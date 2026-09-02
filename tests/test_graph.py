@@ -23,9 +23,18 @@ def test_production_graphs_hold(prod):
     for m in models:
         g = graph.analyse(m, impls_, table)
         assert g.ok
-        assert tuple(s.id for s in g.order) == ("stub",)
-        assert g.provenance == {"canary": "derived"}
-        assert set(g.unbound_inputs) == set(INPUTS)  # S0: no stage reads an input yet
+        assert tuple(s.id for s in g.order) == ("halo", "disc")
+        # Nothing at checkpoint 1 reads a seed, so every field is derived, not seeded (rule A10).
+        assert set(g.provenance.values()) == {"derived"}
+        # S1 binds the four checkpoint-1 controls and no others; graph.py checks each
+        # against GALAXY_PLAN.md §3's hypothesis and none of them disagrees.
+        assert {n for n, c in g.input_checkpoint.items() if c is not None} == {
+            "halo_mass",
+            "disc_spin",
+            "halo_assembly_z",
+            "baryon_retention",
+        }
+        assert all(c == 1 for c in g.input_checkpoint.values() if c is not None)
     assert "graph" in graph.report(models, impls_, table)
 
 

@@ -66,6 +66,9 @@ _UNITS: tuple[Unit, ...] = (
     Unit("Lsun", "L☉", "luminosity"),
     Unit("mag", "mag", "magnitude"),
     Unit("Searth", "S⊕", "insolation"),
+    # gravitation: G in the model's own length/velocity/mass units, so that
+    # G·M/R is a squared velocity with no conversion anywhere (S1)
+    Unit("kpc.km2/s2/Msun", "kpc km²/s²/M☉", "gravitational_constant"),
     # angles
     Unit("deg", "°", "angle"),
     Unit("rad", "rad", "angle"),

@@ -31,18 +31,60 @@ def test_rows_without_a_field_yet():
     assert Q[24].mode == "qualitative"
 
 
-def test_everything_not_yet_computable_at_s0(model):
-    results = spec.run(model, grid=TINY)
+def test_checkpoint_one_rows_report_a_verdict(model):
+    """S1 publishes rows 1, 3, 4 and 19; every other row must still be honest about not knowing."""
+    results = spec.run(model)
     assert len(results) == 24
-    assert {r.status for r in results} == {"not-yet-computable"}
-    assert spec.summary(results) == {"pass": 0, "fail": 0, "not-yet-computable": 24}
-    reasons = {r.n: r.reason for r in results}
-    assert "not published" in reasons[1] and "no published scalar" in reasons[23]
+    by_n = {r.n: r for r in results}
+    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {1, 3, 4, 19}
+    assert spec.summary(results) == {"pass": 3, "fail": 1, "not-yet-computable": 20}
+    assert "no published scalar" in by_n[23].reason
+    assert "not published by model" in by_n[2].reason
+
+
+def test_the_one_failure_is_recorded_and_the_run_is_clean(model):
+    """Row 3 misses and says why. Rule B5 keeps it red; the register keeps it from being noise."""
+    results = spec.run(model)
+    by_n = {r.n: r for r in results}
+    assert by_n[3].status == "fail"
+    assert spec.unexplained(results) == () and spec.stale(results) == ()
+    assert spec.problems(results) == []
+    miss = spec.MISSES[3]
+    assert miss.since == "S1" and miss.debt == 11 and miss.prediction
+
+
+def test_an_unexplained_failure_stops_the_run():
+    q = Q[1]
+    d = scalar("stellar_mass_total")
+    bad = [spec.evaluate(q, {"stellar_mass_total": 9e10}, {"stellar_mass_total": d}, "m")]
+    assert len(spec.unexplained(bad)) == 1
+    assert [p.code for p in spec.problems(bad)] == ["acceptance"]
+
+
+def test_a_recorded_miss_that_starts_passing_is_itself_a_problem():
+    q = Q[3]
+    d = scalar("v_tangential_sun", "km/s")
+    good = [spec.evaluate(q, {"v_tangential_sun": 248.0}, {"v_tangential_sun": d}, "m")]
+    assert good[0].status == "pass" and len(spec.stale(good)) == 1
+    assert [p.code for p in spec.problems(good)] == ["stale-miss"]
+
+
+def test_recorded_misses_are_well_formed():
+    for row, m in spec.MISSES.items():
+        assert m.row == row and m.debt >= 1 and m.since.startswith("S")
+        assert m.reason.strip() and m.prediction.strip()
+    with pytest.raises(spec.SpecError):
+        spec.Miss(row=99, debt=1, since="S1", reason="r", prediction="p")
+    with pytest.raises(spec.SpecError):
+        spec.Miss(row=1, debt=0, since="S1", reason="r", prediction="p")
+    with pytest.raises(spec.SpecError):
+        spec.Miss(row=1, debt=1, since="S1", reason="r", prediction=" ")
 
 
 def test_report_runs(prod):
-    out = spec.report(list(prod[0]), grid=TINY)
-    assert "spec" in out and "24 not-yet-computable of 24" in out
+    out = spec.report(list(prod[0]))
+    assert "spec" in out and "20 not-yet-computable of 24" in out
+    assert "recorded miss, debt #11, since S1" in out
 
 
 def scalar(name, unit="Msun"):
