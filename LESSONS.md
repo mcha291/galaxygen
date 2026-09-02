@@ -96,6 +96,12 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   in a Bessel approximation shifts v_c by a fraction of a percent, which is the
   size of an acceptance error bar and looks like physics `[verified:
   DECISIONS.md D28]`.
+- [close] Not every push credential can push a tag. S1's pushed branches and
+  `main` and then failed `git push origin s01` with HTTP 403, annotated and
+  lightweight alike, while `s00` sits on the remote from a session that used a
+  personal access token. Check the tag actually landed with
+  `git ls-remote --tags origin` rather than trusting the push; if it did not,
+  say so on the board instead of leaving the cell claiming it.
 - [infra] `tools/progress.py` counts debts straight out of GALAXY_INPUTS.md
   §11's register, so adding a numbered item is all it takes to move the board's
   debt line; do not edit the line.

@@ -7,7 +7,7 @@
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
 | ☑ | 0 | Instruments, registry, stub second model | desktop | **Fable** | **Fable** | s00 | 2026-09-03 |
-| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 | 2026-09-02 |
+| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 (local) | 2026-09-02 |
 | ☐ | 2 | SFH & chemistry (simple) | — | Opus | — | — | — |
 | ☐ | 3 | Assembly & mergers | — | Opus | — | — | — |
 | ☐ | 4 | Pattern: bar, arms | — | Opus | — | — | — |
@@ -25,6 +25,12 @@ what was planned; the S10 comparison (below) is worthless if this is recorded
 from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
+
+*s01 (local)*: the tag exists at the S1 merge commit but is **not on the
+remote**. The credentials S1 ran under push branches and refuse tag refs with
+HTTP 403, and a board cell that named a tag no fresh clone can find would be
+exactly the quiet lie this board exists to prevent. `git push origin s01` from
+a checkout with a Contents-write token closes it; the cell becomes `s01` then.
 
 **Next:** S2. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.

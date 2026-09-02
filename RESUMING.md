@@ -109,4 +109,6 @@ merge or tag. The branch stays open and the next session continues on it.
 Push through the machine's git credential helper or a fine-grained token scoped
 to this repository (Contents: read and write). Nothing credential-shaped enters
 the tree; the hook refuses token shapes. Editing `.github/workflows/` needs
-workflow permission on the token.
+workflow permission on the token, and pushing a session tag needs a credential
+that accepts tag refs — some accept branches and refuse tags with a 403. Check
+with `git ls-remote --tags origin`; `s01` is outstanding.
