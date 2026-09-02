@@ -1,0 +1,967 @@
+# Galaxy generator — fundamental input investigation
+
+Method: rules A3 and A4 from `RULES.md`. A3 — *if it can be derived, derive it;
+a control earns its place only if nothing more fundamental determines it, and
+"derived" means determined, not correlated.* A4 — *never invent a variable to
+justify a stage; judged individually, would this input exist if no stage needed
+filling?*
+
+Every claim tagged. `[verified]` carries a citation from the session that wrote
+this file. `[recall]` is memory. `[inferred]` is design reasoning.
+
+---
+
+## 1. The headline result
+
+**The simple model needs 8 physical inputs, 2 seeds, and one variable-length
+event list**, against a ceiling of 12. `[inferred]`
+
+A galaxy has *fewer* fundamental inputs than a planet, and the reason is
+structural rather than lucky: ΛCDM constrains a disc galaxy more tightly than
+planet formation constrains a planet. There is no galactic equivalent of
+obliquity, rotation rate, atmospheric composition or water inventory — the
+things a planet-scale model needs most of its inputs for. Orientation is
+arbitrary and affects
+no internal physics; ISM composition is an *output* of chemical evolution rather
+than an input to it. `[inferred]`
+
+Ceiling: **12** (ruling 6), leaving five slots of headroom before the advanced
+model has to be raided. The ceiling matters more than the count: a simple model
+stays small only *because* an advanced model exists on paper to absorb
+everything else. `[inferred]`
+
+---
+
+## 1b. Three categories
+
+Moved to `RULES.md` A10, where every session can reach it without reading this
+document.
+
+---
+
+## 2. Level 0 — constants, not inputs
+
+These are physical constants that happen to be uncertain. They are recorded as
+calibration debt, never exposed as controls. Rule 4 disqualifies each: they
+would exist whether or not this model did, and none is a property of *this*
+galaxy.
+
+| Constant | Status |
+|---|---|
+| H₀, Ω_M, Ω_Λ | Cosmology. BHG16 use h=0.7, Ω_M=0.3, Ω_Λ=0.7 `[verified: BHG16 §1]` |
+| Cosmic baryon fraction | Ω_b/Ω_M |
+| IMF | Kroupa/Chabrier. MW bulge dynamics **rules out Salpeter** at 10 Gyr — it predicts more mass than is dynamically allowed `[verified: BHG16 §4.2.4]` |
+| Nucleosynthetic yields | Per-element tables |
+| SNIa delay-time distribution | Simple model uses instantaneous recycling; DTD is an advanced-model axis |
+| Stellar lifetimes / isochrones | |
+| Kennicutt–Schmidt index and normalisation | |
+| Outflow mass-loading coefficient | The *loading* is derived per radius from local escape velocity; only the coefficient is constant `[inferred]` |
+
+Making the IMF an input is the most tempting rule-4 violation, because a
+variable IMF is a live hypothesis. It stays a constant in the simple model, and
+becomes an input only in the advanced model. `[inferred]`
+
+---
+
+## 3. Level 1 — the eight
+
+| # | Input | MW default | Provenance |
+|---|---|---|---|
+| 1 | `halo_mass` M₂₀₀ | 1.1 × 10¹² M☉ | Literature spans 0.89–1.3 × 10¹² `[verified: Karukes+19 0.89⁺⁰·¹⁰₋₀.₀₈; McMillan 1.3 ± 0.3]` |
+| 2 | `disc_spin` λ_d | **0.0144** — RULED (8) | The **disc** spin parameter, not the halo's. See §6 |
+| 3 | `halo_assembly_z` | z ≈ 2–3 | RULED (7): renamed; `galaxy_age` cut. Also derives c₂₀₀ (5) |
+| 3b | `baryon_retention` | ~0.35 | RULED (9). f_b × this = m_d ≈ 0.055 |
+| 4 | `infall_timescale` τ₀ | ~7 Gyr at R₀ | Two-infall framework `[verified: Chiappini+97 via Molero+23]` |
+| 5 | `inside_out_index` n | τ(R) = τ₀(R/R_d)ⁿ | Sets the metallicity gradient `[inferred]` |
+| 6 | `second_infall_onset` | ~8 Gyr ago | Produces the thin/thick chemical split `[recall]` |
+| 7 | `migration_efficiency` | — | RULED IN (ruling 4). Dispersion kernel, §8 |
+| ~~8~~ | ~~`bh_seed_mass`~~ | — | **CUT** by ruling 2 — derived, miss recorded |
+| ? | ~~`galaxy_age`~~ | 13.6 Gyr | **New rule-3 candidate — see below** |
+| — | `world_seed` | | |
+| — | `systems_seed` | | Own seed, own workflow step |
+| — | `mergers[]` | 4 scalars per event | Exempt from ceiling, as `impacts` is |
+
+**Count after rulings: 7 physical inputs, 2 seeds, one event list** — if
+`galaxy_age` also goes.
+
+**M_• (ruling 2).** Derived from M–σ. The MW falls **below** the relation for
+ellipticals and classical bulges by a factor of 5–6 `[verified: BHG16 §3.4]`, so
+this is a deliberate failed acceptance check, entered as debt #2 rather than
+relaxed (rule B5). Acceptance entry 18 is
+expected to miss by ~0.75 dex and must not be quietly re-scoped to a range that
+includes the miss.
+
+**`galaxy_age` — a rule-3 candidate found while applying the rulings.** If the
+galaxy is observed at z = 0, then age = t(z=0) − t(z_form), fully determined by
+input #3 plus cosmological constants. It is only a free input if the generator
+must present a galaxy at some *other* epoch, which nothing currently requires.
+Recommend cutting it: 7 physical inputs. `[inferred]`
+
+---
+
+## 4. What gets derived — the rule-3 audit
+
+Each of these was a candidate input and each was cut. This table is the
+justification for the count being 8 rather than 25.
+
+| Derived quantity | From | Note |
+|---|---|---|
+| **Disc scale length R_d** | λ and R_vir: R_d = (λ/√2)·R_vir `[verified: MMW98 via GECO]` | The single largest cut — see §6 |
+| Virial radius R₂₀₀ | M₂₀₀ + cosmology | |
+| **Halo concentration c₂₀₀** | M₂₀₀ + formation epoch | Concentration encodes formation history `[verified: Callingham+18 §4.2]`; BHG16 Fig. 1 plots c against M_vir per cosmic epoch `[verified: BHG16 §1]` |
+| Rotation curve V(R) | Halo profile + baryons | |
+| Disc-to-halo mass fraction m_d | M₂₀₀ via abundance matching | MMW98 assume a constant m_d = 0.05 `[verified: Boissier & Prantzos]`; deriving it is more fundamental but carries a calibration debt |
+| Scale height h_z(R, age) | σ_z + surface density, hydrostatic | |
+| Velocity dispersion σ(age) | Disc heating law | |
+| Gas surface density Σ_gas(R,t) | Infall − SF + recycling | |
+| SFR(R,t) | Kennicutt–Schmidt from Σ_gas | |
+| Metallicity gradient | Inside-out formation + yields | |
+| **Bar pattern speed Ω_b** | Bar length, via fast-bar R = R_CR/R_bar = 1.2 ± 0.2 `[verified: BHG16 §4.4]` | Derivation inherits a wide error — BHG16's own value is Ω_b = 43 ± 9 km/s/kpc, R_CR = 4.5–7 kpc `[verified: BHG16 §4.4]` |
+| **Pitch angle** | Rotation-curve shear S = ½(1 − (R/V)dV/dR) `[verified: Seigar via Corbelli M33]` | **Conflicted — see §5** |
+| Arm multiplicity | Swing amplification (disc/halo mass ratio) | `[recall]` |
+| Bulge mass | Mergers + bar buckling | MW bulge is mostly secular; models need ≤8% initial classical bulge, and none was required `[verified: Shen+10 via BHG16 §4.2.3]` |
+| Dust extinction | Gas × metallicity | |
+| SN rate | SFR × IMF | |
+| Habitable zone | Metallicity + SN rate | Falls out; never drawn by hand `[inferred]` |
+
+## 4b. Determinacy audit
+
+Rule 3 asks whether something more fundamental *determines* a quantity. This
+audit asks the sharper question: **is it determined, or merely correlated?** A
+relation with real galaxy-to-galaxy scatter, shipped as if exact, is a bug — the
+model claims a precision it does not have and the acceptance check silently
+becomes a check on the fit rather than the physics.
+
+Three verdicts:
+
+- **A — arithmetic.** A definition or a solved equation. No freedom.
+- **B — closed by physics.** A law with no per-galaxy freedom; residual is a
+  calibration debt, not a variable.
+- **C — correlated with scatter.** Two galaxies with identical inputs could
+  credibly differ. Needs a remedy.
+
+| Quantity | Verdict | Note |
+|---|---|---|
+| Virial radius R₂₀₀ | **A** | R₂₀₀ = (3M₂₀₀/800πρ_crit)^⅓. A *definition*, not a relation |
+| Scale height h_z | **A** | h_z = σ_z²/πGΣ, hydrostatic. Fully pinned once σ is right |
+| SN rate | **A** | SFR × IMF |
+| Habitable zone | **A** | Arithmetic given its own definition |
+| Σ_gas, SFR, Z(R,t) | **A/B** | The integration itself; K-S constants are Level 0 |
+| Rotation curve V(R) | **B** | Solved Poisson given components. Adiabatic contraction is a debt: cooling raises halo concentration, feedback reverses it `[verified: Kafle+14 §discussion]` |
+| Dust | **B** | Dust-to-gas tracks metallicity tightly |
+| **Disc scale length R_d** | **C — severe** | See below |
+| **Baryon budget m_d** | **C — severe** | See below |
+| Halo concentration c₂₀₀ | **C** | Epoch absorbs most scatter, not all. MW measurements themselves span c ≈ 10–18 `[verified: Huang+16 c=18.06⁺¹·²⁶₋₀.₉₀ vs ΛCDM-relation values ~10]` |
+| σ(age) heating law | **C** | Heating from GMCs, arms, bars, bombardment. Partly derivable from the merger list; residual is real |
+| Bar pattern speed | **C** | Two weak links in series: disc dominance → bar length → Ω_b. Fast-bar ratio itself is 1.2 ± 0.2, i.e. ±17% *observed scatter* `[verified: BHG16 §4.4]` |
+| Arm multiplicity | **C** | Swing amplification sets a preferred m; real galaxies at similar X differ |
+| Bulge mass | **C** | Inherits bar-strength scatter |
+| **M_•** | **C — reopens ruling 2** | See below |
+
+### The remedy is two-valued, not one
+
+Strictly applied, "if it can credibly differ it should be an input" balloons the
+count past the ceiling — six C-verdicts above. The distinction that keeps the
+model honest without doing that:
+
+- **Input** when the residual is *legible* — someone would want to set it, and it
+  means something. "How compact is this galaxy for its mass" is legible.
+- **Seeded draw** when the residual is real but nobody would ever choose it. The
+  arm-multiplicity residual is not a decision.
+
+Both are honest: neither pretends the relation is exact. Seeded draws do not
+break rule 2 (nothing per-cell is an input) and do not count against the ceiling.
+What they cost is that the affected acceptance checks become **statistical rather
+than pointwise** — the model must reproduce the MW's bar pattern speed *within
+the ensemble*, not exactly. That cost must be entered explicitly against
+acceptance entries 14, 16, 17 and 13. `[inferred]`
+
+**Assigned seeded draws:** c₂₀₀ residual, σ(age) residual, bar pattern speed,
+arm multiplicity, bulge mass residual, **M_• residual** (ruling 10). **No new
+inputs from these.**
+
+### R_d — the derivation is circular
+
+Ruling 1 set λ ≈ 0.015 by inverting R_d = (λ/√2)·R_vir to hit the measured 2.6
+kpc. λ has no independent measurement for the MW. So `spin` does not derive the
+scale length; **it is the scale length wearing a physical name.**
+
+The escape would be a second input, the angular-momentum retention j_d/m_d —
+MMW98's j_d ≃ m_d is explicitly an *assumption* `[verified: GECO §2]`, and fits
+to real galaxies require λ_d and m_d to move together `[verified: Burkert+10
+abstract]`, so retention credibly differs between galaxies. But only the
+**product** λ·(j_d/m_d) enters R_d, and nothing else in the simple model reads
+them separately. Rule 4 therefore forbids splitting them: the second input would
+buy nothing measurable.
+
+**Ruling needed.** Either rename the input to what it is, or keep the name and
+put the circularity on its `about` line where it cannot be forgotten `[verified:
+rules A8, A9]`. Recommend renaming — a duplicate that
+wins is a bug wearing the right name.
+
+### Baryon budget — a genuine missing input
+
+**Structural error in the previous table.** m_d was listed as derived from
+abundance matching. But the disc mass is the *integral of the accretion history*,
+and the inputs currently specify only the infall **timescale** (τ₀) and its
+radial index (n) — no normalisation. **Nothing in the current input set fixes the
+total baryon budget.**
+
+Total baryons available is cosmological: f_b · M₂₀₀. The fraction actually
+retained is set by feedback and credibly varies — observed disc fractions span
+f_disk ≈ 0.01–0.07 against a cosmic f_bar `[verified: Burkert+10 §abstract]`, a
+factor of seven.
+
+**Add input: `baryon_retention`.** Highly legible (it is "how much of its gas did
+this galaxy keep"), directly sets total stellar mass, and abundance matching
+becomes an *acceptance check* rather than a derivation — which is where it
+belonged. `[inferred]`
+
+### M_• — the new criterion reopens ruling 2
+
+Ruling 2 derived M_• from M–σ and recorded the 5–6× MW miss as debt. Under the
+determinacy criterion that ruling does not survive on its own terms: M–σ carries
+intrinsic scatter, and the MW sits ~0.75 dex off it `[verified: BHG16 §3.4]`. A
+relation that misses its only calibration target by most of an order of magnitude
+is not determining anything.
+
+Options: (a) uphold ruling 2 and accept the acceptance check is decorative;
+(b) seeded draw about the relation, making entry 18 statistical; (c) restore it
+as an input. **Flagged for re-ruling, not silently kept.**
+
+### A cut found while auditing
+
+`second_infall_onset` (input #6) may be redundant. If the second gas infall is
+delivered *by* a merger, its onset is the timestamp of an event already in the
+`mergers[]` list, and the input duplicates data the model already has. Requires
+ruling on whether every second infall is merger-delivered. `[inferred]`
+
+### Net effect on the count
+
+| Change | Δ |
+|---|---|
+| `baryon_retention` added (genuinely missing) | +1 |
+| `second_infall_onset` possibly cut | −1 (pending) |
+| Six C-verdicts resolved as seeded draws | 0 |
+| M_• re-ruling | 0 or +1 |
+
+**7 inputs, unchanged** — but the composition is different and one of the seven
+was doing no work. Ceiling of 12 still has headroom.
+
+### What the two rulesets actually claim
+
+`PITCH_SEIGAR`. Pitch angle P is a tight deterministic function of rotation-curve
+shear, S = A/ω = ½(1 − (R/V)·dV/dR) `[verified: Seigar via Corbelli M33 eq. 11]`,
+reported at r = 0.89, significance 99.75%, over 48 galaxies `[verified: Seigar+06
+§4]`. High shear means a large central mass concentration and more tightly wound
+arms `[verified: Seigar+06 §4]`. Under this ruleset pitch is **fully derived**:
+no input, no scatter, and arm winding is a strict consequence of the mass
+distribution the model already computed.
+
+`PITCH_YU`. About a third of Seigar's pitch measurements were severely
+overestimated, and once corrected the correlation is much weaker `[verified: Yu
+& Ho 2019 §4.3.5]`. Under this ruleset pitch is **not derivable**. It needs
+either a new input or a seeded draw around a weak trend.
+
+### They are not rival relations — they are rival error bars
+
+Worth being precise, because this changes what the ruling is about. Yu does not
+claim the sign is wrong or that no relation exists. And the shear–pitch
+mechanism has support independent of both observational datasets:
+
+- Swing amplification theory predicts it analytically `[verified: Grand+13 intro,
+  citing Goldreich & Lynden-Bell 1965, Toomre 1981, Julian & Toomre 1966]`.
+- N-body simulations reproduce it, with pitch-angle range narrowing as shear
+  rises, and **scatter comparable to the observed relation** `[verified: Grand+13
+  abstract/conclusions]`.
+
+So the functional form is theoretically motivated and independently reproduced;
+what is disputed is how tight it is. The ruling is therefore not "which relation
+is true" but **how much seeded dispersion sits on top of a form both sides
+accept** — a calibration question with a recorded debt, not a fork. `[inferred]`
+
+### The larger problem neither ruleset solves
+
+The correlation holds only when shear is measured **at a fixed physical radius**
+— 10 kpc — chosen independently of the galaxy `[verified: Seigar+06 fig. 3
+discussion, which calls the choice "somewhat arbitrary"]`. Later work uses
+2.2 R_d instead `[verified: TNG50 MW/M31 analogue study]`.
+
+For a generator this is worse than the tightness dispute. A relation calibrated
+at an absolute radius is not scale-free, and the generator will produce galaxies
+across a wide size range: 10 kpc sits in the far outer disc of a compact galaxy
+and barely past 1.5 scale lengths in an extended one. Applying an
+absolute-radius closure across that range means running it outside its
+calibration regime for most rolls. **`R_CLOSURE_ABSOLUTE` (10 kpc) vs
+`R_CLOSURE_SCALED` (2.2 R_d) is the more consequential fork** and should be
+ruled on alongside. `[inferred]`
+
+### And a degeneracy check the model should run before trusting either
+
+Shear is bounded in a way pitch is not. Writing α = d ln V / d ln R, S = ½(1 − α),
+so a flat rotation curve gives S = 0.5 exactly, and real discs sit near it — M33
+measures S = 0.46 `[verified: Corbelli M33 §4]`, the MW's curve is gently falling
+from ~220 km/s at the solar radius `[verified: Xue+08 abstract]`, putting it just
+above 0.5. Observed pitch angles meanwhile span roughly 5° to M33's 42.2°
+`[verified: Corbelli M33 §4]`.
+
+A narrow input range mapping to a wide output range means the closure is steep,
+and a steep closure is a sensitive one: small errors in a model-computed S become
+large errors in P. Before adopting any ruleset, measure the actual spread of S
+across a generated population. If it clusters at 0.5 — which is what flat
+rotation curves imply — then every generated galaxy gets near-identical arm
+winding and the derivation has bought nothing. **Do not sample what you can
+count** (rule B8): this is countable over a batch
+of rolls, cheaply, before any ruling is needed.
+
+### Recommendation
+
+Adopt the shear form, set dispersion from Yu rather than Seigar, run the S-spread
+check first, and rule `R_CLOSURE_*` explicitly. Pitch is high-visibility and
+low-consequence — it sets where star formation concentrates and therefore what
+the galaxy looks like, but nothing downstream depends on it the way habitability
+depends on metallicity. It does not merit paying for a first-principles
+derivation. `[inferred]`
+
+### RULED (ruling 3): `PITCH_YU`
+
+Implementation: mean pitch from the shear trend, dispersion from `world_seed`.
+Because the trend is weak, the draw dominates and pitch is effectively seeded
+rather than derived. **This costs no input** — seeded draws do not count against
+the ceiling — but it does mean arm winding is no longer a consequence of the
+mass distribution, and any downstream field that reads it inherits a random
+component. Flag on `pitch_angle`'s `about` line accordingly `[verified:
+rule A8]`.
+
+**Two questions this ruling dissolves.** With a weak trend, the radius at which
+shear is evaluated barely affects the output, so `R_CLOSURE_ABSOLUTE` vs
+`R_CLOSURE_SCALED` stops being consequential — take the scaled form and move on.
+The S-spread check likewise stops being a gate; run it once to record how much
+pitch variance is trend versus draw, then leave it. `[inferred]`
+
+This is also a live instance of the recorded lesson that **a relation which fits
+the validation table can still be the wrong relation** `[verified:
+rule B11]`.
+
+---
+
+## 6. The first calibration debt, found while writing this
+
+The MMW98 relation makes λ *measurable* from the disc scale length rather than
+free. Running it forward with the population-mean spin:
+
+- λ̄ = 0.045 `[verified: Muñoz-Cuartas+11]`
+- R_vir ≈ 255 kpc for M_vir ≈ 0.9 × 10¹² `[verified: Huang+16 §6.2.1]`
+- R_d = (0.045/√2) × 255 ≈ **8.1 kpc**
+
+The measured MW thin-disc scale length is **R_t = 2.6 ± 0.5 kpc** `[verified:
+BHG16 §5.1.2]`. The prediction is off by a factor of ~3.
+
+Inverting, the MW's implied spin is λ ≈ 0.015 — about 1.9σ low on the
+log-normal. `[inferred]`
+
+This matters because it directly threatens rule 5. **Defaulting λ to the
+cosmological mean would not generate the Milky Way**; it would generate a galaxy
+three times too spread out.
+
+### RULING 8 resolves this: it was the wrong parameter, not the wrong galaxy
+
+`spin` was λ, the **halo** spin parameter. What R_d actually depends on is
+
+    R_d = (1/√2) · (j_d/m_d) · λ · R_vir      `[verified: MMW98 via GECO §2]`
+
+where j_d/m_d is the **angular momentum retention fraction** — how much of the
+halo's specific angular momentum the disc kept. MMW98 set it to 1 by assumption
+`[verified: GECO §2]`. The combination that the disc actually has is standardly
+written **λ_d**, the *disc* spin parameter `[verified: Burkert+10; Cervantes-Sodi
+§2]`.
+
+Inverting for the MW: **λ_d = R_d·√2/R_vir = 2.6 × 1.414 / 255 = 0.0144.**
+
+Burkert et al. fit observed discs and find that reproducing them requires
+**λ_d = 0.01–0.03 for m_d ≈ 0.05** `[verified: Burkert+10 abstract]`. The MW's
+m_d ≈ 0.055 and its λ_d = 0.0144 sit squarely inside that range.
+
+**The Milky Way is not a 1.9σ outlier. It is typical.** The factor of three was a
+parameter confusion — quoting a halo-spin distribution for a disc-spin quantity.
+The retention fraction it implies is j_d/m_d ≈ 0.32, i.e. the disc kept about a
+third of the halo's specific angular momentum, which is the well-known angular
+momentum loss during collapse rather than an anomaly. `[inferred from verified
+values]`
+
+**RULED (8): `disc_spin`, λ_d, default 0.0144.**
+
+`about` line, to live in the stage that computes it: *Disc spin parameter. The
+specific angular momentum of the disc in units of the halo's, i.e. the halo spin
+λ times the retention fraction j_d/m_d. Not the halo spin parameter — halo λ
+averages 0.044 and disc λ_d is several times smaller, because discs lose angular
+momentum during collapse. Inferred from observed disc structure rather than
+measured directly, which is the standard method.*
+
+### And ruling 9 breaks what remained of the circularity
+
+Debt #7 said λ was a fit to R_d wearing a physical name. With `baryon_retention`
+added, m_d is no longer assumed — it is **pinned by the total stellar mass**
+(acceptance entry 1), and R_d then pins λ_d given m_d. Two parameters, two
+independent observables. That is a joint fit, not an inversion.
+
+### Superseded (ruling 1)
+
+**Superseded by ruling 8.** The gap
+between that and the population mean is debt #1, published rather than tuned
+away. One consequence survives the supersession and is not optional: **the prior must
+be the λ_d distribution, not the halo λ distribution.** Rolling a random galaxy
+from a log-normal centred on 0.044 would make every generated galaxy three times
+too extended. Default and prior must be drawn from the same population.
+`[inferred]`
+
+Three explanations, none yet tested `[inferred]`:
+
+1. **Definitional.** R_vir vs R₂₀₀, and M_vir vs M₂₀₀, differ by ~17–32%
+   `[verified: Patel+16 abstract]` — real, but nowhere near a factor of 3.
+2. **Angular momentum loss.** MMW98 assume j_d ≃ m_d, i.e. the disc keeps the
+   halo's specific angular momentum. It's an assumption, not a result
+   `[verified: GECO §2]`, and fits to real galaxies need λ_d and m_d to move
+   together `[verified: Burkert+10 abstract]`.
+3. **The MW really is a low-spin, compact galaxy.** BHG16 note its scalelength
+   is small for its luminosity, against 4 ± 2 kpc for comparable disc masses
+   `[verified: BHG16 §5.1.2]`.
+
+State it as a prediction that could fail, then check it — the habit that has
+paid most often in this project (rule B4).
+
+---
+
+## 7. The acceptance table — 24 quantities
+
+Lives in `spec.py`, never in prose read at runtime (rule C6). All values `[verified: BHG16]` unless noted.
+
+| # | Quantity | Value |
+|---|---|---|
+| 1 | Total stellar mass | 5 ± 1 × 10¹⁰ M☉ |
+| 2 | Star formation rate | 1.65 ± 0.19 M☉/yr |
+| 3 | Solar tangential velocity | 248 ± 3 km/s |
+| 4 | Thin disc scale length | 2.6 ± 0.5 kpc |
+| 5 | Thick disc scale length | 2.0 ± 0.2 kpc |
+| 6 | Thin disc scale height | 300 ± 50 pc |
+| 7 | Thick disc scale height | 900 ± 180 pc |
+| 8 | Thick/thin local density ratio | 4% ± 2% |
+| 9 | Thick/thin surface density ratio | 12% ± 4% |
+| 10 | Thin disc stellar mass | 3.5 ± 1 × 10¹⁰ M☉ |
+| 11 | Thick disc stellar mass | 6 ± 3 × 10⁹ M☉ |
+| 12 | Bulge stellar mass | 1.4–1.7 × 10¹⁰ M☉ |
+| 13 | Bulge/total stellar fraction | 0.30 ± 0.06 |
+| 14 | Bulge velocity dispersion (rms) | 113 km/s |
+| 15 | Bar half-length | 5.0 ± 0.2 kpc |
+| 16 | Bar pattern speed | 43 ± 9 km/s/kpc |
+| 17 | Bar corotation radius | 4.5–7.0 kpc |
+| 18 | Black hole mass | 4.2 ± 0.2 × 10⁶ M☉ |
+| 19 | Halo virial mass | 1.0–1.3 × 10¹² M☉ `[verified: McMillan]` |
+| 20 | Total gas mass (<30 kpc) | 8.0 × 10⁹ M☉ `[verified: Nakanishi & Sofue 15]` |
+| 21 | Gas HI:H₂ split | 89% : 11% `[verified: Nakanishi & Sofue 15]` |
+| 22 | Present-day metallicity gradient | −0.06 dex/kpc `[verified: Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010]` |
+| 23 | Gradient evolution with age | −0.07 (young) → −0.04 (>10 Gyr) `[verified: Willett+23]` |
+| 24 | [α/Fe] bimodality | Thick disc α-enhanced across a wide [Fe/H] range `[verified: BHG16 §5.2.2]` |
+
+### Why this table is weaker than Earth's
+
+Three degradations, all structural rather than fixable:
+
+**It is not internally consistent.** BHG16 state outright that summary values
+cannot yet all be made consistent within a single plausible dynamical
+description of the Galaxy `[verified: BHG16 §1]`. Earth's 23 do not have this
+problem. A model that fits all 24 exactly would be fitting a contradiction.
+
+**Several entries have factor-of-two-to-three literature spreads.** Disc
+scalelength estimates across 130 refereed papers run from 1.8 to 6.0 kpc
+`[verified: BHG16 §5.1.2]`; thick disc scalelength across 12 papers runs 1.8 to
+4.9 kpc `[verified: BHG16 §5.2.2]`; the metallicity gradient runs −0.01 to −0.09
+depending on tracer `[verified: Lemasle IAU]`. An acceptance check against a
+number with a 3× spread is barely a check.
+
+**Substructure defeats the fitted forms.** Juríc et al. found substructure so
+prevalent that a smooth double-exponential cannot be fitted to either disc
+without accounting for it `[verified: BHG16 §5.1.2 "Disk substructure"]`. The
+model publishes smooth exponential fields; the target is not smooth.
+
+Consequence: **§12-style calibration debt is the primary deliverable of the
+first sessions, not a footnote.** `[inferred]`
+
+---
+
+## 8. Advanced model — ~17 additional, by axis
+
+| Axis | Inputs | Count |
+|---|---|---|
+| Chemistry dimensionality | SNIa DTD index, minimum delay, normalisation; per-element yield scaling | 3–4 |
+| Radial migration | Churning efficiency; blurring/heating rate | 2 |
+| Outflows | Loading normalisation; loading slope vs escape velocity | 2 |
+| Gas dynamics | Radial inflow velocity; fountain recycling timescale | 2 |
+| Bar evolution | Pattern speed decay (dynamical friction) | 1 |
+| Transient spirals | Recurrence rate; amplitude | 2 |
+| Assembly | Merger tree mass resolution; satellite SMHM normalisation | 2 |
+| Accretion chemistry | Pre-enrichment of infalling gas | 1 |
+| IMF | Variability with metallicity or SFR density | 1–2 |
+
+**Total ≈ 25 for the advanced model**, a ~3× expansion on the simple model's
+seven. `[inferred]`
+
+### One item that should cross downward
+
+Radial migration. Without it, metallicity is a pure function of birth radius and
+birth time, and the local metallicity distribution comes out far too narrow
+`[recall]`. That is a *qualitative* error, not an accuracy loss, and it lands on
+gameplay-facing output if planet occurrence is conditioned on metallicity.
+Migration is also directly evidenced: metallicity–age relations vary spatially
+in a way that implies non-negligible migration in the disc plane `[verified:
+Feuillet+19 §3]`.
+
+Cheap form: a **dispersion kernel** whose width grows with stellar age, applied
+by convolution over birth radius. One input, no iteration. Structurally the same
+move as putting a physical smoothing length in front of a threshold `[verified:
+§4b]`. This makes the simple model 9 inputs, still
+well inside a ceiling of 12.
+
+---
+
+## 9. Depth of materialisation — a separate axis, separate document
+
+Binaries, debris discs, moons, cluster membership, a full surface-scale build on
+a visited planet. **None of this is more accurate physics; it is more stuff.** Filed with
+the coupled-physics axis, the advanced model becomes a wish list and stops being
+a spec. `[inferred]`
+
+---
+
+## 10. Computational complexity — measured
+
+The previous version of this section asserted that the advanced model was
+"computationally trivial." That was intuition, and **it was wrong in one place
+and right for the wrong reason in another.** Benchmark in `bench.py` /
+`bench2.py`; grid is N_R annuli marched over N_t timesteps.
+
+### What the benchmark establishes and what it does not
+
+Absolute times measure a sketch written to find scaling, not the real model, and
+should not be quoted. **The exponents are the deliverable**, because they are
+properties of algorithm structure rather than of the implementation.
+`[verified: bench2.py output]`
+
+### Scaling exponents in N_t
+
+| Stage | Exponent | Verdict |
+|---|---|---|
+| Simple chemistry | 0.90 | Linear |
+| Multi-element + DTD, naive | **2.07** | **Quadratic — class change** |
+| DTD, deposit-forward with K ∝ N_t | **1.82** | Still quadratic — see below |
+| DTD, kernel resolution decoupled (K fixed) | **1.01** | Linear. The fix |
+| Migration, applied in-loop | 0.94 in N_t, **2.74 in N_R** | Superlinear in radius |
+| Migration, post-process | — | 0.8× the simple model. Free |
+| Catalogue sampling | 1.08 in N | Linear, as claimed. 10⁷ stars in 0.71 s |
+
+### The instrument found a defect in my own proposal on first run
+
+The deposit-forward scheme was proposed in §8 as the cheap fix for the DTD
+quadratic. **It is not a fix.** Truncating the delay kernel at a fixed *physical*
+window means K = T_window·N_t/T_total, so K grows with N_t and the scheme stays
+quadratic — measured at 1.82. `[verified: bench2.py §1]`
+
+The working fix is to decouple **kernel resolution from integration
+resolution**: bin the DTD into a fixed number of coarse bins regardless of how
+finely time is marched. Exponent 1.01, and the gap against naive widens with
+refinement — 46× faster at N_t = 8000 and growing. `[verified: bench2.py §1]`
+
+This is the recorded pattern holding again: the last three executable
+specifications each found a real defect on their first run `[verified:
+rule B1]`.
+
+### The surprise: the class change is in time, not radius
+
+The instinct is to protect radial resolution and refine time freely. **The
+measurement says the opposite.**
+
+The simple model is *interpreter-bound*, not FLOP-bound, at any realistic radial
+grid: exponent 0.13 in N_R over 50–400 annuli, reaching only 0.75 by 3200
+`[verified: bench2.py §3]`. Per-timestep cost is 6.9 µs at N_R = 50 and 9.0 µs
+at N_R = 400 — quadrupling the radial grid costs 30%. **Radial resolution is
+nearly free; temporal resolution is where the model can be made expensive.**
+`[inferred from verified measurements]`
+
+Consequence for the convergence audit: N_R and N_t are not interchangeable
+quality knobs and must not share one. A galaxy analogue of `convergence.py`
+should sweep them independently.
+
+### Where the advanced model's cost actually lives
+
+| Term | Multiplier over simple |
+|---|---|
+| Multi-element chemistry + DTD (correctly implemented) | **4.9×** |
+| Coupled inflow/outflow fixed point, 8 iterations | **×8 on top** |
+| 20 satellites at quarter resolution | +1.6× |
+| **Total, realistic** | **~40–60×** |
+
+`[verified: bench2.py §4]`
+
+**The dominant term is not the added physics — it is the fixed-point iteration
+that coupling requires.** The DTD quadratic is recoverable by implementation;
+the migration cost is recoverable by moving it out of the loop; the coupling
+multiplier is not recoverable, because it is what "cyclic" costs. That is an
+independent, measured justification for the simple/advanced line already drawn
+on other grounds: **everything one-pass and acyclic is simple** — the criterion
+turns out to also be the criterion that separates the recoverable costs from the
+unrecoverable one. `[inferred]`
+
+### And the earlier conclusion survives, but not for the reason given
+
+Even the pessimistic figure sits inside a 30-second whole-galaxy budget. The
+structural reason is worth stating: the expensive stage in a *terrain* model is
+drainage, which is globally connected — a cell's outflow depends on its whole
+basin. **No field in a galaxy model has that property** `[inferred]`. So the
+headline claim holds:
+**the reason to defer the advanced model is validation, not runtime.** But it
+holds at 40–60×, not at the "trivial" originally asserted, and only if the DTD
+and migration are implemented as specified above rather than naively — naive
+versions would put the advanced model 500×+ over simple and rising with time
+resolution. `[inferred from verified measurements]`
+
+### Not measured
+
+Merger-tree construction; memory footprint; the catalogue's interaction with
+advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
+— that assumption is what this section just corrected.
+
+---
+
+## 11. Rulings
+
+| # | Question | Ruling |
+|---|---|---|
+| 1 | λ default — population mean or MW-inferred? | **MW-inferred, λ ≈ 0.015.** Debt #1 |
+| 2 | M_• input or derived? | **Derived**, 5–6× miss recorded as debt #2 |
+| 3 | `PITCH_SEIGAR` or `PITCH_YU`? | **`PITCH_YU`.** Seeded draw, no input. Dissolves `R_CLOSURE_*` |
+| 4 | Migration kernel in simple model? | **In.** Input #7 |
+| 5 | c₂₀₀ derived from formation epoch? | **Derived.** Input #3 does two jobs |
+| 6 | Ceiling: 12? | **12.** Currently at 8 |
+| 7 | `galaxy_age` derivable from z_form? | **Cut.** Input renamed `halo_assembly_z` |
+| 8 | Rename `spin`? | **`disc_spin` λ_d.** Discharges debts #1 and #7 — see §6 |
+| 9 | Add `baryon_retention`? | **Added.** Input #3b |
+| 10 | M_• — uphold, seed, or input? | **Derived mean + seeded residual**, width from bulge type. No branch, no input (§13) |
+| 11 | Is every second infall merger-delivered? | **DISSOLVED.** `gas_fraction` on merger events; input #6 cut (§14) |
+
+**Calibration debt register**
+
+1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
+   gap was a parameter confusion, not a property of the MW (§6).
+2. M_• derived from M–σ misses the MW by 5–6×.
+3. m_d derived by abundance matching rather than from feedback physics.
+4. Pitch-angle closure radius is arbitrary — largely dissolved by ruling 3 (§5).
+5. Cooling delay from halo assembly to SF onset is unvalidated (§3).
+6. Adiabatic contraction of the halo by infalling baryons is unmodelled (§4b).
+7. ~~`spin` is circular.~~ **LARGELY DISCHARGED** — λ_d is now jointly
+   constrained by two independent observables, not one (§6).
+8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
+   (§4b, §13).
+9. α-bimodality may be reachable without a merger, via smooth accretion plus
+   migration. Test at S4 with a merger-free galaxy (§14).
+
+---
+
+## 12. The planets stage
+
+Yes — but the two-substrate split falls in a different place, and one property of
+planet formation makes this stage qualitatively unlike every other.
+
+### The field half is structurally identical to the galactic disc
+
+A protoplanetary disc is a **1D radial field**: surface density Σ(r), temperature
+T(r), ice line, solid-to-gas ratio. Same shape as the galactic chemistry stage —
+radial grid, prescribed rather than solved, no fixed point. The code is nearly
+the same code. `[inferred]`
+
+### The object half is chaotic, not merely scattered — and that changes the audit
+
+§4b sorted derived quantities into *arithmetic*, *closed by physics*, and
+*correlated with scatter*. **Planetary system architecture is in none of these.**
+Identical initial conditions with infinitesimal perturbations give different
+final systems; the late giant-impact phase is genuinely chaotic. It is not that
+the relation has scatter — there is no deterministic outcome to have scatter
+about. `[recall]`
+
+Consequence: the planets stage is a **seeded draw by construction**, and its
+acceptance checks are *necessarily* statistical.
+
+This inverts the cost noted in §4b. For the galaxy, going statistical was a
+concession. Here it is the native form of both the physics **and the data** —
+Kepler and the RV surveys publish occurrence rates, not predictions for
+individual systems. **The planets stage is therefore the easiest stage in the
+pipeline to validate, not the hardest.** `[inferred]`
+
+### Metallicity is inherited, not input — and the coupling is steep
+
+The strongest single predictor of giant-planet occurrence is host metallicity,
+which the galaxy model already computes. Occurrence scales roughly as
+10^(β[Fe/H]) with β ≈ 2, i.e. with the square of the iron abundance `[verified:
+Fischer & Valenti 2005 abstract; Wang & Fischer]`. Observationally, occurrence
+runs ~5% at [Fe/H] = 0 to ~25% at [Fe/H] = 0.5 `[verified: Adibekyan review §
+Trends with Stellar Metallicity]`, and for M dwarfs splits 12.4 ± 5.4% above the
+sample median against 0.96 ± 0.51% below `[verified: Montet+14 §4.4]`.
+
+**This is the payoff for the whole galactic chemistry stage.** The metallicity
+gradient and its evolution with age — acceptance entries 22 and 23 — propagate
+directly into where in the galaxy giant planets exist and when they became
+possible. Nothing else in the model has that reach. `[inferred]`
+
+### Asteroid belts are derived, not modelled
+
+A belt is not an object to place; it is **a region where a giant planet's
+resonances prevented accretion.** Given giant positions — which the formation
+stage already produced — belt inner and outer edges follow from the resonance
+locations, and the same construction gives the Kuiper analogue (outside the
+outermost giant) and debris discs generally. Zero inputs, zero seeds.
+`[inferred]`
+
+Same treatment applies down the list: rings from moons inside the Roche limit;
+Oort-cloud analogues from giant-planet scattering; regular satellites from
+circumplanetary disc mass, which scales with planet mass; tidal locking from
+semi-major axis, stellar mass and age. **Irregular satellites are captures and
+must be seeded.** `[inferred]`
+
+### Forbidden: N-body
+
+Any stability filtering must be closed-form — mutual Hill separation, or an AMD
+criterion. The moment an integrator enters the loop, rule 1 is gone and the cost
+model in §10 is void. `[inferred]`
+
+### Cost — measured
+
+`bench_planets.py`, vectorised **across** systems rather than within one, since a
+galaxy is one object with many cells and a planets stage is many objects with few
+cells each.
+
+| Systems | Time | Per system |
+|---|---|---|
+| 10³ | 0.003 s | 3.0 µs |
+| 10⁴ | 0.039 s | 3.9 µs |
+| 10⁵ | 0.354 s | 3.5 µs |
+| 10⁶ | 4.70 s | 4.7 µs |
+
+Scaling exponent **1.05** — linear, as the architecture requires. A million
+systems with 48 radial zones each is 48 million cells in under five seconds.
+`[verified: bench_planets.py output]`
+
+**Why the handoff must be summary scalars.** A full surface-scale terrain build
+is order tens of seconds per world `[recall]`. At 10⁵ systems that is hundreds of
+hours. The summary-scalar handoff, with any deeper build run lazily on visit, is
+not an optimisation — it is the only option.
+
+**What the benchmark does not establish.** Cost only. Its giant-planet occurrence
+comes out near 0.17%, against ~5–10% observed — the constants are unfitted, and
+that failure is visible on the first run, which is the point of publishing the
+number rather than the verdict. `[verified: bench_planets.py output vs Adibekyan
+review]`
+
+### The handoff: a self-defined, closed scalar set
+
+The stage publishes what the formation model determines, declared under rule A8
+like any other field: **mass, insolation, volatile inventory, rotation, obliquity,
+atmosphere class.** Some are derived (mass, insolation), some seeded — obliquity
+is set by giant impacts and rotation by accretion plus tides, both stochastic.
+Each says which on its `about` line.
+
+`preflight` asserts the set is **closed and documented**. That is the gate; there
+is no external contract to satisfy.
+
+Shaping this stage around some downstream consumer's current input list would
+import that consumer's arbitrary choices into physics that does not share them.
+Publishing what the model knows and letting integration adapt is the better
+direction, and it is also the only one that keeps this project self-contained.
+
+**Note, not a blocker.** If this is later joined to a surface-scale world
+generator, the two scalar sets must be reconciled and authority declared per
+quantity. That is an integration session with its own gate.
+
+### Does the planets stage add inputs? No — and here is the check
+
+Rule 2 settles most of it structurally: **controls are global scalars only**
+(rule A2), and a per-system control is the
+planetary equivalent of a per-cell input. So the stage cannot have per-system
+inputs whatever else is true. Every system-level quantity is inherited, derived,
+or seeded:
+
+| Quantity | Status |
+|---|---|
+| Metallicity [Fe/H] | **Inherited** from the chemistry stage |
+| Stellar mass | **Seeded** — drawn in the `systems` stage from the IMF |
+| Disc mass | **Seeded** — correlates with stellar mass, ~0.3 dex residual |
+| Disc dispersal time | **Derived**, then seeded. Photoevaporation depends on ambient UV, which depends on local SF density, which the galaxy model already computes `[inferred]` |
+| Occurrence normalisation | **Level 0 constant**, with debt — the benchmark misses it by ~30× |
+| Planetesimal formation efficiency | **Level 0 constant** |
+| Disc-mass scatter width | **Level 0 constant**. Cluster truncation would make it derivable from local density; not modelled |
+
+**Net: zero new inputs.** Count stands at 7 physical inputs.
+
+### But it probably adds a seed, and the audit should decide, not me
+
+`planets_seed`, separate from `systems_seed`, so planets can be re-rolled without
+moving star positions. That is the same relationship `resource_seed` has to the
+other stage seeds: its own workflow step, deciding nothing else.
+
+But the checkpoint grouping is **derived, not designed** — `graph.py` computes
+the earliest field each input can affect and `test_checkpoints.py` asserts the UI
+agrees. So that audit decides whether planets is its own checkpoint. My expectation is that it will say yes; the expectation is not the
+answer.
+
+### The determinism that a game actually needs
+
+`hash(planets_seed, star_id)` → the system. Same star, same planets, forever,
+**regardless of visit order and without storing anything**. This is the property
+that makes 10⁶ systems tractable: they are never persisted, only regenerated.
+
+It is worth being explicit that this is a *stronger* practical guarantee than
+derivation would give, not a weaker one. A derived system would also need its
+inputs carried around; a seeded one needs the seed and the star's identity.
+`[inferred]`
+
+---
+
+## 13. Ruling 10 in detail — M_• and the bulge-type fork
+
+### Why the Milky Way misses
+
+BHG16 record the MW falling below the M–σ relation by a factor of 5–6, and the
+wording carries the answer: below the relation **for elliptical galaxies and
+classical bulges** `[verified: BHG16 §3.4]`.
+
+The Milky Way does not have a classical bulge. BHG16's own §4.2 concludes that
+the bulk of bulge stars form a box/peanut structure — the inner three-dimensional
+part of the bar — and that models match the observed cylindrical rotation with at
+most ~8% initial classical bulge, and none was required `[verified: BHG16 §4.2.1,
+§4.2.3]`. It is a **pseudobulge**, grown out of the disc by the bar.
+
+### Pseudobulges do not merely scatter — they do not correlate
+
+This is the part that changes the ruling. Classical bulges and ellipticals define
+a tight M–σ relation with intrinsic scatter ~0.28 dex. **Pseudobulges show no
+significant correlation at all** — Kormendy & Bender report r = 0.27 and r =
+−0.08 for pseudobulges against r = 0.89 for classical bulges and ellipticals
+`[verified: Kormendy & Ho 2013 §5 via Kormendy 2019; Kormendy & Bender 2011]`.
+The proposed reason is that classical bulges and ellipticals form in gas-rich
+mergers and coevolve with the hole, while pseudobulges grow secularly and do not
+`[verified: Kormendy & Ho via Ho 2014 §summary]`.
+
+So option (a) — uphold ruling 2 and derive from M–σ — is not "derive with a
+recorded miss." **It is applying a relation that demonstrably does not hold for
+this class of object.** That is worse than a failed acceptance check; it is a
+wrong closure that happens to fail visibly.
+
+### RULED (10): M_• is the sixth C-verdict, not a special case
+
+Posing this as a fork between "derive" and "seed" was over-machinery. §4b already
+established the standard remedy for a relation with real scatter: **derive the
+mean, seed the residual.** Five quantities already have it. M_• is the sixth, and
+it needs no new mechanism.
+
+    mean:  M_•/10⁹ M☉ = 0.309 · (σ/200 km s⁻¹)^4.38    `[verified: Ho 2014 eq. 2]`
+    width: interpolated by the classical bulge fraction the model computes
+             fully classical  → 0.28 dex   `[verified: Kormendy & Ho via Ho 2014]`
+             fully pseudo     → the observed pseudobulge spread, ~no correlation
+
+Bulge mass comes from mergers plus bar buckling (§4), so the classical fraction
+M_clb/M*_b is already available — BHG16 give 0–25% for the MW `[verified: BHG16
+§4.2.4]`.
+
+**What this avoids.** A hard branch needs a crossover constant and produces a
+discontinuity in a quantity that is observationally continuous. Interpolating the
+*width* by an existing derived quantity needs neither. `[inferred]`
+
+**Cost: zero inputs, zero new constants beyond the two endpoint widths.**
+Acceptance entry 18 becomes statistical — the cost §4b already priced.
+
+### Why this is the right amount of machinery and not more
+
+**M_• is a leaf.** Nothing in the simple model reads it. The nuclear region it
+governs is far below the model's radial resolution; the galactic-centre hazard
+field is dominated by supernova rate and metallicity; the systems and planets
+stages never consult it. A leaf field with no consumers does not justify a branch
+and a crossover constant. `[inferred]`
+
+Revisit if AGN feedback enters the advanced model, at which point M_• acquires a
+consumer and the precision starts to matter.
+
+### A conflict that dissolves rather than persists
+
+Harris reports the MW lying *close* to the M–σ line for a full mixed sample
+`[verified: Harris 2012 §discussion]`, against BHG16's 5–6× miss. These are not
+in conflict: they are measured against different reference relations, classical-
+only versus all-galaxies. Recording the reference relation with the number is
+what keeps this from looking like a contradiction later.
+
+The Milky Way, being pseudobulge-dominated, lands at the wide end — its M_• is
+drawn, not predicted. That is the correct representation of what is known.
+
+---
+
+## 14. Ruling 11 in detail — the second infall
+
+### What the question is
+
+The two-infall framework has the disc forming in two gas-accretion episodes
+separated by a hiatus: the first builds the halo and thick disc, the second the
+thin disc `[verified: Chiappini+97 via Molero+23]`. The hiatus is what produces
+the α-bimodality — acceptance entry 24 `[verified: BHG16 §5.2.2]`.
+
+Input #6 `second_infall_onset` names when the second episode starts. The question
+is whether that timestamp is already implied by the `mergers[]` list.
+
+### Why it cannot be settled by ruling on the physics
+
+Two live positions `[recall]`:
+
+- The second infall is **merger-delivered** — a gas-rich satellite brings the
+  fuel, and the Gaia-Sausage-Enceladus event is the usual candidate for the MW.
+- The second infall is **smooth cosmological accretion** resuming after a hiatus,
+  with no merger required.
+
+There is one galaxy in which this can be examined from the inside, and the answer
+for it does not generalise. Ruling for either position would hard-wire a
+contested claim into the input vector.
+
+### The dissolution
+
+**Do not rule. Put a gas fraction on merger events and let the mechanism
+follow.**
+
+`mergers[]` already carries per-event scalars and is already exempt from the
+ceiling. Adding `gas_fraction` to each event means:
+
+- A gas-rich merger delivers an infall episode. Its onset *is* the event's
+  timestamp. `second_infall_onset` is then derived, and input #6 is cut.
+- A galaxy with no gas-rich merger gets single-phase accretion, no hiatus, and no
+  α-bimodality.
+
+This is the pattern the project prefers — check whether an existing mechanism
+already covers the case before adding a construct `[recall]`. The merger list is
+the existing mechanism.
+
+### It also makes the model falsifiable, which the input did not
+
+Under the dissolution the model **predicts** that α-bimodality occurs only in
+galaxies with a gas-rich merger. That is a claim which can fail. `second_infall_
+onset` as a free input made no prediction at all — it simply granted the
+bimodality wherever it was set.
+
+State it as a prediction that could fail (rule B4).
+
+### The honest caveat
+
+Some chemical evolution models produce α-bimodality from smooth accretion plus
+radial migration, with no merger `[recall]`. If that is right, the dissolution
+under-produces bimodality in quiet galaxies. Record as **debt #9** and test it at
+S4 by running a merger-free galaxy and checking whether the migration kernel
+alone splits the sequence.
+
+### RULED (11): dissolved
+
+Input #6 `second_infall_onset` is **cut**. `mergers[]` event schema gains
+`gas_fraction`. Debt #9 recorded. Count stands at **7 physical inputs** against a
+ceiling of 12.

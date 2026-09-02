@@ -1,0 +1,482 @@
+# Galaxy generator — implementation plan
+
+## Status
+
+`░░░░░░░░░░░░░░░░░░░░░░` **0 / 11 sessions** · repo initialised: no
+
+| | S | Session | Model | Tag | Closed |
+|---|---|---|---|---|---|
+| ☐ | 0 | Instruments, registry, stub second model | **Fable** | — | — |
+| ☐ | 1 | Halo & disc | Opus | — | — |
+| ☐ | 2 | SFH & chemistry (simple) | Opus | — | — |
+| ☐ | 3 | Assembly & mergers | Opus | — | — |
+| ☐ | 4 | Pattern: bar, arms | Opus | — | — |
+| ☐ | 5 | Systems: catalogue | Opus | — | — |
+| ☐ | 6 | API | Opus | — | — |
+| ☐ | 7 | Viewer, galaxy view, stage previews | Opus | — | — |
+| ☐ | 8 | Planets & system view | Opus | — | — |
+| ☐ | 9 | Advanced model | **Fable** | — | — |
+| ☐ | 10 | Audit | **Fable** | — | — |
+
+☐ not started · ◐ in progress or split · ☑ closed and verified
+
+**Next:** S0. Its prompt is `S0_PROMPT.md`; from S1 onward the next session's
+brief is `BRIEF.md`, written by the session before it.
+
+**Open debts:** 9 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
+
+> This board is the single source of truth for what is done. `RESUMING.md` does
+> not repeat it (rule A9 — one opinion, in one place). The progress bar is
+> **generated** from the checkboxes by `tools/progress.py`, and a test asserts
+> they agree, because a hand-maintained bar drifts from the thing it summarises.
+
+---
+
+Companion to `GALAXY_INPUTS.md`, which holds the model. This holds the build.
+
+Everything here is `[inferred]` design unless tagged otherwise. The working rules
+this plan invokes are stated in `RULES.md`, inside this project — nothing here
+reaches outside it for justification.
+
+---
+
+## 1. Three architectural commitments, made before any physics
+
+Three things that a project with one model can discover late, and this project
+cannot, because two models make each of them load-bearing rather than convenient.
+
+**Field declaration at S0** (rule A8). Every published field carries a label,
+unit, kind, ramp, meaningful-zero flag and an `about` line, declared in the stage
+that computes it, with `preflight` asserting nothing is undeclared and no
+declaration orphaned. **Two models publish different field sets** — advanced
+chemistry publishes per-element abundances the simple model does not. Without a
+declared contract, a downstream stage will read a field that exists in one model
+and not the other, and the failure is silent rather than loud.
+
+**The graph audit at S0.** `graph.py` computes the earliest field each input can
+affect; that is what decides which checkpoint each control belongs to. Staged
+previews with per-stage rerolls are a **requirement** here, not something
+discovered midway, so the audit that grounds them is a prerequisite rather than a
+by-product. The stage grouping in §3 is a **hypothesis to be checked against the
+audit**, not a decree.
+
+**A stub second model at S0.** The single largest risk in this build is that
+eight sessions of simple-model work rot the two-model boundary, and the advanced
+model turns out not to fit. Mitigation: S0 ships a second registered model that
+differs *trivially* — one constant — purely so the registry, the field
+reconciliation and the model switch are exercised from the first session onward.
+Build the instrument before the thing it certifies (rule B1).
+
+---
+
+## 2. Layering
+
+```
+galaxy/
+  core/          fielddoc, registry, seeds, grids, units
+  models/        model declarations: which stage impl, which constants
+  stages/        stage implementations (shared where identical)
+  model/         executable specs: graph, determinism, convergence,
+                 performance, preflight, spec
+  api/           HTTP layer. JSON metadata + binary arrays. No rendering.
+viewer/          static HTML/JS. Talks only to api/. Replaceable.
+```
+
+### The model boundary
+
+A **model** is not a pipeline. It is a declaration:
+
+```
+Model = {
+  name, inputs[], constants{},
+  stages: {stage_name -> implementation_id},
+  publishes: derived from the chosen implementations
+}
+```
+
+Stages are shared wherever the implementation is identical — `halo`, `potential`
+and `disc` are the same code in both models. Only where an advanced
+implementation exists does the model choose. **A third model slots in by
+declaring a stage map**, not by forking a pipeline.
+
+The contract between stages is the **field set**, never the implementation.
+Downstream code that wants `[Fe/H](R,t)` gets it identically whether the simple
+or the multi-element chemistry produced it. Fields present in only one model are
+declared optional and any reader must handle absence — `preflight` asserts this
+per model, so a stage cannot quietly assume the richer model.
+
+### The UI boundary
+
+The viewer receives only: stage metadata, field metadata, and arrays. It never
+receives model internals and it never computes physics. Replacing it means
+reimplementing against the same endpoints.
+
+**One fetch, asserted** (rules D2, D3, D4). Exactly one `fetch` in the client
+transport with CI asserting the count; a `/api/version` content hash; and no
+endpoint running more of the pipeline than its answer requires.
+
+The failure this prevents is a metadata endpoint that quietly calls into the
+pipeline — cheap warm, ruinous cold, and **invisible to every check ever run
+against a warm cache** `[recall]`. So: **cold timings from the first API commit,
+published every session** (rule B2).
+
+---
+
+## 3. Stages and previews
+
+Six stages. The grouping is a hypothesis; `model_graph.py` rules.
+
+| # | Stage | Inputs / seeds it owns | Preview |
+|---|---|---|---|
+| 1 | **Halo & disc** | `halo_mass`, `spin`, `halo_assembly_z`, `baryon_retention` | Rotation curve; face-on surface density (smooth, axisymmetric) |
+| 2 | **Assembly** | `mergers[]` | Accretion history; edge-on view showing the thick disc appear |
+| 3 | **Star formation & chemistry** | `infall_timescale`, `inside_out_index`, `migration_efficiency` | Age–metallicity relation, radial gradient, SFH; face-on coloured by [Fe/H] |
+| 4 | **Pattern** | `pattern_seed` | Bar and arms. **First recognisable galaxy** |
+| 5 | **Systems** | `systems_seed` | Galaxy view — the star catalogue |
+| 6 | **Planets** | `planets_seed` | System view |
+
+Every stage renders the **same two views** — face-on and edge-on — plus a
+stage-specific plot. Each preview shows only the fields that exist at that point,
+so the galaxy visibly assembles: smooth disc, then thickened, then chemically
+structured, then armed, then resolved into stars. That progression is honest
+rather than decorative; it is what the model actually knows at each step.
+
+### Locking
+
+Confirming a stage locks its prefix, under rule D1: a lock means *do not re-roll
+this* and never *freeze this against upstream changes*. Confirmed controls are
+disabled rather than hidden, reopening a stage discards every later one, and a
+page load lands on stage one.
+
+**Reroll is a distinct action from edit.** Rerolling stage 4's `pattern_seed`
+invalidates 5 and 6 but not 1–3. This is the whole point of per-stage seeds and
+it falls out of the graph audit rather than being hand-wired.
+
+---
+
+## 4. The two views
+
+### Galaxy view
+
+10⁶ stars will not render as 10⁶ DOM nodes or draw calls. The rendering strategy
+**mirrors the model's own field/object split**:
+
+- **The field renders as an image.** Stellar density, integrated and coloured by
+  the populations stage, drawn as a texture. This is what you see at galaxy zoom.
+- **A materialised sample renders as points.** A seeded subset — order 10⁴–10⁵ —
+  drawn as clickable objects, stable across sessions because it comes from
+  `hash(systems_seed, star_id)`.
+- **Zooming materialises more.** Below some angular scale the field is replaced
+  by actual stars within the view volume, generated on demand and never stored.
+
+The consequence to state plainly: **at full galaxy zoom you are looking at a
+field, not at stars.** Clicking requires the materialised sample. Building the
+sample first and the LOD ladder later is the right order.
+
+### System view
+
+Star, planets, belts, moons. Small N, trivial to render. Selecting a star in
+galaxy view transitions here; the system is generated from
+`hash(planets_seed, star_id)` at that moment and discarded on exit.
+
+### What the viewer must not do
+
+No physics, no persistence of generated objects, no second opinion about how a
+field is rendered (rules D5, A9). **Ramps come from the field declaration, in the
+stage that computes the field, and from nowhere else.** The failure mode is a
+client-side colour table that silently wins over the authoritative one and
+renders a field as something it is not `[recall]`.
+
+---
+
+## 5. Session protocol
+
+Every session is a fresh context. The repo lives at
+`https://github.com/mcha291/galaxygen.git` and every session clones it fresh
+(rule C1). **Verified reachable from the sandbox** `[verified: clone succeeded,
+this session]`; **push requires a token** `[verified: unauthenticated push
+rejected, this session]`.
+
+This replaces file-passing entirely, which matters most for the cross-account
+Fable sessions — they clone the same URL and nothing has to be carried.
+
+### Fixed opening and closing
+
+**Open:** clone the remote into a fresh directory → read `RESUMING.md` (capped,
+see below) → read `BRIEF.md` → start on branch `session-NN`. Nothing else is read
+by default.
+
+**Mid-session:** push the branch at least once (rule C2b), so a session that runs
+out of time does not lose its work.
+
+**Close, in order:**
+0. **Tick this session's box in the status board** at the top of
+   `GALAXY_PLAN.md`, fill in its tag and close date, set the next session's row
+   to ◐ if it has already begun, and update the debt counts. Then run
+   `python tools/progress.py` to regenerate the bar. A session that closes
+   without doing this leaves the board lying, and the board is what you look at
+   to know where the build is.
+1. Full suite once, quiet mode.
+2. Append to `DECISIONS.md` and any new rule to `LESSONS.md`, **tagged** by stage
+   type so future sessions read only what applies to them.
+3. Rewrite `RESUMING.md` in place — it does not grow.
+4. Write `BRIEF.md` for the next session: what to build, which files to touch,
+   the gate, and known traps. This is the single highest-leverage artefact in the
+   whole protocol; it is what lets the next session skip reading the plan.
+5. Commit, `--no-ff` merge to `main`, tag `s NN`, push branch, main and tags.
+   **Never force-push** (rule C2a).
+6. **Verify by cloning the remote into a clean directory and running the suite
+   there** (rule C2) — not by re-running in the working copy, which cannot detect
+   a file that was never `git add`ed.
+
+### Token discipline — the rules that actually move the number
+
+The dominant recurring cost in a multi-session build is **re-reading state at
+session start**, and it grows with the project unless capped. An uncapped
+resuming document reaches a few hundred lines by the end of a build of this size,
+and every session pays it — eleven times over. `[inferred]`
+
+| Rule | Why |
+|---|---|
+| **`RESUMING.md` hard cap: 120 lines.** Enforced by a test | Otherwise it grows monotonically and every session pays |
+| **`BRIEF.md` replaces reading this plan.** Written by the previous session, ~40 lines | The plan is read once, at S0 |
+| **Lessons are tagged by stage type**; a session reads only its tags | 27 untagged lessons is a per-session tax on all of them |
+| **The acceptance table lives in `spec.py`, never in prose read at runtime** | A session runs the spec and reads pass/fail, not 24 rows |
+| **Tests run quiet; only failures print.** Affected subset mid-session, full suite once at close | A suite printing 339 passing test names is pure waste |
+| **Never read a file you are about to overwrite** | Common and invisible |
+| **Bundle verification is a fixed script, not an exploration** | It is the same six commands every time |
+
+### Subagent delegation — delegate reading, not deciding
+
+The test is the **ratio of output to input**. Delegate when a task consumes a lot
+of context and returns little; keep when the output feeds further design in the
+same session.
+
+**Delegate:**
+- Literature verification of acceptance values — searches are read-heavy, the
+  return is a number and a citation
+- Auditing a large existing spec for a short answer — one agent reads it, returns
+  a list
+- Writing test suites against a settled contract
+- Independent stage implementations that do not interact
+
+**Do not delegate:**
+- Any ruling, or any design whose output feeds more design this session
+- Anything where the subagent's return is large — it gets read back anyway
+- The audit sessions. Finding a defect nobody saw requires the whole context
+
+### Credentials
+
+Push needs a fine-grained personal access token, and it must be supplied each
+session because containers do not persist. Scope it as tightly as the work
+allows: **this repository only, `Contents: read and write`, short expiry.**
+Nothing else is needed — no org scope, no workflow scope.
+
+Two shapes, pick one:
+
+- **Push to `main` directly.** Lower friction. Safe because sessions are
+  sequential and rule C2a forbids force-pushing, so a rejected push is a signal
+  rather than an obstacle to overcome.
+- **Push the session branch only; merge by PR.** One click per session, and the
+  blast radius of any mistake is one branch. Recommended if the token's lifetime
+  is long.
+
+Rule C2c covers the rest: the token stays out of the working tree, and a
+pre-commit hook refuses staged content matching `ghp_` or `github_pat_`.
+
+### Subagents and the remote
+
+Subagents share the main agent's checkout and **do not push**. Delegated work
+returns to the session, which commits it. *Justification: a subagent pushing
+independently would need its own credentials and could interleave commits in an
+order nobody chose* `[inferred]`.
+
+### Which sessions to run on Fable
+
+`[inferred]` — reasoning from capability tier, not measurement. Three criteria:
+the session is **self-contained** (little carried context, since the account
+switch starts fresh), **high-leverage** (errors compound downstream), and
+**reasoning-bound rather than typing-bound**.
+
+- **S0** — the model/stage boundary is the decision the other ten sessions live
+  inside, and it has no predecessors to carry. **It also initialises the
+  repository**, which is now empty.
+- **S9** — the advanced model, where the complexity-class trap lives.
+- **S10** — the audit. This is precisely the "find the defect no picture shows"
+  task, and it reads the repo rather than carrying context.
+
+Everything else follows settled patterns and is typing-bound. Running those on
+Fable spends capability where it does not bind.
+
+---
+
+## 5b. Sessions
+
+Eleven. **All physics is headless through S5** — the viewer arrives at S7 with
+everything to show at once, so the rendering harness is written once instead of
+five times.
+
+That ordering is not only cheaper, it is what rule B1 requires. It has already
+paid once in this project: the benchmark written to measure the advanced model's
+cost found a defect in a proposal made a turn earlier, and no picture would have
+shown it `[verified: bench2.py §1]`. **Instruments before pictures.**
+
+| S | Deliverable | Gate | Notes |
+|---|---|---|---|
+| **0** | Repo init, `tools/progress.py`. `core/` + registry, fielddoc, seeds, grids. `graph`, `preflight`, `determinism`. `spec.py` as **data**. **Stub second model.** No physics | Graph acyclic per model; both models preflight; determinism holds; `spec.py` lists 24 quantities and reports each not-yet-computable | **Fable.** `convergence`/`performance` deferred to S10 — they need something to measure (rule B1) |
+| **1** | Halo & disc (shared impl) | λ_d = 0.0144 from a **joint** fit to stellar mass and scale length; R₂₀₀ arithmetic | Delegate: verify M₂₀₀, R_vir values |
+| **2** | SFH + chemistry, simple | Gradient ≈ −0.06 dex/kpc; SFR ≈ 1.65 M☉/yr | |
+| **3** | Assembly + `mergers[]` with `gas_fraction` | f_Σ = 12% ± 4%; **debt #9: run a merger-free galaxy, check whether α-bimodality appears anyway** | |
+| **4** | Pattern: bar, arms | `PITCH_YU` seeded; S-spread recorded once | |
+| **5** | Systems: catalogue, headless | 10⁶ stars < 10 s; per-region determinism | |
+| **6** | API. Headless and fully tested | **One `fetch`**; `/api/version` hash; **cold timings published** | Testable without a browser — separated from S7 deliberately (rules D2–D4) |
+| **7** | Viewer: galaxy view, checkpoints, previews for stages 1–5 | Field-as-image + clickable seeded sample; reopening a stage discards later ones | Largest slip risk. Split if it runs long |
+| **8** | Planets stage + system view | Occurrence vs [Fe/H]; belts derived from resonances; **planet scalar set declared and closed** | No external dependency — see §5c |
+| **9** | Advanced: multi-element + DTD, migration, outflows, coupling | **Exponent 1.0 in N_t**, not 2.0 (`bench2.py`); coupling multiplier measured | **Fable** |
+| **10** | Audit: `convergence`, `performance`, calibration debt | N_R and N_t swept **independently** | **Fable** |
+
+### On splitting
+
+Splitting costs one session-open — the bundle clone plus two capped documents,
+which under the discipline above is small. Splitting **saves** an entire
+test-fix iteration loop being carried in a context that is already long.
+
+So: split freely when a session risks the limit, with one exception. **S9 must
+not split.** Its two halves touch the same stages, and splitting means reading
+the chemistry implementation into context twice — the one case where the
+handoff costs more than it saves.
+
+---
+
+## 5a. What each session reads
+
+**All three documents are committed in S0's first commit.** After that they are
+in the repo and can be consulted by section rather than read whole.
+
+| | S0 | S1–S10 |
+|---|---|---|
+| `RULES.md` | **In full** | **In full** — it is capped and every rule applies |
+| `GALAXY_PLAN.md` | **In full** | Not read. `BRIEF.md` replaces it (rule C4) |
+| `GALAXY_INPUTS.md` | §7 and §11 only | By section, when a `BRIEF` names one |
+| `RESUMING.md` | Written, not read | **In full** — capped at 120 lines (rule C3) |
+| `BRIEF.md` | — | **In full** — ~40 lines |
+
+`GALAXY_INPUTS.md` is a **source document, not a session-time read.** S0's job
+includes consuming the durable parts of it into code, after which they are never
+read as prose again:
+
+- **§7's 24 acceptance quantities → `spec.py` as data**, with a runner that
+  reports each as pass, fail, or not-yet-computable. From S1 onward a session
+  runs the spec and reads pass/fail (rule C6).
+- **§11's input table → the registry.** Names, defaults, units, ranges.
+- **§4b's three categories → already lifted to rule A10.**
+
+What stays in `GALAXY_INPUTS.md` is reasoning — why a quantity is derived rather
+than input, which conflicts are preserved, what each debt is. A session consults
+those when its brief says to, not by default.
+
+### The three gaps S0 must close itself
+
+None of these is settled in any document, and the registry cannot be written
+without them:
+
+1. **The closed unit vocabulary** for field declarations — kpc, Gyr, M☉, dex,
+   km/s, M☉/yr, dimensionless, and whatever else the six stages need. Closed
+   means a field cannot invent one.
+2. **The `kind` vocabulary** — continuous scalar field, category, per-object
+   scalar, catalogue column.
+3. **Grid defaults.** `N_R = 400` radial annuli, `N_t = 2000` timesteps, `N_z`
+   ≈ 60 for the (R, z) potential grid. N_R is measured nearly free up to 400 —
+   exponent 0.13 in N_R against 1.0+ in N_t `[verified: bench2.py §3]` — so the
+   two are separate quality knobs, never one (rule A6, and `convergence.py` at
+   S10).
+
+---
+
+## 5c. The planets handoff has no external dependency
+
+An earlier draft made S8 block on enumerating another project's input list. **That
+dependency is removed.**
+
+The planets stage publishes a **self-defined, closed set of planet scalars** —
+mass, insolation, volatile inventory, rotation, obliquity, atmosphere class —
+declared under rule A8 like every other field, chosen for what the formation
+model actually determines rather than for what some consumer currently accepts.
+`preflight` asserts the set is closed and documented. That is the whole gate.
+
+This is better design independently of scope. A stage shaped by a downstream
+consumer's current input list inherits that consumer's arbitrary choices; a stage
+that publishes what it knows lets integration adapt to it. Any future consumer
+writes an adapter.
+
+**Recorded as a note, not a blocker:** if this project is later joined to a
+surface-scale world generator, the two scalar sets must be reconciled, and
+whichever side is authoritative for a given quantity must be declared once. That
+reconciliation is an integration task with its own session, not a prerequisite
+for S8.
+
+---
+
+## 6. What the executable specs assert
+
+| Spec | Addition |
+|---|---|
+| `graph.py` | Acyclic **per model**, and the stage→checkpoint map is derived from it |
+| `preflight.py` | Field declarations reconcile **across models**; optional fields have handled absence |
+| `determinism.py` | Per-region determinism: `hash(seed, star_id)` is order-independent |
+| `convergence.py` | **N_R and N_t swept separately.** They are not one quality knob — measured exponent 0.13 in N_R against 1.0+ in N_t `[verified: bench2.py §3]` |
+| `performance.py` | Asserts the DTD stays linear in N_t. This is the one place the advanced model can change complexity class |
+| `spec.py` | The 24 acceptance quantities, with entries 13/14/16/17 **statistical rather than pointwise** (`GALAXY_INPUTS.md` §4b) |
+
+---
+
+## 7. Risks, ranked
+
+1. ~~The λ circularity.~~ **Discharged by ruling 8.** Replaced as top risk by:
+   **the λ_d prior.** Default and prior must be drawn from the same population —
+   seeding rolls from a halo-λ log-normal would make every generated galaxy three
+   times too extended, and the error would look like a plausible galaxy.
+2. **The advanced model is unfalsifiable in the generator.** Its headline outputs
+   can only be checked against our galaxy, not a random one
+   (`GALAXY_INPUTS.md` §10). S8–S9 must ship with that stated, or they will look
+   like progress they are not.
+3. **Two-model boundary rot.** Mitigated by the S0 stub, and only by it.
+4. **Browser rendering at 10⁶.** Mitigated by field-as-image; the LOD ladder is
+   the part most likely to slip.
+5. **Warm-cache self-deception.** This class of defect can survive every check
+   ever run against it, because the checks run warm `[recall]`. Cold timings from
+   S6, published, every session (rule B2).
+6. **Acceptance table internal inconsistency.** The 24 quantities are not
+   mutually consistent (`GALAXY_INPUTS.md` §7); a model fitting all of them
+   exactly is fitting a contradiction.
+
+---
+
+## 8. Rulings needed before S0
+
+**All settled.** The input vector is closed and S0 can declare it.
+
+### The seven
+
+| # | Input | MW default |
+|---|---|---|
+| 1 | `halo_mass` M₂₀₀ | 1.1 × 10¹² M☉ |
+| 2 | `disc_spin` λ_d | 0.0144 |
+| 3 | `halo_assembly_z` | z ≈ 2–3 |
+| 4 | `baryon_retention` | ~0.35 |
+| 5 | `infall_timescale` τ₀ | ~7 Gyr at R₀ |
+| 6 | `inside_out_index` n | — |
+| 7 | `migration_efficiency` | — |
+
+Plus `world_seed`, `systems_seed`, `planets_seed`, `pattern_seed`, and
+`mergers[]` — the last now carrying `gas_fraction` per ruling 11. **Ceiling 12;
+five slots of headroom.**
+
+### Rulings that changed the build
+
+- **8** discharged debts #1 and #7. S1's gate is no longer "resolve the λ
+  circularity" but "reproduce λ_d = 0.0144 from a joint fit to stellar mass and
+  scale length."
+- **11** cut an input and made the model falsifiable. **S4 gains a gate**: run a
+  merger-free galaxy and check whether α-bimodality appears anyway (debt #9).
+- **10** added a sixth seeded residual and no machinery.
