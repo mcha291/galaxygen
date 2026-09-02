@@ -71,6 +71,27 @@ def test_the_gate_prediction_of_0_0144_is_dead(model):
     assert 0.01 <= 0.0144 <= 0.03 and 0.01 <= INPUTS["disc_spin"].default <= 0.03
 
 
+def test_the_255_kpc_is_a_top_hat_radius_not_R200():
+    """The diagnosis behind D30, as arithmetic rather than assertion.
+
+    GALAXY_INPUTS.md §6 pairs R_vir = 255 kpc with M_vir ≈ 0.9 × 10¹² M☉ [Huang+16].
+    Ask what overdensity that pair implies: it is ~95 ρ_crit, not 200. That is the
+    Bryan & Norman top-hat value Δ_vir ≈ 101 for Ω_m = 0.3 at z = 0 [recall: Bryan &
+    Norman 1998], so the two radii are two different definitions and MMW98's r₂₀₀ is
+    the one this model computes. Nothing about the Milky Way is in question here.
+    """
+    from galaxy.stages.halo import rho_crit
+
+    implied = 0.9e12 / (4.0 / 3.0 * math.pi * 255.0**3 * rho_crit(0.07, G))
+    assert 80.0 < implied < 120.0  # top-hat, not 200
+    assert abs(implied - 200.0) > 80.0
+    # The same mass at 200 ρ_crit is a fifth smaller, which is the whole factor in λ_d.
+    from galaxy.stages.halo import virial_radius
+
+    assert virial_radius(0.9e12, 0.07, G) == pytest.approx(199.2, abs=1.0)
+    assert 255.0 / virial_radius(0.9e12, 0.07, G) == pytest.approx(1.28, abs=0.03)
+
+
 def test_the_defaults_hit_rows_1_and_4(model):
     o = out(model)
     assert o.fields["thin_disc_scale_length"] == pytest.approx(SCALE_LENGTH, abs=0.02)

@@ -375,3 +375,197 @@ this is **not** a controlled result.
 specified, so the observation cannot be attributed to the model `[inferred]`. The
 S10 double run exists to answer this question; letting an uncontrolled result
 pre-empt it would waste the one comparison the build affords (rule B4).
+
+## Session 1 — halo & disc
+
+Surface: web (Claude Code on the web). Model: Opus 5 `[verified: the session's own
+`get_session`, `configured_model` and `last_served_model` both `claude-opus-5`]`.
+
+### D28. `core/special.py`: I₁, K₀, K₁ from Abramowitz & Stegun, not from scipy
+
+**Decision.** Freeman's exponential-disc rotation curve needs I₀, I₁, K₀ and K₁.
+numpy ships `i0` and nothing else, so the other three are the A&S §9.8 polynomial
+approximations, implemented in `galaxy/core/special.py` with golden values pinned
+to ten significant figures and the Wronskian identity `I₀K₁ + I₁K₀ = 1/x` as a
+cross-check that ties all four together.
+
+**Settled by.** scipy would replace a two-package pinned environment (D2) with a
+large binary dependency for four functions, and the accuracy that matters here is
+2 × 10⁻⁷, which the approximations deliver `[verified:
+tests/test_special.py::test_golden_values]` `[inferred]`. The alternative to the
+Bessel form is treating the disc as spherical, which is wrong by more than 10 % in
+v_c at R₀ — six times acceptance row 3's error bar `[verified:
+tests/test_disc.py::test_freeman_beats_the_spherical_approximation]`. These are
+transcribed coefficients, so a golden-value test is the instrument that catches a
+mistyped digit before it looks like physics (rule B1).
+
+### D29. Level 0 constants live in one module; only constants a stage reads exist
+
+**Decision.** `galaxy/models/level0.py` holds `G`, `H0`, `F_BARYON`,
+`CONCENTRATION_NORM`, `R_SUN` and `V_SUN_PECULIAR`; each model spreads it and adds
+only what it differs on. `G` is stated as arithmetic — the IAU nominal GM☉ divided
+by a kpc and by (km/s)² — and a test reproduces that arithmetic rather than
+trusting the literal.
+
+**Settled by.** Two copies of a constant is the duplicate rule A9 forbids: the one
+that loses is dead and the one that wins is a bug wearing the right name
+`[inferred]`. Ω_M and Ω_Λ are *not* declared, because preflight fails a model
+carrying a constant no stage reads (D9) and nothing at S1 reads them — the
+no-dead-constants rule doing its job rather than being worked around. `G` is
+arithmetic because GM☉ is known to ten digits while G and M☉ separately are known
+to four `[verified: tests/test_special.py::test_G_is_the_IAU_nominal_solar_mass_parameter]`.
+
+### D30. λ_d's default moves from 0.0144 to 0.0173 — ruling 8's argument stands, its arithmetic does not
+
+**Decision.** `disc_spin` defaults to 0.0173. Ruling 8's reasoning is untouched and
+its default is not.
+
+**Settled by.** This is S1's gate, run as the falsifiable prediction rule B4 asks
+for, and it fails. Ruling 8 obtained λ_d = R_d√2/R_vir = 2.6 × 1.414 / 255 = 0.0144
+`[verified: GALAXY_INPUTS.md §6]`. But 255 kpc is Huang+16's virial radius for
+M_vir ≈ 0.9 × 10¹² M☉, and asking what overdensity that pair implies gives ≈ 95
+ρ_crit — the Bryan & Norman top-hat value Δ_vir ≈ 101 for Ω_M = 0.3 at z = 0
+`[recall: Bryan & Norman 1998]`, not 200 `[verified:
+tests/test_disc.py::test_the_255_kpc_is_a_top_hat_radius_not_R200]`. MMW98's
+relation takes r₂₀₀ `[recall: Mo, Mao & White 1998 §2]`, and this model's r₂₀₀ for
+the default M₂₀₀ = 1.1 × 10¹² M☉ is 212.9 kpc. Two different radius definitions and
+two different masses were mixed, so the constant was calibrated against a mechanism
+the model does not implement, and rule B10 says it then has no claim on its value.
+Re-derived: λ_d = √2 × 2.6 / 212.9 = 0.0173.
+
+Keeping 0.0144 would have given R_d = 2.17 kpc — inside acceptance row 4's window,
+at its edge, and 17 % below the measured 2.6 kpc, so launching with nothing touched
+would not have generated the Milky Way (rule A5). What survives untouched is
+everything ruling 8 actually argued: the parameter is the *disc's* spin and not the
+halo's, the factor of three was a parameter confusion, and the Milky Way is typical
+rather than a 1.9σ outlier — 0.0144 and 0.0173 both sit inside the λ_d = 0.01–0.03
+Burkert+10 need for m_d ≈ 0.05 `[verified: GALAXY_INPUTS.md §6]`. **Recorded as debt
+#10 and flagged for a re-ruling**: S1 implements a mechanism and moves a number; it
+does not have standing to overturn a ruling.
+
+MMW98's structure factors f_c^(−1/2) f_R are not modelled and are absorbed into λ_d,
+which is why λ_d is an inferred effective parameter rather than a measured one. That
+is the pre-existing debt #6 (adiabatic contraction), not a new one.
+
+### D31. The "joint" fit is separable at S1, and saying so is the point
+
+**Decision.** The fit is implemented as GALAXY_INPUTS.md §6 describes — m_d pinned
+by the stellar mass, λ_d by the scale length given R₂₀₀ — and recorded as
+**separable**, not joint.
+
+**Settled by.** In the simple MMW98 form R_d does not depend on m_d at all, so the
+two observables constrain one parameter each and "joint" overstates what is
+happening `[verified: tests/test_disc.py::test_joint_fit_reproduces_the_defaults]`.
+The coupling §6 appeals to — that λ_d and m_d must move together `[verified:
+Burkert+10 via §6]` — enters only through the structure factors this model does not
+carry. Calling it joint would claim a constraint the model does not have, which is
+rule A3's failure mode one level up `[inferred]`.
+
+### D32. `baryon_retention` stays at 0.35, and is deliberately *not* fitted
+
+**Decision.** 0.35 is confirmed, not tightened. `stellar_mass_total` is therefore
+the whole baryon budget, 5.86 × 10¹⁰ M☉, which passes acceptance row 1 at the top of
+its window.
+
+**Settled by.** `baryon_retention` names the fraction of f_b M₂₀₀ the galaxy kept —
+stars *and* gas `[verified: GALAXY_INPUTS.md §4b]`. At 0.35 it gives m_d = 0.053,
+and 0.053 × M₂₀₀ = 5.9 × 10¹⁰ reconciles row 1's 5 ± 1 × 10¹⁰ of stars with row 20's
+8 × 10⁹ of gas, which is exactly what a baryon budget should do and matches ruling
+9's m_d ≈ 0.055. Fitting it instead to the stellar mass alone would return 0.299 and
+make rows 1 and 3 both pass — and would be tuning a parameter with a clear physical
+definition to cover for a missing gas phase, leaving it with no claim on its value
+the moment S2 adds one (rule B10) `[inferred]`. The miss it leaves is recorded
+instead, as debt #11.
+
+### D33. A failing acceptance row can be a *recorded miss*, and stays red
+
+**Decision.** `spec.MISSES` maps a row to the debt it belongs to, the session that
+measured it, a reason, and a prediction that could kill the reason. A registered row
+still evaluates to `fail` and still prints as `fail`; what changes is that
+`python -m galaxy.specs` exits non-zero only on an **unexplained** failure — or on a
+registered miss that has started **passing**, because the explanation is then stale.
+
+**Settled by.** Rule B5 says record a failed check rather than relax it, and
+GALAXY_INPUTS.md §3 says row 18 is *expected* to miss by ~0.75 dex and must not be
+re-scoped. S0's runner had no way to express that: any acceptance failure failed the
+process, so the first honest miss would have turned CI permanently red and made every
+later regression invisible `[inferred]`. The three alternatives were all worse —
+widening a target (forbidden by B5), not publishing the field (row 3 would report
+not-yet-computable, which is a lie about a number the model computes, rule B9), or
+living with red CI (which trains everyone to ignore it). The stale check is what
+keeps the register from becoming a dumping ground: an entry that stops failing is an
+error, so an explanation cannot quietly outlive its cause (rule B10).
+
+### D34. The row 3 miss is published with its size and its cause
+
+**Decision.** `v_tangential_sun` = 256.1 km/s against 248 ± 3, a miss of +5.1 km/s,
+registered as debt #11 with the prediction that S2's gas phase closes it.
+
+**Settled by.** S1 has one baryonic component, so the ~8 × 10⁹ M☉ of gas that
+extends to 30 kpc and the ~1.5 × 10¹⁰ M☉ bulge inside 1 kpc are both in an
+exponential of scale length 2.6 kpc, over-concentrating mass inside R₀. Taking just
+the gas back out gives 246.4 km/s, inside the window `[verified:
+tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss]`. Stating the size
+before S2 runs is what makes it a prediction rather than a story (rule B4). Row 3 is
+not used in the fit, so it is an independent check: the fit to rows 1 and 4 predicts
+a third observable to 2 %.
+
+### D35. `halo_assembly_z` defaults to 2.5, and its consequence is what justifies it
+
+**Decision.** Default 2.5, range 0.5–5.0.
+
+**Settled by.** GALAXY_INPUTS.md §3 gives "z ≈ 2–3" and no single value, so the
+midpoint is `[inferred]` and is not presented as measured (rule B9). What lifts it
+above a guess is a check on its consequence rather than on itself: c₂₀₀ = 4.1(1 +
+z_f) = 14.4, inside the 10–18 the Milky Way's own concentration measurements span
+`[verified: GALAXY_INPUTS.md §4b]`. Recorded honestly as debt #12: v_c(R₀) moves
+about 10 km/s across the cited 2–3, three times row 3's error bar, and the midpoint
+was chosen before row 3 was computed rather than to make it land.
+
+### D36. `halo` owns the mass budget, and the NFW profile carries only the dark half
+
+**Decision.** The halo stage reads `baryon_retention`, publishes
+`baryon_mass_total`, `disc_mass_fraction` and `halo_dark_mass`, and its NFW profile
+carries (1 − m_d) M₂₀₀. The disc stage turns the baryon half into a disc.
+
+**Settled by.** M₂₀₀ and its split are properties of the halo, and putting the split
+anywhere else means two stages both know it `[inferred]`. Letting the NFW carry all
+of M₂₀₀ would count the disc twice and inflate v_c(R₀) by 4.3 km/s — larger than row
+3's error bar, and invisible without the check `[verified:
+tests/test_halo.py::test_the_disc_is_not_counted_twice]`.
+
+### D37. Solar-radius quantities are analytic scalars, never interpolated off the grid
+
+**Decision.** `halo_circular_velocity_sun`, `v_circular_sun` and `v_tangential_sun`
+are evaluated at R₀ directly. The halo publishes its own contribution as a scalar so
+the disc can add to it without a second copy of the NFW formula.
+
+**Settled by.** An acceptance row read off a grid would inherit the radial
+resolution, so the S10 convergence sweep would move a number that has no business
+moving — and rule A6 keeps N_R a quality knob, not a physics parameter `[verified:
+tests/test_halo.py::test_grid_resolution_does_not_move_the_scalars`,
+`tests/test_disc.py::test_solar_scalars_are_analytic_not_interpolated]`. Passing the
+scalar between stages rather than importing the formula keeps one opinion in one
+place (rule A9).
+
+### D38. Grid extents confirmed; `n_phi` still S4's
+
+**Decision.** `R_max = 30 kpc`, `z_max = 5 kpc`, `n_R = 400`, `n_z = 60` unchanged
+from D6.
+
+**Settled by.** 30 kpc is 11.5 disc scale lengths, which holds 99.99 % of the
+exponential's mass, so nothing is being cut off `[verified:
+tests/test_disc.py::test_surface_density_integrates_to_the_disc_mass]`. The NFW
+potential is smooth on both axes at these resolutions and neither R = 0 nor z = 0 is
+sampled, because the grid uses *centres*; that is what keeps K₀ and K₁ inside their
+domain without a guard. `n_phi` is untouched: nothing at checkpoint 1 is
+non-axisymmetric.
+
+### D39. One new unit: `kpc.km2/s2/Msun`
+
+**Decision.** Added to the closed vocabulary for `G`.
+
+**Settled by.** Rule A8's vocabulary is closed and a declaration cannot invent a
+unit (D3), so G either gets its unit or gets declared as something it is not.
+Expressing G in the model's own length, velocity and mass units means G·M/R is a
+squared velocity with no conversion factor anywhere in any stage `[inferred]`.

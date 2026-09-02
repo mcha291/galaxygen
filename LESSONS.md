@@ -33,9 +33,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   reads (`galaxy/specs/spec.py` QUANTITIES). Publish under that name with that
   unit, as kind `scalar`, or the row stays not-yet-computable; a unit mismatch
   is a `fail`, not a warning.
-- [field] The stub stage and `CANARY` are S1's to delete. `tests/test_models.py`
-  must keep passing after the move: keep one constant the two models differ on,
-  read by a real stage, or the canary guard has nothing to guard.
+- [field] `CANARY` now lives in the halo stage; the stub is gone. It is S9's to
+  delete, when the advanced model gets a stage map of its own. Until then
+  `tests/test_models.py` is the only thing keeping the two-model boundary
+  exercised, so a change that makes the two models identical must fail it
+  rather than quietly pass.
 - [audit][all] Ratchet tests encode debt as a one-way bound (unset defaults ≤ 4,
   controls without range ≤ 7 at S0). When you discharge a debt, lower the bound
   in the same commit; a bound that stays loose is a board that lies quietly.
@@ -58,3 +60,42 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] Verify with `uv run python tools/verify_clone.py --ref main` (rule
   C2). It refuses to start while the working tree has uncommitted or untracked
   files, which is the defect it exists to catch.
+
+## From S1
+
+- [field][advanced] A relation and the constant fitted to it must use the *same*
+  definitions. λ_d = 0.0144 was inferred against a top-hat virial radius and
+  used with an r₂₀₀ 20% smaller; the symptom was a scale length 17% low, well
+  inside the acceptance window and therefore invisible to the gate `[verified:
+  DECISIONS.md D30]`. Before trusting any inherited constant, ask what radius,
+  mass and overdensity it was measured against.
+- [field][advanced] Ask what overdensity a quoted (M, R) pair implies rather
+  than trusting its label. "Virial" names at least two conventions that differ
+  by 25% in radius; the arithmetic settles it in one line `[verified:
+  tests/test_disc.py::test_the_255_kpc_is_a_top_hat_radius_not_R200]`.
+- [field] Publish a quantity an acceptance row reads as an analytic scalar, not
+  interpolated off the grid. Otherwise the S10 convergence sweep moves an
+  acceptance number, and N_R stops being a quality knob `[verified:
+  DECISIONS.md D37]`.
+- [field] Fit a parameter only against a mechanism the model actually has.
+  `baryon_retention` could have been fitted to make two more rows pass; the
+  budget it names includes gas the model does not have yet, so the fit would
+  have been undone at S2 (rule B10) `[verified: DECISIONS.md D32]`.
+- [field][all] A failing acceptance row is recorded in `spec.MISSES` with its
+  debt, a reason and a prediction that could kill the reason. It still reports
+  `fail`; only the process exit status distinguishes explained from
+  unexplained, and a recorded miss that starts *passing* is itself an error
+  `[verified: DECISIONS.md D33]`. Never widen a target to get green.
+- [field] Two stages may not both know one fact. The halo publishes its own
+  v_c(R₀) as a scalar so the disc can add to it without a second copy of the
+  NFW formula (rule A9) `[verified: DECISIONS.md D36, D37]`.
+- [field] Check a definition by inverting it, never by re-running the formula
+  the stage used. R₂₀₀ is tested by confirming the sphere encloses 200 ρ_crit
+  (rule B3) `[verified: tests/test_halo.py::test_R200_encloses_200_rho_crit_by_construction]`.
+- [all] Transcribed numerical coefficients need golden values. A mistyped digit
+  in a Bessel approximation shifts v_c by a fraction of a percent, which is the
+  size of an acceptance error bar and looks like physics `[verified:
+  DECISIONS.md D28]`.
+- [infra] `tools/progress.py` counts debts straight out of GALAXY_INPUTS.md
+  §11's register, so adding a numbered item is all it takes to move the board's
+  debt line; do not edit the line.

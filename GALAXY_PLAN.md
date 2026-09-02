@@ -2,12 +2,12 @@
 
 ## Status
 
-`██░░░░░░░░░░░░░░░░░░░░` **1 / 11 sessions** · repo initialised: yes
+`████░░░░░░░░░░░░░░░░░░` **2 / 11 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
 | ☑ | 0 | Instruments, registry, stub second model | desktop | **Fable** | **Fable** | s00 | 2026-09-03 |
-| ☐ | 1 | Halo & disc | — | Opus | — | — | — |
+| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 | 2026-09-02 |
 | ☐ | 2 | SFH & chemistry (simple) | — | Opus | — | — | — |
 | ☐ | 3 | Assembly & mergers | — | Opus | — | — | — |
 | ☐ | 4 | Pattern: bar, arms | — | Opus | — | — | — |
@@ -26,10 +26,10 @@ from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
 
-**Next:** S1. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S2. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 7 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
+**Open debts:** 10 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is
