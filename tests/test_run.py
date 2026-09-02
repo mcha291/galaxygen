@@ -1,0 +1,170 @@
+"""The runner: order, restricted access, publish validation, input resolution."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from galaxy.core.fielddoc import Kind
+from galaxy.core.registry import INPUTS
+from galaxy.core.stage import OptionalFieldAccess, UndeclaredAccess
+from galaxy.run import MissingInput, PublishError, RunError, run
+from galaxy.specs.graph import GraphError
+from helpers import TINY, decl, impls, model, stage
+
+
+def go(m, *stages, inputs=None, grid=TINY):
+    return run(m, inputs, grid, impls=impls(*stages), table=INPUTS)
+
+
+def test_production_runs(model):
+    out = run(model, grid=TINY)
+    assert out.fields["canary"].shape == (8,)
+    assert out.order == ("stub",)
+    assert {"halo_mass", "world_seed"} <= set(out.inputs)
+    assert "halo_assembly_z" not in out.inputs  # UNSET and unread: resolved to nothing, not to a number
+
+
+def chain():
+    a = stage("a", ("fa",), reads_inputs=("halo_mass",), compute=lambda ctx: {"fa": np.full(ctx.grid.shape(("R",)), ctx.inputs["halo_mass"] / 1e12)})
+    b = stage("b", ("fb",), requires=("fa",), compute=lambda ctx: {"fb": ctx.fields["fa"] * 2})
+    c = stage("c", ("fc",), requires=("fb",), reads_constants=("K",), compute=lambda ctx: {"fc": ctx.fields["fb"] + ctx.constants["K"]})
+    return a, b, c
+
+
+def test_synthetic_chain_and_override():
+    a, b, c = chain()
+    m = model("m", c, a, b, constants={"K": 1.0})
+    out = go(m, a, b, c)
+    assert out.order == ("a", "b", "c")
+    assert np.allclose(out.fields["fc"], 1.1 * 2 + 1)
+    out2 = go(m, a, b, c, inputs={"halo_mass": 2e12})
+    assert np.allclose(out2.fields["fc"], 5.0)
+
+
+def test_undeclared_access_raises():
+    s = stage("s", ("f",), compute=lambda ctx: {"f": np.ones(8) * ctx.inputs["halo_mass"]})
+    with pytest.raises(UndeclaredAccess):
+        go(model("m", s), s)
+    s = stage("s", ("f",), compute=lambda ctx: {"f": np.ones(8) * ctx.constants["K"]})
+    with pytest.raises(UndeclaredAccess):
+        go(model("m", s, constants={"K": 1.0}), s)
+    p = stage("p", ("fa",))
+    s = stage("s", ("f",), compute=lambda ctx: {"f": ctx.fields["fa"]})
+    with pytest.raises(UndeclaredAccess):
+        go(model("m", p, s), p, s)
+
+
+def test_publish_must_match_declaration():
+    s = stage("s", ("f",), compute=lambda ctx: {"f": np.ones(8), "extra": 1})
+    with pytest.raises(PublishError, match="undeclared"):
+        go(model("m", s), s)
+    s = stage("s", ("f",), compute=lambda ctx: {})
+    with pytest.raises(PublishError, match="did not publish"):
+        go(model("m", s), s)
+    s = stage("s", ("f",), compute=lambda ctx: [1, 2])
+    with pytest.raises(PublishError, match="mapping"):
+        go(model("m", s), s)
+
+
+def test_shape_is_checked_including_axis_order():
+    d = decl("f", axes=("R", "t"))
+    s = stage("s", (d,), compute=lambda ctx: {"f": np.ones((5, 8))})  # (t, R): transposed
+    with pytest.raises(PublishError, match="shape"):
+        go(model("m", s), s)
+    s = stage("s", (d,), compute=lambda ctx: {"f": np.ones((8, 5))})
+    assert go(model("m", s), s).fields["f"].shape == (8, 5)
+    s = stage("s", ("f",), compute=lambda ctx: {"f": np.ones(8, dtype=int)})
+    with pytest.raises(PublishError, match="floating"):
+        go(model("m", s), s)
+
+
+def test_scalar_is_checked():
+    d = decl("f", Kind.SCALAR)
+    for bad in (np.ones(3), True, "x"):
+        s = stage("s", (d,), compute=lambda ctx, b=bad: {"f": b})
+        with pytest.raises(PublishError):
+            go(model("m", s), s)
+    s = stage("s", (d,), compute=lambda ctx: {"f": 3})
+    out = go(model("m", s), s)
+    assert out.fields["f"] == 3.0 and isinstance(out.fields["f"], float)
+
+
+def test_category_codes_are_checked():
+    d = decl("f", Kind.CATEGORY_FIELD)
+    s = stage("s", (d,), compute=lambda ctx: {"f": np.zeros(8)})  # floats
+    with pytest.raises(PublishError, match="integer"):
+        go(model("m", s), s)
+    s = stage("s", (d,), compute=lambda ctx: {"f": np.full(8, 5)})
+    with pytest.raises(PublishError, match="codes"):
+        go(model("m", s), s)
+    s = stage("s", (d,), compute=lambda ctx: {"f": np.array([0, 1] * 4)})
+    assert go(model("m", s), s).fields["f"].max() == 1
+    ds = decl("g", Kind.CATEGORY_SCALAR)
+    s = stage("s", (ds,), compute=lambda ctx: {"g": "z"})
+    with pytest.raises(PublishError):
+        go(model("m", s), s)
+    s = stage("s", (ds,), compute=lambda ctx: {"g": "b"})
+    assert go(model("m", s), s).fields["g"] == "b"
+
+
+def test_columns_share_a_length_per_object_class():
+    d1, d2 = decl("m1", Kind.COLUMN), decl("m2", Kind.COLUMN)
+    s = stage("s", (d1, d2), compute=lambda ctx: {"m1": np.ones(3), "m2": np.ones(4)})
+    with pytest.raises(PublishError, match="length"):
+        go(model("m", s), s)
+    s = stage("s", (d1,), compute=lambda ctx: {"m1": np.ones((3, 2))})
+    with pytest.raises(PublishError, match="1-D"):
+        go(model("m", s), s)
+    d3 = decl("m3", Kind.COLUMN, of="planet")
+    s = stage("s", (d1, d3), compute=lambda ctx: {"m1": np.ones(3), "m3": np.ones(9)})
+    assert go(model("m", s), s).fields["m3"].shape == (9,)
+    dc = decl("c1", Kind.CATEGORY_COLUMN)
+    s = stage("s", (dc,), compute=lambda ctx: {"c1": np.array([0, 1, 7])})
+    with pytest.raises(PublishError, match="codes"):
+        go(model("m", s), s)
+
+
+def test_unset_input_is_an_error_only_when_read():
+    s = stage("s", ("f",), reads_inputs=("halo_assembly_z",), compute=lambda ctx: {"f": np.full(8, ctx.inputs["halo_assembly_z"])})
+    with pytest.raises(MissingInput, match="S1"):
+        go(model("m", s), s)
+    assert np.all(go(model("m", s), s, inputs={"halo_assembly_z": 2.5}).fields["f"] == 2.5)
+    t = stage("t", ("f",))
+    assert go(model("m", t), t).fields["f"].shape == (8,)
+
+
+def test_unknown_override_and_input_subset():
+    s = stage("s", ("f",))
+    with pytest.raises(RunError):
+        go(model("m", s), s, inputs={"nope": 1})
+    r = stage("r", ("f",), reads_inputs=("disc_spin",), compute=lambda ctx: {"f": np.full(8, ctx.inputs["disc_spin"])})
+    with pytest.raises(GraphError):
+        go(model("m", r, inputs=("halo_mass",)), r)
+
+
+def test_optional_field_absence_is_handled_or_impossible():
+    producer = stage("p", (decl("opt", optional=True),))
+    reader = stage("r", ("g",), requires_optional=("opt",), compute=lambda ctx: {"g": np.full(8, 2.0 if ctx.fields.has("opt") else 1.0)})
+    with_it = go(model("with_it", producer, reader), producer, reader)
+    without = go(model("without", reader), reader)
+    assert np.all(with_it.fields["g"] == 2.0) and np.all(without.fields["g"] == 1.0)
+    careless = stage("c", ("g",), requires_optional=("opt",), compute=lambda ctx: {"g": ctx.fields["opt"] * 2})
+    with pytest.raises(OptionalFieldAccess):
+        go(model("m", producer, careless), producer, careless)
+
+
+def test_seeded_stage_reproducible_and_seed_sensitive():
+    s = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("world_seed",), compute=lambda ctx: {"f": ctx.rng("world_seed").random(8)})
+    m = model("m", s)
+    a, b = go(m, s), go(m, s)
+    assert np.array_equal(a.fields["f"], b.fields["f"])
+    c = go(m, s, inputs={"world_seed": 1})
+    assert not np.array_equal(a.fields["f"], c.fields["f"])
+
+
+def test_cycle_is_refused_before_running():
+    a = stage("a", ("fa",), requires=("fb",))
+    b = stage("b", ("fb",), requires=("fa",))
+    with pytest.raises(GraphError, match="cycle"):
+        go(model("m", a, b), a, b)

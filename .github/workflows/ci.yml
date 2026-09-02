@@ -1,0 +1,16 @@
+# CI runs the suite and the executable specs on every push (rules A6, D2: machine-checked).
+# Editing this file needs a token with workflow permission; a Contents-only
+# fine-grained token cannot push changes to .github/workflows/ (see LESSONS.md).
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run pytest
+      - run: uv run python -m galaxy.specs

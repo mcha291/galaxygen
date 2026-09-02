@@ -1,0 +1,24 @@
+[project]
+name = "galaxygen"
+version = "0.0.0"
+description = "Procedural galaxy generator: physically grounded, Milky Way by default."
+requires-python = ">=3.12"
+# numpy is pinned to a major because Generator distribution streams may change
+# between numpy releases; the golden-value test in tests/test_seeds.py is the
+# instrument that detects a change. Bump deliberately, with a DECISIONS entry.
+dependencies = ["numpy>=2.3,<3"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["galaxy"]
+
+[tool.pytest.ini_options]
+# Rule C7: tests run quiet. Only failures print.
+addopts = "-q --no-header -ra"
+testpaths = ["tests"]
