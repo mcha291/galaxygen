@@ -143,10 +143,18 @@ so a push to `main` should always fast-forward. **A rejected non-fast-forward
 push is a signal that something is wrong — stop and investigate, do not force.**
 `[inferred]`
 
-**C2b. Push at least once mid-session**, on the session branch. *Justification: a
-session that hits its time limit or dies otherwise loses everything up to the
-last push. This is a robustness property that file-passing workflows do not
-have.* `[inferred]`
+**C2b. Commit and push at every completed sub-deliverable**, on the session
+branch — not once at close. *Justification: the binding constraint on a session
+is usage quota, which stops it mid-work without warning and without regard to how
+much was accomplished. Everything after the last push is lost. Wall-clock length
+is not the risk; iteration depth is.* `[inferred]`
+
+**C2d. A session that stops early closes partially.** Commit, push, write what
+remains into `BRIEF.md`, mark the board row ◐. **Do not merge to `main` and do
+not tag** — the branch stays open and the next session continues on it. Never
+start new work in the hope of finishing before the limit. *Justification: leaving
+the next session to reconstruct where the last one got to is the single most
+expensive failure this protocol exists to prevent.* `[inferred]`
 
 **C2c. Credentials never enter the repository.** The token lives in the container
 environment or a credential file outside the working tree, never in a tracked

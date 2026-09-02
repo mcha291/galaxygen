@@ -330,3 +330,48 @@ of this session's brief.
 RULES.md A6, D2]`; the plan names S0_PROMPT.md as S0's brief `[verified:
 GALAXY_PLAN.md status "Next" line]`. Editing the workflow needs a token with
 workflow permission (LESSONS.md).
+
+## Between S0 and S1 — corrections to the design documents
+
+Not a session. Doc-only corrections arising from a design review after S0 closed;
+no code changed. Recorded here so the documents' history is not silent.
+
+### D25. The board's Model column conflated surface with model
+
+**Decision.** The board splits into **Surface**, **Model planned** and **Model
+used**. S0 is recorded as surface `desktop`, planned Fable, used Fable.
+
+**Settled by.** "Desktop" is a place, not a model, and the column's declared
+meaning was model — the same category error rule A8 exists to prevent, in the
+document that argues for it `[inferred]`. *Model used* is separate from *planned*
+because the S10 double run is the project's only controlled evidence on whether
+model choice matters, and it is worthless if the model is recorded from intention
+rather than from what ran. `tools/progress.py` is unaffected: its `ROW` regex
+matches only the status and index columns `[verified: tools/progress.py ROW]`.
+
+### D26. The binding constraint on a session is quota, not wall clock
+
+**Decision.** Rule C2b restated: commit and push at **every completed
+sub-deliverable**, not once at close. New rule **C2d**: a session that stops
+early closes partially — commit, push, write what remains into `BRIEF.md`, mark
+the board row ◐, and **do not merge or tag**. The split criterion moves from the
+session table to the token discipline, and its signal is **iteration depth**
+rather than elapsed time.
+
+**Settled by.** The original justification named a time limit. Time is not the
+constraint; usage allowance is, and it stops a session without warning and
+without regard to how much was accomplished `[recall: stated by the project
+owner]`. A protocol whose only close ritual is the clean one leaves a stranded
+session's successor to reconstruct where it got to, which is the most expensive
+failure available here `[inferred]`.
+
+### D27. S0's result is evidence about Fable, not a comparison
+
+**Decision.** The Fable section records that S0 ran on Fable and found a real
+arithmetic error in the board it was handed (D15), while stating plainly that
+this is **not** a controlled result.
+
+**Settled by.** There is no counterfactual S0, and the session was unusually well
+specified, so the observation cannot be attributed to the model `[inferred]`. The
+S10 double run exists to answer this question; letting an uncontrolled result
+pre-empt it would waste the one comparison the build affords (rule B4).
