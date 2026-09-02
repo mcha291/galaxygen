@@ -22,7 +22,8 @@ def chk(models, *stages, table=INPUTS):
 def test_production_preflights(prod):
     rep = preflight.check(*prod)
     assert rep.ok, rep.problems
-    assert any("UNSET default: 4" in n for n in rep.notes)
+    assert any("UNSET default: 3" in n for n in rep.notes)  # S1 set halo_assembly_z
+    assert any("controls without a range: 3" in n for n in rep.notes)  # S1 set four
     assert any("controls: 7 of 12" in n for n in rep.notes)
     assert "OK" in preflight.report(*prod)
 
@@ -124,5 +125,5 @@ def test_orphan_scan(tmp_path, monkeypatch):
 
 def test_scan_finds_production_declarations():
     stages, decls = preflight.scan_declarations(("galaxy.stages",))
-    assert "stub" in {s.id for s in stages}
-    assert "canary" in {d.name for d in decls}
+    assert {"halo", "disc"} <= {s.id for s in stages}
+    assert {"canary", "halo_virial_radius", "circular_velocity"} <= {d.name for d in decls}

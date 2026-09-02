@@ -53,18 +53,23 @@ def test_unset_defaults_are_owed_and_never_increase():
     for i in unset:
         assert i.default_owner and i.default_owner.startswith("S"), i.name
     # S0: halo_assembly_z (S1), inside_out_index (S2), migration_efficiency (S2), mergers (S3).
-    # Sessions lower this bound as they discharge defaults; nothing may raise it.
-    assert len(unset) <= 4
+    # S1 set halo_assembly_z. Sessions lower this bound as they discharge defaults;
+    # nothing may raise it.
+    assert len(unset) <= 3
 
 
 def test_control_ranges_never_decrease():
     missing = [i.name for i in controls() if not i.has_range]
-    assert len(missing) <= 7  # S0: none set yet. Ratchet downward only.
+    # S0: none set. S1 set the four checkpoint-1 controls. Ratchet downward only.
+    assert len(missing) <= 3
 
 
 def test_defaults_are_the_milky_way():
     assert INPUTS["halo_mass"].default == 1.1e12
-    assert INPUTS["disc_spin"].default == 0.0144
+    # Ruling 8 says 0.0144, inferred against R_vir = 255 kpc. S1 re-derived it against this
+    # model's own R₂₀₀ = 212.9 kpc, which is what MMW98's relation takes (DECISIONS.md D30).
+    assert INPUTS["disc_spin"].default == 0.0173
+    assert INPUTS["halo_assembly_z"].default == 2.5
     assert INPUTS["baryon_retention"].default == 0.35
     assert INPUTS["infall_timescale"].default == 7.0
     assert all(i.default == 0 for i in seeds())
@@ -140,7 +145,7 @@ def test_registry_refuses_duplicates():
 def test_production_is_loaded_and_idempotent(prod):
     models, impls, table = prod
     assert set(models.names()) >= {"simple", "advanced"}
-    assert "stub" in impls
+    assert {"halo", "disc"} <= set(impls.names())
     assert table is INPUTS
     again = production()
     assert again[0] is models and again[1] is impls

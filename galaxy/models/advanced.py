@@ -1,6 +1,7 @@
 """The advanced model: a stub until S9, differing from simple by one constant."""
 
 from galaxy.core.registry import MODELS, Constant, Model
+from galaxy.models.level0 import LEVEL0
 
 ADVANCED = MODELS.register(
     Model(
@@ -12,12 +13,13 @@ ADVANCED = MODELS.register(
             "reconciliation are exercised from S0 rather than discovered broken at S9 "
             "(GALAXY_PLAN.md §1, rule B1). Every test that runs all models runs this one."
         ),
-        stages=(("stub", "stub"),),
+        stages=(("halo", "halo"), ("disc", "disc")),
         constants={
+            **LEVEL0,
             "CANARY": Constant(
                 2.0,
                 "dimensionless",
-                "The one constant the two models differ by at S0. See models/simple.py.",
+                "The one constant the two models differ by. See models/simple.py.",
             ),
         },
     )

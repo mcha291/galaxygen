@@ -2,28 +2,34 @@
 
 ## Status
 
-`██░░░░░░░░░░░░░░░░░░░░` **1 / 11 sessions** · repo initialised: yes
+`████░░░░░░░░░░░░░░░░░░` **2 / 11 sessions** · repo initialised: yes
 
-| | S | Session | Model | Tag | Closed |
-|---|---|---|---|---|---|
-| ☑ | 0 | Instruments, registry, stub second model | **Fable** | s00 | 2026-09-03 |
-| ☐ | 1 | Halo & disc | Opus | — | — |
-| ☐ | 2 | SFH & chemistry (simple) | Opus | — | — |
-| ☐ | 3 | Assembly & mergers | Opus | — | — |
-| ☐ | 4 | Pattern: bar, arms | Opus | — | — |
-| ☐ | 5 | Systems: catalogue | Opus | — | — |
-| ☐ | 6 | API | Opus | — | — |
-| ☐ | 7 | Viewer, galaxy view, stage previews | Opus | — | — |
-| ☐ | 8 | Planets & system view | Opus | — | — |
-| ☐ | 9 | Advanced model | **Fable** | — | — |
-| ☐ | 10 | Audit | **Fable** | — | — |
+| | S | Session | Surface | Model planned | Model used | Tag | Closed |
+|---|---|---|---|---|---|---|---|
+| ☑ | 0 | Instruments, registry, stub second model | desktop | **Fable** | **Fable** | s00 | 2026-09-03 |
+| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 | 2026-09-02 |
+| ☐ | 2 | SFH & chemistry (simple) | — | Opus | — | — | — |
+| ☐ | 3 | Assembly & mergers | — | Opus | — | — | — |
+| ☐ | 4 | Pattern: bar, arms | — | Opus | — | — | — |
+| ☐ | 5 | Systems: catalogue | — | Opus | — | — | — |
+| ☐ | 6 | API | — | Opus | — | — | — |
+| ☐ | 7 | Viewer, galaxy view, stage previews | — | Opus | — | — | — |
+| ☐ | 8 | Planets & system view | — | Opus | — | — | — |
+| ☐ | 9 | Advanced model | — | **Fable** | — | — | — |
+| ☐ | 10 | Audit | — | **Fable** ×2 | — | — | — |
+
+**Surface** is where the session ran — desktop, web, terminal. **Model** is which
+model ran it. They are different things and neither substitutes for the other.
+*Model used* is filled at close from what actually ran, which may differ from
+what was planned; the S10 comparison (below) is worthless if this is recorded
+from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
 
-**Next:** S1. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S2. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 7 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
+**Open debts:** 10 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is
@@ -206,14 +212,16 @@ Fable sessions — they clone the same URL and nothing has to be carried.
 see below) → read `BRIEF.md` → start on branch `session-NN`. Nothing else is read
 by default.
 
-**Mid-session:** push the branch at least once (rule C2b), so a session that runs
-out of time does not lose its work.
+**Mid-session:** commit and push at every completed sub-deliverable (rule C2b).
+The binding constraint is usage quota, and a session halted by it loses
+everything after its last push. See **Partial close** below.
 
 **Close, in order:**
 0. **Tick this session's box in the status board** at the top of
-   `GALAXY_PLAN.md`, fill in its tag and close date, set the next session's row
-   to ◐ if it has already begun, and update the debt counts. Then run
-   `python tools/progress.py` to regenerate the bar. A session that closes
+   `GALAXY_PLAN.md`. Fill in **surface, model actually used**, tag and close
+   date; set the next session's row to ◐ if it has already begun. Record the
+   model from what ran, not from what the plan said. Then run
+   `python tools/progress.py`, which regenerates every derived number. A session that closes
    without doing this leaves the board lying, and the board is what you look at
    to know where the build is.
 1. Full suite once, quiet mode.
@@ -293,20 +301,40 @@ order nobody chose* `[inferred]`.
 
 ### Which sessions to run on Fable
 
-`[inferred]` — reasoning from capability tier, not measurement. Three criteria:
-the session is **self-contained** (little carried context, since the account
-switch starts fresh), **high-leverage** (errors compound downstream), and
-**reasoning-bound rather than typing-bound**.
+**Fable draws on a separate limit**, so its marginal cost against the rest of the
+build is near zero and unused quota is simply wasted. That removes the trade-off
+this section originally agonised over: the question is not whether the capability
+gap justifies the cost, but which sessions are longest and hardest.
 
-- **S0** — the model/stage boundary is the decision the other ten sessions live
-  inside, and it has no predecessors to carry. **It also initialises the
-  repository**, which is now empty.
-- **S9** — the advanced model, where the complexity-class trap lives.
-- **S10** — the audit. This is precisely the "find the defect no picture shows"
-  task, and it reads the repo rather than carrying context.
+Anthropic's guidance is a **procedure rather than a claim** — start on Opus 5 and
+move to Fable when evals at higher effort still fall short `[recall: Claude
+Platform docs, "Choosing the right model"]`. The stated strengths are long
+autonomous sessions, investigating before acting, and verifying work more often
+`[recall: Claude Code docs, model configuration]`.
 
-Everything else follows settled patterns and is typing-bound. Running those on
-Fable spends capability where it does not bind.
+**S10 — audit. The strongest case, and it is structural rather than a hunch.**
+S1–S8 all have gates: acceptance checks pass or they do not, so a weaker model
+fails *visibly*. S10's output is "here are the defects I found", and that cannot
+be checked for false negatives. **Capability matters most exactly where
+verification is weakest.**
+
+**Run S10 twice, once on each model, and diff the defect lists.** It is the one
+session whose output is directly comparable, it converts an impression into a
+measurement, and an audit run twice is not wasted work even when the two agree.
+Record the comparison in `DECISIONS.md` — it is the only controlled evidence this
+project will produce about whether the model choice mattered.
+
+**S9 — advanced model. Second.** Long-horizon, and it contains a specific trap
+(the complexity-class change in the DTD) that must be verified rather than
+assumed.
+
+**S0 — ran on Fable, and the result is evidence but not a comparison.** S0 found
+a real arithmetic error in this very board — the debt line claimed 9 open and 2
+discharged against a register of 9 items of which 2 were struck `[verified:
+DECISIONS.md D15]` — and turned the fix into a generated number that cannot drift
+again. That is a data point. It is **not** a controlled result: there is no
+counterfactual S0, and the session was also unusually well specified. Do not
+treat it as settling the question that S10's double run is designed to answer.
 
 ---
 
@@ -330,21 +358,52 @@ shown it `[verified: bench2.py §1]`. **Instruments before pictures.**
 | **4** | Pattern: bar, arms | `PITCH_YU` seeded; S-spread recorded once | |
 | **5** | Systems: catalogue, headless | 10⁶ stars < 10 s; per-region determinism | |
 | **6** | API. Headless and fully tested | **One `fetch`**; `/api/version` hash; **cold timings published** | Testable without a browser — separated from S7 deliberately (rules D2–D4) |
-| **7** | Viewer: galaxy view, checkpoints, previews for stages 1–5 | Field-as-image + clickable seeded sample; reopening a stage discards later ones | Largest slip risk. Split if it runs long |
+| **7** | Viewer: galaxy view, checkpoints, previews for stages 1–5 | Field-as-image + clickable seeded sample; reopening a stage discards later ones | Largest quota risk — visual work iterates blind |
 | **8** | Planets stage + system view | Occurrence vs [Fe/H]; belts derived from resonances; **planet scalar set declared and closed** | No external dependency — see §5c |
 | **9** | Advanced: multi-element + DTD, migration, outflows, coupling | **Exponent 1.0 in N_t**, not 2.0 (`bench2.py`); coupling multiplier measured | **Fable** |
-| **10** | Audit: `convergence`, `performance`, calibration debt | N_R and N_t swept **independently** | **Fable** |
+| **10** | Audit: `convergence`, `performance`, calibration debt | N_R and N_t swept **independently** | **Fable, run twice** — diff the defect lists |
 
 ### On splitting
 
-Splitting costs one session-open — the bundle clone plus two capped documents,
-which under the discipline above is small. Splitting **saves** an entire
-test-fix iteration loop being carried in a context that is already long.
+**The binding constraint is usage quota, not wall clock.** A session can run as
+long as it likes; what it cannot do is exceed its allowance and stop mid-way.
+That makes the split criterion a **token-volume judgement**, which belongs with
+the token discipline above rather than being read off the session table.
 
-So: split freely when a session risks the limit, with one exception. **S9 must
-not split.** Its two halves touch the same stages, and splitting means reading
-the chemistry implementation into context twice — the one case where the
-handoff costs more than it saves.
+The signal to watch is not elapsed time but **iteration depth** — how many
+test-fix cycles a session has burned. A session that cleared its gate on the
+first or second attempt is nowhere near the limit; one grinding through a
+rendering loop or a failing acceptance check is consuming quota fast and has
+little to show per token. S7 is the likeliest, because visual work cannot be
+tested headlessly and so iterates blind.
+
+Splitting costs one session-open — a clone plus two capped documents, small under
+the discipline above. It **saves** an entire iteration loop being carried in a
+context that is already long.
+
+So: split freely, with one exception. **S9 must not split.** Its two halves touch
+the same stages, and splitting means reading the chemistry implementation into
+context twice — the one case where the handoff costs more than it saves.
+
+### Partial close — what a session does when it senses the limit
+
+The close ritual assumes a session finishes. **A session that stops because it
+ran out of allowance must not leave the next one to reconstruct where it got to**
+— reconstruction is exactly the expensive thing this protocol exists to avoid.
+
+So, from the start rather than as a panic measure (rule C2d):
+
+1. **Commit at every completed sub-deliverable**, not only at close, and push the
+   branch each time. A stranded session loses only what came after its last push.
+2. **Keep `BRIEF.md` written-ahead.** At the point a session's plan is clear,
+   write the next brief *as if stopping now*, and refine it at close. A brief
+   that already exists costs nothing to update and everything to write from
+   scratch after the fact.
+3. **On sensing the limit, stop and close partially**: commit, push, append what
+   was done and what remains to `BRIEF.md`, set this session's board row to ◐
+   with a note. Do not start new work in the hope of finishing it.
+4. A partial close does **not** merge to `main` and does **not** tag. The branch
+   stays open and the next session continues on it.
 
 ---
 
