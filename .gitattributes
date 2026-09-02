@@ -1,0 +1,9 @@
+# LF everywhere. The pre-commit hook is a POSIX sh script and a CRLF shebang
+# line breaks it; Python and Markdown are happier with one convention too.
+* text=auto eol=lf
+tools/hooks/* text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+uv.lock text eol=lf

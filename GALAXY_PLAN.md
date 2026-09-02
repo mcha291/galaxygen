@@ -23,7 +23,7 @@
 **Next:** S0. Its prompt is `S0_PROMPT.md`; from S1 onward the next session's
 brief is `BRIEF.md`, written by the session before it.
 
-**Open debts:** 9 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
+**Open debts:** 7 (`GALAXY_INPUTS.md` §11). **Discharged:** 2.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is
