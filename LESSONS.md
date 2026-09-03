@@ -103,6 +103,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] When a ritual step cannot succeed in this environment, change the
   ritual rather than repeating the failure or quietly skipping it. A close that
   ends in a guaranteed error trains everyone to ignore the error.
+- [close] Before rewriting history, check `git ls-remote` for **tags**, not just
+  the branch head. A rewrite invalidates every ref pointing into the rewritten
+  range, including refs someone else pushed while the session was working;
+  S1 orphaned a hand-pushed `s01` exactly this way `[verified: DECISIONS.md
+  D41]`.
 - [infra] `tools/progress.py` counts debts straight out of GALAXY_INPUTS.md
   §11's register, so adding a numbered item is all it takes to move the board's
   debt line; do not edit the line.

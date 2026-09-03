@@ -24,7 +24,16 @@ closes the project.
 | S | Tag | Merge commit on `main` | State |
 |---|---|---|---|
 | 0 | `s00` | `0bc546d` | **applied** — pushed from the desktop session that ran S0 |
-| 1 | `s01` | *TBD — S2 fills this in* | **queued** |
+| 1 | `s01` | *TBD — S2 fills this in* | **queued**, and a stale `s01` must be deleted first — see below |
+
+> **Delete the stale `s01` before running the batch.** An `s01` tag was pushed by
+> hand at `56d7510` while S1 was still open, and `main` was afterwards rebuilt into
+> a single merge commit per session at the owner's request (D41). `56d7510` is no
+> longer reachable from `main`, so that tag now points at an orphan whose tree is
+> S1's state *before* its last two commits. Nothing is lost — the content is all in
+> the current merge — but the tag has to be re-pointed, and a tag cannot be moved
+> from a web session (the same 403 that created this file). This is the cost of the
+> rewrite, recorded rather than left to be discovered when the batch runs.
 
 ### Run these
 
@@ -33,7 +42,10 @@ personal access token with `Contents: read and write`, or SSH:
 
 ```sh
 git fetch origin --prune
-git checkout main && git pull --ff-only origin main
+git checkout main && git reset --hard origin/main   # main was rebuilt once; see D41
+
+# One-off: drop the stale s01 that points at the pre-rebuild merge commit.
+git push origin :refs/tags/s01 ; git tag -d s01
 
 # S1 — halo & disc. Until S2 records the literal SHA, resolve it by subject:
 git tag -a s01 "$(git rev-list -1 --grep='^Merge S1 into main' origin/main)" -m "S1: halo & disc"
@@ -43,7 +55,8 @@ git ls-remote --tags origin        # confirm; a push that says "Everything up-to
 ```
 
 `git rev-list -1 --grep=…` is exact because every session merge uses the subject
-`Merge S<N> into main: …` and no other commit does. Once a row carries a literal
+`Merge S<N> into main: …` and no other commit does — checked after the rebuild:
+one match on `main`. Once a row carries a literal
 SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 
 ## 2. Anything else owed

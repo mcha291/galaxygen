@@ -620,3 +620,12 @@ points at `0bc546d`, which is an ancestor of the new merge.
 The rule is left alone deliberately. Amending "never" to "never, except when it
 suits" would buy one convenience and cost the rule its only useful property
 `[inferred]`.
+
+**And it cost something immediately, which is the point of recording it.** An `s01`
+tag had been pushed by hand at the old merge commit while the session was still
+open; `origin/main` was re-checked before the rewrite and `origin`'s *tags* were
+not, so the rewrite orphaned it. The content is all in the new merge and nothing is
+lost, but the tag has to be deleted and re-pointed by hand, and that is queued in
+`MANUAL_TODO.md`. The general lesson is not "rewriting is bad" — the owner wanted
+it — but that a rewrite invalidates **every** ref pointing into the rewritten range,
+and refs include ones nobody in the session created.
