@@ -285,20 +285,35 @@ _INPUTS: tuple[Input, ...] = (
         "infall_timescale",
         "Infall timescale τ₀ at R₀",
         "control",
-        "Two-infall framework (Chiappini+97 via Molero+23), per GALAXY_INPUTS.md §3. "
-        "The ~7 Gyr is approximate; S2 confirms.",
+        "e-folding time of the gas accretion at the solar radius; τ(R) = τ₀ (R/R₀)ⁿ. "
+        "Two-infall framework (Chiappini+97 via Molero+23), per GALAXY_INPUTS.md §3. S2 confirms "
+        "the ~7 Gyr: the same source's τ_D(R) = 1.033 R − 1.267 Gyr gives 7.2 Gyr at R₀ [recall: "
+        "Chiappini+01], so τ₀ and the inside-out index are two readings of one relation. Range "
+        "1–14 Gyr: below 1 the disc is built before it can be observed forming, above a Hubble "
+        "time nothing has arrived yet [inferred]. Only one infall episode is modelled — the "
+        "second is merger-delivered by ruling 11 and belongs to S3 (debt #14).",
         unit="Gyr",
         default=7.0,
+        lo=1.0,
+        hi=14.0,
         checkpoint_hypothesis=3,
     ),
     Input(
         "inside_out_index",
         "Inside-out index n",
         "control",
-        "τ(R) = τ₀ (R/R_d)ⁿ; sets the metallicity gradient. No default is given anywhere; "
-        "owed by S2.",
+        "Inside-out growth: the outer disc accretes over a longer timescale, τ(R) = τ₀ (R/R₀)ⁿ. "
+        "GALAXY_INPUTS.md §3 gives no default, but its own source does: the two-infall framework "
+        "it cites uses τ_D(R) = 1.033 R/kpc − 1.267 Gyr [recall: Chiappini+01, the Chiappini+97 "
+        "line §3 names], which is linear in R and gives 7.2 Gyr at R₀ = 8.2 kpc — the same ~7 Gyr "
+        "§3 quotes for τ₀. So n = 1 and τ₀ = 7 Gyr are one statement, not two, and the default "
+        "follows from the citation already in the document rather than from a fit. Range 0–3: "
+        "n = 0 is no inside-out growth at all, and beyond 3 the outer disc has not begun forming "
+        "[inferred]. Note §3 writes the law with R_d where its own numbers require R₀ (D43).",
         unit="dimensionless",
-        default_owner="S2",
+        default=1.0,
+        lo=0.0,
+        hi=3.0,
         checkpoint_hypothesis=3,
     ),
     Input(

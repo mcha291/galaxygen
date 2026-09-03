@@ -61,34 +61,22 @@ def freeman_circular_velocity(R: np.ndarray | float, sigma0: float, R_d: float, 
     return np.sqrt(v2)
 
 
-THIN_DISC_SCALE_LENGTH = FieldDecl(
-    name="thin_disc_scale_length",
-    label="Thin disc scale length R_d",
+DISC_SCALE_LENGTH_SPIN = FieldDecl(
+    name="disc_scale_length_spin",
+    label="Disc scale length from λ_d",
     unit="kpc",
     kind=Kind.SCALAR,
     meaningful_zero=True,
     about=(
         "Exponential scale length from MMW98 given λ_d and R₂₀₀. The surprise is how little of "
         "the halo it is: R_d/R₂₀₀ ≈ 1.2%, so the visible galaxy is a speck at the centre of the "
-        "thing that holds it. At S1 there is one disc, so this is the whole stellar distribution "
-        "and 'thin' names acceptance row 4 rather than a thin/thick split (S2)."
+        "thing that holds it. This is MMW98's *prediction* of the scale length from angular "
+        "momentum. Acceptance row 4 is read from thin_disc_scale_length, which S2 fits to the "
+        "stellar profile the star formation history actually builds — the two disagree by a "
+        "third, and that disagreement is debt #13 rather than something to average away."
     ),
 )
 
-STELLAR_MASS_TOTAL = FieldDecl(
-    name="stellar_mass_total",
-    label="Total stellar mass",
-    unit="Msun",
-    kind=Kind.SCALAR,
-    meaningful_zero=True,
-    about=(
-        "Every retained baryon, treated as a star. Until S2 gives the model a gas phase this is "
-        "the baryon budget rather than the stellar mass, so it is high by the gas — about 8 × 10⁹ "
-        "M☉ against a target of 5 ± 1 × 10¹⁰ (debt #11). It still lands inside acceptance row 1, "
-        "at the top of the window, and rule B10 says baryon_retention must be re-examined the "
-        "moment the gas is split off."
-    ),
-)
 
 DISC_CENTRAL_SURFACE_DENSITY = FieldDecl(
     name="disc_central_surface_density",
@@ -147,31 +135,7 @@ CIRCULAR_VELOCITY = FieldDecl(
     ),
 )
 
-V_CIRCULAR_SUN = FieldDecl(
-    name="v_circular_sun",
-    label="Circular velocity at R₀",
-    unit="km/s",
-    kind=Kind.SCALAR,
-    meaningful_zero=True,
-    about=(
-        "v_c at the solar radius, computed analytically rather than interpolated from the grid. "
-        "The commonly quoted value is 238 ± 15 km/s; it is not an acceptance row, because the "
-        "table's row 3 is the Sun's tangential velocity, which is this plus the solar motion."
-    ),
-)
 
-V_TANGENTIAL_SUN = FieldDecl(
-    name="v_tangential_sun",
-    label="Solar tangential velocity",
-    unit="km/s",
-    kind=Kind.SCALAR,
-    meaningful_zero=True,
-    about=(
-        "v_c(R₀) plus the Sun's own tangential peculiar motion, which is what acceptance row 3's "
-        "248 ± 3 km/s measures — it comes from the proper motion of Sgr A*, so it is the Sun's "
-        "velocity in the Galactic rest frame and not the circular speed of the disc there."
-    ),
-)
 
 
 def compute(ctx: Context) -> Mapping[str, Any]:
@@ -186,19 +150,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     v_disc = freeman_circular_velocity(R, sigma0, R_d, G)
     v_halo = ctx.fields["halo_circular_velocity"]
 
-    R_sun = float(ctx.constants["R_SUN"])
-    v_disc_sun = float(freeman_circular_velocity(R_sun, sigma0, R_d, G))
-    v_c_sun = math.hypot(float(ctx.fields["halo_circular_velocity_sun"]), v_disc_sun)
-
     return {
-        "thin_disc_scale_length": R_d,
-        "stellar_mass_total": M_d,
+        "disc_scale_length_spin": R_d,
         "disc_central_surface_density": sigma0 / PC_PER_KPC**2,
         "disc_surface_density": sigma0 / PC_PER_KPC**2 * np.exp(-R / R_d),
         "disc_circular_velocity": v_disc,
         "circular_velocity": np.hypot(v_halo, v_disc),
-        "v_circular_sun": v_c_sun,
-        "v_tangential_sun": v_c_sun + float(ctx.constants["V_SUN_PECULIAR"]),
     }
 
 
@@ -208,27 +165,24 @@ DISC = IMPLEMENTATIONS.register(
         slot="disc",
         checkpoint=1,
         about=(
-            "Exponential stellar disc from λ_d and the halo's baryon budget, and the total "
-            "rotation curve. Shared by both models."
+            "Exponential baryon disc from λ_d and the halo's baryon budget, and the "
+            "checkpoint-1 rotation curve. Shared by both models. The split into stars and gas, "
+            "and the acceptance-row kinematics that depend on it, belong to the sfh stage."
         ),
         compute=compute,
         reads_inputs=("disc_spin",),
-        reads_constants=("G", "R_SUN", "V_SUN_PECULIAR"),
+        reads_constants=("G",),
         requires=(
             "halo_virial_radius",
             "baryon_mass_total",
             "halo_circular_velocity",
-            "halo_circular_velocity_sun",
         ),
         publishes=(
-            THIN_DISC_SCALE_LENGTH,
-            STELLAR_MASS_TOTAL,
+            DISC_SCALE_LENGTH_SPIN,
             DISC_CENTRAL_SURFACE_DENSITY,
             DISC_SURFACE_DENSITY,
             DISC_CIRCULAR_VELOCITY,
             CIRCULAR_VELOCITY,
-            V_CIRCULAR_SUN,
-            V_TANGENTIAL_SUN,
         ),
     )
 )

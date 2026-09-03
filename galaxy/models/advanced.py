@@ -13,7 +13,7 @@ ADVANCED = MODELS.register(
             "reconciliation are exercised from S0 rather than discovered broken at S9 "
             "(GALAXY_PLAN.md §1, rule B1). Every test that runs all models runs this one."
         ),
-        stages=(("halo", "halo"), ("disc", "disc")),
+        stages=(("halo", "halo"), ("disc", "disc"), ("sfh", "sfh")),
         constants={
             **LEVEL0,
             "CANARY": Constant(
