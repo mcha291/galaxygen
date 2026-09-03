@@ -23,6 +23,19 @@ def prod():
     return production()
 
 
+@pytest.fixture(scope="session")
+def judged(prod):
+    """Every model judged once, ensembles included.
+
+    A statistical acceptance row needs twenty runs of the whole pipeline, and
+    several test modules want the verdict. Building it once per session rather
+    than once per test is the difference between a suite of seconds and minutes.
+    """
+    from galaxy.specs import spec
+
+    return spec.evaluate_models(list(prod[0]))
+
+
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if "model" in metafunc.fixturenames:
         models, _, _ = production()
