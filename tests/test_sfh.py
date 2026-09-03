@@ -39,11 +39,11 @@ def test_the_split_is_computed_not_assumed(model):
     o = out(model)
     f = o.fields
     assert 4.0e10 <= f["stellar_mass_total"] <= 6.0e10          # row 1 passes
-    # Row 2 misses low, with rows 3 and 20, for one reason: there is no extended
-    # accretion left to sustain the present-day rate (debt #18).
-    assert f["sfr"] == pytest.approx(1.14, abs=0.05)
-    # Row 20 misses low by 38%: there is no extended accretion channel (debt #18).
-    assert f["gas_mass_30kpc"] == pytest.approx(4.94e9, rel=0.05)
+    # Row 2 overshoots now that the merger delivers a second infall: the mechanism is
+    # right and the second episode decays too slowly (debt #18).
+    assert f["sfr"] == pytest.approx(1.97, abs=0.06)
+    # Row 20 misses low by 28%: there is no extended accretion channel (debt #18).
+    assert f["gas_mass_30kpc"] == pytest.approx(5.80e9, rel=0.05)
     assert 0.05 < f["gas_mass_30kpc"] / f["baryon_mass_total"] < 0.12
 
 
@@ -152,3 +152,14 @@ def test_surface_densities_integrate_to_their_masses(model):
     R = o.grid.R
     assert surface_to_mass(o.fields["gas_surface_density"], R) == pytest.approx(o.fields["gas_mass_30kpc"])
     assert surface_to_mass(o.fields["stellar_surface_density"], R) == pytest.approx(o.fields["stellar_mass_total"])
+
+
+def test_the_second_infall_is_the_merger(model):
+    """Ruling 11: the merger delivers the gas, so removing it removes the second episode."""
+    o = out(model)
+    assert o.fields["second_infall_share"] == pytest.approx(0.6, abs=0.01)
+    free = run(model, {"mergers": ()})
+    assert free.fields["second_infall_share"] == 0.0
+    assert free.fields["major_merger_count"] == 0.0
+    # Without the late delivery the present-day rate collapses: that is the mechanism.
+    assert free.fields["sfr"] < 0.7 * o.fields["sfr"]

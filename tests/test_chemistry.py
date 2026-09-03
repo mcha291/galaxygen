@@ -94,18 +94,19 @@ def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
 def test_migration_over_flattens_the_old_population(model):
     """A coupling S3 exposed by fixing the disc size, not by touching migration.
 
-    At S2 the young/old gradient ratio was 2.3 against an observed 1.75, and the
-    kernel looked about right. S3 corrected the infall extent (debt #13), the
-    stellar disc shrank from 3.74 to 2.52 kpc, and the same 3.6 kpc kernel now
-    smooths across most of the disc: the ratio is 4.6. The kernel's effect depends
-    on the disc it acts on, so its strength cannot be judged independently of the
-    structure — which is why this is recorded against debt #15 rather than fixed
-    by moving migration_efficiency to whatever reproduces 1.75.
+    At S2 the young/old gradient ratio was 2.3 against an observed 1.75 and the
+    kernel looked about right. S3 corrected the infall extent (debt #13) and the
+    stellar disc shrank from 3.74 to 2.49 kpc, so the same 3.6 kpc kernel now
+    smooths across most of it. The merger-delivered second infall then pulled the
+    ratio back from 4.6 to 3.2 by making the old population younger on average.
+    The number moved twice without migration_efficiency being touched once, which
+    is the point: the kernel's effect depends on the structure it acts on, so its
+    strength cannot be judged on its own (debt #15).
     """
     o = out(model)
     young, old = o.fields["metallicity_gradient_young"], o.fields["metallicity_gradient_old"]
     assert abs(old) < abs(young)
-    assert young / old == pytest.approx(4.6, abs=0.5)
+    assert young / old == pytest.approx(3.2, abs=0.4)
 
 
 def test_metallicity_rises_then_is_slightly_diluted_late(model):

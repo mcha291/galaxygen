@@ -661,8 +661,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    constrained by two independent observables, not one (§6).
 8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
    (§4b, §13).
-9. α-bimodality may be reachable without a merger, via smooth accretion plus
-   migration. Test at S4 with a merger-free galaxy (§14).
+9. ~~α-bimodality may be reachable without a merger.~~ **NOT TESTABLE in the
+   simple model, and S3 established why rather than reporting a null result.**
+   Two independent reasons. First, [α/Fe] needs two nucleosynthetic channels
+   with different delay times, and instantaneous recycling collapses them into
+   one — the model has a single abundance and *no α–Fe plane* in which anything
+   could be bimodal. Reporting "no bimodality without a merger" from it would be
+   reading an instrument that cannot detect the signal (rule B3). Second, and
+   worse, the model's thin/thick split is **defined** as "born before the last
+   major merger", so a merger-free run has no thick disc by construction and
+   cannot be evidence about whether one is needed. The test moves to S9, which
+   has the DTD; whoever runs it must also replace the split criterion with one
+   that does not name the merger.
 10. **λ_d's ruled default was inferred against the wrong radius.** Ruling 8 set
    λ_d = 0.0144 from R_d√2/R_vir with R_vir = 255 kpc, which is Huang+16's
    top-hat virial radius for M_vir ≈ 0.9 × 10¹² M☉ — about 95 ρ_crit, not 200
@@ -735,6 +745,20 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    *high* enough in angular momentum — if the stellar disc broadens, it is not.
    The bulge pushes row 3 the other way and arrives at S3–S4, so those two must
    be judged together.
+19. **The thick disc is too compact and too massive, and the gate passes on the
+   cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
+   1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
+   its 12% ± 4% *only because those two errors compensate*: raising the merger's
+   `gas_fraction` to fix the mass drives row 9 to 0.015, because a thick disc
+   this centrally concentrated sheds surface density at R₀ far faster than it
+   sheds mass `[verified: DECISIONS.md D51]`. Row 5 is the prerequisite — with
+   the right extent the mass and the ratio can be right together. If they still
+   cannot, the split criterion is what is wrong.
+20. **The thin/thick split is defined by the merger, so it cannot be evidence
+   about mergers.** "Born before the last major merger" is a definition, not a
+   measurement, and it makes debt #9 circular (see #9). A criterion grounded in
+   kinematics or chemistry rather than in the event list is needed before any
+   merger-free comparison means anything.
 
 ---
 

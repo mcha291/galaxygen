@@ -161,15 +161,53 @@ _MISSES: tuple[Miss, ...] = (
         debt=18,
         since="S3",
         reason=(
-            "1.14 Msun/yr against 1.65. Every baryon the model keeps is in one compact disc of "
-            "scale length 2.5 kpc, which star formation has largely used up; there is no extended "
-            "reservoir left to sustain the present-day rate."
+            "1.97 Msun/yr against 1.65, having been 1.14 before the merger-delivered second "
+            "infall existed. Moving 60% of the accretion to start at the merger keeps gas "
+            "arriving late, which is the right mechanism and overshoots: the second episode "
+            "decays on the same 7 Gyr timescale as the first, so too much of it is still "
+            "arriving now."
         ),
         prediction=(
-            "The same missing component as rows 3 and 20. A high-angular-momentum accretion "
-            "channel adds gas at large radii, where the threshold keeps it from being consumed, "
-            "and it raises the present rate without touching the stellar structure. If adding one "
-            "raises the SFR but breaks row 4, the component is not high-angular-momentum enough."
+            "The second infall should be *slower* than the first, not the same speed - the outer "
+            "disc it feeds accretes over longer. A separate timescale for the post-merger episode "
+            "brings this down without touching the stellar structure. If it also moves rows 10 and "
+            "11, the two episodes are not as separable as this model assumes."
+        ),
+    ),
+    Miss(
+        row=5,
+        debt=19,
+        since="S3",
+        reason=(
+            "The thick disc's scale length is 1.17 kpc against 2.0. It forms before the merger, "
+            "when the disc is small and inside-out growth has star formation concentrated in the "
+            "middle, so it comes out far more centrally concentrated than the observed thick disc."
+        ),
+        prediction=(
+            "The thick disc has to be born extended, not merely early. Either the pre-merger disc "
+            "is already larger than this model makes it, or the merger itself spreads the stars it "
+            "heats - radial as well as vertical heating, which this model does not do. The second "
+            "is testable: a radial kick applied with the vertical one should raise row 5 towards "
+            "2.0 and lower row 9 at the same time."
+        ),
+    ),
+    Miss(
+        row=11,
+        debt=19,
+        since="S3",
+        reason=(
+            "1.07e10 Msun against 6e9: the pre-merger episode carries 40% of the baryon budget and "
+            "should carry nearer 15%. **Row 9, this session's gate, passes at 0.103 only because "
+            "this error and the row 5 error compensate.** Raising the merger's gas_fraction to "
+            "shrink the thick disc drives row 9 from 0.103 to 0.015, because a thick disc this "
+            "centrally concentrated loses surface density at R_0 far faster than it loses mass. "
+            "The gate is therefore passing for the wrong reason and is recorded as such."
+        ),
+        prediction=(
+            "Row 5 is the prerequisite. Once the thick disc has the right extent, its mass and its "
+            "surface-density ratio can be right together; until then either one can be fixed only "
+            "by breaking the other. If they still cannot be satisfied together at the right scale "
+            "length, the split criterion - born before the last major merger - is what is wrong."
         ),
     ),
     Miss(
@@ -197,7 +235,8 @@ _MISSES: tuple[Miss, ...] = (
         debt=18,
         since="S2",
         reason=(
-            "4.94e9 Msun against 8.0e9, a 38% shortfall. With the infall carrying the disc's own "
+            "5.80e9 Msun against 8.0e9, a 28% shortfall, improved from 4.94e9 by the "
+            "merger-delivered second infall. With the infall carrying the disc's own "
             "scale length there is nothing accreting beyond about 10 kpc, so the outer HI disc "
             "that holds most of the Milky Way's gas simply does not exist in this model."
         ),
