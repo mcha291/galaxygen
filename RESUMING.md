@@ -32,8 +32,10 @@ galaxy/models/level0.py   the physical constants every model shares
 galaxy/models/            simple.py, advanced.py (stub until S9; differs by CANARY)
 galaxy/stages/halo.py     NFW halo, R200, c200, the M200 -> dark + baryons split
 galaxy/stages/disc.py     MMW98 scale length; Freeman + a general razor-thin solver
-galaxy/stages/sfh.py      infall, Kennicutt-Schmidt, the gas/star split, v_c(R0)
+galaxy/stages/assembly.py   mergers[]: gas delivery and vertical heating (cp 2)
+galaxy/stages/sfh.py      two-infall accretion, Kennicutt-Schmidt, gas/star split
 galaxy/stages/chemistry.py  Z(R,t), [Fe/H], the gradient, radial migration
+galaxy/stages/vertical.py   thin/thick split, scale heights, rows 5-11
 galaxy/specs/             graph.py, preflight.py, determinism.py, spec.py; `python -m galaxy.specs`
 galaxy/run.py             run(model, inputs=None, grid=None) -> Outputs(fields, decls, order)
 tools/                    progress.py, bootstrap.py, verify_clone.py, hooks/pre-commit
@@ -45,51 +47,50 @@ BRIEF.md                  the next session's brief, written by the previous one
 
 ## Writing a stage
 
-- `Stage(id, slot, checkpoint, about, compute, reads_inputs, reads_seeds,
-  reads_constants, requires, requires_optional, publishes)`.
+- `Stage(id, slot, checkpoint, about, compute, reads_*, requires*, publishes)`.
 - Each published field is a `FieldDecl` beside its compute: name, label, unit,
   kind, axes in `(R, t, z, phi)` order, ramp, meaningful_zero, provenance, about.
 - `compute(ctx)` sees `ctx.grid`, `ctx.inputs`, `ctx.constants`, `ctx.fields`
   (strict) or `.get()/.has()` (optional), `ctx.rng(seed, *path)`. Only declared
   names resolve.
 - Return exactly the declared names. The runner checks shape and value class.
-- Register with `IMPLEMENTATIONS.register(...)`, import the module in
-  `galaxy/stages/__init__.py`, and map the slot in **both** models.
-- A new Level 0 constant goes in `models/level0.py`, and only if some stage
-  reads it — preflight fails a dead one (D29).
+- Register with `IMPLEMENTATIONS.register(...)`, import it in
+  `galaxy/stages/__init__.py`, map the slot in **both** models. A new Level 0
+  constant goes in `models/level0.py`, and only if a stage reads it (D29).
 
 ## Conventions
 
-- Names: fields, inputs, seeds, stages, models `lower_snake`; constants `UPPER_SNAKE`.
-- Inputs: 7 controls, 4 seeds, `mergers`. Only `mergers` is still UNSET (S3), and
-  every control now has a range. The ratchets in `tests/test_registry.py` are at
-  their floor (unset ≤ 1, controls without a range == 0); never raise them.
+- Names: fields, inputs, seeds, stages, models `lower_snake`; constants
+  `UPPER_SNAKE`. 7 controls, 4 seeds, `mergers`. **Every input now has a default
+  and every control a range**; the `tests/test_registry.py` ratchets are at zero
+  and must stay there.
 - Every factual claim in every document is tagged `[verified: cite]`, `[recall]`
   or `[inferred]` (rule B14); a bare verified tag fails a test.
 - Debts live in GALAXY_INPUTS.md §11; `tools/progress.py` counts them onto the
-  board. Add a numbered item; never edit the board's count. Any new unit, kind,
-  axis, object class or cmap is an edit to `core/` plus a DECISIONS.md entry.
-- A failing acceptance row goes in `spec.MISSES` with its debt, a reason and a
-  prediction that could kill it (D33). It still reports `fail`; never widen a
-  target (B5). A recorded miss that starts *passing* fails the run.
+  board — add a numbered item, never edit the count. A new unit, kind, axis,
+  object class or cmap is a `core/` edit plus a DECISIONS.md entry.
+- A failing acceptance row goes in `spec.MISSES` with its debt, reason and a
+  prediction that could kill it (D33); it still reports `fail`, never widen a
+  target (B5), and a recorded miss that starts *passing* fails the run.
 
-## What the instruments said at S2 close
+## What the instruments said at S3 close
 
-- graph: acyclic for both models; order `halo -> disc -> sfh -> chemistry`;
-  7 of 12 inputs bound, none contradicting GALAXY_PLAN.md §3's hypothesis.
-- preflight: OK; 1 input UNSET (`mergers`, S3); 0 controls without a range.
+- graph: acyclic for both models; order `halo -> assembly -> disc -> sfh ->
+  chemistry -> vertical`; all 8 non-seed inputs bound, none contradicting §3.
+- preflight: OK; 0 inputs UNSET; 0 controls without a range.
 - determinism: OK; golden values pinned under numpy 2.5.2.
-- spec: **3 pass** (rows 1, 2, 19), **5 fail** (3, 4, 20, 22, 23 — every one a
-  recorded miss naming a debt), 16 not-yet-computable. `python -m galaxy.specs`
-  exits 0.
-- The numbers, so the next session can recognise a regression:
-  R₂₀₀ = 212.94 kpc, c₂₀₀ = 14.35, m_d = 0.0533, M_baryon = 5.859 × 10¹⁰ M☉,
-  R_d(λ_d) = 2.605 kpc, R_d(fitted) = 3.737 kpc, M_star = 5.036 × 10¹⁰ M☉,
-  M_gas = 8.229 × 10⁹ M☉, SFR = 1.738 M☉/yr, v_tan(R₀) = 237.2 km/s,
-  [Fe/H](R₀) = −0.010, gradient = −0.0202 dex/kpc (young −0.0217, old −0.0091).
-- **Three causes hold five failing rows**: debt #13 (two disc scale lengths, 44%
-  apart) has rows 3 and 4; debt #15 (every gradient a third of observed) has 22
-  and 23; debt #17 (zero-width target) has 20.
+- spec: **8 pass** (1, 4, 6, 7, 8, 9, 10, 19), **7 fail** (2, 3, 5, 11, 20, 22,
+  23 — every one a recorded miss), 9 not-yet-computable. Exit 0.
+- **Read D51 before trusting row 9.** It is the gate and it passes on two errors
+  cancelling; a test asserts the cancellation.
+- Numbers, to recognise a regression by: R₂₀₀ = 212.94 kpc, c₂₀₀ = 14.35,
+  R_d(λ_d) = 2.605, R_d(fitted) = 2.49 kpc, M_star = 5.276e10, M_gas = 5.80e9,
+  SFR = 1.969, v_tan = 256.0 km/s, [Fe/H](R₀) ≈ 0, gradient = −0.0237,
+  thick M = 1.07e10, thick R_d = 1.17 kpc, h_thin = 253 pc, h_thick = 1039 pc,
+  σ_z thin/thick = 20.1/40.7 km/s, row 9 = 0.103.
+- **Three causes hold seven failing rows**: #18 (no extended accretion) has 2, 3,
+  20; #15 (every gradient a third of observed) has 22, 23; #19 (the thick disc's
+  shape, and the gate's compensation) has 5, 11.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 
@@ -112,9 +113,8 @@ merge. The branch stays open and the next session continues on it.
 
 ## Credentials
 
-Push through the machine's git credential helper or a fine-grained token scoped
-to this repository (Contents: read and write). Nothing credential-shaped enters
-the tree; the hook refuses token shapes. Editing `.github/workflows/` needs
-workflow permission on the token. Do not attempt to push a tag: the web
-environment's proxy refuses tag refs with a 403 whatever credential is used, so
-tags are queued in MANUAL_TODO.md and applied by hand at the end (rule C2e).
+Push through the git credential helper or a fine-grained token scoped to this
+repository (Contents: read and write). Nothing credential-shaped enters the tree;
+the hook refuses token shapes. `.github/workflows/` needs workflow permission.
+Do not attempt to push a tag: the proxy refuses tag refs with a 403 whatever
+credential is used, so tags are queued in MANUAL_TODO.md (rule C2e).

@@ -2,14 +2,14 @@
 
 ## Status
 
-`██████░░░░░░░░░░░░░░░░` **3 / 11 sessions** · repo initialised: yes
+`████████░░░░░░░░░░░░░░` **4 / 11 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
 | ☑ | 0 | Instruments, registry, stub second model | desktop | **Fable** | **Fable** | s00 | 2026-09-03 |
 | ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 | 2026-09-02 |
 | ☑ | 2 | SFH & chemistry (simple) | web | Opus | **Opus 5** | s02 | 2026-09-03 |
-| ☐ | 3 | Assembly & mergers | — | Opus | — | — | — |
+| ☑ | 3 | Assembly & mergers | web | Opus | **Opus 5** | s03 | 2026-09-03 |
 | ☐ | 4 | Pattern: bar, arms | — | Opus | — | — | — |
 | ☐ | 5 | Systems: catalogue | — | Opus | — | — | — |
 | ☐ | 6 | API | — | Opus | — | — | — |
@@ -35,7 +35,7 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S3. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S4. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
 **Open debts:** 16 (`GALAXY_INPUTS.md` §11). **Discharged:** 4.
