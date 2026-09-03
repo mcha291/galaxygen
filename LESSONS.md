@@ -219,3 +219,37 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [catalogue][advanced] Cost that is paid per cell is paid whether or not anyone
   asks for that cell. numpy's `Generator` construction is ~22 µs and dominated the
   whole model run before the cell grid was sized against it (D61).
+
+## From S6
+
+- [api][viewer][all] Publish what a response *did*, not how long it took. Every
+  response carries the stages it ran, and the rule-D4 assertions read that: a
+  timing says only which rows a cache serves, and an endpoint that ran the whole
+  pipeline sits in the same range as one that ran nothing `[verified:
+  DECISIONS.md D67]`.
+- [api][viewer] "This endpoint runs no stage" is checked by taking the runner out
+  of its path and calling it again. Observing that it did not run one is a check
+  on the run; observing that it *could not have* is a check on the route.
+- [api][all] A partial run is only safe if it cannot be resumed from a different
+  galaxy. Refuse a resume whose model, grid or inputs differ — mixing two input
+  vectors publishes a self-consistent galaxy that no input vector generates, and
+  nothing downstream can detect it (D63).
+- [api][catalogue] A star belongs to the cell that drew it, not to the cell its
+  radius falls in: inverting a ring's CDF can place it up to one R-spacing
+  outside its own ring (D69). Anything that maps positions back to cells is
+  fuzzy by that much, by construction.
+- [api][viewer] JSON has no NaN. A non-finite scalar goes out as `null`, and a
+  browser will refuse to parse the alternative (rule B9).
+- [api][viewer] Pad a binary payload to eight bytes. `new Float64Array(buffer,
+  offset, n)` throws on a misaligned offset, and an int64 column arrives as
+  `BigInt` — convert once, where the conversion can be seen.
+- [api][viewer] Write the one-`fetch` gate over the file *tree*, not over the
+  file you just wrote. The viewer S7 adds is then covered without anyone
+  remembering to extend it (rule B13).
+- [api][infra] node is installed here and on the CI runner, so a JS decoder is
+  run rather than mirrored in Python. A twin gets alignment, endianness and
+  BigInt right by construction and tells you nothing (rule B3). Skip where the
+  runtime is absent — a skip is visible, a silent pass is not.
+- [infra][all] A tool that must be run every session needs a test that fails when
+  it is not extended. `tests/test_api.py` asserts every route appears in
+  `tools/timings.py`, so a new endpoint cannot go unmeasured.
