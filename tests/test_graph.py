@@ -135,3 +135,22 @@ def test_unknown_input():
     assert "unknown-input" in codes(chk(model("m", s), s))
     r = stage("r", ("f",), reads_inputs=("disc_spin",))
     assert "unknown-input" in codes(chk(model("m", r, inputs=("halo_mass",)), r))
+
+
+def test_needed_for_is_the_closure_above_the_wanted_fields():
+    a = stage("a", ("fa",))
+    b = stage("b", ("fb",), requires=("fa",))
+    c = stage("c", ("fc",), requires=("fb",))
+    side = stage("side", ("fs",))
+    opt = stage("opt", ("fo",), requires_optional=("fs",))
+    m = model("m", a, b, c, side, opt)
+    g = graph.analyse(m, impls(a, b, c, side, opt), INPUTS)
+    assert [s.id for s in g.needed_for(["fc"])] == ["a", "b", "c"]
+    assert [s.id for s in g.needed_for(["fb"])] == ["a", "b"]
+    assert [s.id for s in g.needed_for(["fa", "fs"])] == ["a", "side"]
+    assert g.needed_for([]) == () and g.needed_for(["not_a_field"]) == ()
+    # An optional requirement this model does publish is a real dependency.
+    assert [s.id for s in g.needed_for(["fo"])] == ["side", "opt"]
+    # ... and where nothing publishes it, the closure is just the reader.
+    without = model("without", opt)
+    assert [s.id for s in graph.analyse(without, impls(opt), INPUTS).needed_for(["fo"])] == ["opt"]

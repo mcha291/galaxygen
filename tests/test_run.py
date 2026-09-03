@@ -13,8 +13,8 @@ from galaxy.specs.graph import GraphError
 from helpers import TINY, decl, impls, model, stage
 
 
-def go(m, *stages, inputs=None, grid=TINY):
-    return run(m, inputs, grid, impls=impls(*stages), table=INPUTS)
+def go(m, *stages, inputs=None, grid=TINY, only=None):
+    return run(m, inputs, grid, impls=impls(*stages), table=INPUTS, only=only)
 
 
 def test_production_runs(model):
@@ -180,3 +180,73 @@ def test_cycle_is_refused_before_running():
     b = stage("b", ("fb",), requires=("fa",))
     with pytest.raises(GraphError, match="cycle"):
         go(model("m", a, b), a, b)
+
+
+# --- partial runs: rule D4's arithmetic ---------------------------------------
+
+
+def same(a, b) -> bool:
+    """Bit-identical, with NaN equal to NaN — TINY's coarse axes make some scalars NaN."""
+    a, b = np.asarray(a), np.asarray(b)
+    if a.shape != b.shape or a.dtype != b.dtype:
+        return False
+    return bool(np.array_equal(a, b, equal_nan=bool(np.issubdtype(a.dtype, np.floating))))
+
+
+def test_only_runs_the_closure_and_nothing_else():
+    a, b, c = chain()
+    m = model("m", c, a, b, constants={"K": 1.0})
+    assert go(m, a, b, c, only=("fb",)).ran == ("a", "b")
+    assert go(m, a, b, c, only=("fa",)).ran == ("a",)
+    assert go(m, a, b, c, only=("fa", "fc")).ran == ("a", "b", "c")
+    # A field this model does not publish contributes nothing; it is not an error.
+    empty = go(m, a, b, c, only=("nothing_publishes_this",))
+    assert empty.ran == () and empty.fields == {}
+
+
+def test_a_partial_run_agrees_with_the_full_run(model):
+    """Running fewer stages must not move the ones that run (rule B3: assert it)."""
+    wanted = ("bar_pattern_speed", "bar_corotation_radius")
+    full = run(model, grid=TINY)
+    part = run(model, grid=TINY, only=wanted)
+    assert set(part.ran) < set(full.ran), "the closure above the bar is not the whole pipeline"
+    assert "systems" not in part.ran and "population" not in part.ran
+    for name, value in part.fields.items():
+        assert same(value, full.fields[name]), name
+    assert set(wanted) <= set(part.fields)
+
+
+def test_resume_runs_only_what_is_missing_and_gets_the_same_galaxy(model):
+    full = run(model, grid=TINY)
+    first = run(model, grid=TINY, only=("bar_pattern_speed",))
+    second = run(model, grid=TINY, only=("star_radius",), resume=first)
+    assert not set(second.ran) & set(first.ran), "resume re-ran a stage that was already done"
+    assert set(second.order) == set(first.ran) | set(second.ran)
+    for name, value in second.fields.items():
+        assert same(value, full.fields[name]), name
+
+
+def test_resume_refuses_a_galaxy_it_did_not_compute(model):
+    first = run(model, grid=TINY, only=("bar_pattern_speed",))
+    with pytest.raises(RunError, match="input"):
+        run(model, {"halo_mass": 2e12}, TINY, only=("star_radius",), resume=first)
+    with pytest.raises(RunError, match="grid"):
+        run(model, None, TINY.replace(n_R=9), only=("star_radius",), resume=first)
+    other = model.__class__(
+        name="other", about=model.about, stages=model.stages, constants=dict(model.constants)
+    )
+    with pytest.raises(RunError, match="model"):
+        run(other, None, TINY, only=("star_radius",), resume=first)
+
+
+def test_a_pruned_stage_does_not_owe_its_inputs():
+    """An UNSET input is only an error on a path that actually runs (rule B9)."""
+    owed = Input("owed", "Owed", "control", "no default", unit="dimensionless", default_owner="S6")
+    table = {**INPUTS, "owed": owed}
+    needs = stage("needs", ("f",), reads_inputs=("owed",), compute=lambda ctx: {"f": np.full(8, ctx.inputs["owed"])})
+    other = stage("other", ("g",))
+    m = model("m", needs, other)
+    with pytest.raises(MissingInput):
+        run(m, None, TINY, impls=impls(needs, other), table=table)
+    out = run(m, None, TINY, impls=impls(needs, other), table=table, only=("g",))
+    assert out.ran == ("other",) and "owed" not in out.inputs

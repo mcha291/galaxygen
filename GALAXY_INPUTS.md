@@ -779,13 +779,22 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    recognisable galaxy" and on this evidence it is not `[verified:
    DECISIONS.md D62]`. Faking a modulation in the catalogue was refused: it
    would put structure in the sample that no field justifies.
-24. **The spec ensemble re-runs the whole pipeline for two scalars.** Rows 16 and
-   17 need twenty seeded runs, and each one recomputes the halo, the chemistry
-   and a 20 000-star catalogue to reach two numbers that depend only on
-   checkpoint 4. This is rule D4's principle — no endpoint runs more of the
-   pipeline than its answer requires — applied to the spec runner rather than
-   the API, and it is what makes the test suite take minutes. The fix is to
-   re-run from a checkpoint; `performance.py` at S10 is where it belongs.
+24. ~~**The spec ensemble re-runs the whole pipeline for two scalars.**~~
+   **DISCHARGED by S6.** Rows 16 and 17 needed twenty seeded runs, and each one
+   recomputed the halo, the chemistry and a 20 000-star catalogue to reach two
+   numbers that depend only on checkpoint 4. The fix is the one rule D4 asks the
+   API for, applied to the spec runner: `spec.ensemble` now names the fields it
+   wants and the runner executes the dependency closure above them and nothing
+   else (`run(..., only=…)`). An ensemble member costs **0.162 s instead of
+   0.616 s, 3.8× less**, and the twenty runs 3.2 s instead of 12.3 s
+   `[verified: DECISIONS.md D63]`. The values are bit-identical, which is
+   asserted rather than argued — a stage is a pure function of its declared
+   reads, so running fewer of them cannot move the ones that run `[verified:
+   tests/test_run.py::test_a_partial_run_agrees_with_the_full_run;
+   tests/test_spec.py::test_the_ensemble_runs_only_the_stages_its_fields_need]`.
+   What is *not* discharged is D61's per-cell cost: the catalogue still builds
+   every cell's streams whether or not anything asks for that cell, and that is
+   a `performance.py` question at S10.
 
 ---
 

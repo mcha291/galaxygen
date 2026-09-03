@@ -51,6 +51,30 @@ class Graph:
     def ok(self) -> bool:
         return not self.problems
 
+    def needed_for(self, fields: Iterable[str]) -> tuple[Stage, ...]:
+        """The stages that must run to publish ``fields``, in execution order.
+
+        This is rule D4's arithmetic: the transitive closure of the dependency
+        edges above the requested fields, and nothing else. A name no stage of
+        this model publishes contributes nothing — the caller asked for a field
+        this model does not have, which is the same answer as an empty closure
+        and is what leaves an acceptance row not-yet-computable rather than
+        failing (``spec.evaluate``).
+
+        Optional requirements are followed only when this model has a producer
+        for them, which is exactly the rule the edges were built under.
+        """
+        wanted = {self.producer[n] for n in fields if n in self.producer}
+        frontier = list(wanted)
+        while frontier:
+            sid = frontier.pop()
+            for name in self.stages[sid].requires + self.stages[sid].requires_optional:
+                dep = self.producer.get(name)
+                if dep is not None and dep not in wanted:
+                    wanted.add(dep)
+                    frontier.append(dep)
+        return tuple(st for st in self.order if st.id in wanted)
+
 
 def resolve_stages(
     model: Model, impls: Registry[Stage] | Mapping[str, Stage]
