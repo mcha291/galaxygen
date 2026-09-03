@@ -569,3 +569,54 @@ non-axisymmetric.
 unit (D3), so G either gets its unit or gets declared as something it is not.
 Expressing G in the model's own length, velocity and mass units means G·M/R is a
 squared velocity with no conversion factor anywhere in any stage `[inferred]`.
+
+### D40. Sessions do not tag; tags are queued in `MANUAL_TODO.md` and applied in one batch
+
+**Decision.** New rule **C2e**. A session's close ends at "push branch and main"
+and adds a row to `MANUAL_TODO.md` carrying its `git tag` command; it also fills in
+the *previous* session's merge SHA, which a merge commit cannot carry about itself.
+The tags are applied by hand from a desktop checkout at the end of the build.
+`tests/test_docs.py` fails if a ☑ session has no row there.
+
+**Settled by.** S1 could push its branch and `main` and could not push a tag.
+Annotated and lightweight both returned HTTP 403, and the GitHub API named the
+cause: `"Write access to this GitHub API path is not permitted through this
+proxy"` `[verified: the S1 session's own transcript; the same request through the
+same proxy that carried the successful `main` push]`. The token the session holds
+even reports `push: false` on the repository while its branch pushes succeed, so
+the proxy is brokering writes under its own path policy rather than passing a
+token's permissions through — which means **no credential supplied to a session
+changes it** `[inferred]`. A close ritual whose last step fails every time is not a
+ritual, it is a trained-in error (rule B13: when correctness depends on
+remembering, move it where it cannot be forgotten — here, into a file with a test
+behind it). The alternative considered and rejected was leaving the step in and
+letting each session record its own failure, which is eleven identical debt entries
+for one environment fact.
+
+The board's **Tag** column now names the tag a session has *earned*. What exists on
+the remote is `MANUAL_TODO.md`'s business, and it says so.
+
+### D41. One authorised rewrite of `main`, to leave exactly one merge commit per session
+
+**Decision.** The three commits S1 had already pushed to `main` — the S1 merge, the
+tag-note commit and its merge — were replaced by a single merge commit containing
+the same tree plus this correction, and `main` was force-pushed once. Rule **C2a
+(never force-push) stands unamended**; this is a recorded exception, not a
+precedent, and no session may take it.
+
+**Settled by.** The project owner asked for it directly, having decided that the
+per-session tag should land on one merge commit rather than a merge plus a
+follow-up `[recall: stated by the project owner]`. C2a's justification is that
+sessions are sequential and nobody else commits, so a non-fast-forward push is a
+*signal* rather than an obstacle `[verified: RULES.md C2a]` — and that reasoning is
+about a push the session did not expect. Here the rewrite is the intended act, by
+the only person holding the repository, and the same "nobody else commits" fact
+that makes an unexpected rejection alarming is what makes an intended rewrite safe.
+Two consequences were stated before it was done and are recorded here rather than
+discovered later: the merge commit's SHA necessarily changed, because a commit
+cannot keep its hash when its content changes; and `s00` is unaffected, because it
+points at `0bc546d`, which is an ancestor of the new merge.
+
+The rule is left alone deliberately. Amending "never" to "never, except when it
+suits" would buy one convenience and cost the rule its only useful property
+`[inferred]`.

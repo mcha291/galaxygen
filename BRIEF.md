@@ -25,36 +25,36 @@ verdicts, two remedies) and §7 (rows 2, 20–23) when you reach them.
 
 ## Gate
 
-- Gradient ≈ −0.06 dex/kpc (row 22, interval [−0.069, −0.049]); SFR ≈ 1.65 M☉/yr
-  (row 2). Both pointwise.
+- Gradient ≈ −0.06 dex/kpc (row 22, [−0.069, −0.049]); SFR ≈ 1.65 M☉/yr (row
+  2). Both pointwise.
 - **Debt #11 is S2's to close or kill.** S1 predicts that giving the gas its own
-  shallower profile drops v_tan(R₀) from 256.1 to ≈ 246.4 km/s, inside row 3.
-  If row 3 still misses, the recorded explanation is wrong: say so, remove the
-  `spec.MISSES` entry and record the real cause (rule B5). Do not tune λ_d or
-  `baryon_retention` to close it.
+  shallower profile drops v_tan(R₀) from 256.1 to ≈ 246.4 km/s, inside row 3. If
+  it still misses, the explanation is wrong: say so, drop the `spec.MISSES` entry
+  and record the real cause. Never tune λ_d or `baryon_retention` to close it.
 - `python -m galaxy.specs` clean for both models; rows 2, 20, 21, 22 report
-  pass or fail, not not-yet-computable, and row 3 resolves one way or the other.
-- Anything fitted while a mechanism is missing goes in the debt register.
+  pass or fail, row 3 resolves, and anything fitted while a mechanism is
+  missing goes in the debt register.
 
 ## Traps
 
-- Row 20 and row 21 are **zero-width** targets: the sources quote no
-  uncertainty, so a pointwise check fails for any float that is not exactly
-  equal. Find the uncertainty in the source or record the miss in
-  `spec.MISSES` with a debt (rule B5). Do not widen the interval.
-- A row that fails still reports `fail`; only an entry in `spec.MISSES` keeps
-  the run's exit status clean, and a recorded miss that starts passing is an
-  error. Read the top of `galaxy/specs/spec.py` before touching it.
+- Rows 20 and 21 are **zero-width** targets — no quoted uncertainty, so a
+  pointwise check fails for any float not exactly equal. Find the uncertainty
+  in the source or record the miss; never widen the interval (rule B5).
+- A failing row still reports `fail`; only a `spec.MISSES` entry (debt, reason,
+  falsifiable prediction) keeps the exit status clean, and a recorded miss that
+  starts passing is an error. Read the top of `galaxy/specs/spec.py` first.
 - Publish anything an acceptance row reads as an **analytic scalar**, never
   interpolated off the grid, or the S10 sweep will move it (D37).
-- `disc_spin` is 0.0173, not ruling 8's 0.0144 (D30, debt #10). If a re-ruling
-  has come back the other way, changing the default is one number plus
-  `tests/test_registry.py::test_defaults_are_the_milky_way`.
-- Checkpoint order: a stage at checkpoint 3 may require checkpoint-1 fields but
-  not the reverse, and `graph.py` fails on an input read earlier than
-  GALAXY_PLAN.md §3 puts it. `mergers` is S3's, not yours.
+- `disc_spin` is 0.0173, not ruling 8's 0.0144 (D30, debt #10). Reversing a
+  re-ruling is one number plus `test_defaults_are_the_milky_way`.
+- Checkpoint order: checkpoint 3 may require checkpoint-1 fields, not the
+  reverse; `graph.py` fails on an input read earlier than §3 puts it.
+  `mergers` is S3's, not yours.
 - Axes order is `(R, t, z, phi)`; chemistry fields are `(R, t)`.
 - Windows: `encoding="utf-8"` everywhere; Bash heredocs over 8 KB fail.
 - Do not edit `.github/workflows/` without workflow scope on the token.
+- Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and
+  replace S1's `TBD` with `git rev-list -1 --grep='^Merge S1 into main'
+  origin/main`. A test fails if a ☑ session has no row there.
 - After ticking the board run `uv run python tools/progress.py`; the suite
   asserts the board agrees with itself.

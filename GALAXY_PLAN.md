@@ -7,7 +7,7 @@
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
 | ☑ | 0 | Instruments, registry, stub second model | desktop | **Fable** | **Fable** | s00 | 2026-09-03 |
-| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 (local) | 2026-09-02 |
+| ☑ | 1 | Halo & disc | web | Opus | **Opus 5** | s01 | 2026-09-02 |
 | ☐ | 2 | SFH & chemistry (simple) | — | Opus | — | — | — |
 | ☐ | 3 | Assembly & mergers | — | Opus | — | — | — |
 | ☐ | 4 | Pattern: bar, arms | — | Opus | — | — | — |
@@ -26,11 +26,14 @@ from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
 
-*s01 (local)*: the tag exists at the S1 merge commit but is **not on the
-remote**. The credentials S1 ran under push branches and refuse tag refs with
-HTTP 403, and a board cell that named a tag no fresh clone can find would be
-exactly the quiet lie this board exists to prevent. `git push origin s01` from
-a checkout with a Contents-write token closes it; the cell becomes `s01` then.
+**Tags are deferred to one batch at the end of the build** (rule C2e). The web
+sessions run behind an egress proxy that refuses tag refs — `git push origin s01`
+returns HTTP 403 while branch and `main` pushes succeed `[verified: DECISIONS.md
+D40]`. Rather than have every session fight it, no session tags: each appends its
+`git tag` command to `MANUAL_TODO.md`, and they are all applied in one go from the
+desktop. **The Tag column therefore names the tag a session has *earned*, not one
+that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
+tags exist lives, and a test asserts it carries a row for every ☑ session.
 
 **Next:** S2. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
@@ -237,7 +240,10 @@ everything after its last push. See **Partial close** below.
 4. Write `BRIEF.md` for the next session: what to build, which files to touch,
    the gate, and known traps. This is the single highest-leverage artefact in the
    whole protocol; it is what lets the next session skip reading the plan.
-5. Commit, `--no-ff` merge to `main`, tag `s NN`, push branch, main and tags.
+5. Commit, `--no-ff` merge to `main` with the subject `Merge S<N> into main: …`,
+   push branch and main. **Do not tag** (rule C2e): append this session's tag
+   command to `MANUAL_TODO.md`, and fill in the *previous* session's merge SHA
+   while you are there — it was unknowable until its merge existed.
    **Never force-push** (rule C2a).
 6. **Verify by cloning the remote into a clean directory and running the suite
    there** (rule C2) — not by re-running in the working copy, which cannot detect
@@ -408,8 +414,9 @@ So, from the start rather than as a panic measure (rule C2d):
 3. **On sensing the limit, stop and close partially**: commit, push, append what
    was done and what remains to `BRIEF.md`, set this session's board row to ◐
    with a note. Do not start new work in the hope of finishing it.
-4. A partial close does **not** merge to `main` and does **not** tag. The branch
-   stays open and the next session continues on it.
+4. A partial close does **not** merge to `main`. The branch stays open and the
+   next session continues on it. No session tags in any case (rule C2e), so
+   there is nothing extra to withhold here.
 
 ---
 

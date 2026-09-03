@@ -156,6 +156,16 @@ start new work in the hope of finishing before the limit. *Justification: leavin
 the next session to reconstruct where the last one got to is the single most
 expensive failure this protocol exists to prevent.* `[inferred]`
 
+**C2e. Sessions do not tag; they queue the command.** A session's close appends
+its `git tag -a s<NN> <merge sha> -m …` line to `MANUAL_TODO.md` and fills in the
+*previous* session's merge SHA, which was unknowable while that merge was being
+written. The tags are applied in one batch, by hand, at the end of the build.
+*Justification: the environment the web sessions run in refuses tag refs — a tag
+push returns HTTP 403 where a branch push to `main` succeeds, so a close ritual
+that ends in a tag ends in a failure every time* `[verified: DECISIONS.md D40]`.
+*A step that cannot succeed is not a step; queueing it keeps the record honest and
+the ritual completable.* `[inferred]`
+
 **C2c. Credentials never enter the repository.** The token lives in the container
 environment or a credential file outside the working tree, never in a tracked
 file, never in `.git/config` that gets committed. A pre-commit hook greps staged

@@ -37,6 +37,7 @@ galaxy/run.py             run(model, inputs=None, grid=None) -> Outputs(fields, 
 tools/                    progress.py, bootstrap.py, verify_clone.py, hooks/pre-commit
 tests/                    pytest; helpers.py builds synthetic stages/models
 DECISIONS.md LESSONS.md   append-only; lessons tagged by stage type
+MANUAL_TODO.md            queued session tags; add yours, fill in the last one (C2e)
 BRIEF.md                  the next session's brief, written by the previous one
 ```
 
@@ -95,20 +96,22 @@ BRIEF.md                  the next session's brief, written by the previous one
 2. Append to DECISIONS.md; new rules into LESSONS.md, tagged.
 3. Rewrite this file in place (≤ 120 lines).
 4. Write BRIEF.md for the next session (≤ 60 lines).
-5. Commit; `git checkout main && git merge --no-ff session-NN && git tag sNN`;
-   push branch, main and tags. Never force-push (rule C2a).
+5. Commit; `git checkout main && git merge --no-ff session-NN` with the subject
+   `Merge S<N> into main: …`; push branch and main. **Do not tag** (rule C2e) —
+   add your row to MANUAL_TODO.md and fill in the previous session's merge SHA.
+   Never force-push (rule C2a).
 6. `uv run python tools/verify_clone.py --ref main` — clones fresh, bootstraps,
    runs the suite and the specs there; refuses if the working tree is dirty.
 
 A session that stops early closes **partially** instead (rule C2d): commit,
 push, write what remains into BRIEF.md, mark the board row ◐ — and do **not**
-merge or tag. The branch stays open and the next session continues on it.
+merge. The branch stays open and the next session continues on it.
 
 ## Credentials
 
 Push through the machine's git credential helper or a fine-grained token scoped
 to this repository (Contents: read and write). Nothing credential-shaped enters
 the tree; the hook refuses token shapes. Editing `.github/workflows/` needs
-workflow permission on the token, and pushing a session tag needs a credential
-that accepts tag refs — some accept branches and refuse tags with a 403. Check
-with `git ls-remote --tags origin`; `s01` is outstanding.
+workflow permission on the token. Do not attempt to push a tag: the web
+environment's proxy refuses tag refs with a 403 whatever credential is used, so
+tags are queued in MANUAL_TODO.md and applied by hand at the end (rule C2e).

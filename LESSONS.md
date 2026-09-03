@@ -96,12 +96,13 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   in a Bessel approximation shifts v_c by a fraction of a percent, which is the
   size of an acceptance error bar and looks like physics `[verified:
   DECISIONS.md D28]`.
-- [close] Not every push credential can push a tag. S1's pushed branches and
-  `main` and then failed `git push origin s01` with HTTP 403, annotated and
-  lightweight alike, while `s00` sits on the remote from a session that used a
-  personal access token. Check the tag actually landed with
-  `git ls-remote --tags origin` rather than trusting the push; if it did not,
-  say so on the board instead of leaving the cell claiming it.
+- [close] Do not try to tag. The web environment's proxy refuses tag refs with
+  HTTP 403 — the GitHub API says the *path* is not permitted, so it is a policy
+  and not a token permission, and no credential fixes it. Queue the command in
+  `MANUAL_TODO.md` instead (rule C2e) `[verified: DECISIONS.md D40]`.
+- [close] When a ritual step cannot succeed in this environment, change the
+  ritual rather than repeating the failure or quietly skipping it. A close that
+  ends in a guaranteed error trains everyone to ignore the error.
 - [infra] `tools/progress.py` counts debts straight out of GALAXY_INPUTS.md
   §11's register, so adding a numbered item is all it takes to move the board's
   debt line; do not edit the line.

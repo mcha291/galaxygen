@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SESSION_DOCS = ["DECISIONS.md", "LESSONS.md", "RESUMING.md", "BRIEF.md", "README.md"]
+SESSION_DOCS = ["DECISIONS.md", "LESSONS.md", "RESUMING.md", "BRIEF.md", "README.md", "MANUAL_TODO.md"]
 
 
 def text(name: str) -> str:
@@ -50,3 +50,27 @@ def test_no_bare_verified_labels(name):
 def test_decisions_are_numbered_sequentially():
     nums = [int(n) for n in re.findall(r"^### D(\d+)\.", text("DECISIONS.md"), flags=re.M)]
     assert nums == list(range(1, len(nums) + 1)) and nums, nums
+
+
+def test_manual_todo_carries_a_row_for_every_closed_session():
+    """Rule C2e: no session tags, so the queue is the only record that a tag is owed.
+
+    The failure this prevents is the one that only shows up at the end, when the
+    tags are applied in a batch and one session is quietly missing from it.
+    """
+    board = (ROOT / "GALAXY_PLAN.md").read_text(encoding="utf-8")
+    closed = [int(n) for n in re.findall(r"^\| ☑ \| (\d+) \| ", board, flags=re.M)]
+    assert closed, "no closed sessions on the board"
+    todo = text("MANUAL_TODO.md")
+    for n in closed:
+        assert re.search(rf"^\| {n} \| `s{n:02d}` \|", todo, flags=re.M), (
+            f"S{n} is ☑ on the board but has no tag row in MANUAL_TODO.md (rule C2e)"
+        )
+
+
+def test_every_queued_tag_has_a_command_to_run():
+    todo = text("MANUAL_TODO.md")
+    queued = re.findall(r"^\| \d+ \| `(s\d+)` \|.*\| \*\*queued\*\*", todo, flags=re.M)
+    assert queued, "no queued tags; if every session is applied, say so here instead"
+    for tag in queued:
+        assert f"git tag -a {tag} " in todo, f"{tag} is queued but no command is given for it"
