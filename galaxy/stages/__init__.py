@@ -10,3 +10,4 @@ from . import assembly  # noqa: F401  (checkpoint 2)
 from . import sfh  # noqa: F401  (checkpoint 3)
 from . import chemistry  # noqa: F401
 from . import vertical  # noqa: F401
+from . import pattern  # noqa: F401  (checkpoint 4, seeded)

@@ -358,6 +358,44 @@ def run(model: Model, ensemble: Mapping[str, Sequence[float]] | None = None, **r
     return evaluate_all(out.fields, out.decls, model.name, ensemble)
 
 
+STATISTICAL_FIELDS: tuple[str, ...] = tuple(
+    q.field for q in QUANTITIES if q.mode == "statistical" and q.field is not None
+)
+
+
+def ensemble(
+    model: Model,
+    fields: Sequence[str] = STATISTICAL_FIELDS,
+    n: int = ENSEMBLE_MIN,
+    **run_kwargs: Any,
+) -> dict[str, list[float]]:
+    """Values of ``fields`` across ``n`` galaxies that differ only in their seeds.
+
+    Every seed moves together, so this is an ensemble of galaxies with identical
+    physical inputs — which is what a statistical row is judged against. Fields the
+    model does not publish are simply absent, and the row stays not-yet-computable.
+    """
+    from galaxy.core.registry import INPUTS
+    from galaxy.run import run as _run
+
+    table = run_kwargs.get("table") or INPUTS
+    seed_names = [name for name, inp in table.items() if inp.kind == "seed"]
+    collected: dict[str, list[float]] = {}
+    for draw in range(n):
+        out = _run(model, {name: draw for name in seed_names}, **run_kwargs)
+        for field in fields:
+            if field in out.fields:
+                collected.setdefault(field, []).append(float(out.fields[field]))
+    return collected
+
+
+def evaluate_models(models: Iterable[Model], **run_kwargs: Any) -> dict[str, list[Result]]:
+    """Judge every model once, building each an ensemble for the statistical rows."""
+    return {
+        m.name: run(m, ensemble=ensemble(m, **run_kwargs), **run_kwargs) for m in models
+    }
+
+
 def summary(results: Iterable[Result]) -> dict[str, int]:
     counts = {s: 0 for s in STATUSES}
     for r in results:
@@ -394,22 +432,29 @@ def problems(results: Iterable[Result]) -> list[Problem]:
     return out
 
 
-def report(models: Iterable[Model], **run_kwargs: Any) -> str:
+def report(
+    models: Iterable[Model],
+    results: Mapping[str, list[Result]] | None = None,
+    **run_kwargs: Any,
+) -> str:
+    models = list(models)
+    if results is None:
+        results = evaluate_models(models, **run_kwargs)
     lines = ["spec"]
     for m in models:
-        results = run(m, **run_kwargs)
-        s = summary(results)
-        recorded = sum(1 for r in results if r.status == "fail" and r.n in MISSES)
-        head = f"  model {m.name}: {s['pass']} pass, {s['fail']} fail, {s['not-yet-computable']} not-yet-computable of {len(results)}"
+        judged = results[m.name]
+        s = summary(judged)
+        recorded = sum(1 for r in judged if r.status == "fail" and r.n in MISSES)
+        head = f"  model {m.name}: {s['pass']} pass, {s['fail']} fail, {s['not-yet-computable']} not-yet-computable of {len(judged)}"
         if recorded:
             head += f" ({recorded} of the failures recorded as misses)"
         lines.append(head)
-        for r in results:
+        for r in judged:
             tag = ""
             if r.n in MISSES and r.status == "fail":
                 tag = f" [recorded miss, debt #{MISSES[r.n].debt}, since {MISSES[r.n].since}]"
             lines.append(f"    {r.n:>2} {r.status:<19} {r.name}: {r.reason}{tag}")
-        for p in problems(results):
+        for p in problems(judged):
             lines.append(f"    FAIL {p}")
     return "\n".join(lines)
 
@@ -417,8 +462,10 @@ def report(models: Iterable[Model], **run_kwargs: Any) -> str:
 def main() -> int:
     utf8_stdout()
     models, _, _ = production()
-    print(report(models))
-    return 1 if any(problems(run(m)) for m in models) else 0
+    models = list(models)
+    results = evaluate_models(models)
+    print(report(models, results))
+    return 1 if any(problems(r) for r in results.values()) else 0
 
 
 if __name__ == "__main__":
