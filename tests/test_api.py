@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 import math
 import re
+import shutil
+import subprocess
 import threading
 import urllib.request
 from pathlib import Path
@@ -114,7 +116,7 @@ def test_the_hash_changes_when_the_bytes_change(tmp_path):
 def test_version_publishes_the_client_hash_and_its_files(api):
     payload = api.handle("/api/version").json()
     assert payload["viewer"] == content_hash(CLIENT)
-    assert [f["path"] for f in payload["viewer"]["files"]] == ["transport.js"]
+    assert [f["path"] for f in payload["viewer"]["files"]] == ["package.json", "transport.js"]
     assert payload["wire"] == wire.FORMAT
     assert payload["api"]["count"] >= 5 and "files" not in payload["api"]
 
@@ -374,6 +376,76 @@ def test_the_server_answers_and_says_what_it_ran():
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+NODE = shutil.which("node")
+
+DRIVER = """
+import {{ version, arrays, region, codes }} from "{module}";
+const origin = "{origin}";
+const v = await version({{ origin }});
+const a = await arrays(["stellar_surface_density", "stellar_mass_total"], {{}}, {{ origin }});
+const r = await region({{ r_min: 7, r_max: 9, phi_max: 0.4 }}, {{ stars: 5000 }}, {{ origin }});
+let refused = null;
+try {{
+  await arrays(["not_a_field"], {{}}, {{ origin }});
+}} catch (e) {{
+  refused = [e.status, e.body.error];
+}}
+console.log(JSON.stringify({{
+  viewer: v.viewer.hash,
+  stages: a.stages,
+  header_stages: a.header.stages,
+  profile: Array.from(a.arrays.stellar_surface_density.slice(0, 4)),
+  length: a.arrays.stellar_surface_density.length,
+  scalar: a.header.scalars.stellar_mass_total,
+  stars: r.header.stars.materialised,
+  radii: Array.from(r.arrays.star_radius.slice(0, 4)),
+  populations: Array.from(codes(r.arrays.star_population).slice(0, 8)),
+  refused,
+}}));
+"""
+
+
+@pytest.mark.skipif(NODE is None, reason="node is not installed; nothing here can run the browser's path")
+def test_the_transport_decodes_what_the_server_sends(tmp_path):
+    """Rule B3: the JS decoder is checked by running it, not by a Python twin of it.
+
+    Alignment, endianness, BigInt category codes and the error path are all
+    things a reimplementation would get right by construction and the real
+    client could still get wrong.
+    """
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    origin = f"http://{host}:{port}"
+    driver = tmp_path / "drive.mjs"
+    driver.write_text(
+        DRIVER.format(module=(CLIENT / "transport.js").as_uri(), origin=origin), encoding="utf-8"
+    )
+    try:
+        proc = subprocess.run([NODE, str(driver)], capture_output=True, text=True, timeout=180)
+        assert proc.returncode == 0, proc.stderr
+        got = json.loads(proc.stdout)
+
+        api = service()
+        header, arrays = api.handle("/api/arrays", "fields=stellar_surface_density,stellar_mass_total").frame()
+        stars_header, stars = api.handle("/api/region", "r_min=7&r_max=9&phi_max=0.4&stars=5000").frame()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert got["viewer"] == content_hash(CLIENT)["hash"]
+    assert got["stages"] == got["header_stages"] == header["stages"]
+    assert got["length"] == SMALL.n_R
+    assert got["profile"] == arrays["stellar_surface_density"][:4].tolist()
+    assert got["scalar"] == header["scalars"]["stellar_mass_total"]
+    assert got["stars"] == stars_header["stars"]["materialised"]
+    assert got["radii"] == stars["star_radius"][:4].tolist()
+    assert got["populations"] == stars["star_population"][:8].tolist()
+    assert got["refused"][0] == 404 and "not_a_field" in got["refused"][1]
 
 
 def test_every_route_has_a_published_timing():

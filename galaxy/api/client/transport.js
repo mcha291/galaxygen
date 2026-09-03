@@ -18,6 +18,10 @@
 export const WIRE = "galaxy-bin/1";
 export const MAGIC = "GLXY";
 export const BASE = "/api";
+// Same-origin by default: the page and the API are served together. An absolute
+// origin is passed per call by whatever is not a page — a test harness, a viewer
+// developed against a server on another port.
+export const ORIGIN = "";
 
 const HEADER_OFFSET = 8; // magic (4) + header length (4)
 const READERS = { f8: Float64Array, i8: BigInt64Array };
@@ -33,14 +37,14 @@ export class ApiError extends Error {
 }
 
 /** Build a URL: params with a null or undefined value are simply not sent. */
-export function url(path, params = {}, base = BASE) {
+export function url(path, params = {}, origin = ORIGIN) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === null || value === undefined) continue;
     query.set(key, Array.isArray(value) ? value.join(",") : String(value));
   }
   const search = query.toString();
-  const route = path.startsWith("/") ? path : `${base}/${path}`;
+  const route = `${origin}${path.startsWith("/") ? path : `${BASE}/${path}`}`;
   return search ? `${route}?${search}` : route;
 }
 
@@ -51,7 +55,7 @@ export function url(path, params = {}, base = BASE) {
  * server says it ran, which is how rule D4 is visible from the client side.
  */
 async function transport(path, params, options = {}) {
-  const target = url(path, params, options.base);
+  const target = url(path, params, options.origin);
   const response = await fetch(target, {
     method: options.method || "GET",
     cache: "no-store",
