@@ -45,10 +45,11 @@ def test_every_failure_is_recorded_and_the_run_is_clean(model):
     """Five rows miss and every one names a debt and a prediction (rules B4, B5)."""
     results = spec.run(model)
     failed = {r.n for r in results if r.status == "fail"}
-    assert failed == {3, 4, 20, 22, 23}
+    assert failed == {2, 3, 20, 22, 23}
     assert spec.unexplained(results) == () and spec.stale(results) == ()
     assert spec.problems(results) == []
-    assert {spec.MISSES[n].debt for n in failed} == {11, 13, 15, 17}
+    # Two causes hold five rows: debt #18 (no extended accretion) and #15 (the tilt).
+    assert {spec.MISSES[n].debt for n in failed} == {15, 18}
 
 
 def test_an_unexplained_failure_stops_the_run():
@@ -82,7 +83,7 @@ def test_recorded_misses_are_well_formed():
 def test_report_runs(prod):
     out = spec.report(list(prod[0]))
     assert "spec" in out and "16 not-yet-computable of 24" in out
-    assert "recorded miss, debt #11, since S1" in out
+    assert "recorded miss, debt #18, since S1" in out   # row 3, three sessions old
     assert "recorded miss, debt #15, since S2" in out
 
 

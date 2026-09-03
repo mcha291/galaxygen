@@ -97,14 +97,19 @@ LEVEL0: dict[str, Constant] = {
         "into stars and the model would have no extended gas disc at all.",
     ),
     "GAS_DISC_SCALE_RATIO": Constant(
-        1.5,
+        1.0,
         "dimensionless",
-        "Scale length of the accreting gas in units of the stellar disc's. HI discs are "
-        "systematically more extended than the stellar light they surround, by roughly 1.5-2 "
-        "[recall: Broeils & Rhee 1997 and the standard HI-to-optical comparison]. This is the "
-        "single constant that decides how much gas survives to the present day, and S2 measured "
-        "what it costs: it is also why the model's fitted stellar scale length disagrees with the "
-        "one lambda_d predicts (debt #13).",
+        "Scale length of the *accreting* gas in units of the disc scale length lambda_d predicts. "
+        "S2 set this to 1.5 from the observed HI-to-optical ratio, which was a mis-application it "
+        "flagged itself: 1.5-2 is measured between *final* discs [recall: Broeils & Rhee 1997], "
+        "not between the infall and the stars. S3 corrected it, and two independent arguments then "
+        "agree on 1.0. MMW98 predicts the gas that forms the disc carries the halo's angular "
+        "momentum distribution and so arrives with exactly the disc scale length; and running the "
+        "model back from the *observed* final ratio picks 1.0-1.1, because star formation makes "
+        "the surviving gas more extended than the gas that fell in. At 1.0 the model's fitted "
+        "stellar scale length is 2.52 kpc against lambda_d's 2.605 - agreement to 3%, which "
+        "discharges debt #13 [verified: tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]. "
+        "The constant is kept rather than deleted so that S10 can sweep it; at 1.0 it does nothing.",
     ),
     "SOLAR_METALLICITY": Constant(
         0.0142,

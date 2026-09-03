@@ -56,7 +56,9 @@ def test_the_gradient_is_set_by_the_inside_out_index(model):
     grads = [out(model, inside_out_index=n)["metallicity_gradient"] if False else
              out(model, inside_out_index=n).fields["metallicity_gradient"] for n in (0.0, 1.0, 2.0)]
     assert grads[0] > grads[1] > grads[2]
-    assert grads[0] == pytest.approx(0.0, abs=0.005)  # no inside-out growth, no gradient
+    # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
+    # surface density still falls outwards and that alone tilts the enrichment.
+    assert grads[0] == pytest.approx(-0.011, abs=0.003)
     # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
     assert grads[1] > -0.049
 
@@ -73,11 +75,11 @@ def test_infall_dilution_is_what_tilts_it(model):
 
     # Not "no spread": with n = 0 the accretion timescale is the same everywhere but
     # the surface density still falls outwards, so some enrichment contrast survives.
-    # Measured, so that a change is loud: it is about 28% of the n = 1 spread, i.e.
-    # differential infall supplies roughly seven tenths of the tilt and the falling
-    # surface density the rest.
-    assert spread(0.0) < 0.4 * spread(1.0)
-    assert spread(0.0) / spread(1.0) == pytest.approx(0.28, abs=0.06)
+    # Measured, so a change is loud. S3's more compact infall raised this from 0.28
+    # to 0.52 — a steeper surface density does more of the tilting — so differential
+    # infall now supplies about half of it rather than seven tenths.
+    assert spread(0.0) < 0.7 * spread(1.0)
+    assert spread(0.0) / spread(1.0) == pytest.approx(0.52, abs=0.08)
 
 
 def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
@@ -89,23 +91,40 @@ def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
     assert lots.fields["metallicity_gradient_old"] > none.fields["metallicity_gradient_old"]
 
 
-def test_old_stars_are_flatter_than_young_ones(model):
+def test_migration_over_flattens_the_old_population(model):
+    """A coupling S3 exposed by fixing the disc size, not by touching migration.
+
+    At S2 the young/old gradient ratio was 2.3 against an observed 1.75, and the
+    kernel looked about right. S3 corrected the infall extent (debt #13), the
+    stellar disc shrank from 3.74 to 2.52 kpc, and the same 3.6 kpc kernel now
+    smooths across most of the disc: the ratio is 4.6. The kernel's effect depends
+    on the disc it acts on, so its strength cannot be judged independently of the
+    structure — which is why this is recorded against debt #15 rather than fixed
+    by moving migration_efficiency to whatever reproduces 1.75.
+    """
     o = out(model)
     young, old = o.fields["metallicity_gradient_young"], o.fields["metallicity_gradient_old"]
     assert abs(old) < abs(young)
-    # Both are about a third of the observed values, but their *ratio* is close to
-    # the observed 0.07/0.04 = 1.75 — so the kernel is roughly right and the
-    # gradient it flattens is not (debt #15).
-    assert 1.5 < young / old < 3.0
+    assert young / old == pytest.approx(4.6, abs=0.5)
 
 
-def test_metallicity_rises_and_never_runs_backwards(model):
+def test_metallicity_rises_then_is_slightly_diluted_late(model):
+    """Late primordial infall outpacing a fading star formation rate is real, not a bug.
+
+    The rise is the whole history; the small late decline is dilution winning once
+    the gas is depleted enough that the Kennicutt-Schmidt rate has fallen away while
+    accretion is still going on. It is worth pinning because a *large* decline would
+    be a sign integration had gone wrong.
+    """
     o = out(model)
     z = o.fields["metallicity_history"]
     at_sun = int(np.argmin(np.abs(o.grid.R - R_SUN)))
-    assert np.all(np.diff(z[at_sun]) >= -1e-12)
-    assert z[at_sun][0] == 0.0  # primordial infall: the model starts with no metals
+    track = z[at_sun]
+    assert track[0] == 0.0  # primordial infall: the model starts with no metals
     assert np.all(z >= 0.0)
+    assert track[-1] > 0.9 * track.max()  # the decline is slight, not a collapse
+    decline = float(track.max() - track[-1]) / track.max()
+    assert decline < 0.02, decline
 
 
 def test_absent_metals_are_not_shown_as_a_number(model):

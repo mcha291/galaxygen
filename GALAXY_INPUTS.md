@@ -689,14 +689,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    about 10 km/s — three times acceptance entry 3's error bar. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
    measurements span (§4b).
-13. **Two routes to the disc scale length, disagreeing by 44%.** λ_d and MMW98
-   give 2.60 kpc; the star formation history builds a stellar profile whose
-   fitted scale length is 3.74 kpc. The second is forced: the accreting gas has
-   to be more extended than the stars or the model retains nowhere near the
-   observed gas mass. Acceptance rows 3 and 4 both fail on this one cause
-   `[verified: spec.MISSES rows 3, 4]`. Not a tolerance to be split — one of
-   them is wrong. First suspects: `GAS_DISC_SCALE_RATIO`, and MMW98's structure
-   factors f_c, f_R, which S1 folded into λ_d unmodelled (debt #6).
+13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
+   **DISCHARGED by S3.** The first suspect was the right one:
+   `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
+   which is measured between *final* discs and not between the infall and the
+   stars. Corrected to 1.0, which two independent arguments agree on — MMW98
+   predicts the gas that forms the disc arrives with the disc's own scale
+   length, and running the model back from the observed final ratio picks
+   1.0–1.1. The two routes then give 2.52 and 2.605 kpc, agreeing to 3.3%
+   `[verified: tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]`.
+   MMW98's structure factors f_c and f_R are untouched and remain debt #6.
 14. **One infall episode, not two.** GALAXY_INPUTS.md §3 names the two-infall
    framework, but ruling 11 makes the second infall merger-delivered and
    `mergers[]` is UNSET until S3. So S2 models a single exponential accretion
@@ -721,6 +723,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    agrees to 6% and still fails. A defect in the table, not the model; the fix
    is to read the source's uncertainty or to give the table a way to say "no
    testable target", which belongs to the S10 audit.
+18. **No high-angular-momentum accretion component.** With the infall carrying
+   the disc's own scale length (debt #13's fix), nothing accretes beyond about
+   10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
+   not exist in the model. **One cause, three failing rows**: gas mass 38% low
+   (row 20), star formation rate 1.14 against 1.65 (row 2), and every baryon
+   packed inside R₀ so v_c there is too high (row 3) `[verified: spec.MISSES
+   rows 2, 3, 20]`. Predicted fix: a second accretion channel at high angular
+   momentum, which adds gas where the star formation threshold protects it and
+   leaves the stellar structure alone. Rows 3 and 4 are the check that it is
+   *high* enough in angular momentum — if the stellar disc broadens, it is not.
+   The bulge pushes row 3 the other way and arrives at S3–S4, so those two must
+   be judged together.
 
 ---
 
