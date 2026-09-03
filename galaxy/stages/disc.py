@@ -61,6 +61,48 @@ def freeman_circular_velocity(R: np.ndarray | float, sigma0: float, R_d: float, 
     return np.sqrt(v2)
 
 
+# Scale lengths of the exponential basis used to represent an arbitrary disc.
+# Log-spaced from well inside the stellar disc to the edge of the grid.
+BASIS_SCALE_LENGTHS: tuple[float, ...] = (0.5, 0.9, 1.6, 2.8, 5.0, 9.0, 16.0, 28.0)
+
+
+def _freeman_v2(R: np.ndarray, sigma0: float, R_d: float, G: float) -> np.ndarray:
+    y = np.asarray(R, dtype=float) / (2.0 * R_d)
+    return 4.0 * math.pi * G * sigma0 * R_d * y * y * (i0(y) * k0(y) - i1(y) * k1(y))
+
+
+def disc_circular_velocity(sigma: np.ndarray, R: np.ndarray, G: float, at: np.ndarray | float | None = None):
+    """Circular velocity of an arbitrary razor-thin axisymmetric disc ``sigma(R)``.
+
+    Freeman's formula is exact only for an exponential, and a gas disc is not one
+    — star formation holds its inner part near the threshold and leaves the outer
+    part untouched, so fitting a single exponential to it and calling that the
+    mass distribution would be wrong where it matters most.
+
+    Poisson's equation is *linear* in the surface density, so the honest fix is
+    cheap: least-squares the profile onto a fixed basis of exponentials, then add
+    the exact Freeman solution for each. Coefficients may come out negative, which
+    is fine — the sum represents the profile, and each term contributes its own
+    (signed) v² to a superposition, not a mass in its own right. The residual of
+    the fit is returned so a caller can assert the representation is good rather
+    than assume it.
+
+    ``sigma`` is in M☉/pc² and ``R`` in kpc; returns ``(v_c, relative residual)``.
+    """
+    sigma = np.asarray(sigma, dtype=float)
+    R = np.asarray(R, dtype=float)
+    basis = np.exp(-R[:, None] / np.asarray(BASIS_SCALE_LENGTHS)[None, :])
+    coeffs, *_ = np.linalg.lstsq(basis, sigma, rcond=None)
+    scale = float(np.max(np.abs(sigma)))
+    residual = float(np.max(np.abs(basis @ coeffs - sigma)) / scale) if scale > 0.0 else 0.0
+    where = R if at is None else np.asarray(at, dtype=float)
+    v2 = np.zeros_like(np.atleast_1d(where), dtype=float)
+    for c, L in zip(coeffs, BASIS_SCALE_LENGTHS):
+        v2 = v2 + _freeman_v2(where, float(c) * PC_PER_KPC**2, float(L), G)
+    v = np.sqrt(np.maximum(v2, 0.0))
+    return (v if at is None else float(v[0]) if np.ndim(at) == 0 else v), residual
+
+
 DISC_SCALE_LENGTH_SPIN = FieldDecl(
     name="disc_scale_length_spin",
     label="Disc scale length from λ_d",

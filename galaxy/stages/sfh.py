@@ -39,7 +39,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.disc import PC_PER_KPC, freeman_circular_velocity
+from galaxy.stages.disc import PC_PER_KPC, disc_circular_velocity
 
 
 def surface_to_mass(sigma: np.ndarray, R: np.ndarray) -> float:
@@ -216,14 +216,15 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     R_gas = fit_scale_length(gas, R, 1.0, ctx.grid.spec.R_max)
     m_star, m_gas = surface_to_mass(stars, R), surface_to_mass(gas, R)
 
-    def freeman(mass: float, length: float, at: np.ndarray | float) -> np.ndarray:
-        sigma0 = mass / (2.0 * math.pi * length**2)  # M☉/kpc²
-        return freeman_circular_velocity(at, sigma0, length, G)
-
-    v_baryons = np.hypot(freeman(m_star, R_star, R), freeman(m_gas, R_gas, R))
+    # Neither profile is an exponential, so each goes through the general
+    # razor-thin solver rather than through a fitted single exponential.
+    v_star, res_star = disc_circular_velocity(stars, R, G)
+    v_gas, res_gas = disc_circular_velocity(gas, R, G)
+    v_star_sun, _ = disc_circular_velocity(stars, R, G, at=R_sun)
+    v_gas_sun, _ = disc_circular_velocity(gas, R, G, at=R_sun)
+    v_baryons = np.hypot(v_star, v_gas)
     v_sun = math.hypot(
-        float(ctx.fields["halo_circular_velocity_sun"]),
-        float(np.hypot(freeman(m_star, R_star, R_sun), freeman(m_gas, R_gas, R_sun))),
+        float(ctx.fields["halo_circular_velocity_sun"]), math.hypot(v_star_sun, v_gas_sun)
     )
 
     return {
