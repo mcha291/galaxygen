@@ -320,10 +320,18 @@ _INPUTS: tuple[Input, ...] = (
         "migration_efficiency",
         "Radial migration efficiency",
         "control",
-        "Dispersion-kernel strength, ruled in by ruling 4. No default and no unit are given; "
-        "dimensionless is provisional and S2 confirms both.",
-        unit="dimensionless",
-        default_owner="S2",
+        "Churning strength: the r.m.s. distance a star's guiding centre wanders from its birth "
+        "radius, quoted at an age of 8 Gyr and growing as sqrt(age). Ruled in by ruling 4. S2 "
+        "confirms the unit is **kpc**, not the provisional dimensionless — a dispersion in radius "
+        "has a length, and leaving it dimensionless would have let a kernel width be compared "
+        "against a metallicity. Default 3.6 kpc [recall: Frankel et al. measure churning of this "
+        "order for the solar neighbourhood over 8 Gyr]. Range 0–8 kpc: zero is no migration, and "
+        "beyond about 8 the disc is radially mixed and no gradient survives [inferred]. Acts on "
+        "stars only, never gas, so acceptance row 22 does not see it and row 23 does.",
+        unit="kpc",
+        default=3.6,
+        lo=0.0,
+        hi=8.0,
         checkpoint_hypothesis=3,
     ),
     Input(

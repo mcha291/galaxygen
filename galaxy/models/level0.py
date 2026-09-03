@@ -113,12 +113,18 @@ LEVEL0: dict[str, Constant] = {
         "Asplund et al. 2009].",
     ),
     "NET_YIELD": Constant(
-        0.035,
+        0.011,
         "dimensionless",
-        "Mass of new metals returned per unit mass locked into stars, integrated over a "
-        "Kroupa/Chabrier IMF. Around 0.03-0.04 for total metallicity [recall]. Level 0 by "
-        "GALAXY_INPUTS.md §2 (nucleosynthetic yields), and the one constant that sets the absolute "
-        "level of the metallicity rather than its gradient.",
+        "**Effective** yield: metals surviving in the gas per unit mass locked into stars. The "
+        "nucleosynthetic yield integrated over a Kroupa/Chabrier IMF is 0.03-0.04 for total "
+        "metallicity [recall], and this is deliberately about a third of it. The simple model has "
+        "no outflows — GALAXY_INPUTS.md §8 makes them an advanced-model axis — so metals that "
+        "should leave the disc stay in it, and at the nucleosynthetic value the solar "
+        "neighbourhood comes out at [Fe/H] = +0.50 rather than 0.00. The factor of three is the "
+        "metal loss the model does not have, and it is debt #16: when S9 adds outflows this "
+        "constant has no claim on its value and must be re-derived (rule B10). Calibrating it "
+        "costs no acceptance row, because the gradient rows are exactly insensitive to it "
+        "[verified: tests/test_chemistry.py::test_the_gradient_does_not_depend_on_the_yield].",
     ),
     "V_SUN_PECULIAR": Constant(
         12.24,
