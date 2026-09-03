@@ -34,8 +34,11 @@ closes the project.
 > the current merge — but the tag has to be re-pointed, and a tag cannot be moved
 > from a web session (the same 403 that created this file). This is the cost of the
 > rewrite, recorded rather than left to be discovered when the batch runs.
-> **Done: the stale tag was deleted by the owner on 2026-09-03**, so the batch
-> below can create `s01` cleanly. The line that deletes it is kept as a no-op.
+> **Still outstanding as of 2026-09-03**, and checked rather than taken on
+> report: `git ls-remote origin refs/tags/s01` returns `e3e8bba`, which peels to
+> the orphaned `56d7510`. A local `git tag -d s01` does not touch the remote —
+> the refspec push below is what deletes it, and it must run before the batch
+> creates the new one, or the create fails as already-existing.
 
 | 2 | `s02` | *TBD — S3 fills this in* | **queued** |
 
