@@ -41,7 +41,8 @@ closes the project.
 > creates the new one, or the create fails as already-existing.
 
 | 2 | `s02` | `fa7e74fb3cc2` | **queued** |
-| 3 | `s03` | *TBD — S4 fills this in* | **queued** |
+| 3 | `s03` | `8a6032ca31be` | **queued** |
+| 4 | `s04` | *TBD — S5 fills this in* | **queued** |
 
 ### Run these
 
@@ -61,8 +62,11 @@ git tag -a s01 4ebbe8f8dfebf142b166a207ec1bb57ca0918eb9 -m "S1: halo & disc"
 # S2 — star formation history & chemistry.
 git tag -a s02 fa7e74fb3cc24e5a25f20e3f6800c5939c6ae821 -m "S2: SFH & chemistry"
 
-# S3 — assembly & mergers. S4 replaces this with the literal SHA.
-git tag -a s03 "$(git rev-list -1 --grep='^Merge S3 into main' origin/main)" -m "S3: assembly & mergers"
+# S3 — assembly & mergers.
+git tag -a s03 8a6032ca31befc5b6d4d643347d52e7c5dbf17fa -m "S3: assembly & mergers"
+
+# S4 — pattern. S5 replaces this with the literal SHA.
+git tag -a s04 "$(git rev-list -1 --grep='^Merge S4 into main' origin/main)" -m "S4: pattern"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

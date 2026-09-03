@@ -759,6 +759,19 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    measurement, and it makes debt #9 circular (see #9). A criterion grounded in
    kinematics or chemistry rather than in the event list is needed before any
    merger-free comparison means anything.
+21. **The first link of the pattern-speed chain is not modelled.** §4b describes
+   it as disc dominance → bar length → pattern speed. S4 models the second and
+   third links; the bar's half-length is scaled from the disc scale length
+   alone, because no relation between disc dominance and bar length is quoted
+   anywhere in this project and inventing one would be rule A4's failure a level
+   up. `disc_dominance` is published and unused so the gap is visible.
+22. **The pitch–shear relation has no lever in this model, so it cannot be
+   falsified by it.** Measured, once, as ruling 3 asks: across the whole input
+   space the shear rate moves only 0.829 → 0.967, buying 0.30° of pitch, while
+   the seeded draw gives 5.12° — **0.3% trend against 99.7% draw**
+   `[verified: DECISIONS.md D57]`. `PITCH_SHEAR_SLOPE` is therefore doing no
+   measurable work, and a wrong slope would look exactly like this one. A live
+   instance of rule B11.
 
 ---
 

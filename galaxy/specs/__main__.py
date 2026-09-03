@@ -31,8 +31,9 @@ def main() -> int:
     print(determinism.report(models, impls, table))
     bad |= bool(determinism.check(models, impls, table))
 
-    print(spec.report(models))
-    bad |= any(spec.problems(spec.run(m)) for m in models)
+    spec_results = spec.evaluate_models(models)
+    print(spec.report(models, spec_results))
+    bad |= any(spec.problems(r) for r in spec_results.values())
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

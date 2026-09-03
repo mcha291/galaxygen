@@ -148,6 +148,50 @@ LEVEL0: dict[str, Constant] = {
         "event contributes this times its mass ratio. Scaled so the Milky Way's 1:4 merger leaves "
         "the pre-existing disc at about 30 km/s, which is what makes it thick rather than warm.",
     ),
+    "BAR_LENGTH_RATIO": Constant(
+        2.0,
+        "dimensionless",
+        "Bar half-length in units of the disc scale length. Bars in barred spirals run about "
+        "1.5-2.5 R_d [recall]. GALAXY_INPUTS.md 4b describes the chain as disc dominance -> bar "
+        "length -> pattern speed; only the second and third links are modelled here, because no "
+        "relation between disc dominance and bar length is quoted anywhere in the project and "
+        "inventing one would be rule A4's failure a level up. disc_dominance is published so the "
+        "missing link can be checked rather than forgotten (debt #21).",
+    ),
+    "FAST_BAR_RATIO": Constant(
+        1.2,
+        "dimensionless",
+        "Corotation radius in units of the bar half-length. Bars are observed to be 'fast', with "
+        "R_CR/a_bar = 1.2 +/- 0.2 [verified: GALAXY_INPUTS.md 4b, citing BHG16 4.4].",
+    ),
+    "FAST_BAR_SCATTER": Constant(
+        0.2,
+        "dimensionless",
+        "The +/- on FAST_BAR_RATIO, and it is *observed scatter* rather than measurement error - "
+        "two galaxies with identical inputs credibly differ by this much. That is why it is a "
+        "seeded draw and why acceptance rows 16 and 17 are statistical (GALAXY_INPUTS.md 4b, "
+        "debt #8).",
+    ),
+    "PITCH_SHEAR_INTERCEPT": Constant(
+        13.0,
+        "deg",
+        "Mean spiral pitch angle at shear rate 1, i.e. for a flat rotation curve. The Milky Way's "
+        "arms are quoted near 12-13 degrees [recall]. Ruling 3 took PITCH_YU over PITCH_SEIGAR.",
+    ),
+    "PITCH_SHEAR_SLOPE": Constant(
+        -8.0,
+        "deg",
+        "Degrees of pitch per unit shear rate: tighter arms where shear is stronger. Ruling 3 "
+        "says the trend is weak, which is a claim S4 measured rather than assumed - the S-spread "
+        "check reports how much of the pitch variance is trend and how much is draw.",
+    ),
+    "PITCH_SCATTER": Constant(
+        6.0,
+        "deg",
+        "Dispersion of pitch angle about the shear trend. Large enough that ruling 3 calls pitch "
+        "'effectively seeded rather than derived' [verified: GALAXY_INPUTS.md 5], which is exactly "
+        "what the S-spread measurement checks.",
+    ),
     "SOLAR_METALLICITY": Constant(
         0.0142,
         "dimensionless",

@@ -1,54 +1,49 @@
-# BRIEF — Session 4: pattern (bar and arms)
+# BRIEF — Session 5: systems (the star catalogue, headless)
 
 Open per RESUMING.md. Read RULES.md in full, then this. Do not read
-GALAXY_PLAN.md. Consult GALAXY_INPUTS.md §5 (ruling 3, `PITCH_YU`), §4b (the
-seeded-draw remedy) and §11 when you reach them.
+GALAXY_PLAN.md. Consult GALAXY_INPUTS.md §9 (depth of materialisation) and §12
+when you reach them.
 
 ## Build
 
-- `galaxy/stages/pattern.py`, checkpoint 4, reading `pattern_seed` — the first
-  **seeded** stage, so it is also the first real exercise of `ctx.rng`, of
-  provenance `seeded` in the field declarations, and of `graph.py`'s provenance
-  check. Expect that check to be the thing that catches your mistakes.
-- Bar: half-length (row 15), pattern speed (16), corotation radius (17). Rows
-  16 and 17 are **statistical** (debt #8): they pass when the central 95% of an
-  ensemble of ≥ 20 seeded runs intersects the target, so the stage must be
-  runnable over seeds cheaply and `spec.run` needs an ensemble argument.
-- Arms: `PITCH_YU` seeded per ruling 3; record the S-spread once. Rule B11
-  warns the pitch–shear correlation may be the wrong relation even where it
-  fits — say which you used and what it would take to falsify it.
-- Bulge mass (row 12) and bulge/total fraction (13, statistical) if the bar
-  gives them honestly; leave them not-yet-computable rather than inventing a
-  bulge the pattern does not produce.
+- `galaxy/stages/systems.py`, checkpoint 5, reading `systems_seed`. Seeded like
+  S4's `pattern` — read D55 first: provenance is per *stage*, so anything
+  reproducible-without-a-seed belongs in a separate derived stage.
+- A star catalogue drawn from the fields the model already publishes: positions
+  from the stellar surface density and the scale heights, ages and [Fe/H] from
+  the histories, kinematics from `disc_heating`. **Do not sample what you can
+  count** (rule B8) — the density field is known, so draw positions from it
+  rather than rejection-sampling a guess.
+- **Per-region determinism is the gate, and it is a property of the seed
+  derivation rather than of the loop.** `hash(systems_seed, star_id)` must give
+  the same star whatever order regions are generated in and whatever else has
+  been generated; `galaxy/specs/determinism.py::check_region` already tests the
+  primitive, so build on `ctx.rng(seed, *path)` and never on iteration state.
+- 10⁶ stars in under 10 s. Measure it cold (rule B2) and publish the number.
 
 ## Gate
 
-- `PITCH_YU` seeded, S-spread recorded once.
-- Rows 16 and 17 report a statistical verdict over a real ensemble, not
-  not-yet-computable.
-- `python -m galaxy.specs` clean; every new failure is a recorded miss naming a
-  debt and a prediction.
+- 10⁶ stars < 10 s, measured and published.
+- Per-region determinism: the same region generated twice, and generated after
+  different neighbours, is identical.
+- `python -m galaxy.specs` clean; new failures are recorded misses with a debt
+  and a prediction.
 
 ## Traps
 
-- **Read D51 before you trust row 9.** S3's gate passes because two errors
-  cancel; a test asserts the cancellation. Do not "fix" that test.
-- Seeded fields must declare `provenance="seeded"` and the graph derives the
-  truth from what the stage reads — a mismatch either way is a failure, and a
-  field that is seeded in one model and derived in another is the open question
-  D10 left for whoever hits it first.
-- Draw through `ctx.rng(seed, *path)`, never `hash()` or module-level state;
-  per-region determinism means the same star gets the same draw whatever order
-  regions are generated in.
-- **Sweep the grid before believing a new scalar** (D46), and publish
-  acceptance scalars analytically rather than off the grid (D37).
-- Freeman is exact only for an exponential; use `disc.disc_circular_velocity`
-  and check the residual it returns (D44).
-- The bar lives inside the region where S3's thick disc is already too compact
-  (debt #19). If a bar makes row 5 or 9 move, say so — those rows are held by a
-  cancellation and will not survive being leaned on.
+- **Read D51 before trusting row 9.** It passes because two errors cancel.
+- A catalogue is `column` kind with `of="star"`, not `field`; every column of one
+  object class must share a length, and the runner checks it.
+- Seeded fields declare `provenance="seeded"`; `graph.py` derives the truth and
+  fails on a mismatch either way.
+- **Sweep the grid before believing a new scalar** (D46); publish acceptance
+  scalars analytically (D37). A catalogue statistic is not exempt: if it moves
+  with N_R it is measuring the grid.
+- The materialised sample is drawn per region and never stored (GALAXY_PLAN.md
+  §4). Do not accumulate a global list you then index into — that is the
+  order-dependence the gate exists to catch.
 - Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and fill
-  in S3's merge SHA from `git rev-list -1 --grep='^Merge S3 into main'
+  in S4's merge SHA from `git rev-list -1 --grep='^Merge S4 into main'
   origin/main`. A test fails if a ☑ session has no row there.
 - Do not edit `.github/workflows/` without workflow scope on the token.
 - After ticking the board run `uv run python tools/progress.py`.

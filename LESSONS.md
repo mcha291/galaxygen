@@ -175,3 +175,25 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [all] Check a formula's constant factor against a worked case. The brief wrote
   h_z = σ_z²/πGΣ, missing the isothermal sheet's 2, which would have made every
   scale height twice too large and still looked plausible.
+
+## From S4
+
+- [field][catalogue][advanced] Provenance is derived **per stage**: a stage that
+  reads a seed publishes seeded fields, all of them. If one field of a stage is
+  genuinely reproducible and another is drawn, split the stage rather than
+  mislabel either (rule A10) `[verified: DECISIONS.md D55]`.
+- [field][advanced] Measure what a relation actually contributes before trusting
+  it. The pitch–shear trend holds 0.3% of the pitch variance because the model's
+  rotation curves are near-flat whatever the inputs, so a wrong slope would look
+  exactly like the right one (rule B11) `[verified: DECISIONS.md D57]`.
+- [field] A statistical acceptance row needs something to build the ensemble, not
+  just a rule for judging one. Rows 16 and 17 reported not-yet-computable for four
+  sessions because the criterion existed and the 20 draws did not (D58).
+- [field][advanced] Derive what you can and draw only the residual. The pattern
+  speed is v_c(R_CR)/R_CR exactly — a definition — so its scatter is all inherited
+  from the one quantity that is genuinely drawn, and there is one place to look
+  when it moves.
+- [all] When two project documents disagree, prefer the one the machinery depends
+  on. §5 puts the pitch draw on `world_seed`; the registry and the plan put it on
+  `pattern_seed`, and only the latter keeps rerolling the arms from invalidating
+  checkpoint 1 (D56).
