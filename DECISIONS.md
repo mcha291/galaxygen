@@ -843,3 +843,71 @@ the 5 Gyr end, leaving the thin disc half its observed thickness. σ_z(thin) is 
 20.1 km/s and row 6 passes. The factor of 2 is the self-gravitating isothermal
 sheet's, and S3's own brief wrote the relation without it — which would have made
 every scale height twice too large `[verified: galaxy/stages/vertical.py]`.
+
+## Session 4 — pattern: bar and arms
+
+Surface: web. Model: Opus 5. Ran on the S1 branch at the owner's direction.
+
+### D55. Two stages at checkpoint 4, because provenance is derived per stage
+
+**Decision.** `bar` (derived: half-length, shear rate, disc dominance) and
+`pattern` (seeded: corotation radius, pattern speed, pitch angle, arm
+multiplicity), both at checkpoint 4.
+
+**Settled by.** `graph.py` computes provenance for a whole stage — a stage that
+reads a seed publishes seeded fields, all of them `[verified: galaxy/specs/graph.py
+provenance block]`. But the bar's *length* has no draw in it while its *pattern
+speed* does, and acceptance row 15 is pointwise where 16 and 17 are statistical.
+Declaring the length seeded would be a false label on a reproducible number, and
+rule A10 exists precisely to stop that vagueness. Splitting gets both labels right
+with the machinery that already exists. **The alternative — per-field provenance —
+is a contract change**: a field would have to declare which seeds it depends on,
+and every existing declaration would need revisiting. That belongs to the S10
+audit, and it is the same seam D10 flagged from the other side.
+
+### D56. The pitch draw uses `pattern_seed`, not `world_seed`
+
+**Decision.** `pattern_seed`, as the registry and GALAXY_PLAN.md §3 have it.
+
+**Settled by.** GALAXY_INPUTS.md §5 says the pitch dispersion comes from
+`world_seed` `[verified: GALAXY_INPUTS.md §5 ruling 3]`, and it cannot: rerolling
+the arms would then invalidate every checkpoint from 1 onwards, when the entire
+point of per-stage seeds is that rerolling stage 4 invalidates 5 and 6 and nothing
+earlier `[verified: GALAXY_PLAN.md §3 locking]`. `graph.py` would also fail the
+checkpoint hypothesis, since `world_seed` is assigned to checkpoint 1. Two
+documents against one, and the two that agree are the ones the locking design
+depends on.
+
+### D57. The S-spread, run once as ruling 3 asks: 0.3% trend, 99.7% draw
+
+**Decision.** Recorded here and not re-run. Sweeping `halo_mass` over
+3 × 10¹¹–4 × 10¹² M☉, `disc_spin` over 0.010–0.030 and `halo_assembly_z` over
+1.5–3.5 (27 galaxies) moves the shear rate only from **0.829 to 0.967**, which
+buys a pitch-angle spread of **0.30°**. The seeded draw over 40 seeds gives
+**5.12°**. So the trend holds **0.3%** of the variance and the draw **99.7%**.
+
+**Settled by.** Ruling 3 predicted the draw would dominate and asked for the check
+once `[verified: GALAXY_INPUTS.md §5]`. It is confirmed, and by a wider margin than
+"weak trend" suggests — the model's rotation curves are near-flat whatever the
+inputs, so the pitch–shear relation has almost no lever to pull. Two consequences,
+both stated rather than left implicit. `PITCH_SHEAR_SLOPE` is doing no measurable
+work, so **the model cannot falsify the pitch–shear relation** — a live instance of
+rule B11, where a relation that fits the validation table is not thereby the right
+relation. And `pitch_angle` is, as ruling 3 says, effectively a pure draw, so
+anything downstream that reads it inherits a random component rather than a
+consequence of the mass distribution. Recorded as debt #22.
+
+### D58. `spec.py` grows a real ensemble
+
+**Decision.** `spec.ensemble(model, fields, n)` runs the model over `n` galaxies
+that differ only in their seeds; `evaluate_models` builds one per model, and
+`python -m galaxy.specs` judges the statistical rows against it.
+
+**Settled by.** Rows 16 and 17 are statistical by debt #8, and D16 fixed what
+passing means — the central 95% of at least 20 seeded values intersecting the
+target — but nothing built the 20 values, so both rows reported
+not-yet-computable however good the model was. Every seed moves together because
+the members of an ensemble should be different galaxies, not one galaxy with one
+knob jiggled. Cost is 20 runs per model, about 3 seconds; if that becomes a
+problem the fix is to re-run only the seeded tail, which is a `performance.py`
+question (S10).

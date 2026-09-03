@@ -38,7 +38,7 @@ tags exist lives, and a test asserts it carries a row for every ☑ session.
 **Next:** S4. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 16 (`GALAXY_INPUTS.md` §11). **Discharged:** 4.
+**Open debts:** 18 (`GALAXY_INPUTS.md` §11). **Discharged:** 4.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is
