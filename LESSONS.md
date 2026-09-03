@@ -103,6 +103,10 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] When a ritual step cannot succeed in this environment, change the
   ritual rather than repeating the failure or quietly skipping it. A close that
   ends in a guaranteed error trains everyone to ignore the error.
+- [close] `git tag -d` is local only; a remote tag needs
+  `git push origin :refs/tags/<name>`. Confirm with `git ls-remote` rather than
+  on report — S2 wrote "deleted" into a tracked file on the strength of a
+  message and the tag was still there.
 - [close] Before rewriting history, check `git ls-remote` for **tags**, not just
   the branch head. A rewrite invalidates every ref pointing into the rewritten
   range, including refs someone else pushed while the session was working;
