@@ -629,3 +629,123 @@ lost, but the tag has to be deleted and re-pointed by hand, and that is queued i
 `MANUAL_TODO.md`. The general lesson is not "rewriting is bad" — the owner wanted
 it — but that a rewrite invalidates **every** ref pointing into the rewritten range,
 and refs include ones nobody in the session created.
+
+## Session 2 — star formation history & chemistry
+
+Surface: web. Model: Opus 5 `[verified: the session's own `get_session`]`. Ran on
+the S1 branch rather than `session-02`, at the owner's direction.
+
+### D42. Two stages, and the acceptance kinematics move to checkpoint 3
+
+**Decision.** `sfh` (infall, star formation, the gas/star split) and `chemistry`
+(metallicity, gradient, migration), both at checkpoint 3. `stellar_mass_total`,
+`thin_disc_scale_length`, `v_circular_sun` and `v_tangential_sun` move there from
+checkpoint 1. The disc stage keeps its λ_d prediction as
+`disc_scale_length_spin` and its one-component `circular_velocity`.
+
+**Settled by.** A velocity at R₀ cannot be right until the mass inside R₀ is
+right, and checkpoint 1 has every baryon in one exponential by construction
+(debt #11). Checkpoint order forbids a checkpoint-1 stage reading a checkpoint-3
+field, so the acceptance scalars had to move rather than be corrected in place
+`[verified: galaxy/specs/graph.py checkpoint-order check]`. The checkpoint-1
+curve stays because GALAXY_PLAN.md §3 makes stage one's preview a rotation curve,
+and stage one genuinely does not know the split `[inferred]`.
+
+### D43. τ(R) is anchored at R₀, not at R_d
+
+**Decision.** `τ(R) = τ₀ (R/R₀)ⁿ`.
+
+**Settled by.** GALAXY_INPUTS.md §3 states τ₀ as "~7 Gyr **at R₀**" in one row and
+the law as `τ₀ (R/R_d)ⁿ` in the next `[verified: GALAXY_INPUTS.md §3 rows 4, 5]`.
+Those cannot both hold: R₀/R_d ≈ 3.1, so at n = 1 they differ by a factor of
+three in every timescale. R₀ is the anchor that matches the source's own numbers —
+the two-infall model §3 cites gives τ_D(R) = 1.033R − 1.267 Gyr, which is 7.2 Gyr
+at R = 8.2 `[recall: Chiappini+01]`. Same reasoning fixes `inside_out_index` at
+1.0: a linear τ(R) *is* n = 1, so τ₀ and n are two readings of one relation rather
+than two free numbers.
+
+### D44. A general razor-thin disc solver, because the gas disc is not an exponential
+
+**Decision.** `disc.disc_circular_velocity` least-squares any Σ(R) onto a fixed
+basis of eight exponentials and superposes the exact Freeman solution for each,
+returning the fit residual with the answer.
+
+**Settled by.** Star formation holds the inner gas near the threshold and leaves
+the outer gas alone, so the profile is flat and then falling; fitting one
+exponential to it gave a "scale length" of 10–25 kpc depending only on the fitting
+range, and that number was feeding an acceptance row. Poisson is linear in Σ, so
+superposition is exact and the coefficients may be signed without meaning anything
+physical `[inferred]`. On a pure exponential it reproduces Freeman to 0.02 km/s at
+R₀ — row 3's bar is 3 km/s — degrading to 2% only at the grid edge where v is
+small `[verified: tests/test_disc.py::test_the_general_solver_reproduces_freeman_on_an_exponential]`.
+S3's bulge and S4's thick disc need the same machinery.
+
+### D45. `migration_efficiency` is in kpc
+
+**Decision.** Unit `kpc`, default 3.6, range 0–8. It smooths stellar populations
+with a Gaussian of width `migration_efficiency × √(age/8 Gyr)` and never touches
+the gas.
+
+**Settled by.** S0 marked the unit provisional and gave S2 the ruling (D8). A
+radial dispersion has a length; leaving it dimensionless would have let a kernel
+width be compared against a metallicity without any check firing `[inferred]`.
+Acting on stars only is what makes it falsifiable: acceptance row 22 is measured
+from young tracers and must not see it, row 23's old populations must
+`[verified: tests/test_chemistry.py::test_migration_flattens_old_stars_and_leaves_gas_alone]`.
+
+### D46. The star formation threshold is smooth, and that is numerical rather than aesthetic
+
+**Decision.** `Ψ = KS_NORM Σ^KS_INDEX × ½(1 + tanh((Σ − Σ_crit)/(0.25 Σ_crit)))`.
+The width belongs to the threshold rather than being a constant of its own.
+
+**Settled by.** A convergence sweep, run because rule B7 says a scaling exponent
+finds what a stopwatch cannot. The gas mass and the gradient converged to 0.1%
+across N_R and N_t; the star formation rate wandered between 1.47 and 1.79 **with
+no trend in either**, which is the signature of an artefact rather than a
+truncation error. The cause is that self-regulation holds a wide annulus of gas
+*at* the threshold, so with a step the integrated SFR depends on which side of it
+each cell lands on. Row 2 "passing" at 1.597 was grid alignment. The smooth switch
+converges the rate to 0.1% and improves the gas mass at the same time
+`[verified: tests/test_sfh.py::test_the_star_formation_rate_converges]`. A
+threshold in nature is not a step, so this is also the more honest law.
+
+### D47. `NET_YIELD` is an effective yield, calibrated, and it costs no acceptance row
+
+**Decision.** 0.011, against a nucleosynthetic 0.03–0.04.
+
+**Settled by.** At the nucleosynthetic value the solar neighbourhood comes out at
+[Fe/H] = +0.50 rather than 0.00, because the simple model has no outflows to
+remove metals and GALAXY_INPUTS.md §8 makes them an advanced-model axis. The
+factor of three is that missing loss. What makes the calibration defensible rather
+than a fit to a check is a measurement: the gradient rows are **exactly**
+insensitive to the yield `[verified:
+tests/test_chemistry.py::test_the_gradient_does_not_depend_on_the_yield]`, so no
+acceptance row moves when this constant does. Debt #16 applies rule B10 the moment
+S9 adds outflows.
+
+### D48. Five acceptance rows fail, and they have three causes between them
+
+**Decision.** Rows 3, 4, 20, 22 and 23 are registered misses. Rows 1, 2 and 19
+pass.
+
+**Settled by.** Rule B5, and the fact that the causes are fewer than the symptoms
+— which is what makes them worth recording rather than tuning away:
+
+- **Rows 3 and 4, one cause (debt #13).** λ_d gives a disc scale length of 2.60
+  kpc; the star formation history builds one of 3.74 kpc, because the accreting
+  gas must be more extended than the stars for the model to keep the observed gas
+  mass at all. Row 4 reads the fitted one — row 4 measures starlight, not angular
+  momentum. Row 3 misses low at 237.2 km/s for the same reason.
+- **Rows 22 and 23, one cause (debt #15).** Every gradient the model makes is
+  about a third of the observed one. Reproducing −0.06 needs n ≈ 3 against a
+  citation-backed n = 1. Migration is close to right: the young/old ratio comes out
+  2.3 against an observed 1.75, so the error is in the gradient being flattened
+  rather than in the flattening.
+- **Row 20, a defect in the table (debt #17).** The target has no width, so the
+  check fails for any float that is not bit-exact, and the model agrees to 3%.
+
+**S1's prediction is falsified and the falsification is the useful part.** S1
+recorded that giving the gas its own profile would bring row 3 to about 246.4 km/s.
+S2 ran the mechanism and got 237.2: right direction, wrong magnitude, because the
+same change that moved the gas out also broadened the stellar disc. The recorded
+entry is updated rather than quietly replaced (rule B5).

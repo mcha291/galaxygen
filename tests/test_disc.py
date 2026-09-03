@@ -19,7 +19,7 @@ import pytest
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS
 from galaxy.run import run
-from galaxy.stages.disc import freeman_circular_velocity, scale_length
+from galaxy.stages.disc import disc_circular_velocity, freeman_circular_velocity, scale_length
 
 G = 4.300917270e-6
 R_SUN = 8.2
@@ -94,8 +94,8 @@ def test_the_255_kpc_is_a_top_hat_radius_not_R200():
 
 def test_the_defaults_hit_rows_1_and_4(model):
     o = out(model)
-    assert o.fields["thin_disc_scale_length"] == pytest.approx(SCALE_LENGTH, abs=0.02)
-    assert 4.0e10 <= o.fields["stellar_mass_total"] <= 6.0e10
+    assert o.fields["disc_scale_length_spin"] == pytest.approx(SCALE_LENGTH, abs=0.02)
+    assert 4.0e10 <= o.fields["baryon_mass_total"] <= 6.0e10
 
 
 # --- the disc itself ---------------------------------------------------------
@@ -103,7 +103,7 @@ def test_the_defaults_hit_rows_1_and_4(model):
 
 def test_scale_length_is_a_fixed_fraction_of_the_halo(model):
     o = out(model)
-    ratio = o.fields["thin_disc_scale_length"] / o.fields["halo_virial_radius"]
+    ratio = o.fields["disc_scale_length_spin"] / o.fields["halo_virial_radius"]
     assert ratio == pytest.approx(INPUTS["disc_spin"].default / math.sqrt(2.0), rel=1e-12)
     assert ratio < 0.02  # the visible galaxy is a speck inside its halo
 
@@ -111,19 +111,19 @@ def test_scale_length_is_a_fixed_fraction_of_the_halo(model):
 def test_surface_density_integrates_to_the_disc_mass(model):
     """∫Σ 2πR dR over an infinite disc is M_d; the grid stops at 30 kpc, so check the tail."""
     o = out(model)
-    R, R_d = o.grid.R, o.fields["thin_disc_scale_length"]
+    R, R_d = o.grid.R, o.fields["disc_scale_length_spin"]
     sigma = o.fields["disc_surface_density"] * 1e6  # M☉/pc² -> M☉/kpc²
     enclosed = np.trapezoid(sigma * 2.0 * math.pi * R, R)
     x = o.grid.spec.R_max / R_d
-    analytic = o.fields["stellar_mass_total"] * (1.0 - (1.0 + x) * math.exp(-x))
+    analytic = o.fields["baryon_mass_total"] * (1.0 - (1.0 + x) * math.exp(-x))
     assert enclosed == pytest.approx(analytic, rel=1e-3)
-    assert analytic / o.fields["stellar_mass_total"] > 0.999  # 30 kpc is 11.5 scale lengths
+    assert analytic / o.fields["baryon_mass_total"] > 0.999  # 30 kpc is 11.5 scale lengths
 
 
 def test_freeman_beats_the_spherical_approximation(model):
     """Justifies the Bessel form over M(<R): the difference is far bigger than row 3's bar."""
     o = out(model)
-    M_d, R_d = o.fields["stellar_mass_total"], o.fields["thin_disc_scale_length"]
+    M_d, R_d = o.fields["baryon_mass_total"], o.fields["disc_scale_length_spin"]
     freeman = float(freeman_circular_velocity(R_SUN, M_d / (2 * math.pi * R_d**2), R_d, G))
     x = R_SUN / R_d
     spherical = math.sqrt(G * M_d * (1.0 - (1.0 + x) * math.exp(-x)) / R_SUN)
@@ -135,13 +135,13 @@ def test_disc_curve_peaks_near_2_2_scale_lengths(model):
     """The classic exponential-disc result, and a check the Bessel branch join is not visible."""
     o = out(model)
     R, v = o.grid.R, o.fields["disc_circular_velocity"]
-    peak = R[int(np.argmax(v))] / o.fields["thin_disc_scale_length"]
+    peak = R[int(np.argmax(v))] / o.fields["disc_scale_length_spin"]
     assert peak == pytest.approx(2.2, abs=0.1)
     assert np.all(np.isfinite(v)) and np.all(v >= 0.0)
     # No step where A&S switches formula at y = 2, i.e. R = 4 R_d. The curve has real
     # curvature at small R, so the join is checked at the join and not by a global bound.
-    R_d = o.fields["thin_disc_scale_length"]
-    sigma0 = o.fields["stellar_mass_total"] / (2 * math.pi * R_d**2)
+    R_d = o.fields["disc_scale_length_spin"]
+    sigma0 = o.fields["baryon_mass_total"] / (2 * math.pi * R_d**2)
     join = 4.0 * R_d
     h = 1e-6
     below = float(freeman_circular_velocity(join - h, sigma0, R_d, G))
@@ -162,40 +162,46 @@ def test_total_curve_is_the_quadrature_sum_and_halo_dominates_outside(model):
     assert np.all(f["halo_circular_velocity"][outer] > f["disc_circular_velocity"][outer])
 
 
-def test_solar_scalars_are_analytic_not_interpolated(model):
-    o = out(model)
-    on_grid = float(np.interp(R_SUN, o.grid.R, o.fields["circular_velocity"]))
-    assert on_grid == pytest.approx(o.fields["v_circular_sun"], rel=2e-3)
-    assert o.fields["v_tangential_sun"] == pytest.approx(o.fields["v_circular_sun"] + 12.24)
-    coarse = run(model, grid=GridSpec(n_R=25, n_t=5, n_z=6))
-    assert coarse.fields["v_circular_sun"] == pytest.approx(o.fields["v_circular_sun"], rel=1e-12)
+def test_the_checkpoint_one_curve_still_has_every_baryon_in_one_exponential(model):
+    """S1's curve is stage one's preview and is deliberately left alone (D42).
 
-
-def test_row_3_misses_high_and_by_how_much(model):
-    """Debt #11, recorded rather than tuned away (rule B5). The size is the claim to check."""
-    o = out(model)
-    assert o.fields["v_tangential_sun"] == pytest.approx(256.1, abs=0.2)
-    assert o.fields["v_tangential_sun"] > 251.0  # row 3's upper bound
-    assert o.fields["v_tangential_sun"] - 251.0 < 10.0  # and not by a lot: one component's worth
-
-
-def test_the_recorded_cause_of_the_row_3_miss(model):
-    """The prediction in spec.MISSES[3]: moving the gas off the disc profile removes the miss.
-
-    Standing in for S2's gas phase, take the 8 × 10⁹ M☉ of gas out of the exponential.
-    If v_c(R₀) does not fall into row 3's window, the recorded explanation is wrong.
+    It is not the acceptance number any more — row 3 reads the sfh stage's resolved
+    curve — but it must still be the one-component curve it was, or the two stages
+    are computing the same thing twice and disagreeing (rule A9).
     """
     o = out(model)
-    R_d = o.fields["thin_disc_scale_length"]
-    stars_only = o.fields["stellar_mass_total"] - 8.0e9
-    v_disc = float(freeman_circular_velocity(R_SUN, stars_only / (2 * math.pi * R_d**2), R_d, G))
-    v_tan = math.hypot(o.fields["halo_circular_velocity_sun"], v_disc) + 12.24
-    assert 245.0 <= v_tan <= 251.0
+    R_d = o.fields["disc_scale_length_spin"]
+    M = o.fields["baryon_mass_total"]
+    expected = float(freeman_circular_velocity(R_SUN, M / (2 * math.pi * R_d**2), R_d, G))
+    on_curve = float(np.interp(R_SUN, o.grid.R, o.fields["disc_circular_velocity"]))
+    assert on_curve == pytest.approx(expected, rel=2e-3)
+    assert np.allclose(
+        o.fields["circular_velocity"],
+        np.hypot(o.fields["halo_circular_velocity"], o.fields["disc_circular_velocity"]),
+    )
+
+
+def test_the_general_solver_reproduces_freeman_on_an_exponential():
+    """The solver that replaced the single-exponential fit must not have cost accuracy."""
+    R = np.linspace(0.0375, 30.0, 400)
+    R_d, M = 2.6, 5.0e10
+    sigma0 = M / (2 * math.pi * R_d**2)
+    exact = freeman_circular_velocity(R, sigma0, R_d, G)
+    got, residual = disc_circular_velocity(sigma0 / 1e6 * np.exp(-R / R_d), R, G)
+    assert residual < 1e-3
+    at_sun = np.argmin(np.abs(R - R_SUN))
+    # Row 3's bar is 3 km/s; the representation must be far inside it where it is read.
+    assert abs(got[at_sun] - exact[at_sun]) < 0.1
+    inner = R < 25.0
+    assert np.max(np.abs(got[inner] - exact[inner]) / np.maximum(exact[inner], 1e-9)) < 0.01
 
 
 def test_the_two_models_agree_on_every_field_but_the_canary(prod):
-    """The disc is shared code; only CANARY may differ until S9 (GALAXY_PLAN.md §7 risk 3)."""
+    """The stages are shared code; only CANARY may differ until S9 (GALAXY_PLAN.md §7 risk 3)."""
     a, b = run(prod[0].get("simple")), run(prod[0].get("advanced"))
     assert set(a.fields) == set(b.fields)
-    differing = [k for k in a.fields if not np.array_equal(np.asarray(a.fields[k]), np.asarray(b.fields[k]))]
+    differing = [
+        k for k in a.fields
+        if not np.array_equal(np.asarray(a.fields[k]), np.asarray(b.fields[k]), equal_nan=True)
+    ]
     assert differing == ["canary"]

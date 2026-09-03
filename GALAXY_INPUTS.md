@@ -689,6 +689,38 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    about 10 km/s — three times acceptance entry 3's error bar. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
    measurements span (§4b).
+13. **Two routes to the disc scale length, disagreeing by 44%.** λ_d and MMW98
+   give 2.60 kpc; the star formation history builds a stellar profile whose
+   fitted scale length is 3.74 kpc. The second is forced: the accreting gas has
+   to be more extended than the stars or the model retains nowhere near the
+   observed gas mass. Acceptance rows 3 and 4 both fail on this one cause
+   `[verified: spec.MISSES rows 3, 4]`. Not a tolerance to be split — one of
+   them is wrong. First suspects: `GAS_DISC_SCALE_RATIO`, and MMW98's structure
+   factors f_c, f_R, which S1 folded into λ_d unmodelled (debt #6).
+14. **One infall episode, not two.** GALAXY_INPUTS.md §3 names the two-infall
+   framework, but ruling 11 makes the second infall merger-delivered and
+   `mergers[]` is UNSET until S3. So S2 models a single exponential accretion
+   and the thin/thick chemical split has nothing to make it. This is also the
+   control for debt #9: a merger-free galaxy is exactly what is running now.
+15. **Every gradient the model makes is a third of the observed one.** Row 22
+   comes out −0.019 dex/kpc against −0.06, row 23's old end −0.009 against
+   −0.04. Measured, not assumed: the gradient is *exactly* insensitive to the
+   yield `[verified: tests/test_chemistry.py::test_the_gradient_does_not_depend_on_the_yield]`,
+   so the level and the tilt are set by different things and this is about the
+   tilt. Reproducing −0.06 needs an inside-out index near 3, while the source
+   that gives τ₀ = 7 Gyr at R₀ gives a linear τ(R), i.e. n = 1. Predicted
+   cause: outflows, which remove more metal from the outer disc than the inner
+   and are an advanced-model axis (§8).
+16. **`NET_YIELD` is an effective yield and is calibrated.** 0.011 against a
+   nucleosynthetic 0.03–0.04, the difference being metal loss the simple model
+   has no mechanism for. It costs no acceptance row, because the gradient rows
+   are insensitive to it, but rule B10 applies the moment S9 adds outflows:
+   the constant has no claim on its value then and must be re-derived.
+17. **Acceptance rows 20 and 21 have zero-width targets.** The sources quote no
+   uncertainty, so the check fails for any float that is not bit-exact. Row 20
+   agrees to 6% and still fails. A defect in the table, not the model; the fix
+   is to read the source's uncertainty or to give the table a way to say "no
+   testable target", which belongs to the S10 audit.
 
 ---
 

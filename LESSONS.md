@@ -111,3 +111,36 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] `tools/progress.py` counts debts straight out of GALAXY_INPUTS.md
   §11's register, so adding a numbered item is all it takes to move the board's
   debt line; do not edit the line.
+
+## From S2
+
+- [field][advanced] Sweep the grid before believing a scalar. S2's star formation
+  rate wandered between 1.47 and 1.79 with **no trend** in either N_R or N_t
+  while every other scalar converged to 0.1%; no trend is the signature of an
+  artefact rather than a truncation error, and the row it fed was "passing" by
+  grid alignment `[verified: DECISIONS.md D46]`.
+- [field][advanced] A hard threshold inside an integral is a defect when the
+  system self-regulates *to* the threshold, because then the answer depends on
+  which side of it each cell lands. Smooth it; nature's thresholds are not steps
+  either.
+- [field] Establish what a constant does **not** affect, not only what it does.
+  The gradient turned out exactly insensitive to the yield, which killed the
+  obvious explanation for it being too flat and made calibrating the yield cost
+  nothing `[verified: DECISIONS.md D47]`.
+- [field] Check a quoted relation against the numbers quoted beside it.
+  GALAXY_INPUTS.md §3 gives τ₀ "at R₀" in one row and τ₀(R/R_d)ⁿ in the next;
+  they differ by a factor of three, and the source's own τ_D(R) settles it
+  `[verified: DECISIONS.md D43]`.
+- [field] Freeman's formula is exact for an exponential and for nothing else. A
+  gas disc shaped by a star formation threshold is flat then falling, and its
+  fitted "scale length" depends only on the fitting range. Decompose onto an
+  exponential basis and superpose — Poisson is linear `[verified: DECISIONS.md D44]`.
+- [field] When two independent routes to one quantity disagree, that is a result,
+  not a tolerance to be split. λ_d and the star formation history give disc scale
+  lengths 44% apart and two acceptance rows fail on it; averaging them would have
+  hidden the finding and fixed nothing `[verified: DECISIONS.md D48, debt #13]`.
+- [field][all] A prediction recorded by an earlier session is there to be run, not
+  honoured. S1's row 3 prediction was directionally right and numerically wrong;
+  the entry gets updated with what actually happened (rule B5).
+- [all] A quantity an acceptance row reads must not be interpolated off the grid
+  *or* be a discontinuous functional of it. Both make N_R a physics parameter.

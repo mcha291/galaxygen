@@ -20,7 +20,7 @@ def go(m, *stages, inputs=None, grid=TINY):
 def test_production_runs(model):
     out = run(model, grid=TINY)
     assert out.fields["canary"].shape == (8,)
-    assert out.order == ("halo", "disc")
+    assert out.order == ("halo", "disc", "sfh", "chemistry")
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
     assert "mergers" not in out.inputs  # UNSET and unread: resolved to nothing, not to a number
 
@@ -126,10 +126,10 @@ def test_columns_share_a_length_per_object_class():
 
 
 def test_unset_input_is_an_error_only_when_read():
-    s = stage("s", ("f",), reads_inputs=("inside_out_index",), compute=lambda ctx: {"f": np.full(8, ctx.inputs["inside_out_index"])})
-    with pytest.raises(MissingInput, match="S2"):
+    s = stage("s", ("f",), reads_inputs=("mergers",), compute=lambda ctx: {"f": np.full(8, 1.0)})
+    with pytest.raises(MissingInput, match="S3"):
         go(model("m", s), s)
-    assert np.all(go(model("m", s), s, inputs={"inside_out_index": 2.5}).fields["f"] == 2.5)
+    assert go(model("m", s), s, inputs={"mergers": []}).fields["f"].shape == (8,)
     t = stage("t", ("f",))
     assert go(model("m", t), t).fields["f"].shape == (8,)
 

@@ -53,15 +53,16 @@ def test_unset_defaults_are_owed_and_never_increase():
     for i in unset:
         assert i.default_owner and i.default_owner.startswith("S"), i.name
     # S0: halo_assembly_z (S1), inside_out_index (S2), migration_efficiency (S2), mergers (S3).
-    # S1 set halo_assembly_z. Sessions lower this bound as they discharge defaults;
-    # nothing may raise it.
-    assert len(unset) <= 3
+    # S1 set halo_assembly_z; S2 set inside_out_index and migration_efficiency.
+    # Only mergers (S3) is left. Sessions lower this bound; nothing may raise it.
+    assert len(unset) <= 1
 
 
 def test_control_ranges_never_decrease():
     missing = [i.name for i in controls() if not i.has_range]
-    # S0: none set. S1 set the four checkpoint-1 controls. Ratchet downward only.
-    assert len(missing) <= 3
+    # S0: none set. S1 set the four checkpoint-1 controls, S2 the three
+    # checkpoint-3 ones. Every control now has a range. Ratchet downward only.
+    assert len(missing) == 0
 
 
 def test_defaults_are_the_milky_way():
@@ -72,6 +73,10 @@ def test_defaults_are_the_milky_way():
     assert INPUTS["halo_assembly_z"].default == 2.5
     assert INPUTS["baryon_retention"].default == 0.35
     assert INPUTS["infall_timescale"].default == 7.0
+    assert INPUTS["inside_out_index"].default == 1.0
+    assert INPUTS["migration_efficiency"].default == 3.6
+    # S2: a radial dispersion has a length; dimensionless was provisional (D45).
+    assert INPUTS["migration_efficiency"].unit == "kpc"
     assert all(i.default == 0 for i in seeds())
 
 
@@ -145,7 +150,7 @@ def test_registry_refuses_duplicates():
 def test_production_is_loaded_and_idempotent(prod):
     models, impls, table = prod
     assert set(models.names()) >= {"simple", "advanced"}
-    assert {"halo", "disc"} <= set(impls.names())
+    assert {"halo", "disc", "sfh", "chemistry"} <= set(impls.names())
     assert table is INPUTS
     again = production()
     assert again[0] is models and again[1] is impls
