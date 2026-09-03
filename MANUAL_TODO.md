@@ -40,7 +40,8 @@ closes the project.
 > the refspec push below is what deletes it, and it must run before the batch
 > creates the new one, or the create fails as already-existing.
 
-| 2 | `s02` | *TBD — S3 fills this in* | **queued** |
+| 2 | `s02` | `fa7e74fb3cc2` | **queued** |
+| 3 | `s03` | *TBD — S4 fills this in* | **queued** |
 
 ### Run these
 
@@ -57,8 +58,11 @@ git push origin :refs/tags/s01 ; git tag -d s01
 # S1 — halo & disc.
 git tag -a s01 4ebbe8f8dfebf142b166a207ec1bb57ca0918eb9 -m "S1: halo & disc"
 
-# S2 — star formation history & chemistry. S3 replaces this with the literal SHA.
-git tag -a s02 "$(git rev-list -1 --grep='^Merge S2 into main' origin/main)" -m "S2: SFH & chemistry"
+# S2 — star formation history & chemistry.
+git tag -a s02 fa7e74fb3cc24e5a25f20e3f6800c5939c6ae821 -m "S2: SFH & chemistry"
+
+# S3 — assembly & mergers. S4 replaces this with the literal SHA.
+git tag -a s03 "$(git rev-list -1 --grep='^Merge S3 into main' origin/main)" -m "S3: assembly & mergers"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

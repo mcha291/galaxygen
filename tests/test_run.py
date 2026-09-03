@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.fielddoc import Kind
-from galaxy.core.registry import INPUTS
+from galaxy.core.registry import INPUTS, Input
 from galaxy.core.stage import OptionalFieldAccess, UndeclaredAccess
 from galaxy.run import MissingInput, PublishError, RunError, run
 from galaxy.specs.graph import GraphError
@@ -20,9 +20,9 @@ def go(m, *stages, inputs=None, grid=TINY):
 def test_production_runs(model):
     out = run(model, grid=TINY)
     assert out.fields["canary"].shape == (8,)
-    assert out.order == ("halo", "disc", "sfh", "chemistry")
+    assert out.order == ("halo", "assembly", "disc", "sfh", "chemistry", "vertical")
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
-    assert "mergers" not in out.inputs  # UNSET and unread: resolved to nothing, not to a number
+    assert set(out.inputs) == set(INPUTS)  # S3 set the last default, so every input resolves
 
 
 def chain():
@@ -126,12 +126,21 @@ def test_columns_share_a_length_per_object_class():
 
 
 def test_unset_input_is_an_error_only_when_read():
-    s = stage("s", ("f",), reads_inputs=("mergers",), compute=lambda ctx: {"f": np.full(8, 1.0)})
-    with pytest.raises(MissingInput, match="S3"):
-        go(model("m", s), s)
-    assert go(model("m", s), s, inputs={"mergers": []}).fields["f"].shape == (8,)
+    """Rule B9: refuse to invent a number, but only when a stage actually wants one.
+
+    Every production input has a default since S3, so this is exercised against a
+    synthetic table — the behaviour still has to hold for the next input added.
+    """
+    owed = Input("owed", "Owed", "control", "no default yet", unit="kpc", default_owner="S9")
+    table = {**INPUTS, "owed": owed}
+    s = stage("s", ("f",), reads_inputs=("owed",), compute=lambda ctx: {"f": np.full(8, ctx.inputs["owed"])})
+    m = model("m", s)
+    with pytest.raises(MissingInput, match="S9"):
+        run(m, None, TINY, impls=impls(s), table=table)
+    got = run(m, {"owed": 2.5}, TINY, impls=impls(s), table=table)
+    assert np.all(got.fields["f"] == 2.5)
     t = stage("t", ("f",))
-    assert go(model("m", t), t).fields["f"].shape == (8,)
+    assert run(model("m", t), None, TINY, impls=impls(t), table=table).fields["f"].shape == (8,)
 
 
 def test_unknown_override_and_input_subset():

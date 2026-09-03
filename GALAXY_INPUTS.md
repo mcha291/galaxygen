@@ -661,8 +661,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    constrained by two independent observables, not one (§6).
 8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
    (§4b, §13).
-9. α-bimodality may be reachable without a merger, via smooth accretion plus
-   migration. Test at S4 with a merger-free galaxy (§14).
+9. ~~α-bimodality may be reachable without a merger.~~ **NOT TESTABLE in the
+   simple model, and S3 established why rather than reporting a null result.**
+   Two independent reasons. First, [α/Fe] needs two nucleosynthetic channels
+   with different delay times, and instantaneous recycling collapses them into
+   one — the model has a single abundance and *no α–Fe plane* in which anything
+   could be bimodal. Reporting "no bimodality without a merger" from it would be
+   reading an instrument that cannot detect the signal (rule B3). Second, and
+   worse, the model's thin/thick split is **defined** as "born before the last
+   major merger", so a merger-free run has no thick disc by construction and
+   cannot be evidence about whether one is needed. The test moves to S9, which
+   has the DTD; whoever runs it must also replace the split criterion with one
+   that does not name the merger.
 10. **λ_d's ruled default was inferred against the wrong radius.** Ruling 8 set
    λ_d = 0.0144 from R_d√2/R_vir with R_vir = 255 kpc, which is Huang+16's
    top-hat virial radius for M_vir ≈ 0.9 × 10¹² M☉ — about 95 ρ_crit, not 200
@@ -689,14 +699,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    about 10 km/s — three times acceptance entry 3's error bar. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
    measurements span (§4b).
-13. **Two routes to the disc scale length, disagreeing by 44%.** λ_d and MMW98
-   give 2.60 kpc; the star formation history builds a stellar profile whose
-   fitted scale length is 3.74 kpc. The second is forced: the accreting gas has
-   to be more extended than the stars or the model retains nowhere near the
-   observed gas mass. Acceptance rows 3 and 4 both fail on this one cause
-   `[verified: spec.MISSES rows 3, 4]`. Not a tolerance to be split — one of
-   them is wrong. First suspects: `GAS_DISC_SCALE_RATIO`, and MMW98's structure
-   factors f_c, f_R, which S1 folded into λ_d unmodelled (debt #6).
+13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
+   **DISCHARGED by S3.** The first suspect was the right one:
+   `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
+   which is measured between *final* discs and not between the infall and the
+   stars. Corrected to 1.0, which two independent arguments agree on — MMW98
+   predicts the gas that forms the disc arrives with the disc's own scale
+   length, and running the model back from the observed final ratio picks
+   1.0–1.1. The two routes then give 2.52 and 2.605 kpc, agreeing to 3.3%
+   `[verified: tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]`.
+   MMW98's structure factors f_c and f_R are untouched and remain debt #6.
 14. **One infall episode, not two.** GALAXY_INPUTS.md §3 names the two-infall
    framework, but ruling 11 makes the second infall merger-delivered and
    `mergers[]` is UNSET until S3. So S2 models a single exponential accretion
@@ -721,6 +733,32 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    agrees to 6% and still fails. A defect in the table, not the model; the fix
    is to read the source's uncertainty or to give the table a way to say "no
    testable target", which belongs to the S10 audit.
+18. **No high-angular-momentum accretion component.** With the infall carrying
+   the disc's own scale length (debt #13's fix), nothing accretes beyond about
+   10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
+   not exist in the model. **One cause, three failing rows**: gas mass 38% low
+   (row 20), star formation rate 1.14 against 1.65 (row 2), and every baryon
+   packed inside R₀ so v_c there is too high (row 3) `[verified: spec.MISSES
+   rows 2, 3, 20]`. Predicted fix: a second accretion channel at high angular
+   momentum, which adds gas where the star formation threshold protects it and
+   leaves the stellar structure alone. Rows 3 and 4 are the check that it is
+   *high* enough in angular momentum — if the stellar disc broadens, it is not.
+   The bulge pushes row 3 the other way and arrives at S3–S4, so those two must
+   be judged together.
+19. **The thick disc is too compact and too massive, and the gate passes on the
+   cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
+   1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
+   its 12% ± 4% *only because those two errors compensate*: raising the merger's
+   `gas_fraction` to fix the mass drives row 9 to 0.015, because a thick disc
+   this centrally concentrated sheds surface density at R₀ far faster than it
+   sheds mass `[verified: DECISIONS.md D51]`. Row 5 is the prerequisite — with
+   the right extent the mass and the ratio can be right together. If they still
+   cannot, the split criterion is what is wrong.
+20. **The thin/thick split is defined by the merger, so it cannot be evidence
+   about mergers.** "Born before the last major merger" is a definition, not a
+   measurement, and it makes debt #9 circular (see #9). A criterion grounded in
+   kinematics or chemistry rather than in the event list is needed before any
+   merger-free comparison means anything.
 
 ---
 

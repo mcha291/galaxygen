@@ -22,7 +22,7 @@ def chk(models, *stages, table=INPUTS):
 def test_production_preflights(prod):
     rep = preflight.check(*prod)
     assert rep.ok, rep.problems
-    assert any("UNSET default: 1" in n for n in rep.notes)  # only mergers, owed by S3
+    assert any("UNSET default: 0" in n for n in rep.notes)  # S3 set mergers, the last one
     assert any("controls without a range: 0" in n for n in rep.notes)  # S2 finished them
     assert any("controls: 7 of 12" in n for n in rep.notes)
     assert "OK" in preflight.report(*prod)

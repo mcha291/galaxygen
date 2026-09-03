@@ -97,14 +97,56 @@ LEVEL0: dict[str, Constant] = {
         "into stars and the model would have no extended gas disc at all.",
     ),
     "GAS_DISC_SCALE_RATIO": Constant(
-        1.5,
+        1.0,
         "dimensionless",
-        "Scale length of the accreting gas in units of the stellar disc's. HI discs are "
-        "systematically more extended than the stellar light they surround, by roughly 1.5-2 "
-        "[recall: Broeils & Rhee 1997 and the standard HI-to-optical comparison]. This is the "
-        "single constant that decides how much gas survives to the present day, and S2 measured "
-        "what it costs: it is also why the model's fitted stellar scale length disagrees with the "
-        "one lambda_d predicts (debt #13).",
+        "Scale length of the *accreting* gas in units of the disc scale length lambda_d predicts. "
+        "S2 set this to 1.5 from the observed HI-to-optical ratio, which was a mis-application it "
+        "flagged itself: 1.5-2 is measured between *final* discs [recall: Broeils & Rhee 1997], "
+        "not between the infall and the stars. S3 corrected it, and two independent arguments then "
+        "agree on 1.0. MMW98 predicts the gas that forms the disc carries the halo's angular "
+        "momentum distribution and so arrives with exactly the disc scale length; and running the "
+        "model back from the *observed* final ratio picks 1.0-1.1, because star formation makes "
+        "the surviving gas more extended than the gas that fell in. At 1.0 the model's fitted "
+        "stellar scale length is 2.52 kpc against lambda_d's 2.605 - agreement to 3%, which "
+        "discharges debt #13 [verified: tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]. "
+        "The constant is kept rather than deleted so that S10 can sweep it; at 1.0 it does nothing.",
+    ),
+    "MERGER_DURATION": Constant(
+        0.5,
+        "Gyr",
+        "Time over which a merger delivers its gas, as a Gaussian width. Around half a Gyr for a "
+        "major merger's crossing and settling [recall]. It is not cosmetic: delivering the gas "
+        "instantaneously makes the star formation rate depend on the timestep, which is the same "
+        "class of defect the star formation threshold had (D46).",
+    ),
+    "BIRTH_DISPERSION": Constant(
+        8.0,
+        "km/s",
+        "Vertical velocity dispersion stars are born with, set by the turbulence of the gas they "
+        "form from. Observed for the youngest disc stars [recall: ~6-10 km/s].",
+    ),
+    "SECULAR_HEATING": Constant(
+        25.0,
+        "km/s",
+        "Vertical dispersion secular heating alone adds over 10 Gyr, from giant molecular clouds "
+        "and spiral arms. The solar neighbourhood's age-velocity dispersion relation runs from "
+        "about 20 km/s at 5 Gyr to 25-30 at 10 [recall], and S3 set this from the 10 Gyr end "
+        "rather than from the 5 Gyr one, which was the first attempt and left the thin disc "
+        "half the observed thickness. On its own this makes a gradient in sigma_z and no thick "
+        "disc; a thick disc needs an event.",
+    ),
+    "SECULAR_HEATING_INDEX": Constant(
+        0.5,
+        "dimensionless",
+        "Power of age in the secular age-velocity dispersion relation. Measured values run 0.3-0.5 "
+        "[recall]; 0.5 is the random-walk value and the upper end of the observed range.",
+    ),
+    "MERGER_HEATING": Constant(
+        120.0,
+        "km/s",
+        "Vertical dispersion a merger of mass ratio 1 would add to the stars already present; an "
+        "event contributes this times its mass ratio. Scaled so the Milky Way's 1:4 merger leaves "
+        "the pre-existing disc at about 30 km/s, which is what makes it thick rather than warm.",
     ),
     "SOLAR_METALLICITY": Constant(
         0.0142,

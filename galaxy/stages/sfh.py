@@ -214,7 +214,25 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     # Inside-out infall timescale, anchored at R_0 (see the module docstring).
     tau = float(ctx.inputs["infall_timescale"]) * (R / R_sun) ** float(ctx.inputs["inside_out_index"])
-    amplitude = sigma_total / (tau * (1.0 - np.exp(-ctx.grid.spec.t_max / tau)))
+    amplitude = sigma_total
+
+    # Two infalls, and the second one is the merger (ruling 11). Both episodes decay
+    # on the same inside-out timescale; the second simply starts when the merger
+    # arrives, which is Chiappini's structure reached from the merger list rather
+    # than from an input that names an onset. The smooth episode carries whatever
+    # the mergers do not, so the budget still adds to one.
+    merger_share = float(ctx.fields["second_infall_share"])
+    onset = float(ctx.fields["last_major_merger_time"])
+
+    def episode(start: float) -> np.ndarray:
+        """Normalised exp(-(t - start)/tau) per radius, zero before ``start``."""
+        span = ctx.grid.spec.t_max - start
+        norm = tau * (1.0 - np.exp(-span / tau))
+        elapsed = t[None, :] - start
+        return np.where(elapsed >= 0.0, np.exp(-np.maximum(elapsed, 0.0) / tau[:, None]), 0.0) / norm[:, None]
+
+    early = episode(0.0)
+    late = episode(onset)
 
     gas = np.zeros_like(R)
     stars = np.zeros_like(R)
@@ -222,7 +240,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     sfr_hist = np.empty((R.size, t.size))
     infall_hist = np.empty((R.size, t.size))
     for j, tj in enumerate(t):
-        infall = amplitude * np.exp(-tj / tau)
+        infall = sigma_total * ((1.0 - merger_share) * early[:, j] + merger_share * late[:, j])
         psi = star_formation_rate(gas, ks_n, ks_k, crit)
         locked = (1.0 - ret) * PC_PER_KPC * psi  # M☉/yr/kpc² -> M☉/pc²/Gyr
         gas = np.maximum(gas + (infall - locked) * dt, 0.0)
@@ -280,7 +298,11 @@ SFH = IMPLEMENTATIONS.register(
             "RETURN_FRACTION", "KS_NORM", "KS_INDEX", "SF_THRESHOLD",
             "GAS_DISC_SCALE_RATIO", "G", "R_SUN", "V_SUN_PECULIAR",
         ),
-        requires=("disc_scale_length_spin", "baryon_mass_total", "halo_circular_velocity", "halo_circular_velocity_sun"),
+        requires=(
+            "disc_scale_length_spin", "baryon_mass_total",
+            "halo_circular_velocity", "halo_circular_velocity_sun",
+            "second_infall_share", "last_major_merger_time",
+        ),
         publishes=(
             GAS_SURFACE_DENSITY, STELLAR_SURFACE_DENSITY, SFR_SURFACE_DENSITY,
             GAS_HISTORY, SFR_HISTORY, INFALL_HISTORY,

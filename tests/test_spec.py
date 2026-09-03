@@ -36,8 +36,10 @@ def test_the_rows_the_model_can_reach_report_a_verdict(model):
     results = spec.run(model)
     assert len(results) == 24
     by_n = {r.n: r for r in results}
-    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {1, 2, 3, 4, 19, 20, 22, 23}
-    assert spec.summary(results) == {"pass": 3, "fail": 5, "not-yet-computable": 16}
+    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 19, 20, 22, 23
+    }
+    assert spec.summary(results) == {"pass": 8, "fail": 7, "not-yet-computable": 9}
     assert "no published scalar" in by_n[24].reason
 
 
@@ -45,10 +47,12 @@ def test_every_failure_is_recorded_and_the_run_is_clean(model):
     """Five rows miss and every one names a debt and a prediction (rules B4, B5)."""
     results = spec.run(model)
     failed = {r.n for r in results if r.status == "fail"}
-    assert failed == {3, 4, 20, 22, 23}
+    assert failed == {2, 3, 5, 11, 20, 22, 23}
     assert spec.unexplained(results) == () and spec.stale(results) == ()
     assert spec.problems(results) == []
-    assert {spec.MISSES[n].debt for n in failed} == {11, 13, 15, 17}
+    # Three causes hold seven rows: #18 (no extended accretion), #15 (the tilt),
+    # #19 (the thick disc's shape, which is also why the gate passes).
+    assert {spec.MISSES[n].debt for n in failed} == {15, 18, 19}
 
 
 def test_an_unexplained_failure_stops_the_run():
@@ -81,8 +85,9 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod):
     out = spec.report(list(prod[0]))
-    assert "spec" in out and "16 not-yet-computable of 24" in out
-    assert "recorded miss, debt #11, since S1" in out
+    assert "spec" in out and "9 not-yet-computable of 24" in out
+    assert "recorded miss, debt #18, since S1" in out   # row 3, three sessions old
+    assert "recorded miss, debt #19, since S3" in out
     assert "recorded miss, debt #15, since S2" in out
 
 

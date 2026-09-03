@@ -749,3 +749,97 @@ recorded that giving the gas its own profile would bring row 3 to about 246.4 km
 S2 ran the mechanism and got 237.2: right direction, wrong magnitude, because the
 same change that moved the gas out also broadened the stellar disc. The recorded
 entry is updated rather than quietly replaced (rule B5).
+
+## Session 3 — assembly & mergers
+
+Surface: web. Model: Opus 5. Ran on the S1 branch at the owner's direction.
+
+### D49. Debt #13 discharged: the infall carries the disc's own scale length
+
+**Decision.** `GAS_DISC_SCALE_RATIO` 1.5 → 1.0.
+
+**Settled by.** The brief named it as the first suspect and it was the right one.
+S2 set 1.5 from the observed HI-to-optical ratio, which is measured between
+*final* discs and not between the infall and the stars — a mis-application S2
+flagged itself. Two independent arguments then agree on 1.0: MMW98 predicts the
+gas that forms the disc carries the halo's angular momentum distribution and so
+arrives with the disc's own scale length; and running the model back from the
+*observed* final ratio picks 1.0–1.1, because star formation makes the surviving
+gas more extended than the gas that fell in. The two routes to the disc scale
+length now give 2.52 and 2.605 kpc `[verified:
+tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]`.
+
+A sweep first established that no value satisfies every row: the structure rows
+want ≤ 1.25 and the gas-content rows want ≥ 1.35. That gap is debt #18, and it is
+a structural insufficiency rather than a calibration — **one knob, and the
+criteria that set it disagree by more than its tolerance.**
+
+### D50. Heating at checkpoint 2, the population it sorts at checkpoint 3
+
+**Decision.** `assembly` (checkpoint 2) publishes gas delivery and the σ_z a star
+born at time t carries today; `vertical` (checkpoint 3) sorts stars into thin and
+thick and computes scale heights.
+
+**Settled by.** GALAXY_PLAN.md §3 gives stage 2 the preview "edge-on view showing
+the thick disc appear", but checkpoint 2 runs before star formation and there are
+no stars there to heat `[verified: galaxy/specs/graph.py checkpoint-order check]`.
+§1 calls the §3 grouping a hypothesis to be checked against the audit, and this is
+it failing usefully: the *heating* is assembly's and the *population* is not.
+
+### D51. The gate passes, and it passes on two errors cancelling
+
+**Decision.** Row 9 reads 0.103 inside its 12% ± 4%, and is recorded as a
+compensated pass, with rows 5 and 11 registered as misses under debt #19.
+
+**Settled by.** The thick disc comes out at 1.17 kpc against 2.0 and
+1.07 × 10¹⁰ M☉ against 6 × 10⁹. Those are not independent of the gate: raising the
+merger's `gas_fraction` to bring the mass into range drives row 9 from 0.103 to
+0.015, because a thick disc this centrally concentrated sheds surface density at
+R₀ far faster than it sheds mass `[verified:
+tests/test_vertical.py::test_the_gate_passes_on_two_errors_cancelling]`. Reporting
+the gate as met without this would be the exact failure rule B3 describes — a
+check that passes because it takes the one path immune to the defect. Row 5 is the
+prerequisite: with the right extent the mass and the ratio can be right together.
+
+### D52. Ruling 11 implemented: the merger *is* the second infall
+
+**Decision.** Each `MergerEvent` carries `gas_fraction`, the share of the
+outstanding baryon budget it delivers. `sfh` runs two accretion episodes on the
+same inside-out timescale, the second starting at the last major merger.
+
+**Settled by.** Ruling 11 dissolved `second_infall_onset` by putting a
+`gas_fraction` on the events `[verified: GALAXY_INPUTS.md §11 ruling 11]`, which
+only means something if the event delivers the gas. It reproduces Chiappini's
+two-infall structure from the merger list rather than from an input naming an
+onset, and it fixes a defect S3 found on the way in: with a single infall the
+model formed 56% of its stars before the merger epoch against a 12% thick-disc
+target. It is now 20%. A first attempt delivered the gas as a burst over the
+merger's own crossing time and drove the SFR to 0.64 — the second infall needs its
+own long decay, not a delivery.
+
+### D53. Debt #9 answered by establishing it cannot be answered here
+
+**Decision.** The α-bimodality test moves to S9, and the split criterion must move
+with it (debt #20).
+
+**Settled by.** Two independent reasons, either sufficient. [α/Fe] needs two
+nucleosynthetic channels with different delay times, and instantaneous recycling
+collapses them into one — the model has a single abundance and no α–Fe plane in
+which anything could be bimodal, so a null result from it would be a reading of an
+instrument that cannot detect the signal (rule B3). And the model *defines*
+thin/thick as "born before the last major merger", so the merger-free control has
+no thick disc by construction `[verified:
+tests/test_vertical.py::test_no_major_merger_means_no_thick_disc]` and cannot be
+evidence about whether a merger is needed. The second is the more serious and is
+recorded separately as debt #20.
+
+### D54. Two constants corrected from the measurements they name
+
+**Decision.** `SECULAR_HEATING` 20 → 25 km/s. `h_z = σ_z²/(2πGΣ)`, not `σ_z²/πGΣ`.
+
+**Settled by.** The age–velocity dispersion relation runs from about 20 km/s at
+5 Gyr to 25–30 at 10, and the constant is defined at 10 Gyr; it had been set from
+the 5 Gyr end, leaving the thin disc half its observed thickness. σ_z(thin) is now
+20.1 km/s and row 6 passes. The factor of 2 is the self-gravitating isothermal
+sheet's, and S3's own brief wrote the relation without it — which would have made
+every scale height twice too large `[verified: galaxy/stages/vertical.py]`.

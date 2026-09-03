@@ -148,3 +148,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the entry gets updated with what actually happened (rule B5).
 - [all] A quantity an acceptance row reads must not be interpolated off the grid
   *or* be a discontinuous functional of it. Both make N_R a physics parameter.
+
+## From S3
+
+- [field][advanced] A passing check can be two errors cancelling. Row 9 passes
+  because the thick disc is both too massive and too compact; fixing either one
+  alone breaks it. Before believing a green row, move the thing it depends on
+  and see whether it moves for the right reason `[verified: DECISIONS.md D51]`.
+- [field][advanced] When one knob has to satisfy several criteria, sweep it and
+  see whether *any* value satisfies them. `GAS_DISC_SCALE_RATIO` cannot: the
+  structure rows want ≤ 1.25 and the gas rows ≥ 1.35. That turns "the model is
+  miscalibrated" into "the model is missing a component" (debt #18).
+- [field] Set a constant from the end of the relation it is defined at.
+  `SECULAR_HEATING` is the dispersion at 10 Gyr and had been given the 5 Gyr
+  value, which halved the thin disc's thickness `[verified: DECISIONS.md D54]`.
+- [field][advanced] A control run is worthless if the thing it varies is what
+  defines the measurement. The merger-free galaxy has no thick disc because the
+  split is *defined* as "born before the last major merger" — a circularity, not
+  a result (debt #20) `[verified: DECISIONS.md D53]`.
+- [field][advanced] Before reporting a null result, check the instrument can see
+  the signal. The simple model has one abundance, so it has no α–Fe plane and
+  cannot find bimodality in it whatever the mergers do (rule B3).
+- [field] Deliver an accretion episode over its own decay, not as a burst. A
+  merger delivering its gas over a crossing time made the SFR a function of the
+  timestep — the same defect class as the hard star formation threshold (D46).
+- [all] Check a formula's constant factor against a worked case. The brief wrote
+  h_z = σ_z²/πGΣ, missing the isothermal sheet's 2, which would have made every
+  scale height twice too large and still looked plausible.

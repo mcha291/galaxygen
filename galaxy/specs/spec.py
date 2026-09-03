@@ -157,42 +157,93 @@ class Miss:
 
 _MISSES: tuple[Miss, ...] = (
     Miss(
-        row=20,
-        debt=17,
-        since="S2",
+        row=2,
+        debt=18,
+        since="S3",
         reason=(
-            "The target has no width. Nakanishi & Sofue's 8.0 x 10^9 Msun is quoted with no "
-            "uncertainty, so a pointwise check fails for any float that is not bit-exact, and the "
-            "model's 8.49 x 10^9 agrees to 6% - as close as a galaxy's total gas mass is ever "
-            "known. This is a defect in the acceptance table, not in the model, and it is recorded "
-            "rather than fixed by widening the interval to whatever the model happens to produce "
-            "(rule B5)."
+            "1.97 Msun/yr against 1.65, having been 1.14 before the merger-delivered second "
+            "infall existed. Moving 60% of the accretion to start at the merger keeps gas "
+            "arriving late, which is the right mechanism and overshoots: the second episode "
+            "decays on the same 7 Gyr timescale as the first, so too much of it is still "
+            "arriving now."
         ),
         prediction=(
-            "Someone has to read the source and record its actual uncertainty; anything above 6% "
-            "makes this row pass on the value it already has. If the source really quotes none, "
-            "the row should be marked as having no testable target rather than a zero-width one, "
-            "which is a change to the table's schema and belongs to the S10 audit."
+            "The second infall should be *slower* than the first, not the same speed - the outer "
+            "disc it feeds accretes over longer. A separate timescale for the post-merger episode "
+            "brings this down without touching the stellar structure. If it also moves rows 10 and "
+            "11, the two episodes are not as separable as this model assumes."
         ),
     ),
     Miss(
-        row=4,
-        debt=13,
-        since="S2",
+        row=5,
+        debt=19,
+        since="S3",
         reason=(
-            "The model has two independent routes to the disc scale length and they disagree. "
-            "lambda_d and MMW98 predict 2.60 kpc (disc_scale_length_spin); the star formation "
-            "history builds a stellar profile with a fitted scale length of 3.74 kpc, 44% larger, "
-            "because the accreting gas must be more extended than the stars for the model to "
-            "retain the observed gas mass at all. Row 4 reads the fitted one, because row 4 "
-            "measures starlight and not angular momentum."
+            "The thick disc's scale length is 1.17 kpc against 2.0. It forms before the merger, "
+            "when the disc is small and inside-out growth has star formation concentrated in the "
+            "middle, so it comes out far more centrally concentrated than the observed thick disc."
         ),
         prediction=(
-            "One of the two is wrong and the disagreement is not a tolerance to be split. Either "
-            "GAS_DISC_SCALE_RATIO is too large - in which case the gas mass and SFR fall out of "
-            "their windows together - or MMW98's structure factors, which S1 folded into lambda_d "
-            "unmodelled (debt #6), account for the difference. S3 can decide it by modelling f_c "
-            "and f_R explicitly; if neither moves it, the infall profile is the wrong shape."
+            "The thick disc has to be born extended, not merely early. Either the pre-merger disc "
+            "is already larger than this model makes it, or the merger itself spreads the stars it "
+            "heats - radial as well as vertical heating, which this model does not do. The second "
+            "is testable: a radial kick applied with the vertical one should raise row 5 towards "
+            "2.0 and lower row 9 at the same time."
+        ),
+    ),
+    Miss(
+        row=11,
+        debt=19,
+        since="S3",
+        reason=(
+            "1.07e10 Msun against 6e9: the pre-merger episode carries 40% of the baryon budget and "
+            "should carry nearer 15%. **Row 9, this session's gate, passes at 0.103 only because "
+            "this error and the row 5 error compensate.** Raising the merger's gas_fraction to "
+            "shrink the thick disc drives row 9 from 0.103 to 0.015, because a thick disc this "
+            "centrally concentrated loses surface density at R_0 far faster than it loses mass. "
+            "The gate is therefore passing for the wrong reason and is recorded as such."
+        ),
+        prediction=(
+            "Row 5 is the prerequisite. Once the thick disc has the right extent, its mass and its "
+            "surface-density ratio can be right together; until then either one can be fixed only "
+            "by breaking the other. If they still cannot be satisfied together at the right scale "
+            "length, the split criterion - born before the last major merger - is what is wrong."
+        ),
+    ),
+    Miss(
+        row=3,
+        debt=18,
+        since="S1",
+        reason=(
+            "256.1 km/s against 248 +/- 3: too much mass inside R0. S1 recorded this as the gas "
+            "not yet having its own profile and predicted 246.4 once it did. S2 gave it one and "
+            "got 237.2 - overshooting - but only because the same constant that moved the gas out "
+            "also broadened the stellar disc to 3.74 kpc. S3 corrected that constant, the two disc "
+            "scale lengths came into agreement (debt #13 discharged), and the miss returned to "
+            "where S1 left it. So the cause is not the gas profile at all: it is that all the "
+            "baryons are in the compact disc, with no extended component and no bulge."
+        ),
+        prediction=(
+            "Splitting the baryons into a compact disc plus an extended high-angular-momentum "
+            "component moves mass outside R0 and lowers v_c there. The bulge (S3-S4) pushes the "
+            "other way, so the two must be added together before this row is judged - which is why "
+            "it is not closable until both exist."
+        ),
+    ),
+    Miss(
+        row=20,
+        debt=18,
+        since="S2",
+        reason=(
+            "5.80e9 Msun against 8.0e9, a 28% shortfall, improved from 4.94e9 by the "
+            "merger-delivered second infall. With the infall carrying the disc's own "
+            "scale length there is nothing accreting beyond about 10 kpc, so the outer HI disc "
+            "that holds most of the Milky Way's gas simply does not exist in this model."
+        ),
+        prediction=(
+            "An extended accretion component sized to the observed HI disc closes this row and "
+            "rows 2 and 3 with it. Note the target is also zero-width (debt #17), so even a model "
+            "that got the mass right would fail this check until the table records an uncertainty."
         ),
     ),
     Miss(
@@ -200,17 +251,16 @@ _MISSES: tuple[Miss, ...] = (
         debt=15,
         since="S2",
         reason=(
-            "Inside-out growth alone produces a third of the observed gradient: -0.019 dex/kpc "
-            "against -0.06. The gradient was measured to be exactly insensitive to the yield, so "
-            "the level and the tilt are set separately and this is a statement about the tilt. "
-            "Reproducing -0.06 needs an inside-out index near 3, and the source that gives "
-            "tau_0 = 7 Gyr at R_0 gives a linear tau(R), i.e. n = 1; the model cannot have both."
+            "-0.027 dex/kpc against -0.06. The gradient was measured to be exactly insensitive to "
+            "the yield, so the level and the tilt are set separately and this is about the tilt. "
+            "S3's more compact infall steepened it from -0.020, which confirms the tilt comes from "
+            "the differential infall, and it is still less than half of what is observed."
         ),
         prediction=(
-            "Outflows are the missing tilt. Metal loss scaling with escape velocity removes more "
+            "Outflows are the missing tilt: metal loss scaling with escape velocity strips more "
             "from the outer disc than the inner one, steepening the gradient without touching the "
-            "inside-out index. S9 adds them (GALAXY_INPUTS.md 8); if the gradient does not steepen "
-            "towards -0.06 when it does, this explanation is wrong and the infall law is."
+            "inside-out index. S9 adds them. If the gradient does not steepen towards -0.06 when "
+            "it does, the infall law is wrong rather than the outflows missing."
         ),
     ),
     Miss(
@@ -218,36 +268,14 @@ _MISSES: tuple[Miss, ...] = (
         debt=15,
         since="S2",
         reason=(
-            "The old-population gradient is -0.009 dex/kpc against -0.04, too flat for the same "
-            "reason row 22 is: every gradient this model produces is about a third of the observed "
-            "one. Migration itself is close to right - the young/old ratio comes out 2.3 against "
-            "an observed 1.75 - so the error is in the gradient it is flattening, not in the "
-            "flattening."
+            "The old-population gradient is too flat for the same reason row 22 is. Migration "
+            "itself is close to right - the young/old ratio is near the observed 1.75 - so the "
+            "error is in the gradient being flattened, not in the flattening."
         ),
         prediction=(
-            "Whatever steepens row 22 steepens this row by the same factor and the young/old ratio "
-            "does not move, because migration and enrichment are separate mechanisms here. If "
-            "row 22 steepens and this one does not, migration_efficiency is wrong too."
-        ),
-    ),
-    Miss(
-        row=3,
-        debt=11,
-        since="S1",
-        reason=(
-            "S1 has one baryonic component. The whole retained budget sits in an exponential of "
-            "scale length 2.6 kpc, so the ~8 x 10^9 Msun of gas that really extends to 30 kpc and "
-            "the ~1.5 x 10^10 Msun bulge that really sits inside 1 kpc are both in the disc, "
-            "over-concentrating mass inside R0 and pushing v_c up."
-        ),
-        prediction=(
-            "S1 predicted that giving the gas its own shallower profile would lower v_tan by about "
-            "the 5 km/s of the miss, to 246.4. S2 did it and got 237.2: the direction was right "
-            "and the magnitude was not, because the same change that moved the gas out also "
-            "broadened the stellar disc from 2.60 to 3.74 kpc (debt #13). Row 3 now misses low "
-            "rather than high, and closing debt #13 is what should close it. If row 3 does not "
-            "land in [245, 251] once the two scale lengths agree, the missing mass at R_0 is the "
-            "bulge, which arrives at S3-S4."
+            "Whatever steepens row 22 steepens this row by the same factor and leaves the "
+            "young/old ratio alone, because migration and enrichment are separate mechanisms here. "
+            "If row 22 steepens and this one does not, migration_efficiency is wrong too."
         ),
     ),
 )
