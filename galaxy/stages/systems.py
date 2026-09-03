@@ -118,9 +118,57 @@ class Catalogue(dict):
         return len(next(iter(self.values()))) if self else 0
 
 
+def cell_edges(R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Ring edges in R and sector edges in φ: the footprint of every cell.
+
+    The rings are the ones :func:`cell_masses` cuts, stated once here so that a
+    caller asking "which cells cover this window" cannot answer it with a second,
+    subtly different definition (rule A9 applied to geometry).
+    """
+    return np.linspace(R[0], R[-1], CELL_RINGS + 1), np.linspace(0.0, 2.0 * math.pi, CELL_SECTORS + 1)
+
+
+def cell_bounds(R: np.ndarray, cell: int) -> dict[str, float]:
+    """The (R, φ) footprint of one cell, for a caller that has to draw it."""
+    rings, sectors = cell_edges(R)
+    ring, sector = divmod(int(cell), CELL_SECTORS)
+    return {
+        "r_lo": float(rings[ring]), "r_hi": float(rings[ring + 1]),
+        "phi_lo": float(sectors[sector]), "phi_hi": float(sectors[sector + 1]),
+    }
+
+
+def cells_in(
+    R: np.ndarray, r_lo: float, r_hi: float, phi_lo: float = 0.0, phi_hi: float = 2.0 * math.pi
+) -> tuple[int, ...]:
+    """Every cell whose footprint meets the window. φ wraps; the window may cross zero.
+
+    A window narrower than a cell still selects the cell containing it, so a
+    query never comes back empty because it was too small to straddle an edge.
+    """
+    rings, sectors = cell_edges(R)
+    if r_hi < r_lo:
+        r_lo, r_hi = r_hi, r_lo
+    span = min(max(phi_hi - phi_lo, 0.0), 2.0 * math.pi)
+    start = phi_lo % (2.0 * math.pi)
+    windows = [(start, start + span)]
+    if start + span > 2.0 * math.pi:  # the window crosses φ = 0 and is two intervals
+        windows = [(start, 2.0 * math.pi), (0.0, start + span - 2.0 * math.pi)]
+
+    def meets(lo: float, hi: float, a: float, b: float) -> bool:
+        return lo < b and a < hi or (a == b and lo <= a <= hi) or (lo == hi and a <= lo <= b)
+
+    want_rings = [i for i in range(CELL_RINGS) if meets(rings[i], rings[i + 1], r_lo, r_hi)]
+    want_sectors = [
+        j for j in range(CELL_SECTORS)
+        if any(meets(sectors[j], sectors[j + 1], a, b) for a, b in windows)
+    ]
+    return tuple(i * CELL_SECTORS + j for i in want_rings for j in want_sectors)
+
+
 def cell_masses(sigma_star: np.ndarray, R: np.ndarray, rings: int = CELL_RINGS) -> tuple[np.ndarray, np.ndarray]:
     """Mass per radial ring and the ring edges. The count is computed, never sampled."""
-    edges = np.linspace(R[0], R[-1], rings + 1)
+    edges = np.linspace(R[0], R[-1], rings + 1)  # cell_edges(R)[0] when rings is CELL_RINGS
     weight = sigma_star * PC_PER_KPC**2 * 2.0 * math.pi * R
     per_ring = np.array([
         float(np.trapezoid(np.where((R >= edges[i]) & (R <= edges[i + 1]), weight, 0.0), R))
