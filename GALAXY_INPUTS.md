@@ -772,6 +772,20 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    `[verified: DECISIONS.md D57]`. `PITCH_SHEAR_SLOPE` is therefore doing no
    measurable work, and a wrong slope would look exactly like this one. A live
    instance of rule B11.
+23. **The arms are parameters, not a pattern.** S4 publishes a pitch angle and an
+   arm multiplicity; nothing publishes a non-axisymmetric density, so the star
+   catalogue S5 draws from it is axisymmetric and the galaxy has no visible
+   spiral structure. GALAXY_PLAN.md §3 promises stage 4 is the "first
+   recognisable galaxy" and on this evidence it is not `[verified:
+   DECISIONS.md D62]`. Faking a modulation in the catalogue was refused: it
+   would put structure in the sample that no field justifies.
+24. **The spec ensemble re-runs the whole pipeline for two scalars.** Rows 16 and
+   17 need twenty seeded runs, and each one recomputes the halo, the chemistry
+   and a 20 000-star catalogue to reach two numbers that depend only on
+   checkpoint 4. This is rule D4's principle — no endpoint runs more of the
+   pipeline than its answer requires — applied to the spec runner rather than
+   the API, and it is what makes the test suite take minutes. The fix is to
+   re-run from a checkpoint; `performance.py` at S10 is where it belongs.
 
 ---
 

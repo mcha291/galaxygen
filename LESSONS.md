@@ -197,3 +197,25 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   on. §5 puts the pitch draw on `world_seed`; the registry and the plan put it on
   `pattern_seed`, and only the latter keeps rerolling the arms from invalidating
   checkpoint 1 (D56).
+
+## From S5
+
+- [catalogue] Give each *property* its own seeded stream, not each object. Then a
+  small sample is a strict prefix of a large one and a region is identical alone
+  or inside a sweep — both for free, from identity rather than from care
+  `[verified: DECISIONS.md D60]`.
+- [catalogue] Anything a per-cell draw is keyed on must come from the *field*,
+  not from the stars the cell realised. Keying the age CDF on the realised mean
+  radius made a cell's ages depend on how many stars were asked for, and it was
+  invisible until the prefix property was asserted.
+- [catalogue] Invert the CDF, never reject-sample: the density is already
+  published, so the draw is exact and its cost does not depend on how peaked the
+  galaxy is (rule B8). The mean of a known distribution is computed, not sampled.
+- [catalogue][api] Check a sample against the *field* it was drawn from, never
+  against its own histogram (rule B3) — a sample tracing the wrong density is
+  still internally consistent.
+- [infra] A suite that builds an ensemble per test runs for minutes. Build it once
+  per session; twenty pipeline runs is the cost of one statistical row.
+- [catalogue][advanced] Cost that is paid per cell is paid whether or not anyone
+  asks for that cell. numpy's `Generator` construction is ~22 µs and dominated the
+  whole model run before the cell grid was sized against it (D61).

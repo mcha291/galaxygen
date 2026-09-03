@@ -37,6 +37,7 @@ galaxy/stages/sfh.py      two-infall accretion, Kennicutt-Schmidt, gas/star spli
 galaxy/stages/chemistry.py  Z(R,t), [Fe/H], the gradient, radial migration
 galaxy/stages/vertical.py   thin/thick split, scale heights, rows 5-11
 galaxy/stages/pattern.py    bar (derived) + pattern (seeded), checkpoint 4
+galaxy/stages/systems.py    population (derived) + the star catalogue (seeded)
 galaxy/specs/             graph.py, preflight.py, determinism.py, spec.py; `python -m galaxy.specs`
 galaxy/run.py             run(model, inputs=None, grid=None) -> Outputs(fields, decls, order)
 tools/                    progress.py, bootstrap.py, verify_clone.py, hooks/pre-commit
@@ -74,23 +75,23 @@ BRIEF.md                  the next session's brief, written by the previous one
   prediction that could kill it (D33); it still reports `fail`, never widen a
   target (B5), and a recorded miss that starts *passing* fails the run.
 
-## What the instruments said at S4 close
+## What the instruments said at S5 close
 
 - graph: acyclic; order `halo -> assembly -> disc -> sfh -> chemistry ->
-  vertical -> bar -> pattern`. preflight OK: 0 UNSET, 0 controls without a
-  range. determinism OK, golden values pinned under numpy 2.5.2.
-- spec: **11 pass** (1, 4, 6-10, 15-17, 19), **7 fail** (2, 3, 5, 11, 20, 22,
-  23, every one a recorded miss), 6 not-yet-computable, exit 0. Rows 16 and 17
-  are judged against a real 20-galaxy ensemble (D58).
+  vertical -> bar -> population -> pattern -> systems`. preflight OK: 0 UNSET,
+  0 controls without a range. determinism OK, golden values pinned.
+- spec: **11 pass** (1, 4, 6-10, 15-17, 19), **7 fail** (2, 3, 5, 11, 20, 22, 23,
+  every one a recorded miss), 6 not-yet-computable, exit 0.
 - **Read D51 before trusting row 9**: it passes on two errors cancelling.
-- Numbers, to spot a regression by: R200 = 212.94, c200 = 14.35, R_d = 2.49 kpc,
+- Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49 kpc,
   M_star = 5.276e10, M_gas = 5.80e9, SFR = 1.969, v_tan = 256.0, grad = -0.0237,
-  thick M = 1.07e10, h_thin = 253 pc, row 9 = 0.103, bar a = 4.98, shear = 0.880.
+  thick M = 1.07e10, row 9 = 0.103, bar a = 4.98, <m> = 0.586, N_stars = 9.0e10.
+- **10^6 stars in 1.07 s** against a 10 s gate, cold/warm 0.88 (no cache to
+  read). A full model run is 0.48 s, of which the catalogue is ~0.2 s.
 - **Three causes hold seven failing rows**: #18 (no extended accretion) has 2, 3,
-  20; #15 (every gradient a third of observed) has 22, 23; #19 (the thick disc's
-  shape, and the gate's compensation) has 5, 11. #22 costs no row but records
-  that the pitch-shear relation has no lever here, so it cannot be tested.
-
+  20; #15 (gradients a third of observed) has 22, 23; #19 (the thick disc's
+  shape, and the gate's compensation) has 5, 11. #23 (no arm pattern) and #24
+  (the ensemble re-runs everything) cost no row but shape what S6-S7 must do.
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 
 0. Tick the board — surface, model **actually used**, tag, date;
