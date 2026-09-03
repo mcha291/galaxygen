@@ -36,6 +36,7 @@ galaxy/stages/assembly.py   mergers[]: gas delivery and vertical heating (cp 2)
 galaxy/stages/sfh.py      two-infall accretion, Kennicutt-Schmidt, gas/star split
 galaxy/stages/chemistry.py  Z(R,t), [Fe/H], the gradient, radial migration
 galaxy/stages/vertical.py   thin/thick split, scale heights, rows 5-11
+galaxy/stages/pattern.py    bar (derived) + pattern (seeded), checkpoint 4
 galaxy/specs/             graph.py, preflight.py, determinism.py, spec.py; `python -m galaxy.specs`
 galaxy/run.py             run(model, inputs=None, grid=None) -> Outputs(fields, decls, order)
 tools/                    progress.py, bootstrap.py, verify_clone.py, hooks/pre-commit
@@ -73,24 +74,22 @@ BRIEF.md                  the next session's brief, written by the previous one
   prediction that could kill it (D33); it still reports `fail`, never widen a
   target (B5), and a recorded miss that starts *passing* fails the run.
 
-## What the instruments said at S3 close
+## What the instruments said at S4 close
 
-- graph: acyclic for both models; order `halo -> assembly -> disc -> sfh ->
-  chemistry -> vertical`; all 8 non-seed inputs bound, none contradicting §3.
-- preflight: OK; 0 inputs UNSET; 0 controls without a range.
-- determinism: OK; golden values pinned under numpy 2.5.2.
-- spec: **8 pass** (1, 4, 6, 7, 8, 9, 10, 19), **7 fail** (2, 3, 5, 11, 20, 22,
-  23 — every one a recorded miss), 9 not-yet-computable. Exit 0.
-- **Read D51 before trusting row 9.** It is the gate and it passes on two errors
-  cancelling; a test asserts the cancellation.
-- Numbers, to recognise a regression by: R₂₀₀ = 212.94 kpc, c₂₀₀ = 14.35,
-  R_d(λ_d) = 2.605, R_d(fitted) = 2.49 kpc, M_star = 5.276e10, M_gas = 5.80e9,
-  SFR = 1.969, v_tan = 256.0 km/s, [Fe/H](R₀) ≈ 0, gradient = −0.0237,
-  thick M = 1.07e10, thick R_d = 1.17 kpc, h_thin = 253 pc, h_thick = 1039 pc,
-  σ_z thin/thick = 20.1/40.7 km/s, row 9 = 0.103.
+- graph: acyclic; order `halo -> assembly -> disc -> sfh -> chemistry ->
+  vertical -> bar -> pattern`. preflight OK: 0 UNSET, 0 controls without a
+  range. determinism OK, golden values pinned under numpy 2.5.2.
+- spec: **11 pass** (1, 4, 6-10, 15-17, 19), **7 fail** (2, 3, 5, 11, 20, 22,
+  23, every one a recorded miss), 6 not-yet-computable, exit 0. Rows 16 and 17
+  are judged against a real 20-galaxy ensemble (D58).
+- **Read D51 before trusting row 9**: it passes on two errors cancelling.
+- Numbers, to spot a regression by: R200 = 212.94, c200 = 14.35, R_d = 2.49 kpc,
+  M_star = 5.276e10, M_gas = 5.80e9, SFR = 1.969, v_tan = 256.0, grad = -0.0237,
+  thick M = 1.07e10, h_thin = 253 pc, row 9 = 0.103, bar a = 4.98, shear = 0.880.
 - **Three causes hold seven failing rows**: #18 (no extended accretion) has 2, 3,
   20; #15 (every gradient a third of observed) has 22, 23; #19 (the thick disc's
-  shape, and the gate's compensation) has 5, 11.
+  shape, and the gate's compensation) has 5, 11. #22 costs no row but records
+  that the pitch-shear relation has no lever here, so it cannot be tested.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 
