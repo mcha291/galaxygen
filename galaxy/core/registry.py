@@ -213,32 +213,53 @@ _INPUTS: tuple[Input, ...] = (
         "Halo mass M₂₀₀",
         "control",
         "Literature spans 0.89–1.3 × 10¹² M☉ (Karukes+19; McMillan), per GALAXY_INPUTS.md §3. "
-        "That span is the uncertainty on the Milky Way, not the control range a generator "
-        "should offer; S1 sets lo/hi.",
+        "That span is the uncertainty on the Milky Way, not the control range: the range is set "
+        "to the disc-galaxy regime this model is built for, 10¹¹–10¹³ M☉, which runs from a large "
+        "dwarf to a group-scale halo. Below 10¹¹ the assumption that the baryons make a rotating "
+        "disc stops holding, and above 10¹³ the galaxy is not a disc galaxy [inferred]. Sets "
+        "everything: R₂₀₀ by definition, and the baryon budget through m_d.",
         unit="Msun",
         default=1.1e12,
+        lo=1e11,
+        hi=1e13,
         checkpoint_hypothesis=1,
     ),
     Input(
         "disc_spin",
         "Disc spin parameter λ_d",
         "control",
-        "The spin parameter of the disc, not of the halo (ruling 8). The S1 gate reproduces it "
-        "from a joint fit to stellar mass and scale length. Seeding rolls from a halo-λ "
-        "log-normal would make every galaxy three times too extended (GALAXY_PLAN.md §7 risk 1).",
+        "The spin parameter of the disc, not of the halo (ruling 8): the halo spin λ times the "
+        "angular-momentum retention fraction j_d/m_d, plus whatever MMW98's unmodelled structure "
+        "factors would have contributed. Seeding rolls from a halo-λ log-normal would make every "
+        "galaxy three times too extended (GALAXY_PLAN.md §7 risk 1), so the prior must be the "
+        "λ_d distribution. Default re-derived at S1: ruling 8's 0.0144 was inferred against "
+        "R_vir = 255 kpc, a different overdensity at a different mass, while this model's own "
+        "R₂₀₀ is 212.9 kpc; λ_d = √2 R_d/R₂₀₀ = 0.0173 reproduces the measured 2.6 kpc "
+        "[verified: DECISIONS.md D30, tests/test_disc.py::test_joint_fit_reproduces_the_defaults]. "
+        "Ruling 8's argument is untouched, only its arithmetic; both values sit inside the "
+        "λ_d = 0.01–0.03 that Burkert+10 need for m_d ≈ 0.05. Debt #10 asks for the re-ruling.",
         unit="dimensionless",
-        default=0.0144,
+        default=0.0173,
+        lo=0.005,
+        hi=0.05,
         checkpoint_hypothesis=1,
     ),
     Input(
         "halo_assembly_z",
         "Halo assembly redshift",
         "control",
-        "z ≈ 2–3 in GALAXY_INPUTS.md §3; no single value is given, so the default is owed by S1. "
-        "Does two jobs: sets the assembly epoch and derives c₂₀₀ (ruling 5). Renamed from "
-        "galaxy_age by ruling 7.",
+        "Does two jobs: sets the assembly epoch and derives c₂₀₀ = 4.1(1 + z_f) (ruling 5). "
+        "Renamed from galaxy_age by ruling 7. GALAXY_INPUTS.md §3 gives z ≈ 2–3 and no single "
+        "value; the default is the midpoint, 2.5, which is [inferred] and not a measurement. What "
+        "makes it more than a guess is its consequence: c₂₀₀ = 14.4, inside the 10–18 the Milky "
+        "Way's own concentration measurements span [verified: GALAXY_INPUTS.md §4b]. The range "
+        "0.5–5 covers late assembly to the earliest epoch the relation is quoted for [inferred]. "
+        "v_c(R₀) moves about 10 km/s across the cited 2–3, which is three times acceptance row "
+        "3's error bar, so this default is load-bearing and unvalidated (debt #12).",
         unit="dimensionless",
-        default_owner="S1",
+        default=2.5,
+        lo=0.5,
+        hi=5.0,
         checkpoint_hypothesis=1,
     ),
     Input(
@@ -246,9 +267,18 @@ _INPUTS: tuple[Input, ...] = (
         "Baryon retention fraction",
         "control",
         "Fraction of the cosmic baryon budget the galaxy keeps: f_b × this = m_d ≈ 0.055 "
-        "(ruling 9). The ~0.35 in §3 is approximate; S1 confirms or tightens it.",
+        "(ruling 9). S1 confirms the ~0.35 of §3 and does not tighten it: 0.35 gives m_d = 0.053, "
+        "and 0.053 × M₂₀₀ = 5.9 × 10¹⁰ M☉ reconciles acceptance row 1's 5 ± 1 × 10¹⁰ of stars "
+        "with row 20's 8 × 10⁹ of gas, which is what a baryon budget should do. Fitting it "
+        "instead to the stellar mass alone would tune a well-defined parameter to cover for the "
+        "missing gas phase — the constant would then have no claim on its value (rule B10). "
+        "Range from the observed disc fractions f_disk ≈ 0.01–0.07 against cosmic f_b "
+        "[verified: GALAXY_INPUTS.md §4b, citing Burkert+10], i.e. retention 0.07–0.46, widened "
+        "to 0.05–0.50.",
         unit="dimensionless",
         default=0.35,
+        lo=0.05,
+        hi=0.5,
         checkpoint_hypothesis=1,
     ),
     Input(

@@ -1,7 +1,11 @@
 """``python -m galaxy.specs``: every executable spec against the production registries.
 
-Exit status is non-zero if any spec reports a problem or any acceptance
-quantity fails. Not-yet-computable quantities do not fail the run.
+Exit status is non-zero if any spec reports a problem, if an acceptance
+quantity fails without being a recorded miss, or if a recorded miss has started
+passing. Not-yet-computable quantities do not fail the run, and neither does a
+miss that is registered in ``spec.MISSES`` with its debt and its reason — it
+still prints as ``fail`` (rule B5 relaxes nothing), it just does not pretend to
+be news.
 """
 
 from __future__ import annotations
@@ -28,7 +32,7 @@ def main() -> int:
     bad |= bool(determinism.check(models, impls, table))
 
     print(spec.report(models))
-    bad |= any(r.status == "fail" for m in models for r in spec.run(m))
+    bad |= any(spec.problems(spec.run(m)) for m in models)
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

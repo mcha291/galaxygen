@@ -663,6 +663,32 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    (§4b, §13).
 9. α-bimodality may be reachable without a merger, via smooth accretion plus
    migration. Test at S4 with a merger-free galaxy (§14).
+10. **λ_d's ruled default was inferred against the wrong radius.** Ruling 8 set
+   λ_d = 0.0144 from R_d√2/R_vir with R_vir = 255 kpc, which is Huang+16's
+   top-hat virial radius for M_vir ≈ 0.9 × 10¹² M☉ — about 95 ρ_crit, not 200
+   `[verified: tests/test_disc.py::test_the_255_kpc_is_a_top_hat_radius_not_R200]`.
+   MMW98's relation takes r₂₀₀, and this model's r₂₀₀ for the default
+   M₂₀₀ = 1.1 × 10¹² M☉ is 212.9 kpc, so the same measured R_d = 2.6 kpc gives
+   λ_d = 0.0173. S1 implements the mechanism correctly and moves the default;
+   ruling 8's *argument* is untouched, and both numbers lie inside Burkert+10's
+   λ_d = 0.01–0.03 for m_d ≈ 0.05. **Needs a re-ruling to close** (§6, D30).
+11. **One baryonic component.** S1 puts the whole retained baryon budget in a
+   single exponential of scale length 2.6 kpc: no gas phase (S2), no bulge
+   (S3–S4). Two consequences, both recorded rather than tuned away:
+   `stellar_mass_total` is the baryon budget and so is high by the ~8 × 10⁹ M☉
+   of gas, and v_c(R₀) is over-concentrated, which makes acceptance entry 3
+   miss high by 5.1 km/s. **Prediction, stated so it can fail:** giving the gas
+   its own much shallower profile at S2 brings the Sun's tangential velocity to
+   246.4 km/s, inside 248 ± 3 `[verified:
+   tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss]`. Registered
+   in `spec.MISSES`; if S2 does not close it, the explanation is wrong.
+12. **The c₂₀₀–z relation is unvalidated and load-bearing.** c₂₀₀ = 4.1(1 + z_f)
+   applies a normalisation quoted for c_vir to c₂₀₀ without the conversion
+   between the two overdensities, and z_f = 2.5 is the midpoint of §3's
+   "z ≈ 2–3" rather than a measurement. Across that cited range v_c(R₀) moves
+   about 10 km/s — three times acceptance entry 3's error bar. The one check it
+   passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
+   measurements span (§4b).
 
 ---
 
