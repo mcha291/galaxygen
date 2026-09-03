@@ -128,7 +128,7 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(20, "Total gas mass (<30 kpc)", "Msun", "gas_mass_30kpc", 8.0e9, 8.0e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="No uncertainty quoted: zero-width target. S2 finds the uncertainty in the source or records the miss (rule B5)."),
     Quantity(21, "Gas HI:H₂ split", "dimensionless", "gas_h2_fraction", 0.11, 0.11, "pointwise", "89% : 11%", "Nakanishi & Sofue 15", note="Read as the H₂ mass fraction f_H₂ = 0.11 (HI = 1 − f_H₂). No uncertainty quoted: zero-width target; see row 20."),
     Quantity(22, "Present-day metallicity gradient", "dex/kpc", "metallicity_gradient", -0.069, -0.049, "pointwise", "−0.06 dex/kpc", "Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010", note="Interval is the union of the two cited measurements [inferred]; the table itself quotes −0.06 with no error."),
-    Quantity(23, "Gradient evolution with age", "dex/kpc", None, None, None, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages. S2 defines the scalar(s) the runner reads, with the age bins, and fills field/lo/hi."),
+    Quantity(23, "Gradient evolution with age", "dex/kpc", "metallicity_gradient_old", -0.05, -0.03, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages; one row can name one field, so S2 operationalises it as the *old* end (>10 Gyr, target −0.04) and leaves the young end to row 22's companion field metallicity_gradient_young, which the same stage publishes. Interval is ±0.01 around −0.04 [inferred]: the source quotes no uncertainty and a zero-width target would make the row untestable rather than strict."),
     Quantity(24, "[α/Fe] bimodality", "dimensionless", None, None, None, "qualitative", "Thick disc α-enhanced across a wide [Fe/H] range", "BHG16 §5.2.2", note="S2 (simple) and S9 (advanced) operationalise this as a category_scalar and set field/expect. Debt #9 asks whether it appears without a merger."),
 )
 
@@ -157,6 +157,80 @@ class Miss:
 
 _MISSES: tuple[Miss, ...] = (
     Miss(
+        row=20,
+        debt=17,
+        since="S2",
+        reason=(
+            "The target has no width. Nakanishi & Sofue's 8.0 x 10^9 Msun is quoted with no "
+            "uncertainty, so a pointwise check fails for any float that is not bit-exact, and the "
+            "model's 8.49 x 10^9 agrees to 6% - as close as a galaxy's total gas mass is ever "
+            "known. This is a defect in the acceptance table, not in the model, and it is recorded "
+            "rather than fixed by widening the interval to whatever the model happens to produce "
+            "(rule B5)."
+        ),
+        prediction=(
+            "Someone has to read the source and record its actual uncertainty; anything above 6% "
+            "makes this row pass on the value it already has. If the source really quotes none, "
+            "the row should be marked as having no testable target rather than a zero-width one, "
+            "which is a change to the table's schema and belongs to the S10 audit."
+        ),
+    ),
+    Miss(
+        row=4,
+        debt=13,
+        since="S2",
+        reason=(
+            "The model has two independent routes to the disc scale length and they disagree. "
+            "lambda_d and MMW98 predict 2.60 kpc (disc_scale_length_spin); the star formation "
+            "history builds a stellar profile with a fitted scale length of 3.74 kpc, 44% larger, "
+            "because the accreting gas must be more extended than the stars for the model to "
+            "retain the observed gas mass at all. Row 4 reads the fitted one, because row 4 "
+            "measures starlight and not angular momentum."
+        ),
+        prediction=(
+            "One of the two is wrong and the disagreement is not a tolerance to be split. Either "
+            "GAS_DISC_SCALE_RATIO is too large - in which case the gas mass and SFR fall out of "
+            "their windows together - or MMW98's structure factors, which S1 folded into lambda_d "
+            "unmodelled (debt #6), account for the difference. S3 can decide it by modelling f_c "
+            "and f_R explicitly; if neither moves it, the infall profile is the wrong shape."
+        ),
+    ),
+    Miss(
+        row=22,
+        debt=15,
+        since="S2",
+        reason=(
+            "Inside-out growth alone produces a third of the observed gradient: -0.019 dex/kpc "
+            "against -0.06. The gradient was measured to be exactly insensitive to the yield, so "
+            "the level and the tilt are set separately and this is a statement about the tilt. "
+            "Reproducing -0.06 needs an inside-out index near 3, and the source that gives "
+            "tau_0 = 7 Gyr at R_0 gives a linear tau(R), i.e. n = 1; the model cannot have both."
+        ),
+        prediction=(
+            "Outflows are the missing tilt. Metal loss scaling with escape velocity removes more "
+            "from the outer disc than the inner one, steepening the gradient without touching the "
+            "inside-out index. S9 adds them (GALAXY_INPUTS.md 8); if the gradient does not steepen "
+            "towards -0.06 when it does, this explanation is wrong and the infall law is."
+        ),
+    ),
+    Miss(
+        row=23,
+        debt=15,
+        since="S2",
+        reason=(
+            "The old-population gradient is -0.009 dex/kpc against -0.04, too flat for the same "
+            "reason row 22 is: every gradient this model produces is about a third of the observed "
+            "one. Migration itself is close to right - the young/old ratio comes out 2.3 against "
+            "an observed 1.75 - so the error is in the gradient it is flattening, not in the "
+            "flattening."
+        ),
+        prediction=(
+            "Whatever steepens row 22 steepens this row by the same factor and the young/old ratio "
+            "does not move, because migration and enrichment are separate mechanisms here. If "
+            "row 22 steepens and this one does not, migration_efficiency is wrong too."
+        ),
+    ),
+    Miss(
         row=3,
         debt=11,
         since="S1",
@@ -167,8 +241,13 @@ _MISSES: tuple[Miss, ...] = (
             "over-concentrating mass inside R0 and pushing v_c up."
         ),
         prediction=(
-            "Giving the gas its own, much shallower profile at S2 lowers v_c(R0) by roughly the "
-            "5 km/s of the miss. If it does not, the cause is elsewhere and this entry is wrong."
+            "S1 predicted that giving the gas its own shallower profile would lower v_tan by about "
+            "the 5 km/s of the miss, to 246.4. S2 did it and got 237.2: the direction was right "
+            "and the magnitude was not, because the same change that moved the gas out also "
+            "broadened the stellar disc from 2.60 to 3.74 kpc (debt #13). Row 3 now misses low "
+            "rather than high, and closing debt #13 is what should close it. If row 3 does not "
+            "land in [245, 251] once the two scale lengths agree, the missing mass at R_0 is the "
+            "bulge, which arrives at S3-S4."
         ),
     ),
 )

@@ -27,30 +27,28 @@ def test_statistical_rows_are_debt_8():
 
 
 def test_rows_without_a_field_yet():
-    assert {q.n for q in spec.QUANTITIES if q.field is None} == {23, 24}
+    assert {q.n for q in spec.QUANTITIES if q.field is None} == {24}  # S2 filled row 23
     assert Q[24].mode == "qualitative"
 
 
-def test_checkpoint_one_rows_report_a_verdict(model):
-    """S1 publishes rows 1, 3, 4 and 19; every other row must still be honest about not knowing."""
+def test_the_rows_the_model_can_reach_report_a_verdict(model):
+    """S1 and S2 publish rows 1, 2, 3, 4, 19, 20, 22, 23; the rest must admit they cannot."""
     results = spec.run(model)
     assert len(results) == 24
     by_n = {r.n: r for r in results}
-    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {1, 3, 4, 19}
-    assert spec.summary(results) == {"pass": 3, "fail": 1, "not-yet-computable": 20}
-    assert "no published scalar" in by_n[23].reason
-    assert "not published by model" in by_n[2].reason
+    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {1, 2, 3, 4, 19, 20, 22, 23}
+    assert spec.summary(results) == {"pass": 3, "fail": 5, "not-yet-computable": 16}
+    assert "no published scalar" in by_n[24].reason
 
 
-def test_the_one_failure_is_recorded_and_the_run_is_clean(model):
-    """Row 3 misses and says why. Rule B5 keeps it red; the register keeps it from being noise."""
+def test_every_failure_is_recorded_and_the_run_is_clean(model):
+    """Five rows miss and every one names a debt and a prediction (rules B4, B5)."""
     results = spec.run(model)
-    by_n = {r.n: r for r in results}
-    assert by_n[3].status == "fail"
+    failed = {r.n for r in results if r.status == "fail"}
+    assert failed == {3, 4, 20, 22, 23}
     assert spec.unexplained(results) == () and spec.stale(results) == ()
     assert spec.problems(results) == []
-    miss = spec.MISSES[3]
-    assert miss.since == "S1" and miss.debt == 11 and miss.prediction
+    assert {spec.MISSES[n].debt for n in failed} == {11, 13, 15, 17}
 
 
 def test_an_unexplained_failure_stops_the_run():
@@ -83,8 +81,9 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod):
     out = spec.report(list(prod[0]))
-    assert "spec" in out and "20 not-yet-computable of 24" in out
+    assert "spec" in out and "16 not-yet-computable of 24" in out
     assert "recorded miss, debt #11, since S1" in out
+    assert "recorded miss, debt #15, since S2" in out
 
 
 def scalar(name, unit="Msun"):

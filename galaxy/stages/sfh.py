@@ -15,9 +15,16 @@ The model, per annulus, with instantaneous recycling:
   states tau_0 as "~7 Gyr **at R_0**" in one row and the law as
   ``tau_0 (R/R_d)^n`` in the next; those cannot both hold, and R_0 is the one
   that matches the source's own numbers (DECISIONS.md D43).
-- **Star formation** is Kennicutt-Schmidt above a threshold and nothing below it,
-  ``Psi = KS_NORM * Sigma_gas^KS_INDEX`` for ``Sigma_gas > SF_THRESHOLD``. The
-  threshold is what leaves an extended gas disc outside a truncated stellar one.
+- **Star formation** is Kennicutt-Schmidt, switched off below a threshold:
+  ``Psi = KS_NORM * Sigma_gas^KS_INDEX * s(Sigma_gas)``. The threshold is what
+  leaves an extended gas disc outside a truncated stellar one. The switch ``s``
+  is a ``tanh`` of width a quarter of the threshold, **not** a step, and that is
+  a numerical requirement rather than a flourish: a step makes the star
+  formation rate a grid-alignment artefact. Self-regulation holds a wide annulus
+  of gas *at* the threshold, so with a step the integrated SFR depends on which
+  side of it each cell lands on, and it wanders between 1.47 and 1.79 with no
+  trend as N_R and N_t change. With the switch it converges to 0.1%
+  ``[verified: tests/test_sfh.py::test_the_star_formation_rate_converges]``.
 - **The accreting gas is more extended than the stars it makes**, by
   ``GAS_DISC_SCALE_RATIO``. Without that the model has no outer HI at all.
 
@@ -40,6 +47,19 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC, disc_circular_velocity
+
+
+# Width of the threshold switch, as a fraction of the threshold itself. A
+# threshold in nature is not a step, and a step here is numerically fatal (see
+# the module docstring), so the width belongs to the threshold rather than
+# being a constant of its own.
+THRESHOLD_WIDTH = 0.25
+
+
+def star_formation_rate(gas: np.ndarray, norm: float, index: float, threshold: float) -> np.ndarray:
+    """Kennicutt-Schmidt with a smooth low-density cutoff, in M☉/yr/kpc²."""
+    switch = 0.5 * (1.0 + np.tanh((gas - threshold) / (THRESHOLD_WIDTH * threshold)))
+    return norm * np.maximum(gas, 0.0) ** index * switch
 
 
 def surface_to_mass(sigma: np.ndarray, R: np.ndarray) -> float:
@@ -203,14 +223,14 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     infall_hist = np.empty((R.size, t.size))
     for j, tj in enumerate(t):
         infall = amplitude * np.exp(-tj / tau)
-        psi = np.where(gas > crit, ks_n * np.maximum(gas, 0.0) ** ks_k, 0.0)
+        psi = star_formation_rate(gas, ks_n, ks_k, crit)
         locked = (1.0 - ret) * PC_PER_KPC * psi  # M☉/yr/kpc² -> M☉/pc²/Gyr
         gas = np.maximum(gas + (infall - locked) * dt, 0.0)
         stars = stars + locked * dt
         gas_hist[:, j] = gas
         sfr_hist[:, j] = psi
         infall_hist[:, j] = infall
-    psi_now = np.where(gas > crit, ks_n * np.maximum(gas, 0.0) ** ks_k, 0.0)
+    psi_now = star_formation_rate(gas, ks_n, ks_k, crit)
 
     R_star = fit_scale_length(stars, R, 1.0, 3.0 * R_d)
     R_gas = fit_scale_length(gas, R, 1.0, ctx.grid.spec.R_max)
