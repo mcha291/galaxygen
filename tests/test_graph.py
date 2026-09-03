@@ -24,19 +24,24 @@ def test_production_graphs_hold(prod):
         g = graph.analyse(m, impls_, table)
         assert g.ok
         assert tuple(s.id for s in g.order) == (
-            "halo", "assembly", "disc", "sfh", "chemistry", "vertical", "bar", "pattern",
+            "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
+            "bar", "population", "pattern", "systems",
         )
         # S4 is the first seeded stage. Provenance is derived per stage, so every field
         # the pattern stage publishes is seeded and every other field is derived (D55).
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
-        assert seeded == {"bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity"}
+        assert seeded == {
+            "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
+            "star_radius", "star_azimuth", "star_height", "star_age", "star_metallicity",
+            "star_mass", "star_population", "catalogue_size",
+        }
         # S1 binds the four checkpoint-1 controls and no others; graph.py checks each
         # against GALAXY_PLAN.md §3's hypothesis and none of them disagrees.
         bound = {n: c for n, c in g.input_checkpoint.items() if c is not None}
         assert bound == {
             "halo_mass": 1, "disc_spin": 1, "halo_assembly_z": 1, "baryon_retention": 1,
             "infall_timescale": 3, "inside_out_index": 3, "migration_efficiency": 3,
-            "mergers": 2, "pattern_seed": 4,
+            "mergers": 2, "pattern_seed": 4, "systems_seed": 5,
         }
     assert "graph" in graph.report(models, impls_, table)
 

@@ -31,9 +31,9 @@ def test_rows_without_a_field_yet():
     assert Q[24].mode == "qualitative"
 
 
-def test_the_rows_the_model_can_reach_report_a_verdict(model):
+def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
     """Everything the model reaches through S4; the rest must admit they cannot."""
-    results = spec.run(model, ensemble=spec.ensemble(model))
+    results = judged[model.name]
     assert len(results) == 24
     by_n = {r.n: r for r in results}
     assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {
@@ -43,9 +43,9 @@ def test_the_rows_the_model_can_reach_report_a_verdict(model):
     assert "no published scalar" in by_n[24].reason
 
 
-def test_every_failure_is_recorded_and_the_run_is_clean(model):
+def test_every_failure_is_recorded_and_the_run_is_clean(model, judged):
     """Five rows miss and every one names a debt and a prediction (rules B4, B5)."""
-    results = spec.run(model, ensemble=spec.ensemble(model))
+    results = judged[model.name]
     failed = {r.n for r in results if r.status == "fail"}
     assert failed == {2, 3, 5, 11, 20, 22, 23}
     assert spec.unexplained(results) == () and spec.stale(results) == ()
@@ -83,8 +83,8 @@ def test_recorded_misses_are_well_formed():
         spec.Miss(row=1, debt=1, since="S1", reason="r", prediction=" ")
 
 
-def test_report_runs(prod):
-    out = spec.report(list(prod[0]))
+def test_report_runs(prod, judged):
+    out = spec.report(list(prod[0]), judged)
     assert "spec" in out and "6 not-yet-computable of 24" in out
     assert "recorded miss, debt #18, since S1" in out   # row 3, three sessions old
     assert "recorded miss, debt #19, since S3" in out

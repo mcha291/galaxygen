@@ -33,7 +33,7 @@ def test_the_bar_scales_with_the_disc(model):
 
 def test_the_bar_length_is_reproducible_not_drawn(model):
     """Row 15 is pointwise, so it must not move with the seed — which is why D55 split the stages."""
-    values = {run(model, {"pattern_seed": s}).fields["bar_half_length"] for s in range(5)}
+    values = {run(model, {"pattern_seed": s}, grid=COARSE).fields["bar_half_length"] for s in range(5)}
     assert len(values) == 1
 
 
@@ -57,9 +57,9 @@ def test_shear_rate_recognises_its_limiting_cases():
 
 def test_the_pattern_is_seeded_and_reproducible(model):
     """Rule A10: seeded means reproducible given the seed, not determined by the physics."""
-    a = run(model, {"pattern_seed": 7}).fields
-    b = run(model, {"pattern_seed": 7}).fields
-    c = run(model, {"pattern_seed": 8}).fields
+    a = run(model, {"pattern_seed": 7}, grid=COARSE).fields
+    b = run(model, {"pattern_seed": 7}, grid=COARSE).fields
+    c = run(model, {"pattern_seed": 8}, grid=COARSE).fields
     for name in ("bar_corotation_radius", "bar_pattern_speed", "pitch_angle"):
         assert a[name] == b[name], name          # reproducible
         assert a[name] != c[name], name          # and not determined
@@ -80,7 +80,7 @@ def test_the_bar_is_fast(model):
 
 
 def test_arm_multiplicity_is_drawn_from_the_closed_set(model):
-    seen = {run(model, {"pattern_seed": s}).fields["arm_multiplicity"] for s in range(30)}
+    seen = {run(model, {"pattern_seed": s}, grid=COARSE).fields["arm_multiplicity"] for s in range(30)}
     assert seen <= set(ARM_MULTIPLICITIES)
     assert len(seen) > 1, "a draw that never varies is not a draw"
 
@@ -112,8 +112,8 @@ def test_the_ensemble_is_an_ensemble_of_galaxies(model):
     assert len(set(e["bar_pattern_speed"])) == 8      # every member is distinct
 
 
-def test_rows_16_and_17_are_judged_statistically(model):
-    results = {r.n: r for r in spec.run(model, ensemble=spec.ensemble(model))}
+def test_rows_16_and_17_are_judged_statistically(model, judged):
+    results = {r.n: r for r in judged[model.name]}
     for n in (16, 17):
         assert results[n].status == "pass"
         assert "central 95%" in results[n].reason and "n=20" in results[n].reason

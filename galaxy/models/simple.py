@@ -10,7 +10,7 @@ SIMPLE = MODELS.register(
             "First-pass model (GALAXY_PLAN.md §2): shared halo, potential and disc; "
             "instantaneous recycling; single-element chemistry. At S1 it maps halo and disc."
         ),
-        stages=(("halo", "halo"), ("disc", "disc"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry"), ("vertical", "vertical"), ("bar", "bar"), ("pattern", "pattern")),
+        stages=(("halo", "halo"), ("disc", "disc"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry"), ("vertical", "vertical"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems")),
         constants={
             **LEVEL0,
             "CANARY": Constant(

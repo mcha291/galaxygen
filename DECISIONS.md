@@ -911,3 +911,71 @@ the members of an ensemble should be different galaxies, not one galaxy with one
 knob jiggled. Cost is 20 runs per model, about 3 seconds; if that becomes a
 problem the fix is to re-run only the seeded tail, which is a `performance.py`
 question (S10).
+
+## Session 5 — systems: the star catalogue
+
+Surface: web. Model: Opus 5. Ran on the S1 branch at the owner's direction.
+
+### D59. The gate, measured: 10⁶ stars in 1.07 s, and there is no cache to read
+
+**Decision.** Recorded here, as rule B2 requires the measurement to be cold.
+
+**Settled by.** A full materialisation of 10⁶ stars takes **1.07 s** against a gate
+of 10 s. The cold/warm ratio is **0.88** — the second call is *slower* than the
+first, which is the honest way of saying there is no cache anywhere in the path,
+so the number is not a reading of one. The full model run costs 0.48 s, of which
+the published 20 000-star catalogue is about 0.2 s.
+
+### D60. Identity, not care, is what makes a region deterministic
+
+**Decision.** A star is `(cell, index)`, and every property is drawn at position
+`index` from `rng(systems_seed, "cell", cell, property)` — one stream per
+*property*, not one per star.
+
+**Settled by.** Two properties fall out that a per-star stream would not give.
+Order independence is immediate: nothing is drawn from a shared stream, so a
+region generated alone is the region generated inside a full sweep. And a small
+sample is a strict **prefix** of a large one, because each property's stream is
+consumed only by that property — asking for 43 stars from a cell gives the first
+43 of the 436 a bigger request would give `[verified:
+tests/test_systems.py::test_a_small_sample_is_a_prefix_of_a_large_one]`. That is
+what makes GALAXY_PLAN.md §4's clickable sample stable while the LOD ladder
+materialises more underneath it. With one stream per star, drawing
+radius-then-age for 43 stars would leave the stream at a different position than
+for 436, and the prefix would break.
+
+**A test found a real bug in this.** The birth-time CDF was keyed off the realised
+mean radius of a cell, so a cell's ages changed with how many stars were asked
+for. It is now keyed off the ring's mass-weighted radius, computed from the
+density field and independent of any sample. The prefix property is exactly the
+kind of invariant that fails silently, which is why it is asserted rather than
+argued.
+
+### D61. The cell grid is a measured trade-off, not a round number
+
+**Decision.** 32 × 32 cells: 0.94 kpc rings, 11.25° sectors.
+
+**Settled by.** Every cell costs eight `Generator` constructions — about 22 µs
+each, and numpy's construction cost, not the BLAKE2b path hashing, which caching
+showed to be worth only 1.1× `[verified: measured at S5]`. They are paid on every
+run whether or not anything asks for that cell's stars. 48 × 48 put the catalogue
+at 76% of the whole model run; 32 × 32 halves it. Going coarser makes a small
+region query materialise stars it then discards, so this is a real trade-off with
+an optimum that depends on what the viewer asks for, and S7 is the session that
+will know. Debt #24 records the structural fix: the spec ensemble re-runs the
+entire pipeline twenty times for two scalars that depend on one checkpoint, which
+is rule D4's principle — no endpoint runs more of the pipeline than its answer
+requires — applied to the spec runner rather than the API.
+
+### D62. What the catalogue does not have
+
+**Decision.** The catalogue is axisymmetric, and says so rather than being given a
+modulation.
+
+**Settled by.** S4 published a pitch angle and an arm multiplicity but no
+non-axisymmetric density field, so there is nothing in the model to wind stars
+into arms. Inventing a modulation here would put a spiral pattern in the
+catalogue that no published field justifies — the same failure rule A4 names for
+inputs, one level up. Recorded as debt #23, whose owner is whoever needs the
+galaxy to look like a galaxy: GALAXY_PLAN.md §3 promises stage 4 is the "first
+recognisable galaxy", and on this evidence it is not.
