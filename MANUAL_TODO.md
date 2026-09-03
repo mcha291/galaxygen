@@ -24,7 +24,7 @@ closes the project.
 | S | Tag | Merge commit on `main` | State |
 |---|---|---|---|
 | 0 | `s00` | `0bc546d` | **applied** — pushed from the desktop session that ran S0 |
-| 1 | `s01` | *TBD — S2 fills this in* | **queued**, and a stale `s01` must be deleted first — see below |
+| 1 | `s01` | `4ebbe8f8dfeb` | **queued**, and a stale `s01` must be deleted first — see below |
 
 > **Delete the stale `s01` before running the batch.** An `s01` tag was pushed by
 > hand at `56d7510` while S1 was still open, and `main` was afterwards rebuilt into
@@ -34,6 +34,10 @@ closes the project.
 > the current merge — but the tag has to be re-pointed, and a tag cannot be moved
 > from a web session (the same 403 that created this file). This is the cost of the
 > rewrite, recorded rather than left to be discovered when the batch runs.
+> **Done: the stale tag was deleted by the owner on 2026-09-03**, so the batch
+> below can create `s01` cleanly. The line that deletes it is kept as a no-op.
+
+| 2 | `s02` | *TBD — S3 fills this in* | **queued** |
 
 ### Run these
 
@@ -47,8 +51,11 @@ git checkout main && git reset --hard origin/main   # main was rebuilt once; see
 # One-off: drop the stale s01 that points at the pre-rebuild merge commit.
 git push origin :refs/tags/s01 ; git tag -d s01
 
-# S1 — halo & disc. Until S2 records the literal SHA, resolve it by subject:
-git tag -a s01 "$(git rev-list -1 --grep='^Merge S1 into main' origin/main)" -m "S1: halo & disc"
+# S1 — halo & disc.
+git tag -a s01 4ebbe8f8dfebf142b166a207ec1bb57ca0918eb9 -m "S1: halo & disc"
+
+# S2 — star formation history & chemistry. S3 replaces this with the literal SHA.
+git tag -a s02 "$(git rev-list -1 --grep='^Merge S2 into main' origin/main)" -m "S2: SFH & chemistry"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
