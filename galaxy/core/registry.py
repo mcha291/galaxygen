@@ -111,6 +111,35 @@ class Input:
 
 
 @dataclass(frozen=True, slots=True)
+class MergerEvent:
+    """One entry in the ``mergers`` event list (ruling 11).
+
+    ``gas_fraction`` is what dissolved the ``second_infall_onset`` input: it is the
+    share of the galaxy's remaining baryon budget this event delivers, not the
+    satellite's own internal gas fraction. A gas-rich major merger is therefore
+    *the* second infall rather than something that happens alongside one.
+    """
+
+    time: float  # Gyr of cosmic time, t = 0 at the Big Bang
+    mass_ratio: float  # satellite : host, so 0.25 is a 1:4 merger
+    gas_fraction: float  # share of the remaining baryon budget this event delivers
+    about: str = ""
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.time:
+            raise RegistryError(f"merger at t={self.time}: time is cosmic time and cannot be negative")
+        if not 0.0 < self.mass_ratio <= 1.0:
+            raise RegistryError(f"merger at t={self.time}: mass_ratio must be in (0, 1]")
+        if not 0.0 <= self.gas_fraction <= 1.0:
+            raise RegistryError(f"merger at t={self.time}: gas_fraction must be in [0, 1]")
+
+
+# A merger is "major" above this ratio; below it the satellite is absorbed without
+# restructuring the disc [recall: the usual 1:10 convention].
+MAJOR_MERGER_RATIO = 0.1
+
+
+@dataclass(frozen=True, slots=True)
 class Constant:
     value: float
     unit: str
@@ -338,11 +367,26 @@ _INPUTS: tuple[Input, ...] = (
         "mergers",
         "Merger events",
         "events",
-        "Event list, exempt from the ceiling (GALAXY_INPUTS.md §3). Each event carries a "
-        "gas_fraction (ruling 11), which dissolved the second_infall_onset input. The event "
-        "schema and the Milky Way default history belong to S3; an empty list is not the "
-        "Milky Way, so the default stays UNSET until then.",
-        default_owner="S3",
+        "Event list, exempt from the ceiling (GALAXY_INPUTS.md §3). Each event is a "
+        "MergerEvent(time, mass_ratio, gas_fraction); the gas_fraction is what dissolved the "
+        "second_infall_onset input (ruling 11), being the share of the remaining baryon budget "
+        "the event delivers. The Milky Way default is the one major merger its stellar halo "
+        "records — Gaia-Enceladus/Sausage, at a lookback of about 10 Gyr and a mass ratio near "
+        "1:4 [recall: Helmi+18; Belokurov+18] — plus Sagittarius, which is minor and ongoing "
+        "[recall: Ibata+94]. An empty list is a legitimate galaxy and is what debt #9's "
+        "merger-free control run passes.",
+        default=(
+            MergerEvent(
+                3.8, 0.25, 0.5,
+                "Gaia-Enceladus/Sausage: the last major merger, ~10 Gyr ago, and the event the "
+                "two-infall framework needs. Mass ratio ~1:4 from the stellar halo it left.",
+            ),
+            MergerEvent(
+                8.8, 0.02, 0.2,
+                "Sagittarius dwarf: minor and still in progress, ~5 Gyr since first pericentre. "
+                "Below the major threshold, so it delivers gas without restructuring the disc.",
+            ),
+        ),
         checkpoint_hypothesis=2,
     ),
     Input(
