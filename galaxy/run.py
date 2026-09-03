@@ -10,11 +10,21 @@ array for an ``(R, t)`` declaration.
 Inputs are resolved from overrides, then registry defaults. An input whose
 default is UNSET is only an error if some stage of the model reads it (rule B9:
 a number is never substituted for a missing one).
+
+**Partial runs** (rule D4). ``only=`` names the fields a caller actually wants,
+and the runner executes the dependency closure above them and nothing else —
+``graph.Graph.needed_for``. ``resume=`` hands back an earlier ``Outputs`` for
+the same model, inputs and grid, and the stages already in it are not run again.
+Together they are what lets an API answer a question without building the whole
+galaxy, and what lets the spec ensemble stop rebuilding a star catalogue to read
+a pattern speed (debt #24). Neither changes any value: a stage is a pure
+function of its declared reads, so running fewer of them cannot move the ones
+that do run — asserted rather than argued, in ``tests/test_run.py``.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -46,7 +56,8 @@ class Outputs:
     inputs: dict[str, Any]
     fields: dict[str, Any]
     decls: dict[str, FieldDecl]
-    order: tuple[str, ...]  # implementation ids, in execution order
+    order: tuple[str, ...]  # implementation ids whose fields are present, in execution order
+    ran: tuple[str, ...] = ()  # what this call executed; differs from order under resume=
 
 
 def resolve_inputs(
@@ -116,6 +127,24 @@ def _check_value(decl: FieldDecl, value: Any, grid: Grid, stage: Stage, column_l
     return arr
 
 
+def _check_resumable(model: Model, g: Grid, resolved: Mapping[str, Any], resume: Outputs) -> None:
+    """``resume`` must describe the same galaxy, or its fields are someone else's.
+
+    Checked rather than documented: a resumed run that silently mixes two input
+    vectors would publish a self-consistent galaxy that no input vector
+    generates, and nothing downstream could detect it (rule B13).
+    """
+    if resume.model != model.name:
+        raise RunError(f"cannot resume model {model.name!r} from an {resume.model!r} run")
+    if resume.grid.spec != g.spec:
+        raise RunError(f"cannot resume: grid {resume.grid.spec} is not {g.spec}")
+    for name in set(resolved) & set(resume.inputs):
+        if resolved[name] != resume.inputs[name]:
+            raise RunError(
+                f"cannot resume: input {name!r} was {resume.inputs[name]!r} and is now {resolved[name]!r}"
+            )
+
+
 def run(
     model: Model,
     inputs: Mapping[str, Any] | None = None,
@@ -123,7 +152,10 @@ def run(
     *,
     impls: Registry[Stage] | Mapping[str, Stage] | None = None,
     table: Mapping[str, Input] | None = None,
+    only: Iterable[str] | None = None,
+    resume: Outputs | None = None,
 ) -> Outputs:
+    """Execute ``model``. ``only`` restricts the work to what those fields need (rule D4)."""
     if impls is None or table is None:
         _, prod_impls, prod_table = production()
         impls = prod_impls if impls is None else impls
@@ -132,7 +164,11 @@ def run(
     g = spec.build() if isinstance(spec, GridSpec) else spec
 
     graph = _graph.build(model, impls, table)
-    needed = {n for st in graph.order for n in st.reads_inputs + st.reads_seeds}
+    plan = graph.order if only is None else graph.needed_for(only)
+    # Inputs are owed by the stages that actually run: pruning a stage prunes
+    # its inputs too, so a partial run cannot be stopped by an UNSET default
+    # that nothing on its path reads.
+    needed = {n for st in plan for n in st.reads_inputs + st.reads_seeds}
     resolved = resolve_inputs(model, dict(inputs or {}), table, needed)
     seeds = {n: v for n, v in resolved.items() if table[n].kind == "seed"}
     constants = {k: c.value for k, c in model.constants.items()}
@@ -140,7 +176,19 @@ def run(
     fields: dict[str, Any] = {}
     decls: dict[str, FieldDecl] = {}
     column_lengths: dict[str, int] = {}
-    for stage in graph.order:
+    done: tuple[str, ...] = ()
+    if resume is not None:
+        _check_resumable(model, g, resolved, resume)
+        fields.update(resume.fields)
+        decls.update(resume.decls)
+        for name, decl in decls.items():
+            if decl.kind.domain == "object":
+                assert decl.of is not None
+                column_lengths[decl.of] = len(fields[name])
+        done = resume.order
+        plan = tuple(st for st in plan if st.id not in set(done))
+
+    for stage in plan:
         ctx = Context(stage, g, resolved, seeds, constants, fields)
         result = stage.compute(ctx)
         if not isinstance(result, Mapping):
@@ -154,4 +202,6 @@ def run(
         for decl in stage.publishes:
             fields[decl.name] = _check_value(decl, result[decl.name], g, stage, column_lengths)
             decls[decl.name] = decl
-    return Outputs(model.name, g, resolved, fields, decls, tuple(s.id for s in graph.order))
+    ran = tuple(s.id for s in plan)
+    order = tuple(st.id for st in graph.order if st.id in set(done) | set(ran))
+    return Outputs(model.name, g, resolved, fields, decls, order, ran)

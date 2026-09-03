@@ -979,3 +979,182 @@ catalogue that no published field justifies — the same failure rule A4 names f
 inputs, one level up. Recorded as debt #23, whose owner is whoever needs the
 galaxy to look like a galaxy: GALAXY_PLAN.md §3 promises stage 4 is the "first
 recognisable galaxy", and on this evidence it is not.
+
+## Session 6 — the API: headless, fully tested
+
+Surface: web. Model: Opus 5. Ran on the S6 branch.
+
+### D63. The runner learned to run part of itself
+
+**Decision.** `run(model, …, only=fields)` executes the dependency closure above
+`fields` and nothing else; `run(…, resume=outputs)` continues an earlier partial
+run without repeating a stage. `Outputs.ran` is what a call executed,
+`Outputs.order` what is present.
+
+**Settled by.** Rule D4 is a rule about endpoints, but an endpoint cannot obey it
+if the only thing it can call is "build the galaxy". The closure is
+`graph.Graph.needed_for`, which is the same edge set the graph already audits, so
+what is pruned is pruned by the structure that is checked rather than by a list
+somebody maintains. Two guards make the pruning safe rather than merely
+convenient: inputs are owed by the stages that actually run, so a partial run is
+not stopped by an UNSET default nothing on its path reads (rule B9), and a
+resumed run refuses an `Outputs` from a different model, grid or input vector —
+mixing two input vectors would publish a self-consistent galaxy that no input
+vector generates, and nothing downstream could detect it `[verified:
+tests/test_run.py::test_resume_refuses_a_galaxy_it_did_not_compute]`.
+
+**It changes no value, and that is asserted rather than argued.** A stage is a
+pure function of its declared reads, so running fewer of them cannot move the
+ones that run; the test compares every field of a partial run against the full
+run bitwise `[verified:
+tests/test_run.py::test_a_partial_run_agrees_with_the_full_run]`.
+
+**Debt #24 is discharged by the same eight lines.** `spec.ensemble` now names the
+two scalars rows 16 and 17 need instead of rebuilding a 20 000-star catalogue
+twenty times to read them: **0.162 s per member against 0.616 s, 3.8×**, and the
+twenty runs 3.2 s instead of 12.3 s `[verified: measured at S6 on the default
+grid, both models]`. The ensemble values are bit-identical before and after.
+
+### D64. What the API publishes, and what it refuses to
+
+**Decision.** Six routes: `/api` (the route table), `/api/version`,
+`/api/stages`, `/api/fields`, `/api/inputs`, `/api/arrays`, `/api/region`.
+They publish declarations, numbers, ramps and hashes. They publish **no
+constants, no stage source and no model internals** (rule D5).
+
+**Settled by.** The viewer has to be replaceable by reimplementing against these
+endpoints (rule D5), which fixes what they must carry: enough to draw a field
+and name it, and not enough to reconstruct the model. So a field arrives as its
+`FieldDecl` — label, unit and its display form, kind, axes, categories, ramp,
+meaningful zero, provenance, `about` — and a stage arrives as what it publishes
+and reads, never as what it computes with. The boundary is checked rather than
+intended: a test greps every metadata body for every Level 0 constant name
+`[verified: tests/test_api.py::test_the_api_publishes_no_model_internals]`. The
+one name that does appear is `CANARY`, inside the canary field's own `about`,
+which is a declaration and published on purpose (rule A8).
+
+**Controls are validated against the ranges the same endpoint publishes**, so a
+viewer cannot ask for a galaxy the input table says is out of bounds, and the
+range enforced is the range advertised. An unknown input is a 404 and an
+out-of-range control a 400, both before anything runs. `mergers` is settable as
+a JSON array because it is a list of records rather than a scalar, and each
+record is handed to `MergerEvent`, which already knows what a merger may be.
+
+### D65. `galaxy-bin/1`: one JSON header, the arrays behind it, padded to eight
+
+**Decision.** A binary response is `GLXY`, a `uint32` header length, a UTF-8 JSON
+header space-padded to an 8-byte boundary, then the arrays back to back,
+little-endian, in the order the header lists.
+
+**Settled by.** Three things, in order of how much they cost to get wrong.
+
+- **Text loses the value.** `feh_history` is 400 × 2000 float64 — 6.4 MB of
+  bytes, and JSON would be about twice that and would round every number. The
+  API's job is to hand over what the model computed.
+- **One request, not N.** A frame carries several arrays, so asking for three
+  fields is one fetch, one dependency closure and one run rather than three of
+  each. That is rule D2 and rule D4 pulling in the same direction.
+- **The padding is load-bearing.** A browser reads an array as
+  `new Float64Array(buffer, offset, n)`, which *throws* unless `offset` is a
+  multiple of 8, so the header is padded and the alignment asserted `[verified:
+  tests/test_api.py::test_the_frame_round_trips_and_the_payload_is_aligned]`.
+
+A categorical column stays `int64`, which reaches JavaScript as `BigInt`; the
+transport exports `codes()` to copy one into an `Int32Array` once, where the copy
+can be seen, rather than leaving `Number(x)` scattered through drawing code.
+JSON has no NaN, so a non-finite scalar is published as `null` and never as a
+number (rule B9) `[verified:
+tests/test_api.py::test_a_scalar_with_no_value_is_published_as_null_not_as_a_number]`.
+
+### D66. The version hash is over content, and recomputed on every request
+
+**Decision.** `/api/version` hashes the bytes of `galaxy/api/client/` — the
+viewer's own files — and, separately, the API's own `.py` bytes. Content, not
+mtime, and no caching of the answer.
+
+**Settled by.** Rule D3 exists so that "am I running the new code" is a glance.
+A file touched but unchanged must not look like a deployment and a file changed
+within one second must not look identical, which rules out mtime. Caching the
+hash would be worse than useless: the question is asked precisely while files
+are changing under the server, so a cached answer would be a reading of the
+cache (rule B2). It costs **0.9 ms** to answer, which is published below rather
+than asserted to be small. A rename changes the aggregate even though no byte of
+content moved, because what is served is the path as well as the bytes
+`[verified: tests/test_api.py::test_the_hash_changes_when_the_bytes_change]`.
+
+### D67. Cold timings, published (rules B2, B6) — one fresh process per endpoint
+
+**Decision.** `tools/timings.py` measures every route in its own interpreter and
+prints the numbers. Every route in `service.routes()` must appear in it, and a
+test fails if one does not.
+
+**Settled by.** A cache turns a measurement into a reading of the cache, and the
+caches that matter are not only the service's own — an imported module, a numpy
+array still in the allocator, a galaxy already resolved. The only way to measure
+a first request is to make it the first request. Measured on the default grid
+(400 × 2000 × 60 × 360):
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    index                    0.0001   0.0000   1.96        998  -
+    version                  0.0009   0.0006   1.46        402  -
+    stages                   0.0003   0.0002   1.74      7,011  -
+    fields                   0.0010   0.0006   1.59     43,298  -
+    inputs                   0.0002   0.0001   1.76      9,091  -
+    arrays: one profile      0.2655   0.0005 578.04      4,672  halo,assembly,disc,sfh
+    arrays: history          0.3769   0.0143  26.29  6,401,472  halo,…,chemistry
+    arrays: scalar           0.2378   0.0004 666.54      1,416  halo,assembly,disc,sfh
+    region: one sector       0.2804   0.0084  33.19     18,656  halo,…,vertical
+    region: whole disc       0.7232   0.3737   1.94  1,126,808  halo,…,vertical
+
+    import + registry: 0.079-0.109 s per process, excluded from the cold column
+
+Read three things off it `[verified: measured at S6; a second run agreed within
+about 20% on the compute-bound rows and was identical in shape]`.
+
+- **Metadata is sub-millisecond and runs no stage**, which is what rule D4 asks
+  for and the `stages` column is where it is visible.
+- **A region query costs what the region costs.** Nine cells of 1024 warm in
+  8.4 ms against 374 ms for all of them — 44×. Cold it is 0.28 s against a full
+  model run's 0.48 s (D59), because it runs six stages and not the two it does
+  not need.
+- **The cold/warm ratios are the argument for not checking D4 with a
+  stopwatch.** 578 on one row and 1.5 on another says only which rows the galaxy
+  cache serves; an endpoint that quietly ran the whole pipeline would sit in the
+  same range. The stage list cannot be flattered by a cache, and that is what the
+  assertions read.
+
+### D68. The one `fetch` is counted, and then run
+
+**Decision.** Rule D2 is asserted twice: a scan over every `.js` file in the
+repository — comments and string literals stripped — must find exactly one
+network call and it must be in `client/transport.js`; and a node driver imports
+that module unmodified and drives a live server with it.
+
+**Settled by.** The count is the rule S7 will actually be held to, and it is
+written over the *tree* rather than over the file that exists today, so a viewer
+file added next session is covered without anybody remembering to extend it
+(rule B13). But a count says nothing about whether the client works. Alignment,
+little-endian doubles, `BigInt` category codes and the error path are all things
+a Python twin of the decoder would get right by construction and the real file
+could still get wrong (rule B3), so the driver fetches `/api/version`,
+`/api/arrays` and `/api/region` over a socket and its numbers are compared
+against the same three requests made in Python `[verified:
+tests/test_api.py::test_the_transport_decodes_what_the_server_sends]`. Where
+node is absent the test *skips*, which is visible; it does not quietly pass.
+
+### D69. A star's identity is its cell, not its position
+
+**Decision.** The region endpoint selects cells and materialises those; the test
+that checks it against a full sweep asserts containment only on the strict
+interior of the window, one R-spacing in.
+
+**Settled by.** Writing the check found the fact. A star's radius comes from
+inverting its ring's CDF, and that CDF is flat outside the ring, so `np.interp`
+can place a star up to one grid spacing beyond its own ring's edge — 0.075 kpc on
+the default grid, 0.6 kpc on a coarse one. A star therefore belongs to the cell
+that *drew* it, not to the cell its radius falls in, and a check written the
+geometric way disagrees with the endpoint by one star in sixty and is right to.
+The endpoint is unaffected — cells are selected by footprint and materialised by
+identity — but S7 must know it before it draws a cell boundary and expects every
+star inside it to have come from it `[verified:
+tests/test_api.py::test_a_region_is_exactly_what_the_full_sweep_puts_there]`.

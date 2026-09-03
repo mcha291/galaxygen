@@ -8,6 +8,8 @@ sessions; the status board at the top of `GALAXY_PLAN.md` says where the build i
 uv run python tools/bootstrap.py   # once per clone
 uv run pytest                      # the suite, quiet
 uv run python -m galaxy.specs      # graph, preflight, determinism, acceptance spec
+uv run python -m galaxy.api        # serve the API on 127.0.0.1:8017
+uv run python tools/timings.py     # cold timings, one fresh process per endpoint
 ```
 
 - `RULES.md` — the rules the project is held to.

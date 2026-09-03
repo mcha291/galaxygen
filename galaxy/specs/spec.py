@@ -374,6 +374,12 @@ def ensemble(
     Every seed moves together, so this is an ensemble of galaxies with identical
     physical inputs — which is what a statistical row is judged against. Fields the
     model does not publish are simply absent, and the row stays not-yet-computable.
+
+    **Only the stages those fields need are run** (``only=``, rule D4). Debt #24
+    was this function rebuilding a 20 000-star catalogue twenty times to read two
+    scalars that depend on checkpoint 4; the closure above the requested fields is
+    the whole of the fix, and the values are unchanged because a stage is a pure
+    function of its declared reads.
     """
     from galaxy.core.registry import INPUTS
     from galaxy.run import run as _run
@@ -382,7 +388,7 @@ def ensemble(
     seed_names = [name for name, inp in table.items() if inp.kind == "seed"]
     collected: dict[str, list[float]] = {}
     for draw in range(n):
-        out = _run(model, {name: draw for name in seed_names}, **run_kwargs)
+        out = _run(model, {name: draw for name in seed_names}, only=tuple(fields), **run_kwargs)
         for field in fields:
             if field in out.fields:
                 collected.setdefault(field, []).append(float(out.fields[field]))

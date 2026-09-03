@@ -156,3 +156,26 @@ def test_quantity_validation():
         with pytest.raises(spec.SpecError):
             spec.Quantity(**{**ok, **bad})
     spec.Quantity(**{**ok, "field": None, "lo": None, "hi": None})  # not yet defined: allowed
+
+
+def test_the_ensemble_runs_only_the_stages_its_fields_need():
+    """Debt #24: twenty runs of the whole pipeline for two scalars (rule D4)."""
+    from galaxy.core.registry import INPUTS
+    from helpers import impls, model, stage
+
+    ran: list[str] = []
+
+    def count(name):
+        def compute(ctx, _n=name):
+            ran.append(_n)
+            return {_n: np.ones(ctx.grid.shape(("R",)))}
+
+        return compute
+
+    wanted = stage("wanted", (decl("f", Kind.SCALAR, provenance="seeded"),), reads_seeds=("world_seed",),
+                   compute=lambda ctx: {"f": float(ctx.rng("world_seed").random())})
+    costly = stage("costly", ("expensive",), compute=count("expensive"))
+    m = model("m", wanted, costly)
+    got = spec.ensemble(m, fields=("f",), n=3, impls=impls(wanted, costly), table=INPUTS, grid=TINY)
+    assert len(got["f"]) == 3 and len(set(got["f"])) == 3, "the seeds did not move"
+    assert ran == [], f"the ensemble ran {ran}, which no requested field needs"

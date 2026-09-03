@@ -1,0 +1,6 @@
+{
+  "name": "galaxygen-client",
+  "private": true,
+  "type": "module",
+  "description": "ES modules, no build step and no dependencies: the browser and node both load these files as written."
+}
