@@ -253,3 +253,35 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra][all] A tool that must be run every session needs a test that fails when
   it is not extended. `tests/test_api.py` asserts every route appears in
   `tools/timings.py`, so a new endpoint cannot go unmeasured.
+
+## From S7
+
+- [viewer][api][all] Put every rule-bearing decision in a pure module and leave
+  the DOM a shell. Rule D1 is four claims about *state*, and state can be
+  asserted; on a screen it would be checked by looking, which is the one access
+  path immune to the defect (rule B3, D70).
+- [viewer][all] `Number(null)` is 0 in JavaScript, and `null` is exactly how this
+  API publishes a number the model does not have. A missing value would be drawn
+  the colour of zero and read as a measurement — rule B9's failure arriving
+  through a language feature. Coerce in one place, and make it return NaN (D72).
+- [viewer][api] Rule D4 can be broken from the client side: asking for a scalar
+  runs the stage that publishes it, and one of them materialises a 20 000-star
+  catalogue. Decide what to request from the declarations — a scalar whose stage
+  also publishes object columns is never worth a stage (D73).
+- [viewer][api] Publish the colours behind a cmap name, do not let the client
+  hold them. Then the A9 gate can be written as an absence — no colour literal
+  and no cmap name in the client's JavaScript — and an absence cannot drift.
+- [viewer] Say what the picture does not have, and derive the sentence. The disc
+  is axisymmetric because no field has a phi axis, so the viewer asks that
+  question rather than carrying a note somebody typed: when a stage publishes one,
+  the sentence goes away by itself (D75).
+- [viewer][all] Uniform beats memorable in a client API. A mixture of
+  `f(model, options)` and `f(options)` produced `model=[object Object]` the first
+  time the transport was called from outside the file that wrote it.
+- [viewer][catalogue] Render it and look. Three defects — a checkpoint opening on
+  a non-physics probe field, a constant drawn on the floor where it reads as zero,
+  a legend overflowing its column — were invisible to every assertion worth
+  writing and obvious in one screenshot (`tools/shot.py`, D77).
+- [viewer][infra] Node's test runner needs the files named: `node --test <dir>`
+  loads the directory as a module and fails. Glob them in the wrapper, and assert
+  the glob is non-empty so an empty run cannot look like a passing one.

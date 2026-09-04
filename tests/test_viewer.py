@@ -328,3 +328,18 @@ def test_the_viewer_logic_holds(tmp_path):
     )
     assert proc.returncode == 0, proc.stdout[-4000:] + proc.stderr[-2000:]
     assert "# fail 0" in proc.stdout and "# pass 0\n" not in proc.stdout, proc.stdout[-2000:]
+
+
+def test_the_screenshot_tool_can_find_a_browser_or_says_which_it_wanted():
+    """A development instrument, not a gate: CI has no browser and does not need one."""
+    import shot
+
+    browser = shot.find_browser()
+    if browser is None:
+        pytest.skip("no chromium here; tools/shot.py reports that rather than failing obscurely")
+    assert browser.is_file()
+    proc = subprocess.run(
+        [__import__("sys").executable, str(ROOT / "tools" / "shot.py"), "--check"],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    assert proc.returncode == 0 and proc.stdout.strip() == str(browser)
