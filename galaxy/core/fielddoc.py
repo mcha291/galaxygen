@@ -22,6 +22,7 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from .cmaps import CMAPS  # the closed cmap vocabulary, with the stops behind it
 from .units import UnknownUnit
 from .units import unit as _unit
 
@@ -32,16 +33,6 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 # Closed vocabularies. Extend by editing here, with a DECISIONS.md entry.
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
 OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon")
-CMAPS: tuple[str, ...] = (
-    "viridis",
-    "magma",
-    "inferno",
-    "plasma",
-    "cividis",
-    "greys",
-    "coolwarm",  # diverging
-    "RdBu",  # diverging
-)
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded")  # rule A10; inputs are the third kind
 

@@ -37,6 +37,8 @@ import math
 import threading
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import parse_qsl
 
@@ -44,7 +46,8 @@ import numpy as np
 
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
-from galaxy.core.fielddoc import FieldDecl, Palette, Ramp
+from galaxy.core.cmaps import COLORMAPS
+from galaxy.core.fielddoc import SCALES, FieldDecl, Palette, Ramp
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
 from galaxy.core.registry import (
     INPUT_CEILING,
@@ -87,21 +90,37 @@ class Route:
     path: str
     about: str
     params: tuple[str, ...] = ()  # reserved query parameters; everything else is an input
+    handler: str = "index"  # the method that answers it, named rather than derived
 
 
 ROUTES: tuple[Route, ...] = (
-    Route("/api", "This route table."),
-    Route("/api/version", "Content hash of the viewer's bytes and of the API's own (rule D3)."),
-    Route("/api/stages", "Stage declarations, their checkpoints and the execution order.", ("model",)),
-    Route("/api/fields", "Field declarations: label, unit, kind, ramp, zero, about (rule A9).", ("model",)),
-    Route("/api/inputs", "The input registry: defaults, ranges, seeds, event list.", ("model",)),
-    Route("/api/arrays", "Named fields as binary arrays, plus the galaxy-level scalars.", ("model", "fields")),
+    Route("/", "The viewer: / is index.html, /<name> a file beside it.", (), "viewer"),
+    Route("/api", "This route table.", (), "index"),
+    Route("/api/version", "Content hash of the viewer's bytes and of the API's own (rule D3).", (), "version"),
+    Route("/api/stages", "Stage declarations, their checkpoints and the execution order.", ("model",), "stages"),
+    Route("/api/fields", "Field declarations and the cmap stops behind them (rule A9).", ("model",), "fields"),
+    Route("/api/inputs", "The input registry: defaults, ranges, seeds, event list.", ("model",), "inputs"),
+    Route("/api/arrays", "Named fields as binary arrays, plus the galaxy-level scalars.", ("model", "fields"), "arrays"),
     Route(
         "/api/region",
         "A materialised star catalogue for one (R, phi) window.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "stars"),
+        "region",
     ),
 )
+
+# What the viewer may be served. A suffix that is not here is not a file this
+# service hands out, whatever is sitting in the directory: an allowlist cannot
+# be widened by accident, and a denylist can.
+MEDIA_TYPES: Mapping[str, str] = MappingProxyType({
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".ico": "image/x-icon",
+})
 
 RESERVED: frozenset[str] = frozenset(p for r in ROUTES for p in r.params)
 
@@ -348,20 +367,23 @@ class Service:
         self._lock = threading.RLock()
         # One handler per declared route: a route in the table with no handler is
         # a startup failure, not a 404 discovered by whoever calls it.
-        self._handlers = {
-            r.path: getattr(self, "_" + (r.path.removeprefix("/api").lstrip("/") or "index")) for r in ROUTES
-        }
+        self._handlers = {r.path: getattr(self, "_" + r.handler) for r in ROUTES}
 
     # --- plumbing ------------------------------------------------------------
 
     def handle(self, path: str, query: str | Mapping[str, Sequence[str]] | None = None) -> Response:
         """Answer one request. Never raises for a bad request; returns its status."""
-        route = path.rstrip("/") or "/api"
+        route = path.rstrip("/") or "/"
         handler = self._handlers.get(route)
-        if handler is None:
-            return _json({"error": "no such route", "route": path, "routes": [r.path for r in ROUTES]}, 404)
         try:
-            return handler(Query(query))
+            if handler is not None:
+                return handler(Query(query))
+            if route.startswith("/api"):
+                raise NotFound(f"no such route; this service answers {[r.path for r in ROUTES]}")
+            # Anything else is asked of the viewer's directory, and answered from
+            # it or not at all — the API serves declarations and files, never a
+            # path the caller composed (rule D5).
+            return self._file(route)
         except ApiError as e:
             return _json({"error": str(e), "route": route}, e.status)
         except RunError as e:
@@ -423,6 +445,22 @@ class Service:
         return {d.name: (d, st) for st in stages.values() for d in st.publishes}
 
     # --- routes --------------------------------------------------------------
+
+    def _viewer(self, q: Query) -> Response:
+        return self._file("/")
+
+    def _file(self, route: str) -> Response:
+        """Serve one file from the client directory. Nothing outside it is reachable."""
+        root = Path(self.client).resolve()
+        target = (root / (route.strip("/") or "index.html")).resolve()
+        if not target.is_relative_to(root):
+            raise NotFound(f"{route} is not in the viewer's directory")
+        media = MEDIA_TYPES.get(target.suffix)
+        if media is None:
+            raise NotFound(f"{target.suffix or route} is not a type this service serves")
+        if not target.is_file():
+            raise NotFound(f"{route} is not there; /api/version lists what is")
+        return Response(200, media, target.read_bytes())
 
     def _index(self, q: Query) -> Response:
         return _json({
@@ -486,6 +524,14 @@ class Service:
         return _json({
             "model": model.name,
             "grid": grid_json(self.grid),
+            # The stops behind every cmap a declaration may name. A9 puts the
+            # choice of ramp in the declaration; this puts the colours behind the
+            # name here too, so a viewer holds no colour of its own.
+            "cmaps": {
+                name: {"stops": list(c.stops), "diverging": c.diverging, "midpoint": c.midpoint}
+                for name, c in COLORMAPS.items()
+            },
+            "scales": list(SCALES),
             "fields": [field_json(decl, stage) for decl, stage in fields],
         })
 
