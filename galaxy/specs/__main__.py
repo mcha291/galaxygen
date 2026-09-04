@@ -13,7 +13,7 @@ from __future__ import annotations
 import sys
 
 from galaxy.core.registry import production
-from galaxy.specs import determinism, graph, preflight, spec, utf8_stdout
+from galaxy.specs import convergence, determinism, graph, preflight, spec, utf8_stdout
 
 
 def main() -> int:
@@ -34,6 +34,10 @@ def main() -> int:
     spec_results = spec.evaluate_models(models)
     print(spec.report(models, spec_results))
     bad |= any(spec.problems(r, name) for name, r in spec_results.items())
+
+    audits = convergence.sweep_models(models)
+    print(convergence.report(models, audits))
+    bad |= bool(convergence.check(models, audits))
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

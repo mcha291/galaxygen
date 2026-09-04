@@ -4,8 +4,8 @@
 - ``preflight``: declarations reconcile within and across models; optional absence handled
 - ``determinism``: reproducible per model; per-region seed derivation is order-independent
 - ``spec``: the 24 acceptance quantities, each pass / fail / not-yet-computable
-
-``convergence`` and ``performance`` arrive at S10, when there is something to measure.
+- ``convergence``: each acceptance scalar against N_R, N_t and N_z, one knob at a time
+- ``performance``: what each stage of each model costs, cold, per model and per cell
 """
 
 from __future__ import annotations
