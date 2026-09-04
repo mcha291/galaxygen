@@ -1463,3 +1463,174 @@ the part that depends only on the star was split out (`giant_zone_share`). The
 zones depend on the ice line, the ice line depends on luminosity, and metallicity
 scales every zone together — so for a fixed stellar mass it is one scalar and an
 elementwise operation `[verified: measured at S8]`.
+
+## Session 9 — the advanced model
+
+### D85. The advanced model's axes are constants, not inputs
+
+**Decision.** The yields, the type Ia delay-time distribution and the wind
+loading are `Constant`s declared in `models/advanced.py` and nowhere else. The
+control count stays at 7; `NET_YIELD` moves out of Level 0 into
+`models/simple.py`, because only the simple chemistry reads it.
+
+**Settled by.** GALAXY_INPUTS.md §8 tabulates these as "inputs" and §2 lists the
+same quantities as Level 0 constants; rule A4 decides between them. A supernova
+yield or a delay-time index would exist whether or not this galaxy did, and none
+is a property of *it*, so they are constants with recorded debt, exactly as §2
+says. Preflight fails a model that declares a constant no stage reads (D29), so
+the two models now carry different constant sets and the registry says which is
+which `[verified: tests/test_models.py::test_shared_constants_are_shared_and_own_ones_are_read]`.
+
+### D86. A model's own stage may require its own optional field
+
+**Decision.** Preflight's `optional-read-strict` fires only when a stage that
+strictly requires an optional field is *shared* with a model that does not
+publish it.
+
+**Settled by.** The rule as written refused every strict read of any optional
+field. `alpha_fe_history` must be optional — the simple model does not publish it
+— and `vertical_alpha` cannot run without it; asking that stage to handle an
+absence that cannot occur in any model it is mapped in would have been a false
+declaration enforced as true. The case the rule exists for is still refused
+`[verified: tests/test_preflight.py::test_optional_discipline]`.
+
+### D87. Misses belong to a model (rule A7)
+
+**Decision.** `spec.Miss` carries a `model`; `spec.misses(name)` is what the
+runner judges against; `MISSES` and `MISSES_ADVANCED` are the two views. Rows
+2, 3 and 20 are shared (debt #18); rows 5, 11, 22 and 23 are the simple model's
+own; the advanced model's are in `_MISSES_ADVANCED`.
+
+**Settled by.** Row 22 passes in the advanced model and fails in the simple one.
+Under a single register that is simultaneously a stale miss and a recorded one,
+and the run would fail either way. The advanced model's findings are stored
+separately, which rule A7 asked for before there was anything to store.
+
+### D88. The thin/thick split is the valley, and the catalogue follows it
+
+**Decision.** `vertical_alpha` calls a star thick if the gas it formed from had
+[α/Fe] above `alpha_split`, the minimum of the [α/Fe] mass histogram between its
+two modes at R₀; NaN means no valley and no thick disc. `vertical.split()` holds
+the arithmetic once for both implementations. The systems stage reads
+`alpha_split` and `alpha_fe_history` optionally and draws its population code by
+the same criterion when they are there, so a catalogue star's population is the
+vertical stage's whichever model built it.
+
+**Settled by.** Debt #20: a split that names the merger cannot be evidence about
+mergers. A fixed [α/Fe] threshold would have been a constant chosen to produce a
+thick disc; the valley is derived from the distribution, and its absence is a
+result (D91). `vertical_alpha.requires` does not contain
+`last_major_merger_time` `[verified: tests/test_chemistry_dtd.py::test_the_split_criterion_never_names_the_merger]`.
+
+### D89. The wind is metal-loaded, set by the escape velocity, and fitted once
+
+**Decision.** `f_esc(R) = 1/(1 + (v_esc/WIND_SPEED)^WIND_INDEX)` of a
+generation's fresh metals leave before mixing; `v_esc` is derived from the halo
+potential plus the resolved baryons' midplane potential; `WIND_INDEX = 2` is the
+energy-driven choice; `WIND_SPEED = 1010 km/s` is the one fitted constant, set so
+the present-day gas at R₀ is solar. The wind removes no gas (debt #26).
+
+**Settled by.** GALAXY_INPUTS.md §2: "the loading is derived per radius from
+local escape velocity; only the coefficient is constant." The escape velocity at
+R₀ comes out at 578 km/s against a measured 530–580, with nothing fitted to it
+`[verified: tests/test_chemistry_dtd.py::test_the_escape_velocity_at_the_sun_is_where_it_is_measured]`.
+With the calibration, **f_esc(R₀) = 0.75**: the factor of three between
+`NET_YIELD` and the nucleosynthetic yield is now a number the model produces
+rather than one it was given, and debt #16 is discharged. The two conventions
+do not coincide exactly — the simple model's effective total-metal yield per unit
+mass formed is 0.011 × 0.7 = 0.0077, the advanced model's retained one at R₀ is
+0.0101 — because the advanced model calibrates *iron* at R₀ and a third of its
+iron arrives late; that difference is the DTD, not a discrepancy.
+
+### D90. Row 22 closes as predicted; row 23 does not, as predicted
+
+**Decision.** The present-day gradient in the advanced model is **−0.057
+dex/kpc**, inside row 22's target; row 23 stays at −0.019 and is recorded under
+debt #28 with the migration width that would close it (2.5 kpc).
+
+**Settled by.** Debt #15 predicted outflows would steepen row 22 towards −0.06.
+Measured, with the mechanism switched off by its own constant: a wind with no
+radial dependence (`WIND_INDEX = 0`) gives −0.043, so the wind's tilt is −0.014
+and the rest — the simple model's −0.024 plus −0.019 from the delayed iron, which
+the younger outer disc has received less of — is the DTD's `[verified:
+tests/test_chemistry_dtd.py::test_the_tilt_is_the_wind_s_radial_dependence,
+::test_iron_lags_oxygen_so_the_iron_gradient_is_the_steeper]`. The [O/H] gradient
+is −0.037: iron's is steeper than oxygen's for the same reason. S2's row 23
+prediction said that if row 22 steepened and 23 did not, migration was wrong
+too; it fired. The young/old ratio is 3.1 against 1.75; the input default stays
+the cited value and the conflict is on the register (rule B12).
+
+### D91. Row 24 is computable, and it fails: one mode, no valley
+
+**Decision.** Row 24 reads `alpha_sequence`, expects `bimodal_wide`, and the
+advanced model publishes `single`. Recorded under debt #27 with the six thick-disc
+rows it takes down (5, 7, 8, 9, 10, 11), every one at zero or at the whole mass.
+
+**Settled by.** The mass at R₀ sits in one mode at [α/Fe] = +0.21, where the local
+track lingers while a star formation history that never pauses keeps forming
+stars as the delayed iron catches up; the plateau at +0.45 and the present-day
+gas at +0.05 are both there, and nothing between them is a valley. Three things
+were tried before recording it. A sweep over τ₀ and the merger's gas fraction:
+dip depth at most 0.38, at τ₀ = 1 Gyr. Re-integrating the infall in a probe with
+episode-specific timescales (1 Gyr, then 7) and the smooth episode interrupted
+for 1.5–2 Gyr before the merger: depth 0.25–0.31, and the pause adds nothing.
+Reading the distribution with no migration: still single. The detector was then
+checked on a distribution that *is* bimodal `[verified:
+tests/test_chemistry_dtd.py::test_bimodality_is_read_off_a_histogram_that_can_say_two]`,
+which also found its own defect — a bump on a tail counted as a mode until a
+mode was required to hold a tenth of the mass. What the register predicts is
+in debt #27. Debt #9's question is answered on the way: a merger-free galaxy is
+`single` too, from a criterion that never named the merger.
+
+### D92. The scaling exponent, measured: 0.77 in N_t, against 2.04 for the naive form
+
+    chemistry stage        N_t=500    N_t=1000    N_t=2000    N_t=4000    N_t=8000  exponent
+    simple                  0.0117      0.0208      0.0407      0.0779      0.1466      0.92
+    advanced                0.1051      0.1577      0.2598      0.4533      0.8794      0.77
+    naive DTD (tool)       N_t=250     N_t=500    N_t=1000    N_t=2000                exponent
+                            0.0052      0.0214      0.0911      0.3600                    2.04
+    advanced chemistry / simple chemistry at N_t = 2000: 6.76x
+    whole model, cold: simple 0.414 s, advanced 0.634 s (1.53x)
+
+**Decision.** `tools/scaling.py` measures the exponent rather than the stage
+asserting it (rule B7), and times the naive convolution beside it so the
+instrument shows it can see the defect it exists to find (rule B3).
+
+**Settled by.** The binned kernel touches `DTD_BINS = 32` shifted copies of the
+star formation history whatever N_t is; the per-step part is linear and the
+transport kernels (400 × 400 per age bin) do not scale with N_t at all, which is
+why the measured exponent is *below* one at these grids. The naive convolution
+in the tool comes out at 2.04 on the same histories — §10's 2.07, reproduced.
+The multiplier is 6.8× for the chemistry stage and 1.5× for the whole model;
+§10 priced the DTD at 4.9× and the coupled fixed point at ×8 on top, and there is
+no fixed point here — the wind reads the potential and the histories, nothing
+reads the wind — so rule A1 holds with nothing to iterate. Absolute seconds moved
+with the machine and are not comparable to §10's.
+
+### D93. Cold timings at S9 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0002   1.49        940  -
+    viewer: a module         0.0003   0.0002   1.43     21,599  -
+    index                    0.0000   0.0000   1.63      1,237  -
+    version                  0.0015   0.0013   1.18      1,132  -
+    stages                   0.0002   0.0001   1.46      8,645  -
+    fields                   0.0006   0.0004   1.46     57,008  -
+    inputs                   0.0001   0.0001   1.43      9,091  -
+    arrays: one profile      0.0702   0.0002 320.47      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1102   0.0022  51.01  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0714   0.0002 342.90      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1279   0.0031  40.97     18,720  halo,…,vertical
+    region: whole disc       0.2429   0.1095   2.22  1,126,208  halo,…,vertical
+    system: one star         0.1273   0.0020  63.14      2,816  halo,…,vertical
+    adv: history             0.3260   0.0026 124.97  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.3227   0.0023 142.63  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.3388   0.0031 108.00     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.3365   0.0019 172.67      2,824  halo,…,chemistry_dtd,vertical_alpha
+
+**Read within the run.** Every simple-model row is faster than D84's — the
+desktop, not the code — so the shape is what carries: the advanced chemistry adds
+about 0.21 s cold to any route that reaches it, and nothing to a route that does
+not; warm, the two models are indistinguishable. Metadata is still
+sub-millisecond with no stage behind it, and `/api/stages` grew by two
+declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).

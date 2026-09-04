@@ -317,3 +317,34 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer] Three decades on a linear axis draws every inner planet on top of the
   star. A system view is logarithmic, and because that is a decision about how the
   picture is read, it belongs in a module where it can be asserted.
+
+## From S9
+
+- [advanced][field] Run the prediction the register made, then write down what
+  happened either way. Debt #15's "outflows steepen the gradient" held for row
+  22 and S2's "then migration is wrong too" fired for row 23 — one session,
+  one mechanism, both a confirmation and a kill `[verified: DECISIONS.md D90]`.
+- [advanced][field] Make the criterion a *result* and accept what it finds. The
+  chemical thin/thick split found no thick disc at all, which is seven red
+  rows and the honest answer; a fixed [α/Fe] threshold would have produced one
+  and taught nothing `[verified: DECISIONS.md D88, D91]`.
+- [advanced][field] Check a detector on a signal you know is there before
+  believing its null. The bimodality reader counted a bump on a tail as a mode
+  until it was tried on a distribution that *is* bimodal; then it needed a
+  mode to hold real mass.
+- [advanced][audit] A miss belongs to a model. The moment two models judge one
+  table, "recorded" and "stale" can both be true of a row, and the register has
+  to say whose explanation it is (rule A7) `[verified: DECISIONS.md D87]`.
+- [advanced][audit] Publish the exponent and the control together. The binned
+  kernel's 0.77 means nothing on its own; beside the naive form's 2.04 on the
+  same histories it is a measurement of the algorithm `[verified: DECISIONS.md D92]`.
+- [advanced][field] A model's own stage may require its own optional field;
+  only a *shared* stage must handle absence. A rule written when both models
+  published identical fields fired the first time they did not (D86).
+- [infra] `node --test` prints the spec reporter under node 24 even when
+  captured; name the reporter (`--test-reporter=tap`) or a TAP assertion fails
+  on the machine and passes in CI.
+- [close] Kahn's algorithm here runs in rounds, so remapping one slot can move
+  stages that did not change: the advanced vertical stage lands three places
+  later than the simple one's because it waits on the chemistry. Orders are per
+  model; assert them per model.
