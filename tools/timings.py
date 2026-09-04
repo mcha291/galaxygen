@@ -43,6 +43,8 @@ class Endpoint:
 
 
 ENDPOINTS: tuple[Endpoint, ...] = (
+    Endpoint("viewer: index.html", "/", "", "the page itself, off disk"),
+    Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
     Endpoint("stages", "/api/stages", "", "10 stage declarations"),

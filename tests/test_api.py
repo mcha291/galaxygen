@@ -77,7 +77,10 @@ def strip_js(source: str) -> str:
 
 
 def js_files() -> list[Path]:
-    return [p for p in ROOT.rglob("*.js") if not SKIP & set(p.parts)]
+    """Every JavaScript file in the repository — including the ones S7 has yet to write."""
+    found = [p for p in ROOT.rglob("*.js") if not SKIP & set(p.parts)]
+    found += [p for p in ROOT.rglob("*.mjs") if not SKIP & set(p.parts)]
+    return sorted(found)
 
 
 def test_exactly_one_fetch_in_the_client_transport():
@@ -116,7 +119,9 @@ def test_the_hash_changes_when_the_bytes_change(tmp_path):
 def test_version_publishes_the_client_hash_and_its_files(api):
     payload = api.handle("/api/version").json()
     assert payload["viewer"] == content_hash(CLIENT)
-    assert [f["path"] for f in payload["viewer"]["files"]] == ["package.json", "transport.js"]
+    on_disk = sorted(p.relative_to(CLIENT).as_posix() for p in CLIENT.rglob("*") if p.is_file())
+    assert [f["path"] for f in payload["viewer"]["files"]] == on_disk
+    assert "transport.js" in on_disk
     assert payload["wire"] == wire.FORMAT
     assert payload["api"]["count"] >= 5 and "files" not in payload["api"]
 

@@ -1,54 +1,57 @@
-# BRIEF — Session 7: the viewer (galaxy view, checkpoints, stage previews)
+# BRIEF — Session 8: the planets stage and the system view
 
-Open per RESUMING.md. Read RULES.md in full — **section D is the whole session**
-— then this. Do not read GALAXY_PLAN.md. Consult GALAXY_INPUTS.md only if a row
-needs it. **This is the largest quota risk in the build** (GALAXY_PLAN §5b):
-visual work iterates blind. Plan to close partially (rule C2d) rather than to
-start something you cannot finish; commit and push at every sub-deliverable.
+Open per RESUMING.md. Read RULES.md in full, then this. Do not read GALAXY_PLAN.md.
+Read **GALAXY_INPUTS.md §12** — the planets stage — and §7 rows 13-14 only if a
+row needs it. There is no external dependency here: everything the stage needs is
+already published.
 
 ## Build
 
-- The viewer's files go in **`galaxy/api/client/`**, beside `transport.js`. That
-  directory is what `/api/version` hashes, so a stale bundle is one glance (D3).
-- **Import `transport.js`; do not write another `fetch`** (rule D2). It already
-  has `version/stages/fields/inputs/arrays/region`, the `galaxy-bin/1` decoder
-  and `codes()` for BigInt category columns. A test scans every `.js` in the repo.
-- A **static route** to serve those files is yours to add (`service.ROUTES` plus a
-  handler, **plus a row in `tools/timings.py`** — a test fails without one).
-- Stage-by-stage flow over the six checkpoints from `/api/stages`; controls from
-  `/api/inputs` with their defaults and ranges; **every ramp, label and unit from
-  `/api/fields` and nowhere else** (rule A9). No colour table in the viewer.
-- Field-as-image from `/api/arrays`; the clickable seeded sample from
-  `/api/region`. `stars=` there is the galaxy-wide count and a region gets its
-  share, so the LOD ladder climbs by raising it — a smaller sample is a strict
-  prefix of a larger one (D60), which is what keeps a click stable while more
-  materialises underneath.
+- `galaxy/stages/planets.py`, checkpoint 6, seeded by `planets_seed` — the last
+  empty checkpoint on the board, and the viewer already says so on that screen.
+- **First, close a gap S7 walked into.** A star's identity is `(cell, index)`
+  (D60) and *neither is published*: the catalogue's columns are all physical, so
+  nothing can name a star to open its system. Publish the identity as columns
+  from `systems.materialise`, and the system view becomes addressable without the
+  viewer inventing a key.
+- A route for one system — `/api/system?cell=…&index=…` — that materialises **one
+  cell** and takes the star out of it. It must not rebuild the galaxy: the
+  closure it needs is what the catalogue stage reads, and `materialise(cells=[c])`
+  gives exactly the stars that cell has in a full sweep (D60). A row in
+  `tools/timings.py` or a test fails.
+- The viewer already selects a star on click (`stars.js`, `app.js`) and shows its
+  columns. The system view is that panel, grown: the planets, their orbits, the
+  belts. Nothing new is needed in the transport.
+- **The planet scalar set is declared and closed** in this session: every
+  published planet quantity gets a `FieldDecl` with a unit from the closed
+  vocabulary (`Mearth`, `Rearth`, `AU`, `K`, `Searth`, `day` are all in it).
 
 ## Gate
 
-- Field-as-image **and** a clickable seeded sample, both from the endpoints.
-- **Reopening a stage discards every later one; a page load lands on stage one; a
-  confirmed control is disabled, not hidden; a lock means "do not re-roll", never
-  "freeze against upstream"** (rule D1). Assert these, in a test.
-- Still exactly one `fetch`, still no physics and nothing generated persisted (D5).
-- **Cold timings published** for every route, the new static one included (B2, D67).
+- Occurrence rises with `[Fe/H]` — read the star's own published metallicity, do
+  not re-derive it (rule A3, and the column is right there).
+- Belts are **derived from resonances**, not drawn from a distribution.
+- The planet scalar set is closed: `preflight` reconciles it across both models.
+- Cold timings published, the system route included (B2, D76).
+- The four client gates still hold: one `fetch`, no colour literal, no cmap name,
+  no storage API — they are tests, and any new module inherits them.
 
 ## Traps
 
-- **Debt #23 will be visible for the first time.** Nothing publishes a
-  non-axisymmetric density, so the galaxy is a smooth axisymmetric disc: no arms.
-  GALAXY_PLAN §3 calls stage 4 "the first recognisable galaxy" and it is not.
-  **Do not paint arms the model does not have** — that is rule A4's failure one
-  level up (D62). Report it; the fix is a field, and a field is a stage's job.
-- A star belongs to the cell that *drew* it, not to the cell its radius falls in:
-  inverting a ring's CDF can place it one R-spacing outside its own ring (D69).
-  Draw cell boundaries knowing that.
-- `feh_history` is 6.4 MB of float64 on the default grid. That is the honest
-  value and the wire is right; the viewer decides what to ask for.
-- Category columns arrive as `BigInt`; `null` in a header scalar means the model
-  has no number there, and is never to be drawn as zero (rule B9).
+- **No new inputs** (A2, A4). Planets are derived from the star and seeded from
+  `planets_seed`; a knob for occurrence would be an input invented to justify a
+  stage. §12 has the argument already.
+- **Count, do not sample** (B8). The number of planets a star has is drawn; their
+  properties are inverted from distributions the stage publishes. Rejection
+  sampling is what this project refuses.
+- A `Generator` costs ~22 µs to construct (D61), so a system opened per click is
+  cheap and a system opened per *star in the catalogue* is not. Open on demand.
+- A star belongs to the cell that drew it, not the cell its radius falls in (D69).
+- Rule D1 does not bend for the system view: **a page load lands on stage one**,
+  so the system is a panel inside checkpoint 6, never a URL that reopens it.
+- `uv run python tools/shot.py --path /` renders the page to a PNG. Look at it
+  before believing it (D77) — three defects at S7 were invisible to every test.
 - Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and fill in
-  S6's merge SHA from `git rev-list -1 --grep='^Merge S6 into main' origin/main`.
-  A test fails if a ☑ session has no row there.
+  S7's merge SHA from `git rev-list -1 --grep='^Merge S7 into main' origin/main`.
 - Do not edit `.github/workflows/` without workflow scope on the token.
 - After ticking the board run `uv run python tools/progress.py`.

@@ -1158,3 +1158,162 @@ The endpoint is unaffected — cells are selected by footprint and materialised 
 identity — but S7 must know it before it draws a cell boundary and expects every
 star inside it to have come from it `[verified:
 tests/test_api.py::test_a_region_is_exactly_what_the_full_sweep_puts_there]`.
+
+## Session 7 — the viewer: galaxy view, checkpoints, stage previews
+
+Surface: web. Model: Opus 5. Ran on the S6 branch, restarted from `main`.
+
+### D70. The viewer is a state machine, a renderer and a shell
+
+**Decision.** `galaxy/api/client/` is five modules and one page. `flow.js` is the
+checkpoint state machine, `ramp.js` value-to-colour, `field.js` field-to-pixels,
+`stars.js` catalogue-to-screen, `view.js` what-a-checkpoint-shows — all pure
+functions over plain objects — and `app.js`, the only file that touches the DOM.
+
+**Settled by.** Rule D1 is four statements, and every one of them is a claim
+about *state*: where a page load lands, what a confirm disables, what a reopen
+discards, what a lock protects. Written into event handlers they would be checked
+by looking at a screen, which is rule B3's failure — the one access path immune
+to the defect. Written as functions they are asserted: 45 node tests run against
+declarations dumped from the live API, so a registry change the viewer would
+mishandle fails in the suite rather than in a browser `[verified:
+tests/test_viewer.py::test_the_viewer_logic_holds]`. CI has no browser and needs
+none, which is only true because the rules do not live in the DOM.
+
+The split has a second payment. The end-to-end test drives the *client's own*
+modules against a live server — the walk through six checkpoints, the region
+query, the projection, the click — so what is tested is the code the browser
+loads, not a Python retelling of it (rule B3 again).
+
+### D71. The stops behind a ramp are published, and the viewer holds no colour
+
+**Decision.** `galaxy/core/cmaps.py` holds the colour stops for the eight-name
+closed vocabulary, `/api/fields` publishes them beside the declarations, and two
+tests assert the client's JavaScript contains **no colour literal and no cmap
+name**.
+
+**Settled by.** Rule A9 puts the rendering opinion in the declaration, but naming
+`viridis` is only half an answer — something must know what viridis is. If that
+something is the viewer, then every client reimplements it and they disagree,
+which is the duplicate A9 exists to prevent, one level down. So the stops moved
+into `core/` beside the vocabulary they belong to, and the API serves them. The
+gate is written as an absence, which is the only form that stays true: a colour
+that is not in the file cannot drift from the declaration.
+
+Two properties are enforced where they are defined rather than where they are
+used. A diverging map must have an **odd** number of stops, so its middle anchor
+is a defined neutral point; without that, a field with a meaningful zero is drawn
+with zero half a stop off the neutral colour and nothing says so. And a name in
+the vocabulary with no stops is refused at import `[verified:
+tests/test_viewer.py::test_a_cmap_the_vocabulary_names_but_does_not_define_is_refused]`.
+
+### D72. `Number(null)` is 0, and that is rule B9's failure inside a language feature
+
+**Decision.** `numberOf()` is the one place a published value becomes a number in
+the client, and it returns NaN for `null`, `undefined` and `""`.
+
+**Settled by.** A test written while the ramp was being built. `/api/arrays`
+publishes a scalar the model has no number for as JSON `null` (D65, rule B9) —
+and JavaScript's `Number(null)` is `0`. Left alone, a missing metallicity would
+have been drawn the exact colour of zero metallicity and read as a measurement:
+the failure rule B9 is about, arriving through a coercion rather than a decision,
+and invisible in every screenshot. `Number("")` is 0 as well, so an empty field
+in a form is not a zero either. The fix is one function, and both modules that
+turn values into pixels go through it `[verified:
+tests/js/render.test.mjs "a value that is not a number is drawn as nothing"]`.
+
+### D73. Rule D4 can be broken by the client, and was
+
+**Decision.** `view.js` decides what a checkpoint asks for, and a scalar whose
+stage also publishes object columns is **not** among it.
+
+**Settled by.** The end-to-end test caught the viewer running the star catalogue.
+`catalogue_size` is a galaxy-level scalar published by the systems stage, so
+asking for it materialises the galaxy-wide sample — beside a region query that
+had just carefully avoided doing that. Rule D4 says no *endpoint* runs more of
+the pipeline than its answer requires; this is the same waste committed from the
+other side of the wire, and no endpoint check could see it.
+
+The rule that replaces it is derived rather than listed: the region response's
+own census already says how many stars were drawn, so a scalar counting them is
+never worth a stage. Nothing in the viewer names `catalogue_size`, or `systems`
+`[verified: tests/js/render.test.mjs "the viewer never asks for a scalar that
+would build the catalogue"; tests/test_viewer.py asserts no request the viewer
+makes runs the catalogue stage]`.
+
+### D74. The viewer is served from a directory it cannot leave
+
+**Decision.** Any path that is not `/api/...` is answered from
+`galaxy/api/client/`: `/` is `index.html`, the suffix must be in a seven-entry
+media-type allowlist, and the resolved path must still be inside the directory.
+
+**Settled by.** The viewer has to be served from somewhere, and the somewhere is
+already the directory `/api/version` hashes (D3), so a stale bundle stays one
+glance away. The two guards are the ones a static handler is always wrong about:
+an allowlist cannot be widened by an unexpected file appearing in the directory,
+where a denylist can, and resolving before comparing is what makes `..` a 404
+rather than a read of `/etc/passwd` `[verified:
+tests/test_viewer.py::test_the_viewer_is_served_from_its_own_directory_and_nowhere_else]`.
+
+### D75. What the picture does not have, said by the picture
+
+**Decision.** The face-on disc is a radial profile revolved, and the viewer says
+so underneath it — in a line it derives from the declarations, not one somebody
+typed.
+
+**Settled by.** Debt #23: no stage publishes a non-axisymmetric density, so there
+is nothing to wind stars into arms and the galaxy has no spiral structure.
+GALAXY_PLAN.md §3 promises stage 4 is "the first recognisable galaxy"; on this
+evidence it is a smooth exponential disc with a seeded sample over it, and that
+is what the screen shows. Painting arms here would put structure in the picture
+that no field justifies — rule A4's failure two levels up from an input, and
+refused for the same reason S5 refused it in the catalogue (D62).
+
+The note is computed: the viewer asks whether *any* published field has a `phi`
+axis, and says nothing when one does. When a stage finally publishes one the
+sentence disappears on its own, which is the difference between a note and a
+comment `[verified: tests/js/render.test.mjs "nothing published varies with phi,
+and the viewer can tell"]`.
+
+### D76. Cold timings at S7 (rules B2, B6)
+
+**Decision.** The viewer's two routes are measured like every other, in a fresh
+interpreter each.
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0001   0.0001   1.91        940  -
+    viewer: a module         0.0001   0.0001   2.01     17,409  -
+    index                    0.0001   0.0000   1.87      1,087  -
+    version                  0.0012   0.0009   1.36      1,050  -
+    stages                   0.0003   0.0002   1.45      7,011  -
+    fields                   0.0008   0.0005   1.55     44,714  -
+    inputs                   0.0001   0.0001   1.68      9,091  -
+    arrays: one profile      0.2173   0.0004 620.06      4,672  halo,assembly,disc,sfh
+    arrays: history          0.3080   0.0045  67.80  6,401,472  halo,…,chemistry
+    arrays: scalar           0.1359   0.0003 409.97      1,416  halo,assembly,disc,sfh
+    region: one sector       0.2998   0.0064  46.77     18,656  halo,…,vertical
+    region: whole disc       0.4911   0.2667   1.84  1,126,808  halo,…,vertical
+
+    import + registry: 0.068-0.071 s per process, excluded from the cold column
+
+**Settled by.** Two readings. Serving a file is 0.1 ms and runs no stage, so the
+page arrives before the data it will ask for — which is why the viewer paints its
+shell first and fills it in. And `/api/fields` grew from 43,298 to 44,714 bytes
+when the cmap stops joined it: the whole rendering vocabulary costs 1.4 KB, once,
+against a client that would otherwise carry its own copy for ever `[verified:
+measured at S7; D67 has the S6 numbers for comparison]`.
+
+### D77. A screenshot is an instrument (`tools/shot.py`)
+
+**Decision.** A tool that starts the server, renders a path in headless Chromium
+and writes a PNG. Not a test; CI has no browser and the suite does not want one.
+
+**Settled by.** GALAXY_PLAN.md §5b calls S7 the largest quota risk in the build
+because "visual work iterates blind". It does not have to be blind, and it was
+not: the first render showed checkpoint one opening on `canary` — the
+model-boundary probe, drawn as a flat white disc — a constant field drawn on the
+floor of its box where it reads as zero, and a legend overflowing into the next
+column. None of the three is visible to any assertion that was worth writing, and
+all three took one look. Rule B1 asks for the instrument before the thing it
+certifies; this is that, for pictures, and S8's system view is the next session
+that needs it.
