@@ -12,7 +12,7 @@ import test from "node:test";
 
 import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../galaxy/api/client/field.js";
 import { legendStops, makePalette, makeRamp, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
-import { census, describe, format, nearest, project } from "../../galaxy/api/client/stars.js";
+import { census, describe, format, identify, nearest, project } from "../../galaxy/api/client/stars.js";
 import * as view from "../../galaxy/api/client/view.js";
 
 const fixture = JSON.parse(readFileSync(process.env.GALAXY_FIXTURE, "utf-8"));
@@ -256,4 +256,14 @@ test("nothing published varies with phi, and the viewer can tell", () => {
   const all = fixture.fields.fields;
   assert.equal(view.variesWithPhi(all), false, "debt #23: when this changes, the disc note goes away");
   assert.equal(view.variesWithPhi([{ axes: ["R", "phi"] }]), true);
+});
+
+test("a row of a region response knows which star it is", () => {
+  const header = { cells: { ids: [3, 9, 12], counts: [2, 1, 3] } };
+  assert.deepEqual(identify(header, 0), { cell: 3, index: 0 });
+  assert.deepEqual(identify(header, 1), { cell: 3, index: 1 });
+  assert.deepEqual(identify(header, 2), { cell: 9, index: 0 });
+  assert.deepEqual(identify(header, 5), { cell: 12, index: 2 });
+  assert.equal(identify(header, 6), null, "past the last star is not a star");
+  assert.equal(identify({ cells: { ids: [], counts: [] } }, 0), null);
 });

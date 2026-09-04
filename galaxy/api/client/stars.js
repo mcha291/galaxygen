@@ -77,6 +77,23 @@ export function describe(index, columns, declarations) {
   return rows;
 }
 
+/**
+ * The name of a row: which cell drew that star, and where in it.
+ *
+ * A star is `(cell, index)` (D60) and that is what a system is opened by. It is
+ * not a column and not a position — a radius can land a ring outside the cell
+ * that drew it (D69) — so it is read off the run lengths the response carries.
+ */
+export function identify(header, row) {
+  const { ids, counts } = header.cells;
+  let seen = 0;
+  for (let i = 0; i < ids.length; i += 1) {
+    if (row < seen + counts[i]) return { cell: ids[i], index: row - seen };
+    seen += counts[i];
+  }
+  return null;
+}
+
 /** How many stars a region query got, against how many it asked the galaxy for. */
 export function census(header) {
   return {

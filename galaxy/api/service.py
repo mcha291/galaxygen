@@ -608,11 +608,19 @@ class Service:
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            # The cells that actually realised a star, with how many each has: that
+            # is what names a row. Star r of this response is index (r - offset) of
+            # the cell whose run covers it, and a system is opened by that name
+            # (D60, §12) rather than by a position, which can drift a ring (D69).
             "cells": {
-                "ids": list(cells),
-                "count": len(cells),
+                "ids": [c for c, _ in catalogue.counts],
+                "counts": [n for _, n in catalogue.counts],
+                "count": len(catalogue.counts),
+                "requested": len(cells),
                 "of": _catalogue.CELL_COUNT,
-                "bounds": [_catalogue.cell_bounds(R, c) for c in cells] if len(cells) <= 64 else [],
+                "bounds": [_catalogue.cell_bounds(R, c) for c, _ in catalogue.counts]
+                if len(catalogue.counts) <= 64
+                else [],
             },
             "stars": {"requested": stars, "materialised": int(catalogue.size), "seed": seed},
             "columns": columns,
