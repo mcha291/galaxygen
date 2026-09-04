@@ -100,7 +100,10 @@ export function polylineOf(values, box, { lo = null, hi = null } = {}) {
     }
     if (!Number.isFinite(min)) return { segments: [], lo: null, hi: null };
   }
-  if (!(max > min)) max = min + (Math.abs(min) || 1) * 1e-6;
+  // A constant field is drawn down the middle. Scaled against a hair-width range
+  // it would sit on the floor of the box and read as "zero", which is a different
+  // statement about the model than "the same everywhere".
+  const constant = !(max > min);
 
   const segments = [];
   let run = [];
@@ -112,9 +115,9 @@ export function polylineOf(values, box, { lo = null, hi = null } = {}) {
       continue;
     }
     const x = box.x + (values.length === 1 ? 0 : (i / (values.length - 1)) * box.width);
-    const y = box.y + box.height - ((v - min) / (max - min)) * box.height;
+    const y = constant ? box.y + box.height / 2 : box.y + box.height - ((v - min) / (max - min)) * box.height;
     run.push([x, y]);
   }
   if (run.length) segments.push(run);
-  return { segments, lo: min, hi: max };
+  return { segments, lo: min, hi: max, constant };
 }

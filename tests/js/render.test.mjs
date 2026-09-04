@@ -13,6 +13,7 @@ import test from "node:test";
 import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../galaxy/api/client/field.js";
 import { legendStops, makePalette, makeRamp, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
 import { census, describe, format, nearest, project } from "../../galaxy/api/client/stars.js";
+import * as view from "../../galaxy/api/client/view.js";
 
 const fixture = JSON.parse(readFileSync(process.env.GALAXY_FIXTURE, "utf-8"));
 const { cmaps, fields } = fixture.fields;
@@ -192,4 +193,67 @@ test("numbers are formatted, and a missing one is not formatted as zero", () => 
 test("the census is what the region query said it did", () => {
   const header = { stars: { materialised: 290, requested: 20000, seed: 0 }, cells: { count: 9, of: 1024 } };
   assert.deepEqual(census(header), { materialised: 290, requested: 20000, cells: 9, of: 1024, seed: 0 });
+});
+
+test("a constant field is drawn down the middle, not on the floor", () => {
+  const box = { x: 0, y: 0, width: 100, height: 50 };
+  const line = polylineOf([2, 2, 2], box);
+  assert.equal(line.constant, true);
+  assert.deepEqual(line.segments[0].map(([, y]) => y), [25, 25, 25]);
+  assert.equal(line.lo, 2);
+  assert.equal(polylineOf([1, 2], box).constant, false);
+});
+
+// --- what a checkpoint shows ------------------------------------------------
+
+test("a checkpoint shows what it published, and asks for nothing else", () => {
+  const all = fixture.fields.fields;
+  const drawable = view.drawableAt(all, 1);
+  assert.ok(drawable.length > 0);
+  assert.ok(drawable.every((f) => f.checkpoint === 1 && f.domain === "grid"));
+  assert.equal(view.defaultField(all, 1), drawable.at(-1).name, "the latest field, not the first");
+  assert.notEqual(view.defaultField(all, 1), "canary", "and so not the model-boundary probe");
+  const names = view.wanted(all, 1, view.defaultField(all, 1));
+  assert.ok(names.every((n) => all.find((f) => f.name === n).checkpoint <= 1));
+});
+
+test("the viewer never asks for a scalar that would build the catalogue", () => {
+  const all = fixture.fields.fields;
+  const catalogueStage = [...view.catalogueStages(all)];
+  assert.equal(catalogueStage.length, 1, "one stage publishes the star columns");
+  const columnCheckpoint = all.find((f) => f.domain === "object").checkpoint;
+
+  const counted = all.filter((f) => f.domain === "galaxy" && f.stage === catalogueStage[0]);
+  assert.ok(counted.length > 0, "that stage does publish a scalar; this test would be vacuous otherwise");
+  const asked = view.scalarsAt(all, columnCheckpoint).map((f) => f.name);
+  for (const scalar of counted) {
+    assert.ok(!asked.includes(scalar.name), `${scalar.name} would materialise the whole sample (rule D4)`);
+  }
+  // The rest of that checkpoint's scalars are still asked for.
+  const others = all.filter((f) => f.domain === "galaxy" && f.checkpoint === columnCheckpoint && f.stage !== catalogueStage[0]);
+  for (const scalar of others) assert.ok(asked.includes(scalar.name), scalar.name);
+});
+
+test("the disc is drawn from a radial field, and the picked one wins", () => {
+  const all = fixture.fields.fields;
+  const radial = view.radialUpTo(all, 3);
+  assert.ok(radial.length > 1);
+  assert.equal(view.discField(all, 3, null).name, radial.at(-1).name);
+  assert.equal(view.discField(all, 3, radial[0].name).name, radial[0].name);
+  // A 2-D field cannot be the disc; the latest radial one is used instead.
+  const twoD = all.find((f) => f.domain === "grid" && f.axes.length === 2);
+  assert.equal(view.discField(all, 3, twoD.name).name, radial.at(-1).name);
+});
+
+test("the catalogue appears at the checkpoint that publishes it, and not before", () => {
+  const all = fixture.fields.fields;
+  const n = all.find((f) => f.domain === "object").checkpoint;
+  assert.equal(view.hasCatalogue(all, n - 1), false);
+  assert.equal(view.hasCatalogue(all, n), true);
+});
+
+test("nothing published varies with phi, and the viewer can tell", () => {
+  const all = fixture.fields.fields;
+  assert.equal(view.variesWithPhi(all), false, "debt #23: when this changes, the disc note goes away");
+  assert.equal(view.variesWithPhi([{ axes: ["R", "phi"] }]), true);
 });

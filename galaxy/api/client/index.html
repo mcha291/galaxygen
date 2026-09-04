@@ -1,2 +1,26 @@
 <!doctype html>
-<title>probe</title>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>galaxygen</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- The shell. Everything inside the three regions is written by app.js from
+         what the API published; nothing here names a field, a unit or a colour. -->
+    <header>
+      <h1>galaxygen</h1>
+      <span id="model" class="hash"></span>
+      <span class="spacer"></span>
+      <!-- Rule D3: which bytes am I running. A glance, not an investigation. -->
+      <span class="hash">viewer <span id="viewer-hash">…</span></span>
+      <span class="hash">api <span id="api-hash">…</span></span>
+    </header>
+    <main>
+      <nav id="rail" aria-label="checkpoints"></nav>
+      <section id="view"></section>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

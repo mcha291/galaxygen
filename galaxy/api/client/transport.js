@@ -135,10 +135,15 @@ export function codes(view) {
 // Thin wrappers so a caller writes what it wants rather than a path and a
 // parameter spelling. Every one of them goes through `transport` above.
 
+// Every one of them takes one options object — `{ model, origin, signal }` —
+// because a mixture of `f(model, options)` and `f(options)` is a call somebody
+// gets wrong by passing the options as the model, and the URL that results is
+// `model=[object Object]`. Uniform beats memorable (rule B13).
+
 export const version = (options) => get("/api/version", {}, options);
-export const stages = (model, options) => get("/api/stages", { model }, options);
-export const fields = (model, options) => get("/api/fields", { model }, options);
-export const inputs = (model, options) => get("/api/inputs", { model }, options);
+export const stages = (options = {}) => get("/api/stages", { model: options.model }, options);
+export const fields = (options = {}) => get("/api/fields", { model: options.model }, options);
+export const inputs = (options = {}) => get("/api/inputs", { model: options.model }, options);
 
 export const arrays = (names, params = {}, options) =>
   frame("/api/arrays", { ...params, fields: names }, options);
