@@ -13,6 +13,7 @@ import test from "node:test";
 import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../galaxy/api/client/field.js";
 import { legendStops, makePalette, makeRamp, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
 import { census, describe, format, identify, nearest, project } from "../../galaxy/api/client/stars.js";
+import { domain, layout, markSize, pick } from "../../galaxy/api/client/system.js";
 import * as view from "../../galaxy/api/client/view.js";
 
 const fixture = JSON.parse(readFileSync(process.env.GALAXY_FIXTURE, "utf-8"));
@@ -269,4 +270,50 @@ test("a row of a region response knows which star it is", () => {
   assert.deepEqual(identify(header, 5), { cell: 12, index: 2 });
   assert.equal(identify(header, 6), null, "past the last star is not a star");
   assert.equal(identify({ cells: { ids: [], counts: [] } }, 0), null);
+});
+
+// --- one system, laid out ----------------------------------------------------
+
+test("a system's axis is logarithmic, because three decades on a line is not readable", () => {
+  const planets = { planet_semi_major_axis: [0.1, 1, 10], planet_radius: [1, 1, 1] };
+  const laid = layout(planets, [], { x: 0, y: 0, width: 300, height: 40 });
+  const [a, b, c] = laid.marks.map((m) => m.x);
+  assert.ok(Math.abs((b - a) - (c - b)) < 1e-6, "equal ratios are equal distances");
+  assert.deepEqual(laid.ticks.map((t) => t.a), [0.1, 1, 10].filter((a) => a >= laid.range.lo && a <= laid.range.hi));
+  assert.equal(laid.star.x, 0);
+  assert.equal(laid.marks[0].y, laid.axis.y);
+});
+
+test("the axis reaches past everything there is, belts included", () => {
+  const planets = { planet_semi_major_axis: [1], planet_radius: [1] };
+  const belts = [{ kind: "kuiper", inner: 20, outer: 40 }];
+  const range = domain(planets, belts);
+  assert.ok(range.lo < 1 && range.hi > 40);
+  assert.equal(domain({ planet_semi_major_axis: [] }, []), null, "nothing to draw is not a layout");
+  assert.equal(layout({ planet_semi_major_axis: [] }, [], { x: 0, y: 0, width: 10, height: 10 }), null);
+});
+
+test("a belt is a band, clipped to the axis it is drawn on", () => {
+  const planets = { planet_semi_major_axis: [1, 5], planet_radius: [1, 10] };
+  const belts = [{ kind: "asteroid", inner: 2.06, outer: 3.28 }];
+  const laid = layout(planets, belts, { x: 0, y: 0, width: 400, height: 50 });
+  const band = laid.bands[0];
+  assert.ok(band.x1 > band.x0);
+  assert.ok(band.x0 > laid.marks[0].x && band.x1 < laid.marks[1].x, "between the two planets, as Jupiter's is");
+});
+
+test("a marker's area carries the radius, and is clamped at both ends", () => {
+  assert.ok(markSize(11) > markSize(1) && markSize(1) > markSize(0.3));
+  assert.ok(markSize(1e6) <= 13 && markSize(1e-6) >= 2);
+  assert.equal(markSize(NaN), markSize(0), "no radius is drawn at the smallest size, not omitted");
+  // Area, not radius: eleven Earth radii is not eleven times the mark.
+  assert.ok(markSize(11) < 5 * markSize(1));
+});
+
+test("a click picks the planet under it, or nothing", () => {
+  const planets = { planet_semi_major_axis: [0.4, 5.2], planet_radius: [1, 11] };
+  const laid = layout(planets, [], { x: 0, y: 0, width: 400, height: 40 });
+  assert.equal(pick(laid, laid.marks[1].x, laid.axis.y), 1);
+  assert.equal(pick(laid, laid.marks[0].x + 1, laid.axis.y), 0);
+  assert.equal(pick(laid, laid.axis.x1, laid.axis.y + 100), -1);
 });

@@ -26,7 +26,7 @@ from galaxy.api.service import MEDIA_TYPES, Service, routes
 from galaxy.api.version import CLIENT
 from galaxy.core.cmaps import CMAPS, COLORMAPS, DIVERGING, CmapError, UnknownCmap, cmap
 from galaxy.core.grids import GridSpec
-from galaxy.stages import systems
+from galaxy.stages import planets, systems
 
 ROOT = Path(__file__).resolve().parents[1]
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
@@ -180,7 +180,9 @@ import {{ catalogue, confirm, initial, query, reopen, seedsAt, setValue, withPre
 import {{ discScale }} from "{client}/field.js";
 import {{ makeRamp }} from "{client}/ramp.js";
 import {{ nearest, project }} from "{client}/stars.js";
-import {{ arrays, fields, inputs, region, stages }} from "{client}/transport.js";
+import {{ arrays, fields, inputs, region, stages, system }} from "{client}/transport.js";
+import {{ identify }} from "{client}/stars.js";
+import {{ layout, pick }} from "{client}/system.js";
 import * as view from "{client}/view.js";
 
 const origin = "{origin}";
@@ -215,6 +217,11 @@ for (let i = 0; i < points.n; i += 1) {{
 }}
 const hit = nearest(points.sx[7], points.sy[7], points, 3);
 
+// A star picked out of the region is opened by the name that response gave it.
+const name = identify(got.header, 3);
+const opened = await system(name, {{ ...query(state), stars: 5000 }}, {{ origin }});
+const laid = layout(opened.arrays, opened.header.belts, {{ x: 0, y: 0, width: 400, height: 40 }});
+
 // A field drawn end to end: values in, colour out, from the published stops.
 const decl = byName.stellar_surface_density;
 const frame = await arrays([decl.name], query(state), {{ origin }});
@@ -234,6 +241,16 @@ console.log(JSON.stringify({{
   colorAtPeak: ramp.color(ramp.hi),
   colorOfNothing: ramp.color(null),
   rampCmap: ramp.cmap,
+  regionCells: got.header.cells.ids,
+  regionStar: got.arrays.star_radius[3],
+  systemName: name,
+  systemStar: opened.header.star.star_radius,
+  systemStages: opened.stages,
+  planets: opened.header.planets,
+  planetColumns: Object.keys(opened.arrays).sort(),
+  axes: [...(opened.arrays.planet_semi_major_axis ?? [])],
+  marks: laid ? laid.marks.length : 0,
+  picked: laid ? pick(laid, laid.marks[0].x, laid.axis.y) : -1,
   previewsAfterReopen: Object.keys(reopened.previews),
   confirmedAfterReopen: reopened.confirmed,
   seedsAtPattern: seedsAt(state, 4),
@@ -297,6 +314,17 @@ def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
     assert got["colorAtPeak"][:3] == list(
         int(COLORMAPS[got["rampCmap"]].stops[-1][i : i + 2], 16) for i in (1, 3, 5)
     )
+
+    # The system a clicked star opens is that star's, and it costs a cell.
+    assert got["systemName"]["cell"] in got["regionCells"]
+    assert got["systemStar"] == pytest.approx(got["regionStar"]), (
+        "the system opened is not the star that was clicked"
+    )
+    assert not set(got["systemStages"]) & {"systems", "planets"}
+    assert got["planets"] == len(got["axes"]) == got["marks"]
+    assert got["planetColumns"] == sorted(d.name for d in planets.PLANETS.publishes if d.of == "planet")
+    assert got["axes"] == sorted(got["axes"]), "a system is drawn in the order it was built, outward"
+    assert got["picked"] == 0, "a click on the innermost planet picks the innermost planet"
 
     # Rule D1 survives the round trip.
     assert got["previewsAfterReopen"] == ["1"]

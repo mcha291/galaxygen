@@ -62,10 +62,12 @@ from galaxy.core.units import unit as _unit
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
+from galaxy.stages import planets as _planets
 from galaxy.stages import systems as _catalogue
 
 JSON = "application/json"
 CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
+PLANETS_SLOT = "planets"  # and the slot a system query materialises with
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
@@ -106,6 +108,12 @@ ROUTES: tuple[Route, ...] = (
         "A materialised star catalogue for one (R, phi) window.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "stars"),
         "region",
+    ),
+    Route(
+        "/api/system",
+        "One star's planets and belts, by the (cell, index) that names it.",
+        ("model", "cell", "index", "stars"),
+        "system",
     ),
 )
 
@@ -580,10 +588,7 @@ class Service:
 
     def _region(self, q: Query) -> Response:
         model = self._model(q)
-        stage_id = model.stage_map.get(CATALOGUE_SLOT)
-        if stage_id is None or stage_id not in self.impls:
-            raise NotFound(f"model {model.name!r} has no {CATALOGUE_SLOT} stage to materialise")
-        stage = self.impls.get(stage_id) if isinstance(self.impls, Registry) else self.impls[stage_id]
+        stage = _stage_for(model, CATALOGUE_SLOT, self.impls)
 
         R, t = self.grid.R, self.grid.t
         r_min = q.number("r_min", float(R[0]))
@@ -627,6 +632,65 @@ class Service:
             "stages": list(ran),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, catalogue[c]) for c in columns]), ran)
+
+    def _system(self, q: Query) -> Response:
+        """One star's planets. It materialises one cell and takes one star out of it.
+
+        The whole point of naming a star ``(cell, index)`` is that this costs a
+        cell rather than a galaxy: the catalogue stage is not run, the planets
+        stage is not run, and what does run is the closure of what the catalogue
+        *reads* — the same six stages a region query needs (rule D4).
+        """
+        model = self._model(q)
+        catalogue = _stage_for(model, CATALOGUE_SLOT, self.impls)
+        planets = _stage_for(model, PLANETS_SLOT, self.impls)
+        cell = q.integer("cell", -1)
+        index = q.integer("index", -1)
+        if not 0 <= cell < _catalogue.CELL_COUNT:
+            raise BadRequest(f"cell={cell} is outside 0..{_catalogue.CELL_COUNT - 1}")
+        if index < 0:
+            raise BadRequest(f"index={index} is not a star of that cell")
+        stars = q.integer("stars", _catalogue.CATALOGUE_SAMPLE)
+        if not 1 <= stars <= MAX_STARS:
+            raise BadRequest(f"stars={stars} is outside 1..{MAX_STARS}")
+
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, catalogue.requires)
+        seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
+        here = _catalogue.materialise(
+            out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell]
+        )
+        if index >= here.size:
+            raise NotFound(f"cell {cell} has {here.size} stars at this sample size, so no index {index}")
+
+        constants = {k: c.value for k, c in model.constants.items()}
+        system, found = _planets.one_system(here, index, cell, seeds["planets_seed"], constants)
+        columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
+        star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star"}
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "star": star,
+            "cell": cell,
+            "index": index,
+            "of": here.size,
+            "bounds": _catalogue.cell_bounds(self.grid.R, cell),
+            "planets": len(system[columns[0]]) if columns else 0,
+            "belts": [dict(b) for b in found],
+            "columns": columns,
+            "stars": {"requested": stars, "seed": seeds["systems_seed"], "planets_seed": seeds["planets_seed"]},
+            "stages": list(ran),
+        }
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
+
+
+
+
+def _stage_for(model: Model, slot: str, impls: Any) -> Stage:
+    stage_id = model.stage_map.get(slot)
+    if stage_id is None or stage_id not in impls:
+        raise NotFound(f"model {model.name!r} has no {slot} stage")
+    return impls.get(stage_id) if isinstance(impls, Registry) else impls[stage_id]
 
 
 def _inputs_json(inputs: Mapping[str, Any]) -> dict[str, Any]:

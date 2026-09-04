@@ -150,3 +150,7 @@ export const arrays = (names, params = {}, options) =>
 
 export const region = (window = {}, params = {}, options) =>
   frame("/api/region", { ...params, ...window }, options);
+
+/** One star's planets, by the (cell, index) that names it. */
+export const system = (star, params = {}, options) =>
+  frame("/api/system", { ...params, ...star }, options);
