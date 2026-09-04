@@ -352,7 +352,7 @@ def test_the_viewer_logic_holds(tmp_path):
     files = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests" / "js").glob("*.test.mjs"))
     assert files, "no node tests found; an empty run must not look like a passing one"
     proc = subprocess.run(
-        [NODE, "--test", *files],
+        [NODE, "--test", "--test-reporter=tap", *files],  # TAP whatever the TTY: node 24 defaults to spec
         cwd=ROOT, capture_output=True, text=True, timeout=300,
         env={**os.environ, "GALAXY_FIXTURE": str(fixture)},
     )

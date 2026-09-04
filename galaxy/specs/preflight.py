@@ -132,6 +132,16 @@ def check(
     all_decls: dict[str, list[FieldDecl]] = {}
     for name, by_model in published_in.items():
         all_decls[name] = list(by_model.values())
+    # An optional field is one some model lacks. A stage may still require it
+    # strictly if every model that maps the stage publishes it: the advanced
+    # model's own stages read the advanced model's own fields, and asking them to
+    # handle an absence that cannot happen in any model they run in would be a
+    # false declaration (S9, D86). What is refused is a *shared* stage requiring a
+    # field that is absent in one of the models it is shared with.
+    maps_stage: dict[str, set[str]] = {}
+    for m in models:
+        for sid in resolved[m.name]:
+            maps_stage.setdefault(sid, set()).add(m.name)
     for m in models:
         stages = resolved[m.name]
         here = {n for n, by in published_in.items() if m.name in by}
@@ -140,10 +150,11 @@ def check(
                 decls = all_decls.get(name)
                 if not decls:
                     P(Problem(m.name, "missing-required", f"stage {sid!r} requires {name!r}, which no model publishes"))
-                elif any(d.optional for d in decls):
-                    P(Problem(m.name, "optional-read-strict", f"stage {sid!r} requires optional field {name!r} without handling absence; move it to requires_optional"))
                 elif name not in here:
                     P(Problem(m.name, "missing-required", f"stage {sid!r} requires {name!r}, which model {m.name!r} does not publish"))
+                elif any(d.optional for d in decls) and not maps_stage[sid] <= set(published_in[name]):
+                    absent = sorted(maps_stage[sid] - set(published_in[name]))
+                    P(Problem(m.name, "optional-read-strict", f"stage {sid!r} requires optional field {name!r}, which {absent} map it without; move it to requires_optional"))
             for name in st.requires_optional:
                 decls = all_decls.get(name)
                 if not decls:
