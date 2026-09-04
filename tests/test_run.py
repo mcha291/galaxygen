@@ -22,7 +22,7 @@ def test_production_runs(model):
     assert out.fields["canary"].shape == (8,)
     assert out.order == (
         "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
-        "bar", "population", "pattern", "systems",
+        "bar", "population", "pattern", "systems", "formation", "planets",
     )
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
     assert set(out.inputs) == set(INPUTS)  # S3 set the last default, so every input resolves

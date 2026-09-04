@@ -219,19 +219,22 @@ test("a checkpoint shows what it published, and asks for nothing else", () => {
 
 test("the viewer never asks for a scalar that would build the catalogue", () => {
   const all = fixture.fields.fields;
-  const catalogueStage = [...view.catalogueStages(all)];
-  assert.equal(catalogueStage.length, 1, "one stage publishes the star columns");
-  const columnCheckpoint = all.find((f) => f.domain === "object").checkpoint;
-
-  const counted = all.filter((f) => f.domain === "galaxy" && f.stage === catalogueStage[0]);
-  assert.ok(counted.length > 0, "that stage does publish a scalar; this test would be vacuous otherwise");
-  const asked = view.scalarsAt(all, columnCheckpoint).map((f) => f.name);
+  const materialisers = view.catalogueStages(all);
+  assert.ok(materialisers.size >= 1, "some stage publishes object columns");
+  const counted = all.filter((f) => f.domain === "galaxy" && materialisers.has(f.stage));
+  assert.ok(counted.length > 0, "one of them publishes a scalar too; this would be vacuous otherwise");
   for (const scalar of counted) {
-    assert.ok(!asked.includes(scalar.name), `${scalar.name} would materialise the whole sample (rule D4)`);
+    const asked = view.scalarsAt(all, scalar.checkpoint).map((f) => f.name);
+    assert.ok(!asked.includes(scalar.name), `${scalar.name} would materialise a whole sample (rule D4)`);
   }
-  // The rest of that checkpoint's scalars are still asked for.
-  const others = all.filter((f) => f.domain === "galaxy" && f.checkpoint === columnCheckpoint && f.stage !== catalogueStage[0]);
-  for (const scalar of others) assert.ok(asked.includes(scalar.name), scalar.name);
+  // Every other scalar at those checkpoints is still asked for.
+  for (const checkpoint of new Set(counted.map((f) => f.checkpoint))) {
+    const asked = view.scalarsAt(all, checkpoint).map((f) => f.name);
+    const others = all.filter(
+      (f) => f.domain === "galaxy" && f.checkpoint === checkpoint && !materialisers.has(f.stage),
+    );
+    for (const scalar of others) assert.ok(asked.includes(scalar.name), scalar.name);
+  }
 });
 
 test("the disc is drawn from a radial field, and the picked one wins", () => {

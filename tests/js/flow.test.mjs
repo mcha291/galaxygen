@@ -27,11 +27,17 @@ test("a page load lands on stage one, with the published defaults", () => {
   assert.equal(state.confirmed, 0);
   assert.equal(state.values.halo_mass, fixture.inputs.controls.find((c) => c.name === "halo_mass").default);
   assert.deepEqual(state.previews, {});
-  // Six checkpoints, and the empty one is kept: "nothing here yet" is true and worth saying.
+  // Six checkpoints, every one of them now built: S8 filled the last. A checkpoint with
+  // no stages is still kept rather than hidden — the flow must survive one — which is
+  // asserted here against a catalogue with the stages taken out.
   assert.equal(cat.checkpoints.length, 6);
-  const planets = cat.checkpoints.at(-1);
-  assert.equal(planets.stages.length, 0);
-  assert.ok(cat.checkpoints.every((cp) => cp.name));
+  assert.ok(cat.checkpoints.every((cp) => cp.name && cp.stages.length > 0));
+  const hollow = catalogue(
+    { ...fixture.stages, checkpoints: fixture.stages.checkpoints.map((cp) => ({ ...cp, stages: [] })) },
+    fixture.inputs,
+  );
+  assert.equal(initial(hollow).current, 1);
+  assert.ok(hollow.checkpoints.every((cp) => cp.stages.length === 0));
 });
 
 test("every input lands in exactly one checkpoint, and none is lost", () => {

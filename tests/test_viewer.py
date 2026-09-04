@@ -275,10 +275,12 @@ def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
 
     # Rule D4, from the client's side: drawing checkpoint one does not build a galaxy.
     assert got["ran"]["1"] and "systems" not in got["ran"]["1"] and "chemistry" not in got["ran"]["1"]
-    assert got["ran"]["6"] == [], "a checkpoint with no stages asks for nothing"
-    assert "systems" not in {stage for ran in got["ran"].values() for stage in ran}, (
-        "the viewer never runs the catalogue stage; it asks for a region instead"
-    )
+    # Checkpoint 6 draws where giants are possible, which is derived from the
+    # chemistry — and stops there. Neither materialiser runs anywhere in the walk:
+    # a sample is what a region query is for (D73).
+    assert got["ran"]["6"] == ["formation"]
+    ran = {stage for got_ran in got["ran"].values() for stage in got_ran}
+    assert not ran & {"systems", "planets"}, "drawing a checkpoint materialised a catalogue"
 
     # The sample, drawn where the disc is.
     assert got["stars"] > 0

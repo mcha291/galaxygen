@@ -212,6 +212,88 @@ LEVEL0: dict[str, Constant] = {
         "costs no acceptance row, because the gradient rows are exactly insensitive to it "
         "[verified: tests/test_chemistry.py::test_the_gradient_does_not_depend_on_the_yield].",
     ),
+    # --- the planets stage (S8, GALAXY_INPUTS.md §12) -------------------------
+    "DISC_MASS_FRACTION": Constant(
+        0.01,
+        "dimensionless",
+        "Protoplanetary disc mass as a fraction of the star's, at the moment planet formation "
+        "starts [recall: surveys of Class II discs put the median near 1% of the stellar mass]. "
+        "It is a median, not a value: the residual is DISC_MASS_SCATTER and is seeded, which is "
+        "what makes occurrence a probability rather than a verdict.",
+    ),
+    "DISC_MASS_SCATTER": Constant(
+        0.3,
+        "dex",
+        "Log-normal width of the disc-mass residual about that median [recall: GALAXY_INPUTS.md "
+        "§12 quotes ~0.3 dex]. This constant does more work than its size suggests: giant "
+        "occurrence is the probability that a log-normal disc clears the critical core mass, so "
+        "the *slope* of occurrence against [Fe/H] is set by this width and not by any occurrence "
+        "law. A narrower disc distribution makes a steeper metallicity dependence.",
+    ),
+    "PLANETESIMAL_EFFICIENCY": Constant(
+        0.171,
+        "dimensionless",
+        "Share of a disc's solid mass that reaches planetesimals and then cores, rather than "
+        "being lost to radial drift or accreted by the star [recall: the streaming-instability "
+        "literature spans tens of percent]. **This absorbs GALAXY_INPUTS.md §12's separate "
+        "'occurrence normalisation'**: in this formation model the two are the same number — a "
+        "factor in front of the solid budget — and declaring both would be inventing a variable "
+        "to justify a stage (rule A4). It is the one constant in the stage fitted to an "
+        "observation: 0.171 puts giant occurrence at 5% for a solar-mass star at [Fe/H] = 0, "
+        "which is where the Adibekyan review puts it [recall: GALAXY_INPUTS.md §12]. Everything "
+        "else about occurrence — its slope, its stellar-mass dependence, its value anywhere else "
+        "— is then a prediction, and debt #25 records what those predictions cost.",
+    ),
+    "CORE_CRITICAL_MASS": Constant(
+        10.0,
+        "Mearth",
+        "Core mass above which a protoplanet's envelope can no longer stay in hydrostatic "
+        "equilibrium and runaway gas accretion begins [recall: the classical core-accretion "
+        "threshold, ~10 M⊕]. A giant is a core that reached this beyond the ice line before the "
+        "disc dispersed; everything else stays a solid planet.",
+    ),
+    "ICE_LINE_TEMPERATURE": Constant(
+        170.0,
+        "K",
+        "Disc temperature at which water condenses, which is where the solid surface density "
+        "jumps [recall: ~170 K at protoplanetary disc pressures]. It is a temperature rather than "
+        "a radius because the radius is derived from the star's own luminosity — a hotter star "
+        "pushes its ice line out, which is why occurrence depends on stellar mass at all.",
+    ),
+    "ICE_BOOST": Constant(
+        2.0,
+        "dimensionless",
+        "Factor by which the solid surface density rises across the ice line, once water is a "
+        "solid [recall: Hayashi's minimum-mass solar nebula uses about 4; measurements of the "
+        "condensable inventory support 2-4]. The low end is taken deliberately: the factor and "
+        "PLANETESIMAL_EFFICIENCY are degenerate in the solid budget, and only one of them can be "
+        "calibrated without the other becoming meaningless (rule B10).",
+    ),
+    "HILL_SEPARATION": Constant(
+        10.0,
+        "dimensionless",
+        "Minimum spacing between neighbouring planets, in mutual Hill radii — the closed-form "
+        "stability criterion GALAXY_INPUTS.md §12 requires in place of an integrator [recall: "
+        "systems below about 10 mutual Hill radii are not long-term stable]. This is what sets "
+        "the architecture: the chain is laid out from the inner edge with each step the previous "
+        "planet's own Hill radius times this, so a massive planet clears a wide gap and a small "
+        "one does not.",
+    ),
+    "DISC_INNER_EDGE": Constant(
+        0.05,
+        "AU",
+        "Inner edge of the planet-forming region, where the disc is truncated by the star's "
+        "magnetosphere [recall: co-rotation for a few-day rotation period]. Nothing forms inside "
+        "it, so it is where the orbital chain starts.",
+    ),
+    "DISC_OUTER_EDGE": Constant(
+        30.0,
+        "AU",
+        "Outer edge of the region where planet formation completes within the disc's lifetime "
+        "[recall: beyond a few tens of AU growth times exceed disc lifetimes, which is why the "
+        "Solar System's planets stop at Neptune and the Kuiper belt is unaccreted]. Solids "
+        "beyond it are counted into the budget but never assembled.",
+    ),
     "V_SUN_PECULIAR": Constant(
         12.24,
         "km/s",
