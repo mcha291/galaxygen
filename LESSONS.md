@@ -348,3 +348,22 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   stages that did not change: the advanced vertical stage lands three places
   later than the simple one's because it waits on the chemistry. Orders are per
   model; assert them per model.
+
+## From S10 (run 1)
+
+- [audit][all] Sweep each grid axis alone and judge the drift against the row's
+  own error bar, never a fixed percentage: a scalar is converged when the grid
+  cannot move it across the width it is judged by, and a zero-width target
+  makes a row untestable rather than failed `[verified: DECISIONS.md D94]`.
+- [audit][all] A profile whose warm column matches its cold one is a profile; one
+  that does not is a reading of a cache. Publish both columns so the reader can
+  tell `[verified: DECISIONS.md D95]`.
+- [audit][field] A row that passes because a constant was chosen inside its cited
+  range is not evidence for the mechanism. Ask of every green row which constant
+  could have been set to make it green, and whether it was (row 15, debt #21).
+- [audit][all] Re-examine the *consumers* of a changed field, not only the stage
+  that changed it: the advanced model's iron-rich centre moved giant occurrence
+  by 7× at 2 kpc without the planets stage changing a line (D96).
+- [audit][close] Two independent runs of one session means the first closes
+  partially and the second continues the branch (rule C2d) — the instruments are
+  shared, the findings are sealed in a file the second run must not open.

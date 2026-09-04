@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SESSION_DOCS = ["DECISIONS.md", "LESSONS.md", "RESUMING.md", "BRIEF.md", "README.md", "MANUAL_TODO.md"]
+SESSION_DOCS = ["DECISIONS.md", "LESSONS.md", "RESUMING.md", "BRIEF.md", "README.md", "MANUAL_TODO.md", "AUDIT_RUN1.md"]
 
 
 def text(name: str) -> str:

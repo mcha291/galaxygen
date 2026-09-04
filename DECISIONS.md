@@ -1634,3 +1634,71 @@ about 0.21 s cold to any route that reaches it, and nothing to a route that does
 not; warm, the two models are indistinguishable. Metadata is still
 sub-millisecond with no stage behind it, and `/api/stages` grew by two
 declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).
+
+## Session 10 — the audit, run 1
+
+### D94. The grid is swept one axis at a time, and nothing drifts
+
+**Decision.** `galaxy/specs/convergence.py` runs every published acceptance
+scalar of each model at N_R ∈ {200, 400, 800}, N_t ∈ {1000, 2000, 4000} and
+N_z ∈ {30, 60, 120}, each axis alone with the others at the default, and fails
+the spec run on a pointwise row whose largest departure from the default-grid
+value exceeds its own target's width. A zero-width target is *untestable*, not
+failed (debt #17); a category that changes is a drift; statistical rows are
+reported at the default seed without a verdict. `python -m galaxy.specs` runs it
+after the four existing specs (`--quick` halves the sweep).
+
+**Settled by.** GALAXY_INPUTS.md §10: the cost exponent is 0.13 in N_R against
+about 1 in N_t, so the two are not one quality knob and a sweep that moved them
+together would hide which one a scalar follows. **Result: 0 drifts of 54 row×axis
+pairs in the simple model, 0 of 57 in the advanced.** The largest movement is
+v_tan under N_t, 0.33 km/s of a 6 km/s target; the stellar mass moves 0.2% under
+N_t and 0.002% under N_R; N_z moves the advanced gradient by 3 × 10⁻⁷ dex/kpc, so
+reading the halo potential off the first z-row (D89) costs nothing. The
+instrument was checked on a stage built to drift before it was believed on one
+that does not `[verified: tests/test_convergence.py::test_a_scalar_that_moves_with_the_grid_is_caught]`.
+
+### D95. The profile, cold, per stage — and the catalogue costs what is asked for
+
+    model simple: 0.425 s cold, 0.410 s warm
+      sfh 16.3%  chemistry 9.1%  vertical 1.7%  pattern 2.3%  systems 28.5%  formation 15.3%  planets 26.6%
+    model advanced: 0.658 s cold, 0.651 s warm
+      sfh 11.4%  chemistry_dtd 41.1%  vertical_alpha 1.3%  pattern 1.5%  formation 9.5%  systems 17.6%  planets 17.3%
+    catalogue at 20,000 stars: layout 0.014 s; one cell 0.0011 s (23 stars), nine 0.0026 s (206), every cell 0.116 s (19,998)
+
+**Decision.** `galaxy/specs/performance.py` times every stage of one default run
+in a fresh interpreter per model (rule B2), warm beside cold, and materialises
+the catalogue for one, nine and every cell. It publishes numbers and fails on
+nothing (rule B6).
+
+**Settled by.** Cold and warm agree at every stage, so there is no cache in the
+reading. One stage is over a fifth of either model: the advanced chemistry, at
+41% — its per-timestep Python loop and 28 transport kernels of 400 × 400 — and it
+is the only optimisation worth a session. The per-cell table closes what debt
+#24 left open: cost is proportional to the stars asked for, one cell is a
+thousandth of the whole disc, and D61's fear that every cell's streams were
+built regardless is not what the code does. **Debt #24 is discharged in full.**
+
+### D96. The calibration audit, run 1: one defect, four flags, and the protocol for run 2
+
+**Decision.** Every constant fitted or chosen against a mechanism is re-examined
+in `AUDIT_RUN1.md` §3 against the mechanisms that have arrived since (rule B10).
+The defect list is §4 of that file. **Run 2 continues on `session-10` (rule C2d),
+uses the instruments, and must not read `AUDIT_RUN1.md` until its own list is
+written**; the diff goes here as D97 or later. Run 1 therefore closes partially:
+the board row is ◐, nothing is merged, no tag is queued.
+
+**Settled by.** The one defect: row 15 passes because `BAR_LENGTH_RATIO` = 2.0
+was chosen inside a cited 1.5–2.5 and 2.0 × 2.49 ≈ 5.0 — a choice, not a
+prediction, appended to debt #21. The flags: `WIND_SPEED` was fitted against a
+massless wind (debt #26); `MERGER_HEATING` has no row reading it in the advanced
+model until the valley opens (debt #27); `migration_efficiency` wants 2.5 kpc
+there (debt #28); `CONCENTRATION_NORM` still holds 10 km/s of lever on row 3
+(debt #12). One consequence measured rather than assumed: the advanced model's
+iron-rich centre reaches the planets stage — giant occurrence 19% at 2 kpc against
+2.6% in the simple model, and the sampled giant fraction 1.65% against 1.02% —
+on debt #26 alone. `PLANETESIMAL_EFFICIENCY` itself holds, being a function
+evaluation at [Fe/H] = 0 for one solar mass, and the published
+`giant_occurrence` field is at the galaxy's *mean* stellar mass (0.46% at R₀),
+which its `about` says and a reader could miss. The UNSET ratchet, loose for six
+sessions, is at zero.

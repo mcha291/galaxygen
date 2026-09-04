@@ -750,7 +750,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    uncertainty, so the check fails for any float that is not bit-exact. Row 20
    agrees to 6% and still fails. A defect in the table, not the model; the fix
    is to read the source's uncertainty or to give the table a way to say "no
-   testable target", which belongs to the S10 audit.
+   testable target", which belongs to the S10 audit. **S10 (run 1)**: the
+   convergence sweep now reports such rows as *untestable* rather than judging a
+   drift against nothing `[verified: galaxy/specs/convergence.py]`; the source's
+   uncertainty was not found in the material this project holds, so row 20 stays
+   as it is — 28% low on the model and unjudgeable on the table — and the row is
+   still red for the right reason (debt #18).
 18. **No high-angular-momentum accretion component.** With the infall carrying
    the disc's own scale length (debt #13's fix), nothing accretes beyond about
    10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
@@ -785,7 +790,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    third links; the bar's half-length is scaled from the disc scale length
    alone, because no relation between disc dominance and bar length is quoted
    anywhere in this project and inventing one would be rule A4's failure a level
-   up. `disc_dominance` is published and unused so the gap is visible.
+   up. `disc_dominance` is published and unused so the gap is visible. **S10
+   (run 1) audit finding:** row 15 passes at 4.98 kpc against 5.0 ± 0.2 because
+   `BAR_LENGTH_RATIO` was set to 2.0 inside a cited 1.5–2.5 and R_d is 2.49 —
+   the pass is a choice of constant, not a prediction, and the row should not be
+   read as evidence for the bar model until the first link exists
+   `[verified: AUDIT_RUN1.md §3]`.
 22. **The pitch–shear relation has no lever in this model, so it cannot be
    falsified by it.** Measured, once, as ruling 3 asks: across the whole input
    space the shear rate moves only 0.829 → 0.967, buying 0.30° of pitch, while
@@ -815,7 +825,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    tests/test_spec.py::test_the_ensemble_runs_only_the_stages_its_fields_need]`.
    What is *not* discharged is D61's per-cell cost: the catalogue still builds
    every cell's streams whether or not anything asks for that cell, and that is
-   a `performance.py` question at S10.
+   ~~a `performance.py` question at S10.~~ **Measured at S10 (run 1) and
+   discharged in full**: at the published sample size one cell costs 1.1 ms, nine
+   2.6 ms and every cell 116 ms, so the catalogue's cost is proportional to the
+   stars asked for and nothing is paid for a cell nobody asked about
+   `[verified: DECISIONS.md D95]`.
 
 25. **The two occurrence relations §12 cites cannot both be true, and the
    mechanism picks the steeper one.** §12 quotes giant occurrence going as
