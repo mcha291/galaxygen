@@ -1,58 +1,54 @@
-# BRIEF — Session 9: the advanced model
+# BRIEF — Session 10: the audit
 
-Open per RESUMING.md. Read RULES.md in full — **A1, A6, A7, B7 and B10 are the
+Open per RESUMING.md. Read RULES.md in full — **B2, B6, B7, B10 and A10 are the
 ones this session lives on** — then this. Do not read GALAXY_PLAN.md. Read
-GALAXY_INPUTS.md **§8** (the advanced axes) and **§10** (the measured cost
-model); consult §11 only for the debts named below.
+GALAXY_INPUTS.md **§10** (the measured cost model) and **§11** (rulings and the
+whole debt register: 21 open, 7 discharged — this session's raw material).
 
-The board says **Fable** runs this one.
+The board says **Fable, run twice** — two independent audits, then diff the
+defect lists. Each run is its own session branch; the second must not read the
+first's findings before making its own.
 
 ## Build
 
-The advanced model has mapped the same stages as `simple` since S0, differing by
-one constant. S9 gives it implementations of its own where it genuinely differs,
-and leaves the rest shared — that is what the two-model discipline was built for
-and this is the session it finally exercises.
-
-- **Multi-element chemistry with a delay-time distribution.** Iron from SNIa
-  arrives late, α from core collapse arrives promptly, and the simple model's
-  instantaneous recycling collapses the two into one. This is what makes an
-  α/Fe plane exist at all, and **acceptance row 24 becomes computable**: give it
-  a `category_scalar` and an `expect` in `spec.py` (rule C6).
-- **Outflows**, which debt #15 predicts will fix the gradients — rows 22 and 23
-  come out a third of the observed slope with no mechanism to remove metal
-  preferentially from the outer disc.
-- **Radial migration** as a mechanism rather than the simple model's kernel.
-- **Delete `CANARY`** and the canary field: they exist only while the advanced
-  model is a stub, and this session ends that. `tests/test_models.py` asserts the
-  two models differ — make it assert something real instead.
+- **`galaxy/specs/convergence.py`**: sweep N_R and N_t **independently** (never
+  one knob) for every acceptance scalar in both models, publish the drift of each
+  against the default grid, and fail a row whose drift exceeds its target's width.
+  `tests/test_sfh.py::test_scalars_do_not_move_with_grid_resolution` and
+  `test_chemistry.py::test_the_gradient_converges` are the seeds of it.
+- **`galaxy/specs/performance.py`**: the profile per stage, both models, cold in a
+  fresh process (`tools/timings.py` and `tools/scaling.py` are the pattern), and
+  the per-cell catalogue cost D61 left open. Publish the numbers, not verdicts.
+- **The calibration audit** (rule B10): every constant fitted while a mechanism was
+  missing, re-examined now that the advanced model has the mechanism. The list is
+  §11; start with #12 (c₂₀₀–z), #17 (zero-width targets: read the sources'
+  uncertainties or give the table "no testable target"), #26–#28 (S9's).
+- Register findings as debts or discharge them; lower the ratchets in
+  `tests/test_registry.py` where a debt is gone. Do not fix physics — record.
 
 ## Gate
 
-- **The N_t scaling exponent is 1.0, not 2.0** (rule B7). The naive DTD is a
-  convolution at every timestep and is quadratic in time resolution; measure the
-  exponent across at least three N_t and publish it, do not time one grid.
-- **The coupling multiplier is measured**, and rule A1 still holds: no fixed-point
-  solver on the grid. Bounded, cheap iteration only — the coupled fixed point is
-  an 8× multiplier no implementation recovers.
-- `preflight` reconciles both models: a field name that both publish must carry
-  the **same contract**. If multi-element chemistry changes what `feh_history`
-  means, it needs a new name, not a new declaration.
-- Cold timings published, both models (B2, D84).
+- Every acceptance row's drift across the sweep is published for both models, and
+  the sweep runs N_R and N_t separately (GALAXY_INPUTS.md §10: exponent 0.13 in
+  N_R against ~1 in N_t — they are not one knob).
+- `python -m galaxy.specs` runs convergence and performance beside the four
+  existing specs; exit 0 with every miss recorded for its model.
+- The two audit runs' defect lists are diffed and the diff is in DECISIONS.md.
+- Cold timings published (B2); `tools/scaling.py` re-run if any stage changed.
 
 ## Traps
 
-- **Rule B10 first.** `NET_YIELD` = 0.011 is an effective yield calibrated
-  against a model with no outflows (debt #16). The moment outflows exist it has
-  no claim on its value and must be re-derived — before anything is judged.
-- **Debt #20 blocks debt #9.** The thin/thick split is *defined* as "born before
-  the last major merger", so a merger-free run cannot be evidence about mergers.
-  A criterion grounded in kinematics or chemistry has to come first; then the
-  merger-free α-bimodality test means something.
-- Rule A7: advanced-model findings are stored separately from the simple pass.
-- Every test takes the `model` fixture, so tests that quietly assume the two
-  models agree will start failing. That is the S0 stub paying off, not a problem.
+- **The advanced model has no thick disc** (debt #27): rows 5, 7–11 and 24 read
+  zero or `single` and are recorded. Do not tune the valley into existence; the
+  register's prediction names what to try (a fast inner disc) if you must.
+- Misses are per model (`spec.misses(name)`, D87): a row can be stale for one
+  model and recorded for the other, and the runner judges each against its own.
+- The advanced model's centre reaches [Fe/H] = +1.5 (debt #26) — a convergence
+  sweep will see the inner rings move; that is the massless wind, not the grid.
+- `tests/test_graph.py::ORDER` pins each model's execution order; Kahn's rounds
+  move stages you did not touch when a dependency changes.
+- Windows: `uv run python` only; Bash commands over ~8 KB fail obscurely — use a
+  file tool. `node --test` needs `--test-reporter=tap` named.
 - Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and fill in
-  S8's merge SHA from `git rev-list -1 --grep='^Merge S8 into main' origin/main`.
-- Do not edit `.github/workflows/` without workflow scope on the token.
+  S9's merge SHA from `git rev-list -1 --grep='^Merge S9 into main' origin/main`.
 - After ticking the board run `uv run python tools/progress.py`.

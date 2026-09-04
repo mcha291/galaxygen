@@ -283,6 +283,11 @@ def materialise(
     psi = fields["sfr_surface_density_history"]
     feh = fields["feh_history"]
     onset = float(fields["last_major_merger_time"])
+    # The population a star belongs to follows whichever criterion the model's
+    # vertical stage used: the [α/Fe] valley when the advanced chemistry found one,
+    # else the merger (D87). Optional, so the simple model answers as before.
+    split = fields.get("alpha_split")
+    afe = fields.get("alpha_fe_history") if split is not None and math.isfinite(float(split)) else None
 
     for cell, count in counts:
         ring, sector = divmod(int(cell), CELL_SECTORS)
@@ -310,7 +315,10 @@ def materialise(
         # separate CDF for every star would cost 10^6 cumulative sums for a resolution
         # finer than a ring is wide.
         index = int(np.argmin(np.abs(R - ring_radius[ring])))
-        window = (t < onset) if onset > 0.0 else np.ones_like(t, dtype=bool)
+        if afe is not None:
+            window = ~(afe[index] < float(split))
+        else:
+            window = (t < onset) if onset > 0.0 else np.ones_like(t, dtype=bool)
         born_thick = invert_cdf(draw("age"), t, np.where(window, psi[index], 0.0))
         born_thin = invert_cdf(draw("age_thin"), t, np.where(~window, psi[index], 0.0))
         born = np.where(is_thick, born_thick, born_thin)
@@ -446,6 +454,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             "thin_disc_scale_height", "thick_disc_scale_height",
             "sfr_surface_density_history", "feh_history", "last_major_merger_time",
         ),
+        requires_optional=("alpha_fe_history", "alpha_split"),
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_METALLICITY,
             STAR_MASS, STAR_POPULATION, CATALOGUE_SIZE,

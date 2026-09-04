@@ -47,7 +47,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "10 stage declarations"),
+    Endpoint("stages", "/api/stages", "", "12 stage declarations"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
@@ -56,6 +56,12 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("region: one sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "9 of 1024 cells"),
     Endpoint("region: whole disc", "/api/region", "stars=20000", "every cell, the published sample"),
     Endpoint("system: one star", "/api/system", "cell=300&index=0", "one cell, one star's planets"),
+    # The advanced model, on the routes where its own stages run (S9). Everything
+    # upstream of chemistry is shared code, so a profile costs the same in both.
+    Endpoint("adv: history", "/api/arrays", "model=advanced&fields=feh_history", "the DTD chemistry"),
+    Endpoint("adv: alpha plane", "/api/arrays", "model=advanced&fields=alpha_fe_history,alpha_sequence", "and its verdict"),
+    Endpoint("adv: one sector", "/api/region", "model=advanced&r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the chemical split"),
+    Endpoint("adv: one star", "/api/system", "model=advanced&cell=300&index=0", "one system, advanced"),
 )
 
 

@@ -57,7 +57,12 @@ def test_missing_required():
 def test_optional_discipline():
     p = stage("p", (decl("f", optional=True),))
     strict = stage("r", ("g",), requires=("f",))
-    assert codes(chk([model("m", p, strict)], p, strict)) == ["optional-read-strict"]
+    # A strict read of an optional field is fine while every model mapping the
+    # reader publishes it (an advanced-only stage reading an advanced-only field)...
+    assert chk([model("m", p, strict)], p, strict).ok
+    # ...and refused the moment the reader is shared with a model that lacks it.
+    rep = chk([model("a", p, strict), model("b", strict)], p, strict)
+    assert "optional-read-strict" in codes(rep) and "missing-required" in codes(rep)
     soft = stage("r", ("g",), requires_optional=("f",))
     rep = chk([model("a", p, soft), model("b", soft)], p, soft)
     assert rep.ok, rep.problems
@@ -126,4 +131,4 @@ def test_orphan_scan(tmp_path, monkeypatch):
 def test_scan_finds_production_declarations():
     stages, decls = preflight.scan_declarations(("galaxy.stages",))
     assert {"halo", "disc"} <= {s.id for s in stages}
-    assert {"canary", "halo_virial_radius", "circular_velocity"} <= {d.name for d in decls}
+    assert {"halo_potential", "halo_virial_radius", "circular_velocity", "alpha_fe_history"} <= {d.name for d in decls}

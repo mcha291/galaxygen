@@ -661,7 +661,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    constrained by two independent observables, not one (§6).
 8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
    (§4b, §13).
-9. ~~α-bimodality may be reachable without a merger.~~ **NOT TESTABLE in the
+9. ~~α-bimodality may be reachable without a merger.~~ **ANSWERED by S9, and the
+   answer is that it is not reached *with* one either** — see debt #27. The
+   advanced model has the α–Fe plane and a split that never names the merger,
+   and a merger-free galaxy and the default one both come out `single`
+   `[verified: tests/test_chemistry_dtd.py::test_the_experiments_that_looked_for_a_valley]`.
+   The question as posed is therefore moot until the valley exists at all.
+   S3's reasoning, kept for the record: **not testable in the
    simple model, and S3 established why rather than reporting a null result.**
    Two independent reasons. First, [α/Fe] needs two nucleosynthetic channels
    with different delay times, and instantaneous recycling collapses them into
@@ -722,12 +728,24 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    tilt. Reproducing −0.06 needs an inside-out index near 3, while the source
    that gives τ₀ = 7 Gyr at R₀ gives a linear τ(R), i.e. n = 1. Predicted
    cause: outflows, which remove more metal from the outer disc than the inner
-   and are an advanced-model axis (§8).
-16. **`NET_YIELD` is an effective yield and is calibrated.** 0.011 against a
-   nucleosynthetic 0.03–0.04, the difference being metal loss the simple model
-   has no mechanism for. It costs no acceptance row, because the gradient rows
-   are insensitive to it, but rule B10 applies the moment S9 adds outflows:
-   the constant has no claim on its value then and must be re-derived.
+   and are an advanced-model axis (§8). **The prediction ran at S9 and held for
+   row 22**: with a metal-loaded wind whose escape fraction follows the local
+   escape velocity, the advanced model's present-day gradient is −0.057 dex/kpc,
+   inside the target, and a wind with no radial dependence gives −0.043 — the
+   difference is the tilt the wind supplies `[verified: tests/test_chemistry_dtd.py::
+   test_debt_15s_prediction_holds_and_row_22_closes, ::test_the_tilt_is_the_wind_s_radial_dependence]`.
+   Row 23 did not follow, which the S2 prediction said would mean migration is
+   wrong too: debt #28. The simple model keeps both misses; it has no wind.
+16. ~~**`NET_YIELD` is an effective yield and is calibrated.**~~ **DISCHARGED by
+   S9.** 0.011 against a nucleosynthetic 0.03–0.04, the difference being metal
+   loss the simple model has no mechanism for. The advanced model has the
+   mechanism: nucleosynthetic yields (y_O = 0.015, y_Fe,cc = 0.0012, y_Fe,Ia =
+   0.0017 `[recall: WAF17]`, y_Z = 0.037 by solar proportion) and a wind whose
+   escape fraction at R₀ comes out at **0.75** once one constant, `WIND_SPEED`,
+   is set so the present-day gas at R₀ is solar. The factor of three is now a
+   result rather than a fit `[verified: tests/test_chemistry_dtd.py::
+   test_the_wind_takes_the_share_the_effective_yield_was_hiding]`. The simple
+   model keeps `NET_YIELD` as its own constant, explained rather than blind.
 17. **Acceptance rows 20 and 21 have zero-width targets.** The sources quote no
    uncertainty, so the check fails for any float that is not bit-exact. Row 20
    agrees to 6% and still fails. A defect in the table, not the model; the fix
@@ -754,11 +772,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    sheds mass `[verified: DECISIONS.md D51]`. Row 5 is the prerequisite — with
    the right extent the mass and the ratio can be right together. If they still
    cannot, the split criterion is what is wrong.
-20. **The thin/thick split is defined by the merger, so it cannot be evidence
-   about mergers.** "Born before the last major merger" is a definition, not a
-   measurement, and it makes debt #9 circular (see #9). A criterion grounded in
-   kinematics or chemistry rather than in the event list is needed before any
-   merger-free comparison means anything.
+20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
+   about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
+   the last major merger" is a definition, not a measurement, and it made debt
+   #9 circular. The advanced model's `vertical_alpha` splits on the valley
+   between the two [α/Fe] sequences at R₀ and never reads the event list
+   `[verified: tests/test_chemistry_dtd.py::test_the_split_criterion_never_names_the_merger]`.
+   The simple model keeps the merger split by design; what the chemical
+   criterion then finds is debt #27.
 21. **The first link of the pattern-speed chain is not modelled.** §4b describes
    it as disc dominance → bar length → pattern speed. S4 models the second and
    third links; the bar's half-length is scaled from the disc scale length
@@ -819,6 +840,52 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    What the model does get without being told: giant occurrence around an M dwarf
    falls to ~1% at [Fe/H] = 0 and rises to ~20% by +0.5, bracketing the
    12.4 ± 5.4% against 0.96 ± 0.51% split §12 quotes from Montet+14.
+
+26. **The advanced model's wind carries metals and no mass.** The escape
+   fraction removes a generation's fresh supernova metals before they mix, and
+   the gas budget stays the sfh stage's — the wind's mass is taken to be the
+   ejecta's, small against the accretion, so rows 1, 2, 3 and 20 are the same
+   in both models by construction `[verified: tests/test_models.py::
+   test_the_models_agree_upstream_of_chemistry_and_differ_below]`. A
+   mass-loaded wind (η ≈ 1) would remove as much gas as forms stars and change
+   every one of those rows; it is not modelled. One visible consequence: the
+   gas-starved centre collects the late Ia iron of its old stars to [Fe/H] =
+   +1.5 inside half a kiloparsec, against the +0.5 real bulges reach, because
+   nothing carries iron out of a region with 5 M☉/pc² of gas `[verified:
+   tests/test_systems.py::test_metallicity_is_looked_up_not_drawn]`. The bulge
+   and its inflow are S10 questions; recorded, not clipped (rule B9).
+27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
+   model has no thick disc — seven rows on one cause.** The plane exists: the
+   plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
+   at R₀, migrants included, form **one mode at [α/Fe] = +0.21** with a high-α
+   tail, where the local track lingers while the delayed iron catches up with a
+   star formation history that never pauses. The chemical split (debt #20)
+   selects nothing, so rows 5, 7, 8, 9 and 11 read zero, row 10 carries every
+   star, and row 24 reads `single` `[verified: spec.MISSES_ADVANCED]`. Measured
+   rather than assumed: a sweep over τ₀ ∈ [1, 12] Gyr and the merger's
+   gas_fraction ∈ [0.2, 0.95] never opens a valley (dip depth at most 0.38, at
+   τ₀ = 1 Gyr), and re-integrating the infall with a fast first episode, a slow
+   merger-delivered second one and a pause between them reaches 0.31 — the
+   pause adds nothing `[verified: DECISIONS.md D91]`. **Prediction, stated so
+   it can fail:** the missing piece is the inner disc reaching low [α/Fe]
+   early and its migrants arriving at R₀ as a separate lump, which needs an
+   infall far faster inside 4 kpc than τ₀(R/R₀) gives; if a steeper inside-out
+   law inside R₀ does not open the valley, the DTD's long tail is what keeps
+   the local track at intermediate [α/Fe]. The simple model is untouched: its
+   thick disc is the merger's and its rows read as before.
+28. **Migration is too strong once the tilt is right.** S2 recorded that if
+   row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
+   Row 22 steepened to −0.057 in the advanced model and row 23 stayed at
+   −0.019: the young/old ratio is 3.1 against the observed 1.75. A kernel
+   width of **2.5 kpc** at 8 Gyr puts row 23 at −0.039 with a ratio of 1.6
+   `[verified: tests/test_chemistry_dtd.py::
+   test_s2s_prediction_fired_migration_is_too_strong_once_the_tilt_is_right]`;
+   the default stays the cited 3.6 kpc `[recall: Frankel et al. 2018]`, and
+   the conflict is preserved rather than averaged (rule B12). Two live
+   explanations: the citation's width is not this kernel's width (a Gaussian
+   in radius growing as √age), or the old gas gradient the model flattens from
+   (−0.127 dex/kpc at 10 Gyr, with no migration) is too steep to begin with. A
+   gradient measured at 10 Gyr decides between them.
 
 ---
 

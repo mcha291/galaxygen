@@ -46,7 +46,8 @@ closes the project.
 | 5 | `s05` | `4cc994062473` | **queued** |
 | 6 | `s06` | `a71483844338` | **queued** |
 | 7 | `s07` | `9b5c612ef027` | **queued** |
-| 8 | `s08` | *TBD — S9 fills this in* | **queued** |
+| 8 | `s08` | `589cb0f52805` | **queued** |
+| 9 | `s09` | *TBD — S10 fills this in* | **queued** |
 
 ### Run these
 
@@ -81,8 +82,11 @@ git tag -a s06 a71483844338 -m "S6: API"
 # S7 — the viewer.
 git tag -a s07 9b5c612ef027 -m "S7: viewer"
 
-# S8 — planets. S9 replaces this with the literal SHA.
-git tag -a s08 "$(git rev-list -1 --grep='^Merge S8 into main' origin/main)" -m "S8: planets"
+# S8 — planets.
+git tag -a s08 589cb0f52805513eb96092b1ff8777d6b035ed8f -m "S8: planets"
+
+# S9 — the advanced model. S10 replaces this with the literal SHA.
+git tag -a s09 "$(git rev-list -1 --grep='^Merge S9 into main' origin/main)" -m "S9: advanced model"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

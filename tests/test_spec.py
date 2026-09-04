@@ -26,33 +26,51 @@ def test_statistical_rows_are_debt_8():
     assert {q.n for q in spec.QUANTITIES if q.mode == "statistical"} == {13, 14, 16, 17, 18}
 
 
-def test_rows_without_a_field_yet():
-    assert {q.n for q in spec.QUANTITIES if q.field is None} == {24}  # S2 filled row 23
-    assert Q[24].mode == "qualitative"
+def test_every_row_names_a_field():
+    assert all(q.field is not None for q in spec.QUANTITIES)  # S9 filled row 24
+    assert Q[24].mode == "qualitative" and Q[24].expect == "bimodal_wide"
+
+
+REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 19, 20, 22, 23}
+VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
+SUMMARY = {
+    "simple": {"pass": 11, "fail": 7, "not-yet-computable": 6},
+    "advanced": {"pass": 8, "fail": 11, "not-yet-computable": 5},
+}
+FAILED = {"simple": {2, 3, 5, 11, 20, 22, 23}, "advanced": {2, 3, 5, 7, 8, 9, 10, 11, 20, 23, 24}}
+DEBTS = {"simple": {15, 18, 19}, "advanced": {18, 27, 28}}
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
-    """Everything the model reaches through S4; the rest must admit they cannot."""
+    """Everything the model reaches; the rest must admit they cannot."""
     results = judged[model.name]
     assert len(results) == 24
     by_n = {r.n: r for r in results}
-    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == {
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 19, 20, 22, 23
-    }
-    assert spec.summary(results) == {"pass": 11, "fail": 7, "not-yet-computable": 6}
-    assert "no published scalar" in by_n[24].reason
+    assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == VERDICTS[model.name]
+    assert spec.summary(results) == SUMMARY[model.name]
+    if model.name == "simple":
+        assert "not published by model" in by_n[24].reason  # one abundance, no α–Fe plane (rule B3)
 
 
 def test_every_failure_is_recorded_and_the_run_is_clean(model, judged):
-    """Five rows miss and every one names a debt and a prediction (rules B4, B5)."""
+    """Every miss names a debt and a prediction, per model (rules A7, B4, B5)."""
     results = judged[model.name]
     failed = {r.n for r in results if r.status == "fail"}
-    assert failed == {2, 3, 5, 11, 20, 22, 23}
-    assert spec.unexplained(results) == () and spec.stale(results) == ()
-    assert spec.problems(results) == []
-    # Three causes hold seven rows: #18 (no extended accretion), #15 (the tilt),
-    # #19 (the thick disc's shape, which is also why the gate passes).
-    assert {spec.MISSES[n].debt for n in failed} == {15, 18, 19}
+    assert failed == FAILED[model.name]
+    assert spec.unexplained(results, model.name) == () and spec.stale(results, model.name) == ()
+    assert spec.problems(results, model.name) == []
+    # Simple: #18 (no extended accretion), #15 (the tilt), #19 (the thick disc's
+    # shape). Advanced: #18 again, #27 (no [α/Fe] valley, so no thick disc), #28
+    # (migration too strong once the tilt is right).
+    assert {spec.misses(model.name)[n].debt for n in failed} == DEBTS[model.name]
+
+
+def test_a_miss_belongs_to_one_model_or_to_all():
+    """Row 22 is a simple-model miss the advanced model closes; row 3 misses in both."""
+    assert 22 in spec.MISSES and 22 not in spec.MISSES_ADVANCED
+    assert 24 in spec.MISSES_ADVANCED and 24 not in spec.MISSES
+    assert spec.MISSES[3] is spec.MISSES_ADVANCED[3] and spec.MISSES[3].model is None
+    assert {m.model for m in spec._MISSES_ADVANCED} == {"advanced"}
 
 
 def test_an_unexplained_failure_stops_the_run():
@@ -72,7 +90,7 @@ def test_a_recorded_miss_that_starts_passing_is_itself_a_problem():
 
 
 def test_recorded_misses_are_well_formed():
-    for row, m in spec.MISSES.items():
+    for row, m in list(spec.MISSES.items()) + list(spec.MISSES_ADVANCED.items()):
         assert m.row == row and m.debt >= 1 and m.since.startswith("S")
         assert m.reason.strip() and m.prediction.strip()
     with pytest.raises(spec.SpecError):
@@ -81,14 +99,17 @@ def test_recorded_misses_are_well_formed():
         spec.Miss(row=1, debt=0, since="S1", reason="r", prediction="p")
     with pytest.raises(spec.SpecError):
         spec.Miss(row=1, debt=1, since="S1", reason="r", prediction=" ")
+    with pytest.raises(spec.SpecError):
+        spec.Miss(row=1, debt=1, since="S1", reason="r", prediction="p", model="Not A Model")
 
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "6 not-yet-computable of 24" in out
-    assert "recorded miss, debt #18, since S1" in out   # row 3, three sessions old
+    assert "spec" in out and "6 not-yet-computable of 24" in out and "5 not-yet-computable of 24" in out
+    assert "recorded miss, debt #18, since S1" in out   # row 3, eight sessions old
     assert "recorded miss, debt #19, since S3" in out
     assert "recorded miss, debt #15, since S2" in out
+    assert "recorded miss, debt #27, since S9" in out
 
 
 def scalar(name, unit="Msun"):

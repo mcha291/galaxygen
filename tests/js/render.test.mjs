@@ -213,7 +213,6 @@ test("a checkpoint shows what it published, and asks for nothing else", () => {
   assert.ok(drawable.length > 0);
   assert.ok(drawable.every((f) => f.checkpoint === 1 && f.domain === "grid"));
   assert.equal(view.defaultField(all, 1), drawable.at(-1).name, "the latest field, not the first");
-  assert.notEqual(view.defaultField(all, 1), "canary", "and so not the model-boundary probe");
   const names = view.wanted(all, 1, view.defaultField(all, 1));
   assert.ok(names.every((n) => all.find((f) => f.name === n).checkpoint <= 1));
 });
