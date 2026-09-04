@@ -198,20 +198,6 @@ LEVEL0: dict[str, Constant] = {
         "Present-day solar metallicity Z_sun, the zero point of [Fe/H] = log10(Z/Z_sun) [recall: "
         "Asplund et al. 2009].",
     ),
-    "NET_YIELD": Constant(
-        0.011,
-        "dimensionless",
-        "**Effective** yield: metals surviving in the gas per unit mass locked into stars. The "
-        "nucleosynthetic yield integrated over a Kroupa/Chabrier IMF is 0.03-0.04 for total "
-        "metallicity [recall], and this is deliberately about a third of it. The simple model has "
-        "no outflows — GALAXY_INPUTS.md §8 makes them an advanced-model axis — so metals that "
-        "should leave the disc stay in it, and at the nucleosynthetic value the solar "
-        "neighbourhood comes out at [Fe/H] = +0.50 rather than 0.00. The factor of three is the "
-        "metal loss the model does not have, and it is debt #16: when S9 adds outflows this "
-        "constant has no claim on its value and must be re-derived (rule B10). Calibrating it "
-        "costs no acceptance row, because the gradient rows are exactly insensitive to it "
-        "[verified: tests/test_chemistry.py::test_the_gradient_does_not_depend_on_the_yield].",
-    ),
     # --- the planets stage (S8, GALAXY_INPUTS.md §12) -------------------------
     "DISC_MASS_FRACTION": Constant(
         0.01,

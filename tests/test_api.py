@@ -337,7 +337,8 @@ def test_a_system_query_refuses_a_star_that_is_not_there(api):
 
 def test_field_declarations_carry_the_one_rendering_opinion(api, model):
     payload = api.handle("/api/fields", {"model": [model.name]}).json()
-    declared = {d.name: d for st in production()[1] for d in st.publishes}
+    impls = production()[1]
+    declared = {d.name: d for _, impl in model.stages for d in impls.get(impl).publishes}  # this model's own declarations
     assert payload["fields"], "no fields published"
     for entry in payload["fields"]:
         decl = declared[entry["name"]]
@@ -345,7 +346,7 @@ def test_field_declarations_carry_the_one_rendering_opinion(api, model):
         assert entry["about"] == decl.about and entry["provenance"] == decl.provenance
         if entry["domain"] in ("grid", "object"):
             assert entry["ramp"] is not None, f"{entry['name']} reaches the viewer without a ramp (rule A9)"
-        if entry["categorical"]:
+        if entry["categorical"] and entry["ramp"] is not None:  # a category *scalar* is a word, not a picture
             assert entry["ramp"]["kind"] == "palette"
             assert len(entry["ramp"]["colors"]) == len(entry["categories"])
     assert payload["grid"]["axes"]["t"]["hi"] == SMALL.t_max
@@ -383,9 +384,6 @@ def test_the_api_publishes_no_model_internals(api):
     for name in LEVEL0:
         assert not re.search(rf"\b{name}\b", text), f"constant {name} is published; the viewer must not see it"
     assert '"constants"' not in text and "reads_constants" not in text
-    # CANARY is named in the canary field's own ``about``, which is a declaration
-    # and is published on purpose (rule A8); its value is not.
-    assert '"CANARY"' not in text
 
 
 # --- what it refuses ----------------------------------------------------------

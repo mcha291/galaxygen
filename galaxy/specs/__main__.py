@@ -3,7 +3,7 @@
 Exit status is non-zero if any spec reports a problem, if an acceptance
 quantity fails without being a recorded miss, or if a recorded miss has started
 passing. Not-yet-computable quantities do not fail the run, and neither does a
-miss that is registered in ``spec.MISSES`` with its debt and its reason — it
+miss that is registered for that model (``spec.misses``) with its debt and its reason — it
 still prints as ``fail`` (rule B5 relaxes nothing), it just does not pretend to
 be news.
 """
@@ -33,7 +33,7 @@ def main() -> int:
 
     spec_results = spec.evaluate_models(models)
     print(spec.report(models, spec_results))
-    bad |= any(spec.problems(r) for r in spec_results.values())
+    bad |= any(spec.problems(r, name) for name, r in spec_results.items())
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

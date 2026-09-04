@@ -131,4 +131,4 @@ def test_orphan_scan(tmp_path, monkeypatch):
 def test_scan_finds_production_declarations():
     stages, decls = preflight.scan_declarations(("galaxy.stages",))
     assert {"halo", "disc"} <= {s.id for s in stages}
-    assert {"canary", "halo_virial_radius", "circular_velocity"} <= {d.name for d in decls}
+    assert {"halo_potential", "halo_virial_radius", "circular_velocity", "alpha_fe_history"} <= {d.name for d in decls}

@@ -54,12 +54,12 @@ def _decl(name, label, unit, about, **kw):
 THIN_SURFACE = FieldDecl(
     name="thin_disc_surface_density", label="Thin disc Σ(R)", unit="Msun/pc2", kind=Kind.FIELD,
     axes=("R",), ramp=Ramp("inferno", scale="log"), meaningful_zero=True,
-    about="Stars born after the last major merger. With no major merger this is every star.",
+    about="The thin population: born after the last major merger (simple model) or α-poor at birth (advanced).",
 )
 THICK_SURFACE = FieldDecl(
     name="thick_disc_surface_density", label="Thick disc Σ(R)", unit="Msun/pc2", kind=Kind.FIELD,
     axes=("R",), ramp=Ramp("cividis", scale="log"), meaningful_zero=True,
-    about="Stars born before the last major merger, and heated by it. Zero if there was none.",
+    about="The thick population: born before the last major merger (simple model) or α-enhanced at birth (advanced). Zero if the criterion selects nothing.",
 )
 
 THIN_MASS = _decl("thin_disc_stellar_mass", "Thin disc stellar mass", "Msun",
@@ -88,7 +88,14 @@ THICK_DISPERSION = _decl("thick_disc_dispersion", "Thick disc σ_z at R₀", "km
                          "Mass-weighted over the thick population. The merger kick dominates it.")
 
 
-def compute(ctx: Context) -> Mapping[str, Any]:
+def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
+    """The populations and their scale heights, given an ``(R, t)`` mask of thick-disc star formation.
+
+    Shared by both implementations of the slot: the simple model's mask is a
+    function of time alone (born before the last major merger, broadcast over
+    R), the advanced model's is chemical and varies with radius. Everything
+    downstream of the mask is arithmetic and lives here once (rule A9).
+    """
     R, t = ctx.grid.R, ctx.grid.t
     dt = ctx.grid.spec.t_max / ctx.grid.spec.n_t
     R_sun = float(ctx.constants["R_SUN"])
@@ -97,20 +104,18 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     psi = ctx.fields["sfr_surface_density_history"]           # M☉/yr/kpc²
     formed = (1.0 - ret) * PC_PER_KPC * psi * dt              # M☉/pc² locked in per step
     sigma_z = np.asarray(ctx.fields["disc_heating"])          # km/s, by birth time
-    onset = float(ctx.fields["last_major_merger_time"])
+    thick_mask = np.broadcast_to(thick_mask, formed.shape)
 
-    thick_mask = t < onset
-    thick = formed[:, thick_mask].sum(axis=1)
-    thin = formed[:, ~thick_mask].sum(axis=1)
+    thick = (formed * thick_mask).sum(axis=1)
+    thin = (formed * ~thick_mask).sum(axis=1)
 
     def dispersion_at_sun(mask: np.ndarray) -> float:
-        w = formed[:, mask]
         at_sun = int(np.argmin(np.abs(R - R_sun)))
-        weights = w[at_sun]
+        weights = formed[at_sun] * mask[at_sun]
         if weights.sum() <= 0.0:
             return 0.0
         # Mass-weighted in quadrature: sigma_z is a dispersion, not a velocity.
-        return float(np.sqrt(np.average(sigma_z[mask] ** 2, weights=weights)))
+        return float(np.sqrt(np.average(sigma_z ** 2, weights=weights)))
 
     sig_thin, sig_thick = dispersion_at_sun(~thick_mask), dispersion_at_sun(thick_mask)
     total_at_sun = float(np.interp(R_sun, R, thin + thick + ctx.fields["gas_surface_density"]))
@@ -137,6 +142,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     }
 
 
+def compute(ctx: Context) -> Mapping[str, Any]:
+    """The simple model's split: born before the last major merger."""
+    onset = float(ctx.fields["last_major_merger_time"])
+    return split(ctx, (ctx.grid.t < onset)[None, :])
+
+
 VERTICAL = IMPLEMENTATIONS.register(
     Stage(
         id="vertical",
@@ -144,7 +155,8 @@ VERTICAL = IMPLEMENTATIONS.register(
         checkpoint=3,
         about=(
             "Sorts the stellar populations into thin and thick by whether they predate the last "
-            "major merger, and turns their velocity dispersions into scale heights."
+            "major merger, and turns their velocity dispersions into scale heights. The simple "
+            "model's vertical stage; the advanced model reads the split off [α/Fe] instead."
         ),
         compute=compute,
         reads_constants=("R_SUN", "RETURN_FRACTION"),

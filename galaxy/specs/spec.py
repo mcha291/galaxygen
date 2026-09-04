@@ -28,7 +28,7 @@ pointwise check against a zero-width target fails for any float that is not
 exactly equal. That is recorded here rather than widened: S2 either finds the
 uncertainty in the source or records the miss (rule B5).
 
-**Recorded misses** (:data:`MISSES`). Rule B5 says to record a failed acceptance
+**Recorded misses** (:func:`misses`). Rule B5 says to record a failed acceptance
 check rather than relax it, and GALAXY_INPUTS.md §3 says row 18 is *expected* to
 miss by ~0.75 dex and must not be re-scoped. A target the model is known not to
 meet therefore has to stay red in this report and still not be indistinguishable
@@ -39,7 +39,9 @@ still evaluates to ``fail`` — nothing is widened, nothing is skipped — but t
 process exit status distinguishes *explained* from *unexplained*. Two things are
 errors, not misses: a failing row nobody has explained, and a registered miss
 that has started passing, because its explanation is then stale and the register
-is lying (rule B10).
+is lying (rule B10). A miss belongs to one model or to all: the advanced model's
+findings are its own (rule A7), so a row the simple model misses and the
+advanced model meets is stale for one and recorded for the other.
 """
 
 from __future__ import annotations
@@ -129,7 +131,7 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(21, "Gas HI:H₂ split", "dimensionless", "gas_h2_fraction", 0.11, 0.11, "pointwise", "89% : 11%", "Nakanishi & Sofue 15", note="Read as the H₂ mass fraction f_H₂ = 0.11 (HI = 1 − f_H₂). No uncertainty quoted: zero-width target; see row 20."),
     Quantity(22, "Present-day metallicity gradient", "dex/kpc", "metallicity_gradient", -0.069, -0.049, "pointwise", "−0.06 dex/kpc", "Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010", note="Interval is the union of the two cited measurements [inferred]; the table itself quotes −0.06 with no error."),
     Quantity(23, "Gradient evolution with age", "dex/kpc", "metallicity_gradient_old", -0.05, -0.03, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages; one row can name one field, so S2 operationalises it as the *old* end (>10 Gyr, target −0.04) and leaves the young end to row 22's companion field metallicity_gradient_young, which the same stage publishes. Interval is ±0.01 around −0.04 [inferred]: the source quotes no uncertainty and a zero-width target would make the row untestable rather than strict."),
-    Quantity(24, "[α/Fe] bimodality", "dimensionless", None, None, None, "qualitative", "Thick disc α-enhanced across a wide [Fe/H] range", "BHG16 §5.2.2", note="S2 (simple) and S9 (advanced) operationalise this as a category_scalar and set field/expect. Debt #9 asks whether it appears without a merger."),
+    Quantity(24, "[α/Fe] bimodality", "dimensionless", "alpha_sequence", None, None, "qualitative", "Thick disc α-enhanced across a wide [Fe/H] range", "BHG16 §5.2.2", expect="bimodal_wide", note="Judged on the [α/Fe] mass distribution of the stars now at R₀, migrants included: two modes with a valley between them, and the α-rich mode spanning at least 0.5 dex of [Fe/H] (S9). Only the advanced model publishes the field; the simple model has one abundance and stays not-yet-computable (rule B3). Debt #9 asks whether it appears without a merger."),
 )
 
 if [q.n for q in QUANTITIES] != list(range(1, len(QUANTITIES) + 1)):
@@ -145,8 +147,11 @@ class Miss:
     since: str  # the session that measured the miss
     reason: str
     prediction: str  # what would change it, stated so that it can fail (rule B4)
+    model: str | None = None  # None: every model; else the one model this explanation belongs to (rule A7)
 
     def __post_init__(self) -> None:
+        if self.model is not None and not IDENT.match(self.model):
+            raise SpecError(f"row {self.row}: model {self.model!r} must be a model name or None")
         if self.row not in {q.n for q in QUANTITIES}:
             raise SpecError(f"recorded miss names row {self.row}, which is not in the table")
         if self.debt < 1 or not self.since.startswith("S"):
@@ -176,6 +181,7 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=5,
+        model="simple",
         debt=19,
         since="S3",
         reason=(
@@ -193,6 +199,7 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=11,
+        model="simple",
         debt=19,
         since="S3",
         reason=(
@@ -248,6 +255,7 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=22,
+        model="simple",
         debt=15,
         since="S2",
         reason=(
@@ -265,6 +273,7 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=23,
+        model="simple",
         debt=15,
         since="S2",
         reason=(
@@ -280,9 +289,88 @@ _MISSES: tuple[Miss, ...] = (
     ),
 )
 
-MISSES: Mapping[int, Miss] = MappingProxyType({m.row: m for m in _MISSES})
-if len(MISSES) != len(_MISSES):
-    raise SpecError("a row is registered as a miss twice")
+
+# The advanced model's own misses (rule A7). Its chemistry finds no valley in the
+# [α/Fe] distribution at R₀, so its chemical thin/thick split selects nothing and
+# every thick-disc row reads zero — one cause, six rows, plus row 24 itself.
+_NO_VALLEY = (
+    "The advanced model's thin/thick split is the valley between the two [α/Fe] sequences at "
+    "R₀ (D88), and there is none: the stellar mass there piles up at [α/Fe] = +0.21 in one "
+    "mode with a high-α tail, so the thick disc is empty and this row reads zero (debt #27)."
+)
+_NO_VALLEY_PREDICTION = (
+    "S9 swept the accretion inputs and re-integrated the infall with a fast first episode, a "
+    "slow merger-delivered second one, and a pause between them: the dip reaches 0.38 at "
+    "best and never the 0.5 that makes two modes. The accretion history alone will not "
+    "produce the valley; what should is the *inner* disc reaching low [α/Fe] early and its "
+    "migrants arriving at R₀ as a separate lump — which needs the inner disc's own early "
+    "history to be fast, i.e. an infall timescale far shorter than τ₀(R/R₀) gives inside "
+    "4 kpc. If a steeper inside-out law inside R₀ does not open a valley either, the DTD's "
+    "long tail is what keeps the local track at intermediate [α/Fe] and the miss is there."
+)
+_MISSES_ADVANCED: tuple[Miss, ...] = tuple(
+    Miss(row=row, model="advanced", debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
+    for row in (5, 7, 8, 9, 11)
+) + (
+    Miss(
+        row=10,
+        model="advanced",
+        debt=27,
+        since="S9",
+        reason=(
+            "5.28e10 Msun against 3.5 ± 1e10: with no valley the chemical split puts every star "
+            "in the thin disc, so this row carries the whole stellar mass (debt #27)."
+        ),
+        prediction=_NO_VALLEY_PREDICTION,
+    ),
+    Miss(
+        row=23,
+        model="advanced",
+        debt=28,
+        since="S9",
+        reason=(
+            "-0.019 dex/kpc against -0.04. Row 22 steepened to -0.057 when the wind arrived, "
+            "exactly as debt #15 predicted, and this row did not follow: the young/old ratio is "
+            "3.1 against the observed 1.75. The S2 prediction said that if row 22 steepens and "
+            "this one does not, migration_efficiency is wrong too, and that is what happened."
+        ),
+        prediction=(
+            "A kernel width of 2.5 kpc at 8 Gyr puts this row at -0.039 with a young/old ratio "
+            "of 1.6 [verified: S9's sweep, tests/test_chemistry_dtd.py]; the default is the "
+            "cited 3.6 kpc. Either the citation's width is not this kernel's width, or the old "
+            "gas gradient the model flattens from (-0.127 at 10 Gyr without migration) is too "
+            "steep to begin with. A measurement of the gradient at 10 Gyr decides between them."
+        ),
+    ),
+    Miss(
+        row=24,
+        model="advanced",
+        debt=27,
+        since="S9",
+        reason=(
+            "'single' against 'bimodal_wide'. The [α/Fe] plane exists now — the plateau is at "
+            "+0.45 and the present-day gas at R₀ is at +0.05 — but the stars at R₀ form one mode "
+            "at +0.21, where the local track lingers while the delayed iron catches up with a "
+            "star formation history that never pauses."
+        ),
+        prediction=_NO_VALLEY_PREDICTION,
+    ),
+)
+
+
+def misses(model: str) -> Mapping[int, Miss]:
+    """The recorded misses that apply to ``model``: the shared ones and its own (rule A7)."""
+    out: dict[int, Miss] = {}
+    for m in _MISSES + _MISSES_ADVANCED:
+        if m.model is None or m.model == model:
+            if m.row in out:
+                raise SpecError(f"row {m.row} is registered as a miss twice for model {model!r}")
+            out[m.row] = m
+    return MappingProxyType(out)
+
+
+MISSES: Mapping[int, Miss] = misses("simple")
+MISSES_ADVANCED: Mapping[int, Miss] = misses("advanced")
 
 
 @dataclass(frozen=True, slots=True)
@@ -409,31 +497,34 @@ def summary(results: Iterable[Result]) -> dict[str, int]:
     return counts
 
 
-def unexplained(results: Iterable[Result]) -> tuple[Result, ...]:
-    """Failing rows with no entry in :data:`MISSES`. These are what should stop a build."""
-    return tuple(r for r in results if r.status == "fail" and r.n not in MISSES)
+def unexplained(results: Iterable[Result], model: str = "simple") -> tuple[Result, ...]:
+    """Failing rows with no recorded miss for ``model``. These are what should stop a build."""
+    known = misses(model)
+    return tuple(r for r in results if r.status == "fail" and r.n not in known)
 
 
-def stale(results: Iterable[Result]) -> tuple[Result, ...]:
+def stale(results: Iterable[Result], model: str = "simple") -> tuple[Result, ...]:
     """Registered misses that now pass: the recorded explanation is wrong or spent (rule B10)."""
-    return tuple(r for r in results if r.status == "pass" and r.n in MISSES)
+    known = misses(model)
+    return tuple(r for r in results if r.status == "pass" and r.n in known)
 
 
-def problems(results: Iterable[Result]) -> list[Problem]:
+def problems(results: Iterable[Result], model: str = "simple") -> list[Problem]:
     """Everything a spec run should fail on. A recorded, still-failing miss is not one."""
     results = list(results)
+    known = misses(model)
     out = [
-        Problem("spec", "acceptance", f"row {r.n} ({r.name}) fails and is not a recorded miss: {r.reason}")
-        for r in unexplained(results)
+        Problem("spec", "acceptance", f"row {r.n} ({r.name}) fails and is not a recorded miss for model {model!r}: {r.reason}")
+        for r in unexplained(results, model)
     ]
     out += [
         Problem(
             "spec",
             "stale-miss",
-            f"row {r.n} ({r.name}) is registered as a miss since {MISSES[r.n].since} (debt "
-            f"#{MISSES[r.n].debt}) but now passes: {r.reason}. Remove the entry or find out why.",
+            f"row {r.n} ({r.name}) is registered as a miss for model {model!r} since {known[r.n].since} (debt "
+            f"#{known[r.n].debt}) but now passes: {r.reason}. Remove the entry or find out why.",
         )
-        for r in stale(results)
+        for r in stale(results, model)
     ]
     return out
 
@@ -450,17 +541,18 @@ def report(
     for m in models:
         judged = results[m.name]
         s = summary(judged)
-        recorded = sum(1 for r in judged if r.status == "fail" and r.n in MISSES)
+        known = misses(m.name)
+        recorded = sum(1 for r in judged if r.status == "fail" and r.n in known)
         head = f"  model {m.name}: {s['pass']} pass, {s['fail']} fail, {s['not-yet-computable']} not-yet-computable of {len(judged)}"
         if recorded:
             head += f" ({recorded} of the failures recorded as misses)"
         lines.append(head)
         for r in judged:
             tag = ""
-            if r.n in MISSES and r.status == "fail":
-                tag = f" [recorded miss, debt #{MISSES[r.n].debt}, since {MISSES[r.n].since}]"
+            if r.n in known and r.status == "fail":
+                tag = f" [recorded miss, debt #{known[r.n].debt}, since {known[r.n].since}]"
             lines.append(f"    {r.n:>2} {r.status:<19} {r.name}: {r.reason}{tag}")
-        for p in problems(judged):
+        for p in problems(judged, m.name):
             lines.append(f"    FAIL {p}")
     return "\n".join(lines)
 
@@ -471,7 +563,7 @@ def main() -> int:
     models = list(models)
     results = evaluate_models(models)
     print(report(models, results))
-    return 1 if any(problems(r) for r in results.values()) else 0
+    return 1 if any(problems(r, name) for name, r in results.items()) else 0
 
 
 if __name__ == "__main__":

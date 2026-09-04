@@ -35,32 +35,51 @@ def test_the_solar_neighbourhood_comes_out_solar(model):
     assert abs(feh_sun) < 0.1
 
 
+# What "the yield" is in each model: one effective yield, or the three
+# nucleosynthetic ones scaled together (the wind's escape fraction is not a yield).
+YIELDS = {"simple": ("NET_YIELD",), "advanced": ("Y_O_CC", "Y_FE_CC", "Y_FE_IA")}
+
+
+def with_yields(model, factor):
+    m = model
+    for name in YIELDS[model.name]:
+        m = with_constant(m, name, model.constants[name].value * factor)
+    return m
+
+
 def test_the_gradient_does_not_depend_on_the_yield(model):
     """The measurement behind debt #15: the yield sets the level, the infall sets the tilt.
 
     This is why calibrating NET_YIELD costs no acceptance row — and why the flat
-    gradient cannot be blamed on the yield being wrong.
+    gradient cannot be blamed on the yield being wrong. It holds for the advanced
+    model too: scaling every yield together moves the level and nothing else.
     """
     grads, levels = [], []
-    for y in (0.005, 0.011, 0.035):
-        o = run(with_constant(model, "NET_YIELD", y))
+    for factor in (0.5, 1.0, 3.0):
+        o = run(with_yields(model, factor), only=("metallicity_gradient",))
         grads.append(o.fields["metallicity_gradient"])
         levels.append(float(np.interp(R_SUN, o.grid.R, o.fields["feh_gas"])))
     assert max(grads) - min(grads) < 1e-6, grads
     # ...while the level moves by exactly the log of the yield ratio.
-    assert levels[2] - levels[0] == pytest.approx(np.log10(0.035 / 0.005), abs=0.02)
+    assert levels[2] - levels[0] == pytest.approx(np.log10(3.0 / 0.5), abs=0.02)
 
 
 def test_the_gradient_is_set_by_the_inside_out_index(model):
     """Steeper inside-out growth, steeper gradient — and n near 3 would be needed for −0.06."""
-    grads = [out(model, inside_out_index=n)["metallicity_gradient"] if False else
-             out(model, inside_out_index=n).fields["metallicity_gradient"] for n in (0.0, 1.0, 2.0)]
+    grads = [out(model, inside_out_index=n).fields["metallicity_gradient"] for n in (0.0, 1.0, 2.0)]
     assert grads[0] > grads[1] > grads[2]
-    # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
-    # surface density still falls outwards and that alone tilts the enrichment.
-    assert grads[0] == pytest.approx(-0.011, abs=0.003)
-    # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
-    assert grads[1] > -0.049
+    if model.name == "simple":
+        # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
+        # surface density still falls outwards and that alone tilts the enrichment.
+        assert grads[0] == pytest.approx(-0.011, abs=0.003)
+        # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
+        assert grads[1] > -0.049
+    else:
+        # The wind's tilt is there even with no inside-out growth at all: three times
+        # the simple model's n = 0 value...
+        assert grads[0] == pytest.approx(-0.033, abs=0.004)
+        # ...and with the cited n = 1 the gradient reaches the observed range (row 22).
+        assert -0.069 <= grads[1] <= -0.049
 
 
 def test_infall_dilution_is_what_tilts_it(model):
@@ -78,8 +97,9 @@ def test_infall_dilution_is_what_tilts_it(model):
     # Measured, so a change is loud. S3's more compact infall raised this from 0.28
     # to 0.52 — a steeper surface density does more of the tilting — so differential
     # infall now supplies about half of it rather than seven tenths.
-    assert spread(0.0) < 0.7 * spread(1.0)
-    assert spread(0.0) / spread(1.0) == pytest.approx(0.52, abs=0.08)
+    assert spread(0.0) < 0.85 * spread(1.0)
+    # The wind supplies its own tilt in the advanced model, so infall's share is smaller there.
+    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.52, "advanced": 0.59}[model.name], abs=0.08)
 
 
 def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
@@ -106,7 +126,9 @@ def test_migration_over_flattens_the_old_population(model):
     o = out(model)
     young, old = o.fields["metallicity_gradient_young"], o.fields["metallicity_gradient_old"]
     assert abs(old) < abs(young)
-    assert young / old == pytest.approx(3.2, abs=0.4)
+    # Advanced: 3.1 at S9 — the same over-flattening with a different old-gas gradient
+    # underneath it, recorded as debt #28 rather than tuned away.
+    assert young / old == pytest.approx({"simple": 3.2, "advanced": 3.1}[model.name], abs=0.4)
 
 
 def test_metallicity_rises_then_is_slightly_diluted_late(model):

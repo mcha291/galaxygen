@@ -74,9 +74,9 @@ export function discField(fields, n, picked) {
  * What to open a checkpoint on: the last field published there.
  *
  * Last rather than first: /api/fields comes back in execution order, so the last
- * entry is what the latest stage made. First would open checkpoint one on the
- * model-boundary canary, which is not physics. This is a choice about what to
- * look at, never about how it is drawn — that stays in the declaration (A9).
+ * entry is what the latest stage made, and the first would be whatever the halo
+ * happens to declare first. This is a choice about what to look at, never about
+ * how it is drawn — that stays in the declaration (A9).
  */
 export function defaultField(fields, n) {
   return (drawableAt(fields, n).at(-1) ?? radialUpTo(fields, n).at(-1) ?? null)?.name ?? null;

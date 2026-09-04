@@ -17,16 +17,28 @@ def chk(m, *stages):
     return graph.check([m], impls(*stages), INPUTS)
 
 
+# Execution orders. Kahn's algorithm runs in rounds with a (checkpoint, id) tie-break,
+# so the advanced model's vertical stage — which reads the chemistry's valley and so
+# cannot start until the chemistry is done — lands a round later than the simple one's.
+ORDER = {
+    "simple": (
+        "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
+        "bar", "population", "pattern", "systems", "formation", "planets",
+    ),
+    "advanced": (
+        "halo", "assembly", "disc", "sfh", "chemistry_dtd", "bar", "population",
+        "vertical_alpha", "pattern", "formation", "systems", "planets",
+    ),
+}
+
+
 def test_production_graphs_hold(prod):
     models, impls_, table = prod
     assert graph.check(models, impls_, table) == []
     for m in models:
         g = graph.analyse(m, impls_, table)
         assert g.ok
-        assert tuple(s.id for s in g.order) == (
-            "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
-            "bar", "population", "pattern", "systems", "formation", "planets",
-        )
+        assert tuple(s.id for s in g.order) == ORDER[m.name]
         # S4 is the first seeded stage. Provenance is derived per stage, so a stage that
         # reads a seed or a seeded field publishes seeded fields and every other field is
         # derived (D55). S8's split keeps the occurrence fields on the derived side.

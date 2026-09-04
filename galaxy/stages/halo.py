@@ -21,11 +21,6 @@ What it computes, and how much freedom each step has (GALAXY_INPUTS.md §4b):
 The halo owns the budget rather than the disc because M₂₀₀ and its split are
 properties of the halo; the disc stage turns the baryon half into a disc.
 
-**CANARY lives here** until S9 gives the advanced model a stage map of its own.
-It is not physics and is not read by anything: it is the one constant the two
-registered models differ by, so that the registry, the model switch and
-cross-model reconciliation stay exercised (GALAXY_PLAN.md §1, risk 3).
-``tests/test_models.py`` is what makes that exercise falsifiable.
 """
 
 from __future__ import annotations
@@ -201,22 +196,6 @@ HALO_POTENTIAL = FieldDecl(
     ),
 )
 
-CANARY = FieldDecl(
-    name="canary",
-    label="Canary",
-    unit="dimensionless",
-    kind=Kind.FIELD,
-    axes=("R",),
-    ramp=Ramp("greys"),
-    meaningful_zero=False,
-    provenance="derived",
-    about=(
-        "Equals the model constant CANARY at every radius, and is not physics. It exists so the "
-        "two registered models produce distinguishable output while the advanced model is still a "
-        "stub; tests/test_models.py asserts they differ. S9 deletes it when the advanced model "
-        "gets a stage map of its own."
-    ),
-)
 
 
 def compute(ctx: Context) -> Mapping[str, Any]:
@@ -254,7 +233,6 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "halo_enclosed_mass": enclosed,
         "halo_circular_velocity": v_c,
         "halo_potential": potential,
-        "canary": np.full(ctx.grid.shape(("R",)), float(ctx.constants["CANARY"])),
     }
 
 
@@ -269,7 +247,7 @@ HALO = IMPLEMENTATIONS.register(
         ),
         compute=compute,
         reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention"),
-        reads_constants=("G", "H0", "F_BARYON", "CONCENTRATION_NORM", "R_SUN", "CANARY"),
+        reads_constants=("G", "H0", "F_BARYON", "CONCENTRATION_NORM", "R_SUN"),
         publishes=(
             HALO_VIRIAL_MASS,
             HALO_VIRIAL_RADIUS,
@@ -282,7 +260,6 @@ HALO = IMPLEMENTATIONS.register(
             HALO_ENCLOSED_MASS,
             HALO_CIRCULAR_VELOCITY,
             HALO_POTENTIAL,
-            CANARY,
         ),
     )
 )

@@ -10,6 +10,7 @@ from galaxy.core.registry import INPUTS, Input
 from galaxy.core.stage import OptionalFieldAccess, UndeclaredAccess
 from galaxy.run import MissingInput, PublishError, RunError, run
 from galaxy.specs.graph import GraphError
+from test_graph import ORDER
 from helpers import TINY, decl, impls, model, stage
 
 
@@ -19,11 +20,8 @@ def go(m, *stages, inputs=None, grid=TINY, only=None):
 
 def test_production_runs(model):
     out = run(model, grid=TINY)
-    assert out.fields["canary"].shape == (8,)
-    assert out.order == (
-        "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
-        "bar", "population", "pattern", "systems", "formation", "planets",
-    )
+    assert out.fields["halo_circular_velocity"].shape == (8,)
+    assert out.order == ORDER[model.name]
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
     assert set(out.inputs) == set(INPUTS)  # S3 set the last default, so every input resolves
 
