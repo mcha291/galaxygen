@@ -111,11 +111,29 @@ def sech2_height(u: np.ndarray, scale: np.ndarray | float) -> np.ndarray:
 
 
 class Catalogue(dict):
-    """A materialised set of stars: name -> column. A plain mapping, deliberately."""
+    """A materialised set of stars: name -> column. A plain mapping, deliberately.
+
+    ``counts`` carries the ``(cell, count)`` layout the rows were built from, which
+    is how a row is named: row *r* is star ``index`` of ``cell``. Identity is not a
+    column — it has no unit, no ramp and nothing to draw — so it travels beside the
+    columns rather than inside them.
+    """
+
+    counts: tuple[tuple[int, int], ...] = ()
+
+    @classmethod
+    def of(cls, columns: Mapping[str, Any], counts: Sequence[tuple[int, int]] = ()) -> "Catalogue":
+        made = cls(columns)
+        made.counts = tuple((int(c), int(n)) for c, n in counts)
+        return made
 
     @property
     def size(self) -> int:
         return len(next(iter(self.values()))) if self else 0
+
+    def star(self, row: int) -> tuple[int, int]:
+        """The ``(cell, index)`` of one row — the name a system is opened by (§12)."""
+        return star_at(self.counts, row)
 
 
 def cell_edges(R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -177,6 +195,57 @@ def cell_masses(sigma_star: np.ndarray, R: np.ndarray, rings: int = CELL_RINGS) 
     return per_ring, edges
 
 
+def cell_shares(sigma_star: np.ndarray, R: np.ndarray) -> np.ndarray:
+    """Each ring's share of the stellar mass — what decides how many stars a cell gets."""
+    ring_mass, _ = cell_masses(sigma_star, R)
+    total = ring_mass.sum()
+    return ring_mass / total if total > 0.0 else np.zeros_like(ring_mass)
+
+
+def cell_counts(
+    sigma_star: np.ndarray,
+    R: np.ndarray,
+    seed: int,
+    n_stars: int,
+    cells: Sequence[int] | None = None,
+) -> tuple[tuple[int, int], ...]:
+    """``(cell, count)`` for every cell that realises a star, in cell order.
+
+    Split out of :func:`materialise` because a star's *identity* is ``(cell,
+    index)`` (D60) and more than one caller needs it: a later stage keying its own
+    draws on a star, and an API mapping a row of a region query back to the star it
+    came from. Recomputing the layout somewhere else would be a second definition
+    of which star is which, and the two would diverge silently.
+
+    It is cheap — one ``Generator`` per cell for the rounding, no property streams —
+    so knowing the layout costs a fraction of drawing the stars themselves.
+    """
+    share = cell_shares(sigma_star, R)
+    wanted = range(CELL_COUNT) if cells is None else cells
+    out: list[tuple[int, int]] = []
+    for cell in wanted:
+        ring = int(cell) // CELL_SECTORS
+        expected = n_stars * share[ring] / CELL_SECTORS
+        base = int(expected)
+        frac = expected - base
+        # The fractional part is a seeded Bernoulli rather than a rounding rule,
+        # which would bias the disc's outskirts away entirely.
+        count = base + int(_seeds.rng(seed, "cell", int(cell), "count").random() < frac)
+        if count:
+            out.append((int(cell), count))
+    return tuple(out)
+
+
+def star_at(counts: Sequence[tuple[int, int]], row: int) -> tuple[int, int]:
+    """The ``(cell, index)`` of row ``row`` of a catalogue built from ``counts``."""
+    seen = 0
+    for cell, count in counts:
+        if row < seen + count:
+            return cell, row - seen
+        seen += count
+    raise IndexError(f"row {row} is past the {seen} stars these cells realise")
+
+
 def materialise(
     fields: Mapping[str, Any],
     R: np.ndarray,
@@ -191,8 +260,6 @@ def materialise(
     a full sweep — that is the per-region determinism the gate is about.
     """
     ring_mass, edges = cell_masses(fields["stellar_surface_density"], R)
-    total = ring_mass.sum()
-    share = ring_mass / total if total > 0.0 else np.zeros_like(ring_mass)
 
     # The radius that stands for a ring, computed from the density field rather than
     # from the stars a cell happens to realise. Using the realised mean would make a
@@ -206,7 +273,7 @@ def materialise(
         for i in range(CELL_RINGS)
     ])
 
-    wanted = range(CELL_COUNT) if cells is None else cells
+    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, cells)
     columns: dict[str, list[np.ndarray]] = {}
 
     sigma_thin = fields["thin_disc_surface_density"]
@@ -217,14 +284,8 @@ def materialise(
     feh = fields["feh_history"]
     onset = float(fields["last_major_merger_time"])
 
-    for cell in wanted:
+    for cell, count in counts:
         ring, sector = divmod(int(cell), CELL_SECTORS)
-        expected = n_stars * share[ring] / CELL_SECTORS
-        base = int(expected)
-        frac = expected - base
-        count = base + int(_seeds.rng(seed, "cell", int(cell), "count").random() < frac)
-        if count == 0:
-            continue
 
         def draw(name: str, k: int = count) -> np.ndarray:
             return _seeds.rng(seed, "cell", int(cell), name).random(k)
@@ -268,12 +329,12 @@ def materialise(
 
     if not columns:
         empty = np.zeros(0)
-        return Catalogue({
+        return Catalogue.of({
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
                       "star_metallicity", "star_mass", "star_population")
-        })
-    return Catalogue({name: np.concatenate(parts) for name, parts in columns.items()})
+        }, counts)
+    return Catalogue.of({name: np.concatenate(parts) for name, parts in columns.items()}, counts)
 
 
 # --- derived half -------------------------------------------------------------

@@ -796,6 +796,30 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    every cell's streams whether or not anything asks for that cell, and that is
    a `performance.py` question at S10.
 
+25. **The two occurrence relations §12 cites cannot both be true, and the
+   mechanism picks the steeper one.** §12 quotes giant occurrence going as
+   10^(β[Fe/H]) with β ≈ 2 `[recall: Fischer & Valenti 2005, via §12]` *and*
+   running from ~5% at [Fe/H] = 0 to ~25% at +0.5 `[recall: the Adibekyan review,
+   via §12]`. Those are different claims: β = 2 takes 5% to 50% over that
+   interval, and reaching 25% needs β ≈ 1.4. S8 did not choose between them. It
+   derived occurrence instead — a giant is a zone whose solids clear the critical
+   core mass, the disc mass is log-normal about its median, so occurrence is a
+   probit in [Fe/H] — and **measured** the slope the mechanism produces:
+   **β = 2.99**, with occurrence reaching **51%** at [Fe/H] = +0.5
+   `[verified: galaxy/stages/planets.py giant_occurrence_index and
+   giant_occurrence_rich; tests/test_planets.py]`. Only the zero point is fitted.
+   The slope is not free: for a threshold on a log-normal, β at 5% occurrence is
+   fixed by the disc-mass scatter alone, and §12's own 0.3 dex forces β ≈ 3.
+   **Prediction, stated so it can fail:** matching β = 2 requires a disc-mass
+   scatter near 0.45 dex, so a measurement of that width decides this — if discs
+   really are 0.3 dex wide, then either occurrence is steeper than Fischer &
+   Valenti found or a threshold is not the whole mechanism (migration destroying
+   close-in giants would flatten it) `[verified:
+   tests/test_planets.py::test_the_slope_is_the_disc_mass_scatter_and_not_a_fitted_exponent]`.
+   What the model does get without being told: giant occurrence around an M dwarf
+   falls to ~1% at [Fe/H] = 0 and rises to ~20% by +0.5, bracketing the
+   12.4 ± 5.4% against 0.96 ± 0.51% split §12 quotes from Montet+14.
+
 ---
 
 ## 12. The planets stage

@@ -22,6 +22,7 @@ from galaxy.stages.systems import (
     imf_mean_mass,
     imf_sample,
     invert_cdf,
+    cell_counts,
     materialise,
     sech2_height,
 )
@@ -178,3 +179,35 @@ def test_an_empty_region_is_empty_not_an_error(model):
     assert far.size == 0
     assert set(far) == {"star_radius", "star_azimuth", "star_height", "star_age",
                         "star_metallicity", "star_mass", "star_population"}
+
+
+def test_a_row_of_the_catalogue_knows_which_star_it_is(model):
+    """A star is (cell, index) — §12 opens a system by that name, so it must be readable."""
+    o = out(model)
+    R, t = o.grid.R, o.grid.t
+    whole = stars(model, 5000)
+    counts = cell_counts(o.fields["stellar_surface_density"], R, 0, 5000)
+    assert whole.counts == counts, "the layout must be the one the stars were built from"
+    assert sum(n for _, n in counts) == whole.size
+    assert all(n > 0 for _, n in counts), "a cell with no star is not part of the layout"
+    assert [c for c, _ in counts] == sorted(c for c, _ in counts), "rows run in cell order"
+
+    for row in (0, 1, whole.size // 3, whole.size - 1):
+        cell, index = whole.star(row)
+        alone = stars(model, 5000, cells=[cell])
+        assert alone["star_radius"][index] == whole["star_radius"][row]
+        assert alone["star_age"][index] == whole["star_age"][row]
+    with pytest.raises(IndexError):
+        whole.star(whole.size)
+
+
+def test_the_layout_costs_a_fraction_of_the_stars(model):
+    """Knowing which star is which must not mean drawing every star (rule D4)."""
+    o = out(model)
+    start = time.perf_counter()
+    counts = cell_counts(o.fields["stellar_surface_density"], o.grid.R, 0, 20000)
+    layout = time.perf_counter() - start
+    start = time.perf_counter()
+    stars(model, 20000)
+    drawn = time.perf_counter() - start
+    assert counts and layout < drawn / 2, f"layout {layout:.3f}s against {drawn:.3f}s of stars"

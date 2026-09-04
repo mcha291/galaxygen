@@ -265,6 +265,73 @@ def test_a_bigger_sample_contains_the_smaller_one(api):
     assert set(small.tolist()) <= set(large.tolist())
 
 
+def test_a_system_is_named_by_the_row_a_region_returned(api):
+    """The join S8 exists to make: a star drawn in a region can be opened by name.
+
+    The region response carries the ``(cell, count)`` runs, a row is named off
+    them, and the system that name opens has to be that star's — not one that
+    merely looks like it. So the host in the system header is compared column by
+    column against the row the region query drew.
+    """
+    header, arrays = api.handle("/api/region", "r_min=7&r_max=9&phi_max=0.6&stars=20000").frame()
+    ids, counts = header["cells"]["ids"], header["cells"]["counts"]
+    for row in (0, 1, sum(counts) // 2, sum(counts) - 1):
+        seen = 0
+        for cell, count in zip(ids, counts):
+            if row < seen + count:
+                break
+            seen += count
+        index = row - seen
+        system = api.handle("/api/system", f"cell={cell}&index={index}&stars=20000")
+        assert system.status == 200
+        star = system.frame()[0]["star"]
+        for name, column in arrays.items():
+            assert star[name] == pytest.approx(float(column[row])), (name, cell, index)
+
+
+def test_opening_a_system_costs_a_cell_and_not_a_galaxy(model):
+    """Rule D4, and the reason the identity work was done at all."""
+    response = service().handle("/api/system", {"model": [model.name], "cell": ["300"], "index": ["0"]})
+    assert response.status == 200
+    assert "systems" not in response.stages, "the catalogue stage would materialise every cell"
+    assert "planets" not in response.stages, "and that one would give every star its planets"
+    assert "formation" not in response.stages and "population" not in response.stages
+    header, arrays = response.frame()
+    assert header["planets"] == len(arrays["planet_mass"]) >= 0
+    assert header["of"] > 0 and 0 <= header["index"] < header["of"]
+    assert set(header["columns"]) == set(arrays)
+
+
+def test_a_system_carries_its_belts_exactly_when_it_has_a_giant(api):
+    """Belts are derived from the giants; a system without one has nothing to show."""
+    from galaxy.stages.planets import ATMOSPHERES
+
+    hydrogen = ATMOSPHERES.index("hydrogen")
+    seen_with, seen_without = 0, 0
+    for cell in range(0, 1024, 37):
+        response = api.handle("/api/system", f"cell={cell}&index=0")
+        if response.status != 200:
+            continue
+        header, arrays = response.frame()
+        giants = int((arrays["planet_atmosphere"] == hydrogen).sum()) if len(arrays["planet_atmosphere"]) else 0
+        assert bool(header["belts"]) == bool(giants), (cell, header["belts"], giants)
+        for belt in header["belts"]:
+            assert belt["outer"] > belt["inner"] > 0.0
+            assert belt["kind"] in ("asteroid", "kuiper")
+        seen_with += bool(giants)
+        seen_without += not giants
+    assert seen_without, "no system without a giant was sampled; the check would be one-sided"
+
+
+def test_a_system_query_refuses_a_star_that_is_not_there(api):
+    assert api.handle("/api/system", "cell=-1&index=0").status == 400
+    assert api.handle("/api/system", "cell=99999&index=0").status == 400
+    assert api.handle("/api/system", "cell=300&index=-1").status == 400
+    assert api.handle("/api/system", "cell=300&index=99999").status == 404
+    assert api.handle("/api/system", "cell=abc&index=0").status == 400
+    assert api.handle("/api/system", f"cell=300&index=0&stars={MAX_STARS + 1}").status == 400
+
+
 # --- what the metadata says ---------------------------------------------------
 
 

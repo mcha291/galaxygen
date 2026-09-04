@@ -285,3 +285,35 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer][infra] Node's test runner needs the files named: `node --test <dir>`
   loads the directory as a module and fails. Glob them in the wrapper, and assert
   the glob is non-empty so an empty run cannot look like a passing one.
+
+## From S8
+
+- [catalogue][api][all] Identity is not a field. It has no unit, no meaningful
+  zero and nothing to draw, and forcing it into a declaration means inventing all
+  three. Let it travel in the *shape* of the answer — the runs a catalogue was
+  built from — and the contract stays honest (D81).
+- [catalogue][advanced] The isolation mass is an embryo's, not a planet's: ~0.02
+  M⊕ at 1 AU. A model that assigns it directly builds systems of gravel. Partition
+  the disc and let the stability criterion filter, which is what §12 sanctions it
+  for (D83).
+- [catalogue] A merge changes the thing it merged into. Filtering pairs of
+  neighbouring *slots* left crowded pairs behind, because the survivor got heavier
+  after the pair before it was checked; sweep and carry the survivor forward.
+- [field][all] Do not write down the relation the literature quotes if the
+  mechanism can produce it. Deriving occurrence made β a measurement, and the
+  measurement showed that two numbers cited in the same paragraph of our own
+  inputs document cannot both be true (debt #25, D79).
+- [field][all] When two cited claims conflict, the model's job is to say which one
+  its mechanism agrees with — not to average them (rule B12) and not to fit both.
+  Fit one constant, publish the rest as predictions, and record the disagreement.
+- [all] A quantity that scales the same way everywhere can be lifted out of a
+  per-cell computation. Occurrence over an 800 000-cell history built an
+  800 000 × 8 intermediate until the part that depends only on the star was
+  separated — 1.5 s of a 2.5 s run, from arithmetic that was already correct.
+- [close][infra] Never `git checkout <file>` to undo a temporary edit to a file
+  that has uncommitted work in it: it reverts to HEAD, not to your edit's start,
+  and takes the day's work with it. Copy the file aside, or commit first. This
+  cost the viewer's system view once, in this session.
+- [viewer] Three decades on a linear axis draws every inner planet on top of the
+  star. A system view is logarithmic, and because that is a decision about how the
+  picture is read, it belongs in a module where it can be asserted.

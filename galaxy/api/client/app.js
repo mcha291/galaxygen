@@ -23,8 +23,9 @@ import { discOf, discScale, imageOf2D, polylineOf } from "./field.js";
 import * as flow from "./flow.js";
 import { legendStops, makePalette, makeRamp } from "./ramp.js";
 import * as catalogue from "./stars.js";
+import * as diagram from "./system.js";
 import * as view from "./view.js";
-import { arrays, fields as fetchFields, inputs as fetchInputs, region, stages as fetchStages, version } from "./transport.js";
+import { arrays, fields as fetchFields, inputs as fetchInputs, region, stages as fetchStages, system as fetchSystem, version } from "./transport.js";
 
 const GALAXY_SIZE = 480;
 const PREVIEW = { width: 520, height: 260 };
@@ -41,7 +42,8 @@ const el = {
 
 let state = null;
 let meta = null; // the /api/fields payload, plus a name index
-let picked = { field: null, star: -1 };
+let picked = { field: null, star: -1, planet: -1, system: null, name: null };
+let systemToken = 0;
 let data = { arrays: null, header: null, stars: null, points: null, error: null, busy: false };
 let token = 0;
 
@@ -109,6 +111,24 @@ async function load() {
   } catch (error) {
     if (mine !== token) return;
     data = { ...data, busy: false, error: error.message };
+  }
+  paint();
+}
+
+/**
+ * Open one star's system. It is fetched by the name the region response gave the
+ * row — `(cell, index)` — so the server materialises one cell rather than a
+ * galaxy, and the same star always opens the same system (§12).
+ */
+async function openSystem(name) {
+  const mine = ++systemToken;
+  try {
+    const got = await fetchSystem(name, { ...flow.query(state), stars: STAR_SAMPLE });
+    if (mine !== systemToken) return;
+    picked.system = got;
+  } catch (error) {
+    if (mine !== systemToken) return;
+    picked.system = { error: error.message };
   }
   paint();
 }
@@ -277,7 +297,11 @@ function renderGalaxy() {
     const x = ((event.clientX - box.left) * canvas.width) / box.width;
     const y = ((event.clientY - box.top) * canvas.height) / box.height;
     picked.star = catalogue.nearest(x, y, data.points, 6);
+    picked.planet = -1;
+    picked.system = null;
+    picked.name = picked.star >= 0 ? catalogue.identify(data.starHeader, picked.star) : null;
     paint();
+    if (picked.name) openSystem(picked.name);
   });
 
   wrap.append(canvas, legend(decl, ramp), h("p", { class: "caption" }, h("strong", { text: decl.label }), ` — ${decl.about}`));
@@ -361,6 +385,7 @@ function renderSide() {
   const scalars = view.scalarsAt(meta.fields, state.current);
   if (scalars.length) side.append(renderScalars(scalars));
   if (picked.star >= 0 && data.stars) side.append(renderStar());
+  if (picked.system) side.append(renderSystem());
   return side;
 }
 
@@ -423,15 +448,102 @@ function renderScalars(scalars) {
   return h("div", { class: "panel" }, h("h2", { text: "published here" }), h("table", {}, rows));
 }
 
+function table(rows) {
+  return h(
+    "table",
+    {},
+    rows.map((r) =>
+      h("tr", {}, h("td", { class: "label", text: r.label }), h("td", { class: "value", text: r.value }), h("td", { class: "unit", text: r.unit })),
+    ),
+  );
+}
+
 function renderStar() {
   const rows = catalogue.describe(picked.star, data.stars, meta.byName);
+  const name = picked.name ? `cell ${picked.name.cell}, star ${picked.name.index}` : "";
   return h(
     "div",
     { class: "panel" },
     h("h2", { text: "star" }),
-    h("table", {}, rows.map((r) => h("tr", {}, h("td", { class: "label", text: r.label }), h("td", { class: "value", text: r.value }), h("td", { class: "unit", text: r.unit })))),
-    h("p", { class: "caption", text: "Drawn from the seeded sample; the same seed puts the same star here every time." }),
+    table(rows),
+    h("p", { class: "caption", text: `${name} — the name its system is opened by, and the same seed puts the same star there every time.` }),
   );
+}
+
+const SYSTEM = { width: 520, height: 96 };
+
+/** One system: a logarithmic axis, its planets, and the belts its giants cleared. */
+function renderSystem() {
+  const panel = h("div", { class: "panel" }, h("h2", { text: "system" }));
+  if (picked.system.error) {
+    panel.append(h("p", { class: "error", text: picked.system.error }));
+    return panel;
+  }
+  const { header, arrays: columns } = picked.system;
+  if (!header.planets) {
+    panel.append(h("p", { class: "empty", text: "This star has no planets: its disc had too little solid mass to make one." }));
+    return panel;
+  }
+
+  const canvas = h("canvas", { width: SYSTEM.width, height: SYSTEM.height });
+  const ctx = canvas.getContext("2d");
+  const box = { x: 26, y: 8, width: SYSTEM.width - 46, height: SYSTEM.height - 34 };
+  const laid = diagram.layout(columns, header.belts, box);
+  const palette = meta.byName.planet_atmosphere ? makePalette(meta.byName.planet_atmosphere) : null;
+
+  // The belts first, behind everything: they are regions, not objects.
+  ctx.fillStyle = css("--line");
+  for (const band of laid.bands) ctx.fillRect(band.x0, box.y + 6, Math.max(band.x1 - band.x0, 1), box.height - 12);
+  ctx.strokeStyle = css("--line");
+  ctx.beginPath();
+  ctx.moveTo(laid.axis.x0, laid.axis.y);
+  ctx.lineTo(laid.axis.x1, laid.axis.y);
+  ctx.stroke();
+  ctx.fillStyle = css("--muted");
+  ctx.font = "10px ui-monospace, SFMono-Regular, Menlo, monospace";
+  ctx.textAlign = "center";
+  for (const tick of laid.ticks) {
+    ctx.fillText(`${catalogue.format(tick.a)}`, tick.x, box.y + box.height + 14);
+    ctx.fillRect(tick.x, laid.axis.y - 3, 1, 6);
+  }
+  ctx.textAlign = "left";
+  ctx.fillText("AU", laid.axis.x1 - 12, box.y + box.height + 14);
+
+  const codes = columns.planet_atmosphere;
+  laid.marks.forEach((mark) => {
+    const [r, g, b] = palette && codes ? palette.color(codes[mark.index]) : [255, 255, 255];
+    ctx.fillStyle = `rgb(${r} ${g} ${b})`;
+    ctx.beginPath();
+    ctx.arc(mark.x, mark.y, mark.size, 0, 2 * Math.PI);
+    ctx.fill();
+    if (mark.index === picked.planet) {
+      ctx.strokeStyle = css("--accent");
+      ctx.beginPath();
+      ctx.arc(mark.x, mark.y, mark.size + 4, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+  });
+  canvas.addEventListener("click", (event) => {
+    const rect = canvas.getBoundingClientRect();
+    picked.planet = diagram.pick(
+      laid,
+      ((event.clientX - rect.left) * canvas.width) / rect.width,
+      ((event.clientY - rect.top) * canvas.height) / rect.height,
+    );
+    paint();
+  });
+
+  const belts = header.belts.map((b) => `${b.kind} ${catalogue.format(b.inner)}–${catalogue.format(b.outer)} AU`);
+  panel.append(
+    canvas,
+    h("p", { class: "caption", text: `${header.planets} planets on a logarithmic axis; sizes are areas and neither is to scale. ${belts.join(", ") || "No giant, so nothing cleared a belt."}` }),
+  );
+  panel.append(
+    picked.planet >= 0
+      ? table(catalogue.describe(picked.planet, columns, meta.byName))
+      : h("p", { class: "caption", text: "Click a planet." }),
+  );
+  return panel;
 }
 
 boot();

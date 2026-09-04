@@ -1,4 +1,4 @@
-"""Modified Bessel functions I₁, K₀, K₁ on the closed interval the disc needs.
+"""Special functions the model needs and numpy does not ship: I₁, K₀, K₁, and erf.
 
 The exponential disc's circular velocity is analytic in terms of I₀, I₁, K₀ and
 K₁ (Freeman 1970) ``[recall: Freeman 1970, ApJ 160, 811; the standard form is
@@ -20,13 +20,20 @@ catch ``[inferred]``.
 Domain: x > 0. K₀ and K₁ diverge at the origin and the callers never evaluate
 there (grid *centres* are used, never edges), so a non-positive argument is an
 error rather than an ``inf``.
+
+``erf`` — and the normal CDF over it — arrives at S8 for the same reason and from
+the same book: giant-planet occurrence is the probability that a log-normal disc
+mass clears a threshold, evaluated on 800 000 grid cells, and ``math.erf`` is a
+scalar function. A&S 7.1.26 gives |ε| < 1.5×10⁻⁷ over the whole line, which is
+four orders below the uncertainty on anything it is multiplied by
+``[recall: Abramowitz & Stegun §7.1.26]``.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-__all__ = ("i0", "i1", "k0", "k1")
+__all__ = ("i0", "i1", "k0", "k1", "erf", "normal_cdf")
 
 
 class DomainError(ValueError):
@@ -109,3 +116,23 @@ def k1(x: object) -> np.ndarray:
         + u * (0.23498619 + u * (-0.03655620 + u * (0.01504268 + u * (-0.00780353 + u * (0.00325614 - u * 0.00068245)))))
     ) / (np.sqrt(far_x) * np.exp(far_x))
     return np.where(small, near, far)
+
+
+# --- the error function (A&S 7.1.26) -----------------------------------------
+
+_ERF_P = 0.3275911
+_ERF_A = (0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429)
+
+
+def erf(x: object) -> np.ndarray:
+    """The error function, |ε| < 1.5×10⁻⁷ ``[recall: A&S 7.1.26]``. Odd, so |x| is enough."""
+    v = np.asarray(x, dtype=float)
+    a = np.abs(v)
+    t = 1.0 / (1.0 + _ERF_P * a)
+    poly = t * (_ERF_A[0] + t * (_ERF_A[1] + t * (_ERF_A[2] + t * (_ERF_A[3] + t * _ERF_A[4]))))
+    return np.sign(v) * (1.0 - poly * np.exp(-a * a))
+
+
+def normal_cdf(x: object) -> np.ndarray:
+    """P(Z ≤ x) for a standard normal — the shape a threshold on a log-normal takes."""
+    return 0.5 * (1.0 + erf(np.asarray(x, dtype=float) / np.sqrt(2.0)))
