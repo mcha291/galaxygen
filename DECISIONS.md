@@ -1317,3 +1317,149 @@ column. None of the three is visible to any assertion that was worth writing, an
 all three took one look. Rule B1 asks for the instrument before the thing it
 certifies; this is that, for pictures, and S8's system view is the next session
 that needs it.
+
+## Session 8 — planets and the system view
+
+Surface: web. Model: Opus 5. Ran on the S6 branch.
+
+### D78. The planets stage splits the way the systems stage did
+
+**Decision.** Two stages at checkpoint 6. `formation` is derived and publishes
+where giant planets are possible and when; `planets` is seeded and publishes the
+systems themselves.
+
+**Settled by.** GALAXY_INPUTS.md §12 makes the object half a seeded draw *by
+construction* — the late giant-impact phase is chaotic, so there is no
+deterministic outcome to have scatter about — while the occurrence of giants
+across the galaxy is a function of the metallicity field and nothing else.
+`graph.py` computes provenance from what a stage reads: a stage that reads a seed
+publishes seeded fields (rule A10). Putting both halves in one stage would have
+declared `giant_occurrence` seeded, which is false and would have been enforced
+as true. S5 had the same problem and solved it the same way (`population` beside
+`systems`), so this is the second instance of a pattern rather than a one-off
+`[verified: tests/test_graph.py asserts giant_occurrence is derived]`.
+
+### D79. Occurrence is not a law here. It is a threshold on a log-normal
+
+**Decision.** Metallicity enters the planets stage exactly once — a disc's solid
+mass is its mass times its metal fraction — and giant occurrence comes out as the
+probability that the solids in a zone beyond the ice line clear the critical core
+mass. Nothing multiplies by 10^(β[Fe/H]).
+
+**Settled by.** Rule A3: if it can be derived, derive it. §12 quotes β ≈ 2 and it
+would have been one line to write down; writing it down would have made every
+later comparison circular. Deriving it instead makes β a *measurement of the
+model*, published as `giant_occurrence_index`, and the measurement disagrees with
+the literature in a way that turns out to be informative.
+
+**The number is β = 2.99, and it is not free.** For a threshold on a log-normal,
+the slope at 5% occurrence is fixed by the width of the log-normal alone, and
+§12's own disc-mass scatter of 0.3 dex forces β ≈ 3. Matching β = 2 needs 0.45
+dex. That is the whole content of debt #25: §12 cites β ≈ 2 *and* an occurrence
+running 5% → 25% across [Fe/H] = 0 → +0.5, and those are different claims (β = 2
+takes 5% to 50%). The mechanism reproduces the steeper one and overshoots the
+endpoint, at 51% `[verified: tests/test_planets.py, and the debt register's
+prediction that a disc-mass width measurement decides it]`.
+
+**One constant is fitted and the rest are predictions.**
+`PLANETESIMAL_EFFICIENCY` = 0.171 sets occurrence to 5% for a solar-mass star at
+[Fe/H] = 0. Everything else follows, including the stellar-mass dependence, which
+was given no data at all: around an M dwarf the model gives ~1% at [Fe/H] = 0
+rising to ~20% by +0.5, bracketing the 0.96 ± 0.51% and 12.4 ± 5.4% §12 quotes
+from Montet+14.
+
+### D80. A belt is not placed. It is what a giant prevented
+
+**Decision.** Belt edges are mean-motion resonances of the giants: the asteroid
+analogue between the innermost giant's 4:1 and 2:1, the Kuiper analogue outward
+from the outermost giant's 3:2. Zero inputs, zero seeds, twelve lines.
+
+**Settled by.** §12 says so, and the Solar System is a sharp check on whether it
+was done right, because nothing about either belt is in the code — only Kepler's
+third law applied to two period ratios. Jupiter at 5.204 AU gives **2.06–3.28 AU**
+against an observed asteroid belt of ~2.1–3.3, and Neptune at 30.07 gives a
+Kuiper inner edge of **39.3 AU** against an observed 39.4 `[verified:
+tests/test_planets.py::test_belts_are_where_the_giants_left_them]`. Two numbers
+that were not fitted and land on top of the real ones is the strongest evidence
+in this session that the derivation is the right one.
+
+### D81. A star is named by the layout, not by an identifier field
+
+**Decision.** `(cell, index)` reaches a caller through the *shape* of a response —
+the `(cell, count)` runs a catalogue was built from — and never as a column.
+
+**Settled by.** §12 opens a system by `hash(planets_seed, star_id)` and S7 found
+that no star_id was published anywhere. Making it a column was the obvious move
+and the declaration system refused it, for good reasons: an identifier has no
+unit in the closed vocabulary, no meaningful zero, and an object field must carry
+a ramp (rule A9) — a colour for a number nobody colours. Rather than invent a
+unit and a palette to satisfy a contract that was right, identity travels beside
+the columns: `Catalogue.counts`, `catalogue.star(row)`, and the same runs in the
+region response for the client. `systems.cell_counts` is the single definition,
+split out of `materialise`, and it is cheap enough — one `Generator` per cell, no
+property streams — that naming a star costs a fraction of drawing one `[verified:
+tests/test_systems.py::test_the_layout_costs_a_fraction_of_the_stars]`.
+
+### D82. Opening a system costs a cell
+
+**Decision.** `/api/system?cell=…&index=…` materialises that one cell, takes that
+one star, and gives it planets. It runs neither materialiser stage.
+
+**Settled by.** Rule D4, and it is the return on D81. The closure the endpoint
+needs is what the *catalogue stage reads* — six stages — and then two direct
+calls. Running the `systems` stage would build every cell; running the `planets`
+stage would give all 20 000 sampled stars their planets to answer about one. Cold
+it is **0.158 s against 0.322 s for a whole-disc region**, and warm 2.8 ms
+`[verified: D84's table]`. The response is 2.8 KB.
+
+### D83. The isolation mass is an embryo's, and a planet is what embryos become
+
+**Decision.** Planet masses come from partitioning the disc's solids across
+geometric zones, not from the isolation mass. The Hill criterion is used as §12
+specifies — to *filter* — rather than to build.
+
+**Settled by.** The first architecture used the classical isolation mass directly
+and produced systems of gravel: ~0.02 M⊕ at 1 AU in this disc, three orders below
+Earth. That is not a bug in the arithmetic, it is what the isolation mass *is* —
+the mass of one embryo in its own feeding zone — and a terrestrial planet is the
+merger of many across a much wider annulus. Zones partition the solids instead,
+which conserves mass by construction, and then neighbours closer than
+HILL_SEPARATION mutual Hill radii merge.
+
+**The filter took two attempts.** Comparing neighbouring *slots* left 0.4% of
+surviving pairs crowded, because a merge makes the survivor heavier and widens
+the Hill radius of a pair that was already checked. Carrying the survivor forward
+through the sweep is exact in one pass and leaves none `[verified:
+tests/test_planets.py::test_the_stability_filter_leaves_nothing_crowded]`.
+
+### D84. Cold timings at S8 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0001   0.0001   1.92        940  -
+    viewer: a module         0.0001   0.0001   2.01     21,599  -
+    index                    0.0001   0.0000   1.91      1,237  -
+    version                  0.0011   0.0009   1.26      1,132  -
+    stages                   0.0002   0.0001   1.78      8,381  -
+    fields                   0.0007   0.0005   1.45     57,617  -
+    inputs                   0.0001   0.0001   1.68      9,091  -
+    arrays: one profile      0.1275   0.0002 527.59      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1410   0.0046  30.84  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0922   0.0003 307.84      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1775   0.0048  36.99     18,720  halo,…,vertical
+    region: whole disc       0.3224   0.1669   1.93  1,126,208  halo,…,vertical
+    system: one star         0.1575   0.0028  55.90      2,816  halo,…,vertical
+
+**Read the table against itself, not against S7's.** Every row is faster than
+D76's — a whole-disc region went 0.49 s to 0.32 s without anything being
+optimised — so the machine, not the code, moved. What is comparable within one
+run is the shape: opening one system costs half a whole-disc region and the same
+six stages, `/api/fields` has grown to 57.6 KB now that it carries the planet
+declarations, and metadata is still sub-millisecond with no stage behind it. A
+full model run is 0.60 s, of which the planets stage is about 0.12 s.
+
+**One measurement changed the code.** Evaluating occurrence over the 800 000-cell
+history built an 800 000 × 8 array of zones and took 1.5 s of a 2.5 s run, until
+the part that depends only on the star was split out (`giant_zone_share`). The
+zones depend on the ice line, the ice line depends on luminosity, and metallicity
+scales every zone together — so for a fixed stellar mass it is one scalar and an
+elementwise operation `[verified: measured at S8]`.
