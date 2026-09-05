@@ -348,3 +348,46 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   stages that did not change: the advanced vertical stage lands three places
   later than the simple one's because it waits on the chemistry. Orders are per
   model; assert them per model.
+
+## From S10 (run 1)
+
+- [audit][all] Sweep each grid axis alone and judge the drift against the row's
+  own error bar, never a fixed percentage: a scalar is converged when the grid
+  cannot move it across the width it is judged by, and a zero-width target
+  makes a row untestable rather than failed `[verified: DECISIONS.md D94]`.
+- [audit][all] A profile whose warm column matches its cold one is a profile; one
+  that does not is a reading of a cache. Publish both columns so the reader can
+  tell `[verified: DECISIONS.md D95]`.
+- [audit][field] A row that passes because a constant was chosen inside its cited
+  range is not evidence for the mechanism. Ask of every green row which constant
+  could have been set to make it green, and whether it was (row 15, debt #21).
+- [audit][all] Re-examine the *consumers* of a changed field, not only the stage
+  that changed it: the advanced model's iron-rich centre moved giant occurrence
+  by 7× at 2 kpc without the planets stage changing a line (D96).
+- [audit][close] Two independent runs of one session means the first closes
+  partially and the second continues the branch (rule C2d) — the instruments are
+  shared, the findings are sealed in a file the second run must not open.
+
+## From S10 (run 2)
+
+- [audit][all] Move every constant across its own cited range and read the rows
+  before writing "holds": three of run 1's verdicts written from the about lines
+  alone were wrong (`SECULAR_HEATING`, `SF_THRESHOLD`, `GAS_DISC_SCALE_RATIO`)
+  `[verified: DECISIONS.md D97]`.
+- [audit][all] Trace every published field to a reader. A field nobody reads is
+  a constant nobody tests: `merger_delivery` and `MERGER_DURATION` were dead for
+  seven sessions under an about line describing a mechanism that never ran
+  `[verified: AUDIT_RUN2.md D-1]`.
+- [audit][all] Re-read the miss register's prose against the current numbers at
+  every audit. A reason written at S2 was false from S3 and still quoted at S9
+  `[verified: AUDIT_RUN2.md D-2]`.
+- [audit][field] An input default is a constant too: ask what it delivers in
+  mass. A gas fraction of 0.2 on a 1:50 satellite was 5.9 × 10⁹ M☉
+  `[verified: AUDIT_RUN2.md D-7]`.
+- [audit][all] Check a profile's warm column against its cold one per stage, not
+  per total: the first seeded stage carries the process's first Generator and
+  reads 46× warm `[verified: AUDIT_RUN2.md P1]`.
+- [audit][close] Two independent runs need the register and the lessons sealed
+  as well as the list. Run 1's amendments to three debts and one lesson carried
+  every overlapping finding across, so the overlap measured the leak, not the
+  agreement `[verified: DECISIONS.md D97]`.

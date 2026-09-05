@@ -1634,3 +1634,203 @@ about 0.21 s cold to any route that reaches it, and nothing to a route that does
 not; warm, the two models are indistinguishable. Metadata is still
 sub-millisecond with no stage behind it, and `/api/stages` grew by two
 declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).
+
+## Session 10 — the audit, run 1
+
+### D94. The grid is swept one axis at a time, and nothing drifts
+
+**Decision.** `galaxy/specs/convergence.py` runs every published acceptance
+scalar of each model at N_R ∈ {200, 400, 800}, N_t ∈ {1000, 2000, 4000} and
+N_z ∈ {30, 60, 120}, each axis alone with the others at the default, and fails
+the spec run on a pointwise row whose largest departure from the default-grid
+value exceeds its own target's width. A zero-width target is *untestable*, not
+failed (debt #17); a category that changes is a drift; statistical rows are
+reported at the default seed without a verdict. `python -m galaxy.specs` runs it
+after the four existing specs (`--quick` halves the sweep).
+
+**Settled by.** GALAXY_INPUTS.md §10: the cost exponent is 0.13 in N_R against
+about 1 in N_t, so the two are not one quality knob and a sweep that moved them
+together would hide which one a scalar follows. **Result: 0 drifts of 54 row×axis
+pairs in the simple model, 0 of 57 in the advanced.** The largest movement is
+v_tan under N_t, 0.33 km/s of a 6 km/s target; the stellar mass moves 0.2% under
+N_t and 0.002% under N_R; N_z moves the advanced gradient by 3 × 10⁻⁷ dex/kpc, so
+reading the halo potential off the first z-row (D89) costs nothing. The
+instrument was checked on a stage built to drift before it was believed on one
+that does not `[verified: tests/test_convergence.py::test_a_scalar_that_moves_with_the_grid_is_caught]`.
+
+### D95. The profile, cold, per stage — and the catalogue costs what is asked for
+
+    model simple: 0.425 s cold, 0.410 s warm
+      sfh 16.3%  chemistry 9.1%  vertical 1.7%  pattern 2.3%  systems 28.5%  formation 15.3%  planets 26.6%
+    model advanced: 0.658 s cold, 0.651 s warm
+      sfh 11.4%  chemistry_dtd 41.1%  vertical_alpha 1.3%  pattern 1.5%  formation 9.5%  systems 17.6%  planets 17.3%
+    catalogue at 20,000 stars: layout 0.014 s; one cell 0.0011 s (23 stars), nine 0.0026 s (206), every cell 0.116 s (19,998)
+
+**Decision.** `galaxy/specs/performance.py` times every stage of one default run
+in a fresh interpreter per model (rule B2), warm beside cold, and materialises
+the catalogue for one, nine and every cell. It publishes numbers and fails on
+nothing (rule B6).
+
+**Settled by.** Cold and warm agree at every stage, so there is no cache in the
+reading. One stage is over a fifth of either model: the advanced chemistry, at
+41% — its per-timestep Python loop and 28 transport kernels of 400 × 400 — and it
+is the only optimisation worth a session. The per-cell table closes what debt
+#24 left open: cost is proportional to the stars asked for, one cell is a
+thousandth of the whole disc, and D61's fear that every cell's streams were
+built regardless is not what the code does. **Debt #24 is discharged in full.**
+
+### D96. The calibration audit, run 1: one defect, four flags, and the protocol for run 2
+
+**Decision.** Every constant fitted or chosen against a mechanism is re-examined
+in `AUDIT_RUN1.md` §3 against the mechanisms that have arrived since (rule B10).
+The defect list is §4 of that file. **Run 2 continues on `session-10` (rule C2d),
+uses the instruments, and must not read `AUDIT_RUN1.md` until its own list is
+written**; the diff goes here as D97 or later. Run 1 therefore closes partially:
+the board row is ◐, nothing is merged, no tag is queued.
+
+**Settled by.** The one defect: row 15 passes because `BAR_LENGTH_RATIO` = 2.0
+was chosen inside a cited 1.5–2.5 and 2.0 × 2.49 ≈ 5.0 — a choice, not a
+prediction, appended to debt #21. The flags: `WIND_SPEED` was fitted against a
+massless wind (debt #26); `MERGER_HEATING` has no row reading it in the advanced
+model until the valley opens (debt #27); `migration_efficiency` wants 2.5 kpc
+there (debt #28); `CONCENTRATION_NORM` still holds 10 km/s of lever on row 3
+(debt #12). One consequence measured rather than assumed: the advanced model's
+iron-rich centre reaches the planets stage — giant occurrence 19% at 2 kpc against
+2.6% in the simple model, and the sampled giant fraction 1.65% against 1.02% —
+on debt #26 alone. `PLANETESIMAL_EFFICIENCY` itself holds, being a function
+evaluation at [Fe/H] = 0 for one solar mass, and the published
+`giant_occurrence` field is at the galaxy's *mean* stellar mass (0.46% at R₀),
+which its `about` says and a reader could miss. The UNSET ratchet, loose for six
+sessions, is at zero.
+
+## Session 10 — the audit, run 2
+
+### D97. The two audits diffed: what both found, what only one found, and why
+
+**Decision.** Run 2's list is `AUDIT_RUN2.md` — fourteen defects D-1…D-14,
+five convergence findings C1–C5, five performance findings P1–P5, a
+constant-by-constant table (§4) and a green-row table (§5) — written and
+committed at `ccc0a42` before `AUDIT_RUN1.md` or D96 were opened `[verified:
+git log: ccc0a42 "S10 (run 2): the second audit sealed…" precedes this entry]`.
+Run 1's list is `AUDIT_RUN1.md` §4, six items. The diff:
+
+**Both found (5).** (1) Row 15 passes by construction on `BAR_LENGTH_RATIO`
+(run 1 §4.1; run 2 §5). (2) The advanced model's iron-rich centre reaches the
+planets stage — run 1: 19% at 2 kpc against 2.6%, sampled giant fraction 1.65%
+against 1.02%; run 2, by its own probe: 0.189 against 0.026, 0.0165 against
+0.0102 `[verified: AUDIT_RUN2.md §4.1]`. (3) Row 20 cannot be judged (zero-width
+target, debt #17). (4) `chemistry_dtd` is the only stage worth a session (41%;
+40.3% in run 2). (5) The advanced thick disc is absent and converged (debt #27).
+**Every one of the five was in material run 2 was allowed to read** — the
+register's amendments to debts #17, #21 and #24, the S10 lessons (one names
+D96's 7×), and the brief's "known state" — and `AUDIT_RUN2.md` §0 marks each
+**(known)**. They are agreement, not independent confirmation.
+
+**Run 1 only (1).** The UNSET ratchet loose for six sessions (run 1 §4.6). Run
+2 could not find it: run 1 lowered the bound to zero in the same commit and run
+2 read it at zero `[verified: tests/test_registry.py::test_unset_defaults_are_owed_and_never_increase]`.
+
+**Run 2 only (16).** D-1 `MERGER_DURATION` is dead: `merger_delivery` is read
+by nothing, `sfh` delivers the merger's gas as a step, and 0.1–2.0 Gyr moves
+every acceptance scalar by ≤ 3 × 10⁻¹⁵. D-2 the simple model's row-23 miss
+carries a reason ("the young/old ratio is near the observed 1.75") that has
+been false since S3 (it is 3.18; S3's own test pins 3.2). D-3 `SF_THRESHOLD`
+at the top of its cited 5–10 gives row 2 = 1.709 (pass) and row 20 = 7.5 × 10⁹
+with row 3 unmoved. D-4 row 3 has three explanations the register does not
+name beside debt #18's: the c_vir→c₂₀₀ conversion (K = 3.5 → 247.97), z_f = 2.0
+(248.17), `baryon_retention` = 0.30 (246.3). D-5 row 1 passes because the disc
+carries the bulge's mass and row 10 because row 11 fails high. D-6
+`GAS_DISC_SCALE_RATIO`'s "does nothing" is the steepest lever on rows 3, 4, 20
+and 22. D-7 the Sagittarius default delivers 5.9 × 10⁹ M☉ of gas from 3.8 Gyr,
+and without it row 2 reads 1.837, inside its target, in both models. D-8
+"without migration the local spread is far too narrow" is refuted: 0.294 dex
+without, 0.299 with. D-9 `vertical.scale_height` hard-codes G (rule A9). D-10
+the advanced total metallicity reads 1.24 Z☉ at [Fe/H] = 0 with an unregistered
+factor 2.0. D-11 the catalogue does not migrate, so the advanced model's
+migrants reach neither the viewer nor the planets (local spread 0.19 in the
+catalogue against the chemistry's 0.30). D-12 D95's "cold and warm agree at
+every stage" is false at `pattern` (46×). D-13 `tools/scaling.py` labels a
+warm number "cold". D-14 row 22's advanced pass is conditional on `WIND_INDEX`
+= 2 (at the equally cited 1 it fails). Plus C2, the default grid is the
+outlier under N_t (rows 1, 10 non-monotone at 0.2%, the step of D-1), and P3,
+the 0.78 exponent is fixed cost, not sublinearity. **Three of run 1's verdicts
+are contradicted**: `SECULAR_HEATING` "holds: set from an observation" (its
+about line says it was re-chosen after row 6 failed; at 20 row 6 reads 176),
+`SF_THRESHOLD` "holds: deliberately unfitted" (D-3), `GAS_DISC_SCALE_RATIO`
+"holds" (D-6) `[verified: AUDIT_RUN1.md §3 against AUDIT_RUN2.md §4.1]`.
+
+**Why run 1 missed them** [inferred from AUDIT_RUN1.md §3's method]. Run 1
+asked rule B10's question literally — which constant was fitted against a
+mechanism S9 changed — and answered it from the register and the about lines,
+with one probe (the planets consequence). It did not (a) move each constant
+across its own cited range and read the rows, which is where D-3, D-4, D-6,
+D-14 and the three contradicted verdicts live; (b) trace published fields to
+their readers (D-1, D-11); (c) re-read the miss register's prose against the
+current numbers (D-2); (d) compare its profile's warm column with the cold one
+per stage, or read the tool it quoted (D-12, D-13); (e) ask what an input
+*default* delivers in mass (D-7). Run 1's own lesson about row 15 — ask of
+every green row which constant could have made it green — was written at the
+end of run 1 and applied by run 2 to every row; run 1 applied it to one.
+
+**Why run 2 missed run 1's.** The ratchet was already at zero. Nothing else.
+
+**What the diff says about the protocol.** The sealed file hid run 1's list and
+not its conclusions: the register amendments and the lessons carried all five
+overlaps across, so the overlap measures the leak rather than the agreement. A
+protocol that wants two independent lists seals the register and the lessons
+too, and lets the *first* run's amendments land in the diff. Recorded as a
+lesson.
+
+**Actions taken here, none of them physics.** Debts #29–#33 registered
+(Sagittarius; the dead duration; the unmigrated catalogue; the spread claim;
+the Z zero point) and #11, #12, #18, #28 amended with run 2's numbers. The
+row-23 (simple) and row-22 (simple) miss texts in `galaxy/specs/spec.py`
+corrected — the register is the record, and a wrong reason is a record defect
+(rule B10), not a target change (rule B5): the rows still fail. No ratchet
+lowered: nothing was discharged (UNSET 0, controls without a range 0). D-9,
+D-12, D-13 and D-10's factor are one-line fixes queued in BRIEF.md for the
+maintainer, because each changes a stage's declared reads or a tool's output
+and belongs in a commit with its own test.
+
+### D98. S10 closes: cold timings and the profile at run 2 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0002   1.39        940  -
+    viewer: a module         0.0003   0.0002   1.39     21,599  -
+    index                    0.0000   0.0000   1.67      1,237  -
+    version                  0.0016   0.0014   1.18      1,132  -
+    stages                   0.0002   0.0001   1.53      8,645  -
+    fields                   0.0006   0.0004   1.44     57,008  -
+    inputs                   0.0001   0.0001   1.52      9,091  -
+    arrays: one profile      0.0733   0.0002 328.69      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1197   0.0023  52.86  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0729   0.0003 284.29      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1359   0.0032  42.52     18,720  halo,…,vertical
+    region: whole disc       0.2425   0.1078   2.25  1,126,208  halo,…,vertical
+    system: one star         0.1350   0.0020  67.80      2,816  halo,…,vertical
+    adv: history             0.3334   0.0026 129.13  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.3394   0.0027 126.40  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.3459   0.0032 107.81     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.3545   0.0021 168.35      2,824  halo,…,chemistry_dtd,vertical_alpha
+
+    model simple: 0.433 s cold, 0.408 s warm
+      sfh 16.5%  chemistry 9.3%  vertical 1.7%  pattern 2.2% (9.3 ms cold, 0.2 warm)
+      systems 26.6%  formation 16.0%  planets 27.5%
+    model advanced: 0.660 s cold, 0.640 s warm
+      sfh 11.8%  chemistry_dtd 40.3%  vertical_alpha 1.4%  pattern 1.4%  formation 9.4%
+      systems 17.8%  planets 17.6%
+    catalogue at 20,000 stars: layout 0.014 s; one cell 0.0012 s (23), nine 0.0027 s (206), every cell 0.112 s (19,998)
+    scaling: exponent in N_t 0.94 simple, 0.78 advanced, 2.03 naive; chemistry 6.51×; whole model 0.418 / 0.631 s in one warm process
+
+**Read within the run.** Every row is within a few percent of D93's and D95's
+— the same desktop `[verified: AUDIT_RUN2.md §1.3–1.5 against D93, D95]`. What
+run 2 adds to the reading is D-12 and D-13: the one stage whose warm column is
+a cache (`pattern`, the process's first `Generator`), and the one tool whose
+"cold" is not. The shape is unchanged: the advanced chemistry adds ~0.22 s cold
+to any route that reaches it; metadata runs no stage.
+
+**Close.** The board row is ☑ (desktop, Fable 5.1, runs 1 and 2, `s10`,
+2026-09-05); `session-10` is merged into `main` with `--no-ff`; `s10` is queued
+in MANUAL_TODO.md with S9's SHA filled in from `origin/main`. The build's
+eleven sessions are closed; BRIEF.md is written for a maintainer rather than a
+session.

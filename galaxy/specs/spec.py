@@ -259,7 +259,7 @@ _MISSES: tuple[Miss, ...] = (
         debt=15,
         since="S2",
         reason=(
-            "-0.027 dex/kpc against -0.06. The gradient was measured to be exactly insensitive to "
+            "-0.024 dex/kpc against -0.06 (-0.027 when recorded at S3). The gradient was measured to be exactly insensitive to "
             "the yield, so the level and the tilt are set separately and this is about the tilt. "
             "S3's more compact infall steepened it from -0.020, which confirms the tilt comes from "
             "the differential infall, and it is still less than half of what is observed."
@@ -277,14 +277,18 @@ _MISSES: tuple[Miss, ...] = (
         debt=15,
         since="S2",
         reason=(
-            "The old-population gradient is too flat for the same reason row 22 is. Migration "
-            "itself is close to right - the young/old ratio is near the observed 1.75 - so the "
-            "error is in the gradient being flattened, not in the flattening."
+            "The old-population gradient is too flat for two reasons, not one. Row 22's tilt is "
+            "a third of the observed (debt #15), and migration over-flattens on top of it: the "
+            "young/old ratio is 3.18 against the observed 1.75, and 1.75 is reached near 2.9 kpc "
+            "(AUDIT_RUN2.md D-2). S2 wrote 'migration itself is close to right' at a ratio of "
+            "2.3; S3's smaller disc took it to 3.2 and S10 (run 2) corrected the record."
         ),
         prediction=(
             "Whatever steepens row 22 steepens this row by the same factor and leaves the "
             "young/old ratio alone, because migration and enrichment are separate mechanisms here. "
-            "If row 22 steepens and this one does not, migration_efficiency is wrong too."
+            "If row 22 steepens and this one does not, migration_efficiency is wrong too. It "
+            "did, in the advanced model (debt #28), and the ratio there is 3.09: the same "
+            "over-flattening with the tilt right, so the kernel is wrong independently of the tilt."
         ),
     ),
 )
