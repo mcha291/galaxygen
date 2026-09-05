@@ -13,7 +13,7 @@ from __future__ import annotations
 import sys
 
 from galaxy.core.registry import production
-from galaxy.specs import convergence, determinism, graph, preflight, spec, utf8_stdout
+from galaxy.specs import convergence, determinism, graph, performance, preflight, spec, utf8_stdout
 
 
 def main() -> int:
@@ -38,6 +38,10 @@ def main() -> int:
     audits = convergence.sweep_models(models)
     print(convergence.report(models, audits))
     bad |= bool(convergence.check(models, audits))
+
+    profiles = performance.measure(models)
+    print(performance.report(models, profiles, impls, table))
+    bad |= bool(performance.check(models, profiles, impls, table))
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

@@ -49,7 +49,6 @@ def api():
 # --- rule D2: one fetch, asserted in CI ---------------------------------------
 
 NETWORK = re.compile(r"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|importScripts)\s*[(<]")
-SKIP = {".git", "node_modules", ".venv", "__pycache__"}
 
 
 def strip_js(source: str) -> str:
@@ -77,10 +76,22 @@ def strip_js(source: str) -> str:
 
 
 def js_files() -> list[Path]:
-    """Every JavaScript file in the repository — including the ones S7 has yet to write."""
-    found = [p for p in ROOT.rglob("*.js") if not SKIP & set(p.parts)]
-    found += [p for p in ROOT.rglob("*.mjs") if not SKIP & set(p.parts)]
-    return sorted(found)
+    """Every JavaScript file the repository contains, tracked or newly written.
+
+    Asked of git rather than walked off the filesystem. A denylist of directory
+    names has to be extended for every new kind of thing that can appear under
+    the root, and until someone remembers, the gate reads files nobody here
+    wrote and fails on them: a sibling git worktree checked out under
+    ``.claude/`` is what caught this at S10 (rule B13). ``--cached --others
+    --exclude-standard`` is the same pair rule C2 asserts empty at close, so
+    what this gate sees is exactly what the repository is answerable for —
+    untracked new files included, ignored ones never.
+    """
+    out = subprocess.run(
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "*.js", "*.mjs"],
+        cwd=str(ROOT), capture_output=True, text=True, check=True,
+    )
+    return sorted(ROOT / p for p in out.stdout.split("\0") if p)
 
 
 def test_exactly_one_fetch_in_the_client_transport():
