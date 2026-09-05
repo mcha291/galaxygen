@@ -2012,3 +2012,10 @@ constants inside the instruments, which is what LESSONS.md now carries.
 
 **Still owed.** A third pass, by someone who has read neither list, is the only
 thing that would measure what these two could not.
+
+**One thing in the log is wrong and is left wrong.** Commit `b8c0fbd`'s subject
+reads "S10 partial close (run 2 of 2)"; that work is **run 1**, and was numbered
+before a second run on this branch was asked for. Rule C2a forbids the rewrite
+that would fix it, and a wrong subject discovered later is cheaper than a
+force-push, so it is recorded here instead: `c4549b4`–`b8c0fbd` is run 1,
+`7b0a4e1` is run 2.
