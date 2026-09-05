@@ -1,8 +1,9 @@
 # Resuming
 
-How to open a session, where things are, what the instruments say. GALAXY_PLAN.md's
+How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
 status board is the only record of what is done (A9); this file does not repeat it,
 is rewritten in place each session, and is capped at 120 lines (C3) by a test.
+**The eleven-session build is closed (S10, 2026-09-05).** BRIEF.md is for a maintainer.
 
 ## Open a session (rules C1, C2b)
 
@@ -14,6 +15,7 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 
 Then RULES.md in full and BRIEF.md; GALAXY_INPUTS.md only by section, when BRIEF.md
 names one. Branch `session-NN`; commit and push at every sub-deliverable (rule C2b).
+In a git worktree also run `git config --worktree core.hooksPath tools/hooks` (S10 run 2).
 
 ## Layout
 
@@ -33,6 +35,7 @@ galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph,
                           grid swept one axis at a time, D94), performance (D95)
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
+AUDIT_RUN1.md, AUDIT_RUN2.md   the two independent S10 defect lists; their diff is D97
 ```
 
 ## Writing a stage
@@ -45,7 +48,7 @@ tools/                    progress, bootstrap, verify_clone, timings, scaling, s
   returns exactly the declared names, shape and value class checked.
 - `IMPLEMENTATIONS.register(...)`, import in `stages/__init__.py`, map the slot in the
   models that use it. A constant goes in `level0.py` if both models' stages read it,
-  else in the one model that does (D29, D85).
+  else in the one model that does (D29, D85). A field nobody reads is dead (debt #30).
 - **Two implementations of one slot** publish the same names under the same contract
   (`FieldDecl.contract`; `dataclasses.replace(decl, about=…)` keeps it) and their own
   fields as `optional=True`. A model's own stage may `require` its own optional field;
@@ -75,31 +78,27 @@ tools/                    progress, bootstrap, verify_clone, timings, scaling, s
 - A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, rule A7) with
   its model, debt, reason and a prediction that could kill it (D33, D87); it still
   reports `fail`, never widen a target (B5), and a miss that starts *passing* fails the
-  run for that model. The table itself is `spec.py`, never prose.
+  run for that model — so a default that fixes a row changes its miss entry in the same
+  commit (debt #29). The table itself is `spec.py`, never prose.
 
-## What the instruments said at S10 (run 1) close
+## What the instruments said at S10 close (run 2, 2026-09-05)
 
-- graph: acyclic, both models. Orders differ: the advanced vertical stage waits on its
-  chemistry and lands three places later (`tests/test_graph.py::ORDER`). preflight OK:
+- graph: acyclic, both models; orders in `tests/test_graph.py::ORDER`. preflight OK:
   0 UNSET, 0 controls without a range. determinism OK, golden values pinned.
-- spec, simple: **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable —
-  unchanged since S8. spec, advanced: **8 pass, 11 fail, 5 not-yet-computable**: row 22
-  closes (−0.057 dex/kpc, debt #15's prediction held), row 24 is computable and reads
-  `single`, and with no [α/Fe] valley the chemical split finds **no thick disc** — rows
-  5, 7, 8, 9, 10, 11, 24 on one cause (debt #27); row 23 is migration (debt #28). Every
-  failure is recorded for its model; exit 0.
+- spec, simple: **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable.
+  spec, advanced: **8 pass, 11 fail, 5 not-yet-computable** — no thick disc (debt #27:
+  rows 5, 7–11, 24), row 23 migration (#28), row 22 passes. Every failure recorded for
+  its model; exit 0. No green row is an unconditioned prediction (AUDIT_RUN2.md §5).
 - Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49, M_star = 5.276e10, SFR
-  = 1.969, v_tan = 256.0 (both); simple grad −0.0237, thick M 1.07e10, row 9 0.103;
-  advanced grad −0.0566, old −0.0193, v_esc(R₀) 578, f_esc(R₀) 0.753, mode at +0.21.
-- **Scaling** (B7, D92): chemistry exponent in N_t 0.92 simple, 0.77 advanced, 2.04
-  for the naive convolution; advanced chemistry 6.8× simple, whole model 1.53× (0.41 s
-  against 0.63 s). No fixed point anywhere (A1).
-- **Cold timings** (B2, D93): the advanced chemistry adds ~0.21 s cold to any route
-  that reaches it and nothing warm; metadata sub-millisecond, no stages.
-- **Convergence** (D94): N_R, N_t, N_z each alone — **0 drifts** in either model; row
-  20 untestable (#17). **Profile** (D95): simple 0.43 s (systems 28%, planets 27%),
-  advanced 0.66 s (chemistry_dtd **41%**); one cell 1.1 ms, every cell 116 ms (#24
-  discharged). Run 1's defect list is sealed in `AUDIT_RUN1.md`; run 2 writes its own.
+  = 1.969, v_tan = 256.0 (both); simple grad −0.0237, old −0.0067, thick M 1.07e10, row
+  9 0.103; advanced grad −0.0566, old −0.0193, v_esc(R₀) 578, f_esc 0.753, spread 0.299.
+- **Convergence** (D94): 0 drifts on N_R, N_t, N_z in either model; the default grid
+  is the N_t outlier at 0.2% (a step-onset infall, debt #30); DTD_BINS and AGE_BIN
+  converged by probe. **Profile** (D95, D98): simple 0.43 s, advanced 0.66 s
+  (chemistry_dtd 40%); `pattern`'s warm column is a cache (9 ms cold). **Scaling**
+  (D92): 0.94 / 0.78 / 2.03 naive; the tool's "whole model, cold" is warm.
+- **Register**: 26 open, 7 discharged; S10 added #29–#33, amended #11, #12, #17, #18,
+  #21, #24, #28. The two audits' diff is D97.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 

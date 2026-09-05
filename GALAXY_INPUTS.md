@@ -698,13 +698,26 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    246.4 km/s, inside 248 ± 3 `[verified:
    tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss]`. Registered
    in `spec.MISSES`; if S2 does not close it, the explanation is wrong.
+   **S10 (run 2):** the gas has its own profile now and row 1 still passes for
+   the wrong reason. Its target, 5 ± 1 × 10¹⁰, is rows 10 + 11 + 12 — it
+   *includes the bulge* — and the model has no bulge, so the disc carries the
+   bulge's 1.4–1.7 × 10¹⁰; and row 10 passes only because row 11 fails high
+   (thin = total − thick: a thick disc at its own target puts the thin disc at
+   4.7 × 10¹⁰, outside 2.5–4.5) `[verified: AUDIT_RUN2.md §5, D-5]`. Rows 1, 10
+   and 11 cannot be green together without a bulge stage or a smaller budget,
+   and a smaller budget fails row 3 by 9 km/s more (`baryon_retention` 0.40 →
+   265 km/s).
 12. **The c₂₀₀–z relation is unvalidated and load-bearing.** c₂₀₀ = 4.1(1 + z_f)
    applies a normalisation quoted for c_vir to c₂₀₀ without the conversion
    between the two overdensities, and z_f = 2.5 is the midpoint of §3's
    "z ≈ 2–3" rather than a measurement. Across that cited range v_c(R₀) moves
    about 10 km/s — three times acceptance entry 3's error bar. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
-   measurements span (§4b).
+   measurements span (§4b). **S10 (run 2), measured:** K = 3.5 (c₂₀₀ = 12.25)
+   puts v_tan at 247.97, inside row 3's 245–251, and z_f = 2.0 at 248.17; the
+   conversion this debt names is on its own the size of row 3's miss, which
+   debt #18 attributes to the missing extended component. `halo_concentration`
+   and row 1 tell the two apart `[verified: AUDIT_RUN2.md D-4]`.
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -767,7 +780,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    leaves the stellar structure alone. Rows 3 and 4 are the check that it is
    *high* enough in angular momentum — if the stellar disc broadens, it is not.
    The bulge pushes row 3 the other way and arrives at S3–S4, so those two must
-   be judged together.
+   be judged together. **S10 (run 2):** three cited constants inside their own
+   ranges close or nearly close these rows without the component:
+   `SF_THRESHOLD` = 10 (the top of its 5–10) gives row 2 = 1.709 and row 20 =
+   7.5 × 10⁹ with row 3 unmoved; `baryon_retention` = 0.30 gives rows 1, 2 and 3
+   all inside; `GAS_DISC_SCALE_RATIO` = 1.2 gives rows 3 and 4 inside with row
+   20 at 7.2 × 10⁹ `[verified: AUDIT_RUN2.md D-3, D-4, D-6]`. The component's
+   discriminating prediction is that it closes row 20 with rows 3 and 4
+   *unmoved*, which none of the three does. Half of row 2's excess is debt
+   #29's Sagittarius gas.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -899,7 +920,52 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    explanations: the citation's width is not this kernel's width (a Gaussian
    in radius growing as √age), or the old gas gradient the model flattens from
    (−0.127 dex/kpc at 10 Gyr, with no migration) is too steep to begin with. A
-   gradient measured at 10 Gyr decides between them.
+   gradient measured at 10 Gyr decides between them. **S10 (run 2):** the
+   framing "once the tilt is right" is wrong — the simple model over-flattens by
+   the same ratio (3.18) with the tilt wrong, and S3's own test pinned it
+   `[verified: tests/test_chemistry.py::test_migration_over_flattens_the_old_population;
+   AUDIT_RUN2.md D-2]`. One kernel over-flattening two different old-gas
+   gradients by one factor favours the first explanation: the citation's width
+   is not this kernel's width.
+29. **The Sagittarius default delivers a tenth of the baryon budget, five Gyr
+   early.** `MergerEvent(8.8, 0.02, 0.2)` takes 0.2 of the budget outstanding
+   after Gaia-Enceladus, 0.1 of the whole, 5.9 × 10⁹ M☉ — more gas than the
+   progenitor's entire mass [recall: 10⁸–10⁹ M☉] — and `sfh` starts it at the
+   *last major merger*, 3.8 Gyr, because it reads only the total share and the
+   major onset; a minor event's `time` reaches nothing that survives. Without
+   the event row 2 reads **1.837, inside 1.46–1.84, in both models**, row 8
+   0.037 and row 9 0.150 (inside), row 20 5.66 × 10⁹, row 11 1.38 × 10¹⁰
+   `[verified: AUDIT_RUN2.md D-7]`. Not corrected by the audit: a registered
+   miss that starts passing fails the spec run, so the default and the row-2
+   entries (both models) must change in one commit. **Prediction:** with
+   Sagittarius carrying ≤ 1% of the budget, row 2 passes in both models; if it
+   does not, debt #18's timescale explanation is the whole story after all.
+30. **`MERGER_DURATION` is dead; the merger's gas arrives as a step.** `assembly`
+   spreads each event over a Gaussian window and publishes `merger_delivery`;
+   nothing reads it; `sfh` rebuilds the second episode as an exponential from a
+   step at the last major merger. 0.1–2.0 Gyr changes every acceptance scalar
+   by ≤ 3 × 10⁻¹⁵ `[verified: AUDIT_RUN2.md D-1]`. The constant's about line
+   describes the timestep dependence the step *has*: rows 1 and 10 are
+   non-monotone under N_t at 0.2% (AUDIT_RUN2.md C2). **Prediction:** feeding
+   `merger_delivery` into `sfh` removes that non-monotonicity.
+31. **The catalogue does not migrate.** `systems` draws radii from the
+   unmigrated `stellar_surface_density` and looks abundances up at that radius
+   and birth time, so the advanced model's migrants reach neither the viewer nor
+   the planets: the catalogue's [Fe/H] spread at R₀ is 0.19 dex against the
+   chemistry's own 0.30 `[verified: AUDIT_RUN2.md D-11]`. A boundary S9 did not
+   cross; `feh_spread_sun` describes stars the catalogue does not hold.
+32. **The local [Fe/H] spread is the age–metallicity relation, not migration.**
+   §8's "without migration the local metallicity distribution comes out far
+   too narrow" is refuted by the model built to show it: `feh_spread_sun` is
+   0.294 dex with `migration_efficiency` = 0 and 0.299 at 3.6 `[verified:
+   AUDIT_RUN2.md D-8]`. The field's about line and the test named for the
+   mechanism overstate it; §8's claim needs a re-ruling.
+33. **The advanced model's total metallicity has its own zero point.** Z(R₀)
+   reads 1.24 Z☉ where [Fe/H] = 0.00: core-collapse metals are taken in solar
+   proportion to oxygen (which already holds the Sun's whole iron) and the Ia
+   iron-peak is added on top with a factor 2.0 that lives in the code, not the
+   register `[verified: AUDIT_RUN2.md D-10]`. No stage reads Z in the advanced
+   model today; the first consumer of `metallicity_history` inherits it.
 
 ---
 
