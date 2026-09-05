@@ -1878,3 +1878,137 @@ was removed. The spec report reads exactly as it did at S9 close — 11 pass, 7
 fail for the simple model, 8 pass, 11 fail for the advanced — which is the
 correct outcome for a session whose job was to find out what the numbers mean
 rather than to change them.
+
+### D102. The statistical criterion rewards a noisy model
+
+**Decision.** Recorded as debt #33 and left in place. `ENSEMBLE_MIN` stays 20,
+`CENTRAL` stays 0.95, and the criterion stays "intersects".
+
+**Settled by.** Rule B3 asks what a check cannot see, and this one cannot see the
+difference between a distribution centred on the observation and one whose tail
+merely reaches it. Measured against row 16's target of [34, 52]: a median of 60
+passes on a spread of ±20, and a median of 100 passes on ±60. Widening the
+ensemble is monotonically helpful to the model, which is the wrong direction for
+an acceptance check to point.
+
+Underneath it, the two constants do not agree. `np.percentile` interpolates, so
+the 2.5th percentile of twenty values sits at order-statistic index
+0.025 × 19 = 0.475 — between the smallest and the second-smallest. The "central
+95 %" interval therefore trims no whole draw, comes to 91 % of the full range,
+and is pinned by the two most extreme values in each tail. **The nominal fraction
+needs n = 41 to exclude one draw at each end**, and `ENSEMBLE_MIN` is 20.
+
+The instability that follows is visible in the model's own numbers. Across five
+disjoint blocks of twenty `pattern_seed` values, row 16's upper endpoint moves
+50.2 → 59.8 — more than half the width of the target it is compared against —
+while the median moves only 39.5 → 42.5:
+
+    seeds    central 95%              min      max    median   verdict
+    0-19     [32.81, 51.87]         32.29    54.83     42.51   pass
+    20-39    [35.18, 59.84]         34.58    67.06     40.90   pass
+    40-59    [32.31, 57.47]         31.74    58.02     39.51   pass
+    60-79    [32.45, 51.87]         32.30    54.98     40.95   pass
+    80-99    [31.20, 50.19]         28.98    50.83     40.86   pass
+
+**Why it is not changed here.** What a statistical row *means* is a decision
+about the acceptance table, not a defect in an implementation, and `spec.py`'s
+own docstring already reserves the revision to a later session. Changing it
+during an audit would also make the audit the thing that moved the verdicts. What
+is recorded instead is the fact that makes the change cheap: **both live rows
+would still pass under the stricter reading** — row 16's medians span 39.5–42.5
+inside [34, 52], row 17's 5.68–6.15 inside [4.5, 7.0] — so requiring the median
+to lie in the target costs no verdict today and would cost one later, which is
+the moment to have the argument rather than after.
+
+### D103. One of the four seeds is read by nothing, and the ensemble is a diagonal
+
+**Decision.** Recorded as debt #34. `world_seed` stays declared.
+
+**Settled by.** `graph` already reports `world_seed` as an unbound input in both
+models, which is the deliberate treatment of an input no stage reads *yet*. What
+had not been noticed is that `spec.ensemble` varies it anyway: a member is built
+by setting every seed to the same integer, so a quarter of the nominal seed
+dimension does nothing and the twenty members trace the diagonal of a
+four-dimensional space rather than sampling it.
+
+Both are harmless today and measured to be: no published quantity depends on more
+than one seed, and row 16 comes out identical whether `pattern_seed` moves alone
+or all four move together. They stop being harmless at the same moment — the
+bulge rows debt #8 is waiting on (13, 14, 18) are the ones whose residual draws
+`world_seed`'s own declaration promises, and the first quantity to read two seeds
+is the first one the diagonal cannot see.
+
+### D104. The reproducibility check runs both halves in the same interpreter
+
+**Decision.** Recorded as debt #35; the suite gains the stronger check, the spec
+does not.
+
+**Settled by.** `determinism.check_reproducible` runs the model twice and compares
+the fields. Within one process, `PYTHONHASHSEED`, set and dict iteration order,
+the allocator and every module-level cache are all held constant, so a field that
+depended on any of them would compare equal every time. This is rule B3 in the
+same shape rule C2 already states for the working copy: the comparison takes the
+one path immune to the defect it exists to find. It is not a hypothetical class —
+iterating a set of field names to build an array is an ordinary thing to write,
+and nothing here would have caught it.
+
+Measured rather than assumed: the model runs identically in three separate
+processes at `PYTHONHASHSEED` 0, 1 and 12345 — same stage order, byte-identical
+values for all 91 simple and 101 advanced fields. So the hole is latent. The
+suite now carries the cross-process comparison; `python -m galaxy.specs`, which is
+the report a session actually reads, still carries only the weaker one, and the
+fix is the subprocess pattern `performance.py` already uses.
+
+### D105. The diff of the two audit runs
+
+**Decision.** The gate S10 could not meet from inside either run, met here, with
+what it is worth stated first.
+
+**What it is worth.** The board asked for two *independent* audits so that the
+overlap would measure coverage. These two runs share an author: run 2 was made
+knowing everything run 1 found, and aimed deliberately at what run 1 had not
+touched. So the diff below measures **what a differently-aimed pass finds**, and
+it cannot measure what an independent one would. Reading it as evidence of
+coverage would be exactly the error rule B3 names. `[inferred]`
+
+**Run 1 — the model and its cost.** Convergence (`convergence.py`), performance
+(`performance.py`), and the calibration audit of the constants. Findings: debt
+#12 re-measured and given a second explanation for row 3 with rows 2 and 20 as
+the discriminator (D95); debt #29, no acceptance row reads inside 4 kpc; debt
+#30, the vertical grid buys nothing and `escape_velocity` is not at the midplane;
+debt #31, the default grid is 25× finer in radius and 80× finer in time than any
+row can detect; debt #32, a cold profile bills the interpreter's one-offs to
+whoever trips them. Debt #24's D61 question answered (D96), debt #17 given a
+mechanism (D98), debt #16's discharge quantified at 10 %, debt #26's centre shown
+to be the wind and not the grid, debt #27 given a coarse-grid trap. Two defects
+found inside run 1's own instruments: the rule D2 gate's directory denylist
+(D99), and an ill-conditioned 2×2 that returned a negative cost per star (D96).
+
+**Run 2 — the instruments and the seeded machinery.** Findings: debt #33, a
+statistical row tests overlap rather than agreement, and `ENSEMBLE_MIN = 20` is
+too small for the 95 % interval it quotes (D102); debt #34, `world_seed` is read
+by no stage and the ensemble samples a diagonal (D103); debt #35, the
+reproducibility check compares two runs in one interpreter (D104). Two clean
+results, recorded because an audit that reports only problems is not an audit:
+every row that quotes a ± has `lo`/`hi` equal to that arithmetic, checked across
+the whole table; and every one of the six specs has at least one test that makes
+it report a problem, so none is a check that cannot fail.
+
+**The diff.** **The two lists do not intersect at all.** Not one defect appears
+on both. That is the finding, and it is a warning rather than a comfort: two
+passes over one repository, by one author, aimed differently, produced disjoint
+lists, which bounds neither list from above. The count of defects found is not
+evidence about the count remaining.
+
+Two patterns do cross the boundary. **Every defect either run found in an
+instrument was found by the run that was not building it** — run 1 found the D2
+gate's denylist while writing something else, run 2 found the ensemble criterion
+in a file run 1 had edited that session without looking at it. And **both runs
+found a constant chosen once and never re-derived**: run 1 the default grid
+(#31), run 2 `ENSEMBLE_MIN` (#33). Neither is a physics constant, so rule B10 as
+written does not reach them — it speaks of a constant "fitted against a broken
+mechanism". The audit's own suggestion is that the rule wants widening to the
+constants inside the instruments, which is what LESSONS.md now carries.
+
+**Still owed.** A third pass, by someone who has read neither list, is the only
+thing that would measure what these two could not.

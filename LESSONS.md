@@ -396,3 +396,33 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [audit][advanced] A coarse grid can manufacture the signal you are hunting: at
   N_t = 8 the advanced model reports the [α/Fe] valley debt #27 exists to find.
   State the grid beside any qualitative verdict.
+
+## From S10, run 2
+
+- [audit][all] Rule B10 says a constant fitted against a broken mechanism has no
+  claim on its value. **The instruments have constants too**, and nobody
+  re-derives those: the default grid (debt #31) and `ENSEMBLE_MIN` (debt #33)
+  were each chosen once and never revisited, and each turned out to be doing
+  something other than what its name says. Audit the measuring apparatus with
+  the same rule as the thing measured.
+- [audit][all] Ask which direction a check's errors point. "The ensemble's
+  interval intersects the target" makes a noisier model *easier* to pass — the
+  acceptance criterion rewards exactly what the model should be penalised for.
+  A criterion that cannot be failed by getting worse is not a criterion.
+- [audit][infra] A percentile of a small sample is not the fraction it is named
+  after. At n = 20 the 2.5th percentile interpolates between the smallest and
+  second-smallest value, so a "central 95%" interval trims nothing and is pinned
+  by the two noisiest draws. Check that the sample size and the quoted fraction
+  agree before quoting either.
+- [audit][all] A reproducibility check that runs both halves in one interpreter
+  holds constant everything an interpreter holds constant. It is the same
+  argument rule C2 makes about testing the working copy you pushed from, one
+  level down, and it is worth making in every instrument that compares two runs.
+- [audit][all] Report the clean results too. "Every row's interval is the
+  arithmetic of its stated ±" and "every spec has a test that makes it fail" are
+  findings; an audit that lists only problems leaves the reader unable to tell
+  what was looked at from what was not.
+- [audit][close] Two audit runs by one author produced **disjoint** defect lists.
+  Take that as a bound on neither: the count of defects found says nothing about
+  the count remaining, and the diff of two non-independent runs measures aim
+  rather than coverage.

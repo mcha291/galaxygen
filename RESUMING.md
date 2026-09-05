@@ -20,17 +20,14 @@ names one. Branch `session-NN`; commit and push at every sub-deliverable (rule C
 ```
 galaxy/core/              units (32 closed), cmaps (8 + stops, A9), fielddoc (FieldDecl,
                           6 Kinds, Ramp/Palette, AXES), stage (Stage, Context, CHECKPOINTS),
-                          registry (12 INPUTS, MODELS, IMPLEMENTATIONS), seeds (pure
-                          child/rng), grids, special (I1, K0, K1, erf)
+                          registry (12 INPUTS, MODELS, IMPLEMENTATIONS), seeds, grids, special
 galaxy/models/            level0 (shared constants), simple (+NET_YIELD), advanced (its
                           own yields, DTD and wind constants; remaps two slots)
-galaxy/stages/            cp1 halo + disc; cp2 assembly; cp3 sfh, chemistry (simple) /
-                          chemistry_dtd (advanced), vertical (merger split) /
-                          vertical_alpha (chemical split); cp4 pattern; cp5 systems; cp6
-                          planets. Shared where identical, mapped per model.
+galaxy/stages/            cp1 halo + disc; cp2 assembly; cp3 sfh, chemistry / chemistry_dtd,
+                          vertical (merger split) / vertical_alpha (chemical split); cp4
+                          pattern; cp5 systems; cp6 planets. Shared where identical.
 galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); six specs — graph,
-                          preflight, determinism, spec (the table; misses are per model,
-                          D87), convergence (S10), performance (S10)
+                          preflight, determinism, spec (D87), convergence, performance
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
 ```
@@ -44,12 +41,11 @@ tools/                    progress, bootstrap, verify_clone, timings, scaling, s
   / `.has()` (optional) and `.rng(seed, *path)`; only declared names resolve, and it
   returns exactly the declared names, shape and value class checked.
 - `IMPLEMENTATIONS.register(...)`, import in `stages/__init__.py`, map the slot in the
-  models that use it. A constant goes in `level0.py` if both models read it, else in
-  the one that does (D29, D85).
+  models that use it. A constant goes in `level0.py` if both models read it (D29, D85).
 - **Two implementations of one slot** publish the same names under the same contract
-  (`FieldDecl.contract`; `dataclasses.replace(decl, about=…)` keeps it) and their own
-  fields as `optional=True`. A model's own stage may `require` its own optional field; a
-  *shared* one reads it through `requires_optional` and `.get()` (D86).
+  (`FieldDecl.contract`; `dataclasses.replace(decl, about=…)` keeps it) and their own as
+  `optional=True`. A model's own stage may `require` its own optional field; a *shared*
+  one reads it through `requires_optional` and `.get()` (D86).
 - A stage that reads a seed publishes *seeded* fields: split one whose other half is
   determined (`population`/`systems`, `formation`/`planets`), or the declaration is
   false and gets enforced as true (D78).
@@ -74,31 +70,34 @@ tools/                    progress, bootstrap, verify_clone, timings, scaling, s
   `[inferred]` (B14); an uncited verified tag fails a test. A new unit, kind, axis,
   object class or cmap is a `core/` edit plus a DECISIONS.md entry. Debts live in
   GALAXY_INPUTS §11; `progress.py` counts them — add an item, never a count.
-- A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, rule A7) with
-  its model, debt, reason and a prediction that could kill it (D33, D87); it still
-  reports `fail`, never widen a target (B5), and a miss that starts *passing* fails the
-  run for that model. A grid drift registers the same way in `convergence._RECORDED`.
+- A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, A7) with its
+  model, debt, reason and a prediction that could kill it (D33, D87); it still reports
+  `fail` (B5), and a miss that starts *passing* fails. Drifts: `convergence._RECORDED`.
 
 ## What the instruments said at S10 close
 
-- graph: acyclic, both models; orders differ (`tests/test_graph.py::ORDER`). preflight OK
-  (0 UNSET, 0 controls without a range). determinism OK, golden values pinned.
+- graph: acyclic, both models; orders differ (`test_graph.py::ORDER`); 1 unbound input,
+  `world_seed` (#34). preflight OK (0 UNSET, 0 ranges missing). determinism OK, pinned.
 - spec, simple: **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable;
   advanced **8 pass, 11 fail** (2, 3, 5, 7–11, 20, 23, 24), 5 nyc. Each recorded for its
-  model, exit 0; **unchanged since S8/S9 — S10 changed no physics** (D101). Rows 20 and
-  21 are now named as having no testable target (debt #17, D98).
-- Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49, M_star = 5.276e10, M_gas
-  = 5.80e9, SFR = 1.969, v_tan = 256.0 (both); simple grad = −0.0237, thick M = 1.07e10;
-  advanced grad = −0.0566, old = −0.0193, v_esc(R₀) = 578, [Fe/H] max +1.5.
+  model, exit 0; **unchanged since S8/S9 — S10 changed no physics** (D101). Rows 20, 21
+  now named as having no testable target (#17, D98).
+- Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49, M_star = 5.276e10, M_gas =
+  5.80e9, SFR = 1.969, v_tan = 256.0 (both); simple grad −0.0237, thick M 1.07e10;
+  advanced grad −0.0566, old −0.0193, v_esc(R₀) 578, [Fe/H] max +1.5.
 - **convergence** (D94): one knob at a time. Nothing drifts; **worst margin 0.056 of a
   target width**. Controls fire at N_R = 8 and N_t = 8, **never for N_z even at 1**.
 - **performance** (D96, D97): simple 0.43 s cold over 12 stages, advanced 0.65 s;
-  `chemistry_dtd` is 40% of the advanced model, the catalogue 27% of the simple one.
-  Catalogue 113 ms, **90% of it independent of the sample size**; 14.9 ms lays out all
-  1024 cells whether or not anything asks. The first seeded draw costs 8.9 ms once a
-  process and the table bills it to `pattern` (debt #32).
-- **Cold timings** (B2, D100): ~10–15% slower than D93, shape unchanged — the machine,
-  not the code. `tools/scaling.py` not re-run: no stage's `compute` was touched (B7).
+  `chemistry_dtd` 40% of the advanced model, the catalogue 27% of the simple one.
+  Catalogue 113 ms, **90% independent of the sample size**; 14.9 ms lays out all 1024
+  cells whether or not anything asks; first seeded draw 8.9 ms once a process, billed to
+  `pattern` (#32). Cold timings (B2, D100) ~10–15% slower than D93, shape unchanged —
+  machine not code; `scaling.py` not re-run, no stage changed (B7).
+- **Run 2** (D102–D105) audited the instruments: a statistical row tests overlap not
+  agreement and `ENSEMBLE_MIN = 20` is too small for its own 95% (#33); `world_seed` is
+  read by nothing and the ensemble is a diagonal (#34); determinism compares two runs in
+  one process (#35 — the model passes the cross-process form). **The two runs' defect
+  lists do not intersect at all** — a bound on neither (D105).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 

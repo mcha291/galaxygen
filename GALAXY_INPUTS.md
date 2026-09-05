@@ -1033,6 +1033,66 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    measurement is the sort of tidying that outlives its justification (rule B6);
    recorded so the column can be read.
 
+33. **A statistical row tests overlap, not agreement, and its ensemble is too
+   small for the interval it quotes.** Two defects in one criterion, both found
+   by S10's second audit run in code its first run had edited without noticing.
+   - `evaluate` passes a statistical row when the ensemble's central interval
+     **intersects** the target, so it asks whether the distribution *reaches* the
+     observation rather than whether it is centred on it. Measured against row
+     16's target of [34, 52]: a median of 60 passes on a spread of ±20, and a
+     median of 100 passes on ±60. **A noisier model is monotonically easier to
+     pass** `[verified:
+     tests/test_spec.py::test_a_statistical_row_tests_overlap_and_not_agreement]`.
+   - `ENSEMBLE_MIN = 20` and `CENTRAL = 0.95` do not agree with each other.
+     `np.percentile` interpolates, so at n = 20 the 2.5th percentile sits at
+     order-statistic index 0.475 — between the smallest and second-smallest draw
+     — and the "central 95 %" interval therefore trims no whole draw. It is 91%
+     of the full range and is set by the two most extreme values in each tail,
+     the highest-variance statistics in the sample. **n would have to be 41** for
+     the nominal fraction to exclude one draw at each end `[verified:
+     tests/test_spec.py::test_the_ensemble_size_and_the_central_fraction_do_not_agree]`.
+     The consequence is visible: across five disjoint blocks of twenty seeds row
+     16's upper endpoint moves 50.2 → 59.8, more than half its target's whole
+     width, while its median moves only 39.5 → 42.5 `[verified: DECISIONS.md D102]`.
+   **Not changed here**, because what a statistical row *means* is a decision and
+   not an implementation defect — the docstring already says S3 or S4 may revise
+   it. What makes the revision cheap is recorded instead: **both live rows would
+   still pass under "the median lies in the target"** (row 16's medians span
+   39.5–42.5 against [34, 52], row 17's 5.68–6.15 against [4.5, 7.0]), so
+   tightening the criterion costs no verdict today. Rows 13, 14 and 18 are
+   not-yet-computable and will be judged by whatever this becomes.
+
+34. **The seed ensemble is a diagonal, and one of its four dimensions is inert.**
+   `spec.ensemble` builds member k by setting *every* seed to k, so twenty
+   members sample the diagonal of a four-dimensional space rather than the space
+   — an interaction between two seeds is invisible to every statistical row by
+   construction. Harmless today and measured to be: no published quantity
+   depends on more than one seed, and row 16 is identical whether `pattern_seed`
+   moves alone or all four move together. Separately, **`world_seed` is read by
+   no stage of either model**; its declaration says it seeds "the residual draws
+   of stages 1–3 (e.g. the M_• residual of ruling 10)" and no such stage exists,
+   so it describes a future rather than the model `[verified:
+   tests/test_spec.py::test_world_seed_is_read_by_no_stage_of_either_model,
+   ::test_the_ensemble_samples_the_diagonal_of_seed_space]`. `graph` reports it
+   unbound rather than failing, which is deliberate — but the ensemble varies it
+   anyway. Both bite at the same moment: the bulge rows (13, 14, 18) debt #8 is
+   waiting on are precisely the ones that would read `world_seed` beside another.
+
+35. **`determinism.check_reproducible` runs the model twice in one interpreter.**
+   Everything a process holds fixed — `PYTHONHASHSEED`, set and dict iteration
+   order, the allocator, module-level caches — is constant across that
+   comparison, so a field depending on any of them passes it every time. That is
+   rule B3 exactly: the check takes the one path immune to the defect, and it is
+   the same argument rule C2 already makes about testing the working copy you
+   pushed from. **Measured, and the model meets the stronger standard**:
+   identical field bytes and identical stage order across three processes at
+   `PYTHONHASHSEED` 0, 1 and 12345, for all 91 simple and 101 advanced fields
+   `[verified: tests/test_determinism.py::test_the_model_is_reproducible_across_processes_too]`.
+   So this is a latent hole in an instrument rather than a live defect, and the
+   suite now closes it; what is still true is that `python -m galaxy.specs` — the
+   report a session actually reads — carries only the weaker check. The fix is to
+   run the second comparison in a subprocess, as `performance.py` already does.
+
 ---
 
 ## 12. The planets stage
