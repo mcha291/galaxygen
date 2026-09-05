@@ -47,7 +47,8 @@ closes the project.
 | 6 | `s06` | `a71483844338` | **queued** |
 | 7 | `s07` | `9b5c612ef027` | **queued** |
 | 8 | `s08` | `589cb0f52805` | **queued** |
-| 9 | `s09` | *TBD — S10 fills this in* | **queued** |
+| 9 | `s09` | `635c3c8ff43d` | **queued** |
+| 10 | `s10` | *TBD — S11 fills this in* | **not yet owed** — S10 is split into two audit runs (board row ◐) and neither is merged; the tag is owed once their defect lists are diffed and the session closes |
 
 ### Run these
 
@@ -85,8 +86,11 @@ git tag -a s07 9b5c612ef027 -m "S7: viewer"
 # S8 — planets.
 git tag -a s08 589cb0f52805513eb96092b1ff8777d6b035ed8f -m "S8: planets"
 
-# S9 — the advanced model. S10 replaces this with the literal SHA.
-git tag -a s09 "$(git rev-list -1 --grep='^Merge S9 into main' origin/main)" -m "S9: advanced model"
+# S9 — the advanced model.
+git tag -a s09 635c3c8ff43d670b090d68577b2c8db578e5a1eb -m "S9: advanced model"
+
+# S10 — the audit. No command yet: the session is split into two runs and neither
+# is merged, so there is no merge commit to tag. Whoever closes S10 adds it.
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

@@ -1634,3 +1634,247 @@ about 0.21 s cold to any route that reaches it, and nothing to a route that does
 not; warm, the two models are indistinguishable. Metadata is still
 sub-millisecond with no stage behind it, and `/api/stages` grew by two
 declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).
+
+## Session 10 — the audit
+
+### D94. Convergence is swept one knob at a time, and the sweep carries a control
+
+**Decision.** `galaxy/specs/convergence.py` sweeps N_R, N_t and N_z
+*independently*, each against the default grid, and judges every acceptance
+scalar's drift against the width of that row's own target interval. Each knob
+also carries a deliberately too-coarse **control** point, measured alongside the
+sweep, and what the control did when it was measured is recorded on the knob: a
+control that stops firing, or one that starts, is a problem.
+
+**Settled by.** GALAXY_INPUTS.md §10 measured the cost exponent at 0.13 in N_R
+against ~1 in N_t, so a single "resolution" dial would hide which knob a number
+is sensitive to. The seed of the module,
+`tests/test_sfh.py::test_scalars_do_not_move_with_grid_resolution`, moved N_R and
+N_t together and so could not have told them apart. N_z is swept although the S10
+brief names only the other two: it is the third grid axis, rows 6 and 7 are scale
+heights, and an audit that leaves an axis out is the defect it exists to find,
+one level up.
+
+The control is rule B3 applied to this instrument. **Nothing drifts** — the worst
+margin across both models and all three knobs is 0.056 of a target's width — and
+a sweep in which nothing drifts is either a converged model or an instrument that
+cannot fire, which look identical from the sweep alone. `scaling.py` answers the
+same objection by timing the naive convolution it exists to rule out. Measured:
+the criterion fires on rows 3, 5, 7 and 16 at N_R = 8 and on thirteen advanced
+rows at N_t = 8; row 3 goes first in radius, because it is read at a single
+radius and so is the first thing a coarse radial grid loses.
+
+**What the sweep found.** The acceptance table is converged on the default grid
+with a factor of about 18 to spare on its worst row. Pushed further, the
+criterion first fires below N_R ≈ 16 and N_t ≈ 25, and **never for N_z, even at
+N_z = 1**. That is debt #31 and debt #30: the default grid is 25× finer in radius
+and 80× finer in time than any acceptance row can detect, and the vertical grid
+has one field on it whose one consumer reads column 0.
+
+Drifts are registered exactly as acceptance misses are (rule B5): a recorded
+drift prints and does not stop the run, an unrecorded one does, and a recorded
+one that has converged is stale and does too (rule B10). The register is empty,
+which is the honest state of it and not an omission.
+
+### D95. Debt #12 gives acceptance row 3 a second explanation, and the two are separable
+
+**Decision.** `CONCENTRATION_NORM` stays at 4.1. What changes is the record: row
+3's recorded miss now names the competing explanation and the measurement that
+tells the two apart.
+
+**Settled by.** Rule B10 says a constant fitted against a broken mechanism has no
+claim on its value, and the S10 brief sends this audit at debt #12 first. The
+debt says K = 4.1 is quoted for c_vir and used as a c₂₀₀ normalisation "without
+the conversion between the two overdensities … folded into K rather than
+modelled". The conversion turns out not to be a free choice: the model publishes
+its own R₂₀₀ = 212.94 kpc, and debt #10 already established that the 255 kpc it
+is set against is a top-hat virial radius. Their ratio is 1.198, so K should be
+3.42 and c₂₀₀ = 11.98 rather than 14.35 — and **both pass the only check the
+constant has**, since the Milky Way's own measurements span 10–18.
+
+Doing the conversion puts v_c(R₀) at 246.92, inside 248 ± 3, and moves the star
+formation rate, the gas mass, the stellar mass and the disc scale length by less
+than one part in 10⁹. Row 3 already has a recorded miss whose explanation is that
+every baryon sits inside R₀ with no extended component and no bulge (debt #18),
+and whose prediction is that rows 2, 3 and 20 close *together*. So the two
+explanations make different predictions and **rows 2 and 20 are the
+discriminator**, which is the whole content of this decision: not that the halo
+is wrong, but that closing row 3 without checking rows 2 and 20 would no longer
+be evidence for anything.
+
+Three things measured alongside it. K and z_f enter only as their product, so
+c₂₀₀ ≈ 12 is reachable by K = 3.42 at z_f = 2.5 or by K = 4.1 at z_f = 1.92 and
+**no measurement of the assembly epoch alone can validate the relation**. The
+sensitivity debt #12 records — "about 10 km/s across z = 2–3, three times row 3's
+error bar" — is stale: after S2 and S3 changed the baryon profile it is 15.29
+km/s, 5.1× row 3's half-width. And the epoch the table wants, z_f ∈ [1.9, 2.1],
+lies *below* the cited z ≈ 2–3 rather than inside it.
+
+**Why the constant does not move.** Two reasons, and only the second is about
+scope. A value chosen now would be chosen with the model's answer for row 3
+already known, which is the move rule B5 exists to prevent; and this session
+audits. The chain was followed to its end first, so that whoever does move it
+knows what else goes: at K = 3.42 the escape velocity at R₀ falls from 578 to
+565 km/s and the present-day gas at R₀ from +0.001 to −0.014 dex, so the advanced
+model's one fitted constant `WIND_SPEED` needs refitting by about a hundredth of
+a dex and row 22 stays inside its target at −0.0563. The correction is cheap;
+the reason to hold it is that it is a candidate answer to an open question.
+
+### D96. What the star catalogue costs, and what D61 got half right
+
+**Decision.** `galaxy/specs/performance.py` profiles every stage of every model
+cold in a fresh process, publishes the numbers with no time budget, and gates
+only on completeness: every stage of every model must appear.
+
+**Settled by.** Rule B6 — publish the number, not the verdict — leaves nothing
+for a threshold to do, and a threshold buried in an instrument is a judgement
+made once and then forgotten. What is worth asserting is the omission rule B2
+exists to prevent: `tools/timings.py` already fails a route nobody timed, and a
+stage nobody profiled is the same defect. Each stage is timed from a run resumed
+at its own dependencies, so the number is the stage's rather than the pipeline
+prefix's, and the runner's own per-call cost — 0.09 ms of graph build and input
+resolution — is measured by resuming with `only=()` and **published rather than
+subtracted**.
+
+**D61's question, answered.** The catalogue is 113 ms for the published
+20 000-star sample, and **90% of it does not depend on how many stars are asked
+for**: the marginal cost is 0.59 µs per star, fitted over an eightfold range of
+sample sizes. Of the 100 ms that is fixed, 1.0 ms is setup, **14.9 ms lays out
+all 1024 cells at 14.5 µs each**, and 84.3 ms draws in the 516 cells that
+actually realise a star, about 163 µs each. D61 said every cell costs eight
+`Generator` constructions at about 22 µs, "paid on every run whether or not
+anything asks for that cell". The 176 µs that implies is right for a cell that
+realises stars — measured at 163 — and **wrong about who pays it: 508 of the
+1024 cells realise nothing and cost only their single layout draw.** The
+unconditional cost is 14.9 ms, 13% of the catalogue and 3.5% of the whole simple
+model. A nine-cell region query costs 2.8 ms, 2.4% of the whole, so the pruning
+`materialise(cells=…)` does is real.
+
+**How the split was arrived at, and how it was not.** The obvious method is to
+difference the whole-galaxy materialisation against the nine-cell one and solve
+for cost-per-cell and cost-per-star. It returns a **negative cost per star**:
+both points sit at nearly the same stars-per-cell ratio, so the 2×2 is
+ill-conditioned and amplifies timing noise into nonsense. Replaced by a slope
+over four sample sizes — the idiom `scaling.py` already uses, and for the same
+reason: a difference of two points cannot see what a slope can. The failed
+version is recorded here rather than deleted, because the number it produced was
+not obviously wrong to look at.
+
+**What is still open.** The cell grid cannot be re-measured without editing the
+source: `CELL_RINGS` and `CELL_SECTORS` are module constants and one is bound
+into a default argument. That is debt #31, and it is why D61's trade-off has not
+been revisited since S5.
+
+### D97. A cold profile bills the interpreter's one-offs to whoever trips them
+
+**Decision.** The first seeded draw's cost is measured in its own fresh
+interpreter and published beside the per-stage table, rather than being paid
+before the table so as to tidy it.
+
+**Settled by.** `pattern` reads at 8.9 ms cold against 0.3 ms warm — a ratio of
+30, the largest in either model, and out of scale with everything the stage does.
+It is not the stage. The first `seeds.rng` call in a fresh interpreter costs
+8.9 ms and every one after costs 0.023 ms, a factor of about 380, and `pattern`
+is the first stage of both models to draw. A per-stage cold profile times each
+stage's first execution, so a cost belonging to the interpreter lands entirely on
+whichever stage runs into it first, and is then read as that stage being
+expensive.
+
+Paying it inside `profile()` before the loop would have produced a cleaner table
+and destroyed the only evidence that the effect exists, so it is measured
+separately and the table is left as it reads. Rule B6: the number is published,
+the correction is not applied. **`tools/timings.py` has the same term in its cold
+column** — whichever route first reaches a seeded stage carries 8.9 ms that is
+not the route's — and that is debt #32.
+
+### D98. The acceptance table can say it has no testable target
+
+**Decision.** `Quantity.testable` is false for a pointwise row whose interval has
+zero width; `spec.untestable()` lists them; the report names them once, as a
+defect of the table rather than of any model; and a new row added without an
+interval has to declare itself in its note. No verdict changes.
+
+**Settled by.** Debt #17 names two fixes and says the choice belongs to this
+audit: read the source's uncertainty, or give the table a way to say "no testable
+target". The first was not available — the uncertainty is not in this repository,
+and rule B14 will not let a verified tag rest on a document outside it — and
+the second is what is implemented.
+
+The stronger reason for not taking the first is that it is no longer honestly
+available to *anyone here*. Row 20's answer is known: 5.80 × 10⁹ against
+8.0 × 10⁹, a 28% miss. An interval chosen now would be chosen against a known
+answer, which is what rule B5 forbids, and the fact that any plausible width
+would still leave row 20 failing does not make choosing one honest. So the defect
+is recorded and made countable instead, and what discharges it is a citation with
+an uncertainty entered *before* the row is next judged.
+
+Row 14 quotes no uncertainty either and is deliberately unaffected: it is
+statistical, and an ensemble's central interval can contain a point target, which
+is the mechanism debt #8 already put there.
+
+### D99. The one-fetch gate asks git what the repository contains
+
+**Decision.** `tests/test_api.py::js_files` enumerates JavaScript through
+`git ls-files --cached --others --exclude-standard` instead of walking the
+filesystem behind a denylist of directory names.
+
+**Settled by.** The gate failed on `transport.js` — the one file it exists to
+permit — inside a sibling git worktree checked out under `.claude/`. The denylist
+held `.git`, `node_modules`, `.venv` and `__pycache__`, and had to grow by one
+entry for every new kind of thing that can appear under the root; rule B13 says to
+move a correctness condition where it cannot be forgotten rather than to remember
+it in N places. `--cached --others --exclude-standard` is the same pair rule C2
+already asserts empty at close, so the gate now sees exactly what the repository
+is answerable for: newly written files included, ignored ones never.
+
+### D100. Cold timings at S10 (rules B2, B6)
+
+Measured with `uv run python tools/timings.py`, one fresh interpreter per
+endpoint, on the same desktop as D93.
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0002   1.51        940  -
+    viewer: a module         0.0003   0.0002   1.49     21,599  -
+    index                    0.0000   0.0000   1.66      1,237  -
+    version                  0.0016   0.0014   1.20      1,132  -
+    stages                   0.0002   0.0001   1.56      8,645  -
+    fields                   0.0007   0.0004   1.53     57,008  -
+    inputs                   0.0001   0.0001   2.06      9,091  -
+    arrays: one profile      0.0800   0.0002 349.81      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1305   0.0027  47.88  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0829   0.0002 372.75      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1495   0.0037  40.73     18,720  halo,…,vertical
+    region: whole disc       0.2679   0.1337   2.00  1,126,208  halo,…,vertical
+    system: one star         0.1445   0.0022  65.00      2,816  halo,…,vertical
+    adv: history             0.3680   0.0023 160.92  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.3768   0.0027 138.29  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.3879   0.0034 113.50     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.3750   0.0021 179.33      2,824  halo,…,chemistry_dtd,vertical_alpha
+
+    import + registry: 0.082-0.092 s, paid once per process, excluded from the cold column
+
+**Read within the run.** Every row is 10–15% slower than D93's and the shape is
+unchanged, so this is the machine and not the code: no stage's `compute` was
+touched this session, and `tools/scaling.py` is therefore not re-run (rule B7 asks
+for it when a stage's cost changes). The advanced chemistry still adds about
+0.24 s cold to any route that reaches it and nothing warm; metadata is
+sub-millisecond with no stage behind it. **Every cold number on a stage-running
+route contains the 8.9 ms of D97**, which is 11% of `arrays: one profile` and 2%
+of `adv: one sector` — debt #32.
+
+### D101. What this audit did not do
+
+**Decision.** Recorded here so the next session does not have to infer it.
+
+The board asks for two independent audits and a diff of their defect lists. This
+is one of the two runs, made without reading the other; **the diff is not in this
+branch and cannot be, because making it requires both lists.** It is the first
+thing owed after both runs are in.
+
+No physics was changed. `CONCENTRATION_NORM` stays at 4.1 (D95); the
+`escape_velocity` midplane is still the first cell centre (debt #30); the cell
+grid stays 32 × 32 (debt #31); no acceptance target moved and no recorded miss
+was removed. The spec report reads exactly as it did at S9 close — 11 pass, 7
+fail for the simple model, 8 pass, 11 fail for the advanced — which is the
+correct outcome for a session whose job was to find out what the numbers mean
+rather than to change them.

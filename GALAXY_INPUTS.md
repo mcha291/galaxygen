@@ -698,13 +698,44 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    246.4 km/s, inside 248 ± 3 `[verified:
    tests/test_disc.py::test_the_recorded_cause_of_the_row_3_miss]`. Registered
    in `spec.MISSES`; if S2 does not close it, the explanation is wrong.
-12. **The c₂₀₀–z relation is unvalidated and load-bearing.** c₂₀₀ = 4.1(1 + z_f)
-   applies a normalisation quoted for c_vir to c₂₀₀ without the conversion
-   between the two overdensities, and z_f = 2.5 is the midpoint of §3's
-   "z ≈ 2–3" rather than a measurement. Across that cited range v_c(R₀) moves
-   about 10 km/s — three times acceptance entry 3's error bar. The one check it
+12. **The c₂₀₀–z relation is unvalidated and load-bearing, and S10 measured how
+   load-bearing.** c₂₀₀ = 4.1(1 + z_f) applies a normalisation quoted for c_vir
+   to c₂₀₀ without the conversion between the two overdensities, and z_f = 2.5
+   is the midpoint of §3's "z ≈ 2–3" rather than a measurement. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
-   measurements span (§4b).
+   measurements span (§4b). Four things the S10 audit established, none of which
+   changes the constant — this session records rather than fixes:
+   - **The conversion is not a free choice.** The model publishes its own
+     R₂₀₀ = 212.94 kpc, and debt #10 already established that the 255 kpc it is
+     compared against is a top-hat virial radius. Their ratio is 1.198, so the
+     c_vir normalisation used as a c₂₀₀ one is high by that factor and K should
+     be 3.42, giving c₂₀₀ = 11.98. **Both values pass the only check the
+     constant has**, because both are inside 10–18.
+   - **The correction closes acceptance row 3 on its own**: v_c(R₀) goes from
+     256.0 to 246.92, inside 248 ± 3, while the star formation rate, the gas
+     mass, the stellar mass and the disc scale length move by less than 1 part
+     in 10⁹. Row 3's recorded miss explains it by every baryon sitting inside R₀
+     (debt #18) and predicts rows 2, 3 and 20 closing together, so **there are
+     now two explanations and rows 2 and 20 tell them apart**. Whichever finally
+     closes row 3, the other two rows are the check that it was the right one
+     `[verified: tests/test_halo.py::test_the_conversion_closes_row_3_and_moves_nothing_else]`.
+   - **K and z_f enter only as their product**, so no measurement of the
+     assembly epoch alone can validate the relation: c₂₀₀ ≈ 12 is reachable by
+     K = 3.42 at z_f = 2.5 or by K = 4.1 at z_f = 1.92, and the model cannot
+     tell the two apart `[verified:
+     tests/test_halo.py::test_k_and_the_assembly_epoch_enter_only_as_their_product]`.
+   - **The recorded sensitivity is stale and too small.** Across the cited
+     z = 2–3 this entry says v_c(R₀) moves "about 10 km/s, three times
+     acceptance entry 3's error bar". Re-measured after S2 and S3 changed the
+     baryon profile it is **15.29 km/s, 5.1× row 3's half-width**, and the epoch
+     the table wants, z_f ∈ [1.9, 2.1], lies below the cited range rather than
+     inside it `[verified:
+     tests/test_halo.py::test_the_epoch_the_acceptance_table_wants_is_below_the_cited_range]`.
+   The chain reaches the advanced model's one fitted constant and stops there:
+   at K = 3.42 the escape velocity at R₀ falls from 578 to 565 km/s and the
+   present-day gas at R₀ from +0.001 to −0.014 dex, so `WIND_SPEED` would need
+   refitting by about a hundredth of a dex and row 22 stays inside its target at
+   −0.0563 `[verified: DECISIONS.md D95]`.
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -746,11 +777,34 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    result rather than a fit `[verified: tests/test_chemistry_dtd.py::
    test_the_wind_takes_the_share_the_effective_yield_was_hiding]`. The simple
    model keeps `NET_YIELD` as its own constant, explained rather than blind.
+   **S10 puts a number on the discharge.** The two routes share no constant —
+   one is a fit to the solar neighbourhood with no outflows, the other is
+   nucleosynthetic yields minus what a wind removes — and they agree to 10%:
+   y_Z = 0.0406 with 75.32% of fresh metals escaping at R₀ gives an effective
+   yield of 0.01001 against the fitted 0.01100 `[verified:
+   tests/test_chemistry_dtd.py::test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent]`.
+   Agreeing at all is the content of the discharge; the residual 10% is the two
+   models' different recycling, and is recorded rather than tuned away.
 17. **Acceptance rows 20 and 21 have zero-width targets.** The sources quote no
    uncertainty, so the check fails for any float that is not bit-exact. Row 20
    agrees to 6% and still fails. A defect in the table, not the model; the fix
    is to read the source's uncertainty or to give the table a way to say "no
-   testable target", which belongs to the S10 audit.
+   testable target", which belongs to the S10 audit. **S10 took the second
+   option and explains why it could not take the first.** `Quantity.testable` is
+   false for a pointwise row whose interval has zero width, `spec.untestable()`
+   lists them, the spec report names them once as a table defect rather than per
+   model, and a new row added without an interval now has to declare itself in
+   its note `[verified: tests/test_spec.py::test_the_table_says_which_rows_have_no_testable_target,
+   ::test_a_new_zero_width_row_cannot_be_added_silently]`. Nothing is widened
+   and no verdict moves: row 20 still fails, by 28%, for debt #18's reasons.
+   Reading the source was not available — the uncertainty is not in this
+   repository, and rule B14 will not let a `[verified]` tag rest on a document
+   outside it. **Inventing an interval now would be worse than not having one**,
+   because the model's answer is already known and choosing a width against a
+   known answer is the move rule B5 exists to prevent. What discharges this is a
+   citation with an uncertainty, entered before the row is next judged. Row 14
+   quotes no uncertainty either and is *not* affected: it is statistical, and an
+   ensemble's central interval can contain a point target.
 18. **No high-angular-momentum accretion component.** With the infall carrying
    the disc's own scale length (debt #13's fix), nothing accretes beyond about
    10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
@@ -815,7 +869,20 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    tests/test_spec.py::test_the_ensemble_runs_only_the_stages_its_fields_need]`.
    What is *not* discharged is D61's per-cell cost: the catalogue still builds
    every cell's streams whether or not anything asks for that cell, and that is
-   a `performance.py` question at S10.
+   a `performance.py` question at S10. **S10 measured it and D61's premise is
+   half right.** The catalogue costs 113 ms for the published 20 000-star
+   sample, and **90% of that does not depend on how many stars are asked for**
+   (0.59 µs per star, fitted over an eightfold range of sample sizes). Of the
+   100 ms fixed, 1.0 ms is setup, **14.9 ms lays out all 1024 cells at 14.5 µs
+   each — that, and only that, is what is paid whether or not anything asks** —
+   and 84.3 ms draws in the 516 cells that actually realise a star, about 163 µs
+   each. So D61's "eight `Generator` constructions, about 22 µs each" is right
+   about the cost of a cell that realises stars (176 µs predicted against 163
+   measured) and wrong about who pays it: **508 of the 1024 cells realise
+   nothing and cost only their layout draw.** A nine-cell region query costs
+   2.8 ms, 2.4% of the whole `[verified: DECISIONS.md D96;
+   tests/test_performance.py::test_the_catalogue_cost_is_separated_the_way_debt_61_asks]`.
+   The trade-off itself is now debt #31.
 
 25. **The two occurrence relations §12 cites cannot both be true, and the
    mechanism picks the steeper one.** §12 quotes giant occurrence going as
@@ -853,7 +920,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    +1.5 inside half a kiloparsec, against the +0.5 real bulges reach, because
    nothing carries iron out of a region with 5 M☉/pc² of gas `[verified:
    tests/test_systems.py::test_metallicity_is_looked_up_not_drawn]`. The bulge
-   and its inflow are S10 questions; recorded, not clipped (rule B9).
+   and its inflow are S10 questions; recorded, not clipped (rule B9). **S10
+   checked the grid and it is not the grid.** Across N_t from 500 to 8000 the
+   centre's peak [Fe/H] wanders by less than 0.10 dex without converging
+   monotonically, and stays above +1.4 while the simple model's stays below
+   +0.7 on every grid: the dex that separates +1.5 from the +0.5 bulges reach is
+   the massless wind `[verified:
+   tests/test_chemistry_dtd.py::test_the_centres_iron_is_the_wind_and_not_the_grid]`.
+   What S10 also found is that **no acceptance row could ever have caught this**
+   — see debt #29.
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
    plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
@@ -872,7 +947,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    infall far faster inside 4 kpc than τ₀(R/R₀) gives; if a steeper inside-out
    law inside R₀ does not open the valley, the DTD's long tail is what keeps
    the local track at intermediate [α/Fe]. The simple model is untouched: its
-   thick disc is the merger's and its rows read as before.
+   thick disc is the merger's and its rows read as before. **A trap S10 found
+   for whoever picks this up:** at N_t = 8 the advanced model reports a valley.
+   A time grid coarse enough to under-resolve the delayed iron manufactures
+   exactly the signal this debt is hunting, so a `bimodal` verdict is worth
+   nothing until the grid it was measured on is stated `[verified:
+   tests/test_chemistry_dtd.py::test_a_coarse_time_grid_manufactures_the_valley_debt_27_is_looking_for]`.
 28. **Migration is too strong once the tilt is right.** S2 recorded that if
    row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
    Row 22 steepened to −0.057 in the advanced model and row 23 stayed at
@@ -886,6 +966,72 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    in radius growing as √age), or the old gas gradient the model flattens from
    (−0.127 dex/kpc at 10 Gyr, with no migration) is too steep to begin with. A
    gradient measured at 10 Gyr decides between them.
+
+29. **The acceptance table reads nothing inside 4 kpc, so the model's worst
+   number is invisible to it.** The gradient rows are fitted over R = 4–12 kpc;
+   rows 3, 6 and 8 are evaluated at R₀; rows 1, 10, 11, 19 and 20 are integrals
+   over the whole disc. Nothing reads a *value* in the inner disc, which is
+   exactly where debt #26's [Fe/H] = +1.5 lives — a full dex above what real
+   bulges reach, on 7 annuli of the default grid, and every acceptance row
+   passes over it `[verified:
+   tests/test_chemistry_dtd.py::test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs]`.
+   The table was assembled from BHG16's summary quantities, which are the ones
+   the Milky Way is *measured* in, so this is not an oversight so much as an
+   inherited shape — but it means the table cannot be read as covering the
+   model. **Prediction, stated so it can fail:** a single row on the central
+   metallicity would have caught debt #26 at S9 rather than S10, and if adding
+   one turns out to catch nothing the model does not already record, then the
+   inner disc really is only wrong in the one way debt #26 names.
+
+30. **The vertical grid buys nothing and quietly moves a published field.**
+   `halo_potential` is the only field on the z axis, and its only consumer —
+   the advanced chemistry's escape velocity — reads column 0. So N_z is not a
+   quality knob for anything the acceptance table can see: **not one row moves
+   by even a thousandth of its target's width at any N_z, including N_z = 1**,
+   where the single sample sits 2.5 kpc above the plane `[verified:
+   tests/test_convergence.py::test_n_z_moves_no_acceptance_row_at_any_resolution]`.
+   Two consequences. The scale heights of rows 6 and 7 are computed analytically
+   by the vertical stage and are not fitted to a z profile, which is worth
+   knowing before anyone reads them as a vertical-structure measurement. And
+   `escape_velocity` is *declared* as the midplane escape speed while being
+   evaluated at z = z_max/(2 N_z) — half a cell above the plane, at a height set
+   by a grid knob. Measured, because the size is the whole question: the
+   innermost annulus moves 1.03 km/s in 725 between N_z = 15 and 960, under 0.2%,
+   because the NFW potential is nearly flat near r = 0 `[verified:
+   tests/test_chemistry_dtd.py::test_the_midplane_escape_velocity_is_half_a_cell_above_the_midplane]`.
+   The fix is one line — evaluate the potential at z = 0 rather than at the
+   first cell centre — and this session records rather than fixes.
+
+31. **The default grid is far finer than any acceptance row can detect, and
+   nothing records what it is sized for.** N_R = 400, N_t = 2000, N_z = 60.
+   Swept one knob at a time, the worst any acceptance scalar drifts against the
+   default is **0.056 of its own target's width**, in either model; the
+   drift-exceeds-width criterion first fires below N_R ≈ 16 and N_t ≈ 25, and
+   never for N_z `[verified: DECISIONS.md D94;
+   tests/test_convergence.py::test_the_acceptance_table_is_converged_on_the_default_grid,
+   ::test_the_criterion_can_fire_and_is_shown_to]`. So the default is about 25×
+   finer in radius and 80× finer in time than the table requires, and the
+   justification must be the *rendered fields* — a profile plotted at 16 annuli
+   is not a profile — which is nowhere written down. **This is not a proposal to
+   coarsen the grid**: the acceptance table is 24 scalars and the viewer draws
+   arrays. It is that the number nobody can defend is the one that will be
+   changed by accident. D61's cell grid is the same shape of question one level
+   down, and cannot be re-measured at all without editing the source, because
+   `CELL_RINGS` and `CELL_SECTORS` are module constants and one of them is bound
+   into a default argument.
+
+32. **A per-stage or per-route cold profile bills a process-wide one-off to
+   whichever stage triggers it.** The first `seeds.rng` call in a fresh
+   interpreter costs 8.9 ms; every one after it costs 0.023 ms, a factor of
+   about 380. The `pattern` stage is the first stage of both models to draw, so
+   it reads at 30× cold-over-warm in `performance.py` and is not a 9 ms stage
+   `[verified: DECISIONS.md D97]`. `performance.py` now measures the one-off in
+   its own interpreter and publishes it beside the table. **`tools/timings.py`
+   has the same term in its cold column and does not say so**: whichever route
+   first reaches a seeded stage carries 8.9 ms that is not the route's. Not
+   corrected there, because subtracting a measured constant from a published
+   measurement is the sort of tidying that outlives its justification (rule B6);
+   recorded so the column can be read.
 
 ---
 

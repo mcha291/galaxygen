@@ -348,3 +348,51 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   stages that did not change: the advanced vertical stage lands three places
   later than the simple one's because it waits on the chemistry. Orders are per
   model; assert them per model.
+
+## From S10
+
+- [audit][all] A sweep in which nothing drifts and an instrument that cannot
+  fire look identical from the sweep alone. Give every convergence knob a
+  deliberately too-coarse control point and record what it did, so the
+  demonstration is part of the measurement rather than an argument beside it
+  (rule B3) `[verified: DECISIONS.md D94]`.
+- [audit][all] Judging a drift against the width of its own acceptance target
+  is the right *criterion* and a very loose one: the worst margin here is 0.056
+  of a width, so the check passes with a factor of 18 to spare and would keep
+  passing through a real regression. Publish the margin next to the verdict —
+  a row at 0.001 widths and a row at 0.9 widths are not the same finding.
+- [audit][field] Sweep the axis nobody asked you to sweep. N_z was outside the
+  brief, and it is the one that turned out to buy nothing: one field on the
+  axis, one consumer, and it reads column 0 `[verified: GALAXY_INPUTS.md §11
+  debt #30]`.
+- [audit][all] Ask what the acceptance table *cannot* see. Every row here is a
+  summary quantity or an integral, so nothing reads the inner disc, and the
+  model's worst number — a full dex above what real bulges reach — sits where no
+  row looks. Coverage is a property of the table, and only an audit checks it.
+- [audit][all] A two-point difference is not a decomposition. Differencing the
+  whole-galaxy and nine-cell catalogues to split fixed cost from per-star cost
+  returns a *negative* cost per star, because both points sit at the same
+  stars-per-cell ratio. Fit a slope over a range wide enough to condition it —
+  the same reason rule B7 prefers an exponent to a stopwatch `[verified:
+  DECISIONS.md D96]`.
+- [audit][infra] A per-stage cold profile bills the interpreter's one-off costs
+  to whichever stage trips them first. 8.9 ms of numpy bit-generator setup made
+  `pattern` read at 30× cold-over-warm. Measure the one-off separately and
+  publish it beside the table rather than paying it before the loop: paying it
+  first tidies the table and destroys the evidence that the effect exists.
+- [audit][all] When a re-examined constant turns out to close a failing row, the
+  finding is the *discriminator*, not the fix. Two explanations for one miss are
+  worth more than one, provided you also record the measurement that tells them
+  apart — here rows 2 and 20, which one explanation moves and the other does not
+  `[verified: DECISIONS.md D95]`.
+- [audit][all] Re-measure a debt's own stated magnitude, not just its claim.
+  Debt #12 said 10 km/s and three error bars; two sessions of unrelated work
+  later it was 15.3 km/s and five. The claim was still true and the number that
+  made it actionable had gone stale.
+- [close][infra] A gate that walks the filesystem behind a denylist of directory
+  names widens silently. A sibling git worktree checked out under `.claude/`
+  made the one-fetch gate read files this repository never wrote. Ask git what
+  the repository contains (rule B13) `[verified: DECISIONS.md D99]`.
+- [audit][advanced] A coarse grid can manufacture the signal you are hunting: at
+  N_t = 8 the advanced model reports the [α/Fe] valley debt #27 exists to find.
+  State the grid beside any qualitative verdict.
