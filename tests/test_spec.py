@@ -136,6 +136,33 @@ def test_zero_width_target_is_recorded_not_widened():
     assert r.status == "fail" and "zero-width" in r.reason
 
 
+def test_the_table_says_which_rows_have_no_testable_target():
+    """Debt #17: the second of the two fixes it names, the first needing a source S10 has not got."""
+    assert {q.n for q in spec.untestable()} == {20, 21}
+    assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21))
+    # Row 14 quotes no uncertainty either and is testable, because it is judged
+    # against an ensemble whose spread does the work.
+    assert Q[14].lo == Q[14].hi and Q[14].mode == "statistical" and Q[14].testable
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21))
+
+
+def test_a_new_zero_width_row_cannot_be_added_silently():
+    """Rule B13: the defect is only recorded because rows 20 and 21 say so in their notes."""
+    ok = dict(n=1, name="x", unit="Msun", field="f", mode="pointwise", stated="8", source="s")
+    with pytest.raises(spec.SpecError):
+        spec.Quantity(lo=8.0, hi=8.0, **ok)
+    assert not spec.Quantity(lo=8.0, hi=8.0, note="no uncertainty quoted", **ok).testable
+    assert spec.Quantity(lo=7.0, hi=9.0, **ok).testable
+
+
+def test_the_report_names_the_table_defect(prod, judged):
+    out = spec.report(list(prod[0]), judged)
+    assert "table: rows 20, 21 have zero-width targets" in out
+    assert "a defect in the table, not in a model (debt #17)" in out
+    # It fails nothing: the rows still evaluate and still print their number.
+    assert "5.79503e+09" in out
+
+
 def test_statistical():
     q = Q[16]  # bar pattern speed 34–52 km/s/kpc
     d = scalar("bar_pattern_speed", "km/s/kpc")

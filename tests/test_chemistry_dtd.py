@@ -197,3 +197,100 @@ def test_the_advanced_gradient_converges(advanced):
         for nr, nt in ((200, 1000), (400, 2000), (400, 4000))
     ]
     assert (max(grads) - min(grads)) / abs(np.mean(grads)) < 0.02, grads
+
+
+# --- S10, the calibration audit (rule B10) ------------------------------------
+
+
+def test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent(prod):
+    """Debt #16 was discharged on this claim at S9; S10 puts a number on it.
+
+    The simple model fits ``NET_YIELD`` so that the solar neighbourhood comes out
+    at [Fe/H] = 0 with no outflows. The advanced model instead takes
+    nucleosynthetic yields and loses metals to a wind, and the effective yield at
+    R₀ is then whatever falls out. The two are arrived at by routes that share no
+    constant, so agreeing at all is the content of the discharge — and how well
+    they agree is a number nobody had.
+    """
+    models, _, _ = prod
+    advanced, simple = models.get("advanced"), models.get("simple")
+    c = advanced.constants
+    y_z = (float(c["Y_O_CC"].value) * float(c["SOLAR_METALLICITY"].value) / float(c["SOLAR_OXYGEN"].value)
+           + 2.0 * float(c["Y_FE_IA"].value))
+    assert y_z == pytest.approx(0.0406, abs=0.0005)  # against the 0.03-0.04 usually quoted
+
+    o = run(advanced, only=("metal_escape_fraction",))
+    i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
+    escaped = float(o.fields["metal_escape_fraction"][i])
+    assert escaped == pytest.approx(0.7532, abs=0.001)
+
+    effective = y_z * (1.0 - escaped)
+    fitted = float(simple.constants["NET_YIELD"].value)
+    assert effective == pytest.approx(0.01001, abs=0.0002)
+    assert fitted / effective == pytest.approx(1.10, abs=0.03)
+
+
+def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
+    """Debt #26's trap, checked: a convergence sweep sees the inner rings move.
+
+    It moves them by ±0.04 dex and never by the dex that separates +1.5 from the
+    +0.5 real bulges reach, and the simple model's centre sits at +0.62 on every
+    grid. The excess is the massless wind, not the discretisation.
+    """
+    models, _, _ = prod
+    peaks = {}
+    for name in ("simple", "advanced"):
+        got = [
+            float(np.nanmax(run(models.get(name), grid=GridSpec(n_t=n), only=("feh_gas",)).fields["feh_gas"]))
+            for n in (500, 1000, 2000, 4000, 8000)
+        ]
+        peaks[name] = got
+        assert max(got) - min(got) < 0.10, (name, got)
+    assert min(peaks["advanced"]) > 1.4 and max(peaks["simple"]) < 0.7
+
+
+def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
+    """So debt #26's +1.5 dex centre is invisible to the whole table (S10)."""
+    from galaxy.stages.chemistry import GRADIENT_FIT_RANGE
+
+    assert GRADIENT_FIT_RANGE[0] == 4.0
+    models, _, _ = prod
+    advanced = models.get("advanced")
+    o = run(advanced, only=("feh_gas", "metallicity_gradient"))
+    R, feh = o.grid.R, o.fields["feh_gas"]
+    assert float(np.nanmax(feh)) == pytest.approx(float(feh[0]), abs=1e-9)  # the peak is the innermost ring
+
+    # Clipping the inner disc to a sane value moves no acceptance scalar, which is
+    # the sense in which the table cannot see it.
+    fit = (R >= GRADIENT_FIT_RANGE[0]) & (R <= GRADIENT_FIT_RANGE[1])
+    assert not fit[R < 4.0].any()
+    assert float(np.nanmax(feh[fit])) < 0.5
+
+
+def test_the_midplane_escape_velocity_is_half_a_cell_above_the_midplane(prod):
+    """S10: the field says midplane and the value is at z = z_max / (2·n_z).
+
+    ``halo_potential`` is the only field on the z axis and this is its only
+    consumer, which reads column 0 — the first cell *centre*, not the plane. So a
+    grid knob moves a published field, and the amount it moves it by is not
+    documented anywhere. It is small because the NFW potential is nearly flat
+    near r = 0, which is the reason to record the number rather than assume it.
+    """
+    models, _, _ = prod
+    advanced = models.get("advanced")
+    at = {}
+    for n_z in (15, 60, 960):
+        o = run(advanced, grid=GridSpec(n_z=n_z), only=("escape_velocity",))
+        assert o.grid.z[0] == pytest.approx(5.0 / (2 * n_z))
+        at[n_z] = float(o.fields["escape_velocity"][0])
+    assert at[960] - at[15] == pytest.approx(1.03, abs=0.15)  # km/s, the innermost annulus
+    assert abs(at[960] / at[15] - 1.0) < 0.002
+
+
+def test_a_coarse_time_grid_manufactures_the_valley_debt_27_is_looking_for(prod):
+    """A warning for whoever chases debt #27: check the grid before believing a verdict."""
+    models, _, _ = prod
+    advanced = models.get("advanced")
+    assert run(advanced, only=("alpha_sequence",)).fields["alpha_sequence"] == "single"
+    coarse = run(advanced, grid=GridSpec(n_t=8), only=("alpha_sequence",))
+    assert coarse.fields["alpha_sequence"] != "single"

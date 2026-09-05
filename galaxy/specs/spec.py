@@ -103,6 +103,26 @@ class Quantity:
             raise SpecError(f"row {self.n}: a qualitative row with a field needs expect=")
         if not self.stated.strip() or not self.source.strip():
             raise SpecError(f"row {self.n}: stated and source are required")
+        if not self.testable and not self.note.strip():
+            raise SpecError(
+                f"row {self.n}: a pointwise row whose target has zero width cannot be met by any "
+                f"float that is not bit-exact, and must say so in its note (debt #17)"
+            )
+
+    @property
+    def testable(self) -> bool:
+        """Whether any value could pass this row (debt #17).
+
+        A pointwise check against a target quoted without an uncertainty fails
+        for every float that is not exactly equal, so the row reports the table's
+        defect and not the model's. Said here rather than left in prose: the
+        table needed a way to say "no testable target", the alternative being to
+        invent an interval, and inventing one *now* — with the model's answer
+        already known — is the thing rule B5 exists to prevent. Statistical rows
+        are exempt: a zero-width target is still met when the ensemble's central
+        interval contains it, which is why row 14 is judged that way.
+        """
+        return self.mode != "pointwise" or self.lo is None or self.lo != self.hi
 
 
 _BHG16 = "BHG16"
@@ -136,6 +156,18 @@ QUANTITIES: tuple[Quantity, ...] = (
 
 if [q.n for q in QUANTITIES] != list(range(1, len(QUANTITIES) + 1)):
     raise SpecError("quantities must be numbered 1..N in order")
+
+
+def untestable(quantities: Iterable[Quantity] = QUANTITIES) -> tuple[Quantity, ...]:
+    """Rows no value can pass, because the source quotes no uncertainty (debt #17).
+
+    A standing defect in the table, not in any model, so it is reported once
+    rather than per model and it fails nothing: the rows it names still evaluate
+    and still print their number. What it stops is the defect spreading quietly —
+    a new row added without an interval now has to say so in its note, and this
+    list is pinned by a test.
+    """
+    return tuple(q for q in quantities if not q.testable)
 
 
 @dataclass(frozen=True, slots=True)
@@ -234,7 +266,13 @@ _MISSES: tuple[Miss, ...] = (
             "Splitting the baryons into a compact disc plus an extended high-angular-momentum "
             "component moves mass outside R0 and lowers v_c there. The bulge (S3-S4) pushes the "
             "other way, so the two must be added together before this row is judged - which is why "
-            "it is not closable until both exist."
+            "it is not closable until both exist. **S10 found a second explanation and the two are "
+            "distinguishable.** CONCENTRATION_NORM = 4.1 is quoted for c_vir and used as a c200 "
+            "normalisation; this model's own R200 = 212.9 kpc against the 255 kpc top-hat radius "
+            "gives the conversion 1.198, and K = 3.42 puts this row at 246.87, inside its target, "
+            "while moving no other row by more than 1e-6 (debt #12). The discriminator is rows 2 "
+            "and 20: the baryon explanation moves all three together, the halo one moves this row "
+            "alone. Whichever finally closes it, check the other two."
         ),
     ),
     Miss(
@@ -538,6 +576,13 @@ def report(
     if results is None:
         results = evaluate_models(models, **run_kwargs)
     lines = ["spec"]
+    bad = untestable()
+    if bad:
+        lines.append(
+            "  table: rows " + ", ".join(str(q.n) for q in bad) + " have zero-width targets and can "
+            "be met by no float that is not bit-exact — a defect in the table, not in a model "
+            "(debt #17). They are still evaluated and still print their number."
+        )
     for m in models:
         judged = results[m.name]
         s = summary(judged)

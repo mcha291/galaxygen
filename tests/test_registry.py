@@ -53,9 +53,9 @@ def test_unset_defaults_are_owed_and_never_increase():
     for i in unset:
         assert i.default_owner and i.default_owner.startswith("S"), i.name
     # S0: halo_assembly_z (S1), inside_out_index (S2), migration_efficiency (S2), mergers (S3).
-    # S1 set halo_assembly_z; S2 set inside_out_index and migration_efficiency.
-    # Only mergers (S3) is left. Sessions lower this bound; nothing may raise it.
-    assert len(unset) <= 1
+    # S1 set halo_assembly_z; S2 set inside_out_index and migration_efficiency; S3 set mergers.
+    # None is left, and the ratchet is at the floor. Sessions lower this bound; nothing may raise it.
+    assert len(unset) == 0
 
 
 def test_control_ranges_never_decrease():
