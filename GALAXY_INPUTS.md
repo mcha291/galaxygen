@@ -897,6 +897,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    value then; the tilt (row 22) is what survives a refit, the level is what
    does not. The convergence sweep sees the inner rings move with N_t and the
    acceptance rows not at all (D94): that is this wind, not the grid.
+   **The other end, from run 1 of the S10 pair** (D100): the advanced catalogue
+   has 1.2% of its stars above [Fe/H] = +0.5 against the simple model's 0.02%,
+   giant occurrence inside 1 kpc is 0.43 against 0.07, and the published
+   sample's giant fraction is 1.65% against 1.02% — a 60% difference in a
+   headline planets number made by the half-kiloparsec the massless wind cannot
+   empty; `PLANETESIMAL_EFFICIENCY`'s fit is untouched, occurrence at R₀ is
+   5.0% in both `[verified: session-10-gamma, tests/test_calibration.py::
+   test_debt_26_the_iron_at_the_centre_reaches_the_planets]`.
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
    plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
@@ -994,7 +1002,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    simple model's 253 — the bimodal probe above reads 443 because its thin disc
    is still carrying most of the heated stars — and rows 6 and 7 then have to
    be judged together, with `MERGER_HEATING` and `SECULAR_HEATING` re-examined
-   against both.
+   against both. Run 1 of the pair adds (D100): 52 pc of the advanced model's
+   326 is `MERGER_HEATING`'s (274 pc without it), and the +5 km/s that puts the
+   advanced model at 429 leaves the simple one at 347, still inside `[verified: session-10-gamma, tests/test_calibration.py::
+   test_debt_31_secular_heating_passes_row_6_in_both_models_only_by_the_targets_width]`.
 31. **`GAS_DISC_SCALE_RATIO` multiplies nothing at 1.0 and carries the advanced
    model's row 22.** S3 kept it "so that S10 can sweep it". Swept: 0.8 → 1.5
    takes the shared upstream from R_d = 2.00 to 3.68 kpc, row 3 from 261 to
@@ -1013,7 +1024,37 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    this constant's second value in disguise — an outer accretion channel
    steepens nothing inside 12 kpc only if it carries no metals in, so with it
    row 22 either holds or moves toward −0.047, which decides whether the wind's
-   tilt or the infall's is the one doing the work.
+   tilt or the infall's is the one doing the work. Run 1 of the pair swept the
+   same constant under debt #18 and adds the 1.2 point (D100): rows 3 and 4
+   pass there (248.7 km/s, 2.97 kpc) and row 20 rises to 7.2 × 10⁹, while
+   row 2 goes to 2.33 and the simple gradient flattens to −0.018 `[verified: session-10-gamma, tests/test_calibration.py::
+   test_debt_18_a_broader_single_infall_trades_rows_3_and_20_against_2_and_22]`.
+32. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (found by run 1 of the
+   S10 pair, ported by the diff, D100). Kennicutt's normalisation is
+   (2.5 ± 0.7) × 10⁻⁴ and is deliberately not fitted (§2). Across that ±1σ the
+   present-day rate runs 2.16–1.85 M☉/yr and the gas mass 6.8–5.2 × 10⁹: the
+   swing is 2.5 times row 2's miss, and at +1σ the row is 0.007 from passing
+   `[verified: session-10-gamma, tests/test_calibration.py::
+   test_debt_29_row_2_cannot_see_past_ks_norms_own_uncertainty]`. A target
+   inside the error bar of the one constant it depends on is not a check on
+   the model by itself. What survives is the *pair*: rows 2 and 20 pull
+   `KS_NORM` opposite ways, so no value of it satisfies both, and that is
+   evidence for debt #18 that neither row is alone — the more so once row 20
+   is read like for like (#29). Run 2 never moved `KS_NORM`; the finding is
+   run 1's and the test that pins it lives on its branch.
+33. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
+   history that misses rows 2 and 20** (found by run 1 of the S10 pair, ported
+   by the diff, D100). Both set the present-day gas at R₀ solar (debt #16,
+   D89), and both were fitted with no extended accretion component (#18);
+   whatever that component does to the infall at R₀ moves them. Levers,
+   measured so the re-fit is one line: +10% `WIND_SPEED` is −0.064 dex at R₀,
+   +10% `NET_YIELD` is +0.041 dex `[verified: session-10-gamma, tests/test_calibration.py::
+   test_debt_30_the_two_solar_calibrations_and_their_levers]`; run 2's larger
+   step agrees to the curvature (800 → 1300 km/s is −0.32 dex at R₀, #26).
+   Rule B10 applies the day #18 closes; until then both are provisional rather
+   than re-fitted against a mechanism that is not there. Run 2 had left
+   `NET_YIELD` as debt #16's, discharged (D96.11); this entry keeps the claim
+   open, and #16 stays discharged: the yield is explained, not yet final.
 
 ---
 

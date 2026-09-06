@@ -97,8 +97,23 @@ git ls-remote --tags origin        # confirm; a push that says "Everything up-to
 one match on `main`. Once a row carries a literal
 SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 
-## 2. Anything else owed
+## 2. S10: the merge is owed, and it is wider than one branch
 
-Nothing else at present. Calibration debt is **not** tracked here — it lives in
+The board asked for two blind audit runs and a diff. The pair `session-10-gamma`
+(run 1) and `session-10-gamme-run-2` (run 2, this branch) is diffed in
+DECISIONS.md D100, and run 1's findings are ported here as debts #32–#33. But
+`main` already carries `Merge S10 into main` (`ff12928`, from `session-10`, its
+own two runs) with debts #29–#33 of its own, and `session-10-beta` holds another
+list (debts #29–#35). Owed, by someone who may read every branch:
+
+1. Decide which S10 `main` keeps: leave `ff12928` and port this pair's union onto
+   `main`'s register as new numbers (#34 onward, D100 the source), or replace it.
+2. If this branch merges: renumber its #29–#33 past `main`'s and re-point the
+   citations (`tests/test_audit.py`, D96, D100, the register text), pick one
+   debt-#17 remedy (D100, disagreement 1), `git merge --no-ff` with subject
+   `Merge S10 into main: …`, then add the `s10` row above (rule C2e).
+3. Tick the board ☑ only when `main` holds the diff; `uv run python tools/progress.py`.
+
+Calibration debt is **not** tracked here — it lives in
 the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
 board. This file is only for actions that need a human at a keyboard.

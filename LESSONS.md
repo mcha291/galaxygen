@@ -386,3 +386,8 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] The 8 KB Bash limit fails a long patch with a quoting error and runs
   nothing; a patch script written to a file with a file tool and run from there
   costs one extra step and cannot half-apply.
+- [close][audit] A paired run needs a reserved range of numbers before it starts.
+  Both blind S10 runs opened debts #29–#31 and decisions D94 onward with
+  different contents, so the diff had to map numbers before it could compare
+  findings; hand each run its own debt and decision range and the diff reads
+  straight across `[verified: DECISIONS.md D100]`.

@@ -279,6 +279,13 @@ def test_the_register_carries_s10s_findings():
     import progress  # tools/, on sys.path via conftest
 
     text = progress.read(progress.INPUTS)
-    assert progress.debt_counts(text) == (23, 8)  # #17 discharged; #29, #30, #31 opened
-    for item in ("29. **Acceptance row 20 compares", "30. **Row 6 passes at the edge", "31. **`GAS_DISC_SCALE_RATIO`"):
+    # #17 discharged; #29-#31 opened by run 2; #32-#33 ported from run 1 by the diff (D100).
+    assert progress.debt_counts(text) == (25, 8)
+    for item in (
+        "29. **Acceptance row 20 compares",
+        "30. **Row 6 passes at the edge",
+        "31. **`GAS_DISC_SCALE_RATIO`",
+        "32. **Row 2 cannot see past `KS_NORM`",
+        "33. **`NET_YIELD` and `WIND_SPEED` are each fitted",
+    ):
         assert item in text, item

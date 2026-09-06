@@ -1858,3 +1858,186 @@ to the first).
 (rule B3); the runner's own clock is the one that cannot disagree with the order
 it ran. The gate's failure was the first thing the session saw and the last thing
 it had to fix.
+
+### D100. The two blind audits diffed: what both found, what only one found, where they disagree
+
+**Decision.** The two lists the board's gate asks for are run 1's, on
+`session-10-gamma` (its DECISIONS.md D94–D102, BRIEF.md "This run's defect
+list", GALAXY_INPUTS.md §11 #29–#31 and amendments to #12, #17, #18, #26,
+`tests/test_calibration.py`, six tests), and run 2's, this branch's D96 with
+D94, D95, D97 and `tests/test_audit.py`, eleven tests. Both were cut from the
+S9 merge `635c3c8`, both ran on Fable 5.1 on the desktop, and neither read the
+other or any commit after that merge `[verified: git merge-base session-10-gamma
+session-10-gamme-run-2 = 635c3c8; this branch's D96 and gamma's D102]`. Run 1
+numbers itself "run 3" because its instruction named two earlier branches; here
+it is run 1 of this pair. The diff is written from both branches read side by
+side, once, and nothing in it is averaged (rule B12): where the runs disagree
+both readings stand on their branches and the merge picks one.
+
+**Both found (9).** Every number the two runs both measured agrees to the last
+printed digit; the lists differ in what was measured, not in what was read.
+
+1. **Debt #12.** c_vir = 14.35 converted at Δ_vir = 101 ρ_crit is c₂₀₀ = 10.9,
+   and row 3 falls 256.0 → 242.6 km/s — through its window and out — in both
+   (gamma D97, here D96.1). Both conclude the conversion and z_f are degenerate
+   in row 3, either fix alone overshoots, and the two must be set together
+   against rows 3 and 19; both recorded and changed nothing.
+2. **Debt #17, the fact.** Both read arXiv:1511.08877 and found no uncertainty
+   on 8.0 × 10⁹ or 89 : 11; both discharged the debt. The remedies differ — the
+   one substantive split, below.
+3. **Row 6 and the heating constants** (gamma #31 ≡ here #30). `SECULAR_HEATING`
+   fitted for the simple model's merger-defined thin disc holds the advanced
+   model's row 6 at 326 pc, 24 pc under its ceiling; 30 km/s puts it at 429 in
+   both runs. Both call it one constant, two fits (rule B10).
+4. **The `GAS_DISC_SCALE_RATIO` sweep** (gamma's #18 amendment ≡ here #31). The
+   advanced gradient reads −0.086 at 0.8 in both, −0.048 (gamma) against −0.047
+   (here) at 1.2; both find rows 3 and 20 bought only by paying rows 2 and 22,
+   and both read that as the case for a second component rather than a wider
+   first. They file it differently, below.
+5. **Debt #26.** Both name the bulge and its inflow as the open question and
+   measured the centre from opposite ends — gamma downstream at the planets, here
+   at the lever — with one number in common: the `WIND_SPEED` lever on the gas at
+   R₀, −0.064 dex per +10% (gamma #30) against −0.32 dex for +62% (here #26),
+   consistent to the curvature.
+6. **Convergence.** Every reachable row stays inside its width in both models
+   with the same criterion (drift ≤ width) and empty registers; row 3 is the
+   widest testable drift, 0.34 / 0.33 km/s from n_t (5.7% / 5.6% of 6 km/s);
+   n_R moves no row more than n_t; row 1's 0.2% step in n_t is D46's class; the
+   advanced thick-disc rows read zero on every grid (debt #27 is not a
+   resolution effect); row 24 is `single` everywhere.
+7. **Performance.** 0.54 s simple, 0.82 / 0.81 s advanced, cold; `chemistry_dtd`
+   42% of the advanced run; `pattern`'s first `Generator` draw the only cold/warm
+   gap (40× / 50×); a `Generator` costs 14–18 µs (gamma) / 16 µs (here); D61
+   answered the same way — per-cell setup, not stars, is the catalogue's cost.
+8. **Cold timings** 20–30% slower than D93 on the same desktop; both blame the
+   machine; the stages column unchanged.
+9. **Housekeeping.** Both lowered the UNSET ratchet 1 → 0, both made the
+   one-`fetch` gate skip `.claude/`, both changed no physics: spec counts
+   11 / 7 / 6 and 8 / 11 / 5 are S9's in both.
+
+**Run 1 only (3 findings, 3 smaller readings).**
+
+- **`KS_NORM`'s own ±1σ contains row 2** (gamma #29): across (2.5 ± 0.7) × 10⁻⁴
+  the SFR runs 2.16–1.85 and the gas 6.8–5.2 × 10⁹ the other way, so row 2 is
+  not a check by itself and only the pair with row 20 is evidence. Run 2 never
+  moved `KS_NORM`. **Registered here as #32.**
+- **`NET_YIELD` and `WIND_SPEED` are provisional on debt #18** (gamma #30), with
+  the levers that make the re-fit one line: +10% `WIND_SPEED` = −0.064 dex, +10%
+  `NET_YIELD` = +0.041 dex at R₀. Run 2 declined `NET_YIELD` by name ("debt
+  #16's, discharged", D96.11) and tied `WIND_SPEED`'s refit to #26's mass-loaded
+  wind only. **Registered here as #33.**
+- **The centre reaches the planets** (gamma D100): 1.2% of the advanced
+  catalogue above [Fe/H] = +0.5 against 0.02%, giant occurrence inside 1 kpc
+  0.43 against 0.07, the published sample's giant fraction 1.65% against 1.02%,
+  occurrence at R₀ 5.0% in both. Run 2 measured the gas, not the stars. **#26
+  amended.**
+- Smaller: row 3 moves 0.22 km/s with n_R because the disc's resolved term is
+  integrated on the grid while the halo's is analytic (gamma D94); 52 pc of the
+  advanced row 6 is `MERGER_HEATING`'s (274 without) and 30 km/s leaves the
+  simple model at 347 (gamma #31 → here #30); at ratio 1.2 rows 3 and 4 pass at
+  248.7 km/s and 2.97 kpc, row 20 reads 7.2 × 10⁹, row 2 2.33 and the simple
+  gradient −0.018 (gamma #18 → here #31).
+
+**Run 2 only (6 findings, 4 smaller readings).**
+
+- **Row 20 compares total gas with a hydrogen mass** (#29): like for like the
+  miss is 47%, not 28%; debt #18's component owes ~5 × 10⁹ M☉ of hydrogen and
+  `baryon_retention`'s budget argument is 3% low. Gamma read the same abstract
+  and kept "28%" — the miss its own remedy for #17 is written to preserve.
+- **Debt #27's prediction, run** (D96.5): the default merger list stays `single`
+  at n = 2, 3; Gaia-Enceladus alone with n = 3 opens `bimodal_wide` (depth
+  0.57–0.64, valley at +0.40) at the price of row 22 (−0.13 to −0.14), and the
+  thick disc it finds is the simple model's compact one. Gamma's one #27
+  reading is that it is not a resolution effect.
+- **Debt #28 measured in both models** (D96.6): old gradient −0.105 / −0.129
+  without migration, the kernel flattens it 16× / 7×, young/old 3.2 / 3.1.
+- **`MERGER_HEATING` calibrates a different row in each model** (#30): row 7 in
+  the simple one (616 → 1745 pc over 60–180 km/s), row 6 in the advanced
+  (287 → 392); `SECULAR_HEATING` 20 fails the simple model low at 176.
+- **`GAS_DISC_SCALE_RATIO` is load-bearing** (#31 as a debt, rule B11): the
+  advanced row 22 runs −0.086, −0.057, −0.047, −0.043 across 0.8–1.5 and passes
+  only within a tenth of the disc's scale; at 1.5 rows 5 and 11 pass and 3, 4,
+  22 fail.
+- **`WIND_SPEED` sets the level, not the centre** (#26): 800 → 1300 km/s moves
+  the central maximum +1.65 → +1.37, the gas at R₀ +0.15 → −0.17, row 22 by
+  0.004.
+- Smaller: z_f = 2–3 spans 15.3 km/s on row 3 (248.2–263.5), not the 10 the S2
+  text of #12 recorded; row 15 is `BAR_LENGTH_RATIO × R_d` exactly, a check on
+  R_d (#21); `RETURN_FRACTION` named as not re-examined (D96.11); the sfh scalars'
+  dependence on n_t is not monotone at the 0.1% level (D94).
+
+**Where they disagree (5, one of them substantive).**
+
+1. **Debt #17's remedy.** Gamma gives rows 14, 20 and 21 the half-unit of the
+   source's last printed digit — `spec.py` now reads 112.5–113.5, 7.95–8.05 × 10⁹,
+   0.105–0.115 — and argues rule B5 widens nothing because no failed row passes,
+   and that "no testable target" would hide row 20's 28% miss (gamma D95). Run 2
+   leaves the intervals at zero width, adds `Quantity.testable` (False for a
+   pointwise row with `lo == hi`, True for a statistical one), prints "no
+   testable target — debt #17", and keeps row 20 `fail` and a recorded miss
+   under #18, arguing that an interval this project infers is a guess dressed as
+   a citation (rule B14; here D97). Each run's objection to the other's remedy:
+   gamma's does not reach run 2's implementation, whose row 20 still fails and
+   is still recorded; run 2's reaches gamma's half-unit, though gamma's is a
+   declared convention, not a guess. Three things follow from the split and are
+   not themselves disagreements: gamma judges row 20's convergence (6.8% of a
+   10⁸ M☉ width, its largest drift) where run 2 says `untestable` (its largest is
+   row 3's 5.6%); gamma's row 14 has a width, run 2's is testable at zero width
+   by being statistical; gamma's `spec.py` notes and #17/#18 text carry "28%",
+   which #29 makes stale. **Not averaged.** The merge takes one remedy whole;
+   the other is a named ruleset on its branch (rule B12).
+2. **The numbers.** Both runs opened #29–#31 with different contents, and both
+   started decisions at D94. Mapping, gamma → here: #29 → #32 (new), #30 → #33
+   (new), #31 → #30 (same finding), the #18 amendment → #31 (same sweep);
+   D94 → D94, D95 → D97 (opposite remedy), D96 → D95, D97 → D96.1, D98 → #31 and
+   #32, D99 → #30 and #33, D100 → #26, D101 → D98, D102 → this entry. Run 2's
+   #29–#31 keep their numbers here because the register and D96 and
+   `tests/test_audit.py` cite them; renumbering is the merge's, not the diff's.
+3. **The catalogue's per-cell cost.** Gamma: 276 µs per realised cell and 7 µs
+   per star, `Generator` construction 41–53% of the stage (gamma D96). Run 2:
+   ~100 µs per cell and 1.5–2.2 µs per star, per-cell setup 70–78% of the stage
+   (here D95). The same word for two quantities — gamma's is the stage's time
+   over its realised cells, stars included; run 2's is the fixed cost from a
+   two-sample fit — and the one like-for-like number, a `Generator`, agrees
+   (14–18 against 16 µs), as does the conclusion. A disagreement about a word.
+4. **Row 20's miss**: 28% (gamma, hydrogen against total) against 47% (here,
+   like for like). Not two measurements of one thing: run 2 found the accounting
+   gamma inherited from S2. If #29 stands, gamma's 28% is superseded, not wrong.
+5. **The sweep's points**: gamma six (n_R 100 / 200 / 800, n_t 500 / 1000 / 4000),
+   run 2 four (200 / 800, 1000 / 4000), same criterion. Gamma's coarser grids give
+   its larger row-6 drift (2.05 pc at n_R = 100); nothing else differs.
+
+**What the diff measures.** Both runs were Fable 5.1, so this pair is not the
+plan's "once on each model" comparison (GALAXY_PLAN.md, "Run S10 twice, once on each model"): it holds the model
+fixed and varies the run — blind, from one commit, on one machine. Read that
+way: every measurement both made is reproducible to the printed digit, and the
+divergence is entirely in *choices* — which constant to move, whether a finding
+is an amendment or a debt, which of two remedies to a zero width. Coverage,
+counting distinct substantive findings in the union:
+
+    found by          both   run 1 only   run 2 only   union
+    findings            5         3            6         14
+    one run alone would have found 8 (gamma) or 11 (here) of 14
+
+So a single audit by this model misses between a fifth and two fifths of what
+two find, and the two lists' *disagreement* — one remedy — is the only place
+where the merge has to choose rather than take the union `[inferred from the
+lists above]`.
+
+**Actions taken here, none of them physics.** #32 and #33 registered from run 1
+with its test names cited by branch; #26, #30 and #31 amended with run 1's
+numbers; `test_the_register_carries_s10s_findings` counts 25 open, 8 discharged;
+the board's debt line regenerated. Nothing renumbered, nothing averaged,
+`session-10-gamma` untouched. One lesson recorded: two blind runs that share a
+numbering guarantee the collision this entry had to map, so a paired run should
+be handed a reserved range of debt and decision numbers before it starts.
+
+**Beyond this pair.** `main` already carries `Merge S10 into main` (`ff12928`,
+from `session-10`), whose D94–D98 and debts #29–#33 are a third list — its own
+two runs, `AUDIT_RUN1.md` / `AUDIT_RUN2.md`, diffed in its D97 — and
+`session-10-beta` holds a fourth (D94–D105, debts #29–#35). So this branch
+cannot merge as BRIEF.md planned without a second reconciliation against `main`,
+and the board row stays ◐: the diff the gate asked for is done, the merge is the
+maintainer's (BRIEF.md, MANUAL_TODO.md §2). The other lists were not read for
+this entry beyond their headings and debt titles, so that what is written above
+is this pair's diff and nothing else's.
