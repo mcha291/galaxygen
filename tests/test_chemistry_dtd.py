@@ -267,24 +267,27 @@ def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
     assert float(np.nanmax(feh[fit])) < 0.5
 
 
-def test_the_midplane_escape_velocity_is_half_a_cell_above_the_midplane(prod):
-    """S10: the field says midplane and the value is at z = z_max / (2·n_z).
+def test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_n_z(prod):
+    """Debt #35, fixed at S12: the field said midplane and read the first z-cell centre.
 
-    ``halo_potential`` is the only field on the z axis and this is its only
-    consumer, which reads column 0 — the first cell *centre*, not the plane. So a
-    grid knob moves a published field, and the amount it moves it by is not
-    documented anywhere. It is small because the NFW potential is nearly flat
-    near r = 0, which is the reason to record the number rather than assume it.
+    ``escape_velocity`` now reads ``halo_potential_midplane``, Φ(R, 0) exactly, so N_z —
+    the grid knob that used to move a published field by 1 km/s in 725 — moves nothing,
+    and the potential it climbs out of is deeper than the half-cell value was.
     """
+    from galaxy.stages.halo import mu
+
     models, _, _ = prod
     advanced = models.get("advanced")
+    G = float(advanced.constants["G"].value)
     at = {}
     for n_z in (15, 60, 960):
         o = run(advanced, grid=GridSpec(n_z=n_z), only=("escape_velocity",))
-        assert o.grid.z[0] == pytest.approx(5.0 / (2 * n_z))
-        at[n_z] = float(o.fields["escape_velocity"][0])
-    assert at[960] - at[15] == pytest.approx(1.03, abs=0.15)  # km/s, the innermost annulus
-    assert abs(at[960] / at[15] - 1.0) < 0.002
+        R = o.grid.R
+        phi0 = -G * o.fields["halo_dark_mass"] * np.log1p(R / o.fields["halo_scale_radius"]) / (mu(o.fields["halo_concentration"]) * R)
+        assert np.allclose(o.fields["halo_potential_midplane"], phi0)
+        assert np.all(o.fields["halo_potential_midplane"] < o.fields["halo_potential"][:, 0])
+        at[n_z] = o.fields["escape_velocity"].copy()
+    assert np.array_equal(at[15], at[60]) and np.array_equal(at[60], at[960])
 
 
 def test_a_coarse_time_grid_manufactures_the_valley_debt_27_is_looking_for(prod):

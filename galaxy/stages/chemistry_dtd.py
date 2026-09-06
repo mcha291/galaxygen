@@ -259,8 +259,9 @@ ESCAPE_VELOCITY = FieldDecl(
     name="escape_velocity", label="Midplane escape velocity", unit="km/s", kind=Kind.FIELD, axes=("R",),
     ramp=Ramp("viridis", scale="linear", lo=300.0, hi=800.0), meaningful_zero=True, optional=True,
     about=(
-        "From the halo potential plus the resolved baryons' midplane potential. The local value "
-        "is what the wind loading is judged against; the Sun's is commonly put at 530–580 km/s."
+        "From the halo potential at z = 0 exactly (halo_potential_midplane, S12) plus the resolved "
+        "baryons' midplane potential. The local value is what the wind loading is judged against; "
+        "the Sun's is commonly put at 530–580 km/s."
     ),
 )
 METAL_ESCAPE_FRACTION = FieldDecl(
@@ -336,7 +337,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     ia = snia_rate(psi, dt, delays, weights)
 
     v_esc = escape_velocity(
-        ctx.fields["halo_potential"][:, 0], ctx.fields["circular_velocity_resolved"],
+        ctx.fields["halo_potential_midplane"], ctx.fields["circular_velocity_resolved"],
         ctx.fields["halo_circular_velocity"], R, float(ctx.fields["baryon_mass_total"]), float(c["G"]),
     )
     kept = 1.0 - 1.0 / (1.0 + (v_esc / float(c["WIND_SPEED"])) ** float(c["WIND_INDEX"]))
@@ -458,7 +459,7 @@ CHEMISTRY_DTD = IMPLEMENTATIONS.register(
         ),
         requires=(
             "gas_surface_density_history", "sfr_surface_density_history", "infall_rate_history",
-            "stellar_surface_density", "halo_potential", "circular_velocity_resolved",
+            "stellar_surface_density", "halo_potential_midplane", "circular_velocity_resolved",
             "halo_circular_velocity", "baryon_mass_total",
         ),
         publishes=(

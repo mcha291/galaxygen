@@ -195,6 +195,20 @@ HALO_POTENTIAL = FieldDecl(
         "the zero point is at infinity."
     ),
 )
+HALO_POTENTIAL_MIDPLANE = FieldDecl(
+    name="halo_potential_midplane",
+    label="Halo potential Φ(R, 0)",
+    unit="km2/s2",
+    kind=Kind.FIELD,
+    axes=("R",),
+    ramp=Ramp("magma", scale="linear"),
+    meaningful_zero=False,
+    about=(
+        "The same NFW potential in the plane, z = 0 exactly: what the advanced chemistry's "
+        "escape velocity climbs out of. Until S12 that stage read halo_potential's first z-row, "
+        "half a cell above the plane at a height set by N_z (debt #35)."
+    ),
+)
 
 
 
@@ -218,6 +232,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     r = np.hypot(R[:, None], ctx.grid.z[None, :])
     potential = -G * dark * np.log1p(r / r_s) / (mu(c) * r)
+    midplane = -G * dark * np.log1p(R / r_s) / (mu(c) * R)
 
     return {
         "halo_virial_mass": M200,
@@ -233,6 +248,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "halo_enclosed_mass": enclosed,
         "halo_circular_velocity": v_c,
         "halo_potential": potential,
+        "halo_potential_midplane": midplane,
     }
 
 
@@ -260,6 +276,7 @@ HALO = IMPLEMENTATIONS.register(
             HALO_ENCLOSED_MASS,
             HALO_CIRCULAR_VELOCITY,
             HALO_POTENTIAL,
+            HALO_POTENTIAL_MIDPLANE,
         ),
     )
 )
