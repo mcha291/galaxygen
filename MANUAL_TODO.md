@@ -101,7 +101,8 @@ SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 
 The board asked for two blind audit runs and a diff. The pair `session-10-gamma`
 (run 1) and `session-10-gamme-run-2` (run 2, this branch) is diffed in
-DECISIONS.md D100, and run 1's findings are ported here as debts #32–#33. But
+DECISIONS.md D100 and set beside main's and beta's lists in D101; run 1's
+findings are ported here as debts #32–#33. But
 `main` already carries `Merge S10 into main` (`ff12928`, from `session-10`, its
 own two runs) with debts #29–#33 of its own, and `session-10-beta` holds another
 list (debts #29–#35). Owed, by someone who may read every branch:

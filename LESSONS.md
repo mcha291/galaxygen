@@ -391,3 +391,8 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   different contents, so the diff had to map numbers before it could compare
   findings; hand each run its own debt and decision range and the diff reads
   straight across `[verified: DECISIONS.md D100]`.
+- [audit][close] An audit's aim decides what it finds more than a repeat does.
+  Six S10 runs with three aims — the constants, the instruments, the register's
+  predictions — gave three nearly disjoint lists that agree to the digit where
+  they meet; when a session is run twice for coverage, hand the second run an
+  aim the first did not have, not the same brief blind `[verified: DECISIONS.md D101]`.

@@ -27,9 +27,12 @@ decision only the maintainer can take (below).
 1. **`main` already has an S10.** `ff12928` "Merge S10 into main" came from
    `session-10` (its own two runs, `AUDIT_RUN1.md`/`AUDIT_RUN2.md`, diffed in its
    D97) and carries debts #29–#33 and D94–D98 of its own; `session-10-beta` holds a
-   further list (D94–D105, debts #29–#35). Nothing of theirs was read for D100
-   beyond headings and debt titles. Decide which S10 `main` keeps before anything
-   else; the board row here stays ◐ until `main` holds a diff.
+   further list (D94–D105, debts #29–#35, **on Opus 5** — the plan's model
+   comparison). **D101 sets all four lists side by side**: a core of five, what
+   each found alone (15 / 12 / 7), six disagreements (the size of #12's
+   conversion, #17's remedy 4 : 1, `MERGER_HEATING` in the advanced model, whether
+   #24 is discharged, `KS_NORM`'s filing, row 20's 28% against 47%) and what a
+   union register needs. Decide which S10 `main` keeps first; the row stays ◐.
 2. If this branch is the one to merge: renumber #29–#33 past `main`'s (cited in
    `tests/test_audit.py::test_the_register_carries_s10s_findings`, D96, D100 and the
    register text), decide debt #17's remedy (D100, disagreement 1) and port the
