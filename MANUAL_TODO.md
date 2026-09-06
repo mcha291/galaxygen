@@ -48,7 +48,8 @@ closes the project.
 | 7 | `s07` | `9b5c612ef027` | **queued** |
 | 8 | `s08` | `589cb0f52805` | **queued** |
 | 9 | `s09` | `635c3c8ff43d` | **queued** |
-| 10 | `s10` | *TBD — the batch fills this in from `git rev-list -1 --grep='^Merge S10 into main' origin/main`* | **queued** |
+| 10 | `s10` | `ff129283543c` | **queued** |
+| 11 | `s11` | *TBD — filled in when S11 is merged* | **queued** |
 
 ### Run these
 
@@ -89,8 +90,11 @@ git tag -a s08 589cb0f52805513eb96092b1ff8777d6b035ed8f -m "S8: planets"
 # S9 — the advanced model.
 git tag -a s09 635c3c8ff43d670b090d68577b2c8db578e5a1eb -m "S9: advanced model"
 
-# S10 — the audit, run twice. The batch replaces this with the literal SHA.
-git tag -a s10 "$(git rev-list -1 --grep='^Merge S10 into main' origin/main)" -m "S10: audit"
+# S10 — the audit, run twice.
+git tag -a s10 ff129283543c00ffaf0a074602a098aa25288653 -m "S10: audit"
+
+# S11 — the three S10 audits integrated. The batch replaces this with the literal SHA.
+git tag -a s11 "$(git rev-list -1 --grep='^Merge S11 into main' origin/main)" -m "S11: audits integrated"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
@@ -103,6 +107,10 @@ SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 
 ## 2. Anything else owed
 
-Nothing else at present. Calibration debt is **not** tracked here — it lives in
+**Keep the three S10 audit branches.** `session-10-beta`, `session-10-gamma` and
+`session-10-gamme-run-2` are unmerged by design (DECISIONS.md D99) and are the sealed
+lists the four-way comparison D102 rests on; do not delete them from the remote, and
+do not merge them — their findings are on `main` as debts #34–#45 and tests. Nothing
+else at present. Calibration debt is **not** tracked here — it lives in
 the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
 board. This file is only for actions that need a human at a keyboard.

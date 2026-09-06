@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
 status board is the only record of what is done (A9); this file does not repeat it,
 is rewritten in place each session, and is capped at 120 lines (C3) by a test.
-**The eleven-session build is closed (S10, 2026-09-05).** BRIEF.md is for a maintainer.
+**The build is closed** (S0–S10; S11 integrated the S10 audits, 2026-09-07). BRIEF.md is for a maintainer.
 
 ## Open a session (rules C1, C2b)
 
@@ -13,9 +13,8 @@ uv run python tools/bootstrap.py       # installs the pre-commit hook path, chec
 uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec reports
 ```
 
-Then RULES.md in full and BRIEF.md; GALAXY_INPUTS.md only by section, when BRIEF.md
-names one. Branch `session-NN`; commit and push at every sub-deliverable (rule C2b).
-In a git worktree also run `git config --worktree core.hooksPath tools/hooks` (S10 run 2).
+Then RULES.md in full and BRIEF.md; GALAXY_INPUTS.md only by section. Branch `session-NN`;
+commit and push at every sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`.
 
 ## Layout
 
@@ -30,12 +29,14 @@ galaxy/stages/            cp1 halo + disc; cp2 assembly; cp3 sfh, chemistry (sim
                           chemistry_dtd (advanced), vertical (merger split) /
                           vertical_alpha (chemical split); cp4 pattern; cp5 systems;
                           cp6 planets. Shared where identical, mapped per model.
-galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight,
-                          determinism, spec (misses per model, D87), convergence (the
-                          grid swept one axis at a time, D94), performance (D95)
+galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight, determinism,
+                          spec (misses per model D87; "no testable target" D100), convergence (one axis
+                          at a time D94; vacuous D101), performance (D95; fixed/per-star fit, one-off D101)
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
-AUDIT_RUN1.md, AUDIT_RUN2.md   the two independent S10 defect lists; their diff is D97
+tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, #26–#28, #41–#45);
+                          beta's are in test_halo, test_chemistry_dtd, test_determinism, test_spec
+AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: D102
 ```
 
 ## Writing a stage
@@ -65,7 +66,8 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   the two independent S10 defect lists; their diff 
   test fails if a route has no cold timing.
 - Metadata answers from declarations and must not reach the runner; whatever computes
   goes through `Service.compute(...)`, the closure above the fields asked for (D4, D63);
-  objects are materialised per request (D82). `transport.js` holds **the only `fetch`**.
+  objects are materialised per request (D82). `transport.js` holds **the only `fetch`**;
+  the gate asks `git ls-files` what the repository contains (D101).
 
 ## Conventions
 
@@ -78,27 +80,25 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   the two independent S10 defect lists; their diff 
 - A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, rule A7) with
   its model, debt, reason and a prediction that could kill it (D33, D87); it still
   reports `fail`, never widen a target (B5), and a miss that starts *passing* fails the
-  run for that model — so a default that fixes a row changes its miss entry in the same
-  commit (debt #29). The table itself is `spec.py`, never prose.
+  run for that model (debt #29). A pointwise row with `lo == hi` says "no testable target" (D100).
 
-## What the instruments said at S10 close (run 2, 2026-09-05)
+## What the instruments said at S11 close (2026-09-07)
 
-- graph: acyclic, both models; orders in `tests/test_graph.py::ORDER`. preflight OK:
-  0 UNSET, 0 controls without a range. determinism OK, golden values pinned.
-- spec, simple: **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable.
-  spec, advanced: **8 pass, 11 fail, 5 not-yet-computable** — no thick disc (debt #27:
-  rows 5, 7–11, 24), row 23 migration (#28), row 22 passes. Every failure recorded for
-  its model; exit 0. No green row is an unconditioned prediction (AUDIT_RUN2.md §5).
+- graph: acyclic, both models. preflight OK: 0 UNSET, 0 controls without a range.
+  determinism OK, golden values pinned; the suite also checks it across processes (#40).
+- spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable;
+  advanced **8 pass, 11 fail, 5 not-yet-computable**. Unchanged since S9: no audit and no
+  integration changed physics. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
 - Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49, M_star = 5.276e10, SFR
   = 1.969, v_tan = 256.0 (both); simple grad −0.0237, old −0.0067, thick M 1.07e10, row
   9 0.103; advanced grad −0.0566, old −0.0193, v_esc(R₀) 578, f_esc 0.753, spread 0.299.
-- **Convergence** (D94): 0 drifts on N_R, N_t, N_z in either model; the default grid
-  is the N_t outlier at 0.2% (a step-onset infall, debt #30); DTD_BINS and AGE_BIN
-  converged by probe. **Profile** (D95, D98): simple 0.43 s, advanced 0.66 s
-  (chemistry_dtd 40%); `pattern`'s warm column is a cache (9 ms cold). **Scaling**
-  (D92): 0.94 / 0.78 / 2.03 naive; the tool's "whole model, cold" is warm.
-- **Register**: 26 open, 7 discharged; S10 added #29–#33, amended #11, #12, #17, #18,
-  #21, #24, #28. The two audits' diff is D97.
+- **Convergence** (D94, D101): 0 drifts on N_R, N_t, N_z in either model; the worst is
+  row 3 under N_t at 0.055 of its width; advanced rows 5, 7–11 are `vacuous` (debt #27).
+  **Profile** (D101, D103): 0.51 s simple, 0.81 s advanced (chemistry_dtd 41%); the
+  catalogue is 90–95% fixed cost (134 / 123 ms, 0.3–0.7 µs per star); the first seeded
+  draw costs 10.6 ms and lands on `pattern` (debt #37). **Scaling** (D92) not re-run.
+- **Register**: 38 open, 7 discharged; S11 added #34–#45 (beta on Opus 5; the gamma pair)
+  and amended ten entries. The three audit branches stay unmerged on the remote as D102's evidence.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 

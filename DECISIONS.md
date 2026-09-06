@@ -1672,7 +1672,9 @@ the catalogue for one, nine and every cell. It publishes numbers and fails on
 nothing (rule B6).
 
 **Settled by.** Cold and warm agree at every stage, so there is no cache in the
-reading. One stage is over a fifth of either model: the advanced chemistry, at
+reading *[S11: not at `pattern`, whose cold column carries the interpreter's first
+seeded draw, 10 ms against 0.4 warm — AUDIT_RUN2.md D-12, debt #37, D101]*. One
+stage is over a fifth of either model: the advanced chemistry, at
 41% — its per-timestep Python loop and 28 transport kernels of 400 × 400 — and it
 is the only optimisation worth a session. The per-cell table closes what debt
 #24 left open: cost is proportional to the stars asked for, one cell is a
@@ -1834,3 +1836,377 @@ to any route that reaches it; metadata runs no stage.
 in MANUAL_TODO.md with S9's SHA filled in from `origin/main`. The build's
 eleven sessions are closed; BRIEF.md is written for a maintainer rather than a
 session.
+
+## Session 11 — the three S10 audits integrated
+
+Surface: desktop. Model: Fable 5.1. Branch `session-11`, cut from `main` at
+`ff12928`, the S10 merge. The repository held four S10 lists on three branches
+after the audit was run six times — main's two runs (Fable 5.1), `session-10-beta`'s
+two (Opus 5), and the blind pair `session-10-gamma` / `session-10-gamme-run-2`
+(Fable 5.1) — and only main's was merged. This session brings the other two onto
+`main` as findings, tests and three instrument features, and records the
+four-way comparison the plan asked for (D102). No physics changed: the spec
+counts are S9's, 11 / 7 / 6 and 8 / 11 / 5.
+
+### D99. Integration by porting, not by merging: main is the base, the branches are sealed evidence
+
+**Decision.** `main` stays as S10 left it (rule C2a: never rewritten) and the
+three audit branches are never merged into it. What each holds is ported:
+its register entries as new debts and amendments, its measurement tests
+verbatim, and the instrument features that found something. The branches stay
+on the remote unmerged, cited by name and SHA, as the sealed lists the
+comparison rests on. Numbering, once: main's #29–#33 stand; beta's #29–#35
+become **#34–#40** in beta's order; the pair's five become **#41** (row 20
+counts hydrogen), **#42** (row 6 and the heating constants), **#43** (the
+solar calibrations provisional on #18), **#44** (`KS_NORM`'s band), **#45**
+(the infall ratio load-bearing). Ten existing entries take the other lists'
+measurements (#12, #16, #17, #18, #21, #24, #26, #27, #28, #29); where lists
+gave one quantity different numbers, #12 carries all three with what each
+assumed. Decisions made on the branches are cited by branch (`session-10-beta
+D95`), not copied; the four-way comparison and the choices this session made
+are the only new entries.
+
+**Settled by.** The branches conflict on fifteen files and hold four
+implementations of the same two instruments; a textual merge would have
+mangled the instruments and gained nothing, because the audits' value is in
+what they found and the tests that pin it. Those port cleanly for a reason
+that is itself a check: no branch changed physics, so every test that pins a
+model measurement — the pair's eleven, gamma's three, beta's twelve — ran on
+`main` unchanged and passed, 137 in the ported files `[verified: uv run pytest
+tests/test_audit.py tests/test_halo.py tests/test_chemistry_dtd.py
+tests/test_determinism.py tests/test_api.py tests/test_spec.py, 2026-09-07]`.
+Not ported, and why: beta's convergence controls (main's sweep already proves it
+can fire, on a stage built to drift), beta's and the pair's `convergence.py` and
+`performance.py` wholesale (main's stay, with three features added in D101),
+the pair's `Outputs.seconds` runner clock (main's profile times each stage's
+compute directly, which is the same clock), and the branches' about-line edits
+that carried one list's number where the register now carries three. What
+`main` owed before this session — the one-line fixes and the physics decisions
+in BRIEF.md — is untouched and still owed.
+
+### D100. Debt #17: the table says "no testable target", and the debt stays open
+
+**Decision.** `spec.Quantity.testable` is False for a pointwise row with
+`lo == hi`; `spec.untestable()` lists such rows; the report names them once as
+a table defect and the row's own reason reads "no testable target — debt
+#17"; a new zero-width row must say so in its note or `Quantity` refuses it;
+row 14 is exempt, being statistical. Rows 20 and 21 keep their zero width. The
+implementation is beta's (`session-10-beta` D98) with the reason wording of the
+pair's (`session-10-gamme-run-2` D97); `Quantity.width` is added for the
+convergence sweep. Debt #17 stays **open** with its discharge condition — a
+citation with an uncertainty, entered before the row is next judged — as it
+does on main's and beta's registers.
+
+**Settled by.** Four of the six runs built or chose this remedy; one,
+`session-10-gamma` (D95), instead gave rows 14, 20 and 21 the half-unit of the
+source's last printed digit. Both are recorded in the register and only one is
+applied (rule B12). The argument that decides it is the project's own: an
+interval chosen now is chosen with the model's answer for row 20 already known,
+which is the move rule B5 exists to prevent, and it does not stop being that
+move because the interval is small or because no failed row passes by it. The
+objection gamma raised to this remedy — that "no testable target" would hide
+row 20's miss — does not reach this implementation: row 20 still evaluates,
+still prints its number, still fails, and is still a recorded miss under debt
+#18 `[verified: tests/test_spec.py::test_the_report_names_the_table_defect;
+tests/test_audit.py::test_debt_17_the_zero_width_rows_say_no_testable_target]`.
+What the pair found about the *target* — that it is a hydrogen mass, debt #41 —
+means the row's eventual interval will be judged against a different number in
+any case.
+
+### D101. Three instrument features ported: `vacuous`, the catalogue's fixed cost fitted, the one-off measured alone
+
+    convergence (S11)   simple:   45 ok, 0 drift, 3 untestable,  0 vacuous, 6 statistical (row x axis)
+                        advanced: 33 ok, 0 drift, 3 untestable, 15 vacuous, 6 statistical
+                                  — rows 5, 7, 8, 9 and 11 read exactly 0 on every N_R, N_t and N_z (debt #27)
+    performance (S11)   catalogue against sample size, cold, one fresh interpreter per model:
+                        simple    5k 0.132 s  10k 0.142  20k 0.141  40k 0.147  -> 0.33 us per star, 134 ms fixed
+                                  (95% of the catalogue at 20k does not depend on how many stars are asked for);
+                                  layout 26.7 ms over all 1024 cells, 516 of them realise a star
+                        advanced  5k 0.136 s  10k 0.120  20k 0.133  40k 0.153  -> 0.69 us per star, 123 ms fixed (90%);
+                                  layout 19.4 ms
+                        one-off, the first seeded draw of a fresh interpreter: 10.60 ms, then 0.024 ms (436x);
+                                  billed by the per-stage table to `pattern` in both models
+
+**Decision.** Main's `convergence.py` and `performance.py` stay and gain three
+things the other audits' instruments had. (1) A pointwise row that reads exactly
+zero at the default grid and at every swept grid is `vacuous`, not `ok`: nothing
+moved because nothing is there (the gamma pair's D94; rule B9). It is not a
+problem and fails nothing; a valley opening in the advanced model (debt #27) will
+make those five rows ones the sweep judges for the first time `[verified:
+tests/test_convergence.py::test_a_row_that_reads_zero_at_every_grid_is_vacuous_not_converged,
+::test_the_production_scalars_hold_under_a_half_sweep]`. (2) `catalogue_cost`
+times the whole catalogue at `SAMPLES` = 5k, 10k, 20k, 40k stars and fits a
+straight line through (stars realised, seconds): the slope is the marginal cost
+per star, the intercept the fixed cost, published with the layout's share and
+the count of cells that realise a star (session-10-beta D96) `[verified:
+tests/test_performance.py::test_the_catalogue_is_priced_per_cell]`. (3) The
+first seeded draw is measured in its own interpreter (`--one-off`) and printed
+beside the table rather than paid before the stage loop (session-10-beta D97)
+`[verified: tests/test_performance.py::test_the_first_seeded_draw_is_measured_in_a_fresh_interpreter]`.
+Also ported, from beta's D99: the one-`fetch` gate asks `git ls-files` what the
+repository contains instead of walking the filesystem behind a denylist, which
+is what made it fail on every desktop checkout with worktrees under `.claude/`.
+
+**Settled by.** The numbers above, which settle two of D102's disagreements
+without averaging them. On D61: the pruning main's run 1 measured is real (one
+cell 1.3 ms, nine 2.9 ms) *and* the fixed cost beta and the pair measured is
+real — 90–95% of the catalogue's time at the published sample does not depend
+on the stars asked for, and about a fifth of that fixed part is the layout of
+every cell whether or not anything asks. Debt #24 stays discharged for what it
+said (a query pays for its own cells) and the cell grid's trade-off is debt
+#36. On D95's "cold and warm agree at every stage": false at `pattern` by a
+factor of hundreds, for a reason that belongs to the interpreter and not the
+stage, and D95 now carries a note saying so rather than being rewritten (debt
+#37). The two-point split beta first tried is recorded in `performance.py`'s
+docstring because the negative number it returned was not obviously wrong to
+look at. The `vacuous` count is the honest table: the advanced model's row 11 was
+"converged" at 0 against a 6 × 10⁹ M☉ width, a green row earned by an absence.
+`tools/scaling.py` was not re-run: no stage's cost changed (rule B7).
+
+### D102. The four S10 lists side by side: main's two runs, beta's two, and the gamma pair
+
+**Decision.** GALAXY_PLAN.md asked for S10 to be run twice and the defect lists
+diffed, "the only controlled evidence this project will produce about whether
+the model choice mattered". The repository ended with six runs and four lists.
+This entry is their comparison, made from the branches read side by side, so
+that the record the plan asked for is on `main`; it was first written on the
+pair's branch (`session-10-gamme-run-2` D101) and is carried here with the
+register numbers of this branch. The lists: **main** (`session-10`:
+`AUDIT_RUN1.md` §4, six items; `AUDIT_RUN2.md` D-1…D-14, C1–C5, P1–P5; the two
+diffed in D97; debts #29–#33), **beta** (`session-10-beta`: D94–D105, two runs
+by one author aimed apart, diffed in its D105; debts #29–#35 there, #34–#40
+here) and **the pair** (`session-10-gamma` D94–D102 and `session-10-gamme-run-2`
+D94–D99, two blind runs from the S9 merge, diffed in the latter's D100; debts
+#41–#45 here). Six runs in all, every one from S9's model on the desktop:
+main's two and the pair's two on Fable 5.1, **beta's two on Opus 5**
+`[verified: the S10 board row on each of the four branches]` — so beta against
+the other two lists is the model comparison the plan asked for. Three lists
+are independent of each other — main, beta, the pair — and inside main and
+beta the second run knew the first (D97 §"what the diff says"; beta D105 §"what
+it is worth"). Nothing below is averaged (rule B12).
+
+**The common core: what every list found (5).**
+
+1. **Debt #12's conversion is the size of row 3's miss or larger.** Measured
+   by four of the six runs (main's run 1 only flagged it; beta's second run
+   audited the instruments) — and given three different numbers,
+   disagreement 1 below.
+2. **Row 20 cannot be judged against a zero width.** Every list; the remedy
+   split 4 : 1, disagreement 2, settled in D100.
+3. **The advanced chemistry is 40–42% of its model, and the first `Generator`
+   of a process lands on `pattern`.** main run 2 46×, beta 30× with the one-off
+   measured alone at 8.9 ms, gamma 40×, the pair's run 2 50×. main run 1 alone
+   wrote "cold and warm agree at every stage" and main's own run 2 corrected it
+   (D-12).
+4. **No acceptance scalar drifts across its width in N_R or N_t.** The worst
+   is row 3 under N_t at 0.33–0.34 km/s of 6, 0.055 of a width, in every run;
+   the advanced thick-disc rows read zero on every grid; rows 1 and 10 move
+   non-monotonically in N_t at 0.2% (main C2, beta's margin lesson, both of
+   the pair). main and beta also swept N_z (harmless, 3 × 10⁻⁷ dex/kpc); the
+   pair did not.
+5. **Housekeeping.** All four branches lowered the UNSET ratchet 1 → 0; none
+   changed physics; the spec counts are S9's in every run.
+
+**Where two or three lists overlap, with the numbers.**
+
+- **The `GAS_DISC_SCALE_RATIO` sweep**: main run 2 (P5), gamma and the pair's
+  run 2 read the same digits — 0.8 → 1.2 takes row 3 261.1 → 248.7, R_d 2.00 →
+  2.97, row 20 4.32 → 7.25 × 10⁹, the simple gradient −0.047 → −0.018, row 2
+  1.54 → 2.33. Filed three ways: main as D-6 and an amendment to #18, gamma as
+  an amendment to #18, the pair's run 2 as a debt (#45 here, rule B11). beta
+  did not sweep it; main run 1 wrote "holds".
+- **`SECULAR_HEATING` is fitted to row 6**: main run 2 (P10: 20 → 176, 30 →
+  347; row 7 883 / 1039 / 1231), gamma and the pair's run 2, which add the
+  advanced model (326 pc; 429 at 30; `MERGER_HEATING` 287 → 392; #42 here).
+  main run 1's "holds: set from an observation" is contradicted by its own run
+  2 and by the pair.
+- **`KS_NORM`'s own ±1σ contains row 2**: main run 2's round-3 probe (3.2 × 10⁻⁴
+  → row 2 = 1.847, 0.007 above its bound; row 20 5.25 × 10⁹) and gamma's #29
+  (#44 here) are the same numbers. Filed as "holds, load-bearing" on main and
+  as a debt by gamma — disagreement 5.
+- **The iron-rich centre reaches the planets**: main run 1 (19% giant
+  occurrence at 2 kpc against 2.6%; sample fraction 1.65% against 1.02%),
+  main run 2 (known), gamma (adds 0.43 against 0.07 inside 1 kpc). beta and
+  the pair's run 2 measured the gas instead (beta: the centre is the wind, not
+  the grid; the pair's run 2: `WIND_SPEED` sets the level, not the centre).
+- **Row 15 is `BAR_LENGTH_RATIO × R_d`**: main run 1, main run 2 (known), the
+  pair's run 2 (#21). Not gamma, not beta.
+- **Debt #12's stated sensitivity is stale**: z_f = 2–3 spans 15.3 km/s on row
+  3, not 10 — beta (15.29) and the pair's run 2 (15.3); z_f = 2.0 → 248.2 —
+  main run 2 (P8) and the pair's run 2.
+- **`WIND_SPEED` is fragile, in four forms**: main run 2 (fitted against a
+  potential carrying row 3's excess, and evaluated on the present-day potential
+  at every time: f_esc 0.78 early against 0.753), beta (K = 3.42 moves its refit
+  by 0.01 dex), gamma (provisional on #18; −0.064 dex per +10%; #43 here), the
+  pair's run 2 (800 → 1300 km/s is −0.32 dex at R₀ and 0.004 on row 22). The
+  levers agree: main ±5% → ∓0.03 dex, row 22 ±0.0006 per 10%.
+- **Migration's young/old ratio 3.2 / 3.1**: main run 2 (3.18 / 3.09; the
+  stale row-23 miss text corrected on main) and the pair's run 2 (3.2 / 3.1;
+  the 10 Gyr gradient as the discriminator, −0.105 / −0.129 without migration).
+- **The harness's worktrees under `.claude/`** broke a tree-walking test on
+  every desktop run: main run 2 (the hooks path), beta (D99: `git ls-files`,
+  ported here), gamma and the pair's run 2 (skip the directory). One artefact,
+  three fixes.
+
+**Found by one list only.**
+
+- **main only** (its run 2, unless said): `MERGER_DURATION` is dead and the
+  merger's gas arrives as a step (#30); the Sagittarius default delivers
+  5.9 × 10⁹ M☉ from 3.8 Gyr and without it row 2 passes at 1.837 in both models
+  (#29); the catalogue does not migrate, spread 0.19 against 0.30 (#31);
+  "without migration the spread is far too narrow" is refuted, 0.294 against
+  0.299 (#32); Z(R₀) = 1.24 Z☉ with an unregistered 2.0 (#33);
+  `vertical.scale_height` hard-codes G (D-9); `SF_THRESHOLD` = 10 closes rows 2
+  and 20 with row 3 unmoved (D-3); `baryon_retention` = 0.30 passes rows 1–3
+  (D-4); rows 1 and 10 pass by two cancellations and row 1's target includes
+  the bulge (D-5); row 22's advanced pass is conditional on `WIND_INDEX` = 2
+  (D-14); `tools/scaling.py` labels a warm run cold (D-13); `DTD_BINS` and
+  `AGE_BIN` converged (C4); N_z has one consumer (C5); `DIP_DEPTH` decides row
+  24 at a dip of 0.384 (§4.5). Fifteen items — the largest single list.
+- **beta only** (Opus 5): the acceptance table reads nothing inside 4 kpc, so
+  debt #26's +1.5 dex is invisible to it (#34); N_z buys nothing and
+  `escape_velocity` is evaluated half a cell above the midplane it is declared
+  at (#35); the default grid is 25× finer in radius and 80× in time than any
+  row can detect, and `CELL_RINGS` is bound into a default argument (#36);
+  `tools/timings.py` carries the 8.9 ms one-off unlabelled (#37); the
+  statistical criterion rewards a noisier model and `ENSEMBLE_MIN` = 20 cannot
+  deliver a central 95% — n = 41 would (#38); `world_seed` is read by nothing
+  and the ensemble samples a diagonal (#39); the reproducibility check runs
+  both halves in one interpreter (#40); K and z_f enter only as their product
+  and the epoch row 3 wants, z_f ∈ [1.9, 2.1], is below the cited range; #16's
+  discharge quantified at 10%; a coarse grid (N_t = 8) manufactures debt #27's
+  valley; a too-coarse control point on every sweep knob; a two-point
+  difference that returned a negative cost per star. Twelve.
+- **the pair only**: row 20's target is hydrogen and the miss is 47%, not 28%
+  (#41 — every other run wrote 28%); debt #27's prediction run, a fast inner
+  disc opening `bimodal_wide` at the price of row 22 and finding the compact
+  thick disc (main's nearest probe: n = 3 gives −0.0666 at row 2 = 1.29);
+  `MERGER_HEATING` calibrates row 7 in one model and row 6 in the other (#42);
+  #28 measured with no migration in both models (16× / 7×); `NET_YIELD`
+  provisional on #18 (#43; main run 2: drifted −0.025 dex, harmless); row 3
+  moves with n_R through the disc's quadrature (gamma D94); the `Generator`
+  ceiling 0.13 s. Seven.
+
+**Where the lists disagree on a number or a verdict (6).**
+
+1. **How much debt #12's conversion is worth.** The pair: c₂₀₀ = 10.9 and row
+   3 → 242.6, the NFW profile converted at Δ_vir = 101 ρ_crit
+   (`tests/test_audit.py::c200_from_cvir`). beta: c₂₀₀ = 11.98 and row 3 →
+   246.92, from the ratio of the model's R₂₀₀ = 212.94 kpc to the cited 255 kpc
+   top-hat radius, 1.198 (`tests/test_halo.py`). main run 2: c₂₀₀ = 12.25 and
+   row 3 → 247.97, K = 3.5 from a recalled factor "of order 0.8". Same sign,
+   5.4 km/s apart; beta's and main's put the corrected row inside 245–251, the
+   pair's 2.4 below it. Three conversions — one computed from the profile with
+   its overdensity stated, one from an external radius, one recalled — and
+   three discriminators proposed: rows 1 and 19 (main D-4), rows 2 and 20 (beta
+   D95), rows 3 and 19 with z_f set jointly (the pair). Not averaged: debt #12
+   carries all three, and this is BRIEF.md's physics item 3.
+2. **Debt #17's remedy, 4 : 1.** "No testable target" or `untestable`: main run
+   1 (the sweep only), beta (`Quantity.testable`, `untestable()`, a `SpecError`
+   on a new silent zero-width row; row 14 exempt), the pair's run 2
+   (`Quantity.testable`, statistical rows exempt); main run 2 took it as known.
+   Gamma alone widened rows 14, 20 and 21 to printed-precision half-units.
+   beta's D98 states the objection to gamma's move in advance: an interval
+   chosen with the answer known is what rule B5 forbids; gamma's answer is
+   that no failed row passes by it. Settled for `main` in D100.
+3. **`MERGER_HEATING` in the advanced model.** main run 1: "no row reads the
+   kick" until the valley opens. The pair: the advanced row 6 reads it — 287 →
+   392 pc across 60–180 km/s, 52 pc at the default (274 without). Contradicted
+   by a measurement (#42).
+4. **D61 and debt #24.** main run 1: the catalogue's cost is proportional to
+   the stars asked for, D61's fear "is not what the code does", #24 discharged
+   in full. beta: 90% of the catalogue's 113 ms does not depend on the star
+   count (0.59 µs per star), 14.9 ms lays out all 1024 cells whether or not
+   anything asks, 163 µs per realised cell — D61 half right, the trade-off
+   moved to a debt (#36 here). The pair: ~100 µs fixed per cell against ~2 µs
+   per star, 70–78% of the stage per-cell setup, a 0.13 s ceiling; gamma 276 µs
+   all-in per realised cell, 41–53% `Generator` construction. Every run agrees
+   a nine-cell region query costs 2.6–2.9 ms, so the pruning is real; the
+   registers disagreed on whether #24 is discharged. Resolved here without
+   averaging: #24 stays discharged (nothing is paid for a cell a *query* did
+   not ask for), the fixed cost is published by the instrument (D101) and its
+   trade-off is #36. The marginal cost per star is 0.59 µs on beta and 1.5–2.2
+   in the pair, different sample ranges, the same order.
+5. **`KS_NORM`.** One probe, one set of numbers, two verdicts: "holds,
+   load-bearing" (main run 2) against "not a check on the model by itself"
+   (gamma). Registered here as #44: a standing condition, countable, with the
+   probe cited.
+6. **Row 20's miss.** 28% in main, beta and gamma; 47% in the pair's run 2,
+   like for like (#41). Not two measurements — an accounting the other four
+   inherited from S2. Every row-20 number on this register is now marked as
+   the table's reading.
+
+Two contradictions inside main are already on D97 and are not repeated here
+(`SECULAR_HEATING` "holds", `SF_THRESHOLD` "holds").
+
+**What the four lists together say.** The union is about forty distinct
+findings. The largest single list, main's run 2, holds about a third of it;
+the three independent lists each hold the core of five and then 15 (main),
+12 (beta) and 7 (the pair) findings no other list has, and no two lists
+share more than a third of either. beta's D105 drew from two aimed runs the
+warning that the count found says nothing about the count remaining; three
+independent lists say it with more force `[inferred from the lists above]`.
+
+**The model comparison.** Four Fable 5.1 runs (main's two, the pair) against
+two Opus 5 runs (beta's), with the plan's own caveats: one list on the Opus
+side, and beta's two runs shared an author. What the lists show. (i) Size:
+beta's twelve unique findings sit between main run 2's fifteen and the pair's
+seven, and beta opened seven debts to main's five and the pair's five. (ii)
+Aim: beta audited the instruments and the acceptance table's coverage — the
+statistical criterion, the seed ensemble, the determinism check, the grid's
+sizing, the one-off's billing, the table's blind inner disc; the Fable lists
+audited the model's constants and the register's predictions — every
+constant across its cited range, every field to a reader, the debts'
+predictions run. The two aims barely intersect, and that, not quality, is why
+the lists are nearly disjoint. (iii) Agreement where they meet: the shared
+core agrees to the digit (0.055 widths, 8.9 ms, 42%, 0.33 km/s); the one
+shared quantity with two numbers is #12's conversion, and the difference is
+in what each assumed, not in the arithmetic. (iv) Contradicted verdicts: main
+run 1 has five (three on D97, `MERGER_HEATING` and #24 here); main run 2,
+beta's two runs and the pair have none. So the weakest list in the repository
+is a Fable run, and the distance between it and the next Fable run on the same
+branch is larger than any distance between the Fable lists and the Opus one.
+Read as the plan asked — did the model choice matter? — the answer six runs
+give is that the **aim** decided what was found and the model did not,
+visibly; a second Opus list, blind, is what would turn that reading into a
+measurement `[inferred from the lists above; rule B12, nothing averaged]`.
+
+### D103. Cold timings at S11 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0004   0.0002   1.55        940  -
+    viewer: a module         0.0003   0.0002   1.45     21,599  -
+    index                    0.0000   0.0000   2.07      1,237  -
+    version                  0.0022   0.0017   1.27      1,132  -
+    stages                   0.0002   0.0001   1.68      8,645  -
+    fields                   0.0007   0.0004   1.61     57,008  -
+    inputs                   0.0001   0.0001   1.66      9,091  -
+    arrays: one profile      0.0840   0.0002 350.65      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1389   0.0032  43.03  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0881   0.0004 250.52      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1612   0.0035  45.72     18,720  halo,…,vertical
+    region: whole disc       0.2890   0.1516   1.91  1,126,208  halo,…,vertical
+    system: one star         0.1537   0.0021  72.42      2,816  halo,…,vertical
+    adv: history             0.4206   0.0041 102.10  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.4281   0.0031 137.02  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.4355   0.0040 107.80     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.4362   0.0022 197.09      2,824  halo,…,chemistry_dtd,vertical_alpha
+    import + registry: 0.095-0.100 s, paid once per process and excluded from the cold column
+
+    model simple:   0.505 s cold, 0.474 s warm   sfh 17.4%  chemistry 10.2%  systems 26.6%  formation 16.5%  planets 25.0%
+                    pattern 0.0113 cold / 0.0004 warm (the one-off, D101)
+    model advanced: 0.807 s cold, 0.760 s warm   sfh 11.1%  chemistry_dtd 41.1%  systems 18.1%  formation 9.3%  planets 17.5%
+
+**Read within the run.** Every row is 15–25% slower than D98's on the same
+desktop two days later — the machine, not the code: no stage's `compute` was
+touched this session and the stages column is unchanged. The shape holds: the
+advanced chemistry adds about 0.28 s cold to any route that reaches it and
+nothing warm; metadata is sub-millisecond with no stage behind it; every cold
+number on a stage-running route carries the 10 ms of D101's one-off, which is
+12% of `arrays: one profile` and 2% of `adv: one sector` (debt #37).
+`tools/scaling.py` not re-run (rule B7).
+
+**Close.** The board gains row 11 (desktop, Fable 5.1, `s11`, 2026-09-07);
+`session-11` is merged into `main` with `--no-ff`; `s11` is queued in
+MANUAL_TODO.md with S10's SHA filled in. The three audit branches stay on the
+remote, unmerged, as the sealed evidence D102 rests on.

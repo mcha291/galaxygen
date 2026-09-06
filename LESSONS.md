@@ -391,3 +391,48 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   as well as the list. Run 1's amendments to three debts and one lesson carried
   every overlapping finding across, so the overlap measured the leak, not the
   agreement `[verified: DECISIONS.md D97]`.
+
+## From S11
+
+- [audit][close] Integrate audits by porting findings and tests, never by merging
+  their branches: four implementations of two instruments on three branches
+  conflict on fifteen files, while every test that pins a model measurement runs
+  unchanged on the base because no audit changed physics — 137 did
+  `[verified: DECISIONS.md D99]`.
+- [audit][all] Rule B10 reaches the instruments' constants too. The default grid
+  (debt #36) and `ENSEMBLE_MIN` (debt #38) were each chosen once and never
+  re-derived, and each does something other than its name says. Audit the measuring
+  apparatus with the same rule as the thing measured (session-10-beta).
+- [audit][all] Ask which direction a check's errors point: "the ensemble's interval
+  intersects the target" makes a noisier model easier to pass (debt #38). A
+  criterion that cannot be failed by getting worse is not a criterion.
+- [audit][all] Ask what the acceptance table cannot see. Every row is a summary
+  quantity or an integral, so nothing reads the inner disc and the model's worst
+  number sits where no row looks (debt #34). Coverage is a property of the table.
+- [audit][all] A target's accounting is part of the target: row 20's 8.0 × 10⁹ M☉
+  is hydrogen and the model's gas is every retained baryon, so the miss is 47%, not
+  28% (debt #41). Check what a quoted mass counts before checking the number.
+- [audit][field] A constant shared by two models can calibrate different rows in
+  each (`MERGER_HEATING`, debt #42), and a constant that is a no-op at its default
+  can still carry a row (`GAS_DISC_SCALE_RATIO` at 1.0, debt #45).
+- [audit][field] Run the register's prediction with every knob it names before
+  writing that it failed: debt #27's fast inner disc does nothing with the default
+  merger list and opens the valley with one event delivering a fifth of the budget.
+- [audit][infra] A two-point difference is not a decomposition — differencing the
+  whole-galaxy and nine-cell catalogues returned a negative cost per star. Fit a
+  slope over a range wide enough to condition it (`performance.SAMPLES`, D101).
+- [audit][infra] A per-stage cold profile bills the interpreter's one-offs to
+  whichever stage trips them first (10 ms of bit-generator setup on `pattern`).
+  Measure the one-off separately and publish it beside the table; paying it before
+  the loop tidies the table and destroys the evidence (debt #37).
+- [audit][advanced] A coarse grid can manufacture the signal you are hunting: at
+  N_t = 8 the advanced model reports the [α/Fe] valley debt #27 exists to find.
+  State the grid beside any qualitative verdict.
+- [audit][close] An audit's aim decides what it finds more than a repeat does: six
+  S10 runs with three aims gave three nearly disjoint lists that agree to the digit
+  where they meet, and the model — Fable 5.1 against Opus 5 — did not visibly
+  matter. Run a session twice with two stated aims, not the same brief blind
+  `[verified: DECISIONS.md D102]`.
+- [close][infra] A paired run needs a reserved range of debt and decision numbers
+  before it starts: every S10 branch opened #29 and D94 with different contents,
+  and the integration had to map numbers before it could compare findings.
