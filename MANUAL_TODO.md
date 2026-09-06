@@ -47,7 +47,8 @@ closes the project.
 | 6 | `s06` | `a71483844338` | **queued** |
 | 7 | `s07` | `9b5c612ef027` | **queued** |
 | 8 | `s08` | `589cb0f52805` | **queued** |
-| 9 | `s09` | *TBD — S10 fills this in* | **queued** |
+| 9 | `s09` | `635c3c8ff43d` | **queued** |
+| 10 | `s10` | *TBD — filled in when S10 is merged; see §2* | **queued** |
 
 ### Run these
 
@@ -85,8 +86,11 @@ git tag -a s07 9b5c612ef027 -m "S7: viewer"
 # S8 — planets.
 git tag -a s08 589cb0f52805513eb96092b1ff8777d6b035ed8f -m "S8: planets"
 
-# S9 — the advanced model. S10 replaces this with the literal SHA.
-git tag -a s09 "$(git rev-list -1 --grep='^Merge S9 into main' origin/main)" -m "S9: advanced model"
+# S9 — the advanced model.
+git tag -a s09 635c3c8ff43d670b090d68577b2c8db578e5a1eb -m "S9: advanced model"
+
+# S10 — the audit. Whoever merges S10 replaces this with the literal SHA (§2).
+git tag -a s10 "$(git rev-list -1 --grep='^Merge S10 into main' origin/main)" -m "S10: audit"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
@@ -97,8 +101,22 @@ git ls-remote --tags origin        # confirm; a push that says "Everything up-to
 one match on `main`. Once a row carries a literal
 SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 
-## 2. Anything else owed
+## 2. S10 ran three times: diff, then merge
 
-Nothing else at present. Calibration debt is **not** tracked here — it lives in
-the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
-board. This file is only for actions that need a human at a keyboard.
+The board asked for two independent audit runs and a diff of their defect
+lists. Run 1 is `session-10`, run 2 `session-10-beta`, and run 3
+`session-10-gamma`, which was cut from S9's merge `635c3c8` on instruction and
+told to read nothing after it — so it could neither diff against the others
+nor merge to `main` (DECISIONS.md D102). Owed, by someone who may read all
+three branches:
+
+1. Diff the three defect lists (each run's BRIEF.md states its own) and put
+   the diff in DECISIONS.md — the S10 gate.
+2. Pick the run to merge, `git merge --no-ff` it with subject
+   `Merge S10 into main: …`, port the other runs' findings as register entries
+   where they are not duplicates, and fill the `s10` row above with the SHA.
+3. Tick the board row ☑ and run `uv run python tools/progress.py`.
+
+Calibration debt is **not** tracked here — it lives in the register at
+`GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the board. This
+file is only for actions that need a human at a keyboard.

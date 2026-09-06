@@ -1634,3 +1634,236 @@ about 0.21 s cold to any route that reaches it, and nothing to a route that does
 not; warm, the two models are indistinguishable. Metadata is still
 sub-millisecond with no stage behind it, and `/api/stages` grew by two
 declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).
+
+## Session 10 — the audit (run 3, cut from the S9 merge)
+
+Surface: desktop. Model: Fable 5.1. Ran on `session-10-gamma`, branched from
+S9's merge commit `635c3c8` on instruction, reading nothing from any later
+commit on any branch. It is therefore independent of the two runs the board
+asked for, and the diff of the defect lists is owed rather than done (D102).
+Two housekeeping items: `tests/test_api.py`'s JavaScript glob now skips
+`.claude/`, where the desktop harness keeps whole worktree copies of the repo
+that made the one-`fetch` gate fail on a clean checkout; and the UNSET-default
+ratchet in `tests/test_registry.py` is lowered from 1 to 0, every input having
+had a default since S3.
+
+### D94. The grid moves no verdict (`galaxy/specs/convergence.py`)
+
+**Decision.** `convergence` runs each model at the default grid and at six
+more — `n_R` ∈ {100, 200, 800} and `n_t` ∈ {500, 1000, 4000}, **one knob at a
+time** — and reports, per acceptance row, the largest distance any point puts
+between the quantity and its default value. A row passes when every drift is
+at most the width of its target interval; the qualitative row when its category
+never changes; statistical rows are judged on one seeded realisation and say
+so. Failures are registered per model like `spec`'s misses (`_RECORDED`,
+`problems()`), and a recorded drift that stops failing is itself an error. The
+register is empty: nothing needed recording.
+
+**Settled by.** Every reachable row passes in both models
+`[verified: tests/test_convergence.py::test_every_row_the_model_reaches_converges_at_s10]`.
+The drifts above one percent of a width, full sweep, default seeds:
+
+    row  quantity                        default      n_R drift    n_t drift   width    worst
+     2   SFR                              1.969        0.0047       0.0048     0.38     1.3 %
+     3   v_tan(R₀)                        256.0        0.22         0.34       6        5.7 %
+     5   thick disc R_d (simple)          1.173        0.0061       0.0018     0.4      1.5 %
+     6   thin disc h_z (simple/adv)   253.1 / 326.2    0.99 / 2.05  0.03 / 0.43 100     2.1 %
+    15   bar half-length                  4.980        0.0017       0.0049     0.4      1.2 %
+    20   gas mass < 30 kpc             5.795e9         6.8e6        5.5e6      1e8      6.8 %
+    22   gradient (advanced)             −0.0566       2.9e-4       2.0e-4     0.02     1.4 %
+    23   old gradient (simple)          −0.0067        8.5e-5       3.2e-4     0.02     1.6 %
+
+Everything else is under one percent; row 19 does not move at all; row 24 is
+`single` at every point, and rows 5, 7–11 read zero on every grid in the
+advanced model (debt #27 is not a resolution effect). Two readings worth
+keeping. Row 3 moves 0.22 km/s with `n_R` although D37 made the solar-radius
+scalars analytic: the halo term is, and the disc's resolved contribution is
+integrated on the grid, so the residual is the baryons' quadrature and not an
+interpolation. And the stellar mass moves 0.2 % with `n_t` from the
+star-formation threshold, a step in time — the same class as D46, at 0.6 % of a
+width. The sweep costs about four seconds per model and runs in
+`python -m galaxy.specs`.
+
+### D95. A target quoted without an uncertainty carries its printed precision (debt #17)
+
+**Decision.** Rows 14, 20 and 21 — `113 km/s`, `8.0 × 10⁹ M☉`, `89 % : 11 %` —
+carry the half-unit of the source's last printed digit: ±0.5, ±0.05 × 10⁹ and
+±0.5 %. The evaluator still flags a zero-width row as such, so a future one is
+visible rather than silently unpassable.
+
+**Settled by.** The source was read: Nakanishi & Sofue 2016 quote 8.0 × 10⁹ and
+89 %/11 % with no error `[verified: arXiv:1511.08877, abstract]`. A pointwise
+check against `lo == hi` fails for every float that is not bit-exact, which
+debt #17 called a defect in the table, and the brief's alternative — "no
+testable target" — would have hidden row 20's genuine 28 % miss. Printed
+precision is the strictest testable reading of a number quoted to two figures.
+No row that failed passes because of it, so rule B5 widens nothing
+`[verified: tests/test_spec.py::test_a_target_quoted_without_an_uncertainty_carries_its_printed_precision]`.
+Discharged.
+
+### D96. The profile per stage, cold (`galaxy/specs/performance.py`, rules B2, B6)
+
+    simple stage             cold s   warm s    c/w  share        bytes  cp
+    halo                     0.0008   0.0006   1.50   0.2%      198,464  1
+    assembly                 0.0003   0.0003   1.22   0.1%       32,032  2
+    disc                     0.0005   0.0004   1.20   0.1%        9,616  1
+    sfh                      0.0878   0.0923   0.95  16.2%   19,212,848  3
+    chemistry                0.0474   0.0559   0.85   8.8%   12,809,624  3
+    vertical                 0.0102   0.0080   1.28   1.9%        6,480  3
+    bar                      0.0003   0.0003   1.32   0.1%           24  4
+    population               0.0002   0.0001   1.40   0.0%           16  5
+    pattern                  0.0116   0.0003  40.23   2.1%           32  4
+    systems                  0.1623   0.1537   1.06  30.0%    1,119,896  5
+    formation                0.0773   0.0822   0.94  14.3%    6,403,232  6
+    planets                  0.1420   0.1198   1.19  26.3%    7,818,576  6
+    total                    0.5408   0.5137   1.05
+    catalogue (D61): 516 of 1024 cells realise 19,998 stars in 0.1424 s = 276 us/cell, 7.1 us/star;
+      layout alone 0.0165 s; one cell (33 stars) 1.29 ms; sector of 9 cells (283 stars) 2.89 ms;
+      a Generator 14.0 us, so 8/cell over every cell is 0.0577 s = 41% of the whole
+
+    advanced stage           cold s   warm s    c/w  share        bytes  cp
+    halo                     0.0013   0.0006   2.12   0.2%      198,464  1
+    assembly                 0.0008   0.0003   2.76   0.1%       32,032  2
+    disc                     0.0008   0.0004   1.84   0.1%        9,616  1
+    sfh                      0.0928   0.0815   1.14  11.3%   19,212,848  3
+    chemistry_dtd            0.3421   0.3269   1.05  41.8%   19,222,462  3
+    bar                      0.0004   0.0004   0.87   0.0%           24  4
+    population               0.0001   0.0001   0.94   0.0%           16  5
+    vertical_alpha           0.0095   0.0099   0.96   1.2%        6,480  3
+    pattern                  0.0118   0.0006  21.44   1.4%           32  4
+    formation                0.0756   0.0804   0.94   9.2%    6,403,232  6
+    systems                  0.1395   0.1387   1.01  17.0%    1,119,896  5
+    planets                  0.1437   0.1363   1.05  17.6%    8,058,768  6
+    total                    0.8183   0.7761   1.05
+    catalogue (D61): 516 of 1024 cells realise 19,998 stars in 0.1391 s = 270 us/cell, 7.0 us/star;
+      one cell 1.19 ms; sector of 9 cells 2.85 ms; a Generator 18.0 us, so 8/cell is 0.0744 s = 53%
+
+**Decision.** Each model is profiled in a fresh interpreter; a stage is isolated
+with `run(model, only=(one of its fields,), resume=previous)` and `Outputs.ran`
+proves it ran alone. The spec fails only on a stage that went unprofiled; the
+numbers are published, not judged
+`[verified: tests/test_performance.py]`.
+
+**Settled by.** Three readings. The advanced chemistry is 42 % of its model and
+the reason a full run is 0.82 s against 0.54 s; the three object stages are
+70 % of the simple model. Nothing is cold in the sense of a cache — every ratio
+is near one except `pattern`'s first call, 12 ms against 0.3 ms warm, a
+first-use cost paid once per process that would matter only on a hot path. And
+**D61's per-cell cost is measured**: 276 µs per realised cell, of which eight
+`Generator` constructions at 14–18 µs are 41–53 %; a nine-cell sector costs
+2 % of the whole catalogue and one cell 1.2 ms, so the region route's choice
+not to run the stage (D63) is worth fifty-fold. Half the cells realise no star
+at 20 000 and cost only their layout draw. `tools/scaling.py` was not re-run:
+no stage changed (rule B7), and S9's exponents stand.
+
+### D97. Debt #12 is worth more than row 3's miss, the other way
+
+**Decision.** Recorded, not changed: `CONCENTRATION_NORM` and `halo_assembly_z`
+keep their values, the register carries the measurement, and the row 3 miss
+names two causes.
+
+**Settled by.** `c₂₀₀ = 4.1(1 + z_f)` applies Wechsler's c_vir normalisation
+without converting between overdensities. Converting — Δ_vir = 101 ρ_crit for
+Ω_M = 0.3 `[recall: Bryan & Norman 1998]`, and Δ c³/μ(c) as the halo's
+invariant — turns c_vir = 14.35 into c₂₀₀ = 10.9, and with that concentration
+v_tan(R₀) falls from 256.0 to 242.6 km/s: 13 km/s, twice the target's width,
+carrying the row from 5 km/s high to 2.4 km/s low. At z_f = 3 the converted
+value lands inside the target
+`[verified: tests/test_calibration.py::test_debt_12_the_overdensity_conversion_is_worth_more_than_row_3s_whole_miss]`.
+So the conversion and z_f are degenerate in row 3, and debt #18's explanation
+of the miss — every baryon inside R₀ — is not the only cause of its size:
+either fix alone overshoots. The two must be set together, against rows 3 and
+19 at once, which is a physics change and not an audit's.
+
+### D98. Rows 2 and 20 are one piece of evidence, not two (debts #29, #18)
+
+**Decision.** Debt #29 records that row 2's target lies inside the ±1σ of
+`KS_NORM`, the one constant it depends on; debt #18 records the sweep of
+`GAS_DISC_SCALE_RATIO` that S3 kept the constant for.
+
+**Settled by.** Across (2.5 ± 0.7) × 10⁻⁴ the present-day rate runs 2.16–1.85
+M☉/yr, 2.5 times the miss, and the gas mass 6.8–5.2 × 10⁹, the other way — no
+value of the constant satisfies rows 2 and 20 together, which is what makes the
+*pair* evidence for the missing extended component
+`[verified: tests/test_calibration.py::test_debt_29_row_2_cannot_see_past_ks_norms_own_uncertainty]`.
+The ratio sweep says the same from the other side: at 1.2 rows 3 and 4 pass and
+row 20 rises to 7.2 × 10⁹, while row 2 goes to 2.33, the simple gradient
+flattens to −0.018 and the advanced model's closed row 22 reopens at −0.048; at
+0.8 the advanced gradient overshoots to −0.086
+`[verified: tests/test_calibration.py::test_debt_18_a_broader_single_infall_trades_rows_3_and_20_against_2_and_22]`.
+One broader infall cannot buy rows 3 and 20 without paying rows 2 and 22. A
+second component, not a wider first one.
+
+### D99. Two solar calibrations and one heating constant have no claim yet (debts #30, #31)
+
+**Decision.** `NET_YIELD` and `WIND_SPEED` are marked provisional on debt #18;
+`SECULAR_HEATING` on debt #27. None is re-fitted: the mechanisms they would be
+re-fitted against are not there (rule B10 cuts both ways).
+
+**Settled by.** Both solar calibrations set the gas at R₀ solar on the star
+formation history that misses rows 2 and 20; the levers are +10 % `WIND_SPEED`
+= −0.064 dex and +10 % `NET_YIELD` = +0.041 dex at R₀, so the re-fit is one
+line when #18 closes
+`[verified: tests/test_calibration.py::test_debt_30_the_two_solar_calibrations_and_their_levers]`.
+`SECULAR_HEATING` was fitted at S3 to a thin disc with the pre-merger stars
+removed; the chemical split removes none, so the advanced thin disc keeps the
+merger-heated stars and row 6 reads 326 pc against 253 — 52 pc of it
+`MERGER_HEATING`'s (274 without) — passing with 24 pc to spare, where +5 km/s
+leaves the simple model at 347 and puts the advanced one at 429
+`[verified: tests/test_calibration.py::test_debt_31_secular_heating_passes_row_6_in_both_models_only_by_the_targets_width]`.
+Two models pass one row with one constant because the target is ±50 pc.
+
+### D100. The centre reaches the planets (debt #26, measured)
+
+**Decision.** Recorded on debt #26; nothing clipped (rule B9).
+
+**Settled by.** The advanced catalogue has 1.2 % of its stars above [Fe/H] =
++0.5 against 0.02 % in the simple model, giant occurrence inside 1 kpc is 0.43
+against 0.07, and the published sample's giant fraction is 1.65 % against
+1.02 % — a 60 % difference in a headline planets number made by a
+half-kiloparsec the massless wind cannot empty. `PLANETESIMAL_EFFICIENCY`'s fit
+is untouched: occurrence at R₀ is 5.0 % in both
+`[verified: tests/test_calibration.py::test_debt_26_the_iron_at_the_centre_reaches_the_planets]`.
+The bulge and its inflow remain the open question, and this is the number
+that says how much rides on it.
+
+### D101. Cold timings at S10 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0002   1.59        940  -
+    viewer: a module         0.0003   0.0002   1.56     21,599  -
+    index                    0.0001   0.0000   1.73      1,237  -
+    version                  0.0017   0.0014   1.23      1,132  -
+    stages                   0.0004   0.0002   1.65      8,645  -
+    fields                   0.0007   0.0005   1.59     57,008  -
+    inputs                   0.0001   0.0001   1.39      9,091  -
+    arrays: one profile      0.0883   0.0003 284.24      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1385   0.0028  48.59  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0869   0.0002 384.75      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1605   0.0047  34.43     18,720  halo,…,vertical
+    region: whole disc       0.2829   0.1351   2.09  1,126,208  halo,…,vertical
+    system: one star         0.1576   0.0022  71.03      2,816  halo,…,vertical
+    adv: history             0.4145   0.0036 115.40  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.4266   0.0037 116.70  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.4436   0.0035 126.27     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.4278   0.0026 166.79      2,824  halo,…,chemistry_dtd,vertical_alpha
+
+**Read within the run.** Every row is 20–30 % slower than D93's on the same
+desktop two days later — the machine, not the code, which did not change on
+any route's path. The shape holds: the advanced chemistry adds about 0.28 s
+cold to any route that reaches it and nothing warm; metadata is
+sub-millisecond with no stage behind it. The stages column is unchanged.
+
+### D102. What this run could not do, and where it is queued
+
+**Decision.** The board's gate asks for the two runs' defect lists diffed into
+this file. This run was instructed not to read any commit after the S9 merge,
+so it cannot read runs 1 and 2, and it does not merge to `main` for the same
+reason: the merge would have to be made against a `main` it may not look at.
+The diff and the merge are queued in `MANUAL_TODO.md` §2 with the three branch
+names, the board row is ◐, and this run's own defect list is stated in one
+place for the diff to consume: **BRIEF.md**.
+
+**Settled by.** Rule C2d, applied to a constraint rather than a limit: a gate
+step that cannot be met honestly is recorded as owed, not ticked (LESSONS,
+S1: change the ritual rather than repeat the failure).

@@ -348,3 +348,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   stages that did not change: the advanced vertical stage lands three places
   later than the simple one's because it waits on the chemistry. Orders are per
   model; assert them per model.
+
+## From S10
+
+- [audit][all] A check no float can pass is not a check. A target quoted without
+  an uncertainty carries the half-unit of its last printed digit, never zero
+  width; rule B5 is untouched because nothing that failed passes `[verified:
+  DECISIONS.md D95]`.
+- [audit] When a debt says "unvalidated and load-bearing", measure the load
+  before anything else. The c_vir→c₂₀₀ conversion debt #12 omits was worth
+  twice a target's width and the opposite sign of the miss it stood behind
+  `[verified: DECISIONS.md D97]`.
+- [audit][all] Read a miss against the error bar of the constant it depends on
+  before reading it as evidence. Row 2's miss sits inside `KS_NORM`'s own ±1σ;
+  only the pair with row 20, which pulls the constant the other way, is
+  evidence `[verified: DECISIONS.md D98]`.
+- [audit] One constant under two split criteria is two fits. Publish what each
+  model pays for the same value, and the margin it passes by `[verified:
+  DECISIONS.md D99]`.
+- [audit][infra] `run(only=…, resume=…)` isolates a stage for free and
+  `Outputs.ran` proves it ran alone; that is the whole of a per-stage profiler
+  `[verified: galaxy/specs/performance.py]`.
+- [infra] `Path.rglob` walks into `.claude/worktrees`, where the desktop harness
+  keeps whole copies of the repo. A test that globs the tree skips hidden
+  directories, or a clean checkout fails on a file it does not contain.
+- [close][audit] A run that must not read its siblings cannot write their diff.
+  Queue the step with the branch names and mark the row ◐ rather than tick a
+  gate that was not met `[verified: DECISIONS.md D102]`.

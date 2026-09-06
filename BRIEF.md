@@ -1,54 +1,52 @@
-# BRIEF — Session 10: the audit
+# BRIEF — after S10 run 3: what is owed, and this run's defect list
 
-Open per RESUMING.md. Read RULES.md in full — **B2, B6, B7, B10 and A10 are the
-ones this session lives on** — then this. Do not read GALAXY_PLAN.md. Read
-GALAXY_INPUTS.md **§10** (the measured cost model) and **§11** (rulings and the
-whole debt register: 21 open, 7 discharged — this session's raw material).
+Open per RESUMING.md. Read RULES.md in full, then this. Do not read GALAXY_PLAN.md.
+This run (`session-10-gamma`) was cut from S9's merge `635c3c8` and told to read
+nothing after it, so it is **unmerged** and has not seen runs 1 and 2. The board is ◐.
 
-The board says **Fable, run twice** — two independent audits, then diff the
-defect lists. Each run is its own session branch; the second must not read the
-first's findings before making its own.
+## Owed (MANUAL_TODO.md §2, needs someone who may read all three branches)
 
-## Build
+- **Diff the defect lists** of `session-10`, `session-10-beta` and this run, and put
+  the diff in DECISIONS.md — the board's gate. This run's list is the section below.
+- **Decide the merge.** Three runs touched the same files (`galaxy/specs/convergence.py`,
+  `performance.py`, `__main__.py`, `spec.py`, GALAXY_INPUTS.md §11, DECISIONS.md,
+  tests). Merge one, or merge one and port the others' findings as register entries.
+- Fill S10's merge SHA into MANUAL_TODO.md §1 once merged; the tag batch stays queued.
 
-- **`galaxy/specs/convergence.py`**: sweep N_R and N_t **independently** (never
-  one knob) for every acceptance scalar in both models, publish the drift of each
-  against the default grid, and fail a row whose drift exceeds its target's width.
-  `tests/test_sfh.py::test_scalars_do_not_move_with_grid_resolution` and
-  `test_chemistry.py::test_the_gradient_converges` are the seeds of it.
-- **`galaxy/specs/performance.py`**: the profile per stage, both models, cold in a
-  fresh process (`tools/timings.py` and `tools/scaling.py` are the pattern), and
-  the per-cell catalogue cost D61 left open. Publish the numbers, not verdicts.
-- **The calibration audit** (rule B10): every constant fitted while a mechanism was
-  missing, re-examined now that the advanced model has the mechanism. The list is
-  §11; start with #12 (c₂₀₀–z), #17 (zero-width targets: read the sources'
-  uncertainties or give the table "no testable target"), #26–#28 (S9's).
-- Register findings as debts or discharge them; lower the ratchets in
-  `tests/test_registry.py` where a debt is gone. Do not fix physics — record.
+## This run's defect list (D94–D102)
 
-## Gate
+- **Instruments built:** `convergence` (n_R 100/200/800, n_t 500/1000/4000, one at a
+  time; every reachable row passes; largest drift row 20 at 7 % of width) and
+  `performance` (per-stage cold profile per model in a fresh process; D61 measured:
+  276 µs/cell, 41–53 % of it Generator construction). Both under `python -m galaxy.specs`.
+- **Discharged:** debt #17 — rows 14, 20, 21 carry the source's printed precision (D95).
+- **Measured, recorded, not fixed:** #12 the missing c_vir→c₂₀₀ conversion is worth
+  13 km/s on row 3, the other way (D97); #18 `GAS_DISC_SCALE_RATIO` swept — a wider single
+  infall trades rows 3/20 against 2/22 (D98); #26 the +1.5 dex centre makes giant
+  occurrence 0.43 inside 1 kpc and a 60 % difference in the sample's giant fraction (D100).
+- **New debts:** #29 row 2 sits inside `KS_NORM`'s own ±1σ; #30 `NET_YIELD` and
+  `WIND_SPEED` are fitted on the row-2/row-20 SFH, levers published; #31 `SECULAR_HEATING`
+  is a different fit under the chemical split, row 6 passes by 24 pc (D99).
+- **Ratchets:** UNSET defaults 1 → 0. `tests/test_api.py` skips `.claude/` worktrees.
+- **Not done:** the runs' diff, the merge, `tools/scaling.py` (no stage changed).
 
-- Every acceptance row's drift across the sweep is published for both models, and
-  the sweep runs N_R and N_t separately (GALAXY_INPUTS.md §10: exponent 0.13 in
-  N_R against ~1 in N_t — they are not one knob).
-- `python -m galaxy.specs` runs convergence and performance beside the four
-  existing specs; exit 0 with every miss recorded for its model.
-- The two audit runs' defect lists are diffed and the diff is in DECISIONS.md.
-- Cold timings published (B2); `tools/scaling.py` re-run if any stage changed.
+## If an S11 is added — the register's order of attack
+
+1. **Rows 3 and 19 together:** set the overdensity conversion and z_f jointly (#12); on
+   its own either fix overshoots row 3. Then the extended component (#18) on top, judged
+   with the bulge (rows 12–14, #26's inflow). Re-fit `NET_YIELD`/`WIND_SPEED` after (#30).
+2. **The valley** (#27): the register predicts a fast inner disc; the sweep already said
+   the accretion history alone will not open it. Row 6 changes with it (#31).
+3. **Migration** (#28): a gradient measured at 10 Gyr decides 3.6 kpc against 2.5.
 
 ## Traps
 
-- **The advanced model has no thick disc** (debt #27): rows 5, 7–11 and 24 read
-  zero or `single` and are recorded. Do not tune the valley into existence; the
-  register's prediction names what to try (a fast inner disc) if you must.
-- Misses are per model (`spec.misses(name)`, D87): a row can be stale for one
-  model and recorded for the other, and the runner judges each against its own.
-- The advanced model's centre reaches [Fe/H] = +1.5 (debt #26) — a convergence
-  sweep will see the inner rings move; that is the massless wind, not the grid.
-- `tests/test_graph.py::ORDER` pins each model's execution order; Kahn's rounds
-  move stages you did not touch when a dependency changes.
-- Windows: `uv run python` only; Bash commands over ~8 KB fail obscurely — use a
-  file tool. `node --test` needs `--test-reporter=tap` named.
-- Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and fill in
-  S9's merge SHA from `git rev-list -1 --grep='^Merge S9 into main' origin/main`.
-- After ticking the board run `uv run python tools/progress.py`.
+- Misses and drifts are per model (`spec.misses`, `convergence.recorded`); a recorded
+  entry that starts passing fails the run — remove it with a DECISIONS entry.
+- `performance.py` spawns one interpreter per model via `sys.executable -m`; under
+  `uv run` that is the venv's python. `python -m galaxy.specs` now takes ~10 s longer.
+- To vary a constant, build a probe `Model` (`tests/test_calibration.py::with_constants`);
+  never edit `level0.py` to measure.
+- `tests/test_progress.py` fails if the board is edited without `tools/progress.py`.
+- Windows: `uv run python` only; Bash commands over ~8 KB fail obscurely; `node --test`
+  needs `--test-reporter=tap`. Do **not** tag (rule C2e).
