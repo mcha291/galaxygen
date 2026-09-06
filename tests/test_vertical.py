@@ -79,7 +79,7 @@ def test_scale_heights_are_arithmetic_from_the_dispersions(model):
         if o.fields[disp] == 0.0:
             assert o.fields[height] == 0.0  # an empty population has no height, not a small one
             continue
-        expected = float(scale_height(o.fields[disp], total)) * 1000.0
+        expected = float(scale_height(o.fields[disp], total, float(model.constants["G"].value))) * 1000.0
         assert o.fields[height] == pytest.approx(expected, rel=1e-9)
 
 
@@ -100,3 +100,19 @@ def test_the_populations_add_up_to_the_stellar_mass(model):
     f = o.fields
     total = f["thin_disc_stellar_mass"] + f["thick_disc_stellar_mass"]
     assert total == pytest.approx(f["stellar_mass_total"], rel=0.02)
+
+
+def test_scale_height_reads_the_registered_G_not_a_copy(prod):
+    """AUDIT_RUN2.md D-9, fixed at S12: the sheet formula took G from a literal in vertical.py.
+
+    A change to level0's G would have left every scale height on the old value, in the
+    file that quotes rule A9. Both vertical stages now declare the read.
+    """
+    from galaxy.stages.vertical import VERTICAL
+    from galaxy.stages.vertical_alpha import VERTICAL_ALPHA
+
+    for st in (VERTICAL, VERTICAL_ALPHA):
+        assert "G" in st.reads_constants
+    G = float(prod[0].get("simple").constants["G"].value)
+    assert scale_height(20.0, 50.0, G) == pytest.approx(20.0**2 / (2.0 * np.pi * G * 50.0 * 1000.0**2))
+    assert scale_height(20.0, 50.0, 2.0 * G) == pytest.approx(0.5 * scale_height(20.0, 50.0, G))
