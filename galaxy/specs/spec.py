@@ -23,10 +23,15 @@ Judging modes:
   revise it, never relax a target (rule B5).
 - ``qualitative`` (row 24): a ``category_scalar`` equal to ``expect``.
 
-Rows 20 and 21 are quoted without an uncertainty and have ``lo == hi``; a
-pointwise check against a zero-width target fails for any float that is not
-exactly equal. That is recorded here rather than widened: S2 either finds the
-uncertainty in the source or records the miss (rule B5).
+Rows 14, 20 and 21 are quoted without an uncertainty, and until S10 had
+``lo == hi``: a pointwise check against a zero-width target fails for any float
+that is not exactly equal, which is not a check (debt #17). The source states
+none ``[verified: Nakanishi & Sofue 2016, arXiv:1511.08877, abstract]``, so the
+interval is now the **half-unit of the source's last printed digit** — "8.0 ×
+10⁹" claims ±0.05 × 10⁹ and nothing more. That is the strictest testable
+reading of a number quoted to two figures, no row that failed passes because of
+it, and a future zero-width row is still flagged by the evaluator rather than
+left unpassable (rule B5 widens nothing; S10, D95).
 
 **Recorded misses** (:func:`misses`). Rule B5 says to record a failed acceptance
 check rather than relax it, and GALAXY_INPUTS.md §3 says row 18 is *expected* to
@@ -121,14 +126,14 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(11, "Thick disc stellar mass", "Msun", "thick_disc_stellar_mass", 3.0e9, 9.0e9, "pointwise", "6 ± 3 × 10⁹ M☉", _BHG16),
     Quantity(12, "Bulge stellar mass", "Msun", "bulge_stellar_mass", 1.4e10, 1.7e10, "pointwise", "1.4–1.7 × 10¹⁰ M☉", _BHG16),
     Quantity(13, "Bulge/total stellar fraction", "dimensionless", "bulge_stellar_fraction", 0.24, 0.36, "statistical", "0.30 ± 0.06", _BHG16, note="Statistical per debt #8 (GALAXY_INPUTS.md §4b)."),
-    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 113.0, 113.0, "statistical", "113 km/s", _BHG16, note="No uncertainty quoted; statistical per debt #8, so the ensemble spread does the work."),
+    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 112.5, 113.5, "statistical", "113 km/s", _BHG16, note="No uncertainty quoted: the interval is the half-unit of the last printed digit (debt #17, S10); statistical per debt #8, so the ensemble spread does the work."),
     Quantity(15, "Bar half-length", "kpc", "bar_half_length", 4.8, 5.2, "pointwise", "5.0 ± 0.2 kpc", _BHG16),
     Quantity(16, "Bar pattern speed", "km/s/kpc", "bar_pattern_speed", 34.0, 52.0, "statistical", "43 ± 9 km/s/kpc", _BHG16, note="Statistical per debt #8."),
     Quantity(17, "Bar corotation radius", "kpc", "bar_corotation_radius", 4.5, 7.0, "statistical", "4.5–7.0 kpc", _BHG16, note="Statistical per debt #8."),
     Quantity(18, "Black hole mass", "Msun", "black_hole_mass", 4.0e6, 4.4e6, "statistical", "4.2 ± 0.2 × 10⁶ M☉", _BHG16, note="Debt #2: derived from M–σ plus a seeded residual (ruling 10); the Milky Way sits 5–6× below the relation, so this is expected to miss by ~0.75 dex and must not be re-scoped to include the miss (GALAXY_INPUTS.md §3, rule B5). Statistical per debt #8."),
     Quantity(19, "Halo virial mass", "Msun", "halo_virial_mass", 1.0e12, 1.3e12, "pointwise", "1.0–1.3 × 10¹² M☉", "McMillan"),
-    Quantity(20, "Total gas mass (<30 kpc)", "Msun", "gas_mass_30kpc", 8.0e9, 8.0e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="No uncertainty quoted: zero-width target. S2 finds the uncertainty in the source or records the miss (rule B5)."),
-    Quantity(21, "Gas HI:H₂ split", "dimensionless", "gas_h2_fraction", 0.11, 0.11, "pointwise", "89% : 11%", "Nakanishi & Sofue 15", note="Read as the H₂ mass fraction f_H₂ = 0.11 (HI = 1 − f_H₂). No uncertainty quoted: zero-width target; see row 20."),
+    Quantity(20, "Total gas mass (<30 kpc)", "Msun", "gas_mass_30kpc", 7.95e9, 8.05e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="No uncertainty quoted in the source (checked at S10): the interval is the half-unit of its last printed digit, ±0.05 × 10⁹ (debt #17). The 28% miss is debt #18 and is unchanged by it."),
+    Quantity(21, "Gas HI:H₂ split", "dimensionless", "gas_h2_fraction", 0.105, 0.115, "pointwise", "89% : 11%", "Nakanishi & Sofue 15", note="Read as the H₂ mass fraction f_H₂ = 0.11 (HI = 1 − f_H₂). No uncertainty quoted: the interval is the half-unit of the last printed percent (debt #17, S10); see row 20."),
     Quantity(22, "Present-day metallicity gradient", "dex/kpc", "metallicity_gradient", -0.069, -0.049, "pointwise", "−0.06 dex/kpc", "Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010", note="Interval is the union of the two cited measurements [inferred]; the table itself quotes −0.06 with no error."),
     Quantity(23, "Gradient evolution with age", "dex/kpc", "metallicity_gradient_old", -0.05, -0.03, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages; one row can name one field, so S2 operationalises it as the *old* end (>10 Gyr, target −0.04) and leaves the young end to row 22's companion field metallicity_gradient_young, which the same stage publishes. Interval is ±0.01 around −0.04 [inferred]: the source quotes no uncertainty and a zero-width target would make the row untestable rather than strict."),
     Quantity(24, "[α/Fe] bimodality", "dimensionless", "alpha_sequence", None, None, "qualitative", "Thick disc α-enhanced across a wide [Fe/H] range", "BHG16 §5.2.2", expect="bimodal_wide", note="Judged on the [α/Fe] mass distribution of the stars now at R₀, migrants included: two modes with a valley between them, and the α-rich mode spanning at least 0.5 dex of [Fe/H] (S9). Only the advanced model publishes the field; the simple model has one abundance and stays not-yet-computable (rule B3). Debt #9 asks whether it appears without a merger."),

@@ -128,11 +128,21 @@ def test_pointwise():
     assert r.status == "fail" and "not a scalar" in r.reason
 
 
-def test_zero_width_target_is_recorded_not_widened():
+def test_a_target_quoted_without_an_uncertainty_carries_its_printed_precision():
+    """Debt #17 (S10): '8.0 x 10^9' claims +/-0.05 x 10^9 and nothing more - testable, and no wider."""
     q = Q[20]
     d = scalar("gas_mass_30kpc")
-    assert spec.evaluate(q, {"gas_mass_30kpc": 8.0e9}, {"gas_mass_30kpc": d}, "m").status == "pass"
-    r = spec.evaluate(q, {"gas_mass_30kpc": 8.0e9 * (1 + 1e-9)}, {"gas_mass_30kpc": d}, "m")
+
+    def status(v):
+        return spec.evaluate(q, {"gas_mass_30kpc": v}, {"gas_mass_30kpc": d}, "m").status
+
+    assert status(8.0e9) == "pass" and status(8.0e9 * (1 + 1e-9)) == "pass" and status(8.04e9) == "pass"
+    assert status(8.06e9) == "fail" and status(7.94e9) == "fail"
+    assert q.hi - q.lo == pytest.approx(1e8)
+    assert not [r.n for r in spec.QUANTITIES if r.lo is not None and r.lo == r.hi]  # none left
+    # A zero-width row is still flagged rather than left silently unpassable.
+    z = spec.Quantity(99, "z", "Msun", "gas_mass_30kpc", 1.0, 1.0, "pointwise", "1", "s")
+    r = spec.evaluate(z, {"gas_mass_30kpc": 1.0 + 1e-9}, {"gas_mass_30kpc": d}, "m")
     assert r.status == "fail" and "zero-width" in r.reason
 
 

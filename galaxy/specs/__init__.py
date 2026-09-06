@@ -4,8 +4,8 @@
 - ``preflight``: declarations reconcile within and across models; optional absence handled
 - ``determinism``: reproducible per model; per-region seed derivation is order-independent
 - ``spec``: the 24 acceptance quantities, each pass / fail / not-yet-computable
-
-``convergence`` and ``performance`` arrive at S10, when there is something to measure.
+- ``convergence``: the same table against the grid, N_R and N_t swept separately (S10)
+- ``performance``: the per-stage cold profile of every model, and the catalogue's per-cell cost (S10)
 """
 
 from __future__ import annotations
