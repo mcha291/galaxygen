@@ -54,7 +54,10 @@ LEVEL0: dict[str, Constant] = {
         "epoch (ruling 5). K = 4.1 is quoted for c_vir [recall: Wechsler et al. 2002]; c_vir and "
         "c₂₀₀ are defined at different overdensities and the conversion between them is folded "
         "into K rather than modelled, which is debt #12. The default z_f = 2.5 gives c₂₀₀ = 14.4, "
-        "inside the 10–18 the Milky Way's own measurements span [verified: GALAXY_INPUTS.md §4b].",
+        "inside the 10–18 the Milky Way's own measurements span [verified: GALAXY_INPUTS.md §4b]. "
+        "S10 did the conversion (Δ_vir ≈ 101 ρ_crit → 200): c₂₀₀ = 10.9, and acceptance row 3 "
+        "falls from 256.0 to 242.6 km/s — recorded rather than applied, because debt #18's "
+        "extended component lowers row 3 too and the two must be judged together (rule B10).",
     ),
     "R_SUN": Constant(
         8.2,

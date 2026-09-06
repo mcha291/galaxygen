@@ -149,13 +149,30 @@ def _stages(model: Model):
     return [impls.get(impl_id) for _, impl_id in model.stages]
 
 
+# What the fresh interpreter runs: the clock starts before anything of this
+# package is imported, so the import column is what a cold process pays for
+# numpy, the registries and the stages, and not for the last module alone.
+CHILD = """
+import json, sys, time
+started = time.perf_counter()
+from galaxy.core.grids import GridSpec
+from galaxy.core.registry import production
+from galaxy.specs import performance, utf8_stdout
+import galaxy.run
+models, _, _ = production()
+import_s = time.perf_counter() - started
+utf8_stdout()
+print(json.dumps(performance.profile(models.get(sys.argv[1]), GridSpec(**json.loads(sys.argv[2])), import_s)))
+"""
+
+
 def profiles(models: Iterable[Model], grid: GridSpec = DEFAULT) -> tuple[list[dict[str, Any]], list[Problem]]:
     """One fresh interpreter per model (rule B2). A profile that fails is a problem, not a number."""
     rows: list[dict[str, Any]] = []
     problems: list[Problem] = []
     for m in models:
         proc = subprocess.run(
-            [sys.executable, "-m", "galaxy.specs.performance", "--one", m.name, "--grid", json.dumps(asdict(grid))],
+            [sys.executable, "-c", CHILD, m.name, json.dumps(asdict(grid))],
             capture_output=True, text=True, cwd=str(ROOT), check=False, encoding="utf-8", errors="replace",
         )
         if proc.returncode != 0 or not proc.stdout.strip():
@@ -216,20 +233,8 @@ def report(models: Iterable[Model], rows: list[dict[str, Any]] | None = None, pr
 def main() -> int:
     parser = argparse.ArgumentParser(description="Per-stage profile of every model, cold in a fresh process (rule B2).")
     parser.add_argument("--json", action="store_true", help="print the measurements as JSON")
-    parser.add_argument("--one", help=argparse.SUPPRESS)  # the subprocess entry point: one model, this process
-    parser.add_argument("--grid", help=argparse.SUPPRESS)  # GridSpec fields as JSON, for --one
     args = parser.parse_args()
     utf8_stdout()
-    if args.one is not None:
-        # The imports are part of what a cold process pays; the registries load here.
-        started = time.perf_counter()
-        models, _, _ = production()
-        import galaxy.run  # noqa: F401
-
-        import_s = time.perf_counter() - started
-        grid = GridSpec(**json.loads(args.grid)) if args.grid else DEFAULT
-        print(json.dumps(profile(models.get(args.one), grid, import_s)))
-        return 0
     models, _, _ = production()
     rows, problems = profiles(list(models))
     if args.json:

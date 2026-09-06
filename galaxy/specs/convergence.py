@@ -188,13 +188,15 @@ def judge(q: Quantity, default: Mapping[str, Any], runs: Mapping[str, Mapping[st
     worst = d.worst or 0.0
     if base_f == 0.0 and all(v == 0.0 for v in vals.values()):
         return Drift(q.n, q.name, q.field, "vacuous", "reads exactly 0 at every grid: nothing to converge", base_f, MappingProxyType(vals), q.width)
-    if not q.testable:
+    if q.width is None or q.width <= 0.0:
+        # A width of zero judges nothing, whatever the row's mode: a statistical row
+        # can meet a point with an ensemble, but a drift at one seed has no room to
+        # be measured against (debt #17).
         return Drift(
             q.n, q.name, q.field, "untestable",
             f"largest drift {worst:.4g} against a zero-width target (debt #17): published, not judged",
             base_f, MappingProxyType(vals), q.width,
         )
-    assert q.width is not None
     share = worst / q.width
     if worst > q.width:
         return Drift(q.n, q.name, q.field, "unconverged", f"largest drift {worst:.4g} exceeds the target width {q.width:.4g} ({share:.2f}×)", base_f, MappingProxyType(vals), q.width)

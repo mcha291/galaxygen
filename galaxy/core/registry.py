@@ -284,7 +284,11 @@ _INPUTS: tuple[Input, ...] = (
         "Way's own concentration measurements span [verified: GALAXY_INPUTS.md §4b]. The range "
         "0.5–5 covers late assembly to the earliest epoch the relation is quoted for [inferred]. "
         "v_c(R₀) moves about 10 km/s across the cited 2–3, which is three times acceptance row "
-        "3's error bar, so this default is load-bearing and unvalidated (debt #12).",
+        "3's error bar, so this default is load-bearing and unvalidated (debt #12). S10 measured "
+        "both halves: row 3 spans 248.2–263.5 across z_f = 2–3, and the normalisation is quoted "
+        "for c_vir — converted to c₂₀₀ it is 10.9, not 14.4, and row 3 reads 242.6 [verified: "
+        "tests/test_audit.py::test_debt_12_the_concentration_is_quoted_at_the_wrong_overdensity]. "
+        "Recorded, not applied: it has to be judged with debt #18's component.",
         unit="dimensionless",
         default=2.5,
         lo=0.5,

@@ -348,3 +348,41 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   stages that did not change: the advanced vertical stage lands three places
   later than the simple one's because it waits on the chemistry. Orders are per
   model; assert them per model.
+
+## From S10
+
+- [audit][field] Sweep each grid axis alone and judge every drift against the
+  row's own target width. A number that "converges to 0.1%" says nothing until
+  the width it has to sit inside is beside it; the widest drift at S10 is 5.6%
+  of row 3's window and every other row is under 1.5% `[verified: DECISIONS.md D94]`.
+- [audit] A row with no width cannot judge a drift, and a row that reads zero at
+  every grid has not converged — it has nothing to converge. Say `untestable`
+  and `vacuous`, never `converged`: both would otherwise be green rows earned by
+  the table's defect and the model's absence (rules B5, B9).
+- [audit][field] Run the register's prediction with every knob it names before
+  writing down that it failed. Debt #27's fast inner disc does nothing with the
+  default merger list and opens the valley with one event delivering a fifth of
+  the budget; the first sweep alone would have killed a prediction that holds
+  `[verified: DECISIONS.md D96]`.
+- [audit][field] A constant shared by two models can calibrate different rows in
+  each. `MERGER_HEATING` sets the thick disc's scale height in the simple model
+  and the *thin* disc's in the advanced one, where the heated stars have no
+  thick disc to belong to; row 6 passes within 3 pc of its floor in one model
+  and 24 pc of its ceiling in the other `[verified: DECISIONS.md D96]`.
+- [audit][all] A target's accounting is part of the target. Row 20's 8.0 × 10⁹
+  M☉ is HI plus H₂ — hydrogen — and the model's gas is every retained baryon
+  not in a star, helium included; read like for like the miss is 47%, not 28%
+  (debt #29). Check what a quoted mass counts before checking the number.
+- [audit][field] A constant that is a no-op at its default can still carry a
+  row. `GAS_DISC_SCALE_RATIO` is 1.0 and multiplies nothing, and the advanced
+  model's row 22 passes only while it stays within a tenth of that (debt #31).
+- [audit][infra] Measure the import before the registries load. A profile that
+  takes ``production()`` first and then times an import reports four
+  milliseconds for what a fresh process pays a quarter of a second for.
+- [infra] The harness keeps other sessions' worktrees under `.claude/` in a
+  desktop checkout; a gate that walks the whole tree walks into them. Skip the
+  directory, and do not read what is in it if the session is meant to be blind
+  to those commits.
+- [infra] The 8 KB Bash limit fails a long patch with a quoting error and runs
+  nothing; a patch script written to a file with a file tool and run from there
+  costs one extra step and cannot half-apply.

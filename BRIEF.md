@@ -1,54 +1,50 @@
-# BRIEF — Session 10: the audit
+# BRIEF — Session 10, closing: diff the two runs and merge
 
-Open per RESUMING.md. Read RULES.md in full — **B2, B6, B7, B10 and A10 are the
-ones this session lives on** — then this. Do not read GALAXY_PLAN.md. Read
-GALAXY_INPUTS.md **§10** (the measured cost model) and **§11** (rulings and the
-whole debt register: 21 open, 7 discharged — this session's raw material).
+Open per RESUMING.md. Read RULES.md in full, then this. The board said **Fable, run
+twice** — two independent audits, then diff the defect lists. This branch
+(`session-10-gamme-run-2`) is run 2: it started at the S9 merge and read nothing of
+run 1 (`session-10-gamma`), by instruction. Its close is **partial** (◐, rule C2d):
+everything below "What run 2 delivered" is done, committed and pushed; what remains
+needs both runs in one place.
 
-The board says **Fable, run twice** — two independent audits, then diff the
-defect lists. Each run is its own session branch; the second must not read the
-first's findings before making its own.
+## What run 2 delivered
 
-## Build
+- `galaxy/specs/convergence.py` and `performance.py`, run by `python -m galaxy.specs`
+  beside the four existing specs (exit 0); `Outputs.seconds`; `Quantity.testable`.
+- The calibration audit as `tests/test_audit.py`, its findings on the register
+  (GALAXY_INPUTS.md §11: #17 discharged, #29–#31 opened, #12/#26/#27/#28 measured)
+  and as a numbered defect list in DECISIONS.md D96 — written to be diffed.
+- Cold timings (D98), the profile (D95), the sweep (D94); LESSONS.md `[audit]`.
 
-- **`galaxy/specs/convergence.py`**: sweep N_R and N_t **independently** (never
-  one knob) for every acceptance scalar in both models, publish the drift of each
-  against the default grid, and fail a row whose drift exceeds its target's width.
-  `tests/test_sfh.py::test_scalars_do_not_move_with_grid_resolution` and
-  `test_chemistry.py::test_the_gradient_converges` are the seeds of it.
-- **`galaxy/specs/performance.py`**: the profile per stage, both models, cold in a
-  fresh process (`tools/timings.py` and `tools/scaling.py` are the pattern), and
-  the per-cell catalogue cost D61 left open. Publish the numbers, not verdicts.
-- **The calibration audit** (rule B10): every constant fitted while a mechanism was
-  missing, re-examined now that the advanced model has the mechanism. The list is
-  §11; start with #12 (c₂₀₀–z), #17 (zero-width targets: read the sources'
-  uncertainties or give the table "no testable target"), #26–#28 (S9's).
-- Register findings as debts or discharge them; lower the ratchets in
-  `tests/test_registry.py` where a debt is gone. Do not fix physics — record.
+## What remains (the gate's last item, then the close)
 
-## Gate
-
-- Every acceptance row's drift across the sweep is published for both models, and
-  the sweep runs N_R and N_t separately (GALAXY_INPUTS.md §10: exponent 0.13 in
-  N_R against ~1 in N_t — they are not one knob).
-- `python -m galaxy.specs` runs convergence and performance beside the four
-  existing specs; exit 0 with every miss recorded for its model.
-- The two audit runs' defect lists are diffed and the diff is in DECISIONS.md.
-- Cold timings published (B2); `tools/scaling.py` re-run if any stage changed.
+1. **Diff the two defect lists.** Run 1's findings are on `session-10-gamma`; run 2's
+   are D96's numbered list. Put the diff in DECISIONS.md — what both found, what only
+   one found, and where they disagree on a number or a debt. Register anything only
+   run 1 found that run 2 missed, and vice versa; never average a disagreement (B12).
+2. Reconcile the register: two runs may have opened debts with the same number.
+   Renumber run 2's #29–#31 if run 1 used them (they are cited by number in
+   `tests/test_audit.py::test_the_register_carries_s10s_findings` and D96).
+3. Merge `--no-ff` into `main` with subject `Merge S10 into main: …`, push, add the
+   `s10` row to MANUAL_TODO.md (S9's SHA is filled in: `635c3c8ff43d`), tick the
+   board ☑ with the date, `uv run python tools/progress.py`, then
+   `uv run python tools/verify_clone.py --ref main`.
 
 ## Traps
 
-- **The advanced model has no thick disc** (debt #27): rows 5, 7–11 and 24 read
-  zero or `single` and are recorded. Do not tune the valley into existence; the
-  register's prediction names what to try (a fast inner disc) if you must.
-- Misses are per model (`spec.misses(name)`, D87): a row can be stale for one
-  model and recorded for the other, and the runner judges each against its own.
-- The advanced model's centre reaches [Fe/H] = +1.5 (debt #26) — a convergence
-  sweep will see the inner rings move; that is the massless wind, not the grid.
-- `tests/test_graph.py::ORDER` pins each model's execution order; Kahn's rounds
-  move stages you did not touch when a dependency changes.
-- Windows: `uv run python` only; Bash commands over ~8 KB fail obscurely — use a
-  file tool. `node --test` needs `--test-reporter=tap` named.
-- Do **not** tag (rule C2e). At close add your row to `MANUAL_TODO.md` and fill in
-  S9's merge SHA from `git rev-list -1 --grep='^Merge S9 into main' origin/main`.
-- After ticking the board run `uv run python tools/progress.py`.
+- Run 2's branch name carries a typo (`gamme`); rename before merging if it matters,
+  the remote branch is `origin/session-10-gamme-run-2`.
+- `python -m galaxy.specs` now takes ~15 s longer: the sweep is ten runs and the
+  profile is two fresh interpreters. `tests/test_convergence.py` sweeps once per
+  session (module fixture); `tests/test_audit.py` is ~30 model runs.
+- Row 20 is `untestable` in the convergence report and still `fail` in the spec
+  report, on purpose (D97): the drift has no width to be judged against, the miss
+  is real on any reading. Do not make one of them agree with the other.
+- The advanced model's thick-disc rows are `vacuous`, not converged: a valley
+  opening (debt #27) turns them into rows that can drift, and the sweep will then
+  judge them for the first time.
+- Debt #12's conversion and debt #18's extended component both lower row 3; applied
+  together they overshoot (242.6 before the component). Judge them together.
+- Windows: `uv run python` only; a Bash command over ~8 KB fails obscurely — write
+  a patch script to a file and run it. `.claude/` holds other sessions' worktrees.
+- Do **not** tag (rule C2e).

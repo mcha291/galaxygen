@@ -120,9 +120,11 @@ class Quantity:
         A pointwise row whose source quotes no uncertainty has ``lo == hi`` and no
         float that is not bit-exact can pass it — that is debt #17, and this is the
         table's way of saying "no testable target" without widening anything
-        (rule B5). Qualitative rows and rows with no interval are not the case.
+        (rule B5). A statistical row is testable at zero width, because an
+        ensemble's central interval can contain a point (row 14); qualitative
+        rows and rows with no interval are not the case either.
         """
-        return self.width is None or self.width > 0.0
+        return self.mode == "statistical" or self.width is None or self.width > 0.0
 
 
 _BHG16 = "BHG16"

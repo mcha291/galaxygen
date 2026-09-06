@@ -1634,3 +1634,227 @@ about 0.21 s cold to any route that reaches it, and nothing to a route that does
 not; warm, the two models are indistinguishable. Metadata is still
 sub-millisecond with no stage behind it, and `/api/stages` grew by two
 declarations. A full run is 0.41 s simple, 0.63 s advanced (D92).
+
+## Session 10 — the audit (run 2 of 2)
+
+Run 2 branched from the S9 merge (`635c3c8`) and, by instruction, read nothing of
+run 1 (`session-10-gamma`). The defect list in D96 is written to be diffed against
+run 1's; the diff itself is owed by whoever has both (BRIEF.md).
+
+### D94. Every acceptance scalar is swept in N_R and N_t separately, and none moves past a tenth of its width
+
+    default n_R=400, n_t=2000, n_z=60; each axis alone: n_R in (200, 800), n_t in (1000, 4000)
+    row  quantity (simple)             default      n_R=200      n_R=800     n_t=1000     n_t=4000  drift/width
+      1  Total stellar mass        5.27619e+10  5.27609e+10   5.2762e+10   5.2876e+10  5.28174e+10   0.006
+      2  Star formation rate           1.96876      1.96974      1.96851      1.96726      1.96959   0.004
+      3  Solar tangential velocity     256.004      256.068      255.959      256.338      256.173   0.056
+      4  Thin disc scale length        2.49018      2.48942      2.48979      2.48788      2.48899   0.002
+      5  Thick disc scale length       1.17317      1.16909      1.17087      1.17135      1.17286   0.010
+      6  Thin disc scale height        253.054      253.051       253.18      253.023       253.05   0.001
+      7  Thick disc scale height       1039.32      1039.03      1039.69      1038.61      1039.01   0.002
+      8  Thick/thin local ratio      0.0250762    0.0250948    0.0250767    0.0249624    0.0250305   0.003
+      9  Thick/thin surface ratio      0.10299     0.103039     0.102978     0.102465     0.102774   0.007
+     10  Thin disc stellar mass    4.20319e+10  4.20362e+10  4.20307e+10   4.2161e+10  4.20958e+10   0.006
+     11  Thick disc stellar mass     1.073e+10  1.07248e+10  1.07313e+10  1.07151e+10  1.07216e+10   0.002
+     15  Bar half-length               4.98037      4.97885      4.97958      4.97575      4.97799   0.012
+     16  Bar pattern speed             45.5648      45.5784      45.5744      45.6166      45.5909   0.003
+     17  Bar corotation radius         5.24231      5.24071      5.24148      5.23745       5.2398   0.002
+     19  Halo virial mass              1.1e+12      1.1e+12      1.1e+12      1.1e+12      1.1e+12   0.000
+     20  Total gas mass (<30 kpc)  5.79503e+09   5.7964e+09  5.79471e+09  5.79412e+09  5.79619e+09   untestable
+     22  Present-day gradient       -0.0236683   -0.0236669   -0.0236807   -0.0236422   -0.0236683   0.001
+     23  Gradient, old end         -0.00668545  -0.00676996  -0.00672227  -0.00679806  -0.00663669   0.006
+    advanced, where it differs (rows 1-4, 15-20 are shared code and read the same):
+      5, 7, 8, 9, 11                       0            0            0            0            0   vacuous
+      6  Thin disc scale height        326.166      327.059      326.761      325.733      325.994   0.009
+     10  Thin disc stellar mass    5.27619e+10  5.27609e+10   5.2762e+10   5.2876e+10  5.28174e+10   0.006
+     22  Present-day gradient       -0.0565751   -0.0562879    -0.056485    -0.056418   -0.0564906   0.014
+     23  Gradient, old end          -0.0192657   -0.0194336   -0.0193567   -0.0192764   -0.0192285   0.008
+     24  [α/Fe] bimodality              single       single       single       single       single   converged
+
+**Decision.** `galaxy/specs/convergence.py` runs each model at the default grid and
+at every point of `SWEEP`, one axis moved at a time, and judges every acceptance
+row's drift against `Quantity.width`. Five statuses: `converged`, `unconverged`,
+`untestable` (zero width, debt #17), `vacuous` (reads 0 at every grid), and
+`not-yet-computable`. An unconverged row is recorded in `_UNCONVERGED` with a
+debt and a prediction, as a miss is in `spec.py`; the register is empty. Only the
+closure above the rows' fields runs (rule D4), so the sweep is ten runs and 4.8 s.
+
+**Settled by.** The numbers. The widest drift is row 3's 0.33 km/s from N_t = 1000,
+5.6% of its window; everything else is under 1.5%, and the vertical and pattern
+rows under 1%. N_R never moves a row more than N_t does — GALAXY_INPUTS.md §10's
+0.13-against-1 seen from the other side, and D37's analytic scalars holding
+`[verified: tests/test_convergence.py::test_the_radial_axis_is_the_cheap_one]`.
+One thing published and not explained (rule B6): the sfh scalars' dependence on
+N_t is not monotone at the 0.1% level — row 1 reads +0.22% at N_t = 1000 and
++0.11% at 4000 against 2000 — which is D46's no-trend signature at a level no
+row can see, and a first-order-in-dt normalisation error would be monotone. The
+advanced model's thick-disc rows are `vacuous` rather than `converged`: nothing
+moved because nothing is there, and a valley opening (debt #27) will make them
+rows the sweep judges for the first time. Row 20 is `untestable` and stays `fail`
+in the spec report on purpose (D97).
+
+### D95. The profile per stage, cold in a fresh process, and D61's per-cell cost measured
+
+    model simple: import 0.139 s (paid once per process)      model advanced: import 0.134 s
+    stage            cp    cold s    warm s    c/w  cold %    stage            cp    cold s    warm s    c/w  cold %
+    halo              1    0.0007    0.0004   1.66    0.1%    halo              1    0.0007    0.0005   1.33    0.1%
+    assembly          2    0.0002    0.0002   1.27    0.0%    assembly          2    0.0002    0.0002   1.03    0.0%
+    disc              1    0.0004    0.0003   1.15    0.1%    disc              1    0.0004    0.0007   0.60    0.1%
+    sfh               3    0.0892    0.0912   0.98   16.5%    sfh               3    0.0913    0.0891   1.03   11.2%
+    chemistry         3    0.0516    0.0525   0.98    9.6%    chemistry_dtd     3    0.3423    0.3331   1.03   42.0%
+    vertical          3    0.0102    0.0104   0.98    1.9%    vertical_alpha    3    0.0120    0.0107   1.12    1.5%
+    bar               4    0.0002    0.0002   1.01    0.0%    bar               4    0.0002    0.0002   0.76    0.0%
+    population        5    0.0000    0.0000   0.73    0.0%    population        5    0.0000    0.0000   0.77    0.0%
+    pattern           4    0.0115    0.0002  51.34    2.1%    pattern           4    0.0102    0.0002  46.27    1.2%
+    systems           5    0.1526    0.1497   1.02   28.3%    systems           5    0.1374    0.1547   0.89   16.9%
+    formation         6    0.0808    0.0798   1.01   15.0%    formation         6    0.0796    0.0805   0.99    9.8%
+    planets           6    0.1417    0.1305   1.09   26.3%    planets           6    0.1404    0.1377   1.02   17.2%
+    whole model            0.5393    0.5157   1.05  100.0%    whole model            0.8148    0.8077   1.01  100.0%
+    catalogue (D61), both models: 1024 cells x 8 streams; stage 0.14-0.15 s at 20 000 stars (516 cells realised)
+      layout 0.017 s; 1024 stars 0.10 s (406 cells); sample 0.14 s -> per cell ~100 us, per star 1.5-2.2 us;
+      per-cell share at the sample 70-78%; every stream of every cell constructed alone 0.13 s (16 us each)
+
+**Decision.** The runner records what each stage cost it (`Outputs.seconds`, the
+compute plus the validation of what it published), and `galaxy/specs/performance.py`
+runs each model in a fresh interpreter — the clock started before anything of the
+package is imported — once cold and once warm, then splits the systems stage by
+timing it at 1024 stars and at 20 000 and at the layout alone. Published, not
+judged (rule B6): the one problem the spec can raise is a profile it could not take.
+
+**Settled by.** D61 priced a stream at ~22 µs on that machine and left the share
+open; here it is 16 µs, the per-cell part is ~100 µs against ~2 µs per star, and at
+the published sample three quarters of the systems stage is per-cell setup that is
+paid whether or not any cell's stars are asked for. Constructing every stream of
+every cell alone costs 0.13 s, the ceiling of that part, which is 25% of a simple
+run and 16% of an advanced one — the size of what a lazy catalogue could save,
+and no more. The two models' pipelines differ by one stage: chemistry_dtd is 0.34
+of the advanced model's 0.81 s (42%), the rest is shared to the millisecond. Two
+readings within the run: `pattern` is 50× colder than warm because its first
+`Generator` draw pays numpy's first-call cost, and nothing else has a cache to
+read (c/w ≈ 1 everywhere else), so the cold column is the honest one.
+
+### D96. The calibration audit (rule B10): the defect list
+
+Every constant fitted or chosen while a mechanism the advanced model now has was
+missing, re-examined; every register prediction the audit could run, run. As
+tests, `tests/test_audit.py`; on the register, GALAXY_INPUTS.md §11. Numbered so
+the two runs can be diffed line by line.
+
+1. **Debt #12, measured.** `CONCENTRATION_NORM` = 4.1 normalises c_vir (Δ_vir ≈ 101
+   ρ_crit) and is applied to c₂₀₀ unconverted. Converted through the NFW profile,
+   c₂₀₀ = 10.9 not 14.35 (−24%); v_c(R₀) 243.8 → 230.4 km/s; **row 3 256.0 →
+   242.6**, through its window and out. The cited z_f = 2–3 spans 15.3 km/s on row
+   3 (248.2–263.5), not the 10 recorded. Recorded, not applied: debt #18's extended
+   component lowers row 3 too, and both together overshoot.
+2. **Debt #17, discharged.** The row 20/21 source quotes no uncertainty (abstract,
+   §4.2) and its §5 gives its own HI mass a factor-of-two history. `Quantity.testable`
+   says "no testable target"; nothing widened (D97).
+3. **New debt #29.** Row 20's 8.0 × 10⁹ M☉ is HI + H₂ — hydrogen; `gas_mass_30kpc`
+   is every retained baryon not in a star, helium included, and no constant names
+   helium. Like for like the shortfall is **47%, not 28%**; debt #18's component must
+   supply ~5 × 10⁹ M☉ of hydrogen, and `baryon_retention`'s budget argument is 3%
+   low for the same reason.
+4. **Debt #26, measured.** Gas above [Fe/H] = +0.5 out to 2.7 kpc (+1.20 at 1 kpc,
+   +0.27 at 4) against 0.8 kpc in the simple model. `WIND_SPEED` 800 → 1300 km/s
+   moves the centre only +1.65 → +1.37 and row 22 by 0.004 while taking the gas at
+   R₀ from +0.15 to −0.17: the fitted constant sets the level, not the centre or
+   the tilt. B10 note for the mass-loaded wind: refit `WIND_SPEED`; row 22 survives.
+5. **Debt #27, prediction run — held in part.** Default merger list: n = 2, 3 at τ₀
+   = 7, 1 Gyr all `single`, no second mode. Gaia-Enceladus alone: n = 3 with the
+   merger delivering 0.2 of the budget (τ₀ = 7), or n = 3 at τ₀ = 1 with 0.5, reads
+   **`bimodal_wide`** — depth 0.57–0.64, valley at +0.40, α-rich span 1.2 dex — with
+   a present-day gradient of −0.13 to −0.14 dex/kpc, twice the observed. The thick
+   disc it finds is the simple model's compact one: 6.6 × 10⁹ M☉ (row 11 in), 0.71
+   kpc (row 5 far out), 1113 pc (row 7 just over), ratio 0.011 at R₀ (row 9 an order
+   of magnitude low), thin disc 443 pc (row 6 out). The valley and row 22 are not
+   both reachable through the inside-out index (rule B12); what is missing is a
+   fast inner disc that does not steepen the infall law everywhere — the bulge and
+   its inflow. The "DTD's long tail" fallback is not the whole story.
+6. **Debt #28, measured in both models.** Old-population gradient with no migration
+   −0.105 (simple) and −0.129 (advanced); young −0.020 and −0.062; the default kernel
+   takes the old one down 16× and 7×; the young/old ratio lands at 3.2 and 3.1.
+   A 10 Gyr gradient near −0.04 convicts the width in both models at once.
+7. **New debt #30.** Row 6 reads 253 pc in the simple model (floor 250) and 326 in
+   the advanced (ceiling 350). `SECULAR_HEATING` 20 fails the simple model low (176),
+   30 fails the advanced high (429). `MERGER_HEATING` calibrates row 7 in the simple
+   model (616 → 1745 pc over 60–180 km/s, row 6 untouched) and row 6 in the advanced
+   one (287 → 392), where the heated stars have no thick disc to belong to. Two
+   constants fitted to make one population thick are holding a different row within
+   24 pc of its edge in the other model.
+8. **New debt #31.** `GAS_DISC_SCALE_RATIO` (kept "so S10 can sweep it") swept 0.8 →
+   1.5: R_d 2.00 → 3.68 kpc, row 3 261 → 237, SFR 1.54 → 2.78, gas 4.3 → 9.3 × 10⁹.
+   At 1.5 the simple model's rows 5 and 11 pass and 3, 4, 22 fail (S3's conflict,
+   with numbers). The advanced model's row 22 runs −0.086, −0.057, −0.047, −0.043,
+   so its pass needs the infall scale within a tenth of R_d: the no-op is load-bearing.
+9. **Debt #21, a note.** Row 15 is `BAR_LENGTH_RATIO × R_d` exactly: 2.0 × 2.49 =
+   4.98 against 4.8–5.2. A check on R_d, not the bar; it follows debt #18 one for one.
+10. **Ratchet.** `tests/test_registry.py` bounded UNSET defaults at ≤ 1 for seven
+    sessions while the count was 0; now == 0.
+11. **Not re-examined, named.** `RETURN_FRACTION` returns mass instantaneously in the
+    shared sfh stage while the advanced chemistry delays a third of the iron; no
+    row reads the difference. `PLANETESIMAL_EFFICIENCY`/`ICE_BOOST` are debt #25's.
+    `NET_YIELD` is debt #16's, discharged. `disc_spin` and `baryon_retention` were
+    not fitted to a row (D30, D32) and stand.
+12. **Absences.** No acceptance row moves with the grid (D94). The fetch gate's one
+    failure at open was a machine artefact, not a defect (D99).
+
+**Register after the audit:** 23 open, 8 discharged (`tools/progress.py`).
+
+### D97. A zero-width target says "no testable target" rather than borrowing a width
+
+**Decision.** `spec.Quantity.width` is `hi − lo`; `testable` is False for a
+pointwise row with zero width (rows 20 and 21) and True for a statistical one
+(row 14: an ensemble's interval can contain a point). The spec report says "no
+testable target — debt #17" on such a row and still reports `fail`; the
+convergence spec publishes its drift and gives no verdict. Rows 22 and 23 keep the
+`[inferred]` intervals S2 gave them; rows 20 and 21 get none.
+
+**Settled by.** The source was read (arXiv:1511.08877): no uncertainty anywhere on
+the 8.0 × 10⁹ or the 89 : 11, and the paper's own HI mass moved by a factor of two
+between its Paper I and III. An interval this project inferred would be a guess
+dressed as a citation; a zero width that says so is the honest table (rules B5,
+B9, B14). Row 20's miss stays recorded under debt #18 because 5.8 against 8.0 is a
+miss on any reading — and 4.2 against 8.0 once helium is taken out (debt #29).
+
+### D98. Cold timings at S10 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0002   1.48        940  -
+    viewer: a module         0.0003   0.0002   1.54     21,599  -
+    index                    0.0000   0.0000   1.95      1,237  -
+    version                  0.0018   0.0016   1.09      1,132  -
+    stages                   0.0002   0.0001   1.58      8,645  -
+    fields                   0.0007   0.0004   1.60     57,008  -
+    inputs                   0.0001   0.0001   1.74      9,091  -
+    arrays: one profile      0.0910   0.0002 388.38      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1389   0.0027  52.28  6,401,472  halo,…,chemistry
+    arrays: scalar           0.0882   0.0003 254.04      1,416  halo,assembly,disc,sfh
+    region: one sector       0.1684   0.0039  42.69     18,720  halo,…,vertical
+    region: whole disc       0.3260   0.1407   2.32  1,126,208  halo,…,vertical
+    system: one star         0.1586   0.0022  73.61      2,816  halo,…,vertical
+    adv: history             0.4334   0.0043  99.66  6,401,480  halo,…,chemistry_dtd
+    adv: alpha plane         0.4325   0.0028 152.21  6,401,528  halo,…,chemistry_dtd
+    adv: one sector          0.4544   0.0038 120.02     18,736  halo,…,chemistry_dtd,vertical_alpha
+    adv: one star            0.4409   0.0021 205.16      2,824  halo,…,chemistry_dtd,vertical_alpha
+    import + registry: 0.096-0.123 s, paid once per process and excluded from the cold column
+
+**Read within the run.** Every row is 20–35% slower than D93's on the same desktop
+— the machine, not the code: no stage changed and the runner's per-stage clock
+costs a `perf_counter` per stage. The shape is D93's: the advanced chemistry adds
+about 0.3 s cold to any route that reaches it and nothing warm; metadata is
+sub-millisecond with no stage behind it. `tools/scaling.py` was not re-run (rule
+B7): no stage's cost changed.
+
+### D99. The runner keeps its own clock, and the gate walks its own tree
+
+**Decision.** `Outputs.seconds` is part of the runner's contract, keyed like `ran`.
+`tests/test_api.py`'s one-fetch gate skips `.claude/` — on a desktop checkout the
+harness keeps other sessions' worktrees there, each with its own `transport.js`,
+and the gate walked into one at open. A machine artefact, fixed at the gate; the
+worktrees themselves were not read (rule C1 in spirit: the second run stays blind
+to the first).
+
+**Settled by.** A profile read from outside the runner is a reading of the wrapper
+(rule B3); the runner's own clock is the one that cannot disagree with the order
+it ran. The gate's failure was the first thing the session saw and the last thing
+it had to fix.
