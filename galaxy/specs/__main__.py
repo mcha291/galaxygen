@@ -1,9 +1,12 @@
 """``python -m galaxy.specs``: every executable spec against the production registries.
 
 Exit status is non-zero if any spec reports a problem, if an acceptance
-quantity fails without being a recorded miss, or if a recorded miss has started
-passing. Not-yet-computable quantities do not fail the run, and neither does a
-miss that is registered for that model (``spec.misses``) with its debt and its reason — it
+quantity fails without being a recorded miss, if a recorded miss has started
+passing, if an acceptance scalar moves with the grid by more than its target's
+width without being recorded (``convergence``), or if a profile could not be
+taken (``performance`` — its numbers are published, never judged).
+Not-yet-computable quantities do not fail the run, and neither does a miss that
+is registered for that model (``spec.misses``) with its debt and its reason — it
 still prints as ``fail`` (rule B5 relaxes nothing), it just does not pretend to
 be news.
 """
@@ -13,7 +16,7 @@ from __future__ import annotations
 import sys
 
 from galaxy.core.registry import production
-from galaxy.specs import determinism, graph, preflight, spec, utf8_stdout
+from galaxy.specs import convergence, determinism, graph, performance, preflight, spec, utf8_stdout
 
 
 def main() -> int:
@@ -34,6 +37,14 @@ def main() -> int:
     spec_results = spec.evaluate_models(models)
     print(spec.report(models, spec_results))
     bad |= any(spec.problems(r, name) for name, r in spec_results.items())
+
+    swept = convergence.sweep_models(models)
+    print(convergence.report(models, swept))
+    bad |= bool(convergence.check(models, swept))
+
+    rows, problems = performance.profiles(models)
+    print(performance.report(models, rows, problems))
+    bad |= bool(problems)
 
     print("specs:", "FAIL" if bad else "OK")
     return 1 if bad else 0

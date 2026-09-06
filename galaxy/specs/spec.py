@@ -104,6 +104,26 @@ class Quantity:
         if not self.stated.strip() or not self.source.strip():
             raise SpecError(f"row {self.n}: stated and source are required")
 
+    @property
+    def width(self) -> float | None:
+        """``hi − lo``: how far a value can move before the row's verdict can change.
+
+        ``None`` for a qualitative row or one with no interval yet. It is what the
+        convergence sweep judges a grid drift against (``specs/convergence.py``).
+        """
+        return None if self.lo is None or self.hi is None else self.hi - self.lo
+
+    @property
+    def testable(self) -> bool:
+        """Whether a float can meet this row at all.
+
+        A pointwise row whose source quotes no uncertainty has ``lo == hi`` and no
+        float that is not bit-exact can pass it — that is debt #17, and this is the
+        table's way of saying "no testable target" without widening anything
+        (rule B5). Qualitative rows and rows with no interval are not the case.
+        """
+        return self.width is None or self.width > 0.0
+
 
 _BHG16 = "BHG16"
 
@@ -409,7 +429,7 @@ def evaluate(
     if q.mode == "pointwise":
         value = float(fields[q.field])
         ok = q.lo <= value <= q.hi
-        width = "" if q.lo != q.hi else " (zero-width target; see note)"
+        width = "" if q.testable else " (zero-width target, so no testable target — debt #17; see note)"
         return Result(q.n, q.name, "pass" if ok else "fail", f"{value:.6g} {'in' if ok else 'not in'} [{q.lo:.6g}, {q.hi:.6g}]{width}", value)
     # statistical
     if ensemble is None or q.field not in ensemble:

@@ -24,8 +24,9 @@ that do run — asserted rather than argued, in ``tests/test_run.py``.
 
 from __future__ import annotations
 
+import time
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
@@ -58,6 +59,7 @@ class Outputs:
     decls: dict[str, FieldDecl]
     order: tuple[str, ...]  # implementation ids whose fields are present, in execution order
     ran: tuple[str, ...] = ()  # what this call executed; differs from order under resume=
+    seconds: dict[str, float] = field(default_factory=dict)  # wall seconds per stage this call ran (specs/performance.py)
 
 
 def resolve_inputs(
@@ -188,7 +190,9 @@ def run(
         done = resume.order
         plan = tuple(st for st in plan if st.id not in set(done))
 
+    seconds: dict[str, float] = {}
     for stage in plan:
+        started = time.perf_counter()
         ctx = Context(stage, g, resolved, seeds, constants, fields)
         result = stage.compute(ctx)
         if not isinstance(result, Mapping):
@@ -202,6 +206,10 @@ def run(
         for decl in stage.publishes:
             fields[decl.name] = _check_value(decl, result[decl.name], g, stage, column_lengths)
             decls[decl.name] = decl
+        # What the runner spent on this stage: its compute and the validation of what
+        # it published. Recorded rather than measured from outside, so a profile reads
+        # the runner's own clock and not a wrapper's (specs/performance.py, rule B6).
+        seconds[stage.id] = time.perf_counter() - started
     ran = tuple(s.id for s in plan)
     order = tuple(st.id for st in graph.order if st.id in set(done) | set(ran))
-    return Outputs(model.name, g, resolved, fields, decls, order, ran)
+    return Outputs(model.name, g, resolved, fields, decls, order, ran, seconds)
