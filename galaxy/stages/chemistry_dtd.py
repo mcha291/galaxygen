@@ -325,9 +325,9 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     y_o, y_fe_cc, y_fe_ia = float(c["Y_O_CC"]), float(c["Y_FE_CC"]), float(c["Y_FE_IA"])
     # Core-collapse metals in solar proportion to their oxygen, so total Z follows
     # from the oxygen yield rather than from a fourth constant; an Ia's ejecta are
-    # iron-peak throughout, about twice the iron by mass [recall].
+    # iron-peak throughout, IA_METAL_TO_IRON times the iron by mass (debt #33).
     y_z_cc = y_o * z_sun / o_sun
-    y_z_ia = 2.0 * y_fe_ia
+    y_z_ia = float(c["IA_METAL_TO_IRON"]) * y_fe_ia
 
     gas = ctx.fields["gas_surface_density_history"]
     psi = ctx.fields["sfr_surface_density_history"]
@@ -455,7 +455,7 @@ CHEMISTRY_DTD = IMPLEMENTATIONS.register(
         reads_constants=(
             "SOLAR_METALLICITY", "SOLAR_IRON", "SOLAR_OXYGEN",
             "Y_O_CC", "Y_FE_CC", "Y_FE_IA", "DTD_INDEX", "DTD_MIN_DELAY",
-            "WIND_SPEED", "WIND_INDEX", "G", "R_SUN",
+            "WIND_SPEED", "WIND_INDEX", "IA_METAL_TO_IRON", "G", "R_SUN",
         ),
         requires=(
             "gas_surface_density_history", "sfr_surface_density_history", "infall_rate_history",

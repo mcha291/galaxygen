@@ -216,7 +216,7 @@ def test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent(prod)
     advanced, simple = models.get("advanced"), models.get("simple")
     c = advanced.constants
     y_z = (float(c["Y_O_CC"].value) * float(c["SOLAR_METALLICITY"].value) / float(c["SOLAR_OXYGEN"].value)
-           + 2.0 * float(c["Y_FE_IA"].value))
+           + float(c["IA_METAL_TO_IRON"].value) * float(c["Y_FE_IA"].value))
     assert y_z == pytest.approx(0.0406, abs=0.0005)  # against the 0.03-0.04 usually quoted
 
     o = run(advanced, only=("metal_escape_fraction",))
@@ -297,3 +297,12 @@ def test_a_coarse_time_grid_manufactures_the_valley_debt_27_is_looking_for(prod)
     assert run(advanced, only=("alpha_sequence",)).fields["alpha_sequence"] == "single"
     coarse = run(advanced, grid=GridSpec(n_t=8), only=("alpha_sequence",))
     assert coarse.fields["alpha_sequence"] != "single"
+
+
+def test_the_ia_metal_to_iron_factor_is_a_registered_constant(prod):
+    """Debt #33 (S12): the 2.0 that set the advanced model's total-metal zero point lived in the code."""
+    models, _, _ = prod
+    c = models.get("advanced").constants
+    assert c["IA_METAL_TO_IRON"].value == 2.0 and "[recall]" in c["IA_METAL_TO_IRON"].about
+    assert "IA_METAL_TO_IRON" in C.CHEMISTRY_DTD.reads_constants
+    assert "IA_METAL_TO_IRON" not in models.get("simple").constants  # the simple model has no Ia channel
