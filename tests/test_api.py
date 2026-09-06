@@ -49,7 +49,7 @@ def api():
 # --- rule D2: one fetch, asserted in CI ---------------------------------------
 
 NETWORK = re.compile(r"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|importScripts)\s*[(<]")
-SKIP = {".git", "node_modules", ".venv", "__pycache__"}
+SKIP = {".git", ".claude", "node_modules", ".venv", "__pycache__"}  # .claude: the harness's worktrees are copies of this repo
 
 
 def strip_js(source: str) -> str:
