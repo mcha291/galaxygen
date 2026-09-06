@@ -14,7 +14,11 @@ parameter, which is the defect the sweep exists to find (D37, D46). A
 zero-width target has no tolerance to judge against and is reported as
 untestable rather than failed (debt #17). A qualitative row drifts if its
 category changes at all. Statistical rows are seeded draws and are reported at
-the default seed without a verdict.
+the default seed without a verdict. A row that reads exactly zero at every
+grid is **vacuous**, not converged: nothing moved because nothing is there
+(the advanced model's thick-disc rows, debt #27), and a valley opening will
+make them rows the sweep judges for the first time (rule B9; S11, from the
+gamma pair's D94).
 
 Publish the numbers, not the verdict (rule B6): the report carries every value
 at every grid, and ``check`` is the one place a drift becomes a problem.
@@ -51,7 +55,7 @@ class Drift:
     default: float | str
     drift: float  # largest |value - default| over the sweep; 1.0 for a category that changed
     tolerance: float | None  # the target's width; None when there is none to judge against
-    status: str  # "ok" | "drifts" | "untestable" | "statistical"
+    status: str  # "ok" | "drifts" | "untestable" | "vacuous" | "statistical"
 
     @property
     def problem(self) -> bool:
@@ -91,6 +95,8 @@ def _judge(q: Quantity, default: float | str, values: Mapping[int, float | str])
     if any(not math.isfinite(float(v)) for v in values.values()) or not math.isfinite(float(default)):
         return float("nan"), None, "untestable"
     width = q.hi - q.lo
+    if float(default) == 0.0 and all(float(v) == 0.0 for v in values.values()):
+        return 0.0, width, "vacuous"  # reads exactly 0 at every grid: nothing to converge (debt #27)
     if width <= 0.0:
         return drift, None, "untestable"  # debt #17: nothing to judge the drift against
     return drift, width, "drifts" if drift > width else "ok"
@@ -141,8 +147,9 @@ def report(models: Iterable[Model], sweeps: Mapping[str, Sequence[int]] = SWEEPS
     lines = ["convergence"]
     for m in models:
         rep = sweep(m, sweeps, **kw)
-        counts = {s: sum(1 for d in rep.drifts if d.status == s) for s in ("ok", "drifts", "untestable", "statistical")}
-        lines.append(f"  model {m.name}: {counts['ok']} ok, {counts['drifts']} drift, {counts['untestable']} untestable, {counts['statistical']} statistical (row x axis)")
+        counts = {s: sum(1 for d in rep.drifts if d.status == s) for s in ("ok", "drifts", "untestable", "vacuous", "statistical")}
+        lines.append(f"  model {m.name}: {counts['ok']} ok, {counts['drifts']} drift, {counts['untestable']} untestable, "
+                     f"{counts['vacuous']} vacuous, {counts['statistical']} statistical (row x axis)")
         for axis in sweeps:
             lines.append(f"    {axis} = {list(sweeps[axis])}")
             for d in rep.drifts:

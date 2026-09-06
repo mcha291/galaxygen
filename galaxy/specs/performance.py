@@ -15,7 +15,20 @@ figure, so a stage whose cost is mostly a first-touch effect shows as a ratio.
 cell, nine cells and every cell at the published sample size, in one process,
 and the cost per cell is published against the cost of the layout alone
 (``cell_counts``). A per-cell cost that is paid whether or not the cell was
-asked for is what this table exists to show.
+asked for is what this table exists to show. Since S11 the catalogue is also
+timed at several sample sizes and a straight line fitted through them, so the
+fixed cost and the marginal cost per star are told apart (``SAMPLES``); a
+two-point difference between the whole galaxy and a nine-cell window sits at
+one stars-per-cell ratio and is ill-conditioned — it returned a negative cost
+per star at S10 (session-10-beta, D96).
+
+**The one-off** (S11, from session-10-beta D97): the first seeded draw of a
+fresh interpreter costs milliseconds and every later one microseconds, and a
+per-stage profile bills that to whichever stage draws first — ``pattern`` in
+both models, which is why its cold column is tens of times its warm one. It is
+measured in its own interpreter (``--one-off``) and published beside the table
+rather than paid before the loop, which would tidy the table and destroy the
+evidence (rule B6). ``tools/timings.py`` carries the same term, unlabelled (debt #37).
 """
 
 from __future__ import annotations
@@ -33,6 +46,7 @@ from galaxy.specs import utf8_stdout
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE = 20_000  # the published catalogue size (D61)
+SAMPLES: tuple[int, ...] = (5_000, 10_000, 20_000, 40_000)  # the sizes the fixed/per-star fit runs over
 
 
 def profile(model: Model, **run_kwargs: Any) -> dict[str, float]:
@@ -59,8 +73,15 @@ def profile(model: Model, **run_kwargs: Any) -> dict[str, float]:
     return out
 
 
-def catalogue_cost(model: Model, n_stars: int = SAMPLE) -> dict[str, float]:
-    """Seconds to materialise 1, 9 and every cell, and the layout alone, at ``n_stars``."""
+def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES) -> dict[str, Any]:
+    """Seconds to materialise 1, 9 and every cell, the layout alone, and the fit against the sample size.
+
+    ``samples`` (plus ``n_stars``) are the sizes the whole catalogue is timed at; the
+    straight line through (stars realised, seconds) gives ``per_star_us`` and ``fixed_s``,
+    the part that does not depend on how many stars are asked for (D61).
+    """
+    import numpy as np
+
     from galaxy.run import run
     from galaxy.stages import systems
 
@@ -77,7 +98,33 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE) -> dict[str, float]:
         cat = systems.materialise(out.fields, R, t, seed, n_stars, cells)
         timings[label] = time.perf_counter() - start
         timings[label + " (stars)"] = float(cat.size)
+    sweep: list[list[float]] = []
+    for n in sorted({*samples, n_stars}):
+        start = time.perf_counter()
+        cat = systems.materialise(out.fields, R, t, seed, n, None)
+        sweep.append([float(n), float(cat.size), time.perf_counter() - start])
+    stars = np.array([s[1] for s in sweep])
+    secs = np.array([s[2] for s in sweep])
+    slope, intercept = np.polyfit(stars, secs, 1)
+    timings["samples"] = sweep  # [asked, realised, seconds] per size
+    timings["per_star_us"] = 1e6 * float(slope)
+    timings["fixed_s"] = float(intercept)
+    timings["cells"] = float(systems.CELL_COUNT)
+    timings["cells realised"] = float(len(systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n_stars, None)))
     return timings
+
+
+def one_off() -> dict[str, float]:
+    """The first seeded draw of this interpreter, then the second. Run in a fresh process."""
+    from galaxy.core import seeds
+
+    start = time.perf_counter()
+    seeds.rng(0, "one-off").random(1)
+    first = time.perf_counter() - start
+    start = time.perf_counter()
+    seeds.rng(1, "one-off").random(1)
+    then = time.perf_counter() - start
+    return {"first_s": first, "then_s": then}
 
 
 def measure(model_name: str) -> dict[str, Any]:
@@ -92,7 +139,14 @@ def measure(model_name: str) -> dict[str, Any]:
 
 
 def profile_cold(models: Iterable[Model]) -> list[dict[str, Any]]:
-    """One fresh interpreter per model (rule B2)."""
+    """One fresh interpreter per model (rule B2), and one more for the process-wide one-off."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "galaxy.specs.performance", "--one-off"],
+        capture_output=True, text=True, cwd=str(ROOT), check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"measuring the one-off failed:\n{proc.stderr[-2000:]}")
+    shared = json.loads(proc.stdout.splitlines()[-1])
     rows = []
     for m in models:
         proc = subprocess.run(
@@ -101,7 +155,7 @@ def profile_cold(models: Iterable[Model]) -> list[dict[str, Any]]:
         )
         if proc.returncode != 0:
             raise RuntimeError(f"profiling {m.name} failed:\n{proc.stderr[-2000:]}")
-        rows.append(json.loads(proc.stdout.splitlines()[-1]))
+        rows.append({**json.loads(proc.stdout.splitlines()[-1]), "one_off": shared})
     return rows
 
 
@@ -119,6 +173,20 @@ def table(rows: list[dict[str, Any]]) -> str:
                      f"one cell {cat['one cell']:.4f} s ({int(cat['one cell (stars)'])} stars), "
                      f"nine {cat['nine cells']:.4f} s ({int(cat['nine cells (stars)'])}), "
                      f"every cell {cat['every cell']:.4f} s ({int(cat['every cell (stars)'])})")
+        if "per_star_us" in cat:
+            whole = next((s for s in cat["samples"] if int(s[0]) == SAMPLE), cat["samples"][-1])
+            marginal = cat["per_star_us"] * 1e-6 * whole[1]
+            share = 1.0 - marginal / whole[2] if whole[2] > 0 else float("nan")
+            sizes = " ".join(f"{int(s[0]) // 1000}k:{s[2]:.4f}s" for s in cat["samples"])
+            lines.append(f"    catalogue against sample size: {sizes} -> {cat['per_star_us']:.2f} us per star, "
+                         f"{1e3 * cat['fixed_s']:.1f} ms fixed ({share:.0%} of the catalogue at {int(whole[0]) // 1000}k "
+                         f"does not depend on how many stars are asked for); layout {1e3 * cat['layout']:.1f} ms over all "
+                         f"{int(cat['cells'])} cells, {int(cat['cells realised'])} of them realise a star")
+        one = r.get("one_off")
+        if one:
+            ratio = one["first_s"] / one["then_s"] if one["then_s"] > 0 else float("inf")
+            lines.append(f"    one-off, first seeded draw: {1e3 * one['first_s']:.2f} ms then {1e3 * one['then_s']:.3f} ms "
+                         f"({ratio:.0f}x) — billed by this table to the first stage that draws (pattern); debt #37")
     return "\n".join(lines)
 
 
@@ -130,6 +198,9 @@ def main() -> int:
     utf8_stdout()
     if len(sys.argv) > 2 and sys.argv[1] == "--one":
         print(json.dumps(measure(sys.argv[2])))
+        return 0
+    if len(sys.argv) > 1 and sys.argv[1] == "--one-off":
+        print(json.dumps(one_off()))
         return 0
     models, _, _ = production()
     print(report(list(models)))
