@@ -45,3 +45,21 @@ def test_the_binned_kernel_touches_a_fixed_number_of_shifts():
         shifts = {max(1, int(round(tau / (13.8 / n_t)))) for tau in delays}
         assert len(shifts) <= C.DTD_BINS
         assert delays.size == C.DTD_BINS
+
+
+def test_the_whole_model_row_is_measured_in_a_fresh_interpreter():
+    """AUDIT_RUN2.md D-13, fixed at S12: the row said "cold" and was the seventeenth run of the process."""
+    import inspect
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    import scaling
+
+    assert "subprocess" in inspect.getsource(scaling.time_model)
+    tool = Path(scaling.__file__).resolve()
+    proc = subprocess.run(
+        [sys.executable, str(tool), "--model", "simple"],
+        capture_output=True, text=True, check=True, cwd=str(tool.parents[1]),
+    )
+    assert 0.05 < float(proc.stdout.splitlines()[-1]) < 60.0

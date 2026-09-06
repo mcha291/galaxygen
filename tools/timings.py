@@ -80,6 +80,15 @@ def measure(endpoint: Endpoint) -> dict:
     cold = service.handle(endpoint.route, endpoint.query)
     cold_s = time.perf_counter() - start
 
+    # Debt #37: the interpreter's first seeded draw costs ~10 ms of numpy setup and lands
+    # on whatever draws first. If the cold request drew, it paid it and this probe is
+    # microseconds; if not, the probe pays it here and the cold number never held it.
+    from galaxy.core import seeds
+
+    start = time.perf_counter()
+    seeds.rng(0, "timings-probe").random(1)
+    probe_s = time.perf_counter() - start
+
     start = time.perf_counter()
     warm = service.handle(endpoint.route, endpoint.query)
     warm_s = time.perf_counter() - start
@@ -98,6 +107,8 @@ def measure(endpoint: Endpoint) -> dict:
         "ratio": cold_s / warm_s if warm_s > 0 else float("inf"),
         "bytes": len(cold.body),
         "stages": list(cold.stages),
+        "probe_s": probe_s,
+        "first_draw_in_cold": probe_s < 1e-3,
     }
 
 
@@ -120,11 +131,19 @@ def table(rows: list[dict]) -> str:
     lines = [head, "-" * len(head)]
     for r in rows:
         stages = ",".join(r["stages"]) or "-"
+        name = r["name"] + ("*" if r.get("first_draw_in_cold") else "")
         lines.append(
-            f"{r['name']:<22} {r['cold_s']:>8.4f} {r['warm_s']:>8.4f} {r['ratio']:>6.2f} {r['bytes']:>10,}  {stages}"
+            f"{name:<22} {r['cold_s']:>8.4f} {r['warm_s']:>8.4f} {r['ratio']:>6.2f} {r['bytes']:>10,}  {stages}"
         )
     imports = [r["import_s"] for r in rows]
     lines.append("")
+    if any(r.get("first_draw_in_cold") for r in rows):
+        paid = [r["probe_s"] for r in rows if not r.get("first_draw_in_cold")]
+        size = f" — about {1e3 * min(paid):.0f} ms here" if paid else ""
+        lines.append(
+            "* cold includes the interpreter's first seeded draw, numpy's bit-generator setup"
+            f"{size}; measured alone by `python -m galaxy.specs.performance --one-off` (debt #37)"
+        )
     lines.append(
         f"import + registry: {min(imports):.3f}-{max(imports):.3f} s, paid once per process and "
         f"excluded from the cold column"
