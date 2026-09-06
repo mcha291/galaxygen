@@ -233,13 +233,17 @@ _MISSES: tuple[Miss, ...] = (
             "also broadened the stellar disc to 3.74 kpc. S3 corrected that constant, the two disc "
             "scale lengths came into agreement (debt #13 discharged), and the miss returned to "
             "where S1 left it. So the cause is not the gas profile at all: it is that all the "
-            "baryons are in the compact disc, with no extended component and no bulge."
+            "baryons are in the compact disc, with no extended component and no bulge. S10 measured "
+            "a second cause of the same size and the opposite sign: the c_vir normalisation applied "
+            "to c200 without the overdensity conversion (debt #12) is worth 13 km/s, so the two "
+            "debts overshoot one another."
         ),
         prediction=(
             "Splitting the baryons into a compact disc plus an extended high-angular-momentum "
             "component moves mass outside R0 and lowers v_c there. The bulge (S3-S4) pushes the "
             "other way, so the two must be added together before this row is judged - which is why "
-            "it is not closable until both exist."
+            "it is not closable until both exist. Debt #12's conversion alone takes this row to "
+            "242.6, below the target, so it belongs in the same judgement (S10)."
         ),
     ),
     Miss(

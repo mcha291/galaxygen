@@ -704,7 +704,17 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    "z ≈ 2–3" rather than a measurement. Across that cited range v_c(R₀) moves
    about 10 km/s — three times acceptance entry 3's error bar. The one check it
    passes is that c₂₀₀ = 14.4 lands inside the 10–18 the Milky Way's own
-   measurements span (§4b).
+   measurements span (§4b). **Measured at S10 (rule B10):** converting at
+   Δ_vir = 101 ρ_crit (Bryan & Norman 1998 for Ω_M = 0.3 `[recall]`) turns
+   c_vir = 14.35 into c₂₀₀ = 10.9, and with that concentration v_tan(R₀) falls
+   from 256.0 to 242.6 km/s — a 13 km/s swing, twice the target's width, that
+   carries row 3 from 5 km/s high to 2.4 km/s low; at z_f = 3 the converted
+   value lands inside the target `[verified: tests/test_calibration.py::test_debt_12_the_overdensity_conversion_is_worth_more_than_row_3s_whole_miss]`.
+   The two halves of this debt — the conversion and z_f — are degenerate in
+   row 3, and row 3's recorded cause (debt #18, every baryon inside R₀) is not
+   the only one of its size: either fix alone overshoots. Nothing changed
+   (D97): the constant has no claim on its value in either direction until the
+   conversion and z_f are set together, against rows 3 and 19 at once.
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -746,11 +756,17 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    result rather than a fit `[verified: tests/test_chemistry_dtd.py::
    test_the_wind_takes_the_share_the_effective_yield_was_hiding]`. The simple
    model keeps `NET_YIELD` as its own constant, explained rather than blind.
-17. **Acceptance rows 20 and 21 have zero-width targets.** The sources quote no
-   uncertainty, so the check fails for any float that is not bit-exact. Row 20
-   agrees to 6% and still fails. A defect in the table, not the model; the fix
-   is to read the source's uncertainty or to give the table a way to say "no
-   testable target", which belongs to the S10 audit.
+17. ~~**Acceptance rows 20 and 21 have zero-width targets.**~~ **DISCHARGED by
+   S10.** The sources quote no uncertainty, so the check failed for any float
+   that was not bit-exact — not a check. The source was read (Nakanishi &
+   Sofue 2016 state 8.0 × 10⁹ M☉, 89% : 11%, and no error `[verified:
+   arXiv:1511.08877, abstract]`), so the table now carries the half-unit of
+   the source's last printed digit: 8.0 × 10⁹ is read as ±0.05 × 10⁹, 11% as
+   ±0.5%, and row 14's 113 km/s as ±0.5. That is the strictest testable
+   reading of a number printed to two figures; no row that failed passes
+   because of it, and `spec.evaluate` still flags a zero-width row rather
+   than leaving it silently unpassable (D95). Row 20's 28% miss is untouched
+   and remains debt #18's.
 18. **No high-angular-momentum accretion component.** With the infall carrying
    the disc's own scale length (debt #13's fix), nothing accretes beyond about
    10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
@@ -762,7 +778,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    leaves the stellar structure alone. Rows 3 and 4 are the check that it is
    *high* enough in angular momentum — if the stellar disc broadens, it is not.
    The bulge pushes row 3 the other way and arrives at S3–S4, so those two must
-   be judged together.
+   be judged together. **Swept at S10:** `GAS_DISC_SCALE_RATIO`, kept since S3
+   for this purpose, over 0.8–1.5. At 1.2 rows 3 and 4 pass (248.7 km/s,
+   2.97 kpc) and row 20 rises to 7.2 × 10⁹, but row 2 goes to 2.33, the simple
+   gradient flattens to −0.018 and the advanced model's closed row 22 reopens
+   at −0.048; at 0.8 the advanced gradient overshoots to −0.086 `[verified:
+   tests/test_calibration.py::test_debt_18_a_broader_single_infall_trades_rows_3_and_20_against_2_and_22]`.
+   One broader infall cannot buy rows 3 and 20 without paying rows 2 and 22:
+   that is the case for a *second* component rather than a wider first one.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -854,6 +877,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    nothing carries iron out of a region with 5 M☉/pc² of gas `[verified:
    tests/test_systems.py::test_metallicity_is_looked_up_not_drawn]`. The bulge
    and its inflow are S10 questions; recorded, not clipped (rule B9).
+   **Measured at S10:** the centre reaches the planets. The advanced catalogue
+   has 1.2% of its stars above [Fe/H] = +0.5 (the simple model 0.02%), giant
+   occurrence inside 1 kpc is 0.43 against 0.07, and the published sample's
+   giant fraction is 1.65% against 1.02% — a 60% difference in a headline
+   planets number, made by a half-kiloparsec the wind cannot empty.
+   `PLANETESIMAL_EFFICIENCY`'s fit is untouched: occurrence at R₀ is 5.0% in
+   both models `[verified: tests/test_calibration.py::test_debt_26_the_iron_at_the_centre_reaches_the_planets]`.
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
    plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
@@ -886,6 +916,35 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    in radius growing as √age), or the old gas gradient the model flattens from
    (−0.127 dex/kpc at 10 Gyr, with no migration) is too steep to begin with. A
    gradient measured at 10 Gyr decides between them.
+29. **Row 2 cannot see past `KS_NORM`'s own uncertainty.** Kennicutt's
+   normalisation is (2.5 ± 0.7) × 10⁻⁴ and is deliberately not fitted (§2).
+   Across that ±1σ the present-day rate runs 2.16–1.85 M☉/yr and the gas mass
+   6.8–5.2 × 10⁹: the swing is 2.5 times row 2's miss, and at +1σ the row is
+   0.007 from passing `[verified: tests/test_calibration.py::test_debt_29_row_2_cannot_see_past_ks_norms_own_uncertainty]`.
+   A target inside the error bar of the one constant it depends on is not a
+   check on the model by itself. What survives is the *pair*: rows 2 and 20
+   pull `KS_NORM` opposite ways, so no value of it satisfies both, and that is
+   evidence for debt #18 that neither row is alone.
+30. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
+   history that misses rows 2 and 20.** Both set the present-day gas at R₀
+   solar (debt #16, D89), and both were fitted with no extended accretion
+   component (#18); whatever that component does to the infall at R₀ moves
+   them. Levers, measured so the re-fit is one line: +10% `WIND_SPEED` is
+   −0.064 dex at R₀, +10% `NET_YIELD` is +0.041 dex `[verified:
+   tests/test_calibration.py::test_debt_30_the_two_solar_calibrations_and_their_levers]`. Rule B10
+   applies the day #18 closes; until then both are provisional rather than
+   re-fitted against a mechanism that is not there.
+31. **`SECULAR_HEATING` is calibrated against a merger-defined thin disc, and
+   the advanced model's thin disc is a different population.** S3 set 25 km/s
+   so row 6 read 253 pc with the pre-merger stars removed to the thick disc.
+   The chemical split finds no thick disc (#27), so the advanced thin disc
+   keeps the merger-heated stars and row 6 reads 326 pc — inside 250–350 with
+   24 pc to spare, 52 pc of it `MERGER_HEATING`'s (274 without it). The same
+   +5 km/s that leaves the simple model at 347 pc puts the advanced one at 429
+   `[verified: tests/test_calibration.py::test_debt_31_secular_heating_passes_row_6_in_both_models_only_by_the_targets_width]`.
+   Two models pass one row with one constant only because the target is
+   ±50 pc; when #27 opens the valley the advanced thin disc loses those stars
+   and the constant has no claim on its value there (rule B10).
 
 ---
 
