@@ -240,7 +240,7 @@ def _stat(values, row=16):
 
 
 def test_a_statistical_row_tests_overlap_and_not_agreement():
-    """S10 run 2: the criterion is 'the interval intersects the target' (debt #33).
+    """S10 run 2: the criterion is 'the interval intersects the target' (debt #38).
 
     So it asks whether the distribution *reaches* the observation, not whether it
     is centred on it, and a median well outside the target passes as long as the
@@ -260,7 +260,7 @@ def test_a_statistical_row_tests_overlap_and_not_agreement():
 
 
 def test_the_ensemble_size_and_the_central_fraction_do_not_agree():
-    """S10 run 2: at n = 20 the 'central 95%' interval trims no whole draw (debt #33).
+    """S10 run 2: at n = 20 the 'central 95%' interval trims no whole draw (debt #38).
 
     ``np.percentile`` interpolates, so the lower endpoint sits at order-statistic
     index ``tail·(n−1)``. Below 1 that is between the smallest and second-smallest
@@ -270,7 +270,7 @@ def test_the_ensemble_size_and_the_central_fraction_do_not_agree():
     tail = (1.0 - spec.CENTRAL) / 2.0
     assert (spec.ENSEMBLE_MIN, spec.CENTRAL) == (20, 0.95)
     assert tail * (spec.ENSEMBLE_MIN - 1) == pytest.approx(0.475)
-    assert tail * (spec.ENSEMBLE_MIN - 1) < 1.0, "the finding is discharged; update debt #33"
+    assert tail * (spec.ENSEMBLE_MIN - 1) < 1.0, "the finding is discharged; update debt #38"
     assert int(np.ceil(1.0 / tail)) + 1 == 41  # the n this criterion would need
 
     v = np.linspace(0.0, 1.0, spec.ENSEMBLE_MIN)
@@ -279,7 +279,7 @@ def test_the_ensemble_size_and_the_central_fraction_do_not_agree():
 
 
 def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
-    """S10 run 2: every member sets all four seeds to the same integer (debt #34)."""
+    """S10 run 2: every member sets all four seeds to the same integer (debt #39)."""
     from galaxy.core.registry import INPUTS
     from galaxy.run import run
 
@@ -295,7 +295,7 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
 
 
 def test_world_seed_is_read_by_no_stage_of_either_model(prod):
-    """S10 run 2: one of the four declared seeds is inert (debt #34).
+    """S10 run 2: one of the four declared seeds is inert (debt #39).
 
     ``graph`` reports it as unbound rather than failing, which is deliberate — an
     input no stage reads yet is a gap, not an error. What is worth pinning is that
