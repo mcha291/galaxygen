@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████` **11 / 11 sessions** · repo initialised: yes
+`████████████████████████` **12 / 12 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -17,6 +17,7 @@
 | ☑ | 8 | Planets & system view | web | Opus | **Opus 5** | s08 | 2026-09-04 |
 | ☑ | 9 | Advanced model | desktop | **Fable** | **Fable 5.1** | s09 | 2026-09-04 |
 | ☑ | 10 | Audit | desktop | **Fable** ×2 | **Fable 5.1** (runs 1, 2) | s10 | 2026-09-05 |
+| ☑ | 11 | Integrate the S10 audits (beta, the gamma pair) | desktop | — | **Fable 5.1** | s11 | 2026-09-07 |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
