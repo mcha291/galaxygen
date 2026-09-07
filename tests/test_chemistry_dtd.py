@@ -222,12 +222,12 @@ def test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent(prod)
     o = run(advanced, only=("metal_escape_fraction",))
     i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
     escaped = float(o.fields["metal_escape_fraction"][i])
-    assert escaped == pytest.approx(0.7532, abs=0.001)
+    assert escaped == pytest.approx(0.7567, abs=0.001)  # 0.7532 until S13 converted the concentration and refitted WIND_SPEED
 
     effective = y_z * (1.0 - escaped)
     fitted = float(simple.constants["NET_YIELD"].value)
-    assert effective == pytest.approx(0.01001, abs=0.0002)
-    assert fitted / effective == pytest.approx(1.10, abs=0.03)
+    assert effective == pytest.approx(0.00987, abs=0.0002)
+    assert fitted / effective == pytest.approx(1.11, abs=0.03)
 
 
 def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
@@ -246,7 +246,7 @@ def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
         ]
         peaks[name] = got
         assert max(got) - min(got) < 0.10, (name, got)
-    assert min(peaks["advanced"]) > 1.4 and max(peaks["simple"]) < 0.7
+    assert min(peaks["advanced"]) > 1.3 and max(peaks["simple"]) < 0.7  # 1.35 since S13 (1.53 before): the wind's refit, not the grid
 
 
 def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):

@@ -168,10 +168,12 @@ def test_the_drawn_sample_agrees_with_the_computed_occurrence(model):
         f"the drawn giants ({drawn:.4f}) and the computed probability ({expected:.4f}) disagree; "
         "one of the two definitions of a giant has drifted"
     )
-    # They differ by a couple of per cent and the reason is known: the computed
-    # form asks whether a zone's *centre* lies beyond the ice line, while a drawn
-    # planet sits somewhere inside its zone and can land on the other side of it.
-    assert abs(drawn - expected) < 0.05 * expected
+    # They differ by a few per cent for two reasons, one known and one statistical: the
+    # computed form asks whether a zone's *centre* lies beyond the ice line, while a drawn
+    # planet sits somewhere inside its zone; and ~200 giants in 20 000 stars carry a 7%
+    # binomial width, which the flat 5% this test asked for until S13 was inside by luck.
+    n = fields["star_mass"].size
+    assert abs(drawn - expected) < 0.02 * expected + 3.0 * (expected * (1.0 - expected) / n) ** 0.5
 
 
 # --- the architecture ---------------------------------------------------------

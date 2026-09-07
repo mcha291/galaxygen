@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.grids import GridSpec
+from galaxy.core.registry import MergerEvent
 from galaxy.run import run
 from galaxy.stages.sfh import fit_scale_length, surface_to_mass
 
@@ -39,11 +40,12 @@ def test_the_split_is_computed_not_assumed(model):
     o = out(model)
     f = o.fields
     assert 4.0e10 <= f["stellar_mass_total"] <= 6.0e10          # row 1 passes
-    # Row 2 overshoots now that the merger delivers a second infall: the mechanism is
-    # right and the second episode decays too slowly (debt #18).
-    assert f["sfr"] == pytest.approx(1.97, abs=0.06)
-    # Row 20 misses low by 28%: there is no extended accretion channel (debt #18).
-    assert f["gas_mass_30kpc"] == pytest.approx(5.80e9, rel=0.05)
+    # Row 2 overshoots: the second episode decays too slowly (debt #18). It read 1.97 while
+    # Sagittarius delivered a tenth of the budget (debt #29, until S13).
+    assert f["sfr"] == pytest.approx(1.89, abs=0.06)
+    # Row 20 misses low by 29%, 48% like for like (debt #41): no extended accretion channel (debt #18).
+    assert f["gas_mass_30kpc"] == pytest.approx(5.71e9, rel=0.05)
+    assert f["hydrogen_mass_30kpc"] == pytest.approx(0.73 * f["gas_mass_30kpc"])
     assert 0.05 < f["gas_mass_30kpc"] / f["baryon_mass_total"] < 0.12
 
 
@@ -112,18 +114,21 @@ def test_inside_out_growth_is_actually_inside_out(model):
     assert peak_outer > peak_inner
 
 
-def test_row_3_misses_high_because_every_baryon_is_inside_R0(model):
-    """The history of this row is the history of two wrong explanations (spec.MISSES[3]).
+def test_row_3_misses_low_once_the_concentration_is_converted(model):
+    """The history of this row is the history of three wrong explanations (spec.MISSES[3]).
 
     S1 blamed the gas profile and predicted 246.4. S2 gave the gas a profile and got
-    237.2, which looked like an overshoot but was the stellar disc broadening at the
-    same time. S3 corrected that, and the miss returned to where S1 found it - which
-    is the evidence that the gas profile was never the cause.
+    237.2, which was the stellar disc broadening at the same time. S3 corrected that and
+    the miss returned to 256, high - and every audit blamed the compact disc. S13 did the
+    conversion debt #12 named: the c_vir normalisation had been used as c200, and with
+    c200 = 10.9 instead of 14.35 the row reads 242.7, low. An extended component would
+    lower it further; what is missing inside R0 is the bulge (debt #11).
     """
     o = out(model)
     v = o.fields["v_tangential_sun"]
-    assert v > 251.0
-    assert v == pytest.approx(256.1, abs=1.0)
+    assert v < 245.0
+    assert v == pytest.approx(242.7, abs=1.0)
+    assert o.fields["halo_concentration"] == pytest.approx(10.9, abs=0.05)
 
 
 def test_the_resolved_curve_supersedes_the_checkpoint_one_one(model):
@@ -157,9 +162,32 @@ def test_surface_densities_integrate_to_their_masses(model):
 def test_the_second_infall_is_the_merger(model):
     """Ruling 11: the merger delivers the gas, so removing it removes the second episode."""
     o = out(model)
-    assert o.fields["second_infall_share"] == pytest.approx(0.6, abs=0.01)
+    assert o.fields["second_infall_share"] == pytest.approx(0.505, abs=0.01)  # 0.5 Gaia-Enceladus + 0.01 of the rest, Sagittarius (S13)
     free = run(model, {"mergers": ()})
     assert free.fields["second_infall_share"] == 0.0
     assert free.fields["major_merger_count"] == 0.0
     # Without the late delivery the present-day rate collapses: that is the mechanism.
     assert free.fields["sfr"] < 0.7 * o.fields["sfr"]
+
+
+def test_the_merger_gas_arrives_at_its_own_epoch_and_the_grid_no_longer_sees_a_step(model):
+    """Debt #30, fixed at S13: sfh accretes merger_delivery instead of a step at the last major merger.
+
+    The register's prediction was that feeding the delivery windows in would remove rows 1
+    and 10's non-monotone movement with N_t (5.2876, 5.2762, 5.2817 x 1e10 at 1000, 2000,
+    4000). It did: monotone, and a spread of 0.007%.
+    """
+    from galaxy.stages.sfh import SFH
+
+    assert "merger_delivery" in SFH.requires and "last_major_merger_time" not in SFH.requires
+    ms = [float(run(model, grid=GridSpec(n_t=n), only=("stellar_mass_total",)).fields["stellar_mass_total"])
+          for n in (1000, 2000, 4000)]
+    assert ms[0] >= ms[1] >= ms[2] or ms[0] <= ms[1] <= ms[2]
+    assert (max(ms) - min(ms)) / ms[1] < 5e-4
+    # Sagittarius' gas arrives around 8.8 Gyr now, not with Gaia-Enceladus at 3.8: the infall with
+    # the event minus without it peaks after 8.8 (the budget is fixed, so read the positive part).
+    ge = (MergerEvent(3.8, 0.25, 0.5, "probe"),)
+    a = run(model, only=("infall_rate_history",))
+    b = run(model, {"mergers": ge}, only=("infall_rate_history",))
+    extra = np.maximum((a.fields["infall_rate_history"] - b.fields["infall_rate_history"]).sum(axis=0), 0.0)
+    assert 8.5 < a.grid.t[int(np.argmax(extra))] < 10.5

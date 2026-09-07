@@ -53,11 +53,13 @@ def test_R200_at_the_default_mass(model):
 
 
 def test_concentration_from_the_assembly_redshift(model):
-    """Ruling 5: c₂₀₀ = K(1 + z_f). The default's consequence must land inside the measured
-    span c ≈ 10–18 (GALAXY_INPUTS.md §4b) — that is what makes z_f = 2.5 more than a guess."""
+    """Ruling 5: c_vir = K(1 + z_f), converted to c₂₀₀ since S13 (debt #12). The default's
+    consequence must land inside the measured span c ≈ 10–18 (GALAXY_INPUTS.md §4b) — that
+    is what makes z_f = 2.5 more than a guess, and both numbers do."""
     o = out(model)
-    assert o.fields["halo_concentration"] == pytest.approx(14.35, abs=0.01)
-    assert 10.0 <= o.fields["halo_concentration"] <= 18.0
+    assert o.fields["halo_concentration_virial"] == pytest.approx(14.35, abs=0.01)
+    assert o.fields["halo_concentration"] == pytest.approx(10.91, abs=0.01)
+    assert 10.0 <= o.fields["halo_concentration"] <= o.fields["halo_concentration_virial"] <= 18.0
     early, late = out(model, halo_assembly_z=4.0), out(model, halo_assembly_z=1.0)
     assert early.fields["halo_concentration"] > late.fields["halo_concentration"]
     assert early.fields["halo_scale_radius"] < late.fields["halo_scale_radius"]
@@ -133,68 +135,58 @@ def _with_norm(base, k: float):
                  constants=constants, inputs=base.inputs)
 
 
-CVIR_RATIO = 255.0 / 212.94  # top-hat R_vir over this model's own R200; see test_disc.py
+def test_the_concentration_is_converted_from_the_virial_overdensity(model):
+    """Debt #12, half discharged at S13: K(1 + z_f) is a c_vir, and the halo converts it to c₂₀₀.
 
-
-def test_the_overdensity_conversion_debt_12_folds_into_k_is_worth_20_percent(model):
-    """Debt #12: K = 4.1 is quoted for c_vir and used as a c₂₀₀ normalisation.
-
-    The conversion is not a free choice — this model publishes R₂₀₀, and debt #10
-    already established that the 255 kpc it is compared against is a top-hat
-    virial radius. The ratio of the two is the factor K carries and should not.
+    Δ_vir(Ω_M = 0.3) ≈ 101 ρ_crit [recall: Bryan & Norman 1998]; Δ c³/μ(c) is the halo's own
+    invariant, so the conversion is a root of the NFW profile and not a factor recalled or
+    taken from a cited radius — the two other readings the S10 audits gave it (D102).
     """
+    from galaxy.stages.halo import concentration_at, virial_overdensity
+
     o = out(model)
-    assert float(o.fields["halo_virial_radius"]) == pytest.approx(212.94, abs=0.01)
-    assert CVIR_RATIO == pytest.approx(1.198, abs=0.001)
-    assert float(o.fields["halo_concentration"]) == pytest.approx(14.35, abs=0.01)
-    corrected = run(_with_norm(model, 4.1 / CVIR_RATIO))
-    assert float(corrected.fields["halo_concentration"]) == pytest.approx(11.97, abs=0.02)
-    # The one check debt #12 says the constant passes cannot tell the two apart:
-    # the Milky Way's own measurements span c₂₀₀ = 10–18 and both land inside it.
-    for c in (float(o.fields["halo_concentration"]), float(corrected.fields["halo_concentration"])):
-        assert 10.0 <= c <= 18.0
+    dvir = virial_overdensity(float(model.constants["OMEGA_M"].value))
+    assert dvir == pytest.approx(101.1, abs=0.2)
+    c_vir, c200 = float(o.fields["halo_concentration_virial"]), float(o.fields["halo_concentration"])
+    assert c_vir == pytest.approx(14.35, abs=0.01) and c200 == pytest.approx(10.91, abs=0.01)
+    assert c200 == pytest.approx(concentration_at(200.0, c_vir, dvir), rel=1e-9)
+    assert concentration_at(dvir, c200, 200.0) == pytest.approx(c_vir, abs=1e-6)  # the root round-trips
+    assert dvir * c_vir**3 / mu(c_vir) == pytest.approx(200.0 * c200**3 / mu(c200), rel=1e-9)
+    assert o.fields["halo_scale_radius"] == pytest.approx(o.fields["halo_virial_radius"] / c200, rel=1e-12)
 
 
-def test_the_conversion_closes_row_3_and_moves_nothing_else(model):
-    """S10: row 3's recorded miss has a second explanation, and the two are separable.
+def test_the_conversion_moved_row_3_and_nothing_else(model):
+    """What the conversion is worth: 13.5 km/s on row 3, from 5 high to 2 low, and < 1e-9 on every other row."""
+    from galaxy.stages.halo import concentration_at, virial_overdensity
 
-    Debt #18 explains row 3 as every baryon being inside R₀ with no extended
-    component and no bulge, and predicts rows 2, 3 and 20 close together. Doing
-    debt #12's conversion closes row 3 on its own. Rows 2 and 20 are therefore
-    the discriminator, and this test is what would notice if that stopped being
-    true — it is not a licence to move the constant, which stays at 4.1.
-    """
-    from galaxy.specs.spec import QUANTITIES, evaluate_all
-
-    rows = {q.n: q for q in QUANTITIES}
-    before = run(model)
-    after = run(_with_norm(model, 4.1 / CVIR_RATIO))
-    judged = {r.n: r for r in evaluate_all(after.fields, after.decls, model.name)}
-
-    assert float(before.fields["v_tangential_sun"]) == pytest.approx(256.0, abs=0.05)
-    assert float(after.fields["v_tangential_sun"]) == pytest.approx(246.92, abs=0.05)
-    assert judged[3].status == "pass"
-    assert rows[3].lo <= float(after.fields["v_tangential_sun"]) <= rows[3].hi
-
+    dvir = virial_overdensity(float(model.constants["OMEGA_M"].value))
+    k_unconverted = concentration_at(dvir, 14.35, 200.0) / 3.5  # the K whose c_vir converts to the old c₂₀₀ = 14.35
+    before, after = run(_with_norm(model, k_unconverted)), run(model)
+    assert float(before.fields["halo_concentration"]) == pytest.approx(14.35, abs=0.01)
+    assert float(before.fields["v_tangential_sun"]) == pytest.approx(256.2, abs=0.5)
+    assert float(after.fields["v_tangential_sun"]) == pytest.approx(242.7, abs=0.5)
+    assert float(after.fields["v_tangential_sun"]) < 245.0 < 251.0 < float(before.fields["v_tangential_sun"])
     for name in ("sfr", "gas_mass_30kpc", "stellar_mass_total", "thin_disc_scale_length"):
         assert float(after.fields[name]) == pytest.approx(float(before.fields[name]), rel=1e-9), name
 
 
 def test_k_and_the_assembly_epoch_enter_only_as_their_product(model):
     """So no measurement of z_f alone can validate the relation debt #12 names."""
-    a = run(_with_norm(model, 4.1 / CVIR_RATIO))  # K corrected, z_f at its default 2.5
-    b = run(model, {"halo_assembly_z": 3.5 / CVIR_RATIO - 1.0})  # K left alone, z_f moved
+    a = run(_with_norm(model, 3.5))  # K lowered, z_f at its default 2.5
+    b = run(model, {"halo_assembly_z": 3.5 * 3.5 / 4.1 - 1.0})  # K left alone, z_f moved to the same product
     assert float(a.fields["halo_concentration"]) == pytest.approx(float(b.fields["halo_concentration"]))
     assert float(a.fields["v_tangential_sun"]) == pytest.approx(float(b.fields["v_tangential_sun"]))
 
 
-def test_the_epoch_the_acceptance_table_wants_is_below_the_cited_range(model):
-    """Row 3 is met at z_f ≈ 1.9–2.1; §3 cites z ≈ 2–3 and the default is its midpoint."""
-    inside = [z for z in (1.8, 1.9, 2.0, 2.1, 2.2, 2.3)
+def test_the_epoch_row_3_wants_is_the_top_of_the_cited_range(model):
+    """Row 3 is met at z_f ≈ 2.7–3.1; §3 cites z ≈ 2–3 and the default stays at its midpoint (S13).
+
+    Choosing z_f against a row whose answer is known is the move rule B5 exists to prevent;
+    the row is a recorded miss instead, and this test is what notices if the range moves.
+    """
+    inside = [z for z in (2.5, 2.7, 2.8, 2.9, 3.0, 3.1, 3.2)
               if 245.0 <= float(run(model, {"halo_assembly_z": z}).fields["v_tangential_sun"]) <= 251.0]
-    assert inside == [1.9, 2.0, 2.1]
-    # And the sensitivity debt #12 records as "about 10 km/s" is now larger than that.
+    assert inside == [2.7, 2.8, 2.9, 3.0, 3.1]
     lo = float(run(model, {"halo_assembly_z": 2.0}).fields["v_tangential_sun"])
     hi = float(run(model, {"halo_assembly_z": 3.0}).fields["v_tangential_sun"])
-    assert hi - lo == pytest.approx(15.29, abs=0.05)
-    assert (hi - lo) / 3.0 == pytest.approx(5.1, abs=0.05)  # row 3's half-width is 3 km/s
+    assert hi - lo == pytest.approx(12.8, abs=0.3)  # the cited range spans four half-widths of the target

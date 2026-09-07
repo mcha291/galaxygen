@@ -116,11 +116,11 @@ def test_rows_16_and_17_are_judged_statistically(model, judged):
     results = {r.n: r for r in judged[model.name]}
     for n in (16, 17):
         assert results[n].status == "pass"
-        assert "central 95%" in results[n].reason and "n=20" in results[n].reason
+        assert "median" in results[n].reason and "central 95%" in results[n].reason and "n=41" in results[n].reason
 
 
 def test_an_ensemble_too_small_is_refused(model):
     small = spec.ensemble(model, ("bar_pattern_speed",), n=5, grid=COARSE)
     results = {r.n: r for r in spec.run(model, ensemble=small, grid=COARSE)}
     assert results[16].status == "not-yet-computable"
-    assert "needs >= 20" in results[16].reason
+    assert "needs >= 41" in results[16].reason

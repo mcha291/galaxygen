@@ -50,17 +50,34 @@ LEVEL0: dict[str, Constant] = {
     "CONCENTRATION_NORM": Constant(
         4.1,
         "dimensionless",
-        "Normalisation of c₂₀₀ = K(1 + z_f), the concentration a halo freezes in at its assembly "
-        "epoch (ruling 5). K = 4.1 is quoted for c_vir [recall: Wechsler et al. 2002]; c_vir and "
-        "c₂₀₀ are defined at different overdensities and the conversion between them is folded "
-        "into K rather than modelled, which is debt #12. The default z_f = 2.5 gives c₂₀₀ = 14.4, "
-        "inside the 10–18 the Milky Way's own measurements span [verified: GALAXY_INPUTS.md §4b].",
+        "Normalisation of c_vir = K(1 + z_f), the concentration a halo freezes in at its assembly "
+        "epoch (ruling 5). K = 4.1 is quoted for c_vir [recall: Wechsler et al. 2002], at the virial "
+        "overdensity Δ_vir(Ω_M) ≈ 101 ρ_crit; since S13 the halo stage converts it through the NFW "
+        "profile to the c₂₀₀ it is built with (debt #12, half of it: z_f = 2.5 is still the midpoint "
+        "of a cited range and not a measurement). The default gives c_vir = 14.35 and c₂₀₀ = 10.9, "
+        "both inside the 10–18 the Milky Way's own measurements span [verified: GALAXY_INPUTS.md §4b].",
+    ),
+    "OMEGA_M": Constant(
+        0.3,
+        "dimensionless",
+        "Matter density parameter, the Ω_M = 0.3 Level 0 takes from BHG16 and F_BARYON already "
+        "assumes [verified: GALAXY_INPUTS.md §2]. Read to form the virial overdensity "
+        "Δ_vir = 18π² + 82x − 39x², x = Ω_M − 1 [recall: Bryan & Norman 1998] — about 101 ρ_crit — "
+        "at which the c_vir normalisation is quoted (debt #12, S13).",
     ),
     "R_SUN": Constant(
         8.2,
         "kpc",
         "Galactocentric radius of the Sun, R₀ = 8.2 ± 0.1 kpc [verified: GALAXY_INPUTS.md §7 row "
         "3's source BHG16]. Where every 'solar neighbourhood' quantity is evaluated.",
+    ),
+    "HELIUM_MASS_FRACTION": Constant(
+        0.27,
+        "dimensionless",
+        "Helium mass fraction of the gas, Y. Primordial 0.245, solar 0.27, and the disc's "
+        "interstellar gas sits near the solar value [recall]. Read to publish the gas's hydrogen "
+        "mass, which is what acceptance row 20's HI + H₂ target counts (debt #41, S13); the metals' "
+        "one to two percent is not taken out, the sfh stage being upstream of the chemistry.",
     ),
     "RETURN_FRACTION": Constant(
         0.30,
@@ -111,7 +128,7 @@ LEVEL0: dict[str, Constant] = {
         "discharges debt #13 [verified: tests/test_sfh.py::test_the_two_disc_scale_lengths_agree]. "
         "The constant is kept rather than deleted so that S10 can sweep it; at 1.0 it does nothing.",
     ),
-    "MERGER_DURATION": Constant(
+    "MERGER_DURATION": Constant(  # read by assembly; its window reaches sfh since S13 (debt #30)
         0.5,
         "Gyr",
         "Time over which a merger delivers its gas, as a Gaussian width. Around half a Gyr for a "

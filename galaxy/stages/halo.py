@@ -10,8 +10,10 @@ What it computes, and how much freedom each step has (GALAXY_INPUTS.md §4b):
   the *definition* of the radius enclosing 200 ρ_crit, not a fitted relation, so
   it has no freedom at all once M₂₀₀ and the cosmology are fixed.
 - **c₂₀₀ is correlated with scatter (verdict C)**, absorbed into the assembly
-  redshift by ruling 5: ``c₂₀₀ = CONCENTRATION_NORM (1 + z_f)``. The scatter it
-  does not absorb is a calibration debt, not a variable.
+  redshift by ruling 5: ``c_vir = CONCENTRATION_NORM (1 + z_f)``, quoted at the
+  virial overdensity Δ_vir(Ω_M) and converted through the NFW profile to the c₂₀₀
+  the halo is built with (S13, debt #12). The scatter it does not absorb is a
+  calibration debt, not a variable.
 - **The baryon budget** splits M₂₀₀ into what became the disc and what stayed
   dark. ``m_d = f_b × baryon_retention`` (ruling 9). The dark halo carries
   ``(1 − m_d) M₂₀₀``, so the disc's mass is not counted twice in the rotation
@@ -49,6 +51,27 @@ def rho_crit(H0: float, G: float) -> float:
 def virial_radius(M200: float, H0: float, G: float) -> float:
     """R₂₀₀ from its definition: the radius enclosing a mean density of 200 ρ_crit."""
     return (3.0 * M200 / (800.0 * math.pi * rho_crit(H0, G))) ** (1.0 / 3.0)
+
+
+def virial_overdensity(omega_m: float) -> float:
+    """Δ_vir in units of ρ_crit at z = 0: ``18π² + 82x − 39x²``, x = Ω_M − 1 [recall: Bryan & Norman 1998]."""
+    x = omega_m - 1.0
+    return 18.0 * math.pi**2 + 82.0 * x - 39.0 * x * x
+
+
+def concentration_at(delta: float, c_ref: float, delta_ref: float) -> float:
+    """Concentration of one NFW halo at overdensity ``delta``, given ``c_ref`` at ``delta_ref``.
+
+    The mean density inside x scale radii goes as μ(x)/x³, so ``Δ c³ / μ(c)`` is the
+    halo's own invariant (its scale density in units of ρ_crit) and the conversion is
+    a root, not a fit. Bisected; μ(x)/x³ is monotone.
+    """
+    target = delta_ref * c_ref**3 / mu(c_ref)
+    lo, hi = 0.5, 60.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if delta * mid**3 / mu(mid) < target else (lo, mid)
+    return 0.5 * (lo + hi)
 
 
 def nfw_circular_velocity(R: np.ndarray | float, M: float, r_s: float, c: float, G: float) -> np.ndarray | float:
@@ -92,7 +115,20 @@ HALO_CONCENTRATION = FieldDecl(
     about=(
         "R₂₀₀/r_s, derived from the assembly redshift by ruling 5: haloes that assembled early are "
         "concentrated because they froze in the mean density of an earlier, denser universe. "
-        "Verdict C: the epoch absorbs most of the galaxy-to-galaxy scatter and not all of it."
+        "Since S13 it is halo_concentration_virial converted through the NFW profile from Δ_vir to "
+        "200 ρ_crit (debt #12). Verdict C: the epoch absorbs most of the galaxy-to-galaxy scatter "
+        "and not all of it."
+    ),
+)
+HALO_CONCENTRATION_VIRIAL = FieldDecl(
+    name="halo_concentration_virial",
+    label="Concentration c_vir",
+    unit="dimensionless",
+    kind=Kind.SCALAR,
+    about=(
+        "The normalisation K times (1 + z_f) as Wechsler et al. quote it, at the virial overdensity "
+        "Δ_vir(Ω_M) ≈ 101 ρ_crit. Published so the conversion to c₂₀₀ can be read off; until S13 "
+        "this number was used as c₂₀₀ unconverted (debt #12)."
     ),
 )
 
@@ -219,7 +255,8 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     z_f = float(ctx.inputs["halo_assembly_z"])
 
     R200 = virial_radius(M200, H0, G)
-    c = float(ctx.constants["CONCENTRATION_NORM"]) * (1.0 + z_f)
+    c_vir = float(ctx.constants["CONCENTRATION_NORM"]) * (1.0 + z_f)
+    c = concentration_at(200.0, c_vir, virial_overdensity(float(ctx.constants["OMEGA_M"])))
     r_s = R200 / c
 
     m_d = float(ctx.constants["F_BARYON"]) * float(ctx.inputs["baryon_retention"])
@@ -238,6 +275,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "halo_virial_mass": M200,
         "halo_virial_radius": R200,
         "halo_concentration": c,
+        "halo_concentration_virial": c_vir,
         "halo_scale_radius": r_s,
         "halo_dark_mass": dark,
         "baryon_mass_total": baryons,
@@ -263,11 +301,12 @@ HALO = IMPLEMENTATIONS.register(
         ),
         compute=compute,
         reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention"),
-        reads_constants=("G", "H0", "F_BARYON", "CONCENTRATION_NORM", "R_SUN"),
+        reads_constants=("G", "H0", "F_BARYON", "CONCENTRATION_NORM", "OMEGA_M", "R_SUN"),
         publishes=(
             HALO_VIRIAL_MASS,
             HALO_VIRIAL_RADIUS,
             HALO_CONCENTRATION,
+            HALO_CONCENTRATION_VIRIAL,
             HALO_SCALE_RADIUS,
             HALO_DARK_MASS,
             BARYON_MASS_TOTAL,

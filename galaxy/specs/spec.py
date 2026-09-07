@@ -18,9 +18,10 @@ Judging modes:
 - ``pointwise``: the published scalar lies in ``[lo, hi]``.
 - ``statistical`` (debt #8: rows 13, 14, 16, 17, 18): the model publishes a
   seeded quantity, so the check is against an ensemble over seeds. Pass when
-  the central 95 % interval of at least ``ENSEMBLE_MIN`` values intersects
-  ``[lo, hi]``. This criterion is an S0 decision (DECISIONS.md); S3 or S4 may
-  revise it, never relax a target (rule B5).
+  the **median** of at least ``ENSEMBLE_MIN`` values lies in ``[lo, hi]``; the
+  central 95 % interval is published beside it. S13 revised the S0 criterion
+  (the interval *intersects* the target), which rewarded a noisier model (debt
+  #38); no target was relaxed (rule B5).
 - ``qualitative`` (row 24): a ``category_scalar`` equal to ``expect``.
 
 Rows 20 and 21 are quoted without an uncertainty and have ``lo == hi``; a
@@ -62,7 +63,7 @@ from galaxy.specs import Problem, utf8_stdout
 
 MODES: tuple[str, ...] = ("pointwise", "statistical", "qualitative")
 STATUSES: tuple[str, ...] = ("pass", "fail", "not-yet-computable")
-ENSEMBLE_MIN = 20
+ENSEMBLE_MIN = 41  # S13 (debt #38): the smallest n at which a central 95% interval excludes one draw at each end
 CENTRAL = 0.95
 
 
@@ -118,11 +119,12 @@ class Quantity:
         defect and not the model's. Said here rather than left in prose: the
         table needed a way to say "no testable target", the alternative being to
         invent an interval, and inventing one *now* — with the model's answer
-        already known — is the thing rule B5 exists to prevent. Statistical rows
-        are exempt: a zero-width target is still met when the ensemble's central
-        interval contains it, which is why row 14 is judged that way.
+        already known — is the thing rule B5 exists to prevent. A statistical row
+        passes on its ensemble's median (S13, debt #38), which no float meets at
+        zero width either, so row 14 is untestable until its source's uncertainty is
+        entered; only a qualitative row has no interval to be zero.
         """
-        return self.mode != "pointwise" or self.lo is None or self.lo != self.hi
+        return self.mode == "qualitative" or self.lo is None or self.lo != self.hi
 
     @property
     def width(self) -> float | None:
@@ -149,13 +151,13 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(11, "Thick disc stellar mass", "Msun", "thick_disc_stellar_mass", 3.0e9, 9.0e9, "pointwise", "6 ± 3 × 10⁹ M☉", _BHG16),
     Quantity(12, "Bulge stellar mass", "Msun", "bulge_stellar_mass", 1.4e10, 1.7e10, "pointwise", "1.4–1.7 × 10¹⁰ M☉", _BHG16),
     Quantity(13, "Bulge/total stellar fraction", "dimensionless", "bulge_stellar_fraction", 0.24, 0.36, "statistical", "0.30 ± 0.06", _BHG16, note="Statistical per debt #8 (GALAXY_INPUTS.md §4b)."),
-    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 113.0, 113.0, "statistical", "113 km/s", _BHG16, note="No uncertainty quoted; statistical per debt #8, so the ensemble spread does the work."),
+    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 113.0, 113.0, "statistical", "113 km/s", _BHG16, note="No uncertainty quoted: zero-width target (debt #17). Statistical per debt #8; since S13 a statistical row passes on its median, which no float meets at zero width, so this row has no testable target until the source's uncertainty is entered."),
     Quantity(15, "Bar half-length", "kpc", "bar_half_length", 4.8, 5.2, "pointwise", "5.0 ± 0.2 kpc", _BHG16),
     Quantity(16, "Bar pattern speed", "km/s/kpc", "bar_pattern_speed", 34.0, 52.0, "statistical", "43 ± 9 km/s/kpc", _BHG16, note="Statistical per debt #8."),
     Quantity(17, "Bar corotation radius", "kpc", "bar_corotation_radius", 4.5, 7.0, "statistical", "4.5–7.0 kpc", _BHG16, note="Statistical per debt #8."),
     Quantity(18, "Black hole mass", "Msun", "black_hole_mass", 4.0e6, 4.4e6, "statistical", "4.2 ± 0.2 × 10⁶ M☉", _BHG16, note="Debt #2: derived from M–σ plus a seeded residual (ruling 10); the Milky Way sits 5–6× below the relation, so this is expected to miss by ~0.75 dex and must not be re-scoped to include the miss (GALAXY_INPUTS.md §3, rule B5). Statistical per debt #8."),
     Quantity(19, "Halo virial mass", "Msun", "halo_virial_mass", 1.0e12, 1.3e12, "pointwise", "1.0–1.3 × 10¹² M☉", "McMillan"),
-    Quantity(20, "Total gas mass (<30 kpc)", "Msun", "gas_mass_30kpc", 8.0e9, 8.0e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="No uncertainty quoted: zero-width target. S2 finds the uncertainty in the source or records the miss (rule B5)."),
+    Quantity(20, "Total gas mass (<30 kpc)", "Msun", "hydrogen_mass_30kpc", 8.0e9, 8.0e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="HI + H₂ from 21 cm and CO: hydrogen, so the row reads the gas's hydrogen mass, (1 − Y) of gas_mass_30kpc (debt #41, S13). No uncertainty quoted: zero-width target (debt #17)."),
     Quantity(21, "Gas HI:H₂ split", "dimensionless", "gas_h2_fraction", 0.11, 0.11, "pointwise", "89% : 11%", "Nakanishi & Sofue 15", note="Read as the H₂ mass fraction f_H₂ = 0.11 (HI = 1 − f_H₂). No uncertainty quoted: zero-width target; see row 20."),
     Quantity(22, "Present-day metallicity gradient", "dex/kpc", "metallicity_gradient", -0.069, -0.049, "pointwise", "−0.06 dex/kpc", "Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010", note="Interval is the union of the two cited measurements [inferred]; the table itself quotes −0.06 with no error."),
     Quantity(23, "Gradient evolution with age", "dex/kpc", "metallicity_gradient_old", -0.05, -0.03, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages; one row can name one field, so S2 operationalises it as the *old* end (>10 Gyr, target −0.04) and leaves the young end to row 22's companion field metallicity_gradient_young, which the same stage publishes. Interval is ±0.01 around −0.04 [inferred]: the source quotes no uncertainty and a zero-width target would make the row untestable rather than strict."),
@@ -206,17 +208,20 @@ _MISSES: tuple[Miss, ...] = (
         debt=18,
         since="S3",
         reason=(
-            "1.97 Msun/yr against 1.65, having been 1.14 before the merger-delivered second "
-            "infall existed. Moving 60% of the accretion to start at the merger keeps gas "
-            "arriving late, which is the right mechanism and overshoots: the second episode "
-            "decays on the same 7 Gyr timescale as the first, so too much of it is still "
-            "arriving now."
+            "1.89 Msun/yr against 1.65 (S13), having been 1.97 while the Sagittarius default "
+            "delivered a tenth of the budget (debt #29) and 1.14 before the merger-delivered second "
+            "infall existed. Debt #29's prediction was that a physical Sagittarius would let this row "
+            "pass; it did not: with the merger gas accreting from each event's own epoch (debt #30) "
+            "the row reads 1.89 at Sagittarius' 0.01 and 1.85 with no Sagittarius at all. What is left "
+            "is the second episode's timescale: it decays on the same 7 Gyr as the first, so too much "
+            "of the merger's gas is still arriving now."
         ),
         prediction=(
             "The second infall should be *slower* than the first, not the same speed - the outer "
             "disc it feeds accretes over longer. A separate timescale for the post-merger episode "
             "brings this down without touching the stellar structure. If it also moves rows 10 and "
-            "11, the two episodes are not as separable as this model assumes."
+            "11, the two episodes are not as separable as this model assumes. Row 44's band: at "
+            "KS_NORM's +1 sigma the row is already inside, so the pair with row 20 is the evidence."
         ),
     ),
     Miss(
@@ -225,7 +230,8 @@ _MISSES: tuple[Miss, ...] = (
         debt=19,
         since="S3",
         reason=(
-            "The thick disc's scale length is 1.17 kpc against 2.0. It forms before the merger, "
+            "The thick disc's scale length is 1.32 kpc against 2.0 (1.17 until S13 moved a tenth of "
+            "the budget out of the pre-merger episode, debt #29). It forms before the merger, "
             "when the disc is small and inside-out growth has star formation concentrated in the "
             "middle, so it comes out far more centrally concentrated than the observed thick disc."
         ),
@@ -243,10 +249,11 @@ _MISSES: tuple[Miss, ...] = (
         debt=19,
         since="S3",
         reason=(
-            "1.07e10 Msun against 6e9: the pre-merger episode carries 40% of the baryon budget and "
-            "should carry nearer 15%. **Row 9, this session's gate, passes at 0.103 only because "
-            "this error and the row 5 error compensate.** Raising the merger's gas_fraction to "
-            "shrink the thick disc drives row 9 from 0.103 to 0.015, because a thick disc this "
+            "1.42e10 Msun against 6e9 (1.07e10 until S13): the pre-merger episode carries half the "
+            "baryon budget now that Sagittarius delivers a physical share (debt #29), and should "
+            "carry nearer 15%. **Row 9, S3's gate, passes at 0.152 only because this error and the "
+            "row 5 error compensate** (0.103 before S13; the ceiling is 0.16). Raising the merger's "
+            "gas_fraction to shrink the thick disc collapses row 9, because a thick disc this "
             "centrally concentrated loses surface density at R_0 far faster than it loses mass. "
             "The gate is therefore passing for the wrong reason and is recorded as such."
         ),
@@ -259,30 +266,29 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=3,
-        debt=18,
-        since="S1",
+        debt=11,
+        since="S13",
         reason=(
-            "256.1 km/s against 248 +/- 3: too much mass inside R0. S1 recorded this as the gas "
-            "not yet having its own profile and predicted 246.4 once it did. S2 gave it one and "
-            "got 237.2 - overshooting - but only because the same constant that moved the gas out "
-            "also broadened the stellar disc to 3.74 kpc. S3 corrected that constant, the two disc "
-            "scale lengths came into agreement (debt #13 discharged), and the miss returned to "
-            "where S1 left it. So the cause is not the gas profile at all: it is that all the "
-            "baryons are in the compact disc, with no extended component and no bulge."
+            "242.7 km/s against 248 +/- 3: too little mass inside R0 now, having been too much - "
+            "256 - for twelve sessions. S1 recorded that miss as the gas not yet having its own "
+            "profile (246.4 predicted); S2 gave it one and got 237.2, the stellar disc broadening "
+            "at the same time; S3 corrected that and the miss returned to 256, blamed on every "
+            "baryon sitting in the compact disc with no extended component and no bulge (debt #18). "
+            "S10's audits priced the cause the register had named since S1: the c_vir normalisation "
+            "used as c200 (debt #12). S13 converted it - c200 = 10.9, not 14.35 - and the row fell "
+            "13.5 km/s, through the window and out the other side. The old explanation now has the "
+            "wrong sign: moving baryons outward lowers v_c(R0) further. What is missing inside R0 is "
+            "the bulge (debt #11): the model carries its ~1.5e10 Msun in the disc."
         ),
         prediction=(
-            "Splitting the baryons into a compact disc plus an extended high-angular-momentum "
-            "component moves mass outside R0 and lowers v_c there. The bulge (S3-S4) pushes the "
-            "other way, so the two must be added together before this row is judged - which is why "
-            "it is not closable until both exist. **S10 found a second explanation and the two are "
-            "distinguishable.** CONCENTRATION_NORM = 4.1 is quoted for c_vir and used as a c200 "
-            "normalisation with no conversion (debt #12); converted, this row reads 246.9 (the "
-            "R200-to-255 kpc ratio, 1.198), 248.0 (K = 3.5) or 242.6 (the NFW profile at "
-            "Δ_vir = 101) — three audits, three conversions, none averaged (rule B12), and either "
-            "fix alone can overshoot — while no other row moves by more than 1e-6. The "
-            "discriminators: rows 2 and 20 (the baryon explanation moves all three together, the "
-            "halo one moves this row alone) and rows 1 and 19 (halo_concentration and the stellar "
-            "mass). Whichever finally closes it, check the others."
+            "Not the bulge: S13 probed a Hernquist spheroid of 1.4-1.7e10 Msun drawn from the disc and "
+            "it *lowers* v_c(R0) by 5-8 km/s, because a flat disc rotates faster than the same mass in a "
+            "sphere (DECISIONS.md, S13). What raises this row now: adiabatic contraction of the halo by "
+            "the baryons (debt #6, unmodelled - several km/s at R0 for a disc this massive), or an "
+            "assembly epoch of 2.7-3.1 rather than the cited midpoint 2.5. Prediction: contraction "
+            "closes the row with z_f at 2.5; if it does not, the cited z ~ 2-3 is wrong at its low end. "
+            "Debt #18's extended component pushes the other way and is judged with it. halo_concentration "
+            "(10.9) and row 19 are the discriminants: neither the bulge nor the component moves them."
         ),
     ),
     Miss(
@@ -299,6 +305,26 @@ _MISSES: tuple[Miss, ...] = (
             "An extended accretion component sized to the observed HI disc closes this row and "
             "rows 2 and 3 with it. Note the target is also zero-width (debt #17), so even a model "
             "that got the mass right would fail this check until the table records an uncertainty."
+        ),
+    ),
+    Miss(
+        row=6,
+        model="advanced",
+        debt=42,
+        since="S13",
+        reason=(
+            "358 pc against 250-350. The advanced thin disc is every star - the chemical split finds "
+            "no thick disc (debt #27) - so it keeps the merger-heated old population, and once "
+            "Sagittarius stopped delivering a tenth of the budget as young gas (debt #29, S13) the "
+            "mass-weighted dispersion at R0 rose from 326 pc to 358. SECULAR_HEATING and "
+            "MERGER_HEATING were fitted at S3 to the simple model's merger split (rule B10)."
+        ),
+        prediction=(
+            "When the valley opens (debt #27) the heated stars leave the thin disc and this row falls "
+            "toward the simple model's 255; rows 6 and 7 are then judged together with both heating "
+            "constants re-examined. If it stays above 350 with a thick disc present, SECULAR_HEATING "
+            "is wrong for both models and the age-velocity relation it was read from is the place "
+            "to look."
         ),
     ),
     Miss(
@@ -469,15 +495,19 @@ def evaluate(
     values = np.asarray(ensemble[q.field], dtype=float)
     if values.size < ENSEMBLE_MIN:
         return Result(q.n, q.name, nyc, f"statistical: ensemble has {values.size} values, needs >= {ENSEMBLE_MIN}")
+    # S13 (debt #38): the verdict is the median's, so a noisier model is not an easier one to
+    # pass; the central interval is published beside it, at an n where 95% means something.
     tail = 100.0 * (1.0 - CENTRAL) / 2.0
     p_lo, p_hi = np.percentile(values, [tail, 100.0 - tail])
-    ok = p_lo <= q.hi and q.lo <= p_hi
+    median = float(np.median(values))
+    ok = q.lo <= median <= q.hi
+    width = "" if q.testable else " (zero-width target, so no testable target — debt #17; see note)"
     return Result(
         q.n,
         q.name,
         "pass" if ok else "fail",
-        f"central {CENTRAL:.0%} [{p_lo:.6g}, {p_hi:.6g}] {'intersects' if ok else 'misses'} [{q.lo:.6g}, {q.hi:.6g}] (n={values.size})",
-        float(np.median(values)),
+        f"median {median:.6g} {'in' if ok else 'not in'} [{q.lo:.6g}, {q.hi:.6g}]; central {CENTRAL:.0%} [{p_lo:.6g}, {p_hi:.6g}] (n={values.size}){width}",
+        median,
     )
 
 

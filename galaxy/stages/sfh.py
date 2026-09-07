@@ -11,7 +11,9 @@ The model, per annulus, with instantaneous recycling:
     dSigma_star/dt =           (1 - RETURN_FRACTION) * Psi(R, t)
 
 - **Infall** ``f(R, t) = A(R) exp(-t/tau(R))`` with ``tau(R) = tau_0 (R/R_0)^n``
-  — inside-out growth, the outer disc still accreting today. GALAXY_INPUTS.md §3
+  — inside-out growth, the outer disc still accreting today. The merger-delivered
+  share arrives as the assembly stage's delivery windows and accretes on the same
+  timescale from each event's own epoch (S13, debt #30). GALAXY_INPUTS.md §3
   states tau_0 as "~7 Gyr **at R_0**" in one row and the law as
   ``tau_0 (R/R_d)^n`` in the next; those cannot both hold, and R_0 is the one
   that matches the source's own numbers (DECISIONS.md D43).
@@ -139,8 +141,20 @@ GAS_MASS_30KPC = FieldDecl(
     name="gas_mass_30kpc", label="Gas mass inside 30 kpc", unit="Msun", kind=Kind.SCALAR,
     meaningful_zero=True,
     about=(
-        "Acceptance row 20, whose target is quoted with no uncertainty at all. The grid reaches "
-        "exactly 30 kpc, which is why R_max was set there (D6)."
+        "Every retained baryon the star formation law has not consumed, helium included. The grid "
+        "reaches exactly 30 kpc, which is why R_max was set there (D6). Acceptance row 20 counts "
+        "hydrogen and reads hydrogen_mass_30kpc since S13 (debt #41)."
+    ),
+)
+
+HYDROGEN_MASS_30KPC = FieldDecl(
+    name="hydrogen_mass_30kpc", label="Hydrogen mass inside 30 kpc", unit="Msun", kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "Acceptance row 20: the gas mass times (1 − Y), because the target — HI plus H₂ from 21 cm "
+        "and CO — is hydrogen and the model's gas is not (debt #41, S13). The metals' one to two "
+        "percent stays in, this stage being upstream of the chemistry. The target is quoted with no "
+        "uncertainty at all (debt #17)."
     ),
 )
 
@@ -216,13 +230,15 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     tau = float(ctx.inputs["infall_timescale"]) * (R / R_sun) ** float(ctx.inputs["inside_out_index"])
     amplitude = sigma_total
 
-    # Two infalls, and the second one is the merger (ruling 11). Both episodes decay
-    # on the same inside-out timescale; the second simply starts when the merger
-    # arrives, which is Chiappini's structure reached from the merger list rather
-    # than from an input that names an onset. The smooth episode carries whatever
-    # the mergers do not, so the budget still adds to one.
+    # Two infalls, and the second one is the merger (ruling 11). Both accrete on the
+    # same inside-out timescale. The smooth episode carries whatever the mergers do
+    # not, so the budget still adds to one; the merger-delivered gas arrives as the
+    # assembly stage's ``merger_delivery`` — each event's share spread over its own
+    # crossing time at its own epoch — and accretes from there (S13, debt #30). Until
+    # S13 it was a step at the last major merger, which put a minor event's gas five
+    # Gyr early and made rows 1 and 10 move non-monotonically with N_t.
     merger_share = float(ctx.fields["second_infall_share"])
-    onset = float(ctx.fields["last_major_merger_time"])
+    delivery = np.asarray(ctx.fields["merger_delivery"], dtype=float)  # budget fraction per Gyr
 
     def episode(start: float) -> np.ndarray:
         """Normalised exp(-(t - start)/tau) per radius, zero before ``start``."""
@@ -232,7 +248,14 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         return np.where(elapsed >= 0.0, np.exp(-np.maximum(elapsed, 0.0) / tau[:, None]), 0.0) / norm[:, None]
 
     early = episode(0.0)
-    late = episode(onset)
+    # A unit of gas delivered in step j accretes as decay^(k - j) over the steps k >= j,
+    # normalised so that the whole of it has arrived by the last step — the discrete
+    # form of the ``episode`` kernel, exact on the grid so the budget closes to
+    # rounding. Convolving the delivery with it is the exponential's own recursion,
+    # one multiply per step.
+    decay = np.exp(-dt / tau)
+    late = np.zeros_like(R)
+    n_t_steps = t.size
 
     gas = np.zeros_like(R)
     stars = np.zeros_like(R)
@@ -240,7 +263,9 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     sfr_hist = np.empty((R.size, t.size))
     infall_hist = np.empty((R.size, t.size))
     for j, tj in enumerate(t):
-        infall = sigma_total * ((1.0 - merger_share) * early[:, j] + merger_share * late[:, j])
+        remaining = dt * (1.0 - decay ** (n_t_steps - j)) / (1.0 - decay)  # >= dt: the steps left, weighted
+        late = late * decay + delivery[j] * dt / remaining
+        infall = sigma_total * ((1.0 - merger_share) * early[:, j] + late)
         psi = star_formation_rate(gas, ks_n, ks_k, crit)
         locked = (1.0 - ret) * PC_PER_KPC * psi  # M☉/yr/kpc² -> M☉/pc²/Gyr
         gas = np.maximum(gas + (infall - locked) * dt, 0.0)
@@ -274,6 +299,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "infall_rate_history": infall_hist,
         "sfr": float(np.trapezoid(psi_now * 2.0 * math.pi * R, R)),
         "gas_mass_30kpc": m_gas,
+        "hydrogen_mass_30kpc": m_gas * (1.0 - float(ctx.constants["HELIUM_MASS_FRACTION"])),
         "stellar_mass_total": m_star,
         "thin_disc_scale_length": R_star,
         "circular_velocity_resolved": np.hypot(ctx.fields["halo_circular_velocity"], v_baryons),
@@ -296,17 +322,17 @@ SFH = IMPLEMENTATIONS.register(
         reads_inputs=("infall_timescale", "inside_out_index"),
         reads_constants=(
             "RETURN_FRACTION", "KS_NORM", "KS_INDEX", "SF_THRESHOLD",
-            "GAS_DISC_SCALE_RATIO", "G", "R_SUN", "V_SUN_PECULIAR",
+            "GAS_DISC_SCALE_RATIO", "G", "R_SUN", "V_SUN_PECULIAR", "HELIUM_MASS_FRACTION",
         ),
         requires=(
             "disc_scale_length_spin", "baryon_mass_total",
             "halo_circular_velocity", "halo_circular_velocity_sun",
-            "second_infall_share", "last_major_merger_time",
+            "second_infall_share", "merger_delivery",
         ),
         publishes=(
             GAS_SURFACE_DENSITY, STELLAR_SURFACE_DENSITY, SFR_SURFACE_DENSITY,
             GAS_HISTORY, SFR_HISTORY, INFALL_HISTORY,
-            SFR, GAS_MASS_30KPC, STELLAR_MASS_TOTAL, STELLAR_SCALE_LENGTH,
+            SFR, GAS_MASS_30KPC, HYDROGEN_MASS_30KPC, STELLAR_MASS_TOTAL, STELLAR_SCALE_LENGTH,
             CIRCULAR_VELOCITY_RESOLVED, V_CIRCULAR_SUN, V_TANGENTIAL_SUN,
         ),
     )

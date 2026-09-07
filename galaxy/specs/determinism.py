@@ -74,6 +74,8 @@ def _equal(a: Any, b: Any) -> bool:
         if a.shape != b.shape or a.dtype != b.dtype:
             return False
         return bool(np.array_equal(a, b, equal_nan=bool(np.issubdtype(a.dtype, np.floating))))
+    if isinstance(a, float | np.floating) and isinstance(b, float | np.floating):
+        return bool(a == b) or (bool(np.isnan(a)) and bool(np.isnan(b)))  # a NaN scalar is the same missing number twice
     return type(a) is type(b) and bool(a == b)
 
 

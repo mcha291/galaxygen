@@ -36,8 +36,8 @@ def test_a_scalar_that_moves_with_the_grid_is_caught():
 
 def test_a_zero_width_target_is_untestable_not_failed():
     """Debt #17: row 20's target has no width, so no drift can be judged against it."""
-    s = stage("s", (decl("gas_mass_30kpc", Kind.SCALAR, unit="Msun"),),
-              compute=lambda ctx: {"gas_mass_30kpc": 8e9 + 1e7 * ctx.grid.spec.n_t})
+    s = stage("s", (decl("hydrogen_mass_30kpc", Kind.SCALAR, unit="Msun"),),
+              compute=lambda ctx: {"hydrogen_mass_30kpc": 8e9 + 1e7 * ctx.grid.spec.n_t})
     rep = convergence.sweep(model("m", s), HALF, SMALL, impls=impls(s), table=INPUTS)
     assert {d.status for d in rep.drifts} == {"untestable"} and rep.ok
 

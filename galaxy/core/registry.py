@@ -382,9 +382,12 @@ _INPUTS: tuple[Input, ...] = (
                 "two-infall framework needs. Mass ratio ~1:4 from the stellar halo it left.",
             ),
             MergerEvent(
-                8.8, 0.02, 0.2,
+                8.8, 0.02, 0.01,
                 "Sagittarius dwarf: minor and still in progress, ~5 Gyr since first pericentre. "
-                "Below the major threshold, so it delivers gas without restructuring the disc.",
+                "Below the major threshold, so it delivers gas without restructuring the disc. Its "
+                "progenitor was 10⁸–10⁹ M☉ in all [recall], so the gas it can bring is a few 10⁸ M☉: "
+                "0.01 of the budget outstanding after Gaia-Enceladus, about 3 × 10⁸ M☉. The 0.2 that "
+                "stood until S13 delivered 5.9 × 10⁹, more than the whole progenitor (debt #29).",
             ),
         ),
         checkpoint_hypothesis=2,
