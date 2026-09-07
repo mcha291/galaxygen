@@ -2721,4 +2721,10 @@ the slope) applies to the test's own sample, which is the maintainer's to widen.
 
 **Close.** Board row 14 (desktop, Fable 5.1, `s14`, 2026-09-07); `session-14`
 merged into `main` with `--no-ff`; `s14` queued in MANUAL_TODO.md with S13's
-SHA filled in.
+SHA filled in. **Merged twice.** The first merge (780cd15) carried RESUMING.md
+three lines over its cap: the close's shell chain tested the exit status of the
+`tail` that printed the suite's last line, not the suite's, and the failing
+`test_resuming_is_capped_at_120_lines` did not stop the merge or the push. Rule
+C2a forbids the force-push that would hide it, so the file is trimmed and merged
+again, and the second merge — the one `s14` names, and the one `rev-list -1
+--grep` finds — is the state verify_clone ran on.

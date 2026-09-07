@@ -1,9 +1,8 @@
 # Resuming
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
-status board is the only record of what is done (A9); this file does not repeat it,
-is rewritten in place each session, and is capped at 120 lines (C3) by a test.
-**The build is closed** (S0–S10; S11–S14 integrated the audits, fixed, decided, contracted).
+status board is the only record of what is done (A9); this file does not repeat it, is
+rewritten each session, capped at 120 lines (C3). **The build is closed** (S0–S10; S11–S14).
 
 ## Open a session (rules C1, C2b)
 
@@ -30,14 +29,12 @@ galaxy/stages/            cp1 halo (NFW, budget, R_d, the contraction on its own
                           cp2 assembly; cp3 sfh (infall_profile factored, S14), chemistry /
                           chemistry_dtd, vertical / vertical_alpha; cp4 pattern; cp5 systems;
                           cp6 planets. Shared where identical, mapped per model.
-galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight, determinism,
-                          spec (misses per model D87; "no testable target" D100; median D109), convergence (one axis
-                          at a time D94; vacuous D101), performance (D95; fixed/per-star fit, one-off D101)
+galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight, determinism, spec (misses
+                          D87; "no testable target" D100; median D109), convergence (D94, D101), performance (D95, D101)
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
-tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, #26–#28, #41–#45); beta's
-                          in test_halo, test_chemistry_dtd, test_determinism, test_spec; S14's end test_halo
-AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: D102
+tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, #26–#28, #41–#45); beta's in
+                          test_halo etc.; S14's end test_halo. AUDIT_RUN1/2.md: main's two lists (D97, D102)
 ```
 
 ## Writing a stage
@@ -93,11 +90,10 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: 
 - spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23; row 3 **high** since S14), 6 n-y-c;
   advanced **7 pass, 12 fail, 5 n-y-c** (row 6 since S13, debt #42). Every failure
   recorded for its model. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
-- Numbers, to spot a regression by (S14): R200 212.94, c_vir 14.35, c200 10.91, R_d 2.605
-  (fitted 2.49), M_star 5.287e10, SFR 1.891, gas 5.714e9, H 4.171e9; halo at R₀ 138.6 →
-  **181.4** contracted (r_i/r_f 1.42), v_tan **270.8** (both; 242.7 until S14); simple grad
-  −0.0236, old −0.0064, thick M 1.42e10, row 9 0.152; advanced grad −0.0582, old −0.0202,
-  v_esc(R₀) 584.8, f_esc 0.756 at WIND_SPEED 1028; rows 16/17 medians 44.9 / 5.82.
+- Numbers, to spot a regression by (S14): R200 212.94, c200 10.91, R_d 2.605 (fitted 2.49),
+  M_star 5.287e10, SFR 1.891, gas 5.714e9, H 4.171e9; halo at R₀ 138.6 → **181.4** contracted
+  (r_i/r_f 1.42), v_tan **270.8** (both; 242.7 until S14); simple grad −0.0236, old −0.0064, thick
+  M 1.42e10, row 9 0.152; advanced grad −0.0582, v_esc(R₀) 584.8, f_esc 0.756; rows 16/17 44.9 / 5.82.
 - **Convergence** (D94, D101): 0 drifts on N_R, N_t, N_z in either model; advanced rows 5,
   7–11 are `vacuous` (debt #27). **Profile** (D115): 0.58 s simple, 0.91 s advanced
   (chemistry_dtd 41%); the halo's mesh costs 3 ms; the catalogue is 77–78% fixed cost.

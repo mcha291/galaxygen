@@ -497,3 +497,7 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   was inferred from one exponential swept wider (debt #45) and fails for a second one
   on the disc's timescale — row 2 rises with row 20. Probe the premise before the
   mechanism, and probe with the repo unchanged: one substituted function per half (D114).
+- [close][infra] A shell chain that pipes the suite into `tail` tests `tail`'s exit
+  status, not the suite's: S14's close merged and pushed main with RESUMING.md three
+  lines over its cap and the docs test red. Capture the suite's status before the pipe
+  and gate the merge on it; the cost of not doing so is a second merge on the record (D115).
