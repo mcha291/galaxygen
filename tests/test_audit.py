@@ -90,12 +90,13 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(simple):
     assert mu(c200) / c200**3 == pytest.approx((200.0 / 101.0) * mu(c_vir) / c_vir**3, rel=1e-9)
     f = run(simple, only=KIN).fields
     assert f["halo_concentration_virial"] == pytest.approx(c_vir) and f["halo_concentration"] == pytest.approx(c200, abs=0.05)
-    # Row 3 read 256.2 unconverted; converted it reads 242.7 - through the 245-251 window and out the other side.
-    assert f["v_tangential_sun"] == pytest.approx(242.7, abs=0.5) and f["v_tangential_sun"] < Q[3].lo
-    # ...and the cited z_f = 2-3 spans 13 km/s on row 3; the row wants 2.7-3.1, the top of the range.
+    # Row 3 read 256.2 unconverted; converted it read 242.7 - through the 245-251 window and out the
+    # other side - until S14 contracted the halo around the disc, since when it reads 270.8, high (debt #6).
+    assert f["v_tangential_sun"] == pytest.approx(270.8, abs=0.5) and f["v_tangential_sun"] > Q[3].hi
+    # ...and the cited z_f = 2-3 spans 12 km/s on row 3 (236.4-249.2 until S14); the row now wants 0.7-1.0.
     lo, hi = (run(simple, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
-    assert lo == pytest.approx(236.4, abs=0.5) and hi == pytest.approx(249.2, abs=0.5)
-    assert 12.0 < hi - lo < 14.0
+    assert lo == pytest.approx(264.5, abs=0.5) and hi == pytest.approx(276.7, abs=0.5)
+    assert 11.0 < hi - lo < 14.0
 
 
 # --- debts #17 and #41: what the row 20 target is, and what it counts ----------
@@ -154,7 +155,8 @@ def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(sim
     # S13 moved the centre down: Sagittarius no longer delivers a tenth of the budget early, and
     # WIND_SPEED was refitted to the converted potential. The simple model's gas no longer reaches +0.5 at all.
     assert s["max"] == pytest.approx(0.46, abs=0.05) and s["out_to"] == 0.0
-    assert a["max"] == pytest.approx(1.36, abs=0.05) and a["out_to"] == pytest.approx(2.5, abs=0.15)
+    # S14: the contracted potential holds more metal at the centre - 1.39 out to 2.66 kpc (1.36, 2.5 until S14).
+    assert a["max"] == pytest.approx(1.39, abs=0.05) and a["out_to"] == pytest.approx(2.66, abs=0.15)
     assert a["at_4"] == pytest.approx(0.25, abs=0.03)  # just outside row 22's 4-12 kpc fit range
     # The one fitted constant does not reach the centre: it moves the level at R₀, not the peak or the tilt.
     cold, hot = centre(advanced, WIND_SPEED=800.0), centre(advanced, WIND_SPEED=1300.0)
@@ -259,7 +261,7 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
     assert by[0.8]["thin_disc_scale_length"] == pytest.approx(2.00, abs=0.05)
     assert by[1.5]["thin_disc_scale_length"] == pytest.approx(3.68, abs=0.05) and not inside(4, by[1.5]["thin_disc_scale_length"])
     assert by[1.5]["gas_mass_30kpc"] == pytest.approx(9.17e9, rel=0.02)
-    assert by[1.5]["v_tangential_sun"] == pytest.approx(222.7, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.67, abs=0.05)
+    assert by[1.5]["v_tangential_sun"] == pytest.approx(253.0, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.67, abs=0.05)  # 222.7 until S14 contracted the halo
     grads = [by[r]["metallicity_gradient"] for r in (0.8, 1.0, 1.25, 1.5)]
     assert grads[0] < grads[1] < grads[2] < grads[3]
     if model.name == "simple":
@@ -296,9 +298,12 @@ def test_the_register_carries_the_s10_findings():
 
     text = progress.read(progress.INPUTS)
     # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99);
-    # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109).
-    assert progress.debt_counts(text) == (31, 14)
+    # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109);
+    # S14 discharged #6 and opened #46 (D113).
+    assert progress.debt_counts(text) == (31, 15)
     for item in (
+        "6. ~~Adiabatic contraction",
+        "46. **The contraction's strength is a simulation calibration",
         "29. ~~**The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",
         "38. ~~**A statistical row tests overlap",

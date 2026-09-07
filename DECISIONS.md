@@ -2532,3 +2532,87 @@ its resolution (rule B7).
 **Close.** Board row 13 (desktop, Fable 5.1, `s13`, 2026-09-07); `session-13`
 merged into `main` with `--no-ff`; `s13` queued in MANUAL_TODO.md with S12's
 SHA filled in.
+
+## Session 14 — the physics the maintainer's brief listed
+
+### D113. The halo contracts around the disc, and the register's number for it was wrong by an order of magnitude (debts #6, #12, #43, #46)
+
+**Decision.** The halo stage solves the halo's adiabatic contraction around
+the disc on its own radial mesh — 600 log-spaced points from 10⁻³ kpc to 1.5
+R₂₀₀ — and every profile it publishes is the contracted one: `halo_enclosed_mass`,
+`halo_circular_velocity`, `halo_potential`, `halo_potential_midplane` and the
+scalar at R₀. The invariant is Gnedin et al. 2004's ``r M(r̄)`` with ``r̄ = A R₂₀₀
+(r/R₂₀₀)^w`` at A = 0.85, w = 0.8 `[recall]`, two new Level 0 constants
+`CONTRACTION_A` and `CONTRACTION_W`; Blumenthal et al. 1986's circular-orbit
+invariant is A = w = 1, kept as the named alternative and not averaged in
+(rule B12). The disc it contracts around is the MMW98 exponential — M_d = m_d
+M₂₀₀ at R_d = λ_d R₂₀₀/√2, its cylindrical enclosed mass taken as spherical —
+so the scale length is computed by the halo stage now and the disc stage reads
+it (rule A9). Two fields are new: `halo_contraction`, the shell displacement
+r_i/r_f on R, and `halo_circular_velocity_sun_initial`, the halo's share at R₀
+before it responded, so the contraction can be read off as a difference the way
+`halo_concentration_virial` lets the conversion be read. The ruleset was chosen
+on the literature and written into the constant's about line **before the row
+was read**, so that the number could not choose the physics (rule B5). Debt #6
+is discharged; the contraction's strength is debt #46; `WIND_SPEED` is refitted
+987 → 1028 km/s (debt #43, rule B10) because the deeper potential raised
+v_esc(R₀) 562 → 585 km/s and the gas at R₀ read +0.026 dex.
+
+**Settled by.** The register had carried the contraction since S13 as "several
+km/s at R₀" `[recall: Blumenthal et al. 1986]`, the lever that would close row 3
+from 242.7. Measured:
+
+    ruleset                          A     w    halo v_c(R0)  r_i/r_f(R0)  row 3    v_esc(R0), adv
+    none (until S14)                 -     -    138.6         1.000        242.7    561.5
+    Gnedin et al. 2004  (default)    0.85  0.8  181.4         1.419        270.8    584.8
+    Blumenthal et al. 1986           1.0   1.0  195.6         1.572        280.9    593.0
+    A = 1.6, w = 0.8 [recall, weak]  1.6   0.8  160.8         1.209        256.8    570.8
+    the epoch, Gnedin:  z_f 0.5 243.4 | 0.6 244.9 | 0.7 246.4 | 0.8 247.9 | 0.9 249.4 | 1.0 250.9 | 1.1 252.3
+                        1.5 257.9 | 2.0 264.5 | 2.5 270.8 | 3.0 276.7   (target 245-251; c200 at 0.7-1.0: 5.2-6.2)
+    baryon_retention:   0.25 245.5 (M_star 3.7e10, row 1 fails) | 0.30 258.6 | 0.35 270.8
+    GAS_DISC_SCALE_RATIO 1.5 (debt #45's sweep): row 3 253.0, was 222.7
+    every other row: < 1e-9 between rulesets; the advanced escape fraction at R0 0.757 -> 0.740 -> 0.756 after the refit
+
+The prediction failed the other way, by eight half-widths: the disc this model
+builds — 5.8 × 10¹⁰ M☉ in one exponential at 2.6 kpc inside a c₂₀₀ = 10.9 halo
+— pulls the halo's share at R₀ up by 43 km/s under the weaker published
+invariant and 57 under the stronger, and row 3 reads 270.8, high by 20. So the
+epoch the row wants is 0.7–1.0, not the 2.7–3.1 of D107, and it lies below the
+cited 2–3 by as much as it lay above it before; every epoch the register has
+quoted, and all three S10 conversions, were read against an uncontracted halo.
+The miss is rewritten under debt #12 with its prediction: the bulge (D110,
+5–8 km/s the right way now) and debt #18's component together do not close
+it, and the epoch has to fall below 2 — or the calibration of the invariant
+is wrong for a disc galaxy, which is what debt #46 says a mass- and
+epoch-dependent (A, w) would test. A second discriminant overshoots the same
+way: the advanced model's escape velocity at R₀, 585 km/s against the 530–580
+commonly measured `[recall]`.
+
+**The instrument, and the defect it found** (rule B1). Three checks were written
+before the physics was read: with no disc every invariant returns r_i = r_f to
+4 × 10⁻¹⁶ and the potential to 7 × 10⁻⁶ (the trapezoid in ln r); quadrupling the
+mesh moves v_halo(R₀) by a part in 10⁶; and a third (A, w) was probed beside the
+two named ones. The third probe read the default's number back to the digit —
+274.7 for A = 0.85 and for A = 1.6 alike — because the first solver attached
+the final dark mass to the orbit-averaged radius r̄_f, and with the mass at r̄
+on both sides A is a relabelling of the mesh and cancels exactly. Gnedin's
+shell keeps its mass at its own radius: the dark mass inside r_f afterwards is
+what was inside r_i before. Fixed, the three read 181.4, 195.6 and 160.8, and
+the default's row 3 moved 274.7 → 270.8. The Blumenthal number was never
+wrong, which is why two rulesets would not have found it `[verified:
+tests/test_halo.py::test_a_third_ruleset_reads_a_third_number,
+::test_with_no_disc_the_halo_comes_back_unchanged, ::test_the_mesh_does_not_move_the_scalars,
+::test_the_named_rulesets_and_what_each_is_worth_at_R0, ::test_the_epoch_row_3_wants_is_below_the_cited_range,
+::test_the_scale_length_is_the_halos_now_and_the_disc_reads_it; tests/test_sfh.py::test_row_3_misses_high_once_the_halo_contracts]`.
+
+**What else moved.** The resolved rotation curve is higher everywhere inside
+R₂₀₀, so the bar's pattern speed and corotation (rows 16, 17: medians 43.3 →
+44.9 km/s/kpc and 5.25 → 5.82 kpc, inside), the shear at 2.2 R_d (0.924 →
+0.944) and the disc dominance (0.550) moved with it; the advanced gradient
+reads −0.058 (from −0.056, inside), the old-star gradient −0.0202, and the
+centre holds more metal (peak [Fe/H] 1.39 out to 2.66 kpc, from 1.36 and 2.5).
+Rows 1, 2, 4–11, 19, 20 and every mass are unchanged to 10⁻⁹: the contraction
+enters only through the kinematics and the potential. Every pinned measurement
+was re-pinned to the new number with the old beside it (S13's lesson); the
+potential's test no longer asserts the analytic NFW curve but that the field is
+deeper than it everywhere and spherical.

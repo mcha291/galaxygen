@@ -114,21 +114,25 @@ def test_inside_out_growth_is_actually_inside_out(model):
     assert peak_outer > peak_inner
 
 
-def test_row_3_misses_low_once_the_concentration_is_converted(model):
-    """The history of this row is the history of three wrong explanations (spec.MISSES[3]).
+def test_row_3_misses_high_once_the_halo_contracts(model):
+    """The history of this row is the history of four wrong explanations (spec.MISSES[3]).
 
     S1 blamed the gas profile and predicted 246.4. S2 gave the gas a profile and got
     237.2, which was the stellar disc broadening at the same time. S3 corrected that and
     the miss returned to 256, high - and every audit blamed the compact disc. S13 did the
     conversion debt #12 named: the c_vir normalisation had been used as c200, and with
-    c200 = 10.9 instead of 14.35 the row reads 242.7, low. An extended component would
-    lower it further; what is missing inside R0 is the bulge (debt #11).
+    c200 = 10.9 instead of 14.35 the row read 242.7, low - and named the halo's
+    contraction as "several km/s", the lever that would close it. S14 modelled the
+    contraction and it is 28 km/s at R0 (Gnedin et al. 2004's invariant; 38 for
+    Blumenthal's): the row reads 270.8, high by 20, and the epoch it wants is 0.7-1.0,
+    below the cited 2-3. The magnitude was recalled, not measured (rule B4).
     """
     o = out(model)
     v = o.fields["v_tangential_sun"]
-    assert v < 245.0
-    assert v == pytest.approx(242.7, abs=1.0)
+    assert v > 251.0
+    assert v == pytest.approx(270.8, abs=1.0)  # 242.7 until S14
     assert o.fields["halo_concentration"] == pytest.approx(10.9, abs=0.05)
+    assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(42.8, abs=0.5)
 
 
 def test_the_resolved_curve_supersedes_the_checkpoint_one_one(model):

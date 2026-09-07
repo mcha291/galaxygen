@@ -147,7 +147,7 @@ Three verdicts:
 | SN rate | **A** | SFR × IMF |
 | Habitable zone | **A** | Arithmetic given its own definition |
 | Σ_gas, SFR, Z(R,t) | **A/B** | The integration itself; K-S constants are Level 0 |
-| Rotation curve V(R) | **B** | Solved Poisson given components. Adiabatic contraction is a debt: cooling raises halo concentration, feedback reverses it `[verified: Kafle+14 §discussion]` |
+| Rotation curve V(R) | **B** | Solved Poisson given components. Adiabatic contraction was a debt (#6) until S14 modelled it — cooling raises halo concentration, feedback reverses it `[verified: Kafle+14 §discussion]` — and its strength is now debt #46: every published invariant overshoots row 3 |
 | Dust | **B** | Dust-to-gas tracks metallicity tightly |
 | **Disc scale length R_d** | **C — severe** | See below |
 | **Baryon budget m_d** | **C — severe** | See below |
@@ -656,7 +656,9 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
 3. m_d derived by abundance matching rather than from feedback physics.
 4. Pitch-angle closure radius is arbitrary — largely dissolved by ruling 3 (§5).
 5. Cooling delay from halo assembly to SF onset is unvalidated (§3).
-6. Adiabatic contraction of the halo by infalling baryons is unmodelled (§4b).
+6. ~~Adiabatic contraction of the halo by infalling baryons is unmodelled (§4b).~~
+   **DISCHARGED at S14 — modelled, and the register's number for it was wrong by an
+   order of magnitude** (D113; its strength is debt #46).
    **S13:** now the named lever for acceptance row 3. With debt #12's conversion done
    the row reads 242.7, low, and a bulge drawn from the disc lowers it further (debt
    #11's probe), so the mass the row misses inside R₀ is the halo's response to the
@@ -664,6 +666,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    1986]` — or a later assembly epoch (z_f 2.7–3.1). **Prediction:** contraction closes
    row 3 with z_f at 2.5; if it does not, the cited z ≈ 2–3 is wrong at its low end
    (spec.MISSES row 3, D107).
+   **S14:** the halo stage contracts its NFW profile around the disc's exponential on
+   its own radial mesh — Gnedin et al. 2004's invariant r M(r̄) by default, Blumenthal
+   et al. 1986's as the named alternative (debt #46) — and publishes the contracted
+   enclosed mass, circular velocity and potential; `halo_contraction` is r_i/r_f and
+   `halo_circular_velocity_sun_initial` the halo's share at R₀ before it responded. The
+   prediction failed the other way: the halo's share at R₀ rises 139 → 181 km/s (196
+   under Blumenthal) and row 3 reads 270.8, not 245–251, so the epoch the row wants is
+   0.7–1.0, not 2.7–3.1 `[verified: tests/test_halo.py::test_the_named_rulesets_and_what_each_is_worth_at_R0,
+   ::test_the_epoch_row_3_wants_is_below_the_cited_range]`. The "several km/s" was
+   recalled, not measured, and a probe would have cost fifty lines (rule B4). The
+   scale length is computed by the halo since S14 — it is the disc the halo contracts
+   around — and the disc stage reads it.
 7. ~~`spin` is circular.~~ **LARGELY DISCHARGED** — λ_d is now jointly
    constrained by two independent observables, not one (§6).
 8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
@@ -714,6 +728,9 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    and 11 cannot be green together without a bulge stage or a smaller budget,
    and a smaller budget fails row 3 by 9 km/s more (`baryon_retention` 0.40 →
    265 km/s).
+   **S14:** with the halo contracted around the disc (debt #6) row 3 reads 270.8, high
+   by 20 km/s, and the bulge's 5–8 (D110) is not enough on its own: the bulge stays a
+   stage for rows 10, 12 and 13, and row 3 is debt #12's epoch and debt #46's calibration.
 12. **The c₂₀₀–z relation is unvalidated and load-bearing.** c₂₀₀ = 4.1(1 + z_f)
    applies a normalisation quoted for c_vir to c₂₀₀ without the conversion
    between the two overdensities, and z_f = 2.5 is the midpoint of §3's
@@ -762,6 +779,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    What this debt still holds is the epoch: z_f = 2.5 is the cited midpoint, the row
    wants 2.7–3.1, and choosing it against a known answer is what rule B5 forbids.
    `WIND_SPEED` was refitted to the converted potential, 1010 → 987 km/s (debt #43).
+   **S14:** with the halo contracted around the disc (debt #6) the epoch row 3 wants is
+   0.7–1.0 (c₂₀₀ = 5.2–6.2), below the cited 2–3 by as much as it was above it before; the
+   cited range now spans 264.5–276.7 km/s on the row, 12 km/s, all of it high
+   `[verified: tests/test_halo.py::test_the_epoch_row_3_wants_is_below_the_cited_range]`.
+   All three S10 conversions were read against an uncontracted halo, and so was every
+   epoch the register has quoted; the row's miss is under this debt since S14 (D113).
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -875,6 +898,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    Sagittarius at all, so what is left of its excess is this debt's timescale; row 20
    like for like is 4.17 × 10⁹ M☉ of hydrogen against 8.0 (debt #41), so the component
    must supply about 3.8 × 10⁹ M☉ of hydrogen — 5.2 × 10⁹ of gas.
+   **S14:** row 3 is this debt's evidence again, and in the right direction: with the
+   halo contracted (debt #6) the row reads 270.8, high, and a component that moves
+   baryons outward lowers both their own pull at R₀ and the halo's response to them.
+   Rows 2, 20 and 3 pull together now; rows 3 and 4 remain the check that the component
+   is high enough in angular momentum.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -1400,6 +1428,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    unconverted concentration (debt #12): the gas at R₀ read −0.015 dex once the halo
    converted, and the constant was re-set to solar (rule B10, D107). `NET_YIELD` stays:
    its −0.025 dex drift is S3's and no row reads it. Both remain provisional on #18.
+   **S14:** `WIND_SPEED` refitted 987 → 1028 km/s once the halo contracted around the
+   disc (debt #6): v_esc(R₀) rose 562 → 585 and the gas at R₀ read +0.026 dex, and the
+   constant was re-set to solar by bisection (rule B10, D113). The potential it is now
+   fitted against overshoots row 3 and the observed escape velocity (debt #46), so the
+   value is provisional on that as well as on #18.
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1439,6 +1472,31 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    0.8–1.5 (inside at 0.8 only); at 1.25 the simple thick disc reaches row 5 (1.84 kpc)
    and not row 11; at 1.5 it overshoots row 5 (2.22). The advanced gradient still
    passes only at 1.0.
+   **S14:** on the contracted halo the sweep reads row 3 at 253.0 km/s at 1.5 (222.7
+   before): a broader infall still cannot buy the row on its own.
+46. **The contraction's strength is a simulation calibration, and every published
+   one overshoots row 3** (S14). The halo's response to the disc is modelled with
+   Gnedin et al. 2004's invariant r M(r̄), r̄ = A R₂₀₀ (r/R₂₀₀)^w at A = 0.85, w = 0.8
+   `[recall]`, chosen on the literature before the row was read (rule B5). At the
+   default it adds 43 km/s to the halo's share at R₀ (139 → 181) and 28 to row 3
+   (242.7 → 270.8); Blumenthal et al. 1986's circular-orbit invariant, A = w = 1, adds
+   57 and 38 (280.9); A = 1.6 at w = 0.8 — a normalisation recalled from the later
+   revision with less confidence and not adopted `[recall: Gnedin et al. 2011, where A
+   and w vary with halo mass and epoch]` — adds 22 and 14 (256.8). None lands inside
+   245–251 at the cited epoch, and the advanced model's escape velocity at R₀ rises
+   562 → 585 km/s, above the 530–580 commonly measured `[recall]` — a second
+   discriminant overshooting the same way `[verified: tests/test_halo.py::
+   test_the_named_rulesets_and_what_each_is_worth_at_R0, ::test_a_third_ruleset_reads_a_third_number]`.
+   The two named rulesets are kept and not averaged (rule B12); A enters only through
+   the invariant, and a version of the solver that attached the final mass to r̄_f made
+   it cancel exactly — found because a third ruleset read the default's number back
+   (D113). **Prediction:** the row closes with the contraction as modelled and an
+   assembly epoch of 0.7–1.0 (debt #12), or with a baryon distribution less compact
+   than one exponential at 2.6 kpc (debts #11, #18); if neither does, the invariant's
+   calibration is what is wrong for a disc galaxy, and a mass- and epoch-dependent
+   (A, w) is the next thing to try. A recalled magnitude — "several km/s" — was wrong
+   by an order of magnitude; the mechanism, not the number, is what belongs in a
+   register (rule B4).
 
 ---
 

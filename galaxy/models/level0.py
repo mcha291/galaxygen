@@ -65,6 +65,25 @@ LEVEL0: dict[str, Constant] = {
         "Δ_vir = 18π² + 82x − 39x², x = Ω_M − 1 [recall: Bryan & Norman 1998] — about 101 ρ_crit — "
         "at which the c_vir normalisation is quoted (debt #12, S13).",
     ),
+    "CONTRACTION_A": Constant(
+        0.85,
+        "dimensionless",
+        "Adiabatic contraction of the halo by the disc's baryons (debt #6, S14): the invariant "
+        "conserved as a dark-matter shell moves inward is r M(r̄) with r̄ = A R₂₀₀ (r/R₂₀₀)^w, the "
+        "orbit-averaged radius standing in for the radius itself. A = 0.85, w = 0.8 is the form "
+        "fitted to hydrodynamic simulations [recall: Gnedin et al. 2004]; A = w = 1 is the "
+        "circular-orbit invariant r M(r) [recall: Blumenthal et al. 1986], which over-contracts "
+        "against every simulation since and is kept as the named alternative (rule B12), not "
+        "averaged in. Chosen before the row was read, on the literature, so that the number could "
+        "not choose the ruleset (rule B5). A later revision makes A and w depend on halo mass and "
+        "epoch [recall: Gnedin et al. 2011] and is not adopted (debt #46).",
+    ),
+    "CONTRACTION_W": Constant(
+        0.8,
+        "dimensionless",
+        "The exponent of the orbit-averaged radius in the contraction invariant; see CONTRACTION_A. "
+        "w = 1 with A = 1 recovers the circular-orbit invariant.",
+    ),
     "R_SUN": Constant(
         8.2,
         "kpc",
