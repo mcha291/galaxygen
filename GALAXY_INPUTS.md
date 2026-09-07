@@ -902,7 +902,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    halo contracted (debt #6) the row reads 270.8, high, and a component that moves
    baryons outward lowers both their own pull at R₀ and the halo's response to them.
    Rows 2, 20 and 3 pull together now; rows 3 and 4 remain the check that the component
-   is high enough in angular momentum.
+   is high enough in angular momentum. **Probed, not built (D114):** a share s of the
+   budget at k R_d on the disc's own inside-out timescale, the halo contracting around
+   it, swept over s = 0.1–0.3 and k = 2–5. Every setting lowers row 3 (4–13 km/s from
+   the baryons, 1–7 from the halo's weaker response) and lifts row 20 toward 8 × 10⁹,
+   and every setting lifts row 2 with it — 1.98 to 2.45 against 1.46–1.84 — because
+   gas at 2–5 R_d accreting as the disc does is still above the star formation
+   threshold when it arrives; row 4 broadens to 2.55–2.77, inside. The premise that
+   the threshold protects the component fails for this form of it: what is wanted
+   arrives late or diffuse enough to stay under the threshold, a timescale of its own,
+   and that is the decision the next session takes before any constant is swept.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside

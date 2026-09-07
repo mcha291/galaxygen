@@ -493,3 +493,7 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [advanced][close] A mechanism that deepens the potential moves the wind's
   calibration: `WIND_SPEED` has now been refitted three times, once per mechanism
   upstream of v_esc, and its about line carries all three numbers (rule B10, D113).
+- [field] A component's premise is itself a prediction. "Gas the threshold protects"
+  was inferred from one exponential swept wider (debt #45) and fails for a second one
+  on the disc's timescale — row 2 rises with row 20. Probe the premise before the
+  mechanism, and probe with the repo unchanged: one substituted function per half (D114).
