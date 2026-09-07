@@ -476,3 +476,24 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] Re-pin a measurement to the new number with the old one beside it, never
   to the target (rule B5); a suite of pinned measurements is what tells a physics
   change from a regression, and it costs a pass of re-pinning every time (D111).
+
+## From S14
+
+- [field] A recalled magnitude is not a measurement. "Several km/s" for the halo's
+  contraction sat in the register for a session as row 3's lever and was an order of
+  magnitude short; the mechanism belongs in a register, the number belongs in a
+  probe, and the probe costs fifty lines (D113).
+- [field][infra] Probe a third ruleset before trusting two. The default and a probed
+  (A, w) reading the same number to the digit was the only sign that A had cancelled
+  out of the solver; the Blumenthal number was right throughout and would never have
+  shown it (D113).
+- [field] Decide the ruleset before reading the row and write the decision into the
+  constant's about line first (rule B5). When the row then misses by eight
+  half-widths, the record shows the number did not choose the physics (D113).
+- [advanced][close] A mechanism that deepens the potential moves the wind's
+  calibration: `WIND_SPEED` has now been refitted three times, once per mechanism
+  upstream of v_esc, and its about line carries all three numbers (rule B10, D113).
+- [field] A component's premise is itself a prediction. "Gas the threshold protects"
+  was inferred from one exponential swept wider (debt #45) and fails for a second one
+  on the disc's timescale — row 2 rises with row 20. Probe the premise before the
+  mechanism, and probe with the repo unchanged: one substituted function per half (D114).

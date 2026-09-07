@@ -222,7 +222,7 @@ def test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent(prod)
     o = run(advanced, only=("metal_escape_fraction",))
     i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
     escaped = float(o.fields["metal_escape_fraction"][i])
-    assert escaped == pytest.approx(0.7567, abs=0.001)  # 0.7532 until S13 converted the concentration and refitted WIND_SPEED
+    assert escaped == pytest.approx(0.7556, abs=0.001)  # 0.7532 until S13 converted the concentration and refitted WIND_SPEED; 0.7567 until S14 contracted the halo and refitted it again
 
     effective = y_z * (1.0 - escaped)
     fitted = float(simple.constants["NET_YIELD"].value)
@@ -284,7 +284,8 @@ def test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_
         o = run(advanced, grid=GridSpec(n_z=n_z), only=("escape_velocity",))
         R = o.grid.R
         phi0 = -G * o.fields["halo_dark_mass"] * np.log1p(R / o.fields["halo_scale_radius"]) / (mu(o.fields["halo_concentration"]) * R)
-        assert np.allclose(o.fields["halo_potential_midplane"], phi0)
+        # Until S14 the midplane *was* this analytic NFW curve; contracted around the disc it is deeper everywhere (debt #6).
+        assert np.all(o.fields["halo_potential_midplane"] < phi0)
         assert np.all(o.fields["halo_potential_midplane"] < o.fields["halo_potential"][:, 0])
         at[n_z] = o.fields["escape_velocity"].copy()
     assert np.array_equal(at[15], at[60]) and np.array_equal(at[60], at[960])

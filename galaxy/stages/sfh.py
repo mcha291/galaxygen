@@ -209,6 +209,16 @@ V_TANGENTIAL_SUN = FieldDecl(
 )
 
 
+def infall_profile(R: np.ndarray, R_inf: float, baryons: float) -> np.ndarray:
+    """Surface density of everything that will ever accrete: one exponential of scale ``R_inf``, normalised to the budget.
+
+    Factored out at S14 so that debt #18's second, high-angular-momentum component
+    could be probed by substituting this one function (D114) before anyone builds it.
+    """
+    shape = np.exp(-R / R_inf)
+    return shape * baryons / surface_to_mass(shape, R)
+
+
 def compute(ctx: Context) -> Mapping[str, Any]:
     R, t = ctx.grid.R, ctx.grid.t
     dt = ctx.grid.spec.t_max / ctx.grid.spec.n_t
@@ -223,8 +233,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     # Total gas to be accreted at each radius: exponential, more extended than the stars.
     R_inf = float(ctx.constants["GAS_DISC_SCALE_RATIO"]) * R_d
-    shape = np.exp(-R / R_inf)
-    sigma_total = shape * baryons / surface_to_mass(shape, R)
+    sigma_total = infall_profile(R, R_inf, baryons)
 
     # Inside-out infall timescale, anchored at R_0 (see the module docstring).
     tau = float(ctx.inputs["infall_timescale"]) * (R / R_sun) ** float(ctx.inputs["inside_out_index"])

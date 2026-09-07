@@ -1,55 +1,60 @@
 # BRIEF — after the build: what a maintainer opens with
 
-S0–S10 are closed; S11 integrated the three S10 audits onto `main` without merging
-their branches (debts #34–#45, their tests, three instrument features, the four lists'
-comparison in D102); S12 made the one-line fixes (D104); S13 the physics decisions
-(D106–D112). All 2026-09-07.
+S0–S10 are closed; S11 integrated the three S10 audits (D99–D103), S12 the one-line
+fixes (D104), S13 the physics decisions (D106–D112), S14 the halo's contraction and a
+probe of the extended component (D113–D115). All 2026-09-07.
 Open per RESUMING.md, read RULES.md in full, then this. GALAXY_INPUTS.md §11 is the
 register and the only list of what is wrong (31 open). Work on a branch
-`session-14` or a topic branch; the close ritual still applies; rule C2e queues tags.
+`session-15` or a topic branch; the close ritual still applies; rule C2e queues tags.
 
-## What S13 did, and what is still physics
+## What S14 found, and why it changes the next decision
 
-Done (D106–D110): the merger's gas accretes from its own delivery windows and
-Sagittarius delivers a physical share (#29, #30 discharged; row 2 reads 1.89, so the
-rest is #18's timescale); the halo converts c_vir to c₂₀₀ (#12 half: row 3 reads 242.7,
-**low**, z_f stays 2.5; WIND_SPEED refit 987); row 20 reads hydrogen (#41: 4.17e9, a 48%
-miss); a statistical row passes on its median at n = 41 (#38). The bulge was probed and
-**lowers row 3 by 5–8 km/s**; it is for rows 10, 12, 13, not for row 3.
+The halo now contracts around the disc (debt #6 discharged; D113): Gnedin et al. 2004's
+invariant by default, Blumenthal's as the named alternative, both Level 0 constants
+(`CONTRACTION_A`, `CONTRACTION_W`), the disc's scale length computed by the halo stage.
+The register had it at "several km/s". **It is 43 km/s on the halo's share at R₀ and 28
+on row 3, which reads 270.8 — high by 20 — against 242.7 before.** The epoch row 3 wants
+is now **0.7–1.0**, below the cited 2–3, where at S13 it wanted 2.7–3.1 above it. The
+advanced model's escape velocity at R₀ rose 562 → 585 (over the observed 530–580) and
+`WIND_SPEED` was refitted 987 → 1028 against that potential (debt #43, provisional).
+Debt #46 holds the calibration question: every published invariant overshoots.
 
 ## The decisions a maintainer must take next — physics
 
-1. **Row 3 (#6, #11, #12).** Adiabatic contraction of the halo is the lever now; a
-   bulge is not. Model contraction with z_f at 2.5 and read rows 3 and 19; if the row
-   still misses, z_f 2.7–3.1 is what the table wants and the cited range is wrong low.
-2. **The extended component (#18).** Rows 2 (1.89 against 1.84) and 20 (3.8e9 of
-   hydrogen short) are its evidence alone now; row 3 is not, and moves the wrong way.
-   Rows 3 and 4 are the check that it is high enough in angular momentum.
+1. **Row 3 (#12, #46, #11, #18).** Three levers, none free: the assembly epoch (0.7–1.0
+   closes it alone; the cited range is 2–3), the contraction's calibration (A = 1.6 at
+   w = 0.8 reads 256.8, still out; Gnedin et al. 2011's mass- and epoch-dependent form is
+   not adopted), and a less compact baryon distribution (the bulge is worth 5–8 the right
+   way now, D110; the component below). Decide which the model derives; do not sweep to
+   the answer (B5). `halo_contraction` at R₀ (1.42) and v_esc(R₀) are the discriminants.
+2. **The extended component (#18), probed at D114.** A share s at k R_d on the disc's own
+   timescale lowers row 3 (4–13 km/s) and lifts row 20 toward 8e9 — and lifts row 2 with
+   it (1.98–2.45 against ≤ 1.84), because the gas arrives above the threshold. The
+   component needs a timescale of its own; that is the decision, before any constant.
+   Substitute `sfh.infall_profile` and `halo.disc_enclosed_mass` from a script to probe.
 3. **The bulge stage (#11).** For rows 10, 12, 13 and the cancellation on row 11; row 14
-   needs the source's uncertainty first (#17). It must not be built for row 3 (D110).
+   needs the source's uncertainty first (#17). It lowers row 3 by 5–8 (D110).
 4. **The catalogue migrates (#31).** A systems-stage change with its own golden values;
-   then rows 6 and 7 in the advanced model are judged together when #27's valley opens.
-5. **The thick disc (#19).** Rows 5 and 11 fail and row 9 passes at 0.152 on the
-   cancellation, worse since S13; radial heating with the vertical kick is the prediction.
-6. **Row 6, advanced (#42).** A recorded miss at 358 since S13; SECULAR_HEATING and
-   MERGER_HEATING are the simple model's fits. Do not tune it back; wait for the valley.
+   rows 6 and 7 in the advanced model judged together when #27's valley opens.
+5. **The thick disc (#19).** Rows 5 and 11 fail, row 9 passes at 0.152 on the
+   cancellation; radial heating with the vertical kick is the prediction.
+6. **Row 6, advanced (#42).** A recorded miss at 358; do not tune it back; wait for the valley.
 
 ## What the instruments will tell you, and what they will not
 
 - `uv run python -m galaxy.specs`: exit 0 means every failing row is a recorded miss,
-  nothing drifted across its width, and every stage was profiled. `vacuous` rows have
-  nothing to converge (debt #27); "no testable target" rows have no width (#17, D100).
-  Never widen a target (B5); record a miss with a prediction. No green row is an
-  unconditioned prediction (AUDIT_RUN2.md §5) and no row reads inside 4 kpc (#34).
-- Probing a constant: `tests/test_audit.py::with_constant`; `run(model, {...inputs},
-  only=(fields,))` for an input. A verdict needs a number (rule B6).
+  nothing drifted across its width, and every stage was profiled. Never widen a target
+  (B5); record a miss with a prediction. A miss that starts passing fails the run.
+- Probing a constant: `tests/test_audit.py::with_constant`; a ruleset: `tests/test_halo.py::
+  _with_contraction`; an input: `run(model, {...}, only=(fields,))`. A verdict needs a number.
 
 ## Traps
 
+- **A solver that attaches the contracted mass to the orbit-averaged radius makes A cancel**
+  — three rulesets read one number (D113). Keep `test_a_third_ruleset_reads_a_third_number`.
+- The disc stage is off the acceptance path since S14 (the halo owns R_d); `timings.py`'s
+  stage column shows `halo,assembly,sfh`. Its fields are stage one's preview only (D42).
 - **Do not merge or delete `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`**:
-  they are the sealed lists D102 compares (D99). Their debt and decision numbers are
-  their own; main's map is in D99.
-- An audit's aim decides what it finds (D102): a repeat with the same brief finds the
-  same third. Give a second run a stated aim — and reserved debt/decision numbers.
+  the sealed lists D102 compares (D99). Give any paired run a stated aim and reserved numbers.
 - Windows: `uv run python` only; Bash commands over ~8 KB fail obscurely; in a worktree
   set `core.hooksPath` per worktree. `tools/progress.py` counts debts by numbered item.

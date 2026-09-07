@@ -266,29 +266,33 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=3,
-        debt=11,
-        since="S13",
+        debt=12,
+        since="S14",
         reason=(
-            "242.7 km/s against 248 +/- 3: too little mass inside R0 now, having been too much - "
-            "256 - for twelve sessions. S1 recorded that miss as the gas not yet having its own "
-            "profile (246.4 predicted); S2 gave it one and got 237.2, the stellar disc broadening "
-            "at the same time; S3 corrected that and the miss returned to 256, blamed on every "
-            "baryon sitting in the compact disc with no extended component and no bulge (debt #18). "
-            "S10's audits priced the cause the register had named since S1: the c_vir normalisation "
-            "used as c200 (debt #12). S13 converted it - c200 = 10.9, not 14.35 - and the row fell "
-            "13.5 km/s, through the window and out the other side. The old explanation now has the "
-            "wrong sign: moving baryons outward lowers v_c(R0) further. What is missing inside R0 is "
-            "the bulge (debt #11): the model carries its ~1.5e10 Msun in the disc."
+            "270.8 km/s against 248 +/- 3: too much mass inside R0 again, by 20 km/s, since S14 "
+            "modelled the halo's response to the disc (debt #6). The row's history: S1 blamed the gas "
+            "profile (246.4 predicted); S2 gave it one and got 237.2, the stellar disc broadening at "
+            "the same time; S3 corrected that and the miss returned to 256, blamed on the compact disc "
+            "(debt #18); S13 converted c_vir to c200 (debt #12) and the row read 242.7, low, with the "
+            "halo's contraction named as the lever that would close it - 'several km/s' [recall]. S14 "
+            "solved the contraction: the disc this model builds - 5.8e10 Msun in one exponential at "
+            "2.6 kpc inside a c200 = 10.9 halo - pulls the halo's share at R0 from 139 to 181 km/s "
+            "under Gnedin et al. 2004's invariant (196 under Blumenthal et al. 1986's), 28 km/s on the "
+            "row, and the recalled magnitude was an order of magnitude short. Every other row moved by "
+            "less than 1e-9; the advanced model's escape velocity at R0 rose 562 -> 585 km/s and "
+            "WIND_SPEED was refitted 987 -> 1028 (debt #43)."
         ),
         prediction=(
-            "Not the bulge: S13 probed a Hernquist spheroid of 1.4-1.7e10 Msun drawn from the disc and "
-            "it *lowers* v_c(R0) by 5-8 km/s, because a flat disc rotates faster than the same mass in a "
-            "sphere (DECISIONS.md, S13). What raises this row now: adiabatic contraction of the halo by "
-            "the baryons (debt #6, unmodelled - several km/s at R0 for a disc this massive), or an "
-            "assembly epoch of 2.7-3.1 rather than the cited midpoint 2.5. Prediction: contraction "
-            "closes the row with z_f at 2.5; if it does not, the cited z ~ 2-3 is wrong at its low end. "
-            "Debt #18's extended component pushes the other way and is judged with it. halo_concentration "
-            "(10.9) and row 19 are the discriminants: neither the bulge nor the component moves them."
+            "What the row wants now is less mass inside R0 before the halo responds. An assembly epoch "
+            "of 0.7-1.0 (c200 = 5.2-6.2), below the cited 2-3, closes it with everything else at its "
+            "default; a baryon retention of 0.25 does too and fails row 1 (3.7e10). The bulge (D110) "
+            "lowers it by 5-8 km/s and is not enough; debt #18's extended component moves baryons "
+            "outward and lowers both their pull and the halo's response to it - it pulls the right way "
+            "now, so rows 2, 20 and 3 are its evidence together. Prediction: the bulge and the component "
+            "together do not close the row, and the epoch has to fall below 2 - or the contraction is "
+            "weaker than any published invariant (debt #46). Discriminants: halo_contraction at R0 "
+            "(1.42), the escape velocity at R0 against its observed 530-580 (585 now, over), and row 19, "
+            "which none of these moves."
         ),
     ),
     Miss(

@@ -2532,3 +2532,193 @@ its resolution (rule B7).
 **Close.** Board row 13 (desktop, Fable 5.1, `s13`, 2026-09-07); `session-13`
 merged into `main` with `--no-ff`; `s13` queued in MANUAL_TODO.md with S12's
 SHA filled in.
+
+## Session 14 — the physics the maintainer's brief listed
+
+### D113. The halo contracts around the disc, and the register's number for it was wrong by an order of magnitude (debts #6, #12, #43, #46)
+
+**Decision.** The halo stage solves the halo's adiabatic contraction around
+the disc on its own radial mesh — 600 log-spaced points from 10⁻³ kpc to 1.5
+R₂₀₀ — and every profile it publishes is the contracted one: `halo_enclosed_mass`,
+`halo_circular_velocity`, `halo_potential`, `halo_potential_midplane` and the
+scalar at R₀. The invariant is Gnedin et al. 2004's ``r M(r̄)`` with ``r̄ = A R₂₀₀
+(r/R₂₀₀)^w`` at A = 0.85, w = 0.8 `[recall]`, two new Level 0 constants
+`CONTRACTION_A` and `CONTRACTION_W`; Blumenthal et al. 1986's circular-orbit
+invariant is A = w = 1, kept as the named alternative and not averaged in
+(rule B12). The disc it contracts around is the MMW98 exponential — M_d = m_d
+M₂₀₀ at R_d = λ_d R₂₀₀/√2, its cylindrical enclosed mass taken as spherical —
+so the scale length is computed by the halo stage now and the disc stage reads
+it (rule A9). Two fields are new: `halo_contraction`, the shell displacement
+r_i/r_f on R, and `halo_circular_velocity_sun_initial`, the halo's share at R₀
+before it responded, so the contraction can be read off as a difference the way
+`halo_concentration_virial` lets the conversion be read. The ruleset was chosen
+on the literature and written into the constant's about line **before the row
+was read**, so that the number could not choose the physics (rule B5). Debt #6
+is discharged; the contraction's strength is debt #46; `WIND_SPEED` is refitted
+987 → 1028 km/s (debt #43, rule B10) because the deeper potential raised
+v_esc(R₀) 562 → 585 km/s and the gas at R₀ read +0.026 dex.
+
+**Settled by.** The register had carried the contraction since S13 as "several
+km/s at R₀" `[recall: Blumenthal et al. 1986]`, the lever that would close row 3
+from 242.7. Measured:
+
+    ruleset                          A     w    halo v_c(R0)  r_i/r_f(R0)  row 3    v_esc(R0), adv
+    none (until S14)                 -     -    138.6         1.000        242.7    561.5
+    Gnedin et al. 2004  (default)    0.85  0.8  181.4         1.419        270.8    584.8
+    Blumenthal et al. 1986           1.0   1.0  195.6         1.572        280.9    593.0
+    A = 1.6, w = 0.8 [recall, weak]  1.6   0.8  160.8         1.209        256.8    570.8
+    the epoch, Gnedin:  z_f 0.5 243.4 | 0.6 244.9 | 0.7 246.4 | 0.8 247.9 | 0.9 249.4 | 1.0 250.9 | 1.1 252.3
+                        1.5 257.9 | 2.0 264.5 | 2.5 270.8 | 3.0 276.7   (target 245-251; c200 at 0.7-1.0: 5.2-6.2)
+    baryon_retention:   0.25 245.5 (M_star 3.7e10, row 1 fails) | 0.30 258.6 | 0.35 270.8
+    GAS_DISC_SCALE_RATIO 1.5 (debt #45's sweep): row 3 253.0, was 222.7
+    every other row: < 1e-9 between rulesets; the advanced escape fraction at R0 0.757 -> 0.740 -> 0.756 after the refit
+
+The prediction failed the other way, by eight half-widths: the disc this model
+builds — 5.8 × 10¹⁰ M☉ in one exponential at 2.6 kpc inside a c₂₀₀ = 10.9 halo
+— pulls the halo's share at R₀ up by 43 km/s under the weaker published
+invariant and 57 under the stronger, and row 3 reads 270.8, high by 20. So the
+epoch the row wants is 0.7–1.0, not the 2.7–3.1 of D107, and it lies below the
+cited 2–3 by as much as it lay above it before; every epoch the register has
+quoted, and all three S10 conversions, were read against an uncontracted halo.
+The miss is rewritten under debt #12 with its prediction: the bulge (D110,
+5–8 km/s the right way now) and debt #18's component together do not close
+it, and the epoch has to fall below 2 — or the calibration of the invariant
+is wrong for a disc galaxy, which is what debt #46 says a mass- and
+epoch-dependent (A, w) would test. A second discriminant overshoots the same
+way: the advanced model's escape velocity at R₀, 585 km/s against the 530–580
+commonly measured `[recall]`.
+
+**The instrument, and the defect it found** (rule B1). Three checks were written
+before the physics was read: with no disc every invariant returns r_i = r_f to
+4 × 10⁻¹⁶ and the potential to 7 × 10⁻⁶ (the trapezoid in ln r); quadrupling the
+mesh moves v_halo(R₀) by a part in 10⁶; and a third (A, w) was probed beside the
+two named ones. The third probe read the default's number back to the digit —
+274.7 for A = 0.85 and for A = 1.6 alike — because the first solver attached
+the final dark mass to the orbit-averaged radius r̄_f, and with the mass at r̄
+on both sides A is a relabelling of the mesh and cancels exactly. Gnedin's
+shell keeps its mass at its own radius: the dark mass inside r_f afterwards is
+what was inside r_i before. Fixed, the three read 181.4, 195.6 and 160.8, and
+the default's row 3 moved 274.7 → 270.8. The Blumenthal number was never
+wrong, which is why two rulesets would not have found it `[verified:
+tests/test_halo.py::test_a_third_ruleset_reads_a_third_number,
+::test_with_no_disc_the_halo_comes_back_unchanged, ::test_the_mesh_does_not_move_the_scalars,
+::test_the_named_rulesets_and_what_each_is_worth_at_R0, ::test_the_epoch_row_3_wants_is_below_the_cited_range,
+::test_the_scale_length_is_the_halos_now_and_the_disc_reads_it; tests/test_sfh.py::test_row_3_misses_high_once_the_halo_contracts]`.
+
+**What else moved.** The resolved rotation curve is higher everywhere inside
+R₂₀₀, so the bar's pattern speed and corotation (rows 16, 17: medians 43.3 →
+44.9 km/s/kpc and 5.25 → 5.82 kpc, inside), the shear at 2.2 R_d (0.924 →
+0.944) and the disc dominance (0.550) moved with it; the advanced gradient
+reads −0.058 (from −0.056, inside), the old-star gradient −0.0202, and the
+centre holds more metal (peak [Fe/H] 1.39 out to 2.66 kpc, from 1.36 and 2.5).
+Rows 1, 2, 4–11, 19, 20 and every mass are unchanged to 10⁻⁹: the contraction
+enters only through the kinematics and the potential. Every pinned measurement
+was re-pinned to the new number with the old beside it (S13's lesson); the
+potential's test no longer asserts the analytic NFW curve but that the field is
+deeper than it everywhere and spherical.
+
+### D114. The extended component, probed and not built: on the disc's own timescale it buys row 20 with row 2 (debt #18)
+
+**Decision.** No second accretion channel this session. What was measured
+instead, so that the next decision is taken on numbers (rule B4, the way S13
+took the bulge): a share s of the budget accreting with scale length k R_d on
+the same inside-out timescale, the halo contracting around the same
+two-component disc. Both halves are substituted through one function each —
+`sfh.infall_profile`, factored out of the stage for the purpose with no change
+in behaviour, and `halo.disc_enclosed_mass` — and the repository is unchanged.
+
+**Settled by.** Rows 2, 3, 4, 20 and 22 (the advanced model's), with the simple
+model's thin disc and thick-disc gate beside them:
+
+    s     k   row 2 SFR   row 3 v_tan (halo share)   row 4 R_d   row 20 H     row 22 adv   row 6   row 5   row 9
+    0     1   1.891 out   270.8 out  (181.4)         2.49 in     4.17e9       -0.0582 in   255     1.32    0.152
+    0.1   2   1.982 out   267.1 out  (180.6)         2.57 in     4.91e9       -0.0550 in   249     1.44    0.154
+    0.2   2   2.090 out   263.4 out  (179.8)         2.66 in     5.55e9       -0.0523 in   243     1.56    0.155
+    0.3   2   2.210 out   259.6 out  (179.0)         2.77 in     6.11e9       -0.0502 in   238     1.68    0.156
+    0.1   3   1.985 out   265.1 out  (179.9)         2.56 in     5.52e9       -0.0548 in   254     1.44    0.152
+    0.2   3   2.129 out   259.2 out  (178.3)         2.65 in     6.65e9       -0.0520 in   254     1.56    0.152
+    0.3   3   2.316 out   253.2 out  (176.6)         2.75 in     7.57e9       -0.0496 in   254     1.69    0.152
+    0.1   5   1.963 out   263.4 out  (179.0)         2.55 in     6.14e9       -0.0554 in   261     1.41    0.151
+    0.2   5   2.146 out   255.8 out  (176.5)         2.61 in     7.77e9       -0.0529 in   268     1.51    0.149
+    0.3   5   2.453 out   247.9 IN   (173.9)         2.69 in     8.92e9       -0.0507 in   276     1.62    0.147
+    the two halves at s = 0.2, k = 3: the profile alone takes row 3 to 261.5 (-9.3), the halo's weaker response alone to 268.5 (-2.3)
+
+Every setting lowers row 3 — the baryons' own pull by 4 to 13 km/s and the
+halo's response by 1 to 7 — and lifts row 20 toward its 8 × 10⁹ M☉ of hydrogen,
+and every setting lifts row 2 with it, 1.98 to 2.45 against 1.46–1.84: gas at
+2–5 R_d that accretes on the disc's timescale is still above the star
+formation threshold when it arrives, so the register's premise — that the
+threshold would protect it — does not hold for a component that accretes as
+the disc does. Row 4 broadens, 2.49 → 2.55–2.77 and inside, so by the
+register's own check the component is not high enough in angular momentum;
+row 22 stays inside at every setting (the wind's tilt, not the infall's, D95)
+and the simple model's thick-disc gate barely moves. The one setting that puts
+row 3 inside, s = 0.3 at k = 5, costs row 2 a third. So the component the
+register wants must arrive late enough or diffuse enough to stay under the
+threshold — a timescale of its own, not only a scale length — and that is a
+second decision, not a constant to sweep: recorded under debt #18, not built.
+Row 3's miss keeps its prediction (D113): the bulge and the component together
+do not close it without the epoch moving.
+
+### D115. Cold timings at S14 (rules B2, B6, B7)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0007   0.43        940  -
+    viewer: a module         0.0003   0.0003   0.96     21,599  -
+    index                    0.0000   0.0000   0.95      1,237  -
+    version                  0.0058   0.0017   3.41      1,132  -
+    stages                   0.0009   0.0002   4.18      8,845  -
+    fields                   0.0008   0.0006   1.27     61,337  -
+    inputs                   0.0001   0.0001   0.93      9,399  -
+    arrays: one profile      0.1109   0.0003 350.45      4,976  halo,assembly,sfh
+    arrays: history          0.1989   0.0033  60.68  6,401,768  halo,assembly,sfh,chemistry
+    arrays: scalar           0.1264   0.0005 263.93      1,712  halo,assembly,sfh
+    region: one sector*      0.2538   0.0034  74.39     19,024  halo,assembly,sfh,chemistry,vertical
+    region: whole disc*      0.3987   0.1936   2.06  1,126,448  halo,assembly,sfh,chemistry,vertical
+    system: one star*        0.2211   0.0021 104.24      3,112  halo,assembly,sfh,chemistry,vertical
+    adv: history             0.6478   0.0034 189.83  6,401,776  halo,assembly,sfh,chemistry_dtd
+    adv: alpha plane         0.6449   0.0026 243.79  6,401,832  halo,assembly,sfh,chemistry_dtd
+    adv: one sector*         0.6325   0.0035 182.39     19,032  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.6866   0.0049 141.01      3,128  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, about 10 ms here; measured alone by `python -m galaxy.specs.performance --one-off` (debt #37)
+    import + registry: 0.105-0.153 s, paid once per process and excluded from the cold column
+
+    model simple: 0.575 s cold, 0.617 s warm; halo 0.0030 s (0.0008 until S14: the contraction mesh), sfh 19%, systems 26%, planets 26%
+    model advanced: 0.905 s cold, 0.946 s warm; halo 0.0030 s, chemistry_dtd 41%
+    catalogue against sample size: simple 1.82 us per star, 109.0 ms fixed (77%); advanced 1.88 us, 132.8 ms fixed (78%)
+    one-off, first seeded draw: 10.45 ms then 0.024 ms (430x), billed to pattern; debt #37
+
+    scaling (tools/scaling.py):
+    chemistry stage        N_t=500    N_t=1000    N_t=2000    N_t=4000    N_t=8000  exponent
+    simple                  0.0140      0.0264      0.0543      0.0986      0.2109      0.97
+    advanced                0.1471      0.2153      0.3780      0.7074      1.3421      0.81
+    naive DTD (tool)       N_t=250     N_t=500    N_t=1000    N_t=2000  exponent: 2.10
+    advanced chemistry / simple chemistry at N_t = 2000: 7.09x
+    whole model, cold (fresh interpreter): simple 0.830 s, advanced 1.221 s (1.47x)
+
+**Read within the run.** Two things changed shape. The halo stage costs 3 ms
+where it cost 0.8: the contraction mesh, 600 points solved by 80 vectorised
+bisection steps and one trapezoid, a fixed cost with no dependence on N_R, N_t
+or N_z (the mesh is the halo's own), so the scaling exponents are the chemistry
+stage's as before and `tools/scaling.py` was re-run only to say so. And the
+`disc` stage has left the stage column of every route: the sfh stage reads the
+scale length from the halo now (D113), so the closure above the acceptance
+fields no longer contains the checkpoint-1 preview, which runs only when its
+own fields are asked for (rule D4). Nothing else moved outside the desktop's
+noise; the whole-model rows read 0.83 / 1.22 s against D105's 0.63 / 0.98 in a
+fresh interpreter, which is the machine's variance on the day (D112 read 0.63 /
+0.98 warm-process), not a regression: the per-stage table is within 10% of S13's
+everywhere but the halo `[verified: python -m galaxy.specs, tools/timings.py,
+tools/scaling.py, 2026-09-07]`.
+
+**A flake, recorded.** `tests/test_performance.py::test_the_catalogue_is_priced_per_cell`
+failed once in the close's full run, in both models, on a *negative* fitted
+per-star cost (-6.3 and -1.1 us) and passed twice when run alone: at n = 2000
+the slope is about 2 ms of signal over 100 ms of fixed cost, and the desktop's
+noise flips its sign. Not this session's physics - the catalogue is untouched -
+and not fixed here: the S11 lesson (fit over a range wide enough to condition
+the slope) applies to the test's own sample, which is the maintainer's to widen.
+
+**Close.** Board row 14 (desktop, Fable 5.1, `s14`, 2026-09-07); `session-14`
+merged into `main` with `--no-ff`; `s14` queued in MANUAL_TODO.md with S13's
+SHA filled in.

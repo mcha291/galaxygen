@@ -20,6 +20,17 @@ What it computes, and how much freedom each step has (GALAXY_INPUTS.md §4b):
   curve — at m_d ≈ 0.05 double counting would be worth about 6 km/s at R₀,
   which is twice acceptance row 3's error bar ``[inferred]``.
 
+- **The halo's response to the disc (S14, debt #6).** The baryons that became the
+  disc were once spread through the halo like the dark matter; as they settled
+  into an exponential of scale length ``R_d = λ_d R₂₀₀/√2`` every dark-matter
+  shell moved inward after them. The stage solves that contraction on its own
+  radial mesh — the invariant is ``r M(r̄)`` with the orbit-averaged radius
+  ``r̄ = A R₂₀₀ (r/R₂₀₀)^w`` ``[recall: Gnedin et al. 2004]``, ``A = w = 1``
+  being the circular-orbit form ``[recall: Blumenthal et al. 1986]`` — and every
+  profile it publishes is the contracted one. The scale length is therefore
+  computed here and the disc stage reads it (rule A9: one opinion, held where
+  the halo needs it first).
+
 The halo owns the budget rather than the disc because M₂₀₀ and its split are
 properties of the halo; the disc stage turns the baryon half into a disc.
 
@@ -77,6 +88,97 @@ def concentration_at(delta: float, c_ref: float, delta_ref: float) -> float:
 def nfw_circular_velocity(R: np.ndarray | float, M: float, r_s: float, c: float, G: float) -> np.ndarray | float:
     """Circular velocity of an NFW halo of total mass ``M`` inside R₂₀₀ = c·r_s."""
     return np.sqrt(G * M * mu(np.asarray(R, dtype=float) / r_s) / mu(c) / np.asarray(R, dtype=float))
+
+
+def scale_length(spin: float, R200: float) -> float:
+    """MMW98: ``R_d = λ_d R₂₀₀ / √2``, with j_d/m_d folded into λ_d (ruling 8)."""
+    return spin * R200 / math.sqrt(2.0)
+
+
+def disc_enclosed_mass(r: np.ndarray | float, M_d: float, R_d: float) -> np.ndarray | float:
+    """Mass of an exponential disc inside cylindrical radius ``r``: ``M_d [1 − e^(−x)(1 + x)]``, x = r/R_d.
+
+    The spherical enclosed baryon mass the contraction responds to, as MMW98 take it
+    [recall: Mo, Mao & White 1998 §2.3]; the razor-thin disc's own flattening is not
+    carried into the halo's response.
+    """
+    x = np.asarray(r, dtype=float) / R_d
+    return M_d * (-np.expm1(-x) - x * np.exp(-x))
+
+
+# The contraction is solved on its own radial mesh, not on the grid: the potential
+# is an integral inward from beyond R₂₀₀ and the grid stops at 30 kpc. Log-spaced
+# from well inside the first cell to MESH_OUTER × R₂₀₀. The scalars it feeds do not
+# move with N_R, and a test doubles the mesh to show they do not move with this either.
+MESH_POINTS = 600
+MESH_INNER = 1.0e-3  # kpc
+MESH_OUTER = 1.5  # in units of R₂₀₀
+
+
+def contracted_halo(
+    r_f: np.ndarray, M200: float, r_s: float, c: float, m_d: float, R_d: float, R200: float, A: float, w: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """The dark halo's response to the disc: final dark mass and shell displacement at each ``r_f``.
+
+    Every shell of the initial NFW halo — total mass M₂₀₀, the disc's baryons spread
+    through it like the dark matter — moves inward as the baryons settle into the disc,
+    conserving ``r M(r̄)`` with ``r̄ = A R₂₀₀ (r/R₂₀₀)^w`` [recall: Gnedin et al. 2004;
+    A = w = 1 is Blumenthal et al. 1986]:
+
+        r_i M_i(r̄_i) = r_f [ (1 − m_d) M_i(r̄_i) + M_disc(r̄_f) ]
+
+    — the dark mass inside r̄_f after the move is approximated by what was inside r̄_i
+    before, which is what makes the equation explicit — and the shell itself carries its
+    mass: the dark mass inside r_f afterwards is what was inside r_i before, (1 − m_d)
+    M_i(r_i). That last step is at the physical radius, not the orbit-averaged one:
+    attaching the mass to r̄_f instead makes A cancel out of the whole calculation, a
+    defect S14 found by probing a third (A, w) and reading the default's number back.
+    The root is bisected in log r_i between 0.01 r_f and 20 r_f, where the two sides are
+    known to have crossed, vectorised over the mesh (rule A1: bounded and cheap). Returns
+    ``(M_dark(r_f), r_i/r_f)``. With no disc the root is r_i = r_f exactly and the halo
+    comes back unchanged.
+    """
+    r_f = np.asarray(r_f, dtype=float)
+    M_d = m_d * M200
+
+    def initial(r: np.ndarray) -> np.ndarray:
+        return M200 * mu(r / r_s) / mu(c)
+
+    def bar(r: np.ndarray) -> np.ndarray:
+        return A * R200 * (r / R200) ** w
+
+    rb_f = bar(r_f)
+    disc = disc_enclosed_mass(rb_f, M_d, R_d)
+    lo, hi = 1.0e-2 * r_f, 2.0e1 * r_f
+    for _ in range(80):
+        mid = np.sqrt(lo * hi)
+        M_i = initial(bar(mid))
+        from_further_out = mid * M_i < r_f * ((1.0 - m_d) * M_i + disc)
+        lo, hi = np.where(from_further_out, mid, lo), np.where(from_further_out, hi, mid)
+    r_i = np.sqrt(lo * hi)
+    return (1.0 - m_d) * initial(r_i), r_i / r_f
+
+
+def potential_of(r: np.ndarray, M: np.ndarray, dark: float, r_s: float, c: float, G: float) -> np.ndarray:
+    """Φ(r) of a spherical profile ``M(r)`` tabulated on an increasing mesh, zero at infinity.
+
+    Integrated inward from the mesh's outer edge, where the profile is taken to be the
+    uncontracted NFW halo's — the disc is all inside by then and the invariant returns
+    r_i = r_f at R₂₀₀ — so the outer boundary is the analytic NFW potential and the
+    integral carries only what the mesh resolves: ``dΦ = G M / r² dr = (G M / r) d ln r``,
+    trapezoid in ln r.
+    """
+    r = np.asarray(r, dtype=float)
+    f = G * np.asarray(M, dtype=float) / r
+    seg = 0.5 * (f[1:] + f[:-1]) * np.diff(np.log(r))
+    inward = np.concatenate([np.cumsum(seg[::-1])[::-1], [0.0]])
+    phi_top = -G * dark * math.log1p(r[-1] / r_s) / (mu(c) * r[-1])
+    return phi_top - inward
+
+
+def _loglog(x: np.ndarray | float, xp: np.ndarray, fp: np.ndarray) -> np.ndarray | float:
+    """Interpolate a positive tabulated profile linearly in log–log."""
+    return np.exp(np.interp(np.log(x), np.log(xp), np.log(fp)))
 
 
 HALO_VIRIAL_MASS = FieldDecl(
@@ -184,10 +286,40 @@ HALO_CIRCULAR_VELOCITY_SUN = FieldDecl(
     kind=Kind.SCALAR,
     meaningful_zero=True,
     about=(
-        "The dark halo's contribution to v_c at the solar radius, evaluated analytically rather "
-        "than read off the grid so that it does not inherit the radial resolution. Published as a "
-        "scalar so the disc stage can add its own contribution without a second copy of the NFW "
-        "formula (rule A9)."
+        "The contracted dark halo's contribution to v_c at the solar radius, read off the "
+        "contraction mesh rather than the grid so that it does not inherit the radial resolution. "
+        "Published as a scalar so the sfh stage can add the baryons' own contribution without a "
+        "second copy of the halo (rule A9). halo_circular_velocity_sun_initial is the same number "
+        "before the halo responded to the disc; the difference is what debt #6 was worth at R₀."
+    ),
+)
+
+HALO_CIRCULAR_VELOCITY_SUN_INITIAL = FieldDecl(
+    name="halo_circular_velocity_sun_initial",
+    label="Halo circular velocity at R₀ before contraction",
+    unit="km/s",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "The NFW halo of (1 − m_d) M₂₀₀ at R₀, analytically, before its shells moved inward after "
+        "the disc's baryons (S14, debt #6). Published so the contraction can be read off as a "
+        "difference, the way halo_concentration_virial lets the c_vir → c₂₀₀ conversion be read."
+    ),
+)
+
+HALO_CONTRACTION = FieldDecl(
+    name="halo_contraction",
+    label="Shell displacement r_i/r_f",
+    unit="dimensionless",
+    kind=Kind.FIELD,
+    axes=("R",),
+    ramp=Ramp("magma", scale="linear", lo=1.0, hi=2.0),
+    meaningful_zero=False,
+    about=(
+        "Where the dark matter now at R came from, as a ratio: the initial radius of the shell "
+        "over its final one. Unity means no response; it tends to a constant near the centre, "
+        "where the disc and the halo both enclose mass as R², and falls to unity at R₂₀₀ where "
+        "the whole disc is inside. Zero is not meaningful: a shell cannot have come from nowhere."
     ),
 )
 
@@ -199,7 +331,11 @@ HALO_ENCLOSED_MASS = FieldDecl(
     axes=("R",),
     ramp=Ramp("viridis", scale="log"),
     meaningful_zero=True,
-    about="NFW cumulative mass. Rises logarithmically: half the halo's mass lies outside 60 kpc.",
+    about=(
+        "Cumulative dark mass after the halo has contracted around the disc (S14): the NFW "
+        "profile's shells, each moved inward by halo_contraction. Rises logarithmically: half the "
+        "halo's mass lies outside 60 kpc."
+    ),
 )
 
 HALO_CIRCULAR_VELOCITY = FieldDecl(
@@ -211,8 +347,9 @@ HALO_CIRCULAR_VELOCITY = FieldDecl(
     ramp=Ramp("viridis", scale="linear", lo=0.0, hi=300.0),
     meaningful_zero=True,
     about=(
-        "√(GM(<R)/R) for the dark halo alone. Nearly flat across the disc, which is the whole "
-        "reason a halo is needed: the baryons alone fall off Keplerian beyond a few scale lengths."
+        "√(GM(<R)/R) for the contracted dark halo alone. Nearly flat across the disc, which is "
+        "the whole reason a halo is needed: the baryons alone fall off Keplerian beyond a few "
+        "scale lengths."
     ),
 )
 
@@ -225,10 +362,11 @@ HALO_POTENTIAL = FieldDecl(
     ramp=Ramp("magma", scale="linear"),
     meaningful_zero=False,
     about=(
-        "NFW potential −G M_dark ln(1 + r/r_s) / (μ(c) r) at r = √(R² + z²), on the half-space "
-        "z ≥ 0 by plane symmetry. Spherical, so it varies with z only through r; the disc's own "
-        "flattened potential arrives with the vertical structure at S2. Zero is not meaningful: "
-        "the zero point is at infinity."
+        "Potential of the contracted dark halo at r = √(R² + z²), on the half-space z ≥ 0 by "
+        "plane symmetry: the mesh's mass profile integrated inward from the analytic NFW value "
+        "beyond R₂₀₀. Spherical, so it varies with z only through r; the disc's own flattened "
+        "potential arrives with the vertical structure at S2. Zero is not meaningful: the zero "
+        "point is at infinity."
     ),
 )
 HALO_POTENTIAL_MIDPLANE = FieldDecl(
@@ -240,12 +378,30 @@ HALO_POTENTIAL_MIDPLANE = FieldDecl(
     ramp=Ramp("magma", scale="linear"),
     meaningful_zero=False,
     about=(
-        "The same NFW potential in the plane, z = 0 exactly: what the advanced chemistry's "
-        "escape velocity climbs out of. Until S12 that stage read halo_potential's first z-row, "
-        "half a cell above the plane at a height set by N_z (debt #35)."
+        "The same potential in the plane, z = 0 exactly: what the advanced chemistry's escape "
+        "velocity climbs out of. Until S12 that stage read halo_potential's first z-row, half a "
+        "cell above the plane at a height set by N_z (debt #35). Deeper since S14 by the "
+        "contraction, which is why WIND_SPEED was re-examined then (rule B10)."
     ),
 )
 
+DISC_SCALE_LENGTH_SPIN = FieldDecl(
+    name="disc_scale_length_spin",
+    label="Disc scale length from λ_d",
+    unit="kpc",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "Exponential scale length from MMW98 given λ_d and R₂₀₀. The surprise is how little of "
+        "the halo it is: R_d/R₂₀₀ ≈ 1.2%, so the visible galaxy is a speck at the centre of the "
+        "thing that holds it. This is MMW98's *prediction* of the scale length from angular "
+        "momentum. Acceptance row 4 is read from thin_disc_scale_length, which S2 fits to the "
+        "stellar profile the star formation history actually builds — the two disagree by a "
+        "third, and that disagreement is debt #13 rather than something to average away. "
+        "Computed by the halo stage since S14, which needs it first: it is the disc the halo "
+        "contracts around."
+    ),
+)
 
 
 def compute(ctx: Context) -> Mapping[str, Any]:
@@ -253,6 +409,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     H0 = float(ctx.constants["H0"])
     M200 = float(ctx.inputs["halo_mass"])
     z_f = float(ctx.inputs["halo_assembly_z"])
+    R_sun = float(ctx.constants["R_SUN"])
 
     R200 = virial_radius(M200, H0, G)
     c_vir = float(ctx.constants["CONCENTRATION_NORM"]) * (1.0 + z_f)
@@ -262,14 +419,23 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     m_d = float(ctx.constants["F_BARYON"]) * float(ctx.inputs["baryon_retention"])
     baryons = m_d * M200
     dark = M200 - baryons
+    R_d = scale_length(float(ctx.inputs["disc_spin"]), R200)
+
+    # The halo's response to the disc, on its own mesh (debt #6, S14).
+    mesh = np.geomspace(MESH_INNER, MESH_OUTER * R200, MESH_POINTS)
+    M_dark, ratio = contracted_halo(
+        mesh, M200, r_s, c, m_d, R_d, R200,
+        float(ctx.constants["CONTRACTION_A"]), float(ctx.constants["CONTRACTION_W"]),
+    )
+    phi_mesh = potential_of(mesh, M_dark, dark, r_s, c, G)
 
     R = ctx.grid.R
-    enclosed = dark * mu(R / r_s) / mu(c)
+    enclosed = _loglog(R, mesh, M_dark)
     v_c = np.sqrt(G * enclosed / R)
 
     r = np.hypot(R[:, None], ctx.grid.z[None, :])
-    potential = -G * dark * np.log1p(r / r_s) / (mu(c) * r)
-    midplane = -G * dark * np.log1p(R / r_s) / (mu(c) * R)
+    potential = np.interp(np.log(r).ravel(), np.log(mesh), phi_mesh).reshape(r.shape)
+    midplane = np.interp(np.log(R), np.log(mesh), phi_mesh)
 
     return {
         "halo_virial_mass": M200,
@@ -280,9 +446,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "halo_dark_mass": dark,
         "baryon_mass_total": baryons,
         "disc_mass_fraction": m_d,
-        "halo_circular_velocity_sun": float(
-            nfw_circular_velocity(float(ctx.constants["R_SUN"]), dark, r_s, c, G)
-        ),
+        "disc_scale_length_spin": R_d,
+        "halo_circular_velocity_sun": math.sqrt(G * float(_loglog(R_sun, mesh, M_dark)) / R_sun),
+        "halo_circular_velocity_sun_initial": float(nfw_circular_velocity(R_sun, dark, r_s, c, G)),
+        "halo_contraction": np.interp(np.log(R), np.log(mesh), ratio),
         "halo_enclosed_mass": enclosed,
         "halo_circular_velocity": v_c,
         "halo_potential": potential,
@@ -296,12 +463,16 @@ HALO = IMPLEMENTATIONS.register(
         slot="halo",
         checkpoint=1,
         about=(
-            "NFW dark halo from M₂₀₀ and the assembly redshift, plus the split of M₂₀₀ into "
-            "retained baryons and dark matter. Shared by both models."
+            "NFW dark halo from M₂₀₀ and the assembly redshift, the split of M₂₀₀ into retained "
+            "baryons and dark matter, and the halo's contraction around the disc those baryons "
+            "make (S14). Shared by both models."
         ),
         compute=compute,
-        reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention"),
-        reads_constants=("G", "H0", "F_BARYON", "CONCENTRATION_NORM", "OMEGA_M", "R_SUN"),
+        reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention", "disc_spin"),
+        reads_constants=(
+            "G", "H0", "F_BARYON", "CONCENTRATION_NORM", "OMEGA_M", "R_SUN",
+            "CONTRACTION_A", "CONTRACTION_W",
+        ),
         publishes=(
             HALO_VIRIAL_MASS,
             HALO_VIRIAL_RADIUS,
@@ -311,7 +482,10 @@ HALO = IMPLEMENTATIONS.register(
             HALO_DARK_MASS,
             BARYON_MASS_TOTAL,
             DISC_MASS_FRACTION,
+            DISC_SCALE_LENGTH_SPIN,
             HALO_CIRCULAR_VELOCITY_SUN,
+            HALO_CIRCULAR_VELOCITY_SUN_INITIAL,
+            HALO_CONTRACTION,
             HALO_ENCLOSED_MASS,
             HALO_CIRCULAR_VELOCITY,
             HALO_POTENTIAL,
