@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████` **15 / 15 sessions** · repo initialised: yes
+`██████████████████████████████░░░░░░░░░░░░░░░░` **15 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -21,6 +21,14 @@
 | ☑ | 12 | The maintainer's one-line fixes (D-9, D-13, #33, #35, #37, #40) | desktop | — | **Fable 5.1** | s12 | 2026-09-07 |
 | ☑ | 13 | The physics decisions: step infall, Sagittarius, c_vir → c₂₀₀, hydrogen, the median criterion; bulge and catalogue probed | desktop | — | **Fable 5.1** | s13 | 2026-09-07 |
 | ☑ | 14 | The halo contracts around the disc (#6; row 3 turns round, wants z_f 0.7–1.0); the extended component probed (#18) | desktop | — | **Fable 5.1** | s14 | 2026-09-07 |
+| ☐ | 15 | Row 3's cause, derived: epoch, contraction calibration or baryon compactness (#12, #46, #11) | desktop | **Fable** | — | s15 | — |
+| ☐ | 16 | The extended component with its own timescale (#18, #43, #45) | desktop | **Fable** | — | s16 | — |
+| ☐ | 17 | The bulge stage and M_• (#11, #2, #17; rows 10–14, 18) | web | Opus | — | s17 | — |
+| ☐ | 18 | The thick disc: radial heating with the vertical kick (#19) | desktop | **Fable** | — | s18 | — |
+| ☐ | 19 | The catalogue migrates; the viewer shows the new fields (#31, #32) | web | Opus | — | s19 | — |
+| ☐ | 20 | The advanced model's [α/Fe] valley and rows 6–7 (#27, #42, #26) | desktop | **Fable** | — | s20 | — |
+| ☐ | 21 | Audit II, twice with two stated aims and reserved numbers (§5d) | desktop + web | **Fable** ×1, Opus ×1 | — | s21 | — |
+| ☐ | 22 | Close-out: audit lists ported, every debt ruled, the tag batch applied (§5d) | web | Opus | — | s22 | — |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -39,7 +47,7 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S10. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S15. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
 **Open debts:** 31 (`GALAXY_INPUTS.md` §11). **Discharged:** 15.
@@ -352,6 +360,17 @@ again. That is a data point. It is **not** a controlled result: there is no
 counterfactual S0, and the session was also unusually well specified. Do not
 treat it as settling the question that S10's double run is designed to answer.
 
+**After S14 — what the double run said, and the rule it leaves.** S10 ran six
+times on four lists and the model did not visibly matter; the stated aim did
+`[verified: DECISIONS.md D102]`. What did separate the sessions since is the
+kind of work: the sessions that overturned a register assumption by probing
+first (D110, D113, D114) and the one that caught a solver defect by probing a
+third ruleset (D113) were judgement sessions, where a wrong answer passes
+every gate. So the rule for what remains (§5d): **Fable where verification is
+weakest** — a decision about what the model derives, a mechanism that could be
+tuned into passing, an audit — and **Opus where the contract is decided and the
+gate is in `spec.py`**, which is how S1–S8 were built and passed.
+
 ---
 
 ## 5b. Sessions
@@ -492,6 +511,50 @@ reconciliation is an integration task with its own session, not a prerequisite
 for S8.
 
 ---
+
+## 5d. Completing the project — S15 to S22 (written after S14, at the owner's request)
+
+The build (S0–S10) closed on schedule; S11–S14 then diverged from §5b into
+integration, fixes and physics decisions, each session taking whatever the last
+one's `BRIEF.md` put first. That was the right order for the work but it is not
+a plan, and a plan is what tells a maintainer when the project is *done*.
+
+**Done means** `[inferred]`: every acceptance row either passes or is a recorded
+miss whose cause is a *mechanism the model lacks*, not a constant it could tune
+(rule B5); every item in the register is discharged, or ruled permanent with the
+reason written in — a property of the model's scope, like the simple model's
+one-abundance chemistry (#15), or of the sources, like the zero-width targets
+(#17); the viewer shows every published field; the tag batch in `MANUAL_TODO.md`
+has been applied from a desktop; and `verify_clone` is OK on `main`.
+
+Eight sessions. Each opens per RESUMING.md, works on `session-NN`, and closes by
+§5's ritual, tags queued (C2e). Gates are read from `python -m galaxy.specs`,
+never from prose. **Probe before build** in every physics session: S13 and S14
+each found, with a fifty-line probe, that the register's stated lever had the
+wrong sign or the wrong magnitude (D110, D113).
+
+| S | Deliverable | Gate | Model, and why |
+|---|---|---|---|
+| **15** | **Row 3's cause, derived** (#12, #46, #11). Three levers, none free: the assembly epoch (0.7–1.0 closes the row alone; the cited range is 2–3), the contraction's calibration (a mass- and epoch-dependent (A, w) is the untried form; A = 1.6 alone reads 256.8), and a less compact baryon distribution (the bulge is worth 5–8 the right way, D110). Decide which the model *derives*; sweep nothing to the answer | Row 3 inside 245–251 with its cause a derived quantity, or a miss whose prediction names a mechanism; row 19 unmoved; v_esc(R₀) inside 530–580 as the second discriminant | **Fable.** A row can be closed by tuning and no gate would see it — verification is weakest exactly here |
+| **16** | **The extended component with its own timescale** (#18, #43, #45). D114 showed a share at k R_d on the disc's timescale buys row 20 with row 2; the component must arrive late or diffuse enough to stay under the threshold. Derive the timescale (the halo's angular momentum arriving late is the physical candidate), then build it in `sfh` behind `infall_profile` | Rows 2 and 20 inside with rows 4 and 22 unmoved; row 3 read with it; `NET_YIELD` and `WIND_SPEED` refitted and recorded (rule B10) | **Fable.** The timescale is a derivation decision (D114), and #45 says a wider first component is the wrong answer that passes |
+| **17** | **The bulge stage and M_•** (#11, #2, #17, ruling 10). Hernquist spheroid drawn from the disc in proportion, as D110 probed; rows 10–14; M_• as derived mean plus seeded residual, row 18 statistical; row 14 needs the source's uncertainty entered first (#17) | Rows 10, 12, 13 inside; row 11 no longer passing on the cancellation; rows 14 and 18 statistical per their debts; row 3 moves −5 to −8 and is re-read | **Opus.** The contract is decided (D110, §13) and every row is in `spec.py` — a gated build, as S1–S8 were |
+| **18** | **The thick disc** (#19). Radial heating with the vertical kick is the prediction: a merger that thickens the disc also spreads it, so rows 5 and 11 can be right together and row 9 comes off the cancellation | Rows 5, 7, 9 and 11 inside together in the simple model, row 9 not on a cancellation (a sweep of the merger's `gas_fraction` leaves it inside) | **Fable.** A cancellation can be tuned into passing; the gate is the sweep, and judging it is the session |
+| **19** | **The catalogue migrates, and the viewer shows the new fields** (#31, #32). Birth radius drawn around the present one with the migration kernel's width, the abundance looked up there, both models (D110); new golden values; previews for `halo_contraction` and whatever S15–S18 published | The catalogue's [Fe/H] spread at R₀ equals the chemistry's `feh_spread_sun`; determinism and per-region checks OK on the new golden values; every published field has a preview | **Opus.** A specified change in `systems.materialise` with its own golden values; the viewer work is the S7 kind |
+| **20** | **The advanced model's [α/Fe] valley** (#27, #42, #26). The mechanism that makes the inner disc fast without steepening the infall law everywhere — the bulge's inflow is the named candidate — then rows 5–11 and 24 in the advanced model, and rows 6 and 7 judged together with both heating constants re-examined | Row 24 `bimodal_wide` at the default grid, stated (the N_t = 8 trap); row 22 still inside; rows 6 and 7 inside together | **Fable.** The hardest open physics, and the one with a known false positive (a coarse grid manufactures the valley) |
+| **21** | **Audit II, run twice with two stated aims** (D102's lesson). Aim (a): every prediction the register and `spec._MISSES` made since S13, killed or held with a number (rule B4). Aim (b): the instruments and the viewer — cold paths (D4), the flaky per-star slope (D115), the audit tests' pins. **Reserved numbers**: debts #47–#60 and D117–D130 for (a), #61–#75 and D131–D145 for (b), so the lists port without renumbering (D99) | Two lists, diffed; every prediction has a verdict; no green row unconditioned (AUDIT_RUN2 §5) | **One on Fable, one on Opus**, aims different by design — extends the only controlled evidence the project has (D102) |
+| **22** | **Close-out.** Port both audit lists onto `main` (never merge the branches, D99); rule every open debt discharged, permanent or carried, with the reason; apply the tag batch from a desktop and delete the stale `s01` (MANUAL_TODO); final RESUMING/BRIEF for whoever maintains it | Tags on the remote, `git ls-remote --tags` listed in DECISIONS; register with no unruled item; `verify_clone` OK | **Opus.** Procedure with a checklist; the judgement was spent in S21 |
+
+**What this does not promise.** Rows whose cause is the model's scope stay
+misses by design: the simple model's gradients (#15) are a third of the observed
+because it has one abundance and no wind, and that is what the advanced model is
+for. Debts #3, #5, #10, #21–#23, #25, #33, #34, #36, #39 and #44 are the kind S22
+rules on rather than closes — each is a measured limitation with its number
+already in the register, and a session spent closing one would be a session
+inventing a variable (rule A4). The order above is by dependency, not by
+importance: S15 before S16 because the component is judged against row 3, S17
+before S20 because the valley's candidate mechanism is the bulge's inflow, S19
+last of the builds because it re-pins every seeded number the earlier sessions
+move.
 
 ## 6. What the executable specs assert
 
