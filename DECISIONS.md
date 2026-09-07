@@ -2728,3 +2728,25 @@ three lines over its cap: the close's shell chain tested the exit status of the
 C2a forbids the force-push that would hide it, so the file is trimmed and merged
 again, and the second merge — the one `s14` names, and the one `rev-list -1
 --grep` finds — is the state verify_clone ran on.
+
+### D116. The completion plan: S15–S22, with the model each runs on (GALAXY_PLAN.md §5d)
+
+**Decision.** At the owner's request after S14, GALAXY_PLAN.md gains §5d — the
+eight sessions that finish the project, each with a deliverable, a gate read
+from `spec.py`, and a model — and the board carries them as open rows, so the
+generated bar reads 15 of 23 and `tools/progress.py` names S15 as next. Done is
+defined: every row green or a recorded miss whose cause is a mechanism, every
+debt discharged or ruled permanent with its reason, every field previewed, the
+tag batch applied, `verify_clone` OK.
+
+**Settled by.** The model rule is the one the project's own evidence supports.
+S10's six runs found the aim mattered and the model did not (D102); what
+separated the sessions since was whether a wrong answer could pass the gate.
+So Fable takes the sessions where verification is weakest — S15 (what row 3's
+cause is), S16 (the component's timescale), S18 (a cancellation that could be
+tuned into passing), S20 (the valley, with its coarse-grid false positive) and
+one of S21's two audits — and Opus takes the gated builds S17, S19 and S22 and
+the other audit, the way S1–S8 were built and passed. S21 reserves its debt and
+decision numbers before it starts (S11's lesson). What the plan does not
+promise is written beside it: the debts that are properties of the model's
+scope are ruled on at S22, not closed `[inferred]`.
