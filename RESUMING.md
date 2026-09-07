@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
 status board is the only record of what is done (A9); this file does not repeat it,
 is rewritten in place each session, and is capped at 120 lines (C3) by a test.
-**The build is closed** (S0–S10; S11 integrated the S10 audits, 2026-09-07). BRIEF.md is for a maintainer.
+**The build is closed** (S0–S10; S11 integrated the S10 audits, S12 made the one-line fixes, 2026-09-07).
 
 ## Open a session (rules C1, C2b)
 
@@ -85,7 +85,7 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: 
 ## What the instruments said at S11 close (2026-09-07)
 
 - graph: acyclic, both models. preflight OK: 0 UNSET, 0 controls without a range.
-  determinism OK, golden values pinned; the suite also checks it across processes (#40).
+  determinism OK, golden values pinned, and reproducible across processes (two hash seeds, S12).
 - spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable;
   advanced **8 pass, 11 fail, 5 not-yet-computable**. Unchanged since S9: no audit and no
   integration changed physics. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
@@ -96,9 +96,9 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: 
   row 3 under N_t at 0.055 of its width; advanced rows 5, 7–11 are `vacuous` (debt #27).
   **Profile** (D101, D103): 0.51 s simple, 0.81 s advanced (chemistry_dtd 41%); the
   catalogue is 90–95% fixed cost (134 / 123 ms, 0.3–0.7 µs per star); the first seeded
-  draw costs 10.6 ms and lands on `pattern` (debt #37). **Scaling** (D92) not re-run.
-- **Register**: 38 open, 7 discharged; S11 added #34–#45 (beta on Opus 5; the gamma pair)
-  and amended ten entries. The three audit branches stay unmerged on the remote as D102's evidence.
+  draw costs ~10 ms, lands on `pattern`, and `tools/timings.py` stars the routes that pay it.
+- **Register**: 35 open, 10 discharged; S11 added #34–#45 (beta on Opus 5; the gamma pair),
+  S12 discharged #35, #37, #40 and registered #33's factor. The three audit branches stay unmerged.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 

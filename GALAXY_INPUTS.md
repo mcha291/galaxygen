@@ -1104,7 +1104,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    proportion to oxygen (which already holds the Sun's whole iron) and the Ia
    iron-peak is added on top with a factor 2.0 that lives in the code, not the
    register `[verified: AUDIT_RUN2.md D-10]`. No stage reads Z in the advanced
-   model today; the first consumer of `metallicity_history` inherits it.
+   model today; the first consumer of `metallicity_history` inherits it. **S12:**
+   the factor is registered — `IA_METAL_TO_IRON` = 2.0 `[recall]` in
+   `galaxy/models/advanced.py`, read by `chemistry_dtd` `[verified:
+   tests/test_chemistry_dtd.py::test_the_ia_metal_to_iron_factor_is_a_registered_constant]`.
+   The zero point itself — whether an Ia's whole ejecta should count twice its
+   iron toward Z, and what 1.24 Z☉ means for the first consumer — is what this
+   debt still holds.
 34. **The acceptance table reads nothing inside 4 kpc, so the model's worst
    number is invisible to it** (S10, beta). The gradient rows are fitted over
    R = 4–12 kpc; rows 3, 6 and 8 are evaluated at R₀; rows 1, 10, 11, 19 and 20
@@ -1120,8 +1126,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    metallicity would have caught debt #26 at S9 rather than S10, and if adding
    one turns out to catch nothing the model does not already record, then the
    inner disc really is only wrong in the one way debt #26 names.
-35. **The vertical grid buys nothing and quietly moves a published field**
-   (S10, beta). `halo_potential` is the only field on the z axis, and its only
+35. ~~**The vertical grid buys nothing and quietly moves a published field**~~
+   **DISCHARGED by S12.** `escape_velocity` reads `halo_potential_midplane`,
+   Φ(R, 0) exactly, which the halo stage now publishes beside Φ(R, z); N_z moves
+   no published field `[verified: tests/test_chemistry_dtd.py::
+   test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_n_z]`.
+   Whether the z axis should exist at all, with one rendered field and no
+   consumer left, is debt #36's question. The S10 finding, kept: (S10, beta). `halo_potential` is the only field on the z axis, and its only
    consumer — the advanced chemistry's escape velocity — reads column 0. So N_z
    is not a quality knob for anything the acceptance table can see: not one row
    moves by even a thousandth of its target's width at any N_z, including
@@ -1157,8 +1168,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    because `CELL_RINGS` and `CELL_SECTORS` are module constants and one of them
    is bound into a default argument; what the catalogue's fixed cost is, per
    cell and in total, is now published by `performance.py` (debt #24).
-37. **A per-stage or per-route cold profile bills a process-wide one-off to
-   whichever stage triggers it** (S10, beta). The first `seeds.rng` call in a
+37. ~~**A per-stage or per-route cold profile bills a process-wide one-off to
+   whichever stage triggers it**~~ **DISCHARGED by S12.** `performance.py` measures
+   the one-off alone (S11, D101), and `tools/timings.py` now probes the RNG after
+   each route's cold request and stars the routes whose cold number carries the
+   first draw, with a footer saying what the star means `[verified:
+   tests/test_timings.py::test_a_metadata_route_does_not_pay_the_first_draw_and_the_table_says_which_do]`.
+   Nothing is subtracted (rule B6): the column is labelled, not corrected. The S10
+   finding, kept: (S10, beta). The first `seeds.rng` call in a
    fresh interpreter costs about 9 ms; every one after it costs 0.02 ms, a
    factor of several hundred. The `pattern` stage is the first stage of both
    models to draw, so it reads at 30–50× cold-over-warm in the profile and is
@@ -1219,8 +1236,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    it anyway. Both bite at the same moment: the bulge rows (13, 14, 18) debt
    #8 is waiting on are precisely the ones that would read `world_seed` beside
    another.
-40. **`determinism.check_reproducible` runs the model twice in one interpreter**
-   (S10, beta). Everything a process holds fixed — `PYTHONHASHSEED`, set and
+40. ~~**`determinism.check_reproducible` runs the model twice in one interpreter**~~
+   **DISCHARGED by S12.** `determinism.check` and `report` also run each production
+   model in two fresh interpreters under two `PYTHONHASHSEED`s and compare every
+   field's bytes, so `python -m galaxy.specs` carries the stronger check `[verified:
+   tests/test_determinism.py::test_the_spec_checks_reproducibility_across_processes_too]`.
+   The S10 finding, kept: (S10, beta). Everything a process holds fixed — `PYTHONHASHSEED`, set and
    dict iteration order, the allocator, module-level caches — is constant
    across that comparison, so a field depending on any of them passes it every
    time. That is rule B3 exactly: the check takes the one path immune to the

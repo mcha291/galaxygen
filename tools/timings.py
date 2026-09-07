@@ -139,7 +139,7 @@ def table(rows: list[dict]) -> str:
     lines.append("")
     if any(r.get("first_draw_in_cold") for r in rows):
         paid = [r["probe_s"] for r in rows if not r.get("first_draw_in_cold")]
-        size = f" — about {1e3 * min(paid):.0f} ms here" if paid else ""
+        size = f", about {1e3 * min(paid):.0f} ms here" if paid else ""
         lines.append(
             "* cold includes the interpreter's first seeded draw, numpy's bit-generator setup"
             f"{size}; measured alone by `python -m galaxy.specs.performance --one-off` (debt #37)"

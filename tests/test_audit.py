@@ -282,8 +282,9 @@ def test_the_register_carries_the_s10_findings():
     import progress  # tools/, on sys.path via conftest
 
     text = progress.read(progress.INPUTS)
-    # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99).
-    assert progress.debt_counts(text) == (38, 7)
+    # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99);
+    # S12 discharged #35, #37 and #40 (D104).
+    assert progress.debt_counts(text) == (35, 10)
     for item in (
         "29. **The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",

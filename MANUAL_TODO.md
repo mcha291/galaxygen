@@ -49,7 +49,8 @@ closes the project.
 | 8 | `s08` | `589cb0f52805` | **queued** |
 | 9 | `s09` | `635c3c8ff43d` | **queued** |
 | 10 | `s10` | `ff129283543c` | **queued** |
-| 11 | `s11` | *TBD — filled in when S11 is merged* | **queued** |
+| 11 | `s11` | `b1a62302bb47` | **queued** |
+| 12 | `s12` | *TBD — filled in when S12 is merged* | **queued** |
 
 ### Run these
 
@@ -93,8 +94,11 @@ git tag -a s09 635c3c8ff43d670b090d68577b2c8db578e5a1eb -m "S9: advanced model"
 # S10 — the audit, run twice.
 git tag -a s10 ff129283543c00ffaf0a074602a098aa25288653 -m "S10: audit"
 
-# S11 — the three S10 audits integrated. The batch replaces this with the literal SHA.
-git tag -a s11 "$(git rev-list -1 --grep='^Merge S11 into main' origin/main)" -m "S11: audits integrated"
+# S11 — the three S10 audits integrated.
+git tag -a s11 b1a62302bb47476b902f92cea878ec84f87febdc -m "S11: audits integrated"
+
+# S12 — the maintainer's one-line fixes. The batch replaces this with the literal SHA.
+git tag -a s12 "$(git rev-list -1 --grep='^Merge S12 into main' origin/main)" -m "S12: one-line fixes"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

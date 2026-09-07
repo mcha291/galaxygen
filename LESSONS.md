@@ -436,3 +436,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close][infra] A paired run needs a reserved range of debt and decision numbers
   before it starts: every S10 branch opened #29 and D94 with different contents,
   and the integration had to map numbers before it could compare findings.
+
+## From S12
+
+- [infra] A label on a measurement is a claim the instrument makes about itself.
+  "Whole model, cold" was the seventeenth run of its process for three sessions;
+  when a number cannot be measured cold where it is printed, measure it in a
+  subprocess or say what it is (rule B2) `[verified: DECISIONS.md D104]`.
+- [field] Declare where a value is evaluated, not only what it is. "Midplane escape
+  velocity" read the first cell centre for three sessions and moved with a grid
+  knob nobody connected to it; a field that names a location should publish that
+  location's value, computed there (debt #35).
+- [infra] When a check can only be made stronger from outside the process — a
+  reproducibility comparison, a cold timing — put the subprocess in the instrument
+  the sessions read, not only in the suite: `python -m galaxy.specs` is the report
+  a session actually looks at (debt #40).
