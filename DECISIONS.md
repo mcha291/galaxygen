@@ -2295,3 +2295,240 @@ B7). The determinism spec now prints its cross-process line per model.
 **Close.** Board row 12 (desktop, Fable 5.1, `s12`, 2026-09-07); `session-12`
 merged into `main` with `--no-ff`; `s12` queued in MANUAL_TODO.md with S11's
 SHA filled in.
+
+## Session 13 — the physics decisions
+
+Surface: desktop. Model: Fable 5.1. Branch `session-13`, cut from `main` at
+`701ab3a`, the S12 merge. BRIEF.md's seven decisions, taken in the order in
+which each measurement informed the next: the step infall and Sagittarius
+together (D106), the concentration (D107), the hydrogen target (D108), the
+statistical criterion (D109), and the bulge and the catalogue probed and
+recorded rather than built (D110). Every change was measured before and after
+with the same probe; every number a test pinned was re-pinned to the new
+measurement, never to a target (rule B5); three instrument defects the changes
+exposed were fixed (D111). The acceptance table after: simple **11 pass, 7 fail**
+(the same seven rows, row 3 now low instead of high), advanced **7 pass, 12
+fail** (row 6 joins, a recorded miss under debt #42).
+
+### D106. The merger's gas accretes from its own delivery windows, and Sagittarius delivers a physical share (debts #30, #29)
+
+**Decision.** `sfh` no longer starts the second infall as a step at the last
+major merger. It accretes `merger_delivery` — the assembly stage's per-event
+Gaussian windows, each event's share at its own epoch — through the
+exponential kernel's own recursion, normalised on the grid so that everything
+delivered has arrived by the last step and the budget closes to rounding. The
+Sagittarius default's gas share is 0.01 of the outstanding budget (about
+3 × 10⁸ M☉), not 0.2 (5.9 × 10⁹): a 10⁸–10⁹ M☉ progenitor `[recall]` cannot
+bring more gas than its own mass. `MERGER_DURATION` is read to some effect for
+the first time since S3.
+
+**Settled by.** The two are one change: with the step, a minor event's gas
+arrived with the major one five Gyr early, and once the windows were wired in,
+the unphysical 0.2 share landing at 8.8–13.8 Gyr took the present-day SFR to
+2.70 and the simple thin disc to 241 pc — the default's error made visible by
+fixing the mechanism that hid it. Measured with the physical share:
+
+    Sagittarius gas share (windows in place):
+      gas   row 2 sfr  row 20 gas   row 6 simple  row 9   row 11      row 6 adv   row 22 adv
+      0.20   2.703     6.54e9       241.3         0.110   1.13e10     319.8       -0.0485
+      0.05   2.069     5.90e9       251.7         0.143   1.36e10     350.4       -0.0542
+      0.01   1.892     5.72e9       254.6         0.152   1.42e10     358.3       -0.0565
+      0.00   1.848     5.67e9       255.3         0.154   1.44e10     360.3       -0.0572
+    rows 1 and 10 against N_t (simple), 1000 / 2000 / 4000:
+      before  5.2876e10  5.27619e10  5.28174e10   spread 0.22%, non-monotone (AUDIT_RUN2.md C2)
+      after   5.28765e10 5.2874e10   5.28727e10   spread 0.007%, monotone
+    Sagittarius' gas (infall with the event minus without, positive part): peak at 9.5 Gyr, was 3.8
+
+Debt #30's prediction held in full. Debt #29's did not: it said row 2 would
+pass with Sagittarius at a physical share, and the row reads 1.89 at 0.01 and
+1.85 with no Sagittarius at all — the 1.837 it predicted was the step model's
+number. So the residual excess is debt #18's timescale after all, as the entry
+said it would then be, and the row-2 miss is rewritten to say so. Two other
+rows moved with the physics: the simple thick disc grew (row 5 1.32 kpc, row 11
+1.42 × 10¹⁰, the gate row 9 at 0.152 — still inside, still on the cancellation,
+debt #19), and the advanced thin disc, which is every star, thickened to 358 pc
+once no young gas arrived late — over its 350 ceiling, a new recorded miss under
+debt #42, whose finding this is: `SECULAR_HEATING` and `MERGER_HEATING` were
+fitted to the simple model's merger split (rule B10). Nothing was tuned back.
+Both debts are discharged; `[verified: tests/test_sfh.py::test_the_merger_gas_arrives_at_its_own_epoch_and_the_grid_no_longer_sees_a_step,
+::test_the_split_is_computed_not_assumed; tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models]`.
+
+### D107. The concentration is converted from the virial overdensity, the epoch stays at the cited midpoint, and row 3 misses low (debt #12; debts #6, #11, #43)
+
+**Decision.** The halo stage computes `c_vir = K(1 + z_f)` as Wechsler et al.
+quote it, at Δ_vir(Ω_M) = 18π² + 82x − 39x² ≈ 101 ρ_crit `[recall: Bryan &
+Norman 1998]` with a new Level 0 constant `OMEGA_M` = 0.3 (the value F_BARYON
+already assumed), and converts it through the NFW invariant Δ c³/μ(c) to the
+c₂₀₀ it builds the halo with, publishing both (`halo_concentration_virial`
+14.35, `halo_concentration` 10.91). This is the gamma pair's conversion, chosen
+over beta's (the ratio of the model's R₂₀₀ to a cited 255 kpc) and main's (a
+recalled factor) because it is the one computed from the profile with its
+overdensity stated (D102 disagreement 1). `halo_assembly_z` stays 2.5.
+`WIND_SPEED` is refitted 1010 → 987 km/s.
+
+**Settled by.**
+
+    z_f     2.0     2.5     2.7     2.8     2.9     3.0     3.1     3.2
+    v_tan  236.2   242.7   245.3   246.6   247.8   249.1   250.3   251.5   (target 245-251)
+    c200    9.32   10.91   11.55   11.87   12.18   12.50   12.82   13.14   (c_vir at 2.5: 14.35)
+    the conversion alone: 256.2 -> 242.7 km/s, 13.5 km/s; every other row moved by < 1e-9
+
+Row 3 fell through its window and out the other side: 242.7, low by 2.3. The
+epoch that would put it back inside is 2.7–3.1, the top of the cited 2–3, and
+choosing it now would be choosing an input against a known answer — the move
+rule B5 exists to prevent and both audits that touched this debt refused
+(beta D95, the pair's D96). So the row is a recorded miss the other way,
+debt #11 (the missing bulge) with debt #6 (contraction) as the lever, since
+its old explanation — every baryon in the compact disc — now has the wrong
+sign: an extended component lowers v_c(R₀) further. The refit is rule B10's
+direct case: `WIND_SPEED` was fitted so the gas at R₀ is solar against a
+potential built on the unconverted concentration; converted, v_esc(R₀) fell
+578 → 562 km/s, the escape fraction rose 0.753 → 0.764 and the gas at R₀ read
+−0.015 dex, so the constant was re-set by bisection to the value that restores
+solar (−0.002 at 987; the lever is −0.065 dex per +10%) and its about line
+records old and new. The advanced gradient stays inside at −0.056 (the tilt is
+the wind's radial dependence, not its speed); `NET_YIELD` is left, its −0.025
+dex drift being S3's and read by no row `[verified: tests/test_halo.py::test_the_concentration_is_converted_from_the_virial_overdensity,
+::test_the_conversion_moved_row_3_and_nothing_else, ::test_the_epoch_row_3_wants_is_the_top_of_the_cited_range;
+tests/test_audit.py::test_debt_12_the_concentration_is_converted_and_row_3_reads_low]`.
+
+### D108. Acceptance row 20 reads the gas's hydrogen mass (debt #41)
+
+**Decision.** `HELIUM_MASS_FRACTION` = 0.27 `[recall: solar; the disc's ISM is
+near it, primordial 0.245]` is a Level 0 constant; `sfh` publishes
+`hydrogen_mass_30kpc` = (1 − Y) × `gas_mass_30kpc`; row 20's field is the
+hydrogen mass, its stated value and zero width unchanged. The metals' one to
+two percent stays in, the sfh stage being upstream of the chemistry.
+
+**Settled by.** The target is HI + H₂ from 21 cm and CO — hydrogen — and the
+model's gas is every retained baryon the star formation law has not consumed,
+so the table had been reading 28% for a 48% miss (4.17 × 10⁹ against 8.0 × 10⁹).
+Nothing else changes: the miss is recorded under debt #18 as before, with the
+component it asks for now sized at 3.8 × 10⁹ M☉ of hydrogen, 5.2 × 10⁹ of gas.
+Rule B9 the other way round: a number shown as measured was measuring the
+wrong thing `[verified: tests/test_audit.py::test_debt_41_row_20_compares_total_gas_with_a_hydrogen_mass;
+tests/test_sfh.py::test_the_split_is_computed_not_assumed]`.
+
+### D109. A statistical row passes on its median, and the ensemble is 41 (debt #38)
+
+**Decision.** `spec.evaluate` passes a statistical row when the median of the
+ensemble lies in the target; the central 95% interval is published beside the
+verdict and no longer decides it. `ENSEMBLE_MIN` = 41, the smallest n at
+which a 95% interval excludes one whole draw at each end. A statistical row
+with a zero-width target is untestable like a pointwise one — row 14 joins
+rows 20 and 21 (debt #17) — because no median meets a point either.
+
+**Settled by.** The S0 criterion, "the interval intersects the target", passed
+a median of 60 against [34, 52] on a spread of ±20 and rewarded a noisier
+model monotonically; at n = 20 the "central 95%" trimmed no whole draw and was
+pinned by the two most extreme values (beta's D102). Rows 16 and 17 pass on
+their medians — 42.5 and 5.7, well inside — exactly as debt #38 said they
+would, so the change costs no verdict today and would have cost one later. The
+`judged` fixture and `python -m galaxy.specs` run 41 members per model, about
+two seconds more `[verified: tests/test_spec.py::test_a_statistical_row_is_judged_on_its_median_not_on_its_reach,
+::test_the_ensemble_size_and_the_central_fraction_agree_since_s13; tests/test_pattern.py::test_rows_16_and_17_are_judged_statistically]`.
+
+### D110. The bulge and the catalogue: probed and recorded, not built (debts #11, #31, #42)
+
+**Decision.** No bulge stage this session and no migration in the catalogue;
+both are a session each and the plan sized them so. What this session did
+instead was measure what the bulge would do — so that it is not built for the
+wrong reason — and write the judgement rules down.
+
+**Settled by.** The bulge probe: a Hernquist spheroid of the observed mass,
+drawn from the stellar disc in proportion, and the rotation curve re-read at R₀
+with the model's own razor-thin solver.
+
+    M_b        a (kpc)   v_tan   change   thin disc after   row 10   thin if row 11 were right
+    1.4e10     0.5-1.0   236-238  -4.8 to -6.3   2.84e10    in       3.29e10  in
+    1.5e10     0.5-1.0   236-237  -5.1 to -6.8   2.77e10    in       3.19e10  in
+    1.7e10     0.5-1.0   235-237  -5.8 to -7.7   2.62e10    in       2.99e10  in
+    row 13, bulge/total: 1.5e10 / 5.29e10 = 0.284 (target 0.24-0.36)
+
+**A bulge lowers row 3**, by 5–8 km/s: a flat disc rotates faster than the same
+mass in a sphere, so moving 1.5 × 10¹⁰ M☉ from the disc into a spheroid takes
+more from v_c(R₀) than the spheroid gives back. The register's assumption
+since S1 — that the bulge "pushes row 3 the other way" — was the wrong sign,
+and it was about to be written into row 3's new miss as its prediction when the
+probe was run first (rule B4, the cheap way round). What the bulge is for: rows
+10 and 11 stop passing on a cancellation (row 10 reads 2.6–3.3 × 10¹⁰ with a
+bulge whether or not the thick disc is right), row 13 lands at 0.28, row 12 is
+its own mass, and row 14 needs the source's uncertainty before it can be met
+(debt #17). Row 3's remaining levers are the halo's contraction (debt #6) and
+the epoch (D107). The catalogue (debt #31): the change is confined to
+`systems.materialise` — draw a birth radius around the present one with the
+migration kernel's width, look the abundance up there — for both models, and
+it moves every seeded catalogue number the viewer and the planets read, so it
+is a session with its own golden values; `feh_spread_sun`'s about now says the
+viewer's stars do not carry its spread. Rows 6 and 7 in the advanced model are
+judged together, both heating constants re-examined, when debt #27's valley
+opens (debt #42); until then row 6 is a recorded miss and nothing is tuned.
+
+### D111. What the physics exposed in the instruments, and what moved
+
+**Decision.** Three defects fixed with the physics, none of them physics. (1)
+The recursion's normalisation: a unit delivered in step j accretes over the
+steps left, normalised on the grid — the continuous normalisation first tried
+was a left-rectangle rule that over-accreted by dt/2τ and put the budget 0.08%
+over; the test that closes it to 1e-4 caught it. (2) `determinism._equal`
+treated a NaN scalar as differing from itself while the arrays already used
+`equal_nan`; a fitted scale length that is NaN on the 16-cell test grid read as
+irreproducible. (3) `tests/test_planets.py` asked the drawn giant fraction to
+agree with the computed occurrence to 5%, inside the 7% binomial width of 200
+giants in 20 000 stars — it had passed by luck; the tolerance is binomial now.
+And every pinned measurement moved by the physics was re-pinned to the new
+number with the old one in the comment: the audit tests (rows 2, 3, 5, 6, 9,
+11, 20, the centre, the migration flattening, the heating sweeps, the ratio
+sweep), the sfh, halo, spec, pattern and chemistry tests.
+
+**Settled by.** The spec report, before → after: simple 11 / 7 / 6 → 11 / 7 / 6
+with row 3's miss reversed in sign; advanced 8 / 11 / 5 → 7 / 12 / 5 with row 6
+added; every failure recorded for its model, exit 0. Numbers to spot a
+regression by: R200 212.94, c_vir 14.35, c200 10.91, R_d 2.49, M_star 5.287e10,
+SFR 1.891, gas 5.714e9, hydrogen 4.171e9, v_tan 242.7 (both); simple grad −0.0236,
+old −0.0064, thick M 1.42e10, row 9 0.152; advanced grad −0.0561, old −0.0195,
+v_esc(R₀) 561.5, f_esc 0.757, spread 0.304, row 6 358.5 `[verified:
+python -m galaxy.specs, 2026-09-07, exit 0]`.
+
+    model simple: 45 ok, 0 drift, 3 untestable, 0 vacuous, 6 statistical (row x axis)
+    model advanced: 33 ok, 0 drift, 3 untestable, 15 vacuous, 6 statistical (row x axis)
+
+### D112. Cold timings at S13 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0003   1.00        940  -
+    viewer: a module         0.0003   0.0003   1.00     21,599  -
+    index                    0.0000   0.0000   1.01      1,237  -
+    version                  0.0024   0.0017   1.45      1,132  -
+    stages                   0.0005   0.0002   2.19      8,717  -
+    fields                   0.0012   0.0006   2.05     59,264  -
+    inputs                   0.0001   0.0001   0.90      9,399  -
+    arrays: one profile      0.1087   0.0003 343.60      4,984  halo,assembly,disc,sfh
+    arrays: history          0.1745   0.0034  51.28  6,401,776  halo,assembly,disc,sfh,chemistry
+    arrays: scalar           0.1105   0.0003 334.76      1,720  halo,assembly,disc,sfh
+    region: one sector*      0.1884   0.0037  51.12     19,032  halo,assembly,disc,sfh,chemistry,vertical
+    region: whole disc*      0.3585   0.1568   2.29  1,126,456  halo,assembly,disc,sfh,chemistry,vertical
+    system: one star*        0.1859   0.0021  87.93      3,120  halo,assembly,disc,sfh,chemistry,vertical
+    adv: history             0.4890   0.0059  83.15  6,401,784  halo,assembly,disc,sfh,chemistry_dtd
+    adv: alpha plane         0.5205   0.0032 161.26  6,401,840  halo,assembly,disc,sfh,chemistry_dtd
+    adv: one sector*         0.5500   0.0059  93.44     19,040  halo,assembly,disc,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.5297   0.0028 188.28      3,136  halo,assembly,disc,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, numpy's bit-generator setup, about 10 ms here; measured alone by `python -m galaxy.specs.performance --one-off` (debt #37)
+    import + registry: 0.108-0.119 s, paid once per process and excluded from the cold column
+
+    model simple: 0.627 s cold, 0.608 s warm; import + registry 0.009 s
+    catalogue against sample size: 5k:0.1341s 10k:0.1540s 20k:0.1652s 40k:0.1961s -> 1.65 us per star, 131.5 ms fixed (80% of the catalogue at 20k does not depend on how many stars are asked for); layout 18.4 ms over all 1024 cells, 516 of them realise a star
+    one-off, first seeded draw: 12.40 ms then 0.027 ms (463x) — billed by this table to the first stage that draws (pattern); debt #37
+    model advanced: 0.978 s cold, 0.946 s warm; import + registry 0.009 s
+    catalogue against sample size: 5k:0.1532s 10k:0.1662s 20k:0.1585s 40k:0.1784s -> 0.60 us per star, 152.9 ms fixed (92% of the catalogue at 20k does not depend on how many stars are asked for); layout 18.7 ms over all 1024 cells, 516 of them realise a star
+    one-off, first seeded draw: 12.40 ms then 0.027 ms (463x) — billed by this table to the first stage that draws (pattern); debt #37
+
+**Read within the run.** The shape is D105's on the same desktop. `sfh` carries
+one more array recursion and the halo a bisection, neither measurable in these
+columns; the ensemble is twice the size, which is the spec runner's cost and
+not a route's. `tools/scaling.py` not re-run: no stage's cost changed within
+its resolution (rule B7).
+
+**Close.** Board row 13 (desktop, Fable 5.1, `s13`, 2026-09-07); `session-13`
+merged into `main` with `--no-ff`; `s13` queued in MANUAL_TODO.md with S12's
+SHA filled in.

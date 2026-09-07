@@ -657,6 +657,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
 4. Pitch-angle closure radius is arbitrary — largely dissolved by ruling 3 (§5).
 5. Cooling delay from halo assembly to SF onset is unvalidated (§3).
 6. Adiabatic contraction of the halo by infalling baryons is unmodelled (§4b).
+   **S13:** now the named lever for acceptance row 3. With debt #12's conversion done
+   the row reads 242.7, low, and a bulge drawn from the disc lowers it further (debt
+   #11's probe), so the mass the row misses inside R₀ is the halo's response to the
+   baryons — several km/s at R₀ for a disc this massive `[recall: Blumenthal et al.
+   1986]` — or a later assembly epoch (z_f 2.7–3.1). **Prediction:** contraction closes
+   row 3 with z_f at 2.5; if it does not, the cited z ≈ 2–3 is wrong at its low end
+   (spec.MISSES row 3, D107).
 7. ~~`spin` is circular.~~ **LARGELY DISCHARGED** — λ_d is now jointly
    constrained by two independent observables, not one (§6).
 8. Acceptance entries 13, 14, 16, 17 and **18** become statistical, not pointwise
@@ -746,6 +753,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    escape velocity at R₀ falls 578 → 565 km/s and `WIND_SPEED` would need a
    refit of about a hundredth of a dex; row 22 stays inside at −0.0563
    `[verified: session-10-beta, DECISIONS.md D95]`.
+   **S13, half discharged.** The halo stage converts: `halo_concentration_virial` =
+   K(1 + z_f) at Δ_vir(Ω_M) ≈ 101 ρ_crit `[recall: Bryan & Norman 1998]` becomes
+   `halo_concentration` = 10.9 through the NFW invariant Δ c³/μ(c) — the gamma pair's
+   conversion, computed from the profile rather than recalled or taken from a cited
+   radius (D107). Row 3 fell 256.2 → 242.7 km/s and no other row moved by more than
+   1e-9 `[verified: tests/test_halo.py::test_the_conversion_moved_row_3_and_nothing_else]`.
+   What this debt still holds is the epoch: z_f = 2.5 is the cited midpoint, the row
+   wants 2.7–3.1, and choosing it against a known answer is what rule B5 forbids.
+   `WIND_SPEED` was refitted to the converted potential, 1010 → 987 km/s (debt #43).
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -825,6 +841,9 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    a citation with an uncertainty, entered before the row is next judged. What
    the same reading of the source found about the target's *accounting* is
    debt #41.
+   **S13:** row 14 joins rows 20 and 21 as untestable — a statistical row now passes on
+   its median (debt #38), which no float meets at zero width either `[verified:
+   tests/test_spec.py::test_the_table_says_which_rows_have_no_testable_target]`.
 18. **No high-angular-momentum accretion component.** With the infall carrying
    the disc's own scale length (debt #13's fix), nothing accretes beyond about
    10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
@@ -849,6 +868,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    from the other side (debt #45): one broader infall cannot buy rows 3 and 20
    without paying rows 2 and 22, which is the case for a *second* component
    rather than a wider first one.
+   **S13:** row 3 is no longer this debt's. With debt #12's conversion done it reads
+   242.7, low, so an extended component — which moves baryons outward — would take it
+   further from its target; row 3's miss is debt #11's and #6's now. Rows 2 and 20
+   remain: with a physical Sagittarius (debt #29) row 2 reads 1.89, and 1.85 with no
+   Sagittarius at all, so what is left of its excess is this debt's timescale; row 20
+   like for like is 4.17 × 10⁹ M☉ of hydrogen against 8.0 (debt #41), so the component
+   must supply about 3.8 × 10⁹ M☉ of hydrogen — 5.2 × 10⁹ of gas.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -858,6 +884,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    sheds mass `[verified: DECISIONS.md D51]`. Row 5 is the prerequisite — with
    the right extent the mass and the ratio can be right together. If they still
    cannot, the split criterion is what is wrong.
+   **S13 moved the numbers, not the shape:** with Sagittarius delivering a physical
+   share the pre-merger episode carries half the budget, so the thick disc reads
+   1.32 kpc (row 5) and 1.42 × 10¹⁰ M☉ (row 11), and the gate, row 9, reads 0.152 —
+   inside 0.08–0.16 by less than the 0.103 it read before, still on the cancellation.
 20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
    about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
    the last major merger" is a definition, not a measurement, and it made debt
@@ -987,6 +1017,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    Rule B10's note for the session that adds a mass-loaded wind: `WIND_SPEED`
    was fitted against this massless one and has no claim on its value then;
    the tilt survives a refit, the level does not (debt #43).
+   **S13:** the centre came down with the physics around it — peak +1.36 (was +1.53),
+   above +0.5 out to 2.5 kpc; the simple model's gas no longer reaches +0.5 anywhere
+   (peak +0.46). Sagittarius' early gas and the unconverted potential were part of the
+   excess; the massless wind is the rest.
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
    plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
@@ -1035,6 +1069,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    a dip of 0.384 reads `single` at 0.5 and 0.4 and `bimodal_wide` at 0.3 —
    though at the default the dip is 0.0 and no threshold matters `[verified:
    AUDIT_RUN2.md §4.5]`.
+   **S13:** with the default merger list a fast inner disc — n = 3 at τ₀ = 1 Gyr — now
+   opens the valley (`bimodal_wide`, depth 0.64); until S13 Sagittarius' unphysical
+   share arriving beside Gaia-Enceladus kept that track single `[verified:
+   tests/test_audit.py::test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row_22_doing_it]`.
+   n = 2, and n = 3 at τ₀ = 7, stay single; the price in row 22 is unchanged.
 28. **Migration is too strong once the tilt is right.** S2 recorded that if
    row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
    Row 22 steepened to −0.057 in the advanced model and row 23 stayed at
@@ -1064,8 +1103,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    different probe. A gradient measured at 10 Gyr near −0.04 would convict the
    width in both models at once; one near −0.13 would say the width is right
    and the old stars' starting point is not.
-29. **The Sagittarius default delivers a tenth of the baryon budget, five Gyr
-   early.** `MergerEvent(8.8, 0.02, 0.2)` takes 0.2 of the budget outstanding
+   **S13:** the unmigrated old gradient is −0.084 (simple) and −0.106 (advanced) now,
+   flattened 13× and 5.5× by the default kernel; the young/old ratio 3.27 and 3.03. The
+   discriminator stands.
+29. ~~**The Sagittarius default delivers a tenth of the baryon budget, five Gyr
+   early.**~~ **DISCHARGED by S13.** The default is 0.01 of the outstanding budget —
+   about 3 × 10⁸ M☉, what a 10⁸–10⁹ M☉ progenitor can bring `[recall]` — and with debt
+   #30's fix its gas arrives around 8.8 Gyr. **The prediction ran and failed**: row 2
+   reads 1.89 at 0.01 and 1.85 with no Sagittarius at all, not the 1.837 the step model
+   gave, so the residual excess is debt #18's timescale after all, as this entry said it
+   would then be (D106). What else moved: rows 5, 9 and 11 (debt #19), the advanced row 6
+   to 358 pc (debt #42), the centre (debt #26). The S10 finding, kept:
+   `MergerEvent(8.8, 0.02, 0.2)` took 0.2 of the budget outstanding
    after Gaia-Enceladus, 0.1 of the whole, 5.9 × 10⁹ M☉ — more gas than the
    progenitor's entire mass [recall: 10⁸–10⁹ M☉] — and `sfh` starts it at the
    *last major merger*, 3.8 Gyr, because it reads only the total share and the
@@ -1079,7 +1128,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    does not, debt #18's timescale explanation is the whole story after all.
    Read like for like (debt #41), the 5.66 × 10⁹ here — and every row-20 number
    in this register — is hydrogen plus helium against a hydrogen target.
-30. **`MERGER_DURATION` is dead; the merger's gas arrives as a step.** `assembly`
+30. ~~**`MERGER_DURATION` is dead; the merger's gas arrives as a step.**~~ **DISCHARGED
+   by S13.** `sfh` accretes the merger-delivered gas from `merger_delivery` — each
+   event's share over its own window at its own epoch — with the exponential's own
+   recursion, normalised on the grid so the budget closes to rounding. **The prediction
+   held**: rows 1 and 10's movement with N_t went from 0.22% and non-monotone to 0.007%
+   and monotone `[verified:
+   tests/test_sfh.py::test_the_merger_gas_arrives_at_its_own_epoch_and_the_grid_no_longer_sees_a_step]`.
+   The S10 finding, kept: `assembly`
    spreads each event over a Gaussian window and publishes `merger_delivery`;
    nothing reads it; `sfh` rebuilds the second episode as an exponential from a
    step at the last major merger. 0.1–2.0 Gyr changes every acceptance scalar
@@ -1093,6 +1149,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the planets: the catalogue's [Fe/H] spread at R₀ is 0.19 dex against the
    chemistry's own 0.30 `[verified: AUDIT_RUN2.md D-11]`. A boundary S9 did not
    cross; `feh_spread_sun` describes stars the catalogue does not hold.
+   **S13:** not built; the judgement is recorded (D110). `feh_spread_sun`'s about now
+   says the catalogue does not carry this spread (the viewer's stars at R₀ read 0.19),
+   and the systems-stage change — a birth radius drawn around the present one with the
+   migration kernel's width, the abundance looked up there, for both models — is the
+   next session's, with rows 6 and 7 judged together when debt #27's valley opens
+   (debt #42).
 32. **The local [Fe/H] spread is the age–metallicity relation, not migration.**
    §8's "without migration the local metallicity distribution comes out far
    too narrow" is refuted by the model built to show it: `feh_spread_sun` is
@@ -1188,8 +1250,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    subtracting a measured constant from a published measurement is the sort of
    tidying that outlives its justification (rule B6); recorded so the column
    can be read.
-38. **A statistical row tests overlap, not agreement, and its ensemble is too
-   small for the interval it quotes** (S10, beta). Two defects in one
+38. ~~**A statistical row tests overlap, not agreement, and its ensemble is too
+   small for the interval it quotes**~~ **DISCHARGED by S13.** A statistical row passes
+   when the ensemble's median lies in the target; `ENSEMBLE_MIN` = 41, the smallest n
+   at which the central 95% excludes one draw at each end, and the interval is
+   published beside the verdict `[verified:
+   tests/test_spec.py::test_a_statistical_row_is_judged_on_its_median_not_on_its_reach,
+   ::test_the_ensemble_size_and_the_central_fraction_agree_since_s13]`. Rows 16 and 17
+   pass on their medians as this entry said they would; row 14 is untestable at zero
+   width (debt #17). The S10 finding, kept: (S10, beta). Two defects in one
    criterion.
    - `evaluate` passes a statistical row when the ensemble's central interval
      **intersects** the target, so it asks whether the distribution *reaches*
@@ -1256,8 +1325,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the report a session actually reads — carries only the weaker check. The
    fix is to run the second comparison in a subprocess, as `performance.py`
    already does.
-41. **Acceptance row 20 compares total gas with a hydrogen mass** (S10, the
-   gamma pair — found by no other run). The target, 8.0 × 10⁹ M☉, is HI plus
+41. ~~**Acceptance row 20 compares total gas with a hydrogen mass**~~ **DISCHARGED by
+   S13.** `HELIUM_MASS_FRACTION` = 0.27 `[recall]` is a Level 0 constant, `sfh`
+   publishes `hydrogen_mass_30kpc` = (1 − Y) × gas, and row 20 reads it: 4.17 × 10⁹
+   against 8.0, a 48% miss `[verified:
+   tests/test_audit.py::test_debt_41_row_20_compares_total_gas_with_a_hydrogen_mass]`.
+   The prediction held — the row misses by half — and debt #18's component is judged
+   against that. The S10 finding, kept: (S10, the gamma pair — found by no other run). The target, 8.0 × 10⁹ M☉, is HI plus
    H₂ from 21 cm and CO column densities — hydrogen, with no helium correction
    anywhere in the source `[verified: arXiv:1511.08877 §3, §4.2]` — and
    `gas_mass_30kpc` is every retained baryon the star formation law has not
@@ -1290,7 +1364,7 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    thick disc for the heated stars to belong to (debt #27), so the same
    constant moves *its* row 6, 287 → 392 pc, and 52 pc of the default 326 is
    the merger's (274 without) `[verified: tests/test_audit.py::
-   test_debt_42_row_6_passes_at_the_edge_of_its_window_in_both_models]`. A
+   test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models]`. A
    constant fitted to make one population thick is holding a different row in
    the other model, within 24 pc of its edge (rule B10); `AUDIT_RUN1.md` §3's
    "no row reads the kick" in the advanced model was wrong — row 6 does.
@@ -1299,6 +1373,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    #27 reads 443 because its thin disc is still carrying most of the heated
    stars — and rows 6 and 7 then have to be judged together, with both heating
    constants re-examined against both.
+   **S13:** the advanced row 6 crossed its ceiling — 358 pc — the moment Sagittarius
+   stopped delivering a tenth of the budget as young gas (debt #29), and is a recorded
+   miss. `SECULAR_HEATING` 20 → 177 pc (simple), 30 → 466 (advanced); `MERGER_HEATING`
+   60–180 → 303–451 on the advanced row 6, 619–1747 on the simple row 7 `[verified:
+   tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models]`.
+   The rule stands: rows 6 and 7 judged together, both constants re-examined, when the
+   valley opens.
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
    present-day gas at R₀ solar (debt #16, D89), and both were fitted with no
@@ -1314,6 +1395,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    yet final — and `AUDIT_RUN2.md` §7's "no stale calibration" is read with
    this beside it: the fits still sit on their observables, and the observables
    sit on the wrong history.
+   **S13:** `WIND_SPEED` refitted 1010 → 987 km/s — not against debt #18's component,
+   still missing, but because the potential it was fitted against carried an
+   unconverted concentration (debt #12): the gas at R₀ read −0.015 dex once the halo
+   converted, and the constant was re-set to solar (rule B10, D107). `NET_YIELD` stays:
+   its −0.025 dex drift is S3's and no row reads it. Both remain provisional on #18.
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1327,6 +1413,8 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    evidence for debt #18 that neither row is alone — the more so once row 20 is
    read like for like (debt #41), and once debt #29's Sagittarius gas, which
    is half of row 2's excess, is taken out.
+   **S13:** at +1σ (3.2 × 10⁻⁴) row 2 now reads 1.77 and passes outright; at the default
+   1.89. The pair with row 20 is still the evidence.
 45. **`GAS_DISC_SCALE_RATIO` multiplies nothing at 1.0 and carries the advanced
    model's row 22** (S10, the gamma pair; `AUDIT_RUN2.md` D-6 has the sweep to
    1.2 under debt #18). S3 kept it "so that S10 can sweep it". Swept 0.8 → 1.5:
@@ -1347,6 +1435,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    steepens nothing inside 12 kpc only if it carries no metals in, so with it
    row 22 either holds or moves toward −0.047, which decides whether the
    wind's tilt or the infall's is the one doing the work.
+   **S13's numbers:** with the conversion done, row 3 runs 248.3 → 222.7 km/s across
+   0.8–1.5 (inside at 0.8 only); at 1.25 the simple thick disc reaches row 5 (1.84 kpc)
+   and not row 11; at 1.5 it overshoots row 5 (2.22). The advanced gradient still
+   passes only at 1.0.
 
 ---
 

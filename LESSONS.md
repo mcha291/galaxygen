@@ -451,3 +451,28 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   reproducibility comparison, a cold timing — put the subprocess in the instrument
   the sessions read, not only in the suite: `python -m galaxy.specs` is the report
   a session actually looks at (debt #40).
+
+## From S13
+
+- [field] An input default is a constant and can be an unphysical one: Sagittarius'
+  gas share delivered more gas than its progenitor weighed for ten sessions, and
+  fixing the mechanism that hid it (the step infall) was what made the default's
+  error visible — do the mechanism and the default together (D106).
+- [field] Probe before you predict. The bulge was about to be written into row 3's
+  miss as the fix, in three places; a fifty-line probe showed it lowers the row by
+  5–8 km/s, because a disc rotates faster than a sphere of the same mass (D110).
+- [field] When a units error in a mechanism is fixed, refit the constant that was
+  fitted against it and record old → new in its about line (rule B10): WIND_SPEED
+  1010 → 987 once the concentration was converted (D107).
+- [field] A row that misses after a fix can miss the *other way*; rewrite the miss,
+  its debt and its prediction rather than keeping the old explanation with a new
+  number — row 3's old cause now has the wrong sign (D107).
+- [infra] Normalise a discrete kernel on the grid it runs on, not in the continuum:
+  a left-rectangle rule over-accreted by dt/2τ and put the baryon budget 0.08% over
+  a test that closes it to 1e-4 (D111).
+- [infra] A tolerance on a seeded sample is a binomial width, not a round number: 5%
+  on 200 giants was inside the 7% noise by luck and broke the moment the physics
+  moved (D111).
+- [close] Re-pin a measurement to the new number with the old one beside it, never
+  to the target (rule B5); a suite of pinned measurements is what tells a physics
+  change from a regression, and it costs a pass of re-pinning every time (D111).

@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████` **13 / 13 sessions** · repo initialised: yes
+`████████████████████████████` **14 / 14 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +19,7 @@
 | ☑ | 10 | Audit | desktop | **Fable** ×2 | **Fable 5.1** (runs 1, 2) | s10 | 2026-09-05 |
 | ☑ | 11 | Integrate the S10 audits (beta, the gamma pair) | desktop | — | **Fable 5.1** | s11 | 2026-09-07 |
 | ☑ | 12 | The maintainer's one-line fixes (D-9, D-13, #33, #35, #37, #40) | desktop | — | **Fable 5.1** | s12 | 2026-09-07 |
+| ☑ | 13 | The physics decisions: step infall, Sagittarius, c_vir → c₂₀₀, hydrogen, the median criterion; bulge and catalogue probed | desktop | — | **Fable 5.1** | s13 | 2026-09-07 |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -40,7 +41,7 @@ tags exist lives, and a test asserts it carries a row for every ☑ session.
 **Next:** S10. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 35 (`GALAXY_INPUTS.md` §11). **Discharged:** 10.
+**Open debts:** 31 (`GALAXY_INPUTS.md` §11). **Discharged:** 14.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is

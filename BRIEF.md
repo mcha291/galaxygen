@@ -2,35 +2,37 @@
 
 S0–S10 are closed; S11 integrated the three S10 audits onto `main` without merging
 their branches (debts #34–#45, their tests, three instrument features, the four lists'
-comparison in D102); S12 made the one-line fixes (D104). Both 2026-09-07.
+comparison in D102); S12 made the one-line fixes (D104); S13 the physics decisions
+(D106–D112). All 2026-09-07.
 Open per RESUMING.md, read RULES.md in full, then this. GALAXY_INPUTS.md §11 is the
-register and the only list of what is wrong (35 open). Work on a branch
-`session-13` or a topic branch; the close ritual still applies; rule C2e queues tags.
+register and the only list of what is wrong (31 open). Work on a branch
+`session-14` or a topic branch; the close ritual still applies; rule C2e queues tags.
 
-## What is owed first
+## What S13 did, and what is still physics
 
-Nothing small. S12 made the one-line fixes (DECISIONS.md D104): G read from the
-registry, the two tool labels, the midplane escape velocity, the cross-process
-determinism check, the Ia factor registered. What remains is physics, below.
+Done (D106–D110): the merger's gas accretes from its own delivery windows and
+Sagittarius delivers a physical share (#29, #30 discharged; row 2 reads 1.89, so the
+rest is #18's timescale); the halo converts c_vir to c₂₀₀ (#12 half: row 3 reads 242.7,
+**low**, z_f stays 2.5; WIND_SPEED refit 987); row 20 reads hydrogen (#41: 4.17e9, a 48%
+miss); a statistical row passes on its median at n = 41 (#38). The bulge was probed and
+**lowers row 3 by 5–8 km/s**; it is for rows 10, 12, 13, not for row 3.
 
-## The decisions a maintainer must take — physics, not fixes
+## The decisions a maintainer must take next — physics
 
-1. **Sagittarius (#29).** Set its gas near zero *and* rewrite both models' row-2 miss
-   entries in the same commit; a registered miss that passes fails the spec run.
-2. **The step infall (#30).** Feed `merger_delivery` into `sfh` or delete the constant;
-   the N_t non-monotonicity of rows 1 and 10 is the prediction that decides it.
-3. **Row 3's explanations (#12, #18).** Three audits give the c_vir → c₂₀₀ conversion
-   three values (242.6 / 246.9 / 248.0 km/s on row 3) and three discriminators (rows 1
-   and 19; 2 and 20; 3 and 19 with z_f). Decide the conversion *and* the epoch together,
-   with all of rows 1, 2, 19, 20 read, before building the extended component (D102).
-4. **Row 20's target is hydrogen (#41).** Add a helium fraction or read a hydrogen
-   field, then re-judge row 20 (a 47% miss) and what #18's component must supply.
-5. **Rows 1, 10, 11 (#11).** A bulge stage takes ~1.5 × 10¹⁰ out of the disc and fails
-   row 1 unless the budget or the concentration moves — decision 3 from the mass side.
-6. **The catalogue does not migrate (#31)**, and the advanced model's row 6 rides on
-   `MERGER_HEATING` (#42): judge rows 6 and 7 together when the valley (#27) opens.
-7. **The statistical criterion (#38).** "Median inside the target" costs no verdict
-   today and `ENSEMBLE_MIN` needs 41 for a real 95%; decide before rows 13, 14, 18 land.
+1. **Row 3 (#6, #11, #12).** Adiabatic contraction of the halo is the lever now; a
+   bulge is not. Model contraction with z_f at 2.5 and read rows 3 and 19; if the row
+   still misses, z_f 2.7–3.1 is what the table wants and the cited range is wrong low.
+2. **The extended component (#18).** Rows 2 (1.89 against 1.84) and 20 (3.8e9 of
+   hydrogen short) are its evidence alone now; row 3 is not, and moves the wrong way.
+   Rows 3 and 4 are the check that it is high enough in angular momentum.
+3. **The bulge stage (#11).** For rows 10, 12, 13 and the cancellation on row 11; row 14
+   needs the source's uncertainty first (#17). It must not be built for row 3 (D110).
+4. **The catalogue migrates (#31).** A systems-stage change with its own golden values;
+   then rows 6 and 7 in the advanced model are judged together when #27's valley opens.
+5. **The thick disc (#19).** Rows 5 and 11 fail and row 9 passes at 0.152 on the
+   cancellation, worse since S13; radial heating with the vertical kick is the prediction.
+6. **Row 6, advanced (#42).** A recorded miss at 358 since S13; SECULAR_HEATING and
+   MERGER_HEATING are the simple model's fits. Do not tune it back; wait for the valley.
 
 ## What the instruments will tell you, and what they will not
 

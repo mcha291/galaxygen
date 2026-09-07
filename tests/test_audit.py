@@ -296,13 +296,13 @@ def test_the_register_carries_the_s10_findings():
 
     text = progress.read(progress.INPUTS)
     # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99);
-    # S12 discharged #35, #37 and #40 (D104).
-    assert progress.debt_counts(text) == (35, 10)
+    # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109).
+    assert progress.debt_counts(text) == (31, 14)
     for item in (
-        "29. **The Sagittarius default",
+        "29. ~~**The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",
-        "38. **A statistical row tests overlap",
-        "41. **Acceptance row 20 compares total gas with a hydrogen mass",
+        "38. ~~**A statistical row tests overlap",
+        "41. ~~**Acceptance row 20 compares total gas with a hydrogen mass",
         "42. **Row 6 passes at the edge",
         "43. **`NET_YIELD` and `WIND_SPEED` are each fitted",
         "44. **Row 2 cannot see past `KS_NORM`",
