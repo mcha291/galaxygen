@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
 status board is the only record of what is done (A9); this file does not repeat it,
 is rewritten in place each session, and is capped at 120 lines (C3) by a test.
-**The build is closed** (S0–S10; S11 integrated the S10 audits, S12 made the one-line fixes, 2026-09-07).
+**The build is closed** (S0–S10; S11 integrated the audits, S12 the one-line fixes, S13 the physics decisions).
 
 ## Open a session (rules C1, C2b)
 
@@ -30,7 +30,7 @@ galaxy/stages/            cp1 halo + disc; cp2 assembly; cp3 sfh, chemistry (sim
                           vertical_alpha (chemical split); cp4 pattern; cp5 systems;
                           cp6 planets. Shared where identical, mapped per model.
 galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight, determinism,
-                          spec (misses per model D87; "no testable target" D100), convergence (one axis
+                          spec (misses per model D87; "no testable target" D100; median D109), convergence (one axis
                           at a time D94; vacuous D101), performance (D95; fixed/per-star fit, one-off D101)
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
@@ -82,23 +82,23 @@ AUDIT_RUN1.md, AUDIT_RUN2.md   main's two S10 lists (diff D97); all four lists: 
   reports `fail`, never widen a target (B5), and a miss that starts *passing* fails the
   run for that model (debt #29). A pointwise row with `lo == hi` says "no testable target" (D100).
 
-## What the instruments said at S11 close (2026-09-07)
+## What the instruments said at S13 close (2026-09-07)
 
 - graph: acyclic, both models. preflight OK: 0 UNSET, 0 controls without a range.
   determinism OK, golden values pinned, and reproducible across processes (two hash seeds, S12).
-- spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23), 6 not-yet-computable;
-  advanced **8 pass, 11 fail, 5 not-yet-computable**. Unchanged since S9: no audit and no
-  integration changed physics. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
-- Numbers, to spot a regression by: R200 = 212.94, R_d = 2.49, M_star = 5.276e10, SFR
-  = 1.969, v_tan = 256.0 (both); simple grad −0.0237, old −0.0067, thick M 1.07e10, row
-  9 0.103; advanced grad −0.0566, old −0.0193, v_esc(R₀) 578, f_esc 0.753, spread 0.299.
+- spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23; row 3 low since S13), 6 n-y-c;
+  advanced **7 pass, 12 fail, 5 n-y-c** (row 6 joined at S13, debt #42). Every failure
+  recorded for its model. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
+- Numbers, to spot a regression by (S13): R200 212.94, c_vir 14.35, c200 10.91, R_d 2.49,
+  M_star 5.287e10, SFR 1.891, gas 5.714e9, H 4.171e9, v_tan 242.7 (both); simple grad −0.0236,
+  old −0.0064, thick M 1.42e10, row 9 0.152; advanced grad −0.0561, v_esc(R₀) 561.5, f_esc 0.757.
 - **Convergence** (D94, D101): 0 drifts on N_R, N_t, N_z in either model; the worst is
   row 3 under N_t at 0.055 of its width; advanced rows 5, 7–11 are `vacuous` (debt #27).
   **Profile** (D101, D103): 0.51 s simple, 0.81 s advanced (chemistry_dtd 41%); the
   catalogue is 90–95% fixed cost (134 / 123 ms, 0.3–0.7 µs per star); the first seeded
   draw costs ~10 ms, lands on `pattern`, and `tools/timings.py` stars the routes that pay it.
-- **Register**: 35 open, 10 discharged; S11 added #34–#45 (beta on Opus 5; the gamma pair),
-  S12 discharged #35, #37, #40 and registered #33's factor. The three audit branches stay unmerged.
+- **Register**: 31 open, 14 discharged; S13 discharged #29, #30, #38, #41 and half of #12
+  (D106–D109), probed the bulge (D110: it lowers row 3). The three audit branches stay unmerged.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 

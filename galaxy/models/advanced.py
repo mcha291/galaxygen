@@ -87,13 +87,16 @@ ADVANCED = MODELS.register(
                 "Chosen, not fitted, and the tilt it gives the gradient is a prediction.",
             ),
             "WIND_SPEED": Constant(
-                1010.0,
+                987.0,
                 "km/s",
                 "The escape velocity at which half of a generation's fresh metals leave the disc. "
                 "**The one fitted constant of the advanced chemistry**: set so the present-day "
                 "gas at R₀ is solar, the same calibration NET_YIELD carried for the simple model "
-                "(debt #16, rule B10). Everything the value implies elsewhere — the loss fraction "
-                "at every other radius, the gradient tilt — is then a prediction.",
+                "(debt #16, rule B10). Fitted at S9 to 1010 against a potential built on an "
+                "unconverted concentration; refitted at S13 to 987 once the halo converts c_vir to "
+                "c₂₀₀ (debt #12) and Sagittarius delivers a physical share (debt #29) — the bug fixed, "
+                "the constant re-examined (rule B10, debt #43). Everything the value implies elsewhere "
+                "— the loss fraction at every other radius, the gradient tilt — is then a prediction.",
             ),
             "IA_METAL_TO_IRON": Constant(
                 2.0,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
@@ -35,10 +37,10 @@ REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 19, 20, 22, 23}
 VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
 SUMMARY = {
     "simple": {"pass": 11, "fail": 7, "not-yet-computable": 6},
-    "advanced": {"pass": 8, "fail": 11, "not-yet-computable": 5},
+    "advanced": {"pass": 7, "fail": 12, "not-yet-computable": 5},
 }
-FAILED = {"simple": {2, 3, 5, 11, 20, 22, 23}, "advanced": {2, 3, 5, 7, 8, 9, 10, 11, 20, 23, 24}}
-DEBTS = {"simple": {15, 18, 19}, "advanced": {18, 27, 28}}
+FAILED = {"simple": {2, 3, 5, 11, 20, 22, 23}, "advanced": {2, 3, 5, 6, 7, 8, 9, 10, 11, 20, 23, 24}}
+DEBTS = {"simple": {11, 15, 18, 19}, "advanced": {11, 18, 27, 28, 42}}
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -106,7 +108,7 @@ def test_recorded_misses_are_well_formed():
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
     assert "spec" in out and "6 not-yet-computable of 24" in out and "5 not-yet-computable of 24" in out
-    assert "recorded miss, debt #18, since S1" in out   # row 3, eight sessions old
+    assert "recorded miss, debt #11, since S13" in out   # row 3: low since the concentration was converted
     assert "recorded miss, debt #19, since S3" in out
     assert "recorded miss, debt #15, since S2" in out
     assert "recorded miss, debt #27, since S9" in out
@@ -130,20 +132,21 @@ def test_pointwise():
 
 def test_zero_width_target_is_recorded_not_widened():
     q = Q[20]
-    d = scalar("gas_mass_30kpc")
-    assert spec.evaluate(q, {"gas_mass_30kpc": 8.0e9}, {"gas_mass_30kpc": d}, "m").status == "pass"
-    r = spec.evaluate(q, {"gas_mass_30kpc": 8.0e9 * (1 + 1e-9)}, {"gas_mass_30kpc": d}, "m")
+    d = scalar("hydrogen_mass_30kpc")
+    assert spec.evaluate(q, {"hydrogen_mass_30kpc": 8.0e9}, {"hydrogen_mass_30kpc": d}, "m").status == "pass"
+    r = spec.evaluate(q, {"hydrogen_mass_30kpc": 8.0e9 * (1 + 1e-9)}, {"hydrogen_mass_30kpc": d}, "m")
     assert r.status == "fail" and "zero-width" in r.reason
 
 
 def test_the_table_says_which_rows_have_no_testable_target():
     """Debt #17: the second of the two fixes it names, the first needing a source S10 has not got."""
-    assert {q.n for q in spec.untestable()} == {20, 21}
+    assert {q.n for q in spec.untestable()} == {14, 20, 21}
     assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21))
-    # Row 14 quotes no uncertainty either and is testable, because it is judged
-    # against an ensemble whose spread does the work.
-    assert Q[14].lo == Q[14].hi and Q[14].mode == "statistical" and Q[14].testable
-    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21))
+    # Row 14 quotes no uncertainty either; while a statistical row passed on its interval's
+    # reach it was exempt, and since S13 it passes on its median, which no float meets at
+    # zero width (debt #38).
+    assert Q[14].lo == Q[14].hi and Q[14].mode == "statistical" and not Q[14].testable
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in (14, 20, 21))
 
 
 def test_a_new_zero_width_row_cannot_be_added_silently():
@@ -157,10 +160,10 @@ def test_a_new_zero_width_row_cannot_be_added_silently():
 
 def test_the_report_names_the_table_defect(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "table: rows 20, 21 have zero-width targets" in out
+    assert "table: rows 14, 20, 21 have zero-width targets" in out
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
-    assert "5.79503e+09" in out
+    assert re.search(r"4\.171\d*e\+09", out)  # row 20's hydrogen mass, printed (S13)
 
 
 def test_statistical():
@@ -174,10 +177,10 @@ def test_statistical():
     assert ok.status == "pass" and ok.value == pytest.approx(35.0)
     bad = spec.evaluate(q, fields, decls, "m", {"bar_pattern_speed": np.linspace(60, 70, 50)})
     assert bad.status == "fail"
-    point = Q[14]  # 113 km/s, no error: the ensemble spread does the work
+    point = Q[14]  # 113 km/s, no error: since S13 no median meets it (debts #17, #38)
     dp = scalar("bulge_velocity_dispersion", "km/s")
-    r = spec.evaluate(point, {"bulge_velocity_dispersion": 100.0}, {"bulge_velocity_dispersion": dp}, "m", {"bulge_velocity_dispersion": np.linspace(100, 120, 40)})
-    assert r.status == "pass"
+    r = spec.evaluate(point, {"bulge_velocity_dispersion": 100.0}, {"bulge_velocity_dispersion": dp}, "m", {"bulge_velocity_dispersion": np.linspace(100, 120, 50)})
+    assert r.status == "fail" and "no testable target" in r.reason
 
 
 def test_qualitative():
@@ -239,43 +242,34 @@ def _stat(values, row=16):
     return spec.evaluate(q, {q.field: float(np.median(values))}, d, "m", {q.field: list(values)})
 
 
-def test_a_statistical_row_tests_overlap_and_not_agreement():
-    """S10 run 2: the criterion is 'the interval intersects the target' (debt #38).
-
-    So it asks whether the distribution *reaches* the observation, not whether it
-    is centred on it, and a median well outside the target passes as long as the
-    spread is wide enough. Recorded here rather than changed: the criterion is a
-    decision about what the acceptance table means, not a defect in an
-    implementation.
-    """
+def test_a_statistical_row_is_judged_on_its_median_not_on_its_reach():
+    """S13 (debt #38): the S0 criterion passed a row when the ensemble's interval *intersected*
+    the target, so a median well outside passed on spread alone and a noisier model was easier
+    to pass. The verdict is the median's now; the interval is published beside it."""
     q = Q[16]  # target [34, 52]
     assert (q.lo, q.hi) == (34.0, 52.0)
     assert _stat(43.0 + np.linspace(-20, 20, spec.ENSEMBLE_MIN)).status == "pass"
-    # 60 is 8 above the top of the target and still passes on spread alone.
-    assert _stat(60.0 + np.linspace(-20, 20, spec.ENSEMBLE_MIN)).status == "pass"
+    assert _stat(50.0 + np.linspace(-30, 30, spec.ENSEMBLE_MIN)).status == "pass"  # wide, but centred inside
+    # 60 is 8 above the top of the target: it fails at every spread, however wide.
     assert _stat(60.0 + np.linspace(-5, 5, spec.ENSEMBLE_MIN)).status == "fail"
-    # A wider ensemble is monotonically easier to pass — the model is rewarded for noise.
-    assert _stat(100.0 + np.linspace(-49, 49, spec.ENSEMBLE_MIN)).status == "fail"
-    assert _stat(100.0 + np.linspace(-60, 60, spec.ENSEMBLE_MIN)).status == "pass"
+    assert _stat(60.0 + np.linspace(-20, 20, spec.ENSEMBLE_MIN)).status == "fail"
+    assert _stat(100.0 + np.linspace(-60, 60, spec.ENSEMBLE_MIN)).status == "fail"
+    assert "median" in _stat(43.0 + np.linspace(-20, 20, spec.ENSEMBLE_MIN)).reason
 
 
-def test_the_ensemble_size_and_the_central_fraction_do_not_agree():
-    """S10 run 2: at n = 20 the 'central 95%' interval trims no whole draw (debt #38).
-
-    ``np.percentile`` interpolates, so the lower endpoint sits at order-statistic
-    index ``tail·(n−1)``. Below 1 that is between the smallest and second-smallest
-    values, which makes the interval the full range less a fraction of one gap —
-    set by the two most extreme draws, the noisiest statistics in the sample.
-    """
+def test_the_ensemble_size_and_the_central_fraction_agree_since_s13():
+    """S13 (debt #38): at n = 20 the 'central 95%' interval trimmed no whole draw, being pinned by
+    the two most extreme values; n = 41 is the smallest ensemble at which it excludes one draw
+    at each end, so the published interval is the fraction it is named after."""
     tail = (1.0 - spec.CENTRAL) / 2.0
-    assert (spec.ENSEMBLE_MIN, spec.CENTRAL) == (20, 0.95)
-    assert tail * (spec.ENSEMBLE_MIN - 1) == pytest.approx(0.475)
-    assert tail * (spec.ENSEMBLE_MIN - 1) < 1.0, "the finding is discharged; update debt #38"
-    assert int(np.ceil(1.0 / tail)) + 1 == 41  # the n this criterion would need
+    assert (spec.ENSEMBLE_MIN, spec.CENTRAL) == (41, 0.95)
+    assert tail * (spec.ENSEMBLE_MIN - 1) == pytest.approx(1.0)
+    assert tail * (spec.ENSEMBLE_MIN - 1) >= 1.0
 
     v = np.linspace(0.0, 1.0, spec.ENSEMBLE_MIN)
     lo, hi = np.percentile(v, [100 * tail, 100 * (1 - tail)])
-    assert (hi - lo) / (v.max() - v.min()) > 0.9  # 95% of the sample, 91% of its range
+    assert lo == pytest.approx(v[1]) and hi == pytest.approx(v[-2])  # one draw excluded at each end
+    assert (hi - lo) / (v.max() - v.min()) == pytest.approx(0.95)
 
 
 def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):

@@ -278,9 +278,11 @@ FEH_SPREAD_SUN = FieldDecl(
     name="feh_spread_sun", label="[Fe/H] dispersion of stars at R₀", unit="dex", kind=Kind.SCALAR,
     meaningful_zero=True, optional=True,
     about=(
-        "Mass-weighted standard deviation of [Fe/H] across every star now at the solar radius. "
-        "Without migration this is the width of the local age–metallicity relation alone and "
-        "comes out far too narrow (GALAXY_INPUTS.md §8); the observed local value is about 0.2 dex."
+        "Mass-weighted standard deviation of [Fe/H] across every star now at the solar radius, "
+        "migrants included. Without migration it is the width of the local age–metallicity relation, "
+        "0.29 dex; with it 0.30 (debt #32 — migration adds little). The catalogue the viewer draws "
+        "does not migrate (debt #31), so the stars it shows at R₀ carry 0.19 dex, not this number. "
+        "The observed local value is about 0.2 dex."
     ),
 )
 ALPHA_SPLIT = FieldDecl(
