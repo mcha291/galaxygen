@@ -40,9 +40,13 @@ from galaxy.stages.sfh import fit_scale_length, surface_to_mass
 SCALE_LENGTH_FIT = (1.0, 12.0)  # kpc
 
 
-def scale_height(sigma_z: np.ndarray | float, sigma_total: np.ndarray | float) -> np.ndarray:
-    """Isothermal self-gravitating sheet, in kpc; ``sigma_total`` in M☉/pc²."""
-    G = 4.300917270e-6
+def scale_height(sigma_z: np.ndarray | float, sigma_total: np.ndarray | float, G: float) -> np.ndarray:
+    """Isothermal self-gravitating sheet, in kpc; ``sigma_total`` in M☉/pc².
+
+    ``G`` is the registered constant, passed in: until S12 this file carried its own
+    copy of the number, so a change to level0's G would have left every scale height
+    on the old value (rule A9; AUDIT_RUN2.md D-9).
+    """
     return np.asarray(sigma_z) ** 2 / (2.0 * math.pi * G * np.asarray(sigma_total) * PC_PER_KPC**2)
 
 
@@ -100,6 +104,7 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     dt = ctx.grid.spec.t_max / ctx.grid.spec.n_t
     R_sun = float(ctx.constants["R_SUN"])
     ret = float(ctx.constants["RETURN_FRACTION"])
+    G = float(ctx.constants["G"])
 
     psi = ctx.fields["sfr_surface_density_history"]           # M☉/yr/kpc²
     formed = (1.0 - ret) * PC_PER_KPC * psi * dt              # M☉/pc² locked in per step
@@ -119,8 +124,8 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
 
     sig_thin, sig_thick = dispersion_at_sun(~thick_mask), dispersion_at_sun(thick_mask)
     total_at_sun = float(np.interp(R_sun, R, thin + thick + ctx.fields["gas_surface_density"]))
-    h_thin = float(scale_height(sig_thin, total_at_sun)) * PC_PER_KPC
-    h_thick = float(scale_height(sig_thick, total_at_sun)) * PC_PER_KPC if sig_thick > 0.0 else 0.0
+    h_thin = float(scale_height(sig_thin, total_at_sun, G)) * PC_PER_KPC
+    h_thick = float(scale_height(sig_thick, total_at_sun, G)) * PC_PER_KPC if sig_thick > 0.0 else 0.0
 
     s_thin = float(np.interp(R_sun, R, thin))
     s_thick = float(np.interp(R_sun, R, thick))
@@ -159,7 +164,7 @@ VERTICAL = IMPLEMENTATIONS.register(
             "model's vertical stage; the advanced model reads the split off [α/Fe] instead."
         ),
         compute=compute,
-        reads_constants=("R_SUN", "RETURN_FRACTION"),
+        reads_constants=("R_SUN", "RETURN_FRACTION", "G"),
         requires=(
             "sfr_surface_density_history", "gas_surface_density",
             "disc_heating", "last_major_merger_time",

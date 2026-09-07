@@ -9,6 +9,11 @@ Two properties, both checked empirically rather than assumed:
   pure functions of their arguments, so the result for one object cannot depend
   on which objects were generated before it, or whether any others were
   generated at all. The check generates a population in two orders and compares.
+- **Across processes** (S12, debt #40). Two runs in one interpreter share
+  ``PYTHONHASHSEED``, set and dict iteration order, the allocator and every
+  module-level cache, so a field that depended on any of them would compare equal
+  every time (rule B3). A production model is therefore also run in two fresh
+  interpreters under two hash seeds and the fields' bytes compared.
 
 Three golden values pin the derivation. If numpy changes its Generator streams,
 ``GOLDEN_DRAW`` fails; that is the instrument working, not a nuisance. Update it
@@ -18,8 +23,14 @@ under the old stream (rule B10).
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import subprocess
 import sys
 from collections.abc import Iterable, Mapping
+from dataclasses import asdict
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -36,6 +47,24 @@ GOLDEN_CHILD = 8756915065166511446  # seeds.child(0, "stub", 7)
 GOLDEN_DRAW = 0.45544494417321946  # seeds.rng(12345, "golden").random()
 
 SMALL = GridSpec(n_R=16, n_t=8, n_z=4, n_phi=6)
+ROOT = Path(__file__).resolve().parents[2]
+HASH_SEEDS: tuple[str, ...] = ("0", "1")
+
+# Run in a fresh interpreter: one production model at one grid, every field hashed.
+_ACROSS = """
+import hashlib, json, sys
+import numpy as np
+from galaxy.core.grids import GridSpec
+from galaxy.core.registry import production
+from galaxy.run import run
+models, _, _ = production()
+o = run(models.get(sys.argv[1]), grid=GridSpec(**json.loads(sys.argv[2])))
+out = {}
+for name, v in sorted(o.fields.items()):
+    a = np.asarray(v)
+    out[name] = hashlib.blake2b(a.tobytes(), digest_size=8).hexdigest() if a.dtype != object else str(v)
+print(json.dumps({"order": list(o.order), "fields": out}))
+"""
 
 
 def _equal(a: Any, b: Any) -> bool:
@@ -65,6 +94,36 @@ def check_reproducible(
     for name, value in a.fields.items():
         if name not in b.fields or not _equal(value, b.fields[name]):
             problems.append(Problem(model.name, "irreproducible", f"field {name!r} differs between two identical runs"))
+    return problems
+
+
+def _is_production(model: Model) -> bool:
+    models, _, _ = production()
+    return any(m is model for m in models)
+
+
+def check_reproducible_across_processes(
+    model_name: str, grid: GridSpec = SMALL, hash_seeds: Iterable[str] = HASH_SEEDS
+) -> list[Problem]:
+    """The production model ``model_name`` run in one fresh interpreter per hash seed; fields compared by hash."""
+    seen: list[dict[str, Any]] = []
+    for hs in hash_seeds:
+        proc = subprocess.run(
+            [sys.executable, "-c", _ACROSS, model_name, json.dumps(asdict(grid))],
+            capture_output=True, text=True, cwd=str(ROOT), check=False,
+            env={**os.environ, "PYTHONHASHSEED": hs},
+        )
+        if proc.returncode != 0:
+            return [Problem(model_name, "irreproducible", f"run under PYTHONHASHSEED={hs} failed: {proc.stderr[-500:]}")]
+        seen.append(json.loads(proc.stdout.splitlines()[-1]))
+    problems: list[Problem] = []
+    first = seen[0]
+    for other in seen[1:]:
+        if other["order"] != first["order"]:
+            problems.append(Problem(model_name, "irreproducible", f"stage order differs across processes: {first['order']} vs {other['order']}"))
+        for name, digest in first["fields"].items():
+            if other["fields"].get(name) != digest:
+                problems.append(Problem(model_name, "irreproducible", f"field {name!r} differs between two processes (PYTHONHASHSEED {list(hash_seeds)})"))
     return problems
 
 
@@ -113,6 +172,8 @@ def check(
     out = check_golden() + check_region()
     for m in models:
         out.extend(check_reproducible(m, impls, table, grid))
+        if _is_production(m):
+            out.extend(check_reproducible_across_processes(m.name, grid))
     return out
 
 
@@ -128,10 +189,16 @@ def report(
     lines.append("  golden values: " + ("OK" if not g else "FAIL"))
     r = check_region()
     lines.append("  per-region (order-independent child seeds): " + ("OK" if not r else "FAIL"))
+    failures: list[Problem] = list(g + r)
     for m in models:
         p = check_reproducible(m, impls, table, grid)
         lines.append(f"  model {m.name}: reproducible " + ("OK" if not p else "FAIL"))
-    for p in g + r + [q for m in models for q in check_reproducible(m, impls, table, grid)]:
+        failures.extend(p)
+        if _is_production(m):
+            x = check_reproducible_across_processes(m.name, grid)
+            lines.append(f"  model {m.name}: reproducible across processes (PYTHONHASHSEED {list(HASH_SEEDS)}) " + ("OK" if not x else "FAIL"))
+            failures.extend(x)
+    for p in failures:
         lines.append(f"    FAIL {p}")
     return "\n".join(lines)
 

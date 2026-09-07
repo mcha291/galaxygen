@@ -22,7 +22,9 @@ it exists to find (rule B3). ``--quick`` uses fewer grids for a CI-sized check.
 
 **Publish the number, not the verdict** (rule B6). The multiplier column is the
 advanced chemistry over the simple one at the default grid, and the whole-model
-row is both models end to end, cold in one process each.
+row is both models end to end, cold in one fresh interpreter each — since S12;
+until then it was the seventeenth model run of this process wearing the label
+(AUDIT_RUN2.md D-13, rule B2).
 """
 
 from __future__ import annotations
@@ -30,11 +32,15 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
+import sys
 import time
+from pathlib import Path
 from collections.abc import Sequence
 
 import numpy as np
 
+ROOT = Path(__file__).resolve().parents[1]
 GRIDS: tuple[int, ...] = (500, 1000, 2000, 4000, 8000)
 NAIVE_GRIDS: tuple[int, ...] = (250, 500, 1000, 2000)
 CHEM = ("metallicity_gradient",)
@@ -94,7 +100,8 @@ def time_naive(n_t: int, repeats: int = 2) -> float:
     return best
 
 
-def time_model(model_name: str) -> float:
+def _time_model_here(model_name: str) -> float:
+    """One full run in this process. Cold only if nothing has run here yet: see ``time_model``."""
     from galaxy.core.registry import production
     from galaxy.run import run
 
@@ -102,6 +109,17 @@ def time_model(model_name: str) -> float:
     start = time.perf_counter()
     run(models.get(model_name))
     return time.perf_counter() - start
+
+
+def time_model(model_name: str) -> float:
+    """Seconds for one full run of ``model_name`` in a fresh interpreter (rule B2)."""
+    proc = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve()), "--model", model_name],
+        capture_output=True, text=True, cwd=str(ROOT), check=False,
+    )
+    if proc.returncode != 0:
+        raise SystemExit(f"timing {model_name} cold failed:\n{proc.stderr[-2000:]}")
+    return float(proc.stdout.splitlines()[-1])
 
 
 def measure(grids: Sequence[int] = GRIDS, naive_grids: Sequence[int] = NAIVE_GRIDS) -> dict:
@@ -139,7 +157,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Scaling exponents in N_t for the chemistries (rule B7).")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--quick", action="store_true", help="three grids, for a check rather than the record")
+    parser.add_argument("--model", help=argparse.SUPPRESS)  # the subprocess entry point behind time_model
     args = parser.parse_args()
+    if args.model:
+        print(_time_model_here(args.model))
+        return 0
     m = measure((500, 1000, 2000), (250, 500, 1000)) if args.quick else measure()
     print(json.dumps(m, indent=2) if args.json else table(m))
     return 0

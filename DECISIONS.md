@@ -2210,3 +2210,88 @@ number on a stage-running route carries the 10 ms of D101's one-off, which is
 `session-11` is merged into `main` with `--no-ff`; `s11` is queued in
 MANUAL_TODO.md with S10's SHA filled in. The three audit branches stay on the
 remote, unmerged, as the sealed evidence D102 rests on.
+
+## Session 12 — the maintainer's one-line fixes
+
+Surface: desktop. Model: Fable 5.1. Branch `session-12`, cut from `main` at
+`b1a6230`, the S11 merge. BRIEF.md's "owed first" list, done: five fixes, each
+with a test, three debts discharged and one amended, no acceptance verdict moved.
+
+### D104. Five one-line fixes, each with a test: G, two tool labels, the midplane, the cross-process check, the Ia factor
+
+**Decision.** (1) `vertical.scale_height` takes `G` as an argument and both
+vertical stages declare the read; the literal copy of G in `vertical.py` is gone
+(AUDIT_RUN2.md D-9, rule A9) `[verified: tests/test_vertical.py::test_scale_height_reads_the_registered_G_not_a_copy]`.
+(2) `tools/scaling.py`'s "whole model, cold" row is measured in a fresh
+interpreter per model (D-13, rule B2) `[verified: tests/test_scaling.py::test_the_whole_model_row_is_measured_in_a_fresh_interpreter]`,
+and `tools/timings.py` probes the RNG after each route's cold request and stars
+the routes whose cold number carries the interpreter's first seeded draw, with a
+footer (debt #37) `[verified: tests/test_timings.py]`. (3) The halo stage
+publishes `halo_potential_midplane`, Φ(R, 0) exactly, and the advanced
+chemistry's `escape_velocity` reads it instead of `halo_potential`'s first
+z-row (debt #35) `[verified: tests/test_chemistry_dtd.py::test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_n_z]`.
+(4) `determinism.check` and `report` run each production model in two fresh
+interpreters under two `PYTHONHASHSEED`s and compare every field's bytes
+(debt #40) `[verified: tests/test_determinism.py::test_the_spec_checks_reproducibility_across_processes_too]`.
+(5) The Ia ejecta's metal-to-iron ratio is a registered constant,
+`IA_METAL_TO_IRON` = 2.0 `[recall]`, read by `chemistry_dtd` (debt #33)
+`[verified: tests/test_chemistry_dtd.py::test_the_ia_metal_to_iron_factor_is_a_registered_constant]`.
+Debts #35, #37 and #40 are discharged; #33 keeps the zero-point question.
+
+**Settled by.** Each was a claim the code did not honour: a rule quoted in the
+file that broke it (A9), a label that said cold on a warm number (B2), a field
+declared at the midplane and evaluated half a cell above it, a check that took
+the one path immune to its defect (B3), a constant with no registry entry. What
+the fixes moved: `escape_velocity` now reads the deeper plane value, so the
+advanced model's wind loading shifts imperceptibly and the present-day gradient
+reads −0.0565752 dex/kpc, from −0.0565751 at S11 — one part in 10⁶; no acceptance verdict changed and
+the spec counts are S9's `[verified: python -m galaxy.specs, exit 0, 2026-09-07]`.
+The midplane fix is the only one that touches a published number, and it is
+the right number for what the field says. Not done, and why: the z axis itself
+stays (debt #36 asks what it is for); `tools/timings.py` labels the one-off and
+does not subtract it (rule B6); the total-Z zero point is a physics question,
+not a registration.
+
+### D105. Cold timings at S12 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0004   0.0003   1.21        940  -
+    viewer: a module         0.0003   0.0003   1.07     21,599  -
+    index                    0.0000   0.0000   0.94      1,237  -
+    version                  0.0019   0.0021   0.91      1,132  -
+    stages                   0.0002   0.0002   0.95      8,672  -
+    fields                   0.0008   0.0006   1.29     57,707  -
+    inputs                   0.0001   0.0002   0.56      9,091  -
+    arrays: one profile      0.0895   0.0005 188.35      4,672  halo,assembly,disc,sfh
+    arrays: history          0.1458   0.0027  54.23  6,401,472  halo,assembly,disc,sfh,chemistry
+    arrays: scalar           0.0885   0.0003 299.29      1,416  halo,assembly,disc,sfh
+    region: one sector*      0.1656   0.0037  44.30     18,720  halo,assembly,disc,sfh,chemistry,vertical
+    region: whole disc*      0.3302   0.1400   2.36  1,126,208  halo,assembly,disc,sfh,chemistry,vertical
+    system: one star*        0.1701   0.0021  79.99      2,816  halo,assembly,disc,sfh,chemistry,vertical
+    adv: history             0.4571   0.0030 152.58  6,401,480  halo,assembly,disc,sfh,chemistry_dtd
+    adv: alpha plane         0.4694   0.0026 183.54  6,401,528  halo,assembly,disc,sfh,chemistry_dtd
+    adv: one sector*         0.4695   0.0035 134.72     18,736  halo,assembly,disc,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.4627   0.0022 211.18      2,824  halo,assembly,disc,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, numpy's bit-generator setup, about 10 ms here; measured alone by `python -m galaxy.specs.performance --one-off` (debt #37)
+    import + registry: 0.100-0.117 s, paid once per process and excluded from the cold column
+
+    model simple: 0.537 s cold, 0.528 s warm; import + registry 0.011 s
+    catalogue against sample size: 5k:0.1426s 10k:0.1526s 20k:0.1481s 40k:0.1497s -> 0.10 us per star, 146.4 ms fixed (99% of the catalogue at 20k does not depend on how many stars are asked for); layout 17.7 ms over all 1024 cells, 516 of them realise a star
+    one-off, first seeded draw: 11.28 ms then 0.025 ms (455x) — billed by this table to the first stage that draws (pattern); debt #37
+    model advanced: 0.869 s cold, 0.844 s warm; import + registry 0.008 s
+    catalogue against sample size: 5k:0.1296s 10k:0.1514s 20k:0.1411s 40k:0.1510s -> 0.39 us per star, 136.0 ms fixed (95% of the catalogue at 20k does not depend on how many stars are asked for); layout 16.8 ms over all 1024 cells, 516 of them realise a star
+    one-off, first seeded draw: 11.28 ms then 0.025 ms (455x) — billed by this table to the first stage that draws (pattern); debt #37
+    model simple: reproducible across processes (PYTHONHASHSEED ['0', '1']) OK
+    model advanced: reproducible across processes (PYTHONHASHSEED ['0', '1']) OK
+
+**Read within the run.** The starred rows are the ones whose cold number holds
+the interpreter's first seeded draw — the routes that materialise objects —
+which is what debt #37 asked the table to say; the arrays routes do not draw
+and are unstarred. The shape is D103's on the same desktop; the halo stage
+publishes one more profile and the vertical stages read one more constant,
+neither measurable in these columns, so `tools/scaling.py` is not re-run (rule
+B7). The determinism spec now prints its cross-process line per model.
+
+**Close.** Board row 12 (desktop, Fable 5.1, `s12`, 2026-09-07); `session-12`
+merged into `main` with `--no-ff`; `s12` queued in MANUAL_TODO.md with S11's
+SHA filled in.

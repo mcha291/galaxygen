@@ -1,24 +1,17 @@
 # BRIEF — after the build: what a maintainer opens with
 
-S0–S10 are closed; S11 (2026-09-07) integrated the three S10 audits onto `main`
-without merging their branches: debts #34–#45, the audits' measurements as tests,
-three instrument features, and the four lists' comparison in DECISIONS.md D102.
+S0–S10 are closed; S11 integrated the three S10 audits onto `main` without merging
+their branches (debts #34–#45, their tests, three instrument features, the four lists'
+comparison in D102); S12 made the one-line fixes (D104). Both 2026-09-07.
 Open per RESUMING.md, read RULES.md in full, then this. GALAXY_INPUTS.md §11 is the
-register and the only list of what is wrong (38 open). Work on a branch
-`session-12` or a topic branch; the close ritual still applies; rule C2e queues tags.
+register and the only list of what is wrong (35 open). Work on a branch
+`session-13` or a topic branch; the close ritual still applies; rule C2e queues tags.
 
-## What is owed first — one-line fixes, each with a test
+## What is owed first
 
-- `galaxy/stages/vertical.py::scale_height` hard-codes G; read the constant and add
-  `G` to both vertical stages' `reads_constants` (AUDIT_RUN2.md D-9).
-- `tools/scaling.py::measure` labels a warm run "whole model, cold" (D-13); measure
-  it in a subprocess or relabel. `tools/timings.py`'s cold column carries the 10 ms
-  first-draw one-off unlabelled (debt #37): say so in the table.
-- `escape_velocity` is declared at the midplane and evaluated half a cell above it
-  (debt #35): evaluate the potential at z = 0.
-- `python -m galaxy.specs` still checks reproducibility in one interpreter (debt #40);
-  the suite has the cross-process form — move it into `determinism.py`.
-- The Ia iron-peak factor `2.0` in `chemistry_dtd.py` belongs in the register (#33).
+Nothing small. S12 made the one-line fixes (DECISIONS.md D104): G read from the
+registry, the two tool labels, the midplane escape velocity, the cross-process
+determinism check, the Ia factor registered. What remains is physics, below.
 
 ## The decisions a maintainer must take — physics, not fixes
 

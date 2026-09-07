@@ -95,6 +95,14 @@ ADVANCED = MODELS.register(
                 "(debt #16, rule B10). Everything the value implies elsewhere — the loss fraction "
                 "at every other radius, the gradient tilt — is then a prediction.",
             ),
+            "IA_METAL_TO_IRON": Constant(
+                2.0,
+                "dimensionless",
+                "Total metal mass a type Ia ejects per unit iron mass: the ejecta are iron-peak "
+                "throughout, about twice the iron by mass [recall]. Until S12 this was a bare 2.0 in "
+                "chemistry_dtd (debt #33); it sets the advanced model's total-Z zero point, which reads "
+                "1.24 Z☉ where [Fe/H] = 0 and is still debt #33's question. No stage reads Z yet.",
+            ),
         },
     )
 )
