@@ -653,6 +653,22 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
 2. M_• derived from M–σ misses the MW by 5–6×.
+   **S17 built it and the miss is exactly the recorded size.** The `nucleus` stage
+   (checkpoint 1, the first seeded stage in the run) publishes `black_hole_mass` as
+   ruling 10 specifies: the M–σ mean of the spheroid's own dispersion, times a
+   lognormal residual drawn from `world_seed`. The ensemble's median is 2.0 × 10⁷ M☉
+   and the mean relation 2.9 × 10⁷, against 4.2 ± 0.2 × 10⁶ — 0.67 and 0.83 dex high,
+   the ~0.75 GALAXY_INPUTS.md §3 says is expected `[verified: spec._MISSES row 18]`.
+   **This debt is not the model's to discharge.** The relation is calibrated on
+   classical bulges and ellipticals; the Milky Way's spheroid is a pseudobulge and
+   pseudobulges do not correlate with the hole at all (§13), so the mean is being asked
+   a question it cannot answer, and the model's own `bulge_classical_fraction` (0.17)
+   says so in its own terms. What would discharge it is a published pseudobulge
+   calibration — a zero point and a width — entered before the row is next judged; that
+   is S22's ruling, not a session's build. Two closures were available and both refused
+   with the answer already known (rule B5): an M_•–M_bulge relation on the classical
+   share alone reads 5.2 × 10⁶ and would land the row, and a hard branch on bulge type
+   needs a crossover constant ruling 10 declined to add.
 3. m_d derived by abundance matching rather than from feedback physics.
 4. Pitch-angle closure radius is arbitrary — largely dissolved by ruling 3 (§5).
 5. Cooling delay from halo assembly to SF onset is unvalidated (§3).
@@ -742,6 +758,27 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    5–8 (D110) is the other half and more than closes it — the prediction is now that S17
    reads the row inside 245–251, and if the bulge overshoots below 245 the two mechanisms
    together are too much and debt #46's invariant is too weak, not too strong.
+   **S17: the spheroid is built and that prediction failed — the bulge is worth 1.6 km/s,
+   not 5–8, and row 3 reads 251.3, a quarter of a km/s outside** (D121). The model is no
+   longer one baryonic component: it is an exponential disc, the high-j tail beyond 12 kpc
+   and a Hernquist spheroid of 7.71 × 10⁹ M☉ inside 2.5 kpc, all three derived from the
+   same angular-momentum distribution and all three contracted around. Why D110's probe
+   over-read by a factor of four: it drew the spheroid from the *stellar* disc in
+   proportion on the uncontracted S13 halo, whereas the derived spheroid comes out of the
+   accreting budget — and that budget included the ~15% of the exponential that lay
+   outside R₀ and pulled the Sun outward, so moving it inward gives back nearly as much as
+   the disc's flattening loses. Measured at S17: 1.4 × 10¹⁰ in the spheroid is worth 3.7
+   km/s and 1.7 × 10¹⁰ is worth 4.2 `[verified: spec._MISSES row 3]`.
+   **Rows 12, 13 and 14 are this debt's now, with row 3, and they have one cause.** The
+   spheroid is 45% under the observed 1.4–1.7 × 10¹⁰ because it is only the mass no
+   exponential disc *could* hold; BHG16 §4.2 says most of the Milky Way's bulge is the
+   box/peanut a bar makes of the inner disc, and this model has no bar dynamics (debt
+   #21). The prediction: buckling adds ~7 × 10⁹ and lands rows 12, 13 **and 3** together
+   — and pushes row 14 from 116 to 123, outside 110–116, unless the bar-built component is
+   less concentrated than the dissipational one. What S17 removed from this debt: rows 1
+   and 10 no longer pass on the cancellation S10 recorded. Row 1 is the disc's stars *plus*
+   the spheroid, which is what its target (rows 10 + 11 + 12) always meant, and row 10
+   reads 3.17 × 10¹⁰ — inside whether or not row 11 is right (3.66 × 10¹⁰ if it were).
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
    ΛCDM median halo of the default mass, derived below, and the relation's validation is
@@ -903,6 +940,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S13:** row 14 joins rows 20 and 21 as untestable — a statistical row now passes on
    its median (debt #38), which no float meets at zero width either `[verified:
    tests/test_spec.py::test_the_table_says_which_rows_have_no_testable_target]`.
+   **S17: row 14 leaves the list, by the remedy this debt asks for and no other.** The row
+   was about to be judged for the first time (the bulge did not exist until S17), so the
+   source was read again, and BHG16 does quote an uncertainty for the bulge's dispersion
+   where it quotes none for the gas masses: "the rms is σ_rms,b ≈ 113 km/s, to ≈3 km/s",
+   mass-weighted within the bulge's half-mass radius `[verified: BHG16 §4.3, read at S17]`.
+   The target is now 110–116 and the model fails it at 116.2, honestly. The width is the
+   source's verbatim and nothing was chosen: the model's number was already known when the
+   source was consulted, and that is recorded in D122 so a reader can weigh it. Rows 20 and
+   21 stay, and the debt stays **open** for them — the same reading of Nakanishi & Sofue
+   still finds no uncertainty.
 18. ~~**No high-angular-momentum accretion component.**~~ **DISCHARGED at S16 — built,
    as the high-j tail of the halo's angular-momentum distribution, and the timescale the
    register wanted for it turned out not to be the decision** (D119; what it leaves is
@@ -1409,6 +1456,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    it anyway. Both bite at the same moment: the bulge rows (13, 14, 18) debt
    #8 is waiting on are precisely the ones that would read `world_seed` beside
    another.
+   **S17 discharged the second half: `world_seed` is live.** The `nucleus` stage reads
+   it for the M_• residual — the exact use its declaration named — and it binds at
+   checkpoint 1, which is its own hypothesis, so no input of either model is unbound
+   any more `[verified: tests/test_spec.py::test_world_seed_is_live_and_every_declared_
+   seed_is_bound, tests/test_graph.py::test_production_graphs_hold]`. What S17 found
+   about the other half is that the moment did not arrive after all: rows 13 and 14
+   came out **derived**, not seeded — the spheroid's mass and dispersion are determined
+   — so only row 18 reads `world_seed`, and no published quantity depends on two seeds
+   yet. The diagonal stays a diagonal and this debt stays **open** for that.
 40. ~~**`determinism.check_reproducible` runs the model twice in one interpreter**~~
    **DISCHARGED by S12.** `determinism.check` and `report` also run each production
    model in two fresh interpreters under two `PYTHONHASHSEED`s and compare every
@@ -1484,6 +1540,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    tests/test_audit.py::test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models]`.
    The rule stands: rows 6 and 7 judged together, both constants re-examined, when the
    valley opens.
+   **S17: the simple model's row 6 crossed to the other edge and the advanced one went
+   further out.** The spheroid takes 13% of the budget out of the disc, Σ(R₀) falls and
+   h_z = σ²/2πGΣ rises: the simple row 6 went 275 → 321 pc (it entered this debt at 255,
+   24 pc off the *floor*, and is now 29 pc off the ceiling) and the advanced 384 → 439.
+   Neither heating constant was touched. That is the debt's own point made twice over —
+   this row has been inside for four sessions and never for a stable reason — and it
+   sharpens the rule rather than changing it: when S20 opens the valley, rows 6 and 7 are
+   judged together at whatever Σ(R₀) the disc has *then*, and a row 6 that lands must be
+   shown to land on σ_z rather than on the surface density it divides by.
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
    present-day gas at R₀ solar (debt #16, D89), and both were fitted with no
@@ -1520,6 +1585,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    993 (−0.004 dex; v_esc(R₀) 569 → 568). What both now sit on is the tail as derived and
    the constant threshold; the derived threshold D119 probed moves the gas at R₀ by −0.085
    dex and would move both again. Provisional on that and on the bulge (#11).
+   **S17:** the bulge arrived, and it barely moved them — which is itself the finding. The
+   spheroid takes 13% of the budget out of the disc, but the gas at R₀ read only −0.005 dex
+   (simple) and −0.007 (advanced), a fifth of S16's shift, because a disc with less gas
+   also makes fewer stars and the effective yield is a ratio. Refitted anyway, on the rule
+   rather than on the size: `NET_YIELD` 0.0117 → 0.01184 (+1.2%) and `WIND_SPEED` 993 →
+   982.2 (−1.1%), each by bisection to solar at R₀; `metal_escape_fraction`(R₀) 0.7536 →
+   0.7503. Still provisional on the derived threshold and now on the bar (#11, #21).
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1572,6 +1644,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    not toward it — the tail carries no metals in and steepens nothing inside 12 kpc, so
    the wind's tilt is the one doing the work. The ratio still multiplies nothing at 1.0;
    the tail is not its second value in disguise because it has no inner part.
+   **S17: the debt got wider, not narrower.** The spheroid steepened every setting of the
+   sweep by about 0.006 dex/kpc, and 1.25 came inside row 22's window alongside 1.0 — so a
+   constant that multiplies nothing at its default now carries the advanced model's row 22
+   over a quarter of its 0.8–1.5 range rather than a tenth (−0.106, −0.064, −0.051, −0.046
+   `[verified: tests/test_audit.py::test_debt_45_the_infall_scale_ratio_trades_the_
+   structure_rows_against_the_gas_rows]`). Row 3 at 1.5 reads 236.1 and row 2 there 2.56.
 46. **The contraction's strength is a simulation calibration, and every published
    one overshoots row 3** (S14). The halo's response to the disc is modelled with
    Gnedin et al. 2004's invariant r M(r̄), r̄ = A R₂₀₀ (r/R₂₀₀)^w at A = 0.85, w = 0.8
@@ -1635,6 +1713,38 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    together; if row 9 cannot be restored with the threshold derived, the thick disc's split
    criterion is what is wrong (debt #19), not the threshold. A model that sizes the tail to
    the HI instead would pass row 20 by construction and is the wrong answer that passes.
+   **S17: row 2 left this debt without the mechanism being built, and that is worth
+   knowing.** The spheroid took 13% of the budget out of what the disc accretes and the
+   rate fell 2.08 → 1.82, inside 1.65 ± 0.19 for the first time since S2, so the recorded
+   miss was removed (a miss that passes is itself an error, debt #29). The threshold is
+   still the constant 5 M☉/pc² at the bottom of its range and nothing about it changed, so
+   the debt is unaltered and rows 9 and 20 are still judged with it at S18 — **but row 2 is
+   no longer available as evidence there**, and it now sits inside a window its own
+   KS_NORM band straddles: at −1σ the row reads 1.97 and fails, at +1σ 1.73 and passes
+   `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_past_ks_norms_own_
+   uncertainty]`. Debt #44's original claim is true again, which is the honest reading of
+   a green row 2. The tail's own μ sensitivity is unchanged; row 20 read 6.24 → 6.03 × 10⁹.
+48. **The M_• residual's width is the classical one, for a bulge the model calls 83%
+   pseudo** (S17, D121). Ruling 10 (§13) specifies the width "interpolated by the classical
+   bulge fraction the model computes", between 0.28 dex for a fully classical bulge and
+   "the observed pseudobulge spread, ~no correlation" at the other end. The model computes
+   the fraction — `bulge_classical_fraction`, 0.17, and it lands inside BHG16 §4.2.4's
+   0–25% for the Milky Way — but **the pseudobulge endpoint has no published number to
+   interpolate towards**: Kormendy & Ho declined to fit pseudobulges at all, on the grounds
+   that the relation has no physical significance for them, and Ho & Kim 2014 say only "a
+   different zero point and much larger scatter" `[verified: Kormendy & Ho 2013 abstract
+   and Ho & Kim 2014 abstract, read at S17]`. Inventing a width would be showing a missing
+   number as a measured one (rule B9), so `BLACK_HOLE_SCATTER` is the classical 0.28 dex
+   and the model **understates** the spread: at the default it publishes a central 95%
+   interval of 5.7 × 10⁶ – 9.4 × 10⁷ where the truth is wider. It moves no verdict — a
+   statistical row is judged on its median (D109) and the median is the mean relation at
+   any width — so this is a defect in what the model *claims*, not in what it scores.
+   **What discharges it:** a citation giving the pseudobulge scatter, after which the
+   interpolation is two lines and the fraction is already there to drive it. **Prediction,
+   stated so it can fail:** whatever that number is, row 18's verdict does not move, and if
+   a future session finds the verdict moving when the width is entered, the ensemble's
+   median is being estimated at too small an n (ENSEMBLE_MIN = 41 gives a median 0.16 dex
+   below the mean here) rather than the width mattering.
 
 ---
 

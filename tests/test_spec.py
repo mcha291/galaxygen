@@ -33,14 +33,17 @@ def test_every_row_names_a_field():
     assert Q[24].mode == "qualitative" and Q[24].expect == "bimodal_wide"
 
 
-REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 19, 20, 22, 23}
+REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
 SUMMARY = {
-    "simple": {"pass": 10, "fail": 8, "not-yet-computable": 6},  # row 7 since S16 (D119)
-    "advanced": {"pass": 7, "fail": 12, "not-yet-computable": 5},
+    "simple": {"pass": 11, "fail": 11, "not-yet-computable": 2},  # rows 12-14, 18 arrived and row 2 landed at S17 (D121)
+    "advanced": {"pass": 9, "fail": 14, "not-yet-computable": 1},
 }
-FAILED = {"simple": {2, 3, 5, 7, 11, 20, 22, 23}, "advanced": {2, 3, 5, 6, 7, 8, 9, 10, 11, 20, 23, 24}}
-DEBTS = {"simple": {11, 15, 19, 47}, "advanced": {11, 27, 28, 42, 47}}  # S16: rows 2 and 20 under #47, row 7 (simple) under #19; row 3 under #11 since S15
+FAILED = {
+    "simple": {3, 5, 7, 11, 12, 13, 14, 18, 20, 22, 23},
+    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 23, 24},
+}
+DEBTS = {"simple": {2, 11, 15, 19, 47}, "advanced": {2, 11, 27, 28, 42, 47}}  # S17: rows 12-14 under #11 with row 3, row 18 under #2; row 2 landed and left, and so did advanced row 10
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -107,7 +110,7 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "6 not-yet-computable of 24" in out and "5 not-yet-computable of 24" in out
+    assert "spec" in out and "2 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
     assert "recorded miss, debt #11, since S15" in out   # row 3: the baryons, once the epoch is derived (under #12 at S14, high since the halo contracted; low at S13)
     assert "recorded miss, debt #19, since S3" in out
     assert "recorded miss, debt #15, since S2" in out
@@ -140,13 +143,13 @@ def test_zero_width_target_is_recorded_not_widened():
 
 def test_the_table_says_which_rows_have_no_testable_target():
     """Debt #17: the second of the two fixes it names, the first needing a source S10 has not got."""
-    assert {q.n for q in spec.untestable()} == {14, 20, 21}
+    assert {q.n for q in spec.untestable()} == {20, 21}  # row 14 left at S17: the source does quote an uncertainty
     assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21))
-    # Row 14 quotes no uncertainty either; while a statistical row passed on its interval's
-    # reach it was exempt, and since S13 it passes on its median, which no float meets at
-    # zero width (debt #38).
-    assert Q[14].lo == Q[14].hi and Q[14].mode == "statistical" and not Q[14].testable
-    assert all(q.testable for q in spec.QUANTITIES if q.n not in (14, 20, 21))
+    # Row 14 was on the list until S17, when the remedy debt #17 actually asks for arrived: the
+    # source does quote an uncertainty for the bulge's dispersion, "to = 3 km/s" (BHG16 §4.3),
+    # and it was entered rather than invented. Rows 20 and 21's sources still quote none.
+    assert Q[14].lo == 110.0 and Q[14].hi == 116.0 and Q[14].mode == "statistical" and Q[14].testable
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21))
 
 
 def test_a_new_zero_width_row_cannot_be_added_silently():
@@ -160,10 +163,10 @@ def test_a_new_zero_width_row_cannot_be_added_silently():
 
 def test_the_report_names_the_table_defect(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "table: rows 14, 20, 21 have zero-width targets" in out
+    assert "table: rows 20, 21 have zero-width targets" in out
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
-    assert re.search(r"6\.24\d*e\+09", out)  # row 20's hydrogen mass, printed (S13; 4.171e9 until S16 built the tail)
+    assert re.search(r"6\.02\d*e\+09", out)  # row 20's hydrogen mass, printed (6.243e9 until S17; 4.171e9 until S16)
 
 
 def test_statistical():
@@ -177,10 +180,16 @@ def test_statistical():
     assert ok.status == "pass" and ok.value == pytest.approx(35.0)
     bad = spec.evaluate(q, fields, decls, "m", {"bar_pattern_speed": np.linspace(60, 70, 50)})
     assert bad.status == "fail"
-    point = Q[14]  # 113 km/s, no error: since S13 no median meets it (debts #17, #38)
+    # Row 14 carried the zero-width defect until S17 entered the source's own ±3 (debt #17).
+    # Its median is judged like any other statistical row now, and a median outside the window
+    # still fails: the row is testable, not lenient.
+    point = Q[14]  # 113 ± 3 km/s since S17
     dp = scalar("bulge_velocity_dispersion", "km/s")
-    r = spec.evaluate(point, {"bulge_velocity_dispersion": 100.0}, {"bulge_velocity_dispersion": dp}, "m", {"bulge_velocity_dispersion": np.linspace(100, 120, 50)})
-    assert r.status == "fail" and "no testable target" in r.reason
+    ens = {"bulge_velocity_dispersion": np.linspace(100, 120, 50)}
+    assert spec.evaluate(point, {"bulge_velocity_dispersion": 110.0}, {"bulge_velocity_dispersion": dp}, "m", ens).status == "pass"
+    far = {"bulge_velocity_dispersion": np.linspace(120, 140, 50)}
+    r = spec.evaluate(point, {"bulge_velocity_dispersion": 130.0}, {"bulge_velocity_dispersion": dp}, "m", far)
+    assert r.status == "fail" and "no testable target" not in r.reason
 
 
 def test_qualitative():
@@ -288,19 +297,26 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
     assert alone == together
 
 
-def test_world_seed_is_read_by_no_stage_of_either_model(prod):
-    """S10 run 2: one of the four declared seeds is inert (debt #39).
+def test_world_seed_is_live_and_every_declared_seed_is_bound(prod):
+    """S10 run 2 found one of the four seeds inert (debt #39); S17's nucleus stage reads it.
 
-    ``graph`` reports it as unbound rather than failing, which is deliberate — an
-    input no stage reads yet is a gap, not an error. What is worth pinning is that
-    ``spec.ensemble`` varies it anyway, so a quarter of the nominal seed dimension
-    does nothing.
+    ``graph`` reported it as unbound rather than failing, which was deliberate — an input
+    no stage reads yet is a gap, not an error — and what this test pinned was that
+    ``spec.ensemble`` varied it anyway, so a quarter of the nominal seed dimension did
+    nothing. The M_• residual is what ruling 10 always meant it for, and now that the
+    spheroid exists to have a dispersion, it draws it. Debt #39's other half stands: the
+    ensemble is still a diagonal, moving every seed together rather than one at a time.
     """
+    from galaxy.run import run as _run
     from galaxy.specs.graph import build
 
     models, impls, table = prod
     for m in models:
         read = {s for st in build(m, impls, table).order for s in st.reads_seeds}
-        assert "world_seed" not in read
-        assert read == {"pattern_seed", "systems_seed", "planets_seed"}
-        assert build(m, impls, table).unbound_inputs == ("world_seed",)
+        assert read == {"world_seed", "pattern_seed", "systems_seed", "planets_seed"}
+        assert build(m, impls, table).unbound_inputs == ()
+        # And it moves something: rerolling it alone changes M_• and nothing upstream.
+        a = _run(m, {"world_seed": 0}, only=("black_hole_mass", "bulge_velocity_dispersion"))
+        b = _run(m, {"world_seed": 5}, only=("black_hole_mass", "bulge_velocity_dispersion"))
+        assert a.fields["black_hole_mass"] != b.fields["black_hole_mass"]
+        assert a.fields["bulge_velocity_dispersion"] == b.fields["bulge_velocity_dispersion"]

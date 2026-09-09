@@ -189,9 +189,11 @@ def test_the_conversion_moved_row_3_and_nothing_else(model):
     k_unconverted = concentration_at(dvir, c_unconverted, 200.0) / (1.0 + z)  # the K whose c_vir converts to it
     before, after = run(_with_norm(model, k_unconverted)), run(model)
     assert float(before.fields["halo_concentration"]) == pytest.approx(c_unconverted, abs=0.01)
-    assert float(before.fields["v_tangential_sun"]) == pytest.approx(263.9, abs=0.5)  # 270.8 until S16; 283.2 until S15; 256.2 until S14
-    assert float(after.fields["v_tangential_sun"]) == pytest.approx(252.9, abs=0.5)  # 260.1 until S16; 270.8 until S15; 242.7 until S14
-    assert 251.0 < float(after.fields["v_tangential_sun"]) < float(before.fields["v_tangential_sun"])
+    assert float(before.fields["v_tangential_sun"]) == pytest.approx(262.4, abs=0.5)  # 263.9 until S17; 270.8 until S16; 283.2 until S15
+    assert float(after.fields["v_tangential_sun"]) == pytest.approx(251.3, abs=0.5)  # 252.9 until S17; 260.1 until S16; 270.8 until S15
+    # The conversion is worth 11.1 km/s now, one half-width less than at S16: it moves the
+    # spheroid too (the low-j excess is read off the same curve), and the spheroid pushes back.
+    assert 250.0 < float(after.fields["v_tangential_sun"]) < float(before.fields["v_tangential_sun"])
     # Until S16 every other row moved by < 1e-9. The high-j tail is mapped onto the plane on the
     # rotation curve (j = R v_c), so the halo's parameters now reach the infall through it: the
     # conversion moves row 2 by 0.4% and the gas mass by 2.3% - the tail's edge moves with the curve (D119). Row 19 is exact.
@@ -217,16 +219,18 @@ def test_the_epoch_row_3_wants_is_below_the_cited_range(model):
     Until S14 the row wanted 2.7–3.1, the top of the range; the contraction turned it round.
     Choosing z_f against a row whose answer is known is the move rule B5 exists to prevent;
     S15 derived the default from the ΛCDM median instead, 1.66, and the row still misses
-    (260.1); S16's tail moved what the row wants to 1.1–1.2 (252.9 at the default). This test
-    is what notices if the range the row wants moves.
+    (260.1); S16's tail moved what the row wants to 1.1–1.2 (252.9 at the default) and S17's
+    spheroid to 1.3–1.4 (251.3), a quarter of a km/s outside. This test is what notices if the
+    range the row wants moves, and it has now moved towards the default three sessions running
+    without reaching it.
     """
-    inside = [z for z in (0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 2.0, 2.5, 3.0)
+    inside = [z for z in (0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 2.0, 2.5, 3.0)
               if 245.0 <= float(run(model, {"halo_assembly_z": z}).fields["v_tangential_sun"]) <= 251.0]
-    assert inside == [1.1, 1.2]  # [0.7, 0.8, 0.9, 1.0] until S16
+    assert inside == [1.3, 1.4]  # [1.1, 1.2] until S17; [0.7, 0.8, 0.9, 1.0] until S16
     lo = float(run(model, {"halo_assembly_z": 2.0}).fields["v_tangential_sun"])
     hi = float(run(model, {"halo_assembly_z": 3.0}).fields["v_tangential_sun"])
-    assert lo == pytest.approx(257.6, abs=0.3)  # 264.5 until S16; 236.4 until S14
-    assert hi - lo == pytest.approx(12.3, abs=0.3)  # the cited range spans four half-widths of the target, all of it high (12.8 until S14)
+    assert lo == pytest.approx(256.0, abs=0.3)  # 257.6 until S17; 264.5 until S16; 236.4 until S14
+    assert hi - lo == pytest.approx(12.4, abs=0.3)  # the cited range spans four half-widths of the target, all of it high (12.8 until S14)
 
 
 # --- S14, the halo's response to the disc (debt #6) -----------------------------
@@ -314,25 +318,29 @@ def test_the_named_rulesets_and_what_each_is_worth_at_R0(model):
     against 245–251. At the S15 default (z_f 1.66, c₂₀₀ 8.24) the less concentrated halo responds
     *more* — 119.3 → 165.8 or 180.6, r_i/r_f 1.50 — and the row read 260.1 or 270.2; with S16's
     tail the total is less compact and the response a little smaller: 163.3 or 178.0, and the row
-    252.9 or 263.3. The ruleset was chosen before the row was read; the row did not choose it.
-    A = 1.6 at w = 0.8 read 245.6 at S15, inside, and reads 239.8 now, out the other way — not
+    252.9 or 263.3; with S17's spheroid the same mass is more compact again and the row reads
+    251.3 or 262.2. The ruleset was chosen before the row was read; the row did not choose it.
+    A = 1.6 at w = 0.8 read 245.6 at S15, inside, and reads 238.1 now, out the other way — not
     adopted either time: the Auriga-calibrated response [recall: Cautun et al. 2020] agrees with
     Gnedin's at R₀ to 2 km/s, not with 1.6 (D117).
     """
     gnedin, blumenthal = out(model), run(_with_contraction(model, 1.0, 1.0))
     for o in (gnedin, blumenthal):
         assert o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(119.3, abs=0.1)  # 138.6 until S15
-    assert gnedin.fields["halo_circular_velocity_sun"] == pytest.approx(163.3, abs=0.2)  # 165.8 until S16; 181.4 until S15
-    assert blumenthal.fields["halo_circular_velocity_sun"] == pytest.approx(178.0, abs=0.2)  # 180.6 until S16; 195.6 until S15
-    assert gnedin.fields["v_tangential_sun"] == pytest.approx(252.9, abs=0.5)  # 260.1 until S16; 270.8 until S15
-    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(263.3, abs=0.5)  # 270.2 until S16; 280.9 until S15
+    assert gnedin.fields["halo_circular_velocity_sun"] == pytest.approx(163.2, abs=0.2)  # 163.3 until S17; 181.4 until S15
+    assert blumenthal.fields["halo_circular_velocity_sun"] == pytest.approx(178.5, abs=0.2)  # 178.0 until S17; 195.6 until S15
+    assert gnedin.fields["v_tangential_sun"] == pytest.approx(251.3, abs=0.5)  # 252.9 until S17; 270.8 until S15
+    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(262.2, abs=0.5)  # 263.3 until S17; 280.9 until S15
     assert float(np.interp(8.2, gnedin.grid.R, gnedin.fields["halo_contraction"])) == pytest.approx(1.47, abs=0.01)  # 1.50 until S16; 1.42 until S15
     assert float(np.interp(8.2, blumenthal.grid.R, blumenthal.fields["halo_contraction"])) == pytest.approx(1.65, abs=0.01)  # 1.68 until S16; 1.57 until S15
     weak = run(_with_contraction(model, 1.6, 0.8), only=("v_tangential_sun",))
-    assert weak.fields["v_tangential_sun"] == pytest.approx(239.8, abs=0.5)  # 245.6 until S16; 256.7 until S15; not adopted
-    # The response tends to a constant at the centre, where disc and halo both enclose mass as R², and falls outward.
+    assert weak.fields["v_tangential_sun"] == pytest.approx(238.1, abs=0.5)  # 239.8 until S17; 245.6 until S16; not adopted
+    # The response tends to a constant at the centre where the *disc* and the halo both enclose
+    # mass as R², and falls outward. Since S17 the spheroid is there too and it does not: a
+    # Hernquist sphere encloses mass as r² only well inside a = 0.36 kpc, and the first grid
+    # cell is at 0.04 kpc, so the innermost ratio jumped 2.45 → 4.85 with the spheroid.
     ratio = gnedin.fields["halo_contraction"]
-    assert ratio[0] == pytest.approx(2.45, abs=0.02) and np.all(np.diff(ratio) < 0.0)  # 2.51 until S16; 2.22 until S15
+    assert ratio[0] == pytest.approx(4.85, abs=0.02) and np.all(np.diff(ratio) < 0.0)  # 2.45 until S17; 2.22 until S15
     # It moved nothing upstream of the kinematics until S16; the high-j tail is mapped onto the plane on
     # the rotation curve, so the ruleset now reaches the infall through it — row 2 by 0.9%, the masses by less (D119).
     assert float(gnedin.fields["halo_virial_mass"]) == float(blumenthal.fields["halo_virial_mass"])
@@ -443,3 +451,142 @@ def test_the_tail_moves_the_halos_response_and_not_the_scale_length(model):
                  only=("infall_tail_share", "infall_tail_inner_radius"))
     assert peaked.fields["infall_tail_inner_radius"] == pytest.approx(11.0, abs=0.2)
     assert abs(peaked.fields["infall_tail_share"] - o.fields["infall_tail_share"]) < 0.01
+
+
+# --- S17, the spheroid: the low-j end of the same distribution (debt #11) --------
+
+
+def test_the_hernquist_half_mass_radius_is_algebra():
+    """a(1 + sqrt 2) is where r^2/(r + a)^2 = 1/2; the scale radius is set by inverting it (D121)."""
+    from galaxy.stages.halo import HERNQUIST_HALF_MASS, hernquist_enclosed
+
+    for a in (0.1, 0.365, 2.0):
+        assert hernquist_enclosed(a * HERNQUIST_HALF_MASS, 1.0, a) == pytest.approx(0.5, rel=1e-12)
+    # And the density is the derivative of the enclosed mass, which is what the Jeans integral needs.
+    from galaxy.stages.halo import hernquist_density
+
+    r = np.geomspace(1e-4, 1e3, 20001)
+    M = hernquist_enclosed(r, 3.0, 0.4)
+    assert np.trapezoid(hernquist_density(r, 3.0, 0.4) * 4.0 * math.pi * r**2, r) == pytest.approx(M[-1], rel=1e-4)
+
+
+def test_the_two_excesses_are_one_construction_read_twice(model):
+    """The distribution lies above the exponential at both ends; the tail is one, the spheroid the other."""
+    from galaxy.stages.halo import (
+        MESH_INNER,
+        MESH_OUTER,
+        MESH_POINTS,
+        angular_momentum_core,
+        angular_momentum_excess,
+        angular_momentum_tail,
+        contracted_halo,
+    )
+    from galaxy.stages.disc import freeman_circular_velocity
+
+    o = out(model)
+    f = o.fields
+    R200, r_s = f["halo_virial_radius"], f["halo_scale_radius"]
+    c, m_d, R_d = f["halo_concentration"], f["disc_mass_fraction"], f["disc_scale_length_spin"]
+    baryons = f["baryon_mass_total"]
+    mesh = np.geomspace(MESH_INNER, MESH_OUTER * R200, MESH_POINTS)
+    M_dark, _ = contracted_halo(mesh, 1.1e12, r_s, c, m_d, R_d, R200, 0.85, 0.8)
+    v_disc = freeman_circular_velocity(mesh, baryons / (2.0 * math.pi * R_d * R_d), R_d, G)
+    j = mesh * np.hypot(np.sqrt(G * M_dark / mesh), v_disc)
+
+    disc, profile = angular_momentum_excess(mesh, j, baryons, R_d, 1.25)
+    ring = 2.0 * math.pi * mesh
+    # Both are normalised to the same budget, so their difference integrates to zero: what the
+    # spheroid and the tail take is exactly what the middle of the exponential gives up.
+    # (the exponential's own quadrature on this mesh is 0.007% over the analytic budget, which
+    # is the mesh's inner cut at 1e-3 kpc and the trapezoid; the profile is normalised exactly)
+    assert np.trapezoid(profile * ring, mesh) == pytest.approx(np.trapezoid(disc * ring, mesh), rel=1e-3)
+    assert np.trapezoid((profile - disc) * ring, mesh) == pytest.approx(0.0, abs=1e-3 * baryons)
+
+    _tail, share, R_out = angular_momentum_tail(mesh, j, baryons, R_d, 1.25)
+    mass, r_half, R_in, j_mean = angular_momentum_core(mesh, j, baryons, R_d, 1.25)
+    assert R_in < R_d < R_out  # the exponential wins in the middle, and only there
+    assert mass == pytest.approx(f["bulge_stellar_mass"], rel=1e-9)
+    assert r_half / (1.0 + math.sqrt(2.0)) == pytest.approx(f["bulge_scale_radius"], rel=1e-9)
+    assert j_mean > 0.0 and share > 0.0
+
+
+def test_the_spheroid_is_derived_and_does_not_move_with_the_mesh(model):
+    """A scalar that moved with the mesh would be a hidden quadrature (rule B2's cousin, S16)."""
+    from galaxy.stages.halo import (
+        MESH_OUTER,
+        angular_momentum_core,
+        contracted_halo,
+    )
+    from galaxy.stages.disc import freeman_circular_velocity
+
+    o = out(model)
+    f = o.fields
+    assert f["bulge_stellar_mass"] == pytest.approx(7.71e9, rel=0.01)
+    assert f["bulge_stellar_mass"] / f["baryon_mass_total"] == pytest.approx(0.132, abs=0.002)
+    assert f["bulge_scale_radius"] == pytest.approx(0.365, abs=0.005)
+    R200, r_s = f["halo_virial_radius"], f["halo_scale_radius"]
+    c, m_d, R_d = f["halo_concentration"], f["disc_mass_fraction"], f["disc_scale_length_spin"]
+    baryons = f["baryon_mass_total"]
+    for n, inner in ((300, 1e-3), (1200, 1e-3), (600, 1e-4), (2400, 1e-4)):
+        mesh = np.geomspace(inner, MESH_OUTER * R200, n)
+        M_dark, _ = contracted_halo(mesh, 1.1e12, r_s, c, m_d, R_d, R200, 0.85, 0.8)
+        v_disc = freeman_circular_velocity(mesh, baryons / (2.0 * math.pi * R_d * R_d), R_d, G)
+        j = mesh * np.hypot(np.sqrt(G * M_dark / mesh), v_disc)
+        mass, r_half, _, _ = angular_momentum_core(mesh, j, baryons, R_d, 1.25)
+        assert mass == pytest.approx(f["bulge_stellar_mass"], rel=0.02), (n, inner)
+        assert r_half == pytest.approx(f["bulge_scale_radius"] * (1.0 + math.sqrt(2.0)), rel=0.05), (n, inner)
+
+
+def test_the_spheroid_grows_as_the_distribution_gets_flatter(model):
+    """mu is the distribution's shape: a flatter one has more low-j material, and the spheroid is it."""
+    from galaxy.core.registry import Constant, Model
+
+    masses = []
+    for mu_j in (1.06, 1.25, 1.40):
+        constants = dict(model.constants)
+        constants["ANGULAR_MOMENTUM_MU"] = Constant(mu_j, "dimensionless", "probe")
+        probe = Model(name=model.name, about=model.about, stages=model.stages,
+                      constants=constants, inputs=model.inputs)
+        masses.append(float(run(probe, only=("bulge_stellar_mass",)).fields["bulge_stellar_mass"]))
+    assert masses[0] > masses[1] > masses[2]
+    # 1.46e10 to 5.6e9 across the range debt #47 holds: the observed 1.4-1.7e10 needs the
+    # flattest distribution anyone quotes, and mu = 1.25 is the value S16 verified (D119).
+    assert masses[0] == pytest.approx(1.46e10, rel=0.02)
+    assert masses[2] == pytest.approx(5.60e9, rel=0.02)
+
+
+def test_the_jeans_integral_reproduces_the_virial_theorem_on_an_isolated_sphere():
+    """The instrument before the physics (B1), checked against an identity it does not use (B3).
+
+    An isolated Hernquist sphere has binding energy GM²/6a, so the virial theorem fixes its
+    mass-weighted mean-square 1-D dispersion at GM/18a exactly — an algebraic fact the Jeans
+    solver knows nothing about. Fed its own gravity, the solver must return that number, and
+    it does: to 0.005% on a fine mesh and 0.15% on the 600-point mesh the stage actually uses,
+    which is the accuracy row 14 is read at.
+    """
+    from galaxy.stages.halo import hernquist_enclosed, spheroid_dispersion
+
+    M, a = 7.7e9, 0.365
+    exact = math.sqrt(G * M / (18.0 * a))
+    for lo, hi, n, tol in ((1e-5, 1e5, 20000, 1e-5), (1e-3, 319.0, 600, 2e-3)):
+        r = np.geomspace(lo, hi, n)
+        _half, whole = spheroid_dispersion(r, M, a, G * hernquist_enclosed(r, M, a))
+        assert whole == pytest.approx(exact, rel=tol), (n, whole, exact)
+    # And inside the half-mass radius it is higher, because the potential is deeper there.
+    r = np.geomspace(1e-5, 1e5, 20000)
+    half, whole = spheroid_dispersion(r, M, a, G * hernquist_enclosed(r, M, a))
+    assert half == pytest.approx(87.6, abs=0.2) and half > whole
+
+
+def test_the_dispersion_is_the_total_potentials_and_not_the_spheroids(model):
+    """Row 14 is a derivation with one assumption, isotropy; on self-gravity alone it is a third lower."""
+    o = out(model)
+    f = o.fields
+    M_b, a = f["bulge_stellar_mass"], f["bulge_scale_radius"]
+    assert f["bulge_velocity_dispersion"] == pytest.approx(116.2, abs=0.3)
+    self_gravity = math.sqrt(G * M_b / (18.0 * a))  # virial for an isolated Hernquist sphere
+    assert self_gravity == pytest.approx(71.1, abs=0.5)
+    assert f["bulge_velocity_dispersion"] > 1.5 * self_gravity
+    # And the classical share is a prediction, read against BHG16's 0-25% for the Milky Way.
+    assert 0.0 <= f["bulge_classical_fraction"] <= 0.25
+    assert f["bulge_classical_fraction"] == pytest.approx(0.171, abs=0.005)

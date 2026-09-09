@@ -1,60 +1,59 @@
-# BRIEF — for S17: the bulge stage and M_• (§5d; Opus, a gated build)
+# BRIEF — for S18: the thick disc (§5d; Fable, a judgement session)
 
-S0–S10 are closed; S11–S16 integrated, fixed and decided (D99–D120); S16 built the extended
-component as the high-j tail of the halo's angular momentum (D119). Open per RESUMING.md, read
-RULES.md, then this; §11 is the register (30 open). Branch `session-17`; your decision is **D121**.
+S0–S10 are closed; S11–S17 integrated, fixed and decided (D99–D123). S17 built the central
+spheroid as the low-j end of the halo's angular-momentum distribution and M_• as a seeded
+residual (D121). Open per RESUMING.md, read RULES.md, then this; §11 is the register (31
+open). Branch `session-18`; your decision is **D124**.
 
-## What S16 left you, and the numbers you start from
+## What S17 left you, and it is not what S16 left
+- **Debt #19 is yours and every one of its rows moved the wrong way.** Row 5 is 1.18 kpc
+  against 1.8–2.2 (1.27 at S16), row 7 is 1309 pc against 720–1080 (1126), row 11 is
+  1.09e10 against 3–9e9 (1.30e10). The spheroid took 13% of the budget out of the disc,
+  so Σ(R₀) fell and every scale height rose. Row 9 still passes, at 0.135 (0.147), and
+  **it is still the cancellation** debt #19 records: row 5 too small and row 11 too big.
+- **Row 2 is inside now (1.82) and it left debt #47's miss list without #47 being built.**
+  Read that as a loss, not a gain: the row is no longer evidence about the threshold, and
+  its own KS_NORM band straddles the window (−1σ 1.97 out, +1σ 1.73 in). §5d's gate for
+  you named rows 5, 7, 9 and 11; row 2 is not in it and should not become a target.
+- Row 20 is 6.03e9 against 8.0e9 and still under #47. **The derived Toomre threshold
+  (α κ σ_g/3.36G, D119's probe) is the mechanism to judge with the heating**, and its numbers
+  were measured on the S16 disc — re-probe on this one before believing them. Row 6 (simple)
+  is 321 pc, inside but 29 pc off the *ceiling*; it was 24 pc off the floor two sessions ago
+  and nothing about the heating changed (debt #42). If your radial heating lands row 7, show
+  that row 6 landed on σ_z and not on the Σ it divides by.
 
-- **Row 3 reads 252.9**, high by 2, a miss under debt #11 whose prediction is *you*: the bulge
-  is worth −5 to −8 km/s at R₀ (D110's probe: a Hernquist spheroid drawn from the stellar disc
-  in proportion; a flat disc rotates faster than the same mass in a sphere). **Re-probe first**
-  — D110 was read on the S13 halo (uncontracted, z_f 2.5); the halo now contracts around the
-  total and responds to what you move (`halo.contracted_halo(..., enclosed=...)`). Below 245
-  the record says debt #46's invariant is too weak, not too strong.
-- Rows 10–13 are yours: 10 reads 3.70e10 (passes only because 11 fails high at 1.30e10, the
-  cancellation D110 names), 12 and 13 are not-yet-computable, 14 has a zero-width target
-  (#17: enter the source's uncertainty first, or it stays "no testable target"). Row 18 is
-  M_• as a derived mean plus a seeded residual (ruling 10, GALAXY_INPUTS.md §13): statistical.
-- The stellar disc is 5.00e10 with fitted R_d 2.49; the tail took 7.6% of the budget beyond
-  12 kpc and the halo's share at R₀ is 163.3 (r_i/r_f 1.47). Gas 8.55e9, hydrogen 6.24e9.
+## What is different about the model since you last read it
+1. `stellar_mass_total` is the disc's stars **plus the spheroid** — rows 10 + 11 + 12, which
+   is what row 1's target always meant. The populations sum to `stellar_mass_total −
+   bulge_stellar_mass`, and several tests assert exactly that. Do not "fix" one of them.
+2. The halo publishes four bulge scalars and contracts around disc + tail + spheroid. Anything
+   that changes what the disc holds changes the contraction; read `halo_circular_velocity_sun`
+   (163.2) after any budget change. `nucleus` is a stage at checkpoint 1 drawing `world_seed`:
+   a seed binds at its earliest reader's checkpoint and `graph` requires §3's hypothesis.
+3. `NET_YIELD` 0.01184 and `WIND_SPEED` 982.2 — refit by bisection to solar at R₀ if the gas
+   at R₀ moves (B10, debt #43), and say by how much even when it is 1%.
 
-## The contract, and the one design trap
+## The gate (§5d)
 
-1. **Where the bulge enters.** `v_tangential_sun` (row 3) is computed in `sfh` off stars, gas
-   and the halo's scalar; two stages may not publish one field (preflight). Either the bulge
-   stage runs *before* `sfh` and `sfh` reads its profile (then its mass cannot be a fraction
-   of the stars `sfh` has not built yet — derive it from the budget, or from the bar's inner
-   disc, §4's "mergers + bar buckling"), or it runs after and republishes nothing kinematic —
-   in which case row 3 cannot see it. Decide before writing a line; D110 drew it from the disc
-   in proportion *in a probe*, which a stage cannot do without a fixed point (rule A1).
-2. **The halo contracts around the total baryons** (S16): give `enclosed` the spheroid too, on
-   the halo's mesh, or the response is computed around a disc that no longer exists.
-3. **What is derived and what is seeded** (A10): bulge mass and fraction derived; M_• mean from
-   M–σ (Ho 2014 eq. 2, §13) with the residual seeded by the classical fraction (0–25%, BHG16).
-   Row 14's σ is a Hernquist virial estimate — a derivation, with its assumption in the about.
-4. **The gate** (§5d): rows 10, 12, 13 inside; row 11 off its cancellation; 14 and 18 statistical; row 3 re-read.
-
-## What the instruments will tell you, and what they will not
-
-- `uv run python -m galaxy.specs`: exit 0 means every failing row is a recorded miss,
-  nothing drifted across its width, and every stage was profiled. Never widen a target
-  (B5); record a miss with a prediction. A miss that starts passing fails the run.
-- Probing: a constant via `tests/test_audit.py::with_constant`; a profile via `sfh.infall_profile` /
-  `halo.disc_enclosed_mass` substitution (D114); a stage's compute via `object.__setattr__(S.SFH,
-  "compute", fn)` — the Stage holds its own reference; patching the module does nothing (S16).
+Rows 5, 7, 9 and 11 inside together in the simple model, with row 9 **not** on a
+cancellation — judged by a sweep of the merger's `gas_fraction` that leaves it inside, not by
+a single reading. Rows 2 and 20 are judged with the threshold if you take it; if row 9 cannot
+be restored with the threshold derived, debt #47 says the split criterion is what is wrong
+(#19), not the threshold.
 
 ## Traps
-
-- **Every pin that reads the potential or the stellar surface density moves**: test_halo,
-  test_sfh, test_audit (#12, #28, #41, #42, #44, #45, the thick-disc probe), test_chemistry_dtd
-  (f_esc 0.7536), test_spec's SUMMARY/FAILED/DEBTS and its row 20 regex, rows 6/7/9/16/17. D119
-  lists the S16 set. Re-pin with the old number beside the new; refit `NET_YIELD` (0.0117) and
-  `WIND_SPEED` (993) by bisection to solar at R₀ if the gas at R₀ moves (B10, debt #43).
-- Row 7 (simple) is a recorded miss since S16 (1126 > 1080, #19) and row 6 advanced 384 (#42);
-  the thick disc rows are S18's — do not tune the heating constants.
-- The full suite outlasts the Bash tool's 10-minute cap: run it in the background with the exit
-  status appended to its log, and gate the merge on that status (D115, D120). Scratch scripts
-  `s17_<what>.py`; models register on `import galaxy.models`; `uv run python` only on Windows.
-- **Do not merge or delete `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`**.
-  New fields need no viewer preview from you; S19 owns previews (§5d).
+- **Probe before build, and re-probe on this disc.** S13, S14 and S17 each found the
+  register's stated lever had the wrong sign or magnitude; S17's bulge was worth 1.6 km/s
+  against a recorded 5–8 because D110's probe was read on a different halo (D121).
+- **A miss that starts passing fails the run** (debt #29). Remove it *and write down why it
+  passed* — S17 had two, and neither passed for the mechanism its debt named.
+- Every pin that reads the potential or the stellar surface density moves: test_halo,
+  test_sfh, test_audit, test_chemistry, test_chemistry_dtd, test_vertical, test_systems,
+  test_spec's SUMMARY/FAILED/DEBTS. D121 lists the S17 set. Re-pin with the old number beside.
+- Probing: a constant via `tests/test_audit.py::with_constant`; a profile via
+  `sfh.infall_profile` / `halo.disc_enclosed_mass` substitution (D114); a stage's compute via
+  `object.__setattr__(S.SFH, "compute", fn)` — the Stage holds its own reference.
+- The full suite outlasts the Bash tool's cap: run it in the background with the exit status
+  appended to its log and gate the merge on that status. Scratch scripts `s18_<what>.py`;
+  `uv run python` only. **Do not merge or delete `session-10-beta`, `session-10-gamma`,
+  `session-10-gamme-run-2`.** S19 owns viewer previews for S15–S18's new fields.

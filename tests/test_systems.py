@@ -136,7 +136,10 @@ def test_the_sample_traces_the_published_surface_density(model):
 def test_the_thick_fraction_matches_the_vertical_stage(model):
     o = out(model)
     cat = stars(model, 120_000, seed=0)
-    published = o.fields["thick_disc_stellar_mass"] / o.fields["stellar_mass_total"]
+    # Against the *disc's* stars: the catalogue draws from the disc's populations and the
+    # spheroid is in neither, so since S17 row 1 is the wrong denominator for it (D121).
+    disc = o.fields["stellar_mass_total"] - o.fields["bulge_stellar_mass"]
+    published = o.fields["thick_disc_stellar_mass"] / disc
     assert cat["star_population"].mean() == pytest.approx(published, abs=0.03)
 
 

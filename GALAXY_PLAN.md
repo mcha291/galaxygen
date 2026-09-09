@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████████░░░░░░░░░░░░` **17 / 23 sessions** · repo initialised: yes
+`████████████████████████████████████░░░░░░░░░░` **18 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@
 | ☑ | 14 | The halo contracts around the disc (#6; row 3 turns round, wants z_f 0.7–1.0); the extended component probed (#18) | desktop | — | **Fable 5.1** | s14 | 2026-09-07 |
 | ☑ | 15 | Row 3's cause, derived: the epoch's default from the ΛCDM median (2.5 → 1.66, #12 discharged); the calibration ruled out as the lever (#46); row 3 at 260.1 under #11 with the bulge and the component its prediction | desktop | **Fable** | **Fable 5.1** | s15 | 2026-09-09 |
 | ☑ | 16 | The extended component, derived as the high-j tail of the halo's angular momentum (#18 discharged, #47 opened); the timescale was not the decision; the derived threshold probed for S18 | desktop | **Fable** | **Fable 5.1** | s16 | 2026-09-09 |
-| ☐ | 17 | The bulge stage and M_• (#11, #2, #17; rows 10–14, 18) | web | Opus | — | s17 | — |
+| ☑ | 17 | The spheroid derived as the low-j end of the halo's angular momentum, and M_• (rows 10–14, 18; #17 discharged for row 14, #48 opened); the bulge is worth 1.6 km/s and not D110's 5–8, so row 3 misses by 0.3 and rows 3 and 12 have one cause | desktop | Opus | **Opus 5** | s17 | 2026-09-09 |
 | ☐ | 18 | The thick disc: radial heating with the vertical kick (#19) | desktop | **Fable** | — | s18 | — |
 | ☐ | 19 | The catalogue migrates; the viewer shows the new fields (#31, #32) | web | Opus | — | s19 | — |
 | ☐ | 20 | The advanced model's [α/Fe] valley and rows 6–7 (#27, #42, #26) | desktop | **Fable** | — | s20 | — |
@@ -47,10 +47,10 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S17. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S18. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 30 (`GALAXY_INPUTS.md` §11). **Discharged:** 17.
+**Open debts:** 31 (`GALAXY_INPUTS.md` §11). **Discharged:** 17.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is

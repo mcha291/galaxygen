@@ -54,7 +54,9 @@ def test_no_major_merger_means_no_thick_disc(model):
     free = out(model, mergers=())
     assert free.fields["thick_disc_stellar_mass"] == 0.0
     assert free.fields["thick_thin_surface_density_ratio"] == 0.0
-    assert free.fields["thin_disc_stellar_mass"] == pytest.approx(free.fields["stellar_mass_total"], rel=0.02)
+    # Since S17 row 1 carries the spheroid too, and the spheroid is neither thin nor thick.
+    disc = free.fields["stellar_mass_total"] - free.fields["bulge_stellar_mass"]
+    assert free.fields["thin_disc_stellar_mass"] == pytest.approx(disc, rel=0.02)
     if not MERGER_SPLIT[model.name]:
         assert free.fields["alpha_sequence"] == "single"  # debt #9's answer, from a criterion that never named the merger
 
@@ -99,7 +101,10 @@ def test_the_populations_add_up_to_the_stellar_mass(model):
     o = out(model)
     f = o.fields
     total = f["thin_disc_stellar_mass"] + f["thick_disc_stellar_mass"]
-    assert total == pytest.approx(f["stellar_mass_total"], rel=0.02)
+    # Rows 10 + 11 are the disc; row 1 is rows 10 + 11 + 12 since S17, which is what its own
+    # target means (AUDIT_RUN2 §5, D-5). The spheroid is sorted into neither population: it is
+    # not in the star formation history the vertical stage splits.
+    assert total == pytest.approx(f["stellar_mass_total"] - f["bulge_stellar_mass"], rel=0.02)
 
 
 def test_scale_height_reads_the_registered_G_not_a_copy(prod):

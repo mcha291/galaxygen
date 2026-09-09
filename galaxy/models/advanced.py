@@ -25,7 +25,7 @@ ADVANCED = MODELS.register(
             "thin/thick split read off the [α/Fe] plane rather than off the merger list. Shares "
             "every other stage with the simple model."
         ),
-        stages=(("halo", "halo"), ("disc", "disc"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry_dtd"), ("vertical", "vertical_alpha"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
+        stages=(("halo", "halo"), ("disc", "disc"), ("nucleus", "nucleus"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry_dtd"), ("vertical", "vertical_alpha"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
         constants={
             **LEVEL0,
             "SOLAR_IRON": Constant(
@@ -87,7 +87,7 @@ ADVANCED = MODELS.register(
                 "Chosen, not fitted, and the tilt it gives the gradient is a prediction.",
             ),
             "WIND_SPEED": Constant(
-                993.0,
+                982.2,
                 "km/s",
                 "The escape velocity at which half of a generation's fresh metals leave the disc. "
                 "**The one fitted constant of the advanced chemistry**: set so the present-day "
@@ -99,11 +99,13 @@ ADVANCED = MODELS.register(
                 "at R₀ rises 562 → 585 km/s; refitted at S15 to 999 once the epoch's default is the "
                 "ΛCDM median (z_f 2.5 → 1.66, debt #12) and v_esc(R₀) falls 585 → 569, inside the "
                 "observed 530–580; refitted at S16 to 993 once the high-j tail exists (debt #18) and "
-                "the gas at R₀ read −0.004 dex — each time the mechanism fixed, the constant "
-                "re-examined (rule B10, debt #43). Row 3 still overshoots by 2 km/s at this potential, "
-                "so the value is fitted against a known miss and will move again when the bulge "
-                "arrives. Everything the value implies elsewhere — the loss fraction at every other "
-                "radius, the gradient tilt — is then a prediction.",
+                "the gas at R₀ read −0.004 dex; refitted at S17 to 982.2 once the spheroid exists "
+                "(debt #11) and it read −0.007 — each time the mechanism fixed, the constant "
+                "re-examined (rule B10, debt #43). Row 3 still overshoots, by a quarter of a km/s at "
+                "this potential rather than 2, so the value is still fitted against a known miss and "
+                "will move again when the bar's box/peanut arrives. Everything the value implies "
+                "elsewhere — the loss fraction at every other radius, the gradient tilt — is then a "
+                "prediction.",
             ),
             "IA_METAL_TO_IRON": Constant(
                 2.0,

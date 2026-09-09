@@ -31,6 +31,20 @@ What it computes, and how much freedom each step has (GALAXY_INPUTS.md §4b):
   computed here and the disc stage reads it (rule A9: one opinion, held where
   the halo needs it first).
 
+- **The two ends of the angular-momentum distribution (S16, S17).** The retained
+  baryons carry the halo's own distribution of specific angular momentum
+  ``[recall: Bullock et al. 2001]``, and one exponential disc cannot hold it: the
+  distribution allots more mass than the exponential at both ends and less in
+  between. Beyond the outer crossing the surplus is the extended gas disc (debt
+  #18, S16); inside the inner one it is mass with too little angular momentum to
+  be in any exponential, and that is the **central spheroid** (debt #11, S17).
+  Both are computed here, from one construction read twice, because both are
+  splits of the budget this stage owns and both need the potential on this
+  stage's own mesh — and because the halo contracts around all three components,
+  which it cannot do around a spheroid a later stage would derive. What the
+  spheroid is *not* is a stage: a stage that only republished these four scalars
+  would be the duplicate rule A9 forbids.
+
 The halo owns the budget rather than the disc because M₂₀₀ and its split are
 properties of the halo; the disc stage turns the baryon half into a disc.
 
@@ -115,22 +129,24 @@ MESH_INNER = 1.0e-3  # kpc
 MESH_OUTER = 1.5  # in units of R₂₀₀
 
 
-def angular_momentum_tail(
+def angular_momentum_excess(
     R: np.ndarray, j: np.ndarray, M_d: float, R_d: float, mu: float
-) -> tuple[np.ndarray, float, float]:
-    """The high-j tail of the halo's angular-momentum distribution, beyond what the exponential disc holds (S16, debt #18).
+) -> tuple[np.ndarray, np.ndarray]:
+    """``(the exponential, the angular-momentum distribution mapped onto the plane)``, both in M☉/kpc².
 
     Bullock et al. 2001's universal profile, ``M(< j) = M μ j/(j₀ + j)`` for ``j ≤ j₀/(μ − 1)``,
-    is mapped onto the plane through the specific angular momentum of a circular orbit at
-    each radius, ``j(R)`` on the model's own rotation curve, with ``j₀`` fixed so that the
-    profile's mean j is the exponential disc's — the disc λ_d already sets. Where that
-    profile lies above the exponential *outside* their outer crossing, the excess is gas
-    the exponential never held: the tail. Returns ``(tail in M☉/pc², its share of M_d, the
-    crossing radius)``; the tail is zero inside the crossing. The low-j excess inside is
-    not returned — it is what the exponential assumption discards, and the bulge (D110)
-    and feedback are its physics, not this function's. Profiles are normalised on ``R``,
-    which the stage makes its own mesh so that the share and the crossing do not inherit the
-    grid's resolution (rule B2's cousin: a scalar that moves with N_R is a hidden quadrature).
+    mapped onto the plane through the specific angular momentum of a circular orbit at each
+    radius, ``j(R)`` on the model's own rotation curve, with ``j₀`` fixed so that the profile's
+    mean j is the exponential disc's — the disc λ_d already sets. Their difference is what the
+    exponential assumption gets wrong, and it has two signs: the profile lies *above* the
+    exponential at both ends and below it in between, so there are two crossings and two
+    excesses. Beyond the outer crossing the excess is gas the exponential never held (S16,
+    debt #18: :func:`angular_momentum_tail`); inside the inner one it is mass with too little
+    angular momentum for any exponential disc, which is the bulge (S17, debt #11:
+    :func:`angular_momentum_core`). One construction, read twice, so the two components cannot
+    drift apart (rule A9). Profiles are normalised on ``R``, which the stage makes its own mesh
+    so that no scalar inherits the grid's resolution (rule B2's cousin: a scalar that moves with
+    N_R is a hidden quadrature).
     """
     R, j = np.asarray(R, dtype=float), np.asarray(j, dtype=float)
     ring = 2.0 * math.pi * R
@@ -140,7 +156,20 @@ def angular_momentum_tail(
     j0 = j_mean / (mu * (math.log1p(x) - x / (1.0 + x)))  # the profile's own mean is μ j₀ [ln(1 + x) − x/(1 + x)]
     dMdj = mu * j0 / (j0 + j) ** 2 * (j < j0 * x)
     profile = np.maximum(dMdj * np.gradient(j, R) / ring, 0.0)
-    profile = profile * M_d / float(np.trapezoid(profile * ring, R))
+    return disc, profile * M_d / float(np.trapezoid(profile * ring, R))
+
+
+def angular_momentum_tail(
+    R: np.ndarray, j: np.ndarray, M_d: float, R_d: float, mu: float
+) -> tuple[np.ndarray, float, float]:
+    """The high-j tail: the excess beyond the outer crossing (S16, debt #18).
+
+    Returns ``(tail in M☉/pc², its share of M_d, the crossing radius)``; the tail is zero
+    inside the crossing. The low-j excess inside is :func:`angular_momentum_core`.
+    """
+    R = np.asarray(R, dtype=float)
+    ring = 2.0 * math.pi * R
+    disc, profile = angular_momentum_excess(R, j, M_d, R_d, mu)
     excess = profile - disc
     above = np.flatnonzero(excess > 0.0)
     if above.size == 0:
@@ -150,6 +179,100 @@ def angular_momentum_tail(
     tail = np.where(R >= R_c, np.maximum(excess, 0.0), 0.0)
     share = float(np.trapezoid(tail * ring, R) / M_d)
     return tail * 1.0e-6, share, R_c
+
+
+def angular_momentum_core(
+    R: np.ndarray, j: np.ndarray, M_d: float, R_d: float, mu: float
+) -> tuple[float, float, float, float]:
+    """The low-j excess: the mass the exponential disc cannot hold, inside the inner crossing (S17, debt #11).
+
+    The mirror of :func:`angular_momentum_tail`. Inside the inner crossing the distribution
+    allots more mass than the exponential holds, and the surplus has too little angular
+    momentum to be in *any* exponential disc of this scale length: it is the material that
+    settles into the central spheroid. Returns ``(mass in M☉, the radius inside which half of
+    it lies, the crossing radius, its mass-weighted specific angular momentum)``.
+
+    Two things it is not. It is not a formation channel — whether the mass ends up in a
+    classical bulge built by dissipation or in the box/peanut a bar makes of the inner disc is
+    a distinction this model does not draw, and ``bulge_classical_fraction`` measures the
+    rotation it carries rather than assuming one. And the radii are the *mapping's*: each
+    element is placed where a circular orbit would carry its j, which is exactly the assumption
+    that fails for material this far below the disc's angular momentum, so the radius is used
+    only to set the spheroid's half-mass radius and never as a position.
+    """
+    R = np.asarray(R, dtype=float)
+    ring = 2.0 * math.pi * R
+    disc, profile = angular_momentum_excess(R, j, M_d, R_d, mu)
+    excess = profile - disc
+    above = np.flatnonzero(excess > 0.0)
+    if above.size == 0:
+        return 0.0, float(R[0]), float(R[0]), 0.0
+    ends = above[np.concatenate([np.diff(above) > 1, [True]])]  # the last index of each run above the exponential
+    R_c = float(R[ends[0]])
+    core = np.where(R <= R_c, np.maximum(excess, 0.0), 0.0)
+    mass = float(np.trapezoid(core * ring, R))
+    if mass <= 0.0:
+        return 0.0, float(R[0]), R_c, 0.0
+    cum = np.concatenate([[0.0], np.cumsum(0.5 * (core[1:] * R[1:] + core[:-1] * R[:-1]) * np.diff(R))])
+    r_half = float(np.interp(0.5 * cum[-1], cum, R))
+    j_mean = float(np.trapezoid(np.asarray(j, dtype=float) * core * ring, R) / mass)
+    return mass, r_half, R_c, j_mean
+
+
+# --- the central spheroid ----------------------------------------------------
+
+
+def hernquist_enclosed(r: np.ndarray | float, M: float, a: float) -> np.ndarray | float:
+    """Hernquist 1990: ``M(<r) = M r²/(r + a)²``."""
+    r = np.asarray(r, dtype=float)
+    return M * r * r / (r + a) ** 2
+
+
+def hernquist_density(r: np.ndarray | float, M: float, a: float) -> np.ndarray | float:
+    """``ρ(r) = M a / (2π r (r + a)³)``, the density whose enclosed mass is :func:`hernquist_enclosed`."""
+    r = np.asarray(r, dtype=float)
+    return M * a / (2.0 * math.pi * r * (r + a) ** 3)
+
+
+# r²/(r + a)² = ½ at r = a(1 + √2): the Hernquist sphere's own half-mass radius, algebra
+# rather than a citation, and a test reproduces it. The spheroid's scale is set by equating
+# this to the radius inside which half the low-j excess lies. Matching the *projected*
+# half-mass radius instead would read a = r_half/1.8153 [recall: Hernquist 1990]; that is a
+# named alternative and not the choice (rule B12), because the excess's radius is a mass
+# inside a radius and so is this one, with no projection assumed on either side.
+HERNQUIST_HALF_MASS = 1.0 + math.sqrt(2.0)
+
+
+def spheroid_dispersion(
+    r: np.ndarray, M: float, a: float, GM_total: np.ndarray
+) -> tuple[float, float]:
+    """Mass-weighted 1-D velocity dispersion of a Hernquist spheroid, isotropic, in the total potential.
+
+    The spherical isotropic Jeans equation, integrated inward from the mesh's outer edge:
+
+        ρ σ_r²(r) = ∫_r^∞ ρ(r') G M_total(r') / r'² dr'
+
+    with ``GM_total`` the whole enclosed mass times G — dark halo, disc and spheroid — because
+    the spheroid is not isolated: on its own gravity alone the dispersion is a third lower, and
+    reporting that would be reporting a different galaxy's bulge. Isotropy is the assumption,
+    and it is the one that makes this a derivation rather than a fit: no rotation is subtracted
+    and none is added, so a bulge that in fact rotates has some of its support counted here as
+    dispersion. Returns ``(σ inside the half-mass radius, σ over the whole spheroid)``; the
+    first is what acceptance row 14 reads, because the source's 113 km/s is mass-weighted
+    within the bulge's half-mass radius `[verified: BHG16 §4.3, "the rms is σ_rms,b ≈ 113 km/s,
+    to ≈3 km/s"]`.
+    """
+    r = np.asarray(r, dtype=float)
+    rho = hernquist_density(r, M, a)
+    f = rho * np.asarray(GM_total, dtype=float) / r**2
+    seg = 0.5 * (f[1:] + f[:-1]) * np.diff(r)
+    integral = np.concatenate([np.cumsum(seg[::-1])[::-1], [0.0]])  # ∫_r^∞, on the mesh
+    sigma_r2 = integral / rho
+    dM = rho * 4.0 * math.pi * r**2
+    inside = r <= a * HERNQUIST_HALF_MASS
+    half = float(np.trapezoid((sigma_r2 * dM)[inside], r[inside]) / np.trapezoid(dM[inside], r[inside]))
+    whole = float(np.trapezoid(sigma_r2 * dM, r) / np.trapezoid(dM, r))
+    return math.sqrt(half), math.sqrt(whole)
 
 
 def contracted_halo(
@@ -539,6 +662,73 @@ INFALL_TAIL_INNER_RADIUS = FieldDecl(
     ),
 )
 
+BULGE_STELLAR_MASS = FieldDecl(
+    name="bulge_stellar_mass",
+    label="Bulge stellar mass",
+    unit="Msun",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "Acceptance row 12: the central spheroid, derived as the low-j end of the same "
+        "angular-momentum distribution the high-j tail comes from (S17, debt #11) — the mass the "
+        "exponential disc cannot hold because its angular momentum is too small, 13% of the "
+        "retained budget, all of it inside 2.5 kpc. It is stellar and carries no gas: at these "
+        "radii and densities the depletion time is a percent of the disc's, so the model takes "
+        "the spheroid to have finished forming stars long ago and the star formation history "
+        "never sees this mass. The surprise is the size of it — 7.7 × 10⁹ M☉ against the "
+        "observed 1.4–1.7 × 10¹⁰, low by 45%, because the model has no bar to buckle the inner "
+        "disc into a box/peanut and BHG16 §4.2 says that is most of what the Milky Way's bulge is."
+    ),
+)
+
+BULGE_SCALE_RADIUS = FieldDecl(
+    name="bulge_scale_radius",
+    label="Bulge scale radius a",
+    unit="kpc",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "The Hernquist scale of the spheroid, set by equating its own half-mass radius, "
+        "a(1 + √2), to the radius inside which half the low-j excess lies. Derived, not chosen: "
+        "no constant enters and the identity is algebra a test reproduces. 0.36 kpc at the "
+        "default, which puts the spheroid's half-mass radius at 0.88 kpc."
+    ),
+)
+
+BULGE_VELOCITY_DISPERSION = FieldDecl(
+    name="bulge_velocity_dispersion",
+    label="Bulge velocity dispersion",
+    unit="km/s",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "Acceptance row 14, mass-weighted inside the spheroid's half-mass radius to match the "
+        "way the source quotes it. The isotropic spherical Jeans equation in the model's own "
+        "total potential — dark halo, disc and spheroid — so it is a derivation with one "
+        "assumption, isotropy, and that assumption is why the number can be right for a bulge "
+        "that in fact rotates: rotational support counted as dispersion. On the spheroid's own "
+        "gravity alone it would read a third lower."
+    ),
+)
+
+BULGE_CLASSICAL_FRACTION = FieldDecl(
+    name="bulge_classical_fraction",
+    label="Classical share of the bulge",
+    unit="dimensionless",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "How much of the spheroid is pressure-supported rather than rotating: one minus the "
+        "low-j excess's mean specific angular momentum over that of a circular orbit at its "
+        "half-mass radius, which is the V/σ axis pseudobulges are classified on [recall: "
+        "Kormendy & Kennedy 2004 via Kormendy & Ho 2013]. Reading a support ratio as a mass "
+        "fraction is the model's assumption and the linear one is the least it can make. "
+        "0.13 at the default — a prediction, and it lands inside the 0–25% classical share "
+        "BHG16 §4.2.4 gives the Milky Way. Ruling 10 interpolates the M–σ residual's width "
+        "with it (GALAXY_INPUTS.md §13)."
+    ),
+)
+
 DISC_SCALE_LENGTH_SPIN = FieldDecl(
     name="disc_scale_length_spin",
     label="Disc scale length from λ_d",
@@ -590,14 +780,30 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     v_disc = freeman_circular_velocity(mesh, baryons / (2.0 * math.pi * R_d * R_d), R_d, G)
     j = mesh * np.hypot(np.sqrt(G * M_dark / mesh), v_disc)
-    tail_mesh, share, R_c = angular_momentum_tail(mesh, j, baryons, R_d, float(ctx.constants["ANGULAR_MOMENTUM_MU"]))
+    mu_j = float(ctx.constants["ANGULAR_MOMENTUM_MU"])
+    tail_mesh, share, R_c = angular_momentum_tail(mesh, j, baryons, R_d, mu_j)
     tail_cum = np.concatenate([[0.0], np.cumsum(0.5 * (tail_mesh[1:] * mesh[1:] + tail_mesh[:-1] * mesh[:-1]) * np.diff(mesh))])
     tail_cum = tail_cum * 2.0 * math.pi * PC_PER_KPC**2  # M☉ inside r
 
+    # The other end of the same distribution: the mass with too little angular momentum for
+    # the exponential, which settles into the central spheroid (S17, debt #11). It leaves the
+    # exponential's budget exactly as the tail does, and the halo contracts around all three.
+    M_b, r_half_b, _R_core, j_b = angular_momentum_core(mesh, j, baryons, R_d, mu_j)
+    a_b = r_half_b / HERNQUIST_HALF_MASS
+    share_b = M_b / baryons
+
     def enclosed(r: np.ndarray) -> np.ndarray:
-        return disc_enclosed_mass(r, (1.0 - share) * baryons, R_d) + np.interp(r, mesh, tail_cum)
+        return (
+            disc_enclosed_mass(r, (1.0 - share - share_b) * baryons, R_d)
+            + np.interp(r, mesh, tail_cum)
+            + hernquist_enclosed(r, M_b, a_b)
+        )
 
     M_dark, ratio = contracted_halo(mesh, M200, r_s, c, m_d, R_d, R200, A, w, enclosed=enclosed)
+    sigma_b, _sigma_whole = spheroid_dispersion(mesh, M_b, a_b, G * (M_dark + enclosed(mesh)))
+    # V/σ at the spheroid's own half-mass radius: what rotates is the pseudobulge's (§13).
+    v_half = math.sqrt(G * float(_loglog(r_half_b, mesh, M_dark + enclosed(mesh))) / r_half_b)
+    classical = 1.0 - j_b / (r_half_b * v_half)
     tail = np.interp(R, mesh, tail_mesh)  # what the grid sees of it; the part beyond R_max is off the grid
     phi_mesh = potential_of(mesh, M_dark, dark, r_s, c, G)
     enclosed = _loglog(R, mesh, M_dark)
@@ -620,6 +826,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "infall_tail_surface_density": tail,
         "infall_tail_share": share,
         "infall_tail_inner_radius": R_c,
+        "bulge_stellar_mass": M_b,
+        "bulge_scale_radius": a_b,
+        "bulge_velocity_dispersion": sigma_b,
+        "bulge_classical_fraction": classical,
         "halo_circular_velocity_sun": math.sqrt(G * float(_loglog(R_sun, mesh, M_dark)) / R_sun),
         "halo_circular_velocity_sun_initial": float(nfw_circular_velocity(R_sun, dark, r_s, c, G)),
         "halo_density_sun": float(_loglog(R_sun, mesh, density_of(mesh, M_dark))) * 1.0e-9,
@@ -639,8 +849,9 @@ HALO = IMPLEMENTATIONS.register(
         checkpoint=1,
         about=(
             "NFW dark halo from M₂₀₀ and the assembly redshift, the split of M₂₀₀ into retained "
-            "baryons and dark matter, and the halo's contraction around the disc those baryons "
-            "make (S14). Shared by both models."
+            "baryons and dark matter, the two ends of their angular-momentum distribution the "
+            "exponential disc cannot hold — the extended gas disc (S16) and the central spheroid "
+            "(S17) — and the halo's contraction around all three (S14). Shared by both models."
         ),
         compute=compute,
         reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention", "disc_spin"),
@@ -661,6 +872,10 @@ HALO = IMPLEMENTATIONS.register(
             INFALL_TAIL_SURFACE_DENSITY,
             INFALL_TAIL_SHARE,
             INFALL_TAIL_INNER_RADIUS,
+            BULGE_STELLAR_MASS,
+            BULGE_SCALE_RADIUS,
+            BULGE_VELOCITY_DISPERSION,
+            BULGE_CLASSICAL_FRACTION,
             HALO_CIRCULAR_VELOCITY_SUN,
             HALO_CIRCULAR_VELOCITY_SUN_INITIAL,
             HALO_DENSITY_SUN,

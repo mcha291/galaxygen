@@ -71,13 +71,13 @@ def test_the_gradient_is_set_by_the_inside_out_index(model):
     if model.name == "simple":
         # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
         # surface density still falls outwards and that alone tilts the enrichment.
-        assert grads[0] == pytest.approx(-0.011, abs=0.003)
+        assert grads[0] == pytest.approx(-0.0173, abs=0.003)  # -0.011 until S17 took the spheroid out of the disc
         # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
         assert grads[1] > -0.049
     else:
-        # The wind's tilt is there even with no inside-out growth at all: three times
-        # the simple model's n = 0 value...
-        assert grads[0] == pytest.approx(-0.033, abs=0.004)
+        # The wind's tilt is there even with no inside-out growth at all: over twice
+        # the simple model's n = 0 value (three times until S17)...
+        assert grads[0] == pytest.approx(-0.0414, abs=0.004)  # -0.033 until S17
         # ...and with the cited n = 1 the gradient reaches the observed range (row 22).
         assert -0.069 <= grads[1] <= -0.049
 
@@ -99,7 +99,7 @@ def test_infall_dilution_is_what_tilts_it(model):
     # infall now supplies about half of it rather than seven tenths.
     assert spread(0.0) < 0.85 * spread(1.0)
     # The wind supplies its own tilt in the advanced model, so infall's share is smaller there.
-    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.52, "advanced": 0.59}[model.name], abs=0.08)
+    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.64, "advanced": 0.66}[model.name], abs=0.08)  # 0.52 / 0.59 until S17
 
 
 def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
