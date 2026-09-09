@@ -22,11 +22,11 @@ def chk(m, *stages):
 # cannot start until the chemistry is done — lands a round later than the simple one's.
 ORDER = {
     "simple": (
-        "halo", "assembly", "disc", "sfh", "chemistry", "vertical",
+        "halo", "assembly", "disc", "nucleus", "sfh", "chemistry", "vertical",
         "bar", "population", "pattern", "systems", "formation", "planets",
     ),
     "advanced": (
-        "halo", "assembly", "disc", "sfh", "chemistry_dtd", "bar", "population",
+        "halo", "assembly", "disc", "nucleus", "sfh", "chemistry_dtd", "bar", "population",
         "vertical_alpha", "pattern", "formation", "systems", "planets",
     ),
 }
@@ -39,11 +39,14 @@ def test_production_graphs_hold(prod):
         g = graph.analyse(m, impls_, table)
         assert g.ok
         assert tuple(s.id for s in g.order) == ORDER[m.name]
-        # S4 is the first seeded stage. Provenance is derived per stage, so a stage that
-        # reads a seed or a seeded field publishes seeded fields and every other field is
-        # derived (D55). S8's split keeps the occurrence fields on the derived side.
+        # The nucleus is the first seeded stage since S17; the pattern was until then.
+        # Provenance is derived per stage, so a stage that reads a seed or a seeded field
+        # publishes seeded fields and every other field is derived (D55) — which is why the
+        # spheroid's own scalars are the halo's and only M_• is here. S8's split keeps the
+        # occurrence fields on the derived side.
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
         assert seeded == {
+            "black_hole_mass",
             "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
             "star_radius", "star_azimuth", "star_height", "star_age", "star_metallicity",
             "star_mass", "star_population", "catalogue_size",
@@ -57,10 +60,13 @@ def test_production_graphs_hold(prod):
             "keeps them so (rule A10)"
         )
         # S1 binds the four checkpoint-1 controls and no others; graph.py checks each
-        # against GALAXY_PLAN.md §3's hypothesis and none of them disagrees.
+        # against GALAXY_PLAN.md §3's hypothesis and none of them disagrees. world_seed
+        # joined them at S17: nothing read it until the nucleus stage did (debt #39's
+        # inert dimension), and it binds at checkpoint 1, which is its own hypothesis.
         bound = {n: c for n, c in g.input_checkpoint.items() if c is not None}
         assert bound == {
             "halo_mass": 1, "disc_spin": 1, "halo_assembly_z": 1, "baryon_retention": 1,
+            "world_seed": 1,
             "infall_timescale": 3, "inside_out_index": 3, "migration_efficiency": 3,
             "mergers": 2, "pattern_seed": 4, "systems_seed": 5, "planets_seed": 6,
         }

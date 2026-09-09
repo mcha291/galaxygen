@@ -6,6 +6,7 @@ it. Each stage declares what it reads and publishes (galaxy/core/stage.py).
 
 from . import halo  # noqa: F401  (checkpoint 1, first in the order)
 from . import disc  # noqa: F401
+from . import nucleus  # noqa: F401  (checkpoint 1, seeded: the M_. residual)
 from . import assembly  # noqa: F401  (checkpoint 2)
 from . import sfh  # noqa: F401  (checkpoint 3)
 from . import chemistry  # noqa: F401

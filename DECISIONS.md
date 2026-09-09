@@ -3057,3 +3057,139 @@ and 20 inside — is not met, and D119 says which constant would meet it and why
 it is S18's to decide. Next: S17, the bulge stage and M_• (Opus, §5d), with row
 3 at 252.9 and the bulge worth −5 to −8 on the S13 halo; BRIEF.md says re-probe
 first.
+
+## Session 17 — the spheroid and the hole
+
+### D121. The bulge is the low-j end of the halo's angular momentum, it is worth 1.6 km/s and not five to eight, and rows 3 and 12 now have one cause (debts #11, #2, #17, #39, #42, #43, #44, #45, #47, #48)
+
+**Decision.** The central spheroid is **derived, not sized**: it is the mirror of
+S16's high-j tail. Bullock et al. 2001's `M(< j)` profile, mapped onto the plane
+on the model's own rotation curve, lies above the exponential disc at *both* ends
+and below it in between. S16 took the outer excess and called it the extended gas
+disc (debt #18). S17 takes the inner one — mass with too little angular momentum
+to be in any exponential disc of this scale length — and calls it the bulge.
+`angular_momentum_excess` is the construction, `angular_momentum_tail` and
+`angular_momentum_core` read it at each end, so the two components cannot drift
+apart (rule A9). No new constant: μ = 1.25 is S16's.
+
+**The numbers.** 7.71 × 10⁹ M☉, 13.2% of the retained budget, inside a crossing at
+2.46 kpc with half of it inside 0.88 kpc; stable to ±1% across meshes of 300–2400
+points and two inner cuts `[verified: tests/test_halo.py::test_the_spheroid_is_derived_and_does_not_move_with_the_mesh]`.
+The spheroid is Hernquist and its scale radius is derived by equating its own
+half-mass radius, a(1 + √2), to the radius inside which half the low-j excess
+lies: **0.365 kpc**. That identity is algebra a test reproduces, and it was chosen
+over matching the *projected* half-mass radius (a = r_half/1.8153 = 0.485, the
+named alternative, rule B12) because both sides are then a mass inside a radius
+with no projection assumed on either. Both were measured before the choice — the
+alternative reads row 3 at 251.0 and row 14 at 110.9 — and the argument, not the
+reading, is the reason.
+
+**Where it lives, and why it is not a stage.** In the halo. Three constraints
+close on one answer: row 3 is computed in `sfh`, so the spheroid must exist
+upstream of it; the halo contracts around the *total* baryons, so it cannot
+contract around a spheroid a later stage would derive; and the low-j excess needs
+the potential on the halo's own 600-point mesh, which no stage can be handed. A
+`bulge` stage that only republished four scalars would be the duplicate rule A9
+forbids. `sfh` reads the mass and the scale, subtracts the share from the budget
+it accretes, adds the sphere's own circular velocity to the quadrature, publishes
+`stellar_mass_total` as the disc's stars *plus* the spheroid — which is what that
+row's target (rows 10 + 11 + 12) always meant — and publishes row 13, the fraction,
+because it is the stage that knows what the fraction is of.
+
+**M_• is its own stage** (`nucleus`, checkpoint 1, the first seeded stage in the
+run). Provenance is derived per stage (D55): folding the draw into the halo would
+relabel the spheroid's mass, scale and dispersion as seeded, and rule A10 forbids
+that — they are determined. `world_seed` sits at checkpoint 1 and nothing had read
+it (debt #39); the M_• residual is the use its own declaration named.
+
+**The finding, and it kills a prediction that has stood since S13.** The bulge is
+worth **1.6 km/s** at R₀, not the 5–8 D110 measured. Row 3: 252.9 → **251.3**, a
+quarter of a km/s outside 245–251. D110's probe drew a spheroid from the *stellar*
+disc in proportion on the uncontracted S13 halo; the derived spheroid comes out of
+the accreting budget, and that budget included the ~15% of the exponential lying
+outside R₀ that pulled the Sun outward — so moving mass inward gives back in
+quadrature nearly what the disc's flattening loses. Measured at S17, so the
+replacement prediction can fail too: 1.4 × 10¹⁰ in the spheroid is worth 3.7 km/s
+and reads row 3 at 249.4; 1.7 × 10¹⁰ is worth 4.2 and reads 248.7.
+
+**Rows 12, 13, 14 and 18 are computable and all four miss.** Row 12 reads 7.71e9
+against 1.4–1.7 × 10¹⁰, low by 45%; row 13 follows it at 0.153. That is not a
+tuning gap: the low-j excess is one formation channel — material that could never
+have been a disc — and BHG16 §4.2 says most of the Milky Way's bulge is the
+box/peanut a bar makes of the *inner disc*, which this model has no dynamics for
+(debt #21). **So rows 3 and 12 have one cause**, and closing row 12 with ~7 × 10⁹
+of buckled disc closes row 3 as well. Row 14 reads 116.2 against a window S17
+entered from the source (D122), high by 0.16 — and the surprise is that it is
+nearly right while row 12 is 45% low, because σ inside the half-mass radius is set
+by the whole enclosed mass and not by the spheroid alone (on self-gravity it would
+read 71). **The two rows pull opposite ways**: adding the bar's missing mass takes
+row 14 to 123, outside, unless a bar-built component is less concentrated than a
+dissipational one — which is the tension the session that builds buckling reads
+first. Row 18's median is 2.0 × 10⁷ against 4.2 ± 0.2 × 10⁶, 0.67 dex high (the
+mean relation is 0.83 high), which is §3's expected ~0.75 and is the source's miss
+rather than the model's: the M–σ relation is calibrated on classical bulges and
+the model's own `bulge_classical_fraction` says this spheroid is 83% pseudo.
+
+**The classical fraction is derived rather than assumed** — 1 − ⟨j⟩/(r_half
+v_c(r_half)), the V/σ axis pseudobulges are classified on `[recall: Kormendy &
+Kennedy 2004 via Kormendy & Ho 2013]`. It reads **0.171**, inside BHG16 §4.2.4's
+0–25% classical share for the Milky Way. Reading a support ratio as a mass
+fraction is the model's assumption and the linear map is the least it can make;
+it is in the `about`.
+
+**Two closures refused with the answer known** (rule B5). Ruling 10's residual
+width should be interpolated by that fraction, but the pseudobulge endpoint has no
+published number — Kormendy & Ho declined to fit pseudobulges and Ho & Kim 2014 say
+only "much larger scatter" — so inventing one would be showing a missing number as
+measured (rule B9): `BLACK_HOLE_SCATTER` stays the classical 0.28 dex, the model
+understates the spread, and that is **debt #48**. And an M_•–M_bulge relation
+applied to the classical share alone reads 5.2 × 10⁶ and would land row 18; it was
+not adopted, precisely because that was visible before the choice.
+
+**Row 2 landed and its miss was removed, without debt #47's mechanism.** The
+spheroid takes 13% of the budget out of the disc and the rate fell 2.08 → **1.82**,
+inside 1.65 ± 0.19 for the first time since S2. A registered miss that passes is an
+error (debt #29), so the entry went — but the threshold is still the constant 5
+M☉/pc² and nothing about #47 changed, so the debt is unaltered and **row 2 is no
+longer available as evidence at S18**. It now sits in a window its own KS_NORM band
+straddles (−1σ 1.97, out; +1σ 1.73, in), which is debt #44's original claim coming
+true again. The advanced model's row 10 also started passing (5.00 → 4.26 × 10¹⁰)
+and its miss went for the same reason; it is green on the same cancellation debt
+#11 named — thin = every star — so it is not evidence for the chemical split.
+
+**What else moved, measured not assumed.** Row 1 5.00 → 5.03 × 10¹⁰ (and now means
+what its target means); row 4 2.491 → 2.484; row 6 simple 275 → 321 pc, from 24 pc
+off its floor to 29 off its ceiling, advanced 384 → 439 (debt #42, and the point of
+that debt made twice); row 9 0.147 → 0.135; row 10 3.70 → 3.17 × 10¹⁰, inside
+whether or not row 11 is right; row 20's hydrogen 6.24 → 6.03 × 10⁹; rows 5, 7 and
+11 further out under #19, which is S18's. `NET_YIELD` 0.0117 → **0.01184** and
+`WIND_SPEED` 993 → **982.2**, refitted by bisection to solar at R₀ (debt #43) —
+both moves are ~1%, a fifth of S16's, because a disc with less gas also makes fewer
+stars and the effective yield is a ratio. **And the advanced model's α valley closed
+at the one default-merger setting that had it**: n = 3, τ₀ = 1 read a dip of 0.6 at
+S16 and reads nothing now, so S20 has one lever fewer than the record said; the
+single-merger probe still opens it, shallower (0.55–0.62 against 0.55–0.66). Debt
+#45's constant now carries the advanced row 22 over a quarter of its range rather
+than a tenth: 1.25 came inside alongside 1.0.
+
+### D122. Row 14's target came from the source, and the model's answer was already known
+
+**Decision.** Acceptance row 14 leaves debt #17's zero-width list. BHG16 quotes
+"the rms is σ_rms,b ≈ 113 km/s, to ≈3 km/s", mass-weighted within the bulge's
+half-mass radius `[verified: BHG16 §4.3, read at S17]`, so the target is 110–116.
+
+**Why this is recorded as its own decision rather than as a line in D121.** The
+debt's remedy is "a citation with an uncertainty, entered before the row is next
+judged", and the order here was the other way round: the spheroid was built, the
+dispersion read 116.2, and *then* the source was consulted. Nothing was chosen —
+the ±3 is the source's own and the model fails against it — but a reader is
+entitled to know the sequence, because the alternative reading of the same event
+is a session that went looking for a window its number would fit. What makes it
+checkable: the same reading gave the *definition* too (mass-weighted inside the
+half-mass radius), and the model's σ was recomputed to match it, which moved the
+number **away** from the target — 112.8 over the whole spheroid, 116.2 inside the
+half-mass radius, and the second is what row 14 reads.
+
+**What did not change.** Rows 20 and 21 stay zero-width and the debt stays open for
+them; the same reading of Nakanishi & Sofue still finds no uncertainty. The rule
+that a new zero-width row must say so in its note is untouched.

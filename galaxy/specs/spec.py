@@ -151,7 +151,7 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(11, "Thick disc stellar mass", "Msun", "thick_disc_stellar_mass", 3.0e9, 9.0e9, "pointwise", "6 ± 3 × 10⁹ M☉", _BHG16),
     Quantity(12, "Bulge stellar mass", "Msun", "bulge_stellar_mass", 1.4e10, 1.7e10, "pointwise", "1.4–1.7 × 10¹⁰ M☉", _BHG16),
     Quantity(13, "Bulge/total stellar fraction", "dimensionless", "bulge_stellar_fraction", 0.24, 0.36, "statistical", "0.30 ± 0.06", _BHG16, note="Statistical per debt #8 (GALAXY_INPUTS.md §4b)."),
-    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 113.0, 113.0, "statistical", "113 km/s", _BHG16, note="No uncertainty quoted: zero-width target (debt #17). Statistical per debt #8; since S13 a statistical row passes on its median, which no float meets at zero width, so this row has no testable target until the source's uncertainty is entered."),
+    Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 110.0, 116.0, "statistical", "113 ± 3 km/s", _BHG16, note="The source's own uncertainty, entered at S17 and not chosen here: BHG16 §4.3 gives the bulge's mass-weighted dispersion within its half-mass radius as \"the rms is σ_rms,b ≈ 113 km/s, to ≈3 km/s\", so the row has a testable target and leaves debt #17's list (rows 20 and 21 stay on it). The model's number was already known when the uncertainty was looked up, which is recorded in D122 so that a reader can judge; the width is the source's verbatim. Statistical per debt #8, against a field the model derives, so every seed reads the same number."),
     Quantity(15, "Bar half-length", "kpc", "bar_half_length", 4.8, 5.2, "pointwise", "5.0 ± 0.2 kpc", _BHG16),
     Quantity(16, "Bar pattern speed", "km/s/kpc", "bar_pattern_speed", 34.0, 52.0, "statistical", "43 ± 9 km/s/kpc", _BHG16, note="Statistical per debt #8."),
     Quantity(17, "Bar corotation radius", "kpc", "bar_corotation_radius", 4.5, 7.0, "statistical", "4.5–7.0 kpc", _BHG16, note="Statistical per debt #8."),
@@ -202,36 +202,13 @@ class Miss:
             raise SpecError(f"row {self.row}: a recorded miss needs a reason and a prediction")
 
 
+# Row 2's miss (debt #47, S16) was removed at S17: the spheroid took 13% of the budget out of
+# what the disc accretes and the rate fell 2.08 -> 1.82, inside 1.65 +/- 0.19 for the first time
+# since S2. It is *not* removed because the mechanism debt #47 names was built - the threshold is
+# still the constant 5 Msun/pc2 at the bottom of its cited range - so the debt stays open and rows
+# 9 and 20 are still judged with it at S18 (D121). What the row would do under the derived
+# threshold is no longer measured; S16's probe read 1.95 with the whole budget in the disc.
 _MISSES: tuple[Miss, ...] = (
-    Miss(
-        row=2,
-        debt=47,
-        since="S16",
-        reason=(
-            "2.08 Msun/yr against 1.65 +/- 0.19, up from 1.89, with the high-j accretion tail built "
-            "(S16, D119). The row's history: 1.14 before the merger-delivered second infall, 1.97 "
-            "while Sagittarius delivered a tenth of the budget (debt #29), 1.89 with a physical "
-            "Sagittarius (S13). Debt #18's prediction was that the extended component's own timescale "
-            "would bring it down; it does not: three arrival laws for the tail (the inside-out law "
-            "from t = 0, the same from the assembly epoch, the halo's own growth after it) read the "
-            "same on every row and within 0.05 of each other here, and all of them raise it, because "
-            "the tail's inner edge at 12 kpc overlaps gas the disc already holds near the threshold "
-            "and 0.2 Msun/yr forms there. The row is the present infall rate inside the threshold "
-            "radius (star formation is self-regulated: KS_NORM at -1 sigma reads 2.25, higher, and at "
-            "+1 sigma 1.98, so the row sees past KS_NORM's band now - debt #44 no longer covers it), "
-            "and the constant threshold of 5 Msun/pc2 is the bottom of its cited 5-10 (debt #47)."
-        ),
-        prediction=(
-            "Kennicutt's threshold is not a constant but alpha kappa sigma_g / 3.36 G, derived from "
-            "the rotation curve; probed at S16 (D119) with alpha = 0.69 and sigma_g = 6 km/s it reads "
-            "10.8 Msun/pc2 at R0 and puts the gas there at the observed 10-13, hydrogen at 8.2e9 "
-            "(row 20 met) and this row at 1.95 - still out - while row 9 falls to 0.06 and fails, "
-            "because the thick disc forms from the same reservoir. So rows 2, 9 and 20 are judged "
-            "together when S18 builds the thick disc's radial heating; if row 2 still exceeds 1.84 "
-            "with the derived threshold and row 9 restored, the cause is the present infall rate "
-            "itself - infall_timescale's 7 Gyr at R0 - and not the gas physics."
-        ),
-    ),
     Miss(
         row=7,
         model="simple",
@@ -297,8 +274,17 @@ _MISSES: tuple[Miss, ...] = (
         debt=11,
         since="S15",
         reason=(
-            "260.1 km/s against 248 +/- 3: too much mass inside R0, by 9 km/s, with the halo contracted "
-            "around the disc (S14, debt #6) and the assembly epoch at its derived default (S15, D117). "
+            "251.3 km/s against 248 +/- 3: too much mass inside R0, by a quarter of a km/s over the "
+            "window, with the halo contracted around the disc (S14), the assembly epoch at its "
+            "derived default (S15) and both ends of the angular-momentum distribution built (S16, "
+            "S17). **The prediction this miss carried has failed and the number is what killed it**: "
+            "the bulge was to be worth 5-8 km/s (D110) and it is worth 1.6. D110's probe drew a "
+            "spheroid from the stellar disc in proportion on the *uncontracted* S13 halo; the "
+            "spheroid the model derives comes out of the accreting budget instead, and that budget "
+            "included the 15% of the exponential that sat outside R0 and pulled the Sun outward - so "
+            "moving it inward gives back nearly as much as the disc's flattening loses. Measured at "
+            "S17: 1.4e10 in the spheroid is worth 3.7 km/s and 1.7e10 is worth 4.2, so no bulge mass "
+            "in the observed range closes 4.9 km/s on its own either. "
             "The row's history: S1 blamed the gas profile (246.4 predicted); S2 gave it one and got "
             "237.2, the stellar disc broadening at the same time; S3 corrected that and the miss "
             "returned to 256, blamed on the compact disc (debt #18); S13 converted c_vir to c200 "
@@ -314,18 +300,124 @@ _MISSES: tuple[Miss, ...] = (
             "and no extended component (debts #11, #18)."
         ),
         prediction=(
-            "The bulge (D110, S17) lowers the row by 5-8 km/s and the extended component (D114, S16) "
-            "by 4-13 at the settings probed; together they are 9-21 against the 9-15 the row needs, "
-            "so the two mechanisms close it with the epoch at its derived default. Prediction, stated "
-            "so it can fail: after S16 and S17 the row reads inside 245-251 with halo_assembly_z = 1.66; "
-            "if it still reads above 251, the baryon distribution is not the cause and debt #46's "
-            "calibration is - A = 1.6 at w = 0.8 reads 245.6 now and is not adopted, because the "
-            "Auriga-calibrated response [recall: Cautun et al. 2020] agrees with Gnedin et al. 2004's at "
-            "R0 to 2 km/s. Not a lever: the epoch below 1.08 (outside the relation's scatter), a baryon "
-            "retention of 0.25 (fails row 1). Discriminants: halo_concentration_contracted against 10-18 "
-            "(15.4), halo_density_sun against 0.008-0.013 Msun/pc3 (0.0087 - inside at every epoch, so "
-            "it does not discriminate), the escape velocity at R0 against 530-580 (569), and row 19, "
-            "which none of these moves."
+            "This row and row 12 now have one cause and it is the bar. The spheroid the model derives "
+            "is 7.7e9 against the observed 1.4-1.7e10, and what is missing is the box/peanut a bar "
+            "makes of the inner disc, which BHG16 §4.2 says is most of the Milky Way's bulge and which "
+            "this model does not have (debt #21: the bar is a scaled length, not a dynamics). "
+            "Prediction, stated so it can fail: a spheroid of 1.4e10 - the observed bulge, reached by "
+            "adding the missing 7e9 to the same reservoir - reads 249.4 here and lands the row, and "
+            "1.7e10 reads 248.7, so **closing row 12 closes row 3 and the interval it lands in is not "
+            "wide**. If a session builds the buckling and this row does not fall below 251, the "
+            "baryon distribution is not the cause and debt #46's calibration is - A = 1.6 at w = 0.8 "
+            "reads 238.1 now, out the other way, and is not adopted, because the Auriga-calibrated "
+            "response [recall: Cautun et al. 2020] agrees with Gnedin et al. 2004's at R0 to 2 km/s. "
+            "The same change is measured to push row 14 to 123 km/s, outside 110-116, unless the "
+            "spheroid's scale radius grows with its mass; that is the tension to watch. Not a lever: "
+            "the epoch below 1.3 (the row is met at 1.3-1.4, and the relation's scatter runs to 1.08), "
+            "a baryon retention of 0.25 (fails row 1). Discriminants: halo_concentration_contracted "
+            "against 10-18 (15.0), halo_density_sun against 0.008-0.013 Msun/pc3 (inside at every "
+            "epoch, so it does not discriminate), the escape velocity at R0 against 530-580, and "
+            "row 19, which none of these moves."
+        ),
+    ),
+    Miss(
+        row=12,
+        debt=11,
+        since="S17",
+        reason=(
+            "7.71e9 Msun against 1.4-1.7e10, low by 45%. The spheroid is derived rather than sized: "
+            "it is the low-j end of the halo's angular-momentum distribution, the mass no exponential "
+            "disc of this scale length can hold, 13.2% of the retained budget inside a crossing at "
+            "2.46 kpc with half of it inside 0.88 kpc (D121). That is one formation channel - "
+            "material that could never have been a disc - and BHG16 §4.2 says it is the smaller one: "
+            "the Milky Way's bulge is mostly the box/peanut inner part of the bar, made of disc stars "
+            "the bar rearranged, and this model has no bar dynamics to make it with (debt #21). The "
+            "shape constant carries the rest of the spread: across mu = 1.06-1.40, the range Bullock "
+            "et al. 2001 quote, the spheroid runs 1.46e10 down to 5.6e9, so the observed mass is "
+            "inside the distribution's own scatter and outside what the median value gives (debt #47)."
+        ),
+        prediction=(
+            "Buckling the inner disc is the mechanism, and it is testable in the direction that "
+            "matters: it must add mass without adding compactness. Adding 7e9 to the spheroid at the "
+            "derived scale radius reads row 3 at 249.4 (inside, closing that row too) and row 14 at "
+            "123 km/s (outside 110-116), so a bar-built component has to be *less* concentrated than "
+            "the dissipational one - which is what a box/peanut is. If a session builds it at a scale "
+            "radius that keeps row 14 inside and row 12 still misses, the low-j excess is not the "
+            "bulge's seed and the whole derivation is wrong. Not a lever: mu, which is S16's and "
+            "verified, and which moves rows 20 and 2 with this one."
+        ),
+    ),
+    Miss(
+        row=13,
+        debt=11,
+        since="S17",
+        reason=(
+            "0.153 against 0.30 +/- 0.06. The numerator is row 12 and misses low by 45% for the "
+            "reason recorded there; the denominator is row 1, which passes. So this row carries no "
+            "information row 12 does not, and it is registered separately only because the table "
+            "judges it separately. The ensemble is degenerate - the spheroid's mass is derived, so "
+            "all 41 seeds read the same number - which is the honest reading of a row §4b made "
+            "statistical against a residual the model turned out not to need (rule A10)."
+        ),
+        prediction=(
+            "It follows row 12 exactly: at the observed 1.4-1.7e10 the fraction is 0.28-0.34, inside. "
+            "If row 12 is ever landed and this row is not, the model's total stellar mass is wrong "
+            "rather than its bulge."
+        ),
+    ),
+    Miss(
+        row=14,
+        debt=11,
+        since="S17",
+        reason=(
+            "116.2 km/s against 113 +/- 3, high by 0.16 - a seventh of a km/s outside a window that "
+            "S17 entered from the source rather than chose (debt #17 discharged for this row; BHG16 "
+            "§4.3 quotes 'the rms is sigma_rms,b = 113 km/s, to = 3 km/s'). The number is the "
+            "isotropic spherical Jeans equation in the model's own total potential, mass-weighted "
+            "inside the spheroid's half-mass radius to match how the source defines it, and it is a "
+            "derivation with no fitted quantity anywhere in it. **The surprise is that it is nearly "
+            "right while row 12 is 45% low**: sigma inside the half-mass radius is set by the whole "
+            "enclosed mass - dark halo, disc and spheroid - so it is a weak function of the spheroid "
+            "alone, and on the spheroid's self-gravity it would read 71. Isotropy is the assumption: "
+            "a bulge with 83% of its support in rotation by the model's own measure has that rotation "
+            "counted here as dispersion, which raises the number rather than lowering it."
+        ),
+        prediction=(
+            "The two ways out disagree, and that is what makes this testable. If the miss is the "
+            "isotropy assumption, subtracting the rotation the model already computes "
+            "(bulge_classical_fraction) would take the row below 113 and row 12 would still miss; if "
+            "it is the missing bar-built mass, adding 7e9 takes the row to 123 and further out. They "
+            "cannot both be right, so the first session to build the buckling reads which."
+        ),
+    ),
+    Miss(
+        row=18,
+        debt=2,
+        since="S17",
+        reason=(
+            "the ensemble's median is 1.97e7 Msun against 4.2 +/- 0.2e6, high by 0.67 dex; the "
+            "M-sigma mean itself, which the median estimates, is 2.86e7, high by 0.83. This is the miss "
+            "GALAXY_INPUTS.md §3 says is expected at ~0.75 dex and must not be re-scoped, and it is "
+            "not a defect in the model: BHG16 records the Milky Way falling 5-6x below the M-sigma "
+            "relation *for elliptical galaxies and classical bulges*, and the model applies exactly "
+            "that relation because ruling 10 says to derive the mean and seed the residual. The "
+            "Milky Way's spheroid is a pseudobulge and pseudobulges do not correlate with the hole at "
+            "all (GALAXY_INPUTS.md §13), so the mean is being asked a question it cannot answer. The "
+            "model's own classical share, 0.17, says the same thing in its own terms. The row is "
+            "judged on the ensemble's median (D109), which is the mean relation at any residual "
+            "width, so the width - the classical 0.28 dex, because the pseudobulge end has no "
+            "published number (debt #48) - moves this verdict not at all."
+        ),
+        prediction=(
+            "The miss is the source's, not the model's, and the way to kill that explanation is to "
+            "make the relation the model applies match the object it applies it to. Two candidates, "
+            "both refused here as inventions: an M_bullet-M_bulge relation applied to the classical "
+            "share alone reads 5.2e6 and would land the row, which is precisely why it was not "
+            "adopted with the answer already known (rule B5); and a crossover on bulge type needs a "
+            "constant ruling 10 declined to add. What would settle it is a published pseudobulge "
+            "calibration - a zero point and a width - entered before the row is next judged. Until "
+            "then the row stays red at 0.83 dex, and if a future session moves it by touching "
+            "BLACK_HOLE_NORM or the dispersion, that is the tuning this entry exists to catch."
         ),
     ),
     Miss(
@@ -432,17 +524,13 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     Miss(row=row, model="advanced", debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
     for row in (5, 7, 8, 9, 11)
 ) + (
-    Miss(
-        row=10,
-        model="advanced",
-        debt=27,
-        since="S9",
-        reason=(
-            "5.28e10 Msun against 3.5 ± 1e10: with no valley the chemical split puts every star "
-            "in the thin disc, so this row carries the whole stellar mass (debt #27)."
-        ),
-        prediction=_NO_VALLEY_PREDICTION,
-    ),
+    # The advanced model's row 10 miss (debt #27, S9) was removed at S17. It read 5.28e10 and
+    # then 5.00e10 against 3.5 ± 1e10 because with no valley the chemical split puts every star
+    # in the thin disc; the spheroid took 13% of the budget out of the disc and it now reads
+    # 4.26e10, inside. Nothing about the valley changed. **The row is green on the same
+    # cancellation debt #11 named for the simple model** — thin = every star, and it lands only
+    # because the total is smaller — so it is not evidence for the chemical split, and if debt
+    # #27's valley ever appears this row will move again by the thick disc's whole mass.
     Miss(
         row=23,
         model="advanced",

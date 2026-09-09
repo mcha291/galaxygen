@@ -12,19 +12,21 @@ SIMPLE = MODELS.register(
             "major merger. Every stage it maps is shared with the advanced model except "
             "chemistry and vertical, where the two genuinely differ (S9)."
         ),
-        stages=(("halo", "halo"), ("disc", "disc"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry"), ("vertical", "vertical"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
+        stages=(("halo", "halo"), ("disc", "disc"), ("nucleus", "nucleus"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry"), ("vertical", "vertical"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
         constants={
             **LEVEL0,
             # Read by the simple chemistry only. The advanced model has no effective
             # yield: it has nucleosynthetic yields and a wind, and the effective yield
             # at R₀ is one of its results (debt #16).
     "NET_YIELD": Constant(
-        0.0117,
+        0.01184,
         "dimensionless",
         "**Effective** yield: metals surviving in the gas per unit mass locked into stars. Refitted "
         "at S16 from 0.011, the first time since S3: the high-j tail took 7.6% of the budget out of "
         "the exponential and the gas at R₀ read −0.027 dex, so the value was re-set to solar by "
-        "bisection (rule B10, debt #43, D119). The "
+        "bisection (rule B10, debt #43, D119); refitted again at S17 from 0.0117 when the spheroid "
+        "took another 13% out, though that moved the gas at R₀ only −0.005 dex and the constant "
+        "1.2% — re-examined every time the budget moves, whether or not the move is material. The "
         "nucleosynthetic yield integrated over a Kroupa/Chabrier IMF is 0.03-0.04 for total "
         "metallicity [recall], and this is deliberately about a third of it. The simple model has "
         "no outflows — GALAXY_INPUTS.md §8 makes them an advanced-model axis — so metals that "

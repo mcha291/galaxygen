@@ -97,8 +97,10 @@ LEVEL0: dict[str, Constant] = {
         "(debt #18, S16): the exponential disc MMW98 assume holds the distribution's low-j part, and "
         "what it does not hold beyond their outer crossing — the high-j tail, about 9% of the "
         "budget beyond 12 kpc at the default — is the gas the star formation threshold leaves as the "
-        "outer HI disc. The low-j excess inside is discarded, not modelled: it is what feedback ejects "
-        "and the bulge is drawn from (D110). The scatter in μ is not absorbed by any input (debt #47).",
+        "outer HI disc. Since S17 the *low-j* excess inside the inner crossing is read off the same "
+        "construction as the central spheroid (debt #11, D121), so one constant now sets both ends of "
+        "the disc the exponential does not describe: at μ = 1.06 the spheroid is 1.46 × 10¹⁰ M☉ and "
+        "at 1.40 it is 5.6 × 10⁹. The scatter in μ is not absorbed by any input (debt #47).",
     ),
     "R_SUN": Constant(
         8.2,
@@ -331,6 +333,38 @@ LEVEL0: dict[str, Constant] = {
         "[recall: beyond a few tens of AU growth times exceed disc lifetimes, which is why the "
         "Solar System's planets stop at Neptune and the Kuiper belt is unaccreted]. Solids "
         "beyond it are counted into the budget but never assembled.",
+    ),
+    "BLACK_HOLE_NORM": Constant(
+        0.309e9,
+        "Msun",
+        "M_• at σ = 200 km/s in the M–σ relation ruling 10 takes, M_•/10⁹ M☉ = 0.309 (σ/200)^4.38 "
+        "[verified: GALAXY_INPUTS.md §13, citing Ho 2014 eq. 2]. It is the relation for **classical "
+        "bulges and ellipticals**, which is why the model publishes the classical share of its own "
+        "spheroid beside it: pseudobulges show no significant correlation at all, so applying this "
+        "to a pseudobulge-dominated galaxy is applying a relation that does not hold for the object "
+        "(GALAXY_INPUTS.md §13). The Milky Way is such a galaxy and acceptance row 18 is expected to "
+        "miss by ~0.75 dex because of it, which is a property of the source and not of the model.",
+    ),
+    "BLACK_HOLE_INDEX": Constant(
+        4.38,
+        "dimensionless",
+        "Slope of the M–σ relation, the exponent in BLACK_HOLE_NORM's formula [verified: "
+        "GALAXY_INPUTS.md §13, citing Ho 2014 eq. 2]. Steep enough that the row is a check on the "
+        "velocity dispersion far more than on the normalisation: a 3% error in σ is 13% in M_•.",
+    ),
+    "BLACK_HOLE_SCATTER": Constant(
+        0.28,
+        "dimensionless",
+        "Width of the seeded M_• residual, in dex of log₁₀ M_•, drawn about the M–σ mean (ruling 10; "
+        "the residual is real and nobody would choose it, §4b). 0.28 dex is the intrinsic scatter "
+        "**for classical bulges and ellipticals** [verified: GALAXY_INPUTS.md §13, citing Kormendy & "
+        "Ho via Ho 2014]. Ruling 10 asks for this width to be interpolated by the classical share "
+        "the model computes, towards the pseudobulge end; that end has no published number — "
+        "Kormendy & Ho declined to fit pseudobulges at all and Ho & Kim 2014 say only 'a different "
+        "zero point and much larger scatter' — so the interpolation is not done and this width, the "
+        "narrow end, is used for a galaxy whose spheroid the model calls 83% pseudo. It therefore "
+        "**understates** the spread, which is debt #48; it moves no verdict, because a statistical "
+        "row is judged on its median (D109) and the median is the mean relation at any width.",
     ),
     "V_SUN_PECULIAR": Constant(
         12.24,

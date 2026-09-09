@@ -78,7 +78,7 @@ def test_iron_lags_oxygen_so_the_iron_gradient_is_the_steeper(default):
     R = default.grid.R
     feh, oh = default.fields["feh_gas"], default.fields["feh_gas"] + default.fields["alpha_fe_gas"]
     assert gradient(feh, R) < gradient(oh, R) - 0.01
-    assert gradient(oh, R) == pytest.approx(-0.037, abs=0.005)
+    assert gradient(oh, R) == pytest.approx(-0.045, abs=0.005)  # -0.037 until S17's spheroid
 
 
 # --- the wind ---------------------------------------------------------------
@@ -110,7 +110,7 @@ def test_the_tilt_is_the_wind_s_radial_dependence(advanced, default):
     flat = run(with_constant(advanced, "WIND_INDEX", 0.0), only=CHEM)
     assert flat.fields["metallicity_gradient"] > default.fields["metallicity_gradient"] + 0.01
     # With no radial dependence what is left is the infall tilt plus the delayed iron's.
-    assert flat.fields["metallicity_gradient"] == pytest.approx(-0.043, abs=0.006)
+    assert flat.fields["metallicity_gradient"] == pytest.approx(-0.049, abs=0.006)  # -0.043 until S17
 
 
 def test_the_solar_calibration_is_one_constant(advanced, default):
@@ -188,7 +188,8 @@ def test_the_split_criterion_never_names_the_merger():
 def test_the_populations_still_add_up_with_a_chemical_split(advanced):
     o = run(advanced, only=("thick_thin_surface_density_ratio",))
     total = o.fields["thin_disc_stellar_mass"] + o.fields["thick_disc_stellar_mass"]
-    assert total == pytest.approx(o.fields["stellar_mass_total"], rel=0.02)
+    # Row 1 carries the spheroid since S17 and the populations are the disc's (D121).
+    assert total == pytest.approx(o.fields["stellar_mass_total"] - o.fields["bulge_stellar_mass"], rel=0.02)
 
 
 def test_the_advanced_gradient_converges(advanced):
@@ -222,7 +223,7 @@ def test_the_winds_effective_yield_and_the_fitted_one_and_how_far_they_agree(pro
     o = run(advanced, only=("metal_escape_fraction",))
     i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
     escaped = float(o.fields["metal_escape_fraction"][i])
-    assert escaped == pytest.approx(0.7536, abs=0.001)  # 0.7556 until S16 built the tail and refitted WIND_SPEED; 0.7532 until S13 converted the concentration and refitted WIND_SPEED; 0.7567 until S14 contracted the halo and refitted it again
+    assert escaped == pytest.approx(0.7503, abs=0.001)  # 0.7536 until S17 built the spheroid and refitted WIND_SPEED; 0.7556 until S16 built the tail and refitted it; 0.7567 until S15
 
     effective = y_z * (1.0 - escaped)
     fitted = float(simple.constants["NET_YIELD"].value)
