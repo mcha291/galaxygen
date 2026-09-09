@@ -2750,3 +2750,153 @@ the other audit, the way S1–S8 were built and passed. S21 reserves its debt an
 decision numbers before it starts (S11's lesson). What the plan does not
 promise is written beside it: the debts that are properties of the model's
 scope are ruled on at S22, not closed `[inferred]`.
+
+### D117. Row 3's cause: the assembly epoch's default is derived, the contraction's calibration is not the lever, and what is left is the baryons (debts #12, #46, #11, #18, #43)
+
+**Decision.** `halo_assembly_z`'s default is 1.66, derived: the epoch at which
+the ΛCDM median halo of the default mass assembled — c₂₀₀ = 10^(0.905 − 0.101
+log₁₀(M₂₀₀ h/10¹² M☉)) = 8.25 at z = 0 `[verified: Dutton & Macciò 2014, Planck;
+h = 0.7 here]`, converted to c_vir = 10.92 at Δ_vir through the NFW invariant
+(D107) and read back through K = 4.1 as z_f = c_vir/K − 1. The old default,
+2.5, was the midpoint of §3's "z ≈ 2–3" and was justified by c₂₀₀ = 14.4 landing
+inside the 10–18 the Milky Way's measurements span; K is a dark-matter-only
+calibration `[verified: Wechsler et al. 2002, c_vir = c₁/a_c, c₁ = 4.1, Ω_M = 0.3,
+σ₈ = 1.0]`, so the concentration it gives is the halo's *before* it contracted
+around the disc (D113), and the measurements are fits to the halo *after*. The
+halo stage publishes two more scalars so that the comparison is between like
+things: `halo_concentration_contracted`, the c₂₀₀ of the NFW halo of the same
+dark mass enclosing the same mass inside R₀ as the contracted one (18.5 at 2.5,
+over; 15.4 at 1.66, inside), and `halo_density_sun`, the dark-matter density at
+R₀ in M☉/pc³, the one halo property measured without the rotation curve. The
+contraction stays Gnedin et al. 2004's at (0.85, 0.8) with Blumenthal's named
+(rule B12); A = 1.6 at w = 0.8 reads 245.6 now, inside, and is not adopted. Row
+3 reads 260.1, a recorded miss under debt #11 whose prediction names the bulge
+(D110, S17) and the extended component (D114, S16). `WIND_SPEED` is refitted
+1028 → 999 km/s (rule B10, debt #43). Debt #12 is discharged; #46, #11, #18 and
+#43 are amended. GALAXY_PLAN.md §5d's reserved D-numbers are restated as counts
+fixed when S21 opens, because decisions are numbered sequentially by a test and
+this one is D117.
+
+**Settled by.** The three levers read against three discriminants, the repo
+unchanged, before anything was decided (the plan's "probe before build"):
+
+    ruleset       z_f   c_vir  c200   c_eff   halo v(R0)  r_i/r_f  rho(R0) Msun/pc3  GeV/cm3  row 3   v_esc(R0) adv
+    Gnedin 2004   0.7    6.97   5.20  11.84    144.7      1.667    0.0066            0.25     246.4   548.8
+    Gnedin 2004   1.0    8.20   6.15  12.97    151.8      1.604    0.0073            0.28     250.9   555.3
+    Gnedin 2004   1.5   10.25   7.73  14.84    162.6      1.524    0.0083            0.32     257.9   565.8
+    Gnedin 2004   1.66  10.91   8.24  15.43    165.8      1.503    0.0087            0.33     260.1   569.0   <- default
+    Gnedin 2004   2.0   12.30   9.32  16.68    172.4      1.464    0.0094            0.36     264.5   575.6
+    Gnedin 2004   2.5   14.35  10.91  18.50    181.4      1.419    0.0103            0.39     270.8   584.8   <- until S15
+    Gnedin 2004   3.0   16.40  12.50  20.31    189.8      1.383    0.0112            0.43     276.7   593.2
+    Blumenthal    1.66  10.91   8.24  17.0     180.6      1.680    -                 -        270.2   -
+    A=1.6, w=0.8  1.66  10.91   8.24  -        143.3      -        -                 -        245.6   -
+    LCDM median c200 8.25 -> z_f 1.66; +-0.11 dex -> 1.08-2.41.  Cautun et al. 2020's Auriga response at R0:
+    180.3 at z_f 2.5 (Gnedin 181.4), 163.6 at 1.66 (165.8).  Measured: c 10-18 (post-contraction fits);
+    rho 0.3-0.5 GeV/cm3 (global analyses); v_esc(R0) 533 +54/-41, 528 +24/-25; MW pre-contraction c 9.4 +1.9/-2.6.
+
+Three things the table says. **The epoch's validation compared unlike things**:
+at 2.5 the pre-contraction c₂₀₀ of 10.9 sat inside the measured span and the
+post-contraction fit, which is what the span measures, sat above it; at the
+median epoch the fit is inside and the Milky Way's own pre-contraction
+concentration, 9.4 (+1.9/−2.6) `[recall: Cautun et al. 2020, Table 2]`, brackets
+the median (z_f 2.0, +0.6/−0.9), and its local density, 8.8 × 10⁻³ M☉/pc³, is
+what the model reads at 1.7. **The calibration is not the lever**: the recalled
+"mass- and epoch-dependent (A, w)" that debt #46 and §5d named as the untried
+form does not exist — Gnedin et al. 2011 find no correlation of A or w with
+either and write that the response cannot be reduced to a prescription
+`[verified: arXiv:1108.5736, read this session by a read-only agent]` — and the
+modern Auriga calibration `[verified: Cautun et al. 2020, eq. 11]` agrees with
+the default invariant at R₀ to 2 km/s, so the number that would land the row
+(A = 1.6) is the one two calibrations agree against. **The local density does
+not discriminate**: the response raises the dark mass inside R₀ by 70% and the
+density there by 16%, because it steepens the profile inside R₀ more than it
+raises it at R₀, and every epoch from 1 to 3 reads inside the measured span.
+The expectation before the probe was a factor of two; the number was measured
+before the about line was written (S14's lesson, rule B4).
+
+So the epoch is derived and the row still misses, by 9–15 km/s, with the
+baryons as the cause: 5.9 × 10¹⁰ M☉ in one exponential at 2.6 kpc, no bulge, no
+extended component. The bulge's 5–8 (D110) and the component's 4–13 (D114)
+together span 9–21, so the prediction is that S16 and S17 close it with the
+epoch at 1.66; if they do not, the invariant is the remaining suspect and its
+test is w swept at A = 1.6 against rows 3, 19 and the escape velocity together.
+Not levers: the epoch below 1.08, outside the relation's scatter; a baryon
+retention of 0.25, which fails row 1. Rule B5 is kept the way the audits kept
+it — the default was not chosen against the row, and the row is not inside.
+
+**The instrument** (rule B1). Both scalars were tested before a number was read:
+with no disc the mesh density matches the analytic NFW density to a part in 10⁴
+away from the mesh's ends and the effective concentration returns the halo's
+own c to 10⁻⁵, and quadrupling the mesh moves neither `[verified:
+tests/test_halo.py::test_with_no_disc_the_density_and_the_effective_concentration_are_the_nfw_ones,
+::test_the_mesh_does_not_move_the_density_or_the_effective_concentration,
+::test_the_stage_publishes_both_in_the_units_a_measurement_quotes]`. The
+derived default is reproduced from the relation, the cosmology and K by a
+test, with the scatter's ends and the old value outside them `[verified:
+tests/test_registry.py::test_the_epochs_default_is_the_lcdm_median]`.
+
+**What moved.** The less concentrated halo responds more (r_i/r_f at R₀ 1.42 →
+1.50, the central ratio 2.22 → 2.51) and its share at R₀ falls 181.4 → 165.8
+(119.3 before the response, 138.6 until S15); row 3 270.8 → 260.1 in both
+models; the conversion of D107 is worth 10.7 km/s at this epoch (12.4 at 2.5).
+The advanced model: v_esc(R₀) 584.8 → 569.0, inside 530–580; the gas at R₀
+read −0.019 dex at 1028 and `WIND_SPEED` was bisected to 999 (0.000 dex); the
+escape fraction at R₀ 0.7556 → 0.7552, the gradient −0.0582 → −0.0578 (inside),
+the old-star gradient −0.0202 → −0.0201. Rows 16 and 17: medians 44.9 → 43.2
+km/s/kpc and 5.82 → 5.82 kpc, inside. Rows 1, 2, 4–11, 19, 20, every mass and
+every simple-model gradient: unchanged to 10⁻⁹. Debt #45's sweep re-read:
+`GAS_DISC_SCALE_RATIO` = 1.5 takes row 3 to 241.5 (253.0 at S14). Every pinned
+measurement re-pinned with the old number beside it `[verified:
+tests/test_halo.py::test_concentration_from_the_assembly_redshift,
+::test_the_disc_is_not_counted_twice, ::test_the_concentration_is_converted_from_the_virial_overdensity,
+::test_the_conversion_moved_row_3_and_nothing_else, ::test_k_and_the_assembly_epoch_enter_only_as_their_product,
+::test_the_named_rulesets_and_what_each_is_worth_at_R0; tests/test_sfh.py::test_row_3_misses_high_once_the_halo_contracts;
+tests/test_audit.py::test_debt_12_the_concentration_is_converted_and_row_3_reads_low,
+::test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_gas_rows;
+tests/test_registry.py::test_defaults_are_the_milky_way; tests/test_spec.py]`.
+The two new fields have no viewer preview; S19 owns that (§5d).
+
+### D118. Cold timings at S15 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0006   0.0003   1.79        940  -
+    viewer: a module         0.0006   0.0003   2.04     21,599  -
+    index                    0.0000   0.0000   0.89      1,237  -
+    version                  0.0042   0.0021   2.06      1,132  -
+    stages                   0.0007   0.0003   2.10      8,898  -
+    fields                   0.0013   0.0006   2.11     63,368  -
+    inputs                   0.0001   0.0001   1.06     10,388  -
+    arrays: one profile      0.1227   0.0004 305.45      4,976  halo,assembly,sfh
+    arrays: history          0.1620   0.0028  57.69  6,401,768  halo,assembly,sfh,chemistry
+    arrays: scalar           0.1036   0.0003 345.02      1,712  halo,assembly,sfh
+    region: one sector*      0.2203   0.0044  49.62     19,024  halo,assembly,sfh,chemistry,vertical
+    region: whole disc*      0.3682   0.1718   2.14  1,126,448  halo,assembly,sfh,chemistry,vertical
+    system: one star*        0.1956   0.0024  81.59      3,112  halo,assembly,sfh,chemistry,vertical
+    adv: history             0.5359   0.0026 206.43  6,401,776  halo,assembly,sfh,chemistry_dtd
+    adv: alpha plane         0.5782   0.0034 168.91  6,401,832  halo,assembly,sfh,chemistry_dtd
+    adv: one sector*         0.5692   0.0040 142.76     19,032  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.4994   0.0025 199.44      3,128  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, about 10 ms here (debt #37)
+    import + registry: 0.104-0.135 s, paid once per process and excluded from the cold column
+
+    model simple: 0.620 s cold, 0.630 s warm; halo 0.0043 s, sfh 17%, systems 27%, planets 24%
+    model advanced: 0.988 s cold, 0.934 s warm; halo 0.0033 s, chemistry_dtd 43%
+    catalogue against sample size: simple 0.35 us per star, 156.2 ms fixed (95%); advanced 0.92 us, 142.5 ms fixed (89%)
+    one-off, first seeded draw: 9.92 ms then 0.026 ms (385x), billed to pattern; debt #37
+
+**Read within the run.** Nothing changed shape. The halo stage's two new
+scalars are one bisection and one gradient on a mesh it already builds, inside
+the noise of its 3–4 ms; the `fields` route grew 2 kB for their declarations
+and the `stages` route 50 bytes. The whole-model numbers, 0.62 / 0.99 s, sit
+between D115's warm-process (0.58 / 0.91) and fresh-interpreter (0.83 / 1.22)
+readings; the per-stage shares are S14's within a few percent everywhere, and
+`tools/scaling.py` was not re-run because no stage's cost or complexity moved
+`[verified: python -m galaxy.specs, tools/timings.py, 2026-09-09]`. The
+catalogue's per-star slope read 0.35 and 0.92 µs against D115's 1.8 — the
+flake D115 recorded, in its benign direction (the fixed cost dominates and the
+slope is noise at this sample); not this session's, not touched.
+
+**Close.** Board row 15 (desktop, Fable 5.1, `s15`, 2026-09-09); `session-15`
+merged `--no-ff` into `main`; `s14`'s SHA filled in MANUAL_TODO.md as the
+second merge's, `s15` queued; register 30 open / 16 discharged. Next: S16, the
+extended component with its own timescale (§5d), judged against row 3 at 260.1.

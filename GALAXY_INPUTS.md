@@ -69,7 +69,7 @@ becomes an input only in the advanced model. `[inferred]`
 |---|---|---|---|
 | 1 | `halo_mass` M₂₀₀ | 1.1 × 10¹² M☉ | Literature spans 0.89–1.3 × 10¹² `[verified: Karukes+19 0.89⁺⁰·¹⁰₋₀.₀₈; McMillan 1.3 ± 0.3]` |
 | 2 | `disc_spin` λ_d | **0.0144** — RULED (8) | The **disc** spin parameter, not the halo's. See §6 |
-| 3 | `halo_assembly_z` | z ≈ 2–3 | RULED (7): renamed; `galaxy_age` cut. Also derives c₂₀₀ (5) |
+| 3 | `halo_assembly_z` | z ≈ 2–3; **default 1.66 since S15** | RULED (7): renamed; `galaxy_age` cut. Also derives c₂₀₀ (5). The default is the epoch of the ΛCDM median halo of the default mass, 1.08–2.41 across the relation's scatter; the 2–3 was read against measurements of the *contracted* halo (debt #12, D117) |
 | 3b | `baryon_retention` | ~0.35 | RULED (9). f_b × this = m_d ≈ 0.055 |
 | 4 | `infall_timescale` τ₀ | ~7 Gyr at R₀ | Two-infall framework `[verified: Chiappini+97 via Molero+23]` |
 | 5 | `inside_out_index` n | τ(R) = τ₀(R/R_d)ⁿ | Sets the metallicity gradient `[inferred]` |
@@ -731,7 +731,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S14:** with the halo contracted around the disc (debt #6) row 3 reads 270.8, high
    by 20 km/s, and the bulge's 5–8 (D110) is not enough on its own: the bulge stays a
    stage for rows 10, 12 and 13, and row 3 is debt #12's epoch and debt #46's calibration.
-12. **The c₂₀₀–z relation is unvalidated and load-bearing.** c₂₀₀ = 4.1(1 + z_f)
+   **S15:** row 3 is this debt's again. With the epoch derived (debt #12 discharged, D117)
+   the row reads 260.1, high by 9–15 km/s against its window, and what is left inside R₀ is
+   the baryons: 5.9 × 10¹⁰ M☉ in one exponential at 2.6 kpc. The bulge's 5–8 (D110) and the
+   extended component's 4–13 (D114) together span 9–21, so the two mechanisms are the row's
+   prediction (`spec._MISSES` row 3): S17's bulge and S16's component close it with the epoch
+   at 1.66, or the baryon distribution is not the cause and debt #46 is.
+12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
+   S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
+   ΛCDM median halo of the default mass, derived below, and the relation's validation is
+   read against the contracted halo. Kept for the history. c₂₀₀ = 4.1(1 + z_f)
    applies a normalisation quoted for c_vir to c₂₀₀ without the conversion
    between the two overdensities, and z_f = 2.5 is the midpoint of §3's
    "z ≈ 2–3" rather than a measurement. Across that cited range v_c(R₀) moves
@@ -785,6 +794,28 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    `[verified: tests/test_halo.py::test_the_epoch_row_3_wants_is_below_the_cited_range]`.
    All three S10 conversions were read against an uncontracted halo, and so was every
    epoch the register has quoted; the row's miss is under this debt since S14 (D113).
+   **S15, discharged.** The one check the default passed — c₂₀₀ = 14.4 inside the 10–18
+   the Milky Way's measurements span — compared unlike things: K is a dark-matter-only
+   calibration `[verified: Wechsler et al. 2002, c_vir = c₁/a_c, Ω_M = 0.3, σ₈ = 1.0]`, so
+   the concentration it gives is the halo's *before* it contracted around the disc, while
+   a measurement of the Milky Way fits an NFW to the halo *after*. The halo stage publishes
+   that fit since S15, `halo_concentration_contracted` (the c₂₀₀ enclosing the same dark
+   mass inside R₀), and at z_f = 2.5 it reads 18.5 — over the span. So the default is
+   derived instead: the ΛCDM median c₂₀₀ for the default mass at z = 0, 8.25 `[verified:
+   Dutton & Macciò 2014, log₁₀ c₂₀₀ = 0.905 − 0.101 log₁₀(M₂₀₀/10¹² h⁻¹ M☉), Planck, 0.11
+   dex scatter; h = 0.7 here]`, converted to c_vir = 10.92 at Δ_vir and read back through K
+   as z_f = 1.66, the scatter spanning 1.08–2.41 and the old 2.5 outside it `[verified:
+   tests/test_registry.py::test_the_epochs_default_is_the_lcdm_median]`. The Milky Way's own
+   pre-contraction concentration from a contracted fit to Gaia DR2, 9.4 (+1.9/−2.6)
+   `[recall: Cautun et al. 2020]`, is z_f = 2.0 (+0.6/−0.9) and brackets it; its local
+   dark-matter density, 8.8 × 10⁻³ M☉/pc³, is what the model reads at 1.7. At the derived
+   default the contracted fit reads 15.4, inside; row 3 reads 260.1 (the less concentrated
+   halo responds *more*, r_i/r_f 1.50, its share at R₀ 119 → 166) and stays a miss under
+   debt #11; the advanced model's escape velocity at R₀ falls 585 → 569, inside its 530–580
+   `[verified: tests/test_halo.py::test_concentration_from_the_assembly_redshift,
+   ::test_the_named_rulesets_and_what_each_is_worth_at_R0]`. What is permanent: K and z_f
+   enter only as their product, so the input is the concentration's scatter under another
+   name (verdict C, ruling 5) — that is its job, not a defect.
 13. ~~**Two routes to the disc scale length, disagreeing by 44%.**~~
    **DISCHARGED by S3.** The first suspect was the right one:
    `GAS_DISC_SCALE_RATIO` was set to 1.5 from the observed HI-to-optical ratio,
@@ -912,6 +943,9 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the threshold protects the component fails for this form of it: what is wanted
    arrives late or diffuse enough to stay under the threshold, a timescale of its own,
    and that is the decision the next session takes before any constant is swept.
+   **S15:** row 3 reads 260.1 with the epoch derived (D117), 9–15 km/s high, and the
+   component's 4–13 is half of its prediction with the bulge's 5–8 (debt #11); D114's
+   table was read at z_f = 2.5 and is re-read when the component is built.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -1442,6 +1476,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    constant was re-set to solar by bisection (rule B10, D113). The potential it is now
    fitted against overshoots row 3 and the observed escape velocity (debt #46), so the
    value is provisional on that as well as on #18.
+   **S15:** `WIND_SPEED` refitted 1028 → 999 km/s once the epoch's default is the ΛCDM
+   median (debt #12, D117): v_esc(R₀) fell 585 → 569, the gas at R₀ read −0.019 dex, and
+   the constant was re-set to solar by bisection. The escape velocity is inside its
+   observed range now; row 3 still overshoots by 12, so the value stays provisional on #18
+   and on the bulge (#11).
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1506,6 +1545,24 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    (A, w) is the next thing to try. A recalled magnitude — "several km/s" — was wrong
    by an order of magnitude; the mechanism, not the number, is what belongs in a
    register (rule B4).
+   **S15:** the calibration is not the lever, on three readings (D117). The mass- and
+   epoch-dependent (A, w) does not exist: Gnedin et al. 2011 report that A and w correlate
+   with neither and that the response "cannot be reduced to a simple prescription",
+   recommending A = 1.6 with w swept over 0.6–1.3 `[verified: arXiv:1108.5736, read this
+   session]` — the form this debt named was recalled, not read. The modern hydrodynamic
+   calibration, M_DM(< r) = M_NFW(< r) [0.45 + 0.38 (η + 1.16)^0.53] fitted to the Auriga
+   simulations `[verified: Cautun et al. 2020, eq. 11]`, agrees with Gnedin et al. 2004's
+   invariant at R₀ to 2 km/s (180.3 against 181.4 at z_f = 2.5, 163.6 against 165.8 at
+   1.66), so the default ruleset is not the outlier. And A = 1.6 at w = 0.8 reads 245.6 at
+   the derived epoch — inside — and is not adopted, because two calibrations that agree
+   are not overruled by a third read with less confidence to land a row (rule B5). The
+   local dark-matter density, published as `halo_density_sun` to judge the contraction
+   without the rotation curve, does not: 0.28–0.43 GeV/cm³ across z_f = 1–3 against the
+   measured 0.3–0.5, because the response steepens the profile inside R₀ more than it
+   raises the density there. **Prediction, revised:** the row closes with the bulge and
+   the extended component at z_f = 1.66 (debt #11); if it does not, the invariant is the
+   remaining suspect and its test is a two-parameter sweep of w at A = 1.6 against rows 3,
+   19 and the escape velocity together, not another normalisation.
 
 ---
 

@@ -70,7 +70,7 @@ def test_defaults_are_the_milky_way():
     # Ruling 8 says 0.0144, inferred against R_vir = 255 kpc. S1 re-derived it against this
     # model's own R₂₀₀ = 212.9 kpc, which is what MMW98's relation takes (DECISIONS.md D30).
     assert INPUTS["disc_spin"].default == 0.0173
-    assert INPUTS["halo_assembly_z"].default == 2.5
+    assert INPUTS["halo_assembly_z"].default == 1.66  # 2.5 until S15: the ΛCDM median for the default mass (D117)
     assert INPUTS["baryon_retention"].default == 0.35
     assert INPUTS["infall_timescale"].default == 7.0
     assert INPUTS["inside_out_index"].default == 1.0
@@ -154,3 +154,32 @@ def test_production_is_loaded_and_idempotent(prod):
     assert table is INPUTS
     again = production()
     assert again[0] is models and again[1] is impls
+
+
+def test_the_epochs_default_is_the_lcdm_median():
+    """S15 (D117): z_f's default is derived, not the midpoint of a cited range.
+
+    The c_vir normalisation K is a dark-matter-only calibration, so the concentration it
+    gives is the halo's before it contracted around the disc (S14); the Milky Way's measured
+    10-18 are fits to the halo after, so they could not set the default. What can is the
+    LCDM concentration-mass relation at z = 0 for the default mass [verified: Dutton & Maccio
+    2014, log10 c200 = 0.905 - 0.101 log10(M200 / 10^12 h^-1 Msun), Planck, 0.11 dex scatter],
+    converted to c_vir at Delta_vir and read back through K: the epoch of the median halo of
+    this mass. The scatter spans 1.08-2.41 and the old 2.5 lies outside it.
+    """
+    import math
+
+    from galaxy.models.level0 import LEVEL0
+    from galaxy.stages.halo import concentration_at, virial_overdensity
+
+    h, K = LEVEL0["H0"].value / 0.1, LEVEL0["CONCENTRATION_NORM"].value
+    dvir = virial_overdensity(LEVEL0["OMEGA_M"].value)
+
+    def epoch(dex: float) -> float:
+        c200 = 10.0 ** (0.905 - 0.101 * math.log10(INPUTS["halo_mass"].default * h / 1e12) + dex)
+        return concentration_at(dvir, c200, 200.0) / K - 1.0
+
+    assert epoch(0.0) == pytest.approx(INPUTS["halo_assembly_z"].default, abs=0.005)
+    assert epoch(-0.11) == pytest.approx(1.08, abs=0.01) and epoch(+0.11) == pytest.approx(2.41, abs=0.01)
+    assert not epoch(-0.11) <= 2.5 <= epoch(+0.11)
+    assert INPUTS["halo_assembly_z"].lo <= epoch(-0.11) and epoch(+0.11) <= INPUTS["halo_assembly_z"].hi

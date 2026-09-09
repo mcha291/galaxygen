@@ -266,32 +266,37 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=3,
-        debt=12,
-        since="S14",
+        debt=11,
+        since="S15",
         reason=(
-            "270.8 km/s against 248 +/- 3: too much mass inside R0 again, by 20 km/s, since S14 "
-            "modelled the halo's response to the disc (debt #6). The row's history: S1 blamed the gas "
-            "profile (246.4 predicted); S2 gave it one and got 237.2, the stellar disc broadening at "
-            "the same time; S3 corrected that and the miss returned to 256, blamed on the compact disc "
-            "(debt #18); S13 converted c_vir to c200 (debt #12) and the row read 242.7, low, with the "
-            "halo's contraction named as the lever that would close it - 'several km/s' [recall]. S14 "
-            "solved the contraction: the disc this model builds - 5.8e10 Msun in one exponential at "
-            "2.6 kpc inside a c200 = 10.9 halo - pulls the halo's share at R0 from 139 to 181 km/s "
-            "under Gnedin et al. 2004's invariant (196 under Blumenthal et al. 1986's), 28 km/s on the "
-            "row, and the recalled magnitude was an order of magnitude short. Every other row moved by "
-            "less than 1e-9; the advanced model's escape velocity at R0 rose 562 -> 585 km/s and "
-            "WIND_SPEED was refitted 987 -> 1028 (debt #43)."
+            "260.1 km/s against 248 +/- 3: too much mass inside R0, by 9 km/s, with the halo contracted "
+            "around the disc (S14, debt #6) and the assembly epoch at its derived default (S15, D117). "
+            "The row's history: S1 blamed the gas profile (246.4 predicted); S2 gave it one and got "
+            "237.2, the stellar disc broadening at the same time; S3 corrected that and the miss "
+            "returned to 256, blamed on the compact disc (debt #18); S13 converted c_vir to c200 "
+            "(debt #12) and the row read 242.7, low, with the contraction named as 'several km/s' "
+            "[recall]; S14 solved the contraction and it was 28 km/s - 270.8, high by 20. S15 found "
+            "the epoch's default, 2.5, had been validated against measurements of the contracted "
+            "halo (an NFW fitted to it reads c200 = 18.5, over the 10-18 span, not the 14.4 claimed) "
+            "and derived it from the LCDM median for the default mass instead: z_f = 1.66, c200 = 8.24 "
+            "before the response, 15.4 after. The less concentrated halo responds more (r_i/r_f 1.50) "
+            "and its share at R0 is 165.8 km/s; the row reads 260.1. The escape velocity at R0 fell "
+            "585 -> 569, inside its observed 530-580; WIND_SPEED was refitted 1028 -> 999 (debt #43). "
+            "What is left is the baryons: 5.9e10 Msun in one exponential at 2.6 kpc, with no bulge "
+            "and no extended component (debts #11, #18)."
         ),
         prediction=(
-            "What the row wants now is less mass inside R0 before the halo responds. An assembly epoch "
-            "of 0.7-1.0 (c200 = 5.2-6.2), below the cited 2-3, closes it with everything else at its "
-            "default; a baryon retention of 0.25 does too and fails row 1 (3.7e10). The bulge (D110) "
-            "lowers it by 5-8 km/s and is not enough; debt #18's extended component moves baryons "
-            "outward and lowers both their pull and the halo's response to it - it pulls the right way "
-            "now, so rows 2, 20 and 3 are its evidence together. Prediction: the bulge and the component "
-            "together do not close the row, and the epoch has to fall below 2 - or the contraction is "
-            "weaker than any published invariant (debt #46). Discriminants: halo_contraction at R0 "
-            "(1.42), the escape velocity at R0 against its observed 530-580 (585 now, over), and row 19, "
+            "The bulge (D110, S17) lowers the row by 5-8 km/s and the extended component (D114, S16) "
+            "by 4-13 at the settings probed; together they are 9-21 against the 9-15 the row needs, "
+            "so the two mechanisms close it with the epoch at its derived default. Prediction, stated "
+            "so it can fail: after S16 and S17 the row reads inside 245-251 with halo_assembly_z = 1.66; "
+            "if it still reads above 251, the baryon distribution is not the cause and debt #46's "
+            "calibration is - A = 1.6 at w = 0.8 reads 245.6 now and is not adopted, because the "
+            "Auriga-calibrated response [recall: Cautun et al. 2020] agrees with Gnedin et al. 2004's at "
+            "R0 to 2 km/s. Not a lever: the epoch below 1.08 (outside the relation's scatter), a baryon "
+            "retention of 0.25 (fails row 1). Discriminants: halo_concentration_contracted against 10-18 "
+            "(15.4), halo_density_sun against 0.008-0.013 Msun/pc3 (0.0087 - inside at every epoch, so "
+            "it does not discriminate), the escape velocity at R0 against 530-580 (569), and row 19, "
             "which none of these moves."
         ),
     ),

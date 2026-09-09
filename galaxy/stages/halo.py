@@ -181,6 +181,37 @@ def _loglog(x: np.ndarray | float, xp: np.ndarray, fp: np.ndarray) -> np.ndarray
     return np.exp(np.interp(np.log(x), np.log(xp), np.log(fp)))
 
 
+def density_of(r: np.ndarray, M: np.ndarray) -> np.ndarray:
+    """ρ(r) of a spherical profile ``M(r)`` tabulated on a log mesh: ``M (d ln M / d ln r) / 4π r³``.
+
+    The logarithmic derivative is second-order on the mesh; with no disc it returns the
+    NFW density to a part in 10⁵ (S15, the instrument before the physics).
+    """
+    r, M = np.asarray(r, dtype=float), np.asarray(M, dtype=float)
+    return M * np.gradient(np.log(M), np.log(r)) / (4.0 * math.pi * r**3)
+
+
+def nfw_density(r: np.ndarray | float, M: float, r_s: float, c: float) -> np.ndarray | float:
+    """Density of an NFW halo of mass ``M`` inside ``c r_s``: ``ρ_s / (x (1 + x)²)``, x = r/r_s."""
+    x = np.asarray(r, dtype=float) / r_s
+    return M / (4.0 * math.pi * r_s**3 * mu(c)) / (x * (1.0 + x) ** 2)
+
+
+def concentration_enclosing(M_inside: float, r: float, M: float, R200: float) -> float:
+    """The c₂₀₀ of the NFW halo of mass ``M`` inside ``R200`` that encloses ``M_inside`` at ``r``.
+
+    What a measurement anchored on the inner halo reads off a profile that is not NFW any
+    more: the contracted halo's effective concentration (S15). μ(c r/R₂₀₀)/μ(c) rises with c
+    for r < R₂₀₀, so the root is bisected. With no disc it returns the halo's own c.
+    """
+    x = r / R200
+    lo, hi = 0.5, 60.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if M * mu(mid * x) / mu(mid) < M_inside else (lo, mid)
+    return 0.5 * (lo + hi)
+
+
 HALO_VIRIAL_MASS = FieldDecl(
     name="halo_virial_mass",
     label="Halo mass M₂₀₀",
@@ -219,7 +250,9 @@ HALO_CONCENTRATION = FieldDecl(
         "concentrated because they froze in the mean density of an earlier, denser universe. "
         "Since S13 it is halo_concentration_virial converted through the NFW profile from Δ_vir to "
         "200 ρ_crit (debt #12). Verdict C: the epoch absorbs most of the galaxy-to-galaxy scatter "
-        "and not all of it."
+        "and not all of it. This is the halo before it responded to the disc — 8.24 at the default "
+        "epoch, the ΛCDM median for the default mass since S15 — and a measurement of the Milky "
+        "Way's halo reads halo_concentration_contracted, not this (D117)."
     ),
 )
 HALO_CONCENTRATION_VIRIAL = FieldDecl(
@@ -304,6 +337,39 @@ HALO_CIRCULAR_VELOCITY_SUN_INITIAL = FieldDecl(
         "The NFW halo of (1 − m_d) M₂₀₀ at R₀, analytically, before its shells moved inward after "
         "the disc's baryons (S14, debt #6). Published so the contraction can be read off as a "
         "difference, the way halo_concentration_virial lets the c_vir → c₂₀₀ conversion be read."
+    ),
+)
+
+HALO_DENSITY_SUN = FieldDecl(
+    name="halo_density_sun",
+    label="Dark matter density at R₀",
+    unit="Msun/pc3",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "The contracted halo's density at the solar radius, read off the contraction mesh (S15). "
+        "It is the one property of the dark halo measured without the rotation curve — from the "
+        "vertical kinematics of the stars — so it judges the contraction independently of row 3: "
+        "0.3–0.5 GeV/cm³, 0.008–0.013 M☉/pc³ [recall: de Salas & Widmark 2021, the global "
+        "analyses]. The surprise is how little the response moves it: the dark mass inside R₀ "
+        "rises 70% and the density there 16%, because the response steepens the profile inside "
+        "R₀ more than it raises it at R₀ — so every epoch from 1 to 3 reads inside the span (0.28 "
+        "to 0.43 GeV/cm³) and the number does not discriminate between them (D117)."
+    ),
+)
+
+HALO_CONCENTRATION_CONTRACTED = FieldDecl(
+    name="halo_concentration_contracted",
+    label="Effective concentration of the contracted halo",
+    unit="dimensionless",
+    kind=Kind.SCALAR,
+    about=(
+        "The c₂₀₀ of the NFW halo of the same dark mass that encloses the same mass inside R₀ as "
+        "the contracted one (S15). The contracted profile is not NFW, and a measurement of the "
+        "Milky Way's halo fits one to it anyway; the 10–18 that GALAXY_INPUTS.md §4b quotes are "
+        "such fits, so they are measurements of this number and not of halo_concentration, which "
+        "is the halo before it responded to the disc. Until S15 the epoch's default was validated "
+        "by comparing the two (debt #12)."
     ),
 )
 
@@ -449,6 +515,8 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "disc_scale_length_spin": R_d,
         "halo_circular_velocity_sun": math.sqrt(G * float(_loglog(R_sun, mesh, M_dark)) / R_sun),
         "halo_circular_velocity_sun_initial": float(nfw_circular_velocity(R_sun, dark, r_s, c, G)),
+        "halo_density_sun": float(_loglog(R_sun, mesh, density_of(mesh, M_dark))) * 1.0e-9,
+        "halo_concentration_contracted": concentration_enclosing(float(_loglog(R_sun, mesh, M_dark)), R_sun, dark, R200),
         "halo_contraction": np.interp(np.log(R), np.log(mesh), ratio),
         "halo_enclosed_mass": enclosed,
         "halo_circular_velocity": v_c,
@@ -485,6 +553,8 @@ HALO = IMPLEMENTATIONS.register(
             DISC_SCALE_LENGTH_SPIN,
             HALO_CIRCULAR_VELOCITY_SUN,
             HALO_CIRCULAR_VELOCITY_SUN_INITIAL,
+            HALO_DENSITY_SUN,
+            HALO_CONCENTRATION_CONTRACTED,
             HALO_CONTRACTION,
             HALO_ENCLOSED_MASS,
             HALO_CIRCULAR_VELOCITY,
