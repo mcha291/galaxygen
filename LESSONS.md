@@ -501,3 +501,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   status, not the suite's: S14's close merged and pushed main with RESUMING.md three
   lines over its cap and the docs test red. Capture the suite's status before the pipe
   and gate the merge on it; the cost of not doing so is a second merge on the record (D115).
+
+## From S15
+
+- [field] A mechanism added upstream re-opens every *validation* an input's default
+  rests on, not only the fitted constants rule B10 names. The epoch's 2.5 was justified
+  by c₂₀₀ = 14.4 "inside the measured 10–18"; the measurements are fits to the halo
+  after it contracted, and once the model contracted its halo the same fit read 18.5.
+  Publish the quantity the measurement measures and compare like with like (D117).
+- [field] Probe the discriminant before trusting it. The local dark-matter density was
+  expected to double under the contraction and to judge it independently of row 3; it
+  rose 16% and reads inside the measured span at every epoch. Fifty lines, and the
+  register would otherwise have carried a discriminant that discriminates nothing (D117).
+- [field][infra] A recalled formula is a claim about a paper, and the paper can refuse it.
+  The "mass- and epoch-dependent (A, w)" the register named as the next thing to try does
+  not exist in Gnedin et al. 2011, which says the response cannot be reduced to a
+  prescription. A read-only agent with the arXiv text costs two minutes; tag `[recall]`
+  until it has run, and let it overturn the plan's wording when it does (D117).
+- [field] A default derived from a population relation is not a sweep to the answer when
+  the row still misses. B5 forbids choosing an input against a known answer; it does not
+  forbid replacing an unmeasured midpoint with a measured median that leaves the row
+  outside and names what closes it (D117).
+- [close][infra] Decisions are numbered sequentially by a test, so a plan cannot reserve
+  D-numbers for a future session while earlier sessions still append; reserve *counts* and
+  fix the numbers when the session opens (GALAXY_PLAN.md §5d, amended at S15).
+- [infra] A scratch script named like a standard-library module (`numbers.py`) shadows it
+  and numpy fails to import with a circular-import error that names nothing useful. Name
+  probes `s<NN>_<what>.py`.

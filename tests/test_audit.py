@@ -302,8 +302,8 @@ def test_the_register_carries_the_s10_findings():
     text = progress.read(progress.INPUTS)
     # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99);
     # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109);
-    # S14 discharged #6 and opened #46 (D113).
-    assert progress.debt_counts(text) == (31, 15)
+    # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117).
+    assert progress.debt_counts(text) == (30, 16)
     for item in (
         "6. ~~Adiabatic contraction",
         "46. **The contraction's strength is a simulation calibration",

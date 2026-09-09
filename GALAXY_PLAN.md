@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████░░░░░░░░░░░░░░░░` **15 / 23 sessions** · repo initialised: yes
+`████████████████████████████████░░░░░░░░░░░░░░` **16 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -21,7 +21,7 @@
 | ☑ | 12 | The maintainer's one-line fixes (D-9, D-13, #33, #35, #37, #40) | desktop | — | **Fable 5.1** | s12 | 2026-09-07 |
 | ☑ | 13 | The physics decisions: step infall, Sagittarius, c_vir → c₂₀₀, hydrogen, the median criterion; bulge and catalogue probed | desktop | — | **Fable 5.1** | s13 | 2026-09-07 |
 | ☑ | 14 | The halo contracts around the disc (#6; row 3 turns round, wants z_f 0.7–1.0); the extended component probed (#18) | desktop | — | **Fable 5.1** | s14 | 2026-09-07 |
-| ☐ | 15 | Row 3's cause, derived: epoch, contraction calibration or baryon compactness (#12, #46, #11) | desktop | **Fable** | — | s15 | — |
+| ☑ | 15 | Row 3's cause, derived: the epoch's default from the ΛCDM median (2.5 → 1.66, #12 discharged); the calibration ruled out as the lever (#46); row 3 at 260.1 under #11 with the bulge and the component its prediction | desktop | **Fable** | **Fable 5.1** | s15 | 2026-09-09 |
 | ☐ | 16 | The extended component with its own timescale (#18, #43, #45) | desktop | **Fable** | — | s16 | — |
 | ☐ | 17 | The bulge stage and M_• (#11, #2, #17; rows 10–14, 18) | web | Opus | — | s17 | — |
 | ☐ | 18 | The thick disc: radial heating with the vertical kick (#19) | desktop | **Fable** | — | s18 | — |
@@ -47,10 +47,10 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S15. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S16. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 31 (`GALAXY_INPUTS.md` §11). **Discharged:** 15.
+**Open debts:** 30 (`GALAXY_INPUTS.md` §11). **Discharged:** 16.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is
@@ -541,7 +541,7 @@ wrong sign or the wrong magnitude (D110, D113).
 | **18** | **The thick disc** (#19). Radial heating with the vertical kick is the prediction: a merger that thickens the disc also spreads it, so rows 5 and 11 can be right together and row 9 comes off the cancellation | Rows 5, 7, 9 and 11 inside together in the simple model, row 9 not on a cancellation (a sweep of the merger's `gas_fraction` leaves it inside) | **Fable.** A cancellation can be tuned into passing; the gate is the sweep, and judging it is the session |
 | **19** | **The catalogue migrates, and the viewer shows the new fields** (#31, #32). Birth radius drawn around the present one with the migration kernel's width, the abundance looked up there, both models (D110); new golden values; previews for `halo_contraction` and whatever S15–S18 published | The catalogue's [Fe/H] spread at R₀ equals the chemistry's `feh_spread_sun`; determinism and per-region checks OK on the new golden values; every published field has a preview | **Opus.** A specified change in `systems.materialise` with its own golden values; the viewer work is the S7 kind |
 | **20** | **The advanced model's [α/Fe] valley** (#27, #42, #26). The mechanism that makes the inner disc fast without steepening the infall law everywhere — the bulge's inflow is the named candidate — then rows 5–11 and 24 in the advanced model, and rows 6 and 7 judged together with both heating constants re-examined | Row 24 `bimodal_wide` at the default grid, stated (the N_t = 8 trap); row 22 still inside; rows 6 and 7 inside together | **Fable.** The hardest open physics, and the one with a known false positive (a coarse grid manufactures the valley) |
-| **21** | **Audit II, run twice with two stated aims** (D102's lesson). Aim (a): every prediction the register and `spec._MISSES` made since S13, killed or held with a number (rule B4). Aim (b): the instruments and the viewer — cold paths (D4), the flaky per-star slope (D115), the audit tests' pins. **Reserved numbers**: debts #47–#60 and D117–D130 for (a), #61–#75 and D131–D145 for (b), so the lists port without renumbering (D99) | Two lists, diffed; every prediction has a verdict; no green row unconditioned (AUDIT_RUN2 §5) | **One on Fable, one on Opus**, aims different by design — extends the only controlled evidence the project has (D102) |
+| **21** | **Audit II, run twice with two stated aims** (D102's lesson). Aim (a): every prediction the register and `spec._MISSES` made since S13, killed or held with a number (rule B4). Aim (b): the instruments and the viewer — cold paths (D4), the flaky per-star slope (D115), the audit tests' pins. **Reserved numbers**, fixed when S21 opens (decisions are numbered sequentially and S15–S20 each append theirs): fourteen debts and fourteen decisions for (a) starting at the next free numbers, the following fourteen of each for (b), so the lists port without renumbering (D99). Written at D116 as #47–#60 / D117–D130 and #61–#75 / D131–D145, before S15 took D117 | Two lists, diffed; every prediction has a verdict; no green row unconditioned (AUDIT_RUN2 §5) | **One on Fable, one on Opus**, aims different by design — extends the only controlled evidence the project has (D102) |
 | **22** | **Close-out.** Port both audit lists onto `main` (never merge the branches, D99); rule every open debt discharged, permanent or carried, with the reason; apply the tag batch from a desktop and delete the stale `s01` (MANUAL_TODO); final RESUMING/BRIEF for whoever maintains it | Tags on the remote, `git ls-remote --tags` listed in DECISIONS; register with no unruled item; `verify_clone` OK | **Opus.** Procedure with a checklist; the judgement was spent in S21 |
 
 **What this does not promise.** Rows whose cause is the model's scope stay

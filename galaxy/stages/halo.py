@@ -250,7 +250,9 @@ HALO_CONCENTRATION = FieldDecl(
         "concentrated because they froze in the mean density of an earlier, denser universe. "
         "Since S13 it is halo_concentration_virial converted through the NFW profile from Δ_vir to "
         "200 ρ_crit (debt #12). Verdict C: the epoch absorbs most of the galaxy-to-galaxy scatter "
-        "and not all of it."
+        "and not all of it. This is the halo before it responded to the disc — 8.24 at the default "
+        "epoch, the ΛCDM median for the default mass since S15 — and a measurement of the Milky "
+        "Way's halo reads halo_concentration_contracted, not this (D117)."
     ),
 )
 HALO_CONCENTRATION_VIRIAL = FieldDecl(
