@@ -323,3 +323,44 @@ def test_the_scale_length_is_the_halos_now_and_the_disc_reads_it(model):
     assert "disc_scale_length_spin" in {d.name for d in IMPLEMENTATIONS.get("halo").publishes}
     assert "disc_scale_length_spin" in IMPLEMENTATIONS.get("disc").requires
     assert "disc_spin" in IMPLEMENTATIONS.get("halo").reads_inputs and "disc_spin" not in IMPLEMENTATIONS.get("disc").reads_inputs
+
+
+# --- S15, two more discriminants read off the contracted halo -------------------
+
+
+def test_with_no_disc_the_density_and_the_effective_concentration_are_the_nfw_ones():
+    """The instrument before the physics (rule B1): both new scalars reduce to the analytic halo with nothing to respond to."""
+    from galaxy.stages.halo import concentration_enclosing, density_of, nfw_density
+
+    mesh = np.geomspace(1e-3, 1.5 * HALO["R200"], 600)
+    M, _ = _contracted(mesh, 0.0, 0.85, 0.8)
+    rho = density_of(mesh, M)
+    nfw = nfw_density(mesh, HALO["M200"], HALO["r_s"], HALO["c"])
+    inside = slice(2, -2)  # the one-sided differences at the mesh's ends are first order
+    assert np.max(np.abs(rho[inside] / nfw[inside] - 1.0)) < 1e-4
+    at_sun = float(np.exp(np.interp(math.log(8.2), np.log(mesh), np.log(M))))
+    # rel 1e-5: at_sun is read between mesh points in log-log, and the root inherits that interpolation.
+    assert concentration_enclosing(at_sun, 8.2, HALO["M200"], HALO["R200"]) == pytest.approx(HALO["c"], rel=1e-5)
+
+
+def test_the_mesh_does_not_move_the_density_or_the_effective_concentration():
+    from galaxy.stages.halo import concentration_enclosing, density_of
+
+    rho, c_eff = {}, {}
+    for n in (600, 2400):
+        mesh = np.geomspace(1e-3, 1.5 * HALO["R200"], n)
+        M, _ = _contracted(mesh, M_D, 0.85, 0.8)
+        rho[n] = float(np.exp(np.interp(math.log(8.2), np.log(mesh), np.log(density_of(mesh, M)))))
+        c_eff[n] = concentration_enclosing(
+            float(np.exp(np.interp(math.log(8.2), np.log(mesh), np.log(M)))), 8.2, HALO["M200"] * (1.0 - M_D), HALO["R200"]
+        )
+    assert rho[600] == pytest.approx(rho[2400], rel=1e-4) and c_eff[600] == pytest.approx(c_eff[2400], rel=1e-5)
+
+
+def test_the_stage_publishes_both_in_the_units_a_measurement_quotes(model):
+    """Msun/pc3 for the density; the effective concentration above the initial one wherever the halo contracted inward."""
+    o = out(model)
+    rho, c_eff, c = o.fields["halo_density_sun"], o.fields["halo_concentration_contracted"], o.fields["halo_concentration"]
+    assert 1e-3 < rho < 1e-1  # a volume density in Msun/pc3, not Msun/kpc3
+    assert c_eff > c  # the disc pulled dark matter inward, so an NFW anchored inside reads it more concentrated
+    assert o.fields["halo_contraction"][0] > 1.0
