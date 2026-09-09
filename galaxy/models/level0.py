@@ -53,9 +53,12 @@ LEVEL0: dict[str, Constant] = {
         "Normalisation of c_vir = K(1 + z_f), the concentration a halo freezes in at its assembly "
         "epoch (ruling 5). K = 4.1 is quoted for c_vir [recall: Wechsler et al. 2002], at the virial "
         "overdensity Δ_vir(Ω_M) ≈ 101 ρ_crit; since S13 the halo stage converts it through the NFW "
-        "profile to the c₂₀₀ it is built with (debt #12, half of it: z_f = 2.5 is still the midpoint "
-        "of a cited range and not a measurement). The default gives c_vir = 14.35 and c₂₀₀ = 10.9, "
-        "both inside the 10–18 the Milky Way's own measurements span [verified: GALAXY_INPUTS.md §4b].",
+        "profile to the c₂₀₀ it is built with (debt #12). K is a dark-matter-only calibration "
+        "(Ω_M = 0.3, σ₈ = 1.0), so the concentration it gives is the halo's before it contracted "
+        "around the disc; the 10–18 the Milky Way's measurements span are fits to the halo after, "
+        "and are read against halo_concentration_contracted since S15. At the default epoch, 1.66 — "
+        "the ΛCDM median for the default mass, derived at S15 — c_vir = 10.92 and c₂₀₀ = 8.25 before "
+        "the response, 15.5 after it, inside the span; at the old 2.5 the fit read 18.5, over.",
     ),
     "OMEGA_M": Constant(
         0.3,

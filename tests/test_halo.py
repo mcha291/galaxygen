@@ -53,13 +53,18 @@ def test_R200_at_the_default_mass(model):
 
 
 def test_concentration_from_the_assembly_redshift(model):
-    """Ruling 5: c_vir = K(1 + z_f), converted to c₂₀₀ since S13 (debt #12). The default's
-    consequence must land inside the measured span c ≈ 10–18 (GALAXY_INPUTS.md §4b) — that
-    is what makes z_f = 2.5 more than a guess, and both numbers do."""
+    """Ruling 5: c_vir = K(1 + z_f), converted to c₂₀₀ since S13 (debt #12). Since S15 the default
+    epoch is the ΛCDM median for the default mass (c₂₀₀ = 8.24 before the halo responds to the
+    disc, 10.91 until S15), and the measured span c ≈ 10–18 (GALAXY_INPUTS.md §4b) is read
+    against the *contracted* halo's effective concentration, which is what a fit to the Milky
+    Way measures: 15.4 at the default, inside; 18.5 at the old 2.5, over (D117)."""
     o = out(model)
-    assert o.fields["halo_concentration_virial"] == pytest.approx(14.35, abs=0.01)
-    assert o.fields["halo_concentration"] == pytest.approx(10.91, abs=0.01)
-    assert 10.0 <= o.fields["halo_concentration"] <= o.fields["halo_concentration_virial"] <= 18.0
+    assert o.fields["halo_concentration_virial"] == pytest.approx(10.91, abs=0.01)  # 14.35 until S15
+    assert o.fields["halo_concentration"] == pytest.approx(8.24, abs=0.01)  # 10.91 until S15
+    assert o.fields["halo_concentration"] < o.fields["halo_concentration_virial"]
+    assert 10.0 <= o.fields["halo_concentration_contracted"] <= 18.0
+    assert o.fields["halo_concentration_contracted"] == pytest.approx(15.43, abs=0.02)
+    assert out(model, halo_assembly_z=2.5).fields["halo_concentration_contracted"] == pytest.approx(18.5, abs=0.05)
     early, late = out(model, halo_assembly_z=4.0), out(model, halo_assembly_z=1.0)
     assert early.fields["halo_concentration"] > late.fields["halo_concentration"]
     assert early.fields["halo_scale_radius"] < late.fields["halo_scale_radius"]
@@ -85,7 +90,7 @@ def test_the_disc_is_not_counted_twice(model):
         G * o.fields["halo_virial_mass"] * mu(8.2 / o.fields["halo_scale_radius"]) / mu(o.fields["halo_concentration"]) / 8.2
     )
     assert naive > o.fields["halo_circular_velocity_sun_initial"]
-    assert naive - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(4.3, abs=0.5)
+    assert naive - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(3.3, abs=0.5)  # 4.3 until S15 (c₂₀₀ 10.9 → 8.2)
     assert o.fields["halo_circular_velocity_sun"] > naive  # the response is ten times the double count
 
 
@@ -161,7 +166,7 @@ def test_the_concentration_is_converted_from_the_virial_overdensity(model):
     dvir = virial_overdensity(float(model.constants["OMEGA_M"].value))
     assert dvir == pytest.approx(101.1, abs=0.2)
     c_vir, c200 = float(o.fields["halo_concentration_virial"]), float(o.fields["halo_concentration"])
-    assert c_vir == pytest.approx(14.35, abs=0.01) and c200 == pytest.approx(10.91, abs=0.01)
+    assert c_vir == pytest.approx(10.91, abs=0.01) and c200 == pytest.approx(8.24, abs=0.01)  # 14.35 and 10.91 until S15
     assert c200 == pytest.approx(concentration_at(200.0, c_vir, dvir), rel=1e-9)
     assert concentration_at(dvir, c200, 200.0) == pytest.approx(c_vir, abs=1e-6)  # the root round-trips
     assert dvir * c_vir**3 / mu(c_vir) == pytest.approx(200.0 * c200**3 / mu(c200), rel=1e-9)
@@ -169,19 +174,23 @@ def test_the_concentration_is_converted_from_the_virial_overdensity(model):
 
 
 def test_the_conversion_moved_row_3_and_nothing_else(model):
-    """What the conversion is worth: 12.4 km/s on row 3 (13.5 before the halo contracted, S14), and < 1e-9 on every other row.
+    """What the conversion is worth: 10.7 km/s on row 3 at the S15 default (12.4 at z_f = 2.5; 13.5 before the halo contracted), and < 1e-9 on every other row.
 
     Until S14 it took the row from 5 high to 2 low (256.2 → 242.7); on the contracted
-    halo it reads 283.2 → 270.8, both high, the conversion still worth four half-widths.
+    halo at z_f = 2.5 it read 283.2 → 270.8; at the ΛCDM-median epoch 270.8 → 260.1 —
+    both high, the conversion still worth three half-widths.
     """
+    from galaxy.core.registry import INPUTS
     from galaxy.stages.halo import concentration_at, virial_overdensity
 
     dvir = virial_overdensity(float(model.constants["OMEGA_M"].value))
-    k_unconverted = concentration_at(dvir, 14.35, 200.0) / 3.5  # the K whose c_vir converts to the old c₂₀₀ = 14.35
+    z = INPUTS["halo_assembly_z"].default
+    c_unconverted = 4.1 * (1.0 + z)  # what K(1 + z_f) was used as until S13
+    k_unconverted = concentration_at(dvir, c_unconverted, 200.0) / (1.0 + z)  # the K whose c_vir converts to it
     before, after = run(_with_norm(model, k_unconverted)), run(model)
-    assert float(before.fields["halo_concentration"]) == pytest.approx(14.35, abs=0.01)
-    assert float(before.fields["v_tangential_sun"]) == pytest.approx(283.2, abs=0.5)  # 256.2 until S14
-    assert float(after.fields["v_tangential_sun"]) == pytest.approx(270.8, abs=0.5)  # 242.7 until S14
+    assert float(before.fields["halo_concentration"]) == pytest.approx(c_unconverted, abs=0.01)
+    assert float(before.fields["v_tangential_sun"]) == pytest.approx(270.8, abs=0.5)  # 283.2 until S15; 256.2 until S14
+    assert float(after.fields["v_tangential_sun"]) == pytest.approx(260.1, abs=0.5)  # 270.8 until S15; 242.7 until S14
     assert 251.0 < float(after.fields["v_tangential_sun"]) < float(before.fields["v_tangential_sun"])
     for name in ("sfr", "gas_mass_30kpc", "stellar_mass_total", "thin_disc_scale_length"):
         assert float(after.fields[name]) == pytest.approx(float(before.fields[name]), rel=1e-9), name
@@ -189,18 +198,22 @@ def test_the_conversion_moved_row_3_and_nothing_else(model):
 
 def test_k_and_the_assembly_epoch_enter_only_as_their_product(model):
     """So no measurement of z_f alone can validate the relation debt #12 names."""
-    a = run(_with_norm(model, 3.5))  # K lowered, z_f at its default 2.5
-    b = run(model, {"halo_assembly_z": 3.5 * 3.5 / 4.1 - 1.0})  # K left alone, z_f moved to the same product
+    from galaxy.core.registry import INPUTS
+
+    z = INPUTS["halo_assembly_z"].default
+    a = run(_with_norm(model, 3.5))  # K lowered, z_f at its default
+    b = run(model, {"halo_assembly_z": 3.5 * (1.0 + z) / 4.1 - 1.0})  # K left alone, z_f moved to the same product
     assert float(a.fields["halo_concentration"]) == pytest.approx(float(b.fields["halo_concentration"]))
     assert float(a.fields["v_tangential_sun"]) == pytest.approx(float(b.fields["v_tangential_sun"]))
 
 
 def test_the_epoch_row_3_wants_is_below_the_cited_range(model):
-    """Row 3 is met at z_f ≈ 0.7–1.0 on the contracted halo; §3 cites z ≈ 2–3 and the default stays at its midpoint (S14).
+    """Row 3 is met at z_f ≈ 0.7–1.0 on the contracted halo; §3 cites z ≈ 2–3 and the default is neither (S14, S15).
 
     Until S14 the row wanted 2.7–3.1, the top of the range; the contraction turned it round.
     Choosing z_f against a row whose answer is known is the move rule B5 exists to prevent;
-    the row is a recorded miss instead, and this test is what notices if the range moves.
+    S15 derived the default from the ΛCDM median instead, 1.66, and the row still misses
+    (260.1). This test is what notices if the range the row wants moves.
     """
     inside = [z for z in (0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 2.0, 2.5, 3.0)
               if 245.0 <= float(run(model, {"halo_assembly_z": z}).fields["v_tangential_sun"]) <= 251.0]
@@ -225,7 +238,8 @@ def _with_contraction(base, A: float, w: float):
                  constants=constants, inputs=base.inputs)
 
 
-# The default halo, as the stage builds it: M₂₀₀, R₂₀₀, c₂₀₀ and the disc it contracts around.
+# The halo as S14 built it at z_f = 2.5: M₂₀₀, R₂₀₀, c₂₀₀ and the disc it contracts around. The
+# solver tests below keep it (the default's c₂₀₀ is 8.24 since S15); the stage tests read the default.
 HALO = dict(M200=1.1e12, R200=212.94, c=10.911, R_d=2.605)
 HALO["r_s"] = HALO["R200"] / HALO["c"]
 M_D = 0.0533  # F_BARYON × baryon_retention
@@ -290,22 +304,28 @@ def test_the_mesh_does_not_move_the_scalars():
 def test_the_named_rulesets_and_what_each_is_worth_at_R0(model):
     """Debt #46: Gnedin et al. 2004 (the default) and Blumenthal et al. 1986, kept as named rulesets (rule B12).
 
-    The register had the contraction at "several km/s" [recall]; measured, the halo's share at
-    R₀ rises 138.6 → 181.4 (Gnedin) or 195.6 (Blumenthal), and row 3 reads 270.8 or 280.9
-    against 245–251. The ruleset was chosen before the row was read; the row did not choose it.
+    The register had the contraction at "several km/s" [recall]; measured at z_f = 2.5, the halo's
+    share at R₀ rose 138.6 → 181.4 (Gnedin) or 195.6 (Blumenthal), and row 3 read 270.8 or 280.9
+    against 245–251. At the S15 default (z_f 1.66, c₂₀₀ 8.24) the less concentrated halo responds
+    *more* — 119.3 → 165.8 or 180.6, r_i/r_f 1.50 — and the row reads 260.1 or 270.2. The ruleset
+    was chosen before the row was read; the row did not choose it. A = 1.6 at w = 0.8 reads 245.6
+    now, inside, and is not adopted: the Auriga-calibrated response [recall: Cautun et al. 2020]
+    agrees with Gnedin's at R₀ to 2 km/s, not with 1.6 (D117).
     """
     gnedin, blumenthal = out(model), run(_with_contraction(model, 1.0, 1.0))
     for o in (gnedin, blumenthal):
-        assert o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(138.6, abs=0.1)
-    assert gnedin.fields["halo_circular_velocity_sun"] == pytest.approx(181.4, abs=0.2)
-    assert blumenthal.fields["halo_circular_velocity_sun"] == pytest.approx(195.6, abs=0.2)
-    assert gnedin.fields["v_tangential_sun"] == pytest.approx(270.8, abs=0.5)
-    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(280.9, abs=0.5)
-    assert float(np.interp(8.2, gnedin.grid.R, gnedin.fields["halo_contraction"])) == pytest.approx(1.42, abs=0.01)
-    assert float(np.interp(8.2, blumenthal.grid.R, blumenthal.fields["halo_contraction"])) == pytest.approx(1.57, abs=0.01)
+        assert o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(119.3, abs=0.1)  # 138.6 until S15
+    assert gnedin.fields["halo_circular_velocity_sun"] == pytest.approx(165.8, abs=0.2)  # 181.4 until S15
+    assert blumenthal.fields["halo_circular_velocity_sun"] == pytest.approx(180.6, abs=0.2)  # 195.6 until S15
+    assert gnedin.fields["v_tangential_sun"] == pytest.approx(260.1, abs=0.5)  # 270.8 until S15
+    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(270.2, abs=0.5)  # 280.9 until S15
+    assert float(np.interp(8.2, gnedin.grid.R, gnedin.fields["halo_contraction"])) == pytest.approx(1.50, abs=0.01)  # 1.42 until S15
+    assert float(np.interp(8.2, blumenthal.grid.R, blumenthal.fields["halo_contraction"])) == pytest.approx(1.68, abs=0.01)  # 1.57 until S15
+    weak = run(_with_contraction(model, 1.6, 0.8), only=("v_tangential_sun",))
+    assert weak.fields["v_tangential_sun"] == pytest.approx(245.6, abs=0.5)  # 256.7 until S15; inside, and not adopted
     # The response tends to a constant at the centre, where disc and halo both enclose mass as R², and falls outward.
     ratio = gnedin.fields["halo_contraction"]
-    assert ratio[0] == pytest.approx(2.22, abs=0.02) and np.all(np.diff(ratio) < 0.0)
+    assert ratio[0] == pytest.approx(2.51, abs=0.02) and np.all(np.diff(ratio) < 0.0)  # 2.22 until S15
     # It moves nothing upstream of the kinematics.
     for name in ("sfr", "hydrogen_mass_30kpc", "stellar_mass_total", "thin_disc_scale_length", "halo_virial_mass"):
         assert float(gnedin.fields[name]) == pytest.approx(float(blumenthal.fields[name]), rel=1e-9), name

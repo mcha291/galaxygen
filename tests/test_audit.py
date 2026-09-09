@@ -82,17 +82,20 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(simple):
     200: the same halo is less concentrated at R₂₀₀ than at R_vir. The halo stage converts
     since S13; this pins what the conversion is worth and where it leaves row 3.
     """
-    K, z_f = simple.constants["CONCENTRATION_NORM"].value, 2.5
+    from galaxy.core.registry import INPUTS
+
+    K, z_f = simple.constants["CONCENTRATION_NORM"].value, INPUTS["halo_assembly_z"].default  # 2.5 until S15
     c_vir = K * (1.0 + z_f)
     c200 = c200_from_cvir(c_vir)
-    assert c_vir == pytest.approx(14.35) and c200 == pytest.approx(10.9, abs=0.05)
+    assert c_vir == pytest.approx(10.91, abs=0.01) and c200 == pytest.approx(8.24, abs=0.05)  # 14.35 and 10.9 until S15
     # The conversion is a property of the profile, checked by inverting it (rule B3).
     assert mu(c200) / c200**3 == pytest.approx((200.0 / 101.0) * mu(c_vir) / c_vir**3, rel=1e-9)
     f = run(simple, only=KIN).fields
     assert f["halo_concentration_virial"] == pytest.approx(c_vir) and f["halo_concentration"] == pytest.approx(c200, abs=0.05)
     # Row 3 read 256.2 unconverted; converted it read 242.7 - through the 245-251 window and out the
-    # other side - until S14 contracted the halo around the disc, since when it reads 270.8, high (debt #6).
-    assert f["v_tangential_sun"] == pytest.approx(270.8, abs=0.5) and f["v_tangential_sun"] > Q[3].hi
+    # other side - until S14 contracted the halo around the disc (270.8, high, debt #6); since S15 the
+    # epoch's default is the LCDM median and the row reads 260.1, still high (D117).
+    assert f["v_tangential_sun"] == pytest.approx(260.1, abs=0.5) and f["v_tangential_sun"] > Q[3].hi
     # ...and the cited z_f = 2-3 spans 12 km/s on row 3 (236.4-249.2 until S14); the row now wants 0.7-1.0.
     lo, hi = (run(simple, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
     assert lo == pytest.approx(264.5, abs=0.5) and hi == pytest.approx(276.7, abs=0.5)
@@ -261,7 +264,7 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
     assert by[0.8]["thin_disc_scale_length"] == pytest.approx(2.00, abs=0.05)
     assert by[1.5]["thin_disc_scale_length"] == pytest.approx(3.68, abs=0.05) and not inside(4, by[1.5]["thin_disc_scale_length"])
     assert by[1.5]["gas_mass_30kpc"] == pytest.approx(9.17e9, rel=0.02)
-    assert by[1.5]["v_tangential_sun"] == pytest.approx(253.0, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.67, abs=0.05)  # 222.7 until S14 contracted the halo
+    assert by[1.5]["v_tangential_sun"] == pytest.approx(241.5, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.67, abs=0.05)  # 253.0 until S15 derived the epoch; 222.7 until S14 contracted the halo
     grads = [by[r]["metallicity_gradient"] for r in (0.8, 1.0, 1.25, 1.5)]
     assert grads[0] < grads[1] < grads[2] < grads[3]
     if model.name == "simple":

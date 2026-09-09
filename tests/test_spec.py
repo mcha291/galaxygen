@@ -40,7 +40,7 @@ SUMMARY = {
     "advanced": {"pass": 7, "fail": 12, "not-yet-computable": 5},
 }
 FAILED = {"simple": {2, 3, 5, 11, 20, 22, 23}, "advanced": {2, 3, 5, 6, 7, 8, 9, 10, 11, 20, 23, 24}}
-DEBTS = {"simple": {12, 15, 18, 19}, "advanced": {12, 18, 27, 28, 42}}  # row 3 under #12 since S14 (#11 at S13, #18 before)
+DEBTS = {"simple": {11, 15, 18, 19}, "advanced": {11, 18, 27, 28, 42}}  # row 3 under #11 since S15 (#12 at S14, #11 at S13, #18 before)
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -108,7 +108,7 @@ def test_recorded_misses_are_well_formed():
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
     assert "spec" in out and "6 not-yet-computable of 24" in out and "5 not-yet-computable of 24" in out
-    assert "recorded miss, debt #12, since S14" in out   # row 3: high since the halo contracted (low at S13, when the concentration was converted)
+    assert "recorded miss, debt #11, since S15" in out   # row 3: the baryons, once the epoch is derived (under #12 at S14, high since the halo contracted; low at S13)
     assert "recorded miss, debt #19, since S3" in out
     assert "recorded miss, debt #15, since S2" in out
     assert "recorded miss, debt #27, since S9" in out

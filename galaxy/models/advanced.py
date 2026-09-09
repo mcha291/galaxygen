@@ -87,7 +87,7 @@ ADVANCED = MODELS.register(
                 "Chosen, not fitted, and the tilt it gives the gradient is a prediction.",
             ),
             "WIND_SPEED": Constant(
-                1028.0,
+                999.0,
                 "km/s",
                 "The escape velocity at which half of a generation's fresh metals leave the disc. "
                 "**The one fitted constant of the advanced chemistry**: set so the present-day "
@@ -96,11 +96,13 @@ ADVANCED = MODELS.register(
                 "unconverted concentration; refitted at S13 to 987 once the halo converts c_vir to "
                 "c₂₀₀ (debt #12) and Sagittarius delivers a physical share (debt #29); refitted at "
                 "S14 to 1028 once the halo contracts around the disc (debt #6) and the escape velocity "
-                "at R₀ rises 562 → 585 km/s — each time the mechanism fixed, the constant re-examined "
-                "(rule B10, debt #43). That potential overshoots row 3 by 20 km/s and the observed "
-                "escape velocity at R₀ (debt #46), so this value is fitted against a known miss and "
-                "will move again when the row closes. Everything the value implies elsewhere — the "
-                "loss fraction at every other radius, the gradient tilt — is then a prediction.",
+                "at R₀ rises 562 → 585 km/s; refitted at S15 to 999 once the epoch's default is the "
+                "ΛCDM median (z_f 2.5 → 1.66, debt #12) and v_esc(R₀) falls 585 → 569, inside the "
+                "observed 530–580 — each time the mechanism fixed, the constant re-examined (rule "
+                "B10, debt #43). Row 3 still overshoots by 12 km/s at this potential, so the value is "
+                "fitted against a known miss and will move again when the bulge and the extended "
+                "component arrive. Everything the value implies elsewhere — the loss fraction at "
+                "every other radius, the gradient tilt — is then a prediction.",
             ),
             "IA_METAL_TO_IRON": Constant(
                 2.0,

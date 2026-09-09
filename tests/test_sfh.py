@@ -124,15 +124,18 @@ def test_row_3_misses_high_once_the_halo_contracts(model):
     c200 = 10.9 instead of 14.35 the row read 242.7, low - and named the halo's
     contraction as "several km/s", the lever that would close it. S14 modelled the
     contraction and it is 28 km/s at R0 (Gnedin et al. 2004's invariant; 38 for
-    Blumenthal's): the row reads 270.8, high by 20, and the epoch it wants is 0.7-1.0,
-    below the cited 2-3. The magnitude was recalled, not measured (rule B4).
+    Blumenthal's): the row read 270.8, high by 20, and the epoch it wants is 0.7-1.0,
+    below the cited 2-3. The magnitude was recalled, not measured (rule B4). S15 found the
+    default epoch had been validated against measurements of the contracted halo and derived
+    it from the LCDM median instead (2.5 -> 1.66, c200 10.9 -> 8.2): the row reads 260.1, high
+    by 9, and its prediction names the bulge and the extended component (D117).
     """
     o = out(model)
     v = o.fields["v_tangential_sun"]
     assert v > 251.0
-    assert v == pytest.approx(270.8, abs=1.0)  # 242.7 until S14
-    assert o.fields["halo_concentration"] == pytest.approx(10.9, abs=0.05)
-    assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(42.8, abs=0.5)
+    assert v == pytest.approx(260.1, abs=1.0)  # 270.8 until S15; 242.7 until S14
+    assert o.fields["halo_concentration"] == pytest.approx(8.24, abs=0.05)  # 10.9 until S15
+    assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(46.5, abs=0.5)  # 42.8 until S15
 
 
 def test_the_resolved_curve_supersedes_the_checkpoint_one_one(model):

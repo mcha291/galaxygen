@@ -348,9 +348,11 @@ HALO_DENSITY_SUN = FieldDecl(
         "The contracted halo's density at the solar radius, read off the contraction mesh (S15). "
         "It is the one property of the dark halo measured without the rotation curve — from the "
         "vertical kinematics of the stars — so it judges the contraction independently of row 3: "
-        "0.3–0.5 GeV/cm³, 0.008–0.013 M☉/pc³ [recall: Read 2014; de Salas & Widmark 2021]. The "
-        "surprise is the size of the response: the uncontracted NFW halo sits inside that span "
-        "and the contracted one is more than twice it."
+        "0.3–0.5 GeV/cm³, 0.008–0.013 M☉/pc³ [recall: de Salas & Widmark 2021, the global "
+        "analyses]. The surprise is how little the response moves it: the dark mass inside R₀ "
+        "rises 70% and the density there 16%, because the response steepens the profile inside "
+        "R₀ more than it raises it at R₀ — so every epoch from 1 to 3 reads inside the span (0.28 "
+        "to 0.43 GeV/cm³) and the number does not discriminate between them (D117)."
     ),
 )
 

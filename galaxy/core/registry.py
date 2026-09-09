@@ -277,16 +277,26 @@ _INPUTS: tuple[Input, ...] = (
         "halo_assembly_z",
         "Halo assembly redshift",
         "control",
-        "Does two jobs: sets the assembly epoch and derives c₂₀₀ = 4.1(1 + z_f) (ruling 5). "
-        "Renamed from galaxy_age by ruling 7. GALAXY_INPUTS.md §3 gives z ≈ 2–3 and no single "
-        "value; the default is the midpoint, 2.5, which is [inferred] and not a measurement. What "
-        "makes it more than a guess is its consequence: c₂₀₀ = 14.4, inside the 10–18 the Milky "
-        "Way's own concentration measurements span [verified: GALAXY_INPUTS.md §4b]. The range "
-        "0.5–5 covers late assembly to the earliest epoch the relation is quoted for [inferred]. "
-        "v_c(R₀) moves about 10 km/s across the cited 2–3, which is three times acceptance row "
-        "3's error bar, so this default is load-bearing and unvalidated (debt #12).",
+        "Does two jobs: sets the assembly epoch and derives c_vir = K(1 + z_f), converted to c₂₀₀ "
+        "(ruling 5, debt #12). Renamed from galaxy_age by ruling 7. GALAXY_INPUTS.md §3 gives "
+        "z ≈ 2–3, and until S15 the default was that range's midpoint, 2.5, justified by its "
+        "c₂₀₀ = 14.4 landing inside the 10–18 the Milky Way's concentration measurements span. But "
+        "K is calibrated on dark-matter-only simulations [verified: Wechsler et al. 2002, c_vir = "
+        "c₁/a_c], so the concentration it gives is the halo's *before* it contracted around the disc "
+        "(S14), while a measurement of the Milky Way fits an NFW to the halo *after*: at 2.5 that "
+        "fit, halo_concentration_contracted, reads 18.5 — over. Since S15 the default is derived: "
+        "the epoch at which the ΛCDM median halo of the default mass assembled, z_f = c_vir/K − 1 "
+        "with c₂₀₀ = 10^(0.905 − 0.101 log₁₀(M₂₀₀ h/10¹² M☉)) = 8.25 [verified: Dutton & Macciò "
+        "2014, the z = 0 relation, Planck; h = 0.7 here] converted to c_vir = 10.92 at Δ_vir — "
+        "1.66, its 0.11 dex scatter spanning 1.08–2.41 [verified: tests/test_registry.py::"
+        "test_the_epochs_default_is_the_lcdm_median]. The Milky Way's own pre-contraction "
+        "concentration, 9.4 (+1.9/−2.6) from a contracted fit to Gaia DR2 [recall: Cautun et al. "
+        "2020], is z_f = 2.0 (+0.6/−0.9) and brackets it. The range 0.5–5 covers late assembly to "
+        "the earliest epoch the relation is quoted for [inferred]. Row 3 still misses high at this "
+        "default, 260 against 245–251, and spans 252–270 across the scatter: its prediction names "
+        "the bulge and the extended component (spec._MISSES row 3), not this input.",
         unit="dimensionless",
-        default=2.5,
+        default=1.66,
         lo=0.5,
         hi=5.0,
         checkpoint_hypothesis=1,
