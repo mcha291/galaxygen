@@ -2900,3 +2900,160 @@ slope is noise at this sample); not this session's, not touched.
 merged `--no-ff` into `main`; `s14`'s SHA filled in MANUAL_TODO.md as the
 second merge's, `s15` queued; register 30 open / 16 discharged. Next: S16, the
 extended component with its own timescale (§5d), judged against row 3 at 260.1.
+
+### D119. The extended component is the high-j tail of the halo's angular momentum, its timescale was not the decision, and the threshold is the next one (debts #18, #43, #44, #45, #47, #11, #19)
+
+**Decision.** The halo stage derives the extended accretion component from the
+halo's specific-angular-momentum distribution and contracts around it; `sfh`
+accretes it on the inside-out law it already has. The distribution is Bullock
+et al. 2001's universal profile, ``M(< j) = M μ j/(j₀ + j)`` for ``j ≤
+j₀/(μ − 1)``, with μ = 1.25 the median `[verified: Bullock et al. 2001, μ − 1
+log-mean −0.6, scatter 0.4 dex, read at S16]` as a new Level 0 constant
+`ANGULAR_MOMENTUM_MU`. Mapped onto the plane through ``j(R) = R v_c(R)`` on the
+curve the halo's first contraction gives — the contracted halo plus the
+razor-thin exponential — with ``j₀`` fixed so that its mean j is the
+exponential disc's (λ_d already sets it), the profile lies below the
+exponential inside 12.3 kpc and above it outside. The excess beyond that outer
+crossing is gas the exponential never held: the tail, 7.6% of the retained
+budget, 3.7 M☉/pc² at 15–20 kpc, ending where j_max lands at 25 kpc. Its share
+comes out of the exponential's normalisation, the halo contracts a second time
+around the total (two bounded passes, rule A1), and three fields are new:
+`infall_tail_surface_density`, `infall_tail_share`, `infall_tail_inner_radius`.
+The low-j excess inside the crossing is discarded, not modelled — it is what
+feedback ejects and the bulge is drawn from (D110) — and the constant's about
+line says so. Debt #18 is discharged; #47 opens on what the tail does not
+explain; `NET_YIELD` 0.011 → 0.0117 and `WIND_SPEED` 999 → 993 are refitted
+(debt #43, the day #18 closed, as it said); rows 2, 7 and 20 are recorded
+misses under #44, #19 and #47. The §5d gate — rows 2 and 20 inside — is not
+met, and the record says why rather than the constant that would meet it.
+
+**Settled by.** Probe before build, three times. First, the forms, the repo
+unchanged (D114's substitution plus the stage's compute set on the Stage
+object), all with the halo contracting around the total, at z_f = 1.66:
+
+    form                                  row 2   row 3   row 4   H (1e9)  adv row 22  M*(1e10)  gas at 8 / 15 / 20 kpc
+    none (S15)                            1.891   260.1   2.49    4.17     -0.0578     5.29      7.1 / 3.9 / 0.6
+    D114: s 0.2 at 3 R_d, tau(R)          2.129   248.4   2.65    6.65     -0.0515     4.95      7.1 / 4.6 / 3.1
+    annular s 0.15 at 5 R_d, edge 4 R_d   2.110   245.5   2.52    7.75     -0.0535     4.80      6.7 / 4.6 / 3.7
+    Bullock profile whole, mu 1.25        1.737   258.7   1.82    6.39     -0.0541     4.98      5.7 / 4.6 / 3.9
+    Bullock tail, mu 1.15                 1.921   252.1   2.49    7.13     -0.0596     4.88      6.8 / 4.4 / 3.3
+    Bullock tail, mu 1.25  (built)        2.088   251.7   2.49    6.66     -0.0595     4.95      6.7 / 4.5 / 3.9
+    Bullock tail, mu 1.4                  2.235   251.2   2.49    5.41     -0.0568     5.12      6.8 / 4.7 / 4.3
+    the tail on three arrival laws, mu 1.25: inside-out from t = 0  2.088 | the same from t_f = 3.84 Gyr  2.132 | the halo's growth after z_f  2.095
+                                             every other column identical to the digit across the three
+
+Three things the table says. **The timescale is not the decision.** The
+register (debt #18, D114) asked for a component that arrives late enough to
+stay under the threshold; the three arrival laws for the tail read the same on
+every row and within 0.05 M☉/yr on row 2, because the inside-out law at 12–25
+kpc already accretes over 10–20 Gyr, and "late" adds nothing to that. What
+D114's form paid on row 2 was its inner part — an exponential at 3 R_d carries
+a third of its mass inside 12 kpc, on top of gas the disc already holds near
+the threshold — and the annular version shows it: no inner part, row 4
+unmoved. **The distribution derives the share.** Across μ = 1.06–1.4 the tail's
+share holds at 0.07–0.08; the shape moves its inner edge (14.9 → 11.0 kpc) and
+with it row 20 (5.8 → 5.0 × 10⁹ through 6.9 at 1.15), not row 3 (252.5–252.9)
+and not row 4. A component "sized to the observed HI disc", which the register
+had asked for, would pass row 20 by construction (debt #47). **The whole
+distribution fails row 4** at 1.82 kpc: the well-known low-j excess. Keeping
+the exponential inside the crossing is MMW98's assumption kept where the stars
+show it holds, and the tail is the part of the distribution the assumption
+drops.
+
+Second, the threshold. With the tail built, row 2 reads 2.08 and row 20 6.2 ×
+10⁹, and the rows point at the one constant between them: the star formation
+threshold, 5 M☉/pc², the bottom of its cited 5–10, at which the model's gas at
+R₀ is 6.8 against the observed 10–13. Kennicutt's threshold is derivable —
+``Σ_crit = α κ σ_g / 3.36 G`` from the rotation curve's epicyclic frequency
+`[recall: Kennicutt 1989; Martin & Kennicutt 2001, α ≈ 0.69]` — and was probed
+by substituting `sfh.star_formation_rate`:
+
+    threshold                    Sigma_crit at 4 / 8.2 / 12 / 20 kpc   row 2   row 4   H (1e9)  row 9   row 5   adv row 22  gas at 8 kpc
+    constant 5 (built)           5 everywhere                          2.083   2.49    6.24     0.147   1.27    -0.0592     6.8
+    alpha 0.69, sigma_g 6 km/s   25.8 / 11.2 / 6.9 / 4.2               1.945   2.47    8.23     0.062   1.01    -0.0627     10.8
+    alpha 0.69, sigma_g 8        34.5 / 15.0 / 9.3 / 5.6               1.842   2.43    10.0     0.025   0.90    -0.0768     13.6
+    alpha 0.63, sigma_g 8        31.5 / 13.7 / 8.5 / 5.1               1.879   2.44    9.43     0.035   0.93    -0.0715     12.6
+
+At Kennicutt's own numbers the derived threshold puts the gas at R₀ where it is
+observed and row 20 at its target, and does not close row 2 (1.95) — star
+formation is self-regulated by the infall rate, which is why `KS_NORM` at −1σ
+reads *higher*, 2.25 — while row 9 falls from 0.147 to 0.062 and fails: the
+thick disc forms from the reservoir the threshold holds. That is S18's
+cancellation (debt #19), so the threshold is a decision for the session that
+builds the thick disc's radial heating, judged on rows 2, 5, 7, 9, 11 and 20
+together, and is recorded here (debt #47), not built.
+
+Third, the instrument. The tail computed on the grid moved `halo_circular_velocity_sun`
+with N_R and the grid-independence test caught it in the first full run; it is
+computed on the halo's own mesh now and interpolated to the grid for
+publication, and the scalars agree to 10⁻¹² across N_R = 40–800 `[verified:
+tests/test_halo.py::test_grid_resolution_does_not_move_the_scalars]`. The
+first probe's "own timescale" rows were the unsubstituted model — the Stage
+holds its own `compute` — and only the mass budget (M* = 0.8 × budget with
+nothing added) said so.
+
+**What moved.** Row 3 260.1 → 252.9 in both models, high by 2: the baryons'
+pull at R₀ −4.3 km/s and the halo's weaker response −2.5 (its share 165.8 →
+163.3, r_i/r_f 1.503 → 1.474, the contracted fit 15.4 → 15.0). Row 20 4.17 →
+6.24 × 10⁹ of hydrogen (48% → 22% short). Row 2 1.89 → 2.08. Row 4 2.49,
+unmoved. Row 1 5.29 → 5.00 × 10¹⁰; row 10 3.87 → 3.71; row 11 1.42 → 1.30 ×
+10¹⁰; row 5 1.32 → 1.27; row 9 0.152 → 0.147; row 6 254.6 → 275.4 (simple,
+inside) and 358.5 → 384.2 (advanced, debt #42's miss, wider); row 7 1042 →
+1126, over 1080, a new recorded miss under debt #19. The advanced gradient
+−0.0578 → −0.0592, inside, away from −0.047: debt #45's prediction held, the
+wind's tilt does the work. Rows 16/17 medians 43.2 → 42.0 km/s/kpc and 5.82
+kpc. The gas at 20 kpc 0.6 → 3.8 M☉/pc². Every pinned measurement re-pinned
+with the old number beside it; the spec test's debt map, counts and row 20
+regex updated; the API's "no internals" test caught the constant's name in a
+field's about line and it was rephrased (rule D5). Two new tests read the tail
+and what it moved `[verified: tests/test_halo.py::test_the_high_j_tail_is_derived_and_where_it_lies,
+::test_the_tail_moves_the_halos_response_and_not_the_scale_length;
+tests/test_sfh.py::test_the_tail_is_accreted_and_what_it_moved]`. The three
+new fields have no viewer preview; S19 owns that (§5d).
+
+### D120. Cold timings at S16 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0003   1.06        940  -
+    viewer: a module         0.0003   0.0003   0.95     21,599  -
+    index                    0.0000   0.0001   0.55      1,237  -
+    version                  0.0020   0.0019   1.07      1,132  -
+    stages                   0.0002   0.0002   1.04      9,030  -
+    fields                   0.0007   0.0006   1.09     66,268  -
+    inputs                   0.0001   0.0001   0.95     10,388  -
+    arrays: one profile      0.1275   0.0003 404.45      4,976  halo,assembly,sfh
+    arrays: history          0.1887   0.0029  64.45  6,401,768  halo,assembly,sfh,chemistry
+    arrays: scalar           0.1214   0.0004 280.04      1,712  halo,assembly,sfh
+    region: one sector*      0.1953   0.0039  50.41     18,632  halo,assembly,sfh,chemistry,vertical
+    region: whole disc*      0.4173   0.2141   1.95  1,128,456  halo,assembly,sfh,chemistry,vertical
+    system: one star*        0.1956   0.0025  77.03      3,112  halo,assembly,sfh,chemistry,vertical
+    adv: history             0.4885   0.0030 163.77  6,401,776  halo,assembly,sfh,chemistry_dtd
+    adv: alpha plane         0.4913   0.0030 163.51  6,401,832  halo,assembly,sfh,chemistry_dtd
+    adv: one sector*         0.5217   0.0044 119.88     18,640  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.5079   0.0025 202.23      3,128  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, about 11 ms here (debt #37)
+    import + registry: 0.114-0.122 s, paid once per process and excluded from the cold column
+
+    model simple: 0.638 s cold, 0.628 s warm; model advanced: 1.047 s cold, 0.990 s warm
+    catalogue at 20,000 stars: layout 16-19 ms over all 1024 cells, 704 of them realise a star (516 until S16)
+    catalogue against sample size: simple 1.60 us per star, 163.7 ms fixed (85%); advanced 2.06 us, 173.1 ms fixed (81%)
+    one-off, first seeded draw: 11.47 ms then 0.029 ms (397x), billed to pattern; debt #37
+
+**Read within the run.** The halo stage contracts twice now and computes the
+tail on its mesh between the passes; it stays inside 3–5 ms, a fixed cost with
+no dependence on N_R, N_t or N_z, so no scaling exponent moved and
+`tools/scaling.py` was not re-run. The `fields` route grew 3 kB for three
+declarations. One thing changed shape that is not a cost: the catalogue's
+layout realises a star in 704 of its 1024 cells where it realised 516 — the
+tail's gas forms stars out to 20 kpc (0.4 M☉/pc² of them there) and cells that
+were empty are not. The whole-model numbers, 0.64 / 1.05 s, are within D118's
+noise (0.62 / 0.99); the per-star slope read 1.6 and 2.1 µs against D118's 0.35
+and 0.92, which is the flake D115 recorded, in its other direction.
+
+**Close.** Board row 16 (desktop, Fable 5.1, `s16`, 2026-09-09); `session-16`
+merged `--no-ff` into `main`; `s15`'s SHA filled in MANUAL_TODO.md, `s16`
+queued; register 30 open / 17 discharged. §5d's gate for this session — rows 2
+and 20 inside — is not met, and D119 says which constant would meet it and why
+it is S18's to decide. Next: S17, the bulge stage and M_• (Opus, §5d), with row
+3 at 252.9 and the bulge worth −5 to −8 on the S13 halo; BRIEF.md says re-probe
+first.

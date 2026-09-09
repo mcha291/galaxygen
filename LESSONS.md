@@ -528,3 +528,28 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] A scratch script named like a standard-library module (`numbers.py`) shadows it
   and numpy fails to import with a circular-import error that names nothing useful. Name
   probes `s<NN>_<what>.py`.
+
+## From S16
+
+- [field] The register named a timescale; the physics was a radius. Three arrival laws
+  for the extended component read identically on every row, because the inside-out law
+  already accretes over 10–20 Gyr where the component lives; D114's form failed on row 2
+  only because its inner part overlapped the disc's own gas. Before deriving a timescale,
+  check whether the rows can see one (D119).
+- [field] Derive the profile from the distribution that exists, not from the observable
+  the row wants. The halo's angular-momentum distribution gives the extended gas a share
+  and a radius with one cited constant; a component "sized to the observed HI disc"
+  would pass row 20 by construction and is the wrong answer that passes (debt #47).
+- [field][infra] A derived field that feeds a scalar must live on the stage's own mesh,
+  not the grid: the tail computed on the grid moved v_halo(R₀) with N_R and the
+  grid-independence test caught it in the first run. The mesh is what the halo owns (D119).
+- [field] A stage object holds its own `compute`; patching the module's name does nothing.
+  A probe that substitutes a stage's compute sets it on the Stage (`object.__setattr__`),
+  and reads the substituted number back before trusting the row (the "late" rows of the
+  first probe were the unsubstituted model, and only the mass budget said so).
+- [field] Probe the constant the rows point at even when it is not the session's: the
+  threshold closed row 20 and cost row 9, which put it in S18's judgement rather than in
+  this session's build — the probe cost fifty lines and saved a mechanism built for the
+  wrong session (D119).
+- [close][infra] A full suite that takes longer than the tool's timeout is killed with a
+  misleading exit status; run it in the background with the status appended to its log.

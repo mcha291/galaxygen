@@ -1,60 +1,60 @@
-# BRIEF — for S16: the extended component with its own timescale (§5d)
+# BRIEF — for S17: the bulge stage and M_• (§5d; Opus, a gated build)
 
-S0–S10 are closed; S11–S14 integrated, fixed and decided (D99–D115); S15 derived the
-assembly epoch's default and ruled the contraction's calibration out as row 3's lever
-(D117, 2026-09-09). Open per RESUMING.md, read RULES.md in full, then this. GALAXY_INPUTS.md
-§11 is the register (30 open). Work on `session-16`; the close ritual applies; C2e queues tags.
-**Probe before build** (§5d): S13, S14 and S15 each overturned the register's stated lever
-with a fifty-line probe before writing anything (D110, D113, D117).
+S0–S10 are closed; S11–S16 integrated, fixed and decided (D99–D120); S16 built the extended
+component as the high-j tail of the halo's angular momentum (D119). Open per RESUMING.md, read
+RULES.md, then this; §11 is the register (30 open). Branch `session-17`; your decision is **D121**.
 
-## What S15 found, and what it leaves S16
+## What S16 left you, and the numbers you start from
 
-- `halo_assembly_z` defaults to **1.66** (2.5 until S15): the ΛCDM median for the default
-  mass, c₂₀₀ 8.24 before the response, a test reproduces the arithmetic. The 2.5 had been
-  validated against measurements of the *contracted* halo; `halo_concentration_contracted`
-  now publishes what those measure (15.4, inside 10–18; 18.5 at 2.5).
-- **Row 3 reads 260.1**, a miss under debt #11, high by 9–15 km/s. Its prediction: the bulge
-  (D110, 5–8 km/s, S17) and *your* component (D114, 4–13, at z_f 2.5) close it together at
-  z_f = 1.66. The contraction's calibration is not the lever: Gnedin 2011 has no (M, z) form
-  (read this session), Cautun 2020's Auriga response agrees with Gnedin 2004 at R₀ to 2 km/s,
-  and A = 1.6 reads 245.6 and is not adopted (D117, debt #46).
-- `halo_density_sun` (0.0087 M☉/pc³) does **not** discriminate: inside the measured span at
-  every epoch. v_esc(R₀) is 569, inside 530–580; `WIND_SPEED` refit 1028 → 999 (debt #43).
+- **Row 3 reads 252.9**, high by 2, a miss under debt #11 whose prediction is *you*: the bulge
+  is worth −5 to −8 km/s at R₀ (D110's probe: a Hernquist spheroid drawn from the stellar disc
+  in proportion; a flat disc rotates faster than the same mass in a sphere). **Re-probe first**
+  — D110 was read on the S13 halo (uncontracted, z_f 2.5); the halo now contracts around the
+  total and responds to what you move (`halo.contracted_halo(..., enclosed=...)`). Below 245
+  the record says debt #46's invariant is too weak, not too strong.
+- Rows 10–13 are yours: 10 reads 3.70e10 (passes only because 11 fails high at 1.30e10, the
+  cancellation D110 names), 12 and 13 are not-yet-computable, 14 has a zero-width target
+  (#17: enter the source's uncertainty first, or it stays "no testable target"). Row 18 is
+  M_• as a derived mean plus a seeded residual (ruling 10, GALAXY_INPUTS.md §13): statistical.
+- The stellar disc is 5.00e10 with fitted R_d 2.49; the tail took 7.6% of the budget beyond
+  12 kpc and the halo's share at R₀ is 163.3 (r_i/r_f 1.47). Gas 8.55e9, hydrogen 6.24e9.
 
-## The decision S16 takes — the timescale, before any constant
+## The contract, and the one design trap
 
-1. **D114's premise failed**: a share s at k R_d on the disc's own inside-out timescale buys
-   row 20 with row 2 (1.98–2.45 against ≤ 1.84) because the gas arrives above the SF
-   threshold. The component needs a timescale of its own; §5d names the halo's angular
-   momentum arriving late as the physical candidate. Derive it, do not sweep it.
-2. **Re-read D114's table at z_f 1.66 first** — it was read at 2.5 and the halo's response
-   is larger now (r_i/r_f 1.50). Substitute `sfh.infall_profile` and `halo.disc_enclosed_mass`
-   from a script; the repo unchanged until the timescale is decided.
-3. **The gate** (§5d): rows 2 and 20 inside with rows 4 and 22 unmoved; row 3 read with it;
-   `NET_YIELD` and `WIND_SPEED` refitted and recorded (B10). Rows 3 and 4 remain the check
-   that the component is *high* enough in angular momentum (debt #18); #45 says a wider
-   first component is the wrong answer that passes.
-4. Build it in `sfh` behind `infall_profile` (D114 factored it out for this). The halo
-   contracts around whatever `disc_enclosed_mass` describes — give it the component too.
+1. **Where the bulge enters.** `v_tangential_sun` (row 3) is computed in `sfh` off stars, gas
+   and the halo's scalar; two stages may not publish one field (preflight). Either the bulge
+   stage runs *before* `sfh` and `sfh` reads its profile (then its mass cannot be a fraction
+   of the stars `sfh` has not built yet — derive it from the budget, or from the bar's inner
+   disc, §4's "mergers + bar buckling"), or it runs after and republishes nothing kinematic —
+   in which case row 3 cannot see it. Decide before writing a line; D110 drew it from the disc
+   in proportion *in a probe*, which a stage cannot do without a fixed point (rule A1).
+2. **The halo contracts around the total baryons** (S16): give `enclosed` the spheroid too, on
+   the halo's mesh, or the response is computed around a disc that no longer exists.
+3. **What is derived and what is seeded** (A10): bulge mass and fraction derived; M_• mean from
+   M–σ (Ho 2014 eq. 2, §13) with the residual seeded by the classical fraction (0–25%, BHG16).
+   Row 14's σ is a Hernquist virial estimate — a derivation, with its assumption in the about.
+4. **The gate** (§5d): rows 10, 12, 13 inside; row 11 off its cancellation; 14 and 18 statistical; row 3 re-read.
 
 ## What the instruments will tell you, and what they will not
 
 - `uv run python -m galaxy.specs`: exit 0 means every failing row is a recorded miss,
   nothing drifted across its width, and every stage was profiled. Never widen a target
   (B5); record a miss with a prediction. A miss that starts passing fails the run.
-- Probing a constant: `tests/test_audit.py::with_constant`; a ruleset: `tests/test_halo.py::
-  _with_contraction`; an input: `run(model, {...}, only=(fields,))`. A verdict needs a number.
-- A default is a measured value or a derivation a test reproduces (D30, D117); a validation
-  must compare like with like — publish the quantity the measurement measures (D117).
+- Probing: a constant via `tests/test_audit.py::with_constant`; a profile via `sfh.infall_profile` /
+  `halo.disc_enclosed_mass` substitution (D114); a stage's compute via `object.__setattr__(S.SFH,
+  "compute", fn)` — the Stage holds its own reference; patching the module does nothing (S16).
 
 ## Traps
 
-- **Every pin that reads the potential moves** when the infall moves: test_halo, test_sfh,
-  test_audit (#12, #45), test_chemistry_dtd (f_esc 0.7552), test_spec's DEBTS map, rows 16/17.
-  Re-pin with the old number beside the new (S13's lesson); D117 lists the S15 set.
-- Decisions are numbered sequentially by a test: yours is D119. §5d's audit reservation is
-  now stated as counts fixed when S21 opens, not numbers.
-- Name scratch scripts `s16_<what>.py` (`numbers.py` shadowed the stdlib); models register on
-  `import galaxy.models`. Windows: `uv run python` only; Bash over ~8 KB fails; worktree hooksPath.
+- **Every pin that reads the potential or the stellar surface density moves**: test_halo,
+  test_sfh, test_audit (#12, #28, #41, #42, #44, #45, the thick-disc probe), test_chemistry_dtd
+  (f_esc 0.7536), test_spec's SUMMARY/FAILED/DEBTS and its row 20 regex, rows 6/7/9/16/17. D119
+  lists the S16 set. Re-pin with the old number beside the new; refit `NET_YIELD` (0.0117) and
+  `WIND_SPEED` (993) by bisection to solar at R₀ if the gas at R₀ moves (B10, debt #43).
+- Row 7 (simple) is a recorded miss since S16 (1126 > 1080, #19) and row 6 advanced 384 (#42);
+  the thick disc rows are S18's — do not tune the heating constants.
+- The full suite outlasts the Bash tool's 10-minute cap: run it in the background with the exit
+  status appended to its log, and gate the merge on that status (D115, D120). Scratch scripts
+  `s17_<what>.py`; models register on `import galaxy.models`; `uv run python` only on Windows.
 - **Do not merge or delete `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`**.
-- The new halo scalars have no viewer preview; S19 owns previews (§5d), not you.
+  New fields need no viewer preview from you; S19 owns previews (§5d).

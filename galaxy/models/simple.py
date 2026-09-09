@@ -19,9 +19,12 @@ SIMPLE = MODELS.register(
             # yield: it has nucleosynthetic yields and a wind, and the effective yield
             # at R₀ is one of its results (debt #16).
     "NET_YIELD": Constant(
-        0.011,
+        0.0117,
         "dimensionless",
-        "**Effective** yield: metals surviving in the gas per unit mass locked into stars. The "
+        "**Effective** yield: metals surviving in the gas per unit mass locked into stars. Refitted "
+        "at S16 from 0.011, the first time since S3: the high-j tail took 7.6% of the budget out of "
+        "the exponential and the gas at R₀ read −0.027 dex, so the value was re-set to solar by "
+        "bisection (rule B10, debt #43, D119). The "
         "nucleosynthetic yield integrated over a Kroupa/Chabrier IMF is 0.03-0.04 for total "
         "metallicity [recall], and this is deliberately about a third of it. The simple model has "
         "no outflows — GALAXY_INPUTS.md §8 makes them an advanced-model axis — so metals that "

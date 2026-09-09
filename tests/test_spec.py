@@ -36,11 +36,11 @@ def test_every_row_names_a_field():
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 19, 20, 22, 23}
 VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
 SUMMARY = {
-    "simple": {"pass": 11, "fail": 7, "not-yet-computable": 6},
+    "simple": {"pass": 10, "fail": 8, "not-yet-computable": 6},  # row 7 since S16 (D119)
     "advanced": {"pass": 7, "fail": 12, "not-yet-computable": 5},
 }
-FAILED = {"simple": {2, 3, 5, 11, 20, 22, 23}, "advanced": {2, 3, 5, 6, 7, 8, 9, 10, 11, 20, 23, 24}}
-DEBTS = {"simple": {11, 15, 18, 19}, "advanced": {11, 18, 27, 28, 42}}  # row 3 under #11 since S15 (#12 at S14, #11 at S13, #18 before)
+FAILED = {"simple": {2, 3, 5, 7, 11, 20, 22, 23}, "advanced": {2, 3, 5, 6, 7, 8, 9, 10, 11, 20, 23, 24}}
+DEBTS = {"simple": {11, 15, 19, 47}, "advanced": {11, 27, 28, 42, 47}}  # S16: rows 2 and 20 under #47, row 7 (simple) under #19; row 3 under #11 since S15
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -163,7 +163,7 @@ def test_the_report_names_the_table_defect(prod, judged):
     assert "table: rows 14, 20, 21 have zero-width targets" in out
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
-    assert re.search(r"4\.171\d*e\+09", out)  # row 20's hydrogen mass, printed (S13)
+    assert re.search(r"6\.24\d*e\+09", out)  # row 20's hydrogen mass, printed (S13; 4.171e9 until S16 built the tail)
 
 
 def test_statistical():

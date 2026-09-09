@@ -39,7 +39,7 @@ properties of the halo; the disc stage turns the baryon half into a disc.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -115,8 +115,46 @@ MESH_INNER = 1.0e-3  # kpc
 MESH_OUTER = 1.5  # in units of R₂₀₀
 
 
+def angular_momentum_tail(
+    R: np.ndarray, j: np.ndarray, M_d: float, R_d: float, mu: float
+) -> tuple[np.ndarray, float, float]:
+    """The high-j tail of the halo's angular-momentum distribution, beyond what the exponential disc holds (S16, debt #18).
+
+    Bullock et al. 2001's universal profile, ``M(< j) = M μ j/(j₀ + j)`` for ``j ≤ j₀/(μ − 1)``,
+    is mapped onto the plane through the specific angular momentum of a circular orbit at
+    each radius, ``j(R)`` on the model's own rotation curve, with ``j₀`` fixed so that the
+    profile's mean j is the exponential disc's — the disc λ_d already sets. Where that
+    profile lies above the exponential *outside* their outer crossing, the excess is gas
+    the exponential never held: the tail. Returns ``(tail in M☉/pc², its share of M_d, the
+    crossing radius)``; the tail is zero inside the crossing. The low-j excess inside is
+    not returned — it is what the exponential assumption discards, and the bulge (D110)
+    and feedback are its physics, not this function's. Profiles are normalised on ``R``,
+    which the stage makes its own mesh so that the share and the crossing do not inherit the
+    grid's resolution (rule B2's cousin: a scalar that moves with N_R is a hidden quadrature).
+    """
+    R, j = np.asarray(R, dtype=float), np.asarray(j, dtype=float)
+    ring = 2.0 * math.pi * R
+    disc = M_d / (2.0 * math.pi * R_d * R_d) * np.exp(-R / R_d)  # M☉/kpc²
+    j_mean = float(np.trapezoid(j * disc * ring, R) / np.trapezoid(disc * ring, R))
+    x = 1.0 / (mu - 1.0)
+    j0 = j_mean / (mu * (math.log1p(x) - x / (1.0 + x)))  # the profile's own mean is μ j₀ [ln(1 + x) − x/(1 + x)]
+    dMdj = mu * j0 / (j0 + j) ** 2 * (j < j0 * x)
+    profile = np.maximum(dMdj * np.gradient(j, R) / ring, 0.0)
+    profile = profile * M_d / float(np.trapezoid(profile * ring, R))
+    excess = profile - disc
+    above = np.flatnonzero(excess > 0.0)
+    if above.size == 0:
+        return np.zeros_like(R), 0.0, float(R[-1])
+    runs = above[np.concatenate([[True], np.diff(above) > 1])]  # the first index of each run above the exponential
+    R_c = float(R[runs[-1]])
+    tail = np.where(R >= R_c, np.maximum(excess, 0.0), 0.0)
+    share = float(np.trapezoid(tail * ring, R) / M_d)
+    return tail * 1.0e-6, share, R_c
+
+
 def contracted_halo(
-    r_f: np.ndarray, M200: float, r_s: float, c: float, m_d: float, R_d: float, R200: float, A: float, w: float
+    r_f: np.ndarray, M200: float, r_s: float, c: float, m_d: float, R_d: float, R200: float, A: float, w: float,
+    enclosed: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """The dark halo's response to the disc: final dark mass and shell displacement at each ``r_f``.
 
@@ -136,7 +174,8 @@ def contracted_halo(
     The root is bisected in log r_i between 0.01 r_f and 20 r_f, where the two sides are
     known to have crossed, vectorised over the mesh (rule A1: bounded and cheap). Returns
     ``(M_dark(r_f), r_i/r_f)``. With no disc the root is r_i = r_f exactly and the halo
-    comes back unchanged.
+    comes back unchanged. ``enclosed(r)`` is the baryons' enclosed mass the halo responds
+    to; by default the exponential's, and since S16 the exponential plus the tail.
     """
     r_f = np.asarray(r_f, dtype=float)
     M_d = m_d * M200
@@ -148,7 +187,7 @@ def contracted_halo(
         return A * R200 * (r / R200) ** w
 
     rb_f = bar(r_f)
-    disc = disc_enclosed_mass(rb_f, M_d, R_d)
+    disc = disc_enclosed_mass(rb_f, M_d, R_d) if enclosed is None else enclosed(rb_f)
     lo, hi = 1.0e-2 * r_f, 2.0e1 * r_f
     for _ in range(80):
         mid = np.sqrt(lo * hi)
@@ -451,6 +490,55 @@ HALO_POTENTIAL_MIDPLANE = FieldDecl(
     ),
 )
 
+INFALL_TAIL_SURFACE_DENSITY = FieldDecl(
+    name="infall_tail_surface_density",
+    label="High-j accretion tail Σ(R)",
+    unit="Msun/pc2",
+    kind=Kind.FIELD,
+    axes=("R",),
+    ramp=Ramp("cividis", scale="log"),
+    meaningful_zero=True,
+    about=(
+        "Everything that will ever accrete beyond what the exponential disc holds: the high-j "
+        "tail of the halo's angular-momentum distribution (its shape a Level 0 constant), mapped onto the "
+        "plane on the model's own rotation curve (S16, debt #18). Zero inside the crossing radius, "
+        "3–4 M☉/pc² from 15 to 20 kpc, and it ends where the distribution's j_max lands, near 25 "
+        "kpc. The surprise is what it is not: a timescale. At these radii the inside-out law "
+        "already accretes over 10–20 Gyr, and three arrival laws read the same on every row but "
+        "row 2, within 0.05 there (D119). Debt #18 wanted a component the threshold protects; this "
+        "is one, and it still forms 0.2 M☉/yr of stars where it overlaps the disc's own gas."
+    ),
+)
+
+INFALL_TAIL_SHARE = FieldDecl(
+    name="infall_tail_share",
+    label="Share of the budget in the tail",
+    unit="dimensionless",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "The tail's mass over the retained budget: about 0.09 at the default, and nearly the same "
+        "for any μ between 1.15 and 1.4 — the profile's shape moves the tail's radius, not its "
+        "mass. Derived, not chosen: the register asked for a component 'sized to the observed HI "
+        "disc', and this one is sized by the halo's angular momentum instead (debt #47 holds "
+        "the difference)."
+    ),
+)
+
+INFALL_TAIL_INNER_RADIUS = FieldDecl(
+    name="infall_tail_inner_radius",
+    label="Tail's inner radius",
+    unit="kpc",
+    kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "The outer crossing of the distribution's profile and the exponential: inside it the "
+        "exponential holds more than the distribution allots, outside it less. About 12 kpc at "
+        "the default, 4.6 scale lengths — beyond the stellar disc's edge, which is why row 4 does "
+        "not move (the check debt #18 named for a component high enough in angular momentum)."
+    ),
+)
+
 DISC_SCALE_LENGTH_SPIN = FieldDecl(
     name="disc_scale_length_spin",
     label="Disc scale length from λ_d",
@@ -489,13 +577,29 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     # The halo's response to the disc, on its own mesh (debt #6, S14).
     mesh = np.geomspace(MESH_INNER, MESH_OUTER * R200, MESH_POINTS)
-    M_dark, ratio = contracted_halo(
-        mesh, M200, r_s, c, m_d, R_d, R200,
-        float(ctx.constants["CONTRACTION_A"]), float(ctx.constants["CONTRACTION_W"]),
-    )
-    phi_mesh = potential_of(mesh, M_dark, dark, r_s, c, G)
-
+    A, w = float(ctx.constants["CONTRACTION_A"]), float(ctx.constants["CONTRACTION_W"])
+    M_dark, ratio = contracted_halo(mesh, M200, r_s, c, m_d, R_d, R200, A, w)
     R = ctx.grid.R
+
+    # The high-j tail (S16, debt #18), on the mesh so that no scalar inherits the grid: j(r) on
+    # the curve the first pass gives — the contracted halo plus the razor-thin exponential —
+    # then the halo contracts again around the total. Two passes, bounded (rule A1). The disc
+    # stage's Freeman curve is imported here rather than at the top because that module
+    # re-exports this one's scale length.
+    from galaxy.stages.disc import PC_PER_KPC, freeman_circular_velocity
+
+    v_disc = freeman_circular_velocity(mesh, baryons / (2.0 * math.pi * R_d * R_d), R_d, G)
+    j = mesh * np.hypot(np.sqrt(G * M_dark / mesh), v_disc)
+    tail_mesh, share, R_c = angular_momentum_tail(mesh, j, baryons, R_d, float(ctx.constants["ANGULAR_MOMENTUM_MU"]))
+    tail_cum = np.concatenate([[0.0], np.cumsum(0.5 * (tail_mesh[1:] * mesh[1:] + tail_mesh[:-1] * mesh[:-1]) * np.diff(mesh))])
+    tail_cum = tail_cum * 2.0 * math.pi * PC_PER_KPC**2  # M☉ inside r
+
+    def enclosed(r: np.ndarray) -> np.ndarray:
+        return disc_enclosed_mass(r, (1.0 - share) * baryons, R_d) + np.interp(r, mesh, tail_cum)
+
+    M_dark, ratio = contracted_halo(mesh, M200, r_s, c, m_d, R_d, R200, A, w, enclosed=enclosed)
+    tail = np.interp(R, mesh, tail_mesh)  # what the grid sees of it; the part beyond R_max is off the grid
+    phi_mesh = potential_of(mesh, M_dark, dark, r_s, c, G)
     enclosed = _loglog(R, mesh, M_dark)
     v_c = np.sqrt(G * enclosed / R)
 
@@ -513,6 +617,9 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "baryon_mass_total": baryons,
         "disc_mass_fraction": m_d,
         "disc_scale_length_spin": R_d,
+        "infall_tail_surface_density": tail,
+        "infall_tail_share": share,
+        "infall_tail_inner_radius": R_c,
         "halo_circular_velocity_sun": math.sqrt(G * float(_loglog(R_sun, mesh, M_dark)) / R_sun),
         "halo_circular_velocity_sun_initial": float(nfw_circular_velocity(R_sun, dark, r_s, c, G)),
         "halo_density_sun": float(_loglog(R_sun, mesh, density_of(mesh, M_dark))) * 1.0e-9,
@@ -539,7 +646,7 @@ HALO = IMPLEMENTATIONS.register(
         reads_inputs=("halo_mass", "halo_assembly_z", "baryon_retention", "disc_spin"),
         reads_constants=(
             "G", "H0", "F_BARYON", "CONCENTRATION_NORM", "OMEGA_M", "R_SUN",
-            "CONTRACTION_A", "CONTRACTION_W",
+            "CONTRACTION_A", "CONTRACTION_W", "ANGULAR_MOMENTUM_MU",
         ),
         publishes=(
             HALO_VIRIAL_MASS,
@@ -551,6 +658,9 @@ HALO = IMPLEMENTATIONS.register(
             BARYON_MASS_TOTAL,
             DISC_MASS_FRACTION,
             DISC_SCALE_LENGTH_SPIN,
+            INFALL_TAIL_SURFACE_DENSITY,
+            INFALL_TAIL_SHARE,
+            INFALL_TAIL_INNER_RADIUS,
             HALO_CIRCULAR_VELOCITY_SUN,
             HALO_CIRCULAR_VELOCITY_SUN_INITIAL,
             HALO_DENSITY_SUN,
