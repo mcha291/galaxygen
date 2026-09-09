@@ -95,10 +95,11 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(simple):
     # Row 3 read 256.2 unconverted; converted it read 242.7 - through the 245-251 window and out the
     # other side - until S14 contracted the halo around the disc (270.8, high, debt #6); since S15 the
     # epoch's default is the LCDM median and the row reads 260.1, still high (D117).
-    assert f["v_tangential_sun"] == pytest.approx(251.3, abs=0.5) and f["v_tangential_sun"] > Q[3].hi  # 252.9 until S17 built the spheroid
+    # S18: inside at 250.96, on the merger's radial kick and the basis-free solver, not on anything named here (D124).
+    assert f["v_tangential_sun"] == pytest.approx(250.96, abs=0.5) and Q[3].lo <= f["v_tangential_sun"] <= Q[3].hi  # 251.3 and out until S18; 252.9 until S17
     # ...and the cited z_f = 2-3 spans 12 km/s on row 3 (236.4-249.2 until S14); the row wants 1.3-1.4 since S17 (1.1-1.2 at S16, 0.7-1.0 at S14-S15).
     lo, hi = (run(simple, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
-    assert lo == pytest.approx(256.0, abs=0.5) and hi == pytest.approx(268.4, abs=0.5)  # 257.6 and 269.9 until S17
+    assert lo == pytest.approx(255.8, abs=0.5) and hi == pytest.approx(268.3, abs=0.5)  # 256.0 and 268.4 until S18; 257.6 and 269.9 until S17
     assert 11.0 < hi - lo < 14.0
 
 
@@ -118,8 +119,9 @@ def test_debt_17_the_zero_width_rows_say_no_testable_target():
     d = decl("hydrogen_mass_30kpc", Kind.SCALAR, unit="Msun")
     r = spec.evaluate(Q[20], {"hydrogen_mass_30kpc": 8.0e9 * (1 + 1e-9)}, {"hydrogen_mass_30kpc": d}, "m")
     assert r.status == "fail" and "no testable target" in r.reason and "debt #17" in r.reason
-    # Row 20 stays a recorded miss on any reading (rule B5): under debt #47 since S16 built the tail (#18 until then).
-    assert 20 in spec.MISSES and spec.MISSES[20].debt == 47 and 20 in spec.MISSES_ADVANCED
+    # Row 20 stays a recorded miss on any reading (rule B5): under debt #17 since S18 put the number at the
+    # target (8.09e9 against 8.0, D124); under #47 from S16, when the tail was built, and #18 before that.
+    assert 20 in spec.MISSES and spec.MISSES[20].debt == 17 and 20 in spec.MISSES_ADVANCED
 
 
 def test_debt_41_row_20_compares_total_gas_with_a_hydrogen_mass(model):
@@ -131,13 +133,13 @@ def test_debt_41_row_20_compares_total_gas_with_a_hydrogen_mass(model):
     Y = model.constants["HELIUM_MASS_FRACTION"].value
     assert Y == 0.27 and Q[20].field == "hydrogen_mass_30kpc"
     assert f["gas_mass_30kpc"] + f["stellar_mass_total"] <= f["baryon_mass_total"] * 1.0001
-    assert f["gas_mass_30kpc"] == pytest.approx(8.26e9, rel=0.02)  # 8.55e9 until S17's spheroid; 5.71e9 until S16's tail
+    assert f["gas_mass_30kpc"] == pytest.approx(1.108e10, rel=0.02)  # 8.26e9 until S18's derived threshold; 8.55e9 until S17; 5.71e9 until S16
     assert f["hydrogen_mass_30kpc"] == pytest.approx(f["gas_mass_30kpc"] * (1.0 - Y))
     # The miss as the table read it until S13 (total gas against a hydrogen target): 0.29 short until S16, then
-    # 7% *over*, and 3% over now - the tail put the total gas past 8e9 while the hydrogen is still a quarter
-    # short, and S17's spheroid took some of both back. Like for like is the only reading.
-    assert 1.0 - f["gas_mass_30kpc"] / 8.0e9 == pytest.approx(-0.03, abs=0.01)  # -0.07 until S17
-    assert 1.0 - f["hydrogen_mass_30kpc"] / 8.0e9 == pytest.approx(0.25, abs=0.01)  # 0.22 until S17; 0.48 until S16
+    # 7% *over*, 3% over at S17 - and 38% over since S18, while the hydrogen is 1% over: the derived threshold
+    # put the hydrogen at the target (D124). Like for like is the only reading, and it was the only one that moved.
+    assert 1.0 - f["gas_mass_30kpc"] / 8.0e9 == pytest.approx(-0.38, abs=0.01)  # -0.03 until S18; -0.07 until S17
+    assert 1.0 - f["hydrogen_mass_30kpc"] / 8.0e9 == pytest.approx(-0.01, abs=0.01)  # 0.25 until S18; 0.22 until S17; 0.48 until S16
 
 
 # --- debt #26: the super-solar centre ------------------------------------------
@@ -163,10 +165,12 @@ def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(sim
     s, a = centre(simple), centre(advanced)
     # S13 moved the centre down: Sagittarius no longer delivers a tenth of the budget early, and
     # WIND_SPEED was refitted to the converted potential. The simple model's gas no longer reaches +0.5 at all.
-    assert s["max"] == pytest.approx(0.46, abs=0.05) and s["out_to"] == 0.0
-    # S14: the contracted potential holds more metal at the centre - 1.39 out to 2.66 kpc (1.36, 2.5 until S14).
-    assert a["max"] == pytest.approx(1.39, abs=0.05) and a["out_to"] == pytest.approx(2.66, abs=0.15)
-    assert a["at_4"] == pytest.approx(0.25, abs=0.03)  # just outside row 22's 4-12 kpc fit range
+    # S18 halved it again: the derived threshold rises with kappa inside (47 Msun/pc2 at 2 kpc, 590 at the
+    # first cell), so the centre holds a gas reservoir it never had and the same metals sit in far more gas:
+    # the simple peak 0.46 -> 0.25, the advanced 1.39 -> 0.70, super-solar out to 1.9 kpc rather than 2.66 (D124).
+    assert s["max"] == pytest.approx(0.25, abs=0.05) and s["out_to"] == 0.0
+    assert a["max"] == pytest.approx(0.70, abs=0.05) and a["out_to"] == pytest.approx(1.91, abs=0.15)  # 1.39 / 2.66 until S18; 1.36 / 2.5 until S14
+    assert a["at_4"] == pytest.approx(0.25, abs=0.03)  # just outside row 22's 4-12 kpc fit range; unmoved
     # The one fitted constant does not reach the centre: it moves the level at R₀, not the peak or the tilt.
     cold, hot = centre(advanced, WIND_SPEED=800.0), centre(advanced, WIND_SPEED=1300.0)
     assert cold["sun"] - hot["sun"] > 0.3
@@ -180,16 +184,21 @@ CHEM = ("metallicity_gradient", "alpha_sequence")
 
 
 def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row_22_doing_it(advanced):
-    # With the default merger list every (n, τ₀) probed stays single. n = 3 at τ₀ = 1 opened the
-    # valley from S13 - when Sagittarius stopped delivering a tenth of the budget beside
-    # Gaia-Enceladus (debt #29) - until **S17 closed it again**: the spheroid takes 13% of the
-    # budget out of the disc before it accretes, and that is enough to take the dip from 0.6 to
-    # nothing. So the one setting under which the default list ever showed a valley is gone, and
-    # what is left of debt #27's prediction is the single-merger probe below. Recorded rather
-    # than tuned: S20 owns the valley and now has one less lever than the record said (D121).
-    for n, tau in ((2.0, 7.0), (2.0, 1.0), (3.0, 7.0), (3.0, 1.0)):
+    # With the default merger list, n = 3 at τ₀ = 1 opened the valley from S13 - when Sagittarius
+    # stopped delivering a tenth of the budget beside Gaia-Enceladus (debt #29) - until S17 closed
+    # it again (the spheroid takes 13% of the budget out of the disc before it accretes, D121), and
+    # **S18 reopened it, wider**: with the derived threshold a fast inner disc (τ₀ = 1) opens a
+    # valley at n = 2 *and* n = 3 (dips 0.57 and 0.64, the split at 0.39), and at τ₀ = 7 neither
+    # does. The threshold holds the inner disc's gas high and the second infall then restarts the
+    # sequence from a diluted start - which is debt #27's own mechanism. Recorded rather than
+    # tuned: S20 owns the valley, and the row-6 cost is on the record too, 700 pc at those settings (D124).
+    for n, tau, expect in ((2.0, 7.0, "single"), (2.0, 1.0, "bimodal_wide"), (3.0, 7.0, "single"), (3.0, 1.0, "bimodal_wide")):
         f = run(advanced, {"inside_out_index": n, "infall_timescale": tau}, only=CHEM).fields
-        assert f["alpha_sequence"] == "single" and f["alpha_dip_depth"] == 0.0, (n, tau)
+        assert f["alpha_sequence"] == expect, (n, tau)
+        if expect == "single":
+            assert f["alpha_dip_depth"] == 0.0
+        else:
+            assert 0.55 < f["alpha_dip_depth"] < 0.66 and f["alpha_split"] == pytest.approx(0.39, abs=0.02)
     # With Gaia-Enceladus alone, a fast inner disc does open it — and the gradient doubles.
     for inputs in (
         {"inside_out_index": 3.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)},
@@ -197,9 +206,8 @@ def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row
     ):
         f = run(advanced, inputs, only=CHEM).fields
         assert f["alpha_sequence"] == "bimodal_wide", inputs
-        # 0.55-0.62 since S17 shallowed both (0.55-0.66 at S16): the same erosion that closed
-        # the default list's valley, and the shallower of the two is now at the edge.
-        assert 0.54 < f["alpha_dip_depth"] < 0.70 and f["alpha_split"] == pytest.approx(0.41, abs=0.02)
+        # 0.56-0.64 since S18 (0.55-0.62 at S17, 0.55-0.66 at S16); the split 0.41 at τ₀ = 7 and 0.39 at 1.
+        assert 0.54 < f["alpha_dip_depth"] < 0.70 and f["alpha_split"] == pytest.approx(0.40, abs=0.02)
         assert f["high_alpha_feh_span"] > 1.0
         assert f["metallicity_gradient"] < -0.12  # row 22's window is [-0.069, -0.049]
     # The same small merger with n = 1 stays single: the index is what opens it.
@@ -211,11 +219,11 @@ def test_the_thick_disc_a_valley_would_find_is_the_simple_models_compact_one(adv
     """What rows 5, 7-11 read the moment the split selects something: recorded so the next session knows the shape."""
     inputs = {"inside_out_index": 3.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}
     f = run(advanced, inputs, only=("thick_thin_surface_density_ratio",)).fields
-    assert f["thick_disc_stellar_mass"] == pytest.approx(4.92e9, rel=0.05) and inside(11, f["thick_disc_stellar_mass"])  # 5.95e9 until S17; 6.6e9 until S16
-    assert f["thick_disc_scale_length"] == pytest.approx(0.66, abs=0.05) and not inside(5, f["thick_disc_scale_length"])
-    assert f["thick_disc_scale_height"] == pytest.approx(1398.0, abs=30.0) and not inside(7, f["thick_disc_scale_height"])  # 1202 until S17; 1113 until S16
-    assert f["thick_thin_surface_density_ratio"] == pytest.approx(0.0096, abs=0.002)  # row 9: an order of magnitude low
-    assert f["thin_disc_scale_height"] == pytest.approx(552.0, abs=15.0) and not inside(6, f["thin_disc_scale_height"])  # 478 until S17; 443 until S16
+    assert f["thick_disc_stellar_mass"] == pytest.approx(5.09e9, rel=0.05) and inside(11, f["thick_disc_stellar_mass"])  # 4.92e9 until S18; 5.95e9 until S17; 6.6e9 until S16
+    assert f["thick_disc_scale_length"] == pytest.approx(0.64, abs=0.05) and not inside(5, f["thick_disc_scale_length"])  # 0.66 until S18
+    assert f["thick_disc_scale_height"] == pytest.approx(1379.0, abs=30.0) and not inside(7, f["thick_disc_scale_height"])  # 1398 until S18; 1202 until S17; 1113 until S16
+    assert f["thick_thin_surface_density_ratio"] == pytest.approx(0.0032, abs=0.001)  # row 9: 0.0096 until S18 - the threshold holds the reservoir here too
+    assert f["thin_disc_scale_height"] == pytest.approx(512.0, abs=15.0) and not inside(6, f["thin_disc_scale_height"])  # 552 until S18; 478 until S17; 443 until S16
 
 
 # --- debt #28: the flattening, measured in both models -------------------------
@@ -230,13 +238,16 @@ def test_debt_28_migration_flattens_the_old_population_from_a_steeper_start_in_b
     # S16's tail steepened it again, -0.084 -> -0.089 and -0.106 -> -0.114 (the outer gas is fresh),
     # and S17's spheroid steepened it once more, -> -0.102 and -0.127: a disc that accretes 13%
     # less enriches its middle faster while the tail keeps the outside fresh.
-    old0, young0 = {"simple": (-0.102, -0.023), "advanced": (-0.127, -0.065)}[model.name]
+    # S18's derived threshold doubled the unmigrated old gradient, -0.102 -> -0.228 and -0.127 -> -0.254: the
+    # oldest stars formed where the early gas first crossed a threshold that is 26 Msun/pc2 at 4 kpc and 11
+    # at R0, so the old population's birth radii are compressed inward and its abundance falls faster out.
+    old0, young0 = {"simple": (-0.228, -0.017), "advanced": (-0.254, -0.060)}[model.name]
     assert still["metallicity_gradient_old"] == pytest.approx(old0, abs=0.004)
     assert still["metallicity_gradient_young"] == pytest.approx(young0, abs=0.004)
-    # The kernel takes the old gradient down by a factor 6-16 (5-14 until S17); the young/old
-    # ratio has spread with it, 3.0 in the advanced model against 3.5 in the simple one.
-    assert 6.0 < still["metallicity_gradient_old"] / moved["metallicity_gradient_old"] < 16.0
-    assert moved["metallicity_gradient_young"] / moved["metallicity_gradient_old"] == pytest.approx(3.27, abs=0.3)
+    # The kernel takes the old gradient down by a factor 11-33 now (6-16 until S18; 5-14 until S17); the
+    # young/old ratio came down with it, 2.5 in both models (3.0 and 3.5 until S18).
+    assert 10.0 < still["metallicity_gradient_old"] / moved["metallicity_gradient_old"] < 35.0
+    assert moved["metallicity_gradient_young"] / moved["metallicity_gradient_old"] == pytest.approx(2.52, abs=0.3)  # 3.27 until S18
 
 
 # --- debt #42: row 6 at the edge in both models, for opposite reasons ----------
@@ -247,25 +258,30 @@ HEIGHTS = ("thin_disc_scale_height", "thick_disc_scale_height")
 def test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models(simple, advanced):
     s = run(simple, only=HEIGHTS).fields
     a = run(advanced, only=HEIGHTS).fields
-    # 321 against a floor of 250 and a ceiling of 350: the simple model's row 6 moved off the
+    # 327 against a floor of 250 and a ceiling of 350 (321 at S17): the simple model's row 6 moved off the
     # floor at S17 and is now near the other edge instead (275 at S16, 255 before it). Both
     # moves are the same mechanism from opposite ends - Σ(R₀) falls, h_z = σ²/2πGΣ rises - and
-    # the row has been inside for three sessions while sitting nowhere near the middle (debt #42).
+    # the row has been inside for four sessions while sitting nowhere near the middle (debt #42).
     assert Q[6].lo + 60.0 <= s["thin_disc_scale_height"] <= Q[6].hi - 20.0
-    # 439 against a ceiling of 350: a recorded miss since S13 (384 until S17; 358 until S16).
-    assert Q[6].hi + 80.0 < a["thin_disc_scale_height"] <= Q[6].hi + 100.0
+    # 373 against a ceiling of 350: a recorded miss since S13 (439 until S18's threshold held more gas at R₀; 384 until S17; 358 until S16).
+    assert Q[6].hi + 15.0 < a["thin_disc_scale_height"] <= Q[6].hi + 30.0
     # SECULAR_HEATING was set from the 10 Gyr end of the AVR (D54); 20 and 30 km/s fail the two models at opposite ends.
     low_s = run(with_constant(simple, "SECULAR_HEATING", 20.0), only=HEIGHTS).fields["thin_disc_scale_height"]
     high_a = run(with_constant(advanced, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
     assert low_s < Q[6].lo and high_a > Q[6].hi
     # MERGER_HEATING calibrates row 7 in the simple model and row 6 in the advanced one, where the heated stars are thin.
-    for k, row7, row6 in ((60.0, 775.0, 375.0), (180.0, 2199.0, 544.0)):  # 668/326 and 1889/482 until S17
+    # **Since S18, 60 km/s lands both** - row 7 at 751 and the advanced row 6 at 346 - which is the first setting
+    # of either heating constant to read rows 6 and 7 inside together; it is S20's to judge with SECULAR_HEATING
+    # (D124), not this session's to set. The simple row 6 barely reads the kick (329.5 / 324.6).
+    for k, row7, row6 in ((60.0, 751.0, 346.0), (180.0, 2148.0, 429.0)):  # 775/375 and 2199/544 until S18; 668/326 and 1889/482 until S17
         hot_s = run(with_constant(simple, "MERGER_HEATING", k), only=HEIGHTS).fields
         hot_a = run(with_constant(advanced, "MERGER_HEATING", k), only=HEIGHTS).fields
         assert hot_s["thick_disc_scale_height"] == pytest.approx(row7, rel=0.02)
-        assert hot_s["thin_disc_scale_height"] == pytest.approx(321.5, abs=1.0)  # 275.4 until S17; 254.6 until S16
+        assert hot_s["thin_disc_scale_height"] == pytest.approx(327.0, abs=3.0)  # 321.5 until S18; 275.4 until S17; 254.6 until S16 - the radial kick moves it a little now
         assert hot_a["thin_disc_scale_height"] == pytest.approx(row6, rel=0.02)
         assert hot_a["thick_disc_scale_height"] == 0.0
+    assert inside(7, run(with_constant(simple, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thick_disc_scale_height"])
+    assert inside(6, run(with_constant(advanced, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height"])
 
 
 # --- debt #45: the constant that does nothing carries row 22 --------------------
@@ -279,28 +295,28 @@ STRUCT = (
 def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_gas_rows(model):
     by = {r: run(with_constant(model, "GAS_DISC_SCALE_RATIO", r), only=STRUCT).fields for r in (0.8, 1.0, 1.25, 1.5)}
     # Upstream is shared, so rows 1-4 and 20 read the same in both models.
-    assert by[0.8]["thin_disc_scale_length"] == pytest.approx(2.00, abs=0.05)
-    assert by[1.5]["thin_disc_scale_length"] == pytest.approx(3.67, abs=0.05) and not inside(4, by[1.5]["thin_disc_scale_length"])
-    assert by[1.5]["gas_mass_30kpc"] == pytest.approx(9.76e9, rel=0.02)  # 1.02e10 until S17's spheroid; 9.17e9 until S16
-    assert by[1.5]["v_tangential_sun"] == pytest.approx(236.1, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.56, abs=0.05)  # 235.2/2.94 until S17; 241.5/2.67 until S16
+    assert by[0.8]["thin_disc_scale_length"] == pytest.approx(1.94, abs=0.05)  # 2.00 until S18
+    assert by[1.5]["thin_disc_scale_length"] == pytest.approx(3.69, abs=0.05) and not inside(4, by[1.5]["thin_disc_scale_length"])  # 3.67 until S18
+    assert by[1.5]["gas_mass_30kpc"] == pytest.approx(1.226e10, rel=0.02)  # 9.76e9 until S18's threshold; 1.02e10 until S17's spheroid; 9.17e9 until S16
+    assert by[1.5]["v_tangential_sun"] == pytest.approx(235.7, abs=0.5) and by[1.5]["sfr"] == pytest.approx(2.45, abs=0.05)  # 236.1/2.56 until S18; 235.2/2.94 until S17; 241.5/2.67 until S16
     grads = [by[r]["metallicity_gradient"] for r in (0.8, 1.0, 1.25, 1.5)]
     assert grads[0] < grads[1] < grads[2] < grads[3]
     if model.name == "simple":
-        # At 1.25 the merger's thick disc reads 1.77 kpc, just under row 5 (1.84 and inside until S16), and not
-        # row 11 (1.09e10); at 1.5 it reads 2.16, inside row 5 (2.22 and over until S16) — and rows 3, 4 and 22 are
-        # gone. (Until S13, with Sagittarius' extra pre-merger gas, 1.5 reached rows 5 and 11 together.)
-        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.64, abs=0.03) and not inside(11, by[1.25]["thick_disc_stellar_mass"])
-        assert inside(5, by[1.5]["thick_disc_scale_length"]) and not inside(4, by[1.5]["thin_disc_scale_length"])
-        assert not inside(3, by[1.5]["v_tangential_sun"])
-        assert grads == pytest.approx([-0.065, -0.030, -0.022, -0.019], abs=0.003)  # [-0.052, -0.026, -0.019, -0.017] until S17
+        # At 1.25 the merger's thick disc reads 1.45 kpc (1.64 until S18; 1.77 at S16, 1.84 and inside before it), not
+        # row 5 and not row 11 (7.5e9); at 1.5 it reads 1.69, *under* row 5 now (2.16 and inside until S18) — the derived
+        # threshold truncates the pre-merger disc whatever the infall's extent — and rows 3, 4 and 22 are gone.
+        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.45, abs=0.03) and not inside(11, by[1.25]["thick_disc_stellar_mass"])
+        assert by[1.5]["thick_disc_scale_length"] == pytest.approx(1.69, abs=0.03) and not inside(5, by[1.5]["thick_disc_scale_length"])
+        assert not inside(4, by[1.5]["thin_disc_scale_length"]) and not inside(3, by[1.5]["v_tangential_sun"])
+        assert grads == pytest.approx([-0.103, -0.034, -0.016, -0.011], abs=0.003)  # [-0.065, -0.030, -0.022, -0.019] until S18; [-0.052, -0.026, -0.019, -0.017] until S17
     else:
-        # Row 22 passed only within a tenth of 1.0 until S17; the spheroid steepened every
-        # setting by about 0.006 and 1.25 came inside too, so the constant that multiplies
-        # nothing at 1.0 now carries the row over a quarter of its range rather than a tenth
-        # (debt #45 is *wider* than it was, not narrower).
-        assert grads == pytest.approx([-0.106, -0.064, -0.051, -0.046], abs=0.003)  # [-0.092, -0.059, -0.048, -0.044] until S17
-        assert not inside(22, grads[0]) and inside(22, grads[1]) and inside(22, grads[2])
-        assert not inside(22, grads[3])
+        # Row 22 passed within a tenth of 1.0 until S17 and over a quarter of the range at S17 (1.0 and 1.25 inside);
+        # since S18 **no setting of the ratio reads it**: 1.0 is out by 0.0008 (-0.0698, the recorded miss under
+        # debt #47) and 1.25 out by 0.002 the other way (-0.0468). The window sits between them, and the constant
+        # that multiplies nothing at 1.0 is not the lever that would land it (D124).
+        assert grads == pytest.approx([-0.147, -0.070, -0.047, -0.038], abs=0.003)  # [-0.106, -0.064, -0.051, -0.046] until S18; [-0.092, -0.059, -0.048, -0.044] until S17
+        assert not any(inside(22, g) for g in grads)
+        assert grads[1] < Q[22].lo < Q[22].hi < grads[2]
 
 
 # --- debt #21: row 15 is the constant --------------------------------------------
@@ -376,12 +392,17 @@ def test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty(simple):
     removed without debt #47's mechanism being built.
     """
     lo, mid, hi = (scalar(simple, "sfr", KS_NORM=k) for k in (1.8e-4, 2.5e-4, 3.2e-4))
-    assert hi < mid < lo  # a higher normalisation locks gas up sooner and leaves less to form stars now
-    assert mid == pytest.approx(1.82, abs=0.02) and hi == pytest.approx(1.73, abs=0.03)  # 2.08 and 1.98 until S17; 1.89 and 1.77 until S16
-    assert lo == pytest.approx(1.97, abs=0.03) and lo > Q[2].hi > mid > hi > Q[2].lo
-    # ...and rows 2 and 20 pull it opposite ways, which is what made the pair evidence for debt #18.
+    # **S18 (D124): the band collapsed.** With Kennicutt's threshold derived, the disc is threshold-regulated
+    # everywhere inside 12 kpc - the gas sits just under Sigma_crit and the rate is whatever the infall
+    # supplies - so the normalisation of the law no longer reaches the rate at all: 1.764 / 1.755 / 1.755
+    # across the +/-1 sigma band, where S17 read 1.97 / 1.82 / 1.73. Row 2 is now a prediction of the infall
+    # and the threshold alone, inside its window, and the debt's claim is false in the direction that matters.
+    assert hi <= mid <= lo and lo - hi < 0.02  # 0.24 wide until S18
+    assert mid == pytest.approx(1.755, abs=0.02) and hi == pytest.approx(1.755, abs=0.02) and lo == pytest.approx(1.764, abs=0.02)  # 1.82 / 1.73 / 1.97 until S17
+    assert Q[2].lo < hi and lo < Q[2].hi
+    # ...while the gas mass still reads the normalisation: the gas the law leaves is set by how fast it consumes.
     gas_lo, gas_hi = (scalar(simple, "gas_mass_30kpc", KS_NORM=k) for k in (1.8e-4, 3.2e-4))
-    assert gas_lo > 8.7e9 > 8.2e9 > gas_hi > 7.2e9  # 9.0e9 > ... > 7.5e9 until S17; 6.5e9 > ... > 5.5e9 until S16
+    assert gas_lo > 1.14e10 > 1.10e10 > gas_hi > 1.04e10  # 8.7e9 > ... > 7.2e9 until S18; 9.0e9 > ... > 7.5e9 until S17
 
 
 def test_debt_43_the_two_solar_calibrations_and_their_levers(simple, advanced):
@@ -390,7 +411,7 @@ def test_debt_43_the_two_solar_calibrations_and_their_levers(simple, advanced):
     assert abs(feh_at_sun(simple)) < 0.03 and abs(feh_at_sun(advanced)) < 0.02
     wind = feh_at_sun(advanced, WIND_SPEED=1.1 * advanced.constants["WIND_SPEED"].value) - feh_at_sun(advanced)  # +10%
     yld = feh_at_sun(simple, NET_YIELD=1.1 * simple.constants["NET_YIELD"].value) - feh_at_sun(simple)  # +10%
-    assert wind == pytest.approx(-0.064, abs=0.01)
+    assert wind == pytest.approx(-0.060, abs=0.01)  # -0.064 until S18's refit (982 -> 860 km/s)
     assert yld == pytest.approx(0.041, abs=0.01)
 
 
@@ -407,6 +428,8 @@ def test_debt_26_the_iron_at_the_centre_reaches_the_planets(prod):
     def rich(o):
         return float(np.mean(o.fields["star_metallicity"] > 0.5))
 
-    assert inner(out["simple"]) < 0.1 < 0.3 < inner(out["advanced"])
-    assert rich(out["simple"]) < 0.001 and rich(out["advanced"]) > 0.008
+    # S18 halved the centre's iron (debt #26: 1.39 -> 0.70 dex in the advanced model, 0.46 -> 0.25 in the simple),
+    # so the occurrence inside a kiloparsec fell 0.36 -> 0.25 and the metal-rich share of the catalogue 0.01 -> 0.005.
+    assert inner(out["simple"]) < 0.05 < 0.2 < inner(out["advanced"]) < 0.3
+    assert rich(out["simple"]) < 0.001 and 0.003 < rich(out["advanced"]) < 0.008
     assert out["advanced"].fields["giant_fraction_sample"] > 1.3 * out["simple"].fields["giant_fraction_sample"]

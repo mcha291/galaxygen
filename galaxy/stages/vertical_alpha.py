@@ -57,9 +57,9 @@ VERTICAL_ALPHA = IMPLEMENTATIONS.register(
             "The advanced model's vertical stage; the criterion does not name the merger."
         ),
         compute=compute,
-        reads_constants=("R_SUN", "RETURN_FRACTION", "G"),
+        reads_constants=("R_SUN", "G"),
         requires=(
-            "sfr_surface_density_history", "gas_surface_density",
+            "stars_formed_history", "gas_surface_density",
             "disc_heating", "alpha_fe_history", "alpha_split",
         ),
         publishes=vertical.VERTICAL.publishes,

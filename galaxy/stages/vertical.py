@@ -100,14 +100,14 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     R), the advanced model's is chemical and varies with radius. Everything
     downstream of the mask is arithmetic and lives here once (rule A9).
     """
-    R, t = ctx.grid.R, ctx.grid.t
-    dt = ctx.grid.spec.t_max / ctx.grid.spec.n_t
+    R = ctx.grid.R
     R_sun = float(ctx.constants["R_SUN"])
-    ret = float(ctx.constants["RETURN_FRACTION"])
     G = float(ctx.constants["G"])
 
-    psi = ctx.fields["sfr_surface_density_history"]           # M☉/yr/kpc²
-    formed = (1.0 - ret) * PC_PER_KPC * psi * dt              # M☉/pc² locked in per step
+    # M☉/pc² locked in per step, at the radii those stars occupy today: the sfh stage has
+    # already moved them through the merger's radial spread (S18), so a population sorted
+    # here carries the radial heating as well as the vertical one.
+    formed = np.asarray(ctx.fields["stars_formed_history"])
     sigma_z = np.asarray(ctx.fields["disc_heating"])          # km/s, by birth time
     thick_mask = np.broadcast_to(thick_mask, formed.shape)
 
@@ -164,9 +164,9 @@ VERTICAL = IMPLEMENTATIONS.register(
             "model's vertical stage; the advanced model reads the split off [α/Fe] instead."
         ),
         compute=compute,
-        reads_constants=("R_SUN", "RETURN_FRACTION", "G"),
+        reads_constants=("R_SUN", "G"),
         requires=(
-            "sfr_surface_density_history", "gas_surface_density",
+            "stars_formed_history", "gas_surface_density",
             "disc_heating", "last_major_merger_time",
         ),
         publishes=(

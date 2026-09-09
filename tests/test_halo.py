@@ -319,8 +319,9 @@ def test_the_named_rulesets_and_what_each_is_worth_at_R0(model):
     *more* — 119.3 → 165.8 or 180.6, r_i/r_f 1.50 — and the row read 260.1 or 270.2; with S16's
     tail the total is less compact and the response a little smaller: 163.3 or 178.0, and the row
     252.9 or 263.3; with S17's spheroid the same mass is more compact again and the row reads
-    251.3 or 262.2. The ruleset was chosen before the row was read; the row did not choose it.
-    A = 1.6 at w = 0.8 read 245.6 at S15, inside, and reads 238.1 now, out the other way — not
+    251.3 or 262.2; S18's radial kick and its basis-free solver read 250.96 (inside, D124) or 261.9.
+    The ruleset was chosen before the row was read; the row did not choose it.
+    A = 1.6 at w = 0.8 read 245.6 at S15, inside, and reads 237.8 now, out the other way — not
     adopted either time: the Auriga-calibrated response [recall: Cautun et al. 2020] agrees with
     Gnedin's at R₀ to 2 km/s, not with 1.6 (D117).
     """
@@ -329,12 +330,12 @@ def test_the_named_rulesets_and_what_each_is_worth_at_R0(model):
         assert o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(119.3, abs=0.1)  # 138.6 until S15
     assert gnedin.fields["halo_circular_velocity_sun"] == pytest.approx(163.2, abs=0.2)  # 163.3 until S17; 181.4 until S15
     assert blumenthal.fields["halo_circular_velocity_sun"] == pytest.approx(178.5, abs=0.2)  # 178.0 until S17; 195.6 until S15
-    assert gnedin.fields["v_tangential_sun"] == pytest.approx(251.3, abs=0.5)  # 252.9 until S17; 270.8 until S15
-    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(262.2, abs=0.5)  # 263.3 until S17; 280.9 until S15
+    assert gnedin.fields["v_tangential_sun"] == pytest.approx(250.96, abs=0.5)  # 251.3 until S18; 252.9 until S17; 270.8 until S15
+    assert blumenthal.fields["v_tangential_sun"] == pytest.approx(261.9, abs=0.5)  # 262.2 until S18; 263.3 until S17; 280.9 until S15
     assert float(np.interp(8.2, gnedin.grid.R, gnedin.fields["halo_contraction"])) == pytest.approx(1.47, abs=0.01)  # 1.50 until S16; 1.42 until S15
     assert float(np.interp(8.2, blumenthal.grid.R, blumenthal.fields["halo_contraction"])) == pytest.approx(1.65, abs=0.01)  # 1.68 until S16; 1.57 until S15
     weak = run(_with_contraction(model, 1.6, 0.8), only=("v_tangential_sun",))
-    assert weak.fields["v_tangential_sun"] == pytest.approx(238.1, abs=0.5)  # 239.8 until S17; 245.6 until S16; not adopted
+    assert weak.fields["v_tangential_sun"] == pytest.approx(237.8, abs=0.5)  # 238.1 until S18; 239.8 until S17; 245.6 until S16; not adopted
     # The response tends to a constant at the centre where the *disc* and the halo both enclose
     # mass as R², and falls outward. Since S17 the spheroid is there too and it does not: a
     # Hernquist sphere encloses mass as r² only well inside a = 0.36 kpc, and the first grid
@@ -342,10 +343,12 @@ def test_the_named_rulesets_and_what_each_is_worth_at_R0(model):
     ratio = gnedin.fields["halo_contraction"]
     assert ratio[0] == pytest.approx(4.85, abs=0.02) and np.all(np.diff(ratio) < 0.0)  # 2.45 until S17; 2.22 until S15
     # It moved nothing upstream of the kinematics until S16; the high-j tail is mapped onto the plane on
-    # the rotation curve, so the ruleset now reaches the infall through it — row 2 by 0.9%, the masses by less (D119).
+    # the rotation curve, so the ruleset now reaches the infall through it — row 2 by 0.9%, the masses by
+    # less (D119) — and since S18 through the threshold too, which reads κ off the curve: row 2 by 1.0%,
+    # the hydrogen by 1.9% (a stronger response is a higher κ inside and a higher threshold).
     assert float(gnedin.fields["halo_virial_mass"]) == float(blumenthal.fields["halo_virial_mass"])
     for name in ("sfr", "hydrogen_mass_30kpc", "stellar_mass_total", "thin_disc_scale_length"):
-        assert float(gnedin.fields[name]) == pytest.approx(float(blumenthal.fields[name]), rel=1e-2), name
+        assert float(gnedin.fields[name]) == pytest.approx(float(blumenthal.fields[name]), rel=2e-2), name
 
 
 def test_the_scale_length_is_the_halos_now_and_the_disc_reads_it(model):

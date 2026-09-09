@@ -19,7 +19,7 @@ import pytest
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS
 from galaxy.run import run
-from galaxy.stages.disc import disc_circular_velocity, freeman_circular_velocity, scale_length
+from galaxy.stages.disc import disc_circular_velocity, epicyclic_frequency, freeman_circular_velocity, scale_length
 
 G = 4.300917270e-6
 R_SUN = 8.2
@@ -187,13 +187,26 @@ def test_the_general_solver_reproduces_freeman_on_an_exponential():
     R_d, M = 2.6, 5.0e10
     sigma0 = M / (2 * math.pi * R_d**2)
     exact = freeman_circular_velocity(R, sigma0, R_d, G)
-    got, residual = disc_circular_velocity(sigma0 / 1e6 * np.exp(-R / R_d), R, G)
-    assert residual < 1e-3
+    sigma = sigma0 / 1e6 * np.exp(-R / R_d)
+    got = disc_circular_velocity(sigma, R, G)
     at_sun = np.argmin(np.abs(R - R_SUN))
-    # Row 3's bar is 3 km/s; the representation must be far inside it where it is read.
-    assert abs(got[at_sun] - exact[at_sun]) < 0.1
-    inner = R < 25.0
-    assert np.max(np.abs(got[inner] - exact[inner]) / np.maximum(exact[inner], 1e-9)) < 0.01
+    # Row 3's bar is 3 km/s; the solver must be far inside it where it is read. The basis fit
+    # that stood until S18 held 0.1 here; the homoeoid solver holds 0.01, and converges.
+    assert abs(got[at_sun] - exact[at_sun]) < 0.01
+    # 1.3e-3 everywhere outside the first few cells, set by the profile being linear between grid
+    # points (it does not move with the quadrature); the innermost cells, where v_c is 6 km/s and
+    # the profile is extended flat inside the first centre, read 4% and nothing reads them.
+    inner = (R > 0.25) & (R < 25.0)
+    assert np.max(np.abs(got[inner] - exact[inner]) / np.maximum(exact[inner], 1e-9)) < 2e-3
+    coarse, fine = disc_circular_velocity(sigma, R, G, at=R_SUN, n_quad=500), disc_circular_velocity(sigma, R, G, at=R_SUN, n_quad=2000)
+    assert abs(coarse - fine) < 5e-3
+    # A Kuzmin disc, whose Σ is nothing like an exponential: v² = G M R² / (R² + a²)^1.5. The
+    # grid truncates it at 30 kpc, which is worth 0.03% at R₀; the solver holds that.
+    M, a = 5e10, 3.0
+    kuzmin = a * M / (2.0 * math.pi * (R**2 + a**2) ** 1.5) / 1e6
+    v = disc_circular_velocity(kuzmin, R, G, at=np.array([2.0, R_SUN]))
+    assert v[0] == pytest.approx(math.sqrt(G * M * 4.0 / (4.0 + a**2) ** 1.5), rel=1e-4)
+    assert v[1] == pytest.approx(math.sqrt(G * M * R_SUN**2 / (R_SUN**2 + a**2) ** 1.5), rel=5e-4)
 
 
 def test_the_two_models_agree_on_checkpoint_one(prod):
@@ -202,3 +215,20 @@ def test_the_two_models_agree_on_checkpoint_one(prod):
     assert set(a.fields) == set(b.fields) and a.order == b.order == ("halo", "disc")
     for k in a.fields:
         assert np.array_equal(np.asarray(a.fields[k]), np.asarray(b.fields[k]), equal_nan=True), k
+
+
+def test_the_epicyclic_frequency_is_solid_body_inside_and_root_two_omega_where_flat(model):
+    """S18: kappa off the checkpoint-1 curve, read by the merger's radial kick and the threshold."""
+    o = run(model, only=("epicyclic_frequency",))
+    R, v, kappa = o.grid.R, o.fields["circular_velocity"], o.fields["epicyclic_frequency"]
+    omega = v / R
+    # Not solid body at the first cell: the contracted halo is cuspy there (v ∝ R^0.3 at 0.04 kpc, D121's
+    # spheroid on top), so κ/Ω = √(2(1 + 0.3)) = 1.62; a solid-body core would read 2.
+    assert kappa[0] / omega[0] == pytest.approx(1.62, abs=0.05)
+    at_sun = int(np.argmin(np.abs(R - R_SUN)))
+    assert kappa[at_sun] == pytest.approx(40.1, abs=0.3)                   # km/s/kpc
+    assert 1.3 < kappa[at_sun] / omega[at_sun] < 1.45                       # a curve falling slowly through R0: between √2 and solid body
+    assert np.all(np.diff(kappa) < 0.0)                                     # monotone outward
+    # the pure function on an exactly flat curve
+    flat = epicyclic_frequency(R, np.full_like(R, 220.0))
+    assert np.allclose(flat, math.sqrt(2.0) * 220.0 / R, rtol=1e-6)

@@ -142,13 +142,27 @@ LEVEL0: dict[str, Constant] = {
         "Exponent of the Kennicutt-Schmidt law, 1.4 +/- 0.15 [recall: Kennicutt 1998]. Level 0 by "
         "GALAXY_INPUTS.md §2, which names the K-S index and normalisation as constants.",
     ),
-    "SF_THRESHOLD": Constant(
-        5.0,
-        "Msun/pc2",
-        "Gas surface density below which star formation shuts off. Observed disc thresholds sit "
-        "near 5-10 Msun/pc2 and are what truncate stellar discs while leaving HI far beyond them "
-        "[recall: Kennicutt 1989; Martin & Kennicutt 2001]. Without it the outer gas would all turn "
-        "into stars and the model would have no extended gas disc at all.",
+    "TOOMRE_ALPHA": Constant(
+        0.69,
+        "dimensionless",
+        "Kennicutt's star formation threshold is the gas surface density at which a disc with "
+        "velocity dispersion sigma_g is Toomre-unstable, Sigma_crit = alpha kappa sigma_g / 3.36 G, "
+        "and alpha is the measured ratio of the observed threshold to the ideal one: 0.63 in the "
+        "1989 sample, 0.69 +/- 0.2 in the larger one [recall: Kennicutt 1989; Martin & Kennicutt "
+        "2001]. Derived from the rotation curve's epicyclic frequency since S18 (debt #47): 11 "
+        "Msun/pc2 at R_0, 26 at 4 kpc, 4 at 20 kpc. Until then the threshold was the constant 5, "
+        "the bottom of its cited 5-10, which held the gas at R_0 at 6.3 against the observed 10-13 "
+        "(AUDIT_RUN2.md D-3). alpha and GAS_DISPERSION are one calibration: alpha was fitted with "
+        "the dispersion assumed, so their product, 4.1 km/s, is what is measured (rule B10).",
+    ),
+    "GAS_DISPERSION": Constant(
+        6.0,
+        "km/s",
+        "Velocity dispersion of the cold gas the threshold is evaluated at, the 6 km/s Kennicutt "
+        "assumed everywhere when fitting alpha [recall: Kennicutt 1989]. The Milky Way's HI reads "
+        "7-10 at R_0 and rises inward [recall], but alpha was calibrated with this value, so moving "
+        "one without the other breaks the calibration (see TOOMRE_ALPHA). At 8 km/s the gas at R_0 "
+        "reads 13.6 and row 9 falls to 0.025 (D119's probe): the pair is read as one number.",
     ),
     "GAS_DISC_SCALE_RATIO": Constant(
         1.0,
