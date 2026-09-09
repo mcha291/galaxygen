@@ -33,12 +33,20 @@ The model, per annulus, with instantaneous recycling:
   budget the exponential never held, beyond about 12 kpc, on the same
   inside-out law, which at those radii is already 10–20 Gyr. That is the outer
   HI disc; the ratio still multiplies nothing at 1.0 (debt #45).
+- **The spheroid never accretes** (S17, debt #11). The low-j end of the same
+  distribution is mass no exponential disc of this scale length can hold, and
+  the halo stage derives it as the central spheroid; it is already stars, so it
+  leaves the budget this stage accretes and rejoins ``stellar_mass_total`` at
+  the end. Removing it is not a bookkeeping detail: it takes 13% of the budget
+  out of the disc, which is why acceptance row 2 moved with it.
 
 **Why the rotation curve is recomputed here.** Acceptance row 3 reads a velocity
 at R_0, and until this stage the model does not know how the baryons are
 distributed — checkpoint 1 has one exponential holding gas and stars together.
 So the checkpoint-1 curve stays as stage one's preview and the *acceptance*
-scalars are published here, off the two-component mass distribution.
+scalars are published here, off the three-component mass distribution: two
+razor-thin discs and, since S17, the spheroid, whose own circular velocity is
+Newton's and enters the same quadrature.
 """
 
 from __future__ import annotations
@@ -53,6 +61,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC, disc_circular_velocity
+from galaxy.stages.halo import hernquist_enclosed
 
 
 # Width of the threshold switch, as a fraction of the threshold itself. A
@@ -168,7 +177,22 @@ STELLAR_MASS_TOTAL = FieldDecl(
     about=(
         "Acceptance row 1, and now actually stellar: S1 published the whole baryon budget under "
         "this name because it had no gas phase (debt #11). The difference is the gas mass, and "
-        "it is no longer assumed — the star formation law decides it."
+        "it is no longer assumed — the star formation law decides it. Since S17 it is the disc's "
+        "stars *plus the spheroid*, because the row's own target is rows 10 + 11 + 12 and so "
+        "includes the bulge (AUDIT_RUN2.md §5, D-5); until then the row passed while counting "
+        "only the disc, and the disc carried the bulge's mass."
+    ),
+)
+
+BULGE_STELLAR_FRACTION = FieldDecl(
+    name="bulge_stellar_fraction", label="Bulge/total stellar fraction", unit="dimensionless",
+    kind=Kind.SCALAR, meaningful_zero=True,
+    about=(
+        "Acceptance row 13: the spheroid's share of the stars. Published here rather than beside "
+        "the other bulge scalars because this is the stage that knows how many stars the disc "
+        "made — the halo derives the spheroid's mass, this stage derives everything it is a "
+        "fraction of. Statistical in the table (debt #8) against a residual the model does not "
+        "draw: the mass is derived, so every seed reads the same number."
     ),
 )
 
@@ -237,10 +261,19 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     # Total gas to be accreted at each radius: the exponential, plus the high-j tail the halo
     # stage derived from its angular-momentum distribution (S16, debt #18) — the tail's share
-    # comes out of the exponential's budget, so the total is still every retained baryon.
+    # comes out of the exponential's budget, so the total is still every retained baryon. The
+    # low-j end of the same distribution is the spheroid (S17, debt #11) and it never accretes
+    # onto the disc at all: it is already stars, so its share leaves the budget here and
+    # rejoins the total stellar mass below.
     R_inf = float(ctx.constants["GAS_DISC_SCALE_RATIO"]) * R_d
     share = float(ctx.fields["infall_tail_share"])
-    sigma_total = infall_profile(R, R_inf, (1.0 - share) * baryons) + np.asarray(ctx.fields["infall_tail_surface_density"], dtype=float)
+    M_bulge = float(ctx.fields["bulge_stellar_mass"])
+    a_bulge = float(ctx.fields["bulge_scale_radius"])
+    share_bulge = M_bulge / baryons
+    sigma_total = (
+        infall_profile(R, R_inf, (1.0 - share - share_bulge) * baryons)
+        + np.asarray(ctx.fields["infall_tail_surface_density"], dtype=float)
+    )
 
     # Inside-out infall timescale, anchored at R_0 (see the module docstring).
     tau = float(ctx.inputs["infall_timescale"]) * (R / R_sun) ** float(ctx.inputs["inside_out_index"])
@@ -301,10 +334,17 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     v_gas, res_gas = disc_circular_velocity(gas, R, G)
     v_star_sun, _ = disc_circular_velocity(stars, R, G, at=R_sun)
     v_gas_sun, _ = disc_circular_velocity(gas, R, G, at=R_sun)
-    v_baryons = np.hypot(v_star, v_gas)
+    # The spheroid is the third baryonic component and rotation at R_0 must see it: it is a
+    # sphere, so its own circular velocity is Newton's, and it enters the quadrature beside the
+    # two razor-thin discs. This is the whole of debt #11's remaining prediction for row 3.
+    v_bulge = np.sqrt(G * hernquist_enclosed(R, M_bulge, a_bulge) / R)
+    v_bulge_sun = math.sqrt(G * float(hernquist_enclosed(R_sun, M_bulge, a_bulge)) / R_sun)
+    v_baryons = np.sqrt(v_star**2 + v_gas**2 + v_bulge**2)
     v_sun = math.hypot(
-        float(ctx.fields["halo_circular_velocity_sun"]), math.hypot(v_star_sun, v_gas_sun)
+        float(ctx.fields["halo_circular_velocity_sun"]),
+        math.sqrt(v_star_sun**2 + v_gas_sun**2 + v_bulge_sun**2),
     )
+    stars_total = m_star + M_bulge
 
     return {
         "gas_surface_density": gas,
@@ -316,7 +356,8 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "sfr": float(np.trapezoid(psi_now * 2.0 * math.pi * R, R)),
         "gas_mass_30kpc": m_gas,
         "hydrogen_mass_30kpc": m_gas * (1.0 - float(ctx.constants["HELIUM_MASS_FRACTION"])),
-        "stellar_mass_total": m_star,
+        "stellar_mass_total": stars_total,
+        "bulge_stellar_fraction": M_bulge / stars_total if stars_total > 0.0 else 0.0,
         "thin_disc_scale_length": R_star,
         "circular_velocity_resolved": np.hypot(ctx.fields["halo_circular_velocity"], v_baryons),
         "v_circular_sun": v_sun,
@@ -343,13 +384,15 @@ SFH = IMPLEMENTATIONS.register(
         requires=(
             "disc_scale_length_spin", "baryon_mass_total",
             "infall_tail_surface_density", "infall_tail_share",
+            "bulge_stellar_mass", "bulge_scale_radius",
             "halo_circular_velocity", "halo_circular_velocity_sun",
             "second_infall_share", "merger_delivery",
         ),
         publishes=(
             GAS_SURFACE_DENSITY, STELLAR_SURFACE_DENSITY, SFR_SURFACE_DENSITY,
             GAS_HISTORY, SFR_HISTORY, INFALL_HISTORY,
-            SFR, GAS_MASS_30KPC, HYDROGEN_MASS_30KPC, STELLAR_MASS_TOTAL, STELLAR_SCALE_LENGTH,
+            SFR, GAS_MASS_30KPC, HYDROGEN_MASS_30KPC, STELLAR_MASS_TOTAL, BULGE_STELLAR_FRACTION,
+            STELLAR_SCALE_LENGTH,
             CIRCULAR_VELOCITY_RESOLVED, V_CIRCULAR_SUN, V_TANGENTIAL_SUN,
         ),
     )

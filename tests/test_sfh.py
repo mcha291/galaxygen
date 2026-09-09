@@ -40,13 +40,15 @@ def test_the_split_is_computed_not_assumed(model):
     o = out(model)
     f = o.fields
     assert 4.0e10 <= f["stellar_mass_total"] <= 6.0e10          # row 1 passes
-    # Row 2 overshoots: 2.08 since S16's tail (debt #47); 1.89 from S13, 1.97 while Sagittarius
-    # delivered a tenth of the budget (debt #29, until S13).
-    assert f["sfr"] == pytest.approx(2.08, abs=0.06)
-    # Row 20 misses low by 22% like for like since S16 (debt #47); 48% with no extended component (debt #18, until S16).
-    assert f["gas_mass_30kpc"] == pytest.approx(8.55e9, rel=0.05)  # 5.71e9 until S16
+    # Row 2 is inside since S17 took the spheroid's 13% out of the budget the disc accretes:
+    # 1.82, from 2.08 with S16's tail (debt #47), 1.89 at S13, 1.97 while Sagittarius delivered
+    # a tenth of the budget (debt #29, until S13), 1.14 before the merger-delivered second infall.
+    assert 1.46 <= f["sfr"] <= 1.84
+    assert f["sfr"] == pytest.approx(1.82, abs=0.06)
+    # Row 20 misses low by 25% like for like: 22% at S16, 48% with no extended component (debt #18, until S16).
+    assert f["gas_mass_30kpc"] == pytest.approx(8.26e9, rel=0.05)  # 8.55e9 until S17; 5.71e9 until S16
     assert f["hydrogen_mass_30kpc"] == pytest.approx(0.73 * f["gas_mass_30kpc"])
-    assert 0.10 < f["gas_mass_30kpc"] / f["baryon_mass_total"] < 0.18  # 0.05-0.12 until S16; 0.146 now
+    assert 0.10 < f["gas_mass_30kpc"] / f["baryon_mass_total"] < 0.18  # 0.05-0.12 until S16; 0.141 now
 
 
 def test_star_formation_is_suppressed_below_the_threshold(model):
@@ -128,14 +130,17 @@ def test_row_3_misses_high_once_the_halo_contracts(model):
     below the cited 2-3. The magnitude was recalled, not measured (rule B4). S15 found the
     default epoch had been validated against measurements of the contracted halo and derived
     it from the LCDM median instead (2.5 -> 1.66, c200 10.9 -> 8.2): the row reads 260.1, high
-    by 9, and its prediction names the bulge and the extended component (D117).
+    by 9, and its prediction names the bulge and the extended component (D117). S16 built the
+    extended component and the row read 252.9; S17 built the spheroid, and the bulge was worth
+    1.6 km/s and not the 5-8 D110's probe measured on the uncontracted halo - so the row reads
+    251.3, a quarter of a km/s outside, and the prediction that is left is the bar (D121).
     """
     o = out(model)
     v = o.fields["v_tangential_sun"]
     assert v > 251.0
-    assert v == pytest.approx(252.9, abs=1.0)  # 260.1 until S16 built the high-j tail; 270.8 until S15; 242.7 until S14
+    assert v == pytest.approx(251.3, abs=1.0)  # 252.9 until S17's spheroid; 260.1 until S16; 270.8 until S15
     assert o.fields["halo_concentration"] == pytest.approx(8.24, abs=0.05)  # 10.9 until S15
-    assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(44.0, abs=0.5)  # 46.5 until S16; 42.8 until S15
+    assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(43.9, abs=0.5)  # 44.0 until S17; 42.8 until S15
 
 
 def test_the_resolved_curve_supersedes_the_checkpoint_one_one(model):
@@ -148,9 +153,10 @@ def test_the_resolved_curve_supersedes_the_checkpoint_one_one(model):
     # into stars and gas barely moves v_c at R0 - which is itself the result behind
     # debt #18: the split was never what row 3 needed, an extended component is.
     one_component = float(np.interp(R_SUN, R, o.fields["circular_velocity"]))
-    # 5.5 km/s since S16: the checkpoint-1 preview still has every baryon in one exponential, and the
-    # tail took 7.6% of it beyond 12 kpc (D119). Under 3 until then.
-    assert 3.0 < abs(resolved - one_component) < 7.0
+    # 7.1 km/s since S17: the checkpoint-1 preview still has every baryon in one exponential, the
+    # tail took 7.6% of it beyond 12 kpc (D119) and the spheroid 13% of it inside 2.5 kpc (D121).
+    # 5.5 at S16, under 3 before it.
+    assert 3.0 < abs(resolved - one_component) < 9.0
 
 
 def test_scalars_do_not_move_with_grid_resolution(model):
@@ -165,7 +171,12 @@ def test_surface_densities_integrate_to_their_masses(model):
     o = out(model)
     R = o.grid.R
     assert surface_to_mass(o.fields["gas_surface_density"], R) == pytest.approx(o.fields["gas_mass_30kpc"])
-    assert surface_to_mass(o.fields["stellar_surface_density"], R) == pytest.approx(o.fields["stellar_mass_total"])
+    # Since S17 row 1 is the disc's stars *plus* the spheroid, because the row's target is rows
+    # 10 + 11 + 12 and includes the bulge; the surface density is the disc's alone, so the
+    # difference is exactly the spheroid and this is what asserts it (D121).
+    assert surface_to_mass(o.fields["stellar_surface_density"], R) == pytest.approx(
+        o.fields["stellar_mass_total"] - o.fields["bulge_stellar_mass"]
+    )
 
 
 def test_the_second_infall_is_the_merger(model):
@@ -207,17 +218,22 @@ def test_the_tail_is_accreted_and_what_it_moved(model):
 
     Row 20's hydrogen 4.17e9 -> 6.24e9, row 3 260.1 -> 252.9, row 4 unmoved at 2.49 (the check that
     the component is high enough in angular momentum, debt #18), row 2 1.89 -> 2.08 (debt #44).
+
+    S17 (D121) took the other end of the same distribution out of the budget as the spheroid, so
+    what accretes is the budget *minus the spheroid* and the numbers moved with it: hydrogen to
+    6.03e9, row 3 to 251.3, row 2 to 1.82, row 4 still unmoved.
     """
     o = out(model)
     f, R = o.fields, o.grid.R
     total = np.trapezoid(f["infall_rate_history"], o.grid.t, axis=1)  # everything that arrived, per radius
     from galaxy.stages.sfh import surface_to_mass
 
-    assert surface_to_mass(total, R) == pytest.approx(f["baryon_mass_total"], rel=0.01)
+    accreted = f["baryon_mass_total"] - f["bulge_stellar_mass"]
+    assert surface_to_mass(total, R) == pytest.approx(accreted, rel=0.01)
     assert np.all(total[(R > 14.0) & (R < 24.0)] > 0.5)  # the tail is there: nothing accreted beyond 14 kpc until S16; it ends near 25
-    assert f["hydrogen_mass_30kpc"] == pytest.approx(6.24e9, rel=0.01)  # 4.17e9 until S16
-    assert f["v_tangential_sun"] == pytest.approx(252.9, abs=0.5)  # 260.1 until S16
-    assert f["thin_disc_scale_length"] == pytest.approx(2.49, abs=0.02)  # unmoved
-    assert f["sfr"] == pytest.approx(2.08, abs=0.03)  # 1.89 until S16
-    assert f["stellar_mass_total"] == pytest.approx(5.00e10, rel=0.01)  # 5.29e10 until S16
-    assert float(np.interp(20.0, R, f["gas_surface_density"])) == pytest.approx(3.8, abs=0.2)  # 0.6 until S16
+    assert f["hydrogen_mass_30kpc"] == pytest.approx(6.03e9, rel=0.01)  # 6.24e9 until S17; 4.17e9 until S16
+    assert f["v_tangential_sun"] == pytest.approx(251.3, abs=0.5)  # 252.9 until S17; 260.1 until S16
+    assert f["thin_disc_scale_length"] == pytest.approx(2.48, abs=0.02)  # unmoved
+    assert f["sfr"] == pytest.approx(1.82, abs=0.03)  # 2.08 until S17; 1.89 until S16
+    assert f["stellar_mass_total"] == pytest.approx(5.03e10, rel=0.01)  # 5.00e10 until S17; 5.29e10 until S16
+    assert float(np.interp(20.0, R, f["gas_surface_density"])) == pytest.approx(3.75, abs=0.2)  # 0.6 until S16
