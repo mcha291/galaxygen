@@ -401,12 +401,14 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     R_gas = fit_scale_length(gas, R, 1.0, ctx.grid.spec.R_max)
     m_star, m_gas = surface_to_mass(stars, R), surface_to_mass(gas, R)
 
-    # Neither profile is an exponential, so each goes through the general
-    # razor-thin solver rather than through a fitted single exponential.
-    v_star = disc_circular_velocity(stars, R, G)
-    v_gas = disc_circular_velocity(gas, R, G)
-    v_star_sun = disc_circular_velocity(stars, R, G, at=R_sun)
-    v_gas_sun = disc_circular_velocity(gas, R, G, at=R_sun)
+    # Neither profile is an exponential, so each goes through the general razor-thin
+    # solver rather than through a fitted single exponential — once per profile, the
+    # grid and R_0 together, because the solver's cost is in the profile, not the points.
+    at = np.append(R, R_sun)
+    v_star_all = disc_circular_velocity(stars, R, G, at=at)
+    v_gas_all = disc_circular_velocity(gas, R, G, at=at)
+    v_star, v_star_sun = v_star_all[:-1], float(v_star_all[-1])
+    v_gas, v_gas_sun = v_gas_all[:-1], float(v_gas_all[-1])
     # The spheroid is the third baryonic component and rotation at R_0 must see it: it is a
     # sphere, so its own circular velocity is Newton's, and it enters the quadrature beside the
     # two razor-thin discs. This is the whole of debt #11's remaining prediction for row 3.

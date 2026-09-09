@@ -593,3 +593,48 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   moves. The profile's "billed to the first stage that draws (pattern)" was wrong the
   moment a seeded stage landed at checkpoint 1; it derives the name from the widest
   cold/warm ratio now (rule B13).
+
+## From S18
+
+- [field] Derive the mechanism the plan named, measure it, and let the number kill the
+  prediction before deciding what to build next. The merger's radial kick is real physics
+  with no new constant, and it is worth 0.3 kpc on a row that needs 0.8; the probe that
+  showed that also showed where the row is decided (the first infall's arrival law), which
+  the plan's mechanism would have hidden if it had been built and tuned (rules B1, B4; D124).
+- [field] A kernel's boundary is a physics statement. A Gaussian in R reflected at R = 0
+  piles mass into a central cusp (Σ at the first cell ×6 for a 0.5 kpc kernel), and the
+  velocity solver then read a rise in v(R₀) that was the fit failing (residual 0.001 → 0.30),
+  not the disc. Check the instrument's residual on the new profile before reading a row off
+  it — the old profiles were smooth and the solver had never been asked a hard question.
+- [field] A representation-based solver cannot be densified past its conditioning.
+  Twelve exponentials fit the profile; sixteen return zero or thousands of km/s. When a fit
+  is the instrument, the honest replacement is a method with no basis at all, validated on
+  a case with an analytic answer that looks nothing like the basis (Kuzmin), and the
+  correction it makes to every earlier reading measured and written down (−0.09 km/s here).
+- [field] A pre-committed reading is worth more than a post-hoc one. Debt #47 wrote, a
+  session early, "if row 9 cannot be restored with the threshold derived, the thick disc is
+  what is wrong, not the threshold". That sentence is why the derived threshold went in
+  with row 9 red, and why the row is a mechanism-shaped miss rather than a constant kept at
+  the bottom of its range to hold a gate (rule B5).
+- [field] A derived quantity can be right where it was calibrated and wrong where the
+  calibration never reached. Kennicutt's threshold lands the gas at R₀ and diverges with κ
+  at the centre, where the argument does not apply and the bar does the work; it put 1.1e9
+  of hydrogen inside 4 kpc and row 20 at its target partly for that reason. Read a landed
+  row's *distribution*, not its total, before crediting it (rule B3's cousin, D124).
+- [field] When a regulator takes over, a calibration stops mattering and the record must say
+  so in both directions. With the threshold derived the disc is threshold-regulated and
+  `KS_NORM` no longer reaches row 2 at all (1.764 / 1.755 / 1.755 across ±1σ, from 1.97 /
+  1.82 / 1.73); debt #44's claim flipped from "the row cannot see past the constant" to "the
+  row cannot see the constant", and both are findings about what a green row 2 is worth.
+- [field] Two rows one constant lands together is a probe, not a decision, when the plan
+  gives that constant to another session. `MERGER_HEATING` = 60 reads row 7 at 751 and the
+  advanced row 6 at 346, both inside, for the first time; it is written into #42 and BRIEF
+  for S20, which owns both heating constants, and left where it is (rule B10 cuts both ways).
+- [close] A miss that lands by less than the instrument's correction is a pass to record
+  with its decomposition. Row 3 read 250.96, inside by 0.04: the solver −0.09, the kick −0.2,
+  the threshold 0.00; none of them is the bar its entry predicted. The entry went (debt #29)
+  and its replacement says which mechanism paid, so the bar's prediction stays testable.
+- [infra] A stage that reads a field from an earlier checkpoint can change the execution
+  order without changing the graph. Assembly now reads the disc's curve; Kahn's tie-break
+  put the disc first and a test that pinned the order caught it, which is what the pin is
+  for — re-pin with the reason, do not loosen it.

@@ -778,7 +778,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    less concentrated than the dissipational one. What S17 removed from this debt: rows 1
    and 10 no longer pass on the cancellation S10 recorded. Row 1 is the disc's stars *plus*
    the spheroid, which is what its target (rows 10 + 11 + 12) always meant, and row 10
-   reads 3.17 × 10¹⁰ — inside whether or not row 11 is right (3.66 × 10¹⁰ if it were).
+   reads 3.17 × 10¹⁰ — inside whether or not row 11 is right (3.66 × 10¹⁰ if it were).   **S18: row 3 landed, by 0.04, and not on the bar.** 251.3 → 250.96: the merger's radial
+   kick carries a fifth of the disc's stars outward across R₀ (−0.2 km/s on the built model,
+   −0.4 alone), the basis-free velocity solver reads S17's profile 0.09 lower than the
+   exponential basis did, and the derived threshold moves the row not at all (D124). The
+   entry in `spec._MISSES` went (debt #29) and its replacement says so; the bar's prediction
+   — 7e9 buckled into the spheroid reads 249.4 — stands unread, and rows 12–14 are still
+   this debt's. A green row 3 is now worth exactly what a green row 2 is: inside on a
+   mechanism smaller than the window.
+
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
    ΛCDM median halo of the default mass, derived below, and the relation's validation is
@@ -1038,7 +1046,24 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    thick disc's scale height, at the top of its window on the same cancellation, rose 1042
    → 1126 pc, over 1080; row 9 reads 0.147, row 5 1.27, row 11 1.3 × 10¹⁰. D119's probe of a
    derived Toomre threshold moves row 9 to 0.06 — the thick disc forms from the reservoir
-   the threshold holds — so S18 judges rows 2, 5, 7, 9 and 11 together.
+   the threshold holds — so S18 judges rows 2, 5, 7, 9 and 11 together.   **S18 tested the prediction this debt has carried since D51 and killed it by the number.**
+   The merger's radial kick is built and derived — the vertical impulse read isotropically,
+   turned into a displacement by the epicyclic frequency and the guiding-centre shift,
+   ⟨ΔR²⟩ = σ_k²(1/2κ² + 6Ω²/κ⁴) — and it is 1.47 kpc at R₀ but 0.30 at 2 kpc, because the
+   inner disc is stiff: row 5 moves 1.18 → 1.51 on the constant threshold, 0.93 → 1.17 on the
+   derived one, row 9 by −0.015, rows 7 and 11 not at all (D124). The sweep §5d's gate asks
+   for, on the built model (merger share 0.3 → 0.8): row 9 0.135, 0.088, 0.051, 0.024, 0.007,
+   0.001 against row 11 1.45e10, 1.21e10, 9.6e9, 7.2e9, 4.9e9, 2.8e9, row 5 never past 1.36 —
+   **never inside together; the cancellation is still there**, and with the derived threshold
+   (debt #47, which pre-committed this reading) row 9 is red at 0.051 and row 8 with it. Row 7
+   leaves this debt for #42: it reads 1260–1370 across every thick-disc shape probed because
+   Σ(R₀) is 47.3 M☉/pc² and does not move; it is the dispersion. **Where the shape is decided:**
+   the early episode's arrival law (debt #49). With the first infall at ~1 Gyr everywhere, as
+   the two-infall framework the inside-out index cites specifies, the pre-merger disc reads
+   2.11 kpc; the rest of that probe is under #49. What would land rows 5, 9 and 11 together is
+   a thick disc extended *and* light, and at the observed scale lengths and masses row 9 is
+   0.11 by arithmetic, so the three rows are one row.
+
 20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
    about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
    the last major merger" is a definition, not a measurement, and it made debt
@@ -1171,7 +1196,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S13:** the centre came down with the physics around it — peak +1.36 (was +1.53),
    above +0.5 out to 2.5 kpc; the simple model's gas no longer reaches +0.5 anywhere
    (peak +0.46). Sagittarius' early gas and the unconverted potential were part of the
-   excess; the massless wind is the rest.
+   excess; the massless wind is the rest.   **S18: the centre halved, for a reason that is not the wind's.** The derived threshold
+   (debt #47) rises with κ inside — 47 M☉/pc² at 2 kpc, 72 at 1, 589 at the first cell — so the
+   innermost disc holds a gas reservoir it never had (1.5e9 inside 4 kpc against S17's 0.4e9)
+   and the same metals sit in far more gas: the advanced peak 1.39 → **0.70** dex, super-solar
+   out to 1.9 kpc rather than 2.66, the peak at 0.5 kpc rather than the first ring (which never
+   crosses its threshold); the simple 0.46 → 0.25. The occurrence inside a kiloparsec 0.36 →
+   0.25 and the catalogue's metal-rich share 0.010 → 0.005 (D124). The massless wind is still
+   the mechanism this debt names; the reservoir is the bar's absence (#21) and is #47's.
+
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
    plateau is at +0.45, the present-day gas at R₀ at +0.05. But the stars now
@@ -1224,7 +1257,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    opens the valley (`bimodal_wide`, depth 0.64); until S13 Sagittarius' unphysical
    share arriving beside Gaia-Enceladus kept that track single `[verified:
    tests/test_audit.py::test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row_22_doing_it]`.
-   n = 2, and n = 3 at τ₀ = 7, stay single; the price in row 22 is unchanged.
+   n = 2, and n = 3 at τ₀ = 7, stay single; the price in row 22 is unchanged.   **S18: the valley reopened on the default merger list, and the fast first infall alone
+   does not open it.** With the derived threshold (debt #47), a fast inner disc — τ₀ = 1 Gyr
+   at n = 2 *and* n = 3 — reads `bimodal_wide` with dips 0.57 and 0.64 and the split at 0.39
+   (S17 had closed the one setting, n = 3, that opened it), at τ₀ = 7 neither does, and the
+   row-6 cost is 700 pc there; the single-merger probes read as before (0.56–0.64). The
+   threshold holds the inner disc's gas high and the second infall restarts the sequence from
+   a diluted start, which is this debt's own mechanism. Probed for S20 and not built: a first
+   infall on its own short timescale (debt #49) reads a dip of 0.15 at most on the default
+   list, with the advanced row 6 at 720 (D124). S20 has two levers where the record said one.
+
 28. **Migration is too strong once the tilt is right.** S2 recorded that if
    row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
    Row 22 steepened to −0.057 in the advanced model and row 23 stayed at
@@ -1548,7 +1590,18 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    this row has been inside for four sessions and never for a stable reason — and it
    sharpens the rule rather than changing it: when S20 opens the valley, rows 6 and 7 are
    judged together at whatever Σ(R₀) the disc has *then*, and a row 6 that lands must be
-   shown to land on σ_z rather than on the surface density it divides by.
+   shown to land on σ_z rather than on the surface density it divides by.   **S18: row 7 is this debt's, and one setting lands rows 6 and 7 together.** The simple
+   model's row 7 reads 1260–1370 pc across every thick-disc shape S18 probed — Σ(R₀) is 47.3
+   M☉/pc², what is observed, and does not move — so the row is the dispersion: 40.4 km/s, of
+   which 30 is `MERGER_HEATING`'s kick in quadrature with 27 of secular heating over 11 Gyr,
+   against an observed thick-disc σ_z of ~35 (958 pc at the same Σ). **`MERGER_HEATING` = 60
+   reads row 7 at 751 and the advanced row 6 at 346, both inside**, the first setting of
+   either constant to land the two rows together (180 reads 2148 / 429; 96 reads 1027 / —).
+   The derived threshold moved the advanced row 6 439 → 373 on its own (more gas at R₀). Not
+   set at S18: the rule stands that both constants are re-examined together when S20 opens the
+   valley, and S20 now has this number to start from (D124). Rows 6 and 7 re-attributed in
+   `spec._MISSES`: row 7 under this debt since S16's number.
+
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
    present-day gas at R₀ solar (debt #16, D89), and both were fitted with no
@@ -1591,7 +1644,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    also makes fewer stars and the effective yield is a ratio. Refitted anyway, on the rule
    rather than on the size: `NET_YIELD` 0.0117 → 0.01184 (+1.2%) and `WIND_SPEED` 993 →
    982.2 (−1.1%), each by bisection to solar at R₀; `metal_escape_fraction`(R₀) 0.7536 →
-   0.7503. Still provisional on the derived threshold and now on the bar (#11, #21).
+   0.7503. Still provisional on the derived threshold and now on the bar (#11, #21).   **S18: the derived threshold, and the largest refit either constant has had.** Kennicutt's
+   threshold holds 10.8 M☉/pc² of gas at R₀ where the constant held 6.3 (debt #47), the gas
+   there read −0.065 dex (simple) and −0.084 (advanced) — D119 predicted −0.085 — and both were
+   re-set to solar by bisection: `NET_YIELD` 0.01184 → **0.01376** (+16%) and `WIND_SPEED`
+   982.2 → **860.3** (−12%); `metal_escape_fraction`(R₀) 0.7503 → 0.699, the two effective
+   yields 13% apart (17% at S17). The levers: +10% `WIND_SPEED` is −0.060 dex now (−0.064),
+   +10% `NET_YIELD` +0.041 (D124). Provisional on the bar (#11, #21) and on the inner
+   reservoir the threshold holds (#47), which is upstream of R₀ only through the wind.
+
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1612,7 +1673,16 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the window and the row sees past `KS_NORM` now; its miss is debt #47's (the threshold
    and the present infall rate), not this one's. The pair's evidence did its job: the
    component exists. What this debt still records is that the row's *value* carries the
-   normalisation's ±0.13 M☉/yr `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty]`.
+   normalisation's ±0.13 M☉/yr `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty]`.   **S18: the band collapsed — the claim is now false in the other direction.** With the
+   threshold derived the disc is threshold-regulated everywhere inside 12 kpc (the gas sits
+   at 70–90% of Σ_crit), so the present-day rate is whatever the infall supplies and
+   `KS_NORM` no longer reaches row 2 at all: 1.764 / 1.755 / 1.755 across its ±1σ band, where
+   S17 read 1.97 / 1.82 / 1.73 `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_
+   past_ks_norms_own_uncertainty]`. Row 2 is a prediction of the infall and the threshold
+   alone, inside its window; the gas mass still reads the normalisation (1.17e10 → 1.07e10).
+   What this debt recorded — that the row's verdict was the constant's to make — is no longer
+   true, and what replaces it is that the row cannot see the constant (D124).
+
 45. **`GAS_DISC_SCALE_RATIO` multiplies nothing at 1.0 and carries the advanced
    model's row 22** (S10, the gamma pair; `AUDIT_RUN2.md` D-6 has the sweep to
    1.2 under debt #18). S3 kept it "so that S10 can sweep it". Swept 0.8 → 1.5:
@@ -1649,7 +1719,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    constant that multiplies nothing at its default now carries the advanced model's row 22
    over a quarter of its 0.8–1.5 range rather than a tenth (−0.106, −0.064, −0.051, −0.046
    `[verified: tests/test_audit.py::test_debt_45_the_infall_scale_ratio_trades_the_
-   structure_rows_against_the_gas_rows]`). Row 3 at 1.5 reads 236.1 and row 2 there 2.56.
+   structure_rows_against_the_gas_rows]`). Row 3 at 1.5 reads 236.1 and row 2 there 2.56.   **S18: no setting of the ratio reads the advanced row 22.** With the derived threshold the
+   gradient at 1.0 is −0.0698 (out by 0.0008, the recorded miss under #47) and at 1.25 −0.0468
+   (out by 0.002 the other way); 0.8 reads −0.147 and 1.5 −0.038. The window sits between 1.0
+   and 1.25, and the constant that multiplies nothing at 1.0 is not the lever that would land
+   it — it is named in the miss as the wrong answer that would (D124). The simple model: 1.25
+   reads the thick disc at 1.45 kpc and 1.5 at 1.69, *under* row 5 now (2.16 and inside at
+   S17), because the threshold truncates the pre-merger disc whatever the infall's extent.
+
 46. **The contraction's strength is a simulation calibration, and every published
    one overshoots row 3** (S14). The halo's response to the disc is modelled with
    Gnedin et al. 2004's invariant r M(r̄), r̄ = A R₂₀₀ (r/R₂₀₀)^w at A = 0.85, w = 0.8
@@ -1723,7 +1800,30 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    KS_NORM band straddles: at −1σ the row reads 1.97 and fails, at +1σ 1.73 and passes
    `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_past_ks_norms_own_
    uncertainty]`. Debt #44's original claim is true again, which is the honest reading of
-   a green row 2. The tail's own μ sensitivity is unchanged; row 20 read 6.24 → 6.03 × 10⁹.
+   a green row 2. The tail's own μ sensitivity is unchanged; row 20 read 6.24 → 6.03 × 10⁹.   **S18 built the threshold, as derived, and judged it with the thick disc (D124).**
+   `TOOMRE_ALPHA` = 0.69 and `GAS_DISPERSION` = 6 km/s replace the constant 5; `sfh`
+   publishes Σ_crit(R) off the checkpoint-1 curve's epicyclic frequency — 589 M☉/pc² at
+   the first cell, 47 at 2 kpc, 26 at 4, **11.5 at R₀**, 3.9 at 20. The gas at R₀ reads
+   **10.8** against the observed 10–13; row 20's hydrogen **8.09e9** against 8.0; row 2 1.755,
+   inside; the advanced row 6 439 → 373. The prediction this debt made — the threshold with
+   S18's radial heating lands rows 9 and 20 together — **failed on row 9**: 0.135 → 0.036
+   without the kick, 0.051 with it, and the pre-committed reading applies: the thick disc is
+   what is wrong (#19, and now #49), not the threshold. Two findings the number carries.
+   **The reservoir at the centre**: Σ_crit diverges with κ where the Toomre argument does not
+   hold and the bar (#21) empties the disc, so the model holds 1.5e9 of gas inside 4 kpc
+   (S17 0.4e9; the Galaxy a few 1e8) — 1.1e9 of row 20's hydrogen, and outside 4 kpc the
+   model reads 7.0e9 against ~7.7e9; row 20 is at its target partly for a wrong reason and
+   its entry says so (under #17 now: the number is at a target with no width). The same
+   reservoir halves the centre's iron (#26), steepens the advanced row 22 past its edge by
+   0.0008 (a recorded miss under this debt), doubles the unmigrated old gradient (#28) and
+   reopens the α valley at a fast inner disc (#27). **Regulation**: the disc is
+   threshold-regulated inside 12 kpc, so `KS_NORM` no longer reaches row 2 (#44). Still
+   open: the reservoir's cause is the bar, and the inner shape is the prediction — a gas
+   dispersion that rises inward makes the excess worse (8 km/s everywhere reads row 22 at
+   −0.089 and hydrogen 9.9e9), so σ_g is not the lever. Discharged when the inner gas is
+   read against the Galaxy's with the bar built, or when a threshold that knows the bar's
+   region is derived rather than capped.
+
 48. **The M_• residual's width is the classical one, for a bulge the model calls 83%
    pseudo** (S17, D121). Ruling 10 (§13) specifies the width "interpolated by the classical
    bulge fraction the model computes", between 0.28 dex for a fully classical bulge and
@@ -1745,6 +1845,32 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    a future session finds the verdict moving when the width is entered, the ensemble's
    median is being estimated at too small an n (ENSEMBLE_MIN = 41 gives a median 0.16 dex
    below the mean here) rather than the width mattering.
+
+49. **The first infall accretes on the thin disc's inside-out law, and that is where the
+   thick disc's shape is decided** (S18, D124). `sfh` accretes both episodes on
+   τ(R) = τ₀ (R/R₀)ⁿ, so by the last major merger at 3.8 Gyr only 42% of the early gas at R₀
+   and 31% at 12 kpc has arrived, and the threshold holds what has arrived outside ~4 kpc as
+   gas: the pre-merger disc — the simple model's thick disc — is 1.2 kpc because the model
+   makes its gas arrive slowly. The two-infall framework the inside-out index cites gives the
+   *first* infall a short, radius-independent timescale (~0.8–1 Gyr, the halo/thick-disc
+   phase) and reserves τ_D(R) for the thin disc `[recall: Chiappini et al. 1997, 2001]`; the
+   halo's own dynamical time at its assembly epoch, 0.1/H(z_f) = 0.55 Gyr at z_f = 1.66, is
+   the derivable candidate and reads the same. Probed at S18 with the early episode at 1 Gyr
+   everywhere, the repo unchanged: row 5 **2.11** (inside) — and the whole early share turns
+   into thick disc, row 11 1.74e10, row 9 0.62, row 2 1.30; shrinking the share through the
+   merger's gas fraction re-truncates the pre-merger disc through the threshold (share 0.8:
+   rows 9 and 11 inside at 0.127 and 6.4e9, row 5 1.35 on the constant threshold; 0.032 and
+   4.4e9 on the derived one). So rows 5 and 11 trade through the merger share either way,
+   and a thick disc both extended and light needs most of the early gas to still be gas at
+   the merger — the observed early disc was gas-rich — which a constant-efficiency
+   Kennicutt law with a threshold does not allow. In the advanced model the fast first
+   infall alone reads a dip of 0.15 at most and row 6 at 720 (#27). **Prediction, stated so
+   it can fail:** built with the early episode on its own timescale, row 5 lands at any
+   merger share and rows 9 and 11 move together under the share; if they still trade against
+   each other, the star formation law at high redshift is what is wrong, and if row 5 does
+   not land, the split criterion is (#19). Owned by S20 with the valley: the same lever is
+   the two-infall mechanism that makes the inner disc fast, and its other consequence — rows
+   6 and 7 — is judged there with both heating constants (#42).
 
 ---
 

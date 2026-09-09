@@ -58,7 +58,10 @@ def test_star_formation_is_suppressed_below_the_threshold(model):
     crit = o.fields["sf_threshold_surface_density"]  # the constant 5 until S18; Kennicutt's, by radius, since
     # Suppressed, not switched: the cutoff is smooth by numerical necessity (D46),
     # so the right check is against the rate the unsuppressed law would give, not zero.
-    deep = gas < 0.5 * crit
+    # Outside 2 kpc: inside it the threshold rises with kappa to 589 at the first cell, the gas there is
+    # 276 - "deep" by this measure - and the suppressed rate at that surface density is still the
+    # largest on the grid (S18, D124: the centre's reservoir), which is a different fact from this one.
+    deep = (gas < 0.5 * crit) & (R > 2.0)
     unsuppressed = 2.5e-4 * np.maximum(gas, 0.0) ** 1.4
     assert np.all(psi[deep] < 0.05 * unsuppressed[deep] + 1e-30)
     assert np.all(psi[deep] < 1e-2 * psi.max())

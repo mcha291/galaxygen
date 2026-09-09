@@ -274,7 +274,7 @@ def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
     advanced = models.get("advanced")
     o = run(advanced, only=("feh_gas", "metallicity_gradient"))
     R, feh = o.grid.R, o.fields["feh_gas"]
-    # The peak was the innermost ring until S18; the derived threshold rises as kappa does inside (570 Msun/pc2 at
+    # The peak was the innermost ring until S18; the derived threshold rises as kappa does inside (590 Msun/pc2 at
     # the first cell), so the innermost rings hold gas that never forms stars and the peak sits at 0.5 kpc (D124).
     assert R[int(np.nanargmax(feh))] == pytest.approx(0.49, abs=0.1) and feh[0] < float(np.nanmax(feh))
 

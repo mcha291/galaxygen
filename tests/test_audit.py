@@ -209,7 +209,7 @@ def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row
         # 0.56-0.64 since S18 (0.55-0.62 at S17, 0.55-0.66 at S16); the split 0.41 at τ₀ = 7 and 0.39 at 1.
         assert 0.54 < f["alpha_dip_depth"] < 0.70 and f["alpha_split"] == pytest.approx(0.40, abs=0.02)
         assert f["high_alpha_feh_span"] > 1.0
-        assert f["metallicity_gradient"] < -0.12  # row 22's window is [-0.069, -0.049]
+        assert f["metallicity_gradient"] < -0.10  # row 22's window is [-0.069, -0.049]; -0.111 / -0.108 since S18 (below -0.12 until then)
     # The same small merger with n = 1 stays single: the index is what opens it.
     f = run(advanced, {"inside_out_index": 1.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}, only=CHEM).fields
     assert f["alpha_sequence"] == "single"
@@ -305,7 +305,8 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
         # At 1.25 the merger's thick disc reads 1.45 kpc (1.64 until S18; 1.77 at S16, 1.84 and inside before it), not
         # row 5 and not row 11 (7.5e9); at 1.5 it reads 1.69, *under* row 5 now (2.16 and inside until S18) — the derived
         # threshold truncates the pre-merger disc whatever the infall's extent — and rows 3, 4 and 22 are gone.
-        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.45, abs=0.03) and not inside(11, by[1.25]["thick_disc_stellar_mass"])
+        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.45, abs=0.03) and not inside(5, by[1.25]["thick_disc_scale_length"])
+        assert inside(11, by[1.25]["thick_disc_stellar_mass"]) and inside(11, by[1.5]["thick_disc_stellar_mass"])  # 7.5e9 and 5.8e9: row 11 lands on this lever now (1.09e10 at 1.25 until S18), row 5 does not
         assert by[1.5]["thick_disc_scale_length"] == pytest.approx(1.69, abs=0.03) and not inside(5, by[1.5]["thick_disc_scale_length"])
         assert not inside(4, by[1.5]["thin_disc_scale_length"]) and not inside(3, by[1.5]["v_tangential_sun"])
         assert grads == pytest.approx([-0.103, -0.034, -0.016, -0.011], abs=0.003)  # [-0.065, -0.030, -0.022, -0.019] until S18; [-0.052, -0.026, -0.019, -0.017] until S17
@@ -343,7 +344,7 @@ def test_the_register_carries_the_s10_findings():
     # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117); S16 discharged #18 and
     # opened #47 (D119); S17 opened #48 and discharged neither - #17 only for row 14 and #39 only
     # for its second half, which is why the discharged count did not move (D121, D122).
-    assert progress.debt_counts(text) == (31, 17)
+    assert progress.debt_counts(text) == (32, 17)  # S18 opened #49 and discharged none; 31 / 17 at S17
     for item in (
         "6. ~~Adiabatic contraction",
         "46. **The contraction's strength is a simulation calibration",

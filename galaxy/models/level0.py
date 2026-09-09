@@ -212,9 +212,14 @@ LEVEL0: dict[str, Constant] = {
     "MERGER_HEATING": Constant(
         120.0,
         "km/s",
-        "Vertical dispersion a merger of mass ratio 1 would add to the stars already present; an "
+        "Velocity dispersion a merger of mass ratio 1 would add to the stars already present; an "
         "event contributes this times its mass ratio. Scaled so the Milky Way's 1:4 merger leaves "
-        "the pre-existing disc at about 30 km/s, which is what makes it thick rather than warm.",
+        "the pre-existing disc at about 30 km/s, which is what makes it thick rather than warm. "
+        "Since S18 the same impulse is applied radially too (isotropic; an anisotropic kick has no "
+        "cited number), and the epicyclic frequency turns it into a displacement of 1.5 kpc at R_0 "
+        "(debt #19, D124). The 30 sits on top of 27 km/s of secular heating, so the thick disc reads "
+        "40 km/s against an observed ~35 and row 7 is this constant's (debt #42): at 60 it reads row "
+        "7 and the advanced row 6 inside together, which is S20's to judge with SECULAR_HEATING.",
     ),
     "BAR_LENGTH_RATIO": Constant(
         2.0,
