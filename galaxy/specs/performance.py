@@ -24,8 +24,11 @@ per star at S10 (session-10-beta, D96).
 
 **The one-off** (S11, from session-10-beta D97): the first seeded draw of a
 fresh interpreter costs milliseconds and every later one microseconds, and a
-per-stage profile bills that to whichever stage draws first — ``pattern`` in
-both models, which is why its cold column is tens of times its warm one. It is
+per-stage profile bills that to whichever stage draws first — which is why that
+stage's cold column is hundreds of times its warm one. Which stage that is, the
+table now derives from the widest cold/warm ratio rather than naming: it was
+``pattern`` in both models until S17 put a seeded stage (``nucleus``) at
+checkpoint 1, and the literal was stale the same day (rule B13). It is
 measured in its own interpreter (``--one-off``) and published beside the table
 rather than paid before the loop, which would tidy the table and destroy the
 evidence (rule B6). ``tools/timings.py`` carries the same term, unlabelled (debt #37).
@@ -185,8 +188,13 @@ def table(rows: list[dict[str, Any]]) -> str:
         one = r.get("one_off")
         if one:
             ratio = one["first_s"] / one["then_s"] if one["then_s"] > 0 else float("inf")
+            # Which stage carries it is derived from the profile, not remembered: the widest
+            # cold/warm ratio is the stage that paid the one-off. Naming it in a literal
+            # was wrong within one session of being written — S17 put a seeded stage at
+            # checkpoint 1 and the note still said `pattern` (rule B13, debt #37).
+            billed = max(r["cold"], key=lambda s: r["cold"][s] / max(r["warm"][s], 1e-9))
             lines.append(f"    one-off, first seeded draw: {1e3 * one['first_s']:.2f} ms then {1e3 * one['then_s']:.3f} ms "
-                         f"({ratio:.0f}x) — billed by this table to the first stage that draws (pattern); debt #37")
+                         f"({ratio:.0f}x) — billed by this table to the first stage that draws ({billed}); debt #37")
     return "\n".join(lines)
 
 

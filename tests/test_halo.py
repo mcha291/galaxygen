@@ -555,6 +555,29 @@ def test_the_spheroid_grows_as_the_distribution_gets_flatter(model):
     assert masses[2] == pytest.approx(5.60e9, rel=0.02)
 
 
+def test_the_jeans_integral_reproduces_the_virial_theorem_on_an_isolated_sphere():
+    """The instrument before the physics (B1), checked against an identity it does not use (B3).
+
+    An isolated Hernquist sphere has binding energy GM²/6a, so the virial theorem fixes its
+    mass-weighted mean-square 1-D dispersion at GM/18a exactly — an algebraic fact the Jeans
+    solver knows nothing about. Fed its own gravity, the solver must return that number, and
+    it does: to 0.005% on a fine mesh and 0.15% on the 600-point mesh the stage actually uses,
+    which is the accuracy row 14 is read at.
+    """
+    from galaxy.stages.halo import hernquist_enclosed, spheroid_dispersion
+
+    M, a = 7.7e9, 0.365
+    exact = math.sqrt(G * M / (18.0 * a))
+    for lo, hi, n, tol in ((1e-5, 1e5, 20000, 1e-5), (1e-3, 319.0, 600, 2e-3)):
+        r = np.geomspace(lo, hi, n)
+        _half, whole = spheroid_dispersion(r, M, a, G * hernquist_enclosed(r, M, a))
+        assert whole == pytest.approx(exact, rel=tol), (n, whole, exact)
+    # And inside the half-mass radius it is higher, because the potential is deeper there.
+    r = np.geomspace(1e-5, 1e5, 20000)
+    half, whole = spheroid_dispersion(r, M, a, G * hernquist_enclosed(r, M, a))
+    assert half == pytest.approx(87.6, abs=0.2) and half > whole
+
+
 def test_the_dispersion_is_the_total_potentials_and_not_the_spheroids(model):
     """Row 14 is a derivation with one assumption, isotropy; on self-gravity alone it is a third lower."""
     o = out(model)

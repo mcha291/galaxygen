@@ -3193,3 +3193,61 @@ half-mass radius, and the second is what row 14 reads.
 **What did not change.** Rows 20 and 21 stay zero-width and the debt stays open for
 them; the same reading of Nakanishi & Sofue still finds no uncertainty. The rule
 that a new zero-width row must say so in its note is untouched.
+
+### D123. Cold timings at S17 (rules B2, B6)
+
+    endpoint                 cold s   warm s    c/w      bytes  stages
+    viewer: index.html       0.0003   0.0003   1.15        940  -
+    viewer: a module         0.0003   0.0003   0.89     21,599  -
+    index                    0.0000   0.0000   0.82      1,237  -
+    version                  0.0017   0.0023   0.72      1,132  -
+    stages                   0.0002   0.0002   0.96      9,874  -
+    fields                   0.0007   0.0008   0.88     72,209  -
+    inputs                   0.0001   0.0001   1.07     10,388  -
+    arrays: one profile      0.1142   0.0003 372.48      4,976  halo,assembly,sfh
+    arrays: history          0.1713   0.0028  60.23  6,401,768  halo,assembly,sfh,chemistry
+    arrays: scalar           0.1156   0.0003 389.59      1,712  halo,assembly,sfh
+    region: one sector*      0.1970   0.0037  53.83     18,576  halo,assembly,sfh,chemistry,vertical
+    region: whole disc*      0.3775   0.1822   2.07  1,128,184  halo,assembly,sfh,chemistry,vertical
+    system: one star*        0.1967   0.0026  75.73      3,112  halo,assembly,sfh,chemistry,vertical
+    adv: history             0.4551   0.0026 175.72  6,401,776  halo,assembly,sfh,chemistry_dtd
+    adv: alpha plane         0.4446   0.0025 175.93  6,401,832  halo,assembly,sfh,chemistry_dtd
+    adv: one sector*         0.4684   0.0038 122.03     18,584  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    adv: one star*           0.4687   0.0024 197.30      3,128  halo,assembly,sfh,chemistry_dtd,vertical_alpha
+    * cold includes the interpreter's first seeded draw, about 9-12 ms here (debt #37)
+    import + registry: 0.094-0.103 s, paid once per process and excluded from the cold column
+
+    model simple: 0.603 s cold, 0.569 s warm; model advanced: 0.867 s cold, 0.862 s warm
+    halo 6.7-7.2 ms, nucleus 11.3 ms cold / 0.1 ms warm, sfh 105-107 ms
+    catalogue at 20,000 stars: layout 16.2-16.4 ms over 1024 cells, 712 of them realise a star (704 at S16)
+    catalogue against sample size: simple 1.21 us per star, 154.9 ms fixed (87%)
+    one-off, first seeded draw: 11.97 ms then 0.025 ms (481x), billed to **nucleus**; debt #37
+
+**Read within the run.** Nothing measurable was added. The halo now solves the
+low-j excess and a Jeans integral between its two contraction passes and stays at
+6.7–7.2 ms, inside S16's 7.1–7.3 — both are one-pass quadratures on the same
+600-point mesh, so the cost was already paid. The `nucleus` stage is arithmetic on
+two scalars and its 11.3 ms cold column is the process-wide one-off, not work: its
+warm column is 0.1 ms. No stage's cost changed shape, so no scaling exponent moved
+and `tools/scaling.py` was not re-run. The whole-model numbers, 0.60 / 0.87 s, are
+below D120's 0.64 / 1.05 and within the same noise; the per-star slope read 1.21 µs
+against D120's 1.60, which is the flake D115 recorded. The `fields` route grew 6 kB
+for the five new declarations and `stages` 0.8 kB for the new stage.
+
+**One instrument fix, and it is a rule B13 instance rather than a cost.** The
+profile's one-off note named the stage that pays it in a literal — "billed to the
+first stage that draws (`pattern`)" — and that was true in both models until this
+session put a seeded stage at checkpoint 1. It derives the name from the widest
+cold/warm ratio now, and prints `nucleus`. The note had been correct for six
+sessions and was wrong within one commit of a stage moving.
+
+**Close.** Board row 17 (desktop, Opus 5, `s17`, 2026-09-09); `session-17` merged
+`--no-ff` into `main`; `s16`'s SHA filled in MANUAL_TODO.md, `s17` queued; register
+31 open / 17 discharged (#48 opened; #17 discharged for row 14 only). §5d's gate for
+this session — rows 10, 12, 13 inside, row 11 off its cancellation, 14 and 18
+statistical, row 3 re-read — is **half met**: rows 10 and 11 came off the
+cancellation and row 10 is inside on its own; rows 14 and 18 are computed and
+judged statistically; row 3 was re-read and moved 252.9 → 251.3. Rows 12 and 13 are
+outside, and D121 says why and what closes them. Next: S18, the thick disc (Fable,
+§5d), with row 2 no longer available as evidence for debt #47 and rows 5, 7 and 11
+further out than S16 left them.

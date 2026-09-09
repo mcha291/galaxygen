@@ -54,7 +54,8 @@ closes the project.
 | 13 | `s13` | `6a2f3f7e669b` | **queued** |
 | 14 | `s14` | `e645d430db90` | **queued** — the *second* S14 merge (D115); `780cd15` is the first and is not tagged |
 | 15 | `s15` | `71a25128d33c` | **queued** |
-| 16 | `s16` | *TBD — filled in when S16 is merged* | **queued** |
+| 16 | `s16` | `b0589232c886` | **queued** |
+| 17 | `s17` | *TBD — filled in when S17 is merged* | **queued** |
 
 ### Run these
 
@@ -113,8 +114,11 @@ git tag -a s14 e645d430db9074cfa976e8e4de5b2e02bb723924 -m "S14: halo contractio
 # S15 — the assembly epoch derived.
 git tag -a s15 71a25128d33c -m "S15: the epoch derived"
 
-# S16 — the extended component derived. The batch replaces this with the literal SHA.
-git tag -a s16 "$(git rev-list -1 --grep='^Merge S16 into main' origin/main)" -m "S16: the high-j tail"
+# S16 — the extended component derived.
+git tag -a s16 b0589232c886 -m "S16: the high-j tail"
+
+# S17 — the spheroid derived and M_•. The batch replaces this with the literal SHA.
+git tag -a s17 "$(git rev-list -1 --grep='^Merge S17 into main' origin/main)" -m "S17: the spheroid and the hole"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

@@ -324,8 +324,10 @@ def test_the_register_carries_the_s10_findings():
     text = progress.read(progress.INPUTS)
     # main's #29-#33 (its own two runs), beta's #34-#40, the gamma pair's #41-#45 (S11, D99);
     # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109);
-    # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117); S16 discharged #18 and opened #47 (D119).
-    assert progress.debt_counts(text) == (30, 17)
+    # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117); S16 discharged #18 and
+    # opened #47 (D119); S17 opened #48 and discharged neither - #17 only for row 14 and #39 only
+    # for its second half, which is why the discharged count did not move (D121, D122).
+    assert progress.debt_counts(text) == (31, 17)
     for item in (
         "6. ~~Adiabatic contraction",
         "46. **The contraction's strength is a simulation calibration",
@@ -337,6 +339,7 @@ def test_the_register_carries_the_s10_findings():
         "43. **`NET_YIELD` and `WIND_SPEED` are each fitted",
         "44. **Row 2 cannot see past `KS_NORM`",
         "45. **`GAS_DISC_SCALE_RATIO` multiplies nothing",
+        "48. **The M_• residual's width is the classical one",
     ):
         assert item in text, item
 

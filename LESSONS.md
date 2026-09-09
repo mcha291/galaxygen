@@ -553,3 +553,43 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   wrong session (D119).
 - [close][infra] A full suite that takes longer than the tool's timeout is killed with a
   misleading exit status; run it in the background with the status appended to its log.
+
+## From S17
+
+- [field] A probe's number is only as good as the model it was run on. D110 measured the
+  bulge at −5 to −8 km/s on the uncontracted S13 halo, drawing it from the stellar disc in
+  proportion; four sessions later, derived and taken out of the accreting budget, it is
+  worth −1.6. A probe result carries the halo it was read against, and BRIEF.md was right
+  to say "re-probe first" — the re-probe is the session's first hour, not a formality (D121).
+- [field] When one construction has two ends, build both from it rather than from two.
+  S16's high-j tail and S17's spheroid are the same mapped distribution read outside and
+  inside its two crossings; factoring the shared half out (`angular_momentum_excess`) was
+  the difference between two components that must agree and two that happen to (rule A9).
+- [field] Ask where a derived component's *mass* comes from before deciding where its code
+  goes. The spheroid could not be a stage: row 3 is computed in `sfh`, the halo contracts
+  around the total baryons, and the derivation needs the halo's own mesh. Three constraints
+  that each look like a preference close on one answer, and the design trap BRIEF.md named
+  was the whole of the difficulty (D121).
+- [field][close] A recorded miss that starts passing must be removed, and the reason it
+  passed is what matters. Row 2 landed because the spheroid took 13% of the budget out of
+  the disc, not because debt #47's threshold was built — so the debt is unaltered and the
+  row is no longer evidence for it. Write that where the next session will read it, in the
+  debt and in the removed miss's place, or the register quietly gains a discharge it did
+  not earn (D121).
+- [field] Two rows that want the same fix in opposite directions are worth more than either
+  alone. Row 12 wants 7 × 10⁹ more mass in the spheroid; row 14's dispersion is already
+  0.16 km/s high and that mass would take it to 123. The session that builds bar buckling
+  reads which, and neither row could have said so on its own (rule B4).
+- [field] A number that is nearly right can be right for a reason that is not the model's.
+  Row 14 reads 116 against 113 while row 12 is 45% low, because σ inside the half-mass
+  radius is set by the whole enclosed mass and not by the spheroid: on self-gravity alone
+  it would read 71. Check what a passing quantity is actually sensitive to before crediting
+  it to the mechanism under test (rule B3's cousin).
+- [close] A missing calibration is not a licence to invent one. Ruling 10 asked for the
+  M_• residual's width to be interpolated towards the pseudobulge end; the sources decline
+  to fit pseudobulges at all, so the width stays the classical one, the model is recorded
+  as understating the spread, and it becomes a debt (#48) rather than a number (rule B9).
+- [infra][close] A note that names a stage in a literal goes stale the session a stage
+  moves. The profile's "billed to the first stage that draws (pattern)" was wrong the
+  moment a seeded stage landed at checkpoint 1; it derives the name from the widest
+  cold/warm ratio now (rule B13).
