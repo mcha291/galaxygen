@@ -28,7 +28,11 @@ The model, per annulus, with instantaneous recycling:
   trend as N_R and N_t change. With the switch it converges to 0.1%
   ``[verified: tests/test_sfh.py::test_the_star_formation_rate_converges]``.
 - **The accreting gas is more extended than the stars it makes**, by
-  ``GAS_DISC_SCALE_RATIO``. Without that the model has no outer HI at all.
+  ``GAS_DISC_SCALE_RATIO`` — and, since S16, by the high-j tail the halo stage
+  derives from its angular-momentum distribution (debt #18): the part of the
+  budget the exponential never held, beyond about 12 kpc, on the same
+  inside-out law, which at those radii is already 10–20 Gyr. That is the outer
+  HI disc; the ratio still multiplies nothing at 1.0 (debt #45).
 
 **Why the rotation curve is recomputed here.** Acceptance row 3 reads a velocity
 at R_0, and until this stage the model does not know how the baryons are
@@ -231,9 +235,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     R_d = float(ctx.fields["disc_scale_length_spin"])
     baryons = float(ctx.fields["baryon_mass_total"])
 
-    # Total gas to be accreted at each radius: exponential, more extended than the stars.
+    # Total gas to be accreted at each radius: the exponential, plus the high-j tail the halo
+    # stage derived from its angular-momentum distribution (S16, debt #18) — the tail's share
+    # comes out of the exponential's budget, so the total is still every retained baryon.
     R_inf = float(ctx.constants["GAS_DISC_SCALE_RATIO"]) * R_d
-    sigma_total = infall_profile(R, R_inf, baryons)
+    share = float(ctx.fields["infall_tail_share"])
+    sigma_total = infall_profile(R, R_inf, (1.0 - share) * baryons) + np.asarray(ctx.fields["infall_tail_surface_density"], dtype=float)
 
     # Inside-out infall timescale, anchored at R_0 (see the module docstring).
     tau = float(ctx.inputs["infall_timescale"]) * (R / R_sun) ** float(ctx.inputs["inside_out_index"])
@@ -335,6 +342,7 @@ SFH = IMPLEMENTATIONS.register(
         ),
         requires=(
             "disc_scale_length_spin", "baryon_mass_total",
+            "infall_tail_surface_density", "infall_tail_share",
             "halo_circular_velocity", "halo_circular_velocity_sun",
             "second_infall_share", "merger_delivery",
         ),

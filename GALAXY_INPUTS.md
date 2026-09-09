@@ -737,6 +737,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    extended component's 4–13 (D114) together span 9–21, so the two mechanisms are the row's
    prediction (`spec._MISSES` row 3): S17's bulge and S16's component close it with the epoch
    at 1.66, or the baryon distribution is not the cause and debt #46 is.
+   **S16:** the component's half is in: the high-j tail takes row 3 from 260.1 to 252.9 (the
+   baryons' pull −4.3, the halo's weaker response −2.5; D119), high by 2 now. The bulge's
+   5–8 (D110) is the other half and more than closes it — the prediction is now that S17
+   reads the row inside 245–251, and if the bulge overshoots below 245 the two mechanisms
+   together are too much and debt #46's invariant is too weak, not too strong.
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
    ΛCDM median halo of the default mass, derived below, and the relation's validation is
@@ -862,7 +867,7 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    other nucleosynthetic yields minus what a wind removes — and they agree to
    10%: y_Z = 0.0406 with 75.32% of fresh metals escaping at R₀ gives an
    effective yield of 0.01001 against the fitted 0.01100 `[verified:
-   tests/test_chemistry_dtd.py::test_the_winds_effective_yield_and_the_fitted_one_agree_to_ten_percent]`.
+   tests/test_chemistry_dtd.py::test_the_winds_effective_yield_and_the_fitted_one_and_how_far_they_agree]`.
    Agreeing at all is the content of the discharge; the residual 10% is the
    two models' different recycling, recorded rather than tuned away. Both fits
    are provisional on debt #18 (debt #43).
@@ -898,7 +903,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S13:** row 14 joins rows 20 and 21 as untestable — a statistical row now passes on
    its median (debt #38), which no float meets at zero width either `[verified:
    tests/test_spec.py::test_the_table_says_which_rows_have_no_testable_target]`.
-18. **No high-angular-momentum accretion component.** With the infall carrying
+18. ~~**No high-angular-momentum accretion component.**~~ **DISCHARGED at S16 — built,
+   as the high-j tail of the halo's angular-momentum distribution, and the timescale the
+   register wanted for it turned out not to be the decision** (D119; what it leaves is
+   debt #47). Kept for the history. With the infall carrying
    the disc's own scale length (debt #13's fix), nothing accretes beyond about
    10 kpc, so the extended HI disc that holds most of the Milky Way's gas does
    not exist in the model. **One cause, three failing rows**: gas mass 38% low
@@ -946,6 +954,25 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S15:** row 3 reads 260.1 with the epoch derived (D117), 9–15 km/s high, and the
    component's 4–13 is half of its prediction with the bulge's 5–8 (debt #11); D114's
    table was read at z_f = 2.5 and is re-read when the component is built.
+   **S16, discharged.** The component is derived, not sized: the halo's specific angular
+   momentum has a universal distribution, M(< j) = M μ j/(j₀ + j) with μ = 1.25 the median
+   `[verified: Bullock et al. 2001, read at S16]`, and mapped onto the plane on the model's
+   own rotation curve with its mean j the exponential disc's, it lies below the exponential
+   inside 12 kpc and above it outside — the high-j tail the exponential never held, 7.6% of
+   the budget, 3.7 M☉/pc² at 15–20 kpc, ending where j_max lands at 25 kpc. The halo stage
+   computes it after its first contraction and contracts again around the total (rule A9:
+   the profile is held where the halo needs it first); `sfh` adds it to the infall. **The
+   timescale was not the decision.** Three arrival laws — the inside-out law from t = 0, the
+   same from the assembly epoch, the halo's own growth after it — read the same on every row
+   and within 0.05 M☉/yr on row 2, because at 12–25 kpc the inside-out law already accretes
+   over 10–20 Gyr; what mattered was the angular momentum, i.e. the radius, and D114's form
+   failed on row 2 only because its inner part overlapped the disc's own gas. Rows 3 and 4
+   were the check that the component is high enough in angular momentum: row 4 reads 2.49,
+   unmoved, and row 3 falls 260.1 → 252.9 (the baryons' pull −4.3, the halo's weaker
+   response −2.5 km/s). Row 20 reads 6.24 × 10⁹ of hydrogen (4.17 until S16), row 2 rises
+   1.89 → 2.08, and both stay misses: row 2 under debt #44, row 20 under debt #47, which
+   holds what this component does not explain `[verified: tests/test_halo.py::test_the_high_j_tail_is_derived_and_where_it_lies,
+   tests/test_sfh.py::test_the_tail_is_accreted_and_what_it_moved]`.
 19. **The thick disc is too compact and too massive, and the gate passes on the
    cancellation.** Scale length 1.17 kpc against 2.0 (row 5) and mass
    1.07 × 10¹⁰ against 6 × 10⁹ (row 11). Row 9 — S3's gate — reads 0.103 inside
@@ -959,6 +986,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    share the pre-merger episode carries half the budget, so the thick disc reads
    1.32 kpc (row 5) and 1.42 × 10¹⁰ M☉ (row 11), and the gate, row 9, reads 0.152 —
    inside 0.08–0.16 by less than the 0.103 it read before, still on the cancellation.
+   **S16:** row 7 joins this debt. The high-j tail took 7.6% of the budget out of the
+   exponential (D119), the stellar surface density at R₀ fell 51.6 → 47.6 M☉/pc², and the
+   thick disc's scale height, at the top of its window on the same cancellation, rose 1042
+   → 1126 pc, over 1080; row 9 reads 0.147, row 5 1.27, row 11 1.3 × 10¹⁰. D119's probe of a
+   derived Toomre threshold moves row 9 to 0.06 — the thick disc forms from the reservoir
+   the threshold holds — so S18 judges rows 2, 5, 7, 9 and 11 together.
 20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
    about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
    the last major merger" is a definition, not a measurement, and it made debt
@@ -1481,6 +1514,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the constant was re-set to solar by bisection. The escape velocity is inside its
    observed range now; row 3 still overshoots by 12, so the value stays provisional on #18
    and on the bulge (#11).
+   **S16:** the day #18 closed, as this debt said. Both refitted by bisection to solar at R₀
+   (D119): `NET_YIELD` 0.011 → 0.0117 (the gas at R₀ read −0.027 dex once the tail took 7.6%
+   of the budget out of the exponential — the first move since S3) and `WIND_SPEED` 999 →
+   993 (−0.004 dex; v_esc(R₀) 569 → 568). What both now sit on is the tail as derived and
+   the constant threshold; the derived threshold D119 probed moves the gas at R₀ by −0.085
+   dex and would move both again. Provisional on that and on the bulge (#11).
 44. **Row 2 cannot see past `KS_NORM`'s own uncertainty** (S10, the gamma
    pair; `AUDIT_RUN2.md` §4.1 has the same probe filed as "holds,
    load-bearing"). Kennicutt's normalisation is (2.5 ± 0.7) × 10⁻⁴ and is
@@ -1496,6 +1535,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    is half of row 2's excess, is taken out.
    **S13:** at +1σ (3.2 × 10⁻⁴) row 2 now reads 1.77 and passes outright; at the default
    1.89. The pair with row 20 is still the evidence.
+   **S16, the claim no longer holds:** with the high-j tail built (debt #18, D119) row 2
+   reads 2.08 at the default and 1.98 at +1σ, so the ±1σ band (2.25–1.98) no longer reaches
+   the window and the row sees past `KS_NORM` now; its miss is debt #47's (the threshold
+   and the present infall rate), not this one's. The pair's evidence did its job: the
+   component exists. What this debt still records is that the row's *value* carries the
+   normalisation's ±0.13 M☉/yr `[verified: tests/test_audit.py::test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty]`.
 45. **`GAS_DISC_SCALE_RATIO` multiplies nothing at 1.0 and carries the advanced
    model's row 22** (S10, the gamma pair; `AUDIT_RUN2.md` D-6 has the sweep to
    1.2 under debt #18). S3 kept it "so that S10 can sweep it". Swept 0.8 → 1.5:
@@ -1522,6 +1567,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    passes only at 1.0.
    **S14:** on the contracted halo the sweep reads row 3 at 253.0 km/s at 1.5 (222.7
    before): a broader infall still cannot buy the row on its own.
+   **S16, the prediction held:** with debt #18's component built as the high-j tail (D119)
+   the advanced row 22 reads −0.059 (−0.058 before), inside and moved away from −0.047,
+   not toward it — the tail carries no metals in and steepens nothing inside 12 kpc, so
+   the wind's tilt is the one doing the work. The ratio still multiplies nothing at 1.0;
+   the tail is not its second value in disguise because it has no inner part.
 46. **The contraction's strength is a simulation calibration, and every published
    one overshoots row 3** (S14). The halo's response to the disc is modelled with
    Gnedin et al. 2004's invariant r M(r̄), r̄ = A R₂₀₀ (r/R₂₀₀)^w at A = 0.85, w = 0.8
@@ -1563,6 +1613,28 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the extended component at z_f = 1.66 (debt #11); if it does not, the invariant is the
    remaining suspect and its test is a two-parameter sweep of w at A = 1.6 against rows 3,
    19 and the escape velocity together, not another normalisation.
+47. **The extended gas is one derived tail and a constant threshold, and the gas inside
+   R₀ is what row 20 still lacks** (S16, D119). The high-j tail (debt #18) follows one
+   Level 0 constant, the angular-momentum profile's μ = 1.25, whose 90% range 1.06–2.0
+   `[verified: Bullock et al. 2001]` no input absorbs: across μ = 1.06–1.4 the tail's share
+   holds at 0.07–0.08 but its inner edge moves 14.9 → 11.0 kpc and row 20 reads 5.8 → 5.0
+   × 10⁹ through 6.9 at 1.15, with row 3 unmoved at 252.5–252.6 and row 4 at 2.49. Its
+   shape differs from the observed HI two ways: the model holds 3.6 M☉/pc² at 20 kpc where
+   the outer HI falls as an exponential of scale length 3.75 kpc from ~10 at 12.5 kpc
+   `[verified: Kalberla & Dedes 2008, read at S16]` — the tail ends at j_max, 25 kpc, and
+   the grid at 30 — and inside 12 kpc the model's gas is 6.8 at R₀ against the observed
+   10–13, because the star formation threshold is the constant 5 M☉/pc², the bottom of its
+   cited 5–10. That threshold is derivable: Kennicutt's Σ_crit = α κ σ_g/3.36 G from the
+   rotation curve's epicyclic frequency `[recall: Kennicutt 1989; Martin & Kennicutt 2001,
+   α ≈ 0.69]`, which at σ_g = 6 km/s reads 11 M☉/pc² at R₀ and 4 at 20 kpc. Probed at S16
+   with the tail as built: the gas at R₀ 10.8, hydrogen 8.2 × 10⁹ (row 20 met), row 2 1.95
+   (still out), row 4 2.47, the advanced row 22 −0.063 (inside) — and row 9 0.06, out,
+   because the thick disc forms from the reservoir the threshold holds. So the threshold
+   is judged with the thick disc at S18 (rows 2, 5, 7, 9, 11, 20 together), not here.
+   **Prediction:** the derived threshold with S18's radial heating lands rows 9 and 20
+   together; if row 9 cannot be restored with the threshold derived, the thick disc's split
+   criterion is what is wrong (debt #19), not the threshold. A model that sizes the tail to
+   the HI instead would pass row 20 by construction and is the wrong answer that passes.
 
 ---
 

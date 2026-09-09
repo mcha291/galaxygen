@@ -2,7 +2,7 @@
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's
 status board is the only record of what is done (A9); this file does not repeat it, is
-rewritten each session, capped at 120 lines (C3). **The build is closed** (S0–S10; S11–S15; §5d plans S16–S22).
+rewritten each session, capped at 120 lines (C3). **The build is closed** (S0–S10; S11–S16; §5d plans S17–S22).
 
 ## Open a session (rules C1, C2b)
 
@@ -22,18 +22,17 @@ galaxy/core/              units (32 closed), cmaps (8 + stops, A9), fielddoc (Fi
                           6 Kinds, Ramp/Palette, AXES), stage (Stage, Context,
                           CHECKPOINTS), registry (12 INPUTS, MODELS, IMPLEMENTATIONS),
                           seeds (pure child/rng), grids, special (I1, K0, K1, erf)
-galaxy/models/            level0 (shared constants; CONTRACTION_A/W since S14), simple
-                          (+NET_YIELD), advanced (its own yields, DTD and wind constants)
-galaxy/stages/            cp1 halo (NFW, budget, R_d, the contraction on its own mesh; ρ_DM and
-                          the contracted fit at R₀, S15) + disc (the cp1 preview, off the acceptance
-                          path); cp2 assembly; cp3 sfh (infall_profile factored, S14), chemistry /
-                          chemistry_dtd, vertical / vertical_alpha; cp4 pattern; cp5 systems; cp6 planets.
+galaxy/models/            level0 (shared constants), simple (+NET_YIELD), advanced (yields, DTD, wind)
+galaxy/stages/            cp1 halo (NFW, budget, R_d, the contraction on its own mesh; ρ_DM and the
+                          contracted fit at R₀, S15; the high-j tail, S16) + disc (the cp1 preview);
+                          cp2 assembly; cp3 sfh (infall = exponential + tail), chemistry / chemistry_dtd,
+                          vertical / vertical_alpha; cp4 pattern; cp5 systems; cp6 planets.
 galaxy/run.py, specs/     run(model, inputs, grid, only=…, resume=…); graph, preflight, determinism, spec (misses
                           D87; "no testable target" D100; median D109), convergence (D94, D101), performance (D95, D101)
 galaxy/api/               service (routes), wire, version, http; client/ (the viewer)
 tools/                    progress, bootstrap, verify_clone, timings, scaling, shot, hooks/
-tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, #26–#28, #41–#45); beta's in
-                          test_halo etc.; S14/S15's end test_halo. AUDIT_RUN1/2.md: main's two lists (D97, D102)
+tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, #26–#28, #41–#45); S14–S16's
+                          end test_halo / test_sfh. AUDIT_RUN1/2.md: main's two S10 lists (D97, D102)
 ```
 
 ## Writing a stage
@@ -55,7 +54,8 @@ tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, 
   determined (`population`/`systems`, `formation`/`planets`) (D78).
 - A named ruleset is a constant with its alternative in the about line, chosen before
   the row is read (D113); a mechanism is probed by substituting one function per half from
-  a script, the repo unchanged (D114); a default is measured or derived by a test (D30, D117).
+  a script, the repo unchanged (D114); a default is measured or derived by a test (D30, D117);
+  a derived scalar lives on the stage's own mesh, never the grid (D119).
 
 ## The API and the viewer
 
@@ -66,8 +66,8 @@ tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, 
   test fails if a route has no cold timing.
 - Metadata answers from declarations and must not reach the runner; whatever computes
   goes through `Service.compute(...)`, the closure above the fields asked for (D4, D63);
-  objects are materialised per request (D82). `transport.js` holds **the only `fetch`**;
-  the gate asks `git ls-files` what the repository contains (D101).
+  objects are materialised per request (D82). `transport.js` holds **the only `fetch`**; the
+  gate asks `git ls-files` what the repository contains (D101). No about line names a constant (D5).
 
 ## Conventions
 
@@ -82,29 +82,29 @@ tests/test_audit.py       the S10 audits' measurements as tests (#12, #17, #21, 
   reports `fail`, never widen a target (B5), and a miss that starts *passing* fails the
   run for that model (debt #29). A pointwise row with `lo == hi` says "no testable target" (D100).
 
-## What the instruments said at S15 close (2026-09-09)
+## What the instruments said at S16 close (2026-09-09)
 
 - graph: acyclic, both models. preflight OK: 0 UNSET, 0 controls without a range.
   determinism OK, golden values pinned, and reproducible across processes (two hash seeds, S12).
-- spec: simple **11 pass, 7 fail** (2, 3, 5, 11, 20, 22, 23; row 3 under #11 since S15), 6 n-y-c;
-  advanced **7 pass, 12 fail, 5 n-y-c** (row 6 since S13, debt #42). Every failure
-  recorded for its model. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
-- Numbers, to spot a regression by (S15): z_f **1.66** (2.5 until S15), c_vir 10.91, c200 **8.24**,
-  the contracted fit **15.4** (18.5 at 2.5), R200 212.94, r_s 25.84, R_d 2.605 (fitted 2.49),
-  M_star 5.287e10, SFR 1.891, gas 5.714e9, H 4.171e9; halo at R₀ 119.3 → **165.8** (r_i/r_f 1.50),
-  ρ_DM(R₀) 0.0087 M☉/pc³, v_tan **260.1** (270.8 until S15); simple grad −0.0236, old −0.0064, thick
-  M 1.42e10, row 9 0.152; advanced grad −0.0578, v_esc(R₀) **569.0**, f_esc 0.755, WIND_SPEED 999;
-  rows 16/17 medians 43.2 / 5.82; row 6 simple 254.6, advanced 358.5.
+- spec: simple **10 pass, 8 fail** (2, 3, 5, 7, 11, 20, 22, 23; row 7 new at S16 under #19, rows 2
+  and 20 under #47), 6 n-y-c; advanced **7 pass, 12 fail, 5 n-y-c** (row 6 under #42). Every
+  failure recorded for its model. No green row is an unconditioned prediction (AUDIT_RUN2 §5).
+- Numbers, to spot a regression by (S16): z_f 1.66, c_vir 10.91, c200 8.24, the contracted fit
+  **15.0**, R200 212.94, r_s 25.84, R_d 2.605 (fitted 2.49); tail share **0.0756**, inner edge
+  **12.3** kpc, 3.7 M☉/pc² at 15–20 kpc; M_star **5.00e10**, SFR **2.083**, gas **8.55e9**, H
+  **6.24e9**; halo at R₀ 119.3 → **163.3** (r_i/r_f 1.47), ρ_DM 0.0086, v_tan **252.9** (260.1 until
+  S16); simple grad −0.0257, old −0.0066, thick M 1.30e10, row 9 0.147, row 6 275, row 7 **1126**;
+  advanced grad −0.0592, v_esc(R₀) 568.0, f_esc 0.7536, WIND_SPEED **993**, NET_YIELD **0.0117**,
+  row 6 384; rows 16/17 medians 42.0 / 5.82.
 - **Convergence** (D94, D101): 0 drifts on N_R, N_t, N_z in either model; advanced rows 5,
-  7–11 are `vacuous` (debt #27). **Profile** (D118): 0.62 s simple, 0.99 s advanced
-  (chemistry_dtd 43%); the halo's mesh costs 3–4 ms; the catalogue is 89–95% fixed cost.
-- **Register**: 30 open, 16 discharged; S15 discharged #12 and amended #11, #18, #43, #46
-  (D117). The three audit branches stay unmerged.
+  7–11 are `vacuous` (debt #27). **Profile** (D120): 0.64 s simple, 1.05 s advanced; the halo 3–5 ms.
+- **Register**: 30 open, 17 discharged; S16 discharged #18, opened #47 (D119). Audit branches stay unmerged.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python
-   tools/progress.py`, then `uv run pytest` once, quiet, **its exit status captured before any pipe** (D115).
+   tools/progress.py`, then `uv run pytest` once, quiet, **backgrounded with its exit status
+   appended to its log** (it outlasts the tool's cap), the merge gated on that status (D115, D120).
 1. Append to DECISIONS.md, new rules to LESSONS.md tagged, **publish the cold timings**
    (rule B2), the profile (D95) and, when a stage's cost changes, `tools/scaling.py`.
 2. Rewrite this file in place (≤ 120 lines); write BRIEF.md (≤ 60 lines).

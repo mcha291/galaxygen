@@ -205,23 +205,51 @@ class Miss:
 _MISSES: tuple[Miss, ...] = (
     Miss(
         row=2,
-        debt=18,
-        since="S3",
+        debt=47,
+        since="S16",
         reason=(
-            "1.89 Msun/yr against 1.65 (S13), having been 1.97 while the Sagittarius default "
-            "delivered a tenth of the budget (debt #29) and 1.14 before the merger-delivered second "
-            "infall existed. Debt #29's prediction was that a physical Sagittarius would let this row "
-            "pass; it did not: with the merger gas accreting from each event's own epoch (debt #30) "
-            "the row reads 1.89 at Sagittarius' 0.01 and 1.85 with no Sagittarius at all. What is left "
-            "is the second episode's timescale: it decays on the same 7 Gyr as the first, so too much "
-            "of the merger's gas is still arriving now."
+            "2.08 Msun/yr against 1.65 +/- 0.19, up from 1.89, with the high-j accretion tail built "
+            "(S16, D119). The row's history: 1.14 before the merger-delivered second infall, 1.97 "
+            "while Sagittarius delivered a tenth of the budget (debt #29), 1.89 with a physical "
+            "Sagittarius (S13). Debt #18's prediction was that the extended component's own timescale "
+            "would bring it down; it does not: three arrival laws for the tail (the inside-out law "
+            "from t = 0, the same from the assembly epoch, the halo's own growth after it) read the "
+            "same on every row and within 0.05 of each other here, and all of them raise it, because "
+            "the tail's inner edge at 12 kpc overlaps gas the disc already holds near the threshold "
+            "and 0.2 Msun/yr forms there. The row is the present infall rate inside the threshold "
+            "radius (star formation is self-regulated: KS_NORM at -1 sigma reads 2.25, higher, and at "
+            "+1 sigma 1.98, so the row sees past KS_NORM's band now - debt #44 no longer covers it), "
+            "and the constant threshold of 5 Msun/pc2 is the bottom of its cited 5-10 (debt #47)."
         ),
         prediction=(
-            "The second infall should be *slower* than the first, not the same speed - the outer "
-            "disc it feeds accretes over longer. A separate timescale for the post-merger episode "
-            "brings this down without touching the stellar structure. If it also moves rows 10 and "
-            "11, the two episodes are not as separable as this model assumes. Row 44's band: at "
-            "KS_NORM's +1 sigma the row is already inside, so the pair with row 20 is the evidence."
+            "Kennicutt's threshold is not a constant but alpha kappa sigma_g / 3.36 G, derived from "
+            "the rotation curve; probed at S16 (D119) with alpha = 0.69 and sigma_g = 6 km/s it reads "
+            "10.8 Msun/pc2 at R0 and puts the gas there at the observed 10-13, hydrogen at 8.2e9 "
+            "(row 20 met) and this row at 1.95 - still out - while row 9 falls to 0.06 and fails, "
+            "because the thick disc forms from the same reservoir. So rows 2, 9 and 20 are judged "
+            "together when S18 builds the thick disc's radial heating; if row 2 still exceeds 1.84 "
+            "with the derived threshold and row 9 restored, the cause is the present infall rate "
+            "itself - infall_timescale's 7 Gyr at R0 - and not the gas physics."
+        ),
+    ),
+    Miss(
+        row=7,
+        model="simple",
+        debt=19,
+        since="S16",
+        reason=(
+            "1126 pc against 900 +/- 180, over by 46, from 1042 (inside) until S16: the high-j tail "
+            "took 7.6% of the budget out of the exponential (D119), the stellar surface density at R0 "
+            "fell 51.6 -> 47.6 Msun/pc2, and the thick disc, which is too massive and too compact "
+            "(debt #19) and sat at the top of its window on the cancellation debt #19 records, "
+            "puffed up with the weaker self-gravity."
+        ),
+        prediction=(
+            "This row is debt #19's with rows 5, 9 and 11: radial heating with the vertical kick "
+            "(S18) spreads the thick disc, and a thick disc at its own mass in the observed scale "
+            "length has the surface density that holds its height inside 720-1080. If S18 restores "
+            "rows 5 and 11 and this row stays over, the vertical stage's heating constants are what "
+            "is wrong (debt #42), not the thick disc's shape."
         ),
     ),
     Miss(
@@ -302,18 +330,23 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=20,
-        debt=18,
-        since="S2",
+        debt=47,
+        since="S16",
         reason=(
-            "5.80e9 Msun against 8.0e9, a 28% shortfall, improved from 4.94e9 by the "
-            "merger-delivered second infall. With the infall carrying the disc's own "
-            "scale length there is nothing accreting beyond about 10 kpc, so the outer HI disc "
-            "that holds most of the Milky Way's gas simply does not exist in this model."
+            "6.24e9 Msun of hydrogen against 8.0e9, a 22% shortfall, from 4.17e9 (48%) until S16 "
+            "built the extended component (debt #18, D119): the high-j tail of the halo's "
+            "angular-momentum distribution, 7.6% of the budget beyond 12 kpc, 3.6-3.7 Msun/pc2 from "
+            "15 to 20 kpc, ending where the distribution's j_max lands, near 25 kpc. What is still "
+            "missing is not in the tail: the model's gas at R0 is 6.8 Msun/pc2 against the observed "
+            "10-13, because the constant threshold of 5 is the bottom of its cited range, and the "
+            "tail's shape follows one constant, mu, whose scatter no input absorbs (debt #47). The "
+            "target is zero-width (debt #17), so no float meets it."
         ),
         prediction=(
-            "An extended accretion component sized to the observed HI disc closes this row and "
-            "rows 2 and 3 with it. Note the target is also zero-width (debt #17), so even a model "
-            "that got the mass right would fail this check until the table records an uncertainty."
+            "The derived Toomre threshold (D119's probe) reads 8.2e9 with the tail as built; that is "
+            "the mechanism, judged with rows 2 and 9 at S18. The tail itself is not the lever: across "
+            "mu = 1.06-1.4 this row reads 5.0-6.9e9 and row 3 does not move. If the derived threshold "
+            "lands this row and row 2 is still out, the two rows are not one story."
         ),
     ),
     Miss(

@@ -87,6 +87,19 @@ LEVEL0: dict[str, Constant] = {
         "The exponent of the orbit-averaged radius in the contraction invariant; see CONTRACTION_A. "
         "w = 1 with A = 1 recovers the circular-orbit invariant.",
     ),
+    "ANGULAR_MOMENTUM_MU": Constant(
+        1.25,
+        "dimensionless",
+        "Shape of the halo's specific-angular-momentum distribution, M(< j) = M μ j/(j₀ + j) with "
+        "j ≤ j₀/(μ − 1): the universal profile of ΛCDM haloes, whose μ − 1 has log-mean −0.6 and "
+        "scatter 0.4 dex — median μ = 1.25, 90% of haloes between 1.06 and 2.0 [verified: Bullock et "
+        "al. 2001, read at S16]. Read by the halo stage to derive the extended accretion component "
+        "(debt #18, S16): the exponential disc MMW98 assume holds the distribution's low-j part, and "
+        "what it does not hold beyond their outer crossing — the high-j tail, about 9% of the "
+        "budget beyond 12 kpc at the default — is the gas the star formation threshold leaves as the "
+        "outer HI disc. The low-j excess inside is discarded, not modelled: it is what feedback ejects "
+        "and the bulge is drawn from (D110). The scatter in μ is not absorbed by any input (debt #47).",
+    ),
     "R_SUN": Constant(
         8.2,
         "kpc",

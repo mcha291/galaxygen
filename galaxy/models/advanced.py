@@ -87,7 +87,7 @@ ADVANCED = MODELS.register(
                 "Chosen, not fitted, and the tilt it gives the gradient is a prediction.",
             ),
             "WIND_SPEED": Constant(
-                999.0,
+                993.0,
                 "km/s",
                 "The escape velocity at which half of a generation's fresh metals leave the disc. "
                 "**The one fitted constant of the advanced chemistry**: set so the present-day "
@@ -98,11 +98,12 @@ ADVANCED = MODELS.register(
                 "S14 to 1028 once the halo contracts around the disc (debt #6) and the escape velocity "
                 "at R₀ rises 562 → 585 km/s; refitted at S15 to 999 once the epoch's default is the "
                 "ΛCDM median (z_f 2.5 → 1.66, debt #12) and v_esc(R₀) falls 585 → 569, inside the "
-                "observed 530–580 — each time the mechanism fixed, the constant re-examined (rule "
-                "B10, debt #43). Row 3 still overshoots by 12 km/s at this potential, so the value is "
-                "fitted against a known miss and will move again when the bulge and the extended "
-                "component arrive. Everything the value implies elsewhere — the loss fraction at "
-                "every other radius, the gradient tilt — is then a prediction.",
+                "observed 530–580; refitted at S16 to 993 once the high-j tail exists (debt #18) and "
+                "the gas at R₀ read −0.004 dex — each time the mechanism fixed, the constant "
+                "re-examined (rule B10, debt #43). Row 3 still overshoots by 2 km/s at this potential, "
+                "so the value is fitted against a known miss and will move again when the bulge "
+                "arrives. Everything the value implies elsewhere — the loss fraction at every other "
+                "radius, the gradient tilt — is then a prediction.",
             ),
             "IA_METAL_TO_IRON": Constant(
                 2.0,
