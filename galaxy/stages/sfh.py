@@ -19,7 +19,11 @@ The model, per annulus, with instantaneous recycling:
   that matches the source's own numbers (DECISIONS.md D43).
 - **Star formation** is Kennicutt-Schmidt, switched off below a threshold:
   ``Psi = KS_NORM * Sigma_gas^KS_INDEX * s(Sigma_gas)``. The threshold is what
-  leaves an extended gas disc outside a truncated stellar one. The switch ``s``
+  leaves an extended gas disc outside a truncated stellar one. Since S18 it is
+  Kennicutt's own, ``Sigma_crit(R) = alpha kappa(R) sigma_g / 3.36 G``, off the
+  checkpoint-1 curve's epicyclic frequency (debt #47): 11 M☉/pc² at R₀ falling to
+  4 at 20 kpc, where the constant 5 that stood until then was the bottom of its
+  cited range and held the gas at R₀ at 6.3 against the observed 10–13. The switch ``s``
   is a ``tanh`` of width a quarter of the threshold, **not** a step, and that is
   a numerical requirement rather than a flourish: a step makes the star
   formation rate a grid-alignment artefact. Self-regulation holds a wide annulus
@@ -71,10 +75,28 @@ from galaxy.stages.halo import hernquist_enclosed
 THRESHOLD_WIDTH = 0.25
 
 
-def star_formation_rate(gas: np.ndarray, norm: float, index: float, threshold: float) -> np.ndarray:
-    """Kennicutt-Schmidt with a smooth low-density cutoff, in M☉/yr/kpc²."""
+def star_formation_rate(gas: np.ndarray, norm: float, index: float, threshold: float | np.ndarray) -> np.ndarray:
+    """Kennicutt-Schmidt with a smooth low-density cutoff, in M☉/yr/kpc²; ``threshold`` may vary with radius."""
     switch = 0.5 * (1.0 + np.tanh((gas - threshold) / (THRESHOLD_WIDTH * threshold)))
     return norm * np.maximum(gas, 0.0) ** index * switch
+
+
+def toomre_threshold(kappa: np.ndarray, alpha: float, sigma_g: float, G: float) -> np.ndarray:
+    """Kennicutt's Σ_crit = α κ σ_g / 3.36 G in M☉/pc², with κ in km/s/kpc and G in the model's units."""
+    return alpha * np.asarray(kappa, dtype=float) * sigma_g / (3.36 * G) / PC_PER_KPC**2
+
+
+SF_THRESHOLD_SURFACE_DENSITY = FieldDecl(
+    name="sf_threshold_surface_density", label="Star formation threshold Σ_crit(R)", unit="Msun/pc2",
+    kind=Kind.FIELD, axes=("R",), ramp=Ramp("cividis", scale="log"), meaningful_zero=True,
+    about=(
+        "Kennicutt's threshold from the rotation curve's epicyclic frequency: the gas surface "
+        "density below which the disc is Toomre-stable and forms no stars. Falls outward with κ, "
+        "so the inner disc holds more gas below it than a constant would and the outer disc less; "
+        "the gas at R₀ sits just under it, which is why the model's gas there reads what is "
+        "observed since S18 (debt #47)."
+    ),
+)
 
 
 def surface_to_mass(sigma: np.ndarray, R: np.ndarray) -> float:
@@ -214,7 +236,7 @@ CIRCULAR_VELOCITY_RESOLVED = FieldDecl(
     meaningful_zero=True,
     about=(
         "Supersedes the checkpoint-1 circular_velocity, which had every baryon in one exponential. "
-        "The stars and the gas are fitted separately and each given Freeman's razor-thin form; the "
+        "The stars and the gas are solved separately as razor-thin discs of arbitrary profile; the "
         "checkpoint-1 field stays because stage one's preview is a rotation curve and stage one "
         "does not know the split."
     ),
@@ -237,6 +259,44 @@ V_TANGENTIAL_SUN = FieldDecl(
 )
 
 
+STARS_FORMED_HISTORY = FieldDecl(
+    name="stars_formed_history", label="Stars formed per step, where they are now", unit="Msun/pc2",
+    kind=Kind.FIELD, axes=("R", "t"), ramp=Ramp("inferno", scale="log"), meaningful_zero=True,
+    about=(
+        "Surface density locked into stars at each step, at the radii those stars occupy today: "
+        "(1 − R) Ψ dt moved through the radial spread of every major merger since (S18, debt #19). "
+        "The vertical stage sorts this rather than the birth history, so a population's shape "
+        "carries the merger's radial heating as well as its vertical one. Equal to (1 − R) Ψ dt "
+        "when there is no major merger; the chemistry still reads the birth history, because an "
+        "abundance is set where a star was born."
+    ),
+)
+
+
+def radial_transport(formed: np.ndarray, spread: np.ndarray, R: np.ndarray, dR: float) -> np.ndarray:
+    """Move each step's stars through a Gaussian in radius of rms ``spread[:, j]``, conserving mass.
+
+    The spread is piecewise constant in time — it changes only where a major merger
+    lands — so one kernel serves every step between events. The kernel is built on
+    ring masses and row-normalised, so what leaves a ring arrives somewhere on the
+    grid and the total is exact to rounding; the surface density is that mass over
+    the ring's area again.
+    """
+    out = np.array(formed, dtype=float, copy=True)
+    area = 2.0 * math.pi * R * dR
+    start = 0
+    for stop in range(1, spread.shape[1] + 1):
+        if stop < spread.shape[1] and np.array_equal(spread[:, stop], spread[:, start]):
+            continue
+        width = spread[:, start]
+        if np.any(width > 0.0):
+            k = np.exp(-0.5 * ((R[None, :] - R[:, None]) / np.maximum(width, 1e-9)[:, None]) ** 2)
+            k /= k.sum(axis=1, keepdims=True)
+            out[:, start:stop] = (k.T @ (formed[:, start:stop] * area[:, None])) / area[:, None]
+        start = stop
+    return out
+
+
 def infall_profile(R: np.ndarray, R_inf: float, baryons: float) -> np.ndarray:
     """Surface density of everything that will ever accrete: one exponential of scale ``R_inf``, normalised to the budget.
 
@@ -252,9 +312,15 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     dt = ctx.grid.spec.t_max / ctx.grid.spec.n_t
     ret = float(ctx.constants["RETURN_FRACTION"])
     ks_n, ks_k = float(ctx.constants["KS_NORM"]), float(ctx.constants["KS_INDEX"])
-    crit = float(ctx.constants["SF_THRESHOLD"])
     G = float(ctx.constants["G"])
     R_sun = float(ctx.constants["R_SUN"])
+    # The threshold is Kennicutt's, off the checkpoint-1 curve (S18, debt #47). That curve has
+    # every baryon in one exponential and no gas, so κ inside a few kpc is the preview's; the
+    # resolved curve is this stage's own output and cannot set its own threshold (rule A1).
+    crit = toomre_threshold(
+        ctx.fields["epicyclic_frequency"], float(ctx.constants["TOOMRE_ALPHA"]),
+        float(ctx.constants["GAS_DISPERSION"]), G,
+    )
 
     R_d = float(ctx.fields["disc_scale_length_spin"])
     baryons = float(ctx.fields["baryon_mass_total"])
@@ -307,10 +373,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     n_t_steps = t.size
 
     gas = np.zeros_like(R)
-    stars = np.zeros_like(R)
     gas_hist = np.empty((R.size, t.size))
     sfr_hist = np.empty((R.size, t.size))
     infall_hist = np.empty((R.size, t.size))
+    formed_hist = np.empty((R.size, t.size))
     for j, tj in enumerate(t):
         remaining = dt * (1.0 - decay ** (n_t_steps - j)) / (1.0 - decay)  # >= dt: the steps left, weighted
         late = late * decay + delivery[j] * dt / remaining
@@ -318,22 +384,31 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         psi = star_formation_rate(gas, ks_n, ks_k, crit)
         locked = (1.0 - ret) * PC_PER_KPC * psi  # M☉/yr/kpc² -> M☉/pc²/Gyr
         gas = np.maximum(gas + (infall - locked) * dt, 0.0)
-        stars = stars + locked * dt
         gas_hist[:, j] = gas
         sfr_hist[:, j] = psi
         infall_hist[:, j] = infall
+        formed_hist[:, j] = locked * dt
     psi_now = star_formation_rate(gas, ks_n, ks_k, crit)
+    # The stars never feed back on the gas, so where a merger moved them can be settled once
+    # the history is complete: every step's stars go through the radial spread of the major
+    # mergers after it (S18, debt #19), and the present-day stellar disc is the sum.
+    formed_now = radial_transport(
+        formed_hist, np.asarray(ctx.fields["disc_radial_spread"], dtype=float), R, ctx.grid["R"].width,
+    )
+    stars = formed_now.sum(axis=1)
 
     R_star = fit_scale_length(stars, R, 1.0, 3.0 * R_d)
     R_gas = fit_scale_length(gas, R, 1.0, ctx.grid.spec.R_max)
     m_star, m_gas = surface_to_mass(stars, R), surface_to_mass(gas, R)
 
-    # Neither profile is an exponential, so each goes through the general
-    # razor-thin solver rather than through a fitted single exponential.
-    v_star, res_star = disc_circular_velocity(stars, R, G)
-    v_gas, res_gas = disc_circular_velocity(gas, R, G)
-    v_star_sun, _ = disc_circular_velocity(stars, R, G, at=R_sun)
-    v_gas_sun, _ = disc_circular_velocity(gas, R, G, at=R_sun)
+    # Neither profile is an exponential, so each goes through the general razor-thin
+    # solver rather than through a fitted single exponential — once per profile, the
+    # grid and R_0 together, because the solver's cost is in the profile, not the points.
+    at = np.append(R, R_sun)
+    v_star_all = disc_circular_velocity(stars, R, G, at=at)
+    v_gas_all = disc_circular_velocity(gas, R, G, at=at)
+    v_star, v_star_sun = v_star_all[:-1], float(v_star_all[-1])
+    v_gas, v_gas_sun = v_gas_all[:-1], float(v_gas_all[-1])
     # The spheroid is the third baryonic component and rotation at R_0 must see it: it is a
     # sphere, so its own circular velocity is Newton's, and it enters the quadrature beside the
     # two razor-thin discs. This is the whole of debt #11's remaining prediction for row 3.
@@ -353,6 +428,8 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "gas_surface_density_history": gas_hist,
         "sfr_surface_density_history": sfr_hist,
         "infall_rate_history": infall_hist,
+        "stars_formed_history": formed_now,
+        "sf_threshold_surface_density": crit,
         "sfr": float(np.trapezoid(psi_now * 2.0 * math.pi * R, R)),
         "gas_mass_30kpc": m_gas,
         "hydrogen_mass_30kpc": m_gas * (1.0 - float(ctx.constants["HELIUM_MASS_FRACTION"])),
@@ -378,19 +455,19 @@ SFH = IMPLEMENTATIONS.register(
         compute=compute,
         reads_inputs=("infall_timescale", "inside_out_index"),
         reads_constants=(
-            "RETURN_FRACTION", "KS_NORM", "KS_INDEX", "SF_THRESHOLD",
+            "RETURN_FRACTION", "KS_NORM", "KS_INDEX", "TOOMRE_ALPHA", "GAS_DISPERSION",
             "GAS_DISC_SCALE_RATIO", "G", "R_SUN", "V_SUN_PECULIAR", "HELIUM_MASS_FRACTION",
         ),
         requires=(
-            "disc_scale_length_spin", "baryon_mass_total",
+            "disc_scale_length_spin", "baryon_mass_total", "epicyclic_frequency",
             "infall_tail_surface_density", "infall_tail_share",
             "bulge_stellar_mass", "bulge_scale_radius",
             "halo_circular_velocity", "halo_circular_velocity_sun",
-            "second_infall_share", "merger_delivery",
+            "second_infall_share", "merger_delivery", "disc_radial_spread",
         ),
         publishes=(
             GAS_SURFACE_DENSITY, STELLAR_SURFACE_DENSITY, SFR_SURFACE_DENSITY,
-            GAS_HISTORY, SFR_HISTORY, INFALL_HISTORY,
+            GAS_HISTORY, SFR_HISTORY, INFALL_HISTORY, STARS_FORMED_HISTORY, SF_THRESHOLD_SURFACE_DENSITY,
             SFR, GAS_MASS_30KPC, HYDROGEN_MASS_30KPC, STELLAR_MASS_TOTAL, BULGE_STELLAR_FRACTION,
             STELLAR_SCALE_LENGTH,
             CIRCULAR_VELOCITY_RESOLVED, V_CIRCULAR_SUN, V_TANGENTIAL_SUN,

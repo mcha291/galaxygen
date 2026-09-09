@@ -71,15 +71,16 @@ def test_the_gradient_is_set_by_the_inside_out_index(model):
     if model.name == "simple":
         # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
         # surface density still falls outwards and that alone tilts the enrichment.
-        assert grads[0] == pytest.approx(-0.0173, abs=0.003)  # -0.011 until S17 took the spheroid out of the disc
+        assert grads[0] == pytest.approx(-0.0265, abs=0.003)  # -0.0173 until S18's derived threshold; -0.011 until S17
         # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
         assert grads[1] > -0.049
     else:
         # The wind's tilt is there even with no inside-out growth at all: over twice
         # the simple model's n = 0 value (three times until S17)...
-        assert grads[0] == pytest.approx(-0.0414, abs=0.004)  # -0.033 until S17
-        # ...and with the cited n = 1 the gradient reaches the observed range (row 22).
-        assert -0.069 <= grads[1] <= -0.049
+        assert grads[0] == pytest.approx(-0.0538, abs=0.004)  # -0.0414 until S18; -0.033 until S17
+        # ...and with the cited n = 1 the gradient reached the observed range (row 22) until S18, when the
+        # derived threshold steepened it past the edge by 0.0008: a recorded miss under debt #47 (D124).
+        assert grads[1] == pytest.approx(-0.0698, abs=0.002) and grads[1] < -0.069
 
 
 def test_infall_dilution_is_what_tilts_it(model):
@@ -99,7 +100,8 @@ def test_infall_dilution_is_what_tilts_it(model):
     # infall now supplies about half of it rather than seven tenths.
     assert spread(0.0) < 0.85 * spread(1.0)
     # The wind supplies its own tilt in the advanced model, so infall's share is smaller there.
-    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.64, "advanced": 0.66}[model.name], abs=0.08)  # 0.52 / 0.59 until S17
+    # 0.80 / 0.76 since S18: the threshold's own radial shape tilts the enrichment whatever n is, so differential infall's share fell again.
+    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.80, "advanced": 0.76}[model.name], abs=0.08)  # 0.64 / 0.66 until S18; 0.52 / 0.59 until S17
 
 
 def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
@@ -128,7 +130,9 @@ def test_migration_over_flattens_the_old_population(model):
     assert abs(old) < abs(young)
     # Advanced: 3.1 at S9 — the same over-flattening with a different old-gas gradient
     # underneath it, recorded as debt #28 rather than tuned away.
-    assert young / old == pytest.approx({"simple": 3.2, "advanced": 3.1}[model.name], abs=0.4)
+    # 2.5 in both since S18: the unmigrated old gradient doubled under the derived threshold and the kernel takes
+    # a larger factor out of a steeper start (debt #28's test has the numbers).
+    assert young / old == pytest.approx({"simple": 2.5, "advanced": 2.55}[model.name], abs=0.4)  # 3.2 / 3.1 until S18
 
 
 def test_metallicity_rises_then_is_slightly_diluted_late(model):

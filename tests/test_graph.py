@@ -20,13 +20,16 @@ def chk(m, *stages):
 # Execution orders. Kahn's algorithm runs in rounds with a (checkpoint, id) tie-break,
 # so the advanced model's vertical stage — which reads the chemistry's valley and so
 # cannot start until the chemistry is done — lands a round later than the simple one's.
+# Since S18 the assembly stage reads the checkpoint-1 curve (the merger's radial kick becomes a
+# displacement through its epicyclic frequency), so the disc runs before it; until then the
+# tie-break put assembly second.
 ORDER = {
     "simple": (
-        "halo", "assembly", "disc", "nucleus", "sfh", "chemistry", "vertical",
+        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry", "vertical",
         "bar", "population", "pattern", "systems", "formation", "planets",
     ),
     "advanced": (
-        "halo", "assembly", "disc", "nucleus", "sfh", "chemistry_dtd", "bar", "population",
+        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population",
         "vertical_alpha", "pattern", "formation", "systems", "planets",
     ),
 }

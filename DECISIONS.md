@@ -3251,3 +3251,178 @@ judged statistically; row 3 was re-read and moved 252.9 → 251.3. Rows 12 and 1
 outside, and D121 says why and what closes them. Next: S18, the thick disc (Fable,
 §5d), with row 2 no longer available as evidence for debt #47 and rows 5, 7 and 11
 further out than S16 left them.
+
+## Session 18 — the thick disc: the radial kick, the derived threshold, and where the thick disc's shape is decided
+
+Surface: desktop. Model: Fable 5.1. Branch `session-18`.
+
+### D124. The merger's radial kick is derived and worth a third of a kiloparsec, the threshold is Kennicutt's and lands the gas rows at the cost of row 9, and the thick disc's shape is decided by the first infall's arrival law (debts #19, #47, #42, #43, #44, #26, #27, #45, #11, #17, #21; #49 opened)
+
+**Decisions.** Three, each probed before it was built (rule B1), and one judgement.
+
+1. **The radial kick is built, derived, and the prediction it carried is dead.**
+   §5d's prediction for this session was that "a merger that thickens the disc also
+   spreads it, so rows 5 and 11 can be right together". The kick is derived from what
+   the model already has: the vertical impulse `MERGER_HEATING × mass_ratio` read as
+   an isotropic one, turned into a displacement by the checkpoint-1 curve — a radial
+   impulse δv starts an epicycle of amplitude δv/κ, an azimuthal one shifts the
+   guiding centre by 2Ω δv/κ² and leaves an epicycle of that amplitude around it —
+   so ⟨ΔR²⟩ = σ_k² (1/2κ² + 6Ω²/κ⁴): **1.47 kpc at R₀ and 0.30 at 2 kpc**, because
+   the inner disc is stiff. The disc stage publishes `epicyclic_frequency` once,
+   assembly publishes `disc_radial_spread` (R, t) beside `disc_heating`, `sfh` moves
+   each step's stars through it after the loop (the stars never feed back on the gas,
+   so the transport can wait for the whole history) and publishes
+   `stars_formed_history`, which both vertical stages sort instead of rebuilding the
+   birth history — one opinion about where the stars are, held where it is computed
+   (rule A9). Mass is conserved ring by ring; with no major merger the field is the
+   birth history exactly `[verified: tests/test_sfh.py::test_the_stars_formed_history_is_the_birth_history_moved_by_the_kick]`.
+   Isotropy is the assumption; an anisotropic kick has no cited number and the probe
+   read the answer's insensitivity to it (a kick 1.5× and 2× larger moves row 5 to
+   1.45 and 1.52 against 1.35 on the epicyclic term alone).
+
+   What it is worth, by the number (rule B4): row 5 **1.18 → 1.51** on the constant
+   threshold and 0.93 → 1.17 on the derived one; row 9 −0.015; row 3 −0.4 alone and
+   −0.2 with the threshold; rows 11 and 7 nothing. The sweep §5d's gate asks for,
+   on the built model, merger share 0.3 → 0.8: row 9 reads 0.135, 0.088, 0.051, 0.024,
+   0.007, 0.001 while row 11 reads 1.45e10, 1.21e10, 9.6e9, 7.2e9, 4.9e9, 2.8e9 and
+   row 5 never passes 1.36 — **rows 9 and 11 are never inside together and the
+   cancellation D51 recorded is still there** `[verified: tests/test_vertical.py::test_the_gate_is_still_a_cancellation_across_the_sweep]`.
+   A kernel of ~2 kpc everywhere would be needed (constant 2.0 kpc reads row 5 at
+   1.77), and that is migration's scale, not heating's — and a symmetric kernel of
+   that size reflects mass at R = 0 into a cusp the old solver could not represent
+   (its residual went 0.001 → 0.30), which is how the third decision was found.
+
+2. **The star formation threshold is Kennicutt's, derived from the curve.**
+   `SF_THRESHOLD` = 5 M☉/pc² — the bottom of its cited 5–10, "chosen, and it is the
+   other end of its own range that the failing rows want" (AUDIT_RUN2.md D-3) — is
+   replaced by Σ_crit = α κ σ_g / 3.36 G `[recall: Kennicutt 1989; Martin & Kennicutt
+   2001]` with two Level 0 constants, `TOOMRE_ALPHA` = 0.69 and `GAS_DISPERSION` = 6
+   km/s, whose about lines say they are one calibration (α was fitted with the
+   dispersion assumed, rule B10). Published as `sf_threshold_surface_density`: 589 at
+   the first cell, 47 at 2 kpc, 26 at 4, **11.5 at R₀**, 3.9 at 20. The gas at R₀ reads
+   **10.8** against the observed 10–13 (6.3 until now), row 20's hydrogen **8.09e9**
+   against 8.0 (6.03e9), row 2 1.755 (inside), the advanced row 6 439 → 373. Debt #47
+   pre-committed the reading of what it costs: "if row 9 cannot be restored with the
+   threshold derived, the thick disc is what is wrong, not the threshold" (D119). It
+   costs **row 9 (0.135 → 0.051)** and row 8 with it, row 5 (1.51 → 1.17 with the kick),
+   and, in the advanced model, **row 22 by 0.0008** (−0.064 → −0.0698). All recorded.
+
+   Two things the threshold does that the record must carry. **The disc is now
+   threshold-regulated**: the gas sits at 70–90% of Σ_crit everywhere inside 12 kpc,
+   so the rate is whatever the infall supplies and `KS_NORM` no longer reaches row 2
+   at all — 1.764 / 1.755 / 1.755 across its ±1σ band where S17 read 1.97 / 1.82 / 1.73
+   (debt #44's claim is now false the other way; the gas mass still reads the
+   normalisation, 1.17e10 → 1.07e10). And **the threshold diverges with κ at the
+   centre**, where the Toomre argument does not hold and the bar the model lacks
+   empties the disc: the model holds 1.5e9 of gas inside 4 kpc (S17: 0.4e9; the Galaxy
+   a few 1e8), 44 M☉/pc² at 1 kpc and 276 at the first cell. That reservoir is 1.1e9 of
+   row 20's hydrogen — outside 4 kpc the model reads 7.0e9 against ~7.7e9 — so the
+   row is at its target partly for a wrong reason, and its entry says so. The same
+   reservoir halves the centre's iron excess (debt #26: the advanced peak 1.39 → 0.70
+   dex, out to 1.9 kpc rather than 2.66, the peak now at 0.5 kpc because the innermost
+   rings never cross their threshold; the simple 0.46 → 0.25), steepens the advanced
+   gradient past its edge, and doubles the unmigrated old gradient (debt #28: −0.102 →
+   −0.228 simple, −0.127 → −0.254 advanced; the kernel takes a factor 33 and 11 out of
+   it now, young/old 2.5 in both).
+
+3. **The disc velocity solver is basis-free.** From S2 the razor-thin solver
+   least-squared a profile onto eight exponentials and summed Freeman's solution.
+   On the S17 profiles that read the stars at R₀ to 0.14 km/s and the gas to 1.4; on
+   S18's — the kick steepens the centre, the threshold shapes the gas like κ — it
+   missed the gas by 2.1 km/s and both curves by 7–12 at 12 kpc, and it cannot be
+   densified (the exponentials are collinear; past twelve terms the fit returns
+   nothing or thousands of km/s). Replaced by the homoeoid form `[recall: Binney &
+   Tremaine 2008 §2.6.2]`, v_c²(R) = −4G ∫₀^R a g′(a)/√(R² − a²) da with g(a) =
+   ∫₀^∞ Σ(√(a² + u²)) du, both integrals regular after substitution, validated on a
+   Kuzmin disc (analytic; 0.03% at R₀ with the 30 kpc truncation accounted for) and
+   Freeman's (0.005%), converged to 10⁻⁵ at R₀, 40 ms `[verified: tests/test_disc.py::test_the_general_solver_reproduces_freeman_on_an_exponential]`.
+   It reads S17's profile 0.09 km/s below the basis fit (251.26 → 251.17), so every
+   earlier pin stands inside its tolerance; on S18's it is worth −0.7.
+
+4. **Judgement: the gate is not met, and the record says where the thick disc's
+   shape is decided.** Rows 5, 7, 9 and 11 are all out (1.17, 1279, 0.051, 9.6e9). The
+   probe that killed the kick's prediction found the lever: **the early episode's
+   arrival law**. `sfh` accretes both infalls on the thin disc's inside-out law, τ(R) =
+   7 Gyr × R/R₀, so by the merger at 3.8 Gyr only 42% of the early gas at R₀ and 31% at
+   12 kpc has arrived — the pre-merger disc is compact because the model makes it
+   arrive slowly. The two-infall framework the inside-out index cites gives the
+   *first* infall a short, radius-independent timescale (~1 Gyr) and reserves τ_D(R)
+   for the second `[recall: Chiappini et al. 1997, 2001]`. Probed with the early
+   episode at 1 Gyr everywhere (0.55 — the halo's dynamical time at z_f, 0.1/H(z_f) —
+   reads the same): row 5 **2.11**, inside, but the whole early share becomes thick
+   disc — row 11 1.74e10, row 9 0.62, row 2 1.30 — and shrinking the share through
+   the merger's gas fraction re-truncates the pre-merger disc through the threshold
+   (share 0.8: rows 9 and 11 inside at 0.127 and 6.4e9, row 5 1.35). A thick disc
+   both extended and light needs most of the early gas to still be gas at the merger,
+   which a constant-efficiency Kennicutt law does not allow. That is **debt #49**, and
+   the same lever is S20's: in the advanced model the fast first infall alone does not
+   open the valley (dip 0.15 at most, row 6 to 720), while the derived threshold
+   **reopens it on the default merger list** at τ₀ = 1 for n = 2 and n = 3 (dips 0.57
+   and 0.64, the split at 0.39; S17 had closed the one setting that opened it), with
+   row 6 at 700 there. Not built here: it moves every row of both models and its
+   other consequence is judged at S20.
+
+   Row 7 is re-attributed. It reads 1260–1370 across every thick-disc shape probed,
+   because Σ(R₀) is 47.3 M☉/pc², what is observed, and does not move; the row is the
+   dispersion, 40.4 km/s of which 30 is `MERGER_HEATING`'s kick on top of 27 of secular
+   heating. At the observed 35 km/s the same Σ reads 958 pc; **`MERGER_HEATING` = 60
+   reads row 7 at 751 and the advanced row 6 at 346, both inside, the first setting of
+   either heating constant to land rows 6 and 7 together** — S20's first probe, under
+   debt #42, and not this session's to set.
+
+**Row 3 landed, by 0.04, on none of the mechanisms its prediction named.** 251.26
+→ **250.96**: the solver −0.09, the kick −0.2 (a fifth of the disc's stars carried
+outward across R₀), the threshold 0.00 (251.17 with and without it). The bar's
+prediction (7e9 buckled into the spheroid reads 249.4) stands unread; its entry
+went because a miss that passes is an error to leave (debt #29), and the reason is
+written in its place. Rows 2 and 3 are green on the same footing now: inside their
+windows on mechanisms worth less than the windows.
+
+**What moved, both models.** Row 1 5.03 → 4.75e10 (the disc makes fewer stars from
+the same budget; inside), row 4 2.48 → 2.44, row 6 simple 321 → 327, advanced 439 →
+373; row 10 3.17 → 3.02e10; hydrogen 6.03 → 8.09e9, total gas 8.26e9 → 1.11e10; the
+gas at 20 kpc 3.75 → 3.33 (the threshold there is 3.9); `NET_YIELD` 0.01184 →
+**0.01376** (+16%) and `WIND_SPEED` 982.2 → **860.3** (−12%), the largest moves either
+has made, because the gas at R₀ read −0.065 and −0.084 dex — D119 predicted −0.085 —
+and both were re-set to solar by bisection (debt #43); the wind's escape fraction at
+R₀ 0.750 → 0.699, the two effective yields 13% apart (17% at S17). Debt #45: no
+setting of `GAS_DISC_SCALE_RATIO` reads the advanced row 22 now (1.0 is −0.0698,
+1.25 is −0.0468; the window sits between). Migration narrows the local spread a
+little instead of widening it (0.370 → 0.360). The execution order changed: the
+disc runs before assembly, which reads its curve. Every pin re-pinned with the old
+number beside; the spec's simple model reads 10 pass / 12 fail / 2 n-y-c and the
+advanced 9 / 14 / 1.
+
+**Not done, on purpose.** The fast first infall (#49, S20 with the valley); either
+heating constant (#42, S20); the inner reservoir's cause, the bar (#21); a cap on the
+threshold at the centre (an invention, rule A4). The viewer previews for
+`epicyclic_frequency`, `disc_radial_spread`, `stars_formed_history` and
+`sf_threshold_surface_density` are S19's.
+
+### D125. Cold timings at S18 (rules B2, B6)
+
+Desktop, Windows 11, uv-managed CPython 3.14, `tools/timings.py` and `python -m
+galaxy.specs.performance`, one process each, the suite not running.
+
+**Profile.** Simple **0.81 s cold** (0.60 at S17), advanced **1.08 s** (0.87): the whole
+of the difference is `sfh`, 0.18 s (22.7% / 14.3%) from ~0.05 — the basis-free solver
+(two calls, one per profile, grid and R₀ together, ~40 ms each on 1000-point
+quadrature), the radial transport (a 400×400 kernel against 550 columns) and the
+(R, t) `stars_formed_history` array. The catalogue (`systems`, 0.24 s), planets (0.18)
+and the advanced chemistry (0.38) are unchanged. Import + registry 7–10 ms.
+
+**Routes** (cold / warm): one profile 0.198 / 0.0004 s, history 0.227 / 0.003,
+scalar 0.173 / 0.0004, one sector 0.250 / 0.004, whole disc 0.482 / 0.255, one star
+0.245 / 0.002; advanced history 0.556, alpha plane 0.562, one sector 0.567, one star
+0.595. Every physics route carries `sfh`'s new 0.15 s; metadata routes are unmoved
+(stages 0.5 ms, fields 1 ms, inputs 0.1 ms). The one-off first seeded draw is 11 ms
+(debt #37).
+
+**Scaling** (`tools/scaling.py`): the simple chemistry is linear in N_t (exponent
+1.00), the advanced 0.82, the naive DTD 2.06 — unchanged; the advanced chemistry is
+7.1× the simple at N_t = 2000 and the whole model 1.48×. The solver's cost does not
+scale with N_t; with N_R it is quadratic in the quadrature, fixed at 1000 points.
+
+**Convergence**: 0 drifts on N_R, N_t and N_z in either model, every row; row 3 moves
+0.04 km/s across N_R (250.99 / 250.96 / 250.95) against a 6 km/s window — and against
+its 0.04 margin, which the sweep is not built to judge and the record says so (D124).

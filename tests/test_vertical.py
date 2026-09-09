@@ -1,7 +1,11 @@
 """The thin/thick split, and the compensation the gate hides.
 
-Row 9 passes. It passes for the wrong reason, and that is asserted here so that
-nobody reads the green as a working thick disc (debt #19).
+Row 9 passed from S3 to S17 for the wrong reason, and that was asserted here so that
+nobody read the green as a working thick disc (debt #19). Since S18 it fails: the
+derived star formation threshold holds the reservoir the pre-merger disc formed its
+outer stars from, and the merger's radial kick - the mechanism §5d predicted would
+spread the thick disc - is worth 0.3 kpc on row 5 and 0.015 on this row (D124). The
+sweep §5d's gate asks for is asserted here: rows 9 and 11 are never inside together.
 """
 
 from __future__ import annotations
@@ -25,28 +29,69 @@ def out(model, **inputs):
 MERGER_SPLIT = {"simple": True, "advanced": False}
 
 
-def test_the_gate_passes(model):
+def test_the_gate_and_what_it_reads(model):
+    """Row 9: 0.051 in the simple model since S18 (0.135 until then, on the cancellation), recorded (D124)."""
     o = out(model)
     if MERGER_SPLIT[model.name]:
-        assert 0.08 <= o.fields["thick_thin_surface_density_ratio"] <= 0.16
+        assert o.fields["thick_thin_surface_density_ratio"] == pytest.approx(0.051, abs=0.004)  # 0.135 until S18; 0.147 until S17
+        assert not 0.08 <= o.fields["thick_thin_surface_density_ratio"] <= 0.16
     else:
         assert o.fields["thick_thin_surface_density_ratio"] == 0.0  # recorded, not hidden (row 9)
 
 
-def test_the_gate_passes_on_two_errors_cancelling(model):
-    """Debt #19. Shrinking the thick disc to its observed mass collapses the ratio.
+def test_the_gate_is_still_a_cancellation_across_the_sweep(model):
+    """Debt #19, judged as §5d says: by a sweep of the merger's gas_fraction, not a reading.
 
-    If these two moved independently, gas_fraction could fix row 11 and leave row 9
-    alone. They do not, because the thick disc is far too centrally concentrated.
+    Rows 9 and 11 must be inside together somewhere in the sweep for the gate to be met. They
+    are not: shrinking the pre-merger episode lands row 11 and collapses row 9, because the
+    thick disc is still too centrally concentrated (row 5), and the radial kick S18 built moves
+    row 5 by 0.3 kpc where 0.8 is needed (D124).
     """
     if not MERGER_SPLIT[model.name]:
         pytest.skip("the advanced model has no thick disc to compensate with (debt #27)")
     o = out(model)
-    assert o.fields["thick_disc_stellar_mass"] > 9.0e9      # row 11 fails high
-    assert o.fields["thick_disc_scale_length"] < 1.8        # row 5 fails low
-    richer = out(model, mergers=(MergerEvent(3.8, 0.25, 0.8, "probe"),))
-    assert 3.0e9 <= richer.fields["thick_disc_stellar_mass"] <= 9.0e9   # row 11 now passes
-    assert richer.fields["thick_thin_surface_density_ratio"] < 0.08     # ...and row 9 breaks
+    assert o.fields["thick_disc_stellar_mass"] > 9.0e9      # row 11 fails high (9.6e9; 1.09e10 until S18)
+    assert o.fields["thick_disc_scale_length"] < 1.8        # row 5 fails low (1.17)
+    by = {g: out(model, mergers=(MergerEvent(3.8, 0.25, g, "probe"), MergerEvent(8.8, 0.02, 0.01, "probe"))).fields
+          for g in (0.3, 0.4, 0.5, 0.6, 0.7)}
+    together = [g for g, f in by.items() if 3.0e9 <= f["thick_disc_stellar_mass"] <= 9.0e9 and 0.08 <= f["thick_thin_surface_density_ratio"] <= 0.16]
+    assert together == []
+    assert 3.0e9 <= by[0.6]["thick_disc_stellar_mass"] <= 9.0e9 and by[0.6]["thick_thin_surface_density_ratio"] < 0.03  # row 11 in, row 9 gone
+    assert 0.08 <= by[0.3]["thick_thin_surface_density_ratio"] <= 0.16 and by[0.3]["thick_disc_stellar_mass"] > 1.4e10   # row 9 in, row 11 far out
+    assert all(f["thick_disc_scale_length"] < 1.8 for f in by.values())  # row 5 never lands on this lever
+
+
+def test_the_thick_disc_carries_the_mergers_radial_kick(model):
+    """S18 (D124): the stars present at the merger are moved by its radial spread, mass conserved.
+
+    The spread is derived from the vertical kick read isotropically - 1.47 kpc at R0, 0.30 at 2 kpc -
+    and the vertical stage sorts the moved stars, so the thick disc's scale length carries it: 1.17
+    against 0.93 on the unspread history. A minor merger delivers the same gas and kicks nothing.
+    """
+    o = out(model)
+    R = o.grid.R
+    spread = o.fields["disc_radial_spread"]
+    assert float(np.interp(R_SUN, R, spread[:, 0])) == pytest.approx(1.47, abs=0.02)
+    assert float(np.interp(2.0, R, spread[:, 0])) == pytest.approx(0.30, abs=0.02)
+    born_after = o.grid.t > o.fields["last_major_merger_time"]
+    assert np.all(spread[:, born_after] == 0.0)
+    if not MERGER_SPLIT[model.name]:
+        return
+    minor = out(model, mergers=(MergerEvent(3.8, 0.02, 0.5, "probe: same gas, no kick"), MergerEvent(8.8, 0.02, 0.01, "probe")))
+    assert np.all(minor.fields["disc_radial_spread"] == 0.0)
+    assert minor.fields["thick_disc_stellar_mass"] == 0.0  # a minor merger makes no thick disc by the simple model's own criterion
+    assert o.fields["thick_disc_scale_length"] == pytest.approx(1.17, abs=0.02)
+    # the same stars, unspread: reconstruct the pre-merger population from the birth history
+    from galaxy.stages.disc import PC_PER_KPC
+    from galaxy.stages.sfh import fit_scale_length
+    from galaxy.stages.vertical import SCALE_LENGTH_FIT
+    dt = o.grid.spec.t_max / o.grid.spec.n_t
+    ret = float(model.constants["RETURN_FRACTION"].value)
+    unspread = ((1.0 - ret) * PC_PER_KPC * o.fields["sfr_surface_density_history"] * dt)[:, ~born_after].sum(axis=1)
+    assert fit_scale_length(unspread, R, *SCALE_LENGTH_FIT) == pytest.approx(0.93, abs=0.02)
+    thick = o.fields["thick_disc_surface_density"]
+    area = 2.0 * np.pi * R * o.grid["R"].width
+    assert float((thick * area).sum()) == pytest.approx(float((unspread * area).sum()), rel=1e-9)  # mass conserved, ring by ring
 
 
 def test_no_major_merger_means_no_thick_disc(model):
@@ -65,7 +110,9 @@ def test_the_thick_disc_is_hotter_than_the_thin_one(model):
     if not MERGER_SPLIT[model.name]:
         pytest.skip("no thick disc in the advanced model at S9 (debt #27)")
     o = out(model)
-    assert o.fields["thick_disc_dispersion"] > 2.0 * o.fields["thin_disc_dispersion"]
+    # 40.4 against 20.4 since S18 (the thin disc at R0 is a little older with the derived threshold holding
+    # its recent star formation lower); 40.7 against 20.1 until then. The factor is 1.98.
+    assert o.fields["thick_disc_dispersion"] > 1.9 * o.fields["thin_disc_dispersion"]
     assert o.fields["thick_disc_scale_height"] > 3.0 * o.fields["thin_disc_scale_height"]
 
 

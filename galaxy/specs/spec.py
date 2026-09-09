@@ -202,50 +202,124 @@ class Miss:
             raise SpecError(f"row {self.row}: a recorded miss needs a reason and a prediction")
 
 
-# Row 2's miss (debt #47, S16) was removed at S17: the spheroid took 13% of the budget out of
-# what the disc accretes and the rate fell 2.08 -> 1.82, inside 1.65 +/- 0.19 for the first time
-# since S2. It is *not* removed because the mechanism debt #47 names was built - the threshold is
-# still the constant 5 Msun/pc2 at the bottom of its cited range - so the debt stays open and rows
-# 9 and 20 are still judged with it at S18 (D121). What the row would do under the derived
-# threshold is no longer measured; S16's probe read 1.95 with the whole budget in the disc.
+# Row 2's miss (debt #47, S16) was removed at S17 when the spheroid took 13% of the budget out of
+# what the disc accretes (D121); it reads 1.755 since S18 built the derived threshold, still inside.
+# Row 3's miss (debt #11, since S15) was removed at S18: it reads 250.96, inside 245-251 by 0.04, and
+# it landed on a mechanism its prediction did not name. The prediction was the bar (7e9 buckled into
+# the spheroid reads 249.4); what moved it was the merger's radial kick, which carries a fifth of the
+# disc's stars outward across R0 and is worth -0.2 km/s on the built model (-0.4 alone), on top of the
+# basis-free velocity solver S18 also brought in, worth -0.09 on S17's profile and -0.7 on S18's
+# cuspier one (D124). The derived threshold moves the row not at all (251.17 with and without it).
+# So the row is green at the edge of its window on a mechanism worth less than the window, and the
+# bar's prediction stands unread: if the buckling is built and the row does not fall to ~247, D121's
+# arithmetic is wrong. A miss that passes is an error to leave (debt #29); the reason is here.
 _MISSES: tuple[Miss, ...] = (
-    Miss(
-        row=7,
-        model="simple",
-        debt=19,
-        since="S16",
-        reason=(
-            "1126 pc against 900 +/- 180, over by 46, from 1042 (inside) until S16: the high-j tail "
-            "took 7.6% of the budget out of the exponential (D119), the stellar surface density at R0 "
-            "fell 51.6 -> 47.6 Msun/pc2, and the thick disc, which is too massive and too compact "
-            "(debt #19) and sat at the top of its window on the cancellation debt #19 records, "
-            "puffed up with the weaker self-gravity."
-        ),
-        prediction=(
-            "This row is debt #19's with rows 5, 9 and 11: radial heating with the vertical kick "
-            "(S18) spreads the thick disc, and a thick disc at its own mass in the observed scale "
-            "length has the surface density that holds its height inside 720-1080. If S18 restores "
-            "rows 5 and 11 and this row stays over, the vertical stage's heating constants are what "
-            "is wrong (debt #42), not the thick disc's shape."
-        ),
-    ),
     Miss(
         row=5,
         model="simple",
         debt=19,
         since="S3",
         reason=(
-            "The thick disc's scale length is 1.32 kpc against 2.0 (1.17 until S13 moved a tenth of "
-            "the budget out of the pre-merger episode, debt #29). It forms before the merger, "
-            "when the disc is small and inside-out growth has star formation concentrated in the "
-            "middle, so it comes out far more centrally concentrated than the observed thick disc."
+            "1.17 kpc against 2.0 +/- 0.2 (1.18 until S18; 1.32 until S17; 1.17 until S13). The "
+            "thick disc is every star born before the last major merger, and by then the disc is "
+            "small: the early episode accretes on the thin disc's inside-out law, tau(R) = 7 Gyr x "
+            "R/R0, so by 3.8 Gyr only 42% of the early gas at R0 has arrived and 31% at 12 kpc, and "
+            "the star formation threshold holds what has arrived outside ~4 kpc as gas. **S18 tested "
+            "the prediction this row carried since S3 - that the merger's radial heating spreads the "
+            "thick disc - and killed it by the number**: the kick is derived (the vertical impulse read "
+            "isotropically, turned into a displacement through kappa and the guiding-centre shift) and "
+            "is 1.5 kpc at R0 but 0.3 at 2 kpc, because the inner disc is stiff, so it moves this row "
+            "1.18 -> 1.51 on the constant threshold and 0.93 -> 1.17 on the derived one (D124). The "
+            "derived threshold lowers it because Kennicutt's Sigma_crit is 26 Msun/pc2 at 4 kpc and "
+            "11 at R0, so the early gas forms stars closer in still."
         ),
         prediction=(
-            "The thick disc has to be born extended, not merely early. Either the pre-merger disc "
-            "is already larger than this model makes it, or the merger itself spreads the stars it "
-            "heats - radial as well as vertical heating, which this model does not do. The second "
-            "is testable: a radial kick applied with the vertical one should raise row 5 towards "
-            "2.0 and lower row 9 at the same time."
+            "The thick disc has to be born extended, and S18's probe found where that is decided: the "
+            "early episode's arrival law. The two-infall framework the inside-out index cites gives "
+            "the *first* infall a short, radius-independent timescale (~1 Gyr) and reserves "
+            "tau_D(R) for the second; this model applies tau(R) to both. With the early episode at "
+            "1 Gyr everywhere the pre-merger disc reads 2.11 kpc here - inside - but the whole early "
+            "share turns into thick disc (row 11 1.7e10, row 9 0.62, row 2 1.30), and shrinking the "
+            "share re-truncates it through the threshold (at a merger share of 0.8: rows 9 and 11 "
+            "inside, this row 1.35). Prediction, stated so it can fail: a fast first infall lands this "
+            "row only if most of the early gas is still gas at the merger, and a constant-efficiency "
+            "Kennicutt law with a threshold does not allow that. If a session builds the fast first "
+            "infall and this row lands with row 11, the reservoir was never the problem; if rows 5 "
+            "and 11 still trade through the merger share, the star formation law at high redshift is "
+            "what is wrong, not the split (debt #49)."
+        ),
+    ),
+    Miss(
+        row=7,
+        model="simple",
+        debt=42,
+        since="S16",
+        reason=(
+            "1279 pc against 900 +/- 180 (1309 until S18; 1126 at S16, 1042 and inside until then). "
+            "h_z = sigma_z^2 / 2 pi G Sigma, and S18 measured which factor it is: the total surface "
+            "density at R0 is 47.3 Msun/pc2, which is what is observed, and it barely moves under "
+            "anything S18 changed (1260-1370 across every thick-disc shape probed), so the row is "
+            "the dispersion. The thick disc's sigma_z is 40.4 km/s: 27 of secular heating over 11 "
+            "Gyr, in quadrature with the merger's 30 - a constant set at S3 so that 'the merger "
+            "leaves the pre-existing disc at about 30 km/s', which it does, on top of the 27 it "
+            "already has. At the observed thick-disc dispersion of 35 km/s the same Sigma reads 958 "
+            "pc; a kick of 24 km/s (MERGER_HEATING 96) reads 1027 (D124)."
+        ),
+        prediction=(
+            "This row belongs to debt #42, not to the thick disc's shape: it is MERGER_HEATING, "
+            "and that constant also sets the advanced model's row 6 (373 pc since S18, 439 before), "
+            "so the two are re-examined together when S20 opens the valley, as the debt says. If "
+            "the kick is reset to leave the thick disc at its observed 35-37 km/s in total and this "
+            "row lands while the advanced row 6 still misses, SECULAR_HEATING is the other constant "
+            "to read. Not a lever: the thick disc's extent - spreading it moves Sigma(R0) by a "
+            "percent."
+        ),
+    ),
+    Miss(
+        row=8,
+        model="simple",
+        debt=19,
+        since="S18",
+        reason=(
+            "0.013 against 4% +/- 2%: row 9's surface-density ratio divided by the scale-height "
+            "ratio (0.051 x 327/1279), so it carries no information row 9 does not and fails with "
+            "it (it read 0.033 while row 9 read 0.135). Registered separately only because the "
+            "table judges it separately; rows 8 and 9 are not independent and are never tuned apart."
+        ),
+        prediction=(
+            "It follows row 9 exactly, scaled by row 6 over row 7: whatever lands row 9 at the "
+            "observed scale heights lands this one at 0.04. If row 9 is landed and this row is not, "
+            "row 7 is what is wrong (debt #42's dispersion), not the thick disc's mass."
+        ),
+    ),
+    Miss(
+        row=9,
+        model="simple",
+        debt=19,
+        since="S18",
+        reason=(
+            "0.051 against 12% +/- 4%: S3's gate, green since S3 on the cancellation debt #19 records "
+            "(0.103, 0.152, 0.147, 0.135 across S3-S17: a thick disc too massive and too compact, "
+            "whose errors compensated at R0), and red at S18 because the derived star formation "
+            "threshold holds the reservoir the pre-merger disc formed its outer stars from: 11 "
+            "Msun/pc2 at R0 against the constant 5, so the early gas at R0 never reaches it before "
+            "the merger and the thick disc's surface density there falls by two thirds. Debt #47 "
+            "said so in advance and pre-committed the reading: if this row cannot be restored with "
+            "the threshold derived, the thick disc is what is wrong, not the threshold (D119). The "
+            "radial kick returns 0.015 of it (0.036 -> 0.051). The sweep the gate asks for, on the "
+            "built model: merger share 0.3 -> 0.8 reads this row 0.135, 0.088, 0.051, 0.024, 0.007, "
+            "0.001 while row 11 reads 1.45e10, 1.21e10, 9.6e9, 7.2e9, 4.9e9, 2.8e9 - never inside "
+            "together, so the cancellation is still there and the gate is not met (D124)."
+        ),
+        prediction=(
+            "Rows 5, 9 and 11 are one row: at the observed scale lengths (2.0 thick, 2.6 thin) and "
+            "masses (6e9, 3.5e10) this ratio is 0.11 by arithmetic, so whatever lands row 5 at the "
+            "observed mass lands this one. The candidate is the early episode's arrival law (debt "
+            "#49, row 5's entry): a fast first infall reads 0.62 at the default merger share and "
+            "0.13 at 0.8 on the constant threshold, 0.03 on the derived one. If that is built and "
+            "this row lands with rows 5 and 11 inside together across a sweep of the merger share, "
+            "the gate is met for the first time; if it lands with row 5 out, it is the same "
+            "cancellation in new clothes."
         ),
     ),
     Miss(
@@ -254,70 +328,27 @@ _MISSES: tuple[Miss, ...] = (
         debt=19,
         since="S3",
         reason=(
-            "1.42e10 Msun against 6e9 (1.07e10 until S13): the pre-merger episode carries half the "
-            "baryon budget now that Sagittarius delivers a physical share (debt #29), and should "
-            "carry nearer 15%. **Row 9, S3's gate, passes at 0.152 only because this error and the "
-            "row 5 error compensate** (0.103 before S13; the ceiling is 0.16). Raising the merger's "
-            "gas_fraction to shrink the thick disc collapses row 9, because a thick disc this "
-            "centrally concentrated loses surface density at R_0 far faster than it loses mass. "
-            "The gate is therefore passing for the wrong reason and is recorded as such."
+            "9.6e9 Msun against 6 +/- 3e9 (1.09e10 until S18; 1.30e10 at S16; 1.42e10 at S13): the "
+            "pre-merger episode carries half the baryon budget, and with the derived threshold a "
+            "little less of it forms stars before 3.8 Gyr, so the row is 7% over its ceiling. The "
+            "radial kick conserves mass and moves it not at all. Shrinking the pre-merger episode "
+            "through the merger's share lands this row at 0.6 (7.2e9) and 0.7 (4.9e9) - and reads "
+            "row 9 at 0.024 and 0.007 there, which is the cancellation debt #19 has recorded since "
+            "D51: a thick disc this centrally concentrated loses surface density at R0 far faster "
+            "than it loses mass. Also on the record: instantaneous recycling returns 30% of every "
+            "generation at birth, where an 11 Gyr population has returned nearer 45% [recall: "
+            "Kroupa/Chabrier], so the present mass of the oldest stars is overstated by ~25% in "
+            "both models - 9.6e9 formed is ~7.6e9 today - which is the simple model's defining "
+            "approximation (debt #15's scope) and not a lever."
         ),
         prediction=(
-            "Row 5 is the prerequisite. Once the thick disc has the right extent, its mass and its "
-            "surface-density ratio can be right together; until then either one can be fixed only "
-            "by breaking the other. If they still cannot be satisfied together at the right scale "
-            "length, the split criterion - born before the last major merger - is what is wrong."
-        ),
-    ),
-    Miss(
-        row=3,
-        debt=11,
-        since="S15",
-        reason=(
-            "251.3 km/s against 248 +/- 3: too much mass inside R0, by a quarter of a km/s over the "
-            "window, with the halo contracted around the disc (S14), the assembly epoch at its "
-            "derived default (S15) and both ends of the angular-momentum distribution built (S16, "
-            "S17). **The prediction this miss carried has failed and the number is what killed it**: "
-            "the bulge was to be worth 5-8 km/s (D110) and it is worth 1.6. D110's probe drew a "
-            "spheroid from the stellar disc in proportion on the *uncontracted* S13 halo; the "
-            "spheroid the model derives comes out of the accreting budget instead, and that budget "
-            "included the 15% of the exponential that sat outside R0 and pulled the Sun outward - so "
-            "moving it inward gives back nearly as much as the disc's flattening loses. Measured at "
-            "S17: 1.4e10 in the spheroid is worth 3.7 km/s and 1.7e10 is worth 4.2, so no bulge mass "
-            "in the observed range closes 4.9 km/s on its own either. "
-            "The row's history: S1 blamed the gas profile (246.4 predicted); S2 gave it one and got "
-            "237.2, the stellar disc broadening at the same time; S3 corrected that and the miss "
-            "returned to 256, blamed on the compact disc (debt #18); S13 converted c_vir to c200 "
-            "(debt #12) and the row read 242.7, low, with the contraction named as 'several km/s' "
-            "[recall]; S14 solved the contraction and it was 28 km/s - 270.8, high by 20. S15 found "
-            "the epoch's default, 2.5, had been validated against measurements of the contracted "
-            "halo (an NFW fitted to it reads c200 = 18.5, over the 10-18 span, not the 14.4 claimed) "
-            "and derived it from the LCDM median for the default mass instead: z_f = 1.66, c200 = 8.24 "
-            "before the response, 15.4 after. The less concentrated halo responds more (r_i/r_f 1.50) "
-            "and its share at R0 is 165.8 km/s; the row reads 260.1. The escape velocity at R0 fell "
-            "585 -> 569, inside its observed 530-580; WIND_SPEED was refitted 1028 -> 999 (debt #43). "
-            "What is left is the baryons: 5.9e10 Msun in one exponential at 2.6 kpc, with no bulge "
-            "and no extended component (debts #11, #18)."
-        ),
-        prediction=(
-            "This row and row 12 now have one cause and it is the bar. The spheroid the model derives "
-            "is 7.7e9 against the observed 1.4-1.7e10, and what is missing is the box/peanut a bar "
-            "makes of the inner disc, which BHG16 §4.2 says is most of the Milky Way's bulge and which "
-            "this model does not have (debt #21: the bar is a scaled length, not a dynamics). "
-            "Prediction, stated so it can fail: a spheroid of 1.4e10 - the observed bulge, reached by "
-            "adding the missing 7e9 to the same reservoir - reads 249.4 here and lands the row, and "
-            "1.7e10 reads 248.7, so **closing row 12 closes row 3 and the interval it lands in is not "
-            "wide**. If a session builds the buckling and this row does not fall below 251, the "
-            "baryon distribution is not the cause and debt #46's calibration is - A = 1.6 at w = 0.8 "
-            "reads 238.1 now, out the other way, and is not adopted, because the Auriga-calibrated "
-            "response [recall: Cautun et al. 2020] agrees with Gnedin et al. 2004's at R0 to 2 km/s. "
-            "The same change is measured to push row 14 to 123 km/s, outside 110-116, unless the "
-            "spheroid's scale radius grows with its mass; that is the tension to watch. Not a lever: "
-            "the epoch below 1.3 (the row is met at 1.3-1.4, and the relation's scatter runs to 1.08), "
-            "a baryon retention of 0.25 (fails row 1). Discriminants: halo_concentration_contracted "
-            "against 10-18 (15.0), halo_density_sun against 0.008-0.013 Msun/pc3 (inside at every "
-            "epoch, so it does not discriminate), the escape velocity at R0 against 530-580, and "
-            "row 19, which none of these moves."
+            "Row 5 is the prerequisite, as it has been since S3, and S18 located what row 5 needs "
+            "(debt #49): a first infall fast enough that the pre-merger disc is extended, with "
+            "most of its gas still gas at the merger, so that the thick disc is light *and* wide "
+            "and this row and row 9 move together under the merger share instead of against each "
+            "other. If they still cannot be satisfied together at the right scale length once the "
+            "early infall is fast, the split criterion - born before the last major merger - is "
+            "what is wrong."
         ),
     ),
     Miss(
@@ -422,23 +453,30 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=20,
-        debt=47,
+        debt=17,
         since="S16",
         reason=(
-            "6.24e9 Msun of hydrogen against 8.0e9, a 22% shortfall, from 4.17e9 (48%) until S16 "
-            "built the extended component (debt #18, D119): the high-j tail of the halo's "
-            "angular-momentum distribution, 7.6% of the budget beyond 12 kpc, 3.6-3.7 Msun/pc2 from "
-            "15 to 20 kpc, ending where the distribution's j_max lands, near 25 kpc. What is still "
-            "missing is not in the tail: the model's gas at R0 is 6.8 Msun/pc2 against the observed "
-            "10-13, because the constant threshold of 5 is the bottom of its cited range, and the "
-            "tail's shape follows one constant, mu, whose scatter no input absorbs (debt #47). The "
-            "target is zero-width (debt #17), so no float meets it."
+            "8.09e9 Msun of hydrogen against 8.0e9, quoted with no uncertainty at all - a zero-width "
+            "target that no float meets (debt #17, D100), and the number is at it: 1% over. It read "
+            "4.17e9 until S16 built the high-j tail (debt #18), 6.03e9 until S18 derived the star "
+            "formation threshold from the rotation curve's epicyclic frequency (debt #47, D124): "
+            "Kennicutt's Sigma_crit is 11 Msun/pc2 at R0 where the constant was 5, and the gas at R0 "
+            "reads 10.8 against the observed 10-13. **But the number is at the target for two "
+            "reasons, and one of them is wrong**: the same threshold rises with kappa inside (44 "
+            "Msun/pc2 of gas at 1 kpc, 276 at the first cell, where the Milky Way's inner disc is "
+            "nearly empty), so 1.1e9 of hydrogen sits inside 4 kpc where S17 held 0.3e9 and the "
+            "Galaxy holds a few 1e8. Outside 4 kpc the model reads 7.0e9 against the target's "
+            "~7.7e9 - still short, by less than half of S17's shortfall."
         ),
         prediction=(
-            "The derived Toomre threshold (D119's probe) reads 8.2e9 with the tail as built; that is "
-            "the mechanism, judged with rows 2 and 9 at S18. The tail itself is not the lever: across "
-            "mu = 1.06-1.4 this row reads 5.0-6.9e9 and row 3 does not move. If the derived threshold "
-            "lands this row and row 2 is still out, the two rows are not one story."
+            "The row cannot pass as written; it can only be judged once Nakanishi & Sofue's own "
+            "uncertainty is entered, as row 14's was at S17 (D122). What would move the number: the "
+            "bar the model lacks, which clears the inner disc and would take ~0.8e9 out (debt #21) - "
+            "after which the row reads ~7.3e9 and is short again - and the tail's mu across its "
+            "1.06-1.4 (D119: +/-1e9). Stated so it can fail: a model with the inner reservoir "
+            "drained lands this row only if the tail is larger than the median mu gives, and if it "
+            "lands at the median with the reservoir still there, the reservoir is being counted as "
+            "the outer HI."
         ),
     ),
     Miss(
@@ -447,7 +485,9 @@ _MISSES: tuple[Miss, ...] = (
         debt=42,
         since="S13",
         reason=(
-            "358 pc against 250-350. The advanced thin disc is every star - the chemical split finds "
+            "373 pc against 250-350 (439 until S18 derived the threshold, which holds 10.8 Msun/pc2 of "
+            "gas at R0 where the constant held 6.3, so Sigma rose and h_z fell; 384 at S16, 358 at S13). "
+            "The advanced thin disc is every star - the chemical split finds "
             "no thick disc (debt #27) - so it keeps the merger-heated old population, and once "
             "Sagittarius stopped delivering a tenth of the budget as young gas (debt #29, S13) the "
             "mass-weighted dispersion at R0 rose from 326 pc to 358. SECULAR_HEATING and "
@@ -531,6 +571,30 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     # cancellation debt #11 named for the simple model** — thin = every star, and it lands only
     # because the total is smaller — so it is not evidence for the chemical split, and if debt
     # #27's valley ever appears this row will move again by the thick disc's whole mass.
+    Miss(
+        row=22,
+        model="advanced",
+        debt=47,
+        since="S18",
+        reason=(
+            "-0.0698 dex/kpc against -0.069 to -0.049, out by 0.0008: the row passed at -0.064 until "
+            "S18 derived the star formation threshold. Kennicutt's Sigma_crit falls outward with "
+            "kappa (47 Msun/pc2 at 2 kpc, 26 at 4, 11 at R0, 4 at 20), so the inner disc holds two to "
+            "three times the gas it did and the wind, refitted to keep R0 solar (982 -> 860 km/s, "
+            "debt #43), keeps more metals everywhere; the gradient steepened by 0.006 and crossed the "
+            "edge. The refit is not what did it: +/-10% on WIND_SPEED moves the row by 0.0008 (D124)."
+        ),
+        prediction=(
+            "The inner gas is the prediction: the model holds 33 Msun/pc2 at 2 kpc, 44 at 1 and 276 at "
+            "the first cell - 1.5e9 of gas inside 4 kpc where S17 held 0.4e9 - where "
+            "the Milky Way has ~5-20, because the threshold is evaluated at a 6 km/s dispersion the "
+            "inner gas does not have and because the bar that clears the inner disc is not modelled "
+            "(debt #21). A gas dispersion that rises inward makes it worse (8 km/s everywhere reads "
+            "-0.089), so the bar is the candidate; if the inner gas is cleared and the row still "
+            "reads below -0.069, the wind's tilt (debt #26) is what is wrong. Not the lever: "
+            "GAS_DISC_SCALE_RATIO 1.25 reads -0.047 and is the wrong answer that passes (debt #45)."
+        ),
+    ),
     Miss(
         row=23,
         model="advanced",

@@ -101,8 +101,14 @@ def test_the_wind_takes_the_share_the_effective_yield_was_hiding(default):
 
 
 def test_debt_15s_prediction_holds_and_row_22_closes(default):
-    """Outflows were predicted to steepen the present-day gradient towards -0.06. They do."""
-    assert -0.069 <= default.fields["metallicity_gradient"] <= -0.049
+    """Outflows were predicted to steepen the present-day gradient towards -0.06. They do - and past it since S18.
+
+    -0.0698 against -0.069 to -0.049: the derived threshold holds two to three times the gas inside 4 kpc
+    and the row crossed its edge by 0.0008, a recorded miss under debt #47 (D124). The prediction held; the
+    window did not.
+    """
+    assert default.fields["metallicity_gradient"] == pytest.approx(-0.0698, abs=0.002)  # -0.064 and inside until S18
+    assert not -0.069 <= default.fields["metallicity_gradient"] <= -0.049
 
 
 def test_the_tilt_is_the_wind_s_radial_dependence(advanced, default):
@@ -110,7 +116,7 @@ def test_the_tilt_is_the_wind_s_radial_dependence(advanced, default):
     flat = run(with_constant(advanced, "WIND_INDEX", 0.0), only=CHEM)
     assert flat.fields["metallicity_gradient"] > default.fields["metallicity_gradient"] + 0.01
     # With no radial dependence what is left is the infall tilt plus the delayed iron's.
-    assert flat.fields["metallicity_gradient"] == pytest.approx(-0.049, abs=0.006)  # -0.043 until S17
+    assert flat.fields["metallicity_gradient"] == pytest.approx(-0.056, abs=0.006)  # -0.049 until S18; -0.043 until S17
 
 
 def test_the_solar_calibration_is_one_constant(advanced, default):
@@ -135,17 +141,21 @@ def test_transport_conserves_what_it_moves():
 def test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it(advanced, default):
     """GALAXY_INPUTS.md §8: without migration the local distribution is far too narrow."""
     still = out(advanced, migration_efficiency=0.0)
-    assert default.fields["feh_spread_sun"] > still.fields["feh_spread_sun"]
+    # Until S18 migration widened it (0.29 -> 0.30, debt #32: "migration adds little"); since S18 it narrows it a
+    # little, 0.370 -> 0.360: the derived threshold steepens the old population's birth gradient (debt #28) and the
+    # migrants that reach R₀ from inside carry narrower age-metallicity relations than the local one, so the
+    # mixture's spread falls. The local relation's own width, 0.37, is now most of the number (D124).
+    assert default.fields["feh_spread_sun"] == pytest.approx(0.360, abs=0.01) and still.fields["feh_spread_sun"] == pytest.approx(0.370, abs=0.01)
     assert 0.2 < default.fields["feh_spread_sun"] < 0.4  # observed ~0.2 dex [recall]
 
 
 def test_s2s_prediction_fired_migration_is_too_strong_once_the_tilt_is_right(advanced, default):
     """Row 22 steepened and row 23 did not, so migration_efficiency is wrong too (debt #28)."""
     young, old = default.fields["metallicity_gradient_young"], default.fields["metallicity_gradient_old"]
-    assert young / old == pytest.approx(3.1, abs=0.3)  # observed 1.75
+    assert young / old == pytest.approx(2.55, abs=0.3)  # observed 1.75; 3.1 until S18
     narrower = out(advanced, migration_efficiency=2.5)
-    assert -0.05 <= narrower.fields["metallicity_gradient_old"] <= -0.03  # row 23 would pass
-    assert narrower.fields["metallicity_gradient_young"] / narrower.fields["metallicity_gradient_old"] == pytest.approx(1.6, abs=0.2)
+    assert -0.05 <= narrower.fields["metallicity_gradient_old"] <= -0.03  # row 23 would pass (-0.048 since S18)
+    assert narrower.fields["metallicity_gradient_young"] / narrower.fields["metallicity_gradient_old"] == pytest.approx(1.22, abs=0.2)  # 1.6 until S18
 
 
 # --- row 24 and the split -----------------------------------------------------
@@ -223,14 +233,15 @@ def test_the_winds_effective_yield_and_the_fitted_one_and_how_far_they_agree(pro
     o = run(advanced, only=("metal_escape_fraction",))
     i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
     escaped = float(o.fields["metal_escape_fraction"][i])
-    assert escaped == pytest.approx(0.7503, abs=0.001)  # 0.7536 until S17 built the spheroid and refitted WIND_SPEED; 0.7556 until S16 built the tail and refitted it; 0.7567 until S15
+    assert escaped == pytest.approx(0.6990, abs=0.001)  # 0.7503 until S18 refitted WIND_SPEED 982 -> 860 under the derived threshold; 0.7536 until S17; 0.7556 until S16; 0.7567 until S15
 
     effective = y_z * (1.0 - escaped)
     fitted = float(simple.constants["NET_YIELD"].value)
     # 0.00987 and 1.11 (ten percent) from S10 to S15; S16's tail moved the simple model's fit 0.011 -> 0.0117 and the
-    # wind's effective yield barely (0.0100): the two routes agree to 17% now, and the number is what the test keeps.
-    assert effective == pytest.approx(0.0100, abs=0.0002)
-    assert fitted / effective == pytest.approx(1.17, abs=0.03)
+    # wind's effective yield barely (0.0100): 17% apart at S16 and S17. S18's threshold moved both the same way -
+    # 0.0138 fitted, 0.0122 from the wind - and they agree to 13% now; the number is what the test keeps.
+    assert effective == pytest.approx(0.0122, abs=0.0002)  # 0.0100 until S18
+    assert fitted / effective == pytest.approx(1.13, abs=0.03)  # 1.17 until S18
 
 
 def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
@@ -249,7 +260,9 @@ def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
         ]
         peaks[name] = got
         assert max(got) - min(got) < 0.10, (name, got)
-    assert min(peaks["advanced"]) > 1.3 and max(peaks["simple"]) < 0.7  # 1.35 since S13 (1.53 before): the wind's refit, not the grid
+    # 0.70 and 0.25 since S18 (1.39 and 0.46 until then; 1.35 / 1.53 at S13): the derived threshold's central reservoir,
+    # not the grid - the peaks move by 0.002 across a 16x sweep in N_t.
+    assert 0.65 < min(peaks["advanced"]) <= max(peaks["advanced"]) < 0.75 and max(peaks["simple"]) < 0.3
 
 
 def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
@@ -261,7 +274,9 @@ def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
     advanced = models.get("advanced")
     o = run(advanced, only=("feh_gas", "metallicity_gradient"))
     R, feh = o.grid.R, o.fields["feh_gas"]
-    assert float(np.nanmax(feh)) == pytest.approx(float(feh[0]), abs=1e-9)  # the peak is the innermost ring
+    # The peak was the innermost ring until S18; the derived threshold rises as kappa does inside (590 Msun/pc2 at
+    # the first cell), so the innermost rings hold gas that never forms stars and the peak sits at 0.5 kpc (D124).
+    assert R[int(np.nanargmax(feh))] == pytest.approx(0.49, abs=0.1) and feh[0] < float(np.nanmax(feh))
 
     # Clipping the inner disc to a sane value moves no acceptance scalar, which is
     # the sense in which the table cannot see it.

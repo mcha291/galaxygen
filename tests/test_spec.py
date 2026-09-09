@@ -36,14 +36,16 @@ def test_every_row_names_a_field():
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
 SUMMARY = {
-    "simple": {"pass": 11, "fail": 11, "not-yet-computable": 2},  # rows 12-14, 18 arrived and row 2 landed at S17 (D121)
-    "advanced": {"pass": 9, "fail": 14, "not-yet-computable": 1},
+    "simple": {"pass": 10, "fail": 12, "not-yet-computable": 2},  # S18: row 3 landed (on the kick, D124); rows 9 and 8 left the green (the derived threshold)
+    "advanced": {"pass": 9, "fail": 14, "not-yet-computable": 1},  # S18: row 3 landed, row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "simple": {3, 5, 7, 11, 12, 13, 14, 18, 20, 22, 23},
-    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 23, 24},
+    "simple": {5, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23},
+    "advanced": {5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23, 24},
 }
-DEBTS = {"simple": {2, 11, 15, 19, 47}, "advanced": {2, 11, 27, 28, 42, 47}}  # S17: rows 12-14 under #11 with row 3, row 18 under #2; row 2 landed and left, and so did advanced row 10
+# S18: row 7 re-attributed to #42 (it is the dispersion, not the shape), row 9 joins #19, row 20 is
+# #17's (at its zero-width target), the advanced row 22 is #47's; row 3 (#11) passes and left.
+DEBTS = {"simple": {2, 11, 15, 17, 19, 42}, "advanced": {2, 11, 17, 27, 28, 42, 47}}
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -71,10 +73,15 @@ def test_every_failure_is_recorded_and_the_run_is_clean(model, judged):
 
 
 def test_a_miss_belongs_to_one_model_or_to_all():
-    """Row 22 is a simple-model miss the advanced model closes; row 3 misses in both."""
-    assert 22 in spec.MISSES and 22 not in spec.MISSES_ADVANCED
+    """Row 5 is the simple model's miss alone; row 22 misses in both for different reasons; row 12 in both for one."""
+    assert 5 in spec.MISSES and spec.MISSES[5].model == "simple" and spec.MISSES_ADVANCED[5].debt == 27
+    # Row 22: the simple model's tilt (debt #15, since S2) and, since S18, the advanced model's inner gas under
+    # the derived threshold (debt #47), out by 0.0008 - two entries, two debts, one row (rule A7).
+    assert 22 in spec.MISSES and 22 in spec.MISSES_ADVANCED and spec.MISSES[22] is not spec.MISSES_ADVANCED[22]
+    assert spec.MISSES[22].debt == 15 and spec.MISSES_ADVANCED[22].debt == 47
     assert 24 in spec.MISSES_ADVANCED and 24 not in spec.MISSES
-    assert spec.MISSES[3] is spec.MISSES_ADVANCED[3] and spec.MISSES[3].model is None
+    assert spec.MISSES[12] is spec.MISSES_ADVANCED[12] and spec.MISSES[12].model is None
+    assert 3 not in spec.MISSES and 3 not in spec.MISSES_ADVANCED  # landed at S18, by 0.04, on the kick (D124)
     assert {m.model for m in spec._MISSES_ADVANCED} == {"advanced"}
 
 
@@ -87,9 +94,9 @@ def test_an_unexplained_failure_stops_the_run():
 
 
 def test_a_recorded_miss_that_starts_passing_is_itself_a_problem():
-    q = Q[3]
-    d = scalar("v_tangential_sun", "km/s")
-    good = [spec.evaluate(q, {"v_tangential_sun": 248.0}, {"v_tangential_sun": d}, "m")]
+    q = Q[9]  # row 3 was the example until S18, when it did exactly this and its entry went (D124)
+    d = scalar("thick_thin_surface_density_ratio", "dimensionless")
+    good = [spec.evaluate(q, {"thick_thin_surface_density_ratio": 0.12}, {"thick_thin_surface_density_ratio": d}, "m")]
     assert good[0].status == "pass" and len(spec.stale(good)) == 1
     assert [p.code for p in spec.problems(good)] == ["stale-miss"]
 
@@ -111,8 +118,12 @@ def test_recorded_misses_are_well_formed():
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
     assert "spec" in out and "2 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
-    assert "recorded miss, debt #11, since S15" in out   # row 3: the baryons, once the epoch is derived (under #12 at S14, high since the halo contracted; low at S13)
-    assert "recorded miss, debt #19, since S3" in out
+    assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid (row 3 was #11's too, since S15, until it landed at S18)
+    assert "recorded miss, debt #19, since S3" in out    # rows 5 and 11
+    assert "recorded miss, debt #19, since S18" in out   # rows 8 and 9: S3's gate, off the cancellation and out (D124)
+    assert "recorded miss, debt #42, since S16" in out   # row 7: the dispersion, not the shape (D124)
+    assert "recorded miss, debt #17, since S16" in out   # row 20: at its zero-width target
+    assert "recorded miss, debt #47, since S18" in out   # the advanced row 22
     assert "recorded miss, debt #15, since S2" in out
     assert "recorded miss, debt #27, since S9" in out
 
@@ -166,7 +177,7 @@ def test_the_report_names_the_table_defect(prod, judged):
     assert "table: rows 20, 21 have zero-width targets" in out
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
-    assert re.search(r"6\.02\d*e\+09", out)  # row 20's hydrogen mass, printed (6.243e9 until S17; 4.171e9 until S16)
+    assert re.search(r"8\.08\d*e\+09", out)  # row 20's hydrogen mass, printed (6.028e9 until S18; 6.243e9 until S17; 4.171e9 until S16)
 
 
 def test_statistical():

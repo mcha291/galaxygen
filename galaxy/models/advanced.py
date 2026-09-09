@@ -87,9 +87,12 @@ ADVANCED = MODELS.register(
                 "Chosen, not fitted, and the tilt it gives the gradient is a prediction.",
             ),
             "WIND_SPEED": Constant(
-                982.2,
+                860.3,
                 "km/s",
                 "The escape velocity at which half of a generation's fresh metals leave the disc. "
+                "Refitted at S18 from 982.2 (−12%), its largest move: the derived threshold holds "
+                "10.8 M☉/pc² of gas at R₀ where the constant held 6.3, the gas there read −0.084 dex, "
+                "and a slower wind keeps more metals to make it solar again (debt #43, D124). "
                 "**The one fitted constant of the advanced chemistry**: set so the present-day "
                 "gas at R₀ is solar, the same calibration NET_YIELD carried for the simple model "
                 "(debt #16, rule B10). Fitted at S9 to 1010 against a potential built on an "

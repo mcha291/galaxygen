@@ -19,9 +19,12 @@ SIMPLE = MODELS.register(
             # yield: it has nucleosynthetic yields and a wind, and the effective yield
             # at R₀ is one of its results (debt #16).
     "NET_YIELD": Constant(
-        0.01184,
+        0.01376,
         "dimensionless",
         "**Effective** yield: metals surviving in the gas per unit mass locked into stars. Refitted "
+        "at S18 from 0.01184 (+16%), the largest move it has made: the star formation threshold is "
+        "Kennicutt's derived one and holds 10.8 M☉/pc² of gas at R₀ where the constant held 6.3, so "
+        "the same metals sit in more gas and the gas at R₀ read −0.065 dex (debt #43, D124). Refitted "
         "at S16 from 0.011, the first time since S3: the high-j tail took 7.6% of the budget out of "
         "the exponential and the gas at R₀ read −0.027 dex, so the value was re-set to solar by "
         "bisection (rule B10, debt #43, D119); refitted again at S17 from 0.0117 when the spheroid "

@@ -21,6 +21,15 @@ it is thin-disc or thick-disc. Two contributions, added in quadrature:
   arrives, scaled by the mass ratio. This is the mechanism that makes the thick
   disc a *population* rather than a tail.
 
+- **Radial**, since S18 (debt #19): the same kick, read as an isotropic velocity
+  impulse, moves a star in radius as well as in height. A radial impulse δv_R
+  becomes an epicycle of amplitude δv_R/κ; an azimuthal one δv_φ shifts the
+  guiding centre by 2Ω δv_φ/κ² and leaves an epicycle of that amplitude around
+  it. Averaged over the epicycle, the mean-square displacement from the birth
+  radius is σ_k² (1/2κ² + 6Ω²/κ⁴) — 1.5 kpc at R₀ for the default merger and a
+  fifth of that at 2 kpc, because κ is what it is inside. Published as an rms
+  by birth time and radius; the sfh stage moves the stars it formed through it.
+
 **Why the thick disc cannot be drawn at this checkpoint.** GALAXY_PLAN.md §3
 gives stage 2 the preview "edge-on view showing the thick disc appear", but
 checkpoint 2 runs before star formation and there are no stars here to heat.
@@ -110,8 +119,35 @@ DISC_HEATING = FieldDecl(
 )
 
 
+DISC_RADIAL_SPREAD = FieldDecl(
+    name="disc_radial_spread", label="Radial spread today for a star born at (R, t)", unit="kpc",
+    kind=Kind.FIELD, axes=("R", "t"), ramp=Ramp("viridis", scale="linear", lo=0.0, hi=3.0),
+    meaningful_zero=True,
+    about=(
+        "Root-mean-square radial displacement a star born at radius R and cosmic time t carries "
+        "today from the major mergers it lived through: the vertical kick read as an isotropic "
+        "impulse, turned into a displacement by the epicyclic frequency (the radial part) and the "
+        "guiding-centre shift (the azimuthal part), summed in quadrature over events. Zero for "
+        "every star born after the last major merger. Grows with radius because κ falls: the "
+        "inner disc is stiff and barely moves, which is why the merger cannot make a compact "
+        "thick disc extended on its own (S18, debt #19)."
+    ),
+)
+
+
+def radial_spread(kick: float, omega: np.ndarray, kappa: np.ndarray) -> np.ndarray:
+    """rms radial displacement, in kpc, from an isotropic velocity impulse ``kick`` (km/s).
+
+    ⟨ΔR²⟩ = kick² (1/2κ² + 6Ω²/κ⁴): the first term is the epicycle a radial impulse
+    starts, the second the guiding-centre shift an azimuthal impulse makes (2Ω δv/κ²)
+    plus the epicycle of that amplitude it leaves the star on.
+    """
+    return kick * np.sqrt(0.5 / kappa**2 + 6.0 * omega**2 / kappa**4)
+
+
 def compute(ctx: Context) -> Mapping[str, Any]:
     t = ctx.grid.t
+    R = ctx.grid.R
     events = list(ctx.inputs["mergers"])
     now = ctx.grid.spec.t_max
 
@@ -133,9 +169,15 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     secular = float(ctx.constants["SECULAR_HEATING"]) * (age / 10.0) ** float(ctx.constants["SECULAR_HEATING_INDEX"])
     sigma2 = sigma0**2 + secular**2
     kick = float(ctx.constants["MERGER_HEATING"])
+    # The same impulse radially (S18): each event's rms displacement, by radius, applied to
+    # the stars already born, in quadrature across events.
+    v = np.asarray(ctx.fields["circular_velocity"], dtype=float)
+    kappa = np.asarray(ctx.fields["epicyclic_frequency"], dtype=float)
+    spread2 = np.zeros((R.size, t.size))
     for event in events:
         if event.mass_ratio >= MAJOR_MERGER_RATIO:
             sigma2 = sigma2 + np.where(t <= event.time, (kick * event.mass_ratio) ** 2, 0.0)
+            spread2 += np.where((t <= event.time)[None, :], radial_spread(kick * event.mass_ratio, v / R, kappa)[:, None] ** 2, 0.0)
 
     merger_share = float(np.trapezoid(delivery, t))
 
@@ -146,6 +188,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "second_infall_share": merger_share,
         "merger_delivery": delivery,
         "disc_heating": np.sqrt(sigma2),
+        "disc_radial_spread": np.sqrt(spread2),
     }
 
 
@@ -164,9 +207,10 @@ ASSEMBLY = IMPLEMENTATIONS.register(
             "MERGER_DURATION", "BIRTH_DISPERSION", "SECULAR_HEATING",
             "SECULAR_HEATING_INDEX", "MERGER_HEATING",
         ),
+        requires=("circular_velocity", "epicyclic_frequency"),
         publishes=(
             MERGER_COUNT, MAJOR_MERGER_COUNT, LAST_MAJOR_MERGER_TIME,
-            SECOND_INFALL_SHARE, MERGER_DELIVERY, DISC_HEATING,
+            SECOND_INFALL_SHARE, MERGER_DELIVERY, DISC_HEATING, DISC_RADIAL_SPREAD,
         ),
     )
 )

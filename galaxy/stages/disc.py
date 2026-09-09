@@ -60,46 +60,50 @@ def freeman_circular_velocity(R: np.ndarray | float, sigma0: float, R_d: float, 
     return np.sqrt(v2)
 
 
-# Scale lengths of the exponential basis used to represent an arbitrary disc.
-# Log-spaced from well inside the stellar disc to the edge of the grid.
-BASIS_SCALE_LENGTHS: tuple[float, ...] = (0.5, 0.9, 1.6, 2.8, 5.0, 9.0, 16.0, 28.0)
-
-
-def _freeman_v2(R: np.ndarray, sigma0: float, R_d: float, G: float) -> np.ndarray:
-    y = np.asarray(R, dtype=float) / (2.0 * R_d)
-    return 4.0 * math.pi * G * sigma0 * R_d * y * y * (i0(y) * k0(y) - i1(y) * k1(y))
-
-
-def disc_circular_velocity(sigma: np.ndarray, R: np.ndarray, G: float, at: np.ndarray | float | None = None):
+def disc_circular_velocity(
+    sigma: np.ndarray, R: np.ndarray, G: float, at: np.ndarray | float | None = None,
+    n_quad: int = 1000,
+) -> np.ndarray | float:
     """Circular velocity of an arbitrary razor-thin axisymmetric disc ``sigma(R)``.
 
     Freeman's formula is exact only for an exponential, and a gas disc is not one
     — star formation holds its inner part near the threshold and leaves the outer
-    part untouched, so fitting a single exponential to it and calling that the
-    mass distribution would be wrong where it matters most.
+    part untouched. From S2 to S17 the profile was least-squared onto eight
+    exponentials and Freeman's solution summed over them; that representation
+    read the stars at R₀ to 0.1 km/s while the profiles were smooth, but the S18
+    profiles are not — the merger's radial kick steepens the centre and the
+    derived threshold shapes the gas like κ(R) — and the basis then missed the
+    gas's v_c at R₀ by 2 km/s and the outer curve by 10, with no way to densify
+    it (the exponentials are collinear and the fit blows up past twelve terms).
 
-    Poisson's equation is *linear* in the surface density, so the honest fix is
-    cheap: least-squares the profile onto a fixed basis of exponentials, then add
-    the exact Freeman solution for each. Coefficients may come out negative, which
-    is fine — the sum represents the profile, and each term contributes its own
-    (signed) v² to a superposition, not a mass in its own right. The residual of
-    the fit is returned so a caller can assert the representation is good rather
-    than assume it.
+    This is the basis-free form (Binney & Tremaine 2008 §2.6.2, the homoeoid
+    decomposition of a thin disc):
 
-    ``sigma`` is in M☉/pc² and ``R`` in kpc; returns ``(v_c, relative residual)``.
+        v_c²(R) = −4G ∫₀^R a g′(a) / √(R² − a²) da,   g(a) = ∫₀^∞ Σ(√(a² + u²)) du
+
+    Both integrals are regular after the substitutions above (``u`` takes the
+    inner endpoint's inverse square root, ``a = R sin θ`` the outer's), so the
+    quadrature is plain trapezoid on ``n_quad`` points and converges to 10⁻⁵ at
+    R₀ ``[verified: tests/test_disc.py::test_the_general_solver_reproduces_freeman_on_an_exponential]``.
+    The profile is linear between grid points and zero beyond the last one, which
+    is what the grid means: nothing is modelled past R_max.
+
+    ``sigma`` is in M☉/pc² and ``R`` in kpc; returns v_c on the grid, or at ``at``.
     """
-    sigma = np.asarray(sigma, dtype=float)
+    sigma = np.asarray(sigma, dtype=float) * PC_PER_KPC**2  # M☉/kpc²
     R = np.asarray(R, dtype=float)
-    basis = np.exp(-R[:, None] / np.asarray(BASIS_SCALE_LENGTHS)[None, :])
-    coeffs, *_ = np.linalg.lstsq(basis, sigma, rcond=None)
-    scale = float(np.max(np.abs(sigma)))
-    residual = float(np.max(np.abs(basis @ coeffs - sigma)) / scale) if scale > 0.0 else 0.0
-    where = R if at is None else np.asarray(at, dtype=float)
-    v2 = np.zeros_like(np.atleast_1d(where), dtype=float)
-    for c, L in zip(coeffs, BASIS_SCALE_LENGTHS):
-        v2 = v2 + _freeman_v2(where, float(c) * PC_PER_KPC**2, float(L), G)
+    R_max = float(R[-1])
+    a = np.linspace(0.0, R_max, n_quad)
+    u = np.linspace(0.0, R_max, n_quad)
+    r = np.sqrt(a[:, None] ** 2 + u[None, :] ** 2)
+    g = np.trapezoid(np.interp(r, R, sigma, left=float(sigma[0]), right=0.0), u, axis=1)
+    dg = np.gradient(g, a)
+    where = R if at is None else np.atleast_1d(np.asarray(at, dtype=float))
+    theta = np.linspace(0.0, 0.5 * math.pi, max(n_quad // 4, 100))
+    aa = where[:, None] * np.sin(theta)[None, :]
+    v2 = -4.0 * G * np.trapezoid(aa * np.interp(aa, a, dg), theta, axis=1)
     v = np.sqrt(np.maximum(v2, 0.0))
-    return (v if at is None else float(v[0]) if np.ndim(at) == 0 else v), residual
+    return v if at is None else float(v[0]) if np.ndim(at) == 0 else v
 
 
 DISC_CENTRAL_SURFACE_DENSITY = FieldDecl(
@@ -144,6 +148,36 @@ DISC_CIRCULAR_VELOCITY = FieldDecl(
     ),
 )
 
+def epicyclic_frequency(R: np.ndarray, v: np.ndarray) -> np.ndarray:
+    """κ(R) in km/s/kpc from a rotation curve: κ² = 2 (v/R)² (1 + dln v/dln R).
+
+    Solid-body inside (κ → 2Ω), √2 Ω where the curve is flat. The derivative is
+    taken on the grid; a curve that is smooth on the grid's scale gives κ to the
+    precision of the interpolation, which is what the convergence sweep checks.
+    """
+    R = np.asarray(R, dtype=float)
+    v = np.maximum(np.asarray(v, dtype=float), 1e-9)
+    dlnv = np.gradient(np.log(v), np.log(R))
+    return np.sqrt(np.maximum(2.0 * (v / R) ** 2 * (1.0 + dlnv), 0.0))
+
+
+EPICYCLIC_FREQUENCY = FieldDecl(
+    name="epicyclic_frequency",
+    label="Epicyclic frequency κ(R)",
+    unit="km/s/kpc",
+    kind=Kind.FIELD,
+    axes=("R",),
+    ramp=Ramp("viridis", scale="log"),
+    meaningful_zero=True,
+    about=(
+        "κ² = 2Ω²(1 + dln v/dln R) off the checkpoint-1 curve: 40 km/s/kpc at R₀, ten times that "
+        "inside a kiloparsec. Two later stages read it — the merger's radial kick becomes a "
+        "displacement through it (S18, debt #19) and the star formation threshold is Kennicutt's "
+        "κ σ_g form rather than a constant (S18, debt #47) — so it is computed once, beside the "
+        "curve it belongs to (rule A9)."
+    ),
+)
+
 CIRCULAR_VELOCITY = FieldDecl(
     name="circular_velocity",
     label="Circular velocity v_c(R)",
@@ -171,12 +205,14 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
     v_disc = freeman_circular_velocity(R, sigma0, R_d, G)
     v_halo = ctx.fields["halo_circular_velocity"]
+    v_total = np.hypot(v_halo, v_disc)
 
     return {
         "disc_central_surface_density": sigma0 / PC_PER_KPC**2,
         "disc_surface_density": sigma0 / PC_PER_KPC**2 * np.exp(-R / R_d),
         "disc_circular_velocity": v_disc,
-        "circular_velocity": np.hypot(v_halo, v_disc),
+        "circular_velocity": v_total,
+        "epicyclic_frequency": epicyclic_frequency(R, v_total),
     }
 
 
@@ -202,6 +238,7 @@ DISC = IMPLEMENTATIONS.register(
             DISC_SURFACE_DENSITY,
             DISC_CIRCULAR_VELOCITY,
             CIRCULAR_VELOCITY,
+            EPICYCLIC_FREQUENCY,
         ),
     )
 )
