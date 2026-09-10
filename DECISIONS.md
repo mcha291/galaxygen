@@ -3544,3 +3544,45 @@ different order than a thirty-two-column one. Per-region determinism is this sta
 contract (D60), so the churn is built for every ring whatever was asked for, and
 `transport_columns` — the kernel read by column, nine times cheaper over the catalogue's
 twenty-eight widths — is what makes that affordable. A one-cell query went 2.9 → 58 → 32 ms.
+
+---
+
+### D127. Cold timings and the profile at S19 (rules B2, B6)
+
+One fresh process per endpoint, `uv run python tools/timings.py`; the profile is
+`python -m galaxy.specs`'s performance section. Everything S19 moved is in the catalogue.
+
+```
+arrays: one profile      0.529 cold / 0.001 warm      region: one sector*   0.467 / 0.034
+arrays: history          0.577 / 0.007  6.4 MB        region: whole disc*   1.091 / 0.649
+arrays: scalar           0.280 / 0.001                system: one star*     0.626 / 0.029
+adv: history             0.984 / 0.004                adv: one sector*      0.822 / 0.035
+adv: alpha plane         0.951 / 0.004                adv: one star*        0.785 / 0.029
+metadata (index, version, stages, fields, inputs): 0.0001–0.0015, no stage run (rule D4)
+* includes the interpreter's first seeded draw, ~10 ms (debt #37). import + registry 0.085–0.099 s.
+```
+
+**The profile.** Whole model 1.393 s cold simple, 1.880 s advanced. `systems` is the
+costliest stage in both — 0.684 s (49.1%) and 0.662 s (35.2%) — ahead of `sfh` 0.233 and
+`chemistry_dtd` 0.747. It was 0.554 / 0.592 at S18, so the migration draw costs about 0.1 s.
+
+**Where the 0.1 s went, and why it matters that it went there.** The catalogue's cost is
+supposed to be per *cell*, not per *star* (D24), and `test_performance` asserts it. The
+first build broke that — a 400-cell cumulative sum per star took the per-star cost from
+3.88 to 11.2 µs and made the star-dependent part the larger half. Drawing at the kernel's
+own age-bin resolution and searching with a vectorised binary search puts it back: **4.19 /
+3.13 µs per star and 523 / 552 ms fixed**, against 3.88 / 2.76 µs and 397 / 432 ms at S18.
+87–90% of the catalogue at 20,000 stars still does not depend on how many stars were asked
+for, which is the property the LOD ladder rests on.
+
+**And the number that had to be watched separately.** A one-cell query — what `/api/system`
+costs, and the interactive path — went 2.9 → 58 → **28 ms**. The 58 was the whole churn built
+for a single cell; reading the kernel by column rather than building it square (`transport_
+columns`, nine times cheaper over the twenty-eight widths) is what brought it back. It cannot
+be brought back further by asking for fewer rings: that changes the arithmetic with the query
+and breaks per-region determinism (D126). Against the 0.63 s the same request spends running
+the six stages above the catalogue, 28 ms is not where that request's time is.
+
+**Unchanged.** `scaling.py` is not re-run: no stage changed complexity class — the churn is
+linear in the grid per ring and the kernels are counted by age bin, not by star.
+
