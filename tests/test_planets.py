@@ -226,6 +226,12 @@ def test_the_stability_filter_leaves_nothing_crowded():
 # --- identity: the same system however you ask for it -------------------------
 
 
+def churn(o):
+    """The run's own migration_efficiency — never a literal, so a catalogue built here is the
+    one the pipeline built (the catalogue draws birth radii with it since S19)."""
+    return float(o.inputs["migration_efficiency"])
+
+
 def test_a_system_is_the_same_alone_as_in_the_sample(model):
     """D60 one level down: (cell, index) names a system, and naming it is enough."""
     o = out(model)
@@ -237,7 +243,7 @@ def test_a_system_is_the_same_alone_as_in_the_sample(model):
     for row in (0, 500, 5000):
         cell, index = counts[np.searchsorted(offsets, row, side="right") - 1][0], None
         index = row - offsets[np.searchsorted(offsets, row, side="right") - 1]
-        stars = materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell])
+        stars = materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell], migration=churn(o))
         mine, belts = pl.one_system(stars, index, cell, 0, CONSTANTS)
         start, end = planets_before[row], planets_before[row + 1]
         assert len(mine["planet_mass"]) == end - start
@@ -251,15 +257,17 @@ def test_a_smaller_sample_gives_a_star_the_same_planets(model):
     """The prefix property (D60) has to survive the second object class too."""
     o = out(model)
     fields = o.fields
-    small = materialise(fields, o.grid.R, o.grid.t, 0, 4000)
-    large = materialise(fields, o.grid.R, o.grid.t, 0, 20000)
+    small = materialise(fields, o.grid.R, o.grid.t, 0, 4000, migration=churn(o))
+    large = materialise(fields, o.grid.R, o.grid.t, 0, 20000, migration=churn(o))
     cell, index = small.counts[3]
     index = 0
     little, _ = pl.one_system(
-        materialise(fields, o.grid.R, o.grid.t, 0, 4000, cells=[cell]), index, cell, 0, CONSTANTS
+        materialise(fields, o.grid.R, o.grid.t, 0, 4000, cells=[cell], migration=churn(o)),
+        index, cell, 0, CONSTANTS,
     )
     lots, _ = pl.one_system(
-        materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell]), index, cell, 0, CONSTANTS
+        materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell], migration=churn(o)),
+        index, cell, 0, CONSTANTS,
     )
     assert len(little["planet_mass"]) == len(lots["planet_mass"])
     assert np.array_equal(little["planet_mass"], lots["planet_mass"])

@@ -157,6 +157,87 @@ def test_thick_stars_are_older_and_higher(model):
     assert np.abs(cat["star_height"][thick]).mean() > np.abs(cat["star_height"][~thick]).mean()
 
 
+# --- S19's gate: the catalogue carries the population the chemistry describes ---
+
+SUN_WINDOW = 0.25  # kpc either side of R0; a quarter of a cell ring, so it sits inside one
+
+
+def at_the_sun(cat, R_sun=8.122):
+    return np.abs(cat["star_radius"] - R_sun) <= SUN_WINDOW
+
+
+def test_the_catalogue_carries_the_chemistrys_own_spread_at_the_sun(model):
+    """S19's gate (GALAXY_PLAN.md §5d), and it is an equality, not "wider".
+
+    ``feh_spread_sun`` is the mass-weighted [Fe/H] dispersion of every star now at R₀ as the
+    chemistry computes it, migrants included. Until S19 the catalogue drew its abundance at
+    the star's *present* radius and birth time, so the field described stars the catalogue
+    did not hold (debt #31). It now draws the birth place from the chemistry's own backward
+    weights, and the two agree because it is the same distribution and not because two
+    numbers happen to land near each other.
+
+    What would kill it, measured before the build (D126): looking the abundance up at the
+    present radius reads 0.284, and drawing only the birth *radius* while keeping the local
+    birth rate for the birth time reads 0.273 — the birth-time marginal of the stars now at
+    R₀ is itself a migrated quantity, so half the rule is not most of the answer. Both are
+    four tolerances away, so this is a discriminating check and not a wide one.
+    """
+    o = out(model)
+    if "feh_spread_sun" not in o.fields:
+        pytest.skip("this model publishes no local [Fe/H] dispersion to be checked against")
+    cat = stars(model, 120_000, seed=0)
+    here = cat["star_metallicity"][at_the_sun(cat)]
+    here = here[np.isfinite(here)]
+    assert here.size > 2000, "too few stars at R₀ for a dispersion to mean anything"
+    assert here.std() == pytest.approx(float(o.fields["feh_spread_sun"]), abs=0.02)  # 0.366 vs 0.360
+
+
+def test_the_catalogue_reproduces_the_stellar_profiles_the_chemistry_published(model):
+    """The same check by a different route (rule B3): means, not the dispersion.
+
+    ``feh_stars_young`` and ``feh_stars_old`` are the chemistry's mean [Fe/H] at each radius
+    for stars either side of the migration kernel's reach — the young barely moved, the old
+    moved the most. The catalogue arrives at both by sampling rather than by convolving, so
+    agreement is evidence about the rule and not about the arithmetic.
+    """
+    o = out(model)
+    R = o.grid.R
+    j = int(np.argmin(np.abs(R - 8.122)))
+    cat = stars(model, 120_000, seed=0)
+    near = at_the_sun(cat)
+    for field, sel, tol in (
+        ("feh_stars_young", cat["star_age"] <= 1.0, 0.03),
+        # The simple model's chemistry migrates its old population with one width taken from
+        # the population's mean age, where the catalogue and chemistry_dtd bin the age; that
+        # is the whole of the difference and it is worth 0.04 dex.
+        ("feh_stars_old", cat["star_age"] >= 10.0, 0.06),  # simple −0.373 vs −0.325; advanced −0.498 vs −0.522
+    ):
+        v = cat["star_metallicity"][near & sel]
+        v = v[np.isfinite(v)]
+        assert v.size > 50, field
+        assert v.mean() == pytest.approx(float(o.fields[field][j]), abs=tol), field
+
+
+def test_the_stars_at_the_sun_were_mostly_born_inside_it(model):
+    """The migrants themselves, which is what debt #31 said never reached the catalogue.
+
+    The birth radius is drawn against how much mass each ring had to send, so with a kernel
+    3.4 kpc wide at the mean local age and a disc that falls off every 2.6 kpc, most of the
+    Sun's neighbours come from inside. **That is also debt #28's symptom in its most direct
+    form**: at migration_efficiency = 3.6 the mean birth radius at R₀ is 5.4 kpc, and a
+    solar neighbourhood assembled that far inward is the same statement as the gradient
+    ratio that debt already records. Pinned so that lowering the input moves this first.
+    """
+    cat = stars(model, 120_000, seed=0)
+    near = at_the_sun(cat)
+    shift = cat["star_birth_radius"][near] - cat["star_radius"][near]
+    assert shift.mean() == pytest.approx(-2.74, abs=0.15)
+    assert (shift < 0).mean() == pytest.approx(0.84, abs=0.03)
+    # Nothing is born off the grid, and nothing is born where no star ever formed.
+    assert cat["star_birth_radius"].min() >= 0.0
+    assert cat["star_birth_radius"].max() <= float(cat["star_radius"].max()) + 30.0
+
+
 def test_metallicity_is_looked_up_not_drawn(model):
     """Given when and where a star formed, its abundance is already decided."""
     cat = stars(model, 120_000, seed=0)

@@ -240,7 +240,9 @@ def test_a_region_is_exactly_what_the_full_sweep_puts_there(api):
     models, impls, table = production()
     out = run(models.get("simple"), None, SMALL, only=systems.SYSTEMS.requires)
     R, t = out.grid.R, out.grid.t
-    whole = systems.materialise(out.fields, R, t, 0, 5000)
+    whole = systems.materialise(
+        out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"])
+    )
 
     header, arrays = api.handle("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&stars=5000").frame()
     cells = tuple(header["cells"]["ids"])

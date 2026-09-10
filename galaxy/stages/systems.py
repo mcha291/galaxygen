@@ -106,21 +106,30 @@ def invert_cdf(u: np.ndarray, x: np.ndarray, weight: np.ndarray) -> np.ndarray:
     return np.interp(np.asarray(u, dtype=float), cdf / total, x)
 
 
-def invert_columns(u: np.ndarray, x: np.ndarray, cdf: np.ndarray) -> np.ndarray:
-    """:func:`invert_cdf` where every draw has its own density: ``cdf`` is ``(len(x), len(u))``.
+def invert_columns(u: np.ndarray, x: np.ndarray, cdf: np.ndarray, column: np.ndarray) -> np.ndarray:
+    """:func:`invert_cdf` where each draw reads its own column of a shared table.
 
-    Each column is already cumulative and normalised. Written as a column search rather than a
-    loop of ``np.interp`` because a star's birth-radius density depends on when it was born, so
-    no two stars in a cell share one — but they do share a handful of columns, and searching
-    them together is what keeps the cost off the star count (rule B8: invert, do not reject).
+    ``cdf`` is ``(len(x), n_columns)``, already cumulative and normalised down each column, and
+    ``column`` says which one each draw inverts. The search is a binary one across the draws at
+    once — ``log2(len(x))`` passes over an array as long as the draws — rather than a comparison
+    against the whole table, which would put ``len(x)`` work on every star and move the
+    catalogue's cost onto the sample size (D24: the per-cell cost is what this design keeps
+    fixed). Still an inversion, never a rejection (rule B8).
     """
     u = np.asarray(u, dtype=float)
-    hi = np.clip((cdf < u[None, :]).sum(axis=0), 0, len(x) - 1)
-    lo = np.maximum(hi - 1, 0)
-    star = np.arange(u.size)
-    c_hi, c_lo = cdf[hi, star], cdf[lo, star]
+    lo = np.zeros(u.size, dtype=np.intp)
+    hi = np.full(u.size, len(x) - 1, dtype=np.intp)
+    while True:
+        mid = (lo + hi) // 2
+        if not np.any(mid > lo) and not np.any(mid < hi):
+            break
+        below = cdf[mid, column] < u
+        lo = np.where(below, np.minimum(mid + 1, hi), lo)
+        hi = np.where(below, hi, mid)
+    below = np.maximum(hi - 1, 0)
+    c_hi, c_lo = cdf[hi, column], cdf[below, column]
     span = np.where(c_hi > c_lo, c_hi - c_lo, 1.0)
-    return x[lo] + np.clip((u - c_lo) / span, 0.0, 1.0) * (x[hi] - x[lo])
+    return x[below] + np.clip((u - c_lo) / span, 0.0, 1.0) * (x[hi] - x[below])
 
 
 def sech2_height(u: np.ndarray, scale: np.ndarray | float) -> np.ndarray:
@@ -276,7 +285,7 @@ class Churn:
     age bin, and one arrival law per cell ring, so the cost does not scale with the stars.
     """
 
-    __slots__ = ("R", "t", "arrive", "_born", "_kcol", "_bin", "_rings")
+    __slots__ = ("R", "t", "arrive", "_born", "_cdf", "_bin", "_rings")
 
     def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float):
         self.R, self.t = R, t
@@ -291,22 +300,35 @@ class Churn:
         widths = migration_width(0.5 * (edges[1:] + edges[:-1]), migration)
         # K[bin][birth ring, cell ring]: only the cell rings are ever asked about, which is
         # what makes this 32 columns rather than a second grid-sized field.
-        self._kcol = np.stack([transport(R, float(w))[:, self._rings] for w in widths])
-        # The arrival law: how much of what was born at each step is here now, per cell ring.
+        kcol = np.stack([transport(R, float(w))[:, self._rings] for w in widths])
+        # The arrival law, per step: how much of what was born at each step is here now.
+        # Per step and not per bin, because it is what a star's *age* is drawn from and the
+        # bins are half a gigayear wide.
         self.arrive = np.zeros((t.size, self._rings.size))
+        # Where it was born, per age bin: the kernel is a bin-level object — one width for
+        # the whole bin — so the birth-radius distribution is read at that resolution too,
+        # and the birth mass is summed over the bin to match it. Cumulative and normalised
+        # here, once, so that drawing a star's birth radius is a search and not a sum.
+        self._cdf = np.zeros((R.size, widths.size, self._rings.size))
         for b in range(widths.size):
             step = self._bin == b
-            if step.any():
-                self.arrive[step] = self._born[:, step].T @ self._kcol[b]
+            if not step.any():
+                continue
+            self.arrive[step] = self._born[:, step].T @ kcol[b]
+            weight = self._born[:, step].sum(axis=1)[:, None] * kcol[b]
+            cum = np.cumsum(weight, axis=0)
+            total = cum[-1]
+            self._cdf[:, b, :] = cum / np.where(total > 0.0, total, 1.0)
 
     def birth_radius(self, u: np.ndarray, ring: int, cols: np.ndarray) -> np.ndarray:
-        """Birth radii for stars of one cell ring, drawn from their own birth steps' weights."""
-        weight = self._born[:, cols] * self._kcol[self._bin[cols], :, ring].T
-        cdf = np.cumsum(weight, axis=0)
-        total = cdf[-1]
-        cdf = cdf / np.where(total > 0.0, total, 1.0)
-        drawn = invert_columns(u, self.R, cdf)
-        return np.where(total > 0.0, drawn, self.R[ring])
+        """Birth radii for stars of one cell ring, each drawn from its own age bin's weights."""
+        cdf = self._cdf[:, :, ring]
+        drawn = invert_columns(u, self.R, cdf, self._bin[cols])
+        # An age bin nothing was born in: the star stays where it is rather than being placed
+        # at radius zero. ``ring`` numbers the cell rings, so the grid radius it stands for is
+        # ``_rings[ring]`` — not ``R[ring]``, which is a different disc.
+        empty = cdf[-1, self._bin[cols]] <= 0.0
+        return np.where(empty, self.R[self._rings[ring]], drawn)
 
 
 def materialise(
