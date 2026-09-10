@@ -3426,3 +3426,121 @@ scale with N_t; with N_R it is quadratic in the quadrature, fixed at 1000 points
 **Convergence**: 0 drifts on N_R, N_t and N_z in either model, every row; row 3 moves
 0.04 km/s across N_R (250.99 / 250.96 / 250.95) against a 6 km/s window — and against
 its 0.04 margin, which the sweep is not built to judge and the record says so (D124).
+
+---
+
+### D126. The catalogue migrates, and the rule is the chemistry's whole rule and not half of it (debts #31, #32, #26; #50 opened)
+
+**The gate.** §5d gives S19 one number: the catalogue's [Fe/H] spread at R₀ equals the
+chemistry's `feh_spread_sun`. It reads **0.361 against 0.360** `[verified:
+tests/test_systems.py::test_the_catalogue_carries_the_chemistrys_own_spread_at_the_sun]`,
+and it is an identity rather than a coincidence — the catalogue draws from the distribution
+the field is a moment of. Getting there needed one decision the brief left open and one it
+did not anticipate.
+
+**Probed before built** (§5d), four rules, the advanced spread at R₀ in a ±0.25 kpc window:
+
+| rule | spread | |
+|---|---|---|
+| abundance at the present radius (S18's catalogue) | 0.284 | |
+| birth radius drawn backward, birth time from the local birth rate | 0.273 | *narrower* |
+| the same with the birth time from `stars_formed_history` | 0.273 | S18's transport is worth 1.5% |
+| **birth radius and birth time drawn together, backward** | **0.361** | against 0.360 |
+
+The BRIEF's sentence — "a birth radius drawn around the present one with the migration
+kernel's width" — read minimally is the second row, and it moves the number the wrong way.
+Two things had to be seen to get the fourth.
+
+1. **"Around the present one" is not a symmetric draw.** `transport` is normalised over the
+   *destination*, so `K[:, j]` read as a distribution over birth rings is not one. The
+   backward weight is `born[i] · K[i, j]` — Bayes — and both chemistries already compute
+   exactly that: `chemistry_dtd` writes `w = m * K[:, at_sun][:, None]` inline, and
+   `chemistry.migrate`'s mass-weighted smoothing is the same posterior in un-normalised
+   form. A symmetric draw is not merely different; it puts stars where nothing was born and
+   reads a metallicity off gas that made no stars (rule B9). Measured, it gives 0.84.
+
+2. **The birth-*time* marginal is itself a migrated quantity, and it is most of the answer.**
+   The catalogue drew a star's birth time from `sfr_surface_density_history` at its present
+   ring — "born here", the answer for a disc whose stars never moved. Of the stars now at
+   R₀, when they were born is `Σ_i born[i,k] K[i,R₀]`, which is 1.4 Gyr older in the mean:
+   **R₀ mean age 5.7 → 7.3 Gyr** in the advanced model, 6.0 → 7.3 in the simple. Drawing the
+   radius and leaving the time is half the rule and less than half the effect.
+
+So a star's birth radius and birth time are drawn together from the backward weights, and
+its abundance is read there. **The kick does not enter the draw** — the brief's open
+question. Two reasons, and the second is the finding: the kick is already spent in the
+present radius (`stellar_surface_density` is `stars_formed_history` summed, i.e. birth
+positions already moved by it), and the chemistry moves abundances with the churn alone, so
+entering the kick as well would make the catalogue disagree with `feh_stars_old`,
+`alpha_fe_stars` and `feh_spread_sun` — every published statement about where the stars now
+at R came from. Trading one inconsistency for another is not progress; naming it is, and
+that is **debt #50**: the model transports stars twice, with two kernels, and nothing
+reconciles them.
+
+**What #50 costs, stated because it is the price of the decision.** The catalogue's thick
+fraction at R₀ is now 0.221 where `thick_thin_surface_density_ratio` says 0.051 — row 9, a
+recorded miss whose target is 0.08–0.16. The two transports bracket the observed number:
+the kick alone puts too little thick disc at R₀, the churn alone too much. The thick disc's
+*total* is unmoved (0.2516 → 0.2535 of the catalogue), so this is about where the population
+sits and not how much of it there is, and the prediction is in the register.
+
+**Two duplicates removed, both rule A9, and the second was hiding a bug.**
+
+- The migration kernel and its age bins move to `chemistry.py` — `transport`,
+  `transport_columns`, `migration_width`, `age_bin_edges` — read by `chemistry_dtd` and by
+  `systems`. The catalogue cannot now churn by a different rule or a different binning than
+  the chemistry it is checked against.
+- **The thin/thick criterion is published**, as `birth_population` (R, t), by the vertical
+  stage that owns it. `systems` rebuilt it from `last_major_merger_time`, `alpha_fe_history`
+  and `alpha_split`. In the advanced model that reconstruction and `vertical_alpha`'s mask
+  *disagreed*: with no valley (debt #27) the stage's mask selects nothing, while the
+  catalogue's fallback was the merger time. It never showed, because the thick surface
+  density was zero and the population was drawn against it — the wrong criterion was
+  masked by a zero. Draw the population from the birth place, as the model's own definition
+  says, and the disagreement would have surfaced as a 21% thick disc in a model that says
+  it has none. Published, the advanced catalogue's empty thick disc follows from #27
+  instead of from an accident.
+
+`star_birth_radius` is published: the difference from `star_radius` is the churning, which
+is what debt #31 said never reached the viewer. **84% of the stars at R₀ were born inside
+it, mean birth radius 5.4 kpc** — which is debt #28's "migration is too strong" in its most
+direct form, and is pinned so that lowering `migration_efficiency` moves it first.
+
+**Debt #32 re-ruled: the spread was the wrong observable to have argued over.** §8's claim
+was that without migration the local distribution is far too narrow; the model refuted it
+(0.370 without, 0.360 with — migration *narrows* it). With the catalogue drawing birth
+places from the same kernel, migration turns out to dominate the solar neighbourhood on
+every statistic except the one §8 named: the mean age, the mean [Fe/H] (−0.33 → −0.25), and
+where the stars came from. A spread is a second moment of a mixture, and two shifted narrow
+components make a wide one look unchanged. The mean and the birth-radius distribution
+separate the hypotheses; the dispersion does not.
+
+**Debt #26's sample instrument is weaker, and that is re-pinned rather than left to drift.**
+The catalogue's metal-rich share went 0.005 → 0.0031 and the two models' giant-fraction
+contrast 1.58× → 1.25×, because a metal-rich star born at 1 kpc is now spread over the disc
+instead of counted where it formed. The centre's iron still reaches the planets — the
+occurrence assertion inside 1 kpc is unmoved — but the sample says less about it than it did.
+
+**The acceptance table did not move.** 10 pass / 12 fail / 2 not-yet-computable in the
+simple model and 9 / 14 / 1 in the advanced, unchanged from S18, and rows 16, 17 and 18 read
+42.8193, 5.70059 and 1.97 × 10⁷ as before: no acceptance row reads the catalogue.
+
+**Two things the build got wrong first, both caught by the suite.**
+
+- The empty-bin fallback returned `R[ring]` where `ring` numbers the *cell* rings, not the
+  grid — out of bounds on a small grid and silently a different radius on the default one.
+- The first draw took each star's birth radius from its own birth *step*, which put a
+  400-cell cumulative sum on every star: per-star cost 3.9 → 11.2 µs, and the star-dependent
+  part became the larger half of the catalogue, which `test_performance` asserts against
+  (D24). The kernel is a bin-level object — one width per 0.5 Gyr age bin — so the
+  birth-radius CDF is built at that resolution, once per (ring, bin), and drawing is a
+  vectorised binary search. It costs nothing in accuracy: 0.3655 binned against 0.3562 per
+  step, either side of the chemistry's 0.3602.
+
+**And one measurement that reversed a change.** Restricting the churn to the rings a region
+query actually touches made a region's star differ from the sweep's in the last bit: the
+arrival law is a matrix product over the rings, and BLAS sums a one-column product in a
+different order than a thirty-two-column one. Per-region determinism is this stage's whole
+contract (D60), so the churn is built for every ring whatever was asked for, and
+`transport_columns` — the kernel read by column, nine times cheaper over the catalogue's
+twenty-eight widths — is what makes that affordable. A one-cell query went 2.9 → 58 → 32 ms.

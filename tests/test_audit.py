@@ -343,10 +343,14 @@ def test_the_register_carries_the_s10_findings():
     # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109);
     # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117); S16 discharged #18 and
     # opened #47 (D119); S17 opened #48 and discharged neither - #17 only for row 14 and #39 only
-    # for its second half, which is why the discharged count did not move (D121, D122).
-    assert progress.debt_counts(text) == (32, 17)  # S18 opened #49 and discharged none; 31 / 17 at S17
+    # for its second half, which is why the discharged count did not move (D121, D122). S18
+    # opened #49 and discharged none (32 / 17); S19 discharged #31 and opened #50, so the open
+    # count stands still while the discharged one moves - both halves have to be read (D126).
+    assert progress.debt_counts(text) == (32, 18)  # 32 / 17 at S18, 31 / 17 at S17
     for item in (
         "6. ~~Adiabatic contraction",
+        "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
+        "50. **The model moves stars twice",
         "46. **The contraction's strength is a simulation calibration",
         "29. ~~**The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",
@@ -432,5 +436,14 @@ def test_debt_26_the_iron_at_the_centre_reaches_the_planets(prod):
     # S18 halved the centre's iron (debt #26: 1.39 -> 0.70 dex in the advanced model, 0.46 -> 0.25 in the simple),
     # so the occurrence inside a kiloparsec fell 0.36 -> 0.25 and the metal-rich share of the catalogue 0.01 -> 0.005.
     assert inner(out["simple"]) < 0.05 < 0.2 < inner(out["advanced"]) < 0.3
-    assert rich(out["simple"]) < 0.001 and 0.003 < rich(out["advanced"]) < 0.008
-    assert out["advanced"].fields["giant_fraction_sample"] > 1.3 * out["simple"].fields["giant_fraction_sample"]
+    # S19 re-pinned the two catalogue numbers, and the direction is the finding. With the
+    # catalogue migrating, the stars at any radius are drawn from the whole disc rather than
+    # from the ring they sit in, so the local age-metallicity relation stops dominating and
+    # the two models' abundance distributions converge: the metal-rich share 0.005 -> 0.0031
+    # and the giant-fraction contrast 1.58x -> 1.25x. The centre's iron still reaches the
+    # planets -- that is the occurrence assertion above, unmoved -- but the *sample* is a
+    # weaker instrument for it than it was, because a metal-rich star born at 1 kpc is now
+    # spread over the disc instead of counted where it formed (D126).
+    assert rich(out["simple"]) < 0.001 and 0.002 < rich(out["advanced"]) < 0.005  # 0.003-0.008 until S19
+    ratio = out["advanced"].fields["giant_fraction_sample"] / out["simple"].fields["giant_fraction_sample"]
+    assert ratio > 1.2, ratio  # > 1.3 until S19; 1.247 now, 1.576 before

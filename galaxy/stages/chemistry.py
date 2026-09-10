@@ -96,6 +96,35 @@ def transport(R: np.ndarray, sigma: float) -> np.ndarray:
     return k / k.sum(axis=1, keepdims=True)
 
 
+def transport_columns(R: np.ndarray, sigma: float, at: np.ndarray) -> np.ndarray:
+    """``transport(R, sigma)[:, at]`` without building the square kernel.
+
+    A caller that wants a few destinations should not pay for every pair. On a uniform grid
+    the row normalisation — the sum of one Gaussian over the whole grid, seen from each ring
+    — is a sliding window over a fixed profile, so it is a cumulative sum rather than a
+    matrix row sum, and each column asked for is then linear in the grid. Same numbers as
+    the square kernel's columns `[verified: tests/test_chemistry.py::
+    test_the_columns_of_the_kernel_are_the_kernels_columns]`; it is what lets a one-cell
+    region query not pay for the whole disc (rule D4).
+
+    Falls back to the square kernel when the grid is not uniform, because the sliding-window
+    argument is exactly the thing that stops being true then.
+    """
+    at = np.atleast_1d(np.asarray(at, dtype=int))
+    n = R.size
+    step = np.diff(R)
+    if sigma <= 0.0 or n < 2 or not np.allclose(step, step[0]):
+        return transport(R, sigma)[:, at]
+    offsets = np.arange(-(n - 1), n) * float(step[0])
+    g = np.exp(-0.5 * (offsets / sigma) ** 2)
+    cumulative = np.cumsum(g)
+    i = np.arange(n)
+    upper = cumulative[2 * n - 2 - i]
+    lower = np.where(i <= n - 2, cumulative[np.maximum(n - 2 - i, 0)], 0.0)
+    rows = upper - lower
+    return g[at[None, :] - i[:, None] + (n - 1)] / rows[:, None]
+
+
 def migrate(profile: np.ndarray, weight: np.ndarray, R: np.ndarray, sigma: float) -> np.ndarray:
     """Mass-weighted Gaussian smoothing of a per-radius quantity (churning)."""
     if sigma <= 0.0:

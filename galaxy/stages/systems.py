@@ -42,7 +42,7 @@ from galaxy.core import seeds as _seeds
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.chemistry import age_bin_edges, migration_width, transport
+from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.vertical import POPULATIONS
 
@@ -288,6 +288,8 @@ class Churn:
     __slots__ = ("R", "t", "arrive", "_born", "_cdf", "_bin", "_rings")
 
     def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float):
+        """``rings`` are the grid indices of every cell ring — all of them, always: see the
+        note at the call site for why this must not depend on which cells were asked for."""
         self.R, self.t = R, t
         # Mass born per ring per step, up to the constant factors that normalise away: the
         # ring's area is the part that does not, and dropping it would weight a birth radius
@@ -300,7 +302,7 @@ class Churn:
         widths = migration_width(0.5 * (edges[1:] + edges[:-1]), migration)
         # K[bin][birth ring, cell ring]: only the cell rings are ever asked about, which is
         # what makes this 32 columns rather than a second grid-sized field.
-        kcol = np.stack([transport(R, float(w))[:, self._rings] for w in widths])
+        kcol = np.stack([transport_columns(R, float(w), self._rings) for w in widths])
         # The arrival law, per step: how much of what was born at each step is here now.
         # Per step and not per bin, because it is what a star's *age* is drawn from and the
         # bins are half a gigayear wide.
@@ -377,6 +379,12 @@ def materialise(
     # [α/Fe] valley, which in the advanced model was a second definition of "thick" that
     # disagreed with the one every thick-disc row is read from (rule A9).
     thick_at_birth = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
+    # Every cell ring, whichever cells were asked for. Narrowing it to the rings a region
+    # query touches was tried and reverted: the arrival law is a matrix product over the
+    # rings, and BLAS sums a 1-column product in a different order than a 32-column one, so
+    # a region came back with a star one bit from the sweep's. Per-region determinism is
+    # this stage's whole contract (D60), and arithmetic that depends on what was asked for
+    # is the one thing it cannot have. Affordable because the kernel is read by column now.
     churn = Churn(R, t, fields["sfr_surface_density_history"], ring_index, migration)
 
     for cell, count in counts:

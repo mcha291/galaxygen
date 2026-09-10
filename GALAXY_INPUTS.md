@@ -1336,24 +1336,49 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    describes the timestep dependence the step *has*: rows 1 and 10 are
    non-monotone under N_t at 0.2% (AUDIT_RUN2.md C2). **Prediction:** feeding
    `merger_delivery` into `sfh` removes that non-monotonicity.
-31. **The catalogue does not migrate.** `systems` draws radii from the
-   unmigrated `stellar_surface_density` and looks abundances up at that radius
-   and birth time, so the advanced model's migrants reach neither the viewer nor
-   the planets: the catalogue's [Fe/H] spread at R₀ is 0.19 dex against the
-   chemistry's own 0.30 `[verified: AUDIT_RUN2.md D-11]`. A boundary S9 did not
-   cross; `feh_spread_sun` describes stars the catalogue does not hold.
-   **S13:** not built; the judgement is recorded (D110). `feh_spread_sun`'s about now
-   says the catalogue does not carry this spread (the viewer's stars at R₀ read 0.19),
-   and the systems-stage change — a birth radius drawn around the present one with the
-   migration kernel's width, the abundance looked up there, for both models — is the
-   next session's, with rows 6 and 7 judged together when debt #27's valley opens
-   (debt #42).
+31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19** (D126). `systems`
+   drew radii from the unmigrated `stellar_surface_density` and looked abundances up at
+   that radius and birth time, so the advanced model's migrants reached neither the viewer
+   nor the planets: the catalogue's [Fe/H] spread at R₀ was 0.19 dex against the
+   chemistry's own 0.30 at S10 `[verified: AUDIT_RUN2.md D-11]`, and 0.299 against 0.360
+   by S18. A star's birth radius **and birth time** are now drawn together from the
+   chemistry's own backward weights — born(R_b, t_b) × K(R_b → R_now), the product
+   `chemistry_dtd` already wrote inline — and the abundance is read there. The catalogue's
+   spread at R₀ reads **0.361** against `feh_spread_sun` **0.360**
+   `[verified: tests/test_systems.py::test_the_catalogue_carries_the_chemistrys_own_spread_at_the_sun]`,
+   and it reproduces `feh_stars_young` and `feh_stars_old` at R₀ by sampling where the
+   chemistry convolves, in both models. **What the half-rule was worth, measured before the
+   build:** the birth *radius* alone, with the birth time still drawn from the local birth
+   rate, reads 0.273 — narrower than doing nothing. The birth-time marginal of the stars
+   now at R₀ is itself a migrated quantity, and it is most of the answer. `star_birth_radius`
+   is published so the churning can be seen: 84% of the stars at R₀ were born inside it,
+   mean birth radius 5.4 kpc. What it moved: R₀ mean age 5.7 → 7.3 Gyr (advanced) and
+   6.0 → 7.3 (simple), R₀ [Fe/H] mean −0.33 → −0.25 and −0.27 → −0.18, the R₀ thick
+   fraction 0.049 → 0.221 in the simple model with the thick disc's *total* unmoved
+   (0.2516 → 0.2535) — which is debt #50 — and the two models' giant-fraction contrast
+   1.58 → 1.25 (debt #26's sample instrument, re-pinned). Rows 6 and 7 are still judged
+   together when debt #27's valley opens (debt #42); nothing here reaches them.
 32. **The local [Fe/H] spread is the age–metallicity relation, not migration.**
    §8's "without migration the local metallicity distribution comes out far
    too narrow" is refuted by the model built to show it: `feh_spread_sun` is
    0.294 dex with `migration_efficiency` = 0 and 0.299 at 3.6 `[verified:
    AUDIT_RUN2.md D-8]`. The field's about line and the test named for the
    mechanism overstate it; §8's claim needs a re-ruling.
+   **S18** made the sign explicit rather than merely small: 0.370 without migration and
+   0.360 with, so the kernel *narrows* the local distribution — the migrants reaching R₀
+   carry narrower age–metallicity relations than the local one `[verified:
+   tests/test_chemistry_dtd.py::test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it]`.
+   **S19: the spread was the wrong observable to have argued over** (D126). With the
+   catalogue drawing birth places from the same kernel, migration turns out to dominate
+   the solar neighbourhood on every statistic except the one §8 named: 84% of the stars
+   at R₀ were born inside it and their mean birth radius is 5.4 kpc, the mean age at R₀
+   rises 5.7 → 7.3 Gyr and the mean [Fe/H] rises 0.08 dex. A spread is a second moment of
+   a mixture and two shifted narrow components make a wide one look unchanged; the mean
+   and the birth-radius distribution separate the hypotheses and the dispersion does not.
+   So §8's re-ruling should replace "the local metallicity distribution comes out far too
+   narrow" with the claim migration actually makes here, and the falsifiable statement is
+   the one debt #28 already holds: at `migration_efficiency` = 3.6 the Sun's neighbours
+   come from too far in, and that is the same number the young/old gradient ratio rejects.
 33. **The advanced model's total metallicity has its own zero point.** Z(R₀)
    reads 1.24 Z☉ where [Fe/H] = 0.00: core-collapse metals are taken in solar
    proportion to oxygen (which already holds the Sun's whole iron) and the Ia
@@ -1871,6 +1896,30 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    not land, the split criterion is (#19). Owned by S20 with the valley: the same lever is
    the two-infall mechanism that makes the inner disc fast, and its other consequence — rows
    6 and 7 — is judged there with both heating constants (#42).
+
+50. **The model moves stars twice, with two kernels, and nothing reconciles them** (S19,
+   D126). `sfh` moves a star from where it was born to where it is now with the merger's
+   radial kick and the disc's radial spread — 1.47 kpc rms at R₀ for stars born before
+   3.8 Gyr (#19, S18) — and `stellar_surface_density`, the thin/thick surface densities and
+   every acceptance row read off them are the result. `chemistry` moves the *same stars*
+   with the migration kernel, σ = `migration_efficiency` √(age/8 Gyr) = 3.4 kpc at the mean
+   local age, and `feh_stars_old`, `alpha_fe_stars` and `feh_spread_sun` are the result.
+   Neither knows about the other. They are different mechanisms — an impulsive kick and a
+   secular churn — so physically they compose, and the total displacement should be
+   √(σ_kick² + σ_churn²); the model applies each alone in a different stage. S19 had to
+   choose which one the catalogue follows and chose the chemistry, because the gate and
+   debt #31 are both about abundances, so the catalogue's thick fraction at R₀ is now
+   **0.221** where `thick_thin_surface_density_ratio` says 0.051 (row 9, a recorded miss
+   whose target is 0.08–0.16). **The two transports bracket the observed number**, which is
+   the finding: the kick alone puts too little thick disc at R₀ and the churn alone too
+   much. The thick disc's *total* is unmoved either way (0.2516 → 0.2535 of the catalogue),
+   so this is about where the population sits, not how much of it there is.
+   **Prediction, stated so it can fail:** if `sfh` moved stars through both kernels, row 9
+   would land between 0.051 and 0.221 and rows 5, 8 and 11 would move with it; if row 9
+   still cannot be reached from inside that interval, the split criterion is what is wrong
+   (#19, #49) and not the transport. Not S19's to build — it moves five acceptance rows and
+   the plan gives none of them to this session — and not S20's either, whose lever is the
+   infall law; **for S21 to read and S22 to rule.**
 
 ---
 
