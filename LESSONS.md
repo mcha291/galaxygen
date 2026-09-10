@@ -638,3 +638,43 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   order without changing the graph. Assembly now reads the disc's curve; Kahn's tie-break
   put the disc first and a test that pinned the order caught it, which is what the pin is
   for — re-pin with the reason, do not loosen it.
+
+## From S19
+
+- [catalogue][field] A kernel normalised over its destination is not a distribution over its
+  source. `transport` sums to one along each *row*, so reading a column as "where did the
+  stars here come from" is wrong by the mass each ring had to send: the backward weight is
+  `born[i] · K[i, j]`, which both chemistries already computed and the catalogue had to be
+  told. The symmetric reading is not a small error — it places stars where nothing was born,
+  and reads an abundance off gas that made no stars (D126).
+- [catalogue][field] When a quantity is transported, so is every marginal of it. The
+  catalogue drew a star's abundance at the ring it sits in and its birth time from the birth
+  rate *there* — the answer for a disc whose stars never moved. Fixing the radius alone
+  moved the spread the wrong way (0.284 → 0.273 against a target of 0.360); fixing the time
+  with it landed the gate. Ask which of a rule's marginals the mechanism touches before
+  deciding you have implemented half of it and got half the effect.
+- [field][catalogue] A criterion two stages apply is a field one stage publishes. `systems`
+  rebuilt the thin/thick mask from the same ingredients `vertical` used, and in the advanced
+  model the two disagreed — the stage's α-criterion selects nothing without a valley, the
+  catalogue's fallback was the merger time. It never showed because the surface density it
+  was drawn against was zero: **a duplicate can be wrong for sessions while a zero masks
+  it** (rule A9, D126).
+- [catalogue][infra] Arithmetic that depends on what was asked for cannot coexist with
+  per-region determinism. Narrowing a matrix product to the rings a region touches changed
+  the last bit of a star's age, because BLAS sums a one-column product in a different order
+  than a thirty-two-column one. Make the work query-independent and make it cheap instead —
+  here by reading the kernel column-wise rather than building it square (D126).
+- [catalogue] A per-star cost hides inside a per-cell design until the profile is read. The
+  first draw gave every star its own 400-cell cumulative sum; the catalogue still passed
+  every correctness test and its cost structure had quietly inverted. The kernel is a
+  bin-level object, so the draw is too — and the accuracy cost was nil (rule B6, D24).
+- [all] State a numerical claim at the precision you checked it at. "The same numbers" became
+  "the same to 6 × 10⁻¹³ relative, and here is why" once the bound was measured — a running
+  total over 2n − 1 terms against a pairwise sum over n. The weaker claim is the one that
+  says the two must not be mixed inside one answer, which is the part that matters.
+- [field] A dispersion is a poor discriminator between hypotheses that shift a mixture's
+  components. Debt #32 spent three sessions on whether migration widens the local [Fe/H]
+  spread; the answer was "barely, and lately it narrows it" — while migration was moving the
+  mean age at R₀ by 1.4 Gyr and bringing 84% of the Sun's neighbours from inside it. Pick
+  the moment the mechanism moves, not the one the source sentence happened to name (D126).
+

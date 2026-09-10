@@ -31,13 +31,14 @@ from typing import Any
 
 import numpy as np
 
-from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
+from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.sfh import fit_scale_length, surface_to_mass
 
 SCALE_LENGTH_FIT = (1.0, 12.0)  # kpc
+POPULATIONS: tuple[str, ...] = ("thin", "thick")
 
 
 def scale_height(sigma_z: np.ndarray | float, sigma_total: np.ndarray | float, G: float) -> np.ndarray:
@@ -54,6 +55,20 @@ def _decl(name, label, unit, about, **kw):
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.SCALAR,
                      meaningful_zero=True, about=about, **kw)
 
+
+BIRTH_POPULATION = FieldDecl(
+    name="birth_population", label="Population a star born here belongs to", unit="dimensionless",
+    kind=Kind.CATEGORY_FIELD, axes=("R", "t"), categories=POPULATIONS,
+    ramp=Palette(("#4c9be8", "#e8894c")), meaningful_zero=True,
+    about=(
+        "The thin/thick criterion itself, over birth radius and birth time: this stage's mask, "
+        "published rather than left implicit. It is the merger in the simple model and the [α/Fe] "
+        "valley in the advanced one, and it is what the catalogue reads to label a star — until "
+        "S19 the catalogue rebuilt the criterion from the same ingredients, which in the advanced "
+        "model was a second, differing definition wearing the right name (rule A9). All thin means "
+        "the model found no thick disc, which is an answer and not an absence."
+    ),
+)
 
 THIN_SURFACE = FieldDecl(
     name="thin_disc_surface_density", label="Thin disc Σ(R)", unit="Msun/pc2", kind=Kind.FIELD,
@@ -132,6 +147,7 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     ratio = s_thick / s_thin if s_thin > 0.0 else 0.0
 
     return {
+        "birth_population": np.broadcast_to(thick_mask, formed.shape).astype(np.int64),
         "thin_disc_surface_density": thin,
         "thick_disc_surface_density": thick,
         "thin_disc_stellar_mass": surface_to_mass(thin, R),
@@ -170,6 +186,7 @@ VERTICAL = IMPLEMENTATIONS.register(
             "disc_heating", "last_major_merger_time",
         ),
         publishes=(
+            BIRTH_POPULATION,
             THIN_SURFACE, THICK_SURFACE, THIN_MASS, THICK_MASS, THIN_LENGTH, THICK_LENGTH,
             THIN_HEIGHT, THICK_HEIGHT, SURFACE_RATIO, LOCAL_RATIO,
             THIN_DISPERSION, THICK_DISPERSION,
