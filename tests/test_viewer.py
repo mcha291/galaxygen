@@ -26,6 +26,7 @@ from galaxy.api.service import MEDIA_TYPES, Service, routes
 from galaxy.api.version import CLIENT
 from galaxy.core.cmaps import CMAPS, COLORMAPS, DIVERGING, CmapError, UnknownCmap, cmap
 from galaxy.core.grids import GridSpec
+from galaxy.core.registry import production
 from galaxy.stages import planets, systems
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -341,11 +342,16 @@ def test_the_viewer_logic_holds(tmp_path):
     """``node --test`` over tests/js, against declarations dumped from the API."""
     s = service()
     fixture = tmp_path / "catalogue.json"
+    # Both models' declarations, not just the default one: S19's gate is that every
+    # published field reaches the viewer, and the two models publish different sets.
+    models = [m.name for m in production()[0]]
+    assert len(models) > 1, "the fixture would make the two-model gate vacuous"
     fixture.write_text(
         json.dumps({
             "stages": s.handle("/api/stages").json(),
             "inputs": s.handle("/api/inputs").json(),
             "fields": s.handle("/api/fields").json(),
+            "models": {n: s.handle("/api/fields", {"model": [n]}).json() for n in models},
         }),
         encoding="utf-8",
     )

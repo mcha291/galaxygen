@@ -21,7 +21,7 @@
 
 import { discOf, discScale, imageOf2D, polylineOf } from "./field.js";
 import * as flow from "./flow.js";
-import { legendStops, makePalette, makeRamp } from "./ramp.js";
+import { legendStops, makePalette, paintOf } from "./ramp.js";
 import * as catalogue from "./stars.js";
 import * as diagram from "./system.js";
 import * as view from "./view.js";
@@ -281,7 +281,7 @@ function renderGalaxy() {
   }
   const values = data.arrays.arrays[decl.name];
   const axis = meta.grid.axes.R;
-  const ramp = makeRamp(decl, meta.cmaps, values);
+  const ramp = paintOf(decl, meta.cmaps, values);
   const canvas = h("canvas", { width: GALAXY_SIZE, height: GALAXY_SIZE, title: decl.about });
   const ctx = canvas.getContext("2d");
   const image = discOf(values, axis, ramp, { size: GALAXY_SIZE });
@@ -328,7 +328,7 @@ function drawStars(ctx, scale) {
   const points = catalogue.project(data.stars, scale, GALAXY_SIZE);
   data.points = points;
   const decl = meta.byName.star_population;
-  const palette = decl ? makePalette(decl) : null;
+  const palette = decl ? paintOf(decl, meta.cmaps, null) : null;
   const codes = data.stars.star_population;
   for (let i = 0; i < points.n; i += 1) {
     const [r, g, b, a] = palette && codes ? palette.color(codes[i]) : [255, 255, 255, 255];
@@ -345,6 +345,23 @@ function drawStars(ctx, scale) {
 }
 
 function legend(decl, ramp) {
+  // A categorical field has no continuous strip to show and no bounds to label: its
+  // legend is the categories it declared, each in its own colour (rule A9).
+  if (ramp.categories) {
+    return h(
+      "div",
+      { class: "legend" },
+      ...ramp.categories.map((label, code) => {
+        const [r, g, b] = ramp.color(code);
+        return h(
+          "span",
+          { class: "swatch" },
+          h("i", { style: `background: rgb(${r} ${g} ${b})` }),
+          h("span", { text: label }),
+        );
+      }),
+    );
+  }
   const strip = h("canvas", { class: "strip", width: 128, height: 1, style: "height:10px" });
   const ctx = strip.getContext("2d");
   const stops = legendStops(ramp, 128);
@@ -393,13 +410,16 @@ function renderPreview() {
   const decl = meta.byName[picked.field];
   const values = data.arrays?.arrays?.[picked.field];
   if (!decl || !values) return h("p", { class: "empty", text: data.busy ? "…" : "nothing drawn yet" });
-  const ramp = makeRamp(decl, meta.cmaps, values);
+  const ramp = paintOf(decl, meta.cmaps, values);
   const canvas = h("canvas", { width: PREVIEW.width, height: PREVIEW.height });
   const ctx = canvas.getContext("2d");
 
-  if (decl.axes.length === 2) {
-    const rows = meta.grid.axes[decl.axes[0]].n;
-    const cols = meta.grid.axes[decl.axes[1]].n;
+  // A categorical field is an image whatever its shape: a polyline through category
+  // codes would draw a slope between two labels that have no order (rule B9's cousin).
+  const asImage = decl.axes.length === 2 || Boolean(ramp.categories);
+  if (asImage) {
+    const rows = decl.axes.length === 2 ? meta.grid.axes[decl.axes[0]].n : 1;
+    const cols = meta.grid.axes[decl.axes.at(-1)].n;
     const image = imageOf2D(values, rows, cols, ramp, { maxWidth: PREVIEW.width, maxHeight: PREVIEW.height });
     ctx.putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
   } else {
@@ -429,7 +449,7 @@ function renderPreview() {
     "div",
     {},
     canvas,
-    decl.axes.length === 2 ? legend(decl, ramp) : null,
+    asImage ? legend(decl, ramp) : null,
     h("p", { class: "caption" }, h("strong", { text: `${decl.label} — ${axes}` }), ` ${decl.about}`),
   );
 }

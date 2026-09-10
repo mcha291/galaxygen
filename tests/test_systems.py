@@ -16,6 +16,7 @@ import pytest
 from galaxy.run import run
 from galaxy.stages.systems import (
     CATALOGUE_SAMPLE,
+    SYSTEMS,
     CELL_COUNT,
     IMF_MAX,
     IMF_MIN,
@@ -39,7 +40,11 @@ def out(model):
 
 
 def stars(model, n, **kw):
+    """The catalogue of one model. ``migration`` comes from the run's own inputs, never a
+    literal: the whole point of debt #31's fix is that the catalogue churns by the same
+    number the chemistry does, and a test that passed its own would not be checking that."""
     o = out(model)
+    kw.setdefault("migration", float(o.inputs["migration_efficiency"]))
     return materialise(o.fields, o.grid.R, o.grid.t, kw.pop("seed", 0), n, **kw)
 
 
@@ -183,10 +188,15 @@ def test_the_star_count_is_computed_from_the_imf(model):
 
 
 def test_an_empty_region_is_empty_not_an_error(model):
+    """No stars is a full set of empty columns, not a missing one (rule B9).
+
+    The names come from the stage's own declarations rather than a list written here: a
+    column added to the catalogue and forgotten in this branch would be absent from every
+    empty region and present everywhere else, which is the shape of bug this asserts against.
+    """
     far = stars(model, 100, seed=0, cells=[CELL_COUNT - 1])
     assert far.size == 0
-    assert set(far) == {"star_radius", "star_azimuth", "star_height", "star_age",
-                        "star_metallicity", "star_mass", "star_population"}
+    assert set(far) == {d.name for d in SYSTEMS.publishes if d.kind.domain == "object"}
 
 
 def test_a_row_of_the_catalogue_knows_which_star_it_is(model):

@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../galaxy/api/client/field.js";
-import { legendStops, makePalette, makeRamp, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
+import { legendStops, makePalette, makeRamp, paintOf, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
 import { census, describe, format, identify, nearest, project } from "../../galaxy/api/client/stars.js";
 import { domain, layout, markSize, pick } from "../../galaxy/api/client/system.js";
 import * as view from "../../galaxy/api/client/view.js";
@@ -253,6 +253,53 @@ test("the catalogue appears at the checkpoint that publishes it, and not before"
   const n = all.find((f) => f.domain === "object").checkpoint;
   assert.equal(view.hasCatalogue(all, n - 1), false);
   assert.equal(view.hasCatalogue(all, n), true);
+});
+
+test("every published field reaches the viewer, in both models", () => {
+  // S19's gate. The viewer is written from the declarations, so a field that nothing draws
+  // is not a missing view — it is a field the model computes and no one ever looks at. Read
+  // per model, because the two publish different sets and only the advanced one publishes
+  // the abundances debt #31 was about.
+  const models = Object.entries(fixture.models);
+  assert.ok(models.length >= 2, "one model is not the two-model discipline");
+  for (const [name, payload] of models) {
+    const all = payload.fields;
+    const materialisers = view.catalogueStages(all);
+    let checked = 0;
+    for (const f of all) {
+      if (f.domain === "grid") {
+        const shown = view.drawableAt(all, f.checkpoint).some((d) => d.name === f.name);
+        assert.ok(shown, `${name}: ${f.name} is published at checkpoint ${f.checkpoint} and drawn nowhere`);
+      } else if (f.domain === "galaxy") {
+        // A scalar of a stage that also materialises objects is deliberately not asked
+        // for — the region response's own census reports it instead (rule D4).
+        if (materialisers.has(f.stage)) continue;
+        const shown = view.scalarsAt(all, f.checkpoint).some((d) => d.name === f.name);
+        assert.ok(shown, `${name}: scalar ${f.name} is published and never shown`);
+      }
+      // Anything painted rather than printed must yield its colour from its own
+      // declaration: a scalar is a number in a table and declares no ramp at all.
+      if (f.domain !== "galaxy") {
+        const paint = paintOf(f, payload.cmaps, [0, 1]);
+        assert.equal(paint.color(0).length, 4, `${name}: ${f.name} has no colour of its own`);
+      }
+      checked += 1;
+    }
+    assert.ok(checked > 100, `${name}: only ${checked} fields checked; the fixture looks empty`);
+  }
+});
+
+test("a categorical field is drawn from its palette, not from a cmap it does not have", () => {
+  const [, payload] = Object.entries(fixture.models)[0];
+  const categorical = payload.fields.find((f) => f.ramp && f.ramp.kind === "palette");
+  assert.ok(categorical, "no categorical field is published; this test is out of date");
+  const paint = paintOf(categorical, payload.cmaps, [0, 1]);
+  assert.deepEqual(paint.color(0).slice(0, 3), rgbOf(categorical.ramp.colors[0]));
+  assert.deepEqual(paint.color(categorical.categories.length), [0, 0, 0, 0], "no category is no colour");
+  assert.equal(paint.label(1), categorical.categories[1]);
+  // And a continuous one still goes to the ramp.
+  const continuous = payload.fields.find((f) => f.ramp && f.ramp.kind === "ramp");
+  assert.equal(paintOf(continuous, payload.cmaps, [0, 1]).scale, continuous.ramp.scale);
 });
 
 test("nothing published varies with phi, and the viewer can tell", () => {

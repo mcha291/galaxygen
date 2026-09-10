@@ -42,7 +42,9 @@ from galaxy.core import seeds as _seeds
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.stages.chemistry import age_bin_edges, migration_width, transport
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.vertical import POPULATIONS
 
 # The cell grid is the unit of regional materialisation, and its size is a real
 # trade-off measured at S5: every cell costs eight Generator constructions (~22 us
@@ -54,7 +56,6 @@ CELL_RINGS = 32
 CELL_SECTORS = 32
 CELL_COUNT = CELL_RINGS * CELL_SECTORS
 CATALOGUE_SAMPLE = 20_000  # the clickable sample of GALAXY_PLAN.md §4, order 10^4-10^5
-POPULATIONS: tuple[str, ...] = ("thin", "thick")
 
 # Kroupa IMF: dN/dm proportional to m^-1.3 below the break and m^-2.3 above it
 # [recall: Kroupa 2001]. GALAXY_INPUTS.md §2 makes the IMF a Level 0 constant.
@@ -103,6 +104,23 @@ def invert_cdf(u: np.ndarray, x: np.ndarray, weight: np.ndarray) -> np.ndarray:
     if total <= 0.0:
         return np.full_like(np.asarray(u, dtype=float), x[0])
     return np.interp(np.asarray(u, dtype=float), cdf / total, x)
+
+
+def invert_columns(u: np.ndarray, x: np.ndarray, cdf: np.ndarray) -> np.ndarray:
+    """:func:`invert_cdf` where every draw has its own density: ``cdf`` is ``(len(x), len(u))``.
+
+    Each column is already cumulative and normalised. Written as a column search rather than a
+    loop of ``np.interp`` because a star's birth-radius density depends on when it was born, so
+    no two stars in a cell share one — but they do share a handful of columns, and searching
+    them together is what keeps the cost off the star count (rule B8: invert, do not reject).
+    """
+    u = np.asarray(u, dtype=float)
+    hi = np.clip((cdf < u[None, :]).sum(axis=0), 0, len(x) - 1)
+    lo = np.maximum(hi - 1, 0)
+    star = np.arange(u.size)
+    c_hi, c_lo = cdf[hi, star], cdf[lo, star]
+    span = np.where(c_hi > c_lo, c_hi - c_lo, 1.0)
+    return x[lo] + np.clip((u - c_lo) / span, 0.0, 1.0) * (x[hi] - x[lo])
 
 
 def sech2_height(u: np.ndarray, scale: np.ndarray | float) -> np.ndarray:
@@ -246,6 +264,51 @@ def star_at(counts: Sequence[tuple[int, int]], row: int) -> tuple[int, int]:
     raise IndexError(f"row {row} is past the {seen} stars these cells realise")
 
 
+class Churn:
+    """Where the stars now at each ring were born — the chemistry's migration kernel, backwards.
+
+    The chemistry moves a star's abundance from where it formed to where it is now with a
+    Gaussian of width ``migration_efficiency √(age / 8 Gyr)``, evaluated in age bins. Read
+    forwards that says where a ring's stars went; the catalogue needs the opposite — given a
+    star here now, where and when was it born — and that is not the kernel alone but the
+    kernel weighted by how much mass each ring had to send (rule B8, and see
+    ``chemistry.transport``). Both are precomputed once per materialisation: one kernel per
+    age bin, and one arrival law per cell ring, so the cost does not scale with the stars.
+    """
+
+    __slots__ = ("R", "t", "arrive", "_born", "_kcol", "_bin", "_rings")
+
+    def __init__(self, R: np.ndarray, t: np.ndarray, psi: np.ndarray, rings: np.ndarray, migration: float):
+        self.R, self.t = R, t
+        # Mass born per ring per step, up to the constant factors that normalise away: the
+        # ring's area is the part that does not, and dropping it would weight a birth radius
+        # by surface density where the chemistry weights it by mass.
+        self._born = np.asarray(psi, dtype=float) * R[:, None]
+        self._rings = np.asarray(rings, dtype=int)
+        edges = age_bin_edges(float(t[-1]))
+        age = float(t[-1]) - t
+        self._bin = np.clip(np.searchsorted(edges, age, side="right") - 1, 0, edges.size - 2)
+        widths = migration_width(0.5 * (edges[1:] + edges[:-1]), migration)
+        # K[bin][birth ring, cell ring]: only the cell rings are ever asked about, which is
+        # what makes this 32 columns rather than a second grid-sized field.
+        self._kcol = np.stack([transport(R, float(w))[:, self._rings] for w in widths])
+        # The arrival law: how much of what was born at each step is here now, per cell ring.
+        self.arrive = np.zeros((t.size, self._rings.size))
+        for b in range(widths.size):
+            step = self._bin == b
+            if step.any():
+                self.arrive[step] = self._born[:, step].T @ self._kcol[b]
+
+    def birth_radius(self, u: np.ndarray, ring: int, cols: np.ndarray) -> np.ndarray:
+        """Birth radii for stars of one cell ring, drawn from their own birth steps' weights."""
+        weight = self._born[:, cols] * self._kcol[self._bin[cols], :, ring].T
+        cdf = np.cumsum(weight, axis=0)
+        total = cdf[-1]
+        cdf = cdf / np.where(total > 0.0, total, 1.0)
+        drawn = invert_columns(u, self.R, cdf)
+        return np.where(total > 0.0, drawn, self.R[ring])
+
+
 def materialise(
     fields: Mapping[str, Any],
     R: np.ndarray,
@@ -253,13 +316,20 @@ def materialise(
     seed: int,
     n_stars: int,
     cells: Sequence[int] | None = None,
+    *,
+    migration: float,
 ) -> Catalogue:
     """Generate ``n_stars`` across the whole galaxy, or only within ``cells``.
 
     Passing a subset of cells returns exactly the stars those cells would have in
     a full sweep — that is the per-region determinism the gate is about.
+
+    ``migration`` is the ``migration_efficiency`` input and is keyword-only and required
+    on purpose: it is the one argument here that is not a published field, and a default
+    of zero would have made a caller that forgot it silently produce the unmigrated
+    catalogue of debt #31 — the defect this signature exists to make unreachable (rule B13).
     """
-    ring_mass, edges = cell_masses(fields["stellar_surface_density"], R)
+    _, edges = cell_masses(fields["stellar_surface_density"], R)
 
     # The radius that stands for a ring, computed from the density field rather than
     # from the stars a cell happens to realise. Using the realised mean would make a
@@ -272,22 +342,20 @@ def materialise(
         else 0.5 * (edges[i] + edges[i + 1])
         for i in range(CELL_RINGS)
     ])
+    ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
 
     counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, cells)
     columns: dict[str, list[np.ndarray]] = {}
 
-    sigma_thin = fields["thin_disc_surface_density"]
-    sigma_thick = fields["thick_disc_surface_density"]
     h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
     h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or h_thin
-    psi = fields["sfr_surface_density_history"]
     feh = fields["feh_history"]
-    onset = float(fields["last_major_merger_time"])
-    # The population a star belongs to follows whichever criterion the model's
-    # vertical stage used: the [α/Fe] valley when the advanced chemistry found one,
-    # else the merger (D87). Optional, so the simple model answers as before.
-    split = fields.get("alpha_split")
-    afe = fields.get("alpha_fe_history") if split is not None and math.isfinite(float(split)) else None
+    # The thin/thick criterion over (birth radius, birth time), published by the vertical
+    # stage that owns it. Until S19 this stage rebuilt it from the merger time and the
+    # [α/Fe] valley, which in the advanced model was a second definition of "thick" that
+    # disagreed with the one every thick-disc row is read from (rule A9).
+    thick_at_birth = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
+    churn = Churn(R, t, fields["sfr_surface_density_history"], ring_index, migration)
 
     for cell, count in counts:
         ring, sector = divmod(int(cell), CELL_SECTORS)
@@ -302,35 +370,29 @@ def materialise(
 
         azimuth = (sector + draw("azimuth")) * (2.0 * math.pi / CELL_SECTORS)
 
-        # Per star, not per cell: the thick fraction varies across a ring's width.
-        thin_here = np.interp(radius, R, sigma_thin)
-        thick_here = np.interp(radius, R, sigma_thick)
-        both = thin_here + thick_here
-        p_thick = np.where(both > 0.0, thick_here / np.where(both > 0.0, both, 1.0), 0.0)
-        is_thick = draw("population") < p_thick
+        # When a star was born, of the stars that are *here now*: the migration kernel's
+        # arrival law rather than the local birth rate, which would be the answer for a
+        # disc whose stars never moved. Taken once per ring, as the birth-time CDF always
+        # was — building one per star would cost 10^6 cumulative sums for a resolution
+        # finer than a ring is wide.
+        born = invert_cdf(draw("age"), t, churn.arrive[:, ring])
+        cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
+        birth_radius = churn.birth_radius(draw("birth_radius"), ring, cols)
+        rows = np.clip(np.searchsorted(R, birth_radius), 0, len(R) - 1)
+
+        # Population and abundance are both read at the birth place, because both are
+        # decided there: a star born before the merger is thick wherever it drifted to,
+        # and its [Fe/H] is the gas it formed from (rule B8 — neither is drawn).
+        is_thick = thick_at_birth[rows, cols]
+        metallicity = feh[rows, cols]
 
         height = sech2_height(draw("height"), np.where(is_thick, h_thick, h_thin))
-
-        # The birth-time CDF is taken once per ring rather than per star: building a
-        # separate CDF for every star would cost 10^6 cumulative sums for a resolution
-        # finer than a ring is wide.
-        index = int(np.argmin(np.abs(R - ring_radius[ring])))
-        if afe is not None:
-            window = ~(afe[index] < float(split))
-        else:
-            window = (t < onset) if onset > 0.0 else np.ones_like(t, dtype=bool)
-        born_thick = invert_cdf(draw("age"), t, np.where(window, psi[index], 0.0))
-        born_thin = invert_cdf(draw("age_thin"), t, np.where(~window, psi[index], 0.0))
-        born = np.where(is_thick, born_thick, born_thin)
-
-        rows = np.clip(np.searchsorted(R, radius), 0, len(R) - 1)
-        cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
-        metallicity = feh[rows, cols]
 
         columns.setdefault("star_radius", []).append(radius)
         columns.setdefault("star_azimuth", []).append(azimuth)
         columns.setdefault("star_height", []).append(height)
         columns.setdefault("star_age", []).append(t[-1] - born)
+        columns.setdefault("star_birth_radius", []).append(birth_radius)
         columns.setdefault("star_metallicity", []).append(metallicity)
         columns.setdefault("star_mass", []).append(imf_sample(draw("mass")))
         columns.setdefault("star_population", []).append(is_thick.astype(np.int64))
@@ -340,7 +402,7 @@ def materialise(
         return Catalogue.of({
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
-                      "star_metallicity", "star_mass", "star_population")
+                      "star_birth_radius", "star_metallicity", "star_mass", "star_population")
         }, counts)
     return Catalogue.of({name: np.concatenate(parts) for name, parts in columns.items()}, counts)
 
@@ -407,9 +469,14 @@ STAR_AGE = _column("star_age", "Age", "Gyr",
                    "Drawn from the star formation history at its radius, restricted to its "
                    "population's era — so an old thick-disc star and a young thin-disc one come "
                    "from the same machinery.", ramp=Ramp("magma"))
+STAR_BIRTH_RADIUS = _column(
+    "star_birth_radius", "Birth radius", "kpc",
+    "Where the star formed, drawn backwards through the chemistry's migration kernel from where "
+    "it is now — so its abundance is read off the gas it was actually made from. The difference "
+    "from star_radius is the churning, and it is what debt #31 said the catalogue was missing.")
 STAR_METALLICITY = _column("star_metallicity", "[Fe/H]", "dex",
-                           "Looked up at the star's radius and birth time, not drawn: given when "
-                           "and where it formed, its abundance is already decided (rule B8).",
+                           "Looked up at the star's *birth* radius and birth time, not drawn: given "
+                           "when and where it formed, its abundance is already decided (rule B8).",
                            ramp=Ramp("RdBu", lo=-2.0, hi=0.5))
 STAR_MASS = _column("star_mass", "Stellar mass", "Msun",
                     "Kroupa by inverse CDF. The steep high-mass slope means almost every star in "
@@ -419,7 +486,13 @@ STAR_POPULATION = FieldDecl(
     name="star_population", label="Population", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=POPULATIONS, ramp=Palette(("#4c9be8", "#e8894c")),
     provenance="seeded",
-    about="Thin or thick, drawn against the local surface-density ratio the vertical stage published.",
+    about=(
+        "Thin or thick, read off birth_population at the star's own birth place — the vertical "
+        "stage's criterion, applied to where and when this star formed. It is not drawn: given a "
+        "birth time the answer is already decided. Migrants make the catalogue's thick fraction "
+        "at R₀ larger than thick_thin_surface_density_ratio, which is the same population moved "
+        "by the other of the model's two transports (debt #50)."
+    ),
 )
 
 CATALOGUE_SIZE = FieldDecl(
@@ -435,7 +508,8 @@ CATALOGUE_SIZE = FieldDecl(
 
 def compute_systems(ctx: Context) -> Mapping[str, Any]:
     catalogue = materialise(
-        ctx.fields, ctx.grid.R, ctx.grid.t, int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE
+        ctx.fields, ctx.grid.R, ctx.grid.t, int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE,
+        migration=float(ctx.inputs["migration_efficiency"]),
     )
     return {**catalogue, "catalogue_size": float(catalogue.size)}
 
@@ -449,15 +523,14 @@ SYSTEMS = IMPLEMENTATIONS.register(
         ),
         compute=compute_systems,
         reads_seeds=("systems_seed",),
+        reads_inputs=("migration_efficiency",),
         requires=(
-            "stellar_surface_density", "thin_disc_surface_density", "thick_disc_surface_density",
-            "thin_disc_scale_height", "thick_disc_scale_height",
-            "sfr_surface_density_history", "feh_history", "last_major_merger_time",
+            "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
+            "birth_population", "sfr_surface_density_history", "feh_history",
         ),
-        requires_optional=("alpha_fe_history", "alpha_split"),
         publishes=(
-            STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_METALLICITY,
-            STAR_MASS, STAR_POPULATION, CATALOGUE_SIZE,
+            STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
+            STAR_METALLICITY, STAR_MASS, STAR_POPULATION, CATALOGUE_SIZE,
         ),
     )
 )

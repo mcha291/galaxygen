@@ -43,6 +43,7 @@ from galaxy.stages.disc import PC_PER_KPC
 
 GRADIENT_FIT_RANGE = (4.0, 12.0)  # kpc; where gradients are actually measured
 MIGRATION_REFERENCE_AGE = 8.0  # Gyr, the age the migration width is quoted at
+AGE_BIN = 0.5  # Gyr; 1.0 and 10.0 are bin edges, so the young/old selections are exact
 YOUNG_MAX_AGE = 1.0  # Gyr
 OLD_MIN_AGE = 10.0  # Gyr
 
@@ -57,6 +58,42 @@ def gradient(feh: np.ndarray, R: np.ndarray, weights: np.ndarray | None = None) 
         return float("nan")
     ww = None if weights is None else weights[w]
     return float(np.polyfit(R[w], feh[w], 1, w=ww)[0])
+
+
+def age_bin_edges(t_max: float) -> np.ndarray:
+    """The age bins the migration kernel is evaluated in, shared so two stages cannot drift.
+
+    ``chemistry_dtd`` moves each bin's stars with one kernel width and ``systems`` draws a
+    star's birth radius from the same bin's weights; binned differently, the catalogue would
+    carry a population the chemistry never described, which is the defect debt #31 named.
+    """
+    return np.arange(0.0, float(t_max) + AGE_BIN, AGE_BIN)
+
+
+def migration_width(age: np.ndarray | float, efficiency: float) -> np.ndarray:
+    """σ(age) = migration_efficiency · √(age / 8 Gyr) — the kernel's width, in one place.
+
+    The rule is the model's, not this stage's: ``chemistry_dtd`` widens its transport by it
+    and ``systems`` draws a star's birth radius with it, so it is written once here rather
+    than three times consistently (rule A9).
+    """
+    return efficiency * np.sqrt(np.maximum(np.asarray(age, dtype=float), 0.0) / MIGRATION_REFERENCE_AGE)
+
+
+def transport(R: np.ndarray, sigma: float) -> np.ndarray:
+    """Row-normalised Gaussian kernel: fraction of ring i's stars now found in ring j.
+
+    Normalised over the *destination*, so ``K[i]`` is where ring i's stars went and sums to
+    one. Reading it backwards — which ring did the stars now at j come from — is therefore
+    not ``K[:, j]`` but ``born[i] · K[i, j]`` — Bayes, weighted by how much mass each ring
+    had to send. ``chemistry_dtd`` writes that product inline and ``systems`` draws a star's
+    birth radius from it; a draw that used ``K[:, j]`` alone would put stars where nothing
+    was born, and read a metallicity off gas that made no stars (rule B9).
+    """
+    if sigma <= 0.0:
+        return np.eye(R.size)
+    k = np.exp(-0.5 * ((R[None, :] - R[:, None]) / sigma) ** 2)
+    return k / k.sum(axis=1, keepdims=True)
 
 
 def migrate(profile: np.ndarray, weight: np.ndarray, R: np.ndarray, sigma: float) -> np.ndarray:

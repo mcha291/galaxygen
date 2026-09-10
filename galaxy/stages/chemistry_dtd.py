@@ -64,14 +64,16 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages import chemistry as simple
-from galaxy.stages.chemistry import MIGRATION_REFERENCE_AGE, OLD_MIN_AGE, YOUNG_MAX_AGE, gradient
+from galaxy.stages.chemistry import (
+    AGE_BIN, MIGRATION_REFERENCE_AGE, OLD_MIN_AGE, YOUNG_MAX_AGE,
+    age_bin_edges, gradient, migration_width, transport,
+)
 from galaxy.stages.disc import PC_PER_KPC
 
 # Numerical resolution choices, not physics: the delay kernel's bin count (fixed
 # whatever N_t, which is the whole point), the age bins migration is applied in,
 # and the [α/Fe] histogram the bimodality is read off.
 DTD_BINS = 32
-AGE_BIN = 0.5  # Gyr; 1.0 and 10.0 are bin edges, so the young/old selections are exact
 ALPHA_HIST = (-0.3, 0.7, 0.02)  # lo, hi, bin width in dex
 PEAK_SEPARATION = 0.1  # dex; two maxima closer than this are one mode
 DIP_DEPTH = 0.5  # the valley must fall to at most this fraction of the lower peak
@@ -138,14 +140,6 @@ def escape_velocity(
 
 
 # --- the abundance distribution at one radius --------------------------------
-
-
-def transport(R: np.ndarray, sigma: float) -> np.ndarray:
-    """Row-normalised Gaussian kernel: fraction of ring i's stars now found in ring j."""
-    if sigma <= 0.0:
-        return np.eye(R.size)
-    k = np.exp(-0.5 * ((R[None, :] - R[:, None]) / sigma) ** 2)
-    return k / k.sum(axis=1, keepdims=True)
 
 
 def weighted_percentile(values: np.ndarray, weights: np.ndarray, q: float) -> float:
@@ -368,7 +362,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     width = float(ctx.inputs["migration_efficiency"])
     formed = PC_PER_KPC * psi * dt * (2.0 * math.pi * R * ctx.grid["R"].width * PC_PER_KPC**2)[:, None]  # M☉ per ring per step
     feh_b, afe_b = np.nan_to_num(feh_hist, nan=-99.0), np.nan_to_num(afe_hist, nan=0.0)
-    edges = np.arange(0.0, ctx.grid.spec.t_max + AGE_BIN, AGE_BIN)
+    edges = age_bin_edges(ctx.grid.spec.t_max)
     at_sun = int(np.argmin(np.abs(R - float(c["R_SUN"]))))
 
     mass_now = np.zeros((edges.size - 1, R.size))
@@ -383,7 +377,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         m = formed[:, in_bin]
         if m.sum() <= 0.0:
             continue
-        sigma = width * math.sqrt(0.5 * (edges[b] + edges[b + 1]) / MIGRATION_REFERENCE_AGE)
+        sigma = float(migration_width(0.5 * (edges[b] + edges[b + 1]), width))
         K = transport(R, sigma)
         mass_b, feh_bin, afe_bin = m.sum(axis=1), feh_b[:, in_bin], afe_b[:, in_bin]
         mass_now[b] = K.T @ mass_b
