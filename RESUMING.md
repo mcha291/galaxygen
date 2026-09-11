@@ -117,5 +117,4 @@ tests/          test_audit.py is the S10 audits as tests plus S20's three probes
    **An audit branch (S21 a/b) skips step 2's merge**: push the branch, S22 ports it (D99).
 
 A session that stops early closes **partially** (C2d): commit, push, write what remains into
-BRIEF.md, mark the row ◐, do **not** merge. **Credentials:** the helper or a repo-scoped token;
-never push a tag (C2e).
+BRIEF.md, mark the row ◐, do **not** merge. Credentials: the helper or a repo-scoped token; no tags (C2e).
