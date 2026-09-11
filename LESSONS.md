@@ -728,6 +728,10 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   recorded was a one-sided test at 2.9σ by the fit's own error bar, and the error bar was wide
   because the model was wrong, not because the desktop was busy. Measure the distribution
   before crediting the explanation (rule B6; #68).
+- [audit][infra] A fitted intercept is an extrapolation; read the slope. The catalogue's
+  per-cell line reads +18.1, +1.4 and −6.3 ms of fixed cost on three runs of one container,
+  and the slope reads 423–459 µs on all three. Publishing the pair without saying which half
+  is determined is how "270 ms fixed" survived ten sessions (D145; #67).
 - [audit] Rule B10 applies to instruments. A constant fitted against a broken mechanism has no
   claim on its value; so does a number published by a fit that was misspecified. Every "µs per
   star / ms fixed" pair since S11 is such a number (D146).

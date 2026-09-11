@@ -132,7 +132,13 @@ the stars asked for `[verified: tests/test_audit.py::test_s21b_the_catalogue_is_
 | both | 354 µs/cell + 0.71 µs/star + 32 ms, **R² 0.9994** | 420 µs/cell + 0.69 µs/star + 4.5 ms, **R² 0.9966** |
 
 The cells that realise a star saturate — 349 of 1024 at 500 stars, 800 at
-20,000, 829 at 80,000 — and that saturation is the whole of the curvature. So:
+20,000, 829 at 80,000 — and that saturation is the whole of the curvature.
+
+**Read the slope, not the intercept.** Even over this range the per-cell line is
+extrapolated from 349 cells to zero, so its fixed term is not determined: three
+runs on this container read +18.1, +1.4 and −6.3 ms. What they agree on is that
+all three are small beside the 0.23 s the per-star fit calls fixed, and the
+three-parameter fit's 32 ms is the better estimate of the per-call cost. So:
 
 - **There is no 270 ms fixed cost.** What the fit calls fixed is the per-cell
   price of however many cells the sample happens to light up, and it falls with

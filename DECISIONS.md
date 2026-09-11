@@ -3799,7 +3799,17 @@ quotes it and a comparison needs it — records the cells realised per sample, a
 widening is D115's own lesson: over the old range the cells only run 630 to 817 of
 1024, so the per-cell line was extrapolated to zero cells from a fifth of its span
 and read a *negative* fixed cost. With 500 and 2,000 in, at 0.35 s more per model,
-the intercept reads 18.1 / 1.4 ms — the layout, which is what it should be.
+the intercept comes back to the right order — 18.1 / 1.4 ms in this
+session's profile run, against −66.5 / −104.6 ms before the widening.
+
+**Read the slope, not the intercept.** Even widened, the per-cell line is
+extrapolated from 349 cells to zero and the intercept is not well determined: the
+close's `verify_clone` run, on the same container, read **−6.3 ms** for the simple
+model where the profile run read +18.1. All three readings are small beside the
+0.23 s the per-star fit calls "fixed", which is the finding; none of them pins the
+per-call cost, and the three-parameter fit's 32 ms is the better estimate of that.
+This is the same discipline the entry above applies to the per-star pair, turned on
+the number this run itself published (rule B6).
 
 **And a discharge re-read, not reversed** (debt #72). `AUDIT_RUN1.md` §2 discharged
 debt #24's remainder with "cost is proportional to the stars asked for". The verdict
@@ -3976,7 +3986,7 @@ is a machine comparison; the shares are what carry across, and they are S20's wi
 a point or two.
 
 **The catalogue, at the widened sample range and both prices** (D145): simple
-**423.4 µs per cell realised + 18.1 ms** at R² 0.99, against 4.23 µs per star + 232.7
+**423.4 µs per cell realised** (+18.1 ms, an extrapolated intercept — D145), at R² 0.99, against 4.23 µs per star + 232.7
 ms at R² 0.63; advanced **444.9 µs per cell + 1.4 ms** at R² 0.99 against 4.54 µs per
 star + 225.6 ms at R² 0.65. Cells per sample 349 / 479 / 630 / 740 / 800 / 817 of
 1024 at 0.5k / 2k / 5k / 10k / 20k / 40k stars. Layout 21 ms over all 1024 cells.
