@@ -1,56 +1,48 @@
-# BRIEF — for S20: the advanced model's [α/Fe] valley, and rows 6–7 (§5d; Fable)
+# BRIEF — for S21: Audit II, run twice with two stated aims (§5d; one on Fable, one on Opus)
 
-S0–S10 are closed; S11–S19 integrated, fixed and decided (D99–D127). S19 made the catalogue
-migrate and left the physics untouched: **no acceptance row moved**, and none reads the
-catalogue. Open per RESUMING.md, read RULES.md, then this; §11 is the register (32 open).
-Branch `session-20`; your decision is **D128**.
+S0–S10 are closed; S11–S20 integrated, fixed and decided (D99–D129). S20 changed one constant
+(`MERGER_HEATING` 120 → 88.8, derived) and one function boundary (`sfh.first_infall`), and wrote
+the valley's record. Open per RESUMING.md, read RULES.md, then this; §11 is the register (32
+open, 18 discharged). Two branches, `session-21-a` and `session-21-b`, **never merged into each
+other** — S22 ports both lists onto main (D99). Your decisions are **D130** onward.
 
-## What you build (§5d row 20; debts #27, #42, #26, and #49 which S18 handed you)
-- **The mechanism that makes the inner disc fast without steepening the infall law
-  everywhere.** The bulge's inflow is §5d's named candidate; #49's is the first infall on its
-  own short timescale (τ₀ ≈ 0.8–1 Gyr, radius-independent, the halo/thick-disc phase), which
-  S18 probed and which the derived threshold reopens. They are not the same lever — decide
-  which the model *derives* and say why in D128.
-- Then rows 5–11 and 24 in the advanced model, and **rows 6 and 7 judged together with both
-  heating constants re-examined** (#42: `MERGER_HEATING` = 60 reads row 7 at 751 and advanced
-  row 6 at 346, both inside, for the first time — S18 left it alone because the plan gives it
-  to you, rule B10 cutting both ways).
-- **Gate:** row 24 `bimodal_wide` at the default grid, *stated* (the N_t = 8 trap — a coarse
-  grid manufactures the valley, which is why this row has a known false positive); row 22
-  still inside; rows 6 and 7 inside together.
+## Reserved numbers, fixed now (§5d row 21; D116 wrote them before S15 took D117)
+- Aim (a): debts **#51–#64**, decisions **D130–D143**. Aim (b): debts **#65–#78**, decisions
+  **D144–D157**. Open your first number at the start of your range whatever the other run did.
+- Give each run its aim in its first line and its model in the board row (the S10 comparison is
+  worthless if the model used is recorded from intention, GALAXY_PLAN.md §5).
 
-## What is different since the valley was last looked at
-1. **The advanced model has no thick disc at all**, and since S19 that fact is visible rather
-   than masked. `alpha_split` is NaN, so `vertical_alpha`'s mask selects nothing and
-   `birth_population` — the criterion, now published by the stage that owns it — is all-thin.
-   The catalogue reads it instead of rebuilding it, so when your valley opens, the thick disc
-   appears in the viewer, in `star_population`, and in the planets, with no further work. Six
-   thick-disc rows plus row 24 have this one cause (#27).
-2. **The threshold is Kennicutt's and diverges at the centre** (S18, #47): 589 M☉/pc² at the
-   first cell, so the innermost rings hold gas and form almost no stars, and the advanced
-   centre's [Fe/H] peaks at 0.5 kpc (0.70) not at the first ring. The same reservoir halves
-   the centre's iron (#26) and is what reopened the valley at a fast inner disc.
-3. **The chemistry owns the migration kernel now** (S19, A9): `transport`,
-   `transport_columns`, `migration_width` and `age_bin_edges` live in `chemistry.py` and are
-   read by `chemistry_dtd` *and* by `systems`. Change the kernel and the catalogue follows;
-   change the age binning and it follows too. That is deliberate — do not fork it.
+## Aim (a): every prediction since S13, killed or held with a number (rule B4)
+- The predictions live in `spec._MISSES` / `_MISSES_ADVANCED` (every entry has one) and in §11's
+  entries from S13 on. Run each one that can be run with the repo unchanged; S20 left the
+  substitution point for the infall law (`sfh.first_infall`, monkeypatched in
+  `tests/test_audit.py`'s three S20 tests) and `with_constant` for the rest.
+- Not yet read by anyone: **#50** (S19: the model transports stars twice, kick in `sfh` and churn
+  in `chemistry`; its prediction is that moving the stars through both lands row 9 between 0.0455
+  and 0.221) — S19 wrote it for you to *read* and S22 to rule. The bar's prediction (D121: 7e9
+  buckled into the spheroid reads row 3 at 249.4, row 12 inside, row 14 at 123) has never run.
+- S20's own claims to test: every `bimodal_wide` the detector reports is the plateau spike (D128,
+  a test pins one case — try the single-merger ones); the valley needs a *rising* first phase cut
+  within a gigayear (nothing in the repo can make one, so this is a claim to attack, not confirm).
+
+## Aim (b): the instruments and the viewer
+- Cold paths (D4): every route in `tools/timings.py`, the metadata routes touching no stage.
+- `tests/test_performance.py::test_the_catalogue_is_priced_per_cell` is flaky under load (D115).
+- The audit tests' pins: `tests/test_audit.py` carries S10–S20's measurements at loose tolerances;
+  ask which ones would not notice a regression of the size that matters (S19's lesson: state the
+  precision you checked at). The `bimodality` detector's `MODE_MIN_SHARE` = 0.1 within ±0.05 dex
+  cannot see a thick mode holding 12% of the mass unless it is under 0.1 dex wide (D128) — an
+  instrument finding for you to state, not a threshold for you to move (rule B5).
+- The viewer previews every published field in both models (S19); check the two S20 numbers
+  reach it (`disc_radial_spread` 1.09 at R₀; the thick disc's σ_z 35.0).
 
 ## Traps
-- **The catalogue is the costliest stage** (0.68 s of a 1.4 s run) and its cost is fixed per
-  cell, not per star (D24, D127). If you touch `materialise` or `Churn`, read the profile
-  after: a per-star cost hides inside a per-cell design and every correctness test still passes.
-- **Nothing in `materialise` may depend on which cells were asked for.** Narrowing the churn
-  to a region's own rings changed the last bit of a star's age, because BLAS sums a 1-column
-  product differently than a 32-column one. Per-region determinism is the contract (D60, D126).
-- **Write files with `newline="\n"`.** A Python `open(p, "w")` on this machine writes CRLF;
-  git normalises on commit but `tools/progress.py`'s line regexes fail on the working copy.
-  The full suite outlasts the Bash tool's cap: background it with `EXIT=$?` appended to its
-  log and gate the merge on **that line**. Scratch scripts `s20_<what>.py`, deleted before the
-  close asserts `git ls-files --others` is empty. **Do not merge or delete `session-10-beta`,
-  `session-10-gamma`, `session-10-gamme-run-2`.**
-- Not yours: **#50**, opened by S19 — the model transports stars twice, the merger's kick in
-  `sfh` and the churn in `chemistry`, and nothing reconciles them, so the catalogue's thick
-  fraction at R₀ (0.221) is not `thick_thin_surface_density_ratio` (0.051) and the two bracket
-  row 9's observed 0.08–0.16 from either side. It moves five acceptance rows and is explicitly
-  **for S21 to read and S22 to rule**. Also not yours: the inner gas reservoir's cause, which
-  is the bar (#47, #21).
+- **Write files with `newline="\n"`**; the full suite outlasts the Bash tool's cap — background
+  it with `EXIT=$?` appended to its log and gate the merge on **that line**. Scratch scripts
+  `s21_<what>.py`, deleted before the close asserts `git ls-files --others` is empty.
+- Row 3 reads 251.03, out by 0.03, on the miss list under #11 since S20; row 7 (simple) passes at
+  962 since S20. The advanced model reads 8 / 15 / 1. A recorded miss that starts passing fails
+  the run (#29): remove the entry and write why.
+- The `judged` fixture runs both models' 41-seed ensembles once per session; `tests/test_spec.py`
+  pins the pass/fail sets and the debt sets per model.
+- **Do not merge or delete `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`.**

@@ -57,7 +57,8 @@ closes the project.
 | 16 | `s16` | `b0589232c886` | **queued** |
 | 17 | `s17` | `4338a60fdcd2` | **queued** |
 | 18 | `s18` | `4c73bca169b5` | **queued** |
-| 19 | `s19` | *TBD — filled in when S19 is merged* | **queued** |
+| 19 | `s19` | `2a8a9b4fc32d` | **queued** |
+| 20 | `s20` | *TBD — filled in when S20 is merged* | **queued** |
 
 ### Run these
 
@@ -125,8 +126,11 @@ git tag -a s17 4338a60fdcd257d8297c4b1abd73d4bc6e932691 -m "S17: the spheroid an
 # S18 — the radial kick and the derived threshold.
 git tag -a s18 4c73bca169b5af2d2d6729d16a965f701ce2a7b7 -m "S18: the kick, the threshold and the solver"
 
-# S19 — the catalogue migrates. The batch replaces this with the literal SHA.
-git tag -a s19 "$(git rev-list -1 --grep='^Merge S19 into main' origin/main)" -m "S19: the catalogue migrates"
+# S19 — the catalogue migrates.
+git tag -a s19 2a8a9b4fc32d0040c79e60ac798fe6abe95bd818 -m "S19: the catalogue migrates"
+
+# S20 — the valley probed six ways and recorded; the kick re-derived. The batch replaces this with the literal SHA.
+git tag -a s20 "$(git rev-list -1 --grep='^Merge S20 into main' origin/main)" -m "S20: the valley's record and the derived kick"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

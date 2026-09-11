@@ -678,3 +678,33 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   mean age at R₀ by 1.4 Gyr and bringing 84% of the Sun's neighbours from inside it. Pick
   the moment the mechanism moves, not the one the source sentence happened to name (D126).
 
+
+## From S20
+
+- [field] Decompose the distribution before choosing the lever. The valley's absence had been
+  argued for four sessions in terms of infall timescales; one instrument — the [α/Fe] mass at R₀
+  by birth epoch, radius and time — showed the early population is a *plain*, not a mode, because
+  dN/dx = Ψ/|dx/dt| and the rate was already falling while x fell. Every timescale probe then
+  read the same for a reason that was visible in the first table (D128).
+- [field] Check what a detector's "yes" is made of before crediting it. Every `bimodal_wide` the
+  model has ever reported was a spike of the stars formed before the first type Ia — +0.45
+  exactly, five percent of the mass — with the split above the α-rich sequence itself. A verdict
+  is a summary; read the histogram it summarises (rule B3's cousin; debt #27).
+- [field] A mechanism that opens the row at the cost of the budget is a measurement, not a
+  candidate. The mass-loaded wind and the bar-driven drain both open a valley and both gut rows 2,
+  3 and 10; the number that matters is the one that says the retained budget would have to be an
+  output. Write it into the debt it belongs to and stop (rule A1, A4; #26, #21).
+- [field] Derive a calibration's arithmetic, not just its value. `MERGER_HEATING` was "scaled so
+  the merger leaves the disc at 30 km/s" and the thick disc read 40, because the stage composes
+  the kick with 27 km/s the model already gives those stars. Net of that the cited 35 gives 88.8,
+  row 7 lands, and the constant now has a citation instead of a sentence (rule B10; #42).
+- [field] A row landed on a constant leaves when the constant is derived. Row 3 was inside by 0.04
+  on the kick at S18; the kick re-derived is worth +0.07 and the row is out by 0.03. Neither
+  reading is a defect — the record says which mechanism paid each time, so the bar's prediction
+  is still the one that is testable (rule B5; #11).
+- [field][infra] Factor the substitution point when a probe is worth repeating. `sfh.first_infall`
+  is one function so that a test can monkeypatch the law and re-run S20's three probes; the
+  session's findings are pins rather than prose, which is what S21's aim (a) needs.
+- [close] A pre-committed reading is the ruling when the prediction fails. Debt #49 wrote "if rows 5
+  and 11 still trade, the star formation law at high redshift is what is wrong" before the probe
+  ran; the probe ran, they traded, and that sentence is the decision — nothing was re-argued.

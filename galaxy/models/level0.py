@@ -210,16 +210,22 @@ LEVEL0: dict[str, Constant] = {
         "[recall]; 0.5 is the random-walk value and the upper end of the observed range.",
     ),
     "MERGER_HEATING": Constant(
-        120.0,
+        88.8,
         "km/s",
         "Velocity dispersion a merger of mass ratio 1 would add to the stars already present; an "
-        "event contributes this times its mass ratio. Scaled so the Milky Way's 1:4 merger leaves "
-        "the pre-existing disc at about 30 km/s, which is what makes it thick rather than warm. "
-        "Since S18 the same impulse is applied radially too (isotropic; an anisotropic kick has no "
-        "cited number), and the epicyclic frequency turns it into a displacement of 1.5 kpc at R_0 "
-        "(debt #19, D124). The 30 sits on top of 27 km/s of secular heating, so the thick disc reads "
-        "40 km/s against an observed ~35 and row 7 is this constant's (debt #42): at 60 it reads row "
-        "7 and the advanced row 6 inside together, which is S20's to judge with SECULAR_HEATING.",
+        "event contributes this times its mass ratio. Set so that the Milky Way's 1:4 merger leaves "
+        "the pre-existing disc at the thick disc's observed vertical dispersion, sigma_W = 35 km/s "
+        "[recall: Bensby, Feltzing & Lundstrom 2003, (67, 38, 35) for the thick disc], **net of the "
+        "heating the model already gives those stars**: the assembly stage composes the kick in "
+        "quadrature with the secular heating and the birth dispersion, which together read 27.06 km/s "
+        "over the thick population at R_0, so the kick is sqrt(35^2 - 27.06^2) = 22.2 km/s and the "
+        "constant is 22.2/0.25 (S20, debt #42; a test reproduces the arithmetic). Until S20 it was "
+        "120 - 'scaled so the merger leaves the pre-existing disc at about 30 km/s' - which counted "
+        "the kick as if it were the whole dispersion, so the thick disc read 40.4 and row 7 1279 pc; "
+        "it reads 960 now. Since S18 the same impulse is applied radially too (isotropic; an "
+        "anisotropic kick has no cited number), and the epicyclic frequency turns it into a "
+        "displacement of 1.09 kpc at R_0 (1.47 at 120; debt #19, D124). The re-derivation costs row 3, "
+        "which S18 had landed on the kick by 0.04 and which reads 251.03 now (debt #11).",
     ),
     "BAR_LENGTH_RATIO": Constant(
         2.0,

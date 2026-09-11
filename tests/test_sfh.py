@@ -142,12 +142,15 @@ def test_row_3_misses_high_once_the_halo_contracts(model):
     S18 read it inside at 250.96, by 0.04, and not on the bar: the merger's radial kick carries a
     fifth of the disc's stars outward across R0 (-0.2 km/s on the built model, -0.4 alone) and the
     basis-free velocity solver reads the S17 profile 0.09 lower than the exponential basis did
-    (251.17); the derived threshold moves it not at all (D124). The bar's prediction stands unread.
+    (251.17); the derived threshold moves it not at all (D124). S20 re-derived the kick's constant
+    from the thick disc's observed dispersion net of the secular heating (120 -> 88.8 km/s, D128),
+    the radial spread at R0 fell 1.47 -> 1.09 kpc, and the row rose by 0.07 to 251.03 - outside
+    again, by less than the solver's correction, and back on the miss list under the bar (#11).
     """
     o = out(model)
     v = o.fields["v_tangential_sun"]
-    assert 245.0 <= v <= 251.0 and v > 250.5  # inside since S18, at the edge; 251.3 and outside until then
-    assert v == pytest.approx(250.96, abs=0.3)  # 251.3 until S18 (251.17 on this solver); 252.9 until S17; 260.1 until S16; 270.8 until S15
+    assert 251.0 < v < 251.1  # 250.96 and inside at S18, at the edge; 251.3 and outside until then
+    assert v == pytest.approx(251.03, abs=0.3)  # 250.96 until S20; 251.3 until S18 (251.17 on this solver); 252.9 until S17; 260.1 until S16; 270.8 until S15
     assert o.fields["halo_concentration"] == pytest.approx(8.24, abs=0.05)  # 10.9 until S15
     assert o.fields["halo_circular_velocity_sun"] - o.fields["halo_circular_velocity_sun_initial"] == pytest.approx(43.9, abs=0.5)  # 44.0 until S17; 42.8 until S15
 

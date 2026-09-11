@@ -785,7 +785,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    entry in `spec._MISSES` went (debt #29) and its replacement says so; the bar's prediction
    — 7e9 buckled into the spheroid reads 249.4 — stands unread, and rows 12–14 are still
    this debt's. A green row 3 is now worth exactly what a green row 2 is: inside on a
-   mechanism smaller than the window.
+   mechanism smaller than the window.   **S20: row 3 is this debt's again, by 0.03.** 250.96 →
+   251.03: `MERGER_HEATING` was re-derived from the thick disc's observed dispersion net of the
+   secular heating (120 → 88.8, debt #42, D128), the radial spread at R₀ fell 1.47 → 1.09 kpc,
+   fewer of the disc's stars cross R₀, and the +0.07 takes the row back out — by less than the
+   solver's own correction, on the constant that had put it in. Its entry is back in
+   `spec._MISSES` (since S20, both models) and its prediction is unchanged: the bar's buckling,
+   249.4. The first infall's law, probed five ways at S20, moves this row by under 0.1.
 
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
@@ -1204,6 +1210,20 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    crosses its threshold); the simple 0.46 → 0.25. The occurrence inside a kiloparsec 0.36 →
    0.25 and the catalogue's metal-rich share 0.010 → 0.005 (D124). The massless wind is still
    the mechanism this debt names; the reservoir is the bar's absence (#21) and is #47's.
+   **S20 probed the wind's mass, and it is the one mechanism that opens a valley at no new
+   constant — at the cost of the budget** (D128). Read as the same energy-driven wind whose
+   metal loading the model already has, the mass loading is the escape fraction's own odds,
+   η(R) = f_esc/(1 − f_esc) = (`WIND_SPEED`/v_esc)^`WIND_INDEX`, 2.3 at R₀. On the fast first
+   infall it ends the thick-disc phase by consumption (the depletion time at R₀ falls 1.4 →
+   0.4 Gyr) and reads `bimodal_wide` at dip 0.59–0.72 — but the α-rich "mode" is the plateau
+   spike (split 0.23; #27), and the wind ejects 60% of the budget the halo says the disc
+   retained: row 2 0.4–0.7, row 3 214–224, row 10 0.9–1.4e10, the advanced row 6 770–1090. It
+   cannot be built by re-normalising the accreted budget, because the retained mass is then a
+   fixed point across checkpoints 1 and 3 — the halo contracts around it (rule A1) — and the
+   chemistry's `kept` fraction already removes the same wind's metals, so a mass-loaded wind
+   on top double-counts them until the two are one wind (rule B10 on `WIND_SPEED`). Ruled for
+   S22: the honest statement is that the disc's retained fraction (`baryon_retention`, an
+   input) is what the wind decides, and the model has it the other way round.
 
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
@@ -1266,6 +1286,26 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    a diluted start, which is this debt's own mechanism. Probed for S20 and not built: a first
    infall on its own short timescale (debt #49) reads a dip of 0.15 at most on the default
    list, with the advanced row 6 at 720 (D124). S20 has two levers where the record said one.
+   **S20: neither lever, and every valley this detector has found is the plateau spike**
+   (D128). The [α/Fe] mass at R₀ was decomposed by birth epoch, radius and time: the early
+   population is 75–100% migrants born inside 6 kpc and is spread *evenly* from +0.2 to +0.45
+   (no bin above 3% of the mass, against 18% in the thin mode's), because dN/d[α/Fe] =
+   Ψ/|d[α/Fe]/dt| and in a threshold-regulated Kennicutt disc fed from t = 0 the star formation
+   rate is already falling while the α-fall runs. Probed, the repo unchanged, at the default
+   grid and across N_t = 1000–4000: the first infall on 0.1/H(z_f) (dip 0.15; #49), a compact
+   early disc at R_d(z_f) (0.00, row 22 −0.147), Wechsler's M(a) as the rate (no thick disc),
+   the switch's width (0.19), a bar-driven drain of the inner disc (a valley at split 0.37 and
+   row 10 halved), the mass-loaded wind (split 0.23, the budget gutted; #26). **The S13/S18
+   valleys (τ₀ = 1, n = 2–3, split 0.39) and both new ones are the stars formed before any Ia
+   iron: +0.45 exactly, 5–7% of the mass, the split above the α-rich sequence itself, the
+   early population a plain beneath it** `[verified: tests/test_audit.py::test_debt_27_every_
+   valley_the_detector_has_found_is_the_plateau_spike]`. The S9 prediction is replaced:
+   a thick mode near +0.3 needs the first phase's star formation to rise on gas-rich material
+   and be cut within ~1 Gyr — a burst — which no accretion law gives under a constant-efficiency
+   Kennicutt law (the reading #47 and #49 reached from rows 5, 9 and 11); if a mechanism ends
+   the first phase sharply and there is still no mode short of the plateau, the DTD's minimum
+   delay (0.15 Gyr, a δ-spike at +0.45 by construction) is what the detector reads. Row 24
+   and the six rows on it stay misses with that prediction; the advanced row 6 reads 356.
 
 28. **Migration is too strong once the tilt is right.** S2 recorded that if
    row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
@@ -1626,6 +1666,21 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    set at S18: the rule stands that both constants are re-examined together when S20 opens the
    valley, and S20 now has this number to start from (D124). Rows 6 and 7 re-attributed in
    `spec._MISSES`: row 7 under this debt since S16's number.
+   **S20, judged: `MERGER_HEATING` 120 → 88.8, derived; `SECULAR_HEATING` stays at 25** (D128).
+   The valley did not open (#27), so the rule was applied without it. The constant's about line
+   said it was scaled so the merger "leaves the pre-existing disc at about 30 km/s" — as if the
+   kick were the whole dispersion — while the assembly stage composes it in quadrature with the
+   secular heating and the birth dispersion, 27.06 km/s over the thick population at R₀; net of
+   that, the observed σ_W = 35 `[recall: Bensby, Feltzing & Lundström 2003]` needs √(35² −
+   27.06²) = 22.2 km/s, and 22.2/0.25 = 88.8 `[verified: tests/test_audit.py::test_debt_42_the_
+   merger_kick_is_the_observed_dispersion_net_of_the_secular_heating]`. Row 7 reads **962**,
+   inside, off the miss list with the reason; the advanced row 6 373 → **356**, 6 pc over, the
+   heated old population counted as thin (#27). `SECULAR_HEATING` is bracketed by its own row:
+   20 reads the simple row 6 at 228 and 30 at 451, both out (252 and 483 in the advanced). Not
+   taken: 60, which lands rows 7 and the advanced 6 together (751 / 346) and is a sweep. The
+   cost: the radial kick 1.47 → 1.09 kpc at R₀, row 5 1.17 → 1.09, row 9 0.051 → 0.0455, row 8
+   0.013 → 0.016 — and row 3 251.03, out by 0.03, back under #11. Rows 6 and 7 are now inside
+   together in the simple model on a cited number; in the advanced model both are #27's.
 
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
@@ -1848,6 +1903,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    −0.089 and hydrogen 9.9e9), so σ_g is not the lever. Discharged when the inner gas is
    read against the Galaxy's with the bar built, or when a threshold that knows the bar's
    region is derived rather than capped.
+   **S20 probed the drain** (D128): a bar-driven inflow inside 2 R_d after Efstathiou, Lake &
+   Negroponte's criterion fires (ε = v_max/√(GM_d/R_d) < 1.1, at 0.5 Gyr on a fast first infall
+   and 3.3 Gyr on the built one), gas leaving on the local orbital time. It empties the
+   reservoir (4.8e6 M☉ inside 4 kpc) and takes 2e10 out of the disc's accretion with it: row 10
+   1.4e10, row 22 +0.15, row 4 −12. A bar does not stop the inner disc forming stars; a drain
+   on the parked gas alone would be a rule with the answer in it. Still the bar's (#21).
 
 48. **The M_• residual's width is the classical one, for a bulge the model calls 83%
    pseudo** (S17, D121). Ruling 10 (§13) specifies the width "interpolated by the classical
@@ -1896,6 +1957,19 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    not land, the split criterion is (#19). Owned by S20 with the valley: the same lever is
    the two-infall mechanism that makes the inner disc fast, and its other consequence — rows
    6 and 7 — is judged there with both heating constants (#42).
+   **S20 ran the prediction and it failed** (D128) `[verified: tests/test_audit.py::test_debt_
+   49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed]`. With the early
+   episode on 0.1/H(z_f) = 0.55 Gyr — derived from `H0`, `OMEGA_M` and the model's own z_f; 1 Gyr
+   reads the same — row 5 reads 1.95 at the default share, 2.15 at 0.3, 1.70 at 0.65, 1.26 at
+   0.8: it lands only where row 11 is 1.67e10 and row 9 0.56, and where row 11 lands (0.8,
+   4.8e9) rows 5 and 9 are 1.26 and 0.04. Rows 5 and 11 still trade through the share, so the
+   pre-committed reading is the ruling: **the star formation law at high redshift is what is
+   wrong**, not the arrival law and not the split. Also dead: a compact early disc at R_d(z_f)
+   (0.62–0.82 on row 5, row 22 −0.147) and Wechsler's M(a) as the rate (row 11 1.5e9: 29% of
+   the halo is in place by z_f). In the advanced model the fast law reads a dip of 0.15 at
+   N_t 1000/2000/4000 and row 6 at 594. Not built: it would move rows 2, 6, 9, 10 and 11 out to
+   move row 5 in. What lands rows 5, 9 and 11 together is the same thing that would open the
+   valley (#27): a first phase that consumes gas slower than it accretes it and then stops.
 
 50. **The model moves stars twice, with two kernels, and nothing reconciles them** (S19,
    D126). `sfh` moves a star from where it was born to where it is now with the merger's
