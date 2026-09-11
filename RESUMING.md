@@ -2,7 +2,7 @@
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's status
 board is the only record of what is done (A9); this file does not repeat it, is rewritten each
-session, capped at 120 lines (C3). **The build is closed** (S0–S19; §5d plans S20–S22).
+session, capped at 120 lines (C3). **The build is closed** (S0–S20; §5d plans S21–S22).
 
 ## Open a session (rules C1, C2b)
 ```
@@ -19,25 +19,26 @@ tools/hooks`. Write files with `newline="\n"`: CRLF breaks progress.py's line re
 galaxy/core/    units (32 closed), cmaps (8 + stops, A9), fielddoc (FieldDecl, 6 Kinds, Ramp/Palette,
                 AXES), stage (Stage, Context, CHECKPOINTS), registry (12 INPUTS, MODELS,
                 IMPLEMENTATIONS), seeds, grids, special (I1, K0, K1, erf)
-galaxy/models/  level0 (shared constants), simple (+NET_YIELD), advanced (yields, DTD, wind)
-galaxy/stages/  cp1 halo (NFW, budget, R_d, the contraction on its own mesh; ρ_DM and the contracted
-                fit; the angular-momentum distribution's two ends — the high-j tail S16, the spheroid
-                S17) + disc (κ(R), the basis-free solver) + nucleus (M_•, seeded); cp2 assembly
-                (delivery, σ_z by birth time, the radial spread); cp3 sfh (infall = exponential + tail,
-                less the spheroid; Kennicutt's threshold off κ; the stars moved through the spread),
-                chemistry — **the migration kernel lives here**: transport / transport_columns /
-                migration_width / age_bin_edges, read by chemistry_dtd and by systems (A9) — /
-                chemistry_dtd, vertical / vertical_alpha (publish `birth_population`, the criterion
-                itself, S19); cp4 pattern; cp5 systems (`Churn` draws birth radius *and* time from
-                the backward weights, S19); cp6 planets.
-galaxy/run.py   run(model, inputs, grid, only=…, resume=…);  galaxy/specs/: graph, preflight,
+galaxy/models/  level0 (shared constants; MERGER_HEATING 88.8 derived, S20), simple (+NET_YIELD),
+                advanced (yields, DTD, wind)
+galaxy/stages/  cp1 halo (NFW, budget, R_d, the contraction on its own mesh; the angular-momentum
+                distribution's two ends — the high-j tail S16, the spheroid S17) + disc (κ(R), the
+                basis-free solver) + nucleus (M_•, seeded); cp2 assembly (delivery, σ_z by birth time,
+                the radial spread); cp3 sfh (infall = exponential + tail, less the spheroid; **the first
+                episode's arrival law is one function, `first_infall`, substitutable for a probe**, S20;
+                Kennicutt's threshold off κ; the stars moved through the spread), chemistry — the
+                migration kernel lives here: transport / transport_columns / migration_width /
+                age_bin_edges, read by chemistry_dtd and by systems (A9) — / chemistry_dtd, vertical /
+                vertical_alpha (publish `birth_population`); cp4 pattern; cp5 systems; cp6 planets.
+galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…);  galaxy/specs/: graph, preflight,
                 determinism, spec (misses D87; "no testable target" D100; median D109), convergence
                 (D94, D101), performance (D95, D101)
-galaxy/api/     service (routes), wire, version, http; client/ (the viewer; `paintOf` picks ramp or
-                palette from the declaration, S19).  tools/: progress, bootstrap, verify_clone,
-                timings, scaling, shot, hooks/.  AUDIT_RUN1/2.md are main's S10 lists (D97, D102)
-tests/          test_audit.py is the S10 audits as tests (#12, #17, #21, #26–#28, #41–#45), S14–S18's
-                end in test_halo / test_sfh / test_vertical, S19's gates in test_systems
+galaxy/api/     service (routes), wire, version, http; client/ (the viewer; every published field
+                previewed in both models, S19).  tools/: progress, bootstrap, verify_clone, timings,
+                scaling, shot, hooks/.  AUDIT_RUN1/2.md are main's S10 lists (D97, D102)
+tests/          test_audit.py is the S10 audits as tests plus S20's three probes (the first infall
+                substituted by monkeypatch; the plateau spike; the kick's derivation); S14–S18's end
+                in test_halo / test_sfh / test_vertical, S19's gates in test_systems
 ```
 ## Writing a stage
 - `Stage(id, slot, checkpoint, about, compute, reads_*, requires*, publishes)`, each field a `FieldDecl`
@@ -50,58 +51,53 @@ tests/          test_audit.py is the S10 audits as tests (#12, #17, #21, #26–#
   (#30). **Two implementations of one slot** publish the same names under the same contract
   (`FieldDecl.contract`) and their own as `optional=True`, read via `requires_optional` (D86).
 - **A seed binds at the checkpoint of its earliest reader and `graph` requires that to equal §3's
-  hypothesis** (S17). A stage reading a seed publishes *seeded* fields, all of them: split the derived
-  half into its own stage rather than mislabel it (D55, `bar`/`pattern`, `halo`/`nucleus`).
+  hypothesis** (S17). A stage reading a seed publishes *seeded* fields, all of them (D55).
 - A named ruleset is a constant with its alternative in the about line, chosen before the row is read
   (D113); a mechanism is probed by substituting one function per half from a script, the repo unchanged
-  (D114) — or a stage's whole compute, set on the Stage, not the module (S16); a default is measured or
-  derived by a test (D30, D117); a derived scalar lives on the stage's own mesh, never the grid (D119).
-  A quantity two stages read is published once by the stage that owns it (`epicyclic_frequency`,
-  `stars_formed_history`, S18) — and so is a **criterion** two stages apply (`birth_population`, S19:
-  the catalogue's copy silently disagreed in the advanced model).
+  (D114; `sfh.first_infall` is the point for the infall law, `replace(Stage, compute=…)` with
+  `run(..., impls=)` for a whole stage, S16/S20); a default is measured or derived by a test (D30,
+  D117, D128); a derived scalar lives on the stage's own mesh, never the grid (D119). A quantity two
+  stages read is published once by the stage that owns it (S18), and so is a criterion (S19).
+- **A calibration's arithmetic is derived, not just its value** (S20): `MERGER_HEATING` is the thick
+  disc's cited σ_W net of what the assembly stage already composes with it, at the fixed point.
 - **Per-region determinism is the catalogue's contract** (D60): nothing in `materialise` may depend on
-  which cells were asked for. Narrowing the churn to a region's own rings moved the last bit of a star's
-  age — BLAS sums a 1-column product differently — so it is done for every ring (S19).
+  which cells were asked for (S19).
 
 ## The API and the viewer
 - `uv run python -m galaxy.api` serves both on 127.0.0.1:8017; `Service().handle(path, query)` is the
   same without a socket and is what the tests drive; `model=advanced` selects the second model on every
   route. A new route is a `Route` in `service.ROUTES` plus **a row in `tools/timings.py`**.
 - Metadata answers from declarations and must not reach the runner; whatever computes goes through
-  `Service.compute(...)`, the closure above the fields asked for (D4, D63); objects are materialised per
-  request (D82). `transport.js` holds **the only `fetch`**; the gate asks `git ls-files` what the
-  repository contains (D101). No about line names a constant (D5).
-- Every published field reaches the viewer, in both models, asserted in `tests/js/render.test.mjs` (S19)
-  — bar a catalogue stage's own scalars, which the region census reports instead (D4).
+  `Service.compute(...)` (D4, D63); objects are materialised per request (D82). `transport.js` holds
+  **the only `fetch`**; the gate asks `git ls-files` what the repository contains (D101).
 
 ## Conventions
 - Names: fields, inputs, seeds, stages, models `lower_snake`; constants `UPPER_SNAKE`. 7 controls, 4
   seeds, `mergers`; every input has a default and every control a range. Every factual claim in every
-  document is tagged `[verified: cite]`, `[recall]` or `[inferred]` (B14); a bare verified tag fails a
-  test. A new unit, kind, axis, object class or cmap is a `core/` edit plus a DECISIONS.md entry. Debts
-  live in GALAXY_INPUTS §11; `tools/progress.py` counts them — add an item, never a count.
+  document is tagged `[verified: cite]`, `[recall]` or `[inferred]` (B14). A new unit, kind, axis,
+  object class or cmap is a `core/` edit plus a DECISIONS.md entry. Debts live in GALAXY_INPUTS §11;
+  `tools/progress.py` counts them — add an item, never a count.
 - A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, A7) with its model, debt,
   reason and a prediction that could kill it (D33, D87); it still reports `fail`, never widen a target
   (B5), and a miss that starts *passing* fails the run (#29) — remove it and **write down why it
-  passed** (S17 row 2; S18 row 3, on the kick and the solver, not the bar). `lo == hi` says "no testable
-  target" (D100); off that list is a citation with an uncertainty (D122).
+  passed** (S20 row 7: the constant, not the shape). `lo == hi` says "no testable target" (D100).
 
-## What the instruments said at S19 close (2026-09-10)
-- graph: acyclic, both models; the disc runs before assembly (it reads the curve). preflight
-  OK: 0 UNSET. determinism OK, reproducible across processes (two hash seeds). No input unbound.
-- spec: simple **10 pass, 12 fail, 2 n-y-c**; advanced **9 pass, 14 fail, 1 n-y-c** — unchanged
-  from S18 in every row. **No acceptance row reads the catalogue**, which is why S19 moved none.
-- Numbers, to spot a regression by. **Every number upstream of the catalogue is D124's, unmoved**:
-  z_f 1.66, c₂₀₀ 8.24, R_d 2.605, M_star 4.75e10, SFR 1.755, H 8.09e9, Σ_crit(R₀) 11.5, v_tan 250.96,
-  WIND_SPEED 860.3, NET_YIELD 0.01376, rows 16/17/18 42.8 / 5.70 / 1.97e7, feh_spread_sun **0.360**.
-- **Moved by S19, all inside the catalogue**, S18's value in brackets: the [Fe/H] spread at R₀
-  **0.361** advanced (0.299) and 0.277 simple (0.333); R₀ mean age **7.31** Gyr (5.72 / 6.01); R₀
-  [Fe/H] mean −0.249 / −0.180 (−0.330 / −0.272); R₀ thick fraction **0.221** simple (0.049), the
-  whole-catalogue fraction unmoved at 0.254; mean birth radius at R₀ **5.4 kpc**, 84% born inside;
-  metal-rich share 0.0031 (0.005); giant_fraction_sample 0.0169 / 0.0136 (0.0192 / 0.0122).
-- **Convergence**: 0 drifts on N_R, N_t, N_z; advanced rows 5, 7–11 `vacuous` (#27). **Profile**
-  (D127): the catalogue is the costliest stage, its cost fixed per cell not per star (D24).
-  **Register**: 32 open, 18 discharged. Audit branches stay unmerged.
+## What the instruments said at S20 close (2026-09-11)
+- graph: acyclic, both models. preflight OK: 0 UNSET. determinism OK, reproducible across processes.
+- spec: simple **10 pass, 12 fail, 2 n-y-c** (row 7 in at 962, row 3 out at 251.03 — both on the
+  re-derived kick); advanced **8 pass, 15 fail, 1 n-y-c** (row 3). Every miss has its debt and a
+  prediction; the advanced rows 5, 7–11 and 24 carry D128's replacement prediction.
+- Numbers, to spot a regression by. Unmoved from S19: z_f 1.66, c₂₀₀ 8.24, R_d 2.605, M_star 4.75e10,
+  SFR 1.755, H 8.09e9, Σ_crit(R₀) 11.5, WIND_SPEED 860.3, NET_YIELD 0.01376, feh_spread_sun 0.360,
+  rows 16/17/18 42.8 / 5.70 / 1.97e7. **Moved by S20** (S19's value in brackets): MERGER_HEATING
+  88.8 (120); the thick disc's σ_z 35.0 (40.4); the radial spread at R₀ **1.09** kpc (1.47), 0.22
+  at 2 kpc (0.30); row 7 **962** (1279); row 3 **251.03** (250.96); row 5 1.09 (1.17); row 9 0.0455
+  (0.051); row 8 0.016 (0.013); the advanced row 6 356 (373); the merger-share sweep of row 9 0.131 /
+  0.083 / 0.0455 / 0.019 / 0.005 / 0.001 against row 11 unmoved.
+- **The valley** (D128): `single` at N_t 1000 / 2000 / 4000; the first infall on 0.1/H(z_f) reads dip
+  0.151 at all three; every `bimodal_wide` the detector has reported is the +0.45 plateau spike.
+- Convergence: 0 drifts on N_R, N_t, N_z; advanced rows 5, 7–11 `vacuous` (#27). Timings and the
+  profile: D129 (the catalogue is still the costliest stage, D127). Register: 32 open, 18 discharged.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python

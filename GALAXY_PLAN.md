@@ -2,7 +2,7 @@
 
 ## Status
 
-`████████████████████████████████████████░░░░░░` **20 / 23 sessions** · repo initialised: yes
+`██████████████████████████████████████████░░░░` **21 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -26,7 +26,7 @@
 | ☑ | 17 | The spheroid derived as the low-j end of the halo's angular momentum, and M_• (rows 10–14, 18; #17 discharged for row 14, #48 opened); the bulge is worth 1.6 km/s and not D110's 5–8, so row 3 misses by 0.3 and rows 3 and 12 have one cause | desktop | Opus | **Opus 5** | s17 | 2026-09-09 |
 | ☑ | 18 | The thick disc: the merger's radial kick derived and built (worth 0.3 kpc on row 5; its prediction dead, #19), Kennicutt's threshold derived (#47: the gas rows land, row 9 leaves), the basis-free disc solver; row 3 landed on the kick; the shape is the first infall's (#49 opened) | desktop | **Fable** | **Fable 5.1** | s18 | 2026-09-10 |
 | ☑ | 19 | The catalogue migrates: birth radius **and birth time** drawn together from the chemistry's backward weights (#31 discharged, #32 re-ruled, #50 opened); the thin/thick criterion published; every published field previewed, in both models | web | Opus | **Opus 5** | s19 | 2026-09-10 |
-| ☐ | 20 | The advanced model's [α/Fe] valley and rows 6–7 (#27, #42, #26) | desktop | **Fable** | — | s20 | — |
+| ☑ | 20 | The valley probed six ways, the repo unchanged, and not opened: every valley the detector finds is the plateau spike, the early population a plain (#27's prediction replaced; #49's killed, #26 and the drain ruled for S22); `MERGER_HEATING` derived from the thick disc's dispersion net of the secular heating (120 → 88.8, #42: row 7 lands, row 3 leaves by 0.03) | desktop | **Fable** | **Fable 5.1** | s20 | 2026-09-11 |
 | ☐ | 21 | Audit II, twice with two stated aims and reserved numbers (§5d) | desktop + web | **Fable** ×1, Opus ×1 | — | s21 | — |
 | ☐ | 22 | Close-out: audit lists ported, every debt ruled, the tag batch applied (§5d) | web | Opus | — | s22 | — |
 
@@ -47,7 +47,7 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S20. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S21. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
 **Open debts:** 32 (`GALAXY_INPUTS.md` §11). **Discharged:** 18.

@@ -3586,3 +3586,133 @@ the six stages above the catalogue, 28 ms is not where that request's time is.
 **Unchanged.** `scaling.py` is not re-run: no stage changed complexity class — the churn is
 linear in the grid per ring and the kernels are counted by age bin, not by star.
 
+
+### D128. The valley does not open on any mechanism the model can derive, and the record says why; the merger's kick is re-derived from the thick disc's dispersion net of the secular heating (debts #27, #42, #49, #26, #47, #11, #19)
+
+**The decision the brief asked for.** §5d gave S20 one question — which mechanism the model
+*derives* to make the inner disc fast without steepening the infall law everywhere — with two
+candidates: the bulge's inflow (the plan's) and the first infall on its own short timescale
+(debt #49's, which S18 probed). The answer is **neither, and the question was the wrong shape**.
+Both were probed, with three more the probes led to, the repo unchanged (D114: `sfh.first_infall`
+is now one substitutable function, and the tests substitute it), every verdict at the default
+grid with the dip read across N_t = 1000–4000 (the N_t = 8 trap, debt #27). None opens the valley
+row 24 asks for. What they read, and the instrument that showed why:
+
+| first infall | advanced: dip, verdict | simple: rows 5 / 9 / 11 | other rows |
+|---|---|---|---|
+| the thin disc's law, as built | 0.00 single | 1.17 / 0.051 / 9.6e9 | — |
+| 0.1/H(z_f) = 0.55 Gyr everywhere (the halo's dynamical time; 1 Gyr reads the same) | **0.15** single, at N_t 1000/2000/4000 | **1.95** / 0.56 / 1.67e10 | row 2 1.27, adv row 6 594 |
+| the same at merger share 0.3 / 0.65 / 0.8 | — | 2.15 / 1.44 / 2.5e10; 1.70 / 0.23 / 1.06e10; 1.26 / 0.04 / **4.8e9** | rows 5 and 11 never inside together |
+| a compact early disc, R_d E(z_f)^(−2/3) = 1.4 kpc, on τ(R) | 0.00 | 0.62 / 0.002 / 1.5e10 | row 4 1.74, **row 22 −0.147** |
+| fast *and* compact (the disc the halo made at z_f) | 0.00 | 0.82 / 0.04 / 1.9e10 | row 22 −0.146 |
+| Wechsler et al. 2002's M(a) at a_c = 1/(1+z_f), as the rate | 0.00 | 0.98 / 0.002 / **1.5e9** | row 2 3.03 |
+| threshold switch width 0.25 → 0.1 → 0.05, on the fast law | 0.19 / 0.19 | — | not the lever |
+| a bar-driven drain of the inner disc after ELN's criterion fires (0.5 Gyr on the fast law) | 0.63 **bimodal_wide** at split 0.37 | 3.3 / 0.10 / 7.2e9 | **row 10 1.4e10, row 22 +0.15, row 4 −12** |
+| a mass-loaded wind, η = f_esc/(1 − f_esc), on the fast law | 0.59–0.72 **bimodal_wide** at split 0.23 | 2.1 / 0.4 / 4.5–6.8e9 | **row 2 0.4–0.7, row 3 214–224, row 10 0.9–1.4e10** |
+
+The first two rows are measured on the derived kick (88.8); the rest were probed on the 120 km/s kick the session opened with, which moves the thick-disc rows by a few percent and no verdict.
+
+**The instrument, and what it showed.** The [α/Fe] mass at R₀ was decomposed the way
+`chemistry_dtd` builds it (the backward weights, D126) by birth epoch, birth radius and birth
+time. At every law the early population at R₀ is 75–100% migrants born inside 6 kpc, and it is
+spread *evenly* from +0.2 to +0.45: on the fast law the stars born at t = 0–1 Gyr sit at +0.39,
+1–2 at +0.27, 2–3 at +0.18, each a sixth of the early mass, with no bin holding more than 3% of
+the total, against 18% in the thin mode's bin at +0.11. The histogram is dN/d[α/Fe] =
+Ψ / |d[α/Fe]/dt|, and in a threshold-regulated Kennicutt disc fed from t = 0 the star formation
+rate is *already falling* while the α-fall runs — the infall peaks at t = 0, the gas at R₀ never
+exceeds 15 M☉/pc² because it is consumed as it arrives, and the depletion time at that density
+(1.4 Gyr) is longer than the infall's, so half the early stars form after the infall has ended,
+on gas whose [α/Fe] falls 0.44 → 0.24 → 0.14 over 0.5–3.8 Gyr. Nothing piles up. A thick *mode*
+near +0.3 needs Ψ high where d[α/Fe]/dt is small, which is a rising burst on gas-rich material
+cut within a gigayear — exactly the reading debts #47 and #49 reached for rows 5, 9 and 11 from
+the other side ("most of the early gas still gas at the merger"). A constant-efficiency Kennicutt
+law with a threshold cannot do it: the threshold parks the gas and the switch keeps a third of
+the Kennicutt rate going through the whole fall (the switch's width is not the lever: 0.25 → 0.05
+moves the dip 0.15 → 0.19).
+
+**Every valley the detector has ever reported is the plateau spike.** S13's, S18's (τ₀ = 1 at
+n = 2–3, dips 0.57–0.64, split 0.39), the drain's (0.37) and the wind's (0.23): in each the α-rich
+"mode" is the stars formed before any type Ia iron arrived, at +0.45 exactly, 5–7% of the mass in
+the top two bins, with the split *above* the α-rich sequence itself and the rest of the early
+population a plain between +0.2 and +0.40 `[verified: tests/test_audit.py::test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike]`.
+DIP_DEPTH = 0.5 is met whenever the thin mode is tall and the plain thin enough, which is what
+the fast inner disc and the wind both do by shrinking the early tail — not by making a thick
+disc. Debt #27's S9 prediction is therefore dead in a way its earlier runs did not show: the
+inner disc fast does open *a* valley, and it is the wrong one. The register's prediction is
+replaced by the one above, stated so it can fail: if a mechanism ends the first phase sharply
+and the histogram still shows no mode short of the plateau, the DTD's minimum delay (0.15 Gyr —
+a δ-spike at +0.45 by construction) is what the detector is reading.
+
+**Why nothing was built for the valley.** The two mechanisms that do open a spike valley
+each cost the disc: the drain empties the inner disc (the bar's inflow, as the plan named it,
+takes 2e10 out of the disc's accretion), and the mass-loaded wind at the metal escape fraction's
+own odds — the one form with no new constant, η(R₀) = 2.3 — ejects 60% of the budget the halo
+says the disc retained, which cannot be re-normalised without the disc's retained mass becoming a
+fixed point across checkpoints 1 and 3 (the halo contracts around it; rule A1). Both are the bar's
+and the wind's *mass*, debts #21 and #26, which §5d gives S22 to rule on rather than S20 to close;
+the numbers are in the register. The derivable candidate the brief favoured, #49's first infall
+on the halo's dynamical time, is real physics with no constant and is not built either: in the
+simple model it lands row 5 (1.95) only where rows 9 and 11 read 0.56 and 1.67e10, and where row
+11 lands (share 0.8) rows 5 and 9 read 1.26 and 0.04 — the trade #49 said would kill it, and its
+pre-committed reading applies: **the star formation law at high redshift is what is wrong**, not
+the arrival law. Built, it would move rows 2, 6, 9, 10 and 11 out and row 5 in; recorded instead
+`[verified: tests/test_audit.py::test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed]`.
+
+**Debt #42, judged: `MERGER_HEATING` 120 → 88.8, derived; `SECULAR_HEATING` stays.** The
+constant's own about line said it was "scaled so the Milky Way's 1:4 merger leaves the pre-existing
+disc at about 30 km/s" — as if the kick were the thick disc's whole dispersion. The assembly stage
+composes it in quadrature with the secular heating and the birth dispersion, which read 27.06 km/s
+over the thick population at R₀, so the thick disc read 40.4 against the observed σ_W = 35
+`[recall: Bensby, Feltzing & Lundström 2003]` and row 7 1279 pc. Net of what the model already
+gives those stars the kick is √(35² − 27.06²) = 22.2 km/s and the constant 88.8; a test
+reproduces the arithmetic `[verified: tests/test_audit.py::test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating]`.
+It is not a sweep: S18's 60 lands rows 7 and the advanced 6 together (751 / 346) and was not
+taken; 88.8 is what the cited dispersion gives, and it lands **row 7 at 962** (inside; its miss
+entry went, the reason written in `spec.py`) with the advanced row 6 at 356 — 6 pc over, the
+merger-heated old population counted as thin, which is #27's. `SECULAR_HEATING` = 25 is bracketed
+by its own row: 20 reads the simple row 6 at 228 and 30 at 451, both out, so it stays. Rows 6 and
+7 are inside together in the simple model on a constant set by a citation; in the advanced model
+row 7 is zero and row 6 is 6 pc out, for the one reason (#27).
+
+**What the re-derivation costs, and where it is written.** The radial kick shrinks with it:
+1.47 → **1.09 kpc at R₀**, 0.30 → 0.22 at 2 kpc; row 5 1.17 → 1.09, row 9 0.051 → 0.0455 (the kick
+now returns 0.010 of it, not 0.015), row 8 0.013 → 0.016; the sweep of the merger share reads row
+9 0.131 / 0.083 / 0.0455 / 0.019 / 0.005 / 0.001 against row 11 unmoved, still never inside
+together. And **row 3 leaves its window by 0.03**: 250.96 → 251.03, because fewer of the disc's
+stars are carried across R₀. S18 landed it on the kick by 0.04 and said so; the constant's
+re-derivation is worth +0.07, and the row is back on the miss list under #11 with its cause
+unchanged — the bar (D121: 7e9 buckled into the spheroid reads 249.4). Rows 2, 4, 20, 22 do not
+move (the kick is downstream of the gas). The advanced model reads 8 pass / 15 fail / 1; the
+simple 10 / 12 / 2 with row 7 in and row 3 out.
+
+**Not done, on purpose.** The first infall on the halo's dynamical time (dead by the number,
+above); a cap or a bar-shaped region on the threshold (an invention, rule A4); the wind's mass
+(#26, S22's ruling — the number it needs is a retained budget that is an output, not an input);
+the detector (its false positive is real and is now named, and changing DIP_DEPTH or
+MODE_MIN_SHARE with the answer known is rule B5's exact prohibition); #50, which is S21's to read.
+The register carries the probes; `tests/test_audit.py` carries the three that S21 should re-run.
+
+### D129. Cold timings and the profile at S20 (rules B2, B6)
+
+One fresh process per endpoint, `uv run python tools/timings.py`; the profile is
+`python -m galaxy.specs.performance`. **This session ran on the desktop** where S19 ran on
+the web, and the machine is about three times faster on every route, so the S19 → S20
+comparison is a machine comparison, not a code one: nothing S20 changed touches a stage's
+cost (one constant and a function boundary in `sfh`).
+
+```
+arrays: one profile      0.170 cold / 0.0003 warm    region: one sector*   0.258 / 0.021
+arrays: history          0.219 / 0.003  6.4 MB       region: whole disc*   0.497 / 0.270
+arrays: scalar           0.158 / 0.0004               system: one star*     0.268 / 0.017
+adv: history             0.524 / 0.004                adv: one sector*      0.564 / 0.021
+adv: alpha plane         0.525 / 0.003                adv: one star*        0.560 / 0.018
+metadata (index, version, stages, fields, inputs): 0.0000–0.0007, no stage run (rule D4)
+* includes the interpreter's first seeded draw, 11.7 ms (debt #37). import + registry 0.102–0.116 s.
+```
+
+**The profile.** Whole model 0.755 s cold simple, 1.104 s advanced. `systems` is still the
+costliest stage in the simple model (0.261 s, 34.8%) and `chemistry_dtd` in the advanced
+(0.387 s, 35.1%) ahead of `systems` (0.276, 25.0%); `sfh` 0.152 / 0.147. The catalogue's cost
+is still per cell: 1.42 / 1.75 µs per star against 220 / 209 ms fixed, 89% / 87% of the
+catalogue at 20,000 stars independent of how many were asked for (D24, D127). A one-cell
+query 18–19 ms. `scaling.py` is not re-run: no stage changed complexity class.
