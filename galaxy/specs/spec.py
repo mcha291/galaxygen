@@ -213,6 +213,10 @@ class Miss:
 # Sigma(R0) is unmoved at 47.3 and rows 5, 9 and 11 still miss - so if the thick disc is ever born
 # extended (debt #49) Sigma(R0) moves and this row with it. A miss that passes is an error to leave
 # (debt #29); the reason is here.
+# S21 (a) read the citation (AUDIT_II_A.md A-14): the 35 is Bensby et al. 2003's Table 1 adopted value for a
+# selection function, with no uncertainty; the measurement it stands in for is Soubiran et al. 2003's 39 +/- 4,
+# at which the constant is 112.3 and this row reads 1193 (out) with row 3 at 250.97 (in). The row is green on
+# the round number at the -1 sigma edge of the measurement; S22 rules whether the constant is re-set.
 _MISSES: tuple[Miss, ...] = (
     Miss(
         row=3,
@@ -235,7 +239,10 @@ _MISSES: tuple[Miss, ...] = (
             "12 inside with it; if the buckling is built at a scale radius that keeps row 14 inside "
             "and this row does not fall to ~249, D121's arithmetic is wrong. Not a lever: the kick, "
             "now set by a cited dispersion; nor z_f, derived at S15 (D117); nor the first infall's "
-            "law, which S20 probed five ways and which moves this row by under 0.1 (D128)."
+            "law, which S20 probed five ways and which moves this row by under 0.1 (D128). **S21 (a) ran "
+            "the bar's**: 7e9 at the derived scale radius reads 249.64, inside - held to 0.2 km/s - and "
+            "row 14 at 144, not 123 (AUDIT_II_A.md A-3, tests/test_audit_ii_a.py). The row still closes "
+            "with the bar; what the bar costs is row 14's."
         ),
     ),
     Miss(
@@ -278,7 +285,10 @@ _MISSES: tuple[Miss, ...] = (
             "can fail: this row lands with rows 9 and 11 only when most of the early gas is still gas "
             "at the merger, which needs the early disc to consume gas slower than it accretes it and "
             "then to stop - a star formation law with a burst and a cut, not a Kennicutt law with a "
-            "threshold."
+            "threshold. **S21 (a) ran that** (AUDIT_II_A.md A-5): star formation off from 1.0 to 3.8 Gyr "
+            "on the fast first infall leaves the early gas as gas at the merger, rows 8, 9, 10 and 11 land "
+            "together for the first time, and this row reads 1.61 - 0.2 short. By debt #19's own reading "
+            "the split criterion is what is wrong; S22 rules."
         ),
     ),
     Miss(
@@ -326,7 +336,11 @@ _MISSES: tuple[Miss, ...] = (
             "0.13 at 0.8 on the constant threshold, 0.03 on the derived one. If that is built and "
             "this row lands with rows 5 and 11 inside together across a sweep of the merger share, "
             "the gate is met for the first time; if it lands with row 5 out, it is the same "
-            "cancellation in new clothes."
+            "cancellation in new clothes. **S21 (a)**: it lands with row 5 out, twice - at 0.115 with row "
+            "11 inside and row 5 at 1.61 on a cut-only law (A-5), and at 0.113 with row 11 inside and row 5 "
+            "at 2.56 when the stars are moved through the chemistry's kernel as well as the kick at a "
+            "merger share of 0.7 (A-2). Debt #50's bracket for this row was a fraction read as a ratio: "
+            "both kernels read 0.266 at the default share."
         ),
     ),
     Miss(
@@ -355,7 +369,9 @@ _MISSES: tuple[Miss, ...] = (
             "and this row and row 9 move together under the merger share instead of against each "
             "other. If they still cannot be satisfied together at the right scale length once the "
             "early infall is fast, the split criterion - born before the last major merger - is "
-            "what is wrong."
+            "what is wrong. **S21 (a)**: with the early infall fast and the early gas kept as gas to the "
+            "merger this row and rows 8, 9, 10 are inside together and row 5 is 1.61 (A-5), so that "
+            "sentence is now the reading."
         ),
     ),
     Miss(
@@ -382,7 +398,12 @@ _MISSES: tuple[Miss, ...] = (
             "the dissipational one - which is what a box/peanut is. If a session builds it at a scale "
             "radius that keeps row 14 inside and row 12 still misses, the low-j excess is not the "
             "bulge's seed and the whole derivation is wrong. Not a lever: mu, which is S16's and "
-            "verified, and which moves rows 20 and 2 with this one."
+            "verified, and which moves rows 20 and 2 with this one. **S21 (a) ran both** (A-3): 7e9 at the "
+            "derived radius reads row 3 at 249.6 and row 14 at 144, and at 1.5, 2, 3 and 4 times the "
+            "half-mass radius row 14 reads 129, 124, 121, 121.5 - never inside - so no concentration "
+            "lands this row and row 14 together and the conditional cannot be reached from either side; "
+            "the isotropic dispersion is the suspect (debt #52). mu = 1.06 reads this row at 1.46e10 and "
+            "row 2 at 1.14 (A-9)."
         ),
     ),
     Miss(
@@ -425,7 +446,11 @@ _MISSES: tuple[Miss, ...] = (
             "isotropy assumption, subtracting the rotation the model already computes "
             "(bulge_classical_fraction) would take the row below 113 and row 12 would still miss; if "
             "it is the missing bar-built mass, adding 7e9 takes the row to 123 and further out. They "
-            "cannot both be right, so the first session to build the buckling reads which."
+            "cannot both be right, so the first session to build the buckling reads which. **S21 (a) read "
+            "both** (A-3, A-12): the buckled 7e9 takes the row to 144 (not 123) and no concentration "
+            "brings it under 121; the rotation the model computes is 160 km/s at the half-mass radius and "
+            "subtracting it leaves 70. Two large errors of opposite sign, so 116 is not evidence; the "
+            "prediction is now debt #52's - a V/sigma-aware dispersion with the buckled mass reads near 113."
         ),
     ),
     Miss(
@@ -483,7 +508,8 @@ _MISSES: tuple[Miss, ...] = (
             "1.06-1.4 (D119: +/-1e9). Stated so it can fail: a model with the inner reservoir "
             "drained lands this row only if the tail is larger than the median mu gives, and if it "
             "lands at the median with the reservoir still there, the reservoir is being counted as "
-            "the outer HI."
+            "the outer HI. **S21 (a)**: it does, at every mu - the hydrogen outside 4 kpc reads 6.4 / 7.7 / "
+            "7.0 / 5.9e9 across mu = 1.06 / 1.15 / 1.25 / 1.4 and never the target's ~7.7e9 (A-13)."
         ),
     ),
     Miss(
@@ -510,7 +536,9 @@ _MISSES: tuple[Miss, ...] = (
             "toward the simple model's 328. If a valley ever opens and it stays above 350 with a thick "
             "disc present, SECULAR_HEATING is wrong for both models and the age-velocity relation it "
             "was read from is the place to look. Not a lever now: MERGER_HEATING, which is set by a "
-            "cited dispersion since S20 and would have to fall below 78 to land this row alone."
+            "cited dispersion since S20 and would have to fall below 78 to land this row alone (S21 (a): "
+            "below 74 - 351.4 at 78, 350.3 at 75, 348.7 at 70; A-11). The one probe that opens a real "
+            "alpha-rich mode - a burst inside the alpha-fall, A-4 - reads this row at 353, inside."
         ),
     ),
     Miss(
@@ -583,7 +611,14 @@ _NO_VALLEY_PREDICTION = (
     "no accretion law under a constant-efficiency Kennicutt law does that (the reading debts #47 "
     "and #49 reached for rows 5, 9 and 11 from the other side); if a mechanism ends the first "
     "phase sharply and the histogram still shows no mode short of the plateau, the DTD's minimum "
-    "delay (0.15 Gyr, a spike by construction) is what the detector is reading, not a thick disc."
+    "delay (0.15 Gyr, a spike by construction) is what the detector is reading, not a thick disc. "
+    "**S21 (a) attacked this and it held with its clock corrected** (AUDIT_II_A.md A-4): the strongest "
+    "accretion law (the early gas in 0.1 Gyr) reads the spike valley (dip 0.78, split 0.21); a x5 burst of "
+    "star formation in the first 0.8 Gyr forms its stars at the plateau and makes nothing; the same burst "
+    "placed inside the alpha-fall, 1-2 Gyr on the fast first infall and cut 2-3 Gyr, makes an alpha-rich "
+    "mode at +0.35 holding a tenth of the mass in one 0.02 dex bin, twice the spike, with the advanced row "
+    "6 at 353. The burst has to run after the first Ia iron and while the gas is rich - not within a "
+    "gigayear of t = 0 - and nothing in the repo makes one; in the simple model it is #49's trade unchanged."
 )
 _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     Miss(row=row, model="advanced", debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
@@ -617,7 +652,14 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
             "(debt #21). A gas dispersion that rises inward makes it worse (8 km/s everywhere reads "
             "-0.089), so the bar is the candidate; if the inner gas is cleared and the row still "
             "reads below -0.069, the wind's tilt (debt #26) is what is wrong. Not the lever: "
-            "GAS_DISC_SCALE_RATIO 1.25 reads -0.047 and is the wrong answer that passes (debt #45)."
+            "GAS_DISC_SCALE_RATIO 1.25 reads -0.047 and is the wrong answer that passes (debt #45). "
+            "**S21 (a) ran it and the mechanism is dead** (A-7): the row is fitted over 4-12 kpc and the "
+            "reservoir is inside 4 - emptied to 4e8 (the threshold capped at 5 Msun/pc2 there) the row reads "
+            "-0.0699, unmoved; capped at the R0 value everywhere inside R0 it reads -0.0794, further out; "
+            "the constant 5 everywhere reads -0.0633. What steepened it is the gas the threshold holds "
+            "inside the fit window (22.8 Msun/pc2 at 4 kpc, 6.1 at 12, against 10.2 and 4.7) with the wind "
+            "refitted to keep R0 solar. By this entry's own reading the wind's tilt (debt #26) is what is "
+            "wrong, and the bar is not this row's lever."
         ),
     ),
     Miss(
@@ -636,7 +678,9 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
             "of 1.6 [verified: S9's sweep, tests/test_chemistry_dtd.py]; the default is the "
             "cited 3.6 kpc. Either the citation's width is not this kernel's width, or the old "
             "gas gradient the model flattens from (-0.127 at 10 Gyr without migration) is too "
-            "steep to begin with. A measurement of the gradient at 10 Gyr decides between them."
+            "steep to begin with. A measurement of the gradient at 10 Gyr decides between them. **S21 "
+            "(a)**: 2.5 kpc reads -0.048, inside, with the young/old ratio at 1.22 - under 1.75 now - and "
+            "2.0 kpc inverts it (0.81); the ratio convicts the old stars' starting point (A-10)."
         ),
     ),
     Miss(

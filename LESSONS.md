@@ -708,3 +708,77 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A pre-committed reading is the ruling when the prediction fails. Debt #49 wrote "if rows 5
   and 11 still trade, the star formation law at high redshift is what is wrong" before the probe
   ran; the probe ran, they traded, and that sentence is the decision — nothing was re-argued.
+
+## From S21 (a)
+
+- [audit][all] Check the units of a bracket before running the prediction inside it. Debt #50's
+  interval put a *fraction* of the catalogue (0.221) beside a thick/thin *ratio* (0.051); as a ratio
+  the fraction is 0.284, and the double transport's 0.266 was "above the bracket" as written and
+  inside it as meant. Read what each end of an interval counts (`AUDIT_II_A.md` A-1).
+- [audit][field] A prediction with a pre-committed reading can fail in a way the reading did not
+  anticipate: #50 said "if row 9 cannot be reached from inside the interval, the split criterion is
+  wrong", and row 9 was reachable — what broke was rows 3 and 4, which the reading never named. Write
+  the rows a probe could break into the reading, not only the row it aims at (A-2).
+- [audit][field] Re-run a prediction's number on the potential it will be judged in. D121's "row 14
+  to 123" was read on S17's halo without contracting around the added mass; contracted and with the
+  Jeans dispersion recomputed it is 144. A number read on a stale potential is a stale number (A-3).
+- [audit][advanced] When a claim names a mechanism, build the mechanism by substitution and move it
+  along the one axis the claim did not specify. D128's "burst cut within a gigayear" made nothing
+  in the first gigayear and a real mode at 1–2 Gyr; the claim was right about the shape and silent
+  about the clock, and the probe found the clock in four runs (A-4).
+- [audit][all] A pre-committed test is only a test if each of its judges can move. Debt #46 named
+  rows 3, 19 and v_esc: row 19 is the input and v_esc stayed inside across the whole sweep, leaving
+  one row and therefore a fit. Ask of every judge in a pre-committed sweep what would make it say
+  no (A-8).
+- [audit][infra] One fixed sample is not an ensemble. The spec's 41-seed diagonal has a median
+  residual half a sigma low for the black hole's draw, so a statistical row's number is the sample's
+  before it is the model's; a second diagonal is the cheapest check and it took forty runs (A-6, #51).
+- [audit][field] Read the citation a derived constant rests on, not the sentence that cites it.
+  `MERGER_HEATING`'s "cited 35 km/s" is an adopted round value in a selection-function table with
+  no error bar; the measurement behind it is 39 ± 4, and the row the constant landed is out at 39.
+  A read-only agent with the PDF is cheaper than a session spent on the number (A-14; rule B14).
+- [close][audit] A killed prediction's replacement goes beside the old one in `spec.py`, with the
+  finding's number, so the entry reads as a history and not as a rewrite; the branch is sealed and
+  S22 ports the entry whole.
+
+## From S21, run b (the instruments and the viewer)
+
+- [audit][infra] Check a rule from outside the thing that reports it. Every D4 assertion in
+  the suite reads `Response.stages`, which is the service's own account of itself; counting at
+  the stages instead — every `compute` wrapped — found the account honest on all 17 endpoints,
+  and found the two calls it structurally cannot cover (rule B3; D144, #65).
+- [audit][infra] Publish the column, not just the number. `disc` returned to every physics
+  route's closure at S18 and three timings records could not show it, because S14 is the last
+  one to carry the stage column. A record that drops a field stops being able to contradict
+  itself (rule B6; #66).
+- [audit][infra] Before trusting a fit, look at the sign of its residuals. The catalogue's
+  per-star line has held its residual signs in 12 of 12 repeats at four of five sample sizes
+  for ten sessions; that is misspecification, and no amount of repeating the timing finds it.
+  A slope reproducible to 9% whose fit reports 36% is the same fact seen from the other side
+  (D145, D146; #67, #68).
+- [audit][infra] A flaky test is a claim about precision, not about the machine. The one D115
+  recorded was a one-sided test at 2.9σ by the fit's own error bar, and the error bar was wide
+  because the model was wrong, not because the desktop was busy. Measure the distribution
+  before crediting the explanation (rule B6; #68).
+- [audit][infra] A fitted intercept is an extrapolation; read the slope. The catalogue's
+  per-cell line reads +18.1, +1.4 and −6.3 ms of fixed cost on three runs of one container,
+  and the slope reads 423–459 µs on all three. Publishing the pair without saying which half
+  is determined is how "270 ms fixed" survived ten sessions (D145; #67).
+- [audit] Rule B10 applies to instruments. A constant fitted against a broken mechanism has no
+  claim on its value; so does a number published by a fit that was misspecified. Every "µs per
+  star / ms fixed" pair since S11 is such a number (D146).
+- [audit] State a detector's reach as a closed form, not as an example. `MODE_MIN_SHARE` reads
+  as "a mode holds a tenth of the mass" and is really `s·erf(0.05/(σ√2)) ≥ 0.1` — a test on the
+  peak's density — which is how the Milky Way's own thick disc, at row 9's share and the
+  observed α-width, ends up seven parts in a thousand short of visible (rule B8; D147, #70).
+- [audit] Where a pinned value sits near its window edge, the guard is an inequality against
+  the edge and the approx is only the measurement. Both pins in `test_audit.py` whose tolerance
+  exceeds the distance to the edge are guarded that way on the same line, and that is why none
+  of the 46 can flip a row (D149, #71).
+- [viewer] "Every published field is previewed" is a claim to count, and the count is in the
+  declarations. Four galaxy scalars in each model reach no surface, excluded by the same D4 rule
+  that stops the client materialising a galaxy to print one number — the exclusion is right and
+  the claim was still wrong (D148, #69).
+- [close] An audit's citations have to point inside the repository (rule B14), so a finding that
+  is worth citing is worth pinning as a test in the same session. Five did; a probe that stayed
+  in the scratchpad is a claim the next session cannot check.

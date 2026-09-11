@@ -58,7 +58,17 @@ closes the project.
 | 17 | `s17` | `4338a60fdcd2` | **queued** |
 | 18 | `s18` | `4c73bca169b5` | **queued** |
 | 19 | `s19` | `2a8a9b4fc32d` | **queued** |
-| 20 | `s20` | *TBD — filled in when S20 is merged* | **queued** |
+| 20 | `s20` | `7e96422190ab` | **queued** — filled in by S21 (a) |
+| 21 | `s21` | *no merge commit exists* | **not tagged, by design** — see below |
+| 22 | `s22` | *TBD — filled in when S22 is merged* | **queued** |
+
+> **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
+> other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
+> a tag would have to point at something that is not one. S22 ported both lists instead, and
+> the commit that carries them is S22's merge, which `s22` tags. The two branches are the
+> record — `session-21-a` and `claude/keen-lamport-lldlvp` — and MANUAL_TODO §2 says to keep
+> them. The row above exists so that the gap is stated rather than discovered: a session
+> missing from the batch is exactly what this table is for.
 
 ### Run these
 
@@ -129,8 +139,13 @@ git tag -a s18 4c73bca169b5af2d2d6729d16a965f701ce2a7b7 -m "S18: the kick, the t
 # S19 — the catalogue migrates.
 git tag -a s19 2a8a9b4fc32d0040c79e60ac798fe6abe95bd818 -m "S19: the catalogue migrates"
 
-# S20 — the valley probed six ways and recorded; the kick re-derived. The batch replaces this with the literal SHA.
-git tag -a s20 "$(git rev-list -1 --grep='^Merge S20 into main' origin/main)" -m "S20: the valley's record and the derived kick"
+# S20 — the valley probed six ways and recorded; the kick re-derived.
+git tag -a s20 7e96422190ab26cdb35ad895a7c7304c087900eb -m "S20: the valley's record and the derived kick"
+
+# S21 — no tag. Two sealed branches, neither merged (D99); see the note above the batch.
+
+# S22 — the close-out: both audit lists ported, every debt ruled. The batch replaces this with the literal SHA.
+git tag -a s22 "$(git rev-list -1 --grep='^Merge S22 into main' origin/main)" -m "S22: the close-out"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
@@ -146,7 +161,15 @@ SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 **Keep the three S10 audit branches.** `session-10-beta`, `session-10-gamma` and
 `session-10-gamme-run-2` are unmerged by design (DECISIONS.md D99) and are the sealed
 lists the four-way comparison D102 rests on; do not delete them from the remote, and
-do not merge them — their findings are on `main` as debts #34–#45 and tests. Nothing
-else at present. Calibration debt is **not** tracked here — it lives in
+do not merge them — their findings are on `main` as debts #34–#45 and tests.
+
+**Keep both S21 audit branches, and never merge them into each other.** Aim (a) is
+`session-21-a`; aim (b) is `claude/keen-lamport-lldlvp` — the web container names its
+own branch, and that branch *is* `session-21-b` for every purpose GALAXY_PLAN.md §5d
+gives it. S22 ported both lists onto `main` (D99) without merging either, so neither
+branch is reachable from `main` and neither carries a tag: `s21` points at S22's merge
+of the ported lists, which is the first commit on `main` that holds both.
+
+Nothing else at present. Calibration debt is **not** tracked here — it lives in
 the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
 board. This file is only for actions that need a human at a keyboard.

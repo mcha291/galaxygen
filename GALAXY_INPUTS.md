@@ -792,6 +792,11 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    solver's own correction, on the constant that had put it in. Its entry is back in
    `spec._MISSES` (since S20, both models) and its prediction is unchanged: the bar's buckling,
    249.4. The first infall's law, probed five ways at S20, moves this row by under 0.1.
+   **S21 (a) ran the bar's prediction** (`AUDIT_II_A.md` A-3, `[verified: tests/test_audit_ii_a.py::test_d121s_bar_prediction_ran_row_3_held_and_row_14_did_not]`): 7e9 buckled into the spheroid at the derived scale radius — the halo contracted around it, the
+   dispersion recomputed — reads row 3 at **249.64** (held to 0.2), rows 12 and 13 inside, and **row 14 at
+   144, not 123**; at four times the half-mass radius row 14 is still 121.5 with row 3 at 245.9, so no
+   concentration lands rows 12 and 14 together (debt #52). The advanced model's rows 6 and 22 pay (400,
+   −0.081). μ = 1.06 reads the spheroid at 1.46e10 and this row at 249.4, with row 2 at 1.14 (A-9).
 
 12. ~~**The c₂₀₀–z relation is unvalidated and load-bearing.**~~ **DISCHARGED by S13 and
    S15** — the conversion at S13, the epoch at S15 (D117): the default is the epoch of the
@@ -1069,6 +1074,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    2.11 kpc; the rest of that probe is under #49. What would land rows 5, 9 and 11 together is
    a thick disc extended *and* light, and at the observed scale lengths and masses row 9 is
    0.11 by arithmetic, so the three rows are one row.
+   **S21 (a) ran the reading** (`AUDIT_II_A.md` A-5, `[verified: tests/test_audit_ii_a.py::test_debt_19_a_cut_only_law_lands_rows_9_and_11_together_and_row_5_short]`): star formation off from 1.0 to 3.8 Gyr on the fast first infall
+   leaves the early gas as gas at the merger, rows 8, 9, 10 and 11 are **inside together for the first
+   time** (0.040, 0.115, 3.36e10, 6.72e9), and row 5 reads **1.61** — 0.2 short. The sentence above is
+   now the reading: the split criterion. And moving the stars through the chemistry's kernel as well as
+   the kick (debt #50) lands rows 9 and 11 together at a share of 0.7 with row 5 at 2.56 (A-2) — the same
+   cancellation run the other way. S22 rules.
 
 20. ~~**The thin/thick split is defined by the merger, so it cannot be evidence
    about mergers.**~~ **DISCHARGED by S9 in the advanced model.** "Born before
@@ -1306,6 +1317,14 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the first phase sharply and there is still no mode short of the plateau, the DTD's minimum
    delay (0.15 Gyr, a δ-spike at +0.45 by construction) is what the detector reads. Row 24
    and the six rows on it stay misses with that prediction; the advanced row 6 reads 356.
+   **S21 (a) attacked both claims and they held, with the clock corrected** (`AUDIT_II_A.md` A-4, `[verified: tests/test_audit_ii_a.py::test_debt_27_a_burst_inside_the_alpha_fall_opens_a_mode_short_of_the_plateau]`). The single-merger valleys are the spike (78–80% of the mass
+   above +0.40 in +0.42–0.46, splits 0.39–0.41); the strongest accretion law, the early gas in 0.1 Gyr, reads
+   the spike valley (dip 0.78, split 0.21). A ×5 burst of star formation in the first 0.8 Gyr forms its
+   stars at the plateau and makes nothing; **the same burst placed inside the α-fall — 1–2 Gyr on the
+   fast first infall, cut 2–3 Gyr — makes an α-rich mode at +0.35 holding a tenth of the mass in one
+   0.02 dex bin**, twice the spike, `bimodal_wide` at split 0.21, the advanced row 6 at 353. The burst has
+   to run after the first Ia iron and while the gas is rich, not within a gigayear of t = 0. Nothing in
+   the repo makes one; the simple model reads #49's trade under it (row 5 2.01, row 9 0.60, row 11 1.7e10).
 
 28. **Migration is too strong once the tilt is right.** S2 recorded that if
    row 22 steepened and row 23 did not, `migration_efficiency` was wrong too.
@@ -1339,6 +1358,12 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    **S13:** the unmigrated old gradient is −0.084 (simple) and −0.106 (advanced) now,
    flattened 13× and 5.5× by the default kernel; the young/old ratio 3.27 and 3.03. The
    discriminator stands.
+   **S21 (a):** 2.5 kpc reads the advanced row 23 at **−0.048**, inside, with the young/old ratio at
+   **1.22** — under the observed 1.75 now — and 2.0 kpc inverts it (−0.073, 0.81); row 22 does not move
+   (the present-day gas does not migrate). The ratio, not the row, is the discriminant, and it convicts
+   the old stars' starting point: a narrower kernel flattens less and the old population is then steeper
+   than the young one wants (`AUDIT_II_A.md` A-10, `[verified: tests/test_audit_ii_a.py::test_debt_28_the_narrower_kernel_lands_row_23_with_the_ratio_on_the_wrong_side]`). The two transports (#50) are the same question: the chemistry's width applied to the
+   mass fails rows 3 and 4 (A-2).
 29. ~~**The Sagittarius default delivers a tenth of the baryon budget, five Gyr
    early.**~~ **DISCHARGED by S13.** The default is 0.01 of the outstanding budget —
    about 3 × 10⁸ M☉, what a 10⁸–10⁹ M☉ progenitor can bring `[recall]` — and with debt
@@ -1681,6 +1706,15 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    cost: the radial kick 1.47 → 1.09 kpc at R₀, row 5 1.17 → 1.09, row 9 0.051 → 0.0455, row 8
    0.013 → 0.016 — and row 3 251.03, out by 0.03, back under #11. Rows 6 and 7 are now inside
    together in the simple model on a cited number; in the advanced model both are #27's.
+   **S21 (a) read the citation** (`AUDIT_II_A.md` A-14, `[verified: tests/test_audit_ii_a.py::test_row_7_is_green_on_an_adopted_round_number_and_out_on_the_measured_one]`). Bensby, Feltzing & Lundström 2003's σ_W = 35 is their Table 1's
+   *adopted characteristic value* for a kinematic selection function, with no uncertainty; the measurement
+   their Sect. 1 quotes is Soubiran, Bienaymé & Siebert 2003's (63 ± 6, 39 ± 4, 39 ± 4) `[verified: both
+   papers read in full at S21 (a) from the publisher-identical PDFs; Bensby et al. 2003 has no arXiv
+   copy]`. Net of 27.06 the measured 39 is a constant of 112.3, which reads row 7 at **1193** (out) and
+   row 3 at **250.97** (in); the window's top is σ_W = 37.1 (101.5). Row 7 is green on the round number at
+   the −1σ edge of the measurement, and rows 3 and 7 trade across the source's own error bar. The
+   derivation's shape is S20's; the value's citation is not a measurement. The advanced row 6 lands at
+   ~74, not 78 (A-11), and the one probe that opens a real α-rich mode (#27, A-4) reads it at 353.
 
 43. **`NET_YIELD` and `WIND_SPEED` are each fitted on the star formation
    history that misses rows 2 and 20** (S10, the gamma pair). Both set the
@@ -1848,6 +1882,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the extended component at z_f = 1.66 (debt #11); if it does not, the invariant is the
    remaining suspect and its test is a two-parameter sweep of w at A = 1.6 against rows 3,
    19 and the escape velocity together, not another normalisation.
+   **S21 (a) ran the sweep and it cannot judge** (`AUDIT_II_A.md` A-8, `[verified: tests/test_audit_ii_a.py::test_debt_46s_pre_committed_sweep_cannot_discriminate]`): row 19 is `halo_mass`, the input, and moves under nothing;
+   v_esc(R₀) runs 544–577 across w = 0.6–1.3 at A = 1.6, inside 530–580 throughout; row 3 reads 230.3 /
+   237.8 / 249.3 / 267.8 and crosses its window between w = 0.8 and 1.0. A one-row sweep is a fit (rule
+   B5). S15's "A = 1.6 at w = 0.8 reads 245.6" is 237.8 with the tail and the spheroid in.
 47. **The extended gas is one derived tail and a constant threshold, and the gas inside
    R₀ is what row 20 still lacks** (S16, D119). The high-j tail (debt #18) follows one
    Level 0 constant, the angular-momentum profile's μ = 1.25, whose 90% range 1.06–2.0
@@ -1909,6 +1947,13 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    reservoir (4.8e6 M☉ inside 4 kpc) and takes 2e10 out of the disc's accretion with it: row 10
    1.4e10, row 22 +0.15, row 4 −12. A bar does not stop the inner disc forming stars; a drain
    on the parked gas alone would be a rule with the answer in it. Still the bar's (#21).
+   **S21 (a): the advanced row 22 does not see the reservoir** (`AUDIT_II_A.md` A-7, `[verified: tests/test_audit_ii_a.py::test_the_advanced_row_22_does_not_see_the_inner_reservoir]`). The gradient is fitted over 4–12 kpc; the threshold
+   capped at 5 M☉/pc² inside 4 kpc empties the reservoir to 4e8 and leaves the row at −0.0699; capped at
+   the R₀ value everywhere inside R₀ it reads −0.0794; the constant 5 everywhere −0.0633. What steepened
+   the row is the gas the threshold holds *inside the window* (22.8 at 4 kpc, 6.1 at 12, against 10.2 and
+   4.7) with the wind refitted to keep R₀ solar. By the miss's own reading the wind's tilt (#26) is what
+   is wrong; the bar is not this row's lever. Row 20 under μ (A-13): the hydrogen outside 4 kpc reads
+   6.4 / 7.7 / 7.0 / 5.9e9 across 1.06 / 1.15 / 1.25 / 1.4 and never the target's ~7.7e9.
 
 48. **The M_• residual's width is the classical one, for a bulge the model calls 83%
    pseudo** (S17, D121). Ruling 10 (§13) specifies the width "interpolated by the classical
@@ -1931,6 +1976,10 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    a future session finds the verdict moving when the width is entered, the ensemble's
    median is being estimated at too small an n (ENSEMBLE_MIN = 41 gives a median 0.16 dex
    below the mean here) rather than the width mattering.
+   **S21 (a) ran it and the reading applies** (`AUDIT_II_A.md` A-6, `[verified: tests/test_audit_ii_a.py::test_debt_48_the_ensembles_median_residual_sits_half_a_sigma_low]`): the verdict does not move, and the median does — 1.97e7 /
+   1.47e7 / 9.9e6 at widths 0.28 / 0.5 / 0.8 — because the 41-seed diagonal's standardised residual has
+   median −0.577σ, 2.9 standard errors from zero; the next diagonal (41–81) reads −0.10σ. "The median is
+   the mean relation at any width" is false by 0.16 dex at the classical width. Debt #51.
 
 49. **The first infall accretes on the thin disc's inside-out law, and that is where the
    thick disc's shape is decided** (S18, D124). `sfh` accretes both episodes on
@@ -1970,6 +2019,9 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    N_t 1000/2000/4000 and row 6 at 594. Not built: it would move rows 2, 6, 9, 10 and 11 out to
    move row 5 in. What lands rows 5, 9 and 11 together is the same thing that would open the
    valley (#27): a first phase that consumes gas slower than it accretes it and then stops.
+   **S21 (a):** that phase was made, by substitution — star formation off 1.0–3.8 Gyr on the 0.55 Gyr
+   infall — and rows 8, 9, 10, 11 land together with row 5 at 1.61 (A-5, debt #19); the burst that opens
+   a real α-rich mode sits at 1–2 Gyr, after the first Ia iron (A-4, debt #27).
 
 50. **The model moves stars twice, with two kernels, and nothing reconciles them** (S19,
    D126). `sfh` moves a star from where it was born to where it is now with the merger's
@@ -1994,6 +2046,174 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    (#19, #49) and not the transport. Not S19's to build — it moves five acceptance rows and
    the plan gives none of them to this session — and not S20's either, whose lever is the
    infall law; **for S21 to read and S22 to rule.**
+   **S21 (a) read it and the prediction is dead** (`AUDIT_II_A.md` A-1, A-2, `[verified: tests/test_audit_ii_a.py::test_debt_50s_prediction_ran_the_stars_moved_through_both_kernels_and_failed]`). Two corrections first. The bracket compared a fraction with a
+   ratio: 0.221 of the catalogue is 0.284 as thick/thin, so the interval was 0.0455–0.284. And the kick
+   is nothing beside the churn (0.002 on row 9). Moved through both kernels — the built kick, then the
+   chemistry's own `transport(R, migration_width(age))` per age bin, mass-conserving — row 9 reads
+   **0.266**, row 5 2.73, row 8 0.092, row 11 unmoved, and **row 4 3.49, row 3 244.9**: the width the
+   chemistry and the catalogue use carries the disc's stars outward until the thin disc's scale length
+   and the Sun's velocity fail, which is debt #28 read off rows 3 and 4. At half the width rows 3, 4, 8, 9
+   are inside together (250.4, 2.86, 0.043, 0.128) and 5, 11 are not; at the full width and a share of
+   0.7, rows 9 and 11 are inside together (0.113, 4.9e9) with row 5 at 2.56. The pre-committed reading
+   does not fire — row 9 *is* reachable from inside the interval — what is unreachable is rows 3 and 4
+   with it. The reconciliation S22 rules on is therefore not a composition: one of the two widths is
+   wrong, and the disc's structure says which.
+
+51. **The spec judges every statistical row on one fixed sample, and its median residual sits half a
+   sigma low** (S21 (a), D130). `spec.ensemble` runs seeds 0–40 with every seed name equal — one
+   diagonal, not a sample — and the standardised residual `world_seed` draws for M_• has median
+   **−0.577σ** over those 41 (mean −0.33, sd 1.29), 2.9 standard errors of a 41-sample median from zero;
+   seeds 41–81 read −0.10σ. Row 18's median is therefore 0.16 dex below the mean relation at the
+   classical width and moves with the width (1.97e7 → 9.9e6 at 0.8 dex), which debt #48 said it could
+   not `[verified: tests/test_audit_ii_a.py::test_debt_48_the_ensembles_median_residual_sits_half_a_sigma_low]`.
+   `ENSEMBLE_MIN` = 41 was derived for the interval's coverage (D109), not for the median's precision,
+   which is 0.2σ at that n — 0.055 dex for row 18, 1.8 km/s/kpc for row 16. No verdict moves today:
+   rows 16 and 17 read 41.1 / 5.94 on the second diagonal, inside, and row 18 is 2.3× over at any width.
+   **What discharges it:** the ensemble drawn as a sample (seeds from a generator, or the diagonal
+   offset per row so no row inherits one draw), with n set by the median's precision against each
+   statistical row's own margin — an instrument change for aim (b) or S22, not a physics one.
+   **Prediction, stated so it can fail:** a row whose margin is under ~0.06 dex or ~2 km/s/kpc is
+   decided by the sample and not by the model; if every statistical verdict is the same on seeds
+   41–81, 82–122 and the diagonal, the sample is not deciding any of them and this debt is a precision
+   statement only.
+
+52. **Row 14 is two large errors of opposite sign, and mass alone cannot land rows 12 and 14
+   together** (S21 (a), D130). The spheroid's dispersion is the isotropic Jeans reading in the total
+   potential (D121); the model's own V/σ says the spheroid is 83% rotation-supported (v_rot = ⟨j⟩/r_half
+   = 160 km/s at 0.88 kpc), and subtracting that rotation leaves √(116² − 160²/3) = **70 km/s**. The
+   missing bar mass pulls the other way: 7e9 buckled in at the derived concentration reads 144, and at
+   four times the half-mass radius 121.5 — the floor set by the enclosed mass — so no concentration of
+   added mass brings the row under 116 with row 12 inside `[verified:
+   tests/test_audit_ii_a.py::test_d121s_bar_prediction_ran_row_3_held_and_row_14_did_not]`. The near-miss at
+   116.2 is therefore not evidence that the spheroid's kinematics are right; it is −46 and +28 cancelling.
+   **Prediction, stated so it can fail:** a dispersion that subtracts the rotation the model already
+   computes (σ² = σ_iso² − v_rot²/3, the least it can assume) with the buckled 7e9 in place reads near
+   113 and lands rows 12, 13, 14 and 3 together; if with the rotation subtracted and the mass added the
+   row is under 105, the rotation the mapping assigns to the low-j excess is too large, and the
+   classical fraction (0.17) with it. Owned by S22's ruling on #11 and #21.
+
+**S21, run b — the instruments and the viewer** (AUDIT_S21B.md; debts #65-#78 and
+decisions D144-D157 are reserved for this aim, D116). Every item below is a finding
+about an instrument, not about the model: none moves an acceptance row, and where an
+instrument was measuring the wrong thing the entry carries the number rather than the
+repair (rule B6).
+
+65. **Rule D4's instrument cannot see the work the routes do outside the runner** (S21b,
+   D144). Every D4 assertion in the suite reads `Response.stages`, which the runner fills
+   from what it executed; `systems.materialise` and `planets.one_system` are called by the
+   region and system routes directly, so they appear in no `stages` tuple and no cold table
+   has ever priced them per route. The region route's defence against D4's named defect is
+   real — it holds in the header's cell census, and #67 now prices it at 350-420 µs per cell
+   — but it is asserted somewhere other than where the rule is checked. Counting at the
+   stages instead of at the routes found the self-report honest on all 17 endpoints
+   `[verified: tests/test_audit.py::test_s21b_the_d4_report_is_what_actually_ran]`.
+   **Prediction:** if a route is ever added that materialises a catalogue, `stages` will
+   report it as costing the six stages a region query costs and the cold column will show
+   the difference, so a timing will catch it and the D4 instrument will not.
+
+66. **The `disc` stage returned to every physics route's closure and no record says so**
+   (S21b, D144). D115 (S14) recorded "the `disc` stage has left the stage column of every
+   route" when `sfh` began reading the scale length from the halo (D113); S18 put Kennicutt's
+   threshold on κ(R), which is the disc stage's, and it came back. D125 and D129 publish cold
+   seconds without the stage column, so nothing between S14 and S21b records the change
+   `[verified: AUDIT_S21B.md §2 against D115]`. It costs 0.5 ms. The debt is not the cost:
+   it is that rule D4's own instrument moved and three sessions' records could not show it.
+   **Discharged by** publishing the stage column in the timings record, which S21b does.
+
+67. **The catalogue is priced against the variable it is not a function of** (S21b, D145).
+   `catalogue_cost` fits a straight line through (stars realised, seconds) and every
+   performance record since S11 quotes its two numbers — D129's are "1.42 / 1.75 µs per star
+   against 220 / 209 ms fixed". The line is fitted to a curve: the residuals keep their sign
+   in 12 of 12 repeats at four of five sample sizes, and the marginal cost falls from 19.6
+   µs/star at 2k→5k to 0.93 at 20k→40k. The cells that realise a star saturate — 349 of 1024
+   at 500 stars, 800 at 20,000, 829 at 80,000 — and seconds is a straight line in *cells*:
+   426 µs/cell at R² 0.97 against 2.46 µs/star at R² 0.67, and 354 µs/cell + 0.71 µs/star +
+   32 ms at R² 0.9994 `[verified: tests/test_audit.py::test_s21b_the_catalogue_is_priced_per_cell_not_per_star]`.
+   **So there is no fixed cost.** What the fit calls fixed is the price of however many cells
+   the sample lights up, and it falls with the sample: 156 ms at 500 stars. The instrument now
+   publishes both fits with their R² and the sample range is widened to carry the cell count
+   down to 349. **Prediction:** the per-cell line stays better conditioned than the per-star
+   line at every sample range wide enough to move the cell count; if a range is ever found
+   where the per-star fit explains more, the saturation has gone and the catalogue has
+   changed shape.
+
+68. **D115's flake is the misfit, not the machine** (S21b, D146). `tests/test_performance.py::
+   test_the_catalogue_is_priced_per_cell` asserted `per_star_us > 0`; D115 recorded it failing
+   under load on a negative slope and explained it as the desktop's noise. Measured: the slope
+   is reproducible to 3.37 ± 0.32 µs/star (simple) and 3.30 ± 0.18 (advanced) over twelve
+   repeats, while the fit's own standard error on it is 1.24 and 1.29 — **3.9× and 7.1× the
+   slope's actual scatter** — because the residuals of #67 are structured and are the whole
+   error budget. A one-sided test at a median t of 2.9 fails a few runs in a hundred with
+   nothing wrong. The assertion now reads the conditioned fit, which is a stronger check and
+   not a looser one (rule B5): if the per-star line ever explained more than the per-cell
+   line the test fails. **The general lesson is rule B10's, applied to an instrument rather
+   than to a constant:** a number published by a fit that was misspecified has no claim on
+   its value, and every "µs per star / ms fixed" pair in D105, D112, D115, D120, D125 and
+   D129 is such a number.
+
+69. **Four published fields reach no surface of the viewer, in both models** (S21b, D148).
+   `catalogue_size`, `giant_fraction_sample`, `mean_planets_per_star` and
+   `planet_count_sample` are galaxy scalars of stages that publish object columns, and
+   `view.js` excludes exactly those — asking for one would materialise the galaxy's whole
+   sample to print a number, which is rule D4's waste committed by the client
+   `[verified: tests/test_audit.py::test_s21b_four_published_scalars_reach_no_surface_of_the_viewer]`.
+   For `catalogue_size` the exclusion costs nothing: the region response's census carries the
+   count. The other three are planets-stage aggregates that no response carries, so §5d's
+   "the viewer shows every published field" is short by three. **For S22 to rule**, because
+   both remedies are choices about what the API publishes and neither is a repair: a cheap
+   aggregate endpoint that answers from the sample the region already built, or the three
+   declarations ruled viewer-invisible with the reason written into them.
+
+70. **The bimodality detector's mode test is a test on a peak's density, not on a mode's
+   share** (S21b, D147). `bimodality` keeps a local maximum only if the histogram holds
+   `MODE_MIN_SHARE` = 0.10 of the **total** mass within ±`PEAK_SEPARATION`/2 = ±0.05 dex of
+   the peak, so for a Gaussian mode of share s and dispersion σ the condition is exactly
+   `s·erf(0.05/(σ√2)) ≥ 0.10`: a mode holding 12% is seen only below σ = 0.035 dex, one
+   holding 10% or less at no width a galaxy could have. **Row 9 asks the model for a thick
+   disc holding 7-14% of the local surface density and the observed α-rich sequence is about
+   0.04 dex wide** `[recall]`, so the Milky Way's own thick disc is inside the blind spot: at share 0.12
+   and σ 0.04 the α-rich maximum is found exactly where it was put, at +0.29 dex, and then
+   rejected — 0.0929 of the mass in the window against 0.1000
+   `[verified: tests/test_audit.py::test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share]`.
+   The threshold is stated and not moved (rule B5, and BRIEF.md says so). **Prediction that
+   could fail:** if the advanced model is ever given a thick disc at row 9's target share
+   with the observed α-width, row 24 will still read `single` and its failure will be the
+   detector's, not the model's; what kills this is any configuration that lands row 9 inside
+   0.08-0.16 *and* reads `bimodal_wide` at the default grid. Choosing a replacement — a test
+   that integrates the mode rather than its peak — is S22's ruling, not a session's fix.
+
+71. **The pin that watches the wind calibration is looser than the refit it watches** (S21b,
+   D149). Of 46 `pytest.approx` pins in `tests/test_audit.py`, none can flip its row: the two
+   whose tolerance exceeds the distance to their window edge — row 3's 251.03 ± 0.5 against an
+   edge 0.03 away and row 7's 1069 ± 30 against an edge 11 away — are both guarded on the same
+   line by an inequality against the edge itself. The exception is the wind's contribution to the
+   solar calibration, in `test_debt_43_the_two_solar_calibrations_and_their_levers`, pinned at
+   −0.060 ± 0.01 with its own comment recording −0.064 before S18's refit: a step of 0.004, **2.5× inside the tolerance**, so
+   `WIND_SPEED` moving 982 → 860 km/s would not have been noticed here. Not tightened, because
+   the value was measured on one machine and the right tolerance is a judgement about
+   cross-machine drift. **For S22**: tighten to ±0.004 if the number reproduces on a second
+   machine, or write the machine spread into the comment.
+
+72. **`AUDIT_RUN1.md` §2 discharged debt #24's remainder on a reason that is wrong** (S21b,
+   D145). Its words are "Cost is proportional to the stars asked for. D61's fear — every
+   cell's streams built whether asked for or not — is not what the code does now." The verdict
+   holds and the reason does not: cost is proportional to *cells*, and the code is safe from
+   D61's fear for a better reason than the one recorded — a nine-cell query pays for nine
+   cells, not for nine cells' share of a fixed cost. The honest residual of #24 is that a
+   one-cell query at 20,000 stars costs 20.2 ms of which 0.35 ms is the cell, and the rest is
+   `materialise`'s per-call work over every ring whichever cells were asked for — **which is
+   D60's price and not waste**, since narrowing the churn to a region's rings was tried at S19
+   and broke per-region determinism in the last bit. **For S22 to re-read** with the right
+   price in it; nothing about the discharge changes.
+
+73. **The number S20 recorded for `disc_radial_spread` is not on the screen as a number**
+   (S21b, D148). The field reaches the viewer — it is a grid field on (R, t) with a ramp, and
+   the viewer draws it as an image — but S20's record is "the radial spread at R₀ 1.09 kpc",
+   which is the maximum over the time axis of that image, and the viewer publishes no such
+   reduction `[verified: tests/test_audit.py::test_s21b_s20s_two_numbers_reach_the_viewer]`.
+   The other S20 number, `thick_disc_dispersion` at 34.998 km/s, is a galaxy scalar and is
+   printed. Recorded rather than fixed: a reduction over an axis is a rendering opinion, and
+   rule A9 puts those in the declaration, so adding one is a `core/` edit and a ruling.
 
 ---
 
