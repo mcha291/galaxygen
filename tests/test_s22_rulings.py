@@ -144,3 +144,43 @@ def test_debt_70_and_27_the_only_mode_ever_opened_is_narrower_than_the_milky_way
     assert needed == pytest.approx(0.145, abs=0.002) and lo < needed < hi
     assert (hi - needed) / (hi - lo) == pytest.approx(0.18, abs=0.02)  # the top 18% of the window
     assert as_ratio(smallest_visible_share(0.05)) > hi  # at 0.05 dex, nowhere in the window
+
+
+def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the_cited_one(prod):
+    """A-10 read two points below the crossing and concluded the ratio could not be landed.
+
+    S21 (a) swept `migration_efficiency` to 2.5 and 2.0 — row 23 inside at 2.5 with the
+    young/old ratio at 1.22, inverted at 2.0 — and ruled "the row can be landed; the ratio
+    cannot be landed with it". Both points are below where the ratio crosses the observed
+    1.75, and the crossing is inside row 23's window: at **3.0 kpc** the old gradient reads
+    −0.033 (inside −0.05 to −0.03) and the ratio 1.76 against Willett+23's 1.75. So the two
+    chemistry observables *are* landed together, by one width, 17% below the cited 3.6 kpc
+    [recall: Frankel et al. 2018] — which is debt #28's *first* explanation, that the
+    citation's width is not this kernel's width, and not the second one A-10 convicted.
+
+    Both ends are about 17% shallower than the source's (−0.058 against −0.07 young,
+    −0.033 against −0.04 old), so what 3.0 kpc reproduces is the ratio and not the pair.
+    The default stays the cited 3.6: moving it here, with both readings known, is the move
+    rule B5 exists to prevent. What this pins is that the width the abundances want exists,
+    and that it disagrees with the width the disc's structure wants (debt #50: under 1.8 kpc
+    once the mass follows the kernel, A-2).
+    """
+    advanced = prod[0].get("advanced")
+    fields = ("metallicity_gradient_old", "metallicity_gradient_young")
+    read = {}
+    for eff in (2.5, 3.0, 3.6):
+        f = run(advanced, {"migration_efficiency": eff}, only=fields).fields
+        read[eff] = (float(f["metallicity_gradient_old"]), float(f["metallicity_gradient_young"]))
+
+    old3, young3 = read[3.0]
+    assert old3 == pytest.approx(-0.0328, abs=0.002) and Q[23].lo <= old3 <= Q[23].hi
+    assert young3 / old3 == pytest.approx(1.76, abs=0.06)  # Willett+23's 1.75
+
+    # The crossing is bracketed, and the cited default is on the far side of it.
+    assert read[2.5][1] / read[2.5][0] < 1.75 < read[3.6][1] / read[3.6][0]
+    # And the default's own ratio is not what the register has carried since S13: S18's
+    # threshold moved it and nobody re-read it. 3.03 (advanced) / 3.27 (simple) then.
+    assert read[3.6][1] / read[3.6][0] == pytest.approx(2.55, abs=0.08)
+    simple = prod[0].get("simple")
+    f = run(simple, only=fields).fields
+    assert f["metallicity_gradient_young"] / f["metallicity_gradient_old"] == pytest.approx(2.49, abs=0.08)

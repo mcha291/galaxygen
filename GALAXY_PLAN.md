@@ -47,10 +47,16 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S21. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
+**Next:** S22. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 43 (`GALAXY_INPUTS.md` §11). **Discharged:** 18.
+**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 35.
+
+> S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
+> and **12 carried**, none left unruled (§5d's "done means"). A permanent item stays
+> counted open on purpose — it is a limitation of the model's scope or of the sources, and
+> one that stopped being counted would stop being read. The three-way map is at the head of
+> the register and a test asserts it.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is

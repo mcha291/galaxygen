@@ -385,13 +385,16 @@ def test_the_register_carries_the_s10_findings():
     # count stands still while the discharged one moves - both halves have to be read (D126).
     # S21 ran twice on two sealed branches and S22 ported both lists (D99): aim (a) opened #51
     # and #52 (D130), aim (b) #65-#73 (D144-D149), and neither discharged anything, so the port
-    # alone reads 43 / 18. The gap #53-#64 is aim (a)'s unused reservation and #74-#78 is aim
+    # alone read 43 / 18. The gap #53-#64 is aim (a)'s unused reservation and #74-#78 is aim
     # (b)'s (D116) - a missing number inside those blocks is the plan working, not a lost item.
-    assert progress.debt_counts(text) == (43, 18)  # 34 / 18 ported from (a) alone, 32 / 18 at S20
+    # S22 then ruled all 43 and discharged 17 of them (#4, #5, #8, #10, #14, #32, #36, #44, #50,
+    # #51, #66-#69, #71-#73), leaving 26 open: 14 ruled permanent and 12 carried, none unruled.
+    # The map at the head of the register is the one place that split is written down.
+    assert progress.debt_counts(text) == (26, 35)  # 43 / 18 on the port, 32 / 18 at S20
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
-        "50. **The model moves stars twice",
+        "50. ~~**The model moves stars twice, with two kernels, and nothing reconciles them**~~",
         "46. **The contraction's strength is a simulation calibration",
         "29. ~~**The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",
@@ -399,15 +402,21 @@ def test_the_register_carries_the_s10_findings():
         "41. ~~**Acceptance row 20 compares total gas with a hydrogen mass",
         "42. **Row 6 passes at the edge",
         "43. **`NET_YIELD` and `WIND_SPEED` are each fitted",
-        "44. **Row 2 cannot see past `KS_NORM`",
+        "44. ~~**Row 2 cannot see past `KS_NORM`",
         "45. **`GAS_DISC_SCALE_RATIO` multiplies nothing",
         "48. **The M_• residual's width is the classical one",
-        "51. **The spec judges every statistical row on one fixed sample",
+        "51. ~~**The spec judges every statistical row on one fixed sample",
         "52. **Row 14 is two large errors of opposite sign",
         "65. **Rule D4's instrument cannot see the work the routes do outside the runner",
-        "67. **The catalogue is priced against the variable it is not a function of",
+        "67. ~~**The catalogue is priced against the variable it is not a function of**~~",
         "70. **The bimodality detector's mode test is a test on a peak's density",
-        "73. **The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
+        "73. ~~**The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
+        # S22's three-way map, and one entry of each verdict, so a silent re-ruling fails here.
+        "| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |",
+        "| **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |",
+        "**S22, ruled PERMANENT (a property of the model's scope), and this is the ruling S20 handed over.**",
+        "**S22, ruled CARRIED, and the pre-committed reading fires: the split criterion is what is wrong.**",
+        "**S22, discharged by its own pre-committed test.**",
     ):
         assert item in text, item
 
