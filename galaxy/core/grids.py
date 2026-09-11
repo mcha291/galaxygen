@@ -64,6 +64,30 @@ class Axis:
 
 @dataclass(frozen=True, slots=True)
 class GridSpec:
+    """The default mesh, and **what it is sized for** (debt #36, ruled at S22).
+
+    It is not sized for the acceptance table, and that was the whole of the debt: swept
+    one knob at a time, the worst any acceptance scalar drifts against these defaults is
+    0.056 of its own target's width, and the drift-exceeds-width criterion first fires
+    below n_R ~ 16 and n_t ~ 25, never for n_z [verified: DECISIONS.md D94; tests/
+    test_convergence.py::test_the_criterion_can_fire_and_is_shown_to]. So the table would
+    be satisfied by a mesh 25x coarser in radius and 80x coarser in time.
+
+    **It is sized for the rendered fields.** The viewer draws arrays, not scalars: a
+    surface-density profile plotted at 16 annuli is not a profile, and the (R, t)
+    histories are drawn as images whose pixels are grid cells. n_R = 400 puts a sample
+    every 75 pc across a 30 kpc disc, n_t = 2000 every 6.9 Myr, and n_phi = 360 one per
+    degree, which is what a screen-sized picture of each needs. n_z = 60 is the one axis
+    with no consumer left - `halo_potential` is the only field on it and its only reader
+    takes column 0 (debt #35) - and it is kept because dropping an axis is a `core/` edit
+    that would move a published field's shape for no measured gain.
+
+    This docstring is the discharge: the number nobody can defend is the one that gets
+    changed by accident (rule B13), so the defence lives beside the numbers and not in a
+    session's notes. Changing a default here is a decision about the pictures, and the
+    convergence sweep is what says whether it is also a decision about the physics.
+    """
+
     n_R: int = 400
     n_t: int = 2000
     n_z: int = 60

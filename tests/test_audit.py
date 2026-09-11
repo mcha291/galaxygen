@@ -463,8 +463,15 @@ def test_debt_43_the_two_solar_calibrations_and_their_levers(simple, advanced):
     assert abs(feh_at_sun(simple)) < 0.03 and abs(feh_at_sun(advanced)) < 0.02
     wind = feh_at_sun(advanced, WIND_SPEED=1.1 * advanced.constants["WIND_SPEED"].value) - feh_at_sun(advanced)  # +10%
     yld = feh_at_sun(simple, NET_YIELD=1.1 * simple.constants["NET_YIELD"].value) - feh_at_sun(simple)  # +10%
-    assert wind == pytest.approx(-0.060, abs=0.01)  # -0.064 until S18's refit (982 -> 860 km/s)
-    assert yld == pytest.approx(0.041, abs=0.01)
+    # Tightened at S22 from +/-0.01, which was debt #71: the tolerance was 17% of the value and
+    # 2.5x the 0.004 step S18's refit made, so WIND_SPEED moving 982 -> 860 km/s (12%) would have
+    # passed here unremarked. Both quantities are *derived* - no seed, no timing - and the suite
+    # already asserts field bytes identical across processes, so the only spread available is the
+    # platform's floating point: read -0.05949 / +0.04139 on S22's container against S21b's
+    # -0.060 / +0.041 on its own. +/-0.002 covers four times that spread and still halves S18's
+    # step, which is the size this pin exists to see.
+    assert wind == pytest.approx(-0.0595, abs=0.002)  # -0.064 until S18's refit (982 -> 860 km/s)
+    assert yld == pytest.approx(0.0414, abs=0.002)
 
 
 def test_debt_26_the_iron_at_the_centre_reaches_the_planets(prod):
@@ -777,6 +784,12 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     ], lost
     # The one that costs nothing: the region response's own census carries the count.
     assert "catalogue_size" in lost
+    # S22's ruling (D148, debt #69): none of the four gets a surface, and each says so in its
+    # own declaration instead - which is where rule A9 puts an opinion about what is rendered.
+    by_name = {f["name"]: f for f in fields}
+    for name in lost:
+        assert "Not shown by the viewer" in by_name[name]["about"], name
+        assert "rule D4" in by_name[name]["about"], name
     # Everything else does reach a surface, and every picture has its ramp (rule A9).
     reachable = [f for f in fields if f["name"] not in lost]
     assert len(reachable) == len(fields) - 4

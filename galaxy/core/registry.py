@@ -266,7 +266,13 @@ _INPUTS: tuple[Input, ...] = (
         "R₂₀₀ is 212.9 kpc; λ_d = √2 R_d/R₂₀₀ = 0.0173 reproduces the measured 2.6 kpc "
         "[verified: DECISIONS.md D30, tests/test_disc.py::test_joint_fit_reproduces_the_defaults]. "
         "Ruling 8's argument is untouched, only its arithmetic; both values sit inside the "
-        "λ_d = 0.01–0.03 that Burkert+10 need for m_d ≈ 0.05. Debt #10 asks for the re-ruling.",
+        "λ_d = 0.01–0.03 that Burkert+10 need for m_d ≈ 0.05. **Re-ruled at S22, which discharges "
+        "debt #10:** the default is the value MMW98's relation gives at the model's own R₂₀₀ and "
+        "not at a radius quoted for another overdensity, because a relation and the radius it is "
+        "written in are one thing — 0.0144 was ruling 8's arithmetic read against Huang+16's "
+        "255 kpc top-hat radius (≈95 ρ_crit at a different mass) and 0.0173 is the same relation "
+        "read against this model's 212.9 kpc. The rule this leaves is general: a length taken from "
+        "a source enters at the source's own definition or not at all.",
         unit="dimensionless",
         default=0.0173,
         lo=0.005,

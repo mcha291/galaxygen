@@ -509,8 +509,23 @@ seven. `[inferred]`
 ### One item that should cross downward
 
 Radial migration. Without it, metallicity is a pure function of birth radius and
-birth time, and the local metallicity distribution comes out far too narrow
-`[recall]`. That is a *qualitative* error, not an accuracy loss, and it lands on
+birth time, and ~~the local metallicity distribution comes out far too narrow~~
+`[recall]`. **Re-ruled at S22 (debt #32), because the model built to show it
+refutes it:** `feh_spread_sun` reads 0.370 dex with the kernel switched off and
+0.360 with it, so migration *narrows* the local distribution here rather than
+widening it, and the spread is the wrong observable to have argued over
+`[verified: tests/test_chemistry_dtd.py::test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it;
+AUDIT_RUN2.md D-8; DECISIONS.md D126]`. What migration does do in this model is
+everything except that: 84% of the stars now at R₀ were born inside it, their
+mean birth radius is 5.4 kpc, and switching the kernel on moves the mean age at
+R₀ from 5.7 to 7.3 Gyr and the mean [Fe/H] by 0.08 dex. A spread is a second
+moment of a mixture, and two shifted narrow components make a wide one look
+unchanged; the mean and the birth-radius distribution separate the hypotheses
+and the dispersion does not. The falsifiable claim that replaces the struck one
+is debt #28's: at `migration_efficiency` = 3.6 kpc the Sun's neighbours come
+from too far in, and the young/old gradient ratio rejects that same width. The
+case for migration crossing downward is unchanged and is now the mean, not the
+spread. That is a *qualitative* error, not an accuracy loss, and it lands on
 gameplay-facing output if planet occurrence is conditioned on metallicity.
 Migration is also directly evidenced: metallicity–age relations vary spatially
 in a way that implies non-negligible migration in the disc plane `[verified:

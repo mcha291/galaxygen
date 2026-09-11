@@ -225,7 +225,17 @@ LEVEL0: dict[str, Constant] = {
         "it reads 960 now. Since S18 the same impulse is applied radially too (isotropic; an "
         "anisotropic kick has no cited number), and the epicyclic frequency turns it into a "
         "displacement of 1.09 kpc at R_0 (1.47 at 120; debt #19, D124). The re-derivation costs row 3, "
-        "which S18 had landed on the kick by 0.04 and which reads 251.03 now (debt #11).",
+        "which S18 had landed on the kick by 0.04 and which reads 251.03 now (debt #11). "
+        "**The named alternative, kept and not averaged (rule B12), is 112.3 km/s**: S21 (a) read the "
+        "citation and the 35 is Bensby et al.'s Table 1 adopted characteristic value for a kinematic "
+        "selection function, quoted without an uncertainty, while the measurement their Sect. 1 quotes "
+        "for it is Soubiran, Bienayme & Siebert 2003's sigma_W = 39 +/- 4; net of the same 27.06 that "
+        "gives sqrt(39^2 - 27.06^2)/0.25 = 112.3, at which row 7 reads 1193 (out) and row 3 250.97 "
+        "(in) - the two rows trade across the source's own error bar and the window's top edge is "
+        "sigma_W = 37.1. S22 kept 88.8: the arithmetic is S20's derivation and choosing between the "
+        "two values with both rows' answers already known is the move rule B5 forbids in either "
+        "direction. What S22 changed is that row 7's green says here, and in spec.py, what it stands "
+        "on (AUDIT_II_A.md A-14, debt #42).",
     ),
     "BAR_LENGTH_RATIO": Constant(
         2.0,

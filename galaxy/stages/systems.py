@@ -531,7 +531,11 @@ CATALOGUE_SIZE = FieldDecl(
     about=(
         "How many of GALAXY_PLAN.md §4's clickable sample were actually materialised. It differs "
         "from the requested size by the per-cell rounding, which is a seeded Bernoulli on the "
-        "fractional part rather than a rounding rule that would bias the disc's outskirts away."
+        "fractional part rather than a rounding rule that would bias the disc's outskirts away. "
+        "**Not shown by the viewer** (debt #69, ruled at S22): it is a galaxy scalar of the stage "
+        "that publishes the object columns, which `scalarsAt` excludes so the client cannot "
+        "materialise a galaxy to print one number (rule D4). Nothing is lost — the region "
+        "response's own cell census carries the count, which is where the viewer reads it."
     ),
 )
 
