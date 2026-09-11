@@ -3722,7 +3722,7 @@ query 18–19 ms. `scaling.py` is not re-run: no stage changed complexity class.
 # Session 21, run b — Audit II, aim (b): the instruments and the viewer
 
 S21 runs twice with two stated aims and the lists are diffed at S22 (GALAXY_PLAN.md
-§5d, D99, D102). This is aim **(b)**: cold paths, the flaky per-star
+§5d, D99, D102). This is aim **(b)**, on **Opus 5**: cold paths, the flaky per-star
 slope, the audit tests' pins, the bimodality detector's reach, and whether every
 published field arrives somewhere a person can see it. Aim (a) — every prediction
 since S13, killed or held with a number — is the other branch, and this one never

@@ -47,7 +47,7 @@ physical moved; the acceptance table reads 10/12/2 and 8/15/1, as it did at S20.
 - **Write files with `newline="\n"`.** The full suite outlasts the Bash tool's cap —
   background it with `EXIT=$?` appended to its log and gate on that line.
 - **`RESUMING.md` is at exactly 120 lines.** Anything added needs something removed.
-- The board row 21 is **◐**, not ☑: run (a) has not run. Its "Model used" cell points at
-  `MANUAL_TODO.md` §2, which is where the one thing a human has to write down lives.
+- The board row 21 is **◐**, not ☑: run (a) has not run. Its "Model used" cell reads
+  "(b) **Opus 5**"; aim (a) adds its own half when it closes.
 - **Do not merge or delete** `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`,
   this branch, or aim (a)'s.

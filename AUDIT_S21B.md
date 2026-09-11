@@ -13,12 +13,10 @@ Used: debts **#65–#73**, decisions **D144–D150**. The gap to #78 and D157 is
 lost item — it is the reservation's headroom, and run (a)'s list occupies
 #51–#64 and D130–D143 so that both port onto `main` without renumbering (D99).
 
-**Which model ran this** is recorded in `MANUAL_TODO.md` §2 and not here: the
-session could not write a model identifier into a tracked file, and §5 is explicit
-that a model recorded from intention rather than from fact makes the S10 comparison
-worthless. The *aim* was not chosen freely — §5a assigns the half whose contract is
-decided and whose gate is mechanical to one model and the judgement to the other,
-and aim (b) is the mechanical half by construction.
+**Model: Opus 5**, recorded from what ran and not from what was planned (§5). The
+*aim* was not chosen freely either: §5a gives the half whose contract is decided and
+whose gate is mechanical to Opus and the judgement to Fable, and aim (b) is the
+mechanical half by construction, so the pairing follows §5a rather than this run.
 
 ## 0. What this run knew before it started
 
