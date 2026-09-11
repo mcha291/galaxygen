@@ -383,7 +383,8 @@ def test_the_register_carries_the_s10_findings():
     # for its second half, which is why the discharged count did not move (D121, D122). S18
     # opened #49 and discharged none (32 / 17); S19 discharged #31 and opened #50, so the open
     # count stands still while the discharged one moves - both halves have to be read (D126).
-    assert progress.debt_counts(text) == (32, 18)  # 32 / 17 at S18, 31 / 17 at S17
+    # S21 (a) opened #51 and #52 (D130) and discharged none: 34 / 18.
+    assert progress.debt_counts(text) == (34, 18)  # 32 / 18 at S20, 32 / 17 at S18, 31 / 17 at S17
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -398,6 +399,8 @@ def test_the_register_carries_the_s10_findings():
         "44. **Row 2 cannot see past `KS_NORM`",
         "45. **`GAS_DISC_SCALE_RATIO` multiplies nothing",
         "48. **The M_• residual's width is the classical one",
+        "51. **The spec judges every statistical row on one fixed sample",
+        "52. **Row 14 is two large errors of opposite sign",
     ):
         assert item in text, item
 

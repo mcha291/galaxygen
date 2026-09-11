@@ -708,3 +708,35 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A pre-committed reading is the ruling when the prediction fails. Debt #49 wrote "if rows 5
   and 11 still trade, the star formation law at high redshift is what is wrong" before the probe
   ran; the probe ran, they traded, and that sentence is the decision — nothing was re-argued.
+
+## From S21 (a)
+
+- [audit][all] Check the units of a bracket before running the prediction inside it. Debt #50's
+  interval put a *fraction* of the catalogue (0.221) beside a thick/thin *ratio* (0.051); as a ratio
+  the fraction is 0.284, and the double transport's 0.266 was "above the bracket" as written and
+  inside it as meant. Read what each end of an interval counts (`AUDIT_II_A.md` A-1).
+- [audit][field] A prediction with a pre-committed reading can fail in a way the reading did not
+  anticipate: #50 said "if row 9 cannot be reached from inside the interval, the split criterion is
+  wrong", and row 9 was reachable — what broke was rows 3 and 4, which the reading never named. Write
+  the rows a probe could break into the reading, not only the row it aims at (A-2).
+- [audit][field] Re-run a prediction's number on the potential it will be judged in. D121's "row 14
+  to 123" was read on S17's halo without contracting around the added mass; contracted and with the
+  Jeans dispersion recomputed it is 144. A number read on a stale potential is a stale number (A-3).
+- [audit][advanced] When a claim names a mechanism, build the mechanism by substitution and move it
+  along the one axis the claim did not specify. D128's "burst cut within a gigayear" made nothing
+  in the first gigayear and a real mode at 1–2 Gyr; the claim was right about the shape and silent
+  about the clock, and the probe found the clock in four runs (A-4).
+- [audit][all] A pre-committed test is only a test if each of its judges can move. Debt #46 named
+  rows 3, 19 and v_esc: row 19 is the input and v_esc stayed inside across the whole sweep, leaving
+  one row and therefore a fit. Ask of every judge in a pre-committed sweep what would make it say
+  no (A-8).
+- [audit][infra] One fixed sample is not an ensemble. The spec's 41-seed diagonal has a median
+  residual half a sigma low for the black hole's draw, so a statistical row's number is the sample's
+  before it is the model's; a second diagonal is the cheapest check and it took forty runs (A-6, #51).
+- [audit][field] Read the citation a derived constant rests on, not the sentence that cites it.
+  `MERGER_HEATING`'s "cited 35 km/s" is an adopted round value in a selection-function table with
+  no error bar; the measurement behind it is 39 ± 4, and the row the constant landed is out at 39.
+  A read-only agent with the PDF is cheaper than a session spent on the number (A-14; rule B14).
+- [close][audit] A killed prediction's replacement goes beside the old one in `spec.py`, with the
+  finding's number, so the entry reads as a history and not as a rewrite; the branch is sealed and
+  S22 ports the entry whole.

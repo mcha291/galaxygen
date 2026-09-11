@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████████████████░░░░` **21 / 23 sessions** · repo initialised: yes
+`███████████████████████████████████████████░░░` **21 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@
 | ☑ | 18 | The thick disc: the merger's radial kick derived and built (worth 0.3 kpc on row 5; its prediction dead, #19), Kennicutt's threshold derived (#47: the gas rows land, row 9 leaves), the basis-free disc solver; row 3 landed on the kick; the shape is the first infall's (#49 opened) | desktop | **Fable** | **Fable 5.1** | s18 | 2026-09-10 |
 | ☑ | 19 | The catalogue migrates: birth radius **and birth time** drawn together from the chemistry's backward weights (#31 discharged, #32 re-ruled, #50 opened); the thin/thick criterion published; every published field previewed, in both models | web | Opus | **Opus 5** | s19 | 2026-09-10 |
 | ☑ | 20 | The valley probed six ways, the repo unchanged, and not opened: every valley the detector finds is the plateau spike, the early population a plain (#27's prediction replaced; #49's killed, #26 and the drain ruled for S22); `MERGER_HEATING` derived from the thick disc's dispersion net of the secular heating (120 → 88.8, #42: row 7 lands, row 3 leaves by 0.03) | desktop | **Fable** | **Fable 5.1** | s20 | 2026-09-11 |
-| ☐ | 21 | Audit II, twice with two stated aims and reserved numbers (§5d) | desktop + web | **Fable** ×1, Opus ×1 | — | s21 | — |
+| ◐ | 21 | Audit II, twice with two stated aims and reserved numbers (§5d). **Aim (a) done** on `session-21-a` (sealed, never merged; S22 ports): 21 predictions since S13 run with the repo unchanged, 13 findings (AUDIT_II_A.md), #51–#52 opened, D130–D131. Aim (b) is `session-21-b` | desktop + web | **Fable** ×1, Opus ×1 | **Fable 5.1** (a); (b) — | s21 | — |
 | ☐ | 22 | Close-out: audit lists ported, every debt ruled, the tag batch applied (§5d) | web | Opus | — | s22 | — |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
@@ -50,7 +50,7 @@ tags exist lives, and a test asserts it carries a row for every ☑ session.
 **Next:** S21. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 32 (`GALAXY_INPUTS.md` §11). **Discharged:** 18.
+**Open debts:** 34 (`GALAXY_INPUTS.md` §11). **Discharged:** 18.
 
 > This board is the single source of truth for what is done. `RESUMING.md` does
 > not repeat it (rule A9 — one opinion, in one place). The progress bar is

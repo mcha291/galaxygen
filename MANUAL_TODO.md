@@ -58,7 +58,7 @@ closes the project.
 | 17 | `s17` | `4338a60fdcd2` | **queued** |
 | 18 | `s18` | `4c73bca169b5` | **queued** |
 | 19 | `s19` | `2a8a9b4fc32d` | **queued** |
-| 20 | `s20` | *TBD — filled in when S20 is merged* | **queued** |
+| 20 | `s20` | `7e96422190ab` | **queued** — filled in by S21 (a); the audit branches themselves are not tagged (never merged, D99) |
 
 ### Run these
 
@@ -130,7 +130,7 @@ git tag -a s18 4c73bca169b5af2d2d6729d16a965f701ce2a7b7 -m "S18: the kick, the t
 git tag -a s19 2a8a9b4fc32d0040c79e60ac798fe6abe95bd818 -m "S19: the catalogue migrates"
 
 # S20 — the valley probed six ways and recorded; the kick re-derived. The batch replaces this with the literal SHA.
-git tag -a s20 "$(git rev-list -1 --grep='^Merge S20 into main' origin/main)" -m "S20: the valley's record and the derived kick"
+git tag -a s20 7e96422190ab26cdb35ad895a7c7304c087900eb -m "S20: the valley's record and the derived kick"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
