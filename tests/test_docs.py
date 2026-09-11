@@ -47,9 +47,21 @@ def test_no_bare_verified_labels(name):
     assert "[verified]" not in text(name), f"{name} carries a bare [verified] tag"
 
 
+# S21 runs twice with two stated aims on two branches that are never merged into
+# each other, and D116 reserved a block of decision numbers for each so that S22 can
+# port both lists onto main without renumbering (D99). On either branch alone the
+# other aim's block is therefore missing, and a gap inside this window is the plan
+# working rather than a lost decision. Outside it, a gap is still a defect.
+S21_RESERVED = range(130, 158)  # aim (a) D130-D143, aim (b) D144-D157
+
+
 def test_decisions_are_numbered_sequentially():
+    """No duplicate, no reordering, and no gap except S21's reserved blocks."""
     nums = [int(n) for n in re.findall(r"^### D(\d+)\.", text("DECISIONS.md"), flags=re.M)]
-    assert nums == list(range(1, len(nums) + 1)) and nums, nums
+    assert nums, nums
+    assert nums == sorted(set(nums)), f"a decision number is repeated or out of order: {nums}"
+    missing = sorted(set(range(1, nums[-1] + 1)) - set(nums))
+    assert all(n in S21_RESERVED for n in missing), f"decision numbers missing outside S21's blocks: {missing}"
 
 
 def test_manual_todo_carries_a_row_for_every_closed_session():

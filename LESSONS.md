@@ -708,3 +708,41 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A pre-committed reading is the ruling when the prediction fails. Debt #49 wrote "if rows 5
   and 11 still trade, the star formation law at high redshift is what is wrong" before the probe
   ran; the probe ran, they traded, and that sentence is the decision — nothing was re-argued.
+
+## From S21, run b (the instruments and the viewer)
+
+- [audit][infra] Check a rule from outside the thing that reports it. Every D4 assertion in
+  the suite reads `Response.stages`, which is the service's own account of itself; counting at
+  the stages instead — every `compute` wrapped — found the account honest on all 17 endpoints,
+  and found the two calls it structurally cannot cover (rule B3; D144, #65).
+- [audit][infra] Publish the column, not just the number. `disc` returned to every physics
+  route's closure at S18 and three timings records could not show it, because S14 is the last
+  one to carry the stage column. A record that drops a field stops being able to contradict
+  itself (rule B6; #66).
+- [audit][infra] Before trusting a fit, look at the sign of its residuals. The catalogue's
+  per-star line has held its residual signs in 12 of 12 repeats at four of five sample sizes
+  for ten sessions; that is misspecification, and no amount of repeating the timing finds it.
+  A slope reproducible to 9% whose fit reports 36% is the same fact seen from the other side
+  (D145, D146; #67, #68).
+- [audit][infra] A flaky test is a claim about precision, not about the machine. The one D115
+  recorded was a one-sided test at 2.9σ by the fit's own error bar, and the error bar was wide
+  because the model was wrong, not because the desktop was busy. Measure the distribution
+  before crediting the explanation (rule B6; #68).
+- [audit] Rule B10 applies to instruments. A constant fitted against a broken mechanism has no
+  claim on its value; so does a number published by a fit that was misspecified. Every "µs per
+  star / ms fixed" pair since S11 is such a number (D146).
+- [audit] State a detector's reach as a closed form, not as an example. `MODE_MIN_SHARE` reads
+  as "a mode holds a tenth of the mass" and is really `s·erf(0.05/(σ√2)) ≥ 0.1` — a test on the
+  peak's density — which is how the Milky Way's own thick disc, at row 9's share and the
+  observed α-width, ends up seven parts in a thousand short of visible (rule B8; D147, #70).
+- [audit] Where a pinned value sits near its window edge, the guard is an inequality against
+  the edge and the approx is only the measurement. Both pins in `test_audit.py` whose tolerance
+  exceeds the distance to the edge are guarded that way on the same line, and that is why none
+  of the 46 can flip a row (D149, #71).
+- [viewer] "Every published field is previewed" is a claim to count, and the count is in the
+  declarations. Four galaxy scalars in each model reach no surface, excluded by the same D4 rule
+  that stops the client materialising a galaxy to print one number — the exclusion is right and
+  the claim was still wrong (D148, #69).
+- [close] An audit's citations have to point inside the repository (rule B14), so a finding that
+  is worth citing is worth pinning as a test in the same session. Five did; a probe that stayed
+  in the scratchpad is a claim the next session cannot check.

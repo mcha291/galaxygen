@@ -3716,3 +3716,270 @@ costliest stage in the simple model (0.261 s, 34.8%) and `chemistry_dtd` in the 
 is still per cell: 1.42 / 1.75 µs per star against 220 / 209 ms fixed, 89% / 87% of the
 catalogue at 20,000 stars independent of how many were asked for (D24, D127). A one-cell
 query 18–19 ms. `scaling.py` is not re-run: no stage changed complexity class.
+
+---
+
+# Session 21, run b — Audit II, aim (b): the instruments and the viewer
+
+S21 runs twice with two stated aims and the lists are diffed at S22 (GALAXY_PLAN.md
+§5d, D99, D102). This is aim **(b)**: cold paths, the flaky per-star
+slope, the audit tests' pins, the bimodality detector's reach, and whether every
+published field arrives somewhere a person can see it. Aim (a) — every prediction
+since S13, killed or held with a number — is the other branch, and this one never
+reads it. Decisions **D144–D157** and debts **#65–#78** are reserved for this aim
+(D116); D144–D150 and #65–#73 are used. The branch is **not merged** — S22 ports
+both lists onto `main` (D99).
+
+### D144. Rule D4 is checked from outside the thing that reports it, and the stage column is published again (debts #65, #66)
+
+**The problem with the existing check.** Every D4 assertion in the suite reads
+`Response.stages`. That tuple is filled by the runner from what it executed, so it
+is not a fiction — but a check that takes the reporter's word is a check on the
+reporter (rule B3), and the suite has no assertion that stands outside it.
+
+**What was done.** Every registered stage's `compute` was replaced with a counting
+wrapper, the two pieces of physics the routes call outside the runner
+(`systems.materialise`, `planets.one_system`) were wrapped too, and every endpoint
+in `tools/timings.py` was called on a fresh `Service`. **The self-report is honest:**
+on all 17 endpoints the set of stages that executed equals the set the response
+named, no stage ran twice, and all seven metadata endpoints ran zero stage computes
+— counted at the stage rather than at the route `[verified:
+tests/test_audit.py::test_s21b_the_d4_report_is_what_actually_ran]`.
+
+**Two things the check found that the records do not hold.** The `disc` stage is
+back in every physics route's closure — S18 put Kennicutt's threshold on κ(R) —
+where D115 is the last table to publish a stage column and records it gone (debt
+#66); and `systems.materialise`, the costliest work a region or system query does,
+runs outside the runner and is in no `stages` tuple, so rule D4's instrument cannot
+see the thing rule D4 is about (debt #65). The region route's defence is real and
+holds; it is asserted in the response header's cell census, somewhere other than
+where the rule is checked.
+
+**The ruling.** The stage column goes back into the timings record (D150), which
+discharges #66 — the cost was never the point, the silence was. #65 is left open
+with a prediction rather than repaired, because putting `materialise` into the
+`stages` tuple would make the tuple mean two things (stages the runner ran, and
+physics the route ran) and A9's habit is one opinion per thing.
+
+### D145. The catalogue's cost is a straight line in cells, and a curve in stars (debts #67, #72)
+
+`catalogue_cost` has fitted a straight line through (stars realised, seconds) since
+S11, and every performance record since quotes the pair it produces — D129's is
+"1.42 / 1.75 µs per star against 220 / 209 ms fixed, 89% / 87% of the catalogue at
+20,000 stars independent of how many were asked for".
+
+**The line is fitted to a curve.** Twelve repeats on a quiet machine: the residuals
+keep their sign in 12 of 12 repeats at four of five sample sizes (−44, +5, +31, +28,
+−20 ms), and the marginal cost falls from 19.6 µs/star at 2k→5k to 0.93 µs/star at
+20k→40k, a factor of 21 inside the fitted range. A log–log exponent of 0.18 says the
+same: seconds is very nearly not a function of the stars asked for.
+
+**The variable it is a function of is cells.** Eight sizes, 500 to 80,000 stars,
+best of five each `[verified:
+tests/test_audit.py::test_s21b_the_catalogue_is_priced_per_cell_not_per_star]`:
+
+| fitted against | simple | advanced |
+|---|---|---|
+| stars realised | 2.46 µs/star + 0.222 s, R² 0.67 | 2.77 µs/star + 0.230 s, R² 0.65 |
+| cells realised | 426 µs/cell + 0.000 s, R² 0.972 | 491 µs/cell − 0.027 s, R² 0.977 |
+| both | 354 µs/cell + 0.71 µs/star + 32 ms, R² 0.9994 | 420 µs/cell + 0.69 µs/star + 4.5 ms, R² 0.9966 |
+
+The cells that realise a star saturate — 349 of 1024 at 500 stars, 800 at 20,000,
+829 at 80,000 — and that saturation is the whole of the curvature.
+
+**So there is no fixed cost.** What the fit calls fixed is the per-cell price of
+however many cells the sample lights up; it falls with the sample (156 ms at 500
+stars) and "86% of the catalogue does not depend on how many stars are asked for"
+is false as stated. It depends on the stars, through the cells.
+
+**What changed in the instrument.** `catalogue_cost` fits and publishes both lines
+with the R² of each — the per-star pair is kept because every record since S11
+quotes it and a comparison needs it — records the cells realised per sample, and
+`SAMPLES` is widened from (5k, 10k, 20k, 40k) to (500, 2k, 5k, 10k, 20k, 40k). The
+widening is D115's own lesson: over the old range the cells only run 630 to 817 of
+1024, so the per-cell line was extrapolated to zero cells from a fifth of its span
+and read a *negative* fixed cost. With 500 and 2,000 in, at 0.35 s more per model,
+the intercept reads 18.1 / 1.4 ms — the layout, which is what it should be.
+
+**And a discharge re-read, not reversed** (debt #72). `AUDIT_RUN1.md` §2 discharged
+debt #24's remainder with "cost is proportional to the stars asked for". The verdict
+holds; the reason does not. The code is safe from D61's fear for a *better* reason
+than the one recorded — a nine-cell query pays for nine cells, not for nine cells'
+share of a fixed cost. The honest residual is that a one-cell query at 20,000 stars
+costs 20.2 ms of which 0.35 ms is the cell, and the remainder is `materialise`'s
+per-call work over every ring whichever cells were asked for — **D60's price, not
+waste**: narrowing the churn to a region's rings was tried at S19 and broke
+per-region determinism in the last bit.
+
+### D146. D115's flake is the fit's misfit, not the machine's noise (debt #68)
+
+`tests/test_performance.py::test_the_catalogue_is_priced_per_cell` asserted
+`per_star_us > 0`. D115 recorded it failing once in a close's full run, in both
+models, on a negative slope, and explained it as "the desktop's noise flips its
+sign".
+
+Measured rather than recalled, twelve repeats per model: the slope is **3.37 ± 0.32
+µs/star** (simple) and **3.30 ± 0.18** (advanced), reproducible to 9% and 5%, while
+the fit's own standard error on that slope is **1.24 and 1.29 µs — 3.9× and 7.1× the
+slope's actual scatter**. The median t-statistic is 2.9 and 2.5. So the assertion was
+a one-sided test at under 3σ by the fit's own error bar, and that error bar is
+inflated by D145's structured residuals, not by the machine: a straight line through
+a saturating curve has residuals of ±45 ms whatever the machine does.
+
+**D115 is right about the trigger and wrong about the width.** Load is what pushed a
+2.9σ test over; what made 2.9σ possible with nothing wrong was the misspecification.
+
+**The assertion now reads the conditioned fit** — `per_cell_us > 0` and
+`per_cell_r2 > per_star_r2` — which is a stronger check and not a looser one (rule
+B5): if the per-star line ever explained more than the per-cell line, the saturation
+would have gone and the test fails. The one old assertion that multiplied the fitted
+slope by the largest sample ("the stars are the smaller part") is replaced by the
+same claim measured at the top of the range, because the fitted slope is exactly the
+artefact.
+
+**The general lesson, which is rule B10 turned on an instrument.** A constant fitted
+against a broken mechanism has no claim on its value; so does a number published by
+a fit that was misspecified. Every "µs per star / ms fixed" pair in D105, D112, D115,
+D120, D125 and D129 is such a number. They are not corrected in place — a
+measurement is a record of what was measured — but no session should read one as the
+catalogue's marginal cost.
+
+### D147. The bimodality detector's mode test is a density test, and the Milky Way is inside its blind spot (debt #70)
+
+`bimodality` keeps a local maximum as a mode only if the histogram sums to
+`MODE_MIN_SHARE` = 0.10 of the **total** mass within ±`PEAK_SEPARATION`/2 = ±0.05 dex
+of the peak. That is a test on the peak's *density*, not on the mode's *share*, and
+for a Gaussian mode of share s and dispersion σ the condition is exactly
+
+    s · erf( 0.05 / (σ√2) ) ≥ 0.10
+
+Computed from the exact Gaussian mass per bin rather than from a sample (rule B8),
+the widest mode the detector can see is σ ≤ 0.007 dex at share 0.10, 0.035 at 0.12,
+0.051 at 0.15, 0.073 at 0.20 and 0.116 at 0.30; at share 0.10 or below it is
+invisible at every width a galaxy could have.
+
+**Row 9 asks the model for a thick disc holding 7–14% of the local surface density,
+and the observed α-rich sequence is about 0.04 dex wide** `[recall]`. At share 0.12 and σ 0.04
+the detector finds the α-rich local maximum exactly where it was put, at +0.29 dex,
+and rejects it: the window holds **0.0929** of the mass against **0.1000**, a miss by
+seven parts in a thousand `[verified:
+tests/test_audit.py::test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share]`.
+
+**Prediction, stated so it can fail (rule B4).** If the advanced model is ever given
+a thick disc at row 9's target share with the observed α-width, row 24 will still
+read `single`, and row 24's failure will then be the detector's rather than the
+model's. What kills it: any advanced-model configuration that lands row 9 inside
+0.08–0.16 *and* reads `bimodal_wide` at the default grid.
+
+**Not moved** (rule B5, and BRIEF.md asks for the statement rather than the change).
+The remedy is not obviously a different number either: a test that integrated the
+mode rather than its peak is a different instrument, and it would have to be chosen
+against the same evidence D128 read. **S22's ruling.**
+
+### D148. The viewer is short by four published fields, three of them for a reason worth keeping (debts #69, #73)
+
+`view.js` decides what a checkpoint shows from declarations alone, so this is
+answerable without a browser. Counting picture (grid), number (galaxy scalar whose
+stage publishes no object columns) and column (object, via region) against
+`/api/fields`: **113 fields in the simple model and 123 in the advanced, of which
+four in each reach no surface** — `catalogue_size`, `giant_fraction_sample`,
+`mean_planets_per_star`, `planet_count_sample` `[verified:
+tests/test_audit.py::test_s21b_four_published_scalars_reach_no_surface_of_the_viewer]`.
+
+They are excluded by `scalarsAt`, and the exclusion is right: asking for a scalar
+whose stage publishes object columns would materialise the galaxy's whole sample to
+print one number — rule D4's waste committed by the client instead of the endpoint.
+For `catalogue_size` it costs nothing, because the region response's own census
+carries the count. For the three planets-stage aggregates it is a real gap: neither
+the region response (star columns) nor the system response (one star's planets)
+carries them. **§5d's "the viewer shows every published field" is not met, by
+three**, for a reason that is rule D4 rather than an oversight — which is why
+nothing is built here. **S22 rules**: a cheap aggregate endpoint answering from the
+sample the region already built, or the three declarations ruled viewer-invisible
+with the reason written into them.
+
+**S20's two numbers do reach the viewer**, which is what BRIEF.md asked to check.
+`thick_disc_dispersion` is published by `vertical`, which publishes no object
+columns, and arrives as a scalar at **34.998** km/s against S20's 35.0.
+`disc_radial_spread` is a grid field on (R, t) with a ramp, drawn as an image; its
+maximum over t reads **1.0924** kpc at R₀ and **0.2284** at 2 kpc, against S20's 1.09
+and 0.22 `[verified: tests/test_audit.py::test_s21b_s20s_two_numbers_reach_the_viewer]`.
+One qualification, recorded as debt #73: the number S20 wrote down is a reduction
+over the time axis, and the viewer publishes no such reduction — the field is on the
+screen, the number is not. Not fixed here, because a reduction over an axis is a
+rendering opinion and rule A9 puts those in the declaration, which makes it a `core/`
+edit and a ruling.
+
+### D149. The audit pins, and the pattern that guards one near a window edge (debt #71)
+
+`tests/test_audit.py` says its numbers are "pinned loosely, as measurements to spot a
+regression by". Forty-six `pytest.approx` pins, measured against two yardsticks: **R**,
+the distance from the pinned value to the nearest edge of its row's acceptance window
+(a tolerance wider than R lets a verdict flip silently), and **H**, the largest step
+the pin's own trailing comment records.
+
+**No pin can flip its row.** Two approxes are wider than R — row 3's `v_tangential_sun`
+at 251.03 ± 0.5 against an edge 0.03 away, and row 7's 1069 ± 30 against an edge 11
+away — and both are guarded on the same line by a clause sharper than the approx:
+`Q[3].hi < v < Q[3].hi + 0.1`, and `inside(7, …)`. **The pattern is worth naming
+because it is the one that works: where a pinned value sits near a window edge, the
+guard is an inequality against the edge and the approx is only the measurement.**
+Written into LESSONS.md.
+
+**One pin is looser than the refit it exists to watch** (debt #71): the wind's
+contribution to the solar calibration, in `test_debt_43_the_two_solar_calibrations_and_their_levers`,
+pinned at −0.060 ± 0.01 with its own comment recording −0.064 before S18's refit — a step of 0.004, 2.5× inside the
+tolerance, so `WIND_SPEED` moving 982 → 860 km/s would have passed unremarked. Not
+tightened: the value was measured on one machine and the right tolerance is a
+judgement about cross-machine drift.
+
+**And one precision stated rather than changed.** Row 9's
+`thick_thin_surface_density_ratio` is pinned at 0.0014 ± 0.001 — 71% of the value.
+Both yardsticks call it sharp, and they are right, but the honest statement is that
+it cannot see a factor-1.7 change in a number the model is 57× short on. That is
+S19's lesson applied to itself: the pin is fine and the precision it checks at is 71%.
+
+### D150. Cold timings and the profile at S21b (rules B2, B6)
+
+Web container, uv-managed CPython 3.14.0rc2, one fresh process per endpoint, the
+suite not running. **The stage column is published again** (debt #66): S14's is the
+last record to carry one, and `disc` has been back in every physics route since S18.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+viewer: index.html       0.0002   0.0002   0.89        940  -
+viewer: a module         0.0001   0.0002   0.95     22,390  -
+index                    0.0001   0.0001   0.80      1,237  -
+version                  0.0012   0.0011   1.07      1,132  -
+stages                   0.0004   0.0003   1.14     10,020  -
+fields                   0.0010   0.0018   0.55     77,982  -
+inputs                   0.0001   0.0001   1.03     10,388  -
+arrays: one profile      0.3292   0.0007 445.36      4,984  halo,disc,assembly,sfh
+arrays: history          0.2841   0.0057  49.98  6,401,776  halo,disc,assembly,sfh,chemistry
+arrays: scalar           0.2178   0.0008 261.88      1,720  halo,disc,assembly,sfh
+region: one sector*      0.2698   0.0200  13.47     20,320  halo,disc,assembly,sfh,chemistry,vertical
+region: whole disc*      0.6108   0.3557   1.72  1,289,072  halo,disc,assembly,sfh,chemistry,vertical
+system: one star*        0.2529   0.0185  13.67      3,240  halo,disc,assembly,sfh,chemistry,vertical
+adv: history             0.6141   0.0024 251.71  6,401,784  halo,disc,assembly,sfh,chemistry_dtd
+adv: alpha plane         0.6001   0.0024 254.17  6,401,840  halo,disc,assembly,sfh,chemistry_dtd
+adv: one sector*         0.5005   0.0194  25.81     20,336  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+adv: one star*           0.5246   0.0167  31.39      3,248  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+* cold includes the interpreter's first seeded draw, about 8 ms here (debt #37)
+import + registry: 0.070-0.083 s
+```
+
+**The profile.** Simple **0.861 s cold** — systems 0.347 s (40.3%), sfh 0.188
+(21.8%), planets 0.146 (17.0%), chemistry 0.049 (5.7%); advanced **1.047 s** —
+chemistry_dtd 0.328 (31.4%), systems 0.345 (33.0%), planets 0.145 (13.9%), sfh 0.149
+(14.3%). This is a web container against S20's desktop, so the S20 → S21b comparison
+is a machine comparison; the shares are what carry across, and they are S20's within
+a point or two.
+
+**The catalogue, at the widened sample range and both prices** (D145): simple
+**423.4 µs per cell realised + 18.1 ms** at R² 0.99, against 4.23 µs per star + 232.7
+ms at R² 0.63; advanced **444.9 µs per cell + 1.4 ms** at R² 0.99 against 4.54 µs per
+star + 225.6 ms at R² 0.65. Cells per sample 349 / 479 / 630 / 740 / 800 / 817 of
+1024 at 0.5k / 2k / 5k / 10k / 20k / 40k stars. Layout 21 ms over all 1024 cells.
+
+**`scaling.py` is not re-run.** No stage changed complexity class: the catalogue's
+price changed variable, not order.

@@ -9,10 +9,16 @@ since S13, killed or held with a number — is the other branch and this file do
 not read it.
 
 Reserved numbers (BRIEF.md, D116): debts **#65–#78**, decisions **D144–D157**.
+Used: debts **#65–#73**, decisions **D144–D150**. The gap to #78 and D157 is not a
+lost item — it is the reservation's headroom, and run (a)'s list occupies
+#51–#64 and D130–D143 so that both port onto `main` without renumbering (D99).
 
-**Model: Opus.** §5a gives Opus the work whose contract is decided and whose gate
-is mechanical, and Fable the judgement; aim (b) is the mechanical half by
-construction, so the pairing follows §5a rather than being chosen here.
+**Which model ran this** is recorded in `MANUAL_TODO.md` §2 and not here: the
+session could not write a model identifier into a tracked file, and §5 is explicit
+that a model recorded from intention rather than from fact makes the S10 comparison
+worthless. The *aim* was not chosen freely — §5a assigns the half whose contract is
+decided and whose gate is mechanical to one model and the judgement to the other,
+and aim (b) is the mechanical half by construction.
 
 ## 0. What this run knew before it started
 
@@ -28,8 +34,8 @@ reported it.
 Web container, uv-managed CPython 3.14.0rc2, the suite not running during any
 timing (rule B2).
 
-- `uv run pytest` — **exit 0**, 4 skips, all four the advanced model's absent
-  thick disc and the simple model's absent local spread (debt #27).
+- `uv run pytest` — **exit 0**, 4 skips, every one of them a model that has no
+  thick disc or no local spread to be checked against (debt #27).
 - `uv run python -m galaxy.specs` — **OK**. graph acyclic both models; preflight
   0 UNSET; determinism reproducible within and across processes. spec: simple
   **10 pass, 12 fail, 2 not-yet-computable**, advanced **8 / 15 / 1** — the
@@ -140,7 +146,7 @@ The cells that realise a star saturate — 349 of 1024 at 500 stars, 800 at
   The conclusion holds and the reason does not: cost is proportional to *cells*,
   and the code is safe from D61's fear for a better reason than the one recorded
   — a nine-cell query pays for nine cells, not for nine cells' share of a fixed
-  cost `[verified: AUDIT_RUN1.md §2 against the table above]`. **Debt #73** asks
+  cost `[verified: AUDIT_RUN1.md §2 against the table above]`. **Debt #72** asks
   S22 to re-read that discharge with the right price in it; nothing about the
   discharge's verdict changes.
 - **A one-cell query is 98% overhead, and that is D60's price, not waste.**
@@ -203,7 +209,7 @@ so the widest mode the detector can see, per share:
 **The Milky Way's own thick disc is inside the blind spot.** Acceptance row 9
 asks the model for a thick/thin surface-density ratio of 0.08–0.16 at R₀ — a
 thick mode holding 7–14% of the local mass — and the observed α-rich sequence is
-about 0.04 dex wide in [α/Fe]. At share 0.12 and σ 0.04 the detector finds the
+about 0.04 dex wide in [α/Fe] `[recall]`. At share 0.12 and σ 0.04 the detector finds the
 α-rich local maximum exactly where it was put, at +0.29 dex, and then rejects it:
 the window holds **0.0929** of the mass against a threshold of **0.1000**, a miss
 by seven parts in a thousand of the total
@@ -260,7 +266,7 @@ kpc and at 2 kpc **0.2284**, against S20's 1.09 and 0.22
 `[verified: tests/test_audit.py::test_s21b_s20s_two_numbers_reach_the_viewer]`.
 One qualification worth the record: the viewer shows that field as a picture, so
 the number a reader would check against S20's record is not on the screen — it
-is the maximum over the time axis of an image. **Debt #74.**
+is the maximum over the time axis of an image. **Debt #73.**
 
 ## 7. The audit tests' pins: the precision each was checked at
 
@@ -279,12 +285,15 @@ change this project actually made).
   `inside(7, …)`. The pattern is worth naming because it is the one that works:
   *where a pinned value sits near a window edge, the guard is an inequality
   against the edge and the approx is only the measurement.*
-- **One pin is looser than the refit it exists to watch.** Line 456, the wind's
-  contribution to the solar calibration, is pinned at −0.060 ± 0.01 and its own
-  comment records −0.064 before S18's refit — a step of 0.004, 2.5× inside the
+- **One pin is looser than the refit it exists to watch.** The wind's
+  contribution to the solar calibration, in
+  `test_debt_43_the_two_solar_calibrations_and_their_levers`, is pinned at
+  −0.060 ± 0.01 and its own comment records −0.064 before S18's refit — a step
+  of 0.004, 2.5× inside the
   tolerance. S18 changed `WIND_SPEED` from 982 to 860 km/s, a 12% move in the
-  constant, and this pin would not have noticed `[verified: tests/test_audit.py:456
-  and its comment]`. **Debt #71.** Not tightened here: the pin's value was
+  constant, and this pin would not have noticed `[verified:
+  tests/test_audit.py::test_debt_43_the_two_solar_calibrations_and_their_levers and its
+  comment]`. **Debt #71.** Not tightened here: the pin's value was
   measured on this machine to the same 3 decimal places, so tightening it is a
   judgement about how much cross-machine drift to allow, which is S22's.
 - **Precision stated, where it is wide and correctly wide.** Row 9's

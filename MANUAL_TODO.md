@@ -146,7 +146,20 @@ SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 **Keep the three S10 audit branches.** `session-10-beta`, `session-10-gamma` and
 `session-10-gamme-run-2` are unmerged by design (DECISIONS.md D99) and are the sealed
 lists the four-way comparison D102 rests on; do not delete them from the remote, and
-do not merge them — their findings are on `main` as debts #34–#45 and tests. Nothing
-else at present. Calibration debt is **not** tracked here — it lives in
+do not merge them — their findings are on `main` as debts #34–#45 and tests.
+
+**Keep both S21 audit branches, and never merge them into each other.** Aim (b) is
+`claude/keen-lamport-lldlvp` — the web container names its own branch, and that branch
+*is* `session-21-b` for every purpose GALAXY_PLAN.md §5d gives it. Aim (a) is its own
+branch. S22 ports both lists onto `main` (D99); neither branch merges, so neither
+carries an `s21` tag of its own until S22 decides what `s21` should point at.
+
+**Fill in S21 run (b)'s "Model used" cell on the board.** The session that ran it could
+not write a model identifier into a tracked file, so the cell points here instead. §5
+is explicit that recording the model from intention rather than from fact makes the
+S10 comparison worthless — so this needs the one line only a human can honestly write,
+before S22 diffs the two lists.
+
+Nothing else at present. Calibration debt is **not** tracked here — it lives in
 the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
 board. This file is only for actions that need a human at a keyboard.

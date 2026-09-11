@@ -383,7 +383,10 @@ def test_the_register_carries_the_s10_findings():
     # for its second half, which is why the discharged count did not move (D121, D122). S18
     # opened #49 and discharged none (32 / 17); S19 discharged #31 and opened #50, so the open
     # count stands still while the discharged one moves - both halves have to be read (D126).
-    assert progress.debt_counts(text) == (32, 18)  # 32 / 17 at S18, 31 / 17 at S17
+    # S21b opened #65-#73, nine findings about the instruments and none about the model; the
+    # reserved range is #65-#78 and run (a)'s is #51-#64, so a gap in the numbering here is
+    # the other branch's list and not a lost item (D116, BRIEF.md).
+    assert progress.debt_counts(text) == (41, 18)  # 32 / 18 at S20, 32 / 17 at S18, 31 / 17 at S17
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",

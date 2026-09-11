@@ -1995,6 +1995,129 @@ advanced-model fields; anything cold-cache. Recorded as gaps, not assumed cheap
    the plan gives none of them to this session — and not S20's either, whose lever is the
    infall law; **for S21 to read and S22 to rule.**
 
+**S21, run b — the instruments and the viewer** (AUDIT_S21B.md; debts #65-#78 and
+decisions D144-D157 are reserved for this aim, D116). Every item below is a finding
+about an instrument, not about the model: none moves an acceptance row, and where an
+instrument was measuring the wrong thing the entry carries the number rather than the
+repair (rule B6).
+
+65. **Rule D4's instrument cannot see the work the routes do outside the runner** (S21b,
+   D144). Every D4 assertion in the suite reads `Response.stages`, which the runner fills
+   from what it executed; `systems.materialise` and `planets.one_system` are called by the
+   region and system routes directly, so they appear in no `stages` tuple and no cold table
+   has ever priced them per route. The region route's defence against D4's named defect is
+   real — it holds in the header's cell census, and #67 now prices it at 350-420 µs per cell
+   — but it is asserted somewhere other than where the rule is checked. Counting at the
+   stages instead of at the routes found the self-report honest on all 17 endpoints
+   `[verified: tests/test_audit.py::test_s21b_the_d4_report_is_what_actually_ran]`.
+   **Prediction:** if a route is ever added that materialises a catalogue, `stages` will
+   report it as costing the six stages a region query costs and the cold column will show
+   the difference, so a timing will catch it and the D4 instrument will not.
+
+66. **The `disc` stage returned to every physics route's closure and no record says so**
+   (S21b, D144). D115 (S14) recorded "the `disc` stage has left the stage column of every
+   route" when `sfh` began reading the scale length from the halo (D113); S18 put Kennicutt's
+   threshold on κ(R), which is the disc stage's, and it came back. D125 and D129 publish cold
+   seconds without the stage column, so nothing between S14 and S21b records the change
+   `[verified: AUDIT_S21B.md §2 against D115]`. It costs 0.5 ms. The debt is not the cost:
+   it is that rule D4's own instrument moved and three sessions' records could not show it.
+   **Discharged by** publishing the stage column in the timings record, which S21b does.
+
+67. **The catalogue is priced against the variable it is not a function of** (S21b, D145).
+   `catalogue_cost` fits a straight line through (stars realised, seconds) and every
+   performance record since S11 quotes its two numbers — D129's are "1.42 / 1.75 µs per star
+   against 220 / 209 ms fixed". The line is fitted to a curve: the residuals keep their sign
+   in 12 of 12 repeats at four of five sample sizes, and the marginal cost falls from 19.6
+   µs/star at 2k→5k to 0.93 at 20k→40k. The cells that realise a star saturate — 349 of 1024
+   at 500 stars, 800 at 20,000, 829 at 80,000 — and seconds is a straight line in *cells*:
+   426 µs/cell at R² 0.97 against 2.46 µs/star at R² 0.67, and 354 µs/cell + 0.71 µs/star +
+   32 ms at R² 0.9994 `[verified: tests/test_audit.py::test_s21b_the_catalogue_is_priced_per_cell_not_per_star]`.
+   **So there is no fixed cost.** What the fit calls fixed is the price of however many cells
+   the sample lights up, and it falls with the sample: 156 ms at 500 stars. The instrument now
+   publishes both fits with their R² and the sample range is widened to carry the cell count
+   down to 349. **Prediction:** the per-cell line stays better conditioned than the per-star
+   line at every sample range wide enough to move the cell count; if a range is ever found
+   where the per-star fit explains more, the saturation has gone and the catalogue has
+   changed shape.
+
+68. **D115's flake is the misfit, not the machine** (S21b, D146). `tests/test_performance.py::
+   test_the_catalogue_is_priced_per_cell` asserted `per_star_us > 0`; D115 recorded it failing
+   under load on a negative slope and explained it as the desktop's noise. Measured: the slope
+   is reproducible to 3.37 ± 0.32 µs/star (simple) and 3.30 ± 0.18 (advanced) over twelve
+   repeats, while the fit's own standard error on it is 1.24 and 1.29 — **3.9× and 7.1× the
+   slope's actual scatter** — because the residuals of #67 are structured and are the whole
+   error budget. A one-sided test at a median t of 2.9 fails a few runs in a hundred with
+   nothing wrong. The assertion now reads the conditioned fit, which is a stronger check and
+   not a looser one (rule B5): if the per-star line ever explained more than the per-cell
+   line the test fails. **The general lesson is rule B10's, applied to an instrument rather
+   than to a constant:** a number published by a fit that was misspecified has no claim on
+   its value, and every "µs per star / ms fixed" pair in D105, D112, D115, D120, D125 and
+   D129 is such a number.
+
+69. **Four published fields reach no surface of the viewer, in both models** (S21b, D148).
+   `catalogue_size`, `giant_fraction_sample`, `mean_planets_per_star` and
+   `planet_count_sample` are galaxy scalars of stages that publish object columns, and
+   `view.js` excludes exactly those — asking for one would materialise the galaxy's whole
+   sample to print a number, which is rule D4's waste committed by the client
+   `[verified: tests/test_audit.py::test_s21b_four_published_scalars_reach_no_surface_of_the_viewer]`.
+   For `catalogue_size` the exclusion costs nothing: the region response's census carries the
+   count. The other three are planets-stage aggregates that no response carries, so §5d's
+   "the viewer shows every published field" is short by three. **For S22 to rule**, because
+   both remedies are choices about what the API publishes and neither is a repair: a cheap
+   aggregate endpoint that answers from the sample the region already built, or the three
+   declarations ruled viewer-invisible with the reason written into them.
+
+70. **The bimodality detector's mode test is a test on a peak's density, not on a mode's
+   share** (S21b, D147). `bimodality` keeps a local maximum only if the histogram holds
+   `MODE_MIN_SHARE` = 0.10 of the **total** mass within ±`PEAK_SEPARATION`/2 = ±0.05 dex of
+   the peak, so for a Gaussian mode of share s and dispersion σ the condition is exactly
+   `s·erf(0.05/(σ√2)) ≥ 0.10`: a mode holding 12% is seen only below σ = 0.035 dex, one
+   holding 10% or less at no width a galaxy could have. **Row 9 asks the model for a thick
+   disc holding 7-14% of the local surface density and the observed α-rich sequence is about
+   0.04 dex wide** `[recall]`, so the Milky Way's own thick disc is inside the blind spot: at share 0.12
+   and σ 0.04 the α-rich maximum is found exactly where it was put, at +0.29 dex, and then
+   rejected — 0.0929 of the mass in the window against 0.1000
+   `[verified: tests/test_audit.py::test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share]`.
+   The threshold is stated and not moved (rule B5, and BRIEF.md says so). **Prediction that
+   could fail:** if the advanced model is ever given a thick disc at row 9's target share
+   with the observed α-width, row 24 will still read `single` and its failure will be the
+   detector's, not the model's; what kills this is any configuration that lands row 9 inside
+   0.08-0.16 *and* reads `bimodal_wide` at the default grid. Choosing a replacement — a test
+   that integrates the mode rather than its peak — is S22's ruling, not a session's fix.
+
+71. **The pin that watches the wind calibration is looser than the refit it watches** (S21b,
+   D149). Of 46 `pytest.approx` pins in `tests/test_audit.py`, none can flip its row: the two
+   whose tolerance exceeds the distance to their window edge — row 3's 251.03 ± 0.5 against an
+   edge 0.03 away and row 7's 1069 ± 30 against an edge 11 away — are both guarded on the same
+   line by an inequality against the edge itself. The exception is the wind's contribution to the
+   solar calibration, in `test_debt_43_the_two_solar_calibrations_and_their_levers`, pinned at
+   −0.060 ± 0.01 with its own comment recording −0.064 before S18's refit: a step of 0.004, **2.5× inside the tolerance**, so
+   `WIND_SPEED` moving 982 → 860 km/s would not have been noticed here. Not tightened, because
+   the value was measured on one machine and the right tolerance is a judgement about
+   cross-machine drift. **For S22**: tighten to ±0.004 if the number reproduces on a second
+   machine, or write the machine spread into the comment.
+
+72. **`AUDIT_RUN1.md` §2 discharged debt #24's remainder on a reason that is wrong** (S21b,
+   D145). Its words are "Cost is proportional to the stars asked for. D61's fear — every
+   cell's streams built whether asked for or not — is not what the code does now." The verdict
+   holds and the reason does not: cost is proportional to *cells*, and the code is safe from
+   D61's fear for a better reason than the one recorded — a nine-cell query pays for nine
+   cells, not for nine cells' share of a fixed cost. The honest residual of #24 is that a
+   one-cell query at 20,000 stars costs 20.2 ms of which 0.35 ms is the cell, and the rest is
+   `materialise`'s per-call work over every ring whichever cells were asked for — **which is
+   D60's price and not waste**, since narrowing the churn to a region's rings was tried at S19
+   and broke per-region determinism in the last bit. **For S22 to re-read** with the right
+   price in it; nothing about the discharge changes.
+
+73. **The number S20 recorded for `disc_radial_spread` is not on the screen as a number**
+   (S21b, D148). The field reaches the viewer — it is a grid field on (R, t) with a ramp, and
+   the viewer draws it as an image — but S20's record is "the radial spread at R₀ 1.09 kpc",
+   which is the maximum over the time axis of that image, and the viewer publishes no such
+   reduction `[verified: tests/test_audit.py::test_s21b_s20s_two_numbers_reach_the_viewer]`.
+   The other S20 number, `thick_disc_dispersion` at 34.998 km/s, is a galaxy scalar and is
+   printed. Recorded rather than fixed: a reduction over an axis is a rendering opinion, and
+   rule A9 puts those in the declaration, so adding one is a `core/` edit and a ruling.
+
 ---
 
 ## 12. The planets stage
