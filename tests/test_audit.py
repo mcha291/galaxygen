@@ -589,3 +589,216 @@ def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_th
     assert s["thick_disc_scale_length"] == pytest.approx(0.98, abs=0.05) and s["sfr"] == pytest.approx(3.03, abs=0.1)
     a = run(advanced, only=VALLEY).fields
     assert a["alpha_sequence"] == "single" and a["alpha_dip_depth"] == 0.0
+
+
+# --- S21, run b: the instruments and the viewer (AUDIT_S21B.md) ---------------
+#
+# Aim (b)'s findings, pinned so the audit's citations point inside the repository
+# (rule B14). Nothing here is a target: each is a measurement of an instrument,
+# and where an instrument was found to be measuring the wrong thing the finding
+# is the number, not the repair (rule B6).
+
+
+def test_s21b_the_d4_report_is_what_actually_ran():
+    """Rule D4, counted at the stages instead of read off the response (rule B3).
+
+    Every other D4 assertion in the suite reads ``Response.stages``, which is the
+    service's own account of itself. This one replaces each registered stage's
+    ``compute`` with a counting wrapper and compares. It also counts the two pieces
+    of physics the routes run *outside* the runner, which no ``stages`` tuple is
+    obliged to mention and none does — debt #65.
+    """
+    from dataclasses import replace
+
+    from galaxy.api.service import Service
+    from galaxy.core.grids import GridSpec
+    from galaxy.core.registry import production
+    from galaxy.stages import planets as planets_mod
+    from galaxy.stages import systems as systems_mod
+
+    small = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+    calls: dict[str, int] = {}
+
+    def counted(stage):
+        def wrapper(ctx, _inner=stage.compute, _id=stage.id):
+            calls[_id] = calls.get(_id, 0) + 1
+            return _inner(ctx)
+
+        return replace(stage, compute=wrapper)
+
+    _, impls, _ = production()
+    wrapped = {st.id: counted(st) for st in impls}
+    outside: dict[str, int] = {}
+    real_materialise, real_one_system = systems_mod.materialise, planets_mod.one_system
+
+    def spy(name, fn):
+        def wrapper(*a, **kw):
+            outside[name] = outside.get(name, 0) + 1
+            return fn(*a, **kw)
+
+        return wrapper
+
+    import galaxy.api.service as service_mod
+
+    service_mod._catalogue.materialise = spy("systems.materialise", real_materialise)
+    service_mod._planets.one_system = spy("planets.one_system", real_one_system)
+    try:
+        for route, query in (
+            ("/api", ""), ("/api/version", ""), ("/api/stages", ""), ("/api/fields", ""), ("/api/inputs", ""),
+            ("/api/arrays", "fields=halo_virial_mass"),
+            ("/api/arrays", "fields=stellar_surface_density"),
+            ("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4"),
+            ("/api/system", "cell=30&index=0"),
+        ):
+            calls.clear()
+            outside.clear()
+            response = Service(grid=small, impls=wrapped).handle(route, query)
+            assert response.status == 200, (route, query, response.status)
+            assert sorted(calls) == sorted(response.stages), (route, sorted(calls), response.stages)
+            assert all(n == 1 for n in calls.values()), (route, calls)
+            if route in ("/api", "/api/version", "/api/stages", "/api/fields", "/api/inputs"):
+                assert calls == {} and outside == {}, f"{route} ran {calls or outside} (rule D4)"
+            if route == "/api/region":
+                # Debt #65: the costliest thing this route does is not in the tuple.
+                assert outside == {"systems.materialise": 1}
+                assert "systems.materialise" not in response.stages
+            if route == "/api/system":
+                assert outside == {"systems.materialise": 1, "planets.one_system": 1}
+    finally:
+        service_mod._catalogue.materialise = real_materialise
+        service_mod._planets.one_system = real_one_system
+
+
+def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(simple):
+    """Debt #67: the per-star line every record since S11 quotes is fitted to a curve.
+
+    The cells that realise a star saturate, so seconds is a straight line in cells
+    and a curve in stars. Pinned as the two R² values and the collapse of the
+    marginal per-star cost across the range, both far outside any tolerance the
+    machine's noise needs — debt #68 is the same fact seen from the flaky test.
+    """
+    from galaxy.specs import performance
+
+    cost = performance.catalogue_cost(simple, n_stars=500, samples=(2_000, 8_000, 32_000))
+    cells = cost["cells per sample"]
+    stars = [s[1] for s in cost["samples"]]
+    secs = [s[2] for s in cost["samples"]]
+
+    # The saturation: 64x the stars buys about 2.3x the cells.
+    assert stars[-1] / stars[0] > 50.0
+    assert 1.8 < cells[-1] / cells[0] < 3.0, cells
+
+    # The curvature, as the marginal cost between consecutive sizes.
+    marginal = [(secs[i + 1] - secs[i]) / (stars[i + 1] - stars[i]) for i in range(len(secs) - 1)]
+    assert marginal[0] > 3.0 * marginal[-1], marginal
+
+    # And the fit that is conditioned. R² ~0.94-0.99 against ~0.4-0.7 in this repo;
+    # the gate is the ordering, which cannot survive the saturation going away.
+    assert cost["per_cell_us"] > 0.0 and cost["per_cell_r2"] > cost["per_star_r2"]
+    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here
+
+
+def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():
+    """Debt #70: `MODE_MIN_SHARE` is a test on a peak's density, not on a mode's share.
+
+    A mode of share s and dispersion σ is kept only if s·erf(0.05/(σ√2)) ≥ 0.10, so
+    the Milky Way's own thick disc — row 9 asks for 8-16% of the local surface
+    density, and the observed α-rich sequence is about 0.04 dex wide — sits inside
+    the blind spot. Computed from the exact Gaussian mass per bin, not sampled
+    (rule B8). The threshold is stated, never moved (rule B5).
+    """
+    from galaxy.stages.chemistry_dtd import (
+        ALPHA_HIST,
+        MODE_MIN_SHARE,
+        PEAK_SEPARATION,
+        bimodality,
+    )
+
+    lo, hi, width = ALPHA_HIST
+    edges = np.arange(lo, hi + width / 2, width)
+    centres = 0.5 * (edges[1:] + edges[:-1])
+    feh = np.linspace(-1.0, 0.3, centres.size)  # wide enough that a found valley reads wide
+
+    def mass(mu: float, sigma: float) -> np.ndarray:
+        cdf = 0.5 * (1.0 + np.vectorize(math.erf)((edges - mu) / (sigma * math.sqrt(2.0))))
+        m = np.diff(cdf)
+        return m / m.sum()
+
+    def two_modes(share: float, sigma_thick: float) -> np.ndarray:
+        return (1.0 - share) * mass(0.05, 0.03) + share * mass(0.30, sigma_thick)
+
+    # The α-rich maximum is found, and then rejected by the window: 0.0929 of the
+    # mass inside ±0.05 dex against a threshold of 0.1000.
+    hist = two_modes(0.12, 0.04)
+    half = max(1, int(round(0.5 * PEAK_SEPARATION / width)))
+    maxima = [i for i in range(hist.size) if hist[i] > 0.0
+              and (i == 0 or hist[i] >= hist[i - 1]) and (i == hist.size - 1 or hist[i] > hist[i + 1])]
+    assert [round(float(centres[i]), 2) for i in maxima] == [0.05, 0.29], maxima
+    share_in_window = float(hist[maxima[1] - half : maxima[1] + half + 1].sum() / hist.sum())
+    assert share_in_window == pytest.approx(0.0929, abs=0.0005) and share_in_window < MODE_MIN_SHARE
+
+    assert bimodality(centres, feh, two_modes(0.12, 0.04))[0] == "single"
+    assert bimodality(centres, feh, two_modes(0.12, 0.03))[0].startswith("bimodal")
+    # Ten per cent or less is invisible at any width a galaxy could have.
+    assert all(bimodality(centres, feh, two_modes(0.10, s))[0] == "single" for s in (0.02, 0.03, 0.04))
+    # The closed form, against the detector itself.
+    for share, sigma in ((0.12, 0.04), (0.12, 0.03), (0.15, 0.04), (0.20, 0.06), (0.20, 0.08)):
+        predicted = share * math.erf(0.05 / (sigma * math.sqrt(2.0))) >= MODE_MIN_SHARE
+        assert (bimodality(centres, feh, two_modes(share, sigma))[0] != "single") == predicted, (share, sigma)
+
+
+def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
+    """Debt #69: §5d's "the viewer shows every published field" is short by four.
+
+    `view.js` picks from declarations alone, so this is answerable without a
+    browser: a grid field is a picture, an object field a column of the region
+    response, and a galaxy scalar a number — unless its stage publishes object
+    columns, which is rule D4 keeping the client from materialising a galaxy to
+    print one number. Those are the four.
+    """
+    from galaxy.api.service import Service
+
+    fields = Service().handle("/api/fields", f"model={model.name}").json()["fields"]
+    catalogue_stages = {f["stage"] for f in fields if f["domain"] == "object"}
+    lost = [f["name"] for f in fields
+            if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
+    assert sorted(lost) == [
+        "catalogue_size", "giant_fraction_sample", "mean_planets_per_star", "planet_count_sample",
+    ], lost
+    # The one that costs nothing: the region response's own census carries the count.
+    assert "catalogue_size" in lost
+    # Everything else does reach a surface, and every picture has its ramp (rule A9).
+    reachable = [f for f in fields if f["name"] not in lost]
+    assert len(reachable) == len(fields) - 4
+    assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
+
+
+def test_s21b_s20s_two_numbers_reach_the_viewer(simple):
+    """S20's two moved numbers, read back through the API the viewer reads (BRIEF.md)."""
+    from galaxy.api.service import Service
+
+    svc = Service()
+    fields = svc.handle("/api/fields", "model=simple").json()["fields"]
+    by_name = {f["name"]: f for f in fields}
+
+    # The thick disc's dispersion: a galaxy scalar of a stage that publishes no
+    # object columns, so the viewer prints it.
+    catalogue_stages = {f["stage"] for f in fields if f["domain"] == "object"}
+    decl = by_name["thick_disc_dispersion"]
+    assert decl["domain"] == "galaxy" and decl["stage"] not in catalogue_stages
+    header, _ = svc.handle("/api/arrays", "model=simple&fields=thick_disc_dispersion").frame()
+    assert header["scalars"]["thick_disc_dispersion"] == pytest.approx(35.0, abs=0.1)  # 40.4 until S20
+
+    # The radial spread: a grid field on (R, t) with a ramp, so the viewer draws it
+    # as an image — the number S20 recorded is the maximum over t and is not on the
+    # screen as a number (debt #74).
+    decl = by_name["disc_radial_spread"]
+    assert decl["domain"] == "grid" and decl["axes"] == ["R", "t"] and decl["ramp"] is not None
+    header, arrays = svc.handle("/api/arrays", "model=simple&fields=disc_radial_spread").frame()
+    spread = np.asarray(arrays["disc_radial_spread"])
+    axis = header["grid"]["axes"]["R"]
+    R = np.linspace(axis["lo"], axis["hi"], axis["n"])
+    at_sun = spread[int(np.argmin(abs(R - R_SUN)))].max()
+    at_two = spread[int(np.argmin(abs(R - 2.0)))].max()
+    assert at_sun == pytest.approx(1.09, abs=0.02)  # 1.47 until S20
+    assert at_two == pytest.approx(0.22, abs=0.02)  # 0.30 until S20
