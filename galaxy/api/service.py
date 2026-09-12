@@ -607,7 +607,10 @@ class Service:
         seed = int(out.inputs[seed_name]) if seed_name else 0
 
         cells = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
-        catalogue = _catalogue.materialise(out.fields, R, t, seed, stars, cells)
+        catalogue = _catalogue.materialise(
+            out.fields, R, t, seed, stars, cells,
+            migration=float(out.inputs["migration_efficiency"]),
+        )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in catalogue]
         header = {
             "model": model.name,
@@ -658,7 +661,8 @@ class Service:
         out, ran = self.compute(model, inputs, catalogue.requires)
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
         here = _catalogue.materialise(
-            out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell]
+            out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
+            migration=float(out.inputs["migration_efficiency"]),
         )
         if index >= here.size:
             raise NotFound(f"cell {cell} has {here.size} stars at this sample size, so no index {index}")

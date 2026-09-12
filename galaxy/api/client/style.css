@@ -119,3 +119,7 @@ select { background: var(--ground); color: var(--ink); border: 1px solid var(--l
 .empty { color: var(--muted); font-style: italic; }
 .busy { color: var(--accent); }
 .error { color: var(--warn); font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; }
+
+/* A categorical legend: one swatch per declared category, in the palette's own colours. */
+.legend .swatch { display: inline-flex; align-items: center; gap: 0.3em; }
+.legend .swatch i { width: 0.8em; height: 0.8em; border-radius: 2px; display: inline-block; }

@@ -130,7 +130,11 @@ DISC_RADIAL_SPREAD = FieldDecl(
         "guiding-centre shift (the azimuthal part), summed in quadrature over events. Zero for "
         "every star born after the last major merger. Grows with radius because κ falls: the "
         "inner disc is stiff and barely moves, which is why the merger cannot make a compact "
-        "thick disc extended on its own (S18, debt #19)."
+        "thick disc extended on its own (S18, debt #19). **The number the records quote for this "
+        "field is its maximum over t at a radius** — 1.09 kpc at R₀ and 0.22 at 2 kpc since S20 — "
+        "and the viewer draws the field as an image, so the reduction is stated here rather than "
+        "left for a reader to guess (debt #73, ruled at S22: a reduction over an axis is a "
+        "rendering opinion and rule A9 puts those in the declaration)."
     ),
 )
 

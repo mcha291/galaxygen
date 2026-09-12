@@ -638,3 +638,188 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   order without changing the graph. Assembly now reads the disc's curve; Kahn's tie-break
   put the disc first and a test that pinned the order caught it, which is what the pin is
   for — re-pin with the reason, do not loosen it.
+
+## From S19
+
+- [catalogue][field] A kernel normalised over its destination is not a distribution over its
+  source. `transport` sums to one along each *row*, so reading a column as "where did the
+  stars here come from" is wrong by the mass each ring had to send: the backward weight is
+  `born[i] · K[i, j]`, which both chemistries already computed and the catalogue had to be
+  told. The symmetric reading is not a small error — it places stars where nothing was born,
+  and reads an abundance off gas that made no stars (D126).
+- [catalogue][field] When a quantity is transported, so is every marginal of it. The
+  catalogue drew a star's abundance at the ring it sits in and its birth time from the birth
+  rate *there* — the answer for a disc whose stars never moved. Fixing the radius alone
+  moved the spread the wrong way (0.284 → 0.273 against a target of 0.360); fixing the time
+  with it landed the gate. Ask which of a rule's marginals the mechanism touches before
+  deciding you have implemented half of it and got half the effect.
+- [field][catalogue] A criterion two stages apply is a field one stage publishes. `systems`
+  rebuilt the thin/thick mask from the same ingredients `vertical` used, and in the advanced
+  model the two disagreed — the stage's α-criterion selects nothing without a valley, the
+  catalogue's fallback was the merger time. It never showed because the surface density it
+  was drawn against was zero: **a duplicate can be wrong for sessions while a zero masks
+  it** (rule A9, D126).
+- [catalogue][infra] Arithmetic that depends on what was asked for cannot coexist with
+  per-region determinism. Narrowing a matrix product to the rings a region touches changed
+  the last bit of a star's age, because BLAS sums a one-column product in a different order
+  than a thirty-two-column one. Make the work query-independent and make it cheap instead —
+  here by reading the kernel column-wise rather than building it square (D126).
+- [catalogue] A per-star cost hides inside a per-cell design until the profile is read. The
+  first draw gave every star its own 400-cell cumulative sum; the catalogue still passed
+  every correctness test and its cost structure had quietly inverted. The kernel is a
+  bin-level object, so the draw is too — and the accuracy cost was nil (rule B6, D24).
+- [all] State a numerical claim at the precision you checked it at. "The same numbers" became
+  "the same to 6 × 10⁻¹³ relative, and here is why" once the bound was measured — a running
+  total over 2n − 1 terms against a pairwise sum over n. The weaker claim is the one that
+  says the two must not be mixed inside one answer, which is the part that matters.
+- [field] A dispersion is a poor discriminator between hypotheses that shift a mixture's
+  components. Debt #32 spent three sessions on whether migration widens the local [Fe/H]
+  spread; the answer was "barely, and lately it narrows it" — while migration was moving the
+  mean age at R₀ by 1.4 Gyr and bringing 84% of the Sun's neighbours from inside it. Pick
+  the moment the mechanism moves, not the one the source sentence happened to name (D126).
+
+
+## From S20
+
+- [field] Decompose the distribution before choosing the lever. The valley's absence had been
+  argued for four sessions in terms of infall timescales; one instrument — the [α/Fe] mass at R₀
+  by birth epoch, radius and time — showed the early population is a *plain*, not a mode, because
+  dN/dx = Ψ/|dx/dt| and the rate was already falling while x fell. Every timescale probe then
+  read the same for a reason that was visible in the first table (D128).
+- [field] Check what a detector's "yes" is made of before crediting it. Every `bimodal_wide` the
+  model has ever reported was a spike of the stars formed before the first type Ia — +0.45
+  exactly, five percent of the mass — with the split above the α-rich sequence itself. A verdict
+  is a summary; read the histogram it summarises (rule B3's cousin; debt #27).
+- [field] A mechanism that opens the row at the cost of the budget is a measurement, not a
+  candidate. The mass-loaded wind and the bar-driven drain both open a valley and both gut rows 2,
+  3 and 10; the number that matters is the one that says the retained budget would have to be an
+  output. Write it into the debt it belongs to and stop (rule A1, A4; #26, #21).
+- [field] Derive a calibration's arithmetic, not just its value. `MERGER_HEATING` was "scaled so
+  the merger leaves the disc at 30 km/s" and the thick disc read 40, because the stage composes
+  the kick with 27 km/s the model already gives those stars. Net of that the cited 35 gives 88.8,
+  row 7 lands, and the constant now has a citation instead of a sentence (rule B10; #42).
+- [field] A row landed on a constant leaves when the constant is derived. Row 3 was inside by 0.04
+  on the kick at S18; the kick re-derived is worth +0.07 and the row is out by 0.03. Neither
+  reading is a defect — the record says which mechanism paid each time, so the bar's prediction
+  is still the one that is testable (rule B5; #11).
+- [field][infra] Factor the substitution point when a probe is worth repeating. `sfh.first_infall`
+  is one function so that a test can monkeypatch the law and re-run S20's three probes; the
+  session's findings are pins rather than prose, which is what S21's aim (a) needs.
+- [close] A pre-committed reading is the ruling when the prediction fails. Debt #49 wrote "if rows 5
+  and 11 still trade, the star formation law at high redshift is what is wrong" before the probe
+  ran; the probe ran, they traded, and that sentence is the decision — nothing was re-argued.
+
+## From S21 (a)
+
+- [audit][all] Check the units of a bracket before running the prediction inside it. Debt #50's
+  interval put a *fraction* of the catalogue (0.221) beside a thick/thin *ratio* (0.051); as a ratio
+  the fraction is 0.284, and the double transport's 0.266 was "above the bracket" as written and
+  inside it as meant. Read what each end of an interval counts (`AUDIT_II_A.md` A-1).
+- [audit][field] A prediction with a pre-committed reading can fail in a way the reading did not
+  anticipate: #50 said "if row 9 cannot be reached from inside the interval, the split criterion is
+  wrong", and row 9 was reachable — what broke was rows 3 and 4, which the reading never named. Write
+  the rows a probe could break into the reading, not only the row it aims at (A-2).
+- [audit][field] Re-run a prediction's number on the potential it will be judged in. D121's "row 14
+  to 123" was read on S17's halo without contracting around the added mass; contracted and with the
+  Jeans dispersion recomputed it is 144. A number read on a stale potential is a stale number (A-3).
+- [audit][advanced] When a claim names a mechanism, build the mechanism by substitution and move it
+  along the one axis the claim did not specify. D128's "burst cut within a gigayear" made nothing
+  in the first gigayear and a real mode at 1–2 Gyr; the claim was right about the shape and silent
+  about the clock, and the probe found the clock in four runs (A-4).
+- [audit][all] A pre-committed test is only a test if each of its judges can move. Debt #46 named
+  rows 3, 19 and v_esc: row 19 is the input and v_esc stayed inside across the whole sweep, leaving
+  one row and therefore a fit. Ask of every judge in a pre-committed sweep what would make it say
+  no (A-8).
+- [audit][infra] One fixed sample is not an ensemble. The spec's 41-seed diagonal has a median
+  residual half a sigma low for the black hole's draw, so a statistical row's number is the sample's
+  before it is the model's; a second diagonal is the cheapest check and it took forty runs (A-6, #51).
+- [audit][field] Read the citation a derived constant rests on, not the sentence that cites it.
+  `MERGER_HEATING`'s "cited 35 km/s" is an adopted round value in a selection-function table with
+  no error bar; the measurement behind it is 39 ± 4, and the row the constant landed is out at 39.
+  A read-only agent with the PDF is cheaper than a session spent on the number (A-14; rule B14).
+- [close][audit] A killed prediction's replacement goes beside the old one in `spec.py`, with the
+  finding's number, so the entry reads as a history and not as a rewrite; the branch is sealed and
+  S22 ports the entry whole.
+
+## From S21, run b (the instruments and the viewer)
+
+- [audit][infra] Check a rule from outside the thing that reports it. Every D4 assertion in
+  the suite reads `Response.stages`, which is the service's own account of itself; counting at
+  the stages instead — every `compute` wrapped — found the account honest on all 17 endpoints,
+  and found the two calls it structurally cannot cover (rule B3; D144, #65).
+- [audit][infra] Publish the column, not just the number. `disc` returned to every physics
+  route's closure at S18 and three timings records could not show it, because S14 is the last
+  one to carry the stage column. A record that drops a field stops being able to contradict
+  itself (rule B6; #66).
+- [audit][infra] Before trusting a fit, look at the sign of its residuals. The catalogue's
+  per-star line has held its residual signs in 12 of 12 repeats at four of five sample sizes
+  for ten sessions; that is misspecification, and no amount of repeating the timing finds it.
+  A slope reproducible to 9% whose fit reports 36% is the same fact seen from the other side
+  (D145, D146; #67, #68).
+- [audit][infra] A flaky test is a claim about precision, not about the machine. The one D115
+  recorded was a one-sided test at 2.9σ by the fit's own error bar, and the error bar was wide
+  because the model was wrong, not because the desktop was busy. Measure the distribution
+  before crediting the explanation (rule B6; #68).
+- [audit][infra] A fitted intercept is an extrapolation; read the slope. The catalogue's
+  per-cell line reads +18.1, +1.4 and −6.3 ms of fixed cost on three runs of one container,
+  and the slope reads 423–459 µs on all three. Publishing the pair without saying which half
+  is determined is how "270 ms fixed" survived ten sessions (D145; #67).
+- [audit] Rule B10 applies to instruments. A constant fitted against a broken mechanism has no
+  claim on its value; so does a number published by a fit that was misspecified. Every "µs per
+  star / ms fixed" pair since S11 is such a number (D146).
+- [audit] State a detector's reach as a closed form, not as an example. `MODE_MIN_SHARE` reads
+  as "a mode holds a tenth of the mass" and is really `s·erf(0.05/(σ√2)) ≥ 0.1` — a test on the
+  peak's density — which is how the Milky Way's own thick disc, at row 9's share and the
+  observed α-width, ends up seven parts in a thousand short of visible (rule B8; D147, #70).
+- [audit] Where a pinned value sits near its window edge, the guard is an inequality against
+  the edge and the approx is only the measurement. Both pins in `test_audit.py` whose tolerance
+  exceeds the distance to the edge are guarded that way on the same line, and that is why none
+  of the 46 can flip a row (D149, #71).
+- [viewer] "Every published field is previewed" is a claim to count, and the count is in the
+  declarations. Four galaxy scalars in each model reach no surface, excluded by the same D4 rule
+  that stops the client materialising a galaxy to print one number — the exclusion is right and
+  the claim was still wrong (D148, #69).
+- [close] An audit's citations have to point inside the repository (rule B14), so a finding that
+  is worth citing is worth pinning as a test in the same session. Five did; a probe that stayed
+  in the scratchpad is a claim the next session cannot check.
+
+## From S22 (the close-out)
+
+- [close][all] Attempt the step you expect to fail, and paste what it printed. C2e was written
+  from a 403 at S1; S22 ran the tag push anyway, got the same 403 with the same credential that
+  pushed a branch seconds later, and that reproduction is worth more than the rule restated —
+  it turns "the proxy refuses tags" from a recollection into a measurement eight sessions apart
+  (D161).
+- [close][audit] A run that is not looking will republish the number the other run is killing.
+  S21 (a)'s close quoted the catalogue's per-star cost, because the ritual asks for the profile
+  and the instrument printed it, in the same session that S21b proved there is no fixed cost.
+  Nobody was careless. The fix is never "remember to doubt it" — it is to make the instrument
+  print the conditioned number beside the wrong one, which is rule B13 with a measurement behind
+  it (D158, D145).
+- [audit][all] A sweep that stops before the crossing has not run the prediction. Aim (a) read
+  the migration kernel at 2.5 and 2.0 kpc, saw the young/old ratio at 1.22 and 0.81 against 1.75,
+  and concluded the ratio could not be landed with row 23 — the crossing is at 3.0, inside the
+  row's window, and lands both. Two points on one side of a threshold are one point (D160, #28).
+- [audit][field] Take the mesh out of a miss before calling the miss a number. Row 3 is 0.027
+  km/s outside its window at the default grid and 0.013 at n_R = 3200: half the miss was the
+  radial mesh. The row is still red, which is the point — a converged small miss is honest and a
+  discretised one is not even wrong (D160, #11).
+- [audit] Two findings about the same object can sit in two lists and be invisible to both. One
+  run made an α-rich mode; the other measured what the detector can see; neither could say that
+  the mode is visible only because it is narrower than the Milky Way's own sequence. Budget a
+  pass whose only job is to read each list against the other (D158, D160).
+- [close] "Not yet computable" reads as a plan and hides as a gap. Row 21 has been
+  not-yet-computable in both models for twenty-three sessions because no stage publishes a
+  molecular fraction, and every report said so honestly every time. A status that is fine when
+  it is temporary needs a note saying which it is — row 24's has one and row 21's did not
+  (#79, D159).
+- [close] Give a register's verdicts a fixed vocabulary and a map, or a reader counts the
+  strikethroughs. Discharged / permanent / carried, defined once, with a table of which item is
+  which and a test on the table: the board's "27 open" then means 15 things nobody can close and
+  12 somebody could, instead of 27 unread paragraphs (D159).
+- [close][all] Let a permanent limitation keep being counted. The tempting tidy is to strike the
+  items no session can close so the number falls; the number is the first thing the next session
+  reads, and a limitation that stops being counted stops being read (D159).
+- [close] A plan can carry a contradiction for eight sessions if no row is read against another.
+  §5d put S22 on the web and required one of its deliverables to be done from a desktop. Read
+  the whole row, including the column that says where it runs (D161).

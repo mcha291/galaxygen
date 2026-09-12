@@ -15,6 +15,8 @@ regression by, never as targets.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -22,6 +24,9 @@ from galaxy.core.fielddoc import Kind
 from galaxy.core.registry import Constant, MergerEvent, Model
 from galaxy.run import run
 from galaxy.specs import spec
+from galaxy.stages import sfh
+from galaxy.stages.chemistry import age_bin_edges, migration_width, transport
+from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.halo import mu
 from helpers import decl
 
@@ -96,7 +101,8 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(simple):
     # other side - until S14 contracted the halo around the disc (270.8, high, debt #6); since S15 the
     # epoch's default is the LCDM median and the row reads 260.1, still high (D117).
     # S18: inside at 250.96, on the merger's radial kick and the basis-free solver, not on anything named here (D124).
-    assert f["v_tangential_sun"] == pytest.approx(250.96, abs=0.5) and Q[3].lo <= f["v_tangential_sun"] <= Q[3].hi  # 251.3 and out until S18; 252.9 until S17
+    # S20: out again at 251.03, by 0.03, when the kick's constant was re-derived from a cited dispersion (D128).
+    assert f["v_tangential_sun"] == pytest.approx(251.03, abs=0.5) and Q[3].hi < f["v_tangential_sun"] < Q[3].hi + 0.1  # 250.96 and in until S20; 251.3 and out until S18; 252.9 until S17
     # ...and the cited z_f = 2-3 spans 12 km/s on row 3 (236.4-249.2 until S14); the row wants 1.3-1.4 since S17 (1.1-1.2 at S16, 0.7-1.0 at S14-S15).
     lo, hi = (run(simple, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
     assert lo == pytest.approx(255.8, abs=0.5) and hi == pytest.approx(268.3, abs=0.5)  # 256.0 and 268.4 until S18; 257.6 and 269.9 until S17
@@ -219,11 +225,11 @@ def test_the_thick_disc_a_valley_would_find_is_the_simple_models_compact_one(adv
     """What rows 5, 7-11 read the moment the split selects something: recorded so the next session knows the shape."""
     inputs = {"inside_out_index": 3.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}
     f = run(advanced, inputs, only=("thick_thin_surface_density_ratio",)).fields
-    assert f["thick_disc_stellar_mass"] == pytest.approx(5.09e9, rel=0.05) and inside(11, f["thick_disc_stellar_mass"])  # 4.92e9 until S18; 5.95e9 until S17; 6.6e9 until S16
-    assert f["thick_disc_scale_length"] == pytest.approx(0.64, abs=0.05) and not inside(5, f["thick_disc_scale_length"])  # 0.66 until S18
-    assert f["thick_disc_scale_height"] == pytest.approx(1379.0, abs=30.0) and not inside(7, f["thick_disc_scale_height"])  # 1398 until S18; 1202 until S17; 1113 until S16
-    assert f["thick_thin_surface_density_ratio"] == pytest.approx(0.0032, abs=0.001)  # row 9: 0.0096 until S18 - the threshold holds the reservoir here too
-    assert f["thin_disc_scale_height"] == pytest.approx(512.0, abs=15.0) and not inside(6, f["thin_disc_scale_height"])  # 552 until S18; 478 until S17; 443 until S16
+    assert f["thick_disc_stellar_mass"] == pytest.approx(5.07e9, rel=0.05) and inside(11, f["thick_disc_stellar_mass"])  # 5.09e9 until S20; 4.92e9 until S18; 5.95e9 until S17; 6.6e9 until S16
+    assert f["thick_disc_scale_length"] == pytest.approx(0.60, abs=0.05) and not inside(5, f["thick_disc_scale_length"])  # 0.64 until S20 (the smaller kick); 0.66 until S18
+    assert f["thick_disc_scale_height"] == pytest.approx(1069.0, abs=30.0) and inside(7, f["thick_disc_scale_height"])  # 1379 until S20 (the kick re-derived, D128); 1398 until S18; 1202 until S17; 1113 until S16
+    assert f["thick_thin_surface_density_ratio"] == pytest.approx(0.0014, abs=0.001)  # row 9: 0.0032 until S20; 0.0096 until S18 - the threshold holds the reservoir here too
+    assert f["thin_disc_scale_height"] == pytest.approx(452.0, abs=15.0) and not inside(6, f["thin_disc_scale_height"])  # 512 until S20; 552 until S18; 478 until S17; 443 until S16
 
 
 # --- debt #28: the flattening, measured in both models -------------------------
@@ -263,17 +269,22 @@ def test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models(simple, advan
     # moves are the same mechanism from opposite ends - Σ(R₀) falls, h_z = σ²/2πGΣ rises - and
     # the row has been inside for four sessions while sitting nowhere near the middle (debt #42).
     assert Q[6].lo + 60.0 <= s["thin_disc_scale_height"] <= Q[6].hi - 20.0
-    # 373 against a ceiling of 350: a recorded miss since S13 (439 until S18's threshold held more gas at R₀; 384 until S17; 358 until S16).
-    assert Q[6].hi + 15.0 < a["thin_disc_scale_height"] <= Q[6].hi + 30.0
-    # SECULAR_HEATING was set from the 10 Gyr end of the AVR (D54); 20 and 30 km/s fail the two models at opposite ends.
+    # 356 against a ceiling of 350: a recorded miss since S13 (373 until S20 re-derived the kick; 439 until S18's
+    # threshold held more gas at R₀; 384 until S17; 358 until S16). The simple row 7 reads 962, inside, since S20 (1279 until then).
+    assert Q[6].hi + 3.0 < a["thin_disc_scale_height"] <= Q[6].hi + 10.0
+    assert inside(7, s["thick_disc_scale_height"]) and s["thick_disc_scale_height"] == pytest.approx(962.0, abs=10.0)
+    # SECULAR_HEATING was set from the 10 Gyr end of the AVR (D54); 20 and 30 km/s fail the two models at opposite
+    # ends (228 / 451 in the simple model, 252 / 483 in the advanced), which is why S20 left it at 25 (D128).
     low_s = run(with_constant(simple, "SECULAR_HEATING", 20.0), only=HEIGHTS).fields["thin_disc_scale_height"]
+    high_s = run(with_constant(simple, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
     high_a = run(with_constant(advanced, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
-    assert low_s < Q[6].lo and high_a > Q[6].hi
+    assert low_s < Q[6].lo and high_s > Q[6].hi and high_a > Q[6].hi
     # MERGER_HEATING calibrates row 7 in the simple model and row 6 in the advanced one, where the heated stars are thin.
-    # **Since S18, 60 km/s lands both** - row 7 at 751 and the advanced row 6 at 346 - which is the first setting
-    # of either heating constant to read rows 6 and 7 inside together; it is S20's to judge with SECULAR_HEATING
-    # (D124), not this session's to set. The simple row 6 barely reads the kick (329.5 / 324.6).
-    for k, row7, row6 in ((60.0, 751.0, 346.0), (180.0, 2148.0, 429.0)):  # 775/375 and 2199/544 until S18; 668/326 and 1889/482 until S17
+    # S18 read 60 km/s landing both (row 7 at 751, the advanced row 6 at 346); S20 did not set it there - it derived the
+    # constant from the thick disc's observed dispersion net of the secular heating (88.8, D128), which lands row 7 and
+    # leaves the advanced row 6 at 356, the heated old population counted as thin (debt #27). The old default, 120, and
+    # the two ends of S10's sweep are kept as measurements. The simple row 6 barely reads the kick (329.5 / 324.6).
+    for k, row7, row6 in ((60.0, 751.0, 346.0), (120.0, 1279.0, 373.0), (180.0, 2148.0, 429.0)):  # 775/375 and 2199/544 until S18; 668/326 and 1889/482 until S17
         hot_s = run(with_constant(simple, "MERGER_HEATING", k), only=HEIGHTS).fields
         hot_a = run(with_constant(advanced, "MERGER_HEATING", k), only=HEIGHTS).fields
         assert hot_s["thick_disc_scale_height"] == pytest.approx(row7, rel=0.02)
@@ -282,6 +293,32 @@ def test_debt_42_row_6_is_at_the_edge_of_its_window_in_both_models(simple, advan
         assert hot_a["thick_disc_scale_height"] == 0.0
     assert inside(7, run(with_constant(simple, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thick_disc_scale_height"])
     assert inside(6, run(with_constant(advanced, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height"])
+
+
+THICK_SIGMA_W = 35.0  # km/s, the thick disc's vertical dispersion [recall: Bensby, Feltzing & Lundstrom 2003]
+
+
+def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating(simple):
+    """S20 (D128): MERGER_HEATING = sqrt(35^2 - <sigma_sec^2 + sigma_0^2>_thick) / 0.25 = 88.8, reproduced here.
+
+    The constant had been 120, 'scaled so the merger leaves the pre-existing disc at about 30 km/s',
+    as if the kick were the whole dispersion; the assembly stage composes it in quadrature with the
+    secular heating and the birth dispersion, which read 27.06 km/s over the thick population at R0.
+    """
+    o = run(simple, only=("thick_disc_dispersion", "stars_formed_history", "last_major_merger_time"))
+    R, t = o.grid.R, o.grid.t
+    at = int(np.argmin(np.abs(R - R_SUN)))
+    thick = t < o.fields["last_major_merger_time"]
+    weights = o.fields["stars_formed_history"][at] * thick
+    kick_now = simple.constants["MERGER_HEATING"].value * 0.25
+    secular2 = o.fields["disc_heating"] ** 2 - np.where(thick, kick_now**2, 0.0)
+    secular = math.sqrt(np.average(secular2, weights=weights))
+    assert secular == pytest.approx(27.06, abs=0.2)
+    derived = math.sqrt(THICK_SIGMA_W**2 - secular**2) / 0.25
+    # 88.815: the fixed point, because the thick population's weights at R0 move a little with the kick
+    # (88.5 on the 120 km/s run's weights derives 88.82 on its own); the constant is set at the fixed point.
+    assert derived == pytest.approx(simple.constants["MERGER_HEATING"].value, abs=0.1)
+    assert o.fields["thick_disc_dispersion"] == pytest.approx(THICK_SIGMA_W, abs=0.1)  # 40.4 until S20
 
 
 # --- debt #45: the constant that does nothing carries row 22 --------------------
@@ -305,9 +342,9 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
         # At 1.25 the merger's thick disc reads 1.45 kpc (1.64 until S18; 1.77 at S16, 1.84 and inside before it), not
         # row 5 and not row 11 (7.5e9); at 1.5 it reads 1.69, *under* row 5 now (2.16 and inside until S18) — the derived
         # threshold truncates the pre-merger disc whatever the infall's extent — and rows 3, 4 and 22 are gone.
-        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.45, abs=0.03) and not inside(5, by[1.25]["thick_disc_scale_length"])
+        assert by[1.25]["thick_disc_scale_length"] == pytest.approx(1.39, abs=0.03) and not inside(5, by[1.25]["thick_disc_scale_length"])  # 1.45 until S20 (the kick re-derived)
         assert inside(11, by[1.25]["thick_disc_stellar_mass"]) and inside(11, by[1.5]["thick_disc_stellar_mass"])  # 7.5e9 and 5.8e9: row 11 lands on this lever now (1.09e10 at 1.25 until S18), row 5 does not
-        assert by[1.5]["thick_disc_scale_length"] == pytest.approx(1.69, abs=0.03) and not inside(5, by[1.5]["thick_disc_scale_length"])
+        assert by[1.5]["thick_disc_scale_length"] == pytest.approx(1.65, abs=0.03) and not inside(5, by[1.5]["thick_disc_scale_length"])  # 1.69 until S20 (the kick re-derived)
         assert not inside(4, by[1.5]["thin_disc_scale_length"]) and not inside(3, by[1.5]["v_tangential_sun"])
         assert grads == pytest.approx([-0.103, -0.034, -0.016, -0.011], abs=0.003)  # [-0.065, -0.030, -0.022, -0.019] until S18; [-0.052, -0.026, -0.019, -0.017] until S17
     else:
@@ -343,10 +380,22 @@ def test_the_register_carries_the_s10_findings():
     # S12 discharged #35, #37 and #40 (D104); S13 discharged #29, #30, #38 and #41 (D106-D109);
     # S14 discharged #6 and opened #46 (D113); S15 discharged #12 (D117); S16 discharged #18 and
     # opened #47 (D119); S17 opened #48 and discharged neither - #17 only for row 14 and #39 only
-    # for its second half, which is why the discharged count did not move (D121, D122).
-    assert progress.debt_counts(text) == (32, 17)  # S18 opened #49 and discharged none; 31 / 17 at S17
+    # for its second half, which is why the discharged count did not move (D121, D122). S18
+    # opened #49 and discharged none (32 / 17); S19 discharged #31 and opened #50, so the open
+    # count stands still while the discharged one moves - both halves have to be read (D126).
+    # S21 ran twice on two sealed branches and S22 ported both lists (D99): aim (a) opened #51
+    # and #52 (D130), aim (b) #65-#73 (D144-D149), and neither discharged anything, so the port
+    # alone read 43 / 18. The gap #53-#64 is aim (a)'s unused reservation and #74-#78 is aim
+    # (b)'s (D116) - a missing number inside those blocks is the plan working, not a lost item.
+    # S22 then ruled all 43 and discharged 17 of them (#4, #5, #8, #10, #14, #32, #36, #44, #50,
+    # #51, #66-#69, #71-#73) and opened one of its own (#79, the row no model has ever judged),
+    # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
+    # the register is the one place that split is written down.
+    assert progress.debt_counts(text) == (27, 35)  # 43 / 18 on the port, 32 / 18 at S20
     for item in (
         "6. ~~Adiabatic contraction",
+        "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
+        "50. ~~**The model moves stars twice, with two kernels, and nothing reconciles them**~~",
         "46. **The contraction's strength is a simulation calibration",
         "29. ~~**The Sagittarius default",
         "34. **The acceptance table reads nothing inside 4 kpc",
@@ -354,9 +403,22 @@ def test_the_register_carries_the_s10_findings():
         "41. ~~**Acceptance row 20 compares total gas with a hydrogen mass",
         "42. **Row 6 passes at the edge",
         "43. **`NET_YIELD` and `WIND_SPEED` are each fitted",
-        "44. **Row 2 cannot see past `KS_NORM`",
+        "44. ~~**Row 2 cannot see past `KS_NORM`",
         "45. **`GAS_DISC_SCALE_RATIO` multiplies nothing",
         "48. **The M_• residual's width is the classical one",
+        "51. ~~**The spec judges every statistical row on one fixed sample",
+        "52. **Row 14 is two large errors of opposite sign",
+        "65. **Rule D4's instrument cannot see the work the routes do outside the runner",
+        "67. ~~**The catalogue is priced against the variable it is not a function of**~~",
+        "70. **The bimodality detector's mode test is a test on a peak's density",
+        "73. ~~**The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
+        # S22's three-way map, and one entry of each verdict, so a silent re-ruling fails here.
+        "| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65, **79** | 15 |",
+        "79. **No model computes the molecular fraction, so acceptance row 21 has never been judged",
+        "| **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |",
+        "**S22, ruled PERMANENT (a property of the model's scope), and this is the ruling S20 handed over.**",
+        "**S22, ruled CARRIED, and the pre-committed reading fires: the split criterion is what is wrong.**",
+        "**S22, discharged by its own pre-committed test.**",
     ):
         assert item in text, item
 
@@ -412,8 +474,15 @@ def test_debt_43_the_two_solar_calibrations_and_their_levers(simple, advanced):
     assert abs(feh_at_sun(simple)) < 0.03 and abs(feh_at_sun(advanced)) < 0.02
     wind = feh_at_sun(advanced, WIND_SPEED=1.1 * advanced.constants["WIND_SPEED"].value) - feh_at_sun(advanced)  # +10%
     yld = feh_at_sun(simple, NET_YIELD=1.1 * simple.constants["NET_YIELD"].value) - feh_at_sun(simple)  # +10%
-    assert wind == pytest.approx(-0.060, abs=0.01)  # -0.064 until S18's refit (982 -> 860 km/s)
-    assert yld == pytest.approx(0.041, abs=0.01)
+    # Tightened at S22 from +/-0.01, which was debt #71: the tolerance was 17% of the value and
+    # 2.5x the 0.004 step S18's refit made, so WIND_SPEED moving 982 -> 860 km/s (12%) would have
+    # passed here unremarked. Both quantities are *derived* - no seed, no timing - and the suite
+    # already asserts field bytes identical across processes, so the only spread available is the
+    # platform's floating point: read -0.05949 / +0.04139 on S22's container against S21b's
+    # -0.060 / +0.041 on its own. +/-0.002 covers four times that spread and still halves S18's
+    # step, which is the size this pin exists to see.
+    assert wind == pytest.approx(-0.0595, abs=0.002)  # -0.064 until S18's refit (982 -> 860 km/s)
+    assert yld == pytest.approx(0.0414, abs=0.002)
 
 
 def test_debt_26_the_iron_at_the_centre_reaches_the_planets(prod):
@@ -432,5 +501,338 @@ def test_debt_26_the_iron_at_the_centre_reaches_the_planets(prod):
     # S18 halved the centre's iron (debt #26: 1.39 -> 0.70 dex in the advanced model, 0.46 -> 0.25 in the simple),
     # so the occurrence inside a kiloparsec fell 0.36 -> 0.25 and the metal-rich share of the catalogue 0.01 -> 0.005.
     assert inner(out["simple"]) < 0.05 < 0.2 < inner(out["advanced"]) < 0.3
-    assert rich(out["simple"]) < 0.001 and 0.003 < rich(out["advanced"]) < 0.008
-    assert out["advanced"].fields["giant_fraction_sample"] > 1.3 * out["simple"].fields["giant_fraction_sample"]
+    # S19 re-pinned the two catalogue numbers, and the direction is the finding. With the
+    # catalogue migrating, the stars at any radius are drawn from the whole disc rather than
+    # from the ring they sit in, so the local age-metallicity relation stops dominating and
+    # the two models' abundance distributions converge: the metal-rich share 0.005 -> 0.0031
+    # and the giant-fraction contrast 1.58x -> 1.25x. The centre's iron still reaches the
+    # planets -- that is the occurrence assertion above, unmoved -- but the *sample* is a
+    # weaker instrument for it than it was, because a metal-rich star born at 1 kpc is now
+    # spread over the disc instead of counted where it formed (D126).
+    assert rich(out["simple"]) < 0.001 and 0.002 < rich(out["advanced"]) < 0.005  # 0.003-0.008 until S19
+    ratio = out["advanced"].fields["giant_fraction_sample"] / out["simple"].fields["giant_fraction_sample"]
+    assert ratio > 1.2, ratio  # > 1.3 until S19; 1.247 now, 1.576 before
+
+
+# --- S20: the valley's mechanisms, probed by substituting the first infall's law (D114, D128) ---
+
+VALLEY = ("alpha_sequence", "alpha_dip_depth", "alpha_split", "thin_disc_scale_height")
+THICK = ("thick_disc_scale_length", "thick_disc_stellar_mass", "thick_thin_surface_density_ratio", "sfr")
+
+
+def dynamical_time_at(z: float, model) -> float:
+    """0.1/H(z) in Gyr, the halo's dynamical time at its assembly epoch, from the model's own constants."""
+    H0 = model.constants["H0"].value / 0.9778  # km/s/kpc -> 1/Gyr
+    om = model.constants["OMEGA_M"].value
+    return 0.1 / (H0 * math.sqrt(om * (1.0 + z) ** 3 + 1.0 - om))
+
+
+FIRST_INFALL = sfh.first_infall  # the built law, captured before any test substitutes it
+
+
+def constant_law(tau_first: float):
+    def law(t, tau, span):
+        return FIRST_INFALL(t, np.full_like(tau, tau_first), span)
+    return law
+
+
+def test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed(simple, advanced, monkeypatch):
+    """Debt #49 predicted row 5 lands at any merger share with rows 9 and 11 moving together; it does not (D128).
+
+    The first infall's timescale is the halo's dynamical time at z_f = 1.66 - 0.55 Gyr, derived
+    from constants the model has (1 Gyr, the two-infall framework's, reads the same). Row 5 lands
+    only where row 11 is far out, and where row 11 lands (share 0.8) rows 5 and 9 are out: the
+    pre-committed reading is that the star formation law at high redshift is what is wrong.
+    """
+    t_dyn = dynamical_time_at(1.66, simple)
+    assert t_dyn == pytest.approx(0.55, abs=0.02)
+    monkeypatch.setattr(sfh, "first_infall", constant_law(t_dyn))
+    at = {g: run(simple, {"mergers": (MergerEvent(3.8, 0.25, g, "probe"), MergerEvent(8.8, 0.02, 0.01, "probe"))}, only=THICK).fields
+          for g in (0.3, 0.5, 0.65, 0.8)}
+    assert at[0.5]["thick_disc_scale_length"] == pytest.approx(1.95, abs=0.05) and inside(5, at[0.5]["thick_disc_scale_length"])
+    assert at[0.5]["thick_disc_stellar_mass"] == pytest.approx(1.67e10, rel=0.05) and at[0.5]["thick_thin_surface_density_ratio"] > 0.4
+    assert inside(11, at[0.8]["thick_disc_stellar_mass"]) and not inside(5, at[0.8]["thick_disc_scale_length"]) and at[0.8]["thick_thin_surface_density_ratio"] < 0.05
+    assert not any(inside(5, f["thick_disc_scale_length"]) and inside(11, f["thick_disc_stellar_mass"]) for f in at.values())
+    assert at[0.5]["sfr"] == pytest.approx(1.27, abs=0.05)  # row 2 out too: the early gas is spent before today
+    # In the advanced model it opens no valley - the dip is 0.15 at N_t 1000, 2000 and 4000 - and row 6 goes to 594 (710 on the 120 km/s kick).
+    f = run(advanced, only=VALLEY).fields
+    assert f["alpha_sequence"] == "single" and f["alpha_dip_depth"] == pytest.approx(0.151, abs=0.02)
+    assert f["thin_disc_scale_height"] == pytest.approx(594.0, abs=15.0)
+
+
+def test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike(advanced):
+    """The alpha-rich 'mode' at tau_0 = 1, n = 2 is the stars formed before any Ia iron: +0.45 exactly, 5% of the mass.
+
+    Recomputed from the published histories the way chemistry_dtd builds the R0 distribution (the
+    backward weights, D126): the split sits at 0.39, above the alpha-rich sequence itself, the mass
+    above it is a twentieth, and it is all in the top two bins. That is not a thick disc (D128).
+    """
+    o = run(advanced, {"infall_timescale": 1.0, "inside_out_index": 2.0}, only=VALLEY + ("alpha_fe_history", "sfr_surface_density_history"))
+    f = o.fields
+    assert f["alpha_sequence"] == "bimodal_wide" and f["alpha_split"] == pytest.approx(0.39, abs=0.02)
+    R, t = o.grid.R, o.grid.t
+    dt = o.grid.spec.t_max / o.grid.spec.n_t
+    formed = PC_PER_KPC * f["sfr_surface_density_history"] * dt * (2.0 * math.pi * R * o.grid["R"].width * PC_PER_KPC**2)[:, None]
+    afe = np.nan_to_num(f["alpha_fe_history"], nan=0.0)
+    edges, age = age_bin_edges(o.grid.spec.t_max), o.grid.spec.t_max - t
+    at_sun = int(np.argmin(np.abs(R - R_SUN)))
+    w = np.zeros_like(formed)
+    for b in range(edges.size - 1):
+        in_bin = (age >= edges[b]) & (age < edges[b + 1])
+        if in_bin.any():
+            K = transport(R, float(migration_width(0.5 * (edges[b] + edges[b + 1]), o.inputs["migration_efficiency"])))
+            w[:, in_bin] = formed[:, in_bin] * K[:, at_sun][:, None]
+    hist, _ = np.histogram(afe, bins=np.arange(-0.3, 0.71, 0.02), weights=w)
+    share = hist / hist.sum()
+    above = share[35:]  # bins from +0.40 up; the split is at 0.39
+    assert 0.06 < above.sum() < 0.13  # 0.10
+    plateau = share[36:38].sum()  # +0.42 to +0.46: where the first stars of every ring sit, before any Ia iron
+    assert plateau > 0.7 * above.sum() and share[38:].sum() == 0.0  # 0.079 of 0.102, and nothing above +0.46
+    assert share[27:35].max() < 0.5 * plateau  # +0.24 to +0.40 is a plain, not a mode: no bin holds 3.3% of the mass (+0.20-0.24 is the thin mode's shoulder)
+
+
+def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_thick_disc(simple, advanced, monkeypatch):
+    """Wechsler et al. 2002's M(a) = M0 exp(-2 a_c (1/a - 1)) at the model's own a_c = 1/(1 + z_f), as the first infall's rate.
+
+    Fully determined by z_f, and dead by the number: 29% of the halo's mass is in place by z_f, so
+    almost nothing has arrived by the merger, the thick disc is 1.5e9 (row 11 out low, row 5 0.98)
+    and the star formation rate today doubles (row 2 3.03). In the advanced model no valley (D128).
+    """
+    H0 = simple.constants["H0"].value / 0.9778
+    om = simple.constants["OMEGA_M"].value
+    ol = 1.0 - om
+
+    def law(t, tau, span):
+        a_grid = np.linspace(1e-4, 1.0, 20000)
+        t_of_a = 2.0 / (3.0 * H0 * math.sqrt(ol)) * np.arcsinh(np.sqrt(ol / om) * a_grid**1.5)
+        a = np.interp(t, t_of_a, a_grid)
+        a_c = 1.0 / (1.0 + 1.66)
+        rate = 2.0 * a_c / a**2 * np.exp(-2.0 * a_c * (1.0 / a - 1.0)) * a * H0 * np.sqrt(om / a**3 + ol)
+        rate = rate / np.trapezoid(rate, t)
+        return np.broadcast_to(rate[None, :], (tau.size, t.size))
+
+    monkeypatch.setattr(sfh, "first_infall", law)
+    s = run(simple, only=THICK).fields
+    assert s["thick_disc_stellar_mass"] == pytest.approx(1.5e9, rel=0.1) and not inside(11, s["thick_disc_stellar_mass"])
+    assert s["thick_disc_scale_length"] == pytest.approx(0.98, abs=0.05) and s["sfr"] == pytest.approx(3.03, abs=0.1)
+    a = run(advanced, only=VALLEY).fields
+    assert a["alpha_sequence"] == "single" and a["alpha_dip_depth"] == 0.0
+
+
+# --- S21, run b: the instruments and the viewer (AUDIT_S21B.md) ---------------
+#
+# Aim (b)'s findings, pinned so the audit's citations point inside the repository
+# (rule B14). Nothing here is a target: each is a measurement of an instrument,
+# and where an instrument was found to be measuring the wrong thing the finding
+# is the number, not the repair (rule B6).
+
+
+def test_s21b_the_d4_report_is_what_actually_ran():
+    """Rule D4, counted at the stages instead of read off the response (rule B3).
+
+    Every other D4 assertion in the suite reads ``Response.stages``, which is the
+    service's own account of itself. This one replaces each registered stage's
+    ``compute`` with a counting wrapper and compares. It also counts the two pieces
+    of physics the routes run *outside* the runner, which no ``stages`` tuple is
+    obliged to mention and none does — debt #65.
+    """
+    from dataclasses import replace
+
+    from galaxy.api.service import Service
+    from galaxy.core.grids import GridSpec
+    from galaxy.core.registry import production
+    from galaxy.stages import planets as planets_mod
+    from galaxy.stages import systems as systems_mod
+
+    small = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+    calls: dict[str, int] = {}
+
+    def counted(stage):
+        def wrapper(ctx, _inner=stage.compute, _id=stage.id):
+            calls[_id] = calls.get(_id, 0) + 1
+            return _inner(ctx)
+
+        return replace(stage, compute=wrapper)
+
+    _, impls, _ = production()
+    wrapped = {st.id: counted(st) for st in impls}
+    outside: dict[str, int] = {}
+    real_materialise, real_one_system = systems_mod.materialise, planets_mod.one_system
+
+    def spy(name, fn):
+        def wrapper(*a, **kw):
+            outside[name] = outside.get(name, 0) + 1
+            return fn(*a, **kw)
+
+        return wrapper
+
+    import galaxy.api.service as service_mod
+
+    service_mod._catalogue.materialise = spy("systems.materialise", real_materialise)
+    service_mod._planets.one_system = spy("planets.one_system", real_one_system)
+    try:
+        for route, query in (
+            ("/api", ""), ("/api/version", ""), ("/api/stages", ""), ("/api/fields", ""), ("/api/inputs", ""),
+            ("/api/arrays", "fields=halo_virial_mass"),
+            ("/api/arrays", "fields=stellar_surface_density"),
+            ("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4"),
+            ("/api/system", "cell=30&index=0"),
+        ):
+            calls.clear()
+            outside.clear()
+            response = Service(grid=small, impls=wrapped).handle(route, query)
+            assert response.status == 200, (route, query, response.status)
+            assert sorted(calls) == sorted(response.stages), (route, sorted(calls), response.stages)
+            assert all(n == 1 for n in calls.values()), (route, calls)
+            if route in ("/api", "/api/version", "/api/stages", "/api/fields", "/api/inputs"):
+                assert calls == {} and outside == {}, f"{route} ran {calls or outside} (rule D4)"
+            if route == "/api/region":
+                # Debt #65: the costliest thing this route does is not in the tuple.
+                assert outside == {"systems.materialise": 1}
+                assert "systems.materialise" not in response.stages
+            if route == "/api/system":
+                assert outside == {"systems.materialise": 1, "planets.one_system": 1}
+    finally:
+        service_mod._catalogue.materialise = real_materialise
+        service_mod._planets.one_system = real_one_system
+
+
+def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(simple):
+    """Debt #67: the per-star line every record since S11 quotes is fitted to a curve.
+
+    The cells that realise a star saturate, so seconds is a straight line in cells
+    and a curve in stars. Pinned as the two R² values and the collapse of the
+    marginal per-star cost across the range, both far outside any tolerance the
+    machine's noise needs — debt #68 is the same fact seen from the flaky test.
+    """
+    from galaxy.specs import performance
+
+    cost = performance.catalogue_cost(simple, n_stars=500, samples=(2_000, 8_000, 32_000))
+    cells = cost["cells per sample"]
+    stars = [s[1] for s in cost["samples"]]
+    secs = [s[2] for s in cost["samples"]]
+
+    # The saturation: 64x the stars buys about 2.3x the cells.
+    assert stars[-1] / stars[0] > 50.0
+    assert 1.8 < cells[-1] / cells[0] < 3.0, cells
+
+    # The curvature, as the marginal cost between consecutive sizes.
+    marginal = [(secs[i + 1] - secs[i]) / (stars[i + 1] - stars[i]) for i in range(len(secs) - 1)]
+    assert marginal[0] > 3.0 * marginal[-1], marginal
+
+    # And the fit that is conditioned. R² ~0.94-0.99 against ~0.4-0.7 in this repo;
+    # the gate is the ordering, which cannot survive the saturation going away.
+    assert cost["per_cell_us"] > 0.0 and cost["per_cell_r2"] > cost["per_star_r2"]
+    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here
+
+
+def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():
+    """Debt #70: `MODE_MIN_SHARE` is a test on a peak's density, not on a mode's share.
+
+    A mode of share s and dispersion σ is kept only if s·erf(0.05/(σ√2)) ≥ 0.10, so
+    the Milky Way's own thick disc — row 9 asks for 8-16% of the local surface
+    density, and the observed α-rich sequence is about 0.04 dex wide — sits inside
+    the blind spot. Computed from the exact Gaussian mass per bin, not sampled
+    (rule B8). The threshold is stated, never moved (rule B5).
+    """
+    from galaxy.stages.chemistry_dtd import (
+        ALPHA_HIST,
+        MODE_MIN_SHARE,
+        PEAK_SEPARATION,
+        bimodality,
+    )
+
+    lo, hi, width = ALPHA_HIST
+    edges = np.arange(lo, hi + width / 2, width)
+    centres = 0.5 * (edges[1:] + edges[:-1])
+    feh = np.linspace(-1.0, 0.3, centres.size)  # wide enough that a found valley reads wide
+
+    def mass(mu: float, sigma: float) -> np.ndarray:
+        cdf = 0.5 * (1.0 + np.vectorize(math.erf)((edges - mu) / (sigma * math.sqrt(2.0))))
+        m = np.diff(cdf)
+        return m / m.sum()
+
+    def two_modes(share: float, sigma_thick: float) -> np.ndarray:
+        return (1.0 - share) * mass(0.05, 0.03) + share * mass(0.30, sigma_thick)
+
+    # The α-rich maximum is found, and then rejected by the window: 0.0929 of the
+    # mass inside ±0.05 dex against a threshold of 0.1000.
+    hist = two_modes(0.12, 0.04)
+    half = max(1, int(round(0.5 * PEAK_SEPARATION / width)))
+    maxima = [i for i in range(hist.size) if hist[i] > 0.0
+              and (i == 0 or hist[i] >= hist[i - 1]) and (i == hist.size - 1 or hist[i] > hist[i + 1])]
+    assert [round(float(centres[i]), 2) for i in maxima] == [0.05, 0.29], maxima
+    share_in_window = float(hist[maxima[1] - half : maxima[1] + half + 1].sum() / hist.sum())
+    assert share_in_window == pytest.approx(0.0929, abs=0.0005) and share_in_window < MODE_MIN_SHARE
+
+    assert bimodality(centres, feh, two_modes(0.12, 0.04))[0] == "single"
+    assert bimodality(centres, feh, two_modes(0.12, 0.03))[0].startswith("bimodal")
+    # Ten per cent or less is invisible at any width a galaxy could have.
+    assert all(bimodality(centres, feh, two_modes(0.10, s))[0] == "single" for s in (0.02, 0.03, 0.04))
+    # The closed form, against the detector itself.
+    for share, sigma in ((0.12, 0.04), (0.12, 0.03), (0.15, 0.04), (0.20, 0.06), (0.20, 0.08)):
+        predicted = share * math.erf(0.05 / (sigma * math.sqrt(2.0))) >= MODE_MIN_SHARE
+        assert (bimodality(centres, feh, two_modes(share, sigma))[0] != "single") == predicted, (share, sigma)
+
+
+def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
+    """Debt #69: §5d's "the viewer shows every published field" is short by four.
+
+    `view.js` picks from declarations alone, so this is answerable without a
+    browser: a grid field is a picture, an object field a column of the region
+    response, and a galaxy scalar a number — unless its stage publishes object
+    columns, which is rule D4 keeping the client from materialising a galaxy to
+    print one number. Those are the four.
+    """
+    from galaxy.api.service import Service
+
+    fields = Service().handle("/api/fields", f"model={model.name}").json()["fields"]
+    catalogue_stages = {f["stage"] for f in fields if f["domain"] == "object"}
+    lost = [f["name"] for f in fields
+            if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
+    assert sorted(lost) == [
+        "catalogue_size", "giant_fraction_sample", "mean_planets_per_star", "planet_count_sample",
+    ], lost
+    # The one that costs nothing: the region response's own census carries the count.
+    assert "catalogue_size" in lost
+    # S22's ruling (D148, debt #69): none of the four gets a surface, and each says so in its
+    # own declaration instead - which is where rule A9 puts an opinion about what is rendered.
+    by_name = {f["name"]: f for f in fields}
+    for name in lost:
+        assert "Not shown by the viewer" in by_name[name]["about"], name
+        assert "rule D4" in by_name[name]["about"], name
+    # Everything else does reach a surface, and every picture has its ramp (rule A9).
+    reachable = [f for f in fields if f["name"] not in lost]
+    assert len(reachable) == len(fields) - 4
+    assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
+
+
+def test_s21b_s20s_two_numbers_reach_the_viewer(simple):
+    """S20's two moved numbers, read back through the API the viewer reads (BRIEF.md)."""
+    from galaxy.api.service import Service
+
+    svc = Service()
+    fields = svc.handle("/api/fields", "model=simple").json()["fields"]
+    by_name = {f["name"]: f for f in fields}
+
+    # The thick disc's dispersion: a galaxy scalar of a stage that publishes no
+    # object columns, so the viewer prints it.
+    catalogue_stages = {f["stage"] for f in fields if f["domain"] == "object"}
+    decl = by_name["thick_disc_dispersion"]
+    assert decl["domain"] == "galaxy" and decl["stage"] not in catalogue_stages
+    header, _ = svc.handle("/api/arrays", "model=simple&fields=thick_disc_dispersion").frame()
+    assert header["scalars"]["thick_disc_dispersion"] == pytest.approx(35.0, abs=0.1)  # 40.4 until S20
+
+    # The radial spread: a grid field on (R, t) with a ramp, so the viewer draws it
+    # as an image — the number S20 recorded is the maximum over t and is not on the
+    # screen as a number (debt #73).
+    decl = by_name["disc_radial_spread"]
+    assert decl["domain"] == "grid" and decl["axes"] == ["R", "t"] and decl["ramp"] is not None
+    header, arrays = svc.handle("/api/arrays", "model=simple&fields=disc_radial_spread").frame()
+    spread = np.asarray(arrays["disc_radial_spread"])
+    axis = header["grid"]["axes"]["R"]
+    R = np.linspace(axis["lo"], axis["hi"], axis["n"])
+    at_sun = spread[int(np.argmin(abs(R - R_SUN)))].max()
+    at_two = spread[int(np.argmin(abs(R - 2.0)))].max()
+    assert at_sun == pytest.approx(1.09, abs=0.02)  # 1.47 until S20
+    assert at_two == pytest.approx(0.22, abs=0.02)  # 0.30 until S20

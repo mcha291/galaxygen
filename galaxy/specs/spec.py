@@ -204,23 +204,55 @@ class Miss:
 
 # Row 2's miss (debt #47, S16) was removed at S17 when the spheroid took 13% of the budget out of
 # what the disc accretes (D121); it reads 1.755 since S18 built the derived threshold, still inside.
-# Row 3's miss (debt #11, since S15) was removed at S18: it reads 250.96, inside 245-251 by 0.04, and
-# it landed on a mechanism its prediction did not name. The prediction was the bar (7e9 buckled into
-# the spheroid reads 249.4); what moved it was the merger's radial kick, which carries a fifth of the
-# disc's stars outward across R0 and is worth -0.2 km/s on the built model (-0.4 alone), on top of the
-# basis-free velocity solver S18 also brought in, worth -0.09 on S17's profile and -0.7 on S18's
-# cuspier one (D124). The derived threshold moves the row not at all (251.17 with and without it).
-# So the row is green at the edge of its window on a mechanism worth less than the window, and the
-# bar's prediction stands unread: if the buckling is built and the row does not fall to ~247, D121's
-# arithmetic is wrong. A miss that passes is an error to leave (debt #29); the reason is here.
+# Row 7's miss (debt #42, since S16) was removed at S20: it reads 962 pc, inside 720-1080, because
+# MERGER_HEATING was re-derived (120 -> 88.8, D128). The constant had been 'scaled so the merger
+# leaves the pre-existing disc at about 30 km/s' as if the kick were the thick disc's whole
+# dispersion, while the assembly stage composes it in quadrature with 27 km/s of secular heating
+# those stars already carry; net of that, the observed 35 km/s [recall: Bensby+03] needs a kick of
+# 22 km/s. The row is green on the constant's re-derivation and not on the thick disc's shape -
+# Sigma(R0) is unmoved at 47.3 and rows 5, 9 and 11 still miss - so if the thick disc is ever born
+# extended (debt #49) Sigma(R0) moves and this row with it. A miss that passes is an error to leave
+# (debt #29); the reason is here.
+# S21 (a) read the citation (AUDIT_II_A.md A-14): the 35 is Bensby et al. 2003's Table 1 adopted value for a
+# selection function, with no uncertainty; the measurement it stands in for is Soubiran et al. 2003's 39 +/- 4,
+# at which the constant is 112.3 and this row reads 1193 (out) with row 3 at 250.97 (in). The row is green on
+# the round number at the -1 sigma edge of the measurement; S22 rules whether the constant is re-set.
 _MISSES: tuple[Miss, ...] = (
+    Miss(
+        row=3,
+        debt=11,
+        since="S20",
+        reason=(
+            "251.03 km/s against 248 +/- 3, out by 0.03 (250.96 and inside by 0.04 at S18; 251.3 at "
+            "S17; 252.9 at S16; 260.1 at S15). S18 landed it on the merger's radial kick, worth -0.2, "
+            "and S20 re-derived the kick's constant: MERGER_HEATING was scaled so the merger alone "
+            "leaves the pre-existing disc at 30 km/s, but the model composes the kick in quadrature "
+            "with 27 km/s of secular heating those stars already carry, so the thick disc read 40.4 "
+            "against Bensby et al. 2003's 35. Net of the secular heating the kick is 22 km/s (88.8, "
+            "debt #42, D128), the radial spread at R0 falls 1.47 -> 1.09 kpc, fewer of the disc's "
+            "stars are carried across R0, and the row rises by 0.07 - back outside by less than the "
+            "solver's own correction (D124). Rows 3 and 12 still have one cause: the bar the model has "
+            "no dynamics for (D121)."
+        ),
+        prediction=(
+            "The bar's: 7e9 of disc buckled into the spheroid reads this row at 249.4 (D121) and row "
+            "12 inside with it; if the buckling is built at a scale radius that keeps row 14 inside "
+            "and this row does not fall to ~249, D121's arithmetic is wrong. Not a lever: the kick, "
+            "now set by a cited dispersion; nor z_f, derived at S15 (D117); nor the first infall's "
+            "law, which S20 probed five ways and which moves this row by under 0.1 (D128). **S21 (a) ran "
+            "the bar's**: 7e9 at the derived scale radius reads 249.64, inside - held to 0.2 km/s - and "
+            "row 14 at 144, not 123 (AUDIT_II_A.md A-3, tests/test_audit_ii_a.py). The row still closes "
+            "with the bar; what the bar costs is row 14's."
+        ),
+    ),
     Miss(
         row=5,
         model="simple",
         debt=19,
         since="S3",
         reason=(
-            "1.17 kpc against 2.0 +/- 0.2 (1.18 until S18; 1.32 until S17; 1.17 until S13). The "
+            "1.09 kpc against 2.0 +/- 0.2 (1.17 at S18 on the 120 km/s kick, D128; 1.18 until S18; "
+            "1.32 until S17; 1.17 until S13). The "
             "thick disc is every star born before the last major merger, and by then the disc is "
             "small: the early episode accretes on the thin disc's inside-out law, tau(R) = 7 Gyr x "
             "R/R0, so by 3.8 Gyr only 42% of the early gas at R0 has arrived and 31% at 12 kpc, and "
@@ -241,38 +273,22 @@ _MISSES: tuple[Miss, ...] = (
             "1 Gyr everywhere the pre-merger disc reads 2.11 kpc here - inside - but the whole early "
             "share turns into thick disc (row 11 1.7e10, row 9 0.62, row 2 1.30), and shrinking the "
             "share re-truncates it through the threshold (at a merger share of 0.8: rows 9 and 11 "
-            "inside, this row 1.35). Prediction, stated so it can fail: a fast first infall lands this "
-            "row only if most of the early gas is still gas at the merger, and a constant-efficiency "
-            "Kennicutt law with a threshold does not allow that. If a session builds the fast first "
-            "infall and this row lands with row 11, the reservoir was never the problem; if rows 5 "
-            "and 11 still trade through the merger share, the star formation law at high redshift is "
-            "what is wrong, not the split (debt #49)."
-        ),
-    ),
-    Miss(
-        row=7,
-        model="simple",
-        debt=42,
-        since="S16",
-        reason=(
-            "1279 pc against 900 +/- 180 (1309 until S18; 1126 at S16, 1042 and inside until then). "
-            "h_z = sigma_z^2 / 2 pi G Sigma, and S18 measured which factor it is: the total surface "
-            "density at R0 is 47.3 Msun/pc2, which is what is observed, and it barely moves under "
-            "anything S18 changed (1260-1370 across every thick-disc shape probed), so the row is "
-            "the dispersion. The thick disc's sigma_z is 40.4 km/s: 27 of secular heating over 11 "
-            "Gyr, in quadrature with the merger's 30 - a constant set at S3 so that 'the merger "
-            "leaves the pre-existing disc at about 30 km/s', which it does, on top of the 27 it "
-            "already has. At the observed thick-disc dispersion of 35 km/s the same Sigma reads 958 "
-            "pc; a kick of 24 km/s (MERGER_HEATING 96) reads 1027 (D124)."
-        ),
-        prediction=(
-            "This row belongs to debt #42, not to the thick disc's shape: it is MERGER_HEATING, "
-            "and that constant also sets the advanced model's row 6 (373 pc since S18, 439 before), "
-            "so the two are re-examined together when S20 opens the valley, as the debt says. If "
-            "the kick is reset to leave the thick disc at its observed 35-37 km/s in total and this "
-            "row lands while the advanced row 6 still misses, SECULAR_HEATING is the other constant "
-            "to read. Not a lever: the thick disc's extent - spreading it moves Sigma(R0) by a "
-            "percent."
+            "inside, this row 1.35). **S20 ran the prediction and it failed** (D128): with the first "
+            "infall on the halo's own dynamical time at z_f (0.55 Gyr; 1 Gyr reads the same) this row "
+            "reads 1.95 at the default share, 2.15 at 0.3, 1.70 at 0.65 and 1.26 at 0.8 - it lands "
+            "only where row 11 reads 1.7e10 and row 9 0.56, and at 0.8, where row 11 is inside, rows 5 "
+            "and 9 read 1.26 and 0.04. Rows 5 and 11 still trade through the share, so the "
+            "pre-committed reading applies: the star formation law at high redshift is what is "
+            "wrong, not the split and not the arrival law (debt #49). Also dead: the halo's own "
+            "mass-accretion history as the first infall (0.98 here, row 11 1.5e9: it delivers too "
+            "little before the merger) and a compact early disc at R_d(z_f) (0.62-0.82). Stated so it "
+            "can fail: this row lands with rows 9 and 11 only when most of the early gas is still gas "
+            "at the merger, which needs the early disc to consume gas slower than it accretes it and "
+            "then to stop - a star formation law with a burst and a cut, not a Kennicutt law with a "
+            "threshold. **S21 (a) ran that** (AUDIT_II_A.md A-5): star formation off from 1.0 to 3.8 Gyr "
+            "on the fast first infall leaves the early gas as gas at the merger, rows 8, 9, 10 and 11 land "
+            "together for the first time, and this row reads 1.61 - 0.2 short. By debt #19's own reading "
+            "the split criterion is what is wrong; S22 rules."
         ),
     ),
     Miss(
@@ -281,10 +297,10 @@ _MISSES: tuple[Miss, ...] = (
         debt=19,
         since="S18",
         reason=(
-            "0.013 against 4% +/- 2%: row 9's surface-density ratio divided by the scale-height "
-            "ratio (0.051 x 327/1279), so it carries no information row 9 does not and fails with "
-            "it (it read 0.033 while row 9 read 0.135). Registered separately only because the "
-            "table judges it separately; rows 8 and 9 are not independent and are never tuned apart."
+            "0.016 against 4% +/- 2% (0.013 at S18): row 9's surface-density ratio divided by the "
+            "scale-height ratio (0.0455 x 328/962), so it carries no information row 9 does not and "
+            "fails with it (it read 0.033 while row 9 read 0.135). Registered separately only because "
+            "the table judges it separately; rows 8 and 9 are not independent and are never tuned apart."
         ),
         prediction=(
             "It follows row 9 exactly, scaled by row 6 over row 7: whatever lands row 9 at the "
@@ -298,7 +314,8 @@ _MISSES: tuple[Miss, ...] = (
         debt=19,
         since="S18",
         reason=(
-            "0.051 against 12% +/- 4%: S3's gate, green since S3 on the cancellation debt #19 records "
+            "0.0455 against 12% +/- 4% (0.051 at S18 on the 120 km/s kick, which returned 0.015 of it; "
+            "the derived kick returns 0.010, D128): S3's gate, green since S3 on the cancellation debt #19 records "
             "(0.103, 0.152, 0.147, 0.135 across S3-S17: a thick disc too massive and too compact, "
             "whose errors compensated at R0), and red at S18 because the derived star formation "
             "threshold holds the reservoir the pre-merger disc formed its outer stars from: 11 "
@@ -306,10 +323,10 @@ _MISSES: tuple[Miss, ...] = (
             "the merger and the thick disc's surface density there falls by two thirds. Debt #47 "
             "said so in advance and pre-committed the reading: if this row cannot be restored with "
             "the threshold derived, the thick disc is what is wrong, not the threshold (D119). The "
-            "radial kick returns 0.015 of it (0.036 -> 0.051). The sweep the gate asks for, on the "
-            "built model: merger share 0.3 -> 0.8 reads this row 0.135, 0.088, 0.051, 0.024, 0.007, "
+            "radial kick returns 0.010 of it (0.036 -> 0.0455). The sweep the gate asks for, on the "
+            "built model: merger share 0.3 -> 0.8 reads this row 0.131, 0.083, 0.0455, 0.019, 0.005, "
             "0.001 while row 11 reads 1.45e10, 1.21e10, 9.6e9, 7.2e9, 4.9e9, 2.8e9 - never inside "
-            "together, so the cancellation is still there and the gate is not met (D124)."
+            "together, so the cancellation is still there and the gate is not met (D124, D128)."
         ),
         prediction=(
             "Rows 5, 9 and 11 are one row: at the observed scale lengths (2.0 thick, 2.6 thin) and "
@@ -319,7 +336,11 @@ _MISSES: tuple[Miss, ...] = (
             "0.13 at 0.8 on the constant threshold, 0.03 on the derived one. If that is built and "
             "this row lands with rows 5 and 11 inside together across a sweep of the merger share, "
             "the gate is met for the first time; if it lands with row 5 out, it is the same "
-            "cancellation in new clothes."
+            "cancellation in new clothes. **S21 (a)**: it lands with row 5 out, twice - at 0.115 with row "
+            "11 inside and row 5 at 1.61 on a cut-only law (A-5), and at 0.113 with row 11 inside and row 5 "
+            "at 2.56 when the stars are moved through the chemistry's kernel as well as the kick at a "
+            "merger share of 0.7 (A-2). Debt #50's bracket for this row was a fraction read as a ratio: "
+            "both kernels read 0.266 at the default share."
         ),
     ),
     Miss(
@@ -348,7 +369,9 @@ _MISSES: tuple[Miss, ...] = (
             "and this row and row 9 move together under the merger share instead of against each "
             "other. If they still cannot be satisfied together at the right scale length once the "
             "early infall is fast, the split criterion - born before the last major merger - is "
-            "what is wrong."
+            "what is wrong. **S21 (a)**: with the early infall fast and the early gas kept as gas to the "
+            "merger this row and rows 8, 9, 10 are inside together and row 5 is 1.61 (A-5), so that "
+            "sentence is now the reading."
         ),
     ),
     Miss(
@@ -375,7 +398,12 @@ _MISSES: tuple[Miss, ...] = (
             "the dissipational one - which is what a box/peanut is. If a session builds it at a scale "
             "radius that keeps row 14 inside and row 12 still misses, the low-j excess is not the "
             "bulge's seed and the whole derivation is wrong. Not a lever: mu, which is S16's and "
-            "verified, and which moves rows 20 and 2 with this one."
+            "verified, and which moves rows 20 and 2 with this one. **S21 (a) ran both** (A-3): 7e9 at the "
+            "derived radius reads row 3 at 249.6 and row 14 at 144, and at 1.5, 2, 3 and 4 times the "
+            "half-mass radius row 14 reads 129, 124, 121, 121.5 - never inside - so no concentration "
+            "lands this row and row 14 together and the conditional cannot be reached from either side; "
+            "the isotropic dispersion is the suspect (debt #52). mu = 1.06 reads this row at 1.46e10 and "
+            "row 2 at 1.14 (A-9)."
         ),
     ),
     Miss(
@@ -418,7 +446,11 @@ _MISSES: tuple[Miss, ...] = (
             "isotropy assumption, subtracting the rotation the model already computes "
             "(bulge_classical_fraction) would take the row below 113 and row 12 would still miss; if "
             "it is the missing bar-built mass, adding 7e9 takes the row to 123 and further out. They "
-            "cannot both be right, so the first session to build the buckling reads which."
+            "cannot both be right, so the first session to build the buckling reads which. **S21 (a) read "
+            "both** (A-3, A-12): the buckled 7e9 takes the row to 144 (not 123) and no concentration "
+            "brings it under 121; the rotation the model computes is 160 km/s at the half-mass radius and "
+            "subtracting it leaves 70. Two large errors of opposite sign, so 116 is not evidence; the "
+            "prediction is now debt #52's - a V/sigma-aware dispersion with the buckled mass reads near 113."
         ),
     ),
     Miss(
@@ -476,7 +508,8 @@ _MISSES: tuple[Miss, ...] = (
             "1.06-1.4 (D119: +/-1e9). Stated so it can fail: a model with the inner reservoir "
             "drained lands this row only if the tail is larger than the median mu gives, and if it "
             "lands at the median with the reservoir still there, the reservoir is being counted as "
-            "the outer HI."
+            "the outer HI. **S21 (a)**: it does, at every mu - the hydrogen outside 4 kpc reads 6.4 / 7.7 / "
+            "7.0 / 5.9e9 across mu = 1.06 / 1.15 / 1.25 / 1.4 and never the target's ~7.7e9 (A-13)."
         ),
     ),
     Miss(
@@ -485,20 +518,27 @@ _MISSES: tuple[Miss, ...] = (
         debt=42,
         since="S13",
         reason=(
-            "373 pc against 250-350 (439 until S18 derived the threshold, which holds 10.8 Msun/pc2 of "
-            "gas at R0 where the constant held 6.3, so Sigma rose and h_z fell; 384 at S16, 358 at S13). "
-            "The advanced thin disc is every star - the chemical split finds "
-            "no thick disc (debt #27) - so it keeps the merger-heated old population, and once "
-            "Sagittarius stopped delivering a tenth of the budget as young gas (debt #29, S13) the "
-            "mass-weighted dispersion at R0 rose from 326 pc to 358. SECULAR_HEATING and "
-            "MERGER_HEATING were fitted at S3 to the simple model's merger split (rule B10)."
+            "356 pc against 250-350 (373 at S18 on the 120 km/s kick; 439 until S18 derived the "
+            "threshold, which holds 10.8 Msun/pc2 of gas at R0 where the constant held 6.3, so Sigma "
+            "rose and h_z fell; 384 at S16, 358 at S13). The advanced thin disc is every star - the "
+            "chemical split finds no thick disc (debt #27) - so it keeps the merger-heated old "
+            "population, and once Sagittarius stopped delivering a tenth of the budget as young gas "
+            "(debt #29, S13) the mass-weighted dispersion at R0 rose from 326 pc to 358. S20 judged "
+            "rows 6 and 7 together and re-examined both heating constants (D128): MERGER_HEATING is "
+            "re-derived from the thick disc's observed dispersion net of the model's own secular "
+            "heating (120 -> 88.8), which lands the simple row 7 at 962 and moves this row 373 -> 356; "
+            "SECULAR_HEATING stays at 25, because 20 reads the simple row 6 at 228 and 30 at 451, both "
+            "out, and this row at 252 and 483. What is left, 6 pc over, is the heated old population "
+            "counted as thin (debt #27): 60 km/s reads it inside at 346 and the simple row 7 at 751."
         ),
         prediction=(
             "When the valley opens (debt #27) the heated stars leave the thin disc and this row falls "
-            "toward the simple model's 255; rows 6 and 7 are then judged together with both heating "
-            "constants re-examined. If it stays above 350 with a thick disc present, SECULAR_HEATING "
-            "is wrong for both models and the age-velocity relation it was read from is the place "
-            "to look."
+            "toward the simple model's 328. If a valley ever opens and it stays above 350 with a thick "
+            "disc present, SECULAR_HEATING is wrong for both models and the age-velocity relation it "
+            "was read from is the place to look. Not a lever now: MERGER_HEATING, which is set by a "
+            "cited dispersion since S20 and would have to fall below 78 to land this row alone (S21 (a): "
+            "below 74 - 351.4 at 78, 350.3 at 75, 348.7 at 70; A-11). The one probe that opens a real "
+            "alpha-rich mode - a burst inside the alpha-fall, A-4 - reads this row at 353, inside."
         ),
     ),
     Miss(
@@ -551,14 +591,34 @@ _NO_VALLEY = (
     "mode with a high-α tail, so the thick disc is empty and this row reads zero (debt #27)."
 )
 _NO_VALLEY_PREDICTION = (
-    "S9 swept the accretion inputs and re-integrated the infall with a fast first episode, a "
-    "slow merger-delivered second one, and a pause between them: the dip reaches 0.38 at "
-    "best and never the 0.5 that makes two modes. The accretion history alone will not "
-    "produce the valley; what should is the *inner* disc reaching low [α/Fe] early and its "
-    "migrants arriving at R₀ as a separate lump — which needs the inner disc's own early "
-    "history to be fast, i.e. an infall timescale far shorter than τ₀(R/R₀) gives inside "
-    "4 kpc. If a steeper inside-out law inside R₀ does not open a valley either, the DTD's "
-    "long tail is what keeps the local track at intermediate [α/Fe] and the miss is there."
+    "S9's prediction - the inner disc fast - ran at S10, S13, S18 and S20, and every valley it "
+    "opens is not the one this row asks for: each 'bimodal_wide' the detector has reported at "
+    "N_t >= 1000 (tau_0 = 1 at n = 2-3; Gaia-Enceladus alone at n = 3) is a spike of the stars "
+    "formed before any type Ia iron arrived, at the +0.45 plateau exactly, holding 5% of the mass, "
+    "with the split at 0.39 - above the alpha-rich sequence itself - and the rest of the early "
+    "population spread evenly from +0.2 to +0.45 (D128). S20 probed the mechanisms the plan and "
+    "the register named, the repo unchanged, all at the default grid and the dip checked across "
+    "N_t = 1000-4000: the first infall on the halo's dynamical time at z_f (dip 0.15); a compact "
+    "early disc at R_d(z_f) (0.00, and row 22 -0.147); the halo's own mass-accretion history (no "
+    "thick disc at all); the threshold switch's width (0.15 -> 0.19); a bar-driven drain of the "
+    "inner disc (a spike valley, row 10 halved); a mass-loaded wind at the metal escape fraction's "
+    "own odds (a spike valley at dip 0.6-0.7 with the budget gutted: row 2 0.4-0.7, row 3 214-224). "
+    "The cause is the shape of the chemistry's own histogram: dN/d[alpha/Fe] = Psi / |d[alpha/Fe]/dt|, "
+    "and in a threshold-regulated Kennicutt disc fed from t = 0 the star formation rate is already "
+    "falling while the alpha-fall runs, so the early population never piles up anywhere short of "
+    "the plateau. Prediction, stated so it can fail: a thick mode near +0.3 needs the first phase's "
+    "star formation to *rise* while its gas is rich and then be cut within ~1 Gyr - a burst - and "
+    "no accretion law under a constant-efficiency Kennicutt law does that (the reading debts #47 "
+    "and #49 reached for rows 5, 9 and 11 from the other side); if a mechanism ends the first "
+    "phase sharply and the histogram still shows no mode short of the plateau, the DTD's minimum "
+    "delay (0.15 Gyr, a spike by construction) is what the detector is reading, not a thick disc. "
+    "**S21 (a) attacked this and it held with its clock corrected** (AUDIT_II_A.md A-4): the strongest "
+    "accretion law (the early gas in 0.1 Gyr) reads the spike valley (dip 0.78, split 0.21); a x5 burst of "
+    "star formation in the first 0.8 Gyr forms its stars at the plateau and makes nothing; the same burst "
+    "placed inside the alpha-fall, 1-2 Gyr on the fast first infall and cut 2-3 Gyr, makes an alpha-rich "
+    "mode at +0.35 holding a tenth of the mass in one 0.02 dex bin, twice the spike, with the advanced row "
+    "6 at 353. The burst has to run after the first Ia iron and while the gas is rich - not within a "
+    "gigayear of t = 0 - and nothing in the repo makes one; in the simple model it is #49's trade unchanged."
 )
 _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     Miss(row=row, model="advanced", debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
@@ -592,7 +652,14 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
             "(debt #21). A gas dispersion that rises inward makes it worse (8 km/s everywhere reads "
             "-0.089), so the bar is the candidate; if the inner gas is cleared and the row still "
             "reads below -0.069, the wind's tilt (debt #26) is what is wrong. Not the lever: "
-            "GAS_DISC_SCALE_RATIO 1.25 reads -0.047 and is the wrong answer that passes (debt #45)."
+            "GAS_DISC_SCALE_RATIO 1.25 reads -0.047 and is the wrong answer that passes (debt #45). "
+            "**S21 (a) ran it and the mechanism is dead** (A-7): the row is fitted over 4-12 kpc and the "
+            "reservoir is inside 4 - emptied to 4e8 (the threshold capped at 5 Msun/pc2 there) the row reads "
+            "-0.0699, unmoved; capped at the R0 value everywhere inside R0 it reads -0.0794, further out; "
+            "the constant 5 everywhere reads -0.0633. What steepened it is the gas the threshold holds "
+            "inside the fit window (22.8 Msun/pc2 at 4 kpc, 6.1 at 12, against 10.2 and 4.7) with the wind "
+            "refitted to keep R0 solar. By this entry's own reading the wind's tilt (debt #26) is what is "
+            "wrong, and the bar is not this row's lever."
         ),
     ),
     Miss(
@@ -611,7 +678,15 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
             "of 1.6 [verified: S9's sweep, tests/test_chemistry_dtd.py]; the default is the "
             "cited 3.6 kpc. Either the citation's width is not this kernel's width, or the old "
             "gas gradient the model flattens from (-0.127 at 10 Gyr without migration) is too "
-            "steep to begin with. A measurement of the gradient at 10 Gyr decides between them."
+            "steep to begin with. A measurement of the gradient at 10 Gyr decides between them. **S21 "
+            "(a)**: 2.5 kpc reads -0.048, inside, with the young/old ratio at 1.22 - under 1.75 now - and "
+            "2.0 kpc inverts it (0.81); the ratio convicts the old stars' starting point (A-10). **S22 "
+            "corrected that**: both points are below where the ratio crosses 1.75, and the crossing is "
+            "inside this row's window - at 3.0 kpc the old gradient reads -0.033 and the ratio 1.76, so "
+            "one width lands the row and the ratio together and it is the citation's that does not. "
+            "**This is the one recorded miss whose cause is a constant the model could tune**, and it is "
+            "not tuned because 3.6 kpc is cited (Frankel et al. 2018) and moving it with both readings "
+            "known is what rule B5 forbids. The disc's structure wants a third width, under 1.8 (#50)."
         ),
     ),
     Miss(
@@ -620,10 +695,12 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
         debt=27,
         since="S9",
         reason=(
-            "'single' against 'bimodal_wide'. The [α/Fe] plane exists now — the plateau is at "
+            "'single' against 'bimodal_wide' at the default grid (N_t = 2000; 1000 and 4000 read the "
+            "same, and N_t = 8 manufactures a valley). The [α/Fe] plane exists — the plateau is at "
             "+0.45 and the present-day gas at R₀ is at +0.05 — but the stars at R₀ form one mode "
-            "at +0.21, where the local track lingers while the delayed iron catches up with a "
-            "star formation history that never pauses."
+            "at +0.17 (+0.21 until S18's threshold), where the local track lingers while the delayed "
+            "iron catches up with a star formation history that never pauses; the 21% born before "
+            "the merger are spread evenly from +0.14 to +0.42 and make no second mode (D128)."
         ),
         prediction=_NO_VALLEY_PREDICTION,
     ),

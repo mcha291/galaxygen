@@ -36,16 +36,17 @@ def test_every_row_names_a_field():
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
 SUMMARY = {
-    "simple": {"pass": 10, "fail": 12, "not-yet-computable": 2},  # S18: row 3 landed (on the kick, D124); rows 9 and 8 left the green (the derived threshold)
-    "advanced": {"pass": 9, "fail": 14, "not-yet-computable": 1},  # S18: row 3 landed, row 22 crossed its edge by 0.0008
+    "simple": {"pass": 10, "fail": 12, "not-yet-computable": 2},  # S20: row 7 landed (the kick re-derived, D128) and row 3 left by 0.03 on the same change
+    "advanced": {"pass": 8, "fail": 15, "not-yet-computable": 1},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "simple": {5, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23},
-    "advanced": {5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23, 24},
+    "simple": {3, 5, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23},
+    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23, 24},
 }
-# S18: row 7 re-attributed to #42 (it is the dispersion, not the shape), row 9 joins #19, row 20 is
-# #17's (at its zero-width target), the advanced row 22 is #47's; row 3 (#11) passes and left.
-DEBTS = {"simple": {2, 11, 15, 17, 19, 42}, "advanced": {2, 11, 17, 27, 28, 42, 47}}
+# S20: row 7 passes (#42's constant re-derived) and row 3 is #11's again (the bar); the advanced
+# row 6 stays #42's. S18: row 9 joins #19, row 20 is #17's (at its zero-width target), the
+# advanced row 22 is #47's.
+DEBTS = {"simple": {2, 11, 15, 17, 19}, "advanced": {2, 11, 17, 27, 28, 42, 47}}
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -81,7 +82,10 @@ def test_a_miss_belongs_to_one_model_or_to_all():
     assert spec.MISSES[22].debt == 15 and spec.MISSES_ADVANCED[22].debt == 47
     assert 24 in spec.MISSES_ADVANCED and 24 not in spec.MISSES
     assert spec.MISSES[12] is spec.MISSES_ADVANCED[12] and spec.MISSES[12].model is None
-    assert 3 not in spec.MISSES and 3 not in spec.MISSES_ADVANCED  # landed at S18, by 0.04, on the kick (D124)
+    # Row 3 landed at S18, by 0.04, on the kick (D124) and left again at S20, by 0.03, when the kick's
+    # constant was re-derived (D128): one entry for both models, the bar's (debt #11).
+    assert spec.MISSES[3] is spec.MISSES_ADVANCED[3] and spec.MISSES[3].model is None and spec.MISSES[3].since == "S20"
+    assert 7 not in spec.MISSES and spec.MISSES_ADVANCED[7].debt == 27  # the simple row 7 passes since S20
     assert {m.model for m in spec._MISSES_ADVANCED} == {"advanced"}
 
 
@@ -118,10 +122,11 @@ def test_recorded_misses_are_well_formed():
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
     assert "spec" in out and "2 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
-    assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid (row 3 was #11's too, since S15, until it landed at S18)
+    assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
+    assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
     assert "recorded miss, debt #19, since S3" in out    # rows 5 and 11
     assert "recorded miss, debt #19, since S18" in out   # rows 8 and 9: S3's gate, off the cancellation and out (D124)
-    assert "recorded miss, debt #42, since S16" in out   # row 7: the dispersion, not the shape (D124)
+    assert "recorded miss, debt #42, since S13" in out   # the advanced row 6: the heated old population counted as thin
     assert "recorded miss, debt #17, since S16" in out   # row 20: at its zero-width target
     assert "recorded miss, debt #47, since S18" in out   # the advanced row 22
     assert "recorded miss, debt #15, since S2" in out

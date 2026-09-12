@@ -297,6 +297,19 @@ def radial_transport(formed: np.ndarray, spread: np.ndarray, R: np.ndarray, dR: 
     return out
 
 
+def first_infall(t: np.ndarray, tau: np.ndarray, span: float) -> np.ndarray:
+    """Arrival kernel of the first episode: ``exp(-t/tau(R))`` per radius, normalised to one over the grid.
+
+    Factored out at S20 so the early episode's law can be substituted alone, the repo
+    unchanged (D114): the register asked whether the first infall should arrive on its
+    own short timescale (debt #49) and D128 records what that and four other laws read.
+    The thin disc's inside-out law is the one built; the merger-delivered episode has its
+    own recursion in ``compute`` and does not go through here.
+    """
+    norm = tau * (1.0 - np.exp(-span / tau))
+    return np.exp(-t[None, :] / tau[:, None]) / norm[:, None]
+
+
 def infall_profile(R: np.ndarray, R_inf: float, baryons: float) -> np.ndarray:
     """Surface density of everything that will ever accrete: one exponential of scale ``R_inf``, normalised to the budget.
 
@@ -355,17 +368,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     merger_share = float(ctx.fields["second_infall_share"])
     delivery = np.asarray(ctx.fields["merger_delivery"], dtype=float)  # budget fraction per Gyr
 
-    def episode(start: float) -> np.ndarray:
-        """Normalised exp(-(t - start)/tau) per radius, zero before ``start``."""
-        span = ctx.grid.spec.t_max - start
-        norm = tau * (1.0 - np.exp(-span / tau))
-        elapsed = t[None, :] - start
-        return np.where(elapsed >= 0.0, np.exp(-np.maximum(elapsed, 0.0) / tau[:, None]), 0.0) / norm[:, None]
-
-    early = episode(0.0)
+    early = first_infall(t, tau, ctx.grid.spec.t_max)
     # A unit of gas delivered in step j accretes as decay^(k - j) over the steps k >= j,
     # normalised so that the whole of it has arrived by the last step — the discrete
-    # form of the ``episode`` kernel, exact on the grid so the budget closes to
+    # form of the ``first_infall`` kernel, exact on the grid so the budget closes to
     # rounding. Convolving the delivery with it is the exponential's own recursion,
     # one multiply per step.
     decay = np.exp(-dt / tau)

@@ -1,52 +1,60 @@
-# BRIEF — for S19: the catalogue migrates, and the viewer shows the new fields (§5d; Opus)
+# BRIEF — the build is closed. This is for whoever maintains it.
 
-S0–S10 are closed; S11–S18 integrated, fixed and decided (D99–D125). S18 built the merger's
-radial kick, derived Kennicutt's threshold from the rotation curve, replaced the disc velocity
-solver, and refitted both solar calibrations (D124). Open per RESUMING.md, read RULES.md, then
-this; §11 is the register (32 open). Branch `session-19`; your decision is **D126**.
+S0–S22 are spent and §5d's plan is complete except for one command no session can run. Read
+RULES.md in full, then RESUMING.md, then `GALAXY_INPUTS.md` §11's head — the debt map — and stop
+there unless you are changing something. GALAXY_PLAN.md's board is the record of what is done (A9).
 
-## What you build (§5d row 19; debts #31, #32)
-- `systems.materialise` draws a **birth radius** around the present one with the migration
-  kernel's width (`migration_efficiency` × √(age/8 Gyr), the chemistry's own rule) and looks the
-  abundance up there, both models (D110); new golden values; determinism and per-region checks.
-- **Gate:** the catalogue's [Fe/H] spread at R₀ equals the chemistry's `feh_spread_sun`, which
-  reads **0.360** now — and note it is *narrower* than without migration (0.370): since S18 the
-  migrants reaching R₀ carry narrower age–metallicity relations than the local one (D124, debt
-  #28's test has the numbers). Your gate is an equality, not "wider"; assert it as measured.
-- **Previews** for every field published since S15 with none: `halo_density_sun`,
-  `halo_concentration_contracted` (S15); `infall_tail_surface_density`, `infall_tail_share`,
-  `infall_tail_inner_radius` (S16); `bulge_stellar_mass`, `bulge_scale_radius`,
-  `bulge_velocity_dispersion`, `bulge_classical_fraction`, `black_hole_mass` (S17);
-  `epicyclic_frequency`, `disc_radial_spread` (R, t), `stars_formed_history` (R, t),
-  `sf_threshold_surface_density` (S18). `halo_contraction` too (§5d). Ramps come from the
-  declaration and nowhere else (rule A9, D1–D5); the client computes no physics.
+## The one thing owed
+**Run the tag batch in `MANUAL_TODO.md` §1 from a desktop**, delete the stale `s01` first, then
+paste `git ls-remote --tags origin` under DECISIONS.md D161 and tick S22's board row from ◐ to
+☑. Twenty-one tags are queued at literal SHAs. S22 attempted it and got HTTP 403 on a tag ref
+with a branch push succeeding seconds later on the same credential — D40's finding, reproduced
+eight sessions on, and the reason rule C2e exists. Nothing else is outstanding.
 
-## What is different about the model since the catalogue was last touched
-1. **Where the stars are is not where they were born.** `sfh` publishes `stars_formed_history`
-   — (1 − R) Ψ dt per step, moved through `disc_radial_spread`, the merger's radial kick (1.47 kpc
-   rms at R₀ for stars born before 3.8 Gyr, 0.30 at 2 kpc, zero after). `stellar_surface_density`
-   is its sum; the vertical stages sort it. The chemistry still reads the *birth* history
-   (`sfr_surface_density_history`) and migrates abundances with its own kernel. A catalogue that
-   draws present radius from `stellar_surface_density` and birth radius by the migration kernel
-   is consistent with the chemistry; whether the kick should also enter the birth-radius draw
-   for pre-merger stars is your call — say which, and why, in D126.
-2. The threshold is Kennicutt's and diverges at the centre: 589 M☉/pc² at the first cell, so the
-   innermost rings hold gas (276 M☉/pc²) and form almost no stars; the advanced centre's [Fe/H]
-   peaks at 0.5 kpc (0.70) not at the first ring. Any catalogue check on the inner disc reads that.
-3. `NET_YIELD` 0.01376 and `WIND_SPEED` 860.3 (refit at S18, debt #43); the disc velocity solver
-   is basis-free (`disc.disc_circular_velocity`, one call per profile, 40 ms); the execution order
-   puts `disc` before `assembly`. Row 3 is green at 250.96 by 0.04 — do not read it as evidence.
+## What the instruments say
+`uv run pytest && uv run python -m galaxy.specs`: graph acyclic in both models, preflight 0
+UNSET, determinism reproducible within and across processes, spec **simple 10 / 12 / 2** and
+**advanced 8 / 15 / 1**, convergence 0 drifts. Those counts have not moved since S20 and are the
+fastest check that a clone is sound. `tools/verify_clone.py --ref main` does the whole of it in
+a fresh clone, which is the only verification rule C2 accepts.
+
+## What the model does not have, in one paragraph
+Twenty-seven register items are open: **15 ruled permanent**, **12 carried**, none unruled. The
+twelve carried are not twelve mechanisms. **Four of them are one** — #19, #27, #49 and the
+inner half of #47 — and it is the largest single absence in the build: *a first phase that
+consumes gas slower than it accretes it and then stops, the stopping after the first Ia iron
+has arrived*. A constant-efficiency Kennicutt law with a threshold cannot do it, and fourteen
+acceptance rows across the two models hang on it. Three more — #11, #52, #47's reservoir — are
+the bar, which is permanent because this model's controls are global scalars (A2) and no
+relation for the bar's first link is quoted anywhere in the project (A4). The permanent
+fifteen are eight source limitations, five scope limitations, one rule-A1 fixed point (#26's
+mass-loaded wind, which would make the retained baryon fraction a fixed point across
+checkpoints 1 and 3), and one rule-A9 instrument gap (#65).
+
+## Three things a maintainer should not have to rediscover
+- **Row 23 is the one recorded miss whose cause is a constant the model could tune.** At
+  `migration_efficiency` = 3.0 kpc the old gradient reads −0.033 (inside) and the young/old
+  ratio 1.76 against Willett+23's 1.75. The default stays the cited 3.6 kpc, because moving it
+  with both readings known is what rule B5 exists to prevent. Its miss entry says so.
+- **Row 3's miss is half the mesh.** 251.026 at the default grid against a window ending at 251.0;
+  251.013 at n_R = 3200. Red at every mesh, honestly — but 0.03 km/s is not a physical quantity.
+- **Rows 9 and 24 are nearly mutually exclusive through the bimodality detector.** At the observed
+  α-width it needs a thick/thin ratio of 0.145 — the top 18% of row 9's 0.08–0.16 — and at 0.05 dex
+  no value in row 9's window would do. GALAXY_PLAN.md §7's risk 6, with two rows named.
+
+## If you change something
+RESUMING.md's "Writing a stage" still applies, and two habits are worth more than the rest. A
+constant's *citation* is read before a row it lands is trusted — `MERGER_HEATING`'s "cited 35
+km/s" is a selection-function constant whose underlying measurement is 39 ± 4, at which row 7
+fails and row 3 passes; both values are in its about line and neither is averaged (B12). And a
+number an instrument prints gets republished by whoever runs the close next, so a corrected
+instrument must print the right number *beside* the wrong one — which is what `performance.py`
+now does with the catalogue's two fits, after ten sessions of a straight line through a curve.
 
 ## Traps
-- **Every pin that reads the catalogue moves with new golden values**: test_systems, test_planets,
-  test_determinism, test_api's object routes. Re-pin with the old number beside (D124 lists S18's).
-- **Write files with `newline="\n"`.** A Python `open(p, "w")` on this machine writes CRLF; git
-  normalises on commit but `tools/progress.py`'s line regexes fail on the working copy, and
-  `test_progress` with them. Normalise before running the board.
-- The full suite outlasts the Bash tool's cap: run it in the background with `EXIT=$?` appended
-  to its log and gate the merge on **that line**, not the tool's notice. Scratch scripts
-  `s19_<what>.py`; `uv run python` only. **Do not merge or delete `session-10-beta`,
-  `session-10-gamma`, `session-10-gamme-run-2`.**
-- Not yours: the heating constants (#42: `MERGER_HEATING` = 60 reads rows 7 and advanced 6
-  inside together — S20's first probe), the first infall's timescale (#49, S20 with the valley,
-  which the derived threshold reopens at τ₀ = 1 for n = 2–3), the inner gas reservoir (#47, #21).
+- **Write files with `newline="\n"`**; the full suite outlasts a tool's output cap — background
+  it with `EXIT=$?` appended to its log and gate the merge on that line.
+- A recorded miss that starts *passing* fails the run (#29): remove the entry and write down why.
+- **Do not merge or delete** `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`,
+  `session-21-a` or `claude/keen-lamport-lldlvp`. They are the sealed audit lists D99 and D102
+  rest on; their findings are on `main` and the branches are the record.

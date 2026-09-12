@@ -34,7 +34,7 @@ closes the project.
 > the current merge — but the tag has to be re-pointed, and a tag cannot be moved
 > from a web session (the same 403 that created this file). This is the cost of the
 > rewrite, recorded rather than left to be discovered when the batch runs.
-> **Still outstanding as of 2026-09-03**, and checked rather than taken on
+> **Still outstanding as of 2026-09-12**, and checked rather than taken on
 > report: `git ls-remote origin refs/tags/s01` returns `e3e8bba`, which peels to
 > the orphaned `56d7510`. A local `git tag -d s01` does not touch the remote —
 > the refspec push below is what deletes it, and it must run before the batch
@@ -56,7 +56,49 @@ closes the project.
 | 15 | `s15` | `71a25128d33c` | **queued** |
 | 16 | `s16` | `b0589232c886` | **queued** |
 | 17 | `s17` | `4338a60fdcd2` | **queued** |
-| 18 | `s18` | *TBD — filled in when S18 is merged* | **queued** |
+| 18 | `s18` | `4c73bca169b5` | **queued** |
+| 19 | `s19` | `2a8a9b4fc32d` | **queued** |
+| 20 | `s20` | `7e96422190ab` | **queued** — filled in by S21 (a) |
+| 21 | `s21` | *no merge commit exists* | **not tagged, by design** — see below |
+| 22 | `s22` | *TBD — filled in when S22 is merged* | **queued** |
+
+> **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
+> other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
+> a tag would have to point at something that is not one. S22 ported both lists instead, and
+> the commit that carries them is S22's merge, which `s22` tags. The two branches are the
+> record — `session-21-a` and `claude/keen-lamport-lldlvp` — and MANUAL_TODO §2 says to keep
+> them. The row above exists so that the gap is stated rather than discovered: a session
+> missing from the batch is exactly what this table is for.
+
+### S22 tried, and the batch is still owed
+
+**The close-out session attempted the batch and could not run it, which is the
+outcome rule C2e predicted and the reason this file exists.** From S22's web
+container, on 2026-09-12, with a credential that pushes branches to `main` in the
+same session and in the same command sequence:
+
+```
+$ git push origin refs/tags/s02          # a queued tag, at its literal SHA
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+send-pack: unexpected disconnect while reading sideband packet
+fatal: the remote end hung up unexpectedly
+                                          # git exit status 1
+$ git push origin claude/…                # the same remote, the same credential
+Everything up-to-date                     # git exit status 0
+```
+
+That is D40's finding reproduced eight sessions later and unchanged: the egress
+proxy allows branch refs and refuses tag refs, so it is a policy on the path and
+no credential handed to a session changes it. The local tag was deleted again and
+**nothing was pushed**. `git ls-remote --tags origin` still returns exactly what
+it returned at S0: `s00` (applied) and the stale `s01` (an orphan).
+
+**So the project is not finished, and the one thing between it and finished is
+this batch.** GALAXY_PLAN.md §5d's "done means" lists it, and S22's board row says
+so rather than claiming the close. Everything else on that list is met.
+**§5d also plans S22 on the web while requiring the batch to be run from a
+desktop** — the two cannot both hold, and the plan carried that contradiction
+from the day it was written (D116).
 
 ### Run these
 
@@ -121,12 +163,30 @@ git tag -a s16 b0589232c886 -m "S16: the high-j tail"
 # S17 — the spheroid derived and M_•.
 git tag -a s17 4338a60fdcd257d8297c4b1abd73d4bc6e932691 -m "S17: the spheroid and the hole"
 
-# S18 — the radial kick and the derived threshold. The batch replaces this with the literal SHA.
-git tag -a s18 "$(git rev-list -1 --grep='^Merge S18 into main' origin/main)" -m "S18: the kick, the threshold and the solver"
+# S18 — the radial kick and the derived threshold.
+git tag -a s18 4c73bca169b5af2d2d6729d16a965f701ce2a7b7 -m "S18: the kick, the threshold and the solver"
+
+# S19 — the catalogue migrates.
+git tag -a s19 2a8a9b4fc32d0040c79e60ac798fe6abe95bd818 -m "S19: the catalogue migrates"
+
+# S20 — the valley probed six ways and recorded; the kick re-derived.
+git tag -a s20 7e96422190ab26cdb35ad895a7c7304c087900eb -m "S20: the valley's record and the derived kick"
+
+# S21 — no tag. Two sealed branches, neither merged (D99); see the note above the batch.
+
+# S22 — the close-out: both audit lists ported, every debt ruled. The batch replaces this with the literal SHA.
+git tag -a s22 "$(git rev-list -1 --grep='^Merge S22 into main' origin/main)" -m "S22: the close-out"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
 ```
+
+**Then finish the record**, which is the only thing left after the batch runs:
+paste that `git ls-remote --tags origin` listing into `DECISIONS.md` under D161,
+mark every row above **applied**, and tick S22's board row from ◐ to ☑. A tag
+push that 403s prints an error and exits 1; a tag push that succeeded and a tag
+push that did nothing both print little, so the listing is the check and not the
+command's own output.
 
 `git rev-list -1 --grep=…` is exact because every session merge uses the subject
 `Merge S<N> into main: …` and no other commit does — checked after the rebuild:
@@ -138,7 +198,15 @@ SHA, prefer it — a grep can in principle match twice, a SHA cannot.
 **Keep the three S10 audit branches.** `session-10-beta`, `session-10-gamma` and
 `session-10-gamme-run-2` are unmerged by design (DECISIONS.md D99) and are the sealed
 lists the four-way comparison D102 rests on; do not delete them from the remote, and
-do not merge them — their findings are on `main` as debts #34–#45 and tests. Nothing
-else at present. Calibration debt is **not** tracked here — it lives in
+do not merge them — their findings are on `main` as debts #34–#45 and tests.
+
+**Keep both S21 audit branches, and never merge them into each other.** Aim (a) is
+`session-21-a`; aim (b) is `claude/keen-lamport-lldlvp` — the web container names its
+own branch, and that branch *is* `session-21-b` for every purpose GALAXY_PLAN.md §5d
+gives it. S22 ported both lists onto `main` (D99) without merging either, so neither
+branch is reachable from `main` and neither carries a tag: `s21` points at S22's merge
+of the ported lists, which is the first commit on `main` that holds both.
+
+Nothing else at present. Calibration debt is **not** tracked here — it lives in
 the register at `GALAXY_INPUTS.md` §11, which `tools/progress.py` counts onto the
 board. This file is only for actions that need a human at a keyboard.

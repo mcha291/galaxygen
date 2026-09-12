@@ -180,6 +180,19 @@ export function makePalette(decl) {
   };
 }
 
+/**
+ * The colour a declared field is drawn with: a ramp, or a palette when it is categorical.
+ *
+ * Which of the two applies is a property of the declaration, so the choice is made here
+ * beside the other declaration-driven ones rather than at each drawing site. Before S19
+ * only object columns were categorical and only one place drew them; the first categorical
+ * *field* would have been handed to `makeRamp`, which would have looked for a cmap a
+ * palette does not have (rule A9 — one opinion, in one place).
+ */
+export function paintOf(decl, cmaps, values) {
+  return decl.ramp && decl.ramp.kind === "palette" ? makePalette(decl) : makeRamp(decl, cmaps, values);
+}
+
 /** A strip of the ramp, for a legend. The legend is the ramp, not a copy of it. */
 export function legendStops(ramp, n = 32) {
   return Array.from({ length: n }, (_, i) => ramp.at(i / (n - 1)));

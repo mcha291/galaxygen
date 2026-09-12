@@ -13,7 +13,9 @@ import pytest
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, Constant, Model
 from galaxy.run import run
-from galaxy.stages.chemistry import GRADIENT_FIT_RANGE, gradient
+from galaxy.stages.chemistry import (
+    GRADIENT_FIT_RANGE, gradient, transport, transport_columns,
+)
 
 R_SUN = 8.2
 
@@ -26,6 +28,33 @@ def with_constant(model, name, value):
     c = dict(model.constants)
     c[name] = Constant(value, c[name].unit, "probe")
     return Model(name="probe", about="probe", stages=model.stages, constants=c)
+
+
+def test_the_columns_of_the_kernel_are_the_kernels_columns():
+    """The cheap reading of the migration kernel is the same reading, and by how much.
+
+    ``transport_columns`` replaces a row sum over the square kernel with a sliding window
+    over one Gaussian, which is only the same thing on a uniform grid — so the fallback is
+    checked as well as the shortcut, and both against the kernel itself rather than against
+    each other (rule B3). Not bitwise: a running total over 2n − 1 terms carries more
+    rounding than a pairwise sum over n, and the gap is worst at the smallest widths. The
+    bound is asserted rather than assumed, because that is what a tolerance is for.
+    """
+    worst = 0.0
+    for n in (17, 64, 400):
+        R = np.linspace(0.0375, 29.9625, n)
+        at = np.array([0, 1, n // 3, n - 1])
+        for sigma in (0.5, 3.6, 12.0):
+            square, columns = transport(R, sigma)[:, at], transport_columns(R, sigma, at)
+            assert np.allclose(square, columns, rtol=1e-11, atol=0.0), (n, sigma)
+            worst = max(worst, float(np.max(np.abs(square - columns) / np.where(square > 0, square, 1.0))))
+        # Zero width is the identity in both, exactly: no sum is taken at all.
+        assert np.array_equal(transport(R, 0.0)[:, at], transport_columns(R, 0.0, at))
+    assert worst < 1e-11, worst  # 5.7e-13 measured, at sigma = 0.5 on the default grid
+    # A grid that is not uniform falls back to the square kernel, which is then bitwise it.
+    uneven = np.sort(np.random.default_rng(0).random(50)) * 30.0
+    picked = np.array([0, 7, 49])
+    assert np.array_equal(transport(uneven, 3.6)[:, picked], transport_columns(uneven, 3.6, picked))
 
 
 def test_the_solar_neighbourhood_comes_out_solar(model):

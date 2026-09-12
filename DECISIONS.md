@@ -3426,3 +3426,989 @@ scale with N_t; with N_R it is quadratic in the quadrature, fixed at 1000 points
 **Convergence**: 0 drifts on N_R, N_t and N_z in either model, every row; row 3 moves
 0.04 km/s across N_R (250.99 / 250.96 / 250.95) against a 6 km/s window — and against
 its 0.04 margin, which the sweep is not built to judge and the record says so (D124).
+
+---
+
+### D126. The catalogue migrates, and the rule is the chemistry's whole rule and not half of it (debts #31, #32, #26; #50 opened)
+
+**The gate.** §5d gives S19 one number: the catalogue's [Fe/H] spread at R₀ equals the
+chemistry's `feh_spread_sun`. It reads **0.361 against 0.360** `[verified:
+tests/test_systems.py::test_the_catalogue_carries_the_chemistrys_own_spread_at_the_sun]`,
+and it is an identity rather than a coincidence — the catalogue draws from the distribution
+the field is a moment of. Getting there needed one decision the brief left open and one it
+did not anticipate.
+
+**Probed before built** (§5d), four rules, the advanced spread at R₀ in a ±0.25 kpc window:
+
+| rule | spread | |
+|---|---|---|
+| abundance at the present radius (S18's catalogue) | 0.284 | |
+| birth radius drawn backward, birth time from the local birth rate | 0.273 | *narrower* |
+| the same with the birth time from `stars_formed_history` | 0.273 | S18's transport is worth 1.5% |
+| **birth radius and birth time drawn together, backward** | **0.361** | against 0.360 |
+
+The BRIEF's sentence — "a birth radius drawn around the present one with the migration
+kernel's width" — read minimally is the second row, and it moves the number the wrong way.
+Two things had to be seen to get the fourth.
+
+1. **"Around the present one" is not a symmetric draw.** `transport` is normalised over the
+   *destination*, so `K[:, j]` read as a distribution over birth rings is not one. The
+   backward weight is `born[i] · K[i, j]` — Bayes — and both chemistries already compute
+   exactly that: `chemistry_dtd` writes `w = m * K[:, at_sun][:, None]` inline, and
+   `chemistry.migrate`'s mass-weighted smoothing is the same posterior in un-normalised
+   form. A symmetric draw is not merely different; it puts stars where nothing was born and
+   reads a metallicity off gas that made no stars (rule B9). Measured, it gives 0.84.
+
+2. **The birth-*time* marginal is itself a migrated quantity, and it is most of the answer.**
+   The catalogue drew a star's birth time from `sfr_surface_density_history` at its present
+   ring — "born here", the answer for a disc whose stars never moved. Of the stars now at
+   R₀, when they were born is `Σ_i born[i,k] K[i,R₀]`, which is 1.4 Gyr older in the mean:
+   **R₀ mean age 5.7 → 7.3 Gyr** in the advanced model, 6.0 → 7.3 in the simple. Drawing the
+   radius and leaving the time is half the rule and less than half the effect.
+
+So a star's birth radius and birth time are drawn together from the backward weights, and
+its abundance is read there. **The kick does not enter the draw** — the brief's open
+question. Two reasons, and the second is the finding: the kick is already spent in the
+present radius (`stellar_surface_density` is `stars_formed_history` summed, i.e. birth
+positions already moved by it), and the chemistry moves abundances with the churn alone, so
+entering the kick as well would make the catalogue disagree with `feh_stars_old`,
+`alpha_fe_stars` and `feh_spread_sun` — every published statement about where the stars now
+at R came from. Trading one inconsistency for another is not progress; naming it is, and
+that is **debt #50**: the model transports stars twice, with two kernels, and nothing
+reconciles them.
+
+**What #50 costs, stated because it is the price of the decision.** The catalogue's thick
+fraction at R₀ is now 0.221 where `thick_thin_surface_density_ratio` says 0.051 — row 9, a
+recorded miss whose target is 0.08–0.16. The two transports bracket the observed number:
+the kick alone puts too little thick disc at R₀, the churn alone too much. The thick disc's
+*total* is unmoved (0.2516 → 0.2535 of the catalogue), so this is about where the population
+sits and not how much of it there is, and the prediction is in the register.
+
+**Two duplicates removed, both rule A9, and the second was hiding a bug.**
+
+- The migration kernel and its age bins move to `chemistry.py` — `transport`,
+  `transport_columns`, `migration_width`, `age_bin_edges` — read by `chemistry_dtd` and by
+  `systems`. The catalogue cannot now churn by a different rule or a different binning than
+  the chemistry it is checked against.
+- **The thin/thick criterion is published**, as `birth_population` (R, t), by the vertical
+  stage that owns it. `systems` rebuilt it from `last_major_merger_time`, `alpha_fe_history`
+  and `alpha_split`. In the advanced model that reconstruction and `vertical_alpha`'s mask
+  *disagreed*: with no valley (debt #27) the stage's mask selects nothing, while the
+  catalogue's fallback was the merger time. It never showed, because the thick surface
+  density was zero and the population was drawn against it — the wrong criterion was
+  masked by a zero. Draw the population from the birth place, as the model's own definition
+  says, and the disagreement would have surfaced as a 21% thick disc in a model that says
+  it has none. Published, the advanced catalogue's empty thick disc follows from #27
+  instead of from an accident.
+
+`star_birth_radius` is published: the difference from `star_radius` is the churning, which
+is what debt #31 said never reached the viewer. **84% of the stars at R₀ were born inside
+it, mean birth radius 5.4 kpc** — which is debt #28's "migration is too strong" in its most
+direct form, and is pinned so that lowering `migration_efficiency` moves it first.
+
+**Debt #32 re-ruled: the spread was the wrong observable to have argued over.** §8's claim
+was that without migration the local distribution is far too narrow; the model refuted it
+(0.370 without, 0.360 with — migration *narrows* it). With the catalogue drawing birth
+places from the same kernel, migration turns out to dominate the solar neighbourhood on
+every statistic except the one §8 named: the mean age, the mean [Fe/H] (−0.33 → −0.25), and
+where the stars came from. A spread is a second moment of a mixture, and two shifted narrow
+components make a wide one look unchanged. The mean and the birth-radius distribution
+separate the hypotheses; the dispersion does not.
+
+**Debt #26's sample instrument is weaker, and that is re-pinned rather than left to drift.**
+The catalogue's metal-rich share went 0.005 → 0.0031 and the two models' giant-fraction
+contrast 1.58× → 1.25×, because a metal-rich star born at 1 kpc is now spread over the disc
+instead of counted where it formed. The centre's iron still reaches the planets — the
+occurrence assertion inside 1 kpc is unmoved — but the sample says less about it than it did.
+
+**The acceptance table did not move.** 10 pass / 12 fail / 2 not-yet-computable in the
+simple model and 9 / 14 / 1 in the advanced, unchanged from S18, and rows 16, 17 and 18 read
+42.8193, 5.70059 and 1.97 × 10⁷ as before: no acceptance row reads the catalogue.
+
+**Two things the build got wrong first, both caught by the suite.**
+
+- The empty-bin fallback returned `R[ring]` where `ring` numbers the *cell* rings, not the
+  grid — out of bounds on a small grid and silently a different radius on the default one.
+- The first draw took each star's birth radius from its own birth *step*, which put a
+  400-cell cumulative sum on every star: per-star cost 3.9 → 11.2 µs, and the star-dependent
+  part became the larger half of the catalogue, which `test_performance` asserts against
+  (D24). The kernel is a bin-level object — one width per 0.5 Gyr age bin — so the
+  birth-radius CDF is built at that resolution, once per (ring, bin), and drawing is a
+  vectorised binary search. It costs nothing in accuracy: 0.3655 binned against 0.3562 per
+  step, either side of the chemistry's 0.3602.
+
+**And one measurement that reversed a change.** Restricting the churn to the rings a region
+query actually touches made a region's star differ from the sweep's in the last bit: the
+arrival law is a matrix product over the rings, and BLAS sums a one-column product in a
+different order than a thirty-two-column one. Per-region determinism is this stage's whole
+contract (D60), so the churn is built for every ring whatever was asked for, and
+`transport_columns` — the kernel read by column, nine times cheaper over the catalogue's
+twenty-eight widths — is what makes that affordable. A one-cell query went 2.9 → 58 → 32 ms.
+
+---
+
+### D127. Cold timings and the profile at S19 (rules B2, B6)
+
+One fresh process per endpoint, `uv run python tools/timings.py`; the profile is
+`python -m galaxy.specs`'s performance section. Everything S19 moved is in the catalogue.
+
+```
+arrays: one profile      0.529 cold / 0.001 warm      region: one sector*   0.467 / 0.034
+arrays: history          0.577 / 0.007  6.4 MB        region: whole disc*   1.091 / 0.649
+arrays: scalar           0.280 / 0.001                system: one star*     0.626 / 0.029
+adv: history             0.984 / 0.004                adv: one sector*      0.822 / 0.035
+adv: alpha plane         0.951 / 0.004                adv: one star*        0.785 / 0.029
+metadata (index, version, stages, fields, inputs): 0.0001–0.0015, no stage run (rule D4)
+* includes the interpreter's first seeded draw, ~10 ms (debt #37). import + registry 0.085–0.099 s.
+```
+
+**The profile.** Whole model 1.393 s cold simple, 1.880 s advanced. `systems` is the
+costliest stage in both — 0.684 s (49.1%) and 0.662 s (35.2%) — ahead of `sfh` 0.233 and
+`chemistry_dtd` 0.747. It was 0.554 / 0.592 at S18, so the migration draw costs about 0.1 s.
+
+**Where the 0.1 s went, and why it matters that it went there.** The catalogue's cost is
+supposed to be per *cell*, not per *star* (D24), and `test_performance` asserts it. The
+first build broke that — a 400-cell cumulative sum per star took the per-star cost from
+3.88 to 11.2 µs and made the star-dependent part the larger half. Drawing at the kernel's
+own age-bin resolution and searching with a vectorised binary search puts it back: **4.19 /
+3.13 µs per star and 523 / 552 ms fixed**, against 3.88 / 2.76 µs and 397 / 432 ms at S18.
+87–90% of the catalogue at 20,000 stars still does not depend on how many stars were asked
+for, which is the property the LOD ladder rests on.
+
+**And the number that had to be watched separately.** A one-cell query — what `/api/system`
+costs, and the interactive path — went 2.9 → 58 → **28 ms**. The 58 was the whole churn built
+for a single cell; reading the kernel by column rather than building it square (`transport_
+columns`, nine times cheaper over the twenty-eight widths) is what brought it back. It cannot
+be brought back further by asking for fewer rings: that changes the arithmetic with the query
+and breaks per-region determinism (D126). Against the 0.63 s the same request spends running
+the six stages above the catalogue, 28 ms is not where that request's time is.
+
+**Unchanged.** `scaling.py` is not re-run: no stage changed complexity class — the churn is
+linear in the grid per ring and the kernels are counted by age bin, not by star.
+
+
+### D128. The valley does not open on any mechanism the model can derive, and the record says why; the merger's kick is re-derived from the thick disc's dispersion net of the secular heating (debts #27, #42, #49, #26, #47, #11, #19)
+
+**The decision the brief asked for.** §5d gave S20 one question — which mechanism the model
+*derives* to make the inner disc fast without steepening the infall law everywhere — with two
+candidates: the bulge's inflow (the plan's) and the first infall on its own short timescale
+(debt #49's, which S18 probed). The answer is **neither, and the question was the wrong shape**.
+Both were probed, with three more the probes led to, the repo unchanged (D114: `sfh.first_infall`
+is now one substitutable function, and the tests substitute it), every verdict at the default
+grid with the dip read across N_t = 1000–4000 (the N_t = 8 trap, debt #27). None opens the valley
+row 24 asks for. What they read, and the instrument that showed why:
+
+| first infall | advanced: dip, verdict | simple: rows 5 / 9 / 11 | other rows |
+|---|---|---|---|
+| the thin disc's law, as built | 0.00 single | 1.17 / 0.051 / 9.6e9 | — |
+| 0.1/H(z_f) = 0.55 Gyr everywhere (the halo's dynamical time; 1 Gyr reads the same) | **0.15** single, at N_t 1000/2000/4000 | **1.95** / 0.56 / 1.67e10 | row 2 1.27, adv row 6 594 |
+| the same at merger share 0.3 / 0.65 / 0.8 | — | 2.15 / 1.44 / 2.5e10; 1.70 / 0.23 / 1.06e10; 1.26 / 0.04 / **4.8e9** | rows 5 and 11 never inside together |
+| a compact early disc, R_d E(z_f)^(−2/3) = 1.4 kpc, on τ(R) | 0.00 | 0.62 / 0.002 / 1.5e10 | row 4 1.74, **row 22 −0.147** |
+| fast *and* compact (the disc the halo made at z_f) | 0.00 | 0.82 / 0.04 / 1.9e10 | row 22 −0.146 |
+| Wechsler et al. 2002's M(a) at a_c = 1/(1+z_f), as the rate | 0.00 | 0.98 / 0.002 / **1.5e9** | row 2 3.03 |
+| threshold switch width 0.25 → 0.1 → 0.05, on the fast law | 0.19 / 0.19 | — | not the lever |
+| a bar-driven drain of the inner disc after ELN's criterion fires (0.5 Gyr on the fast law) | 0.63 **bimodal_wide** at split 0.37 | 3.3 / 0.10 / 7.2e9 | **row 10 1.4e10, row 22 +0.15, row 4 −12** |
+| a mass-loaded wind, η = f_esc/(1 − f_esc), on the fast law | 0.59–0.72 **bimodal_wide** at split 0.23 | 2.1 / 0.4 / 4.5–6.8e9 | **row 2 0.4–0.7, row 3 214–224, row 10 0.9–1.4e10** |
+
+The first two rows are measured on the derived kick (88.8); the rest were probed on the 120 km/s kick the session opened with, which moves the thick-disc rows by a few percent and no verdict.
+
+**The instrument, and what it showed.** The [α/Fe] mass at R₀ was decomposed the way
+`chemistry_dtd` builds it (the backward weights, D126) by birth epoch, birth radius and birth
+time. At every law the early population at R₀ is 75–100% migrants born inside 6 kpc, and it is
+spread *evenly* from +0.2 to +0.45: on the fast law the stars born at t = 0–1 Gyr sit at +0.39,
+1–2 at +0.27, 2–3 at +0.18, each a sixth of the early mass, with no bin holding more than 3% of
+the total, against 18% in the thin mode's bin at +0.11. The histogram is dN/d[α/Fe] =
+Ψ / |d[α/Fe]/dt|, and in a threshold-regulated Kennicutt disc fed from t = 0 the star formation
+rate is *already falling* while the α-fall runs — the infall peaks at t = 0, the gas at R₀ never
+exceeds 15 M☉/pc² because it is consumed as it arrives, and the depletion time at that density
+(1.4 Gyr) is longer than the infall's, so half the early stars form after the infall has ended,
+on gas whose [α/Fe] falls 0.44 → 0.24 → 0.14 over 0.5–3.8 Gyr. Nothing piles up. A thick *mode*
+near +0.3 needs Ψ high where d[α/Fe]/dt is small, which is a rising burst on gas-rich material
+cut within a gigayear — exactly the reading debts #47 and #49 reached for rows 5, 9 and 11 from
+the other side ("most of the early gas still gas at the merger"). A constant-efficiency Kennicutt
+law with a threshold cannot do it: the threshold parks the gas and the switch keeps a third of
+the Kennicutt rate going through the whole fall (the switch's width is not the lever: 0.25 → 0.05
+moves the dip 0.15 → 0.19).
+
+**Every valley the detector has ever reported is the plateau spike.** S13's, S18's (τ₀ = 1 at
+n = 2–3, dips 0.57–0.64, split 0.39), the drain's (0.37) and the wind's (0.23): in each the α-rich
+"mode" is the stars formed before any type Ia iron arrived, at +0.45 exactly, 5–7% of the mass in
+the top two bins, with the split *above* the α-rich sequence itself and the rest of the early
+population a plain between +0.2 and +0.40 `[verified: tests/test_audit.py::test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike]`.
+DIP_DEPTH = 0.5 is met whenever the thin mode is tall and the plain thin enough, which is what
+the fast inner disc and the wind both do by shrinking the early tail — not by making a thick
+disc. Debt #27's S9 prediction is therefore dead in a way its earlier runs did not show: the
+inner disc fast does open *a* valley, and it is the wrong one. The register's prediction is
+replaced by the one above, stated so it can fail: if a mechanism ends the first phase sharply
+and the histogram still shows no mode short of the plateau, the DTD's minimum delay (0.15 Gyr —
+a δ-spike at +0.45 by construction) is what the detector is reading.
+
+**Why nothing was built for the valley.** The two mechanisms that do open a spike valley
+each cost the disc: the drain empties the inner disc (the bar's inflow, as the plan named it,
+takes 2e10 out of the disc's accretion), and the mass-loaded wind at the metal escape fraction's
+own odds — the one form with no new constant, η(R₀) = 2.3 — ejects 60% of the budget the halo
+says the disc retained, which cannot be re-normalised without the disc's retained mass becoming a
+fixed point across checkpoints 1 and 3 (the halo contracts around it; rule A1). Both are the bar's
+and the wind's *mass*, debts #21 and #26, which §5d gives S22 to rule on rather than S20 to close;
+the numbers are in the register. The derivable candidate the brief favoured, #49's first infall
+on the halo's dynamical time, is real physics with no constant and is not built either: in the
+simple model it lands row 5 (1.95) only where rows 9 and 11 read 0.56 and 1.67e10, and where row
+11 lands (share 0.8) rows 5 and 9 read 1.26 and 0.04 — the trade #49 said would kill it, and its
+pre-committed reading applies: **the star formation law at high redshift is what is wrong**, not
+the arrival law. Built, it would move rows 2, 6, 9, 10 and 11 out and row 5 in; recorded instead
+`[verified: tests/test_audit.py::test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed]`.
+
+**Debt #42, judged: `MERGER_HEATING` 120 → 88.8, derived; `SECULAR_HEATING` stays.** The
+constant's own about line said it was "scaled so the Milky Way's 1:4 merger leaves the pre-existing
+disc at about 30 km/s" — as if the kick were the thick disc's whole dispersion. The assembly stage
+composes it in quadrature with the secular heating and the birth dispersion, which read 27.06 km/s
+over the thick population at R₀, so the thick disc read 40.4 against the observed σ_W = 35
+`[recall: Bensby, Feltzing & Lundström 2003]` and row 7 1279 pc. Net of what the model already
+gives those stars the kick is √(35² − 27.06²) = 22.2 km/s and the constant 88.8; a test
+reproduces the arithmetic `[verified: tests/test_audit.py::test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating]`.
+It is not a sweep: S18's 60 lands rows 7 and the advanced 6 together (751 / 346) and was not
+taken; 88.8 is what the cited dispersion gives, and it lands **row 7 at 962** (inside; its miss
+entry went, the reason written in `spec.py`) with the advanced row 6 at 356 — 6 pc over, the
+merger-heated old population counted as thin, which is #27's. `SECULAR_HEATING` = 25 is bracketed
+by its own row: 20 reads the simple row 6 at 228 and 30 at 451, both out, so it stays. Rows 6 and
+7 are inside together in the simple model on a constant set by a citation; in the advanced model
+row 7 is zero and row 6 is 6 pc out, for the one reason (#27).
+
+**What the re-derivation costs, and where it is written.** The radial kick shrinks with it:
+1.47 → **1.09 kpc at R₀**, 0.30 → 0.22 at 2 kpc; row 5 1.17 → 1.09, row 9 0.051 → 0.0455 (the kick
+now returns 0.010 of it, not 0.015), row 8 0.013 → 0.016; the sweep of the merger share reads row
+9 0.131 / 0.083 / 0.0455 / 0.019 / 0.005 / 0.001 against row 11 unmoved, still never inside
+together. And **row 3 leaves its window by 0.03**: 250.96 → 251.03, because fewer of the disc's
+stars are carried across R₀. S18 landed it on the kick by 0.04 and said so; the constant's
+re-derivation is worth +0.07, and the row is back on the miss list under #11 with its cause
+unchanged — the bar (D121: 7e9 buckled into the spheroid reads 249.4). Rows 2, 4, 20, 22 do not
+move (the kick is downstream of the gas). The advanced model reads 8 pass / 15 fail / 1; the
+simple 10 / 12 / 2 with row 7 in and row 3 out.
+
+**Not done, on purpose.** The first infall on the halo's dynamical time (dead by the number,
+above); a cap or a bar-shaped region on the threshold (an invention, rule A4); the wind's mass
+(#26, S22's ruling — the number it needs is a retained budget that is an output, not an input);
+the detector (its false positive is real and is now named, and changing DIP_DEPTH or
+MODE_MIN_SHARE with the answer known is rule B5's exact prohibition); #50, which is S21's to read.
+The register carries the probes; `tests/test_audit.py` carries the three that S21 should re-run.
+
+### D129. Cold timings and the profile at S20 (rules B2, B6)
+
+One fresh process per endpoint, `uv run python tools/timings.py`; the profile is
+`python -m galaxy.specs.performance`. **This session ran on the desktop** where S19 ran on
+the web, and the machine is about three times faster on every route, so the S19 → S20
+comparison is a machine comparison, not a code one: nothing S20 changed touches a stage's
+cost (one constant and a function boundary in `sfh`).
+
+```
+arrays: one profile      0.170 cold / 0.0003 warm    region: one sector*   0.258 / 0.021
+arrays: history          0.219 / 0.003  6.4 MB       region: whole disc*   0.497 / 0.270
+arrays: scalar           0.158 / 0.0004               system: one star*     0.268 / 0.017
+adv: history             0.524 / 0.004                adv: one sector*      0.564 / 0.021
+adv: alpha plane         0.525 / 0.003                adv: one star*        0.560 / 0.018
+metadata (index, version, stages, fields, inputs): 0.0000–0.0007, no stage run (rule D4)
+* includes the interpreter's first seeded draw, 11.7 ms (debt #37). import + registry 0.102–0.116 s.
+```
+
+**The profile.** Whole model 0.755 s cold simple, 1.104 s advanced. `systems` is still the
+costliest stage in the simple model (0.261 s, 34.8%) and `chemistry_dtd` in the advanced
+(0.387 s, 35.1%) ahead of `systems` (0.276, 25.0%); `sfh` 0.152 / 0.147. The catalogue's cost
+is still per cell: 1.42 / 1.75 µs per star against 220 / 209 ms fixed, 89% / 87% of the
+catalogue at 20,000 stars independent of how many were asked for (D24, D127). A one-cell
+query 18–19 ms. `scaling.py` is not re-run: no stage changed complexity class.
+
+## Session 21 (a) — Audit II, aim (a): every prediction since S13, killed or held with a number
+
+Surface: desktop. Model: Fable 5.1. Branch `session-21-a` — sealed, never merged, never merged
+into `session-21-b`; S22 ports (D99). Reserved numbers #51–#64 / D130–D143; this run uses #51,
+#52, D130, D131.
+
+### D130. Twenty-two predictions run with the repo unchanged; fourteen findings; two debts opened, ten amended, eleven miss predictions replaced (debts #11, #19, #27, #28, #42, #46, #47, #48, #49, #50; #51, #52 opened)
+
+**Decision.** The list is `AUDIT_II_A.md`; the measurements are `tests/test_audit_ii_a.py`, one
+test per finding, each pinning the number at a stated precision. Nothing was fixed: every probe
+substitutes one function (`sfh.radial_transport`, `halo.angular_momentum_core`,
+`sfh.first_infall`, `sfh.star_formation_rate`, `sfh.toomre_threshold`) or one constant, and the
+verdict is read off the row's own window. Where a prediction carried a pre-committed reading,
+that reading is applied and not re-argued (LESSONS, S20). What S22 ports is §5 of the list.
+
+**Verdicts, in one paragraph each** `[verified: AUDIT_II_A.md §1; tests/test_audit_ii_a.py]`.
+
+- **Debt #50 is dead** (A-1, A-2). Its bracket compared the catalogue's thick *fraction* (0.221)
+  with a thick/thin *ratio*; as a ratio the bracket was 0.0455–0.284. Moved through both kernels
+  — the built kick, then the chemistry's own `transport(R, migration_width(age))` per age bin —
+  row 9 reads 0.266, and rows 4 and 3 read 3.49 and 244.9: the width `chemistry_dtd` and the
+  catalogue use is ruled out by the disc's structure the moment the mass follows it. The kick is
+  nothing beside the churn (0.002 on row 9). Rows 9 and 11 are inside together for the first time
+  in the project at a merger share of 0.7, with row 5 at 2.56 — the cancellation debt #19
+  recorded, run the other way. The reconciliation S22 rules on is not a composition: one of the two
+  widths is wrong and rows 3 and 4 say which.
+- **D121's bar prediction held on row 3 and died on row 14** (A-3, A-12). 7e9 at the derived scale
+  radius, the halo contracted around it: row 3 249.64 (D121 said 249.4), rows 12 and 13 inside,
+  row 14 144.4 (D121 said 123). At four times the half-mass radius row 14 is still 121.5, so no
+  concentration lands rows 12 and 14 together; subtracting the rotation the model computes
+  (160 km/s at r_half) leaves 70. Row 14's 116.2 is −46 and +28 cancelling — **debt #52**. The
+  advanced model's rows 6 and 22 pay for the bar (400, −0.081), which D121 did not list.
+- **D128's claims held with the clock corrected** (A-4). Every valley is the spike, on the
+  single-merger cases and on the strongest accretion law (the early gas in 0.1 Gyr: dip 0.78,
+  split 0.21, the spike 0.114 of the mass). A ×5 burst of star formation in the first 0.8 Gyr
+  forms its stars at the plateau and makes nothing; the same burst inside the α-fall — 1–2 Gyr on
+  the fast first infall, cut 2–3 Gyr — makes an α-rich mode at +0.35 holding a tenth of the mass
+  in one 0.02 dex bin, twice the spike, the first mode short of the plateau the model has ever
+  produced, with the advanced row 6 at 353. "A rising first phase cut within a gigayear" is right
+  about the shape and wrong about when: after the first Ia iron and while the gas is still rich.
+  Nothing in the repo makes one.
+- **Rows 5, 9 and 11's reading fired** (A-5). Star formation off 1.0–3.8 Gyr on the fast first
+  infall — the early gas left as gas at the merger — puts rows 8, 9, 10 and 11 inside together
+  (0.040, 0.115, 3.36e10, 6.72e9) with row 5 at 1.61. Debt #19's own sentence, "the split
+  criterion is what is wrong", is the reading by 0.2 kpc; S22 rules.
+- **Debt #48's verdict held and its claim died** (A-6). The spec's ensemble is one fixed diagonal
+  (seeds 0–40) whose standardised M_• residual has median −0.577σ, 2.9 standard errors from
+  zero; row 18's median moves with the width (1.97e7 → 9.9e6) while its verdict does not. Seeds
+  41–81 read −0.10σ and hold rows 16 and 17 (41.1 / 5.94). **Debt #51**: `ENSEMBLE_MIN` was
+  derived for the interval, not the median.
+- **The advanced row 22's mechanism is dead** (A-7). The row is fitted over 4–12 kpc; the
+  reservoir inside 4 kpc emptied to 4e8 leaves it at −0.0699, the threshold capped at the R₀
+  value inside R₀ takes it to −0.0794, the constant 5 everywhere reads −0.0633. It is the gas the
+  threshold holds *in the window*, with the wind refitted to R₀; by the entry's own reading the
+  wind's tilt (#26) is what is wrong and the bar is not this row's lever.
+- **Debt #46's pre-committed sweep cannot judge** (A-8): row 19 is the input, v_esc(R₀) is inside
+  530–580 at every w (544–577), and row 3 alone crosses between w = 0.8 (237.8) and 1.0 (249.3).
+- **The smaller ones.** μ = 1.06 lands rows 3, 12, 13 and loses 2 (1.14), 14 (146), 20 (7.53e9),
+  reproducing D121's 1.46e10–5.6e9 (A-9). The 2.5 kpc kernel lands the advanced row 23 (−0.048)
+  with the young/old ratio at 1.22, the wrong side of 1.75; 2.0 kpc inverts it (A-10) — debt #28's
+  second explanation is the one convicted. The advanced row 6 lands at `MERGER_HEATING` ≈ 74, not
+  78 (A-11). Row 20's hydrogen outside 4 kpc never reaches 7.7e9 at any μ (A-13). Debt #44 held
+  (1.764 / 1.755 / 1.755). Row 15 is 2.0 × 2.441, 0.08 above its floor.
+- **`MERGER_HEATING`'s citation is a selection-function constant** (A-14). Bensby, Feltzing &
+  Lundström 2003's σ_W = 35 is their Table 1's adopted characteristic value, no uncertainty; the
+  measurement their Sect. 1 quotes is Soubiran, Bienaymé & Siebert 2003's 39 ± 4 `[verified: both
+  papers read in full at S21 (a) by a read-only agent from the publisher-identical PDFs (Lund
+  University's repository copy of Bensby et al.; arXiv:astro-ph/0210628 for Soubiran et al.)]`.
+  At 39 the constant is 112.3, row 7 reads 1193 (out) and row 3 250.97 (in); the window's top is
+  σ_W = 37.1. Row 7 is green on the round number at the −1σ edge of the measurement, and rows 3
+  and 7 trade across the source's error bar. Not re-set here: the derivation's shape is S20's and
+  the value is S22's ruling under #42, with this number beside it.
+
+**The green rows** (`AUDIT_II_A.md` §3): no green row is an unconditioned prediction. Row 2 is the
+nearest and it is a prediction of two constants' defaults (μ moves it 1.14–1.82 across its 90%
+range). Row 4 is green because the mass does not follow the chemistry's churn (A-2).
+
+**Not run, and why** (§4): row 18's M_•–M_bulge on the classical share (no relation in the repo;
+entering one to read it is the tuning the entry exists to catch); #26's wind and #21's drain (S20
+ran them for S22); the catalogue under the double transport (no row reads it, and the grid's ratio
+agrees with the catalogue's to 7%).
+
+**What this branch changes and what it does not.** No physics, no constant, no default: the
+acceptance table reads 10 / 12 / 2 and 8 / 15 / 1 as S20 left it, and every pin in the suite
+stands. Changed: `spec._MISSES` / `_MISSES_ADVANCED` predictions for rows 3, 5, 9, 11, 12, 14, 20,
+the advanced 6, 22, 23 and `_NO_VALLEY_PREDICTION` (each appended with what S21 (a) read, the old
+prediction kept); the register (#51, #52; ten amendments); `tests/test_audit_ii_a.py` (twelve
+tests); `tests/test_docs.py` lists the audit file; `tests/test_audit.py` counts 34 / 18;
+`MANUAL_TODO.md` carries S20's SHA. The board row is ◐ with the model used.
+
+**Settled by.** Rule B4 — a prediction is a sentence that can fail, and twenty-two of them since
+S13 had never been run as written; rule B5 — nothing was moved to land a row (μ, w, the kernel
+width and the heating constant were read and left); D114 — a probe is a substituted function, and
+S20's factoring of `first_infall` made four of these probes a monkeypatch each; rule B10 —
+`MERGER_HEATING` was re-derived at S20 from a number the record called a citation, and the
+citation was read before the row was trusted `[inferred]`.
+
+### D131. Cold timings and the profile at S21 (a) (rules B2, B6)
+
+One fresh process per endpoint, `uv run python tools/timings.py`; the profile is
+`python -m galaxy.specs.performance`. Desktop, the same machine as S20 (D129). Nothing on this
+branch touches a stage, so this is a repeat measurement and the comparison with D129 is the
+machine's own scatter: every route within 10% of S20's number.
+
+```
+arrays: one profile      0.150 cold / 0.0003 warm    region: one sector*   0.241 / 0.019
+arrays: history          0.201 / 0.003  6.4 MB       region: whole disc*   0.481 / 0.261
+arrays: scalar           0.156 / 0.0003               system: one star*     0.257 / 0.018
+adv: history             0.483 / 0.003                adv: one sector*      0.513 / 0.020
+adv: alpha plane         0.478 / 0.003                adv: one star*        0.517 / 0.016
+metadata (index, version, stages, fields, inputs): 0.0000–0.0046, no stage run (rule D4)
+* includes the interpreter's first seeded draw, ~9 ms (debt #37). import + registry 0.097–0.105 s.
+```
+
+**The profile.** Whole model 0.689 s cold simple, 1.004 s advanced (S20: 0.755 / 1.104).
+`systems` 0.242 s (35.1%) in the simple model, `chemistry_dtd` 0.352 s (35.0%) in the advanced
+ahead of `systems` (0.251, 25.0%); `sfh` 0.140 / 0.140. The catalogue: 1.49 / 1.50 µs per star
+against 224 / 209 ms fixed, 89% / 88% of it independent of how many stars are asked for (D24,
+D127). The one-off first seeded draw 10.3 ms (debt #37). `scaling.py` not re-run: no stage
+changed. Twelve audit tests: `tests/test_audit_ii_a.py` runs in about a minute, most of it the
+two 41-seed diagonals and the six advanced runs.
+
+---
+
+# Session 21, run b — Audit II, aim (b): the instruments and the viewer
+
+S21 runs twice with two stated aims and the lists are diffed at S22 (GALAXY_PLAN.md
+§5d, D99, D102). This is aim **(b)**, on **Opus 5**: cold paths, the flaky per-star
+slope, the audit tests' pins, the bimodality detector's reach, and whether every
+published field arrives somewhere a person can see it. Aim (a) — every prediction
+since S13, killed or held with a number — is the other branch, and this one never
+reads it. Decisions **D144–D157** and debts **#65–#78** are reserved for this aim
+(D116); D144–D150 and #65–#73 are used. The branch is **not merged** — S22 ports
+both lists onto `main` (D99).
+
+### D144. Rule D4 is checked from outside the thing that reports it, and the stage column is published again (debts #65, #66)
+
+**The problem with the existing check.** Every D4 assertion in the suite reads
+`Response.stages`. That tuple is filled by the runner from what it executed, so it
+is not a fiction — but a check that takes the reporter's word is a check on the
+reporter (rule B3), and the suite has no assertion that stands outside it.
+
+**What was done.** Every registered stage's `compute` was replaced with a counting
+wrapper, the two pieces of physics the routes call outside the runner
+(`systems.materialise`, `planets.one_system`) were wrapped too, and every endpoint
+in `tools/timings.py` was called on a fresh `Service`. **The self-report is honest:**
+on all 17 endpoints the set of stages that executed equals the set the response
+named, no stage ran twice, and all seven metadata endpoints ran zero stage computes
+— counted at the stage rather than at the route `[verified:
+tests/test_audit.py::test_s21b_the_d4_report_is_what_actually_ran]`.
+
+**Two things the check found that the records do not hold.** The `disc` stage is
+back in every physics route's closure — S18 put Kennicutt's threshold on κ(R) —
+where D115 is the last table to publish a stage column and records it gone (debt
+#66); and `systems.materialise`, the costliest work a region or system query does,
+runs outside the runner and is in no `stages` tuple, so rule D4's instrument cannot
+see the thing rule D4 is about (debt #65). The region route's defence is real and
+holds; it is asserted in the response header's cell census, somewhere other than
+where the rule is checked.
+
+**The ruling.** The stage column goes back into the timings record (D150), which
+discharges #66 — the cost was never the point, the silence was. #65 is left open
+with a prediction rather than repaired, because putting `materialise` into the
+`stages` tuple would make the tuple mean two things (stages the runner ran, and
+physics the route ran) and A9's habit is one opinion per thing.
+
+### D145. The catalogue's cost is a straight line in cells, and a curve in stars (debts #67, #72)
+
+`catalogue_cost` has fitted a straight line through (stars realised, seconds) since
+S11, and every performance record since quotes the pair it produces — D129's is
+"1.42 / 1.75 µs per star against 220 / 209 ms fixed, 89% / 87% of the catalogue at
+20,000 stars independent of how many were asked for".
+
+**The line is fitted to a curve.** Twelve repeats on a quiet machine: the residuals
+keep their sign in 12 of 12 repeats at four of five sample sizes (−44, +5, +31, +28,
+−20 ms), and the marginal cost falls from 19.6 µs/star at 2k→5k to 0.93 µs/star at
+20k→40k, a factor of 21 inside the fitted range. A log–log exponent of 0.18 says the
+same: seconds is very nearly not a function of the stars asked for.
+
+**The variable it is a function of is cells.** Eight sizes, 500 to 80,000 stars,
+best of five each `[verified:
+tests/test_audit.py::test_s21b_the_catalogue_is_priced_per_cell_not_per_star]`:
+
+| fitted against | simple | advanced |
+|---|---|---|
+| stars realised | 2.46 µs/star + 0.222 s, R² 0.67 | 2.77 µs/star + 0.230 s, R² 0.65 |
+| cells realised | 426 µs/cell + 0.000 s, R² 0.972 | 491 µs/cell − 0.027 s, R² 0.977 |
+| both | 354 µs/cell + 0.71 µs/star + 32 ms, R² 0.9994 | 420 µs/cell + 0.69 µs/star + 4.5 ms, R² 0.9966 |
+
+The cells that realise a star saturate — 349 of 1024 at 500 stars, 800 at 20,000,
+829 at 80,000 — and that saturation is the whole of the curvature.
+
+**So there is no fixed cost.** What the fit calls fixed is the per-cell price of
+however many cells the sample lights up; it falls with the sample (156 ms at 500
+stars) and "86% of the catalogue does not depend on how many stars are asked for"
+is false as stated. It depends on the stars, through the cells.
+
+**What changed in the instrument.** `catalogue_cost` fits and publishes both lines
+with the R² of each — the per-star pair is kept because every record since S11
+quotes it and a comparison needs it — records the cells realised per sample, and
+`SAMPLES` is widened from (5k, 10k, 20k, 40k) to (500, 2k, 5k, 10k, 20k, 40k). The
+widening is D115's own lesson: over the old range the cells only run 630 to 817 of
+1024, so the per-cell line was extrapolated to zero cells from a fifth of its span
+and read a *negative* fixed cost. With 500 and 2,000 in, at 0.35 s more per model,
+the intercept comes back to the right order — 18.1 / 1.4 ms in this
+session's profile run, against −66.5 / −104.6 ms before the widening.
+
+**Read the slope, not the intercept.** Even widened, the per-cell line is
+extrapolated from 349 cells to zero and the intercept is not well determined: the
+close's `verify_clone` run, on the same container, read **−6.3 ms** for the simple
+model where the profile run read +18.1. All three readings are small beside the
+0.23 s the per-star fit calls "fixed", which is the finding; none of them pins the
+per-call cost, and the three-parameter fit's 32 ms is the better estimate of that.
+This is the same discipline the entry above applies to the per-star pair, turned on
+the number this run itself published (rule B6).
+
+**And a discharge re-read, not reversed** (debt #72). `AUDIT_RUN1.md` §2 discharged
+debt #24's remainder with "cost is proportional to the stars asked for". The verdict
+holds; the reason does not. The code is safe from D61's fear for a *better* reason
+than the one recorded — a nine-cell query pays for nine cells, not for nine cells'
+share of a fixed cost. The honest residual is that a one-cell query at 20,000 stars
+costs 20.2 ms of which 0.35 ms is the cell, and the remainder is `materialise`'s
+per-call work over every ring whichever cells were asked for — **D60's price, not
+waste**: narrowing the churn to a region's rings was tried at S19 and broke
+per-region determinism in the last bit.
+
+### D146. D115's flake is the fit's misfit, not the machine's noise (debt #68)
+
+`tests/test_performance.py::test_the_catalogue_is_priced_per_cell` asserted
+`per_star_us > 0`. D115 recorded it failing once in a close's full run, in both
+models, on a negative slope, and explained it as "the desktop's noise flips its
+sign".
+
+Measured rather than recalled, twelve repeats per model: the slope is **3.37 ± 0.32
+µs/star** (simple) and **3.30 ± 0.18** (advanced), reproducible to 9% and 5%, while
+the fit's own standard error on that slope is **1.24 and 1.29 µs — 3.9× and 7.1× the
+slope's actual scatter**. The median t-statistic is 2.9 and 2.5. So the assertion was
+a one-sided test at under 3σ by the fit's own error bar, and that error bar is
+inflated by D145's structured residuals, not by the machine: a straight line through
+a saturating curve has residuals of ±45 ms whatever the machine does.
+
+**D115 is right about the trigger and wrong about the width.** Load is what pushed a
+2.9σ test over; what made 2.9σ possible with nothing wrong was the misspecification.
+
+**The assertion now reads the conditioned fit** — `per_cell_us > 0` and
+`per_cell_r2 > per_star_r2` — which is a stronger check and not a looser one (rule
+B5): if the per-star line ever explained more than the per-cell line, the saturation
+would have gone and the test fails. The one old assertion that multiplied the fitted
+slope by the largest sample ("the stars are the smaller part") is replaced by the
+same claim measured at the top of the range, because the fitted slope is exactly the
+artefact.
+
+**The general lesson, which is rule B10 turned on an instrument.** A constant fitted
+against a broken mechanism has no claim on its value; so does a number published by
+a fit that was misspecified. Every "µs per star / ms fixed" pair in D105, D112, D115,
+D120, D125 and D129 is such a number. They are not corrected in place — a
+measurement is a record of what was measured — but no session should read one as the
+catalogue's marginal cost.
+
+### D147. The bimodality detector's mode test is a density test, and the Milky Way is inside its blind spot (debt #70)
+
+`bimodality` keeps a local maximum as a mode only if the histogram sums to
+`MODE_MIN_SHARE` = 0.10 of the **total** mass within ±`PEAK_SEPARATION`/2 = ±0.05 dex
+of the peak. That is a test on the peak's *density*, not on the mode's *share*, and
+for a Gaussian mode of share s and dispersion σ the condition is exactly
+
+    s · erf( 0.05 / (σ√2) ) ≥ 0.10
+
+Computed from the exact Gaussian mass per bin rather than from a sample (rule B8),
+the widest mode the detector can see is σ ≤ 0.007 dex at share 0.10, 0.035 at 0.12,
+0.051 at 0.15, 0.073 at 0.20 and 0.116 at 0.30; at share 0.10 or below it is
+invisible at every width a galaxy could have.
+
+**Row 9 asks the model for a thick disc holding 7–14% of the local surface density,
+and the observed α-rich sequence is about 0.04 dex wide** `[recall]`. At share 0.12 and σ 0.04
+the detector finds the α-rich local maximum exactly where it was put, at +0.29 dex,
+and rejects it: the window holds **0.0929** of the mass against **0.1000**, a miss by
+seven parts in a thousand `[verified:
+tests/test_audit.py::test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share]`.
+
+**Prediction, stated so it can fail (rule B4).** If the advanced model is ever given
+a thick disc at row 9's target share with the observed α-width, row 24 will still
+read `single`, and row 24's failure will then be the detector's rather than the
+model's. What kills it: any advanced-model configuration that lands row 9 inside
+0.08–0.16 *and* reads `bimodal_wide` at the default grid.
+
+**Not moved** (rule B5, and BRIEF.md asks for the statement rather than the change).
+The remedy is not obviously a different number either: a test that integrated the
+mode rather than its peak is a different instrument, and it would have to be chosen
+against the same evidence D128 read. **S22's ruling.**
+
+### D148. The viewer is short by four published fields, three of them for a reason worth keeping (debts #69, #73)
+
+`view.js` decides what a checkpoint shows from declarations alone, so this is
+answerable without a browser. Counting picture (grid), number (galaxy scalar whose
+stage publishes no object columns) and column (object, via region) against
+`/api/fields`: **113 fields in the simple model and 123 in the advanced, of which
+four in each reach no surface** — `catalogue_size`, `giant_fraction_sample`,
+`mean_planets_per_star`, `planet_count_sample` `[verified:
+tests/test_audit.py::test_s21b_four_published_scalars_reach_no_surface_of_the_viewer]`.
+
+They are excluded by `scalarsAt`, and the exclusion is right: asking for a scalar
+whose stage publishes object columns would materialise the galaxy's whole sample to
+print one number — rule D4's waste committed by the client instead of the endpoint.
+For `catalogue_size` it costs nothing, because the region response's own census
+carries the count. For the three planets-stage aggregates it is a real gap: neither
+the region response (star columns) nor the system response (one star's planets)
+carries them. **§5d's "the viewer shows every published field" is not met, by
+three**, for a reason that is rule D4 rather than an oversight — which is why
+nothing is built here. **S22 rules**: a cheap aggregate endpoint answering from the
+sample the region already built, or the three declarations ruled viewer-invisible
+with the reason written into them.
+
+**S20's two numbers do reach the viewer**, which is what BRIEF.md asked to check.
+`thick_disc_dispersion` is published by `vertical`, which publishes no object
+columns, and arrives as a scalar at **34.998** km/s against S20's 35.0.
+`disc_radial_spread` is a grid field on (R, t) with a ramp, drawn as an image; its
+maximum over t reads **1.0924** kpc at R₀ and **0.2284** at 2 kpc, against S20's 1.09
+and 0.22 `[verified: tests/test_audit.py::test_s21b_s20s_two_numbers_reach_the_viewer]`.
+One qualification, recorded as debt #73: the number S20 wrote down is a reduction
+over the time axis, and the viewer publishes no such reduction — the field is on the
+screen, the number is not. Not fixed here, because a reduction over an axis is a
+rendering opinion and rule A9 puts those in the declaration, which makes it a `core/`
+edit and a ruling.
+
+### D149. The audit pins, and the pattern that guards one near a window edge (debt #71)
+
+`tests/test_audit.py` says its numbers are "pinned loosely, as measurements to spot a
+regression by". Forty-six `pytest.approx` pins, measured against two yardsticks: **R**,
+the distance from the pinned value to the nearest edge of its row's acceptance window
+(a tolerance wider than R lets a verdict flip silently), and **H**, the largest step
+the pin's own trailing comment records.
+
+**No pin can flip its row.** Two approxes are wider than R — row 3's `v_tangential_sun`
+at 251.03 ± 0.5 against an edge 0.03 away, and row 7's 1069 ± 30 against an edge 11
+away — and both are guarded on the same line by a clause sharper than the approx:
+`Q[3].hi < v < Q[3].hi + 0.1`, and `inside(7, …)`. **The pattern is worth naming
+because it is the one that works: where a pinned value sits near a window edge, the
+guard is an inequality against the edge and the approx is only the measurement.**
+Written into LESSONS.md.
+
+**One pin is looser than the refit it exists to watch** (debt #71): the wind's
+contribution to the solar calibration, in `test_debt_43_the_two_solar_calibrations_and_their_levers`,
+pinned at −0.060 ± 0.01 with its own comment recording −0.064 before S18's refit — a step of 0.004, 2.5× inside the
+tolerance, so `WIND_SPEED` moving 982 → 860 km/s would have passed unremarked. Not
+tightened: the value was measured on one machine and the right tolerance is a
+judgement about cross-machine drift.
+
+**And one precision stated rather than changed.** Row 9's
+`thick_thin_surface_density_ratio` is pinned at 0.0014 ± 0.001 — 71% of the value.
+Both yardsticks call it sharp, and they are right, but the honest statement is that
+it cannot see a factor-1.7 change in a number the model is 57× short on. That is
+S19's lesson applied to itself: the pin is fine and the precision it checks at is 71%.
+
+### D150. Cold timings and the profile at S21b (rules B2, B6)
+
+Web container, uv-managed CPython 3.14.0rc2, one fresh process per endpoint, the
+suite not running. **The stage column is published again** (debt #66): S14's is the
+last record to carry one, and `disc` has been back in every physics route since S18.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+viewer: index.html       0.0002   0.0002   0.89        940  -
+viewer: a module         0.0001   0.0002   0.95     22,390  -
+index                    0.0001   0.0001   0.80      1,237  -
+version                  0.0012   0.0011   1.07      1,132  -
+stages                   0.0004   0.0003   1.14     10,020  -
+fields                   0.0010   0.0018   0.55     77,982  -
+inputs                   0.0001   0.0001   1.03     10,388  -
+arrays: one profile      0.3292   0.0007 445.36      4,984  halo,disc,assembly,sfh
+arrays: history          0.2841   0.0057  49.98  6,401,776  halo,disc,assembly,sfh,chemistry
+arrays: scalar           0.2178   0.0008 261.88      1,720  halo,disc,assembly,sfh
+region: one sector*      0.2698   0.0200  13.47     20,320  halo,disc,assembly,sfh,chemistry,vertical
+region: whole disc*      0.6108   0.3557   1.72  1,289,072  halo,disc,assembly,sfh,chemistry,vertical
+system: one star*        0.2529   0.0185  13.67      3,240  halo,disc,assembly,sfh,chemistry,vertical
+adv: history             0.6141   0.0024 251.71  6,401,784  halo,disc,assembly,sfh,chemistry_dtd
+adv: alpha plane         0.6001   0.0024 254.17  6,401,840  halo,disc,assembly,sfh,chemistry_dtd
+adv: one sector*         0.5005   0.0194  25.81     20,336  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+adv: one star*           0.5246   0.0167  31.39      3,248  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+* cold includes the interpreter's first seeded draw, about 8 ms here (debt #37)
+import + registry: 0.070-0.083 s
+```
+
+**The profile.** Simple **0.861 s cold** — systems 0.347 s (40.3%), sfh 0.188
+(21.8%), planets 0.146 (17.0%), chemistry 0.049 (5.7%); advanced **1.047 s** —
+chemistry_dtd 0.328 (31.4%), systems 0.345 (33.0%), planets 0.145 (13.9%), sfh 0.149
+(14.3%). This is a web container against S20's desktop, so the S20 → S21b comparison
+is a machine comparison; the shares are what carry across, and they are S20's within
+a point or two.
+
+**The catalogue, at the widened sample range and both prices** (D145): simple
+**423.4 µs per cell realised** (+18.1 ms, an extrapolated intercept — D145), at R² 0.99, against 4.23 µs per star + 232.7
+ms at R² 0.63; advanced **444.9 µs per cell + 1.4 ms** at R² 0.99 against 4.54 µs per
+star + 225.6 ms at R² 0.65. Cells per sample 349 / 479 / 630 / 740 / 800 / 817 of
+1024 at 0.5k / 2k / 5k / 10k / 20k / 40k stars. Layout 21 ms over all 1024 cells.
+
+**`scaling.py` is not re-run.** No stage changed complexity class: the catalogue's
+price changed variable, not order.
+
+---
+
+# Session 22 — the close-out: both lists ported, every debt ruled, the tags applied
+
+The last session §5d plans. Surface: web. Model: **Opus 5**, recorded from what ran.
+Branch `claude/youthful-hamilton-64vz9t` — the container names its own branch, and it is
+`session-22` for every purpose the plan gives it. Neither S21 branch is merged, into each
+other or into `main` (D99): both lists are **ported**, file by file, and the branches stay
+sealed as the record. Decisions **D158 onward**; the gaps at D132–D143 and D151–D157 are
+S21's two reservations, unspent (D116, and `tests/test_docs.py` encodes it).
+
+### D158. The two S21 lists, diffed — a different experiment from D102's, and it found a different thing
+
+**Decision.** §5d's gate for S21 is "two lists, diffed; every prediction has a verdict; no
+green row unconditioned". This is the diff, made from the two branches read side by side
+after both were ported, so the record lives on `main` as D102's does.
+
+**The two runs.** Aim **(a)**, `session-21-a`, **Fable 5.1**, desktop: every prediction the
+register and `spec._MISSES` made since S13, run with the repository unchanged — 22 of them,
+14 findings, debts #51–#52, decisions D130–D131, eleven miss predictions replaced,
+`AUDIT_II_A.md`, `tests/test_audit_ii_a.py`. Aim **(b)**,
+`claude/keen-lamport-lldlvp`, **Opus 5**, web: the instruments and the viewer — rule D4
+counted at the stages, the catalogue's price, D115's flake, the audit pins, the detector's
+reach, the viewer's coverage — 9 findings, debts #65–#73, decisions D144–D150,
+`AUDIT_S21B.md`, five tests. Both from `main` at 7e96422; neither read the other.
+
+**This is not D102's experiment and does not extend it in the way §5d hoped.** D102 ran the
+*same* aim several ways and could ask whether a finding was robust: it got five items every
+list found and five disagreements. S21 ran *different* aims, one model each, so a common core
+is not something its design can produce. What it can ask instead is whether the aims covered
+the space between them. Two things it found.
+
+**1. The one item both runs verified independently, they agreed on exactly.** Both ran the
+suite and the specs and both recorded simple 10 / 12 / 2 and advanced 8 / 15 / 1, with no
+recorded miss started passing (#29). That is the control: the two branches were reading the
+same repository and reporting it the same way.
+
+**2. The aims did not contain the findings — they contained the search, and each run found
+one thing the other's aim owned.** Aim (a), hunting physics predictions, opened **#51**: the
+spec's ensemble is one fixed diagonal whose standardised residual sits half a sigma low.
+That is an instrument, and it is aim (b)'s half by any reading. Aim (b), auditing
+instruments, found **#70**: the bimodality detector cannot see a mode holding a tenth of the
+mass at any width a galaxy could have — which decides acceptance row 24 and is aim (a)'s half
+by any reading. Neither found the other's, and neither was looking. An aim stated as
+territory routes the *search*; a finding lands wherever someone trips over it.
+
+**3. They collided on exactly one number, and the collision is the most useful thing in this
+diff.** Aim (a)'s close published the cold profile, as every close does, and quoted the
+catalogue at "1.49 / 1.50 µs per star against 224 / 209 ms fixed, 89% / 88% of it independent
+of how many stars are asked for" (D131). Aim (b) spent its session proving that pair is
+fitted to a curve and that **there is no fixed cost** (D145, #67). So in one session, one run
+republished the number the other killed — not through carelessness, but because the close
+ritual asks for the profile and the instrument printed those two numbers. Six earlier
+decisions carry the same pair (D105, D112, D115, D120, D125, D129). **That is rule B13's
+premise demonstrated rather than asserted**: a number that has to be *remembered* to be
+doubted will be republished by whoever runs the ritual next, and the only durable fix is the
+one aim (b) made — the instrument publishes both fits with their R² and names the conditioned
+one, so the next close cannot quote the wrong one without the right one beside it.
+
+**Every prediction has a verdict.** Aim (a)'s §1 is the table, 22 rows, each with what it was
+run as, what it read and whether it was killed or held; its §4 lists the four it did not run
+and why. **No green row is unconditioned**: aim (a)'s §3 re-reads all ten passing rows of the
+simple model and all eight of the advanced, and S22 checks mechanically that the table covers
+the pass set exactly — a row that passes and is not in the table would be a green nobody
+re-read `[verified: tests/test_s22_rulings.py::test_no_green_row_is_unconditioned]`.
+
+**What the diff says about the pairing, for whoever designs the next one.** Same-aim
+duplication measures whether a finding is robust. Different-aim duplication measures whether
+the aims cover the space — and this one says they did not, in both directions at once. If
+there is a third audit, state the aims as **coverage with an overlap**, not as territory:
+give both runs the instruments, and let the second aim be what differs.
+
+### D159. Every open debt ruled: 17 discharged, 15 permanent, 12 carried, and one opened at the checklist
+
+**Decision.** §5d's S22 row says "rule every open debt discharged, permanent or carried, with
+the reason". All 43 that were open when S22 started are ruled, the three verdicts are defined
+once at the head of `GALAXY_INPUTS.md` §11, and the map is a table a test asserts. The
+counts: **17 discharged**, **15 permanent**, **12 carried**, none unruled.
+
+**The three verdicts, and why "permanent" stays counted open.** Discharged means what the
+debt named is no longer true of the repository, and it is struck at the item's number, which
+is what `tools/progress.py` counts. Permanent means a property of the model's declared scope
+or of the sources, which no session closes: closing it would mean inventing a variable (A4),
+inventing a number (B9), or choosing a target with the answer known (B5). It is **not**
+struck, deliberately — a permanent limitation that stopped being counted would stop being
+read, and the board's "open debts" is the one number a session sees before it reads anything
+else. Carried means still open and closable, with the mechanism or measurement that would
+close it named; where the closer is itself a permanent debt, the entry says so.
+
+**The twelve carried ones are not twelve mechanisms.** Four — #19, #27, #49 and the inner
+half of #47 — are one: *a first phase that consumes gas slower than it accretes it and then
+stops, the stopping after the first Ia iron has arrived*. S20 killed #49's arrival law and
+S21 (a) built the shape by substitution: star formation off from 1.0 to 3.8 Gyr on the fast
+first infall lands rows 8, 9, 10 and 11 inside together for the first time in the project
+with row 5 short by 0.2 kpc (A-5), and the same shape one gigayear later, as a burst, is the
+only thing that has ever made an α-rich mode short of the plateau (A-4). A
+constant-efficiency Kennicutt law with a threshold cannot do it, in either model, at any
+radius — and **fourteen acceptance rows across the two models hang on that one absence**,
+which makes it the largest single thing this build does not have. Three more — #11, #52 and
+#47's reservoir — are the bar (#21, permanent). That leaves six.
+
+**The fifteen permanent ones are the shape of the build.** Eight are the sources' (#2, #17,
+#25, #34, #45, #46, #48, #79 — a number the project does not hold, or a target with no
+width). Five are the model's declared scope (#3, #15, #21, #22, #23). One is **rule A1**:
+#26's mass-loaded wind cannot exist here because the retained baryon mass would be a fixed
+point across checkpoints 1 and 3 — the halo contracts around what the disc keeps, and what
+the disc keeps is what the wind did not remove — and A1's ban on a grid fixed point is
+measured (an 8× multiplier), not a preference. That makes #26 and #3 **one statement from two
+ends**: `baryon_retention` is an input precisely because the mechanism that would derive it is
+out of scope, and the model has the causality the other way round and now says so. One is
+rule A9 (#65).
+
+**Two discharges worth naming, because they were dissolved rather than repaired.** #4's
+`R_CLOSURE_*` is read by nothing in the repository and has not been since S4; its residue —
+that the pitch–shear relation has no lever — is #22 and is permanent. #5 has no referent at
+all: there is no assembly *time* in this model to delay star formation from, because S15
+ruled `halo_assembly_z` the concentration's scatter under another name (K and z_f enter only
+as their product), and the infall runs from t = 0 with the threshold deciding the rest. What
+#5 was reaching for is #49's star formation law, where it can be measured.
+
+**And one opened, by the checklist itself (#79).** §5d's "done means" asks that every
+acceptance row either pass or be a recorded miss. One does neither, in both models, and never
+has: `gas_h2_fraction` is declared in `spec.py` and **published by no stage of either model**,
+so row 21 reads not-yet-computable and has never been judged in twenty-three sessions
+`[verified: tests/test_s22_rulings.py::test_debt_79_row_21_has_never_been_judged_in_either_model]`.
+It hid because a not-yet-computable row reports honestly and reads as a plan rather than a
+gap — row 24 is not-yet-computable in the simple model too, but by design and with the reason
+in its own note, and row 21 never had one. Ruled **permanent** on two independent grounds,
+either sufficient: a molecular fraction needs a prescription this project holds no citation
+for, and adding one at the close-out would be inventing a stage to fill a row (A4 read
+forwards); and the row could not pass if it were computed, its target being 0.11 with no
+uncertainty anywhere in the source (#17). **The acceptance table is 24 rows and this model has
+ever been judged on 23 of them**, which is the honest form of the sentence.
+
+**Where this leaves §5d's "done means".** The prose says "every item in the register is
+discharged, or ruled permanent with the reason written in"; the S22 row of the same section
+says "discharged, permanent or carried". They are not the same standard and the build meets
+the second, not the first: twelve items are carried, and four of those twelve are one missing
+mechanism with a measured shape. Recorded here rather than resolved by choosing the reading
+that makes the project finished.
+
+### D160. What S22 corrected in the two lists, and the one conclusion neither could reach
+
+**Decision.** Porting a sealed list is not the same as agreeing with it. Three numbers were
+re-read while the rulings were being written, and they changed three rulings.
+
+**1. Debt #28: one kernel width lands both chemistry observables, and aim (a) stopped one
+point short of it.** A-10 swept `migration_efficiency` to 2.5 and 2.0 kpc, read the young/old
+gradient ratio at 1.22 and 0.81 against the observed 1.75, and ruled "the row can be landed;
+the ratio cannot be landed with it" — convicting the debt's *second* explanation, that the old
+stars' starting gradient is too steep. Both points are below where the ratio crosses 1.75, and
+the crossing is inside row 23's window: **at 3.0 kpc the old gradient reads −0.033, inside
+−0.05 to −0.03, and the ratio 1.76** `[verified:
+tests/test_s22_rulings.py::test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the_cited_one]`.
+One width lands both, and it is 17% below the cited 3.6 kpc — which is the **first**
+explanation, that the citation's width is not this kernel's width. Two further corrections
+came with it: the young/old ratio this register has carried since S13, 3.03 and 3.27, is
+**stale** — S18's derived threshold moved it and nobody re-read it, and it is 2.55 and 2.49
+today; and the disc's *structure* wants a third width, under 1.8 kpc, once the mass follows
+the kernel (#50, A-2). So one kernel is being asked to be three widths. **The default stays
+the cited 3.6**: moving it here, with both readings known, is exactly what rule B5 forbids,
+and row 23 is therefore the one recorded miss in the table whose cause is a constant the
+model could tune. Its entry in `spec._MISSES_ADVANCED` says so.
+
+**2. Debt #11: row 3's miss is half the mesh.** The row reads 251.026 at the default grid
+against a window ending at 251.0 — out by 0.027 — and the radial mesh converges it to
+**251.013** at n_R = 3200 `[verified:
+tests/test_s22_rulings.py::test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model]`. So
+0.013 km/s of the miss is the model and the rest is n_R = 400. The row stays out at every mesh
+in the sweep, which is what keeps it an honest miss (B5, #29) — what is not honest is reading
+0.03 km/s as a physical quantity. It is one part in 460 of the window's half-width, smaller
+than the basis-free solver's own correction at S18 (0.09) and smaller than the grid's effect
+on it.
+
+**3. The conclusion neither list could reach: the only mode this project has ever opened is
+narrower than the Milky Way's.** Aim (a) made it — a ×5 burst inside the α-fall produces an
+α-rich mode at +0.35 holding 0.103 of the mass **in one 0.02 dex bin** (A-4), the first mode
+short of the plateau in the project's history. Aim (b) put the detector's mode test in closed
+form — a Gaussian mode of share s and dispersion σ is kept only if s·erf(0.05/(σ√2)) ≥ 0.10
+(#70). Neither read the other. Together: that mode is seen **because** it is narrower than the
+observed α-rich sequence by a factor of two or more, and at the observed ~0.04 dex the same
+share is invisible. Read against row 9's own window, at 0.04 dex the detector needs a
+thick/thin ratio of **0.145** — the top 18% of row 9's 0.08–0.16 — and at 0.05 dex it needs
+0.172 and row 9 has no value that would do `[verified:
+tests/test_s22_rulings.py::test_debt_70_and_27_the_only_mode_ever_opened_is_narrower_than_the_milky_ways]`.
+**Rows 9 and 24 are very nearly mutually exclusive through this instrument.** That is
+GALAXY_PLAN.md §7's risk 6 — the 24 quantities are not mutually consistent — with two rows
+named and the arithmetic shown, and it is the strongest argument in the project for running an
+audit twice: it took one run to make the mode, one to measure the detector, and a third pass
+to notice they were about the same object.
+
+**Settled by.** Rule B4 — a prediction is a sentence that can fail, and a sweep that stops
+before the crossing has not run it; rule B5 — 3.0 kpc is measured and not adopted, and the
+mesh is not a reason to widen row 3; rule B6 — the numbers are published and the verdicts are
+the reader's `[inferred]`.
+
+### D161. The tag batch could not be applied, for the reason C2e was written about
+
+**Decision.** §5d gives S22 "apply the tag batch from a desktop and delete the stale `s01`",
+and its gate is "tags on the remote, `git ls-remote --tags` listed in DECISIONS". **S22 ran
+on the web and the gate is unmet.** It was attempted rather than assumed, and the attempt is
+the record:
+
+```
+$ git push origin refs/tags/s02          # a queued tag, at its own literal SHA
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+send-pack: unexpected disconnect while reading sideband packet
+fatal: the remote end hung up unexpectedly
+                                          # git exit status 1
+$ git push origin claude/…                # same remote, same credential, seconds later
+                                          # git exit status 0
+```
+
+D40 recorded exactly this at S1 and rule C2e was written from it; eight sessions later it is
+unchanged, which is what a policy on the path looks like as against a permission on a token.
+The local tag was deleted and nothing reached the remote. What `git ls-remote --tags origin`
+says, listed here as the gate asks even though the answer is the one it was trying to avoid:
+
+```
+7e576caa1494dc58bda7d04484aef00371117961  refs/tags/s00
+0bc546d08bd6f22c66dc3b75b1875071665268f1  refs/tags/s00^{}
+e3e8bba6a52eec23ec64ab4d995bc965e2574839  refs/tags/s01
+56d7510a3a5b33613b89603ab11481e471b62f47  refs/tags/s01^{}
+```
+
+`s00` is applied and correct. `s01` is the stale one MANUAL_TODO has described since S1: it
+peels to `56d7510`, an orphan unreachable from `main` since the rebuild (D41), and it must be
+deleted before the batch creates the new one. Twenty-one tags are owed and none of them can be
+pushed from here.
+
+**Two things follow, and both are recorded rather than worked around.**
+
+**The plan contradicts itself, and has since D116 wrote it.** §5d's board puts S22 on the web
+and §5d's S22 row requires a desktop for one of its four deliverables. Those cannot both hold,
+and no session between S15 and here read the row closely enough to say so. It is the same
+class of defect as debt #79 — a line that reports honestly and reads as a plan rather than a
+gap.
+
+**So the project is not finished, and the batch is the only thing between it and finished.**
+Every other item on §5d's "done means" list is met or ruled; this one needs a human at a
+keyboard with a credential that can push a tag, which is precisely what `MANUAL_TODO.md`
+exists to hold. S22's board row is **◐**, not ☑, and the honest close is that the build is
+complete and the record is one command short of it. The batch in `MANUAL_TODO.md` is
+turnkey — every SHA literal but S22's own, which its last line greps by the merge subject —
+and it ends with the two steps that finish the record: paste the listing under this decision,
+and tick the row.
+
+### D162. Cold timings and the profile at S22 (rules B2, B6)
+
+Web container, uv-managed CPython 3.14.0rc2, one fresh process per endpoint, the suite not
+running. The stage column is published, which is debt #66's discharge made a habit rather
+than a repair: `tools/timings.py` always printed it and three records dropped it in the paste.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+viewer: index.html       0.0001   0.0002   0.63        940  -
+viewer: a module         0.0001   0.0002   0.71     22,390  -
+index                    0.0000   0.0001   0.80      1,237  -
+version                  0.0011   0.0011   0.98      1,132  -
+stages                   0.0003   0.0003   1.16     10,020  -
+fields                   0.0008   0.0010   0.82     79,466  -
+inputs                   0.0001   0.0001   1.08     10,921  -
+arrays: one profile      0.3202   0.0008 415.71      4,984  halo,disc,assembly,sfh
+arrays: history          0.3567   0.0050  71.93  6,401,776  halo,disc,assembly,sfh,chemistry
+arrays: scalar           0.2645   0.0006 438.00      1,720  halo,disc,assembly,sfh
+region: one sector*      0.2117   0.0158  13.44     20,320  halo,disc,assembly,sfh,chemistry,vertical
+region: whole disc*      0.5750   0.3133   1.84  1,289,072  halo,disc,assembly,sfh,chemistry,vertical
+system: one star*        0.3020   0.0169  17.84      3,240  halo,disc,assembly,sfh,chemistry,vertical
+adv: history             0.6099   0.0026 238.89  6,401,784  halo,disc,assembly,sfh,chemistry_dtd
+adv: alpha plane         0.6495   0.0029 221.75  6,401,840  halo,disc,assembly,sfh,chemistry_dtd
+adv: one sector*         0.6298   0.0197  32.03     20,336  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+adv: one star*           0.4378   0.0137  32.02      3,248  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+* cold includes the interpreter's first seeded draw, about 7 ms here (debt #37)
+import + registry: 0.055-0.070 s, paid once per process
+```
+
+The seven metadata routes run no stage, which is rule D4 read off the column; S21b checked the
+same thing at the stages rather than at the route and found the column honest (D144). `fields`
+and `inputs` are 1.5 KB and 0.5 KB larger than at S21b: that is S22's rulings arriving in the
+declarations, where debt #69 put them.
+
+**The profile.** Simple **0.727 s cold** — systems 0.329 (45.2%), sfh 0.136 (18.6%), planets
+0.129 (17.7%); advanced **0.966 s** — systems 0.326 (33.7%), chemistry_dtd 0.292 (30.2%),
+planets 0.126 (13.0%). The catalogue is still the costliest stage in both (D127, D129).
+
+**The catalogue, at both prices** (D145, #67), and this container is a third reading of the
+finding: simple **375.1 µs per cell realised at R² 0.94** against 4.38 µs per star + 179.9 ms
+at R² 0.81; advanced **337.7 µs per cell at R² 0.93** against 2.75 µs per star + 197.5 ms at
+**R² 0.39**. The advanced per-star fit explaining 39% of the variance is the clearest form the
+finding has taken yet: that pair is not a measurement of anything. The per-cell intercept reads
+−2.1 and +18.3 ms here against S21b's +18.1 and +1.4 — an extrapolation from 349 cells to
+zero, as D145 said, so the slope is the number and the intercept is not. Cells per sample 349 /
+479 / 630 / 740 / 800 / 817 of 1024, the saturation that makes the curve.
+
+**`tools/scaling.py` is not re-run.** No stage changed complexity class: S22 changed
+declarations, documents and one test tolerance, and added no computation to any stage.

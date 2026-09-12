@@ -709,10 +709,23 @@ PLANET_COLUMNS: tuple[str, ...] = (
     "planet_volatile_fraction", "planet_atmosphere",
 )
 
+# Debt #69, ruled at S22 (D148, AUDIT_S21B.md §6). These three are galaxy scalars of a stage
+# that also publishes object columns, and `view.js`'s `scalarsAt` excludes exactly those: asking
+# for one would make the client materialise the galaxy's whole sample to print a number, which is
+# rule D4's waste moved from the endpoint to the client. The exclusion is right and the claim in
+# GALAXY_PLAN.md §5d - "the viewer shows every published field" - was wrong, so the reason is
+# written into the declarations rather than an endpoint being added to make the claim true.
+INVISIBLE_TO_THE_VIEWER = (
+    " **Not shown by the viewer, and ruled so at S22 (debt #69).** It is a galaxy scalar of a stage "
+    "that publishes object columns, which `scalarsAt` excludes so that the client cannot "
+    "materialise a galaxy to print one number (rule D4). `/api/arrays` answers it."
+)
+
 PLANET_COUNT_SAMPLE = FieldDecl(
     name="planet_count_sample", label="Planets in the catalogue", unit="count", kind=Kind.SCALAR,
     meaningful_zero=True, provenance="seeded",
-    about="How many planets the published star sample turned out to have. A sample count, not a galaxy's.",
+    about=("How many planets the published star sample turned out to have. A sample count, not a "
+           "galaxy's." + INVISIBLE_TO_THE_VIEWER),
 )
 MEAN_PLANETS_PER_STAR = FieldDecl(
     name="mean_planets_per_star", label="Planets per star", unit="count", kind=Kind.SCALAR,
@@ -721,6 +734,7 @@ MEAN_PLANETS_PER_STAR = FieldDecl(
         "Averaged over the sample. Kepler's occurrence for planets of any size is of order one per "
         "star [recall], so this is the number that says whether the solid budget is plausible at "
         "all — and it is one of the two things the stage's fitted constant moves."
+        + INVISIBLE_TO_THE_VIEWER
     ),
 )
 GIANT_FRACTION_SAMPLE = FieldDecl(
@@ -730,6 +744,7 @@ GIANT_FRACTION_SAMPLE = FieldDecl(
         "Fraction of the sample's stars hosting at least one runaway giant. It is the *drawn* "
         "counterpart of giant_occurrence, which is computed: the two must agree, and a test says "
         "so — a sample that traces the wrong density is still internally consistent (rule B3)."
+        + INVISIBLE_TO_THE_VIEWER
     ),
 )
 
