@@ -34,7 +34,7 @@ closes the project.
 > the current merge — but the tag has to be re-pointed, and a tag cannot be moved
 > from a web session (the same 403 that created this file). This is the cost of the
 > rewrite, recorded rather than left to be discovered when the batch runs.
-> **Still outstanding as of 2026-09-03**, and checked rather than taken on
+> **Still outstanding as of 2026-09-12**, and checked rather than taken on
 > report: `git ls-remote origin refs/tags/s01` returns `e3e8bba`, which peels to
 > the orphaned `56d7510`. A local `git tag -d s01` does not touch the remote —
 > the refspec push below is what deletes it, and it must run before the batch
@@ -69,6 +69,36 @@ closes the project.
 > record — `session-21-a` and `claude/keen-lamport-lldlvp` — and MANUAL_TODO §2 says to keep
 > them. The row above exists so that the gap is stated rather than discovered: a session
 > missing from the batch is exactly what this table is for.
+
+### S22 tried, and the batch is still owed
+
+**The close-out session attempted the batch and could not run it, which is the
+outcome rule C2e predicted and the reason this file exists.** From S22's web
+container, on 2026-09-12, with a credential that pushes branches to `main` in the
+same session and in the same command sequence:
+
+```
+$ git push origin refs/tags/s02          # a queued tag, at its literal SHA
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+send-pack: unexpected disconnect while reading sideband packet
+fatal: the remote end hung up unexpectedly
+                                          # git exit status 1
+$ git push origin claude/…                # the same remote, the same credential
+Everything up-to-date                     # git exit status 0
+```
+
+That is D40's finding reproduced eight sessions later and unchanged: the egress
+proxy allows branch refs and refuses tag refs, so it is a policy on the path and
+no credential handed to a session changes it. The local tag was deleted again and
+**nothing was pushed**. `git ls-remote --tags origin` still returns exactly what
+it returned at S0: `s00` (applied) and the stale `s01` (an orphan).
+
+**So the project is not finished, and the one thing between it and finished is
+this batch.** GALAXY_PLAN.md §5d's "done means" lists it, and S22's board row says
+so rather than claiming the close. Everything else on that list is met.
+**§5d also plans S22 on the web while requiring the batch to be run from a
+desktop** — the two cannot both hold, and the plan carried that contradiction
+from the day it was written (D116).
 
 ### Run these
 
@@ -150,6 +180,13 @@ git tag -a s22 "$(git rev-list -1 --grep='^Merge S22 into main' origin/main)" -m
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
 ```
+
+**Then finish the record**, which is the only thing left after the batch runs:
+paste that `git ls-remote --tags origin` listing into `DECISIONS.md` under D161,
+mark every row above **applied**, and tick S22's board row from ◐ to ☑. A tag
+push that 403s prints an error and exits 1; a tag push that succeeded and a tag
+push that did nothing both print little, so the listing is the check and not the
+command's own output.
 
 `git rev-list -1 --grep=…` is exact because every session merge uses the subject
 `Merge S<N> into main: …` and no other commit does — checked after the rebuild:

@@ -782,3 +782,44 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] An audit's citations have to point inside the repository (rule B14), so a finding that
   is worth citing is worth pinning as a test in the same session. Five did; a probe that stayed
   in the scratchpad is a claim the next session cannot check.
+
+## From S22 (the close-out)
+
+- [close][all] Attempt the step you expect to fail, and paste what it printed. C2e was written
+  from a 403 at S1; S22 ran the tag push anyway, got the same 403 with the same credential that
+  pushed a branch seconds later, and that reproduction is worth more than the rule restated —
+  it turns "the proxy refuses tags" from a recollection into a measurement eight sessions apart
+  (D161).
+- [close][audit] A run that is not looking will republish the number the other run is killing.
+  S21 (a)'s close quoted the catalogue's per-star cost, because the ritual asks for the profile
+  and the instrument printed it, in the same session that S21b proved there is no fixed cost.
+  Nobody was careless. The fix is never "remember to doubt it" — it is to make the instrument
+  print the conditioned number beside the wrong one, which is rule B13 with a measurement behind
+  it (D158, D145).
+- [audit][all] A sweep that stops before the crossing has not run the prediction. Aim (a) read
+  the migration kernel at 2.5 and 2.0 kpc, saw the young/old ratio at 1.22 and 0.81 against 1.75,
+  and concluded the ratio could not be landed with row 23 — the crossing is at 3.0, inside the
+  row's window, and lands both. Two points on one side of a threshold are one point (D160, #28).
+- [audit][field] Take the mesh out of a miss before calling the miss a number. Row 3 is 0.027
+  km/s outside its window at the default grid and 0.013 at n_R = 3200: half the miss was the
+  radial mesh. The row is still red, which is the point — a converged small miss is honest and a
+  discretised one is not even wrong (D160, #11).
+- [audit] Two findings about the same object can sit in two lists and be invisible to both. One
+  run made an α-rich mode; the other measured what the detector can see; neither could say that
+  the mode is visible only because it is narrower than the Milky Way's own sequence. Budget a
+  pass whose only job is to read each list against the other (D158, D160).
+- [close] "Not yet computable" reads as a plan and hides as a gap. Row 21 has been
+  not-yet-computable in both models for twenty-three sessions because no stage publishes a
+  molecular fraction, and every report said so honestly every time. A status that is fine when
+  it is temporary needs a note saying which it is — row 24's has one and row 21's did not
+  (#79, D159).
+- [close] Give a register's verdicts a fixed vocabulary and a map, or a reader counts the
+  strikethroughs. Discharged / permanent / carried, defined once, with a table of which item is
+  which and a test on the table: the board's "27 open" then means 15 things nobody can close and
+  12 somebody could, instead of 27 unread paragraphs (D159).
+- [close][all] Let a permanent limitation keep being counted. The tempting tidy is to strike the
+  items no session can close so the number falls; the number is the first thing the next session
+  reads, and a limitation that stops being counted stops being read (D159).
+- [close] A plan can carry a contradiction for eight sessions if no row is read against another.
+  §5d put S22 on the web and required one of its deliverables to be done from a desktop. Read
+  the whole row, including the column that says where it runs (D161).

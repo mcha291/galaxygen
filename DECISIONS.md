@@ -4311,3 +4311,104 @@ to notice they were about the same object.
 before the crossing has not run it; rule B5 — 3.0 kpc is measured and not adopted, and the
 mesh is not a reason to widen row 3; rule B6 — the numbers are published and the verdicts are
 the reader's `[inferred]`.
+
+### D161. The tag batch could not be applied, for the reason C2e was written about
+
+**Decision.** §5d gives S22 "apply the tag batch from a desktop and delete the stale `s01`",
+and its gate is "tags on the remote, `git ls-remote --tags` listed in DECISIONS". **S22 ran
+on the web and the gate is unmet.** It was attempted rather than assumed, and the attempt is
+the record:
+
+```
+$ git push origin refs/tags/s02          # a queued tag, at its own literal SHA
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+send-pack: unexpected disconnect while reading sideband packet
+fatal: the remote end hung up unexpectedly
+                                          # git exit status 1
+$ git push origin claude/…                # same remote, same credential, seconds later
+                                          # git exit status 0
+```
+
+D40 recorded exactly this at S1 and rule C2e was written from it; eight sessions later it is
+unchanged, which is what a policy on the path looks like as against a permission on a token.
+The local tag was deleted and nothing reached the remote. What `git ls-remote --tags origin`
+says, listed here as the gate asks even though the answer is the one it was trying to avoid:
+
+```
+7e576caa1494dc58bda7d04484aef00371117961  refs/tags/s00
+0bc546d08bd6f22c66dc3b75b1875071665268f1  refs/tags/s00^{}
+e3e8bba6a52eec23ec64ab4d995bc965e2574839  refs/tags/s01
+56d7510a3a5b33613b89603ab11481e471b62f47  refs/tags/s01^{}
+```
+
+`s00` is applied and correct. `s01` is the stale one MANUAL_TODO has described since S1: it
+peels to `56d7510`, an orphan unreachable from `main` since the rebuild (D41), and it must be
+deleted before the batch creates the new one. Twenty-one tags are owed and none of them can be
+pushed from here.
+
+**Two things follow, and both are recorded rather than worked around.**
+
+**The plan contradicts itself, and has since D116 wrote it.** §5d's board puts S22 on the web
+and §5d's S22 row requires a desktop for one of its four deliverables. Those cannot both hold,
+and no session between S15 and here read the row closely enough to say so. It is the same
+class of defect as debt #79 — a line that reports honestly and reads as a plan rather than a
+gap.
+
+**So the project is not finished, and the batch is the only thing between it and finished.**
+Every other item on §5d's "done means" list is met or ruled; this one needs a human at a
+keyboard with a credential that can push a tag, which is precisely what `MANUAL_TODO.md`
+exists to hold. S22's board row is **◐**, not ☑, and the honest close is that the build is
+complete and the record is one command short of it. The batch in `MANUAL_TODO.md` is
+turnkey — every SHA literal but S22's own, which its last line greps by the merge subject —
+and it ends with the two steps that finish the record: paste the listing under this decision,
+and tick the row.
+
+### D162. Cold timings and the profile at S22 (rules B2, B6)
+
+Web container, uv-managed CPython 3.14.0rc2, one fresh process per endpoint, the suite not
+running. The stage column is published, which is debt #66's discharge made a habit rather
+than a repair: `tools/timings.py` always printed it and three records dropped it in the paste.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+viewer: index.html       0.0001   0.0002   0.63        940  -
+viewer: a module         0.0001   0.0002   0.71     22,390  -
+index                    0.0000   0.0001   0.80      1,237  -
+version                  0.0011   0.0011   0.98      1,132  -
+stages                   0.0003   0.0003   1.16     10,020  -
+fields                   0.0008   0.0010   0.82     79,466  -
+inputs                   0.0001   0.0001   1.08     10,921  -
+arrays: one profile      0.3202   0.0008 415.71      4,984  halo,disc,assembly,sfh
+arrays: history          0.3567   0.0050  71.93  6,401,776  halo,disc,assembly,sfh,chemistry
+arrays: scalar           0.2645   0.0006 438.00      1,720  halo,disc,assembly,sfh
+region: one sector*      0.2117   0.0158  13.44     20,320  halo,disc,assembly,sfh,chemistry,vertical
+region: whole disc*      0.5750   0.3133   1.84  1,289,072  halo,disc,assembly,sfh,chemistry,vertical
+system: one star*        0.3020   0.0169  17.84      3,240  halo,disc,assembly,sfh,chemistry,vertical
+adv: history             0.6099   0.0026 238.89  6,401,784  halo,disc,assembly,sfh,chemistry_dtd
+adv: alpha plane         0.6495   0.0029 221.75  6,401,840  halo,disc,assembly,sfh,chemistry_dtd
+adv: one sector*         0.6298   0.0197  32.03     20,336  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+adv: one star*           0.4378   0.0137  32.02      3,248  halo,disc,assembly,sfh,chemistry_dtd,vertical_alpha
+* cold includes the interpreter's first seeded draw, about 7 ms here (debt #37)
+import + registry: 0.055-0.070 s, paid once per process
+```
+
+The seven metadata routes run no stage, which is rule D4 read off the column; S21b checked the
+same thing at the stages rather than at the route and found the column honest (D144). `fields`
+and `inputs` are 1.5 KB and 0.5 KB larger than at S21b: that is S22's rulings arriving in the
+declarations, where debt #69 put them.
+
+**The profile.** Simple **0.727 s cold** — systems 0.329 (45.2%), sfh 0.136 (18.6%), planets
+0.129 (17.7%); advanced **0.966 s** — systems 0.326 (33.7%), chemistry_dtd 0.292 (30.2%),
+planets 0.126 (13.0%). The catalogue is still the costliest stage in both (D127, D129).
+
+**The catalogue, at both prices** (D145, #67), and this container is a third reading of the
+finding: simple **375.1 µs per cell realised at R² 0.94** against 4.38 µs per star + 179.9 ms
+at R² 0.81; advanced **337.7 µs per cell at R² 0.93** against 2.75 µs per star + 197.5 ms at
+**R² 0.39**. The advanced per-star fit explaining 39% of the variance is the clearest form the
+finding has taken yet: that pair is not a measurement of anything. The per-cell intercept reads
+−2.1 and +18.3 ms here against S21b's +18.1 and +1.4 — an extrapolation from 349 cells to
+zero, as D145 said, so the slope is the number and the intercept is not. Cells per sample 349 /
+479 / 630 / 740 / 800 / 817 of 1024, the saturation that makes the curve.
+
+**`tools/scaling.py` is not re-run.** No stage changed complexity class: S22 changed
+declarations, documents and one test tolerance, and added no computation to any stage.
