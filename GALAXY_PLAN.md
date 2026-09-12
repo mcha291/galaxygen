@@ -2,7 +2,7 @@
 
 ## Status
 
-`████████████████████████████████████████████░░` **22 / 23 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░` **22 / 23 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -28,7 +28,7 @@
 | ☑ | 19 | The catalogue migrates: birth radius **and birth time** drawn together from the chemistry's backward weights (#31 discharged, #32 re-ruled, #50 opened); the thin/thick criterion published; every published field previewed, in both models | web | Opus | **Opus 5** | s19 | 2026-09-10 |
 | ☑ | 20 | The valley probed six ways, the repo unchanged, and not opened: every valley the detector finds is the plateau spike, the early population a plain (#27's prediction replaced; #49's killed, #26 and the drain ruled for S22); `MERGER_HEATING` derived from the thick disc's dispersion net of the secular heating (120 → 88.8, #42: row 7 lands, row 3 leaves by 0.03) | desktop | **Fable** | **Fable 5.1** | s20 | 2026-09-11 |
 | ☑ | 21 | Audit II, run twice with two stated aims on two sealed branches, never merged into each other (§5d, D99). **(a)**, `session-21-a`: every prediction since S13 run with the repo unchanged — #50's dead and its bracket was a fraction read as a ratio, the bar holds row 3 (249.6) and kills row 14 (144), D128's burst works at 1–2 Gyr and not in the first, #46's sweep cannot judge; #51–#52, D130–D131, `AUDIT_II_A.md`. **(b)**, `claude/keen-lamport-lldlvp`: the instruments and the viewer — rule D4 counted at the stages and found honest, the catalogue priced per **cell** so D115's flake is a misfit, the detector's blind spot in closed form, four fields the viewer cannot show; #65–#73, D144–D150, `AUDIT_S21B.md`. S22 ports both | desktop + web | **Fable** ×1, Opus ×1 | **Fable 5.1** (a), **Opus 5** (b) | — (D99) | 2026-09-11 |
-| ☐ | 22 | Close-out: audit lists ported, every debt ruled, the tag batch applied (§5d) | web | Opus | — | s22 | — |
+| ◐ | 22 | Close-out. Both S21 lists **ported** onto `main`, neither branch merged (D99); the two lists diffed (D158); **every open debt ruled — 17 discharged, 15 permanent, 12 carried, none unruled** (D159), with #79 opened at the checklist: acceptance row 21 is published by no stage of either model and has never been judged; two of S21 (a)'s own conclusions corrected and one cross-list finding neither run could reach (D160). **The tag batch is still owed** — attempted here and refused, HTTP 403 on a tag ref, D40 reproduced (D161) | web | Opus | **Opus 5** | s22 | ◐ 2026-09-12 |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -47,8 +47,18 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S22. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
-is the record of S0's own brief.
+**Next:** S22 is the last row and nothing on it is a session's work. `BRIEF.md` is
+written for a maintainer rather than for a successor; `S0_PROMPT.md` is the record of
+S0's own brief.
+
+> **S22's ◐ is not rule C2d's.** C2d's ◐ means a session ran out and its branch stays
+> open for the next one to continue. S22 did not stop early: it finished every deliverable
+> a session can finish, and merged, because there is no next session to continue a branch.
+> The ◐ is there because **one of its four deliverables cannot be done from a session at
+> all** — the tag batch needs a credential that can push a tag ref, and the egress proxy
+> refuses one (D40, D161). It ticks to ☑ when someone runs `MANUAL_TODO.md` §1 from a
+> desktop and pastes the listing under D161. Until then the board says so, which is the
+> whole purpose of the column.
 
 **Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 35.
 

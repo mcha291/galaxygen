@@ -1,48 +1,60 @@
-# BRIEF — for S21: Audit II, run twice with two stated aims (§5d; one on Fable, one on Opus)
+# BRIEF — the build is closed. This is for whoever maintains it.
 
-S0–S10 are closed; S11–S20 integrated, fixed and decided (D99–D129). S20 changed one constant
-(`MERGER_HEATING` 120 → 88.8, derived) and one function boundary (`sfh.first_infall`), and wrote
-the valley's record. Open per RESUMING.md, read RULES.md, then this; §11 is the register (32
-open, 18 discharged). Two branches, `session-21-a` and `session-21-b`, **never merged into each
-other** — S22 ports both lists onto main (D99). Your decisions are **D130** onward.
+S0–S22 are spent and §5d's plan is complete except for one command no session can run. Read
+RULES.md in full, then RESUMING.md, then `GALAXY_INPUTS.md` §11's head — the debt map — and stop
+there unless you are changing something. GALAXY_PLAN.md's board is the record of what is done (A9).
 
-## Reserved numbers, fixed now (§5d row 21; D116 wrote them before S15 took D117)
-- Aim (a): debts **#51–#64**, decisions **D130–D143**. Aim (b): debts **#65–#78**, decisions
-  **D144–D157**. Open your first number at the start of your range whatever the other run did.
-- Give each run its aim in its first line and its model in the board row (the S10 comparison is
-  worthless if the model used is recorded from intention, GALAXY_PLAN.md §5).
+## The one thing owed
+**Run the tag batch in `MANUAL_TODO.md` §1 from a desktop**, delete the stale `s01` first, then
+paste `git ls-remote --tags origin` under DECISIONS.md D161 and tick S22's board row from ◐ to
+☑. Twenty-one tags are queued at literal SHAs. S22 attempted it and got HTTP 403 on a tag ref
+with a branch push succeeding seconds later on the same credential — D40's finding, reproduced
+eight sessions on, and the reason rule C2e exists. Nothing else is outstanding.
 
-## Aim (a): every prediction since S13, killed or held with a number (rule B4)
-- The predictions live in `spec._MISSES` / `_MISSES_ADVANCED` (every entry has one) and in §11's
-  entries from S13 on. Run each one that can be run with the repo unchanged; S20 left the
-  substitution point for the infall law (`sfh.first_infall`, monkeypatched in
-  `tests/test_audit.py`'s three S20 tests) and `with_constant` for the rest.
-- Not yet read by anyone: **#50** (S19: the model transports stars twice, kick in `sfh` and churn
-  in `chemistry`; its prediction is that moving the stars through both lands row 9 between 0.0455
-  and 0.221) — S19 wrote it for you to *read* and S22 to rule. The bar's prediction (D121: 7e9
-  buckled into the spheroid reads row 3 at 249.4, row 12 inside, row 14 at 123) has never run.
-- S20's own claims to test: every `bimodal_wide` the detector reports is the plateau spike (D128,
-  a test pins one case — try the single-merger ones); the valley needs a *rising* first phase cut
-  within a gigayear (nothing in the repo can make one, so this is a claim to attack, not confirm).
+## What the instruments say
+`uv run pytest && uv run python -m galaxy.specs`: graph acyclic in both models, preflight 0
+UNSET, determinism reproducible within and across processes, spec **simple 10 / 12 / 2** and
+**advanced 8 / 15 / 1**, convergence 0 drifts. Those counts have not moved since S20 and are the
+fastest check that a clone is sound. `tools/verify_clone.py --ref main` does the whole of it in
+a fresh clone, which is the only verification rule C2 accepts.
 
-## Aim (b): the instruments and the viewer
-- Cold paths (D4): every route in `tools/timings.py`, the metadata routes touching no stage.
-- `tests/test_performance.py::test_the_catalogue_is_priced_per_cell` is flaky under load (D115).
-- The audit tests' pins: `tests/test_audit.py` carries S10–S20's measurements at loose tolerances;
-  ask which ones would not notice a regression of the size that matters (S19's lesson: state the
-  precision you checked at). The `bimodality` detector's `MODE_MIN_SHARE` = 0.1 within ±0.05 dex
-  cannot see a thick mode holding 12% of the mass unless it is under 0.1 dex wide (D128) — an
-  instrument finding for you to state, not a threshold for you to move (rule B5).
-- The viewer previews every published field in both models (S19); check the two S20 numbers
-  reach it (`disc_radial_spread` 1.09 at R₀; the thick disc's σ_z 35.0).
+## What the model does not have, in one paragraph
+Twenty-seven register items are open: **15 ruled permanent**, **12 carried**, none unruled. The
+twelve carried are not twelve mechanisms. **Four of them are one** — #19, #27, #49 and the
+inner half of #47 — and it is the largest single absence in the build: *a first phase that
+consumes gas slower than it accretes it and then stops, the stopping after the first Ia iron
+has arrived*. A constant-efficiency Kennicutt law with a threshold cannot do it, and fourteen
+acceptance rows across the two models hang on it. Three more — #11, #52, #47's reservoir — are
+the bar, which is permanent because this model's controls are global scalars (A2) and no
+relation for the bar's first link is quoted anywhere in the project (A4). The permanent
+fifteen are eight source limitations, five scope limitations, one rule-A1 fixed point (#26's
+mass-loaded wind, which would make the retained baryon fraction a fixed point across
+checkpoints 1 and 3), and one rule-A9 instrument gap (#65).
+
+## Three things a maintainer should not have to rediscover
+- **Row 23 is the one recorded miss whose cause is a constant the model could tune.** At
+  `migration_efficiency` = 3.0 kpc the old gradient reads −0.033 (inside) and the young/old
+  ratio 1.76 against Willett+23's 1.75. The default stays the cited 3.6 kpc, because moving it
+  with both readings known is what rule B5 exists to prevent. Its miss entry says so.
+- **Row 3's miss is half the mesh.** 251.026 at the default grid against a window ending at 251.0;
+  251.013 at n_R = 3200. Red at every mesh, honestly — but 0.03 km/s is not a physical quantity.
+- **Rows 9 and 24 are nearly mutually exclusive through the bimodality detector.** At the observed
+  α-width it needs a thick/thin ratio of 0.145 — the top 18% of row 9's 0.08–0.16 — and at 0.05 dex
+  no value in row 9's window would do. GALAXY_PLAN.md §7's risk 6, with two rows named.
+
+## If you change something
+RESUMING.md's "Writing a stage" still applies, and two habits are worth more than the rest. A
+constant's *citation* is read before a row it lands is trusted — `MERGER_HEATING`'s "cited 35
+km/s" is a selection-function constant whose underlying measurement is 39 ± 4, at which row 7
+fails and row 3 passes; both values are in its about line and neither is averaged (B12). And a
+number an instrument prints gets republished by whoever runs the close next, so a corrected
+instrument must print the right number *beside* the wrong one — which is what `performance.py`
+now does with the catalogue's two fits, after ten sessions of a straight line through a curve.
 
 ## Traps
-- **Write files with `newline="\n"`**; the full suite outlasts the Bash tool's cap — background
-  it with `EXIT=$?` appended to its log and gate the merge on **that line**. Scratch scripts
-  `s21_<what>.py`, deleted before the close asserts `git ls-files --others` is empty.
-- Row 3 reads 251.03, out by 0.03, on the miss list under #11 since S20; row 7 (simple) passes at
-  962 since S20. The advanced model reads 8 / 15 / 1. A recorded miss that starts passing fails
-  the run (#29): remove the entry and write why.
-- The `judged` fixture runs both models' 41-seed ensembles once per session; `tests/test_spec.py`
-  pins the pass/fail sets and the debt sets per model.
-- **Do not merge or delete `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`.**
+- **Write files with `newline="\n"`**; the full suite outlasts a tool's output cap — background
+  it with `EXIT=$?` appended to its log and gate the merge on that line.
+- A recorded miss that starts *passing* fails the run (#29): remove the entry and write down why.
+- **Do not merge or delete** `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`,
+  `session-21-a` or `claude/keen-lamport-lldlvp`. They are the sealed audit lists D99 and D102
+  rest on; their findings are on `main` and the branches are the record.
