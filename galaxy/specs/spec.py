@@ -680,7 +680,13 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
             "gas gradient the model flattens from (-0.127 at 10 Gyr without migration) is too "
             "steep to begin with. A measurement of the gradient at 10 Gyr decides between them. **S21 "
             "(a)**: 2.5 kpc reads -0.048, inside, with the young/old ratio at 1.22 - under 1.75 now - and "
-            "2.0 kpc inverts it (0.81); the ratio convicts the old stars' starting point (A-10)."
+            "2.0 kpc inverts it (0.81); the ratio convicts the old stars' starting point (A-10). **S22 "
+            "corrected that**: both points are below where the ratio crosses 1.75, and the crossing is "
+            "inside this row's window - at 3.0 kpc the old gradient reads -0.033 and the ratio 1.76, so "
+            "one width lands the row and the ratio together and it is the citation's that does not. "
+            "**This is the one recorded miss whose cause is a constant the model could tune**, and it is "
+            "not tuned because 3.6 kpc is cited (Frankel et al. 2018) and moving it with both readings "
+            "known is what rule B5 forbids. The disc's structure wants a third width, under 1.8 (#50)."
         ),
     ),
     Miss(

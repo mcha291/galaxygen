@@ -682,14 +682,16 @@ defined here once and used in every entry below:
 |---|---|---|
 | **discharged** before S22 | 1, 6, 7, 9, 12, 13, 16, 18, 20, 24, 29, 30, 31, 35, 37, 38, 40, 41 | 18 |
 | **discharged** at S21b or S22 | 4, 5, 8, 10, 14, 32, 36, 44, 50, 51, 66, 67, 68, 69, 71, 72, 73 | 17 |
-| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |
+| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65, **79** | 15 |
 | **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |
 
-So the board's **26 open** is 14 permanent and 12 carried, and no item is unruled. The
-fourteen permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34,
-45, 46, 48 — a number the project does not hold, or a target with no width), five are the
-model's declared scope (3, 15, 21, 22, 23), one is rule A1's ban on a fixed point across
-checkpoints (26), and one is rule A9's one-opinion-per-thing (65).
+So the board's **27 open** is 15 permanent and 12 carried, and no item is unruled. The
+fifteen permanent ones are the shape of the build: eight are the sources' (2, 17, 25, 34,
+45, 46, 48, 79 — a number the project does not hold, or a target with no width), five are
+the model's declared scope (3, 15, 21, 22, 23), one is rule A1's ban on a fixed point across
+checkpoints (26), and one is rule A9's one-opinion-per-thing (65). **#79 is S22's own**, and
+it is the close-out finding the checklist was for: row 21 is published by no stage of either
+model and has never been judged.
 
 **The twelve carried ones are not twelve mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
@@ -2678,6 +2680,29 @@ repair (rule B6).
    The other S20 number, `thick_disc_dispersion` at 34.998 km/s, is a galaxy scalar and is
    printed. Recorded rather than fixed: a reduction over an axis is a rendering opinion, and
    rule A9 puts those in the declaration, so adding one is a `core/` edit and a ruling.
+
+**S22, the close-out's own finding.** The checklist §5d calls "done means" asks that every
+acceptance row either pass or be a recorded miss. One does neither, in both models, and has
+never been judged in twenty-three sessions.
+
+79. **No model computes the molecular fraction, so acceptance row 21 has never been judged**
+   (S22). `gas_h2_fraction` is declared in `spec.py` and published by no stage of either model,
+   so row 21 reads **not-yet-computable** in both and is the only row that is neither a pass nor
+   a recorded miss `[verified: tests/test_s22_rulings.py::test_debt_79_row_21_has_never_been_judged_in_either_model]`.
+   It was missed because a not-yet-computable row reports honestly and reads as a plan rather
+   than a gap: `sfh` publishes one gas phase, the star formation law consumes it through
+   Kennicutt's threshold, and nothing anywhere splits it into atomic and molecular. Row 24 is
+   not-yet-computable in the simple model too, but *by design and with the reason in its note*
+   (one abundance, rule B3) — this row has no such note and never had one.
+   **S22, ruled PERMANENT (the model's scope and the sources, both).** A molecular fraction
+   needs a prescription this project holds no citation for — a pressure- or metallicity-dependent
+   conversion — and adding one at the close-out would be inventing a stage to fill a row, which is
+   rule A4 read forwards. And the row could not pass if it were computed: its target is 0.11 with
+   no uncertainty anywhere in Nakanishi & Sofue, so it is one of debt #17's zero-width rows and no
+   float that is not bit-exact meets it. Two independent reasons, either of which is sufficient,
+   which is why it is permanent rather than carried. What it costs is stated rather than hidden:
+   **the acceptance table is 24 rows and the model has ever been judged on 23 of them**, and the
+   gas mass the model does publish (row 20) is a total, not a phase.
    **S22.** `disc_radial_spread`'s `about` line now states the reduction the records quote — the
    maximum over t at a radius, 1.09 kpc at R₀ and 0.22 at 2 kpc since S20 — so the number in D128 can
    be recomputed from the declaration by anyone holding the field. That is the whole of the fix a

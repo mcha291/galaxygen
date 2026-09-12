@@ -50,10 +50,12 @@ tags exist lives, and a test asserts it carries a row for every ☑ session.
 **Next:** S22. Read `BRIEF.md`, written by the session before it; `S0_PROMPT.md`
 is the record of S0's own brief.
 
-**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 35.
+**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 35.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
-> and **12 carried**, none left unruled (§5d's "done means"). A permanent item stays
+> and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
+> row no model has ever been able to compute (§5d's "done means", checked rather than
+> assumed). A permanent item stays
 > counted open on purpose — it is a limitation of the model's scope or of the sources, and
 > one that stopped being counted would stop being read. The three-way map is at the head of
 > the register and a test asserts it.

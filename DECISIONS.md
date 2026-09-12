@@ -4115,3 +4115,199 @@ star + 225.6 ms at R² 0.65. Cells per sample 349 / 479 / 630 / 740 / 800 / 817 
 
 **`scaling.py` is not re-run.** No stage changed complexity class: the catalogue's
 price changed variable, not order.
+
+---
+
+# Session 22 — the close-out: both lists ported, every debt ruled, the tags applied
+
+The last session §5d plans. Surface: web. Model: **Opus 5**, recorded from what ran.
+Branch `claude/youthful-hamilton-64vz9t` — the container names its own branch, and it is
+`session-22` for every purpose the plan gives it. Neither S21 branch is merged, into each
+other or into `main` (D99): both lists are **ported**, file by file, and the branches stay
+sealed as the record. Decisions **D158 onward**; the gaps at D132–D143 and D151–D157 are
+S21's two reservations, unspent (D116, and `tests/test_docs.py` encodes it).
+
+### D158. The two S21 lists, diffed — a different experiment from D102's, and it found a different thing
+
+**Decision.** §5d's gate for S21 is "two lists, diffed; every prediction has a verdict; no
+green row unconditioned". This is the diff, made from the two branches read side by side
+after both were ported, so the record lives on `main` as D102's does.
+
+**The two runs.** Aim **(a)**, `session-21-a`, **Fable 5.1**, desktop: every prediction the
+register and `spec._MISSES` made since S13, run with the repository unchanged — 22 of them,
+14 findings, debts #51–#52, decisions D130–D131, eleven miss predictions replaced,
+`AUDIT_II_A.md`, `tests/test_audit_ii_a.py`. Aim **(b)**,
+`claude/keen-lamport-lldlvp`, **Opus 5**, web: the instruments and the viewer — rule D4
+counted at the stages, the catalogue's price, D115's flake, the audit pins, the detector's
+reach, the viewer's coverage — 9 findings, debts #65–#73, decisions D144–D150,
+`AUDIT_S21B.md`, five tests. Both from `main` at 7e96422; neither read the other.
+
+**This is not D102's experiment and does not extend it in the way §5d hoped.** D102 ran the
+*same* aim several ways and could ask whether a finding was robust: it got five items every
+list found and five disagreements. S21 ran *different* aims, one model each, so a common core
+is not something its design can produce. What it can ask instead is whether the aims covered
+the space between them. Two things it found.
+
+**1. The one item both runs verified independently, they agreed on exactly.** Both ran the
+suite and the specs and both recorded simple 10 / 12 / 2 and advanced 8 / 15 / 1, with no
+recorded miss started passing (#29). That is the control: the two branches were reading the
+same repository and reporting it the same way.
+
+**2. The aims did not contain the findings — they contained the search, and each run found
+one thing the other's aim owned.** Aim (a), hunting physics predictions, opened **#51**: the
+spec's ensemble is one fixed diagonal whose standardised residual sits half a sigma low.
+That is an instrument, and it is aim (b)'s half by any reading. Aim (b), auditing
+instruments, found **#70**: the bimodality detector cannot see a mode holding a tenth of the
+mass at any width a galaxy could have — which decides acceptance row 24 and is aim (a)'s half
+by any reading. Neither found the other's, and neither was looking. An aim stated as
+territory routes the *search*; a finding lands wherever someone trips over it.
+
+**3. They collided on exactly one number, and the collision is the most useful thing in this
+diff.** Aim (a)'s close published the cold profile, as every close does, and quoted the
+catalogue at "1.49 / 1.50 µs per star against 224 / 209 ms fixed, 89% / 88% of it independent
+of how many stars are asked for" (D131). Aim (b) spent its session proving that pair is
+fitted to a curve and that **there is no fixed cost** (D145, #67). So in one session, one run
+republished the number the other killed — not through carelessness, but because the close
+ritual asks for the profile and the instrument printed those two numbers. Six earlier
+decisions carry the same pair (D105, D112, D115, D120, D125, D129). **That is rule B13's
+premise demonstrated rather than asserted**: a number that has to be *remembered* to be
+doubted will be republished by whoever runs the ritual next, and the only durable fix is the
+one aim (b) made — the instrument publishes both fits with their R² and names the conditioned
+one, so the next close cannot quote the wrong one without the right one beside it.
+
+**Every prediction has a verdict.** Aim (a)'s §1 is the table, 22 rows, each with what it was
+run as, what it read and whether it was killed or held; its §4 lists the four it did not run
+and why. **No green row is unconditioned**: aim (a)'s §3 re-reads all ten passing rows of the
+simple model and all eight of the advanced, and S22 checks mechanically that the table covers
+the pass set exactly — a row that passes and is not in the table would be a green nobody
+re-read `[verified: tests/test_s22_rulings.py::test_no_green_row_is_unconditioned]`.
+
+**What the diff says about the pairing, for whoever designs the next one.** Same-aim
+duplication measures whether a finding is robust. Different-aim duplication measures whether
+the aims cover the space — and this one says they did not, in both directions at once. If
+there is a third audit, state the aims as **coverage with an overlap**, not as territory:
+give both runs the instruments, and let the second aim be what differs.
+
+### D159. Every open debt ruled: 17 discharged, 15 permanent, 12 carried, and one opened at the checklist
+
+**Decision.** §5d's S22 row says "rule every open debt discharged, permanent or carried, with
+the reason". All 43 that were open when S22 started are ruled, the three verdicts are defined
+once at the head of `GALAXY_INPUTS.md` §11, and the map is a table a test asserts. The
+counts: **17 discharged**, **15 permanent**, **12 carried**, none unruled.
+
+**The three verdicts, and why "permanent" stays counted open.** Discharged means what the
+debt named is no longer true of the repository, and it is struck at the item's number, which
+is what `tools/progress.py` counts. Permanent means a property of the model's declared scope
+or of the sources, which no session closes: closing it would mean inventing a variable (A4),
+inventing a number (B9), or choosing a target with the answer known (B5). It is **not**
+struck, deliberately — a permanent limitation that stopped being counted would stop being
+read, and the board's "open debts" is the one number a session sees before it reads anything
+else. Carried means still open and closable, with the mechanism or measurement that would
+close it named; where the closer is itself a permanent debt, the entry says so.
+
+**The twelve carried ones are not twelve mechanisms.** Four — #19, #27, #49 and the inner
+half of #47 — are one: *a first phase that consumes gas slower than it accretes it and then
+stops, the stopping after the first Ia iron has arrived*. S20 killed #49's arrival law and
+S21 (a) built the shape by substitution: star formation off from 1.0 to 3.8 Gyr on the fast
+first infall lands rows 8, 9, 10 and 11 inside together for the first time in the project
+with row 5 short by 0.2 kpc (A-5), and the same shape one gigayear later, as a burst, is the
+only thing that has ever made an α-rich mode short of the plateau (A-4). A
+constant-efficiency Kennicutt law with a threshold cannot do it, in either model, at any
+radius — and **fourteen acceptance rows across the two models hang on that one absence**,
+which makes it the largest single thing this build does not have. Three more — #11, #52 and
+#47's reservoir — are the bar (#21, permanent). That leaves six.
+
+**The fifteen permanent ones are the shape of the build.** Eight are the sources' (#2, #17,
+#25, #34, #45, #46, #48, #79 — a number the project does not hold, or a target with no
+width). Five are the model's declared scope (#3, #15, #21, #22, #23). One is **rule A1**:
+#26's mass-loaded wind cannot exist here because the retained baryon mass would be a fixed
+point across checkpoints 1 and 3 — the halo contracts around what the disc keeps, and what
+the disc keeps is what the wind did not remove — and A1's ban on a grid fixed point is
+measured (an 8× multiplier), not a preference. That makes #26 and #3 **one statement from two
+ends**: `baryon_retention` is an input precisely because the mechanism that would derive it is
+out of scope, and the model has the causality the other way round and now says so. One is
+rule A9 (#65).
+
+**Two discharges worth naming, because they were dissolved rather than repaired.** #4's
+`R_CLOSURE_*` is read by nothing in the repository and has not been since S4; its residue —
+that the pitch–shear relation has no lever — is #22 and is permanent. #5 has no referent at
+all: there is no assembly *time* in this model to delay star formation from, because S15
+ruled `halo_assembly_z` the concentration's scatter under another name (K and z_f enter only
+as their product), and the infall runs from t = 0 with the threshold deciding the rest. What
+#5 was reaching for is #49's star formation law, where it can be measured.
+
+**And one opened, by the checklist itself (#79).** §5d's "done means" asks that every
+acceptance row either pass or be a recorded miss. One does neither, in both models, and never
+has: `gas_h2_fraction` is declared in `spec.py` and **published by no stage of either model**,
+so row 21 reads not-yet-computable and has never been judged in twenty-three sessions
+`[verified: tests/test_s22_rulings.py::test_debt_79_row_21_has_never_been_judged_in_either_model]`.
+It hid because a not-yet-computable row reports honestly and reads as a plan rather than a
+gap — row 24 is not-yet-computable in the simple model too, but by design and with the reason
+in its own note, and row 21 never had one. Ruled **permanent** on two independent grounds,
+either sufficient: a molecular fraction needs a prescription this project holds no citation
+for, and adding one at the close-out would be inventing a stage to fill a row (A4 read
+forwards); and the row could not pass if it were computed, its target being 0.11 with no
+uncertainty anywhere in the source (#17). **The acceptance table is 24 rows and this model has
+ever been judged on 23 of them**, which is the honest form of the sentence.
+
+**Where this leaves §5d's "done means".** The prose says "every item in the register is
+discharged, or ruled permanent with the reason written in"; the S22 row of the same section
+says "discharged, permanent or carried". They are not the same standard and the build meets
+the second, not the first: twelve items are carried, and four of those twelve are one missing
+mechanism with a measured shape. Recorded here rather than resolved by choosing the reading
+that makes the project finished.
+
+### D160. What S22 corrected in the two lists, and the one conclusion neither could reach
+
+**Decision.** Porting a sealed list is not the same as agreeing with it. Three numbers were
+re-read while the rulings were being written, and they changed three rulings.
+
+**1. Debt #28: one kernel width lands both chemistry observables, and aim (a) stopped one
+point short of it.** A-10 swept `migration_efficiency` to 2.5 and 2.0 kpc, read the young/old
+gradient ratio at 1.22 and 0.81 against the observed 1.75, and ruled "the row can be landed;
+the ratio cannot be landed with it" — convicting the debt's *second* explanation, that the old
+stars' starting gradient is too steep. Both points are below where the ratio crosses 1.75, and
+the crossing is inside row 23's window: **at 3.0 kpc the old gradient reads −0.033, inside
+−0.05 to −0.03, and the ratio 1.76** `[verified:
+tests/test_s22_rulings.py::test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the_cited_one]`.
+One width lands both, and it is 17% below the cited 3.6 kpc — which is the **first**
+explanation, that the citation's width is not this kernel's width. Two further corrections
+came with it: the young/old ratio this register has carried since S13, 3.03 and 3.27, is
+**stale** — S18's derived threshold moved it and nobody re-read it, and it is 2.55 and 2.49
+today; and the disc's *structure* wants a third width, under 1.8 kpc, once the mass follows
+the kernel (#50, A-2). So one kernel is being asked to be three widths. **The default stays
+the cited 3.6**: moving it here, with both readings known, is exactly what rule B5 forbids,
+and row 23 is therefore the one recorded miss in the table whose cause is a constant the
+model could tune. Its entry in `spec._MISSES_ADVANCED` says so.
+
+**2. Debt #11: row 3's miss is half the mesh.** The row reads 251.026 at the default grid
+against a window ending at 251.0 — out by 0.027 — and the radial mesh converges it to
+**251.013** at n_R = 3200 `[verified:
+tests/test_s22_rulings.py::test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model]`. So
+0.013 km/s of the miss is the model and the rest is n_R = 400. The row stays out at every mesh
+in the sweep, which is what keeps it an honest miss (B5, #29) — what is not honest is reading
+0.03 km/s as a physical quantity. It is one part in 460 of the window's half-width, smaller
+than the basis-free solver's own correction at S18 (0.09) and smaller than the grid's effect
+on it.
+
+**3. The conclusion neither list could reach: the only mode this project has ever opened is
+narrower than the Milky Way's.** Aim (a) made it — a ×5 burst inside the α-fall produces an
+α-rich mode at +0.35 holding 0.103 of the mass **in one 0.02 dex bin** (A-4), the first mode
+short of the plateau in the project's history. Aim (b) put the detector's mode test in closed
+form — a Gaussian mode of share s and dispersion σ is kept only if s·erf(0.05/(σ√2)) ≥ 0.10
+(#70). Neither read the other. Together: that mode is seen **because** it is narrower than the
+observed α-rich sequence by a factor of two or more, and at the observed ~0.04 dex the same
+share is invisible. Read against row 9's own window, at 0.04 dex the detector needs a
+thick/thin ratio of **0.145** — the top 18% of row 9's 0.08–0.16 — and at 0.05 dex it needs
+0.172 and row 9 has no value that would do `[verified:
+tests/test_s22_rulings.py::test_debt_70_and_27_the_only_mode_ever_opened_is_narrower_than_the_milky_ways]`.
+**Rows 9 and 24 are very nearly mutually exclusive through this instrument.** That is
+GALAXY_PLAN.md §7's risk 6 — the 24 quantities are not mutually consistent — with two rows
+named and the arithmetic shown, and it is the strongest argument in the project for running an
+audit twice: it took one run to make the mode, one to measure the detector, and a third pass
+to notice they were about the same object.
+
+**Settled by.** Rule B4 — a prediction is a sentence that can fail, and a sweep that stops
+before the crossing has not run it; rule B5 — 3.0 kpc is measured and not adopted, and the
+mesh is not a reason to widen row 3; rule B6 — the numbers are published and the verdicts are
+the reader's `[inferred]`.

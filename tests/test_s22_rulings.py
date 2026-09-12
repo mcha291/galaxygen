@@ -184,3 +184,53 @@ def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the
     simple = prod[0].get("simple")
     f = run(simple, only=fields).fields
     assert f["metallicity_gradient_young"] / f["metallicity_gradient_old"] == pytest.approx(2.49, abs=0.08)
+
+
+def test_debt_79_row_21_has_never_been_judged_in_either_model(prod):
+    """The close-out's own finding: one acceptance row is neither a pass nor a recorded miss.
+
+    `gas_h2_fraction` is declared in the table and published by no stage of either model, so
+    row 21 reads not-yet-computable in both and always has. Row 24 is not-yet-computable in
+    the simple model as well, but by design and with the reason in its own note (one
+    abundance, rule B3); this row has no note like that because nobody noticed.
+
+    Pinned so that the day a molecular phase is built, this fails and the row is judged.
+    """
+    from galaxy.core.registry import production
+
+    models, _, _ = production()
+    for model in models:
+        out = run(model)
+        assert "gas_h2_fraction" not in out.fields, model.name
+    assert Q[21].field == "gas_h2_fraction"
+    assert Q[21].lo == Q[21].hi == 0.11 and not Q[21].testable  # and it could not pass anyway (#17)
+    # Row 24's own not-yet-computable is the documented kind: the note says why.
+    assert "not-yet-computable" in Q[24].note and "one abundance" in Q[24].note
+
+
+def test_no_green_row_is_unconditioned(judged):
+    """§5d's gate: "no green row unconditioned (AUDIT_RUN2 §5)", checked against the list.
+
+    `AUDIT_II_A.md` §3 is aim (a)'s re-reading of every passing row — what each is green on
+    and whether it would survive its cause being repaired. The gate is only met if that table
+    covers the pass set *exactly*: a row that passes and is not in the table is a green nobody
+    re-read, and a row in the table that no longer passes means the table is stale.
+    """
+    import re
+    from pathlib import Path
+
+    text = Path(__file__).resolve().parents[1].joinpath("AUDIT_II_A.md").read_text(encoding="utf-8")
+    section = text.split("## 3. The green rows")[1].split("\n## ")[0]
+    listed: dict[str, set[int]] = {"simple": set(), "advanced": set()}
+    for line in section.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or not re.fullmatch(r"[\d, ]+", cells[0]):
+            continue
+        rows = {int(n) for n in cells[0].split(",")}
+        for name in ("simple", "advanced") if cells[1] == "both" else (cells[1],):
+            listed[name] |= rows
+
+    for name, results in judged.items():
+        passing = {r.n for r in results if r.status == "pass"}
+        assert passing == listed[name], (name, sorted(passing ^ listed[name]))
+    assert len(listed["simple"]) == 10 and len(listed["advanced"]) == 8
