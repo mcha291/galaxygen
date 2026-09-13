@@ -1,8 +1,9 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { fields, inputs, region, stages } from "@interface/transport.js";
+import { arrays, fields, inputs, region, stages } from "@interface/transport.js";
 
+import type { Axis } from "./preview/axes";
 import type { Checkpoint, InputDecl } from "./workflow/logic";
 
 /** How many stars the galaxy view asks for: the materialised sample (D61). */
@@ -60,6 +61,26 @@ export async function loadDeclarations(
 ): Promise<{ stages: StagesPayload; inputs: InputsPayload }> {
   const [s, i] = await Promise.all([stages({ model, signal }), inputs({ model, signal })]);
   return { stages: s as StagesPayload, inputs: i as InputsPayload };
+}
+
+export interface Frame {
+  header: {
+    grid: { axes: Record<string, Axis> };
+    scalars: Record<string, number>;
+    stages: string[];
+    [key: string]: unknown;
+  };
+  arrays: Record<string, Float64Array>;
+}
+
+/**
+ * Named fields for one input vector. The server runs only the stages those
+ * fields need (the frame's `stages`), so a checkpoint-1 preview never pays for
+ * the star catalogue.
+ */
+export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal): Promise<Frame> {
+  const got = await arrays(names, query, { signal });
+  return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"] };
 }
 
 /** The whole-galaxy star sample for one input vector: every cell, STAR_SAMPLE stars in all. */

@@ -5,6 +5,10 @@ import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { starColors } from "./galaxy/colors";
 import { GalaxyView, type Preset } from "./galaxy/GalaxyView";
 import { toScene } from "./galaxy/positions";
+import { Preview } from "./preview/Preview";
+import { panelsAt } from "./preview/panels";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
+import { useLoad } from "./useLoad";
 import { formatNumber } from "./workflow/logic";
 import { useWorkflow } from "./workflow/useWorkflow";
 import { WorkflowPanel } from "./workflow/Workflow";
@@ -13,19 +17,13 @@ import styles from "./App.module.css";
 // The star columns a user can paint the sample by (design brief §3).
 const COLOUR_FIELDS = ["star_metallicity", "star_age", "star_population", "star_mass", "star_birth_radius"];
 const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
-// A slider drag sends one request when it pauses, not one per pixel.
-const REGENERATE_AFTER_MS = 350;
 
-type Galaxy =
-  | { state: "idle" }
-  | { state: "error"; message: string }
-  | { state: "ready"; sample: Sample };
+type Tab = "preview" | "galaxy";
 
 export function App() {
   const wf = useWorkflow();
   const [meta, setMeta] = useState<FieldsPayload | null>(null);
-  const [galaxy, setGalaxy] = useState<Galaxy>({ state: "idle" });
-  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<Tab>("preview");
   const [field, setField] = useState(COLOUR_FIELDS[0]);
   const [preset, setPreset] = useState<Preset>("oblique");
   const [picked, setPicked] = useState<number | null>(null);
@@ -36,34 +34,14 @@ export function App() {
     return () => abort.abort();
   }, [wf.model]);
 
-  // Regenerate whenever the input vector changes. The previous galaxy stays on
-  // screen, marked as regenerating, until the new one arrives; a newer change
-  // cancels the request in flight rather than racing it.
-  const key = wf.query ? JSON.stringify(wf.query) : null;
-  useEffect(() => {
-    if (!key) return;
-    const abort = new AbortController();
-    const timer = setTimeout(() => {
-      setBusy(true);
-      loadSample(JSON.parse(key), abort.signal)
-        .then((sample) => {
-          setGalaxy({ state: "ready", sample });
-          setPicked(null);
-        })
-        .catch((error: Error) => {
-          if (!abort.signal.aborted) setGalaxy({ state: "error", message: error.message });
-        })
-        .finally(() => {
-          if (!abort.signal.aborted) setBusy(false);
-        });
-    }, REGENERATE_AFTER_MS);
-    return () => {
-      clearTimeout(timer);
-      abort.abort();
-    };
-  }, [key]);
+  const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
+  const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
-  const sample = galaxy.state === "ready" ? galaxy.sample : null;
+  // The star sample runs every stage, so it is only asked for while it is on screen.
+  const sampleKey = tab === "galaxy" && wf.query ? JSON.stringify(wf.query) : null;
+  const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(wf.query!, signal));
+  const sample = galaxy.value;
+  useEffect(() => setPicked(null), [sample]);
 
   const positions = useMemo(() => {
     if (!sample) return null;
@@ -93,53 +71,95 @@ export function App() {
         </div>
         <span className="gx-label">same seven inputs</span>
         <span className={styles.spacer} />
-        {sample && (
-          <span className="gx-label">
-            {busy ? "Regenerating · " : ""}
-            {sample.header.stars.materialised.toLocaleString("en")} stars sampled
-          </span>
-        )}
+        <div className={styles.segmented} role="tablist" aria-label="View">
+          <button role="tab" aria-pressed={tab === "preview"} aria-selected={tab === "preview"} onClick={() => setTab("preview")}>
+            Preview
+          </button>
+          <button role="tab" aria-pressed={tab === "galaxy"} aria-selected={tab === "galaxy"} onClick={() => setTab("galaxy")}>
+            Galaxy
+          </button>
+        </div>
       </header>
 
       <WorkflowPanel wf={wf} />
 
       <main className={styles.stage}>
-        {!sample && galaxy.state !== "error" && <p className={styles.status}>Generating galaxy.</p>}
-        {galaxy.state === "error" && (
-          <p className={styles.status}>
-            Generation failed: {galaxy.message}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
-          </p>
+        <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>
+        {tab === "preview" && current && panels && wf.query && (
+          <Preview checkpoint={current} panels={panels} query={wf.query} />
         )}
-        {positions && colors && (
-          <GalaxyView positions={positions} colors={colors} preset={preset} onPick={setPicked} />
+        {tab === "preview" && !panels && <p className={styles.status}>Loading field declarations.</p>}
+
+        {tab === "galaxy" && (
+          <>
+            {!sample && !galaxy.error && <p className={styles.status}>Generating galaxy: every stage runs for the star sample.</p>}
+            {galaxy.error && (
+              <p className={styles.status}>
+                Generation failed: {galaxy.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
+              </p>
+            )}
+            {positions && colors && <GalaxyView positions={positions} colors={colors} preset={preset} onPick={setPicked} />}
+            {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
+          </>
         )}
-        {busy && sample && <div className={styles.busy} aria-hidden />}
+        </ErrorBoundary>
       </main>
 
       <aside className={styles.inspector}>
-        <section>
-          <h2 className="gx-label">View</h2>
-          <div className={styles.segmented}>
-            {PRESETS.map((p) => (
-              <button key={p} aria-pressed={p === preset} onClick={() => setPreset(p)}>
-                {p}
-              </button>
-            ))}
-          </div>
-        </section>
-        <section>
-          <h2 className="gx-label">Colour by</h2>
-          <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)}>
-            {COLOUR_FIELDS.map((f) => (
-              <option key={f} value={f}>
-                {meta?.fields.find((d) => d.name === f)?.label ?? f}
-              </option>
-            ))}
-          </select>
-        </section>
-        {meta && sample && picked !== null && <StarReadout meta={meta} sample={sample} row={picked} />}
+        {tab === "galaxy" ? (
+          <>
+            <section>
+              <h2 className="gx-label">Sample</h2>
+              <p className={styles.readoutLine}>
+                {sample ? `${sample.header.stars.materialised.toLocaleString("en")} stars` : "—"}
+                {galaxy.busy ? " · regenerating" : ""}
+              </p>
+            </section>
+            <section>
+              <h2 className="gx-label">View</h2>
+              <div className={styles.segmented}>
+                {PRESETS.map((p) => (
+                  <button key={p} aria-pressed={p === preset} onClick={() => setPreset(p)}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section>
+              <h2 className="gx-label">Colour by</h2>
+              <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)}>
+                {COLOUR_FIELDS.map((f) => (
+                  <option key={f} value={f}>
+                    {meta?.fields.find((d) => d.name === f)?.label ?? f}
+                  </option>
+                ))}
+              </select>
+            </section>
+            {meta && sample && picked !== null && <StarReadout meta={meta} sample={sample} row={picked} />}
+          </>
+        ) : (
+          <CheckpointNotes panels={panels} />
+        )}
       </aside>
     </div>
+  );
+}
+
+function CheckpointNotes({ panels }: { panels: ReturnType<typeof panelsAt> | null }) {
+  if (!panels) return null;
+  const plotted = panels.lines.reduce((n, p) => n + p.fields.length, 0);
+  return (
+    <section>
+      <h2 className="gx-label">This preview</h2>
+      <p className={styles.readoutLine}>
+        {plotted} profiles on {panels.lines.length} plots · {panels.scalars.length} scalars
+      </p>
+      <p className={styles.help}>
+        Profiles sharing an axis and a unit share a plot. A plot is logarithmic only when every field on it is declared
+        so. Hover a plot to read values.
+      </p>
+      {panels.catalogue && <p className={styles.help}>The star catalogue exists from this checkpoint: open Galaxy to see it.</p>}
+    </section>
   );
 }
 

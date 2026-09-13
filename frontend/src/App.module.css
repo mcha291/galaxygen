@@ -118,6 +118,18 @@
   font: var(--text-body-font);
 }
 
+.readoutLine {
+  margin: 0;
+  font: var(--text-data);
+  color: var(--text-primary);
+}
+
+.help {
+  margin: var(--space-3) 0 0;
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+}
+
 .readout {
   margin: 0;
   font: var(--text-data);

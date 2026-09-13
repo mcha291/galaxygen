@@ -140,6 +140,13 @@ const SUPERSCRIPT: Record<string, string> = {
 };
 const MINUS = "−"; // a real minus sign (design readme, "Numbers are never rounded away")
 
+/** An exact power of ten as "10¹²", for log-axis ticks where the mantissa is always 1. */
+export function formatPower(value: number): string {
+  const k = Math.round(Math.log10(value));
+  if (k >= -2 && k <= 3) return formatNumber(10 ** k);
+  return `10${String(k).replace(/./g, (c) => SUPERSCRIPT[c] ?? c)}`;
+}
+
 /** 1.1e12 as "1.10 × 10¹²"; ordinary magnitudes plainly; always a real minus sign. */
 export function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return "—";

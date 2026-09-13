@@ -7,6 +7,7 @@ import {
   drawSeed,
   firstDifference,
   formatNumber,
+  formatPower,
   fromSlider,
   isLog,
   reopen,
@@ -87,6 +88,14 @@ describe("sliders", () => {
     expect(fromSlider(halo, toSlider(halo, 1.1e12)) / 1.1e12).toBeCloseTo(1, 2);
     expect(fromSlider(halo, 0)).toBe(1e11);
     expect(fromSlider(halo, 1000)).toBe(1e13);
+  });
+});
+
+describe("formatPower", () => {
+  it("writes decades as bare powers, and small ones plainly", () => {
+    expect(formatPower(1e12)).toBe("10¹²");
+    expect(formatPower(1e-5)).toBe("10⁻⁵");
+    expect(formatPower(100)).toBe("100");
   });
 });
 
