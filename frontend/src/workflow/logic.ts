@@ -133,6 +133,21 @@ export function fromSlider(input: InputDecl, position: number): number {
   return Math.min(Math.max(Number(raw.toPrecision(4)), lo), hi);
 }
 
+/**
+ * A short, stable name for one run: FNV-1a over the input vector, six hex digits.
+ * Not a security hash; two runs with the same inputs and model share it, and
+ * any change to either gives a different one, which is all the top bar needs.
+ */
+export function runHash(query: Record<string, unknown>): string {
+  const text = JSON.stringify(Object.keys(query).sort().map((k) => [k, query[k]]));
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0").slice(0, 6);
+}
+
 // --- numbers ------------------------------------------------------------------
 
 const SUPERSCRIPT: Record<string, string> = {

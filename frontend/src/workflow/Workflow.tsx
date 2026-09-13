@@ -32,13 +32,14 @@ export function spanOf(ns: number[]): string {
 
 /** The six-checkpoint rail (design brief §1): each checkpoint, its state, its controls. */
 /** `tMax` is the time axis's end from the API's grid, so the merger timeline spans the model's own history. */
-export function WorkflowPanel({ wf, tMax = 13.8 }: { wf: WorkflowApi; tMax?: number }) {
+export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi; tMax?: number; className?: string }) {
+  const panelClass = className ? `${styles.panel} ${className}` : styles.panel;
   const [askingReopen, setAskingReopen] = useState<number | null>(null);
   const [askingReroll, setAskingReroll] = useState<number | null>(null);
   const { state } = wf;
 
   if (!state) {
-    return <div className={styles.panel}><p className={styles.note}>{wf.error ?? "Loading checkpoints."}</p></div>;
+    return <div className={panelClass}><p className={styles.note}>{wf.error ?? "Loading checkpoints."}</p></div>;
   }
 
   const requestReopen = (n: number) => {
@@ -48,7 +49,7 @@ export function WorkflowPanel({ wf, tMax = 13.8 }: { wf: WorkflowApi; tMax?: num
   };
 
   return (
-    <div className={styles.panel}>
+    <div className={panelClass}>
       <div className={`gx-label ${styles.heading}`}>Generation · {state.cat.checkpoints.length} checkpoints</div>
       {wf.error && <p className={styles.fault}>{wf.error}</p>}
 

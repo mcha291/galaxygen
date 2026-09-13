@@ -1,0 +1,212 @@
+/* The design's Galaxy tab: a translucent control panel over the full-bleed view. */
+.panel {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  width: 268px;
+  max-width: calc(100% - 2 * var(--space-4));
+  max-height: calc(100% - 2 * var(--space-4));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--void-2) 92%, transparent);
+  backdrop-filter: var(--blur-sm);
+}
+
+.section {
+  padding: var(--space-4);
+  border-bottom: var(--hair) solid var(--border-hair);
+}
+
+.section:last-child {
+  border-bottom: 0;
+}
+
+.label {
+  font-size: var(--size-2xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.chips button,
+.pair button {
+  padding: var(--space-3) var(--space-3);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-body);
+  font: var(--weight-regular) var(--size-xs) / 1 var(--font-mono);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.chips button:hover:not(:disabled),
+.pair button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.chips button[aria-pressed="true"],
+.pair button[aria-pressed="true"] {
+  border-color: var(--magenta-4);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+}
+
+.pair {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.pair button {
+  flex: 1;
+}
+
+.pair button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.legendHead,
+.zoomHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.fieldName {
+  flex: 1;
+  font: var(--weight-regular) var(--size-xs) / 1.4 var(--font-mono);
+  color: var(--text-primary);
+}
+
+.zoomHead .label {
+  flex: 1;
+}
+
+.value {
+  font: var(--weight-medium) var(--size-xs) / 1 var(--font-mono);
+  color: var(--text-primary);
+}
+
+.muted {
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.strip {
+  height: 10px;
+  margin-top: var(--space-3);
+  border: var(--hair) solid var(--border-line);
+  border-radius: 1px;
+}
+
+.legendScale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  font: var(--weight-regular) var(--size-2xs) / 1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-3);
+  font: var(--weight-regular) var(--size-xs) / 1 var(--font-mono);
+  color: var(--text-body);
+}
+
+.categories span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.categories i {
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+}
+
+.note {
+  display: -webkit-box;
+  margin: var(--space-3) 0 0;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  font-size: var(--size-2xs);
+  color: var(--text-muted);
+}
+
+.slider {
+  width: 100%;
+  margin-top: var(--space-2);
+  accent-color: var(--magenta-3);
+}
+
+/* Top right and bottom left fade into the view rather than sitting in boxes. */
+.regime {
+  position: absolute;
+  top: 0;
+  right: 0;
+  max-width: min(392px, 100%);
+  padding: var(--space-6) var(--space-6) 84px 104px;
+  text-align: right;
+  pointer-events: none;
+  background: radial-gradient(150% 170% at 100% 0%, color-mix(in oklab, var(--void-0) 97%, transparent) 0%, color-mix(in oklab, var(--void-0) 94%, transparent) 46%, transparent 100%);
+}
+
+.regimeHead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.regimeName {
+  font: var(--weight-medium) var(--size-2xs) / 1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--magenta-3);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--magenta-3);
+}
+
+.regimeWhat {
+  margin: var(--space-3) 0 0;
+  font-size: var(--size-xs);
+  color: var(--text-primary);
+}
+
+.scale {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 84px 104px var(--space-6) var(--space-6);
+  pointer-events: none;
+  background: radial-gradient(150% 170% at 0% 100%, color-mix(in oklab, var(--void-0) 97%, transparent) 0%, color-mix(in oklab, var(--void-0) 94%, transparent) 46%, transparent 100%);
+}
+
+.scaleBar {
+  height: 6px;
+  margin-bottom: var(--space-1);
+  border: var(--hair) solid var(--text-muted);
+  border-top: 0;
+}

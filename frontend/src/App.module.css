@@ -1,16 +1,293 @@
-/* Console layout from the design system: fixed topbar, the generation rail on
-   the left at the inspector's width (it carries sliders), the view in a fluid
-   centre, and the view's own inspector on the right at the sidebar's width. */
+/* The shell follows the design: top bar, one view filling the middle, bottom bar. */
 .shell {
   display: grid;
-  grid-template-columns: var(--inspector-width) 1fr var(--sidebar-width);
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr) auto;
   height: 100%;
   background: var(--bg-app);
 }
 
 .spacer {
   flex: 1;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: 0 var(--space-5);
+  border-bottom: var(--hair) solid var(--border-hair);
+  background: var(--void-2);
+}
+
+.wordmark {
+  font: var(--weight-light) var(--size-lg) / 1 var(--font-display);
+  letter-spacing: var(--track-display);
+  color: var(--text-primary);
+}
+
+.hash {
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.main {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Bottom bar: same ground and hairline as the design's, two mono slots, empty for now. */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: calc(var(--space-7) + var(--space-3));
+  padding: var(--space-3) var(--space-5);
+  overflow: hidden;
+  border-top: var(--hair) solid var(--border-hair);
+  background: var(--void-2);
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.footLeft {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footRight {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Preview and Galaxy: a full-bleed view with overlays -------------------- */
+
+.canvasStage {
+  position: absolute;
+  inset: 0;
+  background: var(--void-0);
+}
+
+/* The design's workflow panel: 296 px, translucent, floating over the view. */
+.floatingRail {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  width: 296px;
+  max-width: calc(100% - 2 * var(--space-4));
+  max-height: calc(100% - 2 * var(--space-4));
+  overscroll-behavior: contain;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--void-2) 92%, transparent);
+  backdrop-filter: var(--blur-sm);
+}
+
+.previewTitle {
+  position: absolute;
+  top: var(--space-5);
+  left: 326px;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  max-width: calc(100% - 690px);
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0);
+}
+
+.previewName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--size-sm);
+  color: var(--text-primary);
+}
+
+.overlayLabel {
+  font-size: var(--size-2xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* The right column: no box, right-aligned, hairlines that fade in from the view. */
+.overlayColumn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: clamp(248px, 38%, 340px);
+  padding: var(--space-5) var(--space-5) var(--space-5) var(--space-7);
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-align: right;
+  text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0), 0 0 22px var(--void-0);
+}
+
+.overlayHead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--ink-3) 55%, transparent));
+}
+
+.overlayNote {
+  margin: var(--space-2) 0 0;
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+}
+
+.stat {
+  padding: var(--space-3) 0;
+  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--ink-3) 28%, transparent)) top right / 100% 1px no-repeat;
+}
+
+.statKey {
+  overflow-wrap: anywhere;
+  font: var(--weight-regular) var(--size-2xs) / 1.35 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.statValue {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font: var(--weight-light) 18px / 1.2 var(--font-mono);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.statUnit {
+  font: var(--weight-regular) var(--size-2xs) / 1 var(--font-ui);
+  color: var(--text-muted);
+}
+
+.openSystem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.caption {
+  position: absolute;
+  bottom: var(--space-5);
+  left: 326px;
+  max-width: min(400px, calc(100% - 700px));
+  pointer-events: none;
+  text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0), 0 0 22px var(--void-0);
+}
+
+.captionNote {
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.caption p {
+  margin: var(--space-2) 0 0;
+  font-size: var(--size-xs);
+  color: var(--text-primary);
+}
+
+.status {
+  position: absolute;
+  left: 326px;
+  bottom: var(--space-5);
+  margin: 0;
+  font: var(--text-data);
+  color: var(--text-muted);
+}
+
+/* --- Science: the rail as a column beside the charts ------------------------ */
+
+.scienceStage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--inspector-width) minmax(0, 1fr);
+}
+
+.scienceBody {
+  position: relative;
+  min-width: 0;
+}
+
+.scienceBody .status {
+  left: var(--space-5);
+}
+
+/* --- shared controls ----------------------------------------------------------- */
+
+.segmented {
+  display: flex;
+  min-width: 0;
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--void-1);
+  text-shadow: none;
+}
+
+.segmented button {
+  flex: 1;
+  height: var(--control-sm);
+  padding: 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-data);
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.segmented button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--surface-selected);
+  color: var(--text-accent);
+}
+
+.segmented button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.select {
+  width: 100%;
+  height: var(--control-md);
+  margin-top: var(--space-3);
+  padding: 0 var(--space-3);
+  background: var(--surface-inset);
+  color: var(--text-primary);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-sm);
+  font: var(--text-body-font);
+  text-shadow: none;
 }
 
 /* The one long animation in the system: a linear sweep while the model runs. */
@@ -37,122 +314,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .busy::after { animation: none; width: 100%; opacity: 0.5; }
-}
-
-.topbar {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  padding: 0 var(--space-5);
-  border-bottom: var(--hair) solid var(--border-hair);
-}
-
-.wordmark {
-  font: var(--weight-light) var(--size-lg) / 1 var(--font-display);
-  letter-spacing: var(--track-display);
-  color: var(--text-primary);
-}
-
-.stage {
-  position: relative;
-  overflow: hidden;
-}
-
-.status {
-  position: absolute;
-  inset: auto var(--space-5) var(--space-5);
-  font: var(--text-data);
-  color: var(--text-muted);
-}
-
-.inspector {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-7);
-  padding: var(--space-5);
-  border-left: var(--hair) solid var(--border-hair);
-  overflow-y: auto;
-}
-
-.inspector h2 {
-  margin-bottom: var(--space-3);
-}
-
-.segmented {
-  display: flex;
-  min-width: 0;
-  border: var(--hair) solid var(--border-line);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.segmented button {
-  flex: 1;
-  height: var(--control-sm);
-  border: 0;
-  background: transparent;
-  color: var(--text-body);
-  font: var(--text-data);
-  cursor: pointer;
-  transition: var(--transition-control);
-}
-
-.segmented button:hover {
-  background: var(--surface-hover);
-}
-
-.segmented button[aria-pressed="true"] {
-  background: var(--surface-selected);
-  color: var(--text-accent);
-}
-
-.select {
-  width: 100%;
-  height: var(--control-md);
-  padding: 0 var(--space-3);
-  background: var(--surface-inset);
-  color: var(--text-primary);
-  border: var(--hair) solid var(--border-line);
-  border-radius: var(--radius-sm);
-  font: var(--text-body-font);
-}
-
-.openSystem {
-  margin-bottom: var(--space-4);
-}
-
-.readoutLine {
-  margin: 0;
-  font: var(--text-data);
-  color: var(--text-primary);
-}
-
-.help {
-  margin: var(--space-3) 0 0;
-  font-size: var(--size-xs);
-  color: var(--text-muted);
-}
-
-.readout {
-  margin: 0;
-  font: var(--text-data);
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-2) 0;
-  border-bottom: var(--hair) solid var(--border-hair);
-}
-
-.row dt {
-  color: var(--text-muted);
-}
-
-.row dd {
-  margin: 0;
-  color: var(--text-primary);
-  text-align: right;
 }

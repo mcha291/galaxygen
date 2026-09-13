@@ -12,6 +12,7 @@ import {
   isLog,
   reopen,
   rerollCost,
+  runHash,
   statusOf,
   toSlider,
 } from "./logic";
@@ -88,6 +89,15 @@ describe("sliders", () => {
     expect(fromSlider(halo, toSlider(halo, 1.1e12)) / 1.1e12).toBeCloseTo(1, 2);
     expect(fromSlider(halo, 0)).toBe(1e11);
     expect(fromSlider(halo, 1000)).toBe(1e13);
+  });
+});
+
+describe("runHash", () => {
+  it("is six hex digits, independent of key order, and moves with any input", () => {
+    const a = runHash({ model: "simple", halo_mass: 1.1e12, world_seed: 0 });
+    expect(a).toMatch(/^[0-9a-f]{6}$/);
+    expect(runHash({ world_seed: 0, halo_mass: 1.1e12, model: "simple" })).toBe(a);
+    expect(runHash({ model: "simple", halo_mass: 1.1e12, world_seed: 1 })).not.toBe(a);
   });
 });
 
