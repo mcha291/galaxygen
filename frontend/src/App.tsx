@@ -92,7 +92,7 @@ export function App() {
         </div>
       </header>
 
-      <WorkflowPanel wf={wf} />
+      <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} />
 
       <main className={styles.stage}>
         <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>

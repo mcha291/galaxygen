@@ -23,6 +23,7 @@ export interface FieldDecl {
 
 export interface FieldsPayload {
   model: string;
+  grid: { axes: Record<string, Axis> };
   fields: FieldDecl[];
   cmaps: Record<string, unknown>;
 }

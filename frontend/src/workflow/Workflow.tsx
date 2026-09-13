@@ -2,6 +2,7 @@ import { Check, Plus, RotateCcw, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "../ui/Button";
+import { MergerTimeline } from "./MergerTimeline";
 import {
   type Checkpoint,
   type FlowState,
@@ -30,7 +31,8 @@ export function spanOf(ns: number[]): string {
 }
 
 /** The six-checkpoint rail (design brief §1): each checkpoint, its state, its controls. */
-export function WorkflowPanel({ wf }: { wf: WorkflowApi }) {
+/** `tMax` is the time axis's end from the API's grid, so the merger timeline spans the model's own history. */
+export function WorkflowPanel({ wf, tMax = 13.8 }: { wf: WorkflowApi; tMax?: number }) {
   const [askingReopen, setAskingReopen] = useState<number | null>(null);
   const [askingReroll, setAskingReroll] = useState<number | null>(null);
   const { state } = wf;
@@ -95,7 +97,7 @@ export function WorkflowPanel({ wf }: { wf: WorkflowApi }) {
                 )}
 
                 {decls.map((decl) => (
-                  <Control key={decl.name} decl={decl} state={state} disabled={status === "locked"} wf={wf} />
+                  <Control key={decl.name} decl={decl} state={state} disabled={status === "locked"} wf={wf} tMax={tMax} />
                 ))}
 
                 <div className={styles.actions}>
@@ -168,12 +170,12 @@ function RerollAsk({ state, cp, seed, onReroll, onCancel }: {
   );
 }
 
-function Control({ decl, state, disabled, wf }: { decl: InputDecl; state: FlowState; disabled: boolean; wf: WorkflowApi }) {
+function Control({ decl, state, disabled, wf, tMax }: { decl: InputDecl; state: FlowState; disabled: boolean; wf: WorkflowApi; tMax: number }) {
   const value = state.values[decl.name];
   const unit = decl.unit_display && decl.unit !== "dimensionless" ? decl.unit_display : "";
 
   if (decl.kind === "events") {
-    return <MergerList decl={decl} events={value as MergerEvent[]} disabled={disabled} wf={wf} />;
+    return <MergerList decl={decl} events={value as MergerEvent[]} disabled={disabled} wf={wf} tMax={tMax} />;
   }
 
   return (
@@ -211,8 +213,9 @@ function Control({ decl, state, disabled, wf }: { decl: InputDecl; state: FlowSt
   );
 }
 
-function MergerList({ decl, events, disabled, wf }: { decl: InputDecl; events: MergerEvent[]; disabled: boolean; wf: WorkflowApi }) {
-  const update = (i: number, key: keyof MergerEvent, raw: string) => {
+function MergerList({ decl, events, disabled, wf, tMax }: { decl: InputDecl; events: MergerEvent[]; disabled: boolean; wf: WorkflowApi; tMax: number }) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const update = (i: number, key: keyof MergerEvent, raw: string | number) => {
     const next = events.map((e, k) => (k === i ? { ...e, [key]: Number(raw) } : e));
     wf.setValue(decl.name, next);
   };
@@ -229,13 +232,21 @@ function MergerList({ decl, events, disabled, wf }: { decl: InputDecl; events: M
         <span className={styles.value}>{events.length}</span>
       </div>
       <div className={styles.unit}>exempt from the input ceiling</div>
+      <MergerTimeline
+        events={events}
+        tMax={tMax}
+        selected={selected}
+        disabled={disabled}
+        onSelect={setSelected}
+        onMove={(i, time) => update(i, "time", time)}
+      />
       <table className={styles.events}>
         <thead>
           <tr><th>time / Gyr</th><th>mass ratio</th><th>gas fraction</th><th aria-label="remove" /></tr>
         </thead>
         <tbody>
           {events.map((e, i) => (
-            <tr key={i} title={e.about}>
+            <tr key={i} title={e.about} aria-selected={i === selected} onFocus={() => setSelected(i)}>
               <td><input type="number" min={0} step={0.1} value={e.time} disabled={disabled} onChange={(x) => update(i, "time", x.target.value)} /></td>
               <td><input type="number" min={0.001} max={1} step={0.01} value={e.mass_ratio} disabled={disabled} onChange={(x) => update(i, "mass_ratio", x.target.value)} /></td>
               <td><input type="number" min={0} max={1} step={0.01} value={e.gas_fraction} disabled={disabled} onChange={(x) => update(i, "gas_fraction", x.target.value)} /></td>

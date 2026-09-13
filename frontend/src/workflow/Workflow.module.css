@@ -271,6 +271,10 @@
   padding: var(--space-1);
 }
 
+.events tr[aria-selected="true"] input {
+  border-color: var(--magenta-3);
+}
+
 .events th:last-child {
   width: calc(var(--control-sm) + var(--space-2));
 }
