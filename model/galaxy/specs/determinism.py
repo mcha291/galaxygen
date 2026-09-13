@@ -47,7 +47,7 @@ GOLDEN_CHILD = 8756915065166511446  # seeds.child(0, "stub", 7)
 GOLDEN_DRAW = 0.45544494417321946  # seeds.rng(12345, "golden").random()
 
 SMALL = GridSpec(n_R=16, n_t=8, n_z=4, n_phi=6)
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 HASH_SEEDS: tuple[str, ...] = ("0", "1")
 
 # Run in a fresh interpreter: one production model at one grid, every field hashed.

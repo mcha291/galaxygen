@@ -24,6 +24,21 @@ def test_two_models_registered(prod):
     assert [m.name for m in models] == ["simple", "advanced"]
 
 
+def test_every_declaration_module_is_found_with_the_default_first(prod):
+    """A model is added by adding a file to galaxy/models/; nothing else lists it."""
+    import galaxy.models as declared
+
+    assert declared.declarations() == ("simple", "advanced")
+    assert prod[0].names()[0] == declared.DEFAULT  # the model a request without model= gets
+
+
+def test_the_breakdown_marks_exactly_the_remapped_slots(prod):
+    from galaxy.models.__main__ import slot_table
+
+    marked = {line.split()[1] for line in slot_table(list(prod[0]))[2:] if line.startswith("*")}
+    assert marked == set(ADVANCED_SLOTS)
+
+
 def test_the_advanced_model_remaps_exactly_two_slots(prod):
     simple, advanced = prod[0].get("simple"), prod[0].get("advanced")
     assert set(simple.stage_map) == set(advanced.stage_map)

@@ -12,7 +12,21 @@ SIMPLE = MODELS.register(
             "major merger. Every stage it maps is shared with the advanced model except "
             "chemistry and vertical, where the two genuinely differ (S9)."
         ),
-        stages=(("halo", "halo"), ("disc", "disc"), ("nucleus", "nucleus"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry"), ("vertical", "vertical"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
+        stages=(
+            ("halo", "halo"),
+            ("disc", "disc"),
+            ("nucleus", "nucleus"),
+            ("assembly", "assembly"),
+            ("sfh", "sfh"),
+            ("chemistry", "chemistry"),
+            ("vertical", "vertical"),
+            ("bar", "bar"),
+            ("pattern", "pattern"),
+            ("population", "population"),
+            ("systems", "systems"),
+            ("formation", "formation"),
+            ("planets", "planets"),
+        ),
         constants={
             **LEVEL0,
             # Read by the simple chemistry only. The advanced model has no effective

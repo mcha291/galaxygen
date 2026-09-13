@@ -219,7 +219,7 @@ def test_no_green_row_is_unconditioned(judged):
     import re
     from pathlib import Path
 
-    text = Path(__file__).resolve().parents[1].joinpath("AUDIT_II_A.md").read_text(encoding="utf-8")
+    text = Path(__file__).resolve().parents[1].joinpath("docs", "AUDIT_II_A.md").read_text(encoding="utf-8")
     section = text.split("## 3. The green rows")[1].split("\n## ")[0]
     listed: dict[str, set[int]] = {"simple": set(), "advanced": set()}
     for line in section.splitlines():

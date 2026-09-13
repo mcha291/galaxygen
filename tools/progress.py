@@ -24,8 +24,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PLAN = ROOT / "GALAXY_PLAN.md"
-INPUTS = ROOT / "GALAXY_INPUTS.md"
+PLAN = ROOT / "docs" / "GALAXY_PLAN.md"
+INPUTS = ROOT / "docs" / "GALAXY_INPUTS.md"
 
 ROW = re.compile(r"^\| (☐|◐|☑) \| (\d+) \| ")
 BAR = re.compile(r"^`([░█]+)` \*\*(\d+) / (\d+) sessions\*\* · repo initialised: (yes|no)$")

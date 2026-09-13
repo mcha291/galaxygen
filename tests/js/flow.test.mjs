@@ -14,7 +14,7 @@ import test from "node:test";
 import {
   FlowError, catalogue, confirm, goTo, initial, isEditable, isLocked,
   query, reopen, reroll, seedsAt, setValue, toggleLock, withPreview,
-} from "../../galaxy/api/client/flow.js";
+} from "../../interface/flow.js";
 
 const path = process.env.GALAXY_FIXTURE;
 assert.ok(path, "GALAXY_FIXTURE is unset; run this through tests/test_viewer.py");
