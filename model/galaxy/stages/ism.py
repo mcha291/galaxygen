@@ -41,9 +41,11 @@ from galaxy.core.stage import Context, Stage
 # and is part of the prescription, not a free constant.
 PRESSURE_COEFFICIENT = 272.0
 
-# 12 + log(O/H) at solar, for converting the model's [Fe/H] to the abundance
-# scale the dust-to-gas law is calibrated on.
-SOLAR_OXYGEN = 8.69
+# No SOLAR_OXYGEN here: the dust-to-gas law is published in 12 + log(O/H), but a
+# power law in (O/H)/(O/H)☉ is identical to one in 10^[Fe/H] under the assumption
+# that oxygen tracks iron, so the absolute abundance scale never enters. It would
+# come back the moment the broken power law is adopted, because its transition is
+# specified at an absolute 12 + log(O/H) = 7.96 rather than as a ratio.
 
 
 def midplane_pressure(sigma_gas: np.ndarray, sigma_star: np.ndarray,

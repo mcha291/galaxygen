@@ -4454,13 +4454,30 @@ line says), and the `Miss` now says so. By the prediction's own terms, the rules
 the error; the weighting or the stellar scale height is where to look next, and that is the
 row's standing prediction.
 
-**Two things recorded, not changed.** `DUST_EXTINCTION_COEFFICIENT` = 10.64 mag per M☉/pc² of
-dust treats every solar mass of gas as hydrogen (1 M☉/pc² = 1.248 × 10²⁰ H cm⁻²), while the
-model's `gas_surface_density` includes helium (row 20 reads (1 − Y) of it). Whether the factor
-of ≈1.37 belongs in the coefficient or is already inside Zubko's (G/D)☉ = 162 depends on whether
-that ratio's gas mass includes helium, which is not settled here `[inferred]`; A_V at R₀ reads
-0.707 mag either way until it is. And `SOLAR_OXYGEN = 8.69` in `ism.py` is read by nothing: the
-dust law takes 10^[Fe/H] as Z/Z☉ directly.
+**Two things found at review and fixed (S24).** Both were raised in the first pass of this
+entry and settled from the sources:
+
+- **Helium in `DUST_EXTINCTION_COEFFICIENT`: 10.64 → 7.71.** Rémy-Ruyer et al. 2014 define the gas
+  mass as μ(M_HI + M_H₂) with μ = 1/(1 − Y − Z) = 1.38 `[recall: their eq. 3]`, and they impose
+  their fits through Zubko's (G/D)☉ = 162, so that anchor is on a total-gas basis and
+  `DUST_TO_GAS_SOLAR` is right as it stands. The coefficient's arithmetic converted a solar mass
+  per pc² to 1.248 × 10²⁰ H cm⁻², treating the whole helium-bearing column as hydrogen; only
+  X = 1/1.38 = 0.725 of it is. **A_V at R₀ moves 0.707 → 0.512 mag** in both models, near the
+  accepted ~0.5 `[verified: S24 run]`; row 21 is unchanged at 0.2041 and 0.2001, since it reads
+  no dust. **This constant has now been wrong twice, found by two methods, and neither was a
+  test**: the factor of 162 by checking an output against a known value, the 1.38 by a reader
+  noticing its units disagreed with a neighbouring field. The suite passed in all three states.
+- **`SOLAR_OXYGEN = 8.69` removed from `ism.py`.** It was read by nothing and never needed: a power
+  law in (O/H)/(O/H)☉ equals one in 10^[Fe/H] under the oxygen-tracks-iron assumption already on
+  the field, so the absolute scale never enters. A comment records that it returns with the
+  broken power law, whose transition is at an absolute 12 + log(O/H) = 7.96. **A class of dead
+  constant preflight cannot see**: D29's check reads registered Level 0 entries, not module-level
+  names in a stage file.
+
+**The row's next suspect, ranked.** Of the two the killed prediction left, the single stellar scale
+height is the likelier: `thin_disc_scale_height` at R₀ enters every radius as h_*^(−1/2), and a
+flaring disc would suppress the outer pressure a constant height does not; the mass weighting is
+second-order by comparison `[inferred]`.
 
 **Register.** #79 moves from permanent to discharged. The S22 prose counting "fifteen permanent,
 eight of them the sources'" is left as S22 wrote it; the count is now fourteen and seven.

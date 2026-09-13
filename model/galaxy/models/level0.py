@@ -466,17 +466,19 @@ LEVEL0: dict[str, Constant] = {
         "DUST_TO_GAS_SOLAR - see there.",
     ),
     "DUST_EXTINCTION_COEFFICIENT": Constant(
-        10.64,
+        7.71,
         "dimensionless",
-        "A_V in magnitudes per M☉/pc² of **dust**. From the standard N_H/A_V = 1.9 × 10²¹ cm⁻² "
-        "mag⁻¹ [recall: Bohlin, Savage & Drake 1978] with 1 M☉/pc² = 1.248 × 10²⁰ hydrogen cm⁻², "
-        "giving 0.0657 mag per M☉/pc² of *gas*, then divided by the Milky Way dust-to-gas ratio "
-        "1/162 to express it per unit dust. **The factor of 162 is the whole content of this "
-        "constant and was wrong on first writing**: the arithmetic gives the gas coefficient, the "
-        "docstring claimed the dust one, and the code multiplied dust by it — face-on A_V at the "
-        "Sun came out 0.003 mag against the ~0.5 it should be, and only a sanity check against a "
-        "known value found it. Because it is per unit dust it carries no metallicity dependence of "
-        "its own; that entered through DUST_TO_GAS_SOLAR, and applying it twice is the obvious way "
-        "to get low-metallicity extinction wrong.",
+        "A_V in magnitudes per M☉/pc² of **dust**, applied to a gas column that **includes "
+        "helium**. From N_H/A_V = 1.9 × 10²¹ cm⁻² mag⁻¹ [recall: Bohlin, Savage & Drake 1978], "
+        "with 1 M☉/pc² of total gas carrying 1.248 × 10²⁰ nuclei cm⁻² if it were all hydrogen but "
+        "only X = 1/1.38 = 0.725 of that in hydrogen once helium and metals are counted — giving "
+        "0.0476 mag per M☉/pc² of gas, then divided by the dust-to-gas ratio 1/162 to express it "
+        "per unit dust. **Both factors were wrong on first writing and each was caught by a "
+        "different method**: the 162 by a sanity check against a known value (A_V at the Sun read "
+        "0.003 mag, not ~0.5), the 1.38 by a reader noticing that gas_surface_density carries "
+        "helium while this arithmetic did not. The helium belongs here and not in "
+        "DUST_TO_GAS_SOLAR: Rémy-Ruyer define their gas mass as μ(M_HI + M_H₂) with "
+        "μ = 1/(1 − Y − Z) = 1.38, so (G/D)☉ = 162 is already on a total-gas basis and correcting "
+        "it there too would count helium twice. A_V at the Sun now reads 0.512 mag.",
     ),
 }
