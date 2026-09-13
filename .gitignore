@@ -9,6 +9,11 @@ dist/
 .ruff_cache/
 .mypy_cache/
 
+# Node (the frontend)
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
 # Credentials never enter the repository (rule C2c)
 .env
 *.token

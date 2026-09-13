@@ -1,0 +1,36 @@
+:root{
+--font-display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+--font-ui:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+--font-mono:"Azeret Mono",ui-monospace,SFMono-Regular,monospace;
+
+--weight-light:300;/* @kind other */
+--weight-regular:400;/* @kind other */
+--weight-medium:500;/* @kind other */
+--weight-bold:700;/* @kind other */
+
+/* Type scale — 1.25 major-third above body, tight below */
+--size-2xs:10px;--size-xs:11px;--size-sm:12px;--size-base:14px;--size-md:16px;
+--size-lg:20px;--size-xl:26px;--size-2xl:34px;--size-3xl:44px;--size-4xl:60px;--size-5xl:80px;
+
+--lh-tight:1.05;/* @kind other */
+--lh-snug:1.22;/* @kind other */
+--lh-normal:1.5;/* @kind other */
+--lh-loose:1.65;/* @kind other */
+
+/* Tracking: display type tightens, mono labels open up wide */
+--track-display:-0.03em;/* @kind other */
+--track-heading:-0.015em;/* @kind other */
+--track-normal:0;/* @kind other */
+--track-label:0.14em;/* @kind other */
+--track-caps:0.22em;/* @kind other */
+
+/* Semantic roles */
+--text-display:var(--weight-light) var(--size-4xl)/var(--lh-tight) var(--font-display);
+--text-h1:var(--weight-medium) var(--size-2xl)/var(--lh-snug) var(--font-display);
+--text-h2:var(--weight-medium) var(--size-xl)/var(--lh-snug) var(--font-display);
+--text-h3:var(--weight-medium) var(--size-lg)/var(--lh-snug) var(--font-display);
+--text-body-font:var(--weight-regular) var(--size-base)/var(--lh-normal) var(--font-ui);
+--text-label:var(--weight-medium) var(--size-2xs)/1.2 var(--font-mono);
+--text-data:var(--weight-regular) var(--size-sm)/1.35 var(--font-mono);
+--text-readout:var(--weight-light) var(--size-xl)/1.1 var(--font-mono);
+}

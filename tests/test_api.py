@@ -75,8 +75,15 @@ def strip_js(source: str) -> str:
     return "".join(out)
 
 
+SOURCE_PATTERNS = ("*.js", "*.mjs", "*.ts", "*.tsx")  # the viewer's and the frontend's (frontend/src)
+NOT_SOURCE = ":(exclude)docs"  # documents and reference exports (docs/design), never run and never tested
+
+
 def js_files() -> list[Path]:
-    """Every JavaScript file the repository contains, tracked or newly written.
+    """Every JavaScript or TypeScript file the repository contains, tracked or newly written.
+
+    ``docs/`` is excluded: what lives there is read, not run. The Claude Design
+    export in ``docs/design`` carries its own runtime with its own fetches.
 
     Asked of git rather than walked off the filesystem. A denylist of directory
     names has to be extended for every new kind of thing that can appear under
@@ -88,7 +95,7 @@ def js_files() -> list[Path]:
     untracked new files included, ignored ones never.
     """
     out = subprocess.run(
-        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "*.js", "*.mjs"],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", *SOURCE_PATTERNS, NOT_SOURCE],
         cwd=str(ROOT), capture_output=True, text=True, check=True,
     )
     return sorted(ROOT / p for p in out.stdout.split("\0") if p)

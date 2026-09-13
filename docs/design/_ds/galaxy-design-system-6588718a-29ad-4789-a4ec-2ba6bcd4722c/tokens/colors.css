@@ -1,0 +1,48 @@
+:root{
+/* ---- Base neutrals: deep-space ramp. --void-0 is ground truth, taken from the
+   knockout fill hardcoded in assets/icons/stellar-icons-modernist.svg ---- */
+--void-0:#05070f;--void-1:#080c18;--void-2:#0d1324;--void-3:#141c32;--void-4:#1e2842;--void-5:#2b3858;
+--ink-1:#eef2fb;--ink-2:#bcc8e0;--ink-3:#8e9dbd;--ink-4:#64738f;--ink-5:#3e4b66;
+
+/* ---- Signal Magenta: the brand accent. Interactive, live, selected ---- */
+--magenta-1:#ffdcea;--magenta-2:#ffa6c9;--magenta-3:#ff6ba8;--magenta-4:#d33f7d;--magenta-5:#84214b;
+
+/* ---- Semantic status ramps ---- */
+--aqua-1:#c8fff0;--aqua-2:#6ceed2;--aqua-3:#27d3b2;--aqua-4:#159f87;--aqua-5:#0b6151;
+--amber-1:#ffeccc;--amber-2:#ffcf85;--amber-3:#f5ab45;--amber-4:#c07d20;--amber-5:#734a10;
+--coral-1:#ffdad3;--coral-2:#ff9f8d;--coral-3:#ff6f57;--coral-4:#d1442d;--coral-5:#7f2718;
+--violet-1:#e4dcff;--violet-2:#bda9ff;--violet-3:#9375ff;--violet-4:#6a4ade;--violet-5:#402b8f;
+
+/* ---- Spectral ramp: the data palette. Maps to the sprite's --sp channel and to
+   real stellar classes O(hottest) through Y(coolest). Use for series colour, never for UI chrome ---- */
+--spectral-o:#9bb0ff;--spectral-b:#b6c6ff;--spectral-a:#d8e2ff;--spectral-f:#f6f4ff;--spectral-g:#fff3e2;
+--spectral-k:#ffd49f;--spectral-m:#ff9f63;--spectral-l:#f4714a;--spectral-t:#c9556f;--spectral-y:#8a4f86;
+
+/* ---- Semantic surface aliases ---- */
+--bg-app:var(--void-1);--bg-deep:var(--void-0);
+--surface-1:var(--void-2);--surface-2:var(--void-3);--surface-raised:var(--void-4);
+--surface-card:var(--void-2);--surface-inset:var(--void-0);--surface-hover:var(--void-3);
+--surface-selected:color-mix(in oklab,var(--magenta-3) 14%,var(--void-2));
+--scrim:rgba(5,7,15,.72);
+
+/* ---- Semantic text aliases ---- */
+--text-primary:var(--ink-1);--text-body:var(--ink-2);--text-muted:var(--ink-3);--text-faint:var(--ink-4);
+--text-accent:var(--magenta-2);--text-inverse:var(--void-0);--text-link:var(--magenta-2);--text-link-hover:var(--magenta-1);
+
+/* ---- Semantic borders: hairlines only ---- */
+--border-hair:rgba(188,200,224,.12);--border-line:rgba(188,200,224,.2);--border-strong:rgba(188,200,224,.34);
+--border-accent:var(--magenta-3);--border-focus:var(--magenta-2);
+
+/* ---- Semantic status aliases ---- */
+--status-nominal:var(--aqua-3);--status-nominal-bg:color-mix(in oklab,var(--aqua-3) 16%,var(--void-1));
+--status-caution:var(--amber-3);--status-caution-bg:color-mix(in oklab,var(--amber-3) 16%,var(--void-1));
+--status-fault:var(--coral-3);--status-fault-bg:color-mix(in oklab,var(--coral-3) 16%,var(--void-1));
+--status-archive:var(--violet-3);--status-archive-bg:color-mix(in oklab,var(--violet-3) 16%,var(--void-1));
+
+/* ---- Icon sprite channels. Set these on any container to recolour stellar icons ---- */
+--sp:var(--spectral-g);--ink:var(--ink-2);--bg:var(--void-0);/* @kind color */
+
+/* ---- Glow: the only "lit" effect in the system ---- */
+--glow-accent:0 0 0 1px rgba(255,107,168,.4),0 0 18px -4px rgba(255,107,168,.55);
+--glow-nominal:0 0 14px -3px rgba(39,211,178,.5);
+}

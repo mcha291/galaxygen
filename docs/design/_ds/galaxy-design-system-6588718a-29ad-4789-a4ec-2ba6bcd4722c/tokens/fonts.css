@@ -1,0 +1,4 @@
+/* SUBSTITUTION NOTE: no font binaries were supplied with the source material.
+   Space Grotesk (display/UI) and Azeret Mono (data/telemetry) are Google Fonts stand-ins.
+   Replace these @import lines with local @font-face rules when real files arrive. */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Azeret+Mono:wght@300..600&display=swap");

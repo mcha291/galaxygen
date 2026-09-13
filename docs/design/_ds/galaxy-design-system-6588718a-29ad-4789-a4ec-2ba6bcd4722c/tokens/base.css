@@ -1,0 +1,13 @@
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg-app);color:var(--text-body);font:var(--text-body-font);-webkit-font-smoothing:antialiased;text-wrap:pretty}
+h1,h2,h3,h4{margin:0;color:var(--text-primary);letter-spacing:var(--track-heading)}
+h1{font:var(--text-h1)}h2{font:var(--text-h2)}h3{font:var(--text-h3)}
+p{margin:0 0 var(--space-5)}
+a{color:var(--text-link);text-decoration:none;border-bottom:var(--hair) solid color-mix(in oklab,var(--magenta-2) 40%,transparent);transition:var(--transition-control)}
+a:hover{color:var(--text-link-hover);border-bottom-color:var(--magenta-2)}
+code,kbd,samp{font-family:var(--font-mono);font-size:.92em}
+::selection{background:var(--magenta-4);color:var(--ink-1)}
+:focus-visible{outline:none;box-shadow:var(--shadow-focus)}
+.gx-label{font:var(--text-label);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--text-muted)}
+.gx-field{background-color:var(--bg-deep);background-image:var(--field-grid)}

@@ -1,0 +1,22 @@
+/* The design system's tokens, copied verbatim from docs/design/_ds/.../tokens except
+   fonts.css, whose Google Fonts @import is replaced by the self-hosted faces in
+   src/fonts.ts. Components style themselves in CSS Modules with var(--...). */
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/elevation.css";
+@import "./tokens/motion.css";
+@import "./tokens/base.css";
+
+:root {
+  /* @fontsource-variable registers Space Grotesk under its variable-font name. */
+  --font-display: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Space Grotesk Variable", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

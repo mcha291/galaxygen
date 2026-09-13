@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/fonts.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/colors.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/typography.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/spacing.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/elevation.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/motion.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/tokens/base.css"><link rel="stylesheet" href="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/styles.css"><script src="_ds/galaxy-design-system-6588718a-29ad-4789-a4ec-2ba6bcd4722c/_ds_bundle.js"></script><style>
+html,body{margin:0;padding:0;background:var(--void-1);color-scheme:dark}
+body{font-family:var(--font-ui);-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:var(--magenta-3);text-decoration:none}
+a:hover{color:var(--magenta-2);text-decoration:underline}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:16px}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--border-line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;margin-top:-5px;border-radius:0;background:var(--magenta-3)}
+input[type=range]:disabled::-webkit-slider-thumb{background:var(--border-strong)}
+input[type=range]:disabled::-webkit-slider-runnable-track{background:var(--void-3)}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--border-hair)}::-webkit-scrollbar-track{background:var(--void-1)}
+@keyframes gg-pulse{0%,100%{opacity:.35}50%{opacity:1}}
+</style></helmet>
+
+<div style="height:100vh;display:flex;flex-direction:column;background:var(--void-1);color:var(--text-primary);font-size:13px;line-height:1.5;overflow:hidden">
+
+<header style="display:flex;align-items:center;gap:18px;padding:7px 16px;min-height:44px;flex:none;background:var(--void-2);border-bottom:1px solid var(--border-hair);flex-wrap:wrap">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <span style="font-size:14px;font-weight:600;letter-spacing:.04em">galaxygen</span>
+    <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap">{{ runHash }}</span>
+  </div>
+  <nav style="display:flex;gap:1px;background:var(--void-1);border:1px solid var(--border-hair);border-radius:3px;padding:1px">
+    <sc-for list="{{ views }}" as="v" hint-placeholder-count="4"><button type="button" onClick="{{ v.go }}" style="font:500 11.5px/1 var(--font-ui);letter-spacing:.04em;padding:7px 13px;border:0;border-radius:2px;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }}">{{ v.label }}</button></sc-for>
+  </nav>
+  <div style="flex:1 1 40px"></div>
+  <div style="display:flex;align-items:center;gap:9px">
+    <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)">model</span>
+    <div style="display:flex;gap:1px;background:var(--void-1);border:1px solid var(--border-hair);border-radius:3px;padding:1px">
+      <button type="button" onClick="{{ setSimple }}" style="font:500 11px/1 var(--font-mono);padding:6px 11px;border:0;border-radius:2px;cursor:pointer;background:{{ simpleBg }};color:{{ simpleFg }}">simple</button>
+      <button type="button" onClick="{{ setAdvanced }}" style="font:500 11px/1 var(--font-mono);padding:6px 11px;border:0;border-radius:2px;cursor:pointer;background:{{ advBg }};color:{{ advFg }}">advanced</button>
+    </div>
+    <span style="font-size:10.5px;color:var(--text-muted);white-space:nowrap">{{ modelNote }}</span>
+  </div>
+</header>
+
+<sc-if value="{{ isWorkflow }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;min-height:0;position:relative;background:var(--void-0);overflow:hidden">
+  <canvas ref="{{ cpCanvas }}" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+
+  <div style="position:absolute;left:14px;top:14px;width:296px;max-width:calc(100% - 28px);max-height:calc(100% - 28px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;background:color-mix(in oklab, var(--void-2) 92%, transparent);border:1px solid var(--border-hair);border-radius:3px;backdrop-filter:blur(6px)">
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-hair)">
+      <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)">Generation · six checkpoints</div>
+    </div>
+
+    <div>
+    <sc-for list="{{ checkpoints }}" as="cp" hint-placeholder-count="6">
+      <section style="border-bottom:1px solid var(--border-hair);background:{{ cp.bg }}">
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px">
+          <button type="button" onClick="{{ cp.go }}" title="{{ cp.reachTitle }}" style="display:flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;margin-top:1px;border:1px solid {{ cp.chipEdge }};border-radius:2px;background:{{ cp.chipBg }};color:{{ cp.chipFg }};font:500 11px/1 var(--font-mono);cursor:{{ cp.cursor }}">{{ cp.chip }}</button>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px 8px">
+              <span style="flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:500;line-height:1.35;color:{{ cp.fg }};text-wrap:pretty">{{ cp.name }}</span>
+              <span style="flex:none;display:inline-flex;align-items:center;line-height:1"><x-import component-from-global-scope="GalaxyDesignSystem_658871.Badge" tone="{{ cp.tone }}" hint-size="auto,18px">{{ cp.stateLabel }}</x-import></span>
+            </div>
+            <sc-if value="{{ cp.discarded }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:6px;margin-top:5px;padding:6px 8px;background:var(--status-caution-bg);border-left:2px solid var(--status-caution);border-radius:0 2px 2px 0">
+              <span style="font-size:11px;line-height:1.45;color:var(--status-caution);text-wrap:pretty">{{ cp.discardedLine }}</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ cp.detail }}" hint-placeholder-val="{{ true }}">
+            <div style="font:400 10.5px/1.5 var(--font-mono);color:var(--text-muted);margin-top:3px">{{ cp.stages }}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">{{ cp.produces }}</div>
+            </sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{ cp.askingReopen }}" hint-placeholder-val="{{ true }}">
+        <div style="margin:0 12px 12px 44px;padding:10px 11px;background:var(--status-caution-bg);border:1px solid var(--status-caution);border-radius:3px">
+          <div style="font-size:11.5px;color:var(--status-caution);margin-bottom:9px;text-wrap:pretty">{{ cp.reopenCost }}</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="primary" size="sm" on-click="{{ cp.doReopen }}" hint-size="auto,32px">Reopen and discard</x-import>
+            <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="ghost" size="sm" on-click="{{ cancelReopen }}" hint-size="auto,32px">Cancel</x-import>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ cp.open }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:0 12px 12px 44px">
+
+          <sc-if value="{{ cp.seedOnly }}" hint-placeholder-val="{{ true }}">
+          <p style="margin:0 0 11px;padding:9px 10px;background:var(--void-1);border:1px solid var(--border-hair);border-left:2px solid var(--magenta-3);border-radius:2px;font-size:11.5px;color:var(--text-muted);text-wrap:pretty">No scalar controls at this checkpoint. Its output is determined by everything confirmed above plus one seed — <span style="font-family:var(--font-mono);color:var(--text-primary)">{{ cp.seedName }}</span>. A reroll is the only edit there is.</p>
+          </sc-if>
+
+          <sc-for list="{{ cp.controls }}" as="c" hint-placeholder-count="4">
+            <div style="margin-bottom:13px;opacity:{{ c.opacity }}">
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+                <span style="font:500 12px/1.4 var(--font-mono);font-variant-numeric:tabular-nums;color:{{ c.valueFg }}">{{ c.display }}</span>
+                <span style="font-size:10px;color:var(--text-muted);white-space:nowrap">{{ c.unit }}</span>
+              </div>
+              <input type="range" min="{{ c.min }}" max="{{ c.max }}" step="{{ c.step }}" value="{{ c.raw }}" disabled="{{ c.disabled }}" onInput="{{ c.onInput }}" style="width:100%;margin:3px 0 1px;accent-color:var(--magenta-3);cursor:{{ c.cursor }}">
+              <div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--font-mono);color:var(--text-muted)">
+                <span>{{ c.lo }}</span><span>{{ c.hi }}</span>
+              </div>
+              <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;text-wrap:pretty">{{ c.about }}</div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ cp.hasEvents }}" hint-placeholder-val="{{ true }}">
+          <div style="margin:0 0 14px">
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:7px">
+              <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-muted);flex:1">mergers[]</span>
+              <span style="font-size:10px;color:var(--text-muted)">{{ eventCount }} events · exempt from the input ceiling</span>
+            </div>
+            <div style="position:relative;height:96px;background:var(--void-1);border:1px solid var(--border-hair);border-radius:2px">
+              <div style="position:absolute;left:0;right:0;bottom:22px;height:1px;background:var(--border-line)"></div>
+              <sc-for list="{{ mergerTicks }}" as="tk" hint-placeholder-count="4">
+                <div style="position:absolute;bottom:6px;left:{{ tk.left }};transform:translateX(-50%);font:400 9px/1 var(--font-mono);color:var(--text-muted)">{{ tk.label }}</div>
+              </sc-for>
+              <sc-for list="{{ mergers }}" as="m" hint-placeholder-count="2">
+                <button type="button" onClick="{{ m.select }}" title="{{ m.title }}" style="position:absolute;bottom:22px;left:{{ m.left }};width:16px;height:{{ m.h }};transform:translateX(-50%);background:{{ m.bg }};border:1px solid {{ m.edge }};border-bottom:0;border-radius:1px 1px 0 0;cursor:{{ m.cursor }};padding:0"></button>
+              </sc-for>
+              <sc-for list="{{ mergers }}" as="m" hint-placeholder-count="2">
+                <div style="position:absolute;bottom:{{ m.labelBottom }};left:{{ m.left }};transform:translateX(-50%);font:400 9px/1.2 var(--font-mono);color:{{ m.labelFg }};white-space:nowrap">{{ m.ratio }}</div>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--font-mono);color:var(--text-muted);margin-top:3px">
+              <span>time / Gyr →</span><span>bar height = mass_ratio</span>
+            </div>
+            <sc-if value="{{ selectedMerger }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:9px;padding:9px 10px;background:var(--void-1);border:1px solid var(--border-hair);border-radius:2px">
+              <div style="font-size:11.5px;font-weight:500;color:var(--text-primary);margin-bottom:6px">{{ selName }}</div>
+              <sc-for list="{{ selFields }}" as="f" hint-placeholder-count="3">
+                <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+                  <span style="font:400 10.5px/1.4 var(--font-mono);color:var(--text-muted);flex:1">{{ f.k }}</span>
+                  <span style="font:500 11px/1.4 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ f.v }}</span>
+                  <span style="font-size:10px;color:var(--text-muted);width:28px">{{ f.u }}</span>
+                </div>
+              </sc-for>
+              <div style="font-size:10.5px;color:var(--text-muted);margin-top:5px;text-wrap:pretty">{{ selNote }}</div>
+            </div>
+            </sc-if>
+          </div>
+          </sc-if>
+
+          <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:2px">
+            <sc-if value="{{ cp.canConfirm }}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="primary" size="sm" on-click="{{ confirmNow }}" hint-size="auto,32px">Confirm &amp; lock</x-import>
+            </sc-if>
+            <sc-if value="{{ cp.canReopen }}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="secondary" size="sm" on-click="{{ cp.reopen }}" hint-size="auto,32px">Reopen to edit</x-import>
+            </sc-if>
+            <sc-if value="{{ cp.hasSeed }}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="secondary" size="sm" on-click="{{ cp.askReroll }}" hint-size="auto,32px">↻ Reroll seed</x-import>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ cp.asking }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:9px;padding:10px 11px;background:var(--status-caution-bg);border:1px solid var(--status-caution);border-radius:3px">
+            <div style="font-size:11.5px;color:var(--amber-2);margin-bottom:3px;text-wrap:pretty"><span style="font-family:var(--font-mono)">{{ cp.seedName }}</span> gets a new value.</div>
+            <div style="font-size:11.5px;color:var(--status-caution);margin-bottom:9px;text-wrap:pretty">{{ cp.cost }}</div>
+            <div style="display:flex;gap:7px">
+              <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="primary" size="sm" on-click="{{ cp.doReroll }}" hint-size="auto,32px">Reroll</x-import>
+              <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="ghost" size="sm" on-click="{{ cancelReroll }}" hint-size="auto,32px">Cancel</x-import>
+            </div>
+          </div>
+          </sc-if>
+
+        </div>
+        </sc-if>
+      </section>
+    </sc-for>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:326px;top:18px;max-width:calc(100% - 690px);display:flex;align-items:baseline;gap:9px;pointer-events:none;white-space:nowrap;overflow:hidden;text-shadow:0 1px 3px rgba(5,7,15,.96),0 0 10px rgba(5,7,15,.92)">
+    <span style="flex:none;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)">Preview · checkpoint {{ current }}</span>
+    <span style="flex:0 1 auto;min-width:0;font-size:12px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis">{{ previewTitle }}</span>
+  </div>
+
+      <div style="position:absolute;right:0;top:0;bottom:0;width:clamp(248px,38%,340px);padding-top:44px;padding:16px 18px 18px 24px;overflow-y:auto;overflow-x:hidden;text-align:right;text-shadow:0 1px 3px rgba(5,7,15,.96),0 0 10px rgba(5,7,15,.92),0 0 22px rgba(5,7,15,.7)">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <span style="flex:1;height:1px;background:linear-gradient(to right,rgba(142,157,189,0),rgba(142,157,189,.55))"></span>
+          <span style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap">Published at this checkpoint</span>
+        </div>
+        <sc-for list="{{ cpDerived }}" as="d" hint-placeholder-count="6">
+          <div style="padding:7px 0 8px;background:linear-gradient(to right,rgba(142,157,189,0),rgba(142,157,189,.28)) top right/100% 1px no-repeat">
+            <div style="font:400 10px/1.35 var(--font-mono);letter-spacing:.02em;color:var(--text-muted);overflow-wrap:anywhere">{{ d.k }}</div>
+            <div style="display:flex;align-items:baseline;justify-content:flex-end;gap:5px;margin-top:2px">
+              <span style="font:300 18px/1.2 var(--font-mono);letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ d.v }}</span>
+              <span style="font-size:10px;color:var(--text-muted)">{{ d.u }}</span>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ cpProvenance }}" hint-placeholder-val="{{ true }}">
+        <p style="margin:14px 0 0;padding-top:11px;background:linear-gradient(to right,rgba(142,157,189,0),rgba(142,157,189,.28)) top right/100% 1px no-repeat;font-size:11px;line-height:1.55;color:var(--text-muted);text-align:left;text-wrap:pretty">{{ cpProvenance }}</p>
+        </sc-if>
+      </div>
+
+  <div style="position:absolute;left:326px;bottom:16px;max-width:min(400px,calc(100% - 700px));pointer-events:none;text-shadow:0 1px 3px rgba(5,7,15,.96),0 0 10px rgba(5,7,15,.92),0 0 22px rgba(5,7,15,.7)">
+    <div style="font:400 10px/1.4 var(--font-mono);color:var(--text-muted)">{{ cpCanvasNote }}</div>
+    <p style="margin:5px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-primary);text-wrap:pretty">{{ cpCaption }}</p>
+  </div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isGalaxy }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;position:relative;min-height:0;background:var(--void-0);overflow:hidden">
+  <canvas ref="{{ galaxyCanvas }}" onClick="{{ pickStar }}" style="position:absolute;inset:0;width:100%;height:100%;cursor:crosshair"></canvas>
+
+  <div style="position:absolute;left:14px;top:14px;width:268px;max-width:calc(100% - 28px);max-height:calc(100% - 28px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;background:color-mix(in oklab, var(--void-2) 92%, transparent);border:1px solid var(--border-hair);border-radius:3px;backdrop-filter:blur(6px)">
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-hair)">
+      <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)">Field painting the disc</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+        <sc-for list="{{ fields }}" as="f" hint-placeholder-count="6"><button type="button" onClick="{{ f.pick }}" style="font:400 10.5px/1 var(--font-mono);padding:6px 8px;border:1px solid {{ f.edge }};border-radius:2px;background:{{ f.bg }};color:{{ f.fg }};cursor:pointer">{{ f.short }}</button></sc-for>
+      </div>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-hair)">
+      <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px">Base image</div>
+      <div style="display:flex;gap:4px">
+        <button type="button" onClick="{{ baseNatural }}" style="flex:1;font:400 11px/1 var(--font-mono);padding:7px 6px;border:1px solid {{ natEdge }};border-radius:2px;background:{{ natBg }};color:{{ natFg }};cursor:pointer">natural</button>
+        <button type="button" onClick="{{ baseField }}" style="flex:1;font:400 11px/1 var(--font-mono);padding:7px 6px;border:1px solid {{ infEdge }};border-radius:2px;background:{{ infBg }};color:{{ infFg }};cursor:pointer">inferno</button>
+      </div>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-hair)">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+        <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-primary);flex:1">{{ fieldName }}</span>
+        <span style="font:400 10px/1 var(--font-mono);color:var(--text-muted)">{{ fieldRamp }}</span>
+      </div>
+      <div ref="{{ legendStrip }}" style="height:10px;border:1px solid var(--border-line);border-radius:1px"></div>
+      <div style="display:flex;justify-content:space-between;font:400 10px/1 var(--font-mono);color:var(--text-muted);margin-top:4px">
+        <span>{{ fieldLo }}</span><span>{{ fieldUnit }}</span><span>{{ fieldHi }}</span>
+      </div>
+      <div style="font-size:10.5px;color:var(--text-muted);margin-top:6px;text-wrap:pretty">{{ boundsNote }}</div>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border-hair)">
+      <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px">Projection</div>
+      <div style="display:flex;gap:4px">
+        <button type="button" onClick="{{ faceOn }}" style="flex:1;font:400 11px/1 var(--font-mono);padding:7px 6px;border:1px solid {{ faceEdge }};border-radius:2px;background:{{ faceBg }};color:{{ faceFg }};cursor:pointer">face-on</button>
+        <button type="button" onClick="{{ edgeOn }}" style="flex:1;font:400 11px/1 var(--font-mono);padding:7px 6px;border:1px solid {{ edgeEdge }};border-radius:2px;background:{{ edgeBg }};color:{{ edgeFg }};cursor:pointer">edge-on</button>
+      </div>
+    </div>
+    <div style="padding:10px 12px">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+        <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);flex:1">Zoom</span>
+        <span style="font:500 11px/1 var(--font-mono);color:var(--text-primary)">{{ zoomLabel }}</span>
+      </div>
+      <input type="range" min="0" max="100" step="1" value="{{ zoomRaw }}" onInput="{{ onZoom }}" style="width:100%;accent-color:var(--magenta-3)">
+      <div style="display:flex;justify-content:space-between;gap:2px;margin-top:5px">
+        <sc-for list="{{ regimeMarks }}" as="r" hint-placeholder-count="3"><button type="button" onClick="{{ r.go }}" style="flex:1;font:400 9.5px/1.3 var(--font-mono);padding:6px 3px;border:1px solid {{ r.edge }};border-radius:2px;background:{{ r.bg }};color:{{ r.fg }};cursor:pointer">{{ r.label }}</button></sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;right:0;top:0;max-width:min(392px,100%);padding:18px 20px 84px 104px;text-align:right;pointer-events:none;background:radial-gradient(150% 170% at 100% 0%,rgba(5,7,15,.97) 0%,rgba(5,7,15,.94) 46%,rgba(5,7,15,0) 100%)">
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px">
+      <span style="font:400 10px/1 var(--font-mono);color:var(--text-muted)">{{ regimeStep }}</span>
+      <span style="font:500 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:{{ regimeEdge }}">{{ regimeName }}</span>
+      <x-import component-from-global-scope="GalaxyDesignSystem_658871.StatusDot" tone="{{ regimeTone }}" hint-size="8px,8px"></x-import>
+    </div>
+    <p style="margin:8px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-primary);text-wrap:pretty">{{ regimeWhat }}</p>
+    <p style="margin:5px 0 0;font-size:11px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">{{ regimeNext }}</p>
+  </div>
+
+  <div style="position:absolute;left:0;bottom:0;padding:84px 104px 18px 20px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;pointer-events:none;background:radial-gradient(150% 170% at 0% 100%,rgba(5,7,15,.97) 0%,rgba(5,7,15,.94) 46%,rgba(5,7,15,0) 100%)">
+    <div>
+      <div style="height:6px;border-left:1px solid var(--text-muted);border-right:1px solid var(--text-muted);border-bottom:1px solid var(--text-muted);width:{{ scaleBarPx }}"></div>
+      <div style="font:400 10.5px/1.4 var(--font-mono);color:var(--text-muted);margin-top:3px">{{ scaleBarLabel }}</div>
+    </div>
+    <div style="font:400 10.5px/1.5 var(--font-mono);color:var(--text-muted)">{{ countLine }}</div>
+  </div>
+
+  <sc-if value="{{ hasHover }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;right:0;bottom:0;padding:92px 20px 18px 104px;background:radial-gradient(150% 170% at 100% 100%,rgba(5,7,15,.97) 0%,rgba(5,7,15,.94) 46%,rgba(5,7,15,0) 100%)">
+    <div style="width:252px;max-width:100%">
+    <div style="font-size:11.5px;font-weight:500;color:var(--text-primary);text-align:right;margin-bottom:7px">{{ hoverTitle }}</div>
+    <sc-for list="{{ hoverRows }}" as="h" hint-placeholder-count="5">
+      <div style="display:flex;align-items:baseline;gap:8px;padding:3px 0;border-top:1px solid var(--border-hair)">
+        <span style="font:400 10.5px/1.4 var(--font-mono);color:var(--text-muted);flex:1;min-width:0">{{ h.k }}</span>
+        <span style="font:500 11px/1.4 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ h.v }}</span>
+        <span style="font-size:10px;color:var(--text-muted);width:38px;text-align:right">{{ h.u }}</span>
+      </div>
+    </sc-for>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="primary" size="sm" on-click="{{ openSystem }}" hint-size="auto,32px">Open system</x-import>
+    </div>
+    </div>
+  </div>
+  </sc-if>
+</main>
+</sc-if>
+
+<sc-if value="{{ isSystem }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;min-height:0;display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto">
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border-hair);flex-wrap:wrap">
+    <x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="secondary" size="sm" on-click="{{ backToGalaxy }}" hint-size="auto,32px">← Back to galaxy</x-import>
+    <span style="font-size:11px;color:var(--text-muted)">{{ returnNote }}</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:1px;background:var(--void-1);border:1px solid var(--border-hair);border-radius:3px;padding:1px">
+      <button type="button" onClick="{{ orbitRail }}" style="font:400 11px/1 var(--font-mono);padding:6px 10px;border:0;border-radius:2px;background:{{ railBg }};color:{{ railFg }};cursor:pointer">log rail</button>
+      <button type="button" onClick="{{ orbitPolar }}" style="font:400 11px/1 var(--font-mono);padding:6px 10px;border:0;border-radius:2px;background:{{ polarBg }};color:{{ polarFg }};cursor:pointer">log polar</button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:stretch;flex-wrap:wrap">
+    <div style="flex:0 0 300px;min-width:280px;border-right:1px solid var(--border-hair);background:var(--void-2);padding:16px">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px">
+        <x-import component-from-global-scope="GalaxyDesignSystem_658871.StarIcon" core="ms" spectral="G" luminosity="{{ starLum }}" modifiers="{{ starMods }}" ref-grid="{{ true }}" size="{{ starIconSize }}" sprite="stellar-icons-modernist.svg" title="{{ starClass }}" hint-size="60px,60px"></x-import>
+        <div style="min-width:0">
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary)">{{ starName }}</div>
+          <div style="font:400 11px/1.5 var(--font-mono);color:var(--text-muted)">{{ starClass }}</div>
+          <div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">materialised in {{ openMs }}</div>
+        </div>
+      </div>
+      <sc-for list="{{ starRows }}" as="s" hint-placeholder-count="7">
+        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-hair)">
+          <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-muted);flex:1;min-width:0">{{ s.k }}</span>
+          <span style="font:500 12px/1.4 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ s.v }}</span>
+          <span style="font-size:10px;color:var(--text-muted);width:44px">{{ s.u }}</span>
+        </div>
+      </sc-for>
+      <div style="margin-top:14px;padding:10px 11px;background:var(--void-1);border:1px solid var(--border-hair);border-left:2px solid var(--magenta-3);border-radius:2px">
+        <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Migration</div>
+        <canvas ref="{{ migration }}" style="width:100%;height:54px;display:block"></canvas>
+        <p style="margin:6px 0 0;font-size:11px;color:var(--text-muted);text-wrap:pretty">{{ migrationNote }}</p>
+      </div>
+    </div>
+
+    <div style="flex:1 1 480px;min-width:320px;display:flex;flex-direction:column;padding:16px;gap:14px">
+      <div style="position:relative;flex:1;min-height:300px;background:var(--void-1);border:1px solid var(--border-line);border-radius:2px;overflow:hidden">
+        <canvas ref="{{ orbitCanvas }}" onClick="{{ pickPlanet }}" style="position:absolute;inset:0;width:100%;height:100%;cursor:pointer"></canvas>
+        <div style="position:absolute;right:10px;top:9px;font:400 10px/1.5 var(--font-mono);color:var(--text-muted);text-align:right;pointer-events:none">0.05 – 30 AU<br>log axis · 2.8 decades</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:1 1 300px;min-width:260px">
+          <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px">{{ bodyTitle }}</div>
+          <sc-for list="{{ bodyRows }}" as="b" hint-placeholder-count="9">
+            <div style="display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid var(--border-hair)">
+              <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-muted);flex:1;min-width:0">{{ b.k }}</span>
+              <span style="font:500 12px/1.4 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ b.v }}</span>
+              <span style="font-size:10px;color:var(--text-muted);width:52px">{{ b.u }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:0 1 210px;min-width:190px">
+          <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px">planet_atmosphere</div>
+          <sc-for list="{{ atmLegend }}" as="a" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:7px;padding:3px 0">
+              <i style="width:9px;height:9px;border-radius:2px;flex:none;background:{{ a.c }}"></i>
+              <span style="font:400 11px/1.4 var(--font-mono);color:var(--text-muted)">{{ a.k }}</span>
+            </div>
+          </sc-for>
+          <p style="margin:9px 0 0;font-size:10.5px;color:var(--text-muted);text-wrap:pretty">Belts are derived from giant-planet resonances and may be absent. This system has {{ beltCount }}.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isScience }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;min-height:0;display:flex;align-items:stretch;flex-wrap:wrap;align-content:stretch;overflow-x:hidden;overflow-y:auto">
+  <div style="flex:0 0 236px;min-width:200px;border-right:1px solid var(--border-hair);background:var(--void-2);padding:12px 0">
+    <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);padding:0 14px 9px">Scientific views</div>
+    <sc-for list="{{ sciNav }}" as="s" hint-placeholder-count="8">
+      <button type="button" onClick="{{ s.go }}" style="display:block;width:100%;text-align:left;padding:8px 14px;border:0;border-left:2px solid {{ s.edge }};background:{{ s.bg }};color:{{ s.fg }};font:400 12px/1.4 var(--font-ui);cursor:pointer">{{ s.label }}<span style="display:block;font:400 10px/1.4 var(--font-mono);color:{{ s.subFg }}">{{ s.sub }}</span></button>
+    </sc-for>
+  </div>
+
+  <div style="flex:1 1 560px;min-width:320px;padding:16px;display:flex;flex-direction:column;gap:14px">
+    <div>
+      <h2 style="margin:0;font-size:15px;font-weight:600;color:var(--text-primary)">{{ sciTitle }}</h2>
+      <p style="margin:4px 0 0;font-size:11.5px;color:var(--text-muted);max-width:74ch;text-wrap:pretty">{{ sciBlurb }}</p>
+    </div>
+
+    <sc-if value="{{ sciLocked }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:20px 22px;background:var(--void-2);border:1px solid var(--border-hair);border-left:2px solid var(--status-caution);border-radius:3px;max-width:72ch">
+      <div style="font:500 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--status-caution)">No content in the simple model</div>
+      <p style="margin:9px 0 0;font-size:12.5px;color:var(--text-primary);text-wrap:pretty">{{ sciLockedWhy }}</p>
+      <div style="margin-top:13px"><x-import component-from-global-scope="GalaxyDesignSystem_658871.Button" variant="secondary" size="sm" on-click="{{ setAdvanced }}" hint-size="auto,32px">Switch to the advanced model</x-import></div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ sciEmpty }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:20px 22px;background:var(--void-2);border:1px solid var(--border-hair);border-left:2px solid var(--border-strong);border-radius:3px;max-width:72ch">
+      <div style="font:500 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Not designed in this pass</div>
+      <p style="margin:9px 0 0;font-size:12.5px;color:var(--text-primary);text-wrap:pretty">The acceptance screen scores the model against 24 measured Milky Way quantities — each one pass, fail, or not computable, five of them judged statistically rather than pointwise. It is the project's central discipline and no consumer tool has anything like it, so it deserves its own pass rather than a card on this page.</p>
+      <p style="margin:9px 0 0;font-size:11.5px;color:var(--text-muted);text-wrap:pretty">14 pass · 7 fail · 3 with no testable target, on the values currently confirmed.</p>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ sciOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start">
+      <div style="min-width:0;background:var(--void-2);border:1px solid var(--border-hair);border-radius:3px;padding:13px 14px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:500;color:var(--text-primary);flex:1">{{ plotATitle }}</span>
+          <span style="font:400 10px/1 var(--font-mono);color:var(--text-muted)">{{ plotAUnit }}</span>
+        </div>
+        <canvas ref="{{ plotA }}" style="width:100%;height:260px;display:block"></canvas>
+        <sc-if value="{{ hasScrub }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--border-hair)">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+            <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);flex:1">lookback</span>
+            <span style="font:500 11.5px/1 var(--font-mono);color:var(--magenta-3)">{{ scrubLabel }}</span>
+          </div>
+          <input type="range" min="0" max="136" step="1" value="{{ scrubRaw }}" onInput="{{ onScrub }}" style="width:100%;accent-color:var(--magenta-3)">
+          <div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--font-mono);color:var(--text-muted);margin-top:2px"><span>t = 0 · first infall</span><span>t = 13.6 · today</span></div>
+        </div>
+        </sc-if>
+        <p style="margin:9px 0 0;font-size:11px;color:var(--text-muted);text-wrap:pretty">{{ plotACaption }}</p>
+      </div>
+
+      <div style="min-width:0;background:var(--void-2);border:1px solid var(--border-hair);border-radius:3px;padding:13px 14px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:500;color:var(--text-primary);flex:1">{{ plotBTitle }}</span>
+          <span style="font:400 10px/1 var(--font-mono);color:var(--text-muted)">{{ plotBUnit }}</span>
+        </div>
+        <canvas ref="{{ plotB }}" style="width:100%;height:260px;display:block"></canvas>
+        <p style="margin:9px 0 0;font-size:11px;color:var(--text-muted);text-wrap:pretty">{{ plotBCaption }}</p>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <sc-for list="{{ sciScalars }}" as="k" hint-placeholder-count="4">
+        <div style="flex:1 1 158px;min-width:150px;padding:10px 12px;background:var(--void-2);border:1px solid var(--border-hair);border-radius:3px">
+          <div style="font:400 10px/1.4 var(--font-mono);color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ k.k }}</div>
+          <div style="display:flex;align-items:baseline;gap:5px;margin-top:4px">
+            <span style="font:500 17px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">{{ k.v }}</span>
+            <span style="font-size:10px;color:var(--text-muted)">{{ k.u }}</span>
+          </div>
+          <div style="font-size:10.5px;color:{{ k.noteFg }};margin-top:4px;text-wrap:pretty">{{ k.note }}</div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+  </div>
+</main>
+</sc-if>
+
+<footer style="flex:none;display:flex;align-items:center;gap:16px;padding:8px 16px;border-top:1px solid var(--border-hair);background:var(--void-2);overflow:hidden">
+  <span style="font:400 10.5px/1.4 var(--font-mono);color:var(--text-muted);flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ footLeft }}</span>
+  <span style="font:400 10.5px/1.4 var(--font-mono);color:var(--text-muted);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">values are the Milky Way defaults · uncertainties as published</span>
+</footer>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;startView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;workflow&quot;,&quot;galaxy&quot;,&quot;system&quot;,&quot;science&quot;],&quot;default&quot;:&quot;workflow&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype state&quot;},&quot;startModel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;simple&quot;,&quot;advanced&quot;],&quot;default&quot;:&quot;simple&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype state&quot;},&quot;baseImage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;natural&quot;,&quot;inferno&quot;],&quot;default&quot;:&quot;natural&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Galaxy renderer&quot;},&quot;sampleSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:2000,&quot;max&quot;:16000,&quot;step&quot;:1000,&quot;default&quot;:9000,&quot;unit&quot;:&quot;points&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Galaxy renderer&quot;}}">
+class Component extends DCLogic {
+  cmaps = {
+    viridis:["#440154","#482878","#3e4989","#31688e","#26828e","#1f9e89","#35b779","#6ece58","#b5de2b","#fde725"],
+    magma:["#000004","#180f3d","#440f76","#721f81","#9e2f7f","#cd4071","#f1605d","#fd9668","#feca8d","#fcfdbf"],
+    inferno:["#000004","#1b0c41","#4a0c6b","#781c6d","#a52c60","#cf4446","#ed6925","#fb9b06","#f7d13d","#fcffa4"],
+    plasma:["#0d0887","#46039f","#7201a8","#9c179e","#bd3786","#d8576b","#ed7953","#fb9f3a","#fdca26","#f0f921"],
+    cividis:["#00224e","#123570","#3b496c","#575d6d","#707173","#8a8678","#a59c74","#c3b369","#e1cc55","#fee838"],
+    greys:["#ffffff","#f0f0f0","#d9d9d9","#bdbdbd","#969696","#737373","#525252","#252525","#000000"],
+    RdBu:["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"],
+    coolwarm:["#3b4cc0","#6788ee","#9abbff","#c9d7f0","#dddddd","#f2cbb7","#f7ac8e","#e88568","#b40426"]
+  };
+
+  cps = [
+    {n:1,name:"Halo & disc",stages:"halo · disc · nucleus",produces:"Rotation curve; smooth axisymmetric disc"},
+    {n:2,name:"Assembly",stages:"assembly",produces:"Merger history; the thick disc appears edge-on"},
+    {n:3,name:"Star formation & chemistry",stages:"sfh · chemistry · vertical",produces:"Gradients and histories; disc colours by [Fe/H]"},
+    {n:4,name:"Pattern",stages:"bar · pattern",produces:"Bar and spiral arms — first recognisable galaxy"},
+    {n:5,name:"Systems",stages:"population · systems",produces:"Resolves into individual stars"},
+    {n:6,name:"Planets",stages:"formation · planets",produces:"Systems become openable"}
+  ];
+
+  ctl = {
+    halo_mass:{cp:1,lo:1e11,hi:1e13,log:true,unit:"M☉",def:1.1e12,about:"M₂₀₀. Below 10¹¹ the rotating-disc assumption fails."},
+    disc_spin:{cp:1,lo:0.005,hi:0.05,step:0.0001,unit:"dimensionless",def:0.0173,about:"λ_d, the disc spin — not the halo's. Halo λ averages 0.044; discs lose angular momentum during collapse."},
+    halo_assembly_z:{cp:1,lo:0.5,hi:5,step:0.01,unit:"dimensionless",def:1.66,about:"Also derives c₂₀₀. Default is the ΛCDM median halo of the default mass; the relation's scatter spans 1.08–2.41."},
+    baryon_retention:{cp:1,lo:0.05,hi:0.5,step:0.005,unit:"dimensionless",def:0.35,about:"How much of f_b · M₂₀₀ the galaxy kept. f_b × this = m_d ≈ 0.055."},
+    world_seed:{cp:1,seed:true,unit:"seed",def:0,about:"Seeds every drawn residual: c₂₀₀, σ(age), pitch angle, arm multiplicity, M_•."},
+    infall_timescale:{cp:3,lo:1,hi:14,step:0.1,unit:"Gyr",def:7,about:"τ₀ at R₀, from the two-infall framework."},
+    inside_out_index:{cp:3,lo:0,hi:3,step:0.05,unit:"dimensionless",def:1,about:"τ(R) = τ₀(R/R_d)ⁿ. Sets the metallicity gradient."},
+    migration_efficiency:{cp:3,lo:0,hi:8,step:0.1,unit:"kpc",def:3.6,about:"Dispersion kernel width, applied by convolution over birth radius."},
+    pattern_seed:{cp:4,seed:true,unit:"seed",def:0,about:""},
+    systems_seed:{cp:5,seed:true,unit:"seed",def:0,about:""},
+    planets_seed:{cp:6,seed:true,unit:"seed",def:0,about:""}
+  };
+
+  derived = {
+    1:[["halo_virial_radius","212.9","kpc"],["halo_concentration","8.25","—"],["halo_contraction","1.50","r_i/r_f"],
+       ["disc_scale_length","2.60","kpc"],["circular_velocity(R₀)","251.03","km/s"],["black_hole_mass","2.0 × 10⁷","M☉"],
+       ["stellar_mass_total","5.1 × 10¹⁰","M☉"]],
+    2:[["merger_count","2","events"],["last_major_merger","3.8","Gyr"],["thick_disc_mass","6.1 × 10⁹","M☉"],
+       ["disc_heating","88.8","km/s"],["disc_radial_spread","1.09","kpc"],["merger_delivery","0.51","gas fraction"]],
+    3:[["feh_gradient","−0.019","dex/kpc"],["feh_stars_young","−0.021","dex/kpc"],["feh_stars_old","−0.009","dex/kpc"],
+       ["feh_spread_sun","0.370","dex"],["mean_birth_radius(R₀)","5.4","kpc"],["mean_age(R₀)","7.3","Gyr"],
+       ["star_formation_rate","1.14","M☉/yr"]],
+    4:[["bar_half_length","5.02","kpc"],["bar_pattern_speed","43.1","km/s/kpc"],["bar_corotation_radius","5.8","kpc"],
+       ["pitch_angle","13.4","deg"],["arm_multiplicity","2","arms"],["disc_dominance","0.70","—"]],
+    5:[["star_count","1.04 × 10⁶","stars"],["materialised_sample","20 000","stars"],["thin_thick_split","0.88 / 0.12","fraction"],
+       ["m_dwarf_fraction","0.73","fraction"],["mean_stellar_mass","0.31","M☉"]],
+    6:[["mean_planets_per_star","2.9","planets"],["giant_occurrence(R₀)","0.113","fraction"],["ice_line_sun","2.71","AU"],
+       ["belt_occurrence","0.41","fraction"]]
+  };
+
+  prov = {
+    1:"Row 3 of the acceptance table wants 245–251 km/s and reads 251.03 — a miss of 0.03, of which the radial mesh is 0.017. The mechanism it lacks is the bar's buckling, which is debt #21 and permanent.",
+    2:"The second infall's onset is an event timestamp, not an input — ruling 11 dissolved `second_infall_onset`. The list is exempt from the twelve-input ceiling, so it can be any length.",
+    3:"The simple model has one abundance and no wind, so it cannot make a gradient of the observed −0.06 dex/kpc. Rows 22 and 23 are misses by construction; the advanced model reads −0.057.",
+    4:"Pitch angle is a seeded draw, not a derivation — the shear trend is worth 0.30° against a draw worth 5.12°. Rerolling pattern_seed invalidates checkpoints 5 and 6 and nothing earlier.",
+    5:"10⁷ stars sample in 0.71 s, linear in N. The view materialises 20 000 of them as clickable objects; the rest exist only as the density field.",
+    6:"Giant occurrence scales roughly as the square of iron abundance, so the galaxy's chemistry is already a statement about where planets can exist."
+  };
+
+  fields = [
+    {name:"stellar_surface_density",short:"Σ★",cmap:"inferno",scale:"log",lo:0.1,hi:1400,unit:"M☉/pc²",loL:"0.1",hiL:"1.4k"},
+    {name:"star_age",short:"age",cmap:"magma",scale:"linear",lo:0,hi:13.6,unit:"Gyr",loL:"0",hiL:"13.6"},
+    {name:"star_metallicity",short:"[Fe/H]",cmap:"RdBu",scale:"linear",lo:-2,hi:0.5,meaningfulZero:true,unit:"0 = solar · dex",loL:"−2.0",hiL:"+2.0"},
+    {name:"star_mass",short:"mass",cmap:"inferno",scale:"log",lo:0.08,hi:8,unit:"M☉",loL:"0.08",hiL:"8"},
+    {name:"star_birth_radius",short:"R_birth",cmap:"viridis",scale:"linear",lo:0,hi:20,unit:"kpc",loL:"0",hiL:"20"},
+    {name:"star_population",short:"pop",palette:["#b6c6ff","#ff9f63"],lo:0,hi:1,unit:"thin / thick",loL:"thin",hiL:"thick"}
+  ];
+
+  sci = [
+    {id:"dyn",label:"Dynamics",sub:"circular_velocity"},
+    {id:"chem",label:"Chemical evolution",sub:"feh_history (R,t)"},
+    {id:"alpha",label:"The alpha plane",sub:"advanced only"},
+    {id:"pop",label:"Stellar populations",sub:"star_birth_radius"},
+    {id:"sf",label:"Star formation",sub:"sfr_surface_density"},
+    {id:"struct",label:"Structure",sub:"bar · arms"},
+    {id:"planet",label:"Planet occurrence",sub:"giant_occurrence"},
+    {id:"accept",label:"Acceptance",sub:"24 quantities"}
+  ];
+
+  planets = [
+    {id:"b",a:0.081,m:1.9,r:1.18,ins:142,per:"8.4 d",rot:"8.4 d (locked)",obl:0.1,vol:0.00,atm:"none"},
+    {id:"c",a:0.34,m:4.1,r:1.71,ins:8.1,per:"71 d",rot:"41 h",obl:12.4,vol:0.02,atm:"thin"},
+    {id:"d",a:1.06,m:0.83,r:0.95,ins:0.89,per:"1.07 yr",rot:"26.4 h",obl:23.7,vol:0.11,atm:"volatile-rich"},
+    {id:"e",a:3.2,m:41,r:4.2,ins:0.098,per:"5.7 yr",rot:"14.1 h",obl:4.2,vol:0.63,atm:"volatile-rich"},
+    {id:"f",a:9.8,m:231,r:10.1,ins:0.0104,per:"30.6 yr",rot:"10.2 h",obl:2.1,vol:0.88,atm:"H/He"},
+    {id:"g",a:24.4,m:17,r:3.6,ins:0.0017,per:"120 yr",rot:"16.0 h",obl:28.3,vol:0.71,atm:"volatile-rich"}
+  ];
+  belts = [[1.82,2.64],[12.6,18.1]];
+  atmCol = {none:"#3e4b66",thin:"#b6c6ff","volatile-rich":"#27d3b2","H/He":"#f5ab45"};
+
+  state = {
+    view:"workflow", model:"simple", confirmed:3, current:4, discarded:{},
+    values:null, base:"natural", asking:0, askReopen:0, selMerger:0,
+    field:0, orient:"face", zoom:1, hover:true, sci:"chem", scrub:136, orbit:"rail",
+    planet:2, seedBump:0
+  };
+
+  constructor(props){
+    super(props);
+    this.resolveTokens();
+    const values = {};
+    for (const k in this.ctl) values[k] = this.ctl[k].def;
+    this.state = {...this.state, values,
+      view: props.startView || "workflow",
+      model: props.startModel || "simple",
+      base: props.baseImage || "natural"};
+    this.mergers = [
+      {name:"Gaia-Enceladus",time:3.8,ratio:0.25,gas:0.5,note:"The last major merger. The thin/thick split is defined against its timestamp, and its gas fraction delivers the second infall."},
+      {name:"Sagittarius",time:8.8,ratio:0.02,gas:0.01,note:"Minor and gas-poor. It heats the disc without resetting the chemical clock."}
+    ];
+    this.r = {};
+    ["cpC","gal","leg","orb","mig","pA","pB"].forEach(k => this.r[k] = React.createRef());
+    this.rng = this.mkrng(7);
+    this.sample = this.buildSample(Math.round(props.sampleSize || 9000), 0);
+    this.local = this.buildLocal(1100);
+  }
+
+  mkrng(s){ let a = s>>>0 || 1; return () => { a ^= a<<13; a>>>=0; a ^= a>>17; a ^= a<<5; a>>>=0; return a/4294967296; }; }
+  gauss(rnd){ let u=0,v=0; while(!u) u=rnd(); while(!v) v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+  lerpHex(a,b,t){
+    const A=parseInt(a.slice(1),16), B=parseInt(b.slice(1),16);
+    const r=Math.round((A>>16)+(((B>>16)-(A>>16))*t));
+    const g=Math.round(((A>>8)&255)+((((B>>8)&255)-((A>>8)&255))*t));
+    const bl=Math.round((A&255)+(((B&255)-(A&255))*t));
+    return [r,g,bl];
+  }
+  ramp(name,t){
+    const s=this.cmaps[name]||this.cmaps.viridis;
+    t=Math.max(0,Math.min(1,t));
+    const x=t*(s.length-1), i=Math.min(s.length-2,Math.floor(x));
+    return this.lerpHex(s[i],s[i+1],x-i);
+  }
+  rampCss(name,t){ const c=this.ramp(name,t); return "rgb("+c[0]+","+c[1]+","+c[2]+")"; }
+
+  diverging = {coolwarm:1, RdBu:1};
+  norm(f,v){
+    if(f.palette) return v;
+    if(f.scale==="log"){
+      const lo=Math.log10(Math.max(1e-6,f.lo)), hi=Math.log10(f.hi);
+      return (Math.log10(Math.max(1e-6,v))-lo)/(hi-lo);
+    }
+    // A diverging map's middle stop is its neutral point (cmaps.py), so a
+    // meaningful_zero field is anchored symmetrically about zero — never across
+    // the declared bounds, which would put neutral at their midpoint.
+    if(this.diverging[f.cmap]&&f.meaningfulZero){
+      const vmax=f.vmax||Math.max(Math.abs(f.lo),Math.abs(f.hi));
+      return 0.5+v/(2*vmax);
+    }
+    return (v-f.lo)/(f.hi-f.lo);
+  }
+  colOf(f,v){
+    if(f.palette) return f.palette[v>0.5?1:0];
+    return this.rampCss(f.cmap,this.norm(f.name==="star_metallicity"?this.fehField():f,v));
+  }
+
+  hash2(i,j){ let h=i*374761393+j*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967296; }
+  vnoise(x,y){
+    const i=Math.floor(x), j=Math.floor(y), fx=x-i, fy=y-j;
+    const sx=fx*fx*(3-2*fx), sy=fy*fy*(3-2*fy);
+    const a=this.hash2(i,j), b=this.hash2(i+1,j), c=this.hash2(i,j+1), d=this.hash2(i+1,j+1);
+    return (a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy;
+  }
+  // The disc split into the components that actually differ in colour: an old
+  // smooth disc, a young arm excess, the bar/bulge, and the dust that sits on
+  // the arms' inner edge.
+  densParts(x,y){
+    const Rd=2.6, r=Math.hypot(x,y)+1e-3;
+    const ca=Math.cos(0.42), sa=Math.sin(0.42);
+    const bx=x*ca+y*sa, by=-x*sa+y*ca;
+    const bar=1.55*Math.exp(-Math.pow(bx/2.7,2)-Math.pow(by/0.9,2));
+    const k=Math.tan(13.4*Math.PI/180), phi=Math.atan2(y,x), th=Math.log(r/1.35)/k;
+    let arm=0, dust=0;
+    for(let m=0;m<2;m++){
+      let d=phi-th-m*Math.PI; d=Math.atan2(Math.sin(d),Math.cos(d));
+      arm+=Math.exp(-Math.pow(d*r/1.55,2));
+      let dd=phi-th-m*Math.PI+0.26; dd=Math.atan2(Math.sin(dd),Math.cos(dd));
+      dust+=Math.exp(-Math.pow(dd*r/0.50,2));
+    }
+    const fade=Math.min(1,Math.max(0,(r-2.1)/2.2))*Math.min(1,Math.max(0,(19-r)/4));
+    const floc=0.72+0.56*this.vnoise(x*1.9+40,y*1.9+40)*(0.35+0.65*fade);
+    const base=Math.exp(-r/Rd)*floc;
+    return {smooth:base, arm:base*1.35*arm*fade, bar, dust:dust*fade, r};
+  }
+  dens(x,y){ const p=this.densParts(x,y); return (p.smooth+p.arm+p.bar)*760; }
+
+  // Main-sequence colour by mass. M dwarfs are orange-red, the Sun ivory, OB
+  // stars blue-white — the sequence a colour image of a galaxy is made of.
+  starStops=[[255,166,104],[255,203,156],[255,241,226],[212,228,255],[164,197,255]];
+  starRGB(m){
+    const t=Math.max(0,Math.min(1,(Math.log10(Math.max(0.08,m))+1.1)/2.05));
+    const x=t*(this.starStops.length-1), i=Math.min(this.starStops.length-2,Math.floor(x)), fr=x-i;
+    return this.starStops[i].map((v,k)=>Math.round(v+(this.starStops[i+1][k]-v)*fr));
+  }
+  starColour(m){ return "rgb("+this.starRGB(m).join(",")+")"; }
+
+  // Power stretch against the brightest thing in view — the sky stays black and
+  // the core still holds detail. (asinh over this range saturates the disc.)
+  stretch(v,hi){ return Math.min(1,Math.pow(Math.max(0,v)/Math.max(1e-6,hi),0.50)); }
+
+  naturalRGB(x,y,hi){
+    const p=this.densParts(x,y), tot=p.smooth+p.arm+p.bar;
+    if(tot<=0) return [0,0,0];
+    // Light, not mass: a young population is ~3x more luminous per unit mass,
+    // which is why arms read at all against a disc that outweighs them.
+    const lum=p.smooth+p.arm*3.0+p.bar*0.95;
+    const young=Math.min(1,(p.arm*2.6)/(lum+1e-6));
+    const bulge=Math.min(1,(p.bar*1.4)/(lum+1e-6));
+    const L=this.stretch(lum*760,hi*1.7);
+    const K=this.hexRGB(this.C.spK), G=this.hexRGB(this.C.spG);
+    const old=G.map((v,i)=>Math.round(v+(K[i]-v)*0.42)), yng=this.hexRGB(this.C.spB), core=K;
+    const dl=Math.min(0.52,p.dust*0.52), red=[0.44,0.66,0.86];
+    return old.map((o,i)=>{
+      let v=o+(yng[i]-o)*young;
+      v=v+(core[i]-v)*bulge;
+      return Math.round(v*(1-dl*red[i])*L);
+    });
+  }
+  naturalEdgeRGB(x,z,hi){
+    const L=this.stretch(this.densEdge(x,z),hi);
+    const thin=Math.exp(-Math.abs(z)/0.35);
+    const K=this.hexRGB(this.C.spK), G=this.hexRGB(this.C.spG);
+    const old=G.map((v,i)=>Math.round(v+(K[i]-v)*0.42)), yng=this.hexRGB(this.C.spB);
+    const dust=Math.exp(-Math.pow(z/0.085,2))*Math.min(1,Math.abs(x)/1.6)*0.80, red=[0.44,0.66,0.86];
+    return old.map((o,i)=>Math.round((o+(yng[i]-o)*thin*0.45)*(1-dust*red[i])*L));
+  }
+  densEdge(x,z){
+    const r=Math.abs(x);
+    const thin=Math.exp(-r/2.6)*Math.exp(-Math.abs(z)/0.30);
+    const thick=0.14*Math.exp(-r/2.0)*Math.exp(-Math.abs(z)/0.90);
+    const bulge=1.3*Math.exp(-Math.hypot(x,z*2.4)/0.72);
+    return (thin+thick+bulge)*760;
+  }
+
+  buildSample(n,bump){
+    const rnd=this.mkrng(11+bump), out=[];
+    let guard=0;
+    while(out.length<n && guard<n*90){
+      guard++;
+      const r=-2.6*Math.log(rnd()), phi=rnd()*2*Math.PI;
+      if(r>20) continue;
+      const x=r*Math.cos(phi), y=r*Math.sin(phi);
+      if(rnd()>this.dens(x,y)/(this.dens(0.6,0)*0.55)) continue;
+      const age=13.6*Math.pow(rnd(),0.62);
+      const pop=age>9.8?1:0;
+      const birth=Math.max(0.2,r-this.gauss(rnd)*3.6*Math.sqrt(Math.min(1,age/10)));
+      const mass=Math.min(9,0.08*Math.pow(Math.max(1e-4,rnd()),-1.3));
+      const feh=0.10-0.06*(birth-8.2)-0.09*age+this.gauss(rnd)*0.11;
+      const z=(pop?0.9:0.30)*(-Math.log(Math.max(1e-4,rnd())))*(rnd()<0.5?-1:1);
+      out.push({x,y,z,r,age,birth,mass,feh,pop});
+    }
+    return out;
+  }
+  buildLocal(n){
+    const rnd=this.mkrng(29), out=[];
+    for(let i=0;i<n;i++){
+      const x=-8.24+(rnd()-0.5)*0.9, y=(rnd()-0.5)*0.9;
+      const age=13.6*Math.pow(rnd(),0.62), pop=age>9.8?1:0;
+      const birth=Math.max(0.2,8.24-this.gauss(rnd)*3.6*Math.sqrt(Math.min(1,age/10)));
+      const mass=Math.min(9,0.08*Math.pow(Math.max(1e-4,rnd()),-1.3));
+      const feh=0.10-0.06*(birth-8.2)-0.09*age+this.gauss(rnd)*0.11;
+      const z=(pop?0.9:0.30)*(-Math.log(Math.max(1e-4,rnd())))*(rnd()<0.5?-1:1);
+      out.push({x,y,z,r:Math.hypot(x,y),age,birth,mass,feh,pop});
+    }
+    return out;
+  }
+
+  vHalo(R){
+    const rs=212.9/8.25, x=R/rs, x0=8.2/rs;
+    const f=r=>Math.log(1+r)-r/(1+r);
+    return 181*Math.sqrt((f(x)/x)/(f(x0)/x0));
+  }
+  vComp(R,amp,rp){ const u=R/rp; return amp*Math.sqrt(Math.max(0,u*Math.exp(1-u))); }
+  vDisc(R){ return this.vComp(R,237,3.2); }
+  vBulge(R){ return this.vComp(R,104,0.9); }
+  vTot(R){ return Math.sqrt(this.vHalo(R)**2+this.vDisc(R)**2+this.vBulge(R)**2); }
+
+  fehRT(R,t){ return -1.12+1.05*Math.log10(1+t/1.1)-(0.027+0.030*(t/13.6))*(R-8.2); }
+  // A zero-anchored diverging map reaches full saturation only if its extent is
+  // the data's own largest |value|; the declared bounds are asymmetric and so
+  // would leave one arm of the ramp unused.
+  fehField(){
+    if(!this._fehF){
+      let m=0;
+      for(let j=0;j<=30;j++) for(let i=0;i<=30;i++) m=Math.max(m,Math.abs(this.fehRT(i/30*20,j/30*13.6)));
+      for(const s of this.sample) m=Math.max(m,Math.abs(s.feh));
+      this._fehF={...this.fields[2],vmax:Math.max(0.5,m)};
+    }
+    return this._fehF;
+  }
+
+  regime(){ const z=this.state.zoom; return z<3?0:(z<18?1:2); }
+  halfKpc(){ return 22/this.state.zoom; }
+
+  // Canvas can't read var(); resolve the tokens once so the plots stay tied to
+  // the design system rather than carrying their own copies of the palette.
+  resolveTokens(){
+    const cs=getComputedStyle(document.documentElement);
+    const g=(n,f)=>(cs.getPropertyValue(n).trim()||f);
+    this.C={
+      deep:g('--void-0','#05070f'), s1:g('--void-2','#0d1324'), s2:g('--void-3','#141c32'),
+      grid:g('--void-3','#141c32'), line:g('--void-5','#2b3858'),
+      sel:g('--void-4','#1e2842'),
+      ink:g('--ink-1','#eef2fb'), muted:g('--ink-3','#8e9dbd'),
+      faint:g('--ink-4','#64738f'), ink5:g('--ink-5','#3e4b66'),
+      accent:g('--magenta-3','#ff6ba8'), accent2:g('--magenta-2','#ffa6c9'),
+      caution:g('--amber-3','#f5ab45'), nominal:g('--aqua-3','#27d3b2'),
+      spO:g('--spectral-o','#9bb0ff'), spB:g('--spectral-b','#b6c6ff'), spA:g('--spectral-a','#d8e2ff'),
+      spF:g('--spectral-f','#f6f4ff'), spG:g('--spectral-g','#fff3e2'), spK:g('--spectral-k','#ffd49f'),
+      spM:g('--spectral-m','#ff9f63'), spL:g('--spectral-l','#f4714a')
+    };
+    this.starStops=[this.hexRGB(this.C.spM),this.hexRGB(this.C.spK),this.hexRGB(this.C.spG),
+                    this.hexRGB(this.C.spA),this.hexRGB(this.C.spO)];
+    // Data palettes come from the spectral ramp, not from UI chrome.
+    this.atmCol={none:this.C.ink5,thin:this.C.spB,"volatile-rich":this.C.nominal,"H/He":this.C.caution};
+    if(this.fields&&this.fields[5]) this.fields[5].palette=[this.C.spB,this.C.spM];
+  }
+  hexRGB(h){
+    h=(h||'').trim();
+    const m=/^#([0-9a-f]{6})$/i.exec(h);
+    if(!m) return [255,255,255];
+    const n=parseInt(m[1],16);
+    return [(n>>16)&255,(n>>8)&255,n&255];
+  }
+
+  componentDidMount(){
+    this.resolveTokens();
+    this.forceUpdate();
+    this.paint();
+    this._ro = () => this.paint();
+    window.addEventListener("resize", this._ro);
+  }
+  componentWillUnmount(){ window.removeEventListener("resize", this._ro); }
+  componentDidUpdate(){ this.paint(); }
+
+  fit(ref,h){
+    const c=ref.current; if(!c) return null;
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    const w=c.clientWidth||300, hh=h||c.clientHeight||220;
+    if(!w) return null;
+    c.width=Math.round(w*dpr); c.height=Math.round(hh*dpr);
+    const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,hh);
+    return {ctx,w,h:hh};
+  }
+
+  paint(){
+    if(!this.C) this.resolveTokens();
+    const v=this.state.view;
+    if(v==="workflow") this.drawCheckpoint();
+    if(v==="galaxy"){ this.drawGalaxy(); this.paintLegend(); }
+    if(v==="system"){ this.drawOrbit(); this.drawMigration(); }
+    if(v==="science") this.drawSci();
+  }
+
+  paintLegend(){
+    const el=this.r.leg.current; if(!el) return;
+    const f=this.fields[this.state.field];
+    if(this.state.base==="natural"&&this.state.field===0){
+      el.style.background="linear-gradient(90deg,"+this.starStops.map(s=>"rgb("+s.join(",")+")").join(",")+")";
+      return;
+    }
+    if(f.palette){ el.style.background="linear-gradient(90deg,"+f.palette[0]+" 0 50%,"+f.palette[1]+" 50% 100%)"; return; }
+    const s=this.cmaps[f.cmap];
+    el.style.background="linear-gradient(90deg,"+s.join(",")+")";
+  }
+
+  centre(){
+    const t=Math.max(0,Math.min(1,(this.state.zoom-10)/8));
+    return [-8.24*t,0];
+  }
+  windowRange(halfX,halfY,orient,cx,cy){
+    const n=26, vals=[];
+    cx=cx||0; cy=cy||0;
+    for(let j=0;j<n;j++) for(let i=0;i<n;i++){
+      const X=cx+(-1+2*(i+0.5)/n)*halfX, Y=cy+(-1+2*(j+0.5)/n)*halfY;
+      vals.push(orient==="edge"?this.densEdge(X,Y):this.dens(X,Y));
+    }
+    vals.sort((a,b)=>a-b);
+    const q=p=>vals[Math.min(vals.length-1,Math.floor(p*vals.length))];
+    const hi=Math.max(0.05,q(0.999));
+    const lo=Math.max(hi/400,q(0.30));
+    return {lo,hi};
+  }
+  fnum(v){
+    if(v>=10000) return (v/1000).toFixed(0)+"k";
+    if(v>=1000) return (v/1000).toFixed(1)+"k";
+    if(v>=10) return v.toFixed(0);
+    if(v>=1) return v.toFixed(1);
+    if(v>=0.1) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+  fieldImage(ctx,w,h,halfX,halfY,orient,rng,cx,cy){
+    const step=3, iw=Math.max(2,Math.ceil(w/step)), ih=Math.max(2,Math.ceil(h/step));
+    const off=document.createElement("canvas"); off.width=iw; off.height=ih;
+    const octx=off.getContext("2d"), img=octx.createImageData(iw,ih), d=img.data;
+    const bounds={scale:"log",lo:rng.lo,hi:rng.hi};
+    cx=cx||0; cy=cy||0;
+    for(let j=0;j<ih;j++){
+      for(let i=0;i<iw;i++){
+        const ux=(i+0.5)/iw*2-1, uy=(j+0.5)/ih*2-1;
+        const X=cx+ux*halfX, Y=cy-uy*halfY;
+        const c=this.state.base==="natural"
+          ? (orient==="edge"?this.naturalEdgeRGB(X,Y,rng.hi):this.naturalRGB(X,Y,rng.hi))
+          : this.ramp("inferno",Math.max(0,Math.min(1,this.norm(bounds,orient==="edge"?this.densEdge(X,Y):this.dens(X,Y)))));
+        const k=(j*iw+i)*4;
+        d[k]=c[0]; d[k+1]=c[1]; d[k+2]=c[2]; d[k+3]=255;
+      }
+    }
+    octx.putImageData(img,0,0);
+    ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(off,0,0,w,h);
+  }
+
+  drawGalaxy(){
+    const g=this.fit(this.r.gal); if(!g) return;
+    const {ctx,w,h}=g, orient=this.state.orient, reg=this.regime();
+    const f=this.fields[this.state.field];
+    const halfX=this.halfKpc(), halfY=halfX*h/w;
+    const [cx,cy]=this.centre();
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const rng=this.windowRange(halfX,halfY,orient,cx,cy);
+    ctx.save();
+    ctx.globalAlpha=reg===0?1:(reg===1?0.58:0.14);
+    this.fieldImage(ctx,w,h,halfX,halfY,orient,rng,cx,cy);
+    ctx.restore();
+
+    const toPx=(X,Y)=>[w/2+(X-cx)/halfX*(w/2), h/2-(Y-cy)/halfY*(h/2)];
+
+    if(reg>=1){
+      const pts=reg===2?this.local:this.sample;
+      ctx.globalAlpha=1;
+      for(const s of pts){
+        const X=s.x, Y=orient==="edge"?s.z:s.y;
+        if(Math.abs(X-cx)>halfX||Math.abs(Y-cy)>halfY) continue;
+        const [px,py]=toPx(X,Y);
+        const val=f.name==="star_age"?s.age:f.name==="star_metallicity"?s.feh:f.name==="star_mass"?s.mass:
+                  f.name==="star_birth_radius"?s.birth:f.name==="star_population"?s.pop:this.dens(s.x,s.y);
+        ctx.fillStyle=f.name!=="stellar_surface_density" ? this.colOf(f,val)
+          : (this.state.base==="natural" ? this.starColour(s.mass)
+             : this.rampCss("inferno",this.norm({scale:"log",lo:rng.lo,hi:rng.hi},val)));
+        const rad=reg===2?Math.max(0.9,1.1+Math.log10(Math.max(0.08,s.mass))*1.5):0.75;
+        if(reg===2){
+          ctx.globalAlpha=0.22; ctx.beginPath(); ctx.arc(px,py,rad*2.6,0,6.2832); ctx.fill();
+          ctx.globalAlpha=1;
+        }
+        ctx.beginPath(); ctx.arc(px,py,rad,0,6.2832); ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha=1;
+    if(halfX>2){
+      const [sx,sy]=toPx(-8.24,0);
+      ctx.strokeStyle=this.C.muted; ctx.lineWidth=1; ctx.setLineDash([1,4]);
+      ctx.beginPath(); ctx.arc(sx,sy,7,0,6.2832); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=this.C.muted; ctx.font="10px 'Azeret Mono', monospace"; ctx.textAlign="left";
+      ctx.fillText("R₀", sx+11, sy+3.5);
+    }
+    if(reg===2){
+      const [sx,sy]=toPx(-8.24,0);
+      ctx.strokeStyle=this.C.accent; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(sx,sy,9,0,6.2832); ctx.stroke();
+    }
+  }
+
+  drawCheckpoint(){
+    const g=this.fit(this.r.cpC); if(!g) return;
+    const {ctx,w,h}=g, n=this.state.current;
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    // Axis plots keep clear of the readout column; the galaxy images run full
+    // bleed under it, which is the point of putting the numbers on the map.
+    // The rail and the readout both float over this canvas, so axis plots draw
+    // into the clear span between them; the galaxy images run full bleed under.
+    const railW=326, readW=Math.min(340,Math.max(248,w*0.38));
+    const plotW=Math.max(260,w-railW-readW+24), plotH=Math.max(200,h-112);
+    if(n<=3){
+      ctx.save(); ctx.translate(railW,38);
+      if(n===1) this.plotRotation(ctx,plotW,plotH,true);
+      else if(n===2) this.plotEdge(ctx,plotW,plotH);
+      else this.plotHeat(ctx,plotW,plotH,13.6,false);
+      ctx.restore(); return;
+    }
+    const halfX=n===4?22:(n===5?22:1.2), halfY=halfX*h/w;
+    const reg=n===4?0:(n===5?1:2);
+    const f=this.fields[n===6?1:0];
+    const kx=n===6?-8.24:0;
+    const rng=this.windowRange(halfX,halfY,"face",kx,0);
+    ctx.save();
+    ctx.globalAlpha=reg===0?1:(reg===1?0.58:0.16);
+    this.fieldImage(ctx,w,h,halfX,halfY,"face",rng,kx,0);
+    ctx.globalAlpha=1;
+    if(reg>=1){
+      const pts=reg===2?this.local:this.sample;
+      for(const s of pts){
+        if(Math.abs(s.x-kx)>halfX||Math.abs(s.y)>halfY) continue;
+        const px=w/2+(s.x-kx)/halfX*w/2, py=h/2-s.y/halfY*h/2;
+        ctx.fillStyle=this.colOf(f,s.age);
+        ctx.beginPath(); ctx.arc(px,py,reg===2?1.6:0.8,0,6.2832); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  axes(ctx,w,h,pad,xt,yt,xl,yl){
+    ctx.strokeStyle=this.C.line; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,h-pad.b); ctx.lineTo(w-pad.r,h-pad.b); ctx.stroke();
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted;
+    ctx.strokeStyle=this.C.grid;
+    for(const t of xt){
+      const x=pad.l+t.p*(w-pad.l-pad.r);
+      ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,h-pad.b); ctx.stroke();
+      ctx.textAlign="center"; ctx.fillText(t.l,x,h-pad.b+12);
+    }
+    for(const t of yt){
+      const y=h-pad.b-t.p*(h-pad.t-pad.b);
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
+      ctx.textAlign="right"; ctx.fillText(t.l,pad.l-6,y+3.5);
+    }
+    ctx.fillStyle=this.C.muted; ctx.textAlign="center";
+    if(xl) ctx.fillText(xl,(pad.l+w-pad.r)/2,h-3);
+    if(yl){ ctx.save(); ctx.translate(9,(pad.t+h-pad.b)/2); ctx.rotate(-Math.PI/2); ctx.fillText(yl,0,0); ctx.restore(); }
+  }
+
+  plotRotation(ctx,w,h,compact){
+    const pad={l:38,r:12,t:14,b:26}, Rmax=25, Vmax=300;
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0"},{p:0.2,l:"5"},{p:0.4,l:"10"},{p:0.6,l:"15"},{p:0.8,l:"20"},{p:1,l:"25"}],
+      [{p:0,l:"0"},{p:1/3,l:"100"},{p:2/3,l:"200"},{p:1,l:"300"}],"R / kpc","v_c / km s⁻¹");
+    const X=R=>pad.l+R/Rmax*(w-pad.l-pad.r), Y=V=>h-pad.b-V/Vmax*(h-pad.t-pad.b);
+    const comps=[[this.C.accent,R=>this.vTot(R),2],[this.C.muted,R=>this.vHalo(R),1],[this.C.caution,R=>this.vDisc(R),1],[this.C.nominal,R=>this.vBulge(R),1]];
+    for(const [col,fn,lw] of comps){
+      ctx.strokeStyle=col; ctx.lineWidth=lw;
+      if(lw===1) ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      for(let i=0;i<=200;i++){ const R=0.05+i/200*Rmax; const px=X(R), py=Y(fn(R)); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.strokeStyle=this.C.faint; ctx.setLineDash([2,3]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(X(8.2),pad.t); ctx.lineTo(X(8.2),h-pad.b); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=this.C.ink; ctx.beginPath(); ctx.arc(X(8.2),Y(251.03),3,0,6.2832); ctx.fill();
+    ctx.strokeStyle=this.C.nominal; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(X(8.2)-5,Y(245)); ctx.lineTo(X(8.2)+5,Y(245)); ctx.moveTo(X(8.2),Y(245)); ctx.lineTo(X(8.2),Y(251)); ctx.moveTo(X(8.2)-5,Y(251)); ctx.lineTo(X(8.2)+5,Y(251)); ctx.stroke();
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.textAlign="left";
+    const key=[["total",this.C.accent],["halo",this.C.muted],["disc",this.C.caution],["bulge",this.C.nominal]];
+    key.forEach((k,i)=>{ ctx.fillStyle=k[1]; ctx.fillRect(w-pad.r-58,pad.t+2+i*12,7,2); ctx.fillStyle=this.C.muted; ctx.fillText(k[0],w-pad.r-48,pad.t+6+i*12); });
+  }
+
+  plotEdge(ctx,w,h){
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const halfX=22, halfY=halfX*h/w;
+    const rng=this.windowRange(halfX,halfY,"edge");
+    this.fieldImage(ctx,w,h,halfX,halfY,"edge",rng);
+    ctx.globalAlpha=0.5;
+    ctx.fillStyle=this.fields[5].palette[1];
+    for(const s of this.sample){
+      if(s.pop!==1||Math.abs(s.x)>halfX||Math.abs(s.z)>halfY) continue;
+      const px=w/2+s.x/halfX*w/2, py=h/2-s.z/halfY*h/2;
+      ctx.beginPath(); ctx.arc(px,py,0.9,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    ctx.font="10px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.spM; ctx.textAlign="left";
+    ctx.fillText("thick disc · born before t = 3.8 Gyr", 10, 16);
+    ctx.fillStyle=this.C.muted;
+    ctx.fillText("1:1 · no vertical exaggeration", 10, h-9);
+  }
+
+  plotHeat(ctx,w,h,tCut,withScrub){
+    const pad={l:38,r:12,t:14,b:30};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b, step=3;
+    const iw=Math.max(2,Math.ceil(pw/step)), ih=Math.max(2,Math.ceil(ph/step));
+    const off=document.createElement("canvas"); off.width=iw; off.height=ih;
+    const oc=off.getContext("2d"), img=oc.createImageData(iw,ih), d=img.data;
+    for(let j=0;j<ih;j++) for(let i=0;i<iw;i++){
+      const R=(i+0.5)/iw*20, t=13.6-(j+0.5)/ih*13.6;
+      const val=this.fehRT(R,t);
+      const c=this.ramp("RdBu",this.norm(this.fehField(),val));
+      const k=(j*iw+i)*4; d[k]=c[0]; d[k+1]=c[1]; d[k+2]=c[2]; d[k+3]=t<=tCut?255:44;
+    }
+    oc.putImageData(img,0,0);
+    ctx.imageSmoothingEnabled=true; ctx.drawImage(off,pad.l,pad.t,pw,ph);
+    ctx.strokeStyle=this.C.line; ctx.strokeRect(pad.l+0.5,pad.t+0.5,pw-1,ph-1);
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted; ctx.textAlign="center";
+    [[0,"0"],[0.25,"5"],[0.5,"10"],[0.75,"15"],[1,"20"]].forEach(([p,l])=>ctx.fillText(l,pad.l+p*pw,h-pad.b+12));
+    ctx.textAlign="right";
+    [[0,"13.6"],[0.25,"10.2"],[0.5,"6.8"],[0.75,"3.4"],[1,"0"]].forEach(([p,l])=>ctx.fillText(l,pad.l-6,pad.t+p*ph+3.5));
+    ctx.fillStyle=this.C.muted; ctx.textAlign="center"; ctx.fillText("R / kpc",pad.l+pw/2,h-4);
+    ctx.save(); ctx.translate(9,pad.t+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText("t / Gyr",0,0); ctx.restore();
+    if(withScrub){
+      const y=pad.t+(1-tCut/13.6)*ph;
+      ctx.strokeStyle=this.C.accent; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+pw,y); ctx.stroke();
+      ctx.fillStyle=this.C.deep; ctx.strokeStyle=this.C.accent;
+      ctx.beginPath(); ctx.arc(pad.l+pw,y,3.5,0,6.2832); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle=this.C.ink; ctx.lineWidth=1.5; ctx.beginPath();
+      for(let i=0;i<=80;i++){
+        const R=i/80*20, val=this.fehRT(R,tCut);
+        const px=pad.l+R/20*pw, py=pad.t+ph-((val+2)/2.5)*ph*0.9;
+        i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+      }
+      ctx.stroke();
+    }
+  }
+
+  plotAlpha(ctx,w,h){
+    const pad={l:40,r:12,t:14,b:28};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"−2.0"},{p:0.4,l:"−1.0"},{p:0.8,l:"0.0"},{p:1,l:"+0.5"}],
+      [{p:0,l:"−0.1"},{p:0.25,l:"0.0"},{p:0.625,l:"0.2"},{p:1,l:"0.4"}],"[Fe/H] / dex","[α/Fe] / dex");
+    const X=f=>pad.l+(f+2)/2.5*(w-pad.l-pad.r), Y=a=>h-pad.b-(a+0.1)/0.5*(h-pad.t-pad.b);
+    const rnd=this.mkrng(53);
+    for(let i=0;i<2600;i++){
+      const thick=rnd()<0.32;
+      let fe,al;
+      if(thick){ fe=-1.7+rnd()*1.35; al=0.30+0.018*fe+this.gauss(rnd)*0.022; }
+      else { fe=-0.75+rnd()*1.2; al=0.055-0.10*fe+this.gauss(rnd)*0.021; if(fe<-0.5) al=Math.min(al,0.26); }
+      const age=thick?10+rnd()*3.4:rnd()*10;
+      const c=this.ramp("magma",age/13.6);
+      ctx.fillStyle="rgba("+c[0]+","+c[1]+","+c[2]+",0.62)";
+      ctx.beginPath(); ctx.arc(X(fe),Y(al),1.1,0,6.2832); ctx.fill();
+    }
+    ctx.strokeStyle=this.C.accent; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(X(-0.5),pad.t); ctx.lineTo(X(-0.5),h-pad.b); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.accent; ctx.textAlign="right";
+    ctx.fillText("alpha_split  −0.50",X(-0.5)-5,pad.t+10);
+  }
+
+  plotMigration(ctx,w,h){
+    const pad={l:36,r:10,t:12,b:26};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0"},{p:0.5,l:"10"},{p:1,l:"20"}],[{p:0,l:"0"},{p:0.5,l:"10"},{p:1,l:"20"}],
+      "star_birth_radius / kpc","present R / kpc");
+    const X=v=>pad.l+v/20*(w-pad.l-pad.r), Y=v=>h-pad.b-v/20*(h-pad.t-pad.b);
+    ctx.strokeStyle=this.C.line; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(20),Y(20)); ctx.stroke(); ctx.setLineDash([]);
+    for(const s of this.sample){
+      if(s.birth>20||s.r>20) continue;
+      const c=this.ramp("magma",s.age/13.6);
+      ctx.fillStyle="rgba("+c[0]+","+c[1]+","+c[2]+",0.4)";
+      ctx.beginPath(); ctx.arc(X(s.birth),Y(s.r),0.9,0,6.2832); ctx.fill();
+    }
+  }
+
+  plotSFR(ctx,w,h){
+    const pad={l:40,r:12,t:14,b:28};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0"},{p:0.25,l:"5"},{p:0.5,l:"10"},{p:0.75,l:"15"},{p:1,l:"20"}],
+      [{p:0,l:"0.01"},{p:0.5,l:"0.1"},{p:1,l:"1"}],"R / kpc","Σ / M☉ pc⁻² Gyr⁻¹");
+    const X=R=>pad.l+R/20*(w-pad.l-pad.r), Y=v=>h-pad.b-(Math.log10(Math.max(1e-3,v))+2)/2*(h-pad.t-pad.b);
+    const series=[[this.C.accent,R=>0.9*Math.exp(-R/3.1)],[this.C.caution,R=>2.4*Math.exp(-R/2.4)],[this.C.muted,R=>0.06*Math.exp(-R/6.5)+0.004]];
+    series.forEach(([col,fn],i)=>{
+      ctx.strokeStyle=col; ctx.lineWidth=i===0?2:1; if(i) ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      for(let k=0;k<=120;k++){ const R=k/120*20, px=X(R), py=Y(fn(R)); k?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.textAlign="left";
+    [["sfr_surface_density",this.C.accent],["gas_surface_density",this.C.caution],["sf_threshold",this.C.muted]].forEach((k,i)=>{
+      ctx.fillStyle=k[1]; ctx.fillRect(w-pad.r-128,pad.t+2+i*12,7,2);
+      ctx.fillStyle=this.C.muted; ctx.fillText(k[0],w-pad.r-118,pad.t+6+i*12);
+    });
+  }
+
+  plotMF(ctx,w,h){
+    const pad={l:40,r:12,t:14,b:28};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const bins=new Array(22).fill(0);
+    for(const s of this.sample){
+      const b=Math.floor((Math.log10(s.mass)+1.1)/(1.1+0.95)*22);
+      if(b>=0&&b<22) bins[b]++;
+    }
+    const mx=Math.max(...bins);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0.08"},{p:0.53,l:"1"},{p:1,l:"9"}],[{p:0,l:"0"},{p:0.5,l:""},{p:1,l:"max"}],
+      "star_mass / M☉","N");
+    const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b, bw=pw/22;
+    bins.forEach((v,i)=>{
+      const c=this.ramp("inferno",0.18+i/22*0.7);
+      ctx.fillStyle="rgb("+c[0]+","+c[1]+","+c[2]+")";
+      const bh=v/mx*ph;
+      ctx.fillRect(pad.l+i*bw+0.6,h-pad.b-bh,bw-1.2,bh);
+    });
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted; ctx.textAlign="left";
+    ctx.fillText("73% of the sample is M dwarf",pad.l+pw*0.30,pad.t+14);
+  }
+
+  drawSci(){
+    const id=this.state.sci, adv=this.state.model==="advanced";
+    if(id==="alpha"&&!adv) return;
+    const a=this.fit(this.r.pA,260), b=this.fit(this.r.pB,260);
+    if(a){
+      if(id==="dyn") this.plotRotation(a.ctx,a.w,a.h);
+      else if(id==="chem") this.plotHeat(a.ctx,a.w,a.h,this.state.scrub/10,true);
+      else if(id==="alpha") this.plotAlpha(a.ctx,a.w,a.h);
+      else if(id==="pop") this.plotMigration(a.ctx,a.w,a.h);
+      else if(id==="sf") this.plotSFR(a.ctx,a.w,a.h);
+      else if(id==="struct") this.plotRotation(a.ctx,a.w,a.h);
+      else if(id==="planet") this.plotSFR(a.ctx,a.w,a.h);
+      else this.plotRotation(a.ctx,a.w,a.h);
+    }
+    if(b){
+      if(id==="chem") this.plotAlphaOrGradient(b.ctx,b.w,b.h);
+      else if(id==="pop") this.plotMF(b.ctx,b.w,b.h);
+      else if(id==="alpha") this.plotMigration(b.ctx,b.w,b.h);
+      else if(id==="dyn") this.plotShear(b.ctx,b.w,b.h);
+      else this.plotMF(b.ctx,b.w,b.h);
+    }
+  }
+
+  plotAlphaOrGradient(ctx,w,h){
+    const pad={l:40,r:12,t:14,b:28};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0"},{p:0.25,l:"5"},{p:0.5,l:"10"},{p:0.75,l:"15"},{p:1,l:"20"}],
+      [{p:0,l:"−1.5"},{p:0.4,l:"−0.5"},{p:0.8,l:"+0.5"},{p:1,l:"+1.0"}],"R / kpc","[Fe/H] / dex");
+    const X=R=>pad.l+R/20*(w-pad.l-pad.r), Y=v=>h-pad.b-(v+1.5)/2.5*(h-pad.t-pad.b);
+    const lines=[[this.C.accent,"feh_stars_young  −0.021",R=>0.10-0.021*(R-8.2)],[this.C.muted,"feh_stars_old  −0.009",R=>-0.42-0.009*(R-8.2)],
+                 [this.C.nominal,"observed  −0.060",R=>0.06-0.060*(R-8.2)]];
+    lines.forEach(([col,lab,fn],i)=>{
+      ctx.strokeStyle=col; ctx.lineWidth=i===2?1:1.8; if(i===2) ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      for(let k=0;k<=60;k++){ const R=k/60*20, px=X(R), py=Y(fn(R)); k?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=col; ctx.textAlign="right";
+      ctx.fillText(lab,w-pad.r-6,h-pad.b-8-((2-i)*12));
+    });
+  }
+
+  plotShear(ctx,w,h){
+    const pad={l:40,r:12,t:14,b:28};
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    this.axes(ctx,w,h,pad,[{p:0,l:"0"},{p:0.4,l:"10"},{p:0.8,l:"20"},{p:1,l:"25"}],
+      [{p:0,l:"0"},{p:0.5,l:"0.5"},{p:1,l:"1.0"}],"R / kpc","shear_rate S");
+    const X=R=>pad.l+R/25*(w-pad.l-pad.r), Y=v=>h-pad.b-v*(h-pad.t-pad.b);
+    ctx.strokeStyle=this.C.faint; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(pad.l,Y(0.5)); ctx.lineTo(w-pad.r,Y(0.5)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle=this.C.accent; ctx.lineWidth=2; ctx.beginPath();
+    for(let i=0;i<=120;i++){
+      const R=0.4+i/120*24.6, dR=0.05;
+      const dv=(this.vTot(R+dR)-this.vTot(R-dR))/(2*dR);
+      const S=0.5*(1-(R/this.vTot(R))*dv);
+      const px=X(R), py=Y(Math.max(0,Math.min(1,S)));
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.stroke();
+    ctx.font="9.5px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted; ctx.textAlign="left";
+    ctx.fillText("S = 0.5 · a flat rotation curve",pad.l+6,Y(0.5)-6);
+  }
+
+  drawOrbit(){
+    const g=this.fit(this.r.orb); if(!g) return;
+    const {ctx,w,h}=g, mode=this.state.orbit;
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const L=Math.log10(0.05), U=Math.log10(30), pos=a=>(Math.log10(a)-L)/(U-L);
+    const ticks=[0.05,0.1,0.3,1,3,10,30];
+    this.hits=[];
+    if(mode==="rail"){
+      const pad={l:46,r:34,t:34,b:52}, pw=w-pad.l-pad.r, cy=h*0.46;
+      ctx.strokeStyle=this.C.line; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,cy); ctx.lineTo(pad.l+pw,cy); ctx.stroke();
+      ctx.font="9.5px 'Azeret Mono', monospace"; ctx.textAlign="center";
+      for(const t of ticks){
+        const x=pad.l+pos(t)*pw;
+        ctx.strokeStyle=this.C.line; ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,h-pad.b); ctx.stroke();
+        ctx.fillStyle=this.C.muted; ctx.fillText(String(t),x,h-pad.b+14);
+      }
+      ctx.fillStyle=this.C.muted; ctx.fillText("semi-major axis / AU (log)",pad.l+pw/2,h-pad.b+30);
+      for(const [b0,b1] of this.belts){
+        const x0=pad.l+pos(b0)*pw, x1=pad.l+pos(b1)*pw;
+        ctx.fillStyle="rgba(139,149,168,.14)"; ctx.fillRect(x0,cy-16,x1-x0,32);
+        ctx.strokeStyle=this.C.faint; ctx.setLineDash([2,2]); ctx.strokeRect(x0+0.5,cy-16.5,x1-x0-1,32); ctx.setLineDash([]);
+      }
+      ctx.fillStyle=this.C.spK; ctx.beginPath(); ctx.arc(pad.l-14,cy,8,0,6.2832); ctx.fill();
+      this.planets.forEach((p,i)=>{
+        const x=pad.l+pos(p.a)*pw, rr=3+Math.log10(p.r)*5.2;
+        const sel=i===this.state.planet;
+        ctx.fillStyle=this.atmCol[p.atm];
+        ctx.beginPath(); ctx.arc(x,cy,Math.max(3,rr),0,6.2832); ctx.fill();
+        if(sel){ ctx.strokeStyle=this.C.accent; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,cy,Math.max(3,rr)+5,0,6.2832); ctx.stroke(); }
+        ctx.font="10px 'Azeret Mono', monospace"; ctx.textAlign="center";
+        ctx.fillStyle=sel?this.C.ink:this.C.muted; ctx.fillText(p.id,x,cy-Math.max(3,rr)-8);
+        ctx.fillStyle=this.C.muted; ctx.font="9px 'Azeret Mono', monospace";
+        ctx.fillText(p.a<1?p.a.toFixed(3):p.a.toFixed(2),x,cy+Math.max(3,rr)+14);
+        this.hits.push({i,x,y:cy,r:Math.max(10,rr+6)});
+      });
+      const ix=pad.l+pos(2.71)*pw;
+      ctx.strokeStyle=this.C.spB; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(ix,pad.t); ctx.lineTo(ix,h-pad.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=this.C.spB; ctx.font="9.5px 'Azeret Mono', monospace"; ctx.textAlign="left";
+      ctx.fillText("ice_line_sun 2.71 AU",ix+5,h-pad.b-6);
+      ctx.fillStyle=this.C.muted; ctx.textAlign="left";
+      ctx.fillText("belts · from giant-planet resonances",pad.l,pad.t-14);
+    } else {
+      const cx=w/2, cy=h/2, r0=16, rmax=Math.min(w,h)/2-26;
+      for(const t of ticks){
+        const rr=r0+pos(t)*(rmax-r0);
+        ctx.strokeStyle=this.C.grid; ctx.lineWidth=1; ctx.setLineDash([1,3]);
+        ctx.beginPath(); ctx.arc(cx,cy,rr,0,6.2832); ctx.stroke(); ctx.setLineDash([]);
+        ctx.font="9px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted; ctx.textAlign="center";
+        ctx.fillText(String(t),cx,cy-rr-3);
+      }
+      for(const [b0,b1] of this.belts){
+        const ra=r0+pos(b0)*(rmax-r0), rb=r0+pos(b1)*(rmax-r0);
+        ctx.strokeStyle="rgba(139,149,168,.3)"; ctx.lineWidth=rb-ra;
+        ctx.beginPath(); ctx.arc(cx,cy,(ra+rb)/2,0,6.2832); ctx.stroke();
+      }
+      ctx.fillStyle=this.C.spK; ctx.beginPath(); ctx.arc(cx,cy,9,0,6.2832); ctx.fill();
+      this.planets.forEach((p,i)=>{
+        const rr=r0+pos(p.a)*(rmax-r0), th=-0.9+i*0.77;
+        const px=cx+rr*Math.cos(th), py=cy+rr*Math.sin(th);
+        const rad=Math.max(3,3+Math.log10(p.r)*5.2), sel=i===this.state.planet;
+        ctx.strokeStyle=sel?this.C.accent:this.C.line; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(cx,cy,rr,0,6.2832); ctx.stroke();
+        ctx.fillStyle=this.atmCol[p.atm];
+        ctx.beginPath(); ctx.arc(px,py,rad,0,6.2832); ctx.fill();
+        ctx.font="10px 'Azeret Mono', monospace"; ctx.textAlign="center";
+        ctx.fillStyle=sel?this.C.ink:this.C.muted; ctx.fillText(p.id,px,py-rad-6);
+        this.hits.push({i,x:px,y:py,r:Math.max(11,rad+6)});
+      });
+      ctx.fillStyle=this.C.muted; ctx.font="9.5px 'Azeret Mono', monospace"; ctx.textAlign="left";
+      ctx.fillText("log-radial · rings evenly spaced per decade",12,h-12);
+    }
+  }
+
+  drawMigration(){
+    const g=this.fit(this.r.mig,54); if(!g) return;
+    const {ctx,w,h}=g;
+    ctx.fillStyle=this.C.deep; ctx.fillRect(0,0,w,h);
+    const X=v=>10+v/20*(w-20), y=h*0.5;
+    ctx.strokeStyle=this.C.line; ctx.beginPath(); ctx.moveTo(10,y); ctx.lineTo(w-10,y); ctx.stroke();
+    ctx.font="9px 'Azeret Mono', monospace"; ctx.fillStyle=this.C.muted; ctx.textAlign="center";
+    [0,5,10,15,20].forEach(t=>ctx.fillText(String(t),X(t),h-3));
+    ctx.strokeStyle=this.C.caution; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(X(5.9),y); ctx.lineTo(X(8.24),y); ctx.stroke();
+    ctx.fillStyle=this.C.caution; ctx.beginPath(); ctx.arc(X(5.9),y,3.2,0,6.2832); ctx.fill();
+    ctx.fillStyle=this.C.accent; ctx.beginPath(); ctx.arc(X(8.24),y,3.6,0,6.2832); ctx.fill();
+    ctx.textAlign="center"; ctx.fillStyle=this.C.muted; ctx.font="9px 'Azeret Mono', monospace";
+    ctx.fillText("birth 5.90",X(5.9),y-8); ctx.fillText("now 8.24",X(8.24),y+14);
+  }
+
+  fmt(name,v){
+    if(name==="halo_mass"){
+      const e=Math.floor(Math.log10(v));
+      return (v/Math.pow(10,e)).toFixed(2)+" × 10"+String(e).split("").map(c=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[+c]).join("");
+    }
+    if(name==="disc_spin") return v.toFixed(4);
+    if(name.endsWith("seed")) return String(v);
+    return v.toFixed(2);
+  }
+
+  set(name,raw){
+    const c=this.ctl[name];
+    let v=Number(raw);
+    if(c.log) v=Math.pow(10,v);
+    this.setState(s=>({values:{...s.values,[name]:v}}));
+  }
+
+  goCp(n){
+    this.setState(s=>{
+      if(n>s.confirmed+1) return s;
+      if(n<s.current&&n<=s.confirmed){
+        const dd={}; for(let k=n;k<=6;k++) dd[k]=true;
+        return {...s,confirmed:n-1,current:n,discarded:dd,asking:0,askReopen:0};
+      }
+      return {...s,current:n,asking:0,askReopen:0};
+    });
+  }
+
+  renderVals(){
+    const S=this.state, adv=S.model==="advanced";
+    const viewDefs=[["workflow","Workflow"],["galaxy","Galaxy"],["system","System"],["science","Science"]];
+    const reg=this.regime(), half=this.halfKpc();
+    const f=this.fields[S.field];
+    const canvasW=(this.r.gal.current&&this.r.gal.current.clientWidth)||900;
+    const canvasH=(this.r.gal.current&&this.r.gal.current.clientHeight)||640;
+    const ctr=this.centre();
+    const winRng=this.windowRange(half,half*canvasH/canvasW,S.orient,ctr[0],ctr[1]);
+    const natStar=S.base==="natural"&&S.field===0;
+    const kpcPerPx=(2*half)/canvasW;
+    const barKpc=[0.02,0.05,0.1,0.2,0.5,1,2,5,10,20].find(t=>t/kpcPerPx>=58)||20;
+
+    const cps=this.cps.map(c=>{
+      const st = c.n<=S.confirmed?"locked":(c.n===S.current?"current":(c.n===S.confirmed+1?"next":"unreachable"));
+      const open=c.n===S.current;
+      const names=Object.keys(this.ctl).filter(k=>this.ctl[k].cp===c.n);
+      const seedName=names.find(k=>this.ctl[k].seed);
+      const scalars=names.filter(k=>!this.ctl[k].seed);
+      const dis=c.n<=S.confirmed;
+      const later=6-c.n;
+      let stages=c.stages;
+      if(adv&&c.n===3) stages="sfh · chemistry_dtd · vertical_alpha";
+      return {
+        n:c.n, name:c.name, stages, produces:c.produces, open,
+        detail: open,
+        chip: st==="locked"?"✓":String(c.n),
+        chipBg: st==="current"?this.C.sel:(st==="locked"?"#0f1a14":this.C.deep),
+        chipEdge: st==="current"?this.C.accent:(st==="locked"?"#2d4a39":this.C.line),
+        chipFg: st==="current"?this.C.accent:(st==="locked"?this.C.nominal:(st==="unreachable"?this.C.faint:this.C.muted)),
+        cursor: st==="unreachable"?"not-allowed":"pointer",
+        reachTitle: st==="unreachable"?("Checkpoint "+c.n+" needs "+(c.n-1)+" confirmed first"):("Go to checkpoint "+c.n),
+        bg: open?this.C.s1:"transparent",
+        fg: st==="unreachable"?this.C.muted:this.C.ink,
+        tone: S.discarded[c.n]?"caution":(st==="locked"?"nominal":(st==="current"?"accent":"neutral")),
+        stateLabel: S.discarded[c.n]?"invalidated"
+          :(st==="locked"?"locked":(st==="current"?"editing":(st==="next"?"next":"needs "+(c.n-1)))),
+        stateFg: S.discarded[c.n]?this.C.caution:(st==="locked"?this.C.nominal:(st==="current"?this.C.accent:this.C.muted)),
+        stateEdge: S.discarded[c.n]?"#4a4030":(st==="locked"?"#2d4a39":(st==="current"?"#274a6b":this.C.line)),
+        discardedLine: S.discarded[c.n]
+          ? (c.n===S.confirmed+1
+              ? "Result discarded. Its inputs are untouched and it rebuilds as soon as you confirm below."
+              : "Result discarded — the galaxy it described no longer exists. Nothing was kept but the seed.")
+          : "",
+        seedOnly: scalars.length===0 && !!seedName && c.n>=4,
+        seedName: seedName||"",
+        hasSeed: !!seedName && !dis,
+        hasEvents: c.n===2,
+        canConfirm: st==="current" && S.confirmed<c.n,
+        canReopen: st==="locked",
+        reopen: ()=>{ if(S.confirmed>c.n) this.setState({askReopen:c.n,asking:0}); else this.goCp(c.n); },
+        askingReopen: S.askReopen===c.n,
+        reopenCost: "Checkpoint"+(S.confirmed-c.n>1?"s ":" ")+(S.confirmed-c.n>1?(c.n+1)+"–"+S.confirmed:String(S.confirmed))
+          +" "+(S.confirmed-c.n>1?"are":"is")+" already confirmed. Reopening this one discards "+(S.confirmed-c.n>1?"their":"its")
+          +" results and everything after. Your inputs are kept — the results are not.",
+        doReopen: ()=>{ this.setState({askReopen:0}); this.goCp(c.n); },
+        go: ()=>{
+          if(c.n<S.current&&c.n<=S.confirmed&&S.confirmed>c.n) this.setState({askReopen:c.n,asking:0});
+          else this.goCp(c.n);
+        },
+        asking: S.asking===c.n,
+        askReroll: ()=>this.setState({asking:c.n}),
+        doReroll: ()=>this.setState(s=>{
+          const dd={}; for(let k=c.n+1;k<=6;k++) dd[k]=true;
+          return {values:{...s.values,[seedName]:(s.values[seedName]+1+((s.seedBump*7919)%9973))},
+                  asking:0, seedBump:s.seedBump+1, confirmed:Math.min(s.confirmed,c.n), current:c.n, discarded:dd};
+        }),
+        cost: later===0?"Nothing later exists yet — nothing is discarded."
+              :("Discards checkpoint"+(later>1?"s ":" ")+(later>1?(c.n+1)+"–6":"6")+". Earlier checkpoints are untouched."),
+        discarded: !!S.discarded[c.n],
+        controls: scalars.concat(seedName?[seedName]:[]).map(k=>{
+          const d=this.ctl[k], v=S.values[k];
+          return {
+            name:k, unit:d.unit, about:d.about, disabled:dis, opacity:dis?0.55:1,
+            cursor:dis?"not-allowed":"pointer",
+            display:this.fmt(k,v), valueFg:dis?this.C.muted:this.C.accent,
+            min:d.seed?0:(d.log?Math.log10(d.lo):d.lo),
+            max:d.seed?100:(d.log?Math.log10(d.hi):d.hi),
+            step:d.seed?1:(d.log?0.001:(d.step||0.01)),
+            raw:d.seed?0:(d.log?Math.log10(v):v),
+            lo:d.seed?"—":(d.log?"10¹¹":String(d.lo)),
+            hi:d.seed?"reroll only":(d.log?"10¹³":String(d.hi)),
+            onInput:e=>{ if(!dis&&!d.seed) this.set(k,e.target.value); }
+          };
+        }).filter(c2=>!c2.name.endsWith("seed")||true)
+      };
+    });
+
+    const der=(this.derived[S.current]||[]).map(r=>({k:r[0],v:r[1],u:r[2]}));
+    if(adv&&S.current===3) der.unshift({k:"feh_gradient (advanced)",v:"−0.057",u:"dex/kpc"});
+
+    const sciDef={
+      dyn:{title:"Dynamics",blurb:"The rotation curve decomposed into halo, disc and bulge, and the shear that the pitch angle is drawn around.",
+        a:"circular_velocity",au:"km s⁻¹",ac:"The halo is contracted around the disc: r_i/r_f = 1.50. Acceptance row 3 wants 245–251 km/s and the model reads 251.03.",
+        b:"shear_rate",bu:"dimensionless",bc:"Shear clusters near 0.5, which is what a flat rotation curve implies — the reason pitch angle is a seeded draw and not a derivation."},
+      chem:{title:"Chemical evolution",blurb:"feh_history on the (R, t) grid — the model's richest output, and the one the reference viewer cannot show at all.",
+        a:"feh_history",au:"dex · RdBu",ac:"Scrub t to cut the grid. Everything above the cut has not happened yet at the chosen lookback.",
+        b:"Radial gradient, young against old",bu:"dex/kpc",bc:"The gradient evolves: −0.021 for young stars against −0.009 for stars older than 10 Gyr. The observed pair is −0.07 and −0.04."},
+      alpha:{title:"The alpha plane",blurb:"[α/Fe] against [Fe/H] — the single most diagnostic plot in galactic archaeology. The thin and thick discs separate into two sequences.",
+        a:"alpha_sequence",au:"coloured by star_age",ac:"alpha_split reads −0.50 dex. The valley between the sequences is debt #27: this model does not yet make one, and says so rather than drawing it.",
+        b:"star_birth_radius against present R",bu:"kpc",bc:"84% of the stars now at R₀ were born inside it; their mean birth radius is 5.4 kpc."},
+      pop:{title:"Stellar populations",blurb:"Radial migration made visible, and the mass function that makes a correct galaxy overwhelmingly red.",
+        a:"star_birth_radius",au:"kpc",ac:"Points below the 1:1 line moved outward. Switching the kernel off moves the mean age at R₀ from 7.3 to 5.7 Gyr.",
+        b:"Mass function",bu:"N per dex",bc:"About 73% of stars are M dwarfs. Blue stars are rare and confined to the arms, because they live only a few million years."},
+      sf:{title:"Star formation",blurb:"Surface densities and the threshold that decides where stars form at all.",
+        a:"sfr_surface_density",au:"M☉ pc⁻² Gyr⁻¹",ac:"The first phase consumes gas slower than it accretes it and then stops — the absence fourteen acceptance rows hang on.",
+        b:"Mass function",bu:"N per dex",bc:"Shown for scale against the star formation rate of 1.14 M☉/yr."},
+      struct:{title:"Structure",blurb:"Bar, arms and the disc's own contribution to the curve.",
+        a:"circular_velocity",au:"km s⁻¹",ac:"disc_dominance 0.70 is what sets the bar's length, and the bar's length sets its pattern speed.",
+        b:"Mass function",bu:"N per dex",bc:"bar_half_length 5.02 kpc against an observed 5.0 ± 0.2."},
+      planet:{title:"Planet occurrence",blurb:"Where the galaxy's chemistry becomes a statement about where planets can exist.",
+        a:"giant_occurrence",au:"fraction",ac:"Giant occurrence scales roughly as the square of iron abundance, so it tracks the metallicity gradient outward.",
+        b:"Mass function",bu:"N per dex",bc:"mean_planets_per_star 2.9, ice_line_sun 2.71 AU."},
+      accept:{title:"Acceptance",blurb:"The model scored against 24 measured Milky Way quantities.",
+        a:"circular_velocity",au:"km s⁻¹",ac:"Row 3 is the one the curve above is judged on.",
+        b:"Mass function",bu:"N per dex",bc:"Placeholder."}
+    }[S.sci];
+
+    const sciScalars={
+      dyn:[["circular_velocity(R₀)","251.03","km/s","row 3 · miss by 0.03",this.C.caution],["epicyclic_frequency(R₀)","36.1","km/s/kpc","derived",this.C.muted],
+           ["shear_rate(R₀)","0.52","—","seeded draw feeds pitch",this.C.muted],["halo_contraction","1.50","r_i/r_f","Gnedin+04 invariant",this.C.muted]],
+      chem:[["feh_gradient",adv?"−0.057":"−0.019","dex/kpc",adv?"row 22 · inside":"row 22 · miss by construction",this.C.caution],
+            ["feh_spread_sun","0.370","dex","migration narrows it",this.C.muted],
+            ["mean_birth_radius(R₀)","5.4","kpc","84% born inside R₀",this.C.muted],
+            ["gradient evolution","−0.021 → −0.009","dex/kpc","row 23 · miss",this.C.caution]],
+      alpha:[["alpha_split","−0.50","dex","the knee",this.C.muted],["alpha_dip_depth","0.000","dex","no valley · debt #27",this.C.caution],
+             ["high_alpha_feh_span","1.35","dex","thick disc reach",this.C.muted],["alpha_fe_stars(R₀)","0.071","dex","thin-dominated",this.C.muted]],
+      pop:[["m_dwarf_fraction","0.73","—","resist making it prettier",this.C.muted],["thin_thick_split","0.88 / 0.12","—","row 9 wants 12% ± 4%",this.C.nominal],
+           ["disc_radial_spread","1.09","kpc","at R₀",this.C.muted],["mean_age(R₀)","7.3","Gyr","5.7 with the kernel off",this.C.muted]],
+      sf:[["star_formation_rate","1.14","M☉/yr","row 2 wants 1.65 ± 0.19",this.C.caution],["gas_mass(<30 kpc)","5.8 × 10⁹","M☉","row 20 · no testable target",this.C.caution],
+          ["sf_threshold","6.1","M☉/pc²","derived",this.C.muted],["infall_rate_history","see plot","—","(R,t)",this.C.muted]],
+      struct:[["bar_half_length","5.02","kpc","row 15 · inside",this.C.nominal],["bar_pattern_speed","43.1","km/s/kpc","row 16 · statistical",this.C.nominal],
+              ["pitch_angle","13.4","deg","draw worth 5.12°",this.C.caution],["arm_multiplicity","2","arms","swing amplification",this.C.muted]],
+      planet:[["mean_planets_per_star","2.9","—","seeded",this.C.muted],["giant_occurrence(R₀)","0.113","—","∝ [Fe/H]²",this.C.muted],
+              ["ice_line_sun","2.71","AU","derived",this.C.muted],["belt_occurrence","0.41","—","from resonances",this.C.muted]],
+      accept:[["passed","14","of 24","not built yet",this.C.muted],["failed","7","of 24","",this.C.muted],["not computable","3","of 24","",this.C.muted],["statistical rows","5","","judged on the median",this.C.muted]]
+    }[S.sci];
+
+    const p=this.planets[S.planet];
+    const regimes=[
+      {i:0,label:"field",name:"Density field",step:"regime 1 of 3",
+       what:"A continuous image. No star is an object here — there are ~1.04 × 10⁶ of them and none is drawn.",
+       next:"Zoom past 22 kpc across to materialise a clickable sample."},
+      {i:1,label:"sampled",name:"Sampled points",step:"regime 2 of 3",
+       what:"20 000 materialised stars drawn as points over a dimmed field. Clickable; not complete.",
+       next:"Keep zooming to resolve every star in the view volume."},
+      {i:2,label:"stars",name:"Actual stars",step:"regime 3 of 3",
+       what:"Every star in the view volume, materialised from one cell in 0.02 s. The field behind is nearly gone.",
+       next:"This is the deepest regime. Click a star to open its system."}
+    ];
+    const R=regimes[reg];
+
+    return {
+      runHash:"9f3c1a · simple · world_seed "+S.values.world_seed,
+      views:viewDefs.map(([id,label])=>({label,go:()=>this.setState({view:id}),
+        bg:S.view===id?this.C.sel:"transparent", fg:S.view===id?this.C.ink:this.C.muted})),
+      isWorkflow:S.view==="workflow", isGalaxy:S.view==="galaxy", isSystem:S.view==="system", isScience:S.view==="science",
+      setSimple:()=>this.setState({model:"simple"}), setAdvanced:()=>this.setState({model:"advanced"}),
+      simpleBg:adv?"transparent":this.C.sel, simpleFg:adv?this.C.muted:this.C.ink,
+      advBg:adv?"#241d0f":"transparent", advFg:adv?this.C.caution:this.C.muted,
+      modelNote:adv?"two stages replaced · 10 extra fields":"same seven inputs",
+
+      checkpoints:cps, current:S.current,
+      confirmNow:()=>this.setState(s=>({confirmed:Math.max(s.confirmed,s.current),current:Math.min(s.current+1,6),asking:0})),
+      cancelReroll:()=>this.setState({asking:0}),
+      cancelReopen:()=>this.setState({askReopen:0}),
+
+      eventCount:this.mergers.length,
+      mergers:this.mergers.map((m,i)=>({
+        left:(6+ (m.time/13.6)*88)+"%", h:(10+m.ratio*230)+"px",
+        bg:i===S.selMerger?this.C.caution:this.C.s2, edge:i===S.selMerger?"#f0cd8a":this.C.faint,
+        cursor:S.current===2?"pointer":"default",
+        labelBottom:(32+m.ratio*230)+"px", labelFg:i===S.selMerger?this.C.caution:this.C.muted,
+        ratio:m.ratio.toFixed(2), title:m.name+" · t = "+m.time+" Gyr",
+        select:()=>this.setState({selMerger:i})
+      })),
+      mergerTicks:[0,4,8,12].map(t=>({left:(6+(t/13.6)*88)+"%",label:String(t)})),
+      selectedMerger:true,
+      selName:this.mergers[S.selMerger].name,
+      selFields:[{k:"time",v:this.mergers[S.selMerger].time.toFixed(1),u:"Gyr"},
+                 {k:"mass_ratio",v:this.mergers[S.selMerger].ratio.toFixed(2),u:"—"},
+                 {k:"gas_fraction",v:this.mergers[S.selMerger].gas.toFixed(2),u:"—"}],
+      selNote:this.mergers[S.selMerger].note,
+
+      cpCanvas:this.r.cpC,
+      cpCanvasNote:["rotation curve · v_c(R)","edge-on · thick disc","feh_history (R,t)","face-on · bar and arms","sampled stars","one system's neighbourhood"][S.current-1],
+      cpCaption:this.cps[S.current-1].produces+".",
+      previewTitle:this.cps[S.current-1].name,
+      previewStamp:"stages "+(adv&&S.current===3?"sfh · chemistry_dtd · vertical_alpha":this.cps[S.current-1].stages),
+      cpDerived:der, cpProvenance:this.prov[S.current],
+
+      galaxyCanvas:this.r.gal, legendStrip:this.r.leg,
+      fields:this.fields.map((x,i)=>({short:x.short,pick:()=>this.setState({field:i}),
+        bg:i===S.field?this.C.sel:this.C.deep, edge:i===S.field?this.C.accent:this.C.line, fg:i===S.field?this.C.ink:this.C.muted})),
+      baseNatural:()=>this.setState({base:"natural"}), baseField:()=>this.setState({base:"inferno"}),
+      natBg:S.base==="natural"?this.C.sel:this.C.deep, natEdge:S.base==="natural"?this.C.accent:this.C.line, natFg:S.base==="natural"?this.C.ink:this.C.muted,
+      infBg:S.base==="natural"?this.C.deep:this.C.sel, infEdge:S.base==="natural"?this.C.line:this.C.accent, infFg:S.base==="natural"?this.C.muted:this.C.ink,
+      fieldName:natStar?"star_colour":f.name,
+      fieldRamp:natStar?"main sequence":(f.palette?"palette · categorical":(f.cmap+" · "+f.scale)),
+      fieldLo:natStar?"M dwarf":(S.field===0?this.fnum(winRng.lo):(S.field===2?"−"+this.fehField().vmax.toFixed(2):f.loL)),
+      fieldHi:natStar?"OB":(S.field===0?this.fnum(winRng.hi):(S.field===2?"+"+this.fehField().vmax.toFixed(2):f.hiL)),
+      fieldUnit:natStar?"spectral class":f.unit,
+      boundsNote:natStar
+        ? "Not a cmap. Old disc light is ivory, the arm excess blue-white, the bar amber, with dust reddening the arms' inner edge. Brightness is a power stretch of stellar_surface_density, exposed to the brightest thing in view."
+        : (S.field===0
+        ? "Declared as inferno · log with no bounds, so the range is the data in view. Stops arrive from /api/fields."
+        : ((S.field===2?"RdBu is diverging and [Fe/H] declares meaningful_zero, so solar sits on the middle stop and the extent is symmetric. ":"Bounds are the field's own declaration. ")
+           +"The image behind is "+(S.base==="natural"?"stellar_surface_density as a broadband composite.":"stellar_surface_density, inferno · log, "+this.fnum(winRng.lo)+"–"+this.fnum(winRng.hi)+" M☉/pc²."))),
+      faceOn:()=>this.setState({orient:"face"}), edgeOn:()=>this.setState({orient:"edge"}),
+      faceBg:S.orient==="face"?this.C.sel:this.C.deep, faceEdge:S.orient==="face"?this.C.accent:this.C.line, faceFg:S.orient==="face"?this.C.ink:this.C.muted,
+      edgeBg:S.orient==="edge"?this.C.sel:this.C.deep, edgeEdge:S.orient==="edge"?this.C.accent:this.C.line, edgeFg:S.orient==="edge"?this.C.ink:this.C.muted,
+      zoomRaw:Math.round((Math.log10(S.zoom)/Math.log10(60))*100),
+      zoomLabel:(half*2).toFixed(half<1?3:1)+" kpc across",
+      onZoom:e=>this.setState({zoom:Math.pow(60,Number(e.target.value)/100)}),
+      regimeMarks:regimes.map(r=>({label:r.label,go:()=>this.setState({zoom:[1.4,7,40][r.i]}),
+        bg:reg===r.i?this.C.sel:this.C.deep, edge:reg===r.i?this.C.accent:this.C.line, fg:reg===r.i?this.C.ink:this.C.muted})),
+      regimeName:R.name, regimeStep:R.step, regimeWhat:R.what, regimeNext:R.next,
+      regimeEdge:["var(--text-muted)","var(--magenta-3)","var(--aqua-3)"][reg],
+      regimeTone:["idle","accent","nominal"][reg],
+      starLum:3, starMods:["planets"], starIconSize:60,
+      scaleBarPx:Math.round(barKpc/kpcPerPx)+"px",
+      scaleBarLabel:barKpc<1?Math.round(barKpc*1000)+" pc":barKpc+" kpc",
+      countLine:reg===0?"0 objects drawn · density field only":(reg===1?"20 000 of 1 040 000 materialised":"1 412 stars in this volume · 0.02 s"),
+      hasHover:reg>=1, hoverTitle:"star #418 207",
+      hoverRows:[{k:"star_mass",v:"0.94",u:"M☉"},{k:"star_age",v:"6.2",u:"Gyr"},{k:"star_metallicity",v:"+0.03",u:"dex"},
+                 {k:"star_birth_radius",v:"5.90",u:"kpc"},{k:"star_population",v:"thin",u:""}],
+      openSystem:()=>this.setState({view:"system"}),
+      pickStar:()=>{ if(this.regime()>=1) this.setState({view:"system"}); },
+
+      backToGalaxy:()=>this.setState({view:"galaxy"}),
+      returnNote:"Returns to "+(half*2).toFixed(1)+" kpc across, "+R.label+" regime, centred where you left it.",
+      orbitRail:()=>this.setState({orbit:"rail"}), orbitPolar:()=>this.setState({orbit:"polar"}),
+      railBg:S.orbit==="rail"?this.C.sel:"transparent", railFg:S.orbit==="rail"?this.C.ink:this.C.muted,
+      polarBg:S.orbit==="polar"?this.C.sel:"transparent", polarFg:S.orbit==="polar"?this.C.ink:this.C.muted,
+      starName:"star #418 207", starClass:"G8 V · thin disc", openMs:"0.02 s",
+      starRows:[{k:"star_mass",v:"0.94",u:"M☉"},{k:"star_age",v:"6.2",u:"Gyr"},{k:"star_metallicity",v:"+0.03",u:"dex"},
+                {k:"star_birth_radius",v:"5.90",u:"kpc"},{k:"star_radius",v:"8.24",u:"kpc"},
+                {k:"star_height",v:"−0.041",u:"kpc"},{k:"star_azimuth",v:"122.4",u:"deg"}],
+      migration:this.r.mig, migCanvas:this.r.mig,
+      migrationNote:"Born 2.34 kpc inside its present radius. Migration is visible per star, and it is the model's most distinctive result.",
+      orbitCanvas:this.r.orb,
+      pickPlanet:e=>{
+        const c=this.r.orb.current; if(!c||!this.hits) return;
+        const b=c.getBoundingClientRect(), x=e.clientX-b.left, y=e.clientY-b.top;
+        let best=null;
+        for(const ht of this.hits){ const d=Math.hypot(ht.x-x,ht.y-y); if(d<ht.r&&(!best||d<best.d)) best={i:ht.i,d}; }
+        if(best) this.setState({planet:best.i});
+      },
+      bodyTitle:"planet "+p.id,
+      bodyRows:[{k:"planet_semi_major_axis",v:p.a<1?p.a.toFixed(3):p.a.toFixed(2),u:"AU"},
+                {k:"planet_mass",v:String(p.m),u:"M⊕"},{k:"planet_radius",v:p.r.toFixed(2),u:"R⊕"},
+                {k:"planet_insolation",v:p.ins<1?p.ins.toFixed(4):p.ins.toFixed(1),u:"S⊕"},
+                {k:"planet_orbital_period",v:p.per,u:""},{k:"planet_rotation_period",v:p.rot,u:""},
+                {k:"planet_obliquity",v:p.obl.toFixed(1),u:"deg"},{k:"planet_volatile_fraction",v:p.vol.toFixed(2),u:"—"},
+                {k:"planet_atmosphere",v:p.atm,u:""}],
+      atmLegend:Object.keys(this.atmCol).map(k=>({k,c:this.atmCol[k]})),
+      beltCount:this.belts.length+" belts",
+
+      sciNav:this.sci.map(s=>({label:s.label, sub:s.id==="alpha"&&!adv?"advanced only · locked":s.sub,
+        go:()=>this.setState({sci:s.id}),
+        edge:S.sci===s.id?this.C.accent:"transparent", bg:S.sci===s.id?this.C.s1:"transparent",
+        fg:S.sci===s.id?this.C.ink:this.C.muted, subFg:S.sci===s.id?this.C.muted:this.C.muted})),
+      sciTitle:sciDef.title, sciBlurb:sciDef.blurb,
+      sciLocked:S.sci==="alpha"&&!adv, sciEmpty:S.sci==="accept",
+      sciOpen:!(S.sci==="alpha"&&!adv)&&S.sci!=="accept",
+      sciLockedWhy:"[α/Fe] needs two nucleosynthetic channels with different delay times. The simple model uses instantaneous recycling, which collapses them into one — it publishes a single abundance and there is no α–Fe plane for anything to be bimodal in. This is not a missing feature; it is what the simple model is.",
+      plotA:this.r.pA, plotB:this.r.pB,
+      plotATitle:sciDef.a, plotAUnit:sciDef.au, plotACaption:sciDef.ac,
+      plotBTitle:sciDef.b, plotBUnit:sciDef.bu, plotBCaption:sciDef.bc,
+      hasScrub:S.sci==="chem",
+      scrubRaw:S.scrub, scrubLabel:(13.6-S.scrub/10).toFixed(1)+" Gyr ago · t = "+(S.scrub/10).toFixed(1),
+      onScrub:e=>this.setState({scrub:Number(e.target.value)}),
+      sciScalars:sciScalars.map(r=>({k:r[0],v:r[1],u:r[2],note:r[3],noteFg:r[4]})),
+
+      footLeft:S.view==="workflow"?("checkpoint "+S.current+" of 6 · "+S.confirmed+" confirmed"
+        +(Object.keys(S.discarded).length?" · "+Object.keys(S.discarded).length+" invalidated":"")
+        +" · reopening one discards every later one")
+        :(S.view==="galaxy"?("regime "+(reg+1)+" of 3 · "+(half*2).toFixed(half<1?3:1)+" kpc across · field "+f.name)
+        :(S.view==="system"?"system view · one cell materialised · 0.02 s":"scientific views · "+sciDef.title.toLowerCase()))
+    };
+  }
+}
+
+</script>
+</body>
+</html>
