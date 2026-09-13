@@ -2,7 +2,7 @@
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  padding: var(--space-5);
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
   background: var(--bg-deep);
   background-image: var(--field-grid);
 }
@@ -16,13 +16,12 @@
 }
 
 .name {
-  font: var(--text-h3);
+  font: 600 15px / 1.3 var(--font-ui);
   color: var(--text-primary);
 }
 
 .stages {
-  font: var(--text-data);
-  font-size: var(--size-2xs);
+  font: 400 10px / 1.4 var(--font-mono);
   color: var(--text-muted);
 }
 
@@ -46,7 +45,7 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--space-1) var(--space-5);
   margin: 0 0 var(--space-5);
-  font: var(--text-data);
+  font: 400 11px / 1.4 var(--font-mono);
 }
 
 .scalar {
@@ -94,14 +93,12 @@
 }
 
 .picker button {
-  height: var(--control-sm);
-  padding: 0 var(--space-3);
+  padding: 6px 8px;
   border: var(--hair) solid var(--border-line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  border-radius: 2px;
+  background: transparent;
   color: var(--text-body);
-  font: var(--text-data);
-  font-size: var(--size-xs);
+  font: 400 10.5px / 1 var(--font-mono);
   cursor: pointer;
   transition: var(--transition-control);
 }

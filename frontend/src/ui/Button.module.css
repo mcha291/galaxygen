@@ -6,7 +6,9 @@
   padding: 0 var(--space-4);
   border: var(--hair) solid transparent;
   border-radius: var(--radius-md);
-  font: var(--weight-medium) var(--size-sm) / 1 var(--font-ui);
+  font: var(--weight-medium) var(--size-xs) / 1 var(--font-ui);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
   transition: var(--transition-control);
 }
@@ -26,16 +28,18 @@
 }
 
 .primary {
+  border-color: var(--magenta-3);
   background: var(--magenta-3);
   color: var(--text-inverse);
 }
 
 .primary:hover:not(:disabled) {
+  border-color: var(--magenta-2);
   background: var(--magenta-2);
 }
 
 .secondary {
-  background: var(--surface-1);
+  background: var(--surface-2);
   border-color: var(--border-line);
   color: var(--text-primary);
 }

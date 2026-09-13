@@ -20,7 +20,24 @@ import {
 import type { Workflow as WorkflowApi } from "./useWorkflow";
 import styles from "./Workflow.module.css";
 
-const BADGE: Record<string, string> = { locked: "locked", editing: "editing", next: "next", blocked: "blocked" };
+// What each checkpoint's preview is for, from the design brief's §1 table. The
+// API declares stages, not purposes, so this is the one table the rail holds.
+const PRODUCES: Record<number, string> = {
+  1: "Rotation curve; smooth axisymmetric disc",
+  2: "Merger history; the thick disc appears edge-on",
+  3: "Gradients and histories; disc colours by [Fe/H]",
+  4: "Bar and spiral arms — first recognisable galaxy",
+  5: "Resolves into individual stars",
+  6: "Systems become openable",
+};
+
+function badgeOf(status: string, n: number, invalidated: boolean): { label: string; tone: string } {
+  if (invalidated) return { label: "invalidated", tone: "caution" };
+  if (status === "locked") return { label: "locked", tone: "nominal" };
+  if (status === "editing") return { label: "editing", tone: "accent" };
+  if (status === "next") return { label: "next", tone: "neutral" };
+  return { label: `needs ${n - 1}`, tone: "neutral" };
+}
 
 /** "5", "5 and 6", "4–6": checkpoint lists in the rail's cost lines. */
 export function spanOf(ns: number[]): string {
@@ -50,7 +67,7 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
 
   return (
     <div className={panelClass}>
-      <div className={`gx-label ${styles.heading}`}>Generation · {state.cat.checkpoints.length} checkpoints</div>
+      <div className={styles.heading}>Generation · {state.cat.checkpoints.length} checkpoints</div>
       {wf.error && <p className={styles.fault}>{wf.error}</p>}
 
       {state.cat.checkpoints.map((cp) => {
@@ -59,10 +76,12 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
         const decls = cp.inputs.map((name) => state.cat.inputs.get(name)!);
         const seedOnly = decls.every((d) => d.kind === "seed");
         const seed = decls.find((d) => d.kind === "seed");
-        const open = status === "editing" || status === "locked";
+        // As in the design, only the checkpoint in hand is expanded; the rest are one row each.
+        const open = cp.n === state.current;
+        const badge = badgeOf(status, cp.n, invalidated);
 
         return (
-          <section key={cp.n} className={styles.checkpoint} data-status={status}>
+          <section key={cp.n} className={styles.checkpoint} data-open={open || undefined}>
             <div className={styles.head}>
               <button
                 type="button"
@@ -70,23 +89,39 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
                 data-status={status}
                 disabled={status === "blocked"}
                 title={chipTitle(status, cp.n)}
-                onClick={() => (status === "locked" ? requestReopen(cp.n) : wf.open(cp.n))}
+                onClick={() => (status === "locked" && cp.n !== state.current ? requestReopen(cp.n) : wf.open(cp.n))}
               >
                 {status === "locked" ? <Check aria-label="locked" /> : cp.n}
               </button>
               <div className={styles.title}>
                 <div className={styles.titleRow}>
-                  <span className={styles.name}>{cp.name}</span>
-                  <span className={styles.badge} data-tone={invalidated ? "caution" : status}>
-                    {invalidated ? "invalidated" : BADGE[status]}
-                  </span>
+                  <span className={styles.name} data-status={status}>{cp.name}</span>
+                  <span className={styles.badge} data-tone={badge.tone}>{badge.label}</span>
                 </div>
-                <div className={styles.stages}>{cp.stages.join(" · ")}</div>
                 {invalidated && (
                   <div className={styles.caution}>Its confirmation was discarded by an earlier change. Confirm it again to lock.</div>
                 )}
+                {open && (
+                  <>
+                    <div className={styles.stages}>{cp.stages.join(" · ")}</div>
+                    {PRODUCES[cp.n] && <div className={styles.produces}>{PRODUCES[cp.n]}</div>}
+                  </>
+                )}
               </div>
             </div>
+
+            {askingReopen === cp.n && !open && (
+              <div className={`${styles.ask} ${styles.askOutside}`}>
+                <p>
+                  Checkpoint {spanOf(reopenCost(state, cp.n))} {reopenCost(state, cp.n).length > 1 ? "are" : "is"} confirmed.
+                  Reopening {cp.n} discards {reopenCost(state, cp.n).length > 1 ? "them" : "it"}.
+                </p>
+                <div className={styles.actions}>
+                  <Button variant="primary" onClick={() => { setAskingReopen(null); wf.reopenAt(cp.n); }}>Reopen and discard</Button>
+                  <Button variant="ghost" onClick={() => setAskingReopen(null)}>Cancel</Button>
+                </div>
+              </div>
+            )}
 
             {open && (
               <div className={styles.body}>
@@ -115,7 +150,7 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
                   )}
                 </div>
 
-                {askingReopen === cp.n && (
+                {askingReopen === cp.n && open && (
                   <div className={styles.ask}>
                     <p>
                       Checkpoint {spanOf(reopenCost(state, cp.n))} {reopenCost(state, cp.n).length > 1 ? "are" : "is"} confirmed.

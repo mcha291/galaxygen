@@ -187,7 +187,7 @@ export function App() {
 
           {tab === "science" && (
             <div className={styles.scienceStage}>
-              <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} />
+              <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
               <div className={styles.scienceBody}>
                 {current && panels && wf.query && meta ? (
                   <ScienceView checkpoint={current} panels={panels} query={wf.query} cmaps={meta.cmaps} />

@@ -221,17 +221,17 @@
   color: var(--text-muted);
 }
 
-/* --- Science: the rail as a column beside the charts ------------------------ */
+/* --- Science: the same floating rail, the charts beside it ------------------ */
 
 .scienceStage {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-columns: var(--inspector-width) minmax(0, 1fr);
+  background: var(--void-0);
 }
 
 .scienceBody {
-  position: relative;
+  position: absolute;
+  inset: 0 0 0 324px;
   min-width: 0;
 }
 
@@ -258,7 +258,7 @@
   border: 0;
   background: transparent;
   color: var(--text-body);
-  font: var(--text-data);
+  font: 400 11px / 1 var(--font-mono);
   cursor: pointer;
   transition: var(--transition-control);
 }
@@ -285,8 +285,8 @@
   background: var(--surface-inset);
   color: var(--text-primary);
   border: var(--hair) solid var(--border-line);
-  border-radius: var(--radius-sm);
-  font: var(--text-body-font);
+  border-radius: 2px;
+  font: 400 11px / 1 var(--font-mono);
   text-shadow: none;
 }
 
