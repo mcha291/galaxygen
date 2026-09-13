@@ -22,7 +22,7 @@ from pathlib import Path
 DIGEST_BYTES = 16  # 32 hex characters: short enough to read aloud, long enough to differ
 
 HERE = Path(__file__).resolve().parent
-CLIENT = HERE / "client"  # the viewer's own bytes (D3); S7 fills this directory
+CLIENT = HERE.parents[2] / "interface"  # the viewer's own bytes (D3), at the repository's interface/
 SERVER = HERE  # the API's own bytes, so a stale *server* is visible too
 
 

@@ -16,9 +16,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["galaxy"]
+packages = ["model/galaxy"]
 
 [tool.pytest.ini_options]
 # Rule C7: tests run quiet. Only failures print.
 addopts = "-q --no-header -ra"
 testpaths = ["tests"]
+pythonpath = ["model"]

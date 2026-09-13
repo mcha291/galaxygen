@@ -47,7 +47,7 @@ from typing import Any
 from galaxy.core.registry import Model, production
 from galaxy.specs import utf8_stdout
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SAMPLE = 20_000  # the published catalogue size (D61)
 SAMPLES: tuple[int, ...] = (500, 2_000, 5_000, 10_000, 20_000, 40_000)  # the sizes both fits run over
 # Widened at S21b from (5k, 10k, 20k, 40k). Over that range the cells that realise a

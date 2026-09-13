@@ -11,8 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SESSION_DOCS = ["DECISIONS.md", "LESSONS.md", "RESUMING.md", "BRIEF.md", "README.md", "MANUAL_TODO.md", "AUDIT_RUN1.md", "AUDIT_RUN2.md", "AUDIT_II_A.md", "AUDIT_S21B.md"]
 
 
+DOCS = ROOT / "docs"
+
+
 def text(name: str) -> str:
-    return (ROOT / name).read_text(encoding="utf-8")
+    return (ROOT / name if name == "README.md" else DOCS / name).read_text(encoding="utf-8")
 
 
 def test_resuming_is_capped_at_120_lines():
@@ -70,7 +73,7 @@ def test_manual_todo_carries_a_row_for_every_closed_session():
     The failure this prevents is the one that only shows up at the end, when the
     tags are applied in a batch and one session is quietly missing from it.
     """
-    board = (ROOT / "GALAXY_PLAN.md").read_text(encoding="utf-8")
+    board = text("GALAXY_PLAN.md")
     closed = [int(n) for n in re.findall(r"^\| ☑ \| (\d+) \| ", board, flags=re.M)]
     assert closed, "no closed sessions on the board"
     todo = text("MANUAL_TODO.md")

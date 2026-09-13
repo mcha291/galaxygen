@@ -10,11 +10,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../galaxy/api/client/field.js";
-import { legendStops, makePalette, makeRamp, paintOf, rgbOf, statistics } from "../../galaxy/api/client/ramp.js";
-import { census, describe, format, identify, nearest, project } from "../../galaxy/api/client/stars.js";
-import { domain, layout, markSize, pick } from "../../galaxy/api/client/system.js";
-import * as view from "../../galaxy/api/client/view.js";
+import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../interface/field.js";
+import { legendStops, makePalette, makeRamp, paintOf, rgbOf, statistics } from "../../interface/ramp.js";
+import { census, describe, format, identify, nearest, project } from "../../interface/stars.js";
+import { domain, layout, markSize, pick } from "../../interface/system.js";
+import * as view from "../../interface/view.js";
 
 const fixture = JSON.parse(readFileSync(process.env.GALAXY_FIXTURE, "utf-8"));
 const { cmaps, fields } = fixture.fields;
