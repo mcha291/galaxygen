@@ -302,9 +302,9 @@ test("a categorical field is drawn from its palette, not from a cmap it does not
   assert.equal(paintOf(continuous, payload.cmaps, [0, 1]).scale, continuous.ramp.scale);
 });
 
-test("nothing published varies with phi, and the viewer can tell", () => {
+test("the bar and arms vary with phi, and the viewer can tell", () => {
   const all = fixture.fields.fields;
-  assert.equal(view.variesWithPhi(all), false, "debt #23: when this changes, the disc note goes away");
+  assert.equal(view.variesWithPhi(all), true, "pattern_density_contrast is published over (R, phi)");
   assert.equal(view.variesWithPhi([{ axes: ["R", "phi"] }]), true);
 });
 

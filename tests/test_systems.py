@@ -13,6 +13,7 @@ import time
 import numpy as np
 import pytest
 
+from galaxy.stages.pattern import ArmPattern
 from galaxy.run import run
 from galaxy.stages.systems import (
     CATALOGUE_SAMPLE,
@@ -285,7 +286,7 @@ def test_a_row_of_the_catalogue_knows_which_star_it_is(model):
     o = out(model)
     R, t = o.grid.R, o.grid.t
     whole = stars(model, 5000)
-    counts = cell_counts(o.fields["stellar_surface_density"], R, 0, 5000)
+    counts = cell_counts(o.fields["stellar_surface_density"], R, 0, 5000, pattern=ArmPattern.from_fields(o.fields))
     assert whole.counts == counts, "the layout must be the one the stars were built from"
     assert sum(n for _, n in counts) == whole.size
     assert all(n > 0 for _, n in counts), "a cell with no star is not part of the layout"
@@ -304,7 +305,7 @@ def test_the_layout_costs_a_fraction_of_the_stars(model):
     """Knowing which star is which must not mean drawing every star (rule D4)."""
     o = out(model)
     start = time.perf_counter()
-    counts = cell_counts(o.fields["stellar_surface_density"], o.grid.R, 0, 20000)
+    counts = cell_counts(o.fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(o.fields))
     layout = time.perf_counter() - start
     start = time.perf_counter()
     stars(model, 20000)

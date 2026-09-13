@@ -22,11 +22,12 @@ def chk(m, *stages):
 # cannot start until the chemistry is done — lands a round later than the simple one's.
 # Since S18 the assembly stage reads the checkpoint-1 curve (the merger's radial kick becomes a
 # displacement through its epicyclic frequency), so the disc runs before it; until then the
-# tie-break put assembly second.
+# tie-break put assembly second. Since the catalogue samples azimuth from the pattern's arms, the
+# systems stage waits for pattern too, a round later than formation in both models.
 ORDER = {
     "simple": (
         "halo", "disc", "nucleus", "assembly", "sfh", "chemistry", "vertical",
-        "bar", "population", "pattern", "systems", "formation", "planets",
+        "bar", "population", "pattern", "formation", "systems", "planets",
     ),
     "advanced": (
         "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population",
@@ -51,6 +52,7 @@ def test_production_graphs_hold(prod):
         assert seeded == {
             "black_hole_mass",
             "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
+            "arm_contrast", "bar_contrast", "pattern_density_contrast",
             "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
             "star_metallicity", "star_mass", "star_population", "catalogue_size",
             "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
@@ -71,7 +73,8 @@ def test_production_graphs_hold(prod):
             "halo_mass": 1, "disc_spin": 1, "halo_assembly_z": 1, "baryon_retention": 1,
             "world_seed": 1,
             "infall_timescale": 3, "inside_out_index": 3, "migration_efficiency": 3,
-            "mergers": 2, "pattern_seed": 4, "systems_seed": 5, "planets_seed": 6,
+            "mergers": 2, "arm_amplitude": 4, "bar_amplitude": 4,
+            "pattern_seed": 4, "systems_seed": 5, "planets_seed": 6,
         }
     assert "graph" in graph.report(models, impls_, table)
 

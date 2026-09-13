@@ -28,6 +28,8 @@ PLAN_INPUTS = {
     "infall_timescale",
     "inside_out_index",
     "migration_efficiency",
+    "arm_amplitude",  # experimental, RENDER_PLAN M1
+    "bar_amplitude",
     "mergers",
     "world_seed",
     "pattern_seed",
@@ -38,7 +40,7 @@ PLAN_INPUTS = {
 
 def test_input_vector_is_closed():
     assert set(INPUTS) == PLAN_INPUTS
-    assert len(controls()) == 7 <= INPUT_CEILING
+    assert len(controls()) == 9 <= INPUT_CEILING  # the seven, plus the two experimental pattern amplitudes
     assert len(seeds()) == 4
     assert [i.name for i in INPUTS.values() if i.kind == "events"] == ["mergers"]
 

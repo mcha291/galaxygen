@@ -19,6 +19,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from galaxy.stages.pattern import ArmPattern
 from galaxy.core.units import UNITS
 from galaxy.models.level0 import LEVEL0
 from galaxy.run import run
@@ -236,7 +237,7 @@ def test_a_system_is_the_same_alone_as_in_the_sample(model):
     """D60 one level down: (cell, index) names a system, and naming it is enough."""
     o = out(model)
     fields = o.fields
-    counts = cell_counts(fields["stellar_surface_density"], o.grid.R, 0, 20000)
+    counts = cell_counts(fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(fields))
     offsets = np.cumsum([0] + [n for _, n in counts])
     planets_before = np.cumsum(np.concatenate([[0], fields["star_planet_count"]])).astype(int)
 

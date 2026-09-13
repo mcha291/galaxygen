@@ -16,7 +16,8 @@ import { Button } from "./ui/Button";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber, runHash } from "./workflow/logic";
-import { useWorkflow } from "./workflow/useWorkflow";
+import { EXPERIMENTAL_INPUTS, useWorkflow } from "./workflow/useWorkflow";
+import { ExperimentBar } from "./workflow/ExperimentBar";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
 
@@ -34,6 +35,10 @@ export function App() {
   const [preset, setPreset] = useState<Preset>("oblique");
   const [picked, setPicked] = useState<number | null>(null);
   const [systemStar, setSystemStar] = useState<{ cell: number; index: number } | null>(null);
+  // Bottom-bar experiments ride on top of the workflow's input vector, outside its locks:
+  // they are for exploring a value, and every request is keyed by the vector, so changing
+  // one simply asks for a different galaxy.
+  const [experiments, setExperiments] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const abort = new AbortController();
@@ -41,6 +46,7 @@ export function App() {
     return () => abort.abort();
   }, [wf.model]);
 
+  const query = useMemo(() => (wf.query ? { ...wf.query, ...experiments } : null), [wf.query, experiments]);
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
   const last = wf.state?.cat.checkpoints.length ?? 0;
   // "Planets: systems become openable" (design brief §1): the last checkpoint must be reachable.
@@ -57,8 +63,8 @@ export function App() {
   // The star sample runs every stage, so it is only asked for where stars are drawn:
   // the Galaxy tab, and the preview from checkpoint 5 (Systems), where stars first exist.
   const drawsStars = tab === "galaxy" || (tab === "preview" && (current?.n ?? 0) >= 5);
-  const sampleKey = drawsStars && wf.query ? JSON.stringify(wf.query) : null;
-  const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(wf.query!, signal));
+  const sampleKey = drawsStars && query ? JSON.stringify(query) : null;
+  const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(query!, signal));
   const sample = galaxy.value;
   // A new galaxy is a new set of stars: the old selection and open system named stars in the old one.
   useEffect(() => {
@@ -82,7 +88,7 @@ export function App() {
   }, [sample, meta, field]);
 
   const seed = wf.state?.values.world_seed;
-  const hash = wf.query ? `${runHash(wf.query)} · ${wf.model} · world_seed ${seed}` : "";
+  const hash = query ? `${runHash(query)} · ${wf.model} · world_seed ${seed}` : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
     { key: "preview", label: "Preview" },
     { key: "science", label: "Science" },
@@ -100,8 +106,8 @@ export function App() {
       {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
     </>
   );
-  const system = systemStar && meta && wf.query && (
-    <SystemView star={systemStar} query={wf.query} meta={meta} onClose={() => setSystemStar(null)} />
+  const system = systemStar && meta && query && (
+    <SystemView star={systemStar} query={query} meta={meta} onClose={() => setSystemStar(null)} />
   );
 
   return (
@@ -138,11 +144,11 @@ export function App() {
         <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>
           {tab === "preview" && (
             <div className={styles.canvasStage}>
-              {current && meta && wf.query && (
+              {current && meta && query && (
                 <CheckpointScene
                   n={current.n}
                   meta={meta}
-                  query={wf.query}
+                  query={query}
                   preset={preset}
                   stars={positions && colors ? { positions, colors } : null}
                   onPick={setPicked}
@@ -182,7 +188,7 @@ export function App() {
                 {meta && sample && picked !== null && (
                   <StarReadout meta={meta} sample={sample} row={picked} onOpen={setSystemStar} planets={planetsReady} />
                 )}
-                {panels && wf.query && <Published scalars={panels.scalars} query={wf.query} />}
+                {panels && query && <Published scalars={panels.scalars} query={query} />}
               </aside>
 
               {current && (
@@ -202,8 +208,8 @@ export function App() {
             <div className={styles.scienceStage}>
               <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
               <div className={styles.scienceBody}>
-                {current && panels && wf.query && meta ? (
-                  <ScienceView checkpoint={current} panels={panels} query={wf.query} cmaps={meta.cmaps} />
+                {current && panels && query && meta ? (
+                  <ScienceView checkpoint={current} panels={panels} query={query} cmaps={meta.cmaps} />
                 ) : (
                   <p className={styles.status}>Loading field declarations.</p>
                 )}
@@ -237,9 +243,17 @@ export function App() {
         </ErrorBoundary>
       </main>
 
-      {/* The design's bottom bar, left empty for now. */}
+      {/* The design's bottom bar: experimental inputs on the left, the other slot empty for now. */}
       <footer className={styles.footer}>
-        <span className={styles.footLeft} />
+        <span className={styles.footLeft}>
+          {wf.state && (
+            <ExperimentBar
+              inputs={EXPERIMENTAL_INPUTS.map((n) => wf.state!.cat.inputs.get(n)).filter((d) => !!d) as never}
+              values={experiments}
+              onChange={(name, value) => setExperiments((e) => ({ ...e, [name]: value }))}
+            />
+          )}
+        </span>
         <span className={styles.footRight} />
       </footer>
     </div>

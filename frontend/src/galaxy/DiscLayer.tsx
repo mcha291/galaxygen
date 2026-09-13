@@ -5,6 +5,7 @@ import { DataTexture, DoubleSide, LinearFilter, RGBAFormat, SRGBColorSpace } fro
 
 import type { FieldDecl, FieldsPayload } from "../api";
 import type { Axis } from "../preview/axes";
+import { polarImage } from "./polar";
 
 interface Props {
   decl: FieldDecl;
@@ -14,6 +15,9 @@ interface Props {
   cmaps: FieldsPayload["cmaps"];
   /** Paint against these values' range rather than the profile's own, so a scrubbed epoch keeps one scale. */
   rangeValues?: ArrayLike<number>;
+  /** A published (R, φ) factor to multiply the profile by: the bar and arms. */
+  contrast?: ArrayLike<number>;
+  phi?: Axis;
   size?: number;
 }
 
@@ -25,17 +29,18 @@ interface Props {
  * declared ramp through interface/field.js, nearest cell, transparent off the
  * grid. It is a picture of a field, not a photograph, and says so by its colours.
  */
-export function DiscLayer({ decl, profile, R, cmaps, rangeValues, size = 512 }: Props) {
+export function DiscLayer({ decl, profile, R, cmaps, rangeValues, contrast, phi, size = 512 }: Props) {
   const ramp = useMemo(() => paintOf(decl, cmaps, rangeValues ?? profile), [decl, cmaps, rangeValues, profile]);
   const texture = useMemo(() => {
-    const { data, width, height } = discOf(profile, R, ramp, { size, rMax: R.hi });
+    const { data, width, height } =
+      contrast && phi ? polarImage(profile, contrast, R, phi, ramp, size) : discOf(profile, R, ramp, { size, rMax: R.hi });
     const t = new DataTexture(data, width, height, RGBAFormat);
     t.colorSpace = SRGBColorSpace;
     t.minFilter = LinearFilter;
     t.magFilter = LinearFilter;
     t.needsUpdate = true;
     return t;
-  }, [profile, R, ramp, size]);
+  }, [profile, R, ramp, size, contrast, phi]);
   useEffect(() => () => texture.dispose(), [texture]);
 
   return (

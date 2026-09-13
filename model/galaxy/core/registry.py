@@ -379,6 +379,33 @@ _INPUTS: tuple[Input, ...] = (
         hi=8.0,
         checkpoint_hypothesis=3,
     ),
+    # Experimental (RENDER_PLAN M1): exposed so the arm and bar strength can be explored from the
+    # viewer's bottom bar. RENDER_PLAN wants these derived or seeded rather than chosen; until a
+    # value is settled they are controls, and the viewer keeps them out of the checkpoint rail.
+    Input(
+        "arm_amplitude",
+        "Spiral arm amplitude",
+        "control",
+        "Fractional surface-density contrast of the spiral arms. 0 is an axisymmetric disc; 1 empties "
+        "the inter-arm region. Experimental while a derived or seeded value is chosen (debt #23).",
+        unit="dimensionless",
+        default=0.3,
+        lo=0.0,
+        hi=1.0,
+        checkpoint_hypothesis=4,
+    ),
+    Input(
+        "bar_amplitude",
+        "Bar amplitude",
+        "control",
+        "Fractional surface-density contrast of the bar inside its half-length. 0 is no bar. "
+        "Experimental while a derived or seeded value is chosen (debt #23).",
+        unit="dimensionless",
+        default=0.3,
+        lo=0.0,
+        hi=1.0,
+        checkpoint_hypothesis=4,
+    ),
     Input(
         "mergers",
         "Merger events",

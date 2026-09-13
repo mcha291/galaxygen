@@ -57,7 +57,9 @@ function DiscScene({ n, meta, query, preset }: { n: number; meta: FieldsPayload;
   const disc = declOf(meta, DISC_AT[n]);
   const inset = INSET_AT[n];
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
-  const names = [...(disc ? [disc.name] : []), ...insetDecls.map((d) => d.name)];
+  // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
+  const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
+  const names = [...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...insetDecls.map((d) => d.name)];
   const key = names.length ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value && names.every((x) => x in loaded.value!.arrays) ? loaded.value : null;
@@ -68,7 +70,17 @@ function DiscScene({ n, meta, query, preset }: { n: number; meta: FieldsPayload;
   return (
     <>
       <GalaxyView preset={preset} reach={R ? R.hi : 30}>
-        {frame && disc && R && <DiscLayer decl={disc} profile={frame.arrays[disc.name] as Float64Array} R={R} cmaps={meta.cmaps} />}
+        {frame && disc && R && (
+          <DiscLayer
+            decl={disc}
+            profile={frame.arrays[disc.name] as Float64Array}
+            R={R}
+            cmaps={meta.cmaps}
+            contrast={contrast ? (frame.arrays[contrast.name] as Float64Array) : undefined}
+            phi={contrast ? frame.header.grid.axes.phi : undefined}
+            size={contrast ? 768 : 512}
+          />
+        )}
       </GalaxyView>
       {frame && inset && insetAxis && (
         <div className={styles.inset}>
@@ -83,7 +95,12 @@ function DiscScene({ n, meta, query, preset }: { n: number; meta: FieldsPayload;
         </div>
       )}
       {loaded.error && <p className={styles.fault}>Preview failed: {loaded.error}</p>}
-      {disc && <p className={styles.layerNote}>disc painted by {disc.name} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}</p>}
+      {disc && (
+        <p className={styles.layerNote}>
+          disc painted by {disc.name}
+          {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
+        </p>
+      )}
     </>
   );
 }

@@ -24,10 +24,12 @@ That second property is the reason each property gets its own stream rather than
 one stream per star. With a single stream, drawing radius-then-age for 10 stars
 would leave it at a different position than for 1000, and the prefix would break.
 
-**What the catalogue does not have.** It is axisymmetric. S4 published a pitch
-angle and an arm multiplicity but no non-axisymmetric density, so there is
-nothing here to wind stars into arms — recorded as debt #23 rather than faked
-with a modulation nothing in the model justifies.
+**Arms and bar.** Azimuth is drawn from the pattern stage's density contrast
+(``pattern.ArmPattern``): a sector's star count follows the contrast averaged over
+that sector at the ring's radius, and a star's azimuth inside its sector inverts
+the contrast at its own radius. The contrast averages to 1 around every ring, so
+the radial distribution — and every radial row — is what it was. Its amplitudes
+are experimental inputs for now (debt #23).
 """
 
 from __future__ import annotations
@@ -44,6 +46,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.pattern import ArmPattern
 from galaxy.stages.vertical import POPULATIONS
 
 # The cell grid is the unit of regional materialisation, and its size is a real
@@ -235,6 +238,7 @@ def cell_counts(
     seed: int,
     n_stars: int,
     cells: Sequence[int] | None = None,
+    pattern: ArmPattern | None = None,
 ) -> tuple[tuple[int, int], ...]:
     """``(cell, count)`` for every cell that realises a star, in cell order.
 
@@ -249,10 +253,18 @@ def cell_counts(
     """
     share = cell_shares(sigma_star, R)
     wanted = range(CELL_COUNT) if cells is None else cells
+    rings, sectors = cell_edges(R)
+    # Each ring's sector weights from the arm and bar contrast at the ring's middle; they
+    # average to 1, so a ring's total is unchanged. None or zero amplitudes: every sector alike.
+    weights = (
+        np.ones((CELL_RINGS, CELL_SECTORS))
+        if pattern is None or pattern.flat
+        else np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)])
+    )
     out: list[tuple[int, int]] = []
     for cell in wanted:
-        ring = int(cell) // CELL_SECTORS
-        expected = n_stars * share[ring] / CELL_SECTORS
+        ring, sector = divmod(int(cell), CELL_SECTORS)
+        expected = n_stars * share[ring] / CELL_SECTORS * max(float(weights[ring, sector]), 0.0)
         base = int(expected)
         frac = expected - base
         # The fractional part is a seeded Bernoulli rather than a rounding rule,
@@ -368,7 +380,8 @@ def materialise(
     ])
     ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
 
-    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, cells)
+    pattern = ArmPattern.from_fields(fields)
+    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, cells, pattern)
     columns: dict[str, list[np.ndarray]] = {}
 
     h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
@@ -398,7 +411,11 @@ def materialise(
         weight = np.where(inside, fields["stellar_surface_density"] * R, 0.0)
         radius = invert_cdf(draw("radius"), R, weight)
 
-        azimuth = (sector + draw("azimuth")) * (2.0 * math.pi / CELL_SECTORS)
+        width = 2.0 * math.pi / CELL_SECTORS
+        if pattern is None or pattern.flat:
+            azimuth = (sector + draw("azimuth")) * width
+        else:
+            azimuth = pattern.azimuths(draw("azimuth"), radius, sector * width, (sector + 1) * width)
 
         # When a star was born, of the stars that are *here now*: the migration kernel's
         # arrival law rather than the local birth rate, which would be the answer for a
@@ -490,8 +507,8 @@ STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
                       "Drawn by inverting the radial mass distribution the model published, so the "
                       "sample traces the disc exactly rather than approximately.")
 STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
-                       "Uniform within the star's sector. The catalogue is axisymmetric because "
-                       "the model's density is: S4 published arm parameters but no arms (debt #23).")
+                       "Drawn from the bar and arm density contrast at the star's radius, so stars "
+                       "crowd into the arms and the bar (experimental amplitudes, debt #23).")
 STAR_HEIGHT = _column("star_height", "Height above the plane", "kpc",
                       "Inverted from the sech² profile at the star's own population's scale height, "
                       "so the thick disc is genuinely thicker rather than tagged as such.")
@@ -561,6 +578,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
         requires=(
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
             "birth_population", "sfr_surface_density_history", "feh_history",
+            "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
         ),
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
