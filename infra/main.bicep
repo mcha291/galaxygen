@@ -68,8 +68,9 @@ resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = if (deploy
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
-        customerId: logs.properties.customerId
-        sharedKey: logs.listKeys().primarySharedKey
+        // Same deployApp condition as this resource, so logs exists whenever this runs.
+        customerId: logs!.properties.customerId
+        sharedKey: logs!.listKeys().primarySharedKey
       }
     }
   }
@@ -83,7 +84,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
     userAssignedIdentities: { '${pullIdentity.id}': {} }
   }
   properties: {
-    managedEnvironmentId: environment.id
+    managedEnvironmentId: environment!.id
     configuration: {
       ingress: {
         external: true
@@ -141,4 +142,4 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
 
 output registryName string = registry.name
 output loginServer string = registry.properties.loginServer
-output url string = deployApp ? 'https://${app.properties.configuration.ingress.fqdn}' : ''
+output url string = deployApp ? 'https://${app!.properties.configuration.ingress.fqdn}' : ''

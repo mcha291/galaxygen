@@ -17,6 +17,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# A fresh winget install is not on this shell's PATH until a new terminal opens.
+if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+  $env:PATH += ';C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin'
+}
 $root = Split-Path -Parent $PSScriptRoot
 $template = Join-Path $PSScriptRoot 'main.bicep'
 
