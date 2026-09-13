@@ -24,7 +24,7 @@ export const BASE = "/api";
 export const ORIGIN = "";
 
 const HEADER_OFFSET = 8; // magic (4) + header length (4)
-const READERS = { f8: Float64Array, i8: BigInt64Array };
+const READERS = { f8: Float64Array, f4: Float32Array, i8: BigInt64Array };
 
 export class ApiError extends Error {
   constructor(status, body, url) {

@@ -1,7 +1,7 @@
 import { codes } from "@interface/transport.js";
 import { useMemo, useState } from "react";
 
-import { type FieldDecl, type FieldsPayload, type Frame, type Query, loadArrays } from "../api";
+import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
 import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
@@ -119,7 +119,7 @@ function HistoryScene({ meta, query, preset }: { meta: FieldsPayload; query: Que
   const [epoch, setEpoch] = useState<number | null>(null);
 
   const key = decl ? JSON.stringify([decl.name, query]) : null;
-  const loaded = useLoad<Frame>(key, (signal) => loadArrays([decl!.name], query, signal));
+  const loaded = useLoad<Frame>(key, (signal) => loadArrays([decl!.name], query, signal, HISTORY_SAMPLING));
   const frame = loaded.value && decl && decl.name in loaded.value.arrays ? loaded.value : null;
   const R = frame?.header.grid.axes.R;
   const t = frame?.header.grid.axes.t;
@@ -180,7 +180,7 @@ function HistoryScene({ meta, query, preset }: { meta: FieldsPayload; query: Que
           <span className={styles.timeValue}>{t ? `${formatNumber(time, 3)} ${t.unit_display}` : "—"}</span>
         </div>
         <div className={styles.scrubNote}>
-          {loaded.busy || !frame ? `Loading ${decl?.name ?? "history"}: ${R && t ? R.n * t.n : "400 × 2000"} cells.` : `${decl?.name} at t = ${formatNumber(time, 4)} Gyr · merger arrivals marked`}
+          {loaded.busy || !frame ? `Loading ${decl?.name ?? "history"}: ${HISTORY_SAMPLING.tSamples} time steps.` : `${decl?.name} at t = ${formatNumber(time, 4)} Gyr · merger arrivals marked`}
         </div>
       </div>
       {loaded.error && <p className={styles.fault}>History failed: {loaded.error}</p>}

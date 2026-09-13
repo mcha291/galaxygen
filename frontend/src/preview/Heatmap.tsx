@@ -11,7 +11,7 @@ import styles from "./Heatmap.module.css";
 
 interface Props {
   decl: FieldDecl;
-  values: Float64Array | BigInt64Array;
+  values: Float64Array | Float32Array | BigInt64Array;
   R: Axis;
   t: Axis;
   cmaps: FieldsPayload["cmaps"];

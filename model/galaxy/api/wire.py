@@ -11,8 +11,9 @@ everything else travels as JSON, in a single body:
 
 **The padding is load-bearing.** A browser reads an array as
 ``new Float64Array(buffer, offset, count)``, which throws unless ``offset`` is a
-multiple of 8. Every dtype here is 8 bytes wide, so aligning the header aligns
-every array behind it, and the alignment is asserted rather than assumed.
+multiple of its element size. The header is padded to 8, and so is every array
+behind it (a float32 array of odd length would otherwise leave the next float64
+misaligned), so every offset is 8-aligned and the alignment is asserted.
 
 Little-endian is stated in the header and written explicitly rather than taken
 from the host: the one machine that disagrees would produce numbers that are
@@ -36,7 +37,7 @@ MEDIA = "application/octet-stream"
 # The closed set of wire dtypes. A field is float64 or an int64 category code
 # (galaxy/core/fielddoc.py); anything else is a declaration this format has not
 # been taught, and saying so beats shipping a silent cast.
-DTYPES: dict[str, str] = {"float64": "f8", "int64": "i8"}
+DTYPES: dict[str, str] = {"float64": "f8", "int64": "i8", "float32": "f4"}  # f4: reduced-precision downloads
 
 
 class WireError(ValueError):
@@ -66,8 +67,8 @@ def encode(header: Mapping[str, Any], arrays: Sequence[tuple[str, np.ndarray]]) 
             "offset": offset,
             "bytes": len(raw),
         })
-        payload.append(raw)
-        offset += len(raw)
+        payload.append(raw + bytes(-len(raw) % ALIGN))  # zero padding to the next 8-byte boundary
+        offset += len(raw) + (-len(raw) % ALIGN)
 
     full = {**dict(header), "format": FORMAT, "endian": "little", "arrays": described}
     body = json.dumps(full, allow_nan=False).encode("utf-8")

@@ -102,7 +102,13 @@ ROUTES: tuple[Route, ...] = (
     Route("/api/stages", "Stage declarations, their checkpoints and the execution order.", ("model",), "stages"),
     Route("/api/fields", "Field declarations and the cmap stops behind them (rule A9).", ("model",), "fields"),
     Route("/api/inputs", "The input registry: defaults, ranges, seeds, event list.", ("model",), "inputs"),
-    Route("/api/arrays", "Named fields as binary arrays, plus the galaxy-level scalars.", ("model", "fields"), "arrays"),
+    Route(
+        "/api/arrays",
+        "Named fields as binary arrays, plus the galaxy-level scalars. t_samples=N keeps N evenly spaced "
+        "time steps of fields over t; precision=f4 sends float fields as float32.",
+        ("model", "fields", "t_samples", "precision"),
+        "arrays",
+    ),
     Route(
         "/api/region",
         "A materialised star catalogue for one (R, phi) window.",
@@ -566,8 +572,24 @@ class Service:
         if missing:
             raise NotFound(f"model {model.name!r} does not publish {missing}")
 
+        precision = q.one("precision", "f8")
+        if precision not in ("f8", "f4"):
+            raise BadRequest(f"precision={precision!r} is not f8 or f4")
+        t_samples = q.integer("t_samples", 0)
+        if t_samples < 0:
+            raise BadRequest(f"t_samples={t_samples} is negative")
+
         inputs = self._overrides(model, q)
         out, ran = self.compute(model, inputs, wanted)
+
+        # Fewer time steps are a download choice, not a coarser model: the galaxy is computed
+        # on its own grid and every stride-th step is sent, sampled, never averaged (rule B9).
+        grid = grid_json(out.grid)
+        t_axis = out.grid.axes["t"]
+        stride = max(1, t_axis.n // t_samples) if 0 < t_samples < t_axis.n else 1
+        steps = np.arange(stride // 2, t_axis.n, stride) if stride > 1 else None
+        if steps is not None:
+            grid["axes"]["t"] = {**grid["axes"]["t"], "n": int(steps.size), "width": t_axis.width * stride}
 
         arrays: list[tuple[str, np.ndarray]] = []
         scalars: dict[str, Any] = {}
@@ -576,15 +598,21 @@ class Service:
             value = out.fields[name]
             if decl.kind.domain == "galaxy":
                 scalars[name] = _number(value) if not decl.kind.categorical else value
-            else:
-                arrays.append((name, np.asarray(value)))
+                continue
+            arr = np.asarray(value)
+            if steps is not None and "t" in decl.axes:
+                arr = np.take(arr, steps, axis=decl.axes.index("t"))
+            if precision == "f4" and arr.dtype == np.float64:
+                arr = arr.astype(np.float32)
+            arrays.append((name, arr))
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
-            "grid": grid_json(out.grid),
+            "grid": grid,
             "fields": list(wanted),
             "scalars": scalars,
             "stages": list(ran),
+            "sampling": {"t_stride": stride, "t_first": int(steps[0]) if steps is not None else 0, "precision": precision},
         }
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 

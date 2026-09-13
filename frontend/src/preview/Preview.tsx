@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { type FieldDecl, type FieldsPayload, type Frame, type Query, loadArrays } from "../api";
+import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
@@ -97,7 +97,7 @@ function Histories({ maps, query, cmaps, markers }: {
   const [picked, setPicked] = useState(maps[0].name);
   const name = maps.some((m) => m.name === picked) ? picked : maps[0].name;
   const decl = maps.find((m) => m.name === name)!;
-  const loaded = useLoad<Frame>(JSON.stringify([name, query]), (signal) => loadArrays([name], query, signal));
+  const loaded = useLoad<Frame>(JSON.stringify([name, query]), (signal) => loadArrays([name], query, signal, HISTORY_SAMPLING));
   const frame = loaded.value && name in loaded.value.arrays ? loaded.value : null;
 
   return (
@@ -126,7 +126,7 @@ function Histories({ maps, query, cmaps, markers }: {
           />
         </div>
       ) : (
-        !loaded.error && <p className={styles.note}>Loading {decl.label}: 400 × 2000 cells.</p>
+        !loaded.error && <p className={styles.note}>Loading {decl.label}: {HISTORY_SAMPLING.tSamples} time steps.</p>
       )}
     </section>
   );

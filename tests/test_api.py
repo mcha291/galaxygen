@@ -555,3 +555,25 @@ def test_the_route_table_is_what_the_index_publishes(api):
 def test_a_response_says_whether_it_is_ok():
     assert Response(200, "application/json", b"{}").ok
     assert not Response(404, "application/json", b"{}").ok
+
+
+def test_a_history_can_be_sent_at_fewer_steps_and_single_precision(model):
+    """t_samples and precision=f4 shrink a download; they sample the model's steps, never average them."""
+    api = service()
+    full = wire.decode(api.handle("/api/arrays", {"model": [model.name], "fields": ["feh_history"]}).body)
+    small = api.handle("/api/arrays", {"model": [model.name], "fields": ["feh_history"], "t_samples": ["16"], "precision": ["f4"]})
+    assert small.status == 200
+    header, arrays = wire.decode(small.body)
+    stride = header["sampling"]["t_stride"]
+    n_t = full[0]["grid"]["axes"]["t"]["n"]
+    assert stride == n_t // 16 and header["grid"]["axes"]["t"]["n"] == arrays["feh_history"].shape[1]
+    assert arrays["feh_history"].dtype == np.float32
+    picked = full[1]["feh_history"][:, stride // 2 :: stride]
+    assert np.array_equal(arrays["feh_history"], picked.astype(np.float32), equal_nan=True)
+    assert api.handle("/api/arrays", {"model": [model.name], "fields": ["feh_history"], "precision": ["f2"]}).status == 400
+
+
+def test_float32_arrays_keep_every_later_offset_aligned():
+    header, arrays = wire.decode(wire.encode({}, [("a", np.ones(3, np.float32)), ("b", np.arange(2.0))]))
+    assert [spec["offset"] % 8 for spec in header["arrays"]] == [0, 0]
+    assert arrays["a"].dtype == np.float32 and np.array_equal(arrays["b"], [0.0, 1.0])

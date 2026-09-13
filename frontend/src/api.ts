@@ -64,6 +64,15 @@ export async function loadDeclarations(
   return { stages: s as StagesPayload, inputs: i as InputsPayload };
 }
 
+/** A lighter download of a history: fewer time steps and/or 32-bit floats. The model still runs at full resolution. */
+export interface Sampling {
+  tSamples?: number;
+  precision?: "f4" | "f8";
+}
+
+/** What the history views ask for: 200 of the 2000 time steps at 32 bits, 400 KB a field instead of 6.4 MB. */
+export const HISTORY_SAMPLING: Sampling = { tSamples: 200, precision: "f4" };
+
 export interface Frame {
   header: {
     grid: { axes: Record<string, Axis> };
@@ -71,8 +80,8 @@ export interface Frame {
     stages: string[];
     [key: string]: unknown;
   };
-  /** f8 fields as Float64Array; categorical (i8) ones as BigInt64Array. */
-  arrays: Record<string, Float64Array | BigInt64Array>;
+  /** f8 fields as Float64Array, f4 as Float32Array; categorical (i8) ones as BigInt64Array. */
+  arrays: Record<string, Float64Array | Float32Array | BigInt64Array>;
 }
 
 /**
@@ -80,8 +89,9 @@ export interface Frame {
  * fields need (the frame's `stages`), so a checkpoint-1 preview never pays for
  * the star catalogue.
  */
-export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal): Promise<Frame> {
-  const got = await arrays(names, query, { signal });
+export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal, sampling?: Sampling): Promise<Frame> {
+  const params = sampling ? { ...query, t_samples: sampling.tSamples, precision: sampling.precision } : query;
+  const got = await arrays(names, params, { signal });
   return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"] };
 }
 
