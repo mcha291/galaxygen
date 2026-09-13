@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, fields, inputs, region, stages } from "@interface/transport.js";
+import { arrays, fields, inputs, region, stages, system } from "@interface/transport.js";
 
 import type { Axis } from "./preview/axes";
 import type { Checkpoint, InputDecl } from "./workflow/logic";
@@ -82,6 +82,30 @@ export interface Frame {
 export async function loadArrays(names: string[], query: Query = {}, signal?: AbortSignal): Promise<Frame> {
   const got = await arrays(names, query, { signal });
   return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"] };
+}
+
+export interface SystemFrame {
+  header: {
+    star: Record<string, number>;
+    cell: number;
+    index: number;
+    planets: number;
+    belts: { kind: string; inner: number; outer: number }[];
+    columns: string[];
+    stars: { requested: number; seed: number; planets_seed: number };
+    stages: string[];
+  };
+  arrays: Record<string, Float64Array | BigInt64Array>;
+}
+
+/**
+ * One star's planets and belts, by the (cell, index) the region response named
+ * it with. The server materialises that one cell, not the galaxy, and asks for
+ * the same sample size so the same star is the same star.
+ */
+export async function loadSystem(star: { cell: number; index: number }, query: Query, signal?: AbortSignal): Promise<SystemFrame> {
+  const got = await system(star, { ...query, stars: STAR_SAMPLE }, { signal });
+  return { header: got.header as SystemFrame["header"], arrays: got.arrays as SystemFrame["arrays"] };
 }
 
 /** The whole-galaxy star sample for one input vector: every cell, STAR_SAMPLE stars in all. */

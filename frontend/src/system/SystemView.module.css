@@ -1,0 +1,222 @@
+/* Over live data, so the one sanctioned blur: the galaxy stays visible behind. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--scrim);
+  backdrop-filter: var(--blur-md);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.note {
+  font: var(--text-data);
+  color: var(--text-muted);
+}
+
+.fault {
+  padding: var(--space-3);
+  border-left: 2px solid var(--status-fault);
+  background: var(--status-fault-bg);
+  color: var(--status-fault);
+  font: var(--text-data);
+}
+
+.card,
+.star {
+  padding: var(--space-4);
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-inset);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin: 0 0 var(--space-4);
+}
+
+.facts dt {
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: var(--space-1) 0 0;
+  font: var(--text-readout);
+  font-size: var(--size-lg);
+  color: var(--text-primary);
+}
+
+.unit {
+  margin-left: var(--space-1);
+  font: var(--text-data);
+  font-size: var(--size-2xs);
+  color: var(--text-muted);
+}
+
+.migration {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.migrationText {
+  font: var(--text-data);
+  color: var(--text-body);
+}
+
+.strip {
+  position: relative;
+  height: var(--space-8);
+  margin-bottom: var(--space-5);
+  border-bottom: var(--hair) solid var(--border-line);
+}
+
+.span {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  background: var(--border-strong);
+}
+
+.birth,
+.now {
+  position: absolute;
+  top: 50%;
+  width: var(--space-3);
+  height: var(--space-3);
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-xs);
+}
+
+/* Birth radius an outline, present radius filled, so the two read apart without a legend. */
+.birth {
+  border: var(--hair) dashed var(--text-muted);
+}
+
+.now {
+  background: var(--spectral-g);
+}
+
+.stripEnd {
+  position: absolute;
+  bottom: calc(-1 * var(--space-5));
+  font: var(--text-data);
+  font-size: var(--size-2xs);
+  color: var(--text-faint);
+}
+
+.railHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font: var(--weight-medium) var(--size-sm) / var(--lh-snug) var(--font-ui);
+  color: var(--text-primary);
+}
+
+.segmented {
+  display: flex;
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segmented button {
+  height: var(--control-sm);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font: var(--text-data);
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--surface-selected);
+  color: var(--text-accent);
+}
+
+.rail {
+  position: relative;
+  cursor: pointer;
+}
+
+.rail canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.caption {
+  margin: var(--space-3) 0 0;
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--text-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  padding: var(--space-3);
+  border-bottom: var(--hair) solid var(--border-line);
+  text-align: right;
+  font: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--hair) solid var(--border-hair);
+  text-align: right;
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.table tbody tr[aria-selected="true"] {
+  background: var(--surface-selected);
+}
+
+.table tbody tr[aria-selected="true"] td {
+  color: var(--text-primary);
+}

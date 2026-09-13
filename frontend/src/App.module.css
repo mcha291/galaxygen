@@ -118,6 +118,10 @@
   font: var(--text-body-font);
 }
 
+.openSystem {
+  margin-bottom: var(--space-4);
+}
+
 .readoutLine {
   margin: 0;
   font: var(--text-data);

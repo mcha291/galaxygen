@@ -1,4 +1,5 @@
 import { identify } from "@interface/stars.js";
+import { Orbit } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
@@ -7,6 +8,8 @@ import { GalaxyView, type Preset } from "./galaxy/GalaxyView";
 import { toScene } from "./galaxy/positions";
 import { Preview } from "./preview/Preview";
 import { panelsAt } from "./preview/panels";
+import { SystemView } from "./system/SystemView";
+import { Button } from "./ui/Button";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber } from "./workflow/logic";
@@ -27,6 +30,7 @@ export function App() {
   const [field, setField] = useState(COLOUR_FIELDS[0]);
   const [preset, setPreset] = useState<Preset>("oblique");
   const [picked, setPicked] = useState<number | null>(null);
+  const [systemStar, setSystemStar] = useState<{ cell: number; index: number } | null>(null);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -35,13 +39,20 @@ export function App() {
   }, [wf.model]);
 
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
+  // "Planets: systems become openable" (design brief §1): the last checkpoint must be reachable.
+  const last = wf.state?.cat.checkpoints.length ?? 0;
+  const planetsReady = !!wf.state && wf.state.confirmed >= last - 1;
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
   // The star sample runs every stage, so it is only asked for while it is on screen.
   const sampleKey = tab === "galaxy" && wf.query ? JSON.stringify(wf.query) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(wf.query!, signal));
   const sample = galaxy.value;
-  useEffect(() => setPicked(null), [sample]);
+  // A new galaxy is a new set of stars: the old selection and open system named stars in the old one.
+  useEffect(() => {
+    setPicked(null);
+    setSystemStar(null);
+  }, [sample]);
 
   const positions = useMemo(() => {
     if (!sample) return null;
@@ -100,6 +111,9 @@ export function App() {
             )}
             {positions && colors && <GalaxyView positions={positions} colors={colors} preset={preset} onPick={setPicked} />}
             {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
+            {systemStar && meta && wf.query && (
+              <SystemView star={systemStar} query={wf.query} meta={meta} onClose={() => setSystemStar(null)} />
+            )}
           </>
         )}
         </ErrorBoundary>
@@ -135,7 +149,9 @@ export function App() {
                 ))}
               </select>
             </section>
-            {meta && sample && picked !== null && <StarReadout meta={meta} sample={sample} row={picked} />}
+            {meta && sample && picked !== null && (
+              <StarReadout meta={meta} sample={sample} row={picked} onOpen={setSystemStar} planets={planetsReady} />
+            )}
           </>
         ) : (
           <CheckpointNotes panels={panels} />
@@ -163,11 +179,21 @@ function CheckpointNotes({ panels }: { panels: ReturnType<typeof panelsAt> | nul
   );
 }
 
-function StarReadout({ meta, sample, row }: { meta: FieldsPayload; sample: Sample; row: number }) {
+function StarReadout({ meta, sample, row, onOpen, planets }: {
+  meta: FieldsPayload; sample: Sample; row: number; onOpen(star: { cell: number; index: number }): void; planets: boolean;
+}) {
   const name = identify(sample.header, row) as { cell: number; index: number } | null;
   return (
     <section>
       <h2 className="gx-label">Selected star</h2>
+      {name && (
+        <div className={styles.openSystem}>
+          <Button variant="primary" icon={<Orbit />} disabled={!planets} onClick={() => onOpen(name)}>
+            Open system
+          </Button>
+          {!planets && <p className={styles.help}>Systems become openable at checkpoint 6, Planets.</p>}
+        </div>
+      )}
       <dl className={styles.readout}>
         {name && (
           <div className={styles.row}>
