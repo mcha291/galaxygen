@@ -60,7 +60,7 @@ S0's own brief.
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 35.
+**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance

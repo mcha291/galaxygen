@@ -186,24 +186,23 @@ def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the
     assert f["metallicity_gradient_young"] / f["metallicity_gradient_old"] == pytest.approx(2.49, abs=0.08)
 
 
-def test_debt_79_row_21_has_never_been_judged_in_either_model(prod):
-    """The close-out's own finding: one acceptance row is neither a pass nor a recorded miss.
+def test_debt_79_row_21_is_judged_in_both_models_since_s24(prod):
+    """S22's close-out finding, and its discharge at S24 (D163).
 
-    `gas_h2_fraction` is declared in the table and published by no stage of either model, so
-    row 21 reads not-yet-computable in both and always has. Row 24 is not-yet-computable in
-    the simple model as well, but by design and with the reason in its own note (one
-    abundance, rule B3); this row has no note like that because nobody noticed.
-
-    Pinned so that the day a molecular phase is built, this fails and the row is judged.
+    Until S24 `gas_h2_fraction` was declared in the table and published by no stage of either
+    model, so row 21 read not-yet-computable. The ism stage now publishes it from a sourced
+    pressure partition (Blitz & Rosolowsky 2006), so the row is judged in both models - and it
+    fails, at a zero-width target no float meets (debt #17), which is a recorded miss, not a gap.
     """
     from galaxy.core.registry import production
 
     models, _, _ = production()
     for model in models:
-        out = run(model)
-        assert "gas_h2_fraction" not in out.fields, model.name
+        out = run(model, only=("gas_h2_fraction",))
+        assert "gas_h2_fraction" in out.fields, model.name
+        assert 0.0 < float(out.fields["gas_h2_fraction"]) < 1.0, model.name
     assert Q[21].field == "gas_h2_fraction"
-    assert Q[21].lo == Q[21].hi == 0.11 and not Q[21].testable  # and it could not pass anyway (#17)
+    assert Q[21].lo == Q[21].hi == 0.11 and not Q[21].testable  # it cannot pass, however well computed (#17)
     # Row 24's own not-yet-computable is the documented kind: the note says why.
     assert "not-yet-computable" in Q[24].note and "one abundance" in Q[24].note
 

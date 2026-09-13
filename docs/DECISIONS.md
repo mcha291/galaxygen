@@ -4412,3 +4412,55 @@ zero, as D145 said, so the slope is the number and the intercept is not. Cells p
 
 **`tools/scaling.py` is not re-run.** No stage changed complexity class: S22 changed
 declarations, documents and one test tolerance, and added no computation to any stage.
+
+### D163. Debt #79 revisited and discharged: the cold ISM, sourced rather than invented (S24)
+
+**Decision.** S22's ruling that #79 is permanent is **revisited**, with the `ism` stage as the
+occasion, and #79 is **discharged**: `gas_h2_fraction` is published by both models and row 21
+is judged. The row fails, and that failure is carried by **debt #17** (a zero-width target),
+not by #79.
+
+**Why the ruling moves.** S22 gave two grounds, "either sufficient". Read again with the code in
+front of it, only one of them was a reason not to compute the row:
+
+- *"A molecular fraction needs a prescription this project holds no citation for; adding one at
+  the close-out would be inventing a stage to fill a row (A4 read forwards)."* This described a
+  state of the project, not of the sources. The partition is Blitz & Rosolowsky 2006's, measured
+  on fourteen nearby galaxies: R_mol = (P/P₀)^α with P₀/k = 3.5 ± 0.6 × 10⁴ cm⁻³ K and α = 0.92 ±
+  0.07 `[verified: web search at S24 against the published values, which match
+  H2_PRESSURE_LOG_NORM = 4.54 and H2_PRESSURE_INDEX = 0.92]`. It adds no input and no seed, and
+  the stage is not there only for the row: it publishes the dust and extinction RENDER_PLAN M3
+  needs, so A4's question ("would this exist if no stage needed filling?") answers yes.
+- *"The row could not pass if it were computed."* Still true, and still the sources': 0.11 with
+  no uncertainty in Nakanishi & Sofue. But that is the ground on which row 20 is computed and
+  recorded as a miss under #17 — it decides the verdict, not whether the row is judged. So it
+  moves to #17 and stops being a reason for #79.
+
+**The first prediction, run before the merge and killed** (rule B4). The patch's `Miss` said
+Leroy et al. 2008's pair — log P₀ = 4.23, α = 0.8, 11 km/s `[recall]` — should bring row 21 below
+0.15, and if it did not, the error was not the ruleset. Run at S24 with the constants swapped and
+everything else as published:
+
+| model | Blitz & Rosolowsky 2006 | Leroy et al. 2008 pair |
+|---|---|---|
+| simple | **0.2041** (f_H₂ 0.531 / 0.202 / 0.055 at 4 / 8.2 / 12 kpc) | **0.3253** (0.718 / 0.408 / 0.162) |
+| advanced | **0.2001** | **0.3207** |
+
+It moves the row **up** by 0.12. At R₀ the pressure is P/k = 7.8 × 10³, below both norms, and
+where P < P₀ a lower P₀ and a shallower α each raise (P/P₀)^α; the gas self-gravity Leroy's
+estimate adds would raise P and the fraction further. The patch's prose had the sign of that
+effect backwards (the stellar-disc-only pressure *under*estimates P, as the field's own `about`
+line says), and the `Miss` now says so. By the prediction's own terms, the ruleset choice is not
+the error; the weighting or the stellar scale height is where to look next, and that is the
+row's standing prediction.
+
+**Two things recorded, not changed.** `DUST_EXTINCTION_COEFFICIENT` = 10.64 mag per M☉/pc² of
+dust treats every solar mass of gas as hydrogen (1 M☉/pc² = 1.248 × 10²⁰ H cm⁻²), while the
+model's `gas_surface_density` includes helium (row 20 reads (1 − Y) of it). Whether the factor
+of ≈1.37 belongs in the coefficient or is already inside Zubko's (G/D)☉ = 162 depends on whether
+that ratio's gas mass includes helium, which is not settled here `[inferred]`; A_V at R₀ reads
+0.707 mag either way until it is. And `SOLAR_OXYGEN = 8.69` in `ism.py` is read by nothing: the
+dust law takes 10^[Fe/H] as Z/Z☉ directly.
+
+**Register.** #79 moves from permanent to discharged. The S22 prose counting "fifteen permanent,
+eight of them the sources'" is left as S22 wrote it; the count is now fourteen and seven.

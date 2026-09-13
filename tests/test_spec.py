@@ -34,19 +34,21 @@ def test_every_row_names_a_field():
 
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
-VERDICTS = {"simple": REACHED, "advanced": REACHED | {24}}
+VERDICTS = {"simple": REACHED | {21}, "advanced": REACHED | {21, 24}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "simple": {"pass": 10, "fail": 12, "not-yet-computable": 2},  # S20: row 7 landed (the kick re-derived, D128) and row 3 left by 0.03 on the same change
-    "advanced": {"pass": 8, "fail": 15, "not-yet-computable": 1},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "simple": {"pass": 10, "fail": 13, "not-yet-computable": 1},  # S20: row 7 landed (the kick re-derived, D128) and row 3 left by 0.03 on the same change
+    "advanced": {"pass": 8, "fail": 16, "not-yet-computable": 0},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "simple": {3, 5, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23},
-    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 22, 23, 24},
+    "simple": {3, 5, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23},
+    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23, 24},
 }
 # S20: row 7 passes (#42's constant re-derived) and row 3 is #11's again (the bar); the advanced
 # row 6 stays #42's. S18: row 9 joins #19, row 20 is #17's (at its zero-width target), the
 # advanced row 22 is #47's.
 DEBTS = {"simple": {2, 11, 15, 17, 19}, "advanced": {2, 11, 17, 27, 28, 42, 47}}
+# S24: row 21 fails at a zero-width target (0.11, no quoted uncertainty) — debt #17's defect,
+# not the prescription's. It could not pass however well the physics were done.
 
 
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
@@ -121,7 +123,7 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "2 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
+    assert "spec" in out and "1 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
     assert "recorded miss, debt #19, since S3" in out    # rows 5 and 11

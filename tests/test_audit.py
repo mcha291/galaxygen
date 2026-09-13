@@ -390,8 +390,9 @@ def test_the_register_carries_the_s10_findings():
     # S22 then ruled all 43 and discharged 17 of them (#4, #5, #8, #10, #14, #32, #36, #44, #50,
     # #51, #66-#69, #71-#73) and opened one of its own (#79, the row no model has ever judged),
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
-    # the register is the one place that split is written down.
-    assert progress.debt_counts(text) == (27, 35)  # 43 / 18 on the port, 32 / 18 at S20
+    # the register is the one place that split is written down. S24 revisited #79 and discharged
+    # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
+    assert progress.debt_counts(text) == (26, 36)  # 27 / 35 at S22, 43 / 18 on the port, 32 / 18 at S20
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -413,8 +414,9 @@ def test_the_register_carries_the_s10_findings():
         "70. **The bimodality detector's mode test is a test on a peak's density",
         "73. ~~**The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
         # S22's three-way map, and one entry of each verdict, so a silent re-ruling fails here.
-        "| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65, **79** | 15 |",
-        "79. **No model computes the molecular fraction, so acceptance row 21 has never been judged",
+        "| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |",
+        "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
+        "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
         "| **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |",
         "**S22, ruled PERMANENT (a property of the model's scope), and this is the ruling S20 handed over.**",
         "**S22, ruled CARRIED, and the pre-committed reading fires: the split criterion is what is wrong.**",

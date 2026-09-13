@@ -33,6 +33,7 @@ ADVANCED = MODELS.register(
             ("sfh", "sfh"),
             ("chemistry", "chemistry_dtd"),  # simple: chemistry
             ("vertical", "vertical_alpha"),  # simple: vertical
+            ("ism", "ism"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),

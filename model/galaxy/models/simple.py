@@ -20,6 +20,7 @@ SIMPLE = MODELS.register(
             ("sfh", "sfh"),
             ("chemistry", "chemistry"),
             ("vertical", "vertical"),
+            ("ism", "ism"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),

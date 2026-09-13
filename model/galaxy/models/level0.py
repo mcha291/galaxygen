@@ -409,4 +409,74 @@ LEVEL0: dict[str, Constant] = {
         "Galactic rest frame, from the proper motion of Sgr A*, so it is v_c(R₀) plus this — not "
         "the circular speed. Leaving it out would understate row 3 by four times its error bar.",
     ),
+
+    # ---- The cold ISM (S24). Both prescriptions carry a second measured pair,
+    # kept beside them and never averaged (rule B12).
+    "H2_PRESSURE_LOG_NORM": Constant(
+        4.54,
+        "dimensionless",
+        "log₁₀(P₀/k_B) in cm⁻³ K: the midplane pressure at which the ISM is equal parts HI and H₂ "
+        "[recall: Blitz & Rosolowsky 2006, fourteen nearby galaxies, 4.54 ± 0.07]. **The measured "
+        "alternative is 4.23** [recall: Leroy et al. 2008, larger sample, with a pressure estimate "
+        "that adds the gas self-gravity this stage's form omits]. Kept beside it, never averaged "
+        "(rule B12): the two belong to different pressure estimates, so mixing this norm with "
+        "Leroy's index would be a third prescription nobody measured.",
+    ),
+    "H2_PRESSURE_INDEX": Constant(
+        0.92,
+        "dimensionless",
+        "The exponent α in R_mol = (P/P₀)^α [recall: Blitz & Rosolowsky 2006, 0.92 ± 0.07]. **The "
+        "measured alternative is 0.8** [recall: Leroy et al. 2008; Wong & Blitz 2002 also found "
+        "0.8]. Belongs with H2_PRESSURE_LOG_NORM — change both or neither.",
+    ),
+    "H2_GAS_DISPERSION": Constant(
+        8.0,
+        "km/s",
+        "The gas vertical velocity dispersion the pressure estimate assumes [recall: Blitz & "
+        "Rosolowsky 2006]. **Leroy et al. 2008 adopt 11 km/s** for the composite ISM. This belongs "
+        "to the prescription rather than to the model: it is not the model's own gas dispersion "
+        "and must not be swapped for one, or the fitted P₀ no longer means what it was fitted as.",
+    ),
+    "DUST_TO_GAS_SOLAR": Constant(
+        1.0 / 162.0,
+        "dimensionless",
+        "Dust-to-gas mass ratio at solar abundance: the reciprocal of (G/D)☉ = 162 [recall: Zubko "
+        "et al. 2004, as adopted throughout Rémy-Ruyer et al. 2014]. **This number and "
+        "DUST_TO_GAS_SLOPE are a matched pair and must not be changed separately**: Rémy-Ruyer "
+        "imposed their fits to pass through Zubko's value, so the slope was measured *given* this "
+        "normalisation. Relaxing that condition gives solar G/D anywhere from 90 to 240 - about "
+        "60% either way - which is the real uncertainty on this constant and is larger than it "
+        "looks.",
+    ),
+    "DUST_TO_GAS_SLOPE": Constant(
+        1.6,
+        "dimensionless",
+        "D/G proportional to Z^1.6, the single power law [recall: Rémy-Ruyer et al. 2014, "
+        "G/D ∝ (O/H)^-1.6 ± 0.3 for a Galactic X_CO; -2.0 ± 0.3 if X_CO scales as Z^-2]. **The "
+        "alternative is a broken power law**, which the same paper finds reproduces the data best; "
+        "De Vis et al. 2019 find a single law no worse on a larger late-type sample. A live "
+        "disagreement, kept as one (rule B12). Its parameters *are* sourced - low-metallicity "
+        "slope -3.1 (± 1.8 for a Galactic X_CO, ± 1.3 for X_CO ∝ Z^-2, the same central value "
+        "either way), high-metallicity slope fixed to 1 following James et al. 2002 and Draine et "
+        "al. 2007, transition at 12 + log(O/H) = 7.96 ± 0.47 - and they are recorded here rather "
+        "than declared as constants, because **a ruleset is a stage implementation, not a constant "
+        "beside the default**: preflight rejects a model carrying a constant no stage reads (D29), "
+        "which is exactly what happened when they were first added. Adopting the broken law means "
+        "a second ism implementation, as chemistry_dtd is to chemistry. Matched to "
+        "DUST_TO_GAS_SOLAR - see there.",
+    ),
+    "DUST_EXTINCTION_COEFFICIENT": Constant(
+        10.64,
+        "dimensionless",
+        "A_V in magnitudes per M☉/pc² of **dust**. From the standard N_H/A_V = 1.9 × 10²¹ cm⁻² "
+        "mag⁻¹ [recall: Bohlin, Savage & Drake 1978] with 1 M☉/pc² = 1.248 × 10²⁰ hydrogen cm⁻², "
+        "giving 0.0657 mag per M☉/pc² of *gas*, then divided by the Milky Way dust-to-gas ratio "
+        "1/162 to express it per unit dust. **The factor of 162 is the whole content of this "
+        "constant and was wrong on first writing**: the arithmetic gives the gas coefficient, the "
+        "docstring claimed the dust one, and the code multiplied dust by it — face-on A_V at the "
+        "Sun came out 0.003 mag against the ~0.5 it should be, and only a sanity check against a "
+        "known value found it. Because it is per unit dust it carries no metallicity dependence of "
+        "its own; that entered through DUST_TO_GAS_SOLAR, and applying it twice is the obvious way "
+        "to get low-metallicity extinction wrong.",
+    ),
 }

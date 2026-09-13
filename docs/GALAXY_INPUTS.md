@@ -682,7 +682,8 @@ defined here once and used in every entry below:
 |---|---|---|
 | **discharged** before S22 | 1, 6, 7, 9, 12, 13, 16, 18, 20, 24, 29, 30, 31, 35, 37, 38, 40, 41 | 18 |
 | **discharged** at S21b or S22 | 4, 5, 8, 10, 14, 32, 36, 44, 50, 51, 66, 67, 68, 69, 71, 72, 73 | 17 |
-| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65, **79** | 15 |
+| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
+| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |
 | **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |
 
 So the board's **27 open** is 15 permanent and 12 carried, and no item is unruled. The
@@ -2685,8 +2686,13 @@ repair (rule B6).
 acceptance row either pass or be a recorded miss. One does neither, in both models, and has
 never been judged in twenty-three sessions.
 
-79. **No model computes the molecular fraction, so acceptance row 21 has never been judged**
-   (S22). `gas_h2_fraction` is declared in `spec.py` and published by no stage of either model,
+79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**
+   (S22).~~ **DISCHARGED at S24 (D163): S22's permanent ruling revisited.** The `ism` stage
+   publishes `gas_h2_fraction` in both models from Blitz & Rosolowsky 2006's pressure partition,
+   a sourced prescription adding no input, so the first ground below no longer holds; the second
+   (the zero-width target) decides the verdict rather than whether the row is judged, and is
+   carried by #17 as row 20's is. Row 21 reads 0.204 (simple) and 0.200 (advanced) against 0.11,
+   a recorded miss, and Leroy et al. 2008's pair was tested and moves it up, to 0.325 and 0.321. `gas_h2_fraction` is declared in `spec.py` and published by no stage of either model,
    so row 21 reads **not-yet-computable** in both and is the only row that is neither a pass nor
    a recorded miss `[verified: tests/test_s22_rulings.py::test_debt_79_row_21_has_never_been_judged_in_either_model]`.
    It was missed because a not-yet-computable row reports honestly and reads as a plan rather

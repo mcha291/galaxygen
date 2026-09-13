@@ -246,6 +246,37 @@ _MISSES: tuple[Miss, ...] = (
         ),
     ),
     Miss(
+        row=21,
+        model=None,
+        debt=17,
+        since="S24",
+        reason=(
+            "0.2041 (simple) and 0.2001 (advanced) against a target of [0.11, 0.11]. **Two separate "
+            "things are wrong and only one is the model's.** The target is zero-width - Nakanishi & "
+            "Sofue quote no uncertainty, exactly as for row 20 - so no float that is not bit-exact "
+            "can pass: debt #17's defect, carried here. But the value is also nearly twice the "
+            "observation, which a width would not have rescued. Published for the first time at S24, "
+            "when the ism stage discharged debt #79 (D163); before that the row had never been judged. "
+            "**The first prediction was run at S24 and killed** (rule B4): Leroy et al. 2008's pair "
+            "(log P_0 = 4.23, alpha = 0.8, 11 km/s) was to bring the row below 0.15 and read 0.325 "
+            "(simple) and 0.321 (advanced) - it moves the row up. At R_0 the pressure is P/k = 7.8e3, "
+            "below both norms, and there a lower P_0 and a shallower alpha each raise (P/P_0)^alpha; "
+            "the gas self-gravity Leroy's estimate adds would raise P further. The stellar-disc-only "
+            "pressure underestimates P, it does not overestimate it, so the ruleset choice is not the "
+            "error [verified: the S24 run recorded in D163]."
+        ),
+        prediction=(
+            "The weighting or the stellar scale height, which is where the killed prediction said to "
+            "look next. f_H2 reads 0.53 at 4 kpc, 0.20 at R_0 and 0.055 at 12 kpc, and the row is "
+            "gas-mass weighted over the whole 30 kpc grid; the pressure reads one scale height, "
+            "thin_disc_scale_height at R_0, at every radius. If a radius-dependent h_* does not bring "
+            "the row below 0.15, the remaining suspect is how Nakanishi & Sofue's H2 mass was derived "
+            "(the CO-to-H2 conversion) rather than the partition [inferred]. Not a lever: the pressure "
+            "pair, DUST_TO_GAS_SOLAR or the extinction coefficient, which this row does not read; nor "
+            "the target, which is the source's and stays as it is (rule B5)."
+        ),
+    ),
+    Miss(
         row=5,
         model="simple",
         debt=19,
