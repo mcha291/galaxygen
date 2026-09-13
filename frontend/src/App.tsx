@@ -39,6 +39,7 @@ export function App() {
   // they are for exploring a value, and every request is keyed by the vector, so changing
   // one simply asks for a different galaxy.
   const [experiments, setExperiments] = useState<Record<string, number>>({});
+  const [charts, setCharts] = useState(false);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -152,6 +153,7 @@ export function App() {
                   preset={preset}
                   stars={positions && colors ? { positions, colors } : null}
                   onPick={setPicked}
+                  charts={charts}
                 />
               )}
               {drawsStars && status}
@@ -254,7 +256,11 @@ export function App() {
             />
           )}
         </span>
-        <span className={styles.footRight} />
+        <span className={styles.footRight}>
+          <button type="button" className={styles.footToggle} aria-pressed={charts} onClick={() => setCharts((c) => !c)}>
+            preview charts {charts ? "on" : "off"}
+          </button>
+        </span>
       </footer>
     </div>
   );

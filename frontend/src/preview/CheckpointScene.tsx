@@ -18,6 +18,8 @@ interface Props {
   /** Checkpoints 5 and 6 draw the star sample; the caller owns it because the Galaxy tab shares it. */
   stars: { positions: Float32Array; colors: Float32Array } | null;
   onPick(row: number): void;
+  /** Show the inset chart at checkpoints 1 and 2 (the rotation curve, the merger history). Off by default. */
+  charts?: boolean;
 }
 
 // What each checkpoint's scene draws, by field name. Every name is checked
@@ -33,12 +35,12 @@ const INSET_AT: Record<number, { title: string; fields: string[] }> = {
 const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
 
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
-export function CheckpointScene({ n, meta, query, preset, stars, onPick }: Props) {
+export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts = false }: Props) {
   if (n >= 5) {
     return <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} />;
   }
   if (n === 3) return <HistoryScene meta={meta} query={query} preset={preset} />;
-  return <DiscScene n={n} meta={meta} query={query} preset={preset} />;
+  return <DiscScene n={n} meta={meta} query={query} preset={preset} charts={charts} />;
 }
 
 function declOf(meta: FieldsPayload, name: string): FieldDecl | undefined {
@@ -53,9 +55,9 @@ function mergersOf(query: Query): MergerEvent[] {
   }
 }
 
-function DiscScene({ n, meta, query, preset }: { n: number; meta: FieldsPayload; query: Query; preset: Preset }) {
+function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: FieldsPayload; query: Query; preset: Preset; charts: boolean }) {
   const disc = declOf(meta, DISC_AT[n]);
-  const inset = INSET_AT[n];
+  const inset = charts ? INSET_AT[n] : undefined; // hidden, so not fetched either, unless the bottom bar's toggle is on
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;

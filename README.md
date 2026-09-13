@@ -39,3 +39,22 @@ Models are declared one file each in `model/galaxy/models/` (`simple.py`,
 live in `level0.py`, stage implementations in `model/galaxy/stages/`.
 `uv run python -m galaxy.models` prints every model's stage slots side by side
 and the constants each declares beyond the shared ones.
+
+## Attributions
+
+**PARSEC stellar isochrones.** `model/galaxy/data/parsec_isochrones.npz` is derived
+from PARSEC v1.2S isochrones with COLIBRI TP-AGB evolution, generated with the CMD 3.9
+web service maintained by Léo Girardi at the Osservatorio Astronomico di Padova
+(<https://stev.oapd.inaf.it/cgi-bin/cmd>). It keeps initial mass, log L, log T_eff and
+the evolutionary-phase label for 385 isochrones: 35 ages (log age 6.6–10.0, step 0.1) at
+each of 11 metallicities ([M/H] −2.19 to +0.30, step 0.25); `tools/fetch_parsec.py`
+regenerates it. The references CMD lists
+for these tables:
+
+- Bressan, A., et al. 2012, MNRAS, 427, 127 — PARSEC
+- Chen, Y., et al. 2014, MNRAS, 444, 2525 — PARSEC low-mass stars
+- Chen, Y., et al. 2015, MNRAS, 452, 1068 — PARSEC massive stars
+- Tang, J., et al. 2014, MNRAS, 445, 4287 — PARSEC low-metallicity massive stars
+- Marigo, P., et al. 2017, ApJ, 835, 77 — COLIBRI TP-AGB and the CMD isochrones
+- Pastorelli, G., et al. 2019, MNRAS, 485, 5666 — TP-AGB calibration (SMC)
+- Pastorelli, G., et al. 2020, MNRAS, 498, 3283 — TP-AGB calibration (LMC)

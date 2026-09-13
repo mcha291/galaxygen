@@ -67,6 +67,22 @@
   white-space: nowrap;
 }
 
+.footToggle {
+  padding: 3px 8px;
+  border: var(--hair) solid var(--border-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-muted);
+  font: 400 10.5px / 1 var(--font-mono);
+  cursor: pointer;
+}
+
+.footToggle[aria-pressed="true"] {
+  border-color: var(--magenta-4);
+  background: var(--surface-selected);
+  color: var(--text-accent);
+}
+
 /* --- Preview and Galaxy: a full-bleed view with overlays -------------------- */
 
 .canvasStage {
