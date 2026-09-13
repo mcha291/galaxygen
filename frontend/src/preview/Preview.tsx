@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
-import { type FieldDecl, type Frame, type Query, loadArrays } from "../api";
+import { type FieldDecl, type FieldsPayload, type Frame, type Query, loadArrays } from "../api";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
+import { Heatmap } from "./Heatmap";
 import { LinePlot } from "./LinePlot";
 import { type Panels, wantedAt } from "./panels";
 import styles from "./Preview.module.css";
@@ -12,6 +13,7 @@ interface Props {
   checkpoint: { n: number; name: string };
   panels: Panels;
   query: Query;
+  cmaps: FieldsPayload["cmaps"];
 }
 
 /**
@@ -19,7 +21,7 @@ interface Props {
  * computed only as far as that checkpoint (the arrays route runs the stages the
  * fields need, and no further).
  */
-export function Preview({ checkpoint, panels, query }: Props) {
+export function Preview({ checkpoint, panels, query, cmaps }: Props) {
   const names = wantedAt(panels);
   const key = names.length ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
@@ -40,7 +42,7 @@ export function Preview({ checkpoint, panels, query }: Props) {
     [mergerJson],
   );
 
-  if (names.length === 0) {
+  if (names.length === 0 && panels.maps.length === 0) {
     return <p className={styles.note}>Checkpoint {checkpoint.n} publishes nothing to preview.</p>;
   }
 
@@ -58,7 +60,7 @@ export function Preview({ checkpoint, panels, query }: Props) {
         {busy && <span className="gx-label">Recomputing</span>}
       </header>
       {error && <p className={styles.fault}>Preview failed: {error}</p>}
-      {!frame && !error && <p className={styles.note}>Computing checkpoint {checkpoint.n}.</p>}
+      {names.length > 0 && !frame && !error && <p className={styles.note}>Computing checkpoint {checkpoint.n}.</p>}
 
       {frame && panels.scalars.length > 0 && <Scalars fields={panels.scalars} values={frame.header.scalars} />}
 
@@ -74,14 +76,59 @@ export function Preview({ checkpoint, panels, query }: Props) {
                 unit={panel.unitDisplay}
                 x={x}
                 log={panel.log}
-                series={panel.fields.map((f) => ({ label: f.label, values: frame.arrays[f.name] }))}
+                // Line panels hold kind "field" only (panelsAt), which is always f8.
+                series={panel.fields.map((f) => ({ label: f.label, values: frame.arrays[f.name] as Float64Array }))}
                 markers={panel.axis === "t" ? markers : []}
               />
             );
           })}
         </div>
       )}
+
+      {panels.maps.length > 0 && <Histories maps={panels.maps} query={query} cmaps={cmaps} markers={markers} />}
     </div>
+  );
+}
+
+/** The checkpoint's (R, t) histories: pick one, and only that one is fetched. */
+function Histories({ maps, query, cmaps, markers }: {
+  maps: FieldDecl[]; query: Query; cmaps: FieldsPayload["cmaps"]; markers: { at: number; label: string }[];
+}) {
+  const [picked, setPicked] = useState(maps[0].name);
+  const name = maps.some((m) => m.name === picked) ? picked : maps[0].name;
+  const decl = maps.find((m) => m.name === name)!;
+  const loaded = useLoad<Frame>(JSON.stringify([name, query]), (signal) => loadArrays([name], query, signal));
+  const frame = loaded.value && name in loaded.value.arrays ? loaded.value : null;
+
+  return (
+    <section className={styles.histories}>
+      <div className={styles.historyHead}>
+        <span className="gx-label">Histories · R against t</span>
+        <div className={styles.picker} role="group" aria-label="History">
+          {maps.map((m) => (
+            <button key={m.name} aria-pressed={m.name === name} onClick={() => setPicked(m.name)} title={m.name}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {loaded.busy && <span className="gx-label">Loading {decl.label}</span>}
+      </div>
+      {loaded.error && <p className={styles.fault}>History failed: {loaded.error}</p>}
+      {frame ? (
+        <div className={styles.card}>
+          <Heatmap
+            decl={decl}
+            values={frame.arrays[name]}
+            R={frame.header.grid.axes.R}
+            t={frame.header.grid.axes.t}
+            cmaps={cmaps}
+            markers={markers}
+          />
+        </div>
+      ) : (
+        !loaded.error && <p className={styles.note}>Loading {decl.label}: 400 × 2000 cells.</p>
+      )}
+    </section>
   );
 }
 

@@ -70,7 +70,8 @@ export interface Frame {
     stages: string[];
     [key: string]: unknown;
   };
-  arrays: Record<string, Float64Array>;
+  /** f8 fields as Float64Array; categorical (i8) ones as BigInt64Array. */
+  arrays: Record<string, Float64Array | BigInt64Array>;
 }
 
 /**

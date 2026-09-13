@@ -86,7 +86,7 @@ export function App() {
       <main className={styles.stage}>
         <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>
         {tab === "preview" && current && panels && wf.query && (
-          <Preview checkpoint={current} panels={panels} query={wf.query} />
+          <Preview checkpoint={current} panels={panels} query={wf.query} cmaps={meta!.cmaps} />
         )}
         {tab === "preview" && !panels && <p className={styles.status}>Loading field declarations.</p>}
 

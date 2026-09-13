@@ -18,6 +18,7 @@ const FIELDS = [
   decl("halo_potential", { unit: "km2/s2", axes: ["R", "z"] }),
   decl("halo_virial_mass", { unit: "Msun", kind: "scalar", domain: "galaxy", axes: [] }),
   decl("disc_heating", { axes: ["t"], checkpoint: 2, stage: "assembly" }),
+  decl("disc_radial_spread", { unit: "kpc", axes: ["R", "t"], checkpoint: 2, stage: "assembly" }),
   decl("star_radius", { unit: "kpc", kind: "column", domain: "object", axes: [], checkpoint: 5, stage: "systems" }),
 ];
 
@@ -45,6 +46,15 @@ describe("panelsAt", () => {
 
   it("reads only the checkpoint asked for", () => {
     expect(panelsAt(FIELDS, 2).lines.map((l) => l.key)).toEqual(["t:km/s"]);
+  });
+
+  it("lists (R, t) histories as maps, not as plots, and leaves other 2D fields out", () => {
+    expect(panelsAt(FIELDS, 2).maps.map((f) => f.name)).toEqual(["disc_radial_spread"]);
+    expect(panelsAt(FIELDS, 1).maps).toEqual([]); // halo_potential is (R, z)
+  });
+
+  it("does not ask for a history in the first request", () => {
+    expect(wantedAt(panelsAt(FIELDS, 2))).toEqual(["disc_heating"]);
   });
 });
 

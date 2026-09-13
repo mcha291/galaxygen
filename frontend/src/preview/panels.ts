@@ -18,6 +18,8 @@ export interface LinePanel {
 
 export interface Panels {
   lines: LinePanel[];
+  /** (R, t) histories. Each is 400 × 2000 cells, so they are loaded one at a time, on request. */
+  maps: FieldDecl[];
   scalars: FieldDecl[];
   catalogue: boolean;
 }
@@ -46,14 +48,22 @@ export function panelsAt(fields: FieldDecl[], n: number): Panels {
     // among log ones would be drawn with its zero thrown away.
     panel.log &&= f.ramp?.scale === "log";
   }
+  const maps = declared.filter(
+    (f) => f.checkpoint === n && f.domain === "grid" && f.axes.length === 2 && f.axes[0] === "R" && f.axes[1] === "t",
+  );
   return {
     lines: [...groups.values()],
+    maps,
     scalars: scalarsAt(fields, n) as FieldDecl[],
     catalogue: hasCatalogue(fields, n) as boolean,
   };
 }
 
-/** Every field name a preview needs from /api/arrays (scalars ride along in the header). */
+/**
+ * Every field name a preview's first request needs from /api/arrays: the
+ * profiles, and the scalars that ride along in the header. Histories are not
+ * here; each is fetched when it is picked.
+ */
 export function wantedAt(panels: Panels): string[] {
   return [...panels.lines.flatMap((p) => p.fields.map((f) => f.name)), ...panels.scalars.map((f) => f.name)];
 }
