@@ -25,7 +25,21 @@ ADVANCED = MODELS.register(
             "thin/thick split read off the [α/Fe] plane rather than off the merger list. Shares "
             "every other stage with the simple model."
         ),
-        stages=(("halo", "halo"), ("disc", "disc"), ("nucleus", "nucleus"), ("assembly", "assembly"), ("sfh", "sfh"), ("chemistry", "chemistry_dtd"), ("vertical", "vertical_alpha"), ("bar", "bar"), ("pattern", "pattern"), ("population", "population"), ("systems", "systems"), ("formation", "formation"), ("planets", "planets")),
+        stages=(
+            ("halo", "halo"),
+            ("disc", "disc"),
+            ("nucleus", "nucleus"),
+            ("assembly", "assembly"),
+            ("sfh", "sfh"),
+            ("chemistry", "chemistry_dtd"),  # simple: chemistry
+            ("vertical", "vertical_alpha"),  # simple: vertical
+            ("bar", "bar"),
+            ("pattern", "pattern"),
+            ("population", "population"),
+            ("systems", "systems"),
+            ("formation", "formation"),
+            ("planets", "planets"),
+        ),
         constants={
             **LEVEL0,
             "SOLAR_IRON": Constant(

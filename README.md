@@ -26,3 +26,9 @@ Repository layout:
 - `interface/` — the web viewer the API serves.
 
 Package layout is described in `model/galaxy/__init__.py`.
+
+Models are declared one file each in `model/galaxy/models/` (`simple.py`,
+`advanced.py`); a new file there is picked up automatically. Shared constants
+live in `level0.py`, stage implementations in `model/galaxy/stages/`.
+`uv run python -m galaxy.models` prints every model's stage slots side by side
+and the constants each declares beyond the shared ones.
