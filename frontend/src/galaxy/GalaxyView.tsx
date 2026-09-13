@@ -1,10 +1,11 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
 import type { PerspectiveCamera } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { extent } from "./positions";
+import { psfTexture } from "./psf";
 import { type ZoomRange, acrossOf, distanceOf, zoomOf } from "./zoom";
 import styles from "./GalaxyView.module.css";
 
@@ -20,8 +21,13 @@ export interface ViewState {
 }
 
 interface Props {
-  positions: Float32Array;
-  colors: Float32Array;
+  /** The star sample; omitted where a checkpoint has no stars yet. */
+  positions?: Float32Array | null;
+  colors?: Float32Array | null;
+  /** Framing radius in kpc when there are no stars to frame on. */
+  reach?: number;
+  /** Extra layers drawn in the galaxy's frame (a disc image, for instance). */
+  children?: ReactNode;
   preset: Preset;
   onPick?: (row: number) => void;
   /** Set to move the camera to this zoom; the view reports every change through onView. */
@@ -39,8 +45,8 @@ const FOV = 45;
  * The canvas is transparent so the ground is the design system's --bg-deep from
  * CSS, not a colour written here.
  */
-export function GalaxyView({ positions, colors, preset, onPick, zoom, onView }: Props) {
-  const reach = useMemo(() => extent(positions) || 20, [positions]);
+export function GalaxyView({ positions, colors, reach: framing, children, preset, onPick, zoom, onView }: Props) {
+  const reach = useMemo(() => (positions ? extent(positions) : 0) || framing || 20, [positions, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
 
   return (
@@ -52,7 +58,8 @@ export function GalaxyView({ positions, colors, preset, onPick, zoom, onView }: 
         gl={{ alpha: true, antialias: true }}
         raycaster={{ params: { Points: { threshold: reach / 400 } } as never }}
       >
-        <Stars positions={positions} colors={colors} reach={reach} onPick={onPick} />
+        {children}
+        {positions && colors && <Stars positions={positions} colors={colors} reach={reach} onPick={onPick} />}
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge range={range} zoom={zoom} onView={onView} />
       </Canvas>
@@ -94,7 +101,7 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
   return null;
 }
 
-function Stars({ positions, colors, reach, onPick }: Pick<Props, "positions" | "colors" | "onPick"> & { reach: number }) {
+function Stars({ positions, colors, reach, onPick }: { positions: Float32Array; colors: Float32Array; reach: number; onPick?: (row: number) => void }) {
   const pick = (event: ThreeEvent<MouseEvent>) => {
     if (event.index === undefined) return;
     event.stopPropagation(); // the nearest star only, not every star behind it
@@ -108,12 +115,14 @@ function Stars({ positions, colors, reach, onPick }: Pick<Props, "positions" | "
       </bufferGeometry>
       <pointsMaterial
         vertexColors
-        size={reach / 150} // about 1.5 px at the preset distance; grows as the camera closes in
+        map={psfTexture()} // RENDER_PLAN R2: a point spread function, not a square
+        alphaTest={0.01}
+        size={reach / 70} // the PSF's wings need room: its bright core stays about 2 px at the preset distance
         sizeAttenuation
         // Normal blending, not additive: overlapping stars adding up to white would
         // paint a colour the field declaration never gave (design brief §3).
         transparent
-        opacity={0.9}
+        opacity={1}
         depthWrite={false}
       />
     </points>

@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { starColors } from "./galaxy/colors";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
-import { GalaxyView, type Preset } from "./galaxy/GalaxyView";
+import { type Preset } from "./galaxy/GalaxyView";
 import { toScene } from "./galaxy/positions";
+import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
@@ -53,8 +54,10 @@ export function App() {
     if (tab === "galaxy" && !generated) setTab("preview");
   }, [tab, generated]);
 
-  // The star sample runs every stage, so it is only asked for while a tab draws it.
-  const sampleKey = tab !== "science" && wf.query ? JSON.stringify(wf.query) : null;
+  // The star sample runs every stage, so it is only asked for where stars are drawn:
+  // the Galaxy tab, and the preview from checkpoint 5 (Systems), where stars first exist.
+  const drawsStars = tab === "galaxy" || (tab === "preview" && (current?.n ?? 0) >= 5);
+  const sampleKey = drawsStars && wf.query ? JSON.stringify(wf.query) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(wf.query!, signal));
   const sample = galaxy.value;
   // A new galaxy is a new set of stars: the old selection and open system named stars in the old one.
@@ -135,8 +138,17 @@ export function App() {
         <ErrorBoundary resetKey={`${tab}:${current?.n}:${wf.model}`}>
           {tab === "preview" && (
             <div className={styles.canvasStage}>
-              {positions && colors && <GalaxyView positions={positions} colors={colors} preset={preset} onPick={setPicked} />}
-              {status}
+              {current && meta && wf.query && (
+                <CheckpointScene
+                  n={current.n}
+                  meta={meta}
+                  query={wf.query}
+                  preset={preset}
+                  stars={positions && colors ? { positions, colors } : null}
+                  onPick={setPicked}
+                />
+              )}
+              {drawsStars && status}
               <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
 
               {current && (
@@ -159,13 +171,13 @@ export function App() {
                       </button>
                     ))}
                   </div>
-                  <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)} aria-label="Colour by">
+                  {drawsStars && <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)} aria-label="Colour by">
                     {COLOUR_FIELDS.map((f) => (
                       <option key={f} value={f}>
                         Colour by {meta?.fields.find((d) => d.name === f)?.label ?? f}
                       </option>
                     ))}
-                  </select>
+                  </select>}
                 </section>
                 {meta && sample && picked !== null && (
                   <StarReadout meta={meta} sample={sample} row={picked} onOpen={setSystemStar} planets={planetsReady} />
@@ -173,12 +185,13 @@ export function App() {
                 {panels && wf.query && <Published scalars={panels.scalars} query={wf.query} />}
               </aside>
 
-              {sample && (
+              {current && (
                 <div className={styles.caption}>
                   <div className={styles.captionNote}>
-                    {sample.header.stars.materialised.toLocaleString("en")} sampled stars · {current?.stages.join(" · ")}
+                    {drawsStars && sample ? `${sample.header.stars.materialised.toLocaleString("en")} sampled stars · ` : ""}
+                    {current.stages.join(" · ")}
                   </div>
-                  <p>Drag to orbit, scroll to zoom, click a star to read it.</p>
+                  <p>{drawsStars ? "Drag to orbit, scroll to zoom, click a star to read it." : "Drag to orbit, scroll to zoom."}</p>
                 </div>
               )}
               {system}

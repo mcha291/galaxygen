@@ -1,0 +1,107 @@
+/* Overlays sit between the floating rail (left, 326 px) and the right column (340 px). */
+.inset,
+.scrubber {
+  position: absolute;
+  left: 326px;
+  right: clamp(260px, 38%, 356px);
+  bottom: 64px;
+  max-width: 560px;
+}
+
+.inset > figure {
+  background: color-mix(in oklab, var(--void-2) 88%, transparent);
+  backdrop-filter: var(--blur-sm);
+}
+
+.scrubber {
+  padding: 10px 12px;
+  border: var(--hair) solid var(--border-hair);
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--void-2) 92%, transparent);
+  backdrop-filter: var(--blur-sm);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chips button {
+  padding: 6px 8px;
+  border: var(--hair) solid var(--border-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-body);
+  font: 400 10.5px / 1 var(--font-mono);
+  cursor: pointer;
+}
+
+.chips button[aria-pressed="true"] {
+  border-color: var(--magenta-4);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.timeLabel,
+.timeValue {
+  font: 500 11px / 1 var(--font-mono);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.timeValue {
+  min-width: 72px;
+  text-align: right;
+}
+
+.track {
+  position: relative;
+  flex: 1;
+}
+
+.track input {
+  width: 100%;
+  accent-color: var(--magenta-3);
+}
+
+/* Merger arrivals: an input, so solid ticks under the track. */
+.merger {
+  position: absolute;
+  top: -4px;
+  width: 1px;
+  height: 22px;
+  background: var(--amber-3);
+  pointer-events: auto;
+}
+
+.scrubNote,
+.layerNote {
+  margin-top: 6px;
+  font: 400 10px / 1.4 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.layerNote {
+  position: absolute;
+  top: 40px;
+  left: 326px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.fault {
+  position: absolute;
+  left: 326px;
+  bottom: 40px;
+  margin: 0;
+  font: 400 11px / 1.4 var(--font-mono);
+  color: var(--status-fault);
+}
