@@ -128,6 +128,8 @@ MEDIA_TYPES: Mapping[str, str] = MappingProxyType({
     ".svg": "image/svg+xml",
     ".png": "image/png",
     ".ico": "image/x-icon",
+    ".woff2": "font/woff2",  # the frontend build self-hosts its fonts
+    ".woff": "font/woff",
 })
 
 RESERVED: frozenset[str] = frozenset(p for r in ROUTES for p in r.params)

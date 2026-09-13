@@ -1,0 +1,17 @@
+# Only what the image builds from: model/, interface/, frontend/, pyproject, uv.lock.
+.git
+.github
+.claude
+.venv
+.pytest_cache
+**/__pycache__
+**/node_modules
+frontend/dist
+docs
+tests
+tools
+*.md
+!README.md
+.env
+*.token
+*.pem

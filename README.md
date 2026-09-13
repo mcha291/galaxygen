@@ -27,6 +27,12 @@ Repository layout:
 
 Package layout is described in `model/galaxy/__init__.py`.
 
+Deployment: `Dockerfile` builds `frontend/` and serves it from `galaxy.api` on
+one origin; `infra/main.bicep` is the Azure Container Apps setup and
+`infra/deploy.ps1 -ResourceGroup <name>` builds the image in Azure Container
+Registry (no local Docker) and rolls out a revision tagged with the commit.
+Locally, `uv run python -m galaxy.api --client frontend/dist` serves the built UI.
+
 Models are declared one file each in `model/galaxy/models/` (`simple.py`,
 `advanced.py`); a new file there is picked up automatically. Shared constants
 live in `level0.py`, stage implementations in `model/galaxy/stages/`.
