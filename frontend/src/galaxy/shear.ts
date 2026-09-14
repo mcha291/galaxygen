@@ -1,6 +1,6 @@
-// Differential rotation, made visible. A spoke starts as a straight radial line;
-// every point on it then orbits at the circular speed its radius publishes, so
-// the inner disc pulls ahead and the spoke winds into a trailing spiral.
+// Differential rotation, made visible. Tracer points ride rings of the disc, each
+// ring orbiting at the circular speed its radius publishes, so the inner rings
+// pull ahead of the outer ones.
 //
 // Only kinematics of a published field: angle = Ω(R) t with Ω = v_c(R) / R.
 // Circular orbits, no dispersion, no pattern speed.
@@ -40,32 +40,33 @@ export function periodMyr(r: number, R: ArrayLike<number>, v: ArrayLike<number>)
   return vr > 0 && r > 0 ? (2 * Math.PI) / ((vr / r) * RAD_PER_MYR_PER_KMS_PER_KPC) : Infinity;
 }
 
+/** Start-angle stagger between rings, the golden angle, so the tracers never line up into spokes. */
+export const RING_STAGGER = Math.PI * (3 - Math.sqrt(5));
+
 /**
- * Scene positions of `spokes` spokes at time t (Myr), as line segments for
- * THREE.LineSegments: each spoke's consecutive points joined pairwise.
- * Same frame as the stars: x = r cos φ, z = −r sin φ, in the plane y = lift.
+ * Scene positions of `perRing` tracer points on each ring at time t (Myr). Each
+ * ring turns rigidly at its own Ω, so the rotation curve shows as rings sliding
+ * past each other rather than as lines winding into a tangle. Same frame as the
+ * stars: x = r cos φ, z = −r sin φ, at y = lift.
  */
-export function spokeSegments(
+export function tracerPositions(
   radii: ArrayLike<number>,
   omega: ArrayLike<number>,
-  spokes: number,
+  perRing: number,
   tMyr: number,
   lift = 0,
   out?: Float32Array,
 ): Float32Array {
-  const n = radii.length;
-  const size = spokes * (n - 1) * 2 * 3;
+  const size = radii.length * perRing * 3;
   const buffer = out && out.length === size ? out : new Float32Array(size);
   let p = 0;
-  for (let s = 0; s < spokes; s += 1) {
-    const start = (2 * Math.PI * s) / spokes;
-    for (let i = 0; i < n - 1; i += 1) {
-      for (const k of [i, i + 1]) {
-        const phi = start + omega[k] * tMyr;
-        buffer[p++] = radii[k] * Math.cos(phi);
-        buffer[p++] = lift;
-        buffer[p++] = -radii[k] * Math.sin(phi);
-      }
+  for (let i = 0; i < radii.length; i += 1) {
+    const turned = i * RING_STAGGER + omega[i] * tMyr;
+    for (let k = 0; k < perRing; k += 1) {
+      const phi = turned + (2 * Math.PI * k) / perRing;
+      buffer[p++] = radii[i] * Math.cos(phi);
+      buffer[p++] = lift;
+      buffer[p++] = -radii[i] * Math.sin(phi);
     }
   }
   return buffer;

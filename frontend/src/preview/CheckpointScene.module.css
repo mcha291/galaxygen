@@ -106,8 +106,8 @@
   color: var(--status-fault);
 }
 
-/* The shearing-spoke controls, under the layer note. */
-.spokes {
+/* The tracer controls, under the layer note. */
+.orbits {
   position: absolute;
   top: 58px;
   left: 326px;
@@ -121,8 +121,8 @@
   text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0);
 }
 
-.spokes button,
-.spokes select {
+.orbits button,
+.orbits select {
   padding: 4px 8px;
   border: var(--hair) solid var(--border-line);
   border-radius: 2px;
@@ -132,24 +132,24 @@
   cursor: pointer;
 }
 
-.spokes button[aria-pressed="true"] {
+.orbits button[aria-pressed="true"] {
   border-color: var(--magenta-4);
   color: var(--text-accent);
 }
 
-.spokes label {
+.orbits label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.spokeTime {
+.orbitTime {
   min-width: 90px;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
-.spokeNote {
+.orbitNote {
   flex-basis: 100%;
 }
 

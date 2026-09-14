@@ -5,7 +5,8 @@ import { Color } from "three";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
-import { ShearSpokes } from "../galaxy/ShearSpokes";
+import { Isophotes } from "../galaxy/Isophotes";
+import { Tracers } from "../galaxy/Tracers";
 import { interp, periodMyr } from "../galaxy/shear";
 import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
@@ -47,7 +48,7 @@ const INSET_AT: Record<number, { title: string; fields: string[] }> = {
 // Checkpoint 2's playback: the probe disc and the three responses it reads over time.
 const PLAYBACK_FIELDS = ["disc_surface_density", "disc_radial_spread", "merger_delivery", "disc_heating"];
 const PLAYBACK_SPEEDS = [0.5, 1, 2, 4]; // Gyr per second of wall time
-const R_SUN_KPC = 8.2; // where the scatter gauge reads, as the spoke note does
+const R_SUN_KPC = 8.2; // where the scatter gauge and the orbit note read
 // stars_formed_history is kept out of the scrubber on purpose: it is published at
 // the radii those stars occupy *today*, so a slice at an epoch would place past
 // stars where they have not yet migrated to (RENDER_PLAN Part 1b, the trap).
@@ -87,7 +88,7 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
-  // Checkpoint 1 shears spokes with the rotation curve, so the curve is always fetched there.
+  // Checkpoint 1's tracers orbit on the rotation curve, so the curve is always fetched there.
   const curve = n === 1 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
     ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
@@ -103,6 +104,17 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetAxis = insetDecls.length ? (insetDecls[0].axes as string[])[0] : null;
   const radii = useMemo(() => (R ? centres(R) : null), [R]);
   const v = curve && frame ? (frame.arrays[curve.name] as Float64Array) : null;
+  const profile = disc && frame ? (frame.arrays[disc.name] as Float64Array) : null;
+  // Isophotes at fixed decades of Σ, at checkpoint 1 only: later discs carry the pattern.
+  const rings = useMemo(
+    () =>
+      n === 1 && profile && radii
+        ? ringLevels(profile, 5)
+            .map((level) => ringRadius(profile, radii, level))
+            .filter((r): r is number => r !== null)
+        : [],
+    [n, profile, radii],
+  );
   const markers = useMemo(() => mergersOf(query).map((m) => ({ at: m.time, label: `${formatNumber(m.time)} Gyr` })), [query]);
 
   return (
@@ -119,12 +131,13 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
             size={contrast ? 768 : 512}
           />
         )}
-        {radii && v && R && (
-          <ShearSpokes R={radii} v={v} rMax={R.hi * 0.8} playing={playing} speed={speed} resetKey={resetKey} onTime={setTMyr} />
+        {R && rings.length > 0 && <Isophotes rings={rings} lift={R.hi / 400} />}
+        {radii && v && R && rings.length > 0 && (
+          <Tracers R={radii} v={v} rings={rings} playing={playing} speed={speed} resetKey={resetKey} onTime={setTMyr} lift={R.hi / 300} />
         )}
       </GalaxyView>
       {radii && v && (
-        <div className={styles.spokes}>
+        <div className={styles.orbits}>
           <button type="button" onClick={() => setPlaying((p) => !p)} aria-pressed={playing}>
             {playing ? "pause" : "play"}
           </button>
@@ -139,9 +152,10 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
               ))}
             </select>
           </label>
-          <span className={styles.spokeTime}>t = {formatNumber(tMyr, 3)} Myr</span>
-          <span className={styles.spokeNote}>
-            spokes orbit at v_c(R)/R · one orbit at R₀ = {formatNumber(periodMyr(8.2, radii, v), 3)} Myr · circular orbits only
+          <span className={styles.orbitTime}>t = {formatNumber(tMyr, 3)} Myr</span>
+          <span className={styles.orbitNote}>
+            isophotes at fixed decades of Σ · tracers on circular orbits at v_c(R)/R · one orbit at R₀ ={" "}
+            {formatNumber(periodMyr(R_SUN_KPC, radii, v), 3)} Myr
           </span>
         </div>
       )}
