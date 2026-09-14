@@ -4,7 +4,7 @@ import { codes } from "@interface/transport.js";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { type FieldDecl, type FieldsPayload, type Query, type SystemFrame, loadSystem } from "../api";
+import { type FieldDecl, type FieldsPayload, type Query, type StarName, type SystemFrame, loadSystem } from "../api";
 import { Button } from "../ui/Button";
 import { useLoad } from "../useLoad";
 import { formatNumber, formatPower } from "../workflow/logic";
@@ -12,7 +12,7 @@ import { type RailMode, pickMark, railOf } from "./rail";
 import styles from "./SystemView.module.css";
 
 interface Props {
-  star: { cell: number; index: number };
+  star: StarName;
   query: Query;
   meta: FieldsPayload;
   onClose(): void;

@@ -114,13 +114,39 @@ export interface SystemFrame {
  * it with. The server materialises that one cell, not the galaxy, and asks for
  * the same sample size so the same star is the same star.
  */
-export async function loadSystem(star: { cell: number; index: number }, query: Query, signal?: AbortSignal): Promise<SystemFrame> {
-  const got = await system(star, { ...query, stars: STAR_SAMPLE }, { signal });
+/**
+ * A star's name: its cell, its index there, and the whole-galaxy sample size it was named in.
+ * The index only means something at that size, so a star picked in a close region view
+ * (a larger sample) opens with that size and not the base one.
+ */
+export interface StarName {
+  cell: number;
+  index: number;
+  stars?: number;
+}
+
+export async function loadSystem(star: StarName, query: Query, signal?: AbortSignal): Promise<SystemFrame> {
+  const { cell, index } = star;
+  const got = await system({ cell, index }, { ...query, stars: star.stars ?? STAR_SAMPLE }, { signal });
   return { header: got.header as SystemFrame["header"], arrays: got.arrays as SystemFrame["arrays"] };
 }
 
 /** The whole-galaxy star sample for one input vector: every cell, STAR_SAMPLE stars in all. */
 export async function loadSample(query: Query = {}, signal?: AbortSignal): Promise<Sample> {
   const got = await region({}, { ...query, stars: STAR_SAMPLE }, { signal });
+  return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
+}
+
+/**
+ * The stars regime: one window's stars, materialised at a larger whole-galaxy sample size so a
+ * close view is dense. The same stars the full sweep at that size would put there (D60).
+ */
+export async function loadRegion(
+  window: { r_min: number; r_max: number; phi_min: number; phi_max: number },
+  stars: number,
+  query: Query,
+  signal?: AbortSignal,
+): Promise<Sample> {
+  const got = await region(window, { ...query, stars }, { signal });
   return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
 }

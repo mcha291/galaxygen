@@ -1,19 +1,15 @@
-import { identify } from "@interface/stars.js";
-import { Orbit } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
-import { PHOTOMETRIC, photometricColors, starColors } from "./galaxy/colors";
+import { loadFields, loadSample, type FieldsPayload, type Sample, type StarName } from "./api";
+import { PHOTOMETRIC } from "./galaxy/colors";
 import { Exposure } from "./galaxy/Exposure";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
 import { type Preset } from "./galaxy/GalaxyView";
-import { toScene } from "./galaxy/positions";
 import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { SystemView } from "./system/SystemView";
-import { Button } from "./ui/Button";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber, runHash } from "./workflow/logic";
@@ -34,10 +30,9 @@ export function App() {
   const wf = useWorkflow();
   const [meta, setMeta] = useState<FieldsPayload | null>(null);
   const [tab, setTab] = useState<Tab>("preview");
-  const [field, setField] = useState(COLOUR_FIELDS[0]);
+  const [field, setField] = useState<string>(PHOTOMETRIC);
   const [preset, setPreset] = useState<Preset>("oblique");
-  const [picked, setPicked] = useState<number | null>(null);
-  const [systemStar, setSystemStar] = useState<{ cell: number; index: number } | null>(null);
+  const [systemStar, setSystemStar] = useState<StarName | null>(null);
   // Bottom-bar experiments ride on top of the workflow's input vector, outside its locks:
   // they are for exploring a value, and every request is keyed by the vector, so changing
   // one simply asks for a different galaxy.
@@ -54,8 +49,6 @@ export function App() {
   const query = useMemo(() => (wf.query ? { ...wf.query, ...experiments } : null), [wf.query, experiments]);
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
   const last = wf.state?.cat.checkpoints.length ?? 0;
-  // "Planets: systems become openable" (design brief §1): the last checkpoint must be reachable.
-  const planetsReady = !!wf.state && wf.state.confirmed >= last - 1;
   // Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only.
   const generated = !!wf.state && last > 0 && wf.state.confirmed === last;
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
@@ -65,33 +58,14 @@ export function App() {
     if (tab === "galaxy" && !generated) setTab("preview");
   }, [tab, generated]);
 
-  // The star sample runs every stage, so it is only asked for where stars are drawn:
-  // the Galaxy tab, and the preview from checkpoint 5 (Systems), where stars first exist.
-  const drawsStars = tab === "galaxy" || (tab === "preview" && (current?.n ?? 0) >= 5);
+  // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
+  // tab. The preview shows fields only, at every checkpoint including the last two.
+  const drawsStars = tab === "galaxy";
   const sampleKey = drawsStars && query ? JSON.stringify(query) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(query!, signal));
   const sample = galaxy.value;
-  // A new galaxy is a new set of stars: the old selection and open system named stars in the old one.
-  useEffect(() => {
-    setPicked(null);
-    setSystemStar(null);
-  }, [sample]);
-
-  const positions = useMemo(() => {
-    if (!sample) return null;
-    const c = sample.columns as Record<string, ArrayLike<number>>;
-    return toScene(c.star_radius, c.star_azimuth, c.star_height);
-  }, [sample]);
-
-  const colors = useMemo(() => {
-    if (!sample || !meta) return null;
-    try {
-      return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure) : starColors(meta, sample.columns, field);
-    } catch {
-      return null; // the fields for a just-switched model have not arrived yet
-    }
-  }, [sample, meta, field, exposure]);
-  const photometric = field === PHOTOMETRIC;
+  // A new galaxy is a new set of stars: an open system named a star in the old one.
+  useEffect(() => setSystemStar(null), [sample]);
 
   const seed = wf.state?.values.world_seed;
   const hash = query ? `${runHash(query)} · ${wf.model} · world_seed ${seed}` : "";
@@ -156,12 +130,10 @@ export function App() {
                   meta={meta}
                   query={query}
                   preset={preset}
-                  stars={positions && colors ? { positions, colors, photometric, exposure } : null}
-                  onPick={setPicked}
+                  exposure={exposure}
                   charts={charts}
                 />
               )}
-              {drawsStars && status}
               <WorkflowPanel wf={wf} tMax={meta?.grid.axes.t?.hi} className={styles.floatingRail} />
 
               {current && (
@@ -184,28 +156,17 @@ export function App() {
                       </button>
                     ))}
                   </div>
-                  {drawsStars && <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)} aria-label="Colour by">
-                    {PAINT_CHOICES.map((f) => (
-                      <option key={f} value={f}>
-                        {f === PHOTOMETRIC ? "Light (photometric)" : `Colour by ${meta?.fields.find((d) => d.name === f)?.label ?? f}`}
-                      </option>
-                    ))}
-                  </select>}
-                  {drawsStars && photometric && <Exposure stops={exposure} onChange={setExposure} />}
+                  {(current?.n ?? 0) >= 5 && <Exposure stops={exposure} onChange={setExposure} />}
                 </section>
-                {meta && sample && picked !== null && (
-                  <StarReadout meta={meta} sample={sample} row={picked} onOpen={setSystemStar} planets={planetsReady} />
-                )}
                 {panels && query && <Published scalars={panels.scalars} query={query} />}
               </aside>
 
               {current && (
                 <div className={styles.caption}>
                   <div className={styles.captionNote}>
-                    {drawsStars && sample ? `${sample.header.stars.materialised.toLocaleString("en")} sampled stars · ` : ""}
                     {current.stages.join(" · ")}
                   </div>
-                  <p>{drawsStars ? "Drag to orbit, scroll to zoom, click a star to read it." : "Drag to orbit, scroll to zoom."}</p>
+                  <p>Drag to orbit, scroll to zoom. Stars and their systems open in the Galaxy tab.</p>
                 </div>
               )}
               {system}
@@ -227,24 +188,19 @@ export function App() {
 
           {tab === "galaxy" && (
             <div className={styles.canvasStage}>
-              {meta && sample && positions && colors && (
+              {meta && sample && query && (
                 <GalaxyTab
                   meta={meta}
                   sample={sample}
-                  positions={positions}
-                  colors={colors}
                   fields={PAINT_CHOICES}
                   field={field}
                   onField={setField}
                   exposure={exposure}
                   onExposure={setExposure}
-                  query={query!}
+                  query={query}
                   preset={preset}
                   onPreset={setPreset}
-                  onPick={(row) => {
-                    const name = identify(sample.header, row) as { cell: number; index: number } | null;
-                    if (name) setSystemStar(name);
-                  }}
+                  onOpen={setSystemStar}
                 />
               )}
               {status}
@@ -272,54 +228,5 @@ export function App() {
         </span>
       </footer>
     </div>
-  );
-}
-
-function StarReadout({ meta, sample, row, onOpen, planets }: {
-  meta: FieldsPayload; sample: Sample; row: number; onOpen(star: { cell: number; index: number }): void; planets: boolean;
-}) {
-  const name = identify(sample.header, row) as { cell: number; index: number } | null;
-  return (
-    <section>
-      <div className={styles.overlayHead}>
-        <span className={styles.rule} />
-        <span className={styles.overlayLabel}>Selected star</span>
-      </div>
-      {name && (
-        <div className={styles.openSystem}>
-          <Button variant="primary" icon={<Orbit />} disabled={!planets} onClick={() => onOpen(name)}>
-            Open system
-          </Button>
-          {!planets && <p className={styles.overlayNote}>Systems become openable at checkpoint 6, Planets.</p>}
-        </div>
-      )}
-      {name && (
-        <div className={styles.stat}>
-          <div className={styles.statKey}>cell / index</div>
-          <div className={styles.statValue}>
-            <span>
-              {name.cell} / {name.index}
-            </span>
-          </div>
-        </div>
-      )}
-      {COLOUR_FIELDS.concat(["star_radius", "star_height"]).map((f) => {
-        const decl = meta.fields.find((d) => d.name === f);
-        const value = sample.columns[f]?.[row];
-        if (!decl || value === undefined) return null;
-        const categorical = (decl.categories?.length ?? 0) > 0; // continuous fields declare []
-        const shown = categorical ? decl.categories![Number(value)] : formatNumber(Number(value), 4);
-        const unit = categorical || decl.unit === "dimensionless" ? "" : String(decl.unit_display ?? decl.unit);
-        return (
-          <div key={f} className={styles.stat}>
-            <div className={styles.statKey}>{decl.label}</div>
-            <div className={styles.statValue}>
-              <span>{shown}</span>
-              {unit && <span className={styles.statUnit}>{unit}</span>}
-            </div>
-          </div>
-        );
-      })}
-    </section>
   );
 }

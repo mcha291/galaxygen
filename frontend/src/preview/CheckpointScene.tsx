@@ -5,7 +5,7 @@ import { Color } from "three";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
-import { LightVolume } from "../galaxy/LightVolume";
+import { FieldVolume } from "../galaxy/FieldVolume";
 import { Isophotes } from "../galaxy/Isophotes";
 import { Tracers } from "../galaxy/Tracers";
 import { interp, periodMyr } from "../galaxy/shear";
@@ -37,9 +37,8 @@ interface Props {
   meta: FieldsPayload;
   query: Query;
   preset: Preset;
-  /** Checkpoints 5 and 6 draw the star sample; the caller owns it because the Galaxy tab shares it. */
-  stars: { positions: Float32Array; colors: Float32Array; photometric?: boolean; exposure?: number } | null;
-  onPick(row: number): void;
+  /** Exposure in stops for the field at checkpoints 5 and 6. */
+  exposure: number;
   /** Show the inset chart at checkpoint 1 (the rotation curve). Off by default. */
   charts?: boolean;
 }
@@ -68,11 +67,13 @@ const R_SUN_KPC = 8.2; // where the scatter gauge and the orbit note read
 const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
 
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
-export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts = false }: Props) {
+export function CheckpointScene({ n, meta, query, preset, exposure, charts = false }: Props) {
+  // From Systems on the galaxy is whole, and its preview is the field regime only: the light
+  // integrated through the published fields. Stars, and the systems they open, are the Galaxy tab's.
   if (n >= 5) {
     return (
-      <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} photometric={stars?.photometric}>
-        {stars?.photometric && <LightVolume meta={meta} query={query} stops={stars.exposure ?? 0} />}
+      <GalaxyView reach={20} preset={preset} hdr>
+        <FieldVolume meta={meta} query={query} stops={exposure} />
       </GalaxyView>
     );
   }

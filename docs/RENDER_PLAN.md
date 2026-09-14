@@ -288,8 +288,8 @@ the debt was opened to avoid.
 | **H1** | History scrubber | done at checkpoint 3 |
 | **R1** | Additive, HDR, tone mapping | done (D164) |
 | **R2** | PSF sprite | done |
-| **R3** | Far field | done: a particle volume with the bulge (D165, D166) |
-| **R4** | Dust as subtraction | done: per line of sight (D166) |
+| **R3** | Far field | done: the ray-marched field regime, with the bulge (D165–D167) |
+| **R4** | Dust as subtraction | done: emission and absorption along each ray (D167) |
 | **R5** | Bloom | done, restrained (D165) |
 | **P3** | Photometric acceptance rows | not started |
 

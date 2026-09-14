@@ -4560,3 +4560,34 @@ that dims and reddens; edge-on it is a dust lane.
 Hα clumping and `LINE_CHANNEL_WEIGHT` (5: the line is all in one channel, a population's
 bolometric light is not) decide how it looks and not what the model says. The particles are not
 stars and carry no identity; the star sample is drawn over them and is what can be clicked.
+
+
+### D167. The three regimes: a ray-marched field, the sample, and a region's own stars; the preview shows fields only
+
+**Decision.** The particle volume of D166 is replaced by the design brief's field regime:
+`FieldVolume` ray-marches every pixel through the galaxy's bounding box, 128 steps spaced
+geometrically from the camera. The published fields become one polar (R, φ) float texture — light
+(surface brightness × colour × pattern contrast, plus Hα crowded into the arms) in RGB and the
+face-on dust optical depth in A — with the thin disc's sech² scale height for the light, half of it
+for the dust, and the Hernquist bulge evaluated in the shader. Each step adds its light dimmed by
+all the dust in front of it and dims what lies behind: emission and absorption along the line of
+sight, so the lanes, the reddening and the dark midplane edge-on are the integral and not a
+per-particle approximation. It has no noise and no rebuild on a camera move.
+
+**The Galaxy tab** hands the three regimes over by the view's width: the field alone above 25 kpc
+(always drawn, dimming to 30% close up, because most stars stay unresolved), the 20 000-star sample
+fading in as the galaxy fills the view, and below 4 kpc a region's own stars from `/api/region`,
+materialised at a whole-galaxy sample size chosen so about 120 000 land in the window (the share is
+counted from the sample, since the centre is far denser than the outskirts). A star is named by
+(cell, index) *at the sample size it was drawn at*, so a system opened from a close view passes that
+size (`StarName.stars`). Checked against the service: a 2 kpc central window at 2 × 10⁶ materialised
+652 567 stars in 1.3 s, and its first star's system opened at that size. Star sprites are a fixed
+size on screen now, since a star is a point at any distance.
+
+**The preview** draws fields only. Checkpoints 5 and 6 show the field regime, with an exposure
+slider; the star sample, its colouring and the star readout are gone from the preview, and stars and
+their systems open in the Galaxy tab, which unlocks when the last checkpoint is locked. The Galaxy
+tab opens painted as light.
+
+**Display choices, named.** The step count and spacing, the dust layer at half the stellar scale
+height, the regime widths, the sample fade and the 120 000-star target.

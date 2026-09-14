@@ -1,29 +1,32 @@
-import { useState } from "react";
+import { identify } from "@interface/stars.js";
+import { useMemo, useState } from "react";
 
-import type { FieldsPayload, Query, Sample } from "../api";
+import { type FieldsPayload, type Query, type Sample, type StarName, STAR_SAMPLE, loadRegion } from "../api";
+import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
-import { PHOTOMETRIC } from "./colors";
+import { PHOTOMETRIC, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
-import { LightVolume } from "./LightVolume";
 import { FieldLegend } from "./FieldLegend";
-import { GalaxyView, type Preset, type ViewState } from "./GalaxyView";
+import { FieldVolume } from "./FieldVolume";
+import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
+import { toScene } from "./positions";
+import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
 import { scaleBar } from "./zoom";
 import styles from "./GalaxyTab.module.css";
 
 interface Props {
   meta: FieldsPayload;
   sample: Sample;
-  positions: Float32Array;
-  colors: Float32Array;
   fields: string[];
   field: string;
   onField(name: string): void;
   exposure: number;
-  query: Query;
   onExposure(stops: number): void;
+  query: Query;
   preset: Preset;
   onPreset(p: Preset): void;
-  onPick(row: number): void;
+  /** A star was clicked: open its system. */
+  onOpen(star: StarName): void;
 }
 
 const SHORT: Record<string, string> = {
@@ -37,30 +40,96 @@ const SHORT: Record<string, string> = {
   [PHOTOMETRIC]: "light",
 };
 
-// The three regimes of the design brief. Only the sample is drawn today, so the
-// other two are shown and disabled rather than hidden.
-const REGIMES = [
-  { key: "field", label: "field", ready: false },
-  { key: "sampled", label: "sampled", ready: true },
-  { key: "stars", label: "stars", ready: false },
-];
+/** The largest sample a region is materialised at (the API's own ceiling is 5 × 10⁶). */
+const REGION_MAX_STARS = 4_000_000;
+/** About how many stars a close view asks for: dense, and still quick to draw and to send. */
+const REGION_TARGET_STARS = 120_000;
+/** The framing radius of the view, kpc: most of the disc's light. */
+const DISC_RADIUS = 20;
 
-/** The finished galaxy, laid out as the design's Galaxy tab: controls floating left, regime top right, scale bottom left. */
-export function GalaxyTab({ meta, sample, positions, colors, fields, field, onField, exposure, onExposure, query, preset, onPreset, onPick }: Props) {
+const REGIMES = [
+  { key: "field", label: "field", name: "Field", what: "The galaxy's light, integrated along every line of sight through the published fields." },
+  { key: "sampled", label: "sampled", name: "Sampled points", what: "The whole-galaxy star sample over the field." },
+  { key: "stars", label: "stars", name: "Stars", what: "This region's own stars, materialised at a sample size scaled to the view." },
+] as const;
+
+/** The view width, kpc, each regime button takes the camera to. */
+const REGIME_VIEW_KPC = { field: 45, sampled: 12, stars: 2.5 } as const;
+
+/**
+ * The zoom slider position that makes the view `width` kpc across. The slider is linear in
+ * log distance over GalaxyView's range (reach/200 to 8 reach, a factor of 1600) and the width
+ * is proportional to distance, so it is a shift from where the view is now.
+ */
+function zoomForWidth(view: ViewState, width: number): number {
+  return Math.min(1, Math.max(0, view.zoom - Math.log(width / view.across) / Math.log(1600)));
+}
+
+function colorsFor(meta: FieldsPayload, sample: Sample, field: string, exposure: number): Float32Array | null {
+  try {
+    return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure) : starColors(meta, sample.columns, field);
+  } catch {
+    return null; // the fields for a just-switched model have not arrived yet
+  }
+}
+
+function positionsOf(sample: Sample): Float32Array {
+  const c = sample.columns as Record<string, ArrayLike<number>>;
+  return toScene(c.star_radius, c.star_azimuth, c.star_height);
+}
+
+/**
+ * The finished galaxy in its three regimes (design brief §3), handed over by zoom: the field
+ * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
+ * Any star drawn can be clicked to open its system.
+ */
+export function GalaxyTab({ meta, sample, fields, field, onField, exposure, onExposure, query, preset, onPreset, onOpen }: Props) {
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const decl = meta.fields.find((f) => f.name === field);
   const bar = view ? scaleBar(view.pxPerKpc) : null;
+  const weights = regimeWeights(view?.across ?? REGIME_KPC.field * 2);
+  const regime = REGIMES.find((r) => r.key === weights.active)!;
+
+  // The stars regime: the window around where the view looks, at a sample size scaled to it.
+  const area = view && weights.stars > 0 ? regionAround(view.target[0], view.target[2], view.across * 0.75) : null;
+  const inWindow = useMemo(() => {
+    if (!area) return 0;
+    const c = sample.columns as Record<string, ArrayLike<number>>;
+    return starsInWindow(c.star_radius, c.star_azimuth, area);
+  }, [sample, area?.r_min, area?.r_max, area?.phi_min, area?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
+  const regionStars = area ? regionSampleSize(STAR_SAMPLE, inWindow, REGION_TARGET_STARS, REGION_MAX_STARS) : 0;
+  const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
+  const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal));
+  const detail = region.value && regionKey ? region.value : null;
+
+  const samplePositions = useMemo(() => positionsOf(sample), [sample]);
+  const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure), [meta, sample, field, exposure]);
+  const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
+  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure) : null), [meta, detail, field, exposure]);
+
+  const open = (from: Sample, row: number) => {
+    const name = identify(from.header, row) as { cell: number; index: number } | null;
+    if (name) onOpen({ ...name, stars: from.header.stars.requested });
+  };
+
+  const layers: StarLayer[] = [];
+  if (sampleColors) layers.push({ positions: samplePositions, colors: sampleColors, opacity: weights.sampled, onPick: (row) => open(sample, row) });
+  if (detail && detailPositions && detailColors && weights.stars > 0) {
+    layers.push({ positions: detailPositions, colors: detailColors, opacity: weights.stars, onPick: (row) => open(detail, row) });
+  }
+
+  const shown = weights.active === "stars" && detail ? detail : sample;
 
   return (
     <>
-      <GalaxyView positions={positions} colors={colors} preset={preset} onPick={onPick} zoom={zoom} onView={setView} photometric={field === PHOTOMETRIC}>
-        {field === PHOTOMETRIC && <LightVolume meta={meta} query={query} stops={exposure} />}
+      <GalaxyView layers={layers} reach={DISC_RADIUS} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC}>
+        <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} />
       </GalaxyView>
 
       <div className={styles.panel}>
         <div className={styles.section}>
-          <div className={styles.label}>Field painting the disc</div>
+          <div className={styles.label}>Field painting the stars</div>
           <div className={styles.chips}>
             {fields.map((f) => (
               <button
@@ -75,18 +144,14 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
           </div>
         </div>
 
-        {decl && <FieldLegend decl={decl} values={sample.columns[field]} cmaps={meta.cmaps} />}
-        {field === PHOTOMETRIC && (
-          <div className={styles.section}>
-            <Exposure stops={exposure} onChange={onExposure} />
-            <p className={styles.muted}>
-              Each star&apos;s published luminosity in its blackbody colour, added as light and tone-mapped. The sample is
-              {` ${sample.header.stars.materialised.toLocaleString("en")}`} stars, drawn over the galaxy&apos;s unresolved light: the disc&apos;s published surface
-              brightness and colour as a volume of its scale height crowded into the arms, its Hα as pink knots, the bulge
-              as a Hernquist sphere, each dimmed and reddened by the published dust between it and you, so edge-on the midplane goes dark.
-            </p>
-          </div>
-        )}
+        {decl && <FieldLegend decl={decl} values={shown.columns[field]} cmaps={meta.cmaps} />}
+        <div className={styles.section}>
+          <Exposure stops={exposure} onChange={onExposure} />
+          <p className={styles.muted}>
+            The field under the stars is always light: the published surface brightness, colour, Hα, bulge and dust, integrated
+            along each line of sight. Exposure scales it, and the stars too when they are painted as light.
+          </p>
+        </div>
 
         <div className={styles.section}>
           <div className={styles.label}>Projection</div>
@@ -115,7 +180,12 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
           />
           <div className={styles.pair}>
             {REGIMES.map((r) => (
-              <button key={r.key} aria-pressed={r.key === "sampled"} disabled={!r.ready} title={r.ready ? undefined : "Not drawn yet"}>
+              <button
+                key={r.key}
+                aria-pressed={r.key === weights.active}
+                title={`${r.name}: ${r.what}`}
+                onClick={() => view && setZoom(zoomForWidth(view, REGIME_VIEW_KPC[r.key]))}
+              >
                 {r.label}
               </button>
             ))}
@@ -125,12 +195,19 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
 
       <div className={styles.regime}>
         <div className={styles.regimeHead}>
-          <span className={styles.muted}>regime 2 of 3</span>
-          <span className={styles.regimeName}>Sampled points</span>
+          <span className={styles.muted}>regime {REGIMES.indexOf(regime) + 1} of 3</span>
+          <span className={styles.regimeName}>{regime.name}</span>
           <span className={styles.dot} />
         </div>
         <p className={styles.regimeWhat}>
-          {sample.header.stars.materialised.toLocaleString("en")} materialised stars. Click one to open its system.
+          {regime.what}{" "}
+          {weights.active === "stars"
+            ? region.busy || !detail
+              ? "Loading this region's stars."
+              : `${detail.header.stars.materialised.toLocaleString("en")} stars here, of a ${regionStars.toLocaleString("en")}-star galaxy. Click one to open its system.`
+            : weights.active === "sampled"
+              ? `${sample.header.stars.materialised.toLocaleString("en")} stars. Click one to open its system.`
+              : "Zoom in for stars."}
         </p>
       </div>
 
