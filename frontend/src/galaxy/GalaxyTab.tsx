@@ -41,9 +41,9 @@ const SHORT: Record<string, string> = {
 };
 
 /** The largest sample a region is materialised at (the API's own ceiling is 5 × 10⁶). */
-const REGION_MAX_STARS = 4_000_000;
+const REGION_MAX_STARS = 1_000_000;
 /** About how many stars a close view asks for: dense, and still quick to draw and to send. */
-const REGION_TARGET_STARS = 120_000;
+const REGION_TARGET_STARS = 60_000;
 /** The framing radius of the view, kpc: most of the disc's light. */
 const DISC_RADIUS = 20;
 
@@ -83,7 +83,9 @@ function positionsOf(sample: Sample): Float32Array {
  * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
  * Any star drawn can be clicked to open its system.
  */
+const __trace = (name: string) => { const w = window as unknown as { __tc?: Record<string, number> }; w.__tc ??= {}; w.__tc[name] = (w.__tc[name] ?? 0) + 1; if (w.__tc[name] % 50 === 1) console.log("TRACE", name, w.__tc[name]); }; // DEBUG
 export function GalaxyTab({ meta, sample, fields, field, onField, exposure, onExposure, query, preset, onPreset, onOpen }: Props) {
+  __trace("GalaxyTab"); // DEBUG
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const decl = meta.fields.find((f) => f.name === field);

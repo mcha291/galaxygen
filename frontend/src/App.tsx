@@ -26,7 +26,9 @@ const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
 
 type Tab = "preview" | "science" | "galaxy";
 
+const __trace = (name: string) => { const w = window as unknown as { __tc?: Record<string, number> }; w.__tc ??= {}; w.__tc[name] = (w.__tc[name] ?? 0) + 1; if (w.__tc[name] % 50 === 1) console.log("TRACE", name, w.__tc[name]); }; // DEBUG
 export function App() {
+  __trace("App"); // DEBUG
   const wf = useWorkflow();
   const [meta, setMeta] = useState<FieldsPayload | null>(null);
   const [tab, setTab] = useState<Tab>("preview");
@@ -200,7 +202,11 @@ export function App() {
                   query={query}
                   preset={preset}
                   onPreset={setPreset}
-                  onOpen={setSystemStar}
+                  onOpen={(s) => {
+                    console.log("DEBUG open", JSON.stringify(s)); // DEBUG
+                    if ((window as unknown as { __noSystem?: boolean }).__noSystem) return; // DEBUG
+                    setSystemStar(s);
+                  }}
                 />
               )}
               {status}

@@ -98,7 +98,10 @@ export function regimeWeights(across: number): { field: number; sampled: number;
   const ramp = (x: number, from: number, to: number) => Math.min(1, Math.max(0, (Math.log(from) - Math.log(x)) / (Math.log(from) - Math.log(to))));
   const stars = ramp(across, REGIME_KPC.stars, REGIME_KPC.stars / 2);
   const sampled = ramp(across, REGIME_KPC.field * 2, REGIME_KPC.field * 0.6) * (1 - stars);
-  const field = 1 - 0.7 * ramp(across, REGIME_KPC.field, REGIME_KPC.stars / 2);
+  // Close up the region's own stars carry the light, so the field steps back to a faint glow of
+  // what stays unresolved. Left at a third, the bulge's surface brightness — which does not fall
+  // as the camera closes in — flooded a close view white and hid every star in it.
+  const field = 1 - 0.7 * ramp(across, REGIME_KPC.field, REGIME_KPC.stars) - 0.27 * stars;
   const active = across >= REGIME_KPC.field ? "field" : across >= REGIME_KPC.stars ? "sampled" : "stars";
   return { field, sampled, stars, active };
 }

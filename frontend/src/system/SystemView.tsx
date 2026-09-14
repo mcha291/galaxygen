@@ -29,7 +29,15 @@ const PLANET_COLUMNS = [
  * mounted underneath, so closing this returns to the same camera, the same
  * colouring and the same selection.
  */
-export function SystemView({ star, query, meta, onClose }: Props) {
+export function SystemView(props: Props) {
+  const mode = (window as unknown as { __sv?: string }).__sv; // DEBUG
+  if (mode === "none") { document.title = "DEBUG none"; return null; } // DEBUG
+  if (mode === "plain") return <div style={{ position: "absolute", top: 0, left: 0, width: 200, height: 40, background: "red" }}>DEBUG plain</div>; // DEBUG
+  if (mode === "empty") return <div className={styles.overlay}>DEBUG empty overlay</div>; // DEBUG
+  return <SystemViewInner {...props} />; // DEBUG
+}
+
+function SystemViewInner({ star, query, meta, onClose }: Props) {
   const key = JSON.stringify([star, query]);
   const loaded = useLoad<SystemFrame>(key, (signal) => loadSystem(star, query, signal));
   const frame = loaded.value && loaded.value.header.cell === star.cell && loaded.value.header.index === star.index ? loaded.value : null;

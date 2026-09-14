@@ -167,7 +167,9 @@ interface Props {
  * the published fields (RENDER_PLAN R3, R4, M4). No particles and no sample: at the scale
  * of a galaxy the light is unresolved, and a smooth integral is what it is.
  */
+const __trace = (name: string) => { const w = window as unknown as { __tc?: Record<string, number> }; w.__tc ??= {}; w.__tc[name] = (w.__tc[name] ?? 0) + 1; if (w.__tc[name] % 50 === 1) console.log("TRACE", name, w.__tc[name]); }; // DEBUG
 export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
+  __trace("FieldVolume"); // DEBUG
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const fields = FIELDS.filter((n) => declared(n));
   const names = [...fields, ...SCALARS.filter((n) => declared(n))];
@@ -244,6 +246,7 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
   // The box lives in a scene of its own, marched into a lower-resolution float target.
   const offscreen = useMemo(() => {
     if (!mesh) return null;
+    __trace("offscreen memo"); // DEBUG
     const scene = new Scene();
     scene.add(mesh);
     const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
