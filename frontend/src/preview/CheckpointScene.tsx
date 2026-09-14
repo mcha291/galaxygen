@@ -1,15 +1,16 @@
 import { codes } from "@interface/transport.js";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
 import { ShearSpokes } from "../galaxy/ShearSpokes";
-import { periodMyr } from "../galaxy/shear";
+import { interp, periodMyr } from "../galaxy/shear";
 import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
 import { LinePlot } from "./LinePlot";
+import { arrivedSpread, deliveredBy, radialTransport, valueAt } from "./mergers";
 import styles from "./CheckpointScene.module.css";
 
 interface Props {
@@ -20,17 +21,20 @@ interface Props {
   /** Checkpoints 5 and 6 draw the star sample; the caller owns it because the Galaxy tab shares it. */
   stars: { positions: Float32Array; colors: Float32Array } | null;
   onPick(row: number): void;
-  /** Show the inset chart at checkpoints 1 and 2 (the rotation curve, the merger history). Off by default. */
+  /** Show the inset chart at checkpoint 1 (the rotation curve). Off by default. */
   charts?: boolean;
 }
 
 // What each checkpoint's scene draws, by field name. Every name is checked
 // against the declarations at run time; a model that lacks one shows the gap.
-const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 2: "disc_surface_density", 4: "stellar_surface_density" };
+const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 4: "stellar_surface_density" };
 const INSET_AT: Record<number, { title: string; fields: string[] }> = {
   1: { title: "Rotation curve", fields: ["circular_velocity", "halo_circular_velocity", "disc_circular_velocity"] },
-  2: { title: "Merger history", fields: ["merger_delivery"] },
 };
+// Checkpoint 2's playback: the probe disc and the three responses it reads over time.
+const PLAYBACK_FIELDS = ["disc_surface_density", "disc_radial_spread", "merger_delivery", "disc_heating"];
+const PLAYBACK_SPEEDS = [0.5, 1, 2, 4]; // Gyr per second of wall time
+const R_SUN_KPC = 8.2; // where the scatter gauge reads, as the spoke note does
 // stars_formed_history is kept out of the scrubber on purpose: it is published at
 // the radii those stars occupy *today*, so a slice at an epoch would place past
 // stars where they have not yet migrated to (RENDER_PLAN Part 1b, the trap).
@@ -41,6 +45,7 @@ export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts 
   if (n >= 5) {
     return <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} />;
   }
+  if (n === 2) return <MergerScene meta={meta} query={query} preset={preset} />;
   if (n === 3) return <HistoryScene meta={meta} query={query} preset={preset} />;
   return <DiscScene n={n} meta={meta} query={query} preset={preset} charts={charts} />;
 }
@@ -63,8 +68,8 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
-  // Checkpoints 1 and 2 shear spokes with the rotation curve, so the curve is always fetched there.
-  const curve = n <= 2 ? declOf(meta, "circular_velocity") : undefined;
+  // Checkpoint 1 shears spokes with the rotation curve, so the curve is always fetched there.
+  const curve = n === 1 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
     ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
   ];
@@ -140,6 +145,174 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
           {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
         </p>
       )}
+    </>
+  );
+}
+
+/**
+ * Checkpoint 2 as a playback through cosmic time. There are no stars yet and no
+ * matter history (checkpoint 3), so the disc is checkpoint 1's Σ(R) used as a
+ * probe: at each τ it is moved through the radial scatter of the mergers landed
+ * so far, by the model's own transport. The gauges read what the assembly stage
+ * publishes at τ. Changing a merger changes when and how hard the disc smears.
+ */
+function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Query; preset: Preset }) {
+  const decls = PLAYBACK_FIELDS.map((name) => declOf(meta, name));
+  const [disc, spreadDecl, deliveryDecl, heatingDecl] = decls;
+  const names = decls.filter((d): d is FieldDecl => !!d).map((d) => d.name);
+  const key = names.length === PLAYBACK_FIELDS.length ? JSON.stringify([names, query]) : null;
+  const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal, HISTORY_SAMPLING));
+  const frame = loaded.value && names.every((x) => x in loaded.value!.arrays) ? loaded.value : null;
+  const R = frame?.header.grid.axes.R;
+  const t = frame?.header.grid.axes.t;
+  const radii = useMemo(() => (R ? centres(R) : null), [R]);
+  const mergers = useMemo(() => mergersOf(query).sort((a, b) => a.time - b.time), [query]);
+
+  const [tau, setTau] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(1);
+  const tauRef = useRef(0);
+  const seek = (value: number) => {
+    tauRef.current = value;
+    setTau(value);
+  };
+  // A new history plays from the start.
+  useEffect(() => {
+    seek(t ? t.lo : 0);
+    setPlaying(true);
+  }, [key, t?.lo]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!playing || !t) return;
+    let last = performance.now();
+    let id = 0;
+    const step = (now: number) => {
+      const next = tauRef.current + Math.min(0.1, (now - last) / 1000) * speed;
+      last = now;
+      if (next >= t.hi) {
+        seek(t.hi);
+        setPlaying(false);
+        return;
+      }
+      seek(next);
+      id = requestAnimationFrame(step);
+    };
+    id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
+  }, [playing, speed, t]);
+
+  const arrived = mergers.filter((m) => m.time <= tau);
+  const lastArrival = arrived.length ? arrived[arrived.length - 1].time : null;
+  const profile = frame && disc ? (frame.arrays[disc.name] as Float64Array) : null;
+  const spread = frame && spreadDecl ? (frame.arrays[spreadDecl.name] as Float32Array) : null;
+  // The scatter only changes when a merger lands, so the transport runs once per arrival.
+  const scatter = useMemo(
+    () => (spread && R && t ? arrivedSpread(spread, R.n, t, lastArrival === null ? t.lo - 1 : lastArrival + t.width / 2) : null),
+    [spread, R, t, lastArrival],
+  );
+  const moved = useMemo(
+    () => (profile && radii && R && scatter ? radialTransport(profile, radii, R.width, scatter) : null),
+    [profile, radii, R, scatter],
+  );
+
+  const delivery = frame && deliveryDecl ? (frame.arrays[deliveryDecl.name] as Float32Array) : null;
+  const heating = frame && heatingDecl ? (frame.arrays[heatingDecl.name] as Float32Array) : null;
+  const landing = mergers.find((m) => tau >= m.time && tau - m.time < 0.5);
+  const atEnd = t ? tau >= t.hi : false;
+
+  return (
+    <>
+      <GalaxyView preset={preset} reach={R ? R.hi : 30}>
+        {disc && moved && profile && R && <DiscLayer decl={disc} profile={moved} R={R} cmaps={meta.cmaps} rangeValues={profile} />}
+      </GalaxyView>
+
+      {disc && (
+        <p className={styles.layerNote}>
+          disc: checkpoint 1&apos;s {disc.name}, moved through the radial scatter of the mergers landed by t · what these
+          mergers do to a disc like this, not the disc as it was at t
+        </p>
+      )}
+
+      <div className={styles.scrubber}>
+        <div className={styles.timeRow}>
+          <div className={styles.playback}>
+            <button
+              type="button"
+              aria-pressed={playing}
+              disabled={!t}
+              onClick={() => {
+                if (atEnd && t) seek(t.lo);
+                setPlaying((p) => !p || atEnd);
+              }}
+            >
+              {playing ? "pause" : atEnd ? "replay" : "play"}
+            </button>
+            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Playback speed">
+              {PLAYBACK_SPEEDS.map((s) => (
+                <option key={s} value={s}>
+                  {s} Gyr/s
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.track}>
+            <input
+              type="range"
+              min={t?.lo ?? 0}
+              max={t?.hi ?? 1}
+              step={t ? t.width / 4 : 0.01}
+              value={tau}
+              disabled={!t}
+              aria-label="Cosmic time"
+              onChange={(e) => {
+                setPlaying(false);
+                seek(Number(e.target.value));
+              }}
+            />
+            {t &&
+              mergers.map((m, i) => (
+                <span
+                  key={i}
+                  className={styles.merger}
+                  style={{ left: `${((m.time - t.lo) / (t.hi - t.lo)) * 100}%` }}
+                  title={`Merger at ${m.time} Gyr, mass ratio 1:${formatNumber(1 / m.mass_ratio, 2)}`}
+                />
+              ))}
+          </div>
+          <span className={styles.timeValue}>{t ? `${formatNumber(tau, 3)} ${t.unit_display}` : "—"}</span>
+        </div>
+
+        {t && radii && scatter && delivery && heating ? (
+          <dl className={styles.gauges}>
+            <div>
+              <dt>gas delivered by mergers</dt>
+              <dd>
+                {formatNumber(100 * deliveredBy(delivery, t, tau), 3)}% <small>of {formatNumber(100 * deliveredBy(delivery, t, t.hi), 3)}%</small>
+              </dd>
+            </div>
+            <div>
+              <dt>σ_z today, matter forming now</dt>
+              <dd>
+                {formatNumber(valueAt(heating, tau, t), 3)} <small>km/s</small>
+              </dd>
+            </div>
+            <div>
+              <dt>radial scatter so far at R₀</dt>
+              <dd>
+                {formatNumber(interp(R_SUN_KPC, radii, scatter), 3)} <small>kpc</small>
+              </dd>
+            </div>
+          </dl>
+        ) : null}
+
+        <div className={styles.scrubNote}>
+          {loaded.busy || !frame
+            ? `Loading the merger history: ${HISTORY_SAMPLING.tSamples} time steps.`
+            : landing
+              ? `merger 1:${formatNumber(1 / landing.mass_ratio, 2)} landing at ${landing.time} Gyr · gas fraction ${landing.gas_fraction}`
+              : `${mergers.length} merger${mergers.length === 1 ? "" : "s"} marked · only major mergers scatter and heat`}
+        </div>
+      </div>
+      {loaded.error && <p className={styles.fault}>Merger history failed: {loaded.error}</p>}
     </>
   );
 }
