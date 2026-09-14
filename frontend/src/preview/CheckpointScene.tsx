@@ -2,6 +2,7 @@ import { codes } from "@interface/transport.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
+import { ContourRings, type Ring } from "../galaxy/ContourRings";
 import { DiscLayer } from "../galaxy/DiscLayer";
 import { ShearSpokes } from "../galaxy/ShearSpokes";
 import { interp, periodMyr } from "../galaxy/shear";
@@ -10,7 +11,7 @@ import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
 import { LinePlot } from "./LinePlot";
-import { arrivedSpread, deliveredBy, radialTransport, valueAt } from "./mergers";
+import { arrivedSpread, deliveredBy, radialTransport, ringLevels, ringRadius, valueAt } from "./mergers";
 import styles from "./CheckpointScene.module.css";
 
 interface Props {
@@ -52,6 +53,12 @@ export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts 
 
 function declOf(meta: FieldsPayload, name: string): FieldDecl | undefined {
   return meta.fields.find((f) => f.name === name);
+}
+
+/** A share as a percentage; the far tail of a Gaussian delivery window reads as none rather than 10⁻¹²%. */
+function formatPercent(share: number): string {
+  const pct = 100 * share;
+  return pct < 0.01 ? "0" : formatNumber(pct, 3);
 }
 
 function mergersOf(query: Query): MergerEvent[] {
@@ -214,6 +221,15 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
     [profile, radii, R, scatter],
   );
 
+  // Fixed surface densities: a ring that moves is the matter moving.
+  const rings = useMemo<Ring[]>(
+    () =>
+      profile && moved && radii
+        ? ringLevels(profile).map((level) => ({ level, radius: ringRadius(moved, radii, level), before: ringRadius(profile, radii, level) }))
+        : [],
+    [profile, moved, radii],
+  );
+  const ringColour = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue("--ink-1").trim() || "#e6ebf5", []);
   const delivery = frame && deliveryDecl ? (frame.arrays[deliveryDecl.name] as Float32Array) : null;
   const heating = frame && heatingDecl ? (frame.arrays[heatingDecl.name] as Float32Array) : null;
   const landing = mergers.find((m) => tau >= m.time && tau - m.time < 0.5);
@@ -223,12 +239,15 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
     <>
       <GalaxyView preset={preset} reach={R ? R.hi : 30}>
         {disc && moved && profile && R && <DiscLayer decl={disc} profile={moved} R={R} cmaps={meta.cmaps} rangeValues={profile} />}
+        {disc && R && rings.length > 0 && (
+          <ContourRings rings={rings} lift={R.hi / 400} colour={ringColour} unit={String(disc.unit_display ?? disc.unit)} fontSize={R.hi / 28} />
+        )}
       </GalaxyView>
 
       {disc && (
         <p className={styles.layerNote}>
           disc: checkpoint 1&apos;s {disc.name}, moved through the radial scatter of the mergers landed by t · what these
-          mergers do to a disc like this, not the disc as it was at t
+          mergers do to a disc like this, not the disc as it was at t · rings at fixed Σ, solid now, faint before any merger
         </p>
       )}
 
@@ -286,7 +305,7 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
             <div>
               <dt>gas delivered by mergers</dt>
               <dd>
-                {formatNumber(100 * deliveredBy(delivery, t, tau), 3)}% <small>of {formatNumber(100 * deliveredBy(delivery, t, t.hi), 3)}%</small>
+                {formatPercent(deliveredBy(delivery, t, tau))}% <small>of {formatPercent(deliveredBy(delivery, t, t.hi))}%</small>
               </dd>
             </div>
             <div>

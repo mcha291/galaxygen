@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Axis } from "./axes";
-import { arrivedSpread, cellOf, deliveredBy, radialTransport, valueAt } from "./mergers";
+import { arrivedSpread, cellOf, deliveredBy, radialTransport, ringLevels, ringRadius, valueAt } from "./mergers";
 
 const T: Axis = { lo: 0, hi: 10, n: 10, width: 1 } as Axis;
 
@@ -71,5 +71,28 @@ describe("deliveredBy", () => {
     expect(deliveredBy(rate, T, 2)).toBe(0);
     expect(deliveredBy(rate, T, 3.5)).toBeCloseTo(0.75, 9);
     expect(deliveredBy(rate, T, 10)).toBeCloseTo(1, 9);
+  });
+});
+
+describe("rings", () => {
+  const radii = Float64Array.from({ length: 400 }, (_, i) => (i + 0.5) * 0.075);
+  const profile = Float64Array.from(radii, (r) => 900 * Math.exp(-r / 2.6));
+
+  it("picks whole decades below the top one, inside the range", () => {
+    expect(ringLevels(profile)).toEqual([10, 1, 0.1, 0.01]);
+    expect(ringLevels(profile, 2)).toEqual([10, 1]);
+    expect(ringLevels([0, Number.NaN])).toEqual([]);
+  });
+
+  it("finds a decade of an exponential disc one ln(10) scale length further out", () => {
+    const r10 = ringRadius(profile, radii, 10)!;
+    const r1 = ringRadius(profile, radii, 1)!;
+    expect(r1 - r10).toBeCloseTo(Math.LN10 * 2.6, 2);
+    expect(ringRadius(profile, radii, 1e6)).toBeNull();
+  });
+
+  it("moves outward once the disc has been scattered", () => {
+    const moved = radialTransport(profile, radii, 0.075, Float64Array.from(radii, (r) => 0.15 * r));
+    expect(ringRadius(moved, radii, 1)!).toBeGreaterThan(ringRadius(profile, radii, 1)!);
   });
 });

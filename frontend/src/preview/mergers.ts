@@ -81,3 +81,40 @@ export function deliveredBy(delivery: ArrayLike<number>, t: Axis, tau: number): 
   }
   return total;
 }
+
+/**
+ * Surface densities worth a ring: whole decades inside the profile's range, top
+ * down, at most `count` of them. Log-spaced so an exponential disc gives evenly
+ * spaced rings, and fixed values so a ring that moves is the matter moving.
+ */
+export function ringLevels(profile: ArrayLike<number>, count = 4): number[] {
+  let lo = Infinity;
+  let hi = 0;
+  for (let i = 0; i < profile.length; i += 1) {
+    const v = profile[i];
+    if (!(v > 0) || !Number.isFinite(v)) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  const out: number[] = [];
+  if (!(hi > 0)) return out;
+  // Skip the top decade: its ring sits in the bright core where the eye cannot follow it.
+  for (let e = Math.floor(Math.log10(hi)) - 1; out.length < count && 10 ** e >= lo; e -= 1) out.push(10 ** e);
+  return out;
+}
+
+/**
+ * The radius where the profile falls through `level`, interpolated between the
+ * two cells that bracket it; the outermost crossing, so a bump does not draw a
+ * ring inside a ring. Null when the profile never reaches the level.
+ */
+export function ringRadius(profile: ArrayLike<number>, radii: ArrayLike<number>, level: number): number | null {
+  let found: number | null = null;
+  for (let i = 0; i + 1 < profile.length; i += 1) {
+    const a = profile[i];
+    const b = profile[i + 1];
+    if (!Number.isFinite(a) || !Number.isFinite(b) || (a - level) * (b - level) > 0 || a === b) continue;
+    found = radii[i] + ((level - a) / (b - a)) * (radii[i + 1] - radii[i]);
+  }
+  return found;
+}
