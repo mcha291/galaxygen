@@ -118,3 +118,33 @@ export function ringRadius(profile: ArrayLike<number>, radii: ArrayLike<number>,
   }
   return found;
 }
+/** Height in the tower for cosmic time τ: the floor is the grid's first moment, the top today, centred on 0. */
+export function towerY(tau: number, t: Axis, height: number): number {
+  return ((tau - t.lo) / (t.hi - t.lo) - 0.5) * height;
+}
+
+/** For each t cell, how many of the (sorted) merger times have landed by its centre. */
+export function arrivalsPerCell(times: number[], t: Axis): Int32Array {
+  const out = new Int32Array(t.n);
+  let k = 0;
+  for (let j = 0; j < t.n; j += 1) {
+    const centre = t.lo + (j + 0.5) * t.width;
+    while (k < times.length && times[k] <= centre) k += 1;
+    out[j] = k;
+  }
+  return out;
+}
+
+/**
+ * A ring's wall through time as a lathe profile: (radius, height) pairs, two per
+ * t cell, so the wall stands straight through each cell and steps outward in a
+ * flat annulus where a merger lands between two cells.
+ */
+export function wallProfile(radiusPerCell: ArrayLike<number>, t: Axis, height: number): Float64Array {
+  const out = new Float64Array(t.n * 4);
+  for (let j = 0; j < t.n; j += 1) {
+    const r = radiusPerCell[j];
+    out.set([r, towerY(t.lo + j * t.width, t, height), r, towerY(t.lo + (j + 1) * t.width, t, height)], j * 4);
+  }
+  return out;
+}

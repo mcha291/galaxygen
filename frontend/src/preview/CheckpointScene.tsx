@@ -1,8 +1,9 @@
+import { paintOf } from "@interface/ramp.js";
 import { codes } from "@interface/transport.js";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Color } from "three";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
-import { ContourRings, type Ring } from "../galaxy/ContourRings";
 import { DiscLayer } from "../galaxy/DiscLayer";
 import { ShearSpokes } from "../galaxy/ShearSpokes";
 import { interp, periodMyr } from "../galaxy/shear";
@@ -11,7 +12,18 @@ import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
 import { LinePlot } from "./LinePlot";
-import { arrivedSpread, deliveredBy, radialTransport, ringLevels, ringRadius, valueAt } from "./mergers";
+import {
+  arrivalsPerCell,
+  arrivedSpread,
+  deliveredBy,
+  radialTransport,
+  ringLevels,
+  ringRadius,
+  towerY,
+  valueAt,
+  wallProfile,
+} from "./mergers";
+import { TimeTower } from "./TimeTower";
 import styles from "./CheckpointScene.module.css";
 
 interface Props {
@@ -207,47 +219,70 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
     return () => cancelAnimationFrame(id);
   }, [playing, speed, t]);
 
-  const arrived = mergers.filter((m) => m.time <= tau);
-  const lastArrival = arrived.length ? arrived[arrived.length - 1].time : null;
+  const arrived = mergers.filter((m) => m.time <= tau).length;
   const profile = frame && disc ? (frame.arrays[disc.name] as Float64Array) : null;
   const spread = frame && spreadDecl ? (frame.arrays[spreadDecl.name] as Float32Array) : null;
-  // The scatter only changes when a merger lands, so the transport runs once per arrival.
-  const scatter = useMemo(
-    () => (spread && R && t ? arrivedSpread(spread, R.n, t, lastArrival === null ? t.lo - 1 : lastArrival + t.width / 2) : null),
-    [spread, R, t, lastArrival],
-  );
-  const moved = useMemo(
-    () => (profile && radii && R && scatter ? radialTransport(profile, radii, R.width, scatter) : null),
-    [profile, radii, R, scatter],
-  );
-
-  // Fixed surface densities: a ring that moves is the matter moving.
-  const rings = useMemo<Ring[]>(
-    () =>
-      profile && moved && radii
-        ? ringLevels(profile).map((level) => ({ level, radius: ringRadius(moved, radii, level), before: ringRadius(profile, radii, level) }))
-        : [],
-    [profile, moved, radii],
-  );
-  const ringColour = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue("--ink-1").trim() || "#e6ebf5", []);
   const delivery = frame && deliveryDecl ? (frame.arrays[deliveryDecl.name] as Float32Array) : null;
   const heating = frame && heatingDecl ? (frame.arrays[heatingDecl.name] as Float32Array) : null;
+
+  // The disc after 0, 1, … of the mergers have landed: the scatter only changes on
+  // an arrival, so the transport runs once per merger, not per frame.
+  const stages = useMemo(() => {
+    if (!profile || !spread || !radii || !R || !t) return null;
+    return Array.from({ length: mergers.length + 1 }, (_, k) => {
+      const scatter = arrivedSpread(spread, R.n, t, k === 0 ? t.lo - 1 : mergers[k - 1].time + t.width / 2);
+      return { scatter, moved: radialTransport(profile, radii, R.width, scatter) };
+    });
+  }, [profile, spread, radii, R, t, mergers]);
+  const stage = stages ? stages[arrived] : null;
+
+  // The tower: height is cosmic time. Each fixed-Σ ring is a wall that steps out where
+  // a merger lands, coloured by the σ_z matter forming at that height carries today.
+  const height = R ? R.hi * 0.9 : 1;
+  const tower = useMemo(() => {
+    if (!stages || !profile || !radii || !t || !heating || !heatingDecl) return null;
+    const perCell = arrivalsPerCell(mergers.map((m) => m.time), t);
+    const walls: Float64Array[] = [];
+    for (const level of ringLevels(profile)) {
+      const byStage = stages.map((st) => ringRadius(st.moved, radii, level));
+      if (byStage.some((r) => r === null)) continue;
+      walls.push(wallProfile(Array.from(perCell, (k) => byStage[k]!), t, height));
+    }
+    const ramp = paintOf(heatingDecl, meta.cmaps, heating);
+    const colours = new Float32Array(t.n * 3);
+    const c = new Color();
+    for (let j = 0; j < t.n; j += 1) {
+      const [r, g, b] = ramp.color(heating[j]);
+      c.setRGB(r / 255, g / 255, b / 255).convertSRGBToLinear();
+      colours.set([c.r, c.g, c.b], j * 3);
+    }
+    return { walls, colours };
+  }, [stages, profile, radii, t, heating, heatingDecl, meta.cmaps, mergers, height]);
+
   const landing = mergers.find((m) => tau >= m.time && tau - m.time < 0.5);
   const atEnd = t ? tau >= t.hi : false;
 
   return (
     <>
-      <GalaxyView preset={preset} reach={R ? R.hi : 30}>
-        {disc && moved && profile && R && <DiscLayer decl={disc} profile={moved} R={R} cmaps={meta.cmaps} rangeValues={profile} />}
-        {disc && R && rings.length > 0 && (
-          <ContourRings rings={rings} lift={R.hi / 400} colour={ringColour} unit={String(disc.unit_display ?? disc.unit)} fontSize={R.hi / 28} />
+      <GalaxyView preset={preset} reach={R ? R.hi * 1.6 : 30}>
+        {disc && stage && profile && R && t && (
+          <group position={[0, towerY(tau, t, height), 0]}>
+            <DiscLayer decl={disc} profile={stage.moved} R={R} cmaps={meta.cmaps} rangeValues={profile} />
+          </group>
         )}
+        {tower && t && <TimeTower walls={tower.walls} colours={tower.colours} now={towerY(tau, t, height)} />}
       </GalaxyView>
 
-      {disc && (
+      {landing && (
+        <p className={styles.arrival}>
+          merger 1:{formatNumber(1 / landing.mass_ratio, 2)} landing at {landing.time} Gyr · gas fraction {landing.gas_fraction}
+        </p>
+      )}
+
+      {disc && heatingDecl && (
         <p className={styles.layerNote}>
-          disc: checkpoint 1&apos;s {disc.name}, moved through the radial scatter of the mergers landed by t · what these
-          mergers do to a disc like this, not the disc as it was at t · rings at fixed Σ, solid now, faint before any merger
+          height is cosmic time, today at the top · walls: fixed Σ of checkpoint 1&apos;s {disc.name}, moved through the mergers&apos;
+          radial scatter, coloured by {heatingDecl.name} · what these mergers do to a disc like this, not the disc as it was
         </p>
       )}
 
@@ -300,7 +335,7 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
           <span className={styles.timeValue}>{t ? `${formatNumber(tau, 3)} ${t.unit_display}` : "—"}</span>
         </div>
 
-        {t && radii && scatter && delivery && heating ? (
+        {t && radii && stage && delivery && heating ? (
           <dl className={styles.gauges}>
             <div>
               <dt>gas delivered by mergers</dt>
@@ -317,7 +352,7 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
             <div>
               <dt>radial scatter so far at R₀</dt>
               <dd>
-                {formatNumber(interp(R_SUN_KPC, radii, scatter), 3)} <small>kpc</small>
+                {formatNumber(interp(R_SUN_KPC, radii, stage.scatter), 3)} <small>kpc</small>
               </dd>
             </div>
           </dl>
@@ -326,9 +361,7 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
         <div className={styles.scrubNote}>
           {loaded.busy || !frame
             ? `Loading the merger history: ${HISTORY_SAMPLING.tSamples} time steps.`
-            : landing
-              ? `merger 1:${formatNumber(1 / landing.mass_ratio, 2)} landing at ${landing.time} Gyr · gas fraction ${landing.gas_fraction}`
-              : `${mergers.length} merger${mergers.length === 1 ? "" : "s"} marked · only major mergers scatter and heat`}
+            : `${mergers.length} merger${mergers.length === 1 ? "" : "s"} marked · only major mergers scatter and heat`}
         </div>
       </div>
       {loaded.error && <p className={styles.fault}>Merger history failed: {loaded.error}</p>}

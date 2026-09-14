@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Axis } from "./axes";
-import { arrivedSpread, cellOf, deliveredBy, radialTransport, ringLevels, ringRadius, valueAt } from "./mergers";
+import { arrivedSpread, cellOf, deliveredBy, radialTransport, ringLevels, ringRadius, towerY, arrivalsPerCell, wallProfile, valueAt } from "./mergers";
 
 const T: Axis = { lo: 0, hi: 10, n: 10, width: 1 } as Axis;
 
@@ -94,5 +94,27 @@ describe("rings", () => {
   it("moves outward once the disc has been scattered", () => {
     const moved = radialTransport(profile, radii, 0.075, Float64Array.from(radii, (r) => 0.15 * r));
     expect(ringRadius(moved, radii, 1)!).toBeGreaterThan(ringRadius(profile, radii, 1)!);
+  });
+});
+describe("the tower", () => {
+  it("puts the grid's first moment at the floor and today at the top, centred", () => {
+    expect(towerY(0, T, 20)).toBe(-10);
+    expect(towerY(10, T, 20)).toBe(10);
+    expect(towerY(5, T, 20)).toBe(0);
+  });
+
+  it("counts the mergers landed by each cell's centre", () => {
+    expect(Array.from(arrivalsPerCell([3.5, 6.5], T))).toEqual([0, 0, 0, 1, 1, 1, 2, 2, 2, 2]);
+    expect(Array.from(arrivalsPerCell([], T))).toEqual(new Array(10).fill(0));
+  });
+
+  it("stands a wall straight through each cell and steps it where the radius changes", () => {
+    const radius = [2, 2, 2, 3, 3, 3, 3, 3, 3, 3];
+    const p = wallProfile(radius, T, 10);
+    expect(p).toHaveLength(40);
+    expect(Array.from(p.slice(0, 4))).toEqual([2, -5, 2, -4]);
+    // the top of cell 2 and the bottom of cell 3 share a height: a flat step outward
+    expect([p[10], p[11]]).toEqual([2, -2]);
+    expect([p[12], p[13]]).toEqual([3, -2]);
   });
 });

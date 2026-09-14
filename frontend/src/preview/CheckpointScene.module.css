@@ -194,6 +194,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Merger arrivals, fixed at the top centre of the canvas. */
+.arrival {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 12px;
+  border: var(--hair) solid var(--amber-3);
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--void-2) 88%, transparent);
+  font: 500 11px / 1 var(--font-mono);
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .gauges small {
   font-size: 10px;
   color: var(--text-muted);
