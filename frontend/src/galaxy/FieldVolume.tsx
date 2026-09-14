@@ -1,5 +1,5 @@
 import { paintOf } from "@interface/ramp.js";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import {
   AdditiveBlending,
@@ -8,12 +8,18 @@ import {
   ClampToEdgeWrapping,
   DataTexture,
   FloatType,
+  HalfFloatType,
   LinearFilter,
+  Matrix4,
   Mesh,
+  PlaneGeometry,
   RGBAFormat,
   RepeatWrapping,
+  Scene,
   ShaderMaterial,
+  Vector2,
   Vector3,
+  WebGLRenderTarget,
 } from "three";
 
 import { type FieldsPayload, type Frame, type Query, loadArrays } from "../api";
@@ -37,7 +43,30 @@ export const LIGHT_PER_LSUN_PC2 = 1 / 400;
 export const CHANNEL_EXTINCTION = [0.748, 1.0, 1.324] as const;
 
 /** Ray-march steps through the galaxy's bounding box. */
-const STEPS = 128;
+const STEPS = 96;
+/**
+ * The field is marched at this fraction of the canvas's resolution and stretched onto it. The
+ * field is smooth, so a quarter of the pixels loses nothing to see; marching every pixel of a
+ * screen the galaxy fills, at a device pixel ratio of 2, was 650 million texture reads a frame
+ * and froze the page.
+ */
+const RESOLUTION = 0.5;
+
+// A screen-covering triangle pair that lays the marched image over the view, added as light.
+const COMPOSITE_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
+const COMPOSITE_FRAGMENT = /* glsl */ `
+  uniform sampler2D field;
+  varying vec2 vUv;
+  void main() {
+    gl_FragColor = vec4(texture2D(field, vUv).rgb, 1.0);
+  }
+`;
 
 const FIELDS = ["disc_surface_brightness", "disc_light_temperature", "pattern_density_contrast", "dust_extinction_v", "halpha_surface_brightness"];
 const SCALARS = ["thin_disc_scale_height", "bulge_luminosity", "bulge_light_temperature", "bulge_scale_radius"];
@@ -196,30 +225,88 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
       side: BackSide, // the far faces, so it draws with the camera outside the box or inside it
-      blending: AdditiveBlending,
-      transparent: true,
       depthTest: false,
       depthWrite: false,
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
-    box.renderOrder = -1;
-    box.frustumCulled = false;    return box;
+    box.frustumCulled = false;
+    return box;
   }, [frame, meta.cmaps]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const gl = useThree((state) => state.gl);
+  const size = useThree((state) => state.size);
+
+  // The box lives in a scene of its own, marched into a lower-resolution float target.
+  const offscreen = useMemo(() => {
+    if (!mesh) return null;
+    const scene = new Scene();
+    scene.add(mesh);
+    const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
+    target.texture.minFilter = LinearFilter;
+    target.texture.magFilter = LinearFilter;
+    const quad = new Mesh(
+      new PlaneGeometry(2, 2),
+      new ShaderMaterial({
+        uniforms: { field: { value: target.texture } },
+        vertexShader: COMPOSITE_VERTEX,
+        fragmentShader: COMPOSITE_FRAGMENT,
+        blending: AdditiveBlending,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    quad.frustumCulled = false;
+    quad.renderOrder = -1;
+    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0 } };
+  }, [mesh]);
 
   useEffect(
     () => () => {
-      if (!mesh) return;
+      if (!mesh || !offscreen) return;
       const material = mesh.material as ShaderMaterial;
       (material.uniforms.plane.value as DataTexture).dispose();
       material.dispose();
       mesh.geometry.dispose();
+      offscreen.target.dispose();
+      offscreen.quad.geometry.dispose();
+      (offscreen.quad.material as ShaderMaterial).dispose();
     },
-    [mesh],
+    [mesh, offscreen],
   );
 
-  useFrame(() => {
-    if (mesh) (mesh.material as ShaderMaterial).uniforms.gain.value = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;
-  });
+  // Before the composer (priority 1) draws the frame: march again only if the camera, the
+  // drawing size or the gain changed. A still view costs nothing after its first frame.
+  useFrame(({ camera }) => {
+    if (!mesh || !offscreen) return;
+    const gain = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;
+    const buffer = gl.getDrawingBufferSize(DRAWING);
+    const width = Math.max(1, Math.round(buffer.x * RESOLUTION));
+    const height = Math.max(1, Math.round(buffer.y * RESOLUTION));
+    const last = offscreen.last;
+    camera.updateMatrixWorld();
+    const moved =
+      !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
+      last.width !== width || last.height !== height;
+    if (!moved) return;
+    if (last.width !== width || last.height !== height) offscreen.target.setSize(width, height);
+    (mesh.material as ShaderMaterial).uniforms.gain.value = gain;
+    const before = gl.getRenderTarget();
+    gl.setRenderTarget(offscreen.target);
+    gl.setClearColor(0x000000, 0);
+    gl.clear(true, false, false);
+    gl.render(offscreen.scene, camera);
+    gl.setRenderTarget(before);
+    gl.setClearColor(0x000000, 1);
+    last.view.copy(camera.matrixWorld);
+    last.projection.copy(camera.projectionMatrix);
+    last.gain = gain;
+    last.width = width;
+    last.height = height;
+  }, 0.5);
 
-  return mesh ? <primitive object={mesh} /> : null;
+  void size; // re-render on resize so the target follows the canvas
+  return offscreen ? <primitive object={offscreen.quad} /> : null;
 }
+
+const DRAWING = new Vector2();
