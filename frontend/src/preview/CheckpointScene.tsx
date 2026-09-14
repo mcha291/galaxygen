@@ -5,7 +5,7 @@ import { Color } from "three";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
-import { FarField } from "../galaxy/FarField";
+import { LightVolume } from "../galaxy/LightVolume";
 import { Isophotes } from "../galaxy/Isophotes";
 import { Tracers } from "../galaxy/Tracers";
 import { interp, periodMyr } from "../galaxy/shear";
@@ -72,7 +72,7 @@ export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts 
   if (n >= 5) {
     return (
       <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} photometric={stars?.photometric}>
-        {stars?.photometric && <FarField meta={meta} query={query} stops={stars.exposure ?? 0} />}
+        {stars?.photometric && <LightVolume meta={meta} query={query} stops={stars.exposure ?? 0} />}
       </GalaxyView>
     );
   }

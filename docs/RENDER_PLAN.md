@@ -274,3 +274,22 @@ the phrase *rather than faked*. The perturbation must therefore be derived and
 declared like any other field, with its amplitude either derived or seeded and
 never made a control — otherwise this plan closes a debt by doing the exact thing
 the debt was opened to avoid.
+
+---
+
+## Status (S24)
+
+| | Step | State |
+|---|---|---|
+| **M1** | Non-axisymmetric density | done: `pattern_density_contrast`, experimental amplitudes |
+| **M2** | Per-star photometry | done: PARSEC lookup in the catalogue, `blackbody` cmap (D164) |
+| **M3** | Dust | done: `dust_extinction_v` from the ISM stage (D163) |
+| **M4** | Line emission | done: `halpha_surface_brightness` (D166) |
+| **H1** | History scrubber | done at checkpoint 3 |
+| **R1** | Additive, HDR, tone mapping | done (D164) |
+| **R2** | PSF sprite | done |
+| **R3** | Far field | done: a particle volume with the bulge (D165, D166) |
+| **R4** | Dust as subtraction | done: per line of sight (D166) |
+| **R5** | Bloom | done, restrained (D165) |
+| **P3** | Photometric acceptance rows | not started |
+

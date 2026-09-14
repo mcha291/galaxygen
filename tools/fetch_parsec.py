@@ -2,6 +2,7 @@
 
     uv run python tools/fetch_parsec.py --raw <dir>     # download (skips files already there) and convert
     uv run python tools/fetch_parsec.py --raw <dir> --convert-only
+    uv run python tools/fetch_parsec.py --raw <dir> --append-age 10.1  # one more age, merged in
 
 One request per metallicity to the CMD 3.9 form (PARSEC v1.2S + COLIBRI TP-AGB, Kroupa IMF,
 UBVRIJHK), every log age on the grid in each. The raw tables stay out of the repository;
@@ -87,7 +88,10 @@ def read(path: Path) -> list[dict[str, np.ndarray]]:
 
 
 def convert(raw: Path) -> None:
-    isochrones = [iso for mh in METALLICITIES for iso in read(raw / f"parsec_mh{mh:+.2f}.dat")]
+    write([iso for mh in METALLICITIES for iso in read(raw / f"parsec_mh{mh:+.2f}.dat")])
+
+
+def write(isochrones: list[dict]) -> None:
     lengths = np.array([len(i["mass"]) for i in isochrones])
     offsets = np.concatenate([[0], np.cumsum(lengths)[:-1]])
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -105,12 +109,53 @@ def convert(raw: Path) -> None:
     print(f"{len(isochrones)} isochrones, {lengths.sum()} rows -> {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1e6:.2f} MB)")
 
 
+def append_age(raw: Path, log_age: float) -> None:
+    """Fetch one more log age at every metallicity and merge it into the committed table."""
+    for mh in METALLICITIES:
+        dest = raw / f"parsec_mh{mh:+.2f}_age{log_age:.2f}.dat"
+        if not dest.exists():
+            start = time.time()
+            fetch_ages(float(mh), log_age, log_age, dest)
+            print(f"[M/H] = {mh:+.2f}, log age {log_age}: {dest.stat().st_size / 1e6:.2f} MB in {time.time() - start:.0f} s", flush=True)
+            time.sleep(5)
+    with np.load(OUT) as old:
+        isochrones = [
+            {"mh": float(old["mh"][k]), "log_age": float(old["log_age"][k]),
+             **{c: old[c][old["offset"][k]: old["offset"][k] + old["length"][k]] for c in ("mass", "log_l", "log_teff", "label")}}
+            for k in range(old["offset"].size)
+        ]
+    known = {(round(i["mh"], 2), round(i["log_age"], 2)) for i in isochrones}
+    for mh in METALLICITIES:
+        for iso in read(raw / f"parsec_mh{mh:+.2f}_age{log_age:.2f}.dat"):
+            if (round(iso["mh"], 2), round(iso["log_age"], 2)) not in known:
+                isochrones.append(iso)
+    isochrones.sort(key=lambda i: (round(i["mh"], 2), round(i["log_age"], 2)))
+    write(isochrones)
+
+
+def fetch_ages(mh: float, lo: float, hi: float, dest: Path) -> None:
+    form = {**FORM, "isoc_lagelow": f"{lo}", "isoc_lageupp": f"{hi}", "isoc_dlage": "0.1",
+            "isoc_metlow": f"{mh}", "isoc_metupp": f"{mh}", "isoc_dmet": "0.0"}
+    body = urllib.parse.urlencode(form).encode()
+    with urllib.request.urlopen(urllib.request.Request(CMD, data=body), context=INSECURE, timeout=900) as r:
+        page = r.read().decode("utf-8", "replace")
+    found = re.search(r"\.\./tmp/(output\d+\.dat)", page)
+    if not found:
+        raise RuntimeError(f"[M/H] = {mh}: no output file in the CMD response")
+    with urllib.request.urlopen(f"{SERVER}/tmp/{found.group(1)}", context=INSECURE, timeout=900) as r:
+        dest.write_bytes(r.read())
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--raw", type=Path, required=True, help="directory for the raw CMD tables (not committed)")
     ap.add_argument("--convert-only", action="store_true")
+    ap.add_argument("--append-age", type=float, help="fetch one more log age and merge it into the committed table")
     args = ap.parse_args()
     args.raw.mkdir(parents=True, exist_ok=True)
+    if args.append_age is not None:
+        append_age(args.raw, args.append_age)
+        return 0
     if not args.convert_only:
         for mh in METALLICITIES:
             dest = args.raw / f"parsec_mh{mh:+.2f}.dat"

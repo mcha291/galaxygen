@@ -4534,3 +4534,29 @@ before the tone map (R5). The ground is black in this mode.
 unresolved light has no thickness, so edge-on it is a line; metallicity is read at present radius.
 The balance between a star point and a pixel of the far field is a display constant
 (`FAR_FIELD_PER_LSUN_PC2`), not a physical one.
+
+
+### D166. The unresolved light becomes a volume, gains Hα and the bulge, and the dust is per line of sight (RENDER_PLAN M4, R3, R4)
+
+**Model.** The `light` stage adds `halpha_surface_brightness` (today's Σ_SFR times a new Level 0
+constant, `HALPHA_PER_SFR` = 4.86 × 10⁷ L☉ per M☉/yr, Kennicutt & Evans 2012 for a Kroupa IMF
+`[recall]`), and `bulge_luminosity` with `bulge_light_temperature`. The classical bulge has no
+history, so its population is **a stated proxy**: as old as the grid's first step, at the
+mass-weighted [Fe/H] of the stars formed at its scale radius. Default Milky Way: Hα 0.13 L☉/pc² at
+R₀, 1/600 of the starlight; bulge 3.3 × 10⁹ L☉ at 4700 K. The PARSEC table gains log age 10.1
+(`fetch_parsec.py --append-age 10.1`, 396 isochrones), so the clamp moves from 10 to 12.6 Gyr.
+
+**Viewer.** The flat far-field texture of D165 is replaced by `LightVolume`: 600 000 particles
+drawn from Σ_L(R) × the pattern contrast in the plane and sech² at the published thin-disc scale
+height, 800 Hα knots crowded harder into the arms (contrast cubed, 120 pc each), and a Hernquist
+bulge drawn to 90% of its light. Every particle carries an equal share of a published luminosity
+and a smoothing size of a few local spacings; a point shader divides its light by the area it is
+drawn over, so the sum reads as a surface brightness at any distance. The dust is per particle:
+the face-on optical depth at its (R, φ), times the share of a tanh dust layer (half the stellar
+scale height) between it and the camera, times the airmass, per channel with CCM's ratios. Face-on
+that dims and reddens; edge-on it is a dust lane.
+
+**Display choices, named.** The particle counts, the smoothing, the dust layer's thickness, the
+Hα clumping and `LINE_CHANNEL_WEIGHT` (5: the line is all in one channel, a population's
+bolometric light is not) decide how it looks and not what the model says. The particles are not
+stars and carry no identity; the star sample is drawn over them and is what can be clicked.

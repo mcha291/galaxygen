@@ -4,7 +4,7 @@ import type { FieldsPayload, Query, Sample } from "../api";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC } from "./colors";
 import { Exposure } from "./Exposure";
-import { FarField } from "./FarField";
+import { LightVolume } from "./LightVolume";
 import { FieldLegend } from "./FieldLegend";
 import { GalaxyView, type Preset, type ViewState } from "./GalaxyView";
 import { scaleBar } from "./zoom";
@@ -55,7 +55,7 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
   return (
     <>
       <GalaxyView positions={positions} colors={colors} preset={preset} onPick={onPick} zoom={zoom} onView={setView} photometric={field === PHOTOMETRIC}>
-        {field === PHOTOMETRIC && <FarField meta={meta} query={query} stops={exposure} />}
+        {field === PHOTOMETRIC && <LightVolume meta={meta} query={query} stops={exposure} />}
       </GalaxyView>
 
       <div className={styles.panel}>
@@ -81,8 +81,9 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
             <Exposure stops={exposure} onChange={onExposure} />
             <p className={styles.muted}>
               Each star&apos;s published luminosity in its blackbody colour, added as light and tone-mapped. The sample is
-              {` ${sample.header.stars.materialised.toLocaleString("en")}`} stars, drawn over the disc&apos;s unresolved light: its published surface
-              brightness and colour, times the arm contrast, dimmed and reddened by the published dust. Not drawn yet: the bulge&apos;s light, and any thickness to the unresolved light.
+              {` ${sample.header.stars.materialised.toLocaleString("en")}`} stars, drawn over the galaxy&apos;s unresolved light: the disc&apos;s published surface
+              brightness and colour as a volume of its scale height crowded into the arms, its Hα as pink knots, the bulge
+              as a Hernquist sphere, each dimmed and reddened by the published dust between it and you, so edge-on the midplane goes dark.
             </p>
           </div>
         )}

@@ -136,6 +136,14 @@ LEVEL0: dict[str, Constant] = {
         "and is deliberately not fitted: fitting it would make acceptance row 2 a check on the fit "
         "rather than on the model (GALAXY_INPUTS.md §4b).",
     ),
+    "HALPHA_PER_SFR": Constant(  # read by light (RENDER_PLAN M4)
+        4.86e7,
+        "Lsun",
+        "Intrinsic Hα luminosity, in L☉, per M☉/yr of star formation: Kennicutt & Evans 2012's "
+        "calibration log SFR = log L(Hα) − 41.27 for a Kroupa IMF, with L(Hα) in erg/s, over "
+        "L☉ = 3.828 × 10³³ erg/s [recall: Kennicutt & Evans 2012, ARA&A 50, 531, Table 1]. "
+        "Intrinsic: before the dust the line is emitted through.",
+    ),
     "KS_INDEX": Constant(
         1.4,
         "dimensionless",

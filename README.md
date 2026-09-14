@@ -46,7 +46,7 @@ and the constants each declares beyond the shared ones.
 from PARSEC v1.2S isochrones with COLIBRI TP-AGB evolution, generated with the CMD 3.9
 web service maintained by Léo Girardi at the Osservatorio Astronomico di Padova
 (<https://stev.oapd.inaf.it/cgi-bin/cmd>). It keeps initial mass, log L, log T_eff and
-the evolutionary-phase label for 385 isochrones: 35 ages (log age 6.6–10.0, step 0.1) at
+the evolutionary-phase label for 396 isochrones: 36 ages (log age 6.6–10.1, step 0.1) at
 each of 11 metallicities ([M/H] −2.19 to +0.30, step 0.25); `tools/fetch_parsec.py`
 regenerates it. The references CMD lists
 for these tables:

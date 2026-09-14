@@ -5,7 +5,7 @@ emits is published by the model and the viewer only composites it (rules A9, D5)
 The catalogue already carries each star's initial mass, age and [Fe/H]; this
 module maps them onto the isochrone table committed at
 ``galaxy/data/parsec_isochrones.npz`` (``tools/fetch_parsec.py``; attribution in the
-README): 385 isochrones, 35 ages at log age 6.6–10.0 in steps of 0.1 and 11
+README): 396 isochrones, 36 ages at log age 6.6–10.1 in steps of 0.1 and 11
 metallicities at [M/H] −2.19 to +0.30 in steps of 0.25, each carrying initial
 mass, log L and log T_eff.
 
@@ -19,9 +19,9 @@ is in a phase the older one no longer has, and the younger one's values stand.
 
 **What does not hold, recorded rather than hidden.**
 
-- *Ages past 10 Gyr are read at 10 Gyr.* The table stops there and a quarter of the
-  default catalogue is older [verified against the simple model's default
-  catalogue: 25.3%]. Their turnoff is placed at ~1.05 M☉ rather than ~0.9 M☉.
+- *Ages past 12.6 Gyr are read at 12.6 Gyr* (log age 10.1), where the table stops;
+  CMD's own grid ends at 10.13. Until log age 10.1 was appended the table stopped at
+  10 Gyr, past which a quarter of the default catalogue lies.
 - *[Fe/H] stands in for [M/H]*, so α-enhanced stars are read slightly too metal-poor.
 - *Metallicity is the nearest of eleven*, a quarter-dex grid; the 0.2% of stars below
   −2.19 are read at −2.19.

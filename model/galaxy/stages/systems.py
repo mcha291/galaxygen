@@ -542,7 +542,7 @@ STAR_LUMINOSITY = _column(
     "Bolometric, from the PARSEC isochrones at the star's initial mass, age and [Fe/H] "
     "(galaxy/stages/photometry.py, RENDER_PLAN M2). NaN for a star that has died: the table "
     "carries no remnants, and a white dwarf's thousandth of a solar luminosity is not "
-    "invented. Ages past 10 Gyr are read at 10 Gyr, where the table ends.",
+    "invented. Ages past 12.6 Gyr are read at 12.6 Gyr, where the table ends.",
     ramp=Ramp("inferno", scale="log"))
 STAR_TEMPERATURE = _column(
     "star_temperature", "Effective temperature", "K",
