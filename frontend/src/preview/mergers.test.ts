@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Axis } from "./axes";
-import { arrivedSpread, cellOf, deliveredBy, radialTransport, ringLevels, ringRadius, towerY, arrivalsPerCell, wallProfile, valueAt } from "./mergers";
+import { arrivedSpread, cellOf, deliveredBy, radialTransport, ringLevels, ringRadius, towerY, arrivalsPerCell, wallProfile, valueAt, kicksSquared, heightReached, envelopeProfile } from "./mergers";
 
 const T: Axis = { lo: 0, hi: 10, n: 10, width: 1 } as Axis;
 
@@ -116,5 +116,29 @@ describe("the tower", () => {
     // the top of cell 2 and the bottom of cell 3 share a height: a flat step outward
     expect([p[10], p[11]]).toEqual([2, -2]);
     expect([p[12], p[13]]).toEqual([3, -2]);
+  });
+});
+describe("the heated envelope", () => {
+  it("reads each major merger's kick off the step in sigma_z, and nothing for a minor one", () => {
+    // sigma_z today by birth cell: 25 before a merger at 3.5, 10 after; flat, so no secular gradient
+    const heating = [25, 25, 25, 25, 10, 10, 10, 10, 10, 10];
+    const kicks = kicksSquared(heating, T, [3.9, 7.5]); // 3.9: its own cell is already past the step
+    expect(kicks[0]).toBeCloseTo(25 * 25 - 10 * 10, 9);
+    expect(kicks[1]).toBe(0);
+  });
+
+  it("finds where the potential has risen by sigma^2/2, capped at the grid top", () => {
+    const Z: Axis = { lo: 0, hi: 4, n: 4, width: 1 } as Axis;
+    // one radius, harmonic: rise = 50 z^2 at the z centres 0.5, 1.5, 2.5, 3.5
+    const midplane = [-1000];
+    const potential = [0.5, 1.5, 2.5, 3.5].map((zc) => -1000 + 50 * zc * zc);
+    // sigma = 10 needs a rise of 50: between z = 0.5 (12.5) and 1.5 (112.5)
+    expect(heightReached(potential, midplane, Z, 1, 10)[0]).toBeCloseTo(0.5 + 37.5 / 100, 9);
+    expect(heightReached(potential, midplane, Z, 1, 1000)[0]).toBe(4);
+  });
+
+  it("closes the envelope top then bottom, inside rMax", () => {
+    const p = envelopeProfile([1, 2, 3], [0.5, 1, 1.5], 2.5);
+    expect(Array.from(p)).toEqual([1, 0.5, 2, 1, 2, -1, 1, -0.5]);
   });
 });

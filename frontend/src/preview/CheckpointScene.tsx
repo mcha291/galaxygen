@@ -17,6 +17,9 @@ import {
   arrivalsPerCell,
   arrivedSpread,
   deliveredBy,
+  envelopeProfile,
+  heightReached,
+  kicksSquared,
   radialTransport,
   ringLevels,
   ringRadius,
@@ -24,6 +27,7 @@ import {
   valueAt,
   wallProfile,
 } from "./mergers";
+import { Envelope } from "./Envelope";
 import { TimeTower } from "./TimeTower";
 import styles from "./CheckpointScene.module.css";
 
@@ -46,7 +50,15 @@ const INSET_AT: Record<number, { title: string; fields: string[] }> = {
   1: { title: "Rotation curve", fields: ["circular_velocity", "halo_circular_velocity", "disc_circular_velocity"] },
 };
 // Checkpoint 2's playback: the probe disc and the three responses it reads over time.
-const PLAYBACK_FIELDS = ["disc_surface_density", "disc_radial_spread", "merger_delivery", "disc_heating"];
+const PLAYBACK_FIELDS = [
+  "disc_surface_density",
+  "disc_radial_spread",
+  "merger_delivery",
+  "disc_heating",
+  "halo_potential",
+  "halo_potential_midplane",
+];
+type MergerView = "envelope" | "tower";
 const PLAYBACK_SPEEDS = [0.5, 1, 2, 4]; // Gyr per second of wall time
 const R_SUN_KPC = 8.2; // where the scatter gauge and the orbit note read
 // stars_formed_history is kept out of the scrubber on purpose: it is published at
@@ -191,7 +203,8 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
  */
 function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Query; preset: Preset }) {
   const decls = PLAYBACK_FIELDS.map((name) => declOf(meta, name));
-  const [disc, spreadDecl, deliveryDecl, heatingDecl] = decls;
+  const [disc, spreadDecl, deliveryDecl, heatingDecl, potentialDecl, midplaneDecl] = decls;
+  const [view, setView] = useState<MergerView>("envelope");
   const names = decls.filter((d): d is FieldDecl => !!d).map((d) => d.name);
   const key = names.length === PLAYBACK_FIELDS.length ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal, HISTORY_SAMPLING));
@@ -273,18 +286,39 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
     return { walls, colours };
   }, [stages, profile, radii, t, heating, heatingDecl, meta.cmaps, mergers, height]);
 
+  // The envelope: how high matter moving up at σ_z climbs in the halo's potential, with
+  // σ_z the birth dispersion (disc_heating for matter born today) plus the kicks of the
+  // mergers landed so far, each read off the step it puts in disc_heating.
+  const kicks = useMemo(() => (heating && t ? kicksSquared(heating, t, mergers.map((m) => m.time)) : null), [heating, t, mergers]);
+  const sigma = heating && t && kicks ? Math.sqrt(heating[t.n - 1] ** 2 + kicks.slice(0, arrived).reduce((a, b) => a + b, 0)) : null;
+  const envelope = useMemo(() => {
+    const potential = frame && potentialDecl ? (frame.arrays[potentialDecl.name] as Float32Array) : null;
+    const midplane = frame && midplaneDecl ? (frame.arrays[midplaneDecl.name] as Float32Array) : null;
+    const z = frame?.header.grid.axes.z;
+    if (!potential || !midplane || !z || !R || !radii || sigma === null || !heatingDecl || !heating) return null;
+    const heights = heightReached(potential, midplane, z, R.n, sigma);
+    return { profile: envelopeProfile(radii, heights, R.hi * 0.8), atSun: interp(R_SUN_KPC, radii, heights) };
+  }, [frame, potentialDecl, midplaneDecl, R, radii, sigma, heatingDecl, heating]);
+  // Chrome, not data: magma at a cold disc's σ_z is near black on the ground, so the
+  // envelope takes the ink and σ_z is read off the gauge.
+  const envelopeColour = useMemo(
+    () => new Color(getComputedStyle(document.documentElement).getPropertyValue("--ink-1").trim() || "#e6ebf5"),
+    [],
+  );
+
   const landing = mergers.find((m) => tau >= m.time && tau - m.time < 0.5);
   const atEnd = t ? tau >= t.hi : false;
 
   return (
     <>
-      <GalaxyView preset={preset} reach={R ? R.hi * 1.6 : 30}>
+      <GalaxyView key={view} preset={preset} reach={R ? (view === "tower" ? R.hi * 1.6 : R.hi) : 30}>
         {disc && stage && profile && R && t && (
-          <group position={[0, towerY(tau, t, height), 0]}>
+          <group position={[0, view === "tower" ? towerY(tau, t, height) : 0, 0]}>
             <DiscLayer decl={disc} profile={stage.moved} R={R} cmaps={meta.cmaps} rangeValues={profile} />
           </group>
         )}
-        {tower && t && <TimeTower walls={tower.walls} colours={tower.colours} now={towerY(tau, t, height)} />}
+        {view === "tower" && tower && t && <TimeTower walls={tower.walls} colours={tower.colours} now={towerY(tau, t, height)} />}
+        {view === "envelope" && envelope && <Envelope profile={envelope.profile} colour={envelopeColour} />}
       </GalaxyView>
 
       {landing && (
@@ -293,7 +327,13 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
         </p>
       )}
 
-      {disc && heatingDecl && (
+      {disc && heatingDecl && view === "envelope" && (
+        <p className={styles.layerNote}>
+          envelope: the height matter moving up at σ_z reaches in the halo&apos;s potential alone, so too thick until the disc&apos;s own
+          gravity arrives at checkpoint 3 · σ_z is the birth dispersion plus the kicks of the mergers landed so far · best edge-on
+        </p>
+      )}
+      {disc && heatingDecl && view === "tower" && (
         <p className={styles.layerNote}>
           height is cosmic time, today at the top · walls: fixed Σ of checkpoint 1&apos;s {disc.name}, moved through the mergers&apos;
           radial scatter, coloured by {heatingDecl.name} · what these mergers do to a disc like this, not the disc as it was
@@ -301,6 +341,13 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
       )}
 
       <div className={styles.scrubber}>
+        <div className={styles.chips} role="group" aria-label="View">
+          {(["envelope", "tower"] as const).map((v) => (
+            <button key={v} aria-pressed={view === v} onClick={() => setView(v)}>
+              {v === "envelope" ? "heated envelope" : "history tower"}
+            </button>
+          ))}
+        </div>
         <div className={styles.timeRow}>
           <div className={styles.playback}>
             <button
@@ -357,12 +404,29 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
                 {formatPercent(deliveredBy(delivery, t, tau))}% <small>of {formatPercent(deliveredBy(delivery, t, t.hi))}%</small>
               </dd>
             </div>
-            <div>
-              <dt>σ_z today, matter forming now</dt>
-              <dd>
-                {formatNumber(valueAt(heating, tau, t), 3)} <small>km/s</small>
-              </dd>
-            </div>
+            {view === "envelope" && sigma !== null && envelope ? (
+              <>
+                <div>
+                  <dt>σ_z, birth + kicks so far</dt>
+                  <dd>
+                    {formatNumber(sigma, 3)} <small>km/s</small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>envelope height at R₀</dt>
+                  <dd>
+                    {formatNumber(envelope.atSun, 3)} <small>kpc</small>
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div>
+                <dt>σ_z today, matter forming now</dt>
+                <dd>
+                  {formatNumber(valueAt(heating, tau, t), 3)} <small>km/s</small>
+                </dd>
+              </div>
+            )}
             <div>
               <dt>radial scatter so far at R₀</dt>
               <dd>

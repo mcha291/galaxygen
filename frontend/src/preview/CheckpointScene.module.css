@@ -177,7 +177,8 @@
 
 .gauges {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   gap: 10px;
   margin: 12px 0 0;
 }

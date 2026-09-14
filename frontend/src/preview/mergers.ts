@@ -148,3 +148,71 @@ export function wallProfile(radiusPerCell: ArrayLike<number>, t: Axis, height: n
   }
   return out;
 }
+/**
+ * Each merger's vertical kick, as the square of the jump it puts in σ_z: read off
+ * disc_heating as the step across the merger's cell, σ²(just before) − σ²(just
+ * after). The slow secular heating changes by a cell's age across that step, which
+ * is what the one-cell read leaves in; a minor merger, which does not heat,
+ * reads as nothing.
+ */
+export function kicksSquared(heating: ArrayLike<number>, t: Axis, times: number[]): number[] {
+  return times.map((time) => {
+    // A cell either side: the merger's own cell may centre on either side of its time.
+    if (time - t.width < t.lo || time + t.width > t.hi) return 0;
+    const before = valueAt(heating, time - t.width, t);
+    const after = valueAt(heating, time + t.width, t);
+    // Below a hundredth of the step's own size it is the secular gradient, not a merger.
+    const jump = before * before - after * after;
+    return jump > 0.01 * before * before ? jump : 0;
+  });
+}
+
+/**
+ * How high matter moving up at `sigma` (km/s) climbs at each radius in a
+ * potential Φ(R, z), row-major over (R, z) on the half-space z ≥ 0: where
+ * Φ(R, z) − Φ(R, 0) first reaches σ²/2, interpolated between z cells. Capped at
+ * the grid's top when it never does.
+ */
+export function heightReached(
+  potential: ArrayLike<number>,
+  midplane: ArrayLike<number>,
+  z: Axis,
+  nR: number,
+  sigma: number,
+): Float64Array {
+  const out = new Float64Array(nR);
+  const need = 0.5 * sigma * sigma;
+  for (let i = 0; i < nR; i += 1) {
+    let prevZ = 0;
+    let prevRise = 0;
+    out[i] = z.hi;
+    for (let k = 0; k < z.n; k += 1) {
+      const zk = z.lo + (k + 0.5) * z.width;
+      const rise = potential[i * z.n + k] - midplane[i];
+      if (rise >= need) {
+        out[i] = rise === prevRise ? zk : prevZ + ((need - prevRise) / (rise - prevRise)) * (zk - prevZ);
+        break;
+      }
+      prevZ = zk;
+      prevRise = rise;
+    }
+  }
+  return out;
+}
+
+/**
+ * A closed lathe profile for an envelope ±h(R) about the midplane, out to `rMax`:
+ * along the top from the axis, down the rim, back along the bottom.
+ */
+export function envelopeProfile(radii: ArrayLike<number>, heights: ArrayLike<number>, rMax: number): Float64Array {
+  const top: number[] = [];
+  for (let i = 0; i < radii.length && radii[i] <= rMax; i += 1) top.push(radii[i], heights[i]);
+  const n = top.length / 2;
+  const out = new Float64Array(n * 4);
+  for (let k = 0; k < n; k += 1) {
+    out.set([top[2 * k], top[2 * k + 1]], 2 * k);
+    const back = n - 1 - k;
+    out.set([top[2 * back], -top[2 * back + 1]], 2 * (n + k));
+  }
+  return out;
+}
