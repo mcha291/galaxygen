@@ -34,6 +34,7 @@ ADVANCED = MODELS.register(
             ("chemistry", "chemistry_dtd"),  # simple: chemistry
             ("vertical", "vertical_alpha"),  # simple: vertical
             ("ism", "ism"),
+            ("light", "light"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),

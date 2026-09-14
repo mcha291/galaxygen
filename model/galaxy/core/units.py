@@ -56,6 +56,7 @@ _UNITS: tuple[Unit, ...] = (
     # star formation and densities
     Unit("Msun/yr", "M☉/yr", "mass_rate"),
     Unit("Msun/pc2", "M☉/pc²", "surface_density"),
+    Unit("Lsun/pc2", "L☉/pc²", "surface_brightness"),
     Unit("Msun/pc3", "M☉/pc³", "volume_density"),
     Unit("Msun/yr/kpc2", "M☉/yr/kpc²", "sfr_surface_density"),
     # chemistry

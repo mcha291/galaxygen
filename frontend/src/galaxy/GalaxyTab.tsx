@@ -1,9 +1,10 @@
 import { useState } from "react";
 
-import type { FieldsPayload, Sample } from "../api";
+import type { FieldsPayload, Query, Sample } from "../api";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC } from "./colors";
 import { Exposure } from "./Exposure";
+import { FarField } from "./FarField";
 import { FieldLegend } from "./FieldLegend";
 import { GalaxyView, type Preset, type ViewState } from "./GalaxyView";
 import { scaleBar } from "./zoom";
@@ -18,6 +19,7 @@ interface Props {
   field: string;
   onField(name: string): void;
   exposure: number;
+  query: Query;
   onExposure(stops: number): void;
   preset: Preset;
   onPreset(p: Preset): void;
@@ -44,7 +46,7 @@ const REGIMES = [
 ];
 
 /** The finished galaxy, laid out as the design's Galaxy tab: controls floating left, regime top right, scale bottom left. */
-export function GalaxyTab({ meta, sample, positions, colors, fields, field, onField, exposure, onExposure, preset, onPreset, onPick }: Props) {
+export function GalaxyTab({ meta, sample, positions, colors, fields, field, onField, exposure, onExposure, query, preset, onPreset, onPick }: Props) {
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const decl = meta.fields.find((f) => f.name === field);
@@ -52,7 +54,9 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
 
   return (
     <>
-      <GalaxyView positions={positions} colors={colors} preset={preset} onPick={onPick} zoom={zoom} onView={setView} photometric={field === PHOTOMETRIC} />
+      <GalaxyView positions={positions} colors={colors} preset={preset} onPick={onPick} zoom={zoom} onView={setView} photometric={field === PHOTOMETRIC}>
+        {field === PHOTOMETRIC && <FarField meta={meta} query={query} stops={exposure} />}
+      </GalaxyView>
 
       <div className={styles.panel}>
         <div className={styles.section}>
@@ -77,8 +81,8 @@ export function GalaxyTab({ meta, sample, positions, colors, fields, field, onFi
             <Exposure stops={exposure} onChange={onExposure} />
             <p className={styles.muted}>
               Each star&apos;s published luminosity in its blackbody colour, added as light and tone-mapped. The sample is
-              {` ${sample.header.stars.materialised.toLocaleString("en")}`} stars, so this is the resolved half only: the smooth
-              unresolved light (RENDER_PLAN R3) is not drawn yet.
+              {` ${sample.header.stars.materialised.toLocaleString("en")}`} stars, drawn over the disc&apos;s unresolved light: its published surface
+              brightness and colour, times the arm contrast, dimmed and reddened by the published dust. Not drawn yet: the bulge&apos;s light, and any thickness to the unresolved light.
             </p>
           </div>
         )}

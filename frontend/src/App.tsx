@@ -156,7 +156,7 @@ export function App() {
                   meta={meta}
                   query={query}
                   preset={preset}
-                  stars={positions && colors ? { positions, colors, photometric } : null}
+                  stars={positions && colors ? { positions, colors, photometric, exposure } : null}
                   onPick={setPicked}
                   charts={charts}
                 />
@@ -238,6 +238,7 @@ export function App() {
                   onField={setField}
                   exposure={exposure}
                   onExposure={setExposure}
+                  query={query!}
                   preset={preset}
                   onPreset={setPreset}
                   onPick={(row) => {

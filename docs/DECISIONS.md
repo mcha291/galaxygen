@@ -4508,3 +4508,29 @@ than 4000 K and carry 3.5% of the light, and stars above 10 L☉ carry 57%.
 stars are read at 10 Gyr, which places their turnoff near 1.05 M☉ rather than 0.9. [Fe/H] stands
 in for [M/H]. Both are in the module's docstring; extending the table to log age 10.13 is in
 `docs/future_ideas.md`.
+
+### D165. The disc's unresolved light is published, and the photometric view composites it with dust and bloom (RENDER_PLAN R3, R4, R5)
+
+**Decision.** A `light` stage (checkpoint 3, both models) publishes `disc_surface_brightness`
+(L☉/pc², a new unit), `disc_light_temperature` (a correlated colour temperature, drawn with the
+blackbody cmap) and `disc_luminosity`. Each step of `stars_formed_history` — already at present-day
+radii, which is the reading an image of today needs — is divided by (1 − `RETURN_FRACTION`) to give
+mass formed and multiplied by a Kroupa population's light per unit mass formed at that age and
+the [Fe/H] where those stars are now, integrated once along every PARSEC isochrone. No input, seed
+or constant is added.
+
+**Checked.** A 4 Myr solar population emits 801 L☉ per M☉ formed and a 10 Gyr one 0.18; their
+light is 27800 K and 4900 K. The default Milky Way disc comes out at 5.3 × 10¹⁰ L☉ (simple) and
+5.5 × 10¹⁰ (advanced) for 4.75 × 10¹⁰ M☉ of stars, bolometric and dust-free; the colour runs from
+4800 K inside a kiloparsec to 8700 K at 12 kpc, the inside-out disc seen as a colour gradient.
+
+**The viewer** draws the field under the star sample in photometric mode as a float texture
+(`FarField`), times the pattern's (R, φ) contrast, and attenuates it by the published face-on
+`dust_extinction_v` as a mixed slab, (1 − e^−τ)/τ per channel with CCM's R, V and B ratios, so dust
+dims and reddens and never adds a colour (R4). A restrained bloom above unit linear intensity sits
+before the tone map (R5). The ground is black in this mode.
+
+**Not included, and said on screen.** The classical bulge has no history and so no light; the
+unresolved light has no thickness, so edge-on it is a line; metallicity is read at present radius.
+The balance between a star point and a pixel of the far field is a display constant
+(`FAR_FIELD_PER_LSUN_PC2`), not a physical one.

@@ -1,10 +1,11 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, useEffect, useMemo, useRef } from "react";
-import { ACESFilmicToneMapping, AdditiveBlending, Color, NormalBlending, type PerspectiveCamera } from "three";
+import { ACESFilmicToneMapping, AdditiveBlending, Color, NormalBlending, type PerspectiveCamera, Vector2 } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { extent } from "./positions";
@@ -41,6 +42,7 @@ interface Props {
 }
 
 const FOV = 45;
+const BLOOM = { strength: 0.35, radius: 0.45, threshold: 1.0 };
 
 /**
  * The sampled galaxy as a rotatable point cloud: drag to orbit, wheel to zoom
@@ -122,17 +124,21 @@ function HdrOutput() {
   const composer = useMemo(() => {
     const c = new EffectComposer(gl); // half-float render targets by default
     c.addPass(new RenderPass(scene, camera));
+    // R5, kept restrained: only light above unit intensity blooms (the core, the brightest
+    // giants), and not by much. Bloom is also the fastest way to make an instrument look like
+    // a screensaver (RENDER_PLAN R5).
+    c.addPass(new UnrealBloomPass(new Vector2(size.width, size.height), BLOOM.strength, BLOOM.radius, BLOOM.threshold));
     c.addPass(new OutputPass()); // tone mapping and the sRGB encode, once
     return c;
-  }, [gl, scene, camera]);
+  }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
   useEffect(() => {
     const before = { toneMapping: gl.toneMapping, clear: gl.getClearColor(new Color()), alpha: gl.getClearAlpha() };
     gl.toneMapping = ACESFilmicToneMapping;
     // The sum needs an opaque ground: additive light over a transparent canvas leaves the
-    // alpha of the brightest star, and the page would show through the galaxy. The ground
-    // is the design system's deep background, read from its token.
-    const ground = getComputedStyle(document.documentElement).getPropertyValue("--bg-deep").trim();
-    gl.setClearColor(new Color(ground || "#05060a"), 1);
+    // alpha of the brightest star, and the page would show through the galaxy. And the
+    // ground is black, not the design system's navy: this is radiance, and light added to
+    // a coloured ground tints every faint pixel of the disc with it.
+    gl.setClearColor(new Color(0, 0, 0), 1);
     return () => {
       gl.toneMapping = before.toneMapping;
       gl.setClearColor(before.clear, before.alpha);

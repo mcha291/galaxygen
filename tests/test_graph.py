@@ -27,10 +27,10 @@ def chk(m, *stages):
 ORDER = {
     "simple": (
         "halo", "disc", "nucleus", "assembly", "sfh", "chemistry", "vertical",
-        "bar", "population", "ism", "pattern", "formation", "systems", "planets",
+        "bar", "population", "ism", "light", "pattern", "formation", "systems", "planets",
     ),
     "advanced": (
-        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population",
+        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population", "light",
         "vertical_alpha", "pattern", "formation", "ism", "systems", "planets",
     ),
 }

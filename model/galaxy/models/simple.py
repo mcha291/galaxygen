@@ -21,6 +21,7 @@ SIMPLE = MODELS.register(
             ("chemistry", "chemistry"),
             ("vertical", "vertical"),
             ("ism", "ism"),
+            ("light", "light"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),

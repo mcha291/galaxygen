@@ -71,15 +71,15 @@ def _lobe(lam: float, mu: float, below: float, above: float) -> float:
     return math.exp(-0.5 * ((lam - mu) / s) ** 2)
 
 
-def blackbody_hex(kelvin: float) -> str:
-    """The sRGB colour of a blackbody, brightest channel at full scale: chromaticity only.
+def blackbody_rgb(kelvin: float) -> tuple[float, float, float]:
+    """The **linear** sRGB colour of a blackbody, brightest channel at 1: chromaticity only.
 
     Computed, not recalled: Planck's law integrated against the CIE 1931 2° colour
     matching functions in Wyman, Sloan and Shirley's multi-lobe fit, then XYZ to linear
-    sRGB (D65) and the sRGB transfer curve ``[recall: Wyman, Sloan & Shirley 2013, JCGT
-    2(2); IEC 61966-2-1]``. A colour outside the sRGB gamut is clipped at zero before
-    normalising, which desaturates the hottest and coolest ends a little. What a star is
-    as *bright* is its luminosity, published separately; this is only what colour it is.
+    sRGB (D65) ``[recall: Wyman, Sloan & Shirley 2013, JCGT 2(2); IEC 61966-2-1]``. A
+    colour outside the sRGB gamut is clipped at zero before normalising, which
+    desaturates the hottest and coolest ends a little. What a star is as *bright* is its
+    luminosity, published separately; this is only what colour it is.
     """
     x = y = z = 0.0
     for lam in range(380, 781, 5):  # nm
@@ -94,13 +94,17 @@ def blackbody_hex(kelvin: float) -> str:
         max(0.0, 0.0557 * x - 0.2040 * y + 1.0570 * z),
     )
     top = max(rgb)
+    return (rgb[0] / top, rgb[1] / top, rgb[2] / top)
+
+
+def blackbody_hex(kelvin: float) -> str:
+    """:func:`blackbody_rgb` through the sRGB transfer curve, as a stop."""
 
     def encode(c: float) -> int:
-        c = c / top
         s = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
         return round(255 * min(1.0, max(0.0, s)))
 
-    return "#" + "".join(f"{encode(c):02x}" for c in rgb)
+    return "#" + "".join(f"{encode(c):02x}" for c in blackbody_rgb(kelvin))
 
 
 def _blackbody_stops() -> tuple[str, ...]:
