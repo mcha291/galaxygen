@@ -45,12 +45,15 @@ export const CHANNEL_EXTINCTION = [0.748, 1.0, 1.324] as const;
 /** Ray-march steps through the galaxy's bounding box. */
 const STEPS = 96;
 /**
- * The field is marched at this fraction of the canvas's resolution and stretched onto it. The
- * field is smooth, so a quarter of the pixels loses nothing to see; marching every pixel of a
- * screen the galaxy fills, at a device pixel ratio of 2, was 650 million texture reads a frame
- * and froze the page.
+ * The most pixels the field is marched at, whatever the screen: the image is stretched onto the
+ * canvas, and the field is smooth, so this loses nothing to see. The work per frame has to be
+ * bounded by a number, not by the display. Marching every pixel of a 4K screen the galaxy fills,
+ * at a device pixel ratio of 2, is a billion shader iterations a frame; that outlasts Windows'
+ * two-second GPU watchdog, the driver resets, and the browser does not come back.
  */
-const RESOLUTION = 0.5;
+const PIXEL_BUDGET = 400_000;
+/** And never more than half the drawing buffer's resolution on a side. */
+const MAX_RESOLUTION = 0.5;
 
 // A screen-covering triangle pair that lays the marched image over the view, added as light.
 const COMPOSITE_VERTEX = /* glsl */ `
@@ -135,7 +138,9 @@ const FRAGMENT = /* glsl */ `
         // Azimuth in the stars' frame: x = r cos φ, z = −r sin φ.
         float phi = atan(-p.z, p.x);
         if (phi < 0.0) phi += 6.28318531;
-        vec4 column = texture2D(plane, vec2((r - rLo) / (rHi - rLo), phi / 6.28318531));
+        // An explicit level: implicit derivatives inside a loop and a branch are undefined, and
+        // some drivers' compilers expand them into shaders that take seconds to build.
+        vec4 column = textureLod(plane, vec2((r - rLo) / (rHi - rLo), phi / 6.28318531), 0.0);
         emitted += column.rgb * sech2(p.y / (2.0 * discHeight)) / (4.0 * discHeight);
         tau = column.a * sech2(p.y / (2.0 * dustHeight)) / (4.0 * dustHeight);
       }
@@ -281,14 +286,19 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
     if (!mesh || !offscreen) return;
     const gain = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
-    const width = Math.max(1, Math.round(buffer.x * RESOLUTION));
-    const height = Math.max(1, Math.round(buffer.y * RESOLUTION));
+    const scale = Math.min(MAX_RESOLUTION, Math.sqrt(PIXEL_BUDGET / Math.max(1, buffer.x * buffer.y)));
+    const width = Math.max(1, Math.round(buffer.x * scale));
+    const height = Math.max(1, Math.round(buffer.y * scale));
     const last = offscreen.last;
     camera.updateMatrixWorld();
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height;
-    if (!moved) return;
+    // React may build the memo above twice (StrictMode), and adding the mesh to the second scene
+    // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
+    const reattached = mesh.parent !== offscreen.scene;
+    if (reattached) offscreen.scene.add(mesh);
+    if (!moved && !reattached) return;
     if (last.width !== width || last.height !== height) offscreen.target.setSize(width, height);
     (mesh.material as ShaderMaterial).uniforms.gain.value = gain;
     const before = gl.getRenderTarget();
