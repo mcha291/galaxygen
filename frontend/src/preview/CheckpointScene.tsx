@@ -36,6 +36,8 @@ const INSET_AT: Record<number, { title: string; fields: string[] }> = {
 // the radii those stars occupy *today*, so a slice at an epoch would place past
 // stars where they have not yet migrated to (RENDER_PLAN Part 1b, the trap).
 const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
+// The shearing spokes over checkpoints 1 and 2 (galaxy/ShearSpokes.tsx). Off for now.
+const SHEAR_SPOKES = false;
 
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
 export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts = false }: Props) {
@@ -71,8 +73,8 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   // chart rather than a scene. Checkpoint 4 is where φ enters the model, and it
   // keeps the disc.
   const asSurface = !contrast;
-  // Checkpoints 1 and 2 shear spokes with the rotation curve, so the curve is always fetched there.
-  const curve = n <= 2 ? declOf(meta, "circular_velocity") : undefined;
+  // Checkpoints 1 and 2 can shear spokes with the rotation curve; when on, the curve is always fetched there.
+  const curve = SHEAR_SPOKES && n <= 2 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
     ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
   ];
