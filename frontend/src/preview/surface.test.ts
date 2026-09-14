@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { contourLevels, contourRings, heightAxisLabel, heightOf, heightScaleOf, polarSurface } from "./surface";
+import {
+  contourLevels,
+  contourRings,
+  footprintOf,
+  gridSurface,
+  heightAxisLabel,
+  heightOf,
+  heightScaleOf,
+  polarSurface,
+} from "./surface";
 
 /** Σ = Σ₀ exp(-R/h) on a 0–30 kpc grid, the shape every checkpoint-1 profile has. */
 function exponentialDisc(h: number, n = 400, rMax = 30): { profile: Float64Array; radii: Float64Array } {
@@ -132,6 +141,28 @@ describe("polarSurface", () => {
         expect(Math.hypot(mesh.positions[k], mesh.positions[k + 1])).toBeCloseTo(radii[i], 4);
       }
     }
+  });
+});
+
+describe("gridSurface", () => {
+  it("lays row-major (x, z) values out as a y-up surface", () => {
+    // values[i * nz + j]: x cell i, z cell j
+    const values = [0, 1, 2, 3, 4, 5];
+    const mesh = gridSurface(values, [10, 20], [-1, 0, 1], { lo: 0, hi: 5, log: false });
+    expect(mesh.positions).toHaveLength(2 * 3 * 3);
+    expect(mesh.indices).toHaveLength(1 * 2 * 6);
+    // x cell 1, z cell 2 is the last vertex: value 5, full height
+    expect(Array.from(mesh.positions.slice(15))).toEqual([20, 1, 1]);
+    expect(mesh.positions[4]).toBeCloseTo(0.2, 6); // x cell 0, z cell 1: value 1 of 5
+    expect(Math.max(...mesh.indices)).toBe(5);
+  });
+});
+
+describe("footprintOf", () => {
+  it("centres the axis range on zero", () => {
+    expect(footprintOf(0, 0, 10, 20)).toBe(-10);
+    expect(footprintOf(10, 0, 10, 20)).toBe(10);
+    expect(footprintOf(5, 0, 10, 20)).toBe(0);
   });
 });
 

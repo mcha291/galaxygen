@@ -39,13 +39,6 @@ describe("spokeSegments", () => {
     expect(seg[11]).toBeCloseTo(-2, 9);
   });
 
-  it("drapes over a surface when given one height per radius", () => {
-    const radii = [1, 2];
-    const seg = spokeSegments(radii, omegas(radii, R, FLAT), 1, 0, [5, 3]);
-    expect(seg[1]).toBe(5);
-    expect(seg[4]).toBe(3);
-  });
-
   it("winds: after time t the inner point has turned further than the outer", () => {
     const radii = [2, 4];
     const w = omegas(radii, R, FLAT);

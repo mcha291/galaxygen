@@ -43,15 +43,14 @@ export function periodMyr(r: number, R: ArrayLike<number>, v: ArrayLike<number>)
 /**
  * Scene positions of `spokes` spokes at time t (Myr), as line segments for
  * THREE.LineSegments: each spoke's consecutive points joined pairwise.
- * Same frame as the stars: x = r cos φ, z = −r sin φ, at y = lift — one height
- * for a flat disc, or one per radius to drape the spokes over a surface.
+ * Same frame as the stars: x = r cos φ, z = −r sin φ, in the plane y = lift.
  */
 export function spokeSegments(
   radii: ArrayLike<number>,
   omega: ArrayLike<number>,
   spokes: number,
   tMyr: number,
-  lift: number | ArrayLike<number> = 0,
+  lift = 0,
   out?: Float32Array,
 ): Float32Array {
   const n = radii.length;
@@ -64,7 +63,7 @@ export function spokeSegments(
       for (const k of [i, i + 1]) {
         const phi = start + omega[k] * tMyr;
         buffer[p++] = radii[k] * Math.cos(phi);
-        buffer[p++] = typeof lift === "number" ? lift : lift[k];
+        buffer[p++] = lift;
         buffer[p++] = -radii[k] * Math.sin(phi);
       }
     }

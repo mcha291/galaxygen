@@ -154,6 +154,49 @@ export function polarSurface(
   return { positions, indices, rings, spokes };
 }
 
+/** Where a chart axis value lands along a footprint of `size` centred on 0. */
+export function footprintOf(value: number, lo: number, hi: number, size: number): number {
+  return ((value - lo) / (hi - lo) - 0.5) * size;
+}
+
+/**
+ * A surface over a Cartesian grid, in the scene's y-up frame: x along the first
+ * axis, z along the second, y the height in [0, 1] (the caller scales it).
+ * `values` is row-major, one row per x cell: values[i * nz + j], as the wire
+ * format lays out an (R, t) field.
+ */
+export function gridSurface(
+  values: ArrayLike<number>,
+  xs: ArrayLike<number>,
+  zs: ArrayLike<number>,
+  scale: HeightScale,
+): SurfaceMesh {
+  const nx = xs.length;
+  const nz = zs.length;
+  const positions = new Float32Array(nx * nz * 3);
+  for (let i = 0; i < nx; i += 1) {
+    for (let j = 0; j < nz; j += 1) {
+      const k = (i * nz + j) * 3;
+      positions[k] = xs[i];
+      positions[k + 1] = heightOf(values[i * nz + j], scale);
+      positions[k + 2] = zs[j];
+    }
+  }
+  const indices = new Uint32Array((nx - 1) * (nz - 1) * 6);
+  let n = 0;
+  for (let i = 0; i + 1 < nx; i += 1) {
+    for (let j = 0; j + 1 < nz; j += 1) {
+      const a = i * nz + j;
+      const b = a + 1;
+      const c = a + nz;
+      const d = c + 1;
+      indices[n++] = a; indices[n++] = b; indices[n++] = c;
+      indices[n++] = b; indices[n++] = d; indices[n++] = c;
+    }
+  }
+  return { positions, indices, rings: nx, spokes: nz };
+}
+
 /**
  * What the vertical axis is, said in full. A log height is not proportional to
  * the quantity, and a surface that does not say so is the misleading thing this

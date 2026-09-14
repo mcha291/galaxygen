@@ -9,7 +9,7 @@ import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
-import { FieldSurface, surfaceHeightAt } from "./FieldSurface";
+import { HeatingSurface } from "./HeatingSurface";
 import { LinePlot } from "./LinePlot";
 import styles from "./CheckpointScene.module.css";
 
@@ -27,7 +27,7 @@ interface Props {
 
 // What each checkpoint's scene draws, by field name. Every name is checked
 // against the declarations at run time; a model that lacks one shows the gap.
-const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 2: "disc_surface_density", 4: "stellar_surface_density" };
+const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 2: "disc_radial_spread", 4: "stellar_surface_density" };
 const INSET_AT: Record<number, { title: string; fields: string[] }> = {
   1: { title: "Rotation curve", fields: ["circular_velocity", "halo_circular_velocity", "disc_circular_velocity"] },
   2: { title: "Merger history", fields: ["merger_delivery"] },
@@ -36,8 +36,6 @@ const INSET_AT: Record<number, { title: string; fields: string[] }> = {
 // the radii those stars occupy *today*, so a slice at an epoch would place past
 // stars where they have not yet migrated to (RENDER_PLAN Part 1b, the trap).
 const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
-// The shearing spokes over checkpoints 1 and 2 (galaxy/ShearSpokes.tsx). Off for now.
-const SHEAR_SPOKES = false;
 
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
 export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts = false }: Props) {
@@ -66,39 +64,50 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
-  // Before then the field has no φ dependence at all, so a swept disc is a 1D
-  // function drawn as a 2D picture: half the pixels carry nothing, and the half
-  // that does not is the half that makes it look like a galaxy. Those checkpoints
-  // get a surface plot instead — axes, grid and contour rings, unmistakably a
-  // chart rather than a scene. Checkpoint 4 is where φ enters the model, and it
-  // keeps the disc.
-  const asSurface = !contrast;
-  // Checkpoints 1 and 2 can shear spokes with the rotation curve; when on, the curve is always fetched there.
-  const curve = SHEAR_SPOKES && n <= 2 ? declOf(meta, "circular_velocity") : undefined;
+  // Checkpoint 1 shears spokes with the rotation curve, so the curve is always fetched there.
+  const curve = n === 1 ? declOf(meta, "circular_velocity") : undefined;
+  // Checkpoint 2 is a chart over (R, t): the radial spread as height, σ_z(t) along its edge.
+  const heating = n === 2 ? declOf(meta, "disc_heating") : undefined;
   const names = [
-    ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
+    ...new Set([
+      ...(disc ? [disc.name] : []),
+      ...(contrast ? [contrast.name] : []),
+      ...(curve ? [curve.name] : []),
+      ...(heating ? [heating.name] : []),
+      ...insetDecls.map((d) => d.name),
+    ]),
   ];
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(50);
   const [resetKey, setResetKey] = useState(0);
   const [tMyr, setTMyr] = useState(0);
   const key = names.length ? JSON.stringify([names, query]) : null;
-  const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
+  const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal, n === 2 ? HISTORY_SAMPLING : undefined));
   const frame = loaded.value && names.every((x) => x in loaded.value!.arrays) ? loaded.value : null;
   const R = frame?.header.grid.axes.R;
   const insetAxis = insetDecls.length ? (insetDecls[0].axes as string[])[0] : null;
   const radii = useMemo(() => (R ? centres(R) : null), [R]);
   const v = curve && frame ? (frame.arrays[curve.name] as Float64Array) : null;
   const profile = disc && frame ? (frame.arrays[disc.name] as Float64Array) : null;
-  // The spokes lie on the surface rather than cutting through it.
-  const heightAt = useMemo(() => (asSurface && profile && R ? surfaceHeightAt(profile, R) ?? undefined : undefined), [asSurface, profile, R]);
+  const t = frame?.header.grid.axes.t;
   const markers = useMemo(() => mergersOf(query).map((m) => ({ at: m.time, label: `${formatNumber(m.time)} Gyr` })), [query]);
 
   return (
     <>
-      <GalaxyView preset={preset} reach={R ? R.hi : 30}>
-        {frame && disc && profile && R && asSurface && <FieldSurface decl={disc} profile={profile} R={R} cmaps={meta.cmaps} />}
-        {frame && disc && profile && R && !asSurface && (
+      <GalaxyView preset={preset} reach={R ? (n === 2 ? R.hi * 1.3 : R.hi) : 30}>
+        {frame && disc && profile && R && t && n === 2 && (
+          <HeatingSurface
+            spreadDecl={disc}
+            spread={profile}
+            heatingDecl={heating}
+            heating={heating ? (frame.arrays[heating.name] as Float64Array) : undefined}
+            R={R}
+            t={t}
+            mergers={mergersOf(query)}
+            cmaps={meta.cmaps}
+          />
+        )}
+        {frame && disc && profile && R && n !== 2 && (
           <DiscLayer
             decl={disc}
             profile={profile}
@@ -106,7 +115,7 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
             cmaps={meta.cmaps}
             contrast={contrast ? (frame.arrays[contrast.name] as Float64Array) : undefined}
             phi={contrast ? frame.header.grid.axes.phi : undefined}
-            size={768}
+            size={contrast ? 768 : 512}
           />
         )}
         {radii && v && R && (
@@ -118,7 +127,6 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
             speed={speed}
             resetKey={resetKey}
             onTime={setTMyr}
-            heightAt={heightAt}
           />
         )}
       </GalaxyView>
@@ -159,8 +167,17 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
       {loaded.error && <p className={styles.fault}>Preview failed: {loaded.error}</p>}
       {disc && (
         <p className={styles.layerNote}>
-          {asSurface ? "surface: height and colour by" : "disc painted by"} {disc.name}
-          {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
+          {n === 2 ? (
+            <>
+              surface over (R, t): height and colour by {disc.name} · {String(disc.ramp?.cmap ?? "")}
+              {heating ? ` · ${heating.name} as the curve on the R = 0 edge` : ""} · mergers as planes
+            </>
+          ) : (
+            <>
+              disc painted by {disc.name}
+              {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
+            </>
+          )}
         </p>
       )}
     </>
