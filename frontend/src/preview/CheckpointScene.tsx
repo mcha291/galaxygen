@@ -9,7 +9,6 @@ import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
-import { HeatingSurface } from "./HeatingSurface";
 import { LinePlot } from "./LinePlot";
 import styles from "./CheckpointScene.module.css";
 
@@ -27,7 +26,7 @@ interface Props {
 
 // What each checkpoint's scene draws, by field name. Every name is checked
 // against the declarations at run time; a model that lacks one shows the gap.
-const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 2: "disc_radial_spread", 4: "stellar_surface_density" };
+const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 2: "disc_surface_density", 4: "stellar_surface_density" };
 const INSET_AT: Record<number, { title: string; fields: string[] }> = {
   1: { title: "Rotation curve", fields: ["circular_velocity", "halo_circular_velocity", "disc_circular_velocity"] },
   2: { title: "Merger history", fields: ["merger_delivery"] },
@@ -64,53 +63,31 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
-  // Checkpoint 1 shears spokes with the rotation curve, so the curve is always fetched there.
-  const curve = n === 1 ? declOf(meta, "circular_velocity") : undefined;
-  // Checkpoint 2 is a chart over (R, t): the radial spread as height, σ_z(t) along its edge.
-  const heating = n === 2 ? declOf(meta, "disc_heating") : undefined;
+  // Checkpoints 1 and 2 shear spokes with the rotation curve, so the curve is always fetched there.
+  const curve = n <= 2 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
-    ...new Set([
-      ...(disc ? [disc.name] : []),
-      ...(contrast ? [contrast.name] : []),
-      ...(curve ? [curve.name] : []),
-      ...(heating ? [heating.name] : []),
-      ...insetDecls.map((d) => d.name),
-    ]),
+    ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
   ];
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(50);
   const [resetKey, setResetKey] = useState(0);
   const [tMyr, setTMyr] = useState(0);
   const key = names.length ? JSON.stringify([names, query]) : null;
-  const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal, n === 2 ? HISTORY_SAMPLING : undefined));
+  const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value && names.every((x) => x in loaded.value!.arrays) ? loaded.value : null;
   const R = frame?.header.grid.axes.R;
   const insetAxis = insetDecls.length ? (insetDecls[0].axes as string[])[0] : null;
   const radii = useMemo(() => (R ? centres(R) : null), [R]);
   const v = curve && frame ? (frame.arrays[curve.name] as Float64Array) : null;
-  const profile = disc && frame ? (frame.arrays[disc.name] as Float64Array) : null;
-  const t = frame?.header.grid.axes.t;
   const markers = useMemo(() => mergersOf(query).map((m) => ({ at: m.time, label: `${formatNumber(m.time)} Gyr` })), [query]);
 
   return (
     <>
-      <GalaxyView preset={preset} reach={R ? (n === 2 ? R.hi * 1.3 : R.hi) : 30}>
-        {frame && disc && profile && R && t && n === 2 && (
-          <HeatingSurface
-            spreadDecl={disc}
-            spread={profile}
-            heatingDecl={heating}
-            heating={heating ? (frame.arrays[heating.name] as Float64Array) : undefined}
-            R={R}
-            t={t}
-            mergers={mergersOf(query)}
-            cmaps={meta.cmaps}
-          />
-        )}
-        {frame && disc && profile && R && n !== 2 && (
+      <GalaxyView preset={preset} reach={R ? R.hi : 30}>
+        {frame && disc && R && (
           <DiscLayer
             decl={disc}
-            profile={profile}
+            profile={frame.arrays[disc.name] as Float64Array}
             R={R}
             cmaps={meta.cmaps}
             contrast={contrast ? (frame.arrays[contrast.name] as Float64Array) : undefined}
@@ -119,15 +96,7 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
           />
         )}
         {radii && v && R && (
-          <ShearSpokes
-            R={radii}
-            v={v}
-            rMax={R.hi * 0.8}
-            playing={playing}
-            speed={speed}
-            resetKey={resetKey}
-            onTime={setTMyr}
-          />
+          <ShearSpokes R={radii} v={v} rMax={R.hi * 0.8} playing={playing} speed={speed} resetKey={resetKey} onTime={setTMyr} />
         )}
       </GalaxyView>
       {radii && v && (
@@ -167,17 +136,8 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
       {loaded.error && <p className={styles.fault}>Preview failed: {loaded.error}</p>}
       {disc && (
         <p className={styles.layerNote}>
-          {n === 2 ? (
-            <>
-              surface over (R, t): height and colour by {disc.name} · {String(disc.ramp?.cmap ?? "")}
-              {heating ? ` · ${heating.name} as the curve on the R = 0 edge` : ""} · mergers as planes
-            </>
-          ) : (
-            <>
-              disc painted by {disc.name}
-              {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
-            </>
-          )}
+          disc painted by {disc.name}
+          {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
         </p>
       )}
     </>
