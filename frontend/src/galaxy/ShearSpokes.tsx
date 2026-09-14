@@ -16,6 +16,8 @@ interface Props {
   resetKey: number;
   onTime?: (tMyr: number) => void;
   spokes?: number;
+  /** Scene height at radius r, to lie on a surface; flat just above the disc otherwise. */
+  heightAt?: (r: number) => number;
 }
 
 const POINTS = 160;
@@ -31,21 +33,22 @@ function tokenColour(name: string): Color {
  * point orbits at Ω(R) = v_c(R)/R, so the spokes wind into trailing spirals and
  * the rate they wind is the curve's shape made visible.
  */
-export function ShearSpokes({ R, v, rMax, playing, speed, resetKey, onTime, spokes = 8 }: Props) {
+export function ShearSpokes({ R, v, rMax, playing, speed, resetKey, onTime, spokes = 8, heightAt }: Props) {
   const radii = useMemo(() => {
     const lo = Math.max(R[0], rMax / 200);
     return Float64Array.from({ length: POINTS }, (_, i) => lo + ((rMax - lo) * i) / (POINTS - 1));
   }, [R, rMax]);
   const omega = useMemo(() => omegas(radii, R, v), [radii, R, v]);
+  const lift = useMemo(() => (heightAt ? Float64Array.from(radii, heightAt) : rMax / 400), [radii, heightAt, rMax]);
 
   const object = useMemo(() => {
     const geometry = new BufferGeometry();
-    geometry.setAttribute("position", new BufferAttribute(spokeSegments(radii, omega, spokes, 0, rMax / 400), 3));
+    geometry.setAttribute("position", new BufferAttribute(spokeSegments(radii, omega, spokes, 0, lift), 3));
     const material = new LineBasicMaterial({ color: tokenColour("--ink-1"), transparent: true, opacity: 0.55, depthWrite: false });
     const lines = new LineSegments(geometry, material);
     lines.renderOrder = 1;
     return lines;
-  }, [radii, omega, spokes, rMax]);
+  }, [radii, omega, spokes, lift]);
   useEffect(() => () => {
     object.geometry.dispose();
     (object.material as LineBasicMaterial).dispose();
@@ -61,7 +64,7 @@ export function ShearSpokes({ R, v, rMax, playing, speed, resetKey, onTime, spok
   useFrame((_, delta) => {
     if (playing) t.current += Math.min(delta, 0.1) * speed;
     const attr = object.geometry.getAttribute("position") as BufferAttribute;
-    spokeSegments(radii, omega, spokes, t.current, rMax / 400, attr.array as Float32Array);
+    spokeSegments(radii, omega, spokes, t.current, lift, attr.array as Float32Array);
     attr.needsUpdate = true;
     // The label only needs whole Myr.
     const whole = Math.floor(t.current);

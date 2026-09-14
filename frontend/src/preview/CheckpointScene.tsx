@@ -9,6 +9,7 @@ import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
 import { centres } from "./axes";
+import { FieldSurface, surfaceHeightAt } from "./FieldSurface";
 import { LinePlot } from "./LinePlot";
 import styles from "./CheckpointScene.module.css";
 
@@ -63,6 +64,13 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
+  // Before then the field has no φ dependence at all, so a swept disc is a 1D
+  // function drawn as a 2D picture: half the pixels carry nothing, and the half
+  // that does not is the half that makes it look like a galaxy. Those checkpoints
+  // get a surface plot instead — axes, grid and contour rings, unmistakably a
+  // chart rather than a scene. Checkpoint 4 is where φ enters the model, and it
+  // keeps the disc.
+  const asSurface = !contrast;
   // Checkpoints 1 and 2 shear spokes with the rotation curve, so the curve is always fetched there.
   const curve = n <= 2 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
@@ -79,24 +87,37 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetAxis = insetDecls.length ? (insetDecls[0].axes as string[])[0] : null;
   const radii = useMemo(() => (R ? centres(R) : null), [R]);
   const v = curve && frame ? (frame.arrays[curve.name] as Float64Array) : null;
+  const profile = disc && frame ? (frame.arrays[disc.name] as Float64Array) : null;
+  // The spokes lie on the surface rather than cutting through it.
+  const heightAt = useMemo(() => (asSurface && profile && R ? surfaceHeightAt(profile, R) ?? undefined : undefined), [asSurface, profile, R]);
   const markers = useMemo(() => mergersOf(query).map((m) => ({ at: m.time, label: `${formatNumber(m.time)} Gyr` })), [query]);
 
   return (
     <>
       <GalaxyView preset={preset} reach={R ? R.hi : 30}>
-        {frame && disc && R && (
+        {frame && disc && profile && R && asSurface && <FieldSurface decl={disc} profile={profile} R={R} cmaps={meta.cmaps} />}
+        {frame && disc && profile && R && !asSurface && (
           <DiscLayer
             decl={disc}
-            profile={frame.arrays[disc.name] as Float64Array}
+            profile={profile}
             R={R}
             cmaps={meta.cmaps}
             contrast={contrast ? (frame.arrays[contrast.name] as Float64Array) : undefined}
             phi={contrast ? frame.header.grid.axes.phi : undefined}
-            size={contrast ? 768 : 512}
+            size={768}
           />
         )}
         {radii && v && R && (
-          <ShearSpokes R={radii} v={v} rMax={R.hi * 0.8} playing={playing} speed={speed} resetKey={resetKey} onTime={setTMyr} />
+          <ShearSpokes
+            R={radii}
+            v={v}
+            rMax={R.hi * 0.8}
+            playing={playing}
+            speed={speed}
+            resetKey={resetKey}
+            onTime={setTMyr}
+            heightAt={heightAt}
+          />
         )}
       </GalaxyView>
       {radii && v && (
@@ -136,7 +157,7 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
       {loaded.error && <p className={styles.fault}>Preview failed: {loaded.error}</p>}
       {disc && (
         <p className={styles.layerNote}>
-          disc painted by {disc.name}
+          {asSurface ? "surface: height and colour by" : "disc painted by"} {disc.name}
           {contrast ? ` × ${contrast.name}` : ""} · {String(disc.ramp?.cmap ?? "")} · {String(disc.ramp?.scale ?? "")}
         </p>
       )}
