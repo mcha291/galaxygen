@@ -105,3 +105,50 @@
   font: 400 11px / 1.4 var(--font-mono);
   color: var(--status-fault);
 }
+
+/* The shearing-spoke controls, under the layer note. */
+.spokes {
+  position: absolute;
+  top: 58px;
+  left: 326px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  max-width: calc(100% - 700px);
+  font: 400 10.5px / 1 var(--font-mono);
+  color: var(--text-muted);
+  text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0);
+}
+
+.spokes button,
+.spokes select {
+  padding: 4px 8px;
+  border: var(--hair) solid var(--border-line);
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--void-2) 92%, transparent);
+  color: var(--text-body);
+  font: inherit;
+  cursor: pointer;
+}
+
+.spokes button[aria-pressed="true"] {
+  border-color: var(--magenta-4);
+  color: var(--text-accent);
+}
+
+.spokes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spokeTime {
+  min-width: 90px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.spokeNote {
+  flex-basis: 100%;
+}

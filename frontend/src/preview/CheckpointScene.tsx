@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 
 import { type FieldDecl, type FieldsPayload, type Frame, HISTORY_SAMPLING, type Query, loadArrays } from "../api";
 import { DiscLayer } from "../galaxy/DiscLayer";
+import { ShearSpokes } from "../galaxy/ShearSpokes";
+import { periodMyr } from "../galaxy/shear";
 import { GalaxyView, type Preset } from "../galaxy/GalaxyView";
 import { useLoad } from "../useLoad";
 import { type MergerEvent, formatNumber } from "../workflow/logic";
@@ -61,12 +63,22 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
   // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
   const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
-  const names = [...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...insetDecls.map((d) => d.name)];
+  // Checkpoints 1 and 2 shear spokes with the rotation curve, so the curve is always fetched there.
+  const curve = n <= 2 ? declOf(meta, "circular_velocity") : undefined;
+  const names = [
+    ...new Set([...(disc ? [disc.name] : []), ...(contrast ? [contrast.name] : []), ...(curve ? [curve.name] : []), ...insetDecls.map((d) => d.name)]),
+  ];
+  const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(50);
+  const [resetKey, setResetKey] = useState(0);
+  const [tMyr, setTMyr] = useState(0);
   const key = names.length ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value && names.every((x) => x in loaded.value!.arrays) ? loaded.value : null;
   const R = frame?.header.grid.axes.R;
   const insetAxis = insetDecls.length ? (insetDecls[0].axes as string[])[0] : null;
+  const radii = useMemo(() => (R ? centres(R) : null), [R]);
+  const v = curve && frame ? (frame.arrays[curve.name] as Float64Array) : null;
   const markers = useMemo(() => mergersOf(query).map((m) => ({ at: m.time, label: `${formatNumber(m.time)} Gyr` })), [query]);
 
   return (
@@ -83,7 +95,32 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
             size={contrast ? 768 : 512}
           />
         )}
+        {radii && v && R && (
+          <ShearSpokes R={radii} v={v} rMax={R.hi * 0.8} playing={playing} speed={speed} resetKey={resetKey} onTime={setTMyr} />
+        )}
       </GalaxyView>
+      {radii && v && (
+        <div className={styles.spokes}>
+          <button type="button" onClick={() => setPlaying((p) => !p)} aria-pressed={playing}>
+            {playing ? "pause" : "play"}
+          </button>
+          <button type="button" onClick={() => setResetKey((k) => k + 1)}>reset</button>
+          <label>
+            <span>speed</span>
+            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+              {[10, 50, 200, 1000].map((s) => (
+                <option key={s} value={s}>
+                  {s} Myr/s
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className={styles.spokeTime}>t = {formatNumber(tMyr, 3)} Myr</span>
+          <span className={styles.spokeNote}>
+            spokes orbit at v_c(R)/R · one orbit at R₀ = {formatNumber(periodMyr(8.2, radii, v), 3)} Myr · circular orbits only
+          </span>
+        </div>
+      )}
       {frame && inset && insetAxis && (
         <div className={styles.inset}>
           <LinePlot
