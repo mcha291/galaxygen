@@ -54,7 +54,7 @@ def test_production_graphs_hold(prod):
             "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
             "arm_contrast", "bar_contrast", "pattern_density_contrast",
             "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
-            "star_metallicity", "star_mass", "star_population", "catalogue_size",
+            "star_metallicity", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
             "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
             "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
             "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",

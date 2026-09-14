@@ -41,12 +41,14 @@ from typing import Any
 import numpy as np
 
 from galaxy.core import seeds as _seeds
+from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.pattern import ArmPattern
+from galaxy.stages.photometry import lookup as photometry
 from galaxy.stages.vertical import POPULATIONS
 
 # The cell grid is the unit of regional materialisation, and its size is a real
@@ -449,9 +451,15 @@ def materialise(
         return Catalogue.of({
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
-                      "star_birth_radius", "star_metallicity", "star_mass", "star_population")
+                      "star_birth_radius", "star_metallicity", "star_mass", "star_population",
+                      "star_luminosity", "star_temperature")
         }, counts)
-    return Catalogue.of({name: np.concatenate(parts) for name, parts in columns.items()}, counts)
+    out = {name: np.concatenate(parts) for name, parts in columns.items()}
+    # What each star emits, looked up rather than drawn: given its mass, age and abundance
+    # the isochrones have already decided (rule B8). Per star, so a region's rows are the
+    # sweep's rows (D60).
+    out["star_luminosity"], out["star_temperature"] = photometry(out["star_mass"], out["star_age"], out["star_metallicity"])
+    return Catalogue.of(out, counts)
 
 
 # --- derived half -------------------------------------------------------------
@@ -529,6 +537,21 @@ STAR_MASS = _column("star_mass", "Stellar mass", "Msun",
                     "Kroupa by inverse CDF. The steep high-mass slope means almost every star in "
                     "the sample is smaller than the Sun.", ramp=Ramp("inferno", scale="log"))
 
+STAR_LUMINOSITY = _column(
+    "star_luminosity", "Luminosity", "Lsun",
+    "Bolometric, from the PARSEC isochrones at the star's initial mass, age and [Fe/H] "
+    "(galaxy/stages/photometry.py, RENDER_PLAN M2). NaN for a star that has died: the table "
+    "carries no remnants, and a white dwarf's thousandth of a solar luminosity is not "
+    "invented. Ages past 10 Gyr are read at 10 Gyr, where the table ends.",
+    ramp=Ramp("inferno", scale="log"))
+STAR_TEMPERATURE = _column(
+    "star_temperature", "Effective temperature", "K",
+    "From the same isochrone lookup as the luminosity. Its ramp is the blackbody colour of "
+    "the temperature itself (galaxy/core/cmaps.py), which is what makes a photometric render "
+    "a published quantity rather than a palette: most stars are M dwarfs, so a correct "
+    "galaxy is overwhelmingly red and its blue stars are young and few.",
+    ramp=Ramp("blackbody", scale="log", lo=BLACKBODY_KELVIN[0], hi=BLACKBODY_KELVIN[1]))
+
 STAR_POPULATION = FieldDecl(
     name="star_population", label="Population", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=POPULATIONS, ramp=Palette(("#4c9be8", "#e8894c")),
@@ -582,7 +605,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
         ),
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
-            STAR_METALLICITY, STAR_MASS, STAR_POPULATION, CATALOGUE_SIZE,
+            STAR_METALLICITY, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
         ),
     )
 )

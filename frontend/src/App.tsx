@@ -3,7 +3,8 @@ import { Orbit } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
-import { starColors } from "./galaxy/colors";
+import { PHOTOMETRIC, photometricColors, starColors } from "./galaxy/colors";
+import { Exposure } from "./galaxy/Exposure";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
 import { type Preset } from "./galaxy/GalaxyView";
 import { toScene } from "./galaxy/positions";
@@ -21,8 +22,10 @@ import { ExperimentBar } from "./workflow/ExperimentBar";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
 
-// The star columns a user can paint the sample by (design brief §3).
-const COLOUR_FIELDS = ["star_metallicity", "star_age", "star_population", "star_mass", "star_birth_radius"];
+// The star columns a user can paint the sample by (design brief §3), and photometric
+// mode beside them: a choice, never a default that hides the fields (RENDER_PLAN §0).
+const COLOUR_FIELDS = ["star_metallicity", "star_age", "star_population", "star_mass", "star_birth_radius", "star_temperature", "star_luminosity"];
+const PAINT_CHOICES = [...COLOUR_FIELDS, PHOTOMETRIC];
 const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
 
 type Tab = "preview" | "science" | "galaxy";
@@ -40,6 +43,7 @@ export function App() {
   // one simply asks for a different galaxy.
   const [experiments, setExperiments] = useState<Record<string, number>>({});
   const [charts, setCharts] = useState(false);
+  const [exposure, setExposure] = useState(0); // photometric exposure, in stops
 
   useEffect(() => {
     const abort = new AbortController();
@@ -82,11 +86,12 @@ export function App() {
   const colors = useMemo(() => {
     if (!sample || !meta) return null;
     try {
-      return starColors(meta, sample.columns, field);
+      return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure) : starColors(meta, sample.columns, field);
     } catch {
       return null; // the fields for a just-switched model have not arrived yet
     }
-  }, [sample, meta, field]);
+  }, [sample, meta, field, exposure]);
+  const photometric = field === PHOTOMETRIC;
 
   const seed = wf.state?.values.world_seed;
   const hash = query ? `${runHash(query)} · ${wf.model} · world_seed ${seed}` : "";
@@ -151,7 +156,7 @@ export function App() {
                   meta={meta}
                   query={query}
                   preset={preset}
-                  stars={positions && colors ? { positions, colors } : null}
+                  stars={positions && colors ? { positions, colors, photometric } : null}
                   onPick={setPicked}
                   charts={charts}
                 />
@@ -180,12 +185,13 @@ export function App() {
                     ))}
                   </div>
                   {drawsStars && <select className={styles.select} value={field} onChange={(e) => setField(e.target.value)} aria-label="Colour by">
-                    {COLOUR_FIELDS.map((f) => (
+                    {PAINT_CHOICES.map((f) => (
                       <option key={f} value={f}>
-                        Colour by {meta?.fields.find((d) => d.name === f)?.label ?? f}
+                        {f === PHOTOMETRIC ? "Light (photometric)" : `Colour by ${meta?.fields.find((d) => d.name === f)?.label ?? f}`}
                       </option>
                     ))}
                   </select>}
+                  {drawsStars && photometric && <Exposure stops={exposure} onChange={setExposure} />}
                 </section>
                 {meta && sample && picked !== null && (
                   <StarReadout meta={meta} sample={sample} row={picked} onOpen={setSystemStar} planets={planetsReady} />
@@ -227,9 +233,11 @@ export function App() {
                   sample={sample}
                   positions={positions}
                   colors={colors}
-                  fields={COLOUR_FIELDS}
+                  fields={PAINT_CHOICES}
                   field={field}
                   onField={setField}
+                  exposure={exposure}
+                  onExposure={setExposure}
                   preset={preset}
                   onPreset={setPreset}
                   onPick={(row) => {

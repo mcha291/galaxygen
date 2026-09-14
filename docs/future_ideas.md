@@ -11,3 +11,6 @@ Short notes on things worth doing later. Not a plan.
   `pattern_seed` (RENDER_PLAN M1) instead of leaving them as inputs.
 - **Photometry for M2** uses PARSEC isochrone tables (chosen over MIST, whose basic set is a
   210 MB download with no stated licence).
+- **Older isochrones.** The PARSEC table stops at log age 10.0, and a quarter of the catalogue
+  is older, read at 10 Gyr (D164). CMD goes to log age 10.13: add 10.1 and 10.13 to
+  `tools/fetch_parsec.py` and refetch.

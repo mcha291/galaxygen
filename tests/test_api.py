@@ -306,6 +306,10 @@ def test_a_system_is_named_by_the_row_a_region_returned(api):
         assert system.status == 200
         star = system.frame()[0]["star"]
         for name, column in arrays.items():
+            if np.isnan(float(column[row])):
+                # JSON has no NaN: a star with no light (a dead one, M2) is null in the header.
+                assert star[name] is None, (name, cell, index)
+                continue
             assert star[name] == pytest.approx(float(column[row])), (name, cell, index)
 
 

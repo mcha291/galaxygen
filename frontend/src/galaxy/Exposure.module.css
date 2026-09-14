@@ -1,0 +1,21 @@
+.exposure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font: 400 10.5px / 1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.exposure input {
+  flex: 1;
+  min-width: 80px;
+  accent-color: var(--magenta-3);
+}
+
+.value {
+  min-width: 56px;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -27,6 +27,7 @@ and would put the neutral colour half a stop off, silently.
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -54,11 +55,63 @@ CMAPS: tuple[str, ...] = (
     "greys",
     "coolwarm",  # diverging
     "RdBu",  # diverging
+    "blackbody",  # a physical colour, not a data ramp: see blackbody_hex
 )
 
 DIVERGING: frozenset[str] = frozenset({"coolwarm", "RdBu"})
 
+# The blackbody map's span. A ramp naming it must declare exactly these bounds on a log
+# scale, because its stops are the colours of these temperatures and nothing else.
+BLACKBODY_KELVIN: tuple[float, float] = (2000.0, 40000.0)
+_BLACKBODY_STOPS = 17
+
+
+def _lobe(lam: float, mu: float, below: float, above: float) -> float:
+    s = below if lam < mu else above
+    return math.exp(-0.5 * ((lam - mu) / s) ** 2)
+
+
+def blackbody_hex(kelvin: float) -> str:
+    """The sRGB colour of a blackbody, brightest channel at full scale: chromaticity only.
+
+    Computed, not recalled: Planck's law integrated against the CIE 1931 2° colour
+    matching functions in Wyman, Sloan and Shirley's multi-lobe fit, then XYZ to linear
+    sRGB (D65) and the sRGB transfer curve ``[recall: Wyman, Sloan & Shirley 2013, JCGT
+    2(2); IEC 61966-2-1]``. A colour outside the sRGB gamut is clipped at zero before
+    normalising, which desaturates the hottest and coolest ends a little. What a star is
+    as *bright* is its luminosity, published separately; this is only what colour it is.
+    """
+    x = y = z = 0.0
+    for lam in range(380, 781, 5):  # nm
+        planck = lam**-5.0 / math.expm1(1.438777e7 / (lam * kelvin))
+        x += planck * (1.056 * _lobe(lam, 599.8, 37.9, 31.0) + 0.362 * _lobe(lam, 442.0, 16.0, 26.7)
+                       - 0.065 * _lobe(lam, 501.1, 20.4, 26.2))
+        y += planck * (0.821 * _lobe(lam, 568.8, 46.9, 40.5) + 0.286 * _lobe(lam, 530.9, 16.3, 31.1))
+        z += planck * (1.217 * _lobe(lam, 437.0, 11.8, 36.0) + 0.681 * _lobe(lam, 459.0, 26.0, 13.8))
+    rgb = (
+        max(0.0, 3.2406 * x - 1.5372 * y - 0.4986 * z),
+        max(0.0, -0.9689 * x + 1.8758 * y + 0.0415 * z),
+        max(0.0, 0.0557 * x - 0.2040 * y + 1.0570 * z),
+    )
+    top = max(rgb)
+
+    def encode(c: float) -> int:
+        c = c / top
+        s = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+        return round(255 * min(1.0, max(0.0, s)))
+
+    return "#" + "".join(f"{encode(c):02x}" for c in rgb)
+
+
+def _blackbody_stops() -> tuple[str, ...]:
+    lo, hi = (math.log10(k) for k in BLACKBODY_KELVIN)
+    return tuple(blackbody_hex(10 ** (lo + (hi - lo) * i / (_BLACKBODY_STOPS - 1))) for i in range(_BLACKBODY_STOPS))
+
+
 _STOPS: dict[str, tuple[str, ...]] = {
+    # Evenly spaced in log T across BLACKBODY_KELVIN, so a log ramp over those bounds
+    # lands each temperature on its own colour.
+    "blackbody": _blackbody_stops(),
     "viridis": (
         "#440154", "#482878", "#3e4989", "#31688e", "#26828e",
         "#1f9e89", "#35b779", "#6ece58", "#b5de2b", "#fde725",

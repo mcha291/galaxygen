@@ -94,7 +94,7 @@ def test_a_region_is_the_same_alone_as_in_a_full_sweep(model):
     alone = stars(model, 100_000, seed=0, cells=cells)
     reversed_order = stars(model, 100_000, seed=0, cells=list(reversed(cells)))
     for name in alone:
-        assert np.array_equal(np.sort(alone[name]), np.sort(reversed_order[name])), name
+        assert np.array_equal(np.sort(alone[name]), np.sort(reversed_order[name]), equal_nan=True), name
     one = stars(model, 100_000, seed=0, cells=[400])
     assert one.size > 0
     assert np.allclose(one["star_radius"], alone["star_radius"][np.isin(alone["star_radius"], one["star_radius"])])
@@ -107,7 +107,7 @@ def test_a_small_sample_is_a_prefix_of_a_large_one(model):
     n = small.size
     assert 0 < n < large.size
     for name in small:
-        assert np.array_equal(small[name], large[name][:n]), name
+        assert np.array_equal(small[name], large[name][:n], equal_nan=True), name
 
 
 def test_the_seed_changes_the_catalogue(model):

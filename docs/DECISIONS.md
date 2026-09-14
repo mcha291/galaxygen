@@ -4481,3 +4481,30 @@ second-order by comparison `[inferred]`.
 
 **Register.** #79 moves from permanent to discharged. The S22 prose counting "fifteen permanent,
 eight of them the sources'" is left as S22 wrote it; the count is now fourteen and seven.
+
+### D164. Per-star photometry from PARSEC, and a blackbody cmap computed rather than recalled (RENDER_PLAN M2, R1)
+
+**Decision.** The catalogue publishes `star_luminosity` (L☉) and `star_temperature` (K), looked
+up per star from the committed PARSEC v1.2S table (`galaxy/stages/photometry.py`) at its initial
+mass, age and [Fe/H]: nearest metallicity, linear in log age between the bracketing isochrones,
+linear in mass along each. A star past the heaviest living mass at its age is NaN in both
+(rule B9): the table carries no remnants. The lookup lives inside `materialise`, so a region
+query and a system header carry the same values a sweep does (D60).
+
+**The cmap vocabulary gains `blackbody`**, the one physical colour in it. Its stops are computed
+at import from Planck's law against the CIE 1931 colour matching functions (Wyman, Sloan &
+Shirley's fit) and pinned to 2000–40000 K on a log scale, which `star_temperature` declares. The
+viewer's photometric mode is then a compositor: the declared ramp's colour times the published
+luminosity, summed additively into a half-float target and ACES tone-mapped once (R1). Scientific
+mode stays, and stays the default (RENDER_PLAN §0).
+
+**Checked, not assumed.** The Sun comes out at 1.05 L☉ and 5824 K. CMD closes every isochrone on
+a row at log L = −9.999 with a heavier mass; kept, it stretched the living range and turned a
+0.95 M☉ star at 12 Gyr and [Fe/H] −1 into a 0.1 L☉ dwarf. It is dropped on load and a test holds
+that. On the simple model's default catalogue 92% of stars are alive, 87% of those are cooler
+than 4000 K and carry 3.5% of the light, and stars above 10 L☉ carry 57%.
+
+**What does not hold.** The table stops at 10 Gyr and 25.3% of the catalogue is older; those
+stars are read at 10 Gyr, which places their turnoff near 1.05 M☉ rather than 0.9. [Fe/H] stands
+in for [M/H]. Both are in the module's docstring; extending the table to log age 10.13 is in
+`docs/future_ideas.md`.

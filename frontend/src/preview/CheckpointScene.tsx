@@ -37,7 +37,7 @@ interface Props {
   query: Query;
   preset: Preset;
   /** Checkpoints 5 and 6 draw the star sample; the caller owns it because the Galaxy tab shares it. */
-  stars: { positions: Float32Array; colors: Float32Array } | null;
+  stars: { positions: Float32Array; colors: Float32Array; photometric?: boolean } | null;
   onPick(row: number): void;
   /** Show the inset chart at checkpoint 1 (the rotation curve). Off by default. */
   charts?: boolean;
@@ -69,7 +69,7 @@ const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
 export function CheckpointScene({ n, meta, query, preset, stars, onPick, charts = false }: Props) {
   if (n >= 5) {
-    return <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} />;
+    return <GalaxyView positions={stars?.positions} colors={stars?.colors} preset={preset} onPick={onPick} photometric={stars?.photometric} />;
   }
   if (n === 2) return <MergerScene meta={meta} query={query} preset={preset} />;
   if (n === 3) return <HistoryScene meta={meta} query={query} preset={preset} />;
