@@ -83,9 +83,7 @@ function positionsOf(sample: Sample): Float32Array {
  * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
  * Any star drawn can be clicked to open its system.
  */
-const __trace = (name: string) => { const w = window as unknown as { __tc?: Record<string, number> }; w.__tc ??= {}; w.__tc[name] = (w.__tc[name] ?? 0) + 1; if (w.__tc[name] % 50 === 1) console.log("TRACE", name, w.__tc[name]); }; // DEBUG
 export function GalaxyTab({ meta, sample, fields, field, onField, exposure, onExposure, query, preset, onPreset, onOpen }: Props) {
-  __trace("GalaxyTab"); // DEBUG
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const decl = meta.fields.find((f) => f.name === field);

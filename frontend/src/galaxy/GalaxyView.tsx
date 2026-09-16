@@ -59,9 +59,7 @@ const STAR_SPRITE_PX = 9;
  * The galaxy in 3D: drag to orbit, wheel to zoom towards the cursor, right-drag to pan.
  * It composites whatever it is given: the field as a child, star layers on top.
  */
-const __trace = (name: string) => { const w = window as unknown as { __tc?: Record<string, number> }; w.__tc ??= {}; w.__tc[name] = (w.__tc[name] ?? 0) + 1; if (w.__tc[name] % 50 === 1) console.log("TRACE", name, w.__tc[name]); }; // DEBUG
 export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false }: Props) {
-  __trace("GalaxyView"); // DEBUG
   const first = layers[0]?.positions;
   const reach = useMemo(() => (first ? extent(first) : 0) || framing || 20, [first, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
@@ -148,7 +146,6 @@ function HdrOutput() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   const composer = useMemo(() => {
-    __trace("composer memo"); // DEBUG
     const c = new EffectComposer(gl); // half-float render targets by default
     c.addPass(new RenderPass(scene, camera));
     // R5, kept restrained: only light above unit intensity blooms (the core, the brightest
