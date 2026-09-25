@@ -230,10 +230,15 @@ def test_a_scalar_with_no_value_is_published_as_null_not_as_a_number():
 
 
 def test_the_catalogue_columns_are_what_the_stage_declares(api, model):
-    response = api.handle("/api/region", "r_min=6&r_max=10&phi_max=0.6")
+    response = api.handle("/api/region", {"model": [model.name], "r_min": ["6"], "r_max": ["10"], "phi_max": ["0.6"]})
     header, arrays = response.frame()
+    # The columns are the stage's object-domain declarations, every one of them: star_alpha was
+    # optional while it depended on a chemistry that published alpha_fe_history, and since D170
+    # (one model) the catalogue always has it.
+    published = {f["name"] for f in api.handle("/api/fields", {"model": [model.name]}).json()["fields"]}
     declared = [d.name for d in systems.SYSTEMS.publishes if d.kind.domain == "object"]
     assert header["columns"] == declared
+    assert ("star_alpha" in arrays) == ("alpha_fe_history" in published)
     assert set(arrays) == set(declared)
     assert arrays["star_population"].dtype == np.int64, "a category is an integer code, not a float"
     lengths = {len(a) for a in arrays.values()}
@@ -245,7 +250,7 @@ def test_a_region_is_exactly_what_the_full_sweep_puts_there(api):
     from galaxy.run import run
 
     models, impls, table = production()
-    out = run(models.get("simple"), None, SMALL, only=systems.SYSTEMS.requires)
+    out = run(models.get("basic"), None, SMALL, only=systems.SYSTEMS.requires)
     R, t = out.grid.R, out.grid.t
     whole = systems.materialise(
         out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"])
@@ -285,6 +290,22 @@ def test_a_bigger_sample_contains_the_smaller_one(api):
     assert set(small.tolist()) <= set(large.tolist())
 
 
+def test_star_alpha_is_the_alpha_history_at_birth(api, model):
+    """The [α/Fe] column is looked up exactly as [Fe/H] is (every model publishes the history since D170)."""
+    header, arrays = api.handle("/api/region", {"model": [model.name], "r_min": ["5"], "r_max": ["10"], "phi_max": ["0.8"], "stars": ["5000"]}).frame()
+    alpha = arrays["star_alpha"]
+    assert alpha.shape == arrays["star_metallicity"].shape
+    assert np.isfinite(alpha).all()
+    # The same birth-place lookup the catalogue uses for [Fe/H] (systems.materialise).
+    R, t = api.grid.R, api.grid.t
+    history = api.handle("/api/arrays", {"model": [model.name], "fields": ["alpha_fe_history"]}).frame()[1]["alpha_fe_history"]
+    born = t[-1] - arrays["star_age"]
+    cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
+    rows = np.clip(np.searchsorted(R, arrays["star_birth_radius"]), 0, len(R) - 1)
+    np.testing.assert_allclose(alpha, history[rows, cols])
+    assert alpha.min() < alpha.max(), "one value everywhere would say the history is flat"
+
+
 def test_a_system_is_named_by_the_row_a_region_returned(api):
     """The join S8 exists to make: a star drawn in a region can be opened by name.
 
@@ -311,6 +332,101 @@ def test_a_system_is_named_by_the_row_a_region_returned(api):
                 assert star[name] is None, (name, cell, index)
                 continue
             assert star[name] == pytest.approx(float(column[row])), (name, cell, index)
+
+
+def _named_rows(header, arrays):
+    """Every row of a plain region response as ``(cell, index) -> radius``, off its runs."""
+    out = {}
+    row = 0
+    for cell, count in zip(header["cells"]["ids"], header["cells"]["counts"]):
+        for index in range(count):
+            out[(cell, index)] = float(arrays["star_radius"][row])
+            row += 1
+    return out
+
+
+def test_brightest_is_the_top_of_the_window_by_luminosity_named_row_by_row(api):
+    window = "r_min=7&r_max=9&phi_min=0&phi_max=0.6&stars=20000"
+    full_header, full = api.handle("/api/region", window).frame()
+    header, top = api.handle("/api/region", window + "&brightest=40").frame()
+
+    assert header["brightest"] == {"requested": 40, "pool": full_header["stars"]["materialised"], "in_view": full_header["stars"]["materialised"], "returned": 40}
+    assert header["columns"][-2:] == ["cell", "index"]
+    assert len(top["star_radius"]) == 40 == header["stars"]["materialised"]
+    lum = top["star_luminosity"]
+    assert np.all(np.diff(lum) <= 0), "brightest first"
+    lit = np.sort(full["star_luminosity"][np.isfinite(full["star_luminosity"])])[::-1]
+    assert lum[-1] >= lit[39], "a dimmer star made the cut over a brighter one"
+    assert top["cell"].dtype == np.int64 and top["index"].dtype == np.int64
+
+    named = _named_rows(full_header, full)
+    for cell, index, radius in zip(top["cell"].tolist(), top["index"].tolist(), top["star_radius"].tolist()):
+        assert named[(cell, index)] == pytest.approx(radius), "the row's own name does not name it"
+
+
+def test_brightest_with_a_view_keeps_only_the_stars_inside_the_frustum(api):
+    # A clip that keeps |x| <= 2, |y| <= 2 and |z| <= 2 kpc around (8, 0, 0): w = 1, so the
+    # frustum is a box, in the viewer's frame x = R cos phi, y = height, z = -R sin phi.
+    m = np.zeros((4, 4))
+    m[0, 0] = m[1, 1] = m[2, 2] = 0.5
+    m[0, 3] = -4.0
+    m[3, 3] = 1.0
+    view = ",".join(f"{v:g}" for v in m.T.ravel())  # column-major, as three.js writes it
+    window = "r_min=5&r_max=11&phi_min=0&phi_max=0.6&stars=20000"
+    _, full = api.handle("/api/region", window).frame()
+    header, top = api.handle("/api/region", f"{window}&brightest=30&view={view}").frame()
+
+    x = full["star_radius"] * np.cos(full["star_azimuth"])
+    z = -full["star_radius"] * np.sin(full["star_azimuth"])
+    inside = (np.abs(x - 8) <= 2) & (np.abs(full["star_height"]) <= 2) & (np.abs(z) <= 2)
+    assert 30 < inside.sum() < full["star_radius"].size, "the box must cut the window, not hold it"
+    assert header["brightest"]["in_view"] == int(inside.sum())
+    assert header["brightest"]["returned"] == 30
+    tx = top["star_radius"] * np.cos(top["star_azimuth"])
+    tz = -top["star_radius"] * np.sin(top["star_azimuth"])
+    assert np.all(np.abs(tx - 8) <= 2) and np.all(np.abs(top["star_height"]) <= 2) and np.all(np.abs(tz) <= 2)
+    lit = np.sort(full["star_luminosity"][inside & np.isfinite(full["star_luminosity"])])[::-1]
+    assert top["star_luminosity"][-1] >= lit[29]
+
+
+def test_cached_cells_are_the_sweep_s_rows_and_are_not_made_twice(api):
+    """The cell cache holds D60 to account: a window served from cells kept by other windows
+    is row for row what materialising it afresh gives, and a repeated window makes nothing."""
+    from galaxy.stages import systems as _systems
+
+    made: list[list[int]] = []
+    original = _systems.materialise
+
+    def counting(fields, R, t, seed, n, cells=None, *, migration):
+        made.append(list(cells) if cells is not None else [])
+        return original(fields, R, t, seed, n, cells, migration=migration)
+
+    _systems.materialise = counting
+    try:
+        inner = api.handle("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&stars=5000").frame()
+        wider = api.handle("/api/region", "r_min=6&r_max=10&phi_min=0&phi_max=0.8&stars=5000").frame()
+        again = api.handle("/api/region", "r_min=6&r_max=10&phi_min=0&phi_max=0.8&stars=5000").frame()
+    finally:
+        _systems.materialise = original
+
+    assert len(made) == 2, "the repeated window materialised something"
+    assert not set(made[1]) & set(made[0]), "the wider window re-made cells the inner one held"
+    cold = service()
+    direct = cold.handle("/api/region", "r_min=6&r_max=10&phi_min=0&phi_max=0.8&stars=5000").frame()
+    assert wider[0]["cells"] == direct[0]["cells"]
+    for name, column in direct[1].items():
+        np.testing.assert_array_equal(wider[1][name], column, err_msg=name)
+        np.testing.assert_array_equal(again[1][name], column, err_msg=name)
+    assert set(inner[1]["star_radius"].tolist()) <= set(direct[1]["star_radius"].tolist())
+
+
+def test_brightest_and_view_are_checked(api):
+    assert api.handle("/api/region", "brightest=-1").status == 400
+    assert api.handle("/api/region", "brightest=200001").status == 400
+    assert api.handle("/api/region", "brightest=10&view=1,2,3").status == 400
+    assert api.handle("/api/region", "brightest=10&view=" + ",".join(["nan"] * 16)).status == 400
+    assert api.handle("/api/region", "view=" + ",".join(["1"] * 16)).status == 400, "a view without brightest is a mistake"
+    assert api.handle("/api/region", "brightest=0&stars=5000").frame()[0]["brightest"] is None
 
 
 def test_opening_a_system_costs_a_cell_and_not_a_galaxy(model):

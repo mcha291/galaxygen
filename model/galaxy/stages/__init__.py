@@ -11,7 +11,7 @@ from . import assembly  # noqa: F401  (checkpoint 2)
 from . import sfh  # noqa: F401  (checkpoint 3)
 from . import chemistry  # noqa: F401
 from . import vertical  # noqa: F401
-from . import chemistry_dtd  # noqa: F401  (the advanced model's chemistry slot)
+from . import chemistry_dtd  # noqa: F401  (the chemistry slot)
 from . import vertical_alpha  # noqa: F401  (and its vertical slot)
 from . import ism  # noqa: F401  (checkpoint 3, after both chemistries and both verticals)
 from . import light  # noqa: F401  (checkpoint 3: the disc's unresolved light)

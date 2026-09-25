@@ -4591,3 +4591,128 @@ tab opens painted as light.
 
 **Display choices, named.** The step count and spacing, the dust layer at half the stellar scale
 height, the regime widths, the sample fade and the 120 000-star target.
+
+
+### D168. A second rendering mode: the N brightest stars inside the camera's frustum
+
+**Decision.** The Galaxy tab gets a mode toggle beside the field rendering of D167: *brightest*,
+which draws only the N most luminous stars inside what the camera sees, at any zoom, with a
+logarithmic slider for N (10² to 10⁵). It is a magnitude-limited catalogue in the survey's sense,
+and the limit is stated: the brightest of a *sample*, not of the galaxy, so N reaches N over the
+pool into the luminosity function, and the header says what the pool was.
+
+**Where the selection runs.** On the server. `/api/region` takes `brightest=N` and `view=` (the
+camera's view-projection matrix, sixteen numbers column-major over the viewer's frame x = R cos φ,
+y = height, z = −R sin φ). It materialises the window as before, keeps the stars whose clip
+coordinates lie inside the frustum, ranks the lit ones by `star_luminosity` (a dead star's NaN
+ranks last), and returns the top N brightest first, each row carrying its own `cell` and `index`
+columns because the run lengths no longer name a selection. Measured: a 1 000 000-star pool
+materialises in 2.7 s and would be 80 MB to ship, so the pool cannot be sorted in the browser;
+a 160 000-star pool answers in 0.6–0.7 s and 100 stars are 12 KB.
+
+**The pool.** The client cuts the frustum by the slab |height| ≤ 3 kpc, takes the (R, φ) hull of
+its hits (`frustum.ts`), and asks for that window at a whole-galaxy sample size chosen so about
+200 000 of it land there, as the stars regime sizes its region. An oblique view of the centre
+still asks for the whole galaxy, correctly: the frustum reaches the disc's far side. Orbiting now
+reports a view change (the camera moves, the target does not), and the request key carries the
+matrix rounded to five figures so a settled camera does not re-ask.
+
+**Display choices, named.** The 3 kpc slab, the 200 000-star pool target, the 9 × 9 rays the
+footprint is cut with and its padding, and luminosity rather than flux at the camera as the
+ranking: the set does not churn as the camera orbits, and from outside the galaxy the two agree
+within a factor of a few. Flux at the camera would be one line to switch to.
+
+**The lag, and where it was.** The first build showed the new selection 0.85–1.1 s after a zoom
+stopped: 300 ms of settle and a 550–840 ms request, nearly all of it `materialise` re-drawing the
+same 160 000-star pool, about 0.4 ms of seeded Python per cell before a star is made. The service
+now keeps materialised cells (`CellCache`, 1.5 M rows, least recently used out), which D60 makes
+sound: a cell drawn alone is the cell drawn in any set, so a window is its cells' rows in order,
+and a test holds a window assembled from cells other windows made against a cold service, row
+for row. With the pool kept, a re-selection is 25–110 ms and the brightest mode settles in 120 ms
+rather than a slider's 350, so the stars follow the camera within 160–260 ms. A remaining
+100–600 ms hitch when a response landed was React's development mode (StrictMode mounting the
+new geometry twice, the dev reconciler's checks); the production build lands 100 000 rows in
+under 50 ms with no long task, so nothing was engineered around it.
+
+**The hole.** A wheel zoom-out in the face-on view left a dark disc at the galaxy's centre that
+stayed. The footprint took its inner radius from a 9 × 9 grid of rays; fully zoomed out those
+land 14 kpc apart, and once zoom-to-cursor had nudged the orbit target off the centre none of
+them fell near r = 0, so the innermost cells were never asked for and the pool was a ring. The
+footprint now tests the centre against the frustum itself and samples the screen's edges finely
+for the inner radius, since the nearest point of a convex footprint to the axis lies on its
+boundary; a test holds r = 0 for a zoomed-out view nudged off the centre.
+
+**Exposure.** Drawn at one fixed exposure, the stars a close view brought in were too faint to
+see: all of them far below the galaxy's giants. The owner asked for brightness to rise with
+zoom, as being closer would; per star that is L/d², but the zoom spans 10⁶ in it, so the view is
+exposed instead, as a photograph is (the design brief's "exposed to the brightest thing in
+view"), with the slider's stops on top. Not to the single brightest star: a giant is in view at
+nearly every zoom (the brightest of the selection fell only from 2 300 to 1 300 L☉ between the
+whole galaxy and 3 kpc across) while the stars around it faded twentyfold. Nor to a share of
+the stars drawn, which was tried first: asking for more stars adds fainter ones at the bottom,
+so the 90th-percentile star moved and every star already on screen brightened with N. The
+exposure is set by the hundredth-brightest star in view, the same star however many are drawn
+beyond it, drawn as 41 L☉ (its value for the whole galaxy, so that view is unchanged); the few
+above it burn out as on film. Measured lift at 12, 2.8 and 0.9 kpc across: see the readout,
+which states it.
+
+
+### D169. The catalogue carries [α/Fe] where the chemistry has one, so the advanced model shows
+
+**Decision.** The catalogue stage publishes `star_alpha`: [α/Fe] looked up at the star's birth
+radius and birth time from `alpha_fe_history`, exactly as `star_metallicity` is from
+`feh_history`. The Galaxy tab paints by it, and the system view lists it.
+
+**Why.** At the default inputs the two models are the same galaxy to the eye. They share
+thirteen of fifteen stages; the advanced model's `chemistry_dtd` publishes ten α fields the
+Science tab shows, and its `vertical_alpha` finds *no* thick disc at the defaults (0 M☉ against
+the simple criterion's 9.6 × 10⁹, 25% of the stars), so in the Galaxy view the advanced model
+was the simple one, slightly bluer and thinner. Its distinction lived only in fields no star
+carried. Painted by [α/Fe], the catalogue splits into the sequences the advanced vertical stage
+divides by, and a history that opens the valley shows its thick disc as a population.
+
+**How it is absent honestly.** The simple chemistry tracks one abundance and publishes no α
+history, so the column is absent rather than invented: `star_alpha` is declared `optional`, the
+stage reads `alpha_fe_history` through `requires_optional`, the runner now lets a stage withhold
+an optional declaration (the one case the flag's meaning implies and the check did not allow),
+the region and system routes ask for the optional fields a model has, and the viewer offers the
+chip only where the sample carries the column, falling back to light for a choice the model
+cannot paint. Tests hold, per model, that the column is present exactly when the history is,
+that it equals the history at the birth place, and that a system's star omits it otherwise.
+(Superseded the same day by D170: with one model the column is always present and the
+optional plumbing was removed.)
+
+
+### D170. One model, `basic`: the advanced physics under a plain name, the simple stages retired
+
+**Decision.** The two registered models are collapsed into one. `galaxy/models/basic.py`
+declares `basic`, mapping `chemistry → chemistry_dtd` and `vertical → vertical_alpha` with the
+advanced model's constants; `simple.py` and `advanced.py` are gone, `DEFAULT = "basic"`, and
+the viewer shows no model toggle when the registry holds one model. The single-yield
+chemistry stage and the merger-criterion vertical stage are unregistered: `chemistry.py` keeps
+the gradient fit, the age bins and the migration transport that the chemistry and the catalogue
+still read, and the [Fe/H] declarations move to `chemistry_dtd.py`, which was the only stage
+still publishing them; `vertical.py` keeps `split` (the populations' arithmetic) and the slot's
+declaration tuple. `NET_YIELD` goes with the stage that read it. The defaults are unchanged:
+the collapse is a restructuring, and the default-history question (D169's valley) stays a
+separate decision.
+
+**Why.** At the default inputs the two models were the same galaxy to the eye: thirteen of
+fifteen stages shared, the advanced chemistry's ten α fields visible only in the Science tab,
+and its vertical stage finding no thick disc at the defaults, so the more elaborate model
+looked like less. The advanced chemistry was the research programme of the audits (debt #27,
+rows 22–24); the simple model existed to be contrasted with it, and D169 had just made the
+contrast visible by another route. One model, plainly named, is the honest shape.
+
+**The ledger.** `spec.MISSES` is one mapping again. The shared misses stay; the advanced model's
+own (rows 5, 7, 8, 9, 11 on debt #27, row 6 on #42, row 22 on #47, row 23 on #28, row 24 on
+#27) become unqualified; the simple model's own (rows 5, 8, 9, 11 on debt #19, rows 22 and 23
+on debt #15) are deleted, since the stages that produced those numbers are gone. The
+`Miss.model` qualification and `misses(model)` stay, because rule A7 does. The audit records
+(`AUDIT_*.md`) are history and are not rewritten; tests that pinned simple-model numbers or the
+two-model boundary are removed, tests of shared stages keep their numbers under the new name,
+and tests of the advanced physics are renamed.
+
+**Optional fields.** With one model nothing is optional: the α fields and `star_alpha` lose
+their `optional` flags, the catalogue requires `alpha_fe_history`, and the runner's allowance
+for withholding an optional declaration (D169) is reverted.

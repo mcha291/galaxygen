@@ -209,14 +209,6 @@ def test_the_general_solver_reproduces_freeman_on_an_exponential():
     assert v[1] == pytest.approx(math.sqrt(G * M * R_SUN**2 / (R_SUN**2 + a**2) ** 1.5), rel=5e-4)
 
 
-def test_the_two_models_agree_on_checkpoint_one(prod):
-    """The halo and disc stages are shared code, so the two models publish identical fields there."""
-    a, b = run(prod[0].get("simple"), only=("circular_velocity",)), run(prod[0].get("advanced"), only=("circular_velocity",))
-    assert set(a.fields) == set(b.fields) and a.order == b.order == ("halo", "disc")
-    for k in a.fields:
-        assert np.array_equal(np.asarray(a.fields[k]), np.asarray(b.fields[k]), equal_nan=True), k
-
-
 def test_the_epicyclic_frequency_is_solid_body_inside_and_root_two_omega_where_flat(model):
     """S18: kappa off the checkpoint-1 curve, read by the merger's radial kick and the threshold."""
     o = run(model, only=("epicyclic_frequency",))

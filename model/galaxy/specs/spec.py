@@ -277,135 +277,6 @@ _MISSES: tuple[Miss, ...] = (
         ),
     ),
     Miss(
-        row=5,
-        model="simple",
-        debt=19,
-        since="S3",
-        reason=(
-            "1.09 kpc against 2.0 +/- 0.2 (1.17 at S18 on the 120 km/s kick, D128; 1.18 until S18; "
-            "1.32 until S17; 1.17 until S13). The "
-            "thick disc is every star born before the last major merger, and by then the disc is "
-            "small: the early episode accretes on the thin disc's inside-out law, tau(R) = 7 Gyr x "
-            "R/R0, so by 3.8 Gyr only 42% of the early gas at R0 has arrived and 31% at 12 kpc, and "
-            "the star formation threshold holds what has arrived outside ~4 kpc as gas. **S18 tested "
-            "the prediction this row carried since S3 - that the merger's radial heating spreads the "
-            "thick disc - and killed it by the number**: the kick is derived (the vertical impulse read "
-            "isotropically, turned into a displacement through kappa and the guiding-centre shift) and "
-            "is 1.5 kpc at R0 but 0.3 at 2 kpc, because the inner disc is stiff, so it moves this row "
-            "1.18 -> 1.51 on the constant threshold and 0.93 -> 1.17 on the derived one (D124). The "
-            "derived threshold lowers it because Kennicutt's Sigma_crit is 26 Msun/pc2 at 4 kpc and "
-            "11 at R0, so the early gas forms stars closer in still."
-        ),
-        prediction=(
-            "The thick disc has to be born extended, and S18's probe found where that is decided: the "
-            "early episode's arrival law. The two-infall framework the inside-out index cites gives "
-            "the *first* infall a short, radius-independent timescale (~1 Gyr) and reserves "
-            "tau_D(R) for the second; this model applies tau(R) to both. With the early episode at "
-            "1 Gyr everywhere the pre-merger disc reads 2.11 kpc here - inside - but the whole early "
-            "share turns into thick disc (row 11 1.7e10, row 9 0.62, row 2 1.30), and shrinking the "
-            "share re-truncates it through the threshold (at a merger share of 0.8: rows 9 and 11 "
-            "inside, this row 1.35). **S20 ran the prediction and it failed** (D128): with the first "
-            "infall on the halo's own dynamical time at z_f (0.55 Gyr; 1 Gyr reads the same) this row "
-            "reads 1.95 at the default share, 2.15 at 0.3, 1.70 at 0.65 and 1.26 at 0.8 - it lands "
-            "only where row 11 reads 1.7e10 and row 9 0.56, and at 0.8, where row 11 is inside, rows 5 "
-            "and 9 read 1.26 and 0.04. Rows 5 and 11 still trade through the share, so the "
-            "pre-committed reading applies: the star formation law at high redshift is what is "
-            "wrong, not the split and not the arrival law (debt #49). Also dead: the halo's own "
-            "mass-accretion history as the first infall (0.98 here, row 11 1.5e9: it delivers too "
-            "little before the merger) and a compact early disc at R_d(z_f) (0.62-0.82). Stated so it "
-            "can fail: this row lands with rows 9 and 11 only when most of the early gas is still gas "
-            "at the merger, which needs the early disc to consume gas slower than it accretes it and "
-            "then to stop - a star formation law with a burst and a cut, not a Kennicutt law with a "
-            "threshold. **S21 (a) ran that** (AUDIT_II_A.md A-5): star formation off from 1.0 to 3.8 Gyr "
-            "on the fast first infall leaves the early gas as gas at the merger, rows 8, 9, 10 and 11 land "
-            "together for the first time, and this row reads 1.61 - 0.2 short. By debt #19's own reading "
-            "the split criterion is what is wrong; S22 rules."
-        ),
-    ),
-    Miss(
-        row=8,
-        model="simple",
-        debt=19,
-        since="S18",
-        reason=(
-            "0.016 against 4% +/- 2% (0.013 at S18): row 9's surface-density ratio divided by the "
-            "scale-height ratio (0.0455 x 328/962), so it carries no information row 9 does not and "
-            "fails with it (it read 0.033 while row 9 read 0.135). Registered separately only because "
-            "the table judges it separately; rows 8 and 9 are not independent and are never tuned apart."
-        ),
-        prediction=(
-            "It follows row 9 exactly, scaled by row 6 over row 7: whatever lands row 9 at the "
-            "observed scale heights lands this one at 0.04. If row 9 is landed and this row is not, "
-            "row 7 is what is wrong (debt #42's dispersion), not the thick disc's mass."
-        ),
-    ),
-    Miss(
-        row=9,
-        model="simple",
-        debt=19,
-        since="S18",
-        reason=(
-            "0.0455 against 12% +/- 4% (0.051 at S18 on the 120 km/s kick, which returned 0.015 of it; "
-            "the derived kick returns 0.010, D128): S3's gate, green since S3 on the cancellation debt #19 records "
-            "(0.103, 0.152, 0.147, 0.135 across S3-S17: a thick disc too massive and too compact, "
-            "whose errors compensated at R0), and red at S18 because the derived star formation "
-            "threshold holds the reservoir the pre-merger disc formed its outer stars from: 11 "
-            "Msun/pc2 at R0 against the constant 5, so the early gas at R0 never reaches it before "
-            "the merger and the thick disc's surface density there falls by two thirds. Debt #47 "
-            "said so in advance and pre-committed the reading: if this row cannot be restored with "
-            "the threshold derived, the thick disc is what is wrong, not the threshold (D119). The "
-            "radial kick returns 0.010 of it (0.036 -> 0.0455). The sweep the gate asks for, on the "
-            "built model: merger share 0.3 -> 0.8 reads this row 0.131, 0.083, 0.0455, 0.019, 0.005, "
-            "0.001 while row 11 reads 1.45e10, 1.21e10, 9.6e9, 7.2e9, 4.9e9, 2.8e9 - never inside "
-            "together, so the cancellation is still there and the gate is not met (D124, D128)."
-        ),
-        prediction=(
-            "Rows 5, 9 and 11 are one row: at the observed scale lengths (2.0 thick, 2.6 thin) and "
-            "masses (6e9, 3.5e10) this ratio is 0.11 by arithmetic, so whatever lands row 5 at the "
-            "observed mass lands this one. The candidate is the early episode's arrival law (debt "
-            "#49, row 5's entry): a fast first infall reads 0.62 at the default merger share and "
-            "0.13 at 0.8 on the constant threshold, 0.03 on the derived one. If that is built and "
-            "this row lands with rows 5 and 11 inside together across a sweep of the merger share, "
-            "the gate is met for the first time; if it lands with row 5 out, it is the same "
-            "cancellation in new clothes. **S21 (a)**: it lands with row 5 out, twice - at 0.115 with row "
-            "11 inside and row 5 at 1.61 on a cut-only law (A-5), and at 0.113 with row 11 inside and row 5 "
-            "at 2.56 when the stars are moved through the chemistry's kernel as well as the kick at a "
-            "merger share of 0.7 (A-2). Debt #50's bracket for this row was a fraction read as a ratio: "
-            "both kernels read 0.266 at the default share."
-        ),
-    ),
-    Miss(
-        row=11,
-        model="simple",
-        debt=19,
-        since="S3",
-        reason=(
-            "9.6e9 Msun against 6 +/- 3e9 (1.09e10 until S18; 1.30e10 at S16; 1.42e10 at S13): the "
-            "pre-merger episode carries half the baryon budget, and with the derived threshold a "
-            "little less of it forms stars before 3.8 Gyr, so the row is 7% over its ceiling. The "
-            "radial kick conserves mass and moves it not at all. Shrinking the pre-merger episode "
-            "through the merger's share lands this row at 0.6 (7.2e9) and 0.7 (4.9e9) - and reads "
-            "row 9 at 0.024 and 0.007 there, which is the cancellation debt #19 has recorded since "
-            "D51: a thick disc this centrally concentrated loses surface density at R0 far faster "
-            "than it loses mass. Also on the record: instantaneous recycling returns 30% of every "
-            "generation at birth, where an 11 Gyr population has returned nearer 45% [recall: "
-            "Kroupa/Chabrier], so the present mass of the oldest stars is overstated by ~25% in "
-            "both models - 9.6e9 formed is ~7.6e9 today - which is the simple model's defining "
-            "approximation (debt #15's scope) and not a lever."
-        ),
-        prediction=(
-            "Row 5 is the prerequisite, as it has been since S3, and S18 located what row 5 needs "
-            "(debt #49): a first infall fast enough that the pre-merger disc is extended, with "
-            "most of its gas still gas at the merger, so that the thick disc is light *and* wide "
-            "and this row and row 9 move together under the merger share instead of against each "
-            "other. If they still cannot be satisfied together at the right scale length once the "
-            "early infall is fast, the split criterion - born before the last major merger - is "
-            "what is wrong. **S21 (a)**: with the early infall fast and the early gas kept as gas to the "
-            "merger this row and rows 8, 9, 10 are inside together and row 5 is 1.61 (A-5), so that "
-            "sentence is now the reading."
-        ),
-    ),
-    Miss(
         row=12,
         debt=11,
         since="S17",
@@ -545,7 +416,7 @@ _MISSES: tuple[Miss, ...] = (
     ),
     Miss(
         row=6,
-        model="advanced",
+        model=None,
         debt=42,
         since="S13",
         reason=(
@@ -572,54 +443,17 @@ _MISSES: tuple[Miss, ...] = (
             "alpha-rich mode - a burst inside the alpha-fall, A-4 - reads this row at 353, inside."
         ),
     ),
-    Miss(
-        row=22,
-        model="simple",
-        debt=15,
-        since="S2",
-        reason=(
-            "-0.024 dex/kpc against -0.06 (-0.027 when recorded at S3). The gradient was measured to be exactly insensitive to "
-            "the yield, so the level and the tilt are set separately and this is about the tilt. "
-            "S3's more compact infall steepened it from -0.020, which confirms the tilt comes from "
-            "the differential infall, and it is still less than half of what is observed."
-        ),
-        prediction=(
-            "Outflows are the missing tilt: metal loss scaling with escape velocity strips more "
-            "from the outer disc than the inner one, steepening the gradient without touching the "
-            "inside-out index. S9 adds them. If the gradient does not steepen towards -0.06 when "
-            "it does, the infall law is wrong rather than the outflows missing."
-        ),
-    ),
-    Miss(
-        row=23,
-        model="simple",
-        debt=15,
-        since="S2",
-        reason=(
-            "The old-population gradient is too flat for two reasons, not one. Row 22's tilt is "
-            "a third of the observed (debt #15), and migration over-flattens on top of it: the "
-            "young/old ratio is 3.18 against the observed 1.75, and 1.75 is reached near 2.9 kpc "
-            "(AUDIT_RUN2.md D-2). S2 wrote 'migration itself is close to right' at a ratio of "
-            "2.3; S3's smaller disc took it to 3.2 and S10 (run 2) corrected the record."
-        ),
-        prediction=(
-            "Whatever steepens row 22 steepens this row by the same factor and leaves the "
-            "young/old ratio alone, because migration and enrichment are separate mechanisms here. "
-            "If row 22 steepens and this one does not, migration_efficiency is wrong too. It "
-            "did, in the advanced model (debt #28), and the ratio there is 3.09: the same "
-            "over-flattening with the tilt right, so the kernel is wrong independently of the tilt."
-        ),
-    ),
 )
 
 
-# The advanced model's own misses (rule A7). Its chemistry finds no valley in the
-# [α/Fe] distribution at R₀, so its chemical thin/thick split selects nothing and
-# every thick-disc row reads zero — one cause, six rows, plus row 24 itself.
+# The chemistry's own misses, recorded for the advanced model until D170 collapsed the two
+# models into one (rule A7 then; the one model's now). Its chemistry finds no valley in the
+# [α/Fe] distribution at R₀, so its chemical thin/thick split selects nothing and every
+# thick-disc row reads zero — one cause, six rows, plus row 24 itself.
 _NO_VALLEY = (
-    "The advanced model's thin/thick split is the valley between the two [α/Fe] sequences at "
-    "R₀ (D88), and there is none: the stellar mass there piles up at [α/Fe] = +0.21 in one "
-    "mode with a high-α tail, so the thick disc is empty and this row reads zero (debt #27)."
+    "The thin/thick split is the valley between the two [α/Fe] sequences at R₀ (D88), and "
+    "there is none: the stellar mass there piles up at [α/Fe] = +0.21 in one mode with a "
+    "high-α tail, so the thick disc is empty and this row reads zero (debt #27)."
 )
 _NO_VALLEY_PREDICTION = (
     "S9's prediction - the inner disc fast - ran at S10, S13, S18 and S20, and every valley it "
@@ -651,8 +485,8 @@ _NO_VALLEY_PREDICTION = (
     "6 at 353. The burst has to run after the first Ia iron and while the gas is rich - not within a "
     "gigayear of t = 0 - and nothing in the repo makes one; in the simple model it is #49's trade unchanged."
 )
-_MISSES_ADVANCED: tuple[Miss, ...] = tuple(
-    Miss(row=row, model="advanced", debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
+_MISSES_CHEMISTRY: tuple[Miss, ...] = tuple(
+    Miss(row=row, model=None, debt=27, since="S9", reason=_NO_VALLEY, prediction=_NO_VALLEY_PREDICTION)
     for row in (5, 7, 8, 9, 11)
 ) + (
     # The advanced model's row 10 miss (debt #27, S9) was removed at S17. It read 5.28e10 and
@@ -664,7 +498,7 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     # #27's valley ever appears this row will move again by the thick disc's whole mass.
     Miss(
         row=22,
-        model="advanced",
+        model=None,
         debt=47,
         since="S18",
         reason=(
@@ -695,7 +529,7 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     ),
     Miss(
         row=23,
-        model="advanced",
+        model=None,
         debt=28,
         since="S9",
         reason=(
@@ -722,7 +556,7 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
     ),
     Miss(
         row=24,
-        model="advanced",
+        model=None,
         debt=27,
         since="S9",
         reason=(
@@ -739,9 +573,13 @@ _MISSES_ADVANCED: tuple[Miss, ...] = tuple(
 
 
 def misses(model: str) -> Mapping[int, Miss]:
-    """The recorded misses that apply to ``model``: the shared ones and its own (rule A7)."""
+    """The recorded misses that apply to ``model``: the shared ones and its own (rule A7).
+
+    Since D170 one model is registered and every entry is shared; the per-model qualification
+    stays because rule A7 does, for the day a second model is declared again.
+    """
     out: dict[int, Miss] = {}
-    for m in _MISSES + _MISSES_ADVANCED:
+    for m in _MISSES + _MISSES_CHEMISTRY:
         if m.model is None or m.model == model:
             if m.row in out:
                 raise SpecError(f"row {m.row} is registered as a miss twice for model {model!r}")
@@ -749,8 +587,7 @@ def misses(model: str) -> Mapping[int, Miss]:
     return MappingProxyType(out)
 
 
-MISSES: Mapping[int, Miss] = misses("simple")
-MISSES_ADVANCED: Mapping[int, Miss] = misses("advanced")
+MISSES: Mapping[int, Miss] = misses("basic")
 
 
 @dataclass(frozen=True, slots=True)
@@ -881,19 +718,19 @@ def summary(results: Iterable[Result]) -> dict[str, int]:
     return counts
 
 
-def unexplained(results: Iterable[Result], model: str = "simple") -> tuple[Result, ...]:
+def unexplained(results: Iterable[Result], model: str = "basic") -> tuple[Result, ...]:
     """Failing rows with no recorded miss for ``model``. These are what should stop a build."""
     known = misses(model)
     return tuple(r for r in results if r.status == "fail" and r.n not in known)
 
 
-def stale(results: Iterable[Result], model: str = "simple") -> tuple[Result, ...]:
+def stale(results: Iterable[Result], model: str = "basic") -> tuple[Result, ...]:
     """Registered misses that now pass: the recorded explanation is wrong or spent (rule B10)."""
     known = misses(model)
     return tuple(r for r in results if r.status == "pass" and r.n in known)
 
 
-def problems(results: Iterable[Result], model: str = "simple") -> list[Problem]:
+def problems(results: Iterable[Result], model: str = "basic") -> list[Problem]:
     """Everything a spec run should fail on. A recorded, still-failing miss is not one."""
     results = list(results)
     known = misses(model)

@@ -42,7 +42,12 @@ class Handler(BaseHTTPRequestHandler):
             print(f"galaxy.api: {type(e).__name__}: {e}", file=sys.stderr)
             body = json.dumps({"error": "internal error", "type": type(e).__name__}).encode("utf-8")
             response = Response(500, JSON, body)
-        self._send(response)
+        try:
+            self._send(response)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            # The viewer aborted the request (its view moved on before the answer came): the
+            # answer has nowhere to go, and a traceback for that is not an error report.
+            pass
 
     def do_HEAD(self) -> None:  # noqa: N802
         parts = urlsplit(self.path)

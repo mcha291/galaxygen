@@ -34,19 +34,17 @@ def test_every_row_names_a_field():
 
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
-VERDICTS = {"simple": REACHED | {21}, "advanced": REACHED | {21, 24}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
+# One model since D170 (the former advanced physics); the tables keep its values.
+VERDICTS = {"basic": REACHED | {21, 24}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "simple": {"pass": 10, "fail": 13, "not-yet-computable": 1},  # S20: row 7 landed (the kick re-derived, D128) and row 3 left by 0.03 on the same change
-    "advanced": {"pass": 8, "fail": 16, "not-yet-computable": 0},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 8, "fail": 16, "not-yet-computable": 0},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "simple": {3, 5, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23},
-    "advanced": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23, 24},
+    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23, 24},
 }
-# S20: row 7 passes (#42's constant re-derived) and row 3 is #11's again (the bar); the advanced
-# row 6 stays #42's. S18: row 9 joins #19, row 20 is #17's (at its zero-width target), the
-# advanced row 22 is #47's.
-DEBTS = {"simple": {2, 11, 15, 17, 19}, "advanced": {2, 11, 17, 27, 28, 42, 47}}
+# S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's (at its
+# zero-width target), row 22 is #47's.
+DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47}}
 # S24: row 21 fails at a zero-width target (0.11, no quoted uncertainty) — debt #17's defect,
 # not the prescription's. It could not pass however well the physics were done.
 
@@ -58,37 +56,32 @@ def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
     by_n = {r.n: r for r in results}
     assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == VERDICTS[model.name]
     assert spec.summary(results) == SUMMARY[model.name]
-    if model.name == "simple":
-        assert "not published by model" in by_n[24].reason  # one abundance, no α–Fe plane (rule B3)
 
 
 def test_every_failure_is_recorded_and_the_run_is_clean(model, judged):
-    """Every miss names a debt and a prediction, per model (rules A7, B4, B5)."""
+    """Every miss names a debt and a prediction (rules A7, B4, B5)."""
     results = judged[model.name]
     failed = {r.n for r in results if r.status == "fail"}
     assert failed == FAILED[model.name]
     assert spec.unexplained(results, model.name) == () and spec.stale(results, model.name) == ()
     assert spec.problems(results, model.name) == []
-    # Simple: #18 (no extended accretion), #15 (the tilt), #19 (the thick disc's
-    # shape). Advanced: #18 again, #27 (no [α/Fe] valley, so no thick disc), #28
+    # #18 (no extended accretion), #27 (no [α/Fe] valley, so no thick disc), #28
     # (migration too strong once the tilt is right).
     assert {spec.misses(model.name)[n].debt for n in failed} == DEBTS[model.name]
 
 
-def test_a_miss_belongs_to_one_model_or_to_all():
-    """Row 5 is the simple model's miss alone; row 22 misses in both for different reasons; row 12 in both for one."""
-    assert 5 in spec.MISSES and spec.MISSES[5].model == "simple" and spec.MISSES_ADVANCED[5].debt == 27
-    # Row 22: the simple model's tilt (debt #15, since S2) and, since S18, the advanced model's inner gas under
-    # the derived threshold (debt #47), out by 0.0008 - two entries, two debts, one row (rule A7).
-    assert 22 in spec.MISSES and 22 in spec.MISSES_ADVANCED and spec.MISSES[22] is not spec.MISSES_ADVANCED[22]
-    assert spec.MISSES[22].debt == 15 and spec.MISSES_ADVANCED[22].debt == 47
-    assert 24 in spec.MISSES_ADVANCED and 24 not in spec.MISSES
-    assert spec.MISSES[12] is spec.MISSES_ADVANCED[12] and spec.MISSES[12].model is None
+def test_the_ledger_is_one_since_d170():
+    """One model, one ledger: every miss is in ``spec.MISSES`` and none belongs to a model that is not registered."""
+    assert spec.MISSES[5].debt == 27 and spec.MISSES[7].debt == 27  # the valley's rows (D170 kept the advanced ledger)
+    # Row 22: since S18 the inner gas under the derived threshold (debt #47), out by 0.0008.
+    assert spec.MISSES[22].debt == 47
+    assert spec.MISSES[24].debt == 27
+    assert spec.MISSES[12].debt == 11 and spec.MISSES[12].model is None
     # Row 3 landed at S18, by 0.04, on the kick (D124) and left again at S20, by 0.03, when the kick's
-    # constant was re-derived (D128): one entry for both models, the bar's (debt #11).
-    assert spec.MISSES[3] is spec.MISSES_ADVANCED[3] and spec.MISSES[3].model is None and spec.MISSES[3].since == "S20"
-    assert 7 not in spec.MISSES and spec.MISSES_ADVANCED[7].debt == 27  # the simple row 7 passes since S20
-    assert {m.model for m in spec._MISSES_ADVANCED} == {"advanced"}
+    # constant was re-derived (D128): the bar's (debt #11).
+    assert spec.MISSES[3].debt == 11 and spec.MISSES[3].model is None and spec.MISSES[3].since == "S20"
+    assert {m.model for m in spec.MISSES.values()} <= {None, "basic"}
+    assert spec.misses("basic") == dict(spec.MISSES)
 
 
 def test_an_unexplained_failure_stops_the_run():
@@ -108,7 +101,7 @@ def test_a_recorded_miss_that_starts_passing_is_itself_a_problem():
 
 
 def test_recorded_misses_are_well_formed():
-    for row, m in list(spec.MISSES.items()) + list(spec.MISSES_ADVANCED.items()):
+    for row, m in spec.MISSES.items():
         assert m.row == row and m.debt >= 1 and m.since.startswith("S")
         assert m.reason.strip() and m.prediction.strip()
     with pytest.raises(spec.SpecError):
@@ -123,15 +116,12 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "1 not-yet-computable of 24" in out and "1 not-yet-computable of 24" in out
+    assert "spec" in out and "0 not-yet-computable of 24" in out
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
-    assert "recorded miss, debt #19, since S3" in out    # rows 5 and 11
-    assert "recorded miss, debt #19, since S18" in out   # rows 8 and 9: S3's gate, off the cancellation and out (D124)
-    assert "recorded miss, debt #42, since S13" in out   # the advanced row 6: the heated old population counted as thin
+    assert "recorded miss, debt #42, since S13" in out   # row 6: the heated old population counted as thin
     assert "recorded miss, debt #17, since S16" in out   # row 20: at its zero-width target
-    assert "recorded miss, debt #47, since S18" in out   # the advanced row 22
-    assert "recorded miss, debt #15, since S2" in out
+    assert "recorded miss, debt #47, since S18" in out   # row 22
     assert "recorded miss, debt #27, since S9" in out
 
 
@@ -305,7 +295,7 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
     from galaxy.run import run
 
     models, _, _ = prod
-    m = models.get("simple")
+    m = models.get("basic")
     seed_names = [n for n, i in INPUTS.items() if i.kind == "seed"]
     assert len(seed_names) == 4
     # Harmless today: no published quantity depends on more than one seed, so the

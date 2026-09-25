@@ -1,21 +1,21 @@
-"""Vertical structure, advanced: the thin/thick split is chemical (checkpoint 3).
+"""Vertical structure: the thin/thick split is chemical (checkpoint 3).
 
-The simple model's ``vertical`` sorts stars by whether they were born before the
-last major merger. That is a definition, not a measurement, and it made the
-merger-free control run circular: a galaxy with no major merger had no thick
-disc *by construction* (debt #20), so nothing it produced could be evidence
-about whether mergers are needed (debt #9).
+The retired merger criterion (``vertical.py``, the simple model's until D170) sorted
+stars by whether they were born before the last major merger. That is a definition,
+not a measurement, and it made the merger-free control run circular: a galaxy with
+no major merger had no thick disc *by construction* (debt #20), so nothing it
+produced could be evidence about whether mergers are needed (debt #9).
 
 Here a star is thick-disc if it was born α-enhanced: if the gas it formed from
-had [α/Fe] above the valley the advanced chemistry found between the two
-sequences at R₀ (``alpha_split``). The criterion names nothing about the event
-list. A merger still matters — through the second infall it delivers, which
-dilutes the gas and restarts the sequence — but whether the result is a thick
-disc is now read off the [α/Fe] plane. With no valley there is no thick disc,
-which is a result rather than a rule.
+had [α/Fe] above the valley the chemistry found between the two sequences at R₀
+(``alpha_split``). The criterion names nothing about the event list. A merger
+still matters — through the second infall it delivers, which dilutes the gas and
+restarts the sequence — but whether the result is a thick disc is read off the
+[α/Fe] plane. With no valley there is no thick disc, which is a result rather
+than a rule.
 
 The arithmetic — scale heights, dispersions, masses, the acceptance rows — is
-the simple stage's, shared through ``vertical.split``; only the mask differs.
+shared through ``vertical.split``; only the mask is this stage's.
 """
 
 from __future__ import annotations
@@ -53,8 +53,8 @@ VERTICAL_ALPHA = IMPLEMENTATIONS.register(
         checkpoint=3,
         about=(
             "Sorts the stellar populations into thin and thick by their birth [α/Fe] against the "
-            "valley the advanced chemistry found, and turns their dispersions into scale heights. "
-            "The advanced model's vertical stage; the criterion does not name the merger."
+            "valley the chemistry found, and turns their dispersions into scale heights. The "
+            "criterion does not name the merger."
         ),
         compute=compute,
         reads_constants=("R_SUN", "G"),
@@ -62,6 +62,6 @@ VERTICAL_ALPHA = IMPLEMENTATIONS.register(
             "stars_formed_history", "gas_surface_density",
             "disc_heating", "alpha_fe_history", "alpha_split",
         ),
-        publishes=vertical.VERTICAL.publishes,
+        publishes=vertical.PUBLISHES,
     )
 )

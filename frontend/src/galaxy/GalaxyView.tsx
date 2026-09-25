@@ -24,6 +24,8 @@ export interface ViewState {
   pxPerKpc: number;
   /** The orbit target in the scene, kpc: where a close view is looking. */
   target: [number, number, number];
+  /** Where the camera is and what it sees: its view-projection matrix, column-major, for a frustum test. */
+  camera: { position: [number, number, number]; viewProjection: number[] };
 }
 
 /** A set of star points: positions and colours, how strongly drawn, and what a click on one does. */
@@ -37,7 +39,7 @@ export interface StarLayer {
 interface Props {
   /** The star layers: the whole-galaxy sample and, close up, a region's own stars. */
   layers?: StarLayer[];
-  /** Framing radius in kpc when there are no stars to frame on. */
+  /** Framing radius in kpc; without one the first layer's stars set it. */
   reach?: number;
   /** Extra layers drawn in the galaxy's frame (the field, a disc image). */
   children?: ReactNode;
@@ -61,7 +63,7 @@ const STAR_SPRITE_PX = 9;
  */
 export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false }: Props) {
   const first = layers[0]?.positions;
-  const reach = useMemo(() => (first ? extent(first) : 0) || framing || 20, [first, framing]);
+  const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
 
   return (
@@ -90,7 +92,7 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const size = useThree((s) => s.size);
-  const reported = useRef<{ zoom: number; x: number; z: number; width: number; height: number } | null>(null);
+  const reported = useRef<{ zoom: number; x: number; z: number; width: number; height: number; eye: [number, number, number] } | null>(null);
   // Read through a ref, not listed as dependencies: the subscription below must not be torn down
   // and re-made on a render. It was, once per render, and each time it reported the view afresh;
   // the report set the parent's state, the parent rendered, the effect ran again, and the page
@@ -107,14 +109,19 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
       const z = zoomOf(d, r);
       const across = acrossOf(d, FOV, s.width / Math.max(s.height, 1));
       const { x, y, z: tz } = controls.target;
+      const eye: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z];
       const last = reported.current;
       // A pan matters as well as a zoom now: close up, where the view looks decides which stars load.
+      // And an orbit, which moves the camera and not the target: the frustum decides too.
       if (
         last && Math.abs(last.zoom - z) < 1e-3 && Math.hypot(last.x - x, last.z - tz) < across / 20 &&
+        Math.hypot(last.eye[0] - eye[0], last.eye[1] - eye[1], last.eye[2] - eye[2]) < across / 20 &&
         last.width === s.width && last.height === s.height
       ) return;
-      reported.current = { zoom: z, x, z: tz, width: s.width, height: s.height };
-      notify?.({ zoom: z, across, pxPerKpc: s.width / across, target: [x, y, tz] });
+      reported.current = { zoom: z, x, z: tz, width: s.width, height: s.height, eye };
+      camera.updateMatrixWorld();
+      const viewProjection = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements.slice();
+      notify?.({ zoom: z, across, pxPerKpc: s.width / across, target: [x, y, tz], camera: { position: eye, viewProjection } });
     };
     const onChange = () => report.current?.();
     onChange();

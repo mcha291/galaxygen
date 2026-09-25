@@ -85,9 +85,9 @@ def test_the_model_is_reproducible_across_processes_too(model):
 
 def test_the_spec_checks_reproducibility_across_processes_too(prod):
     """Debt #40, fixed at S12: the spec ran both halves in one interpreter; now two, under two hash seeds."""
-    assert determinism.check_reproducible_across_processes("simple") == []
+    assert determinism.check_reproducible_across_processes("basic") == []
     rep = determinism.report(*prod)
-    assert rep.count("across processes") == 2 and "FAIL" not in rep
+    assert rep.count("across processes") == 1 and "FAIL" not in rep  # one per model; one model since D170
     # A synthetic model is not a production one and is checked in-process only.
     s = stage("s", ("f",), compute=lambda ctx: {"f": np.zeros(ctx.grid.shape(("R",)))})
     assert not determinism._is_production(model("m", s))

@@ -12,10 +12,10 @@ with a branch push succeeding seconds later on the same credential — D40's fin
 eight sessions on, and the reason rule C2e exists. Nothing else is outstanding.
 
 ## What the instruments say
-`uv run pytest && uv run python -m galaxy.specs`: graph acyclic in both models, preflight 0
-UNSET, determinism reproducible within and across processes, spec **simple 10 / 12 / 2** and
-**advanced 8 / 15 / 1**, convergence 0 drifts. Those counts have not moved since S20 and are the
-fastest check that a clone is sound. `tools/verify_clone.py --ref main` does the whole of it in
+`uv run pytest && uv run python -m galaxy.specs`: graph acyclic, preflight 0 UNSET, determinism
+reproducible within and across processes, spec **basic 8 / 16 / 0** (pass / fail / n-y-c; the
+former advanced model's counts, unmoved since S20 — one model since D170, the simple one and its
+10 / 12 / 2 retired), convergence 0 drifts. The fastest check that a clone is sound. `tools/verify_clone.py --ref main` does the whole of it in
 a fresh clone, which is the only verification rule C2 accepts.
 
 ## What the model does not have, in one paragraph
@@ -24,7 +24,7 @@ twelve carried are not twelve mechanisms. **Four of them are one** — #19, #27,
 inner half of #47 — and it is the largest single absence in the build: *a first phase that
 consumes gas slower than it accretes it and then stops, the stopping after the first Ia iron
 has arrived*. A constant-efficiency Kennicutt law with a threshold cannot do it, and fourteen
-acceptance rows across the two models hang on it. Three more — #11, #52, #47's reservoir — are
+acceptance rows hang on it. Three more — #11, #52, #47's reservoir — are
 the bar, which is permanent because this model's controls are global scalars (A2) and no
 relation for the bar's first link is quoted anywhere in the project (A4). The permanent
 fifteen are eight source limitations, five scope limitations, one rule-A1 fixed point (#26's

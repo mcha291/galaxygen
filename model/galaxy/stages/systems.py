@@ -394,6 +394,8 @@ def materialise(
     # [α/Fe] valley, which in the advanced model was a second definition of "thick" that
     # disagreed with the one every thick-disc row is read from (rule A9).
     thick_at_birth = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
+    # [α/Fe] at birth, read at the same place as [Fe/H].
+    alpha = np.asarray(fields["alpha_fe_history"], dtype=float)
     # Every cell ring, whichever cells were asked for. Narrowing it to the rings a region
     # query touches was tried and reverted: the arrival law is a matrix product over the
     # rings, and BLAS sums a 1-column product in a different order than a 32-column one, so
@@ -443,6 +445,7 @@ def materialise(
         columns.setdefault("star_age", []).append(t[-1] - born)
         columns.setdefault("star_birth_radius", []).append(birth_radius)
         columns.setdefault("star_metallicity", []).append(metallicity)
+        columns.setdefault("star_alpha", []).append(alpha[rows, cols])
         columns.setdefault("star_mass", []).append(imf_sample(draw("mass")))
         columns.setdefault("star_population", []).append(is_thick.astype(np.int64))
 
@@ -451,7 +454,7 @@ def materialise(
         return Catalogue.of({
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
-                      "star_birth_radius", "star_metallicity", "star_mass", "star_population",
+                      "star_birth_radius", "star_metallicity", "star_alpha", "star_mass", "star_population",
                       "star_luminosity", "star_temperature")
         }, counts)
     out = {name: np.concatenate(parts) for name, parts in columns.items()}
@@ -533,6 +536,12 @@ STAR_METALLICITY = _column("star_metallicity", "[Fe/H]", "dex",
                            "Looked up at the star's *birth* radius and birth time, not drawn: given "
                            "when and where it formed, its abundance is already decided (rule B8).",
                            ramp=Ramp("RdBu", lo=-2.0, hi=0.5))
+STAR_ALPHA = _column("star_alpha", "[α/Fe]", "dex",
+                     "Looked up at the star's birth radius and birth time from alpha_fe_history, exactly "
+                     "as [Fe/H] is, so a star born on the core-collapse plateau is α-enhanced wherever it "
+                     "drifted to. Painted by it, the catalogue splits into the α-rich and α-poor sequences "
+                     "the vertical stage divides thick from thin by (D169).",
+                     ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5))
 STAR_MASS = _column("star_mass", "Stellar mass", "Msun",
                     "Kroupa by inverse CDF. The steep high-mass slope means almost every star in "
                     "the sample is smaller than the Sun.", ramp=Ramp("inferno", scale="log"))
@@ -600,12 +609,12 @@ SYSTEMS = IMPLEMENTATIONS.register(
         reads_inputs=("migration_efficiency",),
         requires=(
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
-            "birth_population", "sfr_surface_density_history", "feh_history",
+            "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
             "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
         ),
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
-            STAR_METALLICITY, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
+            STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
         ),
     )
 )

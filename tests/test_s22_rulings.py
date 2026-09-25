@@ -35,8 +35,8 @@ DERIVED_ROWS = {13: "bulge_stellar_fraction", 14: "bulge_velocity_dispersion"}
 
 
 @pytest.fixture(scope="module")
-def simple(prod):
-    return prod[0].get("simple")
+def basic(prod):
+    return prod[0].get("basic")
 
 
 def diagonal(model, start, fields):
@@ -49,7 +49,7 @@ def diagonal(model, start, fields):
     return vals
 
 
-def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagonals(simple):
+def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagonals(basic):
     """#51's own test, run: three samples of 41, none sharing a draw (S22).
 
     The verdict is identical on all three for every statistical row, so the fixed sample
@@ -60,7 +60,7 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     the sample's own spread (16, 17) or out by a factor (18).
     """
     fields = list(SEEDED_ROWS.values())
-    med = {start: {f: float(np.median(v)) for f, v in diagonal(simple, start, fields).items()}
+    med = {start: {f: float(np.median(v)) for f, v in diagonal(basic, start, fields).items()}
            for start in (0, 41, 82)}
 
     verdicts = {row: {s: Q[row].lo <= med[s][f] <= Q[row].hi for s in med} for row, f in SEEDED_ROWS.items()}
@@ -80,12 +80,12 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     assert min(over) > 4.0, over
 
     # Rows 13 and 14 do not move at all: S17 found them derived, not seeded (debt #39).
-    fixed = {s: diagonal(simple, s, list(DERIVED_ROWS.values())) for s in (0, 82)}
+    fixed = {s: diagonal(basic, s, list(DERIVED_ROWS.values())) for s in (0, 82)}
     for f in DERIVED_ROWS.values():
         assert len(set(fixed[0][f])) == 1 and fixed[0][f][0] == fixed[82][f][0], f
 
 
-def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(simple):
+def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(basic):
     """Row 3 reads 251.03 against a window ending at 251.0, and n_R is worth more than that.
 
     Refined to the value the radial mesh converges to: 251.013, so the miss is 0.013 km/s -
@@ -95,7 +95,7 @@ def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(simple):
     """
     reads = {}
     for n in (400, 800, 1600, 3200):
-        reads[n] = float(run(simple, grid=DEFAULT.replace(n_R=n), only=("v_tangential_sun",)).fields["v_tangential_sun"])
+        reads[n] = float(run(basic, grid=DEFAULT.replace(n_R=n), only=("v_tangential_sun",)).fields["v_tangential_sun"])
     assert reads[400] == pytest.approx(251.026, abs=0.005)
     assert reads[3200] == pytest.approx(251.013, abs=0.005)
     assert all(v > Q[3].hi for v in reads.values()), reads  # out at every mesh: the miss is real
@@ -104,7 +104,7 @@ def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(simple):
     assert reads[400] - reads[3200] > 0.5 * converged  # the mesh is worth as much as the miss
 
 
-def test_debt_70_and_27_the_only_mode_ever_opened_is_narrower_than_the_milky_ways(simple):
+def test_debt_70_and_27_the_only_mode_ever_opened_is_narrower_than_the_milky_ways():
     """The two lists, put together: what the detector can see, against what row 9 asks for.
 
     Aim (b) (#70): a Gaussian mode of share s and dispersion sigma is kept only if
@@ -165,11 +165,11 @@ def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the
     and that it disagrees with the width the disc's structure wants (debt #50: under 1.8 kpc
     once the mass follows the kernel, A-2).
     """
-    advanced = prod[0].get("advanced")
+    basic = prod[0].get("basic")
     fields = ("metallicity_gradient_old", "metallicity_gradient_young")
     read = {}
     for eff in (2.5, 3.0, 3.6):
-        f = run(advanced, {"migration_efficiency": eff}, only=fields).fields
+        f = run(basic, {"migration_efficiency": eff}, only=fields).fields
         read[eff] = (float(f["metallicity_gradient_old"]), float(f["metallicity_gradient_young"]))
 
     old3, young3 = read[3.0]
@@ -179,19 +179,16 @@ def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the
     # The crossing is bracketed, and the cited default is on the far side of it.
     assert read[2.5][1] / read[2.5][0] < 1.75 < read[3.6][1] / read[3.6][0]
     # And the default's own ratio is not what the register has carried since S13: S18's
-    # threshold moved it and nobody re-read it. 3.03 (advanced) / 3.27 (simple) then.
+    # threshold moved it and nobody re-read it. 3.03 then (3.27 in the pre-D170 simple model).
     assert read[3.6][1] / read[3.6][0] == pytest.approx(2.55, abs=0.08)
-    simple = prod[0].get("simple")
-    f = run(simple, only=fields).fields
-    assert f["metallicity_gradient_young"] / f["metallicity_gradient_old"] == pytest.approx(2.49, abs=0.08)
 
 
-def test_debt_79_row_21_is_judged_in_both_models_since_s24(prod):
+def test_debt_79_row_21_is_judged_since_s24(prod):
     """S22's close-out finding, and its discharge at S24 (D163).
 
-    Until S24 `gas_h2_fraction` was declared in the table and published by no stage of either
+    Until S24 `gas_h2_fraction` was declared in the table and published by no stage of any
     model, so row 21 read not-yet-computable. The ism stage now publishes it from a sourced
-    pressure partition (Blitz & Rosolowsky 2006), so the row is judged in both models - and it
+    pressure partition (Blitz & Rosolowsky 2006), so the row is judged in every model - and it
     fails, at a zero-width target no float meets (debt #17), which is a recorded miss, not a gap.
     """
     from galaxy.core.registry import production
@@ -214,6 +211,10 @@ def test_no_green_row_is_unconditioned(judged):
     and whether it would survive its cause being repaired. The gate is only met if that table
     covers the pass set *exactly*: a row that passes and is not in the table is a green nobody
     re-read, and a row in the table that no longer passes means the table is stale.
+
+    The table is a historical record written for two models and is not edited (D170): its
+    "advanced" column is the physics the one model, ``basic``, carries, so that column is the
+    one the pass set is checked against; the "simple" column is read for the union only.
     """
     import re
     from pathlib import Path
@@ -229,7 +230,9 @@ def test_no_green_row_is_unconditioned(judged):
         for name in ("simple", "advanced") if cells[1] == "both" else (cells[1],):
             listed[name] |= rows
 
+    column = {"basic": "advanced"}  # the historical column each registered model descends from
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
-        assert passing == listed[name], (name, sorted(passing ^ listed[name]))
-    assert len(listed["simple"]) == 10 and len(listed["advanced"]) == 8
+        assert passing == listed[column[name]], (name, sorted(passing ^ listed[column[name]]))
+        assert passing <= listed["simple"] | listed["advanced"]
+    assert len(listed["advanced"]) == 8  # the simple column's 10 is the record's, not a model's, since D170

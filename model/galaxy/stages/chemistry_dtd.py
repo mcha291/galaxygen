@@ -1,10 +1,10 @@
-"""Chemistry, advanced: two elements, a delay-time distribution, outflows, conservative migration (checkpoint 3).
+"""Chemistry: two elements, a delay-time distribution, outflows, conservative migration (checkpoint 3).
 
-The simple model's chemistry (``chemistry.py``) has one abundance and returns it
-in the timestep that made it. This implementation of the same slot differs on
-exactly the three axes GALAXY_INPUTS.md §8 gives the advanced model, and shares
-everything else — the gas, star formation and infall histories the sfh stage
-published are read unchanged.
+The retired simple chemistry (``chemistry.py``, a stage until D170) had one abundance
+and returned it in the timestep that made it. This stage differs from it on exactly
+the three axes GALAXY_INPUTS.md §8 gave the advanced model, and shares everything
+else — the gas, star formation and infall histories the sfh stage published are
+read unchanged, and the [Fe/H] declarations are that module's under the same contract.
 
 **Two elements and a delay.** Iron and oxygen are tracked separately, and
 iron has two sources with different clocks: core-collapse supernovae return it
@@ -55,7 +55,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -63,7 +62,6 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages import chemistry as simple
 from galaxy.stages.chemistry import (
     AGE_BIN, MIGRATION_REFERENCE_AGE, OLD_MIN_AGE, YOUNG_MAX_AGE,
     age_bin_edges, gradient, migration_width, transport,
@@ -197,61 +195,101 @@ def bimodality(afe: np.ndarray, feh: np.ndarray, weight: np.ndarray) -> tuple[st
 
 # --- declarations -------------------------------------------------------------
 
-# Same contract as the simple model's, so preflight reconciles them; the about
-# line is this stage's own, because what is behind the name has changed.
-METALLICITY_HISTORY = replace(simple.METALLICITY_HISTORY, about=(
-    "Total metal mass fraction in the gas: core-collapse metals in solar proportions to the "
-    "oxygen, plus the iron-peak ejecta of type Ia supernovae, less what the wind removed."
-))
-FEH_HISTORY = replace(simple.FEH_HISTORY, about=(
-    "log10(Z_Fe/Z_Fe☉), iron proper rather than total metallicity as a proxy for it. Two "
-    "sources with two clocks: prompt core-collapse iron and delayed Ia iron. −inf where no "
-    "metals exist, never a floor (rule B9)."
-))
-FEH_GAS = replace(simple.FEH_GAS, about=(
-    "Present-day gas iron. The level at R₀ is a result of the wind's escape fraction there, "
-    "not of a calibrated yield; row 22 is fitted to this over 4–12 kpc."
-))
-FEH_STARS_YOUNG = replace(simple.FEH_STARS_YOUNG, about=(
-    "Mass-weighted mean [Fe/H] of the stars now at R that are younger than 1 Gyr, after "
-    "migration has moved them — which at this age is hardly at all."
-))
-FEH_STARS_OLD = replace(simple.FEH_STARS_OLD, about=(
-    "Mass-weighted mean [Fe/H] of the stars now at R older than 10 Gyr. Beyond the disc they "
-    "formed in these are migrants, carrying inner-disc abundances outward."
-))
-METALLICITY_GRADIENT = replace(simple.METALLICITY_GRADIENT, about=(
-    "Acceptance row 22. Two tilts add here: the differential infall the simple model has, and "
-    "the differential metal loss of a wind that escapes the outer disc more easily (debt #15)."
-))
-GRADIENT_YOUNG = replace(simple.GRADIENT_YOUNG, about="Acceptance row 23's young end, on the migrated young population.")
-GRADIENT_OLD = replace(simple.GRADIENT_OLD, about=(
-    "Acceptance row 23's old end, on the migrated old population; flatter than the young end "
-    "because the old stars have moved furthest and the outer disc's old stars came from inside."
-))
+# The [Fe/H] declarations. Until D170 these were the retired single-yield chemistry's, with
+# this stage overriding each about line because what was behind the name had changed; the
+# contract (units, axes, ramps) is unchanged from then.
+METALLICITY_HISTORY = FieldDecl(
+    name="metallicity_history", label="Gas metallicity Z(R, t)", unit="dimensionless",
+    kind=Kind.FIELD, axes=("R", "t"), ramp=Ramp("plasma", scale="log"), meaningful_zero=True,
+    about=(
+        "Total metal mass fraction in the gas: core-collapse metals in solar proportions to the "
+        "oxygen, plus the iron-peak ejecta of type Ia supernovae, less what the wind removed. "
+        "Starts at zero everywhere — the infall is primordial — and the whole enrichment history "
+        "is the model's, not an initial condition."
+    ),
+)
+FEH_HISTORY = FieldDecl(
+    name="feh_history", label="[Fe/H](R, t)", unit="dex", kind=Kind.FIELD, axes=("R", "t"),
+    ramp=Ramp("RdBu", scale="linear", lo=-2.0, hi=0.5), meaningful_zero=True,
+    about=(
+        "log10(Z_Fe/Z_Fe☉), iron proper rather than total metallicity as a proxy for it. Two "
+        "sources with two clocks: prompt core-collapse iron and delayed Ia iron. Zero is meaningful "
+        "and is solar; −inf where no metals exist, never a floor (rule B9)."
+    ),
+)
+FEH_GAS = FieldDecl(
+    name="feh_gas", label="Present-day gas [Fe/H](R)", unit="dex", kind=Kind.FIELD, axes=("R",),
+    ramp=Ramp("RdBu", scale="linear", lo=-1.5, hi=0.5), meaningful_zero=True,
+    about=(
+        "Present-day gas iron. The level at R₀ is a result of the wind's escape fraction there, "
+        "not of a calibrated yield; row 22 is fitted to this over 4–12 kpc, and young tracers such "
+        "as Cepheids measure it."
+    ),
+)
+FEH_STARS_YOUNG = FieldDecl(
+    name="feh_stars_young", label="[Fe/H] of stars younger than 1 Gyr", unit="dex", kind=Kind.FIELD,
+    axes=("R",), ramp=Ramp("RdBu", scale="linear", lo=-1.5, hi=0.5), meaningful_zero=True,
+    about=(
+        "Mass-weighted mean [Fe/H] of the stars now at R that are younger than 1 Gyr, after "
+        "migration has moved them — which at this age is hardly at all, so it tracks the gas."
+    ),
+)
+FEH_STARS_OLD = FieldDecl(
+    name="feh_stars_old", label="[Fe/H] of stars older than 10 Gyr", unit="dex", kind=Kind.FIELD,
+    axes=("R",), ramp=Ramp("RdBu", scale="linear", lo=-1.5, hi=0.5), meaningful_zero=True,
+    about=(
+        "Mass-weighted mean [Fe/H] of the stars now at R older than 10 Gyr. Beyond the disc they "
+        "formed in these are migrants, carrying inner-disc abundances outward; the contrast with "
+        "the young profile is row 23."
+    ),
+)
+METALLICITY_GRADIENT = FieldDecl(
+    name="metallicity_gradient", label="Present-day metallicity gradient", unit="dex/kpc",
+    kind=Kind.SCALAR, meaningful_zero=True,
+    about=(
+        "Acceptance row 22, fitted to the gas profile over 4–12 kpc — the range the cited "
+        "measurements cover. Two tilts add here: the differential infall (set by the inside-out "
+        "index, not by the yield), and the differential metal loss of a wind that escapes the "
+        "outer disc more easily (debt #15)."
+    ),
+)
+GRADIENT_YOUNG = FieldDecl(
+    name="metallicity_gradient_young", label="Gradient, stars younger than 1 Gyr", unit="dex/kpc",
+    kind=Kind.SCALAR, meaningful_zero=True,
+    about="Acceptance row 23's young end, on the migrated young population, against a target of about −0.07 dex/kpc.",
+)
+GRADIENT_OLD = FieldDecl(
+    name="metallicity_gradient_old", label="Gradient, stars older than 10 Gyr", unit="dex/kpc",
+    kind=Kind.SCALAR, meaningful_zero=True,
+    about=(
+        "Acceptance row 23's old end, on the migrated old population, against about −0.04 dex/kpc. "
+        "Flatter than the young end because the old stars have moved furthest and the outer disc's "
+        "old stars came from inside, so this row is the one place migration_efficiency is falsifiable."
+    ),
+)
 
 ALPHA_FE_HISTORY = FieldDecl(
     name="alpha_fe_history", label="[α/Fe](R, t)", unit="dex", kind=Kind.FIELD, axes=("R", "t"),
-    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True, optional=True,
+    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True,
     about=(
         "[O/H] − [Fe/H] of the gas. Starts on the core-collapse plateau and falls as the delayed "
         "Ia iron arrives; where star formation was fast the fall is late and the stars formed "
-        "before it are α-enhanced. Advanced model only: the simple model has one abundance."
+        "before it are α-enhanced."
     ),
 )
 ALPHA_FE_GAS = FieldDecl(
     name="alpha_fe_gas", label="Present-day gas [α/Fe](R)", unit="dex", kind=Kind.FIELD, axes=("R",),
-    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True, optional=True,
+    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True,
     about="Near solar across the star-forming disc: the Ia iron has had time to arrive everywhere.",
 )
 ALPHA_FE_STARS = FieldDecl(
     name="alpha_fe_stars", label="Mean stellar [α/Fe](R)", unit="dex", kind=Kind.FIELD, axes=("R",),
-    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True, optional=True,
+    ramp=Ramp("viridis", scale="linear", lo=-0.1, hi=0.5), meaningful_zero=True,
     about="Mass-weighted over every star now at R, migrants included. Rises inward, where the old stars are.",
 )
 ESCAPE_VELOCITY = FieldDecl(
     name="escape_velocity", label="Midplane escape velocity", unit="km/s", kind=Kind.FIELD, axes=("R",),
-    ramp=Ramp("viridis", scale="linear", lo=300.0, hi=800.0), meaningful_zero=True, optional=True,
+    ramp=Ramp("viridis", scale="linear", lo=300.0, hi=800.0), meaningful_zero=True,
     about=(
         "From the halo potential at z = 0 exactly (halo_potential_midplane, S12) plus the resolved "
         "baryons' midplane potential. The local value is what the wind loading is judged against; "
@@ -261,7 +299,6 @@ ESCAPE_VELOCITY = FieldDecl(
 METAL_ESCAPE_FRACTION = FieldDecl(
     name="metal_escape_fraction", label="Fraction of fresh metals lost to the wind", unit="dimensionless",
     kind=Kind.FIELD, axes=("R",), ramp=Ramp("magma", scale="linear", lo=0.0, hi=1.0), meaningful_zero=True,
-    optional=True,
     about=(
         "1/(1 + (v_esc/WIND_SPEED)^WIND_INDEX): the share of a generation's supernova metals that "
         "leaves before mixing. About two thirds at R₀ — which is the factor the simple model's "
@@ -270,7 +307,7 @@ METAL_ESCAPE_FRACTION = FieldDecl(
 )
 FEH_SPREAD_SUN = FieldDecl(
     name="feh_spread_sun", label="[Fe/H] dispersion of stars at R₀", unit="dex", kind=Kind.SCALAR,
-    meaningful_zero=True, optional=True,
+    meaningful_zero=True,
     about=(
         "Mass-weighted standard deviation of [Fe/H] across every star now at the solar radius, "
         "migrants included. Without migration it is the width of the local age–metallicity relation, "
@@ -281,7 +318,7 @@ FEH_SPREAD_SUN = FieldDecl(
 )
 ALPHA_SPLIT = FieldDecl(
     name="alpha_split", label="[α/Fe] valley between the two sequences at R₀", unit="dex", kind=Kind.SCALAR,
-    meaningful_zero=True, optional=True,
+    meaningful_zero=True,
     about=(
         "The minimum of the [α/Fe] mass histogram between its two modes. NaN when there is one "
         "mode, which is a real answer (rule B9). This is the advanced model's thin/thick split: "
@@ -290,12 +327,12 @@ ALPHA_SPLIT = FieldDecl(
 )
 ALPHA_DIP_DEPTH = FieldDecl(
     name="alpha_dip_depth", label="Depth of the [α/Fe] valley", unit="dimensionless", kind=Kind.SCALAR,
-    meaningful_zero=True, optional=True,
+    meaningful_zero=True,
     about="1 − valley/lower peak. Zero for one mode; bimodal needs at least 0.5. Published so the verdict can be read.",
 )
 HIGH_ALPHA_FEH_SPAN = FieldDecl(
     name="high_alpha_feh_span", label="[Fe/H] span of the α-rich sequence at R₀", unit="dex", kind=Kind.SCALAR,
-    meaningful_zero=True, optional=True,
+    meaningful_zero=True,
     about=(
         "5th to 95th mass percentile of [Fe/H] among stars above the valley. Row 24 asks for the "
         "thick disc to be α-enhanced *across a wide [Fe/H] range*; wide here is 0.5 dex."
@@ -303,7 +340,7 @@ HIGH_ALPHA_FEH_SPAN = FieldDecl(
 )
 ALPHA_SEQUENCE = FieldDecl(
     name="alpha_sequence", label="[α/Fe] sequences at R₀", unit="dimensionless", kind=Kind.CATEGORY_SCALAR,
-    categories=("single", "bimodal_narrow", "bimodal_wide"), meaningful_zero=False, optional=True,
+    categories=("single", "bimodal_narrow", "bimodal_wide"), meaningful_zero=False,
     about=(
         "Acceptance row 24. 'single': one mode. 'bimodal_narrow': two modes but the α-rich one "
         "spans under 0.5 dex of [Fe/H]. 'bimodal_wide': what BHG16 §5.2.2 describes. A merger-free "
@@ -442,9 +479,9 @@ CHEMISTRY_DTD = IMPLEMENTATIONS.register(
         checkpoint=3,
         about=(
             "Iron and oxygen with a type Ia delay-time distribution, a metal-loaded wind set by "
-            "the local escape velocity, and mass-conserving radial migration. The advanced model's "
-            "chemistry; publishes the simple model's fields under the same contract plus the "
-            "[α/Fe] plane, and acceptance row 24 is judged on it."
+            "the local escape velocity, and mass-conserving radial migration. Publishes the [Fe/H] "
+            "fields under chemistry.py's contract plus the [α/Fe] plane, and acceptance row 24 is "
+            "judged on it."
         ),
         compute=compute,
         reads_inputs=("migration_efficiency",),

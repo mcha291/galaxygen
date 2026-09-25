@@ -1,29 +1,29 @@
-"""The advanced model: the simple model's stages where they are right, its own where they differ.
+"""The basic model: the one registered model, and the physics the project kept (D170).
 
-Two slots are remapped (S9): ``chemistry`` to ``chemistry_dtd`` and ``vertical``
-to ``vertical_alpha``. Everything upstream — halo, disc, assembly, the star
-formation history — is shared code, so the two models agree bit-for-bit up to
-the point where the physics genuinely differs, and ``tests/test_models.py``
-asserts exactly that boundary.
+Until D170 two models were registered: ``simple`` (one abundance, no outflows, a thick disc
+defined by the last major merger) and ``advanced``, which remapped two slots (S9) —
+``chemistry`` to ``chemistry_dtd`` and ``vertical`` to ``vertical_alpha`` — and shared every
+other stage. At the default inputs the two were the same galaxy to the eye, and the advanced
+chemistry was the research the audits were about, so the simple stages were retired and the
+advanced physics became the model. This declaration is that model under a plain name.
 
-The constants below are the advanced model's own: only its stages read them, and
-preflight fails a model that declares a constant nothing reads (D29). Each is a
-Level 0 constant under GALAXY_INPUTS.md §2 — yields, the SNIa delay-time
-distribution, the outflow loading — and none is a property of *this* galaxy,
-which is why they are not inputs however §8 tabulates them (rule A4).
+The constants below are the chemistry's own: only its stages read them, and preflight fails a
+model that declares a constant nothing reads (D29). Each is a Level 0 constant under
+GALAXY_INPUTS.md §2 — yields, the SNIa delay-time distribution, the outflow loading — and none
+is a property of *this* galaxy, which is why they are not inputs however §8 tabulates them
+(rule A4).
 """
 
 from galaxy.core.registry import MODELS, Constant, Model
 from galaxy.models.level0 import LEVEL0
 
-ADVANCED = MODELS.register(
+BASIC = MODELS.register(
     Model(
-        name="advanced",
+        name="basic",
         about=(
             "Multi-element chemistry with a type Ia delay-time distribution, metal-loaded "
             "outflows set by the local escape velocity, mass-conserving radial migration, and a "
-            "thin/thick split read off the [α/Fe] plane rather than off the merger list. Shares "
-            "every other stage with the simple model."
+            "thin/thick split read off the [α/Fe] plane rather than off the merger list."
         ),
         stages=(
             ("halo", "halo"),
@@ -31,8 +31,8 @@ ADVANCED = MODELS.register(
             ("nucleus", "nucleus"),
             ("assembly", "assembly"),
             ("sfh", "sfh"),
-            ("chemistry", "chemistry_dtd"),  # simple: chemistry
-            ("vertical", "vertical_alpha"),  # simple: vertical
+            ("chemistry", "chemistry_dtd"),
+            ("vertical", "vertical_alpha"),
             ("ism", "ism"),
             ("light", "light"),
             ("bar", "bar"),
@@ -109,8 +109,8 @@ ADVANCED = MODELS.register(
                 "Refitted at S18 from 982.2 (−12%), its largest move: the derived threshold holds "
                 "10.8 M☉/pc² of gas at R₀ where the constant held 6.3, the gas there read −0.084 dex, "
                 "and a slower wind keeps more metals to make it solar again (debt #43, D124). "
-                "**The one fitted constant of the advanced chemistry**: set so the present-day "
-                "gas at R₀ is solar, the same calibration NET_YIELD carried for the simple model "
+                "**The one fitted constant of the chemistry**: set so the present-day gas at R₀ is "
+                "solar, the calibration the retired simple chemistry's NET_YIELD carried before D170 "
                 "(debt #16, rule B10). Fitted at S9 to 1010 against a potential built on an "
                 "unconverted concentration; refitted at S13 to 987 once the halo converts c_vir to "
                 "c₂₀₀ (debt #12) and Sagittarius delivers a physical share (debt #29); refitted at "
@@ -131,7 +131,7 @@ ADVANCED = MODELS.register(
                 "dimensionless",
                 "Total metal mass a type Ia ejects per unit iron mass: the ejecta are iron-peak "
                 "throughout, about twice the iron by mass [recall]. Until S12 this was a bare 2.0 in "
-                "chemistry_dtd (debt #33); it sets the advanced model's total-Z zero point, which reads "
+                "chemistry_dtd (debt #33); it sets the model's total-Z zero point, which reads "
                 "1.24 Z☉ where [Fe/H] = 0 and is still debt #33's question. No stage reads Z yet.",
             ),
         },

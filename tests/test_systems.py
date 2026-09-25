@@ -208,10 +208,10 @@ def test_the_catalogue_reproduces_the_stellar_profiles_the_chemistry_published(m
     near = at_the_sun(cat)
     for field, sel, tol in (
         ("feh_stars_young", cat["star_age"] <= 1.0, 0.03),
-        # The simple model's chemistry migrates its old population with one width taken from
-        # the population's mean age, where the catalogue and chemistry_dtd bin the age; that
-        # is the whole of the difference and it is worth 0.04 dex.
-        ("feh_stars_old", cat["star_age"] >= 10.0, 0.06),  # simple −0.373 vs −0.325; advanced −0.498 vs −0.522
+        # The catalogue and chemistry_dtd bin the age the same way; the tolerance dates from
+        # the pre-D170 simple chemistry, which migrated its old population with one width
+        # taken from the mean age and was 0.04 dex off the catalogue.
+        ("feh_stars_old", cat["star_age"] >= 10.0, 0.06),  # −0.498 vs −0.522
     ):
         v = cat["star_metallicity"][near & sel]
         v = v[np.isfinite(v)]
@@ -245,9 +245,9 @@ def test_metallicity_is_looked_up_not_drawn(model):
     thick = cat["star_population"] == 1
     if thick.any():
         assert np.nanmean(cat["star_metallicity"][thick]) < np.nanmean(cat["star_metallicity"][~thick])
-    # The advanced model's gas-starved centre collects late Ia iron to [Fe/H] = +1.5
-    # inside half a kiloparsec (debt #26); the simple model's instantaneous yield cannot.
-    assert np.nanmax(cat["star_metallicity"]) < {"simple": 1.0, "advanced": 1.6}[model.name]
+    # The gas-starved centre collects late Ia iron to [Fe/H] = +1.5 inside half a
+    # kiloparsec (debt #26).
+    assert np.nanmax(cat["star_metallicity"]) < 1.6
 
 
 # --- what the stage publishes -------------------------------------------------

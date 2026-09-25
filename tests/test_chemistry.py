@@ -64,14 +64,14 @@ def test_the_solar_neighbourhood_comes_out_solar(model):
     assert abs(feh_sun) < 0.1
 
 
-# What "the yield" is in each model: one effective yield, or the three
-# nucleosynthetic ones scaled together (the wind's escape fraction is not a yield).
-YIELDS = {"simple": ("NET_YIELD",), "advanced": ("Y_O_CC", "Y_FE_CC", "Y_FE_IA")}
+# What "the yield" is: the three nucleosynthetic ones scaled together (the wind's
+# escape fraction is not a yield). One model since D170.
+YIELDS = ("Y_O_CC", "Y_FE_CC", "Y_FE_IA")
 
 
 def with_yields(model, factor):
     m = model
-    for name in YIELDS[model.name]:
+    for name in YIELDS:
         m = with_constant(m, name, model.constants[name].value * factor)
     return m
 
@@ -79,9 +79,9 @@ def with_yields(model, factor):
 def test_the_gradient_does_not_depend_on_the_yield(model):
     """The measurement behind debt #15: the yield sets the level, the infall sets the tilt.
 
-    This is why calibrating NET_YIELD costs no acceptance row — and why the flat
-    gradient cannot be blamed on the yield being wrong. It holds for the advanced
-    model too: scaling every yield together moves the level and nothing else.
+    This is why calibrating the yields costs no acceptance row — and why the flat
+    gradient cannot be blamed on the yield being wrong: scaling every yield together
+    moves the level and nothing else.
     """
     grads, levels = [], []
     for factor in (0.5, 1.0, 3.0):
@@ -97,19 +97,12 @@ def test_the_gradient_is_set_by_the_inside_out_index(model):
     """Steeper inside-out growth, steeper gradient — and n near 3 would be needed for −0.06."""
     grads = [out(model, inside_out_index=n).fields["metallicity_gradient"] for n in (0.0, 1.0, 2.0)]
     assert grads[0] > grads[1] > grads[2]
-    if model.name == "simple":
-        # Not zero with n = 0: the accretion timescale is then the same everywhere, but the
-        # surface density still falls outwards and that alone tilts the enrichment.
-        assert grads[0] == pytest.approx(-0.0265, abs=0.003)  # -0.0173 until S18's derived threshold; -0.011 until S17
-        # The observed −0.06 is out of reach of the cited n = 1 (debt #15).
-        assert grads[1] > -0.049
-    else:
-        # The wind's tilt is there even with no inside-out growth at all: over twice
-        # the simple model's n = 0 value (three times until S17)...
-        assert grads[0] == pytest.approx(-0.0538, abs=0.004)  # -0.0414 until S18; -0.033 until S17
-        # ...and with the cited n = 1 the gradient reached the observed range (row 22) until S18, when the
-        # derived threshold steepened it past the edge by 0.0008: a recorded miss under debt #47 (D124).
-        assert grads[1] == pytest.approx(-0.0698, abs=0.002) and grads[1] < -0.069
+    # The wind's tilt is there even with no inside-out growth at all (over twice what
+    # infall alone gave the pre-D170 single-yield model at n = 0)...
+    assert grads[0] == pytest.approx(-0.0538, abs=0.004)  # -0.0414 until S18; -0.033 until S17
+    # ...and with the cited n = 1 the gradient reached the observed range (row 22) until S18, when the
+    # derived threshold steepened it past the edge by 0.0008: a recorded miss under debt #47 (D124).
+    assert grads[1] == pytest.approx(-0.0698, abs=0.002) and grads[1] < -0.069
 
 
 def test_infall_dilution_is_what_tilts_it(model):
@@ -128,9 +121,9 @@ def test_infall_dilution_is_what_tilts_it(model):
     # to 0.52 — a steeper surface density does more of the tilting — so differential
     # infall now supplies about half of it rather than seven tenths.
     assert spread(0.0) < 0.85 * spread(1.0)
-    # The wind supplies its own tilt in the advanced model, so infall's share is smaller there.
-    # 0.80 / 0.76 since S18: the threshold's own radial shape tilts the enrichment whatever n is, so differential infall's share fell again.
-    assert spread(0.0) / spread(1.0) == pytest.approx({"simple": 0.80, "advanced": 0.76}[model.name], abs=0.08)  # 0.64 / 0.66 until S18; 0.52 / 0.59 until S17
+    # The wind supplies its own tilt, so infall's share is smaller than infall alone would make it.
+    # 0.76 since S18: the threshold's own radial shape tilts the enrichment whatever n is, so differential infall's share fell again.
+    assert spread(0.0) / spread(1.0) == pytest.approx(0.76, abs=0.08)  # 0.66 until S18; 0.59 until S17
 
 
 def test_migration_flattens_old_stars_and_leaves_gas_alone(model):
@@ -157,11 +150,10 @@ def test_migration_over_flattens_the_old_population(model):
     o = out(model)
     young, old = o.fields["metallicity_gradient_young"], o.fields["metallicity_gradient_old"]
     assert abs(old) < abs(young)
-    # Advanced: 3.1 at S9 — the same over-flattening with a different old-gas gradient
-    # underneath it, recorded as debt #28 rather than tuned away.
-    # 2.5 in both since S18: the unmigrated old gradient doubled under the derived threshold and the kernel takes
+    # 3.1 at S9 — the over-flattening recorded as debt #28 rather than tuned away.
+    # 2.55 since S18: the unmigrated old gradient doubled under the derived threshold and the kernel takes
     # a larger factor out of a steeper start (debt #28's test has the numbers).
-    assert young / old == pytest.approx({"simple": 2.5, "advanced": 2.55}[model.name], abs=0.4)  # 3.2 / 3.1 until S18
+    assert young / old == pytest.approx(2.55, abs=0.4)  # 3.1 until S18
 
 
 def test_metallicity_rises_then_is_slightly_diluted_late(model):

@@ -3,7 +3,7 @@
 // The catalogue comes from a live /api/stages and /api/inputs, dumped by the
 // pytest wrapper (tests/test_viewer.py) into the file named by $GALAXY_FIXTURE.
 // A fixture written by hand here would drift from the registry silently, which
-// is the failure the two-model discipline exists to prevent one level down.
+// is the failure the per-model discipline exists to prevent one level down.
 //
 //   uv run pytest tests/test_viewer.py      # the way to run this
 

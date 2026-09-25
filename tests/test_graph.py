@@ -18,18 +18,14 @@ def chk(m, *stages):
 
 
 # Execution orders. Kahn's algorithm runs in rounds with a (checkpoint, id) tie-break,
-# so the advanced model's vertical stage — which reads the chemistry's valley and so
-# cannot start until the chemistry is done — lands a round later than the simple one's.
+# so the vertical stage — which reads the chemistry's valley and so cannot start until
+# the chemistry is done — lands a round after it (one model since D170).
 # Since S18 the assembly stage reads the checkpoint-1 curve (the merger's radial kick becomes a
 # displacement through its epicyclic frequency), so the disc runs before it; until then the
 # tie-break put assembly second. Since the catalogue samples azimuth from the pattern's arms, the
-# systems stage waits for pattern too, a round later than formation in both models.
+# systems stage waits for pattern too, a round later than formation.
 ORDER = {
-    "simple": (
-        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry", "vertical",
-        "bar", "population", "ism", "light", "pattern", "formation", "systems", "planets",
-    ),
-    "advanced": (
+    "basic": (
         "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population", "light",
         "vertical_alpha", "pattern", "formation", "ism", "systems", "planets",
     ),
@@ -54,7 +50,7 @@ def test_production_graphs_hold(prod):
             "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
             "arm_contrast", "bar_contrast", "pattern_density_contrast",
             "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
-            "star_metallicity", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
+            "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
             "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
             "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
             "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",

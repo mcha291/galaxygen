@@ -491,6 +491,10 @@ first sessions, not a footnote.** `[inferred]`
 
 ## 8. Advanced model — ~17 additional, by axis
 
+> **D170 (2026-09-25):** the advanced model is now the only model, registered as `basic`; the
+> simple stages this section contrasts it with are retired. The section stands as the register
+> of these axes and their history.
+
 | Axis | Inputs | Count |
 |---|---|---|
 | Chemistry dimensionality | SNIa DTD index, minimum delay, normalisation; per-element yield scaling | 3–4 |

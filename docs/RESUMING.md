@@ -23,7 +23,7 @@ galaxy/core/    units (32 closed), cmaps (8 + stops, A9), fielddoc (FieldDecl, 6
                 IMPLEMENTATIONS), seeds, grids (**its docstring is what the default mesh is sized
                 for**, S22, #36), special (I1, K0, K1, erf)
 galaxy/models/  level0 (shared constants; MERGER_HEATING 88.8, with its named alternative 112.3 in
-                the about line — B12, S22), simple (+NET_YIELD), advanced (yields, DTD, wind)
+                the about line — B12, S22), basic (yields, DTD, wind: the one model since D170)
 galaxy/stages/  cp1 halo (NFW, budget, R_d, the contraction on its own mesh; the angular-momentum
                 distribution's two ends — the high-j tail S16, the spheroid S17) + disc (κ(R), the
                 basis-free solver) + nucleus (M_•, seeded); cp2 assembly (delivery, σ_z by birth time,
@@ -68,7 +68,7 @@ tests/          test_audit.py is S10–S20's audits plus S21b's five; test_audit
 
 ## The API and the viewer
 - `uv run python -m galaxy.api` serves both on 127.0.0.1:8017; `Service().handle(path, query)` is the same
-  without a socket and is what the tests drive; `model=advanced` selects the second model on every route.
+  without a socket and is what the tests drive; one model is registered since D170, `basic`, the default.
   A new route is a `Route` in `service.ROUTES` plus **a row in `tools/timings.py`**.
 - Metadata answers from declarations and must not reach the runner; whatever computes goes through
   `Service.compute(...)` (D4, D63); objects are materialised per request (D82). `transport.js` holds **the
@@ -81,7 +81,7 @@ tests/          test_audit.py is S10–S20's audits plus S21b's five; test_audit
   `mergers`; every input has a default and every control a range. Every factual claim in every document is
   tagged `[verified: cite]`, `[recall]` or `[inferred]` (B14). A new unit, kind, axis, object class or cmap
   is a `core/` edit plus a DECISIONS.md entry; debts live in §11 and `tools/progress.py` counts them.
-- A failing acceptance row goes in `spec._MISSES` (or `_MISSES_ADVANCED`, A7) with its model, debt, reason
+- A failing acceptance row goes in `spec._MISSES` (or `_MISSES_CHEMISTRY`, A7) with its model, debt, reason
   and a prediction that could kill it (D33, D87); it still reports `fail`, never widen a target (B5), and a
   miss that starts *passing* fails the run (#29) — remove it and **write down why it passed**. `lo == hi`
   says "no testable target" (D100).

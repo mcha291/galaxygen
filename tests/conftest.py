@@ -1,7 +1,8 @@
 """Shared fixtures.
 
-Any test that takes a ``model`` argument runs once per registered model. This is
-the two-model discipline: nothing is tested against ``simple`` alone.
+Any test that takes a ``model`` argument runs once per registered model. Since D170
+there is one, ``basic``; the parametrisation stays so that a second declaration is
+tested the day it is added.
 """
 
 from __future__ import annotations

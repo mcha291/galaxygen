@@ -47,6 +47,8 @@ export interface Sample {
   header: {
     cells: { ids: number[]; counts: number[]; count: number; of: number };
     stars: { materialised: number; requested: number; seed: number };
+    /** Set on a brightest-N response: the pool the rows were chosen from, and how many were in view. */
+    brightest?: { requested: number; pool: number; in_view: number; returned: number } | null;
     [key: string]: unknown;
   };
 }
@@ -148,5 +150,22 @@ export async function loadRegion(
   signal?: AbortSignal,
 ): Promise<Sample> {
   const got = await region(window, { ...query, stars }, { signal });
+  return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
+}
+
+/**
+ * The brightest-N mode: the `brightest` most luminous stars inside the camera's frustum, from the
+ * window materialised at whole-galaxy sample size `stars`. Rows come brightest first, each named
+ * by its own `cell` and `index` columns.
+ */
+export async function loadBrightest(
+  window: { r_min: number; r_max: number; phi_min: number; phi_max: number },
+  stars: number,
+  brightest: number,
+  view: ArrayLike<number>,
+  query: Query,
+  signal?: AbortSignal,
+): Promise<Sample> {
+  const got = await region(window, { ...query, stars, brightest, view: Array.from(view) }, { signal });
   return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
 }

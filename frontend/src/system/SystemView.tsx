@@ -116,7 +116,8 @@ function unitOf(decl: FieldDecl | undefined): string {
 }
 
 function StarSummary({ star, byName }: { star: Record<string, number>; byName: Map<string, FieldDecl> }) {
-  const shown = ["star_mass", "star_age", "star_metallicity", "star_population", "star_height"];
+  // [α/Fe] is the advanced model's column; the simple model's stars carry none, and the row is left out.
+  const shown = ["star_mass", "star_age", "star_metallicity", ...(star.star_alpha !== undefined ? ["star_alpha"] : []), "star_population", "star_height"];
   const moved = star.star_radius - star.star_birth_radius;
   return (
     <section className={styles.star}>

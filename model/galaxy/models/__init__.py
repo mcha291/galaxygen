@@ -19,7 +19,7 @@ import pkgutil
 
 from galaxy.core.registry import MODELS, RegistryError
 
-DEFAULT = "simple"
+DEFAULT = "basic"
 SHARED = frozenset({"level0"})  # modules here that hold shared constants, not a model
 
 

@@ -8,6 +8,12 @@
       "port": 8017
     },
     {
+      "name": "prod",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "-m", "galaxy.api", "--port", "8018", "--client", "frontend/dist"],
+      "port": 8018
+    },
+    {
       "name": "frontend",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev"],

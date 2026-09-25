@@ -14,6 +14,38 @@ export const PHOTOMETRIC = "photometric";
 export const REFERENCE_LUMINOSITY = 100;
 
 /**
+ * A view of stars is exposed to the stars in it, as a photograph is (the design brief's "exposed
+ * to the brightest thing in view"): drawn at one fixed exposure, a close view's stars were too
+ * faint to see, every one of them far below the galaxy's giants. Not to its single brightest
+ * star, though: a giant is in view at nearly every zoom (the brightest of a 3 000-star selection
+ * fell only from 2 300 to 1 300 L☉ between the whole galaxy and 3 kpc across) while the stars
+ * around it faded twentyfold. Nor to a share of those drawn: asking for more stars adds fainter
+ * ones at the bottom, which moved that star and brightened every star already on screen. The
+ * exposure is set by the EXPOSED_RANK-th brightest star in view, the same star however many are
+ * drawn beyond it, which follows the population as the view closes in; the few above it burn out
+ * as they do on film. That star is drawn as EXPOSED_LUMINOSITY at zero stops; 41 L☉ is the
+ * hundredth brightest of the whole galaxy, so that view keeps the look it had. The slider's
+ * stops ride on top.
+ */
+export const EXPOSED_RANK = 100;
+export const EXPOSED_LUMINOSITY = 41;
+
+/**
+ * The stops that expose a set of stars: log₂(EXPOSED_LUMINOSITY / L) for its EXPOSED_RANK-th
+ * brightest star with light, or its faintest when fewer are drawn. Zero when none has any.
+ */
+export function exposureFor(luminosity: ArrayLike<number | bigint>): number {
+  const lit: number[] = [];
+  for (let i = 0; i < luminosity.length; i += 1) {
+    const L = Number(luminosity[i]);
+    if (L > 0) lit.push(L);
+  }
+  if (lit.length === 0) return 0;
+  const sorted = Float64Array.from(lit).sort().reverse();
+  return Math.log2(EXPOSED_LUMINOSITY / sorted[Math.min(EXPOSED_RANK, sorted.length) - 1]);
+}
+
+/**
  * Per-star linear radiance for photometric mode (RENDER_PLAN M2 and R1): the
  * colour is the published blackbody colour of `star_temperature`, looked up
  * through that column's own declared ramp, and the intensity is the published

@@ -20,7 +20,7 @@ import styles from "./App.module.css";
 
 // The star columns a user can paint the sample by (design brief §3), and photometric
 // mode beside them: a choice, never a default that hides the fields (RENDER_PLAN §0).
-const COLOUR_FIELDS = ["star_metallicity", "star_age", "star_population", "star_mass", "star_birth_radius", "star_temperature", "star_luminosity"];
+const COLOUR_FIELDS = ["star_metallicity", "star_alpha", "star_age", "star_population", "star_mass", "star_birth_radius", "star_temperature", "star_luminosity"];
 const PAINT_CHOICES = [...COLOUR_FIELDS, PHOTOMETRIC];
 const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
 
@@ -70,7 +70,8 @@ export function App() {
   useEffect(() => setSystemStar(null), [sample]);
 
   const seed = wf.state?.values.world_seed;
-  const hash = query ? `${runHash(query)} · ${wf.model} · world_seed ${seed}` : "";
+  // The model is named only where there is a choice of one; since D170 there is one model.
+  const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}` : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
     { key: "preview", label: "Preview", disabled: generated, title: generated ? "The galaxy is generated; reopen a checkpoint in the Science tab to preview it" : undefined },
     { key: "science", label: "Science" },
@@ -96,13 +97,15 @@ export function App() {
     <div className={styles.shell}>
       <header className={styles.topbar}>
         <span className={styles.wordmark}>galaxygen</span>
-        <div className={styles.segmented} role="group" aria-label="Model">
-          {wf.models.map((m) => (
-            <button key={m} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
-              {m}
-            </button>
-          ))}
-        </div>
+        {wf.models.length > 1 && (
+          <div className={styles.segmented} role="group" aria-label="Model">
+            {wf.models.map((m) => (
+              <button key={m} aria-pressed={m === wf.model} onClick={() => wf.setModel(m)}>
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
         <span className={styles.hash} title="Run hash of the input vector · model · world seed">{hash}</span>
         <span className={styles.spacer} />
         <div className={styles.segmented} role="tablist" aria-label="View">

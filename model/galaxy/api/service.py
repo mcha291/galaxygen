@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import math
 import threading
+from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -71,6 +72,9 @@ PLANETS_SLOT = "planets"  # and the slot a system query materialises with
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
+# The most stars a brightest=N query returns: a magnitude-limited view is a few thousand points,
+# and a viewer that wants more than this wants the window itself.
+MAX_BRIGHTEST = 200_000
 
 
 class ApiError(Exception):
@@ -111,8 +115,11 @@ ROUTES: tuple[Route, ...] = (
     ),
     Route(
         "/api/region",
-        "A materialised star catalogue for one (R, phi) window.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "stars"),
+        "A materialised star catalogue for one (R, phi) window. brightest=N keeps the N most luminous "
+        "stars of it, each row named by its own cell and index columns; view=<16 numbers> (a column-major "
+        "view-projection matrix over x = R cos phi, y = height, z = -R sin phi) first keeps only the stars "
+        "inside that frustum.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view"),
         "region",
     ),
     Route(
@@ -166,6 +173,66 @@ class Response:
 
 def _json(payload: Mapping[str, Any], status: int = 200, stages: tuple[str, ...] = ()) -> Response:
     return Response(status, JSON, json.dumps(payload, allow_nan=False).encode("utf-8"), stages)
+
+
+class CellCache:
+    """Materialised cells, kept between requests.
+
+    The catalogue draws every cell from its own seed, so a cell drawn alone is the cell drawn
+    in any set and a window's catalogue is its cells' rows in cell order (D60). Materialising
+    costs about 0.4 ms of Python per cell before a star is made, 832 cells to a galaxy, so a
+    view that asked for the same window twice — every zoom step of the brightest mode, which
+    re-selects inside the same pool — waited half a second for rows the server had just made.
+    Bounded by rows, least recently used out first. A key names the galaxy the rows belong to
+    (model, grid, resolved inputs, sample size, seed); the caller makes it.
+    """
+
+    def __init__(self, max_rows: int = 1_500_000) -> None:
+        self.max_rows = max_rows
+        self._cells: OrderedDict[tuple[str, int], tuple[dict[str, np.ndarray], int]] = OrderedDict()
+        self._rows = 0
+        self._lock = threading.Lock()
+
+    def catalogue(self, key: str, cells: Sequence[int], make: Any) -> Any:
+        """The catalogue of ``cells`` under ``key``, materialising the ones not held via ``make(cells)``."""
+        cells = [int(c) for c in cells]
+        if not cells:
+            return make([])  # the typed empty catalogue, as the stage makes it
+        with self._lock:
+            held = {c: self._cells.get((key, c)) for c in cells}
+        missing = [c for c, h in held.items() if h is None]
+        if missing:
+            made = make(missing)
+            runs = dict(made.counts)
+            offset = 0
+            fresh: dict[int, tuple[dict[str, np.ndarray], int]] = {}
+            for cell in missing:
+                # cell_counts lists cells in the order asked, so the runs follow `missing`.
+                count = runs.get(cell, 0)
+                fresh[cell] = ({name: np.asarray(col)[offset:offset + count] for name, col in made.items()}, count)
+                offset += count
+            with self._lock:
+                for cell, entry in fresh.items():
+                    old = self._cells.pop((key, cell), None)
+                    if old is not None:
+                        self._rows -= old[1]
+                    self._cells[(key, cell)] = entry
+                    self._rows += entry[1]
+                while self._rows > self.max_rows and self._cells:
+                    _, (_, dropped) = self._cells.popitem(last=False)
+                    self._rows -= dropped
+            held.update(fresh)
+        with self._lock:
+            # Touch the hits, so what a view keeps asking for stays.
+            for cell in cells:
+                entry = self._cells.pop((key, cell), None)
+                if entry is not None:
+                    self._cells[(key, cell)] = entry
+        entries = [held[c] for c in cells]
+        counts = [(c, n) for c, (_, n) in zip(cells, entries) if n]
+        names = list(entries[0][0]) if entries else []
+        columns = {name: np.concatenate([e[0][name] for e in entries]) for name in names}
+        return _catalogue.Catalogue.of(columns, counts)
 
 
 class Query:
@@ -377,6 +444,7 @@ class Service:
         self.server = server
         self.cache_size = max(0, int(cache))
         self._cache: dict[str, Galaxy] = {}
+        self.cells = CellCache()
         # The server is threaded, and two requests for one galaxy would otherwise
         # resume the same partial run from two threads. Computation is serialised;
         # metadata, which touches nothing, is not.
@@ -454,6 +522,11 @@ class Service:
                 while len(self._cache) > self.cache_size:
                     del self._cache[next(iter(self._cache))]
             return found.need(fields)
+
+    def _reads(self, model: Model, stage: Stage) -> tuple[str, ...]:
+        """What a stage reads in this model: its requirements, and the optional fields the model has."""
+        declared = self._declared(model)
+        return stage.requires + tuple(n for n in stage.requires_optional if n in declared)
 
     def _declared(self, model: Model) -> dict[str, tuple[FieldDecl, Stage]]:
         """Every field this model publishes, from declarations. No stage runs."""
@@ -628,24 +701,38 @@ class Service:
         stars = q.integer("stars", _catalogue.CATALOGUE_SAMPLE)
         if not 1 <= stars <= MAX_STARS:
             raise BadRequest(f"stars={stars} is outside 1..{MAX_STARS}")
+        brightest = q.integer("brightest", 0)
+        if not 0 <= brightest <= MAX_BRIGHTEST:
+            raise BadRequest(f"brightest={brightest} is outside 0..{MAX_BRIGHTEST}")
+        view = _view_matrix(q.one("view"))
+        if view is not None and not brightest:
+            raise BadRequest("view= only means something with brightest=N")
 
         inputs = self._overrides(model, q)
         # What the catalogue *reads*, which is not the catalogue: the closure
         # above these fields stops one stage short of materialising anything.
-        out, ran = self.compute(model, inputs, stage.requires)
+        out, ran = self.compute(model, inputs, self._reads(model, stage))
         seed_name = stage.reads_seeds[0] if stage.reads_seeds else None
         seed = int(out.inputs[seed_name]) if seed_name else 0
 
         cells = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
-        catalogue = _catalogue.materialise(
-            out.fields, R, t, seed, stars, cells,
-            migration=float(out.inputs["migration_efficiency"]),
+        migration = float(out.inputs["migration_efficiency"])
+        key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed))
+        catalogue = self.cells.catalogue(
+            key, cells, lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in catalogue]
+        selection = None
+        if brightest:
+            catalogue, selection = _brightest(catalogue, brightest, view)
+            columns += ["cell", "index"]
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            # With brightest=N the rows are a selection, named by their own cell and index columns
+            # rather than by the runs below, which describe the pool they were chosen from.
+            "brightest": selection,
             # The cells that actually realised a star, with how many each has: that
             # is what names a row. Star r of this response is index (r - offset) of
             # the cell whose run covers it, and a system is opened by that name
@@ -688,7 +775,7 @@ class Service:
             raise BadRequest(f"stars={stars} is outside 1..{MAX_STARS}")
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, catalogue.requires)
+        out, ran = self.compute(model, inputs, self._reads(model, catalogue))
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
         here = _catalogue.materialise(
             out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
@@ -700,7 +787,7 @@ class Service:
         constants = {k: c.value for k, c in model.constants.items()}
         system, found = _planets.one_system(here, index, cell, seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
-        star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star"}
+        star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
@@ -718,6 +805,56 @@ class Service:
         return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
 
 
+
+
+def _view_matrix(raw: str | None) -> np.ndarray | None:
+    """``view=`` as a 4×4 view-projection matrix, given column-major as three.js writes one."""
+    if raw is None:
+        return None
+    try:
+        values = [float(v) for v in raw.split(",")]
+    except ValueError:
+        raise BadRequest("view= must be 16 comma-separated numbers") from None
+    if len(values) != 16 or not all(math.isfinite(v) for v in values):
+        raise BadRequest("view= must be 16 finite numbers")
+    return np.asarray(values, dtype=float).reshape(4, 4).T
+
+
+def _brightest(catalogue: Any, n: int, view: np.ndarray | None) -> tuple[Any, dict[str, int]]:
+    """The ``n`` most luminous stars of a catalogue, inside ``view``'s frustum when one is given.
+
+    A magnitude-limited catalogue of what the camera sees, in the sense a survey means it: the
+    brightest of the *sample*, not of the galaxy, so what ``n`` reaches into the luminosity function
+    is ``n`` over the pool, which the header states. Rows come back brightest first, each named by
+    its own ``cell`` and ``index`` (the runs no longer name a selection), and stars with no light
+    (M2's dead ones, NaN) rank last and never make the cut.
+    """
+    keep = np.arange(catalogue.size)
+    if view is not None and keep.size:
+        r = np.asarray(catalogue["star_radius"], dtype=float)
+        phi = np.asarray(catalogue["star_azimuth"], dtype=float)
+        # The viewer's frame (frontend/src/galaxy/positions.ts): y up, phi from +x towards -z.
+        p = np.stack([r * np.cos(phi), np.asarray(catalogue["star_height"], dtype=float), -r * np.sin(phi), np.ones_like(r)])
+        clip = view @ p
+        w = clip[3]
+        inside = (w > 0) & (np.abs(clip[0]) <= w) & (np.abs(clip[1]) <= w) & (np.abs(clip[2]) <= w)
+        keep = keep[inside]
+    in_view = int(keep.size)
+    lum = np.nan_to_num(np.asarray(catalogue["star_luminosity"], dtype=float)[keep], nan=-np.inf)
+    lit = keep[lum > -np.inf]
+    lum = lum[lum > -np.inf]
+    if lit.size > n:
+        top = np.argpartition(-lum, n - 1)[:n]
+        lit, lum = lit[top], lum[top]
+    order = np.argsort(-lum, kind="stable")
+    keep = lit[order]
+
+    cells = np.concatenate([np.full(count, cell, dtype=np.int64) for cell, count in catalogue.counts] or [np.zeros(0, np.int64)])
+    indices = np.concatenate([np.arange(count, dtype=np.int64) for _, count in catalogue.counts] or [np.zeros(0, np.int64)])
+    chosen = _catalogue.Catalogue.of({name: np.asarray(column)[keep] for name, column in catalogue.items()})
+    chosen["cell"] = cells[keep]
+    chosen["index"] = indices[keep]
+    return chosen, {"requested": n, "pool": int(catalogue.size), "in_view": in_view, "returned": int(keep.size)}
 
 
 def _stage_for(model: Model, slot: str, impls: Any) -> Stage:

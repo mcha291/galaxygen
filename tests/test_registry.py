@@ -151,8 +151,8 @@ def test_registry_refuses_duplicates():
 
 def test_production_is_loaded_and_idempotent(prod):
     models, impls, table = prod
-    assert set(models.names()) >= {"simple", "advanced"}
-    assert {"halo", "disc", "sfh", "chemistry"} <= set(impls.names())
+    assert set(models.names()) == {"basic"}
+    assert {"halo", "disc", "sfh", "chemistry_dtd", "vertical_alpha"} <= set(impls.names())
     assert table is INPUTS
     again = production()
     assert again[0] is models and again[1] is impls

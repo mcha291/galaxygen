@@ -29,7 +29,7 @@ export interface Workflow {
  * model's declarations, and remembers which confirmations were discarded so the
  * rail can say so.
  */
-export function useWorkflow(initialModel = "simple"): Workflow {
+export function useWorkflow(initialModel = "basic"): Workflow {
   const [model, setModelName] = useState(initialModel);
   const [models, setModels] = useState<string[]>([initialModel]);
   const [state, setState] = useState<FlowState | null>(null);

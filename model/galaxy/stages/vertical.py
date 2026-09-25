@@ -1,15 +1,16 @@
-"""Vertical structure: the thin/thick split the merger made (checkpoint 3).
+"""Vertical structure: the populations' arithmetic, and what the slot publishes (checkpoint 3).
 
 GALAXY_PLAN.md §3 gives the thick disc to stage 2, but checkpoint 2 runs before
 any star exists, so the heating lives there and the population it sorts lives
-here (DECISIONS.md D50). This stage is the plan's §3 hypothesis failing in a
-useful way rather than a defect.
+here (DECISIONS.md D50). This is the plan's §3 hypothesis failing in a useful
+way rather than a defect.
 
-**The split is the merger.** A star is thick-disc if it was born before the last
-major merger and thin-disc otherwise — so the thick disc is a *consequence* of
-the merger list rather than a component switched on beside it, and a galaxy with
-no major merger has no thick disc at all. That is what makes debt #9's control
-run meaningful.
+The slot's stage is ``vertical_alpha``, which sorts stars by their birth [α/Fe].
+Until D170 this module registered the simple model's stage beside it, whose split
+*was the merger*: a star was thick-disc if born before the last major merger,
+so a galaxy with no major merger had no thick disc by construction (debt #20).
+That criterion is retired with the simple model; the arithmetic below — the
+populations, the dispersions and the scale heights — is shared through ``split``.
 
 **Scale heights are arithmetic** once sigma_z exists (GALAXY_INPUTS.md §4b puts
 h_z at verdict A). For a self-gravitating isothermal sheet the density goes as
@@ -110,10 +111,10 @@ THICK_DISPERSION = _decl("thick_disc_dispersion", "Thick disc σ_z at R₀", "km
 def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     """The populations and their scale heights, given an ``(R, t)`` mask of thick-disc star formation.
 
-    Shared by both implementations of the slot: the simple model's mask is a
-    function of time alone (born before the last major merger, broadcast over
-    R), the advanced model's is chemical and varies with radius. Everything
-    downstream of the mask is arithmetic and lives here once (rule A9).
+    Written for two implementations of the slot: the retired merger criterion's mask was a
+    function of time alone (born before the last major merger, broadcast over R), the
+    chemical one (vertical_alpha) varies with radius. Everything downstream of the mask is
+    arithmetic and lives here once (rule A9).
     """
     R = ctx.grid.R
     R_sun = float(ctx.constants["R_SUN"])
@@ -163,33 +164,13 @@ def split(ctx: Context, thick_mask: np.ndarray) -> Mapping[str, Any]:
     }
 
 
-def compute(ctx: Context) -> Mapping[str, Any]:
-    """The simple model's split: born before the last major merger."""
-    onset = float(ctx.fields["last_major_merger_time"])
-    return split(ctx, (ctx.grid.t < onset)[None, :])
-
-
-VERTICAL = IMPLEMENTATIONS.register(
-    Stage(
-        id="vertical",
-        slot="vertical",
-        checkpoint=3,
-        about=(
-            "Sorts the stellar populations into thin and thick by whether they predate the last "
-            "major merger, and turns their velocity dispersions into scale heights. The simple "
-            "model's vertical stage; the advanced model reads the split off [α/Fe] instead."
-        ),
-        compute=compute,
-        reads_constants=("R_SUN", "G"),
-        requires=(
-            "stars_formed_history", "gas_surface_density",
-            "disc_heating", "last_major_merger_time",
-        ),
-        publishes=(
-            BIRTH_POPULATION,
-            THIN_SURFACE, THICK_SURFACE, THIN_MASS, THICK_MASS, THIN_LENGTH, THICK_LENGTH,
-            THIN_HEIGHT, THICK_HEIGHT, SURFACE_RATIO, LOCAL_RATIO,
-            THIN_DISPERSION, THICK_DISPERSION,
-        ),
-    )
+# What the vertical slot publishes, whichever criterion sorts the populations. The stage that
+# maps the slot is vertical_alpha; the merger criterion this module registered until D170
+# (born before the last major merger, ``t < last_major_merger_time``) is retired with the
+# simple model.
+PUBLISHES: tuple[FieldDecl, ...] = (
+    BIRTH_POPULATION,
+    THIN_SURFACE, THICK_SURFACE, THIN_MASS, THICK_MASS, THIN_LENGTH, THICK_LENGTH,
+    THIN_HEIGHT, THICK_HEIGHT, SURFACE_RATIO, LOCAL_RATIO,
+    THIN_DISPERSION, THICK_DISPERSION,
 )

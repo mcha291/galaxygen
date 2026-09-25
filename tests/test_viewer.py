@@ -342,10 +342,10 @@ def test_the_viewer_logic_holds(tmp_path):
     """``node --test`` over tests/js, against declarations dumped from the API."""
     s = service()
     fixture = tmp_path / "catalogue.json"
-    # Both models' declarations, not just the default one: S19's gate is that every
-    # published field reaches the viewer, and the two models publish different sets.
+    # Every registered model's declarations, keyed by name: S19's gate is that every
+    # published field reaches the viewer. One model since D170, and it is the default.
     models = [m.name for m in production()[0]]
-    assert len(models) > 1, "the fixture would make the two-model gate vacuous"
+    assert models == ["basic"], models
     fixture.write_text(
         json.dumps({
             "stages": s.handle("/api/stages").json(),

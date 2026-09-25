@@ -43,7 +43,7 @@ def test_a_zero_width_target_is_untestable_not_failed():
 
 
 def test_a_row_that_reads_zero_at_every_grid_is_vacuous_not_converged():
-    """Debt #27: the advanced thick-disc rows have nothing to converge; saying "ok" would be a green row earned by an absence (rule B9)."""
+    """Debt #27: the thick-disc rows have nothing to converge; saying "ok" would be a green row earned by an absence (rule B9)."""
     s = stage("s", (decl("thick_disc_stellar_mass", Kind.SCALAR, unit="Msun"),),
               compute=lambda ctx: {"thick_disc_stellar_mass": 0.0})
     rep = convergence.sweep(model("m", s), HALF, SMALL, impls=impls(s), table=INPUTS)
@@ -64,14 +64,12 @@ def test_the_production_scalars_hold_under_a_half_sweep(model):
     rep = convergence.sweep(model, convergence.QUICK)
     assert rep.ok, rep.problems
     rows = {d.row for d in rep.drifts}
-    assert {1, 2, 3, 4, 22, 23} <= rows
-    if model.name == "advanced":
-        assert 24 in rows
+    assert {1, 2, 3, 4, 22, 23, 24} <= rows
     assert all(d.status == "statistical" for d in rep.drifts if d.row in (16, 17))
     assert all(d.status == "untestable" for d in rep.drifts if d.row == 20)
     assert not any(d.status == "drifts" for d in rep.drifts)
     vacuous = {d.row for d in rep.drifts if d.status == "vacuous"}
-    assert vacuous == ({5, 7, 8, 9, 11} if model.name == "advanced" else set())  # debt #27
+    assert vacuous == {5, 7, 8, 9, 11}  # debt #27
 
 
 def test_every_axis_is_swept_alone():
@@ -84,4 +82,4 @@ def test_every_axis_is_swept_alone():
 
 def test_report_runs(prod):
     out = convergence.report(list(prod[0]), convergence.QUICK)
-    assert "convergence" in out and "model advanced" in out and "untestable" in out
+    assert "convergence" in out and "model basic" in out and "untestable" in out
