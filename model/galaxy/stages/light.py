@@ -70,7 +70,8 @@ HALPHA_SURFACE_BRIGHTNESS = FieldDecl(
     kind=Kind.FIELD, axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True,
     about=(
         "Line emission from the ionised gas around young massive stars (RENDER_PLAN M4): today's "
-        "sfr_surface_density times HALPHA_PER_SFR. Intrinsic, before dust. Bolometrically a "
+        "sfr_surface_density times a Level 0 constant, 4.86 × 10⁷ L☉ per M☉/yr of star formation "
+        "(Kennicutt & Evans 2012 for a Kroupa IMF, D166). Intrinsic, before dust. Bolometrically a "
         "thousandth of the starlight, but all of it in one red line, which is why star-forming "
         "arms look pink in a colour image."
     ),

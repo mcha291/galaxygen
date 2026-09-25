@@ -4750,7 +4750,7 @@ disc's unresolved light, dust and bloom; Hα and the bulge's light; the ray-marc
 regime with dust per line of sight and the three regimes; the brightest-N mode; [α/Fe] on
 the catalogue; one model, `basic`. D163's own text already calls this stretch S24, and the
 row honours the label. The last two commits (f2230d5, 4a20490) were unpushed when the second
-build's planning began on 2026-09-26 and go up with it.
+build's planning began on 2026-09-26 and go up with it. **Three tests were red on `main` at that point, none caught because no close ran:** two photometry pins written at D164 (35 ages to log age 10.0, 385 tracks, a 10 Gyr clamp) that D166's appended age moved to 36 / 10.1 / 396 / 12.6 Gyr, and `halpha_surface_brightness`'s about line naming `HALPHA_PER_SFR`, which `test_the_api_publishes_no_model_internals` forbids the viewer to see (rule D5). Re-pinned and reworded on 2026-09-26 in the planning branch's second commit; no number changed.
 
 **Why after the fact rather than never.** The alternative — leaving twenty-two rows on the
 board and a build that continues from D170 — would have the board say the project ended at
