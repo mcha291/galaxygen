@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
+**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -196,8 +196,8 @@ Six stages. The grouping is a hypothesis; `model_graph.py` rules.
 |---|---|---|---|
 | 1 | **Halo & disc** | `halo_mass`, `spin`, `halo_assembly_z`, `baryon_retention` | Rotation curve; face-on surface density (smooth, axisymmetric) |
 | 2 | **Assembly** | `mergers[]` | Accretion history; edge-on view showing the thick disc appear |
-| 3 | **Star formation & chemistry** | `infall_timescale`, `inside_out_index`, `migration_efficiency` | Age–metallicity relation, radial gradient, SFH; face-on coloured by [Fe/H] |
-| 4 | **Pattern** | `pattern_seed` | Bar and arms. **First recognisable galaxy** |
+| 3 | **Pattern** | `pattern_seed` | Bar and arms on the disc's own dynamics (ahead of star formation since S25, D174: the arms shape where stars form) |
+| 4 | **Star formation & chemistry** | `infall_timescale`, `inside_out_index`, `migration_efficiency` | Age–metallicity relation, radial gradient, SFH; face-on coloured by [Fe/H]. **First recognisable galaxy** |
 | 5 | **Systems** | `systems_seed` | Galaxy view — the star catalogue |
 | 6 | **Planets** | `planets_seed` | System view |
 
@@ -214,9 +214,11 @@ this* and never *freeze this against upstream changes*. Confirmed controls are
 disabled rather than hidden, reopening a stage discards every later one, and a
 page load lands on stage one.
 
-**Reroll is a distinct action from edit.** Rerolling stage 4's `pattern_seed`
-invalidates 5 and 6 but not 1–3. This is the whole point of per-stage seeds and
-it falls out of the graph audit rather than being hand-wired.
+**Reroll is a distinct action from edit.** Rerolling stage 3's `pattern_seed`
+invalidates 4–6 but not 1–2 (until S25 the pattern was stage 4 and rerolling it
+spared star formation; since D174 star formation follows the pattern). This is the
+whole point of per-stage seeds and it falls out of the graph audit rather than
+being hand-wired.
 
 ---
 

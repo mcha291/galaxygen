@@ -1,4 +1,4 @@
-"""The cold ISM: midplane pressure, the molecular fraction, and dust (checkpoint 3).
+"""The cold ISM: midplane pressure, the molecular fraction, and dust (checkpoint 4).
 
 Everything here is derived from fields that already exist. No new input, no new
 seed, no new stage boundary — the stage reads the gas and stellar surface
@@ -196,7 +196,7 @@ ISM = IMPLEMENTATIONS.register(
     Stage(
         id="ism",
         slot="ism",
-        checkpoint=3,
+        checkpoint=4,
         about=(
             "Partitions the cold gas into atomic and molecular by midplane pressure, and derives "
             "dust from the gas-phase abundance. Adds no input and no seed: every ingredient is "

@@ -45,7 +45,9 @@ interface Props {
 
 // What each checkpoint's scene draws, by field name. Every name is checked
 // against the declarations at run time; a model that lacks one shows the gap.
-const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 4: "stellar_surface_density" };
+// Checkpoint 3 is the pattern since S25 (D174): the bar and arms drawn on checkpoint 1's smooth disc,
+// because no star has formed yet; checkpoint 4's stars then carry the same pattern.
+const DISC_AT: Record<number, string> = { 1: "disc_surface_density", 3: "disc_surface_density", 4: "stellar_surface_density" };
 const INSET_AT: Record<number, { title: string; fields: string[] }> = {
   1: { title: "Rotation curve", fields: ["circular_velocity", "halo_circular_velocity", "disc_circular_velocity"] },
 };
@@ -78,7 +80,7 @@ export function CheckpointScene({ n, meta, query, preset, exposure, charts = fal
     );
   }
   if (n === 2) return <MergerScene meta={meta} query={query} preset={preset} />;
-  if (n === 3) return <HistoryScene meta={meta} query={query} preset={preset} />;
+  if (n === 4) return <HistoryScene meta={meta} query={query} preset={preset} />;
   return <DiscScene n={n} meta={meta} query={query} preset={preset} charts={charts} />;
 }
 
@@ -104,8 +106,8 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
   const disc = declOf(meta, DISC_AT[n]);
   const inset = charts ? INSET_AT[n] : undefined; // hidden, so not fetched either, unless the bottom bar's toggle is on
   const insetDecls = (inset?.fields ?? []).map((f) => declOf(meta, f)).filter((d): d is FieldDecl => !!d);
-  // From checkpoint 4 the disc carries the bar and arms, when the model publishes them.
-  const contrast = n >= 4 ? declOf(meta, "pattern_density_contrast") : undefined;
+  // From checkpoint 3 (the pattern, since S25) the disc carries the bar and arms, when the model publishes them.
+  const contrast = n >= 3 ? declOf(meta, "pattern_density_contrast") : undefined;
   // Checkpoint 1's tracers orbit on the rotation curve, so the curve is always fetched there.
   const curve = n === 1 ? declOf(meta, "circular_velocity") : undefined;
   const names = [
@@ -202,7 +204,7 @@ function DiscScene({ n, meta, query, preset, charts }: { n: number; meta: Fields
 
 /**
  * Checkpoint 2 as a playback through cosmic time. There are no stars yet and no
- * matter history (checkpoint 3), so the disc is checkpoint 1's Σ(R) used as a
+ * matter history (checkpoint 4), so the disc is checkpoint 1's Σ(R) used as a
  * probe: at each τ it is moved through the radial scatter of the mergers landed
  * so far, by the model's own transport. The gauges read what the assembly stage
  * publishes at τ. Changing a merger changes when and how hard the disc smears.
@@ -336,7 +338,7 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
       {disc && heatingDecl && view === "envelope" && (
         <p className={styles.layerNote}>
           envelope: the height matter moving up at σ_z reaches in the halo&apos;s potential alone, so too thick until the disc&apos;s own
-          gravity arrives at checkpoint 3 · σ_z is the birth dispersion plus the kicks of the mergers landed so far · best edge-on
+          gravity arrives at checkpoint 4 · σ_z is the birth dispersion plus the kicks of the mergers landed so far · best edge-on
         </p>
       )}
       {disc && heatingDecl && view === "tower" && (
@@ -454,13 +456,13 @@ function MergerScene({ meta, query, preset }: { meta: FieldsPayload; query: Quer
 }
 
 /**
- * Checkpoint 3 is the formation history (RENDER_PLAN H1): every (R, t) field the
- * checkpoint publishes can be scrubbed through time, the disc swept from the slice
- * at the chosen epoch, merger arrivals marked on the slider.
+ * Checkpoint 4 (star formation; 3 until S25) is the formation history (RENDER_PLAN H1): every
+ * (R, t) field the checkpoint publishes can be scrubbed through time, the disc swept from the
+ * slice at the chosen epoch, merger arrivals marked on the slider.
  */
 function HistoryScene({ meta, query, preset }: { meta: FieldsPayload; query: Query; preset: Preset }) {
   const histories = meta.fields.filter(
-    (f) => (f.checkpoint as number) === 3 && (f.axes as string[])?.join() === "R,t" && !NOT_AN_EPOCH.has(f.name),
+    (f) => (f.checkpoint as number) === 4 && (f.axes as string[])?.join() === "R,t" && !NOT_AN_EPOCH.has(f.name),
   );
   const [picked, setPicked] = useState<string>("sfr_surface_density_history");
   const decl = histories.find((h) => h.name === picked) ?? histories[0];

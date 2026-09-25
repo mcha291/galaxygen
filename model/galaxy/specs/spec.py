@@ -356,6 +356,28 @@ _MISSES: tuple[Miss, ...] = (
         ),
     ),
     Miss(
+        row=15,
+        debt=80,
+        since="S25",
+        reason=(
+            "5.210 kpc against 5.0 +/- 0.2, out by 0.010 (4.883 and inside until S25). BUILD_II "
+            "Phase 1 moved the pattern ahead of star formation so that the arms can shape where "
+            "stars form (D174), and the bar stage then reads the one scale length that exists at "
+            "checkpoint 1 - the lambda_d one, 2.605 kpc - where it read the thin disc's fitted "
+            "stellar one before (2.441 kpc, a star-formation result 6% shorter). BAR_LENGTH_RATIO "
+            "= 2.0 is a recalled '1.5-2.5 R_d' that names no R_d, so it has no claim on either "
+            "number and is not retuned (rule B5, debt #80). The plan named disc_dominance as this "
+            "row's risk; it does not enter the length at all."
+        ),
+        prediction=(
+            "A sourced bar-length ratio quoted against a stated scale length, read at the source's "
+            "own definition (debt #80), either lands the row or moves the question to its target; "
+            "the constant is not moved to land it. What kills the debt's reading: a source giving "
+            "a_bar/R_d for the whole disc that puts the row outside 4.8-5.2 by more than the 0.01 "
+            "it misses now, in which case the miss is the ratio's and not the referent's."
+        ),
+    ),
+    Miss(
         row=18,
         debt=2,
         since="S17",

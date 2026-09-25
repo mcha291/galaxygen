@@ -33,8 +33,8 @@ from .fielddoc import CONST_IDENT, IDENT, FieldDecl
 CHECKPOINTS: tuple[str, ...] = (
     "Halo & disc",
     "Assembly",
+    "Pattern",  # ahead of star formation since S25 (D174): the arms shape where stars form
     "Star formation & chemistry",
-    "Pattern",
     "Systems",
     "Planets",
 )

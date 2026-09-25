@@ -1,4 +1,10 @@
-"""Pattern: the bar and the spiral arms (checkpoint 4). The first seeded stage.
+"""Pattern: the bar and the spiral arms (checkpoint 3, ahead of star formation since S25).
+
+Both stages read the checkpoint-1 curve (``circular_velocity``, the halo plus one
+exponential) and the λ_d scale length, so the pattern is a consequence of the halo and
+disc alone and the star-formation stages can read it (BUILD_II Phase 1, D174). Until
+S25 they read ``sfh``'s resolved curve and fitted thin-disc scale length, which put
+the pattern behind star formation and made azimuthal star formation impossible.
 
 Two stages, not one, and the reason is a limitation worth naming.
 ``graph.py`` derives provenance **per stage**: a stage that reads a seed
@@ -19,7 +25,8 @@ the Milky Way within an ensemble, not exactly.
 **Which seed.** ``pattern_seed``. GALAXY_INPUTS.md §5 says the pitch dispersion
 comes from ``world_seed``, and it cannot: rerolling the arms would then invalidate
 every checkpoint from 1 onwards, when the whole point of per-stage seeds is that
-rerolling stage 4 invalidates 5 and 6 and nothing earlier (GALAXY_PLAN.md §3).
+rerolling the pattern's stage invalidates what follows it and nothing earlier
+(GALAXY_PLAN.md §3; since S25 that is checkpoints 4–6, D174).
 The registry and the plan agree on ``pattern_seed``; §5 is the outlier
 (DECISIONS.md D56).
 """
@@ -58,7 +65,9 @@ def _scalar(name, label, unit, about, provenance="derived"):
 BAR_HALF_LENGTH = _scalar(
     "bar_half_length", "Bar half-length", "kpc",
     "Acceptance row 15, and pointwise rather than statistical — which is why it lives in the "
-    "derived stage. Scaled from the disc's own scale length; the disc-dominance link "
+    "derived stage. Scaled from the disc's λ_d scale length (checkpoint 1) since S25, so that the "
+    "pattern can precede star formation; until then from the thin disc's fitted stellar scale "
+    "length, a star-formation result 6% shorter (D174, debt #80). The disc-dominance link "
     "GALAXY_INPUTS.md §4b describes is published beside it but not modelled (debt #21).",
 )
 
@@ -66,21 +75,23 @@ DISC_DOMINANCE = _scalar(
     "disc_dominance", "Disc share of v_c² at 2.2 R_d", "dimensionless",
     "How much of the rotation the baryons provide where the disc's own curve peaks. §4b makes "
     "this the first link in the chain to the pattern speed; it is measured here and unused, so "
-    "that the missing link is visible rather than silently absent.",
+    "that the missing link is visible rather than silently absent. Read off the checkpoint-1 "
+    "curve since S25, which holds every baryon in one exponential (D174).",
 )
 
 SHEAR = _scalar(
     "shear_rate", "Shear rate Γ", "dimensionless",
     "1 − dln v/dln R at 2.2 R_d. Zero is solid-body rotation and 1 is a flat curve, so a value "
-    "near 1 means the disc is shearing as a flat-curve galaxy does.",
+    "near 1 means the disc is shearing as a flat-curve galaxy does. Off the checkpoint-1 curve "
+    "since S25 (D174).",
 )
 
 
 def compute_bar(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
-    R_d = float(ctx.fields["thin_disc_scale_length"])
+    R_d = float(ctx.fields["disc_scale_length_spin"])
     at = SHEAR_RADIUS_IN_SCALE_LENGTHS * R_d
-    total = np.asarray(ctx.fields["circular_velocity_resolved"])
+    total = np.asarray(ctx.fields["circular_velocity"])
     halo = np.asarray(ctx.fields["halo_circular_velocity"])
     v_total = float(np.interp(at, R, total))
     v_halo = float(np.interp(at, R, halo))
@@ -93,14 +104,14 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
 
 BAR = IMPLEMENTATIONS.register(
     Stage(
-        id="bar", slot="bar", checkpoint=4,
+        id="bar", slot="bar", checkpoint=3,
         about=(
             "The bar's size and the disc's shear — everything about the pattern that has no draw "
             "in it. Split from the seeded half so that row 15 stays reproducible (D55)."
         ),
         compute=compute_bar,
         reads_constants=("BAR_LENGTH_RATIO",),
-        requires=("thin_disc_scale_length", "circular_velocity_resolved", "halo_circular_velocity"),
+        requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
         publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR),
     )
 )
@@ -242,7 +253,7 @@ class ArmPattern:
 def compute_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
     a_bar = float(ctx.fields["bar_half_length"])
-    total = np.asarray(ctx.fields["circular_velocity_resolved"])
+    total = np.asarray(ctx.fields["circular_velocity"])
 
     ratio = ctx.rng("pattern_seed", "fast_bar").normal(
         float(ctx.constants["FAST_BAR_RATIO"]), float(ctx.constants["FAST_BAR_SCATTER"])
@@ -273,11 +284,11 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
 
 PATTERN = IMPLEMENTATIONS.register(
     Stage(
-        id="pattern", slot="pattern", checkpoint=4,
+        id="pattern", slot="pattern", checkpoint=3,
         about=(
             "The pattern's kinematics and the arms: everything §4b assigns to a seeded draw. "
-            "Reads pattern_seed, so rerolling it invalidates checkpoints 5 and 6 and nothing "
-            "earlier."
+            "Reads pattern_seed, so rerolling it invalidates checkpoints 4, 5 and 6 and nothing "
+            "earlier — star formation follows the pattern since S25 (D174)."
         ),
         compute=compute_pattern,
         reads_seeds=("pattern_seed",),
@@ -286,7 +297,7 @@ PATTERN = IMPLEMENTATIONS.register(
             "FAST_BAR_RATIO", "FAST_BAR_SCATTER",
             "PITCH_SHEAR_INTERCEPT", "PITCH_SHEAR_SLOPE", "PITCH_SCATTER",
         ),
-        requires=("bar_half_length", "shear_rate", "circular_velocity_resolved"),
+        requires=("bar_half_length", "shear_rate", "circular_velocity"),
         publishes=(COROTATION, PATTERN_SPEED, PITCH_ANGLE, ARM_MULTIPLICITY, ARM_CONTRAST, BAR_CONTRAST, DENSITY_CONTRAST),
     )
 )

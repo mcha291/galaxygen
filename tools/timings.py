@@ -51,7 +51,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
-    Endpoint("arrays: history", "/api/arrays", "fields=feh_history", "400 x 2000, checkpoint 3"),
+    Endpoint("arrays: history", "/api/arrays", "fields=feh_history", "400 x 2000, checkpoint 4"),
     Endpoint("arrays: scalar", "/api/arrays", "fields=stellar_mass_total", "one number"),
     Endpoint("region: one sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "9 of 1024 cells"),
     Endpoint("region: whole disc", "/api/region", "stars=20000", "every cell, the published sample"),

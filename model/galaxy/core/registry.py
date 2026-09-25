@@ -341,7 +341,7 @@ _INPUTS: tuple[Input, ...] = (
         default=7.0,
         lo=1.0,
         hi=14.0,
-        checkpoint_hypothesis=3,
+        checkpoint_hypothesis=4,
     ),
     Input(
         "inside_out_index",
@@ -359,7 +359,7 @@ _INPUTS: tuple[Input, ...] = (
         default=1.0,
         lo=0.0,
         hi=3.0,
-        checkpoint_hypothesis=3,
+        checkpoint_hypothesis=4,
     ),
     Input(
         "migration_efficiency",
@@ -377,7 +377,7 @@ _INPUTS: tuple[Input, ...] = (
         default=3.6,
         lo=0.0,
         hi=8.0,
-        checkpoint_hypothesis=3,
+        checkpoint_hypothesis=4,
     ),
     # Experimental (RENDER_PLAN M1): exposed so the arm and bar strength can be explored from the
     # viewer's bottom bar. RENDER_PLAN wants these derived or seeded rather than chosen; until a
@@ -392,7 +392,7 @@ _INPUTS: tuple[Input, ...] = (
         default=0.3,
         lo=0.0,
         hi=1.0,
-        checkpoint_hypothesis=4,
+        checkpoint_hypothesis=3,
     ),
     Input(
         "bar_amplitude",
@@ -404,7 +404,7 @@ _INPUTS: tuple[Input, ...] = (
         default=0.3,
         lo=0.0,
         hi=1.0,
-        checkpoint_hypothesis=4,
+        checkpoint_hypothesis=3,
     ),
     Input(
         "mergers",
@@ -449,9 +449,10 @@ _INPUTS: tuple[Input, ...] = (
         "Pattern seed",
         "seed",
         "Seeds the bar and arms, including the PITCH_YU draw (ruling 3). Rerolling it must "
-        "invalidate checkpoints 5 and 6 only.",
+        "invalidate checkpoints 4, 5 and 6 only: since S25 the pattern is checkpoint 3 and star "
+        "formation follows it, because the arms shape where stars form and not the reverse (D174).",
         default=0,
-        checkpoint_hypothesis=4,
+        checkpoint_hypothesis=3,
     ),
     Input(
         "systems_seed",

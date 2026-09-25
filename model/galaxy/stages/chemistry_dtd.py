@@ -1,4 +1,4 @@
-"""Chemistry: two elements, a delay-time distribution, outflows, conservative migration (checkpoint 3).
+"""Chemistry: two elements, a delay-time distribution, outflows, conservative migration (checkpoint 4).
 
 The retired simple chemistry (``chemistry.py``, a stage until D170) had one abundance
 and returned it in the timestep that made it. This stage differs from it on exactly
@@ -476,7 +476,7 @@ CHEMISTRY_DTD = IMPLEMENTATIONS.register(
     Stage(
         id="chemistry_dtd",
         slot="chemistry",
-        checkpoint=3,
+        checkpoint=4,
         about=(
             "Iron and oxygen with a type Ia delay-time distribution, a metal-loaded wind set by "
             "the local escape velocity, and mass-conserving radial migration. Publishes the [Fe/H] "
