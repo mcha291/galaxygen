@@ -25,7 +25,7 @@ import {
 import { type FieldsPayload, type Frame, type Query, loadArrays } from "../api";
 import { useLoad } from "../useLoad";
 import { srgbToLinear } from "./colors";
-import { planeTexture } from "./regimes";
+import { CLUMPS, HII_RGB, LATTICE_LIFT, YOUNG_KELVIN, planeTexture } from "./regimes";
 
 /**
  * How bright 1 L☉/pc² draws at zero exposure stops, against a star point's 1 per 100 L☉.
@@ -41,6 +41,14 @@ export const LIGHT_PER_LSUN_PC2 = 1 / 400;
  * dusty region reddens as it darkens: occlusion, never an added colour (R4).
  */
 export const CHANNEL_EXTINCTION = [0.748, 1.0, 1.324] as const;
+
+/**
+ * The young light's and the dust's scale heights, as shares of the thin disc's. The same share:
+ * light mixed through thick dust glows at their ratio, so a young layer thinner than its dust
+ * draws a bright line down the middle of an edge-on dust lane.
+ */
+export const YOUNG_HEIGHT = 1 / 3;
+export const DUST_HEIGHT = 1 / 3;
 
 /** Ray-march steps through the galaxy's bounding box. */
 const STEPS = 96;
@@ -72,7 +80,7 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
 `;
 
 const FIELDS = ["disc_surface_brightness", "disc_light_temperature", "pattern_density_contrast", "dust_extinction_v", "halpha_surface_brightness"];
-const SCALARS = ["thin_disc_scale_height", "bulge_luminosity", "bulge_light_temperature", "bulge_scale_radius"];
+const SCALARS = ["thin_disc_scale_height", "bulge_luminosity", "bulge_light_temperature", "bulge_scale_radius", "pitch_angle", "arm_multiplicity"];
 
 const VERTEX = /* glsl */ `
   varying vec3 vWorld;
@@ -84,17 +92,50 @@ const VERTEX = /* glsl */ `
 `;
 
 // Emission and absorption along the line of sight, front to back. At each step the light
-// emitted there is added, dimmed by all the dust between it and the camera, and the dust in
-// that step dims everything behind it. Units: the plane texture is L☉/pc² through a face-on
-// column and the sech² profiles integrate to 1 per kpc of height, so their product times the
-// step in kpc is L☉/pc²; the bulge is L☉ times a Hernquist density per kpc³, times the step,
-// per 10⁶ pc² per kpc².
+// emitted there is added, dimmed by all the dust between it and the camera and by the step's
+// own dust mixed through it, and the step's dust dims everything behind it. Units: the plane
+// textures are L☉/pc² through a face-on column and the sech² profiles integrate to 1 per kpc of
+// height, so their product times the step in kpc is L☉/pc²; the bulge is L☉ times a Hernquist
+// density per kpc³, times the step, per 10⁶ pc² per kpc².
+//
+// Two layers. The old disc fills the thin disc's height and is smooth, so a point per step
+// serves. The young light, its line and the dust sit in layers a few times thinner, where the
+// clumps are: sampling those at a point per step both misses them (a step is wider than the
+// layer) and, through a tilted disc, smears each clump across every position the ray passes
+// over while inside the thicker height. So each step takes the layer's exact column over its
+// own height range, a difference of tanh, and reads the layer where the ray is nearest the
+// midplane.
+//
+// The clumps are drawn here, per sample, not baked into the layer texture: a clump near the
+// centre is smaller than a texel, and an HII knot is a texel at most anywhere. The noise is
+// regimes.ts's clumpNoise and clumpFactors line for line (the hash in uint arithmetic, where
+// Math.imul wraps the same), and `norms` gives each ring back its published mean.
 const FRAGMENT = /* glsl */ `
   uniform sampler2D plane;
+  uniform sampler2D layer;
+  uniform sampler2D norms;
+  uniform vec3 youngColour;
+  uniform vec3 lineColour;
+  uniform float clumped;
+  uniform float latCot;
+  uniform float latTan;
+  uniform int latN;
+  uniform int latM;
+  uniform int seedStars;
+  uniform int seedDust;
+  uniform vec2 statsStars;
+  uniform vec2 statsDust;
+  uniform float knotMean;
+  uniform float knotThreshold;
+  uniform float knotCap;
+  uniform float sigmaYoung;
+  uniform float sigmaDust;
+  uniform float fade;
   uniform float rLo;
   uniform float rHi;
   uniform float halfHeight;
   uniform float discHeight;
+  uniform float youngHeight;
   uniform float dustHeight;
   uniform float bulgeLuminosity;
   uniform float bulgeScale;
@@ -104,6 +145,73 @@ const FRAGMENT = /* glsl */ `
   varying vec3 vWorld;
 
   float sech2(float x) { float c = cosh(clamp(x, -30.0, 30.0)); return 1.0 / (c * c); }
+
+  // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
+  // from height y0 to y1 over a path ds: its share of height, over the ray's slope. A ray
+  // running level through the layer takes the density at its height times the path.
+  // tanh clamped: some drivers build it from exp, which overflows to NaN far outside the layer.
+  float safeTanh(float x) { return tanh(clamp(x, -10.0, 10.0)); }
+  float column(float y0, float y1, float h, float ds) {
+    float dy = y1 - y0;
+    if (abs(dy) < 1e-4 * h) return sech2(0.5 * (y0 + y1) / (2.0 * h)) / (4.0 * h) * ds;
+    return abs(safeTanh(y1 / (2.0 * h)) - safeTanh(y0 / (2.0 * h))) * 0.5 * ds / abs(dy);
+  }
+
+  // Where to read a layer over a step from p0 to p1: where it crosses the midplane, or else the
+  // step's middle, since a step that stays on one side holds little of a thin layer unless it
+  // runs level through it.
+  vec3 nearestMidplane(vec3 p0, vec3 p1) {
+    if (p0.y * p1.y < 0.0) return mix(p0, p1, p0.y / (p0.y - p1.y));
+    return 0.5 * (p0 + p1);
+  }
+
+  // Radius and azimuth in the stars' frame: x = r cos φ, z = −r sin φ.
+  vec2 polarOf(vec3 p) {
+    float phi = atan(-p.z, p.x);
+    if (phi < 0.0) phi += 6.28318531;
+    return vec2(length(p.xz), phi);
+  }
+
+  // An explicit level: implicit derivatives inside a loop and a branch are undefined, and some
+  // drivers' compilers expand them into shaders that take seconds to build.
+  vec4 readPolar(sampler2D tex, vec2 rp) {
+    return textureLod(tex, vec2((rp.x - rLo) / (rHi - rLo), rp.y / 6.28318531), 0.0);
+  }
+
+  vec4 readPlane(sampler2D tex, vec3 p) { return readPolar(tex, polarOf(p)); }
+
+  float lattice(int x, int y, int seed) {
+    uint h = uint(x) * 0x27d4eb2du ^ uint(y) * 0x165667b1u ^ uint(seed) * 0x9e3779b1u;
+    h = (h ^ (h >> 15u)) * 0x85ebca6bu;
+    h = (h ^ (h >> 13u)) * 0xc2b2ae35u;
+    h ^= h >> 16u;
+    return float(h) / 2147483647.0 - 1.0;
+  }
+
+  float cellValue(int cx, int cy, int n, int m, int seed) {
+    int turns = int(floor(float(cx) / float(n)));
+    return lattice(cx - turns * n, cy - turns * m + ${LATTICE_LIFT}, seed);
+  }
+
+  float valueNoise(vec2 v, int n, int m, int seed) {
+    vec2 c = floor(v);
+    vec2 f = v - c;
+    vec2 s = f * f * (3.0 - 2.0 * f);
+    int x0 = int(c.x);
+    int y0 = int(c.y);
+    float a = cellValue(x0, y0, n, m, seed);
+    float b = cellValue(x0 + 1, y0, n, m, seed);
+    float cc = cellValue(x0, y0 + 1, n, m, seed);
+    float d = cellValue(x0 + 1, y0 + 1, n, m, seed);
+    return a + (b - a) * s.x + (cc - a) * s.y + (a - b - cc + d) * s.x * s.y;
+  }
+
+  float clumpNoise(float lnR, float angle, int seed, vec2 stats) {
+    float x = (angle - latCot * lnR) * float(latN) / 6.28318531;
+    float y = (lnR * latTan + angle) * float(latM) / 6.28318531;
+    float v = 0.7 * valueNoise(vec2(x, y), latN, latM, seed) + 0.3 * valueNoise(vec2(2.0 * x, 2.0 * y), 2 * latN, 2 * latM, seed + 1);
+    return (v - stats.x) / stats.y;
+  }
 
   void main() {
     vec3 origin = cameraPosition;
@@ -130,24 +238,49 @@ const FRAGMENT = /* glsl */ `
     for (int k = 0; k < ${STEPS}; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
+      // The old disc and the bulge at a jittered point in the step, times the step.
       vec3 p = origin + dir * (a + jitter * ds);
-      float r = length(p.xz);
       vec3 emitted = vec3(0.0);
-      float tau = 0.0;
-      if (r < rHi) {
-        // Azimuth in the stars' frame: x = r cos φ, z = −r sin φ.
-        float phi = atan(-p.z, p.x);
-        if (phi < 0.0) phi += 6.28318531;
-        // An explicit level: implicit derivatives inside a loop and a branch are undefined, and
-        // some drivers' compilers expand them into shaders that take seconds to build.
-        vec4 column = textureLod(plane, vec2((r - rLo) / (rHi - rLo), phi / 6.28318531), 0.0);
-        emitted += column.rgb * sech2(p.y / (2.0 * discHeight)) / (4.0 * discHeight);
-        tau = column.a * sech2(p.y / (2.0 * dustHeight)) / (4.0 * dustHeight);
-      }
+      if (length(p.xz) < rHi) emitted += readPlane(plane, p).rgb * sech2(p.y / (2.0 * discHeight)) / (4.0 * discHeight);
       float s = max(length(p), 0.02);
       emitted += bulgeColour * bulgeLuminosity * bulgeScale / (6.28318531 * s * pow(s + bulgeScale, 3.0)) * 1.0e-6;
-      light += transmitted * emitted * ds;
-      transmitted *= exp(-tau * ds * extinction);
+      emitted *= ds;
+
+      // The midplane layer over the whole step, [a, a + ds].
+      // Most steps are far above or below it and skip it: beyond 20 scale heights, sech²(y / 2h)
+      // is under 10⁻⁸.
+      vec3 p0 = origin + dir * a;
+      vec3 p1 = p0 + dir * ds;
+      vec3 depth = vec3(0.0);
+      if (p0.y * p1.y <= 0.0 || min(abs(p0.y), abs(p1.y)) < 20.0 * max(youngHeight, dustHeight)) {
+        float young = column(p0.y, p1.y, youngHeight, ds);
+        float dust = column(p0.y, p1.y, dustHeight, ds);
+        vec2 rp = polarOf(nearestMidplane(p0, p1));
+        if (rp.x < rHi) {
+          vec4 thin = readPolar(layer, rp);
+          // The clump factors, each times its ring's norm (clumpFactors in regimes.ts).
+          float fy = 1.0;
+          float fl = 1.0;
+          float fd = 1.0;
+          if (clumped > 0.5) {
+            vec4 k = textureLod(norms, vec2((rp.x - rLo) / (rHi - rLo), 0.5), 0.0);
+            float lnR = log(max(rp.x, 1e-3));
+            float s = 1.0 - exp(-(rp.x / fade) * (rp.x / fade));
+            float n = clumpNoise(lnR, rp.y, seedStars, statsStars);
+            float nd = clumpNoise(lnR, rp.y, seedDust, statsDust);
+            float excess = min(max(0.0, n - knotThreshold), knotCap);
+            fy = exp(sigmaYoung * s * n) * k.r;
+            fl = mix(1.0, (1.0 - s + s * excess / knotMean) * k.g, k.a);
+            fd = exp(sigmaDust * s * nd) * k.b;
+          }
+          emitted += (youngColour * thin.r * fy + lineColour * thin.g * fl) * young;
+          depth = thin.b * fd * dust * extinction;
+        }
+      }
+      // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself.
+      vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
+      light += transmitted * emitted * own;
+      transmitted *= exp(-depth);
     }
     gl_FragColor = vec4(light * gain, 1.0);
   }
@@ -189,22 +322,41 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
     for (let i = 0; i < R.n; i += 1) colour.set(linear(Number(temperature[i])), 3 * i);
     const phi = frame.header.grid.axes.phi;
     const contrastValues = frame.arrays.pattern_density_contrast;
-    const { data, width, height } = planeTexture({
+    const scalars = frame.header.scalars;
+    const young = linear(YOUNG_KELVIN);
+    const { data, layer, norms, clumps, width, height } = planeTexture({
       R,
       brightness: frame.arrays.disc_surface_brightness as Float64Array,
       colour,
       halpha: frame.arrays.halpha_surface_brightness as Float64Array | undefined,
       extinction: frame.arrays.dust_extinction_v as Float64Array | undefined,
       contrast: contrastValues && phi ? { values: contrastValues as Float64Array, phi } : undefined,
+      young: young.every(Number.isFinite) ? young : undefined,
+      arms:
+        scalars.pitch_angle !== undefined && scalars.arm_multiplicity !== undefined
+          ? { pitchDeg: scalars.pitch_angle, multiplicity: scalars.arm_multiplicity }
+          : undefined,
+      // The world's seed, so a galaxy keeps its clumps from view to view and a new seed moves them;
+      // kept non-negative, since the shader's hash takes it as a uint.
+      seed: (Number(query.world_seed ?? 0) | 0) & 0x3fffffff,
     });
-    const plane = new DataTexture(data, width, height, RGBAFormat, FloatType);
-    plane.minFilter = LinearFilter;
-    plane.magFilter = LinearFilter;
-    plane.wrapS = ClampToEdgeWrapping;
-    plane.wrapT = RepeatWrapping;
-    plane.needsUpdate = true;
+    const polar = (values: Float32Array) => {
+      const texture = new DataTexture(values, width, height, RGBAFormat, FloatType);
+      texture.minFilter = LinearFilter;
+      texture.magFilter = LinearFilter;
+      texture.wrapS = ClampToEdgeWrapping;
+      texture.wrapT = RepeatWrapping;
+      texture.needsUpdate = true;
+      return texture;
+    };
+    const plane = polar(data);
+    const thin = polar(layer);
+    const ringNorms = new DataTexture(norms, width, 1, RGBAFormat, FloatType);
+    ringNorms.minFilter = LinearFilter;
+    ringNorms.magFilter = LinearFilter;
+    ringNorms.needsUpdate = true;
+    const finite = (rgb: number[]) => new Vector3(...rgb.map((c) => (Number.isFinite(c) ? c : 0)));
 
-    const scalars = frame.header.scalars;
     const discHeight = (scalars.thin_disc_scale_height ?? 300) / 1000;
     const bulgeScale = scalars.bulge_scale_radius ?? 0;
     const bulgeColour = scalars.bulge_light_temperature ? linear(scalars.bulge_light_temperature) : [0, 0, 0];
@@ -214,16 +366,37 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
     const material = new ShaderMaterial({
       uniforms: {
         plane: { value: plane },
+        layer: { value: thin },
+        norms: { value: ringNorms },
+        youngColour: { value: finite(young) },
+        lineColour: { value: new Vector3(...HII_RGB) },
+        clumped: { value: clumps ? 1 : 0 },
+        latCot: { value: clumps?.stars.cot ?? 0 },
+        latTan: { value: clumps?.stars.tan ?? 0 },
+        latN: { value: clumps?.stars.n ?? 1 },
+        latM: { value: clumps?.stars.m ?? 1 },
+        seedStars: { value: clumps?.stars.seed ?? 0 },
+        seedDust: { value: clumps?.dust.seed ?? 0 },
+        statsStars: { value: new Vector2(clumps?.stars.mean ?? 0, clumps?.stars.std ?? 1) },
+        statsDust: { value: new Vector2(clumps?.dust.mean ?? 0, clumps?.dust.std ?? 1) },
+        knotMean: { value: Math.max(clumps?.knotMean ?? 1, 1e-12) },
+        knotThreshold: { value: CLUMPS.knotThreshold },
+        knotCap: { value: CLUMPS.knotCap },
+        sigmaYoung: { value: CLUMPS.sigma.young },
+        sigmaDust: { value: CLUMPS.sigma.dust },
+        fade: { value: CLUMPS.fade },
         rLo: { value: R.lo },
         rHi: { value: R.hi },
         halfHeight: { value: halfHeight },
         discHeight: { value: discHeight },
-        // The dust lies in a layer thinner than the stars: half the thin disc's scale height, about
-        // the cold gas's share of the stellar disc [recall]; a stated display choice.
-        dustHeight: { value: discHeight / 2 },
+        // The young light and the dust lie in a layer thinner than the old stars: OB stars, HII
+        // regions and dust within ~50–100 pc of the midplane against the thin disc's ~300
+        // [recall]. Kept as a share of the published thin disc; a stated display choice.
+        youngHeight: { value: discHeight * YOUNG_HEIGHT },
+        dustHeight: { value: discHeight * DUST_HEIGHT },
         bulgeLuminosity: { value: scalars.bulge_luminosity ?? 0 },
         bulgeScale: { value: Math.max(bulgeScale, 1e-3) },
-        bulgeColour: { value: new Vector3(...bulgeColour.map((c) => (Number.isFinite(c) ? c : 0))) },
+        bulgeColour: { value: finite(bulgeColour) },
         extinction: { value: new Vector3(...CHANNEL_EXTINCTION) },
         gain: { value: 0 },
       },
@@ -236,7 +409,7 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
     box.frustumCulled = false;
     return box;
-  }, [frame, meta.cmaps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [frame, meta.cmaps, query.world_seed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -271,6 +444,8 @@ export function FieldVolume({ meta, query, stops, weight = 1 }: Props) {
       if (!mesh || !offscreen) return;
       const material = mesh.material as ShaderMaterial;
       (material.uniforms.plane.value as DataTexture).dispose();
+      (material.uniforms.layer.value as DataTexture).dispose();
+      (material.uniforms.norms.value as DataTexture).dispose();
       material.dispose();
       mesh.geometry.dispose();
       offscreen.target.dispose();

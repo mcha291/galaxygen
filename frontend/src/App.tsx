@@ -53,8 +53,10 @@ export function App() {
   const generated = !!wf.state && last > 0 && wf.state.confirmed === last;
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
-  // Reopening a checkpoint un-generates the galaxy, so the tab showing it closes.
+  // Confirming the last checkpoint generates the galaxy: the preview closes and the Galaxy tab
+  // takes over. Reopening a checkpoint un-generates it, so the Galaxy tab closes in turn.
   useEffect(() => {
+    if (tab === "preview" && generated) setTab("galaxy");
     if (tab === "galaxy" && !generated) setTab("preview");
   }, [tab, generated]);
 
@@ -70,7 +72,7 @@ export function App() {
   const seed = wf.state?.values.world_seed;
   const hash = query ? `${runHash(query)} · ${wf.model} · world_seed ${seed}` : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
-    { key: "preview", label: "Preview" },
+    { key: "preview", label: "Preview", disabled: generated, title: generated ? "The galaxy is generated; reopen a checkpoint in the Science tab to preview it" : undefined },
     { key: "science", label: "Science" },
     { key: "galaxy", label: "Galaxy", disabled: !generated, title: generated ? undefined : `Confirm all ${last} checkpoints to generate the galaxy` },
   ];

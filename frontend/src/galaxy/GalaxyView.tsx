@@ -1,7 +1,7 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, useEffect, useMemo, useRef } from "react";
-import { ACESFilmicToneMapping, AdditiveBlending, Color, Matrix4, NormalBlending, type PerspectiveCamera, Vector2 } from "three";
+import { AdditiveBlending, AgXToneMapping, Color, Matrix4, NormalBlending, type PerspectiveCamera, Vector2 } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -137,8 +137,14 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
 
 /**
  * Light is additive, so it is summed into a half-float target, where a core of a thousand
- * giants is a thousand times one giant, and tone-mapped once on the way to the screen (ACES
- * filmic). Tone-mapping each star as it is drawn would clip it to white before the sum.
+ * giants is a thousand times one giant, and tone-mapped once on the way to the screen. Tone-mapping
+ * each star as it is drawn would clip it to white before the sum.
+ *
+ * AgX, not ACES filmic: the colours here are published temperatures, and a tone curve should
+ * change how bright they are, not what colour. ACES adds saturation in the shadows (a dim
+ * 5000 K ring came out brown, R/B 1.59 → 1.89; a dim 9000 K one bluer, 0.67 → 0.58), and most
+ * of a disc is dim. AgX holds the source's hue to within a few percent below unit intensity and
+ * only whitens the brightest light, as film does.
  */
 function HdrOutput() {
   const gl = useThree((s) => s.gl);
@@ -157,7 +163,7 @@ function HdrOutput() {
   }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
   useEffect(() => {
     const before = { toneMapping: gl.toneMapping, clear: gl.getClearColor(new Color()), alpha: gl.getClearAlpha() };
-    gl.toneMapping = ACESFilmicToneMapping;
+    gl.toneMapping = AgXToneMapping;
     // An opaque black ground: additive light over a transparent canvas leaves the alpha of the
     // brightest star, and light added to the design system's navy tints every faint pixel.
     gl.setClearColor(new Color(0, 0, 0), 1);

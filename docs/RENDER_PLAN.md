@@ -190,8 +190,11 @@ The current code chooses normal blending deliberately, because overlapping stars
 summing to white looked wrong `[verified: GalaxyView.tsx]`. **The diagnosis was
 right and the remedy was the wrong one.** Light is additive; overlapping stars
 genuinely do add. What was missing is the rest of the chain: render to an HDR
-target and tone-map on output (`ACESFilmicToneMapping`), so a dense core
-saturates gracefully instead of clipping to white.
+target and tone-map on output, so a dense core saturates gracefully instead of
+clipping to white. The curve is `AgXToneMapping`, not the `ACESFilmicToneMapping`
+first used: ACES adds saturation in the shadows, turning a dim 5000 K ring brown
+and a dim 9000 K ring bluer, where AgX keeps the published hue and only whitens
+the brightest light `[verified: GalaxyView.tsx]`.
 
 Keep `srgbToLinear` and the linear-space discipline already in `colors.ts` — that
 part is right and the comment explaining it should survive the rewrite.
