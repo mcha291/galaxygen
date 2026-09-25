@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **24 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **25 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -31,7 +31,7 @@
 | ◐ | 22 | Close-out. Both S21 lists **ported** onto `main`, neither branch merged (D99); the two lists diffed (D158); **every open debt ruled — 17 discharged, 15 permanent, 12 carried, none unruled** (D159), with #79 opened at the checklist: acceptance row 21 is published by no stage of either model and has never been judged; two of S21 (a)'s own conclusions corrected and one cross-list finding neither run could reach (D160). **The tag batch is still owed** — attempted here and refused, HTTP 403 on a tag ref, D40 reproduced (D161) | web | Opus | **Opus 5** | s22 | ◐ 2026-09-12 |
 | ☑ | 23 | **Recorded retrospectively (D171).** The viewer rebuilt as a Vite + React + three.js app with the workflow, per-checkpoint previews, the formation-history scrubber (RENDER_PLAN H1) and a PSF (R2); the bar and arms published as an (R, φ) density contrast with **two experimental amplitude inputs** (M1); histories at 200 steps; the Azure deploy; the repository restructured into `docs/`, `model/`, `interface/` (0f78156). No session branch, no decision entries at the time | desktop | — | **Opus 5** | s23 | 2026-09-13 |
 | ☑ | 24 | **Recorded retrospectively (D171).** The render plan's model side: the PARSEC table and per-star photometry (M2, D164); the `ism` stage, #79 revisited and discharged, row 21 judged for the first time (D163); the disc's unresolved light, dust and bloom (D165); Hα and the bulge's light (D166); the ray-marched field regime and the three regimes (D167); the brightest-N mode (D168); [α/Fe] on the catalogue (D169); **one model, `basic`** (D170). Ran on `main` with no session branch | desktop | — | **Opus 5**, Opus 5.5, **Fable 5.1** | s24 | 2026-09-25 |
-| ☐ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten (the stage graph acyclic, iteration inside a stage), #26 and #3 re-ruled under it; the pattern branch ahead of `sfh` on `circular_velocity`; rows 15–17 measured before and after; the arm number's 2-or-4 draw recorded as a finding | desktop | **Fable** | — | s25 | — |
+| ☑ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten — the stage graph acyclic, iteration inside a stage when termination is guaranteed; the 8× it cited was never measured (D173); **#26 and #3 re-ruled carried**: a probe shows the retained budget is the root of a contraction map inside checkpoint 1, f* 0.338 against the input's 0.35. The pattern branch ahead of `sfh` on the checkpoint-1 curve **and the λ_d scale length** (the plan missed the second `sfh` field); **checkpoints 3 and 4 swap** (Pattern, then star formation) so Phase 2 can read the pattern; rows 15–17 measured before and after — **row 15 4.883 → 5.210, out by 0.01, recorded under new #80** (a recalled ratio's referent moved; not retuned), 16 and 17 pass; the arm number's 2-or-4 draw recorded (D174) | desktop | **Fable** | **Fable 5.1** | s25 | 2026-09-26 |
 | ☐ | 26 | **Phase 1b.** Arm and bar amplitudes derived from shear and disc dominance or seeded on `pattern_seed`, the two inputs removed; the arm number derived or its draw re-ruled with m = 3 and flocculent reachable; #23 re-ruled | desktop | **Fable** | — | s26 | — |
 | ☐ | 27 | **Phase 2.** `sfh_azimuthal` publishing one (R, φ) star-formation modulation, no φ on the histories; the `azimuthal` model declared from `BASIC`'s tuple; the redistribution asserted; the model toggle back | desktop | Opus | — | s27 | — |
 | ☐ | 28 | **Phase 3.** The PARSEC table gains UBVRIJHK; rows 25–28 (M_B, M_V, B − V, Υ_V from BHG16 Table 2); Q(H⁰) ruled and published per star and per radius; wind luminosity; the Wolf–Rayet proxy; the input-sweep instrument for Tully–Fisher | desktop | Opus | — | s28 | — |
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
+**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -196,8 +196,8 @@ Six stages. The grouping is a hypothesis; `model_graph.py` rules.
 |---|---|---|---|
 | 1 | **Halo & disc** | `halo_mass`, `spin`, `halo_assembly_z`, `baryon_retention` | Rotation curve; face-on surface density (smooth, axisymmetric) |
 | 2 | **Assembly** | `mergers[]` | Accretion history; edge-on view showing the thick disc appear |
-| 3 | **Star formation & chemistry** | `infall_timescale`, `inside_out_index`, `migration_efficiency` | Age–metallicity relation, radial gradient, SFH; face-on coloured by [Fe/H] |
-| 4 | **Pattern** | `pattern_seed` | Bar and arms. **First recognisable galaxy** |
+| 3 | **Pattern** | `pattern_seed` | Bar and arms on the disc's own dynamics (ahead of star formation since S25, D174: the arms shape where stars form) |
+| 4 | **Star formation & chemistry** | `infall_timescale`, `inside_out_index`, `migration_efficiency` | Age–metallicity relation, radial gradient, SFH; face-on coloured by [Fe/H]. **First recognisable galaxy** |
 | 5 | **Systems** | `systems_seed` | Galaxy view — the star catalogue |
 | 6 | **Planets** | `planets_seed` | System view |
 
@@ -214,9 +214,11 @@ this* and never *freeze this against upstream changes*. Confirmed controls are
 disabled rather than hidden, reopening a stage discards every later one, and a
 page load lands on stage one.
 
-**Reroll is a distinct action from edit.** Rerolling stage 4's `pattern_seed`
-invalidates 5 and 6 but not 1–3. This is the whole point of per-stage seeds and
-it falls out of the graph audit rather than being hand-wired.
+**Reroll is a distinct action from edit.** Rerolling stage 3's `pattern_seed`
+invalidates 4–6 but not 1–2 (until S25 the pattern was stage 4 and rerolling it
+spared star formation; since D174 star formation follows the pattern). This is the
+whole point of per-stage seeds and it falls out of the graph audit rather than
+being hand-wired.
 
 ---
 

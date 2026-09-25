@@ -1,6 +1,6 @@
 // Checkpoint 2's playback, with no three.js in it so it can be tested.
 //
-// Checkpoint 2 has no stars and no matter history: those are checkpoint 3's. What
+// Checkpoint 2 has no stars and no matter history: those are checkpoint 4's (3 is the pattern since S25). What
 // it publishes is the response to whatever is present when a merger lands — the
 // gas each event delivers, the σ_z matter forming at t will carry today, and the
 // rms radial scatter matter born at (R, t) takes from the major mergers after it.

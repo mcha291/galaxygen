@@ -37,14 +37,15 @@ REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 # One model since D170 (the former advanced physics); the tables keep its values.
 VERDICTS = {"basic": REACHED | {21, 24}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 8, "fail": 16, "not-yet-computable": 0},  # S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 7, "fail": 17, "not-yet-computable": 0},  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 18, 20, 21, 22, 23, 24},
+    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24},
 }
-# S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's (at its
-# zero-width target), row 22 is #47's.
-DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47}}
+# S25: row 15 is #80's (the bar reads the lambda_d scale length now that the pattern precedes
+# star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
+# (at its zero-width target), row 22 is #47's.
+DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80}}
 # S24: row 21 fails at a zero-width target (0.11, no quoted uncertainty) — debt #17's defect,
 # not the prescription's. It could not pass however well the physics were done.
 

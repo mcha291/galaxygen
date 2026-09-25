@@ -3,7 +3,7 @@
 Short notes on things worth doing later. Not a plan.
 
 - **Stellar disc growing over time.** `stars_formed_history` is published at the radii
-  stars occupy *today*, so the checkpoint 3 scrubber cannot use it to show the stellar
+  stars occupy *today*, so the checkpoint 4 scrubber (3 until S25) cannot use it to show the stellar
   disc at a past epoch. Publish a stars-formed history at *birth* radius so the scrubber
   can show the stellar disc building up.
 - **Pattern amplitudes.** `arm_amplitude` and `bar_amplitude` are experimental controls

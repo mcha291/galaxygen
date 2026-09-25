@@ -1,4 +1,4 @@
-"""Star formation history: the baryon budget resolved into gas and stars (checkpoint 3).
+"""Star formation history: the baryon budget resolved into gas and stars (checkpoint 4).
 
 S1 put every retained baryon into one exponential and said so (debt #11). This
 stage accretes them over time and lets a star formation law decide what is still
@@ -452,7 +452,7 @@ SFH = IMPLEMENTATIONS.register(
     Stage(
         id="sfh",
         slot="sfh",
-        checkpoint=3,
+        checkpoint=4,
         about=(
             "Inside-out infall, Kennicutt-Schmidt star formation above a threshold, instantaneous "
             "recycling. Splits the baryon budget into gas and stars and republishes the "

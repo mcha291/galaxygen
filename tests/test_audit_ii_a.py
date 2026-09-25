@@ -247,15 +247,17 @@ def test_debt_42_row_6_lands_at_74_not_78(basic):
 
 
 def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(basic):
-    """The statistical rows are judged on seeds 0-40. Seeds 41-81 read row 16 at 41.1 (42.8) and row 17 at 5.94
-    (5.70): both verdicts hold, so the fixed sample decides row 18's number (debt #51) and not these."""
+    """The statistical rows are judged on seeds 0-40. Seeds 41-81 read row 16 at 39.5 (41.1 on 0-40) and row 17 at
+    6.33 (6.08): both verdicts hold, so the fixed sample decides row 18's number (debt #51) and not these.
+    Until S25 the pair read 41.1 (42.8) and 5.94 (5.70); the bar is 6.7% longer since the pattern reads the
+    lambda_d scale length and the checkpoint-1 curve (D174), so corotation moved out and the speed down."""
     vals = {"bar_pattern_speed": [], "bar_corotation_radius": []}
     for d in range(41, 82):
         f = run(basic, {s: d for s in SEEDS}, only=tuple(vals)).fields
         for k in vals:
             vals[k].append(float(f[k]))
-    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(41.1, abs=0.3) and inside(16, np.median(vals["bar_pattern_speed"]))
-    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(5.94, abs=0.05) and inside(17, np.median(vals["bar_corotation_radius"]))
+    assert np.median(vals["bar_pattern_speed"]) == pytest.approx(39.48, abs=0.3) and inside(16, np.median(vals["bar_pattern_speed"]))
+    assert np.median(vals["bar_corotation_radius"]) == pytest.approx(6.33, abs=0.05) and inside(17, np.median(vals["bar_corotation_radius"]))
 
 
 # --- row 7: the constant's citation, read (A-14) -----------------------------------------------------------

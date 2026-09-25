@@ -25,8 +25,8 @@ import styles from "./Workflow.module.css";
 const PRODUCES: Record<number, string> = {
   1: "Rotation curve; smooth axisymmetric disc",
   2: "Merger history; the thick disc appears edge-on",
-  3: "Gradients and histories; disc colours by [Fe/H]",
-  4: "Bar and spiral arms — first recognisable galaxy",
+  3: "Bar and spiral arms, on the disc's own dynamics",
+  4: "Gradients and histories; disc colours by [Fe/H] — first recognisable galaxy",
   5: "Resolves into individual stars",
   6: "Systems become openable",
 };

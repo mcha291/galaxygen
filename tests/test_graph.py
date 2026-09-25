@@ -24,10 +24,14 @@ def chk(m, *stages):
 # displacement through its epicyclic frequency), so the disc runs before it; until then the
 # tie-break put assembly second. Since the catalogue samples azimuth from the pattern's arms, the
 # systems stage waits for pattern too, a round later than formation.
+# Since S25 (BUILD_II Phase 1, D174) the bar reads the checkpoint-1 curve and the lambda_d scale
+# length instead of sfh's resolved curve and fitted thin-disc length, so it is ready in assembly's
+# round and the pattern a round later, both ahead of sfh: the pattern branch precedes star
+# formation, which is what azimuthal star formation (Phase 2) needs.
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "sfh", "chemistry_dtd", "bar", "population", "light",
-        "vertical_alpha", "pattern", "formation", "ism", "systems", "planets",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "population",
+        "light", "vertical_alpha", "formation", "ism", "systems", "planets",
     ),
 }
 
@@ -68,9 +72,11 @@ def test_production_graphs_hold(prod):
         assert bound == {
             "halo_mass": 1, "disc_spin": 1, "halo_assembly_z": 1, "baryon_retention": 1,
             "world_seed": 1,
-            "infall_timescale": 3, "inside_out_index": 3, "migration_efficiency": 3,
-            "mergers": 2, "arm_amplitude": 4, "bar_amplitude": 4,
-            "pattern_seed": 4, "systems_seed": 5, "planets_seed": 6,
+            # S25 (D174): the pattern is checkpoint 3 and star formation 4, so the three
+            # star-formation controls, the two amplitude inputs and pattern_seed all moved.
+            "infall_timescale": 4, "inside_out_index": 4, "migration_efficiency": 4,
+            "mergers": 2, "arm_amplitude": 3, "bar_amplitude": 3,
+            "pattern_seed": 3, "systems_seed": 5, "planets_seed": 6,
         }
     assert "graph" in graph.report(models, impls_, table)
 
@@ -137,10 +143,11 @@ def test_hypothesis_checked_against_derived_checkpoint():
     g = graph.analyse(model("m", ok), impls(ok), INPUTS)
     assert g.ok and g.input_checkpoint["halo_mass"] == 1
     assert "halo_mass" not in g.unbound_inputs and "disc_spin" in g.unbound_inputs
-    seeded = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("pattern_seed",), checkpoint=4)
+    # pattern_seed's hypothesis is checkpoint 3 since S25 (4 until then, D174).
+    seeded = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("pattern_seed",), checkpoint=3)
     assert chk(model("m", seeded), seeded) == []
-    seeded5 = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("pattern_seed",), checkpoint=5)
-    assert codes(chk(model("m", seeded5), seeded5)) == ["hypothesis"]
+    seeded4 = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("pattern_seed",), checkpoint=4)
+    assert codes(chk(model("m", seeded4), seeded4)) == ["hypothesis"]
 
 
 def test_provenance_is_computed_and_compared():

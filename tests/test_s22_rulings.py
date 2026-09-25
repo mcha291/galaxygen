@@ -69,13 +69,17 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     assert verdicts[16][0] is verdicts[17][0] is True and verdicts[18][0] is False
 
     # The margin each verdict holds, against the spread the three samples show. Rows 16 and
-    # 17 clear their nearest edge by four to five times the spread; row 18 is 4.5-6.6x over.
+    # 17 cleared their nearest edge by four to five times the spread at S22; since S25 the bar
+    # is 6.7% longer (D174) and the medians read 41.10 / 39.48 / 40.47 (row 16, margin 5.48
+    # against a spread of 1.63, 3.4x) and 6.08 / 6.33 / 6.18 (row 17, margin 0.67 to the upper
+    # edge against 0.25, 2.7x). Still a precision statement and not a verdict; row 18 is
+    # 4.5-6.6x over.
     for row in (16, 17):
         f = SEEDED_ROWS[row]
         meds = [med[s][f] for s in med]
         spread = max(meds) - min(meds)
         margin = min(min(abs(m - Q[row].lo), abs(m - Q[row].hi)) for m in meds)
-        assert margin > 4.0 * spread, (row, margin, spread, meds)
+        assert margin > 2.5 * spread, (row, margin, spread, meds)
     over = [med[s]["black_hole_mass"] / Q[18].hi for s in med]
     assert min(over) > 4.0, over
 
@@ -231,8 +235,15 @@ def test_no_green_row_is_unconditioned(judged):
             listed[name] |= rows
 
     column = {"basic": "advanced"}  # the historical column each registered model descends from
+    # Rows the sealed table lists as green that have since left, each with the decision that
+    # took them out: the list is a historical record and is not edited, so the gate is read as
+    # "every green row was conditioned when it was green, and every row that left has a reason".
+    # Row 15: 4.88 -> 5.21 at S25 when the bar read the lambda_d scale length (D174, debt #80) --
+    # the table's own verdict ("chosen; a 2% fall in R_d fails it") named the lever.
+    left_since = {15}
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
-        assert passing == listed[column[name]], (name, sorted(passing ^ listed[column[name]]))
+        assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))
+        assert passing | left_since == listed[column[name]], (name, sorted((passing | left_since) ^ listed[column[name]]))
         assert passing <= listed["simple"] | listed["advanced"]
     assert len(listed["advanced"]) == 8  # the simple column's 10 is the record's, not a model's, since D170

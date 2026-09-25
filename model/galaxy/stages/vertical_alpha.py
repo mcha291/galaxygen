@@ -1,4 +1,4 @@
-"""Vertical structure: the thin/thick split is chemical (checkpoint 3).
+"""Vertical structure: the thin/thick split is chemical (checkpoint 4).
 
 The retired merger criterion (``vertical.py``, the simple model's until D170) sorted
 stars by whether they were born before the last major merger. That is a definition,
@@ -50,7 +50,7 @@ VERTICAL_ALPHA = IMPLEMENTATIONS.register(
     Stage(
         id="vertical_alpha",
         slot="vertical",
-        checkpoint=3,
+        checkpoint=4,
         about=(
             "Sorts the stellar populations into thin and thick by their birth [α/Fe] against the "
             "valley the chemistry found, and turns their dispersions into scale heights. The "

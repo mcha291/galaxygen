@@ -50,7 +50,8 @@ def test_stage_validation():
 
 def test_checkpoints_are_the_plan_hypothesis():
     assert len(CHECKPOINTS) == 6
-    assert CHECKPOINTS[0] == "Halo & disc" and CHECKPOINTS[3] == "Pattern"
+    # The pattern moved ahead of star formation at S25 (D174): the arms shape where stars form.
+    assert CHECKPOINTS[0] == "Halo & disc" and CHECKPOINTS[2] == "Pattern" and CHECKPOINTS[3] == "Star formation & chemistry"
 
 
 def test_restricted_view():

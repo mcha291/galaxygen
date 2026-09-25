@@ -254,7 +254,7 @@ console.log(JSON.stringify({{
   picked: laid ? pick(laid, laid.marks[0].x, laid.axis.y) : -1,
   previewsAfterReopen: Object.keys(reopened.previews),
   confirmedAfterReopen: reopened.confirmed,
-  seedsAtPattern: seedsAt(state, 4),
+  seedsAtPattern: seedsAt(state, 3),  // the pattern is checkpoint 3 since S25 (D174)
   refusedConfirmed: (() => {{ try {{ setValue(reopened, "halo_mass", 1e12); return null; }} catch (e) {{ return e.name; }} }})(),
 }}));
 """

@@ -138,7 +138,7 @@ LIGHT = IMPLEMENTATIONS.register(
     Stage(
         id="light",
         slot="light",
-        checkpoint=3,
+        checkpoint=4,
         about=(
             "The disc's unresolved light: surface brightness and colour temperature from the formation "
             "history and the PARSEC isochrones. What the photometric view draws under the star sample."

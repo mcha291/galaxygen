@@ -687,24 +687,30 @@ defined here once and used in every entry below:
 | **discharged** before S22 | 1, 6, 7, 9, 12, 13, 16, 18, 20, 24, 29, 30, 31, 35, 37, 38, 40, 41 | 18 |
 | **discharged** at S21b or S22 | 4, 5, 8, 10, 14, 32, 36, 44, 50, 51, 66, 67, 68, 69, 71, 72, 73 | 17 |
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
-| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |
-| **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |
+| **permanent** | 2, 15, 17, 21, 22, 23, 25, 34, 45, 46, 48, 65 | 12 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80 | 15 |
 
-So the board's **27 open** is 15 permanent and 12 carried, and no item is unruled. The
-fifteen permanent ones are the shape of the build: eight are the sources' (2, 17, 25, 34,
-45, 46, 48, 79 — a number the project does not hold, or a target with no width), five are
-the model's declared scope (3, 15, 21, 22, 23), one is rule A1's ban on a fixed point across
-checkpoints (26), and one is rule A9's one-opinion-per-thing (65). **#79 is S22's own**, and
-it is the close-out finding the checklist was for: row 21 is published by no stage of either
-model and has never been judged.
+So the board's **27 open** is 12 permanent and 15 carried, and no item is unruled. (S22
+counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
+#3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
+the pattern moved ahead of star formation and row 15 left its window by 0.01, D174.) The twelve
+permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
+48 — a number the project does not hold, or a target with no width), four are the model's
+declared scope (15, 21, 22, 23), and one is rule A9's one-opinion-per-thing (65). **#79 was
+S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
+and had never been judged — and it is the one item the two builds between them have closed.
 
-**The twelve carried ones are not twelve mechanisms.** Four of them — 19, 27, 49 and the
+**The fifteen carried ones are not fifteen mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
 acceptance rows across the two models hang on that one absence. Three more — 11, 52 and the
-reservoir half of 47 — are the bar (#21, permanent). That leaves 28, 33, 39, 42, 43 and 70,
-which are five instrument or bookkeeping statements and one kernel width.
+reservoir half of 47 — are the bar (#21, permanent). Two — 3 and 26 — are one: the retained
+budget as the root of a monotone function of itself inside checkpoint 1, the way the
+contraction is solved, with the wind's mass loss a plain forward pass at checkpoint 3 (S25,
+D173). One — 80 — is a recalled constant whose referent moved with the pattern (S25, D174),
+closable by reading a source. That leaves 28, 33, 39, 42, 43 and 70, which are five
+instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -742,6 +748,27 @@ which are five instrument or bookkeeping statements and one kernel width.
    which is a fixed point across checkpoints and rule A1 forbids one. So `baryon_retention` is an input
    *because* the mechanism that would derive it is out of scope, and the two debts are one statement:
    the model has the causality the other way round and knows it.
+   **S25, re-ruled CARRIED under the rewritten A1 (D173), and still #26 from the other end.** The clause
+   this ruling rested on — that a fixed point across checkpoints 1 and 3 is what A1 forbids — went when
+   A1 was rewritten: the rule now forbids a cycle *between* stages and permits iteration *inside* one
+   when its termination is guaranteed in advance. The question became whether the retained budget can
+   be a root of a monotone function of itself inside checkpoint 1, as the contraction is, and S25
+   probed it with the repository unchanged. Let g(f) = f_in / (1 + η̄(f) s) be the share of what
+   arrives that the energy-driven wind the chemistry already has would leave in a disc retaining f —
+   η̄ the star-formation-weighted mass loading (`WIND_SPEED`/v_esc)^`WIND_INDEX`, s the stars' share of
+   the retained baryons, f_in the share of the cosmic budget that arrives. F(f) = f − g(f) is monotone
+   across the whole input range 0.05–0.5 with |dg/df| ≤ 0.76 at the low end and under 0.02 near the
+   root, so a bisection finds its one root: f* = 0.338 read at checkpoint 3's escape velocity and the
+   present SFR, 0.424 at checkpoint 1's potential weighted by Σ^`KS_INDEX` — against the input's 0.35
+   `[verified: tests/test_s25_rulings.py::test_debts_3_and_26_the_retained_budget_is_a_root_inside_checkpoint_1]`.
+   What closes it: the halo derives m_d as that root and `baryon_retention` leaves the inputs (the
+   ceiling reads one fewer). What it cannot close: the root says what is *kept* of what arrives, not
+   what arrives — f_in = 1, the whole cosmic share falling in, is the assumption the derivation stands
+   on, and if a row refuses it, f_in is `baryon_retention` under another name and this debt returns to
+   permanent for §4b's reason (the baryon budget is a genuine missing input). Predictions that could
+   kill it (rule B4): at the defaults the derived retention reads 0.34–0.42, so rows 1, 2, 3 and 20
+   stay within their present distances of their targets; a root outside 0.05–0.5, or checkpoint 3's
+   budget disagreeing with g(f*) by more than row 1's width, kills it.
 4. ~~Pitch-angle closure radius is arbitrary — largely dissolved by ruling 3 (§5).~~
    **DISCHARGED at S22, by ruling 3 and nothing since.**
    **S22.** Ruling 3 made the pitch angle a seeded draw, and with a trend worth 0.30° against a draw
@@ -1436,6 +1463,29 @@ which are five instrument or bookkeeping statements and one kernel width.
    tilt, which S21 (a) convicted from the other side (A-7: the row is fitted over 4–12 kpc and does not
    see the inner reservoir at all, so the wind's tilt is what is wrong and the bar is not this row's
    lever), and 1.2% of the advanced catalogue above [Fe/H] = +0.5.
+   **S25, re-ruled CARRIED under the rewritten A1 (D173).** The ruling above rests on "rule A1 forbids a
+   fixed-point solver on the grid, and that rule is measured (an 8× multiplier)". Neither clause
+   survives: the multiplier was never measured — `bench2.py` is in neither the tree nor the history,
+   and §10's own table lists the count as assumed — and the rewritten A1 forbids a cycle *between*
+   stages while permitting iteration *inside* one when termination is guaranteed in advance. The fixed
+   point S20 named — the halo contracts around what the disc keeps, and what the disc keeps is what the
+   wind did not remove — dissolves into a root inside checkpoint 1 followed by a plain forward pass:
+   the probe recorded in item 3 shows F(f) = f − g(f) monotone on 0.05–0.5 with gain |dg/df| under
+   0.76 everywhere and under 0.02 at the root, so the bisection the contraction already uses terminates
+   at one f*. The mechanism that closes it, in three parts: (1) `halo` bisects F for the retained
+   fraction, with η̄ from the checkpoint-1 potential and curve weighted by Σ^`KS_INDEX` — the star
+   formation a checkpoint-1 stage can estimate — and the stars' share s the one open derivation;
+   (2) `sfh` removes η(R) Ψ(R, t) from each ring's gas — no fixed point, the potential is checkpoint
+   1's — and the chemistry's `kept` fraction and this mass loss become one wind (rule B10 on
+   `WIND_SPEED`, debt #43); (3) a test that the budget checkpoint 3 ends with — stars + gas + ejected
+   against arrived — agrees with the root's g(f*), the disagreement recorded under B5 rather than
+   iterated away. S20's cost (60% of the budget ejected; rows 2, 3 and 10 lost) was this wind applied
+   *on top of* a retention of 0.35: at f_in = 1 the same wind keeps 0.34–0.42 of the cosmic share,
+   which is today's galaxy. Predictions (rule B4): the centre's iron falls, because for the first time
+   something carries mass out of the reservoir; row 22's tilt moves with `WIND_SPEED`'s refit; the
+   history-integrated loading is larger than today's (the early potential is shallower), so the
+   checkpoint-3 budget will read *below* g(f*) and the size of that gap is the derivation's honest
+   error. What kills it is written in item 3.
 
 27. **There is no valley in the [α/Fe] distribution at R₀, so the advanced
    model has no thick disc — seven rows on one cause.** The plane exists: the
@@ -2718,6 +2768,27 @@ never been judged in twenty-three sessions.
    be recomputed from the declaration by anyone holding the field. That is the whole of the fix a
    rendering opinion is allowed to be under rule A9: the reduction is *described* where the field is
    computed, and no new published field, no new endpoint and no client table is added to carry it.
+80. **`BAR_LENGTH_RATIO` is a recalled range read against an unspecified scale length, and since
+   S25 it multiplies a different one** (S25, BUILD_II Phase 1, D174). The constant says bars run
+   "about 1.5–2.5 R_d [recall]" and does not say which R_d. Until S25 it multiplied the thin disc's
+   fitted stellar scale length (2.441 kpc, a star-formation result) and row 15 read 4.883, inside
+   5.0 ± 0.2. Phase 1 moved the pattern ahead of star formation — the prerequisite for arms that
+   shape where stars form — and the one scale length that exists at checkpoint 1 is the λ_d one
+   (2.605 kpc, MMW98's prediction from angular momentum, which the disc stage is built on), so the
+   row reads **5.210, out by 0.010** `[verified: model/galaxy/specs/spec.py, _MISSES row 15;
+   tests/test_pattern.py::test_the_bar_scales_with_the_disc]`. Not a retune (rule B5): 2.0 was
+   fitted to neither length, so it has no claim on 4.88 over 5.21; and the disc-dominance link
+   BUILD_II named as this row's risk does not enter the length at all — `bar_half_length` is the
+   ratio times R_d, and `disc_dominance` is published beside it and unused (debt #21). The row is
+   the *only* green row Phase 1 could move, and it moved by the referent of a constant, not by the
+   physics the plan expected. **Carried.** What closes it: a sourced bar-length relation quoted
+   against a stated scale length — the bar-to-disc ratios measured per Hubble type `[recall: Erwin
+   2005; Gadotti 2011]` — read at the source's own definition, which is the S22 lesson on
+   `disc_spin` (a length enters at its own definition or not at all); Audit III (S37) reads every
+   constant that entered from a source, and this one entered from recall. Prediction (rule B4): a
+   sourced ratio for a barred Sbc disc against the whole disc's scale length lands the row inside
+   4.8–5.2, or the row's own target is the next thing to read; if a source puts the row further out
+   than the 0.01 it misses now, the miss is the ratio's and this debt was the wrong reading.
 
 ---
 

@@ -14,10 +14,20 @@ not reproducible here, it is tagged `[recall]` and says so. **No rule is tagged
 
 ## A. Model rules
 
-**A1. No fixed-point solvers on the grid.** Every field is computable in one
-pass, in a fixed order. Iteration only where bounded and cheap. *Justification:
-measured — the coupled fixed point is an 8× multiplier and it is the one
-advanced-model cost that no implementation recovers* `[verified: bench2.py §4]`.
+**A1. The stage graph is acyclic; iteration lives inside a stage.** No stage
+may depend on a later stage's output. Within a stage, iteration is permitted
+when **termination is guaranteed in advance** — a bisection on a monotone
+function, a fixed step count with a known error bound — and forbidden when it
+is a convergence loop whose step count depends on the data. *Justification: the
+staged workflow runs a prefix of the pipeline and stops, so a cycle between
+checkpoints makes a prefix uncomputable and the lock semantics of rule D1
+become a lie. A design constraint, not a performance one* `[inferred]`.
+*Precedent: `halo.py` solves the adiabatic contraction — the halo's response to
+the disc it holds — as a bisection on a monotone function, in one pass*
+`[verified: model/galaxy/stages/halo.py, contracted_halo]`. *Until S25 this rule
+banned "fixed-point solvers on the grid" on the strength of an 8× multiplier
+cited to `bench2.py §4`, a file the repository never held; the count was assumed*
+`[verified: DECISIONS.md D173; GALAXY_INPUTS.md §10]`.
 
 **A2. Controls are global scalars only.** Nothing per-cell, per-annulus or
 per-system is ever an input. Regional metallicity, disc structure and system
@@ -73,7 +83,8 @@ loses is dead code; a duplicate that wins is a bug wearing the right name*
 **B1. Build the instrument before the thing it certifies.** *Evidence is
 empirical and from outside this repo* `[recall]` — but it has already held once
 here: the DTD benchmark found a defect in a proposal made one turn earlier
-`[verified: bench2.py §1]`.
+`[verified: GALAXY_INPUTS.md §10, "The instrument found a defect in my own
+proposal on first run"]`.
 
 **B2. Measure cold.** A cache turns a measurement into a reading of the cache.
 *Justification: intrinsic* `[inferred]`.
@@ -93,7 +104,7 @@ not the verdict — the planets benchmark's occurrence rate is 30× low and says
 
 **B7. A scaling exponent finds what a stopwatch cannot.** *Justification:
 measured — the naive DTD is fast enough at low time resolution and quadratic
-above it* `[verified: bench2.py §1]`.
+above it* `[verified: GALAXY_INPUTS.md §10, the exponents in N_t]`.
 
 **B8. Do not sample what you can count.**
 

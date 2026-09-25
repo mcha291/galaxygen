@@ -44,6 +44,18 @@ def test_lessons_are_tagged_by_stage_type():
             assert tag in tags, f"unknown tag {tag!r} in: {line[:60]!r}"
 
 
+def test_rules_cite_nothing_the_repository_never_held():
+    """Rule B14 applied to RULES.md itself.
+
+    A1 cited ``bench2.py §4`` for a measured 8x multiplier from S0 to S25, and the file is
+    in neither the tree nor ``git log --all``; the count was assumed (D173). The benchmark's
+    one in-repo record is GALAXY_INPUTS.md §10, and that is what a rule may cite.
+    """
+    body = text("RULES.md")
+    assert "[verified: bench2.py" not in body, "RULES.md cites bench2.py as verified, and the repository never held it"
+    assert "bench2.py §4" in body, "A1 must keep the record of what it used to cite (D173)"
+
+
 @pytest.mark.parametrize("name", SESSION_DOCS)
 def test_no_bare_verified_labels(name):
     # Rule B14: [verified] needs a citation in the same document; a bare label is a false label.
