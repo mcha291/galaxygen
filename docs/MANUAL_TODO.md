@@ -60,7 +60,9 @@ closes the project.
 | 19 | `s19` | `2a8a9b4fc32d` | **queued** |
 | 20 | `s20` | `7e96422190ab` | **queued** — filled in by S21 (a) |
 | 21 | `s21` | *no merge commit exists* | **not tagged, by design** — see below |
-| 22 | `s22` | *TBD — filled in when S22 is merged* | **queued** |
+| 22 | `s22` | `b3939fe64ac8` | **queued** — filled in on 2026-09-26 (D171) |
+| 23 | `s23` | `fb4a2da1f1d1` | **queued** — **not a merge**: S23 ran on `main` without a session branch and was recorded after the fact (D171); the tag marks its last commit |
+| 24 | `s24` | `4a20490c5043` | **queued** — **not a merge**, as S23 (D171); the last commit of D163–D170 |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -174,8 +176,14 @@ git tag -a s20 7e96422190ab26cdb35ad895a7c7304c087900eb -m "S20: the valley's re
 
 # S21 — no tag. Two sealed branches, neither merged (D99); see the note above the batch.
 
-# S22 — the close-out: both audit lists ported, every debt ruled. The batch replaces this with the literal SHA.
-git tag -a s22 "$(git rev-list -1 --grep='^Merge S22 into main' origin/main)" -m "S22: the close-out"
+# S22 — the close-out: both audit lists ported, every debt ruled. Literal SHA filled in on 2026-09-26.
+git tag -a s22 b3939fe64ac8f16867dabb54d91502099e1f1678 -m "S22: the close-out"
+
+# S23 — the viewer rebuilt, M1's contrast, the restructure. Not a merge: the last commit of the stretch (D171).
+git tag -a s23 fb4a2da1f1d10aa5fdb890581dc3cfd3d342cff9 -m "S23: the viewer rebuilt, the pattern's contrast"
+
+# S24 — the render plan's model side and one model (D163–D170). Not a merge: the last commit of the stretch (D171).
+git tag -a s24 4a20490c5043adcfd84e481ea9679066c8b7e031 -m "S24: the render plan's model side, one model"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

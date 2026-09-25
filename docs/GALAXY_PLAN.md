@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░` **22 / 23 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **24 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -29,6 +29,25 @@
 | ☑ | 20 | The valley probed six ways, the repo unchanged, and not opened: every valley the detector finds is the plateau spike, the early population a plain (#27's prediction replaced; #49's killed, #26 and the drain ruled for S22); `MERGER_HEATING` derived from the thick disc's dispersion net of the secular heating (120 → 88.8, #42: row 7 lands, row 3 leaves by 0.03) | desktop | **Fable** | **Fable 5.1** | s20 | 2026-09-11 |
 | ☑ | 21 | Audit II, run twice with two stated aims on two sealed branches, never merged into each other (§5d, D99). **(a)**, `session-21-a`: every prediction since S13 run with the repo unchanged — #50's dead and its bracket was a fraction read as a ratio, the bar holds row 3 (249.6) and kills row 14 (144), D128's burst works at 1–2 Gyr and not in the first, #46's sweep cannot judge; #51–#52, D130–D131, `AUDIT_II_A.md`. **(b)**, `claude/keen-lamport-lldlvp`: the instruments and the viewer — rule D4 counted at the stages and found honest, the catalogue priced per **cell** so D115's flake is a misfit, the detector's blind spot in closed form, four fields the viewer cannot show; #65–#73, D144–D150, `AUDIT_S21B.md`. S22 ports both | desktop + web | **Fable** ×1, Opus ×1 | **Fable 5.1** (a), **Opus 5** (b) | — (D99) | 2026-09-11 |
 | ◐ | 22 | Close-out. Both S21 lists **ported** onto `main`, neither branch merged (D99); the two lists diffed (D158); **every open debt ruled — 17 discharged, 15 permanent, 12 carried, none unruled** (D159), with #79 opened at the checklist: acceptance row 21 is published by no stage of either model and has never been judged; two of S21 (a)'s own conclusions corrected and one cross-list finding neither run could reach (D160). **The tag batch is still owed** — attempted here and refused, HTTP 403 on a tag ref, D40 reproduced (D161) | web | Opus | **Opus 5** | s22 | ◐ 2026-09-12 |
+| ☑ | 23 | **Recorded retrospectively (D171).** The viewer rebuilt as a Vite + React + three.js app with the workflow, per-checkpoint previews, the formation-history scrubber (RENDER_PLAN H1) and a PSF (R2); the bar and arms published as an (R, φ) density contrast with **two experimental amplitude inputs** (M1); histories at 200 steps; the Azure deploy; the repository restructured into `docs/`, `model/`, `interface/` (0f78156). No session branch, no decision entries at the time | desktop | — | **Opus 5** | s23 | 2026-09-13 |
+| ☑ | 24 | **Recorded retrospectively (D171).** The render plan's model side: the PARSEC table and per-star photometry (M2, D164); the `ism` stage, #79 revisited and discharged, row 21 judged for the first time (D163); the disc's unresolved light, dust and bloom (D165); Hα and the bulge's light (D166); the ray-marched field regime and the three regimes (D167); the brightest-N mode (D168); [α/Fe] on the catalogue (D169); **one model, `basic`** (D170). Ran on `main` with no session branch | desktop | — | **Opus 5**, Opus 5.5, **Fable 5.1** | s24 | 2026-09-25 |
+| ☐ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten (the stage graph acyclic, iteration inside a stage), #26 and #3 re-ruled under it; the pattern branch ahead of `sfh` on `circular_velocity`; rows 15–17 measured before and after; the arm number's 2-or-4 draw recorded as a finding | desktop | **Fable** | — | s25 | — |
+| ☐ | 26 | **Phase 1b.** Arm and bar amplitudes derived from shear and disc dominance or seeded on `pattern_seed`, the two inputs removed; the arm number derived or its draw re-ruled with m = 3 and flocculent reachable; #23 re-ruled | desktop | **Fable** | — | s26 | — |
+| ☐ | 27 | **Phase 2.** `sfh_azimuthal` publishing one (R, φ) star-formation modulation, no φ on the histories; the `azimuthal` model declared from `BASIC`'s tuple; the redistribution asserted; the model toggle back | desktop | Opus | — | s27 | — |
+| ☐ | 28 | **Phase 3.** The PARSEC table gains UBVRIJHK; rows 25–28 (M_B, M_V, B − V, Υ_V from BHG16 Table 2); Q(H⁰) ruled and published per star and per radius; wind luminosity; the Wolf–Rayet proxy; the input-sweep instrument for Tully–Fisher | desktop | Opus | — | s28 | — |
+| ☐ | 29 | **Phase 4.** Remnants by an initial–final mass relation, `star_remnant` and `remnant_mass_fraction`; planetary nebulae flagged with their duration | desktop | Opus | — | s29 | — |
+| ☐ | 30 | **Phase 6.** Core-collapse and Ia rates published with two sourced rows; the galactic habitable zone built and deliberately unjudged | desktop | Opus | — | s30 | — |
+| ☐ | 31 | **Phase 7.** Dust radiates: albedo, g and R_V; the dust temperature and infrared emission; PAH fraction and G₀; the energy-balance test in the suite | desktop | Opus | — | s31 | — |
+| ☐ | 32 | **Phase 8.** Clouds as an object class drawn per cell (mass function, Larson's relations, Mach number, source offset, gradient, age and state); the cell hierarchy under `/api/region` with the union and prefix properties asserted | desktop | **Fable** | — | s32 | — |
+| ☐ | 33 | **Phase 11.** Clusters as an object class: mass function, mass–radius, bound fraction; each cloud's cluster; Q and wind luminosity summed per cluster | desktop | Opus | — | s33 | — |
+| ☐ | 34 | **Phase 5.** Globular clusters as the surviving massive end of the cluster mass function, η = (3–4) × 10⁻⁵ as the check (Boylan-Kolchin 2018), the residual seeded; the stellar halo from `mergers[]`; rows on the GC system mass (Harris) and the halo mass (BHG16 §6) | desktop | Opus | — | s34 | — |
+| ☐ | 35 | **Phase 9.** Nebular emissivities (Hα, Hβ, [O III], [S II], [N II]) from Q, density and abundances, the emissivity ruling recorded; volumetric at region scale; clumping from the log-normal; diffuse ionized gas; rows for Hα, the HII LF and the PNLF; `HALPHA_PER_SFR` becomes a check | desktop | **Fable** | — | s35 | — |
+| ☐ | 36 | **Phase 10.** Wind bubbles (Weaver 1977) per star and per cluster, shells, supernova remnants as the late state, the hot phase from Phase 6's rates | desktop | Opus | — | s36 | — |
+| ☐ | 37 | **Audit III.** Every NEEDS-SOURCING that entered code has its citation read; every redistribution and balance re-derived; every new green row conditioned | desktop | **Fable** | — | s37 | — |
+| ☐ | 38 | **V1.** The spectrum function and the filter sets — broadband, SHO/HOO, one named instrument; the field regime's young-light constant replaced by the stellar component; the frame's B − V and M_V against Phase 3's scalars | desktop | Opus | — | s38 | — |
+| ☐ | 39 | **V2.** Volumetric emissivity and emitting dust in the ray-marcher; the clump lattice and Hα knots removed; energy balance and the Σ_V(R) profile read from the frame | desktop | Opus | — | s39 | — |
+| ☐ | 40 | **V3.** Region synthesis from the cloud vector at the hierarchy's levels — the log-normal interior, pillars from the source offset, shells; the catalogue-against-field test; determinism across zoom | desktop | **Fable** | — | s40 | — |
+| ☐ | 41 | **V4.** Cluster objects drawn, instrument PSFs, the model toggle, the tag batch attempted from the desktop, close-out | desktop | Opus | — | s41 | — |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -47,9 +66,11 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S22 is the last row and nothing on it is a session's work. `BRIEF.md` is
-written for a maintainer rather than for a successor; `S0_PROMPT.md` is the record of
-S0's own brief.
+**Next:** S22 stays ◐ for the tag batch alone (the note below), and `progress.py`
+names it here because it is the first row that is not ☑; **the second build starts at
+S25** — `BUILD_II.md`, §5e — and `BRIEF.md` is written for S25. S23 and S24 were
+recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
+2026-09-25 without a session branch or a close, and the rows say so.
 
 > **S22's ◐ is not rule C2d's.** C2d's ◐ means a session ran out and its branch stays
 > open for the next one to continue. S22 did not stop early: it finished every deliverable
@@ -573,6 +594,54 @@ importance: S15 before S16 because the component is judged against row 3, S17
 before S20 because the valley's candidate mechanism is the bulge's inflow, S19
 last of the builds because it re-pins every seeded number the earlier sessions
 move.
+
+## 5e. The second build — S25 to S41 (written 2026-09-26, at the owner's request)
+
+Two documents the owner wrote, reconciled against the repository and adopted
+(D172): **`BUILD_II.md`**, twelve phases that make the arms form stars, publish
+what light needs, and build the model side of the render contract; and
+**`RENDER_PHYSICS.md`**, the model/renderer contract itself. The board rows
+above carry the deliverables; `BUILD_II.md` carries the phase text, the gates,
+the sourcing owed and the sequence, and it is what a session reads with
+`BRIEF.md` in place of this plan.
+
+**What changed since §5d's "done".** The build closed at S22 with one model
+kept for contrast and no light. S23–S24 then built RENDER_PLAN's model side on
+`main` without sessions — photometry, the ISM, the unresolved light, three
+rendering regimes — and collapsed the two models into `basic` (D170). The second
+build is the physics that work exposed as missing: an arm that makes stars, an
+ionizing budget, clouds, lines, winds, and a renderer that draws only what is
+published.
+
+**The protocol, adapted** (`BUILD_II.md`, "How the rows run"):
+
+- One board row is one phase on one `session-NN` branch, merged `--no-ff` and
+  closed by §5's ritual. **Numbers are sequential** — debts from #80, decisions
+  from D173 — with no reserved blocks, because the rows are sequential.
+- The rows marked **Fable** are the orchestrating session's own: rulings,
+  derivations, interface contracts, the audit (§5's rule: Fable where
+  verification is weakest). The rows marked **Opus** are delegated to an Opus
+  subagent in a worktree on the session branch with the phase text and the
+  gate; it neither pushes nor writes `DECISIONS.md`, and the orchestrator
+  reviews, runs the suite, writes the decision and closes. Two independent
+  Opus rows may run at once; merges stay one at a time, in row order.
+- **Probe before build**, as §5d required; **read the citation before trusting
+  the row it lands** (S21 (a), A-14).
+
+**Sequence.** 25 → 26 → 27 is the one hard chain on the model side; 28 is the
+highest value and the prerequisite for 29, 35 and 36; 31 → 32 → {33, 35, 36}
+is the chain the rendering depends on; 34 follows 33 so the globular-cluster
+relation lands as a check; 37 audits; 38–41 build the renderer against the
+contract, each row removing one structure the present viewer invents
+(`RENDER_PHYSICS.md` §0).
+
+**Done means**, for this build `[inferred]`: `azimuthal` and `basic` both pass
+preflight and read the same acceptance table at the defaults; every new row
+passes or is a recorded miss whose cause is a mechanism (B5); every constant
+that entered from a NEEDS-SOURCING has its citation read; the energy-balance,
+redistribution and catalogue-against-field tests are in the suite; every
+visible feature of the viewer traces to a published field; and the tag batch
+has been run from a desktop, which is the one item §5d could not close.
 
 ## 6. What the executable specs assert
 
