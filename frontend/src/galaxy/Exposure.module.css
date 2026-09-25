@@ -19,3 +19,14 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* Phones: the row has to fit the preview's right column, 56% of the screen. */
+@media (max-width: 640px) {
+  .exposure input {
+    min-width: 48px;
+  }
+
+  .value {
+    min-width: 0;
+  }
+}

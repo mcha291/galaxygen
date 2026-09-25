@@ -210,3 +210,28 @@
   border: var(--hair) solid var(--text-muted);
   border-top: 0;
 }
+
+/* Phones: the control panel is a bottom sheet, the captions lose the margins that kept
+   them clear of a 268 px panel, and the scale bar sits just above the sheet. */
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    width: auto;
+    max-width: none;
+    max-height: var(--sheet-height);
+  }
+
+  .regime {
+    max-width: 100%;
+    padding: var(--space-4) var(--space-4) var(--space-6) var(--space-6);
+  }
+
+  .scale {
+    bottom: calc(var(--sheet-height) + var(--space-4));
+    padding: var(--space-5) var(--space-6) 0 var(--space-4);
+    background: none;
+    text-shadow: 0 1px 3px var(--void-0), 0 0 10px var(--void-0);
+  }
+}

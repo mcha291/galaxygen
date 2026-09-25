@@ -216,3 +216,31 @@
   font-size: 10px;
   color: var(--text-muted);
 }
+/* Phones: the rail is a bottom sheet (App.module.css), so the overlays leave the 326 px
+   strip and line up on the left, under the preview title and above the sheet. */
+@media (max-width: 640px) {
+  .inset,
+  .scrubber {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(var(--sheet-height) + var(--space-6));
+    max-width: none;
+  }
+
+  .layerNote {
+    top: 64px;
+    left: var(--space-4);
+    max-width: 56%;
+  }
+
+  .orbits {
+    top: 112px;
+    left: var(--space-4);
+    max-width: 48%;
+  }
+
+  .fault {
+    left: var(--space-4);
+    bottom: calc(var(--sheet-height) + var(--space-6));
+  }
+}

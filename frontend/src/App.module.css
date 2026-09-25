@@ -1,7 +1,7 @@
 /* The shell follows the design: top bar, one view filling the middle, bottom bar. */
 .shell {
   display: grid;
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
   background: var(--bg-app);
 }
@@ -14,7 +14,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-5);
+  min-width: 0; /* a grid item otherwise widens the whole shell to fit this row */
+  min-height: var(--topbar-height);
   padding: 0 var(--space-5);
+  flex-wrap: wrap;
   border-bottom: var(--hair) solid var(--border-hair);
   background: var(--void-2);
 }
@@ -28,6 +31,9 @@
 .hash {
   font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
   color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -330,4 +336,68 @@
 
 @media (prefers-reduced-motion: reduce) {
   .busy::after { animation: none; width: 100%; opacity: 0.5; }
+}
+
+/* --- phones -------------------------------------------------------------------- */
+/* Below this width the design's side panels are wider than the screen. The top bar wraps
+   its tabs onto a second row, the floating rail becomes a bottom sheet, and the overlays
+   move out of the strip they shared with it, so the view itself stays in the middle. */
+@media (max-width: 640px) {
+  .topbar {
+    row-gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .hash {
+    display: none;
+  }
+
+  .topbar [role="tablist"] {
+    flex-basis: 100%;
+  }
+
+  .floatingRail {
+    top: auto;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    width: auto;
+    max-width: none;
+    max-height: var(--sheet-height);
+  }
+
+  .previewTitle {
+    left: var(--space-4);
+    flex-wrap: wrap;
+    max-width: 40%;
+    white-space: normal;
+  }
+
+  .overlayColumn {
+    bottom: auto;
+    width: 56%;
+    max-height: 40%;
+    padding: var(--space-4);
+  }
+
+  .caption,
+  .status {
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(var(--sheet-height) + var(--space-6));
+    max-width: none;
+  }
+
+  .scienceBody {
+    inset: 0 var(--space-4) calc(var(--sheet-height) + var(--space-6)) var(--space-4);
+  }
+
+  /* The right column is 56% of a phone: the view presets lose their side padding and the
+     section labels wrap instead of clipping. */
+  .overlayColumn .segmented button {
+    padding: 0 var(--space-2);
+  }
+
+  .overlayColumn .overlayLabel {
+    white-space: normal;
+  }
 }

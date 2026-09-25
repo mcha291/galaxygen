@@ -20,3 +20,9 @@ body,
 #root {
   height: 100%;
 }
+
+/* Phones: the floating panels become bottom sheets of this height, and every overlay
+   that must stay clear of them reads the same number. */
+:root {
+  --sheet-height: 42%;
+}
