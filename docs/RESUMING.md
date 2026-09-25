@@ -2,8 +2,9 @@
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's status
 board is the only record of what is done (A9); this file does not repeat it, is rewritten each
-session, capped at 120 lines (C3). **The build is closed and S0–S22 are spent.** What is owed is
-one command that no session can run: the tag batch in MANUAL_TODO.md, from a desktop (D161).
+session, capped at 120 lines (C3). **The first build (S0–S22) closed; the second (S25–S41,
+`BUILD_II.md`, GALAXY_PLAN.md §5e) is open.** The tag batch in MANUAL_TODO.md §1 is still owed
+from a desktop (D161), and S22 stays ◐ for it.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -11,37 +12,37 @@ git clone https://github.com/mcha291/galaxygen.git && cd galaxygen
 uv run python tools/bootstrap.py       # installs the pre-commit hook path, checks imports
 uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec reports
 ```
-Then RULES.md in full and BRIEF.md; GALAXY_INPUTS.md only by section — §11's head is the debt
-map and is the fastest way in. Branch `session-NN`; commit and push at every sub-deliverable
-(C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write files with
-`newline="\n"`: CRLF breaks progress.py's line regexes.
+Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_INPUTS.md only by
+section — §11's head is the debt map. Branch `session-NN`; commit and push at every
+sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
+files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
+debts from #80, decisions from D173, taken when the entry is written.
 
-## Layout
+## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
-galaxy/core/    units (32 closed), cmaps (8 + stops, A9), fielddoc (FieldDecl, 6 Kinds, Ramp/Palette,
-                AXES), stage (Stage, Context, CHECKPOINTS), registry (12 INPUTS, MODELS,
-                IMPLEMENTATIONS), seeds, grids (**its docstring is what the default mesh is sized
-                for**, S22, #36), special (I1, K0, K1, erf)
-galaxy/models/  level0 (shared constants; MERGER_HEATING 88.8, with its named alternative 112.3 in
-                the about line — B12, S22), basic (yields, DTD, wind: the one model since D170)
-galaxy/stages/  cp1 halo (NFW, budget, R_d, the contraction on its own mesh; the angular-momentum
-                distribution's two ends — the high-j tail S16, the spheroid S17) + disc (κ(R), the
-                basis-free solver) + nucleus (M_•, seeded); cp2 assembly (delivery, σ_z by birth time,
-                the radial spread); cp3 sfh (infall = exponential + tail, less the spheroid; the first
-                episode's arrival law is one function, `first_infall`, substitutable for a probe;
-                Kennicutt's threshold off κ; the stars moved through the spread), chemistry — the
-                migration kernel lives here: transport / transport_columns / migration_width /
-                age_bin_edges — / chemistry_dtd, vertical / vertical_alpha (publish `birth_population`);
-                cp4 pattern; cp5 systems; cp6 planets.
-galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…);  galaxy/specs/: graph, preflight,
-                determinism, spec (misses D87; "no testable target" D100; median D109), convergence
-                (D94, D101), performance (**two fits, per star and per cell, with their R²** — read the
-                per-cell one, S21b D145)
-galaxy/api/     service, wire, version, http; client/.  tools/: progress, bootstrap, verify_clone, timings
-tests/          test_audit.py is S10–S20's audits plus S21b's five; test_audit_ii_a.py S21 (a)'s twelve;
-                test_s22_rulings.py S22's six — #51's three diagonals, row 3 against the mesh, the
-                detector against row 9, #28's crossing, #79, the green-row gate. AUDIT_RUN1/2.md are
-                main's S10 lists; AUDIT_II_A.md and AUDIT_S21B.md S21's two.
+docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5d, §5e), GALAXY_INPUTS (§11 register),
+                DECISIONS, LESSONS, MANUAL_TODO, BUILD_II (the phases), RENDER_PHYSICS (the contract),
+                RENDER_PLAN (the viewer's first build, done), the four AUDIT_*.md, future_ideas
+model/galaxy/core/    units (closed), cmaps (incl. `blackbody`, computed), fielddoc (FieldDecl, Kinds,
+                Ramp/Palette, AXES), stage, registry (INPUTS: 7 controls + 2 experimental amplitudes
+                (D171) + 4 seeds + mergers; MODELS; IMPLEMENTATIONS), seeds, grids, special
+model/galaxy/models/  level0 (shared constants), basic (the one model since D170: chemistry_dtd +
+                vertical_alpha + its yields, DTD, wind); a new model is a new file, discovered
+model/galaxy/stages/  cp1 halo, disc, nucleus · cp2 assembly · cp3 sfh, chemistry_dtd, vertical_alpha,
+                ism (P, f_H₂, dust, A_V; D163), light (Σ_L, colour temperature, Hα, bulge light; D165–166)
+                · cp4 bar + pattern (pattern.py: `pattern_density_contrast`, ARM_MULTIPLICITIES (2, 4))
+                · cp5 population + systems (the catalogue; photometry.py's PARSEC lookup inside
+                materialise: star_luminosity, star_temperature, star_alpha) · cp6 formation + planets
+model/galaxy/data/    parsec_isochrones.npz (396 isochrones, 4 columns; tools/fetch_parsec.py)
+model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
+model/galaxy/specs/   graph, preflight, determinism, spec (QUANTITIES rows 1–24, MISSES), convergence,
+                performance;  model/galaxy/api/: service (ROUTES incl. /api/region with brightest= and
+                view=, /api/system), wire, version, http
+frontend/       the viewer (Vite + React + three.js; `npm --prefix frontend run dev` on :5173):
+                galaxy/ (FieldVolume ray-marcher, regimes, frustum, psf), preview/, system/
+interface/      the earlier plain-JS viewer, still served by the API when frontend/dist is absent
+tests/          405 tests; test_audit*.py and test_s22_rulings.py pin the audits' measurements
+tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
 - `Stage(id, slot, checkpoint, about, compute, reads_*, requires*, publishes)`, each field a `FieldDecl`
@@ -50,71 +51,66 @@ tests/          test_audit.py is S10–S20's audits plus S21b's five; test_audit
   `.get()` / `.has()` (optional) and `.rng(seed, *path)`; only declared names resolve, and it returns
   exactly the declared names, shape and value class checked. Register with `IMPLEMENTATIONS.register`,
   import in `stages/__init__.py`, map the slot in the models that use it; a constant goes in `level0.py`
-  if both models read it (D29, D85); a field nobody reads is dead. **Two implementations of one slot**
-  publish the same names under one contract (`FieldDecl.contract`), their own as `optional=True` (D86).
-- **A seed binds at the checkpoint of its earliest reader, and `graph` requires that to equal §3's
-  hypothesis** (S17); a stage reading a seed publishes *seeded* fields, all of them (D55).
-- A named ruleset is a constant with its alternative in the about line, chosen before the row is read (D113,
-  and S22 added MERGER_HEATING's); a mechanism is probed by substituting one function, the repo unchanged
-  (D114; `sfh.first_infall`, `.star_formation_rate`, `.radial_transport`, `.toomre_threshold` and
-  `halo.angular_momentum_core` are S20's and S21's); a default is measured or derived by a test (D30, D117,
-  D128); a derived scalar lives on the stage's own mesh, never the grid (D119).
-- **A calibration's arithmetic is derived, not just its value** (S20), and **its citation is read before
-  the row is trusted** (S21 a, A-14: `MERGER_HEATING`'s "cited 35 km/s" is a selection-function constant
-  and the measurement behind it is 39 ± 4). **An opinion about how a field is rendered lives in its
-  declaration** (A9) — a reduction over an axis (`disc_radial_spread`, #73), or "the viewer cannot show
-  this, and why" (#69). **Per-region determinism is the catalogue's contract** (D60): nothing in
-  `materialise` may depend on which cells a request asked for (S19).
+  if more than one model reads it (D29, D85); a field nobody reads is dead. **Two implementations of one
+  slot** publish the same names under one contract (`FieldDecl.contract`), their own as `optional=True`
+  (D86) — the machinery D170 reverted and Phase 2 restores.
+- **A seed binds at the checkpoint of its earliest reader, and `graph` requires that to equal the
+  input's `checkpoint_hypothesis`** (S17); a stage reading a seed publishes *seeded* fields, all (D55).
+- A named ruleset is a constant with its alternative in the about line, chosen before the row is read
+  (D113); a mechanism is probed by substituting one function, the repo unchanged (D114; `sfh.first_infall`,
+  `.star_formation_rate`, `.radial_transport`, `.toomre_threshold`, `halo.angular_momentum_core`); a
+  default is measured or derived by a test (D30, D117, D128); a derived scalar lives on the stage's own
+  mesh, never the grid (D119). **A calibration's arithmetic is derived, not just its value** (S20), and
+  **its citation is read before the row is trusted** (S21 a, A-14). **Per-region determinism is the
+  catalogue's contract** (D60): nothing in `materialise` may depend on which cells a request asked for.
+- Object columns are `FieldDecl(kind=Kind.COLUMN, of="star")`; a second object class (clouds, clusters:
+  BUILD_II Phases 8 and 11) is a `core/` edit plus a DECISIONS entry, as a new unit or kind is.
 
 ## The API and the viewer
-- `uv run python -m galaxy.api` serves both on 127.0.0.1:8017; `Service().handle(path, query)` is the same
-  without a socket and is what the tests drive; one model is registered since D170, `basic`, the default.
-  A new route is a `Route` in `service.ROUTES` plus **a row in `tools/timings.py`**.
-- Metadata answers from declarations and must not reach the runner; whatever computes goes through
-  `Service.compute(...)` (D4, D63); objects are materialised per request (D82). `transport.js` holds **the
-  only `fetch`** and that gate asks `git ls-files` what the repository contains (D101).
-- The viewer shows every published field **it can show without materialising a galaxy to print one
-  number**; four scalars are ruled invisible and say so in their own declarations (#69, S22).
+- `uv run python -m galaxy.api` serves the API and `interface/` on 127.0.0.1:8017 (`--client
+  frontend/dist` for the built React viewer); `Service().handle(path, query)` is the same without a
+  socket and is what the tests drive. A new route is a `Route` in `service.ROUTES` **plus a row in
+  `tools/timings.py`**. Metadata answers from declarations and must not reach the runner (D4, D63);
+  objects are materialised per request (D82) and cached per cell (`CellCache`, D168).
+- The viewer computes no physics (D5): colour is the declared ramp (the blackbody cmap on
+  `star_temperature`), light is the published Σ_L times the pattern's contrast, dust is the published
+  A_V per line of sight. **What it invents today** — young light crowded into the arms, a seeded clump
+  lattice, Hα knots (f2230d5) — is recorded in RENDER_PHYSICS.md §0 as the dated exception V2/V3 remove.
 
 ## Conventions
-- Names: fields, inputs, seeds, stages, models `lower_snake`; constants `UPPER_SNAKE`. 7 controls, 4 seeds,
-  `mergers`; every input has a default and every control a range. Every factual claim in every document is
-  tagged `[verified: cite]`, `[recall]` or `[inferred]` (B14). A new unit, kind, axis, object class or cmap
-  is a `core/` edit plus a DECISIONS.md entry; debts live in §11 and `tools/progress.py` counts them.
-- A failing acceptance row goes in `spec._MISSES` (or `_MISSES_CHEMISTRY`, A7) with its model, debt, reason
-  and a prediction that could kill it (D33, D87); it still reports `fail`, never widen a target (B5), and a
-  miss that starts *passing* fails the run (#29) — remove it and **write down why it passed**. `lo == hi`
-  says "no testable target" (D100).
+- Names: fields, inputs, seeds, stages, models `lower_snake`; constants `UPPER_SNAKE`. Every input has a
+  default and every control a range. Every factual claim in every document is tagged `[verified: cite]`,
+  `[recall]` or `[inferred]` (B14); a verified tag cites something in this repo or a named source — A1's
+  `bench2.py` never existed here, and Phase 0 is the correction.
+- A failing acceptance row goes in `spec.MISSES` with its debt, reason and a prediction that could kill
+  it (D33, D87); it still reports `fail`, never widen a target (B5), and a miss that starts *passing*
+  fails the run (#29) — remove it and **write down why it passed**. `lo == hi` says "no testable
+  target" (D100). New rows (BUILD_II Phases 3, 5, 6, 9) take the next numbers from 25 and cite their
+  source in `QUANTITIES`; the habitable zone gets none, on purpose.
 
-## What the instruments said at S22 close (2026-09-12)
-- graph: acyclic, both models. preflight OK: 0 UNSET. determinism OK, reproducible across processes. spec:
-  simple **10 pass, 12 fail, 2 n-y-c**; advanced **8 / 15 / 1** — unmoved by S22, which changed no physics:
-  it ported two lists, ruled 44 debts, and edited declarations and documents.
-- Numbers, to spot a regression by, all unmoved from S20: z_f 1.66, c₂₀₀ 8.24, R_d 2.605, M_star 4.75e10,
-  SFR 1.755, H 8.09e9, Σ_crit(R₀) 11.5, WIND_SPEED 860.3, NET_YIELD 0.01376, feh_spread_sun 0.360,
-  MERGER_HEATING 88.8, thick σ_z 35.0, spread at R₀ 1.09, rows 3 / 5 / 7 / 9 / 16 / 17 / 18 at 251.03 /
-  1.09 / 962 / 0.0455 / 42.8 / 5.70 / 1.97e7, the advanced row 6 356.
-- Convergence: 0 drifts on N_R, N_t, N_z; advanced rows 5, 7–11 `vacuous` (#27). **Row 3 converges to
-  251.013 at n_R = 3200**, so half its 0.027 miss is the default mesh (S22, #11).
-- Register: **27 open — 15 ruled permanent, 12 carried — and 35 discharged**, none unruled; the map is
-  at §11's head. Four of the twelve carried are one missing mechanism (#19, #27, #49, half of #47).
-- Timings and the profile: D162. The catalogue is the costliest stage in both and is priced **per cell**
-  (375 / 338 µs, R² 0.94 / 0.93); the per-star pair every record before S21b quoted is a line
-  through a curve (#67).
+## What the instruments said on 2026-09-26 (no physics changed since S20)
+- graph acyclic; preflight OK, 0 UNSET; determinism reproducible across processes; spec **basic
+  8 pass / 16 fail / 0 n-y-c**; convergence 0 drifts; row 3 251.026 (out by 0.027, half of it the
+  mesh, D160); row 15 4.88277 in [4.8, 5.2] — **the one green row Phase 1 can move**; row 21 0.2001
+  against a zero-width 0.11 (#17).
+- Numbers to spot a regression by: z_f 1.66, c₂₀₀ 8.24, R_d 2.605 (thin 2.44), M_star 4.75e10, SFR 1.755,
+  H 8.09e9, WIND_SPEED 860.3, MERGER_HEATING 88.8, rows 16 / 17 / 18 at 47.46 / 5.14 / 1.35e7 (seeded).
+- performance: basic 1.44 s cold; systems 25%, light 24%, chemistry_dtd 24%; the catalogue priced per
+  cell, 389 µs per cell realised (R² 0.92).
+- Register: **26 open — 14 permanent, 12 carried — and 36 discharged**; the map at §11's head still
+  counts #79 as permanent in its prose (D163 discharged it) — Phase 0 rewrites the map anyway.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python
    tools/progress.py`, then `uv run pytest` once, quiet, **backgrounded with its exit status
-   appended to its log** (it outlasts the tool's cap), the merge gated on that status (D115, D120).
-1. Append to DECISIONS.md, new rules to LESSONS.md tagged, **publish the cold timings exactly as
-   `tools/timings.py` prints them, stage column included** (B2; #66 is what dropping it costs), the
-   profile (D95) and, when a stage's cost changes, `tools/scaling.py`; then rewrite this file in place
-   (≤ 120 lines) and write BRIEF.md (≤ 60 lines).
+   appended to its log** (it outlasts the tool's cap), the merge gated on that line (D115, D120).
+1. Append to DECISIONS.md, new rules to LESSONS.md tagged, **the cold timings as `tools/timings.py`
+   prints them** when a stage's cost changes (B2); rewrite this file (≤ 120) and BRIEF.md (≤ 60) for
+   the next row of §5e.
 2. Commit; `git checkout main && git merge --no-ff session-NN`, subject `Merge S<N> into main: …`;
-   push both. **Do not tag** (C2e) — add your MANUAL_TODO.md row with the last session's merge SHA
-   filled in, and never force-push. Then `uv run python tools/verify_clone.py --ref main`, which
-   clones fresh, bootstraps and runs the suite and the specs there; it refuses on a dirty tree.
+   push both. **Do not tag** (C2e): add your MANUAL_TODO.md row with the last session's merge SHA
+   filled in; never force-push. Then `uv run python tools/verify_clone.py --ref main`.
 
-A session that stops early closes **partially** (C2d): commit, push, write what remains into
-BRIEF.md, mark the row ◐, do **not** merge. **Credentials:** the helper or a repo-scoped token;
-never push a tag (C2e) — S22 tried and got the same 403 D40 recorded (D161).
+A session that stops early closes **partially** (C2d): commit, push, what remains into BRIEF.md, ◐,
+no merge. Opus subagents work in a worktree on the session branch and neither push nor write
+DECISIONS.md; the orchestrating session reviews against the gate and closes (§5e).

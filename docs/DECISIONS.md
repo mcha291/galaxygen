@@ -4716,3 +4716,112 @@ and tests of the advanced physics are renamed.
 **Optional fields.** With one model nothing is optional: the α fields and `star_alpha` lose
 their `optional` flags, the catalogue requires `alpha_fe_history`, and the runner's allowance
 for withholding an optional declaration (D169) is reverted.
+
+### D171. S23 and S24 recorded after the fact: the work between the close-out and the second build
+
+**Decision.** Two board rows are added retrospectively, ☑, for work that ran on `main`
+between 2026-09-13 and 2026-09-25 without a session branch, a close, or — for most of S23 —
+a decision entry. Their tag rows in `MANUAL_TODO.md` point at the last commit of each
+stretch rather than at a merge, and say so. Nothing in either stretch is changed by this
+entry; it is bookkeeping, so that the board stays the single source of truth for what is
+done (rule A9) and so that the second build's numbering does not start from a gap.
+
+**S23 (2026-09-13, Opus 5), `s23` at `fb4a2da1f1d1`.** The repository restructured into
+`docs/`, `model/` and `interface/` with models one file each (0f78156, the first commit
+after the S22 merge); the viewer rebuilt as a Vite + React + three.js app under `frontend/`
+with the generation workflow, per-checkpoint previews, the formation-history scrubber
+(RENDER_PLAN H1) and a PSF sprite (R2); the histories downloadable at 200 steps; the
+Azure Container Apps deploy; and **RENDER_PLAN M1** — `pattern_density_contrast`, a
+logarithmic-spiral perturbation over (R, φ) with a straight m = 2 bar inside the bar's
+half-length, from which the catalogue draws azimuth `[verified: commit 5f79cfc;
+model/galaxy/stages/pattern.py; systems.py]`. **M1 landed with no decision entry, and this
+is it.** Its amplitudes were made **two inputs**, `arm_amplitude` and `bar_amplitude`,
+"experimental controls on the bottom bar" `[verified: model/galaxy/core/registry.py;
+docs/future_ideas.md]`, which RENDER_PLAN M1's own text forbids ("it does not become a
+control") and which took the input vector to 9 of the ceiling's 12 (rule A2). Debt #23,
+ruled permanent at S22 on the grounds that no stage publishes a non-axisymmetric density,
+was not re-ruled when one did. Both are the second build's first physics session (Phase 1b,
+D172), not this entry's to fix.
+
+**S24 (2026-09-13 to 2026-09-25, Opus 5, then Opus 5.5 and Fable 5.1 on the last day),
+`s24` at `4a20490c5043`.** D163–D170 as written: the PARSEC table and per-star photometry;
+the `ism` stage with #79 revisited and discharged and row 21 judged for the first time; the
+disc's unresolved light, dust and bloom; Hα and the bulge's light; the ray-marched field
+regime with dust per line of sight and the three regimes; the brightest-N mode; [α/Fe] on
+the catalogue; one model, `basic`. D163's own text already calls this stretch S24, and the
+row honours the label. The last two commits (f2230d5, 4a20490) were unpushed when the second
+build's planning began on 2026-09-26 and go up with it. **Three tests were red on `main` at that point, none caught because no close ran:** two photometry pins written at D164 (35 ages to log age 10.0, 385 tracks, a 10 Gyr clamp) that D166's appended age moved to 36 / 10.1 / 396 / 12.6 Gyr, and `halpha_surface_brightness`'s about line naming `HALPHA_PER_SFR`, which `test_the_api_publishes_no_model_internals` forbids the viewer to see (rule D5). Re-pinned and reworded on 2026-09-26 in the planning branch's second commit; no number changed.
+
+**Why after the fact rather than never.** The alternative — leaving twenty-two rows on the
+board and a build that continues from D170 — would have the board say the project ended at
+S22 while the register, the decisions and the code all say otherwise. A retrospective row is
+weaker than a close (no cold timings were published, no RESUMING was rewritten, the model
+column is filled from commit trailers rather than from a session's own record), and each row
+says it was recorded retrospectively so it is not read as one.
+
+### D172. The second build adopted: `BUILD_II.md`, `RENDER_PHYSICS.md`, and the four rulings that shaped the reconciliation
+
+**Decision.** The owner's two planning documents — a twelve-phase plan for an azimuthal
+star-formation model and the render contract's model side, and the model/renderer contract
+itself — enter the repository as `docs/BUILD_II.md` and `docs/RENDER_PHYSICS.md`, reconciled
+against the repository as it stood on 2026-09-26, and the board gains rows S25–S41 (§5e).
+Reconciliation means the plan was written before D170 and before S23–S24, and several of
+its premises were no longer true; each phase now opens with what already exists, and a
+table at the head of `BUILD_II.md` lists every premise that moved.
+
+**What the reconciliation found, so that no session rediscovers it.**
+
+1. *One model, not three.* D170 collapsed `simple` and `advanced` into `basic` the day before
+   the plan was read. The plan's "three models declared" gate is moot; its rule that the
+   shared derivations must not live in the new model alone is satisfied by putting them in
+   `basic` and building the new model's stage map from `BASIC`'s tuple with one slot
+   replaced.
+2. *The isochrone ruling is made* (D164, PARSEC, tabulated); Phase 3 becomes the photometric
+   rows, the ionizing budget and the winds. `tools/fetch_parsec.py` already requests the
+   UBVRIJHK system from CMD and keeps four columns, so band magnitudes are a re-fetch, not a
+   new dependency.
+3. *The ISM patch is merged and #79 discharged* (D163); Phase 7 is the extension to
+   scattering, thermal emission and PAH. `halpha_surface_brightness` exists as Σ_SFR times a
+   constant (D166) and becomes a check on Phase 9's Q-derived emissivity.
+4. *`sample_region` exists* as `/api/region` with per-cell determinism (D60, D167); what is
+   missing is depth — a cell hierarchy — which is Phase 8's interface change.
+5. *The arm number is a seeded draw of 2 or 4* `[verified: pattern.py, ARM_MULTIPLICITIES]`,
+   neither derived from swing amplification nor hard-coded: the plan's Phase 1 question is
+   answered before it is asked, and Phase 1b decides it.
+6. *A1's citation is to a file the repository never held.* `bench2.py` appears in neither
+   the tree nor `git log --all`; the register's cost table lists the multiplier as "8
+   iterations — ×8 on top", an assumed count `[verified: GALAXY_INPUTS.md §10]`. Phase 0's
+   case is made from inside the repository, as rule B14 requires.
+7. *The viewer invents structure the contract forbids* — young light crowded into the arms,
+   a seeded clump lattice, Hα knots (f2230d5) — seeded from `world_seed`, so frame-stable,
+   but tracing to no published field. Recorded in `RENDER_PHYSICS.md` §0 as the dated
+   exception V2 and V3 remove; nothing new of the kind may be added.
+
+**The owner's four rulings (2026-09-26), asked and answered before a line was written.**
+
+- **The model is `azimuthal`.** Named for the one slot that differs. `realistic_advanced`
+  was declined for the reason the plan itself flagged and for the reason D170 had just
+  retired `advanced`: a name that implies succession makes a result read as a regression.
+- **The amplitudes are derived or seeded before Phase 2** (Phase 1b, S26). Phase 2's
+  modulation reads `pattern_density_contrast`; built on two hand controls it would be a
+  modulation of an input, and its gate would be a check on a slider. Under §4b the amplitude
+  is derived to a mean from `shear_rate` and `disc_dominance` with the residual seeded on
+  `pattern_seed`, as `pitch_angle` is; the two inputs go and #23 is re-ruled.
+- **Model side first, viewer after.** Phases 0–11 and an audit, then four viewer sessions
+  V1–V4 specified now with numeric gates, each replacing one invented structure with a
+  published one. The contract is what both halves are built against, and building the
+  renderer before the fields exist would be the failure mode §8 names.
+- **Sessions from S25, S23–S24 retrospective, per-phase branches, one orchestrating session.**
+  Each phase is a `session-NN` branch merged `--no-ff`; the rows marked Fable are the
+  orchestrating session's own and the rows marked Opus are delegated to Opus subagents in
+  worktrees that neither push nor write decisions; numbers are sequential (debts from #80,
+  decisions from D173) because the rows are.
+
+**One addition the owner did not ask for.** Row 37, Audit III, on Fable, once, with a
+stated aim: every NEEDS-SOURCING that entered code has its citation read. S21 (a)'s A-14
+found a "cited 35 km/s" that was an adopted value with the measurement at 39 ± 4, and this
+build enters more constants from sources than S1–S9 did. The owner may strike the row.
+
+**Unchanged.** No physics, no constant, no default, no test. The acceptance table still
+reads basic 8 / 16 / 0 and the register 26 open / 36 discharged; D171's two rows and the
+seventeen new ones move only the board's bar.

@@ -16,9 +16,9 @@ def one(mass: float, age: float, feh: float) -> tuple[float, float]:
 
 def test_the_table_is_the_grid_the_readme_attributes():
     tab = isochrones()
-    assert tab.log_ages.size == 35 and tab.log_ages[0] == pytest.approx(6.6) and tab.log_ages[-1] == pytest.approx(10.0)
+    assert tab.log_ages.size == 36 and tab.log_ages[0] == pytest.approx(6.6) and tab.log_ages[-1] == pytest.approx(10.1)
     assert tab.mhs.size == 11 and tab.mhs[0] == pytest.approx(-2.19) and tab.mhs[-1] == pytest.approx(0.30)
-    assert len(tab.tracks) == 385
+    assert len(tab.tracks) == 396
 
 
 def test_no_isochrone_keeps_the_boundary_row():
@@ -49,7 +49,8 @@ def test_a_star_past_its_lifetime_has_no_light():
 
 
 def test_ages_past_the_table_read_at_its_oldest():
-    assert one(0.8, 13.0, 0.0) == pytest.approx(one(0.8, 10.0, 0.0))
+    oldest = 10**10.1 / 1e9  # 12.6 Gyr, log age 10.1 since D166 (was 10 Gyr, 35 ages, at D164)
+    assert one(0.8, 13.5, 0.0) == pytest.approx(one(0.8, oldest, 0.0))
 
 
 def test_a_giant_is_brighter_and_cooler_than_the_dwarf_it_was():
