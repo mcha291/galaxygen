@@ -823,3 +823,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A plan can carry a contradiction for eight sessions if no row is read against another.
   §5d put S22 on the web and required one of its deliverables to be done from a desktop. Read
   the whole row, including the column that says where it runs (D161).
+
+## From S25 (BUILD_II Phases 0 and 1)
+
+- [all] A verified tag on a rule is a claim like any other, and one git command checks it.
+  A1 cited a benchmark file the repository never held for twenty-five sessions, and two
+  permanent rulings in the register rested on the number it was said to have measured. Read
+  the citation before resting a ruling on the rule (D173).
+- [all] Rewriting the clause a verdict rests on does not re-rule the verdict; a probe does. The
+  fifty-line sweep with the repository unchanged is what turned "A1 forbids it" into "the map is
+  a contraction and its root is 0.34", and the re-ruling could then name a mechanism and a
+  prediction instead of a re-opening (D173).
+- [field] A plan that moves a stage names the dependency it saw; read every `requires` of the
+  stage before predicting what moves. Phase 1 named the curve and the risk it thought followed
+  from it; the scale length was the stage's second `sfh` field and the one that moved the row,
+  and the risk the plan named does not enter the row at all (D174).
+- [field][close] When the execution order and the checkpoint order come apart, the check that
+  passes today is the one that fails at the next phase's first line. Move the checkpoint with the
+  stage, let the hypotheses follow, and say what the reroll now discards (D174).

@@ -4901,3 +4901,106 @@ no phase of BUILD_II builds this — it is carried with its mechanism named for 
 may add. The board's debt line is unchanged (26 open / 36 discharged): a re-ruling moves
 items between verdicts, not out of the count (S22's lesson: a limitation that stops being
 counted stops being read).
+
+### D174. The pattern ahead of star formation: the bar reads the checkpoint-1 curve and the λ_d scale length, checkpoints 3 and 4 swap, row 15 leaves its window by 0.01 (debt #80), and the arm number is recorded
+
+**Decision.** (1) `bar` requires `disc_scale_length_spin`, `circular_velocity` and
+`halo_circular_velocity`; `pattern` requires `bar_half_length`, `shear_rate` and
+`circular_velocity`. Neither reads anything `sfh` publishes, and `graph.py` reorders on its
+own: halo, disc, nucleus, assembly, **bar, pattern, sfh**, chemistry_dtd, population, light,
+vertical_alpha, formation, ism, systems, planets. `chemistry_dtd` keeps the resolved curve
+for the escape velocity and is untouched. (2) `CHECKPOINTS` swaps its third and fourth
+names: **3 is Pattern, 4 is Star formation & chemistry**. `bar` and `pattern` declare 3;
+`sfh`, `chemistry_dtd`, `vertical_alpha`, `ism` and `light` declare 4; `pattern_seed`,
+`arm_amplitude` and `bar_amplitude` bind at 3 and `infall_timescale`, `inside_out_index`
+and `migration_efficiency` at 4, and each input's `checkpoint_hypothesis` moves with it
+(`graph` binds a seed where its earliest reader is, S17, and the hypothesis must agree).
+(3) Acceptance **row 15 reads 5.20971 against 4.8–5.2** and is a recorded miss under B5,
+debt **#80**, not a retune. (4) The arm number's 2-or-4 draw is recorded below and nothing is
+done about it (Phase 1b, S26). (5) The frontend's fixed scene table follows the model: the
+pattern is drawn on checkpoint 1's smooth disc at 3, the history scrubber and the [Fe/H] disc
+at 4; the rail itself is data-driven from `/api/stages` and needed nothing.
+
+**Why the checkpoints swap and not only the execution order.** `graph.py` forbids a stage
+from requiring a field published at a later checkpoint — rule D1's prefix property, and A1's
+justification as rewritten in D173. Phase 2's `sfh_azimuthal` is a star-formation stage
+that requires `pattern_density_contrast`; with the pattern executing first but still
+declared checkpoint 4, every check passes today and Phase 2's first line fails the
+checkpoint-order check. Renumbering is interface design — the rail the owner walks — and a
+ruling, so it is this session's and not the Opus row's, and it is what "the pattern reorder"
+names. The physics reads the same way: the bar's length and the disc's shear and dominance are
+set by the halo and the disc, and star formation is what responds to them, so the workflow's
+order now follows the causality. GALAXY_PLAN.md §3 put the pattern fourth because S4 built it
+on `sfh`'s resolved curve — a construction, not a hypothesis about the physics — and §3's
+table and its reroll paragraph are corrected in place. **The cost, named:** rerolling
+`pattern_seed` now discards checkpoints 4–6. In `basic`, where `sfh` does not read the
+pattern, D1's per-checkpoint rule discards a star-formation result the graph did not need to;
+in `azimuthal` the discard is necessary. Accepted: one rule for both models.
+
+**Measured before and after, default grid, the repository otherwise unchanged.**
+
+| | before (S24) | after (S25) | target |
+|---|---|---|---|
+| row 15 bar half-length | 4.88277 pass | **5.20971 fail** (miss, #80) | 4.8–5.2 |
+| row 16 pattern speed, median of 41 | 42.8314 pass | 41.1036 pass | 34–52 |
+| row 16 central 95% | 33.69–58.79 | 32.35–55.87 | |
+| row 16 default seed | 47.4569 | 45.4636 | |
+| row 17 corotation, median of 41 | 5.70201 pass | 6.08381 pass | 4.5–7.0 |
+| row 17 central 95% | 4.089–7.177 | 4.363–7.658 | |
+| row 17 default seed | 5.13958 | 5.48371 | |
+| scale length the bar reads | 2.44138 (thin, fitted, `sfh`) | 2.60486 (λ_d, `halo`) | |
+| `disc_dominance` at 2.2 R_d | 0.5871 at 5.371 kpc | 0.5999 at 5.731 kpc | |
+| `shear_rate` at 2.2 R_d | 0.9843 | 0.9680 | |
+| v_c at 5.7 kpc, curve the bar reads | 244.2 (resolved) | 249.7 (checkpoint 1) | |
+| row 15 convergence drift | 0.00224 of 0.4 | 0 | |
+
+Row 17 rises by the 6.7% the scale length rose; row 16 falls 4%: corotation moves out with
+the bar and the checkpoint-1 curve is 5.5 km/s higher there (it holds every baryon in one
+exponential, the tail's and the spheroid's shares included, D119, D121). Row 15's drift falls
+to zero because the λ_d length is a scalar on the halo's mesh (D119) where the fitted one was
+read off the grid. Determinism reproducible across processes; convergence 0 drifts; the run
+is clean at 7 pass / 17 fail / 0 not-yet-computable with every failure recorded
+`[verified: python -m galaxy.specs, 2026-09-26, before and after]`. Performance 1.18 s cold
+and no stage's cost changed, so the cold timings are not re-published (rule B2 asks for them
+when a cost moves).
+
+**The plan's named risk was not the lever, and the dependency it missed was.** BUILD_II
+Phase 1 says `disc_dominance` "sets `bar_half_length`" and is where the row could move; it
+does not enter the length at all — `bar_half_length` is `BAR_LENGTH_RATIO` × R_d, and
+`disc_dominance` is published beside it, unused (debt #21). What the plan did not list is
+that `bar` also required `thin_disc_scale_length`, which is `sfh`'s: swapping the curve alone
+would have left the bar behind star formation and moved nothing. The only scale length
+checkpoint 1 has is the λ_d one, 6.7% longer than the fitted thin-disc one, and the row moved
+by exactly that. `BAR_LENGTH_RATIO` = 2.0 is a recalled "1.5–2.5 R_d" that names no R_d, so it
+has no claim on 4.88 over 5.21 and is not moved (B5, and the brief's own instruction); debt
+#80 carries the closer — a sourced ratio read against the scale length it is quoted for, the
+S22 lesson on `disc_spin`. BRIEF.md's "with `disc_dominance` named as the cause" is corrected
+here: the cause is the referent of a recalled constant.
+
+**The arm number — the finding, recorded and not acted on.** `arm_multiplicity` is
+`ARM_MULTIPLICITIES[rng("pattern_seed", "arms").integers(2)]` with `ARM_MULTIPLICITIES =
+(2.0, 4.0)`: a seeded draw of 2 or 4 at equal odds, no 3, no flocculent state, and no
+dependence on `shear_rate` or `disc_dominance`, both of which the stage now reads off the
+checkpoint-1 curve `[verified: model/galaxy/stages/pattern.py]`. §4b's verdict C names
+swing amplification as what sets a preferred m; the draw is that verdict's remedy with the
+mean left out. The default seed draws m = 4. Phase 1b (S26) decides it together with the
+amplitudes; feathering is downstream of Phase 2 and is not missing structure.
+
+**What the suite re-pinned, and one precision statement re-measured.** Six tests pinned the
+old numbers or the old checkpoint and were re-pinned to the measurement, never to a target:
+row 15 as the constant times the λ_d length (`test_audit`), the register at 27 / 36, the
+second diagonal's medians 41.1 / 5.94 → 39.48 / 6.33 (`test_audit_ii_a`), the viewer walk's
+seed at checkpoint 3, and `AUDIT_II_A.md` §3's green-row table read with row 15 as "left
+since S25" rather than edited (the table's own verdict for the row — *"chosen; a 2% fall in
+R_d fails it"* — named the lever a 6.7% rise pulled the other way). **Debt #51's precision
+statement moved:** on the three disjoint 41-seed diagonals rows 16 and 17 read 41.10 / 39.48 /
+40.47 and 6.08 / 6.33 / 6.18 — the same verdict on all three, as S22 found, but the margin to
+the nearest edge is now 3.4× and 2.7× the spread where S22 measured four to five; row 17 moved
+0.38 kpc toward its upper edge with the longer bar. The test's floor is re-pinned at 2.5× with
+both readings in its comment; the claim it protects (the fixed sample decides no verdict) holds.
+
+**Not done here.** `arm_amplitude` and `bar_amplitude` stay inputs (D171; S26 removes them).
+BUILD_II's Phase 1 text still says `sfh` is checkpoint 3 and RENDER_PLAN.md still puts the
+history scrubber at checkpoint 3 — the plan as it was written and the viewer plan as it was
+done; this entry is the correction and neither is edited. The owner's live tab on :5173
+serves the new scene table on a hard reload.

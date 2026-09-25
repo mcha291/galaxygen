@@ -337,8 +337,12 @@ def test_debt_45_the_infall_scale_ratio_trades_the_structure_rows_against_the_ga
 def test_row_15_is_the_bar_constant_times_the_scale_length(model):
     f = run(model, only=("bar_half_length",)).fields
     ratio = model.constants["BAR_LENGTH_RATIO"].value
-    assert f["bar_half_length"] == pytest.approx(ratio * f["thin_disc_scale_length"], rel=1e-12)
-    assert ratio == 2.0 and inside(15, f["bar_half_length"])
+    # Since S25 the bar reads the lambda_d scale length (checkpoint 1), not the thin disc's fitted
+    # one (a star-formation result): 2.605 against 2.441, and the row reads 5.210 against 4.8-5.2,
+    # a recorded miss under debt #80 (D174). The check below is what took it out.
+    assert f["bar_half_length"] == pytest.approx(ratio * f["disc_scale_length_spin"], rel=1e-12)
+    assert ratio == 2.0 and not inside(15, f["bar_half_length"])
+    assert f["bar_half_length"] == pytest.approx(5.2097, abs=2e-3)
     # A scale length outside 2.4-2.6 kpc takes row 15 out of its window: a check on R_d, not on the bar.
     assert Q[15].lo / ratio == pytest.approx(2.4) and Q[15].hi / ratio == pytest.approx(2.6)
 
@@ -366,7 +370,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (26, 36)  # 27 / 35 at S22, 43 / 18 on the port, 32 / 18 at S20
+    assert progress.debt_counts(text) == (27, 36)  # 26 / 36 at S24; 27 / 35 at S22, 43 / 18 on the port, 32 / 18 at S20. S25 opened #80 (row 15, D174)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -388,10 +392,14 @@ def test_the_register_carries_the_s10_findings():
         "70. **The bimodality detector's mode test is a test on a peak's density",
         "73. ~~**The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
         # S22's three-way map, and one entry of each verdict, so a silent re-ruling fails here.
-        "| **permanent** | 2, 3, 15, 17, 21, 22, 23, 25, 26, 34, 45, 46, 48, 65 | 14 |",
+        # It fired at S25, as designed: #3 and #26 moved permanent -> carried under the rewritten
+        # A1 (D173) and #80 opened (D174); the rows below are the map as re-ruled, not re-read.
+        "| **permanent** | 2, 15, 17, 21, 22, 23, 25, 34, 45, 46, 48, 65 | 12 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 11, 19, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70 | 12 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80 | 15 |",
+        "**S25, re-ruled CARRIED under the rewritten A1 (D173).**",
+        "80. **`BAR_LENGTH_RATIO` is a recalled range read against an unspecified scale length",
         "**S22, ruled PERMANENT (a property of the model's scope), and this is the ruling S20 handed over.**",
         "**S22, ruled CARRIED, and the pre-committed reading fires: the split criterion is what is wrong.**",
         "**S22, discharged by its own pre-committed test.**",

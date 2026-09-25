@@ -63,6 +63,7 @@ closes the project.
 | 22 | `s22` | `b3939fe64ac8` | **queued** — filled in on 2026-09-26 (D171) |
 | 23 | `s23` | `fb4a2da1f1d1` | **queued** — **not a merge**: S23 ran on `main` without a session branch and was recorded after the fact (D171); the tag marks its last commit |
 | 24 | `s24` | `4a20490c5043` | **queued** — **not a merge**, as S23 (D171); the last commit of D163–D170 |
+| 25 | `s25` | TBD | **queued** — the first row of the second build; S26 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -184,6 +185,9 @@ git tag -a s23 fb4a2da1f1d10aa5fdb890581dc3cfd3d342cff9 -m "S23: the viewer rebu
 
 # S24 — the render plan's model side and one model (D163–D170). Not a merge: the last commit of the stretch (D171).
 git tag -a s24 4a20490c5043adcfd84e481ea9679066c8b7e031 -m "S24: the render plan's model side, one model"
+
+# S25 — A1 rewritten, the pattern ahead of star formation (BUILD_II Phases 0 and 1). SHA filled in by S26.
+git tag -a s25 "$(git rev-list -1 --grep='^Merge S25 into main' main)" -m "S25: A1 rewritten, the pattern ahead of star formation"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
