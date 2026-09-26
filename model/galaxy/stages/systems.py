@@ -57,6 +57,7 @@ from galaxy.stages.pattern import ArmPattern, invert_azimuths
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
 from galaxy.stages.photometry import lookup_columns
+from galaxy.stages.remnants import REMNANT_CATEGORIES, classify as remnants_of
 from galaxy.stages.vertical import POPULATIONS
 
 # The cell grid is the unit of regional materialisation, and its size is a real
@@ -595,8 +596,8 @@ def materialise(
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
                       "star_birth_radius", "star_metallicity", "star_alpha", "star_mass", "star_population",
                       "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
-                      "star_wind_luminosity")
-        } | {"star_wolf_rayet": empty.astype(np.int64)}, counts)
+                      "star_wind_luminosity", "star_remnant_mass")
+        } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}, counts)
     out = {name: np.concatenate(parts) for name, parts in columns.items()}
     # What each star emits, looked up rather than drawn: given its mass, age and abundance
     # the isochrones have already decided (rule B8). Per star, so a region's rows are the
@@ -611,6 +612,10 @@ def materialise(
     out["star_ionizing_photons"] = ionizing_photons(L, T)
     out["star_wind_luminosity"] = wind_luminosity(L, T, more["mass_now"], 10.0 ** out["star_metallicity"])
     out["star_wolf_rayet"] = wolf_rayet(out["star_mass"], L, T, more["label"])
+    # S29 (BUILD_II Phase 4): what a dead star is. Dead is the NaN the lookup above already put
+    # in its luminosity; the class and the remnant's mass follow from its initial mass, and a
+    # planetary nebula from how long ago the same table says it died - per star, as above (D60).
+    out["star_remnant"], out["star_remnant_mass"] = remnants_of(out["star_mass"], out["star_age"], out["star_metallicity"], L)
     return Catalogue.of(out, counts)
 
 
@@ -637,21 +642,69 @@ STAR_COUNT_TOTAL = FieldDecl(
 )
 
 
+REMNANT_MASS_FRACTION = FieldDecl(
+    name="remnant_mass_fraction", label="Mass fraction in stellar remnants", unit="dimensionless",
+    kind=Kind.SCALAR, meaningful_zero=True,
+    about=(
+        "Of the mass in stars and their remnants, the share in white dwarfs, neutron stars and black "
+        "holes: every step of the formation history, and the bulge, times what a Kroupa population "
+        "leaves per unit mass formed at that age and [Fe/H] along the PARSEC isochrones - the stars "
+        "still alive at their present mass, and every dead one's remnant (Cummings et al. 2018's "
+        "initial-final mass relation for the white dwarfs; 1.33 and 7.8 M☉ for the neutron stars and "
+        "black holes, the measured Galactic means). A population integral, not a count of the sample. "
+        "The isochrones return more of the mass formed than the star formation law's instantaneous "
+        "return fraction does, so stars and remnants together come to less than the stellar mass the "
+        "model publishes; this is a share of the former."
+    ),
+)
+
+PLANETARY_NEBULA_COUNT = FieldDecl(
+    name="planetary_nebula_count", label="Planetary nebulae", unit="count", kind=Kind.SCALAR,
+    meaningful_zero=True,
+    about=(
+        "How many planetary nebulae the galaxy holds today: the rate at which stars that will become "
+        "white dwarfs are dying, from the same population integral, times the 27 000 years a nebula "
+        "stays visible (Badenes, Maoz & Ciardullo 2015). The sample of 2 × 10⁴ stars almost never "
+        "catches one. Stars older than 12.6 Gyr, where the isochrones end, die no more and make none."
+    ),
+)
+
+
 def compute_population(ctx: Context) -> Mapping[str, Any]:
+    from galaxy.stages.light import bulge_abundance
+    from galaxy.stages.remnants import budget
+
     mean_mass = imf_mean_mass()
+    R, t = ctx.grid.R, ctx.grid.t
+    ret = float(ctx.constants["RETURN_FRACTION"])
+    locked = np.asarray(ctx.fields["stars_formed_history"], dtype=float)
+    # S29 (BUILD_II Phase 4): what the locked mass is made of, integrated as the light is.
+    mass = budget(
+        locked, ctx.fields["feh_history"], R, t, float(ctx.grid.spec.t_max), ret,
+        float(ctx.fields["bulge_stellar_mass"]), float(t[-1] - t[0]),
+        bulge_abundance(R, locked / (1.0 - ret), ctx.fields["feh_history"], float(ctx.fields["bulge_scale_radius"])),
+    )
     return {
         "mean_stellar_mass": mean_mass,
         "star_count_total": float(ctx.fields["stellar_mass_total"]) / mean_mass,
+        "remnant_mass_fraction": mass.remnant_fraction,
+        "planetary_nebula_count": mass.planetary_nebulae,
     }
 
 
 POPULATION = IMPLEMENTATIONS.register(
     Stage(
         id="population", slot="population", checkpoint=5,
-        about="IMF integrals: the mean stellar mass and how many stars the galaxy has. No draws (D55).",
+        about=(
+            "IMF integrals: the mean stellar mass, how many stars the galaxy has, what share of its "
+            "stellar mass is in remnants and how many planetary nebulae it holds. No draws (D55)."
+        ),
         compute=compute_population,
-        requires=("stellar_mass_total",),
-        publishes=(MEAN_STELLAR_MASS, STAR_COUNT_TOTAL),
+        reads_constants=("RETURN_FRACTION",),
+        requires=(
+            "stellar_mass_total", "stars_formed_history", "feh_history", "bulge_stellar_mass", "bulge_scale_radius",
+        ),
+        publishes=(MEAN_STELLAR_MASS, STAR_COUNT_TOTAL, REMNANT_MASS_FRACTION, PLANETARY_NEBULA_COUNT),
     )
 )
 
@@ -753,6 +806,29 @@ STAR_WOLF_RAYET = FieldDecl(
     ),
 )
 
+STAR_REMNANT = FieldDecl(
+    name="star_remnant", label="Remnant", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
+    of="star", categories=REMNANT_CATEGORIES,
+    ramp=Palette(("#5a5a5a", "#d8e4ff", "#9b6cff", "#111111", "#4cf0b0")), provenance="seeded",
+    about=(
+        "What a star that has died is, looked up rather than drawn: a star is dead where the PARSEC "
+        "isochrones no longer hold it (its luminosity is NaN), and then a white dwarf below 8.5 M☉ of "
+        "initial mass (the lowest observed core-collapse progenitor, Smartt 2009), a neutron star up to "
+        "25 M☉ and a black hole above it (Heger et al. 2003) - solar-metallicity boundaries applied at "
+        "every [Fe/H]. A white dwarf's progenitor that left the AGB less than 27 000 years ago "
+        "(Badenes, Maoz & Ciardullo 2015) is a planetary nebula instead. A living star is none."
+    ),
+)
+STAR_REMNANT_MASS = _column(
+    "star_remnant_mass", "Remnant mass", "Msun",
+    "The mass of a dead star's remnant: a white dwarf's from its initial mass by Cummings et al. "
+    "2018's initial-final mass relation, fitted with the same PARSEC isochrones the catalogue reads "
+    "(0.55 M☉ from a 0.8 M☉ star, 1.23 from an 8 M☉ one); a neutron star 1.33 M☉ and a black hole 7.8, "
+    "the measured means of the Galaxy's double neutron stars and X-ray-binary black holes. A black "
+    "hole's mass certainly depends on its metallicity; no fit for that has been read, so it does not "
+    "here. NaN for a living star, which has no remnant.",
+    ramp=Ramp("cividis", scale="log"))
+
 STAR_POPULATION = FieldDecl(
     name="star_population", label="Population", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=POPULATIONS, ramp=Palette(("#4c9be8", "#e8894c")),
@@ -810,6 +886,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
             STAR_MAGNITUDE_V, STAR_IONIZING_PHOTONS, STAR_WIND_LUMINOSITY, STAR_WOLF_RAYET,
+            STAR_REMNANT, STAR_REMNANT_MASS,
         ),
     )
 )

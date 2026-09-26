@@ -368,10 +368,23 @@ _FINE_AGES = np.concatenate([[0.0], np.geomspace(1e5, 2e10, 4000)])  # yr
 STEP_QUANTITIES: tuple[str, ...] = ("light", "red", "green", "blue", *BANDS, "mbol", "ionizing")
 
 
+def on_fine_ages(per_iso: np.ndarray) -> np.ndarray:
+    """(n_fine, n_mh, k): a per-isochrone table ``(n_age, n_mh, k)`` read at every fine age, as
+    :func:`population_at` reads the light (linear in log age, clamped to the table's span)."""
+    younger, frac, _ = _blend(_FINE_AGES / 1e9, np.zeros(_FINE_AGES.shape))
+    return (1.0 - frac)[:, None, None] * per_iso[younger] + frac[:, None, None] * per_iso[younger + 1]
+
+
+def cumulative_over_age(f: np.ndarray) -> np.ndarray:
+    """(n_mh, n_fine, k): ∫₀^τ f(τ') dτ', τ in yr, of a quantity already on the fine ages."""
+    steps = np.diff(_FINE_AGES)[:, None, None] * 0.5 * (f[1:] + f[:-1])
+    cumulative = np.concatenate([np.zeros((1, *f.shape[1:])), np.cumsum(steps, axis=0)])
+    return np.ascontiguousarray(np.moveaxis(cumulative, 0, 1))
+
+
 @functools.cache
 def _age_integrals() -> np.ndarray:
     """(n_mh, n_fine, len(STEP_QUANTITIES)): ∫₀^τ f(τ') dτ' per unit mass formed, τ in yr."""
-    tab = isochrones()
     pop = population_light()
     per_iso = np.concatenate([
         pop.light_per_mass[..., None],
@@ -380,11 +393,7 @@ def _age_integrals() -> np.ndarray:
         pop.bolometric_flux[..., None],
         pop.ionizing_per_mass[..., None],
     ], axis=-1)  # (n_age, n_mh, k)
-    younger, frac, _ = _blend(_FINE_AGES / 1e9, np.zeros(_FINE_AGES.shape))
-    f = (1.0 - frac)[:, None, None] * per_iso[younger] + frac[:, None, None] * per_iso[younger + 1]  # (n_fine, n_mh, k)
-    steps = np.diff(_FINE_AGES)[:, None, None] * 0.5 * (f[1:] + f[:-1])
-    cumulative = np.concatenate([np.zeros((1, *f.shape[1:])), np.cumsum(steps, axis=0)])
-    return np.ascontiguousarray(np.moveaxis(cumulative, 0, 1))
+    return cumulative_over_age(on_fine_ages(per_iso))
 
 
 def population_over(age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray, feh: np.ndarray) -> dict[str, np.ndarray]:
@@ -396,8 +405,15 @@ def population_over(age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray, feh: np.ndar
     and ``mbol`` as Σ 10^(−0.4 M) per M☉; ``ionizing`` in photons/s per M☉. Nearest metallicity,
     as everywhere in this module.
     """
+    per_step = steps_over(_age_integrals(), age_lo_gyr, age_hi_gyr, feh)
+    return {name: per_step[..., k] for k, name in enumerate(STEP_QUANTITIES)}
+
+
+def steps_over(table: np.ndarray, age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """``(..., n_t, k)``: the difference of a cumulative table ``(n_mh, n_fine, k)`` over each
+    step's ages [lo, hi] (Gyr) divided by its width in yr, read at each cell's nearest metallicity
+    — :func:`population_over`'s reading, for any table built by :func:`cumulative_over_age`."""
     tab = isochrones()
-    table = _age_integrals()  # (n_mh, n_fine, k)
     lo = np.clip(np.atleast_1d(np.asarray(age_lo_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
     hi = np.clip(np.atleast_1d(np.asarray(age_hi_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
     width = np.where(hi > lo, hi - lo, 1.0)
@@ -412,7 +428,7 @@ def population_over(age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray, feh: np.ndar
     # The nearest metallicity, as argmin |feh - mh| picks it (ties to the lower), by a search.
     mh = np.searchsorted(0.5 * (tab.mhs[1:] + tab.mhs[:-1]), feh, side="left")
     flat = mh * lo.size + np.arange(lo.size)
-    return {name: per_step[..., k].ravel()[flat] for k, name in enumerate(STEP_QUANTITIES)}
+    return per_step.reshape(-1, per_step.shape[-1])[flat]
 
 
 def ionizing_yield(feh: np.ndarray) -> np.ndarray:

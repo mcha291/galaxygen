@@ -205,6 +205,8 @@ def test_every_shared_field_is_sfhs_own(coarse, models):
              "star_luminosity", "star_temperature",
              # S28: looked up from the same moved ages and abundances
              "star_magnitude_v", "star_ionizing_photons", "star_wind_luminosity", "star_wolf_rayet",
+             # S29: what the dead stars are, from the same moved ages and abundances
+             "star_remnant", "star_remnant_mass",
              } | {n for n in b.fields if n.startswith("planet_")} | {
         "star_planet_count", "mean_planets_per_star", "giant_fraction_sample"}  # the planets' sample statistics
     same = [n for n in b.fields if n not in moved]

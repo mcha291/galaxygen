@@ -208,6 +208,15 @@ IONIZING_PHOTON_RATE_TOTAL = FieldDecl(
 )
 
 
+def bulge_abundance(R: np.ndarray, formed: np.ndarray, feh_history: np.ndarray, scale_radius: float) -> float:
+    """The bulge's [Fe/H]: the mass-weighted [Fe/H] of the stars formed at its scale radius (a
+    stated proxy — the bulge is a mass with no history). Shared with the remnants' integral."""
+    at = int(np.argmin(np.abs(R - scale_radius)))
+    weights = formed[at]
+    feh_row = np.nan_to_num(np.asarray(feh_history, dtype=float)[at], nan=0.0, neginf=-3.0, posinf=1.0)
+    return float(np.average(feh_row, weights=weights)) if weights.sum() > 0 else 0.0
+
+
 def compute(ctx: Context) -> Mapping[str, Any]:
     R, t = ctx.grid.R, ctx.grid.t
     locked = np.asarray(ctx.fields["stars_formed_history"], dtype=float)  # M☉/pc², (R, t)
@@ -230,10 +239,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     halpha = np.asarray(ctx.fields["sfr_surface_density"], dtype=float) * float(ctx.constants["HALPHA_PER_SFR"]) / PC_PER_KPC**2
 
     # The bulge: old, at the abundance of the stars formed where it sits (a stated proxy).
-    at = int(np.argmin(np.abs(R - float(ctx.fields["bulge_scale_radius"]))))
-    weights = formed[at]
-    feh_row = np.nan_to_num(np.asarray(ctx.fields["feh_history"], dtype=float)[at], nan=0.0, neginf=-3.0, posinf=1.0)
-    feh_bulge = float(np.average(feh_row, weights=weights)) if weights.sum() > 0 else 0.0
+    feh_bulge = bulge_abundance(R, formed, ctx.fields["feh_history"], float(ctx.fields["bulge_scale_radius"]))
     bulge_light, bulge_colour = population_at(np.array([age[0]]), np.array([feh_bulge]))
     bulge_formed = float(ctx.fields["bulge_stellar_mass"]) / (1.0 - float(ctx.constants["RETURN_FRACTION"]))
 
