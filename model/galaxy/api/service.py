@@ -884,6 +884,11 @@ class Service:
                 "cloud_forcing_parameter": float(constants["TURBULENCE_FORCING_B"]),
                 "cloud_lifetime": float(constants["GMC_PHASE_EMBEDDED"] + constants["GMC_PHASE_BLOWN_OPEN"]
                                         + constants["GMC_PHASE_DISPERSING"]),
+                # S40 (V3): the census's one central A_V, for the region regime's cloud interiors.
+                "cloud_extinction_v": float(_clouds.central_extinction_v(
+                    np.array([1.0e5]), np.array([_clouds.cloud_radius_pc(np.array([1.0e5]), float(constants["GMC_SURFACE_DENSITY"]))[0]]),
+                    float(constants["HII_MASS_PER_HYDROGEN"]), _clouds._grain_v_extinction(),
+                )[0]),
             },
             "columns": columns,
             "stages": list(ran),

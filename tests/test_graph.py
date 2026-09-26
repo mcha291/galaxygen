@@ -95,6 +95,7 @@ SEEDED_BASIC = {
     "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
     "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
+    "cloud_extinction_v",  # S40 (V3): the cloud's central A_V from its mass, size and the grain table
     "cloud_count_total", "cloud_mass_total", "cloud_forcing_parameter", "cloud_lifetime",
     # S33: which cluster a cloud holds, and the cluster census (a stage that reads systems_seed).
     "cloud_cluster_index",

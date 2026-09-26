@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, fields, inputs, region, render, stages, system } from "@interface/transport.js";
+import { arrays, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
@@ -169,6 +169,32 @@ export async function loadBrightest(
 ): Promise<Sample> {
   const got = await region(window, { ...query, stars, brightest, view: Array.from(view) }, { signal });
   return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
+}
+
+/** A census of one window (S40, V3): the columns as arrays and the header the route wrote. */
+export interface Census {
+  columns: Columns;
+  header: { level: number; cells: { ids: number[]; counts: number[] }; columns: string[]; [key: string]: unknown };
+}
+
+export type RegionWindowQuery = { r_min: number; r_max: number; phi_min: number; phi_max: number; level?: number };
+
+/** The clouds of a window, at a level (the census the region regime synthesises interiors from). */
+export async function loadClouds(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
+  const got = await clouds(window, query, { signal });
+  return { columns: got.arrays as Columns, header: got.header as Census["header"] };
+}
+
+/** The clusters of a window with their HII regions' and bubbles' columns. */
+export async function loadClusters(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
+  const got = await clusters(window, query, { signal });
+  return { columns: got.arrays as Columns, header: got.header as Census["header"] };
+}
+
+/** The supernova remnants of a window. */
+export async function loadRemnants(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
+  const got = await remnants(window, query, { signal });
+  return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 
 /** One render (S38): each published component's response per cell in each filter of the set sent. */
