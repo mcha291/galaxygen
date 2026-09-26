@@ -27,7 +27,9 @@ export function levelFor(across: number): number {
  * on every sample: the vitest asserts the CPU side's distribution, the shader draws it.
  */
 export function hash3(x: number, y: number, z: number, seed: number): number {
-  let h = (x * 374761393 + y * 668265263 + z * 2147483647 + seed * 1597334677) | 0;
+  // Math.imul keeps every product in 32 bits, as the shader's uint arithmetic does: a float64 product of a
+  // large seed loses its low bits before `| 0`, and the two sides would disagree.
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(z | 0, 2147483647) + Math.imul(seed | 0, 1597334677)) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   h = h ^ (h >>> 16);
   return (h >>> 0) / 4294967296; // [0, 1)
@@ -94,4 +96,131 @@ export function densityRatio(
 /** How a cloud's rows are keyed: the same (cell, index) path the model names it by (§5a), as one integer seed. */
 export function cloudSeed(cell: number, index: number): number {
   return ((cell & 0xffff) << 15) ^ (index & 0x7fff);
+}
+
+// --- the objects a region volume draws (RegionVolume.tsx) ---------------------------------------------
+
+/** Unit conversions, not physics: a parsec in cm (IAU 2015, exact) and the Sun's luminosity the model uses. */
+export const CM_PER_PC = 3.0856775814913673e18;
+export const L_SUN_ERG_S = 3.828e33;
+/** erg s⁻¹ cm⁻³ to L☉ pc⁻³: the model publishes emissivity per volume in cgs (§4); the march integrates in pc. */
+export const ERG_S_CM3_TO_LSUN_PC3 = CM_PER_PC ** 3 / L_SUN_ERG_S;
+/** Magnitudes to optical depth: 2.5 log10 e, a definition. */
+export const MAG_PER_TAU = 2.5 / Math.LN10;
+
+/**
+ * The most objects one region volume marches, and the share each kind gets — a display budget, stated: every
+ * pixel loops over them, so the loop's length is bounded by a number, not by the window (a level-1 window holds
+ * hundreds of clouds). The kept ones are the heaviest clouds and the brightest regions and shells.
+ */
+export const MAX_OBJECTS = 256;
+export const BUDGET = { clouds: 128, hii: 64, shells: 64 } as const;
+/** Floats per object in the table the shader reads: four RGBA texels. */
+export const OBJECT_FLOATS = 16;
+export const KIND = { cloud: 0, hii: 1, shell: 2 } as const;
+
+type Col = ArrayLike<number | bigint>;
+const num = (c: Col | undefined, i: number): number => (c ? Number(c[i]) : Number.NaN);
+
+export interface RegionObjects {
+  /** OBJECT_FLOATS per object: centre (kpc, scene) and radius; kind, cell, index, σ_s; kind-specific; a cavity. */
+  data: Float32Array;
+  count: number;
+  /** Scene-space bounds of every object's sphere, kpc: the box the march is drawn over. */
+  min: [number, number, number];
+  max: [number, number, number];
+}
+
+function scene(radius: number, azimuth: number, height: number): [number, number, number] {
+  return [radius * Math.cos(azimuth), height, -radius * Math.sin(azimuth)];
+}
+
+/**
+ * The region's clouds, HII regions and bubble shells as the table the shader marches, within the budget.
+ * - a cloud: its sphere, its seed path (cell, index), σ_s, its gradient, κ_V per kpc from the census's central
+ *   A_V through a uniform sphere (τ over the diameter), and the cavity its cluster's Strömgren sphere carves;
+ * - an HII region: the Strömgren sphere at its cluster, its Hα emissivity per volume in L☉ pc⁻³;
+ * - a shell: the bubble's sphere, its shell emissivity in L☉ pc⁻³, its thickness.
+ * Lengths from the routes are in pc except positions (kpc); a row with a non-finite size is skipped.
+ */
+export function packObjects(
+  clouds: Record<string, Col>,
+  clusters: Record<string, Col>,
+  extinctionV: number,
+  budget: { clouds: number; hii: number; shells: number } = BUDGET,
+): RegionObjects {
+  type Obj = { weight: number; row: number[] };
+  const pick = (list: Obj[], n: number) => list.sort((a, b) => b.weight - a.weight).slice(0, n);
+
+  // Clusters by name, for the cavity a cloud's cluster carves.
+  const clusterAt = new Map<string, number>();
+  const nClusters = clusters.cluster_radius?.length ?? 0;
+  for (let i = 0; i < nClusters; i += 1) clusterAt.set(`${num(clusters.cell, i)}:${num(clusters.index, i)}`, i);
+
+  const cloudList: Obj[] = [];
+  const nClouds = clouds.cloud_radius?.length ?? 0;
+  const tauCentre = extinctionV / MAG_PER_TAU;
+  for (let i = 0; i < nClouds; i += 1) {
+    const sizePc = num(clouds.cloud_size, i);
+    if (!(sizePc > 0) || !Number.isFinite(sizePc)) continue;
+    const [x, y, z] = scene(num(clouds.cloud_radius, i), num(clouds.cloud_azimuth, i), num(clouds.cloud_height, i));
+    const r = sizePc / 1000;
+    let cavity = [0, 0, 0, 0];
+    const host = num(clouds.cloud_cluster_index, i);
+    if (host >= 0) {
+      const j = clusterAt.get(`${num(clouds.cell, i)}:${host}`);
+      if (j !== undefined) {
+        const rs = num(clusters.hii_stromgren_radius, j) / 1000;
+        if (rs > 0) cavity = [...scene(num(clusters.cluster_radius, j), num(clusters.cluster_azimuth, j), num(clusters.cluster_height, j)), rs];
+      }
+    }
+    cloudList.push({
+      weight: num(clouds.cloud_mass, i),
+      row: [x, y, z, r, KIND.cloud, num(clouds.cell, i), num(clouds.index, i), num(clouds.cloud_density_pdf_width, i),
+        num(clouds.cloud_density_gradient, i) || 0, num(clouds.cloud_gradient_angle, i) || 0, tauCentre / (2 * r), 0, ...cavity],
+    });
+  }
+
+  const hiiList: Obj[] = [];
+  const shellList: Obj[] = [];
+  for (let i = 0; i < nClusters; i += 1) {
+    const [x, y, z] = scene(num(clusters.cluster_radius, i), num(clusters.cluster_azimuth, i), num(clusters.cluster_height, i));
+    const rs = num(clusters.hii_stromgren_radius, i) / 1000;
+    const eps = num(clusters.hii_halpha_emissivity, i) * ERG_S_CM3_TO_LSUN_PC3;
+    if (rs > 0 && Number.isFinite(eps) && eps > 0) {
+      hiiList.push({ weight: eps * rs ** 3, row: [x, y, z, rs, KIND.hii, num(clusters.cell, i), num(clusters.index, i), 0, eps, 0, 0, 0, 0, 0, 0, 0] });
+    }
+    const rb = num(clusters.bubble_radius, i) / 1000;
+    const thick = num(clusters.bubble_shell_thickness, i) / 1000;
+    const epsShell = num(clusters.bubble_shell_emissivity, i) * ERG_S_CM3_TO_LSUN_PC3;
+    if (rb > 0 && thick > 0 && Number.isFinite(epsShell) && epsShell > 0) {
+      const shellVolume = rb ** 3 - Math.max(0, rb - thick) ** 3;
+      shellList.push({ weight: epsShell * shellVolume, row: [x, y, z, rb, KIND.shell, num(clusters.cell, i), num(clusters.index, i), 0, epsShell, Math.min(thick, rb), 0, 0, 0, 0, 0, 0] });
+    }
+  }
+
+  const kept = [...pick(cloudList, budget.clouds), ...pick(hiiList, budget.hii), ...pick(shellList, budget.shells)].slice(0, MAX_OBJECTS);
+  const data = new Float32Array(MAX_OBJECTS * OBJECT_FLOATS);
+  const min: [number, number, number] = [Infinity, Infinity, Infinity];
+  const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+  kept.forEach((o, k) => {
+    data.set(o.row, k * OBJECT_FLOATS);
+    for (let a = 0; a < 3; a += 1) {
+      min[a] = Math.min(min[a], o.row[a] - o.row[3]);
+      max[a] = Math.max(max[a], o.row[a] + o.row[3]);
+    }
+  });
+  return { data, count: kept.length, min, max };
+}
+
+/** The table reordered nearest-first from `eye`, so the march composites front to back (overlaps approximate). */
+export function sortedFrom(objects: RegionObjects, eye: readonly [number, number, number], out: Float32Array): Float32Array {
+  const order = Array.from({ length: objects.count }, (_, k) => k);
+  const dist = order.map((k) => {
+    const o = k * OBJECT_FLOATS;
+    return Math.hypot(objects.data[o] - eye[0], objects.data[o + 1] - eye[1], objects.data[o + 2] - eye[2]) - objects.data[o + 3];
+  });
+  order.sort((a, b) => dist[a] - dist[b]);
+  order.forEach((k, slot) => out.set(objects.data.subarray(k * OBJECT_FLOATS, (k + 1) * OBJECT_FLOATS), slot * OBJECT_FLOATS));
+  return out;
 }

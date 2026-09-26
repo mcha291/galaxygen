@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { FIELD_SIGMA, LEVEL_KPC, OCTAVE_NORM, OCTAVE_SIGMA, cloudSeed, densityRatio, hash3, levelFor, unitField, valueNoise } from "./region";
+import {
+  BUDGET,
+  ERG_S_CM3_TO_LSUN_PC3,
+  FIELD_SIGMA,
+  KIND,
+  LEVEL_KPC,
+  MAG_PER_TAU,
+  OBJECT_FLOATS,
+  OCTAVE_NORM,
+  OCTAVE_SIGMA,
+  cloudSeed,
+  densityRatio,
+  hash3,
+  levelFor,
+  packObjects,
+  sortedFrom,
+  unitField,
+  valueNoise,
+} from "./region";
 import { REGIME_KPC } from "./regimes";
 
 describe("the level the view asks for", () => {
@@ -70,5 +88,56 @@ describe("the seeded noise", () => {
     const down = densityRatio(-0.9, 0, 0, 3, 0.001, 0.5, 0);
     expect(up).toBeGreaterThan(down);
     expect(densityRatio(-1, 0, 0, 3, 0.001, 5, 0)).toBeGreaterThan(0);
+  });
+});
+
+describe("the region's object table", () => {
+  const clouds = {
+    cloud_radius: [8, 8.1], cloud_azimuth: [0, 0.01], cloud_height: [0, 0.01], cloud_size: [10, 20], cloud_mass: [1e5, 2e5],
+    cloud_density_pdf_width: [1.4, 1.2], cloud_density_gradient: [0.3, 0.1], cloud_gradient_angle: [0.5, 1],
+    cloud_cluster_index: [0, -1], cell: [300, 300], index: [0, 1],
+  };
+  const clusters = {
+    cluster_radius: [8.001], cluster_azimuth: [0], cluster_height: [0], hii_stromgren_radius: [2], hii_halpha_emissivity: [1e-20],
+    bubble_radius: [9], bubble_shell_thickness: [1.5], bubble_shell_emissivity: [2e-21], cell: [300], index: [0],
+  };
+
+  it("packs clouds, regions and shells with their units and cavities", () => {
+    const t = packObjects(clouds, clusters, 2.9696);
+    expect(t.count).toBe(4);
+    // the heaviest cloud first: the 2e5 one, radius 20 pc
+    expect(t.data[3]).toBeCloseTo(0.02, 6);
+    expect(t.data[4]).toBe(KIND.cloud);
+    // kappa_V: the central tau over the diameter, per kpc
+    expect(t.data[10]).toBeCloseTo(2.9696 / MAG_PER_TAU / 0.04, 2);
+    // the 1e5 cloud (second) carries its cluster's cavity: 2 pc at the cluster
+    const second = OBJECT_FLOATS;
+    expect(t.data[second + 15]).toBeCloseTo(0.002, 6);
+    expect(t.data[second + 12]).toBeCloseTo(8.001, 5);
+    // an HII sphere and a shell, emissivities in Lsun/pc^3 (float32 storage)
+    const hii = 2 * OBJECT_FLOATS;
+    expect(t.data[hii + 4]).toBe(KIND.hii);
+    expect(t.data[hii + 8] / (1e-20 * ERG_S_CM3_TO_LSUN_PC3)).toBeCloseTo(1, 5);
+    expect(t.data[3 * OBJECT_FLOATS + 4]).toBe(KIND.shell);
+    expect(t.data[3 * OBJECT_FLOATS + 9]).toBeCloseTo(0.0015, 6);
+    expect(t.min[0]).toBeLessThan(8);
+    expect(t.max[0]).toBeGreaterThan(8);
+  });
+
+  it("keeps the budget and sorts nearest-first", () => {
+    const n = 300;
+    const many = {
+      cloud_radius: Array(n).fill(8), cloud_azimuth: Array.from({ length: n }, (_, i) => i * 1e-3), cloud_height: Array(n).fill(0),
+      cloud_size: Array(n).fill(5), cloud_mass: Array.from({ length: n }, (_, i) => i + 1), cloud_density_pdf_width: Array(n).fill(1),
+      cloud_density_gradient: Array(n).fill(0), cloud_gradient_angle: Array(n).fill(0), cloud_cluster_index: Array(n).fill(-1),
+      cell: Array(n).fill(1), index: Array.from({ length: n }, (_, i) => i),
+    };
+    const t = packObjects(many, { cluster_radius: [] }, 3);
+    expect(t.count).toBe(BUDGET.clouds);
+    expect(t.data[6]).toBe(n - 1); // the heaviest kept first
+    const out = sortedFrom(t, [8, 0, -0.3], new Float32Array(t.data.length));
+    const dist = (k: number) => Math.hypot(out[k * OBJECT_FLOATS] - 8, out[k * OBJECT_FLOATS + 1], out[k * OBJECT_FLOATS + 2] + 0.3);
+    expect(dist(0)).toBeLessThanOrEqual(dist(1));
+    expect(dist(1)).toBeLessThanOrEqual(dist(t.count - 1));
   });
 });

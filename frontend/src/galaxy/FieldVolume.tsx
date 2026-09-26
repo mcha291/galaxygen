@@ -18,13 +18,14 @@ import {
   ShaderMaterial,
   Vector2,
   Vector3,
+  Vector4,
   WebGLRenderTarget,
 } from "three";
 
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, WHITE_KELVIN, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { RING_ROWS, marchHalfHeight, planeTexture } from "./regimes";
+import { RING_ROWS, type RegionWindow, marchHalfHeight, planeTexture } from "./regimes";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -108,6 +109,10 @@ const FRAGMENT = /* glsl */ `
   uniform float bulgeScale;
   uniform vec3 bulgeLight;
   uniform float gain;
+  // The region regime's window (r_min, r_max, phi_min, phi_max) and how far its resolved HII spheres have
+  // faded in: inside it the field's HII steps back by the same weight (S40, no double counting).
+  uniform vec4 regionWindow;
+  uniform float hiiFade;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -144,6 +149,10 @@ const FRAGMENT = /* glsl */ `
   }
   vec3 readRing(float r, float row) {
     return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (row + 0.5) / ${RING_ROWS.count}.0), 0.0).rgb;
+  }
+
+  float inRegion(vec2 rp) {
+    return (rp.x >= regionWindow.x && rp.x <= regionWindow.y && rp.y >= regionWindow.z && rp.y <= regionWindow.w) ? 1.0 : 0.0;
   }
 
   // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
@@ -201,7 +210,7 @@ const FRAGMENT = /* glsl */ `
         float cDig = column(p0.y, p1.y, digHeight, ds);
         emitted += readPolar(plane, rp).rgb * cStars;
         emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
-        emitted += readPolar(hii, rp).rgb * cHii + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
+        emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
         depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
       }
       // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself.
@@ -222,6 +231,9 @@ interface Props {
   weight?: number;
   /** The filter set the field is seen through (filters.json): the model integrates it, per component. */
   filterSet?: FilterSetName;
+  /** The region regime's window and weight (S40): the field's HII fades there as the resolved spheres fade in. */
+  regionWindow?: RegionWindow | null;
+  hiiFade?: number;
 }
 
 /**
@@ -231,7 +243,7 @@ interface Props {
  * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
  * responses over the white point, each component in the layer the model names.
  */
-export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" }: Props) {
+export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0 }: Props) {
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
   const lit = Boolean(declared("disc_surface_brightness") && declared("disc_light_temperature"));
@@ -304,6 +316,8 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
         bulgeScale: { value: Math.max(bulgeScale, 1e-3) },
         bulgeLight: { value: new Vector3(...bulgeLight(light.header.bulge, white)) },
         gain: { value: 0 },
+        regionWindow: { value: new Vector4(0, 0, 0, 0) },
+        hiiFade: { value: 0 },
       },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
@@ -341,7 +355,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     );
     quad.frustumCulled = false;
     quad.renderOrder = -1;
-    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0 } };
+    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0, region: "" } };
   }, [mesh]);
 
   useEffect(
@@ -369,16 +383,21 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     const height = Math.max(1, Math.round(buffer.y * scale));
     const last = offscreen.last;
     camera.updateMatrixWorld();
+    const w = regionWindow;
+    const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
-      last.width !== width || last.height !== height;
+      last.width !== width || last.height !== height || last.region !== region;
     // React may build the memo above twice (StrictMode), and adding the mesh to the second scene
     // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
     const reattached = mesh.parent !== offscreen.scene;
     if (reattached) offscreen.scene.add(mesh);
     if (!moved && !reattached) return;
     if (last.width !== width || last.height !== height) offscreen.target.setSize(width, height);
-    (mesh.material as ShaderMaterial).uniforms.gain.value = gain;
+    const uniforms = (mesh.material as ShaderMaterial).uniforms;
+    uniforms.gain.value = gain;
+    (uniforms.regionWindow.value as Vector4).set(w?.r_min ?? 0, w?.r_max ?? 0, w?.phi_min ?? 0, w?.phi_max ?? 0);
+    uniforms.hiiFade.value = region ? hiiFade : 0;
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);
@@ -391,6 +410,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     last.gain = gain;
     last.width = width;
     last.height = height;
+    last.region = region;
   }, 0.5);
 
   void size; // re-render on resize so the target follows the canvas
