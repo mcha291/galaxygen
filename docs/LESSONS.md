@@ -859,3 +859,22 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [all] A plan's `[verified: tests/…]` can cite a test that does not exist. BUILD_II's Phase 1b gate
   cited the ring-mean contrast test; nothing asserted it until S26 wrote it. Read the cited test
   before trusting the gate, as S25 read A1's cited file (D173, D175).
+
+## From S27 (BUILD_II Phase 2, the first Opus subagent row)
+
+- [field] A per-stage provenance rule meets its limit the day a second implementation of a slot
+  reads one seeded field: label everything seeded and the label lies about the histories and
+  propagates through every shared stage downstream. The honest fix is structural — compute the
+  shared fields in a view that cannot see the new read (`Stage.extends`) — not a convention that
+  the extension "does not use" what it can reach (B13, D176).
+- [field] When a plan states a normalisation and a conservation law in the same paragraph, check
+  that they are the same statement. "Gas-weighted mean 1" and "integrates to the axisymmetric SFR"
+  differ by the modulation's correlation with the gas, a fifth of the star formation at R₀; the
+  conservation law is the physics and the other reading is pinned in a test so it stays visible (D176).
+- [catalogue] A second model must not rename a star. Keep the cell counts on the field both models
+  share and move what happens *inside* a cell; the name `(cell, index)` is a contract the planets
+  stage and the API hold, and per-region determinism (D60) means every table covers every ring and
+  sector whatever was asked for (D176).
+- [close] A delegated row needs the orchestrator's review to read the *core* diff first: the subagent's
+  one-paragraph justification for a machinery change is where a design either holds or does not,
+  and the tests it wrote are the second thing to read, not the first (D176).

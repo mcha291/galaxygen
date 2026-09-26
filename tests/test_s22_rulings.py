@@ -234,7 +234,7 @@ def test_no_green_row_is_unconditioned(judged):
         for name in ("simple", "advanced") if cells[1] == "both" else (cells[1],):
             listed[name] |= rows
 
-    column = {"basic": "advanced"}  # the historical column each registered model descends from
+    column = {"basic": "advanced", "azimuthal": "advanced"}  # the historical column each registered model descends from (azimuthal: S27, basic's rows)
     # Rows the sealed table lists as green that have since left, each with the decision that
     # took them out: the list is a historical record and is not edited, so the gate is read as
     # "every green row was conditioned when it was green, and every row that left has a reason".

@@ -46,6 +46,12 @@ FAILED = {
 # star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
 # (at its zero-width target), row 22 is #47's.
 DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80}}
+# S27 (BUILD_II Phase 2): the azimuthal model is basic with the sfh slot swapped for one that adds
+# an (R, phi) modulation and changes no radial field, and every row is radial or vertical, so its
+# tables are basic's -- by reference, so that they cannot drift apart. test_sfh_azimuthal asserts
+# the rows themselves are equal, number for number.
+for _table in (VERDICTS, SUMMARY, FAILED, DEBTS):
+    _table["azimuthal"] = _table["basic"]
 # S24: row 21 fails at a zero-width target (0.11, no quoted uncertainty) — debt #17's defect,
 # not the prescription's. It could not pass however well the physics were done.
 
@@ -83,6 +89,8 @@ def test_the_ledger_is_one_since_d170():
     assert spec.MISSES[3].debt == 11 and spec.MISSES[3].model is None and spec.MISSES[3].since == "S20"
     assert {m.model for m in spec.MISSES.values()} <= {None, "basic"}
     assert spec.misses("basic") == dict(spec.MISSES)
+    # S27: every recorded miss is unqualified, so the azimuthal model is judged against the same ledger.
+    assert spec.misses("azimuthal") == dict(spec.MISSES)
 
 
 def test_an_unexplained_failure_stops_the_run():

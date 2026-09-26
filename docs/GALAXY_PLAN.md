@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **26 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **27 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -33,7 +33,7 @@
 | ☑ | 24 | **Recorded retrospectively (D171).** The render plan's model side: the PARSEC table and per-star photometry (M2, D164); the `ism` stage, #79 revisited and discharged, row 21 judged for the first time (D163); the disc's unresolved light, dust and bloom (D165); Hα and the bulge's light (D166); the ray-marched field regime and the three regimes (D167); the brightest-N mode (D168); [α/Fe] on the catalogue (D169); **one model, `basic`** (D170). Ran on `main` with no session branch | desktop | — | **Opus 5**, Opus 5.5, **Fable 5.1** | s24 | 2026-09-25 |
 | ☑ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten — the stage graph acyclic, iteration inside a stage when termination is guaranteed; the 8× it cited was never measured (D173); **#26 and #3 re-ruled carried**: a probe shows the retained budget is the root of a contraction map inside checkpoint 1, f* 0.338 against the input's 0.35. The pattern branch ahead of `sfh` on the checkpoint-1 curve **and the λ_d scale length** (the plan missed the second `sfh` field); **checkpoints 3 and 4 swap** (Pattern, then star formation) so Phase 2 can read the pattern; rows 15–17 measured before and after — **row 15 4.883 → 5.210, out by 0.01, recorded under new #80** (a recalled ratio's referent moved; not retuned), 16 and 17 pass; the arm number's 2-or-4 draw recorded (D174) | desktop | **Fable** | **Fable 5.1** | s25 | 2026-09-26 |
 | ☑ | 26 | **Phase 1b.** The swing-amplification window derived from `disc_dominance` and `shear_rate` (X₂ = 2/f_d, the review's 1/f_d ≤ m ≤ 2/f_d); the arm number drawn from {2…6} with odds the window sets — 2 or 3 at the defaults, four to six for a halo-dominated disc (flocculent reachable); the arm amplitude's mean derived from the window between the flocculent and grand-design arm–interarm contrasts (Elmegreen+ 2011, recomputed from Table 2), residual seeded; the bar amplitude seeded about the S4G median A₂ (Díaz-García+ 2016, 587 rows reduced); **`arm_amplitude` and `bar_amplitude` removed, 7 controls**; rows 15–17 unmoved; **#23 discharged** (D175) | desktop | **Fable** | **Fable 5.1** | s26 | 2026-09-26 |
-| ☐ | 27 | **Phase 2.** `sfh_azimuthal` publishing one (R, φ) star-formation modulation, no φ on the histories; the `azimuthal` model declared from `BASIC`'s tuple; the redistribution asserted; the model toggle back | desktop | Opus | — | s27 | — |
+| ☑ | 27 | **Phase 2.** `sfh_azimuthal` **extends** `sfh` (new `Stage.extends`: the shared histories computed by `sfh` in its own view, so they stay derived) and publishes one (R, φ) field, `sfr_modulation` — the law applied per cell to gas that follows the contrast, ring mean 1 to 10⁻¹⁶, total SFR conserved to 10⁻¹⁶ (the plan's "gas-weighted mean 1" and "integrates to the axisymmetric SFR" cannot both hold; the gate's chosen); the `azimuthal` model from `BASIC`'s tuple, one slot different; every acceptance row identical in both models; the catalogue's young stars (< 0.1 Gyr, #81) placed by the modulation with cell counts and names unchanged; the toggle returns data-driven; timings' dead `advanced` rows now measure `azimuthal` (D176). Built by an Opus subagent in a worktree, reviewed and closed by the orchestrator | desktop | Opus | **Opus 5.5** (subagent), Fable 5.1 (review, close) | s27 | 2026-09-26 |
 | ☐ | 28 | **Phase 3.** The PARSEC table gains UBVRIJHK; rows 25–28 (M_B, M_V, B − V, Υ_V from BHG16 Table 2); Q(H⁰) ruled and published per star and per radius; wind luminosity; the Wolf–Rayet proxy; the input-sweep instrument for Tully–Fisher | desktop | Opus | — | s28 | — |
 | ☐ | 29 | **Phase 4.** Remnants by an initial–final mass relation, `star_remnant` and `remnant_mass_fraction`; planetary nebulae flagged with their duration | desktop | Opus | — | s29 | — |
 | ☐ | 30 | **Phase 6.** Core-collapse and Ia rates published with two sourced rows; the galactic habitable zone built and deliberately unjudged | desktop | Opus | — | s30 | — |
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
+**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance

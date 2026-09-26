@@ -209,6 +209,11 @@ class Registry(Generic[T]):
         name = self._key(item)
         if name in self._items:
             raise DuplicateRegistration(f"{self._what} {name!r} is already registered")
+        # What must hold for an item production runs, and need not for an instrument's copy of
+        # it (Stage.validate_registration, S27): checked here, at the one door into production.
+        validate = getattr(item, "validate_registration", None)
+        if callable(validate):
+            validate()
         self._items[name] = item
         return item
 

@@ -689,20 +689,20 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80 | 15 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81 | 16 |
 
-So the board's **26 open** is 11 permanent and 15 carried, and no item is unruled. (S22
+So the board's **27 open** is 11 permanent and 16 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
-discharged #23, D175.) The eleven
+discharged #23, D175; S27 opened #81, the young-star cut, D176.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The fifteen carried ones are not fifteen mechanisms.** Four of them — 19, 27, 49 and the
+**The sixteen carried ones are not sixteen mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -711,8 +711,9 @@ reservoir half of 47 — are the bar (#21, permanent). Two — 3 and 26 — are 
 budget as the root of a monotone function of itself inside checkpoint 1, the way the
 contraction is solved, with the wind's mass loss a plain forward pass at checkpoint 3 (S25,
 D173). One — 80 — is a recalled constant whose referent moved with the pattern (S25, D174),
-closable by reading a source. That leaves 28, 33, 39, 42, 43 and 70, which are five
-instrument or bookkeeping statements and one kernel width.
+closable by reading a source; one — 81 — is a cut standing where a spiral pattern speed should
+(S27, D176). That leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping
+statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -2813,6 +2814,22 @@ never been judged in twenty-three sessions.
    the 2.6 kpc of row 4: 1.92, which with the λ_d length 2.605 reads 5.01. That would make the row
    what #21 already says it is — a check on R_d against BHG16's 2.6 — and setting it is the
    owner's or Audit III's call (B5: not retuned here). Still carried.
+81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
+   In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
+   today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
+   0.1 Gyr is BUILD_II Phase 2's own "an arm crossing is ~100 Myr", stated there without a source
+   and tagged `[inferred]` in `systems.py`; it is a sharp cut, and a decaying weight would be a second
+   constant with no source either. What the model does not derive is how fast a young population
+   leaves the arm it formed in: the crossing time is 2π/(m|Ω − Ω_p|), which needs the *spiral*
+   pattern speed, and the model publishes the bar's (`bar_pattern_speed`, corotation at 1.2 bar
+   lengths), which is not the arms' — a transient swing-amplified pattern has no single Ω_p, which
+   is also why the cut cannot be read off a source as a number. **Carried.** What closes it: a
+   spiral pattern speed published by `pattern` (a derivation or a sourced relation) and the cut
+   replaced by the crossing time it gives, with the young share's azimuthal contrast against the
+   old's as the measurement (0.26% of the catalogue is young at the defaults; their mean
+   modulation 1.78 against the contrast path's 1.18, D176). What kills the reading: a source
+   giving the age at which a stellar population's arm–interarm contrast has decayed to the old
+   disc's, which would make the cut a constant with a citation rather than a mechanism's absence.
 
 ---
 
