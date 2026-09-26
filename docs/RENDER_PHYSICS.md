@@ -92,7 +92,20 @@ the young light is gone**: the stellar component's colour per cell is the
 model's filter integral at the population's published colour temperature, and
 what stays of the exception is the Hα's crowding into the arms and its seeded
 knots, and the dust's lead and clumps, V2's to remove `[verified:
-frontend/src/galaxy/regimes.ts, FieldVolume.tsx]`.
+frontend/src/galaxy/regimes.ts, FieldVolume.tsx]`. **Since S39 (V2) the exception
+is closed**: `/api/render` returns the Hα as two volumetric layers (the HII
+regions' share placed by the pattern's contrast in the clouds' layer, the diffuse
+gas's in its published 1.4 kpc layer) and the dust as three components — the
+extinction per filter from the grain table's own curve (A_λ/A_V from C_ext/H at
+the filter's reference wavelength over the V row's), the scattered light (the
+slab's scattered share, a Henyey–Greenstein phase table at the published g) and
+the thermal emission (Σ_IR at T_d through the curve) — each with its layer in the
+header; the viewer spreads each through its layer and integrates along the ray.
+The knots, the clump lattice, the dust's lead and `CHANNEL_EXTINCTION` are gone;
+what the field regime keeps is display only (white point, exposure, tone curve,
+bloom, the march's sampling). The frame's absorbed and emitted power are the
+published fields' to 3.4 × 10⁻⁴ each and balance to 6.8 × 10⁻⁴, the TIR box's
+coverage `[verified: tests/test_render.py]`.
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
@@ -364,9 +377,8 @@ Specifically forbidden:
 - detail added below the scale the cloud vector constrains
 - colour applied for appearance rather than derived from the filter integral
 
-The viewer's present clump lattice and Hα knots (§0) are the one standing
-exception, dated and to be removed by V2/V3; nothing new of that kind may be
-added.
+The viewer's clump lattice and Hα knots (§0) were the one standing exception,
+dated; V2 removed them at S39, and nothing of that kind may be added.
 
 ---
 
@@ -399,8 +411,10 @@ Everything marked `[recall — NEEDS SOURCING]` above, plus:
 
 - ~~the turbulence forcing parameter b in σ_s² = ln(1 + b²ℳ²)~~ — read at S32 (Federrath et al. 2010, D181)
 - ~~Case B Hα yield per recombination, and the Hα/Hβ ratio~~ — read at S35 from Storey & Hummer 1995's tables (D184)
-- dust albedo and scattering asymmetry g in V, and R_V
-- modified blackbody emissivity index β
+- ~~dust albedo and scattering asymmetry g in V, and R_V~~ — read at S31 from Draine's table (D180); the
+  table's extinction curve and albedo per wavelength read at S39 for the per-filter dust (`spectra.GRAIN_TABLE`)
+- ~~modified blackbody emissivity index β~~ — read at S31 (Planck 2013 XI, D180)
+- the Henyey–Greenstein phase function — read at S39 (Bosschaart & Olofsson 2026, arXiv:2604.08379 eq. 3)
 - PAH feature wavelengths and their metallicity dependence
 - ~~the wind bubble solution's constants (Weaver et al. 1977) and the Sedov phase~~ — read at S36 from Weaver's scan, Kim & Ostriker 2015, Chen & Slane 2001 (D185)
 - the hydrogen-ionizing photon rate Q(H⁰) as a function of T_eff and L (Phase 3)
