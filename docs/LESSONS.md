@@ -960,3 +960,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] The shell tool's 8 KB limit reports itself as "unexpected EOF while looking for matching quote";
   a splice script of any size goes in a file and runs from there. And `grep -c` printing 0 exits 1: it
   cannot sit inside a `&&` chain (D181, twice in one session).
+
+## From S33 (BUILD_II Phase 11)
+
+- [field] A sourced number can still be the wrong default: Murray's 0.08 is a lower limit for the most
+  active clouds, weighted by their ionizing light, and adopting it made the clusters form stars 4.5 times
+  faster than the model's own rate. When the model already fixes a rate, the efficiency is derived from
+  it and the sourced values are what it is *read against*, not what it is set to (D182; the second time
+  a redistribution rule closed a check, after S32's clouds).
+- [field] A closure test states its tolerance from the census's own noise and then names every factor of
+  the residual; 1.0088 was 1.037 (the clouds' Poisson excess) × 1.029 → 1.022 (per-cluster [Fe/H]) ×
+  0.987 (the age draw). A tolerance that merely covers the number is a widened target (B5) (D182).
+- [close] A subagent's departure from the brief's wording (the cluster's age) can be right; the brief
+  said "the cloud's age" and the source's definition of the embedded phase said otherwise. Read the
+  reasoning before ruling, and record the ruling in the field's about line (D182).
+- [close] Two rulings on a first pass cost one more subagent round and no orchestrator code; reviewing
+  the report's numbers against the model's own rates (7.93 vs 1.755) found what the tests could not (D182).

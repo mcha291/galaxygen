@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the
 only record of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **The
 first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S31 closed on 2026-09-26
-(S29 and S30 in parallel); S32 closed the same day; S33 (Phase 11, clusters as objects, **Opus**) is next.** Tag batch owed; S22 ◐.
+(S29 and S30 in parallel), S32–S33 the same day; S34 (Phase 5, globular clusters and the stellar halo, **Opus**) is next.** Tag batch owed; S22 ◐.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -15,7 +15,7 @@ Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_I
 section — §11's head is the debt map. Branch `session-NN`; commit and push at every
 sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
 files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
-debts from #96, decisions from D182, taken when the entry is written.
+debts from #98, decisions from D183, taken when the entry is written.
 
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -31,17 +31,16 @@ model/galaxy/stages/  cp1 halo, disc, nucleus · cp2 assembly · cp3 bar + patte
                 (extends sfh), chemistry_dtd, supernovae (SN rates), vertical_alpha, ism (P, f_H₂, Σ_dust, A_V), light
                 (Σ_L, colour, Hα, eight bands, Q(H⁰)), dust (τ_sca, E(B−V), g, Σ_abs, T_d, Σ_IR, G₀, q_PAH) ·
                 cp5 population (IMF integrals, remnants, PN count) + systems (materialise: the star columns; **the
-                cell hierarchy, MAX_LEVEL 3, canonical_cell**) + **clouds** (S32: the molecular census, 16 columns,
-                of="cloud") · cp6 formation, habitable_zone, planets; massive_stars.py; remnants.py
+                cell hierarchy, MAX_LEVEL 3, canonical_cell**) + clouds (S32: the molecular census, of="cloud") +
+                **clusters** (S33: one per cloud past embedded, of="cluster", ε derived) · cp6 formation,
+                habitable_zone, planets; massive_stars.py; remnants.py; photometry (population_light/_wind)
 model/galaxy/data/    parsec_isochrones.npz (396 × 137 818 rows; U B V R I J H K, M_bol, present mass; fetch_parsec.py)
 model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
                 qualitative / sweep; MISSES one ledger), convergence, performance; api/: service (ROUTES)
-frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and model toggle
-                data-driven from /api/stages
-interface/      the earlier plain-JS viewer, still served by the API when frontend/dist is absent
-tests/          46 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
-                test_s22/s25/s26_rulings and each phase's file (…, supernovae, dust, clouds, **hierarchy**) pin measurements
+frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and toggle from /api/stages
+tests/          47 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
+                test_s22/s25/s26_rulings and each phase's file (…, dust, clouds, hierarchy, **clusters**) pin measurements
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
@@ -74,24 +73,24 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
 - `uv run python -m galaxy.api` serves the API and `interface/` on 127.0.0.1:8017 (`--client
   frontend/dist` for the built viewer); `Service().handle(path, query)` is what the tests drive. A new route
   is a `Route` in `service.ROUTES` **plus a `tools/timings.py` row**. Metadata never reaches the runner (D4).
-  `/api/region` and `/api/system` take `level=` 0–3 (a child holds its parent's stars plus its own, D181); `/api/clouds`.
+  `/api/region` and `/api/system` take `level=` 0–3 (a child holds its parent's stars plus its own, D181); `/api/clouds`,
+  `/api/clusters` serve the censuses by window; a catalogue stage's scalars ride in the header (rule D4, D148).
 - The viewer computes no physics (D5): colour is the declared ramp, light the published Σ_L times the
   pattern's contrast, dust the published A_V per line of sight. **What it invents today** (young light in
   the arms, a clump lattice, Hα knots) is RENDER_PHYSICS.md §0's dated exception, removed by V1–V3; ranking
   brightest-N by `star_magnitude_v` is owed to V1 (D177). The owner watches :5173 live: one consistent edit per file.
 
 ## Conventions
-- Names: fields, inputs, seeds, stages, models `lower_snake`; constants `UPPER_SNAKE`. Every input has a
-  default and every control a range. Every factual claim in every document is tagged `[verified: cite]`,
-  `[recall]` or `[inferred]` (B14); a verified tag cites something in this repo or a named source.
+- Names `lower_snake`, constants `UPPER_SNAKE`; every input a default, every control a range. Every factual claim
+  in every document is tagged `[verified: cite]`, `[recall]` or `[inferred]` (B14), a verified tag citing a source.
 - A failing acceptance row goes in `spec.MISSES` with its debt, reason and a prediction that could kill
   it (D33, D87); it still reports `fail`, never widen a target (B5); a miss that starts *passing* fails the
   run (#29) — remove it and **write down why**. `lo == hi` says "no testable target" (D100; rows 20, 21,
   25–28); a row whose source does not say what it measures names no field (D177). New rows from 32.
 
-## What the instruments said on 2026-09-26, after S32 (D174–D181 hold the before/after)
+## What the instruments said on 2026-09-26, after S33 (D174–D182 hold the before/after)
 - graph acyclic for both models (order: … sfh, chemistry_dtd, supernovae, light, vertical_alpha, population,
-  ism, systems, formation, habitable_zone, dust, clouds, planets); preflight OK, 7 of 12 controls; determinism reproducible
+  ism, systems, formation, habitable_zone, dust, clouds, planets, clusters); preflight OK, 7 of 12 controls; determinism reproducible
   across processes for both; spec **10 pass / 17 fail / 4 not-yet-computable of 31, identical in both models**;
   convergence 0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; **rows 30 / 31 (SN rates)
   0.0176069 / 0.0065332 yr⁻¹, the Ia pass thin (#88)**; rows 25–28 n-y-c (#82).
@@ -100,10 +99,11 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   M_V −21.2159, B − V 0.6306, Υ_V 1.8468, disc_luminosity 4.8958e10, Q 1.6527e53 s⁻¹;
   remnant_mass_fraction 0.214686 (living + remnants 0.836104 of the locked mass, #85), PN count 14 732; **T_d(R₀)
   19.54 K, L_IR 1.622e10 L☉, G₀(R₀) 2.64, q_PAH(R₀) 0.0908 (S31); **16 704 clouds, mass in clouds 1.037 of the
-  molecular mass (noise 0.035), Mach median 6.5, states 23/50/27% (S32)**; the level-0 catalogue bit-identical.
-- performance: basic ~1.6 s cold (light 0.55, systems 0.37, clouds 0.27, population 0.20); region one sector
-  0.58 s cold, level-2 sector 0.73 s / 430 KB, clouds whole disc 0.78 s; timings re-published at S32 (D181).
-- Register: **41 open — 11 permanent, 30 carried — and 37 discharged** (#88–#90 S30, #91–#93 S31, #94–#95 S32).
+  molecular mass (noise 0.035), Mach median 6.5 (S32); 12 860 clusters, ε 0.0206, ΣQ / young Q 1.0088,
+  bound_cluster_mass_total 2.79e9 = 72 × η M_halo before survival (S33)**; the level-0 catalogue bit-identical.
+- performance: basic ~1.7 s cold (light 0.55, systems 0.37, clouds 0.27, population 0.20, clusters 0.13); region
+  one sector 0.6 s cold, clouds whole disc 0.82 s, clusters one sector 1.06 s (the wind table's build); timings at S33 (D182).
+- Register: **43 open — 11 permanent, 32 carried — and 37 discharged** (#91–#93 S31, #94–#95 S32, #96–#97 S33).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python

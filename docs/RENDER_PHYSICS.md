@@ -62,7 +62,9 @@ sections below as a description of an empty slate.
   model/galaxy/stages/systems.py; tests/test_hierarchy.py; D181]`. The molecular
   clouds of §5a exist as an object class (`of="cloud"`) served by `/api/clouds`, a
   census that a level filters `[verified: model/galaxy/stages/clouds.py; D181]`;
-  the cluster object of §5b is Phase 11's.
+  since S33 the cluster object of §5b exists too (`of="cluster"`, `/api/clusters`,
+  one per cloud past its embedded phase, Q and wind as IMF integrals) `[verified:
+  model/galaxy/stages/clusters.py; D182]`.
 
 **Present in the viewer, and forbidden by §8 once the cloud vector exists.**
 The field regime lays each ring out within itself: 30% of the starlight as
