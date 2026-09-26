@@ -689,21 +689,22 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84 | 19 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87 | 22 |
 
-So the board's **30 open** is 11 permanent and 19 carried, and no item is unruled. (S22
+So the board's **33 open** is 11 permanent and 22 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
 discharged #23, D175; S27 opened #81, the young-star cut, D176; S28 opened #82–#84, the
-photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177.) The eleven
+photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177; S29 opened
+#85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The nineteen carried ones are not nineteen mechanisms.** Four of them — 19, 27, 49 and the
+**The twenty-two carried ones are not twenty-two mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -715,8 +716,9 @@ D173). One — 80 — is a recalled constant whose referent moved with the patte
 closable by reading a source; one — 81 — is a cut standing where a spiral pattern speed should
 (S27, D176); three — 82, 83, 84 — are the second build's sources' (a table that does not say what
 its light is, a coefficient not fetched, a calibration that covers a third of what reads it; S28,
-D177). That leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping statements
-and one kernel width.
+D177); one — 85 — is the instantaneous recycling the remnants exposed, a mechanism in `sfh` (S29,
+D178), and 86 and 87 are a fit not read and a row owed to Audit III. That leaves 28, 33, 39, 42, 43
+and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -2865,6 +2867,38 @@ never been judged in twenty-three sessions.
    hot stripped stars and giants (SHP03's own Table 2 gives class III/I; a WR calibration is Phase 9's to
    source) and by isochrones younger than 4 Myr. What kills the reading: a Phase 9 Hα row that lands
    with the present Q, which would say the unseen half is not there.
+85. **The locked stellar mass is 84% stars and remnants: the instantaneous return fraction is 0.30 and
+   the isochrones return 0.41** (S29, BUILD_II Phase 4, D178). `stellar_mass_total` counts the mass
+   formed times (1 − `RETURN_FRACTION`); Phase 4 integrated what that mass is — living stars at their
+   present mass plus every dead star's remnant along the PARSEC isochrones — and found 0.836104 of it
+   (living 3.1194e10, white dwarfs 6.621e9, neutron stars 6.99e8, black holes 1.208e9 against a locked
+   4.750853e10), an effective return of 0.4147 over this history, 0.4276 for a 12.6 Gyr solar
+   population `[verified: tests/test_remnants.py; D178]`. Not retuned (B5, B10): the constant is the
+   star-formation law's instantaneous recycling, never fitted, and moving it to 0.41 would move the gas
+   budget and row 1 by the same 16% — a change to the sfh stage's physics, not to a number. **Carried.**
+   What closes it: a return fraction derived from the isochrones, or delayed recycling in place of the
+   instantaneous one (the mass returned by each step as its stars die, which the same tables give);
+   either is a mechanism in `sfh` with a prediction — row 1 falls toward 4.0e10 unless the infall
+   compensates, and row 20's gas rises by the returned 16%. What kills it: a sourced return fraction for a
+   Kroupa population that reads near 0.30 at 12.6 Gyr, which would say the isochrones' present masses
+   are what is wrong.
+86. **The black hole's mass and the remnant boundaries do not depend on metallicity** (S29, D178). A
+   black hole weighs 7.8 M☉ (Özel et al. 2010) and a neutron star 1.33 (Özel & Freire 2016) at every
+   [Fe/H], and the white-dwarf / neutron-star / black-hole boundaries (8.5 and 25 M☉; Smartt 2009,
+   Heger et al. 2003) are solar-metallicity ones, because the metallicity-dependent fits could not be
+   read (Spera, Mapelli & Bressan 2015 Appendix C did not extract; Fryer et al. 2012 need a CO-core mass
+   the model lacks). Heger et al. say that at high metallicity mass loss ends by making only neutron
+   stars; at low metallicity black holes are heavier `[verified: astro-ph/0212469 §II.1]`. **Carried**;
+   closable by reading one of the two fits (a constant table with a citation) and by the remnant
+   integral's metallicity axis, which `budget` already carries. Prediction: the black-hole mass at
+   [Fe/H] = −1 doubles and the remnant fraction moves by under 1% (black holes are 2.5% of it).
+87. **Row 30 is owed and was not entered: the local white-dwarf surface density** (S29, D178). The one
+   remnant target read with an uncertainty is McKee, Parravano & Hollenbach 2015 Table 1: white dwarfs
+   4.9 ± 0.8 of 33.4 ± 3 M☉ pc⁻² in stars and remnants at the Sun `[verified: read at S29]`. The model
+   reads Σ_WD(R₀) = 4.757 of 32.068 (a share of 0.1483) — inside — but the number was read before any
+   row was ruled, so entering it now would be choosing a target with the answer known (D113, B5). Pinned
+   as a measurement in `tests/test_remnants.py` and **carried** for Audit III (S37), which enters the row
+   blind to the pin or records why it may not.
 
 ---
 

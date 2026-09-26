@@ -897,3 +897,20 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [audit] A population relation is the row this project was short of, and the instrument came first:
   the sweep over an input's declared range, not narrowed to where the relation holds, judged the
   Tully–Fisher slope and left the zero point unjudged because dust moves it and not the slope (D177).
+
+## From S29 (BUILD_II Phase 4)
+
+- [field] Integrate what a bookkeeping constant stands for and it may not add up. `RETURN_FRACTION`
+  had stood at 0.30 for twenty-nine sessions as the mass a population gives back; the first integral
+  of what the locked mass *is* — living stars plus remnants along the isochrones — found 84% of it,
+  the tables returning 0.41. The number was recorded with its two components and not tuned: the
+  constant is a mechanism's stand-in, and the fix is the mechanism (D178, #85).
+- [catalogue] A number read before its row is ruled cannot become a row. The local white-dwarf surface
+  density was inside McKee et al. 2015's window when it was first printed, and that is exactly why it
+  was pinned as a measurement and left for Audit III to enter blind (D113, D178, #87).
+- [catalogue] Let the table say who is dead. The remnant class reads the NaN the lookup already puts in
+  a dead star's luminosity, and the death age inverts the same reading; nothing re-derived a lifetime,
+  and 200 000 stars disagreed with the table zero times (D178).
+- [close] Two Opus rows in parallel is a merge-order and a row-number question, not a build question:
+  branch both from the same `main`, merge in row order, and tell the second where its spec rows may
+  be renumbered at merge, because `spec.py` asserts the rows are contiguous (D178, D179).

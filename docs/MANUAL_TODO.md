@@ -66,7 +66,8 @@ closes the project.
 | 25 | `s25` | `a4c95cec0be9` | **queued** — the first row of the second build; filled in by S26 |
 | 26 | `s26` | `05655dba6948` | **queued** — filled in by S27 |
 | 27 | `s27` | `c72dffd59d36` | **queued** — filled in by S28 |
-| 28 | `s28` | TBD | **queued** — S29 fills the SHA in |
+| 28 | `s28` | `e30d33a9d060` | **queued** — filled in by S29 |
+| 29 | `s29` | TBD | **queued** — S30 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -198,8 +199,11 @@ git tag -a s26 05655dba69488f36ecb927fc20c0319fe85de0ed -m "S26: the amplitudes 
 # S27 — the azimuthal model: sfh_azimuthal, the star-formation modulation (Phase 2).
 git tag -a s27 c72dffd59d366d7b56f372b33a0598bcdd992415 -m "S27: the azimuthal model, star formation that follows the arms"
 
-# S28 — the photometric rows, the ionizing budget, the wind, the Tully-Fisher sweep (Phase 3). SHA filled in by S29.
-git tag -a s28 "$(git rev-list -1 --grep='^Merge S28 into main' main)" -m "S28: the magnitudes, the ionizing budget and the Tully-Fisher sweep"
+# S28 — the photometric rows, the ionizing budget, the wind, the Tully-Fisher sweep (Phase 3).
+git tag -a s28 e30d33a9d060966e8b7c87b87bae5c6a58b7af19 -m "S28: the magnitudes, the ionizing budget and the Tully-Fisher sweep"
+
+# S29 — remnants and planetary nebulae (Phase 4). SHA filled in by S30.
+git tag -a s29 "$(git rev-list -1 --grep='^Merge S29 into main' main)" -m "S29: remnants and planetary nebulae"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
