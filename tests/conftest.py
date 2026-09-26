@@ -1,8 +1,8 @@
 """Shared fixtures.
 
-Any test that takes a ``model`` argument runs once per registered model. Since D170
-there is one, ``basic``; the parametrisation stays so that a second declaration is
-tested the day it is added.
+Any test that takes a ``model`` argument runs once per registered model. From D170
+to S27 there was one, ``basic``; since S27 (BUILD_II Phase 2) there are two, ``basic``
+and ``azimuthal``, and every such test runs for both.
 """
 
 from __future__ import annotations

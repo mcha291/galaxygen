@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from galaxy.core.registry import INPUTS
@@ -28,12 +29,34 @@ def chk(m, *stages):
 # length instead of sfh's resolved curve and fitted thin-disc length, so it is ready in assembly's
 # round and the pattern a round later, both ahead of sfh: the pattern branch precedes star
 # formation, which is what azimuthal star formation (Phase 2) needs.
+# Since S27 (BUILD_II Phase 2) the azimuthal model maps the sfh slot to sfh_azimuthal, which also
+# waits for the pattern (it reads the contrast); the pattern already ran a round ahead of sfh, so
+# the order is basic's with the one id swapped.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "population",
         "light", "vertical_alpha", "formation", "ism", "systems", "planets",
     ),
+    "azimuthal": (
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "population",
+        "light", "vertical_alpha", "formation", "ism", "systems", "planets",
+    ),
 }
+# The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
+# reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
+# sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
+SEEDED_BASIC = {
+    "black_hole_mass",
+    "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
+    "arm_contrast", "bar_contrast", "pattern_density_contrast",
+    "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
+    "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
+    "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
+    "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
+    "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",
+    "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample",
+}
+SEEDED = {"basic": SEEDED_BASIC, "azimuthal": SEEDED_BASIC | {"sfr_modulation"}}
 
 
 def test_production_graphs_hold(prod):
@@ -49,17 +72,7 @@ def test_production_graphs_hold(prod):
         # spheroid's own scalars are the halo's and only M_• is here. S8's split keeps the
         # occurrence fields on the derived side.
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
-        assert seeded == {
-            "black_hole_mass",
-            "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
-            "arm_contrast", "bar_contrast", "pattern_density_contrast",
-            "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
-            "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
-            "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
-            "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
-            "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",
-            "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample",
-        }
+        assert seeded == SEEDED[m.name], sorted(seeded ^ SEEDED[m.name])
         assert g.provenance["giant_occurrence"] == "derived", (
             "the occurrence fields are a function of the inputs; the split at checkpoint 6 is what "
             "keeps them so (rule A10)"
@@ -165,6 +178,29 @@ def test_provenance_is_computed_and_compared():
     assert codes(chk(model("m", s_opt, d_opt), s_opt, d_opt)) == ["provenance"]
     claims = stage("s", (decl("f", provenance="seeded"),))  # declared seeded, reads no seed
     assert codes(chk(model("m", claims), claims)) == ["provenance"]
+
+
+def test_an_extension_republishes_its_base_at_the_bases_provenance():
+    """S27: a stage that extends another publishes the base's fields at the base's provenance.
+
+    The base computes them in its own restricted view (``Extension``), so the extension's extra
+    seeded read reaches only its own field; a downstream reader of the shared field stays derived.
+    """
+    from galaxy.core.stage import extend
+
+    seeded = stage("s", (decl("f", provenance="seeded"),), reads_seeds=("world_seed",))
+    other = stage("o", ("g",))
+    base = stage("b", ("h",), slot="x", requires=("g",))
+    ext = extend(base, id="e", about="an extension", own=lambda ctx, shared: {"k": np.ones(ctx.grid.shape(("R",)))},
+                 requires=("f",), publishes=(decl("k", provenance="seeded"),))
+    down = stage("d", ("j",), requires=("h",))
+    m = model("m", seeded, other, ext, down)
+    g = graph.analyse(m, impls(seeded, other, ext, down), INPUTS)
+    assert g.ok, g.problems
+    assert g.provenance["h"] == "derived" and g.provenance["j"] == "derived" and g.provenance["k"] == "seeded"
+    # Without the extension the same reads make every field of the stage seeded (D55).
+    flat = stage("e", ("h", decl("k", provenance="seeded")), slot="x", requires=("g", "f"))
+    assert codes(chk(model("m", seeded, other, flat, down), seeded, other, flat, down)) == ["provenance", "provenance"]
 
 
 def test_unknown_input():
