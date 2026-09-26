@@ -199,10 +199,15 @@ def compute_habitable_zone(ctx: Context) -> Mapping[str, Any]:
     d_ia = sterilization_distance(float(c["IA_ABSOLUTE_MAGNITUDE"]), base, m_std) / PC_PER_KPC
     h = float(ctx.fields["thin_disc_scale_height"]) / PC_PER_KPC
     volume = 4.0 / 3.0 * math.pi
-    rate = (
+    per_area = (
         np.asarray(ctx.fields["core_collapse_rate_history"], dtype=float) * volume * d_cc**3
         + np.asarray(ctx.fields["type_ia_rate_history"], dtype=float) * volume * d_ia**3
-    ) / (4.0 * h)  # sterilizing events per year at a point in the midplane
+    )
+    # Sterilizing events per year at a point in the midplane. A galaxy whose thin disc has no
+    # thickness to report (a scale height of zero, as a thin disc with no stars reads) has no
+    # layer to spread its supernovae through: the hazard is undefined there, not zero and not
+    # infinite, and every field that depends on it says so (rule B9).
+    rate = per_area / (4.0 * h) if math.isfinite(h) and h > 0.0 else np.full_like(per_area, np.nan)
 
     # Expected sterilizations in the ozone window before life arises, for a star born at each step.
     cum = np.concatenate([np.zeros((R.size, 1)), np.cumsum(rate, axis=1) * dt * YR_PER_GYR], axis=1)

@@ -102,6 +102,24 @@ def test_the_hazard_is_the_two_histories_through_the_stellar_layer(model, coarse
     assert np.allclose(f["sterilization_rate_history"], expect, rtol=1e-12, atol=0.0)
 
 
+def test_a_thin_disc_with_no_thickness_leaves_the_hazard_undefined(prod):
+    """Determinism's grid (n_t = 8) builds a thin disc whose scale height reads zero: no layer to
+    spread the supernovae through, so the hazard and everything it feeds is NaN, never a number
+    divided by zero (rule B9) - and no warning is raised on the way."""
+    import warnings
+
+    from galaxy.specs.determinism import SMALL
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        f = run(prod[0].get("basic"), grid=SMALL, only=ZONE + ("thin_disc_scale_height",)).fields
+    assert float(f["thin_disc_scale_height"]) == 0.0
+    assert np.all(np.isnan(np.asarray(f["sterilization_rate_history"])))
+    for name in ("habitable_fraction", "habitable_zone_peak_radius", "habitable_zone_half_radius"):
+        assert math.isnan(float(f[name])), name
+    assert np.all(np.asarray(f["planet_metallicity_probability"]) >= 0.03)  # the metals never needed it
+
+
 # --- the zone's shape, pinned (S30) ----------------------------------------------------------
 
 
