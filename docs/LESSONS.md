@@ -1020,3 +1020,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   '> 60,000 years' set the census's count, and the census names it as the one thing a better source moves (D185, #103).
 - [infra] A read-only agent's first `uv run` in a worktree creates a `.venv/` there; it is gitignored, but a
   worktree with a lock needs `git worktree remove --force --force` after the agent has stopped.
+
+## From S37 (Audit III)
+
+- [audit] The blind reading is the instrument a disclosed row needs: give an agent the sources and forbid it the
+  repository, and its window is the one the builder could not choose. It moved one row toward the model and one
+  away in 45 minutes, and neither result was predictable from the disclosure (D186, A3-7).
+- [audit] "I will assume" in a source is A-14's class even when the source is the right paper: read the paper
+  the assumption cites, where the measurement is. η was 3σ from it (D186, A3-2).
+- [audit] Re-read the formula, not only the number: the one DIFFERS that changes output was an exponent, and the
+  about line had recorded the disagreement between readings without settling it (D186, A3-1, #90).
+- [audit] Count equation and section numbers from the LaTeX; five of the build's citations had the right sentence
+  in the wrong place, and four arXiv ids in the orchestrator's own briefs were the wrong papers (D186, A3-3).
+- [close] An audit that changes no number still moves the register by three: the findings are the record, the
+  fixes are the next session's (B3), and the test file it adds pins identities and noise bounds, never values.

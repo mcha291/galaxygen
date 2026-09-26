@@ -5948,3 +5948,59 @@ remnants: one sector*    0.5940   0.0012 506.87      5,976  halo,disc,assembly,s
 remnants: whole disc*    0.6910   0.0034 201.76    148,088  halo,disc,assembly,sfh,chemistry_dtd,supernovae,vertical_alpha,ism
 ```
 (`uv run python tools/timings.py`, 2026-09-26, session-36; the level-0 rows within noise of S33's.)
+
+### D186. Audit III: the second build re-read at its sources, re-derived at a new mesh, its greens conditioned and its disclosed windows read blind — one formula wrong, one adopted η, five misattributions, no number moved
+
+**Run by the orchestrating session itself (a Fable row), once, with the aim written down before any file was
+opened (D113): `docs/AUDIT_III.md`, whose §0 states it and §6 numbers the findings A3-1 … A3-9.** Three
+read-only agents did the reading: one re-read every constant that entered code S25–S36 against the sentence
+its about line quotes (63 constants, every module table, rows 32–36's targets), one set rows 32 and 34's
+windows blind to the repository, and the session re-derived every redistribution at `GridSpec(180, 600, 8)`
+(`tests/test_audit_iii.py`, the one test file the audit adds) and conditioned the four greens. **B3: the audit
+checks, the next session fixes — nothing here changed a model number.** `git diff --stat main` names docs/,
+the test file and the two pins the register move makes.
+
+**Counts.** 63 constants: **46 match, 2 differ, 10 adopted rather than measured (5 disclosed as such), 5
+misattributed, 0 unreachable**; module tables all match (Case B 23 values, SHP03 105 cells, MSH05 84, Vink 13,
+IFMR 12, Weaver 5, Draine 10); rows 32–36's targets match. Thirteen redistributions and balances hold at the
+audit mesh inside their own noise (the clouds 1.055 of the molecular mass at 0.035 noise; the clusters' Q 0.969
+of the light stage's at ~0.06; the HII regions 0.971 of the field at 0.061; every exact identity to 10⁻⁹ or
+better; the hierarchy's union at levels 1–3 on a cell that holds a different sample). Four greens conditioned:
+one (row 31) dies under its constant's own alternative. Two blind windows differ from the built ones.
+Twenty-four register items re-stated: 20 open as described, 2 closable now, 2 wrongly described.
+
+**The findings that need a decision (A3-1 … A3-9 in the document; the three that are debts are numbered).**
+*A3-1, #104 — a formula.* `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock et
+al. 2011 eq. 5 as printed is 8 pc × √(10^(−0.4 ΔM)) `[verified: arXiv:1107.1286, eq. 5, read at S37]`. At the
+mean Ia magnitude the source gives 18.6 pc and the model 43.4: **the Ia sterilization volume is 12.6× too
+large**, and #90's third reading was the right one. The fix is one exponent; the zone's probes re-pin to the
+second reading's numbers (D179). *A3-2, #105 — A-14's class.* `GC_HALO_MASS_RATIO` = 3.5 × 10⁻⁵ is what
+Boylan-Kolchin 2017 lists under "I will assume"; the measurement he cites is Harris, Blakeslee & Harris 2017's
+"η_M = (2.9 ± 0.2) × 10⁻⁵ … significantly lower than in previous papers", scatter "a residual rms ± 0.28 dex"
+`[verified: arXiv:1701.04845; arXiv:1705.01548 §2]`. At the measured η, S34's mean 6.97 × 10⁷ is **+0.34 dex
+above η M_halo = 3.19 × 10⁷ — outside the 0.28 dex D183 said it was inside**: the GC closure fails on the
+measured relation as well as on the population (#97). *A3-3, #106 — the record.* All four Boylan-Kolchin
+constants cite arXiv:1711.00009, a different paper (the sentences are in 1705.01548); the escape fraction's
+"30–60%" is Hoopes & Walterbos's, not Zurita's; two Haffner sections and one Rémy-Ruyer footnote are misplaced;
+`HALPHA_PER_SFR` is rounded (4.86 vs 4.8644 × 10⁷) and its equation is KE12 §3.8 eq. 12; a unit label and a
+comment are stale. *A3-4.* Adopted values that say so or should: E_SN = 10⁵¹ (every source "fixes" it), C_II =
+10 (Weaver's page computes 10.5), the ozone clock's 1.55 Gyr (the source's own text would give 1.75), and five
+already disclosed. *A3-5.* Cummings et al. 2018's adopted IFMR is the MIST fit ("our adopted IFMR", in bold);
+the code's PARSEC choice stands for its stated reason and the disagreement is over. *A3-6.* Row 31 at Maoz &
+Graur's measured efficiency reads 0.35 per century and fails (#88); row 30's window spans a factor 17.5; row 35
+is green because Rice et al.'s two cloud slopes (−1.6, −2.2) straddle KEH89's −2 — inner regions alone −1.76,
+outer −2.15, every bin width and floor inside; row 29 is a ruling's half of a measurement. *A3-7, the owner's.*
+Blind, row 32's window is [2.7, 4.0] × 10⁷ M☉ (Baumgardt, Sollima & Hilker 2020's measured M/L_V 1.83–1.92 for
+literature magnitudes `[verified: arXiv:2009.09611 §3.3, read blind]`, not Kimmig's 1.4 ± 0.5 for metal-poor
+clusters): the model misses either, 0.25 dex against 0.47. Row 34's blind source is McKee & Williams 1997,
+[1.3, 3.9] × 10⁵³, chosen before any comparison for stated reasons; **under it the model passes**, and S35's
+Bennett window it misses by 3%. Recommended: both rows take the blind windows, their texts keeping the
+disclosure; #100's 0.71 stands either way. *A3-8.* #87's Σ_WD row can be entered disclosed once a scalar is
+published, not blind; #93's T_d row cannot be entered at all (Planck's 19.7 K is a sky average, not the face-on
+T_d(R); D177), and is re-described. *A3-9.* #84 and #100 are one mechanism (the isochrones' Q against
+Starburst99's), written in both.
+
+**Method notes for the next audit.** Label every re-read READ / second-hand / DERIVED / RECALL; count equation
+numbers from the LaTeX, not the PDF; the two agents given the sources found four wrong arXiv ids in the
+briefs and one in code. The blind reading is the instrument the disclosed rows needed: it cost 45 minutes and
+moved one row each way. The register reads 52 open = 11 permanent + 41 carried, 37 discharged.
