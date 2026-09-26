@@ -687,16 +687,18 @@ defined here once and used in every entry below:
 | **discharged** before S22 | 1, 6, 7, 9, 12, 13, 16, 18, 20, 24, 29, 30, 31, 35, 37, 38, 40, 41 | 18 |
 | **discharged** at S21b or S22 | 4, 5, 8, 10, 14, 32, 36, 44, 50, 51, 66, 67, 68, 69, 71, 72, 73 | 17 |
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
-| **permanent** | 2, 15, 17, 21, 22, 23, 25, 34, 45, 46, 48, 65 | 12 |
+| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
+| **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
 | **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80 | 15 |
 
-So the board's **27 open** is 12 permanent and 15 carried, and no item is unruled. (S22
+So the board's **26 open** is 11 permanent and 15 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
-the pattern moved ahead of star formation and row 15 left its window by 0.01, D174.) The twelve
+the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
+discharged #23, D175.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
-48 — a number the project does not hold, or a target with no width), four are the model's
-declared scope (15, 21, 22, 23), and one is rule A9's one-opinion-per-thing (65). **#79 was
+48 — a number the project does not hold, or a target with no width), three are the model's
+declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
@@ -1297,7 +1299,20 @@ instrument or bookkeeping statements and one kernel width.
    wrong slope would look exactly like this one. Nothing in the project can falsify the relation, and a
    session that made it falsifiable would be widening the input space to give a constant something to
    do (rule A4). Measured once, as ruling 3 asked, and left.
-23. **The arms are parameters, not a pattern.** S4 publishes a pitch angle and an
+23. ~~**The arms are parameters, not a pattern.**~~ **DISCHARGED at S26 (D175).** Since 5f79cfc
+   (S23, D171) `pattern` publishes `pattern_density_contrast`, a non-axisymmetric density the
+   catalogue draws azimuth from, and since S26 nothing about it is a parameter: the arm number is
+   drawn from the numbers the disc's own share of the rotation amplifies (`swing_arm_min` to
+   `swing_arm_max`, off `disc_dominance` and `shear_rate`), the arm amplitude's mean is derived
+   from the same window and its residual seeded, and the bar amplitude is seeded about a sourced
+   median — the two experimental inputs S23 added are gone and the count reads 7 controls again.
+   The plan's "stage 4 is the first recognisable galaxy" is now checkpoint 3's (D174), and it is a
+   recognisable barred spiral drawn on the smooth disc. What this discharge does not claim: the
+   amplitude's saturation is not derived from first principles — linear theory gives the gain, not
+   the saturated contrast — so the mean is a sourced class value and the residual real scatter
+   (§4b verdict C, the remedy §4b prescribes), and a single-harmonic pattern carries the whole
+   arm–interarm contrast in its one amplitude where real arms carry higher harmonics (D175).
+   *The original entry:* S4 publishes a pitch angle and an
    arm multiplicity; nothing publishes a non-axisymmetric density, so the star
    catalogue S5 draws from it is axisymmetric and the galaxy has no visible
    spiral structure. GALAXY_PLAN.md §3 promises stage 4 is the "first
@@ -2789,6 +2804,15 @@ never been judged in twenty-three sessions.
    sourced ratio for a barred Sbc disc against the whole disc's scale length lands the row inside
    4.8–5.2, or the row's own target is the next thing to read; if a source puts the row further out
    than the 0.01 it misses now, the miss is the ratio's and this debt was the wrong reading.
+   **S26 read the sources while sourcing the amplitudes, and did not act.** Population ratios put
+   the row far out, not 0.01: late-type bars average 0.6 h (Sc–Sd, "0.2–1.5 h; mean ≈ 1.5 kpc, 0.14
+   R25, 0.6 h") and early types 1.4 h `[verified: Erwin 2005, MNRAS 364, 283, abstract]`, so a
+   sourced *typical* ratio would read a_bar = 1.6–3.6 kpc against a target of 5.0 — the Milky Way's
+   bar is long for its type and row 15's target is the Milky Way's own, not a population's. The
+   only sourced ratio that lands it is BHG16's own two numbers, the 5.0 ± 0.2 kpc of this row over
+   the 2.6 kpc of row 4: 1.92, which with the λ_d length 2.605 reads 5.01. That would make the row
+   what #21 already says it is — a check on R_d against BHG16's 2.6 — and setting it is the
+   owner's or Audit III's call (B5: not retuned here). Still carried.
 
 ---
 

@@ -5004,3 +5004,92 @@ BUILD_II's Phase 1 text still says `sfh` is checkpoint 3 and RENDER_PLAN.md stil
 history scrubber at checkpoint 3 — the plan as it was written and the viewer plan as it was
 done; this entry is the correction and neither is edited. The owner's live tab on :5173
 serves the new scene table on a hard reload.
+
+### D175. The arms are a pattern: the arm number drawn from what the disc amplifies, the arm and bar amplitudes derived to a mean and seeded, the two experimental inputs removed, debt #23 discharged
+
+**Decision.** (1) `bar` (checkpoint 3, derived) publishes the **swing-amplification window**
+off the two fields it already had: `swing_x` = 2/`disc_dominance` — Toomre's X for m = 2 in
+the Mestel form, where X_m = κ²R/(2πGΣm) becomes 2/(m f_d) for a flat curve and a disc whose
+own rotation is 2πGΣR — and `swing_arm_min` / `swing_arm_max` = X₂/(Γ·2) and X₂/(Γ·1), the
+arm numbers whose X/Γ lies in the vigorous range 1–2. At Γ = 1 that is the review's rule
+verbatim: *"the rotational symmetry of a strongly swing amplified spiral is 1/f_d ≲ m ≲
+2/f_d"* `[verified: Sellwood & Masters 2022, ARA&A 60, 73, §4.2.3.2]`. (2) `pattern` (seeded)
+draws `arm_multiplicity` from {2, 3, 4, 5, 6} with odds 1 inside the window, falling
+log-linearly to zero where X reaches 3 (*"less than 2 for X > 3"*) or 0.5 (the lower edge the
+review quotes for Γ = 0.5, used as the floor at Γ = 1 by inference) `[verified: the same
+section]`; m = 1 excluded (*"the overwhelming majority of spirals … have two- or three-fold
+rotational symmetry"*, the review's abstract), six the cap (D'Onghia 2015 expects *"a total of
+5–6 spiral arms, lower in strength, in the solar neighborhood"* `[verified: ApJL 808, L8]`).
+(3) `arm_contrast`'s **mean is derived**: the flocculent class's arm–interarm contrast plus the
+two-fold pattern's window weight times the way to the grand-design class's — 0.75 and 1.14 mag
+at 3.6 µm `[verified: Elmegreen et al. 2011, ApJ 737, 32, §4.2; the class means recomputed from
+Table 2's 46 rows in tests/test_s26_rulings.py: 1.14 ± 0.44, 0.81 ± 0.28, 0.75 ± 0.35]` —
+turned into the cosine amplitude A = (C − 1)/(C + 1), C = 10^{0.4 mag}, published as
+`arm_contrast_mean` (0.4815 at the defaults); the **residual is seeded** on `pattern_seed`,
+0.44 mag (the grand-design class's dispersion), and a negative draw is no arms. (4)
+`bar_contrast` is **seeded log-normally about a sourced median**: the S4G barred sample's
+maximum normalised m = 2 Fourier amplitude, median 0.374 (mean 0.412, 16th–84th percentiles
+0.214–0.609) over 587 galaxies, `[verified: Díaz-García et al. 2016, A&A 587, A160; VizieR
+J/A+A/587/A160 tablea3.dat column A2, downloaded and reduced on 2026-09-26]`, width
+ln(0.609/0.214)/2 = 0.52, capped at 0.9. (5) `arm_amplitude` and `bar_amplitude` leave the
+registry, the frontend's bottom bar and its `ExperimentBar` component go: **7 controls of 12**
+again. (6) **Debt #23 discharged**; the map reads 26 open = 11 permanent + 15 carried, 37
+discharged. Ten level-0 constants carry the numbers with their citations; `tests/test_s26_rulings.py`
+pins the sources' arithmetic, the window at the defaults, the odds and the gate.
+
+**The verdicts, written before the numbers were read (§4b; D113).** The arm *number* is
+verdict C with a derived mean: the window is physics (B), the choice inside it is real scatter
+at one X. The arm *amplitude* is verdict C: linear theory gives the gain, not the saturated
+contrast, so no derivation closes and the mean is a sourced class value moved by the derived
+window, the residual seeded — exactly `pitch_angle`'s remedy. The bar amplitude is verdict C
+with a constant mean: its one sourced lever, the bar's length (*"long bars are typically
+strong"*, Díaz-García 2016's abstract; a slope of 1.16 ± 0.33 of peak m = 2 against relative
+bar length, Elmegreen 2011 §4.7), has no lever in this model because `bar_half_length` is a
+constant times R_d (debt #21), so the mean is the population's and the alternative is named.
+
+**Two choices of form, each made before its number and each with the other's reading beside
+it (B12).** *The window's form.* The Mestel/global form reads X₂ = 3.33 at the defaults
+(f_d 0.600, Γ 0.968), window 1.72–3.44. The local form with the exponential disc's own Σ at
+2.2 R_d — D'Onghia 2015's expression — was probed first with the repository unchanged and reads
+X₂ = 2.73, preferring three to four arms there; it rises outward (1.72 at R_d, 3.84 at 3 R_d),
+which is her Milky Way result (*"two spiral arms at approximately 4.50 kpc … and a total of 5–6
+… in the solar neighborhood"*) and also why it needs a radius chosen by hand. The global form
+was chosen: it is the review's stated rule for the pattern's whole symmetry, and it reads the
+field §4b named as the chain's first link. *The amplitude's observable.* The pattern is one
+harmonic, so its amplitude *is* its arm–interarm contrast; the alternative, the arms' m = 2
+Fourier amplitude (0.21 ± 0.08 for the same 13 grand designs, Table 2), is half as large
+because real arms carry higher harmonics, and matching it would draw 0.4-mag arms where 1.1 is
+observed. Contrast chosen.
+
+**Measured (default grid; the sweeps on the coarse one, 200 seeds).** Default seed: m = 4,
+arm 0.401, bar 0.289 (both inputs read 0.3 before). Odds at the defaults {2: 47, 3: 59, 4: 55,
+5: 27, 6: 12} against analytic weights (1, 1, 0.78, 0.46, 0.20); a halo-dominated disc
+(spin 0.03, retention 0.15; f_d 0.30, window 3.9–7.7) {3: 13, 4: 55, 5: 68, 6: 64}, no two-armed
+draw — **the flocculent regime is reachable and m = 3 exists**; a disc-dominated one (spin
+0.01, retention 0.5; window 1.3–2.6) {2: 81, 3: 81, 4: 35, 5: 3}. Arm amplitude over seeds
+0.458 ± 0.167 at the defaults, 0.317 halo-dominated — the flocculent class's weaker arms; bar
+median 0.378, 16th–84th 0.23–0.64, 0.90 cap reached. **Rows 15–17 unmoved: 5.20971 / 41.1036 /
+6.08381** (the gate); the contrast averages to 1 on every ring to 10⁻¹⁶, now asserted —
+BUILD_II cited `tests/test_pattern.py` for it and no such test existed. Determinism
+reproducible across processes; convergence 0 drifts; spec 7 / 17 / 0; preflight *controls: 7
+of 12*. The arm number now has the lever the pitch angle never had (#22): across the input
+space X₂ runs 2.1–6.0 and the drawn m follows it.
+
+**What the sourcing found, recorded because it cost the session most.** A reading agent's
+first pass returned type-binned A₂ means of 0.22–0.28 from a lossy summary of Díaz-García's
+Table 3; the raw VizieR table read mean 0.41 and median 0.37 — the summary was wrong by half
+and the raw rows were a two-minute download. Elmegreen 2011's class means were verified by
+recomputing them from the fetched Table 2 and matching the paper's sentence to the digit. The
+Milky Way's own old-stellar arm amplitude (Drimmel & Spergel 2001) could not be read beyond
+*"a spiral arm component dominated by two arms"* (abstract) and enters nowhere. Toomre 1981's
+own sentence was not readable (proceedings, not on arXiv); its content is taken from the two
+sources that restate it and say so.
+
+**Not done, and the read that waits.** No acceptance row judges the arm number or the
+amplitudes (BHG16 quote none), so the draw's odds at the defaults — two or three arms most
+likely for a disc holding 60% of its rotation — are a prediction without a row; the Milky Way's
+old disc is two-armed (Drimmel & Spergel 2001) and its gas four-armed, and one m cannot be both.
+#80 gained a reading (Erwin 2005's 0.6 h and 1.4 h; BHG16's own 5.0/2.6 = 1.92 lands the row at
+5.01) and no action. The viewer still crowds young light into the arms by its own rule
+(RENDER_PHYSICS §0's dated exception); `pattern_density_contrast` is what Phase 2's
+`sfh_azimuthal` now reads.

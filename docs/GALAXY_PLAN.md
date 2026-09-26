@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **25 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░` **26 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -32,7 +32,7 @@
 | ☑ | 23 | **Recorded retrospectively (D171).** The viewer rebuilt as a Vite + React + three.js app with the workflow, per-checkpoint previews, the formation-history scrubber (RENDER_PLAN H1) and a PSF (R2); the bar and arms published as an (R, φ) density contrast with **two experimental amplitude inputs** (M1); histories at 200 steps; the Azure deploy; the repository restructured into `docs/`, `model/`, `interface/` (0f78156). No session branch, no decision entries at the time | desktop | — | **Opus 5** | s23 | 2026-09-13 |
 | ☑ | 24 | **Recorded retrospectively (D171).** The render plan's model side: the PARSEC table and per-star photometry (M2, D164); the `ism` stage, #79 revisited and discharged, row 21 judged for the first time (D163); the disc's unresolved light, dust and bloom (D165); Hα and the bulge's light (D166); the ray-marched field regime and the three regimes (D167); the brightest-N mode (D168); [α/Fe] on the catalogue (D169); **one model, `basic`** (D170). Ran on `main` with no session branch | desktop | — | **Opus 5**, Opus 5.5, **Fable 5.1** | s24 | 2026-09-25 |
 | ☑ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten — the stage graph acyclic, iteration inside a stage when termination is guaranteed; the 8× it cited was never measured (D173); **#26 and #3 re-ruled carried**: a probe shows the retained budget is the root of a contraction map inside checkpoint 1, f* 0.338 against the input's 0.35. The pattern branch ahead of `sfh` on the checkpoint-1 curve **and the λ_d scale length** (the plan missed the second `sfh` field); **checkpoints 3 and 4 swap** (Pattern, then star formation) so Phase 2 can read the pattern; rows 15–17 measured before and after — **row 15 4.883 → 5.210, out by 0.01, recorded under new #80** (a recalled ratio's referent moved; not retuned), 16 and 17 pass; the arm number's 2-or-4 draw recorded (D174) | desktop | **Fable** | **Fable 5.1** | s25 | 2026-09-26 |
-| ☐ | 26 | **Phase 1b.** Arm and bar amplitudes derived from shear and disc dominance or seeded on `pattern_seed`, the two inputs removed; the arm number derived or its draw re-ruled with m = 3 and flocculent reachable; #23 re-ruled | desktop | **Fable** | — | s26 | — |
+| ☑ | 26 | **Phase 1b.** The swing-amplification window derived from `disc_dominance` and `shear_rate` (X₂ = 2/f_d, the review's 1/f_d ≤ m ≤ 2/f_d); the arm number drawn from {2…6} with odds the window sets — 2 or 3 at the defaults, four to six for a halo-dominated disc (flocculent reachable); the arm amplitude's mean derived from the window between the flocculent and grand-design arm–interarm contrasts (Elmegreen+ 2011, recomputed from Table 2), residual seeded; the bar amplitude seeded about the S4G median A₂ (Díaz-García+ 2016, 587 rows reduced); **`arm_amplitude` and `bar_amplitude` removed, 7 controls**; rows 15–17 unmoved; **#23 discharged** (D175) | desktop | **Fable** | **Fable 5.1** | s26 | 2026-09-26 |
 | ☐ | 27 | **Phase 2.** `sfh_azimuthal` publishing one (R, φ) star-formation modulation, no φ on the histories; the `azimuthal` model declared from `BASIC`'s tuple; the redistribution asserted; the model toggle back | desktop | Opus | — | s27 | — |
 | ☐ | 28 | **Phase 3.** The PARSEC table gains UBVRIJHK; rows 25–28 (M_B, M_V, B − V, Υ_V from BHG16 Table 2); Q(H⁰) ruled and published per star and per radius; wind luminosity; the Wolf–Rayet proxy; the input-sweep instrument for Tully–Fisher | desktop | Opus | — | s28 | — |
 | ☐ | 29 | **Phase 4.** Remnants by an initial–final mass relation, `star_remnant` and `remnant_mass_fraction`; planetary nebulae flagged with their duration | desktop | Opus | — | s29 | — |
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 27 (`GALAXY_INPUTS.md` §11). **Discharged:** 36.
+**Open debts:** 26 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
