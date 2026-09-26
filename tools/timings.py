@@ -67,6 +67,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("region: level 2 sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&level=2", "90 children, 16x the density"),
     Endpoint("clouds: one sector", "/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the census of 9 cells"),
     Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4"),
+    # The cluster census (S33, BUILD_II Phase 11): the cells' clouds drawn, then one cluster per cloud past its embedded phase.
+    Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),
+    Endpoint("clusters: whole disc", "/api/clusters", "", "every cluster, about 1.3e4"),
 )
 
 

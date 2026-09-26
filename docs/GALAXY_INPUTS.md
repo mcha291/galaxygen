@@ -689,9 +689,9 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95 | 30 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97 | 32 |
 
-So the board's **41 open** is 11 permanent and 30 carried, and no item is unruled. (S22
+So the board's **43 open** is 11 permanent and 32 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -700,14 +700,15 @@ photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach
 #85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178; S30 opened
 #88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179; S31 opened #91–#93,
 the grey slab, the PAH fit and the owed row 32, D180; S32 opened #94–#95, the census's construction and
-the cloud vector's unsourced draws, D181.) The eleven
+the cloud vector's unsourced draws, D181; S33 opened #96–#97, the clusters' inherited mass function and
+the bound mass before survival, D182.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The thirty carried ones are not thirty mechanisms.** Four of them — 19, 27, 49 and the
+**The thirty-two carried ones are not thirty-two mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -723,7 +724,8 @@ D177); one — 85 — is the instantaneous recycling the remnants exposed, a mec
 D178), and 86 and 87 are a fit not read and a row owed to Audit III; 88 is a recalled yield that a row
 now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179); 91 is a slab
 that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit III (S31, D180); 94 and
-95 are the cloud census's construction and its stated guesses (S32, D181). That leaves 28, 33, 39, 42,
+95 are the cloud census's construction and its stated guesses (S32, D181); 96 is the cluster function the
+census inherits and 97 the bound mass S34's survival must cut (S33, D182). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -2983,6 +2985,29 @@ never been judged in twenty-three sessions.
    a source for any of the four (a measured HII-region offset distribution, a molecular scale height —
    e.g. the CO layer's half-thickness — a remnant-shell visibility time), each a constant with a citation
    replacing a stated guess; what the stated guesses cost is visible only in V3's synthesis.
+
+96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
+   D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
+   time (0.0206 galaxy-wide) gives 12 860 clusters with masses 9 M☉ to 2.7 × 10⁵ and a median of 763,
+   following the cloud function's slopes (−1.6 inner, −2.2 outer) rather than the β ≃ 2, M∗ ≈ 2 × 10⁵ M☉
+   Schechter function Portegies Zwart, McKee & Gieles 2010 give for Milky-Way-type spirals `[verified:
+   arXiv:1002.1961, §2.4.2]`, which was read and does not enter code; 4 clusters lie above M∗ and hold 2.7%
+   of the mass. The smallest "clusters" are a few stars: no source fixed a lower cluster mass. **Carried.**
+   What closes it: a sourced cloud-to-cluster mass relation (a mass-dependent efficiency), or a sourced
+   minimum cluster mass, or a measured young-cluster mass function for the Milky Way with an uncertainty,
+   which would also be the acceptance row S33 could not enter. What kills the construction: a measured
+   young-cluster function whose slope the census's cannot reach at any efficiency.
+97. **The bound cluster mass before survival is 72 times the globular clusters' share** (S33, D182).
+   `bound_cluster_mass_total` — Lada & Lada 2003's 7% emerging bound, applied to every star formed over the
+   history net of return, every star taken to form in a cluster (their 70–90% `[verified: arXiv:astro-ph/
+   0301540, §2.5, §5]`) — is 2.79 × 10⁹ M☉ against Boylan-Kolchin 2018's η M_halo = 3.85 × 10⁷ `[verified:
+   BUILD_II.md Phase 5]`. Three things stand between them, none applied at S33: dissolution after emergence
+   over a Hubble time, a bound fraction that rises with mass (Lada & Lada: "only the most massive clusters
+   … are candidates for long term survival"), and the 10–30% of stars that form outside clusters. Because
+   the bound fraction is mass-independent the cluster mass function cancels out of the integral, so the
+   survival S34 builds enters only through a survival mass. **Carried to S34**, which either closes it —
+   the surviving mass reproduces η within the relation's 0.28 dex — or records what the survival
+   prescription had to assume to do so.
 
 ---
 

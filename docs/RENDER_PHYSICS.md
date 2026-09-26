@@ -62,7 +62,9 @@ sections below as a description of an empty slate.
   model/galaxy/stages/systems.py; tests/test_hierarchy.py; D181]`. The molecular
   clouds of §5a exist as an object class (`of="cloud"`) served by `/api/clouds`, a
   census that a level filters `[verified: model/galaxy/stages/clouds.py; D181]`;
-  the cluster object of §5b is Phase 11's.
+  since S33 the cluster object of §5b exists too (`of="cluster"`, `/api/clusters`,
+  one per cloud past its embedded phase, Q and wind as IMF integrals) `[verified:
+  model/galaxy/stages/clusters.py; D182]`.
 
 **Present in the viewer, and forbidden by §8 once the cloud vector exists.**
 The field regime lays each ring out within itself: 30% of the starlight as
@@ -250,6 +252,15 @@ Clusters are their own class, not a label on stars.
 **This unifies with BUILD_II Phase 5.** Globular clusters are the surviving
 massive end of the same mass function, so one mechanism produces both, and the
 η relation becomes a check on it rather than a separate assertion.
+
+Since S33 (BUILD_II Phase 11) the cluster is an object class (`of="cluster"`)
+served by `/api/clusters`: one per cloud past its embedded phase, named by the
+cloud's cell and its `cloud_cluster_index`, placed at the cloud's embedded source
+(`cloud_source_angle` read from the outward radial direction toward increasing
+azimuth `[inferred]`), with `cluster_ionizing_photons` and `cluster_wind_luminosity`
+the IMF integrals at its age times its mass `[verified:
+model/galaxy/stages/clusters.py; tests/test_clusters.py]`. The `seed` is the
+cell-and-index path, as for clouds.
 
 ### 5c. On-demand resampling
 

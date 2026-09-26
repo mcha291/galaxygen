@@ -5596,3 +5596,96 @@ clouds: one sector*      0.5143   0.0006 798.65     36,216  halo,disc,assembly,b
 clouds: whole disc*      0.7807   0.0062 124.97  2,148,344  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
 ```
 (`uv run python tools/timings.py`, 2026-09-26, session-32; the level-0 rows within noise of S29's.)
+
+### D182. Phase 11: young star clusters as an object class — one per cloud past its embedded phase, its mass at an efficiency derived from the model's own star formation rate, and the ionizing photons a closure against the light stage at 1.009
+
+**Built by an Opus 5.5 subagent in a worktree on `session-33` (commits bb6c085, 372c775, c7518a2);
+reviewed here against BRIEF.md's gate: core diff first, then the tests, then the two rulings below.**
+The subagent read its sources itself (the PDFs extracted to text) and quoted each sentence in the
+constant's line; nothing entered from recall (B9).
+
+**The brief's rulings (a)–(d), and what the reading did to them.** (a) The cluster mass function:
+Portegies Zwart, McKee & Gieles 2010 §2.4.2 give dN/dM = A M^−β exp(−M/M∗), "β ≃ 2", "for Milky-Way
+type spiral galaxies M∗ ≈ 2 × 10⁵ M☉" `[verified: arXiv:1002.1961]` — **it does not enter code**: under
+(d) a cluster's mass is its cloud's times an efficiency, so the census inherits the cloud function's
+slopes (−1.6 inner, −2.2 outer, S32) and not the review's −2, and the brief's "cap by the function's
+upper end" is not applied because a Schechter function has a scale, not an end (**#96**). The test
+measures the distance: 4 clusters above M∗, 2.7% of the mass. (b) Bound fraction 0.07: Lada & Lada 2003
+§2.5 "only about 7% of all embedded clusters survive to Pleiades age" (abstract: "less than 4-7%"), a
+seeded draw independent of mass `[verified: arXiv:astro-ph/0301540]`; dissolution age 10 Myr from the
+same section ("less than 10% survive longer than 10 Myr"): an unbound cluster older than that is
+*dissolved*, its stars still counted. (c) Mass–radius: the constant half-mass density 10³ M☉ pc⁻³,
+PZMG §4.4.2 "roughly consistent with a density of 10^3±1 M⊙ pc^−3" for clusters ≲10 Myr, r_hm =
+(3M/8πρ)^⅓ (their Fig. 9's definition); the constant radius of a few pc (their older clusters; Larsen
+2004 §6.3 "4 ± 1 pc" `[verified: arXiv:astro-ph/0408201]`) the alternative. (d) One cluster per cloud in
+the blown-open and dispersing states — the two in which Kawamura et al. 2009 see HII regions — named
+by the cloud's `cloud_cluster_index` (a new cloud column; the 431 earlier fields bit-identical by
+sha256).
+
+**Two rulings made on the first pass's report.** *Age*: the subagent departed from the brief's "the
+cloud's age" and took the cloud's age less the embedded phase, because Kawamura define that phase by
+the absence of massive star formation; a cluster as old as its cloud would have made its O stars in a
+phase defined by having none, and the census would have held no cluster under 6 Myr, the ones that
+make most of the photons. **Accepted.** *Efficiency*: the first pass adopted Murray 2011's ε_GMC = 0.08
+("a lower limit to the fraction of gas in a massive Milky Way GMC that will be converted into stars",
+§6; his ionizing-luminosity-weighted mean of the most active clouds `[verified: arXiv:1007.3270]`),
+and the clusters then formed stars **4.52 times faster than the model's own star formation rate**
+(7.93 against 1.755 M☉ yr⁻¹) and emitted 3.67 times the light stage's ionizing photons — the same
+paper says "typical estimates are more like 0.02" and a Galactic average ≈ 0.005. **Ruled: derived,
+not adopted** (A3, D117; S32's redistribution rule): ε(R) = Σ_SFR(R) τ_cloud / Σ_H₂(R), the local
+molecular depletion time inverted over one cloud lifetime (26 Myr), read at the cloud's radius and
+capped at 1, M★ = ε M_cloud with the cloud mass as the molecular gas itself (M★/M_gas, not Murray's
+M★/(M_GMC + M★), and the about says why). The galaxy-wide molecular-mass-weighted value is published
+as `cluster_formation_efficiency` = **0.0206**, with Murray's 0.08 / 0.02 / 0.005 and Lada & Lada's
+"1-5 %" (§5.2) named against it; no cloud reaches the cap (the only capped points are eight gas-poor
+grid points beyond 29 kpc that hold no cloud); the hosting clouds' ε runs 0.0009–0.22.
+
+**Measured (default grid; both models identical).** 12 860 clusters, the clouds in the two hosting
+states. Masses 9.3 – 2.65 × 10⁵ M☉, median 763, total 3.61 × 10⁷; half-mass radius median 0.45 pc;
+bound 901 / unbound 5 951 / dissolved 6 008 (0.070 by number, 0.063 by mass). **ΣQ = 1.634 × 10⁵³ s⁻¹
+against the light stage's 1.620 × 10⁵³ from stars younger than 20 Myr (0.980 of the total): ratio
+1.0088**, pinned, inside a tolerance of 0.16 = 3 × hypot(age noise 0.043, mass noise 1/√N_eff = 0.033,
+N_eff 898) that the test derives from the census itself. The residual is accounted for factor by
+factor: the clouds hold 1.037 of the molecular gas (S32's Poisson excess) so the clusters form at
+1.029 of the SFR; each read at its own [Fe/H] and radius gives 1.022; the age draw 0.987 of that. Both
+sides read the same [Fe/H] (asserted: `feh_gas == feh_history[:, −1]`) and the same tables (the
+age-averaged per-mass Q equals the light stage's integral to 2 × 10⁻³ at three metallicities). Ring
+by ring the ratio scatters 0.5–2.3 where the clusters are few and heavy, tracking each ring's
+expectation. Wind total 5.47 × 10⁶ L☉. **`bound_cluster_mass_total` = 2.79 × 10⁹ M☉** — the Phase 5
+hook, 0.07 × the stars formed over the history net of return, every star taken to form in a cluster
+(Lada & Lada: 70–90%) — is **72.4 × Boylan-Kolchin 2018's η M_halo** (3.5 × 10⁻⁵ × 1.1 × 10¹² = 3.85 ×
+10⁷): survival after emergence is not applied, a mass-independent bound fraction makes the mass
+function cancel out of the integral, and the scalar's about says so in bold; S34 owes the survival
+that removes 98.6% of it (**#97**). Rows 1–31 unmoved; spec 10 / 17 / 4 in both models.
+
+**Built.** `stages/clusters.py` (cp5, after clouds): ten `of="cluster"` columns (radius, azimuth,
+height, mass, half-mass radius, age, bound category, [Fe/H], Q, wind) and two scalars; the position is
+the cloud's embedded source, the offset in the plane at `cloud_source_angle` read from the outward
+radial direction toward increasing azimuth — a convention the cloud census did not state, tagged
+`[inferred]` in RENDER_PHYSICS §5b; Q and the wind per cluster are **mass times a per-unit-mass-formed
+table at the cluster's age and [Fe/H]** — `photometry.population_wind()` (the IMF integral of Vink's
+wind power along every isochrone, new) and `per_mass_at()` — never a sum over a star sample (B8).
+`cluster` joins OBJECTS in `core/fielddoc.py`. `/api/clusters` (window and level, the clusters filtered
+by their own position through `_in_children`, which `/api/clouds` now shares) materialises the cells'
+clouds and derives their clusters without running either stage (D4); its header carries the two
+scalars, which fall under rule D4 (D148) and say so. Two timings rows. The stage costs 0.13 s cold; the
+first cluster request pays the wind table's build, ~0.5 s.
+
+**Chosen against.** A cluster mass function drawn independently of the clouds (it would decouple the
+clusters from the gas that made them and need a sourced lower mass, unread). Murray's 0.08 as the
+default (a Q-weighted lower limit for the most active clouds; adopting it broke the closure). A
+remnant of the cluster on the star sample (`star_cluster_id`): clusters are objects, not labels
+(RENDER_PHYSICS §5b). An acceptance row: no Milky Way young-cluster formation rate or bound mass with
+an uncertainty was read. The register reads 43 open = 11 permanent + 32 carried, 37 discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+region: one sector*      0.6164   0.0008 783.69     41,768  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+system: one star*        0.6340   0.0199  31.83      3,576  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+clouds: one sector*      0.5238   0.0015 347.24     38,496  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clouds: whole disc*      0.8246   0.0108  76.68  2,282,208  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: one sector*    1.0603   0.0014 740.02     18,864  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.3409   0.0050 270.08  1,038,368  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+```
+(`uv run python tools/timings.py`, 2026-09-26, session-33; the level-0 rows within noise of S32's.)

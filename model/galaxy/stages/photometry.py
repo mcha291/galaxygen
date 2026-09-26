@@ -315,6 +315,41 @@ def population_light() -> PopulationLight:
     return PopulationLight(light, colour, bands, bolometric, ionizing)
 
 
+@functools.cache
+def population_wind() -> np.ndarray:
+    """(n_age, n_mh): the wind's mechanical power per unit mass *formed*, L☉ per M☉, along every isochrone.
+
+    The integral :func:`population_light` takes of Q, of ``massive_stars.wind_luminosity`` instead: each
+    living point's L, T_eff and present mass read along the track as the bands are, at Z/Z☉ = 10^[M/H]
+    of the isochrone's own metallicity; zero where the recipe says nothing (outside 12.5–50 kK). S33
+    (BUILD_II Phase 11): a cluster's wind is its mass times this at its age, not a sum over a sample.
+    """
+    from galaxy.stages.massive_stars import wind_luminosity
+
+    tab = isochrones()
+    m = _IMF_MASSES
+    phi = imf_weights(m)
+    mass_formed = np.trapezoid(phi * m, m)
+    out = np.zeros((tab.log_ages.size, tab.mhs.size))
+    column = EXTRA.index("mass_now")
+    for (a, z), track in tab.tracks.items():
+        alive = m <= track[0][-1]
+        log_l, log_teff = _along(track, m)
+        at = np.clip(m[alive], track[0][0], track[0][-1])
+        right = np.clip(np.searchsorted(track[0], at, side="right"), 1, max(track[0].size - 1, 1))
+        left = right - 1
+        span = track[0][right] - track[0][left]
+        w = np.where(span > 0.0, (at - track[0][left]) / np.where(span > 0.0, span, 1.0), 0.0)
+        present = tab.extra[(a, z)][:, column]
+        mass_now = present[left] * (1.0 - w) + present[right] * w
+        power = np.zeros(m.size)
+        power[alive] = np.nan_to_num(wind_luminosity(
+            10.0 ** log_l[alive], 10.0 ** log_teff[alive], mass_now, np.full(at.size, 10.0 ** tab.mhs[z])
+        ))
+        out[a, z] = np.trapezoid(phi * power, m) / mass_formed
+    return out
+
+
 def _blend(age_gyr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """(younger isochrone, fraction toward the older, metallicity index) — :func:`lookup`'s reading."""
     tab = isochrones()
@@ -351,6 +386,14 @@ def band_flux_at(age_gyr: np.ndarray, feh: np.ndarray, bands: tuple[str, ...]) -
         table = pop.bolometric_flux if band == "mbol" else pop.band_flux[..., BANDS.index(band)]
         out[band] = (1.0 - frac) * table[younger, mh] + frac * table[younger + 1, mh]
     return out
+
+
+def per_mass_at(table: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """A per-isochrone table ``(n_age, n_mh)`` read at single ages and [Fe/H], as :func:`population_at`
+    reads the light: nearest metallicity, linear in log age, the first 4 Myr the youngest isochrone's.
+    What one burst of star formation — a cluster — does per unit mass formed (S33)."""
+    younger, frac, mh = _blend(age_gyr, feh)
+    return (1.0 - frac) * table[younger, mh] + frac * table[younger + 1, mh]
 
 
 # --- a formation step's stars span its whole interval (S28) --------------------------------------

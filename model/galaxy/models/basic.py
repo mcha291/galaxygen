@@ -42,6 +42,7 @@ BASIC = MODELS.register(
             ("population", "population"),
             ("systems", "systems"),
             ("clouds", "clouds"),
+            ("clusters", "clusters"),
             ("formation", "formation"),
             ("planets", "planets"),
             ("habitable_zone", "habitable_zone"),
