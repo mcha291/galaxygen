@@ -241,9 +241,15 @@ def test_no_green_row_is_unconditioned(judged):
     # Row 15: 4.88 -> 5.21 at S25 when the bar read the lambda_d scale length (D174, debt #80) --
     # the table's own verdict ("chosen; a 2% fall in R_d fails it") named the lever.
     left_since = {15}
+    # Rows added after the sealed list was written, green with their conditioning stated in the
+    # decision that added them rather than in AUDIT_II_A.md: row 29 (S28, D177), the Tully-Fisher
+    # slope, green on the slope alone -- its zero point is unjudged because dust moves it and the
+    # model's light is intrinsic. Audit III (S37) re-reads every green row added by the second build.
+    joined_since = {29}
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
         assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))
-        assert passing | left_since == listed[column[name]], (name, sorted((passing | left_since) ^ listed[column[name]]))
-        assert passing <= listed["simple"] | listed["advanced"]
+        assert joined_since <= passing, (name, "a row recorded as joining the greens is not green", sorted(joined_since - passing))
+        assert (passing - joined_since) | left_since == listed[column[name]], (name, sorted(((passing - joined_since) | left_since) ^ listed[column[name]]))
+        assert passing - joined_since <= listed["simple"] | listed["advanced"]
     assert len(listed["advanced"]) == 8  # the simple column's 10 is the record's, not a model's, since D170
