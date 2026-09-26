@@ -5851,3 +5851,100 @@ physics. Spec **11 pass / 20 fail / 5 n-y-c of 36**, identical in both models; r
 0.59, Haffner's local 1/8). A row on the Hα–SFR calibration (no uncertainty read for log C = 41.27; D100
 would make it zero-width). Murray & Rahman 2010's 3.2 × 10⁵³ as row 34's target (no uncertainty quoted).
 The register reads 47 open = 11 permanent + 36 carried, 37 discharged.
+
+### D185. Phase 10: Weaver's bubble per cluster at its mean injected power, stalled at the ionized gas's sound speed; the supernova-remnant census per cell on Frail's 60 kyr; the hot phase as a porosity; a star's own bubble as a catalogue column
+
+**Built by an Opus 5.5 subagent in a worktree on `session-36` (commits 7e92b02, 544d6e8, a440420);
+reviewed here against BRIEF.md's gate: core diff first (systems, ism, fielddoc, the stage's docstring), then
+the tests. Accepted without a second pass.** The subagent read Weaver et al. 1977 from the ADS scan's page
+images and quotes each equation with its page.
+
+**The rulings (a)–(d), as applied.** (a) **Weaver, McCray, Castor, Shapiro & Moore 1977**, eq. 21: R₂ =
+(250/308π)^{1/5} L_w^{1/5} ρ₀^{−1/5} t^{3/5} (coefficient 0.76287, "changed from α = 0.88 to α = 0.76"), eqs.
+51–52 in their units (27 n₀^{−1/5} L₃₆^{1/5} t₆^{3/5} pc; 16 … t₆^{−2/5} km s⁻¹), eq. 22 the interior pressure,
+eq. 37 the interior temperature 2.07 × 10⁶ K …, eqs. 66–67 the shell's column n₀R₂/3 and its isothermal
+density n_s = n₀(V₂² + C₀²)/C_s² with C_II ≈ 10 km/s `[verified: ApJ 218, 377, pp. 380–392, read at S36 from
+the scan]`. The solution assumes constant L_w; a cluster's power is not constant, so **the L it is evaluated at
+is the energy injected so far over the age**, (E_wind(t) + E_SN(t))/t `[inferred]` — E_wind the time integral
+of `photometry.population_wind` (equal to `cluster_wind_luminosity` over the first 4 Myr, asserted), E_SN =
+10⁵¹ erg per Kroupa star above max(8.5 M☉, the heaviest still living), from `remnants._heaviest_alive`. **The
+stall**: Weaver et al. find the shell held once V₂ ≤ 10 km/s (p. 389) and give no formula; eliminating t between
+eqs. 21 and 52 at V = C_II gives R_stall = a^{5/2}(L/ρ₀)^{1/2}(0.6/C)^{3/2}, and a bubble past it is held there
+`[inferred]`; asserted: the stalled interiors' pressure is 1.0 × the region's thermal 2nT (median, within 0.25).
+(b) **The ambient density is the HII region's rms density** (S35) × 1.4 m_H; for a single star the ISM's
+midplane density, a new `ism` field `gas_midplane_density` = P/σ² ("a single midplane kinetic pressure
+ρ₀σ_z²", Ostriker & Shetty 2011 §2 `[verified: arXiv:1102.1446]`; 0.69 H cm⁻³ at R₀ against Leroy et al.
+2008's "n ∼ 1 cm⁻³"), because stars and clouds are placed independently and a star inside a cloud would be a
+coincidence of two draws. (c) **Remnants**: a census per cell — expected count = (core-collapse + Ia rate
+surface density) × cell area × **60 000 yr**, Frail, Goss & Whiteoak 1994's mean radio lifetime ("> 60,000
+years", a lower bound, read through a garbled text layer `[verified: arXiv:astro-ph/9407031 §4.1]`;
+Sarbadhicary et al. 2017's "20–80 kyrs" brackets it); Sedov–Taylor with ξ₀ = 1.15167 (Kim & Ostriker 2015 §2
+`[verified: arXiv:1410.1537]`) until Cioffi, McKee & Bertschinger 1988's t_PDS = 1.33 × 10⁴ E₅₁^{3/14}
+n₀^{−4/7} ζ_m^{−5/14} yr, then the pressure-driven snowplow r = r_PDS(4t/3t_PDS − 1/3)^{3/10} (as quoted by Chen
+& Slane 2001 §3.4.2 `[verified: arXiv:astro-ph/0108502]`; Cioffi et al. themselves not on arXiv); E_SN = 10⁵¹
+erg (Kim & Ostriker §3). **Cioffi's merger age was built first and set aside**: in the model's midplane
+densities it is 1.2 Myr at R₀ and hundreds of Myr in the outer disc, and gave 39 709 remnants up to 5 kpc across
+— a census set by the density the model holds least well; it is the named alternative (#103). Positions:
+radius by the rate within the ring, azimuth uniform in the sector (the rates are axisymmetric — the core
+collapses do not follow the arms, #102), height sech² at h = Σ/4ρ₀ `[inferred]`, age uniform over the
+lifetime, kind by the rates' ratio. (d) **Per star**: `star_bubble_radius` on the catalogue, Weaver at the
+star's wind power for its whole age in the midplane density; a column added, none moved — **the 254 existing
+fields per model bit-identical by sha256**, the level-0 catalogue included.
+
+**Built.** `stages/bubbles.py` (cp5, last; both models) and `stages/feedback.py` (the closed forms with their
+quotes; Weaver's pure numbers 250/308π, 7/(3850π)^{2/5}, 2.07 × 10⁶ K as module values). Per cluster
+(`of="cluster"`): `bubble_radius`, `_shell_velocity`, `_shell_density` (eq. 67, not a fixed jump), `_shell_thickness`,
+`_interior_pressure`, `_interior_temperature`, `_shell_emissivity` (Case B at the region's temperature,
+**photon-limited** to the cluster's trapped Q — the same photons as S35's HII Hα, placed in the shell: a renderer
+draws the one or the other), `_mechanical_luminosity`, `bubble_phase` (wind / supernova / fading; the first core
+collapse at the youngest isochrone's 3.98 Myr, the last at 36.2 Myr), `bubble_stalled`. Per remnant
+(`of="remnant"`, **OBJECTS widened**, the `core/fielddoc.py` edit): radius, azimuth, height, size, age, shell
+velocity, ambient and shell density, thickness, `remnant_shell_emissivity` (NaN in the Sedov phase — Case B does
+not describe an adiabatic shock, B9; one recombination per swept-up atom at 10⁴ K in the radiative phase
+`[inferred]`, Telezhinsky 2009's T_sh = 10⁴ K a model assumption `[verified: arXiv:0812.4604 §2.3]`), phase, kind.
+Galaxy scale: `hot_phase_porosity`(R) (summed bubble + remnant volumes over the gas layer's Σ/ρ₀ thickness; a
+porosity, overlaps counted twice) and `remnant_count_total` (rule D4). Ten level-0 constants. `/api/remnants` (window
+and level) with two timings rows; the bubble columns on `/api/clusters`; `/api/region` now runs `ism` (0.2 ms).
+The graph ORDER moved: systems reads ism's density (after clouds), planets after clusters, bubbles last.
+
+**Measured (default; both models identical).** 12 860 bubbles: radius 0.07 / **8.96** / 349 pc (5–95%: 2.0–45);
+20.5% exceed their cloud's radius, 99.6% the Strömgren radius (median 0.72 pc); **12 521 stalled**, the 339
+expanding at 10–124 km/s (median 12.8); shell density median 389 cm⁻³, thickness 1.5 pc, interior P/k 2.6 × 10⁶,
+T 4.8 × 10⁶ K (2.3 × 10⁶ – 1.4 × 10⁷); mean power median 1 663 L☉; phases wind 2 568 / supernova 10 292 / fading 0.
+**Remnants: 1 464 drawn against 1 448.4 expected** (60 kyr × Phase 6's 0.0176 + 0.0065 yr⁻¹): core-collapse
+1 071, Ia 393; Sedov 628, radiative 836; size 1.8 / 18.4 / 59 pc; ambient density median 0.85 cm⁻³; shock
+velocities 56–9 689 km/s; radiative-shell emissivity median 4.9 × 10⁻²² erg s⁻¹ cm⁻³ (Case B of the whole
+compressed shell would have made the median radiative remnant as bright as a giant HII region, 1.8 × 10³⁸
+against 1.3 × 10³⁶ erg/s as built). Hot-phase porosity 0.033 at R₀, maximum 0.13. `star_bubble_radius`: two finite
+values in the 20 000-star catalogue (5.8 and 50.6 pc), NaN wherever the wind is. Hand checks: 10³⁶ erg/s into
+n₀ = 1 at 1 Myr gives 26.22 pc and 15.38 km/s (Weaver's 27 and 16 to their two figures; μ = 1.2 would give 27);
+10⁵¹ erg into n₀ = 1 at 1 000 yr gives 4.986 pc (Kim & Ostriker's 5.0); the Sedov radius at t_PDS is 14.04 pc
+against r_PDS = 14.0, continuous across it to 1%. The census redistributes within 3σ, the kind split too; a cell
+drawn alone is its slice (D60); the star column is inherited unchanged at level 1. Rows 1–36 unmoved; spec
+11 / 20 / 5 of 36; the bubbles stage costs 0.12 s, the basic model 2.8 s cold. The cold timings are appended.
+
+**Two debts.** **#102**: the remnant census is not tied to the clusters that made them — 65% of core collapses
+are of stars that die before 20 Myr, the census's oldest cluster, so their energy drives a superbubble *and*
+their remnant is drawn again as a free object; and the core collapses' azimuth is uniform in the sector while
+their progenitors follow the arms' contrast. **#103**: the census's count is set by the visible lifetime, 60 kyr
+read through a garbled layer and a lower bound in its source, against Cioffi's merger age that gives 27× the
+count; and the Sedov jump of 4 and the one-recombination-per-atom shell Hα are `[inferred]`. Rankine–Hugoniot's 4
+is recall, not re-read.
+
+**Chosen against.** A fixed shell compression of 4 (eq. 67's isothermal jump is what the source gives). The
+thin disc's scale height for the porosity (the gas layer's own thickness Σ/ρ₀ is what Ostriker & Shetty define).
+A cloud lookup for the star's ambient density (a coincidence of two draws). Radiative losses from the Weaver
+interior (not in the solution read). Sarbadhicary's log-normal energy spread (not applied). The register reads
+49 open = 11 permanent + 38 carried, 37 discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+region: one sector*      0.6375   0.0010 669.60     44,096  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+system: one star*        0.6340   0.0193  32.83      3,608  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: one sector*    1.0257   0.0024 419.92     56,904  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.3467   0.0103 131.37  3,304,520  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+remnants: one sector*    0.5940   0.0012 506.87      5,976  halo,disc,assembly,sfh,chemistry_dtd,supernovae,vertical_alpha,ism
+remnants: whole disc*    0.6910   0.0034 201.76    148,088  halo,disc,assembly,sfh,chemistry_dtd,supernovae,vertical_alpha,ism
+```
+(`uv run python tools/timings.py`, 2026-09-26, session-36; the level-0 rows within noise of S33's.)

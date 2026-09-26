@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░██████████████████████████░░░░░░░░░░░░` **35 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░████████████████████████████░░░░░░░░░░` **36 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -42,7 +42,7 @@
 | ☑ | 33 | **Phase 11.** `clusters` stage: 1.29 × 10⁴ young clusters as an object class (`of="cluster"`), one per cloud past its embedded phase, named by the new `cloud_cluster_index`; mass at an efficiency **derived** from the local depletion time over one cloud lifetime (0.0206 galaxy-wide; Murray's adopted 0.08 rejected after it made the clusters form 4.5× faster than the SFR), bound 7% (Lada & Lada 2003), half-mass density 10³ (PZMG 2010); Q and wind per cluster are IMF integrals at the cluster's age — **ΣQ / the light stage's young Q = 1.0088**, every residual factor named; `bound_cluster_mass_total` 72× η M_halo before survival (#97); the census inherits the cloud slopes, not β = 2 (#96); `/api/clusters`, two timings rows (D182) | desktop | Opus | **Opus 5.5** | s33 | 2026-09-26 |
 | ☑ | 34 | **Phase 5.** `stellar_halo`, `cluster_survival`, `globular_clusters` stages: the GC system mass = S33's bound mass × Lamers 2005's survival (open-cluster t₀ 3.3 Myr, γ 0.62; PZMG's function from 10² M☉) — the mean **+0.26 dex from η M_halo, inside the 0.28 dex scatter, but 53% of the survivors are under 1 Gyr and 0.7% over 10 Gyr** (#97 stays; the old survivors alone read −1.87 dex, +0.09 at the N-body t₀); the residual seeded on `world_seed`; metal-poor share 0.643; stellar halo 3.0 × 10⁹ from `mergers[]`, satellites whole; **rows 32 (Harris, 0.47 dex high, #98) and 33 (BHG16, 0.64 dex high, #99) recorded misses**; spec 10/19/4 of 33 (D183) | desktop | Opus | **Opus 5.5** | s34 | 2026-09-26 |
 | ☑ | 35 | **Phase 9.** `nebular` stage: every cluster's HII region as the §3a shape parameters (R_S, n_e rms, T_e from metallicity, log U, clumping e^σ_s², O/N/S) and its Hα **per unit volume** (new units `1/cm3`, `erg/s/cm3`), Case B from Storey & Hummer's own rows (Hα/Hβ 2.863, 0.452 per photon); the diffuse layer from a 30% escape (Zurita/Haffner); the galaxy's Hα as Σ_Q redistributed, census = field to 0.990 (noise 0.059); `HALPHA_PER_SFR` now a check reading **0.71** (the isochrones' Q vs Starburst99's, #100); emissivity ruling: Byler+2017/FSPS grid of the isochrone kind, **its fetch awaiting the owner's word, the forbidden lines with it**; rows 34 (Bennett Q, miss by 3%, #100), 35 (KEH89 slope, −2.008 pass), 36 (PNLF, n-y-c); DIG by construction #101 (D184) | desktop | **Fable** | **Fable 5.1** | s35 | 2026-09-26 |
-| ☐ | 36 | **Phase 10.** Wind bubbles (Weaver 1977) per star and per cluster, shells, supernova remnants as the late state, the hot phase from Phase 6's rates | desktop | Opus | — | s36 | — |
+| ☑ | 36 | **Phase 10.** `bubbles` + `feedback` stages: Weaver+1977's bubble per cluster at its mean injected power (winds + 10⁵¹ erg per core collapse), **stalled at the ionized gas's sound speed** (12 521 of 12 860; median 9 pc), the shell's density, thickness, T, P and photon-limited Hα per volume; the supernova-remnant census (`of="remnant"`, OBJECTS widened): 1 464 vs 1 448 expected from Phase 6's rates × Frail's 60 kyr, Sedov (ξ 1.15167) then Cioffi's snowplow, radius 1.8–59 pc; `hot_phase_porosity` 0.033 at R₀; `gas_midplane_density` = P/σ² on ism; `star_bubble_radius` on the catalogue (254 fields bit-identical); `/api/remnants`; #102 (remnants untied from clusters, no arms), #103 (lifetime-set count, inferred shell) (D185) | desktop | Opus | **Opus 5.5** | s36 | 2026-09-26 |
 | ☐ | 37 | **Audit III.** Every NEEDS-SOURCING that entered code has its citation read; every redistribution and balance re-derived; every new green row conditioned | desktop | **Fable** | — | s37 | — |
 | ☐ | 38 | **V1.** The spectrum function and the filter sets — broadband, SHO/HOO, one named instrument; the field regime's young-light constant replaced by the stellar component; the frame's B − V and M_V against Phase 3's scalars | desktop | Opus | — | s38 | — |
 | ☐ | 39 | **V2.** Volumetric emissivity and emitting dust in the ray-marcher; the clump lattice and Hα knots removed; energy balance and the Σ_V(R) profile read from the frame | desktop | Opus | — | s39 | — |
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 47 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
+**Open debts:** 49 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance

@@ -1004,3 +1004,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   report, and check the arXiv ids: four of the six the brief gave from memory were the wrong papers (D184).
 - [infra] A recalled 'textbook' value in a test is a pin on memory: the 1e49-photon Strömgren sphere is 3.2 pc
   at Storey & Hummer's α_B, not the 1.56 recalled; a test asserts the defining balance, not a remembered number.
+
+## From S36 (BUILD_II Phase 10)
+
+- [field] Build the alternative first when it is the one with the longer reach: Cioffi's merger age, computed
+  before Frail's lifetime was adopted, showed the census would have been set by the outer disc's midplane
+  density (39 709 remnants, 5 kpc across) — the number that decided the ruling came from the road not taken (D185).
+- [field] A similarity solution for a constant power, driven by a power that is not constant, is evaluated at the
+  energy injected so far over the age and tagged `[inferred]`; the tests check the constant-power limit against the
+  source's own numbers (26.22 pc against Weaver's 27) rather than the extension (D185).
+- [field] The same photons cannot make two emissions: the shell's Hα is limited to the cluster's trapped Q, the HII
+  region's Hα is the same photons filling the sphere, and the about lines say a renderer draws one or the other.
+  The same rule applied to energy is debt #102's remedy (D185).
+- [audit] A number read through a garbled OCR layer enters with that fact in its tag and its debt: Frail's
+  '> 60,000 years' set the census's count, and the census names it as the one thing a better source moves (D185, #103).
+- [infra] A read-only agent's first `uv run` in a worktree creates a `.venv/` there; it is gitignored, but a
+  worktree with a lock needs `git worktree remove --force --force` after the agent has stopped.

@@ -73,7 +73,8 @@ closes the project.
 | 32 | `s32` | `89fa20c39e94` | **queued** — filled in by S33 |
 | 33 | `s33` | `9f43a305a2be` | **queued** — filled in by S34 |
 | 34 | `s34` | `7b61e2edce88` | **queued** — filled in by S35 |
-| 35 | `s35` | TBD | **queued** — S36 fills the SHA in |
+| 35 | `s35` | `5d4cb7885dd0` | **queued** — filled in by S36 |
+| 36 | `s36` | TBD | **queued** — S37 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -226,8 +227,11 @@ git tag -a s33 9f43a305a2be79b9e3aeb0ad4ad67987fd9a5c5d -m "S33: clusters as obj
 # S34 — globular clusters as the bound clusters' survivors, the stellar halo, rows 32-33 as misses (Phase 5).
 git tag -a s34 7b61e2edce88d22c9a6c96bbcb5a8cfeac29b8a9 -m "S34: globular clusters and the stellar halo"
 
-# S35 — the HII regions' shape parameters and volume emissivity, Case B, the diffuse layer, rows 34-36 (Phase 9). SHA filled in by S36.
-git tag -a s35 "$(git rev-list -1 --grep='^Merge S35 into main' main)" -m "S35: nebular emission"
+# S35 — the HII regions' shape parameters and volume emissivity, Case B, the diffuse layer, rows 34-36 (Phase 9).
+git tag -a s35 5d4cb7885dd0c7a8aaf3ea012c5b8945a082d2fb -m "S35: nebular emission"
+
+# S36 — Weaver bubbles per cluster and star, the supernova-remnant census, the hot phase (Phase 10). SHA filled in by S37.
+git tag -a s36 "$(git rev-list -1 --grep='^Merge S36 into main' main)" -m "S36: mechanical feedback"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
