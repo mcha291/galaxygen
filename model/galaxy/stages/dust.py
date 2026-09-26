@@ -291,7 +291,7 @@ PAH = FieldDecl(
         "Rémy-Ruyer et al. 2015's relation across 109 galaxies (log f_PAH rising 1.30 per dex of "
         "12 + log(O/H), 0.35 dex of scatter, in units of the Galactic 4.57%), oxygen taken to track iron. "
         "Held flat above 1.2 times solar, the most metal-rich galaxy the relation was fitted to, so the "
-        "inner disc is not extrapolated. At solar abundance it reads 9.0%, twice Draine & Li's 4.58% for "
+        "inner disc is not extrapolated. At solar abundance it reads 9.06%, twice Draine & Li's 4.58% for "
         "the Milky Way itself (0.30 dex, inside the scatter); the metal-poor outer disc falls to a few "
         "tenths of a per cent, which is what makes a metal-poor galaxy's infrared look different."
     ),
