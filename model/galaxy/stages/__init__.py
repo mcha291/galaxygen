@@ -20,5 +20,6 @@ from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation
 from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
 from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and radiates, S31)
 from . import systems  # noqa: F401  (checkpoint 5)
+from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
 from . import planets  # noqa: F401  (checkpoint 6, seeded)
 from . import habitable_zone  # noqa: F401  (checkpoint 6: built and deliberately unjudged, S30)

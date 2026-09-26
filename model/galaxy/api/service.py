@@ -64,11 +64,16 @@ from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
 from galaxy.stages import planets as _planets
+from galaxy.stages import clouds as _clouds
 from galaxy.stages import systems as _catalogue
 
 JSON = "application/json"
 CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
 PLANETS_SLOT = "planets"  # and the slot a system query materialises with
+CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
+# The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
+# about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
+MAX_CHILD_CELLS = 4096
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
@@ -118,15 +123,25 @@ ROUTES: tuple[Route, ...] = (
         "A materialised star catalogue for one (R, phi) window. brightest=N keeps the N most luminous "
         "stars of it, each row named by its own cell and index columns; view=<16 numbers> (a column-major "
         "view-projection matrix over x = R cos phi, y = height, z = -R sin phi) first keeps only the stars "
-        "inside that frustum.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view"),
+        "inside that frustum. level=k (0..3, S32) names the cell hierarchy's depth: each level-k cell "
+        "holds its parent's stars that fall inside it plus its own, 4^k times the sample density, every "
+        "row named by level, cell and index columns.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view", "level"),
         "region",
     ),
     Route(
         "/api/system",
-        "One star's planets and belts, by the (cell, index) that names it.",
-        ("model", "cell", "index", "stars"),
+        "One star's planets and belts, by the (level, cell, index) that names it (level 0 by default).",
+        ("model", "cell", "index", "stars", "level"),
         "system",
+    ),
+    Route(
+        "/api/clouds",
+        "The molecular-cloud census for one (R, phi) window (S32): every cloud of the cells the window "
+        "meets, each row named by cell and index; level=k keeps the clouds inside the level-k children "
+        "the window meets.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "clouds",
     ),
 )
 
@@ -707,6 +722,9 @@ class Service:
         view = _view_matrix(q.one("view"))
         if view is not None and not brightest:
             raise BadRequest("view= only means something with brightest=N")
+        level = _level(q)
+        if level and brightest:
+            raise BadRequest("brightest= is a level-0 selection; below level 0 every row already carries its name")
 
         inputs = self._overrides(model, q)
         # What the catalogue *reads*, which is not the catalogue: the closure
@@ -715,21 +733,31 @@ class Service:
         seed_name = stage.reads_seeds[0] if stage.reads_seeds else None
         seed = int(out.inputs[seed_name]) if seed_name else 0
 
-        cells = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
+        cells = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level)
+        if level and len(cells) > MAX_CHILD_CELLS:
+            raise BadRequest(f"level={level} over this window names {len(cells)} cells, more than {MAX_CHILD_CELLS}: narrow the window")
         migration = float(out.inputs["migration_efficiency"])
-        key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed))
+        key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed, level))
         catalogue = self.cells.catalogue(
-            key, cells, lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration),
+            key, cells,
+            # level= only below level 0, so the level-0 call keeps its signature for the instruments
+            # that wrap materialise (test_api's cache count).
+            lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration, **({"level": level} if level else {})),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in catalogue]
         selection = None
         if brightest:
             catalogue, selection = _brightest(catalogue, brightest, view)
             columns += ["cell", "index"]
+        if level:
+            # Below level 0 the rows carry their canonical names: an inherited star its parent's
+            # (level 0, cell, index), an extra star its child's (level, child, index) - S32.
+            columns += ["level", "cell", "index"]
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "level": level,
             # With brightest=N the rows are a selection, named by their own cell and index columns
             # rather than by the runs below, which describe the pool they were chosen from.
             "brightest": selection,
@@ -742,8 +770,8 @@ class Service:
                 "counts": [n for _, n in catalogue.counts],
                 "count": len(catalogue.counts),
                 "requested": len(cells),
-                "of": _catalogue.CELL_COUNT,
-                "bounds": [_catalogue.cell_bounds(R, c) for c, _ in catalogue.counts]
+                "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(level),
+                "bounds": [_catalogue.cell_bounds(R, c, level) for c, _ in catalogue.counts]
                 if len(catalogue.counts) <= 64
                 else [],
             },
@@ -752,6 +780,63 @@ class Service:
             "stages": list(ran),
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, catalogue[c]) for c in columns]), ran)
+
+    def _clouds(self, q: Query) -> Response:
+        """The molecular-cloud census of one window (S32): the clouds of every level-0 cell the window
+        meets, whole cells as the star route gives; at level k, the clouds inside the children it meets.
+        A census, so no sample size: the same clouds whatever the window (D60)."""
+        model = self._model(q)
+        stage = _stage_for(model, CLOUDS_SLOT, self.impls)
+        R = self.grid.R
+        r_min = q.number("r_min", float(R[0]))
+        r_max = q.number("r_max", float(R[-1]))
+        phi_min = q.number("phi_min", 0.0)
+        phi_max = q.number("phi_max", 2.0 * math.pi)
+        level = _level(q)
+
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        seed = int(out.inputs[stage.reads_seeds[0]])
+        constants = {k: c.value for k, c in model.constants.items()}
+        parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
+        key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        census = self.cells.catalogue(
+            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted),
+        )
+        columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
+        kept = None
+        if level:
+            children = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level)
+            wanted = set(children)
+            keep = np.zeros(census.size, dtype=bool)
+            offset = 0
+            for cell, count in census.counts:
+                r = np.asarray(census["cloud_radius"])[offset:offset + count]
+                phi = np.asarray(census["cloud_azimuth"])[offset:offset + count]
+                for qq in range(_catalogue.children_per_cell(level)):
+                    cid = _catalogue.child_id(cell, level, qq)
+                    if cid in wanted:
+                        keep[offset:offset + count] |= _catalogue._within(r, phi, {}, R, cell, level, qq)
+                offset += count
+            kept = int(keep.sum())
+            census = _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, census.counts)
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "level": level,
+            "cells": {
+                "ids": [c for c, _ in census.counts],
+                "counts": [n for _, n in census.counts],
+                "count": len(census.counts),
+                "requested": len(parents),
+                "of": _catalogue.CELL_COUNT,
+            },
+            "clouds": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
+            "columns": columns,
+            "stages": list(ran),
+        }
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
 
     def _system(self, q: Query) -> Response:
         """One star's planets. It materialises one cell and takes one star out of it.
@@ -764,10 +849,12 @@ class Service:
         model = self._model(q)
         catalogue = _stage_for(model, CATALOGUE_SLOT, self.impls)
         planets = _stage_for(model, PLANETS_SLOT, self.impls)
+        level = _level(q)
         cell = q.integer("cell", -1)
         index = q.integer("index", -1)
-        if not 0 <= cell < _catalogue.CELL_COUNT:
-            raise BadRequest(f"cell={cell} is outside 0..{_catalogue.CELL_COUNT - 1}")
+        n_cells = _catalogue.CELL_COUNT * _catalogue.children_per_cell(level)
+        if not 0 <= cell < n_cells:
+            raise BadRequest(f"cell={cell} is outside 0..{n_cells - 1} at level {level}")
         if index < 0:
             raise BadRequest(f"index={index} is not a star of that cell")
         stars = q.integer("stars", _catalogue.CATALOGUE_SAMPLE)
@@ -779,23 +866,29 @@ class Service:
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
         here = _catalogue.materialise(
             out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
-            migration=float(out.inputs["migration_efficiency"]),
+            migration=float(out.inputs["migration_efficiency"]), level=level,
         )
+        if level:
+            # A level-k name addresses the child's own stars: its inherited rows are opened by their
+            # parent's level-0 name, so the same star has the same planets by either route (S32).
+            own = np.asarray(here["level"]) == level
+            here = _catalogue.Catalogue.of({n: np.asarray(v)[own] for n, v in here.items() if n not in ("level", "cell", "index")}, ((cell, int(own.sum())),))
         if index >= here.size:
-            raise NotFound(f"cell {cell} has {here.size} stars at this sample size, so no index {index}")
+            raise NotFound(f"cell {cell} has {here.size} stars of its own at this sample size and level, so no index {index}")
 
         constants = {k: c.value for k, c in model.constants.items()}
-        system, found = _planets.one_system(here, index, cell, seeds["planets_seed"], constants)
+        system, found = _planets.one_system(here, index, _catalogue.canonical_cell(level, cell), seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
         star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
             "star": star,
+            "level": level,
             "cell": cell,
             "index": index,
             "of": here.size,
-            "bounds": _catalogue.cell_bounds(self.grid.R, cell),
+            "bounds": _catalogue.cell_bounds(self.grid.R, cell, level),
             "planets": len(system[columns[0]]) if columns else 0,
             "belts": [dict(b) for b in found],
             "columns": columns,
@@ -805,6 +898,13 @@ class Service:
         return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
 
 
+
+
+def _level(q: Query) -> int:
+    level = q.integer("level", 0)
+    if not 0 <= level <= _catalogue.MAX_LEVEL:
+        raise BadRequest(f"level={level} is outside 0..{_catalogue.MAX_LEVEL}")
+    return level
 
 
 def _view_matrix(raw: str | None) -> np.ndarray | None:

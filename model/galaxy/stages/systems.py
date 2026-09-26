@@ -41,7 +41,7 @@ counts are still the contrast's, so a star's name is the same whichever model dr
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import numpy as np
@@ -69,6 +69,31 @@ from galaxy.stages.vertical import POPULATIONS
 CELL_RINGS = 32
 CELL_SECTORS = 32
 CELL_COUNT = CELL_RINGS * CELL_SECTORS
+# The cell hierarchy (S32, BUILD_II Phase 8, RENDER_PHYSICS section 5c): a level-k cell is one of 4^k
+# children of a level-0 cell, 2^k sub-rings by 2^k sub-sectors, with its own seeded stream. Three
+# levels deep: at level 3 a child at R0 is about 15 pc by 0.05 rad, 64 times the sample density.
+MAX_LEVEL = 3
+
+
+def children_per_cell(level: int) -> int:
+    return 4 ** int(level)
+
+
+def child_id(cell: int, level: int, q: int) -> int:
+    """The id of child ``q`` (row-major over sub-rings then sub-sectors) of level-0 ``cell`` at ``level``."""
+    return int(cell) * children_per_cell(level) + int(q)
+
+
+def parent_of(cell_id: int, level: int) -> tuple[int, int]:
+    """(level-0 cell, child index q) of a cell id at ``level``; at level 0 the id itself and 0."""
+    n = children_per_cell(level)
+    return int(cell_id) // n, int(cell_id) % n
+
+
+def canonical_cell(level: int, cell_id: int) -> int:
+    """One integer naming a cell at any level without collisions across levels: the level-0 ids
+    come first, then every level-1 id, and so on. What the planets stage keys a star's draws on."""
+    return int(cell_id) + sum(CELL_COUNT * children_per_cell(j) for j in range(int(level)))
 CATALOGUE_SAMPLE = 20_000  # the clickable sample of GALAXY_PLAN.md §4, order 10^4-10^5
 
 # Younger than this, a star is placed by where stars form today (``sfr_modulation``, published
@@ -195,20 +220,27 @@ def cell_edges(R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return np.linspace(R[0], R[-1], CELL_RINGS + 1), np.linspace(0.0, 2.0 * math.pi, CELL_SECTORS + 1)
 
 
-def cell_bounds(R: np.ndarray, cell: int) -> dict[str, float]:
-    """The (R, φ) footprint of one cell, for a caller that has to draw it."""
+def cell_bounds(R: np.ndarray, cell: int, level: int = 0) -> dict[str, float]:
+    """The (R, phi) footprint of one cell - at ``level`` k, of one of a level-0 cell's 4^k children
+    (2^k sub-rings by 2^k sub-sectors, row-major) - for a caller that has to draw it."""
     rings, sectors = cell_edges(R)
-    ring, sector = divmod(int(cell), CELL_SECTORS)
+    parent, q = parent_of(cell, level)
+    ring, sector = divmod(int(parent), CELL_SECTORS)
+    n = 1 << int(level)
+    a, b = divmod(int(q), n)
+    r_lo, r_hi = rings[ring], rings[ring + 1]
+    p_lo, p_hi = sectors[sector], sectors[sector + 1]
     return {
-        "r_lo": float(rings[ring]), "r_hi": float(rings[ring + 1]),
-        "phi_lo": float(sectors[sector]), "phi_hi": float(sectors[sector + 1]),
+        "r_lo": float(r_lo + (r_hi - r_lo) * a / n), "r_hi": float(r_lo + (r_hi - r_lo) * (a + 1) / n),
+        "phi_lo": float(p_lo + (p_hi - p_lo) * b / n), "phi_hi": float(p_lo + (p_hi - p_lo) * (b + 1) / n),
     }
 
 
 def cells_in(
-    R: np.ndarray, r_lo: float, r_hi: float, phi_lo: float = 0.0, phi_hi: float = 2.0 * math.pi
+    R: np.ndarray, r_lo: float, r_hi: float, phi_lo: float = 0.0, phi_hi: float = 2.0 * math.pi, level: int = 0
 ) -> tuple[int, ...]:
-    """Every cell whose footprint meets the window. φ wraps; the window may cross zero.
+    """Every cell whose footprint meets the window - at ``level`` k, every child (S32). phi wraps;
+    the window may cross zero.
 
     A window narrower than a cell still selects the cell containing it, so a
     query never comes back empty because it was too small to straddle an edge.
@@ -219,7 +251,7 @@ def cells_in(
     span = min(max(phi_hi - phi_lo, 0.0), 2.0 * math.pi)
     start = phi_lo % (2.0 * math.pi)
     windows = [(start, start + span)]
-    if start + span > 2.0 * math.pi:  # the window crosses φ = 0 and is two intervals
+    if start + span > 2.0 * math.pi:  # the window crosses phi = 0 and is two intervals
         windows = [(start, 2.0 * math.pi), (0.0, start + span - 2.0 * math.pi)]
 
     def meets(lo: float, hi: float, a: float, b: float) -> bool:
@@ -230,7 +262,19 @@ def cells_in(
         j for j in range(CELL_SECTORS)
         if any(meets(sectors[j], sectors[j + 1], a, b) for a, b in windows)
     ]
-    return tuple(i * CELL_SECTORS + j for i in want_rings for j in want_sectors)
+    parents = tuple(i * CELL_SECTORS + j for i in want_rings for j in want_sectors)
+    if not level:
+        return parents
+    out: list[int] = []
+    for parent in parents:
+        for q in range(children_per_cell(level)):
+            cid = child_id(parent, level, q)
+            bounds = cell_bounds(R, cid, level)
+            if meets(bounds["r_lo"], bounds["r_hi"], r_lo, r_hi) and any(
+                meets(bounds["phi_lo"], bounds["phi_hi"], a, b) for a, b in windows
+            ):
+                out.append(cid)
+    return tuple(out)
 
 
 def cell_masses(sigma_star: np.ndarray, R: np.ndarray, rings: int = CELL_RINGS) -> tuple[np.ndarray, np.ndarray]:
@@ -251,6 +295,28 @@ def cell_shares(sigma_star: np.ndarray, R: np.ndarray) -> np.ndarray:
     return ring_mass / total if total > 0.0 else np.zeros_like(ring_mass)
 
 
+def _sector_weights(R: np.ndarray, pattern: ArmPattern | None) -> np.ndarray:
+    """Each ring's sector weights from the arm and bar contrast at the ring's middle; they
+    average to 1, so a ring's total is unchanged. None or zero amplitudes: every sector alike."""
+    rings, sectors = cell_edges(R)
+    if pattern is None or pattern.flat:
+        return np.ones((CELL_RINGS, CELL_SECTORS))
+    return np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)])
+
+
+def cell_expected(
+    sigma_star: np.ndarray, R: np.ndarray, n_stars: int, cell: int, pattern: ArmPattern | None = None
+) -> float:
+    """The expected number of stars in a level-0 cell at sample size ``n_stars``: the ring's share of
+    the stellar mass, over the sectors, times the sector's contrast weight. A float; the realised
+    count is its seeded rounding (:func:`cell_counts`), and a child below level 0 draws its extra
+    stars against this expectation (S32)."""
+    share = cell_shares(sigma_star, R)
+    weights = _sector_weights(R, pattern)
+    ring, sector = divmod(int(cell), CELL_SECTORS)
+    return float(n_stars * share[ring] / CELL_SECTORS * max(float(weights[ring, sector]), 0.0))
+
+
 def cell_counts(
     sigma_star: np.ndarray,
     R: np.ndarray,
@@ -267,19 +333,12 @@ def cell_counts(
     came from. Recomputing the layout somewhere else would be a second definition
     of which star is which, and the two would diverge silently.
 
-    It is cheap — one ``Generator`` per cell for the rounding, no property streams —
+    It is cheap - one ``Generator`` per cell for the rounding, no property streams -
     so knowing the layout costs a fraction of drawing the stars themselves.
     """
     share = cell_shares(sigma_star, R)
     wanted = range(CELL_COUNT) if cells is None else cells
-    rings, sectors = cell_edges(R)
-    # Each ring's sector weights from the arm and bar contrast at the ring's middle; they
-    # average to 1, so a ring's total is unchanged. None or zero amplitudes: every sector alike.
-    weights = (
-        np.ones((CELL_RINGS, CELL_SECTORS))
-        if pattern is None or pattern.flat
-        else np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)])
-    )
+    weights = _sector_weights(R, pattern)
     out: list[tuple[int, int]] = []
     for cell in wanted:
         ring, sector = divmod(int(cell), CELL_SECTORS)
@@ -474,6 +533,7 @@ def materialise(
     cells: Sequence[int] | None = None,
     *,
     migration: float,
+    level: int = 0,
 ) -> Catalogue:
     """Generate ``n_stars`` across the whole galaxy, or only within ``cells``.
 
@@ -484,7 +544,22 @@ def materialise(
     on purpose: it is the one argument here that is not a published field, and a default
     of zero would have made a caller that forgot it silently produce the unmigrated
     catalogue of debt #31 — the defect this signature exists to make unreachable (rule B13).
+
+    ``level`` (S32, BUILD_II Phase 8) names the cell hierarchy's depth: at level 0 ``cells``
+    are the grid's cells and the catalogue is the sample as always; at level k they are
+    child ids (:func:`child_id`), and each child holds **its parent's stars that fall inside
+    it** — the same rows, in the parent's order, still named by the parent's cell and index —
+    **plus** extra stars from the child's own stream, drawn at the parent's density read at
+    the child (uniform over the child's footprint), so that a level-k child holds about as
+    many stars as its whole parent did: the sample is 4^k times denser. The union property
+    (a parent's stars are its children's) and the prefix property (a smaller sample is a
+    subset of a larger one, within a cell at any level) follow by construction and are
+    asserted in ``tests/test_hierarchy.py``. Below level 0 the catalogue carries three more
+    columns, ``level``, ``cell`` and ``index`` — each row's canonical name, which is what a
+    system is opened by: an inherited star's is its parent's, an extra star's is its child's.
     """
+    if not 0 <= level <= MAX_LEVEL:
+        raise ValueError(f"level={level} is outside 0..{MAX_LEVEL}")
     _, edges = cell_masses(fields["stellar_surface_density"], R)
 
     # The radius that stands for a ring, computed from the density field rather than
@@ -501,8 +576,8 @@ def materialise(
     ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
 
     pattern = ArmPattern.from_fields(fields)
-    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, cells, pattern)
-    columns: dict[str, list[np.ndarray]] = {}
+    parents = None if cells is None else sorted({parent_of(int(c), level)[0] for c in cells}) if level else cells
+    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, parents, pattern)
 
     h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
     h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or h_thin
@@ -529,17 +604,26 @@ def materialise(
         None if table is None
         else YoungStars(Modulation(table, R), pattern, churn.arrive, t, edges, cell_edges(R)[1])
     )
+    width = 2.0 * math.pi / CELL_SECTORS
 
-    for cell, count in counts:
+    def rows_for(cell: int, count: int, draw: Callable[[str], np.ndarray], footprint: dict[str, float] | None) -> dict[str, np.ndarray]:
+        """One cell's (or one child's extra) stars: every column but the looked-up ones.
+
+        ``draw(name)`` is the stream for this set of ``count`` stars; ``footprint`` is None at
+        level 0 (radius from the ring's density, azimuth from the contrast in the sector) and a
+        child's bounds below it (the parent's density read at the child: uniform over it).
+        """
         ring, sector = divmod(int(cell), CELL_SECTORS)
-
-        def draw(name: str, k: int = count) -> np.ndarray:
-            return _seeds.rng(seed, "cell", int(cell), name).random(k)
-
         lo, hi = edges[ring], edges[ring + 1]
-        inside = (R >= lo) & (R <= hi)
-        weight = np.where(inside, fields["stellar_surface_density"] * R, 0.0)
-        radius = invert_cdf(draw("radius"), R, weight)
+        if footprint is None:
+            inside = (R >= lo) & (R <= hi)
+            weight = np.where(inside, fields["stellar_surface_density"] * R, 0.0)
+            radius = invert_cdf(draw("radius"), R, weight)
+            phi_lo, phi_hi = sector * width, (sector + 1) * width
+        else:
+            r_lo, r_hi = footprint["r_lo"], footprint["r_hi"]
+            radius = np.sqrt(r_lo * r_lo + draw("radius") * (r_hi * r_hi - r_lo * r_lo))
+            phi_lo, phi_hi = footprint["phi_lo"], footprint["phi_hi"]
 
         # When a star was born, of the stars that are *here now*: the migration kernel's
         # arrival law rather than the local birth rate, which would be the answer for a
@@ -553,19 +637,16 @@ def materialise(
         # Where around the ring: the density contrast at the star's own radius, inside its
         # sector; in the azimuthal model a star younger than an arm crossing follows where
         # stars form today instead. Every property has its own stream, so drawing the age
-        # first changes no number.
-        width = 2.0 * math.pi / CELL_SECTORS
+        # first changes no number. A child below level 0 is uniform over its footprint.
         u_azimuth = draw("azimuth")
-        if pattern is None or pattern.flat:
-            azimuth = (sector + u_azimuth) * width
+        if footprint is not None or pattern is None or pattern.flat:
+            azimuth = phi_lo + u_azimuth * (phi_hi - phi_lo)
         else:
-            azimuth = pattern.azimuths(u_azimuth, radius, sector * width, (sector + 1) * width)
-        if young is not None:
+            azimuth = pattern.azimuths(u_azimuth, radius, phi_lo, phi_hi)
+        if young is not None and footprint is None:
             fresh = young.is_young(born)
             if fresh.any():
-                azimuth[fresh] = young.modulation.azimuths(
-                    u_azimuth[fresh], radius[fresh], sector * width, (sector + 1) * width,
-                )
+                azimuth[fresh] = young.modulation.azimuths(u_azimuth[fresh], radius[fresh], phi_lo, phi_hi)
 
         cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
         birth_radius = churn.birth_radius(draw("birth_radius"), ring, cols)
@@ -576,28 +657,78 @@ def materialise(
         # and its [Fe/H] is the gas it formed from (rule B8 — neither is drawn).
         is_thick = thick_at_birth[rows, cols]
         metallicity = feh[rows, cols]
-
         height = sech2_height(draw("height"), np.where(is_thick, h_thick, h_thin))
+        return {
+            "star_radius": radius,
+            "star_azimuth": azimuth,
+            "star_height": height,
+            "star_age": t[-1] - born,
+            "star_birth_radius": birth_radius,
+            "star_metallicity": metallicity,
+            "star_alpha": alpha[rows, cols],
+            "star_mass": imf_sample(draw("mass")),
+            "star_population": is_thick.astype(np.int64),
+        }
 
-        columns.setdefault("star_radius", []).append(radius)
-        columns.setdefault("star_azimuth", []).append(azimuth)
-        columns.setdefault("star_height", []).append(height)
-        columns.setdefault("star_age", []).append(t[-1] - born)
-        columns.setdefault("star_birth_radius", []).append(birth_radius)
-        columns.setdefault("star_metallicity", []).append(metallicity)
-        columns.setdefault("star_alpha", []).append(alpha[rows, cols])
-        columns.setdefault("star_mass", []).append(imf_sample(draw("mass")))
-        columns.setdefault("star_population", []).append(is_thick.astype(np.int64))
+    def cell_stream(cell: int, count: int) -> Callable[[str], np.ndarray]:
+        return lambda name: _seeds.rng(seed, "cell", int(cell), name).random(count)
+
+    columns: dict[str, list[np.ndarray]] = {}
+    if level == 0:
+        for cell, count in counts:
+            for name, values in rows_for(cell, count, cell_stream(cell, count), None).items():
+                columns.setdefault(name, []).append(values)
+        out_counts: tuple[tuple[int, int], ...] = counts
+    else:
+        # Below level 0: each requested child inherits its parent's stars that fall inside it,
+        # then adds its own — the parent's expected count times (1 − 4^−k), the share of a
+        # 4^k-times-denser sample the inherited stars do not supply — from its own stream.
+        parent_rows = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
+        parent_counts = dict(counts)
+        realised: list[tuple[int, int]] = []
+        for child in (cells if cells is not None else range(CELL_COUNT * children_per_cell(level))):
+            child = int(child)
+            parent, q = parent_of(child, level)
+            bounds = cell_bounds(R, child, level)
+            rows = parent_rows.get(parent)
+            if rows is None:
+                inherited: dict[str, np.ndarray] = {}
+                n_in = 0
+            else:
+                inside = _within(rows["star_radius"], rows["star_azimuth"], bounds, R, parent, level, q)
+                inherited = {name: values[inside] for name, values in rows.items()}
+                n_in = int(inside.sum())
+                inherited["level"] = np.zeros(n_in, dtype=np.int64)
+                inherited["cell"] = np.full(n_in, parent, dtype=np.int64)
+                inherited["index"] = np.flatnonzero(inside).astype(np.int64)
+            expected = cell_expected(fields["stellar_surface_density"], R, n_stars, parent, pattern)
+            n_extra = int(round(expected * (1.0 - 1.0 / children_per_cell(level))))
+            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds) if n_extra else {}
+            if n_extra:
+                extra["level"] = np.full(n_extra, level, dtype=np.int64)
+                extra["cell"] = np.full(n_extra, child, dtype=np.int64)
+                extra["index"] = np.arange(n_extra, dtype=np.int64)
+            total = n_in + n_extra
+            if not total:
+                continue
+            for name in (*inherited.keys(), *(k for k in extra.keys() if k not in inherited)):
+                parts = [d[name] for d in (inherited, extra) if name in d and len(d[name])]
+                columns.setdefault(name, []).append(np.concatenate(parts) if parts else np.zeros(0))
+            realised.append((child, total))
+        out_counts = tuple(realised)
 
     if not columns:
         empty = np.zeros(0)
-        return Catalogue.of({
+        blank = {
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
                       "star_birth_radius", "star_metallicity", "star_alpha", "star_mass", "star_population",
                       "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
                       "star_wind_luminosity", "star_remnant_mass")
-        } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}, counts)
+        } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}
+        if level:
+            blank |= {n: empty.astype(np.int64) for n in ("level", "cell", "index")}
+        return Catalogue.of(blank, out_counts)
     out = {name: np.concatenate(parts) for name, parts in columns.items()}
     # What each star emits, looked up rather than drawn: given its mass, age and abundance
     # the isochrones have already decided (rule B8). Per star, so a region's rows are the
@@ -616,7 +747,21 @@ def materialise(
     # in its luminosity; the class and the remnant's mass follow from its initial mass, and a
     # planetary nebula from how long ago the same table says it died - per star, as above (D60).
     out["star_remnant"], out["star_remnant_mass"] = remnants_of(out["star_mass"], out["star_age"], out["star_metallicity"], L)
-    return Catalogue.of(out, counts)
+    return Catalogue.of(out, out_counts)
+
+
+def _within(radius: np.ndarray, azimuth: np.ndarray, bounds: Mapping[str, float], R: np.ndarray, parent: int, level: int, q: int) -> np.ndarray:
+    """Which of a parent's stars fall in child ``q``: by the sub-ring and sub-sector index of each
+    star's position, so that every star lands in exactly one child and the children partition the
+    parent (a boundary star goes to the higher child, the last child closed)."""
+    n = 1 << level  # children per side
+    rings, sectors = cell_edges(R)
+    ring, sector = divmod(int(parent), CELL_SECTORS)
+    r_lo, r_hi = rings[ring], rings[ring + 1]
+    p_lo, p_hi = sectors[sector], sectors[sector + 1]
+    a = np.clip(np.floor((np.asarray(radius) - r_lo) / (r_hi - r_lo) * n).astype(int), 0, n - 1)
+    b = np.clip(np.floor((np.mod(np.asarray(azimuth), 2.0 * math.pi) - p_lo) / (p_hi - p_lo) * n).astype(int), 0, n - 1)
+    return (a * n + b) == int(q)
 
 
 # --- derived half -------------------------------------------------------------
