@@ -689,9 +689,9 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93 | 28 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95 | 30 |
 
-So the board's **39 open** is 11 permanent and 28 carried, and no item is unruled. (S22
+So the board's **41 open** is 11 permanent and 30 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -699,14 +699,15 @@ discharged #23, D175; S27 opened #81, the young-star cut, D176; S28 opened #82�
 photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177; S29 opened
 #85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178; S30 opened
 #88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179; S31 opened #91–#93,
-the grey slab, the PAH fit and the owed row 32, D180.) The eleven
+the grey slab, the PAH fit and the owed row 32, D180; S32 opened #94–#95, the census's construction and
+the cloud vector's unsourced draws, D181.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The twenty-eight carried ones are not twenty-eight mechanisms.** Four of them — 19, 27, 49 and the
+**The thirty carried ones are not thirty mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -721,9 +722,9 @@ its light is, a coefficient not fetched, a calibration that covers a third of wh
 D177); one — 85 — is the instantaneous recycling the remnants exposed, a mechanism in `sfh` (S29,
 D178), and 86 and 87 are a fit not read and a row owed to Audit III; 88 is a recalled yield that a row
 now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179); 91 is a slab
-that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit III (S31, D180). That
-leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping statements and one kernel
-width.
+that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit III (S31, D180); 94 and
+95 are the cloud census's construction and its stated guesses (S32, D181). That leaves 28, 33, 39, 42,
+43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -2959,6 +2960,29 @@ never been judged in twenty-three sessions.
    luminosity was not read from a primary source. The model reads T_d(R₀) 19.54 K and L_IR 1.62e10 L☉,
    pinned as measurements. **Carried** for Audit III (S37), which enters the row blind to the pins with a
    source that states what it measures, or records why it may not.
+94. **All the molecular gas is in clouds, drawn from a smallest mass no source fixed** (S32, BUILD_II Phase
+   8, D181). The census puts every gram of the ISM's molecular gas into clouds between 10⁴ M☉ and the
+   sourced truncation (Rice et al. 2016), so the mass in clouds integrates back to the molecular mass to
+   within the count's noise (1.037 at S32, noise 0.035) — RENDER_PHYSICS §7's rule, honoured by
+   construction. Two things that construction asserts without a source: that no molecular gas is diffuse
+   (Rice et al.'s catalogued clouds hold 25 (+10.7, −5.8)% of the Milky Way's H₂ `[verified:
+   arXiv:1602.02791, abstract]`, a completeness-limited share and not the population's, so it neither
+   confirms nor kills the construction), and that the function starts at 10⁴ M☉ `[inferred]` — with γ =
+   −1.6 the mass in clouds moves 6% for a factor of ten in that limit, the count fourfold. **Carried.**
+   What closes it: a sourced completeness limit or a sourced diffuse fraction, either a constant with a
+   citation; Phase 9's Hα and the cloud emissivities will read the count. What kills the reading: a
+   sourced diffuse molecular fraction above ~30%, which would make the census hold too much.
+95. **The cloud vector's unsourced draws and its missing state** (S32, D181). The embedded source's offset
+   from the cloud's centre (uniform over the volume), the density gradient's direction and steepness
+   (uniform), the cloud's height (a sech² layer at half the thin disc's scale height) are seeded draws whose
+   distributions nobody measured — BUILD_II Phase 8 and RENDER_PHYSICS §5a name the quantities and give no
+   number, and the reading agent found none (Kruijssen et al. 2019's 100–150 pc decorrelation length is the
+   nearest, and it is not this). The states are Kawamura et al. 2009's three phases (6 / 13 / 7 Myr); the
+   plan's fourth, *remnant*, has no sourced duration and is not drawn, so a field shows no dispersed
+   shells at the cloud scale until Phase 10 makes bubbles and Phase 9 lights them. **Carried**; closable by
+   a source for any of the four (a measured HII-region offset distribution, a molecular scale height —
+   e.g. the CO layer's half-thickness — a remnant-shell visibility time), each a constant with a citation
+   replacing a stated guess; what the stated guesses cost is visible only in V3's synthesis.
 
 ---
 

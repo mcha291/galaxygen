@@ -141,3 +141,29 @@ def test_positions_and_abundances(default):
     # The embedded source lies inside the cloud; the gradient's steepness in [0, 1].
     assert np.all(F["cloud_source_offset"] <= F["cloud_size"] + 1e-9)
     assert np.all((F["cloud_density_gradient"] >= 0.0) & (F["cloud_density_gradient"] <= 1.0))
+
+
+def test_the_clouds_header_carries_the_stage_scalars(model):
+    """Rule D4 keeps a catalogue stage's galaxy scalars off the viewer's scalars surface (D148); the
+    census route carries them in its header instead, so a renderer reads b and the lifetime there."""
+    from galaxy.api.service import Service
+
+    s = Service()
+    from galaxy.api import wire
+
+    r = s.handle("/api/clouds", f"model={model.name}&r_min=7&r_max=9&phi_min=0&phi_max=0.5")
+    assert r.status == 200
+    header, _ = wire.decode(r.body)
+    scalars = header["scalars"]
+    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime"}
+    assert scalars["cloud_lifetime"] == pytest.approx(26.0)
+    assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
+    # The same numbers /api/arrays serves when the stage itself runs; the realised mass is that route's alone.
+    served, _ = wire.decode(s.handle("/api/arrays", f"model={model.name}&fields=cloud_count_total,cloud_mass_total").body)
+    assert served["scalars"]["cloud_count_total"] == pytest.approx(scalars["cloud_count_total"])
+    assert served["scalars"]["cloud_mass_total"] > 0.0
+    fields = s.handle("/api/fields", f"model={model.name}").json()["fields"]
+    for f in fields:
+        if f["name"].startswith("cloud_") and f["domain"] == "galaxy":
+            assert "Not shown by the viewer" in f["about"] and "rule D4" in f["about"], f["name"]
+

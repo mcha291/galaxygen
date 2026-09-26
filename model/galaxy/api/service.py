@@ -833,6 +833,15 @@ class Service:
                 "of": _catalogue.CELL_COUNT,
             },
             "clouds": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
+            # Three of the stage's galaxy scalars, which rule D4 keeps off the viewer's scalars surface
+            # (D148): a renderer that synthesises a cloud's interior reads b and the lifetime here. The
+            # stage itself does not run for a window, so the realised mass total is /api/arrays' alone.
+            "scalars": {
+                "cloud_count_total": float(_clouds.expected_counts(out.fields, R, constants).sum()),
+                "cloud_forcing_parameter": float(constants["TURBULENCE_FORCING_B"]),
+                "cloud_lifetime": float(constants["GMC_PHASE_EMBEDDED"] + constants["GMC_PHASE_BLOWN_OPEN"]
+                                        + constants["GMC_PHASE_DISPERSING"]),
+            },
             "columns": columns,
             "stages": list(ran),
         }

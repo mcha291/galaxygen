@@ -320,7 +320,8 @@ CLOUD_COUNT_TOTAL = FieldDecl(
     about=(
         "The expected number of clouds, summed over every cell: each cell's molecular mass over the mass "
         "function's mean cloud mass at its radius. A population integral, not the count of a draw; the "
-        "census realises it to within Poisson noise."
+        "census realises it to within Poisson noise. "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that publishes the cloud columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the `/api/clouds` header carries the count, b and the lifetime under `scalars`."
     ),
 )
 CLOUD_MASS_TOTAL = FieldDecl(
@@ -330,7 +331,8 @@ CLOUD_MASS_TOTAL = FieldDecl(
         "The mass the realised census holds. It is the ISM's molecular mass to within the Poisson noise of "
         "the count, because every cell's expected count is its molecular mass over the mean cloud mass: a "
         "redistribution, not a new reservoir. The whole molecular gas is in clouds by construction, which is "
-        "the construction debt #94 names."
+        "the construction debt #94 names. "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that publishes the cloud columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the `/api/clouds` header carries the count, b and the lifetime under `scalars`."
     ),
 )
 CLOUD_FORCING = FieldDecl(
@@ -338,13 +340,17 @@ CLOUD_FORCING = FieldDecl(
     meaningful_zero=True, provenance="seeded",
     about=(
         "The b in σ_s² = ln(1 + b²ℳ²), a level-0 constant published as a scalar because the renderer that "
-        "synthesises a cloud's interior reads it and the API serves no constants (D180's rule)."
+        "synthesises a cloud's interior reads it and the API serves no constants (D180's rule). "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that publishes the cloud columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the `/api/clouds` header carries the count, b and the lifetime under `scalars`."
     ),
 )
 CLOUD_LIFETIME = FieldDecl(
     name="cloud_lifetime", label="Cloud lifetime", unit="Myr", kind=Kind.SCALAR, meaningful_zero=True,
     provenance="seeded",
-    about="The sum of the three sourced phases, 26 Myr: the span a cloud's age is drawn over.",
+    about=(
+        "The sum of the three sourced phases, 26 Myr: the span a cloud's age is drawn over. "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that publishes the cloud columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the `/api/clouds` header carries the count, b and the lifetime under `scalars`."
+    ),
 )
 
 
