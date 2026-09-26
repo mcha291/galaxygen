@@ -1,9 +1,6 @@
-# BRIEF — for S31: BUILD_II Phase 7, dust that radiates (Opus subagent); S30 merges first
+# BRIEF — for S31: BUILD_II Phase 7, dust that radiates (Opus subagent)
 
-**For the orchestrating session.** S30 (Phase 6, supernova rates and the habitable zone) was in flight
-on `session-30` when S29 closed: review it first (core diff, then tests), merge `main` into `session-30`
-(S29 added no row, so S30's rows 30–31 stand), gate on the suite, write D179 (debts from #88), merge in
-row order, then open `session-31`. Hand
+**For the orchestrating session.** S30 closed and merged (D179); open `session-31` from `main`. Hand
 an Opus subagent, in a worktree (`git checkout session-31`, `git config --worktree core.hooksPath
 tools/hooks`), this file, `BUILD_II.md` Phase 7, `RULES.md`, `RESUMING.md`'s "Writing a stage",
 `RENDER_PHYSICS.md` §§3–4 and §7, `stages/ism.py` (P, f_H₂, dust-to-gas, Σ_dust, A_V; D163),

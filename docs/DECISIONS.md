@@ -5361,3 +5361,77 @@ a test for Audit III and carried as **#87**. The boundaries are solar-metallicit
 (Heger et al.: at high metallicity mass loss ends by making "only neutron stars"); ages past the table's
 12.6 Gyr die no more, so the oldest stars make no nebulae and the bulge none; stars above 64 M☉ and
 younger than 4 Myr are NaN in the table and count as black holes, about one in 10⁸.
+
+### D179. Phase 6: the supernova rates the model already implied, published and judged (rows 30–31 pass against Adams et al. 2013, the Ia pass thin); the galactic habitable zone built from Gowanlock et al. 2011's criteria and deliberately unjudged
+
+**The two rulings, made before any number was read (D113), and what the sources said.** (a) **The
+rows judge the Galaxy's present rates against sourced measurements with their uncertainties.** Adams,
+Kochanek, Beacom, Vagins & Stanek 2013 §III.5 gives both by one method: core collapse 3.2 (+7.3, −2.6)
+per century, type Ia 1.4 (+1.4, −0.8) `[verified: arXiv:1306.0559, fetched twice at S30]`; those
+asymmetric intervals, converted to per year, are the windows — nothing chosen. Li et al. 2011 Table 4's
+per-mass rates by Hubble type (Sbc: Ia 0.136 ± 0.018, II 0.104 ± 0.027, Ibc 0.043 ± 0.020 SNuM) and Maoz
+& Graur 2017's per-mass-formed numbers are the named alternatives, read and recorded `[verified:
+arXiv:1006.4613 Table 4; arXiv:1703.04540 §§I–III]`. (b) **The habitable zone is built and given no
+acceptance row** (rules B5, B9: nobody has measured it; a target would be a number chosen with the
+answer known), every field's about line saying so. Lineweaver, Fenner & Gibson 2004 — the ruling's first
+source — could not be read (a scanned preprint; only its abstract), so **every criterion is Gowanlock,
+Patton & McConnell 2011's** (Astrobiology 11, 855, not ApJ 734 as the brief guessed): a planet-hosting
+probability flat at 3% below solar and rising as 10^(2[Fe/H]) above it (§3.2); ozone lost within 8 pc of
+an average type II supernova, scaled to a type Ia's brighter peak by their eq. 5 with M_std = −17.505 and
+M_B(Ia) = −19.34 (§3.1); complex life 4 Gyr after formation needing 1.55 Gyr of unbroken ozone (§3.4)
+`[verified: read at S30, the load-bearing numbers fetched twice]`.
+
+**Built (an Opus subagent in a worktree on the branch, in parallel with S29's; commits 1ac72f5, c3cf188,
+ead7fc5, 2cb8be4; reviewed, the core diff first, accepted without a change).** New `stages/supernovae.py`
+(checkpoint 4, in `BASIC`'s tuple so `azimuthal` inherits it): **core collapse is star formation times the
+IMF** — the Kroupa stars per unit mass formed above Smartt 2009's 8.5 M☉ (the brief said 8; the source
+says 8.5 (+1, −1.5), Heger et al. 2003's 9 the alternative), the IMF constants imported from `systems.py`,
+never restated (A9); **type Ia is the chemistry's own convolution, counted**: `chemistry_dtd.type_ia_history`
+is now the one function both stages call, so the rate cannot drift from the iron it implies (B13), and
+the iron per event is Maoz & Graur's 0.7 M☉ (WAF17's 0.77 the alternative). Published: `core_collapse_rate`
+(R) and `_total`, `type_ia_rate` (R) and `_total`, both per mass formed, and both histories on (R, t). New
+`stages/habitable_zone.py` (checkpoint 6): `planet_metallicity_probability`, `sterilization_rate_history`,
+`habitability_history` on (R, t); `habitability`, `habitable_surface_density` on (R); `habitable_fraction`,
+`habitable_zone_peak_radius`, `habitable_zone_half_radius`. Nine level-0 constants with citations; **three
+units join the vocabulary**: `1/yr`, `1/yr/kpc2`, `1/Msun`. Rows **30** (core collapse) and **31** (Ia) in
+`spec.py`, their numbers named once (`ROW_CORE_COLLAPSE_RATE`, `ROW_TYPE_IA_RATE`) so a renumbering at
+merge would have been one line; S29 added no row, so they stand. The merge of `main` (S29) into the
+branch conflicted only on the graph's ORDER pin, which the orchestrator recomputed from the merged graph:
+`…, chemistry_dtd, supernovae, light, vertical_alpha, population, ism, systems, formation, habitable_zone,
+planets` in both models.
+
+**Measured (default grid; identical in both models).** Row 30: **0.0176069 yr⁻¹** (1.76 per century) in
+[0.006, 0.105] — pass. Row 31: **0.0065332 yr⁻¹** (0.653 per century) in [0.006, 0.028] — **pass, thinly**:
+the window's floor is 0.006. Per unit stellar mass (M_★ 4.7509 × 10¹⁰): core collapse 0.371 SNuM, Ia 0.1375
+SNuM — the Ia inside Li's Sbc 0.136 ± 0.018, the core collapse 2.5× Li's II + Ibc; the total 2.41 per
+century inside Li's Milky Way 2.84 ± 0.60. Per mass formed: core collapse 0.01003 (Maoz & Graur's 0.010 ±
+0.002), **Ia 2.43 × 10⁻³ against their 1.3 ± 0.1 × 10⁻³ — 1.87× too many**, which is the thin pass's
+cause (#88). Conservation: the core-collapse rate equals SFR × the IMF integral to 10⁻¹³; the Ia history's
+event count matches the analytic power-law DTD to 3 × 10⁻⁶ (default grid). Spec **10 pass / 17 fail / 4
+not-yet-computable of 31**, both models; rows 1–29 unchanged (3 = 251.026, 15 = 5.20971, 29 = −7.91436);
+graph, preflight, determinism across processes, convergence (0 drifts) OK for both; `python -m
+galaxy.specs` EXIT=0. Cost: `supernovae` 0.068 s, `habitable_zone` 0.059 s; no route runs either, the
+route table unchanged within noise. **The zone as read (eq. 5 with −0.4 ΔM):** the hazard at R₀ is 2.03
+sterilizations per Gyr, nearly all type Ia reaching 43 pc; the habitable count peaks at **10.84 kpc** and
+half of it lies outside 12.16 kpc, where 95% of the disc's stars formed inside — the per-star weight
+rises to the grid's edge because the metals criterion is flat below solar. Read with −0.2 (a third pass
+described the distance as scaling with the square root of the flux ratio; probed by swapping one
+function, pinned): hazard 0.20 per Gyr, peak 6.56 kpc. **Not adopted** — choosing the reading because
+it resembles Lineweaver's 7–9 kpc would be choosing with the answer known (#90).
+
+**Why row 31's thin pass is recorded as a debt and not as a pass.** The disc's Ia per mass formed is
+1.87× the measured, and the cause is a constant the model has carried since S9: `Y_FE_IA` = 0.0017 M☉ of
+iron per unit mass formed is `[recall: WAF17]`, never sourced; over 0.7 M☉ per event it is 2.43 × 10⁻³
+events. At Maoz & Graur's rate row 31 would read 0.350 per century and **fail** — the pass rests on an
+unsourced yield. Recorded as **#88**, with the row's number beside the prediction. Two more: the spheroid's
+old stars are not in the disc's history, so their Ia are missing — an estimated 0.03–0.05 per century,
+4–7% of the disc's, the row reading low by that share (**#89**); and the zone's two readings of eq. 5
+together with its restarting ozone clock, which this model does not restart (**#90**). The register reads
+36 open = 11 permanent + 25 carried, 37 discharged.
+
+**Decided in review.** The Poisson survival, the midplane sech² layer at `thin_disc_scale_height` and the
+placement of the 1.55 Gyr window before the 4 Gyr are tagged inferred in the stage; a zero scale height
+(determinism's grid) leaves the hazard NaN, not divided by zero (B9). Stars are weighted where they were
+born; migration is not applied to the hazard, as neither source applies it. The brief's row source choice
+— Adams over Li — stands: a Galactic total is what the table judges and one source gives both rates by one
+method; the subagent had probed the model's Ia number before choosing and said so, and both sources pass.
