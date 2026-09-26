@@ -32,14 +32,19 @@ def chk(m, *stages):
 # Since S27 (BUILD_II Phase 2) the azimuthal model maps the sfh slot to sfh_azimuthal, which also
 # waits for the pattern (it reads the contrast); the pattern already ran a round ahead of sfh, so
 # the order is basic's with the one id swapped.
+# Since S29 (BUILD_II Phase 4) the population stage integrates what the locked mass is made of over
+# the formation history and its [Fe/H], so it waits for the chemistry: it moves from the chemistry's
+# round into the next (after light and vertical_alpha by the tie-break), and formation, which reads
+# its mean stellar mass, a round later again, after systems. Until S29 the order ran "...,
+# chemistry_dtd, population, light, vertical_alpha, formation, ism, systems, planets".
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "population",
-        "light", "vertical_alpha", "formation", "ism", "systems", "planets",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "light",
+        "vertical_alpha", "population", "ism", "systems", "formation", "planets",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "population",
-        "light", "vertical_alpha", "formation", "ism", "systems", "planets",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "light",
+        "vertical_alpha", "population", "ism", "systems", "formation", "planets",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -53,6 +58,8 @@ SEEDED_BASIC = {
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
     "star_magnitude_v", "star_ionizing_photons", "star_wind_luminosity", "star_wolf_rayet",
+    # S29 (BUILD_II Phase 4): what a dead star is, looked up from the same columns.
+    "star_remnant", "star_remnant_mass",
     "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
     "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
     "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",
