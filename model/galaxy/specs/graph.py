@@ -16,6 +16,9 @@ Beyond acyclicity this module checks three things the plan makes load-bearing:
   (rule B4). Inputs no stage reads yet are reported as unbound, not failed.
 - **Provenance** (rule A10). A field is seeded if its stage reads a seed or
   requires a seeded field; otherwise it is derived. The declaration must agree.
+  A stage that extends another (``Stage.extends``, S27) republishes the base's
+  fields at the base's provenance, because the base computes them in its own
+  restricted view; only the extension's own fields see its extra reads.
 """
 
 from __future__ import annotations
@@ -96,6 +99,21 @@ def resolve_stages(
     return stages, problems
 
 
+def stage_provenance(st: Stage, known: Mapping[str, str]) -> dict[str, str]:
+    """The provenance each field of ``st`` computes to, given what its inputs computed to.
+
+    Per stage (D55): a stage that reads a seed, or requires a seeded field, publishes seeded
+    fields, all of them. The one refinement is an extension (``Stage.extends``, S27): the
+    fields it republishes are computed by its base in the base's own restricted view, so they
+    take the base's provenance, and only the extension's own fields see its extra reads.
+    """
+    seeded = bool(st.reads_seeds) or any(known.get(n) == "seeded" for n in st.requires + st.requires_optional)
+    out = {name: ("seeded" if seeded else "derived") for name in st.published_names}
+    if st.extends is not None:
+        out.update(stage_provenance(st.extends, known))
+    return out
+
+
 def analyse(
     model: Model,
     impls: Registry[Stage] | Mapping[str, Stage],
@@ -157,11 +175,9 @@ def analyse(
     # Provenance (rule A10), computed along the order.
     provenance: dict[str, str] = {}
     for st in order:
-        seeded = bool(st.reads_seeds) or any(
-            provenance.get(n) == "seeded" for n in st.requires + st.requires_optional
-        )
-        computed = "seeded" if seeded else "derived"
+        computed_for = stage_provenance(st, provenance)
         for decl in st.publishes:
+            computed = computed_for[decl.name]
             provenance[decl.name] = computed
             if decl.provenance != computed:
                 problems.append(

@@ -14,6 +14,15 @@ Optional fields (present in some models only) are declared in
 ``requires_optional`` and are reachable only through ``ctx.fields.get(name)`` or
 ``ctx.fields.has(name)``; ``ctx.fields[name]`` raises even when the field is
 present. Handling absence is therefore not something a reader can forget.
+
+**A stage may extend another implementation of its slot** (``extends``, S27): it
+publishes everything the base publishes, under the base's own declarations,
+*computed by the base's own compute in the base's own restricted view*, and then
+its own fields on top (:class:`Extension`). The base's fields therefore cannot
+see anything the extension reads beyond the base's declarations, and ``graph``
+derives their provenance from the base's reads alone. That is what lets a second
+implementation of a slot read a seeded field for one field of its own without
+making every history it shares with the first a false *seeded* (rule A10, D55).
 """
 
 from __future__ import annotations
@@ -21,6 +30,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -162,6 +172,7 @@ class Stage:
     requires: tuple[str, ...] = ()
     requires_optional: tuple[str, ...] = ()
     publishes: tuple[FieldDecl, ...] = ()
+    extends: Stage | None = None  # the implementation whose fields this one republishes (S27)
 
     def __post_init__(self) -> None:
         for attr in ("id", "slot"):
@@ -199,6 +210,29 @@ class Stage:
         selfdep = set(names) & (set(self.requires) | set(self.requires_optional))
         if selfdep:
             raise StageError(f"stage {self.id}: requires what it publishes: {sorted(selfdep)}")
+        if self.extends is not None:
+            self._check_extension(self.extends)
+
+    def _check_extension(self, base: Stage) -> None:
+        """An extension reads at least what its base reads, publishes the base's declarations
+        themselves, and computes them through the base (rule B13: not by convention)."""
+        if not isinstance(base, Stage):
+            raise StageError(f"stage {self.id}: extends must be a Stage, got {base!r}")
+        if base.slot != self.slot:
+            raise StageError(f"stage {self.id}: extends {base.id!r}, which implements slot {base.slot!r}, not {self.slot!r}")
+        if not isinstance(self.compute, Extension) or self.compute.base is not base:
+            raise StageError(
+                f"stage {self.id}: extends {base.id!r}, so its compute must be Extension({base.id}, ...) — "
+                "the base's fields are computed by the base, in the base's own view"
+            )
+        mine = {id(d) for d in self.publishes}
+        lost = [d.name for d in base.publishes if id(d) not in mine]
+        if lost:
+            raise StageError(f"stage {self.id}: extends {base.id!r} but does not republish its declarations {lost}")
+        for attr in ("reads_inputs", "reads_seeds", "reads_constants", "requires", "requires_optional"):
+            missing = set(getattr(base, attr)) - set(getattr(self, attr))
+            if missing:
+                raise StageError(f"stage {self.id}: extends {base.id!r} but does not declare its {attr} {sorted(missing)}")
 
     @property
     def published_names(self) -> tuple[str, ...]:
@@ -207,3 +241,64 @@ class Stage:
     @property
     def checkpoint_name(self) -> str:
         return CHECKPOINTS[self.checkpoint - 1]
+
+
+class Extension:
+    """The compute of a stage that extends another (``Stage.extends``).
+
+    Runs the base's own compute in a :class:`Context` restricted to the base's own
+    declarations — nested inside the extension's, so it can reach nothing the base did
+    not declare — then ``own(ctx, base_fields)`` for the extension's fields, which may
+    read the base's results. The base's fields are returned unchanged: what the second
+    implementation adds cannot alter what it shares with the first.
+    """
+
+    __slots__ = ("base", "own")
+
+    def __init__(self, base: Stage, own: Callable[[Context, Mapping[str, Any]], Mapping[str, Any]]) -> None:
+        self.base = base
+        self.own = own
+
+    def __call__(self, ctx: Context) -> Mapping[str, Any]:
+        inner = Context(self.base, ctx.grid, ctx.inputs, ctx.seeds, ctx.constants, ctx.fields)
+        shared = dict(self.base.compute(inner))
+        extra = dict(self.own(ctx, MappingProxyType(shared)))
+        clash = sorted(set(extra) & set(shared))
+        if clash:
+            raise StageError(f"stage {ctx.stage.id!r} republished {clash}, which its base {self.base.id!r} computes")
+        return {**shared, **extra}
+
+
+def extend(
+    base: Stage,
+    *,
+    id: str,
+    about: str,
+    own: Callable[[Context, Mapping[str, Any]], Mapping[str, Any]],
+    checkpoint: int | None = None,
+    reads_inputs: tuple[str, ...] = (),
+    reads_seeds: tuple[str, ...] = (),
+    reads_constants: tuple[str, ...] = (),
+    requires: tuple[str, ...] = (),
+    requires_optional: tuple[str, ...] = (),
+    publishes: tuple[FieldDecl, ...] = (),
+) -> Stage:
+    """A second implementation of ``base``'s slot: the base's reads and fields, plus these."""
+
+    def union(a: tuple[str, ...], b: tuple[str, ...]) -> tuple[str, ...]:
+        return a + tuple(n for n in b if n not in a)
+
+    return Stage(
+        id=id,
+        slot=base.slot,
+        checkpoint=base.checkpoint if checkpoint is None else checkpoint,
+        about=about,
+        compute=Extension(base, own),
+        reads_inputs=union(base.reads_inputs, reads_inputs),
+        reads_seeds=union(base.reads_seeds, reads_seeds),
+        reads_constants=union(base.reads_constants, reads_constants),
+        requires=union(base.requires, requires),
+        requires_optional=union(base.requires_optional, requires_optional),
+        publishes=base.publishes + tuple(publishes),
+        extends=base,
+    )
