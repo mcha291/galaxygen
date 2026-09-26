@@ -599,4 +599,30 @@ LEVEL0: dict[str, Constant] = {
         "μ = 1/(1 − Y − Z) = 1.38, so (G/D)☉ = 162 is already on a total-gas basis and correcting "
         "it there too would count helium twice. A_V at the Sun now reads 0.512 mag.",
     ),
+    # --- S30 (BUILD_II Phase 6): supernova rates. Both read from their sources by a read-only
+    # agent at S30 and entered as printed (rule B9; D175's rule that a citation is read first).
+    "CORE_COLLAPSE_MIN_MASS": Constant(
+        8.5,
+        "Msun",
+        "The lowest initial mass that ends in a core-collapse supernova: 'the minimum stellar mass "
+        "for a type II-P to form is m_min = 8.5 +1 -1.5 Msun', from a maximum-likelihood fit to the "
+        "masses and upper limits of the progenitors in a volume-limited sample of nearby "
+        "supernovae [verified: Smartt 2009, ARA&A 47, 63, section 4.4, arXiv:0908.0700, read at "
+        "S30]. The named alternative is Heger et al. 2003's 'we will adopt 9 Msun for M-lower', "
+        "inside a debated 6-11 Msun [verified: ApJ 591, 288, section IV.1, astro-ph/0212469, read "
+        "at S30]; 9 lowers the rate by 7%. BUILD_II's '8 Msun' was recall and is not the number "
+        "the source prints. Every star from here to the IMF's upper end counts as one supernova: "
+        "no source for which massive stars collapse without exploding has been read.",
+    ),
+    "IA_IRON_MASS": Constant(
+        0.7,
+        "Msun",
+        "Iron ejected by one type Ia supernova: 'The mean iron yield of a SN Ia ... is (e.g., "
+        "Mazzali et al. 2007; Howell et al. 2009) y_Fe,Ia = 0.7 Msun' [verified: Maoz & Graur "
+        "2017, ApJ 848, 25, section III eq. 2, arXiv:1703.04540, read at S30]. It turns the "
+        "chemistry's Ia iron into a number of events. The named alternative is Weinberg, Andrews "
+        "& Freudenburg 2017's 0.77 Msun, 'based on the W70 model of Iwamoto et al. 1999', the "
+        "value their Ia iron yield of 0.0017 per unit mass formed was built with [verified: ApJ "
+        "837, 183, section II.2, arXiv:1604.07435, read at S30]; it would lower the rate by 9%.",
+    ),
 }

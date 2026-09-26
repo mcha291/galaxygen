@@ -116,6 +116,18 @@ def snia_rate(psi: np.ndarray, dt: float, delays: np.ndarray, weights: np.ndarra
     return out
 
 
+def type_ia_history(psi: np.ndarray, t_max: float, n_t: int, min_delay: float, index: float) -> np.ndarray:
+    """The type Ia convolution of a star formation history: :func:`snia_rate` over :func:`dtd_bins`.
+
+    The one place the model convolves its history with the delay-time distribution. The
+    chemistry multiplies it by the Ia iron yield; the supernova rates (``supernovae.py``,
+    S30) divide that iron by the iron one event makes. Factored out at S30 so that both read
+    one convolution and the rate cannot drift from the iron it implies (rule B13).
+    """
+    delays, weights = dtd_bins(min_delay, t_max, index)
+    return snia_rate(psi, t_max / n_t, delays, weights)
+
+
 # --- the potential the wind has to climb out of ------------------------------
 
 
@@ -366,8 +378,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     psi = ctx.fields["sfr_surface_density_history"]
     infall = ctx.fields["infall_rate_history"]
 
-    delays, weights = dtd_bins(float(c["DTD_MIN_DELAY"]), ctx.grid.spec.t_max, float(c["DTD_INDEX"]))
-    ia = snia_rate(psi, dt, delays, weights)
+    ia = type_ia_history(psi, ctx.grid.spec.t_max, n_t, float(c["DTD_MIN_DELAY"]), float(c["DTD_INDEX"]))
 
     v_esc = escape_velocity(
         ctx.fields["halo_potential_midplane"], ctx.fields["circular_velocity_resolved"],

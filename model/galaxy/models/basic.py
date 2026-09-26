@@ -35,6 +35,7 @@ BASIC = MODELS.register(
             ("vertical", "vertical_alpha"),
             ("ism", "ism"),
             ("light", "light"),
+            ("supernovae", "supernovae"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),

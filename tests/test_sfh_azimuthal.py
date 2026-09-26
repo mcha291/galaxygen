@@ -20,7 +20,7 @@ from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, production
 from galaxy.core.stage import Extension, Stage, StageError, UndeclaredAccess, extend
 from galaxy.run import run
-from galaxy.specs import graph
+from galaxy.specs import graph, spec
 from galaxy.stages import systems
 from galaxy.stages.pattern import ArmPattern
 from galaxy.stages.sfh import SFH
@@ -222,7 +222,8 @@ def test_every_acceptance_row_reads_the_same_in_both_models(judged):
     """The rows are radial and vertical: the azimuthal model reads basic's, number for number."""
     basic = {r.n: r for r in judged["basic"]}
     azimuthal = {r.n: r for r in judged["azimuthal"]}
-    assert sorted(basic) == sorted(azimuthal) == list(range(1, 30))  # 25-29 since S28 (Phase 3), the same rule
+    # 25-29 since S28 (Phase 3), 30-31 (the supernova rates) since S30 (Phase 6): the same rule
+    assert sorted(basic) == sorted(azimuthal) == [q.n for q in spec.QUANTITIES] == list(range(1, 32))
     for n in basic:
         b, a = basic[n], azimuthal[n]
         assert a.status == b.status, (n, a.status, b.status)

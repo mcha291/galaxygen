@@ -17,5 +17,6 @@ from . import ism  # noqa: F401  (checkpoint 3, after both chemistries and both 
 from . import light  # noqa: F401  (checkpoint 3: the disc's unresolved light)
 from . import pattern  # noqa: F401  (checkpoint 3, seeded)
 from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation: the azimuthal model, S27)
+from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
 from . import systems  # noqa: F401  (checkpoint 5)
 from . import planets  # noqa: F401  (checkpoint 6, seeded)

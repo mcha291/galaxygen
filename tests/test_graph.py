@@ -34,11 +34,11 @@ def chk(m, *stages):
 # the order is basic's with the one id swapped.
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "population",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "population",
         "light", "vertical_alpha", "formation", "ism", "systems", "planets",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "population",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae", "population",
         "light", "vertical_alpha", "formation", "ism", "systems", "planets",
     ),
 }

@@ -1,4 +1,4 @@
-"""spec: 29 quantities as data (24 until S28); the evaluator; everything not-yet-computable at S0."""
+"""spec: 31 quantities as data (29 until S30, 24 until S28); the evaluator; everything not-yet-computable at S0."""
 
 from __future__ import annotations
 
@@ -14,12 +14,15 @@ from helpers import TINY, decl
 Q = {q.n: q for q in spec.QUANTITIES}
 
 
-def test_29_quantities():
-    """S28 (BUILD_II Phase 3) added rows 25-28 (BHG16 Table 2) and 29 (the Tully-Fisher slope)."""
-    assert len(spec.QUANTITIES) == 29
-    assert [q.n for q in spec.QUANTITIES] == list(range(1, 30))
+def test_31_quantities():
+    """S28 (BUILD_II Phase 3) added rows 25-28 (BHG16 Table 2) and 29 (the Tully-Fisher slope); S30
+    (Phase 6) the two supernova rates, numbered once in ``spec`` (``ROW_CORE_COLLAPSE_RATE``,
+    ``ROW_TYPE_IA_RATE``) and read from there everywhere else."""
+    assert len(spec.QUANTITIES) == 31
+    assert [q.n for q in spec.QUANTITIES] == list(range(1, 32))
+    assert (spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE) == (30, 31)
     names = [q.name for q in spec.QUANTITIES]
-    assert len(set(names)) == 29
+    assert len(set(names)) == 31
     fields = [q.field for q in spec.QUANTITIES if q.field]
     assert len(set(fields)) == len(fields)
     assert all(q.source and q.stated for q in spec.QUANTITIES)
@@ -44,9 +47,9 @@ def test_every_row_names_a_field_but_the_four_ruling_b_holds_back():
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 # One model since D170 (the former advanced physics); the tables keep its values.
-VERDICTS = {"basic": REACHED | {21, 24, 29}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
+VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 8, "fail": 17, "not-yet-computable": 4},  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 10, "fail": 17, "not-yet-computable": 4},  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
     "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24},
@@ -68,7 +71,7 @@ for _table in (VERDICTS, SUMMARY, FAILED, DEBTS):
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
     """Everything the model reaches; the rest must admit they cannot."""
     results = judged[model.name]
-    assert len(results) == 29
+    assert len(results) == len(spec.QUANTITIES) == 31
     by_n = {r.n: r for r in results}
     assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == VERDICTS[model.name]
     assert spec.summary(results) == SUMMARY[model.name]
@@ -134,7 +137,7 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "4 not-yet-computable of 29" in out
+    assert "spec" in out and "4 not-yet-computable of 31" in out
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
     assert "recorded miss, debt #42, since S13" in out   # row 6: the heated old population counted as thin

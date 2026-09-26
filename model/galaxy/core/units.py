@@ -70,6 +70,10 @@ _UNITS: tuple[Unit, ...] = (
     # photon rates (S28): the hydrogen-ionizing photons a star or a population emits per second
     Unit("1/s", "s⁻¹", "photon_rate"),
     Unit("1/s/kpc2", "s⁻¹ kpc⁻²", "photon_rate_surface_density"),
+    # event rates (S30): supernovae per year, per year per unit area, and per unit mass formed
+    Unit("1/yr", "yr⁻¹", "event_rate"),
+    Unit("1/yr/kpc2", "yr⁻¹ kpc⁻²", "event_rate_surface_density"),
+    Unit("1/Msun", "M☉⁻¹", "events_per_mass"),
     Unit("Searth", "S⊕", "insolation"),
     # gravitation: G in the model's own length/velocity/mass units, so that
     # G·M/R is a squared velocity with no conversion anywhere (S1)
