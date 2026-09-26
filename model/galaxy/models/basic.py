@@ -42,6 +42,7 @@ BASIC = MODELS.register(
             ("systems", "systems"),
             ("formation", "formation"),
             ("planets", "planets"),
+            ("habitable_zone", "habitable_zone"),
         ),
         constants={
             **LEVEL0,

@@ -600,29 +600,101 @@ LEVEL0: dict[str, Constant] = {
         "it there too would count helium twice. A_V at the Sun now reads 0.512 mag.",
     ),
     # --- S30 (BUILD_II Phase 6): supernova rates. Both read from their sources by a read-only
-    # agent at S30 and entered as printed (rule B9; D175's rule that a citation is read first).
+    # agent at S30, confirmed by a second fetch, and entered as printed (rule B9; D175).
     "CORE_COLLAPSE_MIN_MASS": Constant(
         8.5,
         "Msun",
-        "The lowest initial mass that ends in a core-collapse supernova: 'the minimum stellar mass "
-        "for a type II-P to form is m_min = 8.5 +1 -1.5 Msun', from a maximum-likelihood fit to the "
-        "masses and upper limits of the progenitors in a volume-limited sample of nearby "
-        "supernovae [verified: Smartt 2009, ARA&A 47, 63, section 4.4, arXiv:0908.0700, read at "
-        "S30]. The named alternative is Heger et al. 2003's 'we will adopt 9 Msun for M-lower', "
-        "inside a debated 6-11 Msun [verified: ApJ 591, 288, section IV.1, astro-ph/0212469, read "
-        "at S30]; 9 lowers the rate by 7%. BUILD_II's '8 Msun' was recall and is not the number "
-        "the source prints. Every star from here to the IMF's upper end counts as one supernova: "
-        "no source for which massive stars collapse without exploding has been read.",
+        "The lowest initial mass that ends in a core-collapse supernova, m_min = 8.5 (+1, -1.5) "
+        "Msun for a type II-P progenitor: a maximum-likelihood fit to the masses and upper limits "
+        "of the progenitors in a volume-limited sample of nearby supernovae [verified: Smartt 2009, "
+        "ARA&A 47, 63, section 4.4, arXiv:0908.0700, read at S30]. The named alternative is Heger "
+        "et al. 2003, who adopt 9 Msun inside a debated 6-11 [verified: ApJ 591, 288, section "
+        "IV.1, astro-ph/0212469, read at S30]; 9 lowers the rate by 7%. BUILD_II's 8 Msun was "
+        "recall and is not the number the source prints. Every star from here to the IMF's upper "
+        "end counts as one supernova: no source for which massive stars collapse without "
+        "exploding has been read.",
     ),
     "IA_IRON_MASS": Constant(
         0.7,
         "Msun",
-        "Iron ejected by one type Ia supernova: 'The mean iron yield of a SN Ia ... is (e.g., "
-        "Mazzali et al. 2007; Howell et al. 2009) y_Fe,Ia = 0.7 Msun' [verified: Maoz & Graur "
-        "2017, ApJ 848, 25, section III eq. 2, arXiv:1703.04540, read at S30]. It turns the "
-        "chemistry's Ia iron into a number of events. The named alternative is Weinberg, Andrews "
-        "& Freudenburg 2017's 0.77 Msun, 'based on the W70 model of Iwamoto et al. 1999', the "
-        "value their Ia iron yield of 0.0017 per unit mass formed was built with [verified: ApJ "
-        "837, 183, section II.2, arXiv:1604.07435, read at S30]; it would lower the rate by 9%.",
+        "Iron ejected by one type Ia supernova, the mean yield Maoz & Graur adopt (citing Mazzali et "
+        "al. 2007 and Howell et al. 2009) [verified: Maoz & Graur 2017, ApJ 848, 25, section III "
+        "eq. 2, arXiv:1703.04540, read at S30]. It turns the chemistry's Ia iron into a number of "
+        "events. The named alternative is Weinberg, Andrews & Freudenburg 2017's 0.77 Msun (the W70 "
+        "model of Iwamoto et al. 1999), the value their Ia iron yield of 0.0017 per unit mass "
+        "formed was built with [verified: ApJ 837, 183, section II.2, arXiv:1604.07435, read at "
+        "S30]; it would lower the rate by 9%.",
+    ),
+    # --- S30: the galactic habitable zone's criteria (ruling (b): built, deliberately unjudged).
+    # Lineweaver, Fenner & Gibson 2004 (Science 303, 59) was the ruling's first source and could
+    # not be read: its astro-ph preprint is a scanned image and no text mirror was found. Only its
+    # abstract was read (a zone between 7 and 9 kpc, of stars formed 8 to 4 Gyr ago), so its
+    # criteria enter nothing here. Every criterion below is Gowanlock, Patton & McConnell 2011,
+    # Astrobiology 11, 855 (arXiv:1107.1286), the ruling's named alternative, read at S30 section
+    # by section; the one quoted fragment is the equation.
+    "PLANET_PROBABILITY_SOLAR": Constant(
+        0.03,
+        "dimensionless",
+        "The probability that a star of solar metallicity forms a giant planet, the metallicity "
+        "criterion's normalisation: Gowanlock et al. 2011 section 3.2 adopt Fischer & Valenti "
+        "2005's P(planet) = 0.03 x 10^(2.0[Fe/H]) above solar metallicity and Santos et al. "
+        "2004's flat tail, a constant 3% below it [verified: arXiv:1107.1286 section 3.2, read at "
+        "S30]. They scale it to a habitable-planet probability by Ida & Lin 2005's ratios and "
+        "remove a habitable planet whose star also has a hot Jupiter; neither the ratios nor the "
+        "hot-Jupiter fraction was read, so the model publishes the giant-planet criterion itself "
+        "and says its weight is relative.",
+    ),
+    "PLANET_METALLICITY_INDEX": Constant(
+        2.0,
+        "dimensionless",
+        "The exponent of the same relation, P proportional to 10^(2.0[Fe/H]) above solar "
+        "metallicity [verified: arXiv:1107.1286 section 3.2, citing Fischer & Valenti 2005, read "
+        "at S30]. No upper metallicity cut is stated there.",
+    ),
+    "STERILIZATION_DISTANCE": Constant(
+        8.0,
+        "pc",
+        "How close an average type II supernova must be to strip a planet's ozone, 8 pc after "
+        "Gehrels et al. 2003; a brighter event reaches further by eq. 5, d_SN = 8 pc x "
+        "10^(-0.4(M_SN - M_std)) [verified: arXiv:1107.1286 section 3.1.2, eq. 5, read twice at "
+        "S30]. A third read described the distance as scaling with the square root of the flux "
+        "ratio, which would make the exponent -0.2; the equation is used as read and the "
+        "question is carried, not settled from recall (rule B9).",
+    ),
+    "STERILIZATION_MAGNITUDE": Constant(
+        -17.505,
+        "mag",
+        "M_std of the sterilization distance: the absolute magnitude of the average SN II, taken "
+        "as just enough to sterilize at 8 pc [verified: arXiv:1107.1286 section 3.1.2, read at "
+        "S30]. The source draws each SN II from Richardson et al. 2002's magnitude distribution; "
+        "the model uses the average, so a core collapse reaches 8 pc.",
+    ),
+    "IA_ABSOLUTE_MAGNITUDE": Constant(
+        -19.34,
+        "mag",
+        "The mean peak magnitude of a type Ia supernova in the sterilization distance: Wang et al. "
+        "2006's mean M_B over 109 events, which the source draws its Ia magnitudes from "
+        "[verified: arXiv:1107.1286 section 3.1, read at S30]. At the mean and by eq. 5 as read a "
+        "type Ia sterilizes out to 5.4 times a type II's distance; the source, drawing both from "
+        "their distributions, calls an Ia about 5.6-5.7 times more lethal. No dispersion is "
+        "stated there.",
+    ),
+    "COMPLEX_LIFE_DELAY": Constant(
+        4.0,
+        "Gyr",
+        "How long after its planet forms complex life arises: the source assumes animal life "
+        "about 4 Gyr after formation, from the Earth's age of about 4.55 Gyr [verified: "
+        "arXiv:1107.1286 section 3.4.1, read at S30]. A star formed less than this long ago "
+        "carries no weight in the habitable zone.",
+    ),
+    "OZONE_CONTINUITY": Constant(
+        1.55,
+        "Gyr",
+        "How long a planet's ozone must survive unbroken by a sterilizing supernova for complex "
+        "life to arise: 1.55 Gyr before the rise of animal life [verified: arXiv:1107.1286 "
+        "section 3.4, read at S30]. The source restarts the clock after a sterilization (read in "
+        "paraphrase, one pass), so a planet can become habitable later; the model counts only the "
+        "last 1.55 Gyr before the 4 Gyr rise, the first chance and a lower bound on the source's "
+        "criterion [inferred].",
     ),
 }

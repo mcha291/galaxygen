@@ -296,7 +296,9 @@ def test_the_viewer_walks_the_checkpoints_against_a_live_server(tmp_path):
     # Checkpoint 6 draws where giants are possible, which is derived from the
     # chemistry — and stops there. Neither materialiser runs anywhere in the walk:
     # a sample is what a region query is for (D73).
-    assert got["ran"]["6"] == ["formation"]
+    # S30: and the habitable zone, derived from the chemistry and the supernova histories
+    # (["formation"] until S30).
+    assert got["ran"]["6"] == ["formation", "habitable_zone"]
     ran = {stage for got_ran in got["ran"].values() for stage in got_ran}
     assert not ran & {"systems", "planets"}, "drawing a checkpoint materialised a catalogue"
 
