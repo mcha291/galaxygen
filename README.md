@@ -46,10 +46,12 @@ and the constants each declares beyond the shared ones.
 **PARSEC stellar isochrones.** `model/galaxy/data/parsec_isochrones.npz` is derived
 from PARSEC v1.2S isochrones with COLIBRI TP-AGB evolution, generated with the CMD 3.9
 web service maintained by Léo Girardi at the Osservatorio Astronomico di Padova
-(<https://stev.oapd.inaf.it/cgi-bin/cmd>). It keeps initial mass, log L, log T_eff and
-the evolutionary-phase label for 396 isochrones: 36 ages (log age 6.6–10.1, step 0.1) at
-each of 11 metallicities ([M/H] −2.19 to +0.30, step 0.25); `tools/fetch_parsec.py`
-regenerates it. The references CMD lists
+(<https://stev.oapd.inaf.it/cgi-bin/cmd>). It keeps initial mass, present mass, log L,
+log T_eff, the evolutionary-phase label, the bolometric magnitude and the absolute
+magnitudes in U B V R I J H K (Vega; the UBVRIJHK system of Maíz Apellániz 2006 and
+Bessell 1990, with the YBC bolometric corrections of Chen et al. 2019) for 396
+isochrones: 36 ages (log age 6.6–10.1, step 0.1) at each of 11 metallicities ([M/H]
+−2.19 to +0.30, step 0.25); `tools/fetch_parsec.py` regenerates it. The references CMD lists
 for these tables:
 
 - Bressan, A., et al. 2012, MNRAS, 427, 127 — PARSEC
@@ -59,3 +61,12 @@ for these tables:
 - Marigo, P., et al. 2017, ApJ, 835, 77 — COLIBRI TP-AGB and the CMD isochrones
 - Pastorelli, G., et al. 2019, MNRAS, 485, 5666 — TP-AGB calibration (SMC)
 - Pastorelli, G., et al. 2020, MNRAS, 498, 3283 — TP-AGB calibration (LMC)
+- Chen et al. (2019) — the YBC bolometric corrections, as the CMD output header cites them
+- Maíz Apellániz (2006) and Bessell (1990) — the UBVRIJHK photometric system, likewise
+
+**Massive-star tables** (`model/galaxy/stages/massive_stars.py`, entered row by row from
+the published tables): Sternberg, A., Hoffmann, T. L. & Pauldrach, A. W. A. 2003, ApJ,
+599, 1333, Table 1 (ionizing photon fluxes of O and early-B dwarfs); Martins, F.,
+Schaerer, D. & Hillier, D. J. 2005, A&A, 436, 1049, Table 4 (the comparison
+calibration); the mass-loss recipe of Vink, J. S., de Koter, A. & Lamers, H. J. G. L. M.
+2001, A&A, 369, 574; the Wolf-Rayet thresholds of Crowther, P. A. 2007, ARA&A, 45, 177.
