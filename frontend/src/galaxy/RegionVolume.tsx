@@ -24,7 +24,7 @@ import {
   ZeroFactor,
 } from "three";
 
-import { type Census, type Query, type RenderFrame, loadClouds, loadClusters, loadRender } from "../api";
+import { type Census, type Query, type RenderFrame, loadClouds, loadClusters, loadRemnants, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
@@ -191,13 +191,14 @@ export function RegionVolume({ query, window, level, stops, weight, filterSet = 
   const key = JSON.stringify([place, query]);
   const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
   const clusters = useLoad<Census>(key, (signal) => loadClusters(place, query, signal)).value ?? null;
+  const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal)).value ?? null;
   const renderKey = JSON.stringify([filterSet, place, query]);
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), WHITE_KELVIN, { ...query, ...place }, signal)).value ?? null;
 
   const built = useMemo(() => {
-    if (!clouds || !clusters || !rendered) return null;
+    if (!clouds || !clusters || !remnants || !rendered) return null;
     const scalars = (clouds.header.scalars ?? {}) as Record<string, number>;
-    const table = packObjects(clouds.columns, clusters.columns, Number(scalars.cloud_extinction_v ?? 0));
+    const table = packObjects(clouds.columns, clusters.columns, Number(scalars.cloud_extinction_v ?? 0), undefined, remnants.columns);
     if (!table.count) return null;
     const white = whiteOf(rendered.header) ?? [1, 1, 1];
     const comps = (rendered.header.components ?? {}) as Record<string, { transmission?: number[]; extinction_ratio?: number[] }>;
@@ -235,7 +236,7 @@ export function RegionVolume({ query, window, level, stops, weight, filterSet = 
       return m;
     });
     return { table, texture, meshes, sorted: new Float32Array(MAX_OBJECTS * OBJECT_FLOATS) };
-  }, [clouds, clusters, rendered]);
+  }, [clouds, clusters, remnants, rendered]);
 
   const gl = useThree((state) => state.gl);
 

@@ -148,6 +148,7 @@ export function packObjects(
   clusters: Record<string, Col>,
   extinctionV: number,
   budget: { clouds: number; hii: number; shells: number } = BUDGET,
+  remnants: Record<string, Col> = {},
 ): RegionObjects {
   type Obj = { weight: number; row: number[] };
   const pick = (list: Obj[], n: number) => list.sort((a, b) => b.weight - a.weight).slice(0, n);
@@ -196,6 +197,19 @@ export function packObjects(
     if (rb > 0 && thick > 0 && Number.isFinite(epsShell) && epsShell > 0) {
       const shellVolume = rb ** 3 - Math.max(0, rb - thick) ** 3;
       shellList.push({ weight: epsShell * shellVolume, row: [x, y, z, rb, KIND.shell, num(clusters.cell, i), num(clusters.index, i), 0, epsShell, Math.min(thick, rb), 0, 0, 0, 0, 0, 0] });
+    }
+  }
+
+  // Supernova remnants: shells too, competing with the bubbles' for the shell budget by the light they carry.
+  const nRemnants = remnants.remnant_radius?.length ?? 0;
+  for (let i = 0; i < nRemnants; i += 1) {
+    const [x, y, z] = scene(num(remnants.remnant_radius, i), num(remnants.remnant_azimuth, i), num(remnants.remnant_height, i));
+    const rr = num(remnants.remnant_size, i) / 1000;
+    const thick = num(remnants.remnant_shell_thickness, i) / 1000;
+    const epsShell = num(remnants.remnant_shell_emissivity, i) * ERG_S_CM3_TO_LSUN_PC3;
+    if (rr > 0 && thick > 0 && Number.isFinite(epsShell) && epsShell > 0) {
+      const shellVolume = rr ** 3 - Math.max(0, rr - thick) ** 3;
+      shellList.push({ weight: epsShell * shellVolume, row: [x, y, z, rr, KIND.shell, num(remnants.cell, i), num(remnants.index, i), 0, epsShell, Math.min(thick, rr), 0, 0, 0, 0, 0, 0] });
     }
   }
 
