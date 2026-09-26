@@ -45,16 +45,21 @@ def chk(m, *stages):
 # in dust's round, between dust and planets by the tie-break.
 # Since S33 (BUILD_II Phase 11) the clusters stage reads the cloud columns, so it runs the round after
 # clouds', last in both orders; until S33 both ended "..., habitable_zone, dust, clouds, planets".
+# Since S34 (BUILD_II Phase 5) the stellar halo reads the history (checkpoint 4, in supernovae's round,
+# ahead of it by the tie-break), the survival of the bound clusters reads the halo's mass (the next
+# round, ahead of population) and the globular clusters read the survival (the round after, ahead of
+# systems). Until S34 the order ran "..., chemistry_dtd, supernovae, light, vertical_alpha, population,
+# ism, systems, ...".
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "light",
-        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
-        "clusters",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
+        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae",
-        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
-        "clusters",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "stellar_halo",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
+        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -62,6 +67,9 @@ ORDER = {
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
 SEEDED_BASIC = {
     "black_hole_mass",
+    # S34 (BUILD_II Phase 5): the globular cluster system, drawn on world_seed; the survival fraction and the
+    # metal-poor share are a separate stage and stay derived (D55), as the stellar halo does.
+    "gc_system_mass", "gc_count_estimate",
     # The molecular-cloud census (S32): every column and scalar of a stage that reads systems_seed.
     "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",

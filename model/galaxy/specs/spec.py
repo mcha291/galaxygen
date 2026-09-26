@@ -221,6 +221,35 @@ _ADAMS13_READ = (
     "table judges and one source gives both rates by one method."
 )
 
+# S34 (BUILD_II Phase 5): the globular cluster system and the stellar halo, numbered here once as S30's
+# rows are, so that a renumbering at a merge is this one line.
+ROW_GC_SYSTEM_MASS, ROW_STELLAR_HALO_MASS = 32, 33
+_HARRIS = "Harris catalogue (December 2010 revision), mwgc.dat Part II M_V,t; M/L_V from BHG16 section 6.1.2"
+# The sum of 10^(-0.4 (M_V,t - 4.81)) over the 156 clusters with an M_V,t, L_V in Lsun at the Sun's
+# Johnson V absolute magnitude the model uses (Willmer 2018); tests/test_globular_clusters.py holds the
+# 156 values and recomputes it.
+HARRIS_LUMINOSITY_V = 1.716222334634886e7
+_HARRIS_READ = (
+    "The catalogue, read at S34 at https://physics.mcmaster.ca/~harris/mwgc.dat, twice, by two "
+    "independent transcriptions that agree to the digit, the second checked row by row against "
+    "M_V,t = V_t - (m-M)V [verified: tests/test_globular_clusters.py]. What it says it covers: 'This catalog "
+    "contains basic parameters on distances, velocities, metallicities, luminosities, colors, and "
+    "dynamical parameters for 157 objects classified as globular clusters in the Milky Way galaxy' "
+    "(header, 'This revision: December 2010'); its bibliography (mwgc.ref): 'Seven new clusters have been "
+    "added, bringing the total to 157.' **It lists no mass**: Part II's 'M_V,t = V_t - (m-M)V' is the "
+    "cluster luminosity, given for 156 of the 157 (GLIMPSE02 has none), and the only mass-to-light ratio "
+    "it names is an assumption for its relaxation times, 'A mean stellar mass of (1/3) M_sun and a mean "
+    "mass to light ratio of M/L = 2 are assumed here for purposes of this calculation.' It says nothing "
+    "of completeness beyond 'the evidence for them is not yet convincing' for further candidates. So the "
+    "row reads the catalogue's summed luminosity, 1.716e7 Lsun at the Sun's M_V = 4.81, times the ratio "
+    "BHG16 section 6.1.2 quotes for these objects: 'With a mass-to-light ratio M/LV = 1.4 +/- 0.5 for "
+    "metal-poor Galactic globular clusters (Kimmig et al. 2015)' [verified: arXiv:1602.07702, read at S34] "
+    "- the one conversion read with an uncertainty, so the window is the source's 0.9-1.9 and nothing is "
+    "chosen. It applies the metal-poor clusters' ratio to all 156, a third of which are metal-rich. The "
+    "catalogue's own M/L = 2 reads 3.43e7 with no width, the named alternative; **the model's number was "
+    "known when the ratio was chosen** (as row 14's was, D122), and both conversions give the same verdict."
+)
+
 QUANTITIES: tuple[Quantity, ...] = (
     Quantity(1, "Total stellar mass", "Msun", "stellar_mass_total", 4.0e10, 6.0e10, "pointwise", "5 ± 1 × 10¹⁰ M☉", _BHG16),
     Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16),
@@ -290,6 +319,33 @@ QUANTITIES: tuple[Quantity, ...] = (
             "by Maoz & Graur 2017's 0.7 Msun per event. The disc alone: the spheroid's old stars are "
             "not in the history, so their Ia are missing and the row reads low by their share. "
             + _ADAMS13_READ
+        ),
+    ),
+    Quantity(
+        ROW_GC_SYSTEM_MASS, "Globular cluster system mass", "Msun", "gc_system_mass",
+        0.9 * HARRIS_LUMINOSITY_V, 1.9 * HARRIS_LUMINOSITY_V, "statistical",
+        "156 clusters' M_V,t: 1.716 × 10⁷ L☉ at M/L_V = 1.4 ± 0.5", _HARRIS,
+        note=(
+            "Statistical per debt #8: the model's system mass is a derived mean times a lognormal residual "
+            "drawn on world_seed at Boylan-Kolchin 2018's scatter, so the verdict is the ensemble's median, "
+            "which is the mean. " + _HARRIS_READ
+        ),
+    ),
+    Quantity(
+        ROW_STELLAR_HALO_MASS, "Stellar halo mass", "Msun", "halo_stellar_mass", 4.0e8, 7.0e8, "pointwise",
+        "4–7 × 10⁸ M☉", "BHG16 section 6.1.2",
+        note=(
+            "'We therefore add ~50% of this mass to the result of Bell et al. (2008) to obtain a rough "
+            "estimate for the total stellar halo mass Ms = 4-7 x 10^8 Msun. This is somewhat lower than "
+            "the classical value based on Morrison (1993)' [verified: Bland-Hawthorn & Gerhard 2016, "
+            "arXiv:1602.07702, section 6.1.2, read at S34 from the arXiv PDF]. What it measures: Bell et "
+            "al.'s 'best-fit stellar halo mass within r = 1-40 kpc of ~(3.7 +/- 1.2) x 10^8 Msun' from "
+            "double power-law fits to SDSS turnoff stars, plus half of the 2-3 x 10^8 in the four largest "
+            "substructures (the Sagittarius stream, the Anti-Center structure, the Virgo overdensity, the "
+            "Hercules-Aquila cloud), 'a significant fraction' of which is already inside Bell's volume. A "
+            "range with no stated uncertainty beyond 'rough', taken as the window. The model's halo is "
+            "every accreted satellite's stars, whole, Sagittarius's remnant included; the source counts "
+            "the stream and not the bound remnant."
         ),
     ),
 )
@@ -593,6 +649,58 @@ _MISSES: tuple[Miss, ...] = (
             "cited dispersion since S20 and would have to fall below 78 to land this row alone (S21 (a): "
             "below 74 - 351.4 at 78, 350.3 at 75, 348.7 at 70; A-11). The one probe that opens a real "
             "alpha-rich mode - a burst inside the alpha-fall, A-4 - reads this row at 353, inside."
+        ),
+    ),
+    Miss(
+        row=ROW_GC_SYSTEM_MASS,
+        debt=98,
+        since="S34",
+        reason=(
+            "the ensemble's median is 7.13e7 Msun against 1.54-3.26e7 (the Harris catalogue's 1.716e7 Lsun "
+            "at M/L_V = 1.4 +/- 0.5), 0.47 dex above the window's centre; the mean it estimates is 6.97e7 = "
+            "the survival 0.0250 times S33's bound cluster mass 2.786e9. The mean is 0.26 dex above "
+            "Boylan-Kolchin's eta M_halo (3.85e7), inside his 0.28 dex scatter, so the model reproduces the "
+            "halo relation and misses the catalogue - and the relation itself sits above this window at the "
+            "Milky Way's mass (3.3-4.4e7 across eta = 3-4e-5, the window's top 3.26e7). **What the model "
+            "counts is not what the catalogue lists**: the system is every bound cluster alive today, and "
+            "53% of its surviving mass is younger than 1 Gyr and 0.7% older than 10 Gyr, while the "
+            "catalogue's 157 are the old globulars. One disruption time-scale, the solar neighbourhood's "
+            "open clusters', is given to every cluster ever formed."
+        ),
+        prediction=(
+            "The age at which a survivor counts as a globular, once a source gives one, splits the number: "
+            "at this calibration the clusters older than 10 Gyr read 5.2e5 Msun, 1.5 dex below the window, "
+            "and at the N-body tidal-field time-scale (five times longer, Lamers et al. 2005's abstract) "
+            "4.7e7, above it by 0.16 dex and 0.09 dex above the halo relation. So the prediction that could "
+            "kill this entry's reading: if the old survivors are separated and given a halo orbit's "
+            "disruption time, the row lands within 0.2 dex of its window; if they read below 1.5e7 at any "
+            "sourced time-scale between the open clusters' and the N-body one, the bound fraction or the "
+            "mass function's scale at high redshift (M* >~ 1e6 in interacting galaxies, PZMG10 section "
+            "2.4.2) is what is wrong, not the dissolution. Not a lever: the window, which is the source's "
+            "0.9-1.9 and whose alternative (the catalogue's own M/L = 2, 3.43e7) fails the same way."
+        ),
+    ),
+    Miss(
+        row=ROW_STELLAR_HALO_MASS,
+        debt=99,
+        since="S34",
+        reason=(
+            "3.03e9 Msun against BHG16's 4-7e8, 0.64 dex above the top. Every satellite's stars are "
+            "counted whole, the satellite taken to hold the host's own stellar share of its mass: "
+            "Gaia-Enceladus at a quarter of the 9.63e9 of disc stars the host had formed by 3.8 Gyr is "
+            "2.41e9, Sagittarius at 0.02 of 3.11e10 by 8.8 Gyr is 6.2e8. Gaia-Enceladus alone misses; "
+            "Sagittarius alone would sit inside, and its whole remnant is counted where the source "
+            "counts half of its stream; no stripped fraction was read to apply to either."
+        ),
+        prediction=(
+            "The satellite's stellar share, not the stripping: a dwarf holds a far smaller share of its "
+            "mass in stars than a Milky-Way-mass galaxy [recall], so the mass ratio applied to a halo mass and a "
+            "sourced stellar-to-halo relation - with the halo mass history the model does not have - must "
+            "bring the sum down by a factor of 4.3-7.6 to land the row; if a sourced relation "
+            "does that and the row still misses high, the mass ratio's reading (1:4 as a total-mass "
+            "ratio at the event) is what is wrong, and if it undershoots, a stripped fraction below 1 "
+            "cannot help. Not a lever: the merger list's mass ratios, which set the disc's heating and "
+            "rows 3 and 6-11 with it."
         ),
     ),
 )
