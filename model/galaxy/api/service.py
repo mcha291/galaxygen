@@ -63,6 +63,7 @@ from galaxy.core.units import unit as _unit
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
+from galaxy.stages import bubbles as _bubbles
 from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds
 from galaxy.stages import clusters as _clusters
@@ -75,6 +76,7 @@ PLANETS_SLOT = "planets"  # and the slot a system query materialises with
 CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
 CLUSTERS_SLOT = "clusters"  # and the slot a clusters query answers for (S33)
 NEBULAR_SLOT = "nebular"  # whose HII-region columns ride on the clusters response (S35)
+BUBBLES_SLOT = "bubbles"  # whose bubble columns ride on it too, and whose remnant census /api/remnants serves (S36)
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
@@ -151,10 +153,18 @@ ROUTES: tuple[Route, ...] = (
         "/api/clusters",
         "The young star-cluster census for one (R, phi) window (S33): one cluster in every cloud past its "
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
-        "that holds it names it, with its HII region's columns (S35); level=k keeps the clusters inside the "
-        "level-k children the window meets.",
+        "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
+        "clusters inside the level-k children the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clusters",
+    ),
+    Route(
+        "/api/remnants",
+        "The supernova-remnant census for one (R, phi) window (S36): every visible remnant of the cells the "
+        "window meets, each row named by cell and index, with its blast wave's size, shell and phase; level=k "
+        "keeps the remnants inside the level-k children the window meets.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "remnants",
     ),
 )
 
@@ -855,6 +865,7 @@ class Service:
         model = self._model(q)
         stage = _stage_for(model, CLUSTERS_SLOT, self.impls)
         nebular = _stage_for(model, NEBULAR_SLOT, self.impls)
+        bubbles = _stage_for(model, BUBBLES_SLOT, self.impls)
         R = self.grid.R
         r_min = q.number("r_min", float(R[0]))
         r_max = q.number("r_max", float(R[-1]))
@@ -875,10 +886,14 @@ class Service:
             clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted)
             clusters = _clusters.materialise_clusters(clouds, out.fields, R, seed, constants)
             regions = _nebular.materialise_nebular(clusters, clouds, constants)  # S35: the region is the cluster's
-            return _catalogue.Catalogue.of({**clusters, **regions}, clusters.counts)
+            blown = _bubbles.materialise_bubbles(clusters, regions, constants)  # S36: and so is the bubble
+            return _catalogue.Catalogue.of({**clusters, **regions, **blown}, clusters.counts)
 
         census = self.cells.catalogue(key, parents, draw)
-        columns = [d.name for st in (stage, nebular) for d in st.publishes if d.kind.domain == "object" and d.name in census]
+        columns = [
+            d.name for st in (stage, nebular, bubbles) for d in st.publishes
+            if d.kind.domain == "object" and d.of == "cluster" and d.name in census
+        ]
         kept = None
         if level:
             census, kept = _in_children(census, "cluster", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
@@ -906,6 +921,54 @@ class Service:
                     out.fields["stars_formed_history"], R, float(constants["CLUSTER_BOUND_FRACTION"])
                 ),
             },
+            "columns": columns,
+            "stages": list(ran),
+        }
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
+
+    def _remnants(self, q: Query) -> Response:
+        """The supernova-remnant census of one window (S36): the remnants of every level-0 cell the window meets,
+        drawn exactly as the stage draws them from the rates it reads; at level k, those inside the children it
+        meets. The stage does not run, and neither does anything that makes clusters: the census reads the rates
+        and the gas, nothing else (D4)."""
+        model = self._model(q)
+        stage = _stage_for(model, BUBBLES_SLOT, self.impls)
+        R = self.grid.R
+        r_min = q.number("r_min", float(R[0]))
+        r_max = q.number("r_max", float(R[-1]))
+        phi_min = q.number("phi_min", 0.0)
+        phi_max = q.number("phi_max", 2.0 * math.pi)
+        level = _level(q)
+
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, tuple(n for n in self._reads(model, stage) if n in _bubbles.REMNANT_READS))
+        seed = int(out.inputs[stage.reads_seeds[0]])
+        constants = {k: c.value for k, c in model.constants.items()}
+        parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
+        key = repr(("remnants", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        census = self.cells.catalogue(
+            key, parents, lambda wanted: _bubbles.materialise_remnants(out.fields, R, seed, constants, wanted),
+        )
+        columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.of == "remnant" and d.name in census]
+        kept = None
+        if level:
+            census, kept = _in_children(census, "remnant", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "level": level,
+            "cells": {
+                "ids": [c for c, _ in census.counts],
+                "counts": [n for _, n in census.counts],
+                "count": len(census.counts),
+                "requested": len(parents),
+                "of": _catalogue.CELL_COUNT,
+            },
+            "remnants": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
+            # The stage's galaxy scalar, which rule D4 keeps off the viewer's scalars surface (D148): the
+            # population integral /api/arrays serves when the stage runs.
+            "scalars": {"remnant_count_total": float(_bubbles.remnant_expected(out.fields, R, constants).sum())},
             "columns": columns,
             "stages": list(ran),
         }

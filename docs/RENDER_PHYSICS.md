@@ -55,6 +55,13 @@ sections below as a description of an empty slate.
   the check (0.71 at S35) `[verified: model/galaxy/stages/nebular.py; D184]`. The
   collisionally excited lines wait on the photoionization grid ruled in (Byler et
   al. 2017 via FSPS), whose fetch is the owner's call; the old field stays until V3.
+- **Since S36 (Phase 10)** the `bubbles` stage publishes the hollow: per cluster
+  Weaver et al. 1977's bubble (radius, shell velocity, density, thickness, Hα per
+  unit volume in the shell, interior pressure and temperature, phase, stalled),
+  the supernova-remnant census as an object class (`of="remnant"`, `/api/remnants`,
+  Sedov then the snowplow), the hot phase's porosity per radius, and a star's own
+  bubble as a catalogue column `[verified: model/galaxy/stages/bubbles.py,
+  feedback.py; D185]`. Their [S II]/Hα waits on the same grid.
 - The region cells were galaxy-scale: 1024 cells in (R, φ), of which ~800 realise
   a star at the default sample `[verified: python -m galaxy.specs, performance]`.
   **Since S32 (Phase 8) `/api/region` and `/api/system` take `level=` 0–3**: a
@@ -376,7 +383,7 @@ Everything marked `[recall — NEEDS SOURCING]` above, plus:
 - dust albedo and scattering asymmetry g in V, and R_V
 - modified blackbody emissivity index β
 - PAH feature wavelengths and their metallicity dependence
-- the wind bubble solution's constants (Weaver et al. 1977) and the Sedov phase
+- ~~the wind bubble solution's constants (Weaver et al. 1977) and the Sedov phase~~ — read at S36 from Weaver's scan, Kim & Ostriker 2015, Chen & Slane 2001 (D185)
 - the hydrogen-ionizing photon rate Q(H⁰) as a function of T_eff and L (Phase 3)
 - the filter curves of every named filter set the viewer offers (V1)
 

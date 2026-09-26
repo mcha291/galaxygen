@@ -44,6 +44,7 @@ BASIC = MODELS.register(
             ("clouds", "clouds"),
             ("clusters", "clusters"),
             ("nebular", "nebular"),
+            ("bubbles", "bubbles"),
             ("stellar_halo", "stellar_halo"),
             ("cluster_survival", "cluster_survival"),
             ("globular_clusters", "globular_clusters"),

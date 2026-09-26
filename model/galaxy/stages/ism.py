@@ -34,6 +34,8 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.stages.feedback import MSUN_PER_PC3_IN_G_PER_CM3
+from galaxy.stages.massive_stars import BOLTZMANN
 
 # Blitz & Rosolowsky's own pressure form (their eq. for P_tot, after Elmegreen 1989):
 #   P/k_B = 272 · Σ_gas · Σ_*^0.5 · v_disp · h_*^-0.5   [cm^-3 K]
@@ -63,6 +65,13 @@ def midplane_pressure(sigma_gas: np.ndarray, sigma_star: np.ndarray,
             * v_disp / np.sqrt(max(h_star_pc, 1e-6)))
 
 
+def midplane_density(pressure: np.ndarray, v_disp: float) -> np.ndarray:
+    """The gas's midplane mass density in M☉/pc³, ρ0 = P / σ²: the hydrostatic pressure (P/k_B in
+    cm⁻³ K) over the square of the same velocity dispersion the pressure was computed with (km/s)."""
+    rho = np.maximum(np.asarray(pressure, dtype=float), 0.0) * BOLTZMANN / (v_disp * 1.0e5) ** 2  # g/cm³
+    return rho / MSUN_PER_PC3_IN_G_PER_CM3
+
+
 def molecular_ratio(pressure: np.ndarray, p_norm: float, index: float) -> np.ndarray:
     """R_mol = Σ_H2/Σ_HI = (P/P_0)^α, Blitz & Rosolowsky 2006."""
     return (np.maximum(np.asarray(pressure), 0.0) / p_norm) ** index
@@ -90,6 +99,21 @@ MIDPLANE_PRESSURE = FieldDecl(
         "hydrostatic estimate as Blitz & Rosolowsky wrote it, assuming the stellar disc dominates "
         "the vertical gravity. That assumption fails where the gas dominates, so the outer disc's "
         "pressure is underestimated and with it the molecular fraction."
+    ),
+)
+
+MIDPLANE_DENSITY = FieldDecl(
+    name="gas_midplane_density", label="Gas midplane density ρ₀(R)", unit="Msun/pc3",
+    kind=Kind.FIELD, axes=("R",), ramp=Ramp("viridis", scale="log"), meaningful_zero=True,
+    about=(
+        "The midplane pressure over the square of the gas's velocity dispersion: in vertical equilibrium "
+        "'the thermal and turbulent terms can be combined as a single midplane kinetic pressure ρ0σ_z²' "
+        "(Ostriker & Shetty 2011), so the mass density is the pressure divided by it, at the dispersion the "
+        "pressure prescription assumed. The volume-averaged density of the diffuse gas, clouds and "
+        "intercloud medium together, not of any one phase: about 0.7 hydrogen atoms per cm³ at the "
+        "solar radius, where Leroy et al. 2008 read 'Ph/k_B ≈ 2.3 × 10^4 cm^-3 K, corresponding to a "
+        "particle density n ∼ 1 cm^-3'. What a single star's wind bubble and a supernova remnant expand "
+        "into (S36)."
     ),
 )
 
@@ -183,6 +207,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     return {
         "gas_midplane_pressure": pressure,
+        "gas_midplane_density": midplane_density(pressure, v_disp),
         "gas_molecular_fraction_profile": f_mol,
         "gas_molecular_surface_density": sigma_h2,
         "gas_h2_fraction": h2_fraction,
@@ -214,7 +239,7 @@ ISM = IMPLEMENTATIONS.register(
             "thin_disc_scale_height", "feh_gas",
         ),
         publishes=(
-            MIDPLANE_PRESSURE, H2_FRACTION_PROFILE, MOLECULAR_SURFACE, H2_FRACTION,
+            MIDPLANE_PRESSURE, MIDPLANE_DENSITY, H2_FRACTION_PROFILE, MOLECULAR_SURFACE, H2_FRACTION,
             DUST_TO_GAS, DUST_SURFACE, DUST_EXTINCTION,
         ),
     )

@@ -689,9 +689,9 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101 | 36 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103 | 38 |
 
-So the board's **47 open** is 11 permanent and 36 carried, and no item is unruled. (S22
+So the board's **49 open** is 11 permanent and 38 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -702,14 +702,15 @@ photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach
 the grey slab, the PAH fit and the owed row 32, D180; S32 opened #94–#95, the census's construction and
 the cloud vector's unsourced draws, D181; S33 opened #96–#97, the clusters' inherited mass function and
 the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as recorded misses, D183; S35 opened
-#100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184.) The eleven
+#100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184; S36 opened #102–#103, the remnant
+census untied from its clusters and its lifetime-set count, D185.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The thirty-six carried ones are not thirty-six mechanisms.** Four of them — 19, 27, 49 and the
+**The thirty-eight carried ones are not thirty-eight mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -729,7 +730,8 @@ that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit
 census inherits and 97 the bound mass whose survival S34 built on the wrong population (S33, D182; S34,
 D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
 D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
-D184). That leaves 28, 33, 39, 42,
+D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185). That
+leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3067,6 +3069,32 @@ never been judged in twenty-three sessions.
    fraction with an uncertainty, which would also be the row this item could not enter. What kills the
    construction: a sourced local fraction near 1/8 — the model would then put twice too much glow between
    the knots.
+
+102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**
+   (S36, BUILD_II Phase 10, D185). The census draws every supernova as a free object per cell from Phase 6's rate
+   surface densities, and the clusters' bubbles count the same core collapses as superbubble energy: 65% of the
+   core collapses are of stars that die before 20 Myr, the census's oldest cluster, so their energy is in a
+   bubble and their remnant is drawn again elsewhere in the cell. And the remnants' azimuth is uniform in the
+   sector because the rates are axisymmetric, while their progenitors follow the arms' contrast (the clusters
+   do; the type Ia, from old stars, rightly do not). **Carried.** What closes it: the core-collapse remnants
+   younger than the cluster lifetime drawn *at* the clusters (a remnant column on the cluster, or a census whose
+   expectation per cell is the clusters' own supernova rate) and only the Ia and the orphaned core collapses as a
+   free census; the same photons rule (D185: a renderer draws the shell or the region, never both) applied to the
+   energy. What kills the construction: a field showing supernova remnants between the arms as densely as in them.
+103. **The remnant count is set by a visible lifetime read as a lower bound, and its shell physics is inferred**
+   (S36, D185). 1 464 remnants = the rates × 60 000 yr — Frail, Goss & Whiteoak 1994's "the mean lifetime of radio
+   supernova remnants is > 60,000 years" `[verified: arXiv:astro-ph/9407031, §4.1, read through a garbled text
+   layer]`, a lower bound; Sarbadhicary et al. 2017's "visibility times between 20-80 kyrs" `[verified:
+   arXiv:1605.04923, §4]` brackets it. The alternative built first, Cioffi et al. 1988's merger age (Leahy &
+   Williams 2017's t_mrg = 153 t_PDS […]^{10/7}), gives 39 709 remnants up to 5 kpc across in the model's midplane
+   densities (1.2 Myr at R₀, hundreds of Myr in the outer disc, where P/σ² is smallest) — a census set by the
+   density the model holds least well, so it was set aside. Inferred in the shell: the Sedov jump of 4 (Rankine–
+   Hugoniot, from recall, not re-read), one recombination per swept-up hydrogen atom for the radiative shell's Hα
+   (Case B of the whole compressed shell would make a radiative remnant as bright as a giant HII region), and the
+   remnants' height layer h = Σ/4ρ₀. **Carried.** What closes it: a sourced age distribution of Galactic remnants
+   with its selection (Green's catalogue statistics), which is also the row this census could not enter; a source
+   for the radiative shell's ionization state; the Sedov jump re-read in a source. What kills the count: a sourced
+   Milky Way remnant census above ~3 000 or below ~300 for a complete survey.
 
 ---
 

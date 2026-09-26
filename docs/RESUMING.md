@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the
 only record of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **The
 first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S31 closed on 2026-09-26
-(S29 and S30 in parallel), S32–S35 the same day; S36 (Phase 10, **Opus**) is next; **the owner owes one word: fetch the Byler/FSPS grid or not (D184)**.** Tags owed; S22 ◐.
+(S29 and S30 in parallel), S32–S36 the same day; S37 (Audit III, **Fable**) is next; **the owner owes one word: fetch the Byler/FSPS grid or not (D184)**.** Tags owed; S22 ◐.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -15,7 +15,7 @@ Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_I
 section — §11's head is the debt map. Branch `session-NN`; commit and push at every
 sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
 files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
-debts from #102, decisions from D185, taken when the entry is written.
+debts from #104, decisions from D186, taken when the entry is written.
 
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -31,17 +31,17 @@ model/galaxy/models/  level0 (constants), basic, azimuthal (BASIC's tuple, sfh -
                 **stellar_halo** (S34: debris over mergers[], BHG16 profile) ·
                 cp5 population (IMF integrals, remnants, PN count) + systems (materialise: the star columns; **the
                 cell hierarchy, MAX_LEVEL 3, canonical_cell**) + clouds (S32: the molecular census, of="cloud") +
-                clusters (S33: one per cloud past embedded, of="cluster", ε derived) + **nebular** (S35: the HII
-                regions' parameters and Hα per volume, the DIG, Σ_Hα as Σ_Q redistributed) + **cluster_survival +
-                globular_clusters** (S34: Lamers dissolution, gc_system_mass seeded on world_seed) · cp6 formation,
+                clusters (S33: one per cloud, ε derived) + nebular (S35: the HII regions' parameters, Hα per volume, the
+                DIG) + cluster_survival + globular_clusters (S34: Lamers dissolution, seeded on world_seed) + **bubbles**
+                (S36: Weaver bubbles per cluster, the remnant census of="remnant", porosity; feedback.py) · cp6 formation,
                 habitable_zone, planets; massive_stars.py; remnants.py; photometry (population_light/_wind)
 model/galaxy/data/    parsec_isochrones.npz (396 × 137 818 rows; U B V R I J H K, M_bol, present mass; fetch_parsec.py)
 model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
                 qualitative / sweep; MISSES one ledger), convergence, performance; api/: service (ROUTES)
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and toggle from /api/stages
-tests/          49 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
-                test_s22/s25/s26_rulings and each phase's file (…, hierarchy, clusters, globular_clusters, **nebular**) pin measurements
+tests/          50 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
+                test_s22/s25/s26_rulings and each phase's file (…, clusters, globular_clusters, nebular, **bubbles**) pin measurements
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
@@ -86,9 +86,9 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   run (#29) — remove it and **write down why**. `lo == hi` says "no testable target" (D100; rows 20, 21,
   25–28, 36); a row whose source does not say what it measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-09-26, after S35 (D174–D184 hold the before/after)
+## What the instruments said on 2026-09-26, after S36 (D174–D185 hold the before/after)
 - graph acyclic for both models (order: … sfh, chemistry_dtd, stellar_halo, supernovae, light, vertical_alpha,
-  cluster_survival, population, ism, globular_clusters, systems, …, clouds, planets, clusters, nebular); preflight OK,
+  cluster_survival, population, ism, globular_clusters, …, dust, clouds, systems, …, clusters, planets, nebular, bubbles); preflight OK,
   7 of 12 controls; determinism reproducible for both; spec **11 pass / 20 fail / 5 not-yet-computable of 36, identical**;
   convergence 0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; **rows 30 / 31 (SN rates)
   0.0176069 / 0.0065332 yr⁻¹, the Ia pass thin (#88)**; rows 25–28, 36 n-y-c; **rows 32–34 misses (#98–#100)**; row 35 −2.008 passes.
@@ -100,10 +100,10 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   molecular mass (noise 0.035), Mach median 6.5 (S32); 12 860 clusters, ε 0.0206, ΣQ / young Q 1.0088,
   bound_cluster_mass_total 2.79e9 (S33); gc_survival 0.0250, gc mean 6.97e7 = +0.26 dex from η M_halo but 53% under
   1 Gyr (#97), metal-poor share 0.643, halo_stellar_mass 3.03e9 (S34); 12 860 HII regions, R_S median 0.72 pc,
-  n_e 194, log U −2.83, census/field 0.990, halpha_sfr_ratio 0.7095, DIG 0.30 (S35)**; the level-0 catalogue bit-identical.
-- performance: basic ~1.7 s cold (light 0.55, systems 0.37, clouds 0.27, population 0.20, clusters 0.13); region
-  one sector 0.6 s cold, clouds whole disc 0.82 s, clusters one sector 1.06 s (the wind table's build); timings at S33 (D182).
-- Register: **47 open — 11 permanent, 36 carried — and 37 discharged** (#96–#97 S33, #98–#99 S34, #100–#101 S35).
+  n_e 194, log U −2.83, census/field 0.990, halpha_sfr_ratio 0.7095, DIG 0.30 (S35); bubbles median 9 pc, 12 521 of
+  12 860 stalled, 1 464 remnants (1 448 expected), porosity(R₀) 0.033 (S36)**; the level-0 catalogue bit-identical.
+- performance: basic ~2.8 s cold (light 0.6, systems 0.46, clouds 0.33, bubbles 0.12); remnants whole disc 0.73 s (D185).
+- Register: **49 open — 11 permanent, 38 carried — and 37 discharged** (#98–#99 S34, #100–#101 S35, #102–#103 S36).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python
