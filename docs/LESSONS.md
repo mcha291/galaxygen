@@ -944,3 +944,19 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [field] State the slab's errors on both sides. The grey absorption under-absorbs the ultraviolet by a
   measured 11% and over-absorbs the red by an unmeasured amount; a balance that closes to 10⁻¹² says
   nothing about either, because emission is solved from whatever was absorbed (D180, #91).
+
+## From S32 (BUILD_II Phase 8)
+
+- [catalogue] A property that must hold across sample sizes cannot depend on a realised count. The child's
+  extra-star count is a function of the parent's *expectation*, not of how many of the parent's stars
+  happened to land in it; had it been the difference, a larger sample could have made the child draw
+  fewer extras and the prefix property would have failed at some N and passed at the next (D181).
+- [catalogue] A census is not a sample. Clouds have a physical number — the molecular mass over the mean
+  cloud mass — so their count is a Poisson draw on the cell's stream and a level only filters them; the
+  stars' `stars=N` has no analogue, and giving clouds one would have made the ISM's gas depend on a request (D181).
+- [api] Keep a level-0 call's signature untouched when a deeper level is added: the instruments that wrap
+  `materialise` (the cache count) broke on a `level=` keyword they did not expect, and the fix was to pass
+  it only below level 0, so the path every existing pin walks is the path it always walked (D181).
+- [infra] The shell tool's 8 KB limit reports itself as "unexpected EOF while looking for matching quote";
+  a splice script of any size goes in a file and runs from there. And `grep -c` printing 0 exits 1: it
+  cannot sit inside a `&&` chain (D181, twice in one session).

@@ -52,11 +52,17 @@ sections below as a description of an empty slate.
   ionization parameter behind it; Phase 9 replaces it with §2's ionized-gas
   component, and the constant `HALPHA_PER_SFR` becomes a *check* on the Q-based
   emissivity rather than the emissivity.
-- The region cells are galaxy-scale: 1024 cells in (R, φ), of which ~800 realise
+- The region cells were galaxy-scale: 1024 cells in (R, φ), of which ~800 realise
   a star at the default sample `[verified: python -m galaxy.specs, performance]`.
-  Zooming to a 10 pc field needs a **cell hierarchy** — a cell subdivided by
-  level, each sub-cell its own seeded stream, a parent's draw the prefix of its
-  children's — not a new function. That is Phase 8's interface change.
+  **Since S32 (Phase 8) `/api/region` and `/api/system` take `level=` 0–3**: a
+  level-k cell is one of 4^k children of a level-0 cell with its own seeded stream,
+  holds its parent's stars that fall inside it plus its own at the parent's density
+  read at the child — 4^k the sample density — and the union, prefix and
+  determinism properties are asserted at every level `[verified:
+  model/galaxy/stages/systems.py; tests/test_hierarchy.py; D181]`. The molecular
+  clouds of §5a exist as an object class (`of="cloud"`) served by `/api/clouds`, a
+  census that a level filters `[verified: model/galaxy/stages/clouds.py; D181]`;
+  the cluster object of §5b is Phase 11's.
 
 **Present in the viewer, and forbidden by §8 once the cloud vector exists.**
 The field regime lays each ring out within itself: 30% of the starlight as

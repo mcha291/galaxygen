@@ -41,14 +41,16 @@ def chk(m, *stages):
 # round after ism's (ism shares its round with systems, formation and habitable_zone), beside planets
 # and ahead of it by the (checkpoint, id) tie-break; until S31 the order ended "..., formation,
 # habitable_zone, planets".
+# Since S32 (BUILD_II Phase 8) the clouds stage reads ism's molecular gas and the pattern, so it runs
+# in dust's round, between dust and planets by the tie-break.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "light",
-        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "planets",
+        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae",
-        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "planets",
+        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -56,6 +58,11 @@ ORDER = {
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
 SEEDED_BASIC = {
     "black_hole_mass",
+    # The molecular-cloud census (S32): every column and scalar of a stage that reads systems_seed.
+    "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
+    "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
+    "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
+    "cloud_count_total", "cloud_mass_total", "cloud_forcing_parameter", "cloud_lifetime",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",

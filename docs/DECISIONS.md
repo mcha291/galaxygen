@@ -5502,3 +5502,97 @@ lengthening no path, the bulge's light heating nothing, no CMB floor, G₀ flat 
 the PAH relation is a cross-galaxy fit applied per radius, and the Milky Way at solar sits 0.30 dex above
 Draine & Li's own value; Rémy-Ruyer et al. name the specific star formation rate as the primary driver. The
 register reads 39 open = 11 permanent + 28 carried, 37 discharged.
+
+### D181. Phase 8: the molecular-cloud census as an object class beside stars, and the cell hierarchy — a child holds its parent's stars and its own, 4^k the density, union and prefix asserted at every level
+
+**Built by the orchestrating session itself (a Fable row).** The sourcing was read at S31's close by a
+read-only agent and the numbers entered from its report, each with its citation in level-0; two more
+were fetched directly (Bergin & Tafalla 2007 for the gas temperature, Roman-Duval et al. 2010 for a
+second surface density) when the agent found no readable text for Heyer & Dame 2015. Every ruling
+below was written down (`s32_design.md`) before the census's first number was printed (D113).
+
+**The rulings, and what the census then read.** (1) **Mass function**: Rice et al. 2016's truncated
+power law, dN/dM ∝ M^γ up to M₀ — inner Galaxy γ = −1.6 ± 0.1, M₀ = (1.0 ± 0.2) × 10⁷; outer −2.2 ±
+0.1, 1.5 × 10⁶ `[verified: arXiv:1602.02791, abstract and §IV.4]` — the boundary at the solar radius
+(the sources' "inner" and "outer Galaxy", inferred), drawn from a smallest mass of 10⁴ M☉ that no
+source fixed (inferred, **#94**). Rosolowsky 2005's form and inner-Milky-Way fit (−1.53 ± 0.07, M₀ ≈ 3 ×
+10⁶) is the alternative. **All of the ISM's molecular gas is in clouds**: a cell's expected count is its
+molecular mass over the law's mean cloud mass at its ring — 2.26 × 10⁵ M☉ inside R₀ — so the mass in
+clouds integrates back to the ISM's molecular mass (RENDER_PHYSICS §7's rule for clouds); Rice et al.'s
+own catalogued clouds hold 25 (+10.7, −5.8)% of the Milky Way's H₂, which is what the construction
+stands against, and #94 says so. (2) **Size**: one surface density, Heyer et al. 2009's median 42 M☉
+pc⁻² `[verified: arXiv:0809.1397, abstract]`, R = √(M/πΣ); Roman-Duval's 144 (§VI.3; M = 228 R^2.36,
+eq. 13) and Solomon et al.'s 206 the alternatives — three sourced values, the largest homogeneous
+re-analysis chosen (B12). (3) **Velocity dispersion**: Heyer's eq. 10, σ_v = (πGΣ/5)^½ R^½; the Mach
+number over the sound speed of 10 K gas (Bergin & Tafalla 2007 §§1, 2.2, 3.2.2: "~10–20 K", "about 10 K";
+their 0.2 km/s at 10 K, the model's 0.19 with μ = 2.33) `[verified: arXiv:0705.3765]`. (4) **Density
+PDF**: σ_s² = ln(1 + b²ℳ²) with b = 0.4 — Federrath et al. 2010 §3.6, "b ≈ 0.3–0.4 in 3D" for natural
+forcing `[verified: arXiv:0905.1060; FKS08 eq. 4, Table 1: 0.36 solenoidal, 1.05 compressive]` — b
+published as a scalar (D180's rule) and σ_s per cloud as a column. (5) **Age and state**: a steady
+population, age uniform over the 26 Myr that Kawamura et al. 2009's phases sum to — embedded 6, blown
+open 13, dispersing 7 `[verified: arXiv:0908.1168, Table 3, "rough"]`; Murray 2011's **17 ± 4 Myr**
+(the plan's "27" is not in the paper) and Chevance et al. 2020's 10–30 the alternatives; no *remnant*
+state, a dispersed cloud being no longer molecular gas and its duration unsourced (**#95**). (6) The
+embedded source's offset (uniform over the cloud's volume), the density gradient's direction and
+steepness (uniform), and the cloud height (a sech² layer at half the thin disc's scale height) are
+seeded draws with no source anywhere — the plan gives none — stated and tagged (**#95**). (7) Radius
+inverted from Σ_H₂ within the cell's ring and azimuth from the pattern's contrast within the sector,
+as a star's are; abundances the gas's at the cloud's radius; **`cloud` joins the closed object
+vocabulary** in `core/fielddoc.py` (the `core/` edit RENDER_PHYSICS §5a says a second class is).
+
+**Measured (default grid; identical in both models — the clouds follow the contrast in both).** 16 704
+clouds against an expectation of 16 693.4; **the mass in clouds is 1.037 of the ISM's molecular mass**
+(2.300 × 10⁹ against 2.217 × 10⁹), inside the census's own noise of 0.035 (√Σm²/M, the heavy tail) and
+asserted at five times it; the expectation reproduces the molecular mass ring by ring to 10⁻⁹. Masses
+10⁴–10⁷ (median 2.2 × 10⁴), radii 8.7–275 pc (median 13), σ_v median 1.2 km/s, **Mach 5.3–29.7 (median
+6.5)**, σ_s median 1.43, states 3 844 / 8 341 / 4 519 (the phases' 23 / 50 / 27%), |z| median 195 pc,
+[Fe/H] median −0.004. Per-region determinism: cells drawn alone are the sweep's cells, column for
+column. The stage costs ~0.1 s; the census is 16 columns × 1.7 × 10⁴ rows.
+
+**The hierarchy, and the construction that makes the properties hold.** A level-k cell is one of 4^k
+children of a level-0 cell — 2^k sub-rings by 2^k sub-sectors — and `MAX_LEVEL` is 3: at R₀ a level-3
+child is ~15 pc by 0.05 rad, 64× the sample density. A request at `level=k` with `stars=N` gives each
+child **its parent's stars that fall inside it** — the same rows, in the parent's order, still named
+(0, parent, index) — **plus** extra stars from the child's own stream `(seed, "cell", parent, "level",
+k, q, …)`, round(E_parent(N)·(1 − 4^−k)) of them, uniform over the child's footprint (the parent's
+density read at the child, RENDER_PHYSICS §5c) with every other column drawn as a level-0 star's is,
+named (k, child, j). So a child holds about as many stars as its whole parent did. **Union**: a parent's
+rows are exactly its children's inherited rows, column for column, each name once (the children
+partition the parent by sub-ring and sub-sector index, a boundary star to the higher child). **Prefix**:
+a child's rows at a smaller N are a subset of its rows at a larger N by name — because the extra count
+is a function of the expectation and not of how many stars happened to be inherited, and the extras
+are a stream's prefix. **Determinism**: a child drawn alone is its slice of the whole set. All three
+asserted at levels 1, 2 and 3 on cell 300 (22 stars at the default sample; 90 / 358 / 1 430 rows at
+levels 1 / 2 / 3, 0.03 / 0.05 / 0.11 s) `[verified: tests/test_hierarchy.py]`, and **the level-0
+catalogue is bit-identical** — every pin the suite holds on it passed unchanged. The API: `level=` on
+`/api/region` (rows carry `level`, `cell`, `index`; the cache keyed by level; `brightest=` refused
+below level 0; a window naming more than 4 096 children refused — the whole disc at level 3 would be
+65 536) and on `/api/system`, where a child star is opened by its own name and an inherited star by
+its parent's, so a star has **the same planets by either route** (the planets key is the canonical
+cell, `canonical_cell(level, id)`, distinct across levels); `/api/clouds` serves the census by window,
+a level filtering the clouds to the children the window meets. A level-2 sector answers in 430 KB
+against level 0's 42 KB. The cold timings as `tools/timings.py` printed them are appended below.
+
+**What was chosen against.** A cloud hierarchy: clouds are a census, so a level filters them and draws
+nothing new. Extras drawn from the pattern's contrast within the child: the contract says the parent's
+density at the child's centre, and a child is narrower than the contrast varies. Level-k names for
+inherited stars: they keep their parent's, or the same star would carry two names and two sets of
+planets. Row 33 for the cloud population: no measured target with an uncertainty was read (Rice's 25%
+is a completeness-limited catalogue's share, not the population's); the count and the mass are
+published and Audit III may enter a row. **The stage's four galaxy scalars fall under rule D4** (a
+catalogue stage's scalars stay off the viewer's scalars surface, D148): each about says so, `/api/arrays`
+serves them, and the `/api/clouds` header carries the count, b and the lifetime under `scalars` for the
+renderer that synthesises a cloud's interior — the realised mass total is not recomputed per window. The register reads 41 open = 11 permanent + 30 carried, 37
+discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+region: one sector*      0.5805   0.0008 737.93     41,768  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+region: whole disc*      0.9444   0.0071 132.29  2,728,712  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+system: one star*        0.5983   0.0197  30.42      3,576  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+region: level 2 sector*   0.7318   0.0026 277.63    430,496  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+clouds: one sector*      0.5143   0.0006 798.65     36,216  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clouds: whole disc*      0.7807   0.0062 124.97  2,148,344  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+```
+(`uv run python tools/timings.py`, 2026-09-26, session-32; the level-0 rows within noise of S29's.)

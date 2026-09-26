@@ -299,6 +299,105 @@ LEVEL0: dict[str, Constant] = {
         "'effectively seeded rather than derived' [verified: GALAXY_INPUTS.md 5], which is exactly "
         "what the S-spread measurement checks.",
     ),
+    # --- molecular clouds: the population the ISM's molecular gas is drawn as (S32, BUILD_II Phase 8, D181) ---
+    "GMC_MASS_SLOPE_INNER": Constant(
+        -1.6,
+        "dimensionless",
+        "Slope of the giant-molecular-cloud mass function inside the solar circle, dN/dM proportional to "
+        "M^gamma up to a truncation mass: gamma = -1.6 +/- 0.1 [verified: Rice et al. 2016, ApJ 822, 52, "
+        "arXiv:1602.02791, abstract and section IV.4, read at S32 by a read-only agent]. The functional "
+        "form is Rosolowsky 2005's eqs. 3-4 (PASP 117, 1403), whose inner-Milky-Way fit, -1.53 +/- 0.07 "
+        "with a truncation near 3e6 [verified: its Table 1, read at S32], is the named alternative.",
+    ),
+    "GMC_MASS_TRUNCATION_INNER": Constant(
+        1.0e7,
+        "Msun",
+        "Upper truncation of the inner Galaxy's cloud mass function, (1.0 +/- 0.2) x 10^7 [verified: Rice "
+        "et al. 2016, abstract and section IV.4].",
+    ),
+    "GMC_MASS_SLOPE_OUTER": Constant(
+        -2.2,
+        "dimensionless",
+        "Slope of the cloud mass function outside the solar circle, -2.2 +/- 0.1, a non-truncating power "
+        "law in the source [verified: Rice et al. 2016, abstract and section IV.4]; Rosolowsky 2005's outer "
+        "Milky Way -2.56 +/- 0.11 is the alternative. The inner/outer boundary is taken at the solar "
+        "radius, the sources' 'inner' and 'outer Galaxy' [inferred].",
+    ),
+    "GMC_MASS_TRUNCATION_OUTER": Constant(
+        1.5e6,
+        "Msun",
+        "The outer Galaxy's largest cloud mass, (1.5 +/- 0.5) x 10^6 [verified: Rice et al. 2016, abstract]; "
+        "the source calls the law non-truncating and this is its upper end, used as the cut.",
+    ),
+    "GMC_MASS_MIN": Constant(
+        1.0e4,
+        "Msun",
+        "The smallest cloud the catalogue draws. No completeness limit was read from the sources at S32, "
+        "so this is the mass at which a 'giant' molecular cloud is conventionally said to begin "
+        "[inferred]. With gamma near -1.6 the mass in clouds is set by the top of the function and moves "
+        "6% for a factor of ten here; the count is set by this end and moves fourfold (debt #94).",
+    ),
+    "GMC_SURFACE_DENSITY": Constant(
+        42.0,
+        "Msun/pc2",
+        "Mean mass surface density of a giant molecular cloud, from which its radius follows as "
+        "sqrt(M / pi Sigma): 'the median mass surface density of molecular hydrogen for this sample is "
+        "42 Msun/pc2' [verified: Heyer et al. 2009, ApJ 699, 1092, arXiv:0809.1397, abstract, read at "
+        "S32]. The named alternatives are Roman-Duval et al. 2010's median 144 (ApJ 723, 492, section "
+        "VI.3; their M = 228 R^2.36, eq. 13) and Solomon et al. 1987's 206, which Heyer et al. re-derive "
+        "downward; three sourced values, the largest homogeneous re-analysis chosen (rule B12).",
+    ),
+    "MOLECULAR_GAS_TEMPERATURE": Constant(
+        10.0,
+        "K",
+        "Kinetic temperature of molecular cloud gas, for the sound speed the Mach number is measured "
+        "against: 'gas temperatures ~10-20 K' for dark clouds and 'about 10 K' for their dense cores "
+        "[verified: Bergin & Tafalla 2007, ARA&A 45, 339, arXiv:0705.3765, sections 1, 2.2 and 3.2.2, "
+        "read at S32]; the same review states the sound speed as 0.2 km/s at 10 K (section 2.5). 20 K, "
+        "the warm end of the range, is the named alternative.",
+    ),
+    "MOLECULAR_MEAN_WEIGHT": Constant(
+        2.33,
+        "dimensionless",
+        "Mean mass per particle of molecular gas in proton masses, H2 with helium at the solar ratio: "
+        "1/(X/2 + Y/4) for X = 0.71, Y = 0.28 [inferred: arithmetic on the composition]. The sound speed is "
+        "sqrt(k T / mu m_H): 0.19 km/s at 10 K, the review's 0.2.",
+    ),
+    "TURBULENCE_FORCING_B": Constant(
+        0.4,
+        "dimensionless",
+        "The forcing parameter b in the width of a cloud's log-normal density distribution, sigma_s^2 = "
+        "ln(1 + b^2 M^2) [verified: Federrath, Klessen & Schmidt 2008, ApJL 688, L79, eq. 4; Federrath et "
+        "al. 2010, A&A 512, A81, eq. 19]: 'for zeta >~ 0.5 the b-parameter remains close to the value "
+        "obtained for purely solenoidal forcing, i.e. b ~ 0.3-0.4 in 3D' [verified: Federrath et al. 2010, "
+        "section 3.6, read at S32], the natural mixture. Purely solenoidal 0.36 +/- 0.03 and purely "
+        "compressive 1.05 +/- 0.19 (FKS08 Table 1) are the named alternatives; published as a scalar "
+        "because the renderer that synthesises a cloud's interior reads it (D180's rule).",
+    ),
+    "GMC_PHASE_EMBEDDED": Constant(
+        6.0,
+        "Myr",
+        "How long a cloud shows no massive star formation (Kawamura et al. 2009's Type I): 6 Myr, of a "
+        "20-30 Myr lifetime, 'rough' by the source's own word [verified: Kawamura et al. 2009, ApJS 184, 1, "
+        "arXiv:0908.1168, Table 3 and section IV.2, read at S32]. Murray 2011's 17 +/- 4 Myr total (ApJ "
+        "729, 133, abstract) and Chevance et al. 2020's 10-30 Myr (MNRAS 493, 2872, abstract) are the "
+        "named alternatives for the whole lifetime; a fourth, dispersed 'remnant' state has no sourced "
+        "duration and is not drawn (debt #95).",
+    ),
+    "GMC_PHASE_BLOWN_OPEN": Constant(
+        13.0,
+        "Myr",
+        "How long a cloud carries HII regions but no exposed cluster (Kawamura et al. 2009's Type II): 13 "
+        "Myr [verified: the same Table 3].",
+    ),
+    "GMC_PHASE_DISPERSING": Constant(
+        7.0,
+        "Myr",
+        "How long a cloud carries HII regions and young clusters before it is gone (Kawamura et al. 2009's "
+        "Type III): 7 Myr [verified: the same Table 3]. The three phases sum to 26 Myr, the lifetime a cloud's "
+        "age is drawn over; Kruijssen et al. 2019 read 1.5 Myr for the overlap of clouds and HII regions in "
+        "NGC 300 (Nature 569, 519, arXiv:1905.08801), the alternative reading of the last two phases.",
+    ),
     # --- swing amplification: the arm number and the arms' strength (S26, BUILD_II Phase 1b, D175) ---
     "SWING_X_LOW": Constant(
         1.0,

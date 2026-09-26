@@ -63,6 +63,10 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("az: history", "/api/arrays", "model=azimuthal&fields=feh_history", "the chemistry, off sfh_azimuthal"),
     Endpoint("az: one sector", "/api/region", "model=azimuthal&r_min=7&r_max=9&phi_min=0&phi_max=0.4", "young stars in the arms"),
     Endpoint("az: one star", "/api/system", "model=azimuthal&cell=300&index=0", "one system, azimuthal"),
+    # The cell hierarchy and the cloud census (S32, BUILD_II Phase 8).
+    Endpoint("region: level 2 sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&level=2", "90 children, 16x the density"),
+    Endpoint("clouds: one sector", "/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the census of 9 cells"),
+    Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4"),
 )
 
 

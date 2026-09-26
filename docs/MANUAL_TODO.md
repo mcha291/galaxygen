@@ -69,7 +69,8 @@ closes the project.
 | 28 | `s28` | `e30d33a9d060` | **queued** — filled in by S29 |
 | 29 | `s29` | `70ed6bd1da8d` | **queued** — filled in by S30 |
 | 30 | `s30` | `34a76f6fa560` | **queued** — filled in by S31 |
-| 31 | `s31` | TBD | **queued** — S32 fills the SHA in |
+| 31 | `s31` | `57c3d38d7810` | **queued** — filled in by S32 |
+| 32 | `s32` | TBD | **queued** — S33 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -210,8 +211,11 @@ git tag -a s29 70ed6bd1da8d28109f0bd5df268f8acbc2f353b6 -m "S29: remnants and pl
 # S30 — the supernova rates and the habitable zone (Phase 6).
 git tag -a s30 34a76f6fa5607674473d932e0e4e9610b38da692 -m "S30: the supernova rates and the habitable zone"
 
-# S31 — dust that radiates: the grain model, the heating balance, G0 and the PAHs (Phase 7). SHA filled in by S32.
-git tag -a s31 "$(git rev-list -1 --grep='^Merge S31 into main' main)" -m "S31: dust that radiates"
+# S31 — dust that radiates: the grain model, the heating balance, G0 and the PAHs (Phase 7).
+git tag -a s31 57c3d38d7810179768acd40621b9b220403cd53a -m "S31: dust that radiates"
+
+# S32 — the molecular-cloud census and the cell hierarchy (Phase 8). SHA filled in by S33.
+git tag -a s32 "$(git rev-list -1 --grep='^Merge S32 into main' main)" -m "S32: the cloud census and the cell hierarchy"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
