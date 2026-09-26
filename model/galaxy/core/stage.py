@@ -220,11 +220,6 @@ class Stage:
             raise StageError(f"stage {self.id}: extends must be a Stage, got {base!r}")
         if base.slot != self.slot:
             raise StageError(f"stage {self.id}: extends {base.id!r}, which implements slot {base.slot!r}, not {self.slot!r}")
-        if not isinstance(self.compute, Extension) or self.compute.base is not base:
-            raise StageError(
-                f"stage {self.id}: extends {base.id!r}, so its compute must be Extension({base.id}, ...) — "
-                "the base's fields are computed by the base, in the base's own view"
-            )
         mine = {id(d) for d in self.publishes}
         lost = [d.name for d in base.publishes if id(d) not in mine]
         if lost:
@@ -233,6 +228,23 @@ class Stage:
             missing = set(getattr(base, attr)) - set(getattr(self, attr))
             if missing:
                 raise StageError(f"stage {self.id}: extends {base.id!r} but does not declare its {attr} {sorted(missing)}")
+
+    def validate_registration(self) -> None:
+        """What must hold for an implementation production runs, checked when it is registered.
+
+        An extension's compute must be :class:`Extension` of its base, so the base's fields are
+        computed by the base in the base's own view. Checked at registration rather than at
+        construction so that an instrument may wrap or substitute a compute on an unregistered copy
+        — ``replace(stage, compute=...)`` with ``run(impls=...)`` is how a mechanism is probed with
+        the repository unchanged (D114) and how rule D4 is counted at the stages (S21 b) — without
+        weakening the guarantee for anything a model runs.
+        """
+        base = self.extends
+        if base is not None and (not isinstance(self.compute, Extension) or self.compute.base is not base):
+            raise StageError(
+                f"stage {self.id}: extends {base.id!r}, so its compute must be Extension({base.id}, ...) — "
+                "the base's fields are computed by the base, in the base's own view"
+            )
 
     @property
     def published_names(self) -> tuple[str, ...]:

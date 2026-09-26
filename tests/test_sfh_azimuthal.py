@@ -110,9 +110,20 @@ def test_an_extension_computes_its_base_in_the_bases_own_view():
 
 
 def test_an_extension_must_compute_through_its_base_and_republish_it():
+    from dataclasses import replace
+
+    from galaxy.core.registry import Registry
+
     base = stage("b", ("h",), slot="x")
+    # The compute check fires at registration, the one door into production, so that an
+    # instrument may wrap an unregistered copy's compute (D114's probes, S21 b's D4 count) —
+    # construction alone does not refuse it (S27, D176).
+    loose = Stage(id="e", slot="x", checkpoint=1, about="a", compute=lambda ctx: {}, publishes=base.publishes, extends=base)
     with pytest.raises(StageError, match="Extension"):
-        Stage(id="e", slot="x", checkpoint=1, about="a", compute=lambda ctx: {}, publishes=base.publishes, extends=base)
+        Registry("stage", lambda s: s.id).register(loose)
+    good = extend(base, id="g", about="a", own=lambda ctx, shared: {})
+    Registry("stage", lambda s: s.id).register(good)
+    replace(good, compute=lambda ctx: {})  # an instrument's copy: constructs without complaint
     with pytest.raises(StageError, match="republish"):
         Stage(id="e", slot="x", checkpoint=1, about="a", compute=Extension(base, lambda c, s: {}), extends=base)
     other = stage("o", ("h2",), slot="y")

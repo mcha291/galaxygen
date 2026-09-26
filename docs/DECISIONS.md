@@ -5093,3 +5093,81 @@ old disc is two-armed (Drimmel & Spergel 2001) and its gas four-armed, and one m
 5.01) and no action. The viewer still crowds young light into the arms by its own rule
 (RENDER_PHYSICS §0's dated exception); `pattern_density_contrast` is what Phase 2's
 `sfh_azimuthal` now reads.
+
+### D176. The `azimuthal` model: `sfh_azimuthal` extends `sfh` with one (R, φ) star-formation modulation, a redistribution to 10⁻¹⁶; the catalogue's young stars follow it; a stage may extend another implementation of its slot
+
+**Decision.** (1) **`sfh_azimuthal`**, a second implementation of the `sfh` slot at checkpoint 4,
+publishes everything `sfh` publishes — computed by `sfh`'s own compute — plus **`sfr_modulation`**,
+Ψ(R, φ)/Ψ(R) on (R, φ), `optional=True`, seeded: the star-formation law applied cell by cell to
+Σ_gas(R) times the pattern's density contrast, the threshold's switch per cell, divided by its
+mean around the ring; a ring that forms nothing reads 1. No history gains a φ axis (Phase 2's
+design, made there: 288 million cells, and the gas mixes azimuthally faster than it enriches).
+(2) **`azimuthal`** is declared from `BASIC`'s stage tuple with the `sfh` slot swapped, constants
+shared; a test asserts the two differ in exactly one slot; `python -m galaxy.models` lists both
+and the viewer's toggle, data-driven on the model count, returns without an edit. (3) **The
+catalogue**: in `azimuthal`, a star younger than 0.1 Gyr — about one arm crossing — takes its
+azimuth from the modulation inside its sector, and a cell's *share* of young stars follows the
+sector's mean modulation over its mean contrast so the ring's young share is unchanged; **cell
+counts stay the contrast's**, so a star's `(cell, index)` name is the same whichever model drew it
+and the planets stage and the API recompute the layout from the contrast alone. (4) **`Stage.extends`**
+(core): a stage may extend another implementation of its slot; the fields it republishes are the
+base's own declarations, computed by the base's compute in a Context restricted to the base's own
+reads, returned untouched, at the base's provenance; only the extension's own fields see its extra
+reads. Validation refuses an extension that does not republish every declaration or declare every
+read the base declares (at construction), and one whose compute is not `Extension(base, …)` **at
+registration** — the orchestrator's one change to the subagent's design: checked at construction it
+broke `tests/test_audit.py`'s D4 count, which wraps every registered compute with `replace(stage,
+compute=…)`, and D114's probes substitute computes the same way; the guarantee holds for everything a
+model runs, and an instrument's unregistered copy is free. (5) `tools/timings.py`'s four `model=advanced`
+rows, which had asked for a model gone since D170, now measure `azimuthal`. (6) Debt **#81** opened
+(the 0.1 Gyr cut). Built by an Opus subagent in a worktree on the branch (commits a72d853, 5809d9e,
+28e81bb), reviewed and closed by the orchestrating session.
+
+**Why an extension and not a second stage with seeded declarations (the brief's approach).**
+`FieldDecl.contract()` includes provenance, so a second `sfh` implementation declaring the same
+seventeen fields *seeded* fails preflight's contract check; and had its outputs all been seeded, D55's
+per-stage rule would have propagated *seeded* through every shared downstream stage — chemistry,
+the vertical split, the ISM, the light, the population, the formation — some eighty declarations
+against their computed labels, or a false *seeded* on every acceptance row. The histories are not
+seeded: they do not depend on `pattern_seed`, bit for bit, and a label must say what is true (A10).
+The extension makes that true by construction rather than by convention (B13): `sfh`'s fields are
+computed in a view that cannot see the contrast. The alternative — a *third* slot, `modulation`,
+that `basic` leaves empty — needs no core change and was declined because the owner's ruling
+(D172) is that `azimuthal` is `basic` with the `sfh` slot swapped. Provenance in `azimuthal`:
+`sfr_modulation` seeded, every shared field derived exactly as in `basic`.
+
+**Why the plain ring mean and not the gas-weighted one.** Phase 2's text says both "renormalised so
+its gas-weighted mean around the ring is 1" and, in its gate, "integrates to the axisymmetric SFR
+over φ at every radius". For a field that multiplies the *rate* they cannot both hold: Σ_φ c·M = Σ_φ M
+only where the modulation is uncorrelated with the gas, and an arm is where both are high. Measured:
+the gas-weighted mean of the plain-normalised modulation is 1.2617 at R₀ and 1.10–1.30 across the
+disc, so a gas-weighted normalisation would have removed about a fifth of the star formation at R₀.
+The gate is RENDER_PHYSICS §7's rule — a redistribution, not a new source — and the plain mean is
+what satisfies it. A test pins the gas-weighted mean above 1.1 so the discarded reading stays visible.
+
+**Measured (default grid unless said).** Ring mean of the modulation: maximum deviation from 1,
+3.33 × 10⁻¹⁶. Total star formation: `sfr` 1.7551515118200913 against the (R, φ) integral of Ψ·M
+1.7551515118200918, relative difference 2.5 × 10⁻¹⁶. Shape at R₀: the modulation runs 0.0243–2.511
+where the contrast runs 0.599–1.401 — the law's exponent and the per-cell switch sharpen it. All
+seventeen shared fields bit-identical to `basic`'s and independent of `pattern_seed`; every
+downstream field equal except the catalogue columns and the planets' sample statistics (the young
+stars moved). **Rows 1–24 identical in both models, value for value and status for status**: 7 pass /
+17 fail / 0, every failure recorded; rows 15–17 at 5.20971 (#80) / 41.1036 / 6.08381. Young stars
+(coarse grid, 200 000-star catalogue): 525, 0.26% of the sample; the mean modulation at their
+positions 1.779 against 1.176 along the contrast-only path; the old stars' mean contrast 1.0934
+against 1.0936 in `basic`. Graph OK for both models — `azimuthal`'s order is `basic`'s with
+`sfh_azimuthal` in `sfh`'s place; preflight OK, 7 of 12 controls; determinism reproducible across
+processes for both; convergence 36 ok / 0 drift for both; `python -m galaxy.specs` EXIT=0. Cost:
+`sfh_azimuthal` 0.1308 s against `sfh`'s 0.1275 s; the model 1.231 s cold against 1.228 s — no
+stage's cost moved, and the timings rows for `azimuthal` (modulation 0.146 s cold, history 0.406,
+one sector 0.451, one star 0.442) are the first for that model. The subagent's subset of sixteen
+test files read 292 passed, 3 skipped; the orchestrator's full suite is the gate.
+
+**Consequences, named.** In `azimuthal` a history request runs `bar` and `pattern` first, because
+`sfh_azimuthal` requires the contrast — and rerolling `pattern_seed` recomputes bit-identical
+histories, which is the extension working. The young-star cut is a sharp 0.1 Gyr with no source (#81):
+the plan's own "~100 Myr" wording, tagged inferred; a decaying weight would be a second unsourced
+constant, and the honest derivation — how fast a young population leaves its arm, from Ω − Ω_p —
+needs a *spiral* pattern speed the model does not publish (the bar's is not it). The viewer still
+crowds young light into the arms by its own rule (RENDER_PHYSICS §0); `sfr_modulation` is the field
+V1/V2 replace it with.
