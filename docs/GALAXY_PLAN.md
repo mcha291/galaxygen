@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░████████████████████████░░░░░░░░░░░░░░` **34 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░██████████████████████████░░░░░░░░░░░░` **35 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -41,7 +41,7 @@
 | ☑ | 32 | **Phase 8.** `clouds` stage: the molecular gas as a census of 1.67 × 10⁴ objects (`of="cloud"`, the vocabulary widened) drawn per cell — Rice+ 2016's truncated power law inner/outer, Heyer+ 2009's Σ = 42 and size–linewidth, Mach 5–30 at 10 K, Federrath's b = 0.4, Kawamura+ 2009's three phases as the state; the mass in clouds is 1.037 of the ISM's molecular mass, inside the count's noise (#94: all gas in clouds from an unsourced 10⁴ M☉; #95: source offset, gradient, height, no remnant state unsourced). **The cell hierarchy**: `level=` 0–3 on `/api/region` and `/api/system`, a child holding its parent's stars plus its own at 4^k the density; union, prefix and determinism asserted at every level, the level-0 catalogue bit-identical; `/api/clouds`; three timings rows (D181) | desktop | **Fable** | **Fable 5.1** | s32 | 2026-09-26 |
 | ☑ | 33 | **Phase 11.** `clusters` stage: 1.29 × 10⁴ young clusters as an object class (`of="cluster"`), one per cloud past its embedded phase, named by the new `cloud_cluster_index`; mass at an efficiency **derived** from the local depletion time over one cloud lifetime (0.0206 galaxy-wide; Murray's adopted 0.08 rejected after it made the clusters form 4.5× faster than the SFR), bound 7% (Lada & Lada 2003), half-mass density 10³ (PZMG 2010); Q and wind per cluster are IMF integrals at the cluster's age — **ΣQ / the light stage's young Q = 1.0088**, every residual factor named; `bound_cluster_mass_total` 72× η M_halo before survival (#97); the census inherits the cloud slopes, not β = 2 (#96); `/api/clusters`, two timings rows (D182) | desktop | Opus | **Opus 5.5** | s33 | 2026-09-26 |
 | ☑ | 34 | **Phase 5.** `stellar_halo`, `cluster_survival`, `globular_clusters` stages: the GC system mass = S33's bound mass × Lamers 2005's survival (open-cluster t₀ 3.3 Myr, γ 0.62; PZMG's function from 10² M☉) — the mean **+0.26 dex from η M_halo, inside the 0.28 dex scatter, but 53% of the survivors are under 1 Gyr and 0.7% over 10 Gyr** (#97 stays; the old survivors alone read −1.87 dex, +0.09 at the N-body t₀); the residual seeded on `world_seed`; metal-poor share 0.643; stellar halo 3.0 × 10⁹ from `mergers[]`, satellites whole; **rows 32 (Harris, 0.47 dex high, #98) and 33 (BHG16, 0.64 dex high, #99) recorded misses**; spec 10/19/4 of 33 (D183) | desktop | Opus | **Opus 5.5** | s34 | 2026-09-26 |
-| ☐ | 35 | **Phase 9.** Nebular emissivities (Hα, Hβ, [O III], [S II], [N II]) from Q, density and abundances, the emissivity ruling recorded; volumetric at region scale; clumping from the log-normal; diffuse ionized gas; rows for Hα, the HII LF and the PNLF; `HALPHA_PER_SFR` becomes a check | desktop | **Fable** | — | s35 | — |
+| ☑ | 35 | **Phase 9.** `nebular` stage: every cluster's HII region as the §3a shape parameters (R_S, n_e rms, T_e from metallicity, log U, clumping e^σ_s², O/N/S) and its Hα **per unit volume** (new units `1/cm3`, `erg/s/cm3`), Case B from Storey & Hummer's own rows (Hα/Hβ 2.863, 0.452 per photon); the diffuse layer from a 30% escape (Zurita/Haffner); the galaxy's Hα as Σ_Q redistributed, census = field to 0.990 (noise 0.059); `HALPHA_PER_SFR` now a check reading **0.71** (the isochrones' Q vs Starburst99's, #100); emissivity ruling: Byler+2017/FSPS grid of the isochrone kind, **its fetch awaiting the owner's word, the forbidden lines with it**; rows 34 (Bennett Q, miss by 3%, #100), 35 (KEH89 slope, −2.008 pass), 36 (PNLF, n-y-c); DIG by construction #101 (D184) | desktop | **Fable** | **Fable 5.1** | s35 | 2026-09-26 |
 | ☐ | 36 | **Phase 10.** Wind bubbles (Weaver 1977) per star and per cluster, shells, supernova remnants as the late state, the hot phase from Phase 6's rates | desktop | Opus | — | s36 | — |
 | ☐ | 37 | **Audit III.** Every NEEDS-SOURCING that entered code has its citation read; every redistribution and balance re-derived; every new green row conditioned | desktop | **Fable** | — | s37 | — |
 | ☐ | 38 | **V1.** The spectrum function and the filter sets — broadband, SHO/HOO, one named instrument; the field regime's young-light constant replaced by the stellar component; the frame's B − V and M_V against Phase 3's scalars | desktop | Opus | — | s38 | — |
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 45 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
+**Open debts:** 47 (`GALAXY_INPUTS.md` §11). **Discharged:** 37.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance

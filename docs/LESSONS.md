@@ -989,3 +989,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the alternative that fails the same way, and let the miss stand; the disclosure is the protection (D183, #98).
 - [catalogue] A population integral a statistical row re-runs 41 times must not read a field whose stage
   materialises a census; recompute the integral from the history and assert equality once (D183, D4).
+
+## From S35 (BUILD_II Phase 9)
+
+- [field] Publish the parameters a table is read off before the table exists. The forbidden lines wait on a
+  data dependency the owner must approve; Q, n_e, T_e, log U and the abundances per region do not, and once
+  they are columns the grid is a lookup, not a change to the object (D184).
+- [field] One check, three readings: the 0.71 of `halpha_sfr_ratio`, row 34's 3% miss and Chomiuk & Povich's
+  SFR-per-photon all measure the isochrones' Q against Starburst99's. Name the one lever (#84's table) in
+  all three places rather than three debts (D184, #100).
+- [field] A stage has one provenance (D55): the nebular stage's radial Hα fields read only radial fields, but
+  the stage reads seeded columns, so the graph refused `derived` on them. Declare by the stage, not the field.
+- [audit] Label every sourced number READ, READ second-hand, DERIVED, RECALL or NOT READ in the sourcing
+  report, and check the arXiv ids: four of the six the brief gave from memory were the wrong papers (D184).
+- [infra] A recalled 'textbook' value in a test is a pin on memory: the 1e49-photon Strömgren sphere is 3.2 pc
+  at Storey & Hummer's α_B, not the 1.56 recalled; a test asserts the defining balance, not a remembered number.

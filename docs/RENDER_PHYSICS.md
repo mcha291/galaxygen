@@ -48,10 +48,13 @@ sections below as a description of an empty slate.
 **Published, but not in the contract's form.**
 
 - `halpha_surface_brightness` is Σ_SFR times one constant `[verified: light.py;
-  D166]`. It is a surface quantity with no line list, no density and no
-  ionization parameter behind it; Phase 9 replaces it with §2's ionized-gas
-  component, and the constant `HALPHA_PER_SFR` becomes a *check* on the Q-based
-  emissivity rather than the emissivity.
+  D166]`. **Since S35 (Phase 9)** the `nebular` stage publishes §2's ionized-gas
+  component: per cluster the HII region's Q, n_e, T_e, log U, clumping and O/N/S
+  (§3a's shape parameters) and its Hα **per unit volume** (§4, unit `erg/s/cm3`),
+  the diffuse layer, and the disc's Hα as Σ_Q redistributed; `HALPHA_PER_SFR` is
+  the check (0.71 at S35) `[verified: model/galaxy/stages/nebular.py; D184]`. The
+  collisionally excited lines wait on the photoionization grid ruled in (Byler et
+  al. 2017 via FSPS), whose fetch is the owner's call; the old field stays until V3.
 - The region cells were galaxy-scale: 1024 cells in (R, φ), of which ~800 realise
   a star at the default sample `[verified: python -m galaxy.specs, performance]`.
   **Since S32 (Phase 8) `/api/region` and `/api/system` take `level=` 0–3**: a
@@ -368,8 +371,8 @@ attempting one would be fitting with the answer known (rule B5).
 
 Everything marked `[recall — NEEDS SOURCING]` above, plus:
 
-- the turbulence forcing parameter b in σ_s² = ln(1 + b²ℳ²)
-- Case B Hα yield per recombination, and the Hα/Hβ ratio
+- ~~the turbulence forcing parameter b in σ_s² = ln(1 + b²ℳ²)~~ — read at S32 (Federrath et al. 2010, D181)
+- ~~Case B Hα yield per recombination, and the Hα/Hβ ratio~~ — read at S35 from Storey & Hummer 1995's tables (D184)
 - dust albedo and scattering asymmetry g in V, and R_V
 - modified blackbody emissivity index β
 - PAH feature wavelengths and their metallicity dependence

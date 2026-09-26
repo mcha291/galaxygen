@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the
 only record of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **The
 first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S31 closed on 2026-09-26
-(S29 and S30 in parallel), S32–S34 the same day; S35 (Phase 9, nebular emission, **Fable**) is next.** Tag batch owed; S22 ◐.
+(S29 and S30 in parallel), S32–S35 the same day; S36 (Phase 10, **Opus**) is next; **the owner owes one word: fetch the Byler/FSPS grid or not (D184)**.** Tags owed; S22 ◐.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -15,7 +15,7 @@ Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_I
 section — §11's head is the debt map. Branch `session-NN`; commit and push at every
 sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
 files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
-debts from #100, decisions from D184, taken when the entry is written.
+debts from #102, decisions from D185, taken when the entry is written.
 
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -31,7 +31,8 @@ model/galaxy/models/  level0 (constants), basic, azimuthal (BASIC's tuple, sfh -
                 **stellar_halo** (S34: debris over mergers[], BHG16 profile) ·
                 cp5 population (IMF integrals, remnants, PN count) + systems (materialise: the star columns; **the
                 cell hierarchy, MAX_LEVEL 3, canonical_cell**) + clouds (S32: the molecular census, of="cloud") +
-                clusters (S33: one per cloud past embedded, of="cluster", ε derived) + **cluster_survival +
+                clusters (S33: one per cloud past embedded, of="cluster", ε derived) + **nebular** (S35: the HII
+                regions' parameters and Hα per volume, the DIG, Σ_Hα as Σ_Q redistributed) + **cluster_survival +
                 globular_clusters** (S34: Lamers dissolution, gc_system_mass seeded on world_seed) · cp6 formation,
                 habitable_zone, planets; massive_stars.py; remnants.py; photometry (population_light/_wind)
 model/galaxy/data/    parsec_isochrones.npz (396 × 137 818 rows; U B V R I J H K, M_bol, present mass; fetch_parsec.py)
@@ -39,8 +40,8 @@ model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
                 qualitative / sweep; MISSES one ledger), convergence, performance; api/: service (ROUTES)
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and toggle from /api/stages
-tests/          48 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
-                test_s22/s25/s26_rulings and each phase's file (…, clouds, hierarchy, clusters, **globular_clusters**) pin measurements
+tests/          49 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
+                test_s22/s25/s26_rulings and each phase's file (…, hierarchy, clusters, globular_clusters, **nebular**) pin measurements
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
@@ -53,16 +54,14 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   if more than one model reads it (D29, D85) — and at module level only where `materialise` must read
   it (S28, S29); a field nobody reads is dead. **An about line must not name a constant** (D5). A new
   unit is a `core/units.py` edit plus a line in the decision (D177).
-- **Two implementations of one slot.** Shared fields carry one `FieldDecl.contract` (provenance included),
-  the second's own as `optional=True` (D86); if the second reads a seeded field for its own field, **extend
-  the first** (`extend(BASE, …)`, D176) so the shared fields keep the base's provenance; `requires_optional` + `ctx.fields.get`.
-- **A stage may only require fields from its own or an earlier checkpoint** (graph; A1 as rewritten
-  at S25, D173). The pattern is checkpoint 3 and star formation 4; rerolling `pattern_seed` discards 4–6.
-- **A seed binds at the checkpoint of its earliest reader, and `graph` requires that to equal the
-  input's `checkpoint_hypothesis`** (S17); a stage reading a seed publishes *seeded* fields, all (D55).
-- A named ruleset is a constant with its alternative in the about line, chosen before the row is read
-  (D113); a mechanism is probed by substituting one function (D114); a default is measured or derived by
-  a test (D30, D117, D175); a derived scalar lives on the stage's own mesh (D119). **A calibration's
+- **Two implementations of one slot.** Shared fields carry one `FieldDecl.contract` (D86); if the second reads a
+  seeded field for its own field, **extend the first** (`extend(BASE, …)`, D176); `requires_optional` + `ctx.fields.get`.
+- **A stage may only require fields from its own or an earlier checkpoint** (A1 as rewritten at S25, D173); the
+  pattern is checkpoint 3, star formation 4. **A stage has one provenance** (D55): reading a seeded column seeds all it publishes.
+- **A seed binds at the checkpoint of its earliest reader, and `graph` requires that to equal the input's
+  `checkpoint_hypothesis`** (S17).
+- A named ruleset is a constant with its alternative in the about line, chosen before the row is read (D113); a
+  mechanism is probed by substituting one function (D114); a default is measured or derived (D30, D117, D175). **A calibration's
   citation is read before it enters code** — rows fetched, counted, arithmetic checked (D175–D178) — and
   **say what fraction of a quantity it covers** (#84). **A number read before its row is ruled cannot
   become a row** (D113; #87). **Per-region determinism is the catalogue's contract** (D60); a second
@@ -85,14 +84,14 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
 - A failing acceptance row goes in `spec.MISSES` with its debt, reason and a prediction that could kill
   it (D33, D87); it still reports `fail`, never widen a target (B5); a miss that starts *passing* fails the
   run (#29) — remove it and **write down why**. `lo == hi` says "no testable target" (D100; rows 20, 21,
-  25–28); a row whose source does not say what it measures names no field (D177). New rows from 34.
+  25–28, 36); a row whose source does not say what it measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-09-26, after S34 (D174–D183 hold the before/after)
+## What the instruments said on 2026-09-26, after S35 (D174–D184 hold the before/after)
 - graph acyclic for both models (order: … sfh, chemistry_dtd, stellar_halo, supernovae, light, vertical_alpha,
-  cluster_survival, population, ism, globular_clusters, systems, …, clouds, planets, clusters); preflight OK, 7 of 12
-  controls; determinism reproducible for both; spec **10 pass / 19 fail / 4 not-yet-computable of 33, identical in both**;
+  cluster_survival, population, ism, globular_clusters, systems, …, clouds, planets, clusters, nebular); preflight OK,
+  7 of 12 controls; determinism reproducible for both; spec **11 pass / 20 fail / 5 not-yet-computable of 36, identical**;
   convergence 0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; **rows 30 / 31 (SN rates)
-  0.0176069 / 0.0065332 yr⁻¹, the Ia pass thin (#88)**; rows 25–28 n-y-c (#82); **rows 32 / 33 misses (#98, #99)**.
+  0.0176069 / 0.0065332 yr⁻¹, the Ia pass thin (#88)**; rows 25–28, 36 n-y-c; **rows 32–34 misses (#98–#100)**; row 35 −2.008 passes.
 - Regression numbers: z_f 1.66, c₂₀₀ 8.24, R_d 2.60486 (thin 2.44138), M_star 4.751e10, SFR 1.7551515, H 8.088e9,
   WIND_SPEED 860.3, MERGER_HEATING 88.8, `swing_x` 3.334; rows 16 / 17 medians 41.10 / 6.08;
   M_V −21.2159, B − V 0.6306, Υ_V 1.8468, disc_luminosity 4.8958e10, Q 1.6527e53 s⁻¹;
@@ -100,10 +99,11 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   19.54 K, L_IR 1.622e10 L☉, G₀(R₀) 2.64, q_PAH(R₀) 0.0908 (S31); **16 704 clouds, mass in clouds 1.037 of the
   molecular mass (noise 0.035), Mach median 6.5 (S32); 12 860 clusters, ε 0.0206, ΣQ / young Q 1.0088,
   bound_cluster_mass_total 2.79e9 (S33); gc_survival 0.0250, gc mean 6.97e7 = +0.26 dex from η M_halo but 53% under
-  1 Gyr (#97), metal-poor share 0.643, halo_stellar_mass 3.03e9 (S34)**; the level-0 catalogue bit-identical.
+  1 Gyr (#97), metal-poor share 0.643, halo_stellar_mass 3.03e9 (S34); 12 860 HII regions, R_S median 0.72 pc,
+  n_e 194, log U −2.83, census/field 0.990, halpha_sfr_ratio 0.7095, DIG 0.30 (S35)**; the level-0 catalogue bit-identical.
 - performance: basic ~1.7 s cold (light 0.55, systems 0.37, clouds 0.27, population 0.20, clusters 0.13); region
   one sector 0.6 s cold, clouds whole disc 0.82 s, clusters one sector 1.06 s (the wind table's build); timings at S33 (D182).
-- Register: **45 open — 11 permanent, 34 carried — and 37 discharged** (#94–#95 S32, #96–#97 S33, #98–#99 S34).
+- Register: **47 open — 11 permanent, 36 carried — and 37 discharged** (#96–#97 S33, #98–#99 S34, #100–#101 S35).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python
