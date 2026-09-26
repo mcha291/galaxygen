@@ -141,8 +141,11 @@ LEVEL0: dict[str, Constant] = {
         "Lsun",
         "Intrinsic Hα luminosity, in L☉, per M☉/yr of star formation: Kennicutt & Evans 2012's "
         "calibration log SFR = log L(Hα) − 41.27 for a Kroupa IMF, with L(Hα) in erg/s, over "
-        "L☉ = 3.828 × 10³³ erg/s [recall: Kennicutt & Evans 2012, ARA&A 50, 531, Table 1]. "
-        "Intrinsic: before the dust the line is emitted through.",
+        "L☉ = 3.828 × 10³³ erg/s. Read at S35: Table 1's Hα row gives log C_x = 41.27 and section 3.1 "
+        "'log M-dot (M yr-1) = log Lx - log Cx', for the Kroupa IMF (Salpeter slope 1-100 M☉, -1.3 below "
+        "1 M☉) with Starburst99 models [verified: Kennicutt & Evans 2012, arXiv:1204.3552, Table 1, "
+        "section 3.1]. Intrinsic: before the dust the line is emitted through. Since S35 a check on the "
+        "nebular stage's Q-derived Hα (halpha_sfr_ratio), not the Hα itself (D166 -> D184).",
     ),
     "SOLAR_ABSOLUTE_MAGNITUDE_V": Constant(  # read by light (S28, BUILD_II Phase 3)
         4.81,
@@ -1091,5 +1094,99 @@ LEVEL0: dict[str, Constant] = {
         "KINGFISH sample range from Z ~ 0.07 Z_sun to 1.20 Z_sun' [verified: arXiv:1507.05432, section "
         "2, read at S31]. The relation is not extrapolated above it: the inner disc's gas reaches five "
         "times solar, where eq. 5 would give three quarters of the dust mass in PAHs.",
+    ),
+    # --- S35 (BUILD_II Phase 9): nebular emission. Every value read at S35 (phase9_sourcing.md). ---
+    "HII_ESCAPE_FRACTION": Constant(
+        0.30,
+        "dimensionless",
+        "The share of an HII region's ionizing photons that escape it into the diffuse ionized gas: the model "
+        "Zurita et al. 2002 fitted to NGC 157, 'In this model 30% of emitted Lyman continuum photons escape "
+        "from each H II region, and propagate through the DIG isotropically ... the result is remarkably "
+        "similar globally to the observed distribution', their variants spanning 'between 30% and 60%' "
+        "[verified: Haffner et al. 2009, RvMP 81, 969, arXiv:0901.0941, section IV, read at S35]. The "
+        "alternatives read and not adopted: Oey et al. 2007's diffuse share of the Halpha, 0.59 +/- 0.19 over "
+        "109 galaxies [verified: arXiv:astro-ph/0703033, abstract], which is an output here, and Haffner's "
+        "'about 1/8th' of the local stellar photons for the Milky Way's own layer (debt #101).",
+    ),
+    "DIG_TEMPERATURE": Constant(
+        8000.0,
+        "K",
+        "The warm ionized medium's temperature, the midpoint of 'Temperatures range from about 6000 K to "
+        "10 000 K' [verified: Haffner et al. 2009, arXiv:0901.0941, section I, read at S35]; the midpoint is "
+        "the model's choice [inferred]. Case B at this temperature turns the escaped photons into Halpha.",
+    ),
+    "DIG_SCALE_HEIGHT": Constant(
+        1.4,
+        "kpc",
+        "The warm ionized layer's scale height, the midpoint of 'The large, 1000-1800 pc scale height, "
+        "significantly larger than that of the neutral hydrogen layer' [verified: Haffner et al. 2009, "
+        "arXiv:0901.0941, section I, read at S35]; the midpoint is the model's choice [inferred]. Published "
+        "as the scalar dig_scale_height for the renderer (D180's rule).",
+    ),
+    "HII_MASS_PER_HYDROGEN": Constant(
+        1.4,
+        "dimensionless",
+        "Gas mass per hydrogen atom in proton masses, helium included, for turning a cloud's mass and radius "
+        "into a hydrogen number density [inferred: the composition's, not a measurement].",
+    ),
+    "HII_LF_MIN_LUMINOSITY": Constant(
+        1.0e37,
+        "dimensionless",
+        "The Halpha luminosity in erg/s above which the HII-region luminosity function is fitted: 'At faint "
+        "levels, below 10^37 ergs s-1 in the LMC and M31, the LFs become significantly flatter' and only the "
+        "complete parts were fitted [verified: Kennicutt, Edgar & Hodge 1989, ApJ 337, 761, section IIIb, "
+        "read at S35 from the ADS scan]. Row 35 fits the model's regions above the same floor.",
+    ),
+    "TE_METALLICITY_INTERCEPT": Constant(
+        9.29,
+        "dex",
+        "The temperature-metallicity relation of star-forming regions, 12 + log(O/H) = (9.29 +/- 0.02) - "
+        "(0.96 +/- 0.02) x (T_e(H+) / 10^4 K) [verified: Martinez-Hernandez, Mendez-Delgado et al. 2026, "
+        "arXiv:2601.13337, eq. 5, read at S35]: the intercept. Fitted to 225 regions and applied by them to "
+        "460 Galactic HII regions; the t^2 > 0 variant (9.46, 0.97) is the alternative.",
+    ),
+    "TE_METALLICITY_SLOPE": Constant(
+        0.96,
+        "dimensionless",
+        "The same relation's slope per 10^4 K [verified: arXiv:2601.13337, eq. 5, read at S35].",
+    ),
+    "TE_VALID_MIN": Constant(
+        6000.0,
+        "K",
+        "'Equations (5) and (6) are valid over a Te(H+) range between approximately 6000 K to 20000 K' "
+        "[verified: arXiv:2601.13337, read at S35]: the floor the inverted relation is clamped to; the inner "
+        "disc's gas above 12 + log(O/H) = 8.71 sits on it.",
+    ),
+    "TE_VALID_MAX": Constant(
+        20000.0,
+        "K",
+        "The same validity range's ceiling [verified: arXiv:2601.13337, read at S35].",
+    ),
+    "NO_PRIMARY_LOG": Constant(
+        -1.732,
+        "dex",
+        "Nitrogen's primary floor: 'log(X/O) = log(10^a + 10^[log(O/H)+b]) (3) where X = N or C ... for "
+        "nitrogen a = -1.732, b = 2.19', fitted to Milky Way stellar abundances spanning 12 + log(O/H) of 6 "
+        "to 9, 'a starting point for modelling, rather than being prescriptive' [verified: Nicholls et al. "
+        "2017, MNRAS 466, 4403, arXiv:1612.03546, eq. 3, read at S35]. Byler et al. 2017's grids use "
+        "Dopita et al. 2000's piecewise N/O instead; the difference is the first thing a grid reading must state.",
+    ),
+    "NO_SECONDARY_LOG": Constant(
+        2.19,
+        "dex",
+        "The same fit's secondary term, b [verified: arXiv:1612.03546, eq. 3, read at S35].",
+    ),
+    "NITROGEN_ABUNDANCE_SOLAR": Constant(
+        7.83,
+        "dex",
+        "12 + log(N/H) of the Sun, 'log epsilon_N = 7.83 +/- 0.05' [verified: Asplund et al. 2009, "
+        "arXiv:0909.0948, read at S35]. Recorded beside the N/O relation for the reader; the relation, not "
+        "this, sets the model's nitrogen (solar log N/O is -0.86; the relation gives -0.97 at 8.76).",
+    ),
+    "SULPHUR_ABUNDANCE_SOLAR": Constant(
+        7.12,
+        "dex",
+        "12 + log(S/H) of the Sun, 'log epsilon_S = 7.12 +/- 0.03' [verified: Asplund et al. 2009, "
+        "arXiv:0909.0948, read at S35]; sulphur follows [Fe/H] + [alpha/Fe] as an alpha element.",
     ),
 }

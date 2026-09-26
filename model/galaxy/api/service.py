@@ -66,6 +66,7 @@ from galaxy.specs import graph as _graph
 from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds
 from galaxy.stages import clusters as _clusters
+from galaxy.stages import nebular as _nebular
 from galaxy.stages import systems as _catalogue
 
 JSON = "application/json"
@@ -73,6 +74,7 @@ CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
 PLANETS_SLOT = "planets"  # and the slot a system query materialises with
 CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
 CLUSTERS_SLOT = "clusters"  # and the slot a clusters query answers for (S33)
+NEBULAR_SLOT = "nebular"  # whose HII-region columns ride on the clusters response (S35)
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
@@ -149,7 +151,8 @@ ROUTES: tuple[Route, ...] = (
         "/api/clusters",
         "The young star-cluster census for one (R, phi) window (S33): one cluster in every cloud past its "
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
-        "that holds it names it; level=k keeps the clusters inside the level-k children the window meets.",
+        "that holds it names it, with its HII region's columns (S35); level=k keeps the clusters inside the "
+        "level-k children the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clusters",
     ),
@@ -851,6 +854,7 @@ class Service:
         materialised here from what the clouds read, as ``/api/clouds`` does (D4)."""
         model = self._model(q)
         stage = _stage_for(model, CLUSTERS_SLOT, self.impls)
+        nebular = _stage_for(model, NEBULAR_SLOT, self.impls)
         R = self.grid.R
         r_min = q.number("r_min", float(R[0]))
         r_max = q.number("r_max", float(R[-1]))
@@ -866,13 +870,15 @@ class Service:
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
         key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
-        census = self.cells.catalogue(
-            key, parents,
-            lambda wanted: _clusters.materialise_clusters(
-                _clouds.materialise_clouds(out.fields, R, seed, constants, wanted), out.fields, R, seed, constants
-            ),
-        )
-        columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
+
+        def draw(wanted: Sequence[int]) -> Any:
+            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted)
+            clusters = _clusters.materialise_clusters(clouds, out.fields, R, seed, constants)
+            regions = _nebular.materialise_nebular(clusters, clouds, constants)  # S35: the region is the cluster's
+            return _catalogue.Catalogue.of({**clusters, **regions}, clusters.counts)
+
+        census = self.cells.catalogue(key, parents, draw)
+        columns = [d.name for st in (stage, nebular) for d in st.publishes if d.kind.domain == "object" and d.name in census]
         kept = None
         if level:
             census, kept = _in_children(census, "cluster", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)

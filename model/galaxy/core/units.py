@@ -80,6 +80,10 @@ _UNITS: tuple[Unit, ...] = (
     Unit("cm2/g", "cm² g⁻¹", "mass_opacity"),
     Unit("um", "µm", "length"),
     Unit("erg/cm2/s", "erg cm⁻² s⁻¹", "energy_flux"),
+    # nebular emission (S35, BUILD_II Phase 9): the ionized gas's density and its emissivity per unit volume,
+    # the region-scale quantity RENDER_PHYSICS section 4 requires (a renderer integrates it along the ray)
+    Unit("1/cm3", "cm⁻³", "number_density"),
+    Unit("erg/s/cm3", "erg s⁻¹ cm⁻³", "volume_emissivity"),
     # gravitation: G in the model's own length/velocity/mass units, so that
     # G·M/R is a squared velocity with no conversion anywhere (S1)
     Unit("kpc.km2/s2/Msun", "kpc km²/s²/M☉", "gravitational_constant"),
