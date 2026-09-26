@@ -71,8 +71,9 @@ from galaxy.stages.systems import Catalogue
 CASE_B_T = np.array([3000.0, 5000.0, 7500.0, 10000.0, 12500.0, 15000.0, 20000.0, 30000.0])
 CASE_B_HBETA = np.array([3.265e-25, 2.199e-25, 1.579e-25, 1.235e-25, 1.014e-25, 8.600e-26, 6.579e-26, 4.440e-26])
 CASE_B_HALPHA = np.array([1.048e-24, 6.687e-25, 4.625e-25, 3.536e-25, 2.860e-25, 2.398e-25, 1.807e-25, 1.199e-25])
-# alpha_B (cm^3 s^-1), the total Case B recombination coefficient, file e1b.d ("alpha-tot"), same n_e; no
-# 3000 K row was read, so the table starts at 5000 K.
+# alpha_B (cm^3 s^-1), the total Case B recombination coefficient, file e1b.d ("alpha-tot"), same n_e. The
+# table starts at 5000 K; the file's 3000 K row (6.708e-13, re-read at S37) is not needed, the temperature
+# relation being clamped at 6000 K.
 ALPHA_B_T = np.array([5000.0, 7500.0, 10000.0, 12500.0, 15000.0, 20000.0, 30000.0])
 ALPHA_B = np.array([4.522e-13, 3.273e-13, 2.585e-13, 2.144e-13, 1.836e-13, 1.428e-13, 9.911e-14])
 

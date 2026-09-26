@@ -72,14 +72,15 @@ def _mean(o, c):
 def test_the_sourced_constants_and_their_arithmetic(constants):
     """Boylan-Kolchin's ratios, scatter and mean mass; Lamers et al.'s disruption; PZMG10's mass function; BHG16's halo."""
     c = constants
-    assert (c["GC_HALO_MASS_RATIO"], c["GC_METAL_POOR_HALO_MASS_RATIO"]) == (3.5e-5, 2.25e-5)  # midpoints of 3-4, 2-2.5
+    assert (c["GC_HALO_MASS_RATIO"], c["GC_METAL_POOR_HALO_MASS_RATIO"]) == (2.9e-5, 2.25e-5)  # eta measured (Harris+17, S38, #105; 3.5e-5 until S38); eta_b the midpoint of 2-2.5
     assert (c["GC_SYSTEM_SCATTER"], c["GC_MEAN_MASS"]) == (0.28, 2.5e5)
     assert (c["CLUSTER_DISRUPTION_T0"], c["CLUSTER_DISRUPTION_INDEX"]) == (3.3, 0.62)
     assert (c["CLUSTER_MASS_FUNCTION_INDEX"], c["CLUSTER_MASS_FUNCTION_SCALE"], c["CLUSTER_MASS_MIN"]) == (2.0, 2.0e5, 1.0e2)
     assert (c["STELLAR_HALO_INNER_SLOPE"], c["STELLAR_HALO_OUTER_SLOPE"]) == (-2.5, -4.5)
     assert (c["STELLAR_HALO_BREAK_RADIUS"], c["STELLAR_HALO_FLATTENING"]) == (25.0, 0.65)
-    # BUILD_II's consistency check: 3.5e-5 x 1.1e12 ~ 3.9e7 Msun, ~160 clusters at a typical 2.4e5.
-    assert c["GC_HALO_MASS_RATIO"] * 1.1e12 == pytest.approx(3.85e7)
+    # BUILD_II's consistency check read 3.5e-5 x 1.1e12 ~ 3.9e7 Msun; at the measured eta (Harris et al. 2017,
+    # Audit III A3-2, #105) it is 2.9e-5 x 1.1e12 = 3.19e7 (3.85e7 until S38).
+    assert c["GC_HALO_MASS_RATIO"] * 1.1e12 == pytest.approx(3.19e7)
     # Lamers et al. 2005: t0 = 3.3 Myr 'implies a total disruption time of a 10^4 Msun cluster of 1.3 +/- 0.5 Gyr';
     # with the model's own stellar-evolution remainder (1 - R = 0.7) the formula gives 1.288 Gyr.
     mu_ev = 1.0 - c["RETURN_FRACTION"]
@@ -116,8 +117,10 @@ def test_the_bound_mass_is_s33s_and_the_system_is_its_survivors(coarse, constant
     assert gc.survival_fraction(per_step, age, slow, 0.7) > F["gc_survival_fraction"]
 
 
-def test_the_halo_relation_is_the_check_and_debt_97_closes_on_it(default, constants):
-    """The surviving mass against eta M_halo, within Boylan-Kolchin's 0.28 dex, at the default."""
+def test_the_halo_relation_is_the_check_and_the_survival_misses_it_on_the_measured_eta(default, constants):
+    """The surviving mass against eta M_halo. At S34 (eta 3.5e-5 adopted) the mean sat 0.258 dex above, inside
+    the 0.28 dex scatter; at the measured eta (2.9e-5, Audit III A3-2, #105) it sits 0.339 dex above - outside.
+    The physics behind the miss is #97's: the survivors are young open clusters, not globulars."""
     o, c = default, constants
     F = o.fields
     assert F["gc_survival_fraction"] == pytest.approx(0.0250196, rel=1e-5)
@@ -125,12 +128,12 @@ def test_the_halo_relation_is_the_check_and_debt_97_closes_on_it(default, consta
     mean = _mean(o, c)
     assert mean == pytest.approx(6.96994e7, rel=1e-5)
     eta_m = c["GC_HALO_MASS_RATIO"] * F["halo_virial_mass"]
-    assert eta_m == pytest.approx(3.85e7)
+    assert eta_m == pytest.approx(3.19e7)  # 3.85e7 until S38
     dex = math.log10(mean / eta_m)
-    assert dex == pytest.approx(0.2578, abs=5e-4)
-    assert abs(dex) <= c["GC_SYSTEM_SCATTER"]  # the stated precision: the relation's own scatter
-    # Before survival the bound mass was 72.4 x eta M_halo (D182); the survival removes 97.5% of it.
-    assert F["bound_cluster_mass_total"] / eta_m == pytest.approx(72.36, abs=0.01)
+    assert dex == pytest.approx(0.3394, abs=5e-4)  # 0.2578 until S38
+    assert dex > c["GC_SYSTEM_SCATTER"]  # outside the relation's own scatter on the measured eta (#105)
+    # Before survival the bound mass was 72.4 x the adopted eta M_halo (D182), 87.3 x the measured one.
+    assert F["bound_cluster_mass_total"] / eta_m == pytest.approx(87.33, abs=0.01)
 
 
 def test_the_survivors_are_mostly_young(default, constants):
@@ -148,10 +151,10 @@ def test_the_survivors_are_mostly_young(default, constants):
     assert older_than(10.0) / total == pytest.approx(0.0074, abs=5e-4)
     bound = o.fields["bound_cluster_mass_total"]
     eta_m = c["GC_HALO_MASS_RATIO"] * o.fields["halo_virial_mass"]
-    assert math.log10(older_than(10.0) * bound / eta_m) == pytest.approx(-1.872, abs=2e-3)
+    assert math.log10(older_than(10.0) * bound / eta_m) == pytest.approx(-1.790, abs=2e-3)  # -1.872 until S38 (eta 3.5e-5)
     # The N-body tidal-field time-scale (Lamers et al.: 'a factor 5 shorter than derived from N-body'):
     slow = dict(c, CLUSTER_DISRUPTION_T0=5.0 * c["CLUSTER_DISRUPTION_T0"])
-    assert math.log10(older_than(10.0, slow) * bound / eta_m) == pytest.approx(0.085, abs=2e-3)
+    assert math.log10(older_than(10.0, slow) * bound / eta_m) == pytest.approx(0.167, abs=2e-3)  # 0.085 until S38 (eta 3.5e-5)
     assert gc.survival_fraction(per_step, age, slow, 0.7) / total == pytest.approx(6.14, abs=0.01)
 
 
@@ -172,8 +175,8 @@ def test_the_residual_is_a_seeded_lognormal_on_world_seed(models, constants):
 def test_the_metal_poor_share_is_the_accreted_one(models, default, constants):
     """Ruling (c): eta_b/eta when the merger list accreted any stars; none when it accreted none."""
     c = constants
-    assert default.fields["gc_metal_poor_fraction"] == pytest.approx(2.25 / 3.5)
-    assert default.fields["gc_metal_poor_fraction"] == pytest.approx(0.642857, abs=1e-6)
+    assert default.fields["gc_metal_poor_fraction"] == pytest.approx(2.25 / 2.9)  # 2.25 / 3.5 until S38 (#105)
+    assert default.fields["gc_metal_poor_fraction"] == pytest.approx(0.775862, abs=1e-6)  # 0.642857 until S38
     free = run(models["basic"], {"mergers": ()}, grid=COARSE, only=("gc_metal_poor_fraction", "halo_stellar_mass"))
     assert free.fields["halo_stellar_mass"] == 0.0 and free.fields["gc_metal_poor_fraction"] == 0.0
     assert gc.metal_poor_fraction(1.0, c) == c["GC_METAL_POOR_HALO_MASS_RATIO"] / c["GC_HALO_MASS_RATIO"]

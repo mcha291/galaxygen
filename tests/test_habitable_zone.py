@@ -61,10 +61,13 @@ def test_the_metals_criterion_is_flat_below_solar_and_rises_as_ten_to_the_two_fe
 
 
 def test_the_sterilization_distance_is_eq_5():
-    """An average SN II sits at M_std and reaches 8 pc; a mean type Ia at -19.34 reaches further."""
+    """An average SN II sits at M_std and reaches 8 pc; a mean type Ia at -19.34 reaches further - by the square
+    root of the flux ratio, 10^(0.2 x 1.835) = 2.33, as eq. 5 prints it (S38, #104); until S38 the root was
+    dropped and the ratio read 5.42."""
     assert hz.sterilization_distance(-17.505, 8.0, -17.505) == 8.0
     ratio = hz.sterilization_distance(-19.34, 8.0, -17.505) / 8.0
-    assert ratio == pytest.approx(10 ** (0.4 * 1.835))
+    assert ratio == pytest.approx(10 ** (0.2 * 1.835))
+    assert ratio == pytest.approx(2.328, abs=1e-3) and 8.0 * ratio == pytest.approx(18.6, abs=0.05)
 
 
 def test_a_star_younger_than_the_complex_life_delay_carries_no_weight(model, coarse):
@@ -124,37 +127,31 @@ def test_a_thin_disc_with_no_thickness_leaves_the_hazard_undefined(prod):
 
 
 def test_the_zone_as_the_criteria_read_it(model, coarse):
-    """Measured at S30 on this grid (the default grid reads 4.7269e-4, 10.84 and 12.159 kpc). By
-    number the habitable stars were born around 11 kpc and half of them outside 12 kpc, where only
-    5% of the disc's stars formed: at R0 a planet sees about 2 sterilizing supernovae per Gyr
-    today, nearly all type Ia at 43 pc, so the inner disc's metals are outweighed by its hazard.
-    The per-star weight still rises at the grid's edge, because below solar metallicity the
-    source's criterion is flat."""
+    """Measured at S38 on this grid, with eq. 5 as printed (the square root, exponent -0.2; Audit III
+    A3-1, #104): a type Ia sterilizes to 18.6 pc rather than 43.4, the hazard at R0 is 0.20 per Gyr
+    and the zone sits in the disc - half the habitable stars inside 6.44 kpc, the peak at 6.6. These
+    were S30's "other reading" numbers, measured then and not adopted because the equation had been
+    read twice as -0.4; S37 re-read the LaTeX and settled it (D186, D187)."""
     out = coarse[model.name]
-    f, R = out.fields, out.grid.R
-    assert float(f["habitable_fraction"]) == pytest.approx(4.7514e-4, rel=1e-4)
-    assert float(f["habitable_zone_peak_radius"]) == pytest.approx(10.875, abs=1e-9)
-    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.0517, abs=1e-3)
-    formed = np.asarray(f["sfr_surface_density_history"]).sum(axis=1) * R
-    inside = float(formed[R <= float(f["habitable_zone_half_radius"])].sum() / formed.sum())
-    assert inside == pytest.approx(0.95269, abs=5e-5)
-    assert int(np.argmax(np.asarray(f["habitability"]))) == R.size - 1  # the edge, not an interior maximum
-    i = int(np.argmin(abs(R - 8.2)))
-    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.0834, abs=5e-4)
-
-
-def test_the_other_reading_of_eq_5_moves_the_zone_inward(prod, monkeypatch):
-    """Kept visible, as D176 kept its discarded normalisation: with the distance scaling as the
-    square root of the flux ratio, 10^(-0.2 dM), a type Ia sterilizes to 18.6 pc rather than 43.4,
-    the hazard at R0 falls tenfold (0.203 per Gyr) and the zone moves in - half the habitable stars
-    inside 6.44 kpc, the peak at 6.6. Measured at S30 on this grid. Not adopted: the equation was
-    read twice as -0.4, and choosing the reading whose answer resembles Lineweaver et al.'s 7-9 kpc
-    would be choosing with the answer known (candidate debt)."""
-    monkeypatch.setattr(hz, "sterilization_distance", lambda mag, base, m_std: base * 10.0 ** (-0.2 * (mag - m_std)))
-    out = run(prod[0].get("basic"), grid=COARSE, only=ZONE)
     f, R = out.fields, out.grid.R
     assert float(f["habitable_zone_half_radius"]) == pytest.approx(6.4414, abs=1e-3)
     assert float(f["habitable_zone_peak_radius"]) == pytest.approx(6.625, abs=1e-9)
     assert float(f["habitable_fraction"]) == pytest.approx(5.9613e-3, rel=1e-4)
     i = int(np.argmin(abs(R - 8.2)))
     assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(0.20278, abs=5e-5)
+
+
+def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
+    """S30's reading, kept as D176 kept its discarded normalisation: without the square root (exponent
+    -0.4) a type Ia sterilizes to 43.4 pc, the hazard at R0 is 2.08 per Gyr and the zone is pushed to the
+    disc's edge (half the habitable stars outside 12 kpc, where 5% of the stars formed). That is what the
+    model read from S30 to S37 (D179); Audit III found the root in the printed equation (A3-1, #104)."""
+    monkeypatch.setattr(hz, "sterilization_distance", lambda mag, base, m_std: base * 10.0 ** (-0.4 * (mag - m_std)))
+    out = run(prod[0].get("basic"), grid=COARSE, only=ZONE)
+    f, R = out.fields, out.grid.R
+    assert float(f["habitable_fraction"]) == pytest.approx(4.7514e-4, rel=1e-4)
+    assert float(f["habitable_zone_peak_radius"]) == pytest.approx(10.875, abs=1e-9)
+    assert float(f["habitable_zone_half_radius"]) == pytest.approx(12.0517, abs=1e-3)
+    assert int(np.argmax(np.asarray(f["habitability"]))) == R.size - 1  # the edge, not an interior maximum
+    i = int(np.argmin(abs(R - 8.2)))
+    assert np.asarray(f["sterilization_rate_history"])[i, -1] * 1e9 == pytest.approx(2.0834, abs=5e-4)
