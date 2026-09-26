@@ -65,7 +65,7 @@ from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
 from galaxy.stages import bubbles as _bubbles
 from galaxy.stages import planets as _planets
-from galaxy.stages import clouds as _clouds
+from galaxy.stages import clouds as _clouds  # also the HII layer's height (S39)
 from galaxy.stages import clusters as _clusters
 from galaxy.stages import nebular as _nebular
 from galaxy.stages import spectra as _spectra
@@ -86,9 +86,15 @@ MAX_CHILD_CELLS = 4096
 RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_light_temperature")
 RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
 RENDER_OPTIONAL = (
-    "pattern_density_contrast", *RENDER_BULGE,
-    "halpha_surface_brightness_nebular", "dust_extinction_v", "dust_colour_excess_b_v",
+    "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
+    # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
+    "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
+    # The dust's three components (S39, V2): extinction, scattering, thermal emission.
+    "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
+    "dust_temperature", "dust_infrared_surface_brightness",
 )
+# The dust stage's modified blackbody (S39): its shape is read with the stage's own constants, server-side.
+RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX")
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
 # interpolated at 8 x 8 midpoints, area-weighted.
 RENDER_CELL_SAMPLES = 8
@@ -184,10 +190,12 @@ ROUTES: tuple[Route, ...] = (
         "viewer's curves, each {name, shape: gaussian (centre, fwhm) | box (centre, width) | sampled (wavelength, "
         "transmission)}, angstroms> returns, per cell of the (R, phi) grid inside the window - or per level-k region "
         "cell with level=k - each emitting component's response in each filter, never composited: stars (the "
-        "population's eight-band spectrum joined into a continuum, times the pattern's contrast), "
-        "halpha (the nebular line through each curve at 6562.8 A) and the dust (face-on A_V and E(B-V)). The bulge's "
-        "response rides in the header; white=<K> adds a blackbody's response per unit light for the viewer's white "
-        "balance; set=<name> is echoed; precision=f4 sends float32.",
+        "population's eight-band spectrum joined into a continuum, times the pattern's contrast), the Halpha line as "
+        "two volumetric layers (halpha_hii placed by the contrast, halpha_dig per ring; S39), and the dust as "
+        "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
+        "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
+        "vertical layer; the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
+        "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32.",
         ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
         "render",
     ),
@@ -1008,6 +1016,12 @@ class Service:
         its tone map and does nothing else (rule D5). The stages run are the closure of the fields
         read, as for ``/api/arrays`` (rule D4): the nebular line is a checkpoint-5 field, so a render
         runs the census stages its Hα is redistributed from.
+
+        **Since S39 (V2)** the line is two volumetric layers and the dust three components (extinction,
+        scattered, thermal), each named in the header's ``components`` with the fields it reads, and
+        every component's vertical layer in ``layers``: the arrays are face-on columns the viewer spreads
+        through their layers and integrates along each ray. What the frame's dust removes and what it
+        emits balance (``tests/test_render.py``).
         """
         model = self._model(q)
         raw = q.one("filters")
@@ -1053,10 +1067,21 @@ class Service:
         placed = np.ones((R.size, phi_axis.n)) if contrast is None else np.maximum(np.asarray(contrast, dtype=float), 0.0)
         stars = per_ring[:, None, :] * placed[..., None]
         halpha_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["halpha"])
+        contrast_fields = ["pattern_density_contrast"] if contrast is not None else []
+        # Every component's vertical layer (S39): a sech²(z / 2h) / 4h profile, integrating to one over height,
+        # at the scale height named here, kpc. The arrays are face-on columns; the viewer spreads each through
+        # its layer and integrates along the ray (RENDER_PHYSICS §4), so a thick layer brightens at the limb.
+        h_thin = float(f["thin_disc_scale_height"]) / 1000.0 if "thin_disc_scale_height" in f else None
+        layers: dict[str, Any] = {
+            "form": "sech2(z / 2h) / 4h, per kpc of height, integrating to 1",
+            "stars": h_thin,
+            # The dust is mixed with the starlight it absorbs: the dust stage's heating is a uniformly mixed slab.
+            "dust": h_thin,
+        }
         components: list[tuple[str, np.ndarray]] = [("stars", stars)]
         about: dict[str, Any] = {
             "stars": {
-                "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *(["pattern_density_contrast"] if contrast is not None else [])],
+                "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *contrast_fields], "layer": "stars",
                 "about": "the population's own spectrum - the eight bands' lambda L_lambda at their reference "
                          "wavelengths, power laws between them, a blackbody at the colour temperature beyond U and K - "
                          "through each curve, placed around each ring by the pattern's density contrast",
@@ -1064,26 +1089,75 @@ class Service:
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
         }
-        if "halpha_surface_brightness_nebular" in f:
-            line = np.asarray(f["halpha_surface_brightness_nebular"], dtype=float)[:, None] * halpha_share
-            components.append(("halpha", line))
-            about["halpha"] = {
-                "unit": "Lsun/pc2", "fields": ["halpha_surface_brightness_nebular"],
-                "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist(),
-                "about": "the nebular Halpha per ring through each curve at its wavelength; axisymmetric as published",
+        line_about = {"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
+        if "halpha_surface_brightness_hii" in f and h_thin is not None:
+            hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
+            components.append(("halpha_hii", hii[:, None, None] * placed[..., None] * halpha_share))
+            layers["halpha_hii"] = _clouds.cloud_layer_height(float(f["thin_disc_scale_height"]))
+            about["halpha_hii"] = {
+                **line_about, "fields": ["halpha_surface_brightness_hii", *contrast_fields, "thin_disc_scale_height"],
+                "layer": "halpha_hii",
+                "about": "the HII regions' Halpha through each curve at its wavelength, placed around each ring by the "
+                         "pattern's density contrast (the same contrast the stars follow; it averages to 1, so each "
+                         "ring keeps its published line) in the clouds' layer, where the regions' clusters are",
             }
-        for name in ("dust_extinction_v", "dust_colour_excess_b_v"):
-            if name in f:
-                components.append((name, np.asarray(f[name], dtype=float)))
-        about["dust"] = {
-            "unit": "mag", "fields": [n for n in ("dust_extinction_v", "dust_colour_excess_b_v") if n in f],
-            "about": "face-on, per ring: occlusion, applied by the viewer per line of sight. No extinction curve is "
-                     "published, so no per-filter ratio is computed (the dust stage's E(B-V) is the law's one "
-                     "published number between B and V)",
-        }
-        absent = [n for n in _spectra.LINE_WAVELENGTHS if n not in about]
+        if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
+            dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
+            components.append(("halpha_dig", dig[:, None] * halpha_share))
+            layers["halpha_dig"] = float(f["dig_scale_height"])
+            about["halpha_dig"] = {
+                **line_about, "fields": ["halpha_surface_brightness_dig", "dig_scale_height"], "layer": "halpha_dig",
+                "about": "the diffuse ionized gas's Halpha through each curve, axisymmetric as published, in its own "
+                         "published layer: seen edge-on it is a thick glow that brightens toward the limb",
+            }
+        if "dust_extinction_v" in f:
+            a_v = np.asarray(f["dust_extinction_v"], dtype=float)
+            refs = _spectra.filter_references(curves)
+            components.append(("dust_extinction", _spectra.extinction_transmission(a_v, curves)))
+            about["dust_extinction"] = {
+                "unit": "dimensionless", "fields": ["dust_extinction_v"], "layer": "dust",
+                "reference_wavelength": refs.tolist(),
+                "extinction_ratio": _spectra.extinction_ratio(refs).tolist(),
+                "albedo": _spectra.albedo(refs).tolist(),
+                "about": "the share of each filter's light a face-on column of the dust lets through, 10^(-0.4 A_V r), "
+                         "r = A_lambda/A_V the grain model's extinction cross-section at the filter's reference "
+                         "wavelength over its V row's (Draine's R_V = 3.1 table, the dust stage's). Occlusion, never a "
+                         "colour: the viewer takes its optical depth, -ln of this, through the dust's layer",
+            }
+        if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
+            tau_sca = _spectra.scattering_depth(f["dust_scattering_optical_depth"], curves)  # (R, filter)
+            tau_ext = _spectra.extinction_depth(f["dust_extinction_v"], curves)
+            g = float(f["dust_scattering_asymmetry"])
+            components.append(("dust_scattered", _spectra.scattered_share(tau_ext, tau_sca)[:, None, :] * stars))
+            about["dust_scattered"] = {
+                "unit": "Lsun/pc2", "fields": ["dust_scattering_optical_depth", "dust_extinction_v", "dust_scattering_asymmetry",
+                                               *RENDER_STARS, *contrast_fields],
+                "layer": "dust", "phase": _spectra.phase_table(g),
+                "about": "starlight the dust scatters, all directions together: the published V-band scattering depth, "
+                         "moved to each filter by the grain model's scattering cross-section, and the share of the "
+                         "stellar component a mixed slab of that depth scatters as the dust stage counts it (what the "
+                         "extinction removes less what the absorption keeps). The phase table's factor, a "
+                         "Henyey-Greenstein phase function at the published g averaged over light arriving in the "
+                         "disc's plane, turns it into what a view at |cos i| receives; it averages to 1 over every view",
+            }
+        if "dust_infrared_surface_brightness" in f and "dust_temperature" in f:
+            dc = {k: float(model.constants[k].value) for k in RENDER_DUST_CONSTANTS}
+            thermal = _spectra.thermal_response(
+                f["dust_infrared_surface_brightness"], f["dust_temperature"], curves,
+                dc["DUST_OPACITY_REFERENCE"], dc["DUST_OPACITY_WAVELENGTH"], dc["DUST_EMISSIVITY_INDEX"],
+            )
+            components.append(("dust_thermal", thermal))
+            about["dust_thermal"] = {
+                "unit": "Lsun/pc2", "fields": ["dust_infrared_surface_brightness", "dust_temperature"], "layer": "dust",
+                "about": "the dust's own emission through each curve: the published infrared surface brightness as the "
+                         "dust stage's modified blackbody at the published temperature and its emissivity index, "
+                         "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
+            }
+        lined = "halpha_hii" in about or "halpha_dig" in about
+        absent = [n for n in _spectra.LINE_WAVELENGTHS if n != "halpha" or not lined]
 
-        per_ring_names = {"halpha", "dust_extinction_v", "dust_colour_excess_b_v"}
+        # Per ring (R, filter) or placed around it (R, phi, filter).
+        per_ring_names = {"halpha_dig", "dust_extinction", "dust_thermal"}
         arrays: list[tuple[str, np.ndarray]] = []
         if level is None:
             r_min = q.number("r_min", R_axis.lo)
@@ -1101,8 +1175,7 @@ class Service:
                 "phi": {"first": j0, "n": n_phi, "lo": phi_axis.lo + j0 * phi_axis.width, "width": phi_axis.width,
                         "wraps": bool(j0 + n_phi > phi_axis.n)},
             }
-            axes = {name: (["R"] if name.startswith("dust") else ["R", "filter"]) if name in per_ring_names
-                    else ["R", "phi", "filter"] for name, _ in components}
+            axes = {name: ["R", "filter"] if name in per_ring_names else ["R", "phi", "filter"] for name, _ in components}
         else:
             r_min = q.number("r_min", float(R[0]))
             r_max = q.number("r_max", float(R[-1]))
@@ -1117,7 +1190,7 @@ class Service:
                 arrays.append((name, _cell_means(value, bounds, R_axis, phi_axis, per_ring=name in per_ring_names)))
             window = {"cells": {"count": len(cells), "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(level),
                                 "bounds": bounds if len(cells) <= 64 else []}}
-            axes = {"cell": ["cell"], **{name: ["cell"] if name.startswith("dust") else ["cell", "filter"] for name, _ in components}}
+            axes = {"cell": ["cell"], **{name: ["cell", "filter"] for name, _ in components}}
         if precision == "f4":
             arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
 
@@ -1135,6 +1208,7 @@ class Service:
             "window": window,
             "axes": axes,
             "components": about,
+            "layers": layers,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": None if white_k is None else {

@@ -29,6 +29,18 @@
       ]
     }
   },
+  "measured": {
+    "ir": {
+      "label": "IR",
+      "about": "The infrared set (S39, BUILD_II V2), sent to /api/render to read the dust's thermal emission and the energy balance, and not drawn: a 6500 K white point makes no sense of a far-infrared channel, and a white per channel is a display choice not yet made. Four boxes: TIR, 8 to 1000 microns, the span a total-infrared luminosity is conventionally taken over [recall: not read from a source this session], wide enough to hold the modified blackbody's peak (about 130 microns at 20 K) and all but 0.068% of the default galaxy's dust emission (what lies beyond 1 mm, from its coldest outer dust, tests/test_render.py); and K, H, J at the reference wavelengths of the Bessell & Brett passbands the isochrone table's J H K magnitudes are in, each box as wide as the passband's FWHM, the same numbers as the model's own band definitions (photometry.PASSBANDS) [verified: SVO Filter Profile Service, Generic/Bessell_JHKLM.J, .H, .K, read at S38]. The box shapes are [inferred].",
+      "curves": [
+        { "name": "TIR", "shape": "box", "centre": 5040000, "width": 9920000 },
+        { "name": "K", "shape": "box", "centre": 22027.46, "width": 3959.11 },
+        { "name": "H", "shape": "box", "centre": 16396.38, "width": 2983.81 },
+        { "name": "J", "shape": "box", "centre": 12303.17, "width": 2065.62 }
+      ]
+    }
+  },
   "white": {
     "kelvin": 6500,
     "about": "The tone map's white point: each channel is divided by the model's response of a blackbody at this temperature per unit light, so a 6500 K source draws white in every set [inferred: near sRGB's D65 white, a display choice, not a physical constant]."
