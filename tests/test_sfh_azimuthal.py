@@ -226,7 +226,7 @@ def test_every_acceptance_row_reads_the_same_in_both_models(judged):
     azimuthal = {r.n: r for r in judged["azimuthal"]}
     # 25-29 since S28 (Phase 3), 30-31 (the supernova rates) since S30 (Phase 6), 32-33 (globular clusters,
     # stellar halo) since S34 (Phase 5): the same rule. range(1, 32) until S34.
-    assert sorted(basic) == sorted(azimuthal) == [q.n for q in spec.QUANTITIES] == list(range(1, 34))
+    assert sorted(basic) == sorted(azimuthal) == [q.n for q in spec.QUANTITIES] == list(range(1, 37))  # 34 until S35
     for n in basic:
         b, a = basic[n], azimuthal[n]
         assert a.status == b.status, (n, a.status, b.status)

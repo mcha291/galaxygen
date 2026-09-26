@@ -5766,3 +5766,88 @@ cluster mass the model does not make; BUILD_II: "acceptance row on mass, not cou
 objects (cut in BUILD_II Phase 5 with the reason recorded; not reinstated). A stellar-to-halo relation for
 the satellites (unread; #99's prediction names it as the lever). The register reads 45 open = 11
 permanent + 34 carried, 37 discharged.
+
+### D184. Phase 9: the ionized gas as shape parameters and a volume emissivity per HII region, Case B from Storey & Hummer's rows, the diffuse layer from an escape fraction, the galaxy's Hα as its photons redistributed — and the forbidden lines held for the owner's ruling on a data dependency
+
+**Built by the orchestrating session itself (a Fable row).** The sourcing was read by a read-only agent
+(`phase9_sourcing.md`, 377 lines, every value labelled READ / READ second-hand / DERIVED / RECALL / NOT
+READ; four arXiv ids in my brief were the wrong papers and it found the right ones), Byler et al. 2017 §II
+by me via ar5iv; the rulings were written to `s35_design.md` before any model number was printed (D113).
+
+**The four rulings.** (1) **Emissivities: a tabulated photoionization grid, of the isochrone kind**, over
+analytic fits — the collisionally excited lines need ionization fractions that only a photoionization
+model gives; the atomic data alone (NIST A-values and PyNeb's collision strengths, READ) make no line, and
+the two-level emissivity formula itself was RECALL. The grid ruled in is Byler, Dalcanton, Conroy &
+Johnson 2017 as FSPS ships it (`nebular/ZAU_ND_prsc.lines`: 11 log Z × 10 ages 0.5–20 Myr × 7 log U, 166
+lines in L☉ per ionizing photon; n_H = 100 cm⁻³; U ≡ Q/(4πR² n_H c); spherical shell, R_inner 10¹⁹ cm,
+radiation-bounded; Dopita et al. 2000 abundances on Anders & Grevesse with a piecewise N/O `[verified:
+arXiv:1611.08305 §II via ar5iv; github.com/cconroy20/fsps]`; 1.4 MB, MIT, patched 2026-07-20 and
+2026-08-06 so a commit must be pinned; PARSEC-based to match the model's isochrones). **Fetching it is a
+file download, which this session does not do without the owner's word**: the question is put with the
+filename, source and size, and the forbidden lines wait on the answer. What is built now publishes
+exactly the parameters the grid is read off (RENDER_PHYSICS §3a's ionized-gas row: Q, n_e, T_e, log U,
+O/H, N/H, S/H per region), so the reading is a lookup later, not a change to the object. (2) **Case B**:
+Storey & Hummer 1995's own tables (CDS VI/64, the primary files) — 4πj/(n_e n_p) for Hβ and Hα at n_e =
+10² from 3000 to 30000 K (eight rows) and α_B (seven rows from 5000 K), interpolated in log T; from them
+Hα/Hβ = 2.863 and 0.452 Hα photons per recombination at 10⁴ K, which Kennicutt 1998 eq. 2 reproduces to
+0.2% `[verified: MNRAS 272, 41; arXiv:astro-ph/9807187]`. (3) **T_e from metallicity**: Martínez-Hernández,
+Méndez-Delgado et al. 2026 eq. 5, 12+log(O/H) = 9.29 − 0.96 T_e/10⁴, valid 6000–20000 K `[verified:
+arXiv:2601.13337]`, inverted and clamped; **nitrogen** by Nicholls et al. 2017 eq. 3 (a = −1.732, b = 2.19,
+"a starting point for modelling" `[verified: arXiv:1612.03546]`), oxygen and sulphur as α elements on
+Asplund et al. 2009's 8.69 and 7.12 `[verified: arXiv:0909.0948]`. (4) **Diffuse ionized gas**: 30% of
+each region's photons escape it (Zurita et al. 2002's model for NGC 157, "30% of emitted Lyman continuum
+photons escape from each H II region", variants 30–60% `[verified: Haffner et al. 2009, arXiv:0901.0941
+§IV]`), none leave the galaxy (Leitherer et al. 1995's < 3% `[verified: Kennicutt 1998 §3]`); the layer's
+temperature and scale height are the midpoints of Haffner's 6000–10000 K and 1000–1800 pc `[inferred]`.
+Oey et al. 2007's f_WIM = 0.59 ± 0.19 (109 galaxies) and Haffner's "about 1/8th" of the local stellar
+photons are recorded against the construction, not as inputs (#101).
+
+**Built.** `stages/nebular.py` (cp5, after clusters, both models): twelve `of="cluster"` columns — the
+HII region is the cluster's (§5b) — `hii_stromgren_radius`, `hii_electron_density` (rms), `hii_temperature`,
+`hii_ionization_parameter`, `hii_clumping`, `hii_halpha_luminosity`, **`hii_halpha_emissivity` per unit
+volume** (§4's contract: a renderer integrates it along the ray), `hii_balmer_decrement`, the three
+abundances and a bounded/leaking category; three radial fields `halpha_surface_brightness_hii/_dig/
+_nebular`; scalars `dig_scale_height`, `halpha_luminosity_nebular`, `dig_halpha_fraction`,
+`halpha_sfr_ratio`, `hii_luminosity_function_slope` (all five under rule D4, D148). The region is a
+Strömgren sphere in its cloud's **clumped** gas — Q(1 − f_esc) = α_B ⟨n²⟩ (4/3)πR³ with ⟨n²⟩ = e^{σ_s²}⟨n⟩²
+from the census's own log-normal width (§6: one mechanism, two payoffs; the second moment is an identity)
+— capped at the cloud's radius, beyond which it leaks into the diffuse budget; the mean density is the
+cloud's mass over its volume at 1.4 m_H per hydrogen `[inferred]`. **No seed is read**: every column is a
+function of the cluster's and its cloud's, so a region alone is its slice (D60), and by D55 the stage's
+fields are all *seeded*, the radial ones included (a stage has one provenance; the graph enforced it).
+**Two new units**, `1/cm3` and `erg/s/cm3`, in `core/units.py` (D177's rule: named here). `/api/clusters`
+carries the twelve columns (the same materialisation chain, cached per cell). `HALPHA_PER_SFR`'s tag moves
+from recall to verified (Kennicutt & Evans 2012 Table 1, log C = 41.27, Kroupa, Starburst99 — READ) and
+its role from the Hα to a check on it (D166 → here). No new inputs; fourteen level-0 constants; no new
+route or timings row; the stage costs 7 ms.
+
+**Measured (default; both models identical).** 12 860 regions; radius median 0.72 pc; rms density median
+194 cm⁻³ (39–244); log U median −2.83 (−3.70 to −1.75), inside Byler's grid; clumping median 7.7 (5.5–142);
+Hα per region median 186 L☉, the brightest 1.0 × 10⁶; Hα/Hβ 2.75–2.99; **7 779 of 12 860 regions sit on
+the temperature floor** (the metal-rich inner disc, 12+log(O/H) > 8.71) and 3 on the ceiling; no region
+outgrows its cloud (R_S median 0.7 pc against cloud radii of ~13). **Catalogue against field (§7)**: the
+regions' Hα sums to 0.990 of the HII surface-brightness integral, inside the census's noise of 0.059 (the
+clusters hold 0.989 of Σ_Q); the nebular field integrates to `halpha_luminosity_nebular` = 6.05 × 10⁷ L☉
+exactly. **`halpha_sfr_ratio` = 0.7095**: the model makes 0.71 of the Hα per unit star formation that
+Kennicutt & Evans's Kroupa/Starburst99 calibration does — the same number two other ways: the light
+stage's Q = 1.6527 × 10⁵³ against Chomiuk & Povich 2011's 7.5 × 10⁻⁵⁴ M☉ yr⁻¹ per photon s⁻¹ at 1.755
+M☉/yr (2.34 × 10⁵³), and the old `halpha_surface_brightness` integral (8.53 × 10⁷) over the new (6.05 ×
+10⁷). It is stated in the field's about as a consistency check and not a validation: the SFR is upstream
+of both sides, so it measures the isochrones' Q against Starburst99's and nothing about the galaxy. **Row
+34** (Q(H⁰) against Bennett et al. 1994's (3.5 ± 1.8) × 10⁵³, READ second-hand in Chomiuk & Povich §3.1)
+**fails by 3%** — 1.6527 × 10⁵³ under the 1.7 × 10⁵³ floor — a recorded miss (#100) whose text discloses
+that the model's Q was known when the source was chosen, that McKee & Williams 1997's re-analysis (2.6 ±
+1.3) × 10⁵³ would pass it, and that Bennett's is taken as the primary analysis. **Row 35** (the HII-region
+LF slope against Kennicutt, Edgar & Hodge 1989's −2.0 ± 0.5, 30 external galaxies, fitted above 10³⁷ erg/s)
+**passes at −2.008** — green with its conditioning stated in `test_s22_rulings`: the slope is inherited
+from the cloud mass function at one efficiency (#96), so green says the clouds' slopes bracket the observed
+one. **Row 36** (the PNLF cutoff M* = −4.47 ± 0.05, Ciardullo 2002 via Ciardullo 2012 §4) enters
+not-yet-computable: the model has PN counts and no [O III] per nebula, and the cutoff is central-star
+physics. Spec **11 pass / 20 fail / 5 n-y-c of 36**, identical in both models; rows 1–33 unmoved.
+
+**Chosen against.** Analytic forbidden lines (unsourced ionization fractions). Gutkin, Charlot & Bruzual
+2016's grid (every Phase 9 line, but integrated over 100 Myr of constant star formation with a Chabrier IMF
+— a population, not a cluster at an age). A row on the DIG fraction (two readings disagree: Oey's external
+0.59, Haffner's local 1/8). A row on the Hα–SFR calibration (no uncertainty read for log C = 41.27; D100
+would make it zero-width). Murray & Rahman 2010's 3.2 × 10⁵³ as row 34's target (no uncertainty quoted).
+The register reads 47 open = 11 permanent + 36 carried, 37 discharged.

@@ -50,16 +50,18 @@ def chk(m, *stages):
 # round, ahead of population) and the globular clusters read the survival (the round after, ahead of
 # systems). Until S34 the order ran "..., chemistry_dtd, supernovae, light, vertical_alpha, population,
 # ism, systems, ...".
+# Since S35 (BUILD_II Phase 9) the nebular stage reads the cluster and cloud columns, so it runs the round
+# after clusters', last in both orders; until S35 both ended "..., planets, clusters".
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
-        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters",
+        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters", "nebular",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
-        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters",
+        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters", "nebular",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -67,6 +69,13 @@ ORDER = {
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
 SEEDED_BASIC = {
     "black_hole_mass",
+    # S35 (BUILD_II Phase 9): the nebular stage reads the seeded cluster and cloud columns, so everything it
+    # publishes is seeded (D55: a stage has one provenance), the radial Halpha fields and the scale height too.
+    "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular", "dig_scale_height",
+    "hii_stromgren_radius", "hii_electron_density", "hii_temperature", "hii_ionization_parameter", "hii_clumping",
+    "hii_halpha_luminosity", "hii_halpha_emissivity", "hii_balmer_decrement", "hii_oxygen_abundance",
+    "hii_nitrogen_abundance", "hii_sulphur_abundance", "hii_density_bounded",
+    "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
     # S34 (BUILD_II Phase 5): the globular cluster system, drawn on world_seed; the survival fraction and the
     # metal-poor share are a separate stage and stay derived (D55), as the stellar halo does.
     "gc_system_mass", "gc_count_estimate",

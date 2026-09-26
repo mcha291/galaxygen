@@ -689,9 +689,9 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 | 34 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101 | 36 |
 
-So the board's **45 open** is 11 permanent and 34 carried, and no item is unruled. (S22
+So the board's **47 open** is 11 permanent and 36 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -701,14 +701,15 @@ photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach
 #88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179; S31 opened #91–#93,
 the grey slab, the PAH fit and the owed row 32, D180; S32 opened #94–#95, the census's construction and
 the cloud vector's unsourced draws, D181; S33 opened #96–#97, the clusters' inherited mass function and
-the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as recorded misses, D183.) The eleven
+the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as recorded misses, D183; S35 opened
+#100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The thirty-four carried ones are not thirty-four mechanisms.** Four of them — 19, 27, 49 and the
+**The thirty-six carried ones are not thirty-six mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -727,7 +728,8 @@ that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit
 95 are the cloud census's construction and its stated guesses (S32, D181); 96 is the cluster function the
 census inherits and 97 the bound mass whose survival S34 built on the wrong population (S33, D182; S34,
 D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
-D183). That leaves 28, 33, 39, 42,
+D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
+D184). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3039,6 +3041,32 @@ never been judged in twenty-three sessions.
    down 4.3–7.6×; the mass ratios are not a lever, they also set the disc heating (MERGER_HEATING). If a
    sourced relation does that and the row still misses high, the ratio's reading (total mass, not stellar)
    is what is wrong.
+
+100. **Row 34, the Galactic ionizing photon rate, misses Bennett et al. 1994 by 3%, and the model's photons
+   per unit star formation are 0.71 of Starburst99's** (S35, BUILD_II Phase 9, D184). Q(H⁰) = 1.6527 × 10⁵³ s⁻¹
+   against (3.5 ± 1.8) × 10⁵³ `[verified: Chomiuk & Povich 2011, arXiv:1110.4105, §3.1, second-hand]`, the
+   floor 1.7 × 10⁵³; the same COBE data re-analysed by McKee & Williams 1997, (2.6 ± 1.3) × 10⁵³, would pass.
+   The nebular stage's `halpha_sfr_ratio` = 0.7095 says the same thing against Kennicutt & Evans 2012's
+   calibration, and Chomiuk & Povich's 7.5 × 10⁻⁵⁴ M☉ yr⁻¹ per photon s⁻¹ at the model's 1.755 M☉/yr a third
+   way (2.34 × 10⁵³ expected). The lever is the Q(T_eff, L) table the light stage integrates along the PARSEC
+   isochrones (SHP03, #84), which yields fewer photons per massive star than Starburst99's atmospheres, and
+   the youngest isochrone's 64 M☉ ceiling. **Carried.** Prediction that kills the reading: raising the yield
+   to Starburst99's (× 1.41) lands row 34 at 2.3 × 10⁵³ and the ratio at 1.0 together; if the yield is raised
+   and the row still misses, the star formation rate is low, not the photons. Disclosed in the row: the
+   model's Q was known when Bennett's window was chosen (it is the primary analysis).
+101. **The diffuse ionized gas is 30% of the Hα by construction, and two readings say otherwise** (S35,
+   D184). Every HII region loses 30% of its ionizing photons to the diffuse layer (Zurita et al. 2002's
+   model `[verified: Haffner et al. 2009, arXiv:0901.0941, §IV]`) and none leave the galaxy, so
+   `dig_halpha_fraction` reads 0.30 whatever the galaxy does; no region is density-bounded at S35, so
+   nothing leaks beyond it. Oey et al. 2007 measure 0.59 ± 0.19 of the Hα as diffuse over 109 galaxies
+   `[verified: arXiv:astro-ph/0703033, abstract]`, and Haffner et al. 2009 put the Milky Way's own warm
+   ionized medium at about an eighth of the stellar photons locally (§I). The layer's temperature (8000 K)
+   and scale height (1.4 kpc) are midpoints of Haffner's ranges `[inferred]`. **Carried.** What closes it: a
+   sourced escape fraction that depends on the region's luminosity (Zurita et al. 2002's best fit rises
+   above a transition luminosity, READ in their abstract, the numbers not) or a sourced Milky Way diffuse
+   fraction with an uncertainty, which would also be the row this item could not enter. What kills the
+   construction: a sourced local fraction near 1/8 — the model would then put twice too much glow between
+   the knots.
 
 ---
 

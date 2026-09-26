@@ -250,7 +250,13 @@ def test_no_green_row_is_unconditioned(judged):
     # (so green says little); the type Ia rate sits 0.053 per century above its window's lower edge
     # on an Ia count per unit mass formed 1.87x Maoz & Graur 2017's measured efficiency, and at that
     # measured efficiency it would read 0.35 per century and fail (S30's candidate debt).
-    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE}
+    # S35 (Phase 9) adds row 35, the HII-region luminosity function slope, green at -2.008 in KEH89's
+    # -2.0 +/- 0.5 with its conditioning stated here: the slope is inherited - the regions' Halpha is
+    # proportional to their clusters' mass, which follows the cloud mass function (-1.6 inner, -2.2 outer,
+    # debt #96) at one efficiency - so green says the clouds' slopes bracket the observed one, and the
+    # source's sample is 30 external galaxies, not the Milky Way (D184).
+
+    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, 35}
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
         assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))

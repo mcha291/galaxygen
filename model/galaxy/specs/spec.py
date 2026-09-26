@@ -224,6 +224,23 @@ _ADAMS13_READ = (
 # S34 (BUILD_II Phase 5): the globular cluster system and the stellar halo, numbered here once as S30's
 # rows are, so that a renumbering at a merge is this one line.
 ROW_GC_SYSTEM_MASS, ROW_STELLAR_HALO_MASS = 32, 33
+# S35 (BUILD_II Phase 9): the ionizing budget, the HII-region luminosity function, the PNLF cutoff.
+ROW_IONIZING_RATE, ROW_HII_LF_SLOPE, ROW_PNLF_CUTOFF = 34, 35, 36
+_BENNETT94 = "Bennett et al. 1994 via Chomiuk & Povich 2011, AJ 142, 197, section 3.1"
+_BENNETT94_READ = (
+    "'Bennett et al. (1994) used Cosmic Background Explorer (COBE) observations of N II 205 um emission to "
+    "measure the rate of Lyman continuum photons in the Milky Way, and correcting for dust absorption and "
+    "photon escape, they found Nc = (3.5 +/- 1.8) x 10^53 phot s-1' [verified: Chomiuk & Povich 2011, "
+    "arXiv:1110.4105, section 3.1, read at S35 by a read-only agent; Bennett et al. 1994 itself not read]. "
+    "What it measures: the whole Galaxy's intrinsic ionizing photon rate, the [N II] fine-structure line "
+    "tracing the ionized gas and the corrections restoring the photons dust absorbed and the ones that "
+    "escaped, so it is the number the light stage's Q(H0) is. Disclosed (rule D113, debt #87's lesson): "
+    "the model's Q has been pinned since S28, so it was known when this source was chosen; the same "
+    "data re-analysed by McKee & Williams 1997 give (2.6 +/- 1.3) x 10^53, a window the model would sit "
+    "inside, and Bennett's is taken because it is the primary analysis, not because of where it lands."
+)
+_KEH89 = "Kennicutt, Edgar & Hodge 1989, ApJ 337, 761, abstract and section IIIb"
+_CIARDULLO12 = "Ciardullo et al. 2002 via Ciardullo 2012, arXiv:1203.5551, section 4"
 _HARRIS = "Harris catalogue (December 2010 revision), mwgc.dat Part II M_V,t; M/L_V from BHG16 section 6.1.2"
 # The sum of 10^(-0.4 (M_V,t - 4.81)) over the 156 clusters with an M_V,t, L_V in Lsun at the Sun's
 # Johnson V absolute magnitude the model uses (Willmer 2018); tests/test_globular_clusters.py holds the
@@ -346,6 +363,42 @@ QUANTITIES: tuple[Quantity, ...] = (
             "range with no stated uncertainty beyond 'rough', taken as the window. The model's halo is "
             "every accreted satellite's stars, whole, Sagittarius's remnant included; the source counts "
             "the stream and not the bound remnant."
+        ),
+    ),
+    Quantity(
+        ROW_IONIZING_RATE, "Galactic ionizing photon rate Q(H⁰)", "1/s", "ionizing_photon_rate_total",
+        1.7e53, 5.3e53, "pointwise", "(3.5 ± 1.8) × 10⁵³ s⁻¹", _BENNETT94,
+        note=(
+            "The light stage's Q(H0): the isochrones' ionizing output integrated over the disc's history, "
+            "intrinsic (no dust, no escape), which is what the source corrects its measurement back to. "
+            + _BENNETT94_READ
+        ),
+    ),
+    Quantity(
+        ROW_HII_LF_SLOPE, "HII-region luminosity function slope", "dimensionless", "hii_luminosity_function_slope",
+        -2.5, -1.5, "pointwise", "N(L) ∝ L^(−2.0 ± 0.5)", _KEH89,
+        note=(
+            "'In most galaxies the LF is well represented by a power-law function, with N(L) proportional to "
+            "L^-2.0 +/- 0.5' over 'the range where the data are complete', flattening 'below 10^37 ergs s-1' "
+            "[verified: Kennicutt, Edgar & Hodge 1989, ApJ 337, 761, abstract and section IIIb, read at S35 from "
+            "the ADS scan]. What it measures: the Halpha luminosity function of the HII regions of 30 nearby "
+            "spirals and irregulars (M31, M101, the LMC among them) - not the Milky Way's, whose regions the "
+            "source calls 'giant', below the 5-10 x 10^38 erg/s where the supergiant regions begin. The model's "
+            "slope is the nebular stage's fit to its clusters' HII regions above the same 10^37 floor (0.2 dex "
+            "bins, dN/dL); the window is the source's own +/- 0.5."
+        ),
+    ),
+    Quantity(
+        ROW_PNLF_CUTOFF, "Planetary nebula luminosity function cutoff M*(5007)", "mag", None,
+        -4.47, -4.47, "pointwise", "−4.47 (± 0.05)", _CIARDULLO12,
+        note=(
+            "Not yet computable (S35): the model has a planetary nebula count (S29) and no [O III] 5007 "
+            "luminosity per nebula, and the cutoff is a prediction of central-star evolution, not of the "
+            "population's size. Recorded so that the target is read before any model number: 'By adopting the "
+            "universal PNLF first proposed by Ciardullo et al. (1989a), N(M) proportional to e^0.307M {1 - "
+            "e^3(M*-M)} the authors obtained a value of M* = -4.47' and, for the metal-rich galaxies, 'M* = "
+            "-4.46 +/- 0.05' [verified: Ciardullo 2012, arXiv:1203.5551, section 4, read at S35]. A zero-width "
+            "window says no testable target yet (D100), not a strict one."
         ),
     ),
 )
@@ -678,6 +731,26 @@ _MISSES: tuple[Miss, ...] = (
             "mass function's scale at high redshift (M* >~ 1e6 in interacting galaxies, PZMG10 section "
             "2.4.2) is what is wrong, not the dissolution. Not a lever: the window, which is the source's "
             "0.9-1.9 and whose alternative (the catalogue's own M/L = 2, 3.43e7) fails the same way."
+        ),
+    ),
+    Miss(
+        row=ROW_IONIZING_RATE,
+        debt=100,
+        since="S35",
+        reason=(
+            "1.6527e53 s^-1 against Bennett et al. 1994's 1.7-5.3e53, 3% below the window's floor. The model's "
+            "ionizing photons per unit star formation are 0.71 of the Kroupa/Starburst99 steady state (the "
+            "nebular stage's halpha_sfr_ratio, Kennicutt & Evans 2012's calibration; Chomiuk & Povich 2011's "
+            "7.5e-54 Msun/yr per photon/s puts 1.755 Msun/yr at 2.34e53): the Q(T_eff, L) table the light "
+            "stage integrates along the PARSEC isochrones (SHP03, debt #84) yields fewer photons per massive "
+            "star formed than Starburst99's atmospheres, and the youngest isochrone cannot see stars above "
+            "64 Msun. The same COBE data re-analysed by McKee & Williams 1997, (2.6 +/- 1.3)e53, would pass."
+        ),
+        prediction=(
+            "If the Q calibration is the cause, raising the ionizing yield to Starburst99's (x1.41) lands the "
+            "row at 2.3e53, inside, and halpha_sfr_ratio at 1.0 together - one lever, two rows. If the yield is "
+            "raised and the row still misses, the star formation rate (row 15's family) is low, not the photons. "
+            "Not a lever: the window, which is the source's own 50% uncertainty."
         ),
     ),
     Miss(

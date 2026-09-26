@@ -1,4 +1,4 @@
-"""spec: 33 quantities as data (31 until S34, 29 until S30, 24 until S28); the evaluator; everything not-yet-computable at S0."""
+"""spec: 36 quantities as data (33 until S35, 31 until S34, 29 until S30, 24 until S28); the evaluator; everything not-yet-computable at S0."""
 
 from __future__ import annotations
 
@@ -14,17 +14,18 @@ from helpers import TINY, decl
 Q = {q.n: q for q in spec.QUANTITIES}
 
 
-def test_33_quantities():  # test_31_quantities until S34
+def test_36_quantities():  # test_33_quantities until S35, test_31_quantities until S34
     """S28 (BUILD_II Phase 3) added rows 25-28 (BHG16 Table 2) and 29 (the Tully-Fisher slope); S30
     (Phase 6) the two supernova rates, numbered once in ``spec`` (``ROW_CORE_COLLAPSE_RATE``,
     ``ROW_TYPE_IA_RATE``) and read from there everywhere else; S34 (Phase 5) the globular cluster system
     and the stellar halo the same way (``ROW_GC_SYSTEM_MASS``, ``ROW_STELLAR_HALO_MASS``)."""
-    assert len(spec.QUANTITIES) == 33  # 31 until S34
-    assert [q.n for q in spec.QUANTITIES] == list(range(1, 34))
+    assert len(spec.QUANTITIES) == 36  # 33 until S35, 31 until S34
+    assert [q.n for q in spec.QUANTITIES] == list(range(1, 37))  # 34 until S35
     assert (spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE) == (30, 31)
     assert (spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS) == (32, 33)
+    assert (spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE, spec.ROW_PNLF_CUTOFF) == (34, 35, 36)  # S35
     names = [q.name for q in spec.QUANTITIES]
-    assert len(set(names)) == 33  # 31 until S34
+    assert len(set(names)) == 36  # 33 until S35
     fields = [q.field for q in spec.QUANTITIES if q.field]
     assert len(set(fields)) == len(fields)
     assert all(q.source and q.stated for q in spec.QUANTITIES)
@@ -38,7 +39,7 @@ def test_statistical_rows_are_debt_8():
 def test_every_row_names_a_field_but_the_four_ruling_b_holds_back():
     """S9 filled row 24. S28's ruling (b): rows 25-28 judge the model's intrinsic light only if BHG16
     Table 2 says its magnitudes are extinction-corrected, and it does not, so they name no field."""
-    assert [q.n for q in spec.QUANTITIES if q.field is None] == [25, 26, 27, 28]
+    assert [q.n for q in spec.QUANTITIES if q.field is None] == [25, 26, 27, 28, 36]  # 36: the PNLF cutoff, no [O III] per nebula (S35, D184)
     assert Q[24].mode == "qualitative" and Q[24].expect == "bimodal_wide"
     for n, field in ((25, "absolute_magnitude_b"), (26, "absolute_magnitude_v"), (27, "colour_b_v"), (28, "mass_to_light_v")):
         assert Q[n].note.startswith("Not judged (S28 ruling (b))") and f"published as {field}" in Q[n].note
@@ -50,17 +51,17 @@ def test_every_row_names_a_field_but_the_four_ruling_b_holds_back():
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 # One model since D170 (the former advanced physics); the tables keep its values.
-VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS}}  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
+VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS, spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE}}  # S35: rows 34 and 35 (36 n-y-c)  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 10, "fail": 19, "not-yet-computable": 4},  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 11, "fail": 20, "not-yet-computable": 5},  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33},  # 32, 33 since S34
+    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33, 34},  # 34 since S35; 32, 33 since S34
 }
 # S25: row 15 is #80's (the bar reads the lambda_d scale length now that the pattern precedes
 # star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
 # (at its zero-width target), row 22 is #47's.
-DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80, 98, 99}}  # 98, 99 since S34 (rows 32, 33)
+DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80, 98, 99, 100}}  # 100 since S35 (row 34); 98, 99 since S34 (rows 32, 33)
 # S27 (BUILD_II Phase 2): the azimuthal model is basic with the sfh slot swapped for one that adds
 # an (R, phi) modulation and changes no radial field, and every row is radial or vertical, so its
 # tables are basic's -- by reference, so that they cannot drift apart. test_sfh_azimuthal asserts
@@ -74,7 +75,7 @@ for _table in (VERDICTS, SUMMARY, FAILED, DEBTS):
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
     """Everything the model reaches; the rest must admit they cannot."""
     results = judged[model.name]
-    assert len(results) == len(spec.QUANTITIES) == 33  # 31 until S34
+    assert len(results) == len(spec.QUANTITIES) == 36  # 33 until S35
     by_n = {r.n: r for r in results}
     assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == VERDICTS[model.name]
     assert spec.summary(results) == SUMMARY[model.name]
@@ -140,7 +141,7 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "4 not-yet-computable of 33" in out  # of 31 until S34
+    assert "spec" in out and "5 not-yet-computable of 36" in out  # 4 of 33 until S35
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
     assert "recorded miss, debt #42, since S13" in out   # row 6: the heated old population counted as thin
@@ -177,13 +178,13 @@ def test_the_table_says_which_rows_have_no_testable_target():
     """Debt #17: the second of the two fixes it names, the first needing a source S10 has not got."""
     # Row 14 left at S17 (the source does quote an uncertainty); rows 25-28 joined at S28: BHG16
     # prints Table 2 "without the uncertainties" (section 2.2), and no width is invented (D100).
-    assert {q.n for q in spec.untestable()} == {20, 21, 25, 26, 27, 28}
-    assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21, 25, 26, 27, 28))
+    assert {q.n for q in spec.untestable()} == {20, 21, 25, 26, 27, 28, 36}  # 36 joined at S35 (D184)
+    assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21, 25, 26, 27, 28, 36))
     # Row 14 was on the list until S17, when the remedy debt #17 actually asks for arrived: the
     # source does quote an uncertainty for the bulge's dispersion, "to = 3 km/s" (BHG16 §4.3),
     # and it was entered rather than invented. Rows 20 and 21's sources still quote none.
     assert Q[14].lo == 110.0 and Q[14].hi == 116.0 and Q[14].mode == "statistical" and Q[14].testable
-    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21, 25, 26, 27, 28))
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21, 25, 26, 27, 28, 36))
 
 
 def test_a_new_zero_width_row_cannot_be_added_silently():
@@ -197,7 +198,7 @@ def test_a_new_zero_width_row_cannot_be_added_silently():
 
 def test_the_report_names_the_table_defect(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "table: rows 20, 21, 25, 26, 27, 28 have zero-width targets" in out
+    assert "table: rows 20, 21, 25, 26, 27, 28, 36 have zero-width targets" in out  # 36 since S35
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
     assert re.search(r"8\.08\d*e\+09", out)  # row 20's hydrogen mass, printed (6.028e9 until S18; 6.243e9 until S17; 4.171e9 until S16)
