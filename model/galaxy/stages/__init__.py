@@ -22,5 +22,7 @@ from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and r
 from . import systems  # noqa: F401  (checkpoint 5)
 from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
 from . import clusters  # noqa: F401  (checkpoint 5: the young star clusters the clouds make, S33)
+from . import stellar_halo  # noqa: F401  (checkpoint 4: the accreted satellites' debris, S34)
+from . import globular_clusters  # noqa: F401  (checkpoint 5: the survivors of the bound clusters, S34)
 from . import planets  # noqa: F401  (checkpoint 6, seeded)
 from . import habitable_zone  # noqa: F401  (checkpoint 6: built and deliberately unjudged, S30)

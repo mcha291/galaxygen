@@ -434,6 +434,121 @@ LEVEL0: dict[str, Constant] = {
         "size', a mean half-light radius of '4 +/- 1 pc' in the Antennae (astro-ph/0408201, section "
         "6.3, read at S33).",
     ),
+    # --- globular clusters and the stellar halo (S34, BUILD_II Phase 5). Every number below was read at
+    # S34 in its source's text (rule B9, D175) and the sentence is quoted in the line. Boylan-Kolchin's
+    # relation is the check the survival is held to (ruling (a)): only its ratio of ratios, its scatter
+    # and its mean cluster mass enter a computation. ---
+    "GC_HALO_MASS_RATIO": Constant(
+        3.5e-5,
+        "dimensionless",
+        "eta, the globular clusters' mass over the halo's: 'The total mass in present-day GCs within a dark "
+        "matter halo is a constant fraction of the mass of the dark matter halo for 10^10 <~ M_halo/Msun <~ "
+        "10^15: <M_GCs|M_halo(z=0)> = eta M_halo(z=0) with eta = (3-4) x 10^-5' [verified: Boylan-Kolchin "
+        "2017, MNRAS 472, 3120, arXiv:1711.00009, section 2, assumption (iii), read at S34 from PMC6288678]. "
+        "The midpoint of the quoted range [inferred], the value BUILD_II's consistency check uses. Read only "
+        "as the metal-poor share's denominator: the system's mass is the survival's, and this is the check "
+        "it is held to, never an input to it (the brief's ruling (a)).",
+    ),
+    "GC_METAL_POOR_HALO_MASS_RATIO": Constant(
+        2.25e-5,
+        "dimensionless",
+        "eta_b, the metal-poor clusters' mass over the halo's: 'The total mass in present-day metal-poor GCs "
+        "within a dark matter halo is also a constant fraction of the mass of the dark matter halo: "
+        "<M_GCs|M_halo(z=0)> = eta_b M_halo(z=0) with eta_b ~ (2-2.5) x 10^-5' [verified: the same paper, "
+        "assumption (iv), read at S34]. The midpoint [inferred]; over eta's midpoint it makes the metal-poor "
+        "share 0.643, and the quoted ranges span 0.50-0.83.",
+    ),
+    "GC_SYSTEM_SCATTER": Constant(
+        0.28,
+        "dex",
+        "The residual about the halo relation: 'Observationally, the scatter in the mass in GCs at fixed halo "
+        "mass is approximately constant with sigma <~ 0.28 dex' [verified: the same paper, section 5.1, read "
+        "at S34]. An upper bound in the source, used as the lognormal's width, as the M-sigma residual's is "
+        "(ruling (b), GALAXY_INPUTS.md section 4b: derive the mean, seed the residual).",
+    ),
+    "GC_MEAN_MASS": Constant(
+        2.5e5,
+        "Msun",
+        "The mean present-day globular cluster mass: 'I will assume <m(z = 0)> = 2.5 x 10^5 Msun (see Harris "
+        "et al. 2017)' [verified: the same paper, section 2, read at S34]. Turns the system's mass into a "
+        "count estimate, a second number the acceptance row does not judge (BUILD_II: on mass, not count).",
+    ),
+    "CLUSTER_DISRUPTION_T0": Constant(
+        3.3,
+        "Myr",
+        "The disruption time's normalisation in t_dis = t_0 (M_i/Msun)^gamma: 't0 = 3.3 -1.0 +1.4 Myr' for "
+        "the solar neighbourhood (section 6.3), which 'implies a total disruption time of a 10^4 Msun cluster "
+        "of 1.3 +/- 0.5 Gyr'; the abstract: 'This is a factor 5 shorter than derived from N-body simulations "
+        "of clusters in the tidal field of the galaxy' [verified: Lamers, Gieles, Bastian, Baumgardt, "
+        "Kharchenko & Portegies Zwart 2005, A&A, arXiv:astro-ph/0505558, read at S34]. Measured on "
+        "open clusters within 600 pc of the Sun, so it carries the thin disc's cloud encounters; the N-body "
+        "tidal-field value, five times longer, is the named alternative for clusters that live in the halo.",
+    ),
+    "CLUSTER_DISRUPTION_INDEX": Constant(
+        0.62,
+        "dimensionless",
+        "gamma in t_dis = t_0 (M_i/Msun)^0.62 (eq. 1): 'the disruption time of a cluster, defined as t_dis^-1 "
+        "= dln M/dt depends on the initial mass M_i of the clusters as M_i^gamma, with gamma ~ 0.6 for "
+        "clusters in very different local environments' [verified: Lamers et al. 2005, section 2, read at "
+        "S34]; eq. 6 gives the mass left at age t, mu = {mu_ev^gamma - gamma t/t_0 (Msun/M_i)^gamma}^(1/gamma).",
+    ),
+    "CLUSTER_MASS_FUNCTION_INDEX": Constant(
+        2.0,
+        "dimensionless",
+        "beta in the young clusters' initial mass function: 'The functional form of the initial mass "
+        "function for young star clusters is well represented by a Schechter (1976) distribution phi(M) = "
+        "dN/dM = A M^-beta exp(-M/M*)' and 'Here beta ~ 2' [verified: Portegies Zwart, McKee & Gieles 2010, "
+        "ARA&A 48, 431, "
+        "arXiv:1002.1961, section 2.4.2, read at S33 and S34]. Enters only the survival integral: the cluster "
+        "census inherits the clouds' slopes (debt #96).",
+    ),
+    "CLUSTER_MASS_FUNCTION_SCALE": Constant(
+        2.0e5,
+        "Msun",
+        "M*, the Schechter scale of the same function: 'For Milky-Way type spiral galaxies M* ~ 2 x 10^5 Msun' "
+        "[verified: the same section]. The same review's 'For interacting galaxies and luminous infrared "
+        "galaxies, Bastian (2008) obtains M* >~ 10^6 Msun' is the named alternative for clusters formed in "
+        "the gas-rich, merging early galaxy; it raises the survival, which is dominated by the massive end.",
+    ),
+    "CLUSTER_MASS_MIN": Constant(
+        1.0e2,
+        "Msun",
+        "The lower end of the cluster mass function: 'Suppose that the CIMF is a power law with a slope "
+        "-alpha = -2 ... in the range of Mmin < Mcl < Mmax, Mmin ~ 10^2 Msun and Mmax ~ 10^7 Msun' "
+        "[verified: Lamers et al. 2005, section 5, read at S34] - a supposition in the source, not a "
+        "measurement. With an index of 2 the mass per decade is flat below the scale, so the survival falls "
+        "as the logarithm of the range this opens.",
+    ),
+    "STELLAR_HALO_INNER_SLOPE": Constant(
+        -2.5,
+        "dimensionless",
+        "The stellar halo's density slope inside the break: 'The inner power-law slope is encompassed by "
+        "alpha_in = -2.5 +/- 0.3' [verified: Bland-Hawthorn & Gerhard 2016, ARA&A 54, 529, arXiv:1602.07702, "
+        "section 6.1.1, read at S34 from the arXiv PDF]; the review's Table 6 lists the double power-law fits "
+        "it summarises.",
+    ),
+    "STELLAR_HALO_OUTER_SLOPE": Constant(
+        -4.5,
+        "dimensionless",
+        "The slope beyond the break: 'For RRL and BHB, the outer power-law slope is in the range alpha_out = "
+        "-4.5 +/- 0.5 ... For RGB the slope is somewhat shallower, alpha_out = -3.8 +/- 0.1' [verified: the "
+        "same section]. The RR Lyrae and horizontal-branch value, the tracers of the old metal-poor stars; the "
+        "giants' -3.8 is the named alternative, and the margin gives -(3.7-5.0).",
+    ),
+    "STELLAR_HALO_BREAK_RADIUS": Constant(
+        25.0,
+        "kpc",
+        "Where the slope breaks: 'the break radius between the inner and outer components scatters in the "
+        "range rs = 25 +/- 10 kpc' [verified: the same section].",
+    ),
+    "STELLAR_HALO_FLATTENING": Constant(
+        0.65,
+        "dimensionless",
+        "The halo's axis ratio: 'The inner halo flattening is found qin = 0.65 +/- 0.05 across various "
+        "studies' [verified: the same section]; one ratio at every radius, as in the double power-law models "
+        "the review tabulates ('in these models, the outer qout = qin', Table 6). The outer 0.8 +/- 0.1 some "
+        "studies find is the named alternative.",
+    ),
     # --- swing amplification: the arm number and the arms' strength (S26, BUILD_II Phase 1b, D175) ---
     "SWING_X_LOW": Constant(
         1.0,

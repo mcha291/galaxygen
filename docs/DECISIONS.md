@@ -5689,3 +5689,80 @@ clusters: one sector*    1.0603   0.0014 740.02     18,864  halo,disc,assembly,b
 clusters: whole disc*    1.3409   0.0050 270.08  1,038,368  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
 ```
 (`uv run python tools/timings.py`, 2026-09-26, session-33; the level-0 rows within noise of S32's.)
+
+### D183. Phase 5: the globular-cluster system as the bound clusters' survivors — η reproduced to 0.26 dex by the wrong population — and the stellar halo as the accreted debris; rows 32 and 33 enter as recorded misses
+
+**Built by an Opus 5.5 subagent in a worktree on `session-34` (commit e8e6412); reviewed here against
+BRIEF.md's gate: core diff first, then the tests. Accepted without a second pass.** Every constant carries
+the sentence it was read from; the Harris catalogue was transcribed twice and the two agree to the digit
+(the sum M_V,t = V_t − (m−M)_V holds on every row).
+
+**The rulings (a)–(d), as applied.** (a) **η is the check, never an input to the system mass**: the mass is
+S33's bound cluster mass times a survival fraction over the history, and the survival is Lamers et al.
+2005's analytic disruption — t_dis = t₀ (M/M☉)^γ, μ(t) = {μ_ev^γ − γ t/t₀ (M☉/M_i)^γ}^(1/γ), their eq. 6,
+at their own solar-neighbourhood calibration t₀ = 3.3 (+1.4 −1.0) Myr, γ = 0.62 `[verified:
+arXiv:astro-ph/0505558, §§2, 6.3]` — applied to clusters born with Portegies Zwart, McKee & Gieles 2010's
+young-cluster function (β ≃ 2, M∗ ≈ 2 × 10⁵ M☉, §2.4.2; Bastian's M∗ ≳ 10⁶ for interacting galaxies the
+alternative) from Lamers' own lower mass 10² (their §5), at the ages the model's history gives them; μ_ev
+is the model's 1 − R = 0.7 because the bound mass is already net of return (the source's μ_ev(t) fit the
+named alternative, its coefficients read only through a summary and so not used). The mass function
+enters here and nowhere else: S33's bound fraction is mass-independent, dissolution is not (#96, #97).
+(b) The residual is a lognormal draw on `world_seed` at Boylan-Kolchin's "σ ≲ 0.28 dex" `[verified:
+arXiv:1711.00009, §5.1]`, the mean never published alone; `world_seed` still binds at checkpoint 1 (the
+nucleus). (c) The metal-poor share is η_b/η = 2.25/3.5 = 0.643 from the same source's assumptions (iii)
+and (iv) `[verified: §2]`, applied when the merger list accreted any stars and zero otherwise — the source
+measures both on galaxies that all accreted and says nothing about scaling with the accreted mass, so
+nothing is invented. (d) The stellar halo is the sum over `mergers[]` of mass ratio × the host's disc
+stars formed before the event, net of return, every satellite taken whole (no stripped fraction was
+read; the ratio-as-stellar-share reading tagged `[inferred]`); the spheroid is excluded because the model
+gives it no formation time. Boylan-Kolchin's paper states it does not model disruption; BUILD_II's "2018"
+is MNRAS 472, 3120 (2017).
+
+**Built.** Three stages, in both models through BASIC's tuple: `stellar_halo` (cp4, derived:
+`halo_stellar_mass`, `halo_stellar_density`(R) with BHG16 §6.1.1's broken power law, α_in −2.5 ± 0.3,
+α_out −4.5 ± 0.5, r_s 25 ± 10 kpc, q 0.65 ± 0.05 `[verified: arXiv:1602.07702]`), `cluster_survival` (cp5,
+derived: `gc_survival_fraction`, `gc_metal_poor_fraction`) and `globular_clusters` (cp5, seeded:
+`gc_system_mass`, `gc_count_estimate` at Boylan-Kolchin's assumed ⟨m⟩ = 2.5 × 10⁵ after Harris et al.
+2017) — split as the nucleus was from the halo (D55) so the determined quantities stay derived. Thirteen
+level-0 constants. **The bound mass is recomputed, not read**: reading `bound_cluster_mass_total` would
+materialise both censuses in each of row 32's 41 ensemble runs (D4, #24's reasoning); the stage calls the
+same function on the same history and a test asserts equality. No new inputs, no new routes; the 228
+fields per model bit-identical by sha256.
+
+**Measured (default; both models identical).** Survival 0.02502; the mean system mass 6.97 × 10⁷ M☉ =
+1.810 × η M_halo (3.5 × 10⁻⁵ × 1.1 × 10¹² = 3.85 × 10⁷), **+0.258 dex, inside the 0.28 dex scatter** —
+the consistency check BUILD_II states, reproduced and asserted; the drawn value at `world_seed` 0 is
+9.38 × 10⁷ (+0.13 dex), the 41-run ensemble median 7.13 × 10⁷ with a central 95% of 1.6 × 10⁷ – 1.7 × 10⁸;
+count estimate 285 (median) against Harris's 157; metal-poor share 0.643; halo stellar mass 3.03 × 10⁹
+(Gaia-Enceladus 0.25 × 9.63 × 10⁹ = 2.41 × 10⁹, Sagittarius 0.02 × 3.11 × 10¹⁰ = 6.2 × 10⁸). Sensitivity of
+the mean: t₀ 2.3 / 4.7 Myr → 4.5 × 10⁷ / 1.09 × 10⁸; the N-body t₀ (×5) → 4.28 × 10⁸; M∗ 10⁶ → 1.9 × 10⁸;
+M_min 10³ → 1.0 × 10⁸.
+
+**The finding, which is the ruling this decision records.** #97 closes on the number and **not on the
+population**: 53% of the surviving mass is in clusters younger than 1 Gyr and 0.7% (5.2 × 10⁵ M☉) in
+clusters older than 10 Gyr — a 10⁴ M☉ cluster is gone in 1.3 Gyr and a 10⁵ one in 5.4 at the open-cluster
+t₀ — so the agreement with the halo relation is carried by surviving open clusters, not globulars. The
+survivors older than 10 Gyr alone read −1.87 dex against the relation at this calibration and **+0.085
+dex at the N-body time-scale** (Lamers' abstract: the solar-neighbourhood t₀ is "a factor 5 shorter than
+derived from N-body simulations") — a closure on the right population, **not built**, because it needs the
+age at which a survivor counts as a globular and a disruption time for a halo orbit, and no source read
+gives either. **Ruled: the build stands as is** — the stage's docstring and every about line state the
+composition; `gc_system_mass` is what its about says it is; **#97 stays carried**, re-stated with these
+numbers, and no age cut enters from recall (B9). **Rows 32 and 33 are recorded misses** (#98, #99): row 32
+statistical, `gc_system_mass` against the Harris catalogue's ΣL_V = 1.716 × 10⁷ L☉ (156 of 157 clusters with
+M_V,t; the catalogue lists no masses) × BHG16's M/L_V = 1.4 ± 0.5 for metal-poor globulars → 1.54–3.26 ×
+10⁷, the median 0.47 dex above the centre — and the row's text discloses that the model's number was
+known when the M/L was chosen, and that η M_halo itself (3.3–4.4 × 10⁷) sits at or above the window's
+top; row 33 pointwise, `halo_stellar_mass` against BHG16 §6.1.2's Ms = 4–7 × 10⁸ (Bell et al.'s 1–40 kpc
+fit plus half the substructures), 0.64 dex above. Spec **10 pass / 19 fail / 4 n-y-c of 33**; rows 1–31
+unmoved; convergence 0 drifts. Pins: graph ORDER (stellar_halo after chemistry_dtd, cluster_survival
+after vertical_alpha, globular_clusters after ism), SEEDED set, test_spec tallies, test_sfh_azimuthal's
+row range; test_s22_rulings unchanged (both new rows fail). The stages cost milliseconds; the cold
+timings were run and are within noise of S33's, so no table is appended (B2).
+
+**Chosen against.** An age cut making `gc_system_mass` the old survivors (unsourced; and the number it
+would give depends entirely on which t₀ — 5 × 10⁵ or 4.7 × 10⁷). A derived cluster count (needs a mean
+cluster mass the model does not make; BUILD_II: "acceptance row on mass, not count"). Satellites as
+objects (cut in BUILD_II Phase 5 with the reason recorded; not reinstated). A stellar-to-halo relation for
+the satellites (unread; #99's prediction names it as the lever). The register reads 45 open = 11
+permanent + 34 carried, 37 discharged.
