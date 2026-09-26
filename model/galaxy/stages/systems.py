@@ -29,7 +29,13 @@ would leave it at a different position than for 1000, and the prefix would break
 that sector at the ring's radius, and a star's azimuth inside its sector inverts
 the contrast at its own radius. The contrast averages to 1 around every ring, so
 the radial distribution — and every radial row — is what it was. Its amplitudes
-are experimental inputs for now (debt #23).
+are derived means with seeded residuals since S26 (D175).
+
+**Young stars in the azimuthal model** (S27). Where the model publishes
+``sfr_modulation`` — where around each ring today's stars form — a star younger than
+:data:`YOUNG_STAR_AGE` takes its azimuth from that instead, and a cell's share of young
+stars follows the sector's modulation over its contrast (:class:`YoungStars`). The cell
+counts are still the contrast's, so a star's name is the same whichever model drew it.
 """
 
 from __future__ import annotations
@@ -47,7 +53,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.pattern import ArmPattern
+from galaxy.stages.pattern import ArmPattern, invert_azimuths
 from galaxy.stages.photometry import lookup as photometry
 from galaxy.stages.vertical import POPULATIONS
 
@@ -61,6 +67,14 @@ CELL_RINGS = 32
 CELL_SECTORS = 32
 CELL_COUNT = CELL_RINGS * CELL_SECTORS
 CATALOGUE_SAMPLE = 20_000  # the clickable sample of GALAXY_PLAN.md §4, order 10^4-10^5
+
+# Younger than this, a star is placed by where stars form today (``sfr_modulation``, published
+# only by the azimuthal model) rather than by where the mass is (the density contrast): about one
+# arm crossing. The number is BUILD_II.md Phase 2's — gas orbits and mixes azimuthally on ~100 Myr,
+# so a star older than that has phase-mixed out of the arm it formed in — and the plan states it
+# without a source [inferred]. It is a cut, not a law: nothing in the model says how fast a young
+# population leaves its arm, and a decaying weight would be a second constant with no source either.
+YOUNG_STAR_AGE = 0.1  # Gyr
 
 # Kroupa IMF: dN/dm proportional to m^-1.3 below the break and m^-2.3 above it
 # [recall: Kroupa 2001]. GALAXY_INPUTS.md §2 makes the IMF a Level 0 constant.
@@ -347,6 +361,107 @@ class Churn:
         return np.where(empty, self.R[self._rings[ring]], drawn)
 
 
+class Modulation:
+    """Where stars form today around each ring (``sfr_modulation``), read for the young stars.
+
+    A grid field on (R, φ), not an analytic pattern, so it is read bilinearly: linearly in R
+    between grid radii, linearly and periodically in φ between the φ cells' centres (the grid's
+    own ``Axis.centres``: cell k at (k + ½) 2π/n).
+    """
+
+    __slots__ = ("table", "R")
+
+    def __init__(self, table: np.ndarray, R: np.ndarray) -> None:
+        self.table = np.asarray(table, dtype=float)
+        self.R = np.asarray(R, dtype=float)
+
+    def at(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """The modulation at each radius ``r`` (one row each) and every azimuth ``phi``."""
+        R, table = self.R, self.table
+        r = np.atleast_1d(np.asarray(r, dtype=float))
+        i = np.clip(np.searchsorted(R, r) - 1, 0, max(R.size - 2, 0))
+        j = np.minimum(i + 1, R.size - 1)
+        span = np.where(R[j] > R[i], R[j] - R[i], 1.0)
+        a = np.clip((r - R[i]) / span, 0.0, 1.0)[:, None]
+        rows = table[i] * (1.0 - a) + table[j] * a  # (len(r), n_phi)
+        n = table.shape[1]
+        x = np.mod(np.asarray(phi, dtype=float), 2.0 * math.pi) * (n / (2.0 * math.pi)) - 0.5
+        k0 = np.floor(x)
+        w = x - k0
+        k0 = k0.astype(np.intp) % n
+        k1 = (k0 + 1) % n
+        return rows[:, k0] * (1.0 - w) + rows[:, k1] * w
+
+    def sector_means(self, r: float, edges: np.ndarray, steps: int = 24) -> np.ndarray:
+        """The modulation averaged over each sector between ``edges`` at one radius (trapezoids)."""
+        frac = np.linspace(0.0, 1.0, steps + 1)
+        sub = edges[:-1, None] + (edges[1:] - edges[:-1])[:, None] * frac[None, :]
+        f = self.at(np.array([r]), sub.ravel()).reshape(sub.shape)
+        return (0.5 * (f[:, 0] + f[:, -1]) + f[:, 1:-1].sum(axis=1)) / steps
+
+    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
+        """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8)."""
+        grid = np.linspace(lo, hi, steps + 1)
+        return invert_azimuths(u, grid, self.at(radius, grid))
+
+
+class YoungStars:
+    """The azimuthal model's split of each cell into young stars and the rest (S27).
+
+    A cell's star count stays the density contrast's — the stellar mass is where the contrast
+    puts it, and a star's name ``(cell, index)`` must not depend on which model drew the
+    catalogue's layout (the planets stage and the API recompute it with the contrast alone).
+    What moves is *which* of a cell's stars are young. A ring whose arrival law holds a share
+    ``y`` of stars younger than :data:`YOUNG_STAR_AGE` gives each of its sectors a young share
+    ``y · m̄ / c̄`` — the sector's mean modulation over its mean contrast — so the ring's young
+    stars are spread over its sectors as the modulation is, the ring's total young share is
+    still ``y``, and the older stars take up the difference: the total stays the contrast.
+    Every table here covers every ring and sector, whatever a request asked for (D60).
+    """
+
+    __slots__ = ("modulation", "young_step", "born_after", "share", "p")
+
+    def __init__(
+        self,
+        modulation: Modulation,
+        pattern: ArmPattern | None,
+        arrive: np.ndarray,
+        t: np.ndarray,
+        rings: np.ndarray,
+        sectors: np.ndarray,
+    ) -> None:
+        self.modulation = modulation
+        self.young_step = (t[-1] - t) < YOUNG_STAR_AGE
+        first = int(np.argmax(self.young_step)) if self.young_step.any() else t.size
+        # invert_cdf gives step k's weight to the interval ending at t[k], so a star born after
+        # t[first - 1] was drawn from the young steps' weights, and it is young by that token.
+        self.born_after = float(t[first - 1]) if first > 0 else -math.inf
+        total = arrive.sum(axis=0)
+        young = arrive[self.young_step].sum(axis=0)
+        self.share = np.where(total > 0.0, young / np.where(total > 0.0, total, 1.0), 0.0)
+        mids = 0.5 * (rings[:-1] + rings[1:])
+        mod = np.array([modulation.sector_means(float(r), sectors) for r in mids])
+        ring_mean = mod.mean(axis=1, keepdims=True)
+        mod = np.where(ring_mean > 0.0, mod / np.where(ring_mean > 0.0, ring_mean, 1.0), 1.0)
+        con = (
+            np.ones_like(mod)
+            if pattern is None or pattern.flat
+            else np.array([pattern.sector_means(float(r), sectors) for r in mids])
+        )
+        ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
+        self.p = np.clip(self.share[:, None] * ratio, 0.0, 1.0)
+
+    def age_weights(self, arrive: np.ndarray, ring: int, sector: int) -> np.ndarray:
+        """The ring's arrival law, its young steps weighted to this sector's young share."""
+        y, p = float(self.share[ring]), float(self.p[ring, sector])
+        if not 0.0 < y < 1.0:
+            return arrive
+        return arrive * np.where(self.young_step, p / y, (1.0 - p) / (1.0 - y))
+
+    def is_young(self, born: np.ndarray) -> np.ndarray:
+        return born > self.born_after
+
+
 def materialise(
     fields: Mapping[str, Any],
     R: np.ndarray,
@@ -403,6 +518,14 @@ def materialise(
     # this stage's whole contract (D60), and arithmetic that depends on what was asked for
     # is the one thing it cannot have. Affordable because the kernel is read by column now.
     churn = Churn(R, t, fields["sfr_surface_density_history"], ring_index, migration)
+    # Where stars form today, when the model publishes it (the azimuthal model, S27): read
+    # optionally, so the same stage draws both models' catalogues, and tabulated over every
+    # ring and sector for the same reason the arrival law is (D60).
+    table = fields.get("sfr_modulation")
+    young = (
+        None if table is None
+        else YoungStars(Modulation(table, R), pattern, churn.arrive, t, edges, cell_edges(R)[1])
+    )
 
     for cell, count in counts:
         ring, sector = divmod(int(cell), CELL_SECTORS)
@@ -415,18 +538,32 @@ def materialise(
         weight = np.where(inside, fields["stellar_surface_density"] * R, 0.0)
         radius = invert_cdf(draw("radius"), R, weight)
 
-        width = 2.0 * math.pi / CELL_SECTORS
-        if pattern is None or pattern.flat:
-            azimuth = (sector + draw("azimuth")) * width
-        else:
-            azimuth = pattern.azimuths(draw("azimuth"), radius, sector * width, (sector + 1) * width)
-
         # When a star was born, of the stars that are *here now*: the migration kernel's
         # arrival law rather than the local birth rate, which would be the answer for a
         # disc whose stars never moved. Taken once per ring, as the birth-time CDF always
         # was — building one per star would cost 10^6 cumulative sums for a resolution
-        # finer than a ring is wide.
-        born = invert_cdf(draw("age"), t, churn.arrive[:, ring])
+        # finer than a ring is wide. In the azimuthal model the ring's law is tilted per
+        # sector toward or away from its young steps (YoungStars), the ring's total unchanged.
+        arrival = churn.arrive[:, ring] if young is None else young.age_weights(churn.arrive[:, ring], ring, sector)
+        born = invert_cdf(draw("age"), t, arrival)
+
+        # Where around the ring: the density contrast at the star's own radius, inside its
+        # sector; in the azimuthal model a star younger than an arm crossing follows where
+        # stars form today instead. Every property has its own stream, so drawing the age
+        # first changes no number.
+        width = 2.0 * math.pi / CELL_SECTORS
+        u_azimuth = draw("azimuth")
+        if pattern is None or pattern.flat:
+            azimuth = (sector + u_azimuth) * width
+        else:
+            azimuth = pattern.azimuths(u_azimuth, radius, sector * width, (sector + 1) * width)
+        if young is not None:
+            fresh = young.is_young(born)
+            if fresh.any():
+                azimuth[fresh] = young.modulation.azimuths(
+                    u_azimuth[fresh], radius[fresh], sector * width, (sector + 1) * width,
+                )
+
         cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
         birth_radius = churn.birth_radius(draw("birth_radius"), ring, cols)
         rows = np.clip(np.searchsorted(R, birth_radius), 0, len(R) - 1)
@@ -519,7 +656,10 @@ STAR_RADIUS = _column("star_radius", "Galactocentric radius", "kpc",
                       "sample traces the disc exactly rather than approximately.")
 STAR_AZIMUTH = _column("star_azimuth", "Azimuth", "rad",
                        "Drawn from the bar and arm density contrast at the star's radius, so stars "
-                       "crowd into the arms and the bar (experimental amplitudes, debt #23).")
+                       "crowd into the arms and the bar. Where the model publishes where stars form "
+                       "today (sfr_modulation, the azimuthal model), a star younger than about one arm "
+                       "crossing, 100 Myr, is placed by that instead, and the young stars crowd into "
+                       "the arms more tightly than the old ones.")
 STAR_HEIGHT = _column("star_height", "Height above the plane", "kpc",
                       "Inverted from the sech² profile at the star's own population's scale height, "
                       "so the thick disc is genuinely thicker rather than tagged as such.")
@@ -612,6 +752,8 @@ SYSTEMS = IMPLEMENTATIONS.register(
             "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
             "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
         ),
+        # Where stars form today: the azimuthal model's own field, absent in basic (S27).
+        requires_optional=("sfr_modulation",),
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,

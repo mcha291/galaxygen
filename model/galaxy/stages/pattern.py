@@ -330,16 +330,28 @@ class ArmPattern:
     def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
         """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8)."""
         grid = np.linspace(lo, hi, steps + 1)
-        f = np.maximum(self.contrast(radius, grid), 0.0)  # (stars, steps + 1)
-        seg = 0.5 * (f[:, 1:] + f[:, :-1])
-        cdf = np.concatenate([np.zeros((len(radius), 1)), np.cumsum(seg, axis=1)], axis=1)
-        total = np.where(cdf[:, -1] > 0.0, cdf[:, -1], 1.0)
-        target = np.asarray(u, dtype=float) * total
-        k = np.clip((cdf < target[:, None]).sum(axis=1) - 1, 0, steps - 1)
-        rows = np.arange(len(radius))
-        c0, c1 = cdf[rows, k], cdf[rows, k + 1]
-        frac = np.where(c1 > c0, (target - c0) / np.where(c1 > c0, c1 - c0, 1.0), 0.0)
-        return grid[k] + np.clip(frac, 0.0, 1.0) * (grid[1] - grid[0])
+        return invert_azimuths(u, grid, self.contrast(radius, grid))
+
+
+def invert_azimuths(u: np.ndarray, grid: np.ndarray, density: np.ndarray) -> np.ndarray:
+    """Azimuths on ``grid`` (one sector, evenly spaced) by inverting each star's own row of ``density``.
+
+    ``density`` is (stars, len(grid)): the contrast, or since S27 the star-formation modulation,
+    evaluated at each star's radius. Trapezoids between the grid points, linear inside one —
+    an inverse CDF, never a rejection (rule B8).
+    """
+    steps = grid.size - 1
+    f = np.maximum(density, 0.0)  # (stars, steps + 1)
+    stars = f.shape[0]
+    seg = 0.5 * (f[:, 1:] + f[:, :-1])
+    cdf = np.concatenate([np.zeros((stars, 1)), np.cumsum(seg, axis=1)], axis=1)
+    total = np.where(cdf[:, -1] > 0.0, cdf[:, -1], 1.0)
+    target = np.asarray(u, dtype=float) * total
+    k = np.clip((cdf < target[:, None]).sum(axis=1) - 1, 0, steps - 1)
+    rows = np.arange(stars)
+    c0, c1 = cdf[rows, k], cdf[rows, k + 1]
+    frac = np.where(c1 > c0, (target - c0) / np.where(c1 > c0, c1 - c0, 1.0), 0.0)
+    return grid[k] + np.clip(frac, 0.0, 1.0) * (grid[1] - grid[0])
 
 
 def compute_pattern(ctx: Context) -> Mapping[str, Any]:
