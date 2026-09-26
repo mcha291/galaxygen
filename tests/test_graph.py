@@ -39,12 +39,12 @@ def chk(m, *stages):
 # chemistry_dtd, population, light, vertical_alpha, formation, ism, systems, planets".
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "light",
-        "vertical_alpha", "population", "ism", "systems", "formation", "planets",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "light",
+        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "planets",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "light",
-        "vertical_alpha", "population", "ism", "systems", "formation", "planets",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae",
+        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "planets",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation

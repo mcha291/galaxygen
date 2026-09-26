@@ -689,22 +689,23 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87 | 22 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90 | 25 |
 
-So the board's **33 open** is 11 permanent and 22 carried, and no item is unruled. (S22
+So the board's **36 open** is 11 permanent and 25 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
 discharged #23, D175; S27 opened #81, the young-star cut, D176; S28 opened #82–#84, the
 photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177; S29 opened
-#85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178.) The eleven
+#85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178; S30 opened
+#88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The twenty-two carried ones are not twenty-two mechanisms.** Four of them — 19, 27, 49 and the
+**The twenty-five carried ones are not twenty-five mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -717,8 +718,10 @@ closable by reading a source; one — 81 — is a cut standing where a spiral pa
 (S27, D176); three — 82, 83, 84 — are the second build's sources' (a table that does not say what
 its light is, a coefficient not fetched, a calibration that covers a third of what reads it; S28,
 D177); one — 85 — is the instantaneous recycling the remnants exposed, a mechanism in `sfh` (S29,
-D178), and 86 and 87 are a fit not read and a row owed to Audit III. That leaves 28, 33, 39, 42, 43
-and 70, which are five instrument or bookkeeping statements and one kernel width.
+D178), and 86 and 87 are a fit not read and a row owed to Audit III; 88 is a recalled yield that a row
+now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179). That
+leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping statements and one kernel
+width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -2899,6 +2902,32 @@ never been judged in twenty-three sessions.
    row was ruled, so entering it now would be choosing a target with the answer known (D113, B5). Pinned
    as a measurement in `tests/test_remnants.py` and **carried** for Audit III (S37), which enters the row
    blind to the pin or records why it may not.
+88. **Row 31 passes on an unsourced yield: the model makes 1.87× the type Ia per unit mass formed that is
+   measured** (S30, BUILD_II Phase 6, D179). `Y_FE_IA` = 0.0017 M☉ of Ia iron per unit mass formed has
+   been `[recall: WAF17]` since S9; over Maoz & Graur 2017's 0.7 M☉ of iron per event `[verified:
+   arXiv:1703.04540 §III eq. 2]` it is 2.43 × 10⁻³ events per M☉ formed against their measured 1.3 ± 0.1
+   × 10⁻³ (§II). The Galactic Ia rate reads 0.0065332 yr⁻¹ against Adams et al. 2013's 1.4 (+1.4, −0.8) per
+   century — inside, by 0.0005 above the floor; at the measured events per mass it would read 0.350 per
+   century and fail. **Carried.** What closes it: the yield read from WAF17's own text or the DTD
+   normalised to Maoz & Graur's events per mass with the iron per event sourced (one constant either
+   way, entered before the row is next judged, D113); rule B10 then reaches `WIND_SPEED`, fitted while the
+   Ia iron was 1.87× too much. Prediction (B4): row 31 falls below its floor unless the spheroid's Ia
+   (#89) are added; the gas iron at R₀ falls and the wind refits slower; row 22's tilt moves.
+89. **The spheroid's type Ia are not in the rate** (S30, D179). `type_ia_rate` convolves the disc's
+   formation history; the spheroid is old stars the halo stage derives (S17) that the history never
+   formed, and the stellar halo does not exist yet (Phase 5). Their Ia are missing — an estimated 0.03–0.05
+   per century, 4–7% of the disc's 0.653 `[inferred: the spheroid's mass at an old population's DTD
+   tail]` — and row 31 reads low by that share. **Carried**; closable when the spheroid has a formation
+   time (a burst at its assembly, the same DTD) and when Phase 5's halo stars join the history.
+90. **The habitable zone's two open readings** (S30, D179). Gowanlock et al. 2011's eq. 5 was read twice as
+   d = 8 pc × 10^(−0.4 ΔM) and once as scaling with the square root of the flux ratio, 10^(−0.2 ΔM); the
+   two give different zones (hazard at R₀ 2.03 against 0.20 per Gyr, the habitable count peaking at 10.8
+   against 6.6 kpc). The first is used as read; the second is pinned as a probe, and it was not adopted
+   because it resembles Lineweaver et al. 2004's 7–9 kpc, which would be choosing with the answer known.
+   The source's ozone clock restarts after a sterilization; this model counts only the first window, a
+   lower bound. **Carried**; closable by reading the equation from the journal text (not a text
+   extraction) and by Lineweaver et al. 2004 read at all. The zone has no row by ruling (b) and gets none
+   here: this debt is about reading the source, not about a target.
 
 ---
 

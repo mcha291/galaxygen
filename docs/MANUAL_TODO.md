@@ -67,7 +67,8 @@ closes the project.
 | 26 | `s26` | `05655dba6948` | **queued** — filled in by S27 |
 | 27 | `s27` | `c72dffd59d36` | **queued** — filled in by S28 |
 | 28 | `s28` | `e30d33a9d060` | **queued** — filled in by S29 |
-| 29 | `s29` | TBD | **queued** — S30 fills the SHA in |
+| 29 | `s29` | `70ed6bd1da8d` | **queued** — filled in by S30 |
+| 30 | `s30` | TBD | **queued** — S31 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -202,8 +203,11 @@ git tag -a s27 c72dffd59d366d7b56f372b33a0598bcdd992415 -m "S27: the azimuthal m
 # S28 — the photometric rows, the ionizing budget, the wind, the Tully-Fisher sweep (Phase 3).
 git tag -a s28 e30d33a9d060966e8b7c87b87bae5c6a58b7af19 -m "S28: the magnitudes, the ionizing budget and the Tully-Fisher sweep"
 
-# S29 — remnants and planetary nebulae (Phase 4). SHA filled in by S30.
-git tag -a s29 "$(git rev-list -1 --grep='^Merge S29 into main' main)" -m "S29: remnants and planetary nebulae"
+# S29 — remnants and planetary nebulae (Phase 4).
+git tag -a s29 70ed6bd1da8d28109f0bd5df268f8acbc2f353b6 -m "S29: remnants and planetary nebulae"
+
+# S30 — the supernova rates and the habitable zone (Phase 6). SHA filled in by S31.
+git tag -a s30 "$(git rev-list -1 --grep='^Merge S30 into main' main)" -m "S30: the supernova rates and the habitable zone"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

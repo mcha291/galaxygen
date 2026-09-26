@@ -202,6 +202,25 @@ _BHG16_TABLE2 = (
 )
 _BHG16_T2 = "BHG16 Table 2 (Licquia, Newman & Brinchmann 2015)"
 
+# S30 (BUILD_II Phase 6): the two supernova-rate rows. **Their numbers are named here and nowhere
+# else** - every test and note reads these two names - so that renumbering them at a merge (if
+# another row 30 lands first) is this one line.
+ROW_CORE_COLLAPSE_RATE, ROW_TYPE_IA_RATE = 30, 31
+_ADAMS13 = "Adams et al. 2013, ApJ 778, 164, section III.5"
+_ADAMS13_READ = (
+    "Adams, Kochanek, Beacom, Vagins & Stanek 2013, section III.5, read from arXiv:1306.0559 (ar5iv) "
+    "at S30 by a read-only agent and confirmed by a second fetch [verified: arXiv:1306.0559]: a "
+    "Galactic core-collapse rate of 3.2 +7.3 -2.6 per century and a Galactic type Ia rate of "
+    "1.4 +1.4 -0.8 per century (a total of 4.6 +7.4 -2.7), from their modelled observability of "
+    "Galactic supernovae together with the historical ones. The window is the source's asymmetric "
+    "interval converted to per year, nothing chosen "
+    "(ruling (a)). A per-galaxy rate, so the row reads the model's total; the model's rate per unit "
+    "stellar mass is recorded in S30's decision against Li et al. 2011's per-mass rates by "
+    "Hubble type (Table 4, Sbc: Ia 0.136 +/- 0.018, II 0.104 +/- 0.027, Ibc 0.043 +/- 0.020 SNuM) - "
+    "the named alternative for the Ia row, chosen against because the Galaxy's own rate is what the "
+    "table judges and one source gives both rates by one method."
+)
+
 QUANTITIES: tuple[Quantity, ...] = (
     Quantity(1, "Total stellar mass", "Msun", "stellar_mass_total", 4.0e10, 6.0e10, "pointwise", "5 ± 1 × 10¹⁰ M☉", _BHG16),
     Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16),
@@ -253,6 +272,24 @@ QUANTITIES: tuple[Quantity, ...] = (
             "is judged and the zero point is not: an offset between face-on and dust-free light moves "
             "the zero point and, if it does not change with mass, not the slope. Both zero points assume "
             "Cepheid distances (TP00 H0 = 77, Sakai 71; the model's h is 0.70)."
+        ),
+    ),
+    Quantity(
+        ROW_CORE_COLLAPSE_RATE, "Galactic core-collapse supernova rate", "1/yr", "core_collapse_rate_total",
+        0.006, 0.105, "pointwise", "3.2 +7.3 −2.6 per century", _ADAMS13,
+        note=(
+            "Today's star formation rate times the Kroupa IMF's stars per solar mass above Smartt "
+            "2009's 8.5 Msun core-collapse limit - prompt, so no history enters. " + _ADAMS13_READ
+        ),
+    ),
+    Quantity(
+        ROW_TYPE_IA_RATE, "Galactic type Ia supernova rate", "1/yr", "type_ia_rate_total",
+        0.006, 0.028, "pointwise", "1.4 +1.4 −0.8 per century", _ADAMS13,
+        note=(
+            "The chemistry's own delay-time convolution of the disc's history, its Ia iron divided "
+            "by Maoz & Graur 2017's 0.7 Msun per event. The disc alone: the spheroid's old stars are "
+            "not in the history, so their Ia are missing and the row reads low by their share. "
+            + _ADAMS13_READ
         ),
     ),
 )

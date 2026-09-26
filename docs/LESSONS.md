@@ -914,3 +914,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] Two Opus rows in parallel is a merge-order and a row-number question, not a build question:
   branch both from the same `main`, merge in row order, and tell the second where its spec rows may
   be renumbered at merge, because `spec.py` asserts the rows are contiguous (D178, D179).
+
+## From S30 (BUILD_II Phase 6)
+
+- [field] A pass can rest on a constant nobody sourced. Row 31 sits 0.0005 above its floor because the Ia
+  iron yield has been recall since S9; per mass formed the model makes 1.87× the measured events, and
+  at the measured number the row fails. Compute the per-mass number beside the per-galaxy row before
+  calling the row green, and record the pass as the debt it is (D179, #88).
+- [field] One convolution, two readers. The Ia rate divides the chemistry's iron by the iron per event
+  instead of running its own DTD, so the rate and the iron cannot drift apart; when two stages need the
+  same integral, factor the function and let both import it (B13, D179).
+- [field] When a source reads two ways, use the reading as read and pin the other as a probe; do not pick
+  the one whose answer looks familiar. The zone's exponent read −0.4 twice and −0.2 once, and the −0.2
+  zone happens to peak near the literature's 7–9 kpc — which is exactly why it was not chosen (D179, #90).
+- [close] A merge of two parallel rows conflicts where both pinned the same derived thing — the execution
+  order — and the resolution is to recompute it from the merged graph, never to hand-edit a tuple (D179).
