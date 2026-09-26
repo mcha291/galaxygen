@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.cmaps import BLACKBODY_KELVIN, COLORMAPS, blackbody_hex
-from galaxy.stages.photometry import isochrones, lookup
+from galaxy.stages.photometry import BANDS, isochrones, lookup, lookup_columns, population_light
 
 
 def one(mass: float, age: float, feh: float) -> tuple[float, float]:
@@ -32,6 +32,49 @@ def test_the_sun_comes_out_as_the_sun():
     L, T = one(1.0, 4.57, 0.0)
     assert L == pytest.approx(1.0, abs=0.1)
     assert T == pytest.approx(5772, abs=150)
+
+
+def test_the_regenerated_table_reads_what_the_old_one_did():
+    """S28 regenerated the table with the bands kept; mass, log L and log T_eff are CMD's same rows.
+
+    Re-pinned on the new table, the old table's numbers in the comments: they are equal, because
+    the request was the same and CMD answered it with the same rows (compared bit for bit, S28)."""
+    L, T = lookup(np.array([1.0, 1.0, 1.0]), np.array([4.57, 5.0, 9.9]), np.zeros(3))
+    assert L == pytest.approx([1.04704773, 1.08539546, 2.03570423], rel=1e-8)  # old: 1.04704773, 1.08539546, 2.03570423
+    assert T == pytest.approx([5823.96159307, 5832.87121235, 5729.52982438], rel=1e-10)  # old: 5823.96..., 5832.87..., 5729.53...
+    tab, pop = isochrones(), population_light()
+    solar = int(np.abs(tab.mhs).argmin())
+    assert pop.light_per_mass[[0, -1], solar] == pytest.approx([8.01433898e02, 1.47498719e-01], rel=1e-8)  # old: 801.433898, 0.147498719
+
+
+def test_the_bands_are_the_tables_eight_and_the_sun_is_near_willmers():
+    """The Sun's V magnitude off the isochrones against Willmer 2018's observed 4.81 (level0)."""
+    assert BANDS == ("U", "B", "V", "R", "I", "J", "H", "K")
+    sun = lookup_columns(np.array([1.0]), np.array([4.57]), np.array([0.0]), ("B", "V", "K", "mbol", "mass_now", "label"))
+    print({k: float(v[0]) for k, v in sun.items()})
+    assert sun["V"][0] == pytest.approx(4.7727, abs=5e-4)  # S28: 4.77269, 0.037 brighter than Willmer's Sun
+    assert sun["V"][0] == pytest.approx(4.81, abs=SUN_V_OFFSET)
+    assert 0.55 < sun["B"][0] - sun["V"][0] < 0.75  # a G2 dwarf
+    assert sun["label"][0] == 1.0  # on the main sequence
+    assert sun["mass_now"][0] == pytest.approx(1.0, abs=0.01)
+
+
+SUN_V_OFFSET = 0.05  # the isochrones' Sun against the observed one: 0.037 at S28
+
+
+def test_a_dead_star_has_no_magnitude_and_no_phase():
+    dead = lookup_columns(np.array([1.5]), np.array([8.0]), np.array([0.0]), ("V", "label"))
+    assert np.isnan(dead["V"][0]) and dead["label"][0] == -1.0
+
+
+def test_the_band_integrals_carry_the_bolometric_one():
+    """Per isochrone: Σ 10^(−0.4 M_bol) per mass formed is the bolometric light per mass formed, at
+    CMD's M_bol,☉ = 4.77 - the table's two columns describe the same stars (S28)."""
+    pop = population_light()
+    lit = pop.light_per_mass > 0.0
+    ratio = pop.bolometric_flux[lit] * 10.0 ** (0.4 * 4.77) / pop.light_per_mass[lit]
+    print(f"bolometric route / log L route: {ratio.min():.6f} - {ratio.max():.6f}")
+    assert np.all(np.abs(ratio - 1.0) < 1e-3)  # S28: 0.999247 - 1.000682 over the 396 isochrones
 
 
 def test_the_main_sequence_brightens_and_heats_with_mass():

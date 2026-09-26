@@ -51,6 +51,8 @@ SEEDED_BASIC = {
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
+    # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
+    "star_magnitude_v", "star_ionizing_photons", "star_wind_luminosity", "star_wolf_rayet",
     "planet_semi_major_axis", "planet_mass", "planet_radius", "planet_insolation",
     "planet_orbital_period", "planet_rotation_period", "planet_obliquity",
     "planet_volatile_fraction", "planet_atmosphere", "star_planet_count",

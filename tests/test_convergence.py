@@ -67,6 +67,7 @@ def test_the_production_scalars_hold_under_a_half_sweep(model):
     assert {1, 2, 3, 4, 22, 23, 24} <= rows
     assert all(d.status == "statistical" for d in rep.drifts if d.row in (16, 17))
     assert all(d.status == "untestable" for d in rep.drifts if d.row == 20)
+    assert all(d.status == "sweep" for d in rep.drifts if d.row == 29)  # S28: judged across galaxies, not here
     assert not any(d.status == "drifts" for d in rep.drifts)
     vacuous = {d.row for d in rep.drifts if d.status == "vacuous"}
     assert vacuous == {5, 7, 8, 9, 11}  # debt #27
@@ -77,7 +78,7 @@ def test_every_axis_is_swept_alone():
     assert set(convergence.SWEEPS) == {"n_R", "n_t", "n_z"}
     for axis, sizes in convergence.SWEEPS.items():
         assert getattr(GridSpec(), axis) in sizes and len(sizes) >= 3
-    assert all(q.mode in ("pointwise", "statistical", "qualitative") for q in QUANTITIES)
+    assert all(q.mode in ("pointwise", "statistical", "qualitative", "sweep") for q in QUANTITIES)
 
 
 def test_report_runs(prod):

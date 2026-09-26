@@ -202,7 +202,10 @@ def test_every_shared_field_is_sfhs_own(coarse, models):
     # Every other field the two models share, downstream included, except the catalogue columns
     # (the young stars move) and the planets drawn around them.
     moved = {"star_azimuth", "star_age", "star_birth_radius", "star_metallicity", "star_alpha",
-             "star_luminosity", "star_temperature"} | {n for n in b.fields if n.startswith("planet_")} | {
+             "star_luminosity", "star_temperature",
+             # S28: looked up from the same moved ages and abundances
+             "star_magnitude_v", "star_ionizing_photons", "star_wind_luminosity", "star_wolf_rayet",
+             } | {n for n in b.fields if n.startswith("planet_")} | {
         "star_planet_count", "mean_planets_per_star", "giant_fraction_sample"}  # the planets' sample statistics
     same = [n for n in b.fields if n not in moved]
     differ = [n for n in same if not identical(a.fields[n], b.fields[n])]
@@ -219,7 +222,7 @@ def test_every_acceptance_row_reads_the_same_in_both_models(judged):
     """The rows are radial and vertical: the azimuthal model reads basic's, number for number."""
     basic = {r.n: r for r in judged["basic"]}
     azimuthal = {r.n: r for r in judged["azimuthal"]}
-    assert sorted(basic) == sorted(azimuthal) == list(range(1, 25))
+    assert sorted(basic) == sorted(azimuthal) == list(range(1, 30))  # 25-29 since S28 (Phase 3), the same rule
     for n in basic:
         b, a = basic[n], azimuthal[n]
         assert a.status == b.status, (n, a.status, b.status)
