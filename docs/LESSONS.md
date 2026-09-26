@@ -929,3 +929,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   zone happens to peak near the literature's 7–9 kpc — which is exactly why it was not chosen (D179, #90).
 - [close] A merge of two parallel rows conflicts where both pinned the same derived thing — the execution
   order — and the resolution is to recompute it from the merged graph, never to hand-edit a tuple (D179).
+
+## From S31 (BUILD_II Phase 7)
+
+- [field] Solve the emission from the absorbed power in closed form, then publish the emission by a
+  second route and assert the two agree: the balance closed to 10⁻¹² and the assertion is a test on the
+  quadrature, the spectrum function and the inversion at once, not a tautology (B3, D180).
+- [all] A summarising fetch mis-transcribed four rows of a grain-model table (1.65 µm read as 0.165 µm);
+  the direct read of the file caught it and a raw-text fetch confirmed. The S26 lesson holds one level
+  down: when the source is a file, read the file, and read every load-bearing row twice (D180).
+- [field] A model constant the renderer must read is published as a scalar whose about line does not
+  name it — the API serves no constants (D5), and the alternative is a second copy in the viewer, which
+  rule A9 forbids. Three constants became two constants and one field, and the ruling says which (D180).
+- [field] State the slab's errors on both sides. The grey absorption under-absorbs the ultraviolet by a
+  measured 11% and over-absorbs the red by an unmeasured amount; a balance that closes to 10⁻¹² says
+  nothing about either, because emission is solved from whatever was absorbed (D180, #91).

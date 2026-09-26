@@ -2,8 +2,8 @@
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the
 only record of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **The
-first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S30 closed on 2026-09-26
-(S29 and S30 ran in parallel, merged in row order); S31 (Phase 7, dust that radiates, Opus) is next.** Tag batch owed; S22 ◐.
+first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S31 closed on 2026-09-26
+(S29 and S30 in parallel, merged in row order); S32 (Phase 8, clouds and the cell hierarchy, **Fable**) is next.** Tag batch owed; S22 ◐.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -15,24 +15,24 @@ Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_I
 section — §11's head is the debt map. Branch `session-NN`; commit and push at every
 sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
 files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
-debts from #91, decisions from D180, taken when the entry is written.
+debts from #94, decisions from D181, taken when the entry is written.
 
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
 docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5d, §5e), GALAXY_INPUTS (§11 register),
                 DECISIONS, LESSONS, MANUAL_TODO, BUILD_II (the phases), RENDER_PHYSICS (the contract),
                 RENDER_PLAN (the viewer's first build, done), the four AUDIT_*.md, future_ideas
-model/galaxy/core/    units (closed; Msun/Lsun, 1/s, 1/s/kpc2 S28; 1/yr, 1/yr/kpc2, 1/Msun S30), cmaps, fielddoc (FieldDecl:
+model/galaxy/core/    units (closed; grew at S28, S30, S31), special (i0 k0 erf **expn**), cmaps, fielddoc (FieldDecl:
                 optional, contract, provenance), stage (CHECKPOINTS 1 Halo & disc, 2 Assembly, 3 Pattern,
                 4 Star formation & chemistry, 5 Systems, 6 Planets; Stage.extends / extend()), registry
                 (INPUTS: 7 controls + 4 seeds + mergers; MODELS; IMPLEMENTATIONS), seeds, grids
 model/galaxy/models/  level0 (shared constants), basic, azimuthal (BASIC's tuple, sfh -> sfh_azimuthal)
 model/galaxy/stages/  cp1 halo, disc, nucleus · cp2 assembly · cp3 bar + pattern · cp4 sfh, sfh_azimuthal
-                (extends sfh), chemistry_dtd, **supernovae** (S30: core collapse = SFR × IMF, Ia = the chemistry's
-                DTD convolution counted), vertical_alpha, ism, light (Σ_L, colour, Hα, eight bands, Q(H⁰)) · cp5
-                population (IMF integrals, remnant_mass_fraction, planetary_nebula_count) + systems (columns inside
-                materialise: L, T_eff, [α/Fe], M_V, Q, wind, WR, star_remnant + mass) · cp6 formation, **habitable_zone**
-                (S30, unjudged), planets; massive_stars.py (Q tables, wind, WR); remnants.py (IFMR, budget)
+                (extends sfh), chemistry_dtd, supernovae (SN rates), vertical_alpha, ism (P, f_H₂, Σ_dust, A_V), light
+                (Σ_L, colour, Hα, eight bands, Q(H⁰)), **dust** (S31: τ_sca, E(B−V), g, Σ_abs, T_d, Σ_IR, G₀, q_PAH) ·
+                cp5 population (IMF integrals, remnant fraction, PN count) + systems (columns inside materialise: L,
+                T_eff, [α/Fe], M_V, Q, wind, WR, star_remnant + mass) · cp6 formation, habitable_zone (unjudged),
+                planets; massive_stars.py (Q tables, wind, WR); remnants.py (IFMR, budget)
 model/galaxy/data/    parsec_isochrones.npz (396 × 137 818 rows; U B V R I J H K, M_bol, present mass; fetch_parsec.py)
 model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
@@ -40,8 +40,8 @@ model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes po
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and model toggle
                 data-driven from /api/stages
 interface/      the earlier plain-JS viewer, still served by the API when frontend/dist is absent
-tests/          43 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
-                test_s22/s25/s26_rulings, test_sfh_azimuthal, test_massive_stars, test_remnants, test_supernovae pin measurements
+tests/          44 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
+                test_s22/s25/s26_rulings and each phase's test file (…_azimuthal, massive_stars, remnants, supernovae, dust) pin measurements
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
@@ -89,20 +89,20 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   run (#29) — remove it and **write down why**. `lo == hi` says "no testable target" (D100; rows 20, 21,
   25–28); a row whose source does not say what it measures names no field (D177). New rows from 32.
 
-## What the instruments said on 2026-09-26, after S30 (D174–D179 hold the before/after)
+## What the instruments said on 2026-09-26, after S31 (D174–D180 hold the before/after)
 - graph acyclic for both models (order: … sfh, chemistry_dtd, supernovae, light, vertical_alpha, population,
-  ism, systems, formation, habitable_zone, planets); preflight OK, 7 of 12 controls; determinism reproducible
+  ism, systems, formation, habitable_zone, dust, planets); preflight OK, 7 of 12 controls; determinism reproducible
   across processes for both; spec **10 pass / 17 fail / 4 not-yet-computable of 31, identical in both models**;
   convergence 0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; **rows 30 / 31 (SN rates)
   0.0176069 / 0.0065332 yr⁻¹, the Ia pass thin (#88)**; rows 25–28 n-y-c (#82).
 - Regression numbers: z_f 1.66, c₂₀₀ 8.24, R_d 2.60486 (thin 2.44138), M_star 4.751e10, SFR 1.7551515,
   H 8.088e9, WIND_SPEED 860.3, MERGER_HEATING 88.8, `swing_x` 3.334; rows 16 / 17 medians 41.10 / 6.08;
   M_V −21.2159, B − V 0.6306, Υ_V 1.8468, disc_luminosity 4.8958e10, Q 1.6527e53 s⁻¹;
-  **remnant_mass_fraction 0.214686, planetary_nebula_count 14 732, living + remnants = 0.836104 of the
-  locked mass (#85)**; default catalogue 18 269 living / 1 589 WD / 113 NS / 19 BH.
-- performance: basic ~1.5 s cold (light 0.40, population 0.17, systems 0.29, supernovae 0.07, habitable_zone
-  0.06); region one sector ~0.49 s cold; timings re-published at S28 and S29 (D177, D178).
-- Register: **36 open — 11 permanent, 25 carried — and 37 discharged** (#85–#87 at S29, #88–#90 at S30).
+  remnant_mass_fraction 0.214686 (living + remnants 0.836104 of the locked mass, #85), PN count 14 732; **T_d(R₀)
+  19.54 K, L_IR 1.622e10 L☉ (0.331 of the disc's light), G₀(R₀) 2.64, q_PAH(R₀) 0.0908, energy balance 1.5e-12 (S31)**.
+- performance: basic ~1.5 s cold (light 0.40, population 0.17, systems 0.29, dust 0.08, supernovae 0.07);
+  region one sector ~0.49 s cold; timings re-published at S28 and S29 (D177, D178).
+- Register: **39 open — 11 permanent, 28 carried — and 37 discharged** (#85–#87 S29, #88–#90 S30, #91–#93 S31).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python

@@ -75,3 +75,28 @@ def test_G_is_the_IAU_nominal_solar_mass_parameter():
     # And the sanity check that motivates those units: a circular orbit.
     v2 = LEVEL0["G"].value * 1.0e12 / 100.0
     assert math.sqrt(v2) == pytest.approx(207.4, abs=0.1)  # km/s at 100 kpc, 10^12 M☉
+
+
+# --- the exponential integrals (S31, the dust stage's slab) ------------------------------------
+
+
+@pytest.mark.parametrize("n", [1, 2, 3])
+@pytest.mark.parametrize("x", [0.02, 0.5, 1.0, 1.0 + 1e-9, 2.0, 7.5, 40.0])
+def test_expn_is_its_defining_integral(n, x):
+    """E_n(x) = int_1^inf e^(-xt) t^-n dt, by quadrature in ln t (a second path, rule B3), on both sides
+    of the series / continued-fraction switch at x = 1."""
+    from galaxy.core.special import expn
+
+    t = np.exp(np.linspace(0.0, math.log(1.0 + 60.0 / x), 400_001))
+    direct = float(np.trapezoid(np.exp(-x * t) * t ** (1.0 - n), np.log(t)))
+    assert float(expn(n, x)) == pytest.approx(direct, rel=1e-9)
+
+
+def test_expn_at_zero_and_its_domain():
+    from galaxy.core.special import expn
+
+    assert float(expn(2, 0.0)) == 1.0 and float(expn(3, 0.0)) == 0.5
+    with pytest.raises(DomainError):
+        expn(1, 0.0)
+    with pytest.raises(DomainError):
+        expn(0, 1.0)

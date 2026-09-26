@@ -75,6 +75,11 @@ _UNITS: tuple[Unit, ...] = (
     Unit("1/yr/kpc2", "yr⁻¹ kpc⁻²", "event_rate_surface_density"),
     Unit("1/Msun", "M☉⁻¹", "events_per_mass"),
     Unit("Searth", "S⊕", "insolation"),
+    # dust (S31): a grain model's absorption cross-section per unit dust mass, the wavelength it is
+    # quoted at, and the interstellar far-ultraviolet flux its radiation field is measured against
+    Unit("cm2/g", "cm² g⁻¹", "mass_opacity"),
+    Unit("um", "µm", "length"),
+    Unit("erg/cm2/s", "erg cm⁻² s⁻¹", "energy_flux"),
     # gravitation: G in the model's own length/velocity/mass units, so that
     # G·M/R is a squared velocity with no conversion anywhere (S1)
     Unit("kpc.km2/s2/Msun", "kpc km²/s²/M☉", "gravitational_constant"),

@@ -373,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (36, 37)  # 33 / 37 at S29 (#85-#87, D178); 30 / 37 at S28; 27 / 35 at S22; S30 opened #88-#90 (D179)
+    assert progress.debt_counts(text) == (39, 37)  # 36 / 37 at S30 (#88-#90, D179); 33 / 37 at S29; 27 / 35 at S22; S31 opened #91-#93 (D180)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -402,7 +402,8 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90 | 25 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93 | 28 |",
+        "91. **The dust's radiative transfer is a grey slab**",
         "88. **Row 31 passes on an unsourced yield",
         "85. **The locked stellar mass is 84% stars and remnants",
         "81. **The catalogue's young-star cut has no source and no mechanism**",

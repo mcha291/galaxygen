@@ -697,4 +697,149 @@ LEVEL0: dict[str, Constant] = {
         "last 1.55 Gyr before the 4 Gyr rise, the first chance and a lower bound on the source's "
         "criterion [inferred].",
     ),
+    # --- S31 (BUILD_II Phase 7): dust that radiates. Ruling (a): one grain model, the Milky Way
+    # R_V = 3.1 carbonaceous-silicate model of Weingartner & Draine 2001 renormalised by Draine 2003,
+    # read row by row from Draine's own tabulation of it, kext_albedo_WD_MW_3.1_60_D03.all
+    # (https://www.astro.princeton.edu/~draine/dust/extcurvs/, calculated 2009), by a read-only agent
+    # and again directly at S31; the agent's first pass misread four rows (it took 1.65 um for 0.165)
+    # and the rows below are the file's as printed. Its header: M_dust per H nucleon 1.398E-26 g,
+    # M_gas/M_dust 165.3 (He/H = 0.096). Every other R_V (the same model's 4.0 and 5.5 tables for
+    # dense clouds; Fitzpatrick 1999's law) is the named alternative, never an average (B12).
+    "DUST_R_V": Constant(
+        3.1,
+        "dimensionless",
+        "The ratio of total to selective extinction, A_V / E(B-V): the grain model's, whose table is "
+        "headed 'Carbonaceous - Silicate Model for Interstellar Dust with R_V=3.1', the value Draine "
+        "2003 (ARA&A 41, 241) takes for 'the average extinction law for diffuse regions in the local "
+        "Milky Way' [verified: Draine's table header and astro-ph/0304489, read at S31]. Dense clouds "
+        "run to 5.5; the same model's R_V = 4.0 and 5.5 tables are the named alternatives.",
+    ),
+    "DUST_ALBEDO_V": Constant(
+        0.6774,
+        "dimensionless",
+        "Scattering over extinction cross-section in V: the table's 'V filter' row, lambda = 0.547 um, "
+        "albedo 0.6774 [verified: kext_albedo_WD_MW_3.1_60_D03.all, the V filter row, read at S31]. "
+        "Two thirds of the V light dust removes from a ray is scattered, one third absorbed. "
+        "BUILD_II's recalled 0.5-0.6 was low.",
+    ),
+    "DUST_SCATTERING_G": Constant(
+        0.5383,
+        "dimensionless",
+        "The scattering asymmetry g = <cos theta> in V, the same row's <cos> column, 0.5383 "
+        "[verified: kext_albedo_WD_MW_3.1_60_D03.all, the V filter row, read at S31]: forward-throwing. "
+        "BUILD_II's recalled ~0.6 was high.",
+    ),
+    "DUST_EXTINCTION_RATIO_FUV": Constant(
+        1.193e-21 / 4.868e-22,
+        "dimensionless",
+        "A_FUV / A_V = 2.451: the extinction cross-section per H at lambda = 0.151356 um, 1.193E-21 "
+        "cm^2/H, over the V filter row's 4.868E-22 [verified: kext_albedo_WD_MW_3.1_60_D03.all, both "
+        "rows, read at S31]. 0.151356 um is the table's point nearest 1528 A, where the far-ultraviolet "
+        "calibration's nu L_nu is read [verified: Hao et al. 2011, ApJ 741, 124, arXiv:1108.2837, "
+        "Kennicutt & Evans's FUV reference, read at S31]; the next point, 0.154882 um, gives 2.406.",
+    ),
+    "DUST_ALBEDO_FUV": Constant(
+        0.4068,
+        "dimensionless",
+        "The albedo at the same far-ultraviolet point, lambda = 0.151356 um: 0.4068 [verified: "
+        "kext_albedo_WD_MW_3.1_60_D03.all, read at S31]. Ultraviolet is absorbed, not scattered, in "
+        "the larger share, unlike V.",
+    ),
+    "DUST_OPACITY_REFERENCE": Constant(
+        16.43,
+        "cm2/g",
+        "Absorption cross-section per gram of dust at the far-infrared reference wavelength: K_abs = "
+        "1.643E+01 cm^2/g on the table's 'MIPS 3' row, lambda = 155.9 um [verified: "
+        "kext_albedo_WD_MW_3.1_60_D03.all, read at S31]. Chosen at 156 um because a 15-25 K modified "
+        "blackbody's power peaks near there, so the emissivity index moves the temperature least; the "
+        "same table gives 40.95 at 100 um and 6.412 at 245.5 um (a local slope of 2.07 between them). "
+        "Per unit dust mass on the same total-gas basis as the dust-to-gas ratio: the table's "
+        "M_gas/M_dust is 165.3 against the 162 the ISM stage adopts.",
+    ),
+    "DUST_OPACITY_WAVELENGTH": Constant(
+        155.9,
+        "um",
+        "The wavelength the far-infrared opacity is quoted at: the table's 'MIPS 3' row, 1.55900E+02 um "
+        "[verified: kext_albedo_WD_MW_3.1_60_D03.all, read at S31].",
+    ),
+    "DUST_EMISSIVITY_INDEX": Constant(
+        1.62,
+        "dimensionless",
+        "beta of the modified blackbody, kappa_nu proportional to nu^beta: Planck's whole-sky mean "
+        "<beta_obs> = 1.62, standard deviation 0.10, fitted with <T_obs> = 19.7 K (sigma 1.4 K) "
+        "[verified: Planck Collaboration 2014, A&A 571, A11 ('Planck 2013 results. XI'), Table 3, "
+        "arXiv:1312.1300, read at S31]; 1.59 +/- 0.12 above |b| = 15 deg. The named alternative is "
+        "beta = 2, graphite's in Draine & Li 2007 (which the same Planck paper contrasts with its "
+        "lower mean) and near the grain model's own 100-250 um slope of 2.07.",
+    ),
+    "FUV_LUMINOSITY_PER_SFR": Constant(
+        10.0**43.35 / 3.828e33,
+        "Lsun",
+        "Far-ultraviolet nu L_nu, in Lsun, per Msun/yr of star formation: Kennicutt & Evans 2012's "
+        "log SFR = log L_x - log C_x with log C_x = 43.35 for FUV, L_x in erg/s as nu L_nu, ages "
+        "0-10-100 Myr, for a Kroupa & Weidner 2003 IMF (Salpeter 1-100 Msun, -1.3 below) [verified: "
+        "arXiv:1204.3552, Table 1 and eq. 12, read at S31], nu L_nu at 1528 A [verified: Hao et al. "
+        "2011, arXiv:1108.2837, read at S31], over Lsun = 3.828e33 erg/s. The same table "
+        "gives the H-alpha constant's 41.27. 5.85e9 Lsun per Msun/yr.",
+    ),
+    "HABING_FLUX": Constant(
+        1.6e-3,
+        "erg/cm2/s",
+        "Habing's 1968 estimate of the interstellar far-ultraviolet flux between 6 and 13.6 eV, the "
+        "unit G0 = 1: 'G0 is in units of the \"Habing Field\", 1.6 x 10^-3 erg cm^-2 s^-1' [verified: "
+        "Kaufman, Wolfire, Hollenbach & Luhman 1999, ApJ 527, 795, astro-ph/9907255, read at S31]. "
+        "The local field measured by Draine 1978 is 4 pi J = 2.7 x 10^-3, 'a factor of 1.7 higher than "
+        "the integrated field of Habing 1968' [verified: Wolfire et al. 2003, ApJ 587, 278, "
+        "astro-ph/0207098, read at S31]: G0 = 1.7 at the Sun is the comparison, not a target.",
+    ),
+    # --- S31 ruling (c): the PAH fraction's metallicity dependence enters because a source for it was
+    # read - Remy-Ruyer et al. 2015, A&A 582, A121 (arXiv:1507.05432), section 4.3, eq. 5, its
+    # normalisation, abundance scale and sample read by the agent and again directly at S31. The
+    # named alternative is a constant: Draine & Li 2007's Milky Way q_PAH = 4.58% (model MW3.1_60,
+    # the grain model the dust constants above are read from) [verified: astro-ph/0608003, its model
+    # tables, read at S31]. Draine et al. 2007 (ApJ 663, 866) measured the same trend in two bins,
+    # 'The nine galaxies in our sample with A_O<8.1 have a median q_PAH=1.0%, whereas galaxies with
+    # A_O>8.1 have a median q_PAH=3.55%' [verified: astro-ph/0703213, abstract, read at S31], on the
+    # same Pilyugin & Thuan 2005 abundance scale; a relation is preferred to a step.
+    "PAH_FRACTION_GALACTIC": Constant(
+        0.0457,
+        "dimensionless",
+        "The Galactic PAH mass fraction the relation's f_PAH is normalised to: 'The Galactic PAH mass "
+        "fraction is f_PAH,sun = 4.57% from Zubko et al. 2004' [verified: Remy-Ruyer et al. 2015, "
+        "arXiv:1507.05432, section 3 footnote 13, read at S31]. Draine & Li 2007's Milky Way model has "
+        "4.58%, the named alternative's constant.",
+    ),
+    "PAH_METALLICITY_INTERCEPT": Constant(
+        -11.0,
+        "dimensionless",
+        "log(f_PAH) = (-11.0 +/- 0.3) + (1.30 +/- 0.04) x (12 + log(O/H)), 'with a dispersion of 0.35 "
+        "dex around the relation with metallicity' [verified: Remy-Ruyer et al. 2015, arXiv:1507.05432, "
+        "section 4.3, eq. 5, read at S31]: the intercept. Fitted across 109 galaxies (their dwarf and "
+        "KINGFISH samples), not along any one galaxy's radius; the same section's sSFR relation, and "
+        "their remark that the PAH fraction is 'primarily driven by the sSFR, with a second order effect "
+        "from metallicity', are recorded, not used.",
+    ),
+    "PAH_METALLICITY_SLOPE": Constant(
+        1.30,
+        "dimensionless",
+        "The same relation's slope, 1.30 +/- 0.04 per dex of 12 + log(O/H) [verified: arXiv:1507.05432, "
+        "section 4.3, eq. 5, read at S31].",
+    ),
+    "OXYGEN_ABUNDANCE_SOLAR": Constant(
+        8.69,
+        "dex",
+        "12 + log(O/H) of the Sun on the relation's own scale: 'Throughout the paper, we assume "
+        "(O/H)sun = 4.90 x 10^-4, i.e., 12+log(O/H)sun = 8.69 (Asplund et al. 2009)', their abundances "
+        "being Pilyugin & Thuan 2005's strong-line calibration [verified: arXiv:1507.05432, section 2, "
+        "read at S31]. It places the gas's [Fe/H], oxygen taken to track iron as the ISM stage takes it, "
+        "on the relation's absolute scale.",
+    ),
+    "PAH_METALLICITY_MAX": Constant(
+        1.20,
+        "dimensionless",
+        "The most metal-rich galaxy the relation was fitted to, in Z/Z_sun: 'The metallicities in the "
+        "KINGFISH sample range from Z ~ 0.07 Z_sun to 1.20 Z_sun' [verified: arXiv:1507.05432, section "
+        "2, read at S31]. The relation is not extrapolated above it: the inner disc's gas reaches five "
+        "times solar, where eq. 5 would give three quarters of the dust mass in PAHs.",
+    ),
 }

@@ -27,13 +27,21 @@ mass clears a threshold, evaluated on 800 000 grid cells, and ``math.erf`` is a
 scalar function. A&S 7.1.26 gives |ε| < 1.5×10⁻⁷ over the whole line, which is
 four orders below the uncertainty on anything it is multiplied by
 ``[recall: Abramowitz & Stegun §7.1.26]``.
+
+``expn`` — the exponential integrals Eₙ(x) = ∫₁^∞ e^(−xt) t^(−n) dt — arrives at S31 for
+the dust stage: the fraction of an isotropically emitting slab's light that escapes it,
+and the mean intensity at its midplane, are Eₙ of the slab's optical depth. The power
+series about zero for x ≤ 1 and the continued fraction (evaluated by Lentz's method) for
+x > 1, each with a fixed term count (rule A1) `[recall: Press et al., Numerical Recipes,
+§6.3; A&S 5.1.12 and 5.1.22]`; ``tests/test_special.py`` checks it against quadrature of
+the defining integral, a second path.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-__all__ = ("i0", "i1", "k0", "k1", "erf", "normal_cdf")
+__all__ = ("i0", "i1", "k0", "k1", "erf", "normal_cdf", "expn")
 
 
 class DomainError(ValueError):
@@ -136,3 +144,52 @@ def erf(x: object) -> np.ndarray:
 def normal_cdf(x: object) -> np.ndarray:
     """P(Z ≤ x) for a standard normal — the shape a threshold on a log-normal takes."""
     return 0.5 * (1.0 + erf(np.asarray(x, dtype=float) / np.sqrt(2.0)))
+
+
+# --- the exponential integrals Eₙ (S31) ---------------------------------------
+
+_EULER_GAMMA = 0.5772156649015329
+_SERIES_TERMS = 60  # x ≤ 1: the k-th term is below x^k/k!, 1/60! is far past double precision
+_FRACTION_TERMS = 200  # x > 1: the continued fraction converges fastest at large x; 200 is ample at x = 1
+
+
+def expn(n: int, x: object) -> np.ndarray:
+    """Eₙ(x) = ∫₁^∞ e^(−xt) t^(−n) dt for an integer n ≥ 1 and x ≥ 0 (x > 0 when n = 1).
+
+    Eₙ(0) = 1/(n − 1) for n ≥ 2. Fixed term counts, no convergence loop (rule A1).
+    """
+    if not isinstance(n, int) or n < 1:
+        raise DomainError("expn: n must be an integer >= 1")
+    a = _asarray(x, "expn", positive=(n == 1))
+    out = np.empty_like(a)
+    zero = a == 0.0
+    out[zero] = 1.0 / (n - 1) if n > 1 else np.inf
+    small = (a > 0.0) & (a <= 1.0)
+    large = a > 1.0
+    nm1 = n - 1
+    if np.any(small):
+        xs = a[small]
+        ans = np.full_like(xs, 1.0 / nm1) if nm1 != 0 else -np.log(xs) - _EULER_GAMMA
+        fact = np.ones_like(xs)
+        for i in range(1, _SERIES_TERMS + 1):
+            fact = fact * (-xs / i)
+            if i != nm1:
+                ans = ans - fact / (i - nm1)
+            else:
+                psi = -_EULER_GAMMA + sum(1.0 / k for k in range(1, nm1 + 1))
+                ans = ans + fact * (-np.log(xs) + psi)
+        out[small] = ans
+    if np.any(large):
+        xl = a[large]
+        b = xl + n
+        c = np.full_like(xl, 1e300)
+        d = 1.0 / b
+        h = d.copy()
+        for i in range(1, _FRACTION_TERMS + 1):
+            an = -i * (nm1 + i)
+            b = b + 2.0
+            d = 1.0 / (an * d + b)
+            c = b + an / c
+            h = h * (c * d)
+        out[large] = h * np.exp(-xl)
+    return out
