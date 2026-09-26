@@ -1,60 +1,60 @@
-# BRIEF — for S29: BUILD_II Phase 4, stellar remnants and planetary nebulae (Opus subagent)
+# BRIEF — for S31: BUILD_II Phase 7, dust that radiates (Opus subagent); S30 merges first
 
-**For the orchestrating session.** Open `session-29` (main checkout on `main`); hand an Opus subagent,
-in a worktree (`git checkout session-29`, `git config --worktree core.hooksPath tools/hooks`), this
-file, `BUILD_II.md` Phase 4, `RULES.md`, `RESUMING.md`'s "Writing a stage", `stages/photometry.py`
-(`lookup_columns`, present mass and phase), `stages/massive_stars.py` (S28's pattern: a sourced table
-with a named alternative), `stages/systems.py` (columns inside `materialise`, D60), `stages/light.py`
-(population integrals). It neither pushes nor writes DECISIONS.md. Debts from #85, decisions from
-D178; MANUAL_TODO's `s28` row takes S28's merge SHA. **Rulings made here (D113):** (a) the
-initial–final mass relation is **sourced** (NEEDS SOURCING: Cummings et al. 2018, ApJ 866, 21, the
-white-dwarf IFMR; a read-only agent fetches the fitted segments verbatim) and the remnant classes' mass
-boundaries are the source's, not recalled; (b) the black-hole mass's metallicity dependence enters only
-if a source is read for it (NEEDS SOURCING: Spera, Mapelli & Bressan 2015 or Fryer et al. 2012),
-otherwise a stated fraction of the initial mass with the dependence a debt, not invented; (c) the
-planetary-nebula duration is a sourced number or the flag is not built (NEEDS SOURCING: ~10⁴ yr; the
-PNLF cutoff M* ≈ −4.5 is Phase 9's row, only its citation read here, Ciardullo et al.).
+**For the orchestrating session.** S30 (Phase 6, supernova rates and the habitable zone) was in flight
+on `session-30` when S29 closed: review it first (core diff, then tests), merge `main` into `session-30`
+(S29 added no row, so S30's rows 30–31 stand), gate on the suite, write D179 (debts from #88), merge in
+row order, then open `session-31`. Hand
+an Opus subagent, in a worktree (`git checkout session-31`, `git config --worktree core.hooksPath
+tools/hooks`), this file, `BUILD_II.md` Phase 7, `RULES.md`, `RESUMING.md`'s "Writing a stage",
+`RENDER_PHYSICS.md` §§3–4 and §7, `stages/ism.py` (P, f_H₂, dust-to-gas, Σ_dust, A_V; D163),
+`stages/light.py` (Σ_L, the band sums, the ionizing budget). It neither pushes nor writes DECISIONS.md.
+**Rulings made here (D113):** (a) the three dust constants — R_V, the V albedo and the scattering
+asymmetry g — are SOURCED from one dust model read at the source (NEEDS SOURCING: Draine 2003 ARA&A
+41, 241 Table 4 / Weingartner & Draine 2001 for R_V = 3.1; a read-only agent fetches the values
+verbatim), the Milky Way R_V = 3.1 grain model the ruleset and any other R_V the named alternative;
+(b) the thermal emission is a modified blackbody with a sourced emissivity index β (Planck 2014 or
+Draine & Li 2007 — read it) and the dust temperature from the heating balance, not from a fit; (c) the
+PAH fraction's metallicity dependence enters only if a source is read (Draine et al. 2007 SINGS; Engelbracht
+et al. 2008), otherwise a constant fraction with the dependence a debt.
 
-## What to build (BUILD_II Phase 4, reconciled)
-- **`star_remnant`**, a category column on the catalogue: `none / white_dwarf / neutron_star /
-  black_hole` (and `planetary_nebula` if (c) closes), from the star's initial mass and age against the
-  isochrone lifetimes the table already holds (a dead star is NaN in L and T_eff, D164) and the IFMR.
-  Every value is looked up inside `materialise`, every ring and sector whatever a request asked for.
-- **`star_remnant_mass`** (a column) and **`remnant_mass_fraction`** (a scalar) — the latter a
-  **population integral** over the history, as `light.py` integrates light, not the sample. Relate it to
-  `RETURN_FRACTION`'s locked mass (`stellar_mass_total` counts locked mass; this phase says what it is):
-  assert remnant + living mass reconciles with it, the tolerance measured, any gap explained.
-- **Planetary nebulae**: a star within the sourced phase duration of the end of its AGB life is flagged
-  (a `planetary_nebula` category or a flag column) with `star_pn_age` or the duration published as a
-  constant; the emissivity is Phase 9's. Say how many PNe the default galaxy carries and compare to
-  the Milky Way's estimated population only if a source for that count is read.
-- **No new inputs** (A2, A4). New constants in level0 with citations; module-level constants only where
-  `materialise` cannot read `ctx.constants`, as S28 did, and say so.
-- No acceptance row is added unless its target has a source with an uncertainty (D100, #17). If the
-  remnant fraction has one (BUILD_II's "10–15%" NEEDS SOURCING), add row 30 citing it; otherwise
-  publish the number and leave the row for Audit III.
+## What to build (BUILD_II Phase 7, reconciled: D163's ism stage exists; this is the extension)
+- **Scattering**: `dust_albedo_v`, `dust_scattering_asymmetry`, `extinction_ratio_r_v` as level-0
+  constants with citations (three constants, not fields); publish what the viewer needs to light a dust
+  lane's rim: the scattered fraction per line of sight is the viewer's integral, the constants are the
+  model's (D5). Say in the report what V2 will read.
+- **Thermal emission**: `dust_temperature`(R) from the heating balance — the light absorbed per unit
+  dust mass at each radius from the `light` stage's Σ_L and the ISM's τ_V — and
+  `dust_infrared_surface_brightness`(R), a modified blackbody at that temperature with the sourced β;
+  the total infrared luminosity as a scalar.
+- **PAH**: `pah_fraction`(R) and the radiation field `radiation_field_g0`(R) (G₀ from the young light,
+  a sourced normalisation — Habing 1968 / Draine 1978; read it), coupled to Z(R) by ruling (c).
+- **The energy-balance test (the gate, RENDER_PHYSICS §7)**: total ultraviolet + optical light absorbed
+  equals total infrared emitted, per radius and integrated, asserted in the suite with the tolerance
+  measured. This is the class of test D163's factor-162 extinction defect never had.
+- No new inputs (A2, A4). New units (e.g. `Lsun/pc2` exists; check `K`, `1/s`) via `core/units.py` with
+  a line in the report. About lines must not name constants (D5). Both models publish everything (the
+  dust reads shared fields), so nothing is optional.
+- No acceptance row unless its target has a source with an uncertainty (D100, #17): the Milky Way's
+  total infrared luminosity or dust temperature only if a source quotes one — propose row 32 (after
+  S30's 30–31) with its citation, or publish and leave it to Audit III.
 
 ## Gate
-Both models pass graph, preflight, determinism; `python -m galaxy.specs` exits 0; rows 1–29 unmoved
-(15 = 5.20971 recorded miss #80; 29 = −7.914); the remnant classes partition the dead stars exactly
-(no star two things, none `none` while dead); the mass reconciliation asserted; the new columns'
-per-region determinism (D60) asserted; new tests on the coarse grid where the claim allows; existing
-pins untouched unless one moves, and then the old number in the comment.
+Both models pass graph, preflight, determinism; `python -m galaxy.specs` exits 0; rows 1–31 unmoved
+(15 = 5.20971 recorded miss #80; 29 = −7.914); the energy balance asserted per radius and in total;
+the dust temperature finite and between 10 and 60 K everywhere the disc has dust (a sanity assertion,
+not a target); existing pins untouched unless one moves, then the old number in the comment; new tests
+on the coarse grid where the claim allows; if `ism` or `light` cost moves, `tools/timings.py` re-run.
 
 ## Traps
-- The catalogue is priced per cell (D168's `CellCache`); a new column must not add a per-request pass
-  over every ring — follow `lookup_columns`' path.
-- About lines must not name constants (D5). The units vocabulary is closed: a new unit is a `core/`
-  edit plus a line in the decision candidate.
-- `tools/timings.py` rows pin the routes; a new column changes no route. If `systems` cost moves, say
-  by how much (S28's light moved 0.30 → 0.40 s cold and the timings were re-published).
+- `dust_extinction_v` is published per (R) and the viewer subtracts it per line of sight (D167): do not
+  change its definition; add beside it.
+- Every `model`-parametrised test runs for `basic` and `azimuthal`.
 - Machine: `uv run` only; the Bash tool fails over ~8 KB; cp1252 console (`encoding="utf-8"`, LF
   newlines); `grep -c` exits 1 on zero matches; long runs backgrounded with `EXIT=$?` on the log.
-- **Do not merge or delete** `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`,
-  `session-21-a` or `claude/keen-lamport-lldlvp` (MANUAL_TODO §2).
+- **Do not merge or delete** the sealed audit branches listed in MANUAL_TODO §2.
 
 ## At close (orchestrator)
-Read the core diff first, then the tests. Board row 29 ☑ with the subagent's model; `progress.py`; the
-suite backgrounded, merge gated on its EXIT line; D178 with rulings (a)–(c) and their sources, the
-remnant fraction and its reconciliation, the PN count; RESUMING (≤ 120) and this file for **S30 (Phase
-6, Opus)**; `MANUAL_TODO.md` row `s29` with `s28`'s SHA; merge `--no-ff`, push, `verify_clone --ref main`.
+Core diff first, then the tests. Board row 31 ☑ with the subagent's model; `progress.py`; the suite
+backgrounded, merge gated on its EXIT line; D180 with rulings (a)–(c), the energy balance's numbers, the
+dust temperature profile; RESUMING (≤ 120) and this file for **S32 (Phase 8, clouds, Fable)**;
+`MANUAL_TODO.md` row `s31` with `s30`'s SHA; merge `--no-ff`, push, `verify_clone --ref main`.

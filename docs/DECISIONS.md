@@ -5292,3 +5292,72 @@ the measurement: debt #17's zero-width set is now rows 20, 21, 25–28 (`test_au
 `AUDIT_II_A.md`'s sealed green-row table is read with row 29 as *joined since* — green on the slope
 alone, conditioned in this entry rather than in the sealed list, and Audit III's to re-read
 (`test_s22_rulings`). No code changed in review.
+
+### D178. Phase 4: what a dead star is — remnants by a sourced initial–final mass relation, planetary nebulae by a sourced lifetime, and the locked mass found to be 84% stars and remnants
+
+**The three rulings, made before any number was read (D113), and what the sources said.**
+(a) **The initial–final mass relation is sourced**: Cummings et al. 2018, ApJ 866, 21, §VI.2, the
+**PARSEC-based** piecewise-linear fit — M_f = 0.0873 M_i + 0.476 (0.87–2.80 M☉), 0.181 M_i + 0.210
+(2.80–3.65), 0.0835 M_i + 0.565 (3.65–8.20) — chosen because the catalogue's isochrones are PARSEC
+v1.2S, the same the fit's progenitor ages used; the paper's MIST-based fit is the named alternative,
+kept as a function and compared by a test (an old solar population's white-dwarf mass agrees to 0.7%)
+`[verified: arXiv:1809.01673, read twice at S29]`. The class boundaries are sourced too: white dwarf
+below **8.5 M☉** (Smartt 2009 §4.4, m_min = 8.5 (+1, −1.5), the observed core-collapse progenitors;
+Heger et al. 2003's ~9 the alternative), neutron star to **25 M☉** and black hole above (Heger et al.
+2003 §II.1) `[verified: arXiv:0908.0700; astro-ph/0212469]`. (b) **The black hole's mass is a measured
+constant, not a function of metallicity**, because no metallicity-dependent fit could be read: Spera,
+Mapelli & Bressan 2015's Appendix C would not extract from the paper's HTML and Fryer et al. 2012's
+prescriptions need a CO-core mass the model does not carry. So 7.8 M☉ (Özel et al. 2010, "a narrow mass
+distribution at 7.8 ± 1.2 M☉") and 1.33 M☉ for a neutron star (Özel & Freire 2016 §2.5, the
+double-neutron-star peak; the slow pulsars' 1.49 the alternative) `[verified: arXiv:1006.2834;
+1603.02698]`; the dependence is debt **#86**. (c) **The planetary-nebula lifetime is sourced, so the flag
+was built**: 27 ± 6 kyr (Badenes, Maoz & Ciardullo 2015 §III, the LMC's older progenitors), their
+tentative 11 kyr for 2–8 M☉ progenitors and Buzzoni et al. 2006's ≈ 30 kyr the alternatives `[verified:
+arXiv:1502.01015; astro-ph/0602458]`; the PNLF cutoff M* = −4.47 (Ciardullo et al. 2002 §V) is Phase 9's
+row and only its citation was read.
+
+**Built (an Opus subagent in a worktree on the branch, commits b2499a6 and ed609ae; reviewed, the core
+diff first, and accepted without a change).** New `stages/remnants.py`: the IFMRs, the boundaries and the
+lifetime as module constants (the catalogue's `materialise` has no `ctx.constants`, S28's precedent; the
+lifetime would otherwise be duplicated), `fate`, `remnant_mass`, `death_age` (the lookup's
+heaviest-living-mass reading, inverted — 0 disagreements in 200 000 stars) and the population integral
+`budget`. **Dead is the table's own mark**, the NaN luminosity D164 already gives; nothing re-derives a
+lifetime. The catalogue gains the category column **`star_remnant`** (`none / white_dwarf / neutron_star /
+black_hole / planetary_nebula`) and **`star_remnant_mass`** (NaN for a living star: zero would read as a
+measured massless remnant, B9, and the log ramp cannot draw it), both inside `materialise` (D60; region
+and whole-disc queries agree, asserted). The `population` stage publishes **`remnant_mass_fraction`**
+and **`planetary_nebula_count`** as population integrals over the history and the bulge, not counts of
+the sample (a 2 × 10⁵-star sample reads 0.2078 ± 0.0019 against the disc integral's 0.2076, B3); it
+now reads the chemistry, so the execution order moved — `population` after `chemistry_dtd`, `formation`
+after `systems` — and the pin in `tests/test_graph.py` carries the old order. Two refactors checked
+bit-identical: `photometry.population_over` split into `on_fine_ages` / `cumulative_over_age` /
+`steps_over`; the bulge's [Fe/H] proxy factored as `light.bulge_abundance`. No new inputs, units or
+level-0 constants.
+
+**Measured (default grid; identical in both models).** `remnant_mass_fraction` **0.214686** (0.214597
+coarse); `planetary_nebula_count` **14 732** (14 731 coarse). The default catalogue of 19 990 stars: 18 269
+living, 1 589 white dwarfs, 113 neutron stars, 19 black holes, 0 planetary nebulae (`azimuthal` differs by
+two neutron stars; a 4 × 10⁵-star sample caught one nebula). Rows 1–29 unchanged (3 = 251.026, 15 =
+5.20971, 16 = 41.1036, 17 = 6.08381, 29 = −7.91436); spec 8 / 17 / 4 in both; graph, preflight,
+determinism (across processes) and convergence (36 ok, 0 drift) OK for both; `python -m galaxy.specs`
+EXIT=0. Cost: `population` from ~0 to 0.166 s cold (0.036 warm), the integral; `systems` 0.285 s; no route
+runs `population`, so the timings rows moved within noise while the region payloads grew (37 136 → 41 760
+bytes for a sector, 2.41 → 2.73 MB for the disc: two columns).
+
+**The finding: the locked mass is 84% stars and remnants (#85).** The budget's locked mass equals
+`stellar_mass_total` to 10⁻¹², so it is the same 4.750853 × 10¹⁰ M☉ — but living stars (3.1194 × 10¹⁰)
+plus remnants (white dwarfs 6.621 × 10⁹, neutron stars 6.99 × 10⁸, black holes 1.208 × 10⁹) come to
+**0.836104** of it. The isochrones' effective return over this history is **0.4147** against the
+instantaneous `RETURN_FRACTION` of 0.30 (a 12.6 Gyr solar population alone returns 0.4276). The
+constant was not retuned (B5, B10): it is the star-formation law's instantaneous recycling, fitted
+nowhere, and the honest fix is to derive the return from the isochrones or replace instantaneous
+recycling, which reaches into the gas budget and row 1. Recorded as a carried debt with the numbers.
+
+**Decided in review, and one thing deliberately not done.** No row 30: the only remnant target read with
+an uncertainty is local — McKee, Parravano & Hollenbach 2015 Table 1, white dwarfs 4.9 ± 0.8 of 33.4 ±
+3 M☉ pc⁻² in stars and remnants at the Sun — and the model's Σ_WD at R₀, **4.757** of 32.068 (share
+0.1483), was read before any row could be ruled, so entering it now would breach D113; it is pinned in
+a test for Audit III and carried as **#87**. The boundaries are solar-metallicity ones at every [Fe/H]
+(Heger et al.: at high metallicity mass loss ends by making "only neutron stars"); ages past the table's
+12.6 Gyr die no more, so the oldest stars make no nebulae and the bulge none; stars above 64 M☉ and
+younger than 4 Myr are NaN in the table and count as black holes, about one in 10⁸.
