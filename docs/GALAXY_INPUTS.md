@@ -689,9 +689,9 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97 | 32 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 | 34 |
 
-So the board's **43 open** is 11 permanent and 32 carried, and no item is unruled. (S22
+So the board's **45 open** is 11 permanent and 34 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -701,14 +701,14 @@ photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach
 #88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179; S31 opened #91–#93,
 the grey slab, the PAH fit and the owed row 32, D180; S32 opened #94–#95, the census's construction and
 the cloud vector's unsourced draws, D181; S33 opened #96–#97, the clusters' inherited mass function and
-the bound mass before survival, D182.) The eleven
+the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as recorded misses, D183.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The thirty-two carried ones are not thirty-two mechanisms.** Four of them — 19, 27, 49 and the
+**The thirty-four carried ones are not thirty-four mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -725,7 +725,9 @@ D178), and 86 and 87 are a fit not read and a row owed to Audit III; 88 is a rec
 now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179); 91 is a slab
 that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit III (S31, D180); 94 and
 95 are the cloud census's construction and its stated guesses (S32, D181); 96 is the cluster function the
-census inherits and 97 the bound mass S34's survival must cut (S33, D182). That leaves 28, 33, 39, 42,
+census inherits and 97 the bound mass whose survival S34 built on the wrong population (S33, D182; S34,
+D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
+D183). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3008,6 +3010,35 @@ never been judged in twenty-three sessions.
    survival S34 builds enters only through a survival mass. **Carried to S34**, which either closes it —
    the surviving mass reproduces η within the relation's 0.28 dex — or records what the survival
    prescription had to assume to do so.
+   *S34 (D183):* the survival is built (Lamers et al. 2005's disruption at the open-cluster t₀ = 3.3 Myr,
+   PZMG's function from 10² M☉) and the mean lands +0.26 dex from η M_halo — **on the wrong population**:
+   53% of the surviving mass is younger than 1 Gyr and 0.7% older than 10 Gyr; the old survivors alone read
+   −1.87 dex at that t₀ and +0.09 dex at the N-body t₀ (×5). **Still carried.** What closes it: a sourced
+   age at which a survivor counts as a globular *and* a sourced disruption time for halo orbits; then
+   `gc_system_mass` is the old survivors and this item and #98 are judged together.
+
+98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex** (S34, BUILD_II
+   Phase 5, D183). The ensemble median 7.13 × 10⁷ M☉ against 1.54–3.26 × 10⁷: the catalogue's ΣL_V =
+   1.716 × 10⁷ L☉ over 156 clusters (it lists no masses; M_V,t for 156 of 157) `[verified:
+   physics.mcmaster.ca/~harris/mwgc.dat, Part II, read at S34]` at BHG16's M/L_V = 1.4 ± 0.5 for metal-poor
+   globulars `[verified: arXiv:1602.07702, §6.1.2]`, applied to all 156; the catalogue's own M/L = 2 (3.43 ×
+   10⁷, no width) is the alternative and fails the same way. Disclosed in the row: the model's number was
+   known when the M/L was chosen; and η M_halo itself (3.3–4.4 × 10⁷) sits at or above the window's top, so
+   the model reproduces the halo relation and misses the catalogue because it counts every surviving bound
+   cluster whatever its age (#97). **Carried.** Prediction that kills the reading: separating the old
+   survivors at a sourced halo-orbit disruption time lands the row within 0.2 dex; if they read below 1.5 ×
+   10⁷ at any sourced t₀ between the open clusters' and the N-body one, the bound fraction or the mass
+   function's scale at high redshift is at fault, not the dissolution.
+99. **Row 33, the stellar halo mass, reads 3.0 × 10⁹ against BHG16's 4–7 × 10⁸** (S34, D183). The debris
+   integral over `mergers[]` takes each satellite's stars as the mass ratio times the host's disc stars
+   formed before the event `[inferred]`: Gaia-Enceladus 0.25 × 9.63 × 10⁹ = 2.41 × 10⁹, Sagittarius 0.02 ×
+   3.11 × 10¹⁰ = 6.2 × 10⁸, every satellite whole, no stripped fraction read. The source's Ms is Bell et
+   al.'s 1–40 kpc fit plus half the four substructures `[verified: arXiv:1602.07702, §6.1.2]`. **Carried.**
+   The lever is the satellite's stellar share, not the stripping: a dwarf holds far less of its mass in
+   stars than the host does, so a sourced stellar-to-halo relation for the satellites must bring the sum
+   down 4.3–7.6×; the mass ratios are not a lever, they also set the disc heating (MERGER_HEATING). If a
+   sourced relation does that and the row still misses high, the ratio's reading (total mass, not stellar)
+   is what is wrong.
 
 ---
 

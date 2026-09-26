@@ -976,3 +976,16 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   reasoning before ruling, and record the ruling in the field's about line (D182).
 - [close] Two rulings on a first pass cost one more subagent round and no orchestrator code; reviewing
   the report's numbers against the model's own rates (7.93 vs 1.755) found what the tests could not (D182).
+
+## From S34 (BUILD_II Phase 5)
+
+- [audit] A check can pass on the wrong population. The GC system mass landed inside η's 0.28 dex with
+  half its mass in clusters under a gigayear old; only the age composition, measured because the
+  subagent asked what the survivors were, showed it. Every closure now states *what* closed (D183).
+- [field] When the sourced number that would fix a result (an age cut, a halo-orbit t₀) is not read, the
+  right move is to publish the honest quantity with its composition in the about line and carry the debt,
+  not to reach for a plausible value: the result depends entirely on it (5 × 10⁵ or 4.7 × 10⁷) (D183, #97).
+- [field] A row's window can be chosen with the model's number known — say so in the row's own text, name
+  the alternative that fails the same way, and let the miss stand; the disclosure is the protection (D183, #98).
+- [catalogue] A population integral a statistical row re-runs 41 times must not read a field whose stage
+  materialises a census; recompute the integral from the history and assert equality once (D183, D4).

@@ -373,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (43, 37)  # 41 / 37 at S32 (#94-#95, D181); 39 / 37 at S31; 27 / 35 at S22; S33 opened #96-#97 (D182)
+    assert progress.debt_counts(text) == (45, 37)  # 43 / 37 at S33 (#96-#97, D182); 41 / 37 at S32; 27 / 35 at S22; S34 opened #98-#99 (D183)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -402,7 +402,8 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97 | 32 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 | 34 |",
+        "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex**",
         "94. **All the molecular gas is in clouds, drawn from a smallest mass no source fixed**",
         "96. **The cluster census inherits the clouds' mass function, not the review's**",
         "91. **The dust's radiative transfer is a grey slab**",
