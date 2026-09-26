@@ -70,6 +70,9 @@ from galaxy.stages.systems import (
 )
 
 CLOUD_STATES: tuple[str, ...] = ("embedded", "blown_open", "dispersing")
+# The states whose cloud holds a star cluster (S33, BUILD_II Phase 11, ruling (d)): past the embedded
+# phase, the two in which Kawamura et al. 2009 see HII regions, so massive stars have formed.
+CLUSTER_HOSTING_STATES: tuple[str, ...] = ("blown_open", "dispersing")
 
 # Boltzmann's constant over the proton mass, in (km/s)^2 per kelvin: the sound speed squared of
 # gas at temperature T and mean particle mass mu is K_OVER_MH * T / mu. SI 2019 exact k and the
@@ -109,6 +112,13 @@ def velocity_dispersion(radius_pc: np.ndarray, surface_density: float) -> np.nda
 def sound_speed(temperature: float, mean_weight: float) -> float:
     """Isothermal sound speed √(kT/μ m_H) in km/s."""
     return math.sqrt(K_OVER_MH * temperature / mean_weight)
+
+
+def cluster_indices(state: np.ndarray) -> np.ndarray:
+    """Per cloud of one cell, in the cell's order: the index its cluster has among the cell's clusters,
+    or -1 where the cloud holds none. A cell's clusters are its hosting clouds' in the same order (S33)."""
+    hosts = np.isin(np.asarray(state), [CLOUD_STATES.index(s) for s in CLUSTER_HOSTING_STATES])
+    return np.where(hosts, np.cumsum(hosts) - 1, -1).astype(float)
 
 
 def state_of(age_myr: np.ndarray, phases: Sequence[float]) -> np.ndarray:
@@ -238,10 +248,13 @@ def materialise_clouds(
         columns.setdefault("cloud_metallicity", []).append(np.interp(radius, R, feh_gas))
         columns.setdefault("cloud_alpha", []).append(np.interp(radius, R, alpha_gas))
         states.append(state_of(age, phases))
+        columns.setdefault("cloud_cluster_index", []).append(cluster_indices(states[-1]))
 
     if not columns:
         empty = np.zeros(0)
-        return Catalogue.of({n: empty for n in CLOUD_COLUMNS} | {"cloud_state": empty.astype(np.int64)}, counts)
+        return Catalogue.of(
+            {n: empty for n in CLOUD_COLUMNS} | {"cloud_cluster_index": empty, "cloud_state": empty.astype(np.int64)}, counts
+        )
     out: dict[str, Any] = {name: np.concatenate(parts) for name, parts in columns.items()}
     out["cloud_state"] = np.concatenate(states)
     return Catalogue.of(out, counts)
@@ -313,6 +326,13 @@ CLOUD_METALLICITY = _column("cloud_metallicity", "[Fe/H]", "dex",
 CLOUD_ALPHA = _column("cloud_alpha", "[α/Fe]", "dex",
                       "The present-day gas α-to-iron ratio at the cloud's radius, for the oxygen its lines need.",
                       ramp=Ramp("plasma"))
+
+CLOUD_CLUSTER_INDEX = _column("cloud_cluster_index", "Its cluster's index", "dimensionless",
+                              "Which star cluster of the cloud's own cell the cloud holds, by that cluster's index "
+                              "in the cell (the cluster census names a cluster by cell and index, as stars are "
+                              "named), or -1 for none: a cloud holds one cluster once it is past its embedded "
+                              "phase, when its HII regions say massive stars have formed.",
+                              ramp=Ramp("viridis", lo=-1.0))
 
 CLOUD_COUNT_TOTAL = FieldDecl(
     name="cloud_count_total", label="Clouds in the galaxy", unit="count", kind=Kind.SCALAR, meaningful_zero=True,
@@ -390,7 +410,7 @@ CLOUDS = IMPLEMENTATIONS.register(
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
             CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT,
-            CLOUD_GRADIENT_ANGLE, CLOUD_METALLICITY, CLOUD_ALPHA,
+            CLOUD_GRADIENT_ANGLE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
             CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME,
         ),
     )

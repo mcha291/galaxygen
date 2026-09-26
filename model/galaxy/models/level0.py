@@ -398,6 +398,54 @@ LEVEL0: dict[str, Constant] = {
         "age is drawn over; Kruijssen et al. 2019 read 1.5 Myr for the overlap of clouds and HII regions in "
         "NGC 300 (Nature 569, 519, arXiv:1905.08801), the alternative reading of the last two phases.",
     ),
+    # --- star clusters: one per cloud past its embedded phase (S33, BUILD_II Phase 11). Every number
+    # below was read at S33 in its source's text (rule B9, D175); the sentence is quoted in the line. ---
+    "CLUSTER_FORMATION_EFFICIENCY": Constant(
+        0.08,
+        "dimensionless",
+        "The fraction of a cloud's mass its cluster takes, eps_GMC = M_*/(M_GMC + M_*) (Murray 2011, eq. "
+        "5): 'we have estimated a lower limit to the fraction of gas in a massive Milky Way GMC that will "
+        "be converted into stars over the lifetime of that GMC, finding eps_GMC ~ 0.08' [verified: Murray "
+        "2011, ApJ 729, 133, arXiv:1007.3270, section 6; the abstract's 'ionizing luminosity-weighted "
+        "average <eps_GMC>_Q = 0.08, compared to the Galactic average ~ 0.005', read at S33]. Ruling (d) "
+        "of S33's brief. The named alternatives are the same paper's Galactic average 0.005, its remark "
+        "that 'typical estimates are more like 0.02' (section 3), Lada & Lada 2003's 'global SFEs "
+        "estimated for entire GMCs which are typically only 1-5 %' (section 5.2, astro-ph/0301540), and the "
+        "model's own ratio of today's star formation rate times the cloud lifetime to its molecular "
+        "mass, which reads 0.020 (S33, tests/test_clusters.py).",
+    ),
+    "CLUSTER_BOUND_FRACTION": Constant(
+        0.07,
+        "dimensionless",
+        "The chance a cluster emerges from its cloud bound: 'Less than 4-7% of embedded clusters survive "
+        "emergence from molecular clouds to become bound clusters of Pleiades age' (abstract) and 'only "
+        "about 7% of all embedded clusters survive to Pleiades age' (section 2.5) [verified: Lada & Lada "
+        "2003, ARA&A 41, 57, astro-ph/0301540, read at S33]. The upper end of the range, by number and "
+        "independent of mass; the same section's 'It is likely that only the most massive clusters in "
+        "our catalog are candidates for long term survival' is the named alternative (a mass cut), not "
+        "built: its 500 Msun is a sub-cloud embedded cluster's, below every cluster this census makes.",
+    ),
+    "CLUSTER_DISSOLUTION_AGE": Constant(
+        10.0,
+        "Myr",
+        "The age by which an unbound cluster has dispersed: 'the vast majority of embedded clusters do "
+        "not survive emergence from molecular clouds as identifiable systems for periods even as long as "
+        "10 Myr ... less than 10% survive longer than 10 Myr. Indeed, most clusters may dissolve well "
+        "before they reach an age of 10 Myr' [verified: Lada & Lada 2003, section 2.5, read at S33]. An "
+        "upper bound in the source, used as the time.",
+    ),
+    "CLUSTER_HALF_MASS_DENSITY": Constant(
+        1.0e3,
+        "Msun/pc3",
+        "The half-mass density rho_hm = 3M/(8 pi r_hm^3) young clusters form at: 'For young clusters "
+        "(<~ 10 Myr) there seems to be some positive correlation between mass and radius, roughly "
+        "consistent with a density of 10^(3+/-1) Msun pc^-3' [verified: Portegies Zwart, McKee & Gieles "
+        "2010, ARA&A 48, 431, arXiv:1002.1961, section 4.4.2, and Fig. 9's caption for the definition, "
+        "read at S33]. The named alternative is a constant radius, the same section's reading of "
+        "clusters older than 10 Myr and Larsen 2004's 'most star clusters seem to have about the same "
+        "size', a mean half-light radius of '4 +/- 1 pc' in the Antennae (astro-ph/0408201, section "
+        "6.3, read at S33).",
+    ),
     # --- swing amplification: the arm number and the arms' strength (S26, BUILD_II Phase 1b, D175) ---
     "SWING_X_LOW": Constant(
         1.0,

@@ -65,12 +65,14 @@ from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
 from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds
+from galaxy.stages import clusters as _clusters
 from galaxy.stages import systems as _catalogue
 
 JSON = "application/json"
 CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
 PLANETS_SLOT = "planets"  # and the slot a system query materialises with
 CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
+CLUSTERS_SLOT = "clusters"  # and the slot a clusters query answers for (S33)
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
@@ -142,6 +144,14 @@ ROUTES: tuple[Route, ...] = (
         "the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clouds",
+    ),
+    Route(
+        "/api/clusters",
+        "The young star-cluster census for one (R, phi) window (S33): one cluster in every cloud past its "
+        "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
+        "that holds it names it; level=k keeps the clusters inside the level-k children the window meets.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "clusters",
     ),
 )
 
@@ -806,20 +816,7 @@ class Service:
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
         kept = None
         if level:
-            children = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level)
-            wanted = set(children)
-            keep = np.zeros(census.size, dtype=bool)
-            offset = 0
-            for cell, count in census.counts:
-                r = np.asarray(census["cloud_radius"])[offset:offset + count]
-                phi = np.asarray(census["cloud_azimuth"])[offset:offset + count]
-                for qq in range(_catalogue.children_per_cell(level)):
-                    cid = _catalogue.child_id(cell, level, qq)
-                    if cid in wanted:
-                        keep[offset:offset + count] |= _catalogue._within(r, phi, {}, R, cell, level, qq)
-                offset += count
-            kept = int(keep.sum())
-            census = _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, census.counts)
+            census, kept = _in_children(census, "cloud", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
@@ -841,6 +838,63 @@ class Service:
                 "cloud_forcing_parameter": float(constants["TURBULENCE_FORCING_B"]),
                 "cloud_lifetime": float(constants["GMC_PHASE_EMBEDDED"] + constants["GMC_PHASE_BLOWN_OPEN"]
                                         + constants["GMC_PHASE_DISPERSING"]),
+            },
+            "columns": columns,
+            "stages": list(ran),
+        }
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
+
+    def _clusters(self, q: Query) -> Response:
+        """The star-cluster census of one window (S33): the clusters of every level-0 cell the window meets,
+        drawn from those cells' clouds exactly as the stage draws them; at level k, the clusters inside the
+        children it meets. The clusters stage does not run, nor the clouds stage: the cells' clouds are
+        materialised here from what the clouds read, as ``/api/clouds`` does (D4)."""
+        model = self._model(q)
+        stage = _stage_for(model, CLUSTERS_SLOT, self.impls)
+        R = self.grid.R
+        r_min = q.number("r_min", float(R[0]))
+        r_max = q.number("r_max", float(R[-1]))
+        phi_min = q.number("phi_min", 0.0)
+        phi_max = q.number("phi_max", 2.0 * math.pi)
+        level = _level(q)
+
+        inputs = self._overrides(model, q)
+        # What the stage reads other than the cloud columns, which the census here draws for itself.
+        reads = tuple(n for n in self._reads(model, stage) if n not in _clusters.CLOUD_READS)
+        out, ran = self.compute(model, inputs, reads)
+        seed = int(out.inputs[stage.reads_seeds[0]])
+        constants = {k: c.value for k, c in model.constants.items()}
+        parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
+        key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        census = self.cells.catalogue(
+            key, parents,
+            lambda wanted: _clusters.materialise_clusters(
+                _clouds.materialise_clouds(out.fields, R, seed, constants, wanted), seed, constants
+            ),
+        )
+        columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
+        kept = None
+        if level:
+            census, kept = _in_children(census, "cluster", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "level": level,
+            "cells": {
+                "ids": [c for c, _ in census.counts],
+                "counts": [n for _, n in census.counts],
+                "count": len(census.counts),
+                "requested": len(parents),
+                "of": _catalogue.CELL_COUNT,
+            },
+            "clusters": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
+            # The stage's galaxy scalar, which rule D4 keeps off the viewer's scalars surface (D148): a
+            # population integral over the history, the same number /api/arrays serves when the stage runs.
+            "scalars": {
+                "bound_cluster_mass_total": _clusters.bound_mass(
+                    out.fields["stars_formed_history"], R, float(constants["CLUSTER_BOUND_FRACTION"])
+                ),
             },
             "columns": columns,
             "stages": list(ran),
@@ -907,6 +961,23 @@ class Service:
         return Response(200, wire.MEDIA, wire.encode(header, [(c, system[c]) for c in columns]), ran)
 
 
+
+
+def _in_children(census: Any, prefix: str, R: np.ndarray, children: Sequence[int], level: int) -> tuple[Any, int]:
+    """A census's rows inside the level-``level`` ``children`` asked for, by each row's own position
+    (``<prefix>_radius``, ``<prefix>_azimuth``) within its level-0 cell; the counts stay the cells'."""
+    wanted = set(children)
+    keep = np.zeros(census.size, dtype=bool)
+    offset = 0
+    for cell, count in census.counts:
+        r = np.asarray(census[f"{prefix}_radius"])[offset:offset + count]
+        phi = np.asarray(census[f"{prefix}_azimuth"])[offset:offset + count]
+        for qq in range(_catalogue.children_per_cell(level)):
+            cid = _catalogue.child_id(cell, level, qq)
+            if cid in wanted:
+                keep[offset:offset + count] |= _catalogue._within(r, phi, {}, R, cell, level, qq)
+        offset += count
+    return _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, census.counts), int(keep.sum())
 
 
 def _level(q: Query) -> int:

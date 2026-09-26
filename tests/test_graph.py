@@ -43,14 +43,18 @@ def chk(m, *stages):
 # habitable_zone, planets".
 # Since S32 (BUILD_II Phase 8) the clouds stage reads ism's molecular gas and the pattern, so it runs
 # in dust's round, between dust and planets by the tie-break.
+# Since S33 (BUILD_II Phase 11) the clusters stage reads the cloud columns, so it runs the round after
+# clouds', last in both orders; until S33 both ended "..., habitable_zone, dust, clouds, planets".
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "light",
         "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
+        "clusters",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae",
         "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "clouds", "planets",
+        "clusters",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -63,6 +67,11 @@ SEEDED_BASIC = {
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
     "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
     "cloud_count_total", "cloud_mass_total", "cloud_forcing_parameter", "cloud_lifetime",
+    # S33: which cluster a cloud holds, and the cluster census (a stage that reads systems_seed).
+    "cloud_cluster_index",
+    "cluster_radius", "cluster_azimuth", "cluster_height", "cluster_mass", "cluster_half_mass_radius", "cluster_age",
+    "cluster_bound", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
+    "bound_cluster_mass_total",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",

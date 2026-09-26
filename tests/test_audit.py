@@ -776,9 +776,10 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     lost = [f["name"] for f in fields
             if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
     assert sorted(lost) == [
-        "catalogue_size", "cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime",
-        "cloud_mass_total", "giant_fraction_sample", "mean_planets_per_star", "planet_count_sample",
-    ], lost  # the four cloud scalars joined at S32 (D181): the /api/clouds header carries them
+        "bound_cluster_mass_total", "catalogue_size", "cloud_count_total", "cloud_forcing_parameter",
+        "cloud_lifetime", "cloud_mass_total", "giant_fraction_sample", "mean_planets_per_star", "planet_count_sample",
+    ], lost  # the four cloud scalars joined at S32 (D181), the /api/clouds header carrying them; the
+    # cluster census's one at S33, the /api/clusters header carrying it
     # The one that costs nothing: the region response's own census carries the count.
     assert "catalogue_size" in lost
     # S22's ruling (D148, debt #69): none of the four gets a surface, and each says so in its
@@ -789,7 +790,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
         assert "rule D4" in by_name[name]["about"], name
     # Everything else does reach a surface, and every picture has its ramp (rule A9).
     reachable = [f for f in fields if f["name"] not in lost]
-    assert len(reachable) == len(fields) - len(lost) and len(lost) == 8  # 4 until S32's cloud scalars (D181)
+    assert len(reachable) == len(fields) - len(lost) and len(lost) == 9  # 4 until S32's cloud scalars (D181), 8 until S33's
     assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
 
 
