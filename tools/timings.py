@@ -30,8 +30,13 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlencode
 
 ROOT = Path(__file__).resolve().parents[1]
+# The viewer's own broadband set, as it sends it (S38): the render rows measure the request the viewer makes.
+_RGB = json.dumps(
+    json.loads((ROOT / "frontend" / "src" / "galaxy" / "filters.json").read_text(encoding="utf-8"))["sets"]["rgb"]["curves"]
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +78,12 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),
+    # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
+    Endpoint("render: whole, rgb", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4"}),
+             "400 x 360 x 3 stars, the line, the dust"),
+    Endpoint("render: one region", "/api/render",
+             urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
+             "90 level-2 cells' means"),
 )
 
 

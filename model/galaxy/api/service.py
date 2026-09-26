@@ -68,6 +68,7 @@ from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds
 from galaxy.stages import clusters as _clusters
 from galaxy.stages import nebular as _nebular
+from galaxy.stages import spectra as _spectra
 from galaxy.stages import systems as _catalogue
 
 JSON = "application/json"
@@ -80,6 +81,16 @@ BUBBLES_SLOT = "bubbles"  # whose bubble columns ride on it too, and whose remna
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
+# What /api/render reads (S38): the stellar component's two fields are required, the rest are
+# read where the model publishes them and named as absent where it does not (rule B9).
+RENDER_STARS = ("disc_surface_brightness", "disc_light_temperature")
+RENDER_OPTIONAL = (
+    "pattern_density_contrast", "bulge_luminosity", "bulge_light_temperature",
+    "halpha_surface_brightness_nebular", "dust_extinction_v", "dust_colour_excess_b_v",
+)
+# Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
+# interpolated at 8 x 8 midpoints, area-weighted.
+RENDER_CELL_SAMPLES = 8
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
@@ -165,6 +176,19 @@ ROUTES: tuple[Route, ...] = (
         "keeps the remnants inside the level-k children the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "remnants",
+    ),
+    Route(
+        "/api/render",
+        "The filter integral, run here (RENDER_PHYSICS section 0's ruling (a), S38): filters=<JSON list of the "
+        "viewer's curves, each {name, shape: gaussian (centre, fwhm) | box (centre, width) | sampled (wavelength, "
+        "transmission)}, angstroms> returns, per cell of the (R, phi) grid inside the window - or per level-k region "
+        "cell with level=k - each emitting component's response in each filter, never composited: stars (the "
+        "published surface brightness at its colour temperature, a blackbody's shape, times the pattern's contrast), "
+        "halpha (the nebular line through each curve at 6562.8 A) and the dust (face-on A_V and E(B-V)). The bulge's "
+        "response rides in the header; white=<K> adds a blackbody's response per unit light for the viewer's white "
+        "balance; set=<name> is echoed; precision=f4 sends float32.",
+        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
+        "render",
     ),
 )
 
@@ -974,6 +998,150 @@ class Service:
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
 
+    def _render(self, q: Query) -> Response:
+        """The components through the viewer's filters (RENDER_PHYSICS §§2, 3a; S38, V1).
+
+        The viewer holds its filters as data and sends their curves; this evaluates each published
+        emitting component through each curve (``stages/spectra.py``) and returns the responses per
+        cell, one array per component, never summed into a colour (§2). The viewer multiplies them by
+        its tone map and does nothing else (rule D5). The stages run are the closure of the fields
+        read, as for ``/api/arrays`` (rule D4): the nebular line is a checkpoint-5 field, so a render
+        runs the census stages its Hα is redistributed from.
+        """
+        model = self._model(q)
+        raw = q.one("filters")
+        if raw is None:
+            raise BadRequest(
+                "filters= is the viewer's filter set as a JSON list of curves; the model holds no filter set "
+                "(RENDER_PHYSICS section 2a)"
+            )
+        try:
+            curves = _spectra.parse_curves(json.loads(raw))
+        except json.JSONDecodeError as e:
+            raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
+        except _spectra.CurveError as e:
+            raise BadRequest(f"filters=: {e}") from None
+        precision = q.one("precision", "f8")
+        if precision not in ("f8", "f4"):
+            raise BadRequest(f"precision={precision!r} is not f8 or f4")
+        white = q.one("white")
+        white_k = None
+        if white is not None:
+            white_k = q.number("white", 0.0)
+            if not 1000.0 <= white_k <= 100_000.0:
+                raise BadRequest(f"white={white_k!r} is outside 1000..100000 K")
+        level = None if q.one("level") is None else _level(q)
+
+        declared = self._declared(model)
+        missing = [n for n in RENDER_STARS if n not in declared]
+        if missing:
+            raise NotFound(f"model {model.name!r} does not publish {missing}, which the stellar component is")
+        wanted = [*RENDER_STARS, *(n for n in RENDER_OPTIONAL if n in declared)]
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, wanted)
+        f = out.fields
+        R_axis, phi_axis = out.grid.axes["R"], out.grid.axes["phi"]
+        R = out.grid.R
+
+        # The components on the whole grid: the stars per (R, phi), the line and the dust per R.
+        per_ring = _spectra.stellar_response(f["disc_surface_brightness"], f["disc_light_temperature"], curves)
+        contrast = f["pattern_density_contrast"] if "pattern_density_contrast" in f else None
+        # The stellar light follows the pattern's density contrast around each ring (a constant mass-to-light
+        # ratio in azimuth), which averages to 1 around every ring, so each ring keeps its published light.
+        placed = np.ones((R.size, phi_axis.n)) if contrast is None else np.maximum(np.asarray(contrast, dtype=float), 0.0)
+        stars = per_ring[:, None, :] * placed[..., None]
+        halpha_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["halpha"])
+        components: list[tuple[str, np.ndarray]] = [("stars", stars)]
+        about: dict[str, Any] = {
+            "stars": {
+                "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *(["pattern_density_contrast"] if contrast is not None else [])],
+                "about": "the disc's surface brightness at its colour temperature, a blackbody's shape, through each "
+                         "curve, placed around each ring by the pattern's density contrast",
+            },
+        }
+        if "halpha_surface_brightness_nebular" in f:
+            line = np.asarray(f["halpha_surface_brightness_nebular"], dtype=float)[:, None] * halpha_share
+            components.append(("halpha", line))
+            about["halpha"] = {
+                "unit": "Lsun/pc2", "fields": ["halpha_surface_brightness_nebular"],
+                "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist(),
+                "about": "the nebular Halpha per ring through each curve at its wavelength; axisymmetric as published",
+            }
+        for name in ("dust_extinction_v", "dust_colour_excess_b_v"):
+            if name in f:
+                components.append((name, np.asarray(f[name], dtype=float)))
+        about["dust"] = {
+            "unit": "mag", "fields": [n for n in ("dust_extinction_v", "dust_colour_excess_b_v") if n in f],
+            "about": "face-on, per ring: occlusion, applied by the viewer per line of sight. No extinction curve is "
+                     "published, so no per-filter ratio is computed (the dust stage's E(B-V) is the law's one "
+                     "published number between B and V)",
+        }
+        absent = [n for n in _spectra.LINE_WAVELENGTHS if n not in about]
+
+        per_ring_names = {"halpha", "dust_extinction_v", "dust_colour_excess_b_v"}
+        arrays: list[tuple[str, np.ndarray]] = []
+        if level is None:
+            r_min = q.number("r_min", R_axis.lo)
+            r_max = q.number("r_max", R_axis.hi)
+            phi_min = q.number("phi_min", 0.0)
+            phi_max = q.number("phi_max", 2.0 * math.pi)
+            i0, n_r = _span(R_axis.lo, R_axis.width, R_axis.n, r_min, r_max, wrap=False)
+            j0, n_phi = _span(phi_axis.lo, phi_axis.width, phi_axis.n, phi_min, phi_max, wrap=True)
+            rows = np.arange(i0, i0 + n_r)
+            cols = (j0 + np.arange(n_phi)) % phi_axis.n
+            for name, value in components:
+                arrays.append((name, value[rows] if name in per_ring_names else value[rows][:, cols]))
+            window: dict[str, Any] = {
+                "R": {"first": i0, "n": n_r, "lo": R_axis.lo + i0 * R_axis.width, "width": R_axis.width},
+                "phi": {"first": j0, "n": n_phi, "lo": phi_axis.lo + j0 * phi_axis.width, "width": phi_axis.width,
+                        "wraps": bool(j0 + n_phi > phi_axis.n)},
+            }
+            axes = {name: (["R"] if name.startswith("dust") else ["R", "filter"]) if name in per_ring_names
+                    else ["R", "phi", "filter"] for name, _ in components}
+        else:
+            r_min = q.number("r_min", float(R[0]))
+            r_max = q.number("r_max", float(R[-1]))
+            phi_min = q.number("phi_min", 0.0)
+            phi_max = q.number("phi_max", 2.0 * math.pi)
+            cells = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level)
+            if level and len(cells) > MAX_CHILD_CELLS:
+                raise BadRequest(f"level={level} over this window names {len(cells)} cells, more than {MAX_CHILD_CELLS}: narrow the window")
+            bounds = [_catalogue.cell_bounds(R, c, level) for c in cells]
+            arrays.append(("cell", np.asarray(cells, dtype=np.int64)))
+            for name, value in components:
+                arrays.append((name, _cell_means(value, bounds, R_axis, phi_axis, per_ring=name in per_ring_names)))
+            window = {"cells": {"count": len(cells), "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(level),
+                                "bounds": bounds if len(cells) <= 64 else []}}
+            axes = {"cell": ["cell"], **{name: ["cell"] if name.startswith("dust") else ["cell", "filter"] for name, _ in components}}
+        if precision == "f4":
+            arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
+
+        bulge = None
+        if "bulge_luminosity" in f and "bulge_light_temperature" in f:
+            share = _spectra.blackbody_response(curves, np.array([float(f["bulge_light_temperature"])]))[0]
+            bulge = [_number(v) for v in float(f["bulge_luminosity"]) * share]
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "set": q.one("set"),
+            "filters": [c.json() for c in curves],
+            "level": level,
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "window": window,
+            "axes": axes,
+            "components": about,
+            # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
+            "bulge": bulge,
+            "white": None if white_k is None else {
+                "kelvin": white_k,
+                "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]],
+            },
+            "absent": {"lines": absent, "why": "not published per cell: the collisionally excited lines wait on the "
+                                                "photoionization grid (D184), and Hbeta on the line list (section 3)"},
+            "stages": list(ran),
+        }
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
     def _system(self, q: Query) -> Response:
         """One star's planets. It materialises one cell and takes one star out of it.
 
@@ -1051,6 +1219,51 @@ def _in_children(census: Any, prefix: str, R: np.ndarray, children: Sequence[int
                 keep[offset:offset + count] |= _catalogue._within(r, phi, {}, R, cell, level, qq)
         offset += count
     return _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, census.counts), int(keep.sum())
+
+
+def _span(lo: float, width: float, n: int, a: float, b: float, *, wrap: bool) -> tuple[int, int]:
+    """The run of grid cells ``(first, count)`` whose extent meets ``[a, b]`` on an axis of ``n`` cells of
+    ``width`` from ``lo``. A window narrower than a cell still selects the cell containing it; a wrapping axis
+    (phi) takes the run from the cell holding ``a`` round past its end, at most once round."""
+    if b < a and not wrap:
+        a, b = b, a
+    if wrap:
+        span = min(max(b - a, 0.0), n * width)
+        start = (a - lo) % (n * width)
+        first = min(int(math.floor(start / width)), n - 1)
+        last = int(math.ceil((start + span) / width - 1e-9))
+        return first, int(min(max(last - first, 1), n))
+    first = int(min(max(math.floor((a - lo) / width), 0), n - 1))
+    last = int(min(max(math.ceil((b - lo) / width - 1e-9), first + 1), n))
+    return first, last - first
+
+
+def _cell_means(value: np.ndarray, bounds: Sequence[Mapping[str, float]], R_axis: Any, phi_axis: Any, *, per_ring: bool) -> np.ndarray:
+    """Each region cell's area-weighted mean of a grid quantity: the grid's values, bilinear in (R, phi) and
+    periodic in phi (linear in R for a per-ring one), at RENDER_CELL_SAMPLES² midpoints of the cell."""
+    k = RENDER_CELL_SAMPLES
+    edges = np.array([[b["r_lo"], b["r_hi"], b["phi_lo"], b["phi_hi"]] for b in bounds], dtype=float).reshape(-1, 4)
+    u = (np.arange(k) + 0.5) / k
+    r = edges[:, 0, None, None] + (edges[:, 1] - edges[:, 0])[:, None, None] * u[:, None]  # (n, k, 1)
+    p = edges[:, 2, None, None] + (edges[:, 3] - edges[:, 2])[:, None, None] * u[None, :]  # (n, 1, k)
+    r, p = np.broadcast_arrays(r, p)
+    x = np.clip((r - R_axis.lo) / R_axis.width - 0.5, 0.0, R_axis.n - 1.0)
+    i0 = np.minimum(np.floor(x).astype(int), R_axis.n - 2)
+    fx = x - i0
+    weight = r / r.sum(axis=(1, 2), keepdims=True)
+    if per_ring:
+        at = value[i0] * (1.0 - fx if value.ndim == 1 else (1.0 - fx)[..., None]) + value[i0 + 1] * (fx if value.ndim == 1 else fx[..., None])
+    else:
+        y = (p - phi_axis.lo) / phi_axis.width - 0.5
+        j0 = np.floor(y).astype(int)
+        fy = (y - j0)[..., None]
+        j0 %= phi_axis.n
+        j1 = (j0 + 1) % phi_axis.n
+        fxe = fx[..., None]
+        at = ((1.0 - fxe) * ((1.0 - fy) * value[i0, j0] + fy * value[i0, j1])
+              + fxe * ((1.0 - fy) * value[i0 + 1, j0] + fy * value[i0 + 1, j1]))
+    w = weight if at.ndim == 3 else weight[..., None]
+    return (at * w).sum(axis=(1, 2))
 
 
 def _level(q: Query) -> int:

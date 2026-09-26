@@ -1,0 +1,36 @@
+{
+  "about": "The viewer's filter sets (RENDER_PHYSICS section 2a: the viewer holds the filters, the model holds no palette). Data, sent to /api/render as curves; the model evaluates every published component through them (S38, D113 option (a)). Channels are listed red, green, blue: the display channel each filter is drawn in. Wavelengths in angstroms, in air. Every curve here is [inferred]: an analytic stand-in stated as such, no instrument's measured transmission. tests/test_render.py reads this file, so the gate runs on the curves the viewer sends.",
+  "sets": {
+    "rgb": {
+      "label": "RGB",
+      "about": "Broadband: three Gaussians at the centres and FWHMs of the Bessell 1990 R, V and B passbands the isochrone table's magnitudes are computed in (CMD's UBVRIJHK, photometry.py) [recall: Bessell 2005, ARA&A 43, 293, Table 1: R 6407/1580, V 5448/840, B 4361/890 A; not read in this session]. The Gaussian shape is [inferred]; B and V are what the render gate compares with the table's B - V and M_V.",
+      "curves": [
+        { "name": "R", "shape": "gaussian", "centre": 6407, "fwhm": 1580 },
+        { "name": "V", "shape": "gaussian", "centre": 5448, "fwhm": 840 },
+        { "name": "B", "shape": "gaussian", "centre": 4361, "fwhm": 890 }
+      ]
+    },
+    "sho": {
+      "label": "SHO",
+      "about": "Narrowband false colour, the 'Hubble palette': [S II] 6716/6731 in red, Halpha 6563 in green, [O III] 5007 in blue. Boxes 30 A wide at the lines' air wavelengths [inferred: a flat-topped interference filter of a commonly sold width]; the [S II] box is centred between the doublet and holds both.",
+      "curves": [
+        { "name": "[S II]", "shape": "box", "centre": 6723.6, "width": 30 },
+        { "name": "Halpha", "shape": "box", "centre": 6562.8, "width": 30 },
+        { "name": "[O III]", "shape": "box", "centre": 5006.8, "width": 30 }
+      ]
+    },
+    "hoo": {
+      "label": "HOO",
+      "about": "Bicolour false colour: Halpha in red, [O III] in green and in blue. The same 30 A boxes as SHO [inferred].",
+      "curves": [
+        { "name": "Halpha", "shape": "box", "centre": 6562.8, "width": 30 },
+        { "name": "[O III]", "shape": "box", "centre": 5006.8, "width": 30 },
+        { "name": "[O III]", "shape": "box", "centre": 5006.8, "width": 30 }
+      ]
+    }
+  },
+  "white": {
+    "kelvin": 6500,
+    "about": "The tone map's white point: each channel is divided by the model's response of a blackbody at this temperature per unit light, so a 6500 K source draws white in every set [inferred: near sRGB's D65 white, a display choice, not a physical constant]."
+  }
+}

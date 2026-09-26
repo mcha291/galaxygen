@@ -154,3 +154,11 @@ export const region = (window = {}, params = {}, options) =>
 /** One star's planets, by the (cell, index) that names it. */
 export const system = (star, params = {}, options) =>
   frame("/api/system", { ...params, ...star }, options);
+
+/**
+ * The published components through a filter set (S38): `curves` is the viewer's own data, a list
+ * of {name, shape, ...} objects, sent as JSON; the model holds no filter set and returns each
+ * component's response per cell, which the viewer only tone-maps.
+ */
+export const render = (curves, params = {}, options) =>
+  frame("/api/render", { ...params, filters: JSON.stringify(curves) }, options);
