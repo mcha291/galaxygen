@@ -144,6 +144,16 @@ LEVEL0: dict[str, Constant] = {
         "L☉ = 3.828 × 10³³ erg/s [recall: Kennicutt & Evans 2012, ARA&A 50, 531, Table 1]. "
         "Intrinsic: before the dust the line is emitted through.",
     ),
+    "SOLAR_ABSOLUTE_MAGNITUDE_V": Constant(  # read by light (S28, BUILD_II Phase 3)
+        4.81,
+        "mag",
+        "The Sun's absolute magnitude in Johnson V, Vega system: 4.81 [verified: Willmer 2018, ApJS "
+        "236, 47, Table 3 'Magnitudes of the Sun', Johnson_V Abs(Vega), read from arXiv:1804.07788 at "
+        "S28]. It is what turns a V magnitude into V-band solar luminosities, for the mass-to-light "
+        "ratio and the V surface brightness. The isochrones' own Sun (1 M☉, 4.57 Gyr, solar) reads "
+        "4.773, 0.037 brighter, which is the named alternative and is not used: a solar luminosity "
+        "is a unit, and the unit is the observed Sun's [verified: tests/test_photometry.py].",
+    ),
     "KS_INDEX": Constant(
         1.4,
         "dimensionless",

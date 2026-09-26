@@ -87,6 +87,11 @@ def _judge(q: Quantity, default: float | str, values: Mapping[int, float | str])
     if q.mode == "statistical":
         drift = max((abs(float(v) - float(default)) for v in values.values()), default=0.0)
         return drift, None, "statistical"
+    if q.mode == "sweep":
+        # A sweep row judges a slope across galaxies (S28); its field at the default inputs is one
+        # point of that relation, so its drift is reported beside the rest and judged by nothing.
+        drift = max((abs(float(v) - float(default)) for v in values.values()), default=0.0)
+        return drift, None, "sweep"
     if q.mode == "qualitative":
         drift = 0.0 if all(v == default for v in values.values()) else 1.0
         return drift, 0.0, "drifts" if drift else "ok"
@@ -147,9 +152,9 @@ def report(models: Iterable[Model], sweeps: Mapping[str, Sequence[int]] = SWEEPS
     lines = ["convergence"]
     for m in models:
         rep = sweep(m, sweeps, **kw)
-        counts = {s: sum(1 for d in rep.drifts if d.status == s) for s in ("ok", "drifts", "untestable", "vacuous", "statistical")}
+        counts = {s: sum(1 for d in rep.drifts if d.status == s) for s in ("ok", "drifts", "untestable", "vacuous", "statistical", "sweep")}
         lines.append(f"  model {m.name}: {counts['ok']} ok, {counts['drifts']} drift, {counts['untestable']} untestable, "
-                     f"{counts['vacuous']} vacuous, {counts['statistical']} statistical (row x axis)")
+                     f"{counts['vacuous']} vacuous, {counts['statistical']} statistical, {counts['sweep']} sweep (row x axis)")
         for axis in sweeps:
             lines.append(f"    {axis} = {list(sweeps[axis])}")
             for d in rep.drifts:
