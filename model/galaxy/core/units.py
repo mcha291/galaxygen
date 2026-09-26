@@ -66,6 +66,10 @@ _UNITS: tuple[Unit, ...] = (
     Unit("K", "K", "temperature"),
     Unit("Lsun", "L☉", "luminosity"),
     Unit("mag", "mag", "magnitude"),
+    Unit("Msun/Lsun", "M☉/L☉", "mass_to_light"),  # S28: a band's mass-to-light ratio, in that band's solar units
+    # photon rates (S28): the hydrogen-ionizing photons a star or a population emits per second
+    Unit("1/s", "s⁻¹", "photon_rate"),
+    Unit("1/s/kpc2", "s⁻¹ kpc⁻²", "photon_rate_surface_density"),
     Unit("Searth", "S⊕", "insolation"),
     # gravitation: G in the model's own length/velocity/mass units, so that
     # G·M/R is a squared velocity with no conversion anywhere (S1)

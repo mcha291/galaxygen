@@ -1,4 +1,4 @@
-"""spec: 24 quantities as data; the evaluator; everything not-yet-computable at S0."""
+"""spec: 29 quantities as data (24 until S28); the evaluator; everything not-yet-computable at S0."""
 
 from __future__ import annotations
 
@@ -14,11 +14,12 @@ from helpers import TINY, decl
 Q = {q.n: q for q in spec.QUANTITIES}
 
 
-def test_24_quantities():
-    assert len(spec.QUANTITIES) == 24
-    assert [q.n for q in spec.QUANTITIES] == list(range(1, 25))
+def test_29_quantities():
+    """S28 (BUILD_II Phase 3) added rows 25-28 (BHG16 Table 2) and 29 (the Tully-Fisher slope)."""
+    assert len(spec.QUANTITIES) == 29
+    assert [q.n for q in spec.QUANTITIES] == list(range(1, 30))
     names = [q.name for q in spec.QUANTITIES]
-    assert len(set(names)) == 24
+    assert len(set(names)) == 29
     fields = [q.field for q in spec.QUANTITIES if q.field]
     assert len(set(fields)) == len(fields)
     assert all(q.source and q.stated for q in spec.QUANTITIES)
@@ -28,16 +29,24 @@ def test_statistical_rows_are_debt_8():
     assert {q.n for q in spec.QUANTITIES if q.mode == "statistical"} == {13, 14, 16, 17, 18}
 
 
-def test_every_row_names_a_field():
-    assert all(q.field is not None for q in spec.QUANTITIES)  # S9 filled row 24
+def test_every_row_names_a_field_but_the_four_ruling_b_holds_back():
+    """S9 filled row 24. S28's ruling (b): rows 25-28 judge the model's intrinsic light only if BHG16
+    Table 2 says its magnitudes are extinction-corrected, and it does not, so they name no field."""
+    assert [q.n for q in spec.QUANTITIES if q.field is None] == [25, 26, 27, 28]
     assert Q[24].mode == "qualitative" and Q[24].expect == "bimodal_wide"
+    for n, field in ((25, "absolute_magnitude_b"), (26, "absolute_magnitude_v"), (27, "colour_b_v"), (28, "mass_to_light_v")):
+        assert Q[n].note.startswith("Not judged (S28 ruling (b))") and f"published as {field}" in Q[n].note
+        assert "does not say its magnitudes are extinction-corrected" in Q[n].note
+        assert "without the uncertainties" in Q[n].note  # the source's own words for the zero width
+        assert "inconsistencies between magnitude differences and colour indices" in Q[n].note  # its caveat
+    assert (Q[25].lo, Q[26].lo, Q[27].lo, Q[28].lo) == (-20.70, -21.37, 0.73, 1.70)
 
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 # One model since D170 (the former advanced physics); the tables keep its values.
-VERDICTS = {"basic": REACHED | {21, 24}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
+VERDICTS = {"basic": REACHED | {21, 24, 29}}  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 7, "fail": 17, "not-yet-computable": 0},  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 8, "fail": 17, "not-yet-computable": 4},  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
     "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24},
@@ -59,7 +68,7 @@ for _table in (VERDICTS, SUMMARY, FAILED, DEBTS):
 def test_the_rows_the_model_can_reach_report_a_verdict(model, judged):
     """Everything the model reaches; the rest must admit they cannot."""
     results = judged[model.name]
-    assert len(results) == 24
+    assert len(results) == 29
     by_n = {r.n: r for r in results}
     assert {n for n, r in by_n.items() if r.status != "not-yet-computable"} == VERDICTS[model.name]
     assert spec.summary(results) == SUMMARY[model.name]
@@ -125,7 +134,7 @@ def test_recorded_misses_are_well_formed():
 
 def test_report_runs(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "spec" in out and "0 not-yet-computable of 24" in out
+    assert "spec" in out and "4 not-yet-computable of 29" in out
     assert "recorded miss, debt #11, since S17" in out   # rows 12-14: the spheroid
     assert "recorded miss, debt #11, since S20" in out   # row 3: the bar again, out by 0.03 on the re-derived kick (D128)
     assert "recorded miss, debt #42, since S13" in out   # row 6: the heated old population counted as thin
@@ -160,13 +169,15 @@ def test_zero_width_target_is_recorded_not_widened():
 
 def test_the_table_says_which_rows_have_no_testable_target():
     """Debt #17: the second of the two fixes it names, the first needing a source S10 has not got."""
-    assert {q.n for q in spec.untestable()} == {20, 21}  # row 14 left at S17: the source does quote an uncertainty
-    assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21))
+    # Row 14 left at S17 (the source does quote an uncertainty); rows 25-28 joined at S28: BHG16
+    # prints Table 2 "without the uncertainties" (section 2.2), and no width is invented (D100).
+    assert {q.n for q in spec.untestable()} == {20, 21, 25, 26, 27, 28}
+    assert all(Q[n].lo == Q[n].hi and Q[n].mode == "pointwise" for n in (20, 21, 25, 26, 27, 28))
     # Row 14 was on the list until S17, when the remedy debt #17 actually asks for arrived: the
     # source does quote an uncertainty for the bulge's dispersion, "to = 3 km/s" (BHG16 §4.3),
     # and it was entered rather than invented. Rows 20 and 21's sources still quote none.
     assert Q[14].lo == 110.0 and Q[14].hi == 116.0 and Q[14].mode == "statistical" and Q[14].testable
-    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21))
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21, 25, 26, 27, 28))
 
 
 def test_a_new_zero_width_row_cannot_be_added_silently():
@@ -180,7 +191,7 @@ def test_a_new_zero_width_row_cannot_be_added_silently():
 
 def test_the_report_names_the_table_defect(prod, judged):
     out = spec.report(list(prod[0]), judged)
-    assert "table: rows 20, 21 have zero-width targets" in out
+    assert "table: rows 20, 21, 25, 26, 27, 28 have zero-width targets" in out
     assert "a defect in the table, not in a model (debt #17)" in out
     # It fails nothing: the rows still evaluate and still print their number.
     assert re.search(r"8\.08\d*e\+09", out)  # row 20's hydrogen mass, printed (6.028e9 until S18; 6.243e9 until S17; 4.171e9 until S16)
@@ -337,3 +348,71 @@ def test_world_seed_is_live_and_every_declared_seed_is_bound(prod):
         b = _run(m, {"world_seed": 5}, only=("black_hole_mass", "bulge_velocity_dispersion"))
         assert a.fields["black_hole_mass"] != b.fields["black_hole_mass"]
         assert a.fields["bulge_velocity_dispersion"] == b.fields["bulge_velocity_dispersion"]
+
+
+# --- S28: the sweep instrument (rule B1) and the rows it judges ---------------------------------
+
+
+def test_a_sweep_row_is_well_formed():
+    ok = dict(n=1, name="tf", unit="mag", field="absolute_magnitude_b", lo=-8.56, hi=-7.14, mode="sweep", stated="s", source="src")
+    spec.Quantity(**ok, sweep=spec.Sweep("halo_mass", 5, "circular_velocity_resolved"))
+    with pytest.raises(spec.SpecError):
+        spec.Quantity(**ok)  # a sweep row without a Sweep
+    with pytest.raises(spec.SpecError):
+        spec.Quantity(**{**ok, "mode": "pointwise"}, sweep=spec.Sweep("halo_mass", 5, "circular_velocity_resolved"))
+    with pytest.raises(spec.SpecError):
+        spec.Sweep("halo_mass", 2, "circular_velocity_resolved")  # two points fit any slope exactly
+    with pytest.raises(spec.SpecError):
+        spec.Sweep("Halo", 5, "circular_velocity_resolved")
+
+
+def test_the_sweep_judges_the_slope_and_only_the_slope():
+    q = Q[29]
+    d = {q.field: scalar(q.field, "mag")}
+    x = np.linspace(2.2, 2.8, q.sweep.points)
+    inside = spec.evaluate(q, {q.field: -21.0}, d, "m", swept={29: (x, -7.85 * (x - 2.5) - 19.70)})
+    assert inside.status == "pass" and inside.value == pytest.approx(-7.85)
+    shifted = spec.evaluate(q, {q.field: -21.0}, d, "m", swept={29: (x, -7.85 * (x - 2.5) - 15.0)})
+    assert shifted.status == "pass", "the zero point is not judged (the dust and the width definitions move it)"
+    steep = spec.evaluate(q, {q.field: -21.0}, d, "m", swept={29: (x, -10.0 * (x - 2.5) - 19.70)})
+    assert steep.status == "fail"
+    assert spec.evaluate(q, {q.field: -21.0}, d, "m").status == "not-yet-computable"
+    assert spec.evaluate(q, {q.field: -21.0}, d, "m", swept={29: (x[:3], x[:3])}).status == "not-yet-computable"
+
+
+def test_the_tully_fisher_row_is_sakais_slope_with_its_own_uncertainty():
+    q = Q[29]
+    assert q.mode == "sweep" and (q.lo, q.hi) == (-8.56, -7.14)  # -7.85 +/- 0.71
+    assert q.sweep.input == "halo_mass" and q.sweep.abscissa == "circular_velocity_resolved"
+    assert q.lo <= -7.27 <= q.hi  # Tully & Pierce 2000's slope, the named alternative, inside
+    assert q.sweep.x(np.array([10.0, 158.1, 120.0])) == pytest.approx(np.log10(316.2))
+
+
+def test_the_sweep_runs_the_whole_declared_range(prod):
+    """The input is swept across the range it declares, not a range chosen to fit (S28)."""
+    from galaxy.core.registry import INPUTS
+
+    q = Q[29]
+    values = q.sweep.values(INPUTS["halo_mass"].lo, INPUTS["halo_mass"].hi)
+    assert values[0] == 1e11 and values[-1] == pytest.approx(1e13) and values.size == 9
+
+
+def test_rows_1_to_24_are_where_s27_left_them(judged):
+    """The gate: S28 added light and moved nothing it did not publish (D176's numbers)."""
+    for results in judged.values():
+        v = {r.n: r.value for r in results}
+        assert v[15] == pytest.approx(5.20971, abs=5e-6)
+        assert v[16] == pytest.approx(41.1036, abs=5e-5)
+        assert v[17] == pytest.approx(6.08381, abs=5e-6)
+        assert v[3] == pytest.approx(251.026, abs=5e-4)
+        assert v[21] == pytest.approx(0.2001, abs=5e-5)
+
+
+def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
+    """S28: -7.91436 in both models, inside Sakai et al.'s -7.85 +/- 0.71; the zero point (not
+    judged) is -19.00 at log W = 2.5 against Sakai's -19.70 and Tully & Pierce's -20.11."""
+    for results in judged.values():
+        r = next(r for r in results if r.n == 29)
+        assert r.status == "pass" and r.value == pytest.approx(-7.91436, abs=5e-5)
+        zero = float(re.search(r"zero point at log W = 2\.5 (-?[0-9.]+)", r.reason).group(1))
+        assert zero == pytest.approx(-19.00, abs=0.01)

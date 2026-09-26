@@ -2,12 +2,15 @@
 
     uv run python tools/fetch_parsec.py --raw <dir>     # download (skips files already there) and convert
     uv run python tools/fetch_parsec.py --raw <dir> --convert-only
-    uv run python tools/fetch_parsec.py --raw <dir> --append-age 10.1  # one more age, merged in
 
-One request per metallicity to the CMD 3.9 form (PARSEC v1.2S + COLIBRI TP-AGB, Kroupa IMF,
-UBVRIJHK), every log age on the grid in each. The raw tables stay out of the repository;
-what is committed is ``model/galaxy/data/parsec_isochrones.npz``: per isochrone, initial mass,
-log L, log T_eff and the evolutionary-phase label, as float32 — the four columns photometry needs.
+Two requests per metallicity to the CMD 3.9 form (PARSEC v1.2S + COLIBRI TP-AGB, Kroupa IMF,
+UBVRIJHK): one for every log age from 6.6 up (CMD returns 6.6-10.0) and one for log age 10.1
+alone, which the range request stops short of. The raw tables stay out of the repository;
+what is committed is ``model/galaxy/data/parsec_isochrones.npz``: per isochrone point, initial
+mass, log L, log T_eff and the evolutionary-phase label; the present (post-mass-loss) mass, which
+the wind recipe reads; and the absolute bolometric magnitude and the absolute magnitudes in the
+eight bands U B V R I J H K (Vega system, YBC bolometric corrections), as float32 and the magnitudes as delta-coded thousandths (S28: the
+bands were requested from the start and dropped on conversion until then).
 
 Attribution: see the README's Attributions section. The CMD service's certificate does not
 verify (an incomplete chain), so this client does not verify it either; it only reads data.
@@ -32,7 +35,9 @@ CMD = "https://stev.oapd.inaf.it/cgi-bin/cmd_3.9"
 SERVER = "https://stev.oapd.inaf.it"
 
 LOG_AGES = np.round(np.arange(6.6, 10.1001, 0.1), 2)  # asked for 6.6-10.1; CMD returns 6.6-10.0, 35 ages
+EXTRA_AGES = (10.1,)  # fetched one at a time: the range request above stops at 10.0
 METALLICITIES = np.round(np.arange(-2.2, 0.3001, 0.25), 2)  # [M/H] -2.2 to +0.3: 11 values (CMD clamps -2.2 to -2.19)
+BANDS = ("U", "B", "V", "R", "I", "J", "H", "K")  # CMD's columns are "<band>mag"
 
 FORM = {
     "cmd_version": "3.9", "track_parsec": "parsec_CAF09_v1.2S", "track_colibri": "parsec_CAF09_v1.2S_S_LMC_08_web",
@@ -51,21 +56,21 @@ INSECURE.check_hostname = False
 INSECURE.verify_mode = ssl.CERT_NONE
 
 
-def fetch(mh: float, dest: Path) -> None:
-    form = {**FORM, "isoc_lagelow": f"{LOG_AGES[0]}", "isoc_lageupp": f"{LOG_AGES[-1]}", "isoc_dlage": "0.1",
+def fetch_ages(mh: float, lo: float, hi: float, dest: Path) -> None:
+    form = {**FORM, "isoc_lagelow": f"{lo}", "isoc_lageupp": f"{hi}", "isoc_dlage": "0.1",
             "isoc_metlow": f"{mh}", "isoc_metupp": f"{mh}", "isoc_dmet": "0.0"}
     body = urllib.parse.urlencode(form).encode()
-    with urllib.request.urlopen(urllib.request.Request(CMD, data=body), context=INSECURE, timeout=900) as r:
+    with urllib.request.urlopen(urllib.request.Request(CMD, data=body), context=INSECURE, timeout=1800) as r:
         page = r.read().decode("utf-8", "replace")
     found = re.search(r"\.\./tmp/(output\d+\.dat)", page)
     if not found:
         raise RuntimeError(f"[M/H] = {mh}: no output file in the CMD response")
-    with urllib.request.urlopen(f"{SERVER}/tmp/{found.group(1)}", context=INSECURE, timeout=900) as r:
+    with urllib.request.urlopen(f"{SERVER}/tmp/{found.group(1)}", context=INSECURE, timeout=1800) as r:
         dest.write_bytes(r.read())
 
 
 def read(path: Path) -> list[dict[str, np.ndarray]]:
-    """Split one CMD file into isochrones, keeping the four columns photometry needs."""
+    """Split one CMD file into isochrones, keeping the columns photometry needs and the bands."""
     header: list[str] | None = None
     rows: list[list[float]] = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -76,19 +81,41 @@ def read(path: Path) -> list[dict[str, np.ndarray]]:
     if header is None or not rows:
         raise RuntimeError(f"{path}: no isochrone table")
     table = np.array(rows)
-    col = {name: header.index(name) for name in ("MH", "logAge", "Mini", "logL", "logTe", "label")}
+    col = {name: header.index(name) for name in ("MH", "logAge", "Mini", "Mass", "logL", "logTe", "label", "mbolmag")}
+    bands = [header.index(f"{b}mag") for b in BANDS]
     out = []
     for age in np.unique(np.round(table[:, col["logAge"]], 2)):
         sel = np.round(table[:, col["logAge"]], 2) == age
         out.append({
             "mh": float(np.round(table[sel, col["MH"]][0], 2)), "log_age": float(age),
-            **{k: table[sel, col[c]] for k, c in (("mass", "Mini"), ("log_l", "logL"), ("log_teff", "logTe"), ("label", "label"))},
+            **{k: table[sel, col[c]] for k, c in (
+                ("mass", "Mini"), ("mass_now", "Mass"), ("log_l", "logL"), ("log_teff", "logTe"), ("label", "label"), ("mbol", "mbolmag"),
+            )},
+            "mag": table[sel][:, bands],
         })
     return out
 
 
+def raw_files(raw: Path, mh: float) -> list[tuple[Path, float, float]]:
+    return [(raw / f"parsec_mh{mh:+.2f}.dat", float(LOG_AGES[0]), float(LOG_AGES[-1]))] + [
+        (raw / f"parsec_mh{mh:+.2f}_age{a:.2f}.dat", a, a) for a in EXTRA_AGES
+    ]
+
+
 def convert(raw: Path) -> None:
-    write([iso for mh in METALLICITIES for iso in read(raw / f"parsec_mh{mh:+.2f}.dat")])
+    isochrones: dict[tuple[float, float], dict] = {}
+    for mh in METALLICITIES:
+        for path, _, _ in raw_files(raw, float(mh)):
+            for iso in read(path):
+                isochrones.setdefault((round(iso["mh"], 2), round(iso["log_age"], 2)), iso)
+    write([isochrones[k] for k in sorted(isochrones)])
+
+
+def millimag_delta(mags: np.ndarray) -> np.ndarray:
+    """Magnitudes as int32 thousandths, differenced down the rows: lossless against CMD's three
+    printed decimals, and a third the size compressed, because a magnitude changes smoothly along
+    an isochrone. ``photometry.isochrones`` undoes it with a cumulative sum."""
+    return np.diff(np.round(np.asarray(mags, dtype=float) * 1000.0).astype(np.int64), axis=0, prepend=0).astype(np.int32)
 
 
 def write(isochrones: list[dict]) -> None:
@@ -104,67 +131,38 @@ def write(isochrones: list[dict]) -> None:
         log_l=np.concatenate([i["log_l"] for i in isochrones]).astype(np.float32),
         log_teff=np.concatenate([i["log_teff"] for i in isochrones]).astype(np.float32),
         label=np.concatenate([i["label"] for i in isochrones]).astype(np.int8),
-        source=np.array("PARSEC v1.2S + COLIBRI via CMD 3.9 (stev.oapd.inaf.it); see README Attributions"),
+        mass_now=np.concatenate([i["mass_now"] for i in isochrones]).astype(np.float32),
+        mbol_mmag_delta=millimag_delta(np.concatenate([i["mbol"] for i in isochrones])[:, None])[:, 0],
+        mag_mmag_delta=millimag_delta(np.concatenate([i["mag"] for i in isochrones])),
+        bands=np.array(BANDS),
+        source=np.array("PARSEC v1.2S + COLIBRI via CMD 3.9 (stev.oapd.inaf.it), UBVRIJHK YBC Vega; see README Attributions"),
     )
     print(f"{len(isochrones)} isochrones, {lengths.sum()} rows -> {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1e6:.2f} MB)")
-
-
-def append_age(raw: Path, log_age: float) -> None:
-    """Fetch one more log age at every metallicity and merge it into the committed table."""
-    for mh in METALLICITIES:
-        dest = raw / f"parsec_mh{mh:+.2f}_age{log_age:.2f}.dat"
-        if not dest.exists():
-            start = time.time()
-            fetch_ages(float(mh), log_age, log_age, dest)
-            print(f"[M/H] = {mh:+.2f}, log age {log_age}: {dest.stat().st_size / 1e6:.2f} MB in {time.time() - start:.0f} s", flush=True)
-            time.sleep(5)
-    with np.load(OUT) as old:
-        isochrones = [
-            {"mh": float(old["mh"][k]), "log_age": float(old["log_age"][k]),
-             **{c: old[c][old["offset"][k]: old["offset"][k] + old["length"][k]] for c in ("mass", "log_l", "log_teff", "label")}}
-            for k in range(old["offset"].size)
-        ]
-    known = {(round(i["mh"], 2), round(i["log_age"], 2)) for i in isochrones}
-    for mh in METALLICITIES:
-        for iso in read(raw / f"parsec_mh{mh:+.2f}_age{log_age:.2f}.dat"):
-            if (round(iso["mh"], 2), round(iso["log_age"], 2)) not in known:
-                isochrones.append(iso)
-    isochrones.sort(key=lambda i: (round(i["mh"], 2), round(i["log_age"], 2)))
-    write(isochrones)
-
-
-def fetch_ages(mh: float, lo: float, hi: float, dest: Path) -> None:
-    form = {**FORM, "isoc_lagelow": f"{lo}", "isoc_lageupp": f"{hi}", "isoc_dlage": "0.1",
-            "isoc_metlow": f"{mh}", "isoc_metupp": f"{mh}", "isoc_dmet": "0.0"}
-    body = urllib.parse.urlencode(form).encode()
-    with urllib.request.urlopen(urllib.request.Request(CMD, data=body), context=INSECURE, timeout=900) as r:
-        page = r.read().decode("utf-8", "replace")
-    found = re.search(r"\.\./tmp/(output\d+\.dat)", page)
-    if not found:
-        raise RuntimeError(f"[M/H] = {mh}: no output file in the CMD response")
-    with urllib.request.urlopen(f"{SERVER}/tmp/{found.group(1)}", context=INSECURE, timeout=900) as r:
-        dest.write_bytes(r.read())
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--raw", type=Path, required=True, help="directory for the raw CMD tables (not committed)")
     ap.add_argument("--convert-only", action="store_true")
-    ap.add_argument("--append-age", type=float, help="fetch one more log age and merge it into the committed table")
     args = ap.parse_args()
     args.raw.mkdir(parents=True, exist_ok=True)
-    if args.append_age is not None:
-        append_age(args.raw, args.append_age)
-        return 0
     if not args.convert_only:
         for mh in METALLICITIES:
-            dest = args.raw / f"parsec_mh{mh:+.2f}.dat"
-            if dest.exists():
-                continue
-            start = time.time()
-            fetch(float(mh), dest)
-            print(f"[M/H] = {mh:+.2f}: {dest.stat().st_size / 1e6:.2f} MB in {time.time() - start:.0f} s", flush=True)
-            time.sleep(5)  # one job at a time, and a pause between them: it is someone else's server
+            for dest, lo, hi in raw_files(args.raw, float(mh)):
+                if dest.exists():
+                    continue
+                start = time.time()
+                for attempt in range(3):  # the service times out under load; a file on disk is never partial
+                    try:
+                        fetch_ages(float(mh), lo, hi, dest)
+                        break
+                    except (TimeoutError, OSError) as e:
+                        if attempt == 2:
+                            raise
+                        print(f"[M/H] = {mh:+.2f}, log age {lo}-{hi}: {e!r}; retrying", flush=True)
+                        time.sleep(30)
+                print(f"[M/H] = {mh:+.2f}, log age {lo}-{hi}: {dest.stat().st_size / 1e6:.2f} MB in {time.time() - start:.0f} s", flush=True)
+                time.sleep(5)  # one job at a time, and a pause between them: it is someone else's server
     convert(args.raw)
     return 0
 

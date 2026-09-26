@@ -5171,3 +5171,124 @@ constant, and the honest derivation — how fast a young population leaves its a
 needs a *spiral* pattern speed the model does not publish (the bar's is not it). The viewer still
 crowds young light into the arms by its own rule (RENDER_PHYSICS §0); `sfr_modulation` is the field
 V1/V2 replace it with.
+
+### D177. Phase 3: the galaxy's magnitudes in eight bands, the ionizing budget by a tabulated calibration, the wind and the Wolf–Rayet proxy, rows 25–29 and the sweep instrument — and why four of the five new rows judge nothing yet
+
+**The two rulings, made before any number was read (D113) and what the sources then said.**
+(a) **Q(H⁰) comes from a tabulated model-atmosphere calibration, q₀(T_eff), not a blackbody.**
+Sternberg, Hoffmann & Pauldrach 2003 Table 1 (class V, O3–B0.5, 15 rows, 32 060–51 230 K) is the
+table, chosen over Martins, Schaerer & Hillier 2005 Table 4 (12 rows, O3–O9.5) because it alone
+reaches the early B stars; both were fetched from the papers' own text by a read-only agent, entered
+verbatim in `massive_stars.py`, and every row is checked against its own arithmetic (Q = q·4πR²,
+L = 4πR²σT⁴, to 0.01 dex) `[verified: tests/test_massive_stars.py]`. The blackbody integral above
+13.6 eV is the named alternative, kept as a function: for an O5 V star the table reads 3.117 × 10⁴⁹
+against the blackbody's 3.379 × 10⁴⁹ s⁻¹ (ratio 0.92), for a B0 V 1.041 × 10⁴⁸ against 2.906 × 10⁴⁸
+(0.36) — the factor of a few the plan predicted, at the cool end. (b) **Rows 25–28 judge the model's
+intrinsic light only if BHG16 Table 2 says its magnitudes are extinction-corrected.** The table was
+read: its caption is *"Global magnitudes, colour indices and mass-to-light ratios for the Galaxy"*,
+its §2.2 presents the values *"without the uncertainties"*, and **nothing in the caption or notes says
+the magnitudes are corrected for internal extinction** — the analogues span *"a spread in inclination
+and internal extinction"* `[verified: arXiv:1602.07702, read at S28]`. So rows 25–28 exist with their
+targets (M_B −20.70, M_V −21.37, B − V 0.73, Υ_V 1.70), name no field, and read **not-yet-computable**;
+they are zero-width besides (debt #17). The model's intrinsic values are published beside them:
+M_B −20.5853, M_V −21.2159, B − V 0.6306, Υ_V 1.8468. Debt **#82** carries the two ways to judge them.
+
+**Built (an Opus subagent in a worktree on the branch, five commits b008f9a…626909a; reviewed, the
+core diff first, and accepted without a change).** (1) `tools/fetch_parsec.py` keeps U B V R I J H K,
+M_bol and the present mass per isochrone point; `parsec_isochrones.npz` regenerated from CMD, still
+396 isochrones × 137 818 rows, 1.13 → 3.24 MB (the magnitudes delta-coded in millimagnitudes, lossless
+against CMD's three decimals); the eight old columns came back bit-identical. (2) `photometry.py`:
+per-band light per unit mass formed integrated along every isochrone, `population_over` (each formation
+step averaged over the ages its stars span), `ionizing_yield`, `lookup_columns` for the catalogue.
+(3) `light` publishes `absolute_magnitude_{u,b,v,r,i,j,h,k}`, `colour_b_v`, `mass_to_light_v`,
+`bolometric_correction_v`, `disc_surface_brightness_v`, `photometric_scale_length` (fitted to Σ_V over
+1 kpc–3 R_d: **4.403 kpc against 2.441 for the mass**), `ionizing_photon_rate`(R) and its total. (4) New
+`massive_stars.py`: the two Q tables, the blackbody, Vink, de Koter & Lamers 2001's mass-loss recipe
+(eqs. 24/25, 15, 23; v_∞/v_esc = 2.6 and 1.3 either side of the bistability jump) and the Wolf–Rayet
+proxy (Crowther 2007: initial mass ≥ 25 M☉, T ≥ 30 kK, L ≥ 1.5 × 10⁵ L☉), declared as a proxy. (5) The
+catalogue gains `star_magnitude_v`, `star_ionizing_photons`, `star_wind_luminosity` and the category
+column `star_wolf_rayet`, looked up inside `materialise` (D60). (6) `SOLAR_ABSOLUTE_MAGNITUDE_V` = 4.81
+`[verified: Willmer 2018, ApJS 236, 47, Table 3]` in level0; the isochrones' own Sun reads 4.773 and is
+the named alternative. (7) **Three units join the closed vocabulary**: `Msun/Lsun`, `1/s`, `1/s/kpc2`.
+(8) `spec.py`: rows 25–29, a fourth judging mode **`sweep`** and the `Sweep` class — a row judged over a
+log-spaced sweep of one input across its declared range rather than over seeds (B1: the instrument
+before the row); `convergence.py` reports sweep rows without judging them.
+
+**Row 29, the first population relation in the table, passes.** The B-band Tully–Fisher slope over nine
+halo masses spanning 10¹¹–10¹³ M☉ reads **−7.914 against Sakai et al. 2000's −7.85 ± 0.71** (eq. 6,
+the one B-band calibration read that quotes its slope's uncertainty `[verified: astro-ph/9909269]`;
+Tully & Pierce 2000's −7.27 is the named alternative and lies inside the window `[verified:
+astro-ph/9911052]`); the zero point at log W = 2.5 is −19.00 against −19.70 and is not judged — the
+model's light is intrinsic and both calibrations are corrected to face-on, an offset that moves the zero
+point and not the slope; rms about the fit 0.058. Spec totals **8 pass / 17 fail / 4 not-yet-computable
+of 29 in both models**, every failure recorded; rows 1–24 unchanged (3 = 251.026, 15 = 5.20971, 16 =
+41.1036, 17 = 6.08381).
+
+**The bolometric check.** BC_V = −0.83843; M_V + BC_V reproduces the disc's and bulge's bolometric light
+to 1.58 × 10⁻⁵ (default grid) and 1.65 × 10⁻⁵ (coarse), asserted at 5 × 10⁻⁵; per isochrone the two
+routes agree to 0.99925–1.00068.
+
+**A defect the new bands exposed in the light stage, fixed.** Each formation step's light had been read
+at the step's centre, and the youngest step's whole mass shone as a 4 Myr population: `disc_luminosity`
+read 5.31 × 10¹⁰ at N_t = 2000 and 5.02 × 10¹⁰ at 8000, and B − V moved by 0.1 on the coarse grid.
+Each step is now averaged over the ages its stars span (`population_over`); `disc_luminosity` reads
+4.8958 × 10¹⁰ and moves 0.05% from 2000 to 8000. A published number changed without an acceptance row
+noticing, because no row reads the light — the convergence sweep is what caught it (B7's kind of
+instrument). Recorded here, and reversible.
+
+**What the ionizing budget cannot see, stated (#84).** Of a steady solar population's photons, 0.328
+come from stars inside the table's temperature range; 0.218 from cooler stars and 0.454 from
+post-main-sequence stars PARSEC takes to 217 kK, both carried by a blackbody *extension* anchored to the
+table at its ends `[inferred]` — so the ruling governs a third of the budget. Stars above the youngest
+isochrone's 63.8 M☉ have no L or T_eff and emit nothing here; by the heaviest star the isochrone holds
+they would be about 0.489 of the total, an estimate with errors of both signs, not a bound. The
+galaxy reads Q = 1.6527 × 10⁵³ s⁻¹, 9.42 × 10⁵² per M☉ yr⁻¹; the blackbody alternative would read
+2.12× that and MSH05 1.38×. **The wind (#83)** uses a Newtonian escape velocity: Γ_e's electron-scattering
+opacity σ_e is cited by Vink to Lamers & Leitherer 1993 and was not fetched, so v_∞ is high by
+(1 − Γ_e)^−½. The Wolf–Rayet thresholds and Vink's coefficients are module-level in `massive_stars.py`
+because `materialise` has no `ctx.constants` (the precedent is the IMF's constants in `systems.py`).
+
+**Deferred to V1 with the number in hand.** The brightest-N mode (D168) ranks by bolometric
+luminosity; ranking by `star_magnitude_v` — what a magnitude-limited catalogue does, and what the plan
+asks for — would change 1–6% of the selected set (overlap 0.940 / 0.988 / 0.944 at N = 100 / 1000 /
+5000). A display choice made physical belongs with the filter sets V1 builds; the switch is recorded
+here as owed, not made.
+
+**Cost.** `light` 0.30 → 0.40 s cold (the one-off band and Q table integrals; 0.063 s warm); basic 1.29 s
+cold against 1.23 at S27. Debts **#82–#84** opened; the register reads 30 open = 11 permanent + 19
+carried, 37 discharged. The cold timings as `tools/timings.py` printed them at close (B2), this desktop:
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+viewer: index.html       0.0007   0.0003   2.36        940  -
+viewer: a module         0.0145   0.0003  50.24     22,390  -
+index                    0.0000   0.0000   1.07      1,645  -
+version                  0.0243   0.0018  13.56      1,132  -
+stages                   0.0003   0.0002   1.10     13,058  -
+fields                   0.0010   0.0012   0.84    118,319  -
+inputs                   0.0001   0.0001   1.05     11,060  -
+arrays: one profile      0.1298   0.0003 376.35      5,040  halo,disc,assembly,sfh
+arrays: history          0.3828   0.0023 166.53  6,401,848  halo,disc,assembly,sfh,chemistry_dtd
+arrays: scalar           0.1316   0.0003 407.15      1,784  halo,disc,assembly,sfh
+region: one sector*      0.4902   0.0007 685.92     37,136  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+region: whole disc*      0.7967   0.0051 155.14  2,408,632  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+system: one star*        0.5202   0.0181  28.72      3,520  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha
+az: modulation*          0.1516   0.0009 176.23  1,153,864  halo,disc,assembly,bar,pattern,sfh_azimuthal
+az: history*             0.4206   0.0024 176.76  6,401,880  halo,disc,assembly,bar,pattern,sfh_azimuthal,chemistry_dtd
+az: one sector*          0.5100   0.0007 780.29     37,152  halo,disc,assembly,bar,pattern,sfh_azimuthal,chemistry_dtd,vertical_alpha
+az: one star*            0.4762   0.0202  23.56      3,528  halo,disc,assembly,bar,pattern,sfh_azimuthal,chemistry_dtd,vertical_alpha
+
+* cold includes the interpreter's first seeded draw, numpy's bit-generator setup, about 8 ms here (debt #37)
+import + registry: 0.086-0.687 s, paid once per process and excluded from the cold column
+```
+
+The `region: one sector` row reads 0.490 against S27's 0.451 and `whole disc` 0.797 against 0.738: the
+catalogue's four new columns, looked up per star inside `materialise`. The `az:` rows are the second
+set ever published for that model.
+
+**The orchestrator's full suite found two pins the subagent's subset did not run**, both re-pinned to
+the measurement: debt #17's zero-width set is now rows 20, 21, 25–28 (`test_audit`), and
+`AUDIT_II_A.md`'s sealed green-row table is read with row 29 as *joined since* — green on the slope
+alone, conditioned in this entry rather than in the sealed list, and Audit III's to re-read
+(`test_s22_rulings`). No code changed in review.

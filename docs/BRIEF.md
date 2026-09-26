@@ -1,60 +1,60 @@
-# BRIEF — for S28: BUILD_II Phase 3, photometric rows, the ionizing budget and winds (Opus subagent)
+# BRIEF — for S29: BUILD_II Phase 4, stellar remnants and planetary nebulae (Opus subagent)
 
-**For the orchestrating session.** Open `session-28` (main checkout stays on `main`); hand an Opus
-subagent, in a worktree (`git checkout session-28`, `git config --worktree core.hooksPath tools/hooks`),
-this file, `BUILD_II.md` Phase 3 (reconciled: the isochrone ruling is D164's, PARSEC), `RULES.md`,
-`RESUMING.md`'s "Writing a stage", `stages/photometry.py`, `light.py`, `tools/fetch_parsec.py`. It
-neither pushes nor writes DECISIONS.md; it commits on the branch and reports the instruments' numbers
-verbatim. Debts from #82, decisions from D177; MANUAL_TODO's `s27` row takes S27's merge SHA.
-**Two rulings made here, before any number is read (D113):** (a) **Q(H⁰)** is a sourced tabulated
-q₀(T_eff) calibration for O and early-B stars (NEEDS SOURCING: Sternberg, Hoffmann & Pauldrach 2003;
-Martins, Schaerer & Hillier 2005 — a read-only agent fetches the table's rows; nothing from recall),
-with the blackbody integral above 13.6 eV the *named alternative* the tests compare against; (b) the
-rows judge **intrinsic** light against BHG16 Table 2 only if the table's own caption says its magnitudes
-are extinction-corrected — read it first and put the answer in each row's note.
+**For the orchestrating session.** Open `session-29` (main checkout on `main`); hand an Opus subagent,
+in a worktree (`git checkout session-29`, `git config --worktree core.hooksPath tools/hooks`), this
+file, `BUILD_II.md` Phase 4, `RULES.md`, `RESUMING.md`'s "Writing a stage", `stages/photometry.py`
+(`lookup_columns`, present mass and phase), `stages/massive_stars.py` (S28's pattern: a sourced table
+with a named alternative), `stages/systems.py` (columns inside `materialise`, D60), `stages/light.py`
+(population integrals). It neither pushes nor writes DECISIONS.md. Debts from #85, decisions from
+D178; MANUAL_TODO's `s28` row takes S28's merge SHA. **Rulings made here (D113):** (a) the
+initial–final mass relation is **sourced** (NEEDS SOURCING: Cummings et al. 2018, ApJ 866, 21, the
+white-dwarf IFMR; a read-only agent fetches the fitted segments verbatim) and the remnant classes' mass
+boundaries are the source's, not recalled; (b) the black-hole mass's metallicity dependence enters only
+if a source is read for it (NEEDS SOURCING: Spera, Mapelli & Bressan 2015 or Fryer et al. 2012),
+otherwise a stated fraction of the initial mass with the dependence a debt, not invented; (c) the
+planetary-nebula duration is a sourced number or the flag is not built (NEEDS SOURCING: ~10⁴ yr; the
+PNLF cutoff M* ≈ −4.5 is Phase 9's row, only its citation read here, Ciardullo et al.).
 
-## What to build
-- **The table gains bands.** `tools/fetch_parsec.py` already asks CMD for UBVRIJHK and keeps four columns;
-  keep the band magnitudes and regenerate `parsec_isochrones.npz` (a network fetch; raw tables stay out).
-- **Per-band light per unit mass formed** integrated along every isochrone, the way `light.py` did for
-  bolometric light, so galaxy-level numbers come from the *field* (the whole history), not the sample.
-- **Publish**: galaxy-level `absolute_magnitude_b`, `absolute_magnitude_v` (the other bands as
-  scalars), `colour_b_v`, `mass_to_light_v`, `photometric_scale_length` (fitted to Σ_V(R), not the
-  mass); per star `star_magnitude_v` at least. Every about line without a constant name (D5).
-- **The ionizing budget**: `star_ionizing_photons` per star (Q from L and T_eff by ruling (a)) and the
-  population integral `ionizing_photon_rate`(R). State what fraction of Q the table cannot see: the
-  youngest isochrone reaches 64 M☉ at 4 Myr and heavier stars are NaN.
-- `star_wind_luminosity` (½ Ṁ v_∞², NEEDS SOURCING: Vink, de Koter & Lamers 2001); a Wolf–Rayet flag
-  declared as a **stated proxy** (hot, luminous, post-main-sequence, high initial mass).
-- **Rows 25–28** in `spec.py`: M_B −20.70, M_V −21.37, B − V 0.73, Υ_V 1.70 `[verified: BHG16
-  Table 2]` — the uncertainties are the table's to state (a zero-width target is untestable, D100,
-  debt #17); delegate the read of the table itself, take ugriz and the other colours from it, and
-  note its caveat that SDSS magnitudes and colour indices use different calibrations.
-- **The input-sweep instrument** for Tully–Fisher: a row judged over a sweep of `halo_mass`, not seeds
-  (B1: instrument first; the B-band zero point and slope NEED SOURCING). If the sourcing does not
-  close, build the instrument and leave the row not-yet-computable with the reason in its note.
+## What to build (BUILD_II Phase 4, reconciled)
+- **`star_remnant`**, a category column on the catalogue: `none / white_dwarf / neutron_star /
+  black_hole` (and `planetary_nebula` if (c) closes), from the star's initial mass and age against the
+  isochrone lifetimes the table already holds (a dead star is NaN in L and T_eff, D164) and the IFMR.
+  Every value is looked up inside `materialise`, every ring and sector whatever a request asked for.
+- **`star_remnant_mass`** (a column) and **`remnant_mass_fraction`** (a scalar) — the latter a
+  **population integral** over the history, as `light.py` integrates light, not the sample. Relate it to
+  `RETURN_FRACTION`'s locked mass (`stellar_mass_total` counts locked mass; this phase says what it is):
+  assert remnant + living mass reconciles with it, the tolerance measured, any gap explained.
+- **Planetary nebulae**: a star within the sourced phase duration of the end of its AGB life is flagged
+  (a `planetary_nebula` category or a flag column) with `star_pn_age` or the duration published as a
+  constant; the emissivity is Phase 9's. Say how many PNe the default galaxy carries and compare to
+  the Milky Way's estimated population only if a source for that count is read.
+- **No new inputs** (A2, A4). New constants in level0 with citations; module-level constants only where
+  `materialise` cannot read `ctx.constants`, as S28 did, and say so.
+- No acceptance row is added unless its target has a source with an uncertainty (D100, #17). If the
+  remnant fraction has one (BUILD_II's "10–15%" NEEDS SOURCING), add row 30 citing it; otherwise
+  publish the number and leave the row for Audit III.
 
 ## Gate
-Both models pass graph, preflight, determinism; `python -m galaxy.specs` exits 0; every new row reads
-the same in both models (the light is radial); a failing new row is a recorded miss with a debt, a
-reason and a prediction, never a widened target; rows 1–24 unmoved (15 = 5.20971, #80); the per-band
-integrals reproduce the bolometric one with a stated bolometric correction (assert it);
-`tests/test_photometry.py`'s pins re-pinned with the old number in the comment.
+Both models pass graph, preflight, determinism; `python -m galaxy.specs` exits 0; rows 1–29 unmoved
+(15 = 5.20971 recorded miss #80; 29 = −7.914); the remnant classes partition the dead stars exactly
+(no star two things, none `none` while dead); the mass reconciliation asserted; the new columns'
+per-region determinism (D60) asserted; new tests on the coarse grid where the claim allows; existing
+pins untouched unless one moves, and then the old number in the comment.
 
 ## Traps
-- Every `model`-parametrised test runs for `basic` and `azimuthal`; keep new tests on the COARSE grid.
-- The catalogue's `star_luminosity`/`star_temperature` are looked up inside `materialise` (D60): a new
-  per-star column follows the same path, every ring and sector whatever a request asked for.
-- The brightest-N mode (D168) ranks by bolometric luminosity; report whether it should rank by
-  `star_magnitude_v` and leave the switch to the orchestrator.
-- `tools/timings.py` has a row per route; a new route needs a row and `tests/test_timings.py` pins them.
+- The catalogue is priced per cell (D168's `CellCache`); a new column must not add a per-request pass
+  over every ring — follow `lookup_columns`' path.
+- About lines must not name constants (D5). The units vocabulary is closed: a new unit is a `core/`
+  edit plus a line in the decision candidate.
+- `tools/timings.py` rows pin the routes; a new column changes no route. If `systems` cost moves, say
+  by how much (S28's light moved 0.30 → 0.40 s cold and the timings were re-published).
 - Machine: `uv run` only; the Bash tool fails over ~8 KB; cp1252 console (`encoding="utf-8"`, LF
   newlines); `grep -c` exits 1 on zero matches; long runs backgrounded with `EXIT=$?` on the log.
 - **Do not merge or delete** `session-10-beta`, `session-10-gamma`, `session-10-gamme-run-2`,
   `session-21-a` or `claude/keen-lamport-lldlvp` (MANUAL_TODO §2).
 
 ## At close (orchestrator)
-Read the core diff first, then the tests. Board row 28 ☑ with the subagent's model; `progress.py`; the
-suite backgrounded, merge gated on its EXIT line; D177 with rulings (a) and (b), the rows' numbers in
-both models and the table's provenance; RESUMING (≤ 120) and this file for **S29 (Phase 4, Opus)**;
-`MANUAL_TODO.md` row `s28` with `s27`'s SHA; merge `--no-ff`, push, `verify_clone --ref main`.
+Read the core diff first, then the tests. Board row 29 ☑ with the subagent's model; `progress.py`; the
+suite backgrounded, merge gated on its EXIT line; D178 with rulings (a)–(c) and their sources, the
+remnant fraction and its reconciliation, the PN count; RESUMING (≤ 120) and this file for **S30 (Phase
+6, Opus)**; `MANUAL_TODO.md` row `s29` with `s28`'s SHA; merge `--no-ff`, push, `verify_clone --ref main`.

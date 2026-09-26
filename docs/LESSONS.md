@@ -878,3 +878,22 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A delegated row needs the orchestrator's review to read the *core* diff first: the subagent's
   one-paragraph justification for a machinery change is where a design either holds or does not,
   and the tests it wrote are the second thing to read, not the first (D176).
+
+## From S28 (BUILD_II Phase 3)
+
+- [all] Rule on the observable before reading the source, then let the source decide the row. Ruling
+  (b) — judge intrinsic light only against corrected magnitudes — was made before BHG16's table was
+  read; the table turned out to say nothing about extinction, and four rows honestly read
+  not-yet-computable instead of comparing unlike with unlike. A ruling made after the read would have
+  been tempted by −21.22 against −21.37 (D177, #82).
+- [field] A new field can expose an old one's defect. No acceptance row reads the disc's light, so the
+  light stage's step-centre read had failed to converge (5.5% between two grids) for four sessions
+  unnoticed; the band sums made the colour move and the convergence sweep caught it. Run the sweep on a
+  new field's inputs, not only on the rows (D177).
+- [field] Say what fraction of a quantity a calibration actually covers. The ionizing table governs a
+  third of the photons; the rest is an extension anchored to it, and half the true budget is in stars
+  the isochrones do not hold. A field that reads "from the tabulated calibration" without those three
+  numbers would be a false label (D177, #84).
+- [audit] A population relation is the row this project was short of, and the instrument came first:
+  the sweep over an input's declared range, not narrowed to where the relation holds, judged the
+  Tully–Fisher slope and left the zero point unjudged because dust moves it and not the slope (D177).

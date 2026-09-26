@@ -1,4 +1,4 @@
-"""spec: the 24 acceptance quantities as data (rule C6), with a runner.
+"""spec: the acceptance quantities as data (rule C6), with a runner.
 
 Each :class:`Quantity` names the published scalar field the runner reads, the
 target interval, how it is judged, and its source. The table is
@@ -23,6 +23,11 @@ Judging modes:
   (the interval *intersects* the target), which rewarded a noisier model (debt
   #38); no target was relaxed (rule B5).
 - ``qualitative`` (row 24): a ``category_scalar`` equal to ``expect``.
+- ``sweep`` (row 29, S28): a scaling relation across galaxies, judged over a sweep of one
+  input rather than over seeds (:class:`Sweep`). The model is run at ``points`` values of
+  the input, log-spaced across its declared range; the row's field is the relation's
+  ordinate and :class:`Sweep` says how its abscissa is read; the verdict is the fitted
+  slope's. Built at S28 as the instrument before the row it certifies (rule B1).
 
 Rows 20 and 21 are quoted without an uncertainty and have ``lo == hi``; a
 pointwise check against a zero-width target fails for any float that is not
@@ -61,7 +66,7 @@ from galaxy.core.units import UnknownUnit
 from galaxy.core.units import unit as _unit
 from galaxy.specs import Problem, utf8_stdout
 
-MODES: tuple[str, ...] = ("pointwise", "statistical", "qualitative")
+MODES: tuple[str, ...] = ("pointwise", "statistical", "qualitative", "sweep")
 STATUSES: tuple[str, ...] = ("pass", "fail", "not-yet-computable")
 ENSEMBLE_MIN = 41  # S13 (debt #38): the smallest n at which a central 95% interval excludes one draw at each end
 CENTRAL = 0.95
@@ -69,6 +74,35 @@ CENTRAL = 0.95
 
 class SpecError(ValueError):
     """A quantity row is malformed."""
+
+
+@dataclass(frozen=True, slots=True)
+class Sweep:
+    """How a ``sweep`` row varies the galaxy and reads the relation's abscissa (S28).
+
+    The input is swept across its own declared range, ``points`` values log-spaced from ``lo``
+    to ``hi`` — the range the model claims to hold for, chosen before any value is read and
+    not narrowed to where the relation happens to hold. The abscissa is
+    ``log10(2 · max_R abscissa)``: Tully & Pierce 2000's W_R is "constructed to approximate
+    twice the maximum rotation velocity of a disk galaxy" [verified: TP00 §2.3, read at S28],
+    and the model's maximum rotation velocity is the peak of its resolved rotation curve.
+    """
+
+    input: str
+    points: int
+    abscissa: str
+
+    def __post_init__(self) -> None:
+        if not IDENT.match(self.input) or not IDENT.match(self.abscissa):
+            raise SpecError(f"sweep names {self.input!r}, {self.abscissa!r}: must be field/input names")
+        if self.points < 3:
+            raise SpecError("a sweep needs at least three points to fit a slope and show its scatter")
+
+    def values(self, lo: float, hi: float) -> np.ndarray:
+        return np.geomspace(lo, hi, self.points)
+
+    def x(self, abscissa: Any) -> float:
+        return float(np.log10(2.0 * np.nanmax(np.asarray(abscissa, dtype=float))))
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +118,7 @@ class Quantity:
     source: str
     note: str = ""
     expect: str | None = None  # qualitative rows: the category that passes
+    sweep: Sweep | None = None  # sweep rows: the input swept and how the abscissa is read
 
     def __post_init__(self) -> None:
         try:
@@ -102,6 +137,8 @@ class Quantity:
             raise SpecError(f"row {self.n}: a {self.mode} row with a field needs an interval")
         if self.mode == "qualitative" and self.field is not None and self.expect is None:
             raise SpecError(f"row {self.n}: a qualitative row with a field needs expect=")
+        if (self.mode == "sweep") != (self.sweep is not None):
+            raise SpecError(f"row {self.n}: a sweep row, and only a sweep row, carries a Sweep")
         if not self.stated.strip() or not self.source.strip():
             raise SpecError(f"row {self.n}: stated and source are required")
         if not self.testable and not self.note.strip():
@@ -137,6 +174,34 @@ class Quantity:
 
 _BHG16 = "BHG16"
 
+
+# BHG16 Table 2, read at S28 (ruling (b)): every value the table prints, and what it says about
+# them. The rows below quote from it; nothing here is judged except what a row names.
+_BHG16_TABLE2 = (
+    "BHG16 Table 2, 'Global magnitudes, colour indices and mass-to-light ratios for the Galaxy', "
+    "read from arXiv:1602.07702 (ar5iv) at S28 by a read-only agent [verified: BHG16 Table 2, arXiv:1602.07702]. Its note: "
+    "'Magnitudes and colours derived for the Galaxy from Milky Way analogues drawn from the sdss "
+    "survey using the Kroupa initial mass function. All values assume R0=8.2 kpc and Rd=2.6 kpc'; "
+    "the Johnson photometry is Vega, the SDSS AB, 'typical errors ~ 0.1 mag' (a calibration error, "
+    "not a quoted uncertainty on any row). **No row carries an uncertainty** - 'the likely values "
+    "for the Galaxy are presented in Table 2 without the uncertainties' (section 2.2) - so every "
+    "target here has zero width (D100, debt #17). **The dust question (ruling (b)) is not answered "
+    "by the table**: neither the caption nor its notes say the magnitudes are corrected for internal "
+    "extinction, face-on or intrinsic; section 2.2 describes the analogues as spanning 'a spread in "
+    "inclination and internal extinction', and the Fig. 3 caption mentions 'corrections for "
+    "inclination reddening' for the adopted point, not for the table. The model's light is intrinsic "
+    "(no dust), so by ruling (b) the row judges nothing and names no field; the model's intrinsic "
+    "value is published under the field its first sentence names. The table's other rows: M_u..z -19.87, "
+    "-21.00, -21.64, -21.87, -22.15; M_U -20.67, M_R -21.90, M_I -22.47; u-r 1.96, u-g 1.29, g-r "
+    "0.65, r-i 0.28, i-z 0.28, U-V 0.86, U-B 0.14, V-R 0.54, R-I 0.58; Upsilon u..z 1.61, 1.77, "
+    "1.50, 1.34, 1.05, U 1.66, B 1.73, R 1.45, I 1.18. Its caveat (note b): 'Different calibration "
+    "schemes are needed for the sdss total magnitudes and the unbiassed galaxy colours which leads "
+    "to inconsistencies between magnitude differences and colour indices', and the Johnson "
+    "magnitudes 'are derived via color transformations from the sdss magnitudes' (section 2.2), so "
+    "B - V from rows 25 and 26 (0.67) is not row 27's 0.73."
+)
+_BHG16_T2 = "BHG16 Table 2 (Licquia, Newman & Brinchmann 2015)"
+
 QUANTITIES: tuple[Quantity, ...] = (
     Quantity(1, "Total stellar mass", "Msun", "stellar_mass_total", 4.0e10, 6.0e10, "pointwise", "5 ± 1 × 10¹⁰ M☉", _BHG16),
     Quantity(2, "Star formation rate", "Msun/yr", "sfr", 1.46, 1.84, "pointwise", "1.65 ± 0.19 M☉/yr", _BHG16),
@@ -162,6 +227,34 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(22, "Present-day metallicity gradient", "dex/kpc", "metallicity_gradient", -0.069, -0.049, "pointwise", "−0.06 dex/kpc", "Trentin+24 −0.064 ± 0.003; Feuillet+19 −0.059 ± 0.010", note="Interval is the union of the two cited measurements [inferred]; the table itself quotes −0.06 with no error."),
     Quantity(23, "Gradient evolution with age", "dex/kpc", "metallicity_gradient_old", -0.05, -0.03, "pointwise", "−0.07 (young) → −0.04 (>10 Gyr)", "Willett+23", note="Two values at two ages; one row can name one field, so S2 operationalises it as the *old* end (>10 Gyr, target −0.04) and leaves the young end to row 22's companion field metallicity_gradient_young, which the same stage publishes. Interval is ±0.01 around −0.04 [inferred]: the source quotes no uncertainty and a zero-width target would make the row untestable rather than strict."),
     Quantity(24, "[α/Fe] bimodality", "dimensionless", "alpha_sequence", None, None, "qualitative", "Thick disc α-enhanced across a wide [Fe/H] range", "BHG16 §5.2.2", expect="bimodal_wide", note="Judged on the [α/Fe] mass distribution of the stars now at R₀, migrants included: two modes with a valley between them, and the α-rich mode spanning at least 0.5 dex of [Fe/H] (S9). Only the advanced model publishes the field; the simple model has one abundance and stays not-yet-computable (rule B3). Debt #9 asks whether it appears without a merger."),
+    # S28 (BUILD_II Phase 3): the photometric rows. Each reads the intrinsic field named in its
+    # note only if the source's magnitudes are stated extinction-corrected (ruling (b)); they are not.
+    Quantity(25, "Absolute magnitude M_B", "mag", None, -20.70, -20.70, "pointwise", "−20.70", _BHG16_T2, note="Not judged (S28 ruling (b)): the table does not say its magnitudes are extinction-corrected, and the model's light is intrinsic, published as absolute_magnitude_b. " + _BHG16_TABLE2),
+    Quantity(26, "Absolute magnitude M_V", "mag", None, -21.37, -21.37, "pointwise", "−21.37", _BHG16_T2, note="Not judged (S28 ruling (b)): the table does not say its magnitudes are extinction-corrected, and the model's light is intrinsic, published as absolute_magnitude_v. " + _BHG16_TABLE2),
+    Quantity(27, "Colour B − V", "mag", None, 0.73, 0.73, "pointwise", "0.73", _BHG16_T2, note="Not judged (S28 ruling (b)): the table does not say its magnitudes are extinction-corrected, and the model's light is intrinsic, published as colour_b_v. The table's colour index is its own measurement, not the difference of rows 25 and 26 (note b). " + _BHG16_TABLE2),
+    Quantity(28, "V-band mass-to-light ratio Υ_V", "Msun/Lsun", None, 1.70, 1.70, "pointwise", "1.70", _BHG16_T2, note="Not judged (S28 ruling (b)): the table does not say its magnitudes are extinction-corrected, and the model's light is intrinsic, published as mass_to_light_v (its stellar mass over intrinsic V light, the Sun at M_V = 4.81): a ratio carries the dust question through its luminosity. " + _BHG16_TABLE2),
+    Quantity(
+        29, "Tully–Fisher slope (B band)", "mag", "absolute_magnitude_b", -8.56, -7.14, "sweep",
+        "−7.85 ± 0.71 mag per dex of W", "Sakai et al. 2000, ApJ 529, 698, eq. 6",
+        sweep=Sweep("halo_mass", 9, "circular_velocity_resolved"),
+        note=(
+            "A population relation, the first in the table: the slope of M_B against log W across "
+            "galaxies, judged over a sweep of halo_mass across its whole declared range rather than "
+            "over seeds (S28, rule B1: the instrument before the row). Target: Sakai et al. 2000 eq. 6, "
+            "'B_T^c = -7.85(+/-0.71)(log W_20^c - 2.5) - 19.70(+/-0.11)', the one B-band calibration "
+            "read that quotes the slope's uncertainty [verified: arXiv:astro-ph/9909269, read at S28]; "
+            "Tully & Pierce 2000 eq. 5, 'M_B^{b,i,k} = -20.11 - 7.27(log W_R^i - 2.5)', quotes none and "
+            "is the named alternative, inside this window [verified: arXiv:astro-ph/9911052]. The "
+            "abscissa is TP00's: W_R approximates twice the maximum rotation velocity; Sakai's W_20 is "
+            "the 20% HI width corrected for inclination and not for turbulence, which TP00's construction "
+            "adds, so the two widths differ most for slow rotators. Both calibrations' magnitudes are "
+            "corrected for internal extinction to face-on, which 'does not account for the residual "
+            "absorption within a face-on system' (TP00 section 2.4); the model's are intrinsic. The slope "
+            "is judged and the zero point is not: an offset between face-on and dust-free light moves "
+            "the zero point and, if it does not change with mass, not the slope. Both zero points assume "
+            "Cepheid distances (TP00 H0 = 77, Sakai 71; the model's h is 0.70)."
+        ),
+    ),
 )
 
 if [q.n for q in QUANTITIES] != list(range(1, len(QUANTITIES) + 1)):
@@ -627,10 +720,12 @@ def evaluate(
     decls: Mapping[str, FieldDecl],
     model: str,
     ensemble: Mapping[str, Sequence[float]] | None = None,
+    swept: Mapping[int, tuple[np.ndarray, np.ndarray]] | None = None,
 ) -> Result:
     nyc = "not-yet-computable"
     if q.field is None:
-        return Result(q.n, q.name, nyc, "no published scalar is named for this quantity yet" + (f" ({q.note})" if q.note else ""))
+        first = q.note.split(". ")[0].rstrip(".")
+        return Result(q.n, q.name, nyc, "no published scalar is named for this quantity yet" + (f" ({first})" if first else ""))
     if q.field not in fields:
         return Result(q.n, q.name, nyc, f"field {q.field!r} is not published by model {model!r}")
     decl = decls[q.field]
@@ -645,6 +740,21 @@ def evaluate(
     if decl.kind is not Kind.SCALAR:
         return Result(q.n, q.name, "fail", f"field {q.field!r} is a {decl.kind.value}, not a scalar")
     assert q.lo is not None and q.hi is not None
+    if q.mode == "sweep":
+        assert q.sweep is not None
+        if swept is None or q.n not in swept or len(swept[q.n][0]) < q.sweep.points:
+            return Result(q.n, q.name, nyc, f"sweep: needs the model run at {q.sweep.points} values of {q.sweep.input}")
+        x, y = (np.asarray(v, dtype=float) for v in swept[q.n])
+        slope, intercept = np.polyfit(x, y, 1)
+        rms = float(np.sqrt(np.mean((y - (slope * x + intercept)) ** 2)))
+        ok = q.lo <= slope <= q.hi
+        return Result(
+            q.n, q.name, "pass" if ok else "fail",
+            f"slope {slope:.6g} {'in' if ok else 'not in'} [{q.lo:.6g}, {q.hi:.6g}] over {x.size} values of "
+            f"{q.sweep.input}; log W {x.min():.4g}-{x.max():.4g}, {q.field} {y.min():.4g} to {y.max():.4g}, "
+            f"zero point at log W = 2.5 {slope * 2.5 + intercept:.2f} (not judged), rms about the fit {rms:.3g}",
+            float(slope),
+        )
     if q.mode == "pointwise":
         value = float(fields[q.field])
         ok = q.lo <= value <= q.hi
@@ -677,16 +787,49 @@ def evaluate_all(
     decls: Mapping[str, FieldDecl],
     model: str,
     ensemble: Mapping[str, Sequence[float]] | None = None,
+    swept: Mapping[int, tuple[np.ndarray, np.ndarray]] | None = None,
 ) -> list[Result]:
-    return [evaluate(q, fields, decls, model, ensemble) for q in QUANTITIES]
+    return [evaluate(q, fields, decls, model, ensemble, swept) for q in QUANTITIES]
 
 
-def run(model: Model, ensemble: Mapping[str, Sequence[float]] | None = None, **run_kwargs: Any) -> list[Result]:
+def run(
+    model: Model,
+    ensemble: Mapping[str, Sequence[float]] | None = None,
+    swept: Mapping[int, tuple[np.ndarray, np.ndarray]] | None = None,
+    **run_kwargs: Any,
+) -> list[Result]:
     """Run ``model`` with default inputs and judge every quantity."""
     from galaxy.run import run as _run
 
     out = _run(model, **run_kwargs)
-    return evaluate_all(out.fields, out.decls, model.name, ensemble)
+    return evaluate_all(out.fields, out.decls, model.name, ensemble, swept)
+
+
+def sweep(model: Model, q: Quantity, **run_kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
+    """``(x, y)`` across the row's sweep: the abscissa read as :meth:`Sweep.x`, the ordinate the row's field.
+
+    Only the stages the two fields need are run (rule D4), once per point; every other input
+    and every seed stays at its default, so the points differ in the swept input alone.
+    """
+    from galaxy.core.registry import INPUTS
+    from galaxy.run import run as _run
+
+    assert q.sweep is not None and q.field is not None
+    table = run_kwargs.get("table") or INPUTS
+    control = table[q.sweep.input]
+    xs, ys = [], []
+    for value in q.sweep.values(float(control.lo), float(control.hi)):
+        out = _run(model, {q.sweep.input: float(value)}, only=(q.field, q.sweep.abscissa), **run_kwargs)
+        if q.field not in out.fields or q.sweep.abscissa not in out.fields:
+            return np.zeros(0), np.zeros(0)
+        xs.append(q.sweep.x(out.fields[q.sweep.abscissa]))
+        ys.append(float(out.fields[q.field]))
+    return np.asarray(xs), np.asarray(ys)
+
+
+def sweeps(model: Model, **run_kwargs: Any) -> dict[int, tuple[np.ndarray, np.ndarray]]:
+    """Every sweep row's ``(x, y)`` for ``model``."""
+    return {q.n: sweep(model, q, **run_kwargs) for q in QUANTITIES if q.mode == "sweep" and q.field is not None}
 
 
 STATISTICAL_FIELDS: tuple[str, ...] = tuple(
@@ -727,9 +870,9 @@ def ensemble(
 
 
 def evaluate_models(models: Iterable[Model], **run_kwargs: Any) -> dict[str, list[Result]]:
-    """Judge every model once, building each an ensemble for the statistical rows."""
+    """Judge every model once, building each an ensemble for the statistical rows and a sweep for the sweep rows."""
     return {
-        m.name: run(m, ensemble=ensemble(m, **run_kwargs), **run_kwargs) for m in models
+        m.name: run(m, ensemble=ensemble(m, **run_kwargs), swept=sweeps(m, **run_kwargs), **run_kwargs) for m in models
     }
 
 

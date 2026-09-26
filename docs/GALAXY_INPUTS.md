@@ -689,20 +689,21 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81 | 16 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84 | 19 |
 
-So the board's **27 open** is 11 permanent and 16 carried, and no item is unruled. (S22
+So the board's **30 open** is 11 permanent and 19 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
-discharged #23, D175; S27 opened #81, the young-star cut, D176.) The eleven
+discharged #23, D175; S27 opened #81, the young-star cut, D176; S28 opened #82–#84, the
+photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The sixteen carried ones are not sixteen mechanisms.** Four of them — 19, 27, 49 and the
+**The nineteen carried ones are not nineteen mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -712,8 +713,10 @@ budget as the root of a monotone function of itself inside checkpoint 1, the way
 contraction is solved, with the wind's mass loss a plain forward pass at checkpoint 3 (S25,
 D173). One — 80 — is a recalled constant whose referent moved with the pattern (S25, D174),
 closable by reading a source; one — 81 — is a cut standing where a spiral pattern speed should
-(S27, D176). That leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping
-statements and one kernel width.
+(S27, D176); three — 82, 83, 84 — are the second build's sources' (a table that does not say what
+its light is, a coefficient not fetched, a calibration that covers a third of what reads it; S28,
+D177). That leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping statements
+and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
    gap was a parameter confusion, not a property of the MW (§6).
@@ -2830,6 +2833,38 @@ never been judged in twenty-three sessions.
    modulation 1.78 against the contrast path's 1.18, D176). What kills the reading: a source
    giving the age at which a stellar population's arm–interarm contrast has decayed to the old
    disc's, which would make the cut a constant with a citation rather than a mechanism's absence.
+82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected and the
+   model's light is intrinsic** (S28, BUILD_II Phase 3, D177). BHG16 Table 2 quotes M_B −20.70, M_V
+   −21.37, B − V 0.73, Υ_V 1.70 for the Galaxy `[verified: arXiv:1602.07702 Table 2, read at S28]`,
+   without uncertainties (§2.2) and without saying whether the values are corrected for internal
+   extinction; the analogues they come from span "a spread in inclination and internal extinction". The
+   model publishes the intrinsic quantities (−20.5853, −21.2159, 0.6306, 1.8468) and, by ruling (b), the
+   rows name no field and read not-yet-computable rather than compare unlike with unlike. **Carried.**
+   Two closers, either sufficient: a source that states extinction-corrected (or intrinsic) values with
+   their uncertainties — Licquia, Newman & Brinchmann 2015, whose analogue method BHG16 adopt, quote
+   errors the review dropped `[recall — NEEDS SOURCING]` — or a model-published *dust-attenuated*
+   magnitude from the ISM stage's A_V, which Phase 7 (dust that radiates) can give. Prediction (B4): the
+   intrinsic model is 0.15 mag fainter in V than the table and 0.10 bluer in B − V; if the table is
+   corrected light the model is short of light, if it is observed light an attenuation of ~0.3 mag would
+   land M_V and the colour would move the wrong way — the two readings separate on the colour.
+83. **The stellar wind's escape velocity is Newtonian: Γ_e is missing** (S28, D177). `star_wind_luminosity`
+   is ½ Ṁ v_∞² with Vink, de Koter & Lamers 2001's mass-loss recipe and v_∞/v_esc = 2.6 (1.3 below the
+   bistability jump) `[verified: A&A 369, 574, eqs. 15, 23, 24, 25, read at S28]`, but v_esc is computed
+   without the Eddington factor because the electron-scattering opacity σ_e Vink cite to Lamers &
+   Leitherer 1993 was not fetched, so v_∞ is high by (1 − Γ_e)^−½ — ~10–20% for O dwarfs, more for
+   supergiants `[inferred]`. **Carried**; closable by reading σ_e (a constant with a citation) and
+   applying Γ_e = σ_e L / (4πGMc). Phase 10 (bubbles) reads this luminosity and inherits the error.
+84. **Two thirds of the ionizing budget rides on an extension the ruling does not cover, and about half
+   of the true budget is in stars the table cannot see** (S28, D177). Ruling (a)'s table (SHP03, class
+   V, 32–51 kK) governs 0.328 of a steady solar population's Q; 0.218 comes from cooler B stars and
+   0.454 from post-main-sequence stars PARSEC takes to 217 kK, both read off a blackbody anchored to the
+   table at its ends `[inferred]`; and stars above the youngest isochrone's 63.8 M☉ contribute nothing
+   because they have no L or T_eff, an estimated 0.489 of the total `[verified:
+   tests/test_massive_stars.py]`. `ionizing_photon_rate` is therefore a lower limit by up to a factor of
+   two and everything nebular (Phase 9) reads it. **Carried**; closable by a sourced calibration for
+   hot stripped stars and giants (SHP03's own Table 2 gives class III/I; a WR calibration is Phase 9's to
+   source) and by isochrones younger than 4 Myr. What kills the reading: a Phase 9 Hα row that lands
+   with the present Q, which would say the unseen half is not there.
 
 ---
 

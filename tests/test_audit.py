@@ -111,9 +111,12 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(basic):
 
 def test_debt_17_the_zero_width_rows_say_no_testable_target():
     """The source quotes no uncertainty [verified: arXiv:1511.08877, abstract and §4.2]; the table says so."""
-    for n in (20, 21):
+    # Rows 25-28 joined at S28: BHG16 Table 2 prints its magnitudes "without the uncertainties"
+    # (section 2.2) and no width is invented (D100, D177).
+    zero_width = (20, 21, 25, 26, 27, 28)
+    for n in zero_width:
         assert Q[n].lo == Q[n].hi and Q[n].width == 0.0 and not Q[n].testable
-    assert all(q.testable for q in spec.QUANTITIES if q.n not in (20, 21))
+    assert all(q.testable for q in spec.QUANTITIES if q.n not in zero_width)
     # Row 14 was on this list too until S17. The debt's own remedy is "a citation with an
     # uncertainty, entered before the row is next judged", and for the bulge's dispersion the
     # same source does give one — "the rms is σ_rms,b ≈ 113 km/s, to ≈3 km/s" (BHG16 §4.3) — so
@@ -370,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (27, 37)  # 26 / 37 at S26 (#23 discharged, D175); 27 / 36 at S25 (#80, D174); 27 / 35 at S22; S27 opened #81 (D176)
+    assert progress.debt_counts(text) == (30, 37)  # 27 / 37 at S27 (#81, D176); 26 / 37 at S26 (#23 discharged, D175); 27 / 35 at S22; S28 opened #82-#84 (D177)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -399,8 +402,9 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81 | 16 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84 | 19 |",
         "81. **The catalogue's young-star cut has no source and no mechanism**",
+        "82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected",
         "**S25, re-ruled CARRIED under the rewritten A1 (D173).**",
         "80. **`BAR_LENGTH_RATIO` is a recalled range read against an unspecified scale length",
         "**S22, ruled PERMANENT (a property of the model's scope), and this is the ruling S20 handed over.**",

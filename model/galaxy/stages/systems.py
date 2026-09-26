@@ -54,7 +54,9 @@ from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.pattern import ArmPattern, invert_azimuths
+from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
+from galaxy.stages.photometry import lookup_columns
 from galaxy.stages.vertical import POPULATIONS
 
 # The cell grid is the unit of regional materialisation, and its size is a real
@@ -592,13 +594,23 @@ def materialise(
             n: (empty.astype(np.int64) if n == "star_population" else empty)
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
                       "star_birth_radius", "star_metallicity", "star_alpha", "star_mass", "star_population",
-                      "star_luminosity", "star_temperature")
-        }, counts)
+                      "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
+                      "star_wind_luminosity")
+        } | {"star_wolf_rayet": empty.astype(np.int64)}, counts)
     out = {name: np.concatenate(parts) for name, parts in columns.items()}
     # What each star emits, looked up rather than drawn: given its mass, age and abundance
     # the isochrones have already decided (rule B8). Per star, so a region's rows are the
     # sweep's rows (D60).
     out["star_luminosity"], out["star_temperature"] = photometry(out["star_mass"], out["star_age"], out["star_metallicity"])
+    # S28 (BUILD_II Phase 3): the rest of what the same point of the table says, and what the
+    # massive stars do with it - each a function of columns already here, so looked up rather
+    # than drawn, per star, for the same reason (D60).
+    more = lookup_columns(out["star_mass"], out["star_age"], out["star_metallicity"], ("V", "mass_now", "label"))
+    L, T = out["star_luminosity"], out["star_temperature"]
+    out["star_magnitude_v"] = more["V"]
+    out["star_ionizing_photons"] = ionizing_photons(L, T)
+    out["star_wind_luminosity"] = wind_luminosity(L, T, more["mass_now"], 10.0 ** out["star_metallicity"])
+    out["star_wolf_rayet"] = wolf_rayet(out["star_mass"], L, T, more["label"])
     return Catalogue.of(out, counts)
 
 
@@ -701,6 +713,46 @@ STAR_TEMPERATURE = _column(
     "galaxy is overwhelmingly red and its blue stars are young and few.",
     ramp=Ramp("blackbody", scale="log", lo=BLACKBODY_KELVIN[0], hi=BLACKBODY_KELVIN[1]))
 
+STAR_MAGNITUDE_V = FieldDecl(
+    name="star_magnitude_v", label="Absolute V magnitude M_V", unit="mag", kind=Kind.COLUMN, of="star",
+    ramp=Ramp("inferno", lo=-8.0, hi=15.0), meaningful_zero=False, provenance="seeded",
+    about=(
+        "The star's absolute V magnitude, Vega system, from the same point of the PARSEC table as its "
+        "luminosity and temperature (the table's own bolometric corrections). What a V-band image of "
+        "the sample would weight each star by: an M dwarf is 10-15, the Sun 4.8, a red giant 0 to -3 "
+        "and an O star -4 to -6. NaN for a star that has died. Intrinsic, before any dust."
+    ),
+)
+STAR_IONIZING_PHOTONS = _column(
+    "star_ionizing_photons", "Hydrogen-ionizing photon rate Q(H⁰)", "1/s",
+    "Photons above 13.6 eV per second: the star's surface area, L / σT_eff⁴, times the photon flux "
+    "per unit area of a model atmosphere at its temperature, tabulated for O and early-B dwarfs by "
+    "Sternberg, Hoffmann & Pauldrach 2003. Outside that table's 32-51 kK the blackbody carries the "
+    "temperature dependence, joined to the table at its end. Brutally steep: an O5 dwarf emits ~3 "
+    "× 10⁴⁹, a B0 ~1 × 10⁴⁸, and the Sun's is negligible, so a handful of the sample's stars carry "
+    "all of it. NaN for a star that has died.",
+    ramp=Ramp("magma", scale="log", lo=1e40, hi=1e50))
+STAR_WIND_LUMINOSITY = _column(
+    "star_wind_luminosity", "Wind mechanical luminosity", "Lsun",
+    "½ Ṁ v_∞² of the star's line-driven wind: Ṁ from Vink, de Koter & Lamers 2001's recipe at its "
+    "luminosity, temperature, present mass and 10^[Fe/H] as Z/Z☉, v_∞ its fixed multiple of the "
+    "escape velocity on either side of the bistability jump. The escape velocity is Newtonian: the "
+    "source's Eddington reduction needs an opacity it cites and this model has not read, so v_∞ is "
+    "high by (1 − Γ_e)^(−1/2). NaN outside the recipe's 12.5-50 kK, which is almost every star.",
+    ramp=Ramp("inferno", scale="log"))
+STAR_WOLF_RAYET = FieldDecl(
+    name="star_wolf_rayet", label="Wolf-Rayet (proxy)", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
+    of="star", categories=WR_CATEGORIES, ramp=Palette(("#5a5a5a", "#6fd3ff")), provenance="seeded",
+    about=(
+        "A stated proxy, not a classification: the isochrones do not name Wolf-Rayet stars, so a star "
+        "is flagged when it is past the main sequence, was born at 25 M☉ or more, is hotter than 30 kK "
+        "and brighter than 1.5 × 10⁵ L☉ - the lowest initial mass, temperature and luminosity Crowther "
+        "2007 quotes for WR stars at solar metallicity. What makes a WR star, a hydrogen-stripped "
+        "surface under a dense wind, the table cannot see. They live a few hundred thousand years, so "
+        "a sample of 2 × 10⁴ usually holds none."
+    ),
+)
+
 STAR_POPULATION = FieldDecl(
     name="star_population", label="Population", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=POPULATIONS, ramp=Palette(("#4c9be8", "#e8894c")),
@@ -757,6 +809,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
         publishes=(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
+            STAR_MAGNITUDE_V, STAR_IONIZING_PHOTONS, STAR_WIND_LUMINOSITY, STAR_WOLF_RAYET,
         ),
     )
 )
