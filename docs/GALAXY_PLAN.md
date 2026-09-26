@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░████████████████████████████████░░░░░░` **38 / 42 sessions** · repo initialised: yes
+`█████████████████████████████████████████████░██████████████████████████████████░░░░` **39 / 42 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -45,7 +45,7 @@
 | ☑ | 36 | **Phase 10.** `bubbles` + `feedback` stages: Weaver+1977's bubble per cluster at its mean injected power (winds + 10⁵¹ erg per core collapse), **stalled at the ionized gas's sound speed** (12 521 of 12 860; median 9 pc), the shell's density, thickness, T, P and photon-limited Hα per volume; the supernova-remnant census (`of="remnant"`, OBJECTS widened): 1 464 vs 1 448 expected from Phase 6's rates × Frail's 60 kyr, Sedov (ξ 1.15167) then Cioffi's snowplow, radius 1.8–59 pc; `hot_phase_porosity` 0.033 at R₀; `gas_midplane_density` = P/σ² on ism; `star_bubble_radius` on the catalogue (254 fields bit-identical); `/api/remnants`; #102 (remnants untied from clusters, no arms), #103 (lifetime-set count, inferred shell) (D185) | desktop | Opus | **Opus 5.5** | s36 | 2026-09-26 |
 | ☑ | 37 | **Audit III** (`docs/AUDIT_III.md`). 63 constants re-read at their sources by a read-only agent: **46 match, 2 differ, 10 adopted-not-measured, 5 misattributed**; every module table matches. Findings: a dropped square root makes the Ia sterilization volume 12.6× too large (#104); η = 3.5 × 10⁻⁵ is Boylan-Kolchin's assumption, the measurement 2.9 ± 0.2 puts S34's GC mass 0.34 dex outside (#105); five misattributions (#106). 13 redistributions re-derived at GridSpec(180, 600, 8), all inside their noise (`tests/test_audit_iii.py`); greens 29/30/31/35 conditioned, row 31 dies at the measured Ia efficiency; rows 32 and 34 read blind: [2.7, 4.0] × 10⁷ (model misses) and McKee & Williams' [1.3, 3.9] × 10⁵³ (model passes) — the owner's ruling; #80–#103 re-stated. No number moved (B3) (D186) | desktop | **Fable** | **Fable 5.1** | s37 | 2026-09-26 |
 | ☑ | 38 | **V1.** The filter integral runs server-side (option (a), the ruling §0 left open): `/api/render` takes the viewer's filter curves and returns per-cell responses per component (stars, Hα, dust), never composited; the stellar spectrum per cell is the population's **eight-band SED** (16 new light fields, SVO band definitions read from pages, band-consistent joins) — **frame B − V 0.630641 vs 0.630552, M_V −21.216042 vs −21.215871, tolerance 10⁻³** (the first cut's single blackbody missed M_V by 0.71 mag and was sent back); viewer: Filters selector RGB/SHO/HOO, the young-light invention removed; left for V2: the line's knots, the dust's clumps, per-filter extinction (#108); the SED's joins inferred, 0.71 of L_bol (#107); no named instrument (a download, the owner's). Opened with Audit III's fixes applied (D187) | desktop | Opus | **Opus 5.5** | s38 | 2026-09-27 |
-| ☐ | 39 | **V2.** Volumetric emissivity and emitting dust in the ray-marcher; the clump lattice and Hα knots removed; energy balance and the Σ_V(R) profile read from the frame | desktop | Opus | — | s39 | — |
+| ☑ | 39 | **V2.** The dust in three components — extinction per filter from Draine's grain table (110 rows transcribed into `spectra.GRAIN_TABLE`, the table was not in the repository), scattered light by the slab's own convention (the ruling's optically-thin form scattered 12× too much at the centre and was set aside), thermal emission through the filter — and the line in two volumetric layers (HII in the clouds' layer, DIG at 1.4 kpc); **the frame's energy balance closes to 7 × 10⁻⁴ and the face-on Σ_V(R) to 10⁻³ per ring**; the V1 gate unmoved; the viewer's knots, clump lattice, dust lead and `CHANNEL_EXTINCTION` removed — **nothing structural is invented at galaxy scale**; the dust in the stars' layer, the IR set measured not drawn (#109) (D189) | desktop | Opus | **Opus 5.5** | s39 | 2026-09-27 |
 | ☐ | 40 | **V3.** Region synthesis from the cloud vector at the hierarchy's levels — the log-normal interior, pillars from the source offset, shells; the catalogue-against-field test; determinism across zoom | desktop | **Fable** | — | s40 | — |
 | ☐ | 41 | **V4.** Cluster objects drawn, instrument PSFs, the model toggle, the tag batch attempted from the desktop, close-out | desktop | Opus | — | s41 | — |
 
@@ -81,7 +81,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > desktop and pastes the listing under D161. Until then the board says so, which is the
 > whole purpose of the column.
 
-**Open debts:** 51 (`GALAXY_INPUTS.md` §11). **Discharged:** 40.
+**Open debts:** 52 (`GALAXY_INPUTS.md` §11). **Discharged:** 40.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance

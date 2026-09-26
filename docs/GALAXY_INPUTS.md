@@ -690,9 +690,9 @@ defined here once and used in every entry below:
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108 | 40 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109 | 41 |
 
-So the board's **51 open** is 11 permanent and 40 carried, and no item is unruled. (S22
+So the board's **52 open** is 11 permanent and 41 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -706,14 +706,14 @@ the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as re
 #100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184; S36 opened #102–#103, the remnant
 census untied from its clusters and its lifetime-set count, D185; S37, Audit III, opened #104–#106, a dropped
 square root, an adopted η and the record's misattributions, D186; S38 applied all three and discharged them, D187, and V1 opened #107–#108, the SED's stated choices and the
-dust and instrument the viewer still lacks, D188.) The eleven
+dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's layer and the infrared channel, D189.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The forty carried ones are not forty mechanisms.** Four of them — 19, 27, 49 and the
+**The forty-one carried ones are not forty-one mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -734,7 +734,8 @@ census inherits and 97 the bound mass whose survival S34 built on the wrong popu
 D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
 D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
 D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185); 107 is the SED's
-joins and 108 the viewer's last two inventions (S38, D188). That leaves 28, 33, 39, 42,
+joins and 108 the viewer's last two inventions (S38, D188); 109 the dust's layer and the infrared channel
+(S39, D189). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3150,8 +3151,22 @@ never been judged in twenty-three sessions.
    last colour invention V1 leaves (with the line's knots and the dust's clumps, V2's). The named instrument's
    filter curves (e.g. HST WFC3 F435W/F555W/F814W) are files on the SVO service, and the session downloads
    nothing without the owner's word. **Carried** to V2 (the extinction law per band from the dust stage's grain
-   table, which S31 read — one column per band, the table already in the repository) and to the owner (the
-   download).
+   table, which S31 read — one column per band; S39 found the table was not in the repository and transcribed
+   110 rows of it into `spectra.GRAIN_TABLE`, D189) and to the owner (the download).
+
+109. **The dust sits in the stars' layer, the infrared set is not drawable, and the scattering geometry is a
+   thin-slab guess** (S39, V2, D189). The render's `layers` put the dust at the stars' sech² scale height (0.356
+   kpc) because the dust stage's heating treats stars and dust as uniformly mixed, so an edge-on frame shows no
+   thin dark lane — the viewer's old lane was a display constant at a third of the disc height, removed as an
+   invention; the model publishes no gas or dust scale height (the ISM stage has a midplane density and a
+   pressure, not a thickness; the DIG's 1.4 kpc is Haffner's). The "ir" filter set is measured, not drawn: a
+   far-infrared channel needs a white point of its own, a display choice nobody has made. The scattered light's
+   phase table averages Henyey–Greenstein over in-plane illumination from every azimuth `[inferred]`, and the
+   bulge is left undimmed in the face-on record. **Carried.** What closes the layer: a published gas scale height
+   (Σ/2ρ₀ from the ISM's midplane density, which S36 already computes for the porosity — one field, one
+   session) read by the render as the dust's layer; the infrared channel: a white point per channel ruled as
+   display; the geometry: a source for the slab's scattering phase in an inclined disc, or V3's region-scale
+   scattering, which needs none.
 
 ---
 
