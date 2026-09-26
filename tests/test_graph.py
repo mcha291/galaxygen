@@ -37,14 +37,18 @@ def chk(m, *stages):
 # round into the next (after light and vertical_alpha by the tie-break), and formation, which reads
 # its mean stellar mass, a round later again, after systems. Until S29 the order ran "...,
 # chemistry_dtd, population, light, vertical_alpha, formation, ism, systems, planets".
+# Since S31 (BUILD_II Phase 7) the dust stage reads ism's dust and light's starlight, so it runs the
+# round after ism's (ism shares its round with systems, formation and habitable_zone), beside planets
+# and ahead of it by the (checkpoint, id) tie-break; until S31 the order ended "..., formation,
+# habitable_zone, planets".
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "supernovae", "light",
-        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "planets",
+        "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "planets",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "supernovae",
-        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "planets",
+        "light", "vertical_alpha", "population", "ism", "systems", "formation", "habitable_zone", "dust", "planets",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation

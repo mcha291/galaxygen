@@ -36,6 +36,7 @@ BASIC = MODELS.register(
             ("ism", "ism"),
             ("light", "light"),
             ("supernovae", "supernovae"),
+            ("dust", "dust"),
             ("bar", "bar"),
             ("pattern", "pattern"),
             ("population", "population"),
