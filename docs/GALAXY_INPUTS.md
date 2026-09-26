@@ -688,10 +688,11 @@ defined here once and used in every entry below:
 | **discharged** at S21b or S22 | 4, 5, 8, 10, 14, 32, 36, 44, 50, 51, 66, 67, 68, 69, 71, 72, 73 | 17 |
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
+| **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106 | 41 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108 | 40 |
 
-So the board's **52 open** is 11 permanent and 41 carried, and no item is unruled. (S22
+So the board's **51 open** is 11 permanent and 40 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -704,14 +705,15 @@ the cloud vector's unsourced draws, D181; S33 opened #96–#97, the clusters' in
 the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as recorded misses, D183; S35 opened
 #100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184; S36 opened #102–#103, the remnant
 census untied from its clusters and its lifetime-set count, D185; S37, Audit III, opened #104–#106, a dropped
-square root, an adopted η and the record's misattributions, D186.) The eleven
+square root, an adopted η and the record's misattributions, D186; S38 applied all three and discharged them, D187, and V1 opened #107–#108, the SED's stated choices and the
+dust and instrument the viewer still lacks, D188.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The forty-one carried ones are not forty-one mechanisms.** Four of them — 19, 27, 49 and the
+**The forty carried ones are not forty mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -731,8 +733,8 @@ that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit
 census inherits and 97 the bound mass whose survival S34 built on the wrong population (S33, D182; S34,
 D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
 D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
-D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185); 104 is one
-exponent, 105 one adopted ratio and 106 the record's housekeeping (S37, D186). That leaves 28, 33, 39, 42,
+D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185); 107 is the SED's
+joins and 108 the viewer's last two inventions (S38, D188). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3103,16 +3105,17 @@ never been judged in twenty-three sessions.
    for the radiative shell's ionization state; the Sedov jump re-read in a source. What kills the count: a sourced
    Milky Way remnant census above ~3 000 or below ~300 for a complete survey.
 
-104. **The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**
-   (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock
+104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~
+   **DISCHARGED at S38 (D187)**: the exponent is −0.2, the zone's pins swapped to the printed reading. (S37, Audit III A3-1, D186). `habitable_zone.sterilization_distance` computes 8 pc × 10^(−0.4 ΔM); Gowanlock
    et al. 2011 eq. 5 as printed is 8 pc × √(10^(−0.4 ΔM)) `[verified: arXiv:1107.1286, eq. 5, re-read at S37]`,
    so at the mean type Ia magnitude the source gives 18.6 pc and the model 43.4 pc. #90 recorded two readings
    and used the first; the third was right. **Carried** to the next model-side change, which fixes the exponent,
    re-pins the zone's probes to the second reading's numbers (hazard at R₀ 0.20 per Gyr, the habitable count
    peaking at 6.6 kpc, D179) and closes #90's reading question (Lineweaver stays). No row moves: the zone is
    unjudged by ruling (D179).
-105. **The globular clusters' η is an adopted value; the measurement is (2.9 ± 0.2) × 10⁻⁵, and the closure
-   fails on it** (S37, A3-2, D186). Boylan-Kolchin 2017 lists "η = (3–4) × 10⁻⁵" under "I will assume"; Harris,
+105. ~~**The globular clusters' η is an adopted value; the measurement is (2.9 ± 0.2) × 10⁻⁵, and the closure
+   fails on it**~~ **DISCHARGED at S38 (D187)**: η = 2.9 × 10⁻⁵ with Harris et al. 2017 as the citation, the ids
+   corrected, the check pinned as a 0.34 dex miss; the physics of the miss stays #97's. (S37, A3-2, D186). Boylan-Kolchin 2017 lists "η = (3–4) × 10⁻⁵" under "I will assume"; Harris,
    Blakeslee & Harris 2017 measure "η_M = (2.9 ± 0.2) × 10⁻⁵ … significantly lower than in previous papers"
    with "a residual rms scatter ± 0.28 dex" `[verified: arXiv:1701.04845; arXiv:1705.01548 §2, §5.1]`. At the
    measured η, S34's mean 6.97 × 10⁷ is +0.34 dex above η M_halo = 3.19 × 10⁷, outside the 0.28 dex that D183
@@ -3120,7 +3123,8 @@ never been judged in twenty-three sessions.
    What closes it: the three constants at the measured values with Harris et al. 2017 as the citation, the
    consistency test's number moved with the old one in its comment, and D183's sentence corrected in the next
    decision; #97's survival on the wrong population remains the physics behind the miss.
-106. **Five citations misattributed, one constant rounded, two labels stale** (S37, A3-3, D186). The four
+106. ~~**Five citations misattributed, one constant rounded, two labels stale**~~ **DISCHARGED at S38 (D187)**: the
+   about-line pass applied, no number moved. (S37, A3-3, D186). The four
    Boylan-Kolchin constants cite arXiv:1711.00009 (a different paper; the sentences are in arXiv:1705.01548);
    `HII_ESCAPE_FRACTION`'s "between 30% and 60%" is Hoopes & Walterbos 2003's (Haffner §IV.C), not Zurita's
    variants; `DIG_TEMPERATURE` and `DIG_SCALE_HEIGHT` are Haffner §II.A, not §I; `OXYGEN_ABUNDANCE_SOLAR`'s
@@ -3129,6 +3133,25 @@ never been judged in twenty-three sessions.
    says no 3000 K α_B row was read (the file has 6.708 × 10⁻¹³). Adopted values that should say so: E_SN = 10⁵¹
    erg, C_II = 10 km/s (Weaver computes 10.5 at 8000 K), the ozone clock's 1.55 Gyr. **Carried**; one about-line
    pass in the next session that touches `level0.py`, moving no number at the pinned precision.
+107. **The stellar SED's joins and tails are stated choices, and it carries 0.71 of the bolometric light** (S38,
+   V1, D188). Between the eight bands the spectrum is a power law in log–log and outside U–K a blackbody at the
+   colour temperature scaled to the end point `[inferred]`; made band-consistent by twelve fixed passes (A1) so
+   every band's mean is the table's to 8 × 10⁻⁵ mag. Through a box over the whole 0.1–30 µm grid it carries
+   0.708 of `disc_luminosity`: the U-anchored blue tail misses the young stars' ultraviolet, which the light
+   stage's FUV field (S31) holds and the SED does not read. Optical filters are unaffected; a UV or a far-infrared
+   filter set would read low. Also inferred: which SVO curves the CMD table's YBC corrections correspond to (the
+   CMD pages fail TLS), and SVO's Vega against YBC's, a per-band zero-point term. **Carried.** What closes it: a
+   ninth and tenth anchor from the published FUV and infrared fields (the dust's L_IR belongs to the dust
+   component, not here), or a model-atmosphere library of the isochrone kind — a data dependency, the owner's
+   call; and the CMD filter files read when their pages are reachable.
+108. **No per-filter dust and no named instrument: the viewer still holds `CHANNEL_EXTINCTION`, and the
+   instrument set needs a download** (S38, D188). The dust component is the published A_V and E(B − V) per
+   cell; no extinction curve is published per filter, so the viewer reddens with its own display constant, the
+   last colour invention V1 leaves (with the line's knots and the dust's clumps, V2's). The named instrument's
+   filter curves (e.g. HST WFC3 F435W/F555W/F814W) are files on the SVO service, and the session downloads
+   nothing without the owner's word. **Carried** to V2 (the extinction law per band from the dust stage's grain
+   table, which S31 read — one column per band, the table already in the repository) and to the owner (the
+   download).
 
 ---
 

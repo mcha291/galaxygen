@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the
 only record of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **The
 first build (S0–S22) closed; the second (S25–S41, `BUILD_II.md`, §5e) is open: S25–S31 closed on 2026-09-26
-(S29 and S30 in parallel), S32–S37 the same day; S38 (V1, **Opus**) next; **owner owes: the Byler/FSPS grid (D184), rows 32/34's blind windows (D186)**.** Tags owed; S22 ◐.
+(S29 and S30 in parallel), S32–S38 in two days; S39 (V2, **Opus**) next; **owner owes: the FSPS grid (D184), rows 32/34's blind windows (D186), filter files (D188)**.** Tags owed; S22 ◐.
 
 ## Open a session (rules C1, C2b)
 ```
@@ -15,7 +15,7 @@ Then RULES.md in full, BRIEF.md, and the BUILD_II.md phase BRIEF names; GALAXY_I
 section — §11's head is the debt map. Branch `session-NN`; commit and push at every
 sub-deliverable (C2b). In a worktree: `git config --worktree core.hooksPath tools/hooks`. Write
 files with `newline="\n"`: CRLF breaks progress.py's line regexes. **Numbers are sequential**:
-debts from #107, decisions from D187, taken when the entry is written.
+debts from #109, decisions from D189, taken when the entry is written.
 
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -40,8 +40,8 @@ model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
                 qualitative / sweep; MISSES one ledger), convergence, performance; api/: service (ROUTES)
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and toggle from /api/stages
-tests/          51 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
-                test_s22/s25/s26_rulings and each phase's file (…, globular_clusters, nebular, bubbles) pin measurements; **test_audit_iii** the new-mesh identities
+tests/          52 files; every `model`-parametrised test runs per registered model (two); test_audit*.py,
+                test_s22/s25/s26_rulings and each phase's file (…, globular_clusters, nebular, bubbles) pin measurements; test_audit_iii the new-mesh identities; **test_render** the V1 gate
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec
 ```
 ## Writing a stage
@@ -75,8 +75,8 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `/api/region` and `/api/system` take `level=` 0–3 (a child holds its parent's stars plus its own, D181); `/api/clouds`,
   `/api/clusters` serve the censuses by window; a catalogue stage's scalars ride in the header (rule D4, D148).
 - The viewer computes no physics (D5): colour is the declared ramp, light Σ_L × the pattern's contrast, dust A_V per
-  line of sight. **What it invents today** (young light in the arms, a clump lattice, Hα knots) is RENDER_PHYSICS.md
-  §0's dated exception, removed by V1–V3 (brightest-N by `star_magnitude_v` owed to V1, D177). The owner watches :5173 live.
+  line of sight — **since S38 the field regime's colour is the model's filter integral** (`/api/render`, option (a), D188).
+  **What it still invents** (Hα knots, the dust's clumps, `CHANNEL_EXTINCTION`) is §0's exception, V2's to remove. The owner watches :5173 live.
 
 ## Conventions
 - Names `lower_snake`, constants `UPPER_SNAKE`; every input a default, every control a range. Every factual claim
@@ -86,7 +86,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   run (#29) — remove it and **write down why**. `lo == hi` says "no testable target" (D100; rows 20, 21,
   25–28, 36); a row whose source does not say what it measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-09-26, after S37 (D174–D186 hold the before/after)
+## What the instruments said on 2026-09-27, after S38 (D174–D188 hold the before/after)
 - graph acyclic for both models (order: … sfh, chemistry_dtd, stellar_halo, supernovae, light, vertical_alpha,
   cluster_survival, population, ism, globular_clusters, …, dust, clouds, systems, …, clusters, planets, nebular, bubbles); preflight OK,
   7 of 12 controls; determinism reproducible for both; spec **11 pass / 20 fail / 5 not-yet-computable of 36, identical**;
@@ -101,9 +101,10 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   bound_cluster_mass_total 2.79e9 (S33); gc_survival 0.0250, gc mean 6.97e7 = +0.26 dex from η M_halo but 53% under
   1 Gyr (#97), metal-poor share 0.643, halo_stellar_mass 3.03e9 (S34); 12 860 HII regions, R_S median 0.72 pc,
   n_e 194, log U −2.83, census/field 0.990, halpha_sfr_ratio 0.7095, DIG 0.30 (S35); bubbles median 9 pc, 12 521 of
-  12 860 stalled, 1 464 remnants (1 448 expected), porosity(R₀) 0.033 (S36)**; the level-0 catalogue bit-identical.
-- performance: basic ~2.8 s cold (light 0.6, systems 0.46, clouds 0.33, bubbles 0.12); remnants whole disc 0.73 s (D185).
-- Register: **52 open — 11 permanent, 41 carried — and 37 discharged** (#102–#103 S36; #104–#106 S37's audit findings, fixes owed to S38).
+  12 860 stalled, 1 464 remnants, porosity(R₀) 0.033 (S36); zone peak 6.6 kpc, GC mean +0.34 dex from measured η (S38 fixes);
+  render frame B − V 0.630641, M_V −21.216042 (S38)**; the level-0 catalogue bit-identical.
+- performance: basic ~2.8 s cold (light 0.6, systems 0.46, clouds 0.33, bubbles 0.12); render whole rgb 1.7 s cold, 0.24 warm (D188).
+- Register: **51 open — 11 permanent, 40 carried — and 40 discharged** (#104–#106 discharged at S38, D187; #107–#108 V1, D188).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python
