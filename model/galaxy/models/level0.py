@@ -1189,4 +1189,90 @@ LEVEL0: dict[str, Constant] = {
         "12 + log(S/H) of the Sun, 'log epsilon_S = 7.12 +/- 0.03' [verified: Asplund et al. 2009, "
         "arXiv:0909.0948, read at S35]; sulphur follows [Fe/H] + [alpha/Fe] as an alpha element.",
     ),
+    # --- S36 (BUILD_II Phase 10): mechanical feedback. Every value read at S36 from the source named in its
+    # line; Weaver et al. 1977 from the ADS scan's page images, the rest from arXiv. The similarity solutions'
+    # own pure numbers (Weaver's 250/308pi, 7/(3850pi)^(2/5), 2.07e6 K) are module-level in stages/feedback.py
+    # with their equations, because the catalogue's materialise reads the radius coefficient. ---
+    "SUPERNOVA_ENERGY_51": Constant(
+        1.0,
+        "dimensionless",
+        "A supernova's energy in units of 10^51 erg: 'For our standard models, we fix the total energy of a "
+        "single SN to be E_SN = 10^51 erg' [verified: Kim & Ostriker 2015, ApJ 802, 99, arXiv:1410.1537, "
+        "section 3, read at S36], 'typical kinetic energy of ~10^51 erg' [verified: same, section 1]; 'the "
+        "canonical value of 10^51 ergs' [verified: Chen & Slane 2001, arXiv:astro-ph/0108502, section 3.4.1]. "
+        "The same energy for a core collapse and a type Ia, as Sarbadhicary et al. 2017 draw both 'from a "
+        "log-normal distribution centered on 10^51 ergs' [verified: arXiv:1605.04923, section 2.1.3]; the "
+        "spread is not applied (debt).",
+    ),
+    "SEDOV_XI": Constant(
+        1.15167,
+        "dimensionless",
+        "The Sedov-Taylor similarity constant at the shock, R = xi0 (E t^2 / rho0)^(1/5): 'A detailed solution "
+        "gives xi0 = 1.15167 at the shock radius, when the specific heat ratio is gamma = 5/3' [verified: Kim & "
+        "Ostriker 2015, arXiv:1410.1537, section 2, read at S36], attributed there to Sedov 1959 and Taylor "
+        "1950; 'Rs = 1.15(E/rho)^(1/5) t^(2/5) ... (We presume a ratio of specific heats of 5/3.)' [verified: "
+        "Reynolds 2017, arXiv:1708.05386, section 2.2].",
+    ),
+    "PDS_TIME_COEFFICIENT": Constant(
+        1.33e4,
+        "yr",
+        "When a remnant turns radiative, Cioffi, McKee & Bertschinger 1988's 't_PDS = 1.33 x 10^4 E51^(3/14) "
+        "n0^(-4/7) zeta_m^(-5/14) yr', quoted with attribution [verified: Chen & Slane 2001, "
+        "arXiv:astro-ph/0108502, section 3.4.2, read at S36]; Leahy & Williams 2017 write the same as t_sf / e "
+        "with t_sf = 3.61e4 [verified: arXiv:1701.05942, section 3.1.2]. Blondin et al. 1998's t_tr = 2.9e4 "
+        "E51^(4/17) n^(-9/17) yr [verified: Telezhinsky 2009, arXiv:0812.4604, eq. 1] is the alternative "
+        "transition, not adopted: Cioffi's comes with the radius and velocity that follow it.",
+    ),
+    "PDS_RADIUS_COEFFICIENT": Constant(
+        14.0,
+        "pc",
+        "The radius at t_PDS: 'r_PDS = 14.0 E51^(2/7) n0^(-3/7) zeta_m^(-1/7) pc, where zeta_m is the "
+        "metallicity factor and is close to unity for normal abundances', and after it 'rs = r_PDS "
+        "(4t/(3t_PDS) - 1/3)^(3/10)' [verified: Chen & Slane 2001, arXiv:astro-ph/0108502, section 3.4.2, "
+        "eqs. 3-4, quoting Cioffi et al. 1988, read at S36]; Martizzi et al. 2015 write the factor as "
+        "(Z/Zsun)^(-1/7) [verified: arXiv:1409.4425, section 2.1]. The Sedov radius at t_PDS is 14.05 pc at "
+        "n0 = 1: the phases join.",
+    ),
+    "PDS_VELOCITY_COEFFICIENT": Constant(
+        413.0,
+        "km/s",
+        "'vs = v_PDS (4t/(3t_PDS) - 1/3)^(-7/10), where v_PDS = 413 n0^(1/7) zeta_m^(3/14) E51^(1/14) km s^-1' "
+        "[verified: Chen & Slane 2001, arXiv:astro-ph/0108502, section 3.4.2, eq. 5, read at S36].",
+    ),
+    "REMNANT_VISIBLE_LIFETIME": Constant(
+        6.0e4,
+        "yr",
+        "How long a supernova remnant stays visible: 'it follows that the mean lifetime of radio supernova "
+        "remnants is > 60,000 years and not 20,000 years as Braun et al. (1989) concluded', from the young "
+        "pulsars' associations, 'assume E51 ~ 1', 'The average density is approximately 0.2 cm^-3' [verified: "
+        "Frail, Goss & Whiteoak 1994, ApJ 437, 781, arXiv:astro-ph/9407031, section 4.1, read at S36 through a "
+        "garbled text layer]; used as the estimate by Ball et al. 2023, 'Frail et al. (1994) estimated the mean "
+        "radio SNR lifetime to be about 60,000 years ... 1000 to 2700 radio supernova remnants should be "
+        "detectable in our Galaxy. So far we have only discovered somewhere in the range of 300 to 400' "
+        "[verified: arXiv:2307.01948, section 1]. A lower bound in its source. The named alternative, read and "
+        "not adopted, is the age at which a remnant merges with the ISM, 't_mrg = 153 t_PDS [E51^(1/14) "
+        "n0^(1/7) zeta_m^(3/14)/(beta c6)]^(10/7)' with beta = 2 [verified: Leahy & Williams 2017, "
+        "arXiv:1701.05942, section 3.1.2, after Cioffi et al. 1988]: at the model's midplane densities it is "
+        "1.2 Myr at the Sun and hundreds of Myr in the outer disc, where the pressure prescription "
+        "underestimates the density, and it made 39 700 remnants up to 5 kpc across - a count dominated by "
+        "the one density the model holds least well. Sarbadhicary et al. 2017's 'visibility times between "
+        "20-80 kyrs' [verified: arXiv:1605.04923, section 4] bracket the adopted value.",
+    ),
+    "SHELL_SOUND_SPEED": Constant(
+        10.0,
+        "km/s",
+        "The isothermal sound speed of a swept-up shell of ionized gas: 'the isothermal sound speed C_s = "
+        "(kT/mu)^(1/2) can be C_I ~ 1 km s^-1 if the gas is H I or H_2, or C_II ~ 10 km s^-1 if the gas is "
+        "H II' [verified: Weaver et al. 1977, ApJ 218, 377, p. 392, read at S36 from the ADS scan], with "
+        "'T_II ~ 8000 K'. It sets the shell's density through the isothermal jump n_s = n0 (V^2 + C_0^2) / "
+        "C_s^2 (their eq. 67); a cluster's bubble expands into its HII region, so its ambient C_0 is the same.",
+    ),
+    "REMNANT_SHELL_TEMPERATURE": Constant(
+        1.0e4,
+        "K",
+        "The temperature a radiative remnant's cooled shell is given for its Case B emission: 'The temperature "
+        "of the shell equals the ISM temperature: T_sh = T_ISM = 10^4 K' [verified: Telezhinsky 2009, "
+        "arXiv:0812.4604, section 2.3, read at S36] - that paper's model assumption, not a measurement; Kim & "
+        "Ostriker 2015 define shell gas as below 2 x 10^4 K [verified: arXiv:1410.1537, section 3].",
+    ),
 }

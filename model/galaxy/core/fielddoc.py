@@ -32,7 +32,7 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 # Closed vocabularies. Extend by editing here, with a DECISIONS.md entry.
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
-OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11
+OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census)
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded")  # rule A10; inputs are the third kind
 

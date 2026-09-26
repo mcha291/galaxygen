@@ -52,16 +52,20 @@ def chk(m, *stages):
 # ism, systems, ...".
 # Since S35 (BUILD_II Phase 9) the nebular stage reads the cluster and cloud columns, so it runs the round
 # after clusters', last in both orders; until S35 both ended "..., planets, clusters".
+# Since S36 (BUILD_II Phase 10) the catalogue reads ism's midplane density (a star's wind bubble expands into
+# it), so systems runs the round after ism's, behind clouds by the tie-break, and the planets after clusters;
+# the bubbles stage reads the HII regions, so it runs last. Until S36 both read "..., ism, globular_clusters,
+# systems, formation, habitable_zone, dust, clouds, planets, clusters, nebular". No value moves with the order.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
-        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters", "nebular",
+        "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
-        "systems", "formation", "habitable_zone", "dust", "clouds", "planets", "clusters", "nebular",
+        "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
 }
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
@@ -69,6 +73,14 @@ ORDER = {
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
 SEEDED_BASIC = {
     "black_hole_mass",
+    # S36 (BUILD_II Phase 10): the bubbles stage reads the seeded cluster and HII-region columns and draws the
+    # remnant census on systems_seed, so all it publishes is seeded (D55), the hot phase's radial field too;
+    # the catalogue's new column is seeded with the catalogue. ism's midplane density stays derived.
+    "bubble_radius", "bubble_shell_velocity", "bubble_shell_density", "bubble_shell_thickness", "bubble_interior_pressure",
+    "bubble_interior_temperature", "bubble_shell_emissivity", "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled",
+    "remnant_radius", "remnant_azimuth", "remnant_height", "remnant_size", "remnant_age", "remnant_shell_velocity",
+    "remnant_ambient_density", "remnant_shell_density", "remnant_shell_thickness", "remnant_shell_emissivity",
+    "remnant_phase", "remnant_kind", "hot_phase_porosity", "remnant_count_total", "star_bubble_radius",
     # S35 (BUILD_II Phase 9): the nebular stage reads the seeded cluster and cloud columns, so everything it
     # publishes is seeded (D55: a stage has one provenance), the radial Halpha fields and the scale height too.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular", "dig_scale_height",

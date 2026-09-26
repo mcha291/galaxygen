@@ -53,6 +53,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.feedback import star_bubble_radius
 from galaxy.stages.pattern import ArmPattern, invert_azimuths
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
@@ -724,7 +725,7 @@ def materialise(
             for n in ("star_radius", "star_azimuth", "star_height", "star_age",
                       "star_birth_radius", "star_metallicity", "star_alpha", "star_mass", "star_population",
                       "star_luminosity", "star_temperature", "star_magnitude_v", "star_ionizing_photons",
-                      "star_wind_luminosity", "star_remnant_mass")
+                      "star_wind_luminosity", "star_remnant_mass", "star_bubble_radius")
         } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}
         if level:
             blank |= {n: empty.astype(np.int64) for n in ("level", "cell", "index")}
@@ -747,6 +748,11 @@ def materialise(
     # in its luminosity; the class and the remnant's mass follow from its initial mass, and a
     # planetary nebula from how long ago the same table says it died - per star, as above (D60).
     out["star_remnant"], out["star_remnant_mass"] = remnants_of(out["star_mass"], out["star_age"], out["star_metallicity"], L)
+    # S36 (BUILD_II Phase 10): the bubble its wind has blown, from its own columns and the gas's midplane
+    # density at its radius - per star, as above (D60); a column added, none moved.
+    out["star_bubble_radius"] = star_bubble_radius(
+        out["star_wind_luminosity"], out["star_age"], np.interp(out["star_radius"], R, np.asarray(fields["gas_midplane_density"], dtype=float))
+    )
     return Catalogue.of(out, out_counts)
 
 
@@ -974,6 +980,19 @@ STAR_REMNANT_MASS = _column(
     "here. NaN for a living star, which has no remnant.",
     ramp=Ramp("cividis", scale="log"))
 
+STAR_BUBBLE_RADIUS = _column(
+    "star_bubble_radius", "Wind bubble radius", "pc",
+    "The bubble the star's own wind has blown: Weaver et al. 1977's energy-conserving solution, R = 0.76 "
+    "(L_w / ρ₀)^⅕ t^⅗, at its wind power held for its whole age, in the gas's midplane density at its "
+    "radius. Why that density and not its cloud's: the catalogue places a star by the disc's densities "
+    "and the cloud census places clouds by the molecular gas's, independently, so a star found inside a "
+    "cloud would be a coincidence of two draws, not a birthplace. The midplane density is the volume "
+    "average over every phase, low for an O star still in its natal cloud, so these bubbles are large. "
+    "NaN wherever the wind is (outside the recipe's 12.5-50 kK: almost every star). Not stalled, as a "
+    "cluster's is: in the thin midplane gas a single O star's shell stays faster than the ionized gas's "
+    "sound speed out to tens of parsecs. A star's own bubble inside a cluster's is not distinguished from it.",
+    ramp=Ramp("viridis", scale="log"))
+
 STAR_POPULATION = FieldDecl(
     name="star_population", label="Population", unit="dimensionless", kind=Kind.CATEGORY_COLUMN,
     of="star", categories=POPULATIONS, ramp=Palette(("#4c9be8", "#e8894c")),
@@ -1024,6 +1043,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
             "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
             "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            "gas_midplane_density",  # S36: what a star's wind bubble expands into
         ),
         # Where stars form today: the azimuthal model's own field, absent in basic (S27).
         requires_optional=("sfr_modulation",),
@@ -1031,7 +1051,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             STAR_RADIUS, STAR_AZIMUTH, STAR_HEIGHT, STAR_AGE, STAR_BIRTH_RADIUS,
             STAR_METALLICITY, STAR_ALPHA, STAR_MASS, STAR_LUMINOSITY, STAR_TEMPERATURE, STAR_POPULATION, CATALOGUE_SIZE,
             STAR_MAGNITUDE_V, STAR_IONIZING_PHOTONS, STAR_WIND_LUMINOSITY, STAR_WOLF_RAYET,
-            STAR_REMNANT, STAR_REMNANT_MASS,
+            STAR_REMNANT, STAR_REMNANT_MASS, STAR_BUBBLE_RADIUS,
         ),
     )
 )
