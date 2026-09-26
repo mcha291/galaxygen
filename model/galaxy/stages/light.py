@@ -38,6 +38,13 @@ history's, disc and bulge, and not the 2 × 10⁴-star sample's. Intrinsic, like
 bolometric light: what the observed Milky Way's magnitudes include is the acceptance
 rows' question (spec rows 25–28), and the answer is in their notes.
 
+**The spectrum (S38, BUILD_II V1's second cut).** The same eight sums, per unit area and for
+the bulge, published as λL_λ at each band's reference wavelength (``disc_sed_u`` … ``_k``,
+``bulge_sed_u`` … ``_k``): a Vega magnitude times the band's Vega zero point at 10 pc
+(``photometry.PASSBANDS``, read from the SVO Filter Profile Service). They are the population's
+spectrum at eight wavelengths, which ``/api/render``'s filter integral joins into a continuum
+(``spectra.py``). Sixteen fields added; every field published before is computed as it was.
+
 **The ionizing budget.** Today's star formation rate at each radius times the
 hydrogen-ionizing photons a steady population emits per unit rate
 (``photometry.ionizing_yield``: Q per unit mass formed, integrated over the isochrone
@@ -59,7 +66,9 @@ from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.photometry import (
     BANDS,
+    PASSBANDS,
     band_flux_at,
+    band_nu_l_nu,
     correlated_temperature,
     ionizing_yield,
     population_at,
@@ -139,6 +148,34 @@ def _magnitude_decl(band: str) -> FieldDecl:
 
 
 BAND_MAGNITUDES = tuple(_magnitude_decl(b) for b in BANDS)
+
+
+def _sed_decl(band: str) -> FieldDecl:
+    return FieldDecl(
+        name=f"disc_sed_{band.lower()}", label=f"Disc spectrum at {band}: λL_λ(R)", unit="Lsun/pc2",
+        kind=Kind.FIELD, axes=("R",), ramp=Ramp("inferno", scale="log"), meaningful_zero=True,
+        about=(
+            f"The disc's light per square parsec as λL_λ at the {band} band's reference wavelength: the same "
+            f"sum as the {band}-band magnitude, per unit area, turned from a Vega magnitude into a spectral "
+            "density by the band's Vega zero point. Eight of these are the population's spectrum at eight "
+            "wavelengths, which the renderer's filter integral joins into a continuum (S38). Intrinsic."
+        ),
+    )
+
+
+def _bulge_sed_decl(band: str) -> FieldDecl:
+    return FieldDecl(
+        name=f"bulge_sed_{band.lower()}", label=f"Bulge spectrum at {band}: λL_λ", unit="Lsun",
+        kind=Kind.SCALAR, meaningful_zero=True,
+        about=(
+            f"The bulge's light as λL_λ at the {band} band's reference wavelength, from the same old "
+            "population as its luminosity: its spectrum at eight wavelengths, for the renderer (S38)."
+        ),
+    )
+
+
+DISC_SED = tuple(_sed_decl(b) for b in BANDS)
+BULGE_SED = tuple(_bulge_sed_decl(b) for b in BANDS)
 
 COLOUR_B_V = FieldDecl(
     name="colour_b_v", label="B − V colour", unit="mag", kind=Kind.SCALAR, meaningful_zero=True,
@@ -247,6 +284,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     m_sun_v = float(ctx.constants["SOLAR_ABSOLUTE_MAGNITUDE_V"])
     magnitude = {}
     surface_v = np.zeros_like(brightness)
+    sed: dict[str, Any] = {}
     every = (*BANDS, "mbol")
     bulge_bands = band_flux_at(np.array([age[0]]), np.array([feh_bulge]), every)
     for band in every:
@@ -256,6 +294,10 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         magnitude[band] = -2.5 * float(np.log10(disc_flux + bulge_flux))
         if band == "V":
             surface_v = per_area * 10.0 ** (0.4 * m_sun_v)  # solar V luminosities per pc²
+        if band in PASSBANDS:
+            # The spectrum at this band (S38): the same sums as spectral densities, λL_λ in L☉.
+            sed[f"disc_sed_{band.lower()}"] = band_nu_l_nu(per_area, band)
+            sed[f"bulge_sed_{band.lower()}"] = float(band_nu_l_nu(np.array(bulge_flux), band))
     luminosity_v = 10.0 ** (-0.4 * (magnitude["V"] - m_sun_v))
     R_d = float(ctx.fields["disc_scale_length_spin"])
 
@@ -265,6 +307,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     ionizing = np.asarray(ctx.fields["sfr_surface_density"], dtype=float) * ionizing_yield(feh_now)  # s⁻¹ kpc⁻²
 
     return {
+        **sed,
         **{f"absolute_magnitude_{b.lower()}": magnitude[b] for b in BANDS},
         "colour_b_v": magnitude["B"] - magnitude["V"],
         "mass_to_light_v": float(ctx.fields["stellar_mass_total"]) / luminosity_v,
@@ -304,6 +347,7 @@ LIGHT = IMPLEMENTATIONS.register(
             HALPHA_SURFACE_BRIGHTNESS, BULGE_LUMINOSITY, BULGE_LIGHT_TEMPERATURE,
             *BAND_MAGNITUDES, COLOUR_B_V, MASS_TO_LIGHT_V, BOLOMETRIC_CORRECTION_V,
             SURFACE_BRIGHTNESS_V, PHOTOMETRIC_SCALE_LENGTH, IONIZING_PHOTON_RATE, IONIZING_PHOTON_RATE_TOTAL,
+            *DISC_SED, *BULGE_SED,
         ),
     )
 )

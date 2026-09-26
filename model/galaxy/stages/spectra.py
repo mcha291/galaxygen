@@ -17,13 +17,16 @@ filter whose curve peaks at 1 passes a line at its peak whole.
 
 **The components, first cut** (§2, components not colours; nothing is composited here):
 
-- *Stars.* The disc's published bolometric surface brightness at its published colour
-  temperature, the shape a blackbody's: F_λ = Σ_L · πB_λ(T)/(σT⁴). A population is not a
-  blackbody, and ``disc_light_temperature`` is a correlated colour temperature, not a
-  temperature of anything (``light.py``); how far the first cut's colour and magnitudes sit
-  from the eight-band table the same populations are integrated in is measured by
-  ``tests/test_render.py`` and stated there. The table-based spectrum (the eight bands as an
-  SED) or the population's own temperature mix is the second cut, owed.
+- *Stars.* The population's own spectrum, from the eight bands the light stage integrates it in
+  (the second cut, ruled at S38): per cell the eight points λL_λ at the bands' reference
+  wavelengths (``disc_sed_u`` … ``disc_sed_k``), joined by power laws (L_λ linear in log–log)
+  and continued outside U–K by a blackbody at the cell's colour temperature scaled to the end
+  point [inferred: the join and the tails are stated choices, not a model atmosphere]. Through
+  the table's own B and V this returns the table's magnitudes up to what the interpolation
+  costs over a band's width, measured in ``tests/test_render.py``. The first cut — the
+  bolometric light as one blackbody at the colour temperature — put twice the table's V light in
+  V (M_V 0.71 mag bright, B − V +0.012) and is kept as ``blackbody_stellar_response``, the
+  record the second is measured against.
 - *Lines.* Each published line surface brightness times the curve's transmission at the
   line's wavelength: a line is narrower than any filter the viewer holds, so it is evaluated
   exactly rather than on a grid (§3). Only Hα is published per cell today (``nebular``);
@@ -46,6 +49,7 @@ from typing import Any
 import numpy as np
 
 from galaxy.stages.massive_stars import BOLTZMANN, LIGHT_SPEED, PLANCK
+from galaxy.stages.photometry import BANDS, PASSBANDS
 
 # hc/k in Å·K: the second radiation constant, from the SI 2019 defining constants (exact).
 _C2 = PLANCK * LIGHT_SPEED / BOLTZMANN * 1.0e8
@@ -54,6 +58,13 @@ _C2 = PLANCK * LIGHT_SPEED / BOLTZMANN * 1.0e8
 WAVELENGTH_MIN = 1_000.0
 WAVELENGTH_MAX = 300_000.0
 MAX_FILTERS = 8
+
+# The stellar spectrum's anchors (S38's second cut): each of the table's eight bands at its reference
+# wavelength, Å, read from SVO (photometry.PASSBANDS), in increasing wavelength.
+SED_BANDS: tuple[str, ...] = BANDS
+SED_WAVELENGTHS = np.array([PASSBANDS[b].reference for b in SED_BANDS])
+# The corrections that make the joined spectrum's band means the table's (band_consistent).
+SED_ITERATIONS = 12
 SHAPES = ("gaussian", "box", "sampled")
 
 # The lines a render can carry, by component name: wavelength in air, Å [recall: the standard
@@ -69,9 +80,11 @@ LINE_WAVELENGTHS: Mapping[str, float] = {
 }
 
 # Points per curve for the continuum integral: a Gaussian spans ±4 FWHM (its wings there are
-# 10⁻¹⁹ of the peak) at 801, a box its width at 2001 log-spaced (a box may span the whole
-# continuum grid), a sampled curve is resampled at 2001.
-_GAUSSIAN_POINTS = 801
+# 10⁻¹⁹ of the peak) at 201 (a twenty-fifth of a FWHM apart: the trapezoid on a Gaussian times a
+# smooth spectrum is exact to far below the magnitudes' thousandths; 801 until the band-consistent
+# spectrum's twelve passes made it the route's cost), a box its width at 2001 log-spaced (a box may
+# span the whole continuum grid), a sampled curve is resampled at 2001.
+_GAUSSIAN_POINTS = 201
 _GAUSSIAN_SPAN = 4.0
 _BOX_POINTS = 2001
 _SAMPLED_POINTS = 2001
@@ -208,9 +221,77 @@ def line_response(curves: Sequence[Curve], wavelength: float) -> np.ndarray:
     return np.array([float(curve.at(np.array([wavelength]))[0]) for curve in curves])
 
 
-def stellar_response(surface_brightness: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
-    """``(*shape, n_filters)``: the stellar component through each curve, L☉/pc² if the surface
-    brightness is. Zero where there is no light; NaN where there is light with no temperature."""
+def blackbody_stellar_response(surface_brightness: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
+    """``(*shape, n_filters)``: S38's first cut, kept as the record the second is measured against — the
+    bolometric surface brightness as one blackbody at the colour temperature, through each curve, L☉/pc²
+    if the surface brightness is. Zero where there is no light; NaN where there is light with no
+    temperature. It puts about twice the table's V light in V (tests/test_render.py)."""
     light = np.asarray(surface_brightness, dtype=float)
     share = blackbody_response(curves, kelvin)
     return np.where((light > 0.0)[..., None], light[..., None] * share, 0.0)
+
+
+def sed_density(lam: np.ndarray, nu_l_nu: np.ndarray, kelvin: np.ndarray) -> np.ndarray:
+    """L_λ per Å at wavelengths ``lam`` (Å), shape ``(*shape, *lam.shape)``, of the spectrum the eight
+    band points ``nu_l_nu`` (``(*shape, 8)``, λL_λ at each band's reference wavelength, in the order of
+    ``SED_WAVELENGTHS``) describe: a power law between neighbouring points (L_λ linear in log–log), and
+    outside U–K a blackbody at ``kelvin`` scaled to the end point it meets [inferred: the stated join].
+    Zero where the population has no light; NaN in a tail where it has light and no temperature."""
+    lam = np.asarray(lam, dtype=float)
+    points = np.asarray(nu_l_nu, dtype=float) / SED_WAVELENGTHS  # L_λ at the anchors
+    lit = (points > 0.0).any(axis=-1)
+    log_p = np.log(np.maximum(points, 1e-300))
+    log_x = np.log(SED_WAVELENGTHS)
+    x = np.log(np.clip(lam, SED_WAVELENGTHS[0], SED_WAVELENGTHS[-1]))
+    k = np.clip(np.searchsorted(log_x, x, side="right") - 1, 0, log_x.size - 2)
+    w = (x - log_x[k]) / (log_x[k + 1] - log_x[k])
+    out = np.exp(log_p[..., k] * (1.0 - w) + log_p[..., k + 1] * w)
+    t = np.asarray(kelvin, dtype=float)
+    # The tails, evaluated only where a curve reaches past U or K.
+    for side, end in ((lam < SED_WAVELENGTHS[0], 0), (lam > SED_WAVELENGTHS[-1], -1)):
+        if side.any():
+            anchor = SED_WAVELENGTHS[end : end + 1 if end == 0 else None]
+            tail = points[..., end : end + 1 if end == 0 else None] * planck_share(lam[side], t) / planck_share(anchor, t)
+            out[..., side] = tail
+    return np.where(lit[..., None], out, 0.0)
+
+
+def sed_response(nu_l_nu: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
+    """``(*shape, n_filters)``: the eight-band spectrum (``sed_density``) through each curve, ∫ L_λ S dλ,
+    in the unit λL_λ was given in (L☉/pc² for the disc's fields, L☉ for the bulge's)."""
+    nu_l_nu = np.asarray(nu_l_nu, dtype=float)
+    out = np.empty((*nu_l_nu.shape[:-1], len(curves)))
+    for k, curve in enumerate(curves):
+        lam = curve.grid()
+        out[..., k] = np.trapezoid(sed_density(lam, nu_l_nu, kelvin) * curve.at(lam), lam, axis=-1)
+    return out
+
+
+def band_consistent(nu_l_nu: np.ndarray, kelvin: np.ndarray, iterations: int = SED_ITERATIONS) -> np.ndarray:
+    """The anchor points, ``(*shape, 8)``, moved so that the joined spectrum's mean L_λ through each band's
+    own curve (``band_curve``) is the band's published value, rather than its value at the band's reference
+    wavelength: a spectrum peaked at B, read at B's centre, is brighter than its mean over B's 950 Å, and the
+    point-anchored join read the table's B 0.076 mag faint (S38). A fixed number of multiplicative
+    corrections, each band's point scaled by its target over its current mean (A1: a step count fixed in
+    advance, its residual measured in tests/test_render.py)."""
+    target = np.asarray(nu_l_nu, dtype=float) / SED_WAVELENGTHS
+    curves = [band_curve(b) for b in SED_BANDS]
+    norm = np.array([np.trapezoid(c.at(c.grid()), c.grid()) for c in curves])
+    points = target.copy()
+    for _ in range(iterations):
+        mean = sed_response(points * SED_WAVELENGTHS, kelvin, curves) / norm
+        points = np.where(mean > 0.0, points * target / np.where(mean > 0.0, mean, 1.0), points)
+    return points * SED_WAVELENGTHS
+
+
+def stellar_response(nu_l_nu: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
+    """``(*shape, n_filters)``: the stellar component through each curve — the eight band points made
+    band-consistent (``band_consistent``), joined (``sed_density``) and integrated (``sed_response``)."""
+    return sed_response(band_consistent(nu_l_nu, kelvin), kelvin, curves)
+
+
+def band_curve(band: str) -> Curve:
+    """The table's own band as a curve: a Gaussian at its reference wavelength with its FWHM, both read
+    from SVO (``photometry.PASSBANDS``); the Gaussian shape is [inferred]. What the render gate sends."""
+    p = PASSBANDS[band]
+    return Curve(band, "gaussian", centre=p.reference, width=p.fwhm)

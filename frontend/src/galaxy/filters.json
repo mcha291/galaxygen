@@ -3,11 +3,11 @@
   "sets": {
     "rgb": {
       "label": "RGB",
-      "about": "Broadband: three Gaussians at the centres and FWHMs of the Bessell 1990 R, V and B passbands the isochrone table's magnitudes are computed in (CMD's UBVRIJHK, photometry.py) [recall: Bessell 2005, ARA&A 43, 293, Table 1: R 6407/1580, V 5448/840, B 4361/890 A; not read in this session]. The Gaussian shape is [inferred]; B and V are what the render gate compares with the table's B - V and M_V.",
+      "about": "Broadband: three Gaussians at the reference wavelengths and FWHMs of the Bessell R, V and B passbands the isochrone table's magnitudes are in, the same numbers as the model's own band definitions (photometry.PASSBANDS) [verified: SVO Filter Profile Service, Generic/Bessell.R, .V, .B, read at S38]. The Gaussian shape is [inferred]. Until the S38 second cut these were recalled numbers (6407/1580, 5448/840, 4361/890 A).",
       "curves": [
-        { "name": "R", "shape": "gaussian", "centre": 6407, "fwhm": 1580 },
-        { "name": "V", "shape": "gaussian", "centre": 5448, "fwhm": 840 },
-        { "name": "B", "shape": "gaussian", "centre": 4361, "fwhm": 890 }
+        { "name": "R", "shape": "gaussian", "centre": 6498.09, "fwhm": 1567.06 },
+        { "name": "V", "shape": "gaussian", "centre": 5477.7, "fwhm": 852.44 },
+        { "name": "B", "shape": "gaussian", "centre": 4371.07, "fwhm": 947.62 }
       ]
     },
     "sho": {

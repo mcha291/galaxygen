@@ -54,6 +54,47 @@ EXTRA: tuple[str, ...] = (*BANDS, "mbol", "mass_now", "label")
 
 
 @dataclass(frozen=True)
+class Passband:
+    """One band's reference (pivot) wavelength, FWHM and Vega zero point, as the SVO Filter Profile
+    Service lists them: what turns the table's Vega magnitudes into a spectrum (S38, BUILD_II V1)."""
+
+    reference: float  # Å: λ_ref, the pivot wavelength, at which the zero point's f_λ is quoted
+    fwhm: float  # Å
+    zero_point: float  # erg/cm²/s/Å: Vega's mean f_λ through the band
+
+
+# The eight bands' passbands (S38). CMD's photometric-system page names the table's system "UBVRIJHK
+# (cf. Maiz-Apellaniz 2006 + Bessell 1990)" (quoted in fetch_parsec.py's form and this module's
+# docstring); CMD's own pages could not be read at S38 (their TLS certificate fails verification), so
+# which curve CMD uses per band is [inferred]: U B V R I as SVO's Generic/Bessell (Bessell 1990),
+# J H K as its Generic/Bessell_JHKLM ("Bessell & Brett 1988 J/H/K filter"). The numbers are the SVO
+# pages' own, λ_ref / FWHM / ZP (erg/cm²/s/Å), each cross-checked there as ZP(Jy) · c / λ_ref²
+# [verified: http://svo2.cab.inta-csic.es/theory/fps/index.php?id=Generic/Bessell.U (and .B .V .R .I)
+# and ?id=Generic/Bessell_JHKLM.J (and .H .K), read at S38]. The Vega spectrum SVO integrates is not
+# necessarily the one YBC's Vega magnitudes are on; the difference is a zero-point term per band [inferred].
+PASSBANDS: dict[str, Passband] = {
+    "U": Passband(3584.78, 652.84, 3.96526e-9),
+    "B": Passband(4371.07, 947.62, 6.13268e-9),
+    "V": Passband(5477.70, 852.44, 3.62708e-9),
+    "R": Passband(6498.09, 1567.06, 2.17037e-9),
+    "I": Passband(8020.14, 1543.11, 1.12588e-9),
+    "J": Passband(12303.17, 2065.62, 3.12398e-10),
+    "H": Passband(16396.38, 2983.81, 1.13166e-10),
+    "K": Passband(22027.46, 3959.11, 3.93276e-11),
+}
+
+
+def band_nu_l_nu(flux: np.ndarray, band: str) -> np.ndarray:
+    """λL_λ at the band's reference wavelength, L☉, of a population whose Σ 10^(−0.4 M_band) is
+    ``flux`` (absolute magnitudes: 10 pc): 4π (10 pc)² · f_λ,Vega · λ_ref · 10^(−0.4 M)."""
+    from galaxy.stages.dust import CM_PER_PC
+    from galaxy.stages.massive_stars import SOLAR_LUMINOSITY
+
+    p = PASSBANDS[band]
+    return np.asarray(flux, dtype=float) * (4.0 * np.pi * (10.0 * CM_PER_PC) ** 2 * p.zero_point * p.reference / SOLAR_LUMINOSITY)
+
+
+@dataclass(frozen=True)
 class Isochrones:
     log_ages: np.ndarray  # (n_age,), increasing, evenly spaced
     mhs: np.ndarray  # (n_mh,), increasing

@@ -83,9 +83,10 @@ BUBBLES_SLOT = "bubbles"  # whose bubble columns ride on it too, and whose remna
 MAX_CHILD_CELLS = 4096
 # What /api/render reads (S38): the stellar component's two fields are required, the rest are
 # read where the model publishes them and named as absent where it does not (rule B9).
-RENDER_STARS = ("disc_surface_brightness", "disc_light_temperature")
+RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_light_temperature")
+RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
 RENDER_OPTIONAL = (
-    "pattern_density_contrast", "bulge_luminosity", "bulge_light_temperature",
+    "pattern_density_contrast", *RENDER_BULGE,
     "halpha_surface_brightness_nebular", "dust_extinction_v", "dust_colour_excess_b_v",
 )
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
@@ -183,7 +184,7 @@ ROUTES: tuple[Route, ...] = (
         "viewer's curves, each {name, shape: gaussian (centre, fwhm) | box (centre, width) | sampled (wavelength, "
         "transmission)}, angstroms> returns, per cell of the (R, phi) grid inside the window - or per level-k region "
         "cell with level=k - each emitting component's response in each filter, never composited: stars (the "
-        "published surface brightness at its colour temperature, a blackbody's shape, times the pattern's contrast), "
+        "population's eight-band spectrum joined into a continuum, times the pattern's contrast), "
         "halpha (the nebular line through each curve at 6562.8 A) and the dust (face-on A_V and E(B-V)). The bulge's "
         "response rides in the header; white=<K> adds a blackbody's response per unit light for the viewer's white "
         "balance; set=<name> is echoed; precision=f4 sends float32.",
@@ -1044,7 +1045,8 @@ class Service:
         R = out.grid.R
 
         # The components on the whole grid: the stars per (R, phi), the line and the dust per R.
-        per_ring = _spectra.stellar_response(f["disc_surface_brightness"], f["disc_light_temperature"], curves)
+        sed = np.stack([np.asarray(f[f"disc_sed_{b.lower()}"], dtype=float) for b in _spectra.SED_BANDS], axis=-1)
+        per_ring = _spectra.stellar_response(sed, f["disc_light_temperature"], curves)
         contrast = f["pattern_density_contrast"] if "pattern_density_contrast" in f else None
         # The stellar light follows the pattern's density contrast around each ring (a constant mass-to-light
         # ratio in azimuth), which averages to 1 around every ring, so each ring keeps its published light.
@@ -1055,8 +1057,11 @@ class Service:
         about: dict[str, Any] = {
             "stars": {
                 "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *(["pattern_density_contrast"] if contrast is not None else [])],
-                "about": "the disc's surface brightness at its colour temperature, a blackbody's shape, through each "
-                         "curve, placed around each ring by the pattern's density contrast",
+                "about": "the population's own spectrum - the eight bands' lambda L_lambda at their reference "
+                         "wavelengths, power laws between them, a blackbody at the colour temperature beyond U and K - "
+                         "through each curve, placed around each ring by the pattern's density contrast",
+                "bands": list(_spectra.SED_BANDS),
+                "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
         }
         if "halpha_surface_brightness_nebular" in f:
@@ -1117,9 +1122,9 @@ class Service:
             arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
 
         bulge = None
-        if "bulge_luminosity" in f and "bulge_light_temperature" in f:
-            share = _spectra.blackbody_response(curves, np.array([float(f["bulge_light_temperature"])]))[0]
-            bulge = [_number(v) for v in float(f["bulge_luminosity"]) * share]
+        if all(n in f for n in RENDER_BULGE):
+            points = np.array([float(f[f"bulge_sed_{b.lower()}"]) for b in _spectra.SED_BANDS])
+            bulge = [_number(v) for v in _spectra.stellar_response(points, np.array(float(f["bulge_light_temperature"])), curves)]
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),

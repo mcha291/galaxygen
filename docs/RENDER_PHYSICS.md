@@ -101,9 +101,12 @@ it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 refused, since the model holds none), and the model returns the stars per
 (R, φ) cell, the Hα and the dust per ring and the bulge per filter, never
 composited; the viewer divides by a white point and multiplies by its exposure
-`[verified: tests/test_render.py]`. The first cut's stellar spectrum is one
-blackbody at the colour temperature, and its frame reads B − V +0.012 and M_V
-−0.71 mag from the table's; the test states and pins both.
+`[verified: tests/test_render.py]`. The stellar spectrum is the population's
+own eight-band SED (`disc_sed_*`, `bulge_sed_*`, λL_λ at the SVO reference
+wavelengths), joined by power laws made band-consistent, blackbody tails beyond U
+and K; the frame through the table's B and V reads B − V +8.9 × 10⁻⁵ and M_V
+−1.7 × 10⁻⁴ mag from Phase 3's, tolerance 10⁻³. The first cut (one blackbody at
+the colour temperature, M_V 0.71 mag bright) is kept in the test as the record.
 
 **One ruling this contract leaves open, for V1.** §3a says the model ships the
 spectrum function and the renderer calls it, and §2a says the viewer holds the
