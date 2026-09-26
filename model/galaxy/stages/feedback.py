@@ -34,7 +34,7 @@ pressure-driven snowplow of Cioffi, McKee & Bertschinger 1988, as quoted with at
 "r_PDS = 14.0 E51^{2/7} n0^{−3/7} ζm^{−1/7} pc", "rs = r_PDS (4t/(3t_PDS) − 1/3)^{3/10}", "vs = v_PDS
 (4t/(3t_PDS) − 1/3)^{−7/10}, where v_PDS = 413 n0^{1/7} ζm^{3/14} E51^{1/14} km s^−1 and t_PDS = 1.33 × 10^4
 E51^{3/14} n0^{−4/7} ζm^{−5/14} yr" `[verified: arXiv:astro-ph/0108502, §3.4.2, eqs. 3–5]`. The two join: at
-n0 = 1 the Sedov radius at t_PDS is 14.05 pc against r_PDS = 14.0. The coefficients are level-0 constants; the
+n0 = 1 the Sedov radius at t_PDS is 14.04 pc against r_PDS = 14.0. The coefficients are level-0 constants; the
 exponents are the solutions' and live here.
 """
 

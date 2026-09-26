@@ -1230,7 +1230,7 @@ LEVEL0: dict[str, Constant] = {
         "metallicity factor and is close to unity for normal abundances', and after it 'rs = r_PDS "
         "(4t/(3t_PDS) - 1/3)^(3/10)' [verified: Chen & Slane 2001, arXiv:astro-ph/0108502, section 3.4.2, "
         "eqs. 3-4, quoting Cioffi et al. 1988, read at S36]; Martizzi et al. 2015 write the factor as "
-        "(Z/Zsun)^(-1/7) [verified: arXiv:1409.4425, section 2.1]. The Sedov radius at t_PDS is 14.05 pc at "
+        "(Z/Zsun)^(-1/7) [verified: arXiv:1409.4425, section 2.1]. The Sedov radius at t_PDS is 14.04 pc at "
         "n0 = 1: the phases join.",
     ),
     "PDS_VELOCITY_COEFFICIENT": Constant(
