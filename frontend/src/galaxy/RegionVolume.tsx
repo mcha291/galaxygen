@@ -24,7 +24,7 @@ import {
   ZeroFactor,
 } from "three";
 
-import { type Census, type Query, type RenderFrame, loadClouds, loadClusters, loadRemnants, loadRender } from "../api";
+import { type Census, type Query, type RenderFrame, loadClouds, loadRemnants, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
@@ -171,6 +171,8 @@ const FRAGMENT = /* glsl */ `
 interface Props {
   query: Query;
   window: RegionWindow;
+  /** The window's clusters at this level, loaded once by the galaxy tab (it draws them as points too, S41). */
+  clusters: Census | null;
   level: number;
   /** Exposure in stops. */
   stops: number;
@@ -186,11 +188,10 @@ interface Props {
  * of a cloud included (an approximation of the composite, stated in HANDOFF_S40). The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
-export function RegionVolume({ query, window, level, stops, weight, filterSet = "rgb" }: Props) {
+export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb" }: Props) {
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
   const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
-  const clusters = useLoad<Census>(key, (signal) => loadClusters(place, query, signal)).value ?? null;
   const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal)).value ?? null;
   const renderKey = JSON.stringify([filterSet, place, query]);
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), WHITE_KELVIN, { ...query, ...place }, signal)).value ?? null;
