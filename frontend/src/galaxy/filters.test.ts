@@ -28,6 +28,11 @@ describe("the filter sets", () => {
     expect(FILTER_SETS.rgb.curves.map((c) => c.name)).toEqual(["R", "V", "B"]); // the gate reads B and V
   });
 
+  it("does not offer the measured infrared set, which has no white point to be drawn by (S39)", () => {
+    expect(FILTER_SET_NAMES).not.toContain("ir");
+    expect(Object.keys(FILTER_SETS)).not.toContain("ir");
+  });
+
   it("passes the lines each narrow set is named for, and no other", () => {
     const [s, h, o] = FILTER_SETS.sho.curves;
     for (const l of SII) expect(passes(s, l)).toBe(true);

@@ -2,71 +2,26 @@
 // volume the renderer integrates along each line of sight. No three.js here.
 //
 // Since S38 (BUILD_II V1) the light's colour is the filter integral's, run by the model: the
-// viewer sends its filter set (filters.ts) to /api/render and gets back, per (R, φ) cell, the
-// stellar component's response in each filter, and per ring the Hα line's and the dust's. It
-// divides each channel by its white point and nothing else (rule D5; RENDER_PHYSICS §2, "components,
-// not colours"). The stellar light is placed around each ring by the model (the pattern's density
-// contrast); the young light the viewer used to crowd into the arms at a display temperature
-// (YOUNG_SHARE 0.3 at YOUNG_KELVIN 12 000 K, YOUNG_CLUMP 2) is gone, and every ring's stars are drawn
-// at the population's own published colour.
+// viewer sends its filter set (filters.ts) to /api/render and gets back each emitting component's
+// response in each filter, and divides each channel by its white point and nothing else (rule D5;
+// RENDER_PHYSICS §2, "components, not colours").
 //
-// **The invention left, dated** (RENDER_PHYSICS §0, §8's one standing exception, removed by V2): how
-// the published Hα and dust are placed within each ring — the line crowded into the arms and
-// gathered into seeded knots along a clump lattice, the dust led onto the arms' inner edge and
-// broken into seeded clumps — is still the viewer's, and every ring keeps its published mean.
+// Since S39 (BUILD_II V2) every component is placed by the model and spread through a layer the
+// model names (the render header's `layers`, each a sech²(z / 2h) / 4h profile): the stars and the
+// dust's own light and scattered light in the thin disc, where the dust is mixed with them (the dust
+// stage's heating geometry); the HII regions' Hα, placed round each ring by the pattern's contrast, in
+// the clouds' layer; the diffuse gas's Hα in its own published 1.4 kpc layer, which a tilted view sees
+// brighten toward the limb. The dust dims each filter by its own depth from the grain model's curve.
+//
+// **What the field regime still invents at galaxy scale: nothing structural.** The seeded Hα knots,
+// the clump lattice, the dust's lead onto the arms' inner edge, the line's and the dust's crowding
+// into the arms at a display power, and the per-channel extinction the viewer held (CHANNEL_EXTINCTION)
+// are gone (RENDER_PHYSICS §0's exception, closed by V2). What remains the viewer's is display only:
+// the white point, the exposure, the tone curve and the bloom, and the ray-march's own sampling (steps,
+// the jitter that turns banding into grain, the pixel budget). Structure below a (R, φ) cell of the
+// model's grid — a knot, a filament — is V3's, from the cloud catalogue.
 
 import type { Axis } from "../preview/axes";
-
-/**
- * How much harder the line crowds into the arms than the starlight: the contrast raised to
- * this power, renormalised around each ring so the ring still carries its published Hα.
- * Star formation goes as gas density to the Kennicutt–Schmidt power and the arms are where
- * the gas is; the exponent is a display choice standing in for that, not a derivation (V2's).
- */
-export const LINE_CLUMP = 3;
-
-/**
- * How hard the dust crowds into the arms: as the gas and the line do. Renormalised around each
- * ring, so the ring keeps its published face-on A_V.
- */
-export const DUST_CLUMP = 3;
-
-/**
- * How far inside each arm's ridge the dust lane lies, as a share of the radial spacing between
- * arms. Gas overtakes the pattern inside corotation and shocks on the arm's concave edge, so the
- * lanes run along the inner side of the starlight [recall: Roberts 1969]. A display choice.
- */
-export const DUST_LEAD = 0.12;
-
-/** Optical depth per magnitude: τ = A / 1.086. */
-export const TAU_PER_MAG = 1 / 1.086;
-
-
-export interface PlaneFields {
-  R: Axis;
-  /** The φ axis of `stars` and `contrast`: the render's window, the whole ring. */
-  phi: Axis;
-  /**
-   * The stellar component's response per (R, φ) cell and filter, row-major over (R, φ, filter),
-   * L☉/pc² through each filter (/api/render's `stars`); non-finite means no light is drawn there.
-   */
-  stars: ArrayLike<number>;
-  /** The Hα line's response per R cell and filter, row-major over (R, filter) (/api/render's `halpha`). */
-  line?: ArrayLike<number>;
-  /** Face-on A_V per R cell. */
-  extinction?: ArrayLike<number>;
-  /**
-   * The white point: each filter's response to a unit of white light (/api/render's `white`). Every
-   * channel is divided by it, so white light draws (1, 1, 1) per unit of light in any filter set.
-   */
-  white: readonly number[];
-  /** The (R, φ) contrast, row-major over (R, φ): where the line and the dust are crowded (V2's to remove). */
-  contrast?: ArrayLike<number>;
-  /** The published arm geometry, which places the dust lanes; without it the dust sits on the ridge. */
-  arms?: { pitchDeg: number; multiplicity: number };
-  /** Seeds the knots and dust clumps laid along the arms; without it, or without `arms`, the rings are smooth. */
-  seed?: number;
-}
 
 /**
  * The drawn value of one published response: divided by its filter's white point, the tone map's
@@ -78,320 +33,130 @@ export function balanced(response: number, white: number): number {
 }
 
 /**
- * The clumps: seeded noise that breaks the smooth rings into HII knots and feathered dust, laid
- * out along the arms. A multiplicative factor on the midplane line and dust, evaluated by the
- * shader at every sample (a texture of them could not hold a clump smaller than its cells) and
- * renormalised around every ring by a factor computed here, so no ring's published value moves.
- * Everything here is a display choice, and V2's to remove.
+ * The optical depth of a face-on column from the share of light it lets through (/api/render's
+ * `dust_extinction`, 10^(−0.4 A_λ)): τ = −ln T, which the ray-march spreads through the dust's layer.
+ * No dust, or a missing number, is no depth (rule B9: nothing is dimmed on a guess).
  */
-export const CLUMPS = {
-  /** Lattice cells around the arm phase ψ: sets a clump's width across the arm, 2πR sin p / cells. */
-  cells: 64,
-  /** How much longer a clump runs along the arm than across it. */
-  aspect: 2,
-  /** The dust's log-normal width. Kept below the arms' own contrast, or the clumps hide the arms they sit in. */
-  sigma: { dust: 0.3 },
-  /**
-   * The line is not spread through the arms but gathered into knots: HII regions are discrete,
-   * a few hundred parsecs across at most, lit by the few clusters young enough to ionise them.
-   * Only the star clouds' lattice noise above this many standard deviations carries line,
-   * weighted by its excess up to `knotCap`, so each ring's Hα sits in under 2% of its area, a
-   * typical knot some sixty times the ring's mean and the brightest a hundred: about the share
-   * of a star-forming disc HII regions cover [recall]. At 1.5σ the knots took 7% of the area at
-   * six times the mean, a pink wash rather than knots. Since V1 that lattice places nothing but
-   * the knots: the young light it once clumped is gone.
-   */
-  knotThreshold: 2.0,
-  /**
-   * The excess, in standard deviations, beyond which a knot is no brighter. HII regions have a
-   * ceiling: the squared excess put the brightest thousands of times over the ring's mean, and a
-   * few such pixels were bright enough for the bloom to wash the whole view white.
-   */
-  knotCap: 0.3,
-  /**
-   * The radius, kpc, inside which the clumps fade out, as 1 − exp(−(R/fade)²). A clump's size goes
-   * as R, so near the centre they shrink to a grain; and the inner disc is old light, not star clouds.
-   */
-  fade: 2,
-  /** Added to the seed for the dust's own lattice, so dust and knots are not the same clumps. */
-  dustSeedOffset: 7919,
-};
-
-/**
- * One lattice of arm-aligned noise: the cells per turn of φ across (n) and along (m) the arms, the
- * pitch, the seed, and the mean and spread that normalise it. Everything the shader needs to draw
- * the same noise as `clumpNoise`.
- */
-export interface ClumpLattice {
-  n: number;
-  m: number;
-  cot: number;
-  tan: number;
-  seed: number;
-  mean: number;
-  std: number;
-}
-
-/** Added to every along-arm lattice index, keeping it positive; the shader adds the same. */
-export const LATTICE_LIFT = 65536;
-
-// A lattice value in [−1, 1] per integer cell and seed: a 32-bit integer hash, no state. The
-// shader's `lattice` is this line for line in uint arithmetic; Math.imul is the same wrap.
-function latticeValue(x: number, y: number, seed: number): number {
-  let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1) ^ Math.imul(seed, 0x9e3779b1);
-  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
-  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
-  h ^= h >>> 16;
-  return (h >>> 0) / 0x7fffffff - 1;
-}
-
-// Smooth value noise on a lattice that repeats under the shift (n, m): cell (x, y) is cell
-// (x + n, y + m). One turn of φ is that shift, so the noise wraps around the ring without a seam.
-function valueNoise(x: number, y: number, n: number, m: number, seed: number): number {
-  const x0 = Math.floor(x);
-  const y0 = Math.floor(y);
-  const fx = x - x0;
-  const fy = y - y0;
-  const sx = fx * fx * (3 - 2 * fx);
-  const sy = fy * fy * (3 - 2 * fy);
-  // Brought into the first turn, and lifted by LATTICE_LIFT so no index is negative: GLSL ES 3.00
-  // does not promise a negative int keeps its bits on the way to uint.
-  const value = (cx: number, cy: number) => {
-    const turns = Math.floor(cx / n);
-    return latticeValue(cx - turns * n, cy - turns * m + LATTICE_LIFT, seed);
-  };
-  const a = value(x0, y0);
-  const b = value(x0 + 1, y0);
-  const c = value(x0, y0 + 1);
-  const d = value(x0 + 1, y0 + 1);
-  return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
-}
-
-// Two octaves, before normalising.
-function rawNoise(l: Omit<ClumpLattice, "mean" | "std">, lnR: number, angle: number): number {
-  // In cells: ψ over a turn gives n; (ln R tan p + φ) over a turn gives m.
-  const x = ((angle - l.cot * lnR) * l.n) / (2 * Math.PI);
-  const y = ((lnR * l.tan + angle) * l.m) / (2 * Math.PI);
-  return 0.7 * valueNoise(x, y, l.n, l.m, l.seed) + 0.3 * valueNoise(2 * x, 2 * y, 2 * l.n, 2 * l.m, l.seed + 1);
+export function depthOf(transmission: number): number {
+  const t = Number(transmission);
+  return Number.isFinite(t) && t > 0 && t < 1 ? -Math.log(t) : 0;
 }
 
 /**
- * Noise over (R, φ) on a lattice square to the arms. In (ln R, φ) lengths go as R times the flat
- * distance, so a lattice there is a true local grid at every radius; the arm of pitch p runs along
- * (sin p, cos p) in it, and the lattice's axes are that direction and the one across it. Across is
- * the arm phase ψ = φ − cot p ln R (pattern.py's convention) times sin p; along is
- * ln R sin p + φ cos p. A clump is then an ellipse CLUMPS.aspect times longer than it is wide,
- * R · 2π sin p / cells across. One turn of φ moves both coordinates by whole cells (the along count
- * is rounded to make it so), which is what lets the lattice wrap without a seam. Normalised to
- * zero mean and unit spread over the (R, φ) grid given.
+ * The scattered light's phase factor for a view at |cos i| = `cosView` to the disc's axis, read from
+ * the model's table (/api/render's `dust_scattered.phase`: a Henyey–Greenstein phase function at the
+ * published g, averaged over light arriving in the disc's plane) by linear interpolation between its
+ * evenly spaced points. The shader's `phaseAt` is this, line for line. 1 (isotropic) without a table.
  */
-export function clumpLattice(R: Axis, phi: Axis, pitchDeg: number, seed: number): ClumpLattice {
-  const p = (Math.min(Math.max(pitchDeg, 1), 89) * Math.PI) / 180;
-  const cot = 1 / Math.tan(p);
-  const n = CLUMPS.cells;
-  const base = { n, m: Math.max(1, Math.round((n * cot) / CLUMPS.aspect)), cot, tan: Math.tan(p), seed };
-  let sum = 0;
-  let sum2 = 0;
-  for (let i = 0; i < R.n; i += 1) {
-    const lnR = Math.log(Math.max(R.lo + (i + 0.5) * R.width, 1e-3));
-    for (let j = 0; j < phi.n; j += 1) {
-      const v = rawNoise(base, lnR, phi.lo + (j + 0.5) * phi.width);
-      sum += v;
-      sum2 += v * v;
-    }
-  }
-  const count = R.n * phi.n;
-  const mean = sum / count;
-  return { ...base, mean, std: Math.sqrt(Math.max(sum2 / count - mean * mean, 1e-12)) };
+export function phaseAt(factor: readonly number[] | null | undefined, cosView: number): number {
+  if (!factor || factor.length < 2) return 1;
+  const x = Math.min(1, Math.max(0, Math.abs(cosView))) * (factor.length - 1);
+  const k = Math.min(factor.length - 2, Math.floor(x));
+  return factor[k] + (factor[k + 1] - factor[k]) * (x - k);
 }
 
-/** The normalised noise at radius `radius` (kpc) and azimuth `angle`. */
-export function clumpNoise(l: ClumpLattice, radius: number, angle: number): number {
-  return (rawNoise(l, Math.log(Math.max(radius, 1e-3)), angle) - l.mean) / l.std;
+/** The model's layers, kpc (/api/render's header `layers`); a missing one draws its component nowhere. */
+export interface Layers {
+  stars: number | null;
+  dust: number | null;
+  halpha_hii?: number | null;
+  halpha_dig?: number | null;
 }
 
-/** A lattice's noise at every texel centre of an (R, φ) grid, row-major over (R, φ). */
-function noiseGrid(l: ClumpLattice, R: Axis, phi: Axis): Float64Array {
-  const out = new Float64Array(R.n * phi.n);
-  for (let i = 0; i < R.n; i += 1) {
-    const radius = R.lo + (i + 0.5) * R.width;
-    for (let j = 0; j < phi.n; j += 1) out[i * phi.n + j] = clumpNoise(l, radius, phi.lo + (j + 0.5) * phi.width);
-  }
-  return out;
-}
-
-/** The noise at every texel centre of an (R, φ) grid, row-major over (R, φ). */
-export function armNoise(R: Axis, phi: Axis, pitchDeg: number, seed: number): Float64Array {
-  return noiseGrid(clumpLattice(R, phi, pitchDeg, seed), R, phi);
-}
-
-/** How strongly the clumps show at a radius: faded out toward the centre. */
-export function clumpStrength(radius: number): number {
-  return 1 - Math.exp(-((radius / CLUMPS.fade) ** 2));
-}
-
-const knotExcess = (n: number) => Math.min(Math.max(0, n - CLUMPS.knotThreshold), CLUMPS.knotCap);
-
-/** The least share of a ring's line its knots must carry for the ring to be drawn knotted. */
-const KNOT_MIN_SHARE = 0.25;
-
-/**
- * The clump factors at one point, before each ring's renormalisation: the line's and the dust's,
- * from the star clouds' noise `n` and the dust noise `nd` at clump strength `s`. The shader's
- * factors are this, line for line.
- */
-export function clumpFactors(n: number, nd: number, s: number, knotMean: number): [number, number] {
-  return [knotMean > 0 ? 1 - s + (s * knotExcess(n)) / knotMean : 1, Math.exp(CLUMPS.sigma.dust * s * nd)];
+export interface PlaneFields {
+  R: Axis;
+  /** The φ axis of the (R, φ) components: the render's window, the whole ring. */
+  phi: Axis;
+  /**
+   * The stellar component's response per (R, φ) cell and filter, row-major over (R, φ, filter),
+   * L☉/pc² through each filter (/api/render's `stars`); non-finite means no light is drawn there.
+   */
+  stars: ArrayLike<number>;
+  /** The HII regions' Hα per (R, φ, filter), placed by the model (`halpha_hii`). */
+  hii?: ArrayLike<number>;
+  /** The diffuse gas's Hα per (R, filter) (`halpha_dig`). */
+  dig?: ArrayLike<number>;
+  /** The face-on transmission per (R, filter) (`dust_extinction`). */
+  extinction?: ArrayLike<number>;
+  /** The scattered light per (R, φ, filter), all directions together (`dust_scattered`). */
+  scattered?: ArrayLike<number>;
+  /** The dust's thermal emission per (R, filter) (`dust_thermal`). */
+  thermal?: ArrayLike<number>;
+  /**
+   * The white point: each filter's response to a unit of white light (/api/render's `white`). Every
+   * channel is divided by it, so white light draws (1, 1, 1) per unit of light in any filter set.
+   */
+  white: readonly number[];
 }
 
 export interface PlaneTexture {
-  /**
-   * The stars, in the thin disc's height: RGB each filter's response through a face-on column,
-   * divided by its white point (L☉/pc² of white light); A unused.
-   */
+  /** The stars, in the thin disc's layer: RGB each filter's response over its white point; A unused. */
   data: Float32Array;
+  /** The scattered light, in the dust's layer, all directions together (the shader applies the phase); A unused. */
+  scatter: Float32Array;
+  /** The HII regions' Hα, in the clouds' layer, over the white point; A unused. */
+  hii: Float32Array;
   /**
-   * The midplane layer, smooth: RGB the line's response in each filter, divided by its white point
-   * and crowded into the arms; A the dust's face-on optical depth in V.
+   * Per ring, three rows of one texel per R cell: row 0 the dust's face-on optical depth per channel,
+   * row 1 the diffuse gas's Hα and row 2 the dust's thermal emission, each over the white point; A unused.
    */
-  layer: Float32Array;
-  /**
-   * Per ring, one texel per R cell: what multiplies each clump factor so the ring keeps its mean.
-   * R the line's, G the dust's; B is 1 where the line gathers into knots and 0 in a ring no knot
-   * crosses, where the line stays smooth; A unused.
-   */
-  norms: Float32Array;
-  /** The star clouds' (the knots') and the dust's lattices and the knots' mean weight; null when the rings are smooth. */
-  clumps: { stars: ClumpLattice; dust: ClumpLattice; knotMean: number } | null;
+  rings: Float32Array;
   width: number;
   height: number;
 }
 
+/** The rows of `PlaneTexture.rings`, and where a shader samples each (texel centres). */
+export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, count: 3 } as const;
+
 /**
- * Three RGBA float textures from the published responses, one texel per (R cell, φ cell),
- * row-major with φ as the row, and one per R cell for the rings' clump norms. Split by the layer
- * the light lives in, so the renderer can give each its own thickness: the stars fill the thin
- * disc, and the line and the dust lie in a far thinner layer at the midplane.
- *
- * The stars are the model's responses per cell, white-balanced and nothing more. Around each ring
- * the line and the dust average to their published values; only their placement in azimuth is the
- * viewer's (V2's to remove): the line crowds into the arms, the dust as hard but on the arms' inner
- * edge, and with a seed the line is gathered into knots and the dust broken into clumps, by
- * `clumpFactors` and `norms`.
+ * RGBA float textures from the published components, one texel per (R cell, φ cell), row-major with φ as
+ * the row, and one row per R cell for the per-ring ones. Every value is the model's, over the white point
+ * where it is light, or −ln of its transmission where it is dust: nothing is placed, clumped or recoloured.
  */
 export function planeTexture(fields: PlaneFields): PlaneTexture {
-  const { R, phi, stars, line, extinction, white, contrast, arms, seed } = fields;
+  const { R, phi, stars, hii, dig, extinction, scattered, thermal, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
   const data = new Float32Array(R.n * nPhi * 4);
-  const layer = new Float32Array(R.n * nPhi * 4);
-  const norms = new Float32Array(R.n * 4);
-  const at = (i: number, j: number) => (contrast ? Math.max(0, Number(contrast[i * nPhi + j])) : 1);
-  // The contrast at a radius between cells, clamped to the grid.
-  const atRadius = (radius: number, j: number) => {
-    const x = Math.min(R.n - 1, Math.max(0, (radius - R.lo) / R.width - 0.5));
-    const i0 = Math.floor(x);
-    const i1 = Math.min(R.n - 1, i0 + 1);
-    return at(i0, j) + (at(i1, j) - at(i0, j)) * (x - i0);
-  };
-  // A logarithmic spiral's arms are 2πR tan p / m apart along a radius.
-  const lead = arms && contrast && Number.isFinite(arms.pitchDeg) && arms.multiplicity > 0
-    ? DUST_LEAD * 2 * Math.PI * Math.tan((arms.pitchDeg * Math.PI) / 180) / arms.multiplicity
-    : 0;
-
-  // Knots (on the star clouds' lattice) and dust clumps from two lattices.
-  let clumps: PlaneTexture["clumps"] = null;
-  let starNoise: Float64Array | null = null;
-  let dustNoise: Float64Array | null = null;
-  if (contrast && arms && seed !== undefined && Number.isFinite(arms.pitchDeg)) {
-    const lattice = clumpLattice(R, phi, arms.pitchDeg, seed);
-    const dust = clumpLattice(R, phi, arms.pitchDeg, seed + CLUMPS.dustSeedOffset);
-    starNoise = noiseGrid(lattice, R, phi);
-    dustNoise = noiseGrid(dust, R, phi);
-    let knotMean = 0;
-    for (let k = 0; k < starNoise.length; k += 1) knotMean += knotExcess(starNoise[k]);
-    clumps = { stars: lattice, dust, knotMean: knotMean / starNoise.length };
-  }
-
-  const lineC = new Float64Array(nPhi);
-  const dustC = new Float64Array(nPhi);
+  const scatter = new Float32Array(R.n * nPhi * 4);
+  const line = new Float32Array(R.n * nPhi * 4);
+  const rings = new Float32Array(R.n * RING_ROWS.count * 4);
   for (let i = 0; i < R.n; i += 1) {
-    const lineRgb = [0, 1, 2].map((k) => (line && k < nF ? balanced(Number(line[i * nF + k]), white[k]) : 0));
-    const av = extinction ? Math.max(0, Number(extinction[i]) || 0) : 0;
-
-    // The line's and the dust's smooth shapes around the ring, renormalised so each ring mean is 1:
-    // they carry their own published values.
-    const radius = R.lo + (i + 0.5) * R.width;
-    let meanLine = 0;
-    let meanDust = 0;
-    for (let j = 0; j < nPhi; j += 1) {
-      lineC[j] = at(i, j) ** LINE_CLUMP;
-      dustC[j] = atRadius(radius + lead * radius, j) ** DUST_CLUMP;
-      meanLine += lineC[j];
-      meanDust += dustC[j];
+    for (let k = 0; k < 3 && k < nF; k += 1) {
+      rings[(RING_ROWS.depth * R.n + i) * 4 + k] = extinction ? depthOf(Number(extinction[i * nF + k])) : 0;
+      rings[(RING_ROWS.dig * R.n + i) * 4 + k] = dig ? balanced(Number(dig[i * nF + k]), white[k]) : 0;
+      rings[(RING_ROWS.thermal * R.n + i) * 4 + k] = thermal ? balanced(Number(thermal[i * nF + k]), white[k]) : 0;
     }
-    meanLine = meanLine / nPhi || 1;
-    meanDust = meanDust / nPhi || 1;
-
-    // The clump factors' own mean around the ring, weighted by each smooth shape: dividing by it
-    // gives the ring back its mean.
-    const p = 4 * i;
-    norms[p] = norms[p + 1] = 1;
-    norms[p + 2] = norms[p + 3] = 0;
-    if (clumps && starNoise && dustNoise) {
-      const s = clumpStrength(radius);
-      let line0 = 0;
-      let line1 = 0;
-      let knotted = 0;
-      let dust0 = 0;
-      let dust1 = 0;
-      for (let j = 0; j < nPhi; j += 1) {
-        const [fl, fd] = clumpFactors(starNoise[i * nPhi + j], dustNoise[i * nPhi + j], s, clumps.knotMean);
-        line0 += lineC[j];
-        line1 += lineC[j] * fl;
-        knotted += (lineC[j] * s * knotExcess(starNoise[i * nPhi + j])) / clumps.knotMean;
-        dust0 += dustC[j];
-        dust1 += dustC[j] * fd;
-      }
-      if (dust1 > 0) norms[p + 1] = dust0 / dust1;
-      // A ring whose knots would carry under a quarter of its line keeps the line spread with the
-      // arms. Renormalising it instead divides by the few knots it has, or by the smooth 1 − s
-      // alone, which near full strength is nearly nothing: the norm then runs to thousands, and a
-      // knot the shader finds between this ring's texels is drawn thousands of times too bright.
-      if (line1 > 0 && knotted >= KNOT_MIN_SHARE * line0) {
-        norms[p] = line0 / line1;
-        norms[p + 2] = 1;
-      }
-    }
-
     for (let j = 0; j < nPhi; j += 1) {
       const q = (j * R.n + i) * 4;
-      for (let k = 0; k < 3; k += 1) data[q + k] = k < nF ? balanced(Number(stars[(i * nPhi + j) * nF + k]), white[k]) : 0;
-      for (let k = 0; k < 3; k += 1) layer[q + k] = (lineRgb[k] * lineC[j]) / meanLine;
-      layer[q + 3] = contrast ? (av * TAU_PER_MAG * dustC[j]) / meanDust : av * TAU_PER_MAG;
+      const at = (i * nPhi + j) * nF;
+      for (let k = 0; k < 3 && k < nF; k += 1) {
+        data[q + k] = balanced(Number(stars[at + k]), white[k]);
+        scatter[q + k] = scattered ? balanced(Number(scattered[at + k]), white[k]) : 0;
+        line[q + k] = hii ? balanced(Number(hii[at + k]), white[k]) : 0;
+      }
     }
   }
-  return { data, layer, norms, clumps, width: R.n, height: nPhi };
+  return { data, scatter, hii: line, rings, width: R.n, height: nPhi };
 }
 
 /**
- * The midplane layer at one texel with its clumps applied, as the shader draws it at that point:
- * the line in each channel and the dust. For checking the ring means; the renderer does this per
- * sample, not per texel.
+ * The share of a sech²(y / 2h) / 4h layer's column between heights y0 and y1 — the shader's `column` over
+ * a unit path, line for line: a difference of tanh, so a step takes its layer's exact column however
+ * coarse the step and however thin the layer.
  */
-export function clumpedLayer(tex: PlaneTexture, R: Axis, phi: Axis, i: number, j: number): [number, number, number, number] {
-  const q = (j * R.n + i) * 4;
-  const line = [tex.layer[q], tex.layer[q + 1], tex.layer[q + 2]];
-  const dust = tex.layer[q + 3];
-  if (!tex.clumps) return [line[0], line[1], line[2], dust];
-  const radius = R.lo + (i + 0.5) * R.width;
-  const angle = phi.lo + (j + 0.5) * phi.width;
-  const n = clumpNoise(tex.clumps.stars, radius, angle);
-  const nd = clumpNoise(tex.clumps.dust, radius, angle);
-  const [fl, fd] = clumpFactors(n, nd, clumpStrength(radius), tex.clumps.knotMean);
-  const k = 4 * i;
-  const lineScale = tex.norms[k + 2] > 0 ? fl * tex.norms[k] : 1;
-  return [line[0] * lineScale, line[1] * lineScale, line[2] * lineScale, dust * fd * tex.norms[k + 1]];
+export function layerShare(y0: number, y1: number, h: number): number {
+  const t = (y: number) => Math.tanh(Math.min(10, Math.max(-10, y / (2 * h))));
+  return Math.abs(t(y1) - t(y0)) / 2;
+}
+
+/**
+ * Where the march reads the model's layers: tall enough that the thickest layer's sech² has fallen under
+ * 2 × 10⁻⁴ of its midplane value (ten scale heights) and the bulge has faded, and never under 2 kpc.
+ */
+export function marchHalfHeight(layers: Layers, bulgeScale: number): number {
+  const heights = [layers.stars, layers.dust, layers.halpha_hii, layers.halpha_dig].map((h) => Number(h ?? 0)).filter(Number.isFinite);
+  return Math.max(10 * Math.max(0, ...heights), 12 * bulgeScale, 2);
 }
 
 /**

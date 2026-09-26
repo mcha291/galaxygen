@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { TAU_PER_MAG, armNoise, balanced, clumpLattice, clumpNoise, clumpedLayer, planeTexture } from "./regimes";
+import { RING_ROWS, balanced, depthOf, layerShare, marchHalfHeight, phaseAt, planeTexture } from "./regimes";
 
-// Two rings of a two-armed log spiral, A = 0.3: enough to check what the texture keeps per ring.
+// What /api/render returns since S39, in miniature: per (R, φ, filter) the stars, the HII regions' Hα and the
+// scattered light, each already placed by the model's contrast; per (R, filter) the diffuse Hα, the dust's
+// face-on transmission and its thermal emission; and the white point.
 const R = { unit: "kpc", unit_display: "kpc", n: 40, lo: 0, hi: 20, width: 0.5 };
 const phi = { unit: "rad", unit_display: "rad", n: 180, lo: 0, hi: 2 * Math.PI, width: (2 * Math.PI) / 180 };
 const contrast = new Float64Array(R.n * phi.n);
@@ -13,144 +15,129 @@ for (let i = 0; i < R.n; i += 1) {
     contrast[i * phi.n + j] = 1 + 0.3 * Math.cos(2 * (angle - Math.log(radius) / Math.tan((15 * Math.PI) / 180)));
   }
 }
-// What /api/render returns, in miniature: the stars per (R, φ, filter) already placed by the model's
-// contrast, a ring colour of (30, 20, 10) L☉/pc² through the three filters; the line per (R, filter),
-// all in the first filter; and the white point, each filter's response to a unit of white light.
 const white = [0.2, 0.1, 0.05];
-const stars = new Float64Array(R.n * phi.n * 3);
-for (let i = 0; i < R.n; i += 1) {
-  for (let j = 0; j < phi.n; j += 1) stars.set([30, 20, 10].map((v) => v * contrast[i * phi.n + j]), (i * phi.n + j) * 3);
-}
-const line = new Float64Array(R.n * 3);
-for (let i = 0; i < R.n; i += 1) line.set([2, 0, 0], 3 * i);
-const extinction = new Float64Array(R.n).fill(0.5);
-const arms = { pitchDeg: 15, multiplicity: 2 };
-
-const texture = planeTexture({ R, phi, stars, line, extinction, white, contrast, arms });
-
-// Channels 0–2 are the light as drawn at a texel: the stars plus the midplane layer's line, clumps
-// applied as the shader applies them; 3 is the dust.
-type Texture = ReturnType<typeof planeTexture>;
-const texel = (tex: Texture, i: number, j: number, channel: number) => {
-  const drawn = clumpedLayer(tex, R, phi, i, j);
-  if (channel === 3) return drawn[3];
-  return tex.data[(j * R.n + i) * 4 + channel] + drawn[channel];
+const placed = (ring: number[]) => {
+  const out = new Float64Array(R.n * phi.n * 3);
+  for (let i = 0; i < R.n; i += 1) {
+    for (let j = 0; j < phi.n; j += 1) out.set(ring.map((v) => v * contrast[i * phi.n + j]), (i * phi.n + j) * 3);
+  }
+  return out;
 };
-const meanOf = (tex: Texture, i: number, channel: number) => {
-  let sum = 0;
-  for (let j = 0; j < phi.n; j += 1) sum += texel(tex, i, j, channel);
-  return sum / phi.n;
+const perRing = (ring: (i: number) => number[]) => {
+  const out = new Float64Array(R.n * 3);
+  for (let i = 0; i < R.n; i += 1) out.set(ring(i), 3 * i);
+  return out;
 };
-const ringMean = (i: number, channel: number) => meanOf(texture, i, channel);
-// Float32 textures: compared to a relative tolerance, not a count of decimals.
+const stars = placed([30, 20, 10]);
+const hii = placed([0, 2, 0]);
+const scattered = placed([3, 2, 1.5]);
+const dig = perRing(() => [0, 0.8, 0]);
+// A_V of 0.5 through a curve with A_λ/A_V of 0.79, 1 and 1.30 (the grain table at R, V and B).
+const extinction = perRing(() => [0.79, 1.0, 1.3].map((r) => 10 ** (-0.4 * 0.5 * r)));
+const thermal = perRing((i) => [1e-40 * i, 0, 0]);
+const texture = planeTexture({ R, phi, stars, hii, dig, extinction, scattered, thermal, white });
+
 const near = (got: number, want: number, rel = 1e-6) => expect(Math.abs(got - want) / Math.abs(want)).toBeLessThan(rel);
-const ringContrast = (i: number) => {
-  let sum = 0;
-  for (let j = 0; j < phi.n; j += 1) sum += contrast[i * phi.n + j];
-  return sum / phi.n;
-};
+const ring = (row: number, i: number, k: number) => texture.rings[(row * R.n + i) * 4 + k];
 
 describe("planeTexture", () => {
   it("draws each cell's published responses over the white point and nothing else", () => {
     for (const [i, j] of [[3, 0], [10, 47], [30, 179]]) {
+      const q = (j * R.n + i) * 4;
       for (let k = 0; k < 3; k += 1) {
-        const q = (j * R.n + i) * 4;
-        near(texture.data[q + k], stars[(i * phi.n + j) * 3 + k] / white[k]);
-        // The tone map's inverse: the texel times the white point is the model's response, as sent.
-        near(texture.data[q + k] * white[k], stars[(i * phi.n + j) * 3 + k]);
+        const at = (i * phi.n + j) * 3 + k;
+        near(texture.data[q + k], stars[at] / white[k]);
+        near(texture.data[q + k] * white[k], stars[at]); // the tone map's inverse is the model's response
+        near(texture.scatter[q + k], scattered[at] / white[k]);
+        if (hii[at] > 0) near(texture.hii[q + k], hii[at] / white[k]);
+        else expect(texture.hii[q + k]).toBe(0);
       }
     }
   });
 
-  it("keeps each ring's published light and line on average, in every channel", () => {
+  it("places nothing: each ring's mean is the published mean, with no renormalisation", () => {
     for (const i of [10, 30]) {
-      const c = ringContrast(i);
-      near(ringMean(i, 0), (30 * c) / 0.2 + 2 / 0.2);
-      near(ringMean(i, 1), (20 * c) / 0.1);
-      near(ringMean(i, 2), (10 * c) / 0.05);
-    }
-  });
-
-  it("keeps each ring's published values with the clumps on, and moves them with the seed", () => {
-    const fields = { R, phi, stars, line, extinction, white, contrast, arms };
-    const a = planeTexture({ ...fields, seed: 3 });
-    const b = planeTexture({ ...fields, seed: 4 });
-
-    for (const i of [10, 30]) {
-      for (const channel of [0, 1, 2, 3]) {
-        const want = ringMean(i, channel);
-        expect(Math.abs(meanOf(a, i, channel) - want) / want).toBeLessThan(1e-5);
-        expect(Math.abs(meanOf(b, i, channel) - want) / want).toBeLessThan(1e-5);
+      let sum = 0;
+      let want = 0;
+      for (let j = 0; j < phi.n; j += 1) {
+        sum += texture.hii[(j * R.n + i) * 4 + 1];
+        want += hii[(i * phi.n + j) * 3 + 1] / white[1];
       }
-    }
-    const drawn = (tex: Texture) => [...Array(phi.n).keys()].map((j) => texel(tex, 30, j, 0));
-    expect(drawn(a)).not.toEqual(drawn(texture));
-    expect(drawn(a)).not.toEqual(drawn(b));
-    expect(drawn(planeTexture({ ...fields, seed: 3 }))).toEqual(drawn(a));
-  });
-
-  it("does not clump or recolour the stars: only the line and the dust are placed by the viewer", () => {
-    const a = planeTexture({ R, phi, stars, line, extinction, white, contrast, arms, seed: 3 });
-    expect(Array.from(a.data)).toEqual(Array.from(texture.data));
-    // The colour of the stars at a texel is the ring's published colour, in the arms and between them.
-    const i = 20;
-    const ratio = (j: number) => a.data[(j * R.n + i) * 4 + 2] / a.data[(j * R.n + i) * 4];
-    for (const j of [0, 45, 90, 135]) near(ratio(j), (10 / 0.05) / (30 / 0.2));
-  });
-
-  it("gathers the line into knots: a few percent of a ring holds most of its Hα", () => {
-    const knotted = planeTexture({ R, phi, stars, line, white, contrast, arms, seed: 3 });
-    const i = 30;
-    const values = [...Array(phi.n).keys()].map((j) => clumpedLayer(knotted, R, phi, i, j)[0]).sort((a, b) => b - a);
-    const total = values.reduce((s, v) => s + v, 0);
-    const top = values.slice(0, Math.ceil(0.1 * phi.n)).reduce((s, v) => s + v, 0);
-    expect(total).toBeGreaterThan(0);
-    expect(top / total).toBeGreaterThan(0.6);
-  });
-
-  it("keeps every ring's clump norms bounded, so no knot between texels can run away", () => {
-    const tex = planeTexture({ R, phi, stars, line, extinction, white, contrast, arms, seed: 3 });
-    for (let i = 0; i < R.n; i += 1) {
-      for (let c = 0; c < 2; c += 1) {
-        expect(Number.isFinite(tex.norms[4 * i + c])).toBe(true);
-        expect(tex.norms[4 * i + c]).toBeLessThanOrEqual(4 + 1e-6);
-      }
+      near(sum / phi.n, want / phi.n);
     }
   });
 
-  it("draws the same noise a whole turn of φ later, at any point", () => {
-    const l = clumpLattice(R, phi, 13.4, 5);
-    for (const [radius, angle] of [[0.4, 0.1], [3.3, 1.7], [8, 4.2], [17.9, 6.2]]) {
-      expect(clumpNoise(l, radius, angle + 2 * Math.PI)).toBeCloseTo(clumpNoise(l, radius, angle), 9);
+  it("lays the per-ring components in their rows: the dust's depth, the diffuse line, the thermal light", () => {
+    for (const i of [0, 17, 39]) {
+      [0.79, 1.0, 1.3].forEach((r, k) => near(ring(RING_ROWS.depth, i, k), (0.4 * Math.LN10 * 0.5) * r, 1e-6));
+      near(ring(RING_ROWS.dig, i, 1), 0.8 / 0.1);
+      expect(ring(RING_ROWS.dig, i, 0)).toBe(0);
+    }
+    // Light too faint for a float32 texel is drawn as the float holds it, never raised to a guess.
+    expect(ring(RING_ROWS.thermal, 20, 0)).toBe(Math.fround(1e-40 * 20 / 0.2));
+    expect(texture.rings.length).toBe(R.n * RING_ROWS.count * 4);
+  });
+
+  it("dims blue more than red, as the grain table's curve does: occlusion, never an added colour", () => {
+    expect(ring(RING_ROWS.depth, 5, 2)).toBeGreaterThan(ring(RING_ROWS.depth, 5, 1));
+    expect(ring(RING_ROWS.depth, 5, 1)).toBeGreaterThan(ring(RING_ROWS.depth, 5, 0));
+  });
+
+  it("draws the components it is not given as nothing", () => {
+    const bare = planeTexture({ R, phi, stars, white });
+    expect(bare.hii.every((v) => v === 0) && bare.scatter.every((v) => v === 0) && bare.rings.every((v) => v === 0)).toBe(true);
+  });
+});
+
+describe("the dust's depth", () => {
+  it("is −ln of the transmission, and no dust or a missing number is no depth", () => {
+    expect(depthOf(Math.exp(-2))).toBeCloseTo(2, 12);
+    expect(depthOf(1)).toBe(0);
+    expect(depthOf(Number.NaN)).toBe(0);
+    expect(depthOf(0)).toBe(0);
+    expect(depthOf(-0.5)).toBe(0);
+  });
+});
+
+describe("the scattered light's phase factor", () => {
+  // A table as the model publishes it: 21 points of |cos i| from edge-on to face-on.
+  const table = Array.from({ length: 21 }, (_, k) => 1.5 - k / 20);
+
+  it("reads the table at its points and linearly between them, at either face", () => {
+    expect(phaseAt(table, 0)).toBeCloseTo(1.5, 12);
+    expect(phaseAt(table, 1)).toBeCloseTo(0.5, 12);
+    expect(phaseAt(table, 0.5)).toBeCloseTo(1.0, 12);
+    expect(phaseAt(table, 0.525)).toBeCloseTo(0.975, 12);
+    expect(phaseAt(table, -0.525)).toBeCloseTo(phaseAt(table, 0.525), 12);
+    expect(phaseAt(table, 3)).toBeCloseTo(0.5, 12);
+  });
+
+  it("is isotropic without a table", () => {
+    expect(phaseAt(null, 0.3)).toBe(1);
+    expect(phaseAt([], 0.3)).toBe(1);
+  });
+});
+
+describe("the layers", () => {
+  it("give a ray the whole of a layer's column however it is stepped", () => {
+    for (const h of [0.18, 0.36, 1.4]) {
+      let steps = 0;
+      const edges = Array.from({ length: 41 }, (_, k) => -40 + 2 * k);
+      for (let k = 0; k < 40; k += 1) steps += layerShare(edges[k], edges[k + 1], h);
+      expect(steps).toBeCloseTo(1, 6);
+      expect(layerShare(-50, 50, h)).toBeCloseTo(1, 6);
+      expect(layerShare(0, 50, h)).toBeCloseTo(0.5, 6);
     }
   });
 
-  it("lays the clumps without a seam at φ = 0", () => {
-    const noise = armNoise(R, phi, 15, 3);
-    // Neighbouring cells across the wrap differ no more than neighbours elsewhere.
-    let seam = 0;
-    let inside = 0;
-    for (let i = 5; i < R.n; i += 1) {
-      seam = Math.max(seam, Math.abs(noise[i * phi.n] - noise[i * phi.n + phi.n - 1]));
-      for (let j = 1; j < phi.n; j += 1) inside = Math.max(inside, Math.abs(noise[i * phi.n + j] - noise[i * phi.n + j - 1]));
-    }
-    expect(seam).toBeLessThanOrEqual(inside);
+  it("march tall enough for the thickest layer: ten of the diffuse gas's scale heights", () => {
+    expect(marchHalfHeight({ stars: 0.36, dust: 0.36, halpha_hii: 0.18, halpha_dig: 1.4 }, 0.5)).toBeCloseTo(14, 12);
+    expect(marchHalfHeight({ stars: 0.36, dust: 0.36 }, 0.1)).toBeCloseTo(3.6, 12);
+    expect(marchHalfHeight({ stars: null, dust: null }, 0)).toBe(2);
   });
+});
 
-  it("keeps each ring's published face-on dust", () => {
-    for (const i of [10, 30]) expect(ringMean(i, 3)).toBeCloseTo(0.5 * TAU_PER_MAG, 6);
-  });
-
-  it("puts the dust lane on the inner side of the arm, not its ridge", () => {
-    // At fixed azimuth, find an arm's ridge in radius; the dust just inside it is thicker than on it.
-    const j = 0;
-    const c = (i: number) => contrast[i * phi.n + j];
-    const tau = (i: number) => texel(texture, i, j, 3);
-    const ridge = [...Array(R.n - 6).keys()].map((k) => k + 5).find((i) => c(i) > c(i - 1) && c(i) >= c(i + 1));
-    expect(ridge).toBeDefined();
-    expect(Math.max(tau(ridge! - 1), tau(ridge! - 2))).toBeGreaterThan(tau(ridge!));
-  });
-
+describe("balanced", () => {
   it("draws a missing response as nothing, never as a guess", () => {
     expect(balanced(Number.NaN, 0.2)).toBe(0);
     expect(balanced(-1, 0.2)).toBe(0);

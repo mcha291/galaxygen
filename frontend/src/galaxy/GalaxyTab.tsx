@@ -262,7 +262,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           <Exposure stops={exposure} onChange={onExposure} />
           <p className={styles.muted}>
             {mode === "field"
-              ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, Hα and bulge through each filter, and the dust dims them along each line of sight. Exposure scales it, and the stars too when they are painted as light (always in broadband colour).`
+              ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, bulge, Hα and the dust's scattered and thermal light through each filter, and the dust dims each filter by its own depth along each line of sight. Exposure scales it, and the stars too when they are painted as light (always in broadband colour).`
               : `Stars only, brightest first by published luminosity: no field, no sample. Painted as light, the view is exposed to its hundredth-brightest star, the few above burning out${
                   bright && field === PHOTOMETRIC ? ` (${autoStops >= 0 ? "+" : ""}${autoStops.toFixed(1)} stops here)` : ""
                 }, and the slider adds to that.`}
