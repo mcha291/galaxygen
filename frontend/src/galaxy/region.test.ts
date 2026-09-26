@@ -124,6 +124,17 @@ describe("the region's object table", () => {
     expect(t.max[0]).toBeGreaterThan(8);
   });
 
+  it("draws a remnant's shell and skips a Sedov-phase remnant's NaN emissivity", () => {
+    const remnants = {
+      remnant_radius: [8, 8.2], remnant_azimuth: [0.1, 0.2], remnant_height: [0, 0], remnant_size: [18, 5],
+      remnant_shell_thickness: [1.2, 0.5], remnant_shell_emissivity: [5e-22, Number.NaN], cell: [300, 301], index: [0, 0],
+    };
+    const t = packObjects(clouds, clusters, 2.9696, undefined, remnants);
+    expect(t.count).toBe(5); // two clouds, one region, the bubble's shell and the radiative remnant's
+    const kinds = Array.from({ length: t.count }, (_, k) => t.data[k * OBJECT_FLOATS + 4]);
+    expect(kinds.filter((k) => k === KIND.shell).length).toBe(2);
+  });
+
   it("keeps the budget and sorts nearest-first", () => {
     const n = 300;
     const many = {

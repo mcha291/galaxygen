@@ -36,6 +36,7 @@ D190 records it.
 | d909717 | `tests/test_region_synthesis.py`: R4's two gates |
 | ae9644f | the census routes name every row by (cell, index); a level filter recomputes the header's counts |
 | d4b23c5 | `RegionVolume.tsx`, the field's HII fade inside the window, `GalaxyTab` wiring, the object table |
+| (this) | R2's **remnant shells**, missing from d4b23c5 (found while planning S41): remnants join the shell list; a Sedov-phase remnant's NaN emissivity draws nothing (D185) |
 
 - **Model: one scalar, no new column.** `cloud_extinction_v` = 2.9696 mag, the V extinction through a cloud's
   centre: 1.4 m_H per hydrogen and Draine's V cross-section per H (`spectra.GRAIN_V_EXTINCTION`, D189). It is one
