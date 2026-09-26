@@ -245,7 +245,12 @@ def test_no_green_row_is_unconditioned(judged):
     # decision that added them rather than in AUDIT_II_A.md: row 29 (S28, D177), the Tully-Fisher
     # slope, green on the slope alone -- its zero point is unjudged because dust moves it and the
     # model's light is intrinsic. Audit III (S37) re-reads every green row added by the second build.
-    joined_since = {29}
+    # S30 (Phase 6) adds the two supernova rates, each green with its conditioning stated here: the
+    # core-collapse rate sits inside Adams et al. 2013's window, which spans more than a factor of ten
+    # (so green says little); the type Ia rate sits 0.053 per century above its window's lower edge
+    # on an Ia count per unit mass formed 1.87x Maoz & Graur 2017's measured efficiency, and at that
+    # measured efficiency it would read 0.35 per century and fail (S30's candidate debt).
+    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE}
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
         assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))
