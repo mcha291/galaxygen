@@ -399,21 +399,9 @@ LEVEL0: dict[str, Constant] = {
         "NGC 300 (Nature 569, 519, arXiv:1905.08801), the alternative reading of the last two phases.",
     ),
     # --- star clusters: one per cloud past its embedded phase (S33, BUILD_II Phase 11). Every number
-    # below was read at S33 in its source's text (rule B9, D175); the sentence is quoted in the line. ---
-    "CLUSTER_FORMATION_EFFICIENCY": Constant(
-        0.08,
-        "dimensionless",
-        "The fraction of a cloud's mass its cluster takes, eps_GMC = M_*/(M_GMC + M_*) (Murray 2011, eq. "
-        "5): 'we have estimated a lower limit to the fraction of gas in a massive Milky Way GMC that will "
-        "be converted into stars over the lifetime of that GMC, finding eps_GMC ~ 0.08' [verified: Murray "
-        "2011, ApJ 729, 133, arXiv:1007.3270, section 6; the abstract's 'ionizing luminosity-weighted "
-        "average <eps_GMC>_Q = 0.08, compared to the Galactic average ~ 0.005', read at S33]. Ruling (d) "
-        "of S33's brief. The named alternatives are the same paper's Galactic average 0.005, its remark "
-        "that 'typical estimates are more like 0.02' (section 3), Lada & Lada 2003's 'global SFEs "
-        "estimated for entire GMCs which are typically only 1-5 %' (section 5.2, astro-ph/0301540), and the "
-        "model's own ratio of today's star formation rate times the cloud lifetime to its molecular "
-        "mass, which reads 0.020 (S33, tests/test_clusters.py).",
-    ),
+    # below was read at S33 in its source's text (rule B9, D175); the sentence is quoted in the line. The
+    # efficiency per cloud is derived, not a constant (the orchestrator's ruling on S33's first pass):
+    # the sourced values it is read against are in the cluster_formation_efficiency scalar's about. ---
     "CLUSTER_BOUND_FRACTION": Constant(
         0.07,
         "dimensionless",

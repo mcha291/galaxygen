@@ -49,16 +49,24 @@ def _hosts(fields) -> np.ndarray:
 
 
 def test_the_sourced_constants_and_their_arithmetic(coarse):
-    """Murray 2011's eps_GMC, Lada & Lada 2003's 7% and 10 Myr, Portegies Zwart et al. 2010's 10^3 Msun/pc^3."""
-    _, c = coarse
-    assert c["CLUSTER_FORMATION_EFFICIENCY"] == 0.08
+    """Lada & Lada 2003's 7% and 10 Myr, Portegies Zwart et al. 2010's 10^3 Msun/pc^3; the efficiency derived."""
+    o, c = coarse
+    assert "CLUSTER_FORMATION_EFFICIENCY" not in c  # derived since the first pass's ruling, not adopted
     assert c["CLUSTER_BOUND_FRACTION"] == 0.07
     assert c["CLUSTER_DISSOLUTION_AGE"] == 10.0
     assert c["CLUSTER_HALF_MASS_DENSITY"] == 1.0e3
-    # eps = M*/(M_GMC + M*), so M* = eps/(1 - eps) M_GMC: a cluster and its cloud put back together give eps.
-    m_cloud = np.array([1.0e4, 1.0e7])
-    m_star = cu.cluster_mass(m_cloud, 0.08)
-    assert np.allclose(m_star / (m_star + m_cloud), 0.08)
+    # eps = Sigma_SFR tau / Sigma_H2, capped at 1: 1 Msun/yr/kpc^2 (1e-6 per pc^2) for 26 Myr over 26 Msun/pc^2 is 1.
+    R = np.array([1.0, 2.0])
+    assert cu.cloud_lifetime(c) == 26.0
+    eps = cu.efficiency(np.array([1.5, 1.5, 1.5]), np.array([1.0, 1.0]), np.array([26.0, 26.0]), R, 26.0)
+    assert np.allclose(eps, 1.0)
+    assert cu.efficiency(np.array([1.5]), np.array([0.1, 0.1]), np.array([26.0, 26.0]), R, 26.0)[0] == pytest.approx(0.1)
+    assert cu.efficiency(np.array([1.5]), np.array([5.0, 5.0]), np.array([26.0, 26.0]), R, 26.0)[0] == 1.0  # the cap
+    assert cu.efficiency(np.array([1.5]), np.array([5.0, 5.0]), np.array([0.0, 0.0]), R, 26.0)[0] == 0.0  # no gas
+    # The published scalar is the molecular-mass-weighted efficiency, a population integral.
+    F, RR = o.fields, o.grid.R
+    assert o.fields["cluster_formation_efficiency"] == pytest.approx(
+        cu.mean_efficiency(F["sfr_surface_density"], F["gas_molecular_surface_density"], RR, 26.0))
     # rho_hm = 3M/(8 pi r_hm^3): a cluster of 8 pi/3 x 10^3 Msun at 10^3 Msun/pc^3 has r_hm = 1 pc.
     assert cu.half_mass_radius(np.array([8.0 * math.pi / 3.0 * 1.0e3]), 1.0e3)[0] == pytest.approx(1.0)
     # The offset is exact in the plane: 100 pc outward from 8 kpc is 8.1 kpc at the same azimuth, and
@@ -75,7 +83,7 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
     F, R = o.fields, o.grid.R
     seed = int(o.inputs["systems_seed"])
     clouds = cu.census_of_clouds(F, R, seed, c)
-    clusters = cu.materialise_clusters(clouds, seed, c)
+    clusters = cu.materialise_clusters(clouds, F, R, seed, c)
     # The stage publishes exactly what materialise gives from the published clouds.
     for name in (*cu.CLUSTER_COLUMNS, "cluster_bound"):
         assert np.array_equal(clusters[name], F[name]), name
@@ -86,7 +94,8 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
     # Every index resolves to a cluster of the same cell, and every cluster is named by exactly one cloud.
     per_cell = dict(clusters.counts)
     offset, row = 0, 0
-    eps = c["CLUSTER_FORMATION_EFFICIENCY"]
+    eps_all = cu.efficiency(np.asarray(F["cloud_radius"]), F["sfr_surface_density"], F["gas_molecular_surface_density"], R, 26.0)
+    assert 0.0 < eps_all[_hosts(F)].min() and eps_all.max() < 1.0  # no cloud reaches the cap at S33
     for cell, count in clouds.counts:
         idx = index[offset:offset + count]
         named = idx[idx >= 0.0].astype(int)
@@ -95,7 +104,7 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
         k = named.size
         if k:
             got = slice(row, row + k)
-            assert np.allclose(F["cluster_mass"][got], eps / (1.0 - eps) * F["cloud_mass"][hosts])
+            assert np.allclose(F["cluster_mass"][got], eps_all[hosts] * F["cloud_mass"][hosts])
             assert np.allclose(F["cluster_age"][got], F["cloud_age"][hosts] - c["GMC_PHASE_EMBEDDED"])
             assert np.array_equal(F["cluster_height"][got], F["cloud_height"][hosts])
             assert np.array_equal(F["cluster_metallicity"][got], F["cloud_metallicity"][hosts])
@@ -132,9 +141,9 @@ def test_per_region_determinism_and_both_models_agree(models, coarse):
     a new systems seed rerolls clusters with clouds, and the cloud columns never move with the cluster stream."""
     o, c = coarse
     F, R = o.fields, o.grid.R
-    sweep = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c), 0, c)
+    sweep = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c), F, R, 0, c)
     cells = [300, 301, 517, 640]
-    part = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c, cells=cells), 0, c)
+    part = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c, cells=cells), F, R, 0, c)
     assert [cell for cell, _ in part.counts] == [cell for cell in cells if cell in dict(sweep.counts)]
     off_part = 0
     for cell, count in part.counts:
@@ -153,10 +162,10 @@ def test_per_region_determinism_and_both_models_agree(models, coarse):
 
 
 def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
-    """The gate's Q check, in two parts. The machinery: Q per unit mass formed of a burst, averaged over
-    the ages 0-20 Myr, is the light stage's integral over the same ages; the census's total is its own
-    expectation to within the noise of its ages. The physics: the census against the light stage's Q
-    for stars younger than the oldest cluster is 3.67, not 1 - recorded, not relaxed (rule B5)."""
+    """The gate's Q check, a closure since the efficiency is derived. The machinery: Q per unit mass formed of
+    a burst, averaged over 0-20 Myr, is the light stage's integral over the same ages. The census: its total
+    Q against the light stage's Q from stars younger than the oldest cluster, within three times the noise
+    the census itself carries - its ages (a burst's Q is steep in age) and its masses (Poisson in clouds)."""
     o, c = default
     F, R = o.fields, o.grid.R
     span = c["GMC_PHASE_BLOWN_OPEN"] + c["GMC_PHASE_DISPERSING"]  # Myr: the oldest a cluster is
@@ -166,34 +175,39 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
         mean = float(np.trapezoid(q, ages) / span)
         light = float(ph.population_over(np.zeros(1), np.array([span / 1000.0]), np.array([[feh]]))["ionizing"][0, 0])
         assert mean == pytest.approx(light, rel=2e-3), feh
+    # The same [Fe/H] on both sides: the clusters read their cloud's, the gas's at its radius, which is the
+    # present step of the history the light stage reads.
+    assert np.array_equal(F["feh_gas"], np.asarray(F["feh_history"])[:, -1])
     mass, feh, Q = (np.asarray(F[n]) for n in ("cluster_mass", "cluster_metallicity", "cluster_ionizing_photons"))
     qbar = ph.population_over(np.zeros(1), np.array([span / 1000.0]), feh[:, None])["ionizing"][:, 0]
     expected = float((mass * qbar).sum())
     q_solar, _ = cu.per_mass(ages, np.zeros(ages.size))
-    noise = math.sqrt(float((mass**2).sum())) * float(np.std(q_solar)) / expected  # 0.063 at S33
-    assert abs(Q.sum() / expected - 1.0) < 3.0 * noise, (Q.sum() / expected, noise)
-    assert Q.sum() / expected == pytest.approx(1.019, abs=0.002)  # measured at S33
-    # The physics check. The light stage's Q from stars younger than the oldest cluster:
+    age_noise = math.sqrt(float((mass**2).sum())) * float(np.std(q_solar)) / expected  # 0.043 at S33
+    mass_noise = math.sqrt(float((mass**2).sum())) / float(mass.sum())  # 1/sqrt(N_eff), N_eff 898: 0.033
+    assert abs(Q.sum() / expected - 1.0) < 3.0 * age_noise, (Q.sum() / expected, age_noise)
     sfr = np.asarray(F["sfr_surface_density"])
     feh_now = np.asarray(F["feh_history"])[:, -1]
     younger = ph.population_over(np.zeros(1), np.array([span / 1000.0]), feh_now[:, None])["ionizing"][:, 0] * span * 1e6
     light_young = float(np.trapezoid(sfr * younger * 2.0 * math.pi * R, R))
     assert light_young == pytest.approx(0.980 * F["ionizing_photon_rate_total"], rel=0.002)  # 98% of it is under 20 Myr
     ratio = Q.sum() / light_young
-    # 3.67 (S33): the clusters form stars 4.5 times as fast as the star formation rate does, because the
-    # efficiency (a lower limit for the most active clouds) is 4.4 times the 0.0198 the model's own rate
-    # times the cloud lifetime over its molecular mass gives; the rest is where the clusters sit (with the
-    # molecular gas, more metal-rich than where the stars form, so fewer photons per unit mass).
-    assert ratio == pytest.approx(3.67, abs=0.01)
+    tolerance = 3.0 * math.hypot(age_noise, mass_noise)  # 0.16 at S33
+    assert abs(ratio - 1.0) < tolerance, (ratio, tolerance)
+    # Measured at S33: 1.0088 - the clouds' mass 1.037 of the molecular gas (S32's Poisson excess), the
+    # clusters' formation rate 1.029 of the SFR, 1.022 once each cluster's own [Fe/H] is read, and the
+    # draw of the ages 0.987 of that: every factor inside its noise, none unexplained.
+    assert ratio == pytest.approx(1.0088, abs=0.0005)
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
-    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(4.52, abs=0.01)
-    lifetime = c["GMC_PHASE_EMBEDDED"] + span
-    assert sfr_total * lifetime * 1e6 / F["cloud_mass_total"] == pytest.approx(0.0198, abs=0.0002)
+    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.029, abs=0.001)
+    assert expected / light_young == pytest.approx(1.022, abs=0.001)
+    # The efficiency the census used, against the sources it was chosen against (its about line).
+    assert F["cluster_formation_efficiency"] == pytest.approx(0.02058, abs=0.0001)
+    assert 0.005 < F["cluster_formation_efficiency"] < 0.08
     # The wind: positive, finite, the O and B stars' - a 1 Myr burst blows harder than a 19 Myr one.
     _, w = cu.per_mass(np.array([1.0, 19.0]), np.zeros(2))
     assert w[0] > w[1] >= 0.0
     W = np.asarray(F["cluster_wind_luminosity"])
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(2.966e7, rel=0.01)
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.466e6, rel=0.01)
 
 
 def test_the_census_on_the_default_grid(default):
@@ -202,18 +216,19 @@ def test_the_census_on_the_default_grid(default):
     F = o.fields
     mass = np.asarray(F["cluster_mass"])
     assert mass.size == 12860 == int(_hosts(F).sum())
-    assert mass.min() == pytest.approx(869.6, rel=1e-3) and mass.max() == pytest.approx(8.676e5, rel=1e-3)
-    assert np.median(mass) == pytest.approx(1944.2, rel=1e-3)
+    assert mass.min() == pytest.approx(9.289, rel=1e-3) and mass.max() == pytest.approx(2.652e5, rel=1e-3)
+    assert np.median(mass) == pytest.approx(763.06, rel=1e-3) and mass.sum() == pytest.approx(3.613e7, rel=1e-3)
     bound = np.asarray(F["cluster_bound"])
     assert np.bincount(bound, minlength=3).tolist() == [901, 5951, 6008]
-    # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 1.2% of the clusters are above
-    # it and hold 44% of the mass - the census inherits the clouds' slopes, not the review's -2.
-    assert float(np.mean(mass > 2.0e5)) == pytest.approx(0.0124, abs=0.0005)
-    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.615, abs=0.002)
+    # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 4 clusters are above it,
+    # holding 2.7% of the mass.
+    assert int((mass > 2.0e5).sum()) == 4
+    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.450, abs=0.002)
 
 
 def test_the_phase_5_hook(default):
-    """bound_cluster_mass_total: the whole history's locked stars times the bound fraction. At S33 it is 72 times
+    """bound_cluster_mass_total: the whole history's locked stars times the bound fraction - every star formed in a
+    cluster, as the derived efficiency makes them, so the efficiency does not enter it. At S33 it is 72 times
     Boylan-Kolchin 2018's eta M_halo, (3-4) x 10^-5 of 1.1e12 Msun: what S34's dissolution has to remove."""
     o, c = default
     F, R = o.fields, o.grid.R
@@ -235,7 +250,7 @@ def test_the_clusters_route_is_the_stages_census_by_window_and_level():
     assert h0["clusters"]["materialised"] == len(a0["cluster_mass"]) > 0
     assert "cluster_bound" in h0["columns"] and "cluster_ionizing_photons" in h0["columns"]
     # The same rows the stage publishes for those cells, cell by cell.
-    whole, _ = wire.decode(svc.handle("/api/arrays", "fields=cluster_mass,bound_cluster_mass_total").body)
+    whole, _ = wire.decode(svc.handle("/api/arrays", "fields=cluster_mass,bound_cluster_mass_total,cluster_formation_efficiency").body)
     frame = wire.decode(svc.handle("/api/arrays", "fields=cluster_mass,cloud_cluster_index").body)[1]
     clouds = wire.decode(svc.handle("/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4").body)
     hosts = [(cell, int((clouds[1]["cloud_cluster_index"][o:o + n] >= 0).sum()))
@@ -244,7 +259,9 @@ def test_the_clusters_route_is_the_stages_census_by_window_and_level():
     assert [(c_, n) for c_, n in hosts if n] == list(zip(h0["cells"]["ids"], h0["cells"]["counts"]))
     assert set(np.round(a0["cluster_mass"], 6).tolist()) <= set(np.round(frame["cluster_mass"], 6).tolist())
     # The header carries the stage's scalar, the number /api/arrays serves.
-    assert h0["scalars"]["bound_cluster_mass_total"] == pytest.approx(whole["scalars"]["bound_cluster_mass_total"])
+    assert set(h0["scalars"]) == {"bound_cluster_mass_total", "cluster_formation_efficiency"}
+    for name in h0["scalars"]:
+        assert h0["scalars"][name] == pytest.approx(whole["scalars"][name])
     # A level filters, by the cluster's own position.
     assert h2["level"] == 2 and 0 < len(a2["cluster_mass"]) < len(a0["cluster_mass"])
     assert set(np.round(a2["cluster_mass"], 6).tolist()) <= set(np.round(a0["cluster_mass"], 6).tolist())
@@ -255,5 +272,5 @@ def test_the_clusters_route_is_the_stages_census_by_window_and_level():
     assert svc.handle("/api/clusters", "level=4").status == 400
     fields = svc.handle("/api/fields", "").json()["fields"]
     for f in fields:
-        if f["name"] == "bound_cluster_mass_total":
+        if f["name"] in ("bound_cluster_mass_total", "cluster_formation_efficiency"):
             assert "Not shown by the viewer" in f["about"] and "rule D4" in f["about"]

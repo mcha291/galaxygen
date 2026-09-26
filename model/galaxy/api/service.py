@@ -869,7 +869,7 @@ class Service:
         census = self.cells.catalogue(
             key, parents,
             lambda wanted: _clusters.materialise_clusters(
-                _clouds.materialise_clouds(out.fields, R, seed, constants, wanted), seed, constants
+                _clouds.materialise_clouds(out.fields, R, seed, constants, wanted), out.fields, R, seed, constants
             ),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
@@ -889,9 +889,13 @@ class Service:
                 "of": _catalogue.CELL_COUNT,
             },
             "clusters": {"materialised": int(census.size) if kept is None else kept, "seed": seed},
-            # The stage's galaxy scalar, which rule D4 keeps off the viewer's scalars surface (D148): a
-            # population integral over the history, the same number /api/arrays serves when the stage runs.
+            # The stage's galaxy scalars, which rule D4 keeps off the viewer's scalars surface (D148):
+            # population integrals, the same numbers /api/arrays serves when the stage runs.
             "scalars": {
+                "cluster_formation_efficiency": _clusters.mean_efficiency(
+                    out.fields["sfr_surface_density"], out.fields["gas_molecular_surface_density"], R,
+                    _clusters.cloud_lifetime(constants),
+                ),
                 "bound_cluster_mass_total": _clusters.bound_mass(
                     out.fields["stars_formed_history"], R, float(constants["CLUSTER_BOUND_FRACTION"])
                 ),

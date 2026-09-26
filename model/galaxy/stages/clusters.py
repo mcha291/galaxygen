@@ -6,20 +6,29 @@ not a label on stars (RENDER_PHYSICS.md §5b). They are drawn from the cloud cen
 so that a region's clusters are a sweep's clusters (D60), and a cluster is named ``(cell, index)`` on
 the same grid as a star and a cloud.
 
-**The rulings (S33's brief, D113), each a level-0 constant with the sentence it was read from quoted
-in its line; nothing here is recalled (rule B9).**
+**The rulings (S33's brief, D113, and the orchestrator's rulings on the first pass), each sourced
+number a level-0 constant with the sentence it was read from quoted in its line; nothing here is
+recalled (rule B9).**
 
 - *One cluster per cloud past its embedded phase* (ruling (d)): a cloud in Kawamura et al. 2009's
   blown-open or dispersing state holds one, and the cloud census says which by ``cloud_cluster_index``.
-  Its mass is the star formation efficiency per cloud times the cloud's mass — Murray 2011's
-  ε_GMC = M★/(M_GMC + M★), so M★ = ε/(1 − ε) · M_cloud. The brief's cap "by the function's upper
-  end" is not applied: the cluster mass function the review gives (ruling (a)) is a Schechter
-  function, which has no upper end, and its M★ is a scale, not a cut.
-- *Age*: the cluster forms when its cloud leaves the embedded phase — the phase the source defines by
-  the absence of massive star formation — so its age is the cloud's less that phase's duration
-  ``[inferred]``: 0 to 20 Myr. (The brief wrote "the cloud's age"; a cluster as old as its cloud would
-  have made its O stars in a phase defined by having none, and the census would hold no cluster
-  younger than 6 Myr, the ones that make most of the ionizing photons.)
+- *Its mass is derived, not adopted* (rule A3, D117): the efficiency per cloud is the local molecular
+  depletion time inverted over one cloud lifetime, ε(R) = Σ_SFR(R) τ_cloud / Σ_H₂(R), read at the
+  cloud's radius, capped at 1, and the cluster's mass is ε times the cloud's. ε here is M★/M_gas, not
+  Murray 2011's M★/(M_GMC + M★): the census's cloud masses *are* the molecular gas (S32's
+  redistribution rule), and ε(R) is defined so that the clusters form stars exactly as fast as the
+  model's own star formation rate does — every star in a cluster — just as the clouds hold exactly the
+  ISM's molecular mass. The sourced values it is read against, chosen against as defaults, are in
+  ``cluster_formation_efficiency``'s about line: Murray's 0.08, his "typical" 0.02 and Galactic
+  average 0.005, and Lada & Lada's 1–5%. The model's own galaxy-wide value is 0.0198.
+- *No cap by the mass function* (ruling (a)): the cluster mass function Portegies Zwart, McKee &
+  Gieles 2010 give is a Schechter function, which has no upper end, and its M★ is a scale, not a cut;
+  the census inherits the clouds' slopes, and the test says how far that is from the review's −2.
+- *Age* (accepted by the orchestrator on the first pass): the cluster forms when its cloud leaves the
+  embedded phase — the phase the source defines by the absence of massive star formation — so its age
+  is the cloud's less that phase's duration: 0 to 20 Myr. A cluster as old as its cloud would have made
+  its O stars in a phase defined by having none, and the census would hold no cluster younger than
+  6 Myr, the ones that make most of the ionizing photons.
 - *Bound* (ruling (b)): a seeded draw at Lada & Lada 2003's fraction of embedded clusters that
   survive to Pleiades age, independent of mass; an unbound cluster older than the age by which the
   same review says the unbound have dispersed is *dissolved* — its stars are still there and still
@@ -73,9 +82,29 @@ CLOUD_READS: tuple[str, ...] = (
 )
 
 
-def cluster_mass(cloud_mass: np.ndarray, efficiency: float) -> np.ndarray:
-    """M★ = ε/(1 − ε) · M_cloud: Murray 2011's ε_GMC ≡ M★/(M_GMC + M★), the cloud's mass as M_GMC."""
-    return efficiency / (1.0 - efficiency) * np.asarray(cloud_mass, dtype=float)
+def cloud_lifetime(constants: Mapping[str, float]) -> float:
+    """τ_cloud in Myr: the three sourced phases' sum, the span a cloud's age is drawn over."""
+    c = constants
+    return float(c["GMC_PHASE_EMBEDDED"]) + float(c["GMC_PHASE_BLOWN_OPEN"]) + float(c["GMC_PHASE_DISPERSING"])
+
+
+def efficiency(radius: np.ndarray, sigma_sfr: np.ndarray, sigma_h2: np.ndarray, R: np.ndarray, lifetime_myr: float) -> np.ndarray:
+    """ε = min(Σ_SFR τ_cloud / Σ_H₂, 1) at ``radius`` (kpc): the fraction of a cloud's molecular mass that
+    one cloud lifetime of the local star formation rate turns into stars. Σ_SFR in M☉/yr/kpc², Σ_H₂ in
+    M☉/pc²; zero where there is no molecular gas (no cloud is drawn there)."""
+    sfr = np.interp(radius, R, np.asarray(sigma_sfr, dtype=float)) / PC_PER_KPC**2  # M☉/yr/pc²
+    h2 = np.interp(radius, R, np.asarray(sigma_h2, dtype=float))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        eps = np.where(h2 > 0.0, sfr * lifetime_myr * 1.0e6 / np.where(h2 > 0.0, h2, 1.0), 0.0)
+    return np.minimum(eps, 1.0)
+
+
+def mean_efficiency(sigma_sfr: np.ndarray, sigma_h2: np.ndarray, R: np.ndarray, lifetime_myr: float) -> float:
+    """The molecular-mass-weighted ε over the disc, a population integral: ∫ ε Σ_H₂ 2πR dR / ∫ Σ_H₂ 2πR dR."""
+    h2 = np.asarray(sigma_h2, dtype=float)
+    eps = efficiency(R, sigma_sfr, h2, R, lifetime_myr)
+    mass = float(np.trapezoid(h2 * R, R))
+    return float(np.trapezoid(eps * h2 * R, R)) / mass if mass > 0.0 else 0.0
 
 
 def half_mass_radius(mass: np.ndarray, density: float) -> np.ndarray:
@@ -98,12 +127,15 @@ def per_mass(age_myr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarr
     return per_mass_at(population_light().ionizing_per_mass, age, feh), per_mass_at(population_wind(), age, feh)
 
 
-def materialise_clusters(clouds: Catalogue, seed: int, constants: Mapping[str, float]) -> Catalogue:
+def materialise_clusters(
+    clouds: Catalogue, fields: Mapping[str, Any], R: np.ndarray, seed: int, constants: Mapping[str, float]
+) -> Catalogue:
     """The clusters of a cloud census's cells: one per cloud whose ``cloud_cluster_index`` names one, in
     the cells' order and the clouds' order within each, so a cell drawn alone is the cell in any set (D60).
-    ``counts`` lists the cells that hold a cluster, in the order the census listed them."""
+    ``counts`` lists the cells that hold a cluster, in the order the census listed them. ``fields`` gives
+    the star formation rate and molecular surface densities the efficiency is read from."""
     c = constants
-    eps = float(c["CLUSTER_FORMATION_EFFICIENCY"])
+    lifetime = cloud_lifetime(c)
     embedded = float(c["GMC_PHASE_EMBEDDED"])
     bound_fraction = float(c["CLUSTER_BOUND_FRACTION"])
     dissolution = float(c["CLUSTER_DISSOLUTION_AGE"])
@@ -129,7 +161,8 @@ def materialise_clusters(clouds: Catalogue, seed: int, constants: Mapping[str, f
     def cloud(name: str) -> np.ndarray:
         return np.asarray(clouds[name], dtype=float)[rows]
 
-    mass = cluster_mass(cloud("cloud_mass"), eps)
+    eps = efficiency(cloud("cloud_radius"), fields["sfr_surface_density"], fields["gas_molecular_surface_density"], R, lifetime)
+    mass = eps * cloud("cloud_mass")
     age = np.maximum(cloud("cloud_age") - embedded, 0.0)
     feh = cloud("cloud_metallicity")
     radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), cloud("cloud_source_offset"), cloud("cloud_source_angle"))
@@ -181,12 +214,12 @@ CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
 CLUSTER_HEIGHT = _column("cluster_height", "Height above the plane", "kpc",
                          "Its cloud's height: the offset is taken in the plane.")
 CLUSTER_MASS = _column("cluster_mass", "Cluster mass", "Msun",
-                       "Stellar mass formed: the star formation efficiency per cloud Murray 2011 read for massive "
-                       "Milky Way clouds, applied to every cloud past its embedded phase, so the clusters inherit "
-                       "the cloud mass function's slopes rather than the −2 of the review's cluster function. "
-                       "Their total over the 20 Myr they span is four and a half times what today's star formation "
-                       "rate makes in that time: the efficiency is the source's lower limit for the most active "
-                       "clouds, and its Galactic average is sixteen times lower.", ramp=Ramp("magma", scale="log"))
+                       "Stellar mass formed: the cloud's mass times the efficiency derived where it sits — one "
+                       "cloud lifetime of the local star formation rate over the local molecular gas — so the "
+                       "clusters form stars exactly as fast as the galaxy does, every star in a cluster. The "
+                       "clusters inherit the cloud mass function's slopes rather than the −2 of the review's "
+                       "cluster function, and nothing caps them: that function has a scale, not an end.",
+                       ramp=Ramp("magma", scale="log"))
 CLUSTER_HALF_MASS_RADIUS = _column("cluster_half_mass_radius", "Half-mass radius", "pc",
                                    "(3M / 8πρ)^⅓ at the one half-mass density young clusters are read to form at "
                                    "(Portegies Zwart, McKee & Gieles 2010); a constant radius of a few parsecs, their "
@@ -194,8 +227,10 @@ CLUSTER_HALF_MASS_RADIUS = _column("cluster_half_mass_radius", "Half-mass radius
                                    "given the radius they formed with, not the one they expand to.",
                                    ramp=Ramp("viridis", scale="log"))
 CLUSTER_AGE = _column("cluster_age", "Cluster age", "Myr",
-                      "Its cloud's age less the embedded phase, in which the cloud makes no massive stars: a cluster "
-                      "is born when its HII regions appear, so the census holds every cluster from 0 to 20 Myr old.")
+                      "Its cloud's age less the embedded phase. Kawamura et al. 2009 define that phase by the "
+                      "absence of massive star formation, so a cluster as old as its cloud would have made its O "
+                      "stars in a phase defined by having none: a cluster is born when its HII regions appear, "
+                      "and the census holds every cluster from 0 to 20 Myr old.")
 CLUSTER_BOUND = FieldDecl(
     name="cluster_bound", label="Bound", unit="dimensionless", kind=Kind.CATEGORY_COLUMN, of="cluster",
     categories=CLUSTER_BOUND_STATES, ramp=Palette(("#f2d16b", "#e07b39", "#5a5a5a")), provenance="seeded",
@@ -228,9 +263,30 @@ BOUND_CLUSTER_MASS_TOTAL = FieldDecl(
     about=(
         "A population integral over the whole history, not a sum over the census: the stars formed "
         "everywhere, net of what they return, times the fraction of clusters Lada & Lada 2003 find "
-        "emerging bound, every star taken to form in a cluster. The mass that could become old clusters "
-        "before any of them dissolves after emergence, which is the next phase's to apply; the globular "
+        "emerging bound, every star taken to form in a cluster, as the census's own efficiency makes "
+        "them. **Survival after emergence is not applied**: this is the mass that could become old "
+        "clusters before any of them dissolves, which is the next phase's to apply, and the globular "
         "clusters' share of the halo mass is the check it will be held to. "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage "
+        "that publishes the cluster columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the "
+        "`/api/clusters` header carries it under `scalars`."
+    ),
+)
+
+CLUSTER_FORMATION_EFFICIENCY_DECL = FieldDecl(
+    name="cluster_formation_efficiency", label="Star formation efficiency per cloud", unit="dimensionless",
+    kind=Kind.SCALAR, meaningful_zero=True, provenance="seeded",
+    about=(
+        "The fraction of a cloud's molecular mass its cluster takes, averaged over the disc by molecular "
+        "mass: today's star formation rate times one cloud lifetime over the molecular gas, ring by ring "
+        "and capped at 1. Derived, so the clusters form stars as fast as the model does; M★/M_gas, not "
+        "Murray's M★/(M_GMC + M★), because the census's clouds are the molecular gas itself. The sourced "
+        "values it is read against, each chosen against as the default: Murray 2011's 0.08, 'a lower "
+        "limit to the fraction of gas in a massive Milky Way GMC that will be converted into stars' "
+        "[verified: arXiv:1007.3270, section 6], the ionizing-luminosity-weighted mean of the most active "
+        "clouds; the same paper's 'typical estimates are more like 0.02' [verified: section 3] and "
+        "'Galactic average ~ 0.005' [verified: abstract]; and Lada & Lada 2003's 'global SFEs estimated "
+        "for entire GMCs which are typically only 1-5 %' [verified: astro-ph/0301540, section 5.2]. "
         "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage "
         "that publishes the cluster columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the "
         "`/api/clusters` header carries it under `scalars`."
@@ -242,9 +298,12 @@ def compute_clusters(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
     R = ctx.grid.R
     seed = int(ctx.seeds["systems_seed"])
-    clusters = materialise_clusters(census_of_clouds(ctx.fields, R, seed, c), seed, c)
+    clusters = materialise_clusters(census_of_clouds(ctx.fields, R, seed, c), ctx.fields, R, seed, c)
     return {
         **clusters,
+        "cluster_formation_efficiency": mean_efficiency(
+            ctx.fields["sfr_surface_density"], ctx.fields["gas_molecular_surface_density"], R, cloud_lifetime(c)
+        ),
         "bound_cluster_mass_total": bound_mass(ctx.fields["stars_formed_history"], R, float(c["CLUSTER_BOUND_FRACTION"])),
     }
 
@@ -261,16 +320,17 @@ CLUSTERS = IMPLEMENTATIONS.register(
         reads_seeds=("systems_seed",),
         reads_constants=(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
-            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "CLUSTER_FORMATION_EFFICIENCY",
-            "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
+            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
+            "GMC_PHASE_DISPERSING", "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
         ),
         requires=(
             *CLOUD_READS, "gas_molecular_surface_density", "arm_contrast", "bar_contrast", "arm_multiplicity",
-            "pitch_angle", "bar_half_length", "stars_formed_history",
+            "pitch_angle", "bar_half_length", "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(
             CLUSTER_RADIUS, CLUSTER_AZIMUTH, CLUSTER_HEIGHT, CLUSTER_MASS, CLUSTER_HALF_MASS_RADIUS, CLUSTER_AGE,
             CLUSTER_BOUND, CLUSTER_METALLICITY, CLUSTER_IONIZING, CLUSTER_WIND, BOUND_CLUSTER_MASS_TOTAL,
+            CLUSTER_FORMATION_EFFICIENCY_DECL,
         ),
     )
 )
