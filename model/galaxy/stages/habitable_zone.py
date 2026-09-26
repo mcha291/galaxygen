@@ -78,8 +78,11 @@ def planet_probability(feh: np.ndarray, p_solar: float, index: float) -> np.ndar
 
 
 def sterilization_distance(magnitude: float, base_pc: float, m_std: float) -> float:
-    """Eq. 5 of Gowanlock et al. 2011: d = 8 pc × 10^(−0.4 (M − M_std)), in pc."""
-    return base_pc * 10.0 ** (-0.4 * (magnitude - m_std))
+    """Eq. 5 of Gowanlock et al. 2011 as printed: d = 8 pc × √(10^(−0.4 (M − M_std))) = 8 pc × 10^(−0.2 ΔM), in pc.
+    Until S38 the square root was dropped (the exponent −0.4): Audit III re-read the equation from the arXiv
+    LaTeX and settled the two readings S30 recorded (A3-1, #104, D187). A type Ia at its mean magnitude sterilizes
+    to 18.6 pc, not 43.4."""
+    return base_pc * 10.0 ** (-0.2 * (magnitude - m_std))
 
 
 def cumulative_at(cum_edges: np.ndarray, when: np.ndarray, dt: float) -> np.ndarray:

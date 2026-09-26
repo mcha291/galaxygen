@@ -144,7 +144,8 @@ LEVEL0: dict[str, Constant] = {
         "L☉ = 3.828 × 10³³ erg/s. Read at S35: Table 1's Hα row gives log C_x = 41.27 and section 3.1 "
         "'log M-dot (M yr-1) = log Lx - log Cx', for the Kroupa IMF (Salpeter slope 1-100 M☉, -1.3 below "
         "1 M☉) with Starburst99 models [verified: Kennicutt & Evans 2012, arXiv:1204.3552, Table 1, "
-        "section 3.1]. Intrinsic: before the dust the line is emitted through. Since S35 a check on the "
+        "section 3.8, eq. 12; the section corrected at S38]. The exact quotient is 4.8644e7; the rounded "
+        "value is kept because the light stage's pins carry it (Audit III A3-3). Intrinsic: before the dust the line is emitted through. Since S35 a check on the "
         "nebular stage's Q-derived Hα (halpha_sfr_ratio), not the Hα itself (D166 -> D184).",
     ),
     "SOLAR_ABSOLUTE_MAGNITUDE_V": Constant(  # read by light (S28, BUILD_II Phase 3)
@@ -442,39 +443,46 @@ LEVEL0: dict[str, Constant] = {
     # relation is the check the survival is held to (ruling (a)): only its ratio of ratios, its scatter
     # and its mean cluster mass enter a computation. ---
     "GC_HALO_MASS_RATIO": Constant(
-        3.5e-5,
+        2.9e-5,
         "dimensionless",
-        "eta, the globular clusters' mass over the halo's: 'The total mass in present-day GCs within a dark "
-        "matter halo is a constant fraction of the mass of the dark matter halo for 10^10 <~ M_halo/Msun <~ "
-        "10^15: <M_GCs|M_halo(z=0)> = eta M_halo(z=0) with eta = (3-4) x 10^-5' [verified: Boylan-Kolchin "
-        "2017, MNRAS 472, 3120, arXiv:1711.00009, section 2, assumption (iii), read at S34 from PMC6288678]. "
-        "The midpoint of the quoted range [inferred], the value BUILD_II's consistency check uses. Read only "
-        "as the metal-poor share's denominator: the system's mass is the survival's, and this is the check "
-        "it is held to, never an input to it (the brief's ruling (a)).",
+        "eta, the globular clusters' mass over the halo's, at its measurement: 'The new calibration of the "
+        "mean mass ratio eta_M = (2.9 +/- 0.2) x 10^-5 is significantly lower than in previous papers' "
+        "[verified: Harris, Blakeslee & Harris 2017, ApJ 836, 67, arXiv:1701.04845, abstract, read at S37 by "
+        "Audit III]. Until S38 the constant was 3.5e-5, the midpoint of the '(3-4) x 10^-5' Boylan-Kolchin 2017 "
+        "lists under 'I will assume the following' (MNRAS 472, 3120, arXiv:1705.01548, section 2 (iii)) - an "
+        "adopted value 3 sigma above the measurement it cites (A3-2, #105, D187). Read only as the metal-poor "
+        "share's denominator: the system's mass is the survival's, and this is the check it is held to, never "
+        "an input to it (ruling (a)); on the measured eta the check fails by 0.34 dex (#97, #105).",
     ),
     "GC_METAL_POOR_HALO_MASS_RATIO": Constant(
         2.25e-5,
         "dimensionless",
         "eta_b, the metal-poor clusters' mass over the halo's: 'The total mass in present-day metal-poor GCs "
         "within a dark matter halo is also a constant fraction of the mass of the dark matter halo: "
-        "<M_GCs|M_halo(z=0)> = eta_b M_halo(z=0) with eta_b ~ (2-2.5) x 10^-5' [verified: the same paper, "
-        "assumption (iv), read at S34]. The midpoint [inferred]; over eta's midpoint it makes the metal-poor "
-        "share 0.643, and the quoted ranges span 0.50-0.83.",
+        "<M_GCs|M_halo(z=0)> = eta_b M_halo(z=0) with eta_b ~ (2-2.5) x 10^-5' [verified: Boylan-Kolchin 2017, "
+        "arXiv:1705.01548, section 2, assumption (iv), read at S34; the id corrected at S38]. An adopted value in "
+        "its source (Audit III A3-4; the blue clusters' ratio was not located in Harris et al. 2015 or 2017), "
+        "kept at the midpoint [inferred]; over the measured eta it makes the metal-poor share 0.78 (0.643 "
+        "until S38, over the adopted 3.5e-5).",
     ),
     "GC_SYSTEM_SCATTER": Constant(
         0.28,
         "dex",
         "The residual about the halo relation: 'Observationally, the scatter in the mass in GCs at fixed halo "
-        "mass is approximately constant with sigma <~ 0.28 dex' [verified: the same paper, section 5.1, read "
-        "at S34]. An upper bound in the source, used as the lognormal's width, as the M-sigma residual's is "
-        "(ruling (b), GALAXY_INPUTS.md section 4b: derive the mean, seed the residual).",
+        "mass is approximately constant with sigma <~ 0.28 dex' [verified: Boylan-Kolchin 2017, arXiv:1705.01548, "
+        "section 5.1, read at S34; the id corrected at S38]; its origin is a measured rms, '<eta_M> = 2.9 x 10^-5, "
+        "with a residual rms scatter +/- 0.28 dex' [verified: Harris, Blakeslee & Harris 2017, arXiv:1701.04845, "
+        "read at S37]. Used as the lognormal's width, as the M-sigma residual's is (ruling (b), GALAXY_INPUTS.md "
+        "section 4b: derive the mean, seed the residual).",
     ),
     "GC_MEAN_MASS": Constant(
         2.5e5,
         "Msun",
         "The mean present-day globular cluster mass: 'I will assume <m(z = 0)> = 2.5 x 10^5 Msun (see Harris "
-        "et al. 2017)' [verified: the same paper, section 2, read at S34]. Turns the system's mass into a "
-        "count estimate, a second number the acceptance row does not judge (BUILD_II: on mass, not count).",
+        "et al. 2017)' [verified: Boylan-Kolchin 2017, arXiv:1705.01548, section 2, read at S34; the id corrected "
+        "at S38]. An adopted value (Audit III A3-4): Harris et al. 2017's host-dependent means run 0.9-3.4 x 10^5. "
+        "Turns the system's mass into a count estimate, a second number the acceptance row does not judge "
+        "(BUILD_II: on mass, not count).",
     ),
     "CLUSTER_DISRUPTION_T0": Constant(
         3.3,
@@ -908,11 +916,11 @@ LEVEL0: dict[str, Constant] = {
         8.0,
         "pc",
         "How close an average type II supernova must be to strip a planet's ozone, 8 pc after "
-        "Gehrels et al. 2003; a brighter event reaches further by eq. 5, d_SN = 8 pc x "
-        "10^(-0.4(M_SN - M_std)) [verified: arXiv:1107.1286 section 3.1.2, eq. 5, read twice at "
-        "S30]. A third read described the distance as scaling with the square root of the flux "
-        "ratio, which would make the exponent -0.2; the equation is used as read and the "
-        "question is carried, not settled from recall (rule B9).",
+        "Gehrels et al. 2003; a brighter event reaches further by eq. 5 as printed, d_SN = 8 pc x "
+        "sqrt(10^(-0.4(M_SN - M_std))), the square root of the flux ratio [verified: arXiv:1107.1286 "
+        "section 3.1.2, eq. 5, re-read from the LaTeX at S37 (Audit III A3-1)]. S30 read it twice "
+        "without the root and carried the question (#90); S38 applied the printed form (#104, D187): a "
+        "type Ia at its mean magnitude reaches 18.6 pc, not 43.4.",
     ),
     "STERILIZATION_MAGNITUDE": Constant(
         -17.505,
@@ -1083,8 +1091,8 @@ LEVEL0: dict[str, Constant] = {
         "dex",
         "12 + log(O/H) of the Sun on the relation's own scale: 'Throughout the paper, we assume "
         "(O/H)sun = 4.90 x 10^-4, i.e., 12+log(O/H)sun = 8.69 (Asplund et al. 2009)', their abundances "
-        "being Pilyugin & Thuan 2005's strong-line calibration [verified: arXiv:1507.05432, section 2, "
-        "read at S31]. It places the gas's [Fe/H], oxygen taken to track iron as the ISM stage takes it, "
+        "being Pilyugin & Thuan 2005's strong-line calibration [verified: arXiv:1507.05432, a footnote in "
+        "section 1 and section 2.1, read at S31; the section corrected at S38]. It places the gas's [Fe/H], oxygen taken to track iron as the ISM stage takes it, "
         "on the relation's absolute scale.",
     ),
     "PAH_METALLICITY_MAX": Constant(
@@ -1102,8 +1110,10 @@ LEVEL0: dict[str, Constant] = {
         "The share of an HII region's ionizing photons that escape it into the diffuse ionized gas: the model "
         "Zurita et al. 2002 fitted to NGC 157, 'In this model 30% of emitted Lyman continuum photons escape "
         "from each H II region, and propagate through the DIG isotropically ... the result is remarkably "
-        "similar globally to the observed distribution', their variants spanning 'between 30% and 60%' "
-        "[verified: Haffner et al. 2009, RvMP 81, 969, arXiv:0901.0941, section IV, read at S35]. The "
+        "similar globally to the observed distribution' [verified: Haffner et al. 2009, RvMP 81, 969, "
+        "arXiv:0901.0941, section IV.B, read at S35]; the 'between 30% and 60%' the same review quotes is "
+        "Hoopes & Walterbos 2003's line-ratio modelling (section IV.C), not variants of Zurita's model "
+        "(the attribution corrected at S38, Audit III A3-3). The "
         "alternatives read and not adopted: Oey et al. 2007's diffuse share of the Halpha, 0.59 +/- 0.19 over "
         "109 galaxies [verified: arXiv:astro-ph/0703033, abstract], which is an output here, and Haffner's "
         "'about 1/8th' of the local stellar photons for the Milky Way's own layer (debt #101).",
@@ -1112,15 +1122,17 @@ LEVEL0: dict[str, Constant] = {
         8000.0,
         "K",
         "The warm ionized medium's temperature, the midpoint of 'Temperatures range from about 6000 K to "
-        "10 000 K' [verified: Haffner et al. 2009, arXiv:0901.0941, section I, read at S35]; the midpoint is "
-        "the model's choice [inferred]. Case B at this temperature turns the escaped photons into Halpha.",
+        "10 000 K' [verified: Haffner et al. 2009, arXiv:0901.0941, section II.A, read at S35; the section "
+        "corrected at S38]; the midpoint is the model's choice [inferred]. Case B at this temperature turns "
+        "the escaped photons into Halpha.",
     ),
     "DIG_SCALE_HEIGHT": Constant(
         1.4,
         "kpc",
         "The warm ionized layer's scale height, the midpoint of 'The large, 1000-1800 pc scale height, "
         "significantly larger than that of the neutral hydrogen layer' [verified: Haffner et al. 2009, "
-        "arXiv:0901.0941, section I, read at S35]; the midpoint is the model's choice [inferred]. Published "
+        "arXiv:0901.0941, section II.A, read at S35; the section corrected at S38]; the midpoint is the "
+        "model's choice [inferred]. Published "
         "as the scalar dig_scale_height for the renderer (D180's rule).",
     ),
     "HII_MASS_PER_HYDROGEN": Constant(
@@ -1132,7 +1144,8 @@ LEVEL0: dict[str, Constant] = {
     "HII_LF_MIN_LUMINOSITY": Constant(
         1.0e37,
         "dimensionless",
-        "The Halpha luminosity in erg/s above which the HII-region luminosity function is fitted: 'At faint "
+        "The Halpha luminosity in erg/s (the closed unit vocabulary has no erg/s, so the unit column reads "
+        "dimensionless; Audit III A3-3) above which the HII-region luminosity function is fitted: 'At faint "
         "levels, below 10^37 ergs s-1 in the LMC and M31, the LFs become significantly flatter' and only the "
         "complete parts were fitted [verified: Kennicutt, Edgar & Hodge 1989, ApJ 337, 761, section IIIb, "
         "read at S35 from the ADS scan]. Row 35 fits the model's regions above the same floor.",

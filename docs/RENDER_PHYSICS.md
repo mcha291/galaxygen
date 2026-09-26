@@ -87,7 +87,26 @@ commit f2230d5]`. The seed comes from the model, which §8 requires; the
 stated display choice made before any cloud field existed, and it is exactly
 what V2 and V3 replace: the young light by the ionized-gas and stellar
 components at the arms' own star formation (Phase 2), the clumps and knots by
-the cloud catalogue (Phase 8) and its emissivity (Phase 9).
+the cloud catalogue (Phase 8) and its emissivity (Phase 9). **Since S38 (V1)
+the young light is gone**: the stellar component's colour per cell is the
+model's filter integral at the population's published colour temperature, and
+what stays of the exception is the Hα's crowding into the arms and its seeded
+knots, and the dust's lead and clumps, V2's to remove `[verified:
+frontend/src/galaxy/regimes.ts, FieldVolume.tsx]`.
+
+**The ruling V1 made (S38): option (a).** The paragraph below is the question as
+it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
+`api/service.py`): the viewer sends its curves as numbers (the sets are
+`frontend/src/galaxy/filters.json`; a request naming a set without curves is
+refused, since the model holds none), and the model returns the stars per
+(R, φ) cell, the Hα and the dust per ring and the bulge per filter, never
+composited; the viewer divides by a white point and multiplies by its exposure
+`[verified: tests/test_render.py]`. The stellar spectrum is the population's
+own eight-band SED (`disc_sed_*`, `bulge_sed_*`, λL_λ at the SVO reference
+wavelengths), joined by power laws made band-consistent, blackbody tails beyond U
+and K; the frame through the table's B and V reads B − V +8.9 × 10⁻⁵ and M_V
+−1.7 × 10⁻⁴ mag from Phase 3's, tolerance 10⁻³. The first cut (one blackbody at
+the colour temperature, M_V 0.71 mag bright) is kept in the test as the record.
 
 **One ruling this contract leaves open, for V1.** §3a says the model ships the
 spectrum function and the renderer calls it, and §2a says the viewer holds the

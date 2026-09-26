@@ -75,7 +75,8 @@ closes the project.
 | 34 | `s34` | `7b61e2edce88` | **queued** — filled in by S35 |
 | 35 | `s35` | `5d4cb7885dd0` | **queued** — filled in by S36 |
 | 36 | `s36` | `f6ec37e5435f` | **queued** — filled in by S37 |
-| 37 | `s37` | TBD | **queued** — S38 fills the SHA in |
+| 37 | `s37` | `12c5f80497cc` | **queued** — filled in by S38 |
+| 38 | `s38` | TBD | **queued** — S39 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -234,8 +235,11 @@ git tag -a s35 5d4cb7885dd0c7a8aaf3ea012c5b8945a082d2fb -m "S35: nebular emissio
 # S36 — Weaver bubbles per cluster and star, the supernova-remnant census, the hot phase (Phase 10).
 git tag -a s36 f6ec37e5435f6f3ecda2796df848855909cae82d -m "S36: mechanical feedback"
 
-# S37 — Audit III: the second build re-read, re-derived, its greens conditioned, two windows read blind. SHA filled in by S38.
-git tag -a s37 "$(git rev-list -1 --grep='^Merge S37 into main' main)" -m "S37: Audit III"
+# S37 — Audit III: the second build re-read, re-derived, its greens conditioned, two windows read blind.
+git tag -a s37 12c5f80497ccdc441e7df0c9612c4bf5911b0c4f -m "S37: Audit III"
+
+# S38 — Audit III's fixes; V1: /api/render, the eight-band SED, the filter sets, the gate to 1e-4 mag. SHA filled in by S39.
+git tag -a s38 "$(git rev-list -1 --grep='^Merge S38 into main' main)" -m "S38: V1, the filter integral"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing

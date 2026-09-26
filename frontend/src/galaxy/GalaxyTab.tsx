@@ -8,6 +8,7 @@ import { PHOTOMETRIC, exposureFor, photometricColors, starColors } from "./color
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
 import { FieldVolume } from "./FieldVolume";
+import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName } from "./filters";
 import { footprint } from "./frustum";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
@@ -118,6 +119,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
+  const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
   const [brightestSlider, setBrightestSlider] = useState(500);
   const brightestN = brightestOf(brightestSlider);
   // A column some models lack ([α/Fe] is the advanced chemistry's) offers no chip where the
@@ -195,7 +197,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   return (
     <>
       <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC}>
-        {mode === "field" && <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} />}
+        {mode === "field" && <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} filterSet={filterSet} />}
       </GalaxyView>
 
       <div className={styles.panel}>
@@ -208,6 +210,18 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
               </button>
             ))}
           </div>
+          {mode === "field" && (
+            <>
+              <div className={styles.label}>Filters</div>
+              <div className={styles.pair}>
+                {FILTER_SET_NAMES.map((name) => (
+                  <button key={name} aria-pressed={name === filterSet} title={FILTER_SETS[name].about} onClick={() => setFilterSet(name)}>
+                    {FILTER_SETS[name].label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           {mode === "brightest" && (
             <>
               <div className={styles.zoomHead}>
@@ -248,7 +262,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           <Exposure stops={exposure} onChange={onExposure} />
           <p className={styles.muted}>
             {mode === "field"
-              ? "The field under the stars is always light: the published surface brightness, colour, Hα, bulge and dust, integrated along each line of sight. Exposure scales it, and the stars too when they are painted as light."
+              ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, Hα and bulge through each filter, and the dust dims them along each line of sight. Exposure scales it, and the stars too when they are painted as light (always in broadband colour).`
               : `Stars only, brightest first by published luminosity: no field, no sample. Painted as light, the view is exposed to its hundredth-brightest star, the few above burning out${
                   bright && field === PHOTOMETRIC ? ` (${autoStops >= 0 ? "+" : ""}${autoStops.toFixed(1)} stops here)` : ""
                 }, and the slider adds to that.`}

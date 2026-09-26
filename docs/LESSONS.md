@@ -1034,3 +1034,15 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   in the wrong place, and four arXiv ids in the orchestrator's own briefs were the wrong papers (D186, A3-3).
 - [close] An audit that changes no number still moves the register by three: the findings are the record, the
   fixes are the next session's (B3), and the test file it adds pins identities and noise bounds, never values.
+
+## From S38 (Audit III's fixes; V1)
+
+- [viewer] A gate's tolerance is not set after the number is read. The first cut missed M_V by 0.71 mag and came
+  back with a 0.75 mag tolerance; the second cut's tolerance is four times two measured costs and the gate closed
+  to 10⁻⁴ mag. When a cut misses by a factor two, the shape is wrong, not the normalisation (D188).
+- [viewer] Eight band fluxes and a stated join are a spectrum the table already paid for; a blackbody at the colour
+  temperature is not, because the bolometric correction is the population's, not a blackbody's (D188).
+- [infra] Two checkouts cannot hold one branch: the orchestrator must sit on `main` before a worktree checks out the
+  session branch, or the subagent's first command fails. Move first, launch second (D188).
+- [audit] Reading a web page is not downloading a file: the SVO filter pages gave the band definitions with their
+  zero points, tagged verified with the URL, while the curve files stayed the owner's call (D188).

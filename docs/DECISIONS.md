@@ -6004,3 +6004,118 @@ Starburst99's), written in both.
 numbers from the LaTeX, not the PDF; the two agents given the sources found four wrong arXiv ids in the
 briefs and one in code. The blind reading is the instrument the disclosed rows needed: it cost 45 minutes and
 moved one row each way. The register reads 52 open = 11 permanent + 41 carried, 37 discharged.
+
+### D187. Audit III's fixes applied at S38's opening: the sterilization distance takes its square root, η at its measurement, the record set right — the GC check now reads outside the scatter and the habitable zone sits in the disc
+
+**Applied by the orchestrating session as the first commit on `session-38` (e273ec3), before the V1 subagent's
+worktree branched (B3: S37 checked, S38 fixes).** Three findings, three debts discharged.
+
+**#104 (A3-1).** `habitable_zone.sterilization_distance` now computes 8 pc × 10^(−0.2 ΔM), the square root Gowanlock
+et al. 2011 eq. 5 prints `[verified: arXiv:1107.1286, eq. 5, re-read from the LaTeX at S37]`; until now the exponent
+was −0.4. A type Ia at its mean magnitude sterilizes to 18.6 pc, not 43.4: **the zone's numbers are the ones S30
+measured as its "other reading" and did not adopt** — the hazard at R₀ 0.203 per Gyr (was 2.08), half the habitable
+stars inside 6.44 kpc (was outside 12.05), the peak at 6.6 kpc (was 10.9), the habitable fraction 5.96 × 10⁻³ (was
+4.75 × 10⁻⁴) `[verified: tests/test_habitable_zone.py]`. The dropped-root reading is kept visible as a monkeypatched
+test, as D176 kept its discarded normalisation. The zone stays unjudged by ruling (D179); #90's equation question
+is settled and its Lineweaver half stays.
+
+**#105 (A3-2).** `GC_HALO_MASS_RATIO` = 2.9 × 10⁻⁵, Harris, Blakeslee & Harris 2017's "new calibration of the mean
+mass ratio η_M = (2.9 ± 0.2) × 10⁻⁵" `[verified: arXiv:1701.04845, abstract]`, in place of the 3.5 × 10⁻⁵ midpoint of
+what Boylan-Kolchin 2017 lists under "I will assume"; the four Boylan-Kolchin constants now cite arXiv:1705.01548
+(MNRAS 472, 3120), the scatter's about says its origin is a measured rms, and η_b and ⟨m⟩ say they are adopted.
+**What moved:** η M_halo 3.85 × 10⁷ → 3.19 × 10⁷; S34's surviving mean 6.97 × 10⁷ sits **+0.339 dex above it, outside
+the 0.28 dex** — D183's "inside the scatter" is corrected here: the GC closure fails on the measured relation as it
+already did on the population (#97); the bound mass before survival is 87.3 × η M_halo (was 72.4); the metal-poor
+share 0.776 (was 0.643); row 32's miss text says the relation itself now sits inside the Harris window (3.0–3.4 ×
+10⁷ against a top of 3.26) and the model misses both. The `gc_system_mass` field itself does not move: η was never
+an input to it (ruling (a), D183). The consistency test asserts the miss with the old numbers in its comments.
+
+**#106 (A3-3).** The escape fraction's "30–60%" attributed to Hoopes & Walterbos 2003 (Haffner §IV.C); the diffuse
+layer's temperature and scale height to Haffner §II.A; the solar oxygen footnote to Rémy-Ruyer §1; `HALPHA_PER_SFR`'s
+equation to KE12 §3.8 eq. 12 (the value 4.86 × 10⁷ kept, the exact 4.8644 × 10⁷ stated: the light stage's pins carry
+the rounded one); `HII_LF_MIN_LUMINOSITY`'s about says why its unit column reads dimensionless; the stale α_B comment
+in `nebular.py` corrected. No number moved.
+
+**Not applied, by the audit's own rule.** Rows 32 and 34's blind windows (A3-7) are the owner's; E_SN, C_II and the
+ozone clock stay adopted with their abouts saying so (A3-4); #87's Σ_WD row waits on a published scalar (A3-8). The
+register reads 49 open = 11 permanent + 38 carried, 40 discharged.
+
+### D188. V1: the filter integral runs server-side (option (a)); the stellar spectrum per cell is the population's own eight-band SED; the frame's B − V and M_V equal Phase 3's scalars to 10⁻⁴ mag; the viewer's young-light invention removed
+
+**Built by an Opus 5.5 subagent in a worktree on `session-38` (commits d9212b6, 1c99eca, 327926d, 950d49c),
+after Audit III's fixes (D187) had gone in; reviewed here against BRIEF.md's gate. One ruling on the first
+pass sent it back; the second closed the gate.** The two-checkout trap: the main checkout still held
+`session-38` when the worktree tried to check it out, and the subagent's first checkout was refused — the
+orchestrator moved to `main` and it retried (a lesson).
+
+**The ruling RENDER_PHYSICS §0 left open, made here (D113): option (a).** The viewer holds its filter sets as
+data (`frontend/src/galaxy/filters.json`) and sends their curves with a request; the model evaluates each
+component's spectrum through each curve and returns a response per cell per filter per component — three
+or four floats per cell per component, the payload of today's texture — and the viewer multiplies by its
+tone map and computes nothing else (D5). `filters=rgb` by name is refused (400): the model holds no palette
+(§2a). **`/api/render`** (model, `filters` as a JSON list of 1–8 curves — gaussian / box / sampled, within
+1000–300 000 Å — `set` echoed, `white` 1000–100 000 K, the window, `level` 0–3, `precision`): header keys
+model, inputs, set, filters, level, region, window, axes, components (stars with bands and wavelength, halpha
+with transmission per filter, dust), bulge (per-filter L☉), white, **absent.lines** (Hβ, [O III], [S II],
+[N II] with the reason: D184's grid), stages; arrays `stars` (n_R, n_φ, n_F), `halpha` (n_R, n_F),
+`dust_extinction_v` and `dust_colour_excess_b_v` (n_R) — or per region cell at a level, 8 × 8 bilinear
+sub-samples per cell. 1.74 MB for the whole galaxy at rgb in f4; 10 KB for a level-2 sector. Components,
+never composited (§2).
+
+**The first pass and why it was sent back.** The stellar component was one blackbody per cell at
+`disc_light_temperature` scaled to the bolometric surface brightness: the frame's B − V read 0.6428 against
+0.6306 but **M_V −21.93 against −21.22, 0.71 mag bright** — a factor two in V light, because a 5600 K
+blackbody's BC_V is ≈ −0.1 against the table's −0.87 — and the subagent had set the tolerance to 0.75 mag to
+cover it. Ruled: a tolerance chosen to cover a measured gap is a widened target (B5); the spectrum's shape,
+not its normalisation, was wrong; the second cut is the population's own SED.
+
+**The second cut.** `stages/spectra.py`: per cell the eight points λL_λ at the bands' reference wavelengths
+— **sixteen new fields on the light stage**, `disc_sed_u … _k` (R, L☉/pc²) and `bulge_sed_u … _k` (scalars),
+all 561 existing fields of both models bit-identical — joined by power laws (log–log) between the bands and
+continued outside U–K by a blackbody at the colour temperature scaled to the end point `[inferred]`. Two
+stated deviations from the ruling: the anchor is SVO's λ_ref (the pivot, where its f_λ zero point is
+quoted), not λ_eff; and the anchors are made **band-consistent** — twelve fixed multiplicative passes scale
+each point until its mean through its own curve is the table's value (A1: a fixed step count, the residual
+measured: 0.089 → 0.0044 → 5.1 × 10⁻⁴ → 7.9 × 10⁻⁵ mag over 0 / 4 / 8 / 12 passes), because the plain
+point-anchored join misses B by 0.077 mag where the spectrum peaks. **The bands' reference wavelengths,
+widths and zero points were read from the SVO Filter Profile Service pages** (Generic/Bessell U B V R I;
+Generic/Bessell_JHKLM J H K, "Bessell & Brett 1988") `[verified: svo2.cab.inta-csic.es/theory/fps,
+read at S38]`, pages not files; which curves the CMD table's YBC corrections used is `[inferred]` (the
+CMD pages fail TLS), as is SVO's Vega against YBC's — a per-band zero-point term. **The gate:** frame B − V
+0.630641 against the table's 0.630552 (+8.9 × 10⁻⁵), M_V −21.216042 against −21.215871 (−1.7 × 10⁻⁴);
+all eight bands within 10⁻³ of their published magnitudes; tolerance 10⁻³ mag = 4 × the two measured costs
+(the worst ring's interpolation 9.2 × 10⁻⁵ in B − V; the cell sum against the stage's trapezoid 1.5 × 10⁻⁴),
+the measured values pinned to 2 × 10⁻⁶; identical in both models. Stated and not gated: through a box over
+the whole 0.1–30 µm grid the SED carries 0.708 of `disc_luminosity` — the U-scaled blue tail misses the
+young stars' ultraviolet; optical filters are unaffected (**#107**). The first cut is kept as
+`blackbody_stellar_response`, its numbers pinned as the record (ring-by-ring B − V residuals −0.080 to +0.252).
+
+**The viewer.** A Filters selector (RGB / SHO / HOO) in field mode; `FieldVolume` requests `/api/render` with
+the set's curves and `white=6500` (a display choice) and divides each texel by the white point; stars, the Hα
+line and the bulge all go through that one step. **Removed**: `YOUNG_SHARE`, `YOUNG_KELVIN`, `YOUNG_CLUMP`,
+`OLD_COLOUR_FLOOR`, `HII_RGB`, `LINE_CHANNEL_WEIGHT` and the young layer they drew (the line's weight in rgb's
+red channel is now 5.18 from the integral; the display weight was 5; Hβ unpublished, the line draws red, not
+pink). **Left for V2**, stated in `regimes.ts`: Hα crowded into the arms and gathered into seeded knots, the
+dust's lead and clumps, and `CHANNEL_EXTINCTION` (no extinction curve is published, so no per-filter dust —
+**#108**). The stars regime is unchanged. The rgb set is Gaussians at the SVO numbers (shape `[inferred]`),
+SHO/HOO 30 Å boxes at the lines' wavelengths `[inferred]`; the named instrument is not shipped — its curves
+are a file download, the owner's call (#108). Checked in a browser on a scratch server (:8038, stopped);
+vitest 15 files / 102 tests; the frontend build clean. Two timings rows (render whole rgb 1.7 s cold, 0.24 s
+warm; one region 1.8 s cold). Spec unchanged, 11 / 20 / 5 of 36; rows 1–36 unmoved; graph, SEEDED and ORDER
+pins unmoved. The cold timings are appended.
+
+**Chosen against.** Option (b) (shipping the spectrum function to the viewer): the viewer would compute
+physics (D5). A blackbody per star's temperature mix (the subagent measured it: B − V +0.059, M_V −0.16;
+better in magnitude, worse in colour, and still not the table). The plain point-anchored SED (tolerance 0.09
+mag). A named filter set held by the model (§2a). The register reads 51 open = 11 permanent + 40 carried,
+40 discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+arrays: history          0.4878   0.0031 158.31  6,401,848  halo,disc,assembly,sfh,chemistry_dtd
+region: one sector*      0.6005   0.0009 658.82     44,096  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+render: whole, rgb*      1.8726   0.2445   7.66  1,739,928  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.8290   0.2134   8.57     10,280  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+(`uv run python tools/timings.py`, 2026-09-27, session-38.)

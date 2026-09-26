@@ -1,8 +1,9 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, fields, inputs, region, stages, system } from "@interface/transport.js";
+import { arrays, fields, inputs, region, render, stages, system } from "@interface/transport.js";
 
+import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
 import type { Checkpoint, InputDecl } from "./workflow/logic";
 
@@ -168,4 +169,33 @@ export async function loadBrightest(
 ): Promise<Sample> {
   const got = await region(window, { ...query, stars, brightest, view: Array.from(view) }, { signal });
   return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
+}
+
+/** One render (S38): each published component's response per cell in each filter of the set sent. */
+export interface RenderFrame {
+  header: {
+    set: string | null;
+    filters: Curve[];
+    window: {
+      R: { first: number; n: number; lo: number; width: number };
+      phi: { first: number; n: number; lo: number; width: number; wraps: boolean };
+    };
+    /** The bulge's response per filter, L☉; null when the model publishes no bulge. */
+    bulge: (number | null)[] | null;
+    white: { kelvin: number; response: (number | null)[] } | null;
+    absent: { lines: string[]; why: string };
+    stages: string[];
+    [key: string]: unknown;
+  };
+  /** stars (R, φ, filter), halpha (R, filter), dust_extinction_v (R), dust_colour_excess_b_v (R): row-major. */
+  arrays: Record<string, Float32Array | Float64Array>;
+}
+
+/**
+ * The whole galaxy through a filter set, at 32 bits (a texture holds no more). The filter integral
+ * is the model's: the viewer sends its curves and a white point and only tone-maps what comes back.
+ */
+export async function loadRender(curves: Curve[], white: number, query: Query = {}, signal?: AbortSignal): Promise<RenderFrame> {
+  const got = await render(curves, { ...query, white, precision: "f4" }, { signal });
+  return { header: got.header as RenderFrame["header"], arrays: got.arrays as RenderFrame["arrays"] };
 }
