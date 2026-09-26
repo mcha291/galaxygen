@@ -28,9 +28,12 @@ Q = q · 4πR² and L = 4πR²σT⁴ (``tests/test_massive_stars.py``).
   T_eff has a lower gravity and, in SHP03's own Table 2, a higher q_H (+0.2 dex at 33 kK).
 - *Outside 32 060–51 230 K* the table says nothing. There q₀ is the blackbody's, scaled by the
   table-to-blackbody ratio at the nearer end of the table, so the calibration is continuous
-  and the blackbody supplies only the temperature dependence `[inferred]`. A cooler star's Q is
-  negligible to any budget; a hotter one's (a stripped post-main-sequence star) is not, and
-  ``tests/test_massive_stars.py`` measures how much of a population's Q comes from outside.
+  and the blackbody supplies only the temperature dependence `[inferred]`. **That is most of a
+  population's photons**: of a steady solar population's Q, 0.328 comes from stars inside the
+  table's range, 0.218 from cooler ones (the many B1-B3 stars) and 0.454 from hotter ones, the
+  stripped post-main-sequence stars PARSEC takes to 200 kK, whose atmospheres are nothing like
+  a dwarf's (``tests/test_massive_stars.py``, S28). The ruling governs a third of the budget;
+  the rest is the extension's, and it is the first thing a sourced hot-star table would replace.
 - *Stars heavier than the youngest isochrone reaches* (64 M☉ at 4 Myr) have no L or T_eff and
   so no Q (``photometry.py``). Given the Q of the heaviest star the youngest isochrone holds
   for that isochrone's 3.98 Myr, they would be about half of a steady population's photons

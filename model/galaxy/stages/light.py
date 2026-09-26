@@ -218,7 +218,7 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     dt = float(ctx.grid.spec.t_max) / float(ctx.grid.spec.n_t)
     youngest = float(ctx.grid.spec.t_max) - (t + 0.5 * dt)
     feh = ctx.fields["feh_history"]
-    step = population_over(np.broadcast_to(youngest, formed.shape), np.broadcast_to(youngest + dt, formed.shape), feh)
+    step = population_over(youngest, youngest + dt, feh)
 
     brightness = (formed * step["light"]).sum(axis=1)  # L☉/pc²
     rgb = np.stack([(formed * step[c]).sum(axis=1) for c in ("red", "green", "blue")], axis=-1)

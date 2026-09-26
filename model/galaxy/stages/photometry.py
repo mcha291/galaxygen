@@ -298,12 +298,19 @@ def population_light() -> PopulationLight:
         colour[a, z] = np.trapezoid(weights[:, None] * blackbody_linear(10.0**log_teff), m, axis=0) / max(
             np.trapezoid(weights, m), 1e-300
         )
-        at = np.clip(m, track[0][0], track[0][-1])
-        mags = np.stack([np.interp(at, track[0], tab.extra[(a, z)][:, c]) for c in columns], axis=-1)
-        flux = np.where(alive[:, None], 10.0 ** (-0.4 * mags), 0.0)
+        # np.interp for every column at once: one search along the track, then a weighted gather.
+        at = np.clip(m[alive], track[0][0], track[0][-1])
+        right = np.clip(np.searchsorted(track[0], at, side="right"), 1, max(track[0].size - 1, 1))
+        left = right - 1
+        span = track[0][right] - track[0][left]
+        w = np.where(span > 0.0, (at - track[0][left]) / np.where(span > 0.0, span, 1.0), 0.0)[:, None]
+        cols = tab.extra[(a, z)][:, columns]
+        flux = np.zeros((m.size, len(columns)))
+        flux[alive] = 10.0 ** (-0.4 * (cols[left] * (1.0 - w) + cols[right] * w))
         integrated = np.trapezoid(phi[:, None] * flux, m, axis=0) / mass_formed
         bands[a, z], bolometric[a, z] = integrated[:-1], integrated[-1]
-        Q = np.where(alive, np.nan_to_num(ionizing_photons(L, 10.0**log_teff)), 0.0)
+        Q = np.zeros(m.size)
+        Q[alive] = np.nan_to_num(ionizing_photons(L[alive], 10.0 ** log_teff[alive]))
         ionizing[a, z] = np.trapezoid(phi * Q, m) / mass_formed
     return PopulationLight(light, colour, bands, bolometric, ionizing)
 
@@ -383,32 +390,29 @@ def _age_integrals() -> np.ndarray:
 def population_over(age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray, feh: np.ndarray) -> dict[str, np.ndarray]:
     """Each of ``STEP_QUANTITIES`` per unit mass formed, averaged over ages [lo, hi] (Gyr).
 
+    ``age_lo_gyr`` and ``age_hi_gyr`` are one pair per step, shape ``(n_t,)``, and ``feh`` is
+    ``(..., n_t)``: the averages are taken once per step and metallicity, then read per cell.
     ``light`` in L☉/M☉; ``red``/``green``/``blue`` the light times its linear colour; the bands
     and ``mbol`` as Σ 10^(−0.4 M) per M☉; ``ionizing`` in photons/s per M☉. Nearest metallicity,
     as everywhere in this module.
     """
     tab = isochrones()
-    table = _age_integrals()
-    lo = np.clip(np.asarray(age_lo_gyr, dtype=float) * 1e9, 0.0, _FINE_AGES[-1])
-    hi = np.clip(np.asarray(age_hi_gyr, dtype=float) * 1e9, 0.0, _FINE_AGES[-1])
-    lo, hi = np.broadcast_arrays(lo, hi)
-    feh = np.nan_to_num(np.asarray(feh, dtype=float), nan=tab.mhs[0], neginf=tab.mhs[0], posinf=tab.mhs[-1])
-    mh = np.broadcast_to(np.abs(feh[..., None] - tab.mhs).argmin(axis=-1), lo.shape)
+    table = _age_integrals()  # (n_mh, n_fine, k)
+    lo = np.clip(np.atleast_1d(np.asarray(age_lo_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
+    hi = np.clip(np.atleast_1d(np.asarray(age_hi_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
     width = np.where(hi > lo, hi - lo, 1.0)
 
-    def at(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def at(x: np.ndarray) -> np.ndarray:  # (n_mh, n_t, k): the cumulative integral at ages x
         i = np.clip(np.searchsorted(_FINE_AGES, x, side="right") - 1, 0, _FINE_AGES.size - 2)
-        return i, (x - _FINE_AGES[i]) / (_FINE_AGES[i + 1] - _FINE_AGES[i])
+        w = ((x - _FINE_AGES[i]) / (_FINE_AGES[i + 1] - _FINE_AGES[i]))[None, :, None]
+        return table[:, i] * (1.0 - w) + table[:, i + 1] * w
 
-    i_lo, w_lo = at(lo)
-    i_hi, w_hi = at(hi)
-    out = {}
-    for k, name in enumerate(STEP_QUANTITIES):
-        c = table[..., k]
-        c_lo = c[mh, i_lo] * (1.0 - w_lo) + c[mh, i_lo + 1] * w_lo
-        c_hi = c[mh, i_hi] * (1.0 - w_hi) + c[mh, i_hi + 1] * w_hi
-        out[name] = (c_hi - c_lo) / width
-    return out
+    per_step = (at(hi) - at(lo)) / width[None, :, None]  # (n_mh, n_t, k)
+    feh = np.nan_to_num(np.asarray(feh, dtype=float), nan=tab.mhs[0], neginf=tab.mhs[0], posinf=tab.mhs[-1])
+    # The nearest metallicity, as argmin |feh - mh| picks it (ties to the lower), by a search.
+    mh = np.searchsorted(0.5 * (tab.mhs[1:] + tab.mhs[:-1]), feh, side="left")
+    flat = mh * lo.size + np.arange(lo.size)
+    return {name: per_step[..., k].ravel()[flat] for k, name in enumerate(STEP_QUANTITIES)}
 
 
 def ionizing_yield(feh: np.ndarray) -> np.ndarray:
