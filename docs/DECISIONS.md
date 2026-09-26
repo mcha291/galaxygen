@@ -5435,3 +5435,70 @@ placement of the 1.55 Gyr window before the 4 Gyr are tagged inferred in the sta
 born; migration is not applied to the hazard, as neither source applies it. The brief's row source choice
 — Adams over Li — stands: a Galactic total is what the table judges and one source gives both rates by one
 method; the subagent had probed the model's Ia number before choosing and said so, and both sources pass.
+
+### D180. Phase 7: dust that radiates — one grain model read from its own table, the heating balance inverted in closed form, the energy balance asserted to 10⁻¹², G₀ and a metallicity-dependent PAH fraction, the constants a renderer needs published as scalars
+
+**The three rulings, made before any number was read (D113), and what the sources said.** (a) **One grain
+model.** R_V, the V albedo and the asymmetry g — and the far-ultraviolet extinction and albedo G₀ needs, and
+the far-infrared opacity the temperature needs — are the Milky Way R_V = 3.1 carbonaceous-silicate model of
+Weingartner & Draine 2001 as renormalised by Draine 2003, **read from Draine's own tabulation**
+(`kext_albedo_WD_MW_3.1_60_D03.all`: 1.398 × 10⁻²⁶ g of dust per H, M_gas/M_dust 165.3): albedo_V 0.6774,
+g_V 0.5383 (the 0.547 µm row), FUV extinction ratio 2.4507 and albedo 0.4068 (0.1514 µm), κ = 16.43 cm² g⁻¹
+at 155.9 µm `[verified: the table file, read twice at S31]`. **A sourcing incident, recorded**: the reading
+agent's first pass returned four wrong rows from a summarising fetch (1.65 µm read as 0.165 µm; the 350 and
+500 µm rows off); the subagent caught them with a direct read of the file and the agent's raw-text second
+fetch confirmed — the S26 lesson again, one level down. (b) **A modified blackbody with a sourced β and a
+temperature from the heating balance**: β = 1.62 (Planck 2013 XI Table 3, whole-sky ⟨β⟩ = 1.62 ± 0.10; β = 2
+of Draine & Li 2007 the named alternative, reading T(R₀) 19.41 against 19.54) `[verified: read at S31]`.
+(c) **The PAH fraction's metallicity dependence enters, because a source was read**: Rémy-Ruyer et al. 2015
+§4.3 eq. 5, log f_PAH = (−11.0 ± 0.3) + (1.30 ± 0.04)(12 + log O/H), normalised to the Galactic 4.57%,
+scatter 0.35 dex, fitted to 1.20 Z☉ and held flat above it (extrapolated, the inner disc would read 74%);
+Draine & Li 2007's constant 4.58% the alternative `[verified: read at S31]`.
+
+**Built (an Opus subagent in a worktree on the branch, commits 9fb1092, ef4228d, 4cf0479; reviewed, the core
+diff first, accepted without a change).** New `stages/dust.py` (checkpoint 4, in `BASIC`'s tuple after
+`supernovae`, so `azimuthal` inherits it), reading `disc_surface_brightness`, the ISM's dust fields and the
+SFR, **redefining nothing**: `dust_extinction_v` is read, and a test asserts it is still the ISM coefficient
+times Σ_dust (D167). Per radius: `dust_scattering_optical_depth` (albedo × τ_V), `dust_colour_excess_b_v`
+(A_V/R_V), `dust_absorbed_surface_brightness` — Σ_L times 1 − P_esc(τ) for a uniform mixed slab, P_esc =
+(½ − E₃(τ))/τ with τ the absorption part of τ_V, derived here and tagged so — `dust_temperature`, the
+heating balance **inverted in closed form** (4πκ₀ν₀^−β (2h/c²)(k/h)^(4+β) Γ(4+β) ζ(4+β) T^(4+β) = the
+absorbed power per unit dust mass; NaN where nothing is absorbed), `dust_infrared_surface_brightness` —
+the emission spectrum integrated by quadrature over 1 µm–1 m, **deliberately not the closed form run
+backwards**, so the balance compares two computations (B3) — `radiation_field_g0` (the midplane flux of a
+uniform slab, Σ_FUV(1 − E₂(τ/2))/τ, over Habing's 1.6 × 10⁻³ erg cm⁻² s⁻¹, the FUV from the SFR through
+Kennicutt & Evans 2012's calibration taken flat in νL_ν across 6–13.6 eV, inferred) and `pah_fraction`.
+Scalars: `dust_absorbed_luminosity`, `dust_infrared_luminosity`, and **`dust_scattering_asymmetry`** — g
+published as a scalar field because the API serves no constants (D5) and V2's phase function needs it. That
+bends BUILD_II's "three constants, not three fields" and is **ruled here**: a level-0 constant the renderer
+must read is published as a scalar whose about line does not name it; the constant stays the model's, the
+field is its value. `core/special.expn` (Eₙ by series and Lentz's continued fraction, fixed term counts,
+A1), checked against quadrature of the defining integral. Fifteen level-0 constants with citations; **three
+units** join the vocabulary: `cm2/g`, `um`, `erg/cm2/s`. RENDER_PHYSICS §0's dust bullet updated.
+
+**Measured (default grid; identical in both models).** **Energy balance: per radius the worst
+|Σ_IR/Σ_abs − 1| is 1.46 × 10⁻¹²** (at the 30 kpc edge where T = 1.5 K; ~10⁻¹⁵ inside the disc), **in
+total 2.0 × 10⁻¹⁵**, asserted at 10⁻¹¹ and 10⁻¹³ — the test D163's factor-162 extinction defect never had.
+Dust temperature 17.97 / 20.41 / 19.54 / 16.60 / 16.49 K at 2 / 5 / 8.2 / 12 / 16 kpc, 14.8–21.1 K where
+Σ_dust exceeds 10⁻⁴ of its peak, below 10 K only past the dust disc's edge at 23.7 kpc (no CMB floor).
+**L_IR = 1.622 × 10¹⁰ L☉, 0.331 of the disc's bolometric light and 0.302 of disc plus bulge.** G₀(R₀) = 2.64
+(the local field is ~1.7). PAH fraction 9.1% at R₀ (twice Draine & Li's Milky Way value, 0.30 dex), 11.5%
+held in the inner disc, 1.3% at 16 kpc. A cross-check of D163's kind: the grain model's own V opacity per
+dust mass gives 7.90 mag per M☉ pc⁻² against the ISM's 7.71, 2.4% apart, pinned. Sensitivities: κ
+normalised at 100 µm reads T(R₀) 18.88, at 245 µm 20.27; the SFR's Habing-band light (8.40 × 10⁹ L☉, 17% of
+the disc's) absorbed at τ_FUV would add 1.75 × 10⁹ L☉, +10.8% of L_abs — the grey slab's under-absorption,
+one side of it. Rows 1–31 unchanged (15 = 5.20971, 21 = 0.200137, 29 = −7.91436, 30 = 0.0176069, 31 =
+0.0065332); spec 10 / 17 / 4 in both; graph, preflight, determinism (across processes), convergence (0
+drifts) OK; `python -m galaxy.specs` EXIT=0. Cost: `dust` 0.075 s (3.3%); `ism` and `light` unchanged, so
+the route timings were not re-run. Graph order: `…, habitable_zone, dust, planets`, the pin moved with the
+old order in its comment.
+
+**No row 32, for D113's reason.** Planck's ⟨T⟩ = 19.7 ± 1.4 K was read while sourcing β, before any row
+could be ruled, and is a sky average seen from the Sun; the Milky Way's total infrared luminosity was not read
+from a primary source. Both go to Audit III (**#93**). **Debts opened.** **#91**: the radiative transfer is a
+grey slab — absorption at V's optical depth for every wavelength (the ultraviolet under-absorbed by ~11% of
+L_abs on the FUV estimate, the red over-absorbed by an amount not measured), scattering removing no energy and
+lengthening no path, the bulge's light heating nothing, no CMB floor, G₀ flat across the Habing band. **#92**:
+the PAH relation is a cross-galaxy fit applied per radius, and the Milky Way at solar sits 0.30 dex above
+Draine & Li's own value; Rémy-Ruyer et al. name the specific star formation rate as the primary driver. The
+register reads 39 open = 11 permanent + 28 carried, 37 discharged.

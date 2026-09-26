@@ -689,23 +689,24 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90 | 25 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93 | 28 |
 
-So the board's **36 open** is 11 permanent and 25 carried, and no item is unruled. (S22
+So the board's **39 open** is 11 permanent and 28 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
 discharged #23, D175; S27 opened #81, the young-star cut, D176; S28 opened #82–#84, the
 photometric rows' dust question, the wind's Γ_e and the ionizing budget's reach, D177; S29 opened
 #85–#87, the return fraction's gap, the remnants' metallicity and the owed row 30, D178; S30 opened
-#88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179.) The eleven
+#88–#90, the Ia yield's recall, the spheroid's Ia and the zone's two readings, D179; S31 opened #91–#93,
+the grey slab, the PAH fit and the owed row 32, D180.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The twenty-five carried ones are not twenty-five mechanisms.** Four of them — 19, 27, 49 and the
+**The twenty-eight carried ones are not twenty-eight mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -719,7 +720,8 @@ closable by reading a source; one — 81 — is a cut standing where a spiral pa
 its light is, a coefficient not fetched, a calibration that covers a third of what reads it; S28,
 D177); one — 85 — is the instantaneous recycling the remnants exposed, a mechanism in `sfh` (S29,
 D178), and 86 and 87 are a fit not read and a row owed to Audit III; 88 is a recalled yield that a row
-now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179). That
+now rests on, 89 a component not in the history, 90 a source read three ways (S30, D179); 91 is a slab
+that absorbs grey, 92 a cross-galaxy fit read per radius, 93 a row owed to Audit III (S31, D180). That
 leaves 28, 33, 39, 42, 43 and 70, which are five instrument or bookkeeping statements and one kernel
 width.
 
@@ -2928,6 +2930,35 @@ never been judged in twenty-three sessions.
    lower bound. **Carried**; closable by reading the equation from the journal text (not a text
    extraction) and by Lineweaver et al. 2004 read at all. The zone has no row by ruling (b) and gets none
    here: this debt is about reading the source, not about a target.
+91. **The dust's radiative transfer is a grey slab** (S31, BUILD_II Phase 7, D180). The starlight absorbed
+   at each radius is the disc's bolometric surface brightness times the escape probability of a uniform
+   mixed slab at the V band's absorption optical depth, for every wavelength at once: the young stars'
+   ultraviolet is absorbed more than that and the old stars' red light less. One side is measured — the
+   star formation rate's Habing-band light (8.40e9 L☉, 17% of the disc's) absorbed at the far-ultraviolet
+   depth would add 1.75e9 L☉, **+10.8% of the absorbed power** `[verified: D180; tests/test_dust.py]` — and
+   the other is not. Also inside this debt: scattering removes no energy and lengthens no path, the
+   bulge's light heats nothing, there is no cosmic-microwave-background floor (the temperature falls below
+   10 K past 23.7 kpc), and G₀ takes νL_ν flat across 6–13.6 eV in a slab. The energy balance closes to
+   1e-12 whatever the slab's errors, because emission is solved from what was absorbed; this debt is about
+   how much is absorbed. **Carried.** What closes it: the absorbed power integrated over the bands the
+   light stage now publishes (U B V R I J H K since S28) with the grain model's extinction curve per
+   band — the same table, eight rows instead of one — which is one afternoon of arithmetic with a
+   prediction: L_IR rises by ~10% and T_d(R₀) by ~0.5 K; the CMB floor is one constant (2.725 K).
+92. **The PAH fraction is a cross-galaxy fit applied per radius, and the Milky Way sits 0.30 dex above its
+   own value** (S31, D180). Rémy-Ruyer et al. 2015's eq. 5 relates f_PAH to 12 + log O/H across 109
+   galaxies `[verified: read at S31]`; applied to the gas's abundance at each radius it reads 9.1% at R₀
+   against Draine & Li 2007's Milky Way 4.58%, twice, and 11.5% held flat in the inner disc where the
+   fit's range ends (1.20 Z☉). The source itself names the specific star formation rate as the primary
+   driver, with metallicity second. **Carried**; closable by the sSFR form of the same paper if it is read,
+   or by a per-radius calibration from resolved galaxies (KINGFISH), either a sourced relation replacing
+   this one; what kills the reading: a Phase 9 PAH-band emission that lands at R₀ with 9.1%.
+93. **Row 32 is owed and was not entered: the dust temperature and the infrared luminosity** (S31, D180).
+   Planck 2013 XI's whole-sky ⟨T_obs⟩ = 19.7 ± 1.4 K `[verified: Table 3, read at S31]` was read while
+   sourcing β, before any row was ruled, so entering it now would be choosing with the answer known (D113,
+   as #87); it is also a sky average seen from the Sun, not a disc profile. The Milky Way's total infrared
+   luminosity was not read from a primary source. The model reads T_d(R₀) 19.54 K and L_IR 1.62e10 L☉,
+   pinned as measurements. **Carried** for Audit III (S37), which enters the row blind to the pins with a
+   source that states what it measures, or records why it may not.
 
 ---
 
