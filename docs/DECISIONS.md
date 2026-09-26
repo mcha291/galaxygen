@@ -6110,6 +6110,85 @@ better in magnitude, worse in colour, and still not the table). The plain point-
 mag). A named filter set held by the model (§2a). The register reads 51 open = 11 permanent + 40 carried,
 40 discharged.
 
+### D189. V2: the dust in three components (extinction per filter from Draine's table, scattered light by the slab's own convention, thermal emission through the filter), the line in two volumetric layers, the frame's energy balance closed to 7 × 10⁻⁴ and the face-on profile to 10⁻³ — nothing structural is invented at galaxy scale any more
+
+**Built by an Opus 5.5 subagent in a worktree on `session-39` (commits 79e6907, 55e754b, d23eab0); reviewed here
+against BRIEF.md's gate: the clouds diff (one constant named), the spectra functions, then the tests. Accepted
+without a second pass, with one departure from ruling (a) accepted for the reason it gave.**
+
+**The rulings, and the departure.** (a) The dust is three components. *Extinction per filter*: A_λ/A_V from
+Draine's grain table at each filter's reference wavelength — **the table was not in the repository** (S31 had
+quoted three rows into level-0; the brief was wrong), so the subagent re-read Draine's file as a page, no
+download, and transcribed **110 rows into `spectra.GRAIN_TABLE`** (λ, albedo, ⟨cos⟩, C_ext/H — the extinction
+column — K_abs), with a test that checks every row two ways (K_abs × 1.398 × 10⁻²⁶ = (1 − albedo) C_ext, worst
+6.4 × 10⁻⁴ at 0.178 µm) and a second that the S31 constants match the transcription digit for digit
+`[verified: kext_albedo_WD_MW_3.1_60_D03.all; tests/test_render.py]`. A_B/A_V = 1.302, A_V 0.998, A_R 0.794,
+A_J 0.298, A_H 0.187, A_K 0.113 (a monochromatic R_V of 3.31 against the broadband 3.1 the dust stage divides
+by); the far-ultraviolet ratio reproduces S31's 2.4507. *Scattered light*: **not the ruling's τ_sca × the
+stellar response** — that form assumes an optically thin slab, and the disc centre has A_V ≈ 50, τ_sca ≈ 31:
+literally it scattered 12.18 × the light the dust can remove without absorbing, ~30 × the starlight at the
+centre. The subagent used the dust stage's own slab convention instead, scattered = stars × [a(τ_ext) − a(τ_ext
+− τ_sca)] with a the slab's absorbed fraction 1 − P_esc, τ_sca moved to each filter by the table's albedo ×
+C_ext; the literal form is pinned as the record (12.184149), as V1 kept its first cut. **Accepted**: the
+ruling's form was wrong where the dust is thick, and the stage's convention is the one opinion (A9). The phase
+function is Henyey–Greenstein at the published g, averaged over in-plane illumination from every azimuth
+(thin-slab, `[inferred]`) and published as a 21-point table against |cos i| (0.485 face-on, 1.51 edge-on,
+mean 1 to 10⁻¹⁰) `[verified: Bosschaart & Olofsson, arXiv:2604.08379 eq. 3, read as a page]`. *Thermal*: the
+published Σ_IR at T_d as a modified blackbody at β through the filter — zero in the optical sets, real in an
+"ir" set (J H K boxes at the SVO numbers and a TIR box 8–1000 µm) that is **measured, not drawn** (`filters.json`
+"measured": a 6500 K white point makes a far-infrared channel meaningless; a white point per channel is a
+display choice nobody has made). (b) The line in two volumetric layers: `halpha_hii` (R, φ, F), Σ_HII × the
+pattern's contrast in the clouds' layer (0.5 × the thin disc's scale height, now the named constant
+`clouds.CLOUD_LAYER_SHARE`, #95's guess), and `halpha_dig` (R, F) in the 1.4 kpc layer; the two sum to the
+published nebular Hα ring by ring to 10⁻¹². The header's `layers` carry each component's sech² profile — stars
+and dust 0.356 kpc, HII 0.178, DIG 1.4 — **the dust in the stars' layer**, because the dust stage's heating
+treats stars and dust as uniformly mixed: the viewer's old display-choice dust layer at a third of the disc
+height is gone and an edge-on view no longer shows a thin dark lane (**#109**). (c) **The frame's energy
+balance**: the absorbed side compared as a share, not a sum (the model absorbs grey at V; the frame's filters
+are not bolometric, its continuum holding 0.708 of the disc light): from `dust_extinction` alone the share each
+filter loses averaged over inclination, agreeing with the stage's E₃ closed form to 2.2 × 10⁻¹¹, times the
+bolometric light reproduces `dust_absorbed_surface_brightness` ring by ring to 10⁻⁸; the emitted side sums
+`dust_thermal` over the ir set. **Absorbed 1.000344 × the published total, emitted 0.999664 ×, emitted over
+absorbed 0.999321**, tolerance 10⁻³ whose one cost is the TIR box's coverage (6.8 × 10⁻⁴ of Σ_IR lies beyond
+1 mm, the outer disc's 2–10 K dust); the 3.4 × 10⁻⁴ on each side is the cell-centre quadrature against the
+stage's trapezoid. Light conservation per filter to 10⁻⁹ (escaped + scattered + absorbed = the stars). **The
+profile** (RENDER_PLAN Part 3 check 2): Σ_V(R) read from the level-0 cells against the exact ring mean of
+`disc_surface_brightness_v`, the tolerance derived per ring (the midpoint rule's kink and curvature, the
+azimuthal sampling of the contrast, 6 × 10⁻⁵ mag of band consistency): all 32 rings inside, the worst inner
+ring 9.2 × 10⁻⁴, the disc-edge ring −1.1% inside its own bound. **The V1 gate re-run** with the dust arrays
+never composed: B − V 0.630641, M_V −21.216042, unmoved; with the dust composed face-on (bulge undimmed, a
+record): 0.647469 and −20.805, 0.41 mag fainter. Records, not gates: the frame absorbs 0.744 of grey-at-V's
+absorption through the grain curve over 0.1–30 µm (the continuum lacks the young stars' UV, #107); R / V / B
+lose 0.361 / 0.374 / 0.373 of their light over the image.
+
+**The viewer.** `FieldVolume` integrates each component through the layer the header names (the DIG's thick
+layer brightens toward the limb — §4 for free), applies each filter's own depth −ln T, adds the scattered
+light at the phase factor for the view's |cos i| and the thermal light. **Removed**: `CHANNEL_EXTINCTION`, the
+Hα knots, the clump lattice and its helpers, the dust's lead, `LINE_CLUMP`, `DUST_CLUMP`, `TAU_PER_MAG`,
+`LINE_HEIGHT`, `DUST_HEIGHT`; the `/api/arrays` load fetches only `bulge_scale_radius`. **`regimes.ts`'s
+docstring says nothing structural is invented at galaxy scale**; what remains is display only (white point,
+exposure, tone curve, bloom, the march's sampling) — RENDER_PHYSICS §0's dated exception is closed for the
+field regime; the stars regime is V3's. Vitest 103 tests, the build clean; checked on a scratch port (:8039,
+stopped; the web preview launcher served the main checkout on :8018 and was stopped). The whole-galaxy rgb
+render grew from 1.74 to 5.21 MB (f4); a region from 10 to 21 KB; `spectra.WAVELENGTH_MAX` 300 000 → 10⁷ Å.
+No stage output changed: all 296 / 297 fields bit-identical. Spec unchanged, rows 1–36 unmoved. Two commit
+messages: 55e754b says `CHANNEL_EXTINCTION` "now FieldVolume"; it is removed (the subagent did not amend, C2a's
+spirit). The cold timings are appended.
+
+**Chosen against.** The ruling's optically-thin scattering (a factor 12 over the whole galaxy). A drawable
+infrared set (no white point per channel). A separate dust layer from a display constant (the model publishes
+no gas or dust scale height: #109 names the field V3 or a model session would add). The register reads 52 open
+= 11 permanent + 41 carried, 40 discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+region: one sector*      0.5976   0.0009 699.73     44,096  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+render: whole, rgb*      1.8944   0.2102   9.01  5,205,784  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.8803   0.2065   9.11     20,912  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+(`uv run python tools/timings.py`, 2026-09-27, session-39.)
+
 ```
 endpoint                 cold s   warm s    c/w      bytes  stages
 ------------------------------------------------------------------

@@ -1046,3 +1046,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   session branch, or the subagent's first command fails. Move first, launch second (D188).
 - [audit] Reading a web page is not downloading a file: the SVO filter pages gave the band definitions with their
   zero points, tagged verified with the URL, while the curve files stayed the owner's call (D188).
+
+## From S39 (V2)
+
+- [viewer] A ruling written for the thin case is wrong where the model is thick: τ_sca × the light scattered
+  twelve times what the dust could remove at A_V ≈ 50. The subagent used the stage's own slab convention and
+  pinned the literal form as the record; accept the departure that keeps one opinion (A9) (D189).
+- [audit] "The table is in the repository" must be checked before it goes in a brief: S31 had quoted three rows,
+  not the table. Reading the file as a page and transcribing it with a two-way row check is the honest route
+  when a download is not the session's to make (D189).
+- [viewer] Removing an invention can remove a feature: the dust's display layer gave edge-on views their dark
+  lane, and the model publishes no gas thickness to replace it with. Name the missing field in the debt rather
+  than keep the constant (D189, #109).
+- [viewer] Two sides of a balance must be made commensurable before they are compared: the model absorbs grey
+  at V and the frame's filters are not bolometric, so the absorbed side is a share reproduced ring by ring, not a
+  sum over filters (D189).

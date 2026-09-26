@@ -79,6 +79,14 @@ CLUSTER_HOSTING_STATES: tuple[str, ...] = ("blown_open", "dispersing")
 # CODATA proton mass [recall: 1.380649e-23 J/K, 1.67262e-27 kg].
 K_OVER_MH = 1.380649e-23 / 1.67262192e-27 / 1.0e6  # (km/s)^2 / K
 G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) times 1000
+# The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
+# source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
+CLOUD_LAYER_SHARE = 0.5
+
+
+def cloud_layer_height(thin_disc_scale_height_pc: float) -> float:
+    """The clouds' sech² scale height, kpc, from the thin disc's (pc)."""
+    return CLOUD_LAYER_SHARE * float(thin_disc_scale_height_pc) / PC_PER_KPC
 
 
 # --- the mass function ---------------------------------------------------------------------------
@@ -205,7 +213,7 @@ def materialise_clouds(
     b = float(c["TURBULENCE_FORCING_B"])
     phases = (float(c["GMC_PHASE_EMBEDDED"]), float(c["GMC_PHASE_BLOWN_OPEN"]), float(c["GMC_PHASE_DISPERSING"]))
     lifetime = sum(phases)
-    h_cloud = 0.5 * float(fields["thin_disc_scale_height"]) / PC_PER_KPC  # kpc, half the thin disc's [inferred]
+    h_cloud = cloud_layer_height(fields["thin_disc_scale_height"])  # kpc, half the thin disc's [inferred]
     sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
     feh_gas = np.asarray(fields["feh_gas"], dtype=float)
     alpha_gas = np.asarray(fields["alpha_fe_gas"], dtype=float)

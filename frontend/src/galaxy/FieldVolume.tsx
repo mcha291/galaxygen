@@ -24,7 +24,7 @@ import {
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, WHITE_KELVIN, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { CLUMPS, LATTICE_LIFT, planeTexture } from "./regimes";
+import { RING_ROWS, marchHalfHeight, planeTexture } from "./regimes";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -33,25 +33,6 @@ import { CLUMPS, LATTICE_LIFT, planeTexture } from "./regimes";
  * the white point (filters.ts), so a ring of white light draws its surface brightness in each channel.
  */
 export const LIGHT_PER_LSUN_PC2 = 1 / 400;
-
-/**
- * Extinction in the red, green and blue channels per magnitude of A_V: the R, V and B bands
- * of Cardelli, Clayton & Mathis at R_V = 3.1 standing in for the three channels
- * `[recall: CCM 1989, A_R/A_V = 0.748, A_B/A_V = 1.324]`. Dust dims blue more than red, so a
- * dusty region reddens as it darkens: occlusion, never an added colour (R4). Still the viewer's
- * after V1, and for every filter set: the model publishes A_V and E(B − V) and no extinction curve,
- * so /api/render returns no per-filter ratio (a narrowband channel is dimmed as the broadband one
- * it is drawn in).
- */
-export const CHANNEL_EXTINCTION = [0.748, 1.0, 1.324] as const;
-
-/**
- * The line's and the dust's scale heights, as shares of the thin disc's. The same share: light
- * mixed through thick dust glows at their ratio, so a line layer thinner than its dust draws a
- * bright line down the middle of an edge-on dust lane.
- */
-export const LINE_HEIGHT = 1 / 3;
-export const DUST_HEIGHT = 1 / 3;
 
 /** Ray-march steps through the galaxy's bounding box. */
 const STEPS = 96;
@@ -65,6 +46,8 @@ const STEPS = 96;
 const PIXEL_BUDGET = 400_000;
 /** And never more than half the drawing buffer's resolution on a side. */
 const MAX_RESOLUTION = 0.5;
+/** The points of the scattered light's phase table the shader holds (spectra.PHASE_POINTS). */
+const PHASE_POINTS = 21;
 
 // A screen-covering triangle pair that lays the marched image over the view, added as light.
 const COMPOSITE_VERTEX = /* glsl */ `
@@ -82,10 +65,8 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
   }
 `;
 
-// The geometry the field is laid out in; the light, the line and the dust come from /api/render.
-// The contrast places the line and the dust around each ring (V2's to remove); the stars arrive placed.
-const FIELDS = ["pattern_density_contrast"];
-const SCALARS = ["thin_disc_scale_height", "bulge_scale_radius", "pitch_angle", "arm_multiplicity"];
+// The bulge's scale radius comes from the arrays; every component, its layer and its colour from /api/render.
+const SCALARS = ["bulge_scale_radius"];
 
 const VERTEX = /* glsl */ `
   varying vec3 vWorld;
@@ -96,74 +77,54 @@ const VERTEX = /* glsl */ `
   }
 `;
 
-// Emission and absorption along the line of sight, front to back. At each step the light
-// emitted there is added, dimmed by all the dust between it and the camera and by the step's
-// own dust mixed through it, and the step's dust dims everything behind it. Units: the plane
-// textures are L☉/pc² through a face-on column and the sech² profiles integrate to 1 per kpc of
-// height, so their product times the step in kpc is L☉/pc²; the bulge is L☉ times a Hernquist
-// density per kpc³, times the step, per 10⁶ pc² per kpc².
+// Emission and absorption along the line of sight, front to back (S39, V2). At each step every
+// component's light in the step is added, dimmed by all the dust between it and the camera and by the
+// step's own dust mixed through it, and the step's dust dims everything behind it. Units: the textures
+// are L☉/pc² through a face-on column, and each component is spread through its own layer — a
+// sech²(y / 2h) / 4h profile at the scale height the model names (the render header's layers), which
+// integrates to 1 over height — so a step takes each layer's exact column over its own height range, a
+// difference of tanh, whatever the step's size; the bulge is L☉ times a Hernquist density per kpc³, times
+// the step, per 10⁶ pc² per kpc².
 //
-// Two layers. The stars fill the thin disc's height and are smooth, so a point per step
-// serves. The line and the dust sit in layers a few times thinner, where the
-// clumps are: sampling those at a point per step both misses them (a step is wider than the
-// layer) and, through a tilted disc, smears each clump across every position the ray passes
-// over while inside the thicker height. So each step takes the layer's exact column over its
-// own height range, a difference of tanh, and reads the layer where the ray is nearest the
-// midplane.
+// Volumetric, not a surface (RENDER_PHYSICS §4): a tilted ray crosses more of a thick layer than a
+// face-on one, so the diffuse Hα's 1.4 kpc layer brightens toward the disc's limb by itself.
 //
-// The clumps are drawn here, per sample, not baked into the layer texture: a clump near the
-// centre is smaller than a texel, and an HII knot is a texel at most anywhere. The noise is
-// regimes.ts's clumpNoise and clumpFactors line for line (the hash in uint arithmetic, where
-// Math.imul wraps the same), and `norms` gives each ring back its published mean.
-//
-// Every colour here is the model's filter integral over the white point (regimes.ts, filters.ts):
-// the plane texture's stars, the layer's line, the bulge's light. The shader only sums and dims.
+// Every colour here is the model's filter integral over the white point (regimes.ts, filters.ts); the
+// dust is each channel's own optical depth from the grain model's curve. The shader only sums and dims,
+// and reads the scattered light's phase factor from the model's table by the view's |cos i|.
 const FRAGMENT = /* glsl */ `
   uniform sampler2D plane;
-  uniform sampler2D layer;
-  uniform sampler2D norms;
-  uniform float clumped;
-  uniform float latCot;
-  uniform float latTan;
-  uniform int latN;
-  uniform int latM;
-  uniform int seedStars;
-  uniform int seedDust;
-  uniform vec2 statsStars;
-  uniform vec2 statsDust;
-  uniform float knotMean;
-  uniform float knotThreshold;
-  uniform float knotCap;
-  uniform float sigmaDust;
-  uniform float fade;
+  uniform sampler2D scatter;
+  uniform sampler2D hii;
+  uniform sampler2D rings;
+  uniform float phase[${PHASE_POINTS}];
   uniform float rLo;
   uniform float rHi;
   uniform float halfHeight;
-  uniform float discHeight;
-  uniform float lineHeight;
+  uniform float starsHeight;
   uniform float dustHeight;
+  uniform float hiiHeight;
+  uniform float digHeight;
   uniform float bulgeScale;
   uniform vec3 bulgeLight;
-  uniform vec3 extinction;
   uniform float gain;
   varying vec3 vWorld;
-
-  float sech2(float x) { float c = cosh(clamp(x, -30.0, 30.0)); return 1.0 / (c * c); }
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
   // from height y0 to y1 over a path ds: its share of height, over the ray's slope. A ray
   // running level through the layer takes the density at its height times the path.
   // tanh clamped: some drivers build it from exp, which overflows to NaN far outside the layer.
+  float sech2(float x) { float c = cosh(clamp(x, -30.0, 30.0)); return 1.0 / (c * c); }
   float safeTanh(float x) { return tanh(clamp(x, -10.0, 10.0)); }
   float column(float y0, float y1, float h, float ds) {
+    if (h <= 0.0) return 0.0;
     float dy = y1 - y0;
     if (abs(dy) < 1e-4 * h) return sech2(0.5 * (y0 + y1) / (2.0 * h)) / (4.0 * h) * ds;
     return abs(safeTanh(y1 / (2.0 * h)) - safeTanh(y0 / (2.0 * h))) * 0.5 * ds / abs(dy);
   }
 
-  // Where to read a layer over a step from p0 to p1: where it crosses the midplane, or else the
-  // step's middle, since a step that stays on one side holds little of a thin layer unless it
-  // runs level through it.
+  // Where to read the layers over a step from p0 to p1: where it crosses the midplane, or else the
+  // step's middle.
   vec3 nearestMidplane(vec3 p0, vec3 p1) {
     if (p0.y * p1.y < 0.0) return mix(p0, p1, p0.y / (p0.y - p1.y));
     return 0.5 * (p0 + p1);
@@ -181,40 +142,20 @@ const FRAGMENT = /* glsl */ `
   vec4 readPolar(sampler2D tex, vec2 rp) {
     return textureLod(tex, vec2((rp.x - rLo) / (rHi - rLo), rp.y / 6.28318531), 0.0);
   }
-
-  vec4 readPlane(sampler2D tex, vec3 p) { return readPolar(tex, polarOf(p)); }
-
-  float lattice(int x, int y, int seed) {
-    uint h = uint(x) * 0x27d4eb2du ^ uint(y) * 0x165667b1u ^ uint(seed) * 0x9e3779b1u;
-    h = (h ^ (h >> 15u)) * 0x85ebca6bu;
-    h = (h ^ (h >> 13u)) * 0xc2b2ae35u;
-    h ^= h >> 16u;
-    return float(h) / 2147483647.0 - 1.0;
+  vec3 readRing(float r, float row) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (row + 0.5) / ${RING_ROWS.count}.0), 0.0).rgb;
   }
 
-  float cellValue(int cx, int cy, int n, int m, int seed) {
-    int turns = int(floor(float(cx) / float(n)));
-    return lattice(cx - turns * n, cy - turns * m + ${LATTICE_LIFT}, seed);
-  }
-
-  float valueNoise(vec2 v, int n, int m, int seed) {
-    vec2 c = floor(v);
-    vec2 f = v - c;
-    vec2 s = f * f * (3.0 - 2.0 * f);
-    int x0 = int(c.x);
-    int y0 = int(c.y);
-    float a = cellValue(x0, y0, n, m, seed);
-    float b = cellValue(x0 + 1, y0, n, m, seed);
-    float cc = cellValue(x0, y0 + 1, n, m, seed);
-    float d = cellValue(x0 + 1, y0 + 1, n, m, seed);
-    return a + (b - a) * s.x + (cc - a) * s.y + (a - b - cc + d) * s.x * s.y;
-  }
-
-  float clumpNoise(float lnR, float angle, int seed, vec2 stats) {
-    float x = (angle - latCot * lnR) * float(latN) / 6.28318531;
-    float y = (lnR * latTan + angle) * float(latM) / 6.28318531;
-    float v = 0.7 * valueNoise(vec2(x, y), latN, latM, seed) + 0.3 * valueNoise(vec2(2.0 * x, 2.0 * y), 2 * latN, 2 * latM, seed + 1);
-    return (v - stats.x) / stats.y;
+  // regimes.ts's phaseAt, line for line: the table read linearly at |cos i|.
+  float phaseAt(float cosView) {
+    float x = clamp(abs(cosView), 0.0, 1.0) * float(${PHASE_POINTS - 1});
+    int k = min(int(floor(x)), ${PHASE_POINTS - 2});
+    float lo = phase[0];
+    float hi = phase[1];
+    for (int n = 0; n < ${PHASE_POINTS - 1}; n++) {
+      if (n == k) { lo = phase[n]; hi = phase[n + 1]; }
+    }
+    return lo + (hi - lo) * (x - float(k));
   }
 
   void main() {
@@ -230,54 +171,38 @@ const FRAGMENT = /* glsl */ `
     float tFar = min(min(tFar3.x, tFar3.y), tFar3.z);
     if (tFar <= tNear) discard;
 
+    // The scattered light this view receives: the disc's axis is y.
+    float scattering = phaseAt(dir.y);
     // Steps spaced geometrically from the camera: fine where the galaxy is close and large on
     // screen, coarse where it is far and small. Even steps along a 60 kpc ray pass straight
     // over a disc 0.3 kpc thick a few hundred parsecs away.
     float tStart = max(tNear, 0.01);
     float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(${STEPS}));
-    // A per-pixel offset into the first step turns banding into fine noise.
+    // A per-pixel offset into the first step turns banding into fine noise (the bulge's point sample).
     float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
     vec3 light = vec3(0.0);
     vec3 transmitted = vec3(1.0);
     for (int k = 0; k < ${STEPS}; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
-      // The disc's stars and the bulge at a jittered point in the step, times the step.
       vec3 p = origin + dir * (a + jitter * ds);
-      vec3 emitted = vec3(0.0);
-      if (length(p.xz) < rHi) emitted += readPlane(plane, p).rgb * sech2(p.y / (2.0 * discHeight)) / (4.0 * discHeight);
       float s = max(length(p), 0.02);
-      emitted += bulgeLight * bulgeScale / (6.28318531 * s * pow(s + bulgeScale, 3.0)) * 1.0e-6;
-      emitted *= ds;
+      vec3 emitted = bulgeLight * bulgeScale / (6.28318531 * s * pow(s + bulgeScale, 3.0)) * 1.0e-6 * ds;
 
-      // The midplane layer over the whole step, [a, a + ds].
-      // Most steps are far above or below it and skip it: beyond 20 scale heights, sech²(y / 2h)
-      // is under 10⁻⁸.
+      // The disc's layers over the whole step, [a, a + ds], read where the step is nearest the midplane.
       vec3 p0 = origin + dir * a;
       vec3 p1 = p0 + dir * ds;
       vec3 depth = vec3(0.0);
-      if (p0.y * p1.y <= 0.0 || min(abs(p0.y), abs(p1.y)) < 20.0 * max(lineHeight, dustHeight)) {
-        float lineColumn = column(p0.y, p1.y, lineHeight, ds);
-        float dust = column(p0.y, p1.y, dustHeight, ds);
-        vec2 rp = polarOf(nearestMidplane(p0, p1));
-        if (rp.x < rHi) {
-          vec4 thin = readPolar(layer, rp);
-          // The clump factors, each times its ring's norm (clumpFactors in regimes.ts).
-          float fl = 1.0;
-          float fd = 1.0;
-          if (clumped > 0.5) {
-            vec4 k = textureLod(norms, vec2((rp.x - rLo) / (rHi - rLo), 0.5), 0.0);
-            float lnR = log(max(rp.x, 1e-3));
-            float s = 1.0 - exp(-(rp.x / fade) * (rp.x / fade));
-            float n = clumpNoise(lnR, rp.y, seedStars, statsStars);
-            float nd = clumpNoise(lnR, rp.y, seedDust, statsDust);
-            float excess = min(max(0.0, n - knotThreshold), knotCap);
-            fl = mix(1.0, (1.0 - s + s * excess / knotMean) * k.r, k.b);
-            fd = exp(sigmaDust * s * nd) * k.g;
-          }
-          emitted += thin.rgb * fl * lineColumn;
-          depth = thin.a * fd * dust * extinction;
-        }
+      vec2 rp = polarOf(nearestMidplane(p0, p1));
+      if (rp.x < rHi) {
+        float cStars = column(p0.y, p1.y, starsHeight, ds);
+        float cDust = column(p0.y, p1.y, dustHeight, ds);
+        float cHii = column(p0.y, p1.y, hiiHeight, ds);
+        float cDig = column(p0.y, p1.y, digHeight, ds);
+        emitted += readPolar(plane, rp).rgb * cStars;
+        emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
+        emitted += readPolar(hii, rp).rgb * cHii + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
+        depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
       }
       // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself.
       vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
@@ -301,19 +226,18 @@ interface Props {
 
 /**
  * The field regime: the whole galaxy's light as a volume, ray-marched per pixel through
- * the published fields (RENDER_PLAN R3, R4, M4). No particles and no sample: at the scale
- * of a galaxy the light is unresolved, and a smooth integral is what it is. Its colour is the
- * model's filter integral (/api/render, S38): the viewer sends the set's curves and draws the
- * responses over the white point.
+ * the published components (RENDER_PLAN R3, R4, M4; BUILD_II V1, V2). No particles and no sample:
+ * at the scale of a galaxy the light is unresolved, and a smooth integral is what it is. Its colour
+ * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
+ * responses over the white point, each component in the layer the model names.
  */
 export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" }: Props) {
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
-  const fields = FIELDS.filter((n) => declared(n));
-  const names = [...fields, ...SCALARS.filter((n) => declared(n))];
+  const names = SCALARS.filter((n) => declared(n));
   const lit = Boolean(declared("disc_surface_brightness") && declared("disc_light_temperature"));
   const key = lit ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
-  const frame = loaded.value && fields.every((n) => n in loaded.value!.arrays) ? loaded.value : null;
+  const frame = loaded.value ?? null;
   const renderKey = lit ? JSON.stringify([filterSet, WHITE_KELVIN, query]) : null;
   const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), WHITE_KELVIN, query, signal));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
@@ -322,24 +246,23 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     const R = frame?.header.grid.axes.R;
     const phi = frame?.header.grid.axes.phi;
     const white = light ? whiteOf(light.header) : null;
-    // The render covers the whole grid; a frame from another grid (a model switch in flight) waits.
-    if (!frame || !R || !phi || !light || !white || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) return null;
-    const scalars = frame.header.scalars;
-    const { data, layer, norms, clumps, width, height } = planeTexture({
+    const layers = light?.header.layers;
+    // The render covers the whole grid; a frame from another grid (a model switch in flight) waits, and
+    // so does a render without the layers its components are spread through.
+    if (!frame || !R || !phi || !light || !white || !layers?.stars || light.header.window.R.n !== R.n || light.header.window.phi.n !== phi.n) {
+      return null;
+    }
+    const a = light.arrays;
+    const { data, scatter, hii, rings, width, height } = planeTexture({
       R,
       phi,
-      stars: light.arrays.stars,
-      line: light.arrays.halpha,
-      extinction: light.arrays.dust_extinction_v,
+      stars: a.stars,
+      hii: a.halpha_hii,
+      dig: a.halpha_dig,
+      extinction: a.dust_extinction,
+      scattered: a.dust_scattered,
+      thermal: a.dust_thermal,
       white,
-      contrast: frame.arrays.pattern_density_contrast as Float64Array | undefined,
-      arms:
-        scalars.pitch_angle !== undefined && scalars.arm_multiplicity !== undefined
-          ? { pitchDeg: scalars.pitch_angle, multiplicity: scalars.arm_multiplicity }
-          : undefined,
-      // The world's seed, so a galaxy keeps its clumps from view to view and a new seed moves them;
-      // kept non-negative, since the shader's hash takes it as a uint.
-      seed: (Number(query.world_seed ?? 0) | 0) & 0x3fffffff,
     });
     const polar = (values: Float32Array) => {
       const texture = new DataTexture(values, width, height, RGBAFormat, FloatType);
@@ -350,49 +273,36 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
       texture.needsUpdate = true;
       return texture;
     };
-    const plane = polar(data);
-    const thin = polar(layer);
-    const ringNorms = new DataTexture(norms, width, 1, RGBAFormat, FloatType);
-    ringNorms.minFilter = LinearFilter;
-    ringNorms.magFilter = LinearFilter;
-    ringNorms.needsUpdate = true;
+    const ringTexture = new DataTexture(rings, width, RING_ROWS.count, RGBAFormat, FloatType);
+    ringTexture.minFilter = LinearFilter;
+    ringTexture.magFilter = LinearFilter;
+    ringTexture.wrapS = ClampToEdgeWrapping;
+    ringTexture.wrapT = ClampToEdgeWrapping;
+    ringTexture.needsUpdate = true;
 
-    const discHeight = (scalars.thin_disc_scale_height ?? 300) / 1000;
-    const bulgeScale = scalars.bulge_scale_radius ?? 0;
-    // Tall enough for the disc's light to have fallen away and the bulge to have faded.
-    const halfHeight = Math.max(10 * discHeight, 12 * bulgeScale, 2);
+    const bulgeScale = frame.header.scalars.bulge_scale_radius ?? 0;
+    const halfHeight = marchHalfHeight(layers, bulgeScale);
+    // The phase table, or isotropic scattering where the render carries none.
+    const table = light.header.components?.dust_scattered?.phase?.factor;
+    const phase = table && table.length === PHASE_POINTS ? table.map(Number) : new Array<number>(PHASE_POINTS).fill(1);
 
     const material = new ShaderMaterial({
       uniforms: {
-        plane: { value: plane },
-        layer: { value: thin },
-        norms: { value: ringNorms },
-        clumped: { value: clumps ? 1 : 0 },
-        latCot: { value: clumps?.stars.cot ?? 0 },
-        latTan: { value: clumps?.stars.tan ?? 0 },
-        latN: { value: clumps?.stars.n ?? 1 },
-        latM: { value: clumps?.stars.m ?? 1 },
-        seedStars: { value: clumps?.stars.seed ?? 0 },
-        seedDust: { value: clumps?.dust.seed ?? 0 },
-        statsStars: { value: new Vector2(clumps?.stars.mean ?? 0, clumps?.stars.std ?? 1) },
-        statsDust: { value: new Vector2(clumps?.dust.mean ?? 0, clumps?.dust.std ?? 1) },
-        knotMean: { value: Math.max(clumps?.knotMean ?? 1, 1e-12) },
-        knotThreshold: { value: CLUMPS.knotThreshold },
-        knotCap: { value: CLUMPS.knotCap },
-        sigmaDust: { value: CLUMPS.sigma.dust },
-        fade: { value: CLUMPS.fade },
+        plane: { value: polar(data) },
+        scatter: { value: polar(scatter) },
+        hii: { value: polar(hii) },
+        rings: { value: ringTexture },
+        phase: { value: phase },
         rLo: { value: R.lo },
         rHi: { value: R.hi },
         halfHeight: { value: halfHeight },
-        discHeight: { value: discHeight },
-        // The line and the dust lie in a layer thinner than the stars: HII regions and dust within
-        // ~50–100 pc of the midplane against the thin disc's ~300 [recall]. Kept as a share of the
-        // published thin disc; a stated display choice (the diffuse layer's own height is V2's).
-        lineHeight: { value: discHeight * LINE_HEIGHT },
-        dustHeight: { value: discHeight * DUST_HEIGHT },
+        // The model's layers (the render header): a missing one is height 0, which draws nothing.
+        starsHeight: { value: layers.stars ?? 0 },
+        dustHeight: { value: layers.dust ?? 0 },
+        hiiHeight: { value: layers.halpha_hii ?? 0 },
+        digHeight: { value: layers.halpha_dig ?? 0 },
         bulgeScale: { value: Math.max(bulgeScale, 1e-3) },
         bulgeLight: { value: new Vector3(...bulgeLight(light.header.bulge, white)) },
-        extinction: { value: new Vector3(...CHANNEL_EXTINCTION) },
         gain: { value: 0 },
       },
       vertexShader: VERTEX,
@@ -404,7 +314,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
     box.frustumCulled = false;
     return box;
-  }, [frame, light, query.world_seed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [frame, light]);
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -438,9 +348,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb" 
     () => () => {
       if (!mesh || !offscreen) return;
       const material = mesh.material as ShaderMaterial;
-      (material.uniforms.plane.value as DataTexture).dispose();
-      (material.uniforms.layer.value as DataTexture).dispose();
-      (material.uniforms.norms.value as DataTexture).dispose();
+      for (const name of ["plane", "scatter", "hii", "rings"]) (material.uniforms[name].value as DataTexture).dispose();
       material.dispose();
       mesh.geometry.dispose();
       offscreen.target.dispose();

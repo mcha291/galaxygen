@@ -76,7 +76,8 @@ closes the project.
 | 35 | `s35` | `5d4cb7885dd0` | **queued** — filled in by S36 |
 | 36 | `s36` | `f6ec37e5435f` | **queued** — filled in by S37 |
 | 37 | `s37` | `12c5f80497cc` | **queued** — filled in by S38 |
-| 38 | `s38` | TBD | **queued** — S39 fills the SHA in |
+| 38 | `s38` | `80fbf33f9394` | **queued** — filled in by S39 |
+| 39 | `s39` | TBD | **queued** — S40 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -238,8 +239,11 @@ git tag -a s36 f6ec37e5435f6f3ecda2796df848855909cae82d -m "S36: mechanical feed
 # S37 — Audit III: the second build re-read, re-derived, its greens conditioned, two windows read blind.
 git tag -a s37 12c5f80497ccdc441e7df0c9612c4bf5911b0c4f -m "S37: Audit III"
 
-# S38 — Audit III's fixes; V1: /api/render, the eight-band SED, the filter sets, the gate to 1e-4 mag. SHA filled in by S39.
-git tag -a s38 "$(git rev-list -1 --grep='^Merge S38 into main' main)" -m "S38: V1, the filter integral"
+# S38 — Audit III's fixes; V1: /api/render, the eight-band SED, the filter sets, the gate to 1e-4 mag.
+git tag -a s38 80fbf33f93940532a26f29193345f122f3bdaa27 -m "S38: V1, the filter integral"
+
+# S39 — V2: the dust in three components, the line in two layers, the frame's balance and profile. SHA filled in by S40.
+git tag -a s39 "$(git rev-list -1 --grep='^Merge S39 into main' main)" -m "S39: V2, volumetric emission and emitting dust"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
