@@ -860,6 +860,7 @@ class Service:
             key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
+        census = _named(census)  # S40: every row named by (cell, index)
         kept = None
         if level:
             census, kept = _in_children(census, "cloud", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
@@ -893,7 +894,7 @@ class Service:
             "columns": columns,
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
     def _clusters(self, q: Query) -> Response:
         """The star-cluster census of one window (S33): the clusters of every level-0 cell the window meets,
@@ -932,6 +933,7 @@ class Service:
             d.name for st in (stage, nebular, bubbles) for d in st.publishes
             if d.kind.domain == "object" and d.of == "cluster" and d.name in census
         ]
+        census = _named(census)  # S40: every row named by (cell, index)
         kept = None
         if level:
             census, kept = _in_children(census, "cluster", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
@@ -962,7 +964,7 @@ class Service:
             "columns": columns,
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
     def _remnants(self, q: Query) -> Response:
         """The supernova-remnant census of one window (S36): the remnants of every level-0 cell the window meets,
@@ -988,6 +990,7 @@ class Service:
             key, parents, lambda wanted: _bubbles.materialise_remnants(out.fields, R, seed, constants, wanted),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.of == "remnant" and d.name in census]
+        census = _named(census)  # S40: every row named by (cell, index)
         kept = None
         if level:
             census, kept = _in_children(census, "remnant", R, _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=level), level)
@@ -1010,7 +1013,7 @@ class Service:
             "columns": columns,
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns]), ran)
+        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
     def _render(self, q: Query) -> Response:
         """The components through the viewer's filters (RENDER_PHYSICS §§2, 3a; S38, V1).
@@ -1288,12 +1291,23 @@ class Service:
 
 
 
+def _named(census: Any) -> Any:
+    """The census with each row's name as two int64 columns, ``cell`` and ``index``: the level-0 cell it was
+    drawn in and its place among that cell's rows - the path it was drawn on (D60), which a renderer seeds a
+    cloud's interior by (RENDER_PHYSICS 5a). Taken before any level filter, so a kept row keeps its name (S40)."""
+    cells = np.repeat(np.asarray([c for c, _ in census.counts], dtype=np.int64), [n for _, n in census.counts])
+    index = np.concatenate([np.arange(n, dtype=np.int64) for _, n in census.counts]) if census.counts else np.zeros(0, dtype=np.int64)
+    return _catalogue.Catalogue.of({**census, "cell": cells, "index": index}, census.counts)
+
+
 def _in_children(census: Any, prefix: str, R: np.ndarray, children: Sequence[int], level: int) -> tuple[Any, int]:
     """A census's rows inside the level-``level`` ``children`` asked for, by each row's own position
-    (``<prefix>_radius``, ``<prefix>_azimuth``) within its level-0 cell; the counts stay the cells'."""
+    (``<prefix>_radius``, ``<prefix>_azimuth``) within its level-0 cell. The counts are recomputed from the rows
+    kept, so the header's cells describe the body (until S40 they stayed the unfiltered cells')."""
     wanted = set(children)
     keep = np.zeros(census.size, dtype=bool)
     offset = 0
+    counts: list[tuple[int, int]] = []
     for cell, count in census.counts:
         r = np.asarray(census[f"{prefix}_radius"])[offset:offset + count]
         phi = np.asarray(census[f"{prefix}_azimuth"])[offset:offset + count]
@@ -1301,8 +1315,11 @@ def _in_children(census: Any, prefix: str, R: np.ndarray, children: Sequence[int
             cid = _catalogue.child_id(cell, level, qq)
             if cid in wanted:
                 keep[offset:offset + count] |= _catalogue._within(r, phi, {}, R, cell, level, qq)
+        kept_here = int(keep[offset:offset + count].sum())
+        if kept_here:
+            counts.append((int(cell), kept_here))
         offset += count
-    return _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, census.counts), int(keep.sum())
+    return _catalogue.Catalogue.of({n: np.asarray(v)[keep] for n, v in census.items()}, counts), int(keep.sum())
 
 
 def _span(lo: float, width: float, n: int, a: float, b: float, *, wrap: bool) -> tuple[int, int]:

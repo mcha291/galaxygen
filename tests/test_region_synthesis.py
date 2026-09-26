@@ -93,3 +93,21 @@ def test_a_census_is_the_same_at_every_level(svc, path, key):
     assert len(rows_at[0]) > 10  # 58 clouds and 42 clusters at S40
     for level in (1, 2, 3):
         assert rows_at[level] == rows_at[0], (path, level)
+
+
+@pytest.mark.parametrize("path", ["/api/clouds", "/api/clusters", "/api/remnants"])
+def test_every_census_row_is_named_and_the_header_counts_the_body(svc, path):
+    """S40: each row carries its (cell, index) - the path the viewer seeds a cloud's interior by - and a level filter
+    recomputes the header's per-cell counts from the rows it keeps (until S40 they stayed the unfiltered cells':
+    257 counted against 155 returned for the clouds of r 7-9, phi 0-0.4 at level 2)."""
+    window = _window(7.0, 9.0, 0.0, 0.4)
+    _, base = _get(svc, path, f"{window}&level=0")
+    named0 = set(zip(np.asarray(base["cell"]).tolist(), np.asarray(base["index"]).tolist()))
+    for level in (0, 2):
+        h, a = _get(svc, path, f"{window}&level={level}")
+        n = len(a["cell"])
+        assert sum(h["cells"]["counts"]) == n
+        cells = np.asarray(a["cell"])
+        for cell, count in zip(h["cells"]["ids"], h["cells"]["counts"]):
+            assert int((cells == cell).sum()) == count
+        assert set(zip(cells.tolist(), np.asarray(a["index"]).tolist())) <= named0  # a kept row keeps its name
