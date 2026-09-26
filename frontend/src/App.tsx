@@ -13,8 +13,7 @@ import { SystemView } from "./system/SystemView";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber, runHash } from "./workflow/logic";
-import { EXPERIMENTAL_INPUTS, useWorkflow } from "./workflow/useWorkflow";
-import { ExperimentBar } from "./workflow/ExperimentBar";
+import { useWorkflow } from "./workflow/useWorkflow";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
 
@@ -33,10 +32,6 @@ export function App() {
   const [field, setField] = useState<string>(PHOTOMETRIC);
   const [preset, setPreset] = useState<Preset>("oblique");
   const [systemStar, setSystemStar] = useState<StarName | null>(null);
-  // Bottom-bar experiments ride on top of the workflow's input vector, outside its locks:
-  // they are for exploring a value, and every request is keyed by the vector, so changing
-  // one simply asks for a different galaxy.
-  const [experiments, setExperiments] = useState<Record<string, number>>({});
   const [charts, setCharts] = useState(false);
   const [exposure, setExposure] = useState(0); // photometric exposure, in stops
 
@@ -46,7 +41,7 @@ export function App() {
     return () => abort.abort();
   }, [wf.model]);
 
-  const query = useMemo(() => (wf.query ? { ...wf.query, ...experiments } : null), [wf.query, experiments]);
+  const query = wf.query;
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
   const last = wf.state?.cat.checkpoints.length ?? 0;
   // Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only.
@@ -215,17 +210,10 @@ export function App() {
         </ErrorBoundary>
       </main>
 
-      {/* The design's bottom bar: experimental inputs on the left, the other slot empty for now. */}
+      {/* The design's bottom bar. Its left slot held two experimental amplitude sliders until S26
+          derived the amplitudes (D175); both slots are empty until a control earns one. */}
       <footer className={styles.footer}>
-        <span className={styles.footLeft}>
-          {wf.state && (
-            <ExperimentBar
-              inputs={EXPERIMENTAL_INPUTS.map((n) => wf.state!.cat.inputs.get(n)).filter((d) => !!d) as never}
-              values={experiments}
-              onChange={(name, value) => setExperiments((e) => ({ ...e, [name]: value }))}
-            />
-          )}
-        </span>
+        <span className={styles.footLeft} />
         <span className={styles.footRight}>
           <button type="button" className={styles.footToggle} aria-pressed={charts} onClick={() => setCharts((c) => !c)}>
             preview charts {charts ? "on" : "off"}

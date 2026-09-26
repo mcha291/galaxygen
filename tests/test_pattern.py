@@ -13,7 +13,7 @@ import pytest
 from galaxy.core.grids import GridSpec
 from galaxy.run import run
 from galaxy.specs import spec
-from galaxy.stages.pattern import ARM_MULTIPLICITIES, shear_rate
+from galaxy.stages.pattern import ARM_MULTIPLICITIES, ArmPattern, shear_rate
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 
@@ -86,6 +86,23 @@ def test_arm_multiplicity_is_drawn_from_the_closed_set(model):
     seen = {run(model, {"pattern_seed": s}, grid=COARSE).fields["arm_multiplicity"] for s in range(30)}
     assert seen <= set(ARM_MULTIPLICITIES)
     assert len(seen) > 1, "a draw that never varies is not a draw"
+
+
+def test_the_contrast_averages_to_one_around_every_ring(model):
+    """The pattern redistributes, it does not add: Σ(R, φ)/Σ(R) has mean 1 on every ring (BUILD_II Phase 1b's gate).
+
+    BUILD_II cited this test as already existing; it did not (S26). On the grid and analytically.
+    """
+    o = out(model)
+    field = np.asarray(o.fields["pattern_density_contrast"])
+    assert field.shape == (o.grid.R.size, o.grid.phi.size)
+    assert np.all(field >= 0.0)
+    assert np.allclose(field.mean(axis=1), 1.0, atol=1e-9)
+    shape = ArmPattern.from_fields(o.fields)
+    assert shape is not None and not shape.flat
+    edges = np.linspace(0.0, 2.0 * np.pi, 13)
+    for R in (1.0, 3.0, 6.0, 12.0):
+        assert float(shape.sector_means(R, edges).mean()) == pytest.approx(1.0, abs=1e-9)
 
 
 def test_the_draw_dominates_the_pitch_angle(model):

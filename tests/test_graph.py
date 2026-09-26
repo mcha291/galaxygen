@@ -73,9 +73,10 @@ def test_production_graphs_hold(prod):
             "halo_mass": 1, "disc_spin": 1, "halo_assembly_z": 1, "baryon_retention": 1,
             "world_seed": 1,
             # S25 (D174): the pattern is checkpoint 3 and star formation 4, so the three
-            # star-formation controls, the two amplitude inputs and pattern_seed all moved.
+            # star-formation controls and pattern_seed moved. S26 (D175) removed the two
+            # experimental amplitude inputs: seven controls again.
             "infall_timescale": 4, "inside_out_index": 4, "migration_efficiency": 4,
-            "mergers": 2, "arm_amplitude": 3, "bar_amplitude": 3,
+            "mergers": 2,
             "pattern_seed": 3, "systems_seed": 5, "planets_seed": 6,
         }
     assert "graph" in graph.report(models, impls_, table)

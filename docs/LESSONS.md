@@ -841,3 +841,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [field][close] When the execution order and the checkpoint order come apart, the check that
   passes today is the one that fails at the next phase's first line. Move the checkpoint with the
   stage, let the hypotheses follow, and say what the reroll now discards (D174).
+
+## From S26 (BUILD_II Phase 1b)
+
+- [all] A summarised table is not a source. A reading agent returned "mean A₂ 0.22–0.28 by type"
+  from a lossy pass over a paper whose raw VizieR table, downloaded and reduced, reads mean 0.41 and
+  median 0.37 over 587 rows. When the source is a table, fetch the rows and count them (rule B8);
+  when it is a sentence, get it verbatim with its section number (D175).
+- [field] One criterion, two forms, a factor of two apart: the swing window written in the disc's
+  share of the rotation (the review's 1/f_d ≤ m ≤ 2/f_d) and the same window with the exponential
+  disc's local Σ prefer two-to-three and three-to-four arms for the same galaxy. Choose the form
+  before reading either number, say why, and publish the other's reading beside it (B12, D175).
+- [field] Match a single-harmonic pattern to the observable it can produce. Real arms carry higher
+  harmonics, so their m = 2 Fourier amplitude (0.21) is half the amplitude their arm–interarm
+  contrast implies (0.48); a one-cosine model matched to the Fourier number draws arms of 0.4 mag
+  where 1.1 is seen. Name which observable a derived constant is like-for-like with (D175).
+- [all] A plan's `[verified: tests/…]` can cite a test that does not exist. BUILD_II's Phase 1b gate
+  cited the ring-mean contrast test; nothing asserted it until S26 wrote it. Read the cited test
+  before trusting the gate, as S25 read A1's cited file (D173, D175).

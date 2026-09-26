@@ -45,7 +45,46 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 
 SHEAR_RADIUS_IN_SCALE_LENGTHS = 2.2  # ruling 3: take the scaled form
-ARM_MULTIPLICITIES: tuple[float, ...] = (2.0, 4.0)
+# The closed set an arm number is drawn from since S26 (D175): two to ARM_MULTIPLICITY_MAX. Until
+# then a coin toss between 2 and 4. m = 1 is excluded (level0, ARM_MULTIPLICITY_MAX's about line).
+ARM_MULTIPLICITIES: tuple[float, ...] = (2.0, 3.0, 4.0, 5.0, 6.0)
+BAR_CONTRAST_CAP = 0.9  # a cosine bar above this empties its inter-bar sector (BAR_CONTRAST_LOG_SCATTER)
+
+
+def swing_window(disc_dominance: float, shear: float, x_low: float, x_high: float) -> tuple[float, float, float]:
+    """(X₂, m_lo, m_hi): Toomre's X for m = 2 in the Mestel form, and the arm numbers the disc amplifies.
+
+    For a flat curve κ² = 2v²/R² and a disc whose own rotation is v_d² = 2πGΣR (Mestel), so
+    X_m = κ²R/(2πGΣm) = 2/(m f_d) with f_d = v_d²/v² the disc's share of the rotation — the
+    published ``disc_dominance``. Vigorous amplification for x_low < X/Γ < x_high therefore means
+    X₂/(Γ x_high) ≤ m ≤ X₂/(Γ x_low), the review's 1/f_d ≲ m ≲ 2/f_d at Γ = 1 [verified:
+    Sellwood & Masters 2022 §4.2.3.2]. The alternative is the local form with the exponential
+    disc's own Σ(2.2 R_d), which reads X₂ = 2.7 at the defaults and prefers m = 3–4 there; it
+    increases outward (D'Onghia 2015: two arms at 4.5 kpc, five or six at R₀), so it needs a
+    radius chosen by hand, and the global form was chosen before either number was read (D175).
+    """
+    f_d = min(max(float(disc_dominance), 1e-6), 1.0)
+    gamma = float(shear) if math.isfinite(shear) and shear > 0.0 else 1.0
+    x2 = 2.0 / f_d
+    return x2, x2 / (gamma * x_high), x2 / (gamma * x_low)
+
+
+def swing_weight(m: float, m_lo: float, m_hi: float, x_high: float, x_dead: float, x_low: float, x_floor: float) -> float:
+    """How strongly a disc amplifies an m-fold pattern, 0–1: 1 inside [m_lo, m_hi], falling
+    log-linearly to 0 where X reaches x_dead (fewer arms than m_lo) or x_floor (more than m_hi)."""
+    if m_lo <= m <= m_hi:
+        return 1.0
+    if m < m_lo:  # X above the vigorous range: dead at X = x_dead, i.e. at m_lo × x_high / x_dead
+        m_dead = m_lo * x_high / x_dead
+        return float(min(max(math.log(m / m_dead) / math.log(m_lo / m_dead), 0.0), 1.0)) if m > m_dead else 0.0
+    m_dead = m_hi * x_low / x_floor  # X below the range: dead at X = x_floor
+    return float(min(max(math.log(m_dead / m) / math.log(m_dead / m_hi), 0.0), 1.0)) if m < m_dead else 0.0
+
+
+def contrast_amplitude(mag: float) -> float:
+    """The cosine amplitude whose peak-to-trough ratio is an arm–interarm contrast of ``mag`` magnitudes."""
+    c = 10.0 ** (0.4 * max(float(mag), 0.0))
+    return (c - 1.0) / (c + 1.0)
 
 
 def shear_rate(R: np.ndarray, v: np.ndarray, at: float) -> float:
@@ -87,18 +126,59 @@ SHEAR = _scalar(
 )
 
 
+SWING_X = _scalar(
+    "swing_x", "Swing-amplification X for two arms", "dimensionless",
+    "Toomre's X = κ²R/(2πGΣm) at m = 2 in the Mestel form, 2/disc_dominance (S26, D175): the "
+    "first link of §4b's chain, disc dominance → the arms the disc can amplify. 3.3 at the "
+    "defaults, against the vigorous range of 1–2 the level-0 window holds: a two-armed pattern "
+    "is at the edge of what this disc amplifies, three arms are inside it.",
+)
+
+SWING_ARM_MIN = _scalar(
+    "swing_arm_min", "Fewest arms the disc amplifies", "count",
+    "swing_x over the shear rate times the window's upper edge: the m at which X/Γ leaves the vigorous range on the "
+    "high side. Not an integer — the pattern stage draws the integer around it. 1.7 at the defaults; "
+    "3.9 for a disc that holds 30% of its rotation at a shear of 0.87 (the flocculent regime).",
+)
+
+SWING_ARM_MAX = _scalar(
+    "swing_arm_max", "Most arms the disc amplifies", "count",
+    "swing_x over the shear rate times the window's lower edge: the m at which X/Γ leaves the range on the low side. 3.4 "
+    "at the defaults, the review's 2/f_d [verified: Sellwood & Masters 2022 §4.2.3.2].",
+)
+
+ARM_CONTRAST_MEAN = _scalar(
+    "arm_contrast_mean", "Mean arm amplitude the disc supports", "dimensionless",
+    "The cosine amplitude of the arm–interarm contrast the disc's own dynamics predict before the "
+    "residual is drawn: the flocculent class's arm–interarm contrast plus the two-fold pattern's "
+    "amplification weight times the way to the grand-design class's, then 10^(0.4 mag) turned into (C−1)/(C+1). 0.48 "
+    "at the defaults (the grand-design value, since m = 2 sits inside the vigorous range), falling "
+    "to 0.33 for a halo-dominated disc. Derived, so it lives in the derived half (D55).",
+)
+
+
 def compute_bar(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
+    c = ctx.constants
     R_d = float(ctx.fields["disc_scale_length_spin"])
     at = SHEAR_RADIUS_IN_SCALE_LENGTHS * R_d
     total = np.asarray(ctx.fields["circular_velocity"])
     halo = np.asarray(ctx.fields["halo_circular_velocity"])
     v_total = float(np.interp(at, R, total))
     v_halo = float(np.interp(at, R, halo))
+    dominance = 1.0 - (v_halo / v_total) ** 2 if v_total > 0.0 else 0.0
+    shear = shear_rate(R, total, at)
+    x2, m_lo, m_hi = swing_window(dominance, shear, float(c["SWING_X_LOW"]), float(c["SWING_X_HIGH"]))
+    coherence = swing_weight(2.0, m_lo, m_hi, float(c["SWING_X_HIGH"]), float(c["SWING_X_DEAD"]), float(c["SWING_X_LOW"]), float(c["SWING_X_FLOOR"]))
+    floc, grand = float(c["ARM_INTERARM_FLOCCULENT"]), float(c["ARM_INTERARM_GRAND_DESIGN"])
     return {
-        "bar_half_length": float(ctx.constants["BAR_LENGTH_RATIO"]) * R_d,
-        "disc_dominance": 1.0 - (v_halo / v_total) ** 2 if v_total > 0.0 else 0.0,
-        "shear_rate": shear_rate(R, total, at),
+        "bar_half_length": float(c["BAR_LENGTH_RATIO"]) * R_d,
+        "disc_dominance": dominance,
+        "shear_rate": shear,
+        "swing_x": x2,
+        "swing_arm_min": m_lo,
+        "swing_arm_max": m_hi,
+        "arm_contrast_mean": contrast_amplitude(floc + (grand - floc) * coherence),
     }
 
 
@@ -106,13 +186,18 @@ BAR = IMPLEMENTATIONS.register(
     Stage(
         id="bar", slot="bar", checkpoint=3,
         about=(
-            "The bar's size and the disc's shear — everything about the pattern that has no draw "
-            "in it. Split from the seeded half so that row 15 stays reproducible (D55)."
+            "The bar's size, the disc's shear, and what the disc can amplify — everything about the "
+            "pattern that has no draw in it. Split from the seeded half so that row 15 stays "
+            "reproducible (D55). Since S26 it publishes the swing-amplification window and the mean "
+            "arm amplitude, derived from disc_dominance and shear_rate (D175)."
         ),
         compute=compute_bar,
-        reads_constants=("BAR_LENGTH_RATIO",),
+        reads_constants=(
+            "BAR_LENGTH_RATIO", "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
+            "ARM_INTERARM_GRAND_DESIGN", "ARM_INTERARM_FLOCCULENT",
+        ),
         requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
-        publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR),
+        publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN),
     )
 )
 
@@ -147,8 +232,12 @@ PITCH_ANGLE = _scalar(
 
 ARM_MULTIPLICITY = _scalar(
     "arm_multiplicity", "Number of spiral arms", "count",
-    "Swing amplification sets a preferred m and real galaxies at similar shear still differ, so "
-    "§4b assigns this a seeded draw rather than an input. Two arms or four; nobody would choose it.",
+    "Swing amplification sets a preferred m and real galaxies at similar X still differ, so §4b "
+    "assigns this a seeded draw rather than an input. Since S26 the draw is weighted by what the "
+    "disc amplifies — odds 1 for m between swing_arm_min and swing_arm_max, falling to 0 where X "
+    "reaches the window's dead edge or its floor — over 2 to 6 (D175). At the "
+    "defaults two or three arms carry 29% each, four 23%, five 13%, six 6%; a disc holding 30% of "
+    "its rotation draws four to six, the flocculent regime. Until S26 a coin toss between 2 and 4.",
     provenance="seeded",
 )
 
@@ -156,14 +245,17 @@ ARM_MULTIPLICITY = _scalar(
 ARM_CONTRAST = _scalar(
     "arm_contrast", "Spiral arm amplitude A", "dimensionless",
     "Fractional density contrast of the arms, Σ(R, φ) = Σ(R)[1 + A cos m(φ − ln R / tan p)]. "
-    "Experimental: taken from the arm_amplitude input while its value is explored (debt #23).",
+    "Since S26 the mean is derived (arm_contrast_mean, from the disc's own amplification) and the "
+    "residual drawn on pattern_seed as the grand-design class's scatter in arm–interarm contrast "
+    "(§4b verdict C, D175); until then an experimental input (D171, debt #23).",
     provenance="seeded",
 )
 
 BAR_CONTRAST = _scalar(
     "bar_contrast", "Bar amplitude", "dimensionless",
     "Fractional density contrast of the bar, an m = 2 term tapered off beyond the bar's "
-    "half-length. Experimental: taken from the bar_amplitude input (debt #23).",
+    "half-length. Since S26 drawn log-normally on pattern_seed about the S4G barred sample's median "
+    "with its 16th–84th-percentile width, capped at 0.9 (D175); until then an experimental input (D171).",
     provenance="seeded",
 )
 
@@ -265,10 +357,28 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
     pitch_mean = float(ctx.constants["PITCH_SHEAR_INTERCEPT"]) + float(ctx.constants["PITCH_SHEAR_SLOPE"]) * (gamma - 1.0)
     pitch = ctx.rng("pattern_seed", "pitch").normal(pitch_mean, float(ctx.constants["PITCH_SCATTER"]))
 
-    arms = ARM_MULTIPLICITIES[int(ctx.rng("pattern_seed", "arms").integers(len(ARM_MULTIPLICITIES)))]
+    # The arm number: the closed set, weighted by what this disc amplifies (D175). The odds are
+    # a derived function of the window; the draw is the residual real galaxies show at one X.
+    c = ctx.constants
+    m_lo, m_hi = float(ctx.fields["swing_arm_min"]), float(ctx.fields["swing_arm_max"])
+    x_high, x_dead, x_low, x_floor = (float(c[k]) for k in ("SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_LOW", "SWING_X_FLOOR"))
+    choices = tuple(m for m in ARM_MULTIPLICITIES if m <= float(c["ARM_MULTIPLICITY_MAX"]))
+    weights = np.array([swing_weight(m, m_lo, m_hi, x_high, x_dead, x_low, x_floor) for m in choices])
+    if not weights.sum() > 0.0:  # nothing inside or near the window: the m nearest its centre
+        weights = np.array([1.0 if i == int(np.argmin(np.abs(np.log(np.array(choices)) - 0.5 * (math.log(max(m_lo, 1e-9)) + math.log(max(m_hi, 1e-9)))))) else 0.0 for i in range(len(choices))])
+    u = float(ctx.rng("pattern_seed", "arms").random())
+    arms = float(choices[min(int(np.searchsorted(np.cumsum(weights) / weights.sum(), u, side="right")), len(choices) - 1)])
     pitch_angle = float(np.clip(pitch, 1.0, 60.0))
-    arm_contrast = float(ctx.inputs["arm_amplitude"])
-    bar_contrast = float(ctx.inputs["bar_amplitude"])
+    # The amplitudes: derived means, seeded residuals (§4b verdict C). The arms' residual is drawn
+    # in magnitudes of arm–interarm contrast about the derived mean; the bar's log-normally.
+    floc, grand = float(c["ARM_INTERARM_FLOCCULENT"]), float(c["ARM_INTERARM_GRAND_DESIGN"])
+    coherence = swing_weight(2.0, m_lo, m_hi, x_high, x_dead, x_low, x_floor)
+    mag = floc + (grand - floc) * coherence + ctx.rng("pattern_seed", "arm_contrast").normal(0.0, float(c["ARM_INTERARM_SCATTER"]))
+    arm_contrast = contrast_amplitude(mag)
+    bar_contrast = min(
+        math.exp(math.log(float(c["BAR_CONTRAST_MEDIAN"])) + ctx.rng("pattern_seed", "bar_contrast").normal(0.0, float(c["BAR_CONTRAST_LOG_SCATTER"]))),
+        BAR_CONTRAST_CAP,
+    )
     shape = ArmPattern(arm_contrast, bar_contrast, arms, pitch_angle, a_bar)
 
     return {
@@ -292,12 +402,14 @@ PATTERN = IMPLEMENTATIONS.register(
         ),
         compute=compute_pattern,
         reads_seeds=("pattern_seed",),
-        reads_inputs=("arm_amplitude", "bar_amplitude"),
         reads_constants=(
             "FAST_BAR_RATIO", "FAST_BAR_SCATTER",
             "PITCH_SHEAR_INTERCEPT", "PITCH_SHEAR_SLOPE", "PITCH_SCATTER",
+            "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR", "ARM_MULTIPLICITY_MAX",
+            "ARM_INTERARM_GRAND_DESIGN", "ARM_INTERARM_FLOCCULENT", "ARM_INTERARM_SCATTER",
+            "BAR_CONTRAST_MEDIAN", "BAR_CONTRAST_LOG_SCATTER",
         ),
-        requires=("bar_half_length", "shear_rate", "circular_velocity"),
+        requires=("bar_half_length", "shear_rate", "circular_velocity", "swing_arm_min", "swing_arm_max"),
         publishes=(COROTATION, PATTERN_SPEED, PITCH_ANGLE, ARM_MULTIPLICITY, ARM_CONTRAST, BAR_CONTRAST, DENSITY_CONTRAST),
     )
 )

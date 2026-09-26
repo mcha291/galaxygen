@@ -370,7 +370,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (27, 36)  # 26 / 36 at S24; 27 / 35 at S22, 43 / 18 on the port, 32 / 18 at S20. S25 opened #80 (row 15, D174)
+    assert progress.debt_counts(text) == (26, 37)  # 27 / 36 at S25 (#80 opened, D174); 26 / 36 at S24; 27 / 35 at S22; S26 discharged #23 (D175)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -393,8 +393,10 @@ def test_the_register_carries_the_s10_findings():
         "73. ~~**The number S20 recorded for `disc_radial_spread` is not on the screen as a number",
         # S22's three-way map, and one entry of each verdict, so a silent re-ruling fails here.
         # It fired at S25, as designed: #3 and #26 moved permanent -> carried under the rewritten
-        # A1 (D173) and #80 opened (D174); the rows below are the map as re-ruled, not re-read.
-        "| **permanent** | 2, 15, 17, 21, 22, 23, 25, 34, 45, 46, 48, 65 | 12 |",
+        # A1 (D173) and #80 opened (D174); S26 discharged #23 (D175). The rows below are the map
+        # as re-ruled, not re-read.
+        "| **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |",
+        "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
         "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80 | 15 |",
