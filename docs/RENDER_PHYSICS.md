@@ -33,8 +33,13 @@ sections below as a description of an empty slate.
   `[verified: model/galaxy/stages/light.py; D165]`. A **surface** quantity, as
   §4 permits at galaxy scale.
 - Dust as `dust_surface_density` and `dust_extinction_v` (A_V face-on) from the
-  `ism` stage `[verified: model/galaxy/stages/ism.py; D163]`. Absorption only:
-  no albedo, no thermal emission, no PAH (BUILD_II Phase 7).
+  `ism` stage `[verified: model/galaxy/stages/ism.py; D163]`. Since S31 (BUILD_II
+  Phase 7) the `dust` stage adds, per radius, the scattering optical depth and
+  E(B − V), the scalar asymmetry g, the absorbed starlight, the dust temperature
+  from the heating balance, the infrared emission and its total, G₀ and the PAH
+  fraction; the absorbed and emitted powers are the §7 energy-balance test
+  `[verified: model/galaxy/stages/dust.py; tests/test_dust.py]`. Galaxy-scale
+  surface quantities, face-on.
 - Per-region determinism: `/api/region` materialises any (R, φ) window as the
   same stars a full sweep would give, a star named by `(cell, index)` at a
   sample size `[verified: model/galaxy/stages/systems.py; D60, D167]`. This is
