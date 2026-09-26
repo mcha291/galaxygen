@@ -174,7 +174,7 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("vir
 
 CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
                          "Where its cloud's embedded source sits: the cloud's centre plus the source's offset, "
-                         "so a cluster lies inside the cloud that made it and on the side its pillars point away from.")
+                         "so a cluster lies inside the cloud that made it, where the ionization front starts.")
 CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
                           "The embedded source's azimuth. The source's direction is read from the outward radial "
                           "direction toward increasing azimuth, a convention the cloud census does not state.")

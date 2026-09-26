@@ -251,6 +251,15 @@ Clusters are their own class, not a label on stars.
 massive end of the same mass function, so one mechanism produces both, and the
 η relation becomes a check on it rather than a separate assertion.
 
+Since S33 (BUILD_II Phase 11) the cluster is an object class (`of="cluster"`)
+served by `/api/clusters`: one per cloud past its embedded phase, named by the
+cloud's cell and its `cloud_cluster_index`, placed at the cloud's embedded source
+(`cloud_source_angle` read from the outward radial direction toward increasing
+azimuth `[inferred]`), with `cluster_ionizing_photons` and `cluster_wind_luminosity`
+the IMF integrals at its age times its mass `[verified:
+model/galaxy/stages/clusters.py; tests/test_clusters.py]`. The `seed` is the
+cell-and-index path, as for clouds.
+
 ### 5c. On-demand resampling
 
 The star catalogue is a sample, not a census. Zooming to pillar scale needs stars
