@@ -505,7 +505,7 @@ def test_stages_and_checkpoints_are_the_graph(api, model):
 
 def test_inputs_publishes_every_default_and_every_range(api, model):
     payload = api.handle("/api/inputs", {"model": [model.name]}).json()
-    assert len(payload["controls"]) == 9 and len(payload["seeds"]) == 4
+    assert len(payload["controls"]) == 7 and len(payload["seeds"]) == 4  # 9 from S23 to S26, when the two amplitude inputs went (D175)
     for control in payload["controls"]:
         assert control["default"] is not None, f"{control['name']} has no default (rule A5)"
         assert control["lo"] is not None and control["hi"] < math.inf

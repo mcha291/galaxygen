@@ -289,6 +289,106 @@ LEVEL0: dict[str, Constant] = {
         "'effectively seeded rather than derived' [verified: GALAXY_INPUTS.md 5], which is exactly "
         "what the S-spread measurement checks.",
     ),
+    # --- swing amplification: the arm number and the arms' strength (S26, BUILD_II Phase 1b, D175) ---
+    "SWING_X_LOW": Constant(
+        1.0,
+        "dimensionless",
+        "Lower edge of the X range over which swing amplification is vigorous, for a flat rotation "
+        "curve. X = kappa^2 R / (2 pi G Sigma m); 'in a disk with Gamma = 1 and Q = 1.2, the "
+        "amplification factor may vary from less than 2 for X > 3 to greater than 100 for 1 < X < 2' "
+        "[verified: Sellwood & Masters 2022, ARA&A 60, 73, section 4.2.3.2]. The peak sits at X = 1.5 "
+        "[verified: D'Onghia 2015, ApJL 808, L8, citing Toomre 1981 and Athanassoula 1984]. The edges "
+        "scale with the shear rate: the vigorous range is 0.5-1.5 at Gamma = 0.5 and 1.5-4 at 1.5 "
+        "[verified: the same section], so the stage tests X/Gamma against these edges - exact at the "
+        "lower edge for all three quoted shears, a third short at the upper edge for Gamma = 1.5 "
+        "[inferred]. In the Mestel form X_m = 2/(m f_d), the same range reads 1/f_d <= m <= 2/f_d for "
+        "the arm number, which the review states outright [verified: the same section].",
+    ),
+    "SWING_X_HIGH": Constant(
+        2.0,
+        "dimensionless",
+        "Upper edge of the vigorous range, 'greater than 100 for 1 < X < 2' [verified: Sellwood & "
+        "Masters 2022 section 4.2.3.2]. Between here and SWING_X_DEAD the pattern stage's odds for an "
+        "arm number fall log-linearly to zero [inferred: the shape; the two edges are the source's].",
+    ),
+    "SWING_X_DEAD": Constant(
+        3.0,
+        "dimensionless",
+        "Where amplification has stopped: 'less than 2 for X > 3' [verified: Sellwood & Masters 2022 "
+        "section 4.2.3.2]. An arm number whose X sits here or beyond is not drawn.",
+    ),
+    "SWING_X_FLOOR": Constant(
+        0.5,
+        "dimensionless",
+        "Below SWING_X_LOW the odds fall log-linearly to zero here. 0.5 is the lower edge of the "
+        "vigorous range the source quotes for Gamma = 0.5 [verified: Sellwood & Masters 2022 section "
+        "4.2.3.2]; using it as the floor at Gamma = 1 is the inference, since the source gives no "
+        "lower cut-off for a flat curve [inferred]. It bounds how many arms a halo-dominated disc can "
+        "carry: X_m < floor is a wavelength the disc cannot amplify at all.",
+    ),
+    "ARM_MULTIPLICITY_MAX": Constant(
+        6.0,
+        "count",
+        "The most arms one pattern is allowed: beyond six a disc is flocculent and no single m "
+        "describes it [inferred]. D'Onghia 2015 expects 'a total of 5-6 spiral arms, lower in "
+        "strength, in the solar neighborhood' for the Milky Way [verified: D'Onghia 2015, ApJL 808, "
+        "L8], so six is the multi-arm regime her own estimate reaches, not an invention. m = 1 is "
+        "excluded: 'the overwhelming majority of spirals in galaxies have two- or three-fold rotational "
+        "symmetry' [verified: Sellwood & Masters 2022, abstract].",
+    ),
+    "ARM_INTERARM_GRAND_DESIGN": Constant(
+        1.14,
+        "mag",
+        "Arm-interarm contrast of grand-design spirals in the old stellar disc: 1.14 +/- 0.44 mag at "
+        "3.6 micron, 13 galaxies, all Hubble types [verified: Elmegreen et al. 2011, ApJ 737, 32, "
+        "section 4.2 and Table 2, the class means recomputed from the table's 46 rows in "
+        "tests/test_s26_rulings.py]. The stage turns a contrast C = 10^(0.4 mag) into the cosine "
+        "amplitude A = (C - 1)/(C + 1), because the pattern is one harmonic and its whole "
+        "arm-interarm contrast is that amplitude. The alternative is the arms' m = 2 Fourier "
+        "amplitude, 0.21 +/- 0.08 for the same 13 galaxies (Table 2): a real arm carries higher "
+        "harmonics that a single cosine does not, so matching the Fourier amplitude would draw arms "
+        "with a 0.4 mag contrast where 1.1 is observed. Chosen before the number was read (D175).",
+    ),
+    "ARM_INTERARM_FLOCCULENT": Constant(
+        0.75,
+        "mag",
+        "Arm-interarm contrast of flocculent spirals in the old stellar disc: 0.75 +/- 0.35 mag at "
+        "3.6 micron, 13 galaxies [verified: Elmegreen et al. 2011 section 4.2 and Table 2]. The "
+        "16-galaxy multi-band subsample reads 0.44 +/- 0.13 for flocculents at 3.6 micron [verified: "
+        "the same paper, Table 3]; the larger sample is used and the smaller is the named alternative. "
+        "The arms' mean contrast runs from here to ARM_INTERARM_GRAND_DESIGN with the two-fold "
+        "pattern's amplification weight - a halo-dominated disc, which cannot amplify m = 2, gets "
+        "flocculent arms [inferred: the link; the two end points are the source's].",
+    ),
+    "ARM_INTERARM_SCATTER": Constant(
+        0.44,
+        "mag",
+        "Dispersion of the arm-interarm contrast about its class mean, the grand-design class's 0.44 "
+        "mag [verified: Elmegreen et al. 2011 section 4.2]; the multiple-arm class reads 0.28 and the "
+        "flocculent 0.35. Drawn on pattern_seed as the residual a derived mean cannot carry "
+        "(GALAXY_INPUTS.md 4b, verdict C).",
+    ),
+    "BAR_CONTRAST_MEDIAN": Constant(
+        0.374,
+        "dimensionless",
+        "Median of the bar's maximum normalised m = 2 Fourier density amplitude, A_2^max, over the 587 "
+        "barred S4G galaxies at 3.6 micron: median 0.374, mean 0.412, 16th-84th percentiles 0.214-0.609 "
+        "[verified: Diaz-Garcia et al. 2016, A&A 587, A160, VizieR J/A+A/587/A160 tablea3.dat column "
+        "A2, read and reduced on 2026-09-26 (D175)]. A pure cos 2phi bar has A_2 equal to its "
+        "amplitude, so this is the bar_contrast like for like. The median rather than the mean because "
+        "the distribution is skewed (maximum 1.3). Elmegreen et al. 2011's 13 grand designs read a "
+        "peak m = 2 of 0.43 +/- 0.12 (Table 2), the named alternative. Not derived from the bar's "
+        "length: the correlation is real ('long bars are typically strong', the same paper's abstract) "
+        "but bar_half_length is a constant times R_d in this model, so it has no lever (debt #21).",
+    ),
+    "BAR_CONTRAST_LOG_SCATTER": Constant(
+        0.52,
+        "dimensionless",
+        "Half the natural-log width of A_2^max's 16th-84th percentile range, ln(0.609/0.214)/2 "
+        "[verified: the same VizieR table]. Drawn log-normally on pattern_seed and capped at 0.9, since "
+        "an amplitude at 1 empties the inter-bar sector and a Fourier amplitude above 1 describes a "
+        "peaked bar no single cosine can (the table's top 2% exceed 0.9).",
+    ),
     "SOLAR_METALLICITY": Constant(
         0.0142,
         "dimensionless",

@@ -4,9 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { loadDeclarations, type Query } from "../api";
 import { type Checkpoint, type FlowState, drawSeed, firstDifference, reopen } from "./logic";
 
-/** Inputs being explored from the bottom bar (RENDER_PLAN M1); kept out of the checkpoint rail. */
-export const EXPERIMENTAL_INPUTS = ["arm_amplitude", "bar_amplitude"];
-
 export interface Workflow {
   model: string;
   models: string[];
@@ -43,8 +40,6 @@ export function useWorkflow(initialModel = "basic"): Workflow {
     loadDeclarations(model, abort.signal)
       .then(({ stages, inputs }) => {
         const cat = flow.catalogue(stages, inputs);
-        // Experimental inputs live on the bottom bar, not in a checkpoint's controls.
-        for (const cp of cat.checkpoints) cp.inputs = cp.inputs.filter((name: string) => !EXPERIMENTAL_INPUTS.includes(name));
         const fresh = flow.initial(cat) as FlowState;
         const before = previous.current;
         setModels(stages.models);

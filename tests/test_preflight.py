@@ -24,7 +24,7 @@ def test_production_preflights(prod):
     assert rep.ok, rep.problems
     assert any("UNSET default: 0" in n for n in rep.notes)  # S3 set mergers, the last one
     assert any("controls without a range: 0" in n for n in rep.notes)  # S2 finished them
-    assert any("controls: 9 of 12" in n for n in rep.notes)  # the seven, plus two experimental pattern amplitudes
+    assert any("controls: 7 of 12" in n for n in rep.notes)  # the seven again since S26 (D175); 9 with the two experimental amplitudes from S23
     assert "OK" in preflight.report(*prod)
 
 

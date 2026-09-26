@@ -28,8 +28,8 @@ PLAN_INPUTS = {
     "infall_timescale",
     "inside_out_index",
     "migration_efficiency",
-    "arm_amplitude",  # experimental, RENDER_PLAN M1
-    "bar_amplitude",
+    # arm_amplitude and bar_amplitude were experimental inputs (RENDER_PLAN M1, D171) from S23
+    # to S26, when their means were derived and their residuals seeded (D175).
     "mergers",
     "world_seed",
     "pattern_seed",
@@ -40,7 +40,7 @@ PLAN_INPUTS = {
 
 def test_input_vector_is_closed():
     assert set(INPUTS) == PLAN_INPUTS
-    assert len(controls()) == 9 <= INPUT_CEILING  # the seven, plus the two experimental pattern amplitudes
+    assert len(controls()) == 7 <= INPUT_CEILING  # the seven; 9 from S23 to S26 with the two experimental amplitudes (D175)
     assert len(seeds()) == 4
     assert [i.name for i in INPUTS.values() if i.kind == "events"] == ["mergers"]
 
