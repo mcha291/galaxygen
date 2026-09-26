@@ -35,8 +35,7 @@ model/galaxy/models/  level0 (constants), basic, azimuthal (BASIC's tuple, sfh -
                 DIG) + cluster_survival + globular_clusters (S34: Lamers dissolution, seeded on world_seed) + **bubbles**
                 (S36: Weaver bubbles per cluster, the remnant census of="remnant", porosity; feedback.py) · cp6 formation,
                 habitable_zone, planets; massive_stars.py; remnants.py; photometry (population_light/_wind)
-model/galaxy/data/    parsec_isochrones.npz (396 × 137 818 rows; U B V R I J H K, M_bol, present mass; fetch_parsec.py)
-model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…)
+model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…) · data/ parsec_isochrones.npz (396 × 137 818 rows)
 model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–31; modes pointwise / statistical /
                 qualitative / sweep; MISSES one ledger), convergence, performance; api/: service (ROUTES)
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); rail and toggle from /api/stages
