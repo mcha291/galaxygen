@@ -225,7 +225,9 @@ def test_the_harris_catalogue_arithmetic():
     lum = sum(10.0 ** (-0.4 * (v - 4.81)) for v in HARRIS_MV if v is not None)
     assert lum == pytest.approx(spec.HARRIS_LUMINOSITY_V, rel=1e-12)
     q = {x.n: x for x in spec.QUANTITIES}[spec.ROW_GC_SYSTEM_MASS]
-    assert (q.lo, q.hi) == (0.9 * lum, 1.9 * lum) and q.mode == "statistical" and q.field == "gc_system_mass"
+    # S42: the blind window (Audit III, adopted by the owner): M/L_V 1.6-2.2 on this sum, rounded to the source's precision.
+    assert (q.lo, q.hi) == (2.7e7, 4.0e7) and q.mode == "statistical" and q.field == "gc_system_mass"  # (0.9, 1.9) x lum until S42
+    assert 1.6 * lum == pytest.approx(2.746e7, rel=1e-3) and 2.2 * lum == pytest.approx(3.776e7, rel=1e-3)
     assert 2.0 * lum == pytest.approx(3.4324e7, rel=1e-4)  # the catalogue's own M/L = 2, the named alternative
 
 
