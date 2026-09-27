@@ -25,4 +25,71 @@ two audit branches were never merged, and S22's merge carries `s22`). What Fable
 "finish the record"): paste the listing under D161, mark every row applied (correcting `s06`'s SHA), and tick S22's board
 row from ◐ to ☑ — GALAXY_PLAN §5d's last "done means" item is met.
 
-## 2. Built on this branch (filled in as the work proceeds)
+## 2. Built on this branch (Opus 5.5, 2026-09-27)
+
+**Ruling 2 — rows 32 and 34 take the blind windows (b275c1e).** `docs/AUDIT_III_BLIND.md` is the blind report, verbatim.
+- **Row 32**: [2.7e7, 4.0e7] M☉, the Harris sum 1.716e7 L☉ at Baumgardt, Sollima & Hilker 2020's M/L_V ≈ 1.9 (§3.3,
+  quoted in `_HARRIS_BLIND_READ`); the old window (BHG16's 1.4 ± 0.5, 1.54–3.26e7) kept in the note as the record. Still a
+  recorded miss (**#98**), its reason rewritten: 7.13e7 is 0.25 dex above the new top, 0.34 above the centre (0.47 above
+  the old centre); η M_halo 3.19e7 now falls *inside* the window, which sharpens #98's finding.
+- **Row 34**: McKee & Williams 1997's (2.6 ± 1.3)e53 s⁻¹ → [1.3e53, 3.9e53]; the model's 1.6527e53 **passes**. Its
+  recorded miss is removed with the reason written in its place (a miss that starts passing fails the run, #29);
+  **debt #100 stays open** on the 0.71 Q/SFR. Both texts carry the disclosure: the builder knew the model's number and
+  chose Bennett's window, the blind reader did not. `test_s22_rulings` adds row 34 to `joined_since` with its conditioning.
+- Pins: specs 11/20/5 → **12/19/5 of 36** (both models); `FAILED` loses 34; `DEBTS` loses 100 (the debt, not the row);
+  `test_globular_clusters` pins the new window and M/L 1.6–2.2 on the sum.
+
+**Ruling 1 — the forbidden lines from Byler et al. 2017's grid (644750b).**
+- `tools/fetch_nebular.py` → `model/galaxy/data/nebular_lines.npz` (16 KB) from FSPS `nebular/ZAU_ND_prsc.lines` at commit
+  `bd187a0d07dac17b55c4dc7c60d83f63694c1b4e` (PARSEC-ionized, dust-free; MIT, attributed in the README; the Byler et al.
+  reference checked on arXiv:1611.08305 — authors and DOI; units "Lsun/Q" and the file order read in FSPS's
+  `sps_setup.f90`, the interpolation in `add_nebular.f90`). Axes 11 log Z (−1.98…+0.2) × 10 ages (0.5–20 Myr) × 7 log U
+  (−4…−1); six lines kept (Hβ, [O III] 5007, Hα, [N II] 6583, [S II] 6716, 6731).
+- The nebular stage reads it per region at log(Z/Z☉) = its [α/H] (the stage's oxygen − 8.69), the cluster's age and the
+  region's own log U; trilinear in log L as FSPS does, **clamped at the edges** (FSPS extrapolates in Z and U). Publishes
+  `hii_{oiii_5007,nii_6583,sii_6716,sii_6731}_ratio` (line over the grid's own Hα, so the region's Case B Hα carries the
+  photon budget), per-ring `*_surface_brightness_hii` (the census's Hα-weighted ratio per ring, empty rings interpolated),
+  and `hbeta_surface_brightness_{hii,dig}` by the Case B decrement. The diffuse gas gets no forbidden line (named).
+- `/api/render`: components `lines_hii` (R, φ, filter; the regions' layer, placed by the contrast) and `lines_dig`
+  (R, filter; Hβ), each line through each curve at its own wavelength, per-line transmissions in the header;
+  `absent.lines` is now `[]`. The viewer sums them into the field's HII and diffuse layers, and colours each resolved
+  region by its own lines (`region.ts regionLineColour`; the HII row's spare slots 9–11). The inventory (`test_v4`) moves
+  `hii_balmer_decrement` and the four ratios to DRAWN.
+- **Recorded, not judged** (`test_nebular`): 26.4% of the default regions are richer than the grid's +0.2 dex and read the
+  edge; 2.6% are younger than 0.5 Myr and read the floor; every log U is inside. Hα-weighted [O III]/Hα 0.477, [N II]/Hα
+  0.131, [S II] 0.053 + 0.041; per ring [O III]/Hα 0.02 at 4 kpc → 0.72 at 12, [N II]/Hα 0.19 → 0.09 — the metallicity
+  gradient's direction. No acceptance row reads these; comparing them to Milky Way HII-region line ratios would need a
+  sourced target (candidate row or debt for Fable). `[inferred]` in the stage's docstring: the grid's gas carries its own
+  abundance pattern (N/O included) at n_H = 100 cm⁻³, not the model's published N/H, S/H or density.
+
+**Ruling 3 — HST WFC3 as a named instrument (17c57ef).**
+- `tools/fetch_filters.py` → `frontend/src/galaxy/instruments.json` (48 KB, generated, do not hand-edit): SVO's
+  `HST/WFC3_UVIS2.*` system throughputs, two sets — **WFC3** (F814W, F555W, F438W) and **WFC3 SHO** (F673N, F656N, F502N)
+  — each curve on 241 points, peak one; the largest resample error 1.07% of peak (F438W). SVO's acknowledgement and
+  references (read on its front page) in the README. SVO does not state air or vacuum: the tool records each line's share
+  both ways — the largest difference is F673N at [S II] 6716, 0.983 vs 0.958. Through the model: Hα 0.962 in F656N,
+  [O III] 0.903 in F502N, [S II] 0.98/0.86 in F673N, no [N II] in F656N (`test_render`).
+- **The PSF**: under either instrument set the stars are drawn with the Airy pattern of a circular aperture, per channel at
+  a radius in proportion to the filter's pivot (λ/D), J1 from its integral definition (vitest checks it against the power
+  series and finds the Rayleigh zero at 1.2197π). Float texture, so rings at 1% survive; sprite 25 px, the red core's first
+  dark ring at 0.16 of its radius — a display choice `[inferred]` (the view has no distance to the galaxy). HST's central
+  obscuration and its four spikes are not drawn. In the browser the rings are faint under the bloom at 0.48 kpc across;
+  the stars read slightly larger and redder-edged than under RGB. JWST (NIRCam + hexagonal PSF) is not built.
+- The render's query string carries the sampled curves (≈ 20 KB of URL per request for three 241-point curves); it
+  works against the stdlib server here, a note for a proxy with a shorter URL limit (the Azure deployment).
+
+## 4. What Fable owes for S42 (after S40 and S41 are closed and merged)
+
+1. Merge or rebase `session-42` onto the closed `session-41` if S40's or S41's review changed anything. Conflicts to
+   expect: `tests/test_v4.py` (the inventory; S42 moved five cluster columns to DRAWN), `frontend/src/galaxy/region.ts`
+   (the HII row's slots 9–11), `docs/HANDOFF_*`.
+2. **A decision recording the owner's rulings of 2026-09-27** (the four in the header, in the owner's words) and what S42
+   built on them: D184's grid fetched and read, A3-7's windows adopted (rows 32, 34), #108's instrument half built.
+3. The debt register: **#98** (row 32's reason now reads the new window), **#100** (row 34 passes, the debt stays open on
+   the 0.71 Q/SFR — or re-scope it), **#108** (the instrument half done; the per-filter dust half was V2's — discharge?).
+   Candidates: the line ratios have no acceptance target (a sourced Milky Way HII-region [N II]/Hα, [S II]/Hα or
+   [O III]/Hβ gradient would make one); a quarter of the regions read the grid's metal-rich edge; the diffuse gas's
+   forbidden lines (the grid does not model its field); JWST's set and PSF; HST's obscuration and spikes.
+4. D161's tag listing (§1), MANUAL_TODO rows marked applied with `s06`'s SHA corrected, S22 ◐ → ☑.
+5. Board row 42 if Fable makes one (rulings: the owner, 2026-09-27; build Opus 5.5), LESSONS, RESUMING/BRIEF, the close
+   ritual, merge `--no-ff`, push, `verify_clone`, delete this file.
