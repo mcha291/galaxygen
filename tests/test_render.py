@@ -55,7 +55,8 @@ from galaxy.stages.photometry import BANDS, PASSBANDS, band_nu_l_nu, lookup, loo
 
 ROOT = Path(__file__).resolve().parents[1]
 FILTERS = json.loads((ROOT / "frontend" / "src" / "galaxy" / "filters.json").read_text(encoding="utf-8"))
-SETS = FILTERS["sets"]
+INSTRUMENTS = json.loads((ROOT / "frontend" / "src" / "galaxy" / "instruments.json").read_text(encoding="utf-8"))
+SETS = {**FILTERS["sets"], **INSTRUMENTS["sets"]}  # the named instruments since S42 (tools/fetch_filters.py)
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 
 # The gate's tolerance, stated (module docstring), and what the second cut measured at S38.
@@ -669,7 +670,7 @@ def test_the_viewer_s_sets_are_curves_the_model_takes():
     for name, entry in SETS.items():
         parsed = spectra.parse_curves(entry["curves"])
         assert len(parsed) == 3, name
-        assert "[inferred]" in entry["about"] or "[inferred]" in FILTERS["about"], name
+        assert "[inferred]" in entry["about"] or "[verified: SVO" in entry["about"] or "[inferred]" in FILTERS["about"], name
     assert 1000.0 <= FILTERS["white"]["kelvin"] <= 100_000.0
     # The measured set (S39): the TIR box and J, H, K at the model's own band definitions.
     ir = spectra.parse_curves(IR)
@@ -754,3 +755,15 @@ def test_the_thermal_shape_carries_the_dust_stage_s_power(kelvin):
     share = spectra.thermal_share(lam, np.array(kelvin), 16.43, 155.9, 1.62)
     assert np.trapezoid(share, lam) == pytest.approx(1.0, abs=1e-6)
     assert np.all(spectra.thermal_share(lam[:5], np.array([np.nan, 0.0]), 16.43, 155.9, 1.62) == 0.0)
+
+
+def test_the_named_instrument_draws_the_lines_through_its_measured_curves(full):
+    """S42 (the owner's word on #108): WFC3's narrowband palette through the model. Each line lands in its own
+    channel at the measured curve's throughput there, and the Halpha filter holds no [N II]."""
+    header, arrays = render(full, "basic", "wfc3n", white="6500")
+    lines = header["components"]["lines_hii"]["lines"]
+    assert header["components"]["halpha_hii"]["transmission"][1] == pytest.approx(0.962, abs=2e-3)  # F656N at 6562.8 A
+    assert lines["oiii_5007"]["transmission"][2] == pytest.approx(0.903, abs=2e-3)  # F502N
+    assert lines["sii_6716"]["transmission"][0] > 0.95 and lines["sii_6731"]["transmission"][0] > 0.85  # F673N
+    assert lines["nii_6583"]["transmission"][1] < 0.02 and lines["hbeta"]["transmission"] == [0.0, 0.0, 0.0]
+    assert np.all(np.isfinite(arrays["stars"])) and all(v > 0 for v in header["white"]["response"])

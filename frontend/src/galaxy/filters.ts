@@ -4,6 +4,7 @@
 // exposure. Nothing here evaluates a spectrum (rule D5).
 
 import data from "./filters.json";
+import instruments from "./instruments.json";
 
 /** One filter's transmission, as the model's spectrum function takes it (stages/spectra.py). Å, air. */
 export type Curve =
@@ -16,12 +17,17 @@ export interface FilterSet {
   about: string;
   /** Red, green, blue: the display channel each filter is drawn in. */
   curves: Curve[];
+  /** A named instrument's point spread function (S42): the stars' sprite while its set is shown. */
+  psf?: { kind: "airy"; about: string };
+  /** Where a named instrument's curves came from, per filter (instruments.json, tools/fetch_filters.py). */
+  sources?: { filter: string; svo: string; pivot: number; fwhm: number; resample_error: number }[];
 }
 
-export type FilterSetName = "rgb" | "sho" | "hoo";
+// The named instruments (S42) come after the stand-ins: measured curves from the SVO Filter Profile Service.
+export type FilterSetName = "rgb" | "sho" | "hoo" | "wfc3" | "wfc3n";
 
 /** The sets the selector offers, in its order. */
-export const FILTER_SETS = data.sets as Record<FilterSetName, FilterSet>;
+export const FILTER_SETS = { ...data.sets, ...instruments.sets } as Record<FilterSetName, FilterSet>;
 export const FILTER_SET_NAMES = Object.keys(FILTER_SETS) as FilterSetName[];
 
 /** The white point's colour temperature, K, sent with every render: a display choice (filters.json). */

@@ -11,6 +11,7 @@ import { FieldVolume } from "./FieldVolume";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName } from "./filters";
+import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
@@ -122,6 +123,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
   const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
+  // A named instrument's filter set brings its point spread function to the stars (S42).
+  const spritePsf = useMemo(() => instrumentPsf(FILTER_SETS[filterSet]), [filterSet]);
   const [brightestSlider, setBrightestSlider] = useState(500);
   const brightestN = brightestOf(brightestSlider);
   // A column some models lack ([α/Fe] is the advanced chemistry's) offers no chip where the
@@ -216,7 +219,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
 
   return (
     <>
-      <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC}>
+      <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC} psf={spritePsf}>
         {mode === "field" && (
           <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} filterSet={filterSet} regionWindow={area} hiiFade={area ? weights.stars : 0} />
         )}

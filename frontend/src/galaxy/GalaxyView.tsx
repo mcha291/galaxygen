@@ -9,7 +9,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { extent } from "./positions";
-import { psfTexture } from "./psf";
+import { type SpritePsf, psfTexture } from "./psf";
 import { type ZoomRange, acrossOf, distanceOf, zoomOf } from "./zoom";
 import styles from "./GalaxyView.module.css";
 
@@ -51,6 +51,8 @@ interface Props {
   hdr?: boolean;
   /** The stars' colours are radiance, so they add rather than blend. */
   additive?: boolean;
+  /** A named instrument's sprite (S42); the default PSF without one. */
+  psf?: SpritePsf | null;
 }
 
 const FOV = 45;
@@ -61,7 +63,7 @@ const STAR_SPRITE_PX = 9;
  * The galaxy in 3D: drag to orbit, wheel to zoom towards the cursor, right-drag to pan.
  * It composites whatever it is given: the field as a child, star layers on top.
  */
-export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false }: Props) {
+export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null }: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
@@ -76,7 +78,7 @@ export function GalaxyView({ layers = [], reach: framing, children, preset, zoom
       >
         {children}
         {layers.map((layer, i) => (
-          <Stars key={i} layer={layer} additive={additive} />
+          <Stars key={i} layer={layer} additive={additive} psf={psf} />
         ))}
         {hdr && <HdrOutput />}
         <Picker layers={layers} />
@@ -249,7 +251,7 @@ function Picker({ layers }: { layers: StarLayer[] }) {
   return null;
 }
 
-function Stars({ layer, additive }: { layer: StarLayer; additive: boolean }) {
+function Stars({ layer, additive, psf }: { layer: StarLayer; additive: boolean; psf: SpritePsf | null }) {
   const opacity = layer.opacity ?? 1;
   return (
     // No pointer handlers: picking is the Picker's, in screen space.
@@ -260,11 +262,11 @@ function Stars({ layer, additive }: { layer: StarLayer; additive: boolean }) {
       </bufferGeometry>
       <pointsMaterial
         vertexColors
-        map={psfTexture()} // RENDER_PLAN R2: a point spread function, not a square
-        alphaTest={0.01}
+        map={psf?.texture ?? psfTexture()} // RENDER_PLAN R2: a point spread function, not a square
+        alphaTest={psf?.alphaTest ?? 0.01}
         // A star is a point at any distance, so its sprite keeps one size on screen: the PSF's wings
         // need about this many pixels for its bright core to stay near two.
-        size={STAR_SPRITE_PX}
+        size={psf?.size ?? STAR_SPRITE_PX}
         sizeAttenuation={false}
         // Field colours blend normally: overlapping stars adding up to white would paint a colour
         // the field declaration never gave (design brief §3). Radiance adds, because light does.
