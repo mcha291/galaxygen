@@ -78,6 +78,29 @@ row from ◐ to ☑ — GALAXY_PLAN §5d's last "done means" item is met.
 - The render's query string carries the sampled curves (≈ 20 KB of URL per request for three 241-point curves); it
   works against the stdlib server here, a note for a proxy with a shorter URL limit (the Azure deployment).
 
+## 3. The gate (2026-09-27, Opus 5.5; EXIT lines read from the logs)
+
+- `uv run python -m galaxy.specs`: **EXIT=0**; **12 pass / 19 fail / 5 not-yet-computable of 36** in both models (row 34
+  joined; all 19 failures recorded misses).
+- `uv run pytest -q`: **EXIT=0**.
+- vitest 16 files / 118 tests; `tsc -b` clean; the frontend build clean.
+- **In a browser** (a scratch server on :8018 serving the built `dist/`, stopped; :5173 untouched): SHO and HOO field and
+  region views draw with the lines (header `absent.lines` = []; `lines_hii` carries each line's transmission); WFC3 and
+  WFC3 SHO draw, the region's stars under the Airy sprite; no console errors.
+- `tools/timings.py`: **EXIT=0**; the render grew by the two line components, the clusters route by the four ratios:
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+clusters: one sector*    1.0695   0.0022 487.46     70,648  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.6253   0.0138 117.38  4,128,488  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+render: whole, rgb*      2.1545   0.2401   8.97  6,940,400  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      2.1370   0.2210   9.67     27,032  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+
+(Cold times up ~0.3–0.5 s against S41's run on the same machine; part of that is the grid's first load, part load on the
+machine — not investigated.)
+
 ## 4. What Fable owes for S42 (after S40 and S41 are closed and merged)
 
 1. Merge or rebase `session-42` onto the closed `session-41` if S40's or S41's review changed anything. Conflicts to
