@@ -119,6 +119,29 @@ export const BUDGET = { clouds: 128, hii: 64, shells: 64 } as const;
 export const OBJECT_FLOATS = 16;
 export const KIND = { cloud: 0, hii: 1, shell: 2 } as const;
 
+/** Each line's weight per display channel - its transmission through the channel's filter over the white point's
+ * response - by the model's line name (S42). */
+export type LineWeights = Record<string, readonly [number, number, number]>;
+/** The forbidden lines a region carries as ratios to its Hα (`hii_<line>_ratio`, the nebular stage's, S42). */
+export const FORBIDDEN_LINES = ["oiii_5007", "nii_6583", "sii_6716", "sii_6731"] as const;
+const HALPHA_ONLY: LineWeights = { halpha: [1, 1, 1] };
+
+/**
+ * One region's colour per unit Hα: Hα's weight, Hβ's over the region's Balmer decrement, and each forbidden line's
+ * times its ratio. A line the region or the filters lack adds nothing (a NaN ratio included).
+ */
+export function regionLineColour(clusters: Record<string, Col>, i: number, lines: LineWeights): [number, number, number] {
+  const out: [number, number, number] = [0, 0, 0];
+  const add = (w: readonly [number, number, number] | undefined, share: number) => {
+    if (!w || !Number.isFinite(share) || share <= 0) return;
+    for (let k = 0; k < 3; k += 1) out[k] += w[k] * share;
+  };
+  add(lines.halpha, 1);
+  add(lines.hbeta, 1 / num(clusters.hii_balmer_decrement, i));
+  for (const n of FORBIDDEN_LINES) add(lines[n], num(clusters[`hii_${n}_ratio`], i));
+  return out;
+}
+
 type Col = ArrayLike<number | bigint>;
 const num = (c: Col | undefined, i: number): number => (c ? Number(c[i]) : Number.NaN);
 
@@ -139,7 +162,8 @@ function scene(radius: number, azimuth: number, height: number): [number, number
  * The region's clouds, HII regions and bubble shells as the table the shader marches, within the budget.
  * - a cloud: its sphere, its seed path (cell, index), σ_s, its gradient, κ_V per kpc from the census's central
  *   A_V through a uniform sphere (τ over the diameter), and the cavity its cluster's Strömgren sphere carves;
- * - an HII region: the Strömgren sphere at its cluster, its Hα emissivity per volume in L☉ pc⁻³;
+ * - an HII region: the Strömgren sphere at its cluster, its Hα emissivity per volume in L☉ pc⁻³, and its colour per
+ *   unit Hα from all its lines through the filters (`regionLineColour`, S42);
  * - a shell: the bubble's sphere, its shell emissivity in L☉ pc⁻³, its thickness.
  * Lengths from the routes are in pc except positions (kpc); a row with a non-finite size is skipped.
  */
@@ -149,6 +173,7 @@ export function packObjects(
   extinctionV: number,
   budget: { clouds: number; hii: number; shells: number } = BUDGET,
   remnants: Record<string, Col> = {},
+  lines: LineWeights = HALPHA_ONLY,
 ): RegionObjects {
   type Obj = { weight: number; row: number[] };
   const pick = (list: Obj[], n: number) => list.sort((a, b) => b.weight - a.weight).slice(0, n);
@@ -189,7 +214,8 @@ export function packObjects(
     const rs = num(clusters.hii_stromgren_radius, i) / 1000;
     const eps = num(clusters.hii_halpha_emissivity, i) * ERG_S_CM3_TO_LSUN_PC3;
     if (rs > 0 && Number.isFinite(eps) && eps > 0) {
-      hiiList.push({ weight: eps * rs ** 3, row: [x, y, z, rs, KIND.hii, num(clusters.cell, i), num(clusters.index, i), 0, eps, 0, 0, 0, 0, 0, 0, 0] });
+      const colour = regionLineColour(clusters, i, lines);
+      hiiList.push({ weight: eps * rs ** 3, row: [x, y, z, rs, KIND.hii, num(clusters.cell, i), num(clusters.index, i), 0, eps, ...colour, 0, 0, 0, 0] });
     }
     const rb = num(clusters.bubble_radius, i) / 1000;
     const thick = num(clusters.bubble_shell_thickness, i) / 1000;

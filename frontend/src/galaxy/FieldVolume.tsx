@@ -25,7 +25,7 @@ import {
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, WHITE_KELVIN, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { RING_ROWS, type RegionWindow, marchHalfHeight, planeTexture } from "./regimes";
+import { marchHalfHeight, planeTexture, RING_ROWS, summed, type RegionWindow } from "./regimes";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -269,8 +269,9 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       R,
       phi,
       stars: a.stars,
-      hii: a.halpha_hii,
-      dig: a.halpha_dig,
+      // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
+      hii: summed(a.halpha_hii, a.lines_hii),
+      dig: summed(a.halpha_dig, a.lines_dig),
       extinction: a.dust_extinction,
       scattered: a.dust_scattered,
       thermal: a.dust_thermal,

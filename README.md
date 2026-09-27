@@ -64,6 +64,16 @@ for these tables:
 - Chen et al. (2019) — the YBC bolometric corrections, as the CMD output header cites them
 - Maíz Apellániz (2006) and Bessell (1990) — the UBVRIJHK photometric system, likewise
 
+**Nebular line grid.** `model/galaxy/data/nebular_lines.npz` is derived from the Cloudy
+line grid of Byler, N., Dalcanton, J. J., Conroy, C. & Johnson, B. D. 2017, ApJ
+(doi:10.3847/1538-4357/aa6c66, arXiv:1611.08305), as
+FSPS ships it (`nebular/ZAU_ND_prsc.lines`, PARSEC-ionized, no dust in the region), at
+commit `bd187a0d07dac17b55c4dc7c60d83f63694c1b4e` of <https://github.com/cconroy20/fsps>
+(MIT License, Copyright (c) 2009-2021 Charlie Conroy & contributors; FSPS: Conroy, Gunn &
+White 2009, ApJ, 699, 486; Conroy & Gunn 2010, ApJ, 712, 833). It keeps the grid's three
+axes and six lines (Hβ, [O III] 5007, Hα, [N II] 6583, [S II] 6716, 6731) as log L☉ per
+ionizing photon; `tools/fetch_nebular.py` regenerates it.
+
 **Massive-star tables** (`model/galaxy/stages/massive_stars.py`, entered row by row from
 the published tables): Sternberg, A., Hoffmann, T. L. & Pauldrach, A. W. A. 2003, ApJ,
 599, 1333, Table 1 (ionizing photon fluxes of O and early-B dwarfs); Martins, F.,

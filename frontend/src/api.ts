@@ -212,14 +212,21 @@ export interface RenderFrame {
     absent: { lines: string[]; why: string };
     stages: string[];
     /** Each component's vertical layer, kpc (S39): a sech²(z / 2h) / 4h profile at each scale height. */
-    layers?: { stars: number | null; dust: number | null; halpha_hii?: number | null; halpha_dig?: number | null };
+    layers?: {
+      stars: number | null;
+      dust: number | null;
+      halpha_hii?: number | null;
+      halpha_dig?: number | null;
+      lines_hii?: number | null;
+      lines_dig?: number | null;
+    };
     /** What each component reads and is; the scattered light's phase table rides here (S39). */
     components?: { dust_scattered?: { phase?: { cos_view: number[]; factor: number[] } } } & Record<string, unknown>;
     [key: string]: unknown;
   };
   /**
-   * Row-major: stars, halpha_hii, dust_scattered (R, φ, filter); halpha_dig, dust_extinction, dust_thermal
-   * (R, filter) (S39).
+   * Row-major: stars, halpha_hii, lines_hii, dust_scattered (R, φ, filter); halpha_dig, lines_dig, dust_extinction,
+   * dust_thermal (R, filter) (S39; the lines_ components since S42).
    */
   arrays: Record<string, Float32Array | Float64Array>;
 }

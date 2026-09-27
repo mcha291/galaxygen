@@ -37,6 +37,15 @@ export function balanced(response: number, white: number): number {
  * `dust_extinction`, 10^(−0.4 A_λ)): τ = −ln T, which the ray-march spreads through the dust's layer.
  * No dust, or a missing number, is no depth (rule B9: nothing is dimmed on a guess).
  */
+/** Two arrays of one shape added element by element (S42: a layer's lines summed); either alone if the other is absent. */
+export function summed(x?: ArrayLike<number>, y?: ArrayLike<number>): ArrayLike<number> | undefined {
+  if (!x || !y) return x ?? y;
+  if (x.length !== y.length) throw new Error(`summed: ${x.length} and ${y.length} values`);
+  const out = new Float32Array(x.length);
+  for (let i = 0; i < x.length; i += 1) out[i] = Number(x[i]) + Number(y[i]);
+  return out;
+}
+
 export function depthOf(transmission: number): number {
   const t = Number(transmission);
   return Number.isFinite(t) && t > 0 && t < 1 ? -Math.log(t) : 0;

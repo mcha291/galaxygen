@@ -28,7 +28,7 @@ import { type Census, type Query, type RenderFrame, loadClouds, loadRemnants, lo
 import { useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
-import { FIELD_SIGMA, MAX_OBJECTS, OBJECT_FLOATS, OCTAVES, packObjects, sortedFrom } from "./region";
+import { FIELD_SIGMA, type LineWeights, MAX_OBJECTS, OBJECT_FLOATS, OCTAVES, packObjects, sortedFrom } from "./region";
 import type { RegionWindow } from "./regimes";
 
 /** The most pixels the region is marched at (as FieldVolume's budget): the loop over objects runs per pixel. */
@@ -141,8 +141,9 @@ const FRAGMENT = /* glsl */ `
       if (!sphere(origin, dir, a.xyz, a.w, t0, t1)) continue;
       int kind = int(b.x + 0.5);
       if (kind == 1) {
-        // An HII region: uniform emissivity (L_sun/pc^3) over the chord in pc - brighter toward the limb for free.
-        light += trans * c.x * (t1 - t0) * 1000.0 * lineWeight;
+        // An HII region: uniform emissivity (L_sun/pc^3) over the chord in pc - brighter toward the limb for free -
+        // in its own colour per unit Halpha, every line it carries through the filters (S42).
+        light += trans * c.x * (t1 - t0) * 1000.0 * c.yzw;
       } else if (kind == 2) {
         // A shell: the chord through the sphere less the chord through its hollow.
         float i0, i1;
@@ -199,11 +200,18 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
   const built = useMemo(() => {
     if (!clouds || !clusters || !remnants || !rendered) return null;
     const scalars = (clouds.header.scalars ?? {}) as Record<string, number>;
-    const table = packObjects(clouds.columns, clusters.columns, Number(scalars.cloud_extinction_v ?? 0), undefined, remnants.columns);
-    if (!table.count) return null;
     const white = whiteOf(rendered.header) ?? [1, 1, 1];
-    const comps = (rendered.header.components ?? {}) as Record<string, { transmission?: number[]; extinction_ratio?: number[] }>;
+    const comps = (rendered.header.components ?? {}) as Record<
+      string,
+      { transmission?: number[]; extinction_ratio?: number[]; lines?: Record<string, { transmission: number[] }> }
+    >;
     const t = comps.halpha_hii?.transmission ?? [0, 0, 0];
+    // Each line's weight per channel: the model's transmission at its wavelength over the white point's (S42).
+    const weigh = (tr: number[]) => [0, 1, 2].map((k) => (white[k] > 0 ? (tr[k] ?? 0) / white[k] : 0)) as [number, number, number];
+    const lines: LineWeights = { halpha: weigh(t) };
+    for (const [name, entry] of Object.entries(comps.lines_hii?.lines ?? {})) lines[name] = weigh(entry.transmission);
+    const table = packObjects(clouds.columns, clusters.columns, Number(scalars.cloud_extinction_v ?? 0), undefined, remnants.columns, lines);
+    if (!table.count) return null;
     const x = comps.dust_extinction?.extinction_ratio ?? [1, 1, 1];
     const line = new Vector3(...[0, 1, 2].map((k) => (white[k] > 0 ? (t[k] ?? 0) / white[k] : 0)));
     const ratio = new Vector3(...[0, 1, 2].map((k) => x[k] ?? 1));

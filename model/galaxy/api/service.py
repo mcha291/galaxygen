@@ -85,10 +85,14 @@ MAX_CHILD_CELLS = 4096
 # read where the model publishes them and named as absent where it does not (rule B9).
 RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_light_temperature")
 RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
+# Every line but Halpha the render route draws (S42), by the model's line name: its HII-region field.
+RENDER_LINES_HII = tuple(f"{n}_surface_brightness_hii" for n in ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731"))
 RENDER_OPTIONAL = (
     "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
     # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
+    # The other lines (S42): Hbeta in both layers, the forbidden lines the grid gives the HII regions.
+    *RENDER_LINES_HII, "hbeta_surface_brightness_dig",
     # The dust's three components (S39, V2): extinction, scattering, thermal emission.
     "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
     "dust_temperature", "dust_infrared_surface_brightness",
@@ -1109,6 +1113,23 @@ class Service:
                          "pattern's density contrast (the same contrast the stars follow; it averages to 1, so each "
                          "ring keeps its published line) in the clouds' layer, where the regions' clusters are",
             }
+        # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
+        # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
+        # over lines, with each line's transmission in the header.
+        hii_lines = [n.removesuffix("_surface_brightness_hii") for n in RENDER_LINES_HII if n in f]
+        if hii_lines and "halpha_hii" in about:
+            shares = {n: _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS[n]) for n in hii_lines}
+            summed = sum(np.asarray(f[f"{n}_surface_brightness_hii"], dtype=float)[:, None] * shares[n] for n in hii_lines)
+            components.append(("lines_hii", summed[:, None, :] * placed[..., None]))
+            layers["lines_hii"] = layers["halpha_hii"]
+            about["lines_hii"] = {
+                "unit": "Lsun/pc2", "fields": [f"{n}_surface_brightness_hii" for n in hii_lines] + about["halpha_hii"]["fields"][1:],
+                "layer": "lines_hii",
+                "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
+                "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
+                         "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
+                         "summed, placed and layered as the regions' Halpha is",
+            }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
             components.append(("halpha_dig", dig[:, None] * halpha_share))
@@ -1118,6 +1139,16 @@ class Service:
                 "about": "the diffuse ionized gas's Halpha through each curve, axisymmetric as published, in its own "
                          "published layer: seen edge-on it is a thick glow that brightens toward the limb",
             }
+            if "hbeta_surface_brightness_dig" in f:
+                hbeta_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["hbeta"])
+                components.append(("lines_dig", np.asarray(f["hbeta_surface_brightness_dig"], dtype=float)[:, None] * hbeta_share))
+                layers["lines_dig"] = layers["halpha_dig"]
+                about["lines_dig"] = {
+                    "unit": "Lsun/pc2", "fields": ["hbeta_surface_brightness_dig", "dig_scale_height"], "layer": "lines_dig",
+                    "lines": {"hbeta": {"wavelength": _spectra.LINE_WAVELENGTHS["hbeta"], "transmission": hbeta_share.tolist()}},
+                    "about": "the diffuse gas's Hbeta through each curve, in the Halpha's layer; the diffuse gas carries no "
+                             "forbidden line (the grid does not model its field)",
+                }
         if "dust_extinction_v" in f:
             a_v = np.asarray(f["dust_extinction_v"], dtype=float)
             refs = _spectra.filter_references(curves)
@@ -1161,11 +1192,13 @@ class Service:
                          "dust stage's modified blackbody at the published temperature and its emissivity index, "
                          "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
             }
-        lined = "halpha_hii" in about or "halpha_dig" in about
-        absent = [n for n in _spectra.LINE_WAVELENGTHS if n != "halpha" or not lined]
+        drawn = {"halpha"} if ("halpha_hii" in about or "halpha_dig" in about) else set()
+        for name in ("lines_hii", "lines_dig"):
+            drawn |= set(about.get(name, {}).get("lines", {}))
+        absent = [n for n in _spectra.LINE_WAVELENGTHS if n not in drawn]
 
         # Per ring (R, filter) or placed around it (R, phi, filter).
-        per_ring_names = {"halpha_dig", "dust_extinction", "dust_thermal"}
+        per_ring_names = {"halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"}
         arrays: list[tuple[str, np.ndarray]] = []
         if level is None:
             r_min = q.number("r_min", R_axis.lo)
@@ -1223,8 +1256,8 @@ class Service:
                 "kelvin": white_k,
                 "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]],
             },
-            "absent": {"lines": absent, "why": "not published per cell: the collisionally excited lines wait on the "
-                                                "photoionization grid (D184), and Hbeta on the line list (section 3)"},
+            "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
+                                                "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(ran),
         }
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)

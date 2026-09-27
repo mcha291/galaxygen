@@ -273,8 +273,39 @@ def test_the_line_is_the_nebular_field_in_two_layers(full, model):
     assert layers["stars"] == layers["dust"] == pytest.approx(f["thin_disc_scale_height"] / 1000.0, rel=1e-15)
     for name, entry in header["components"].items():
         assert entry["fields"] and entry["about"] and entry["layer"] in layers, name
-    # The lines the model does not publish are named, not drawn dark (rule B9).
-    assert set(header["absent"]["lines"]) == {"hbeta", "oiii_5007", "sii_6716", "sii_6731", "nii_6583"}
+    # The lines the model does not publish are named, not drawn dark (rule B9): since S42 it publishes all six.
+    assert header["absent"]["lines"] == []  # Hbeta and the four forbidden lines until S42
+
+
+def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelengths(full, model):
+    """S42 (the owner's word on D184): the HII regions' Hbeta and forbidden lines, each through each curve at its
+    own wavelength, summed and placed as the regions' Halpha is; the diffuse gas's Hbeta per ring. Through the
+    Hubble palette's boxes [S II] lands in red, [O III] in blue, and nothing but Halpha in the Halpha box (the
+    [N II] line at 6583.5 A sits 6 A outside its 30 A)."""
+    header, arrays = render(full, model.name, "sho")
+    names = ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731")
+    f = scalars(full, model.name, *(f"{n}_surface_brightness_hii" for n in names), "hbeta_surface_brightness_dig",
+                "halpha_surface_brightness_hii", "pattern_density_contrast")
+    placed = np.maximum(f["pattern_density_contrast"], 0.0)
+    lines = header["components"]["lines_hii"]["lines"]
+    assert {n: lines[n]["transmission"] for n in names} == {
+        "hbeta": [0.0, 0.0, 0.0], "oiii_5007": [0.0, 0.0, 1.0], "nii_6583": [0.0, 0.0, 0.0],
+        "sii_6716": [1.0, 0.0, 0.0], "sii_6731": [1.0, 0.0, 0.0],
+    }
+    sii = (f["sii_6716_surface_brightness_hii"] + f["sii_6731_surface_brightness_hii"])[:, None] * placed
+    assert np.allclose(arrays["lines_hii"][..., 0], sii, rtol=1e-12, atol=0.0)
+    assert not arrays["lines_hii"][..., 1].any()
+    assert np.allclose(arrays["lines_hii"][..., 2], f["oiii_5007_surface_brightness_hii"][:, None] * placed, rtol=1e-12, atol=0.0)
+    assert not arrays["lines_dig"].any()  # Hbeta falls in none of the three boxes
+    assert header["layers"]["lines_hii"] == header["layers"]["halpha_hii"] and header["layers"]["lines_dig"] == header["layers"]["halpha_dig"]
+    # Through the broadband set Hbeta lands in B, in both layers.
+    header, arrays = render(full, model.name, "rgb")
+    b = header["components"]["lines_dig"]["lines"]["hbeta"]["transmission"]
+    assert b[2] == pytest.approx(0.4762, abs=1e-4) and b[2] > b[1] > b[0] and np.allclose(arrays["lines_dig"], f["hbeta_surface_brightness_dig"][:, None] * np.array(b), rtol=1e-12, atol=0.0)
+    # Every HII line is its ring's Halpha times a ratio the census's regions set: finite and non-negative.
+    for n in names:
+        x = f[f"{n}_surface_brightness_hii"]
+        assert np.all(np.isfinite(x) & (x >= 0.0)) and np.all((x > 0) <= (f["halpha_surface_brightness_hii"] > 0)), n
 
 
 # --- V2's gate (S39): the frame's energy balance and its face-on profile --------------------------
@@ -495,11 +526,11 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     assert "systems" not in got.stages and "planets" not in got.stages  # no catalogue is materialised
     header, arrays = wire.decode(got.body)
     assert header["stages"] == list(got.stages)
-    for name in ("stars", "halpha_hii", "dust_scattered"):
+    for name in ("stars", "halpha_hii", "lines_hii", "dust_scattered"):
         assert arrays[name].shape == (48, 36, 3) and header["axes"][name] == ["R", "phi", "filter"], name
-    for name in ("halpha_dig", "dust_extinction", "dust_thermal"):
+    for name in ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"):
         assert arrays[name].shape == (48, 3) and header["axes"][name] == ["R", "filter"], name
-    assert set(arrays) == {"stars", "halpha_hii", "halpha_dig", "dust_extinction", "dust_scattered", "dust_thermal"}
+    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal"}
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):
@@ -525,9 +556,9 @@ def test_a_window_is_the_slice_of_the_whole_and_wraps_at_phi_zero(small):
     assert p["wraps"] and p["first"] + p["n"] > 36
     rows = np.arange(r["first"], r["first"] + r["n"])
     cols = (p["first"] + np.arange(p["n"])) % 36
-    for name in ("stars", "halpha_hii", "dust_scattered"):
+    for name in ("stars", "halpha_hii", "lines_hii", "dust_scattered"):
         assert np.array_equal(part[name], whole[name][rows][:, cols]), name
-    for name in ("halpha_dig", "dust_extinction", "dust_thermal"):
+    for name in ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"):
         assert np.array_equal(part[name], whole[name][rows]), name
     # A window narrower than a cell still selects the cell holding it.
     header, one = render(small, "basic", "rgb", r_min="8.1", r_max="8.1", phi_min="1.0", phi_max="1.0")
@@ -550,7 +581,7 @@ def test_region_cells_carry_their_mean_and_the_cells_integrate_to_the_frame(smal
     header, deep = render(small, "basic", "rgb", level="2", r_min="7", r_max="9", phi_min="0", phi_max="0.4")
     n = header["window"]["cells"]["count"]
     assert deep["stars"].shape == (n, 3) and np.all(deep["stars"] > 0)
-    for name in ("halpha_hii", "halpha_dig", "dust_extinction", "dust_scattered", "dust_thermal"):
+    for name in ("halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal"):
         assert deep[name].shape == (n, 3) and header["axes"][name] == ["cell", "filter"], name
     assert np.all((deep["dust_extinction"] > 0) & (deep["dust_extinction"] < 1))
 
