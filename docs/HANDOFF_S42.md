@@ -78,6 +78,26 @@ row from ◐ to ☑ — GALAXY_PLAN §5d's last "done means" item is met.
 - The render's query string carries the sampled curves (≈ 20 KB of URL per request for three 241-point curves); it
   works against the stdlib server here, a note for a proxy with a shorter URL limit (the Azure deployment).
 
+**After the rulings, asked by the owner ("anything you can do on the render in the meantime?") — two more.**
+
+- **A long query travels as a POST body (5872162).** The server takes a form-encoded body as the rest of the query and
+  answers exactly as the GET (411 / 413 past 1 MiB / 415; nothing written); the transport sends any query past 4 KB
+  that way. It exists for the deployment: WFC3's curves made a ≈ 20 KB render URL. Tested through the real JS transport
+  against the server (`test_api`), and seen in the browser (WFC3 SHO's render and table went as bare-URL POSTs, 200).
+- **P6 — proposed, for Fable to ratify or overturn: stars and clusters drawn through the filter set (e29868f).** Until
+  now a point in "light" was its bolometric luminosity in the declared blackbody ramp's hue, whatever the filter set
+  (the panel said "always in broadband colour") — so in SHO the stars were broadband over a narrowband field, against
+  RENDER_PHYSICS §2a's one mechanism. New route `/api/blackbody` (runs no stage; timed): each filter's share of a
+  blackbody's light on 193 temperatures (1000–100 000 K) and the white point's, read log-share linear in log T (a line
+  in the share itself missed by 16% at 1000 K; this is within 2.2e-3 everywhere, `test_render`). The viewer draws a
+  point's channel k as L × share_k(T) / white_k (`colors.ts channelShare`); the ramp stays until the table arrives.
+  **What it changes** (RGB): a 5800 K star (1.02, 0.96, 0.85) — as before; 3000 K (0.39, 0.20, 0.07); 10 000 K (0.66,
+  0.79, 1.11); 30 000 K (0.06, 0.09, 0.19). The giants and the O stars are dimmer through optical filters than their
+  bolometric light, as through a camera; the exposure rule (`exposureFor`) still ranks stars by bolometric L — a
+  question for the ruling. `[inferred]`: a star is a blackbody at its `star_temperature` (the ramp assumed the same;
+  the stars' own isochrone magnitudes are not published per star). To overturn: pass no table (`colorsFor`'s last
+  argument) and restore the panel's sentence.
+
 ## 3. The gate (2026-09-27, Opus 5.5; EXIT lines read from the logs)
 
 - `uv run python -m galaxy.specs`: **EXIT=0**; **12 pass / 19 fail / 5 not-yet-computable of 36** in both models (row 34
@@ -101,6 +121,10 @@ render: one region*      2.1370   0.2210   9.67     27,032  halo,disc,assembly,b
 (Cold times up ~0.3–0.5 s against S41's run on the same machine; part of that is the grid's first load, part load on the
 machine — not investigated.)
 
+**Re-run after the POST and P6 (same day):** `uv run pytest -q` **EXIT=0**; vitest 16 files / 120 tests; `tsc -b` clean;
+`tools/timings.py` **EXIT=0** — the new route `blackbody: rgb` 0.0041 s cold, 17 KB, no stage; the renders 2.44 / 2.40 s
+cold (unchanged by this work: nothing in the render route moved). Specs untouched by it (12/19/5).
+
 ## 4. What Fable owes for S42 (after S40 and S41 are closed and merged)
 
 1. Merge or rebase `session-42` onto the closed `session-41` if S40's or S41's review changed anything. Conflicts to
@@ -114,5 +138,7 @@ machine — not investigated.)
    [O III]/Hβ gradient would make one); a quarter of the regions read the grid's metal-rich edge; the diffuse gas's
    forbidden lines (the grid does not model its field); JWST's set and PSF; HST's obscuration and spikes.
 4. D161's tag listing (§1), MANUAL_TODO rows marked applied with `s06`'s SHA corrected, S22 ◐ → ☑.
-5. Board row 42 if Fable makes one (rulings: the owner, 2026-09-27; build Opus 5.5), LESSONS, RESUMING/BRIEF, the close
+5. **Rule on P6** (stars and clusters through the filter set, §2): ratify, overturn, or ratify with the exposure rule
+   moved to the filtered light; and on the POST path (an API change a decision should name).
+6. Board row 42 if Fable makes one (rulings: the owner, 2026-09-27; build Opus 5.5), LESSONS, RESUMING/BRIEF, the close
    ritual, merge `--no-ff`, push, `verify_clone`, delete this file.
