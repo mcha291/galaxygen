@@ -171,6 +171,11 @@ export const system = (star, params = {}, options) =>
 export const render = (curves, params = {}, options) =>
   frame("/api/render", { ...params, filters: JSON.stringify(curves) }, options);
 
+/** Each filter's share of a blackbody's light on a temperature grid (S42): what a point of a colour temperature
+ * puts through the viewer's curves. JSON; runs no stage. */
+export const blackbody = (curves, params = {}, options) =>
+  get("/api/blackbody", { ...params, filters: JSON.stringify(curves) }, options);
+
 /** The censuses of one window (S32-S36): clouds, clusters (with their HII regions and bubbles) and remnants. */
 export const clouds = (window = {}, params = {}, options) =>
   frame("/api/clouds", { ...params, ...window }, options);

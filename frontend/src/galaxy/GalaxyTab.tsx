@@ -1,7 +1,19 @@
 import { identify } from "@interface/stars.js";
 import { useMemo, useState } from "react";
 
-import { type Census, type FieldsPayload, type Query, type Sample, type StarName, STAR_SAMPLE, loadBrightest, loadClusters, loadRegion } from "../api";
+import {
+  type BlackbodyTable,
+  type Census,
+  type FieldsPayload,
+  type Query,
+  type Sample,
+  type StarName,
+  STAR_SAMPLE,
+  loadBlackbody,
+  loadBrightest,
+  loadClusters,
+  loadRegion,
+} from "../api";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
@@ -10,7 +22,7 @@ import { FieldLegend } from "./FieldLegend";
 import { FieldVolume } from "./FieldVolume";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
-import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName } from "./filters";
+import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, WHITE_KELVIN, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
@@ -100,9 +112,9 @@ function zoomForWidth(view: ViewState, width: number): number {
   return Math.min(1, Math.max(0, view.zoom - Math.log(width / view.across) / Math.log(1600)));
 }
 
-function colorsFor(meta: FieldsPayload, sample: Sample, field: string, exposure: number): Float32Array | null {
+function colorsFor(meta: FieldsPayload, sample: Sample, field: string, exposure: number, table: BlackbodyTable | null = null): Float32Array | null {
   try {
-    return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure) : starColors(meta, sample.columns, field);
+    return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure, table) : starColors(meta, sample.columns, field);
   } catch {
     return null; // the fields for a just-switched model have not arrived yet
   }
@@ -123,6 +135,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
   const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
+  // The filter set's blackbody table (S42, P6): stars and clusters are drawn through the same curves as the field.
+  const blackbodyTable = useLoad<BlackbodyTable>(filterSet, (signal) => loadBlackbody(curvesOf(filterSet), WHITE_KELVIN, signal)).value ?? null;
   // A named instrument's filter set brings its point spread function to the stars (S42).
   const spritePsf = useMemo(() => instrumentPsf(FILTER_SETS[filterSet]), [filterSet]);
   const [brightestSlider, setBrightestSlider] = useState(500);
@@ -159,8 +173,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   }, [shownClusters]);
   const clusterColors = useMemo(() => {
     if (!shownClusters || !shownClusters.columns.cluster_luminosity) return null;
-    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity");
-  }, [meta, shownClusters, exposure]);
+    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable);
+  }, [meta, shownClusters, exposure, blackbodyTable]);
 
   // The brightest mode: the frustum's footprint, a pool sized to it, and the top N inside the frustum.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
@@ -180,13 +194,16 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const bright = mode === "brightest" && brightest.value ? brightest.value : null;
 
   const samplePositions = useMemo(() => positionsOf(sample), [sample]);
-  const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure), [meta, sample, field, exposure]);
+  const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable), [meta, sample, field, exposure, blackbodyTable]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
-  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure) : null), [meta, detail, field, exposure]);
+  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable) : null), [meta, detail, field, exposure, blackbodyTable]);
   const brightPositions = useMemo(() => (bright ? positionsOf(bright) : null), [bright]);
   // A selection is exposed to its own stars, as a photograph is (colors.ts); the slider's stops ride on top.
   const autoStops = useMemo(() => (bright ? exposureFor(bright.columns.star_luminosity) : 0), [bright]);
-  const brightColors = useMemo(() => (bright ? colorsFor(meta, bright, field, exposure + autoStops) : null), [meta, bright, field, exposure, autoStops]);
+  const brightColors = useMemo(
+    () => (bright ? colorsFor(meta, bright, field, exposure + autoStops, blackbodyTable) : null),
+    [meta, bright, field, exposure, autoStops, blackbodyTable],
+  );
   // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each.
   const reach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);
 
@@ -291,7 +308,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           <Exposure stops={exposure} onChange={onExposure} />
           <p className={styles.muted}>
             {mode === "field"
-              ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, bulge, Hα and the dust's scattered and thermal light through each filter, and the dust dims each filter by its own depth along each line of sight. Exposure scales it, and the stars too when they are painted as light (always in broadband colour).`
+              ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, bulge, Hα and the dust's scattered and thermal light through each filter, and the dust dims each filter by its own depth along each line of sight. Exposure scales it, and the stars too when they are painted as light - through the same filters, each star's light as a blackbody of its temperature, so a hot star is dimmer here than its bolometric light.`
               : `Stars only, brightest first by published luminosity: no field, no sample. Painted as light, the view is exposed to its hundredth-brightest star, the few above burning out${
                   bright && field === PHOTOMETRIC ? ` (${autoStops >= 0 ? "+" : ""}${autoStops.toFixed(1)} stops here)` : ""
                 }, and the slider adds to that.`}

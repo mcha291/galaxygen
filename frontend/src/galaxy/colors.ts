@@ -1,6 +1,6 @@
 import { paintOf } from "@interface/ramp.js";
 
-import type { Columns, FieldsPayload } from "../api";
+import type { BlackbodyTable, Columns, FieldsPayload } from "../api";
 
 /** One sRGB channel in 0..1 to linear light (IEC 61966-2-1). */
 export function srgbToLinear(c: number): number {
@@ -56,8 +56,36 @@ export function exposureFor(luminosity: ArrayLike<number | bigint>): number {
  * dense core saturates gracefully rather than clipping. A star with no light (a
  * dead one: NaN) is black, which adds nothing.
  */
-export function photometricColors(meta: FieldsPayload, columns: Columns, stops: number): Float32Array {
-  return lightColors(meta, columns, stops, "star_temperature", "star_luminosity");
+export function photometricColors(meta: FieldsPayload, columns: Columns, stops: number, table: BlackbodyTable | null = null): Float32Array {
+  return lightColors(meta, columns, stops, "star_temperature", "star_luminosity", table);
+}
+
+/**
+ * A point's light per display channel per unit of its light, at a colour temperature (S42): the model's blackbody
+ * share through each filter over the white point's, read off `/api/blackbody`'s table - log share linear in log T,
+ * as the route says to read it - and clamped at its ends. A white-point star is (1, 1, 1); a hot one puts most of its light below the filters and
+ * is dimmer through them than its bolometric light, as it is through a camera's. Null without a white point.
+ */
+export function channelShare(table: BlackbodyTable): ((kelvin: number) => [number, number, number]) | null {
+  const white = table.white?.response;
+  if (!white || white.length < 3 || !white.slice(0, 3).every((w) => w > 0)) return null;
+  const logK = table.kelvin.map(Math.log10);
+  const last = logK.length - 1;
+  return (kelvin: number) => {
+    const x = Math.min(logK[last], Math.max(logK[0], Math.log10(kelvin)));
+    let i = Math.min(last - 1, Math.max(0, Math.floor(((x - logK[0]) / (logK[last] - logK[0])) * last)));
+    while (i > 0 && logK[i] > x) i -= 1;
+    while (i < last - 1 && logK[i + 1] < x) i += 1;
+    const f = (x - logK[i]) / (logK[i + 1] - logK[i]);
+    const at = (k: number) => {
+      const a = table.share[i][k];
+      const b = table.share[i + 1][k];
+      // The Wien side is exponential in 1/T: its logarithm is the smooth thing to interpolate (a zero row stays linear).
+      const s = a > 0 && b > 0 ? a * (b / a) ** f : a + (b - a) * f;
+      return s / white[k];
+    };
+    return [at(0), at(1), at(2)];
+  };
 }
 
 /**
@@ -65,14 +93,33 @@ export function photometricColors(meta: FieldsPayload, columns: Columns, stops: 
  * ramp: a star, or since S41 a cluster (`cluster_light_temperature`, `cluster_luminosity`) - the same mapping,
  * so a cluster is a point of the light its stars sum to, painted as a star of its temperature.
  */
-export function lightColors(meta: FieldsPayload, columns: Columns, stops: number, temperatureName: string, luminosityName: string): Float32Array {
+export function lightColors(
+  meta: FieldsPayload,
+  columns: Columns,
+  stops: number,
+  temperatureName: string,
+  luminosityName: string,
+  table: BlackbodyTable | null = null,
+): Float32Array {
   const decl = meta.fields.find((f) => f.name === temperatureName);
   const temperature = columns[temperatureName];
   const luminosity = columns[luminosityName];
   if (!decl || !temperature || !luminosity) throw new Error(`these objects carry no ${temperatureName} and ${luminosityName}`);
-  const paint = paintOf(decl, meta.cmaps, temperature);
   const gain = 2 ** stops / REFERENCE_LUMINOSITY;
   const out = new Float32Array(temperature.length * 3);
+  // Through the filter set when its table has come (S42, P6): the point's light in each channel, as the field's.
+  const share = table ? channelShare(table) : null;
+  if (share) {
+    for (let i = 0; i < temperature.length; i += 1) {
+      const L = Number(luminosity[i]);
+      const T = Number(temperature[i]);
+      if (!(L > 0) || !(T > 0)) continue;
+      const s = share(T);
+      for (let k = 0; k < 3; k += 1) out[3 * i + k] = s[k] * L * gain;
+    }
+    return out;
+  }
+  const paint = paintOf(decl, meta.cmaps, temperature);
   for (let i = 0; i < temperature.length; i += 1) {
     const L = Number(luminosity[i]);
     if (!(L > 0)) continue;

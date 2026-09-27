@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
+import { arrays, blackbody, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
@@ -229,6 +229,18 @@ export interface RenderFrame {
    * dust_thermal (R, filter) (S39; the lines_ components since S42).
    */
   arrays: Record<string, Float32Array | Float64Array>;
+}
+
+/** Each filter's share of a blackbody's light per temperature, and the white point's (S42, `/api/blackbody`). */
+export interface BlackbodyTable {
+  kelvin: number[];
+  /** Per temperature, per filter. */
+  share: number[][];
+  white: { kelvin: number; response: number[] } | null;
+}
+
+export async function loadBlackbody(curves: Curve[], white: number, signal?: AbortSignal): Promise<BlackbodyTable> {
+  return (await blackbody(curves, { white }, { signal })) as BlackbodyTable;
 }
 
 /**

@@ -767,3 +767,45 @@ def test_the_named_instrument_draws_the_lines_through_its_measured_curves(full):
     assert lines["sii_6716"]["transmission"][0] > 0.95 and lines["sii_6731"]["transmission"][0] > 0.85  # F673N
     assert lines["nii_6583"]["transmission"][1] < 0.02 and lines["hbeta"]["transmission"] == [0.0, 0.0, 0.0]
     assert np.all(np.isfinite(arrays["stars"])) and all(v > 0 for v in header["white"]["response"])
+
+
+# --- S42 (P6, proposed): the points through the filter set -------------------------------------------------
+
+
+def test_the_blackbody_table_is_the_integral_and_runs_no_stage(small):
+    """/api/blackbody: each filter's share of a blackbody's light on 193 temperatures, and the white point's.
+    It runs no stage (a function of the curves alone, rule D4), refuses what /api/render refuses, and read as it
+    says (log share linear in log T) it is within 2.5e-3 of the integral between its rows for every set the
+    viewer offers (worst 2.2e-3, WFC3 at the grid's cool end)."""
+    from galaxy.api.service import BLACKBODY_GRID
+
+    got = small.handle("/api/blackbody", {"filters": [curves("rgb")], "white": ["6500"]})
+    assert got.status == 200 and got.stages == ()
+    table = got.json()
+    parsed = spectra.parse_curves(SETS["rgb"]["curves"])
+    assert np.allclose(table["share"], spectra.blackbody_response(parsed, BLACKBODY_GRID), rtol=1e-12, atol=0.0)
+    assert table["white"]["response"] == pytest.approx(spectra.blackbody_response(parsed, np.array([6500.0]))[0].tolist(), rel=1e-12)
+    assert small.handle("/api/blackbody", {}).status == 400
+    assert small.handle("/api/blackbody", {"filters": [curves("rgb")], "white": ["500"]}).status == 400
+    mid = np.sqrt(BLACKBODY_GRID[1:] * BLACKBODY_GRID[:-1])  # the farthest points from the rows
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        rows = spectra.blackbody_response(parsed, BLACKBODY_GRID)
+        read = np.sqrt(rows[1:] * rows[:-1])  # log-linear at the midpoint in log T
+        assert np.abs(read / spectra.blackbody_response(parsed, mid) - 1).max() < 2.5e-3, name
+
+
+def test_a_point_through_the_filters_is_its_light_where_the_filters_see_it(small):
+    """What P6 changes, in numbers (RGB): a white-point star is drawn as before; a hot one is dimmer through the
+    optical filters than its bolometric light, because most of its light is below them, and a cool one redder -
+    the ramp drew every star at its bolometric light in its hue."""
+    table = small.handle("/api/blackbody", {"filters": [curves("rgb")], "white": ["6500"]}).json()
+    k, share, white = np.log10(table["kelvin"]), np.array(table["share"]), np.array(table["white"]["response"])
+
+    def channels(t: float) -> np.ndarray:
+        return np.array([10 ** np.interp(np.log10(t), k, np.log10(share[:, c])) for c in range(3)]) / white
+
+    assert channels(6500.0) == pytest.approx([1.0, 1.0, 1.0], abs=2e-3)
+    hot, cool = channels(30_000.0), channels(3_000.0)
+    assert hot.max() < 0.35 and hot[2] > hot[1] > hot[0]  # an O star: blue, and a third of its light or less
+    assert cool[0] > cool[1] > cool[2] and cool[2] < 0.1

@@ -79,6 +79,8 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
+    Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
+             "97 temperatures x 3 filters, no stage (S42)"),
     Endpoint("render: whole, rgb", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4"}),
              "400 x 360 x 3 stars, HII line, scattered; the DIG, dust depth, thermal per ring (S39)"),
     Endpoint("render: one region", "/api/render",
