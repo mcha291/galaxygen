@@ -28,4 +28,45 @@ rebased or merged onto the reviewed `session-40` before it is closed. Delete thi
   (the D4 sentence's object-class twin). Columns the viewer does not read yet get that sentence, not a drawing
   invented to use them.
 
-## 2. Built / 3. Gate / 4. What Fable owes — filled in as the build proceeds.
+## 2. Built (commits on `session-41`, Opus 5.5)
+
+| commit | what |
+|---|---|
+| 2f3bf9b | this file, the proposals written before the build |
+| 0bc8fe9 | **P1 model**: `cluster_luminosity` (L☉) = mass × `photometry.population_at` light per mass at the cluster's age and [Fe/H]; `cluster_light_temperature` (K) = `correlated_temperature` of the same colour, the blackbody ramp as `star_temperature` has. Default grid: L 857 – 2.1 × 10⁸ L☉, median 1.7 × 10⁵; L/M median 185 L☉/M☉; T 10 200 – 30 600 K, median 13 900; the youngest (< 4 Myr) median 27 800 K, the oldest (> 15 Myr) 11 100 K |
+| 58eaab9 | `session-40` merged in (its remnant-shell fix, found while planning this row) |
+| 2f67b74 | **P1 viewer**: `colors.lightColors` generalises `photometricColors` to any object with a luminosity and a blackbody temperature; the galaxy tab loads the window's clusters once at the view's level, shares them with S40's region volume, and draws them as a point layer (photometric painting, the stars regime's weight); **P5**: `tests/test_v4.py` — the cluster light's identity with the tables (P1), and the object-column inventory: 25 columns drawn, 39 not drawn yet (8 cloud, 24 cluster, 7 remnant) |
+
+## 3. The gate (2026-09-27, Opus 5.5; EXIT lines read from the logs)
+
+- `uv run python -m galaxy.specs`: **EXIT=0**; 11 pass / 20 fail / 5 not-yet-computable of 36 in both models, unchanged.
+- `uv run pytest -q`: **EXIT=0**, the three known skips.
+- vitest 16 files / 111 tests; the frontend build clean.
+- **P3 in a browser** (a scratch server on :8018 serving the built `dist/`, stopped; :5173 untouched): `basic` at 1.38 kpc
+  across (level 1) draws the region's stars and the cluster points over the bulge's glow; `azimuthal` (switching model
+  reopens checkpoint 4, the app's existing behaviour) draws the field and, at 0.88 kpc, stars, cluster points and an
+  HII region in its shell; no console errors; one `/api/clusters` request per window (shared with the region volume).
+- **P5**: the scalar half of #69's gate is `test_audit.py::test_s21b…` (17 ruled invisible under rule D4); the object half
+  is the inventory above, which fails if a new object column is left unplaced.
+- `tools/timings.py`: **EXIT=0**; the clusters route grew by the two light columns:
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+clusters: one sector*    0.8061   0.0014 574.60     63,744  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.2350   0.0097 127.74  3,716,480  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+render: whole, rgb*      1.6158   0.1705   9.48  5,205,784  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.5351   0.1655   9.28     20,912  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+
+## 4. What Fable owes for S41 (after S40 is closed and merged)
+
+1. Rebase or merge `session-41` onto the closed `session-40` if S40's review changed anything.
+2. Ratify or overturn P1–P5 in **D191**; for P5, rule on the 39 not-drawn columns — draw, or give each declaration the
+   object-class twin of rule D4's sentence (a candidate debt if deferred).
+3. Board row 41 (**rulings: Opus 5.5, proposed; ratified by Fable 5.1** — or as Fable records it; build Opus 5.5);
+   MANUAL_TODO `s41` row with `s40`'s SHA; LESSONS; RESUMING and BRIEF for the maintainer (BUILD_II's end: V4 is the last
+   row); the suite's EXIT line; merge `--no-ff`; push; `verify_clone`; delete this file.
+4. Not built, by P2 and P4: the named-instrument PSFs (a filter-file download, the owner's word, #108) and the tag batch
+   (the owner's, C2e). The merge commit 58eaab9 carries git's default message without the co-author line; it is pushed,
+   so it was left as is (C2a).
