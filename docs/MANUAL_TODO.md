@@ -13,7 +13,11 @@ succeed `[verified: DECISIONS.md D40]`. It is a policy on the path, not a
 permission on a token, so no credential handed to a session changes it. Rather
 than have eleven closes each end in the same failure, **no session tags** (rule
 C2e): each queues its command here, and they are all applied in one go from a
-desktop checkout at the end of the build.
+desktop checkout at the end of the build. **The first batch ran on 2026-09-27** from
+this desktop, on the owner's word ("run the tag batch for me"): 39 tags, `s00`–`s20`
+and `s22`–`s39`, the listing under D161, the run recorded at D192. Rows `s40`–`s42`
+(the second build's last three, merged after the batch) are still queued: the next
+batch is the three commands at the end of "Run these", on the owner's word as before.
 
 **How a session updates this.** At close, a session adds its own row with the
 merge SHA left as `TBD` — a merge commit cannot contain its own hash — and
@@ -24,7 +28,7 @@ closes the project.
 | S | Tag | Merge commit on `main` | State |
 |---|---|---|---|
 | 0 | `s00` | `0bc546d` | **applied** — pushed from the desktop session that ran S0 |
-| 1 | `s01` | `4ebbe8f8dfeb` | **queued**, and a stale `s01` must be deleted first — see below |
+| 1 | `s01` | `4ebbe8f8dfeb` | **applied** 2026-09-27 — the stale `s01` deleted and re-pointed first, as the note below said
 
 > **Delete the stale `s01` before running the batch.** An `s01` tag was pushed by
 > hand at `56d7510` while S1 was still open, and `main` was afterwards rebuilt into
@@ -40,46 +44,47 @@ closes the project.
 > the refspec push below is what deletes it, and it must run before the batch
 > creates the new one, or the create fails as already-existing.
 
-| 2 | `s02` | `fa7e74fb3cc2` | **queued** |
-| 3 | `s03` | `8a6032ca31be` | **queued** |
-| 4 | `s04` | `c4f217390464` | **queued** |
-| 5 | `s05` | `4cc994062473` | **queued** |
-| 6 | `s06` | `a71483844338` | **queued** |
-| 7 | `s07` | `9b5c612ef027` | **queued** |
-| 8 | `s08` | `589cb0f52805` | **queued** |
-| 9 | `s09` | `635c3c8ff43d` | **queued** |
-| 10 | `s10` | `ff129283543c` | **queued** |
-| 11 | `s11` | `b1a62302bb47` | **queued** |
-| 12 | `s12` | `701ab3ac12b2` | **queued** |
-| 13 | `s13` | `6a2f3f7e669b` | **queued** |
-| 14 | `s14` | `e645d430db90` | **queued** — the *second* S14 merge (D115); `780cd15` is the first and is not tagged |
-| 15 | `s15` | `71a25128d33c` | **queued** |
-| 16 | `s16` | `b0589232c886` | **queued** |
-| 17 | `s17` | `4338a60fdcd2` | **queued** |
-| 18 | `s18` | `4c73bca169b5` | **queued** |
-| 19 | `s19` | `2a8a9b4fc32d` | **queued** |
-| 20 | `s20` | `7e96422190ab` | **queued** — filled in by S21 (a) |
+| 2 | `s02` | `fa7e74fb3cc2` | **applied** 2026-09-27 |
+| 3 | `s03` | `8a6032ca31be` | **applied** 2026-09-27 |
+| 4 | `s04` | `c4f217390464` | **applied** 2026-09-27 |
+| 5 | `s05` | `4cc994062473` | **applied** 2026-09-27 |
+| 6 | `s06` | `a7148384433b` | **applied** 2026-09-27 — the batch's literal `a71483844338` had an extra digit; the tag points at the S6 merge (D192)
+| 7 | `s07` | `9b5c612ef027` | **applied** 2026-09-27 |
+| 8 | `s08` | `589cb0f52805` | **applied** 2026-09-27 |
+| 9 | `s09` | `635c3c8ff43d` | **applied** 2026-09-27 |
+| 10 | `s10` | `ff129283543c` | **applied** 2026-09-27 |
+| 11 | `s11` | `b1a62302bb47` | **applied** 2026-09-27 |
+| 12 | `s12` | `701ab3ac12b2` | **applied** 2026-09-27 |
+| 13 | `s13` | `6a2f3f7e669b` | **applied** 2026-09-27 |
+| 14 | `s14` | `e645d430db90` | **applied** 2026-09-27 — the *second* S14 merge (D115); `780cd15` is the first and is not tagged |
+| 15 | `s15` | `71a25128d33c` | **applied** 2026-09-27 |
+| 16 | `s16` | `b0589232c886` | **applied** 2026-09-27 |
+| 17 | `s17` | `4338a60fdcd2` | **applied** 2026-09-27 |
+| 18 | `s18` | `4c73bca169b5` | **applied** 2026-09-27 |
+| 19 | `s19` | `2a8a9b4fc32d` | **applied** 2026-09-27 |
+| 20 | `s20` | `7e96422190ab` | **applied** 2026-09-27 — filled in by S21 (a) |
 | 21 | `s21` | *no merge commit exists* | **not tagged, by design** — see below |
-| 22 | `s22` | `b3939fe64ac8` | **queued** — filled in on 2026-09-26 (D171) |
-| 23 | `s23` | `fb4a2da1f1d1` | **queued** — **not a merge**: S23 ran on `main` without a session branch and was recorded after the fact (D171); the tag marks its last commit |
-| 24 | `s24` | `4a20490c5043` | **queued** — **not a merge**, as S23 (D171); the last commit of D163–D170 |
-| 25 | `s25` | `a4c95cec0be9` | **queued** — the first row of the second build; filled in by S26 |
-| 26 | `s26` | `05655dba6948` | **queued** — filled in by S27 |
-| 27 | `s27` | `c72dffd59d36` | **queued** — filled in by S28 |
-| 28 | `s28` | `e30d33a9d060` | **queued** — filled in by S29 |
-| 29 | `s29` | `70ed6bd1da8d` | **queued** — filled in by S30 |
-| 30 | `s30` | `34a76f6fa560` | **queued** — filled in by S31 |
-| 31 | `s31` | `57c3d38d7810` | **queued** — filled in by S32 |
-| 32 | `s32` | `89fa20c39e94` | **queued** — filled in by S33 |
-| 33 | `s33` | `9f43a305a2be` | **queued** — filled in by S34 |
-| 34 | `s34` | `7b61e2edce88` | **queued** — filled in by S35 |
-| 35 | `s35` | `5d4cb7885dd0` | **queued** — filled in by S36 |
-| 36 | `s36` | `f6ec37e5435f` | **queued** — filled in by S37 |
-| 37 | `s37` | `12c5f80497cc` | **queued** — filled in by S38 |
-| 38 | `s38` | `80fbf33f9394` | **queued** — filled in by S39 |
-| 39 | `s39` | `8d8c89475086` | **queued** — filled in by S40 |
+| 22 | `s22` | `b3939fe64ac8` | **applied** 2026-09-27 — filled in on 2026-09-26 (D171) |
+| 23 | `s23` | `fb4a2da1f1d1` | **applied** 2026-09-27 — **not a merge**: S23 ran on `main` without a session branch and was recorded after the fact (D171); the tag marks its last commit |
+| 24 | `s24` | `4a20490c5043` | **applied** 2026-09-27 — **not a merge**, as S23 (D171); the last commit of D163–D170 |
+| 25 | `s25` | `a4c95cec0be9` | **applied** 2026-09-27 — the first row of the second build; filled in by S26 |
+| 26 | `s26` | `05655dba6948` | **applied** 2026-09-27 — filled in by S27 |
+| 27 | `s27` | `c72dffd59d36` | **applied** 2026-09-27 — filled in by S28 |
+| 28 | `s28` | `e30d33a9d060` | **applied** 2026-09-27 — filled in by S29 |
+| 29 | `s29` | `70ed6bd1da8d` | **applied** 2026-09-27 — filled in by S30 |
+| 30 | `s30` | `34a76f6fa560` | **applied** 2026-09-27 — filled in by S31 |
+| 31 | `s31` | `57c3d38d7810` | **applied** 2026-09-27 — filled in by S32 |
+| 32 | `s32` | `89fa20c39e94` | **applied** 2026-09-27 — filled in by S33 |
+| 33 | `s33` | `9f43a305a2be` | **applied** 2026-09-27 — filled in by S34 |
+| 34 | `s34` | `7b61e2edce88` | **applied** 2026-09-27 — filled in by S35 |
+| 35 | `s35` | `5d4cb7885dd0` | **applied** 2026-09-27 — filled in by S36 |
+| 36 | `s36` | `f6ec37e5435f` | **applied** 2026-09-27 — filled in by S37 |
+| 37 | `s37` | `12c5f80497cc` | **applied** 2026-09-27 — filled in by S38 |
+| 38 | `s38` | `80fbf33f9394` | **applied** 2026-09-27 — filled in by S39 |
+| 39 | `s39` | `8d8c89475086` | **applied** 2026-09-27 — filled in by S40 |
 | 40 | `s40` | `73b95410fa1c` | **queued** — filled in by S41 |
-| 41 | `s41` | TBD | **queued** — S42 fills the SHA in |
+| 41 | `s41` | `75abd5e4029e` | **queued** — filled in by S42 |
+| 42 | `s42` | TBD | **queued** — the next session fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -89,7 +94,7 @@ closes the project.
 > them. The row above exists so that the gap is stated rather than discovered: a session
 > missing from the batch is exactly what this table is for.
 
-### S22 tried, and the batch is still owed
+### S22 tried, and the batch was owed until 2026-09-27 (kept as the record; D161, D192)
 
 **The close-out session attempted the batch and could not run it, which is the
 outcome rule C2e predicted and the reason this file exists.** From S22's web
@@ -121,8 +126,13 @@ from the day it was written (D116).
 
 ### Run these
 
-From a desktop checkout with a credential that can push tags — any normal
-personal access token with `Contents: read and write`, or SSH:
+**Ran on 2026-09-27 through `s39`** (the listing under D161); the block is kept
+whole as the record of what was run, with `s06`'s SHA as the tag actually points
+(`a7148384433b…`; the literal here read `a71483844338`, one digit too many — D192).
+**Still to run: the last three commands, `s40`, `s41` and `s42`**, from a desktop
+checkout with a credential that can push tags — any normal personal access token
+with `Contents: read and write`, or SSH — on the owner's word, as the first batch was;
+`git push origin --tags` then pushes only what is new.
 
 ```sh
 git fetch origin --prune
@@ -146,8 +156,8 @@ git tag -a s04 c4f2173904641d423f0648d6059a51682ad0aecc -m "S4: pattern"
 # S5 — systems.
 git tag -a s05 4cc994062473 -m "S5: systems"
 
-# S6 — the API.
-git tag -a s06 a71483844338 -m "S6: API"
+# S6 — the API. (The literal was a71483844338 until S42 — an extra 8, no such object; corrected to the S6 merge, D192.)
+git tag -a s06 a7148384433bb3218027ea9966afdc19b41d12c3 -m "S6: API"
 
 # S7 — the viewer.
 git tag -a s07 9b5c612ef027 -m "S7: viewer"
@@ -251,15 +261,19 @@ git tag -a s39 8d8c89475086421c77c13dace70cd9149c2f7564 -m "S39: V2, volumetric 
 git tag -a s40 73b95410fa1caad603f405de1924641cf4a584fd -m "S40: V3, region synthesis from the cloud vector"
 
 # S41 — V4: clusters drawn as objects, every object column drawn or ruled not drawn in its declaration. SHA filled in by S42.
-git tag -a s41 "$(git rev-list -1 --grep='^Merge S41 into main' main)" -m "S41: V4, clusters as objects and the object columns ruled"
+git tag -a s41 75abd5e4029ea27b854c6d91b5201f5b62d88535 -m "S41: V4, clusters as objects and the object columns ruled"
+
+# S42 — the owner's four answers: the FSPS grid, the blind windows, WFC3 from SVO, the batch; the POST path; P6. SHA filled in by the next session.
+git tag -a s42 "$(git rev-list -1 --grep='^Merge S42 into main' main)" -m "S42: the forbidden lines, the blind windows, a named instrument, the points through the filters"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
 ```
 
-**Then finish the record**, which is the only thing left after the batch runs:
+**Then finish the record**, which is the only thing left after a batch runs:
 paste that `git ls-remote --tags origin` listing into `DECISIONS.md` under D161,
-mark every row above **applied**, and tick S22's board row from ◐ to ☑. A tag
+and mark the rows above **applied** (done for `s00`–`s39` at S42's close, when
+S22's board row ticked ◐ → ☑; the next batch's rows are `s40`–`s42`). A tag
 push that 403s prints an error and exits 1; a tag push that succeeded and a tag
 push that did nothing both print little, so the listing is the check and not the
 command's own output.

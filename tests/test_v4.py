@@ -126,4 +126,5 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
             assert "**Not drawn by the viewer** (D191)" in by_name[name]["about"], name
         for name in DRAWN[of]:
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
-    assert sum(len(v) for v in DRAWN.values()) == 25 and sum(len(v) for v in NOT_DRAWN.values()) == 38
+    # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
+    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 37

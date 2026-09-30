@@ -2,7 +2,7 @@
 
 ## Status
 
-`█████████████████████████████████████████████░██████████████████████████████████████` **41 / 42 sessions** · repo initialised: yes
+`██████████████████████████████████████████████████████████████████████████████████████` **43 / 43 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -28,7 +28,7 @@
 | ☑ | 19 | The catalogue migrates: birth radius **and birth time** drawn together from the chemistry's backward weights (#31 discharged, #32 re-ruled, #50 opened); the thin/thick criterion published; every published field previewed, in both models | web | Opus | **Opus 5** | s19 | 2026-09-10 |
 | ☑ | 20 | The valley probed six ways, the repo unchanged, and not opened: every valley the detector finds is the plateau spike, the early population a plain (#27's prediction replaced; #49's killed, #26 and the drain ruled for S22); `MERGER_HEATING` derived from the thick disc's dispersion net of the secular heating (120 → 88.8, #42: row 7 lands, row 3 leaves by 0.03) | desktop | **Fable** | **Fable 5.1** | s20 | 2026-09-11 |
 | ☑ | 21 | Audit II, run twice with two stated aims on two sealed branches, never merged into each other (§5d, D99). **(a)**, `session-21-a`: every prediction since S13 run with the repo unchanged — #50's dead and its bracket was a fraction read as a ratio, the bar holds row 3 (249.6) and kills row 14 (144), D128's burst works at 1–2 Gyr and not in the first, #46's sweep cannot judge; #51–#52, D130–D131, `AUDIT_II_A.md`. **(b)**, `claude/keen-lamport-lldlvp`: the instruments and the viewer — rule D4 counted at the stages and found honest, the catalogue priced per **cell** so D115's flake is a misfit, the detector's blind spot in closed form, four fields the viewer cannot show; #65–#73, D144–D150, `AUDIT_S21B.md`. S22 ports both | desktop + web | **Fable** ×1, Opus ×1 | **Fable 5.1** (a), **Opus 5** (b) | — (D99) | 2026-09-11 |
-| ◐ | 22 | Close-out. Both S21 lists **ported** onto `main`, neither branch merged (D99); the two lists diffed (D158); **every open debt ruled — 17 discharged, 15 permanent, 12 carried, none unruled** (D159), with #79 opened at the checklist: acceptance row 21 is published by no stage of either model and has never been judged; two of S21 (a)'s own conclusions corrected and one cross-list finding neither run could reach (D160). **The tag batch is still owed** — attempted here and refused, HTTP 403 on a tag ref, D40 reproduced (D161) | web | Opus | **Opus 5** | s22 | ◐ 2026-09-12 |
+| ☑ | 22 | Close-out. Both S21 lists **ported** onto `main`, neither branch merged (D99); the two lists diffed (D158); **every open debt ruled — 17 discharged, 15 permanent, 12 carried, none unruled** (D159), with #79 opened at the checklist: acceptance row 21 is published by no stage of either model and has never been judged; two of S21 (a)'s own conclusions corrected and one cross-list finding neither run could reach (D160). **The tag batch was still owed** — attempted here and refused, HTTP 403 on a tag ref, D40 reproduced (D161); **run from the desktop on 2026-09-27 on the owner's word, 39 tags listed under D161, ticked at S42's close (D192)** | web | Opus | **Opus 5** | s22 | 2026-09-12 (◐ until 2026-09-30) |
 | ☑ | 23 | **Recorded retrospectively (D171).** The viewer rebuilt as a Vite + React + three.js app with the workflow, per-checkpoint previews, the formation-history scrubber (RENDER_PLAN H1) and a PSF (R2); the bar and arms published as an (R, φ) density contrast with **two experimental amplitude inputs** (M1); histories at 200 steps; the Azure deploy; the repository restructured into `docs/`, `model/`, `interface/` (0f78156). No session branch, no decision entries at the time | desktop | — | **Opus 5** | s23 | 2026-09-13 |
 | ☑ | 24 | **Recorded retrospectively (D171).** The render plan's model side: the PARSEC table and per-star photometry (M2, D164); the `ism` stage, #79 revisited and discharged, row 21 judged for the first time (D163); the disc's unresolved light, dust and bloom (D165); Hα and the bulge's light (D166); the ray-marched field regime and the three regimes (D167); the brightest-N mode (D168); [α/Fe] on the catalogue (D169); **one model, `basic`** (D170). Ran on `main` with no session branch | desktop | — | **Opus 5**, Opus 5.5, **Fable 5.1** | s24 | 2026-09-25 |
 | ☑ | 25 | **BUILD_II Phases 0 + 1.** A1 rewritten — the stage graph acyclic, iteration inside a stage when termination is guaranteed; the 8× it cited was never measured (D173); **#26 and #3 re-ruled carried**: a probe shows the retained budget is the root of a contraction map inside checkpoint 1, f* 0.338 against the input's 0.35. The pattern branch ahead of `sfh` on the checkpoint-1 curve **and the λ_d scale length** (the plan missed the second `sfh` field); **checkpoints 3 and 4 swap** (Pattern, then star formation) so Phase 2 can read the pattern; rows 15–17 measured before and after — **row 15 4.883 → 5.210, out by 0.01, recorded under new #80** (a recalled ratio's referent moved; not retuned), 16 and 17 pass; the arm number's 2-or-4 draw recorded (D174) | desktop | **Fable** | **Fable 5.1** | s25 | 2026-09-26 |
@@ -48,6 +48,7 @@
 | ☑ | 39 | **V2.** The dust in three components — extinction per filter from Draine's grain table (110 rows transcribed into `spectra.GRAIN_TABLE`, the table was not in the repository), scattered light by the slab's own convention (the ruling's optically-thin form scattered 12× too much at the centre and was set aside), thermal emission through the filter — and the line in two volumetric layers (HII in the clouds' layer, DIG at 1.4 kpc); **the frame's energy balance closes to 7 × 10⁻⁴ and the face-on Σ_V(R) to 10⁻³ per ring**; the V1 gate unmoved; the viewer's knots, clump lattice, dust lead and `CHANNEL_EXTINCTION` removed — **nothing structural is invented at galaxy scale**; the dust in the stars' layer, the IR set measured not drawn (#109) (D189) | desktop | Opus | **Opus 5.5** | s39 | 2026-09-27 |
 | ☑ | 40 | **V3.** The region regime below 4 kpc draws the censuses from their published vectors: the level follows the view's width (one per factor four under 4 kpc); each cloud a log-normal interior at the published σ_s seeded by its (cell, index) path, its cluster's Strömgren cavity carved and the clumps above e^σ_s inside it left as pillars; HII spheres and bubble and remnant shells marched per pixel (limb-brightened for free); the field's HII fades inside the window; `cloud_extinction_v` 2.97 mag, one scalar; the census routes name every row and a level filter's header counts the body (a defect since S32). **Catalogue against field 0.980 (disc) / 0.974 (level-1 sector); sixty level-1 windows z mean +0.15 against the census's own σ(N); a census identical at levels 0–3.** Stated: stars stay on the level-0 sample, a screen-space composite, a display budget of 256 objects, the noise's shapes inferred (#110–#113) (D190). Built across a usage limit: rulings before it, review after | desktop | **Fable** | **Fable 5.1** (rulings, review) / **Opus 5.5** (build) | s40 | 2026-09-30 |
 | ☑ | 41 | **V4.** Clusters drawn as objects: two columns on the cluster census — `cluster_luminosity` (mass × the light per mass formed at its age and [Fe/H], the light stage's tables) and `cluster_light_temperature` (that light's correlated colour temperature) — and a point of that light in the region regime, painted as a star is, the census loaded once and shared with the region volume. **The #69 gate extended to the object classes: every `of="cloud" / "cluster" / "remnant"` column is drawn (25) or carries "Not drawn by the viewer" with why in its declaration (38: through what it sets, invisible to a filter, or owed), asserted per model.** Rulings P1–P5 proposed by Opus before the build and ratified at the review with two findings measured there: the ramp's painting is bolometric — the census summed reads 2.1× its own G light through the viewer's filters, +0.18 mag at the youngest to +1.31 at the oldest (#114, D188's finding left in the point regime; S42's P6 keeps it) — and the clusters hold a quarter of the disc's light that the sampled catalogue barely carries (7 stars under 20 Myr in a 2 kpc window), half of them dissolved yet pointed (#115); the cluster's extent unpainted (#116). #111 not closed by V4. `halpha_surface_brightness` retired (RENDER_PHYSICS §0). Instrument PSFs and the tag batch the owner's (P2, P4; the batch ran on 2026-09-27 — 39 tags on the remote — recorded at S42's close). Both models draw both regimes (P3). Specs 11/20/5 unchanged (D191) | desktop | Opus | **Opus 5.5** (proposals, build) / **Fable 5.1** (rulings, review, close) | s41 | 2026-09-30 |
+| ☑ | 42 | **The owner's four answers of 2026-09-27, built on Opus while Fable's limit reset, ruled at Fable's review.** (1) "download it": Byler et al. 2017's nebular grid as FSPS ships it, pinned (`tools/fetch_nebular.py` → `data/nebular_lines.npz`); the nebular stage reads it per region, clamped, and publishes the four forbidden lines over Hα, per-ring lines and Hβ in both layers; `/api/render` carries `lines_hii` / `lines_dig`, `absent.lines` is empty, each resolved region coloured by its own lines — **30 object columns drawn, 37 ruled not drawn**. (2) "follow the audit's recommendation": rows 32 and 34 take Audit III's blind windows (`AUDIT_III_BLIND.md`), row 34 passes on McKee & Williams 1997 and its miss is removed with the reason written, row 32 still misses (#98 re-read: 0.25 dex above the blind top, η M_halo now inside); **specs 12/19/5 of 36, both models**. (3) "yes": HST WFC3/UVIS's six system throughputs from SVO (`tools/fetch_filters.py` → `instruments.json`, sets `wfc3`, `wfc3n`) with an Airy sprite per channel. (4) "run the tag batch for me": run 2026-09-27, 39 tags on the remote, `s06`'s literal corrected, the listing under D161, S22 ☑. Then a form-encoded POST as the GET past 4 KB (an API change, ratified) and **P6 ratified**: stars and clusters drawn through the filter set by `/api/blackbody`'s share table, the exposure rule left on bolometric L as a stated display choice; **P6 does not close #114** (the blackbody's bolometric correction stays). #108 discharged, #100 re-scoped to the 0.71, #117–#120 opened (D192) | desktop | Opus | **Opus 5.5** (build) / **Fable 5.1** (rulings, review, close) | s42 | 2026-09-30 |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -66,22 +67,22 @@ desktop. **The Tag column therefore names the tag a session has *earned*, not on
 that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
 tags exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S22 stays ◐ for the tag batch alone (the note below), and `progress.py`
-names it here because it is the first row that is not ☑; **the second build starts at
-S25** — `BUILD_II.md`, §5e — and `BRIEF.md` is written for S25. S23 and S24 were
+**Next:** nothing is planned. Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
+`BUILD_II.md`), every "done means" item met, the tag batch run and recorded (D161, D192);
+`BRIEF.md` names what the owner could choose next without starting it. S23 and S24 were
 recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 2026-09-25 without a session branch or a close, and the rows say so.
 
-> **S22's ◐ is not rule C2d's.** C2d's ◐ means a session ran out and its branch stays
-> open for the next one to continue. S22 did not stop early: it finished every deliverable
-> a session can finish, and merged, because there is no next session to continue a branch.
-> The ◐ is there because **one of its four deliverables cannot be done from a session at
-> all** — the tag batch needs a credential that can push a tag ref, and the egress proxy
-> refuses one (D40, D161). It ticks to ☑ when someone runs `MANUAL_TODO.md` §1 from a
-> desktop and pastes the listing under D161. Until then the board says so, which is the
-> whole purpose of the column.
+> **S22 was ◐ from 2026-09-12 to 2026-09-30, and not for rule C2d's reason.** C2d's ◐ means
+> a session ran out and its branch stays open for the next one to continue. S22 did not stop
+> early: it finished every deliverable a session can finish, and merged. The ◐ was there
+> because **one of its four deliverables could not be done from a session at all** — the tag
+> batch needs a credential that can push a tag ref, and the egress proxy refuses one (D40,
+> D161). It ticked to ☑ when the batch ran from the desktop on the owner's word (2026-09-27)
+> and its listing was pasted under D161 (S42's close, D192). The board said so until then,
+> which is the whole purpose of the column.
 
-**Open debts:** 59 (`GALAXY_INPUTS.md` §11). **Discharged:** 40.
+**Open debts:** 62 (`GALAXY_INPUTS.md` §11). **Discharged:** 41.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -597,7 +598,7 @@ before S20 because the valley's candidate mechanism is the bulge's inflow, S19
 last of the builds because it re-pins every seeded number the earlier sessions
 move.
 
-## 5e. The second build — S25 to S41 (written 2026-09-26, at the owner's request)
+## 5e. The second build — S25 to S42 (written 2026-09-26, at the owner's request; S42 added at its close, D192)
 
 Two documents the owner wrote, reconciled against the repository and adopted
 (D172): **`BUILD_II.md`**, twelve phases that make the arms form stars, publish

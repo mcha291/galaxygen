@@ -310,26 +310,25 @@ def leaked_fraction(clusters: Catalogue, regions: Catalogue, constants: Mapping[
 
 
 # S41 (V4, D191): the HII-region columns the viewer does not read, each with why - the object-class twin of the
-# sentence the stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory.
+# sentence the stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory. S42 (D192)
+# drew `hii_balmer_decrement` and the four `hii_*_ratio` columns (region.ts regionLineColour), so they have no entry.
 NOT_DRAWN_WHY: dict[str, str] = {
     "hii_electron_density": "drawn through `hii_halpha_emissivity`, which is this density squared times the Case B "
                             "coefficient; a density has no look but its emission measure.",
     "hii_temperature": "drawn through the emissivity's Case B coefficient at this temperature; a temperature itself "
                        "is a line ratio's to show.",
-    "hii_ionization_parameter": "the axis a photoionization grid reads the forbidden lines along: drawn only through "
-                                "those lines, when a grid publishes them, never as itself.",
+    "hii_ionization_parameter": "the axis the photoionization grid reads the forbidden lines along: drawn through "
+                                "the four `hii_*_ratio` columns it sets (S42), never as itself.",
     "hii_clumping": "drawn through `hii_halpha_emissivity` (the emission measure's correction) and through the cloud's "
                     "log-normal interior, which is the same width.",
     "hii_halpha_luminosity": "the emissivity integrated over the sphere: the march integrates `hii_halpha_emissivity` "
                              "over the radius, and the sum is the gate's number (D190), not a look.",
-    "hii_balmer_decrement": "what a renderer reddens the region by, and the Hβ it draws when a filter set carries the "
-                            "line and a route serves it; at V4 no set does and nothing reads it.",
     "hii_oxygen_abundance": "drawn through the electron temperature it sets (the emissivity's Case B coefficient) and "
-                            "through the forbidden lines when a grid publishes them.",
-    "hii_nitrogen_abundance": "no published line carries it: [N II] would, from a photoionization grid (S35's ruling); "
-                              "until then nothing in the render sees nitrogen.",
-    "hii_sulphur_abundance": "no published line carries it: [S II] would, from a photoionization grid (S35's ruling); "
-                             "until then nothing in the render sees sulphur.",
+                            "through the forbidden lines: it is the metallicity the grid is read at (S42).",
+    "hii_nitrogen_abundance": "not read by anything drawn: the [N II] line the region carries (S42) comes off the grid "
+                              "at the gas's oxygen, with the grid's own N/O, not this column (debt #118).",
+    "hii_sulphur_abundance": "not read by anything drawn: the [S II] lines the region carries (S42) come off the grid "
+                             "at the gas's oxygen, with the grid's own S/O, not this column (debt #118).",
     "hii_density_bounded": "drawn through the radius: a leaking region's sphere is its whole cloud, which "
                            "`hii_stromgren_radius` already says; the category itself is not a look.",
 }

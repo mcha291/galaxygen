@@ -1088,3 +1088,21 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   declaration and a test reads it back: an inventory in a test file is the reviewer's list, not the model's word.
   Put the sentence in the about and assert it per model (D191, P5).
 - [close] Count a handoff's inventory from the sets, not from its prose: the 39 was 38 (D191).
+
+## From S42 (the owner's four answers, built by Opus, ruled at Fable's review)
+
+- [audit] A window set blind moves a row without touching the model: row 34 passed and row 32 stayed a miss on the
+  same numbers, and the blind window sharpened #98 rather than softening it (η M_halo landed inside). A disclosed
+  row's honest successor is a blind one, not a wider one (B5; D186 A3-7, D192).
+- [audit] Once a model's number has been printed, no target for it can be chosen clean: the forbidden-line ratios
+  were measured and recorded before any source was read, so their row must be blind or disclosed from the start
+  (#117). Print the measurement into a test, not into a target (D113, D192).
+- [field] A grid read at one axis carries the rest of its assumptions with it: the lines are read at the gas's
+  oxygen, and the grid's own N/O, S/O and density come along whatever the model publishes for them. Say in the
+  column's declaration what the grid supplies and what the model does (#118, D192).
+- [close] A stacked branch that merges clean can still be wrong: `main`'s new inventory count and the branch's five
+  drawn columns met without a textual conflict and the test would have failed on 25 ≠ 30. Merge the closed
+  branch in, then run the tests that count, before reading the diff as reviewed (D192).
+- [api] A transport change is an API change even when nothing on the server's side of the query moves: a POST
+  body that is the GET's query needs its refusals stated (411, 413, 415), its limit named and a test through the
+  real client, or a proxy's limit becomes a silent black canvas (D192).
