@@ -61,12 +61,13 @@ from typing import Any
 import numpy as np
 
 from galaxy.core import seeds as _seeds
+from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.clouds import cloud_counts, expected_counts
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.photometry import per_mass_at, population_light, population_wind
+from galaxy.stages.photometry import correlated_temperature, per_mass_at, population_at, population_light, population_wind
 from galaxy.stages.systems import Catalogue
 
 CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
@@ -74,6 +75,7 @@ CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
 CLUSTER_COLUMNS: tuple[str, ...] = (
     "cluster_radius", "cluster_azimuth", "cluster_height", "cluster_mass", "cluster_half_mass_radius",
     "cluster_age", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
+    "cluster_luminosity", "cluster_light_temperature",
 )
 # What the census reads of each cloud: its place, mass, age, abundance, source and which cluster it holds.
 CLOUD_READS: tuple[str, ...] = (
@@ -167,6 +169,7 @@ def materialise_clusters(
     feh = cloud("cloud_metallicity")
     radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), cloud("cloud_source_offset"), cloud("cloud_source_angle"))
     q, wind = per_mass(age, feh)
+    light, colour = population_at(age / 1000.0, feh)
     is_bound = np.concatenate(bound)
     state = np.where(is_bound, 0, np.where(age < dissolution, 1, 2)).astype(np.int64)
     out = {
@@ -179,6 +182,10 @@ def materialise_clusters(
         "cluster_metallicity": feh,
         "cluster_ionizing_photons": mass * q,
         "cluster_wind_luminosity": mass * wind,
+        # S41 (V4, P1): what the cluster shines with, as a star does - its light per mass formed at its age and
+        # [Fe/H] times its mass, and the correlated colour temperature of that light (the light stage's tables).
+        "cluster_luminosity": mass * light,
+        "cluster_light_temperature": correlated_temperature(colour),
         "cluster_bound": state,
     }
     return Catalogue.of(out, counts)
@@ -200,9 +207,37 @@ def bound_mass(stars_formed_history: np.ndarray, R: np.ndarray, bound_fraction: 
 # --- declarations ----------------------------------------------------------------------------------
 
 
+# S41 (V4, D191): the cluster columns the viewer does not read, each with why - the object-class twin of the
+# sentence a catalogue stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory.
+NOT_DRAWN_WHY: dict[str, str] = {
+    "cluster_mass": "drawn through `cluster_luminosity`, the mass times the light per mass formed; a mass has no "
+                    "look but its light.",
+    "cluster_half_mass_radius": "not drawn yet, and it should be (debt #116): a cluster is a point sprite at every "
+                                "level, though at the finest level (a view some sixty parsecs across) a half-mass "
+                                "radius of one to three parsecs spans tens of pixels. What closes it: a light profile "
+                                "of this radius at the levels that resolve it.",
+    "cluster_age": "drawn through the light and colour temperature the tables give at this age and [Fe/H], and "
+                   "through the region and bubble that grow with it.",
+    "cluster_bound": "not drawn as such, and the category matters (debt #115): a dissolved cluster - half the census "
+                     "by count, a sixth of the clusters' light at the defaults - is still a point of its summed light "
+                     "though its stars have spread over tens of parsecs; the accounting owed between the points and "
+                     "the region's sampled stars is that debt's.",
+    "cluster_metallicity": "drawn through the light and colour temperature the tables give at its [Fe/H] and age.",
+    "cluster_ionizing_photons": "drawn through its HII region: `hii_stromgren_radius` and `hii_halpha_emissivity` are "
+                                "this rate in the cloud's clumped gas.",
+    "cluster_wind_luminosity": "drawn through its bubble: `bubble_radius` and the shell's thickness and emissivity are "
+                               "this power, with the supernovae's, over the age.",
+}
+
+
+def _not_drawn(name: str) -> str:
+    why = NOT_DRAWN_WHY.get(name)
+    return f" **Not drawn by the viewer** (D191): {why}" if why else ""
+
+
 def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis")) -> FieldDecl:
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cluster",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
 
 
 CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
@@ -238,7 +273,7 @@ CLUSTER_BOUND = FieldDecl(
         "Bound, a seeded draw at the fraction of embedded clusters Lada & Lada 2003 find surviving to the "
         "Pleiades' age, whatever the mass; otherwise unbound and expanding, and dissolved — an association "
         "in the field, its stars still counted — once older than the age by which the same review finds "
-        "the unbound gone."
+        "the unbound gone." + _not_drawn("cluster_bound")
     ),
 )
 CLUSTER_METALLICITY = _column("cluster_metallicity", "[Fe/H]", "dex",
@@ -251,6 +286,20 @@ CLUSTER_IONIZING = _column("cluster_ionizing_photons", "Hydrogen-ionizing photon
                            "magnitude between 3 and 10 Myr as the O stars die; the first 4 Myr are read at the "
                            "youngest isochrone, which cannot see stars above 64 M☉.",
                            ramp=Ramp("magma", scale="log", lo=1e44, hi=1e53))
+CLUSTER_LUMINOSITY = _column("cluster_luminosity", "Luminosity", "Lsun",
+                             "The light of the cluster's stars, bolometric: the light per unit mass formed of a burst at the "
+                             "cluster's age and [Fe/H], integrated over the IMF along the same isochrones the light stage "
+                             "uses, times the mass - the sum over its members, not a sample of them. What a renderer draws "
+                             "the cluster as a point of light by, as it draws a star by its luminosity. Bolometric: a "
+                             "point painted by this through a blackbody's share at the colour temperature carries about "
+                             "twice the population's own light through an optical filter (debt #114); the cluster's "
+                             "band light is the same tables' and is the closer.",
+                             ramp=Ramp("inferno", scale="log"))
+CLUSTER_LIGHT_TEMPERATURE = _column("cluster_light_temperature", "Colour temperature of its light", "K",
+                                    "The correlated colour temperature of the cluster's summed light - the blackbody whose "
+                                    "chromaticity is nearest the population's, as the disc's light temperature is taken. "
+                                    "Its ramp is the blackbody colour, so a cluster is painted as a star of that temperature.",
+                                    ramp=Ramp("blackbody", scale="log", lo=BLACKBODY_KELVIN[0], hi=BLACKBODY_KELVIN[1]))
 CLUSTER_WIND = _column("cluster_wind_luminosity", "Wind mechanical luminosity", "Lsun",
                        "½ Ṁ v_∞² summed over the IMF the same way: Vink, de Koter & Lamers 2001's line-driven "
                        "winds at each living member's luminosity, temperature and present mass, at the "
@@ -329,7 +378,8 @@ CLUSTERS = IMPLEMENTATIONS.register(
         ),
         publishes=(
             CLUSTER_RADIUS, CLUSTER_AZIMUTH, CLUSTER_HEIGHT, CLUSTER_MASS, CLUSTER_HALF_MASS_RADIUS, CLUSTER_AGE,
-            CLUSTER_BOUND, CLUSTER_METALLICITY, CLUSTER_IONIZING, CLUSTER_WIND, BOUND_CLUSTER_MASS_TOTAL,
+            CLUSTER_BOUND, CLUSTER_METALLICITY, CLUSTER_IONIZING, CLUSTER_WIND, CLUSTER_LUMINOSITY,
+            CLUSTER_LIGHT_TEMPERATURE, BOUND_CLUSTER_MASS_TOTAL,
             CLUSTER_FORMATION_EFFICIENCY_DECL,
         ),
     )

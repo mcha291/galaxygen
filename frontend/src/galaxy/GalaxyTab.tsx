@@ -1,10 +1,10 @@
 import { identify } from "@interface/stars.js";
 import { useMemo, useState } from "react";
 
-import { type FieldsPayload, type Query, type Sample, type StarName, STAR_SAMPLE, loadBrightest, loadRegion } from "../api";
+import { type Census, type FieldsPayload, type Query, type Sample, type StarName, STAR_SAMPLE, loadBrightest, loadClusters, loadRegion } from "../api";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
-import { PHOTOMETRIC, exposureFor, photometricColors, starColors } from "./colors";
+import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
 import { FieldVolume } from "./FieldVolume";
@@ -144,6 +144,20 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const regionKey = area ? JSON.stringify([area, regionStars, query]) : null;
   const region = useLoad<Sample>(regionKey, (signal) => loadRegion(area!, regionStars, query, signal));
   const detail = region.value && regionKey ? region.value : null;
+  // The region's clusters (V3's volume, V4's points, S41): loaded once at the level the view asks for.
+  const level = area && view ? levelFor(view.across) : 0;
+  const clustersKey = area ? JSON.stringify([area, level, query]) : null;
+  const regionClusters = useLoad<Census>(clustersKey, (signal) => loadClusters({ ...area!, level }, query, signal)).value ?? null;
+  const shownClusters = area && regionClusters ? regionClusters : null;
+  const clusterPositions = useMemo(() => {
+    if (!shownClusters) return null;
+    const c = shownClusters.columns as Record<string, ArrayLike<number>>;
+    return c.cluster_radius ? toScene(c.cluster_radius, c.cluster_azimuth, c.cluster_height) : null;
+  }, [shownClusters]);
+  const clusterColors = useMemo(() => {
+    if (!shownClusters || !shownClusters.columns.cluster_luminosity) return null;
+    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity");
+  }, [meta, shownClusters, exposure]);
 
   // The brightest mode: the frustum's footprint, a pool sized to it, and the top N inside the frustum.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
@@ -189,6 +203,10 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
     if (detail && detailPositions && detailColors && weights.stars > 0) {
       layers.push({ positions: detailPositions, colors: detailColors, opacity: weights.stars, onPick: (row) => open(detail, row) });
     }
+    // Clusters as objects (V4, S41): each a point of the light its stars sum to, in the region regime.
+    if (clusterPositions && clusterColors && weights.stars > 0 && field === PHOTOMETRIC) {
+      layers.push({ positions: clusterPositions, colors: clusterColors, opacity: weights.stars });
+    }
   } else if (bright && brightPositions && brightColors) {
     layers.push({ positions: brightPositions, colors: brightColors, onPick: (row) => openBright(bright, row) });
   }
@@ -204,7 +222,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={levelFor(view.across)} stops={exposure} weight={weights.stars} filterSet={filterSet} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} />
         )}
       </GalaxyView>
 

@@ -373,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (56, 40)  # 52 / 40 at S39 (#109, D189); 51 / 40 at S38; 27 / 35 at S22; V3 opened #110-#113 (D190)
+    assert progress.debt_counts(text) == (59, 40)  # 56 / 40 at S40 (#110-#113, D190); 52 / 40 at S39; 27 / 35 at S22; V4 opened #114-#116 (D191)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -402,7 +402,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113 | 45 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 | 48 |",
         "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex**",
         "100. **Row 34, the Galactic ionizing photon rate, misses Bennett et al. 1994 by 3%",
         "102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**",

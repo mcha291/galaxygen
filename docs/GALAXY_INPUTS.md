@@ -690,9 +690,9 @@ defined here once and used in every entry below:
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113 | 45 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 | 48 |
 
-So the board's **56 open** is 11 permanent and 45 carried, and no item is unruled. (S22
+So the board's **59 open** is 11 permanent and 48 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -708,14 +708,15 @@ census untied from its clusters and its lifetime-set count, D185; S37, Audit III
 square root, an adopted η and the record's misattributions, D186; S38 applied all three and discharged them, D187, and V1 opened #107–#108, the SED's stated choices and the
 dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's layer and the infrared channel, D189; V3 opened
 #110–#113, the region regime's stated shapes, its display budget, its screen-space composite and the stars left on the
-level-0 sample, D190.) The eleven
+level-0 sample, D190; V4 opened #114–#116, the point regime's bolometric painting, the young population's double
+representation and the cluster's undrawn extent, D191.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The forty-five carried ones are not forty-five mechanisms.** Four of them — 19, 27, 49 and the
+**The forty-eight carried ones are not forty-eight mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -3191,7 +3192,9 @@ never been judged in twenty-three sessions.
    while the census is still loading. The heavy tail makes the loss smaller than the count says, and unmeasured.
    **Carried.** What closes it: `packObjects` returns the kept share of the window's HII luminosity and the shells',
    and the field's HII fades by weight × share (zero until loaded); or the unbudgeted regions drawn as points at
-   their luminosity — V4's cluster points carrying the census's Hα.
+   their luminosity — V4's cluster points carrying the census's Hα. **S41 (D191): not closed by V4.** The cluster
+   points carry the cluster's *stellar* light (`cluster_luminosity`), not its region's Hα, and the field's HII
+   still fades by the regime's weight; the light past the 64th region is dropped as before. The remedy stands.
 112. **The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
    them, a star in front included** (S40, V3, D190). The region volume renders emission and transmission to two
    offscreen targets and blends them over the frame — light added, transmission multiplied (render orders 2 and 1,
@@ -3209,7 +3212,44 @@ never been judged in twenty-three sessions.
    levels, and no test integrates the sample's light over a patch against the render's stars over the same cells.
    **Carried.** What closes it: the level-k region as the point layer below 1 kpc with the picker reading the three
    name columns (one call and the naming), and a test that the sample's V light over a patch, scaled by its
-   sampling fraction, is the render's `stars` over the same cells within the sample's own noise.
+   sampling fraction, is the render's `stars` over the same cells within the sample's own noise. **S41 (D191):**
+   that closure now counts two sources — the sample and V4's cluster points (#115) — and the test must sum both.
+114. **A point is painted by its bolometric light through a blackbody's share at its temperature, and that is
+   about twice its light through an optical filter** (S41, V4, D191). A star's point is `star_luminosity` in the
+   declared blackbody ramp's hue at `star_temperature` (D5, A9), and P1 paints a cluster the same way from
+   `cluster_luminosity` and `cluster_light_temperature`. Measured against the population's own eight-band SED
+   through the viewer's rgb curves — V1's machinery (D188) at the object grain — the census summed reads 1.89 /
+   2.12 / 2.43 times its R / G / B light, median +0.91 mag per cluster, +0.18 at the youngest (28 000 K) and +1.31
+   at the oldest (11 000 K): the old clusters are a magnitude too bright against the young. For a window's sampled
+   stars, λL_λ at V from L_bol and a blackbody at T_eff against the isochrone's own `star_magnitude_v` reads a
+   median +0.81 mag per star (p90 +1.75) though only +0.05 light-weighted: the dwarfs are painted too bright against
+   the giants. It is D188's finding — the bolometric correction is the population's, not a blackbody's — which V1
+   fixed for the field and left in the point regime. S42's P6 (`/api/blackbody`: the share per filter at T, so a
+   point's hue follows the filter set) makes the assumption explicit and filter-consistent but keeps it; it does
+   not close this. **Carried.** What closes it: the object's own band light through the filter set — per cluster
+   the eight `band_flux_at` points times the mass (or the per-filter response computed server-side per object, as
+   `/api/render` does per cell), per star the isochrone's magnitudes the table already holds (`star_magnitude_v`
+   is one) — and the viewer drawing a point's channel as that response over the white point, the ramp kept for
+   the "temperature" field alone. `tests/test_v4.py` pins the 2.12.
+115. **The young population is on the screen twice in principle and once in practice: the cluster points and the
+   sampled stars have no accounting between them, and a dissolved cluster is a point** (S41, V4, D191). The
+   clusters are the whole young population — ΣQ / the light stage's young Q = 1.0088 (D182) — and carry 0.249 of
+   the disc's bolometric light (1.22 × 10¹⁰ of 4.90 × 10¹⁰ L☉ at the defaults). The catalogue samples the same
+   stars: in r 7–9 kpc, φ 0–0.4 at the region's sample size (4 400 stars of a 320 000-star galaxy), 7 are younger
+   than 20 Myr and hold 0.001 of the sampled light, while the window's 201 clusters hold 1.47 × 10⁸ L☉ — so at the
+   sample the points add light the sample cannot show, and at a sample dense enough to hold O stars (the finest
+   windows, up to 10⁶ stars) the same stars would be drawn twice, the members spread over the cell and the point
+   on top, since no membership is published. And half the census by count (0.470) is `cluster_bound` = dissolved,
+   0.165 of the clusters' light: an association whose stars have spread over tens of parsecs at 10–20 Myr, drawn
+   as one point at every level. **Carried.** What closes it: a membership the model publishes (the catalogue's
+   young stars a cell's clusters account for, or a `star_cluster_index`) so the sample excludes what the points
+   carry; the dissolved clusters' light handed back to the sample rather than pointed; and #113's closure test
+   summing the sample and the points against the render's `stars` over the same cells.
+116. **A cluster's extent is published and not drawn: every cluster is a point sprite at every level** (S41, V4,
+   D191). `cluster_half_mass_radius` (one to three parsecs at the published half-mass density) is on the wire, and
+   at level 3 — a view some sixty parsecs across — spans tens of pixels; the sprite's size is the display's.
+   **Carried.** What closes it: a light profile of the published radius (Plummer or King, the form to be ruled)
+   drawn at the levels that resolve it, the point kept where it does not.
 
 ---
 

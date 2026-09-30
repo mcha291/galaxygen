@@ -57,10 +57,19 @@ export function exposureFor(luminosity: ArrayLike<number | bigint>): number {
  * dead one: NaN) is black, which adds nothing.
  */
 export function photometricColors(meta: FieldsPayload, columns: Columns, stops: number): Float32Array {
-  const decl = meta.fields.find((f) => f.name === "star_temperature");
-  const temperature = columns.star_temperature;
-  const luminosity = columns.star_luminosity;
-  if (!decl || !temperature || !luminosity) throw new Error("this sample carries no photometry");
+  return lightColors(meta, columns, stops, "star_temperature", "star_luminosity");
+}
+
+/**
+ * photometricColors for any object that publishes a luminosity and a colour temperature with the blackbody
+ * ramp: a star, or since S41 a cluster (`cluster_light_temperature`, `cluster_luminosity`) - the same mapping,
+ * so a cluster is a point of the light its stars sum to, painted as a star of its temperature.
+ */
+export function lightColors(meta: FieldsPayload, columns: Columns, stops: number, temperatureName: string, luminosityName: string): Float32Array {
+  const decl = meta.fields.find((f) => f.name === temperatureName);
+  const temperature = columns[temperatureName];
+  const luminosity = columns[luminosityName];
+  if (!decl || !temperature || !luminosity) throw new Error(`these objects carry no ${temperatureName} and ${luminosityName}`);
   const paint = paintOf(decl, meta.cmaps, temperature);
   const gain = 2 ** stops / REFERENCE_LUMINOSITY;
   const out = new Float32Array(temperature.length * 3);

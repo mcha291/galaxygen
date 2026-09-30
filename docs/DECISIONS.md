@@ -6319,3 +6319,94 @@ render: whole, rgb*      1.9491   0.2320   8.40  5,205,784  halo,disc,assembly,b
 render: one region*      1.8571   0.2183   8.51     20,912  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
 ```
 (`uv run python tools/timings.py`, 2026-09-30, session-40 at the review; the machine otherwise quiet.)
+
+### D191. V4: clusters drawn as objects from two published light columns, painted as stars are; the #69 gate extended to the object classes — 25 columns drawn, 38 ruled not drawn in their own declarations; the point regime's painting measured bolometric (2.1× the population's light through the filter) and the young population's double representation recorded (#114–#116); V4's points do not close #111; `halpha_surface_brightness` retired; instrument PSFs and the tag batch the owner's
+
+**Rulings Fable 5.1 (P1–P5 proposed by Opus 5.5 in `docs/HANDOFF_S41.md` on 2026-09-27, written before its build,
+ruled now, 2026-09-30); build Opus 5.5 (commits 0bc8fe9, 2f67b74, on `session-41` branched from the pre-review
+`session-40`, then `main` at 73b9541 merged in, no conflict).** Reviewed as D190 was: the core diff first
+(`clusters.py`'s two columns, `colors.lightColors`, `GalaxyTab.tsx`'s shared load, `RegionVolume.tsx`), then
+`tests/test_v4.py`, then two instruments of the review's own. The build's code is accepted unchanged; the review
+added the P5 sentences to 38 declarations, a measurement test, and retired one field. The handoff file is deleted.
+
+**The rulings.** (P1, *ratified with a debt.*) A cluster is an object with its own light: `cluster_luminosity` =
+mass × `photometry.population_at`'s light per mass formed at its age and [Fe/H], `cluster_light_temperature` =
+`correlated_temperature` of the same colour — the light stage's tables, never a star sample (B8), the identity
+asserted to 10⁻¹² `[verified: tests/test_v4.py]`. Drawn as a point painted as a star is (L in the declared
+blackbody ramp's hue at T, `lightColors` generalising `photometricColors`), loaded once per window and shared with
+the region volume. The question the S40 close put — is one colour temperature through a blackbody ramp not what
+D188 removed for the field? — is answered by measurement rather than argument: **it is.** Against the population's
+own eight-band SED through the viewer's rgb curves (V1's machinery at the object grain: `band_flux_at` × mass,
+`stellar_response`), L_bol × `blackbody_response` at T_cct puts **1.89 / 2.12 / 2.43×** the census's R / G / B
+light on the screen, median +0.91 mag per cluster, +0.18 at the youngest (27 800 K) and +1.31 at the oldest
+(11 100 K); for a window's sampled stars the same painting against `star_magnitude_v` reads +0.81 mag median
+(+0.05 light-weighted — the giants are near a blackbody, the dwarfs are not) `[verified: tests/test_v4.py, the
+G-channel 2.118 pinned at the coarse grid]`. P1 is ratified because it is the point regime's existing convention
+(A9: one mapping for every point; D5: the viewer computes nothing) and because the alternative — the object's own
+band light through the filter set — is the same tables read eight times per object and a route, not a ruling to
+make at a review; it is **debt #114**, with P6's relation stated there: S42's `/api/blackbody` makes the share per
+filter explicit so a point's hue follows SHO/HOO (RENDER_PHYSICS §2a's one mechanism) but keeps the blackbody's
+bolometric correction, so P6 — S42's closer's to rule — does not close #114 and should not be recorded as if it
+did. (P2, *ratified.*) No named-instrument PSF was built at S41: the curves were a download the owner had not yet
+approved (#108). The owner approved it on 2026-09-27 and S42 built WFC3 with an Airy sprite; S42's closer rules it.
+(P3, *ratified.*) The model toggle exists since S27; V4's gate for it is that both models draw the field and the
+region regimes — Opus's check on a scratch server (`basic` at 1.38 kpc, `azimuthal` at 0.88 kpc, no console
+error, one `/api/clusters` request per window), and every S41 test runs per registered model. (P4, *ratified.*)
+The tag batch is the owner's (C2e); it ran on 2026-09-27 from this desktop on the owner's word — `git ls-remote
+--tags origin` on 2026-09-30 lists 39 tags, s00–s20 and s22–s39 — and its record (D161's listing, MANUAL_TODO's
+rows marked applied with `s06`'s corrected SHA, S22 ◐ → ☑) is written at S42's close, whose handoff §1 holds it.
+(P5, *ratified and completed.*) The #69 gate extended to the object classes: every `of="cloud" | "cluster" |
+"remnant"` column is read by the viewer (`region.ts packObjects`, the cluster points) or says in its declaration
+why it is not — **25 drawn, 38 not** (8 cloud, 24 cluster, 6 remnant; the handoff's 39 was a miscount, the sets
+were always 38). The 38 are ruled one by one in `NOT_DRAWN_WHY` dictionaries beside each stage's declarations
+(`clouds.py`, `clusters.py`, `nebular.py`, `bubbles.py`), each about ending "**Not drawn by the viewer** (D191):
+…", in three kinds: *drawn through what it sets* (a mass through its light, a Mach number through σ_s, Q through
+R_S and the emissivity, a density through the emission measure, an age through the radius, a state through the
+shell it sets — 27 of them); *nothing in a filter's image sees it* (shell velocities, the bubble's X-ray interior,
+nitrogen and sulphur without a line, the remnant's kind — 8); *owed* (`cluster_half_mass_radius`, #116;
+`cluster_bound`'s dissolved state, #115; `hii_balmer_decrement`, which S42 draws — 3). `tests/test_v4.py` asserts
+the sentence on every not-drawn column and its absence on every drawn one, per model; a column moved to DRAWN
+must lose its dictionary entry.
+
+**Two findings of the review's own.** *The young population is on the screen twice in principle.* The clusters
+are the whole young population (ΣQ / the light stage's young Q = 1.0088, D182) and carry **0.249 of the disc's
+bolometric light** (1.22 × 10¹⁰ of 4.90 × 10¹⁰ L☉); the catalogue samples the same stars, and in r 7–9 kpc,
+φ 0–0.4 at the region's sample size (4 400 stars of a 320 000-star galaxy) holds 7 younger than 20 Myr with 0.001
+of the sampled light, against the window's 201 clusters' 1.47 × 10⁸ L☉. So at the sample the points add light the
+sample cannot show — which is the case for P1 — and at a sample dense enough to hold O stars the same stars would
+be drawn twice, no membership being published; and 0.470 of the census by count is dissolved (0.165 of the
+clusters' light), an association drawn as one point. **#115**, its closer a published membership and #113's
+closure test summing both sources. *#111 is not closed by V4*, as the S40 close asked: the points carry stellar
+light, not the region's Hα, and the field's HII still fades by the regime's weight; the entry says so.
+
+**Also.** `halpha_surface_brightness` (D166, Σ_SFR × one constant) is retired from the light stage: no route,
+test or viewer read it since S35's nebular layers, and RENDER_PHYSICS §0 named the close-out to remove it;
+`HALPHA_PER_SFR` stays as the nebular stage's check. Every other field is bit-identical (the review changed
+declarations' text and nothing computed). Specs 11 / 20 / 5 of 36 in both models, unchanged; vitest 16 files /
+111 tests; the frontend build clean (Opus's run, the review's re-run). The `/api/clusters` route grew by the two
+light columns at the build — Opus's cold timings of 2026-09-27, kept as the record (B2):
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+clusters: one sector*    0.8061   0.0014 574.60     63,744  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.2350   0.0097 127.74  3,716,480  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+render: whole, rgb*      1.6158   0.1705   9.48  5,205,784  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.5351   0.1655   9.28     20,912  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+(`uv run python tools/timings.py`, 2026-09-27, session-41, Opus 5.5; the review added no route and changed no
+stage's cost.)
+
+**Chosen against.** Sending P1 back for the object's band light (a route and eight columns under a stacked
+branch, for a defect the stars' points have carried since S23 — recorded with its number instead). Dropping the
+cluster points until a membership exists (they add the young quarter of the light the sample cannot show).
+Drawing a column to use it (P5's own rule). Ruling P6 here (S42's closer's; its relation to #114 is stated so the
+two rulings cannot contradict). Recording the tag batch here (S42's handoff holds the run; one record, A9).
+
+**The second build's "done means" (GALAXY_PLAN §5e), read at this merge.** Both models pass preflight and read
+one acceptance table; every new row passes or is a recorded miss; every NEEDS-SOURCING constant read (Audit III);
+the energy-balance, redistribution and catalogue-against-field tests are in the suite; every visible feature of
+the viewer traces to a published field, and every published field of both models is shown or ruled invisible in
+its declaration (17 scalars under rule D4, 38 object columns under this decision, every grid and object field
+with a ramp — `test_audit`, `test_v4`); the tag batch has run from a desktop. **Met, with the batch's record and
+S42's own close outstanding.** The register reads 59 open = 11 permanent + 48 carried, 40 discharged.

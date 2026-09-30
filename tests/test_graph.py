@@ -101,6 +101,7 @@ SEEDED_BASIC = {
     "cloud_cluster_index",
     "cluster_radius", "cluster_azimuth", "cluster_height", "cluster_mass", "cluster_half_mass_radius", "cluster_age",
     "cluster_bound", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
+    "cluster_luminosity", "cluster_light_temperature",  # S41 (V4, P1): the cluster's own light
     "bound_cluster_mass_total", "cluster_formation_efficiency",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
