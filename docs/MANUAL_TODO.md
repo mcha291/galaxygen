@@ -103,7 +103,7 @@ the row is written with its SHA at once.
 | 41 | `s41` | `75abd5e4029e` | **applied** 2026-09-30 — filled in by S42; tagged the same day (D193) |
 | 42 | `s42` | `396bd66ea368` | **applied** 2026-09-30 — the SHA resolved by the grep below; the last row of the queue, tagged the same day (D193) |
 | 43 | `s43` | `493c783a7fc9` | **applied** 2026-09-30 at S43's own close — the first tag made under the amended C2e (D193); the SHA written on `main` in the commit after the merge, since a merge cannot carry its own hash |
-| 44 | `s44` | *the S44 merge on `main`* | **applied** 2026-10-01 at S44's own close (C2e as amended, D193; D195); the literal SHA is written on `main` right after the merge, as S43 did |
+| 44 | `s44` | `83d2ca25d7d7` | **applied** 2026-10-01 at S44's own close (C2e as amended, D193; D195); the SHA written on `main` in the commit after the merge, as S43's was |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
