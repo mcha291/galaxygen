@@ -690,10 +690,11 @@ defined here once and used in every entry below:
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
+| **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123 | 54 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120 | 51 |
 
-So the board's **65 open** is 11 permanent and 54 carried, and no item is unruled. (S22
+So the board's **62 open** is 11 permanent and 51 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -713,7 +714,8 @@ level-0 sample, D190; V4 opened #114–#116, the point regime's bolometric paint
 representation and the cluster's undrawn extent, D191; S42, the owner's four answers, discharged #108 and opened
 #117–#120, the forbidden lines' missing row, the grid's edge and gas, the diffuse gas's lines and the instrument's
 sprite and convention, D192; S43, Audit IV, opened #121–#123, the grid's solar scale, the renderer's record and a
-misplaced grain row, and set #117's window blind, D194.) The eleven
+misplaced grain row, and set #117's window blind, D194; S44 applied and discharged #121–#123, decided #120's
+convention half, and entered row 37 as a recorded miss under #117, D195.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3270,20 +3272,35 @@ never been judged in twenty-three sessions.
    [O III]/Hα runs 0.02 at 4 kpc to 0.72 at 12, [N II]/Hα 0.19 to 0.09 — recorded in `test_nebular`, judged by
    nothing. A row needs a sourced Milky Way HII-region gradient ([N II]/Hα, [S II]/Hα or [O III]/Hβ against R,
    with a width), and since the model's ratios were printed before any target was read, B5 and D113 say it must
-   be set blind (Audit III's instrument, D186) or entered disclosed, as rows 32 and 34 were. **Carried.** What
+   be set blind (Audit III's instrument, D186) or entered disclosed, as rows 32 and 34 were. What
    kills the reading: a blind window the rings' [N II]/Hα gradient misses in direction — the gradient is the
-   metallicity's, and a miss there is the chemistry's, not the grid's.
-118. **A quarter of the regions read the grid's metal-rich edge, and the grid's gas is not the region's** (S42,
-   D192). The grid spans log(Z/Z☉) −1.98 to +0.2; 26.4% of the default regions (the inner disc) are richer and
-   read the edge, clamped, and 2.6% are younger than its 0.5 Myr floor (every log U is inside). The lines are
+   metallicity's, and a miss there is the chemistry's, not the grid's. **S43 set the window blind** (Audit IV §4,
+   `AUDIT_IV_BLIND.md`: d log([N II]/Hα)/dR over 8.2–15.4 kpc = −0.025 ± 0.009, acceptance [−0.045, −0.005] dex
+   kpc⁻¹, Zhao et al. 2026) and measured the model after it, −0.0815 as built. **S44 entered row 37** (D195 (5)):
+   the nebular stage publishes `nii_halpha_gradient_hii`, the unweighted slope of the rings' log([N II]/Hα)
+   against R over 8.2–15.4 kpc, and on the grid's own solar scale (#121) it reads **−0.1035 dex kpc⁻¹, 6.5σ below
+   the floor** — a recorded miss in `spec.MISSES` whose text discloses the order (window, then S43's measurement,
+   then the row); the secondary reading, [N II]/Hα at R₀ = 0.27 (0.20–0.40), the model 0.137 at 8.2 kpc, is in the
+   row's note. **Carried as the row's miss.** What closes it: the prediction in the miss — read the grid's own
+   [N II]/Hα run against log Z at fixed age and U times the model's d log Z/dR first (the grid's temperature run),
+   then the chemistry's N/H gradient; a slope inside the window after either one change alone, with the other
+   untouched, kills the other explanation.
+118. **3.0 % of the regions read the grid's metal-rich edge (a quarter until S44), and the grid's gas is not the
+   region's** (S42, D192; re-stated at S44, D195). The grid spans log(Z/Z☉) −1.98 to +0.2; since S44 enters the
+   axis on the grid's own oxygen (8.93, #121, D195) **3.0 % of the default regions** (the inner disc) are richer
+   and read the edge, clamped — 26.4 % did until then, the axis entered 0.24 dex too rich — and 2.6 % are younger
+   than its 0.5 Myr floor (every log U is inside). The lines are
    read at the gas's oxygen alone: the grid carries its own abundance pattern (Dopita et al. 2000's piecewise
    N/O on Anders & Grevesse; `[verified: arXiv:1611.08305 §II]`) at n_H = 100 cm⁻³, so the model's published
    `hii_nitrogen_abundance`, `hii_sulphur_abundance` and `hii_electron_density` (median 194, range 39–244) are
-   not what the lines see, and the [S II] doublet's ratio is the grid's density, not the region's. FSPS
-   extrapolates in Z and U where this reads the edge; the clamp is a stated choice. **Carried.** What closes it:
-   a grid that spans the inner disc's metallicity (or the edge's behaviour measured against FSPS's
-   extrapolation and ruled), and the [S II] ratio computed at the region's own density from the atomic data
-   S35 read (the one forbidden-line quantity that needs no ionization fraction).
+   not what the lines see, and the [S II] doublet's ratio is the grid's density, not the region's. **FSPS clamps
+   at its edges exactly as the model does** (`add_nebular.f90`: `dz = MAX(MIN(dz,1.0),0.0) !no extrapolation`
+   `[verified: cconroy20/fsps at bd187a0d, read at S43]`; until S44 this entry said FSPS extrapolates, and it was
+   wrong, D195). Byler's U is defined at the fixed inner face R_in = 10¹⁹ cm of a thin shell, the model's at the
+   Strömgren radius of a filled sphere with n = √⟨n²⟩ — a convention gap the read point carries. **Carried.**
+   What closes it: a grid that spans the inner disc's metallicity (or the edge ruled as the grid's limit, now that
+   it is 3 % of the regions), the U convention reconciled, and the [S II] ratio computed at the region's own
+   density from the atomic data S35 read (the one forbidden-line quantity that needs no ionization fraction).
 119. **The diffuse ionized gas carries only its recombination lines** (S42, D192). The grid models a
    radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
    observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the
@@ -3308,9 +3325,18 @@ never been judged in twenty-three sessions.
    6716 in F673N 0.983 against 0.958, 6731 0.857 against 0.863, [O III] 0.903 against 0.899. What closes that half:
    a `wavelengths: "vacuum"` flag on the set that the line integral honours, or the curves shifted to air by Morton's
    factor in `tools/fetch_filters.py` (1.000277 is right to 2 × 10⁻⁶), and `test_render`'s pins moved. The sprite half
-   stands as written.
-121. **The nebular grid is read 0.24 dex too metal-rich: its log Z = 0 is Anders & Grevesse's oxygen, not Asplund's**
-   (S43, Audit IV A4-1, D194). Byler et al. 2017 adopt "the gas phase abundances specified by Dopita et al. (2000),
+   stands as written. **S44 (D195): the convention half is discharged** — every curve of `wfc3` / `wfc3n` carries
+   `wavelengths: "vacuum"` (written by `fetch_filters.py`, so a regeneration reproduces it), `spectra.parse_curves`
+   accepts the key on any shape (air or vacuum, refused otherwise), and `spectra.line_response` converts the model's
+   air line by Morton 1991's own formula before reading a vacuum curve: F656N at Hα 0.945 (was 0.962), F502N at
+   [O III] 0.899 (was 0.903), [S II] 6716 in F673N 0.958, 6731 0.863 (`test_render`). The curves were not shifted —
+   the raw VOTables are outside the repository and regenerating them is a download, and a declared convention is
+   the record kept where it cannot be forgotten (B13). The continuum integrals read a curve as sent under either
+   convention (a 2.8 × 10⁻⁴ shift of a broadband is below every render tolerance; the band anchors carry no stated
+   convention, #107). **Carried for the sprite half alone:** its scale tied to a stated pixel scale and distance, or
+   ruled display in the set's declaration as it now is; JWST on the owner's word for the download.
+121. ~~**The nebular grid is read 0.24 dex too metal-rich: its log Z = 0 is Anders & Grevesse's oxygen, not
+   Asplund's**~~ **DISCHARGED at S44** (S43, Audit IV A4-1, D194; applied D195). Byler et al. 2017 adopt "the gas phase abundances specified by Dopita et al. (2000),
    which are based on the solar abundances from Anders & Grevesse (1989)", oxygen −3.07 with depletion −0.22 — 12 +
    log(O/H) = 8.93 total, 8.71 in the gas, at the grid's log Z = 0 `[verified: arXiv:1611.08305 §2.1.2, Table 1, read at
    S43]`; `nebular.py` enters log Z = `hii_oxygen_abundance` − `OXYGEN_ABUNDANCE_SOLAR` (8.69). So every region is read
@@ -3319,12 +3345,21 @@ never been judged in twenty-three sessions.
    are clamped, not 26.4 %**; Hα-weighted [O III]/Hα 0.75 (built 0.48), [N II]/Hα 0.082 (built 0.131), the [S II] pair
    unchanged (0.053 / 0.041); per ring [N II]/Hα 0.151 / 0.091 / 0.046 at 4 / 8 / 12 kpc (built 0.200 / 0.166 / 0.097).
    The [N II]/Hα gradient over 8.2–15.4 kpc does not change in kind (≈ −0.07 dex kpc⁻¹ either way), so #117's miss is
-   not this debt's. **Carried.** What closes it: a ruling on which oxygen the axis is entered on — the total 8.93 (the
+   not this debt's. What closed it: a ruling on which oxygen the axis is entered on — the total 8.93 (the
    model's oxygen is a total abundance from [Fe/H] + [α/Fe]) or the gas-phase 8.71 (what the ionized gas holds after
    Dopita's depletion) — one constant beside `OXYGEN_ABUNDANCE_SOLAR` with its sentence, the read point moved,
-   `test_nebular`'s clamp share and ratios re-pinned, #118's clamp sentence rewritten.
-122. **The renderer's record has nine sentences to set right, none moving a number** (S43, Audit IV A4-2, A4-6,
-   A4-11, D194). (i) **FSPS clamps at the grid's edges; it does not extrapolate** — `add_nebular.f90`: `dz =
+   `test_nebular`'s clamp share and ratios re-pinned, #118's clamp sentence rewritten. **S44 ruled the total, 8.93**
+   (D195 (1): the grid's axis scales Dopita's total abundances and the depletion is applied inside the
+   photoionization code; the model's oxygen is a total with no depletion taken, so total is entered against total;
+   8.71 would be right only for a gas-phase oxygen the stage does not compute). Applied as `NEBULAR_GRID_OXYGEN_SOLAR`
+   in `level0.py` with Byler's sentence, the one `grid_line_ratios` read point moved, `OXYGEN_ABUNDANCE_SOLAR` left
+   on the T_e and PAH relations' own scale; measured after: 3.02 % of the regions clamp, the Hα-weighted
+   [O III]/Hα 0.752, [N II]/Hα 0.082, [S II] 0.053 / 0.041 unchanged — the pins moved to these with the reason in each
+   comment, #118 rewritten. One sentence above is corrected by the build: the row's statistic over 8.2–15.4 kpc
+   reads −0.1035 on the grid's scale, not ≈ −0.07 — S43's ≈ −0.07 was its three ring means over 8–12 kpc; the miss is
+   in the same direction and larger (row 37).
+122. ~~**The renderer's record has nine sentences to set right, none moving a number**~~ **DISCHARGED at S44** (S43,
+   Audit IV A4-2, A4-6, A4-11, D194; applied D195 (4)). (i) **FSPS clamps at the grid's edges; it does not extrapolate** — `add_nebular.f90`: `dz =
    MAX(MIN(dz,1.0),0.0) !no extrapolation`, the same for `du` and `da` `[verified: cconroy20/fsps at bd187a0d, read at
    S43]`; `nebular.py`'s docstring, `grid_line_ratios`' docstring, D192 (twice) and #118's text say the model clamps
    "where FSPS extrapolates" — written at S42's review from an incomplete grep, and wrong; the model's reading is
@@ -3342,18 +3377,29 @@ never been judged in twenty-three sessions.
    `[recall]` in `filters.json` lifts to the citation and the name says which. (ix) `transport.js`'s "4 KB is inside
    every proxy's limit" is Envoy's documented 60 KiB default (431 past it; Microsoft documents no limit for Container
    Apps ingress); and #118 should name Byler's U convention (at the fixed inner face R_in = 10¹⁹ cm of a thin shell)
-   against the model's (at the Strömgren radius of a filled sphere with n = √⟨n²⟩). **Carried.** What closes it: an
+   against the model's (at the Strömgren radius of a filled sphere with n = √⟨n²⟩). What closed it: an
    about-line and docstring pass in the next session that touches these files, with `test_docs`' bare-tag check as
-   the gate; no pin moves.
-123. **`spectra.GRAIN_TABLE`'s 398.107 µm row carries the file's 380.189 µm values** (S43, Audit IV A4-3, D194). The
-   file reads `3.98107E+02 0.0000 -0.0000 3.184E-26 2.277E+00`; the code's row is `(398.107, 0.0000, -0.0001,
+   the gate; no pin moves. **Applied at S44** (D195 (4)): (i) and (ii) the two docstrings rewritten and #118's
+   sentence with them — D192's two sentences stand as written and are corrected in D195, a decision not being
+   edited after its merge; (iii) the `prsc` citation reads "Byler et al. 2017's method as FSPS ships it at the
+   pinned commit"; (iv) `fetch_nebular.py` records the +0.07–0.10 Å; (v) the two `[recall]` tags lifted to NIST ASD
+   and CODATA 2018; (vi) one solar mass, 1.98841 × 10³³ g (IAU 2015 nominal GM☉ over CODATA 2018's G), defined once
+   and imported by the dust, cloud and nebular stages — {{C_MSUN}}; (vii) `test_render`'s docstring says which R_V
+   it reads; (viii) `filters.json`'s box is named for what it is, Sanders & Mirabel's 8–1000 µm L_IR, with the
+   citation, the wire label `TIR` kept; (ix) `transport.js` cites Envoy's 60 KiB default. D189's "110 rows" is 104,
+   corrected in D195.
+123. ~~**`spectra.GRAIN_TABLE`'s 398.107 µm row carries the file's 380.189 µm values**~~ **DISCHARGED at S44** (S43,
+   Audit IV A4-3, D194; applied D195 (3)). The file reads `3.98107E+02 0.0000 -0.0000 3.184E-26 2.277E+00`; the code's row is `(398.107, 0.0000, -0.0001,
    3.493e-26, 2.498e00)`, which is the file's `3.80189E+02` row entered under the wrong wavelength `[verified:
    astro.princeton.edu/~draine/dust/extcurvs/kext_albedo_WD_MW_3.1_60_D03.all, both rows read at S43]`. 103 of 104
    rows match. The test's identity K_abs × M_dust/H = (1 − albedo) C_ext holds for a misplaced row, so it could not
    catch this; the effect is confined to the log–log interpolation between 251 and 631 µm (C_ext 9.7 % high at 398
    µm), which no filter the viewer offers reads, and the thermal shape is the dust stage's own κ, not the table's.
-   **Carried.** What closes it: the row corrected from the file and a test that pins every kept row's λ against the
-   file's own wavelength list (a row can be right and misplaced), one afternoon.
+   What closed it: the row corrected from the file and a test that pins every kept row's λ against the
+   file's own wavelength list (a row can be right and misplaced), one afternoon. **Applied at S44:** the row is the
+   file's `3.184e-26, 2.277e00`; `test_render` pins every key to the file's 0.01 dex list at its six printed figures
+   and bounds the far-infrared rows' log–log run (the largest residual from a log–log cubic over the nine rows at λ ≥ 100 µm, 0.0078 dex corrected against 0.0157 with the old row, the bound 0.011 — 1.4× each way, the file's own run bending at 400 µm; three keys sit one unit in the sixth figure off 10^(k/100), as the file prints them), which the misplaced row violated and the identity
+   could not see; the extinction ratios at the viewer's filters did not move.
 
 ---
 
