@@ -698,6 +698,57 @@ def test_the_grain_table_rows_are_the_file_s():
     assert (row[155.9][0], row[155.9][4]) == (c["DUST_OPACITY_WAVELENGTH"], c["DUST_OPACITY_REFERENCE"])
 
 
+# The file's named rows (a filter's or a line's wavelength, printed beside it in the file and in GRAIN_TABLE's
+# comments): the rows that lie on the file's list but off its 0.01-dex grid.
+GRAIN_NAMED_ROWS = {0.2175, 0.35, 0.355, 0.3635, 0.41, 0.4405, 0.4685, 0.47, 0.4861, 0.547, 0.555, 0.6165, 0.6415,
+                    0.6492, 0.6562, 1.25, 1.65, 2.2, 155.9}
+
+
+def test_the_grain_table_keys_are_the_file_s_wavelengths():
+    """A row can be right and misplaced (S43, #123: the 380.189 µm row sat under the 398.107 key and passed the
+    identity above), so the keys are pinned to the file's own list as well as the rows to the identity. The file
+    runs from 10⁴ µm down to 10⁻⁴ in steps of 0.01 dex printed to six significant figures, with its named rows
+    between: every kept λ is 10^(k/100) for an integer k, or one of the 19 named rows. Three grid rows differ
+    from the six-figure rounding of 10^(k/100) by one unit in the sixth figure (0.309029 for 0.309030, 0.354814
+    for 0.354813, 0.630958 for 0.630957; relative 3.2e-6, 2.8e-6, 1.6e-6: the file's own printing, as
+    transcribed at S39 and not re-read here), so the grid is held to one unit in the sixth figure, not to exact
+    equality and not to rel=1e-6, which those three exceed."""
+    off_grid = set()
+    for lam in (r[0] for r in spectra.GRAIN_TABLE):
+        k = round(100.0 * math.log10(lam))
+        unit = 10.0 ** (math.floor(math.log10(lam)) - 5)  # one unit in the sixth significant figure
+        if abs(float(f"{10.0 ** (k / 100.0):.6g}") - lam) > 1.0001 * unit:
+            off_grid.add(lam)
+    assert off_grid == GRAIN_NAMED_ROWS
+    assert len(spectra.GRAIN_TABLE) == 104
+
+
+def _far_infrared_residual(table):
+    """The largest departure, in dex, of log10(C_ext/H) from a cubic in log10 λ fitted over the rows at λ ≥ 100 µm."""
+    far = np.array([r for r in table if r[0] >= 100.0])
+    x, y = np.log10(far[:, 0]), np.log10(far[:, 3])
+    return float(np.abs(y - np.polyval(np.polyfit(x, y, 3), x)).max())
+
+
+def test_the_far_infrared_rows_run_smoothly():
+    """The nine rows at λ ≥ 100 µm depart from a least-squares cubic in log–log by at most 0.0078 dex (at 398.107
+    µm); with the misplaced row restored (the 380.189 row's 3.493e-26 under the 398.107 key) the departure is
+    0.0157 dex, and the bound is set between them at 0.011 — 1.4× over the one and 1.4× under the other, not the
+    2× each way the ruling asked for (D195 (3)). No smoothness statistic at this sampling does better: the file's
+    own run steepens to a log–log slope of −2.14 at 250–400 µm and flattens to −1.87 and −1.69 beyond, so the
+    corrected row is itself the far-infrared's largest departure from any smooth fit, and the misplaced row, one
+    0.02-dex step along the same run (0.040 dex in C_ext), is of the same order. The second difference of the
+    consecutive rows does not separate them (max 0.266 corrected against 0.388 misplaced, the close pairs at
+    155.9/158.489 and 245.471/251.189 carrying the rounding), and the local slope not at all (the misplaced row's
+    slopes, −1.94 and −2.08, lie inside the corrected run's range). The cubic's residual is the separation there
+    is; it is recorded here as a weak guard, the key test and the identity being the strong ones."""
+    bound = 0.011
+    corrected = _far_infrared_residual(spectra.GRAIN_TABLE)
+    misplaced = [r if r[0] != 398.107 else (398.107, 0.0000, -0.0001, 3.493e-26, 2.498e00) for r in spectra.GRAIN_TABLE]
+    assert corrected == pytest.approx(0.0078, abs=1e-4) and corrected < bound
+    assert _far_infrared_residual(misplaced) > bound
+
+
 def test_the_extinction_curve_at_the_viewer_s_filters():
     """A_λ/A_V read at each filter's reference wavelength, pinned: the rgb set's R, V, B and the ir set's J, H, K.
     B over V is 1.302, a monochromatic R_V of 3.31 against the broadband 3.1 the dust stage's E(B − V) divides by."""
