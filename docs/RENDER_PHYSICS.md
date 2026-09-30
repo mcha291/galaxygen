@@ -53,17 +53,21 @@ sections below as a description of an empty slate.
   component: per cluster the HII region's Q, n_e, T_e, log U, clumping and O/N/S
   (§3a's shape parameters) and its Hα **per unit volume** (§4, unit `erg/s/cm3`),
   the diffuse layer, and the disc's Hα as Σ_Q redistributed; `HALPHA_PER_SFR` is
-  the check (0.71 at S35) `[verified: model/galaxy/stages/nebular.py; D184]`. The
-  collisionally excited lines wait on the photoionization grid ruled in (Byler et
-  al. 2017 via FSPS), whose fetch is the owner's call; the old field stays — V3 left it
-  (the render reads the nebular stage's), and retiring it is the close-out's.
+  the check (0.71 at S35) `[verified: model/galaxy/stages/nebular.py; D184]`. **Since S42
+  (D192)** the collisionally excited lines are read off the photoionization grid ruled in
+  (Byler et al. 2017 via FSPS, fetched on the owner's word of 2026-09-27, clamped at its
+  edges): per region `hii_{oiii_5007,nii_6583,sii_6716,sii_6731}_ratio` over its own Hα,
+  per ring `*_surface_brightness_hii`, and Hβ in both layers; `/api/render` carries them as
+  `lines_hii` / `lines_dig` and `absent.lines` is empty. The diffuse gas has no forbidden
+  line (the grid does not model its field; debt #119).
 - **Since S36 (Phase 10)** the `bubbles` stage publishes the hollow: per cluster
   Weaver et al. 1977's bubble (radius, shell velocity, density, thickness, Hα per
   unit volume in the shell, interior pressure and temperature, phase, stalled),
   the supernova-remnant census as an object class (`of="remnant"`, `/api/remnants`,
   Sedov then the snowplow), the hot phase's porosity per radius, and a star's own
   bubble as a catalogue column `[verified: model/galaxy/stages/bubbles.py,
-  feedback.py; D185]`. Their [S II]/Hα waits on the same grid.
+  feedback.py; D185]`. The shells' own [S II]/Hα still waits: the grid is read for the
+  HII regions, not for a shocked shell.
 - The region cells were galaxy-scale: 1024 cells in (R, φ), of which ~800 realise
   a star at the default sample `[verified: python -m galaxy.specs, performance]`.
   **Since S32 (Phase 8) `/api/region` and `/api/system` take `level=` 0–3**: a

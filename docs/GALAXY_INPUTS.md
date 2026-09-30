@@ -689,10 +689,11 @@ defined here once and used in every entry below:
 | **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
+| **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 | 48 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120 | 51 |
 
-So the board's **59 open** is 11 permanent and 48 carried, and no item is unruled. (S22
+So the board's **62 open** is 11 permanent and 51 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -709,14 +710,16 @@ square root, an adopted η and the record's misattributions, D186; S38 applied a
 dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's layer and the infrared channel, D189; V3 opened
 #110–#113, the region regime's stated shapes, its display budget, its screen-space composite and the stars left on the
 level-0 sample, D190; V4 opened #114–#116, the point regime's bolometric painting, the young population's double
-representation and the cluster's undrawn extent, D191.) The eleven
+representation and the cluster's undrawn extent, D191; S42, the owner's four answers, discharged #108 and opened
+#117–#120, the forbidden lines' missing row, the grid's edge and gas, the diffuse gas's lines and the instrument's
+sprite and convention, D192.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The forty-eight carried ones are not forty-eight mechanisms.** Four of them — 19, 27, 49 and the
+**The fifty-one carried ones are not fifty-one mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -737,9 +740,12 @@ census inherits and 97 the bound mass whose survival S34 built on the wrong popu
 D183); 98 and 99 are rows 32 and 33's misses, the same population and the satellites' stellar share (S34,
 D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
 D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185); 107 is the SED's
-joins and 108 the viewer's last two inventions (S38, D188); 109 the dust's layer and the infrared channel
+joins (S38, D188; 108, the viewer's last two inventions, went at V2 and S42); 109 the dust's layer and the infrared channel
 (S39, D189); 110–113 are the region regime's four stated departures — shapes the cloud vector does not constrain,
-a display budget, a screen-space composite, the stars on the level-0 sample (S40, D190). That leaves 28, 33, 39, 42,
+a display budget, a screen-space composite, the stars on the level-0 sample (S40, D190); 114–116 the point regime's
+bolometric painting, the young population drawn twice in principle, the cluster's undrawn extent (S41, D191); 117–120
+the forbidden lines' missing row, the grid's edge and its own gas, the diffuse gas's lines and the instrument's sprite
+and wavelength convention (S42, D192). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3035,15 +3041,17 @@ never been judged in twenty-three sessions.
    age at which a survivor counts as a globular *and* a sourced disruption time for halo orbits; then
    `gc_system_mass` is the old survivors and this item and #98 are judged together.
 
-98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex** (S34, BUILD_II
-   Phase 5, D183). The ensemble median 7.13 × 10⁷ M☉ against 1.54–3.26 × 10⁷: the catalogue's ΣL_V =
-   1.716 × 10⁷ L☉ over 156 clusters (it lists no masses; M_V,t for 156 of 157) `[verified:
-   physics.mcmaster.ca/~harris/mwgc.dat, Part II, read at S34]` at BHG16's M/L_V = 1.4 ± 0.5 for metal-poor
-   globulars `[verified: arXiv:1602.07702, §6.1.2]`, applied to all 156; the catalogue's own M/L = 2 (3.43 ×
-   10⁷, no width) is the alternative and fails the same way. Disclosed in the row: the model's number was
-   known when the M/L was chosen; and η M_halo itself (3.3–4.4 × 10⁷) sits at or above the window's top, so
-   the model reproduces the halo relation and misses the catalogue because it counts every surviving bound
-   cluster whatever its age (#97). **Carried.** Prediction that kills the reading: separating the old
+98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex — 0.25 above the
+   blind window's top** (S34, BUILD_II Phase 5, D183; the window re-set at S42, D192). The ensemble median
+   7.13 × 10⁷ M☉ against 2.7–4.0 × 10⁷: the catalogue's ΣL_V = 1.716 × 10⁷ L☉ over 156 clusters (it lists no
+   masses; M_V,t for 156 of 157) `[verified: physics.mcmaster.ca/~harris/mwgc.dat, Part II, read at S34 and
+   blind at S37]` at Baumgardt, Sollima & Hilker 2020's dynamical M/L_V 1.83–1.92 (1.6–2.2 with their scatter)
+   `[verified: arXiv:2009.09611 §3.3, read blind at S37]` — Audit III's blind window (A3-7, `AUDIT_III_BLIND.md`),
+   adopted by the owner on 2026-09-27 over the built one (BHG16's 1.4 ± 0.5 for metal-poor globulars, 1.54–3.26
+   × 10⁷, which S34 chose knowing the model's number; the catalogue's own M/L = 2, 3.43 × 10⁷, now falls inside).
+   The re-set sharpens the finding: the measured η M_halo (3.19 × 10⁷, #105) sits **inside** the blind window,
+   so the model reproduces the halo relation's input and misses the catalogue because it counts every surviving
+   bound cluster whatever its age (#97). **Carried.** Prediction that kills the reading: separating the old
    survivors at a sourced halo-orbit disruption time lands the row within 0.2 dex; if they read below 1.5 ×
    10⁷ at any sourced t₀ between the open clusters' and the N-body one, the bound fraction or the mass
    function's scale at high redshift is at fault, not the dissolution.
@@ -3058,18 +3066,20 @@ never been judged in twenty-three sessions.
    sourced relation does that and the row still misses high, the ratio's reading (total mass, not stellar)
    is what is wrong.
 
-100. **Row 34, the Galactic ionizing photon rate, misses Bennett et al. 1994 by 3%, and the model's photons
-   per unit star formation are 0.71 of Starburst99's** (S35, BUILD_II Phase 9, D184). Q(H⁰) = 1.6527 × 10⁵³ s⁻¹
-   against (3.5 ± 1.8) × 10⁵³ `[verified: Chomiuk & Povich 2011, arXiv:1110.4105, §3.1, second-hand]`, the
-   floor 1.7 × 10⁵³; the same COBE data re-analysed by McKee & Williams 1997, (2.6 ± 1.3) × 10⁵³, would pass.
-   The nebular stage's `halpha_sfr_ratio` = 0.7095 says the same thing against Kennicutt & Evans 2012's
-   calibration, and Chomiuk & Povich's 7.5 × 10⁻⁵⁴ M☉ yr⁻¹ per photon s⁻¹ at the model's 1.755 M☉/yr a third
-   way (2.34 × 10⁵³ expected). The lever is the Q(T_eff, L) table the light stage integrates along the PARSEC
-   isochrones (SHP03, #84), which yields fewer photons per massive star than Starburst99's atmospheres, and
-   the youngest isochrone's 64 M☉ ceiling. **Carried.** Prediction that kills the reading: raising the yield
-   to Starburst99's (× 1.41) lands row 34 at 2.3 × 10⁵³ and the ratio at 1.0 together; if the yield is raised
-   and the row still misses, the star formation rate is low, not the photons. Disclosed in the row: the
-   model's Q was known when Bennett's window was chosen (it is the primary analysis).
+100. **The model's ionizing photons per unit star formation are 0.71 of Starburst99's; row 34 passes since S42
+   and no longer tests it** (S35, BUILD_II Phase 9, D184; re-scoped at S42, D192). Q(H⁰) = 1.6527 × 10⁵³ s⁻¹
+   was 3% under Bennett et al. 1994's (3.5 ± 1.8) × 10⁵³ `[verified: Chomiuk & Povich 2011, arXiv:1110.4105,
+   §3.1, second-hand]`, a window S35 chose knowing the number; Audit III's blind reader chose McKee & Williams
+   1997's (2.6 ± 1.3) × 10⁵³ from the same COBE data for stated reasons (A3-7, `AUDIT_III_BLIND.md`), the owner
+   adopted it on 2026-09-27, and the model passes at 1.3–3.9 × 10⁵³ with its conditioning in `test_s22_rulings`:
+   a factor-of-three window that the disc's whole history lands in says nothing about its young light. What the
+   debt names is unchanged: the nebular stage's `halpha_sfr_ratio` = 0.7095 against Kennicutt & Evans 2012's
+   calibration, and Chomiuk & Povich's 7.5 × 10⁻⁵⁴ M☉ yr⁻¹ per photon s⁻¹ at the model's 1.755 M☉/yr (2.34 ×
+   10⁵³ expected) — the Q(T_eff, L) table the light stage integrates along the PARSEC isochrones (SHP03) yields
+   fewer photons per massive star than Starburst99's atmospheres, and the youngest isochrone's 64 M☉ ceiling;
+   one mechanism with #84 (A3-9). **Carried.** Prediction that kills the reading: raising the yield to
+   Starburst99's (× 1.41) lands the ratio at 1.0 and row 34 at 2.3 × 10⁵³ (still inside — the row cannot tell);
+   the instrument is the ratio, and a Milky Way HII-region line-ratio row (#117) would be a second one.
 101. **The diffuse ionized gas is 30% of the Hα by construction, and two readings say otherwise** (S35,
    D184). Every HII region loses 30% of its ionizing photons to the diffuse layer (Zurita et al. 2002's
    model `[verified: Haffner et al. 2009, arXiv:0901.0941, §IV]`) and none leave the galaxy, so
@@ -3149,14 +3159,17 @@ never been judged in twenty-three sessions.
    ninth and tenth anchor from the published FUV and infrared fields (the dust's L_IR belongs to the dust
    component, not here), or a model-atmosphere library of the isochrone kind — a data dependency, the owner's
    call; and the CMD filter files read when their pages are reachable.
-108. **No per-filter dust and no named instrument: the viewer still holds `CHANNEL_EXTINCTION`, and the
-   instrument set needs a download** (S38, D188). The dust component is the published A_V and E(B − V) per
-   cell; no extinction curve is published per filter, so the viewer reddens with its own display constant, the
-   last colour invention V1 leaves (with the line's knots and the dust's clumps, V2's). The named instrument's
-   filter curves (e.g. HST WFC3 F435W/F555W/F814W) are files on the SVO service, and the session downloads
-   nothing without the owner's word. **Carried** to V2 (the extinction law per band from the dust stage's grain
-   table, which S31 read — one column per band; S39 found the table was not in the repository and transcribed
-   110 rows of it into `spectra.GRAIN_TABLE`, D189) and to the owner (the download).
+108. ~~**No per-filter dust and no named instrument: the viewer still holds `CHANNEL_EXTINCTION`, and the
+   instrument set needs a download**~~ **DISCHARGED at S42** (S38, D188). The dust component is the published
+   A_V and E(B − V) per cell; no extinction curve is published per filter, so the viewer reddens with its own
+   display constant, the last colour invention V1 leaves (with the line's knots and the dust's clumps, V2's).
+   The named instrument's filter curves (e.g. HST WFC3 F435W/F555W/F814W) are files on the SVO service, and
+   the session downloads nothing without the owner's word. *Both halves are gone:* V2 reads the extinction per
+   filter from `spectra.GRAIN_TABLE` and removed `CHANNEL_EXTINCTION` (D189), and on the owner's word of
+   2026-09-27 S42 fetched HST WFC3/UVIS's six system throughputs from SVO (`tools/fetch_filters.py` →
+   `instruments.json`, sets `wfc3` and `wfc3n`) with an Airy sprite per channel (D192). What the instrument
+   still lacks — the sprite's scale, HST's obscuration and spikes, JWST, SVO's air-or-vacuum silence — is
+   #120's.
 
 109. **The dust sits in the stars' layer, the infrared set is not drawable, and the scattering geometry is a
    thin-slab guess** (S39, V2, D189). The render's `layers` put the dust at the stars' sech² scale height (0.356
@@ -3250,6 +3263,44 @@ never been judged in twenty-three sessions.
    at level 3 — a view some sixty parsecs across — spans tens of pixels; the sprite's size is the display's.
    **Carried.** What closes it: a light profile of the published radius (Plummer or King, the form to be ruled)
    drawn at the levels that resolve it, the point kept where it does not.
+117. **The forbidden lines have no acceptance row, and the model's numbers are now known** (S42, D192). The
+   nebular stage publishes [O III] 5007, [N II] 6583 and [S II] 6716, 6731 over Hα per region off Byler et al.
+   2017's grid; Hα-weighted over the default census they read 0.477, 0.131, 0.053 + 0.041, and per ring
+   [O III]/Hα runs 0.02 at 4 kpc to 0.72 at 12, [N II]/Hα 0.19 to 0.09 — recorded in `test_nebular`, judged by
+   nothing. A row needs a sourced Milky Way HII-region gradient ([N II]/Hα, [S II]/Hα or [O III]/Hβ against R,
+   with a width), and since the model's ratios were printed before any target was read, B5 and D113 say it must
+   be set blind (Audit III's instrument, D186) or entered disclosed, as rows 32 and 34 were. **Carried.** What
+   kills the reading: a blind window the rings' [N II]/Hα gradient misses in direction — the gradient is the
+   metallicity's, and a miss there is the chemistry's, not the grid's.
+118. **A quarter of the regions read the grid's metal-rich edge, and the grid's gas is not the region's** (S42,
+   D192). The grid spans log(Z/Z☉) −1.98 to +0.2; 26.4% of the default regions (the inner disc) are richer and
+   read the edge, clamped, and 2.6% are younger than its 0.5 Myr floor (every log U is inside). The lines are
+   read at the gas's oxygen alone: the grid carries its own abundance pattern (Dopita et al. 2000's piecewise
+   N/O on Anders & Grevesse; `[verified: arXiv:1611.08305 §II]`) at n_H = 100 cm⁻³, so the model's published
+   `hii_nitrogen_abundance`, `hii_sulphur_abundance` and `hii_electron_density` (median 194, range 39–244) are
+   not what the lines see, and the [S II] doublet's ratio is the grid's density, not the region's. FSPS
+   extrapolates in Z and U where this reads the edge; the clamp is a stated choice. **Carried.** What closes it:
+   a grid that spans the inner disc's metallicity (or the edge's behaviour measured against FSPS's
+   extrapolation and ruled), and the [S II] ratio computed at the region's own density from the atomic data
+   S35 read (the one forbidden-line quantity that needs no ionization fraction).
+119. **The diffuse ionized gas carries only its recombination lines** (S42, D192). The grid models a
+   radiation-bounded region around a young cluster; the diffuse layer's field is softer and diluted, and its
+   observed [N II]/Hα and [S II]/Hα are enhanced above the regions' `[recall: Haffner et al. 2009 §IV, the
+   WIM's line ratios; not re-read at S42]`. So `lines_dig` holds Hβ alone, named in the route's header, and a
+   narrowband frame's diffuse glow is Hα-only where the sky's is not. **Carried.** What closes it: a sourced
+   DIG [N II]/Hα and [S II]/Hα (a value with a width, or a relation with the layer's temperature) published as
+   two scalars of the nebular stage and drawn beside the layer's Hβ.
+120. **The named instrument's sprite is a display choice, and the curves' wavelength convention is unstated**
+   (S42, D192). Under `wfc3` / `wfc3n` a star is the Airy pattern of a circular aperture per channel at a
+   radius in proportion to the filter's pivot — the shape is the physics, its scale on screen is not (the view
+   has no distance to the galaxy; the reddest first dark ring sits at 0.16 of a 25 px sprite `[inferred]`);
+   HST's central obscuration and its secondary's four spikes are not drawn, and JWST (NIRCam, a hexagonal PSF —
+   RENDER_PHYSICS §2a's other named row) is not built. SVO does not say whether its wavelengths are air or
+   vacuum; `tools/fetch_filters.py` records each line's transmission both ways, the largest difference F673N at
+   [S II] 6716 (0.983 against 0.958, 2.5%), and the model's `LINE_WAVELENGTHS` are air. **Carried.** What
+   closes it: the convention read from STScI's own throughput tables (the source SVO cites) and the curves
+   shifted if they are vacuum; the sprite's scale tied to a stated pixel scale and distance, or ruled display in
+   the filter set's declaration as it now is; JWST on the owner's word for the download.
 
 ---
 

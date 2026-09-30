@@ -24,6 +24,8 @@ export const BASE = "/api";
 export const ORIGIN = "";
 
 const HEADER_OFFSET = 8; // magic (4) + header length (4)
+/** The longest URL sent as a GET (S42): past it the query travels as a POST body. 4 KB is inside every proxy's limit. */
+export const MAX_URL = 4096;
 const READERS = { f8: Float64Array, f4: Float32Array, i8: BigInt64Array };
 
 export class ApiError extends Error {
@@ -55,12 +57,18 @@ export function url(path, params = {}, origin = ORIGIN) {
  * server says it ran, which is how rule D4 is visible from the client side.
  */
 async function transport(path, params, options = {}) {
-  const target = url(path, params, options.origin);
-  const response = await fetch(target, {
-    method: options.method || "GET",
-    cache: "no-store",
-    signal: options.signal,
-  });
+  let target = url(path, params, options.origin);
+  const init = { method: options.method || "GET", cache: "no-store", signal: options.signal };
+  // A query too long for a request line (a named instrument's sampled curves, S42) goes as a POST body,
+  // form-encoded: the server appends it to the URL's query and answers exactly as it would a GET.
+  if (init.method === "GET" && target.length > MAX_URL) {
+    const at = target.indexOf("?");
+    init.method = "POST";
+    init.headers = { "Content-Type": "application/x-www-form-urlencoded" };
+    init.body = target.slice(at + 1);
+    target = target.slice(0, at);
+  }
+  const response = await fetch(target, init);
   const buffer = await response.arrayBuffer();
   const type = response.headers.get("content-type") || "";
   const stages = (response.headers.get("x-galaxy-stages") || "").split(",").filter(Boolean);
@@ -162,6 +170,11 @@ export const system = (star, params = {}, options) =>
  */
 export const render = (curves, params = {}, options) =>
   frame("/api/render", { ...params, filters: JSON.stringify(curves) }, options);
+
+/** Each filter's share of a blackbody's light on a temperature grid (S42): what a point of a colour temperature
+ * puts through the viewer's curves. JSON; runs no stage. */
+export const blackbody = (curves, params = {}, options) =>
+  get("/api/blackbody", { ...params, filters: JSON.stringify(curves) }, options);
 
 /** The censuses of one window (S32-S36): clouds, clusters (with their HII regions and bubbles) and remnants. */
 export const clouds = (window = {}, params = {}, options) =>

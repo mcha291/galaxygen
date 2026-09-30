@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { RING_ROWS, balanced, depthOf, layerShare, marchHalfHeight, phaseAt, planeTexture } from "./regimes";
+import { RING_ROWS, balanced, depthOf, layerShare, marchHalfHeight, phaseAt, planeTexture, summed } from "./regimes";
 
 // What /api/render returns since S39, in miniature: per (R, φ, filter) the stars, the HII regions' Hα and the
 // scattered light, each already placed by the model's contrast; per (R, filter) the diffuse Hα, the dust's
@@ -142,5 +142,16 @@ describe("balanced", () => {
     expect(balanced(Number.NaN, 0.2)).toBe(0);
     expect(balanced(-1, 0.2)).toBe(0);
     expect(balanced(3, 0.2)).toBeCloseTo(15, 12);
+  });
+});
+
+describe("a layer's lines summed (S42)", () => {
+  it("adds element by element, passes one through alone, and refuses two shapes", () => {
+    expect(Array.from(summed([1, 2], new Float64Array([0.5, 0.25])) ?? [])).toEqual([1.5, 2.25]);
+    const alone = [3, 4];
+    expect(summed(alone, undefined)).toBe(alone);
+    expect(summed(undefined, alone)).toBe(alone);
+    expect(summed(undefined, undefined)).toBeUndefined();
+    expect(() => summed([1], [1, 2])).toThrow();
   });
 });

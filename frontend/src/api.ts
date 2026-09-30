@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
+import { arrays, blackbody, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
@@ -212,16 +212,35 @@ export interface RenderFrame {
     absent: { lines: string[]; why: string };
     stages: string[];
     /** Each component's vertical layer, kpc (S39): a sech²(z / 2h) / 4h profile at each scale height. */
-    layers?: { stars: number | null; dust: number | null; halpha_hii?: number | null; halpha_dig?: number | null };
+    layers?: {
+      stars: number | null;
+      dust: number | null;
+      halpha_hii?: number | null;
+      halpha_dig?: number | null;
+      lines_hii?: number | null;
+      lines_dig?: number | null;
+    };
     /** What each component reads and is; the scattered light's phase table rides here (S39). */
     components?: { dust_scattered?: { phase?: { cos_view: number[]; factor: number[] } } } & Record<string, unknown>;
     [key: string]: unknown;
   };
   /**
-   * Row-major: stars, halpha_hii, dust_scattered (R, φ, filter); halpha_dig, dust_extinction, dust_thermal
-   * (R, filter) (S39).
+   * Row-major: stars, halpha_hii, lines_hii, dust_scattered (R, φ, filter); halpha_dig, lines_dig, dust_extinction,
+   * dust_thermal (R, filter) (S39; the lines_ components since S42).
    */
   arrays: Record<string, Float32Array | Float64Array>;
+}
+
+/** Each filter's share of a blackbody's light per temperature, and the white point's (S42, `/api/blackbody`). */
+export interface BlackbodyTable {
+  kelvin: number[];
+  /** Per temperature, per filter. */
+  share: number[][];
+  white: { kelvin: number; response: number[] } | null;
+}
+
+export async function loadBlackbody(curves: Curve[], white: number, signal?: AbortSignal): Promise<BlackbodyTable> {
+  return (await blackbody(curves, { white }, { signal })) as BlackbodyTable;
 }
 
 /**

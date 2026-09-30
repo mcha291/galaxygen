@@ -256,7 +256,12 @@ def test_no_green_row_is_unconditioned(judged):
     # debt #96) at one efficiency - so green says the clouds' slopes bracket the observed one, and the
     # source's sample is 30 external galaxies, not the Milky Way (D184).
 
-    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, 35}
+    # S42 adds row 34, the Galactic ionizing photon rate, green at 1.65e53 in McKee & Williams 1997's (2.6 +/- 1.3)e53,
+    # with its conditioning stated here: the window is Audit III's blind reading (the reader did not know the model's
+    # number), adopted by the owner on 2026-09-27 over Bennett et al. 1994's, which the model missed by 3%; the model's
+    # ionizing photons per unit star formation are 0.71 of Starburst99's (debt #100 stays open), so green says the
+    # disc's whole history lands inside a factor-of-three window, not that its young light is right.
+    joined_since = {29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, 35, spec.ROW_IONIZING_RATE}
     for name, results in judged.items():
         passing = {r.n for r in results if r.status == "pass"}
         assert not passing & left_since, (name, "a row recorded as gone is green again", sorted(passing & left_since))

@@ -209,3 +209,60 @@ def test_the_clusters_route_carries_the_regions_and_the_scalars_fall_under_rule_
     for name in ("halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular"):
         assert by_name[name]["domain"] == "grid" and by_name[name]["unit"] == "Lsun/pc2"
     assert by_name["hii_halpha_emissivity"]["unit"] == "erg/s/cm3" and by_name["hii_electron_density"]["unit"] == "1/cm3"
+
+
+# --- S42: the forbidden lines off Byler et al. 2017's grid (the owner's word on D184, 2026-09-27) -------------
+
+
+def test_the_line_table_is_the_fetched_grid_and_a_grid_point_reads_back_exactly():
+    """tools/fetch_nebular.py's table: FSPS's PARSEC-ionized dust-free grid at the pinned commit, its three axes as
+    the file gives them, six lines. At a grid point the reader returns the grid's own ratio; off the grid it clamps."""
+    g = nb._line_grid()
+    assert g["log_z"].tolist() == [-1.98, -1.5, -0.98, -0.58, -0.39, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2]
+    assert np.allclose(10.0 ** g["log_age_yr"], [5e5, 1e6, 2e6, 3e6, 4e6, 5e6, 6e6, 7e6, 1e7, 2e7], rtol=1e-12)
+    assert g["log_u"].tolist() == [-4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0]
+    assert g["lines"].tolist() == ["hbeta", "oiii_5007", "halpha", "nii_6583", "sii_6716", "sii_6731"]
+    with np.load(nb.LINE_TABLE) as a:
+        assert str(a["source"]) == "cconroy20/fsps@bd187a0d07dac17b55c4dc7c60d83f63694c1b4e:nebular/ZAU_ND_prsc.lines"
+    cube = g["log_lsun_per_photon"].astype(float)
+    # Solar gas, 1 Myr, log U = -3: the grid's own [O III]/Halpha and [N II]/Halpha (the file's 0.992 x its Hb/Ha
+    # and 0.396, read off it at S42).
+    got = nb.grid_line_ratios(0.0, 6.0, -3.0)
+    assert float(got["oiii_5007"]) == pytest.approx(10.0 ** (cube[8, 1, 2, 1] - cube[8, 1, 2, 2]), rel=1e-12)
+    assert float(got["nii_6583"]) == pytest.approx(0.396, abs=5e-4)
+    # Past every edge the corner's value; a NaN input is a NaN line, never a guess.
+    corner = nb.grid_line_ratios(1.0, 8.0, 0.0)
+    assert float(corner["sii_6731"]) == pytest.approx(10.0 ** (cube[-1, -1, -1, 5] - cube[-1, -1, -1, 2]), rel=1e-12)
+    assert np.isnan(nb.grid_line_ratios(np.nan, 6.0, -3.0)["oiii_5007"])
+    # Linear in log luminosity between grid points, as FSPS's add_nebular.f90 interpolates.
+    mid = nb.grid_line_ratios(0.0, 6.0, -2.75)["oiii_5007"]
+    ends = [10.0 ** (cube[8, 1, k, 1] - cube[8, 1, k, 2]) for k in (2, 3)]
+    assert float(mid) == pytest.approx(math.sqrt(ends[0] * ends[1]), rel=1e-12)
+
+
+def test_the_default_regions_on_the_grid_and_their_lines(models, default):
+    """Where the default census's regions sit on the grid, and what it gives them. Recorded, not judged: no row
+    reads these lines yet. The inner disc's gas is richer than the grid's +0.2 dex edge for a quarter of the
+    regions, which read the edge; the youngest 2.6% read the 0.5 Myr floor; every log U is inside."""
+    F = default.fields
+    g = nb._line_grid()
+    log_z = np.asarray(F["hii_oxygen_abundance"]) - 8.69
+    age = np.log10(np.asarray(F["cluster_age"]) * 1e6)
+    log_u = np.asarray(F["hii_ionization_parameter"])
+    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.2641, abs=1e-3) and not (log_z < g["log_z"][0]).any()
+    assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
+    assert np.all((log_u >= g["log_u"][0]) & (log_u <= g["log_u"][-1]))
+    w = np.asarray(F["hii_halpha_luminosity"])
+    weighted = {n: float(np.sum(np.asarray(F[f"hii_{n}_ratio"]) * w) / w.sum()) for n in nb.FORBIDDEN}
+    assert weighted == pytest.approx({"oiii_5007": 0.477, "nii_6583": 0.131, "sii_6716": 0.053, "sii_6731": 0.041}, abs=2e-3)
+    # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
+    R = default.grid.R
+    ha = np.asarray(F["halpha_surface_brightness_hii"])
+    at = {r: int(np.argmin(np.abs(R - r))) for r in (4.0, 12.0)}
+    ratio = {n: {r: F[f"{n}_surface_brightness_hii"][i] / ha[i] for r, i in at.items()} for n in ("oiii_5007", "nii_6583")}
+    assert ratio["oiii_5007"][4.0] < 0.05 < 0.5 < ratio["oiii_5007"][12.0]
+    assert ratio["nii_6583"][4.0] > ratio["nii_6583"][12.0]
+    # Hbeta is Halpha over the Case B decrement in both layers.
+    t_dig = float(models["basic"].constants["DIG_TEMPERATURE"].value)
+    dec = float(nb.case_b_halpha(np.array([t_dig]))[0] / nb.case_b_hbeta(np.array([t_dig]))[0])
+    assert np.allclose(np.asarray(F["hbeta_surface_brightness_dig"]) * dec, F["halpha_surface_brightness_dig"], rtol=1e-12)

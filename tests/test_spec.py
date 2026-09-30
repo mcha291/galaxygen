@@ -53,15 +53,15 @@ REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 # One model since D170 (the former advanced physics); the tables keep its values.
 VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS, spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE}}  # S35: rows 34 and 35 (36 n-y-c)  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
-    "basic": {"pass": 11, "fail": 20, "not-yet-computable": 5},  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
+    "basic": {"pass": 12, "fail": 19, "not-yet-computable": 5},  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
 }
 FAILED = {
-    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33, 34},  # 34 since S35; 32, 33 since S34
+    "basic": {3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 24, 32, 33},  # 34 from S35 to S42; 32, 33 since S34
 }
 # S25: row 15 is #80's (the bar reads the lambda_d scale length now that the pattern precedes
 # star formation). S20: row 3 is #11's again (the bar); row 6 stays #42's. S18: row 20 is #17's
 # (at its zero-width target), row 22 is #47's.
-DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80, 98, 99, 100}}  # 100 since S35 (row 34); 98, 99 since S34 (rows 32, 33)
+DEBTS = {"basic": {2, 11, 17, 27, 28, 42, 47, 80, 98, 99}}  # 100 from S35 to S42 (row 34; the debt stays open, its row passes); 98, 99 since S34 (rows 32, 33)
 # S27 (BUILD_II Phase 2): the azimuthal model is basic with the sfh slot swapped for one that adds
 # an (R, phi) modulation and changes no radial field, and every row is radial or vertical, so its
 # tables are basic's -- by reference, so that they cannot drift apart. test_sfh_azimuthal asserts

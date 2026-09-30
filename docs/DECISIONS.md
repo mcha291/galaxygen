@@ -4363,6 +4363,96 @@ turnkey — every SHA literal but S22's own, which its last line greps by the me
 and it ends with the two steps that finish the record: paste the listing under this decision,
 and tick the row.
 
+**The batch ran on 2026-09-27 (S42, D192), from this desktop on the owner's word ("run the tag batch for me"):**
+the stale `s01` deleted and re-pointed, 38 annotated tags created and pushed; `s06`'s literal SHA in the
+batch had an extra digit (`a71483844338`, no such object) and the tag points at the S6 merge
+`a7148384433bb3218027ea9966afdc19b41d12c3`, the one match for `^Merge S6 into main`. `git ls-remote --tags
+origin` on 2026-09-30, as the gate asks — **39 tags, s00–s20 and s22–s39** (no `s21`: its two branches
+were never merged; `s22` carries the ported lists), each annotated tag followed by the commit it peels to:
+
+```
+7e576caa1494dc58bda7d04484aef00371117961  refs/tags/s00
+0bc546d08bd6f22c66dc3b75b1875071665268f1  refs/tags/s00^{}
+ca153ad03948781c69f5ff64c9f9fbfe9b7b0eb7  refs/tags/s01
+4ebbe8f8dfebf142b166a207ec1bb57ca0918eb9  refs/tags/s01^{}
+a14bf2cb03be2eedc8d78bf96601cd5d319d6dc0  refs/tags/s02
+fa7e74fb3cc24e5a25f20e3f6800c5939c6ae821  refs/tags/s02^{}
+751cee5576e96b22a967d5a0b2a55189a4051202  refs/tags/s03
+8a6032ca31befc5b6d4d643347d52e7c5dbf17fa  refs/tags/s03^{}
+d08e3a83f1a5e2c8952386ab2b787f654307d66a  refs/tags/s04
+c4f2173904641d423f0648d6059a51682ad0aecc  refs/tags/s04^{}
+d8a82ff8e14d628ecf83008f8e95b7b4e484ecf7  refs/tags/s05
+4cc9940624730d54336b6f6dbf66cdc0c8e5d468  refs/tags/s05^{}
+54d7664faf4b7ef032a8492798f862eb04f63502  refs/tags/s06
+a7148384433bb3218027ea9966afdc19b41d12c3  refs/tags/s06^{}
+7d30666a4bb44f1be38c942b0300288af7639b96  refs/tags/s07
+9b5c612ef027cb728537b7a3370ecca577c08cd4  refs/tags/s07^{}
+fdc986697d36fcffbda4ffdbaea8e6af4f5b8798  refs/tags/s08
+589cb0f52805513eb96092b1ff8777d6b035ed8f  refs/tags/s08^{}
+622eaf17790ab35176c0c82ed36ed55d61ba0e54  refs/tags/s09
+635c3c8ff43d670b090d68577b2c8db578e5a1eb  refs/tags/s09^{}
+ccc150e0500d9edbbf9465b2983fb6382dc10f60  refs/tags/s10
+ff129283543c00ffaf0a074602a098aa25288653  refs/tags/s10^{}
+df527318d4fe1c339154f5497efe123a3d0e1738  refs/tags/s11
+b1a62302bb47476b902f92cea878ec84f87febdc  refs/tags/s11^{}
+6c73bbf4920d60b72ffcaa123a98d3fa71153a2c  refs/tags/s12
+701ab3ac12b26068e77cf8a96cd623e0a2af3479  refs/tags/s12^{}
+4b477f44d77d3d75a02f1225d566e7e237b3caae  refs/tags/s13
+6a2f3f7e669bd3e2694f02002d25279342b01aff  refs/tags/s13^{}
+05cbbc6baba7b72036914ce1681c1fd10d2d4a8c  refs/tags/s14
+e645d430db9074cfa976e8e4de5b2e02bb723924  refs/tags/s14^{}
+df9e030d18427edee96a15f26bcabca2cb272055  refs/tags/s15
+71a25128d33c156e5314b86cfa29cae3c68070d7  refs/tags/s15^{}
+495a359d46fb13ab2d53c04993e621285ce6104e  refs/tags/s16
+b0589232c88688d4384fd54d12cac3aadf621d56  refs/tags/s16^{}
+ac77e7cdadb838ef4d495c13b4673bb2ac6c6665  refs/tags/s17
+4338a60fdcd257d8297c4b1abd73d4bc6e932691  refs/tags/s17^{}
+b8a5df757528b75404ed407174b027fa2bf0175f  refs/tags/s18
+4c73bca169b5af2d2d6729d16a965f701ce2a7b7  refs/tags/s18^{}
+606e71b7cd33cb1f2034626ddbb61c3253ef3735  refs/tags/s19
+2a8a9b4fc32d0040c79e60ac798fe6abe95bd818  refs/tags/s19^{}
+7a69908b586aca7c1b72997255b00fddc13c04ed  refs/tags/s20
+7e96422190ab26cdb35ad895a7c7304c087900eb  refs/tags/s20^{}
+2f37934c245346aa9004fcde01d64fef87d73a26  refs/tags/s22
+b3939fe64ac8f16867dabb54d91502099e1f1678  refs/tags/s22^{}
+fd703f6484cdac816a338ebaf0854c665bd4eba0  refs/tags/s23
+fb4a2da1f1d10aa5fdb890581dc3cfd3d342cff9  refs/tags/s23^{}
+3bbb759b6e7e9dcc9a17970fd1969b2f3caeb6b1  refs/tags/s24
+4a20490c5043adcfd84e481ea9679066c8b7e031  refs/tags/s24^{}
+b8f69fb0603971918d4b1eb75ecfd63d11e65c12  refs/tags/s25
+a4c95cec0be903ab7dd330dad17aa5c9c7be7199  refs/tags/s25^{}
+1ecc4cc9d1fc4aaad5041af2f80cc4604694085a  refs/tags/s26
+05655dba69488f36ecb927fc20c0319fe85de0ed  refs/tags/s26^{}
+0b6b09229c04d4c39143719dad119f4fc6158c5c  refs/tags/s27
+c72dffd59d366d7b56f372b33a0598bcdd992415  refs/tags/s27^{}
+79a7ec8e0fdbca65ad679faabd935f10a78468ba  refs/tags/s28
+e30d33a9d060966e8b7c87b87bae5c6a58b7af19  refs/tags/s28^{}
+08a2b9f103c505d90fb0d013c6a161045dee534d  refs/tags/s29
+70ed6bd1da8d28109f0bd5df268f8acbc2f353b6  refs/tags/s29^{}
+ac160a8ad19e02627c1612ac20b8a8d71ef4c68b  refs/tags/s30
+34a76f6fa5607674473d932e0e4e9610b38da692  refs/tags/s30^{}
+d910156116b4b839b722ccb5ee5844fbdda95eb4  refs/tags/s31
+57c3d38d7810179768acd40621b9b220403cd53a  refs/tags/s31^{}
+587c7758eaa7df630444ead797dcbc67a47f8f56  refs/tags/s32
+89fa20c39e948fbf83adbdbe7d5b79c1eaadc5c3  refs/tags/s32^{}
+0e338db8bb8bcab1a07a4efc0ac765e59733994e  refs/tags/s33
+9f43a305a2be79b9e3aeb0ad4ad67987fd9a5c5d  refs/tags/s33^{}
+2244e3cc40c7cf0a75b4e38630d04c81cd5ff0e0  refs/tags/s34
+7b61e2edce88d22c9a6c96bbcb5a8cfeac29b8a9  refs/tags/s34^{}
+a5373277eadcc23f22f1edea4eec2320213a4ebf  refs/tags/s35
+5d4cb7885dd0c7a8aaf3ea012c5b8945a082d2fb  refs/tags/s35^{}
+55a73bb9e2f636ec59c97aa4f7378ccc1995b28b  refs/tags/s36
+f6ec37e5435f6f3ecda2796df848855909cae82d  refs/tags/s36^{}
+a9e14035697d883dd05929ddcf4f8ef6a0be8247  refs/tags/s37
+12c5f80497ccdc441e7df0c9612c4bf5911b0c4f  refs/tags/s37^{}
+982dc7a1f2067f2d1a5660f143d7e2386c3c6d3d  refs/tags/s38
+80fbf33f93940532a26f29193345f122f3bdaa27  refs/tags/s38^{}
+7b8f62122d62de64b491467a868a4873d26199d6  refs/tags/s39
+8d8c89475086421c77c13dace70cd9149c2f7564  refs/tags/s39^{}
+```
+
+S22's board row ticks ◐ → ☑ with this listing; `s40`–`s42` are queued rows for the next batch (C2e).
+
 ### D162. Cold timings and the profile at S22 (rules B2, B6)
 
 Web container, uv-managed CPython 3.14.0rc2, one fresh process per endpoint, the suite not
@@ -6410,3 +6500,164 @@ the viewer traces to a published field, and every published field of both models
 its declaration (17 scalars under rule D4, 38 object columns under this decision, every grid and object field
 with a ramp — `test_audit`, `test_v4`); the tag batch has run from a desktop. **Met, with the batch's record and
 S42's own close outstanding.** The register reads 59 open = 11 permanent + 48 carried, 40 discharged.
+
+### D192. S42: the owner's four answers of 2026-09-27 — the FSPS grid fetched and the forbidden lines read off it (30 object columns drawn, 37 ruled not), rows 32 and 34 on Audit III's blind windows (row 34 passes, specs 12 / 19 / 5 of 36), HST WFC3 from SVO with an Airy sprite, the tag batch run and recorded (39 tags, S22 ☑); the POST path ratified; P6 ratified — the points drawn through the filter set, the exposure left on bolometric light as a stated display choice, #114 not closed; #108 discharged, #100 re-scoped, #117–#120 opened
+
+**Rulings: the owner (2026-09-27, in chat, four answers to questions three earlier decisions had left them) and
+Fable 5.1 (this review, 2026-09-30); build Opus 5.5 (commits b275c1e, 644750b, 17c57ef, 5872162, e29868f on
+`session-42`, branched from the pre-review `session-41`, with `main` at 75abd5e merged in at 9874960 before the
+review — no textual conflict, one semantic one, below).** Reviewed as D190 and D191 were: the handoff's citations
+against their sources where the repository holds them (`AUDIT_III_BLIND.md`, the fetch tools, the README), then
+the core diff (`spec.py`, `nebular.py`, `service.py` / `http.py` / `transport.js`, `colors.ts` / `psf.ts` /
+`region.ts`), then the tests, then the instruments run again here. The build's code is accepted unchanged; the
+review changed one inventory count, five declaration sentences, one label and the contract's §0 (below). The
+handoff file is deleted.
+
+**The owner's four answers, in their words, and what was built on each.**
+
+*(1) The Byler/FSPS nebular grid (D184's question: a 1.4 MB file download): "download it."* `tools/fetch_nebular.py`
+takes FSPS's `nebular/ZAU_ND_prsc.lines` at commit `bd187a0d07dac17b55c4dc7c60d83f63694c1b4e` (PARSEC-ionized,
+dust-free; the file order and the "Lsun/Q" unit read in FSPS's `sps_setup.f90`, the interpolation in
+`add_nebular.f90`; Byler et al. 2017 checked on arXiv:1611.08305; MIT, attributed in the README) into
+`model/galaxy/data/nebular_lines.npz` (16 KB): 11 log Z (−1.98 … +0.2) × 10 ages (0.5–20 Myr) × 7 log U (−4 … −1),
+six lines kept (Hβ, [O III] 5007, Hα, [N II] 6583, [S II] 6716, 6731), a test asserting the axes and the pinned
+source. The nebular stage reads it per region at log(Z/Z☉) = the gas's oxygen − 8.69, the cluster's age and the
+region's own log U, trilinear in log L as FSPS does but **clamped at the edges** where FSPS extrapolates — a stated
+choice, and the reason 26.4% of the default regions (the inner disc, richer than +0.2 dex) read the edge and 2.6%
+the age floor (`test_nebular`, recorded; every log U inside). It publishes four `hii_{oiii_5007,nii_6583,sii_6716,
+sii_6731}_ratio` columns — each line over **the grid's own Hα** at that point, so the region's Case B Hα keeps the
+photon budget (escape, leaking) and the grid only splits it — per-ring `*_surface_brightness_hii` (the census's
+Hα-weighted ratio per ring, empty rings interpolated) and `hbeta_surface_brightness_{hii,dig}` by the Case B
+decrement; the diffuse gas gets no forbidden line, named. `/api/render` adds `lines_hii` (R, φ, filter) and
+`lines_dig` (R, filter), each line through each curve at its own wavelength with the per-line transmissions in the
+header; `absent.lines` is `[]`. The viewer sums them into the two layers and colours each resolved region by its
+own lines (`region.ts regionLineColour`: Hα, Hβ over the decrement, each forbidden line times its ratio, each at
+the model's transmission over the white point's — arithmetic on published columns and server numbers, D5). B9: the
+grid is READ (the file, at a pinned commit, its order from the code that writes it); the `[inferred]` in the
+stage's docstring is right and is now debt #118 — the grid's gas carries its own N/O, S/O and n_H = 100 cm⁻³,
+whatever the model publishes for the region. **Hα-weighted over the default census: [O III]/Hα 0.477, [N II]/Hα
+0.131, [S II] 0.053 + 0.041; per ring [O III]/Hα 0.02 at 4 kpc → 0.72 at 12, [N II]/Hα 0.19 → 0.09** — the
+metallicity gradient's direction. No row reads them, and since the numbers were printed before any target was read,
+a row must now be blind or disclosed (#117). *Accepted.*
+
+*(2) Rows 32 and 34 (Audit III, A3-7, D186): "follow the audit's recommendation."* `docs/AUDIT_III_BLIND.md` is the
+S37 blind report verbatim, so the rows can cite it. B5 checked against it: row 32's window [2.7, 4.0] × 10⁷ M☉ is
+the reader's own ("M/L 1.6 to 2.2 on the Harris sum, the BH18 direct-mass hybrid (3.55e7), and +10% incompleteness
+at the upper end"), row 34's [1.3, 3.9] × 10⁵³ s⁻¹ is McKee & Williams 1997's (2.6 ± 1.3) as the reader chose it;
+neither is the builder's, and every quotation in `_HARRIS_BLIND_READ` and `_MW97_READ` is in the report word for
+word. Row 32 keeps its miss (#98): 7.13 × 10⁷ is 0.25 dex above the new top and 0.34 above its centre (0.47 above
+the old), and the re-set **sharpens** the finding — the measured η M_halo (3.19 × 10⁷, #105) now sits inside the
+window, so the model reproduces the halo relation's input and misses the catalogue for the reason #97 states (it
+counts every surviving bound cluster). Row 34 **passes** at 1.6527 × 10⁵³; its recorded miss is removed with the
+reason written in its place (a miss that starts passing fails the run, #29), and the row joins `test_s22_rulings`'
+conditioned greens: a factor-of-three window the disc's whole history lands in says nothing about its young light.
+Both texts keep the disclosure — the builder knew the model's number and chose Bennett's window, the blind reader
+did not. **Specs 12 pass / 19 fail / 5 not-yet-computable of 36, identical in both models** (11 / 20 / 5 until
+now); every failure a recorded miss. *Accepted; #100 re-scoped, below.*
+
+*(3) The instrument filter curves (D188, #108): "yes."* `tools/fetch_filters.py` takes six SVO VOTables
+(`HST/WFC3_UVIS2.*`: F814W, F555W, F438W as `wfc3`; F673N, F656N, F502N as `wfc3n`, "WFC3 SHO") into
+`frontend/src/galaxy/instruments.json` (48 KB, generated): system throughputs, each resampled onto 241 points over
+the span above 10⁻³ of its peak, the largest resample error 1.07% of peak (F438W), SVO's acknowledgement and
+three references in the README as SVO asks. SVO does not state air or vacuum; the tool records each line's share
+both ways (the largest difference F673N at [S II] 6716, 0.983 against 0.958). Through the model (`test_render`):
+Hα 0.962 in F656N, [O III] 0.903 in F502N, [S II] 0.98 / 0.86 in F673N, no [N II] in F656N. Under either set the
+stars are drawn with the Airy pattern of a circular aperture per channel at a radius in proportion to the filter's
+pivot (λ/D), J1 from its integral definition (vitest finds the Rayleigh zero at 1.2197π from it), a float texture so
+rings at 1% survive; the sprite's scale is a display choice `[inferred]` and the set's `psf.about` says so (the
+view has no distance to the galaxy), HST's obscuration and spikes are not drawn, JWST is not built. D5: the viewer
+draws a shape, it computes no spectrum. *Accepted; #108 discharged, its remainder #120.*
+
+*(4) The tag batch (C2e, D161): "run the tag batch for me."* Run on 2026-09-27 from this desktop with `main` at
+`origin/main` (8d8c894; the batch's `reset --hard` not needed and not run): the stale `s01` deleted and re-pointed,
+38 annotated tags created and pushed. One command was wrong — `s06`'s literal `a71483844338` has an extra digit
+and names no object; the tag points at `a7148384433bb3218027ea9966afdc19b41d12c3`, the one match for `^Merge S6 into
+main`. `git ls-remote --tags origin` on 2026-09-30, pasted under D161 as its gate asks: **39 tags, s00–s20 and
+s22–s39**. MANUAL_TODO's rows `s00`–`s39` are marked applied with `s06` corrected; S22's board row ticks ◐ → ☑,
+eighteen days after its close; §5d's last "done means" item is met. **`s40`–`s42` stay queued**: C2e and
+MANUAL_TODO's own procedure say the batch runs by hand on the owner's word, not per session, and the owner's word
+of 2026-09-27 covered what was queued that day; the three commands sit at the end of the batch. *Recorded.*
+
+**P6, ruled (proposed by Opus in the handoff after the four, built at e29868f): ratified, with the exposure rule
+stated.** Until S42 a point in "light" was its bolometric luminosity in the declared blackbody ramp's hue whatever
+the filter set — broadband stars over a narrowband field in SHO, against RENDER_PHYSICS §2a's one mechanism. Now
+`/api/blackbody` (a `Route`, a timings row; runs no stage, rule D4) tabulates each filter's share of a blackbody's
+light on 193 temperatures 1000–100 000 K and the white point's, read log-share linear in log T (a line in the share
+misses 16% at 1000 K; this is within 2.2 × 10⁻³ of the integral between rows for every set, `test_render`), and the
+viewer draws a point's channel k as L × share_k(T) / white_k (`colors.ts channelShare`), the ramp kept until the
+table arrives and for the "temperature" field. What it changes (rgb): a 5800 K star (1.02, 0.96, 0.85) as before;
+3000 K (0.39, 0.20, 0.07); 10 000 K (0.66, 0.79, 1.11); 30 000 K (0.06, 0.09, 0.19) — the giants and the O stars
+are dimmer through optical filters than their bolometric light, as through a camera. Ratified because it is §2a
+applied to the point regime (the same curves for the field and the points; D5: the share is the model's integral,
+the viewer multiplies), and because it removes the panel's "always in broadband colour" — a sentence that named a
+second mechanism. **Two things stated with it.** *The exposure rule* (`exposureFor`) still ranks a selection's
+stars by bolometric L: a display choice, kept, because the rule sets a scale, not a colour, and moving it to the
+filtered light would make the auto-exposure change with the palette — the alternative, if wanted, is one line.
+*P6 does not close #114*, as D191 said before this ruling and as #114's entry says: the share is a blackbody's at
+one colour temperature, so the bolometric correction is still a blackbody's, not the population's (the census
+summed still reads 2.1× its own G light; `test_v4` still pins the 2.12); what closes #114 is the object's own band
+light through the filter set, which no part of P6 supplies. The two rulings cannot contradict because they were
+written to the same sentence.
+
+**The POST path, ruled: ratified as an API change.** A form-encoded POST body is the rest of the query — the
+server appends it to the URL's query and answers exactly as the GET (411 without a length, 413 past 1 MiB, 415 for
+any other type; nothing is written by a POST) — and the transport sends any query past 4 KB (`MAX_URL`) that way,
+bare URL plus body. It exists for the deployment: three sampled 241-point curves make a ≈ 20 KB render URL, past
+what a proxy in front of the Azure ingress may accept on a request line. Tested through the real JS transport
+against the server (`test_api`: the long render equals the GET's answer number for number; the refusals; a 413 on
+the header alone), and seen in a browser (WFC3 SHO's render and table as POSTs, 200). Ratified because nothing on
+the server's side of the query moves (`Service.handle(path, query)` is what both verbs call) and because the
+refusals are named; the deployment's ingress limit is the owner's to check when the tag deploys.
+
+**The review's own changes (the semantic conflict the S41 close predicted, and four sentences).** `main` merged
+into the branch without a textual conflict, and `tests/test_v4.py` would have failed: S41 pinned the inventory at
+25 drawn / 38 not, S42 moved `hii_balmer_decrement` and the four ratios to DRAWN — **30 drawn / 37 not** now,
+counted from the sets (9 cloud + 15 cluster + 6 remnant; 8 + 23 + 6). `nebular.NOT_DRAWN_WHY` loses
+`hii_balmer_decrement` (drawn: Hβ over it, per region) and four of its sentences were stale — `hii_ionization_
+parameter` and `hii_oxygen_abundance` now say the lines are drawn through them (the grid's axes), `hii_nitrogen_
+abundance` and `hii_sulphur_abundance` say the [N II] and [S II] lines the region carries come off the grid with the
+grid's own N/O and S/O, not these columns (#118); the test reads every sentence per model. `tools/timings.py`'s
+label said 97 temperatures for a 193-row grid. RENDER_PHYSICS §0's two "wait on the grid" sentences now say what
+S42 published, and that the shells' own [S II]/Hα still waits (the grid is read for HII regions, not shocked
+shells). No model number moved: the review changed declarations' text and a test's count.
+
+**Debts.** *#108 discharged*: both halves are gone — the per-filter extinction at V2 (D189) and the named instrument
+here. *#100 re-scoped*: row 34 passes and no longer tests the 0.71; the debt is the ratio itself (the isochrones' Q
+against Starburst99's, one mechanism with #84, A3-9), its instrument `halpha_sfr_ratio` and, once a blind row
+exists, the line ratios. *#98 re-read* on the blind window. *Opened*: **#117** the forbidden lines have no acceptance
+row and the model's numbers are now known (blind or disclosed, never clean); **#118** a quarter of the regions read
+the grid's metal-rich edge, clamped, and the grid's gas (its N/O, S/O, 100 cm⁻³) is not the region's — the [S II]
+doublet's ratio is the grid's density; **#119** the diffuse gas carries only its recombination lines, where the
+sky's WIM has enhanced [N II] and [S II]; **#120** the instrument's sprite is a display choice (its scale, no
+obscuration or spikes, no JWST) and SVO's air-or-vacuum silence is worth up to 2.5% on one line. Not opened: a
+debt on the POST (an API change ratified with its refusals named is not a debt).
+
+**Measured (this review, 2026-09-30; both models identical).** Specs 12 / 19 / 5 of 36; convergence 0 drifts; the
+regression numbers of D191 unmoved (nothing upstream of the nebular stage changed; row 34's 1.6527 × 10⁵³ is the
+same number under a new window). vitest 16 files / 120 tests; `tsc -b` and the build clean (Opus's run). The full
+suite's EXIT line and the merge are in the close-out below. The render route grew by the two line components and the
+clusters route by the four ratios; the new route costs nothing (B2, `uv run python tools/timings.py`, this machine):
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+clusters: one sector*    1.0506   0.0016 647.92     70,648  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.6859   0.0132 127.36  4,128,488  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+blackbody: rgb           0.0049   0.0040   1.23     17,159  -
+render: whole, rgb*      2.1032   0.2257   9.32  6,940,400  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.9794   0.2147   9.22     27,032  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+(The renders are up ~0.4 s and 1.7 MB cold against D191's 1.62 / 1.54 s: the grid's first load and the two
+components, at 1.33× the bytes; not investigated further.)
+
+**Chosen against.** Extrapolating off the grid as FSPS does (a number the grid does not hold, for a quarter of the
+regions — the clamp is stated and the gap is #118). Entering a line-ratio row from a source read now (B5: the
+model's ratios were on the screen first; #117 says how a row can still be made). Moving the exposure rule to the
+filtered light (a palette would then move the exposure). Recording P6 as #114's closer (it is not; D191 and this
+say the same thing). Running the `s40`–`s42` tags here (C2e; MANUAL_TODO's procedure; the owner's word covered the
+batch of 2026-09-27). Drawing the diffuse gas's forbidden lines by any ratio not read (#119). A JWST set or an HST
+spider (#120; the download and the shape are the owner's and a ruling's).
+
+**The second build's "done means" (GALAXY_PLAN §5e), re-read at this merge.** Every item D191 read as met is met;
+the one it left — the tag batch's record — is written here and under D161, and S22 is ☑. **Both builds are
+closed.** The register reads 62 open = 11 permanent + 51 carried, 41 discharged.

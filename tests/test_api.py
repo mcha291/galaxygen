@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import threading
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -591,7 +592,7 @@ def test_the_server_answers_and_says_what_it_ran():
 NODE = shutil.which("node")
 
 DRIVER = """
-import {{ version, arrays, region, codes }} from "{module}";
+import {{ version, arrays, region, render, codes, MAX_URL }} from "{module}";
 const origin = "{origin}";
 const v = await version({{ origin }});
 const a = await arrays(["stellar_surface_density", "stellar_mass_total"], {{}}, {{ origin }});
@@ -602,6 +603,11 @@ try {{
 }} catch (e) {{
   refused = [e.status, e.body.error];
 }}
+// S42 (after the calls above, so their stages are their own): a query past MAX_URL goes as a POST body; three sampled curves of 400 points are one.
+const wavelength = Array.from({{ length: 400 }}, (_, i) => 4000 + i * 10);
+const curves = [0, 1, 2].map((k) => ({{ name: `c${{k}}`, shape: "sampled", wavelength,
+  transmission: wavelength.map((w) => Math.exp(-(((w - 4600 - 900 * k) / 300) ** 2))) }}));
+const long = await render(curves, {{ white: 6500 }}, {{ origin }});
 console.log(JSON.stringify({{
   viewer: v.viewer.hash,
   stages: a.stages,
@@ -613,6 +619,11 @@ console.log(JSON.stringify({{
   radii: Array.from(r.arrays.star_radius.slice(0, 4)),
   populations: Array.from(codes(r.arrays.star_population).slice(0, 8)),
   refused,
+  long_query: JSON.stringify(curves).length > MAX_URL,
+  long_filters: long.header.filters.map((c) => c.name),
+  long_stars: Array.from(long.arrays.stars.slice(0, 6)),
+  long_stages: long.stages,
+  curves,
 }}));
 """
 
@@ -656,6 +667,60 @@ def test_the_transport_decodes_what_the_server_sends(tmp_path):
     assert got["radii"] == stars["star_radius"][:4].tolist()
     assert got["populations"] == stars["star_population"][:8].tolist()
     assert got["refused"][0] == 404 and "not_a_field" in got["refused"][1]
+    # The long render went as a POST (its query is past MAX_URL) and is the GET's answer, number for number.
+    assert got["long_query"] and got["long_filters"] == ["c0", "c1", "c2"]
+    long_header, long_arrays = api.handle("/api/render", {"filters": [json.dumps(got["curves"])], "white": ["6500"]}).frame()
+    assert got["long_stars"] == long_arrays["stars"].ravel()[:6].tolist()
+    assert set(got["long_stages"]) <= set(long_header["stages"])  # a warm cache runs fewer (D4 counts what ran)
+
+
+def test_a_post_is_the_get_with_its_query_in_the_body():
+    """S42: the query a GET carries, sent as a form-encoded body, is answered identically; a body that is not
+    a query is refused before anything runs."""
+    server = api_http.make_server("127.0.0.1", 0, service())
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    base = f"http://{host}:{port}"
+
+    def post(path: str, body: bytes, kind: str = api_http.FORM) -> tuple[int, bytes, str]:
+        req = urllib.request.Request(base + path, data=body, method="POST", headers={"Content-Type": kind})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, r.read(), r.headers["X-Galaxy-Stages"]
+        except urllib.error.HTTPError as e:
+            return e.code, e.read(), ""
+
+    try:
+        def same(a: bytes, b: bytes) -> bool:  # the answer, less which stages this request had to run (a warm cache)
+            (ha, xa), (hb, xb) = wire.decode(a), wire.decode(b)
+            ha.pop("stages"), hb.pop("stages")
+            return ha == hb and xa.keys() == xb.keys() and all(np.array_equal(xa[k], xb[k]) for k in xa)
+
+        with urllib.request.urlopen(base + "/api/arrays?fields=halo_virial_mass,stellar_surface_density") as r:
+            got = r.read()
+        status, body, _ = post("/api/arrays", b"fields=halo_virial_mass,stellar_surface_density")
+        assert status == 200 and same(body, got)
+        # The URL's query and the body's join: one request, both halves.
+        status, body, _ = post("/api/arrays?fields=stellar_surface_density", b"precision=f4")
+        assert status == 200 and wire.decode(body)[1]["stellar_surface_density"].dtype == np.float32
+        status, body, _ = post("/api/arrays", b'{"fields": "halo_virial_mass"}', kind="application/json")
+        assert status == 415
+        # A body past the limit is refused on its Content-Length, before a byte of it is read (sent as headers alone:
+        # a client still writing when the server closes sees the connection reset, which is the point).
+        import http.client
+
+        conn = http.client.HTTPConnection(host, port, timeout=10)
+        conn.putrequest("POST", "/api/arrays")
+        conn.putheader("Content-Type", api_http.FORM)
+        conn.putheader("Content-Length", str(api_http.MAX_BODY + 1))
+        conn.endheaders()
+        assert conn.getresponse().status == 413
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
 
 
 def test_every_route_has_a_published_timing():

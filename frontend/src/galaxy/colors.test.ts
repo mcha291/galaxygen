@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Columns, FieldsPayload } from "../api";
-import { EXPOSED_LUMINOSITY, EXPOSED_RANK, REFERENCE_LUMINOSITY, exposureFor, photometricColors, srgbToLinear } from "./colors";
+import { EXPOSED_LUMINOSITY, EXPOSED_RANK, REFERENCE_LUMINOSITY, channelShare, exposureFor, photometricColors, srgbToLinear } from "./colors";
 
 // A two-stop stand-in for the published blackbody map: red at 2000 K, blue at 40000 K.
 const META = {
@@ -71,5 +71,39 @@ describe("srgbToLinear", () => {
 
   it("darkens the middle: sRGB 0.5 is about 21% linear light", () => {
     expect(srgbToLinear(0.5)).toBeCloseTo(0.214, 3);
+  });
+});
+
+describe("points through the filter set (S42, P6)", () => {
+  // A miniature /api/blackbody table: three rows, three filters, and the white point's response.
+  const table = {
+    kelvin: [1000, 10000, 100000],
+    share: [
+      [1e-4, 1e-6, 1e-8],
+      [0.1, 0.2, 0.3],
+      [0.01, 0.02, 0.04],
+    ],
+    white: { kelvin: 10000, response: [0.1, 0.2, 0.3] },
+  };
+
+  it("is one at the white point, log-linear between rows, and clamped at the ends", () => {
+    const share = channelShare(table)!;
+    expect(share(10000)).toEqual([1, 1, 1]);
+    // Halfway in log T between 1e4 and 1e5: the geometric mean of the rows, over the white.
+    const [r, , b] = share(Math.sqrt(1e4 * 1e5));
+    expect(r).toBeCloseTo(Math.sqrt(0.1 * 0.01) / 0.1, 12);
+    expect(b).toBeCloseTo(Math.sqrt(0.3 * 0.04) / 0.3, 12);
+    expect(share(1e6)).toEqual(share(1e5));
+    expect(share(10)).toEqual(share(1000));
+    expect(channelShare({ ...table, white: null })).toBeNull();
+  });
+
+  it("draws a star's light per channel through the table instead of the ramp", () => {
+    const meta = { fields: [{ name: "star_temperature", ramp: { name: "blackbody" } }], cmaps: {} } as unknown as FieldsPayload;
+    const columns = { star_temperature: [10000, 100000, 5000], star_luminosity: [100, 100, Number.NaN] };
+    const out = photometricColors(meta, columns, 0, table);
+    expect(Array.from(out.slice(0, 3))).toEqual([1, 1, 1]); // 100 Lsun at the white point, zero stops
+    expect(out[3]).toBeCloseTo(0.1, 6); // a hotter star, a tenth of its light in the red filter
+    expect(Array.from(out.slice(6, 9))).toEqual([0, 0, 0]); // no light, nothing drawn
   });
 });

@@ -85,10 +85,14 @@ MAX_CHILD_CELLS = 4096
 # read where the model publishes them and named as absent where it does not (rule B9).
 RENDER_STARS = (*(f"disc_sed_{b.lower()}" for b in _spectra.SED_BANDS), "disc_light_temperature")
 RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_light_temperature")
+# Every line but Halpha the render route draws (S42), by the model's line name: its HII-region field.
+RENDER_LINES_HII = tuple(f"{n}_surface_brightness_hii" for n in ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731"))
 RENDER_OPTIONAL = (
     "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
     # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
+    # The other lines (S42): Hbeta in both layers, the forbidden lines the grid gives the HII regions.
+    *RENDER_LINES_HII, "hbeta_surface_brightness_dig",
     # The dust's three components (S39, V2): extinction, scattering, thermal emission.
     "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
     "dust_temperature", "dust_infrared_surface_brightness",
@@ -98,6 +102,11 @@ RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "D
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
 # interpolated at 8 x 8 midpoints, area-weighted.
 RENDER_CELL_SAMPLES = 8
+# The temperatures /api/blackbody tabulates (S42): 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart - the
+# render's own white-point range. Read linearly in log share against log T (the Wien side is an exponential in 1/T,
+# which a line in the share itself misses by 16% at 1000 K), every set's table is within the bound
+# tests/test_render.py measures of the integral at any temperature between its rows.
+BLACKBODY_GRID = np.logspace(3.0, 5.0, 193)
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
@@ -185,6 +194,15 @@ ROUTES: tuple[Route, ...] = (
         "remnants",
     ),
     Route(
+        "/api/blackbody",
+        "Each of the viewer's filters' share of a blackbody's light (S42), on 193 temperatures, with the white "
+        "point's: what a star or a cluster of a colour temperature puts through each filter per unit of its light, "
+        "so the points are drawn through the same curves as the field. filters= as for /api/render; white=<K> "
+        "optional. Runs no stage.",
+        ("filters", "white"),
+        "blackbody",
+    ),
+    Route(
         "/api/render",
         "The filter integral, run here (RENDER_PHYSICS section 0's ruling (a), S38): filters=<JSON list of the "
         "viewer's curves, each {name, shape: gaussian (centre, fwhm) | box (centre, width) | sampled (wavelength, "
@@ -240,6 +258,22 @@ class Response:
 
     def frame(self) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
         return wire.decode(self.body)
+
+
+def _parse_filters(q: Query) -> list[Any]:
+    """filters=: the viewer's curves, parsed by the model's spectrum module, or a 400 saying why not."""
+    raw = q.one("filters")
+    if raw is None:
+        raise BadRequest(
+            "filters= is the viewer's filter set as a JSON list of curves; the model holds no filter set "
+            "(RENDER_PHYSICS section 2a)"
+        )
+    try:
+        return _spectra.parse_curves(json.loads(raw))
+    except json.JSONDecodeError as e:
+        raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
+    except _spectra.CurveError as e:
+        raise BadRequest(f"filters=: {e}") from None
 
 
 def _json(payload: Mapping[str, Any], status: int = 200, stages: tuple[str, ...] = ()) -> Response:
@@ -629,6 +663,28 @@ class Service:
             "models": list(self.models.names()),
             "routes": [{"path": r.path, "about": r.about, "params": list(r.params)} for r in ROUTES],
             "inputs_are": "any query parameter that is not one of a route's params",
+        })
+
+    def _blackbody(self, q: Query) -> Response:
+        """The blackbody response per filter on BLACKBODY_GRID: the table a point of a colour temperature is drawn
+        from, as the render's white point is. A function of the curves alone; no model, no stage (rule D4)."""
+        curves = _parse_filters(q)
+        white = q.one("white")
+        white_k = None
+        if white is not None:
+            white_k = q.number("white", 0.0)
+            if not BLACKBODY_GRID[0] <= white_k <= BLACKBODY_GRID[-1]:
+                raise BadRequest(f"white={white_k!r} is outside {BLACKBODY_GRID[0]:g}..{BLACKBODY_GRID[-1]:g} K")
+        share = _spectra.blackbody_response(curves, BLACKBODY_GRID)
+        return _json({
+            "filters": [c.json() for c in curves],
+            "kelvin": BLACKBODY_GRID.tolist(),
+            "share": share.tolist(),
+            "interpolate": "log10(share) linear in log10(kelvin); a temperature off the grid takes its end's row",
+            "white": None if white_k is None else {
+                "kelvin": white_k,
+                "response": _spectra.blackbody_response(curves, np.array([white_k]))[0].tolist(),
+            },
         })
 
     def _version(self, q: Query) -> Response:
@@ -1032,18 +1088,7 @@ class Service:
         emits balance (``tests/test_render.py``).
         """
         model = self._model(q)
-        raw = q.one("filters")
-        if raw is None:
-            raise BadRequest(
-                "filters= is the viewer's filter set as a JSON list of curves; the model holds no filter set "
-                "(RENDER_PHYSICS section 2a)"
-            )
-        try:
-            curves = _spectra.parse_curves(json.loads(raw))
-        except json.JSONDecodeError as e:
-            raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
-        except _spectra.CurveError as e:
-            raise BadRequest(f"filters=: {e}") from None
+        curves = _parse_filters(q)
         precision = q.one("precision", "f8")
         if precision not in ("f8", "f4"):
             raise BadRequest(f"precision={precision!r} is not f8 or f4")
@@ -1109,6 +1154,23 @@ class Service:
                          "pattern's density contrast (the same contrast the stars follow; it averages to 1, so each "
                          "ring keeps its published line) in the clouds' layer, where the regions' clusters are",
             }
+        # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
+        # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
+        # over lines, with each line's transmission in the header.
+        hii_lines = [n.removesuffix("_surface_brightness_hii") for n in RENDER_LINES_HII if n in f]
+        if hii_lines and "halpha_hii" in about:
+            shares = {n: _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS[n]) for n in hii_lines}
+            summed = sum(np.asarray(f[f"{n}_surface_brightness_hii"], dtype=float)[:, None] * shares[n] for n in hii_lines)
+            components.append(("lines_hii", summed[:, None, :] * placed[..., None]))
+            layers["lines_hii"] = layers["halpha_hii"]
+            about["lines_hii"] = {
+                "unit": "Lsun/pc2", "fields": [f"{n}_surface_brightness_hii" for n in hii_lines] + about["halpha_hii"]["fields"][1:],
+                "layer": "lines_hii",
+                "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
+                "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
+                         "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
+                         "summed, placed and layered as the regions' Halpha is",
+            }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
             components.append(("halpha_dig", dig[:, None] * halpha_share))
@@ -1118,6 +1180,16 @@ class Service:
                 "about": "the diffuse ionized gas's Halpha through each curve, axisymmetric as published, in its own "
                          "published layer: seen edge-on it is a thick glow that brightens toward the limb",
             }
+            if "hbeta_surface_brightness_dig" in f:
+                hbeta_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["hbeta"])
+                components.append(("lines_dig", np.asarray(f["hbeta_surface_brightness_dig"], dtype=float)[:, None] * hbeta_share))
+                layers["lines_dig"] = layers["halpha_dig"]
+                about["lines_dig"] = {
+                    "unit": "Lsun/pc2", "fields": ["hbeta_surface_brightness_dig", "dig_scale_height"], "layer": "lines_dig",
+                    "lines": {"hbeta": {"wavelength": _spectra.LINE_WAVELENGTHS["hbeta"], "transmission": hbeta_share.tolist()}},
+                    "about": "the diffuse gas's Hbeta through each curve, in the Halpha's layer; the diffuse gas carries no "
+                             "forbidden line (the grid does not model its field)",
+                }
         if "dust_extinction_v" in f:
             a_v = np.asarray(f["dust_extinction_v"], dtype=float)
             refs = _spectra.filter_references(curves)
@@ -1161,11 +1233,13 @@ class Service:
                          "dust stage's modified blackbody at the published temperature and its emissivity index, "
                          "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
             }
-        lined = "halpha_hii" in about or "halpha_dig" in about
-        absent = [n for n in _spectra.LINE_WAVELENGTHS if n != "halpha" or not lined]
+        drawn = {"halpha"} if ("halpha_hii" in about or "halpha_dig" in about) else set()
+        for name in ("lines_hii", "lines_dig"):
+            drawn |= set(about.get(name, {}).get("lines", {}))
+        absent = [n for n in _spectra.LINE_WAVELENGTHS if n not in drawn]
 
         # Per ring (R, filter) or placed around it (R, phi, filter).
-        per_ring_names = {"halpha_dig", "dust_extinction", "dust_thermal"}
+        per_ring_names = {"halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"}
         arrays: list[tuple[str, np.ndarray]] = []
         if level is None:
             r_min = q.number("r_min", R_axis.lo)
@@ -1223,8 +1297,8 @@ class Service:
                 "kelvin": white_k,
                 "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]],
             },
-            "absent": {"lines": absent, "why": "not published per cell: the collisionally excited lines wait on the "
-                                                "photoionization grid (D184), and Hbeta on the line list (section 3)"},
+            "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
+                                                "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(ran),
         }
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)

@@ -15,6 +15,7 @@ import {
   hash3,
   levelFor,
   packObjects,
+  regionLineColour,
   sortedFrom,
   unitField,
   valueNoise,
@@ -122,6 +123,27 @@ describe("the region's object table", () => {
     expect(t.data[3 * OBJECT_FLOATS + 9]).toBeCloseTo(0.0015, 6);
     expect(t.min[0]).toBeLessThan(8);
     expect(t.max[0]).toBeGreaterThan(8);
+  });
+
+  it("colours a region by all its lines through the filters (S42)", () => {
+    const withLines = {
+      ...clusters, hii_balmer_decrement: [2.86], hii_oiii_5007_ratio: [0.5], hii_nii_6583_ratio: [0.2],
+      hii_sii_6716_ratio: [0.05], hii_sii_6731_ratio: [Number.NaN],
+    };
+    // The Hubble palette in miniature: [S II] in red, Halpha in green, [O III] in blue; Hbeta and [N II] in none.
+    const lines = {
+      halpha: [0, 1, 0], hbeta: [0, 0, 0], oiii_5007: [0, 0, 1], nii_6583: [0, 0, 0], sii_6716: [1, 0, 0], sii_6731: [1, 0, 0],
+    } as const;
+    expect(regionLineColour(withLines, 0, lines)).toEqual([0.05, 1, 0.5]); // a NaN ratio adds nothing
+    // Through one broad filter every line adds: 1 + 1/2.86 + 0.5 + 0.2 + 0.05.
+    const broad = { halpha: [1, 1, 1], hbeta: [1, 1, 1], oiii_5007: [1, 1, 1], nii_6583: [1, 1, 1], sii_6716: [1, 1, 1] } as const;
+    expect(regionLineColour(withLines, 0, broad)[0]).toBeCloseTo(1 + 1 / 2.86 + 0.75, 12);
+    const t = packObjects(clouds, withLines, 2.9696, undefined, {}, lines);
+    const hii = 2 * OBJECT_FLOATS;
+    expect(t.data[hii + 4]).toBe(KIND.hii);
+    expect(Array.from(t.data.slice(hii + 9, hii + 12)).map((v) => Number(v.toFixed(6)))).toEqual([0.05, 1, 0.5]);
+    // Without line weights a region is its Halpha alone, in every channel (the default).
+    expect(Array.from(packObjects(clouds, clusters, 2.9696).data.slice(hii + 9, hii + 12))).toEqual([1, 1, 1]);
   });
 
   it("draws a remnant's shell and skips a Sedov-phase remnant's NaN emissivity", () => {

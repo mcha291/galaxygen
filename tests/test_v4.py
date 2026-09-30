@@ -93,7 +93,9 @@ DRAWN = {
               "cloud_density_gradient", "cloud_gradient_angle", "cloud_cluster_index"},
     "cluster": {"cluster_radius", "cluster_azimuth", "cluster_height", "cluster_luminosity", "cluster_light_temperature",
                 "hii_stromgren_radius", "hii_halpha_emissivity", "bubble_radius", "bubble_shell_thickness",
-                "bubble_shell_emissivity"},
+                "bubble_shell_emissivity",
+                # S42: a region is coloured by all its lines (region.ts regionLineColour).
+                "hii_balmer_decrement", "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio"},
     "remnant": {"remnant_radius", "remnant_azimuth", "remnant_height", "remnant_size", "remnant_shell_thickness",
                 "remnant_shell_emissivity"},
 }
@@ -103,7 +105,7 @@ NOT_DRAWN = {
               "cloud_source_angle", "cloud_metallicity", "cloud_alpha"},
     "cluster": {"cluster_mass", "cluster_half_mass_radius", "cluster_age", "cluster_bound", "cluster_metallicity",
                 "cluster_ionizing_photons", "cluster_wind_luminosity", "hii_electron_density", "hii_temperature",
-                "hii_ionization_parameter", "hii_clumping", "hii_halpha_luminosity", "hii_balmer_decrement",
+                "hii_ionization_parameter", "hii_clumping", "hii_halpha_luminosity",
                 "hii_oxygen_abundance", "hii_nitrogen_abundance", "hii_sulphur_abundance", "hii_density_bounded",
                 "bubble_shell_velocity", "bubble_shell_density", "bubble_interior_pressure", "bubble_interior_temperature",
                 "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled"},
@@ -124,4 +126,5 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
             assert "**Not drawn by the viewer** (D191)" in by_name[name]["about"], name
         for name in DRAWN[of]:
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
-    assert sum(len(v) for v in DRAWN.values()) == 25 and sum(len(v) for v in NOT_DRAWN.values()) == 38
+    # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
+    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 37

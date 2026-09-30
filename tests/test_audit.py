@@ -373,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (59, 40)  # 56 / 40 at S40 (#110-#113, D190); 52 / 40 at S39; 27 / 35 at S22; V4 opened #114-#116 (D191)
+    assert progress.debt_counts(text) == (62, 41)  # 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -402,9 +402,13 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 | 48 |",
-        "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex**",
-        "100. **Row 34, the Galactic ionizing photon rate, misses Bennett et al. 1994 by 3%",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120 | 51 |",
+        # S42 (D192): rows 32 and 34 re-set on Audit III's blind windows; #100 re-scoped to the 0.71; #108 discharged.
+        "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex",
+        "100. **The model's ionizing photons per unit star formation are 0.71 of Starburst99's; row 34 passes since S42",
+        "108. ~~**No per-filter dust and no named instrument",
+        "| **discharged** at S42 | **108**",
+        "117. **The forbidden lines have no acceptance row, and the model's numbers are now known**",
         "102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**",
         "104. ~~**The sterilization distance drops a square root: the type Ia sterilization volume is 12.6× too large**~~",
         "| **discharged** at S38 | **104, 105, 106**",

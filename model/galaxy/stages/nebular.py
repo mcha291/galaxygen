@@ -6,14 +6,23 @@ shape parameters per emitter — Q(H⁰), n_e, T_e, the ionization parameter, O/
 emissivity **per unit volume** at region scale, so a shell limb-brightens when a renderer integrates along a
 ray. This stage publishes exactly that for every cluster's HII region, as columns of the cluster object
 (§5b: the region is the cluster's), plus the recombination lines the parameters determine in closed form
-(Case B, Storey & Hummer 1995). **The collisionally excited lines ([O III], [S II], [N II]) are not
-published**: they need the ionization fractions a photoionization model gives, and S35 ruled that a
-tabulated grid of the isochrone kind (Byler et al. 2017 as shipped in FSPS: 11 log Z × 10 ages × 7 log U,
-L☉ per ionizing photon, n_H = 100 cm⁻³, U ≡ Q/(4πR²n_H c), radiation-bounded spherical shells `[verified:
+(Case B, Storey & Hummer 1995). **The collisionally excited lines ([O III] 5007, [N II] 6583, [S II]
+6716 and 6731)** need the ionization fractions a photoionization model gives: S35 ruled that a tabulated
+grid of the isochrone kind (Byler et al. 2017 as shipped in FSPS: 11 log Z × 10 ages × 7 log U, L☉ per
+ionizing photon, n_H = 100 cm⁻³, U ≡ Q/(4πR²n_H c), radiation-bounded spherical shells `[verified:
 arXiv:1611.08305 §II, read at S35]`) is the dependency to take, read off the very parameters published
-here — the fetch of that table is the owner's call (D184). The analytic alternative (a two-level atom on
-NIST transition probabilities and the PyNeb collision strengths) was read and set aside: without the
-ionization fractions it makes no line.
+here, and the owner gave the word to fetch it on 2026-09-27 (S42). `tools/fetch_nebular.py` takes the
+PARSEC-ionized, dust-free file at a pinned FSPS commit into `galaxy/data/nebular_lines.npz`; each region
+reads it at its gas's log(Z/Z☉) (its [α/H], the oxygen the stage already computes), its cluster's age and
+its own log U, interpolated linearly in log luminosity as FSPS does (``add_nebular.f90``) but **clamped at
+the grid's edges** rather than extrapolated. What is published is each line **over the grid's own Hα at
+that point**, times the region's Case B Hα: the lines inherit the region's photon budget (escape, leaking)
+and the grid only says how they split. `[inferred]`: the grid's gas carries its own abundance pattern,
+not the model's published N/H and S/H (those columns are not read by it), and its density is 100 cm⁻³
+whatever the region's. The diffuse ionized gas gets no forbidden lines: its enhanced [N II] and [S II]
+come from a softer, diluted field the grid does not model, and they are named absent by the render route.
+The analytic alternative (a two-level atom on NIST transition probabilities and the PyNeb collision
+strengths) was read at S35 and set aside: without the ionization fractions it makes no line.
 
 **Every number below was read at S35 (`phase9_sourcing.md`; rule B9).**
 
@@ -51,8 +60,10 @@ although they read only radial fields: a stage has one provenance.
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -83,14 +94,72 @@ PROTON_MASS = 1.67262192e-24  # g (the census's K_OVER_MH uses the same value)
 SOLAR_MASS_G = 1.98841e33  # g, IAU 2015 nominal GM_sun / G
 CM_PER_KPC = CM_PER_PC * PC_PER_KPC
 
-CLUSTER_READS: tuple[str, ...] = ("cluster_ionizing_photons", "cluster_metallicity")
+CLUSTER_READS: tuple[str, ...] = ("cluster_ionizing_photons", "cluster_metallicity", "cluster_age", "cluster_radius")
 CLOUD_READS: tuple[str, ...] = ("cloud_mass", "cloud_size", "cloud_density_pdf_width", "cloud_alpha", "cloud_cluster_index")
 HII_STATES: tuple[str, ...] = ("bounded", "leaking")
 HII_COLUMNS: tuple[str, ...] = (
     "hii_stromgren_radius", "hii_electron_density", "hii_temperature", "hii_ionization_parameter", "hii_clumping",
     "hii_halpha_luminosity", "hii_halpha_emissivity", "hii_balmer_decrement", "hii_oxygen_abundance",
     "hii_nitrogen_abundance", "hii_sulphur_abundance",
+    "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",
 )
+# The forbidden lines the grid is read for (S42), each published over the region's Halpha.
+FORBIDDEN: tuple[str, ...] = ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")
+LINE_TABLE = Path(__file__).resolve().parents[1] / "data" / "nebular_lines.npz"
+
+
+@functools.cache
+def _line_grid() -> dict[str, np.ndarray]:
+    with np.load(LINE_TABLE) as a:
+        table = {k: a[k] for k in ("log_z", "log_age_yr", "log_u", "lines", "log_lsun_per_photon")}
+    table["lines"] = np.array([str(n) for n in table["lines"]])
+    return table
+
+
+def _axis(values: np.ndarray, axis: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The lower grid index and the fraction toward the next, clamped to the grid (no extrapolation)."""
+    x = np.clip(np.asarray(values, dtype=float), axis[0], axis[-1])
+    i = np.clip(np.searchsorted(axis, x, side="right") - 1, 0, axis.size - 2)
+    return i, (x - axis[i]) / (axis[i + 1] - axis[i])
+
+
+def grid_line_ratios(log_z: np.ndarray, log_age_yr: np.ndarray, log_u: np.ndarray) -> dict[str, np.ndarray]:
+    """Each forbidden line over Halpha, read off the Byler et al. 2017 grid at (log Z/Z_sun, log age, log U):
+    trilinear in log luminosity per ionizing photon, clamped at the grid's edges. NaN where an input is."""
+    g = _line_grid()
+    shape = np.broadcast(np.asarray(log_z), np.asarray(log_age_yr), np.asarray(log_u)).shape
+    lz, la, lu = (np.broadcast_to(np.asarray(v, dtype=float), shape).ravel() for v in (log_z, log_age_yr, log_u))
+    bad = ~(np.isfinite(lz) & np.isfinite(la) & np.isfinite(lu))
+    (iz, fz), (ia, fa), (iu, fu) = (_axis(np.where(bad, ax[0], v), ax) for v, ax in
+                                    ((lz, g["log_z"]), (la, g["log_age_yr"]), (lu, g["log_u"])))
+    cube = g["log_lsun_per_photon"].astype(float)
+    log_l = np.zeros((lz.size, cube.shape[-1]))
+    for dz in (0, 1):
+        for da in (0, 1):
+            for du in (0, 1):
+                w = (fz if dz else 1 - fz) * (fa if da else 1 - fa) * (fu if du else 1 - fu)
+                log_l += w[:, None] * cube[iz + dz, ia + da, iu + du]
+    names = list(g["lines"])
+    ha = log_l[:, names.index("halpha")]
+    return {n: np.where(bad, np.nan, 10.0 ** (log_l[:, names.index(n)] - ha)).reshape(shape) for n in FORBIDDEN}
+
+
+def ring_ratios(radius_kpc: np.ndarray, weight: np.ndarray, ratio: np.ndarray, R: np.ndarray) -> np.ndarray:
+    """The regions' Halpha-weighted mean of one line ratio in each ring of ``R`` (the ring nearest each
+    region), a ring without a region taking its nearest occupied neighbours' by linear interpolation in R;
+    zero everywhere if no region has light."""
+    r = np.asarray(radius_kpc, dtype=float)
+    w = np.asarray(weight, dtype=float)
+    x = np.asarray(ratio, dtype=float)
+    ok = np.isfinite(r) & np.isfinite(w) & np.isfinite(x) & (w > 0)
+    if not ok.any():
+        return np.zeros_like(R, dtype=float)
+    edges = np.concatenate([[-np.inf], 0.5 * (R[1:] + R[:-1]), [np.inf]])
+    ring = np.searchsorted(edges, r[ok], side="right") - 1
+    num = np.bincount(ring, weights=w[ok] * x[ok], minlength=R.size)
+    den = np.bincount(ring, weights=w[ok], minlength=R.size)
+    lit = den > 0
+    return np.interp(R, R[lit], num[lit] / den[lit])
 
 
 def _log_interp(t: np.ndarray, table_t: np.ndarray, table_v: np.ndarray) -> np.ndarray:
@@ -203,6 +272,9 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     with np.errstate(divide="ignore", invalid="ignore"):
         emissivity = np.where(volume > 0, l_halpha / np.where(volume > 0, volume, 1.0), 0.0)
         log_u = np.log10(q_trapped / (4.0 * math.pi * radius**2 * np.sqrt(n_squared) * SPEED_OF_LIGHT))
+    lines = grid_line_ratios(oxygen - float(c["OXYGEN_ABUNDANCE_SOLAR"]),
+                             np.log10(np.asarray(clusters["cluster_age"], dtype=float) * 1.0e6),
+                             np.where(np.isfinite(log_u), log_u, np.nan))
     out = {
         "hii_stromgren_radius": radius / CM_PER_PC,
         "hii_electron_density": np.sqrt(n_squared),
@@ -215,6 +287,7 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
         "hii_oxygen_abundance": oxygen,
         "hii_nitrogen_abundance": nitrogen,
         "hii_sulphur_abundance": sulphur,
+        **{f"hii_{n}_ratio": lines[n] for n in FORBIDDEN},
         "hii_density_bounded": leaking.astype(np.int64),
     }
     return Catalogue.of(out, clusters.counts)
@@ -237,26 +310,25 @@ def leaked_fraction(clusters: Catalogue, regions: Catalogue, constants: Mapping[
 
 
 # S41 (V4, D191): the HII-region columns the viewer does not read, each with why - the object-class twin of the
-# sentence the stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory.
+# sentence the stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory. S42 (D192)
+# drew `hii_balmer_decrement` and the four `hii_*_ratio` columns (region.ts regionLineColour), so they have no entry.
 NOT_DRAWN_WHY: dict[str, str] = {
     "hii_electron_density": "drawn through `hii_halpha_emissivity`, which is this density squared times the Case B "
                             "coefficient; a density has no look but its emission measure.",
     "hii_temperature": "drawn through the emissivity's Case B coefficient at this temperature; a temperature itself "
                        "is a line ratio's to show.",
-    "hii_ionization_parameter": "the axis a photoionization grid reads the forbidden lines along: drawn only through "
-                                "those lines, when a grid publishes them, never as itself.",
+    "hii_ionization_parameter": "the axis the photoionization grid reads the forbidden lines along: drawn through "
+                                "the four `hii_*_ratio` columns it sets (S42), never as itself.",
     "hii_clumping": "drawn through `hii_halpha_emissivity` (the emission measure's correction) and through the cloud's "
                     "log-normal interior, which is the same width.",
     "hii_halpha_luminosity": "the emissivity integrated over the sphere: the march integrates `hii_halpha_emissivity` "
                              "over the radius, and the sum is the gate's number (D190), not a look.",
-    "hii_balmer_decrement": "what a renderer reddens the region by, and the Hβ it draws when a filter set carries the "
-                            "line and a route serves it; at V4 no set does and nothing reads it.",
     "hii_oxygen_abundance": "drawn through the electron temperature it sets (the emissivity's Case B coefficient) and "
-                            "through the forbidden lines when a grid publishes them.",
-    "hii_nitrogen_abundance": "no published line carries it: [N II] would, from a photoionization grid (S35's ruling); "
-                              "until then nothing in the render sees nitrogen.",
-    "hii_sulphur_abundance": "no published line carries it: [S II] would, from a photoionization grid (S35's ruling); "
-                             "until then nothing in the render sees sulphur.",
+                            "through the forbidden lines: it is the metallicity the grid is read at (S42).",
+    "hii_nitrogen_abundance": "not read by anything drawn: the [N II] line the region carries (S42) comes off the grid "
+                              "at the gas's oxygen, with the grid's own N/O, not this column (debt #118).",
+    "hii_sulphur_abundance": "not read by anything drawn: the [S II] lines the region carries (S42) come off the grid "
+                             "at the gas's oxygen, with the grid's own S/O, not this column (debt #118).",
     "hii_density_bounded": "drawn through the radius: a leaking region's sphere is its whole cloud, which "
                            "`hii_stromgren_radius` already says; the category itself is not a look.",
 }
@@ -290,8 +362,8 @@ HII_TEMPERATURE = _column("hii_temperature", "Electron temperature", "K",
                           "the inner disc's metal-rich gas sits at the floor.", ramp=Ramp("inferno"))
 HII_LOG_U = _column("hii_ionization_parameter", "Ionization parameter log U", "dex",
                     "log of the ionizing photon density over the gas density at the region's radius, in the "
-                    "definition the photoionization grids use (U = Q / 4πR² n c): the axis along which a tabulated "
-                    "model reads the collisionally excited lines this stage does not publish (S35's ruling).",
+                    "definition the photoionization grids use (U = Q / 4πR² n c): the axis along which the "
+                    "tabulated grid is read for the collisionally excited lines (S35's ruling, fetched at S42).",
                     ramp=Ramp("plasma"))
 HII_CLUMPING = _column("hii_clumping", "Clumping ⟨n²⟩/⟨n⟩²", "dimensionless",
                        "e^(σ_s²) from the cloud census's log-normal width: the same mechanism that structures the "
@@ -316,6 +388,23 @@ HII_NITROGEN = _column("hii_nitrogen_abundance", "12 + log(N/H)", "dex",
                        "toward −0.7 in the inner disc.", ramp=Ramp("plasma"))
 HII_SULPHUR = _column("hii_sulphur_abundance", "12 + log(S/H)", "dex",
                       "Sulphur as an α element on the solar scale (Asplund et al. 2009).", ramp=Ramp("plasma"))
+_LINE_LABELS = {"oiii_5007": "[O III] 5007", "nii_6583": "[N II] 6583", "sii_6716": "[S II] 6716", "sii_6731": "[S II] 6731"}
+_GRID = ("Read off Byler et al. 2017's photoionization grid (as FSPS ships it; tools/fetch_nebular.py) at the "
+         "region's gas metallicity, its cluster's age and its log U, clamped at the grid's edges: the line over the "
+         "grid's own Halpha at that point, so the region's Halpha luminosity or emissivity times this is the line's. ")
+HII_LINE_RATIOS = tuple(
+    _column(f"hii_{n}_ratio", f"{label} / Hα", "dimensionless",
+            _GRID + {"oiii_5007": "Doubly ionized oxygen: it rises with log U and with the hotter, younger clusters, and "
+                                  "falls in metal-rich gas, which cools through the infrared lines instead.",
+                     "nii_6583": "Singly ionized nitrogen from the partially ionized edge: strong in metal-rich, low-U "
+                                 "regions; the grid's own N/O, not the model's published N/H, sets it.",
+                     "sii_6716": "Singly ionized sulphur, the doublet's blue line: from the region's outskirts, strongest "
+                                 "at low log U.",
+                     "sii_6731": "The doublet's red line; the pair's ratio is the grid's at its 100 cm⁻³, not a "
+                                 "measure of this region's density."}[n],
+            ramp=Ramp("viridis", scale="log"))
+    for n, label in _LINE_LABELS.items()
+)
 HII_BOUNDED = FieldDecl(
     name="hii_density_bounded", label="Region bounded by", unit="dimensionless", kind=Kind.CATEGORY_COLUMN, of="cluster",
     categories=HII_STATES, ramp=Palette(("#3b6fb6", "#e0a030")), provenance="seeded",
@@ -391,6 +480,26 @@ HALPHA_SFR_RATIO = FieldDecl(
         "— the isochrones' Q against Starburst99's — and nothing about the galaxy." + _D4
     ),
 )
+HBETA_HII = FieldDecl(
+    name="hbeta_surface_brightness_hii", label="Hβ from HII regions Σ(R)", unit="Lsun/pc2", kind=Kind.FIELD,
+    axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
+    about="The HII regions' Hα over the Case B decrement at the gas's temperature at that radius (Storey & Hummer 1995).",
+)
+HBETA_DIG = FieldDecl(
+    name="hbeta_surface_brightness_dig", label="Hβ from the diffuse ionized gas Σ(R)", unit="Lsun/pc2", kind=Kind.FIELD,
+    axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
+    about="The diffuse gas's Hα over the Case B decrement at the layer's temperature.",
+)
+LINES_HII = tuple(
+    FieldDecl(
+        name=f"{n}_surface_brightness_hii", label=f"{label} from HII regions Σ(R)", unit="Lsun/pc2", kind=Kind.FIELD,
+        axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True, provenance="seeded",
+        about=(f"The HII regions' Hα at this radius times the census's regions' Hα-weighted {label}/Hα in the ring "
+               "(a ring without a region takes its neighbours'): the line the grid gives the regions that are there. "
+               "The diffuse gas adds none (the grid does not model its field)."),
+    )
+    for n, label in _LINE_LABELS.items()
+)
 HII_LF_SLOPE = FieldDecl(
     name="hii_luminosity_function_slope", label="HII-region luminosity function slope", unit="dimensionless", kind=Kind.SCALAR,
     meaningful_zero=False, provenance="seeded",
@@ -419,6 +528,10 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
     hii = (1.0 - escape) * sigma_q * halpha_per_recombination(t_gas) * per_pc2
     dig = escape * sigma_q * float(halpha_per_recombination(np.array([float(c["DIG_TEMPERATURE"])]))[0]) * per_pc2
     total = hii + dig
+    weight = np.asarray(regions["hii_halpha_luminosity"], dtype=float)
+    radius = np.asarray(clusters["cluster_radius"], dtype=float)
+    lines = {f"{n}_surface_brightness_hii": hii * ring_ratios(radius, weight, regions[f"hii_{n}_ratio"], R) for n in FORBIDDEN}
+    decrement_dig = float((case_b_halpha(np.array([float(c["DIG_TEMPERATURE"])])) / case_b_hbeta(np.array([float(c["DIG_TEMPERATURE"])])))[0])
     l_nebular = float(np.trapezoid(total * 2.0 * math.pi * R, R)) * PC_PER_KPC**2  # Lsun
     sfr = float(np.trapezoid(np.asarray(f["sfr_surface_density"], dtype=float) * 2.0 * math.pi * R, R))  # Msun/yr
     return {
@@ -426,6 +539,9 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
         "halpha_surface_brightness_hii": hii,
         "halpha_surface_brightness_dig": dig,
         "halpha_surface_brightness_nebular": total,
+        "hbeta_surface_brightness_hii": hii * case_b_hbeta(t_gas) / case_b_halpha(t_gas),
+        "hbeta_surface_brightness_dig": dig / decrement_dig,
+        **lines,
         "dig_scale_height": float(c["DIG_SCALE_HEIGHT"]),
         "halpha_luminosity_nebular": l_nebular,
         "dig_halpha_fraction": leaked_fraction(clusters, regions, c),
@@ -454,8 +570,8 @@ NEBULAR = IMPLEMENTATIONS.register(
         requires=(*CLUSTER_READS, *CLOUD_READS, "ionizing_photon_rate", "feh_gas", "alpha_fe_gas", "sfr_surface_density"),
         publishes=(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
-            HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, HII_BOUNDED,
-            HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
+            HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED,
+            HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
         ),
     )
 )

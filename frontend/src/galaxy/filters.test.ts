@@ -17,7 +17,7 @@ const passes = (curve: Curve, lambda: number) => {
 
 describe("the filter sets", () => {
   it("offers RGB, SHO and HOO, three curves each, red to blue", () => {
-    expect(FILTER_SET_NAMES).toEqual(["rgb", "sho", "hoo"]);
+    expect(FILTER_SET_NAMES).toEqual(["rgb", "sho", "hoo", "wfc3", "wfc3n"]) // the named instruments since S42;
     for (const name of FILTER_SET_NAMES) expect(FILTER_SETS[name].curves).toHaveLength(3);
     const [r, v, b] = FILTER_SETS.rgb.curves;
     expect(r.shape === "gaussian" && v.shape === "gaussian" && b.shape === "gaussian").toBe(true);
@@ -76,5 +76,43 @@ describe("the white point", () => {
     // A redder source keeps its ratio: the tone map divides every cell by the same three numbers.
     const [r, , b] = bulgeLight([0.3, 0.1, 0.05], white);
     expect(r / b).toBeCloseTo((0.3 / 0.05) * (0.1369 / 0.1878), 12);
+  });
+});
+
+describe("the named instruments (S42)", () => {
+  const at = (curve: { wavelength: number[]; transmission: number[] }, lam: number) => {
+    const w = curve.wavelength;
+    if (lam < w[0] || lam > w[w.length - 1]) return 0;
+    for (let i = 1; i < w.length; i += 1) {
+      if (w[i] >= lam) return curve.transmission[i - 1] + ((curve.transmission[i] - curve.transmission[i - 1]) * (lam - w[i - 1])) / (w[i] - w[i - 1]);
+    }
+    return 0;
+  };
+
+  it("are SVO's measured WFC3 curves, sampled, peak one, with their sources", () => {
+    for (const name of ["wfc3", "wfc3n"] as const) {
+      const set = FILTER_SETS[name];
+      expect(set.psf?.kind).toBe("airy");
+      expect(set.sources?.map((s) => s.svo.startsWith("HST/WFC3_UVIS2."))).toEqual([true, true, true]);
+      for (const c of set.curves) {
+        expect(c.shape).toBe("sampled");
+        if (c.shape !== "sampled") continue;
+        expect(Math.max(...c.transmission)).toBe(1);
+        expect(c.wavelength.length).toBe(241);
+      }
+      for (const s of set.sources ?? []) expect(s.resample_error).toBeLessThan(0.012);
+    }
+    expect(FILTER_SETS.wfc3.curves.map((c) => c.name)).toEqual(["F814W", "F555W", "F438W"]);
+    expect(FILTER_SETS.wfc3n.curves.map((c) => c.name)).toEqual(["F673N", "F656N", "F502N"]);
+  });
+
+  it("put each palette line in its own channel", () => {
+    const [s, h, o] = FILTER_SETS.wfc3n.curves as { wavelength: number[]; transmission: number[] }[];
+    expect(at(s, SII[0])).toBeGreaterThan(0.95);
+    expect(at(s, SII[1])).toBeGreaterThan(0.8);
+    expect(at(h, HALPHA)).toBeGreaterThan(0.9);
+    expect(at(h, 6583.5)).toBeLessThan(0.02); // [N II] outside F656N's 18 A
+    expect(at(o, OIII)).toBeGreaterThan(0.85);
+    expect(at(s, HALPHA)).toBe(0);
   });
 });

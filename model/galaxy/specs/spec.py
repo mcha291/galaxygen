@@ -227,6 +227,21 @@ ROW_GC_SYSTEM_MASS, ROW_STELLAR_HALO_MASS = 32, 33
 # S35 (BUILD_II Phase 9): the ionizing budget, the HII-region luminosity function, the PNLF cutoff.
 ROW_IONIZING_RATE, ROW_HII_LF_SLOPE, ROW_PNLF_CUTOFF = 34, 35, 36
 _BENNETT94 = "Bennett et al. 1994 via Chomiuk & Povich 2011, AJ 142, 197, section 3.1"
+_MW97 = "McKee & Williams 1997, ApJ 476, 144, via Chomiuk & Povich 2011, section 3.1 (blind reading, Audit III)"
+_MW97_READ = (
+    "The window is Audit III's blind reading (S37, docs/AUDIT_III_BLIND.md), adopted by the owner on 2026-09-27 (A3-7): a read-only agent forbidden the repository, so not knowing the model's number, set it from the sources alone. "
+    "'Subsequently, McKee & Williams (1997) used the same COBE data and slightly different assumptions to measure a "
+    "Lyman continuum photon rate of Nc = (2.6 +/- 1.3) x 10^53 phot s-1' [verified: Chomiuk & Povich 2011, "
+    "arXiv:1110.4105, section 3.1, read at S35 and at S37]; McKee & Williams' abstract, read blind at S37 on IOPscience: "
+    "'Allowing for the ionizing radiation that is absorbed by dust (about 25% of the total) ... The total ionizing "
+    "luminosity of this distribution of OB associations can account for the thermal radio emission and the N II "
+    "far-infrared emission of the Galaxy.' The blind reader took it over Bennett et al. 1994's (3.5 +/- 1.8) x 10^53 "
+    "because it is the whole Galaxy from both Galaxy-wide tracers with its corrections stated (the 1.37 for dust and "
+    "escape that Murray & Rahman 2010 later borrowed); it noted all five candidates overlap between 1.9 and 2.7 x 10^53 "
+    "once rescaled to R0 = 8.2 kpc. Disclosed, as S35 disclosed its choice: the model's 1.65e53 was known to the "
+    "builder, who chose Bennett's window, which the model missed by 3%; it was not known to the blind reader, and the "
+    "model passes this window. Bennett's reading is kept in _BENNETT94_READ as the record."
+)
 _BENNETT94_READ = (
     "'Bennett et al. (1994) used Cosmic Background Explorer (COBE) observations of N II 205 um emission to "
     "measure the rate of Lyman continuum photons in the Milky Way, and correcting for dust absorption and "
@@ -246,6 +261,17 @@ _HARRIS = "Harris catalogue (December 2010 revision), mwgc.dat Part II M_V,t; M/
 # Johnson V absolute magnitude the model uses (Willmer 2018); tests/test_globular_clusters.py holds the
 # 156 values and recomputes it.
 HARRIS_LUMINOSITY_V = 1.716222334634886e7
+_HARRIS_BLIND = "Harris catalogue (2010) Part II M_V,t; M/L_V from Baumgardt, Sollima & Hilker 2020 section 3.3 (blind reading, Audit III)"
+_HARRIS_BLIND_READ = (
+    "The window is Audit III's blind reading (S37, docs/AUDIT_III_BLIND.md), adopted by the owner on 2026-09-27 (A3-7): a read-only agent forbidden the repository, so not knowing the model's number, set it from the sources alone. "
+    "The same summed luminosity, 1.716e7 Lsun over the catalogue's 156 clusters with an M_V,t (recomputed independently "
+    "by the blind reader), at the mass-to-light ratio Baumgardt, Sollima & Hilker 2020 measure dynamically: 'We obtain an "
+    "average mass-to-light ratio of M/LV = 1.83 +/- 0.03 ... compared to M/LV = 1.92 +/- 0.05 ... that we derive from the "
+    "literature magnitudes' [verified: arXiv:2009.09611, section 3.3, read blind at S37] - 1.92 the consistent pairing with "
+    "the catalogue's literature magnitudes. The window covers M/L 1.6-2.2 on the Harris sum, Baumgardt & Hilker 2018's "
+    "direct-mass hybrid (3.55e7) and 10% incompleteness at its top; BHG16's 1.4 +/- 0.5 (Kimmig et al. 2015, quoted for "
+    "metal-poor clusters to turn halo star counts into mass) falls below it."
+)
 _HARRIS_READ = (
     "The catalogue, read at S34 at https://physics.mcmaster.ca/~harris/mwgc.dat, twice, by two "
     "independent transcriptions that agree to the digit, the second checked row by row against "
@@ -340,12 +366,13 @@ QUANTITIES: tuple[Quantity, ...] = (
     ),
     Quantity(
         ROW_GC_SYSTEM_MASS, "Globular cluster system mass", "Msun", "gc_system_mass",
-        0.9 * HARRIS_LUMINOSITY_V, 1.9 * HARRIS_LUMINOSITY_V, "statistical",
-        "156 clusters' M_V,t: 1.716 × 10⁷ L☉ at M/L_V = 1.4 ± 0.5", _HARRIS,
+        2.7e7, 4.0e7, "statistical",
+        "156 clusters' M_V,t: 1.716 × 10⁷ L☉ at M/L_V = 1.9 (1.6–2.2); window 2.7–4.0 × 10⁷ M☉", _HARRIS_BLIND,
         note=(
             "Statistical per debt #8: the model's system mass is a derived mean times a lognormal residual "
             "drawn on world_seed at Boylan-Kolchin 2018's scatter, so the verdict is the ensemble's median, "
-            "which is the mean. " + _HARRIS_READ
+            "which is the mean. " + _HARRIS_BLIND_READ + " Until S42 (the owner's ruling) the window was "
+            "1.54-3.26e7, BHG16's M/L_V = 1.4 +/- 0.5 for metal-poor globulars: " + _HARRIS_READ
         ),
     ),
     Quantity(
@@ -367,11 +394,11 @@ QUANTITIES: tuple[Quantity, ...] = (
     ),
     Quantity(
         ROW_IONIZING_RATE, "Galactic ionizing photon rate Q(H⁰)", "1/s", "ionizing_photon_rate_total",
-        1.7e53, 5.3e53, "pointwise", "(3.5 ± 1.8) × 10⁵³ s⁻¹", _BENNETT94,
+        1.3e53, 3.9e53, "pointwise", "(2.6 ± 1.3) × 10⁵³ s⁻¹", _MW97,
         note=(
             "The light stage's Q(H0): the isochrones' ionizing output integrated over the disc's history, "
             "intrinsic (no dust, no escape), which is what the source corrects its measurement back to. "
-            + _BENNETT94_READ
+            + _MW97_READ + " Until S42 (the owner's ruling): " + _BENNETT94_READ
         ),
     ),
     Quantity(
@@ -709,13 +736,14 @@ _MISSES: tuple[Miss, ...] = (
         debt=98,
         since="S34",
         reason=(
-            "the ensemble's median is 7.13e7 Msun against 1.54-3.26e7 (the Harris catalogue's 1.716e7 Lsun "
-            "at M/L_V = 1.4 +/- 0.5), 0.47 dex above the window's centre; the mean it estimates is 6.97e7 = "
+            "the ensemble's median is 7.13e7 Msun against 2.7-4.0e7 (the Harris catalogue's 1.716e7 Lsun at the blind "
+            "reading's M/L_V = 1.9, S42; 1.54-3.26e7 at BHG16's 1.4 until then), 0.25 dex above the window's top and 0.34 "
+            "above its centre (0.47 dex above the old centre); the mean it estimates is 6.97e7 = "
             "the survival 0.0250 times S33's bound cluster mass 2.786e9. The mean is 0.34 dex above the "
             "measured eta M_halo (Harris et al. 2017's 2.9e-5 x 1.1e12 = 3.19e7; S38, #105) - outside the "
             "0.28 dex scatter, where at the adopted 3.5e-5 it had read 0.26 dex, inside (D183) - so the model "
             "misses the halo relation and the catalogue both; the relation itself sits inside this window at the "
-            "Milky Way's mass (3.0-3.4e7 at eta = 2.9 +/- 0.2e-5, the window's top 3.26e7). **What the model "
+            "Milky Way's mass (3.0-3.4e7 at eta = 2.9 +/- 0.2e-5, inside 2.7-4.0e7). **What the model "
             "counts is not what the catalogue lists**: the system is every bound cluster alive today, and "
             "53% of its surviving mass is younger than 1 Gyr and 0.7% older than 10 Gyr, while the "
             "catalogue's 157 are the old globulars. One disruption time-scale, the solar neighbourhood's "
@@ -730,30 +758,14 @@ _MISSES: tuple[Miss, ...] = (
             "disruption time, the row lands within 0.2 dex of its window; if they read below 1.5e7 at any "
             "sourced time-scale between the open clusters' and the N-body one, the bound fraction or the "
             "mass function's scale at high redshift (M* >~ 1e6 in interacting galaxies, PZMG10 section "
-            "2.4.2) is what is wrong, not the dissolution. Not a lever: the window, which is the source's "
-            "0.9-1.9 and whose alternative (the catalogue's own M/L = 2, 3.43e7) fails the same way."
+            "2.4.2) is what is wrong, not the dissolution. Not a lever: the window, set blind (S42) and whose "
+            "alternatives (BHG16's 1.4, the catalogue's own M/L = 2 at 3.43e7) fail the same way."
         ),
     ),
-    Miss(
-        row=ROW_IONIZING_RATE,
-        debt=100,
-        since="S35",
-        reason=(
-            "1.6527e53 s^-1 against Bennett et al. 1994's 1.7-5.3e53, 3% below the window's floor. The model's "
-            "ionizing photons per unit star formation are 0.71 of the Kroupa/Starburst99 steady state (the "
-            "nebular stage's halpha_sfr_ratio, Kennicutt & Evans 2012's calibration; Chomiuk & Povich 2011's "
-            "7.5e-54 Msun/yr per photon/s puts 1.755 Msun/yr at 2.34e53): the Q(T_eff, L) table the light "
-            "stage integrates along the PARSEC isochrones (SHP03, debt #84) yields fewer photons per massive "
-            "star formed than Starburst99's atmospheres, and the youngest isochrone cannot see stars above "
-            "64 Msun. The same COBE data re-analysed by McKee & Williams 1997, (2.6 +/- 1.3)e53, would pass."
-        ),
-        prediction=(
-            "If the Q calibration is the cause, raising the ionizing yield to Starburst99's (x1.41) lands the "
-            "row at 2.3e53, inside, and halpha_sfr_ratio at 1.0 together - one lever, two rows. If the yield is "
-            "raised and the row still misses, the star formation rate (row 15's family) is low, not the photons. "
-            "Not a lever: the window, which is the source's own 50% uncertainty."
-        ),
-    ),
+    # Row 34's recorded miss (debt #100, S35: 1.6527e53 against Bennett et al. 1994's 1.7-5.3e53, 3% under) was removed at
+    # S42: the owner adopted Audit III's blind window, McKee & Williams 1997's 1.3-3.9e53 (D186 A3-7), which the model
+    # passes; a miss that starts passing fails the run (#29), so it goes, and this says why. Debt #100 itself stays open:
+    # the model's ionizing photons per unit star formation are still 0.71 of Starburst99's (halpha_sfr_ratio; #84).
     Miss(
         row=ROW_STELLAR_HALO_MASS,
         debt=99,

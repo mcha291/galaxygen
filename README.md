@@ -64,6 +64,25 @@ for these tables:
 - Chen et al. (2019) — the YBC bolometric corrections, as the CMD output header cites them
 - Maíz Apellániz (2006) and Bessell (1990) — the UBVRIJHK photometric system, likewise
 
+**Nebular line grid.** `model/galaxy/data/nebular_lines.npz` is derived from the Cloudy
+line grid of Byler, N., Dalcanton, J. J., Conroy, C. & Johnson, B. D. 2017, ApJ
+(doi:10.3847/1538-4357/aa6c66, arXiv:1611.08305), as
+FSPS ships it (`nebular/ZAU_ND_prsc.lines`, PARSEC-ionized, no dust in the region), at
+commit `bd187a0d07dac17b55c4dc7c60d83f63694c1b4e` of <https://github.com/cconroy20/fsps>
+(MIT License, Copyright (c) 2009-2021 Charlie Conroy & contributors; FSPS: Conroy, Gunn &
+White 2009, ApJ, 699, 486; Conroy & Gunn 2010, ApJ, 712, 833). It keeps the grid's three
+axes and six lines (Hβ, [O III] 5007, Hα, [N II] 6583, [S II] 6716, 6731) as log L☉ per
+ionizing photon; `tools/fetch_nebular.py` regenerates it.
+
+**Instrument filter curves.** `frontend/src/galaxy/instruments.json` holds HST WFC3/UVIS
+system throughputs (F814W, F555W, F438W; F673N, F656N, F502N), resampled, from the SVO Filter
+Profile Service; `tools/fetch_filters.py` regenerates it. This research has made use of the
+SVO Filter Profile Service "Carlos Rodrigo", funded by MCIN/AEI/10.13039/501100011033/ through
+grant PID2023-146210NB-I00 (Rodrigo, C., Cruz, P., Aguilar, J. F., et al. 2024, 2024A&A...689A..93R;
+Rodrigo, C., Solano, E. & Bayo, A. 2012, 2012ivoa.rept.1015R; Rodrigo, C. & Solano, E. 2020,
+2020sea..confE.182R — the references SVO asks for). The curves are STScI's
+(<https://www.stsci.edu/hst/instrumentation/wfc3/performance/throughputs>).
+
 **Massive-star tables** (`model/galaxy/stages/massive_stars.py`, entered row by row from
 the published tables): Sternberg, A., Hoffmann, T. L. & Pauldrach, A. W. A. 2003, ApJ,
 599, 1333, Table 1 (ionizing photon fluxes of O and early-B dwarfs); Martins, F.,
