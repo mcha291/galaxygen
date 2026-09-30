@@ -1107,3 +1107,29 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [api] A transport change is an API change even when nothing on the server's side of the query moves: a POST
   body that is the GET's query needs its refusals stated (411, 413, 415), its limit named and a test through the
   real client, or a proxy's limit becomes a silent black canvas (D192).
+
+## From S43 (Audit IV; the aim by Fable, the reading by two Opus agents, the verdicts the session's)
+
+- [audit] A grid's axis carries a solar scale, and the model's number must be entered on the grid's, not on the
+  model's: the nebular grid's log Z = 0 is Anders & Grevesse's oxygen (8.93) and the model entered Asplund's (8.69),
+  so a quarter of the regions read the edge for no physical reason. Read what "solar" means in the source before
+  subtracting it (D194, #121).
+- [audit] A sentence about a dependency's behaviour is a reading, not a recollection of a grep: "FSPS extrapolates"
+  entered D192 from an incomplete search of its source and the routine says `!no extrapolation`. Quote the line
+  that does the thing, with its file, or say the behaviour was not read (D194, #122).
+- [audit] A cross-column identity cannot catch a row entered under the wrong key: the grain table's 398 µm row is
+  the 380 µm row, and K_abs × M_dust/H = (1 − albedo) C_ext holds for it. Pin a transcribed table's keys against the
+  source's own key list as well as its rows (D194, #123).
+- [audit] Verify a blind reader's source yourself before its window becomes a row: text renderings of PDFs misread
+  tables, and the reader said so; the equations were read again at arXiv HTML before the window was written down.
+  Then measure the model against the window once, say that the measurement came after, and let the row be a miss
+  if it is one (D194, #117).
+- [viewer] Compare levels on a window that is exactly cells: a window given in kpc and radians is met by different
+  cells at each level (a level-0 sector overruns φ = 1.2 by 0.17 rad, a level-1 half-sector by 0.08), and the 7.6 %
+  the first test read was area, not light (D194, tests/test_audit_iv.py).
+- [audit] A gate that compares a frame to a published total carries a term in the mesh (the cell sum against the
+  stage's trapezoid, ∝ dR²): a fixed tolerance is a statement about one mesh. Say which, or gate the frame against
+  the frame (D194).
+- [close] A tag is made after its merge exists, so the session that merges can also record it: the close ends with
+  the tag, the push and `git ls-remote` read back, and the MANUAL_TODO row is written applied in the same sitting —
+  a queue filled one row behind was the web proxy's rule, not the project's (D193).

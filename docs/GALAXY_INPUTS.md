@@ -691,9 +691,9 @@ defined here once and used in every entry below:
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120 | 51 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123 | 54 |
 
-So the board's **62 open** is 11 permanent and 51 carried, and no item is unruled. (S22
+So the board's **65 open** is 11 permanent and 54 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -712,7 +712,8 @@ dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's lay
 level-0 sample, D190; V4 opened #114–#116, the point regime's bolometric painting, the young population's double
 representation and the cluster's undrawn extent, D191; S42, the owner's four answers, discharged #108 and opened
 #117–#120, the forbidden lines' missing row, the grid's edge and gas, the diffuse gas's lines and the instrument's
-sprite and convention, D192.) The eleven
+sprite and convention, D192; S43, Audit IV, opened #121–#123, the grid's solar scale, the renderer's record and a
+misplaced grain row, and set #117's window blind, D194.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3300,7 +3301,59 @@ never been judged in twenty-three sessions.
    [S II] 6716 (0.983 against 0.958, 2.5%), and the model's `LINE_WAVELENGTHS` are air. **Carried.** What
    closes it: the convention read from STScI's own throughput tables (the source SVO cites) and the curves
    shifted if they are vacuum; the sprite's scale tied to a stated pixel scale and distance, or ruled display in
-   the filter set's declaration as it now is; JWST on the owner's word for the download.
+   the filter set's declaration as it now is; JWST on the owner's word for the download. **S43 (Audit IV, A4-4):
+   the convention half is decided** — STScI's WFC3/UVIS throughputs are on vacuum wavelengths ("converted to vacuum
+   wavelengths using the formula given by D. C. Morton (1991)" `[verified: WFC3 Instrument Handbook §6.5, read at
+   S43]`) and the model places its air lines on them: Hα in F656N 0.962 where the vacuum placement gives 0.945, [S II]
+   6716 in F673N 0.983 against 0.958, 6731 0.857 against 0.863, [O III] 0.903 against 0.899. What closes that half:
+   a `wavelengths: "vacuum"` flag on the set that the line integral honours, or the curves shifted to air by Morton's
+   factor in `tools/fetch_filters.py` (1.000277 is right to 2 × 10⁻⁶), and `test_render`'s pins moved. The sprite half
+   stands as written.
+121. **The nebular grid is read 0.24 dex too metal-rich: its log Z = 0 is Anders & Grevesse's oxygen, not Asplund's**
+   (S43, Audit IV A4-1, D194). Byler et al. 2017 adopt "the gas phase abundances specified by Dopita et al. (2000),
+   which are based on the solar abundances from Anders & Grevesse (1989)", oxygen −3.07 with depletion −0.22 — 12 +
+   log(O/H) = 8.93 total, 8.71 in the gas, at the grid's log Z = 0 `[verified: arXiv:1611.08305 §2.1.2, Table 1, read at
+   S43]`; `nebular.py` enters log Z = `hii_oxygen_abundance` − `OXYGEN_ABUNDANCE_SOLAR` (8.69). So every region is read
+   at a grid point 0.24 dex richer than its own oxygen in the grid's terms, and the +0.2 dex clamp bites 0.24 dex
+   early. Measured on the default census (`scratchpad/audit4_offset.py`): on the grid's scale **3.0 % of regions
+   are clamped, not 26.4 %**; Hα-weighted [O III]/Hα 0.75 (built 0.48), [N II]/Hα 0.082 (built 0.131), the [S II] pair
+   unchanged (0.053 / 0.041); per ring [N II]/Hα 0.151 / 0.091 / 0.046 at 4 / 8 / 12 kpc (built 0.200 / 0.166 / 0.097).
+   The [N II]/Hα gradient over 8.2–15.4 kpc does not change in kind (≈ −0.07 dex kpc⁻¹ either way), so #117's miss is
+   not this debt's. **Carried.** What closes it: a ruling on which oxygen the axis is entered on — the total 8.93 (the
+   model's oxygen is a total abundance from [Fe/H] + [α/Fe]) or the gas-phase 8.71 (what the ionized gas holds after
+   Dopita's depletion) — one constant beside `OXYGEN_ABUNDANCE_SOLAR` with its sentence, the read point moved,
+   `test_nebular`'s clamp share and ratios re-pinned, #118's clamp sentence rewritten.
+122. **The renderer's record has nine sentences to set right, none moving a number** (S43, Audit IV A4-2, A4-6,
+   A4-11, D194). (i) **FSPS clamps at the grid's edges; it does not extrapolate** — `add_nebular.f90`: `dz =
+   MAX(MIN(dz,1.0),0.0) !no extrapolation`, the same for `du` and `da` `[verified: cconroy20/fsps at bd187a0d, read at
+   S43]`; `nebular.py`'s docstring, `grid_line_ratios`' docstring, D192 (twice) and #118's text say the model clamps
+   "where FSPS extrapolates" — written at S42's review from an incomplete grep, and wrong; the model's reading is
+   FSPS's own. (ii) D189 and AUDIT_IV §0 say `GRAIN_TABLE` has 110 rows; it has 104. (iii) The `prsc` file is FSPS's
+   later product (11 Z values, four shifted from the paper's; a 20 Myr row the paper lacks), so the grid should be
+   cited as "Byler et al. 2017's method as FSPS ships it at the pinned commit", not as the paper's grid. (iv) FSPS's
+   vacuum line wavelengths sit +0.07 to +0.10 Å above NIST air × Morton 1991 for all six lines — a line in
+   `fetch_nebular.py`'s docstring. (v) `LINE_WAVELENGTHS`' `[recall]` is now READ at NIST ASD (all six within 0.05 Å)
+   and `clouds.K_OVER_MH`'s `[recall]` at CODATA: the tags lift to citations. (vi) Two solar masses: `dust.GRAMS_PER_
+   MSUN` 1.98847e33 against `SOLAR_MASS_G` 1.98841e33 (IAU 2015's GM☉/G) in `clouds.py` and `nebular.py` — one value,
+   in level-0 (D29). (vii) D189's "monochromatic R_V 3.31" is 1/(A_B/A_V − 1) with A_V ≡ 1 at the table's 5470 Å row;
+   with both bands at their pivots it is 3.28. (viii) The ir set's "TIR" box, 8–1000 µm, is Sanders & Mirabel's L_IR;
+   TIR is Dale & Helou 2002's 3–1100 µm ("we refer to this as the total-infrared or TIR luminosity", Kennicutt &
+   Evans 2012 `[verified: arXiv:1204.3552 definitions.tex 108–113, read at S43]`) — worth 5 × 10⁻⁷ of Σ_IR here; the
+   `[recall]` in `filters.json` lifts to the citation and the name says which. (ix) `transport.js`'s "4 KB is inside
+   every proxy's limit" is Envoy's documented 60 KiB default (431 past it; Microsoft documents no limit for Container
+   Apps ingress); and #118 should name Byler's U convention (at the fixed inner face R_in = 10¹⁹ cm of a thin shell)
+   against the model's (at the Strömgren radius of a filled sphere with n = √⟨n²⟩). **Carried.** What closes it: an
+   about-line and docstring pass in the next session that touches these files, with `test_docs`' bare-tag check as
+   the gate; no pin moves.
+123. **`spectra.GRAIN_TABLE`'s 398.107 µm row carries the file's 380.189 µm values** (S43, Audit IV A4-3, D194). The
+   file reads `3.98107E+02 0.0000 -0.0000 3.184E-26 2.277E+00`; the code's row is `(398.107, 0.0000, -0.0001,
+   3.493e-26, 2.498e00)`, which is the file's `3.80189E+02` row entered under the wrong wavelength `[verified:
+   astro.princeton.edu/~draine/dust/extcurvs/kext_albedo_WD_MW_3.1_60_D03.all, both rows read at S43]`. 103 of 104
+   rows match. The test's identity K_abs × M_dust/H = (1 − albedo) C_ext holds for a misplaced row, so it could not
+   catch this; the effect is confined to the log–log interpolation between 251 and 631 µm (C_ext 9.7 % high at 398
+   µm), which no filter the viewer offers reads, and the thermal shape is the dust stage's own κ, not the table's.
+   **Carried.** What closes it: the row corrected from the file and a test that pins every kept row's λ against the
+   file's own wavelength list (a row can be right and misplaced), one afternoon.
 
 ---
 
