@@ -6898,3 +6898,66 @@ runs steeper than the nitrogen's secondary rise (the grid's temperature run), or
 is too steep (Nicholls et al. 2017's secondary term on the model's O/H gradient); the grid's run is read first, and
 a slope inside the window after either one change kills the other explanation. Specs 12 pass / 20 fail / 5 n-y-c of
 37 in both models. #119 (the diffuse gas's two ratios) is left as it stands unless time remains after the gate.
+
+**What the builds measured, reviewed against the rulings (2026-10-01; Fable ruled, reviewed and wrote the record; three
+Opus 5.5 builders on branches `session-44-nebular`, `session-44-spectra`, `session-44-record`, each in a worktree cut
+from the rulings commit, merged `--no-ff` into `session-44` after review).**
+
+*(1) #121, applied as ruled.* `NEBULAR_GRID_OXYGEN_SOLAR` 8.93 in `level0.py` with Byler's sentence; the one read point
+moved. Measured on the default census, `basic` and `azimuthal` identical: **3.02 % of regions clamp at +0.2 dex (26.41 %
+before)**, the youngest 2.57 % still at the age floor; Hα-weighted **[O III]/Hα 0.7525, [N II]/Hα 0.0821, [S II] 0.0532 /
+0.0413**; ring means over ±0.5 kpc 0.1514 / 0.0905 / 0.0463 at 4 / 8 / 12 kpc — every number S43 predicted, to the
+third figure. Pins moved in `test_nebular` with the reason in each comment (the 4 kpc [O III] bound 0.05 → 0.15, the
+ring reading 0.116 now). Discharged.
+
+*(2) #120's convention, applied as ruled — with one figure of S43's corrected.* `Curve.wavelengths` ("air" | "vacuum"),
+accepted on every shape by `parse_curves` and refused otherwise, echoed by `Curve.json()` on every curve (air included:
+an echoed header goes back through `parse_curves` unchanged); `air_to_vacuum` by Morton 1991's formula; `line_response`
+converts. `instruments.json`'s six curves carry `"wavelengths": "vacuum"` (added by a script reproducing the file
+byte-for-byte, the key in the tool's order; `fetch_filters.py` writes it and its two `about` strings say so; the file's
+header is untouched); `filters.ts`'s `Curve` type carries the key and `curvesOf` sends it; vitest 120 → 121. **Hα in
+F656N 0.9617 → 0.9453, [O III] in F502N 0.9025 → 0.8987, [S II] 6716 in F673N 0.9825 → 0.9578, 6731 0.8565 → 0.8632**;
+`test_render`'s two pins moved. **The formula worked by hand at σ = 2 µm⁻¹ gives n − 1 = 2.7896 × 10⁻⁴ at 5000 Å and
+2.7620 × 10⁻⁴ at 6600 Å; S43's note (2.792 and 2.767 × 10⁻⁴) does not reproduce from it** — the difference is 0.001 Å at
+5007 Å, below anything a transmission feels, and the tool's 1.000277 stands; `test_air_to_vacuum_is_morton_1991` pins
+the formula's values and records the disagreement. Verified through the served build on `prod` (:8018, the
+`launch.json` config, stopped after): the bundle's `wfc3n` curves carry the key, a form-encoded POST to `/api/render`
+through the real transport returns 200 (6.95 MB) with the three filters echoed `vacuum`, Hα 0.9453 and [O III] 0.8987;
+`/api/fields` lists `nii_halpha_gradient_hii` (dex/kpc, galaxy, scalar). The convention half of #120 is discharged; the
+sprite half stays carried.
+
+*(3) #123, applied — the margin smaller than asked.* The row is the file's. The key test holds every λ to the file's
+0.01 dex list at six printed figures **to one unit in the sixth figure**, because three grid rows (0.309029, 0.354814,
+0.630958) differ from the rounding of 10^(k/100) by that unit — the file's own printing as transcribed at S39, not
+re-read here (no download); the 19 named rows off the grid are pinned as exactly that set, and the count as 104. **The
+far-infrared guard reaches 1.4× each way, not the 2× the ruling asked**: the file's own log–log run bends at 400 µm
+(slope −2.14 over 250–400 µm, −1.87 and −1.69 beyond), so the corrected row is itself the largest departure from any
+smooth fit; the second difference does not separate the tables (0.266 against 0.388), the local slope not at all, and
+the cubic's residual (0.0078 dex corrected, 0.0157 misplaced, bound 0.011) is the separation there is. Recorded in the
+test's docstring as a weak guard; the key list and the identity are the strong ones. `extinction_ratio` at the viewer's
+filters: unchanged to the last digit. Discharged.
+
+*(4) #122, applied — no number moved.* (i)–(ii) no sentence says FSPS extrapolates (the #121 builder's rewrite); (iii)
+"Byler et al. 2017's method as FSPS ships it at the pinned commit" in `nebular.py` and `fetch_nebular.py` (the published
+`_GRID` about already said "as FSPS ships it"); (iv) the +0.07–0.10 Å; (v) both tags lifted; (vi) `SOLAR_MASS_G`
+1.98841e33 in `dust.py`, imported by `clouds.py` and `nebular.py`, `GRAMS_PER_MSUN` kept as an alias because
+`tests/test_dust.py` reads it — **no pin moved**; (vii)–(ix) as worded. Discharged. The register's own count pin in
+`test_audit` moved to 62 / 44 with the carried list (the session's, not the builder's).
+
+*(5) Row 37, entered — the number larger than S43 implied.* `nii_halpha_gradient_hii` published; row 37 and its `Miss`
+in `spec.py`; `test_spec` at 37 rows, `test_graph`, `test_audit`'s `lost` (17 → 18), `test_sfh_azimuthal`'s row range,
+`test_nebular`'s scalar loop — two of those inventories outside the brief's list, found by the builder. **On the grid's
+own scale the model reads −0.1035 dex kpc⁻¹ (96 rings), 6.5σ below the blind floor, not the ≈ −0.07 the audit wrote:**
+S43's "unchanged in kind" compared its three ring means over 8–12 kpc (≈ −0.07 either way), not the row's fit over
+8.2–15.4 kpc, and the outer rings, less clamped on the corrected scale, fall faster still — the offset moved the row
+out, not in. [N II]/Hα at the ring nearest 8.2 kpc: 0.137 (0.205 as built), now below the secondary 0.20–0.40. The
+miss text was amended by the session to the build's numbers ("four times the measured slope"; the offset's direction
+stated) before the merge; the prediction stands as ruled. **Specs 12 pass / 20 fail / 5 not-yet-computable of 37 in
+both models** (row 37 the twentieth recorded miss); convergence 0 drifts.
+
+**The gate.** `test_nebular`, `test_render`, `test_spec`, `test_audit_iv`, `test_docs` green with every moved pin's reason in
+its comment; specs 12 / 20 / 5 of 37 both models; vitest 121, `tsc -b` and `vite build` clean; the full suite
+backgrounded with its own line: **`EXIT=1` on the first run, one failure and not a model's — `test_hook`'s check that this checkout's `core.hooksPath` reads `tools/hooks`: the builders' worktrees had rewritten it to the absolute path (the harness's worktree machinery, with `extensions.worktreeConfig` on); `uv run python tools/bootstrap.py` reset it, `tests/test_hook.py` re-run alone `EXIT=0`, every other file green (the load-flaky s21b test passed in the run). The merge is gated on that pair of lines**. #119 not taken (optional; carried as it stands). The register reads
+**62 open = 11 permanent + 51 carried, 44 discharged.** Board row 44; LESSONS six; RESUMING 120; BRIEF for S45 offers the
+owner's choice (row 37's diagnosis by the miss's prediction, #119, #107, a redeploy, Audit V). Tag `s44` on the merge
+(C2e as amended, D193), the MANUAL_TODO row applied with the SHA on `main`.

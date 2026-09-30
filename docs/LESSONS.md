@@ -1160,3 +1160,6 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the record pass last because it touches every builder's files. A builder finds the inventory the brief missed
   (`test_audit`'s count of scalars, `test_sfh_azimuthal`'s row range): brief builders to grep the inventories by
   the neighbouring name, not only to edit the files named (D195).
+- [infra] The desktop harness's agent worktrees rewrite the main checkout's `core.hooksPath` to an absolute path (with
+  `extensions.worktreeConfig` on), and `test_hook` then fails at close for a reason that is nobody's code: run
+  `tools/bootstrap.py` again before the full suite, or read that failure as the environment's (D195).
