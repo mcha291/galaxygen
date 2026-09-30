@@ -194,6 +194,33 @@ CLOUD_COLUMNS: tuple[str, ...] = (
     "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
 )
 
+# The dust's V-band extinction cross-section per hydrogen atom, cm^2/H: the grain table's own V row
+# (Draine 2003, R_V 3.1; spectra.GRAIN_TABLE, D189), the one number that turns a column density
+# into magnitudes, A_V = 1.086 N_H C_ext(V). Read here so the census publishes each cloud's A_V (S40, V3).
+MAG_PER_OPTICAL_DEPTH = 2.5 / math.log(10.0)  # 1.0857: a definition
+SOLAR_MASS_G = 1.98841e33  # g, IAU 2015 nominal (the nebular stage's value)
+PROTON_MASS_G = 1.67262192e-24
+CM_PER_PC_ = 3.0856775814913673e18
+
+
+def _grain_v_extinction() -> float:
+    """C_ext(V)/H from the grain table (spectra.GRAIN_V_EXTINCTION), imported at call time: spectra is the
+    render side and clouds the census; neither imports the other at module load."""
+    from galaxy.stages.spectra import GRAIN_V_EXTINCTION
+
+    return float(GRAIN_V_EXTINCTION)
+
+
+def central_extinction_v(mass_msun: np.ndarray, radius_pc: np.ndarray, mass_per_h: float, c_ext_v: float) -> np.ndarray:
+    """A_V (mag) face-on through the centre of a uniform sphere of this mass and radius: the column
+    N_H = 2 r rho / (mu m_H) with rho = 3 M / (4 pi r^3), times 1.086 C_ext(V). Uniform, so a mean-density
+    figure: the log-normal interior a renderer synthesises around it keeps the same mean column
+    (RENDER_PHYSICS section 6) [inferred: the geometry]."""
+    r_cm = np.asarray(radius_pc, dtype=float) * CM_PER_PC_
+    with np.errstate(divide="ignore", invalid="ignore"):
+        n_h = 3.0 * np.asarray(mass_msun, dtype=float) * SOLAR_MASS_G / (2.0 * math.pi * r_cm**2 * mass_per_h * PROTON_MASS_G)
+    return MAG_PER_OPTICAL_DEPTH * c_ext_v * np.where(np.isfinite(n_h), n_h, 0.0)
+
 
 def materialise_clouds(
     fields: Mapping[str, Any],
@@ -335,6 +362,21 @@ CLOUD_ALPHA = _column("cloud_alpha", "[α/Fe]", "dex",
                       "The present-day gas α-to-iron ratio at the cloud's radius, for the oxygen its lines need.",
                       ramp=Ramp("plasma"))
 
+CLOUD_EXTINCTION_V = FieldDecl(
+    name="cloud_extinction_v", label="A cloud's central extinction A_V", unit="mag", kind=Kind.SCALAR,
+    meaningful_zero=True, provenance="seeded",
+    about=(
+        "The V-band extinction face-on through a cloud's centre: the column of a uniform sphere at the census's "
+        "one surface density (Heyer et al. 2009's 42 solar masses per square parsec, so it is the same for "
+        "every cloud - a scalar, not a column), 1.4 proton masses per hydrogen, times the grain table's V "
+        "cross-section per hydrogen (Draine 2003, the dust stage's own table): 3.0 mag. What a renderer darkens "
+        "a cloud by before it makes the interior log-normal at the published width, which keeps the mean column "
+        "(RENDER_PHYSICS section 6); a cloud's centre is opaque at the pillars' scale, not at the disc's. "
+        "**Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that "
+        "publishes the cloud columns, which `scalarsAt` excludes; `/api/arrays` serves it, and the `/api/clouds` "
+        "header carries it under `scalars`."
+    ),
+)
 CLOUD_CLUSTER_INDEX = _column("cloud_cluster_index", "Its cluster's index", "dimensionless",
                               "Which star cluster of the cloud's own cell the cloud holds, by that cluster's index "
                               "in the cell (the cluster census names a cluster by cell and index, as stars are "
@@ -393,6 +435,12 @@ def compute_clouds(ctx: Context) -> Mapping[str, Any]:
         "cloud_mass_total": float(np.sum(catalogue["cloud_mass"])),
         "cloud_forcing_parameter": float(c["TURBULENCE_FORCING_B"]),
         "cloud_lifetime": float(c["GMC_PHASE_EMBEDDED"]) + float(c["GMC_PHASE_BLOWN_OPEN"]) + float(c["GMC_PHASE_DISPERSING"]),
+        # S40 (V3): one A_V for every cloud, the census fixing one surface density; the centre column of a
+        # uniform sphere is 3/2 of the mean, so mass and radius cancel to Sigma alone.
+        "cloud_extinction_v": float(central_extinction_v(
+            np.array([1.0e5]), np.array([cloud_radius_pc(np.array([1.0e5]), float(c["GMC_SURFACE_DENSITY"]))[0]]),
+            float(c["HII_MASS_PER_HYDROGEN"]), _grain_v_extinction(),
+        )[0]),
     }
 
 
@@ -406,6 +454,7 @@ CLOUDS = IMPLEMENTATIONS.register(
         compute=compute_clouds,
         reads_seeds=("systems_seed",),
         reads_constants=(
+            "HII_MASS_PER_HYDROGEN",  # S40: the cloud's column density per hydrogen, for its A_V
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
@@ -419,7 +468,7 @@ CLOUDS = IMPLEMENTATIONS.register(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
             CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT,
             CLOUD_GRADIENT_ANGLE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
-            CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME,
+            CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME, CLOUD_EXTINCTION_V,
         ),
     )
 )

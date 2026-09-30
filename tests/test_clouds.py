@@ -155,7 +155,8 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
     assert r.status == 200
     header, _ = wire.decode(r.body)
     scalars = header["scalars"]
-    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime"}
+    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}  # S40: A_V
+    assert scalars["cloud_extinction_v"] == pytest.approx(2.9696, abs=1e-3)  # 42 Msun/pc2 x 3/2 through Draine's V row
     assert scalars["cloud_lifetime"] == pytest.approx(26.0)
     assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
     # The same numbers /api/arrays serves when the stage itself runs; the realised mass is that route's alone.

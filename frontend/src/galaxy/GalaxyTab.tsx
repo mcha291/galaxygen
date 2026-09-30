@@ -8,6 +8,8 @@ import { PHOTOMETRIC, exposureFor, photometricColors, starColors } from "./color
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
 import { FieldVolume } from "./FieldVolume";
+import { levelFor } from "./region";
+import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName } from "./filters";
 import { footprint } from "./frustum";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
@@ -197,7 +199,13 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   return (
     <>
       <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC}>
-        {mode === "field" && <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} filterSet={filterSet} />}
+        {mode === "field" && (
+          <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} filterSet={filterSet} regionWindow={area} hiiFade={area ? weights.stars : 0} />
+        )}
+        {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
+        {mode === "field" && area && view && weights.stars > 0 && (
+          <RegionVolume query={query} window={area} level={levelFor(view.across)} stops={exposure} weight={weights.stars} filterSet={filterSet} />
+        )}
       </GalaxyView>
 
       <div className={styles.panel}>

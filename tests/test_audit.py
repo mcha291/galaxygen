@@ -373,7 +373,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (52, 40)  # 51 / 40 at S38 (#107-#108, D188); 49 / 40 after S38's fixes; 27 / 35 at S22; V2 opened #109 (D189)
+    assert progress.debt_counts(text) == (56, 40)  # 52 / 40 at S39 (#109, D189); 51 / 40 at S38; 27 / 35 at S22; V3 opened #110-#113 (D190)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -402,7 +402,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109 | 41 |",
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113 | 45 |",
         "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.47 dex**",
         "100. **Row 34, the Galactic ionizing photon rate, misses Bennett et al. 1994 by 3%",
         "102. **The remnant census is not tied to the clusters that made them, and its core collapses ignore the arms**",
@@ -783,7 +783,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     lost = [f["name"] for f in fields
             if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
     assert sorted(lost) == [
-        "bound_cluster_mass_total", "catalogue_size", "cloud_count_total", "cloud_forcing_parameter",
+        "bound_cluster_mass_total", "catalogue_size", "cloud_count_total", "cloud_extinction_v", "cloud_forcing_parameter",
         "cloud_lifetime", "cloud_mass_total", "cluster_formation_efficiency", "dig_halpha_fraction",
         "dig_scale_height", "giant_fraction_sample", "halpha_luminosity_nebular", "halpha_sfr_ratio",
         "hii_luminosity_function_slope", "mean_planets_per_star", "planet_count_sample", "remnant_count_total",
@@ -800,7 +800,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
         assert "rule D4" in by_name[name]["about"], name
     # Everything else does reach a surface, and every picture has its ramp (rule A9).
     reachable = [f for f in fields if f["name"] not in lost]
-    assert len(reachable) == len(fields) - len(lost) and len(lost) == 16  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
+    assert len(reachable) == len(fields) - len(lost) and len(lost) == 17  # 16 until S40's cloud_extinction_v  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
     assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
 
 

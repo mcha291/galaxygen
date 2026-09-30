@@ -1061,3 +1061,17 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer] Two sides of a balance must be made commensurable before they are compared: the model absorbs grey
   at V and the frame's filters are not bolometric, so the absorbed side is a share reproduced ring by ring, not a
   sum over filters (D189).
+
+## From S40 (V3; rulings by Fable, the build by Opus across a usage limit)
+
+- [api] A header that summarises a body must be tested against the body: the census routes' per-cell counts stayed
+  the unfiltered cells' at every level above 0 for seven sessions (S32–S39), because every test read the header or
+  the rows and none read both. One assertion — the counts sum to the rows returned — would have caught it at S32 (D190).
+- [viewer] A window's own realised noise is correlated with its reading: a window that misses the bright tail reads
+  low and estimates its noise low. A heavy-tailed census is judged against the population's second moment, and many
+  windows by their z-scores' mean — never by one window's ratio (D190).
+- [viewer] A display budget that drops objects must hand their light back to the field it replaced: fading the field
+  by the regime's weight rather than by the kept share under-counts a level-1 window silently (D190, #111).
+- [close] A build finished by another model to rulings written first closes on the rulings' author's review: the
+  handoff names what the orchestrator owes, every number stays a record until the decision is written, and the
+  file is deleted at close so that nothing outside DECISIONS.md reads as a decision (D190).
