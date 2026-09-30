@@ -1095,6 +1095,20 @@ LEVEL0: dict[str, Constant] = {
         "section 1 and section 2.1, read at S31; the section corrected at S38]. It places the gas's [Fe/H], oxygen taken to track iron as the ISM stage takes it, "
         "on the relation's absolute scale.",
     ),
+    "NEBULAR_GRID_OXYGEN_SOLAR": Constant(
+        8.93,
+        "dex",
+        "12 + log(O/H) of the Sun on the nebular grid's own scale, the oxygen its log Z = 0 carries: 'We adopt "
+        "the gas phase abundances specified by Dopita et al. (2000), which are based on the solar abundances "
+        "from Anders & Grevesse (1989)' - oxygen -3.07 (12+log(O/H) = 8.93) with a depletion of -0.22 (8.71 "
+        "in the gas) at log Z = 0 [verified: Byler et al. 2017, arXiv:1611.08305, section 2.1.2 and Table 1, "
+        "read at S43 (Audit IV, A4-1); D195]. The grid's axis scales these total abundances with Z and the "
+        "photoionization code applies the depletion inside, and the model's hii_oxygen_abundance is a total "
+        "(no depletion taken), so the total is entered against the total: log Z = oxygen - 8.93. Until S44 "
+        "the read point used OXYGEN_ABUNDANCE_SOLAR (8.69, the T_e relation's own scale), which read every "
+        "region 0.24 dex too metal-rich in the grid's terms and clamped 26.4% of the default regions at the "
+        "+0.2 dex edge instead of 3.0%.",
+    ),
     "PAH_METALLICITY_MAX": Constant(
         1.20,
         "dimensionless",

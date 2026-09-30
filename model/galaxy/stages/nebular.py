@@ -13,9 +13,10 @@ ionizing photon, n_H = 100 cm⁻³, U ≡ Q/(4πR²n_H c), radiation-bounded sph
 arXiv:1611.08305 §II, read at S35]`) is the dependency to take, read off the very parameters published
 here, and the owner gave the word to fetch it on 2026-09-27 (S42). `tools/fetch_nebular.py` takes the
 PARSEC-ionized, dust-free file at a pinned FSPS commit into `galaxy/data/nebular_lines.npz`; each region
-reads it at its gas's log(Z/Z☉) (its [α/H], the oxygen the stage already computes), its cluster's age and
-its own log U, interpolated linearly in log luminosity as FSPS does (``add_nebular.f90``) but **clamped at
-the grid's edges** rather than extrapolated. What is published is each line **over the grid's own Hα at
+reads it at its gas's log(Z/Z☉) (its [α/H], the oxygen the stage already computes), on the grid's own solar
+oxygen 8.93 (Anders & Grevesse; D195, #121), its cluster's age and its own log U, interpolated linearly in log
+luminosity as FSPS does (``add_nebular.f90``), **clamped at the grid's edges**, as FSPS's own
+``add_nebular.f90`` clamps (``!no extrapolation``; read at S43, D195). What is published is each line **over the grid's own Hα at
 that point**, times the region's Case B Hα: the lines inherit the region's photon budget (escape, leaking)
 and the grid only says how they split. `[inferred]`: the grid's gas carries its own abundance pattern,
 not the model's published N/H and S/H (those columns are not read by it), and its density is 100 cm⁻³
@@ -125,7 +126,8 @@ def _axis(values: np.ndarray, axis: np.ndarray) -> tuple[np.ndarray, np.ndarray]
 
 def grid_line_ratios(log_z: np.ndarray, log_age_yr: np.ndarray, log_u: np.ndarray) -> dict[str, np.ndarray]:
     """Each forbidden line over Halpha, read off the Byler et al. 2017 grid at (log Z/Z_sun, log age, log U):
-    trilinear in log luminosity per ionizing photon, clamped at the grid's edges. NaN where an input is."""
+    trilinear in log luminosity per ionizing photon, clamped at the grid's edges, as FSPS's add_nebular.f90 does (no
+    extrapolation). NaN where an input is."""
     g = _line_grid()
     shape = np.broadcast(np.asarray(log_z), np.asarray(log_age_yr), np.asarray(log_u)).shape
     lz, la, lu = (np.broadcast_to(np.asarray(v, dtype=float), shape).ravel() for v in (log_z, log_age_yr, log_u))
@@ -272,7 +274,7 @@ def materialise_nebular(clusters: Catalogue, clouds: Catalogue, constants: Mappi
     with np.errstate(divide="ignore", invalid="ignore"):
         emissivity = np.where(volume > 0, l_halpha / np.where(volume > 0, volume, 1.0), 0.0)
         log_u = np.log10(q_trapped / (4.0 * math.pi * radius**2 * np.sqrt(n_squared) * SPEED_OF_LIGHT))
-    lines = grid_line_ratios(oxygen - float(c["OXYGEN_ABUNDANCE_SOLAR"]),
+    lines = grid_line_ratios(oxygen - float(c["NEBULAR_GRID_OXYGEN_SOLAR"]),
                              np.log10(np.asarray(clusters["cluster_age"], dtype=float) * 1.0e6),
                              np.where(np.isfinite(log_u), log_u, np.nan))
     out = {
@@ -509,6 +511,31 @@ HII_LF_SLOPE = FieldDecl(
         "against log L, less one. Acceptance row 35." + _D4
     ),
 )
+# Zhao et al. 2026's fitted range, the blind row's (acceptance row 37; docs/AUDIT_IV_BLIND.md): the rings whose
+# centres lie in it are the ones the [N II]/Halpha gradient is fitted over.
+NII_GRADIENT_R_INNER = 8.2  # kpc
+NII_GRADIENT_R_OUTER = 15.4  # kpc
+NII_HALPHA_GRADIENT = FieldDecl(
+    name="nii_halpha_gradient_hii", label="[N II] 6583/Hα gradient of HII regions", unit="dex/kpc", kind=Kind.SCALAR,
+    meaningful_zero=False, provenance="seeded",
+    about=(
+        "d log10([N II] 6583/Hα)/dR of the HII regions' ring surface brightnesses, an unweighted straight-line fit "
+        "over the rings between 8.2 and 15.4 kpc (the diffuse layer excluded): the statistic acceptance row 37 reads, "
+        "set blind at S43 against Zhao et al. 2026's Galactic HII-region gradient. Negative where the ratio falls "
+        "outward." + _D4
+    ),
+)
+
+
+def nii_halpha_gradient(R: np.ndarray, halpha: np.ndarray, nii: np.ndarray) -> float:
+    """The unweighted least-squares slope of log10([N II]/Halpha) against R (dex/kpc) over the rings whose centres
+    lie in [NII_GRADIENT_R_INNER, NII_GRADIENT_R_OUTER] and whose Halpha and [N II] are both positive; NaN if fewer
+    than three rings qualify."""
+    R, halpha, nii = (np.asarray(v, dtype=float) for v in (R, halpha, nii))
+    keep = (R >= NII_GRADIENT_R_INNER) & (R <= NII_GRADIENT_R_OUTER) & (halpha > 0) & (nii > 0)
+    if keep.sum() < 3:
+        return float("nan")
+    return float(np.polyfit(R[keep], np.log10(nii[keep] / halpha[keep]), 1)[0])
 
 
 def compute_nebular(ctx: Context) -> Mapping[str, Any]:
@@ -549,6 +576,7 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
         "hii_luminosity_function_slope": luminosity_function_slope(
             np.asarray(regions["hii_halpha_luminosity"], dtype=float) * SOLAR_LUMINOSITY, float(c["HII_LF_MIN_LUMINOSITY"])
         ),
+        "nii_halpha_gradient_hii": nii_halpha_gradient(R, hii, lines["nii_6583_surface_brightness_hii"]),
     }
 
 
@@ -565,13 +593,14 @@ NEBULAR = IMPLEMENTATIONS.register(
             "HALPHA_PER_SFR", "HII_ESCAPE_FRACTION", "HII_MASS_PER_HYDROGEN", "HII_LF_MIN_LUMINOSITY",
             "DIG_TEMPERATURE", "DIG_SCALE_HEIGHT", "TE_METALLICITY_INTERCEPT", "TE_METALLICITY_SLOPE",
             "TE_VALID_MIN", "TE_VALID_MAX", "NO_PRIMARY_LOG", "NO_SECONDARY_LOG", "OXYGEN_ABUNDANCE_SOLAR",
-            "NITROGEN_ABUNDANCE_SOLAR", "SULPHUR_ABUNDANCE_SOLAR",
+            "NITROGEN_ABUNDANCE_SOLAR", "SULPHUR_ABUNDANCE_SOLAR", "NEBULAR_GRID_OXYGEN_SOLAR",
         ),
         requires=(*CLUSTER_READS, *CLOUD_READS, "ionizing_photon_rate", "feh_gas", "alpha_fe_gas", "sfr_surface_density"),
         publishes=(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
             HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED,
             HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
+            NII_HALPHA_GRADIENT,
         ),
     )
 )
