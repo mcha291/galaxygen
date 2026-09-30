@@ -92,6 +92,8 @@ SEEDED_BASIC = {
     "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio",
     "hbeta_surface_brightness_hii", "hbeta_surface_brightness_dig", "oiii_5007_surface_brightness_hii",
     "nii_6583_surface_brightness_hii", "sii_6716_surface_brightness_hii", "sii_6731_surface_brightness_hii",
+    # S44 (D195): the [N II]/Halpha gradient over 8.2-15.4 kpc, the statistic acceptance row 37 reads.
+    "nii_halpha_gradient_hii",
     # S34 (BUILD_II Phase 5): the globular cluster system, drawn on world_seed; the survival fraction and the
     # metal-poor share are a separate stage and stay derived (D55), as the stellar halo does.
     "gc_system_mass", "gc_count_estimate",

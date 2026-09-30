@@ -153,6 +153,9 @@ def test_the_default_census_numbers(default):
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
     assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7095, abs=0.002)
     assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
+    # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
+    # the model's ratio falls outward at its N/H gradient's pace.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035, abs=0.002)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -204,7 +207,8 @@ def test_the_clusters_route_carries_the_regions_and_the_scalars_fall_under_rule_
     assert a2["hii_halpha_luminosity"].size == h2["clusters"]["materialised"] <= arrays["hii_halpha_luminosity"].size
     fields = svc.handle("/api/fields", "model=basic").json()["fields"]
     by_name = {f["name"]: f for f in fields}
-    for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope"):
+    for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
+                 "nii_halpha_gradient_hii"):  # the sixth since S44 (row 37, D195)
         assert by_name[name]["domain"] == "galaxy" and "rule D4" in by_name[name]["about"], name
     for name in ("halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular"):
         assert by_name[name]["domain"] == "grid" and by_name[name]["unit"] == "Lsun/pc2"

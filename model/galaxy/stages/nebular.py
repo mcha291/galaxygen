@@ -511,6 +511,31 @@ HII_LF_SLOPE = FieldDecl(
         "against log L, less one. Acceptance row 35." + _D4
     ),
 )
+# Zhao et al. 2026's fitted range, the blind row's (acceptance row 37; docs/AUDIT_IV_BLIND.md): the rings whose
+# centres lie in it are the ones the [N II]/Halpha gradient is fitted over.
+NII_GRADIENT_R_INNER = 8.2  # kpc
+NII_GRADIENT_R_OUTER = 15.4  # kpc
+NII_HALPHA_GRADIENT = FieldDecl(
+    name="nii_halpha_gradient_hii", label="[N II] 6583/Hα gradient of HII regions", unit="dex/kpc", kind=Kind.SCALAR,
+    meaningful_zero=False, provenance="seeded",
+    about=(
+        "d log10([N II] 6583/Hα)/dR of the HII regions' ring surface brightnesses, an unweighted straight-line fit "
+        "over the rings between 8.2 and 15.4 kpc (the diffuse layer excluded): the statistic acceptance row 37 reads, "
+        "set blind at S43 against Zhao et al. 2026's Galactic HII-region gradient. Negative where the ratio falls "
+        "outward." + _D4
+    ),
+)
+
+
+def nii_halpha_gradient(R: np.ndarray, halpha: np.ndarray, nii: np.ndarray) -> float:
+    """The unweighted least-squares slope of log10([N II]/Halpha) against R (dex/kpc) over the rings whose centres
+    lie in [NII_GRADIENT_R_INNER, NII_GRADIENT_R_OUTER] and whose Halpha and [N II] are both positive; NaN if fewer
+    than three rings qualify."""
+    R, halpha, nii = (np.asarray(v, dtype=float) for v in (R, halpha, nii))
+    keep = (R >= NII_GRADIENT_R_INNER) & (R <= NII_GRADIENT_R_OUTER) & (halpha > 0) & (nii > 0)
+    if keep.sum() < 3:
+        return float("nan")
+    return float(np.polyfit(R[keep], np.log10(nii[keep] / halpha[keep]), 1)[0])
 
 
 def compute_nebular(ctx: Context) -> Mapping[str, Any]:
@@ -551,6 +576,7 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
         "hii_luminosity_function_slope": luminosity_function_slope(
             np.asarray(regions["hii_halpha_luminosity"], dtype=float) * SOLAR_LUMINOSITY, float(c["HII_LF_MIN_LUMINOSITY"])
         ),
+        "nii_halpha_gradient_hii": nii_halpha_gradient(R, hii, lines["nii_6583_surface_brightness_hii"]),
     }
 
 
@@ -574,6 +600,7 @@ NEBULAR = IMPLEMENTATIONS.register(
             HII_RADIUS, HII_DENSITY, HII_TEMPERATURE, HII_LOG_U, HII_CLUMPING, HII_HALPHA, HII_EMISSIVITY, HII_DECREMENT,
             HII_OXYGEN, HII_NITROGEN, HII_SULPHUR, *HII_LINE_RATIOS, HII_BOUNDED,
             HALPHA_HII, HALPHA_DIG, HALPHA_NEBULAR, HBETA_HII, HBETA_DIG, *LINES_HII, DIG_SCALE_HEIGHT, HALPHA_TOTAL, DIG_FRACTION, HALPHA_SFR_RATIO, HII_LF_SLOPE,
+            NII_HALPHA_GRADIENT,
         ),
     )
 )
