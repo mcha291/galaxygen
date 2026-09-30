@@ -1,8 +1,8 @@
 # Resuming
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
-of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S43: S0–S22
-(§5d), S25–S42 (§5e) and S43, Audit IV of the renderer (`AUDIT_IV.md`, D193, D194); S44 applies its fixes (`BRIEF.md`).**
+of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S44: S0–S22
+(§5d), S25–S42 (§5e), S43 Audit IV (`AUDIT_IV.md`, D194) and S44 its fixes (D195); S45 is the owner's choice (`BRIEF.md`).**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -12,15 +12,13 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 ```
 Then RULES.md in full, BRIEF.md, whatever plan the owner names; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
-tools/hooks`; write files with `newline="
-"`. **Numbers are sequential**: debts from #124, decisions from D195, board
-rows from 44, acceptance rows from 37, taken when the entry is written.
-
+tools/hooks`; LF newlines. **Numbers are sequential**: debts from #124, decisions from D196, board rows from 45,
+acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
 docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5e), GALAXY_INPUTS (§11 register), DECISIONS, LESSONS,
-                MANUAL_TODO, BUILD_II (the phases), RENDER_PHYSICS (the contract), RENDER_PLAN (done), AUDIT_*.md
-                (AUDIT_III_BLIND.md holds the blind windows rows 32 and 34 cite)
+                MANUAL_TODO, BUILD_II (the phases), RENDER_PHYSICS (the contract), RENDER_PLAN (done), AUDIT_*.md (the
+                _BLIND files hold the windows rows 32, 34 and 37 cite)
 model/galaxy/core/    units (closed; grew at S28, S30, S31), special, cmaps, fielddoc (FieldDecl: optional, contract,
                 provenance; OBJECTS closed: system star planet belt moon cloud cluster remnant), stage (CHECKPOINTS 1–6;
                 Stage.extends / extend()), registry (INPUTS: 7 controls + 4 seeds + mergers; MODELS; IMPLEMENTATIONS), seeds, grids
@@ -29,19 +27,21 @@ model/galaxy/models/  level0 (constants), basic, azimuthal (BASIC's tuple, sfh -
                 (Σ_L, colour, eight bands, Q), dust, stellar_halo · cp5 population + systems (the star columns; the cell
                 hierarchy, MAX_LEVEL 3) + clouds (S32 census; `cloud_extinction_v`, S40) + clusters (S33; S41 `cluster_luminosity`,
                 `cluster_light_temperature`) + nebular (S35: HII regions, Hα per volume, the DIG; **S42: the four forbidden
-                lines per region off Byler et al.'s grid, per-ring lines, Hβ in both layers**) + cluster_survival +
-                globular_clusters (S34) + bubbles (S36) · cp6 formation, habitable_zone, planets; massive_stars.py; remnants.py;
-                photometry; spectra (S38–S39: the SED, the grain table, the filter integral, LINE_WAVELENGTHS in air)
+                lines per region off Byler's grid, per-ring lines, Hβ in both layers; S44: the grid on its own 8.93 and
+                `nii_halpha_gradient_hii`, row 37**) + cluster_survival + globular_clusters (S34) + bubbles (S36) · cp6
+                formation, habitable_zone, planets; massive_stars.py; remnants.py; photometry; spectra (S38–S39: the SED, the
+                grain table, the filter integral, LINE_WAVELENGTHS in air; **S44: a curve's `wavelengths` air | vacuum,
+                honoured by `line_response` through `air_to_vacuum`, Morton 1991**)
 model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…) · data/ parsec_isochrones.npz (396 × 137 818 rows),
                 **nebular_lines.npz (S42: FSPS `ZAU_ND_prsc.lines` at bd187a0d, six lines; `tools/fetch_nebular.py`)**
-model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–36; MISSES one ledger), convergence, performance; api/: service
+model/galaxy/specs/   graph, preflight, determinism, spec (rows 1–37; MISSES one ledger), convergence, performance; api/: service
                 (ROUTES; **S42 `/api/blackbody`**), http (**S42: a form-encoded POST is the GET with its query in the body**)
 frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :5173); galaxy/ FieldVolume, RegionVolume + region.ts,
-                regimes.ts, filters.json (rgb, sho, hoo), instruments.json (S42: wfc3, wfc3n from SVO via `tools/fetch_filters.py`),
-                psf.ts (the Airy sprite), colors.ts (`channelShare`, P6); interface/transport.js is the one fetch (a POST past 4 KB)
+                regimes.ts, filters.json (rgb, sho, hoo), instruments.json (wfc3, wfc3n from SVO via `tools/fetch_filters.py`; vacuum
+                since S44), psf.ts (the Airy sprite), colors.ts (P6); interface/transport.js is the one fetch (a POST past 4 KB)
 tests/          53 files; every `model`-parametrised test runs per registered model (two); test_audit*.py (iv: S43's mesh) and
-                each phase's file pin measurements; test_render the V1/V2 gates, S42's lines, instrument and blackbody table;
-                test_region_synthesis the V3 gates (24 s); test_v4 the object-column inventory (**30 drawn / 37 not, D192**)
+                each phase's file pin measurements; test_render the V1/V2 gates, the lines, instrument, blackbody and grain
+                keys; test_region_synthesis the V3 gates (24 s); test_v4 the object columns (**30 drawn / 37 not, D192**)
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec, fetch_nebular, fetch_filters
 ```
 ## Writing a stage
@@ -83,12 +83,12 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `lo == hi` says "no testable target" (D100; rows 20, 21, 25–28, 36); a row whose source does not say what it
   measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-09-30, after S43 (D174–D194 hold the before/after; S43 moved nothing)
+## What the instruments said on 2026-10-01, after S44 (D174–D195 hold the before/after)
 - graph acyclic for both models; preflight OK, 7 of 12 controls; determinism reproducible for both; spec **12 pass /
-  19 fail / 5 not-yet-computable of 36, identical** (row 34 green since S42 on the blind window, conditioned); convergence
+  20 fail / 5 not-yet-computable of 37, identical** (row 34 green since S42 on the blind window; row 37 a miss, #117); convergence
   0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; rows 30 / 31 0.0176069 / 0.0065332 yr⁻¹ (#88);
   rows 25–28, 36 n-y-c; rows 32 / 33 misses (#98, #99: 7.13e7 against 2.7–4.0e7; 3.0e9 against 4–7e8); row 34 1.6527e53
-  in 1.3–3.9e53; row 35 −2.008 passes.
+  in 1.3–3.9e53; row 35 −2.008 passes; **row 37 −0.1035 dex kpc⁻¹ against the blind [−0.045, −0.005] (S44)**.
 - Regression numbers: z_f 1.66, c₂₀₀ 8.24, R_d 2.60486 (thin 2.44138), M_star 4.751e10, SFR 1.7551515, H 8.088e9,
   WIND_SPEED 860.3, MERGER_HEATING 88.8, `swing_x` 3.334; rows 16 / 17 medians 41.10 / 6.08; M_V −21.2159, B − V 0.6306,
   Υ_V 1.8468, disc_luminosity 4.8958e10, Q 1.6527e53 s⁻¹; remnant_mass_fraction 0.214686 (#85), PN count 14 732; T_d(R₀)
@@ -98,13 +98,13 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   (S35); bubbles median 9 pc, 1 464 remnants, porosity(R₀) 0.033 (S36); render frame B − V 0.630641, M_V −21.216042;
   balance 0.999321 (S38–S39); clusters' HII Hα / field 0.9801 / 0.9744, √⟨L²⟩/⟨L⟩ 6.898, `cloud_extinction_v` 2.9696
   (S40); clusters' ΣL 0.249 of disc_luminosity, the ramp 1.89 / 2.12 / 2.43× the census's R / G / B light (S41);
-  **S42: Hα-weighted [O III]/Hα 0.477, [N II]/Hα 0.131, [S II] 0.053 + 0.041; 26.4% of regions at the grid's +0.2 dex
-  edge, 2.6% at its 0.5 Myr floor; WFC3 SHO: Hα 0.962 in F656N, [O III] 0.903 in F502N, no [N II]; the blackbody table
-  within 2.2e-3; 43 tags on the remote (S43).** Performance: basic ~2.8 s cold; render whole rgb 2.1 s cold,
-  6.9 MB (the lines' two components); clusters whole disc 1.7 s, 4.1 MB; `/api/blackbody` 5 ms, no stage (D192).
-- Register: **65 open — 11 permanent, 54 carried — and 41 discharged** (#121–#123, D194). **S43 read**: the grid is entered on
-  the wrong solar scale (0.24 dex; on its own scale 3.0 % of regions clamp, not 26.4 %); FSPS clamps; the WFC3 curves are vacuum;
-  #117's blind window [−0.045, −0.005] dex kpc⁻¹ over 8.2–15.4 kpc (`AUDIT_IV_BLIND.md`), the model −0.0815 measured after.
+  **S44 (the grid on its own 8.93): Hα-weighted [O III]/Hα 0.752, [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % of
+  regions at the +0.2 dex edge, 2.6 % at the 0.5 Myr floor; WFC3 SHO on vacuum curves: Hα 0.945 in F656N, [O III] 0.899
+  in F502N, [S II] 0.958 / 0.863 in F673N; 44 tags on the remote.** Performance: basic ~2.8 s cold; render whole rgb 2.1 s
+  cold, 6.9 MB; clusters whole disc 1.7 s, 4.1 MB; `/api/blackbody` 5 ms, no stage (D192).
+- Register: **62 open — 11 permanent, 51 carried — and 44 discharged** (#121–#123 at S44, D195; #120's sprite half stays).
+  **S44 read**: row 37 is −0.1035 on the corrected scale, steeper than S43's −0.0815 (its ≈ −0.07 was three ring means
+  over 8–12 kpc); the diagnosis is the miss's own prediction (`spec.MISSES[37]`, BRIEF item 1).
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python tools/progress.py`, then `uv run
@@ -115,6 +115,6 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
    D193): `git tag -a s<NN> <sha> -m "S<N>: …"`, `git push origin s<NN>`, `git ls-remote --tags origin` read back, your
    MANUAL_TODO.md §1 row applied with the SHA; never force-push. Then `tools/verify_clone.py --ref main`.
 
-A session that stops early closes **partially** (C2d): commit, push, BRIEF.md, ◐, no merge, no tag. Opus subagents work in
-worktrees, neither push nor write DECISIONS.md. **A row built on Opus across Fable's limit** (S40–S42) leaves a
-`docs/HANDOFF_S<NN>.md`: Fable merges `main` in, runs the tests that count, reviews, rules, deletes it at close (D190–D192).
+A session that stops early closes **partially** (C2d): commit, push, BRIEF.md, ◐, no merge, no tag. Opus builders work in
+worktrees on branches cut from the session's, own disjoint files, neither push nor write DECISIONS.md (D195); a row built
+across Fable's limit leaves `docs/HANDOFF_S<NN>.md` for Fable to review, rule and delete at close (D190–D192).

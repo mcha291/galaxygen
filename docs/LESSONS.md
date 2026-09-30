@@ -1133,3 +1133,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A tag is made after its merge exists, so the session that merges can also record it: the close ends with
   the tag, the push and `git ls-remote` read back, and the MANUAL_TODO row is written applied in the same sitting —
   a queue filled one row behind was the web proxy's rule, not the project's (D193).
+
+## From S44 (Audit IV's fixes; the rulings by Fable as the first commit, the builds by three Opus agents on their own branches)
+
+- [audit] Rule the scale before the pin, and the build lands where the audit said: the grid's log Z = 0 is the
+  source's own solar oxygen (Anders & Grevesse's 8.93), the model's oxygen is a total, so total is entered against
+  total; every number S43 predicted for the fix reproduced to the third figure once the ruling was written first
+  (D195, #121).
+- [audit] A blind window measured after by the auditor is still a row when the row's own text writes the order —
+  but a fix ruled between the measurement and the row moves the number: −0.0815 became −0.1035 on the corrected
+  scale, and the audit's "unchanged in kind" had compared three ring means over 8–12 kpc, not the row's statistic
+  over 8.2–15.4. Enter the number the build measures, say what the earlier one measured, and let the miss be the
+  size it is (D195, row 37, #117).
+- [viewer] A dependency's convention is declared on the data and honoured by the reader, not corrected into the
+  data: the instrument's curves carry `wavelengths: "vacuum"` and the line integral converts the model's air line
+  by Morton 1991; a curve shifted in the fetch tool would differ silently from the source the set cites, and could
+  not be regenerated without a download (D195, #120).
+- [audit] A smoothness guard on a sparse tabulation separates a misplaced row only as far as the file's own bends
+  allow: the far-infrared cubic residual gives 1.4× each way where 2× was asked, because the corrected row sits on
+  a real bend at 400 µm. Write the margin in the test, and keep the key list and the identity as the strong checks
+  (D195, #123).
+- [audit] A figure in an audit note is a recall until a formula reproduces it: S43 wrote n − 1 = 2.792 × 10⁻⁴ at
+  5000 Å for Morton 1991, and the formula worked by hand at σ = 2 gives 2.7896 × 10⁻⁴. The transmissions do not
+  feel the 0.001 Å; the record does (D195, #120).
+- [close] Rulings as the first commit; builders on branches cut from it, one per file set, in parallel worktrees;
+  the record pass last because it touches every builder's files. A builder finds the inventory the brief missed
+  (`test_audit`'s count of scalars, `test_sfh_azimuthal`'s row range): brief builders to grep the inventories by
+  the neighbouring name, not only to edit the files named (D195).
