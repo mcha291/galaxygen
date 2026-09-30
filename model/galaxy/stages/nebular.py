@@ -8,7 +8,9 @@ ray. This stage publishes exactly that for every cluster's HII region, as column
 (§5b: the region is the cluster's), plus the recombination lines the parameters determine in closed form
 (Case B, Storey & Hummer 1995). **The collisionally excited lines ([O III] 5007, [N II] 6583, [S II]
 6716 and 6731)** need the ionization fractions a photoionization model gives: S35 ruled that a tabulated
-grid of the isochrone kind (Byler et al. 2017 as shipped in FSPS: 11 log Z × 10 ages × 7 log U, L☉ per
+grid of the isochrone kind (Byler et al. 2017's method as FSPS ships it at the pinned commit (the
+`ZAU_ND_prsc.lines` file: 11 log Z, four of them shifted from the paper's, a 20 Myr row the paper lacks):
+11 log Z × 10 ages × 7 log U, L☉ per
 ionizing photon, n_H = 100 cm⁻³, U ≡ Q/(4πR²n_H c), radiation-bounded spherical shells `[verified:
 arXiv:1611.08305 §II, read at S35]`) is the dependency to take, read off the very parameters published
 here, and the owner gave the word to fetch it on 2026-09-27 (S42). `tools/fetch_nebular.py` takes the
@@ -73,7 +75,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.dust import CM_PER_PC
+from galaxy.stages.dust import CM_PER_PC, SOLAR_MASS_G
 from galaxy.stages.massive_stars import SOLAR_LUMINOSITY
 from galaxy.stages.systems import Catalogue
 
@@ -92,7 +94,6 @@ ALPHA_B = np.array([4.522e-13, 3.273e-13, 2.585e-13, 2.144e-13, 1.836e-13, 1.428
 # Physical constants: definitions and CODATA values, not calibrations.
 SPEED_OF_LIGHT = 2.99792458e10  # cm/s, exact
 PROTON_MASS = 1.67262192e-24  # g (the census's K_OVER_MH uses the same value)
-SOLAR_MASS_G = 1.98841e33  # g, IAU 2015 nominal GM_sun / G
 CM_PER_KPC = CM_PER_PC * PC_PER_KPC
 
 CLUSTER_READS: tuple[str, ...] = ("cluster_ionizing_photons", "cluster_metallicity", "cluster_age", "cluster_radius")
