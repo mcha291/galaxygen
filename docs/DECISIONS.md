@@ -4451,7 +4451,25 @@ a9e14035697d883dd05929ddcf4f8ef6a0be8247  refs/tags/s37
 8d8c89475086421c77c13dace70cd9149c2f7564  refs/tags/s39^{}
 ```
 
-S22's board row ticks ◐ → ☑ with this listing; `s40`–`s42` are queued rows for the next batch (C2e).
+S22's board row ticks ◐ → ☑ with this listing; `s40`–`s42` were queued rows for the next batch (C2e).
+
+**The queue's last three ran on 2026-09-30 (S43, D193), from this desktop on the owner's word ("run the tags and do
+them with each session from now on"):** MANUAL_TODO's own `s40`–`s42` lines, `s42`'s grep resolving to
+`396bd66ea36849cb5d6034ff80a9893e588e2194`. `git ls-remote --tags origin` the same day — **42 tags, s00–s20 and
+s22–s42** — the tail of the listing (the first 39 pairs are as above, unchanged):
+
+```
+7b8f62122d62de64b491467a868a4873d26199d6  refs/tags/s39
+8d8c89475086421c77c13dace70cd9149c2f7564  refs/tags/s39^{}
+f3a15caecdd795c3427b86a13c4cd9446c783b42  refs/tags/s40
+73b95410fa1caad603f405de1924641cf4a584fd  refs/tags/s40^{}
+4a5f158eb53c2990c6219b5df4cc57b82256ac2b  refs/tags/s41
+75abd5e4029ea27b854c6d91b5201f5b62d88535  refs/tags/s41^{}
+b1d82a643c21817e544c1bb5ee6bba91bc751efa  refs/tags/s42
+396bd66ea36849cb5d6034ff80a9893e588e2194  refs/tags/s42^{}
+```
+
+No row is queued; from S43 each session tags its own merge (C2e as amended, D193).
 
 ### D162. Cold timings and the profile at S22 (rules B2, B6)
 
@@ -6661,3 +6679,125 @@ spider (#120; the download and the shape are the owner's and a ruling's).
 **The second build's "done means" (GALAXY_PLAN §5e), re-read at this merge.** Every item D191 read as met is met;
 the one it left — the tag batch's record — is written here and under D161, and S22 is ☑. **Both builds are
 closed.** The register reads 62 open = 11 permanent + 51 carried, 41 discharged.
+
+### D193. The owner's choice of 2026-09-30, in two rulings before any number: (a) sessions tag their own merges from now on — rule C2e amended, `s40`–`s42` on the remote, the queue retired to history; (b) Audit IV of the renderer commissioned as S43, its aim written before any code file was opened
+
+**The owner, in chat, on 2026-09-30, in these words: "run the tags and do them with each session from now on, then
+proceed to do Audit IV."** Recorded first (D113: rulings before numbers), on `session-43`, as the first commit of
+the session.
+
+**(a) Tags per session.** The three queued commands ran from this desktop before this branch was cut — MANUAL_TODO's
+own `s40`, `s41`, `s42` lines, `s42`'s grep resolving to `396bd66ea36849cb5d6034ff80a9893e588e2194` — and `git
+ls-remote --tags origin` lists **42 tags, s00–s20 and s22–s42**, the tail appended under D161 as its gate asks. **Rule
+C2e is amended**: the close ritual now ends, after the `--no-ff` merge and its push, with `git tag -a s<NN> <merge sha>
+-m "S<N>: …"`, `git push origin s<NN>` and `git ls-remote --tags origin` read back (the listing is the check — a tag
+push that did nothing and one that succeeded both print little, D161), and the session writes its own MANUAL_TODO §1
+row **applied** with the SHA; no row is left `TBD`, because the tag is made after the merge exists. The old text is
+kept inside the rule as history with its justification (D40's 403 was a policy on the web proxy's path, verified
+twice, D161), and the rule says what a session behind that proxy does: queue the command as before and say so in
+its decision. `MANUAL_TODO.md` §1 states the per-session procedure, marks `s40`–`s42` applied, and keeps the batch
+block as the record of what was run; `GALAXY_PLAN.md` (the board's tag paragraph, §5's step 5, the partial-close
+note), `RESUMING.md`, `BRIEF.md`, `BUILD_II.md`'s protocol line and the S1 lesson say the same. `tests/test_docs.py`:
+the row-per-☑-session test keeps its assertion with the new reason; the queued-tag test now accepts an empty queue
+only when the file says **"No tag is queued."**; a new test reads C2e and asserts it ends with the listing and cites
+this decision. *Justification:* the rule existed because a step that cannot succeed is not a step; on this checkout
+the step succeeds, and a tag made at close by the session that made the merge is the record kept where it cannot
+be forgotten (B13) instead of a queue filled one row behind. *Chosen against:* `git push origin --tags` at close (it
+pushes every local tag, including a stale one; the single ref is the honest command); dropping the MANUAL_TODO table
+(it is the one place the tag-to-session map is asserted by a test); deleting the batch block (history, D161).
+
+**(b) Audit IV commissioned.** The renderer as built S38–S42 — `spectra.py` and the sixteen SED fields, `/api/render`
+and `/api/blackbody`, the form-encoded POST, the dust's three components and the frame's balance, the region march
+(`region.ts`, `RegionVolume.tsx`, `FieldVolume.tsx`), the cluster points and `channelShare`, S42's grid reading and
+`instruments.json` — is audited in Audit III's shape (D186): the aim written in `docs/AUDIT_IV.md` §0 before any code
+file of the audit was opened, read-only reader agents (one re-reader of every constant and cited choice against its
+source sentence; one blind reader forbidden the repository, who sets the forbidden-line target for #117 and any
+other window the aim names), the re-derivations at a mesh the build did not use in `tests/test_audit_iv.py` (the one
+test file the audit adds), the greens conditioned with row 34 among them, the register's #107–#120 re-stated one line
+each. **B3 holds: the audit checks, the next session fixes — no model number moves.** The findings, the counts, the
+debts from #121 and the board row are D194's, written at this session's close. *Chosen against:* an audit that also
+applies its fixes (S37 → S38's split is the precedent, and it is what kept D186's counts honest); an Opus subagent
+running the audit (a Fable row, as S37 was: the judgement is the session's, the reading is the agents').
+
+### D194. Audit IV: the renderer S38–S42 re-read at its sources, re-derived at a fourth mesh, its greens conditioned and the forbidden-line row set blind — the nebular grid read 0.24 dex too rich, FSPS clamps (S42's sentence wrong), one grain row misplaced, the WFC3 curves are vacuum, CMD's U B V are not SVO's; the model misses the blind [N II]/Hα gradient by 4σ; no number moved
+
+**Run by the orchestrating session itself (a Fable row, commissioned by the owner on 2026-09-30, D193 (b)), with the aim
+written before any renderer source file was opened (`docs/AUDIT_IV.md` §0, commit 2c92b77) and the findings numbered
+A4-1 … A4-11 in its §6.** Two read-only agents did the reading, spawned by the coordinating session on the briefs the
+session wrote (`scratchpad/audit4_brief_reread.md`, `audit4_brief_blind.md`): one re-read every constant, table and
+cited choice that entered code S38–S42 against its source (20 items judged; its report is AUDIT_IV §1 verbatim), one
+forbidden the repository set the forbidden-line target and read the diffuse gas's ratios (`docs/AUDIT_IV_BLIND.md`
+verbatim). The session re-derived every gate and identity of V1–V4 and S42 at `GridSpec(150, 500, 10, 240)`
+(`tests/test_audit_iv.py`, the one test file the audit adds — a fourth mesh, because Audit III's (180, 600, 8) has been in
+the suite since S37), conditioned the renderer's greens and row 34 (`scratchpad/audit4_greens.py`), measured the grid's
+offset (`audit4_offset.py`), and read the five load-bearing sources itself before writing a finding (B9: Zhao et al.
+2026's equations, FSPS's `add_nebular.f90`, Byler et al. 2017 §2, Draine's two rows, the WFC3 IHB §6.5). **B3: the audit
+checks, the next session fixes — nothing here changed a model or viewer number.** `git diff --stat main` names docs/,
+the test file, the blind report and the register.
+
+**Counts.** 20 items re-read: **12 match, 4 differ, 4 adopted (disclosed; one under the wrong name), 0 misattributed in
+code, 0 unreachable**; 103 of the grain table's 104 rows match (D189 said 110); all 24 SVO Bessell numbers match with the
+field named (λ_ref ≡ pivot; Vega, Pogson, Jy → erg/cm²/s/Å); the `LINE_WAVELENGTHS` and `K_OVER_MH` recalls are now READ.
+Thirteen gates and identities hold at the fourth mesh inside the cost the mesh sets: V1's gate +1.6 × 10⁻⁴ / −6.6 × 10⁻⁴
+mag (the cell-sum term ∝ dR²), V2's emitted over absorbed 0.999317 (the TIR coverage alone), the layers and the S42 lines
+exact, the disc's catalogue against field 0.949 at z −0.86 for this mesh's census (12 675 clusters, √⟨L²⟩/⟨L⟩ 6.70), the
+sector 0.993, the render's light the same at levels 0–2 to 4.6 × 10⁻⁴ on a cell-aligned window (a property first checked
+here), the ramp 1.886 / 2.110 / 2.421 the population's R / G / B. Greens: V1 is green by its passes (0 passes: B − V
++0.0595, M_V +0.017), V2 by one function of the same fields (β ± 0.10 and a 3–1000 µm box move nothing), V3 survives
+two re-tilings (z̄ +0.10 / +0.24), row 34 survives and is strengthened by #84/#100's 0.7095 (Q / 0.7095 = 2.33 × 10⁵³
+inside McKee & Williams' and Bennett's). One blind window set; the model, measured after, misses it by 4σ. Fourteen
+register items re-stated: 9 open as described, 1 closable as a miss (#117), 2 wrongly described (#118, #120's half), 2
+re-described (#107, #119). Three new debts.
+
+**The findings that need a decision (A4-1 … A4-11 in the document; the three that are debts are numbered).**
+*A4-1, #121 — the grid's solar scale.* Byler et al. 2017 adopt "the gas phase abundances specified by Dopita et al. (2000),
+which are based on the solar abundances from Anders & Grevesse (1989)", oxygen −3.07 with depletion −0.22 — 12+log(O/H)
+= 8.93 total, 8.71 gas-phase, at the grid's log Z = 0 `[verified: arXiv:1611.08305 §2.1.2, Table 1, read at S43]`;
+`nebular.py` enters oxygen − 8.69. Every region is read 0.24 dex too metal-rich in the grid's terms: on the grid's scale
+**3.0 % of regions are clamped, not 26.4 %**, Hα-weighted [O III]/Hα 0.75 (was 0.48), [N II]/Hα 0.082 (was 0.131), the
+[S II] pair unchanged. The fix is one constant with a ruling (total 8.93 or gas-phase 8.71) and `test_nebular`'s pins.
+*A4-2, part of #122 — FSPS clamps.* `add_nebular.f90`: `dz = MAX(MIN(dz,1.0),0.0) !no extrapolation`, and `du`, `da`
+likewise `[verified: FSPS at bd187a0d, read at S43]`. D192 says twice that FSPS extrapolates and the model clamps where
+it does; **that sentence was written at S42's review from an incomplete grep of the FSPS source, and it is wrong** — the
+model's reading is FSPS's own. Also in #122: D189's 110 rows are 104; the `prsc` file is FSPS's later product (11 Z with
+four shifted, a 20 Myr row), not the nine-age grid the paper tabulates; FSPS's vacuum wavelengths sit +0.07–0.10 Å above
+NIST air × Morton 1991; two solar masses in the code; D189's R_V 3.31 is 3.28 at both pivots; the ir set's "TIR" is
+Sanders & Mirabel's 8–1000 µm L_IR, not Dale & Helou's 3–1100 µm TIR (worth 5 × 10⁻⁷ of Σ_IR here); Byler's U at a fixed
+inner face against the model's at the Strömgren radius; `transport.js`'s "every proxy's limit" is Envoy's documented 60
+KiB default. *A4-3, #123 — a grain row.* `GRAIN_TABLE`'s `(398.107, …, 3.493e-26, 2.498e00)` is the file's 380.189 µm row
+under the wrong wavelength; the file's 398.107 row reads `3.184E-26 2.277E+00` `[verified: Draine's
+kext_albedo_WD_MW_3.1_60_D03.all, read at S43]`. The test's cross-column identity holds for a misplaced row; the effect is
+C_ext 9.7 % high between 251 and 631 µm, which no filter reads. *A4-4, #120 half decided.* WFC3 IHB §6.5: the UVIS
+measurements "were done in air. The data have been converted to vacuum wavelengths using the formula given by D. C.
+Morton (1991 …)" `[verified: hst-docs.stsci.edu, read at S43]`; the model's lines are air, so Hα in F656N reads 0.962
+where the vacuum placement gives 0.945, [S II] 6716 in F673N 0.983 against 0.958; the fix is a convention flag or a
+shifted curve, and `test_render`'s pins move. *A4-5, #107 re-described.* CMD's U B V are Maíz Apellániz 2006's Johnson
+curves ("combination of previous 2 systems", `stev.oapd.inaf.it/cmd_3.9/photsys.html`, reachable now over http) and YBC's
+Vega is `alpha_lyr_stis_008` against SVO's `stis_010`: the `[inferred]` zero-point term is real and has two named parts.
+*A4-6.* The ir box's name (above). *A4-7.* The greens as counted. *A4-8.* The mesh: the frame-against-published-total
+tolerances of test_render carry a dR² term that would fail 10⁻³ below ~170 rings — stated; the default mesh is the
+viewer's. *A4-9, #117.* **The blind window: d log([N II] 6583/Hα)/dR of the Hα-weighted ring means over 8.2–15.4 kpc =
+−0.025 ± 0.009 dex kpc⁻¹, acceptance [−0.045, −0.005]**, from Zhao et al. 2026 (AJ 172, 168, arXiv:2607.27662; LAMOST
+MRS-N, 243 Galactic HII regions with distances, whole-region stacked spectra) — Eq. 8's O/H slope −0.014 ± 0.005 over Eq.
+5's 0.57 `[verified: arxiv.org/html/2607.27662, read at S43 after the blind report]`; a secondary value at R₀, 0.27
+(0.20–0.40), Madsen et al. 2006. **The model as built reads −0.0815 dex kpc⁻¹ and 0.205 at 8.2 kpc**, measured after the
+window was set (`audit4_offset.py`): a 4σ miss in the reader's "killing direction" (the ratio falls at the N/H gradient's
+pace, three times the measured slope), unchanged in kind on the grid's own solar scale. *Decision (the next session's):*
+row 37 entered blind-with-disclosure as a recorded miss under #117; read the grid's T_e run against the Galactic
++345–359 K kpc⁻¹ before blaming the chemistry. *#119's numbers are read* (WIM [N II]/Hα 0.5 (0.3–1.0), [S II] 6716/Hα
+0.3–0.5, doublet ≈ ×1.7; in the plane 0.33 / 0.38): two constants once the layer is ruled the WIM proper. *A4-10.* The
+POST path: RFC 9110's statuses, no documented ingress limit, Envoy 60 KiB, the real-transport test passes; no debt.
+*A4-11.* The record, gathered as #122.
+
+**Also measured.** The render's cold cost re-read (B2, `tools/timings.py`, 2026-09-30, this machine): render whole rgb
+2.0654 s cold / 0.2248 warm, 6 940 400 bytes; one region 2.0170 / 0.2238; clusters whole disc 1.6121; `/api/blackbody`
+0.0051. D192's +0.4 s against D191 stands as the grid's first load and the two line components; no route changed, no
+table appended. The V4 inventory read from the sets in both models: 30 drawn, 37 not (`test_v4`, per model). The POST
+test through the real transport: passes.
+
+**Method notes for the next audit.** Verify a blind source yourself before the row is proposed — a text-rendered PDF
+misreads tables (the blind reader flagged its own; the session read the equations at arXiv HTML). Align a window to the
+cells before comparing levels (a 7.6 % "loss" was area). Ask a re-reader to count rows, not to trust the decision's count.
+The two briefs carried three citation slips of the session's own (RFC 9110 §15.5.10 is 409; arXiv:1905.04955 is not YBC;
+"ApJ 840, 44" is not in the README) — the agents found them, as D186's did. The register reads 65 open = 11 permanent +
+54 carried, 41 discharged.

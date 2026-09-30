@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████████████████████████████████████████████████████████████` **43 / 43 sessions** · repo initialised: yes
+`████████████████████████████████████████████████████████████████████████████████████████` **44 / 44 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -49,6 +49,7 @@
 | ☑ | 40 | **V3.** The region regime below 4 kpc draws the censuses from their published vectors: the level follows the view's width (one per factor four under 4 kpc); each cloud a log-normal interior at the published σ_s seeded by its (cell, index) path, its cluster's Strömgren cavity carved and the clumps above e^σ_s inside it left as pillars; HII spheres and bubble and remnant shells marched per pixel (limb-brightened for free); the field's HII fades inside the window; `cloud_extinction_v` 2.97 mag, one scalar; the census routes name every row and a level filter's header counts the body (a defect since S32). **Catalogue against field 0.980 (disc) / 0.974 (level-1 sector); sixty level-1 windows z mean +0.15 against the census's own σ(N); a census identical at levels 0–3.** Stated: stars stay on the level-0 sample, a screen-space composite, a display budget of 256 objects, the noise's shapes inferred (#110–#113) (D190). Built across a usage limit: rulings before it, review after | desktop | **Fable** | **Fable 5.1** (rulings, review) / **Opus 5.5** (build) | s40 | 2026-09-30 |
 | ☑ | 41 | **V4.** Clusters drawn as objects: two columns on the cluster census — `cluster_luminosity` (mass × the light per mass formed at its age and [Fe/H], the light stage's tables) and `cluster_light_temperature` (that light's correlated colour temperature) — and a point of that light in the region regime, painted as a star is, the census loaded once and shared with the region volume. **The #69 gate extended to the object classes: every `of="cloud" / "cluster" / "remnant"` column is drawn (25) or carries "Not drawn by the viewer" with why in its declaration (38: through what it sets, invisible to a filter, or owed), asserted per model.** Rulings P1–P5 proposed by Opus before the build and ratified at the review with two findings measured there: the ramp's painting is bolometric — the census summed reads 2.1× its own G light through the viewer's filters, +0.18 mag at the youngest to +1.31 at the oldest (#114, D188's finding left in the point regime; S42's P6 keeps it) — and the clusters hold a quarter of the disc's light that the sampled catalogue barely carries (7 stars under 20 Myr in a 2 kpc window), half of them dissolved yet pointed (#115); the cluster's extent unpainted (#116). #111 not closed by V4. `halpha_surface_brightness` retired (RENDER_PHYSICS §0). Instrument PSFs and the tag batch the owner's (P2, P4; the batch ran on 2026-09-27 — 39 tags on the remote — recorded at S42's close). Both models draw both regimes (P3). Specs 11/20/5 unchanged (D191) | desktop | Opus | **Opus 5.5** (proposals, build) / **Fable 5.1** (rulings, review, close) | s41 | 2026-09-30 |
 | ☑ | 42 | **The owner's four answers of 2026-09-27, built on Opus while Fable's limit reset, ruled at Fable's review.** (1) "download it": Byler et al. 2017's nebular grid as FSPS ships it, pinned (`tools/fetch_nebular.py` → `data/nebular_lines.npz`); the nebular stage reads it per region, clamped, and publishes the four forbidden lines over Hα, per-ring lines and Hβ in both layers; `/api/render` carries `lines_hii` / `lines_dig`, `absent.lines` is empty, each resolved region coloured by its own lines — **30 object columns drawn, 37 ruled not drawn**. (2) "follow the audit's recommendation": rows 32 and 34 take Audit III's blind windows (`AUDIT_III_BLIND.md`), row 34 passes on McKee & Williams 1997 and its miss is removed with the reason written, row 32 still misses (#98 re-read: 0.25 dex above the blind top, η M_halo now inside); **specs 12/19/5 of 36, both models**. (3) "yes": HST WFC3/UVIS's six system throughputs from SVO (`tools/fetch_filters.py` → `instruments.json`, sets `wfc3`, `wfc3n`) with an Airy sprite per channel. (4) "run the tag batch for me": run 2026-09-27, 39 tags on the remote, `s06`'s literal corrected, the listing under D161, S22 ☑. Then a form-encoded POST as the GET past 4 KB (an API change, ratified) and **P6 ratified**: stars and clusters drawn through the filter set by `/api/blackbody`'s share table, the exposure rule left on bolometric L as a stated display choice; **P6 does not close #114** (the blackbody's bolometric correction stays). #108 discharged, #100 re-scoped to the 0.71, #117–#120 opened (D192) | desktop | Opus | **Opus 5.5** (build) / **Fable 5.1** (rulings, review, close) | s42 | 2026-09-30 |
+| ☑ | 43 | **The owner's choice of 2026-09-30, then Audit IV** (`docs/AUDIT_IV.md`). Tags per session from now on — rule C2e amended, `s40`–`s42` on the remote, the queue retired (D193). Then the renderer S38–S42 audited in Audit III's shape, the aim written before any source file was opened: 20 items re-read at their sources by a read-only agent — **12 match, 4 differ, 4 adopted**; 103 of the grain table's 104 rows match. Findings: **the nebular grid is read 0.24 dex too metal-rich** (Byler's log Z = 0 is Anders & Grevesse's 8.93, the model enters oxygen − 8.69: on the grid's scale 3.0 % of regions clamp, not 26.4 %; #121); **FSPS clamps, it does not extrapolate** — D192's sentence was wrong (#122, the record); one grain row misplaced (#123); STScI's WFC3 curves are vacuum and the model's lines air (#120 half decided); CMD's U B V are Maíz Apellániz 2006's, not SVO's Bessell (#107). Thirteen gates re-derived at `GridSpec(150, 500, 10, 240)`, all inside the mesh's own cost (`tests/test_audit_iv.py`; the render's light the same across levels, first checked); greens conditioned (V1 green by its passes, V2 by one function, V3 survives re-tiling, row 34 strengthened by the 0.71). **The forbidden-line row set blind** (`AUDIT_IV_BLIND.md`): d log([N II]/Hα)/dR over 8.2–15.4 kpc = −0.025 ± 0.009, window [−0.045, −0.005] dex kpc⁻¹ (Zhao et al. 2026, verified at the source); the model, measured after, reads −0.0815 — a 4σ miss for the next session's row 37 (#117). No number moved (B3) (D194) | desktop | **Fable** | **Fable 5.1** (rulings, aim, review); the two readers Opus 5.5 | s43 | 2026-09-30 |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -58,18 +59,21 @@ from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
 
-**Tags are deferred to one batch at the end of the build** (rule C2e). The web
-sessions run behind an egress proxy that refuses tag refs — `git push origin s01`
-returns HTTP 403 while branch and `main` pushes succeed `[verified: DECISIONS.md
-D40]`. Rather than have every session fight it, no session tags: each appends its
-`git tag` command to `MANUAL_TODO.md`, and they are all applied in one go from the
-desktop. **The Tag column therefore names the tag a session has *earned*, not one
-that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
-tags exist lives, and a test asserts it carries a row for every ☑ session.
+**Since S43 a session tags its own merge at close** (rule C2e as amended on the
+owner's word, D193): `git tag -a`, `git push origin s<NN>`, `git ls-remote --tags
+origin` read back, the row in `MANUAL_TODO.md` §1 written applied. **Until then tags
+were deferred to a batch.** The web sessions ran behind an egress proxy that refused
+tag refs — `git push origin s01` returned HTTP 403 while branch and `main` pushes
+succeeded `[verified: DECISIONS.md D40]` — so no session tagged: each appended its
+`git tag` command to `MANUAL_TODO.md`, and they were applied from the desktop in two
+runs (2026-09-27, `s00`–`s39`, D192; 2026-09-30, `s40`–`s42`, D193). **The Tag column
+names the tag on the remote**; `MANUAL_TODO.md` is where the truth about which tags
+exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** nothing is planned. Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
-`BUILD_II.md`), every "done means" item met, the tag batch run and recorded (D161, D192);
-`BRIEF.md` names what the owner could choose next without starting it. S23 and S24 were
+**Next:** Audit IV's fixes (S44, `BRIEF.md`): #121's ruling and constant, #123's row, #122's
+record pass, #120's convention, and row 37 entered blind-with-disclosure as #117's recorded miss
+(B3: S43 checked, S44 fixes). Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
+`BUILD_II.md`), every "done means" item met, the tags on the remote (D161, D192, D193). S23 and S24 were
 recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 2026-09-25 without a session branch or a close, and the rows say so.
 
@@ -82,7 +86,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > and its listing was pasted under D161 (S42's close, D192). The board said so until then,
 > which is the whole purpose of the column.
 
-**Open debts:** 62 (`GALAXY_INPUTS.md` §11). **Discharged:** 41.
+**Open debts:** 65 (`GALAXY_INPUTS.md` §11). **Discharged:** 41.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
@@ -295,9 +299,10 @@ everything after its last push. See **Partial close** below.
    the gate, and known traps. This is the single highest-leverage artefact in the
    whole protocol; it is what lets the next session skip reading the plan.
 5. Commit, `--no-ff` merge to `main` with the subject `Merge S<N> into main: …`,
-   push branch and main. **Do not tag** (rule C2e): append this session's tag
-   command to `MANUAL_TODO.md`, and fill in the *previous* session's merge SHA
-   while you are there — it was unknowable until its merge existed.
+   push branch and main. **Then tag the merge** (rule C2e since D193): `git tag -a
+   s<NN> <merge sha> -m "S<N>: …"`, `git push origin s<NN>`, read `git ls-remote
+   --tags origin` back, and write this session's row in `MANUAL_TODO.md` §1 as
+   applied with the SHA. (Until D193 the step was "do not tag; queue the command".)
    **Never force-push** (rule C2a).
 6. **Verify by cloning the remote into a clean directory and running the suite
    there** (rule C2) — not by re-running in the working copy, which cannot detect
@@ -480,8 +485,8 @@ So, from the start rather than as a panic measure (rule C2d):
    was done and what remains to `BRIEF.md`, set this session's board row to ◐
    with a note. Do not start new work in the hope of finishing it.
 4. A partial close does **not** merge to `main`. The branch stays open and the
-   next session continues on it. No session tags in any case (rule C2e), so
-   there is nothing extra to withhold here.
+   next session continues on it. A partial close does not tag either (rule C2e:
+   the tag marks a merge, and there is none).
 
 ---
 
