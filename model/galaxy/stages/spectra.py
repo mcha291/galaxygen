@@ -86,6 +86,8 @@ SED_WAVELENGTHS = np.array([PASSBANDS[b].reference for b in SED_BANDS])
 # The corrections that make the joined spectrum's band means the table's (band_consistent).
 SED_ITERATIONS = 12
 SHAPES = ("gaussian", "box", "sampled")
+# The conventions a curve's wavelengths may be on (S44, D195, #120): air unless the curve says vacuum.
+WAVELENGTH_CONVENTIONS = ("air", "vacuum")
 
 # The lines a render can carry, by component name: wavelength in air, Å [recall: the standard
 # air wavelengths of these transitions; not read from a source in this session]. Hα is the one
@@ -116,7 +118,15 @@ class CurveError(ValueError):
 
 @dataclass(frozen=True)
 class Curve:
-    """One filter's transmission, as the viewer sent it."""
+    """One filter's transmission, as the viewer sent it.
+
+    ``wavelengths`` is the convention the curve's wavelengths are on, ``"air"`` (the default, and the model's
+    own: ``LINE_WAVELENGTHS`` are air) or ``"vacuum"`` (a named instrument's measured curve: STScI's WFC3/UVIS
+    throughputs, S44, D195, #120). The line integral converts the model's air lines to vacuum
+    (``air_to_vacuum``) before reading a vacuum curve. The continuum integrals — the blackbody's, the SED's
+    band means, the dust's curve read at ``reference()`` — read a curve as sent under either convention: a
+    2.8e-4 shift of a broadband curve is below every tolerance the render is held to, and the eight band
+    anchors carry no stated convention of their own (#107). That is the limit of what the flag does."""
 
     name: str
     shape: str
@@ -124,6 +134,7 @@ class Curve:
     width: float = math.nan  # Å; the FWHM of a gaussian, the full width of a box
     wavelength: tuple[float, ...] = ()  # Å; sampled
     transmission: tuple[float, ...] = ()  # sampled
+    wavelengths: str = "air"  # "air" | "vacuum": the convention the wavelengths above are on
 
     def at(self, lam: np.ndarray) -> np.ndarray:
         """Transmission at wavelengths ``lam`` (Å): zero outside a box or a sampled curve."""
@@ -162,7 +173,7 @@ class Curve:
             out |= {"wavelength": list(self.wavelength), "transmission": list(self.transmission)}
         else:
             out |= {"centre": self.centre, ("fwhm" if self.shape == "gaussian" else "width"): self.width}
-        return out
+        return out | {"wavelengths": self.wavelengths}
 
 
 def _finite(value: Any, what: str) -> float:
@@ -178,7 +189,8 @@ def _finite(value: Any, what: str) -> float:
 def parse_curves(raw: Any) -> tuple[Curve, ...]:
     """The viewer's filter set, as JSON decoded: a list of curves, each a Gaussian
     (``centre``, ``fwhm``), a box (``centre``, ``width``) or sampled (``wavelength``,
-    ``transmission``), all in Å, each with a ``name``. Refused rather than guessed at."""
+    ``transmission``), all in Å, each with a ``name`` and, optionally, ``wavelengths``: ``"air"`` (the
+    default) or ``"vacuum"`` (S44, D195). Refused rather than guessed at."""
     if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_FILTERS:
         raise CurveError(f"a filter set is a list of 1 to {MAX_FILTERS} curves")
     curves: list[Curve] = []
@@ -189,12 +201,15 @@ def parse_curves(raw: Any) -> tuple[Curve, ...]:
         shape = entry.get("shape")
         if shape not in SHAPES:
             raise CurveError(f"curve {name!r}: shape must be one of {list(SHAPES)}, got {shape!r}")
-        allowed = {"name", "shape", "about"} | (
+        allowed = {"name", "shape", "about", "wavelengths"} | (
             {"centre", "fwhm"} if shape == "gaussian" else {"centre", "width"} if shape == "box" else {"wavelength", "transmission"}
         )
         unknown = set(entry) - allowed
         if unknown:
             raise CurveError(f"curve {name!r}: unknown keys {sorted(unknown)} for a {shape}")
+        convention = entry.get("wavelengths", "air")
+        if convention not in WAVELENGTH_CONVENTIONS:
+            raise CurveError(f"curve {name!r}: wavelengths must be one of {list(WAVELENGTH_CONVENTIONS)}, got {convention!r}")
         if shape == "sampled":
             lam, s = entry.get("wavelength"), entry.get("transmission")
             if not isinstance(lam, list) or not isinstance(s, list) or len(lam) != len(s) or len(lam) < 2:
@@ -207,7 +222,7 @@ def parse_curves(raw: Any) -> tuple[Curve, ...]:
                 raise CurveError(f"curve {name!r}: transmission must be non-negative and somewhere positive")
             if lam_v[0] < WAVELENGTH_MIN or lam_v[-1] > WAVELENGTH_MAX:
                 raise CurveError(f"curve {name!r}: wavelengths must lie in {WAVELENGTH_MIN:g}-{WAVELENGTH_MAX:g} A")
-            curves.append(Curve(name, shape, wavelength=lam_v, transmission=s_v))
+            curves.append(Curve(name, shape, wavelength=lam_v, transmission=s_v, wavelengths=convention))
             continue
         centre = _finite(entry.get("centre"), f"{name} centre")
         width = _finite(entry.get("fwhm" if shape == "gaussian" else "width"), f"{name} width")
@@ -218,7 +233,7 @@ def parse_curves(raw: Any) -> tuple[Curve, ...]:
                 f"curve {name!r}: centre must lie in {WAVELENGTH_MIN:g}-{WAVELENGTH_MAX:g} A, a box wholly, "
                 "with a positive width, a Gaussian's FWHM no more than its centre"
             )
-        curves.append(Curve(name, shape, centre=centre, width=width))
+        curves.append(Curve(name, shape, centre=centre, width=width, wavelengths=convention))
     return tuple(curves)
 
 
@@ -246,9 +261,24 @@ def blackbody_response(curves: Sequence[Curve], kelvin: np.ndarray) -> np.ndarra
     return out
 
 
+def air_to_vacuum(wavelength_air: float) -> float:
+    """A wavelength in air (Å) on the vacuum scale: λ_air × n, with the refractive index of air by Morton 1991,
+    (n − 1) × 10⁸ = 6432.8 + 2 949 810 / (146 − σ²) + 25 540 / (41 − σ²), σ = 10⁴ / λ the wavenumber in µm⁻¹
+    [verified: Morton 1991, ApJS 77, 119, eq. 3 as STScI cites it in the WFC3 IHB section 6.5; read at S43,
+    D195]. σ is evaluated at the air wavelength: the difference from evaluating it at the vacuum one is below
+    10⁻⁸ in n (4e-9 at 5000 Å). n − 1 is 2.790e-4 at [O III] 5006.8 and 2.762e-4 at Hα."""
+    sigma2 = (1.0e4 / wavelength_air) ** 2
+    n = 1.0 + 1.0e-8 * (6432.8 + 2_949_810.0 / (146.0 - sigma2) + 25_540.0 / (41.0 - sigma2))
+    return wavelength_air * n
+
+
 def line_response(curves: Sequence[Curve], wavelength: float) -> np.ndarray:
-    """``(n_filters,)``: each curve's transmission at one line's wavelength (Å)."""
-    return np.array([float(curve.at(np.array([wavelength]))[0]) for curve in curves])
+    """``(n_filters,)``: each curve's transmission at one line's wavelength, ``wavelength`` in air (Å, as
+    ``LINE_WAVELENGTHS``): a curve on vacuum wavelengths is read at the line's vacuum wavelength
+    (``air_to_vacuum``, S44, D195), a curve in air at the wavelength as given."""
+    vacuum = air_to_vacuum(wavelength)
+    return np.array([float(curve.at(np.array([vacuum if curve.wavelengths == "vacuum" else wavelength]))[0])
+                     for curve in curves])
 
 
 def blackbody_stellar_response(surface_brightness: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
@@ -444,7 +474,7 @@ GRAIN_TABLE: tuple[tuple[float, float, float, float, float], ...] = (
     (199.526, 0.0000, -0.0005, 1.369e-25, 9.791e00),
     (245.471, 0.0000, -0.0003, 8.966e-26, 6.412e00),
     (251.189, 0.0000, -0.0003, 8.533e-26, 6.102e00),
-    (398.107, 0.0000, -0.0001, 3.493e-26, 2.498e00),
+    (398.107, 0.0000, -0.0000, 3.184e-26, 2.277e00),  # S44: was the file's 380.189 row under this key (Audit IV A4-3, #123, D195)
     (630.957, 0.0000, -0.0000, 1.343e-26, 9.605e-01),
     (1000.00, 0.0000, -0.0000, 6.174e-27, 4.416e-01),
 )

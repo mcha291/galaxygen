@@ -13,9 +13,12 @@ curve's response to a blackbody, so the scale cancels and only the shape draws.
 What is written is ``frontend/src/galaxy/instruments.json``: per set, the three curves as the model's
 ``sampled`` shape, each resampled linearly onto 241 points over the span where it exceeds 10⁻³ of its peak
 (the request carries its curves in the query string, and SVO's tables run to 3000 rows); the largest
-difference between a resampled curve and SVO's own points, over its peak, is recorded beside it. SVO does
-not say whether the wavelengths are in air or vacuum; the line transmissions at both, recorded here, show
-what the question is worth.
+difference between a resampled curve and SVO's own points, over its peak, is recorded beside it. STScI's
+UVIS throughputs are on vacuum wavelengths (WFC3 Instrument Handbook section 6.5, converted by Morton 1991's
+formula; read at S43, D195, #120), so each curve is written with ``wavelengths: "vacuum"`` and the model
+converts its air lines before reading them; the both-ways transmissions recorded here show what the
+convention is worth (Hα in F656N 0.962 at the air placement, 0.945 at the vacuum one; [S II] 6716 in F673N
+0.983 against 0.958).
 """
 
 from __future__ import annotations
@@ -43,13 +46,16 @@ ACKNOWLEDGEMENT = (
     "MCIN/AEI/10.13039/501100011033/ through grant PID2023-146210NB-I00 (Rodrigo et al. 2012, 2020, 2024; "
     "the acknowledgement and references SVO asks for, read on its front page on " + FETCHED + ")."
 )
+# STScI's curves are on vacuum wavelengths and the model's lines in air (D195, #120): each curve says so.
+VACUUM = (", on vacuum wavelengths (WFC3 Instrument Handbook section 6.5; the model converts its air lines by Morton "
+          "1991 before reading them, D195)")
 
 SETS = {
     "wfc3": {
         "label": "WFC3",
         "about": ("As Hubble, broadband (RENDER_PHYSICS section 2a): HST WFC3/UVIS F814W, F555W and F438W as red, green "
                   "and blue - the measured system throughputs [verified: SVO Filter Profile Service, HST/WFC3_UVIS2.*, "
-                  "fetched " + FETCHED + " by tools/fetch_filters.py], with the Airy diffraction pattern of a circular "
+                  "fetched " + FETCHED + " by tools/fetch_filters.py]" + VACUUM + ", with the Airy diffraction pattern of a circular "
                   "aperture as the stars' sprite, its size per channel in proportion to the filter's pivot wavelength."),
         "filters": [("F814W", "HST/WFC3_UVIS2.F814W"), ("F555W", "HST/WFC3_UVIS2.F555W"), ("F438W", "HST/WFC3_UVIS2.F438W")],
     },
@@ -57,7 +63,7 @@ SETS = {
         "label": "WFC3 SHO",
         "about": ("As Hubble, the narrowband palette: HST WFC3/UVIS F673N ([S II] 6716/6731), F656N (Halpha) and F502N "
                   "([O III] 5007) as red, green and blue - measured throughputs [verified: SVO Filter Profile Service, "
-                  "HST/WFC3_UVIS2.*, fetched " + FETCHED + "], the same Airy sprite. F656N is 18 A wide: the [N II] lines "
+                  "HST/WFC3_UVIS2.*, fetched " + FETCHED + "]" + VACUUM + ", the same Airy sprite. F656N is 18 A wide: the [N II] lines "
                   "either side of Halpha fall outside it, where the SHO set's 30 A box also leaves them."),
         "filters": [("F673N", "HST/WFC3_UVIS2.F673N"), ("F656N", "HST/WFC3_UVIS2.F656N"), ("F502N", "HST/WFC3_UVIS2.F502N")],
     },
@@ -116,7 +122,8 @@ def main() -> int:
             lam, t, params = read(path)
             grid, values, error = resample(lam, t)
             peak = float(values.max())
-            curves.append({"name": name, "shape": "sampled", "wavelength": [round(float(x), 2) for x in grid],
+            curves.append({"name": name, "shape": "sampled", "wavelengths": "vacuum",
+                           "wavelength": [round(float(x), 2) for x in grid],
                            "transmission": [round(float(v) / peak, 5) for v in values]})
             # Each line's share at its air wavelength and at its vacuum one (air x 1.000277 near 6000 A, the
             # refractivity of dry air at 15 C [inferred]): what the air-or-vacuum question moves.
