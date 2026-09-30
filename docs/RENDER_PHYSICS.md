@@ -54,7 +54,8 @@ sections below as a description of an empty slate.
   the diffuse layer, and the disc's Hα as Σ_Q redistributed; `HALPHA_PER_SFR` is
   the check (0.71 at S35) `[verified: model/galaxy/stages/nebular.py; D184]`. The
   collisionally excited lines wait on the photoionization grid ruled in (Byler et
-  al. 2017 via FSPS), whose fetch is the owner's call; the old field stays until V3.
+  al. 2017 via FSPS), whose fetch is the owner's call; the old field stays — V3 left it
+  (the render reads the nebular stage's), and retiring it is the close-out's.
 - **Since S36 (Phase 10)** the `bubbles` stage publishes the hollow: per cluster
   Weaver et al. 1977's bubble (radius, shell velocity, density, thickness, Hα per
   unit volume in the shell, interior pressure and temperature, phase, stalled),
@@ -105,7 +106,27 @@ The knots, the clump lattice, the dust's lead and `CHANNEL_EXTINCTION` are gone;
 what the field regime keeps is display only (white point, exposure, tone curve,
 bloom, the march's sampling). The frame's absorbed and emitted power are the
 published fields' to 3.4 × 10⁻⁴ each and balance to 6.8 × 10⁻⁴, the TIR box's
-coverage `[verified: tests/test_render.py]`.
+coverage `[verified: tests/test_render.py]`. **Since S40 (V3) the region regime
+draws §5's objects from their published vectors** (D190): below the stars
+handover the view asks `/api/clouds`, `/api/clusters`, `/api/remnants` and
+`/api/render` at the level its width needs (one level per factor four under
+4 kpc) and marches per pixel each cloud's interior — the log-normal at the
+published σ_s realised by a value-noise field seeded by the cloud's (cell, index)
+path, the mean tilted along the published gradient, the cluster's Strömgren
+sphere carved out and the clumps above e^σ_s inside it left as pillars — each
+HII region as a sphere of the published emissivity per volume, each bubble and
+remnant as a shell of the published thickness and emissivity (§4's limb
+brightening for free), the clouds' transmission at the census's one central A_V
+(`cloud_extinction_v`); the field's HII component fades inside the window as
+the spheres fade in (§7: no double counting). The routes name every row by
+(cell, index) — §5a's seed, realised. §7's catalogue-against-field holds for the
+clusters' Hα (0.980 over the disc, 0.974 over a level-1 sector, sixty level-1
+windows scattering as the census's own second moment says) and a census is
+identical at levels 0–3 `[verified: tests/test_region_synthesis.py;
+frontend/src/galaxy/region.test.ts]`. Stated, not hidden (#110–#113): the
+noise's octaves and the pillar threshold are shapes the vector does not
+constrain; a display budget of 256 objects; the composite is a screen-space
+pass; the stars stay on the level-0 sample.
 
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,

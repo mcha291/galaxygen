@@ -6198,3 +6198,124 @@ render: whole, rgb*      1.8726   0.2445   7.66  1,739,928  halo,disc,assembly,b
 render: one region*      1.8290   0.2134   8.57     10,280  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
 ```
 (`uv run python tools/timings.py`, 2026-09-27, session-38.)
+
+### D190. V3: the region regime draws the censuses from their published vectors — the level from the view's width, each cloud a seeded log-normal at the published σ_s with its cavity and pillars, HII spheres and shells marched per pixel, the field's HII fading inside the window; catalogue against field 0.980 / 0.974 and sixty windows within the census's own second moment, a census identical at levels 0–3; the census routes name every row and their header counts the body
+
+**Rulings R1–R4 written by Fable 5.1 on `session-40` before any number (D113) on 2026-09-27; its usage limit ran
+out mid-build and the owner had Opus 5.5 finish the build to those rulings (commits 37b9784, d909717, ae9644f,
+d4b23c5, 2331b3e, 3700cfc), pushed and not merged, with `docs/HANDOFF_S40.md` listing what the orchestrator owed.
+Reviewed here by Fable 5.1 on 2026-09-30 — the core diff first (`service._named`, `_in_children`,
+`clouds.central_extinction_v`, `region.ts`, `RegionVolume.tsx`, `FieldVolume`'s fade), then the tests, then one
+instrument of the review's own; the remaining rulings made now; the handoff file deleted at this close. Accepted
+with no change to the build's code; one test added.**
+
+**The rulings.** (R1) The level is the view's width: 0 at and above the stars handover (4 kpc, `REGIME_KPC.stars`),
+one level per factor four below (`LEVEL_KPC` 4, 1, 0.25, 0.0625; `levelFor`), so a level-k cell — 2^k finer per
+side than a level-0 cell's ~1.6 kpc × 0.2 rad at R₀ — stays under about half the view `[inferred]`. (R2) The
+region's light is the region's own: stars as points; the clusters' HII regions as spheres of radius R_S carrying
+`hii_halpha_emissivity` per volume, marched so they limb-brighten (RENDER_PHYSICS §4), the line's per-filter weight
+`/api/render`'s `halpha_hii.transmission` (the viewer holds no physics, D5); bubbles and remnants as thin shells at
+the published radius, thickness and shell emissivity; clouds as extinction at the published mean column made
+log-normal by R3; inside the window the field's HII component fades as the resolved spheres fade in — no double
+counting. (R3) A cloud's interior is a log-normal noise field seeded by its (cell, index) path (§5a): ρ/ρ̄ =
+exp(σ_s g − σ_s²/2) at the census's published width, the mean tilted linearly along the published gradient
+`[inferred]`; the cavity is the cluster's Strömgren sphere; the pillars are the clumps inside it that survive as
+extinction. (R4) The gate (BUILD_II V3): catalogue against field — the window's clusters' HII Hα against the field's
+HII Hα from `/api/render?level=k` over the same cells, within the census's noise — and determinism across levels: a
+cloud's and a cluster's columns identical at every level that holds it, the noise bit-identical for a seed.
+
+**What was built.** *Model: one scalar, no column.* `cloud_extinction_v` = **2.9696 mag**, the V extinction face-on
+through a cloud's centre. A uniform sphere's central column is 3/2 of its mean and the census fixes one surface
+density (Heyer et al. 2009's 42 M☉ pc⁻², D181), so mass and radius cancel and every cloud has the same A_V:
+1.5 × 42 M☉ pc⁻² over 1.4 m_H is 5.6 × 10²¹ H cm⁻², times 1.086 × Draine's C_ext(V)/H from `spectra.GRAIN_TABLE`
+(D189) `[verified: model/galaxy/stages/clouds.py, central_extinction_v; tests/test_clouds.py]`. First built as a
+per-cloud column and made a scalar when every value came out equal; it carries the D4 sentence (test_audit's
+lost-scalar count 16 → 17) and the stage's provenance (D55: the stage reads a seed). *A defect since S32, found and
+fixed.* At a level above 0 the census routes kept the level-0 cells' counts in the header after filtering the rows —
+the clouds of r 7–9, φ 0–0.4 at level 2 came back as 155 rows under counts summing to 257 — so no client could name a
+row. `service._named` adds int64 `cell` and `index` columns to `/api/clouds`, `/api/clusters` and `/api/remnants`,
+taken before any filter so a kept row keeps its name (§5a's "the seed is the cell-and-index path", now on the wire),
+and `_in_children` recomputes the counts from the rows it keeps; asserted at levels 0 and 2 on all three routes
+`[verified: tests/test_region_synthesis.py]`. *The noise* (`frontend/src/galaxy/region.ts`): four octaves of value
+noise on a 32-bit integer hash — `Math.imul`, so the shader's `uint` arithmetic draws the same field (a float64
+product of a large seed had lost its low bits before `| 0`); one octave's spread 0.1794 measured on 64 000 points,
+the sum's 0.2088 (1 % above the independent-octave 0.2067 because octaves share lattice corners), the field divided
+by the measured value; the realised log-density spread equals σ_s to 0.1 at σ_s 0.8, 1.4 and 2.0, the mean ratio
+1.06–1.12 with bounds 0.8–1.25 asserted `[verified: frontend/src/galaxy/region.test.ts]`. *The viewer.*
+`RegionVolume` marches per pixel, front to back (the objects sorted on the CPU by their near surface each camera
+move), the window's clouds — log-normal interiors, the cavity carved by the cloud's own cluster, pillars where
+ρ > e^σ_s inside it, κ_V per kpc from the census's A_V over the diameter, moved to each filter by the render's
+`extinction_ratio` — HII spheres (uniform emissivity over the chord) and bubble and remnant shells (the chord less
+the hollow's; a Sedov-phase remnant's NaN emissivity draws nothing, D185). Emission adds to the frame; the clouds'
+transmission multiplies what lies behind in a second pass, cleared to white (a black clear had blacked out the frame
+outside the objects' box, found on a scratch server). The field's HII fades by the stars weight inside the window
+(`FieldVolume`; its azimuth wrapped to [0, 2π) as the census's). A display budget of 256 objects — the 128 heaviest
+clouds, the 64 brightest regions, the 64 brightest shells — stated in the code. The three censuses and the render
+header are one `useLoad` each (state per hook, so one key serves four loads without collision).
+
+**The gate.** *Catalogue against field:* the clusters' HII Hα over the field's — **0.9801 for the disc at level 0**
+(12 597 clusters, census noise 0.061) and **0.9744 for r 4–12, φ 0–2 at level 1** (2 499 clusters, noise 0.138),
+both inside 3 × noise + 0.02 (D184's galaxy-wide 1 %). *Determinism:* over cell 300 the 58 clouds and 42 clusters
+are identical, column for column, at levels 0, 1, 2 and 3; the field for a seed is the same across two
+constructions and differs between seeds. *The small windows, ruled here.* Opus recorded two windows reading low —
+**0.6745** (r 6–10, φ 0–1.2, level 1, 832 clusters) and **0.5107** (r 7–9, φ 0–0.8, level 2, 246) — and asked whether
+R4 is met at the windows a view uses. The review's instrument: the HII luminosities' population second moment,
+√⟨L²⟩/⟨L⟩ = **6.898** over the disc's 12 597 regions, so a window of N regions scatters by 6.9/√N about the field
+(0.24 at 832, 0.44 at 246, 0.06 over the disc). Against that the two windows sit at **−1.36σ and −1.11σ**, not at
+the −1.44 and −1.99 their own realised noise gave: a window's realised √ΣL²/ΣL is correlated with its reading — a
+window that misses the bright tail reads low *and* estimates its noise low. Sixty level-1 windows tiling r 4–12 kpc
+(2 kpc rings × 15 sectors; 100–342 clusters each, median 163): **z mean +0.15, sd 1.16, 90 % inside 2σ, 98 % inside
+3σ**; the ratios' mean 1.085 and median 0.857 — the heavy tail's skew (two thirds of windows read below 1, a few far
+above, the highest 3.39). Forty level-2 windows over r 6–10, φ 0–2 (20–85 clusters each) pool to 0.69 over 1 520
+clusters: the same low patch the 0.67 window sits in, −1.8σ pooled — one realisation, not a level effect. **Ruled:
+R4 is met.** The field is the census's expectation, and the region at a small window *should* differ from it by
+the census's own realisation, which is what the zoom shows; the statistic for one window is its z against the
+population moment and for many windows their z-scores' mean, never one ratio. The sixty-window statistic is added
+to the suite with the mean z as the gate (|z̄| < 0.5, three standard errors) and the median and mean pinned as the
+record `[verified: tests/test_region_synthesis.py]`. The z-scores' sd of 1.16 says one galaxy-wide moment slightly
+understates the scatter where the luminosity function is steeper; accepted, the bound 0.7–1.5 stated in the test.
+
+**The departures from R2 and the approximations — ruled.** (1) *Stars stay on the prefix-scaled level-0 sample*, not
+`/api/region?level=k`: accepted for S40 — D167's sample densifies on approach with no star moving, and the switch is
+one call plus the picker reading the level-k name columns — but the V3 gate's stars half was thereby not tested,
+and no test integrates the sample's light over a patch against the render's stars (**#113**). (2) *The transmission
+multiplies the whole frame behind the clouds, a star in front included*: accepted as a stated screen-space
+composite; the exact form is one march or a depth-aware multiply (**#112**). (3) *The noise's octaves and weights,
+the linear tilt and the e^σ_s pillar threshold are `[inferred]` shapes* the cloud vector does not constrain — §8's
+"detail below the scale the vector constrains", stated rather than hidden; what would source them is the census's
+turbulent spectral index and a column condition for the front (**#110**). (4) *The display budget* is a stated
+display choice, but with the field's HII fading to zero inside the window by the regime's weight rather than by the
+kept share, a level-1 window with hundreds of regions loses the light of every region past the 64th, and the fade
+runs while the census loads (**#111**; the remedy is the kept share). No code was changed for any of the four:
+`session-41` is stacked on this branch and touches `RegionVolume.tsx` and `GalaxyTab.tsx`, and none of the four is
+wrong at the gate's scale — each is recorded with its closer named.
+
+**Also.** `halpha_surface_brightness` (the light stage's Σ_SFR × constant) was to go "at V3" (RENDER_PHYSICS §0);
+V3 left it — the render reads the nebular stage's layers — and retiring it is the close-out's. `RegionVolume`
+requests `/api/render` for the window at its level for the header alone (the line's transmission, the extinction
+ratios, the white point): 21 KB, 0.2 s warm. Vitest 16 files / 111 tests (re-run at the review); the frontend build
+clean (the build's run); specs 11 / 20 / 5 of 36, unchanged; rows 1–36 unmoved; every existing field bit-identical,
+one scalar added. The cold timings are appended (the review's run): the census routes grew by the two name columns
+(clusters whole disc 3.51 MB, clouds 2.55 MB), no new route, so no new row.
+
+**Chosen against.** A level by pixels per cell (a display choice; the hierarchy's factor four is the model's).
+Per-cloud A_V as a column (equal for every cloud, so a scalar). A gate on the median ratio over windows (the median
+is the skew's, 0.86; the mean z is the statistic that could fail). Widening R4's tolerance to cover the small
+windows (B5). Changing the viewer under a stacked branch for departures that are approximations at the gate's
+scale. The register reads 56 open = 11 permanent + 45 carried, 40 discharged.
+
+```
+endpoint                 cold s   warm s    c/w      bytes  stages
+------------------------------------------------------------------
+region: one sector*      0.6313   0.0009 717.54     44,096  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+region: level 2 sector*   0.7423   0.0024 306.68    451,920  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clouds: one sector*      0.5291   0.0018 293.68     42,816  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clouds: whole disc*      0.8337   0.0088  94.70  2,549,688  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: one sector*    1.0280   0.0018 562.18     60,280  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+clusters: whole disc*    1.3700   0.0121 113.32  3,510,456  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,vertical_alpha,ism
+remnants: one sector*    0.5952   0.0010 596.17      6,648  halo,disc,assembly,sfh,chemistry_dtd,supernovae,vertical_alpha,ism
+remnants: whole disc*    0.7008   0.0039 181.79    171,680  halo,disc,assembly,sfh,chemistry_dtd,supernovae,vertical_alpha,ism
+render: whole, rgb*      1.9491   0.2320   8.40  5,205,784  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+render: one region*      1.8571   0.2183   8.51     20,912  halo,disc,assembly,bar,pattern,sfh,chemistry_dtd,light,vertical_alpha,ism,dust,clouds,clusters,nebular
+```
+(`uv run python tools/timings.py`, 2026-09-30, session-40 at the review; the machine otherwise quiet.)

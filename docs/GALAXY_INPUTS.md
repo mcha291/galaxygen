@@ -690,9 +690,9 @@ defined here once and used in every entry below:
 | **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109 | 41 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 108, 109, 110, 111, 112, 113 | 45 |
 
-So the board's **52 open** is 11 permanent and 41 carried, and no item is unruled. (S22
+So the board's **56 open** is 11 permanent and 45 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -706,14 +706,16 @@ the bound mass before survival, D182; S34 opened #98–#99, rows 32 and 33 as re
 #100–#101, the ionizing budget's 0.71 and the diffuse gas by construction, D184; S36 opened #102–#103, the remnant
 census untied from its clusters and its lifetime-set count, D185; S37, Audit III, opened #104–#106, a dropped
 square root, an adopted η and the record's misattributions, D186; S38 applied all three and discharged them, D187, and V1 opened #107–#108, the SED's stated choices and the
-dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's layer and the infrared channel, D189.) The eleven
+dust and instrument the viewer still lacks, D188; V2 opened #109, the dust's layer and the infrared channel, D189; V3 opened
+#110–#113, the region regime's stated shapes, its display budget, its screen-space composite and the stars left on the
+level-0 sample, D190.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
 S22's own**, the close-out finding the checklist was for — row 21 was published by no stage
 and had never been judged — and it is the one item the two builds between them have closed.
 
-**The forty-one carried ones are not forty-one mechanisms.** Four of them — 19, 27, 49 and the
+**The forty-five carried ones are not forty-five mechanisms.** Four of them — 19, 27, 49 and the
 inner half of 47 — are one: *a first phase that consumes gas slower than it accretes it and
 then stops, the stopping after the first Ia iron has arrived*. A constant-efficiency
 Kennicutt law with a threshold cannot do it, in either model, at any radius, and fourteen
@@ -735,7 +737,8 @@ D183); 98 and 99 are rows 32 and 33's misses, the same population and the satell
 D183); 100 is the ionizing yield's 0.71 of Starburst99 (row 34) and 101 the diffuse gas's fixed 30% (S35,
 D184); 102 and 103 are the remnant census's double count and its lifetime-set number (S36, D185); 107 is the SED's
 joins and 108 the viewer's last two inventions (S38, D188); 109 the dust's layer and the infrared channel
-(S39, D189). That leaves 28, 33, 39, 42,
+(S39, D189); 110–113 are the region regime's four stated departures — shapes the cloud vector does not constrain,
+a display budget, a screen-space composite, the stars on the level-0 sample (S40, D190). That leaves 28, 33, 39, 42,
 43 and 70, which are five instrument or bookkeeping statements and one kernel width.
 
 1. ~~λ default is 3× off the population mean.~~ **DISCHARGED by ruling 8** — the
@@ -3167,6 +3170,46 @@ never been judged in twenty-three sessions.
    session) read by the render as the dust's layer; the infrared channel: a white point per channel ruled as
    display; the geometry: a source for the slab's scattering phase in an inclined disc, or V3's region-scale
    scattering, which needs none.
+110. **The region regime's noise, pillar rule and tilt are stated shapes the cloud vector does not constrain**
+   (S40, V3, D190). The cloud vector fixes the one-point PDF (σ_s), the mean column, the gradient and the source
+   offset; the *spatial* structure needs a power spectrum it does not carry. So `region.ts` realises the log-normal
+   with four octaves of value noise at frequencies 1–8 per cloud radius and weights 1/2^k `[inferred]`, the gradient
+   as a linear tilt of the mean clamped at 0.05 `[inferred]`, and the pillars as the clumps inside the Strömgren
+   sphere denser than e^σ_s times the mean `[inferred]` — where an ionization front spares a clump by the clump's
+   column against the front's flux, both sides of which the model publishes (Q, n_e, R_S). The realised ratio's
+   mean is 1.06–1.12 rather than 1 (a sum of smoothed uniforms has lighter tails than a Gaussian; bounds 0.8–1.25
+   asserted). RENDER_PHYSICS §8 forbids detail below the scale the vector constrains; the octaves under a radius
+   are that, stated. **Carried.** What closes it: a turbulent spectral index for the census read at the source the
+   Mach number's width rests on (the σ–ℓ relation, Heyer et al. 2009 / Larson 1981 — one constant), the octave
+   weights derived from it (w_k ∝ 2^{−kβ/2}); the pillar rule as a column condition from Q and the clump's density;
+   the realised mean set to 1 by measurement, as `FIELD_SIGMA` is.
+111. **The region volume's display budget drops light the field has already given up** (S40, V3, D190). One march
+   loops over at most 256 objects per pixel — the 128 heaviest clouds, the 64 brightest HII regions, the 64
+   brightest shells — while a level-1 window (a view 1–4 kpc across asks `regionAround` for ±4 kpc of radius) holds
+   hundreds of clusters (832 in r 6–10, φ 0–1.2). Inside the window the field's HII component fades by the stars
+   regime's weight, to zero at 2 kpc across, so every region past the 64th is drawn by neither; the same fade runs
+   while the census is still loading. The heavy tail makes the loss smaller than the count says, and unmeasured.
+   **Carried.** What closes it: `packObjects` returns the kept share of the window's HII luminosity and the shells',
+   and the field's HII fades by weight × share (zero until loaded); or the unbudgeted regions drawn as points at
+   their luminosity — V4's cluster points carrying the census's Hα.
+112. **The region composites as a screen-space pass: the clouds' transmission multiplies the whole frame behind
+   them, a star in front included** (S40, V3, D190). The region volume renders emission and transmission to two
+   offscreen targets and blends them over the frame — light added, transmission multiplied (render orders 2 and 1,
+   after the field's −1 and the star points' 0) — so a star between the camera and a cloud is darkened as if behind
+   it, and the field's light in front of the cloud likewise; the objects among themselves composite front to back
+   inside the march, overlaps approximated by a sort on the near surface. **Carried.** What closes it: the star
+   layer's depth written and read by the transmission pass (a depth-aware multiply), or the region's objects
+   marched inside `FieldVolume`'s own march — one volume, the exact form.
+113. **The stars stay on the level-0 prefix-scaled sample, and the gate tested the clusters' Hα only** (S40, V3,
+   R2's first departure, D190). R2 asked for `/api/region?level=k` as the region's star points; the viewer keeps
+   D167's prefix-scaled level-0 sample, which densifies on approach with no star moving, because picking a star
+   opens its system by (cell, index) read from the header and level-k rows are named by `level`, `cell`, `index`
+   columns the picker does not read. BUILD_II's V3 gate reads "the stars at the level plus the clusters' Hα";
+   `tests/test_region_synthesis.py` asserts the clusters' Hα against the field and a census identical across
+   levels, and no test integrates the sample's light over a patch against the render's stars over the same cells.
+   **Carried.** What closes it: the level-k region as the point layer below 1 kpc with the picker reading the three
+   name columns (one call and the naming), and a test that the sample's V light over a patch, scaled by its
+   sampling fraction, is the render's `stars` over the same cells within the sample's own noise.
 
 ---
 
