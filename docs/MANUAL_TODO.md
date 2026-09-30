@@ -77,7 +77,8 @@ closes the project.
 | 36 | `s36` | `f6ec37e5435f` | **queued** — filled in by S37 |
 | 37 | `s37` | `12c5f80497cc` | **queued** — filled in by S38 |
 | 38 | `s38` | `80fbf33f9394` | **queued** — filled in by S39 |
-| 39 | `s39` | TBD | **queued** — S40 fills the SHA in |
+| 39 | `s39` | `8d8c89475086` | **queued** — filled in by S40 |
+| 40 | `s40` | TBD | **queued** — S41 fills the SHA in |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -242,8 +243,11 @@ git tag -a s37 12c5f80497ccdc441e7df0c9612c4bf5911b0c4f -m "S37: Audit III"
 # S38 — Audit III's fixes; V1: /api/render, the eight-band SED, the filter sets, the gate to 1e-4 mag.
 git tag -a s38 80fbf33f93940532a26f29193345f122f3bdaa27 -m "S38: V1, the filter integral"
 
-# S39 — V2: the dust in three components, the line in two layers, the frame's balance and profile. SHA filled in by S40.
-git tag -a s39 "$(git rev-list -1 --grep='^Merge S39 into main' main)" -m "S39: V2, volumetric emission and emitting dust"
+# S39 — V2: the dust in three components, the line in two layers, the frame's balance and profile.
+git tag -a s39 8d8c89475086421c77c13dace70cd9149c2f7564 -m "S39: V2, volumetric emission and emitting dust"
+
+# S40 — V3: the region regime from the cloud vector, the censuses named by (cell, index), catalogue against field. SHA filled in by S41.
+git tag -a s40 "$(git rev-list -1 --grep='^Merge S40 into main' main)" -m "S40: V3, region synthesis from the cloud vector"
 
 git push origin --tags
 git ls-remote --tags origin        # confirm; a push that says "Everything up-to-date" did nothing
