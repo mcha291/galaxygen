@@ -58,6 +58,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.dust import SOLAR_MASS_G
 from galaxy.stages.pattern import ArmPattern
 from galaxy.stages.systems import (
     CELL_COUNT,
@@ -76,7 +77,8 @@ CLUSTER_HOSTING_STATES: tuple[str, ...] = ("blown_open", "dispersing")
 
 # Boltzmann's constant over the proton mass, in (km/s)^2 per kelvin: the sound speed squared of
 # gas at temperature T and mean particle mass mu is K_OVER_MH * T / mu. SI 2019 exact k and the
-# CODATA proton mass [recall: 1.380649e-23 J/K, 1.67262e-27 kg].
+# CODATA proton mass [verified: CODATA 2018, k = 1.380649e-23 J/K exact (SI 2019) and
+# m_p = 1.67262192e-27 kg, read at S43].
 K_OVER_MH = 1.380649e-23 / 1.67262192e-27 / 1.0e6  # (km/s)^2 / K
 G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) times 1000
 # The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
@@ -198,7 +200,6 @@ CLOUD_COLUMNS: tuple[str, ...] = (
 # (Draine 2003, R_V 3.1; spectra.GRAIN_TABLE, D189), the one number that turns a column density
 # into magnitudes, A_V = 1.086 N_H C_ext(V). Read here so the census publishes each cloud's A_V (S40, V3).
 MAG_PER_OPTICAL_DEPTH = 2.5 / math.log(10.0)  # 1.0857: a definition
-SOLAR_MASS_G = 1.98841e33  # g, IAU 2015 nominal (the nebular stage's value)
 PROTON_MASS_G = 1.67262192e-24
 CM_PER_PC_ = 3.0856775814913673e18
 

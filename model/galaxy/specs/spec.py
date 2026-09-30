@@ -226,6 +226,26 @@ _ADAMS13_READ = (
 ROW_GC_SYSTEM_MASS, ROW_STELLAR_HALO_MASS = 32, 33
 # S35 (BUILD_II Phase 9): the ionizing budget, the HII-region luminosity function, the PNLF cutoff.
 ROW_IONIZING_RATE, ROW_HII_LF_SLOPE, ROW_PNLF_CUTOFF = 34, 35, 36
+ROW_NII_HALPHA_GRADIENT = 37  # S44: the blind forbidden-line row (Audit IV, D195, #117)
+_ZHAO26_BLIND = "Zhao et al. 2026, AJ 172, 168, arXiv:2607.27662, Eqs. 5 and 8 (blind reading, Audit IV, docs/AUDIT_IV_BLIND.md)"
+_ZHAO26_READ = (
+    "The window is Audit IV's blind reading (S43, docs/AUDIT_IV_BLIND.md, Target A): a read-only agent forbidden the "
+    "repository, so not knowing the model's number, set it from the sources alone - d log([N II] 6583/Halpha)/dR of "
+    "the Halpha-weighted ring means over 8.2-15.4 kpc = -0.025 dex/kpc, 1 sigma 0.009, acceptance [-0.045, -0.005]: "
+    "Zhao et al. 2026's Eq. 8 '12+log(O/H) = 8.763(+/-0.046) - 0.014(+/-0.005) R_gal' over 8.16-15.36 kpc (LAMOST "
+    "MRS-N, 243 Galactic HII regions with distances, whole-region stacked spectra) divided by Eq. 5's '8.90 + 0.57 x "
+    "log([N II]/Halpha)', the PP04 N2 calibration, linear in the ratio, so the O/H slope is the ratio's slope over "
+    "0.57 [verified: arxiv.org/html/2607.27662 Eqs. 5, 8, read by the S43 session at the source after the blind "
+    "report]. What the model publishes: nii_halpha_gradient_hii, the unweighted straight-line slope of log10 of each "
+    "ring's [N II] 6583 surface brightness over its Halpha surface brightness (the HII regions alone, the diffuse "
+    "layer excluded) against R over the rings whose centres lie in 8.2-15.4 kpc. **Disclosed (rule D113, debt #117):** "
+    "the window was set blind, and the S43 session then computed this statistic against it before the row existed - "
+    "-0.0815 dex/kpc as built, with the grid read on Asplund's 8.69; S44 entered the row after ruling the grid's axis "
+    "onto its own 8.93 (D195, #121), at which the model reads -0.1035. The order is written here so that the row is "
+    "a blind window with a disclosed measurement, not a target chosen after the number. Secondary reading, not a "
+    "row: [N II]/Halpha at R0 = 0.27, window 0.20-0.40 (Madsen, Reynolds & Haffner 2006's O-star HII-region average, "
+    "read blind at S43); the model 0.205 at 8.2 kpc as built, 0.137 on the grid's scale."
+)
 _BENNETT94 = "Bennett et al. 1994 via Chomiuk & Povich 2011, AJ 142, 197, section 3.1"
 _MW97 = "McKee & Williams 1997, ApJ 476, 144, via Chomiuk & Povich 2011, section 3.1 (blind reading, Audit III)"
 _MW97_READ = (
@@ -427,6 +447,11 @@ QUANTITIES: tuple[Quantity, ...] = (
             "-4.46 +/- 0.05' [verified: Ciardullo 2012, arXiv:1203.5551, section 4, read at S35]. A zero-width "
             "window says no testable target yet (D100), not a strict one."
         ),
+    ),
+    Quantity(
+        ROW_NII_HALPHA_GRADIENT, "[N II] 6583/Hα gradient of HII regions, 8.2–15.4 kpc", "dex/kpc", "nii_halpha_gradient_hii",
+        -0.045, -0.005, "pointwise", "−0.025 ± 0.009 dex kpc⁻¹ (window ± 2σ, the reader's)", _ZHAO26_BLIND,
+        note=_ZHAO26_READ,
     ),
 )
 
@@ -787,6 +812,34 @@ _MISSES: tuple[Miss, ...] = (
             "ratio at the event) is what is wrong, and if it undershoots, a stripped fraction below 1 "
             "cannot help. Not a lever: the merger list's mass ratios, which set the disc's heating and "
             "rows 3 and 6-11 with it."
+        ),
+    ),
+    Miss(
+        row=ROW_NII_HALPHA_GRADIENT,
+        debt=117,
+        since="S44",
+        reason=(
+            "-0.1035 dex/kpc against [-0.045, -0.005], 6.5 sigma below the window's floor and in the direction the "
+            "blind reader named as the killing one ('a model whose [N II]/Halpha follows N/H (about -0.06 to -0.08 "
+            "dex/kpc) fails'): the model's ratio falls outward at the pace of its nitrogen abundance gradient and "
+            "faster, four times the measured slope, where the measured ratio is held up by an electron temperature "
+            "rising outward at +345-359 K/kpc that nearly cancels the abundance fall. The miss is not the solar-scale "
+            "offset's (#121), which moved it further out, not in: as built on the 8.69 scale the model read -0.0815, "
+            "and on the grid's own scale it steepens to -0.1035 - the ring means at 4 / 8 / 12 kpc move from 0.200 / "
+            "0.166 / 0.097 to 0.151 / 0.091 / 0.046 (about -0.07 dex/kpc over 8-12 kpc either way, which is what S43 "
+            "read as 'unchanged in kind'), and the rings beyond 12 kpc, less clamped on the new scale, fall faster "
+            "still. Two candidates: the grid's own temperature run - its [N II]/Halpha against log Z "
+            "at fixed age and U may fall steeper than the secondary nitrogen's rise, the grid's T_e being its own (the "
+            "model's hii_temperature column is not read by it) - or the chemistry's N/H gradient, Nicholls et al. "
+            "2017's secondary term on the model's O/H gradient, too steep over the outer disc."
+        ),
+        prediction=(
+            "Read the grid first: at a fixed age and log U, d log([N II]/Halpha)/d log Z along the grid's Z axis, "
+            "times the model's d log Z/dR over 8.2-15.4 kpc, is the slope the grid alone imposes. If that product is "
+            "within 0.01 dex/kpc of -0.1035, the grid's temperature run is the cause and the chemistry is not; if it "
+            "is inside the window, the chemistry's N/H gradient is. What kills this entry: a slope inside [-0.045, "
+            "-0.005] after either one change alone, with the other untouched - and a slope that stays outside after "
+            "both is a third cause the register does not yet name (the grid's fixed n_H = 100 and its own N/O, #118)."
         ),
     ),
 )

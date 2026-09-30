@@ -3,7 +3,7 @@
  "sets": {
   "wfc3": {
    "label": "WFC3",
-   "about": "As Hubble, broadband (RENDER_PHYSICS section 2a): HST WFC3/UVIS F814W, F555W and F438W as red, green and blue - the measured system throughputs [verified: SVO Filter Profile Service, HST/WFC3_UVIS2.*, fetched 2026-09-27 by tools/fetch_filters.py], with the Airy diffraction pattern of a circular aperture as the stars' sprite, its size per channel in proportion to the filter's pivot wavelength.",
+   "about": "As Hubble, broadband (RENDER_PHYSICS section 2a): HST WFC3/UVIS F814W, F555W and F438W as red, green and blue - the measured system throughputs [verified: SVO Filter Profile Service, HST/WFC3_UVIS2.*, fetched 2026-09-27 by tools/fetch_filters.py], on vacuum wavelengths (WFC3 Instrument Handbook section 6.5; the model converts its air lines by Morton 1991 before reading them, D195), with the Airy diffraction pattern of a circular aperture as the stars' sprite, its size per channel in proportion to the filter's pivot wavelength.",
    "psf": {
     "kind": "airy",
     "about": "The diffraction pattern of a circular aperture, (2 J1(v)/v)^2: the shape of an unresolved point through a telescope, drawn per channel at a radius proportional to the channel's pivot wavelength (lambda/D). Its scale on screen is a display choice [inferred], because the view has no distance to the galaxy; HST's central obscuration and the four spikes its secondary's supports make are not drawn."
@@ -12,6 +12,7 @@
     {
      "name": "F814W",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       6927.0,
       6938.81,
@@ -502,6 +503,7 @@
     {
      "name": "F555W",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       4354.0,
       4366.76,
@@ -992,6 +994,7 @@
     {
      "name": "F438W",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       3832.0,
       3835.81,
@@ -1537,7 +1540,7 @@
   },
   "wfc3n": {
    "label": "WFC3 SHO",
-   "about": "As Hubble, the narrowband palette: HST WFC3/UVIS F673N ([S II] 6716/6731), F656N (Halpha) and F502N ([O III] 5007) as red, green and blue - measured throughputs [verified: SVO Filter Profile Service, HST/WFC3_UVIS2.*, fetched 2026-09-27], the same Airy sprite. F656N is 18 A wide: the [N II] lines either side of Halpha fall outside it, where the SHO set's 30 A box also leaves them.",
+   "about": "As Hubble, the narrowband palette: HST WFC3/UVIS F673N ([S II] 6716/6731), F656N (Halpha) and F502N ([O III] 5007) as red, green and blue - measured throughputs [verified: SVO Filter Profile Service, HST/WFC3_UVIS2.*, fetched 2026-09-27], on vacuum wavelengths (WFC3 Instrument Handbook section 6.5; the model converts its air lines by Morton 1991 before reading them, D195), the same Airy sprite. F656N is 18 A wide: the [N II] lines either side of Halpha fall outside it, where the SHO set's 30 A box also leaves them.",
    "psf": {
     "kind": "airy",
     "about": "The diffraction pattern of a circular aperture, (2 J1(v)/v)^2: the shape of an unresolved point through a telescope, drawn per channel at a radius proportional to the channel's pivot wavelength (lambda/D). Its scale on screen is a display choice [inferred], because the view has no distance to the galaxy; HST's central obscuration and the four spikes its secondary's supports make are not drawn."
@@ -1546,6 +1549,7 @@
     {
      "name": "F673N",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       6661.0,
       6661.93,
@@ -2036,6 +2040,7 @@
     {
      "name": "F656N",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       6546.41,
       6546.53,
@@ -2526,6 +2531,7 @@
     {
      "name": "F502N",
      "shape": "sampled",
+     "wavelengths": "vacuum",
      "wavelength": [
       4952.78,
       4953.27,

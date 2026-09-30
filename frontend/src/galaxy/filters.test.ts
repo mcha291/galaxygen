@@ -106,6 +106,17 @@ describe("the named instruments (S42)", () => {
     expect(FILTER_SETS.wfc3n.curves.map((c) => c.name)).toEqual(["F673N", "F656N", "F502N"]);
   });
 
+  it("say their curves are on vacuum wavelengths, and the stand-ins say nothing (air; S44, D195)", () => {
+    for (const name of ["wfc3", "wfc3n"] as const) {
+      for (const c of FILTER_SETS[name].curves) expect(c.wavelengths).toBe("vacuum");
+      // The key travels to the request unchanged.
+      for (const c of curvesOf(name)) expect(c.wavelengths).toBe("vacuum");
+    }
+    for (const name of ["rgb", "sho", "hoo"] as const) {
+      for (const c of FILTER_SETS[name].curves) expect("wavelengths" in c).toBe(false);
+    }
+  });
+
   it("put each palette line in its own channel", () => {
     const [s, h, o] = FILTER_SETS.wfc3n.curves as { wavelength: number[]; transmission: number[] }[];
     expect(at(s, SII[0])).toBeGreaterThan(0.95);

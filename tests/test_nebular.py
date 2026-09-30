@@ -153,6 +153,9 @@ def test_the_default_census_numbers(default):
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
     assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7095, abs=0.002)
     assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
+    # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
+    # the model's ratio falls outward at its N/H gradient's pace.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035, abs=0.002)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -204,7 +207,8 @@ def test_the_clusters_route_carries_the_regions_and_the_scalars_fall_under_rule_
     assert a2["hii_halpha_luminosity"].size == h2["clusters"]["materialised"] <= arrays["hii_halpha_luminosity"].size
     fields = svc.handle("/api/fields", "model=basic").json()["fields"]
     by_name = {f["name"]: f for f in fields}
-    for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope"):
+    for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
+                 "nii_halpha_gradient_hii"):  # the sixth since S44 (row 37, D195)
         assert by_name[name]["domain"] == "galaxy" and "rule D4" in by_name[name]["about"], name
     for name in ("halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "halpha_surface_brightness_nebular"):
         assert by_name[name]["domain"] == "grid" and by_name[name]["unit"] == "Lsun/pc2"
@@ -242,25 +246,33 @@ def test_the_line_table_is_the_fetched_grid_and_a_grid_point_reads_back_exactly(
 
 def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     """Where the default census's regions sit on the grid, and what it gives them. Recorded, not judged: no row
-    reads these lines yet. The inner disc's gas is richer than the grid's +0.2 dex edge for a quarter of the
-    regions, which read the edge; the youngest 2.6% read the 0.5 Myr floor; every log U is inside."""
+    reads these lines yet. On the grid's own solar oxygen (8.93, Anders & Grevesse; D195, #121) the inner disc's
+    gas is richer than the grid's +0.2 dex edge for 3.0% of the regions, which read the edge; the youngest 2.6%
+    read the 0.5 Myr floor; every log U is inside."""
     F = default.fields
     g = nb._line_grid()
-    log_z = np.asarray(F["hii_oxygen_abundance"]) - 8.69
+    solar = float(models["basic"].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
+    assert solar == 8.93  # the grid's log Z = 0 (Byler et al. 2017 section 2.1.2; D195)
+    log_z = np.asarray(F["hii_oxygen_abundance"]) - solar
     age = np.log10(np.asarray(F["cluster_age"]) * 1e6)
     log_u = np.asarray(F["hii_ionization_parameter"])
-    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.2641, abs=1e-3) and not (log_z < g["log_z"][0]).any()
+    # S44: was 0.2641 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93 (D195, #121)
+    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0302, abs=1e-3) and not (log_z < g["log_z"][0]).any()
     assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
     assert np.all((log_u >= g["log_u"][0]) & (log_u <= g["log_u"][-1]))
     w = np.asarray(F["hii_halpha_luminosity"])
     weighted = {n: float(np.sum(np.asarray(F[f"hii_{n}_ratio"]) * w) / w.sum()) for n in nb.FORBIDDEN}
-    assert weighted == pytest.approx({"oiii_5007": 0.477, "nii_6583": 0.131, "sii_6716": 0.053, "sii_6731": 0.041}, abs=2e-3)
+    # S44: was 0.477 / 0.131 / 0.053 / 0.041 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93
+    # (D195, #121)
+    assert weighted == pytest.approx({"oiii_5007": 0.752, "nii_6583": 0.082, "sii_6716": 0.053, "sii_6731": 0.041}, abs=2e-3)
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])
     at = {r: int(np.argmin(np.abs(R - r))) for r in (4.0, 12.0)}
     ratio = {n: {r: F[f"{n}_surface_brightness_hii"][i] / ha[i] for r, i in at.items()} for n in ("oiii_5007", "nii_6583")}
-    assert ratio["oiii_5007"][4.0] < 0.05 < 0.5 < ratio["oiii_5007"][12.0]
+    # S44: the 4 kpc bound was 0.05 on the 8.69 scale (the ring reads 0.116 now, 0.989 at 12 kpc); the grid's
+    # log Z = 0 is Anders & Grevesse's 8.93 (D195, #121)
+    assert ratio["oiii_5007"][4.0] < 0.15 < 0.5 < ratio["oiii_5007"][12.0]
     assert ratio["nii_6583"][4.0] > ratio["nii_6583"][12.0]
     # Hbeta is Halpha over the Case B decrement in both layers.
     t_dig = float(models["basic"].constants["DIG_TEMPERATURE"].value)
