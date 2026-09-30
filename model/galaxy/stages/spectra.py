@@ -89,8 +89,8 @@ SHAPES = ("gaussian", "box", "sampled")
 # The conventions a curve's wavelengths may be on (S44, D195, #120): air unless the curve says vacuum.
 WAVELENGTH_CONVENTIONS = ("air", "vacuum")
 
-# The lines a render can carry, by component name: wavelength in air, Å [recall: the standard
-# air wavelengths of these transitions; not read from a source in this session]. Hα is the one
+# The lines a render can carry, by component name: wavelength in air, Å [verified: NIST Atomic Spectra
+# Database, air wavelengths, all six within 0.05 Å of these values, read at S43 (Audit IV, D194)]. Hα is the one
 # published per cell; the rest are named so a request can be told they are absent rather than dark.
 LINE_WAVELENGTHS: Mapping[str, float] = {
     "halpha": 6562.8,

@@ -66,15 +66,19 @@ from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.massive_stars import BOLTZMANN, ELECTRON_VOLT, LIGHT_SPEED, PLANCK, SOLAR_LUMINOSITY
 
 # --- conversions, cgs ---------------------------------------------------------------------
-# The parsec is 648000/π au with the au the IAU 2012 exact 149 597 870 700 m (IAU 2015 B2); the
-# solar mass is the IAU 2015 nominal GM☉ over CODATA's G [recall]. L☉ is massive_stars'.
+# The parsec is 648000/π au with the au the IAU 2012 exact 149 597 870 700 m (IAU 2015 B2). The solar
+# mass is the model's one (the cloud census and the nebular stage import it). L☉ is massive_stars'.
 CM_PER_PC = 3.0856775814913673e18
-GRAMS_PER_MSUN = 1.98847e33
+# g: the IAU 2015 nominal GM_sun = 1.3271244e26 m^3/s^2 over CODATA 2018's G = 6.67430e-11 [verified: IAU 2015
+# Resolution B3; CODATA 2018; read at S43 (Audit IV A4-11), D195]
+SOLAR_MASS_G = 1.98841e33
+# The old name, kept as an alias of the one value because tests/test_dust.py reads it (S44, D195 (vi)).
+GRAMS_PER_MSUN = SOLAR_MASS_G
 MAGNITUDES_PER_OPTICAL_DEPTH = 2.5 * math.log10(math.e)  # A = 1.0857 τ: a definition
 MICRON_CM = 1.0e-4
 # Lsun/pc² in erg s⁻¹ cm⁻², and a dust mass's power in Lsun/Msun from erg s⁻¹ g⁻¹.
 FLUX_PER_LSUN_PC2 = SOLAR_LUMINOSITY / CM_PER_PC**2
-LSUN_PER_MSUN_PER_CGS = GRAMS_PER_MSUN / SOLAR_LUMINOSITY
+LSUN_PER_MSUN_PER_CGS = SOLAR_MASS_G / SOLAR_LUMINOSITY
 # The Habing band's edges (Habing 1968's 6–13.6 eV): its width in ln ν, for a flat νL_ν.
 HABING_BAND_LN_WIDTH = math.log(13.6 / 6.0)
 

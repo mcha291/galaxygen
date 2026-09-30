@@ -1,10 +1,11 @@
-"""Fetch the Byler et al. 2017 nebular line grid as FSPS ships it and convert it into the model's table.
+"""Fetch FSPS's nebular line grid (Byler et al. 2017's method) and convert it into the model's table.
 
     uv run python tools/fetch_nebular.py --raw <dir>     # download (skips a file already there) and convert
     uv run python tools/fetch_nebular.py --raw <dir> --convert-only
 
 One file, ``nebular/ZAU_ND_prsc.lines`` from the FSPS repository at a pinned commit (the owner's word,
-2026-09-27, on D184's question): Cloudy line luminosities per ionizing photon (L☉ per photon/s, FSPS's
+2026-09-27, on D184's question), Byler et al. 2017's method as FSPS ships it at that commit (11 log Z, four
+of them shifted from the paper's, a 20 Myr row the paper lacks): Cloudy line luminosities per ionizing photon (L☉ per photon/s, FSPS's
 ``sps_setup.f90``: "Units are Lsun/Q") for 166 lines on 11 gas metallicities log(Z/Z☉) × 10 ages
 (0.5–20 Myr) × 7 ionization parameters log U (−4 to −1), ionized by PARSEC ("prsc") single stellar
 populations with no dust inside the region ("ND"). The file is read in FSPS's own order: a header line,
@@ -13,7 +14,9 @@ coordinates and a line of the 166 luminosities.
 
 What is committed is ``model/galaxy/data/nebular_lines.npz``: the three axes, and for the six lines the
 model names (``spectra.LINE_WAVELENGTHS``) their vacuum wavelengths and log10 of their luminosity per
-ionizing photon as float32 on the full grid. Attribution: the README's Attributions section (MIT).
+ionizing photon as float32 on the full grid. FSPS's vacuum wavelengths sit +0.07 to +0.10 Å above NIST's air
+values × Morton 1991's refractive index for all six lines [verified: NIST ASD and FSPS ``emlines_info.dat`` at
+the pinned commit, compared at S43 (Audit IV A4-11)]. Attribution: the README's Attributions section (MIT).
 """
 
 from __future__ import annotations

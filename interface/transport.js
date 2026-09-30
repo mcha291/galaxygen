@@ -24,7 +24,7 @@ export const BASE = "/api";
 export const ORIGIN = "";
 
 const HEADER_OFFSET = 8; // magic (4) + header length (4)
-/** The longest URL sent as a GET (S42): past it the query travels as a POST body. 4 KB is inside every proxy's limit. */
+/** The longest URL sent as a GET (S42): past it the query travels as a POST body. 4 KB is inside Envoy's documented 60 KiB request-header default (431 past it; Container Apps' ingress documents no limit of its own) [verified: Envoy's HTTP connection manager docs and RFC 6585 section 5, read at S43 (Audit IV A4-10)]. */
 export const MAX_URL = 4096;
 const READERS = { f8: Float64Array, f4: Float32Array, i8: BigInt64Array };
 

@@ -777,7 +777,8 @@ def test_the_far_infrared_rows_run_smoothly():
 
 def test_the_extinction_curve_at_the_viewer_s_filters():
     """A_λ/A_V read at each filter's reference wavelength, pinned: the rgb set's R, V, B and the ir set's J, H, K.
-    B over V is 1.302, a monochromatic R_V of 3.31 against the broadband 3.1 the dust stage's E(B − V) divides by."""
+    B over V is 1.302, a monochromatic R_V of 3.31 with A_V ≡ 1 at the table's 5470 Å row (3.28 with both bands
+    read at their pivots, S43), against the broadband 3.1 the dust stage's E(B − V) divides by."""
     ratio = spectra.extinction_ratio(np.array([6498.09, 5477.70, 4371.07, 12303.17, 16396.38, 22027.46]))
     assert ratio == pytest.approx([0.793528, 0.998188, 1.302122, 0.298354, 0.186688, 0.113246], abs=2e-6)
     assert spectra.extinction_ratio(np.array(5470.0)) == pytest.approx(1.0, abs=1e-14)
