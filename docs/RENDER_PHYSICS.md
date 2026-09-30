@@ -47,8 +47,9 @@ sections below as a description of an empty slate.
 
 **Published, but not in the contract's form.**
 
-- `halpha_surface_brightness` is Σ_SFR times one constant `[verified: light.py;
-  D166]`. **Since S35 (Phase 9)** the `nebular` stage publishes §2's ionized-gas
+- `halpha_surface_brightness` was Σ_SFR times one constant `[verified: light.py;
+  D166]`, **retired at S41 (D191)**: no route, test or viewer read it once the
+  nebular stage's layers existed. **Since S35 (Phase 9)** the `nebular` stage publishes §2's ionized-gas
   component: per cluster the HII region's Q, n_e, T_e, log U, clumping and O/N/S
   (§3a's shape parameters) and its Hα **per unit volume** (§4, unit `erg/s/cm3`),
   the diffuse layer, and the disc's Hα as Σ_Q redistributed; `HALPHA_PER_SFR` is

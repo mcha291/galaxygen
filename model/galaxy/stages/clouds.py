@@ -298,9 +298,38 @@ def materialise_clouds(
 # --- declarations ----------------------------------------------------------------------------------
 
 
+# S41 (V4, D191): the cloud columns the viewer does not read, each with why - the object-class twin of the
+# sentence a catalogue stage's scalars carry under rule D4 (debt #69). A column reaches the picture through what
+# it sets, or nothing in a filter's image can see it; tests/test_v4.py holds the inventory and asserts the sentence.
+NOT_DRAWN_WHY: dict[str, str] = {
+    "cloud_velocity_dispersion": "it reaches the picture as the log-normal width it sets (`cloud_density_pdf_width`); "
+                                 "a linewidth itself needs a spectral resolution the render has not.",
+    "cloud_mach_number": "it reaches the picture as `cloud_density_pdf_width`, the width the interior is synthesised "
+                         "at; the number is not a look.",
+    "cloud_age": "an age has no look of its own; it is drawn through what it sets - the cloud's state, whether it "
+                 "holds a cluster, and that cluster's light, region and bubble.",
+    "cloud_state": "the state is drawn through what it sets: a cloud past its embedded phase holds a cluster "
+                   "(`cloud_cluster_index`), whose cavity, HII sphere and point of light the viewer draws; the "
+                   "category itself is not a look.",
+    "cloud_source_offset": "it is drawn where the cluster stands: the cluster census places its cluster by this "
+                           "offset, and the cavity is carved at the cluster's position.",
+    "cloud_source_angle": "it is drawn where the cluster stands, as the offset is.",
+    "cloud_metallicity": "no line comes from molecular gas in the render; the abundance reaches the picture through "
+                         "the cluster's light (the isochrones at its [Fe/H]) and its HII region's emissivity at the "
+                         "temperature the oxygen sets.",
+    "cloud_alpha": "as the iron abundance: through the HII region's oxygen, its temperature and so its emissivity, "
+                   "and through the forbidden lines when a photoionization grid publishes them.",
+}
+
+
+def _not_drawn(name: str) -> str:
+    why = NOT_DRAWN_WHY.get(name)
+    return f" **Not drawn by the viewer** (D191): {why}" if why else ""
+
+
 def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis")) -> FieldDecl:
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cloud",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
 
 
 CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
@@ -340,6 +369,7 @@ CLOUD_STATE = FieldDecl(
         "Which of Kawamura et al. 2009's phases the cloud's age falls in: embedded (no massive star "
         "formation yet), blown open (HII regions inside it), dispersing (HII regions and exposed young "
         "clusters). A dispersed remnant is not molecular gas and has no sourced duration, so it is not a state."
+        + _not_drawn("cloud_state")
     ),
 )
 CLOUD_SOURCE_OFFSET = _column("cloud_source_offset", "Embedded source offset", "pc",

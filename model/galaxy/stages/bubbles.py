@@ -399,14 +399,44 @@ def hot_phase_porosity(
 # --- declarations ----------------------------------------------------------------------------------------
 
 
+# S41 (V4, D191): the bubble and remnant columns the viewer does not read, each with why - the object-class twin
+# of the sentence the stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory.
+NOT_DRAWN_WHY: dict[str, str] = {
+    "bubble_shell_velocity": "a kinematic quantity - a line's splitting - which needs a spectral resolution the render "
+                             "has not; nothing in a filter's image sees it.",
+    "bubble_shell_density": "drawn through `bubble_shell_thickness` and `bubble_shell_emissivity`: the swept column "
+                            "over this density, and the recombinations in it.",
+    "bubble_interior_pressure": "the hot interior emits in X-rays; no filter set reaches them and no X-ray emissivity "
+                                "is published, so nothing in the render sees the interior.",
+    "bubble_interior_temperature": "as the interior pressure: X-ray gas, which no published emissivity or filter set "
+                                   "reaches.",
+    "bubble_mechanical_luminosity": "drawn through `bubble_radius`, the power the bubble is evaluated at.",
+    "bubble_phase": "drawn through the radius and shell the driving power sets; the category itself is not a look.",
+    "bubble_stalled": "drawn through the radius it stalled at and the shell at rest; the category itself is not a look.",
+    "remnant_age": "an age has no look but its radius: drawn through `remnant_size` and the phase's shell.",
+    "remnant_shell_velocity": "a kinematic quantity, as a bubble's shell velocity: nothing in a filter's image sees it.",
+    "remnant_ambient_density": "drawn through the size and the shell density it sets.",
+    "remnant_shell_density": "drawn through `remnant_shell_thickness` and `remnant_shell_emissivity`.",
+    "remnant_phase": "drawn through the emissivity: a Sedov remnant's is NaN and draws nothing, a radiative shell "
+                     "draws (D185, D190); the category itself is not a look.",
+    "remnant_kind": "the two kinds share the energy, the medium and the shell model, so nothing published tells them "
+                    "apart in an image; the kind is the census's count, not a look.",
+}
+
+
+def _not_drawn(name: str) -> str:
+    why = NOT_DRAWN_WHY.get(name)
+    return f" **Not drawn by the viewer** (D191): {why}" if why else ""
+
+
 def _bubble(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis", scale="log")) -> FieldDecl:
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cluster",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
 
 
 def _remnant(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis", scale="log")) -> FieldDecl:
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="remnant",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
 
 
 _D4 = (" **Not shown by the viewer** (rule D4, as debt #69 was ruled at S22): a galaxy scalar of the stage that "
@@ -456,7 +486,7 @@ BUBBLE_PHASE = FieldDecl(
     about=(
         "Wind: younger than the first core collapse the isochrones can date, 4 Myr. Supernova: while its stars "
         "above the core-collapse limit are still dying. Fading: after the last, when nothing drives it — none at "
-        "the defaults, whose clusters are at most 20 Myr old."
+        "the defaults, whose clusters are at most 20 Myr old." + _not_drawn("bubble_phase")
     ),
 )
 
@@ -468,6 +498,7 @@ BUBBLE_STALLED = FieldDecl(
         "et al. 1977 find the H II region's pressure stalls the shell when its velocity falls to about 10 km/s, "
         "and their thin-shell treatment fails there. A stalled bubble keeps the radius at which it stalled, at "
         "the power that drives it now, its shell at rest and its interior the solution's at that moment."
+        + _not_drawn("bubble_stalled")
     ),
 )
 
@@ -514,7 +545,8 @@ REMNANT_EMISSIVITY = _remnant("remnant_shell_emissivity", "Shell Hα volume emis
 REMNANT_PHASE = FieldDecl(
     name="remnant_phase", label="Remnant phase", unit="dimensionless", kind=Kind.CATEGORY_COLUMN, of="remnant",
     categories=REMNANT_PHASES, ramp=Palette(("#6fd3ff", "#e07b39")), provenance="seeded",
-    about="Sedov: the adiabatic blast wave, before its shell cools. Radiative: the pressure-driven snowplow after.",
+    about="Sedov: the adiabatic blast wave, before its shell cools. Radiative: the pressure-driven snowplow after."
+    + _not_drawn("remnant_phase"),
 )
 REMNANT_KIND = FieldDecl(
     name="remnant_kind", label="Supernova type", unit="dimensionless", kind=Kind.CATEGORY_COLUMN, of="remnant",
@@ -522,6 +554,7 @@ REMNANT_KIND = FieldDecl(
     about=(
         "Core collapse or type Ia, drawn by the two rates' ratio at its radius. The same energy for both; a "
         "type Ia's older progenitor is not placed differently, so the two differ only in number here."
+        + _not_drawn("remnant_kind")
     ),
 )
 

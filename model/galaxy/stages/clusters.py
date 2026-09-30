@@ -207,9 +207,37 @@ def bound_mass(stars_formed_history: np.ndarray, R: np.ndarray, bound_fraction: 
 # --- declarations ----------------------------------------------------------------------------------
 
 
+# S41 (V4, D191): the cluster columns the viewer does not read, each with why - the object-class twin of the
+# sentence a catalogue stage's scalars carry under rule D4 (debt #69); tests/test_v4.py holds the inventory.
+NOT_DRAWN_WHY: dict[str, str] = {
+    "cluster_mass": "drawn through `cluster_luminosity`, the mass times the light per mass formed; a mass has no "
+                    "look but its light.",
+    "cluster_half_mass_radius": "not drawn yet, and it should be (debt #116): a cluster is a point sprite at every "
+                                "level, though at the finest level (a view some sixty parsecs across) a half-mass "
+                                "radius of one to three parsecs spans tens of pixels. What closes it: a light profile "
+                                "of this radius at the levels that resolve it.",
+    "cluster_age": "drawn through the light and colour temperature the tables give at this age and [Fe/H], and "
+                   "through the region and bubble that grow with it.",
+    "cluster_bound": "not drawn as such, and the category matters (debt #115): a dissolved cluster - half the census "
+                     "by count, a sixth of the clusters' light at the defaults - is still a point of its summed light "
+                     "though its stars have spread over tens of parsecs; the accounting owed between the points and "
+                     "the region's sampled stars is that debt's.",
+    "cluster_metallicity": "drawn through the light and colour temperature the tables give at its [Fe/H] and age.",
+    "cluster_ionizing_photons": "drawn through its HII region: `hii_stromgren_radius` and `hii_halpha_emissivity` are "
+                                "this rate in the cloud's clumped gas.",
+    "cluster_wind_luminosity": "drawn through its bubble: `bubble_radius` and the shell's thickness and emissivity are "
+                               "this power, with the supernovae's, over the age.",
+}
+
+
+def _not_drawn(name: str) -> str:
+    why = NOT_DRAWN_WHY.get(name)
+    return f" **Not drawn by the viewer** (D191): {why}" if why else ""
+
+
 def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("viridis")) -> FieldDecl:
     return FieldDecl(name=name, label=label, unit=unit, kind=Kind.COLUMN, of="cluster",
-                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about)
+                     ramp=ramp, meaningful_zero=True, provenance="seeded", about=about + _not_drawn(name))
 
 
 CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
@@ -245,7 +273,7 @@ CLUSTER_BOUND = FieldDecl(
         "Bound, a seeded draw at the fraction of embedded clusters Lada & Lada 2003 find surviving to the "
         "Pleiades' age, whatever the mass; otherwise unbound and expanding, and dissolved — an association "
         "in the field, its stars still counted — once older than the age by which the same review finds "
-        "the unbound gone."
+        "the unbound gone." + _not_drawn("cluster_bound")
     ),
 )
 CLUSTER_METALLICITY = _column("cluster_metallicity", "[Fe/H]", "dex",
@@ -262,7 +290,10 @@ CLUSTER_LUMINOSITY = _column("cluster_luminosity", "Luminosity", "Lsun",
                              "The light of the cluster's stars, bolometric: the light per unit mass formed of a burst at the "
                              "cluster's age and [Fe/H], integrated over the IMF along the same isochrones the light stage "
                              "uses, times the mass - the sum over its members, not a sample of them. What a renderer draws "
-                             "the cluster as a point of light by, as it draws a star by its luminosity.",
+                             "the cluster as a point of light by, as it draws a star by its luminosity. Bolometric: a "
+                             "point painted by this through a blackbody's share at the colour temperature carries about "
+                             "twice the population's own light through an optical filter (debt #114); the cluster's "
+                             "band light is the same tables' and is the closer.",
                              ramp=Ramp("inferno", scale="log"))
 CLUSTER_LIGHT_TEMPERATURE = _column("cluster_light_temperature", "Colour temperature of its light", "K",
                                     "The correlated colour temperature of the cluster's summed light - the blackbody whose "
