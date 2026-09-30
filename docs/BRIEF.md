@@ -1,50 +1,46 @@
-# BRIEF — for S40: V3, region synthesis from the cloud vector (Fable's own row)
+# BRIEF — for S42's close: the owner's four answers and P6, built on Opus, awaiting Fable's rulings
 
-**For the session.** Open `session-40` from `main`; read this file, `BUILD_II.md` "V3" (lines 779–786),
-`RENDER_PHYSICS.md` §§4, 5 (5a the cloud vector, 5b the cluster object, 5c on-demand resampling — the hierarchy
-exists since S32), 6 (clumping: one mechanism, two payoffs), 7 (catalogue against field; region determinism),
-8; `stages/clouds.py` (the census's columns: mass, size, Mach, `cloud_density_pdf_width` σ_s, `cloud_source_offset`
-and `_angle`, `cloud_density_gradient` and `_gradient_angle`, state), `stages/nebular.py` (per region: R_S,
-n_e, T_e, `hii_halpha_emissivity` per volume, the Balmer decrement), `stages/bubbles.py` (per cluster: the
-bubble's radius, shell thickness, density, `bubble_shell_emissivity`; per remnant the same), `api/service.py`
-(`/api/region` with `level=`, `/api/clouds`, `/api/clusters` — the bubble and HII columns ride on it — `/api/
-remnants`, `/api/render` with `level=`), `frontend/src/galaxy/regimes.ts` (`REGIME_KPC` field 25 / stars 4,
-`regimeWeights`, `regionAround`), `GalaxyView.tsx` (the star layers), `api.ts` (`loadRegion`, `loadBrightest`,
-`loadRender`), `FieldVolume.tsx` (V2's march: the pattern V3 follows for a region volume). Debts from #110,
-decisions from D190; MANUAL_TODO's `s39` row takes S39's merge SHA. **Rulings to make before a number is printed
-(D113), each recorded in D190:** (1) **the level the view asks for** — a function of the view's width in kpc:
-level 0 above the stars handover (4 kpc), 1 below 1 kpc, 2 below 0.25, 3 below 0.06 `[inferred: 4^k the
-density]`, or the level at which a cell is at most N pixels wide — state which and why; (2) **the cloud
-interior** is synthesised in the shader from the log-normal at the published σ_s: a 3-D noise field whose
-one-point PDF is log-normal with that width (a sum of octaves exponentiated), seeded by the cloud's cell-and-
-index path so the same cloud is the same at every approach, with the density gradient tilting it and the
-Strömgren radius carving the HII cavity around the source offset — the pillars are the shadows of clumps the
-front did not eat, drawn by marching from the source; (3) **shells** from the bubble and remnant columns as
-thin spheres of the published shell thickness and emissivity (limb-brightened by the march, §4); (4) **the
-region's light** is the region's own: `/api/render` at the level for the stars (already volumetric per cell),
-the region's clusters' Hα from `hii_halpha_emissivity` inside R_S, the DIG from the field; the census stars
-drawn as points as today at the level's sample.
+**The state.** S40 (D190) and S41 (D191) are merged; the second build's last planned row is closed and its "done
+means" met but for the tag batch's *record*. **S42 is already built** on `session-42` (head ea06bdf, pushed,
+unmerged) by Opus 5.5 on 2026-09-27, **stacked on the pre-review `session-41` (beb278f)**; `docs/HANDOFF_S42.md`
+holds it: (1) the FSPS/Byler nebular grid fetched (`tools/fetch_nebular.py` → `data/nebular_lines.npz`, pinned
+commit) and four `hii_*_ratio` columns, per-ring lines, Hβ both layers, `/api/render` `lines_hii` / `lines_dig`;
+(2) rows 32 and 34 on Audit III's blind windows (row 34 passes, its miss removed; #100 stays; specs 12/19/5);
+(3) SVO WFC3 curves (`tools/fetch_filters.py` → `instruments.json`, sets `wfc3`, `wfc3n`) and an Airy sprite per
+channel; (4) the tag batch run — 39 tags s00–s20, s22–s39 on the remote (verified 2026-09-30), `s06`'s literal SHA
+in MANUAL_TODO had an extra digit (the tag points at a7148384433bb…); then a POST body for queries past 4 KB and
+**P6 proposed**: `/api/blackbody` (193 T, log-share interpolation ≤ 2.2e-3) and stars/clusters drawn as L × share_k(T)
+/ white_k through the chosen filter set instead of the ramp's hue. The four downloads were the owner's word in chat
+(D184, D186, D188); the handoff quotes it — check that before ruling.
 
-## What to build
-- The viewer's **region regime** below 4 kpc: `regionAround` picks the level; the loads become `/api/region?level=k`
-  (stars), `/api/clusters` (clusters with HII and bubble columns), `/api/clouds`, `/api/remnants` for the window;
-  a `RegionVolume` component marches cloud volumes (log-normal interiors, cavities, shells) and adds the star points.
-- The model side only if a column is missing (name it; every existing field bit-identical). The seed for a
-  cloud's noise is its `(cell, index)` — publish nothing new for it (§5a: "the seed is the cell-and-index path").
-- **Gate** (BUILD_II V3): RENDER_PHYSICS §7's catalogue-against-field — the region's light integrated over a
-  patch (the stars at the level plus the clusters' Hα) equals the field's at that patch (the render at level 0
-  over the same window) within the census's Poisson noise, asserted by a Python test that drives the routes and
-  integrates without a browser; and **determinism across zoom levels** — a nebula the same at every approach:
-  the same cloud's parameters and seed at levels 1, 2, 3 (a test on the routes) and a vitest that the noise
-  field for a given seed is bit-identical across two constructions.
+## What to do, in order
+1. `git checkout session-42; git merge main`. **Expect conflicts**: `tests/test_v4.py` (S42 moves `hii_balmer_decrement`
+   and the four ratios to DRAWN; S41 added the sentence assertions, the 25 / 38 count and a measurement test — keep
+   both: the count becomes 30 / 37, and `nebular.NOT_DRAWN_WHY` must lose its `hii_balmer_decrement` entry or the
+   DRAWN assertion fails); `model/galaxy/stages/nebular.py` (S41 inserted `NOT_DRAWN_WHY` above `_D4`; S42 added
+   columns — new drawn columns need no entry); possibly `tests/test_audit.py`'s pins and the docs S41 rewrote.
+2. Read the core diff against `main`, then rule (D192): the four answers as recorded, the grid's edge clamp (26 % of
+   regions at +0.2 dex — recorded, unjudged; a candidate debt), the WFC3 PSF as a display choice, the POST path, and
+   **P6** — D191 already says how it sits: P6 makes the point's hue follow the filter set (RENDER_PHYSICS §2a) but
+   keeps the blackbody's bolometric correction, so it does **not** close #114 (the object's own band light does);
+   the exposure ranking by bolometric L is a display choice to state. Do not record P6 as closing #114.
+3. **The tag batch's record** (P4, D191 deferred it here): paste `git ls-remote --tags origin` under D161, mark every
+   MANUAL_TODO row **applied** (correct `s06`), tick S22 ◐ → ☑ — GALAXY_PLAN §5d's last "done means" item.
+4. Board row 42 (new row; `tools/progress.py` counts it — the bar becomes /43), model **Opus 5.5** built / Fable ruled;
+   debts from **#117**; register pins in `test_audit.py` (`(59, 40)` now, the carried row ends `…, 114, 115, 116 | 48 |`);
+   LESSONS; RESUMING (≤ 120) and this file for the maintainer; MANUAL_TODO `s41` = S41's merge SHA, `s42` TBD;
+   delete HANDOFF_S42.md. Retire nothing else: RENDER_PHYSICS §0's `halpha_surface_brightness` went at S41.
+5. Gate: `uv run python -m galaxy.specs` (expect **12 / 19 / 5 of 36**), vitest (S42: 16 files / 120 tests), and
+   `uv run pytest -q` **backgrounded with its own EXIT= line** (~20 min; `test_s21b_the_catalogue_is_priced_per_cell…`
+   is load-flaky — re-run alone if it is the only failure). Merge `--no-ff`, subject `Merge S42 into main: … (D192)`;
+   push both; `uv run python tools/verify_clone.py --ref main` on a quiet machine.
 
 ## Traps
-- No downloads. The owner watches :5173 live: one consistent edit per file; a scratch port for checks.
-- Machine: `uv run`; `npm --prefix frontend run test -- --run`, `run build`; the Bash tool fails over ~8 KB;
-  cp1252 console; LF newlines; `grep -c` exits 1 on zero matches; `git commit -F -` fails, use a file.
-- **Do not merge or delete** the sealed audit branches (MANUAL_TODO §2) or `claude/blissful-poitras-2cbbd3`.
-
-## At close
-Board row 40 ☑ (Fable 5.1); `progress.py`; the suite backgrounded, merge gated on its EXIT line; D190; RESUMING
-(≤ 120) and this file for **S41 (V4, clusters as objects, instruments, close-out, Opus)**; `MANUAL_TODO.md` row
-`s40` with `s39`'s SHA; merge `--no-ff`, push, `verify_clone --ref main` on a quiet machine.
+- Never force-push; never touch :5173; a scratch check uses `.claude/launch.json` "prod" (:8018, `npx vite build`
+  first), stopped after; the canvas is black ~15–20 s on first load; each reload needs six "Confirm & lock" clicks.
+  `uv run` only; LF newlines; the Bash tool fails over ~8 KB; `grep -c` exits 1 on zero; `git commit -F -` fails here.
+- **Do not merge or delete** the sealed branches (MANUAL_TODO §2, `claude/blissful-poitras-2cbbd3`).
+- #114–#116 (D191) stand in code by design: the cluster points paint bolometric light, the dissolved clusters are
+  points, the sprite has no extent. S42's `colors.ts channelShare` touches the same painting — rule, do not rebuild.
+- The WFC3 render sends ≈ 20 KB of curves; the POST path exists for the Azure ingress — a browser check of `wfc3`
+  through the built `dist/` is the P3-style gate for it.

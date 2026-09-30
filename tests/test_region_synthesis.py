@@ -6,9 +6,11 @@
 2. Determinism across levels: over one level-0 cell, the clouds and the clusters /api/clouds and /api/clusters
    return at levels 1, 2 and 3 are the level-0 rows, column for column - a nebula the same at every approach.
 
-Measured at S40 (Opus build to Fable's rulings; docs/HANDOFF_S40.md). Small windows are recorded, not gated: the HII
-luminosities are heavy-tailed (a few bright regions carry the sum), so a window of a few hundred clusters usually
-reads low and occasionally far high, and the realised sqrt(sum L^2)/sum L understates that spread.
+Measured at S40 (Opus build to Fable's rulings, D190). Small windows are recorded, not gated: the HII luminosities
+are heavy-tailed (a few bright regions carry the sum), so a window of a few hundred clusters usually reads low and
+occasionally far high, and the realised sqrt(sum L^2)/sum L understates that spread. The ruling (D190): a window is
+judged against the population's second moment, sigma(N) = sqrt(<L^2>)/<L> / sqrt(N), and many windows by their
+z-scores' mean - the third test below.
 """
 
 from __future__ import annotations
@@ -68,12 +70,48 @@ def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, me
 
 
 def test_small_windows_are_recorded_not_gated(svc):
-    """The heavy tail at work: two windows of a few hundred clusters read 0.67 and 0.51 (1.4 and 2 of their own
-    realised noise low). Pinned as the record Fable reviews (HANDOFF_S40, D190), with no pass/fail on the ratio."""
+    """The heavy tail at work: two windows of a few hundred clusters read 0.67 and 0.51 (1.4 and 2.0 of their own
+    realised noise low; 1.4 and 1.1 of the population's sigma(N), D190). Pinned as the record, no pass/fail on the ratio."""
     r1, n1, k1 = _clusters_against_field(svc, _window(6.0, 10.0, 0.0, 1.2), 1)
     r2, n2, k2 = _clusters_against_field(svc, _window(7.0, 9.0, 0.0, 0.8), 2)
     assert r1 == pytest.approx(0.6745, abs=1e-3) and k1 == 832
     assert r2 == pytest.approx(0.5107, abs=1e-3) and k2 == 246
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.36, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.11, abs=0.02)
+
+
+# sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
+# of N regions scatters by C_POP / sqrt(N) about the field - 0.24 at N 832, 0.44 at N 246, 0.06 over the disc.
+C_POP = 6.898
+
+
+def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
+    """The ruling on the small windows (D190). A window's realised noise is correlated with its reading - a window
+    that misses the bright tail reads low and estimates its own noise low - so no one window's ratio is a gate. Sixty
+    level-1 windows tiling r 4-12 kpc (2 kpc rings, 15 sectors; 100-342 clusters each, median 163), each judged
+    against the population's sigma(N): z mean +0.15, sd 1.16, 90% inside 2 sigma and 98% inside 3; the ratios' mean
+    1.085 and median 0.857, the heavy tail's skew. The gate is the mean z; the median and the mean are the record."""
+    _, disc = _get(svc, "/api/clusters", _window(0.5, 20.0, 0.0, 2.0 * math.pi))
+    lum = np.asarray(disc["hii_halpha_luminosity"], dtype=float)
+    c_pop = math.sqrt(float((lum**2).mean())) / float(lum.mean())
+    assert c_pop == pytest.approx(C_POP, abs=1e-2)
+    ratios, sizes = [], []
+    for r0 in (4.0, 6.0, 8.0, 10.0):
+        for k in range(15):
+            p0, p1 = round(k * 2.0 * math.pi / 15, 6), round((k + 1) * 2.0 * math.pi / 15, 6)
+            q, _, n = _clusters_against_field(svc, _window(r0, r0 + 2.0, p0, p1), 1)
+            ratios.append(q)
+            sizes.append(n)
+    q, n = np.array(ratios), np.array(sizes)
+    assert n.min() >= 100 and len(q) == 60
+    z = (q - 1.0) / (c_pop / np.sqrt(n))
+    assert abs(float(z.mean())) < 0.5  # three standard errors of the mean at sd 1.16 over sixty windows
+    assert 0.7 < float(z.std()) < 1.5  # one galaxy-wide moment for a luminosity function that varies with radius
+    assert float(np.mean(np.abs(z) < 3.0)) >= 0.95
+    # the record, dated S40
+    assert float(z.mean()) == pytest.approx(0.15, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.8567, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(1.0853, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])

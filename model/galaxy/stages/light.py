@@ -100,17 +100,9 @@ LIGHT_TEMPERATURE = FieldDecl(
     ),
 )
 
-HALPHA_SURFACE_BRIGHTNESS = FieldDecl(
-    name="halpha_surface_brightness", label="Hα surface brightness Σ_Hα(R)", unit="Lsun/pc2",
-    kind=Kind.FIELD, axes=("R",), ramp=Ramp("magma", scale="log"), meaningful_zero=True,
-    about=(
-        "Line emission from the ionised gas around young massive stars (RENDER_PLAN M4): today's "
-        "sfr_surface_density times a Level 0 constant, 4.86 × 10⁷ L☉ per M☉/yr of star formation "
-        "(Kennicutt & Evans 2012 for a Kroupa IMF, D166). Intrinsic, before dust. Bolometrically a "
-        "thousandth of the starlight, but all of it in one red line, which is why star-forming "
-        "arms look pink in a colour image."
-    ),
-)
+# `halpha_surface_brightness` (D166: Σ_SFR times one constant, RENDER_PLAN M4) was published here from S24 to S40
+# and retired at S41 (D191, RENDER_PHYSICS §0): since S35 the nebular stage publishes the disc's Hα as its ionizing
+# photons redistributed, and the constant is that stage's check (`halpha_sfr_ratio`), not a field.
 
 BULGE_LUMINOSITY = FieldDecl(
     name="bulge_luminosity", label="Bulge luminosity", unit="Lsun", kind=Kind.SCALAR, meaningful_zero=True,
@@ -272,9 +264,6 @@ def compute(ctx: Context) -> Mapping[str, Any]:
 
     area = 2.0 * np.pi * R * (PC_PER_KPC**2)  # pc² per kpc of radius
 
-    # M4: the line. Σ_SFR is per kpc², the constant per M☉/yr.
-    halpha = np.asarray(ctx.fields["sfr_surface_density"], dtype=float) * float(ctx.constants["HALPHA_PER_SFR"]) / PC_PER_KPC**2
-
     # The bulge: old, at the abundance of the stars formed where it sits (a stated proxy).
     feh_bulge = bulge_abundance(R, formed, ctx.fields["feh_history"], float(ctx.fields["bulge_scale_radius"]))
     bulge_light, bulge_colour = population_at(np.array([age[0]]), np.array([feh_bulge]))
@@ -319,7 +308,6 @@ def compute(ctx: Context) -> Mapping[str, Any]:
         "disc_surface_brightness": brightness,
         "disc_light_temperature": temperature,
         "disc_luminosity": float(np.trapezoid(brightness * area, R)),
-        "halpha_surface_brightness": halpha,
         "bulge_luminosity": bulge_formed * float(bulge_light[0]),
         "bulge_light_temperature": float(correlated_temperature(bulge_colour)[0]),
     }
@@ -337,14 +325,14 @@ LIGHT = IMPLEMENTATIONS.register(
             "view draws under the star sample."
         ),
         compute=compute,
-        reads_constants=("RETURN_FRACTION", "HALPHA_PER_SFR", "SOLAR_ABSOLUTE_MAGNITUDE_V"),
+        reads_constants=("RETURN_FRACTION", "SOLAR_ABSOLUTE_MAGNITUDE_V"),
         requires=(
             "stars_formed_history", "feh_history", "sfr_surface_density", "bulge_stellar_mass", "bulge_scale_radius",
             "stellar_mass_total", "disc_scale_length_spin",
         ),
         publishes=(
             SURFACE_BRIGHTNESS, LIGHT_TEMPERATURE, DISC_LUMINOSITY,
-            HALPHA_SURFACE_BRIGHTNESS, BULGE_LUMINOSITY, BULGE_LIGHT_TEMPERATURE,
+            BULGE_LUMINOSITY, BULGE_LIGHT_TEMPERATURE,
             *BAND_MAGNITUDES, COLOUR_B_V, MASS_TO_LIGHT_V, BOLOMETRIC_CORRECTION_V,
             SURFACE_BRIGHTNESS_V, PHOTOMETRIC_SCALE_LENGTH, IONIZING_PHOTON_RATE, IONIZING_PHOTON_RATE_TOTAL,
             *DISC_SED, *BULGE_SED,

@@ -4,12 +4,21 @@ P1: a cluster is drawn as an object - a point of the light its stars sum to. Its
 stage's tables read at the cluster's age and [Fe/H], times its mass; never a sample (rule B8).
 P5: the #69 gate extended to the object classes. Every cloud, cluster and remnant column is either read by the viewer
 (the region volume's object table, frontend/src/galaxy/region.ts, or the cluster points) or listed here as not drawn
-yet - the inventory Fable rules on (D191): a column the viewer should draw, or one whose declaration should say why
-it is not drawn, as rule D4's sentence does for a catalogue stage's scalars. A new object column fails this test
-until it is placed in one list or the other.
+- the inventory Fable ruled on at D191: 25 drawn, 38 not (8 cloud, 24 cluster, 6 remnant; the handoff had counted 39),
+and every not-drawn column's declaration carries the object-class twin of rule D4's sentence ("Not drawn by the
+viewer", D191) saying why - it reaches the picture through what it sets, nothing in a filter's image sees it, or
+it is owed (debts #115, #116). A new object column fails this test until it is placed in one list or the other, and
+a column moved to DRAWN must lose the sentence (its module's NOT_DRAWN_WHY entry).
+
+D191's measurements, pinned: the ramp's painting (L_bol through a blackbody's share at the colour temperature) puts
+about twice the population's own light through the viewer's optical filters (#114), and the clusters carry a
+quarter of the disc's bolometric light while the sampled catalogue holds almost none of it (#115).
 """
 
 from __future__ import annotations
+
+import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -18,7 +27,10 @@ from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
 from galaxy.run import run
-from galaxy.stages.photometry import correlated_temperature, population_at
+from galaxy.stages import spectra
+from galaxy.stages.photometry import band_flux_at, band_nu_l_nu, correlated_temperature, population_at
+
+ROOT = Path(__file__).resolve().parents[1]
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 
@@ -44,6 +56,36 @@ def test_a_clusters_light_is_its_mass_times_the_tables_at_its_age(coarse):
     assert np.median(T[age < 4]) > np.median(T[age > 15])
 
 
+def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_light(coarse):
+    """D191 (#114, #115). A point's channel is L_bol x a blackbody's share at T_cct (P1, the stars' convention; P6
+    makes the share explicit); the population's own eight-band SED through the same curve is what V1 draws the field
+    by. Summed over the census the ramp paints 1.89 / 2.12 / 2.43 times the population's R / G / B light - V1's
+    "about twice" (D188) at the object grain - with the error running from +0.18 mag at the youngest to +1.31 mag at
+    the oldest, so the old clusters are painted a magnitude too bright against the young. And the clusters hold
+    0.236 of the disc's bolometric light on this grid (0.249 at the default grid), the young population the sampled
+    catalogue barely carries; 0.47 of them by count are dissolved, holding 0.165 of the clusters' light."""
+    F = coarse.fields
+    L = np.asarray(F["cluster_luminosity"], dtype=float)
+    T = np.asarray(F["cluster_light_temperature"], dtype=float)
+    age = np.asarray(F["cluster_age"], dtype=float) / 1000.0
+    feh = np.asarray(F["cluster_metallicity"], dtype=float)
+    mass = np.asarray(F["cluster_mass"], dtype=float)
+    state = np.asarray(F["cluster_bound"])
+    rgb = spectra.parse_curves(json.loads((ROOT / "frontend/src/galaxy/filters.json").read_text(encoding="utf-8"))["sets"]["rgb"]["curves"])
+    flux = band_flux_at(age, feh, spectra.SED_BANDS)
+    sed = np.stack([band_nu_l_nu(flux[b], b) for b in spectra.SED_BANDS], axis=-1) * mass[:, None]  # L☉ per band
+    population = spectra.stellar_response(sed, T, rgb)
+    ramp = L[:, None] * spectra.blackbody_response(rgb, T)
+    summed = ramp.sum(axis=0) / population.sum(axis=0)
+    assert summed == pytest.approx([1.889, 2.118, 2.434], rel=2e-2), summed
+    error = 2.5 * np.log10(ramp[:, 1] / population[:, 1])
+    assert np.median(error[age < 0.004]) == pytest.approx(0.182, abs=0.03)
+    assert np.median(error[age > 0.015]) == pytest.approx(1.309, abs=0.03)
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2358, rel=2e-2)
+    dissolved = state == 2
+    assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
+
+
 # The columns the viewer reads (frontend/src/galaxy/region.ts packObjects; GalaxyTab's cluster points), and the
 # naming columns every census row carries (S40).
 DRAWN = {
@@ -57,7 +99,7 @@ DRAWN = {
     "remnant": {"remnant_radius", "remnant_azimuth", "remnant_height", "remnant_size", "remnant_shell_thickness",
                 "remnant_shell_emissivity"},
 }
-# Published and not drawn yet (S41): Fable's inventory to rule on.
+# Published and not drawn (S41, ruled at D191): each carries the "Not drawn by the viewer" sentence.
 NOT_DRAWN = {
     "cloud": {"cloud_velocity_dispersion", "cloud_mach_number", "cloud_age", "cloud_state", "cloud_source_offset",
               "cloud_source_angle", "cloud_metallicity", "cloud_alpha"},
@@ -74,7 +116,14 @@ NOT_DRAWN = {
 
 def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it for every registered model
     fields = Service().handle("/api/fields", f"model={model.name}").json()["fields"]
+    by_name = {f["name"]: f for f in fields}
     for of in ("cloud", "cluster", "remnant"):
         published = {f["name"] for f in fields if f["domain"] == "object" and f.get("of") == of}
         assert not DRAWN[of] & NOT_DRAWN[of], of
         assert published == DRAWN[of] | NOT_DRAWN[of], (of, sorted(published ^ (DRAWN[of] | NOT_DRAWN[of])))
+        # D191: the ruling lives in the declaration (rule A9), as debt #69's does for the scalars.
+        for name in NOT_DRAWN[of]:
+            assert "**Not drawn by the viewer** (D191)" in by_name[name]["about"], name
+        for name in DRAWN[of]:
+            assert "Not drawn by the viewer" not in by_name[name]["about"], name
+    assert sum(len(v) for v in DRAWN.values()) == 25 and sum(len(v) for v in NOT_DRAWN.values()) == 38
