@@ -635,6 +635,32 @@ def test_a_sampled_curve_is_the_curve_it_samples():
     assert spectra.line_response(both, 6562.8) == pytest.approx([parsed.at(np.array([6562.8]))[0]] * 2, rel=1e-4)
 
 
+def test_air_to_vacuum_is_morton_1991():
+    """n − 1 by Morton 1991's formula (as STScI cites it, WFC3 IHB section 6.5), worked by hand at σ = 2 µm⁻¹:
+    6432.8 + 2 949 810/142 + 25 540/37 = 27 896.4, so 2.7896e-4 at 5000 Å; 2.7895e-4 at [O III] 5006.8 and
+    2.7624e-4 at Hα 6562.8. S43 recorded 2.792e-4 at 5000 Å and 2.767e-4 at 6600 Å (the formula gives 2.7620e-4
+    there): neither reproduces from the formula as D195 writes it, and the line transmissions do not feel the
+    difference (2e-7 of 5007 Å is 0.001 Å)."""
+    assert spectra.air_to_vacuum(5000.0) / 5000.0 - 1.0 == pytest.approx(2.78964e-4, abs=1e-9)
+    assert spectra.air_to_vacuum(5006.8) / 5006.8 - 1.0 == pytest.approx(2.7895e-4, abs=5e-9)
+    assert spectra.air_to_vacuum(6562.8) / 6562.8 - 1.0 == pytest.approx(2.7624e-4, abs=5e-9)
+    assert spectra.air_to_vacuum(6600.0) / 6600.0 - 1.0 == pytest.approx(2.7620e-4, abs=5e-9)
+
+
+def test_a_vacuum_curve_reads_the_line_at_its_vacuum_wavelength():
+    """A 1 Å box centred on Hα's vacuum wavelength: declared vacuum it passes the air line whole, declared air
+    (or saying nothing) it misses it, 1.8 Å away. The key is echoed as sent, air when not sent."""
+    box = {"name": "b", "shape": "box", "centre": spectra.air_to_vacuum(6562.8), "width": 1.0}
+    vacuum, air, unsaid = spectra.parse_curves([box | {"wavelengths": "vacuum"}, box | {"wavelengths": "air"}, box])
+    assert list(spectra.line_response([vacuum, air, unsaid], 6562.8)) == [1.0, 0.0, 0.0]
+    assert [c.json()["wavelengths"] for c in (vacuum, air, unsaid)] == ["vacuum", "air", "air"]
+    # The continuum integral reads a curve as sent under either convention.
+    kelvin = np.array([5000.0])
+    assert spectra.blackbody_response([vacuum], kelvin) == spectra.blackbody_response([air], kelvin)
+    with pytest.raises(spectra.CurveError, match="wavelengths must be one of"):
+        spectra.parse_curves([box | {"wavelengths": "nm"}])
+
+
 def test_a_redder_temperature_is_redder_through_the_rgb_set():
     share = spectra.blackbody_response(spectra.parse_curves(SETS["rgb"]["curves"]), np.array([3500.0, 6500.0, 20000.0]))
     red_over_blue = share[:, 0] / share[:, 2]
@@ -810,12 +836,17 @@ def test_the_thermal_shape_carries_the_dust_stage_s_power(kelvin):
 
 def test_the_named_instrument_draws_the_lines_through_its_measured_curves(full):
     """S42 (the owner's word on #108): WFC3's narrowband palette through the model. Each line lands in its own
-    channel at the measured curve's throughput there, and the Halpha filter holds no [N II]."""
+    channel at the measured curve's throughput there, and the Halpha filter holds no [N II]. The curves are STScI's,
+    on vacuum wavelengths, and say so; the model's air lines are converted by Morton 1991 before they are read
+    (S44, D195, #120)."""
     header, arrays = render(full, "basic", "wfc3n", white="6500")
     lines = header["components"]["lines_hii"]["lines"]
-    assert header["components"]["halpha_hii"]["transmission"][1] == pytest.approx(0.962, abs=2e-3)  # F656N at 6562.8 A
-    assert lines["oiii_5007"]["transmission"][2] == pytest.approx(0.903, abs=2e-3)  # F502N
-    assert lines["sii_6716"]["transmission"][0] > 0.95 and lines["sii_6731"]["transmission"][0] > 0.85  # F673N
+    assert [c["wavelengths"] for c in header["filters"]] == ["vacuum"] * 3
+    # S44: was 0.962 with the air line placed on STScI's vacuum curve (D195, #120)
+    assert header["components"]["halpha_hii"]["transmission"][1] == pytest.approx(0.945, abs=2e-3)  # F656N at 6562.8 A
+    # S44: was 0.903 with the air line placed on STScI's vacuum curve (D195, #120)
+    assert lines["oiii_5007"]["transmission"][2] == pytest.approx(0.899, abs=2e-3)  # F502N
+    assert lines["sii_6716"]["transmission"][0] > 0.95 and lines["sii_6731"]["transmission"][0] > 0.85  # F673N: 0.958, 0.863
     assert lines["nii_6583"]["transmission"][1] < 0.02 and lines["hbeta"]["transmission"] == [0.0, 0.0, 0.0]
     assert np.all(np.isfinite(arrays["stars"])) and all(v > 0 for v in header["white"]["response"])
 

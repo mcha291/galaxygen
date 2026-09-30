@@ -6,11 +6,15 @@
 import data from "./filters.json";
 import instruments from "./instruments.json";
 
-/** One filter's transmission, as the model's spectrum function takes it (stages/spectra.py). Å, air. */
-export type Curve =
+/**
+ * One filter's transmission, as the model's spectrum function takes it (stages/spectra.py). Å; air unless the
+ * curve says vacuum (a named instrument's, S44, D195): the model converts its air lines before reading one.
+ */
+export type Curve = { wavelengths?: "air" | "vacuum" } & (
   | { name: string; shape: "gaussian"; centre: number; fwhm: number }
   | { name: string; shape: "box"; centre: number; width: number }
-  | { name: string; shape: "sampled"; wavelength: number[]; transmission: number[] };
+  | { name: string; shape: "sampled"; wavelength: number[]; transmission: number[] }
+);
 
 export interface FilterSet {
   label: string;

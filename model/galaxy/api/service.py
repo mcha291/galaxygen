@@ -206,8 +206,9 @@ ROUTES: tuple[Route, ...] = (
         "/api/render",
         "The filter integral, run here (RENDER_PHYSICS section 0's ruling (a), S38): filters=<JSON list of the "
         "viewer's curves, each {name, shape: gaussian (centre, fwhm) | box (centre, width) | sampled (wavelength, "
-        "transmission)}, angstroms> returns, per cell of the (R, phi) grid inside the window - or per level-k region "
-        "cell with level=k - each emitting component's response in each filter, never composited: stars (the "
+        "transmission), optionally wavelengths: air | vacuum (air unless it says so; the lines are converted to "
+        "vacuum before a vacuum curve is read, S44)}, angstroms> returns, per cell of the (R, phi) grid inside the "
+        "window - or per level-k region cell with level=k - each emitting component's response in each filter, never composited: stars (the "
         "population's eight-band spectrum joined into a continuum, times the pattern's contrast), the Halpha line as "
         "two volumetric layers (halpha_hii placed by the contrast, halpha_dig per ring; S39), and the dust as "
         "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
