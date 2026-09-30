@@ -167,15 +167,23 @@ start new work in the hope of finishing before the limit. *Justification: leavin
 the next session to reconstruct where the last one got to is the single most
 expensive failure this protocol exists to prevent.* `[inferred]`
 
-**C2e. Sessions do not tag; they queue the command.** A session's close appends
-its `git tag -a s<NN> <merge sha> -m …` line to `MANUAL_TODO.md` and fills in the
-*previous* session's merge SHA, which was unknowable while that merge was being
-written. The tags are applied in one batch, by hand, at the end of the build.
-*Justification: the environment the web sessions run in refuses tag refs — a tag
-push returns HTTP 403 where a branch push to `main` succeeds, so a close ritual
-that ends in a tag ends in a failure every time* `[verified: DECISIONS.md D40]`.
-*A step that cannot succeed is not a step; queueing it keeps the record honest and
-the ritual completable.* `[inferred]`
+**C2e. A session tags its own merge at close, and checks the remote.** After the
+`--no-ff` merge and its push, the close ritual ends with `git tag -a s<NN> <merge
+sha> -m "S<N>: …"`, `git push origin s<NN>`, and `git ls-remote --tags origin` read
+back — the listing is the check, because a tag push that did nothing and one that
+succeeded both print little. The session then marks its own row **applied** with
+the SHA in `MANUAL_TODO.md` §1 (the table is the tag record; a test asserts a row
+for every ☑ session). *Amended 2026-09-30 on the owner's word — "do them with each
+session from now on" — because this desktop checkout pushes tag refs: `s40`–`s42`
+went up the same way on the same day* `[verified: DECISIONS.md D193]`. **Until
+D193 the rule read: sessions do not tag; they queue the command.** The web
+environment the first build ran in refused tag refs — a tag push returned HTTP 403
+where a branch push to `main` succeeded, so a close ritual that ended in a tag
+ended in a failure every time `[verified: DECISIONS.md D40, D161]` — and the
+commands were queued in `MANUAL_TODO.md` and run in one batch from a desktop
+(2026-09-27, D192). **A session that finds itself behind that proxy again queues
+the command as before** and says so in its decision: a step that cannot succeed is
+not a step `[inferred]`. A partial close (C2d) still does not tag.
 
 **C2c. Credentials never enter the repository.** The token lives in the container
 environment or a credential file outside the working tree, never in a tracked

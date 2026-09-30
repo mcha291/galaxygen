@@ -25,8 +25,8 @@ reconciliation are in `DECISIONS.md` D172.
 - **One board row = one phase = one `session-NN` branch = one `--no-ff` merge**,
   closed by §5's ritual: board ticked, `progress.py`, the full suite backgrounded
   with `EXIT=$?` on its log and the merge gated on that line, DECISIONS/LESSONS,
-  cold timings when a stage's cost changes, RESUMING/BRIEF, MANUAL_TODO's tag
-  row, push, `verify_clone`.
+  cold timings when a stage's cost changes, RESUMING/BRIEF, push, the tag on the
+  merge with its MANUAL_TODO row (C2e since D193; queued until then), `verify_clone`.
 - **Sessions are sequential, so numbers are sequential**: debts from **#80**,
   decisions from **D173**, each taken at the moment the entry is written. No
   reserved blocks (S15's lesson: reservations were restated as counts the first

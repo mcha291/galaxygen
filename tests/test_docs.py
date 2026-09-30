@@ -80,10 +80,13 @@ def test_decisions_are_numbered_sequentially():
 
 
 def test_manual_todo_carries_a_row_for_every_closed_session():
-    """Rule C2e: no session tags, so the queue is the only record that a tag is owed.
+    """Rule C2e: MANUAL_TODO's table is the tag record, one row per closed session.
 
-    The failure this prevents is the one that only shows up at the end, when the
-    tags are applied in a batch and one session is quietly missing from it.
+    Until D193 no session tagged and the table was the queue; the failure this
+    prevented was the one that only shows up at the end, when the tags are applied
+    in a batch and one session is quietly missing from it. Since D193 a session tags
+    its own merge at close and writes its row applied, and a session that is closed
+    without a row has skipped the last step of the ritual.
     """
     board = text("GALAXY_PLAN.md")
     closed = [int(n) for n in re.findall(r"^\| ☑ \| (\d+) \| ", board, flags=re.M)]
@@ -96,8 +99,19 @@ def test_manual_todo_carries_a_row_for_every_closed_session():
 
 
 def test_every_queued_tag_has_a_command_to_run():
+    """A queued row names a command; no queued row means the file says so (D193)."""
     todo = text("MANUAL_TODO.md")
     queued = re.findall(r"^\| \d+ \| `(s\d+)` \|.*\| \*\*queued\*\*", todo, flags=re.M)
-    assert queued, "no queued tags; if every session is applied, say so here instead"
+    if not queued:
+        assert "**No tag is queued.**" in todo, "no row is queued, and the file does not say so"
     for tag in queued:
         assert f"git tag -a {tag} " in todo, f"{tag} is queued but no command is given for it"
+
+
+def test_rule_c2e_names_the_check_it_ends_with():
+    """The amended C2e (D193) ends the close with the listing, not the push's own output."""
+    rules = text("RULES.md")
+    assert "**C2e." in rules
+    c2e = rules.split("**C2e.")[1].split("**C2c.")[0]
+    assert "git ls-remote --tags origin" in c2e, "C2e must end the ritual with the listing read back"
+    assert "D193" in c2e

@@ -96,10 +96,11 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   in a Bessel approximation shifts v_c by a fraction of a percent, which is the
   size of an acceptance error bar and looks like physics `[verified:
   DECISIONS.md D28]`.
-- [close] Do not try to tag. The web environment's proxy refuses tag refs with
+- [close] Do not try to tag *from the web environment*. Its proxy refuses tag refs with
   HTTP 403 — the GitHub API says the *path* is not permitted, so it is a policy
   and not a token permission, and no credential fixes it. Queue the command in
-  `MANUAL_TODO.md` instead (rule C2e) `[verified: DECISIONS.md D40]`.
+  `MANUAL_TODO.md` instead (rule C2e as it read until D193) `[verified: DECISIONS.md D40]`.
+  A desktop checkout pushes tags, and since D193 a session tags its own merge at close.
 - [close] When a ritual step cannot succeed in this environment, change the
   ritual rather than repeating the failure or quietly skipping it. A close that
   ends in a guaranteed error trains everyone to ignore the error.

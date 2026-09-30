@@ -6,7 +6,8 @@ and 34 on Audit III's blind windows (**specs 12 / 19 / 5 of 36**, row 34 green a
 sharper terms), HST WFC3 from SVO with an Airy sprite, the tag batch run and recorded (39 tags, S22 ☑ at last);
 then the POST path and P6 (points through the filter set) ratified. The second build's "done means" is met in full
 (§5e), the first's was at S22 with the record now closed. **The register: 62 open = 11 permanent + 51 carried, 41
-discharged.** MANUAL_TODO queues `s40`–`s42` for the next batch, on the owner's word as before (C2e).
+discharged.** On 2026-09-30 the owner chose: "run the tags and do them with each session from now on, then proceed
+to do Audit IV" — `s40`–`s42` are on the remote, C2e is amended (D193), and S43 is Audit IV (option 1 below).
 
 ## What the owner could choose next (none started; each is one session's brief, numbered from S43 / D193 / #121)
 1. **Audit IV of the renderer, S38–S42** (the shape of Audit III, D186: aim written first, read-only agents, no

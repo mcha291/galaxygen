@@ -4451,7 +4451,25 @@ a9e14035697d883dd05929ddcf4f8ef6a0be8247  refs/tags/s37
 8d8c89475086421c77c13dace70cd9149c2f7564  refs/tags/s39^{}
 ```
 
-S22's board row ticks ◐ → ☑ with this listing; `s40`–`s42` are queued rows for the next batch (C2e).
+S22's board row ticks ◐ → ☑ with this listing; `s40`–`s42` were queued rows for the next batch (C2e).
+
+**The queue's last three ran on 2026-09-30 (S43, D193), from this desktop on the owner's word ("run the tags and do
+them with each session from now on"):** MANUAL_TODO's own `s40`–`s42` lines, `s42`'s grep resolving to
+`396bd66ea36849cb5d6034ff80a9893e588e2194`. `git ls-remote --tags origin` the same day — **42 tags, s00–s20 and
+s22–s42** — the tail of the listing (the first 39 pairs are as above, unchanged):
+
+```
+7b8f62122d62de64b491467a868a4873d26199d6  refs/tags/s39
+8d8c89475086421c77c13dace70cd9149c2f7564  refs/tags/s39^{}
+f3a15caecdd795c3427b86a13c4cd9446c783b42  refs/tags/s40
+73b95410fa1caad603f405de1924641cf4a584fd  refs/tags/s40^{}
+4a5f158eb53c2990c6219b5df4cc57b82256ac2b  refs/tags/s41
+75abd5e4029ea27b854c6d91b5201f5b62d88535  refs/tags/s41^{}
+b1d82a643c21817e544c1bb5ee6bba91bc751efa  refs/tags/s42
+396bd66ea36849cb5d6034ff80a9893e588e2194  refs/tags/s42^{}
+```
+
+No row is queued; from S43 each session tags its own merge (C2e as amended, D193).
 
 ### D162. Cold timings and the profile at S22 (rules B2, B6)
 
@@ -6661,3 +6679,42 @@ spider (#120; the download and the shape are the owner's and a ruling's).
 **The second build's "done means" (GALAXY_PLAN §5e), re-read at this merge.** Every item D191 read as met is met;
 the one it left — the tag batch's record — is written here and under D161, and S22 is ☑. **Both builds are
 closed.** The register reads 62 open = 11 permanent + 51 carried, 41 discharged.
+
+### D193. The owner's choice of 2026-09-30, in two rulings before any number: (a) sessions tag their own merges from now on — rule C2e amended, `s40`–`s42` on the remote, the queue retired to history; (b) Audit IV of the renderer commissioned as S43, its aim written before any code file was opened
+
+**The owner, in chat, on 2026-09-30, in these words: "run the tags and do them with each session from now on, then
+proceed to do Audit IV."** Recorded first (D113: rulings before numbers), on `session-43`, as the first commit of
+the session.
+
+**(a) Tags per session.** The three queued commands ran from this desktop before this branch was cut — MANUAL_TODO's
+own `s40`, `s41`, `s42` lines, `s42`'s grep resolving to `396bd66ea36849cb5d6034ff80a9893e588e2194` — and `git
+ls-remote --tags origin` lists **42 tags, s00–s20 and s22–s42**, the tail appended under D161 as its gate asks. **Rule
+C2e is amended**: the close ritual now ends, after the `--no-ff` merge and its push, with `git tag -a s<NN> <merge sha>
+-m "S<N>: …"`, `git push origin s<NN>` and `git ls-remote --tags origin` read back (the listing is the check — a tag
+push that did nothing and one that succeeded both print little, D161), and the session writes its own MANUAL_TODO §1
+row **applied** with the SHA; no row is left `TBD`, because the tag is made after the merge exists. The old text is
+kept inside the rule as history with its justification (D40's 403 was a policy on the web proxy's path, verified
+twice, D161), and the rule says what a session behind that proxy does: queue the command as before and say so in
+its decision. `MANUAL_TODO.md` §1 states the per-session procedure, marks `s40`–`s42` applied, and keeps the batch
+block as the record of what was run; `GALAXY_PLAN.md` (the board's tag paragraph, §5's step 5, the partial-close
+note), `RESUMING.md`, `BRIEF.md`, `BUILD_II.md`'s protocol line and the S1 lesson say the same. `tests/test_docs.py`:
+the row-per-☑-session test keeps its assertion with the new reason; the queued-tag test now accepts an empty queue
+only when the file says **"No tag is queued."**; a new test reads C2e and asserts it ends with the listing and cites
+this decision. *Justification:* the rule existed because a step that cannot succeed is not a step; on this checkout
+the step succeeds, and a tag made at close by the session that made the merge is the record kept where it cannot
+be forgotten (B13) instead of a queue filled one row behind. *Chosen against:* `git push origin --tags` at close (it
+pushes every local tag, including a stale one; the single ref is the honest command); dropping the MANUAL_TODO table
+(it is the one place the tag-to-session map is asserted by a test); deleting the batch block (history, D161).
+
+**(b) Audit IV commissioned.** The renderer as built S38–S42 — `spectra.py` and the sixteen SED fields, `/api/render`
+and `/api/blackbody`, the form-encoded POST, the dust's three components and the frame's balance, the region march
+(`region.ts`, `RegionVolume.tsx`, `FieldVolume.tsx`), the cluster points and `channelShare`, S42's grid reading and
+`instruments.json` — is audited in Audit III's shape (D186): the aim written in `docs/AUDIT_IV.md` §0 before any code
+file of the audit was opened, read-only reader agents (one re-reader of every constant and cited choice against its
+source sentence; one blind reader forbidden the repository, who sets the forbidden-line target for #117 and any
+other window the aim names), the re-derivations at a mesh the build did not use in `tests/test_audit_iv.py` (the one
+test file the audit adds), the greens conditioned with row 34 among them, the register's #107–#120 re-stated one line
+each. **B3 holds: the audit checks, the next session fixes — no model number moves.** The findings, the counts, the
+debts from #121 and the board row are D194's, written at this session's close. *Chosen against:* an audit that also
+applies its fixes (S37 → S38's split is the precedent, and it is what kept D186's counts honest); an Opus subagent
+running the audit (a Fable row, as S37 was: the judgement is the session's, the reading is the agents').

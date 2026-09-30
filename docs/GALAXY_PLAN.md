@@ -58,14 +58,16 @@ from intention rather than fact.
 
 ☐ not started · ◐ in progress or split · ☑ closed and verified
 
-**Tags are deferred to one batch at the end of the build** (rule C2e). The web
-sessions run behind an egress proxy that refuses tag refs — `git push origin s01`
-returns HTTP 403 while branch and `main` pushes succeed `[verified: DECISIONS.md
-D40]`. Rather than have every session fight it, no session tags: each appends its
-`git tag` command to `MANUAL_TODO.md`, and they are all applied in one go from the
-desktop. **The Tag column therefore names the tag a session has *earned*, not one
-that exists on the remote yet.** `MANUAL_TODO.md` is where the truth about which
-tags exist lives, and a test asserts it carries a row for every ☑ session.
+**Since S43 a session tags its own merge at close** (rule C2e as amended on the
+owner's word, D193): `git tag -a`, `git push origin s<NN>`, `git ls-remote --tags
+origin` read back, the row in `MANUAL_TODO.md` §1 written applied. **Until then tags
+were deferred to a batch.** The web sessions ran behind an egress proxy that refused
+tag refs — `git push origin s01` returned HTTP 403 while branch and `main` pushes
+succeeded `[verified: DECISIONS.md D40]` — so no session tagged: each appended its
+`git tag` command to `MANUAL_TODO.md`, and they were applied from the desktop in two
+runs (2026-09-27, `s00`–`s39`, D192; 2026-09-30, `s40`–`s42`, D193). **The Tag column
+names the tag on the remote**; `MANUAL_TODO.md` is where the truth about which tags
+exist lives, and a test asserts it carries a row for every ☑ session.
 
 **Next:** nothing is planned. Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
 `BUILD_II.md`), every "done means" item met, the tag batch run and recorded (D161, D192);
@@ -295,9 +297,10 @@ everything after its last push. See **Partial close** below.
    the gate, and known traps. This is the single highest-leverage artefact in the
    whole protocol; it is what lets the next session skip reading the plan.
 5. Commit, `--no-ff` merge to `main` with the subject `Merge S<N> into main: …`,
-   push branch and main. **Do not tag** (rule C2e): append this session's tag
-   command to `MANUAL_TODO.md`, and fill in the *previous* session's merge SHA
-   while you are there — it was unknowable until its merge existed.
+   push branch and main. **Then tag the merge** (rule C2e since D193): `git tag -a
+   s<NN> <merge sha> -m "S<N>: …"`, `git push origin s<NN>`, read `git ls-remote
+   --tags origin` back, and write this session's row in `MANUAL_TODO.md` §1 as
+   applied with the SHA. (Until D193 the step was "do not tag; queue the command".)
    **Never force-push** (rule C2a).
 6. **Verify by cloning the remote into a clean directory and running the suite
    there** (rule C2) — not by re-running in the working copy, which cannot detect
@@ -480,8 +483,8 @@ So, from the start rather than as a panic measure (rule C2d):
    was done and what remains to `BRIEF.md`, set this session's board row to ◐
    with a note. Do not start new work in the hope of finishing it.
 4. A partial close does **not** merge to `main`. The branch stays open and the
-   next session continues on it. No session tags in any case (rule C2e), so
-   there is nothing extra to withhold here.
+   next session continues on it. A partial close does not tag either (rule C2e:
+   the tag marks a merge, and there is none).
 
 ---
 

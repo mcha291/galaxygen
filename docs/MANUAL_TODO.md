@@ -5,25 +5,42 @@ blocks a session; everything here is owed before the project is finished.
 
 ## 1. Session tags
 
-**Why this file exists.** The web sessions push through an egress proxy that
-allows branch refs and refuses tag refs: `git push origin s01` returns HTTP 403,
-and the GitHub API answers `"Write access to this GitHub API path is not
-permitted through this proxy"`, while pushes to `main` in the same session
-succeed `[verified: DECISIONS.md D40]`. It is a policy on the path, not a
-permission on a token, so no credential handed to a session changes it. Rather
-than have eleven closes each end in the same failure, **no session tags** (rule
-C2e): each queues its command here, and they are all applied in one go from a
-desktop checkout at the end of the build. **The first batch ran on 2026-09-27** from
-this desktop, on the owner's word ("run the tag batch for me"): 39 tags, `s00`–`s20`
-and `s22`–`s39`, the listing under D161, the run recorded at D192. Rows `s40`–`s42`
-(the second build's last three, merged after the batch) are still queued: the next
-batch is the three commands at the end of "Run these", on the owner's word as before.
+**Since 2026-09-30 (rule C2e as amended, D193) every session tags its own merge at
+close and this table is the record, not a queue.** The procedure, after the
+`--no-ff` merge to `main` is pushed:
 
-**How a session updates this.** At close, a session adds its own row with the
-merge SHA left as `TBD` — a merge commit cannot contain its own hash — and
-**fills in the previous session's SHA**, which is knowable by then. So the table
-runs one row behind, by construction, and the last row is filled in by whoever
-closes the project.
+```sh
+git tag -a s<NN> <merge sha> -m "S<N>: <what the row did>"
+git push origin s<NN>
+git ls-remote --tags origin | grep "s<NN>"     # the listing is the check
+```
+
+then add the row below as **applied** with the SHA the tag peels to (a merge's
+hash is known once it exists; the tag is made after the merge, so no row is left
+`TBD` any more). **No tag is queued.** A session that finds itself behind a proxy
+that refuses tag refs (the web environment, below) queues its command here instead,
+marks its row **queued**, and says so in its decision.
+
+**Why this file exists (history, kept).** The web sessions pushed through an egress
+proxy that allowed branch refs and refused tag refs: `git push origin s01` returned
+HTTP 403, and the GitHub API answered `"Write access to this GitHub API path is not
+permitted through this proxy"`, while pushes to `main` in the same session
+succeeded `[verified: DECISIONS.md D40]`. It was a policy on the path, not a
+permission on a token, so no credential handed to a session changed it. Rather
+than have eleven closes each end in the same failure, **no session tagged** (rule
+C2e until D193): each queued its command here, and they were applied in one go from a
+desktop checkout. **The first batch ran on 2026-09-27** from this desktop, on the
+owner's word ("run the tag batch for me"): 39 tags, `s00`–`s20` and `s22`–`s39`,
+the listing under D161, the run recorded at D192. **Rows `s40`–`s42` were applied on
+2026-09-30** by the same desktop on the owner's word ("run the tags and do them with
+each session from now on"): 42 tags on the remote, the listing appended under D161
+(D193).
+
+**How a session updated this until D193.** At close, a session added its own row
+with the merge SHA left as `TBD` — a merge commit cannot contain its own hash — and
+**filled in the previous session's SHA**, which was knowable by then. So the table
+ran one row behind, by construction. Since D193 the tag is made after the merge and
+the row is written with its SHA at once.
 
 | S | Tag | Merge commit on `main` | State |
 |---|---|---|---|
@@ -82,9 +99,9 @@ closes the project.
 | 37 | `s37` | `12c5f80497cc` | **applied** 2026-09-27 — filled in by S38 |
 | 38 | `s38` | `80fbf33f9394` | **applied** 2026-09-27 — filled in by S39 |
 | 39 | `s39` | `8d8c89475086` | **applied** 2026-09-27 — filled in by S40 |
-| 40 | `s40` | `73b95410fa1c` | **queued** — filled in by S41 |
-| 41 | `s41` | `75abd5e4029e` | **queued** — filled in by S42 |
-| 42 | `s42` | TBD | **queued** — the next session fills the SHA in |
+| 40 | `s40` | `73b95410fa1c` | **applied** 2026-09-30 — filled in by S41; tagged on the owner's word of 2026-09-30 (D193) |
+| 41 | `s41` | `75abd5e4029e` | **applied** 2026-09-30 — filled in by S42; tagged the same day (D193) |
+| 42 | `s42` | `396bd66ea368` | **applied** 2026-09-30 — the SHA resolved by the grep below; the last row of the queue, tagged the same day (D193) |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and
@@ -124,15 +141,16 @@ so rather than claiming the close. Everything else on that list is met.
 desktop** — the two cannot both hold, and the plan carried that contradiction
 from the day it was written (D116).
 
-### Run these
+### The batch as it was run (history; nothing here is still to run)
 
 **Ran on 2026-09-27 through `s39`** (the listing under D161); the block is kept
 whole as the record of what was run, with `s06`'s SHA as the tag actually points
 (`a7148384433b…`; the literal here read `a71483844338`, one digit too many — D192).
-**Still to run: the last three commands, `s40`, `s41` and `s42`**, from a desktop
-checkout with a credential that can push tags — any normal personal access token
-with `Contents: read and write`, or SSH — on the owner's word, as the first batch was;
-`git push origin --tags` then pushes only what is new.
+**The last three commands, `s40`, `s41` and `s42`, ran on 2026-09-30** from this
+desktop on the owner's word (D193), `s42`'s grep resolving to
+`396bd66ea36849cb5d6034ff80a9893e588e2194`; `git ls-remote --tags origin` then listed
+42 tags, appended under D161. From S43 on, each session's close makes its own tag
+(§1's procedure above) and no command is queued here.
 
 ```sh
 git fetch origin --prune
@@ -273,10 +291,10 @@ git ls-remote --tags origin        # confirm; a push that says "Everything up-to
 **Then finish the record**, which is the only thing left after a batch runs:
 paste that `git ls-remote --tags origin` listing into `DECISIONS.md` under D161,
 and mark the rows above **applied** (done for `s00`–`s39` at S42's close, when
-S22's board row ticked ◐ → ☑; the next batch's rows are `s40`–`s42`). A tag
+S22's board row ticked ◐ → ☑, and for `s40`–`s42` at S43's opening, D193). A tag
 push that 403s prints an error and exits 1; a tag push that succeeded and a tag
 push that did nothing both print little, so the listing is the check and not the
-command's own output.
+command's own output — which is why the per-session procedure in §1 ends with it.
 
 `git rev-list -1 --grep=…` is exact because every session merge uses the subject
 `Merge S<N> into main: …` and no other commit does — checked after the rebuild:

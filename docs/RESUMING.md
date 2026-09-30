@@ -3,8 +3,8 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
 of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Both builds are closed and
 every row is ☑: S0–S22 (§5d; S22 ticked on 2026-09-30 once the tag batch's record was written, D161/D192) and
-S25–S42 (`BUILD_II.md`, §5e; S42 on 2026-09-30, D192). Nothing is planned. `BRIEF.md` says what the owner could
-choose next without starting it; the three queued tags `s40`–`s42` are MANUAL_TODO's, on the owner's word.**
+S25–S42 (`BUILD_II.md`, §5e; S42 on 2026-09-30, D192). The owner chose on 2026-09-30: tags per session from now
+on (C2e amended, `s40`–`s42` on the remote, D193) and Audit IV of the renderer — S43, on `session-43`.**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -111,10 +111,10 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
    pytest` once, quiet, **backgrounded with its exit status appended to its log**; the merge is gated on that line (D115, D120).
 1. Append to DECISIONS.md, new rules to LESSONS.md tagged (its `Tags:` line is the closed set), **the cold timings as
    `tools/timings.py` prints them** when a stage's cost changes (B2); rewrite this file (≤ 120) and BRIEF.md (≤ 60).
-2. Commit; `git checkout main && git merge --no-ff session-NN`, subject `Merge S<N> into main: …`; push both. **Do not
-   tag** (C2e): add your MANUAL_TODO.md row, fill the last session's SHA; never force-push. Then `tools/verify_clone.py --ref main`.
+2. Commit; `git checkout main && git merge --no-ff session-NN`, subject `Merge S<N> into main: …`; push both. **Then tag** (C2e,
+   D193): `git tag -a s<NN> <sha> -m "S<N>: …"`, `git push origin s<NN>`, `git ls-remote --tags origin` read back, your
+   MANUAL_TODO.md §1 row applied with the SHA; never force-push. Then `tools/verify_clone.py --ref main`.
 
-A session that stops early closes **partially** (C2d): commit, push, BRIEF.md, ◐, no merge. Opus subagents work in
-worktrees, neither push nor write DECISIONS.md; the orchestrator reads the core diff first. **A row built on Opus across
-Fable's limit** (S40–S42) leaves a `docs/HANDOFF_S<NN>.md`: Fable merges `main` in, runs the tests that count, reviews,
-rules, deletes it at close (D190–D192).
+A session that stops early closes **partially** (C2d): commit, push, BRIEF.md, ◐, no merge, no tag. Opus subagents work
+in worktrees, neither push nor write DECISIONS.md; the orchestrator reads the core diff first. **A row built on Opus across
+Fable's limit** (S40–S42) leaves a `docs/HANDOFF_S<NN>.md`: Fable merges `main` in, runs the tests that count, reviews, rules, deletes it at close (D190–D192).
