@@ -74,6 +74,9 @@ three places**: the registry's order (`DEFAULT = "basic"` first; the API takes `
 
 ## 2. The candidates, costed
 
+> **Superseded as the task list by `VIEWER_TASKS.md` (S47, 2026-10-01).** §2 and §3 below are kept as the
+> reasoning behind each cost; the one list of what remains, with what has been done since, is that file.
+
 Each: what exists, what the row builds, its gate (something checkable, per RENDER_PLAN Part 3: "looks right" is not a
 row), who builds it, the cost in sessions. **Model** marks a candidate that needs a new published field.
 

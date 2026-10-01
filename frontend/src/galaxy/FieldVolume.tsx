@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
   BackSide,
@@ -10,6 +10,7 @@ import {
   HalfFloatType,
   LinearFilter,
   Matrix4,
+  NearestFilter,
   Mesh,
   PlaneGeometry,
   RGBAFormat,
@@ -24,8 +25,9 @@ import {
 
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
-import { type FilterSetName, WHITE_KELVIN, bulgeLight, curvesOf, whiteOf } from "./filters";
+import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -35,18 +37,7 @@ import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type
  */
 export const LIGHT_PER_LSUN_PC2 = 1 / 400;
 
-/** Ray-march steps through the galaxy's bounding box. */
-const STEPS = 96;
-/**
- * The most pixels the field is marched at, whatever the screen: the image is stretched onto the
- * canvas, and the field is smooth, so this loses nothing to see. The work per frame has to be
- * bounded by a number, not by the display. Marching every pixel of a 4K screen the galaxy fills,
- * at a device pixel ratio of 2, is a billion shader iterations a frame; that outlasts Windows'
- * two-second GPU watchdog, the driver resets, and the browser does not come back.
- */
-const PIXEL_BUDGET = 400_000;
-/** And never more than half the drawing buffer's resolution on a side. */
-const MAX_RESOLUTION = 0.5;
+// The march's sampling (STEPS, PIXEL_BUDGET, MAX_RESOLUTION) is a display choice and lives in tuning.ts (D199).
 /** The points of the scattered light's phase table the shader holds (spectra.PHASE_POINTS). */
 const PHASE_POINTS = 21;
 
@@ -101,7 +92,8 @@ const VERTEX = /* glsl */ `
 // behind. Read once per step, a grazing step spans many cells, and neighbouring pixels quantised R at the
 // same step boundaries: the disc drew as concentric terraces. The columns are exact per sub-step and add
 // to the step's, so the sub-samples change where the layers are read, not how much light there is.
-const FRAGMENT = /* glsl */ `
+// The steps are compiled in (a GLSL loop needs a constant bound): a new count is a new shader (D199).
+export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D plane;
   uniform sampler2D scatter;
   uniform sampler2D hii;
@@ -111,6 +103,10 @@ const FRAGMENT = /* glsl */ `
   uniform float rHi;
   // One texel's radial width, kpc (regimes.ts PlaneTexture.cell): the sub-steps' in-plane length.
   uniform float planeCell;
+  // The most sub-samples a step reads (the Tuning panel's cap, D199), at most the loop's ${SUB_SAMPLES_MAX}.
+  uniform float subMax;
+  // 1 offsets each step by the pixel's fixed fraction; 0 reads each sub-step at its middle (D199).
+  uniform float dither;
   uniform float halfHeight;
   uniform float starsHeight;
   uniform float dustHeight;
@@ -196,13 +192,13 @@ const FRAGMENT = /* glsl */ `
     // screen, coarse where it is far and small. Even steps along a 60 kpc ray pass straight
     // over a disc 0.3 kpc thick a few hundred parsecs away.
     float tStart = max(tNear, 0.01);
-    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(${STEPS}));
+    float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(${steps}));
     // A per-pixel offset turns banding into fine noise: into each step for the bulge's point sample, and
     // into each sub-step for the layers' reads. Fixed by the pixel, never by the frame.
-    float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    float jitter = dither > 0.5 ? fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) : 0.5;
     vec3 light = vec3(0.0);
     vec3 transmitted = vec3(1.0);
-    for (int k = 0; k < ${STEPS}; k++) {
+    for (int k = 0; k < ${steps}; k++) {
       float a = tStart * pow(ratio, float(k));
       float ds = a * (ratio - 1.0);
       vec3 p = origin + dir * (a + jitter * ds);
@@ -214,7 +210,7 @@ const FRAGMENT = /* glsl */ `
       // it sits in the same dust as before; with n = 1 this is the single read per step of S39.
       vec3 p0 = origin + dir * a;
       vec3 p1 = p0 + dir * ds;
-      int n = int(clamp(ceil(length(p1.xz - p0.xz) / planeCell), 1.0, ${SUB_SAMPLES_MAX}.0));
+      int n = int(clamp(ceil(length(p1.xz - p0.xz) / planeCell), 1.0, subMax));
       float sub = ds / float(n);
       for (int j = 0; j < ${SUB_SAMPLES_MAX}; j++) {
         if (j >= n) break;
@@ -257,6 +253,20 @@ interface Props {
   /** The region regime's window and weight (S40): the field's HII fades there as the resolved spheres fade in. */
   regionWindow?: RegionWindow | null;
   hiiFade?: number;
+  /**
+   * The Tuning panel's display choices (D199): the march's sampling, the field's gain multiplier and the
+   * white point. The defaults are the values the view drew with before the panel.
+   */
+  tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin">;
+  /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
+  stats?: MarchStats;
+}
+
+/** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
+export interface MarchStats {
+  width: number;
+  height: number;
+  ms: number;
 }
 
 /**
@@ -266,16 +276,23 @@ interface Props {
  * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
  * responses over the white point, each component in the layer the model names.
  */
-export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0 }: Props) {
+export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0, tuning = TUNING_DEFAULTS, stats }: Props) {
+  const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
   const lit = Boolean(declared("disc_surface_brightness") && declared("disc_light_temperature"));
   const key = lit ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value ?? null;
-  const renderKey = lit ? JSON.stringify([filterSet, WHITE_KELVIN, query]) : null;
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), WHITE_KELVIN, query, signal));
+  const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query]) : null;
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
+
+  // Read when the material is built, so a mesh made after a steps change compiles once, with them.
+  const stepsNow = useRef(steps);
+  stepsNow.current = steps;
+  const filteringNow = useRef(filtering);
+  filteringNow.current = filtering;
 
   const mesh = useMemo(() => {
     const R = frame?.header.grid.axes.R;
@@ -300,18 +317,19 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       thermal: a.dust_thermal,
       white,
     });
+    const filter = filteringNow.current === "nearest" ? NearestFilter : LinearFilter;
     const polar = (values: Float32Array) => {
       const texture = new DataTexture(values, width, height, RGBAFormat, FloatType);
-      texture.minFilter = LinearFilter;
-      texture.magFilter = LinearFilter;
+      texture.minFilter = filter;
+      texture.magFilter = filter;
       texture.wrapS = ClampToEdgeWrapping;
       texture.wrapT = RepeatWrapping;
       texture.needsUpdate = true;
       return texture;
     };
     const ringTexture = new DataTexture(rings, width, RING_ROWS.count, RGBAFormat, FloatType);
-    ringTexture.minFilter = LinearFilter;
-    ringTexture.magFilter = LinearFilter;
+    ringTexture.minFilter = filter;
+    ringTexture.magFilter = filter;
     ringTexture.wrapS = ClampToEdgeWrapping;
     ringTexture.wrapT = ClampToEdgeWrapping;
     ringTexture.needsUpdate = true;
@@ -332,6 +350,8 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         rLo: { value: R.lo },
         rHi: { value: R.hi },
         planeCell: { value: cell },
+        subMax: { value: SUB_SAMPLES_MAX },
+        dither: { value: 1 },
         halfHeight: { value: halfHeight },
         // The model's layers (the render header): a missing one is height 0, which draws nothing.
         starsHeight: { value: layers.stars ?? 0 },
@@ -345,7 +365,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         hiiFade: { value: 0 },
       },
       vertexShader: VERTEX,
-      fragmentShader: FRAGMENT,
+      fragmentShader: fieldFragment(stepsNow.current),
       side: BackSide, // the far faces, so it draws with the camera outside the box or inside it
       depthTest: false,
       depthWrite: false,
@@ -380,7 +400,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     );
     quad.frustumCulled = false;
     quad.renderOrder = -1;
-    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0, region: "" } };
+    return { scene, target, quad, last: { view: new Matrix4(), projection: new Matrix4(), gain: -1, width: 0, height: 0, region: "", settings: "" } };
   }, [mesh]);
 
   useEffect(
@@ -397,22 +417,47 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     [mesh, offscreen],
   );
 
+  // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
+  useEffect(() => {
+    if (!mesh) return;
+    const material = mesh.material as ShaderMaterial;
+    const source = fieldFragment(steps);
+    if (material.fragmentShader === source) return;
+    material.fragmentShader = source;
+    material.needsUpdate = true;
+  }, [mesh, steps]);
+
+  // The plane textures' sampling, set in place: no new textures, no new shader.
+  useEffect(() => {
+    if (!mesh) return;
+    const filter = filtering === "nearest" ? NearestFilter : LinearFilter;
+    const uniforms = (mesh.material as ShaderMaterial).uniforms;
+    for (const name of ["plane", "scatter", "hii", "rings"]) {
+      const texture = uniforms[name].value as DataTexture;
+      if (texture.minFilter === filter && texture.magFilter === filter) continue;
+      texture.minFilter = filter;
+      texture.magFilter = filter;
+      texture.needsUpdate = true;
+    }
+  }, [mesh, filtering]);
+
   // Before the composer (priority 1) draws the frame: march again only if the camera, the
-  // drawing size or the gain changed. A still view costs nothing after its first frame.
+  // drawing size, the gain or a tuning choice changed. A still view costs nothing after its first frame.
   useFrame(({ camera }) => {
     if (!mesh || !offscreen) return;
-    const gain = LIGHT_PER_LSUN_PC2 * 2 ** stops * weight;
+    const gain = LIGHT_PER_LSUN_PC2 * fieldGain * 2 ** stops * weight;
     const buffer = gl.getDrawingBufferSize(DRAWING);
-    const scale = Math.min(MAX_RESOLUTION, Math.sqrt(PIXEL_BUDGET / Math.max(1, buffer.x * buffer.y)));
+    const scale = Math.min(resolution, Math.sqrt(pixelBudget / Math.max(1, buffer.x * buffer.y)));
     const width = Math.max(1, Math.round(buffer.x * scale));
     const height = Math.max(1, Math.round(buffer.y * scale));
     const last = offscreen.last;
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
+    const settings = `${steps},${subMax},${dither},${filtering}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
-      last.width !== width || last.height !== height || last.region !== region;
+      last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
     // React may build the memo above twice (StrictMode), and adding the mesh to the second scene
     // takes it out of the first; whichever scene is kept, the mesh goes back into it here.
     const reattached = mesh.parent !== offscreen.scene;
@@ -423,11 +468,15 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     uniforms.gain.value = gain;
     (uniforms.regionWindow.value as Vector4).set(w?.r_min ?? 0, w?.r_max ?? 0, w?.phi_min ?? 0, w?.phi_max ?? 0);
     uniforms.hiiFade.value = region ? hiiFade : 0;
+    uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
+    uniforms.dither.value = dither ? 1 : 0;
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);
     gl.clear(true, false, false);
+    const started = performance.now();
     gl.render(offscreen.scene, camera);
+    const ms = performance.now() - started;
     gl.setRenderTarget(before);
     gl.setClearColor(0x000000, 1);
     last.view.copy(camera.matrixWorld);
@@ -436,6 +485,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     last.width = width;
     last.height = height;
     last.region = region;
+    last.settings = settings;
+    if (stats) {
+      stats.width = width;
+      stats.height = height;
+      stats.ms = ms;
+    }
   }, 0.5);
 
   void size; // re-render on resize so the target follows the canvas

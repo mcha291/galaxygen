@@ -1,5 +1,5 @@
 import { identify } from "@interface/stars.js";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   type BlackbodyTable,
@@ -19,15 +19,17 @@ import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
-import { FieldVolume } from "./FieldVolume";
+import { FieldVolume, type MarchStats } from "./FieldVolume";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
-import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, WHITE_KELVIN, curvesOf } from "./filters";
+import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
 import { instrumentPsf } from "./psf";
 import { footprint } from "./frustum";
 import { GalaxyView, type Preset, type StarLayer, type ViewState } from "./GalaxyView";
 import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
+import { type Tuning, loadTuning, saveTuning } from "./tuning";
+import { TuningPanel, useDebounced } from "./TuningPanel";
 import { scaleBar } from "./zoom";
 import styles from "./GalaxyTab.module.css";
 
@@ -114,9 +116,16 @@ function zoomForWidth(view: ViewState, width: number): number {
   return Math.min(1, Math.max(0, view.zoom - Math.log(width / view.across) / Math.log(1600)));
 }
 
-function colorsFor(meta: FieldsPayload, sample: Sample, field: string, exposure: number, table: BlackbodyTable | null = null): Float32Array | null {
+function colorsFor(
+  meta: FieldsPayload,
+  sample: Sample,
+  field: string,
+  exposure: number,
+  table: BlackbodyTable | null = null,
+  pointGain = 1,
+): Float32Array | null {
   try {
-    return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure, table) : starColors(meta, sample.columns, field);
+    return field === PHOTOMETRIC ? photometricColors(meta, sample.columns, exposure, table, pointGain) : starColors(meta, sample.columns, field);
   } catch {
     return null; // the fields for a just-switched model have not arrived yet
   }
@@ -137,8 +146,21 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
   const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
+  // The Tuning panel's display choices (D199): a UI preference kept in localStorage, today's values by default.
+  const [tuning, setTuningState] = useState<Tuning>(() => loadTuning());
+  const setTuning = (t: Tuning) => {
+    setTuningState(t);
+    saveTuning(t);
+  };
+  // A new step count recompiles the march's shader and a new white point asks the model again: both wait for the slider to settle.
+  const steps = useDebounced(tuning.steps, 300);
+  const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
+  const fieldTuning = { ...tuning, steps, whiteKelvin };
+  const marchStats = useRef<MarchStats>({ width: 0, height: 0, ms: 0 }).current;
+  const pointGain = tuning.pointGain;
   // The filter set's blackbody table (S42, P6): stars and clusters are drawn through the same curves as the field.
-  const blackbodyTable = useLoad<BlackbodyTable>(filterSet, (signal) => loadBlackbody(curvesOf(filterSet), WHITE_KELVIN, signal)).value ?? null;
+  const blackbodyKey = JSON.stringify([filterSet, whiteKelvin]);
+  const blackbodyTable = useLoad<BlackbodyTable>(blackbodyKey, (signal) => loadBlackbody(curvesOf(filterSet), whiteKelvin, signal)).value ?? null;
   // A named instrument's filter set brings its point spread function to the stars (S42).
   const spritePsf = useMemo(() => instrumentPsf(FILTER_SETS[filterSet]), [filterSet]);
   const [brightestSlider, setBrightestSlider] = useState(500);
@@ -149,7 +171,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const field = paintable.includes(chosen) ? chosen : PHOTOMETRIC;
   const decl = meta.fields.find((f) => f.name === field);
   const bar = view ? scaleBar(view.pxPerKpc) : null;
-  const weights = regimeWeights(view?.across ?? REGIME_KPC.field * 2);
+  const weights = regimeWeights(view?.across ?? REGIME_KPC.field * 2, tuning.fieldFloor);
   const regime = REGIMES.find((r) => r.key === weights.active)!;
 
   // The stars regime: the window around where the view looks, at a sample size scaled to it.
@@ -175,8 +197,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   }, [shownClusters]);
   const clusterColors = useMemo(() => {
     if (!shownClusters || !shownClusters.columns.cluster_luminosity) return null;
-    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable);
-  }, [meta, shownClusters, exposure, blackbodyTable]);
+    return lightColors(meta, shownClusters.columns, exposure, "cluster_light_temperature", "cluster_luminosity", blackbodyTable, pointGain);
+  }, [meta, shownClusters, exposure, blackbodyTable, pointGain]);
 
   // The brightest mode: the frustum's footprint, a pool sized to it, and the top N inside the frustum.
   const rMax = meta.grid.axes.R?.hi ?? DISC_RADIUS * 1.5;
@@ -196,15 +218,15 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const bright = mode === "brightest" && brightest.value ? brightest.value : null;
 
   const samplePositions = useMemo(() => positionsOf(sample), [sample]);
-  const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable), [meta, sample, field, exposure, blackbodyTable]);
+  const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable, pointGain), [meta, sample, field, exposure, blackbodyTable, pointGain]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
-  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable) : null), [meta, detail, field, exposure, blackbodyTable]);
+  const detailColors = useMemo(() => (detail ? colorsFor(meta, detail, field, exposure, blackbodyTable, pointGain) : null), [meta, detail, field, exposure, blackbodyTable, pointGain]);
   const brightPositions = useMemo(() => (bright ? positionsOf(bright) : null), [bright]);
   // A selection is exposed to its own stars, as a photograph is (colors.ts); the slider's stops ride on top.
   const autoStops = useMemo(() => (bright ? exposureFor(bright.columns.star_luminosity) : 0), [bright]);
   const brightColors = useMemo(
-    () => (bright ? colorsFor(meta, bright, field, exposure + autoStops, blackbodyTable) : null),
-    [meta, bright, field, exposure, autoStops, blackbodyTable],
+    () => (bright ? colorsFor(meta, bright, field, exposure + autoStops, blackbodyTable, pointGain) : null),
+    [meta, bright, field, exposure, autoStops, blackbodyTable, pointGain],
   );
   // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each.
   const reach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);
@@ -238,13 +260,23 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
 
   return (
     <>
-      <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC} psf={spritePsf}>
+      <GalaxyView layers={layers} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC} psf={spritePsf} tuning={tuning}>
         {mode === "field" && (
-          <FieldVolume meta={meta} query={query} stops={exposure} weight={weights.field} filterSet={filterSet} regionWindow={area} hiiFade={area ? weights.stars : 0} />
+          <FieldVolume
+            meta={meta}
+            query={query}
+            stops={exposure}
+            weight={weights.field}
+            filterSet={filterSet}
+            regionWindow={area}
+            hiiFade={area ? weights.stars : 0}
+            tuning={fieldTuning}
+            stats={marchStats}
+          />
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} />
         )}
       </GalaxyView>
 
@@ -364,6 +396,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
             </div>
           )}
         </div>
+
+        <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} />
       </div>
 
       <div className={styles.regime}>

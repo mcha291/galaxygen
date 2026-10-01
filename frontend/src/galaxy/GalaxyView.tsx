@@ -1,7 +1,19 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { type ReactNode, useEffect, useMemo, useRef } from "react";
-import { AdditiveBlending, AgXToneMapping, Color, Matrix4, NormalBlending, type PerspectiveCamera, Vector2 } from "three";
+import {
+  ACESFilmicToneMapping,
+  AdditiveBlending,
+  AgXToneMapping,
+  Color,
+  LinearToneMapping,
+  Matrix4,
+  NormalBlending,
+  type PerspectiveCamera,
+  ReinhardToneMapping,
+  type ToneMapping as ThreeToneMapping,
+  Vector2,
+} from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -10,6 +22,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { extent } from "./positions";
 import { type SpritePsf, psfTexture } from "./psf";
+import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
 import { type ZoomRange, acrossOf, distanceOf, zoomOf } from "./zoom";
 import styles from "./GalaxyView.module.css";
 
@@ -53,17 +66,27 @@ interface Props {
   additive?: boolean;
   /** A named instrument's sprite (S42); the default PSF without one. */
   psf?: SpritePsf | null;
+  /** The Tuning panel's bloom, tone curve and sprite size (D199); the defaults are the view's before it. */
+  tuning?: ViewTuning;
 }
 
+export type ViewTuning = Pick<Tuning, "bloomStrength" | "bloomRadius" | "bloomThreshold" | "toneMapping" | "spriteSize">;
+
+/** The tone curves the Tuning panel offers, as three.js's constants. */
+const TONE_MAPPINGS: Record<ToneMapping, ThreeToneMapping> = {
+  agx: AgXToneMapping,
+  aces: ACESFilmicToneMapping,
+  reinhard: ReinhardToneMapping,
+  linear: LinearToneMapping,
+};
+
 const FOV = 45;
-const BLOOM = { strength: 0.35, radius: 0.45, threshold: 1.0 };
-const STAR_SPRITE_PX = 9;
 
 /**
  * The galaxy in 3D: drag to orbit, wheel to zoom towards the cursor, right-drag to pan.
  * It composites whatever it is given: the field as a child, star layers on top.
  */
-export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null }: Props) {
+export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null, tuning = TUNING_DEFAULTS }: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
@@ -78,9 +101,9 @@ export function GalaxyView({ layers = [], reach: framing, children, preset, zoom
       >
         {children}
         {layers.map((layer, i) => (
-          <Stars key={i} layer={layer} additive={additive} psf={psf} />
+          <Stars key={i} layer={layer} additive={additive} psf={psf} spriteSize={tuning.spriteSize} />
         ))}
-        {hdr && <HdrOutput />}
+        {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={layers} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge range={range} zoom={zoom} onView={onView} />
@@ -155,7 +178,10 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
  * of a disc is dim. AgX holds the source's hue to within a few percent below unit intensity and
  * only whitens the brightest light, as film does.
  */
-function HdrOutput() {
+function HdrOutput({ tuning }: { tuning: ViewTuning }) {
+  const latest = useRef(tuning);
+  latest.current = tuning;
+  const bloom = useRef<UnrealBloomPass | null>(null);
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
@@ -166,13 +192,15 @@ function HdrOutput() {
     // R5, kept restrained: only light above unit intensity blooms (the core, the brightest
     // giants), and not by much. Bloom is also the fastest way to make an instrument look like
     // a screensaver (RENDER_PLAN R5).
-    c.addPass(new UnrealBloomPass(new Vector2(size.width, size.height), BLOOM.strength, BLOOM.radius, BLOOM.threshold));
+    const t = latest.current;
+    bloom.current = new UnrealBloomPass(new Vector2(size.width, size.height), t.bloomStrength, t.bloomRadius, t.bloomThreshold);
+    c.addPass(bloom.current);
     c.addPass(new OutputPass()); // tone mapping and the sRGB encode, once
     return c;
   }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps -- resized below, not rebuilt
   useEffect(() => {
     const before = { toneMapping: gl.toneMapping, clear: gl.getClearColor(new Color()), alpha: gl.getClearAlpha() };
-    gl.toneMapping = AgXToneMapping;
+    gl.toneMapping = TONE_MAPPINGS[latest.current.toneMapping];
     // An opaque black ground: additive light over a transparent canvas leaves the alpha of the
     // brightest star, and light added to the design system's navy tints every faint pixel.
     gl.setClearColor(new Color(0, 0, 0), 1);
@@ -183,6 +211,19 @@ function HdrOutput() {
     };
   }, [gl, composer]);
   useEffect(() => composer.setSize(size.width, size.height), [composer, size]);
+  // The Tuning panel's bloom and tone curve, set in place: the pass reads its numbers at each render, and
+  // the output pass rebuilds its tone curve when the renderer's changes.
+  const { bloomStrength, bloomRadius, bloomThreshold, toneMapping } = tuning;
+  useEffect(() => {
+    const pass = bloom.current;
+    if (!pass) return;
+    pass.strength = bloomStrength;
+    pass.radius = bloomRadius;
+    pass.threshold = bloomThreshold;
+  }, [composer, bloomStrength, bloomRadius, bloomThreshold]);
+  useEffect(() => {
+    gl.toneMapping = TONE_MAPPINGS[toneMapping];
+  }, [gl, composer, toneMapping]);
   // A positive priority takes the render over from react-three-fiber.
   useFrame(() => composer.render(), 1);
   return null;
@@ -251,7 +292,7 @@ function Picker({ layers }: { layers: StarLayer[] }) {
   return null;
 }
 
-function Stars({ layer, additive, psf }: { layer: StarLayer; additive: boolean; psf: SpritePsf | null }) {
+function Stars({ layer, additive, psf, spriteSize }: { layer: StarLayer; additive: boolean; psf: SpritePsf | null; spriteSize: number }) {
   const opacity = layer.opacity ?? 1;
   return (
     // No pointer handlers: picking is the Picker's, in screen space.
@@ -266,7 +307,7 @@ function Stars({ layer, additive, psf }: { layer: StarLayer; additive: boolean; 
         alphaTest={psf?.alphaTest ?? 0.01}
         // A star is a point at any distance, so its sprite keeps one size on screen: the PSF's wings
         // need about this many pixels for its bright core to stay near two.
-        size={psf?.size ?? STAR_SPRITE_PX}
+        size={psf?.size ?? spriteSize}
         sizeAttenuation={false}
         // Field colours blend normally: overlapping stars adding up to white would paint a colour
         // the field declaration never gave (design brief §3). Radiance adds, because light does.

@@ -202,17 +202,25 @@ export const MARCH_SCALE_HEIGHTS = 16;
  * never goes fully away (most stars stay unresolved at any zoom); the sample fades in as the
  * galaxy fills the view and out again when a region's own stars take over.
  */
-export function regimeWeights(across: number): { field: number; sampled: number; stars: number; active: "field" | "sampled" | "stars" } {
+export function regimeWeights(
+  across: number,
+  floor: number = CLOSE_FIELD_FLOOR,
+): { field: number; sampled: number; stars: number; active: "field" | "sampled" | "stars" } {
   const ramp = (x: number, from: number, to: number) => Math.min(1, Math.max(0, (Math.log(from) - Math.log(x)) / (Math.log(from) - Math.log(to))));
   const stars = ramp(across, REGIME_KPC.stars, REGIME_KPC.stars / 2);
   const sampled = ramp(across, REGIME_KPC.field * 2, REGIME_KPC.field * 0.6) * (1 - stars);
   // Close up the region's own stars carry the light, so the field steps back to a faint glow of
   // what stays unresolved. Left at a third, the bulge's surface brightness — which does not fall
-  // as the camera closes in — flooded a close view white and hid every star in it.
-  const field = 1 - 0.7 * ramp(across, REGIME_KPC.field, REGIME_KPC.stars) - 0.27 * stars;
+  // as the camera closes in — flooded a close view white and hid every star in it. The floor is the
+  // Tuning panel's (D199): its offset from CLOSE_FIELD_FLOOR is added, so at the default it adds an
+  // exact zero and the weight is the S40 formula to the bit.
+  const field = 1 - 0.7 * ramp(across, REGIME_KPC.field, REGIME_KPC.stars) - 0.27 * stars + (floor - CLOSE_FIELD_FLOOR) * stars;
   const active = across >= REGIME_KPC.field ? "field" : across >= REGIME_KPC.stars ? "sampled" : "stars";
   return { field, sampled, stars, active };
 }
+
+/** The field's weight at the closest zoom, 1 − 0.7 − 0.27: a display choice (D199's field floor). */
+export const CLOSE_FIELD_FLOOR = 0.03;
 
 /** The view widths, kpc, where the regimes hand over: the field above the first, a region's stars below the second. */
 export const REGIME_KPC = { field: 25, stars: 4 };

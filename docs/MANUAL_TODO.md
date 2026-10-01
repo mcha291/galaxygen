@@ -106,6 +106,7 @@ the row is written with its SHA at once.
 | 44 | `s44` | `83d2ca25d7d7` | **applied** 2026-10-01 at S44's own close (C2e as amended, D193; D195); the SHA written on `main` in the commit after the merge, as S43's was |
 | 45 | `s45` | `11af920ba02c` | **applied** 2026-10-01 at S45's own close (C2e; D196); the SHA written on `main` in the commit after the merge, as S43's and S44's were |
 | 46 | `s46` | `7e23ba4337e5` | **applied** 2026-10-01 at S46's own close (C2e; D197, D198); the SHA written on `main` in the commit after the merge |
+| 47 | `s47` | *the S47 merge on `main`* | **applied** 2026-10-01 at S47's own close (C2e; D199); the literal SHA is written on `main` right after the merge |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and

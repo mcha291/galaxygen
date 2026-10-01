@@ -180,6 +180,8 @@ interface Props {
   /** The stars regime's weight, 0 to 1: the resolved objects fade in as the field's HII fades out. */
   weight: number;
   filterSet?: FilterSetName;
+  /** The white point, K (the Tuning panel's, D199): the same one the field is drawn with. */
+  whiteKelvin?: number;
 }
 
 /**
@@ -189,13 +191,13 @@ interface Props {
  * of a cloud included (an approximation of the composite, stated in HANDOFF_S40). The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
-export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb" }: Props) {
+export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN }: Props) {
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
   const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
   const remnants = useLoad<Census>(key, (signal) => loadRemnants(place, query, signal)).value ?? null;
-  const renderKey = JSON.stringify([filterSet, place, query]);
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), WHITE_KELVIN, { ...query, ...place }, signal)).value ?? null;
+  const renderKey = JSON.stringify([filterSet, whiteKelvin, place, query]);
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, { ...query, ...place }, signal)).value ?? null;
 
   const built = useMemo(() => {
     if (!clouds || !clusters || !remnants || !rendered) return null;
