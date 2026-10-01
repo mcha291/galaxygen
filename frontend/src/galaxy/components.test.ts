@@ -15,11 +15,11 @@ import {
   cellOutlines,
   cloudColors,
   cloudMarkerPx,
-  depthMedian,
-  depthPeak,
   diagnosticOn,
+  dustLevels,
   dustRamp,
   marchWanted,
+  ringDepths,
   rowsInWindow,
   whereLevel,
   whereTint,
@@ -55,12 +55,12 @@ describe("the march's layers (D205)", () => {
     const f = Math.fround;
     const mul = (a: number, b: number) => f(f(a) * f(b));
     const L = FIELD_LAYERS;
-    const level = whereLevel(L.where, 3.2, LIGHT_PER_LSUN_PC2);
-    expect(level).toBe(0);
-    for (const [bulge, n, col, plane, scat, therm, hii, dig, ring] of [
-      [3.7e-3, 3, 0.0123, 812.5, 4.1, 0.02, 63.1, 5.5, 0.71],
-      [1e-9, 8, 7.9e-7, 1e-3, 0, 0, 1e5, 0, 2.5],
-      [0, 1, 0.5, 0, 1e-12, 3.3, 0, 7.7e-3, 0],
+    const where = whereLevel(L.where, LIGHT_PER_LSUN_PC2);
+    expect(where).toBe(0);
+    for (const [bulge, n, col, plane, scat, therm, hii, dig, ring, level] of [
+      [3.7e-3, 3, 0.0123, 812.5, 4.1, 0.02, 63.1, 5.5, 0.71, 0.4],
+      [1e-9, 8, 7.9e-7, 1e-3, 0, 0, 1e5, 0, 2.5, 1],
+      [0, 1, 0.5, 0, 1e-12, 3.3, 0, 7.7e-3, 0, 0],
     ]) {
       expect(f(mul(bulge, L.stars) / n)).toBe(f(f(bulge) / n));
       expect(mul(col, L.stars)).toBe(f(col));
@@ -70,8 +70,8 @@ describe("the march's layers (D205)", () => {
       const tau = mul(ring, col);
       expect(mul(tau, L.dustDepth)).toBe(tau);
       const emitted = f(f(plane * col) + f(hii * col) + f(dig * col));
-      const tint = whereTint(L.whereStops, 0);
-      expect(f(emitted + mul(mul(level, tint[0]), f(tau / 3)))).toBe(emitted);
+      const tint = whereTint(L.whereStops, level);
+      expect(f(emitted + mul(mul(mul(where, level), tint[0]), col))).toBe(emitted);
     }
   });
 
@@ -98,72 +98,78 @@ describe("the march's layers (D205)", () => {
   });
 });
 
-describe("the dust diagnostic's normalisation (a display choice)", () => {
-  // Three R cells of the ring texture's depth row (RGBA): channel means 0.5, 3.2 and 1.
-  const rings = new Float32Array([0.6, 0.5, 0.4, 0, 3.6, 3.2, 2.8, 0, 1, 1, 1, 0, /* the next row, not depth */ 99, 99, 99, 0]);
-
-  it("is the depth ring's largest channel-mean face-on optical depth", () => {
-    expect(depthPeak(rings, 3)).toBeCloseTo(3.2, 6);
-    expect(depthPeak(new Float32Array(12), 3)).toBe(0);
-    expect(depthPeak(new Float32Array([Number.NaN, 1, 1, 0]), 1)).toBe(0);
+describe("the dust diagnostic: painted through its declared ramp and scale (A9)", () => {
+  it("reads each ring's channel-mean face-on optical depth from the depth row", () => {
+    const rings = new Float32Array([0.6, 0.5, 0.4, 0, 3.6, 3.2, 2.8, 0, 1, 1, 1, 0]);
+    expect(Array.from(ringDepths(rings, 3)).map((v) => Number(v.toFixed(6)))).toEqual([0.5, 3.2, 1]);
   });
 
-  it("is referred to the rings' area-weighted median face-on optical depth, over the rings with dust", () => {
-    // Cells over [0, 3] kpc, centres 0.5, 1.5, 2.5: areas ∝ 0.5, 1.5, 2.5 (total 4.5, half 2.25).
-    expect(depthMedian(rings, 3, 0, 3)).toBeCloseTo(1, 6); // depths 0.5, 3.2, 1: 0.5 holds 0.5, then 1 brings 3.0
-    // Weighting by area, not by ring: depths 3, 0.2, 0.1 — the outer ring holds more than half the area.
-    const outer = new Float32Array([3, 3, 3, 0, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0.1, 0]);
-    expect(depthMedian(outer, 3, 0, 3)).toBeCloseTo(0.1, 6); // the unweighted median would be 0.2
-    // A ring without dust takes no part: depths 0, 0.2, 0.1 over the same area weights.
-    const bare = new Float32Array([0, 0, 0, 0, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0.1, 0]);
-    expect(depthMedian(bare, 3, 0, 3)).toBeCloseTo(0.1, 6); // 2.5 of 4.0 at 0.1
-    const swapped = new Float32Array([0, 0, 0, 0, 0.1, 0.1, 0.1, 0, 0.2, 0.2, 0.2, 0]);
-    expect(depthMedian(swapped, 3, 0, 3)).toBeCloseTo(0.2, 6); // 1.5 of 4.0 at 0.1: the median is the outer 0.2
-    // No dust anywhere: zero, and whereLevel draws nothing rather than dividing by it.
-    expect(depthMedian(new Float32Array(12), 3, 0, 3)).toBe(0);
-    expect(whereLevel(1, depthMedian(new Float32Array(12), 3, 0, 3), LIGHT_PER_LSUN_PC2)).toBe(0);
-    expect(depthMedian(new Float32Array([Number.NaN, 1, 1, 0]), 1, 0, 1)).toBe(0);
-  });
-
-  it("draws the median ring's face-on column at WHERE_LEVEL × intensity, before tone mapping, at zero stops", () => {
-    expect(WHERE_LEVEL).toBe(0.25);
-    const median = depthMedian(rings, 3, 0, 3);
-    const peak = depthPeak(rings, 3);
-    // A face-on ray takes the whole layer's column, Σ cDust = 1 (regimes.ts layerShare over all heights), so τ is the
-    // ring's; the march multiplies by the field's gain, LIGHT_PER_LSUN_PC2 at a field gain of 1 and zero stops.
-    expect(layerShare(-1e3, 1e3, 0.2)).toBeCloseTo(1, 8); // tanh clamped at ±10: 1 − 4e−9
-    for (const intensity of [1, 0.25, 4]) {
-      const level = whereLevel(intensity, median, LIGHT_PER_LSUN_PC2) * LIGHT_PER_LSUN_PC2;
-      expect(level * median * whereTint(GREY_STOPS, median / peak)[0]).toBeCloseTo(WHERE_LEVEL * intensity, 12);
-      // The centre, deeper than the median, draws brighter in proportion: it saturates and the tone curve takes it.
-      expect(level * peak).toBeCloseTo((WHERE_LEVEL * intensity * peak) / median, 12);
-    }
-    expect(whereLevel(1, 0, LIGHT_PER_LSUN_PC2)).toBe(0); // no dust: nothing drawn, no division by zero
-    expect(whereLevel(0, 3.2, LIGHT_PER_LSUN_PC2)).toBe(0);
-  });
-
-  it("is painted by a declared ramp: a coloured one read at τ / τ_peak, grey ones kept grey", () => {
-    // The model's two dust ramps are both greys: dust_surface_density's is kept, every stop white.
-    expect(dustRamp(META)).toEqual({ field: "dust_surface_density", stops: GREY_STOPS, coloured: false });
-    // A coloured dust_extinction_v ramp wins; its stops are its cmap's, as linear light, from τ = 0 to the peak.
+  it("chooses the first dust field declared with a log scale, and paints a grey ramp grey", () => {
+    // The model's own: dust_extinction_v is greys, linear; dust_surface_density is greys, log.
+    expect(dustRamp(META)).toEqual({
+      field: "dust_surface_density",
+      decl: META.fields[1],
+      scale: "log",
+      inferred: false,
+      stops: GREY_STOPS,
+      coloured: false,
+    });
+    // Both linear: the first, its scale inferred as log (and the caption says so).
+    const linear = { ...META, fields: [META.fields[0], { ...META.fields[1], ramp: { ...META.fields[1].ramp, scale: "linear" } }] } as unknown as FieldsPayload;
+    expect(dustRamp(linear)).toMatchObject({ field: "dust_extinction_v", scale: "log", inferred: true });
+    // A coloured ramp gives its stops, as linear light, from level 0 to level 1.
     const coloured = {
       ...META,
-      fields: [{ name: "dust_extinction_v", ramp: { kind: "ramp", cmap: "magma", scale: "linear", lo: null, hi: null } }, ...META.fields.slice(1)],
+      fields: [{ name: "dust_extinction_v", ramp: { kind: "ramp", cmap: "magma", scale: "log", lo: null, hi: null } }, META.fields[1]],
     } as unknown as FieldsPayload;
     const r = dustRamp(coloured)!;
-    expect(r.field).toBe("dust_extinction_v");
-    expect(r.coloured).toBe(true);
+    expect(r).toMatchObject({ field: "dust_extinction_v", scale: "log", inferred: false, coloured: true });
     expect(r.stops.length).toBe(WHERE_STOPS);
     expect(r.stops[0][2]).toBeCloseTo(srgbToLinear(4 / 255), 9);
     expect(r.stops[WHERE_STOPS - 1][0]).toBeCloseTo(srgbToLinear(0xfc / 255), 9);
-    // Grey first, coloured second: the coloured one is used.
-    const second = {
-      ...META,
-      fields: [META.fields[0], { name: "dust_surface_density", ramp: { kind: "ramp", cmap: "magma", scale: "log", lo: null, hi: null } }],
-    } as unknown as FieldsPayload;
-    expect(dustRamp(second)!.field).toBe("dust_surface_density");
-    expect(dustRamp(second)!.coloured).toBe(true);
     expect(dustRamp({ fields: [], cmaps: {} } as unknown as FieldsPayload)).toBeNull();
+  });
+
+  it("levels a known ring set by the declared log scale: the two ends and the middle", () => {
+    const paint = dustRamp(META)!;
+    // makeRamp's log scale: lo the smallest positive value, hi the rings' 98th percentile (here the largest).
+    const { levels, lo, hi } = dustLevels(paint, META.cmaps, [0.001, 0.1, 10, 0, Number.NaN]);
+    expect([lo, hi]).toEqual([0.001, 10]);
+    expect(levels[0]).toBeCloseTo(0, 6); // the smallest: the ramp's foot
+    expect(levels[1]).toBeCloseTo(0.5, 6); // two decades of four: the middle
+    expect(levels[2]).toBeCloseTo(1, 6); // the largest: the ramp's top
+    expect(levels[3]).toBe(0); // no dust
+    expect(levels[4]).toBe(0); // not a number: nothing (rule B9)
+  });
+
+  it("infers log10 from the smallest positive to the largest when no declaration gives a log scale", () => {
+    const linear = { ...META, fields: [META.fields[0]] } as unknown as FieldsPayload;
+    const paint = dustRamp(linear)!;
+    expect(paint.inferred).toBe(true);
+    const { levels, lo, hi } = dustLevels(paint, META.cmaps, [30, 0.3, 0.003, 0]);
+    expect([lo, hi]).toEqual([0.003, 30]);
+    expect(Array.from(levels).map((v) => Number(v.toFixed(5)))).toEqual([1, 0.5, 0, 0]);
+  });
+
+  it("draws nothing without dust, and divides by nothing", () => {
+    for (const fields of [META.fields, [META.fields[0]]]) {
+      const paint = dustRamp({ ...META, fields } as unknown as FieldsPayload)!;
+      const { levels } = dustLevels(paint, META.cmaps, new Float64Array(5));
+      expect(Array.from(levels)).toEqual([0, 0, 0, 0, 0]);
+    }
+  });
+
+  it("draws a ring at level 1 seen face-on at WHERE_LEVEL × intensity, before tone mapping, at zero stops", () => {
+    expect(WHERE_LEVEL).toBe(0.5);
+    // A face-on ray takes the whole layer's column, Σ cDust = 1 (regimes.ts layerShare over all heights); the march
+    // multiplies by the field's gain, LIGHT_PER_LSUN_PC2 at a field gain of 1 and zero stops.
+    expect(layerShare(-1e3, 1e3, 0.2)).toBeCloseTo(1, 8); // tanh clamped at ±10: 1 − 4e−9
+    for (const intensity of [1, 0.25, 4]) {
+      const perColumn = whereLevel(intensity, LIGHT_PER_LSUN_PC2) * LIGHT_PER_LSUN_PC2;
+      expect(perColumn * 1 * whereTint(GREY_STOPS, 1)[0]).toBeCloseTo(WHERE_LEVEL * intensity, 12);
+      expect(perColumn * 0.5 * whereTint(GREY_STOPS, 0.5)[0]).toBeCloseTo(0.5 * WHERE_LEVEL * intensity, 12);
+    }
+    expect(whereLevel(0, LIGHT_PER_LSUN_PC2)).toBe(0);
   });
 
   it("reads the stops linearly, clamped at the ramp's ends (the shader's whereTint)", () => {

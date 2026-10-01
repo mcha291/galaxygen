@@ -16,7 +16,7 @@ import {
   loadRegion,
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
-import { CLOUD_COLUMNS, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
+import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
@@ -236,7 +236,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   const R = meta.grid.axes.R;
   const marchOn = mode === "brightest" && marchWanted(tuning);
   const ramp = useMemo(() => dustRamp(meta), [meta]);
-  const [dustDepth, setDustDepth] = useState<{ median: number; peak: number } | null>(null);
+  const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
   const marchLayers = brightestLayers(tuning, ramp);
   const diagnostic = mode === "brightest" && diagnosticOn(tuning);
   // The whole disc's cloud census, loaded once per query (about 17 000 clouds) and cut to the footprint here.
@@ -326,7 +326,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
         {/* The brightest mode's components (D205): the march with only the switched layers, at the slider's own
             stops (not the stars' auto-exposure, so the volumes hold still as N changes) and the whole field weight. */}
         {marchOn && (
-          <FieldVolume meta={meta} query={query} stops={exposure} weight={1} filterSet={filterSet} tuning={fieldTuning} stats={marchStats} layers={marchLayers} onDepth={setDustDepth} />
+          <FieldVolume meta={meta} query={query} stops={exposure} weight={1} filterSet={filterSet} tuning={fieldTuning} stats={marchStats} layers={marchLayers} onDepth={setDustPaint} />
         )}
         {mode === "brightest" && tuning.compCells && R && <CellOutlines lo={R.lo} hi={R.hi} />}
         {mode === "brightest" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
@@ -510,11 +510,9 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
         {mode === "brightest" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
           <p className={styles.muted}>
             {ramp
-              ? `dust: optical depth drawn relative to the disc's area-weighted median optical depth τ = ${
-                  dustDepth === null ? "…" : formatNumber(dustDepth.median, 2)
-                } (face-on, drawn at ${WHERE_LEVEL}: a display normalisation); peak τ = ${
-                  dustDepth === null ? "…" : formatNumber(dustDepth.peak, 2)
-                } at the centre; through ${ramp.field}'s declared ramp${ramp.coloured ? "" : ", grey"}`
+              ? `dust: ${ramp.field}'s declared ramp${ramp.coloured ? "" : " (grey)"}, ${ramp.scale}${
+                  ramp.inferred ? " [inferred: log display scale]" : ""
+                }, τ ${dustPaint === null ? "…" : `${formatNumber(dustPaint.lo, 2)} … ${formatNumber(dustPaint.hi, 2)}`} (the top drawn at ${WHERE_LEVEL} face-on: a display normalisation)`
               : "dust: no dust field is declared with a ramp, so its depth is not drawn"}
           </p>
         )}

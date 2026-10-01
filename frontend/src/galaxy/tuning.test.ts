@@ -96,17 +96,20 @@ describe("tuning defaults (D199)", () => {
       ["1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`],
       [/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;"],
       [
-        /\n {2}\/\/ The component layers \(D205[^\n]*(?:\n {2}\/\/[^\n]*){3}\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform float dustWhere;\n {2}uniform float wherePeak;\n {2}uniform vec3 whereStops\[\d+\];/,
+        /\n {2}\/\/ The component layers \(D205[^\n]*(?:\n {2}\/\/[^\n]*){3}\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform float dustWhere;\n {2}uniform vec3 whereStops\[\d+\];/,
         "",
       ],
-      [/\n\n {2}\/\/ The dust diagnostic's ramp \(D205\)[^\n]*\n {2}vec3 whereTint\(float t\) \{[\s\S]*?\n {4}return lo \+ \(hi - lo\) \* \(x - float\(k\)\);\n {2}\}/, ""],
+      [
+        /\n\n {2}\/\/ The dust diagnostic's ramp \(D205\)[^\n]*\n {2}vec3 whereTint\(float t\) \{[\s\S]*?\n {2}\/\/ Each ring's level[^\n]*\n {2}float readLevel\(float r\) \{\n[^\n]*\n {2}\}/,
+        "",
+      ],
       ["bulge * starsGain / float(n);", "bulge / float(n);"],
       ["starsHeight, sub) * starsGain;", "starsHeight, sub);"],
       ["hiiHeight, sub) * gasGain;", "hiiHeight, sub);"],
       ["digHeight, sub) * gasGain;", "digHeight, sub);"],
       [/(readRing\(rp\.x, \d\.0\)\) \* cDust) \* dustGain;/, "$1;"],
       [
-        /vec3 ring = (readRing\(rp\.x, \d\.0\));\n {10}vec3 tau = ring \* cDust;\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}\/\/[^\n]*\n {10}emitted \+= dustWhere \* whereTint\(\(ring\.r \+ ring\.g \+ ring\.b\) \/ 3\.0 \* wherePeak\) \* \(\(tau\.r \+ tau\.g \+ tau\.b\) \/ 3\.0\);\n {10}depth = tau \* dustDepth;/,
+        /vec3 tau = (readRing\(rp\.x, \d\.0\)) \* cDust;\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}\/\/[^\n]*\n {10}float level = readLevel\(rp\.x\);\n {10}emitted \+= dustWhere \* level \* whereTint\(level\) \* cDust;\n {10}depth = tau \* dustDepth;/,
         "depth = $1 * cDust;",
       ],
     ];

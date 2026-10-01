@@ -11,20 +11,20 @@
 
 import { makeRamp, paintOf } from "@interface/ramp.js";
 
-import type { Columns, FieldsPayload } from "../api";
+import type { Columns, FieldDecl, FieldsPayload } from "../api";
 import { srgbToLinear } from "./colors";
 import type { RegionWindow } from "./regimes";
 import type { Tuning } from "./tuning";
 
 export type Rgb = [number, number, number];
 
-/** The colours the "where it is" reading's ramp is held at in the shader, evenly spaced from τ = 0 to the peak. */
+/** The colours the "where it is" reading's ramp is held at in the shader, evenly spaced over its levels, 0 to 1. */
 export const WHERE_STOPS = 8;
 
 /**
  * The march's layer switches, as its uniforms take them: each emitting layer's multiplier (0 is off),
  * the dust's depth switch (1: it dims what lies behind it), and the "where it is" reading's intensity
- * (0: not drawn; FieldVolume normalises it by the disc's median depth, whereLevel) and its ramp's stops.
+ * (0: not drawn; whereLevel scales it) and its ramp's stops, read at each ring's level (dustLevels).
  */
 export interface MarchLayers {
   stars: number;
@@ -46,68 +46,81 @@ export const GREY_STOPS: readonly Rgb[] = Object.freeze(Array.from({ length: WHE
 export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: 0, whereStops: GREY_STOPS });
 
 /**
- * The level the reference ring's face-on dust column draws at in the "where it is" reading, linear, before
- * tone mapping, at intensity ×1, zero stops and a field gain of 1. **A display normalisation of a
- * diagnostic, not physics**: the reading is scaled by the reciprocal of the disc's area-weighted median
- * face-on optical depth (depthMedian), so the disc is readable whatever its dust; the centre, tens of times
- * deeper, saturates and the tone curve takes it. The caption states the median and the peak, so the
- * picture stays quantitative. (Normalised to the peak, τ ≈ 48 at the centre against 0.6 at the solar
- * radius, the disc drew as nothing.)
+ * The level a ring at the top of the ramp (level 1) draws at, seen face-on, in the "where it is" reading:
+ * linear, before tone mapping, at intensity ×1, zero stops and a field gain of 1 (with a grey ramp; a
+ * coloured one tints it). **A display normalisation of a diagnostic, not physics.** The level itself is the
+ * ring's position on the declared ramp, in the declared scale (dustLevels), as the viewer paints any field.
  */
-export const WHERE_LEVEL = 0.25;
+export const WHERE_LEVEL = 0.5;
 
-/**
- * The area-weighted median of the rings' channel-mean face-on optical depth (regimes.ts planeTexture's
- * `rings`, row RING_ROWS.depth = 0, RGBA per R cell, `width` cells evenly over [lo, hi] kpc): each ring
- * weighted by its area, ∝ R × dR at its centre, over the rings that have dust. Half the dusty disc's area
- * has more dust than this. Zero when no ring has any.
- */
-export function depthMedian(rings: ArrayLike<number>, width: number, lo: number, hi: number): number {
-  const dR = (hi - lo) / width;
-  const rows: { tau: number; w: number }[] = [];
-  let total = 0;
-  for (let i = 0; i < width; i += 1) {
-    const tau = (Number(rings[i * 4]) + Number(rings[i * 4 + 1]) + Number(rings[i * 4 + 2])) / 3;
-    const w = (lo + (i + 0.5) * dR) * dR;
-    if (!(Number.isFinite(tau) && tau > 0 && w > 0)) continue;
-    rows.push({ tau, w });
-    total += w;
-  }
-  if (rows.length === 0) return 0;
-  rows.sort((a, b) => a.tau - b.tau);
-  let below = 0;
-  for (const row of rows) {
-    below += row.w;
-    if (below >= total / 2) return row.tau;
-  }
-  return rows[rows.length - 1].tau;
+/** Each ring's channel-mean face-on optical depth: regimes.ts planeTexture's `rings`, row RING_ROWS.depth = 0, RGBA per R cell. */
+export function ringDepths(rings: ArrayLike<number>, width: number): Float64Array {
+  const out = new Float64Array(width);
+  for (let i = 0; i < width; i += 1) out[i] = (Number(rings[i * 4]) + Number(rings[i * 4 + 1]) + Number(rings[i * 4 + 2])) / 3;
+  return out;
+}
+
+/** What the dust diagnostic's caption states: the field whose ramp paints it, the scale, and the range mapped (optical depth). */
+export interface DustPaintShown {
+  field: string;
+  scale: string;
+  inferred: boolean;
+  coloured: boolean;
+  lo: number;
+  hi: number;
+}
+
+/** The rings' levels on the declared ramp, and the range that ramp maps (its lo and hi, in optical depth). */
+export interface DustLevels {
+  levels: Float32Array;
+  lo: number;
+  hi: number;
 }
 
 /**
- * The depth ring's peak: the largest channel-mean face-on optical depth over the rings (regimes.ts
- * planeTexture's `rings`, row RING_ROWS.depth = 0, RGBA per R cell). Zero when there is no dust.
+ * Each ring's level, 0 to 1: its optical depth's position on `paint`'s declared ramp, computed by ramp.js's
+ * makeRamp exactly as the viewer paints a field (rule A9) — the declared scale, the declared bounds or else the
+ * field's own range across the rings (makeRamp's percentiles; for a log scale from the smallest positive value).
+ * When neither declaration gives a log scale, log10 from the smallest positive to the largest ring value, and the
+ * caption says it was inferred. The rings carry optical depth, τ = 0.921 A_λ: proportional to the field the
+ * declaration is for, so a log position is the field's own and a range read from the data scales with it.
+ * No dust, or a value that is not a number: level 0.
  */
-export function depthPeak(rings: ArrayLike<number>, width: number): number {
-  let peak = 0;
-  for (let i = 0; i < width; i += 1) {
-    const mean = (Number(rings[i * 4]) + Number(rings[i * 4 + 1]) + Number(rings[i * 4 + 2])) / 3;
-    if (Number.isFinite(mean) && mean > peak) peak = mean;
+export function dustLevels(paint: DustRamp, cmaps: FieldsPayload["cmaps"], depths: ArrayLike<number>): DustLevels {
+  const levels = new Float32Array(depths.length);
+  let decl = paint.decl;
+  if (paint.inferred) {
+    let lo = Infinity;
+    let hi = 0;
+    for (let i = 0; i < depths.length; i += 1) {
+      const v = Number(depths[i]);
+      if (Number.isFinite(v) && v > 0) {
+        lo = Math.min(lo, v);
+        hi = Math.max(hi, v);
+      }
+    }
+    if (!(hi > 0)) return { levels, lo: 0, hi: 0 };
+    decl = { ...decl, ramp: { ...decl.ramp!, scale: "log", lo, hi: Math.max(hi, lo * (1 + 1e-12)) } };
   }
-  return peak;
+  const ramp = makeRamp(decl, cmaps, depths) as { position(v: number): number | null; lo: number; hi: number };
+  for (let i = 0; i < depths.length; i += 1) {
+    const t = ramp.position(depths[i]);
+    levels[i] = t === null ? 0 : Math.min(1, Math.max(0, t));
+  }
+  return { levels, lo: ramp.lo, hi: ramp.hi };
 }
 
 /**
- * The march's "where it is" multiplier, per unit of channel-mean optical depth in the march's units: the
- * layer's intensity times WHERE_LEVEL over the reference depth (depthMedian), over the field's light per
- * L☉/pc² (`lightPerUnit`, FieldVolume's LIGHT_PER_LSUN_PC2, which the march's gain multiplies back). A
- * face-on ray takes its ring's whole column, so a ring at the reference depth draws at WHERE_LEVEL × intensity
- * (with a grey ramp; a coloured one tints it). Zero without dust.
+ * The march's "where it is" multiplier per unit of the dust's column share: the layer's intensity times
+ * WHERE_LEVEL over the field's light per L☉/pc² (`lightPerUnit`, FieldVolume's LIGHT_PER_LSUN_PC2, which the
+ * march's gain multiplies back). A face-on ray takes its ring's whole column (Σ cDust = 1), so a ring at level
+ * 1 draws at WHERE_LEVEL × intensity, and a ring at level x at x times its colour on the ramp.
  */
-export function whereLevel(intensity: number, reference: number, lightPerUnit: number): number {
-  return intensity > 0 && reference > 0 && lightPerUnit > 0 ? (WHERE_LEVEL * intensity) / (reference * lightPerUnit) : 0;
+export function whereLevel(intensity: number, lightPerUnit: number): number {
+  return intensity > 0 && lightPerUnit > 0 ? (WHERE_LEVEL * intensity) / lightPerUnit : 0;
 }
 
-/** The shader's whereTint, line for line: the stops read linearly at τ / τ_peak, clamped to the ramp. */
+/** The shader's whereTint, line for line: the stops read linearly at a level, clamped to the ramp. */
 export function whereTint(stops: readonly Rgb[], t: number): Rgb {
   const x = Math.min(1, Math.max(0, t)) * (stops.length - 1);
   const k = Math.min(stops.length - 2, Math.floor(x));
@@ -129,8 +142,8 @@ export function diagnosticOn(t: Pick<Tuning, "compDust" | "dustReading" | "compC
  * The march's layers for the brightest mode's switches: a switched-on layer at its intensity, the rest
  * at zero. The dust "as it acts" emits its scattered and thermal light at its intensity and dims what
  * lies behind it at its published depth (the intensity never scales a depth: that would be physics);
- * "where it is" draws its depth as light through `ramp` at its intensity (normalised to the peak by the
- * march) and dims nothing; without a declared ramp it draws nothing (rule A9).
+ * "where it is" draws each ring's level on `ramp` as light at its intensity (the level from the declared
+ * scale, dustLevels) and dims nothing; without a declared ramp it draws nothing (rule A9).
  */
 export function brightestLayers(
   t: Pick<Tuning, "compStars" | "compGas" | "compDust" | "dustReading" | "starsIntensity" | "gasIntensity" | "dustIntensity">,
@@ -148,43 +161,46 @@ export function brightestLayers(
   };
 }
 
-/** The dust fields whose declared ramp paints the "where it is" reading, in order of preference. */
+/** The dust fields whose declaration paints the "where it is" reading, in order of preference. */
 export const DUST_TINT_FIELDS = ["dust_extinction_v", "dust_surface_density"] as const;
 
-/** The ramp the "where it is" reading is painted with: whose declaration it is, its stops (linear light), and whether it has colour. */
+/** The scales that span the dust's decades (it runs from about 48 at the centre to 0.003 in the outer disc). */
+const SPANNING = ["log", "symlog"];
+
+/**
+ * How the "where it is" reading is painted: whose declaration it is, its ramp's stops (linear light) and
+ * whether they have colour, its scale and whether that scale was inferred rather than declared.
+ */
 export interface DustRamp {
   field: string;
+  decl: FieldDecl;
+  scale: string;
+  inferred: boolean;
   stops: readonly Rgb[];
   coloured: boolean;
 }
 
 /**
- * The "where it is" reading's ramp (rule A9: from a declaration, never the viewer's). The first of
- * DUST_TINT_FIELDS whose declared ramp has colour, its cmap's stops read by ramp.js at WHERE_STOPS even
- * positions, as linear light: the march reads it at τ / τ_peak. If every declared one is grey, the last of
- * them is kept grey — every stop white, so the drawn level alone (normalised to the peak) carries the depth:
- * a grey ramp mapped literally would draw the densest dust black, which on black is nothing. Null when no
- * dust field is declared with a ramp.
+ * The "where it is" reading's paint (rule A9: from a declaration, never the viewer's). The first of
+ * DUST_TINT_FIELDS declared with a ramp whose scale spans decades (log, symlog); if none does, the first
+ * declared one with a log scale inferred (and said so). Its cmap's stops are read by ramp.js at WHERE_STOPS
+ * even positions, as linear light, for the march to read at the ring's level. A grey ramp is kept grey —
+ * every stop white, so the level alone carries the value: mapped literally, greys draws the densest dust
+ * black, which on black is nothing. Null when no dust field is declared with a ramp.
  */
 export function dustRamp(meta: Pick<FieldsPayload, "fields" | "cmaps">): DustRamp | null {
-  let grey: DustRamp | null = null;
-  for (const name of DUST_TINT_FIELDS) {
-    const decl = meta.fields.find((f) => f.name === name);
-    if (!decl?.ramp || decl.ramp.kind !== "ramp") continue;
-    try {
-      const ramp = makeRamp(decl, meta.cmaps, []) as { at(t: number): number[]; stops: number[][] };
-      const coloured = ramp.stops.some(([r, g, b]) => r !== g || g !== b);
-      if (!coloured) {
-        grey = { field: name, stops: GREY_STOPS, coloured: false };
-        continue;
-      }
-      const stops = Array.from({ length: WHERE_STOPS }, (_, i) => ramp.at(i / (WHERE_STOPS - 1)).map((v) => srgbToLinear(v / 255)) as Rgb);
-      return { field: name, stops, coloured: true };
-    } catch {
-      continue;
-    }
-  }
-  return grey;
+  const declared = DUST_TINT_FIELDS.map((name) => meta.fields.find((f) => f.name === name)).filter(
+    (d): d is FieldDecl => Boolean(d?.ramp && d.ramp.kind === "ramp" && meta.cmaps[String(d.ramp.cmap)]),
+  );
+  const chosen = declared.find((d) => SPANNING.includes(String(d.ramp!.scale))) ?? declared[0];
+  if (!chosen) return null;
+  const inferred = !SPANNING.includes(String(chosen.ramp!.scale));
+  const ramp = makeRamp(chosen, meta.cmaps, []) as { at(t: number): number[]; stops: number[][] };
+  const coloured = ramp.stops.some(([r, g, b]) => r !== g || g !== b);
+  const stops = coloured
+    ? Array.from({ length: WHERE_STOPS }, (_, i) => ramp.at(i / (WHERE_STOPS - 1)).map((v) => srgbToLinear(v / 255)) as Rgb)
+    : GREY_STOPS;
+  return { field: chosen.name, decl: chosen, scale: inferred ? "log" : String(chosen.ramp!.scale), inferred, stops, coloured };
 }
 
 /** The level-0 cell grid's rings and sectors (the catalogue's cells: 32 × 32 over the model's radial extent). */
