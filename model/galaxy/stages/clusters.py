@@ -311,13 +311,19 @@ CLUSTER_LUMINOSITY = _column("cluster_luminosity", "Luminosity", "Lsun",
                              "uses, times the mass - the sum over its members, not a sample of them. What a renderer draws "
                              "the cluster as a point of light by, as it draws a star by its luminosity. Bolometric: a "
                              "point painted by this through a blackbody's share at the colour temperature carries about "
-                             "twice the population's own light through an optical filter (debt #114); the cluster's "
-                             "band light is the same tables' and is the closer.",
+                             "twice the population's own light through an optical filter (debt #114; the factor of two "
+                             "is the clusters', an integrated population being no blackbody, where a single star's "
+                             "painting is 4-15% high, D201). Since S48 /api/clusters with filters= serves the cluster's "
+                             "own band light through the viewer's curves (its response: the same tables' eight bands at "
+                             "its age and [Fe/H] times its mass, joined as the field's stars are); the viewer draws by "
+                             "it once its star-first mode is built, and paints by this until then.",
                              ramp=Ramp("inferno", scale="log"))
 CLUSTER_LIGHT_TEMPERATURE = _column("cluster_light_temperature", "Colour temperature of its light", "K",
                                     "The correlated colour temperature of the cluster's summed light - the blackbody whose "
                                     "chromaticity is nearest the population's, as the disc's light temperature is taken. "
-                                    "Its ramp is the blackbody colour, so a cluster is painted as a star of that temperature.",
+                                    "Its ramp is the blackbody colour, so a cluster is painted as a star of that temperature. "
+                                    "It is also the temperature /api/clusters' filtered response (S48) joins the band "
+                                    "light's tails beyond U and K at.",
                                     ramp=Ramp("blackbody", scale="log", lo=BLACKBODY_KELVIN[0], hi=BLACKBODY_KELVIN[1]))
 CLUSTER_WIND = _column("cluster_wind_luminosity", "Wind mechanical luminosity", "Lsun",
                        "½ Ṁ v_∞² summed over the IMF the same way: Vink, de Koter & Lamers 2001's line-driven "

@@ -52,7 +52,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "12 stage declarations"),
+    Endpoint("stages", "/api/stages", "", "26 stage declarations (S48)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),

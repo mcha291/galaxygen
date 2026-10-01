@@ -355,7 +355,7 @@ class CellCache:
 
     The catalogue draws every cell from its own seed, so a cell drawn alone is the cell drawn
     in any set and a window's catalogue is its cells' rows in cell order (D60). Materialising
-    costs about 0.4 ms of Python per cell before a star is made, 832 cells to a galaxy, so a
+    costs about 0.4 ms of Python per cell before a star is made, 1024 cells to a galaxy, so a
     view that asked for the same window twice — every zoom step of the brightest mode, which
     re-selects inside the same pool — waited half a second for rows the server had just made.
     Bounded by rows, least recently used out first. A key names the galaxy the rows belong to

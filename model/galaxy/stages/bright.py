@@ -936,7 +936,10 @@ BRIGHT_LUMINOSITY = _column(
     "bright_star_luminosity", "Luminosity", "Lsun",
     "Bolometric, exact from the luminosity function: the star's place in its cell's ordered Poisson process "
     "inverted through the cell's expected count above each luminosity, so every disc star brighter than any "
-    "threshold is in the catalogue and a higher threshold keeps a prefix of it.", Ramp("inferno", scale="log"))
+    "threshold is in the catalogue and a higher threshold keeps a prefix of it. A point painted by this through a "
+    "blackbody's share at the star's temperature is 4-15% too bright through optical filters (D201, debt #114: a star "
+    "is nearly a blackbody, a cluster is not); /api/bright with filters= serves the star's own band light through the "
+    "viewer's curves (S48), which the viewer draws by once its star-first mode is built.", Ramp("inferno", scale="log"))
 BRIGHT_TEMPERATURE = _column(
     "bright_star_temperature", "Effective temperature", "K",
     "The isochrone's at the star's initial mass, read along the same segment as its mass.",
@@ -947,7 +950,8 @@ def _magnitude_column(band: str) -> FieldDecl:
     return _column(
         f"bright_star_magnitude_{band.lower()}", f"Absolute {band} magnitude M_{band}", "mag",
         f"The isochrone's {band}-band absolute magnitude (Vega) at the star's mass, moved by the difference between "
-        "the star's luminosity and the isochrone's at that point where the two differ. Intrinsic.",
+        "the star's luminosity and the isochrone's at that point where the two differ. Intrinsic. With the other seven "
+        "it is what /api/bright's response (filters=, S48) puts through the viewer's curves.",
         Ramp("inferno", lo=-10.0, hi=5.0), zero=False)
 
 
