@@ -7584,3 +7584,38 @@ numbers needs a blind window first); the full suite backgrounded after `bootstra
 **65 open = 11 permanent + 54 carried, 44 discharged** (#125, #126 opened; #114 corrected and still carried until the
 viewer draws the response). Board row 48; LESSONS; RESUMING ≤ 120; BRIEF for S49. Tag `s48` on the merge. The
 owner's word is asked on #126 (the field's light tables); the viewer's star-first mode is S49–S50's.
+
+### D204. S49: the field's light tables fixed on the owner's word (#126) — one quadrature along each isochrone's own points, the bright catalogue's second budget removed, every pin that moves re-read
+
+**The owner, in chat, on 2026-10-01**, asked what decision was wanted and given two options — fix the field's light
+tables now (every photometric number moves by a few per cent, the star-first view's accounting becomes exact), or leave
+the defect registered (nothing moves, a stated gap of up to 26 % between what the bright stars carry and what the
+field subtracts for them) — with the session's recommendation for the first: **"go with option A, fix it now."** The
+model pin is lifted for this one accuracy fix. Written before any code moved (D113); the ruling was the builder's
+brief, given at S48's close.
+
+**The ruling.** (1) **One quadrature, in `photometry.py`**: the per-isochrone segment integration S48 wrote for the
+luminosity function — between consecutive living points the IMF's exact number, each quantity integrated with log L
+and the magnitudes linear along the segment, the stars below the first point a flat segment at its values, the dead
+counted in the mass formed and not in the light — becomes the shared primitive, and `population_light` is that
+integral for every quantity it holds: the light, its colour, the eight band fluxes, the bolometric flux, the ionizing
+rate. (2) **`bright.luminosity_function` uses the same primitive**, so its totals are `population_light`'s by
+construction: the renormalisation and the second budget (`*_own`, `bright_own`, `expected_own`) are removed — one
+opinion per thing (A9). (3) **An independent gate** (B3): the new tables against a brute-force integration that does
+not use the segment code (the old trapezoid on a very fine mass grid) on at least eight isochrones, to 10⁻³. (4)
+**Every pin that moves is re-read with its reason**; a gate or identity that should hold regardless (V1's
+render-against-published gate, V2's balance, the closure identities, the dust's energy balance) is not re-pinned — if
+one fails, something read the old tables by another path, and the builder stops. (5) **Acceptance rows**: the windows
+do not move (B5); a row whose verdict changes comes back to the session — a recorded miss that starts passing is
+removed with its reason written (#29), a pass that starts failing becomes a recorded miss with a debt and a prediction.
+(6) **B10**: every constant calibrated against, and every about-line quoting, a number read off the old tables is
+listed by the builder and ruled one by one by the session; none is changed in the build. *Chosen against:* a finer
+fixed mass grid (the giant branch's width shrinks with age: any fixed grid aliases some isochrone); renormalising the
+field to the luminosity function per isochrone (a correction applied to a quadrature that is simply wrong); leaving it
+registered (the owner's option B).
+
+**What is expected to move** (S48's measurement of the old tables' error): the disc's light down by about 6.7 %
+bolometric, 5.4 % in V, 11–12 % in I, H and K — so M_V about 0.06 mag fainter, the colours bluer in V − K, Υ_V up by
+about 5 %, the dust's absorbed starlight and with it L_IR and T_d down, the SED anchors and every render frame with
+them; the ionizing rate as the hot stars' segments say; the bright catalogue's threshold and the light split at 10³ L☉
+re-read. The numbers the build measures are recorded at this decision's close, with the table of pins moved.
