@@ -7229,3 +7229,26 @@ are shown disabled, not hidden); auto-generating only when a stored flag says so
 *Cost:* the first frame now waits on the full pipeline (basic ~2.8 s cold, the render 2 s) where it waited on
 checkpoint one's; the status line covers it. Built by an Opus builder after `session-46-default` merges (both touch
 `useWorkflow.ts` and `App.tsx`).
+
+**Applied, measured against the ruling (`session-46-landing`, 3c3b348, merged a6a7755; four files, +129 −16).** (i) A pure
+`generateDefault(s)` in `useWorkflow.ts` applies `flow.confirm` once per checkpoint; the declarations effect runs it on
+the first load only (`setState(generateDefault(fresh))`); afterwards `confirmed === current === last` because
+`flow.confirm` caps `current` at the last checkpoint; a model switch keeps its path. The initial tab is `"galaxy"`.
+(ii) The Preview tab is never disabled; when generated its title reads "The staged generation: reopen a checkpoint to
+change the galaxy"; the effect only settles galaxy → preview when not generated, and does nothing until the state
+exists (otherwise the first load would bounce to Preview before the declarations arrive). The scene shown is the last
+checkpoint's; checkpoints 1–5 are one locked row each and clicking one asks to reopen it with the cost shown; **an
+earlier checkpoint cannot be viewed without reopening it**, because `flow.goTo` in the shared `interface/flow.js`
+treats going back to a confirmed checkpoint as reopening, and that file was out of the row's scope — the user picks
+what to reopen, as ruled; a view-without-reopen is a change to `flow.js` for a later row if the owner wants it. (iii)
+"Edit galaxy" in its own section above Rendering, the panel's own button style, `onEdit` → the Preview tab; nothing
+discarded. One addition beyond the brief, kept: if the declarations fail before any state exists, the Galaxy tab says
+"Loading the model failed: …" (the workflow panel that showed the error is no longer the landing). (v) vitest 122 → 131
+(generating gives confirmed = current = 6 and equals six clicks with the same query; a fresh or null flow is not
+generated; the tab switch leaves `confirmed`; `reopen(s, 3)` discards 4–6 and closes the Galaxy tab); `tsc -b` and
+`vite build` clean; `tests/test_viewer.py` unchanged and green (the reference client's stage-one landing stands).
+**Verified on `prod`** (a fresh load of the rebuilt bundle): the page lands on the Galaxy tab with `azimuthal` as the
+model, "Edit galaxy" above Rendering, the default galaxy's field drawn within twenty seconds of a cold server
+(`docs/design/screenshots/s46/landing-default-galaxy.jpg`); the button opens the Preview tab with six locked
+checkpoints, each with a "Reopen checkpoint n" button, checkpoint 6's scene shown; the console clean. The owner's
+live tab on :5173 carries the same code through hot reload.
