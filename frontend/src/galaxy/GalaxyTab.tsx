@@ -44,6 +44,8 @@ interface Props {
   onPreset(p: Preset): void;
   /** A star was clicked: open its system. */
   onOpen(star: StarName): void;
+  /** "Edit galaxy": open the staged generation with the confirmations kept (D198). Discards nothing. */
+  onEdit(): void;
 }
 
 const SHORT: Record<string, string> = {
@@ -130,7 +132,7 @@ function positionsOf(sample: Sample): Float32Array {
  * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
  * Any star drawn can be clicked to open its system.
  */
-export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposure, onExposure, query, preset, onPreset, onOpen }: Props) {
+export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposure, onExposure, query, preset, onPreset, onOpen, onEdit }: Props) {
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
@@ -247,6 +249,13 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
       </GalaxyView>
 
       <div className={styles.panel}>
+        <div className={styles.section}>
+          <div className={styles.pair}>
+            <button type="button" title="Open the staged generation and reopen a checkpoint to change the galaxy" onClick={onEdit}>
+              Edit galaxy
+            </button>
+          </div>
+        </div>
         <div className={styles.section}>
           <div className={styles.label}>Rendering</div>
           <div className={styles.pair}>
