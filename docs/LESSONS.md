@@ -1204,3 +1204,18 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [viewer] The accessibility tree's references are stable only within a page load, and `find` must precede each click;
   a six-step confirmation walk is six round trips, which is the cost of a viewer with no deep link to a generated
   galaxy — and the reason D198's landing is the default galaxy already generated (D198).
+
+## From S47 (the tuning panel and the task list; the ruling by Fable, the panel by an Opus agent)
+
+- [viewer] A display choice the owner will judge by eye is built as a control, not ruled as a value: the default is
+  today's number, the panel shows what changed, and the session fixes the default from what the owner reports. A plan
+  document is not a visible change — say plainly what moved on screen and what did not (D199).
+- [viewer] "Unchanged at the defaults" is proved, not asserted: snapshot the shader before the change and require the
+  new default source to equal it once its declared edits are undone; pin the weights' formula at several zooms (D199).
+- [viewer] Check a viewer branch on the scratch server before it reaches the owner's live tab: build the branch's
+  bundle into the scratch directory without merging, look, then merge (D199).
+- [catalogue] Measure what a view is made of before building on it: the "brightest" stars were the brightest of a
+  one-in-10⁵ number sample, and one probe (the top-N share of the pool's light at two pool sizes) showed the pool's
+  bright end is not converged. A sample by number is not a selection by luminosity (D199; D200's reason).
+- [infra] A probe script in the system temp directory can be shadowed by a stray module there (`numbers.py` broke
+  numpy's import): scripts go in the session's scratchpad (D199).

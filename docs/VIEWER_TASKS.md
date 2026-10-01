@@ -6,7 +6,8 @@ open debts (`GALAXY_INPUTS.md` §11, #110–#116, #119, #120), `RENDER_PLAN_II.m
 review (§1), the gates (§4) and the traps (§5), and its §2–§3 are superseded by this list.** `RENDER_PHYSICS.md` is
 the contract every row is held to (§8: no frame-seeded noise, no detail below the cloud vector, no colour for
 appearance). The model is pinned (the owner, 2026-10-01): a task marked **Model** needs a new published field and the
-owner's leave. Costs are in sessions.
+owner's leave. **The owner lifted the pin for T2, T3 and T21 on 2026-10-01 ("lift the pin for those two and implement
+them first"): they are S48's, designed in D200, with `BRIEF.md` the working plan.** Costs are in sessions.
 
 ## 0. Done (for orientation)
 

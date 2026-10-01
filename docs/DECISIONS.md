@@ -7280,3 +7280,37 @@ the owner's word. *Chosen against:* ruling the values in one session from the bu
 owner judges the picture on their own screen, and said so); a URL-parameter interface (not discoverable); exposing the
 model's fields as sliders (they are the model's, and it is pinned). Numbers: debts from #125, decisions from D200,
 board rows from 47, acceptance rows from 38.
+
+**Applied (`session-47-tuning`, f29a71b, merged 1149c92; 11 files, +1007 −68).** `frontend/src/galaxy/tuning.ts` holds the
+typed `Tuning`, `TUNING_DEFAULTS`, the control list (fifteen controls in four groups, every range as ruled), load / save
+(one `localStorage` key holding only the changed entries, try/catch throughout) and `changed()`; `TuningPanel.tsx` is the
+last section of the Galaxy tab's panel, collapsed by default, with a per-row reset, "Reset all", the copy box and the
+march readout ("w×h px, ms", CPU-side). The constants moved into `tuning.ts` (STEPS, PIXEL_BUDGET, MAX_RESOLUTION, BLOOM,
+STAR_SPRITE_PX) or stayed in their homes and are tuned by multipliers (the field's 1/400, the points' reference
+luminosity); `CLOSE_FIELD_FLOOR = 0.03` is new in `regimes.ts`. Steps recompile the shader after a 300 ms debounce;
+`subMax` and `dither` are uniforms; the white point feeds `/api/render`, `/api/blackbody` and the region's render after
+400 ms. **The default picture is unchanged, shown two ways:** the default fragment, with its three declared edits
+undone (the two uniform declarations, the sub-sample bound, the dither switch), equals a snapshot of S46's shader byte
+for byte (`fieldFragment.s46.glsl`, a test), and `regimeWeights` returns S40's formula exactly at nine zooms. vitest 131
+→ 140; `tsc -b` and `vite build` clean. **Verified on `prod` before it reached the owner's tab** (the branch's bundle
+built into the scratch directory without merging): the landing unchanged, bloom strength at 1.2 and the resolution cap
+at 1 both driving the render with their reset markers, the console clean
+(`docs/design/screenshots/s47/tuning-panel-bloom-1.2.jpg`).
+
+**Also at S47, on the owner's word.** (i) `docs/VIEWER_TASKS.md`: every remaining viewer task in one list (T1–T23),
+superseding `RENDER_PLAN_II.md` §2–§3 as the list. (ii) The "brightest" view reviewed as a base to build from, with one
+measurement (`/api/region`, the whole galaxy): **the top 3 162 stars carry 86 % of a 160 000-star pool's light and 94 %
+of a 1 000 000-star pool's, whose single brightest star (514 000 L☉) is 41 % of it** — the pool is a number sample of
+about one star in 10⁵, its light 10⁻⁵–10⁻⁶ of the galaxy's 4.9 × 10¹⁰ L☉ and not converged at the bright end, so
+"brightest" is the brightest of the sample (`service._brightest` says so). (iii) **The owner lifted the model pin for
+two pieces — "lift the pin for those two and implement them first"**: the bright-end-complete selection (T21) and the
+photometric points with single counting (T2, T3). Asked what else the model is missing — "i thought we implemented all
+features and only needed to improve the accuracy" — the answer recorded: the physics is feature complete against
+BUILD_II; these two re-express populations the model already has (a publication gap, a different draw of the same
+population, a link between two representations of the young stars); the genuine gaps are the diffuse gas's forbidden
+lines (#119), a per-nebula [O III] luminosity (row 36) and the history at birth radius (T15). The design is S48's (D200);
+two builders were started at this close on branches cut from `session-47`.
+
+**The gate.** vitest 140, `tsc -b`, `vite build` clean; no Python changed in this row's code; the full suite backgrounded
+after `bootstrap.py`: **{{SUITE}}**. Board row 47; LESSONS; RESUMING ≤ 120; BRIEF for S48. Tag `s47` on the merge. T1 (the
+display defaults) stays open until the owner reports a combination.
