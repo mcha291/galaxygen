@@ -194,15 +194,18 @@ def test_the_temperature_profile_and_the_infrared_share(model, coarse):
     (20.411) at 5, 19.543 (19.539) at 8.2, 16.621 (16.604) at 12, 16.485 (16.485) at 16; L_IR = 1.6185e10
     (1.6223e10) Lsun, 0.3311 (0.3314) of the disc's intrinsic bolometric light and 0.3020 (0.3023) of disc
     and bulge together. Planck's whole-sky 19.7 K (sigma 1.4 K) is a sky average from the Sun, read to
-    source beta before any row was ruled; it is a comparison, not a target (D113)."""
+    source beta before any row was ruled; it is a comparison, not a target (D113). S49 (D204, #126): the light
+    integrated along the isochrone's points moves them to 18.268 / 20.207 / 18.829 / 16.597 / 16.458 K and
+    L_IR = 1.5665e10 Lsun, 0.3414 of the disc's light, on this grid; the numbers above were on the fixed-grid tables."""
     out = coarse[model.name]
     f, R = out.fields, out.grid.R
     T = np.asarray(f["dust_temperature"])
-    for r, want in ((2.0, 17.955), (5.0, 20.414), (8.2, 19.543), (12.0, 16.621), (16.0, 16.485)):
+    # S49 (D204, #126): the light integrated along the isochrone's points; was 17.955, 20.414, 19.543, 16.621, 16.485
+    for r, want in ((2.0, 18.268), (5.0, 20.207), (8.2, 18.829), (12.0, 16.597), (16.0, 16.458)):
         assert float(np.interp(r, R, T)) == pytest.approx(want, abs=2e-3)
     L = float(f["dust_infrared_luminosity"])
-    assert L == pytest.approx(1.6185e10, rel=2e-4)
-    assert L / float(f["disc_luminosity"]) == pytest.approx(0.3311, abs=2e-4)
+    assert L == pytest.approx(1.5665e10, rel=2e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 1.6185e10
+    assert L / float(f["disc_luminosity"]) == pytest.approx(0.3414, abs=2e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.3311
 
 
 # --- scattering, the field G0 and the PAHs -----------------------------------------------------

@@ -208,7 +208,9 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     _, w = cu.per_mass(np.array([1.0, 19.0]), np.zeros(2))
     assert w[0] > w[1] >= 0.0
     W = np.asarray(F["cluster_wind_luminosity"])
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.466e6, rel=0.01)
+    # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
+    # was 5.466e6
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.363e6, rel=0.01)
 
 
 def test_the_census_on_the_default_grid(default):

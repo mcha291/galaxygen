@@ -44,7 +44,8 @@ def test_the_regenerated_table_reads_what_the_old_one_did():
     assert T == pytest.approx([5823.96159307, 5832.87121235, 5729.52982438], rel=1e-10)  # old: 5823.96..., 5832.87..., 5729.53...
     tab, pop = isochrones(), population_light()
     solar = int(np.abs(tab.mhs).argmin())
-    assert pop.light_per_mass[[0, -1], solar] == pytest.approx([8.01433898e02, 1.47498719e-01], rel=1e-8)  # old: 801.433898, 0.147498719
+    # old table: 801.433898, 0.147498719 (the same on both tables, S28). # S49 (D204, #126): the light integrated along the isochrone's points; was those
+    assert pop.light_per_mass[[0, -1], solar] == pytest.approx([8.04037928e02, 2.26344953e-01], rel=1e-8)
 
 
 def test_the_bands_are_the_tables_eight_and_the_sun_is_near_willmers():
@@ -123,3 +124,62 @@ def test_the_blackbody_cmap_is_in_the_vocabulary_and_spans_its_declared_bounds()
     assert not cmap.diverging and len(cmap.stops) >= 9
     assert cmap.stops[0] == blackbody_hex(BLACKBODY_KELVIN[0])
     assert cmap.stops[-1] == blackbody_hex(BLACKBODY_KELVIN[1])
+
+
+# --- S49 (D204, debt #126): the population's light along the isochrone's own points, checked by a path that is not it
+
+
+GATE_ISOCHRONES = [(a, z) for a in (0, 5, 10, 15, 20, 25, 30, 35) for z in (0, 5, 9)]  # 4 Myr-12.6 Gyr; [M/H] -2.19, -0.94, +0.05
+
+
+def _brute(a: int, z: int, flat: bool) -> np.ndarray:
+    """(light, V, K, bolometric) per M☉ formed on isochrone (a, z), by the trapezoid in mass the field used until S49
+    - φ(m) times each quantity read along the track by ``_along`` (log L and the magnitudes linear in initial mass) -
+    on a fine grid inside each interval between consecutive points (every interval cut so that no quantity changes
+    by more than 0.002 dex across a cut, and at least 256 times; each interval read alone, so a repeated mass is a
+    jump between its two points), and below the first point on 4 000 log-spaced masses at its values. The mass formed
+    is the same trapezoid of φ m on 400 000 log-spaced masses. ``flat`` holds φ inside each interval at its mean over
+    the interval (that trapezoid of φ divided by the width): where the segments put the interval's stars. No segment
+    code, no analytic IMF."""
+    from galaxy.stages.photometry import EXTRA, _along, imf_weights
+    from galaxy.stages.systems import IMF_MAX, IMF_MIN
+
+    tab = isochrones()
+    m, log_l, _ = tab.track(a, z)
+    g = np.column_stack([log_l, -0.4 * tab.extra[(a, z)][:, [EXTRA.index(c) for c in ("V", "K", "mbol")]]])
+    below = np.geomspace(IMF_MIN, m[0], 4000)
+    total = np.trapezoid(imf_weights(below), below) * 10.0 ** g[0]
+    jump = np.abs(np.diff(g, axis=0)).max(axis=1)
+    for i in np.flatnonzero(np.diff(m) > 0.0):
+        mm = np.linspace(m[i], m[i + 1], max(int(np.ceil(jump[i] / 0.002)), 256) + 1)
+        q = np.column_stack([_along((m[i : i + 2], g[i : i + 2, k], g[i : i + 2, k]), mm)[0] for k in range(g.shape[1])])
+        phi = imf_weights(mm)
+        if flat:
+            phi = np.full(mm.size, np.trapezoid(phi, mm) / (m[i + 1] - m[i]))
+        total = total + np.trapezoid(phi[:, None] * 10.0**q, mm, axis=0)
+    every = np.geomspace(IMF_MIN, IMF_MAX, 400_000)
+    return total / np.trapezoid(imf_weights(every) * every, every)
+
+
+def test_the_population_light_against_a_brute_force_integral():
+    """B3: the light per mass formed (bolometric, V, K and CMD's own bolometric magnitude's) of 24 isochrones, 4 Myr to
+    12.6 Gyr at three metallicities, against :func:`_brute`. Two readings. With φ held at its mean inside each
+    interval - where the segments put the interval's stars - the agreement measures the quadrature itself: S49
+    (D204) 6.3e-8 worst. With φ(m) itself the difference is the segments' reading, the IMF's number in an interval
+    spread uniformly along it, against φ falling across an interval: S49 1.13e-3 worst (the light of the 4 Myr
+    isochrone at [M/H] -0.94, whose upper main sequence has points 10-25 % apart in mass), median 4e-4; D204's
+    1e-3 is missed there and recorded, not loosened. The fixed-grid trapezoid this replaced missed by up to a
+    factor of seven (D202)."""
+    pop = population_light()
+    k_v, k_k = BANDS.index("V"), BANDS.index("K")
+    worst_flat = worst_phi = 0.0
+    for (a, z) in GATE_ISOCHRONES:
+        ours = np.array([pop.light_per_mass[a, z], pop.band_flux[a, z, k_v], pop.band_flux[a, z, k_k], pop.bolometric_flux[a, z]])
+        worst_flat = max(worst_flat, float(np.abs(ours / _brute(a, z, True) - 1.0).max()))
+        worst_phi = max(worst_phi, float(np.abs(ours / _brute(a, z, False) - 1.0).max()))
+    print(f"worst relative difference: phi at its interval mean {worst_flat:.3e}, phi(m) {worst_phi:.5e}")
+    assert worst_flat < 1e-6
+    assert worst_phi == pytest.approx(PHI_WORST, abs=2e-5)
+
+
+PHI_WORST = 1.13e-3  # S49 (D204): the gate's worst against the trapezoid with φ(m), on the 4 Myr [M/H] -0.94 isochrone
