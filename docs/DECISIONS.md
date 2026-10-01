@@ -7491,3 +7491,33 @@ quadrature (the code exists), every photometric pin re-read with its reason (B10
 old tables re-examined), V1's gate re-pinned. **It is accuracy work on the pinned model and moves published numbers,
 so it waits for the owner's word**; until then the star-first renderer's realised light sits below the field's budget
 by the factor above, and the wiring states both.
+
+### D203. S48: within a luminosity interval a bright star is drawn by its segment's exact count in the interval, not by the density at an interpolated luminosity — the wiring's realised-light gate found the catalogue's stars too red
+
+**Ruled on the wiring builder's report (2026-10-01), before the fix (D113).** The identities hold (unresolved + young +
+bright ≡ the field's total to 10⁻¹³ per ring and band) and the single counting holds (the cluster census carries 0.985
+/ 0.990 / 1.000 of the young light through rgb, 1.011 bolometric). **The realised bright catalogue does not carry its
+own band budget:** above 10⁴ L☉ the count (64 492 against 64 233 expected) and the bolometric light (z = +0.08) are
+right, and the band light is U … K = 0.84 / 0.83 / 0.92 / 0.98 / 1.02 / 1.04 / 1.04 / 1.03 of the budget (through rgb
+0.977 / 0.915 / 0.826, z = −3.9 / −14 / −26); at 10^3.5 L☉ even the bolometric light is 1.2 % low. Which isochrone a
+star lands on is right (χ²/dof 0.96); **where on the isochrone is not**: D200 (3) fixed the star's luminosity first, as
+`Λ⁻¹(Γ_i)` read log-linearly across each 0.05 dex interval, and then chose the segment by its density at that exact
+luminosity — and where an isochrone's count curve is not log-linear inside an interval (the top of the main sequence,
+the ends of the blue loop) the hot segments are under-drawn. One isochrone drawn alone reproduces it (log age 7.6:
+B 0.72, K 1.11 of its budget). The defect is in D200's design, not in the build.
+
+**The ruling.** `Γ_i` fixes the star's **interval** — which pair of grid thresholds its luminosity lies between — and
+the order between intervals; within the interval the star's (age part, isochrone, segment) is drawn by **its exact
+star count inside the interval** (one inverse CDF, as now, but over counts in the bin rather than densities at a
+point), and its luminosity **uniformly in log L across the segment's overlap with the interval**, from the star's own
+stream. The interval's count is partitioned exactly among segments, so every linear quantity of the realised stars —
+count, bolometric light, each band — has the budget's expectation by construction. *What it costs, stated:* the
+prefix property and completeness are exact **at the grid's thresholds** (0.05 dex) and no longer at an arbitrary
+luminosity inside an interval; for an arbitrary `l_min` the route materialises the interval that contains it and keeps
+the stars above, so the body is still complete above `l_min` (every such star is in it), and the header says the
+prefix holds by interval. Within a cell, rows are ordered brightest first. *Chosen against:* a finer threshold grid
+(the bias shrinks and does not vanish; the tables grow); the interval's exact piecewise CDF per cell (the mixture
+differs per cell: 65 536 inversions of a 792-component mixture). **Gate:** the realised band light above 10⁴ L☉ within
+4σ of the own budget in all eight bands and through rgb (the strict xfail becomes a pass), the bolometric light at
+10^3.5 within 4σ, the single-isochrone draw's B and K within its noise, counts and the per-region and grid-threshold
+prefix tests as before; `bright_star_limit` and the other pins re-read, each with its reason.
