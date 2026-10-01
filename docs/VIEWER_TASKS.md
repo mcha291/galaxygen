@@ -91,6 +91,27 @@ field's light drawn *under* the selection with the selection's own light subtrac
 Its natural order: T22 (a quarter) → the field under the points with a ruled accounting (one) → T20 (half) → T2/T3
 (two, Model) → T21 (one, Model).
 
+### 4a. What the owner was told after S49, and the choice left open (2026-10-01, recorded at handoff)
+
+**How the light divides among the brightest N disc stars** (exact, from `bright.luminosity_function` over all ages;
+89 billion living disc stars, 4.59 × 10¹⁰ L☉; the bulge not included): the brightest 100 carry 0.35 %, 1 000 2.2 %,
+3 162 5.1 %, 10⁴ 10 % (each above 2.4 × 10⁵ L☉), 10⁵ 22 %, 10⁶ 35 % (above 2 900 L☉), 10⁷ 53 % (above 390 L☉), 10⁸ 72 %,
+10⁹ 88 % (above 2.5 L☉), 10¹⁰ 98 %. So no small number of stars "is" the galaxy: half the light takes about seven
+million stars, the star-first mode needs the unresolved field under its points, and the very top is young (the
+clusters').
+
+**What the model does not yet provide for a star-first picture** (none blocks S50's mode): **T24** a cluster resolved
+into its own stars at close zoom (stars under 20 Myr exist only as cluster points; the same ordered process with
+Λ = M_cluster × the luminosity function at the cluster's age); **T25** bulge stars (the bulge stays as glow; the same
+process on its Hernquist profile); **T26** the faint end below 0.1 L☉ with finer cells so a close view stays
+affordable; **T27** one star list — the number-sampled catalogue (which carries the planetary systems and is about one
+star in 10⁵–10⁷ of the galaxy: 20 000 by default, at most 5 × 10⁶) re-keyed onto the complete list's identities, so
+any drawn star can be picked and its system opened; today a bright star is named (level-3 cell, rank) and has no
+system. T24–T26 are about two sessions together, T27 two to three; all four are model work beyond the two pieces the
+pin was lifted for and need the owner's word. **The owner's open choice at handoff:** the star-first viewer mode first
+on what exists (the session's recommendation), or T24–T26 first. The owner has ideas of their own for the viewer to
+give the next session.
+
 ## 5. Not viewer work (pinned)
 
 The model's open debts — #117 and #124 (row 37 and the gas gradient; the blind direct-method reading), #107, Audit V —
