@@ -692,9 +692,9 @@ defined here once and used in every entry below:
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124 | 52 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125 | 53 |
 
-So the board's **63 open** is 11 permanent and 52 carried, and no item is unruled. (S22
+So the board's **64 open** is 11 permanent and 53 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -717,7 +717,8 @@ sprite and convention, D192; S43, Audit IV, opened #121–#123, the grid's solar
 misplaced grain row, and set #117's window blind, D194; S44 applied and discharged #121–#123, decided #120's
 convention half, and entered row 37 as a recorded miss under #117, D195; S45 diagnosed row 37 — the metallicity path
 is the whole gradient, the gas gradient is steeper than the Cepheids' (#124 opened) and the rest is a conflict of
-sources — D196.) The eleven
+sources — D196; S48, the per-object filter response, opened #125, the band curves' wings on the steepest spectra,
+and corrected #114's factor of two to the clusters', D201.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3249,6 +3250,13 @@ never been judged in twenty-three sessions.
    `/api/render` does per cell), per star the isochrone's magnitudes the table already holds (`star_magnitude_v`
    is one) — and the viewer drawing a point's channel as that response over the white point, the ramp kept for
    the "temperature" field alone. `tests/test_v4.py` pins the 2.12.
+   **S48 (D201): the function exists and the factor of two is the clusters'.** `spectra.object_response` gives an
+   object's light through the viewer's curves from its eight band magnitudes — the field's own machinery on
+   one-dimensional tables, within 2 × 10⁻⁵ mag of `stellar_response` — and, re-measured on 2 000 isochrone points,
+   today's painting of a *star* (L × the blackbody share) is 1.151 / 1.093 / 1.043 of its filter light in R / G / B
+   summed over the points (per-point medians 1.107 / 1.139 / 1.259): a single star is nearly one blackbody. The
+   1.89 / 2.12 / 2.43 above was measured on the cluster census, and is an integrated population's. **Still
+   carried** until the routes serve the response (`filters=` on the object routes) and the viewer draws it.
 115. **The young population is on the screen twice in principle and once in practice: the cluster points and the
    sampled stars have no accounting between them, and a dissolved cluster is a point** (S41, V4, D191). The
    clusters are the whole young population — ΣQ / the light stage's young Q = 1.0088 (D182) — and carry 0.249 of
@@ -3426,6 +3434,19 @@ never been judged in twenty-three sessions.
    mixing) was not read at S45. **Carried.** What closes it: a ruling in `chemistry_dtd` / `ism` on the gas-phase
    gradient against a sourced gas measurement (the blind direct-method HII-region gradient #117 asks for serves
    both), with rows 22 and 23 re-read after any change (B10).
+125. **The spectrum's band curves cannot hold a band below what their wings collect from a brighter neighbour** (S48,
+   D201). `spectra.band_consistent` makes the joined spectrum's mean through each band's curve equal the band's
+   own flux by twelve multiplicative passes, the curves Gaussians at the passbands' pivots and widths `[inferred]`
+   (S38, D188). On a spectrum that falls steeply to the blue — 32 of 2 000 isochrone points, dust-shrouded TP-AGB
+   stars — the iteration cannot pull U (25 points, by up to 2.65 mag), B (6, up to 0.38) or V (3, up to 0.09)
+   down to the table's magnitude: the Gaussian's wing over the next band holds more light than the band itself.
+   A population's anchors are smooth, so the per-cell field is not affected in any pin; an *object's* response
+   (`object_response`, which reproduces the machinery to 10⁻⁵ mag) inherits it, and a test pins the 32. The light
+   at stake is a star's faintest band, a millionth of its K. **Carried.** What closes it: band curves with the
+   passbands' real extent (the Bessell curves themselves, which end, instead of Gaussians, which do not — #107's
+   reading of what CMD's bands are), or a consistency solve that is exact for eight anchors (a linear solve in
+   the segment basis instead of a multiplicative iteration), either re-pinning V1's gate.
+
 
 ---
 

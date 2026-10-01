@@ -7415,3 +7415,33 @@ field's pins must not move); if the floor is ever needed there it is a ruling of
 response, summed over the 2 000 points, is 1.151 / 1.093 / 1.043 in R / G / B — a single star is nearly one blackbody
 — where S41 measured 1.89 / 2.12 / 2.43 on the cluster census. The factor of two is the *clusters'* (an integrated
 population is not a blackbody); the stars' error is 4–15 %. The debt's text is corrected at this session's close.
+
+**Applied (`session-48-response`, 8a47a82 and 7369a6b, merged 673b044; `spectra.py` +173, `tests/test_render.py` +230).**
+`object_nu_l_nu` (eight Vega magnitudes → the λL_λ anchors through `band_nu_l_nu`, NaN in, NaN out) and
+`object_response`, **the field's own machinery on one-dimensional tables**: each power-law segment's integral ln G(s)
+against the log slope (−80 to 80 in steps of 0.02; interpolation error at the rows' midpoints ≤ 4.7 × 10⁻⁶), the tails
+below U and beyond K on the 193-point temperature grid (≤ 3.3 × 10⁻⁵), `band_consistent`'s twelve passes run on the
+eight band curves' tables; an LRU of eight table sets keyed by the curves. `ANCHOR_FLOOR = 1e-12` inside
+`object_response` only; `stellar_response`, `band_consistent` and `sed_response` untouched, the field's pins unmoved.
+**Against `stellar_response` on the same floored anchors, all 2 000 points, the worst filter per set:**
+
+| Set | Median |Δmag| | Max | Luminosity-weighted |
+|---|---|---|---|
+| rgb | 5 × 10⁻⁸ | 2.8 × 10⁻⁶ | 8 × 10⁻⁸ |
+| sho, hoo, wfc3n | 3.2 × 10⁻⁶ | 9.5 × 10⁻⁶ | 3.3 × 10⁻⁶ |
+| wfc3 | 1.9 × 10⁻⁶ | 1.9 × 10⁻⁵ | 2.1 × 10⁻⁶ |
+
+D200's threshold (0.02 mag weighted, 0.1 mag worst) is asserted for all five sets and met by four orders of magnitude.
+10⁵ objects through a three-filter set with warm tables: **0.7 s** (pinned under 3 s); the tables build in 0.03–0.5 s
+per set, the eight band curves' in 0.1 s once. Stars hotter than 10⁵ K (87 points) take the last row's tails and stay
+within 0.0014 mag. The new tests add 13.5 s to `test_render.py`. One slip, disclosed by the builder: its first commit
+took its message from a stray scratchpad file and was amended at once, unpushed; 7369a6b carries the right one.
+
+**What did not go as ruled, and is registered (#125).** The floor does not repair the dust-shrouded TP-AGB stars: only
+14 of the 39 have an anchor below 10⁻¹² of their peak. After the floor 7 hold every band to 0.01 mag and **32 do not:
+U misses at 25 by up to 2.65 mag, B at 6 by up to 0.38, V at 3 by up to 0.09; R through K hold.** These stars are
+steep but above the floor: twelve passes of `band_consistent` cannot pull a band's mean below the light its Gaussian
+curve's wings collect from a far brighter neighbour. That is a limit of the field's own machinery (S38's band curves
+are Gaussians of the passbands' widths, `[inferred]` in shape), which this row leaves unchanged; `object_response`
+reproduces it to 10⁻⁵ mag on these stars too, and a test pins the 32. The light at stake is small — a star that misses
+U by 2.65 mag is one whose U is a millionth of its K — but it is a wrong number on the wire, and it is recorded.
