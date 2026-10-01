@@ -158,6 +158,30 @@ def test_production_is_loaded_and_idempotent(prod):
     assert again[0] is models and again[1] is impls
 
 
+def test_the_default_model_is_azimuthal(prod, monkeypatch):
+    """S46 (D197): the azimuthal model is the default and leads the registry; basic stays registered."""
+    import galaxy.models
+
+    models, _, _ = prod
+    assert galaxy.models.DEFAULT == "azimuthal"
+    assert models.names()[0] == "azimuthal"  # /api's default and the specs' first report
+    assert "basic" in models.names()
+    assert galaxy.models.declarations()[0] == "azimuthal"
+    monkeypatch.setattr(galaxy.models, "DEFAULT", "no_such_model")
+    with pytest.raises(RegistryError, match="default model's declaration"):
+        galaxy.models.declarations()
+
+
+def test_put_first_reorders_without_losing_items():
+    r: Registry[str] = Registry("thing", lambda x: x)
+    for x in ("a", "b", "c"):
+        r.register(x)
+    r.put_first("c")
+    assert r.names() == ("c", "a", "b") and len(r) == 3
+    with pytest.raises(KeyError):
+        r.put_first("d")
+
+
 def test_the_epochs_default_is_the_lcdm_median():
     """S15 (D117): z_f's default is derived, not the midpoint of a cited range.
 

@@ -65,7 +65,8 @@ export function App() {
   useEffect(() => setSystemStar(null), [sample]);
 
   const seed = wf.state?.values.world_seed;
-  // The model is named only where there is a choice of one; since D170 there is one model.
+  // The model is named only where there is a choice of one; there are two since S27 (D176) and the
+  // selector shows them; the default is the azimuthal one since S46 (D197).
   const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}` : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
     { key: "preview", label: "Preview", disabled: generated, title: generated ? "The galaxy is generated; reopen a checkpoint in the Science tab to preview it" : undefined },

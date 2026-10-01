@@ -1,4 +1,4 @@
-"""The basic model: the one registered model, and the physics the project kept (D170).
+"""The basic model: the first model; the azimuthal model is built from it (S27) and is the default since S46 (D197).
 
 Until D170 two models were registered: ``simple`` (one abundance, no outflows, a thick disc
 defined by the last major merger) and ``advanced``, which remapped two slots (S9) —

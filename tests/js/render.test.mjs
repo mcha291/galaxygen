@@ -258,11 +258,12 @@ test("the catalogue appears at the checkpoint that publishes it, and not before"
 test("every published field reaches the viewer, in every model", () => {
   // S19's gate. The viewer is written from the declarations, so a field that nothing draws
   // is not a missing view — it is a field the model computes and no one ever looks at. Read
-  // per registered model (one, "basic", since D170), so a second declaration is gated the
-  // day it is added.
+  // per registered model (one, "basic", from D170 to S27; two since; the default "azimuthal"
+  // since S46, D197), so a further declaration is gated the day it is added.
   const models = Object.entries(fixture.models);
   assert.ok(models.length >= 1, "no model in the fixture: the gate would be vacuous");
-  assert.ok(models.some(([name]) => name === "basic"), "the default model is not in the fixture");
+  assert.ok(models.some(([name]) => name === "azimuthal"), "the default model is not in the fixture");
+  assert.ok(models.some(([name]) => name === "basic"), "the basic model is not in the fixture");
   for (const [name, payload] of models) {
     const all = payload.fields;
     const materialisers = view.catalogueStages(all);
