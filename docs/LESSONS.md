@@ -1163,3 +1163,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [infra] The desktop harness's agent worktrees rewrite the main checkout's `core.hooksPath` to an absolute path (with
   `extensions.worktreeConfig` on), and `test_hook` then fails at close for a reason that is nobody's code: run
   `tools/bootstrap.py` again before the full suite, or read that failure as the environment's (D195).
+
+## From S45 (row 37's diagnosis; the aim and readings by Fable, the instrument by an Opus agent, the ruling the session's)
+
+- [audit] Write the readings before the number, and then read the number against the readings' *substance* as well as
+  their letter: the pre-stated "Z share within 0.01 of the total" assumed two shares add, and a grid response that
+  varies with age and U made the frozen-age-U probe overshoot by 0.014. Say the criterion was a method tolerance,
+  record the overshoot, and do not widen it (D196).
+- [audit] A reading that fires can still be a part, not the whole: R1c named the chemistry, and the next line of
+  arithmetic (the Cepheid gradient through the grid's own response still misses by 3.7σ) showed the rest is a
+  conflict between two measurements of the Galaxy. Follow a fired reading one step further before writing it as the
+  cause; preserve the sources' conflict as named rulesets (B12), never averaged (D196, #117, #124).
+- [field] Name the quantity a dependency actually reads: the grid reads log Z, age and U and carries its own N/O, so
+  "the chemistry's N/H gradient" was never a lever — the chemistry enters only as the oxygen gradient. A miss text's
+  candidate causes must be the dependency's inputs, not the model's columns it does not read (D196).
+- [audit] A substitution probe (D114) that freezes one input at the fit range's inner edge decomposes a gradient
+  cleanly when the shares are nearly additive, and overshoots when the response varies along the other inputs; run
+  the complementary probe and the all-frozen residual so the overshoot is seen, not inferred (D196).
+- [close] An instrument an Opus builder writes from a pre-stated aim lands first time when the aim names every
+  quantity, its weighting, its range and the identity it must reproduce to 10⁻⁹ before anything else is printed:
+  the published value was reproduced to 0.0 and no number needed a second pass (D196).

@@ -6961,3 +6961,142 @@ backgrounded with its own line: **`EXIT=1` on the first run, one failure and not
 **62 open = 11 permanent + 51 carried, 44 discharged.** Board row 44; LESSONS six; RESUMING 120; BRIEF for S45 offers the
 owner's choice (row 37's diagnosis by the miss's prediction, #119, #107, a redeploy, Audit V). Tag `s44` on the merge
 (C2e as amended, D193), the MANUAL_TODO row applied with the SHA on `main`.
+
+### D196. S45: row 37's diagnosis by the miss's own prediction — the aim, the instrument and the readings written before the number (D113), and the prod check for a redeploy bundled at the close
+
+**The owner, in chat, on 2026-10-01: "Yes, lets do that. Delegate to opus subagents if you judge that fable capabilities
+are not needed."** — option 1 of S44's BRIEF (row 37's diagnosis) with option 4 (the viewer built and checked on `prod`
+for a redeploy, the deploy itself the owner's) at the close. Fable writes the aim, rules on the reading and keeps the
+record; an Opus 5.5 builder builds the instrument and prints the numbers. Written as the first commit of `session-45`,
+before any script ran.
+
+**What the grid actually reads, stated so the diagnosis has the right parts.** A region's [N II]/Hα is the grid's own
+ratio at (log Z, age, log U), log Z = oxygen − 8.93 (D195); the grid carries its own N/O(Z) and T_e(Z), and the model's
+published `hii_nitrogen_abundance` is not read by it (D192, #118). So the ring gradient over 8.2–15.4 kpc decomposes as
+G_Z × Z′ + G_age × age′ + G_U × U′ (plus what the Hα weighting mixes in), where Z′, age′, U′ are the regions' radial
+trends and G the grid's local responses. **The miss text's "chemistry's N/H gradient" was the wrong name: the chemistry
+enters only as Z′, the oxygen gradient the ism and chemistry stages set** — corrected here, and in the miss text at the
+close.
+
+**The instrument (B1, built before the number): `tests/test_s45_diagnosis.py`**, on the default `basic` model, the
+regions whose `cluster_radius` lies in 8.2–15.4 kpc, Hα-weighted (`hii_halpha_luminosity`) throughout:
+(a) **Z′** — the weighted least-squares slope of `hii_oxygen_abundance` against R (dex/kpc), and the ring vector's
+    (`feh_gas` + `alpha_fe_gas`) slope over the same rings for comparison;
+(b) **G_Z, G_age, G_U** — the grid's local d log([N II]/Hα)/d(log Z, log age, log U) at each region's own point by
+    central differences (±0.05 dex, inside the grid: a region at a clamped edge takes the one-sided difference), the
+    weighted means over the regions; and **age′, U′** — the weighted slopes of log age and log U against R;
+(c) the three products and their sum against the published −0.1035 (the sum is linear in R only to first order; the
+    difference is reported, not explained away);
+(d) **the substitution probes (D114)** — `grid_line_ratios` re-evaluated on the same regions (i) with log Z frozen at
+    the Hα-weighted value of the regions within ±0.5 kpc of 8.2 for every region beyond, age and U their own; (ii) with
+    age and U frozen the same way, log Z its own; each giving a ring gradient by the row's own fit
+    (`nebular.nii_halpha_gradient` on ring sums of the re-evaluated ratio × the region's Hα) — (ii) is **the Z share**,
+    (i) **the age/U share**;
+(e) PP04's empirical response, **1/0.57 = 1.75 per dex** of 12 + log(O/H) (the N2 calibration as Zhao et al. 2026's
+    Eq. 5 quotes it: 12 + log(O/H) = 8.90 + 0.57 × N2; Pettini & Pagel 2004 itself not read) — G_Z against it;
+(f) row 22's reading, −0.0698 dex/kpc against [−0.069, −0.049] (Trentin+24's Cepheids −0.064 ± 0.003), beside Z′.
+The test pins what it measures with a tolerance and a comment, so the diagnosis is re-run by every later session.
+
+**The readings, stated before the script runs (B4).**
+- **R1 — the Z share within 0.01 dex/kpc of −0.1035:** the gradient is the metallicity's through the grid and nothing
+  else. Then which part is wrong is read from G_Z against PP04's 1.75 and Z′ against row 22:
+  - **R1a — G_Z inside 1.75 ± 0.35 per dex (±20 %) and Z′ inside row 22's window widened by its own miss (−0.07 to
+    −0.049):** the grid's response is the empirical one and the oxygen gradient is the Cepheids'. Then row 37 is what
+    PP04's own calibration gives for the Galaxy's abundance gradient (−0.06 × 1.75 ≈ −0.105), and Zhao's flat N2 slope
+    (−0.025, i.e. −0.014 dex/kpc in O/H by the same calibration) and row 22's Cepheid gradient are **two measurements
+    of the Galaxy the model cannot satisfy together through one empirical response.** B12: a conflict of sources is
+    preserved as named rulesets, never averaged — row 37 stays a recorded miss, its debt re-described as the sources'
+    (not the grid's, not the chemistry's), and the closer is a third measurement read blind: the direct-method
+    HII-region O/H gradient (Esteban & García-Rojas 2018 or Arellano-Córdova et al. 2020, as a reader forbidden the
+    repository sets it) that says whether the Galaxy's HII regions follow the Cepheids or LAMOST's N2. No model number
+    moves.
+  - **R1b — G_Z > 2.1 per dex:** the grid's run with Z (its T_e and N/O) is steeper than the empirical response: the
+    cause is the grid's; the debt is #118's family (the grid's gas is not the region's) with the closer a grid read at
+    the regions' own N/O, or a stated calibration-domain correction. No number moves at S45.
+  - **R1c — G_Z < 1.4 per dex, or Z′ steeper than −0.075:** the gas oxygen gradient is steeper than the stars' (row
+    22's): the ism/chemistry stages' gas-phase gradient is the cause, and the closer sits in `chemistry_dtd`; a fix
+    there moves rows 22–23 and is S46's, after a ruling.
+- **R2 — the Z share inside [−0.045, −0.005]:** the age/U run carries the miss: the regions' log U or age trend with R
+  (the Strömgren-radius U convention, #118's U gap, or the clusters' age mix) is the cause; the closer is in the nebular
+  stage's U. No number moves at S45 without a ruling on the convention.
+- **R3 — between:** both named, apportioned by the two shares, the larger first; the register entry says so.
+A reading that names a defect with a fix inside a stage is recorded, not applied, at S45 (the fix is a ruling of its own,
+S46's). A new acceptance row on any of these numbers needs a blind window set first (#117's lesson; D192, D195): if R1a
+fires, S45 may commission the blind reader for the direct-method gradient and leave the row to S46.
+
+**The close.** D196's findings; the register (a re-described #117 or a new #124, as the reading says); row 37's miss text
+updated with which reading fired; board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46. **Option 4:** `npx vite build`,
+the `prod` config (:8018) started, the viewer's own render under `wfc3n` read through the real transport and `/api/fields`
+for row 37's scalar, the server stopped; the deploy command for the owner written in BRIEF (`deploy.ps1 -Tag <merge sha>`)
+— a deploy is the owner's action, not a session's. Then the ritual: merge `--no-ff`, push, `s45` on the merge, `ls-remote`
+read back, the MANUAL_TODO row, `verify_clone --ref main`.
+
+**What the instrument read (2026-10-01; `tests/test_s45_diagnosis.py`, built by an Opus 5.5 builder on `session-45-diagnosis`
+from the aim above, every number pinned; 12 860 regions, 5 337 in 8.2–15.4 kpc, 96 rings; the published −0.10351
+reproduced to 0.0 when nothing is frozen, the identity asserted to 10⁻⁹).**
+
+| Part | Reading |
+|---|---|
+| Z′, the regions' oxygen gradient (Hα-weighted) | **−0.0784 dex/kpc** (the ring `feh_gas + alpha_fe_gas` −0.0780) |
+| G_Z, the grid's d log([N II]/Hα)/d log Z at the regions' own (age, U) | **+1.224 per dex** (16/50/84: 0.96 / 1.28 / 1.52; no region one-sided) |
+| G_age, G_U | +0.213, −0.378 per dex (759 one-sided in age, 126 below the 0.5 Myr floor) |
+| age′, U′ | −0.0081, +0.0005 dex/kpc |
+| First-order products | G_Z Z′ −0.0960, G_age age′ −0.0017, G_U U′ −0.0002; sum −0.0979 against −0.1035 |
+| Probe (i), Z frozen at the 8.2 kpc edge (age/U share) | **−0.0016 dex/kpc** |
+| Probe (ii), age and U frozen (Z share) | **−0.1177 dex/kpc** |
+| Probe (iii), all frozen (mixing) | −0.0005 |
+| G_Z over PP04's 1.754 | **0.70** (median 0.73) |
+| Row 22, the stars' present-day gradient | −0.0698 (window [−0.069, −0.049]; Trentin+24's Cepheids −0.064 ± 0.003) |
+
+**The readings applied, in the order written.**
+
+*R1 fires, in substance and not by its letter.* The age/U path carries −0.0016 of the −0.1035 (1.5 %), the mixing
+−0.0005, and the metallicity path, age and U frozen, −0.1177 — which is **0.014 from the published value, outside the
+0.01 the aim wrote**. The aim assumed the two shares add; they do not: G_Z is larger at the inner edge's younger,
+higher-U regions than averaged over the regions' own, so freezing age and U *there* overshoots. The decomposition is
+nonetheless unambiguous — the gradient is the metallicity's through the grid and nothing else — and that is what R1
+asks. The 0.01 was a method tolerance for a linear sum, not an acceptance window, and it is recorded as too tight for a
+nonlinear decomposition rather than widened: the test pins the three probes as read.
+
+*R1c fires, by both its conditions; R1a and R1b do not.* G_Z = 1.22 per dex is **below 1.4** — the grid responds at 0.70
+of PP04's empirical 1.75, so the grid's run with Z is not steeper than the empirical response but shallower (its own
+T_e(Z) and N/O(Z) already flatten N2 more than Pettini & Pagel's calibration does); R1b is dead. And Z′ = −0.078 is
+**steeper than −0.075**: the HII regions' oxygen gradient (the ring gas gradient, −0.078, which the regions inherit
+exactly) is steeper than the stars' present-day −0.070 that row 22 reads, and steeper than the Cepheids' −0.064 ± 0.003
+that row 22's window is set from — young stars that should track the gas. So the chemistry's gas-phase gradient is a
+cause, as R1c says, and its closer sits in `chemistry_dtd` / `ism` (rows 22 and 23 watch it; a fix is S46's after a
+ruling, as the aim pre-stated). **But R1c's consequence was then examined before it was written down as the whole
+answer, and it is not:** at the Cepheids' own gradient the model would read 1.22 × (−0.064) = **−0.078**, still 3.7σ
+below the blind floor, and to land inside [−0.045, −0.005] through the grid's response the gas gradient would have to
+be flatter than −0.037 dex/kpc — flatter than every stellar measurement row 22 cites and than the Cepheids by a factor
+of two. So the chemistry owns a bounded part of the miss — the 0.014 dex/kpc by which the gas gradient exceeds the
+Cepheids', worth **−0.017 dex/kpc of the ratio gradient** — and the rest is R1a's substance under R1c's letter:
+**Zhao et al.'s LAMOST N2 gradient (−0.025, i.e. an O/H gradient of −0.020 through this grid's response or −0.014
+through PP04's) and the Galaxy's Cepheid abundance gradient (−0.064) are two measurements the model cannot satisfy
+together through any response between the grid's 1.22 and PP04's 1.75 per dex.** B12: a conflict of sources is
+preserved as named rulesets, never averaged. Row 37 stays a recorded miss; nothing moves.
+
+**What the register says now.** *#117 re-described:* the row's miss has two named parts — the chemistry's (−0.017,
+#124 below) and the sources' conflict — and its closer is a third measurement read blind, **the direct-method
+HII-region O/H gradient over 8–15 kpc** (Esteban & García-Rojas 2018, Arellano-Córdova et al. 2020, as a reader
+forbidden the repository sets it): if it is flatter than −0.03 dex/kpc the Galaxy's HII gas is flatter than its Cepheids
+and the model's gas gradient is the defect in full; if steeper than −0.05, LAMOST's N2 gradient is the outlier and the
+row's source carries the conflict; between, both. *#124 opened:* the gas-phase oxygen gradient (−0.078) is steeper than
+the Cepheids' (−0.064 ± 0.003) and than the model's own stars' (−0.070); the HII regions inherit it. Carried; the closer
+is a ruling on the chemistry stage's gas gradient (what sets the gas steeper than the stars it just formed — the
+inside-out profile's present-day enrichment or the ism's mixing), with rows 22–23 re-read after. *The miss text of row
+37* (`spec.MISSES[37]`) is rewritten to these two causes and the blind-reading prediction; the "chemistry's N/H
+gradient" phrase is gone (the grid reads no N/H). The register reads **63 open = 11 permanent + 52 carried, 44
+discharged.**
+
+**Option 4, the prod check.** `npx vite build` clean; `prod` (:8018) started on `main`'s code (S45 adds tests and docs
+only), the bundle's `wfc3n` curves carry the vacuum key, a form-encoded POST to `/api/render` through the real
+transport returns 200 (6 953 080 bytes) with the three filters echoed `vacuum`, Hα 0.9453 in F656N, [O III] 0.8987 in
+F502N; `/api/fields` lists `nii_halpha_gradient_hii` (dex/kpc, galaxy, scalar); the server stopped. CI's `image.yml`
+built `ghcr.io/mcha291/galaxygen:7e0338d` (and `:83d2ca2`) on the push, so the owner's command is `./infra/deploy.ps1
+-ResourceGroup galaxygen-rg -Tag <short sha of main after this merge>` — in BRIEF; the deploy is the owner's.
+
+**The gate.** `test_s45_diagnosis` and `test_nebular` green; no model number moved, so specs stay 12 / 20 / 5 of 37 (re-run
+and read); `test_audit`'s register pins moved to 63 / 44 with #124 in the carried list; the full suite backgrounded with
+its own line, `bootstrap.py` run first (S44's lesson): **`EXIT=0`, every file green (bootstrap run first, the hooks path at `tools/hooks`); specs re-read 12 / 20 / 5 of 37 in both models, row 37 the recorded miss at −0.103506**. Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
+(the blind direct-method reading first, then the chemistry ruling). Tag `s45` on the merge (C2e), the MANUAL_TODO row.

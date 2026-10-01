@@ -1,8 +1,8 @@
 # Resuming
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
-of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S44: S0–S22
-(§5d), S25–S42 (§5e), S43 Audit IV (`AUDIT_IV.md`, D194) and S44 its fixes (D195); S45 is the owner's choice (`BRIEF.md`).**
+of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S45: S0–S22
+(§5d), S25–S42 (§5e), S43 Audit IV (D194), S44 its fixes (D195), S45 row 37's diagnosis (D196); S46 is the owner's choice.**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -12,7 +12,7 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 ```
 Then RULES.md in full, BRIEF.md, whatever plan the owner names; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
-tools/hooks`; LF newlines. **Numbers are sequential**: debts from #124, decisions from D196, board rows from 45,
+tools/hooks`; LF newlines. **Numbers are sequential**: debts from #125, decisions from D197, board rows from 46,
 acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -41,7 +41,8 @@ frontend/       Vite + React + three.js (`npm --prefix frontend run dev` on :517
                 since S44), psf.ts (the Airy sprite), colors.ts (P6); interface/transport.js is the one fetch (a POST past 4 KB)
 tests/          53 files; every `model`-parametrised test runs per registered model (two); test_audit*.py (iv: S43's mesh) and
                 each phase's file pin measurements; test_render the V1/V2 gates, the lines, instrument, blackbody and grain
-                keys; test_region_synthesis the V3 gates (24 s); test_v4 the object columns (**30 drawn / 37 not, D192**)
+                keys; test_region_synthesis the V3 gates (24 s); test_v4 the object columns (**30 drawn / 37 not, D192**);
+                test_s45_diagnosis row 37's parts (Z′, the grid's responses, the frozen probes; D196)
 tools/          progress (the board), bootstrap, verify_clone, timings, scaling, fetch_parsec, fetch_nebular, fetch_filters
 ```
 ## Writing a stage
@@ -83,7 +84,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `lo == hi` says "no testable target" (D100; rows 20, 21, 25–28, 36); a row whose source does not say what it
   measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-10-01, after S44 (D174–D195 hold the before/after)
+## What the instruments said on 2026-10-01, after S45 (D174–D196 hold the before/after; S45 moved nothing)
 - graph acyclic for both models; preflight OK, 7 of 12 controls; determinism reproducible for both; spec **12 pass /
   20 fail / 5 not-yet-computable of 37, identical** (row 34 green since S42 on the blind window; row 37 a miss, #117); convergence
   0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; rows 30 / 31 0.0176069 / 0.0065332 yr⁻¹ (#88);
@@ -98,13 +99,12 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   (S35); bubbles median 9 pc, 1 464 remnants, porosity(R₀) 0.033 (S36); render frame B − V 0.630641, M_V −21.216042;
   balance 0.999321 (S38–S39); clusters' HII Hα / field 0.9801 / 0.9744, √⟨L²⟩/⟨L⟩ 6.898, `cloud_extinction_v` 2.9696
   (S40); clusters' ΣL 0.249 of disc_luminosity, the ramp 1.89 / 2.12 / 2.43× the census's R / G / B light (S41);
-  **S44 (the grid on its own 8.93): Hα-weighted [O III]/Hα 0.752, [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % of
-  regions at the +0.2 dex edge, 2.6 % at the 0.5 Myr floor; WFC3 SHO on vacuum curves: Hα 0.945 in F656N, [O III] 0.899
-  in F502N, [S II] 0.958 / 0.863 in F673N; 44 tags on the remote.** Performance: basic ~2.8 s cold; render whole rgb 2.1 s
-  cold, 6.9 MB; clusters whole disc 1.7 s, 4.1 MB; `/api/blackbody` 5 ms, no stage (D192).
-- Register: **62 open — 11 permanent, 51 carried — and 44 discharged** (#121–#123 at S44, D195; #120's sprite half stays).
-  **S44 read**: row 37 is −0.1035 on the corrected scale, steeper than S43's −0.0815 (its ≈ −0.07 was three ring means
-  over 8–12 kpc); the diagnosis is the miss's own prediction (`spec.MISSES[37]`, BRIEF item 1).
+  **S44 (the grid on 8.93): Hα-weighted [O III]/Hα 0.752, [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % at the +0.2 dex
+  edge, 2.6 % at the age floor; WFC3 SHO on vacuum curves: Hα 0.945 F656N, [O III] 0.899 F502N, [S II] 0.958 / 0.863 F673N;
+  45 tags on the remote.** Performance: basic ~2.8 s cold; render rgb 2.1 s cold, 6.9 MB; clusters 1.7 s; `/api/blackbody` 5 ms.
+- Register: **63 open — 11 permanent, 52 carried — and 44 discharged** (#124 at S45, D196). **S45 read row 37**: all of it
+  the metallicity path (probes −0.1177 / −0.0016 / −0.0005); the grid 1.22 per dex (0.70 of PP04); the gas O/H gradient
+  −0.078 against the Cepheids' −0.064 (#124, −0.017 of it); the rest LAMOST's N2 against the Cepheids (B12); closer in BRIEF.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python tools/progress.py`, then `uv run

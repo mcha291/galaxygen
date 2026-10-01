@@ -1,53 +1,53 @@
-# BRIEF — for S45: the owner's choice after Audit IV's fixes
+# BRIEF — for S46: the owner's choice after row 37's diagnosis
 
-**The state (2026-10-01).** S44 is merged (D195): Audit IV's four fixes are applied and row 37 is entered. The grid's
-axis is read on its own total oxygen (8.93; 3.0 % of regions clamp, the Hα-weighted [O III]/Hα 0.752, [N II]/Hα
-0.082); the WFC3 sets declare `wavelengths: "vacuum"` and `line_response` converts the model's air lines by Morton
-1991 (F656N at Hα 0.945, F502N at [O III] 0.899); the grain row is the file's, its keys pinned; the record's nine
-sentences are set right (FSPS clamps; D192's sentence corrected in D195; one solar mass 1.98841e33). **Row 37 is a
-recorded miss under #117: `nii_halpha_gradient_hii` −0.1035 dex kpc⁻¹ against the blind [−0.045, −0.005], 6.5σ**,
-steeper than S43's −0.0815 (the offset moved it out, not in). Register: **62 open = 11 permanent + 51 carried, 44
-discharged.** Specs 12 / 20 / 5 of 37 in both models; vitest 121. Nothing is owed from S44 except #119 (optional, left).
+**The state (2026-10-01).** S45 is merged (D196). Row 37's miss (−0.1035 dex/kpc against the blind [−0.045, −0.005]) is
+taken apart in `tests/test_s45_diagnosis.py`, pinned: **the metallicity path is the whole gradient** (the regions' age
+and U frozen at 8.2 kpc → −0.1177; log Z frozen → −0.0016; all frozen → −0.0005); **the grid responds at 1.22 per dex of
+log Z, 0.70 of PP04's empirical 1.75**, so the grid is not too steep; **the regions' oxygen gradient is −0.078 dex/kpc,
+steeper than the Cepheids' −0.064 ± 0.003** that row 22 is set from, by 0.014 — worth −0.017 of the ratio gradient
+(**#124**, the gas gradient, opened). At the Cepheids' own gradient the model would still read −0.078, 3.7σ out, so the
+rest of the miss is a **conflict between Zhao et al. 2026's LAMOST N2 gradient and the Galaxy's Cepheid abundance
+gradient**, preserved as named rulesets (B12). #117 re-described; row 37's miss text rewritten with the prediction
+below. Option 4 done: `prod` checked through the real transport, CI's image built. **No number moved.** Register: **63
+open = 11 permanent + 52 carried, 44 discharged.** Specs 12 / 20 / 5 of 37 both models; vitest 121.
 
-## What S45 could do — the owner chooses; none is started without the word (numbers from #124, D196, row 38)
-1. **Row 37's diagnosis, by the miss's own prediction** (`spec.MISSES[37]`, D195 (5)). Read the grid first: at a
-   fixed age and log U, d log([N II]/Hα)/d log Z along the grid's Z axis (`nebular.grid_line_ratios` on the loaded
-   `_line_grid()`), times the model's d log Z/dR over 8.2–15.4 kpc (`hii_oxygen_abundance` against `cluster_radius`),
-   is the slope the grid alone imposes. If it is within 0.01 dex/kpc of −0.1035 the grid's temperature run is the
-   cause; if it is inside the window, the chemistry's N/H gradient (Nicholls' secondary term on the model's O/H
-   gradient) is. A slope inside the window after either one change alone kills the other. What may follow: the
-   blind reader's direction note says the Galactic T_e rises +345–359 K kpc⁻¹ and nearly cancels the abundance
-   fall — a grid read at the region's own T_e is not available (the grid's T_e is its own), so a diagnosis that
-   lands on the grid becomes a debt with a stated closer, not a fix. Also the secondary reading: 0.137 at 8.2 kpc
-   against 0.20–0.40 (it was 0.205 as built); a fix that lifts the slope must not sink this further.
-2. **#119 — the diffuse gas's two ratios** as sourced scalars once the layer is ruled the WIM proper: [N II]/Hα 0.5
-   (0.3–1.0) and [S II] 6716/Hα 0.3–0.5 (doublet ≈ ×1.7), Madsen 2006 / Haffner 1999 as read in `AUDIT_IV_BLIND.md`
-   Target B; published by the nebular stage beside the layer's Hβ, drawn by the render route's `lines_dig`.
-3. **#107 — the SED's anchors**: CMD's U B V are Maíz Apellániz 2006's and YBC's Vega is `alpha_lyr_stis_008`; what
-   closes it is a download (the owner's word), then a reading and a re-pin of V1's 8.9 × 10⁻⁵.
-4. **A redeploy** (`galaxygen-azure-deploy`: `deploy.ps1 -Tag <sha>`): the live viewer predates S42–S44 — the WFC3
-   sets, the vacuum key, row 37's scalar in `/api/fields`. A deploy is the owner's action; a session can build and
-   check `prod` (:8018) first.
-5. **Audit V** in Audit III/IV's shape, of S44 itself: a re-reader for the four constants that entered (8.93, Morton's
-   coefficients, the grain row, 1.98841e33) and a blind reader for row 37's diagnosis window if item 1 is chosen.
+## What S46 could do — the owner chooses; none is started without the word (numbers from #125, D197, row 38)
+1. **The blind third measurement** (#117's and #124's closer, D196). A reader forbidden the repository sets, before any
+   model number is read against it: the direct-method (T_e) HII-region O/H gradient of the Milky Way over 8–15 kpc
+   with its 1σ — Esteban & García-Rojas 2018 (MNRAS 478, 2315) and Arellano-Córdova et al. 2020 (MNRAS 496, 1051) as the
+   candidates, the reader choosing and saying why — written to `docs/AUDIT_V_BLIND.md` in Audit IV's shape. The reading
+   the aim must pre-state: flatter than −0.03 dex/kpc → the Galaxy's HII gas is flatter than its Cepheids and the
+   model's gas gradient is the defect in full (a chemistry ruling, item 2); steeper than −0.05 → LAMOST's N2 gradient is
+   the outlier and row 37's source carries the conflict; between → both. Then the model's `hii_oxygen_abundance`
+   gradient (−0.078) is read against it once, disclosed as measured after, and a row 38 may be entered if the window
+   has width. Half a session; the reader is a Fable or Opus agent spawned by the session with the brief written first.
+2. **The chemistry ruling (#124).** Only after item 1. What makes the gas steeper than the stars it just formed:
+   `chemistry_dtd`'s present-day enrichment profile or `ism`'s mixing — read the stage, name the mechanism, state the
+   prediction, then change one function (D114); rows 22 and 23 are re-read after (B10), and row 37 with them. Not to
+   be done in the same session as item 1 unless the window is wide.
+3. **The redeploy (option 4, ready).** The live viewer predates S42–S45. The image for `main`'s tip is built by CI on
+   every push (`.github/workflows/image.yml`, tagged by short SHA). The owner runs, from the repository root:
+   `./infra/deploy.ps1 -ResourceGroup galaxygen-rg -Tag <short SHA of main's tip>` (the S45 tag-record commit's, after
+   this merge). A session can re-check `prod` (:8018) first if asked; the deploy itself is the owner's.
+4. **#119** (the DIG's two sourced ratios), **#107** (the SED's anchors: a download), **Audit V** of S44–S45's constants
+   (8.93, Morton's coefficients, the grain row, 1.98841e33, the diagnosis's pins) — as S44's BRIEF described them.
 
 ## Gate for whichever is chosen
-`test_nebular`, `test_render`, `test_spec`, `test_audit_iv` green with any moved pin's reason in its comment; specs
-reported for both models; vitest and `npx vite build` clean if the sets change; the full suite backgrounded with its
-own `EXIT=` line; merge, push, **tag `s45` on the merge and push it**, `ls-remote` read back, the MANUAL_TODO row,
-`verify_clone --ref main`.
+The named test files green with every moved pin's reason in its comment; specs reported for both models; vitest and
+`npx vite build` clean if the viewer changes; **`uv run python tools/bootstrap.py` before the full suite** (agent
+worktrees rewrite the hooks path, S44); the suite backgrounded with its own `EXIT=` line; merge, push, **tag `s46` on
+the merge and push it**, `ls-remote` read back, the MANUAL_TODO row, `verify_clone --ref main`.
 
 ## Traps
 - Never force-push; never touch :5173; a scratch check uses `.claude/launch.json` "prod" (:8018, `npx vite build` first),
   stopped after. `uv run` only; LF newlines; the Bash tool fails over ~8 KB; `grep -c` exits 1 on zero; `git commit -F -`
   fails; bare `python` is not on the path. Do not merge or delete the sealed branches (MANUAL_TODO §2). Download nothing
-  without the owner's word (items 3 and 5's sources; a fresh SVO fetch for the instrument sets).
-- The full suite is ~15–20 min; `test_s21b_the_catalogue_is_priced_per_cell…` is load-flaky — re-run it alone if it is
-  the only failure, and say so. Gate the merge on the log's own `EXIT=` line.
-- Builders in parallel worktrees must own disjoint files; a record pass that touches every file runs last. Brief them
-  to grep the inventories (`test_graph`, `test_audit`'s `lost`, `test_sfh_azimuthal`'s row range, `test_nebular`'s
-  scalar loop) by a neighbouring name, not only to edit the files named (S44's lesson).
-- A number the model has printed gets only a blind or a disclosed row (#117, D192, D195): row 37's diagnosis prints
-  the grid's slope, so a row on it needs a blind window set first (item 5).
-- The grid's `_line_grid()` is cached; `nebular.py`'s read point is the one `grid_line_ratios` call. `OXYGEN_ABUNDANCE_
-  SOLAR` (8.69) is the T_e and PAH relations' scale and must not move with the grid's 8.93.
+  without the owner's word (item 1's papers are read by the agent at their sources, not fetched into the repository).
+- A number the model has printed gets only a blind or a disclosed row (#117, D192, D195, D196): the model's gas gradient
+  −0.078 is printed, so item 1's window is set before it is compared, and the comparison is disclosed in the row.
+- The specs report's summary lines do not survive a Bash-tool background move; redirect `python -m galaxy.specs` to a
+  file. The full suite is ~17 min; `test_s21b_the_catalogue_is_priced_per_cell…` is load-flaky — re-run alone, say so.
+- Builders in parallel worktrees own disjoint files; a record pass runs last; brief them to grep the inventories
+  (`test_graph`, `test_audit`'s `lost`, `test_sfh_azimuthal`'s row range, `test_nebular`'s scalar loop).
+- `OXYGEN_ABUNDANCE_SOLAR` (8.69) is the T_e and PAH relations' scale; the grid's is `NEBULAR_GRID_OXYGEN_SOLAR` (8.93).
+  The grid reads log Z, age and U only — it carries its own N/O; the model's N/H column is not a lever (D196).
