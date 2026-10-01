@@ -374,7 +374,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (63, 44)  # 62 / 44 at S44; S45 opened #124 (D196); 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
+    assert progress.debt_counts(text) == (65, 44)  # S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -403,7 +403,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124 | 52 |",  # S45: #124 opened (D196); S44: #121-#123 discharged (D195); 54 at S43
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 126 | 54 |",  # S48: #125 (D201) and #126 (D202) opened; S45: #124 (D196); S44: #121-#123 discharged (D195)
         # S42 (D192): rows 32 and 34 re-set on Audit III's blind windows; #100 re-scoped to the 0.71; #108 discharged.
         "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex",
         "100. **The model's ionizing photons per unit star formation are 0.71 of Starburst99's; row 34 passes since S42",
@@ -788,7 +788,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     lost = [f["name"] for f in fields
             if f["domain"] == "galaxy" and f["stage"] in catalogue_stages]
     assert sorted(lost) == [
-        "bound_cluster_mass_total", "catalogue_size", "cloud_count_total", "cloud_extinction_v", "cloud_forcing_parameter",
+        "bound_cluster_mass_total", "bright_star_count_1e3", "bright_star_limit", "catalogue_size", "cloud_count_total", "cloud_extinction_v", "cloud_forcing_parameter",
         "cloud_lifetime", "cloud_mass_total", "cluster_formation_efficiency", "dig_halpha_fraction",
         "dig_scale_height", "giant_fraction_sample", "halpha_luminosity_nebular", "halpha_sfr_ratio",
         "hii_luminosity_function_slope", "mean_planets_per_star", "nii_halpha_gradient_hii", "planet_count_sample",
@@ -796,7 +796,8 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     ], lost  # the four cloud scalars joined at S32 (D181), the /api/clouds header carrying them; the
     # cluster census's two at S33, the /api/clusters header carrying them; the nebular stage's five at S35, its
     # six since S44 (row 37's gradient, D195);
-    # the remnant census's expected count at S36, the /api/remnants header carrying it
+    # the remnant census's expected count at S36, the /api/remnants header carrying it; the bright catalogue's
+    # default limit and count above 10^3 Lsun at S48 (D200), the /api/bright header carrying them
     # The one that costs nothing: the region response's own census carries the count.
     assert "catalogue_size" in lost
     # S22's ruling (D148, debt #69): none of the four gets a surface, and each says so in its
@@ -807,7 +808,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
         assert "rule D4" in by_name[name]["about"], name
     # Everything else does reach a surface, and every picture has its ramp (rule A9).
     reachable = [f for f in fields if f["name"] not in lost]
-    assert len(reachable) == len(fields) - len(lost) and len(lost) == 18  # 17 until S44's nii_halpha_gradient_hii (row 37)  # 16 until S40's cloud_extinction_v  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
+    assert len(reachable) == len(fields) - len(lost) and len(lost) == 20  # 18 until S48's two bright-catalogue scalars (D200)  # 17 until S44's nii_halpha_gradient_hii (row 37)  # 16 until S40's cloud_extinction_v  # 4 until S32's cloud scalars (D181), 8 until S33's two, 10 until S35's five, 15 until S36's one
     assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
 
 

@@ -895,3 +895,330 @@ def test_a_point_through_the_filters_is_its_light_where_the_filters_see_it(small
     hot, cool = channels(30_000.0), channels(3_000.0)
     assert hot.max() < 0.35 and hot[2] > hot[1] > hot[0]  # an O star: blue, and a third of its light or less
     assert cool[0] > cool[1] > cool[2] and cool[2] < 0.1
+
+
+# --- S48 (D200, D201, #114): one object's light through the curves ------------------------------------------
+
+# The gate's sample: every tenth isochrone of the table (40 of 396: every metallicity, ages across the grid), fifty
+# points along each evenly in the table's own order (so the pre-main sequence, the main sequence, the giant branch,
+# the core-helium burners, the early and thermally pulsing AGB all appear: 299 / 411 / 191 / 198 / 116 / 90 / 91 /
+# 244 / 360 by PARSEC label 0-8), among the points 1000-100 000 K the table spans.
+GATE_THRESHOLD_WEIGHTED = 0.02  # mag, luminosity-weighted (D200)
+GATE_THRESHOLD_MAX = 0.1  # mag (D200)
+
+
+def _isochrone_points(hot: bool = False):
+    from galaxy.stages.photometry import EXTRA, isochrones
+
+    tab = isochrones()
+    mags, log_t, log_l, label = [], [], [], []
+    for key in sorted(tab.tracks)[::10]:
+        _, ll, lt = tab.tracks[key]
+        extra = tab.extra[key]
+        if hot:
+            pick = np.flatnonzero(lt > 5.0)
+        else:
+            inside = np.flatnonzero((lt >= 3.0) & (lt <= 5.0))
+            pick = inside[np.unique(np.linspace(0, inside.size - 1, 50).round().astype(int))]
+        mags.append(extra[pick, :8]), log_t.append(lt[pick]), log_l.append(ll[pick])
+        label.append(extra[pick, EXTRA.index("label")])
+    return (np.concatenate(mags), 10.0 ** np.concatenate(log_t), 10.0 ** np.concatenate(log_l), np.concatenate(label))
+
+
+def _floored(anchors: np.ndarray) -> np.ndarray:
+    return np.maximum(anchors, spectra.ANCHOR_FLOOR * anchors.max(axis=-1, keepdims=True))
+
+
+def _mag(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    return 2.5 * np.abs(np.log10(a / b))
+
+
+@pytest.fixture(scope="module")
+def objects():
+    """The 2 000 points, their anchors as given and floored (the exact reference is ``stellar_response`` on the
+    floored anchors, so it is sound at every point), and per set the reference and ``object_response``."""
+    mags, kelvin, light, label = _isochrone_points()
+    anchors = spectra.object_nu_l_nu(mags)
+    floored = _floored(anchors)
+    sets = {}
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        sets[name] = (parsed, spectra.stellar_response(floored, kelvin, parsed), spectra.object_response(anchors, kelvin, parsed))
+    return {"anchors": anchors, "floored": floored, "kelvin": kelvin, "light": light, "label": label, "sets": sets}
+
+
+def test_an_object_s_anchors_are_its_magnitudes_through_the_zero_points():
+    mags = np.array([[5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3], [np.nan] * 8])
+    got = spectra.object_nu_l_nu(mags)
+    for k, band in enumerate(BANDS):
+        assert got[0, k] == pytest.approx(float(band_nu_l_nu(10 ** (-0.4 * mags[0, k]), band)), rel=1e-15)
+    assert np.all(np.isnan(got[1]))  # a dead star: no magnitudes, no light (B9)
+    with pytest.raises(ValueError, match="8 bands"):
+        spectra.object_nu_l_nu(np.zeros(7))
+
+
+@pytest.mark.parametrize("name", ["bands", *SETS])
+def test_the_tables_are_the_trapezoid_between_their_rows(name):
+    """Each segment's ln G(s) = ln Σ q_i e^{w_i s}, read linearly between the slope rows, against the sum itself at
+    the rows' midpoints: within h²/32 = 1.25e-5 (ln G is convex in s, its curvature the variance of w ≤ 1/4; worst
+    measured 4.7e-6, the eight band curves). Each tail factor, read linearly in ln between the temperature rows,
+    within 1e-4 of the sum at the midpoints (worst 3.3e-5, the band curves). Equal sets share their tables."""
+    parsed = [spectra.band_curve(b) for b in BANDS] if name == "bands" else spectra.parse_curves(SETS[name]["curves"])
+    factors = spectra.response_factors(parsed)
+    slopes = 0.5 * (spectra.RESPONSE_SLOPES[1:] + spectra.RESPONSE_SLOPES[:-1])
+    kelvin = np.sqrt(spectra.RESPONSE_TEMPERATURES[1:] * spectra.RESPONSE_TEMPERATURES[:-1])
+    tables = {k: (table[..., 0], member) for k, table, member in factors.segments}
+    log_x, ends = np.log(spectra.SED_WAVELENGTHS), spectra.SED_WAVELENGTHS
+    for c, curve in enumerate(parsed):
+        lam = curve.grid()
+        q = np.zeros_like(lam)
+        q[:-1] += 0.5 * np.diff(lam)
+        q[1:] += 0.5 * np.diff(lam)
+        q *= curve.at(lam)
+        x = np.log(np.clip(lam, ends[0], ends[-1]))
+        k = np.clip(np.searchsorted(log_x, x, side="right") - 1, 0, 6)
+        w = (x - log_x[k]) / (log_x[k + 1] - log_x[k])
+        inside = (lam >= ends[0]) & (lam <= ends[-1]) & (q > 0.0)
+        for seg in range(7):
+            at = inside & (k == seg)
+            if at.any():
+                log_g, member = tables[seg]
+                read = log_g[:, int(np.flatnonzero(member[:, c])[0])]
+                direct = np.log(np.exp(np.outer(slopes, w[at])) @ q[at])
+                assert np.abs(0.5 * (read[1:] + read[:-1]) - direct).max() < 1.25e-5, (name, c, seg)
+        for side, (beyond, end) in enumerate((((lam < ends[0]) & (q > 0.0), 0), ((lam > ends[-1]) & (q > 0.0), -1))):
+            assert factors.has_tails[side, c] == beyond.any()
+            if beyond.any():
+                direct = (spectra.planck_share(lam[beyond], kelvin) / spectra.planck_share(ends[end:][:1], kelvin)) @ q[beyond]
+                read = np.exp(0.5 * (factors.log_tails[side, 1:, c] + factors.log_tails[side, :-1, c]))
+                big = direct > 1e-200
+                assert np.abs(read[big] / direct[big] - 1.0).max() < 1e-4, (name, c, side)
+    assert spectra.response_factors(spectra.parse_curves(json.loads(json.dumps([p.json() for p in parsed])))) is factors
+
+
+def test_an_object_s_response_scales_with_its_light_exactly(objects):
+    """Homogeneity: every anchor ×10 is every response ×10, to 1e-9, and the shapes broadcast."""
+    a, t = objects["anchors"][::50], objects["kelvin"][::50]
+    for name, (parsed, _, _) in objects["sets"].items():
+        one = spectra.object_response(a, t, parsed)
+        assert np.allclose(spectra.object_response(10.0 * a, t, parsed), 10.0 * one, rtol=1e-9, atol=0.0), name
+    got = spectra.object_response(a[:6].reshape(2, 3, 8), t[:6].reshape(2, 3), parsed)
+    assert got.shape == (2, 3, 3) and np.allclose(got.reshape(6, 3), one[:6], rtol=1e-14, atol=0.0)
+
+
+def test_an_object_without_light_is_dark_and_without_a_temperature_missing():
+    """No light is zero; a NaN anchor, or light with no temperature, is missing (B9); a vanished anchor is floored
+    (D201) and the response is the field's machinery on the floored anchors."""
+    rgb = spectra.parse_curves(SETS["rgb"]["curves"])
+    lit = spectra.object_nu_l_nu(np.array([5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3]))
+    anchors = np.stack([np.zeros(8), lit, lit, lit, np.full(8, np.nan), lit])
+    kelvin = np.array([np.nan, np.nan, 0.0, 5800.0, 5800.0, 300_000.0])
+    got = spectra.object_response(anchors, kelvin, rgb)
+    assert np.all(got[0] == 0.0) and np.all(np.isnan(got[1:3])) and np.all(np.isnan(got[4]))
+    assert np.all(got[3] > 0.0) and np.all(np.isfinite(got[5]))  # beyond the grid: the end row's tails
+    vanished = lit * np.array([0.0, 1, 1, 1, 1, 1, 1, 1])
+    got = spectra.object_response(vanished, np.array(5800.0), rgb)
+    assert got == pytest.approx(spectra.stellar_response(_floored(vanished), np.array(5800.0), rgb), rel=1e-4)
+
+
+def test_the_floor_and_the_stars_the_join_cannot_carry(objects):
+    """Through the eight band curves themselves the exact path should return each star's own magnitudes. Unfloored
+    it misses at 39 of the 2 000 points, all thermally pulsing AGB stars (label 8) whose circumstellar dust puts
+    M_B up to +95 beside M_K +4.5: by up to 8.5 / 49.6 / 9.8 mag in U / B / V. Floored at 1e-12 of the peak (D201;
+    14 of the 39 have an anchor under it — U at 14, B 6, V 5, R 2, I 1), 7 of the 39 then hold every band above
+    the floor to 0.01 mag and **32 still do not**: U at 25 of them by up to 2.65 mag, B at 6 by up to 0.38, V at 3
+    by up to 0.09; R to K hold. Those stars are steep but above the floor: twelve multiplicative passes of
+    ``band_consistent`` do not pull a band's mean down past the light its Gaussian's wings take from a neighbour
+    tens of magnitudes brighter. The floor is not the remedy for them; the field's machinery is what it is (D201:
+    ``stellar_response`` unchanged). ``object_response`` is that machinery: within 1e-5 mag of it here too."""
+    bands = [spectra.band_curve(b) for b in BANDS]
+    norm = np.array([np.trapezoid(c.at(c.grid()), c.grid()) for c in bands])
+    a, f, t = objects["anchors"], objects["floored"], objects["kelvin"]
+    under = a < spectra.ANCHOR_FLOOR * a.max(axis=1, keepdims=True)
+    before = _mag(spectra.stellar_response(a, t, bands), a / spectra.SED_WAVELENGTHS * norm)
+    exact = spectra.stellar_response(f, t, bands)
+    after = np.where(under, 0.0, _mag(exact, f / spectra.SED_WAVELENGTHS * norm))
+    missed = before.max(axis=1) > 0.01
+    assert missed.sum() == 39 and set(objects["label"][missed]) == {8.0}
+    assert before[missed].max(axis=0)[:3] == pytest.approx([8.4646, 49.6082, 9.8395], abs=2e-4)
+    assert under.any(axis=1).sum() == 14 and list(under.sum(axis=0)) == [14, 6, 5, 2, 1, 0, 0, 0]
+    still = after.max(axis=1) > 0.01
+    assert still.sum() == 32 and np.all(missed[still])
+    assert list((after > 0.01).sum(axis=0)) == [25, 6, 3, 0, 0, 0, 0, 0]
+    assert after.max(axis=0)[:3] == pytest.approx([2.6525, 0.3791, 0.0906], abs=2e-4)
+    assert _mag(spectra.object_response(a, t, bands), exact).max() < 1e-5
+
+
+# Per set, the worst over its filters of the median / max / luminosity-weighted |Δ mag| at all 2 000 points,
+# measured at S48.
+GATE = {
+    "rgb": (5.4e-8, 2.83e-6, 8.3e-8),
+    "sho": (3.16e-6, 9.51e-6, 3.26e-6),
+    "hoo": (3.16e-6, 9.51e-6, 3.26e-6),
+    "wfc3": (1.93e-6, 1.89e-5, 2.07e-6),
+    "wfc3n": (3.16e-6, 9.50e-6, 3.27e-6),
+}
+
+
+@pytest.mark.parametrize("name", list(GATE))
+def test_the_object_response_against_the_exact_integral(objects, name):
+    """**D200's gate, D201's method**: ``object_response`` against the exact ``stellar_response`` on the same
+    floored anchors at all 2 000 isochrone points, per filter, |Δ mag| = 2.5 |log10(approx / exact)|. Worst over each
+    set's filters, median / max / luminosity-weighted, measured at S48 (``GATE``): rgb 5e-8 / 2.8e-6 / 8e-8; sho and
+    hoo 3.2e-6 / 9.5e-6 / 3.3e-6; wfc3 1.9e-6 / 1.9e-5 / 2.1e-6; wfc3n 3.2e-6 / 9.5e-6 / 3.3e-6 — the tables'
+    interpolation (the band curves' slope rows, 4.7e-6 in ln G, carried through the twelve passes). D200's threshold
+    (weighted under 0.02 mag, worst under 0.1) holds for every set, the narrowband ones included.
+
+    Not to be retried: S48's first commit linearised the machinery in log about a blackbody at T. On wfc3 at the
+    points the exact path held, weighted 0.0198 mag and worst 0.34 (TP-AGB); second-order 4.76; blends 0.26-0.42."""
+    parsed, exact, approx = objects["sets"][name]
+    light = objects["light"]
+    dm = _mag(approx, exact)
+    median, worst, weighted = np.median(dm, axis=0).max(), dm.max(), ((dm * light[:, None]).sum(axis=0) / light.sum()).max()
+    assert [median, worst, weighted] == pytest.approx(GATE[name], rel=0.05)
+    assert weighted < GATE_THRESHOLD_WEIGHTED and worst < GATE_THRESHOLD_MAX
+
+
+def test_an_object_beyond_the_grid_reads_the_end_row():
+    """The 87 points of the same isochrones hotter than 100 000 K are given the end row's tails (10⁵ K's, below U
+    and beyond K): within 0.002 mag of the exact path at their own temperatures through every set (measured at S48:
+    rgb 1e-5, the narrowband sets 0.0009, wfc3 0.0014 in F438W)."""
+    mags, kelvin, _, _ = _isochrone_points(hot=True)
+    anchors = spectra.object_nu_l_nu(mags)
+    assert kelvin.size == 87
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        exact = spectra.stellar_response(_floored(anchors), kelvin, parsed)
+        assert _mag(spectra.object_response(anchors, kelvin, parsed), exact).max() < 0.002, name
+
+
+def test_ten_to_the_five_objects_in_about_a_second(objects):
+    """10⁵ objects through rgb with the tables warm: 0.7 s at S48 (bound 3 s), where the exact path took 1.3 s for
+    2 000. The tables, once per filter set: 0.03 s for rgb, 0.4-0.5 s for the box and sampled sets, 0.1 s for the
+    eight band curves (shared by every set)."""
+    import time
+
+    parsed = objects["sets"]["rgb"][0]
+    pick = np.random.default_rng(0).integers(0, objects["kelvin"].size, 100_000)
+    a, t = objects["anchors"][pick], objects["kelvin"][pick]
+    start = time.perf_counter()
+    got = spectra.object_response(a, t, parsed)
+    assert time.perf_counter() - start < 3.0 and got.shape == (100_000, 3)
+
+
+def test_today_s_painting_against_the_object_s_light(objects):
+    """#114 re-made on stars: a point painted as its bolometric light through a blackbody's share at its
+    temperature (``L × blackbody_response``, what the viewer draws today) against its light through the filters
+    (the exact ``stellar_response`` of its eight bands). Summed over the 2 000 isochrone points, the painting reads
+    1.151 / 1.093 / 1.043 of the stars' light in R / G / B; per point the median is 1.107 / 1.139 / 1.259. S41's
+    1.89 / 2.12 / 2.43 was the cluster census, each cluster one blackbody at its population's colour temperature:
+    the factor of two is a population's light not being one blackbody, a star's much less so. (A light-weighted
+    mean of the per-point ratio is not a number: the dust-shrouded AGB stars read 10²⁰ — L_bol over almost no
+    optical light.)"""
+    parsed, exact, _ = objects["sets"]["rgb"]
+    paint = objects["light"][:, None] * spectra.blackbody_response(parsed, objects["kelvin"])
+    assert paint.sum(axis=0) / exact.sum(axis=0) == pytest.approx([1.1511, 1.0929, 1.0427], abs=2e-4)
+    assert np.median(paint / exact, axis=0) == pytest.approx([1.1065, 1.1388, 1.2591], abs=2e-4)
+
+
+# --- S48's wiring (D200 (4)): the field's remainder beside the stars, l_min= ------------------------------------------
+
+# The whole disc's bolometric light split at 10^3 Lsun on the default grid (Lsun): the stars component's total, the
+# young population's (the cluster census's ages), the old stars above 10^3 (the field's budget and the stars' own,
+# debt #126), and the remainder.
+SPLIT_1E3 = {"total": 4.895767e10, "young": 1.202957e10, "bright": 9.019945e9, "bright_own": 8.632747e9,
+             "unresolved": 2.790815e10}
+# The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
+# from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
+CLOSURE_RGB = {100.0: 4.9594e-6, 1000.0: 5.7059e-6, 10000.0: 5.6762e-6}
+
+
+def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:
+    query = {"model": [model], "filters": [curves("rgb")], **{k: [str(v)] for k, v in extra.items()}}
+    if l_min is not None:
+        query["l_min"] = [repr(l_min)]
+    return query
+
+
+def test_without_l_min_the_render_is_the_one_it_was(full, model):
+    """l_min= adds one component, its entry in components and axes, and the header's resolved; nothing else moves.
+    Asserted byte for byte: the body without it is the body with it, the additions taken out (both warm, so both
+    name the same stages run: none)."""
+    for l_min in (None, 1000.0, None, 1000.0):
+        got = full.handle("/api/render", _unresolved_query(model.name, l_min))
+        assert got.status == 200
+        if l_min is None:
+            plain = got
+        else:
+            header, arrays = wire.decode(got.body)
+    assert header["stages"] == [] and set(arrays) - {"stars_unresolved"} == set(wire.decode(plain.body)[1])
+    stripped = {k: v for k, v in header.items() if k != "resolved"}
+    stripped["components"] = {k: v for k, v in header["components"].items() if k != "stars_unresolved"}
+    stripped["axes"] = {k: v for k, v in header["axes"].items() if k != "stars_unresolved"}
+    assert plain.body == wire.encode(stripped, [(k, v) for k, v in arrays.items() if k != "stars_unresolved"])
+
+
+def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_them(full, model):
+    """stars_unresolved is bright.resolve's two remainder parts through the curves at the ring's colour temperature,
+    the 20-100 Myr part placed by sfr_modulation normalised around its ring where the model publishes it, the older
+    by the pattern's contrast (bright.part_weights, the catalogue's rule); in the basic model both by the contrast,
+    so it is a fixed share of the stars around each ring. The header states the split and the closure."""
+    from galaxy.stages import bright as br
+
+    header, arrays = render_q(full, _unresolved_query(model.name, 1000.0))
+    stars, rest = arrays["stars"], arrays["stars_unresolved"]
+    assert rest.shape == stars.shape and header["axes"]["stars_unresolved"] == ["R", "phi", "filter"]
+    assert header["components"]["stars_unresolved"]["layer"] == "stars"
+    names = ("stars_formed_history", "feh_history", "sfr_modulation", "pattern_density_contrast", "disc_light_temperature")
+    f = scalars(full, model.name, *(n for n in names if n != "sfr_modulation" or model.name != "basic"))
+    spec = full.grid.spec
+    res = br.resolve(f, spec.t_max, spec.n_t, {k: c.value for k, c in model.constants.items()}, 1000.0)
+    parsed = spectra.parse_curves(SETS["rgb"]["curves"])
+    middle = spectra.stellar_response(res.anchors["unresolved_middle"], f["disc_light_temperature"], parsed)
+    old = spectra.stellar_response(res.anchors["unresolved_old"], f["disc_light_temperature"], parsed)
+    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"))
+    want = middle[:, None, :] * w[0][..., None] + old[:, None, :] * w[1][..., None]
+    assert np.allclose(rest, want, rtol=1e-12, atol=0.0)
+    lit = stars > 0.0
+    assert np.all(rest[lit] >= 0.0) and np.all(rest.sum(axis=1) < stars.sum(axis=1) + 1e-300)
+    share = np.where(lit, rest / np.where(lit, stars, 1.0), np.nan)
+    spread = np.nanmax(share, axis=1) - np.nanmin(share, axis=1)
+    if model.name == "basic":
+        assert np.nanmax(spread) < 1e-12  # both parts follow the contrast
+    else:
+        assert np.nanmax(spread) > 0.05  # the middle part follows where stars form today
+    resolved = header["resolved"]
+    assert resolved["l_min"] == resolved["requested"] == 1000.0 and resolved["cluster_window_gyr"] == pytest.approx(0.02)
+    assert resolved["light"] == pytest.approx(SPLIT_1E3, rel=1e-6)
+    light = resolved["light"]
+    assert light["unresolved"] + light["young"] + light["bright"] == pytest.approx(light["total"], rel=1e-12)
+    assert light["total"] == pytest.approx(scalars(full, model.name, "disc_luminosity")["disc_luminosity"], rel=1e-12)
+    assert resolved["closure"]["anchors"] == "exact" and "[inferred]" in resolved["temperature"]
+
+
+def test_the_closure_through_rgb_is_pinned_at_three_thresholds(full):
+    """The parts - the remainder's two, the young, the bright - each through the field's machinery at the ring's
+    temperature, summed, against the stars component per ring: the join is not linear, so they differ, by under 6e-6
+    through rgb at every ring (S48; through the WFC3 set 2e-3). The header carries the number for the request's curves."""
+    for l_min, pinned in CLOSURE_RGB.items():
+        header, _ = render_q(full, _unresolved_query(DEFAULT_MODEL, l_min))
+        assert header["resolved"]["closure"]["response"] == pytest.approx(pinned, rel=1e-3), l_min
+        assert header["resolved"]["closure"]["response"] < 1e-4
+
+
+def test_l_min_rides_on_region_cells_and_is_refused_when_not_a_luminosity(small):
+    header, cells = render_q(small, _unresolved_query(DEFAULT_MODEL, 3000.0, level=2, r_min=7, r_max=9, phi_min=0, phi_max=0.4))
+    n = header["window"]["cells"]["count"]
+    assert cells["stars_unresolved"].shape == (n, 3) and np.all(cells["stars_unresolved"] < cells["stars"])
+    assert header["axes"]["stars_unresolved"] == ["cell", "filter"]
+    header, _ = render_q(small, _unresolved_query(DEFAULT_MODEL, 1e-3))  # under the luminosity function's first threshold
+    assert header["resolved"]["l_min"] == pytest.approx(0.1) and header["resolved"]["requested"] == 1e-3
+    for bad in ("0", "-5", "lots"):
+        got = small.handle("/api/render", {"filters": [curves("rgb")], "l_min": [bad]})
+        assert got.status == 400 and "l_min=" in got.json()["error"] and got.stages == ()
+
+
+def render_q(api: Service, query: dict):
+    got = api.handle("/api/render", query)
+    assert got.status == 200, got.body[:300]
+    return wire.decode(got.body)

@@ -497,8 +497,7 @@ def steps_over(table: np.ndarray, age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray
     """``(..., n_t, k)``: the difference of a cumulative table ``(n_mh, n_fine, k)`` over each
     step's ages [lo, hi] (Gyr) divided by its width in yr, read at each cell's nearest metallicity
     — :func:`population_over`'s reading, for any table built by :func:`cumulative_over_age`."""
-    tab = isochrones()
-    lo = np.clip(np.atleast_1d(np.asarray(age_lo_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
+    lo =np.clip(np.atleast_1d(np.asarray(age_lo_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
     hi = np.clip(np.atleast_1d(np.asarray(age_hi_gyr, dtype=float)) * 1e9, 0.0, _FINE_AGES[-1])
     width = np.where(hi > lo, hi - lo, 1.0)
 
@@ -508,11 +507,18 @@ def steps_over(table: np.ndarray, age_lo_gyr: np.ndarray, age_hi_gyr: np.ndarray
         return table[:, i] * (1.0 - w) + table[:, i + 1] * w
 
     per_step = (at(hi) - at(lo)) / width[None, :, None]  # (n_mh, n_t, k)
-    feh = np.nan_to_num(np.asarray(feh, dtype=float), nan=tab.mhs[0], neginf=tab.mhs[0], posinf=tab.mhs[-1])
-    # The nearest metallicity, as argmin |feh - mh| picks it (ties to the lower), by a search.
-    mh = np.searchsorted(0.5 * (tab.mhs[1:] + tab.mhs[:-1]), feh, side="left")
+    mh = nearest_metallicity(feh)
     flat = mh * lo.size + np.arange(lo.size)
     return per_step.reshape(-1, per_step.shape[-1])[flat]
+
+
+def nearest_metallicity(feh: np.ndarray) -> np.ndarray:
+    """The isochrone metallicity index :func:`steps_over` reads each [Fe/H] at: the nearest, as argmin
+    |feh - mh| picks it (ties to the lower), by a search; NaN at the lowest. Shared with the bright
+    catalogue's decomposition (``bright.py``, S48), which must put each step's mass on the same row."""
+    tab = isochrones()
+    feh = np.nan_to_num(np.asarray(feh, dtype=float), nan=tab.mhs[0], neginf=tab.mhs[0], posinf=tab.mhs[-1])
+    return np.searchsorted(0.5 * (tab.mhs[1:] + tab.mhs[:-1]), feh, side="left")
 
 
 def ionizing_yield(feh: np.ndarray) -> np.ndarray:

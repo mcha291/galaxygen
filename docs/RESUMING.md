@@ -1,9 +1,9 @@
 # Resuming
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
-of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S47: S0–S22
-(§5d), S25–S42 (§5e), S43–S45 (D194–D196), S46–S47 the viewer (D197–D199). The model is pinned except the two pieces the
-owner lifted it for (S48, D200); `VIEWER_TASKS.md` is the one list of what remains; `BRIEF.md` is S48's.**
+of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S48: S0–S22
+(§5d), S25–S42 (§5e), S43–S45 (D194–D196), S46–S47 the viewer (D197–D199), S48 the bright catalogue and the per-object
+response (D200–D203). The model is otherwise pinned; `VIEWER_TASKS.md` is the one list; `BRIEF.md` is S49's.**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -13,7 +13,7 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 ```
 Then RULES.md in full, BRIEF.md, whatever plan the owner names; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
-tools/hooks`; LF newlines. **Numbers are sequential**: debts from #125, decisions from D200, board rows from 48,
+tools/hooks`; LF newlines. **Numbers are sequential**: debts from #127, decisions from D204, board rows from 49,
 acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -30,7 +30,7 @@ model/galaxy/models/  level0 (constants), **azimuthal (default since S46, D197)*
                 `cluster_light_temperature`) + nebular (S35: HII regions, Hα per volume, the DIG; **S42: the four forbidden
                 lines per region off Byler's grid, per-ring lines, Hβ in both layers; S44: the grid on its own 8.93 and
                 `nii_halpha_gradient_hii`, row 37**) + cluster_survival + globular_clusters (S34) + bubbles (S36) · cp6
-                formation, habitable_zone, planets; massive_stars.py; remnants.py; photometry; spectra (S38–S39: the SED, the
+                formation, habitable_zone, planets; massive_stars.py; remnants.py; photometry; **bright (S48: the luminosity function, `bright_stars`)**; spectra (S38–S39: the SED, the
                 grain table, the filter integral, LINE_WAVELENGTHS in air; **S44: a curve's `wavelengths` air | vacuum,
                 honoured by `line_response` through `air_to_vacuum`, Morton 1991**)
 model/galaxy/run.py   run(model, inputs, grid, only=…, resume=…, impls=…) · data/ parsec_isochrones.npz (396 × 137 818 rows),
@@ -85,7 +85,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `lo == hi` says "no testable target" (D100; rows 20, 21, 25–28, 36); a row whose source does not say what it
   measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-10-01, after S47 (D174–D199 hold the before/after; S46–S47 moved no model number)
+## What the instruments said on 2026-10-01, after S48 (D174–D203 hold the before/after; S46–S48 moved no published number)
 - graph acyclic for both models; preflight OK, 7 of 12 controls; determinism reproducible for both; spec **12 pass /
   20 fail / 5 not-yet-computable of 37, identical** (row 34 green since S42 on the blind window; row 37 a miss, #117); convergence
   0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.914; rows 30 / 31 0.0176069 / 0.0065332 yr⁻¹ (#88);
@@ -102,9 +102,9 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   (S40); clusters' ΣL 0.249 of disc_luminosity, the ramp 1.89 / 2.12 / 2.43× the census's R / G / B light (S41);
   **S44 (the grid on 8.93): Hα-weighted [O III]/Hα 0.752, [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % at the +0.2 dex
   edge, 2.6 % at the age floor; WFC3 SHO on vacuum curves: Hα 0.945 F656N, [O III] 0.899 F502N, [S II] 0.958 / 0.863 F673N;
-  47 tags on the remote.** Performance: basic ~2.8 s cold; render rgb 2.1 s cold, 6.9 MB; clusters 1.7 s; `/api/blackbody` 5 ms.
-- Register: **63 open — 11 permanent, 52 carried — and 44 discharged** (#124 at S45, D196; S46 opened none). **Row 37 (S45)**:
-  all the metallicity path; the grid 1.22 per dex; the gas gradient −0.078 vs the Cepheids' −0.064 (#124); the rest a conflict of sources.
+  48 tags on the remote.** Performance: basic ~2.8 s cold; render rgb 2.1 s cold, 6.9 MB; clusters 1.7 s; `/api/blackbody` 5 ms.
+- Register: **65 open — 11 permanent, 54 carried — and 44 discharged** (#125, #126 at S48). **S48**: `bright_star_limit` 33 960 L☉,
+  3.35e6 stars > 10³ L☉; light at 10³: 24.6 % young / 18.4 % bright / 57.0 % unresolved; **#126: the field's light 6.7 % high (5–12 % by band)**.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
 0. Tick the board — surface, model **actually used**, tag, date — then `uv run python tools/progress.py`, then `uv run

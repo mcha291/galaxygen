@@ -41,6 +41,7 @@ BASIC = MODELS.register(
             ("pattern", "pattern"),
             ("population", "population"),
             ("systems", "systems"),
+            ("bright_stars", "bright_stars"),
             ("clouds", "clouds"),
             ("clusters", "clusters"),
             ("nebular", "nebular"),

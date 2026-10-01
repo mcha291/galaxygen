@@ -52,7 +52,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "12 stage declarations"),
+    Endpoint("stages", "/api/stages", "", "26 stage declarations (S48)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
@@ -78,6 +78,13 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),
+    # The bright-end-complete catalogue (S48, D200): an ordered Poisson process per finest cell.
+    Endpoint("bright: whole disc", "/api/bright", "n=3162", "the 3162 brightest disc stars, 65 536 cells"),
+    Endpoint("bright: one sector", "/api/bright", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&n=1000",
+             "the 1000 brightest of 306 cells, plus the default limit's whole disc"),
+    # S48's wiring: each star's band light through the viewer's curves (spectra.object_response).
+    Endpoint("bright: whole, rgb", "/api/bright", urlencode({"n": 3162, "filters": _RGB, "white": 6500}),
+             "the 3162 brightest, each through 3 filters"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),
@@ -86,6 +93,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("render: one region", "/api/render",
              urlencode({"filters": _RGB, "r_min": 7, "r_max": 9, "phi_min": 0, "phi_max": 0.4, "level": 2}),
              "90 level-2 cells' means"),
+    # S48's wiring: the field's remainder under 10^3 Lsun beside the stars (bright.resolve, four more responses).
+    Endpoint("render: unresolved", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000}),
+             "as the whole rgb render, plus stars_unresolved and the closure"),
 )
 
 

@@ -67,7 +67,16 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.clouds import cloud_counts, expected_counts
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.photometry import correlated_temperature, per_mass_at, population_at, population_light, population_wind
+from galaxy.stages.photometry import (
+    BANDS,
+    band_flux_at,
+    band_nu_l_nu,
+    correlated_temperature,
+    per_mass_at,
+    population_at,
+    population_light,
+    population_wind,
+)
 from galaxy.stages.systems import Catalogue
 
 CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
@@ -127,6 +136,16 @@ def per_mass(age_myr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarr
     """(Q in photons/s, wind power in L☉) per M☉ formed, for single bursts of these ages and [Fe/H]."""
     age = np.asarray(age_myr, dtype=float) / 1000.0
     return per_mass_at(population_light().ionizing_per_mass, age, feh), per_mass_at(population_wind(), age, feh)
+
+
+def band_anchors(mass: np.ndarray, age_myr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """``(n, 8)``: each cluster's light in the table's eight bands as λL_λ anchors, L☉ (S48's wiring): a burst's
+    Σ 10^(−0.4 M_band) per M☉ formed at the cluster's age and [Fe/H] (``photometry.band_flux_at``, read as
+    ``population_at`` reads the light for ``cluster_luminosity``) times its mass formed, through each band's Vega
+    zero point (``band_nu_l_nu``). What ``/api/clusters`` puts through the viewer's curves."""
+    mass = np.asarray(mass, dtype=float)
+    flux = band_flux_at(np.asarray(age_myr, dtype=float) / 1000.0, np.asarray(feh, dtype=float), BANDS)
+    return np.stack([band_nu_l_nu(mass * flux[b], b) for b in BANDS], axis=-1)
 
 
 def materialise_clusters(
@@ -292,13 +311,19 @@ CLUSTER_LUMINOSITY = _column("cluster_luminosity", "Luminosity", "Lsun",
                              "uses, times the mass - the sum over its members, not a sample of them. What a renderer draws "
                              "the cluster as a point of light by, as it draws a star by its luminosity. Bolometric: a "
                              "point painted by this through a blackbody's share at the colour temperature carries about "
-                             "twice the population's own light through an optical filter (debt #114); the cluster's "
-                             "band light is the same tables' and is the closer.",
+                             "twice the population's own light through an optical filter (debt #114; the factor of two "
+                             "is the clusters', an integrated population being no blackbody, where a single star's "
+                             "painting is 4-15% high, D201). Since S48 /api/clusters with filters= serves the cluster's "
+                             "own band light through the viewer's curves (its response: the same tables' eight bands at "
+                             "its age and [Fe/H] times its mass, joined as the field's stars are); the viewer draws by "
+                             "it once its star-first mode is built, and paints by this until then.",
                              ramp=Ramp("inferno", scale="log"))
 CLUSTER_LIGHT_TEMPERATURE = _column("cluster_light_temperature", "Colour temperature of its light", "K",
                                     "The correlated colour temperature of the cluster's summed light - the blackbody whose "
                                     "chromaticity is nearest the population's, as the disc's light temperature is taken. "
-                                    "Its ramp is the blackbody colour, so a cluster is painted as a star of that temperature.",
+                                    "Its ramp is the blackbody colour, so a cluster is painted as a star of that temperature. "
+                                    "It is also the temperature /api/clusters' filtered response (S48) joins the band "
+                                    "light's tails beyond U and K at.",
                                     ramp=Ramp("blackbody", scale="log", lo=BLACKBODY_KELVIN[0], hi=BLACKBODY_KELVIN[1]))
 CLUSTER_WIND = _column("cluster_wind_luminosity", "Wind mechanical luminosity", "Lsun",
                        "½ Ṁ v_∞² summed over the IMF the same way: Vink, de Koter & Lamers 2001's line-driven "

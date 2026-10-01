@@ -63,6 +63,7 @@ from galaxy.core.units import unit as _unit
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
+from galaxy.stages import bright as _bright
 from galaxy.stages import bubbles as _bubbles
 from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds  # also the HII layer's height (S39)
@@ -70,6 +71,7 @@ from galaxy.stages import clusters as _clusters
 from galaxy.stages import nebular as _nebular
 from galaxy.stages import spectra as _spectra
 from galaxy.stages import systems as _catalogue
+from galaxy.stages.disc import PC_PER_KPC
 
 JSON = "application/json"
 CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
@@ -78,6 +80,7 @@ CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
 CLUSTERS_SLOT = "clusters"  # and the slot a clusters query answers for (S33)
 NEBULAR_SLOT = "nebular"  # whose HII-region columns ride on the clusters response (S35)
 BUBBLES_SLOT = "bubbles"  # whose bubble columns ride on it too, and whose remnant census /api/remnants serves (S36)
+BRIGHT_SLOT = "bright_stars"  # the slot /api/bright answers for (S48, D200)
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
@@ -105,14 +108,18 @@ RENDER_CELL_SAMPLES = 8
 # The temperatures /api/blackbody tabulates (S42): 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart - the
 # render's own white-point range. Read linearly in log share against log T (the Wien side is an exponential in 1/T,
 # which a line in the share itself misses by 16% at 1000 K), every set's table is within the bound
-# tests/test_render.py measures of the integral at any temperature between its rows.
-BLACKBODY_GRID = np.logspace(3.0, 5.0, 193)
+# tests/test_render.py measures of the integral at any temperature between its rows. The model's one copy, the grid
+# the per-object response tabulates its tails on (S48's wiring: until then this module held a mirror of it).
+BLACKBODY_GRID = _spectra.RESPONSE_TEMPERATURES
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
 # The most stars a brightest=N query returns: a magnitude-limited view is a few thousand points,
 # and a viewer that wants more than this wants the window itself.
 MAX_BRIGHTEST = 200_000
+# The most stars one /api/bright request materialises while lowering its threshold to find n inside a view
+# (S48): a view that sees a sliver of a wide window stops here, says so, and returns what it found.
+MAX_BRIGHT_POOL = 500_000
 
 
 class ApiError(Exception):
@@ -181,8 +188,9 @@ ROUTES: tuple[Route, ...] = (
         "The young star-cluster census for one (R, phi) window (S33): one cluster in every cloud past its "
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
-        "clusters inside the level-k children the window meets.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
+        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
     Route(
@@ -192,6 +200,21 @@ ROUTES: tuple[Route, ...] = (
         "keeps the remnants inside the level-k children the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "remnants",
+    ),
+    Route(
+        "/api/bright",
+        "Every disc star above a luminosity, complete (S48, D200): the bright catalogue's stars in the finest cells "
+        "(level 3) the (R, phi) window meets, drawn from the luminosity function by an ordered Poisson process per "
+        "cell, so a higher grid threshold (every 0.05 dex) keeps a prefix and a window's stars are a sweep's. n=N "
+        "(1..200000) returns the N brightest, inside view=<16 numbers>'s frustum when one is given (as /api/region "
+        "takes it); l_min=<Lsun> every star above it (refused past 200000 expected). Rows brightest first, each named "
+        "by cell and rank (its place in the cell's Gamma order, stable as the threshold drops); the header's threshold "
+        "says what the body is complete above and that the prefix holds by interval (D203). Stars younger than the cluster census's window "
+        "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
+        "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
+        "header.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
+        "bright",
     ),
     Route(
         "/api/blackbody",
@@ -214,8 +237,11 @@ ROUTES: tuple[Route, ...] = (
         "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
         "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
         "vertical layer; the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
-        "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32.",
-        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
+        "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
+        "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
+        "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
+        "the header's resolved stating the light split and the closure.",
+        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
         "render",
     ),
 )
@@ -277,6 +303,50 @@ def _parse_filters(q: Query) -> list[Any]:
         raise BadRequest(f"filters=: {e}") from None
 
 
+def _white_point(q: Query, curves: Sequence[Any]) -> dict[str, Any] | None:
+    """white=<K>: a blackbody's response per unit light through the curves, the viewer's white balance (S38), as the
+    header of every route that takes filters= carries it; None without it, a 400 outside the blackbody grid."""
+    if q.one("white") is None:
+        return None
+    white_k = q.number("white", 0.0)
+    if not BLACKBODY_GRID[0] <= white_k <= BLACKBODY_GRID[-1]:
+        raise BadRequest(f"white={white_k!r} is outside {BLACKBODY_GRID[0]:g}..{BLACKBODY_GRID[-1]:g} K")
+    return {"kelvin": white_k, "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]]}
+
+
+def _object_filters(q: Query) -> tuple[list[Any] | None, dict[str, Any] | None]:
+    """filters= and white= on an object route (S48): optional there, parsed and refused as /api/render does; white=
+    alone is refused, a white point being a response through curves."""
+    if q.one("filters") is None:
+        if q.one("white") is not None:
+            raise BadRequest("white= is a blackbody's response through the curves of filters=; give them with it")
+        return None, None
+    curves = _parse_filters(q)
+    return curves, _white_point(q, curves)
+
+
+# What an object route's ``response`` array is, in its header (S48, D200 (5), D201).
+OBJECT_RESPONSE_ABOUT = (
+    "each object's light through each curve, Lsun: its light in the table's eight bands U..K (a star's own magnitudes; "
+    "a cluster's, its burst's at its age and [Fe/H] times its mass) as lambda L_lambda anchors, joined as the field's "
+    "stars are - power laws between the anchors, made band-consistent, a blackbody at "
+    "its temperature beyond U and K - and integrated through the curve (spectra.object_response: the field's own "
+    "machinery on one-dimensional tables; an anchor below 1e-12 of the object's brightest is floored there). NaN where "
+    "an object has light and no temperature (B9). Drawn as a point of this light in each filter, the object and the "
+    "field are the same physics"
+)
+
+
+def _object_response_header(curves: Sequence[Any], white: dict[str, Any] | None, temperature: str) -> dict[str, Any]:
+    """What an object route's header gains with filters= (S48): the curves echoed, the white point as /api/render
+    carries it, and what the body's ``response`` array is."""
+    return {
+        "filters": [c.json() for c in curves],
+        "white": white,
+        "response": {"unit": "Lsun", "axes": ["row", "filter"], "temperature": temperature, "about": OBJECT_RESPONSE_ABOUT},
+    }
+
+
 def _json(payload: Mapping[str, Any], status: int = 200, stages: tuple[str, ...] = ()) -> Response:
     return Response(status, JSON, json.dumps(payload, allow_nan=False).encode("utf-8"), stages)
 
@@ -286,7 +356,7 @@ class CellCache:
 
     The catalogue draws every cell from its own seed, so a cell drawn alone is the cell drawn
     in any set and a window's catalogue is its cells' rows in cell order (D60). Materialising
-    costs about 0.4 ms of Python per cell before a star is made, 832 cells to a galaxy, so a
+    costs about 0.4 ms of Python per cell before a star is made, 1024 cells to a galaxy, so a
     view that asked for the same window twice — every zoom step of the brightest mode, which
     re-selects inside the same pool — waited half a second for rows the server had just made.
     Bounded by rows, least recently used out first. A key names the galaxy the rows belong to
@@ -339,6 +409,65 @@ class CellCache:
         names = list(entries[0][0]) if entries else []
         columns = {name: np.concatenate([e[0][name] for e in entries]) for name in names}
         return _catalogue.Catalogue.of(columns, counts)
+
+
+class BrightCache:
+    """The bright catalogue's finest cells, kept between requests (S48).
+
+    A cell's stars above a grid threshold are a prefix of its stars above any lower one, in its Γ order
+    (``bright.py``'s ordered process, D203: exact at the grid's thresholds), so a cell is held as drawn to the
+    lowest grid threshold asked so far and serves any higher one by cutting that prefix; a request inside an
+    interval is served from the interval's lower threshold and cut at its own luminosity (``bright.cut_bright``).
+    A lower threshold draws the cell again, longer, from the same streams. Bounded by rows (an empty cell counts
+    as one), least recently used out first. A key names the galaxy (model, grid, resolved inputs, seed); the
+    caller makes it.
+    """
+
+    def __init__(self, max_rows: int = 2_000_000) -> None:
+        self.max_rows = max_rows
+        self._cells: OrderedDict[tuple[str, int], tuple[int, dict[str, np.ndarray], int]] = OrderedDict()
+        self._rows = 0
+        self._lock = threading.Lock()
+
+    def fetch(self, key: str, galaxy: Any, seed: int, cells: Sequence[int], l_min: float) -> Any:
+        """Every star above ``l_min`` in ``cells``, grouped by cell in the order asked, as ``materialise_bright``."""
+        cells = [int(c) for c in cells]
+        k = _bright.interval_of(l_min)
+        with self._lock:
+            held = {c: self._cells.get((key, c)) for c in cells}
+        missing = [c for c, h in held.items() if h is None or h[0] > k]
+        if missing:
+            made = _bright.draw_bright(galaxy, seed, missing, k)
+            runs = dict(made.counts)
+            starts = np.concatenate([[0], np.cumsum([runs.get(c, 0) for c in missing])])
+            fresh = {
+                c: (k, {name: np.asarray(col)[starts[i]:starts[i + 1]] for name, col in made.items()}, runs.get(c, 0))
+                for i, c in enumerate(missing)
+            }
+            with self._lock:
+                for c, entry in fresh.items():
+                    old = self._cells.pop((key, c), None)
+                    if old is not None:
+                        self._rows -= max(old[2], 1)
+                    self._cells[(key, c)] = entry
+                    self._rows += max(entry[2], 1)
+                while self._rows > self.max_rows and self._cells:
+                    _, (_, _, dropped) = self._cells.popitem(last=False)
+                    self._rows -= max(dropped, 1)
+            held.update(fresh)
+        with self._lock:
+            for c in cells:
+                entry = self._cells.pop((key, c), None)
+                if entry is not None:
+                    self._cells[(key, c)] = entry
+        parts = [(c, held[c][1]) for c in cells if held[c][2]]
+        if not parts:
+            return _bright.materialise_bright(galaxy, seed, [], l_min)
+        drawn = _catalogue.Catalogue.of(
+            {name: np.concatenate([p[name] for _, p in parts]) for name in parts[0][1]},
+            [(c, held[c][2]) for c, _ in parts],
+        )
+        return _bright.cut_bright(drawn, galaxy, l_min)
 
 
 class Query:
@@ -551,6 +680,8 @@ class Service:
         self.cache_size = max(0, int(cache))
         self._cache: dict[str, Galaxy] = {}
         self.cells = CellCache()
+        self.bright = BrightCache()  # S48: the bright catalogue's finest cells
+        self._bright_galaxies: OrderedDict[str, Any] = OrderedDict()  # its per-galaxy tables, and the default limit
         # The server is threaded, and two requests for one galaxy would otherwise
         # resume the same partial run from two threads. Computation is serialised;
         # metadata, which touches nothing, is not.
@@ -670,22 +801,14 @@ class Service:
         """The blackbody response per filter on BLACKBODY_GRID: the table a point of a colour temperature is drawn
         from, as the render's white point is. A function of the curves alone; no model, no stage (rule D4)."""
         curves = _parse_filters(q)
-        white = q.one("white")
-        white_k = None
-        if white is not None:
-            white_k = q.number("white", 0.0)
-            if not BLACKBODY_GRID[0] <= white_k <= BLACKBODY_GRID[-1]:
-                raise BadRequest(f"white={white_k!r} is outside {BLACKBODY_GRID[0]:g}..{BLACKBODY_GRID[-1]:g} K")
+        white = _white_point(q, curves)
         share = _spectra.blackbody_response(curves, BLACKBODY_GRID)
         return _json({
             "filters": [c.json() for c in curves],
             "kelvin": BLACKBODY_GRID.tolist(),
             "share": share.tolist(),
             "interpolate": "log10(share) linear in log10(kelvin); a temperature off the grid takes its end's row",
-            "white": None if white_k is None else {
-                "kelvin": white_k,
-                "response": _spectra.blackbody_response(curves, np.array([white_k]))[0].tolist(),
-            },
+            "white": white,
         })
 
     def _version(self, q: Query) -> Response:
@@ -968,6 +1091,7 @@ class Service:
         phi_min = q.number("phi_min", 0.0)
         phi_max = q.number("phi_max", 2.0 * math.pi)
         level = _level(q)
+        curves, white = _object_filters(q)
 
         inputs = self._overrides(model, q)
         # What the stage reads other than the cloud columns, which the census here draws for itself.
@@ -1021,7 +1145,14 @@ class Service:
             "columns": columns,
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
+        arrays = [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]
+        if curves is not None:
+            # S48's wiring (D200 (5)): the cluster's own band light - the burst's tables at its age and [Fe/H] times its
+            # mass, cluster_luminosity's convention - through the viewer's curves at its colour temperature.
+            anchors = _clusters.band_anchors(census["cluster_mass"], census["cluster_age"], census["cluster_metallicity"])
+            arrays.append(("response", _spectra.object_response(anchors, np.asarray(census["cluster_light_temperature"], dtype=float), curves)))
+            header.update(_object_response_header(curves, white, "cluster_light_temperature"))
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _remnants(self, q: Query) -> Response:
         """The supernova-remnant census of one window (S36): the remnants of every level-0 cell the window meets,
@@ -1072,6 +1203,122 @@ class Service:
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
+    def _bright_galaxy(self, key: str, out: Outputs, model: Model) -> tuple[Any, dict[str, float]]:
+        """The bright catalogue's tables for one galaxy, and its stage's two scalars - the default selection's
+        limit is the whole disc's brightest few thousand, materialised once through the cell cache - kept for
+        the last two galaxies asked about."""
+        with self._lock:
+            found = self._bright_galaxies.pop(key, None)
+            if found is None:
+                constants = {k: c.value for k, c in model.constants.items()}
+                spec = self.grid.spec
+                galaxy = _bright.BrightGalaxy(out.fields, self.grid.R, self.grid.t, float(spec.t_max), int(spec.n_t), constants)
+                seed = int(out.inputs["systems_seed"])
+                cells = _bright.all_cells()
+                _, info = _bright.select_brightest(
+                    galaxy, seed, cells, _bright.DEFAULT_SELECTION,
+                    fetch=lambda wanted, l: self.bright.fetch(key, galaxy, seed, wanted, l),
+                )
+                found = (galaxy, _bright.scalars(galaxy, info["l_min"]))
+            self._bright_galaxies[key] = found
+            while len(self._bright_galaxies) > 2:
+                del self._bright_galaxies[next(iter(self._bright_galaxies))]
+            return found
+
+    def _bright(self, q: Query) -> Response:
+        """Every disc star above a luminosity in one window (S48, D200): the finest cells the window meets, their
+        ordered Poisson processes cut at a threshold - found by bisection on the expected count for ``n``, given for
+        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests."""
+        model = self._model(q)
+        stage = _stage_for(model, BRIGHT_SLOT, self.impls)
+        R = self.grid.R
+        r_min = q.number("r_min", float(R[0]))
+        r_max = q.number("r_max", float(R[-1]))
+        phi_min = q.number("phi_min", 0.0)
+        phi_max = q.number("phi_max", 2.0 * math.pi)
+        view = _view_matrix(q.one("view"))
+        precision = q.one("precision", "f8")
+        if precision not in ("f8", "f4"):
+            raise BadRequest(f"precision={precision!r} is not f8 or f4")
+        has_n, has_l = q.one("n") is not None, q.one("l_min") is not None
+        if has_n == has_l:
+            raise BadRequest(f"give exactly one of n= (1..{MAX_BRIGHTEST}) or l_min= (Lsun)")
+        n = q.integer("n", 0) if has_n else None
+        if n is not None and not 1 <= n <= MAX_BRIGHTEST:
+            raise BadRequest(f"n={n} is outside 1..{MAX_BRIGHTEST}")
+        l_min = q.number("l_min", 0.0) if has_l else None
+        if l_min is not None and not l_min > 0.0:
+            raise BadRequest(f"l_min={l_min!r} is not a positive luminosity")
+        curves, white = _object_filters(q)
+
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        seed = int(out.inputs[stage.reads_seeds[0]])
+        key = repr(("bright", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        galaxy, scalars = self._bright_galaxy(key, out, model)
+        cells = np.asarray(_catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=_catalogue.MAX_LEVEL), dtype=np.int64)
+
+        def fetch(wanted: Sequence[int], threshold: float) -> Any:
+            return self.bright.fetch(key, galaxy, seed, wanted, threshold)
+
+        faint = 10.0 ** float(_bright.LOG_L_GRID[0])
+        if n is not None:
+            rows, info = _bright.select_brightest(galaxy, seed, cells, n, view=view, fetch=fetch, pool_max=MAX_BRIGHT_POOL)
+            threshold = {"l_min": info["l_min"], "complete": info["complete"], "why": info["why"], "prefix": _bright.PREFIX}
+            used = info["l_min"]
+        else:
+            used = max(float(l_min), faint)
+            expected = float(galaxy.expected(cells, math.log10(used)).sum())
+            if expected > MAX_BRIGHTEST:
+                raise BadRequest(
+                    f"l_min={l_min:g} holds {expected:.0f} expected stars in this window, more than {MAX_BRIGHTEST}: "
+                    "raise it or narrow the window"
+                )
+            pool = fetch(cells, used)
+            lum = np.asarray(pool["bright_star_luminosity"], dtype=float)
+            keep = np.arange(lum.size)
+            if view is not None and keep.size:
+                keep = keep[_bright.in_frustum(view, pool["bright_star_radius"], pool["bright_star_azimuth"], pool["bright_star_height"])]
+            rows = _catalogue.Catalogue.of({name: np.asarray(col)[keep[np.argsort(-lum[keep], kind="stable")]] for name, col in pool.items()})
+            why = "every star above l_min is in the body"
+            if l_min < faint:
+                why += f"; the luminosity function starts at {faint:g} Lsun, so none fainter exists here"
+            threshold = {"l_min": used, "complete": True, "why": why, "prefix": _bright.PREFIX}
+        log_used = math.log10(max(used, faint))
+        columns = [d.name for d in stage.publishes if d.kind.domain == "object"] + ["cell", "rank"]
+        lum = np.asarray(rows["bright_star_luminosity"], dtype=float)
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "view": view is not None,
+            "cells": {"count": int(cells.size), "level": _catalogue.MAX_LEVEL,
+                      "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(_catalogue.MAX_LEVEL)},
+            "threshold": threshold,
+            # Expected over the window's cells (not the frustum): the luminosity function's count and light above l_min.
+            "count": {"returned": int(lum.size), "expected": float(galaxy.expected(cells, log_used).sum())},
+            "light": {
+                "returned": float(lum.sum()),
+                # The field's budget above l_min (the luminosity function renormalised to the field's tables) and
+                # the stars' own; they differ by how well the field's mass grid resolves the giant branch (D200).
+                "expected": float(galaxy.expected(cells, log_used, "light").sum()),
+                "expected_own": float(galaxy.expected(cells, log_used, "light_own").sum()),
+            },
+            "columns": columns,
+            "scalars": scalars,
+            "seed": seed,
+            "stages": list(ran),
+        }
+        arrays = [(c, np.asarray(rows[c])) for c in columns]
+        if curves is not None:
+            # S48's wiring (D200 (5), D201): each star's band light through the viewer's curves, at its own temperature.
+            anchors = _spectra.object_nu_l_nu(_bright.magnitudes(rows))
+            arrays.append(("response", _spectra.object_response(anchors, np.asarray(rows["bright_star_temperature"], dtype=float), curves)))
+            header.update(_object_response_header(curves, white, "bright_star_temperature"))
+        if precision == "f4":
+            arrays = [(c, a.astype(np.float32) if a.dtype == np.float64 else a) for c, a in arrays]
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
     def _render(self, q: Query) -> Response:
         """The components through the viewer's filters (RENDER_PHYSICS §§2, 3a; S38, V1).
 
@@ -1093,19 +1340,21 @@ class Service:
         precision = q.one("precision", "f8")
         if precision not in ("f8", "f4"):
             raise BadRequest(f"precision={precision!r} is not f8 or f4")
-        white = q.one("white")
-        white_k = None
-        if white is not None:
-            white_k = q.number("white", 0.0)
-            if not 1000.0 <= white_k <= 100_000.0:
-                raise BadRequest(f"white={white_k!r} is outside 1000..100000 K")
+        white = _white_point(q, curves)
         level = None if q.one("level") is None else _level(q)
+        l_min = None if q.one("l_min") is None else q.number("l_min", 0.0)
+        if l_min is not None and not l_min > 0.0:
+            raise BadRequest(f"l_min={l_min!r} is not a positive luminosity")
 
         declared = self._declared(model)
         missing = [n for n in RENDER_STARS if n not in declared]
         if missing:
             raise NotFound(f"model {model.name!r} does not publish {missing}, which the stellar component is")
         wanted = [*RENDER_STARS, *(n for n in RENDER_OPTIONAL if n in declared)]
+        if l_min is not None:
+            # S48's wiring (D200 (4)): what the field's remainder decomposes - the bright stage's reads, only those (D4).
+            bright = _stage_for(model, BRIGHT_SLOT, self.impls)
+            wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
         out, ran = self.compute(model, inputs, wanted)
         f = out.fields
@@ -1143,7 +1392,11 @@ class Service:
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
         }
-        line_about = {"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
+        resolved = None
+        if l_min is not None:
+            unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min)
+            components.append(("stars_unresolved", unresolved))
+        line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
         if "halpha_surface_brightness_hii" in f and h_thin is not None:
             hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
             components.append(("halpha_hii", hii[:, None, None] * placed[..., None] * halpha_share))
@@ -1294,15 +1547,88 @@ class Service:
             "layers": layers,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
-            "white": None if white_k is None else {
-                "kelvin": white_k,
-                "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]],
-            },
+            "white": white,
             "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
                                                 "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(ran),
         }
+        if resolved is not None:
+            header["resolved"] = resolved
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
+    def _unresolved(
+        self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
+        contrast: Any, l_min: float,
+    ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
+        """The field's remainder under ``l_min`` (S48's wiring, D200 (4)): (the component on the (R, phi) grid, its
+        entry in ``components``, the header's ``resolved``).
+
+        The disc's light less the young population (ages under the cluster census's window, which the cluster
+        points carry) and less the disc stars above ``l_min`` older than it (which ``/api/bright`` carries), all
+        three from ``bright.resolve``: one decomposition of the history onto the isochrones, the luminosity
+        function renormalised to the field's tables, so unresolved + young + bright is the field's total per ring
+        and band exactly. Each of the remainder's two age parts goes through the curves on its own and is placed
+        around the ring by the weight the bright catalogue gives the same part (``bright.part_weights``: the
+        contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
+        it), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
+        do not sum to the total's exactly: the departure through this request's curves is measured here, per ring,
+        and stated in the header."""
+        spec = self.grid.spec
+        constants = {k: c.value for k, c in model.constants.items()}
+        res = _bright.resolve(f, float(spec.t_max), int(spec.n_t), constants, l_min)
+        T = f["disc_light_temperature"]
+        a = res.anchors
+        middle = _spectra.stellar_response(a["unresolved_middle"], T, curves)
+        old = _spectra.stellar_response(a["unresolved_old"], T, curves)
+        modulation = f["sfr_modulation"] if "sfr_modulation" in f else None
+        grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
+        weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old
+        component = middle[:, None, :] * weights[0][..., None] + old[:, None, :] * weights[1][..., None]
+        # The closure through these curves: every part through the field's machinery at the ring's temperature.
+        parts = middle + old + _spectra.stellar_response(a["young"], T, curves) + _spectra.stellar_response(
+            a["bright_middle"] + a["bright_old"], T, curves)
+        lit = per_ring > 0.0
+        departure = float(np.max(np.abs(parts[lit] / per_ring[lit] - 1.0))) if lit.any() else 0.0
+        area = 2.0 * math.pi * R * PC_PER_KPC**2  # pc² per kpc of radius, as disc_luminosity integrates
+        light = {k: float(np.trapezoid(v * area, R)) for k, v in res.light.items()}
+        fields = [*RENDER_STARS, *(["pattern_density_contrast"] if contrast is not None else []),
+                  *(n for n in _bright.RESOLVE_READS if n in f)]
+        entry = {
+            "unit": "Lsun/pc2", "fields": fields, "layer": "stars",
+            "about": "the disc's starlight no point carries: the stars component's light less the stars younger than "
+                     "the cluster census's window (the cluster points carry them) and less the disc stars above l_min "
+                     "older than it (the bright catalogue's, /api/bright with the same l_min), from one decomposition "
+                     "of the history onto the isochrones and the luminosity function renormalised to the field's "
+                     "tables; its 20-100 Myr part placed around each ring by where stars form today (sfr_modulation, "
+                     "where the model publishes it) and the older part by the pattern's contrast, as the bright "
+                     "catalogue places its stars; through each curve as the stars component is, at the ring's colour "
+                     "temperature",
+        }
+        resolved = {
+            "l_min": 10.0**res.log_l,
+            "requested": l_min,
+            "cluster_window_gyr": _bright.cluster_window(constants),
+            # Bolometric, whole disc, Lsun: the trapezoid in R disc_luminosity is. bright is the field's budget above
+            # l_min (what the remainder is cut by); bright_own what the catalogue's stars carry themselves - they differ
+            # by how well the field's mass grid resolves the giant branch (D202, debt #126).
+            "light": light,
+            "closure": {
+                "anchors": "exact",
+                "response": departure,
+                "about": "anchors: unresolved + young + bright is the stars' eight band sums per ring and band, one "
+                         "decomposition (tests/test_render.py: 1e-13). response: the largest relative departure, over "
+                         "rings and these curves, of the four parts' responses summed (each through the field's "
+                         "machinery at the ring's temperature) from the stars component's - the join is not linear",
+            },
+            "temperature": "the remainder is put through the curves at the ring's colour temperature "
+                           "(disc_light_temperature), not its own [inferred]: the luminosity function carries no colour, "
+                           "so the remainder's own correlated temperature is not computed here. Measured at S48 against "
+                           "the remainder's own (its stars' colour integrated along the isochrones): within 7.5e-5 of the "
+                           "response through rgb at every ring, within 1.5% through the narrowband and WFC3 sets (the "
+                           "20-100 Myr part, which is hotter; the older part within 0.5%); the temperature shapes only "
+                           "the blackbody tails beyond U and K and, through them, the band-consistent anchors",
+        }
+        return component, entry, resolved
 
     def _system(self, q: Query) -> Response:
         """One star's planets. It materialises one cell and takes one star out of it.
@@ -1473,14 +1799,9 @@ def _brightest(catalogue: Any, n: int, view: np.ndarray | None) -> tuple[Any, di
     """
     keep = np.arange(catalogue.size)
     if view is not None and keep.size:
-        r = np.asarray(catalogue["star_radius"], dtype=float)
-        phi = np.asarray(catalogue["star_azimuth"], dtype=float)
-        # The viewer's frame (frontend/src/galaxy/positions.ts): y up, phi from +x towards -z.
-        p = np.stack([r * np.cos(phi), np.asarray(catalogue["star_height"], dtype=float), -r * np.sin(phi), np.ones_like(r)])
-        clip = view @ p
-        w = clip[3]
-        inside = (w > 0) & (np.abs(clip[0]) <= w) & (np.abs(clip[1]) <= w) & (np.abs(clip[2]) <= w)
-        keep = keep[inside]
+        # The viewer's frame (frontend/src/galaxy/positions.ts): y up, phi from +x towards -z; one test,
+        # shared with /api/bright (S48).
+        keep = keep[_bright.in_frustum(view, catalogue["star_radius"], catalogue["star_azimuth"], catalogue["star_height"])]
     in_view = int(keep.size)
     lum = np.nan_to_num(np.asarray(catalogue["star_luminosity"], dtype=float)[keep], nan=-np.inf)
     lit = keep[lum > -np.inf]
