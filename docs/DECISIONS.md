@@ -7445,3 +7445,49 @@ curve's wings collect from a far brighter neighbour. That is a limit of the fiel
 are Gaussians of the passbands' widths, `[inferred]` in shape), which this row leaves unchanged; `object_response`
 reproduces it to 10⁻⁵ mag on these stars too, and a test pins the 32. The light at stake is small — a star that misses
 U by 2.65 mag is one whose U is a millionth of its K — but it is a wrong number on the wire, and it is recorded.
+
+### D202. S48: the bright catalogue as built, and what it found — the field's light per isochrone is integrated on a mass grid that aliases the giant branch; registered (#126), not fixed in this row
+
+**Applied (`session-48-bright`, a70f275 and fb3f140, merged on `session-48`; 12 files, +1 569 −19: `stages/bright.py` 918
+lines, `tests/test_bright.py` 399, `api/service.py` +201).** *The luminosity function*: along each isochrone's own
+points, each segment's IMF number exact (the analytic Kroupa), spread uniformly in log L, light and band fluxes
+integrated with log L and the magnitudes linear along the segment; a sparse form (suffix sums and only the thresholds a
+segment straddles) that matches the dense one to 4 × 10⁻¹⁵ in 0.55 s. *The decomposition*: light and all eight bands
+against the light stage **under 10⁻¹³ relative** (gate 10⁻⁹); young + old ≡ total to 1.4 × 10⁻¹⁴; `steps_over`'s
+nearest-metallicity rule moved into `photometry.nearest_metallicity` so there is one copy. *The process*: per level-3
+child cell as ruled; the isochrone and the age part drawn by one inverse CDF over 2 × 396 entries; the age within the
+isochrone uniform in log age across ± 0.05 dex `[inferred]`; the point on the isochrone among the segments whose
+luminosity span holds L_i (1.3–4.2 % of stars fall back to a segment end with the magnitudes shifted by −2.5 Δ log L);
+the height the catalogue's own sech²; the metallicity column the isochrone's [M/H]; the phase the PARSEC label.
+*The route*: `/api/bright` with `n` (bisection on the summed curve, at most eight passes, never past 0.1 L☉ or 500 000
+expected stars) or `l_min`; the header's `threshold`, `count`, `light`; it never runs the stage itself (D4).
+**Measured on the default run:** the 3 162 brightest disc stars older than 20 Myr are everything above **33 911 L☉**
+(`bright_star_limit`); **3.35 × 10⁶ stars above 10³ L☉** (`bright_star_count_1e3`), 3.54 × 10⁷ above 10², 6.4 × 10⁴
+above 10⁴, none above 10⁵ (the 20 Myr cut removes the most massive); the old disc's light above 10² and 10³ L☉ is 50.4 %
+and 25.5 % of what its stars carry. The azimuthal model places the 20–100 Myr stars on the modulation (mean
+ln modulation +0.50 against −0.46 for the old). Cold / warm: whole disc `n=3162` 4.06 / 0.69 s, 485 kB; one sector 3.29
+/ 0.009 s. Specs 12 / 20 / 5 of 37 both models, unchanged. Three small departures, accepted: the 20 Myr cut is 0.05 Myr
+older than the youngest isochrone the old part reaches, so ages 19.95–20 Myr are in neither catalogue; the header's
+default limit costs one whole-disc materialisation per galaxy (≈ 2 s cold, cached); `test_v4`'s drawn / not-drawn gate
+iterates cloud, cluster and remnant only and was not extended.
+
+**The finding (#126): the field's light tables are wrong on old populations.** `photometry.population_light`
+integrates each isochrone on a fixed grid of 1 500 log-spaced masses (0.5 % steps), and a red-giant branch is 0.01 M☉
+wide, an AGB 0.001: one or two points fall on them, and where they fall decides the answer. Against the integration
+along the isochrone's own points (which an independent 50×-subdivided trapezoid confirms to under 0.1 % on seven
+isochrones), the per-isochrone ratio of the two **runs from 0.55 to 7.09 in bolometric light (171 of 396 isochrones off
+by more than 10 %), 0.59 to 2.21 in V, 0.26 to 11.97 in K; 1 441 of the 3 168 band factors are off by more than 10 %.**
+Summed over the galaxy's history the errors partly cancel: **the field's disc light is 6.7 % high bolometric, 5.4 % in
+V, 11 % in I, 12.4 % in H, 10.9 % in K.** The docstring's claim — "resolves the giant branch to a hundredth of a solar
+mass near the turnoff" — is true of the grid and not enough for the branch. *What this row did with it, as D200 (2)
+ruled:* the luminosity function is renormalised per isochrone to the field's table, so the field's total is
+distributed and nothing published moved; both budgets are exposed (`light_above`, the field's; `light_above_own`, the
+stars'), and the realised catalogue is tested against its own budget with the ratio pinned (1.262 in the 7–9 kpc
+window above 10³ L☉). *What it means:* every photometric number the model publishes — M_V −21.216, B − V 0.631, Υ_V,
+`disc_luminosity`, the eight bands and the SED, the dust's absorbed starlight and so L_IR and T_d — carries this
+error, at the several-per-cent level; the acceptance rows it touches are the photometric ones (25–28 not yet
+computable, 29). *What closes it:* `population_light` integrated along the isochrone's points with `bright.py`'s
+quadrature (the code exists), every photometric pin re-read with its reason (B10: constants calibrated against the
+old tables re-examined), V1's gate re-pinned. **It is accuracy work on the pinned model and moves published numbers,
+so it waits for the owner's word**; until then the star-first renderer's realised light sits below the field's budget
+by the factor above, and the wiring states both.
