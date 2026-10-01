@@ -7312,5 +7312,5 @@ lines (#119), a per-nebula [O III] luminosity (row 36) and the history at birth 
 two builders were started at this close on branches cut from `session-47`.
 
 **The gate.** vitest 140, `tsc -b`, `vite build` clean; no Python changed in this row's code; the full suite backgrounded
-after `bootstrap.py`: **{{SUITE}}**. Board row 47; LESSONS; RESUMING ≤ 120; BRIEF for S48. Tag `s47` on the merge. T1 (the
+after `bootstrap.py`: **`EXIT=0`, every file green, run on the merged tuning panel with two S48 builders working in their own worktrees at the same time (neither timing flake tripped)**. Board row 47; LESSONS; RESUMING ≤ 120; BRIEF for S48. Tag `s47` on the merge. T1 (the
 display defaults) stays open until the owner reports a combination.
