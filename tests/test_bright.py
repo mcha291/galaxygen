@@ -1,7 +1,7 @@
 """S48 (D200): the bright-end-complete star catalogue.
 
 The luminosity function per isochrone (stars, light and band flux above each threshold, integrated along the
-isochrone's own points and renormalised to the field's tables) and the mass-on-isochrones decomposition, gated
+isochrone's own points - the field's own quadrature since S49, D204) and the mass-on-isochrones decomposition, gated
 against the light stage it must reproduce; then the ordered Poisson process per finest cell (complete above any
 threshold, a prefix as it drops, per-region), the stage bright_stars and /api/bright.
 """
@@ -17,7 +17,9 @@ from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import bright as br
 from galaxy.stages.systems import MAX_LEVEL, cells_in
-from galaxy.stages.photometry import BANDS, band_nu_l_nu, imf_weights, isochrones, population_light
+from galaxy.stages.photometry import (
+    BANDS, band_nu_l_nu, imf_mass_formed, imf_number, isochrones, log_linear_integral, population_light, segments,
+)
 
 
 @pytest.fixture(scope="module")
@@ -107,62 +109,29 @@ def test_young_and_old_sum_to_the_whole_exactly(default, models):
 
 
 def test_the_tables_are_monotone_and_their_totals_are_the_field_s(tables):
+    """One budget (rule A9; S49, D204): the luminosity function's totals - every living star's light and band
+    flux per M☉ formed - are population_light's tables to 1e-12 on all 396 isochrones, because both are the one
+    quadrature along the isochrone's points (photometry.segments). Until S49 they were renormalised per isochrone to
+    the field's trapezoid on a fixed mass grid, by factors of 0.55 to 7.09 bolometric and 0.25 to 11.97 in K (D202)."""
     pop = population_light()
     assert np.all(np.diff(tables.count_above, axis=-1) <= 0.0)
     assert np.all(np.diff(tables.light_above, axis=-1) <= 0.0)
     assert np.all(np.diff(tables.band_above, axis=-2) <= 0.0)
     assert np.all(tables.count_above[..., 0] <= tables.count_total)
-    # The totals (L -> 0) are the field's own tables after the renormalisation, to 1e-12.
-    from galaxy.stages.bright import _log_linear_integral, segments
-
+    assert np.all(tables.light_above[..., 0] <= tables.light_total * (1.0 + 1e-12))
+    assert np.max(np.abs(tables.light_total / pop.light_per_mass - 1.0)) < 1e-12
+    assert np.max(np.abs(tables.band_total / pop.band_flux - 1.0)) < 1e-12
+    # And by hand on a few, from the segments themselves.
     for (a, z) in [(0, 9), (14, 0), (22, 9), (32, 8), (35, 2), (35, 10)]:
         seg = segments(a, z)
-        own = float((seg.number * _log_linear_integral(seg.log_l[:, 0], seg.log_l[:, 1], 0.0, 1.0)).sum())
-        assert own * tables.light_factor[a, z] == pytest.approx(pop.light_per_mass[a, z], rel=1e-12)
+        own = float((seg.number * log_linear_integral(seg.log_l[:, 0], seg.log_l[:, 1], 0.0, 1.0)).sum())
+        assert own == pytest.approx(pop.light_per_mass[a, z], rel=1e-12)
         for k in range(len(BANDS)):
             g0, g1 = seg.neg_mag[:, 0, k], seg.neg_mag[:, 1, k]
-            own = float((seg.number * _log_linear_integral(g0, g1, 0.0, 1.0)).sum())
-            assert own * tables.band_factor[a, z, k] == pytest.approx(pop.band_flux[a, z, k], rel=1e-12)
+            own = float((seg.number * log_linear_integral(g0, g1, 0.0, 1.0)).sum())
+            assert own == pytest.approx(pop.band_flux[a, z, k], rel=1e-12)
     # Above the brightest point of every isochrone there is nothing.
     assert np.all(tables.count_above[..., -1] == 0.0) and np.all(tables.light_above[..., -1] == 0.0)
-
-
-# --- (d) the renormalisation factors, pinned: they measure the field's mass grid ----------------------
-
-
-def test_the_renormalisation_factors_are_pinned(tables):
-    """The factor each isochrone's total takes to become the field's (population_light's trapezoid on a fixed
-    log-spaced mass grid). Far from 1 on the old isochrones: the fixed grid puts one or two points on a red-giant
-    branch a hundredth of a solar mass wide and on an AGB a thousandth wide, so the field's light per mass is
-    off by up to a factor of seven either way, isochrone by isochrone - the integration along the isochrone's
-    own points agrees with a 50-times-subdivided trapezoid to 0.1% (S48's check). Flagged, not hidden (D200)."""
-    light = tables.light_factor
-    # S48 (D200): bolometric 0.550 / 0.994 / 7.09 (min / median / max over the 396 isochrones), 171 beyond 10%.
-    assert light.min() == pytest.approx(0.5497, abs=2e-3)
-    assert np.median(light) == pytest.approx(0.9940, abs=2e-3)
-    assert light.max() == pytest.approx(7.094, abs=1e-2)
-    assert int((np.abs(light - 1.0) > 0.1).sum()) == 171
-    k = tables.band_factor
-    # S48 (D200): V 0.585 / 0.991 / 2.21; K 0.255 / 0.854 / 11.97.
-    assert (k[..., 2].min(), k[..., 2].max()) == pytest.approx((0.5845, 2.207), abs=2e-3)
-    assert (k[..., 7].min(), k[..., 7].max()) == pytest.approx((0.2549, 11.97), abs=2e-2)
-    # The young isochrones (4-16 Myr), whose light is the main sequence's, are resolved by both: within 4%.
-    assert np.all(np.abs(light[:9] - 1.0) < 0.04)
-
-
-def test_the_luminosity_function_s_own_totals_are_a_fine_quadrature_s():
-    """The independent check behind the pins: the isochrone's own L(m) (log L linear in mass, the field's
-    reading) on a grid of every isochrone point with each interval cut in fifty agrees with the segments'
-    total to 0.15%, where the field's 1500-point grid misses by a factor."""
-    tab = isochrones()
-    for (a, z) in [(35, 9), (32, 8), (22, 9)]:
-        m, log_l, _ = tab.track(a, z)
-        pieces = [np.geomspace(0.08, m[0], 200)] + [np.linspace(m[i], m[i + 1], 51) for i in range(m.size - 1) if m[i + 1] > m[i]]
-        fine = np.unique(np.concatenate(pieces))
-        quad = np.trapezoid(imf_weights(fine) * 10.0 ** np.interp(fine, m, log_l), fine) / br._imf_mass_formed()
-        seg = br.segments(a, z)
-        own = float((seg.number * br._log_linear_integral(seg.log_l[:, 0], seg.log_l[:, 1], 0.0, 1.0)).sum())
-        assert own == pytest.approx(quad, rel=1.5e-3), (a, z)
 
 
 # --- (e) the counts, by hand ---------------------------------------------------------------------------
@@ -183,8 +152,8 @@ def _by_hand(a: int, z: int, log_threshold: float) -> float:
         else:
             cross = m0 + (log_threshold - y0) / (y1 - y0) * (m1 - m0)
             lo, hi = (cross, m1) if y1 > y0 else (m0, cross)
-        total += float(br._imf_number(np.array(lo), np.array(hi)))
-    return total / br._imf_mass_formed()
+        total += float(imf_number(np.array(lo), np.array(hi)))
+    return total / imf_mass_formed()
 
 
 def test_count_above_on_the_oldest_solar_isochrone_against_a_hand_count(tables):
@@ -285,15 +254,13 @@ def test_counts_over_the_whole_disc_are_poisson_about_the_expected_count(galaxy,
 
 
 def test_the_light_above_a_thousand_suns_is_what_the_luminosity_function_carries(galaxy, seed, default):
-    """Σ L of the stars above 10^3 Lsun in a window against the luminosity function's own light there, within 4σ
-    of the realised spread (σ² = Σ L², a compound Poisson sum). The field's budget above the same threshold - the
-    tables renormalised to the field's - is 26% more in this window: the renormalisation's measure of the field's
-    mass grid on the giant branch, pinned and flagged (D200), not a property of the stars."""
+    """Σ L of the stars above 10^3 Lsun in a window against the luminosity function's light there, within 4σ of the
+    realised spread (σ² = Σ L², a compound Poisson sum). One budget since S49 (D204): until then the field's budget
+    here, the tables renormalised to the field's fixed mass grid, was 1.262 times the stars' own (debt #126)."""
     cells = _window(default.grid.R)
     L = np.asarray(br.materialise_bright(galaxy, seed, cells, 1.0e3)["bright_star_luminosity"])
-    own = float(galaxy.expected(cells, 3.0, "light_own").sum())
-    assert abs(L.sum() - own) < 4.0 * np.sqrt((L**2).sum())
-    assert float(galaxy.expected(cells, 3.0, "light").sum()) / own == pytest.approx(1.262, abs=0.005)  # S48 (D200)
+    budget = float(galaxy.expected(cells, 3.0, "light").sum())
+    assert abs(L.sum() - budget) < 4.0 * np.sqrt((L**2).sum())
 
 
 def test_young_bright_stars_follow_where_stars_form_today(galaxy, seed, default):
@@ -353,7 +320,8 @@ def test_the_n_brightest_are_complete_above_the_header_s_threshold(api, default,
         assert np.all(np.isfinite(np.asarray(a[name], dtype=float))), name
     # The light: the stars carry what the luminosity function says (they are 3162 of an expected ~3250 there).
     assert h["light"]["returned"] == pytest.approx(float(L.sum()))
-    assert h["light"]["returned"] == pytest.approx(h["light"]["expected_own"], rel=0.1)
+    assert h["light"]["returned"] == pytest.approx(h["light"]["expected"], rel=0.1)
+    assert "expected_own" not in h["light"]  # one budget since S49 (D204)
     # A metadata-free route: what the stage reads ran, not the stage (rule D4).
     assert "bright_star" not in " ".join(h["stages"]) and "bright_stars" not in r.stages
     # S48 (D200): about 4.5 s cold for the whole disc on the owner's machine (the pipeline it reads, then 65 536
@@ -542,58 +510,56 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 BRIGHT_RGB_OVER_OWN = (1.00325, 1.00435, 1.00412)
 
 
-def test_the_bright_stars_light_is_their_own_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
+def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
     """(b) the realisation. The catalogue's stars above 10^4 Lsun, summed over the whole disc, against what the
-    luminosity function's own budget (light_above_own, band_above_own) expects there: the bolometric light within 4
+    luminosity function's budget (light_above, band_above) expects there: the bolometric light within 4
     sigma of the realised spread (sigma^2 = sum L^2, a compound Poisson sum), and the light through rgb, pinned (the
     4-sigma gate is the test below). Until D203 the band light was short by 2 / 8 / 17 % in R / V / B: the segment was
     picked by its stars per dex at an L read log-linearly across the interval, which under-drew the hot segments
     where an isochrone's count is not log-linear inside an interval; since D203 the segment is drawn by its exact
-    count in the interval and L uniformly across its overlap. The field's budget is 0.8-0.9 % above the stars' own
-    here (debt #126's measure at this threshold)."""
+    count in the interval and L uniformly across its overlap. Until S49 the field's budget was 0.8-0.9 % above the
+    stars' own here (debt #126); one budget since (D204)."""
     (h, a), _ = through_rgb
     L = a["bright_star_luminosity"]
-    own = float(_expected_bright(galaxy, br.luminosity_function().light_above_own, 4.0))
+    own = float(_expected_bright(galaxy, br.luminosity_function().light_above, 4.0))
     assert L.size == h["count"]["returned"] and abs(L.size - h["count"]["expected"]) < 4.0 * np.sqrt(h["count"]["expected"])
     assert abs(L.sum() - own) < 4.0 * np.sqrt((L**2).sum())
     tables = br.luminosity_function()
-    anchors = band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above_own, 4.0))
+    anchors = band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above, 4.0))
     expected = _band_light(anchors, _rgb_curves())
     got = a["response"].sum(axis=0)
     assert got / expected == pytest.approx(BRIGHT_RGB_OVER_OWN, abs=1e-4)
-    field = _band_light(band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above, 4.0)), _rgb_curves())
-    assert field / expected == pytest.approx([1.0077, 1.0084, 1.0094], abs=2e-4)
 
 
-def test_the_bright_stars_band_light_is_their_own_budget_within_4_sigma(galaxy, through_rgb):
+def test_the_bright_stars_band_light_is_their_budget_within_4_sigma(galaxy, through_rgb):
     """D203's gate (a strict xfail at S48's wiring): above 10^4 Lsun over the whole disc, the realised light in each
-    of the table's eight bands and through each rgb filter within 4 sigma of the own budget. S48 (D203): the eight
+    of the table's eight bands and through each rgb filter within 4 sigma of the budget. S48 (D203): the eight
     bands U..K at 1.0044 / 1.0042 / 1.0043 / 1.0033 / 1.0002 / 0.9971 / 0.9970 / 0.9978 (z = +0.55 / +0.51 / +0.66 /
     +0.55 / +0.03 / -0.52 / -0.53 / -0.40), until then 0.84 / 0.83 / 0.92 / 0.98 / 1.02 / 1.04 / 1.04 / 1.03."""
     (_, a), _ = through_rgb
     tables = br.luminosity_function()
-    expected = _band_light(band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above_own, 4.0)), _rgb_curves())
+    expected = _band_light(band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above, 4.0)), _rgb_curves())
     z = (a["response"].sum(axis=0) - expected) / np.sqrt((a["response"] ** 2).sum(axis=0))
     assert np.all(np.abs(z) < 4.0), z
     flux = 10.0 ** (-0.4 * br.magnitudes(a))
-    budget = _expected_bright(galaxy, tables.band_above_own, 4.0)
+    budget = _expected_bright(galaxy, tables.band_above, 4.0)
     z = (flux.sum(axis=0) - budget) / np.sqrt((flux**2).sum(axis=0))
     assert np.all(np.abs(z) < 4.0), z
 
 
-def test_the_bolometric_light_at_ten_to_the_three_and_a_half_is_the_own_budget(galaxy, seed, default):
+def test_the_bolometric_light_at_ten_to_the_three_and_a_half_is_the_budget(galaxy, seed, default):
     """D203's second gate: at 10^3.5 Lsun, where the old draw was 1.2 % low (z = -8 over the whole disc), the stars'
-    light within 4 sigma of what the luminosity function's own budget puts there - here over the 6-10 kpc annulus
+    light within 4 sigma of what the luminosity function's budget puts there - here over the 6-10 kpc annulus
     (the whole disc holds 6.5e5 such stars; S48 (D203) measured it at 1.0007, z = +0.44), and each band too."""
     cells = _window(default.grid.R, 6.0, 10.0, 0.0, 2.0 * np.pi)
     cat = br.materialise_bright(galaxy, seed, cells, 10.0 ** 3.5)
     L = np.asarray(cat["bright_star_luminosity"])
-    own = float(galaxy.expected(cells, 3.5, "light_own").sum())
+    own = float(galaxy.expected(cells, 3.5, "light").sum())
     assert L.size > 1e5 and abs(L.sum() - own) < 4.0 * np.sqrt((L**2).sum())
     tables = br.luminosity_function()
     ring, sector = galaxy.locate(cells)
     mass = np.einsum("c,pc,pcx->px", galaxy.area[ring], galaxy.weights[:, ring, sector], galaxy.mass_cell[:, ring])
-    budget = br.above_at(mass.reshape(2, *tables.count_above.shape[:2]), tables.band_above_own, 3.5).sum(axis=0)
+    budget = br.above_at(mass.reshape(2, *tables.count_above.shape[:2]), tables.band_above, 3.5).sum(axis=0)
     flux = 10.0 ** (-0.4 * br.magnitudes(cat))
     z = (flux.sum(axis=0) - budget) / np.sqrt((flux**2).sum(axis=0))
     assert np.all(np.abs(z) < 4.0), z
@@ -616,7 +582,7 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
     assert not placed["fallback"].any()
     assert np.all((placed["log_l"] >= tables.log_l[k]) & (placed["log_l"] <= tables.log_l[k + 1]))
     flux = 10.0 ** (-0.4 * placed["mags"])
-    per_star = tables.band_above_own[a, z, k0] / tables.count_above[a, z, k0]
+    per_star = tables.band_above[a, z, k0] / tables.count_above[a, z, k0]
     zs = (flux.sum(axis=0) - per_star * n) / np.sqrt((flux**2).sum(axis=0))
     assert np.all(np.abs(zs) < 4.0), zs
     ratio = flux.sum(axis=0) / (per_star * n)

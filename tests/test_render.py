@@ -1124,10 +1124,9 @@ def test_today_s_painting_against_the_object_s_light(objects):
 # --- S48's wiring (D200 (4)): the field's remainder beside the stars, l_min= ------------------------------------------
 
 # The whole disc's bolometric light split at 10^3 Lsun on the default grid (Lsun): the stars component's total, the
-# young population's (the cluster census's ages), the old stars above 10^3 (the field's budget and the stars' own,
-# debt #126), and the remainder.
-SPLIT_1E3 = {"total": 4.895767e10, "young": 1.202957e10, "bright": 9.019945e9, "bright_own": 8.632747e9,
-             "unresolved": 2.790815e10}
+# young population's (the cluster census's ages), the old stars above 10^3 (one budget since S49, D204: until then
+# the field's renormalised one and the stars' own, debt #126), and the remainder.
+SPLIT_1E3 = {"total": 4.895767e10, "young": 1.202957e10, "bright": 9.019945e9, "unresolved": 2.790815e10}
 # The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
 # from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
 CLOSURE_RGB = {100.0: 4.9594e-6, 1000.0: 5.7059e-6, 10000.0: 5.6762e-6}

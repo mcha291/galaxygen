@@ -1299,10 +1299,9 @@ class Service:
             "count": {"returned": int(lum.size), "expected": float(galaxy.expected(cells, log_used).sum())},
             "light": {
                 "returned": float(lum.sum()),
-                # The field's budget above l_min (the luminosity function renormalised to the field's tables) and
-                # the stars' own; they differ by how well the field's mass grid resolves the giant branch (D200).
+                # The luminosity function's light above l_min: the stars' budget and the field's, one quadrature
+                # (S49, D204).
                 "expected": float(galaxy.expected(cells, log_used, "light").sum()),
-                "expected_own": float(galaxy.expected(cells, log_used, "light_own").sum()),
             },
             "columns": columns,
             "scalars": scalars,
@@ -1566,7 +1565,7 @@ class Service:
         The disc's light less the young population (ages under the cluster census's window, which the cluster
         points carry) and less the disc stars above ``l_min`` older than it (which ``/api/bright`` carries), all
         three from ``bright.resolve``: one decomposition of the history onto the isochrones, the luminosity
-        function renormalised to the field's tables, so unresolved + young + bright is the field's total per ring
+        function on the field's own quadrature (S49, D204), so unresolved + young + bright is the field's total per ring
         and band exactly. Each of the remainder's two age parts goes through the curves on its own and is placed
         around the ring by the weight the bright catalogue gives the same part (``bright.part_weights``: the
         contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
@@ -1598,8 +1597,8 @@ class Service:
             "about": "the disc's starlight no point carries: the stars component's light less the stars younger than "
                      "the cluster census's window (the cluster points carry them) and less the disc stars above l_min "
                      "older than it (the bright catalogue's, /api/bright with the same l_min), from one decomposition "
-                     "of the history onto the isochrones and the luminosity function renormalised to the field's "
-                     "tables; its 20-100 Myr part placed around each ring by where stars form today (sfr_modulation, "
+                     "of the history onto the isochrones and the luminosity function, whose totals are the field's "
+                     "tables (one quadrature along the isochrones' points); its 20-100 Myr part placed around each ring by where stars form today (sfr_modulation, "
                      "where the model publishes it) and the older part by the pattern's contrast, as the bright "
                      "catalogue places its stars; through each curve as the stars component is, at the ring's colour "
                      "temperature",
@@ -1608,9 +1607,8 @@ class Service:
             "l_min": 10.0**res.log_l,
             "requested": l_min,
             "cluster_window_gyr": _bright.cluster_window(constants),
-            # Bolometric, whole disc, Lsun: the trapezoid in R disc_luminosity is. bright is the field's budget above
-            # l_min (what the remainder is cut by); bright_own what the catalogue's stars carry themselves - they differ
-            # by how well the field's mass grid resolves the giant branch (D202, debt #126).
+            # Bolometric, whole disc, Lsun: the trapezoid in R disc_luminosity is. bright is what the catalogue's
+            # stars above l_min carry, and what the remainder is cut by: one budget since S49 (D204, debt #126).
             "light": light,
             "closure": {
                 "anchors": "exact",

@@ -135,23 +135,20 @@ def test_the_unresolved_top_of_the_imf():
 def test_how_much_of_a_populations_q_the_table_itself_covers():
     """Of a steady solar population's photons, the share from stars whose T_eff is inside the
     table's 32-51 kK, cooler, and hotter (the stripped post-main-sequence stars the blackbody
-    extension carries). Measured at S28, printed and pinned."""
-    from galaxy.stages.photometry import _IMF_MASSES, _along
+    extension carries). Measured at S28, printed and pinned. On the population's own quadrature since S49
+    (``photometry.nodes`` along the isochrone's segments, D204), as ``population_light`` takes Q."""
+    from galaxy.stages.photometry import nodes, segments
 
     tab = isochrones()
     solar = int(np.abs(tab.mhs).argmin())
-    m = _IMF_MASSES
-    phi = imf_weights(m)
     ages = 10.0 ** tab.log_ages
     parts = np.zeros((ages.size, 3))
     for a in range(ages.size):
-        track = tab.track(a, solar)
-        alive = m <= track[0][-1]
-        log_l, log_teff = _along(track, m)
-        T = 10.0**log_teff
-        Q = np.where(alive, np.nan_to_num(ms.ionizing_photons(10.0**log_l, T)), 0.0)
+        at = nodes(segments(a, solar))
+        T = 10.0**at.log_teff
+        Q = at.weight * np.nan_to_num(ms.ionizing_photons(10.0**at.log_l, T))
         for k, sel in enumerate((T < ms.SHP03_TEFF[0], (T >= ms.SHP03_TEFF[0]) & (T <= ms.SHP03_TEFF[-1]), T > ms.SHP03_TEFF[-1])):
-            parts[a, k] = np.trapezoid(np.where(sel, phi * Q, 0.0), m)
+            parts[a, k] = float(np.where(sel, Q, 0.0).sum())
     total = np.trapezoid(parts, ages, axis=0) + ages[0] * parts[0]
     share = total / total.sum()
     print(f"cooler {share[0]:.4f}, inside {share[1]:.4f}, hotter {share[2]:.4f}")

@@ -38,6 +38,7 @@ is in a phase the older one no longer has, and the younger one's values stand.
 from __future__ import annotations
 
 import functools
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -244,7 +245,6 @@ def lookup_columns(mass: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray, names
 # Temperatures the population colours are tabulated at, log-spaced past both ends of the
 # blackbody cmap so a cool M dwarf and a hot O star each land on a real sample.
 _CCT_GRID = np.geomspace(1500.0, 60000.0, 384)
-_IMF_MASSES = np.geomspace(0.08, 150.0, 1500)
 
 
 @functools.cache
@@ -278,6 +278,144 @@ def correlated_temperature(rgb: np.ndarray) -> np.ndarray:
     return np.where(np.isfinite(unit[..., 0]), _CCT_GRID[np.nanargmin(np.nan_to_num(distance, nan=np.inf), axis=-1)], np.nan)
 
 
+def imf_weights(m: np.ndarray) -> np.ndarray:
+    """The Kroupa dN/dm, unnormalised, at masses ``m`` — the catalogue's IMF (``systems.py``)."""
+    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE
+
+    return np.where(m < IMF_BREAK, m**IMF_LOW_SLOPE, IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE) * m**IMF_HIGH_SLOPE)
+
+
+# --- the quadrature: an isochrone as segments between its own points (S48 D202, S49 D204) ---------------
+#
+# One integral over a population for everything this module and the bright catalogue (``bright.py``) hold. Until
+# S49 the field's tables were a trapezoid on 1 500 log-spaced masses, which puts one or two points on a red-giant
+# branch a hundredth of a solar mass wide and on an AGB a thousandth wide, so its light per mass was off by up to a
+# factor of seven either way, isochrone by isochrone (debt #126, D202). The isochrone's own points are dense where
+# the evolved phases are, and they are what is integrated along now.
+
+
+def imf_cumulative(m: np.ndarray) -> np.ndarray:
+    """∫ φ dm from the IMF's lower end to ``m``, with φ :func:`imf_weights`' unnormalised Kroupa form, analytic."""
+    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE, IMF_MIN
+
+    m = np.clip(np.asarray(m, dtype=float), IMF_MIN, None)
+    p_lo, p_hi = IMF_LOW_SLOPE + 1.0, IMF_HIGH_SLOPE + 1.0
+    k_high = IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE)
+    below = (np.minimum(m, IMF_BREAK) ** p_lo - IMF_MIN**p_lo) / p_lo
+    above = k_high * (np.maximum(m, IMF_BREAK) ** p_hi - IMF_BREAK**p_hi) / p_hi
+    return below + above
+
+
+def imf_number(lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
+    """∫ φ dm over [lo, hi]: the IMF's number in each mass interval, unnormalised."""
+    return imf_cumulative(hi) - imf_cumulative(lo)
+
+
+@functools.cache
+def imf_mass_formed() -> float:
+    """∫ φ m dm over the whole IMF, analytic: what turns the unnormalised number into stars per M☉ formed."""
+    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE, IMF_MAX, IMF_MIN
+
+    k_high = IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE)
+    p_lo, p_hi = IMF_LOW_SLOPE + 2.0, IMF_HIGH_SLOPE + 2.0
+    return float((IMF_BREAK**p_lo - IMF_MIN**p_lo) / p_lo + k_high * (IMF_MAX**p_hi - IMF_BREAK**p_hi) / p_hi)
+
+
+@dataclass(frozen=True)
+class Segments:
+    """One isochrone as straight pieces between its consecutive living points.
+
+    Each segment holds ``number`` stars per M☉ formed (the IMF's exact number in its mass interval), spread
+    uniformly in its parameter s ∈ [0, 1] (and so in log L, which is linear in s); every other column is linear
+    in s between its ends. The first segment runs from the IMF's lower end to the isochrone's first point at that
+    point's values: the stars the table does not reach, read at its lightest. The stars heavier than the last
+    point are dead: they count toward the mass formed (``imf_mass_formed``) and hold no segment.
+    """
+
+    number: np.ndarray  # (n,) stars per M☉ formed
+    log_l: np.ndarray  # (n, 2) log10 L/L☉ at the two ends
+    mass: np.ndarray  # (n, 2) initial mass, M☉
+    log_teff: np.ndarray  # (n, 2)
+    neg_mag: np.ndarray  # (n, 2, 8): −0.4 M_band at the ends, so 10^this is the band flux
+    neg_mbol: np.ndarray  # (n, 2): −0.4 M_bol, CMD's own bolometric magnitude
+    mass_now: np.ndarray  # (n, 2) present mass, after the tracks' mass loss
+    label: np.ndarray  # (n, 2) PARSEC's phase label at the ends
+
+
+@functools.cache
+def segments(age: int, mh: int) -> Segments:
+    """The segments of isochrone ``(age, mh)``: see :class:`Segments`."""
+    from galaxy.stages.systems import IMF_MIN
+
+    tab = isochrones()
+    m, log_l, log_teff = tab.track(age, mh)
+    cols = tab.extra[(age, mh)]
+    mags = cols[:, [EXTRA.index(b) for b in BANDS]]
+    mbol, now, label = (cols[:, EXTRA.index(c)] for c in ("mbol", "mass_now", "label"))
+    # Prepend the IMF's lower end at the first point's values (a degenerate segment in L).
+    m0 = np.concatenate([[min(IMF_MIN, m[0])], m])
+    idx = np.concatenate([[0], np.arange(m.size)])
+    lo, hi = idx[:-1], idx[1:]
+    number = imf_number(m0[:-1], m0[1:]) / imf_mass_formed()
+
+    def ends(v: np.ndarray) -> np.ndarray:
+        return np.stack([v[lo], v[hi]], axis=1)
+
+    return Segments(
+        number=number,
+        log_l=ends(log_l),
+        mass=np.stack([m0[:-1], m0[1:]], axis=1),
+        log_teff=ends(log_teff),
+        neg_mag=ends(-0.4 * mags),
+        neg_mbol=ends(-0.4 * mbol),
+        mass_now=ends(now),
+        label=ends(label),
+    )
+
+
+def log_linear_integral(g0: np.ndarray, g1: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """∫_a^b 10^(g0 + s (g1 − g0)) ds, exactly, for g linear in s; zero where b <= a."""
+    d = (g1 - g0) * math.log(10.0)
+    width = np.maximum(b - a, 0.0)
+    start = 10.0 ** (g0 + a * (g1 - g0))
+    x = d * width
+    small = np.abs(x) < 1e-9
+    factor = np.where(small, width * (1.0 + 0.5 * x), np.expm1(np.where(small, 0.0, x)) / np.where(small, 1.0, d))
+    return start * factor
+
+
+# Gauss-Legendre nodes per segment for what is not log-linear along it (the colour, the ionizing rate, the wind's
+# power). S49 (D204), against 128 nodes over all 396 isochrones: the colour within 3.7e-5 and Q within 3.2e-6 of
+# each isochrone's own; the light read on the same nodes is the exact integral to 4e-15. The wind is discontinuous
+# along a segment (the recipe's two sides of the bistability jump, its 12.5-50 kK window), so it converges slower:
+# against a 2 048-point midpoint rule, within 6.2e-3 per isochrone holding above 1e-3 of the peak, and 7.5e-4
+# integrated over age, at [M/H] +0.05 (2e-4 and 1e-6 at -2.2 and -0.95).
+SEGMENT_NODES = 16
+
+
+@dataclass(frozen=True)
+class Nodes:
+    """Points inside every segment of an isochrone, and the stars per M☉ formed each stands for: the
+    Gauss-Legendre rule on s ∈ [0, 1] times each segment's number. Σ ``weight`` · f(point) is ∫ f over the
+    living stars, for any f of the columns read at the point."""
+
+    weight: np.ndarray  # (n_seg, k) stars per M☉ formed
+    log_l: np.ndarray  # (n_seg, k)
+    log_teff: np.ndarray  # (n_seg, k)
+    mass_now: np.ndarray  # (n_seg, k)
+
+
+def nodes(seg: Segments, k: int = SEGMENT_NODES) -> Nodes:
+    """The :class:`Nodes` of ``seg``, ``k`` per segment."""
+    x, w = np.polynomial.legendre.leggauss(int(k))
+    s, w = 0.5 * (x + 1.0), 0.5 * w
+
+    def at(ends: np.ndarray) -> np.ndarray:
+        return ends[:, :1] + s[None, :] * (ends[:, 1:] - ends[:, :1])
+
+    return Nodes(seg.number[:, None] * w[None, :], at(seg.log_l), at(seg.log_teff), at(seg.mass_now))
+
+
 @dataclass(frozen=True)
 class PopulationLight:
     """Per isochrone: light today per solar mass *formed*, and that light's linear colour.
@@ -294,65 +432,47 @@ class PopulationLight:
     ionizing_per_mass: np.ndarray  # (n_age, n_mh), photons/s per M☉ formed
 
 
-def imf_weights(m: np.ndarray) -> np.ndarray:
-    """The Kroupa dN/dm, unnormalised, at masses ``m`` — the catalogue's IMF (``systems.py``)."""
-    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE
-
-    return np.where(m < IMF_BREAK, m**IMF_LOW_SLOPE, IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE) * m**IMF_HIGH_SLOPE)
-
-
 @functools.cache
 def population_light() -> PopulationLight:
-    """Integrate a Kroupa population along every isochrone.
+    """Integrate a Kroupa population along every isochrone's own points (S49, D204; debt #126).
 
-    Light per unit mass formed is ∫ φ(m) L(m) dm over the stars still alive, divided by
-    ∫ φ(m) m dm over the whole IMF — the dead count toward the mass formed and add no
-    light. The colour is the same integral of L(m) times the blackbody chromaticity of
-    T_eff(m). Both are integrated on a fixed log-spaced mass grid, which puts ~150
-    samples per decade of mass and resolves the giant branch, where most of an old
-    population's light is, to a hundredth of a solar mass near the turnoff.
+    Light per unit mass formed is ∫ φ(m) L(m) dm over the stars still alive, divided by ∫ φ(m) m dm
+    over the whole IMF — the dead count toward the mass formed and add no light. The integral is taken
+    along the isochrone's :func:`segments`: between consecutive living points the IMF's exact number in
+    the mass interval, spread uniformly along the segment, with log L and each magnitude linear along it,
+    so the light, each band's Σ 10^(−0.4 M_band) and CMD's bolometric magnitude's are integrated exactly
+    (:func:`log_linear_integral`); the stars lighter than the first point are read at it. The points are
+    dense where the evolved phases are. Until S49 the integral was a trapezoid on 1 500 log-spaced masses,
+    which resolves the main sequence and puts one or two points on a red-giant branch a hundredth of a
+    solar mass wide and on an AGB a thousandth wide: S48 measured its light per mass 0.55–7.1 times this
+    one bolometric and 0.26–12 in K, isochrone by isochrone, the disc's light 6.7 % high (D202).
 
-    A band's light is the same integral of 10^(−0.4 M_band(m)), each point's absolute
-    magnitude read along the isochrone exactly as log L is, so a population's magnitude
-    is −2.5 log₁₀ of it times the mass formed; the ionizing rate is the same integral of
-    Q(L(m), T_eff(m)).
+    What is not log-linear along a segment — the colour (the luminosity-weighted linear chromaticity of
+    the blackbody at T_eff, ∫ L · chromaticity over ∫ L) and the ionizing rate (``massive_stars.
+    ionizing_photons`` at L and T_eff) — is integrated on :func:`nodes` (``SEGMENT_NODES`` Gauss-Legendre
+    points per segment). This is the same quadrature as the bright catalogue's luminosity function, so the
+    two hold one budget (``bright.luminosity_function``'s totals are these to rounding).
     """
     from galaxy.stages.massive_stars import ionizing_photons
 
     tab = isochrones()
-    m = _IMF_MASSES
-    phi = imf_weights(m)
-    mass_formed = np.trapezoid(phi * m, m)
     shape = (tab.log_ages.size, tab.mhs.size)
     light = np.zeros(shape)
     colour = np.zeros((*shape, 3))
     bands = np.zeros((*shape, len(BANDS)))
     bolometric = np.zeros(shape)
     ionizing = np.zeros(shape)
-    columns = [EXTRA.index(b) for b in BANDS] + [EXTRA.index("mbol")]
-    for (a, z), track in tab.tracks.items():
-        alive = m <= track[0][-1]
-        log_l, log_teff = _along(track, m)
-        L = np.where(alive, 10.0**log_l, 0.0)
-        light[a, z] = np.trapezoid(phi * L, m) / mass_formed
-        weights = phi * L
-        colour[a, z] = np.trapezoid(weights[:, None] * blackbody_linear(10.0**log_teff), m, axis=0) / max(
-            np.trapezoid(weights, m), 1e-300
-        )
-        # np.interp for every column at once: one search along the track, then a weighted gather.
-        at = np.clip(m[alive], track[0][0], track[0][-1])
-        right = np.clip(np.searchsorted(track[0], at, side="right"), 1, max(track[0].size - 1, 1))
-        left = right - 1
-        span = track[0][right] - track[0][left]
-        w = np.where(span > 0.0, (at - track[0][left]) / np.where(span > 0.0, span, 1.0), 0.0)[:, None]
-        cols = tab.extra[(a, z)][:, columns]
-        flux = np.zeros((m.size, len(columns)))
-        flux[alive] = 10.0 ** (-0.4 * (cols[left] * (1.0 - w) + cols[right] * w))
-        integrated = np.trapezoid(phi[:, None] * flux, m, axis=0) / mass_formed
-        bands[a, z], bolometric[a, z] = integrated[:-1], integrated[-1]
-        Q = np.zeros(m.size)
-        Q[alive] = np.nan_to_num(ionizing_photons(L[alive], 10.0 ** log_teff[alive]))
-        ionizing[a, z] = np.trapezoid(phi * Q, m) / mass_formed
+    for (a, z) in tab.tracks:
+        seg = segments(a, z)
+        g0 = np.concatenate([seg.log_l[:, :1], seg.neg_mag[:, 0, :], seg.neg_mbol[:, :1]], axis=1)
+        g1 = np.concatenate([seg.log_l[:, 1:], seg.neg_mag[:, 1, :], seg.neg_mbol[:, 1:]], axis=1)
+        total = (seg.number[:, None] * log_linear_integral(g0, g1, 0.0, 1.0)).sum(axis=0)
+        light[a, z], bands[a, z], bolometric[a, z] = total[0], total[1:-1], total[-1]
+        at = nodes(seg)
+        L, T = 10.0 ** at.log_l, 10.0 ** at.log_teff
+        weights = at.weight * L
+        colour[a, z] = np.einsum("sk,skc->c", weights, blackbody_linear(T)) / max(float(weights.sum()), 1e-300)
+        ionizing[a, z] = float((at.weight * np.nan_to_num(ionizing_photons(L, T))).sum())
     return PopulationLight(light, colour, bands, bolometric, ionizing)
 
 
@@ -360,34 +480,22 @@ def population_light() -> PopulationLight:
 def population_wind() -> np.ndarray:
     """(n_age, n_mh): the wind's mechanical power per unit mass *formed*, L☉ per M☉, along every isochrone.
 
-    The integral :func:`population_light` takes of Q, of ``massive_stars.wind_luminosity`` instead: each
-    living point's L, T_eff and present mass read along the track as the bands are, at Z/Z☉ = 10^[M/H]
-    of the isochrone's own metallicity; zero where the recipe says nothing (outside 12.5–50 kK). S33
-    (BUILD_II Phase 11): a cluster's wind is its mass times this at its age, not a sum over a sample.
+    The integral :func:`population_light` takes of Q, of ``massive_stars.wind_luminosity`` instead: at each
+    of the :func:`nodes` along the isochrone's segments, its L, T_eff and present mass read along the segment
+    as the bands are, at Z/Z☉ = 10^[M/H] of the isochrone's own metallicity; zero where the recipe says
+    nothing (outside 12.5–50 kK). S33 (BUILD_II Phase 11): a cluster's wind is its mass times this at its
+    age, not a sum over a sample. On the segments since S49 (D204), as the light is: one quadrature.
     """
     from galaxy.stages.massive_stars import wind_luminosity
 
     tab = isochrones()
-    m = _IMF_MASSES
-    phi = imf_weights(m)
-    mass_formed = np.trapezoid(phi * m, m)
     out = np.zeros((tab.log_ages.size, tab.mhs.size))
-    column = EXTRA.index("mass_now")
-    for (a, z), track in tab.tracks.items():
-        alive = m <= track[0][-1]
-        log_l, log_teff = _along(track, m)
-        at = np.clip(m[alive], track[0][0], track[0][-1])
-        right = np.clip(np.searchsorted(track[0], at, side="right"), 1, max(track[0].size - 1, 1))
-        left = right - 1
-        span = track[0][right] - track[0][left]
-        w = np.where(span > 0.0, (at - track[0][left]) / np.where(span > 0.0, span, 1.0), 0.0)
-        present = tab.extra[(a, z)][:, column]
-        mass_now = present[left] * (1.0 - w) + present[right] * w
-        power = np.zeros(m.size)
-        power[alive] = np.nan_to_num(wind_luminosity(
-            10.0 ** log_l[alive], 10.0 ** log_teff[alive], mass_now, np.full(at.size, 10.0 ** tab.mhs[z])
+    for (a, z) in tab.tracks:
+        at = nodes(segments(a, z))
+        power = np.nan_to_num(wind_luminosity(
+            10.0 ** at.log_l, 10.0 ** at.log_teff, at.mass_now, np.full(at.log_l.shape, 10.0 ** tab.mhs[z])
         ))
-        out[a, z] = np.trapezoid(phi * power, m) / mass_formed
+        out[a, z] = float((at.weight * power).sum())
     return out
 
 
