@@ -359,22 +359,24 @@ def band_curve(band: str) -> Curve:
     return Curve(band, "gaussian", centre=p.reference, width=p.fwhm)
 
 
-# --- one object's light through the curves (S48, D200, #114) ---------------------------------------------
+# --- one object's light through the curves (S48, D200, D201, #114) ----------------------------------------
 
-# The temperatures the per-object table is built on: 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart. The
-# same grid as /api/blackbody's (``api.service.BLACKBODY_GRID``, S42), mirrored here because that module is not this
-# row's to edit; tests/test_render.py asserts the two are equal, and the row that wires this function into a route
-# can make the service read this copy so there is one [verified: np.logspace(3.0, 5.0, 193) in both, read at S48].
+# An object's anchors are floored at this fraction of its brightest before the machinery runs (object_response only).
+ANCHOR_FLOOR = 1e-12  # [inferred: a numerical floor; it changes no response above 1e-12 of the object's peak; D201]
+# The temperatures the tails are tabulated on: 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart. The same grid
+# as /api/blackbody's (``api.service.BLACKBODY_GRID``, S42), mirrored here because that module is not this row's to
+# edit; tests/test_render.py asserts the two are equal [verified: np.logspace(3.0, 5.0, 193) in both, read at S48].
 RESPONSE_TEMPERATURES = np.logspace(3.0, 5.0, 193)
 _RESPONSE_LOG_MIN = 3.0
 _RESPONSE_PER_DEX = 96.0
-# The step, in natural log of one anchor, of the central differences the sensitivities are taken by. D200 named
-# δ ≈ 0.05; at 0.05 the differences' own truncation leaves Σ_k a_fk − 1 at 2.3e-3 (wfc3), at 5e-4 at 2.3e-7, within
-# the 1e-6 the ruling asks, and the responses are the same to 1e-4 mag at 0.05, 0.01 and 0.001 on the gate's 2 000
-# points [verified: measured at S48, all five sets]. Rounding is far below either: ln R is good to ~1e-14.
-RESPONSE_STEP = 5.0e-4
-# Tables kept, one per (filter set, step): the viewer offers five sets.
+# The log slopes s = ln(P_{k+1}/P_k) a segment's integral is tabulated at: -80 to 80 in steps of 0.02. Read linearly
+# in ln G; outside the span the end step is extended (ln G is asymptotically linear in s).
+RESPONSE_SLOPE_MAX = 80.0
+RESPONSE_SLOPE_STEP = 0.02
+RESPONSE_SLOPES = np.linspace(-RESPONSE_SLOPE_MAX, RESPONSE_SLOPE_MAX, int(round(2 * RESPONSE_SLOPE_MAX / RESPONSE_SLOPE_STEP)) + 1)
+# Filter sets whose tables are kept (the viewer offers five), and the objects evaluated at once (the cache, not the result).
 _RESPONSE_CACHE = 8
+_RESPONSE_CHUNK = 2_048  # measured fastest at S48: 0.7 s for 10^5 against 1.2 s at 8 192
 
 
 def object_nu_l_nu(magnitudes: np.ndarray) -> np.ndarray:
@@ -390,89 +392,141 @@ def object_nu_l_nu(magnitudes: np.ndarray) -> np.ndarray:
 
 
 @dataclass(frozen=True)
-class ResponseTable:
-    """``stellar_response`` linearised in log about a blackbody, per temperature of ``RESPONSE_TEMPERATURES``, for
-    one filter set. Natural logs throughout.
+class _Factors:
+    """``sed_response``'s trapezoid through a list of curves, split by where each grid point falls. Per segment k
+    (between anchors k and k + 1), for each curve with grid points in it, ln G(s) = ln Σ_i q_i e^{w_i s} on
+    ``RESPONSE_SLOPES`` (q_i the trapezoid weight times the transmission, w_i the point's place in the segment in
+    log λ) beside its step to the next row; per curve the two tails Σ_i q_i πB_λi(T)/πB_λend(T) on
+    ``RESPONSE_TEMPERATURES``, as logs floored at ln 1e-300."""
 
-    ``log_anchors`` ``(193, 8)``: ln F_k^bb(T), the anchors of a unit-luminosity blackbody. Each is the band's mean
-    λL_λ through its own curve (``band_curve``) — the reading ``band_consistent`` gives an anchor — not the
-    blackbody's λL_λ at the band's reference wavelength: through rgb the mean anchors put ``stellar_response``
-    within 0.035 mag of ``blackbody_response`` at every grid temperature (median 0.0000), the point values within
-    1.5 mag (9.9 through wfc3), both worst at the cool end [verified: measured at S48, the five sets].
-    ``log_response`` ``(193, n_f)``: ln R_f^bb(T) = ln stellar_response(F^bb(T), T). ``slope`` ``(193, n_f, 8)``:
-    a_fk = ∂ ln R_f / ∂ ln F_k there, by central differences of ± ``step``."""
-
-    log_anchors: np.ndarray
-    log_response: np.ndarray
-    slope: np.ndarray
-    step: float
+    # Per segment that any curve reaches: (k, table (n_s, n_k, 2) of [ln G, its step], member (n_k, n_curves)).
+    segments: tuple[tuple[int, np.ndarray, np.ndarray], ...]
+    log_tails: np.ndarray  # (2, n_T, n_curves): below U, beyond K
+    has_tails: np.ndarray  # (2, n_curves) bool
+    norm: np.ndarray  # (n_curves,) ∫ S dλ by the same trapezoid
 
 
-def response_table(curves: Sequence[Curve], step: float = RESPONSE_STEP) -> ResponseTable:
-    """The table ``object_response`` reads: 193 × 17 exact evaluations (the reference and each anchor moved ± step),
-    built once per filter set and step and kept in a small LRU keyed by the curves' JSON (the form a request
-    carries them in, so equal sets share a table)."""
-    key = json.dumps([c.json() for c in curves], sort_keys=True)
-    return _response_table(key, float(step))
+def _build_factors(curves: Sequence[Curve]) -> _Factors:
+    log_x = np.log(SED_WAVELENGTHS)
+    per_segment: dict[int, list[tuple[int, np.ndarray]]] = {}
+    tails = np.full((2, RESPONSE_TEMPERATURES.size, len(curves)), -690.0)
+    has_tails = np.zeros((2, len(curves)), dtype=bool)
+    norm = np.empty(len(curves))
+    for c, curve in enumerate(curves):
+        lam = curve.grid()
+        step = np.diff(lam)
+        q = np.zeros_like(lam)
+        q[:-1] += 0.5 * step
+        q[1:] += 0.5 * step
+        q *= curve.at(lam)
+        norm[c] = q.sum()
+        x = np.log(np.clip(lam, SED_WAVELENGTHS[0], SED_WAVELENGTHS[-1]))
+        k = np.clip(np.searchsorted(log_x, x, side="right") - 1, 0, log_x.size - 2)
+        w = (x - log_x[k]) / (log_x[k + 1] - log_x[k])
+        inside = (lam >= SED_WAVELENGTHS[0]) & (lam <= SED_WAVELENGTHS[-1]) & (q > 0.0)
+        for seg in range(log_x.size - 1):
+            at = inside & (k == seg)
+            if at.any():
+                # ln Σ q e^{w s}, by the largest term so neither end of the slope span overflows.
+                expo = np.outer(RESPONSE_SLOPES, w[at])
+                top = expo.max(axis=1, keepdims=True)
+                per_segment.setdefault(seg, []).append((c, top[:, 0] + np.log(np.exp(expo - top) @ q[at])))
+        for side, (beyond, end) in enumerate((((lam < SED_WAVELENGTHS[0]) & (q > 0.0), 0), ((lam > SED_WAVELENGTHS[-1]) & (q > 0.0), -1))):
+            if beyond.any():
+                has_tails[side, c] = True
+                ratio = planck_share(lam[beyond], RESPONSE_TEMPERATURES) / planck_share(SED_WAVELENGTHS[end:][:1], RESPONSE_TEMPERATURES)
+                tails[side, :, c] = np.log(np.maximum(ratio @ q[beyond], 1e-300))
+    segments = []
+    for seg, entries in sorted(per_segment.items()):
+        log_g = np.stack([g for _, g in entries], axis=-1)  # (n_s, n_k)
+        table = np.stack([log_g, np.vstack([np.diff(log_g, axis=0), np.zeros((1, len(entries)))])], axis=-1)
+        member = np.zeros((len(entries), len(curves)))
+        member[np.arange(len(entries)), [c for c, _ in entries]] = 1.0
+        segments.append((seg, np.ascontiguousarray(table), member))
+    return _Factors(tuple(segments), tails, has_tails, norm)
 
 
 @functools.lru_cache(maxsize=_RESPONSE_CACHE)
-def _response_table(key: str, step: float) -> ResponseTable:
-    curves = parse_curves(json.loads(key))
-    t = RESPONSE_TEMPERATURES
-    anchors = np.stack(
-        [np.trapezoid(planck_share(c.grid(), t) * c.at(c.grid()), c.grid(), axis=-1) / np.trapezoid(c.at(c.grid()), c.grid())
-         for c in (band_curve(b) for b in SED_BANDS)], axis=-1) * SED_WAVELENGTHS  # (193, 8)
-    n = len(SED_BANDS)
-    # Row 0 the reference; rows 1 + 2k and 2 + 2k with anchor k scaled by e^{+step} and e^{-step}.
-    scale = np.ones((1 + 2 * n, n))
-    for k in range(n):
-        scale[1 + 2 * k, k] = math.exp(step)
-        scale[2 + 2 * k, k] = math.exp(-step)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        log_r = np.log(stellar_response(anchors[:, None, :] * scale[None], np.broadcast_to(t[:, None], (t.size, 1 + 2 * n)), curves))
-    slope = np.moveaxis((log_r[:, 1::2, :] - log_r[:, 2::2, :]) / (2.0 * step), 1, 2)  # (193, n_f, 8)
-    return ResponseTable(np.log(anchors), log_r[:, 0, :], slope, step)
+def _factors(key: str) -> _Factors:
+    return _build_factors(parse_curves(json.loads(key)))
+
+
+def response_factors(curves: Sequence[Curve]) -> _Factors:
+    """A filter set's tables, built once and kept in a small LRU keyed by the curves' JSON (the form a request
+    carries them in, so equal sets share them). The eight band curves' are kept the same way."""
+    return _factors(json.dumps([c.json() for c in curves], sort_keys=True))
+
+
+def _band_factors() -> _Factors:
+    return response_factors([band_curve(b) for b in SED_BANDS])
+
+
+def _through(log_p: np.ndarray, tails: np.ndarray, factors: _Factors) -> np.ndarray:
+    """``(N, n_curves)``: ``sed_response`` of the points P = e^{log_p} (L_λ at the anchors, ``(N, 8)``), the tails'
+    factors at each object's temperature already read (``(2, N, n_curves)``). Each segment's slope is read off its
+    table by one row gather, linearly in ln G; a slope beyond the table's span extends its end step."""
+    y = (np.diff(log_p, axis=1) + RESPONSE_SLOPE_MAX) * (1.0 / RESPONSE_SLOPE_STEP)
+    i = np.clip(y.astype(np.intp), 0, RESPONSE_SLOPES.size - 2)
+    f = y - i
+    out = np.exp(log_p[:, :1]) * tails[0] + np.exp(log_p[:, -1:]) * tails[1]
+    for k, table, member in factors.segments:
+        rows = table[i[:, k]]
+        out += np.exp(rows[..., 0] + f[:, k, None] * rows[..., 1] + log_p[:, k, None]) @ member
+    return out
+
+
+def _tails_at(factors: _Factors, kelvin: np.ndarray) -> np.ndarray:
+    x = np.clip((np.log10(kelvin) - _RESPONSE_LOG_MIN) * _RESPONSE_PER_DEX, 0.0, RESPONSE_TEMPERATURES.size - 1.0)
+    i = np.minimum(x.astype(np.intp), RESPONSE_TEMPERATURES.size - 2)
+    w = (x - i)[None, :, None]
+    log_t = factors.log_tails[:, i, :] * (1.0 - w) + factors.log_tails[:, i + 1, :] * w
+    return np.where(factors.has_tails[:, None, :], np.exp(log_t), 0.0)
 
 
 def object_response(nu_l_nu: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
-    """``(*shape, n_filters)``: an object's light through each curve, L☉ if its anchors are — the quantity
-    ``stellar_response`` returns per ring, so a point and a cell are on one scale (D200) — for 10⁵ objects a
-    request: the exact machinery linearised in log about a blackbody at the object's temperature,
+    """``(*shape, n_filters)``: an object's light through each curve, L☉ if its anchors are, for 10⁵ objects a
+    request (D200, D201). **The same function as ``stellar_response``, factorised, not an approximation**: the
+    joined spectrum is a power law between neighbouring anchors, so ``sed_response``'s trapezoid through a curve is
+    Σ_k P_k G_k(ln P_{k+1}/P_k) plus P_U and P_K times the tails' factors, each G_k a function of one number (the
+    segment's log slope) and each tail of one (the temperature). Those are tabulated once per filter set
+    (``response_factors``) and ``band_consistent``'s twelve passes run on the eight band curves' tables.
 
-        ln R_f = ln R_f^bb(T) + c + Σ_k a_fk(T) (u_k − c),   u_k = ln F_k − ln F_k^bb(T),   c = mean_k u_k,
+    The tables' resolution and what it costs [verified: measured at S48, tests/test_render.py]: the slope grid
+    ``RESPONSE_SLOPES``, −80 to 80 in steps of 0.02, read linearly in ln G — bounded by h²/32 = 1.25e-5 in ln G
+    (ln G is convex in s, its curvature the variance of w, ≤ 1/4), measured at most 4.7e-6 at the rows' midpoints
+    over the eight band curves and the viewer's five sets (the largest slope the gate's 2 000 stars reach is 40);
+    the tails on ``RESPONSE_TEMPERATURES`` (1000-100 000 K, 1/96 dex), read linearly in ln, at most 3.3e-5 off
+    at the midpoints. Against ``stellar_response`` on the same floored anchors: within 2e-5 mag at every one of the
+    2 000 isochrone points through every set. A temperature outside the grid reads the end row's tails (a star
+    hotter than 10⁵ K is given 10⁵ K's tails below U and beyond K; between U and K its anchors carry it whatever
+    its temperature): within 0.0014 mag of the exact path at its own temperature for the 87 such points.
 
-    the table (``response_table``) read linearly in log T. The exact response is homogeneous of degree one in the
-    anchors, so its log-sensitivities sum to one per filter (Euler), and the c-form is that sum used: scaling every
-    anchor by s adds ln s to c and nothing to u − c, so the response scales by s exactly whatever the differences
-    leave in Σ a. A blackbody's own anchors give u = 0 and return R^bb. A temperature outside 1000-100 000 K reads
-    the table's end row: the anchors still carry the shape; the tails beyond U and K are the end temperature's.
+    The anchors are floored at ``ANCHOR_FLOOR`` of the object's brightest first (D201), here only, not in the
+    field's ``stellar_response``: a dust-shrouded AGB star with M_B +95 and M_K +4.5 has a B that no join of the
+    eight can carry.
 
-    What it costs against ``stellar_response``, and where it misses D200's threshold (TP-AGB stars, whose anchors
-    are tens of e-folds from any blackbody), is measured in tests/test_render.py; a diagonal second-order term and
-    a blend with a second reference at the best-fitting blackbody were tried at S48 and did not close it.
-
-    Zero where the object has no light, NaN where an anchor is NaN or where it has light and no temperature
-    (as ``stellar_response`` gives through any curve that reaches a tail; rule B9)."""
+    Zero where the object has no light, NaN where an anchor is NaN or where it has light and no temperature."""
     f = np.asarray(nu_l_nu, dtype=float)
     t = np.asarray(kelvin, dtype=float)
     shape = np.broadcast_shapes(f.shape[:-1], t.shape)
     f = np.broadcast_to(f, (*shape, f.shape[-1])).reshape(-1, f.shape[-1])
     t = np.broadcast_to(t, shape).reshape(-1)
-    table = response_table(curves)
-    ok_t = np.isfinite(t) & (t > 0.0)
-    x = np.clip((np.log10(np.where(ok_t, t, 1.0)) - _RESPONSE_LOG_MIN) * _RESPONSE_PER_DEX, 0.0, RESPONSE_TEMPERATURES.size - 1.0)
-    i = np.minimum(x.astype(int), RESPONSE_TEMPERATURES.size - 2)
-    w = (x - i)[:, None]
-    u = np.log(np.maximum(f, 1e-300)) - (table.log_anchors[i] * (1.0 - w) + table.log_anchors[i + 1] * w)
-    c = u.mean(axis=-1, keepdims=True)
-    d = u - c
-    log_r = table.log_response[i] * (1.0 - w) + table.log_response[i + 1] * w + c
-    log_r += (1.0 - w) * np.einsum("nfk,nk->nf", table.slope[i], d) + w * np.einsum("nfk,nk->nf", table.slope[i + 1], d)
+    bands, filters = _band_factors(), response_factors(curves)
+    out = np.zeros((f.shape[0], len(curves)))
     lit = (f > 0.0).any(axis=-1)
-    with np.errstate(over="ignore"):
-        out = np.where(lit[:, None], np.exp(log_r), 0.0)
-    out[np.isnan(f).any(axis=-1) | (lit & ~ok_t)] = np.nan
+    missing = np.isnan(f).any(axis=-1) | (lit & ~(np.isfinite(t) & (t > 0.0)))
+    go = np.flatnonzero(lit & ~missing)
+    for start in range(0, go.size, _RESPONSE_CHUNK):
+        rows = go[start : start + _RESPONSE_CHUNK]
+        peak = f[rows].max(axis=-1, keepdims=True)
+        log_target = np.log(np.maximum(f[rows], ANCHOR_FLOOR * peak) / SED_WAVELENGTHS)
+        log_p = log_target.copy()
+        band_tails, filter_tails = _tails_at(bands, t[rows]), _tails_at(filters, t[rows])
+        log_norm = np.log(bands.norm)
+        for _ in range(SED_ITERATIONS):
+            log_p += log_target - (np.log(_through(log_p, band_tails, bands)) - log_norm)
+        out[rows] = _through(log_p, filter_tails, filters)
+    out[missing] = np.nan
     return out.reshape(*shape, len(curves))
 
 
