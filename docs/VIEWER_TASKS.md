@@ -16,6 +16,7 @@ them first"): they are S48's, designed in D200, with `BRIEF.md` the working plan
 | S38–S42 | The contract's viewer side: the filter integral through `/api/render`, dust as three layered components, the region march (clouds, HII spheres, shells), clusters as points, the named instrument sets (D188–D192) |
 | S46 | `azimuthal` the default everywhere; the field march's terracing fixed (jittered sub-samples, the box at 16 h); the viewer lands on the Galaxy view of the default galaxy, "Edit galaxy" opens the staged process (D197, D198) |
 | S47 | The tuning panel: the field's display choices as sliders, today's values as defaults (D199) |
+| S48 | **The model side of T2, T3 and T21**: the bright-end-complete catalogue (`/api/bright`), the per-object filter response (`filters=` on `/api/bright` and `/api/clusters`), the field's unresolved remainder (`/api/render?l_min=`), single counting by age (the clusters carry the first 20 Myr) with the closure identity to 10⁻¹³ (D200–D203). **What remains of them is the viewer's**: the star-first mode that draws these (§4), and resolving a cluster into its own stars at close zoom (the second half of T3) |
 
 ## 1. In progress
 

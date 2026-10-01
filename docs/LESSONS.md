@@ -1219,3 +1219,29 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   bright end is not converged. A sample by number is not a selection by luminosity (D199; D200's reason).
 - [infra] A probe script in the system temp directory can be shadowed by a stray module there (`numbers.py` broke
   numpy's import): scripts go in the session's scratchpad (D199).
+
+## From S48 (the bright catalogue and the per-object response; the design by Fable, four builds by Opus agents)
+
+- [catalogue] A second quadrature of the same integral is an audit of the first: the luminosity function, integrated
+  along the isochrone's own points and checked against a finer one, showed the field's fixed mass grid puts one or two
+  points on the giant branch — factors of 0.55 to 7 per isochrone, 5–12 % by band over the galaxy. Rule that the new
+  piece reproduces the old total, and have the builder report the factor it took to do so (D202, #126).
+- [catalogue] To draw objects that hold a budget, partition the budget and draw from the parts: choosing a star's
+  segment by the density at an interpolated luminosity under-drew the hot segments wherever the count curve bends
+  inside an interval (B 0.83 of budget); drawing by each segment's exact count in the interval holds every linear
+  quantity by construction. Fix the bin by the order statistic, the value inside it by the part (D203).
+- [catalogue] An ordered Poisson process gives a complete, prefix-stable, per-region selection without rejection:
+  cumulative unit exponentials against the expected-count curve. Say where the prefix is exact (the grid's thresholds)
+  and where it is by interval (D200, D203).
+- [audit] Gate the realisation as well as the identity, and by band as well as in total: the identity closed to 10⁻¹³
+  and the counts and bolometric light were on budget while the band light was 17 % low; only the per-band realised sum
+  against its budget saw it (D203).
+- [field] A method that fails its gate is replaced, not excused, and the builder who measured the failure may hold the
+  replacement: the linearised response met the weighted threshold and missed the worst case by 3×; the same machinery
+  factorised into one-dimensional tables is exact and faster (D201).
+- [field] When an "exact" reference disagrees with the data it was built from, the reference is the finding: the
+  consistency iteration cannot hold a band below what its Gaussian wing collects from a brighter neighbour, on 32 of
+  2 000 stars. Register the limit; do not tune the new code to reproduce or hide it (D201, #125).
+- [close] A builder resumed with a ruling keeps its context and its scratch prototypes; a builder that finds a defect
+  in another builder's merged work reports it with a strict xfail and a mechanism, and the session rules the fix
+  (D201, D203).

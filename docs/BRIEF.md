@@ -1,51 +1,53 @@
-# BRIEF — for S48: the bright-end-complete catalogue and the per-object filter response (the pin lifted for these)
+# BRIEF — for S49: the owner's word on #126, then the star-first viewer mode
 
-**The state (2026-10-01).** S47 is merged (D199): the tuning panel (the field view's display choices as sliders, today's
-values as defaults, `frontend/src/galaxy/tuning.ts`) and `docs/VIEWER_TASKS.md`, the one list of what remains for the
-viewer (T1–T23). The owner reviewed building up from the "brightest" view, was shown that its stars are the brightest of
-a one-in-10⁵ number sample (the top 3 162 carry 86–94 % of a pool whose light is 10⁻⁵ of the galaxy's and is not
-converged at the bright end), and ruled: **"lift the pin for those two and implement them first"** — T21 the
-bright-end-complete selection and T2/T3 the photometric points with single counting. Everything else in the model stays
-pinned. The owner's servers run on :8017 and :5173; never stop them. T1 (the display defaults) waits on the owner's
-slider combination.
+**The state (2026-10-01).** S48 is merged (D200–D203). The model now serves what a star-first picture needs: **the
+bright-end-complete catalogue** (`stages/bright.py`, stage `bright_stars`, `/api/bright` with `n` or `l_min`: every disc
+star older than 20 Myr above a luminosity, per region, an ordered Poisson process per level-3 cell; the 3 162 brightest
+are everything above 33 960 L☉; 3.35 × 10⁶ stars above 10³ L☉), **the per-object filter response**
+(`spectra.object_response`, the field's machinery factorised, within 2 × 10⁻⁵ mag of the exact integral; `filters=` on
+`/api/bright` and `/api/clusters` returns `response`, L☉ through each filter), and **the field's unresolved remainder**
+(`/api/render?l_min=` returns `stars_unresolved`; unresolved + young + bright ≡ the total to 10⁻¹³; the clusters carry
+0.985 / 0.990 / 1.000 of the young light through rgb). At 10³ L☉ the disc's light is 24.6 % young, 18.4 % bright,
+57.0 % unresolved. Specs 12 / 20 / 5 of 37 both models, unchanged. Register 65 open = 11 + 54, 44 discharged. The owner's
+servers run on :8017 and :5173; never stop them. T1 (the display defaults) waits on the owner's slider combination.
 
-## What S48 does (numbers from #125, D200, row 38; the design is the session's ruling, written before code moved)
-1. **D200, the design, first commit.** One decomposition: `M(R, isochrone age, metallicity)`, the mass formed per pc²,
-   from the same step weights the light stage uses (`photometry.steps_over` is linear in the per-isochrone table), so
-   every linear quantity — light, stars above a luminosity, band flux above it — is `M` times a per-isochrone table and
-   the totals reproduce `light.py` to 10⁻⁹. The bright catalogue: per level-3 child cell an **ordered Poisson process
-   in luminosity** (`Γ_i` cumulative unit exponentials, `L_i = Λ⁻¹(Γ_i)`): complete above any threshold, a prefix as
-   the threshold drops, per-region (D60), no rejection (B8). Ages under 20 Myr (the cluster census's window) are left
-   to the clusters: the young population counted once. The bulge stays in the field. The per-object filter response:
-   the field's own `stellar_response` linearised in log about a blackbody at the object's temperature, its error
-   measured against the exact integral (threshold: luminosity-weighted < 0.02 mag on the broadband sets).
-2. **Two builders were started at S47's close on branches cut from `session-47`** — `session-48-bright`
-   (`stages/bright.py`, the stage `bright_stars`, `/api/bright`, `tests/test_bright.py`, the inventories) and
-   `session-48-response` (`spectra.object_response`, `object_nu_l_nu`, the accuracy gate in `tests/test_render.py`) —
-   disjoint files. Review each against its brief's gates; the luminosity function's renormalisation factors against
-   the field's tables are a finding to register if any exceeds 10 % (the field's fixed mass grid on the giant branch).
-3. **The wiring (after both merge; one builder, `api/service.py`):** `filters=` on `/api/bright` and `/api/clusters`
-   returning each object's response per filter (clusters from `band_flux_at(age, feh)` × mass); `/api/render` takes
-   `l_min` and returns `stars_unresolved` — the field's stars minus the young population (the clusters') and minus the
-   old stars above `l_min`, from the same tables — with the closure asserted: unresolved + young + bright ≡ the total
-   per ring and band to 10⁻⁹, and the realised census and catalogue sums within their noise.
-4. **Then the viewer (S49–S50, `VIEWER_TASKS.md` §4):** the star-first mode — the bright stars and the clusters as
-   points on the field's own surface-brightness scale (response over the pixel's footprint), the unresolved field
-   under them, the filter sets in the mode, dust in front of each point (T20), picking.
+## The decision asked of the owner (pending at S48's close)
+**#126: fix the field's light tables now, or leave them registered.** `photometry.population_light` integrates each
+isochrone on a fixed mass grid that puts one or two points on the giant branch; against the integral along the
+isochrone's points the disc's light is 6.7 % high bolometric (V 5.4 %, I 11 %, H 12.4 %, K 10.9 %). The fix is to
+integrate along the points (`bright.luminosity_function`'s quadrature exists) — and it moves every photometric number
+the model publishes (M_V, B − V, Υ_V, `disc_luminosity`, the eight bands, the dust's absorbed starlight and so L_IR and
+T_d, row 29). The session's recommendation: fix it before the viewer mode, since the mode's light accounting rests on
+it (today the realised bright stars hold less light than the field subtracts for them: 1.26× in the 7–9 kpc window
+above 10³ L☉). **If the owner says fix:** one builder, `population_light` on the isochrone's points, the
+renormalisation factors then ≈ 1 (assert it and remove the `_own` split), every moved pin re-read with its reason and
+B10 applied (constants calibrated against the old tables: the dust's heating balance first), V1's gate re-pinned,
+specs re-read. **If not:** the viewer mode proceeds on the field's budget and the header's two budgets stay.
+
+## Then the viewer (VIEWER_TASKS.md §4; numbers from #127, D204, row 38)
+1. **The star-first mode** (replacing "brightest"): `/api/bright?view=…&n=…&filters=…` for the stars, `/api/clusters`
+   with `filters=` for the young population, `/api/render?l_min=<the bright body's threshold>` for the field under them
+   (`stars_unresolved`, the bulge, the gas and dust layers as now). **Points on the field's own scale**: a point's
+   channel is its `response` over the white, divided by the area of sky its pixel covers (pc²), times the field's gain —
+   so a star emerges from the glow as the view closes in, instead of through a separate point gain. The tuning panel's
+   point gain and sprite size stay as display controls. The filter-set chips shown in the mode (T22).
+2. **Picking**: a bright star is named (level-3 cell, rank); it has no planetary system yet — the pick shows its
+   columns. Clusters pickable (T23).
+3. **Dust in front of each point** (T20): the march's optical depth to the point's position, per channel.
+4. **The image-level test** (T12) before or with 1: no row can otherwise prove the picture.
 
 ## Gate
-`tests/test_bright.py`, `test_render`, `test_graph`, `test_api`, `test_v4`, `test_spec` green; specs 12 / 20 / 5 of 37 both
-models unchanged (no new row: a row on these numbers needs a blind window first, #117's lesson); `tools/timings.py`'s
-new rows printed cold and warm (B2, B6); `bootstrap.py` before the full suite; the suite's own `EXIT=` line; merge,
-push, tag `s48`, `ls-remote`, the MANUAL_TODO row, `verify_clone --ref main`.
+vitest, `tsc -b`, `vite build` clean; `tests/test_bright.py`, `test_render`, `test_api`, `test_clusters` green; a `prod`
+check (:8018 after the build, the branch's bundle built into the scratch directory before merging) with frames under
+`docs/design/screenshots/s49/`; `bootstrap.py` before the full suite; the suite's own `EXIT=` line; merge, push, tag
+`s49`, `ls-remote`, the MANUAL_TODO row, `verify_clone --ref main`.
 
 ## Traps
-- The field's quadrature is the total; the luminosity function distributes it. Do not "fix" `population_light`'s mass
-  grid in passing: it moves every photometric number and is accuracy work (pinned). Register what the factors show.
-- The light stage reads [Fe/H] at the present radius, the catalogue at birth radius: the bright catalogue follows the
-  light stage (the closure is with the field). Say so in the stage's about.
-- A star's identity in the bright catalogue is (level-3 child, rank), a namespace of its own: it is not a row of the
-  number-sampled catalogue and has no planetary system yet (a later task).
-- Scripts go in the scratchpad, never the system temp directory (a stray `numbers.py` there shadows the stdlib).
-- :5173 and :8017 are the owner's; a scratch check uses `prod` (:8018) after `npx vite build`, stopped after. Builders
-  in parallel worktrees own disjoint files; `api/service.py` is touched by both the route and the wiring — sequence them.
+- A bright star's prefix property is exact at the grid's thresholds (0.05 dex) and by interval inside one (D203); ask
+  `/api/bright` with `n` and read the header's `threshold.l_min` for the render's `l_min`.
+- The remainder's colour temperature is the ring's (`[inferred]`; within 7.5 × 10⁻⁵ through rgb, 1.5 % through the
+  narrowband sets). The response of parts adds to the whole to 6 × 10⁻⁶ through rgb, 2 × 10⁻³ through WFC3.
+- 32 dust-shrouded TP-AGB points miss their own U by up to 2.65 mag in the SED machinery (#125): a bright star's U or B
+  response can be too bright where its U is a millionth of its K. Do not tune the viewer around it.
+- :5173 and :8017 are the owner's. Scripts and commit-message files go in a builder's own scratchpad folder. Builders
+  in parallel own disjoint files; a builder that finds a defect in merged work reports it with a strict xfail.

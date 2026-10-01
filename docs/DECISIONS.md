@@ -7557,3 +7557,30 @@ Cold / warm (B2, B6; `tools/timings.py`, this machine, uncontended): `/api/brigh
 stellar responses and the decomposition); `/api/clusters` whole disc 1.28 / 0.010 s. The about-lines that described
 #114 now name the routes' filtered response and claim nothing of the viewer; `CellCache`'s "832 cells" is 1 024 and
 the timings' "12 stage declarations" 26.
+
+**D203 applied (`session-48-fix`, 03b876f, merged d9a543f; `bright.py` +200, `service.py` +51, `tests/test_bright.py`
++117).** `Γ_i` now picks only the star's interval, by comparison with the cell's expected count at each grid threshold;
+`bright.on_isochrone` draws the segment by its exact count in the interval and log L uniformly across the segment's
+overlap; `draw_bright` draws a cell to a grid threshold in Γ order and `cut_bright` keeps the Γ prefix of `l_min`'s
+interval, then the stars above `l_min`, brightest first within each cell; `rank` is the star's index in its cell's Γ
+order; the header's `threshold.prefix` says the prefix holds by 0.05 dex interval. **The realised band light above
+10⁴ L☉ against its own budget, whole disc (64 492 stars):**
+
+| | U | B | V | R | I | J | H | K |
+|---|---|---|---|---|---|---|---|---|
+| ratio | 1.0044 | 1.0042 | 1.0043 | 1.0033 | 1.0002 | 0.9971 | 0.9970 | 0.9978 |
+| z | +0.55 | +0.51 | +0.66 | +0.55 | +0.03 | −0.52 | −0.53 | −0.40 |
+
+Bolometric 1.0006 (z +0.15); through rgb 1.0033 / 1.0044 / 1.0041 where it was 0.977 / 0.915 / 0.826; the bolometric
+light at 10^3.5 L☉ 1.0007 over 646 171 stars (z +0.44); the single isochrone (log age 7.6) B 1.0017, K 0.9840, every band
+within 1σ; **no star falls back to a segment end** (0 of 64 492; the −2.5 Δ log L shift is gone). The strict xfail is a
+plain passing test. `bright_star_limit` 33 910.75 → **33 960.12 L☉** (the same 3 162 stars by Γ, each luminosity
+redrawn); `bright_star_count_1e3` unchanged at 3.348738 × 10⁶ (it is the tables'). Cold / warm unchanged within noise
+(whole disc 3.87 / 0.65 s).
+
+**S48's gate.** `tests/test_bright.py`, `test_render`, `test_api`, `test_clusters`, `test_graph`, `test_audit`,
+`test_timings` green (210 tests); specs **12 / 20 / 5 of 37 in both models, unchanged** (no row added: a row on these
+numbers needs a blind window first); the full suite backgrounded after `bootstrap.py`: **{{SUITE}}**. The register:
+**65 open = 11 permanent + 54 carried, 44 discharged** (#125, #126 opened; #114 corrected and still carried until the
+viewer draws the response). Board row 48; LESSONS; RESUMING ≤ 120; BRIEF for S49. Tag `s48` on the merge. The
+owner's word is asked on #126 (the field's light tables); the viewer's star-first mode is S49–S50's.
