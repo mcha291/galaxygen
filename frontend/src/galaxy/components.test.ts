@@ -15,6 +15,7 @@ import {
   cellOutlines,
   cloudColors,
   cloudMarkerPx,
+  depthMedian,
   depthPeak,
   diagnosticOn,
   dustRamp,
@@ -107,15 +108,35 @@ describe("the dust diagnostic's normalisation (a display choice)", () => {
     expect(depthPeak(new Float32Array([Number.NaN, 1, 1, 0]), 1)).toBe(0);
   });
 
-  it("draws the densest ring's face-on column at WHERE_LEVEL × intensity, before tone mapping, at zero stops", () => {
-    expect(WHERE_LEVEL).toBe(0.5);
+  it("is referred to the rings' area-weighted median face-on optical depth, over the rings with dust", () => {
+    // Cells over [0, 3] kpc, centres 0.5, 1.5, 2.5: areas ∝ 0.5, 1.5, 2.5 (total 4.5, half 2.25).
+    expect(depthMedian(rings, 3, 0, 3)).toBeCloseTo(1, 6); // depths 0.5, 3.2, 1: 0.5 holds 0.5, then 1 brings 3.0
+    // Weighting by area, not by ring: depths 3, 0.2, 0.1 — the outer ring holds more than half the area.
+    const outer = new Float32Array([3, 3, 3, 0, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0.1, 0]);
+    expect(depthMedian(outer, 3, 0, 3)).toBeCloseTo(0.1, 6); // the unweighted median would be 0.2
+    // A ring without dust takes no part: depths 0, 0.2, 0.1 over the same area weights.
+    const bare = new Float32Array([0, 0, 0, 0, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0.1, 0]);
+    expect(depthMedian(bare, 3, 0, 3)).toBeCloseTo(0.1, 6); // 2.5 of 4.0 at 0.1
+    const swapped = new Float32Array([0, 0, 0, 0, 0.1, 0.1, 0.1, 0, 0.2, 0.2, 0.2, 0]);
+    expect(depthMedian(swapped, 3, 0, 3)).toBeCloseTo(0.2, 6); // 1.5 of 4.0 at 0.1: the median is the outer 0.2
+    // No dust anywhere: zero, and whereLevel draws nothing rather than dividing by it.
+    expect(depthMedian(new Float32Array(12), 3, 0, 3)).toBe(0);
+    expect(whereLevel(1, depthMedian(new Float32Array(12), 3, 0, 3), LIGHT_PER_LSUN_PC2)).toBe(0);
+    expect(depthMedian(new Float32Array([Number.NaN, 1, 1, 0]), 1, 0, 1)).toBe(0);
+  });
+
+  it("draws the median ring's face-on column at WHERE_LEVEL × intensity, before tone mapping, at zero stops", () => {
+    expect(WHERE_LEVEL).toBe(0.25);
+    const median = depthMedian(rings, 3, 0, 3);
     const peak = depthPeak(rings, 3);
-    // A face-on ray takes the whole layer's column, Σ cDust = 1 (regimes.ts layerShare over all heights), so τ = peak;
-    // the march multiplies by the field's gain, LIGHT_PER_LSUN_PC2 at a field gain of 1 and zero stops.
+    // A face-on ray takes the whole layer's column, Σ cDust = 1 (regimes.ts layerShare over all heights), so τ is the
+    // ring's; the march multiplies by the field's gain, LIGHT_PER_LSUN_PC2 at a field gain of 1 and zero stops.
     expect(layerShare(-1e3, 1e3, 0.2)).toBeCloseTo(1, 8); // tanh clamped at ±10: 1 − 4e−9
     for (const intensity of [1, 0.25, 4]) {
-      const drawn = whereLevel(intensity, peak, LIGHT_PER_LSUN_PC2) * peak * whereTint(GREY_STOPS, 1)[0] * LIGHT_PER_LSUN_PC2;
-      expect(drawn).toBeCloseTo(WHERE_LEVEL * intensity, 12);
+      const level = whereLevel(intensity, median, LIGHT_PER_LSUN_PC2) * LIGHT_PER_LSUN_PC2;
+      expect(level * median * whereTint(GREY_STOPS, median / peak)[0]).toBeCloseTo(WHERE_LEVEL * intensity, 12);
+      // The centre, deeper than the median, draws brighter in proportion: it saturates and the tone curve takes it.
+      expect(level * peak).toBeCloseTo((WHERE_LEVEL * intensity * peak) / median, 12);
     }
     expect(whereLevel(1, 0, LIGHT_PER_LSUN_PC2)).toBe(0); // no dust: nothing drawn, no division by zero
     expect(whereLevel(0, 3.2, LIGHT_PER_LSUN_PC2)).toBe(0);

@@ -27,7 +27,7 @@ import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArray
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
-import { FIELD_LAYERS, type MarchLayers, WHERE_STOPS, depthPeak, whereLevel } from "./components";
+import { FIELD_LAYERS, type MarchLayers, WHERE_STOPS, depthMedian, depthPeak, whereLevel } from "./components";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -294,8 +294,11 @@ interface Props {
    * the brightest mode's component switches. The field's default draws every layer as before.
    */
   layers?: MarchLayers;
-  /** Told the depth ring's peak (the largest channel-mean face-on optical depth) when the render arrives: the dust diagnostic's caption. */
-  onDepthPeak?: (tau: number) => void;
+  /**
+   * Told the rings' area-weighted median and peak channel-mean face-on optical depth when the render arrives:
+   * the dust diagnostic's caption.
+   */
+  onDepth?: (depth: { median: number; peak: number }) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -323,7 +326,7 @@ export function FieldVolume({
   tuning = TUNING_DEFAULTS,
   stats,
   layers: shown = FIELD_LAYERS,
-  onDepthPeak,
+  onDepth,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -426,8 +429,10 @@ export function FieldVolume({
       depthWrite: false,
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
-    // The depth ring's peak, for the dust diagnostic's display normalisation (D205; components.ts whereLevel).
+    // The depth ring's area-weighted median (the dust diagnostic's display normalisation, D205; components.ts
+    // whereLevel) and its peak (the ramp's far end, and the caption's).
     box.userData.depthPeak = depthPeak(rings, width);
+    box.userData.depthMedian = depthMedian(rings, width, R.lo, R.hi);
     box.frustumCulled = false;
     return box;
   }, [frame, light]);
@@ -474,10 +479,10 @@ export function FieldVolume({
     [mesh, offscreen],
   );
 
-  const tellPeak = useRef(onDepthPeak);
-  tellPeak.current = onDepthPeak;
+  const tellDepth = useRef(onDepth);
+  tellDepth.current = onDepth;
   useEffect(() => {
-    if (mesh) tellPeak.current?.(Number(mesh.userData.depthPeak) || 0);
+    if (mesh) tellDepth.current?.({ median: Number(mesh.userData.depthMedian) || 0, peak: Number(mesh.userData.depthPeak) || 0 });
   }, [mesh]);
 
   // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
@@ -538,7 +543,7 @@ export function FieldVolume({
     uniforms.dustGain.value = shown.dust;
     uniforms.dustDepth.value = shown.dustDepth;
     const peak = Number(mesh.userData.depthPeak) || 0;
-    uniforms.dustWhere.value = whereLevel(shown.where, peak, LIGHT_PER_LSUN_PC2);
+    uniforms.dustWhere.value = whereLevel(shown.where, Number(mesh.userData.depthMedian) || 0, LIGHT_PER_LSUN_PC2);
     uniforms.wherePeak.value = peak > 0 ? 1 / peak : 0;
     (uniforms.whereStops.value as Vector3[]).forEach((v, i) => v.set(...shown.whereStops[i]));
     const before = gl.getRenderTarget();

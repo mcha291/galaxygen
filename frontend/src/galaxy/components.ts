@@ -24,7 +24,7 @@ export const WHERE_STOPS = 8;
 /**
  * The march's layer switches, as its uniforms take them: each emitting layer's multiplier (0 is off),
  * the dust's depth switch (1: it dims what lies behind it), and the "where it is" reading's intensity
- * (0: not drawn; FieldVolume normalises it by the depth ring's peak, whereLevel) and its ramp's stops.
+ * (0: not drawn; FieldVolume normalises it by the disc's median depth, whereLevel) and its ramp's stops.
  */
 export interface MarchLayers {
   stars: number;
@@ -46,12 +46,42 @@ export const GREY_STOPS: readonly Rgb[] = Object.freeze(Array.from({ length: WHE
 export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: 0, whereStops: GREY_STOPS });
 
 /**
- * The level the densest ring's face-on dust column draws at in the "where it is" reading, linear, before
+ * The level the reference ring's face-on dust column draws at in the "where it is" reading, linear, before
  * tone mapping, at intensity ×1, zero stops and a field gain of 1. **A display normalisation of a
- * diagnostic, not physics**: the reading is scaled by the reciprocal of the depth ring's own peak, so it is
- * readable whatever the galaxy's dust, and the caption states that peak so the picture stays quantitative.
+ * diagnostic, not physics**: the reading is scaled by the reciprocal of the disc's area-weighted median
+ * face-on optical depth (depthMedian), so the disc is readable whatever its dust; the centre, tens of times
+ * deeper, saturates and the tone curve takes it. The caption states the median and the peak, so the
+ * picture stays quantitative. (Normalised to the peak, τ ≈ 48 at the centre against 0.6 at the solar
+ * radius, the disc drew as nothing.)
  */
-export const WHERE_LEVEL = 0.5;
+export const WHERE_LEVEL = 0.25;
+
+/**
+ * The area-weighted median of the rings' channel-mean face-on optical depth (regimes.ts planeTexture's
+ * `rings`, row RING_ROWS.depth = 0, RGBA per R cell, `width` cells evenly over [lo, hi] kpc): each ring
+ * weighted by its area, ∝ R × dR at its centre, over the rings that have dust. Half the dusty disc's area
+ * has more dust than this. Zero when no ring has any.
+ */
+export function depthMedian(rings: ArrayLike<number>, width: number, lo: number, hi: number): number {
+  const dR = (hi - lo) / width;
+  const rows: { tau: number; w: number }[] = [];
+  let total = 0;
+  for (let i = 0; i < width; i += 1) {
+    const tau = (Number(rings[i * 4]) + Number(rings[i * 4 + 1]) + Number(rings[i * 4 + 2])) / 3;
+    const w = (lo + (i + 0.5) * dR) * dR;
+    if (!(Number.isFinite(tau) && tau > 0 && w > 0)) continue;
+    rows.push({ tau, w });
+    total += w;
+  }
+  if (rows.length === 0) return 0;
+  rows.sort((a, b) => a.tau - b.tau);
+  let below = 0;
+  for (const row of rows) {
+    below += row.w;
+    if (below >= total / 2) return row.tau;
+  }
+  return rows[rows.length - 1].tau;
+}
 
 /**
  * The depth ring's peak: the largest channel-mean face-on optical depth over the rings (regimes.ts
@@ -68,12 +98,13 @@ export function depthPeak(rings: ArrayLike<number>, width: number): number {
 
 /**
  * The march's "where it is" multiplier, per unit of channel-mean optical depth in the march's units: the
- * layer's intensity times WHERE_LEVEL over the peak, over the field's light per L☉/pc² (`lightPerUnit`,
- * FieldVolume's LIGHT_PER_LSUN_PC2, which the march's gain multiplies back). A face-on ray through the
- * densest ring takes its whole column, τ = peak, so it draws at WHERE_LEVEL × intensity. Zero without dust.
+ * layer's intensity times WHERE_LEVEL over the reference depth (depthMedian), over the field's light per
+ * L☉/pc² (`lightPerUnit`, FieldVolume's LIGHT_PER_LSUN_PC2, which the march's gain multiplies back). A
+ * face-on ray takes its ring's whole column, so a ring at the reference depth draws at WHERE_LEVEL × intensity
+ * (with a grey ramp; a coloured one tints it). Zero without dust.
  */
-export function whereLevel(intensity: number, peak: number, lightPerUnit: number): number {
-  return intensity > 0 && peak > 0 && lightPerUnit > 0 ? (WHERE_LEVEL * intensity) / (peak * lightPerUnit) : 0;
+export function whereLevel(intensity: number, reference: number, lightPerUnit: number): number {
+  return intensity > 0 && reference > 0 && lightPerUnit > 0 ? (WHERE_LEVEL * intensity) / (reference * lightPerUnit) : 0;
 }
 
 /** The shader's whereTint, line for line: the stops read linearly at τ / τ_peak, clamped to the ramp. */
