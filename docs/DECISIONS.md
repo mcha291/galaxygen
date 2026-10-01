@@ -7154,6 +7154,49 @@ since; the record says so rather than guessing.
 disjoint files, merged `--no-ff` into `session-46` after review; the image-level test (RENDER_PLAN_II §2 E2) is the next
 row, not this one. Numbers: debts from #125, decisions from D198, board rows from 46 (this row), acceptance rows from 38.
 
+**(2) applied — the default, measured against the ruling.** `session-46-default` (0e88dc5, 765ad83; merged 0ee67c5): 42
+files, +304 −214. `galaxy.models.DEFAULT = "azimuthal"`; **one change beyond the brief, sound and kept:** importing the
+default first broke the loader, because `azimuthal.py` imports `basic` and the per-declaration check wants exactly one
+registration per import — so the declarations import in name order with the default last and `Registry.put_first`
+moves it to the front; `/api`'s default, `/api/stages`' list and the specs' report order follow (`tests/test_registry.py`
+pins `DEFAULT`, `names()[0]`, basic still registered, the missing-file raise, `put_first`). `spec.py` reads `DEFAULT` for
+`MISSES` and its three defaults; `useWorkflow` starts on `DEFAULT_MODEL` (vitest); three order pins moved
+(`test_viewer.py:351`, `test_sfh_azimuthal.py:306`, `tests/js/render.test.mjs:265`). **No measured pin moved:** the two
+models publish 283 shared fields identically and differ only in the star catalogue's columns and the planets that
+follow them (plus `sfr_modulation`), and every window-level test reads clusters, clouds, HII regions and grid fields —
+identical in both; the S45 diagnosis selects by `cluster_radius` and does not move (its docstring says so). Twenty-two
+test files read `DEFAULT` for the default run; fourteen keep `"basic"` on purpose with the reason beside it (basic's
+constants, the two-model comparisons, per-model tables, the order pin). The builder's full suite `EXIT=0`, neither timing
+flake tripped; specs **azimuthal first, 12 / 20 / 5 of 37 both models**; vitest 122; `tsc -b` clean. README and the two
+stale comments corrected.
+
+**(3) applied — the march, measured against the ruling.** `session-46-march` (c21d585, merged b212111): each step split
+into n sub-steps, n = ceil(the step's in-plane length / the plane texture's radial cell (R.hi − R.lo)/N_R = 0.075 kpc),
+capped at `SUB_SAMPLES_MAX = 8`; each sub-step reads at its midplane crossing or at the pixel's fixed hash fraction along
+it, takes its own exact column (the columns add to the step's, so no 1/n), mixes its light through its own dust and dims
+what lies behind — light and dust keep their order inside a long step; the bulge's point sample spread over the sub-steps.
+**The box's half-height is 16 h, not the 14 h the ruling wrote: sech²(7) is 3.3 × 10⁻⁶, not 1.3 × 10⁻⁶, and the ruled
+10⁻⁶ needs sech²(8) = 4.5 × 10⁻⁷** — the builder's arithmetic corrected the session's, and the record says so. The
+builder measured the shader in a WebGL2 harness built from the real fragment strings (headless Edge on a local file; no
+server, no download) against a converged reference (384 steps × 32 sub-samples): the new march sits within 2.3 × 10⁻⁴
+of the reference at 30°, 8°, 3° and 1° inside the box, where the old one was off by 7 × 10⁻⁴ to 8.1 × 10⁻³ — so "the
+light unchanged within 10⁻³" holds against the truth and not against the old frame, which was the one in error; face-on
+both read 1.3–1.9 × 10⁻³ off. **The straight cut was the box's top and bottom faces** at 10 h cutting the 1.4 kpc
+diffuse layer at 1.8 × 10⁻⁴ of its midplane, carried across a grazing ray; the side faces clip only zeros (every read is
+gated by `rp.x < rHi`). Cost: 96 × 8 × 6 = 4 608 texture reads per pixel at worst (576 before); mean n 2.2 face-on,
+5.5–5.9 at 30°–3°; frame time 1.1–5× the old in the harness, ≈ 100 ms per re-march at the 400 000-pixel budget on an
+RTX 4070 — the march re-runs only when the camera moves, and a settle-then-refine scheme is RENDER_PLAN_II §2 E4's.
+vitest 121 → 125 (`subSamples`, `cell`, the sub-step columns adding to the step's, the half-height rule); `tsc -b` and
+`vite build` clean. **Verified on `prod` at the owner's camera** (edge-on preset, then a small orbit above the plane;
+`docs/design/screenshots/s46/field-grazing-before.jpg` / `-after.jpg`): the terraces gone, the console clean. Whether
+the terraces were new is still not established — the one-read-per-step march dates from V2 (S39) — and the record says
+so rather than guessing.
+
+**The gate (S46's close).** The full suite on the merged branch, backgrounded with its own line after `bootstrap.py`:
+**{{SUITE}}**; specs azimuthal first, 12 / 20 / 5 of 37 both models; vitest and `vite build` clean; the landing row (D198)
+reviewed and merged before the suite ran. Board row 46; LESSONS; RESUMING ≤ 120; BRIEF for S47 from RENDER_PLAN_II's
+sequence with the owner's choices to date. Tag `s46` on the merge.
+
 ### D198. S46: the viewer lands on the Galaxy view of the default galaxy, and an "Edit galaxy" button opens the staged generation process — rule D1 amended on the owner's word
 
 **The owner, in chat, on 2026-10-01: "please change the frontend so that it starts on the galaxy view of a default
