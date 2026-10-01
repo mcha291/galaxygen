@@ -56,8 +56,14 @@ export function exposureFor(luminosity: ArrayLike<number | bigint>): number {
  * dense core saturates gracefully rather than clipping. A star with no light (a
  * dead one: NaN) is black, which adds nothing.
  */
-export function photometricColors(meta: FieldsPayload, columns: Columns, stops: number, table: BlackbodyTable | null = null): Float32Array {
-  return lightColors(meta, columns, stops, "star_temperature", "star_luminosity", table);
+export function photometricColors(
+  meta: FieldsPayload,
+  columns: Columns,
+  stops: number,
+  table: BlackbodyTable | null = null,
+  pointGain: number = 1,
+): Float32Array {
+  return lightColors(meta, columns, stops, "star_temperature", "star_luminosity", table, pointGain);
 }
 
 /**
@@ -100,12 +106,14 @@ export function lightColors(
   temperatureName: string,
   luminosityName: string,
   table: BlackbodyTable | null = null,
+  /** The Tuning panel's point gain (D199), a display choice: REFERENCE_LUMINOSITY is divided by it; 1 leaves it be. */
+  pointGain: number = 1,
 ): Float32Array {
   const decl = meta.fields.find((f) => f.name === temperatureName);
   const temperature = columns[temperatureName];
   const luminosity = columns[luminosityName];
   if (!decl || !temperature || !luminosity) throw new Error(`these objects carry no ${temperatureName} and ${luminosityName}`);
-  const gain = 2 ** stops / REFERENCE_LUMINOSITY;
+  const gain = 2 ** stops / (REFERENCE_LUMINOSITY / pointGain);
   const out = new Float32Array(temperature.length * 3);
   // Through the filter set when its table has come (S42, P6): the point's light in each channel, as the field's.
   const share = table ? channelShare(table) : null;
