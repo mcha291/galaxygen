@@ -7521,3 +7521,39 @@ differs per cell: 65 536 inversions of a 792-component mixture). **Gate:** the r
 4σ of the own budget in all eight bands and through rgb (the strict xfail becomes a pass), the bolometric light at
 10^3.5 within 4σ, the single-isochrone draw's B and K within its noise, counts and the per-region and grid-threshold
 prefix tests as before; `bright_star_limit` and the other pins re-read, each with its reason.
+
+**The wiring, applied (`session-48-wiring`, 8132d4a, 10d8776, 14a9b4e, merged on `session-48`; 8 files, +728 −62).**
+*`filters=` and `white=` on `/api/bright` and `/api/clusters`*: the body gains `response` (objects × filters, L☉ through
+each filter) — a bright star's from its eight magnitudes and temperature through `object_response`, a cluster's from
+`band_flux_at(age, [Fe/H])` × its mass with `cluster_luminosity`'s own mass convention and `cluster_light_temperature`;
+the header echoes the curves and the white point as `/api/render` does; `white` without `filters` is a 400; the service
+reads the one temperature grid from `spectra`. *`l_min=` on `/api/render`*: the body gains `stars_unresolved`, the
+disc's starlight less the young population (the clusters') and less the old stars above `l_min` (the bright
+catalogue's), from `bright.mass_on_isochrones` and the renormalised `band_above` read by the catalogue's own
+interpolation rule (`bright.above_at`), each part through the curves separately and placed by its own azimuthal weight
+(`bright.part_weights`: the old part on the contrast, the 20–100 Myr part on the modulation in the azimuthal model);
+the header gains `resolved: {l_min, cluster_window_gyr, light: {total, young, bright, bright_own, unresolved},
+closure}`. The remainder's colour temperature is the ring's `disc_light_temperature` `[inferred]` — the luminosity
+function carries no colour — measured against the remainder's own: within 7.5 × 10⁻⁵ through rgb, 1.5 % per ring
+through the narrowband and WFC3 sets. **Without the new parameters all nine bodies hashed before the edit are
+byte-identical.**
+
+**The closure, measured.** *The identity*: unresolved + young + bright ≡ `disc_sed_*` per ring and band to 10⁻¹³ at
+10², 10³ and 10⁴ L☉; through the rgb curves the parts depart from `stars` by 5–6 × 10⁻⁶ (the SED join is nonlinear),
+through WFC3 by about 2 × 10⁻³ — pinned and carried in the header. *The single counting*: **the cluster census carries
+0.985 / 0.990 / 1.000 of the young expectation through R / V / B and 1.011 bolometric** (S33's ΣQ / young Q was
+1.0088): the young population is one population, counted once. *The realised bright stars*: counts and bolometric
+light on budget, the band light not — D203's finding and fix. **The whole disc at 10³ L☉, bolometric:**
+
+| Component | L☉ | Share |
+|---|---|---|
+| Total (`disc_luminosity`, to 10⁻¹²) | 4.896 × 10¹⁰ | 100 % |
+| Young, carried by the clusters | 1.203 × 10¹⁰ | 24.6 % |
+| Bright, the field's budget (the stars' own: 8.633 × 10⁹) | 9.020 × 10⁹ | 18.4 % (17.6 %) |
+| Unresolved | 2.791 × 10¹⁰ | 57.0 % |
+
+Cold / warm (B2, B6; `tools/timings.py`, this machine, uncontended): `/api/bright` whole disc with rgb 3.99 / 0.69 s,
+562 kB; `/api/render` whole rgb 1.61 / 0.185 s, 6.94 MB, and with `l_min=1000` 2.31 / 0.64 s, 8.67 MB (four more
+stellar responses and the decomposition); `/api/clusters` whole disc 1.28 / 0.010 s. The about-lines that described
+#114 now name the routes' filtered response and claim nothing of the viewer; `CellCache`'s "832 cells" is 1 024 and
+the timings' "12 stage declarations" 26.
