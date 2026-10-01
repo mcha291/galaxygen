@@ -22,6 +22,7 @@ import pytest
 from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.stages import nebular as nb
 from galaxy.stages import spectra
 from galaxy.stages import systems as sy
@@ -250,7 +251,7 @@ def test_the_render_redistributes_across_levels(svc):
 def test_a_clusters_light_is_its_mass_times_the_tables_and_the_ramp_is_bolometric_at_the_audit_mesh(svc):
     """The identity is exact at any mesh. The painting's excess (2.12 in G at the coarse grid, D191) is a property of
     the census's age and metallicity mix, which the mesh moves a little: measured here and bounded, not pinned."""
-    F = svc.compute(svc.models.get("basic"), {}, ["cluster_luminosity", "cluster_light_temperature", "cluster_mass", "cluster_age",
+    F = svc.compute(svc.models.get(DEFAULT_MODEL), {}, ["cluster_luminosity", "cluster_light_temperature", "cluster_mass", "cluster_age",
                                                   "cluster_metallicity", "disc_luminosity"])[0].fields
     mass = np.asarray(F["cluster_mass"], dtype=float)
     age = np.asarray(F["cluster_age"], dtype=float) / 1000.0

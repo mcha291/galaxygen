@@ -18,6 +18,7 @@ import pytest
 from galaxy.api.service import Service
 from galaxy.api import wire
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import systems as sy
 
@@ -30,8 +31,8 @@ PARENT = 300  # ring 9, sector 12: inside R0, a few dozen stars at the default s
 @pytest.fixture(scope="module")
 def fields():
     models, _, _ = production()
-    basic = next(m for m in models if m.name == "basic")
-    o = run(basic, only=tuple(sy.SYSTEMS.requires))
+    default_model = next(m for m in models if m.name == DEFAULT_MODEL)
+    o = run(default_model, only=tuple(sy.SYSTEMS.requires))
     return o.fields, o.grid.R, o.grid.t
 
 

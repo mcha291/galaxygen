@@ -13,6 +13,7 @@ from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import nebular as nb
 from galaxy.stages.disc import PC_PER_KPC
@@ -30,12 +31,12 @@ def models():
 
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models["basic"])
+    return run(models[DEFAULT_MODEL])
 
 
 @pytest.fixture(scope="module")
 def coarse(models):
-    return run(models["basic"], grid=COARSE)
+    return run(models[DEFAULT_MODEL], grid=COARSE)
 
 
 def test_case_b_reproduces_the_rows_read_from_storey_and_hummer():
@@ -63,7 +64,7 @@ def test_temperature_and_abundances_are_the_sources_relations():
     """T_e from 12+log(O/H) by the DESIRED eq. 5, clamped to 6000-20000 K; N/O by Nicholls eq. 3 (solar log N/O is
     -0.86, the relation gives -0.97 at the Galactic Concordance 8.76 and -1.0 at 8.69); S an alpha element."""
     ms, _, _ = production()
-    c = {k: v.value for k, v in ms.get("basic").constants.items()}
+    c = {k: v.value for k, v in ms.get(DEFAULT_MODEL).constants.items()}
     assert nb.electron_temperature(np.array([8.69]), c)[0] == pytest.approx((9.29 - 8.69) / 0.96 * 1.0e4)  # 6250 K
     assert nb.electron_temperature(np.array([9.0, 7.0]), c) == pytest.approx([6000.0, 20000.0])
     o, n, s_ = nb.abundances(np.array([0.0, 0.07]), np.array([0.0, 0.0]), c)
@@ -113,7 +114,7 @@ def test_every_region_is_a_function_of_its_cluster_and_cloud_and_the_census_matc
     F = coarse.fields
     R = coarse.grid.R
     clusters, clouds = _catalogues(F)
-    regions = nb.materialise_nebular(clusters, clouds, {k: v.value for k, v in models["basic"].constants.items()})
+    regions = nb.materialise_nebular(clusters, clouds, {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()})
     for name in nb.HII_COLUMNS:
         assert np.array_equal(np.asarray(regions[name]), np.asarray(F[name]), equal_nan=True), name
     L = np.asarray(F["hii_halpha_luminosity"], dtype=float)
@@ -168,7 +169,7 @@ def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
     other = run(models["azimuthal"], grid=COARSE).fields
     for name in nb.HII_COLUMNS:
         assert np.array_equal(np.asarray(F[name]), np.asarray(other[name]), equal_nan=True), name
-    c = {k: v.value for k, v in models["basic"].constants.items()}
+    c = {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
     R = coarse.grid.R
     seed = int(coarse.inputs["systems_seed"])
     clusters, clouds = _catalogues(F)
@@ -205,7 +206,7 @@ def test_the_clusters_route_carries_the_regions_and_the_scalars_fall_under_rule_
     r2 = svc.handle("/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&level=2")
     h2, a2 = wire.decode(r2.body)
     assert a2["hii_halpha_luminosity"].size == h2["clusters"]["materialised"] <= arrays["hii_halpha_luminosity"].size
-    fields = svc.handle("/api/fields", "model=basic").json()["fields"]
+    fields = svc.handle("/api/fields", f"model={DEFAULT_MODEL}").json()["fields"]
     by_name = {f["name"]: f for f in fields}
     for name in ("dig_scale_height", "halpha_luminosity_nebular", "dig_halpha_fraction", "halpha_sfr_ratio", "hii_luminosity_function_slope",
                  "nii_halpha_gradient_hii"):  # the sixth since S44 (row 37, D195)
@@ -251,7 +252,7 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     read the 0.5 Myr floor; every log U is inside."""
     F = default.fields
     g = nb._line_grid()
-    solar = float(models["basic"].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
+    solar = float(models[DEFAULT_MODEL].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
     assert solar == 8.93  # the grid's log Z = 0 (Byler et al. 2017 section 2.1.2; D195)
     log_z = np.asarray(F["hii_oxygen_abundance"]) - solar
     age = np.log10(np.asarray(F["cluster_age"]) * 1e6)
@@ -275,6 +276,6 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     assert ratio["oiii_5007"][4.0] < 0.15 < 0.5 < ratio["oiii_5007"][12.0]
     assert ratio["nii_6583"][4.0] > ratio["nii_6583"][12.0]
     # Hbeta is Halpha over the Case B decrement in both layers.
-    t_dig = float(models["basic"].constants["DIG_TEMPERATURE"].value)
+    t_dig = float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value)
     dec = float(nb.case_b_halpha(np.array([t_dig]))[0] / nb.case_b_hbeta(np.array([t_dig]))[0])
     assert np.allclose(np.asarray(F["hbeta_surface_brightness_dig"]) * dec, F["halpha_surface_brightness_dig"], rtol=1e-12)

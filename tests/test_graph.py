@@ -56,6 +56,7 @@ def chk(m, *stages):
 # it), so systems runs the round after ism's, behind clouds by the tie-break, and the planets after clusters;
 # the bubbles stage reads the HII regions, so it runs last. Until S36 both read "..., ism, globular_clusters,
 # systems, formation, habitable_zone, dust, clouds, planets, clusters, nebular". No value moves with the order.
+# Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",

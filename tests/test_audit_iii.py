@@ -16,6 +16,7 @@ import pytest
 
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import clusters as cs
 from galaxy.stages import systems as sy
@@ -28,7 +29,7 @@ PARENT = 300
 @pytest.fixture(scope="module")
 def audit():
     ms, _, _ = production()
-    model = ms.get("basic")
+    model = ms.get(DEFAULT_MODEL)
     o = run(model, grid=AUDIT_MESH)
     return o, {k: v.value for k, v in model.constants.items()}
 

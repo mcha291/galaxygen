@@ -24,6 +24,7 @@ import pytest
 
 from galaxy.core.fielddoc import Kind
 from galaxy.core.registry import Constant, MergerEvent, Model
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import spec
 from galaxy.stages import sfh
@@ -37,8 +38,8 @@ Q = {q.n: q for q in spec.QUANTITIES}
 
 
 @pytest.fixture(scope="module")
-def basic(prod):
-    return prod[0].get("basic")
+def default_model(prod):
+    return prod[0].get(DEFAULT_MODEL)
 
 
 def with_constant(model, name, value):
@@ -77,7 +78,7 @@ def c200_from_cvir(c_vir: float, delta_vir: float = 101.0) -> float:
     return 0.5 * (lo + hi)
 
 
-def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(basic):
+def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(default_model):
     """K = 4.1 normalises c_vir; until S13 it was applied to c₂₀₀ unconverted (debt #12).
 
     Δ_vir ≈ 101 ρ_crit for Ω_M = 0.3 [recall: Bryan & Norman 1998] against the model's
@@ -86,13 +87,13 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(basic):
     """
     from galaxy.core.registry import INPUTS
 
-    K, z_f = basic.constants["CONCENTRATION_NORM"].value, INPUTS["halo_assembly_z"].default  # 2.5 until S15
+    K, z_f = default_model.constants["CONCENTRATION_NORM"].value, INPUTS["halo_assembly_z"].default  # 2.5 until S15
     c_vir = K * (1.0 + z_f)
     c200 = c200_from_cvir(c_vir)
     assert c_vir == pytest.approx(10.91, abs=0.01) and c200 == pytest.approx(8.24, abs=0.05)  # 14.35 and 10.9 until S15
     # The conversion is a property of the profile, checked by inverting it (rule B3).
     assert mu(c200) / c200**3 == pytest.approx((200.0 / 101.0) * mu(c_vir) / c_vir**3, rel=1e-9)
-    f = run(basic, only=KIN).fields
+    f = run(default_model, only=KIN).fields
     assert f["halo_concentration_virial"] == pytest.approx(c_vir) and f["halo_concentration"] == pytest.approx(c200, abs=0.05)
     # Row 3 read 256.2 unconverted; converted it read 242.7 - through the 245-251 window and out the
     # other side - until S14 contracted the halo around the disc (270.8, high, debt #6); since S15 the
@@ -101,7 +102,7 @@ def test_debt_12_the_concentration_is_converted_and_row_3_reads_low(basic):
     # S20: out again at 251.03, by 0.03, when the kick's constant was re-derived from a cited dispersion (D128).
     assert f["v_tangential_sun"] == pytest.approx(251.03, abs=0.5) and Q[3].hi < f["v_tangential_sun"] < Q[3].hi + 0.1  # 250.96 and in until S20; 251.3 and out until S18; 252.9 until S17
     # ...and the cited z_f = 2-3 spans 12 km/s on row 3 (236.4-249.2 until S14); the row wants 1.3-1.4 since S17 (1.1-1.2 at S16, 0.7-1.0 at S14-S15).
-    lo, hi = (run(basic, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
+    lo, hi = (run(default_model, {"halo_assembly_z": z}, only=KIN).fields["v_tangential_sun"] for z in (2.0, 3.0))
     assert lo == pytest.approx(255.8, abs=0.5) and hi == pytest.approx(268.3, abs=0.5)  # 256.0 and 268.4 until S18; 257.6 and 269.9 until S17
     assert 11.0 < hi - lo < 14.0
 
@@ -167,8 +168,8 @@ def centre(model, **consts):
     }
 
 
-def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(basic):
-    a = centre(basic)
+def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(default_model):
+    a = centre(default_model)
     # S13 moved the centre down: Sagittarius no longer delivers a tenth of the budget early, and
     # WIND_SPEED was refitted to the converted potential.
     # S18 halved it again: the derived threshold rises with kappa inside (47 Msun/pc2 at 2 kpc, 590 at the
@@ -178,7 +179,7 @@ def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(bas
     assert a["max"] == pytest.approx(0.70, abs=0.05) and a["out_to"] == pytest.approx(1.91, abs=0.15)  # 1.39 / 2.66 until S18; 1.36 / 2.5 until S14
     assert a["at_4"] == pytest.approx(0.25, abs=0.03)  # just outside row 22's 4-12 kpc fit range; unmoved
     # The one fitted constant does not reach the centre: it moves the level at R₀, not the peak or the tilt.
-    cold, hot = centre(basic, WIND_SPEED=800.0), centre(basic, WIND_SPEED=1300.0)
+    cold, hot = centre(default_model, WIND_SPEED=800.0), centre(default_model, WIND_SPEED=1300.0)
     assert cold["sun"] - hot["sun"] > 0.3
     assert abs(cold["max"] - hot["max"]) < 0.35
     assert abs(cold["gradient"] - hot["gradient"]) < 0.005
@@ -189,7 +190,7 @@ def test_debt_26_the_centre_is_the_missing_mass_loss_not_the_fitted_constant(bas
 CHEM = ("metallicity_gradient", "alpha_sequence")
 
 
-def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row_22_doing_it(basic):
+def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row_22_doing_it(default_model):
     # With the default merger list, n = 3 at τ₀ = 1 opened the valley from S13 - when Sagittarius
     # stopped delivering a tenth of the budget beside Gaia-Enceladus (debt #29) - until S17 closed
     # it again (the spheroid takes 13% of the budget out of the disc before it accretes, D121), and
@@ -199,7 +200,7 @@ def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row
     # sequence from a diluted start - which is debt #27's own mechanism. Recorded rather than
     # tuned: S20 owns the valley, and the row-6 cost is on the record too, 700 pc at those settings (D124).
     for n, tau, expect in ((2.0, 7.0, "single"), (2.0, 1.0, "bimodal_wide"), (3.0, 7.0, "single"), (3.0, 1.0, "bimodal_wide")):
-        f = run(basic, {"inside_out_index": n, "infall_timescale": tau}, only=CHEM).fields
+        f = run(default_model, {"inside_out_index": n, "infall_timescale": tau}, only=CHEM).fields
         assert f["alpha_sequence"] == expect, (n, tau)
         if expect == "single":
             assert f["alpha_dip_depth"] == 0.0
@@ -210,21 +211,21 @@ def test_debt_27s_prediction_ran_a_fast_inner_disc_opens_a_valley_and_closes_row
         {"inside_out_index": 3.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)},
         {"inside_out_index": 3.0, "infall_timescale": 1.0, "mergers": one_merger(0.5)},
     ):
-        f = run(basic, inputs, only=CHEM).fields
+        f = run(default_model, inputs, only=CHEM).fields
         assert f["alpha_sequence"] == "bimodal_wide", inputs
         # 0.56-0.64 since S18 (0.55-0.62 at S17, 0.55-0.66 at S16); the split 0.41 at τ₀ = 7 and 0.39 at 1.
         assert 0.54 < f["alpha_dip_depth"] < 0.70 and f["alpha_split"] == pytest.approx(0.40, abs=0.02)
         assert f["high_alpha_feh_span"] > 1.0
         assert f["metallicity_gradient"] < -0.10  # row 22's window is [-0.069, -0.049]; -0.111 / -0.108 since S18 (below -0.12 until then)
     # The same small merger with n = 1 stays single: the index is what opens it.
-    f = run(basic, {"inside_out_index": 1.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}, only=CHEM).fields
+    f = run(default_model, {"inside_out_index": 1.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}, only=CHEM).fields
     assert f["alpha_sequence"] == "single"
 
 
-def test_the_thick_disc_a_valley_would_find_is_a_compact_one(basic):
+def test_the_thick_disc_a_valley_would_find_is_a_compact_one(default_model):
     """What rows 5, 7-11 read the moment the split selects something: recorded so the next session knows the shape."""
     inputs = {"inside_out_index": 3.0, "infall_timescale": 7.0, "mergers": one_merger(0.2)}
-    f = run(basic, inputs, only=("thick_thin_surface_density_ratio",)).fields
+    f = run(default_model, inputs, only=("thick_thin_surface_density_ratio",)).fields
     assert f["thick_disc_stellar_mass"] == pytest.approx(5.07e9, rel=0.05) and inside(11, f["thick_disc_stellar_mass"])  # 5.09e9 until S20; 4.92e9 until S18; 5.95e9 until S17; 6.6e9 until S16
     assert f["thick_disc_scale_length"] == pytest.approx(0.60, abs=0.05) and not inside(5, f["thick_disc_scale_length"])  # 0.64 until S20 (the smaller kick); 0.66 until S18
     assert f["thick_disc_scale_height"] == pytest.approx(1069.0, abs=30.0) and inside(7, f["thick_disc_scale_height"])  # 1379 until S20 (the kick re-derived, D128); 1398 until S18; 1202 until S17; 1113 until S16
@@ -261,14 +262,14 @@ def test_debt_28_migration_flattens_the_old_population_from_a_steeper_start(mode
 HEIGHTS = ("thin_disc_scale_height", "thick_disc_scale_height")
 
 
-def test_debt_42_row_6_is_at_the_edge_of_its_window(basic):
-    a = run(basic, only=HEIGHTS).fields
+def test_debt_42_row_6_is_at_the_edge_of_its_window(default_model):
+    a = run(default_model, only=HEIGHTS).fields
     # 356 against a ceiling of 350: a recorded miss since S13 (373 until S20 re-derived the kick; 439 until S18's
     # threshold held more gas at R₀; 384 until S17; 358 until S16). Σ(R₀) falls, h_z = σ²/2πGΣ rises (debt #42).
     assert Q[6].hi + 3.0 < a["thin_disc_scale_height"] <= Q[6].hi + 10.0
     # SECULAR_HEATING was set from the 10 Gyr end of the AVR (D54); 30 km/s fails row 6 high (483), and 20 km/s
     # failed the pre-D170 simple model low (228), which is why S20 left it at 25 (D128).
-    high_a = run(with_constant(basic, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
+    high_a = run(with_constant(default_model, "SECULAR_HEATING", 30.0), only=HEIGHTS).fields["thin_disc_scale_height"]
     assert high_a > Q[6].hi
     # MERGER_HEATING calibrates row 6 here, where the heated stars are thin (it calibrated row 7 in the simple
     # model). S18 read 60 km/s landing it (346); S20 did not set it there - it derived the constant from the thick
@@ -276,16 +277,16 @@ def test_debt_42_row_6_is_at_the_edge_of_its_window(basic):
     # old population counted as thin (debt #27). The old default, 120, and the two ends of S10's sweep are kept
     # as measurements.
     for k, row6 in ((60.0, 346.0), (120.0, 373.0), (180.0, 429.0)):  # 375 and 544 until S18; 326 and 482 until S17
-        hot_a = run(with_constant(basic, "MERGER_HEATING", k), only=HEIGHTS).fields
+        hot_a = run(with_constant(default_model, "MERGER_HEATING", k), only=HEIGHTS).fields
         assert hot_a["thin_disc_scale_height"] == pytest.approx(row6, rel=0.02)
         assert hot_a["thick_disc_scale_height"] == 0.0
-    assert inside(6, run(with_constant(basic, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height"])
+    assert inside(6, run(with_constant(default_model, "MERGER_HEATING", 60.0), only=HEIGHTS).fields["thin_disc_scale_height"])
 
 
 THICK_SIGMA_W = 35.0  # km/s, the thick disc's vertical dispersion [recall: Bensby, Feltzing & Lundstrom 2003]
 
 
-def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating(basic):
+def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_heating(default_model):
     """S20 (D128): MERGER_HEATING = sqrt(35^2 - <sigma_sec^2 + sigma_0^2>_thick) / 0.25 = 88.8, reproduced here.
 
     The constant had been 120, 'scaled so the merger leaves the pre-existing disc at about 30 km/s',
@@ -293,19 +294,19 @@ def test_debt_42_the_merger_kick_is_the_observed_dispersion_net_of_the_secular_h
     secular heating and the birth dispersion, which read 27.06 km/s over the pre-merger population at R0.
     (The simple model's thick disc read the 35 back; it went at D170 and the derivation is what stays.)
     """
-    o = run(basic, only=("disc_heating", "stars_formed_history", "last_major_merger_time"))
+    o = run(default_model, only=("disc_heating", "stars_formed_history", "last_major_merger_time"))
     R, t = o.grid.R, o.grid.t
     at = int(np.argmin(np.abs(R - R_SUN)))
     thick = t < o.fields["last_major_merger_time"]
     weights = o.fields["stars_formed_history"][at] * thick
-    kick_now = basic.constants["MERGER_HEATING"].value * 0.25
+    kick_now = default_model.constants["MERGER_HEATING"].value * 0.25
     secular2 = o.fields["disc_heating"] ** 2 - np.where(thick, kick_now**2, 0.0)
     secular = math.sqrt(np.average(secular2, weights=weights))
     assert secular == pytest.approx(27.06, abs=0.2)
     derived = math.sqrt(THICK_SIGMA_W**2 - secular**2) / 0.25
     # 88.815: the fixed point, because the thick population's weights at R0 move a little with the kick
     # (88.5 on the 120 km/s run's weights derives 88.82 on its own); the constant is set at the fixed point.
-    assert derived == pytest.approx(basic.constants["MERGER_HEATING"].value, abs=0.1)
+    assert derived == pytest.approx(default_model.constants["MERGER_HEATING"].value, abs=0.1)
 
 
 # --- debt #45: the constant that does nothing carries row 22 --------------------
@@ -449,7 +450,7 @@ def feh_at_sun(model, **consts):
     return float(o.fields["feh_gas"][int(np.argmin(np.abs(o.grid.R - R_SUN)))])
 
 
-def test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty(basic):
+def test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty(default_model):
     """KS_NORM is (2.5 +/- 0.7) x 10^-4 and deliberately unfitted. Until S16 its 1-sigma swing was 2.5x row 2's miss.
 
     Then the tail (S16, D119) took the row to 2.08 with +1 sigma at 1.98, past the window; then
@@ -460,7 +461,7 @@ def test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty(basic):
     passing row 2 is worth. Read alongside the row's own note in spec.py, which says the miss was
     removed without debt #47's mechanism being built.
     """
-    lo, mid, hi = (scalar(basic, "sfr", KS_NORM=k) for k in (1.8e-4, 2.5e-4, 3.2e-4))
+    lo, mid, hi = (scalar(default_model, "sfr", KS_NORM=k) for k in (1.8e-4, 2.5e-4, 3.2e-4))
     # **S18 (D124): the band collapsed.** With Kennicutt's threshold derived, the disc is threshold-regulated
     # everywhere inside 12 kpc - the gas sits just under Sigma_crit and the rate is whatever the infall
     # supplies - so the normalisation of the law no longer reaches the rate at all: 1.764 / 1.755 / 1.755
@@ -470,16 +471,16 @@ def test_debt_44_row_2_cannot_see_past_ks_norms_own_uncertainty(basic):
     assert mid == pytest.approx(1.755, abs=0.02) and hi == pytest.approx(1.755, abs=0.02) and lo == pytest.approx(1.764, abs=0.02)  # 1.82 / 1.73 / 1.97 until S17
     assert Q[2].lo < hi and lo < Q[2].hi
     # ...while the gas mass still reads the normalisation: the gas the law leaves is set by how fast it consumes.
-    gas_lo, gas_hi = (scalar(basic, "gas_mass_30kpc", KS_NORM=k) for k in (1.8e-4, 3.2e-4))
+    gas_lo, gas_hi = (scalar(default_model, "gas_mass_30kpc", KS_NORM=k) for k in (1.8e-4, 3.2e-4))
     assert gas_lo > 1.14e10 > 1.10e10 > gas_hi > 1.04e10  # 8.7e9 > ... > 7.2e9 until S18; 9.0e9 > ... > 7.5e9 until S17
 
 
-def test_debt_43_the_solar_calibration_and_its_lever(basic):
+def test_debt_43_the_solar_calibration_and_its_lever(default_model):
     """WIND_SPEED makes the gas at R0 solar on a star formation history that misses rows 2 and 20
     (debt #18). The lever, so the re-fit is one line when #18 closes. (NET_YIELD, the simple
     model's own calibration, went with it at D170.)"""
-    assert abs(feh_at_sun(basic)) < 0.02
-    wind = feh_at_sun(basic, WIND_SPEED=1.1 * basic.constants["WIND_SPEED"].value) - feh_at_sun(basic)  # +10%
+    assert abs(feh_at_sun(default_model)) < 0.02
+    wind = feh_at_sun(default_model, WIND_SPEED=1.1 * default_model.constants["WIND_SPEED"].value) - feh_at_sun(default_model)  # +10%
     # Tightened at S22 from +/-0.01, which was debt #71: the tolerance was 17% of the value and
     # 2.5x the 0.004 step S18's refit made, so WIND_SPEED moving 982 -> 860 km/s (12%) would have
     # passed here unremarked. The quantity is *derived* - no seed, no timing - and the suite
@@ -490,9 +491,9 @@ def test_debt_43_the_solar_calibration_and_its_lever(basic):
     assert wind == pytest.approx(-0.0595, abs=0.002)  # -0.064 until S18's refit (982 -> 860 km/s)
 
 
-def test_debt_26_the_iron_at_the_centre_reaches_the_planets(basic):
+def test_debt_26_the_iron_at_the_centre_reaches_the_planets(default_model):
     """[Fe/H] = +1.5 inside half a kiloparsec is not clipped (rule B9), so it reaches occurrence."""
-    out = run(basic)
+    out = run(default_model)
     assert out.fields["giant_occurrence_sun"] == pytest.approx(0.05, abs=0.002)  # the fit at [Fe/H]=0 holds
     R = out.grid.R
 
@@ -536,7 +537,7 @@ def constant_law(tau_first: float):
     return law
 
 
-def test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed(basic, monkeypatch):
+def test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_and_failed(default_model, monkeypatch):
     """Debt #49 predicted row 5 lands at any merger share with rows 9 and 11 moving together; it did not (D128).
 
     The first infall's timescale is the halo's dynamical time at z_f = 1.66 - 0.55 Gyr, derived
@@ -545,25 +546,25 @@ def test_debt_49s_prediction_ran_the_first_infall_on_the_halos_dynamical_time_an
     where row 11 landed (share 0.8) rows 5 and 9 were out; what stays is the shared star
     formation rate at share 0.5 and what the chemical split makes of the law.
     """
-    t_dyn = dynamical_time_at(1.66, basic)
+    t_dyn = dynamical_time_at(1.66, default_model)
     assert t_dyn == pytest.approx(0.55, abs=0.02)
     monkeypatch.setattr(sfh, "first_infall", constant_law(t_dyn))
-    at = run(basic, {"mergers": (MergerEvent(3.8, 0.25, 0.5, "probe"), MergerEvent(8.8, 0.02, 0.01, "probe"))}, only=("sfr",)).fields
+    at = run(default_model, {"mergers": (MergerEvent(3.8, 0.25, 0.5, "probe"), MergerEvent(8.8, 0.02, 0.01, "probe"))}, only=("sfr",)).fields
     assert at["sfr"] == pytest.approx(1.27, abs=0.05)  # row 2 out too: the early gas is spent before today
     # It opens no valley - the dip is 0.15 at N_t 1000, 2000 and 4000 - and row 6 goes to 594 (710 on the 120 km/s kick).
-    f = run(basic, only=VALLEY).fields
+    f = run(default_model, only=VALLEY).fields
     assert f["alpha_sequence"] == "single" and f["alpha_dip_depth"] == pytest.approx(0.151, abs=0.02)
     assert f["thin_disc_scale_height"] == pytest.approx(594.0, abs=15.0)
 
 
-def test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike(basic):
+def test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike(default_model):
     """The alpha-rich 'mode' at tau_0 = 1, n = 2 is the stars formed before any Ia iron: +0.45 exactly, 5% of the mass.
 
     Recomputed from the published histories the way chemistry_dtd builds the R0 distribution (the
     backward weights, D126): the split sits at 0.39, above the alpha-rich sequence itself, the mass
     above it is a twentieth, and it is all in the top two bins. That is not a thick disc (D128).
     """
-    o = run(basic, {"infall_timescale": 1.0, "inside_out_index": 2.0}, only=VALLEY + ("alpha_fe_history", "sfr_surface_density_history"))
+    o = run(default_model, {"infall_timescale": 1.0, "inside_out_index": 2.0}, only=VALLEY + ("alpha_fe_history", "sfr_surface_density_history"))
     f = o.fields
     assert f["alpha_sequence"] == "bimodal_wide" and f["alpha_split"] == pytest.approx(0.39, abs=0.02)
     R, t = o.grid.R, o.grid.t
@@ -587,7 +588,7 @@ def test_debt_27_every_valley_the_detector_has_found_is_the_plateau_spike(basic)
     assert share[27:35].max() < 0.5 * plateau  # +0.24 to +0.40 is a plain, not a mode: no bin holds 3.3% of the mass (+0.20-0.24 is the thin mode's shoulder)
 
 
-def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_thick_disc(basic, monkeypatch):
+def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_thick_disc(default_model, monkeypatch):
     """Wechsler et al. 2002's M(a) = M0 exp(-2 a_c (1/a - 1)) at the model's own a_c = 1/(1 + z_f), as the first infall's rate.
 
     Fully determined by z_f, and dead by the number: 29% of the halo's mass is in place by z_f, so
@@ -595,8 +596,8 @@ def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_th
     row 11 out low and row 5 0.98, before D170) and the star formation rate today doubles (row 2
     3.03). No valley (D128).
     """
-    H0 = basic.constants["H0"].value / 0.9778
-    om = basic.constants["OMEGA_M"].value
+    H0 = default_model.constants["H0"].value / 0.9778
+    om = default_model.constants["OMEGA_M"].value
     ol = 1.0 - om
 
     def law(t, tau, span):
@@ -609,9 +610,9 @@ def test_debt_27_the_halos_own_accretion_history_as_the_first_infall_makes_no_th
         return np.broadcast_to(rate[None, :], (tau.size, t.size))
 
     monkeypatch.setattr(sfh, "first_infall", law)
-    s = run(basic, only=("sfr",)).fields
+    s = run(default_model, only=("sfr",)).fields
     assert s["sfr"] == pytest.approx(3.03, abs=0.1)
-    a = run(basic, only=VALLEY).fields
+    a = run(default_model, only=VALLEY).fields
     assert a["alpha_sequence"] == "single" and a["alpha_dip_depth"] == 0.0
 
 
@@ -693,7 +694,7 @@ def test_s21b_the_d4_report_is_what_actually_ran():
         service_mod._planets.one_system = real_one_system
 
 
-def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(basic):
+def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     """Debt #67: the per-star line every record since S11 quotes is fitted to a curve.
 
     The cells that realise a star saturate, so seconds is a straight line in cells
@@ -703,7 +704,7 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(basic):
     """
     from galaxy.specs import performance
 
-    cost = performance.catalogue_cost(basic, n_stars=500, samples=(2_000, 8_000, 32_000))
+    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
     cells = cost["cells per sample"]
     stars = [s[1] for s in cost["samples"]]
     secs = [s[2] for s in cost["samples"]]
@@ -810,7 +811,7 @@ def test_s21b_four_published_scalars_reach_no_surface_of_the_viewer(model):
     assert all(f["ramp"] is not None for f in reachable if f["domain"] in ("grid", "object"))
 
 
-def test_s21b_s20s_numbers_reach_the_viewer(basic):
+def test_s21b_s20s_numbers_reach_the_viewer(default_model):
     """S20's moved numbers, read back through the API the viewer reads (BRIEF.md).
 
     The thick disc's dispersion (35.0 in the simple model) went with that model at D170; the
@@ -819,7 +820,7 @@ def test_s21b_s20s_numbers_reach_the_viewer(basic):
     from galaxy.api.service import Service
 
     svc = Service()
-    fields = svc.handle("/api/fields", "model=basic").json()["fields"]
+    fields = svc.handle("/api/fields", f"model={DEFAULT_MODEL}").json()["fields"]
     by_name = {f["name"]: f for f in fields}
 
     # The thick disc's dispersion: a galaxy scalar of a stage that publishes no
@@ -833,7 +834,7 @@ def test_s21b_s20s_numbers_reach_the_viewer(basic):
     # screen as a number (debt #73).
     decl = by_name["disc_radial_spread"]
     assert decl["domain"] == "grid" and decl["axes"] == ["R", "t"] and decl["ramp"] is not None
-    header, arrays = svc.handle("/api/arrays", "model=basic&fields=disc_radial_spread").frame()
+    header, arrays = svc.handle("/api/arrays", f"model={DEFAULT_MODEL}&fields=disc_radial_spread").frame()
     spread = np.asarray(arrays["disc_radial_spread"])
     axis = header["grid"]["axes"]["R"]
     R = np.linspace(axis["lo"], axis["hi"], axis["n"])

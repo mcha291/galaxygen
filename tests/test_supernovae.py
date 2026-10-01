@@ -159,5 +159,6 @@ def test_both_rates_pass_and_read_the_same_in_both_models(judged):
         assert ia.status == "pass" and ia.value == pytest.approx(0.0065332015, rel=1e-8)
     # Every row equal across the two models is test_sfh_azimuthal's; these two, bit for bit.
     for n in (spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE):
+        # Both models by name, deliberately (S46, D197): the test compares them.
         b, a = (next(x for x in judged[name] if x.n == n) for name in ("basic", "azimuthal"))
         assert a.value == b.value

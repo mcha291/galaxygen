@@ -20,13 +20,16 @@ export interface Workflow {
   reroll(n: number): void;
 }
 
+/** The model the viewer starts on: the azimuthal one, the API's and the tests' default since S46 (D197). */
+export const DEFAULT_MODEL = "azimuthal";
+
 /**
  * React state around interface/flow.js. flow.js decides what is allowed (it
  * throws on anything D1 forbids); this hook only holds the result, loads each
  * model's declarations, and remembers which confirmations were discarded so the
  * rail can say so.
  */
-export function useWorkflow(initialModel = "basic"): Workflow {
+export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
   const [model, setModelName] = useState(initialModel);
   const [models, setModels] = useState<string[]>([initialModel]);
   const [state, setState] = useState<FlowState | null>(null);

@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages.vertical import scale_height
 
@@ -106,6 +107,6 @@ def test_scale_height_reads_the_registered_G_not_a_copy(prod):
     from galaxy.stages.vertical_alpha import VERTICAL_ALPHA
 
     assert "G" in VERTICAL_ALPHA.reads_constants
-    G = float(prod[0].get("basic").constants["G"].value)
+    G = float(prod[0].get(DEFAULT_MODEL).constants["G"].value)
     assert scale_height(20.0, 50.0, G) == pytest.approx(20.0**2 / (2.0 * np.pi * G * 50.0 * 1000.0**2))
     assert scale_height(20.0, 50.0, 2.0 * G) == pytest.approx(0.5 * scale_height(20.0, 50.0, G))

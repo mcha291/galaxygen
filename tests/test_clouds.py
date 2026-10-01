@@ -16,6 +16,7 @@ import pytest
 
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import clouds as cl
 
@@ -30,8 +31,8 @@ def models():
 
 @pytest.fixture(scope="module")
 def default(models):
-    o = run(models["basic"])
-    return o, {k: v.value for k, v in models["basic"].constants.items()}
+    o = run(models[DEFAULT_MODEL])
+    return o, {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
 
 
 def test_the_mass_function_arithmetic():
@@ -119,11 +120,11 @@ def test_per_region_determinism_and_both_models_agree(models, default):
             assert np.array_equal(part[name][off_part:off_part + count], sweep[name][off:off + count]), (cell, name)
         off_part += count
     a = run(models["azimuthal"], grid=COARSE).fields
-    b = run(models["basic"], grid=COARSE).fields
+    b = run(models[DEFAULT_MODEL], grid=COARSE).fields
     for name in cl.CLOUD_COLUMNS + ("cloud_state",):
         assert np.array_equal(a[name], b[name]), name
     # A different systems seed rerolls the clouds with the stars; the expectation does not move.
-    other = run(models["basic"], {"systems_seed": 3}, grid=COARSE).fields
+    other = run(models[DEFAULT_MODEL], {"systems_seed": 3}, grid=COARSE).fields
     assert other["cloud_count_total"] == b["cloud_count_total"]
     assert not np.array_equal(other["cloud_mass"], b["cloud_mass"])
 

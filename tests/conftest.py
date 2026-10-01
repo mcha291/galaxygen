@@ -2,7 +2,9 @@
 
 Any test that takes a ``model`` argument runs once per registered model. From D170
 to S27 there was one, ``basic``; since S27 (BUILD_II Phase 2) there are two, ``basic``
-and ``azimuthal``, and every such test runs for both.
+and ``azimuthal``, and every such test runs for both. Since S46 (D197) ``azimuthal`` is
+the default and leads the registry; a test that means "the default run" reads
+``galaxy.models.DEFAULT``, and one that names ``basic`` says why.
 """
 
 from __future__ import annotations
