@@ -78,6 +78,10 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # The remnant census (S36, BUILD_II Phase 10): Poisson per cell on the supernova rates times the visible lifetime.
     Endpoint("remnants: one sector", "/api/remnants", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the remnants of 9 cells"),
     Endpoint("remnants: whole disc", "/api/remnants", "", "every visible remnant, about 1.4e3"),
+    # The bright-end-complete catalogue (S48, D200): an ordered Poisson process per finest cell.
+    Endpoint("bright: whole disc", "/api/bright", "n=3162", "the 3162 brightest disc stars, 65 536 cells"),
+    Endpoint("bright: one sector", "/api/bright", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&n=1000",
+             "the 1000 brightest of 306 cells, plus the default limit's whole disc"),
     # The filter integral (S38, BUILD_II V1): the viewer's curves through every published component.
     Endpoint("blackbody: rgb", "/api/blackbody", urlencode({"filters": _RGB, "white": 6500}),
              "193 temperatures x 3 filters, no stage (S42)"),

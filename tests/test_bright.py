@@ -1,8 +1,9 @@
 """S48 (D200): the bright-end-complete star catalogue.
 
-Commit 1: the luminosity function per isochrone (stars, light and band flux above each threshold, integrated
-along the isochrone's own points and renormalised to the field's tables) and the mass-on-isochrones
-decomposition, gated against the light stage it must reproduce.
+The luminosity function per isochrone (stars, light and band flux above each threshold, integrated along the
+isochrone's own points and renormalised to the field's tables) and the mass-on-isochrones decomposition, gated
+against the light stage it must reproduce; then the ordered Poisson process per finest cell (complete above any
+threshold, a prefix as it drops, per-region), the stage bright_stars and /api/bright.
 """
 
 from __future__ import annotations
@@ -10,10 +11,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from galaxy.api.service import Service
 from galaxy.core.registry import production
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import bright as br
+from galaxy.stages.systems import MAX_LEVEL, cells_in
 from galaxy.stages.photometry import BANDS, band_nu_l_nu, imf_weights, isochrones, population_light
 
 
@@ -23,9 +26,17 @@ def models():
     return {n: ms.get(n) for n in ms.names()}
 
 
+# The default model's run, as far as these gates read it: the light stage's fields, everything the bright stage
+# reads (and the azimuthal model's modulation), and the bright stage itself.
+WANTED = (
+    "disc_surface_brightness", *(f"disc_sed_{b.lower()}" for b in BANDS), *br.READS, "sfr_modulation",
+    *(d.name for d in br.COLUMNS), "bright_star_limit", "bright_star_count_1e3",
+)
+
+
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models[DEFAULT_MODEL])
+    return run(models[DEFAULT_MODEL], only=WANTED)
 
 
 @pytest.fixture(scope="module")
@@ -188,3 +199,201 @@ def test_count_above_on_the_oldest_solar_isochrone_against_a_hand_count(tables):
         per_million = tables.count_above[a, z, k] * 1e6
         assert per_million == pytest.approx(pinned, rel=1e-3)
         assert per_million == pytest.approx(_by_hand(a, z, log_threshold) * 1e6, rel=5e-3)
+
+
+# --- commit 2: the ordered process, the stage and the route -------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def galaxy(default, models):
+    spec = default.grid.spec
+    constants = {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()}
+    return br.BrightGalaxy(default.fields, default.grid.R, default.grid.t, spec.t_max, spec.n_t, constants)
+
+
+@pytest.fixture(scope="module")
+def seed(default):
+    return int(default.inputs["systems_seed"])
+
+
+@pytest.fixture(scope="module")
+def api():
+    return Service()
+
+
+def _window(R, r_lo=7.0, r_hi=9.0, phi_lo=0.0, phi_hi=0.4):
+    return np.asarray(cells_in(R, r_lo, r_hi, phi_lo, phi_hi, level=MAX_LEVEL), dtype=np.int64)
+
+
+def _cluster_window(models):
+    return br.cluster_window({k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+
+
+def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, models):
+    F = default.fields
+    L = np.asarray(F["bright_star_luminosity"])
+    assert L.size == br.DEFAULT_SELECTION == 3162
+    assert np.all(np.diff(L) <= 0.0)  # brightest first
+    assert F["bright_star_limit"] == L[-1] == L.min()
+    # S48 (D200): every disc star above 3.39e4 Lsun older than 20 Myr is in the default selection; the galaxy holds
+    # 3.35e6 such stars above 10^3 Lsun (and 3.5e7 above 10^2, 6.4e4 above 10^4, 3e-4 expected above 10^5).
+    assert F["bright_star_limit"] == pytest.approx(33910.75, rel=1e-6)
+    assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
+    assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
+    for d in br.COLUMNS:
+        assert np.all(np.isfinite(np.asarray(F[d.name], dtype=float))), d.name
+    assert set(np.unique(F["bright_star_phase"])) <= set(range(len(br.PHASES)))
+
+
+def test_a_higher_threshold_keeps_a_prefix_cell_by_cell(galaxy, seed, default):
+    """The stars above 2 l_min are the first of those above l_min in every cell, every column the same."""
+    cells = _window(default.grid.R)
+    low = br.materialise_bright(galaxy, seed, cells, 2000.0)
+    high = br.materialise_bright(galaxy, seed, cells, 4000.0)
+    assert 0 < high.size < low.size
+    starts = {}
+    offset = 0
+    for c, n in low.counts:
+        starts[c] = (offset, n)
+        offset += n
+    offset = 0
+    for c, n in high.counts:
+        first, held = starts[c]
+        assert n <= held
+        for name in high:
+            assert np.array_equal(np.asarray(high[name])[offset:offset + n], np.asarray(low[name])[first:first + n]), (c, name)
+        offset += n
+    assert np.all(np.asarray(high["bright_star_luminosity"]) > 4000.0)
+    assert int((np.asarray(low["bright_star_luminosity"]) > 4000.0).sum()) == high.size
+
+
+def test_counts_over_the_whole_disc_are_poisson_about_the_expected_count(galaxy, seed):
+    cells = br.all_cells()
+    L = np.asarray(br.materialise_bright(galaxy, seed, cells, 2.0e4)["bright_star_luminosity"])
+    for threshold in (2.0e4, 3.0e4, 5.0e4):
+        lam = float(galaxy.expected(cells, np.log10(threshold)).sum())
+        found = int((L > threshold).sum())
+        assert abs(found - lam) < 4.0 * np.sqrt(lam), (threshold, found, lam)
+
+
+def test_the_light_above_a_thousand_suns_is_what_the_luminosity_function_carries(galaxy, seed, default):
+    """Σ L of the stars above 10^3 Lsun in a window against the luminosity function's own light there, within 4σ
+    of the realised spread (σ² = Σ L², a compound Poisson sum). The field's budget above the same threshold - the
+    tables renormalised to the field's - is 26% more in this window: the renormalisation's measure of the field's
+    mass grid on the giant branch, pinned and flagged (D200), not a property of the stars."""
+    cells = _window(default.grid.R)
+    L = np.asarray(br.materialise_bright(galaxy, seed, cells, 1.0e3)["bright_star_luminosity"])
+    own = float(galaxy.expected(cells, 3.0, "light_own").sum())
+    assert abs(L.sum() - own) < 4.0 * np.sqrt((L**2).sum())
+    assert float(galaxy.expected(cells, 3.0, "light").sum()) / own == pytest.approx(1.262, abs=0.005)  # S48 (D200)
+
+
+def test_young_bright_stars_follow_where_stars_form_today(galaxy, seed, default):
+    """In the azimuthal default the stars between the cluster window and 100 Myr are placed by sfr_modulation:
+    the modulation at their positions sits far above the older stars' (S48: mean ln 0.50 against -0.46, the
+    basic model's two parts both at -0.46)."""
+    from galaxy.stages.systems import Modulation
+
+    assert "sfr_modulation" in default.fields  # the default model publishes it (D197)
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 2.0 * np.pi)
+    cat = br.materialise_bright(galaxy, seed, cells, 5.0e3)
+    age = np.asarray(cat["bright_star_age"])
+    m = Modulation(default.fields["sfr_modulation"], default.grid.R).at_points(cat["bright_star_radius"], np.asarray(cat["bright_star_azimuth"])[:, None])[:, 0]
+    ln = np.log(np.maximum(m, 1e-12))
+    young, old = age < 0.1, age >= 0.1
+    assert young.sum() > 1000 and old.sum() > 1000
+    gap = ln[young].mean() - ln[old].mean()
+    error = np.hypot(ln[young].std() / np.sqrt(young.sum()), ln[old].std() / np.sqrt(old.sum()))
+    assert gap > 0.5 and gap > 20.0 * error
+
+
+def test_a_window_alone_is_the_same_cells_inside_a_whole_disc_call():
+    """Per-region determinism (D60): a window's stars, asked alone of a fresh service, are the rows the whole disc
+    holds in the same cells, named by (cell, rank), every column equal."""
+    query = "l_min=20000"
+    alone = Service().handle("/api/bright", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&" + query)
+    whole = Service().handle("/api/bright", query)
+    assert alone.ok and whole.ok
+    (ha, a), (hw, w) = alone.frame(), whole.frame()
+    assert ha["columns"] == hw["columns"]
+    name_w = {(int(c), int(r)): i for i, (c, r) in enumerate(zip(w["cell"], w["rank"]))}
+    cells = set(int(c) for c in _window(Service().grid.R))
+    inside = [i for (c, _), i in name_w.items() if c in cells]
+    assert len(inside) == a["cell"].size > 0
+    for j, (c, r) in enumerate(zip(a["cell"], a["rank"])):
+        i = name_w[(int(c), int(r))]
+        for col in ha["columns"]:
+            assert a[col][j] == w[col][i], col
+
+
+def test_the_n_brightest_are_complete_above_the_header_s_threshold(api, default, models):
+    import time
+
+    start = time.perf_counter()
+    r = api.handle("/api/bright", "n=3162")
+    cold = time.perf_counter() - start
+    assert r.ok
+    h, a = r.frame()
+    L = a["bright_star_luminosity"]
+    assert h["threshold"]["complete"] is True and h["count"]["returned"] == L.size == 3162
+    assert np.all(np.diff(L) <= 0.0) and np.all(L >= h["threshold"]["l_min"]) and L[-1] == h["threshold"]["l_min"]
+    # The route's whole-disc selection is the stage's default selection, and its scalars the stage's.
+    assert np.array_equal(L, np.asarray(default.fields["bright_star_luminosity"]))
+    assert h["scalars"] == {"bright_star_limit": default.fields["bright_star_limit"], "bright_star_count_1e3": default.fields["bright_star_count_1e3"]}
+    assert np.all(a["bright_star_age"] >= _cluster_window(models) * (1.0 - 1e-12))
+    for name in h["columns"]:
+        assert np.all(np.isfinite(np.asarray(a[name], dtype=float))), name
+    # The light: the stars carry what the luminosity function says (they are 3162 of an expected ~3250 there).
+    assert h["light"]["returned"] == pytest.approx(float(L.sum()))
+    assert h["light"]["returned"] == pytest.approx(h["light"]["expected_own"], rel=0.1)
+    # A metadata-free route: what the stage reads ran, not the stage (rule D4).
+    assert "bright_star" not in " ".join(h["stages"]) and "bright_stars" not in r.stages
+    # S48 (D200): about 4.5 s cold for the whole disc on the owner's machine (the pipeline it reads, then 65 536
+    # cells' first draws), 0.7 s warm; a loose class, not a benchmark.
+    assert cold < 60.0
+    start = time.perf_counter()
+    assert api.handle("/api/bright", "n=3162").ok
+    assert time.perf_counter() - start < 10.0
+
+
+def _box_view(x_lo, x_hi, y_lo, y_hi, z_lo, z_hi):
+    """A view-projection matrix whose frustum is an axis-aligned box in the viewer's frame, column-major."""
+    m = np.zeros((4, 4))
+    for row, (lo, hi) in enumerate(((x_lo, x_hi), (y_lo, y_hi), (z_lo, z_hi))):
+        m[row, row] = 2.0 / (hi - lo)
+        m[row, 3] = -(hi + lo) / (hi - lo)
+    m[3, 3] = 1.0
+    return ",".join(repr(float(v)) for v in m.flatten(order="F")), m
+
+
+def test_with_a_view_the_n_brightest_inside_the_frustum(api):
+    text, m = _box_view(7.0, 9.0, -1.0, 1.0, -1.0, 1.0)
+    base = "r_min=6&r_max=10&phi_min=-0.5&phi_max=0.5&view=" + text
+    r = api.handle("/api/bright", base + "&n=500")
+    assert r.ok
+    h, a = r.frame()
+    assert h["view"] is True and h["threshold"]["complete"] is True and a["cell"].size == 500
+    assert np.all(br.in_frustum(m, a["bright_star_radius"], a["bright_star_azimuth"], a["bright_star_height"]))
+    # The same frustum cut at the header's l_min holds exactly these stars: complete above it.
+    again = api.handle("/api/bright", base + f"&l_min={h['threshold']['l_min'] * (1.0 - 1e-12)!r}")
+    assert again.ok
+    _, b = again.frame()
+    assert sorted(zip(b["cell"].tolist(), b["rank"].tolist())) == sorted(zip(a["cell"].tolist(), a["rank"].tolist()))
+
+
+def test_the_route_refuses_what_it_cannot_answer(api):
+    for query, says in (
+        ("", "exactly one of n="),
+        ("n=5&l_min=3000", "exactly one of n="),
+        ("n=0", "outside 1..200000"),
+        ("n=200001", "outside 1..200000"),
+        ("l_min=-1", "positive luminosity"),
+        ("l_min=1000", "expected stars in this window, more than 200000"),
+        ("n=10&precision=f2", "precision"),
+        ("n=10&view=1,2,3", "view="),
+    ):
+        r = api.handle("/api/bright", query)
+        assert r.status == 400, query
+        assert says in r.json()["error"], (query, r.json())
+    # the count a refused l_min would hold is said
+    assert "3348738" in api.handle("/api/bright", "l_min=1000").json()["error"]

@@ -20,6 +20,7 @@ from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation
 from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
 from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and radiates, S31)
 from . import systems  # noqa: F401  (checkpoint 5)
+from . import bright  # noqa: F401  (checkpoint 5: every disc star above a luminosity, S48)
 from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
 from . import clusters  # noqa: F401  (checkpoint 5: the young star clusters the clouds make, S33)
 from . import nebular  # noqa: F401  (checkpoint 5: the clusters' HII regions and the diffuse ionized gas, S35)

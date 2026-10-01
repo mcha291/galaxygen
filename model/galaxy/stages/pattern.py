@@ -317,6 +317,13 @@ class ArmPattern:
         bar = bar_w[:, None] * np.cos(2.0 * (phi - bar_angle))
         return 1.0 + arms + bar
 
+    def contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """The contrast at points: ``R`` and ``phi`` broadcast against each other, elementwise (S48: each
+        bright star inverts its own row of azimuths inside its own cell)."""
+        arm_w, bar_w, phase, bar_angle = self._terms(np.asarray(R, dtype=float))
+        phi = np.asarray(phi, dtype=float)
+        return 1.0 + arm_w * np.cos(self.m * (phi - phase)) + bar_w * np.cos(2.0 * (phi - bar_angle))
+
     def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """The contrast averaged over each sector between ``edges`` at one radius, analytically."""
         arm_w, bar_w, phase, bar_angle = self._terms(np.array([R]))
