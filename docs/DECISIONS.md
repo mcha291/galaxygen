@@ -7685,7 +7685,7 @@ within a segment, the luminosity a power law of mass there) would re-move the fo
 **#127**. `#126` is discharged.
 
 **S49's gate.** The builder's own full suite on its branch `EXIT=0`; the session's, on the merged branch after
-`bootstrap.py`: **{{SUITE}}**; specs 12 / 20 / 5 of 37 in both models, no verdict changed; no frontend change (vitest
+`bootstrap.py`: **`EXIT=1`, one failure and the session's own doing — `test_audit`'s register count read (65, 44) against a pin already moved to (65, 45), because the session edited the register and its pins while the suite was running; `tests/test_audit.py` and `tests/test_docs.py` re-run alone on the committed tree `EXIT=0`, every other file green in the run**; specs 12 / 20 / 5 of 37 in both models, no verdict changed; no frontend change (vitest
 140 as at S47). The register: **65 open = 11 permanent + 54 carried, 45 discharged** (#126 out, #127 in). Board row 49;
 LESSONS; RESUMING ≤ 120 with the regression numbers re-read; BRIEF for S50, the star-first viewer mode. Tag `s49` on
 the merge. **The owner's API server on :8017 was started before S48 and holds the old model in memory: it serves the

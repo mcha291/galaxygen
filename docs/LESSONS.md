@@ -1269,3 +1269,5 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   transcript, and its branch says what it left (D204).
 - [infra] A running API server holds the model it imported: new routes and new numbers reach the owner's tab only
   after that server restarts. Say so when a session changes the model under a server it does not own (D204).
+- [close] Do not move a pinned document while the suite that reads it is running: the register's count test failed on
+  a half-moved register. Write the records before starting the suite, or after its exit line (D204's gate line).
