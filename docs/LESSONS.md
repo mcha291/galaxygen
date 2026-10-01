@@ -1248,3 +1248,26 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A new stage's fields meet the two-model gate (`test_sfh_azimuthal`: every shared field identical unless
   exempted with a reason): put that file in every builder's list when a stage's output can depend on the model, and
   expect "equal to rounding", not "bit for bit", for a sum whose order the weights change (D203's gate line).
+
+## From S49 (the light tables fixed; the ruling by Fable, the fix by an Opus agent)
+
+- [field] An integral over stellar mass is taken along the isochrone's own points, not on a fixed mass grid: the
+  evolved phases are a hundredth of a solar mass wide and carry most of an old population's light, so a fixed grid's
+  answer depends on where a point happens to fall — per isochrone by factors, per ring by tens of per cent (a jagged
+  radial profile), over the galaxy by 6 %. A docstring's claim that a grid "resolves" a feature is a number to
+  measure (D204, #126).
+- [audit] When a fix moves published numbers, sort every failing assertion into three: a pin that moved (re-read with
+  its old value), an identity that must hold regardless (if it fails, something read the old path — stop), and a
+  verdict (the session's to rule). Checking every assertion, not only the first failure per test, is the builder's
+  job, and a plugin that logs every `approx` is worth writing (D204).
+- [audit] Estimate a fix's reach from the place the error is largest, not from its sum: the galaxy-wide 6.7 % hid a
+  42 % error in a component that is one population (the bulge) and in a ring that sat on a spike of the old grid (D204).
+- [audit] An independent gate has two readings and both are recorded: against the same discretisation it tests the
+  arithmetic (6 × 10⁻⁸); against a different one it measures the method (1.1 × 10⁻³). A ruled tolerance missed by the
+  second is a stated property of the method and a debt, not a number to round (D204, #127).
+- [close] A builder cut off by the network before its first edit is resumed, not respawned: its reading is in its
+  transcript, and its branch says what it left (D204).
+- [infra] A running API server holds the model it imported: new routes and new numbers reach the owner's tab only
+  after that server restarts. Say so when a session changes the model under a server it does not own (D204).
+- [close] Do not move a pinned document while the suite that reads it is running: the register's count test failed on
+  a half-moved register. Write the records before starting the suite, or after its exit line (D204's gate line).

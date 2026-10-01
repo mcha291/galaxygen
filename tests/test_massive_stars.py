@@ -111,7 +111,8 @@ def test_the_unresolved_top_of_the_imf():
     that, and it dies before 3.98 Myr (that is why the isochrone does not hold it) - and the
     table cannot say which wins. What it does say: about half of a star-forming galaxy's
     ionizing photons come from stars the table cannot see, so ionizing_photon_rate is a lower
-    limit by up to a factor of two. Measured at solar metallicity."""
+    limit by up to a factor of two. Measured at solar metallicity. S49 (D204): 0.488, the population's Q
+    integrated along the isochrone's points."""
     tab = isochrones()
     solar = int(np.abs(tab.mhs).argmin())
     mass, log_l, log_teff = tab.track(0, solar)
@@ -129,36 +130,34 @@ def test_the_unresolved_top_of_the_imf():
     print(f"top of the youngest isochrone {top:.1f} Msun, Q there {q_top:.3e}/s; unseen >= {fraction:.3f}")
     assert top == pytest.approx(63.8, abs=0.05)
     assert q_top == pytest.approx(4.006e49, rel=1e-3)
-    assert fraction == pytest.approx(0.489, abs=0.001)
+    assert fraction == pytest.approx(0.488, abs=0.001)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.489
 
 
 def test_how_much_of_a_populations_q_the_table_itself_covers():
     """Of a steady solar population's photons, the share from stars whose T_eff is inside the
     table's 32-51 kK, cooler, and hotter (the stripped post-main-sequence stars the blackbody
-    extension carries). Measured at S28, printed and pinned."""
-    from galaxy.stages.photometry import _IMF_MASSES, _along
+    extension carries). Measured at S28, printed and pinned. On the population's own quadrature since S49
+    (``photometry.nodes`` along the isochrone's segments, D204), as ``population_light`` takes Q."""
+    from galaxy.stages.photometry import nodes, segments
 
     tab = isochrones()
     solar = int(np.abs(tab.mhs).argmin())
-    m = _IMF_MASSES
-    phi = imf_weights(m)
     ages = 10.0 ** tab.log_ages
     parts = np.zeros((ages.size, 3))
     for a in range(ages.size):
-        track = tab.track(a, solar)
-        alive = m <= track[0][-1]
-        log_l, log_teff = _along(track, m)
-        T = 10.0**log_teff
-        Q = np.where(alive, np.nan_to_num(ms.ionizing_photons(10.0**log_l, T)), 0.0)
+        at = nodes(segments(a, solar))
+        T = 10.0**at.log_teff
+        Q = at.weight * np.nan_to_num(ms.ionizing_photons(10.0**at.log_l, T))
         for k, sel in enumerate((T < ms.SHP03_TEFF[0], (T >= ms.SHP03_TEFF[0]) & (T <= ms.SHP03_TEFF[-1]), T > ms.SHP03_TEFF[-1])):
-            parts[a, k] = np.trapezoid(np.where(sel, phi * Q, 0.0), m)
+            parts[a, k] = float(np.where(sel, Q, 0.0).sum())
     total = np.trapezoid(parts, ages, axis=0) + ages[0] * parts[0]
     share = total / total.sum()
     print(f"cooler {share[0]:.4f}, inside {share[1]:.4f}, hotter {share[2]:.4f}")
     assert share == pytest.approx(TABLE_COVERAGE, abs=5e-4)
 
 
-TABLE_COVERAGE = (0.2177, 0.3283, 0.4540)  # S28: the table itself carries a third of the photons
+TABLE_COVERAGE = (0.2165, 0.3174, 0.4661)  # S28: the table itself carries a third of the photons. # S49 (D204, #126): the light integrated along the isochrone's points; was
+# (0.2177, 0.3283, 0.4540), on the fixed mass grid
 
 
 # --- the wind ---------------------------------------------------------------------------------

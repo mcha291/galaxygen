@@ -9,23 +9,17 @@ is the disc's light, exactly.
 **The luminosity function** (:func:`luminosity_function`). Per isochrone, the number of stars per solar
 mass formed brighter than each threshold ``L_k`` (``LOG_L_GRID``), the bolometric light they carry and
 their light in each of the table's eight bands. Integrated **along the isochrone's own points**, which
-are dense where the evolved phases are: between consecutive living points the IMF's number in the mass
-interval (analytic, ``_imf_number``) is spread uniformly in log L between the two ends, so the count
-above a threshold is continuous and monotone in it; the light and the band fluxes of the part above it
-are integrated on the same segment with each quantity's logarithm linear in the segment's parameter
-(log L for the light, −0.4 M for a band), exactly. The stars lighter than an isochrone's first point
-are read at it, as the field reads them. Dead stars contribute nothing. Each isochrone's light and band
-totals (the values for L → 0) are then **renormalised to the field's own tables**
-(``photometry.population_light``): the field's quadrature is the total, the luminosity function
-distributes it, so the bright catalogue and the field share one budget. The count is not renormalised;
-the field has no count to match. **The factors are far from 1 on the old isochrones** (0.55 to 7.1
-bolometric, 0.25 to 12 in K; 171 of 396 beyond 10%): the field's fixed log-spaced mass grid puts one or
-two points on a red-giant branch a hundredth of a solar mass wide and on an AGB a thousandth wide, so its
-light per mass is off by up to a factor of seven either way, isochrone by isochrone, and the disc's
-bolometric light 6.7% high overall (K 11%) against the integration along the points, which agrees with a
-fifty-times-subdivided quadrature to 0.1% [verified: tests/test_bright.py, S48]. Kept, pinned and
-flagged (D200): the stars carry the luminosity function's own light (``light_above_own``), the budget
-the field's (``light_above``).
+are dense where the evolved phases are: the field's own quadrature (``photometry.segments``, S49 D204) -
+between consecutive living points the IMF's number in the mass interval (analytic) is spread uniformly in
+log L between the two ends, so the count above a threshold is continuous and monotone in it; the light and
+the band fluxes of the part above it are integrated on the same segment with each quantity's logarithm
+linear in the segment's parameter (log L for the light, −0.4 M for a band), exactly
+(``photometry.log_linear_integral``). The stars lighter than an isochrone's first point are read at it.
+Dead stars contribute nothing. So each isochrone's light and band totals (the values for L → 0) **are**
+the field's tables (``photometry.population_light``), by construction: one budget, which the stars carry
+(rule A9). Until S49 the field integrated on a fixed log-spaced mass grid that aliased the giant branch,
+and these tables were renormalised to it per isochrone (factors 0.55 to 7.1 bolometric, 0.25 to 12 in K;
+D202, debt #126); the field now integrates along the points, and the renormalisation is gone.
 
 **The ordered process** (:func:`materialise_bright`, the stage ``bright_stars``). The unit is the finest
 cell of the hierarchy (level ``MAX_LEVEL``, 65 536 of them). In a cell the expected number of stars above
@@ -101,92 +95,19 @@ from galaxy.stages.photometry import (
     EXTRA,
     band_nu_l_nu,
     cumulative_over_age,
+    Segments,
     isochrones,
+    log_linear_integral,
     nearest_metallicity,
     on_fine_ages,
     population_light,
+    segments,
     steps_over,
 )
 
 # Luminosity thresholds, log10 L/L☉ bolometric, every 0.05 dex from 0.1 L☉ to 4 × 10⁶ L☉: past the
 # brightest point of the youngest isochrone the catalogue covers.
 LOG_L_GRID = np.linspace(-1.0, 6.6, 153)
-
-
-# --- the IMF's number in a mass interval, analytic ---------------------------------------------------
-
-
-def _imf_cumulative(m: np.ndarray) -> np.ndarray:
-    """∫ φ dm from the IMF's lower end to ``m``, with φ ``photometry.imf_weights``' unnormalised Kroupa form."""
-    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE, IMF_MIN
-
-    m = np.clip(np.asarray(m, dtype=float), IMF_MIN, None)
-    p_lo, p_hi = IMF_LOW_SLOPE + 1.0, IMF_HIGH_SLOPE + 1.0
-    k_high = IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE)
-    below = (np.minimum(m, IMF_BREAK) ** p_lo - IMF_MIN**p_lo) / p_lo
-    above = k_high * (np.maximum(m, IMF_BREAK) ** p_hi - IMF_BREAK**p_hi) / p_hi
-    return below + above
-
-
-def _imf_number(lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
-    """∫ φ dm over [lo, hi]: the IMF's number in each mass interval, unnormalised."""
-    return _imf_cumulative(hi) - _imf_cumulative(lo)
-
-
-@functools.cache
-def _imf_mass_formed() -> float:
-    """∫ φ m dm over the whole IMF, analytic: what turns the unnormalised number into stars per M☉ formed."""
-    from galaxy.stages.systems import IMF_BREAK, IMF_HIGH_SLOPE, IMF_LOW_SLOPE, IMF_MAX, IMF_MIN
-
-    k_high = IMF_BREAK ** (IMF_LOW_SLOPE - IMF_HIGH_SLOPE)
-    p_lo, p_hi = IMF_LOW_SLOPE + 2.0, IMF_HIGH_SLOPE + 2.0
-    return float((IMF_BREAK**p_lo - IMF_MIN**p_lo) / p_lo + k_high * (IMF_MAX**p_hi - IMF_BREAK**p_hi) / p_hi)
-
-
-# --- the segments of an isochrone ---------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Segments:
-    """One isochrone as straight pieces between its consecutive living points.
-
-    Each segment holds ``number`` stars per M☉ formed, spread uniformly in its parameter s ∈ [0, 1]
-    (and so in log L, which is linear in s); every other column is linear in s between its ends.
-    The first segment runs from the IMF's lower end to the isochrone's first point at that point's
-    values: the stars the table does not reach, read at its lightest as the field reads them.
-    """
-
-    number: np.ndarray  # (n,) stars per M☉ formed
-    log_l: np.ndarray  # (n, 2) log10 L/L☉ at the two ends
-    mass: np.ndarray  # (n, 2) initial mass, M☉
-    log_teff: np.ndarray  # (n, 2)
-    neg_mag: np.ndarray  # (n, 2, 8): −0.4 M_band at the ends, so 10^this is the band flux
-    label: np.ndarray  # (n, 2) PARSEC's phase label at the ends
-
-
-@functools.cache
-def segments(age: int, mh: int) -> Segments:
-    """The segments of isochrone ``(age, mh)``: see :class:`Segments`."""
-    from galaxy.stages.systems import IMF_MIN
-
-    tab = isochrones()
-    m, log_l, log_teff = tab.track(age, mh)
-    cols = tab.extra[(age, mh)]
-    mags = cols[:, [EXTRA.index(b) for b in BANDS]]
-    label = cols[:, EXTRA.index("label")]
-    # Prepend the IMF's lower end at the first point's values (a degenerate segment in L).
-    m0 = np.concatenate([[min(IMF_MIN, m[0])], m])
-    idx = np.concatenate([[0], np.arange(m.size)])
-    lo, hi = idx[:-1], idx[1:]
-    number = _imf_number(m0[:-1], m0[1:]) / _imf_mass_formed()
-    return Segments(
-        number=number,
-        log_l=np.stack([log_l[lo], log_l[hi]], axis=1),
-        mass=np.stack([m0[:-1], m0[1:]], axis=1),
-        log_teff=np.stack([log_teff[lo], log_teff[hi]], axis=1),
-        neg_mag=np.stack([-0.4 * mags[lo], -0.4 * mags[hi]], axis=1),
-        label=np.stack([label[lo], label[hi]], axis=1),
-    )
 
 
 def _above(log_l: np.ndarray, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -205,25 +126,13 @@ def _above(log_l: np.ndarray, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return a, b
 
 
-def _log_linear_integral(g0: np.ndarray, g1: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """∫_a^b 10^(g0 + s (g1 − g0)) ds, exactly, for g linear in s; zero where b <= a."""
-    d = (g1 - g0) * math.log(10.0)
-    width = np.maximum(b - a, 0.0)
-    start = 10.0 ** (g0 + a * (g1 - g0))
-    x = d * width
-    small = np.abs(x) < 1e-9
-    factor = np.where(small, width * (1.0 + 0.5 * x), np.expm1(np.where(small, 0.0, x)) / np.where(small, 1.0, d))
-    return start * factor
-
-
 @dataclass(frozen=True)
 class BrightTables:
     """Per isochrone ``(n_age, n_mh)`` and threshold ``LOG_L_GRID``: what lies above each threshold, per M☉ formed.
 
-    ``count_above``, ``light_above`` and ``band_above`` are non-increasing in L; ``light_above`` and
-    ``band_above`` are renormalised so that their totals (L → 0, every living star) are the field's
-    ``light_per_mass`` and ``band_flux``; ``light_factor`` and ``band_factor`` are the factors that took.
-    ``count_total`` is every living star per M☉ formed (not renormalised).
+    ``count_above``, ``light_above`` and ``band_above`` are non-increasing in L. ``count_total``,
+    ``light_total`` and ``band_total`` are every living star's (L → 0, below the grid's faint end too): the
+    light and band totals are the field's ``light_per_mass`` and ``band_flux``, one quadrature (S49, D204).
     """
 
     log_l: np.ndarray  # (K,)
@@ -231,43 +140,29 @@ class BrightTables:
     light_above: np.ndarray  # (n_age, n_mh, K) L☉ per M☉ formed from those stars
     band_above: np.ndarray  # (n_age, n_mh, K, 8) Σ 10^(−0.4 M_band) per M☉ formed from those stars
     count_total: np.ndarray  # (n_age, n_mh)
-    light_factor: np.ndarray  # (n_age, n_mh): the field's total over the segments' own
-    band_factor: np.ndarray  # (n_age, n_mh, 8)
-
-    @property
-    def light_above_own(self) -> np.ndarray:
-        """``light_above`` before the renormalisation: the light the stars of ``count_above`` themselves carry."""
-        return self.light_above / self.light_factor[..., None]
-
-    @property
-    def band_above_own(self) -> np.ndarray:
-        """``band_above`` before the renormalisation: the band light the stars of ``count_above`` themselves carry."""
-        return self.band_above / self.band_factor[..., None, :]
+    light_total: np.ndarray  # (n_age, n_mh)
+    band_total: np.ndarray  # (n_age, n_mh, 8)
 
 
 @functools.cache
 def luminosity_function() -> BrightTables:
     """The per-isochrone tables of what lies above each threshold: see the module docstring."""
     tab = isochrones()
-    pop = population_light()
     x = LOG_L_GRID
     shape = (tab.log_ages.size, tab.mhs.size)
     count = np.zeros((*shape, x.size))
     light = np.zeros((*shape, x.size))
     bands = np.zeros((*shape, x.size, len(BANDS)))
     count_total = np.zeros(shape)
-    light_factor = np.ones(shape)
-    band_factor = np.ones((*shape, len(BANDS)))
+    totals = np.zeros((*shape, 1 + len(BANDS)))
     for (age, mh) in tab.tracks:
         seg = segments(age, mh)
-        above_n, above_q, total_q = _above_sums(seg, x)
+        above_n, above_q, totals[age, mh] = _above_sums(seg, x)
         count[age, mh] = above_n
         count_total[age, mh] = float(seg.number.sum())
-        light_factor[age, mh] = pop.light_per_mass[age, mh] / total_q[0]
-        light[age, mh] = above_q[:, 0] * light_factor[age, mh]
-        band_factor[age, mh] = pop.band_flux[age, mh] / total_q[1:]
-        bands[age, mh] = above_q[:, 1:] * band_factor[age, mh]
-    return BrightTables(x, count, light, bands, count_total, light_factor, band_factor)
+        light[age, mh] = above_q[:, 0]
+        bands[age, mh] = above_q[:, 1:]
+    return BrightTables(x, count, light, bands, count_total, totals[..., 0], totals[..., 1:])
 
 
 def _above_sums(seg: Segments, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -279,7 +174,7 @@ def _above_sums(seg: Segments, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, n
     lo, hi, d = np.minimum(y0, y1), np.maximum(y0, y1), y1 - y0
     g0 = np.concatenate([y0[:, None], seg.neg_mag[:, 0, :]], axis=1)  # log10 of each quantity at s = 0
     g1 = np.concatenate([y1[:, None], seg.neg_mag[:, 1, :]], axis=1)
-    full = seg.number[:, None] * _log_linear_integral(g0, g1, 0.0, 1.0)  # (n, 9)
+    full = seg.number[:, None] * log_linear_integral(g0, g1, 0.0, 1.0)  # (n, 9)
     order = np.argsort(lo, kind="stable")
     suffix_n = np.concatenate([np.cumsum(seg.number[order][::-1])[::-1], [0.0]])
     suffix_q = np.concatenate([np.cumsum(full[order][::-1], axis=0)[::-1], np.zeros((1, full.shape[1]))])
@@ -294,7 +189,7 @@ def _above_sums(seg: Segments, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, n
     rising = d[j] > 0.0
     a, b = np.where(rising, s, 0.0), np.where(rising, 1.0, s)
     np.add.at(count, k, seg.number[j] * (b - a))
-    np.add.at(quant, k, seg.number[j, None] * _log_linear_integral(g0[j], g1[j], a[:, None], b[:, None]))
+    np.add.at(quant, k, seg.number[j, None] * log_linear_integral(g0[j], g1[j], a[:, None], b[:, None]))
     return count, quant, full.sum(axis=0)
 
 
@@ -436,9 +331,8 @@ class Resolved:
     (``young``, every star younger than its window), what the bright catalogue carries (its two parts' stars above the
     threshold) and what neither does (``unresolved_middle``, ``unresolved_old``: the field's remainder, each part
     placed around the ring by its own weight). All from one decomposition and one set of tables, so
-    unresolved + young + bright is the total exactly; the bright parts are the field's budget (the luminosity
-    function renormalised to the field's tables), and ``light["bright_own"]`` is what the catalogue's stars carry
-    themselves (debt #126: the field's mass grid aliases the giant branch)."""
+    unresolved + young + bright is the total exactly; the bright parts are what the catalogue's stars carry, the
+    luminosity function's totals being the field's own tables (one quadrature, S49 D204)."""
 
     log_l: float  # log10 of the threshold applied, L☉ (the requested one, raised to the grid's faint end)
     anchors: dict[str, np.ndarray]  # (n_R, 8): λL_λ at the table's eight bands, L☉/pc²
@@ -447,8 +341,7 @@ class Resolved:
 
 def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any], l_min: float) -> Resolved:
     """Split the disc's light at ``l_min`` L☉: see :class:`Resolved`. Anchors ``total``, ``young``, ``bright_middle``,
-    ``bright_old``, ``unresolved_middle``, ``unresolved_old``; light ``total``, ``young``, ``bright``, ``bright_own``,
-    ``unresolved``. The threshold is read on ``LOG_L_GRID`` by :func:`above_at` (the catalogue's rule), per ring and
+    ``bright_old``, ``unresolved_middle``, ``unresolved_old``; light ``total``, ``young``, ``bright``, ``unresolved``. The threshold is read on ``LOG_L_GRID`` by :func:`above_at` (the catalogue's rule), per ring and
     part."""
     tables = luminosity_function()
     pop = population_light()
@@ -457,9 +350,8 @@ def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mappin
     flat = masses.reshape(*masses.shape[:2], -1)
     bands = flat @ pop.band_flux.reshape(-1, len(BANDS))  # (3, n_R, 8): every living star of each part
     light = flat @ pop.light_per_mass.ravel()  # (3, n_R)
-    bright_bands = above_at(masses[1:], tables.band_above, log_l)  # (2, n_R, 8): the field's budget above l_min
+    bright_bands = above_at(masses[1:], tables.band_above, log_l)  # (2, n_R, 8): what lies above l_min
     bright_light = above_at(masses[1:], tables.light_above, log_l)  # (2, n_R)
-    bright_own = above_at(masses[1:], tables.light_above_own, log_l)
 
     def anchors(flux: np.ndarray) -> np.ndarray:
         return np.stack([band_nu_l_nu(flux[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
@@ -478,7 +370,6 @@ def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mappin
             "total": light.sum(axis=0),
             "young": light[0],
             "bright": bright_light.sum(axis=0),
-            "bright_own": bright_own.sum(axis=0),
             "unresolved": (light[1:] - bright_light).sum(axis=0),
         },
     )
@@ -573,7 +464,6 @@ class BrightGalaxy:
         self.mass_cell = np.einsum("cr,prx->pcx", average, mass_R)  # (2, 256, n_iso) M☉/pc²
         self.count_cell = self.mass_cell @ count  # (2, 256, K)
         self.light_cell = self.mass_cell @ tables.light_above.reshape(n_iso, K)
-        self.light_cell_own = self.mass_cell @ tables.light_above_own.reshape(n_iso, K)
         self.count_iso = count  # (n_iso, K)
         dphi = 2.0 * math.pi / (CELL_SECTORS * n)
         self.area = 0.5 * (self.ring_hi**2 - self.ring_lo**2) * dphi * PC_PER_KPC**2  # pc² per cell, by ring
@@ -609,9 +499,9 @@ class BrightGalaxy:
 
     def curves(self, cells: Sequence[int] | np.ndarray, table: str = "count") -> np.ndarray:
         """(n_cells, K): each cell's expected number of stars above each threshold (``table="count"``), or
-        their light, the field's budget (``"light"``) or the stars' own (``"light_own"``)."""
+        their light (``"light"``)."""
         ring, sector = self.locate(cells)
-        tab = {"count": self.count_cell, "light": self.light_cell, "light_own": self.light_cell_own}[table]
+        tab = {"count": self.count_cell, "light": self.light_cell}[table]
         return self.area[ring, None] * (
             tab[0, ring] * self.weights[0, ring, sector][:, None] + tab[1, ring] * self.weights[1, ring, sector][:, None]
         )
@@ -627,7 +517,7 @@ class BrightGalaxy:
         """Each cell's curve read at one log L, between the thresholds as :func:`_between` reads it."""
         ring, sector = self.locate(cells)
         k, frac = _bracket(log_l)
-        tab = {"count": self.count_cell, "light": self.light_cell, "light_own": self.light_cell_own}[table]
+        tab = {"count": self.count_cell, "light": self.light_cell}[table]
 
         def at(j: int) -> np.ndarray:
             return self.area[ring] * (tab[0, ring, j] * self.weights[0, ring, sector] + tab[1, ring, j] * self.weights[1, ring, sector])

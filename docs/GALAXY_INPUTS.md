@@ -691,8 +691,9 @@ defined here once and used in every entry below:
 | **discharged** at S38 | **104, 105, 106** (Audit III's findings applied: the square root, η measured, the record, D187) | 3 |
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
+| **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 126 | 54 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127 | 54 |
 
 So the board's **65 open** is 11 permanent and 54 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
@@ -719,7 +720,8 @@ convention half, and entered row 37 as a recorded miss under #117, D195; S45 dia
 is the whole gradient, the gas gradient is steeper than the Cepheids' (#124 opened) and the rest is a conflict of
 sources — D196; S48, the per-object filter response, opened #125, the band curves' wings on the steepest spectra,
 and corrected #114's factor of two to the clusters', D201, and the bright catalogue opened #126, the field's light
-integrated on a mass grid that aliases the giant branch, D202.) The eleven
+integrated on a mass grid that aliases the giant branch, D202; S49 fixed and discharged #126 on the owner's word and
+opened #127, the segment quadrature's thousandth on the upper main sequence, D204.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3448,8 +3450,8 @@ never been judged in twenty-three sessions.
    reading of what CMD's bands are), or a consistency solve that is exact for eight anchors (a linear solve in
    the segment basis instead of a multiplicative iteration), either re-pinning V1's gate.
 
-126. **The field's light per isochrone is integrated on a mass grid that aliases the giant branch: the disc's light is
-   6.7 % high bolometric and 5–12 % by band** (S48, D202). `photometry.population_light` integrates each isochrone on
+126. ~~**The field's light per isochrone is integrated on a mass grid that aliases the giant branch: the disc's light is
+   6.7 % high bolometric and 5–12 % by band**~~ **DISCHARGED at S49** (S48, D202; fixed D204). `photometry.population_light` integrates each isochrone on
    1 500 log-spaced masses; a red-giant branch is 0.01 M☉ wide and an AGB 0.001, so one or two grid points land on
    them. Against the integral along the isochrone's own points (`bright.luminosity_function`'s quadrature,
    confirmed by a 50×-subdivided trapezoid to under 0.1 % on seven isochrones) the per-isochrone ratio runs 0.55–7.09
@@ -3459,9 +3461,26 @@ never been judged in twenty-three sessions.
    M_V, B − V, Υ_V, `disc_luminosity`, the eight bands and the SED, the dust's absorbed starlight (so L_IR and T_d),
    rows 25–29. The bright catalogue renormalises to the field's table so that nothing published moved (D200 (2)),
    and carries both budgets; its realised stars hold 1/1.262 of the field's budget in the 7–9 kpc window above
-   10³ L☉. **Carried.** What closes it: `population_light` integrated along the isochrone's points, every photometric
+   10³ L☉. What closed it: `population_light` integrated along the isochrone's points, every photometric
    pin re-read with its reason and every constant calibrated against the old tables re-examined (B10), V1's gate
    re-pinned — accuracy work that moves published numbers, on the owner's word (the model is pinned).
+   **Fixed at S49 on the owner's word ("go with option A, fix it now", D204):** one quadrature along the isochrone's
+   points in `photometry.py`, shared with the bright catalogue, whose second budget is gone; `disc_luminosity` 4.8958 →
+   4.5898 × 10¹⁰ L☉, M_V −21.216 → −21.110, B − V 0.631 → 0.569, Υ_V 1.85 → 2.04, the bulge's light −42 %, the radial
+   profile no longer jagged ring to ring; 43 pins re-read, no acceptance verdict changed, no identity failed, no
+   constant had been fitted to the old tables.
+
+127. **The segment quadrature spreads an interval's stars uniformly in log L: a thousandth on the upper main sequence**
+   (S49, D204). `photometry.segments` integrates each isochrone between its own points with the interval's IMF number
+   exact and spread uniformly along the segment; the IMF falls across the intervals, 10–25 % wide on the upper main
+   sequence where the isochrone's points are sparse. Against a brute-force trapezoid with φ(m) itself the tables
+   differ by up to 1.13 × 10⁻³ on the gate's 24 isochrones (light, 4 Myr, [M/H] −0.94) and 1.46 × 10⁻³ over all 396
+   (ten exceed 10⁻³); with the brute force placing the stars as the segments do, 6.3 × 10⁻⁸ `[verified:
+   tests/test_photometry.py pins both]`. D204's gate asked 10⁻³ and is recorded as measured, not loosened. It
+   touches the young populations' light — the clusters', Q, the bright end's hottest stars — at the 0.1 % level.
+   **Carried.** What closes it: the IMF's own distribution within a segment with the luminosity a power law of mass
+   there (both integrals and the count above a threshold are then closed forms), and the forty-odd light pins
+   re-read once more.
 
 
 ---
