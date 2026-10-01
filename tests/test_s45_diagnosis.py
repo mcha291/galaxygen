@@ -1,7 +1,7 @@
 """S45 (D196): row 37's diagnosis by the miss's own prediction — the parts of the [N II]/Hα gradient over 8.2–15.4 kpc,
 measured so that the readings D196 states can be applied. Every number here is pinned so the diagnosis re-runs.
 
-On the default ``basic`` run, the regions whose ``cluster_radius`` lies in [8.2, 15.4] kpc, Hα-weighted
+On the default run (``basic`` at S45; ``azimuthal`` since S46, D197, whose regions are basic's bit for bit), the regions whose ``cluster_radius`` lies in [8.2, 15.4] kpc, Hα-weighted
 (``hii_halpha_luminosity``) throughout: (a) Z′, the regions' oxygen gradient, beside the gas rings' α gradient;
 (b) the grid's local responses G_Z, G_age, G_U of log([N II]/Hα) at each region's own point, and age′, U′;
 (c) the three first-order products against the published gradient; (d) the substitution probes (D114) through the
@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import nebular as nb
 
@@ -33,7 +34,7 @@ def models():
 
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models["basic"])
+    return run(models[DEFAULT_MODEL])
 
 
 def _wmean(x: np.ndarray, w: np.ndarray) -> float:
@@ -66,7 +67,7 @@ def _response(f, x: np.ndarray, axis: np.ndarray, h: float) -> tuple[np.ndarray,
 def _diagnose(models, default) -> dict:
     F = default.fields
     R = np.asarray(default.grid.R, dtype=float)
-    solar = float(models["basic"].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
+    solar = float(models[DEFAULT_MODEL].constants["NEBULAR_GRID_OXYGEN_SOLAR"].value)
     radius_all = np.asarray(F["cluster_radius"], dtype=float)
     w_all = np.asarray(F["hii_halpha_luminosity"], dtype=float)
     oxygen_all = np.asarray(F["hii_oxygen_abundance"], dtype=float)

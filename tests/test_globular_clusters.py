@@ -15,6 +15,7 @@ import pytest
 from galaxy.core import seeds as _seeds
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import spec
 from galaxy.stages import globular_clusters as gc
@@ -52,17 +53,17 @@ def models():
 
 @pytest.fixture(scope="module")
 def constants(models):
-    return {k: v.value for k, v in models["basic"].constants.items()}
+    return {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
 
 
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models["basic"], only=(*WANT, "bound_cluster_mass_total"))
+    return run(models[DEFAULT_MODEL], only=(*WANT, "bound_cluster_mass_total"))
 
 
 @pytest.fixture(scope="module")
 def coarse(models):
-    return run(models["basic"], grid=COARSE, only=(*WANT, "bound_cluster_mass_total"))
+    return run(models[DEFAULT_MODEL], grid=COARSE, only=(*WANT, "bound_cluster_mass_total"))
 
 
 def _mean(o, c):
@@ -160,7 +161,7 @@ def test_the_survivors_are_mostly_young(default, constants):
 
 def test_the_residual_is_a_seeded_lognormal_on_world_seed(models, constants):
     """Ruling (b): drawn at 0.28 dex on world_seed under the stage's slot; the count is the mass over 2.5e5."""
-    m, c = models["basic"], constants
+    m, c = models[DEFAULT_MODEL], constants
     for seed in (0, 7):
         o = run(m, {"world_seed": seed}, grid=COARSE, only=("gc_system_mass", "gc_count_estimate", "gc_survival_fraction", "stars_formed_history"))
         dex = _seeds.rng(seed, "globular_clusters", "residual").normal(0.0, c["GC_SYSTEM_SCATTER"])
@@ -177,7 +178,7 @@ def test_the_metal_poor_share_is_the_accreted_one(models, default, constants):
     c = constants
     assert default.fields["gc_metal_poor_fraction"] == pytest.approx(2.25 / 2.9)  # 2.25 / 3.5 until S38 (#105)
     assert default.fields["gc_metal_poor_fraction"] == pytest.approx(0.775862, abs=1e-6)  # 0.642857 until S38
-    free = run(models["basic"], {"mergers": ()}, grid=COARSE, only=("gc_metal_poor_fraction", "halo_stellar_mass"))
+    free = run(models[DEFAULT_MODEL], {"mergers": ()}, grid=COARSE, only=("gc_metal_poor_fraction", "halo_stellar_mass"))
     assert free.fields["halo_stellar_mass"] == 0.0 and free.fields["gc_metal_poor_fraction"] == 0.0
     assert gc.metal_poor_fraction(1.0, c) == c["GC_METAL_POOR_HALO_MASS_RATIO"] / c["GC_HALO_MASS_RATIO"]
 

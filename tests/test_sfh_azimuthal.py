@@ -42,6 +42,7 @@ def identical(x, y) -> bool:
 @pytest.fixture(scope="module")
 def models():
     m = production()[0]
+    # Both models by name, deliberately (S46, D197): this module compares basic against azimuthal.
     return m.get("basic"), m.get("azimuthal")
 
 

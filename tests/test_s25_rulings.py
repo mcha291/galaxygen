@@ -53,6 +53,7 @@ def _kept_share(model, f: float) -> tuple[float, float]:
 @pytest.fixture(scope="module")
 def sweep():
     models, _, _ = production()
+    # "basic" by name, deliberately (S46, D197): the ruling reads basic's constants, which azimuthal shares.
     basic = next(m for m in models if m.name == "basic")
     return np.array([(f, *_kept_share(basic, f)) for f in RETENTIONS])
 

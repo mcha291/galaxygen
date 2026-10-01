@@ -25,6 +25,7 @@ import pytest
 
 from galaxy.core.grids import DEFAULT
 from galaxy.core.registry import INPUTS
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import spec
 from test_audit import Q
@@ -35,8 +36,8 @@ DERIVED_ROWS = {13: "bulge_stellar_fraction", 14: "bulge_velocity_dispersion"}
 
 
 @pytest.fixture(scope="module")
-def basic(prod):
-    return prod[0].get("basic")
+def default_model(prod):
+    return prod[0].get(DEFAULT_MODEL)
 
 
 def diagonal(model, start, fields):
@@ -49,7 +50,7 @@ def diagonal(model, start, fields):
     return vals
 
 
-def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagonals(basic):
+def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagonals(default_model):
     """#51's own test, run: three samples of 41, none sharing a draw (S22).
 
     The verdict is identical on all three for every statistical row, so the fixed sample
@@ -60,7 +61,7 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     the sample's own spread (16, 17) or out by a factor (18).
     """
     fields = list(SEEDED_ROWS.values())
-    med = {start: {f: float(np.median(v)) for f, v in diagonal(basic, start, fields).items()}
+    med = {start: {f: float(np.median(v)) for f, v in diagonal(default_model, start, fields).items()}
            for start in (0, 41, 82)}
 
     verdicts = {row: {s: Q[row].lo <= med[s][f] <= Q[row].hi for s in med} for row, f in SEEDED_ROWS.items()}
@@ -84,12 +85,12 @@ def test_debt_51_every_statistical_verdict_is_the_same_on_three_disjoint_diagona
     assert min(over) > 4.0, over
 
     # Rows 13 and 14 do not move at all: S17 found them derived, not seeded (debt #39).
-    fixed = {s: diagonal(basic, s, list(DERIVED_ROWS.values())) for s in (0, 82)}
+    fixed = {s: diagonal(default_model, s, list(DERIVED_ROWS.values())) for s in (0, 82)}
     for f in DERIVED_ROWS.values():
         assert len(set(fixed[0][f])) == 1 and fixed[0][f][0] == fixed[82][f][0], f
 
 
-def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(basic):
+def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(default_model):
     """Row 3 reads 251.03 against a window ending at 251.0, and n_R is worth more than that.
 
     Refined to the value the radial mesh converges to: 251.013, so the miss is 0.013 km/s -
@@ -99,7 +100,7 @@ def test_debt_11_row_3s_miss_is_half_the_mesh_and_half_the_model(basic):
     """
     reads = {}
     for n in (400, 800, 1600, 3200):
-        reads[n] = float(run(basic, grid=DEFAULT.replace(n_R=n), only=("v_tangential_sun",)).fields["v_tangential_sun"])
+        reads[n] = float(run(default_model, grid=DEFAULT.replace(n_R=n), only=("v_tangential_sun",)).fields["v_tangential_sun"])
     assert reads[400] == pytest.approx(251.026, abs=0.005)
     assert reads[3200] == pytest.approx(251.013, abs=0.005)
     assert all(v > Q[3].hi for v in reads.values()), reads  # out at every mesh: the miss is real
@@ -169,11 +170,11 @@ def test_debt_28_one_width_lands_row_23_and_the_ratio_together_and_it_is_not_the
     and that it disagrees with the width the disc's structure wants (debt #50: under 1.8 kpc
     once the mass follows the kernel, A-2).
     """
-    basic = prod[0].get("basic")
+    default_model = prod[0].get(DEFAULT_MODEL)
     fields = ("metallicity_gradient_old", "metallicity_gradient_young")
     read = {}
     for eff in (2.5, 3.0, 3.6):
-        f = run(basic, {"migration_efficiency": eff}, only=fields).fields
+        f = run(default_model, {"migration_efficiency": eff}, only=fields).fields
         read[eff] = (float(f["metallicity_gradient_old"]), float(f["metallicity_gradient_young"]))
 
     old3, young3 = read[3.0]
@@ -234,6 +235,7 @@ def test_no_green_row_is_unconditioned(judged):
         for name in ("simple", "advanced") if cells[1] == "both" else (cells[1],):
             listed[name] |= rows
 
+    # Keyed per model, "basic" deliberately (S46, D197).
     column = {"basic": "advanced", "azimuthal": "advanced"}  # the historical column each registered model descends from (azimuthal: S27, basic's rows)
     # Rows the sealed table lists as green that have since left, each with the decision that
     # took them out: the list is a historical record and is not edited, so the gate is read as

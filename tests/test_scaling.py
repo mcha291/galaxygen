@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.stages import chemistry_dtd as C
 from scaling import exponent, naive_snia_rate
 
@@ -59,7 +60,7 @@ def test_the_whole_model_row_is_measured_in_a_fresh_interpreter():
     assert "subprocess" in inspect.getsource(scaling.time_model)
     tool = Path(scaling.__file__).resolve()
     proc = subprocess.run(
-        [sys.executable, str(tool), "--model", "basic"],
+        [sys.executable, str(tool), "--model", DEFAULT_MODEL],
         capture_output=True, text=True, check=True, cwd=str(tool.parents[1]),
     )
     assert 0.05 < float(proc.stdout.splitlines()[-1]) < 60.0

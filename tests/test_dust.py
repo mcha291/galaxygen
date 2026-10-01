@@ -255,4 +255,5 @@ def test_the_pah_fraction_follows_the_gas_abundance_and_stops_at_the_fits_edge(m
 def test_both_models_publish_the_same_dust(coarse):
     """The dust reads shared fields only, so the azimuthal model's is basic's bit for bit."""
     for name in FIELDS:
+        # Both models by name, deliberately (S46, D197): the test compares them.
         assert np.array_equal(np.asarray(coarse["basic"].fields[name]), np.asarray(coarse["azimuthal"].fields[name]), equal_nan=True), name

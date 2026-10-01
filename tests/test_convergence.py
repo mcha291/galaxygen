@@ -83,4 +83,5 @@ def test_every_axis_is_swept_alone():
 
 def test_report_runs(prod):
     out = convergence.report(list(prod[0]), convergence.QUICK)
+    # "basic" by name, deliberately (S46, D197): the report names every registered model, basic among them.
     assert "convergence" in out and "model basic" in out and "untestable" in out

@@ -26,6 +26,7 @@ import pytest
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import spectra
 from galaxy.stages.photometry import band_flux_at, band_nu_l_nu, correlated_temperature, population_at
@@ -38,7 +39,7 @@ COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 @pytest.fixture(scope="module")
 def coarse():
     ms, _, _ = production()
-    return run(ms.get("basic"), grid=COARSE)
+    return run(ms.get(DEFAULT_MODEL), grid=COARSE)
 
 
 def test_a_clusters_light_is_its_mass_times_the_tables_at_its_age(coarse):

@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.fielddoc import Kind
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.specs import spec
 from helpers import TINY, decl
 
@@ -52,6 +53,7 @@ def test_every_row_names_a_field_but_the_four_ruling_b_holds_back():
 
 REACHED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23}  # 12-14 and 18 since S17
 # One model since D170 (the former advanced physics); the tables keep its values.
+# Keyed "basic" deliberately (S46, D197): the tables are basic's and the azimuthal model aliases them below.
 VERDICTS = {"basic": REACHED | {21, 24, 29, spec.ROW_CORE_COLLAPSE_RATE, spec.ROW_TYPE_IA_RATE, spec.ROW_GC_SYSTEM_MASS, spec.ROW_STELLAR_HALO_MASS, spec.ROW_IONIZING_RATE, spec.ROW_HII_LF_SLOPE, spec.ROW_NII_HALPHA_GRADIENT}}  # S44: row 37  # S35: rows 34 and 35 (36 n-y-c)  # S34: rows 32 and 33  # S24: the ism stage publishes gas_h2_fraction, so row 21 is computable for the first time (debt #79)
 SUMMARY = {
     "basic": {"pass": 12, "fail": 20, "not-yet-computable": 5},  # S44: row 37 fails, recorded (#117)  # S42: row 34 passes on the blind window the owner adopted (11/20 until S42)  # S35: row 35 passes, 34 fails (#100), 36 n-y-c (10/19/4 of 33 until S35)  # S34: rows 32 and 33 fail, recorded (#98, #99; 17 fail of 31 until S34)  # S30: both supernova rates pass (8 pass of 29 until S30)  # S28: row 29 passes; 25-28 are ruling (b)'s  # S25: row 15 left by 0.01 (#80); S20: row 3 left; S18: row 22 crossed its edge by 0.0008
@@ -104,6 +106,7 @@ def test_the_ledger_is_one_since_d170():
     # Row 3 landed at S18, by 0.04, on the kick (D124) and left again at S20, by 0.03, when the kick's
     # constant was re-derived (D128): the bar's (debt #11).
     assert spec.MISSES[3].debt == 11 and spec.MISSES[3].model is None and spec.MISSES[3].since == "S20"
+    # "basic" by name, deliberately (S46, D197): a miss may belong to either model; MISSES is the default's.
     assert {m.model for m in spec.MISSES.values()} <= {None, "basic"}
     assert spec.misses("basic") == dict(spec.MISSES)
     # S27: every recorded miss is unqualified, so the azimuthal model is judged against the same ledger.
@@ -323,7 +326,7 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
     from galaxy.run import run
 
     models, _, _ = prod
-    m = models.get("basic")
+    m = models.get(DEFAULT_MODEL)
     seed_names = [n for n, i in INPUTS.items() if i.kind == "seed"]
     assert len(seed_names) == 4
     # Harmless today: no published quantity depends on more than one seed, so the
