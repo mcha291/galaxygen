@@ -205,10 +205,11 @@ ROUTES: tuple[Route, ...] = (
         "/api/bright",
         "Every disc star above a luminosity, complete (S48, D200): the bright catalogue's stars in the finest cells "
         "(level 3) the (R, phi) window meets, drawn from the luminosity function by an ordered Poisson process per "
-        "cell, so a higher threshold keeps a prefix and a window's stars are a sweep's. n=N (1..200000) returns the N "
-        "brightest, inside view=<16 numbers>'s frustum when one is given (as /api/region takes it); l_min=<Lsun> "
-        "every star above it (refused past 200000 expected). Rows brightest first, each named by cell and rank; the "
-        "header's threshold says what the body is complete above. Stars younger than the cluster census's window "
+        "cell, so a higher grid threshold (every 0.05 dex) keeps a prefix and a window's stars are a sweep's. n=N "
+        "(1..200000) returns the N brightest, inside view=<16 numbers>'s frustum when one is given (as /api/region "
+        "takes it); l_min=<Lsun> every star above it (refused past 200000 expected). Rows brightest first, each named "
+        "by cell and rank (its place in the cell's Gamma order, stable as the threshold drops); the header's threshold "
+        "says what the body is complete above and that the prefix holds by interval (D203). Stars younger than the cluster census's window "
         "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
         "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
         "header.",
@@ -413,32 +414,34 @@ class CellCache:
 class BrightCache:
     """The bright catalogue's finest cells, kept between requests (S48).
 
-    A cell's stars above a threshold are a prefix of its stars above any lower one (``bright.py``'s ordered
-    process), so a cell is held with the lowest threshold it was drawn to and serves any higher one by
-    cutting the prefix whose Γ lies under the higher threshold's expected count; a lower one draws the cell
-    again, longer, from the same streams. Bounded by rows (an empty cell counts as one), least recently used
-    out first. A key names the galaxy (model, grid, resolved inputs, seed); the caller makes it.
+    A cell's stars above a grid threshold are a prefix of its stars above any lower one, in its Γ order
+    (``bright.py``'s ordered process, D203: exact at the grid's thresholds), so a cell is held as drawn to the
+    lowest grid threshold asked so far and serves any higher one by cutting that prefix; a request inside an
+    interval is served from the interval's lower threshold and cut at its own luminosity (``bright.cut_bright``).
+    A lower threshold draws the cell again, longer, from the same streams. Bounded by rows (an empty cell counts
+    as one), least recently used out first. A key names the galaxy (model, grid, resolved inputs, seed); the
+    caller makes it.
     """
 
     def __init__(self, max_rows: int = 2_000_000) -> None:
         self.max_rows = max_rows
-        self._cells: OrderedDict[tuple[str, int], tuple[float, dict[str, np.ndarray], int]] = OrderedDict()
+        self._cells: OrderedDict[tuple[str, int], tuple[int, dict[str, np.ndarray], int]] = OrderedDict()
         self._rows = 0
         self._lock = threading.Lock()
 
     def fetch(self, key: str, galaxy: Any, seed: int, cells: Sequence[int], l_min: float) -> Any:
         """Every star above ``l_min`` in ``cells``, grouped by cell in the order asked, as ``materialise_bright``."""
         cells = [int(c) for c in cells]
-        log_l = math.log10(max(float(l_min), 10.0 ** float(_bright.LOG_L_GRID[0])))
+        k = _bright.interval_of(l_min)
         with self._lock:
             held = {c: self._cells.get((key, c)) for c in cells}
-        missing = [c for c, h in held.items() if h is None or h[0] > log_l]
+        missing = [c for c, h in held.items() if h is None or h[0] > k]
         if missing:
-            made = _bright.materialise_bright(galaxy, seed, missing, l_min)
+            made = _bright.draw_bright(galaxy, seed, missing, k)
             runs = dict(made.counts)
             starts = np.concatenate([[0], np.cumsum([runs.get(c, 0) for c in missing])])
             fresh = {
-                c: (log_l, {name: np.asarray(col)[starts[i]:starts[i + 1]] for name, col in made.items()}, runs.get(c, 0))
+                c: (k, {name: np.asarray(col)[starts[i]:starts[i + 1]] for name, col in made.items()}, runs.get(c, 0))
                 for i, c in enumerate(missing)
             }
             with self._lock:
@@ -457,18 +460,14 @@ class BrightCache:
                 entry = self._cells.pop((key, c), None)
                 if entry is not None:
                     self._cells[(key, c)] = entry
-        ceilings = galaxy.expected(cells, log_l) if cells else np.zeros(0)
-        parts: list[dict[str, np.ndarray]] = []
-        counts: list[tuple[int, int]] = []
-        for c, ceiling in zip(cells, ceilings):
-            _, columns, n = held[c]
-            keep = int(np.searchsorted(columns["gamma"], ceiling, side="left")) if n else 0
-            if keep:
-                parts.append({name: col[:keep] for name, col in columns.items()})
-                counts.append((c, keep))
+        parts = [(c, held[c][1]) for c in cells if held[c][2]]
         if not parts:
             return _bright.materialise_bright(galaxy, seed, [], l_min)
-        return _catalogue.Catalogue.of({name: np.concatenate([p[name] for p in parts]) for name in parts[0]}, counts)
+        drawn = _catalogue.Catalogue.of(
+            {name: np.concatenate([p[name] for _, p in parts]) for name in parts[0][1]},
+            [(c, held[c][2]) for c, _ in parts],
+        )
+        return _bright.cut_bright(drawn, galaxy, l_min)
 
 
 class Query:
@@ -1265,7 +1264,7 @@ class Service:
         faint = 10.0 ** float(_bright.LOG_L_GRID[0])
         if n is not None:
             rows, info = _bright.select_brightest(galaxy, seed, cells, n, view=view, fetch=fetch, pool_max=MAX_BRIGHT_POOL)
-            threshold = {"l_min": info["l_min"], "complete": info["complete"], "why": info["why"]}
+            threshold = {"l_min": info["l_min"], "complete": info["complete"], "why": info["why"], "prefix": _bright.PREFIX}
             used = info["l_min"]
         else:
             used = max(float(l_min), faint)
@@ -1284,7 +1283,7 @@ class Service:
             why = "every star above l_min is in the body"
             if l_min < faint:
                 why += f"; the luminosity function starts at {faint:g} Lsun, so none fainter exists here"
-            threshold = {"l_min": used, "complete": True, "why": why}
+            threshold = {"l_min": used, "complete": True, "why": why, "prefix": _bright.PREFIX}
         log_used = math.log10(max(used, faint))
         columns = [d.name for d in stage.publishes if d.kind.domain == "object"] + ["cell", "rank"]
         lum = np.asarray(rows["bright_star_luminosity"], dtype=float)

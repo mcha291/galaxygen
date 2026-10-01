@@ -237,7 +237,9 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     assert F["bright_star_limit"] == L[-1] == L.min()
     # S48 (D200): every disc star above 3.39e4 Lsun older than 20 Myr is in the default selection; the galaxy holds
     # 3.35e6 such stars above 10^3 Lsun (and 3.5e7 above 10^2, 6.4e4 above 10^4, 3e-4 expected above 10^5).
-    assert F["bright_star_limit"] == pytest.approx(33910.75, rel=1e-6)
+    # S48 (D203): the within-interval draw - 33 910.75 until then; the same 3162 stars by Gamma, the luminosity of
+    # each now uniform across its segment's overlap with its interval. The expected count is the tables' (unmoved).
+    assert F["bright_star_limit"] == pytest.approx(33960.12, rel=1e-6)
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -245,26 +247,32 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     assert set(np.unique(F["bright_star_phase"])) <= set(range(len(br.PHASES)))
 
 
-def test_a_higher_threshold_keeps_a_prefix_cell_by_cell(galaxy, seed, default):
-    """The stars above 2 l_min are the first of those above l_min in every cell, every column the same."""
+def test_a_higher_grid_threshold_keeps_a_prefix_cell_by_cell(galaxy, seed, default):
+    """At grid thresholds (D203) the stars above the higher are, in every cell, the first of its Gamma order -
+    ranks 0..m-1 - and they are the lower set's stars of those ranks, every column the same; the lower set holds
+    no other star above the higher threshold. Rows within a cell come brightest first."""
     cells = _window(default.grid.R)
-    low = br.materialise_bright(galaxy, seed, cells, 2000.0)
-    high = br.materialise_bright(galaxy, seed, cells, 4000.0)
+    k_low, k_high = br.interval_of(10.0 ** 3.3), br.interval_of(10.0 ** 3.6)
+    l_low, l_high = 10.0 ** br.LOG_L_GRID[k_low], 10.0 ** br.LOG_L_GRID[k_high]
+    low = br.materialise_bright(galaxy, seed, cells, l_low)
+    high = br.materialise_bright(galaxy, seed, cells, l_high)
     assert 0 < high.size < low.size
-    starts = {}
-    offset = 0
-    for c, n in low.counts:
-        starts[c] = (offset, n)
-        offset += n
+
+    def by_name(cat):
+        return {(int(c), int(r)): i for i, (c, r) in enumerate(zip(cat["cell"], cat["rank"]))}
+
+    names_low, names_high = by_name(low), by_name(high)
     offset = 0
     for c, n in high.counts:
-        first, held = starts[c]
-        assert n <= held
-        for name in high:
-            assert np.array_equal(np.asarray(high[name])[offset:offset + n], np.asarray(low[name])[first:first + n]), (c, name)
+        assert sorted(int(r) for r in high["rank"][offset:offset + n]) == list(range(n)), c  # a Gamma prefix
+        assert np.all(np.diff(high["bright_star_luminosity"][offset:offset + n]) <= 0.0)  # brightest first
         offset += n
-    assert np.all(np.asarray(high["bright_star_luminosity"]) > 4000.0)
-    assert int((np.asarray(low["bright_star_luminosity"]) > 4000.0).sum()) == high.size
+    for name, i in names_high.items():
+        j = names_low[name]
+        for col in high:
+            assert np.asarray(high[col])[i] == np.asarray(low[col])[j], (name, col)
+    above = {name for name, j in names_low.items() if low["bright_star_luminosity"][j] > l_high}
+    assert above == set(names_high)
 
 
 def test_counts_over_the_whole_disc_are_poisson_about_the_expected_count(galaxy, seed):
@@ -529,22 +537,20 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 
 
 # S48's wiring, measured: the whole disc's bright stars above 10^4 Lsun through rgb (R, V, B) against the expectation
-# from their own budget. The bolometric light holds (z = +0.08); the band light does not - see the xfail below.
-BRIGHT_RGB_OVER_OWN = (0.97696, 0.91533, 0.82598)
+# from their own budget. Until D203 the bolometric light held (z = +0.08) and the band light did not (0.977 / 0.915 /
+# 0.826, z = -3.9 / -14 / -26); S48 (D203): the within-interval draw - 1.0033 / 1.0044 / 1.0041, z = +0.54 / +0.66 / +0.51.
+BRIGHT_RGB_OVER_OWN = (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_own_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
     """(b) the realisation. The catalogue's stars above 10^4 Lsun, summed over the whole disc, against what the
     luminosity function's own budget (light_above_own, band_above_own) expects there: the bolometric light within 4
-    sigma of the realised spread (sigma^2 = sum L^2, a compound Poisson sum) - and the light through rgb, which is the
-    band light, **short of it by 2 / 8 / 17 % in R / V / B** (z = -3.9 / -14 / -26). Pinned as found, not a
-    target: the ruled gate is the xfail below. The cause, measured at S48's wiring: which isochrone a star is put on
-    is right (counts per isochrone chi^2/dof 0.96), where on it is not - the 25-40 Myr isochrones' stars carry 20-37 %
-    too little B per star. `_properties` picks the segment by its stars per dex at the star's exact L, while L follows
-    the count curve read log-linearly across each 0.05-dex threshold interval, so where an isochrone's curve is not
-    log-linear inside an interval (the top of a main sequence, a blue loop's ends) the hot segments are under-drawn;
-    one isochrone alone (log age 7.6, [M/H] +0.05, L drawn on its own curve) reproduces it: B 0.72, K 1.11.
-    The field's budget is 0.8-0.9 % above the stars' own here (debt #126's measure at this threshold)."""
+    sigma of the realised spread (sigma^2 = sum L^2, a compound Poisson sum), and the light through rgb, pinned (the
+    4-sigma gate is the test below). Until D203 the band light was short by 2 / 8 / 17 % in R / V / B: the segment was
+    picked by its stars per dex at an L read log-linearly across the interval, which under-drew the hot segments
+    where an isochrone's count is not log-linear inside an interval; since D203 the segment is drawn by its exact
+    count in the interval and L uniformly across its overlap. The field's budget is 0.8-0.9 % above the stars' own
+    here (debt #126's measure at this threshold)."""
     (h, a), _ = through_rgb
     L = a["bright_star_luminosity"]
     own = float(_expected_bright(galaxy, br.luminosity_function().light_above_own, 4.0))
@@ -559,15 +565,62 @@ def test_the_bright_stars_light_is_their_own_budget_and_their_band_light_is_pinn
     assert field / expected == pytest.approx([1.0077, 1.0084, 1.0094], abs=2e-4)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "S48 wiring: the ruled realisation gate (each filter within 4 sigma of the own budget) fails at z = -3.9 / -14 / -26 "
-    "through R / V / B: the bright catalogue's draw of where on its isochrone a star sits under-draws the hot segments "
-    "(see the test above); not fixed in the wiring row (it moves the published bright-star columns)"))
 def test_the_bright_stars_band_light_is_their_own_budget_within_4_sigma(galaxy, through_rgb):
+    """D203's gate (a strict xfail at S48's wiring): above 10^4 Lsun over the whole disc, the realised light in each
+    of the table's eight bands and through each rgb filter within 4 sigma of the own budget. S48 (D203): the eight
+    bands U..K at 1.0044 / 1.0042 / 1.0043 / 1.0033 / 1.0002 / 0.9971 / 0.9970 / 0.9978 (z = +0.55 / +0.51 / +0.66 /
+    +0.55 / +0.03 / -0.52 / -0.53 / -0.40), until then 0.84 / 0.83 / 0.92 / 0.98 / 1.02 / 1.04 / 1.04 / 1.03."""
     (_, a), _ = through_rgb
-    expected = _band_light(band_nu_l_nu_all(_expected_bright(galaxy, br.luminosity_function().band_above_own, 4.0)), _rgb_curves())
+    tables = br.luminosity_function()
+    expected = _band_light(band_nu_l_nu_all(_expected_bright(galaxy, tables.band_above_own, 4.0)), _rgb_curves())
     z = (a["response"].sum(axis=0) - expected) / np.sqrt((a["response"] ** 2).sum(axis=0))
     assert np.all(np.abs(z) < 4.0), z
+    flux = 10.0 ** (-0.4 * br.magnitudes(a))
+    budget = _expected_bright(galaxy, tables.band_above_own, 4.0)
+    z = (flux.sum(axis=0) - budget) / np.sqrt((flux**2).sum(axis=0))
+    assert np.all(np.abs(z) < 4.0), z
+
+
+def test_the_bolometric_light_at_ten_to_the_three_and_a_half_is_the_own_budget(galaxy, seed, default):
+    """D203's second gate: at 10^3.5 Lsun, where the old draw was 1.2 % low (z = -8 over the whole disc), the stars'
+    light within 4 sigma of what the luminosity function's own budget puts there - here over the 6-10 kpc annulus
+    (the whole disc holds 6.5e5 such stars; S48 (D203) measured it at 1.0007, z = +0.44), and each band too."""
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 2.0 * np.pi)
+    cat = br.materialise_bright(galaxy, seed, cells, 10.0 ** 3.5)
+    L = np.asarray(cat["bright_star_luminosity"])
+    own = float(galaxy.expected(cells, 3.5, "light_own").sum())
+    assert L.size > 1e5 and abs(L.sum() - own) < 4.0 * np.sqrt((L**2).sum())
+    tables = br.luminosity_function()
+    ring, sector = galaxy.locate(cells)
+    mass = np.einsum("c,pc,pcx->px", galaxy.area[ring], galaxy.weights[:, ring, sector], galaxy.mass_cell[:, ring])
+    budget = br.above_at(mass.reshape(2, *tables.count_above.shape[:2]), tables.band_above_own, 3.5).sum(axis=0)
+    flux = 10.0 ** (-0.4 * br.magnitudes(cat))
+    z = (flux.sum(axis=0) - budget) / np.sqrt((flux**2).sum(axis=0))
+    assert np.all(np.abs(z) < 4.0), z
+
+
+def test_one_isochrone_drawn_alone_carries_its_band_budget():
+    """The case D203 was found by: log age 7.6, [M/H] +0.05, 3e5 stars above 10^2 Lsun, each interval by the
+    isochrone's own counts and each star placed by bright.on_isochrone. Until D203: B 0.72, K 1.11 of its budget;
+    S48 (D203): U..K 1.0016 / 1.0017 / 0.9988 / 0.9954 / 0.991 / 0.986 / 0.984 / 0.984, every band within 1.1 sigma,
+    the bolometric 0.997, and no star without a segment in its interval."""
+    tables = br.luminosity_function()
+    a, z = 10, 9
+    assert isochrones().log_ages[a] == pytest.approx(7.6) and isochrones().mhs[z] == pytest.approx(0.05)
+    k0 = int(np.argmin(np.abs(tables.log_l - 2.0)))
+    dn = tables.count_above[a, z, k0:-1] - tables.count_above[a, z, k0 + 1:]
+    rng = np.random.default_rng(7)
+    n = 300_000
+    k = np.clip(k0 + np.searchsorted(np.cumsum(dn) / dn.sum(), rng.random(n), side="right"), k0, tables.log_l.size - 2)
+    placed = br.on_isochrone(a * isochrones().mhs.size + z, k, rng.random(n), rng.random(n), isochrones().mhs.size)
+    assert not placed["fallback"].any()
+    assert np.all((placed["log_l"] >= tables.log_l[k]) & (placed["log_l"] <= tables.log_l[k + 1]))
+    flux = 10.0 ** (-0.4 * placed["mags"])
+    per_star = tables.band_above_own[a, z, k0] / tables.count_above[a, z, k0]
+    zs = (flux.sum(axis=0) - per_star * n) / np.sqrt((flux**2).sum(axis=0))
+    assert np.all(np.abs(zs) < 4.0), zs
+    ratio = flux.sum(axis=0) / (per_star * n)
+    assert ratio[BANDS.index("B")] == pytest.approx(1.0017, abs=2e-4) and ratio[BANDS.index("K")] == pytest.approx(0.9840, abs=2e-4)
 
 
 # S48's wiring, measured: the cluster census's light through rgb (R, V, B) and bolometric, whole disc, against the

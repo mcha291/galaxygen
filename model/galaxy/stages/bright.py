@@ -32,12 +32,20 @@ cell of the hierarchy (level ``MAX_LEVEL``, 65 536 of them). In a cell the expec
 L is Λ(L): the cell's area times the mass formed on each isochrone, averaged over the cell's radial span,
 times ``count_above``, times the cell's azimuthal weight — the pattern's density contrast for stars older
 than ``systems.YOUNG_STAR_AGE`` and, where the model publishes it, ``sfr_modulation`` for the younger ones.
-The cell's stars are a Poisson process in luminosity, ordered: star i, brightest first, has
-Γ_i = E_0 + … + E_i (unit exponentials by inverse CDF from the cell's own stream) and L_i = Λ⁻¹(Γ_i), so
-the stars above any threshold are exactly those with Γ_i < Λ(threshold): a higher threshold is a prefix,
-the count above it is Poisson with mean Λ, and a cell's stars do not depend on which other cells were
-asked for (D60). Each star's isochrone, age, mass, phase, magnitudes and place are then drawn from its own
-streams by inverse CDFs (rule B8). Stars younger than the cluster census's window (its blown-open and
+The cell's stars are a Poisson process in luminosity, ordered: star i has Γ_i = E_0 + … + E_i (unit
+exponentials by inverse CDF from the cell's own stream), and Γ_i fixes its **threshold interval** - the pair
+of grid thresholds its luminosity lies between, from Λ at the thresholds - so the stars above any grid
+threshold are exactly those with Γ_i < Λ(threshold): a higher grid threshold is a prefix in Γ order, the
+count above it is Poisson with mean Λ, and a cell's stars do not depend on which other cells were asked for
+(D60). **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
+counts in the interval, and its luminosity uniformly in log L across the segment's overlap with the
+interval, so every linear quantity of the realised stars - count, bolometric light, each band - has the
+budget's expectation; until D203 the luminosity was Λ⁻¹(Γ_i) read log-linearly across the interval and the
+segment chosen by its density there, which under-drew the hot segments where an isochrone's count is not
+log-linear inside an interval (B 0.83 of the budget above 10⁴ L☉). The cost: the prefix is exact at the
+grid's thresholds (every 0.05 dex), not inside an interval; a threshold inside one is served by drawing to
+the interval's lower threshold and keeping the stars above it, so every star above it is still there. Each
+star's age, mass, phase, magnitudes and place come from its own streams by inverse CDFs (rule B8). Stars younger than the cluster census's window (its blown-open and
 dispersing phases, 20 Myr) are the census's, not this catalogue's; the bulge is not covered and stays in
 the field.
 
@@ -479,6 +487,9 @@ def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mappin
 # --- the ordered process: every disc star above a threshold, per finest cell ---------------------------
 
 DEFAULT_SELECTION = 3162  # the default run's selection: the viewer's default N (10^3.5 stars)
+# What /api/bright's header says of its prefix (D203): exact at the grid's thresholds, a request inside an
+# interval drawn to the interval's lower threshold and cut at its own luminosity.
+PREFIX = "by interval: a higher grid threshold (every 0.05 dex) keeps a prefix of each cell's Gamma order"
 BISECTION_STEPS = 60  # halvings of the one 0.05-dex interval that brackets a count: below a float's step
 MAX_PASSES = 8  # threshold-lowering passes when a realisation falls short of n (A1: bounded)
 RADIUS_STEPS = 8  # intervals a star's radius is inverted over across its cell's span
@@ -490,7 +501,7 @@ PHASES: tuple[str, ...] = (
     "pre_main_sequence", "main_sequence", "subgiant", "red_giant", "core_helium_burning",
     "blue_loop", "red_loop", "early_agb", "thermally_pulsing_agb",
 )
-STREAMS: tuple[str, ...] = ("population", "age", "segment", "radius", "azimuth", "height")
+STREAMS: tuple[str, ...] = ("population", "age", "segment", "luminosity", "radius", "azimuth", "height")
 
 
 def cluster_window(constants: Mapping[str, Any]) -> float:
@@ -510,27 +521,12 @@ def _bracket(log_l: float | np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 def _between(a: np.ndarray, b: np.ndarray, frac: np.ndarray) -> np.ndarray:
     """A non-increasing curve read between two thresholds: log-linear in L where both ends hold something,
-    linear to zero across the last occupied interval, zero past it. :func:`_invert` is its exact inverse."""
+    linear to zero across the last occupied interval, zero past it: the expected count between thresholds."""
     a, b, frac = np.broadcast_arrays(np.asarray(a, dtype=float), np.asarray(b, dtype=float), np.asarray(frac, dtype=float))
     both = (a > 0.0) & (b > 0.0)
     safe_a, safe_b = np.where(both, a, 1.0), np.where(both, b, 1.0)
     logged = np.exp(np.log(safe_a) + frac * (np.log(safe_b) - np.log(safe_a)))
     return np.where(both, logged, np.where(a > 0.0, a * (1.0 - frac), 0.0))
-
-
-def _invert(curve: np.ndarray, gamma: np.ndarray) -> np.ndarray:
-    """log L per star from its Γ on one cell's expected-count curve (K,), non-increasing: the L at which
-    :func:`_between` reads Γ. Every Γ here is below the curve's first value (it was drawn under it)."""
-    x = LOG_L_GRID
-    k = np.clip((curve[None, :] >= gamma[:, None]).sum(axis=1) - 1, 0, x.size - 2)
-    a, b = curve[k], curve[k + 1]
-    both = b > 0.0
-    frac = np.where(
-        both,
-        np.log(gamma / np.where(both, a, 1.0)) / np.where(both, np.log(np.where(both, b, 1.0) / np.where(both, a, 1.0)), 1.0),
-        (a - gamma) / np.where(a > 0.0, a, 1.0),
-    )
-    return x[k] + np.clip(frac, 0.0, 1.0) * (x[k + 1] - x[k])
 
 
 class BrightGalaxy:
@@ -620,6 +616,13 @@ class BrightGalaxy:
             tab[0, ring] * self.weights[0, ring, sector][:, None] + tab[1, ring] * self.weights[1, ring, sector][:, None]
         )
 
+    def at_threshold(self, cells: Sequence[int] | np.ndarray, k: int) -> np.ndarray:
+        """Each cell's expected number of stars above the grid threshold ``LOG_L_GRID[k]``, exactly as
+        :meth:`curves` holds it: what Γ is compared with at a grid threshold (D203)."""
+        ring, sector = self.locate(cells)
+        j = int(k)
+        return self.area[ring] * (self.count_cell[0, ring, j] * self.weights[0, ring, sector] + self.count_cell[1, ring, j] * self.weights[1, ring, sector])
+
     def expected(self, cells: Sequence[int] | np.ndarray, log_l: float, table: str = "count") -> np.ndarray:
         """Each cell's curve read at one log L, between the thresholds as :func:`_between` reads it."""
         ring, sector = self.locate(cells)
@@ -668,16 +671,23 @@ def _gammas(seed: int, cell: int, ceiling: float) -> np.ndarray:
         size *= 2
 
 
-def materialise_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], l_min: float) -> Catalogue:
-    """Every disc star above ``l_min`` (L☉) older than the cluster window, in the finest ``cells``.
+def interval_of(l_min: float) -> int:
+    """The threshold interval holding ``l_min`` (L☉): the index k of the grid threshold at or below it, the one
+    the catalogue draws to before cutting at ``l_min`` itself (D203: the prefix is exact at grid thresholds)."""
+    k, _ = _bracket(math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0])))
+    return int(k)
 
-    Rows are grouped by cell in the order asked, brightest first within each; ``counts`` is the
-    ``(cell, n)`` layout. Besides the declared columns each row carries ``cell``, ``rank`` (its place in
-    its cell's ordered process: the star's name) and ``gamma`` (its Γ, what a cache cuts a prefix by).
-    """
+
+def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -> Catalogue:
+    """Every disc star older than the cluster window above the grid threshold ``LOG_L_GRID[k]`` in the finest
+    ``cells``, in each cell's Γ order (``rank`` 0, 1, …): the stars with Γ_i below the cell's expected count at
+    that threshold, exactly. Γ_i fixes the star's interval — the pair of grid thresholds its luminosity lies
+    between, by the cell's expected count at the thresholds — and the order between intervals; within its
+    interval the star's part, isochrone and segment are drawn by their exact counts in the interval and its
+    luminosity uniformly in log L across the segment's overlap with it (D203). Besides the declared columns each
+    row carries ``cell``, ``rank`` and ``gamma`` (what a cache cuts a prefix by)."""
     cells = [int(c) for c in cells]
-    log_min = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
-    ceilings = galaxy.expected(cells, log_min) if cells else np.zeros(0)
+    ceilings = galaxy.at_threshold(cells, int(k)) if cells else np.zeros(0)
     drawn = [(c, _gammas(seed, c, float(lam))) if lam > 0.0 else (c, np.zeros(0)) for c, lam in zip(cells, ceilings)]
     drawn = [(c, g) for c, g in drawn if g.size]
     counts = tuple((c, int(g.size)) for c, g in drawn)
@@ -687,11 +697,41 @@ def materialise_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], l_
     rank = np.concatenate([np.arange(g.size, dtype=np.int64) for _, g in drawn])
     gamma = np.concatenate([g for _, g in drawn])
     curves = galaxy.curves([c for c, _ in drawn])
-    log_l = np.concatenate([_invert(curves[j], g) for j, (_, g) in enumerate(drawn)])
+    # The interval: the last threshold whose expected count is at least Γ (the curve is non-increasing).
+    interval = np.concatenate([
+        np.clip((curves[j][None, :] >= g[:, None]).sum(axis=1) - 1, 0, LOG_L_GRID.size - 2) for j, (_, g) in enumerate(drawn)
+    ])
     u = {name: np.concatenate([_seeds.rng(seed, "bright", c, name).random(g.size) for c, g in drawn]) for name in STREAMS}
-    out = _properties(galaxy, cell, log_l, u)
+    out = _properties(galaxy, cell, interval, u)
     out.update({"cell": cell, "rank": rank, "gamma": gamma})
     return Catalogue.of(out, counts)
+
+
+def cut_bright(drawn: Catalogue, galaxy: BrightGalaxy, l_min: float) -> Catalogue:
+    """The stars of a :func:`draw_bright` catalogue (each cell's rows in Γ order, drawn to a grid threshold at or
+    below ``l_min``'s interval) brighter than ``l_min``: in each cell the Γ prefix of ``l_min``'s interval, then
+    those of its stars above ``l_min`` itself, brightest first within each cell. Every disc star above ``l_min``
+    in the cells is in it."""
+    if not drawn.counts:
+        return Catalogue.of(_empty(), ())
+    k = interval_of(l_min)
+    cell_ids = [c for c, _ in drawn.counts]
+    ceiling = np.repeat(galaxy.at_threshold(cell_ids, k), [n for _, n in drawn.counts])
+    position = np.repeat(np.arange(len(cell_ids)), [n for _, n in drawn.counts])
+    lum = np.asarray(drawn["bright_star_luminosity"], dtype=float)
+    keep = np.flatnonzero((np.asarray(drawn["gamma"]) < ceiling) & (lum > float(l_min)))
+    keep = keep[np.lexsort((-lum[keep], position[keep]))]
+    held = np.bincount(position[keep], minlength=len(cell_ids))
+    counts = tuple((c, int(n)) for c, n in zip(cell_ids, held) if n)
+    return Catalogue.of({name: np.asarray(col)[keep] for name, col in drawn.items()}, counts)
+
+
+def materialise_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], l_min: float) -> Catalogue:
+    """Every disc star above ``l_min`` (L☉) older than the cluster window, in the finest ``cells``: drawn to the
+    grid threshold of ``l_min``'s interval and cut at ``l_min`` (:func:`draw_bright`, :func:`cut_bright`). Rows are
+    grouped by cell in the order asked, brightest first within each; ``rank`` is the star's place in its cell's Γ
+    order, which a lower threshold does not change."""
+    return cut_bright(draw_bright(galaxy, seed, cells, interval_of(l_min)), galaxy, l_min)
 
 
 def _empty() -> dict[str, np.ndarray]:
@@ -700,15 +740,52 @@ def _empty() -> dict[str, np.ndarray]:
     return cols | {"cell": e.astype(np.int64), "rank": e.astype(np.int64), "gamma": e}
 
 
-def _properties(galaxy: BrightGalaxy, cell: np.ndarray, log_l: np.ndarray, u: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
-    """Each star's isochrone, age, place on the isochrone and place in its cell, given its luminosity."""
+def on_isochrone(iso: int, k: np.ndarray, u_segment: np.ndarray, u_luminosity: np.ndarray, n_mh: int) -> dict[str, np.ndarray]:
+    """Stars of one isochrone in threshold intervals ``k``: each star's segment by the segments' exact counts in its
+    interval (an inverse CDF), its log L uniform across that segment's overlap with the interval, and its initial
+    mass, log T_eff, eight magnitudes and phase read at that point of the segment (D203). ``fallback`` marks a star
+    whose isochrone holds no star in its interval to the tables' rounding (it is put at the interval's middle on the
+    segment nearest it)."""
+    seg = segments(*divmod(int(iso), n_mh))
+    y0, y1 = seg.log_l[:, 0], seg.log_l[:, 1]
+    d = y1 - y0
+    lo_k, hi_k = LOG_L_GRID[k], LOG_L_GRID[k + 1]
+    a0, b0 = _above(seg.log_l, lo_k)
+    a1, b1 = _above(seg.log_l, hi_k)
+    count = (seg.number[:, None] * np.maximum((b0 - a0) - (b1 - a1), 0.0)).T  # (n, n_seg): each segment's stars in the interval
+    cdf = np.cumsum(count, axis=1)
+    fallback = cdf[:, -1] <= 0.0
+    j = np.clip((cdf < u_segment[:, None] * cdf[:, -1:]).sum(axis=1), 0, d.size - 1)
+    if fallback.any():
+        middle = 0.5 * (lo_k + hi_k)[fallback]
+        gap = np.abs(np.clip(middle[:, None], np.minimum(y0, y1), np.maximum(y0, y1)) - middle[:, None])
+        j[fallback] = np.argmin(gap, axis=1)
+    flat = d[j] == 0.0
+    lo = np.maximum(np.minimum(y0[j], y1[j]), lo_k)
+    hi = np.minimum(np.maximum(y0[j], y1[j]), hi_k)
+    hi = np.maximum(hi, lo)
+    log_l = np.where(flat, y0[j], lo + u_luminosity * (hi - lo))
+    s = np.clip(np.where(flat, 0.5, (log_l - y0[j]) / np.where(flat, 1.0, d[j])), 0.0, 1.0)
+    log_l = np.where(fallback, y0[j] + s * d[j], log_l)
+    neg = seg.neg_mag[j, 0] + s[:, None] * (seg.neg_mag[j, 1] - seg.neg_mag[j, 0])
+    return {
+        "log_l": log_l,
+        "mass": seg.mass[j, 0] + s * (seg.mass[j, 1] - seg.mass[j, 0]),
+        "log_teff": seg.log_teff[j, 0] + s * (seg.log_teff[j, 1] - seg.log_teff[j, 0]),
+        "mags": -2.5 * neg,
+        "label": np.where(s < 0.5, seg.label[j, 0], seg.label[j, 1]),
+        "fallback": fallback,
+    }
+
+
+def _properties(galaxy: BrightGalaxy, cell: np.ndarray, k: np.ndarray, u: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """Each star's isochrone, age, luminosity, place on the isochrone and place in its cell, given its interval."""
     tab = isochrones()
     ring, sector = galaxy.locate(cell)
-    k, _ = _bracket(log_l)
-    n_star = log_l.size
+    n_star = k.size
 
     # Which part and which isochrone: ∝ the part's azimuthal weight times the mass on each isochrone times the
-    # stars it puts in this threshold interval (the differential luminosity function there).
+    # stars it puts in this threshold interval - exact counts, the same partition the interval's count is.
     in_bin = galaxy.count_cell[:, ring, k] - galaxy.count_cell[:, ring, k + 1]  # (2, n)
     w = galaxy.weights[:, ring, sector] * np.maximum(in_bin, 0.0)
     total = w.sum(axis=0)
@@ -738,38 +815,18 @@ def _properties(galaxy: BrightGalaxy, cell: np.ndarray, log_l: np.ndarray, u: Ma
     hi = np.where(empty, lo, hi)
     age = 10.0 ** (lo + u["age"] * (hi - lo)) / 1e9
 
-    # Where on the isochrone: among its segments whose span in log L holds the star's, by their stars per dex
-    # there (an inverse CDF over those segments); the star's L is exact, the rest read along the segment.
+    # Where on the isochrone, and so the star's luminosity: its segment by exact counts in the interval, its
+    # log L uniform across the segment's overlap with the interval (on_isochrone, D203).
+    log_l = np.empty(n_star)
     mass = np.empty(n_star)
     log_teff = np.empty(n_star)
     mags = np.empty((n_star, len(BANDS)))
     label = np.empty(n_star)
     for g in np.unique(iso):
         sel = np.flatnonzero(iso == g)
-        seg = segments(*divmod(int(g), galaxy.n_mh))
-        y0, y1 = seg.log_l[:, 0], seg.log_l[:, 1]
-        x = log_l[sel][:, None]
-        d = y1 - y0
-        holds = (np.minimum(y0, y1) <= x) & (x <= np.maximum(y0, y1)) & (d != 0.0)
-        density = np.where(holds, seg.number / np.where(d != 0.0, np.abs(d), 1.0), 0.0)
-        none = density.sum(axis=1) <= 0.0
-        if none.any():  # nothing spans this L exactly: the segments' stars in its threshold interval, clamped
-            kk = k[sel][none]
-            a0, b0 = _above(seg.log_l, LOG_L_GRID[kk])
-            a1, b1 = _above(seg.log_l, LOG_L_GRID[kk + 1])
-            density[none] = (seg.number[:, None] * ((b0 - a0) - (b1 - a1))).T
-        cdf = np.cumsum(density, axis=1)
-        j = np.clip((cdf < u["segment"][sel, None] * cdf[:, -1:]).sum(axis=1), 0, d.size - 1)
-        s = np.where(d[j] != 0.0, (log_l[sel] - y0[j]) / np.where(d[j] != 0.0, d[j], 1.0), 0.5)
-        s = np.clip(s, 0.0, 1.0)
-        on_track = y0[j] + s * d[j]
-        mass[sel] = seg.mass[j, 0] + s * (seg.mass[j, 1] - seg.mass[j, 0])
-        log_teff[sel] = seg.log_teff[j, 0] + s * (seg.log_teff[j, 1] - seg.log_teff[j, 0])
-        neg = seg.neg_mag[j, 0] + s[:, None] * (seg.neg_mag[j, 1] - seg.neg_mag[j, 0])
-        # The magnitudes are the isochrone's at that point, moved by the bolometric difference where the
-        # point's L is not the star's (a clamped segment): all eight bands by the same amount.
-        mags[sel] = -2.5 * neg - 2.5 * (log_l[sel] - on_track)[:, None]
-        label[sel] = np.where(s < 0.5, seg.label[j, 0], seg.label[j, 1])
+        placed = on_isochrone(int(g), k[sel], u["segment"][sel], u["luminosity"][sel], galaxy.n_mh)
+        log_l[sel], mass[sel], log_teff[sel] = placed["log_l"], placed["mass"], placed["log_teff"]
+        mags[sel], label[sel] = placed["mags"], placed["label"]
 
     # Radius: the cell's span, by inverting the surface density of the star's own part and threshold interval
     # (linear between grid radii) times R. Azimuth: the cell's span, by the part's azimuthal law at that radius.
@@ -930,13 +987,14 @@ BRIGHT_METALLICITY = _column(
     "of the history step that formed it, where its stars are now.", Ramp("RdBu", lo=-2.0, hi=0.5), zero=False)
 BRIGHT_MASS = _column(
     "bright_star_mass", "Initial mass", "Msun",
-    "Read along the isochrone at the point whose luminosity is the star's: the segment chosen by its stars "
-    "per dex of luminosity there.", Ramp("inferno", scale="log"))
+    "Read along the isochrone at the star's point: the segment chosen by its exact count of stars in the "
+    "star's luminosity interval, the point by the star's luminosity on it.", Ramp("inferno", scale="log"))
 BRIGHT_LUMINOSITY = _column(
     "bright_star_luminosity", "Luminosity", "Lsun",
-    "Bolometric, exact from the luminosity function: the star's place in its cell's ordered Poisson process "
-    "inverted through the cell's expected count above each luminosity, so every disc star brighter than any "
-    "threshold is in the catalogue and a higher threshold keeps a prefix of it. A point painted by this through a "
+    "Bolometric, from the luminosity function: the star's place in its cell's ordered Poisson process fixes the "
+    "0.05-dex interval of luminosity it lies in, and within it the luminosity is uniform in log L across the "
+    "isochrone segment its exact count there chose, so every disc star brighter than any threshold is in the "
+    "catalogue and a higher grid threshold keeps a prefix of it. A point painted by this through a "
     "blackbody's share at the star's temperature is 4-15% too bright through optical filters (D201, debt #114: a star "
     "is nearly a blackbody, a cluster is not); /api/bright with filters= serves the star's own band light through the "
     "viewer's curves (S48), which the viewer draws by once its star-first mode is built.", Ramp("inferno", scale="log"))
@@ -949,8 +1007,8 @@ BRIGHT_TEMPERATURE = _column(
 def _magnitude_column(band: str) -> FieldDecl:
     return _column(
         f"bright_star_magnitude_{band.lower()}", f"Absolute {band} magnitude M_{band}", "mag",
-        f"The isochrone's {band}-band absolute magnitude (Vega) at the star's mass, moved by the difference between "
-        "the star's luminosity and the isochrone's at that point where the two differ. Intrinsic. With the other seven "
+        f"The isochrone's {band}-band absolute magnitude (Vega) at the star's point on its segment, where its "
+        "luminosity is the star's own. Intrinsic. With the other seven "
         "it is what /api/bright's response (filters=, S48) puts through the viewer's curves.",
         Ramp("inferno", lo=-10.0, hi=5.0), zero=False)
 
