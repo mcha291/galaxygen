@@ -7098,5 +7098,5 @@ built `ghcr.io/mcha291/galaxygen:7e0338d` (and `:83d2ca2`) on the push, so the o
 
 **The gate.** `test_s45_diagnosis` and `test_nebular` green; no model number moved, so specs stay 12 / 20 / 5 of 37 (re-run
 and read); `test_audit`'s register pins moved to 63 / 44 with #124 in the carried list; the full suite backgrounded with
-its own line, `bootstrap.py` run first (S44's lesson): **{{SUITE}}**. Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
+its own line, `bootstrap.py` run first (S44's lesson): **`EXIT=0`, every file green (bootstrap run first, the hooks path at `tools/hooks`); specs re-read 12 / 20 / 5 of 37 in both models, row 37 the recorded miss at −0.103506**. Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
 (the blind direct-method reading first, then the chemistry ruling). Tag `s45` on the merge (C2e), the MANUAL_TODO row.
