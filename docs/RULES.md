@@ -213,8 +213,16 @@ A session runs it and reads pass/fail.
 
 **D1. A lock means "do not re-roll this."** It can never mean "freeze this
 against upstream changes." Confirmed controls are **disabled rather than
-hidden**; reopening a stage discards every later one; a page load lands on stage
-one.
+hidden**; reopening a stage discards every later one; **the viewer lands on the
+Galaxy view of the default galaxy** — every checkpoint confirmed at its default
+(A5: the defaults are the Milky Way) — **and "Edit galaxy" opens the staged
+process with the confirmations kept**, from which reopening a stage discards the
+later ones as before. *Amended 2026-10-01 on the owner's word — "starts on the
+galaxy view of a default galaxy … an edit galaxy button that opens up the staged
+generation process"* `[verified: DECISIONS.md D198]`. **Until D198 the rule read:
+a page load lands on stage one.** The reference client in `interface/` still does,
+as the API's own demonstration of the staged flow, and `tests/test_viewer.py`
+pins that; the amendment is the React viewer's.
 
 **D2. Exactly one `fetch` in the client transport, asserted in CI.**
 *Justification: instrumentation that must be remembered in N places will be

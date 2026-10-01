@@ -7153,3 +7153,36 @@ since; the record says so rather than guessing.
 (the registry, the viewer's start, the fixtures, the pins) and `session-46-march` (`FieldVolume.tsx` and its tests) —
 disjoint files, merged `--no-ff` into `session-46` after review; the image-level test (RENDER_PLAN_II §2 E2) is the next
 row, not this one. Numbers: debts from #125, decisions from D198, board rows from 46 (this row), acceptance rows from 38.
+
+### D198. S46: the viewer lands on the Galaxy view of the default galaxy, and an "Edit galaxy" button opens the staged generation process — rule D1 amended on the owner's word
+
+**The owner, in chat, on 2026-10-01: "please change the frontend so that it starts on the galaxy view of a default
+galaxy. give the side panel an edit galaxy button that opens up the staged generation process."** Written before any
+code moved (D113).
+
+**The rule.** D1's last clause, "a page load lands on stage one", becomes: the viewer lands on the Galaxy view of the
+default galaxy — every checkpoint confirmed at its default values (A5: launching with nothing touched generates the
+Milky Way) — and "Edit galaxy" opens the staged process with the confirmations kept; reopening a stage still discards
+every later one, and confirmed controls are still disabled rather than hidden. The old text stays inside the rule as
+history. The reference client in `interface/` keeps the stage-one landing as the API's demonstration of the flow, and
+`tests/test_viewer.py` keeps pinning it: the amendment is the React viewer's, and `interface/flow.js` (the flow logic
+both clients share) does not change — the viewer confirms every checkpoint through `flow.confirm` once the model's
+declarations arrive, so what the user sees as "generated" is exactly the state six clicks would have reached.
+
+**What the build does.** (i) On load, once `useWorkflow` has the declarations, confirm every checkpoint at the defaults
+(the same `confirm` the button calls, applied `last` times, or one `flow.confirm` loop — not a hand-built state), and
+land on the Galaxy tab; the Galaxy tab's status line says "Generating galaxy." while the sample and the render load, as
+it does today. (ii) The Preview tab is no longer disabled when the galaxy is generated: it shows the workflow panel with
+every checkpoint locked and its reopen affordance as today, and the checkpoint scene of whichever checkpoint is
+selected; its title changes accordingly. The automatic switch "preview → galaxy when generated" goes (it would send the
+user straight back); "galaxy → preview when not generated" stays (reopening un-generates, and the Galaxy tab closes as
+today). (iii) The Galaxy tab's side panel gains an **Edit galaxy** button at the top of its controls, which switches to
+the Preview tab; nothing is discarded by the switch. (iv) A model switch keeps its present behaviour (confirmations up
+to the first differing checkpoint are kept). (v) vitest: a case that the initial flow after declarations is generated
+(confirmed = last), that "Edit galaxy" leaves `confirmed` untouched, and that reopening still discards; the existing
+`logic.test.ts` cases stand. *Chosen against:* a hand-built "generated" state (it would drift from `flow.js`); hiding
+the workflow behind a modal (the staged process is the product's own explanation of the galaxy, and D1 says controls
+are shown disabled, not hidden); auto-generating only when a stored flag says so (the owner asked for the default).
+*Cost:* the first frame now waits on the full pipeline (basic ~2.8 s cold, the render 2 s) where it waited on
+checkpoint one's; the status line covers it. Built by an Opus builder after `session-46-default` merges (both touch
+`useWorkflow.ts` and `App.tsx`).
