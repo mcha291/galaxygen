@@ -8,17 +8,23 @@ import {
   CIRCLE_SEGMENTS,
   CLOUD_MIN_PX,
   FIELD_LAYERS,
-  WHERE_PER_TAU,
+  GREY_STOPS,
+  WHERE_LEVEL,
+  WHERE_STOPS,
   brightestLayers,
   cellOutlines,
   cloudColors,
   cloudMarkerPx,
+  depthPeak,
   diagnosticOn,
-  dustTint,
+  dustRamp,
   marchWanted,
   rowsInWindow,
+  whereLevel,
+  whereTint,
 } from "./components";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
+import { layerShare } from "./regimes";
 import { TUNING_DEFAULTS } from "./tuning";
 
 // The model's own greys and magma stops (model/galaxy/core/cmaps.py), as /api/fields publishes them.
@@ -34,9 +40,12 @@ const META = {
   },
 } as unknown as FieldsPayload;
 
+const OFF = { stars: 0, gas: 0, dust: 0, dustDepth: 0, where: 0, whereStops: GREY_STOPS };
+
 describe("the march's layers (D205)", () => {
   it("are all on in the field, the dust acting, nothing diagnostic", () => {
-    expect(FIELD_LAYERS).toEqual({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: [0, 0, 0] });
+    expect(FIELD_LAYERS).toEqual({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: 0, whereStops: GREY_STOPS });
+    expect(GREY_STOPS.length).toBe(WHERE_STOPS);
   });
 
   it("leave a sub-step's light and depth bit for bit the S46 arithmetic at the field's values", () => {
@@ -45,6 +54,8 @@ describe("the march's layers (D205)", () => {
     const f = Math.fround;
     const mul = (a: number, b: number) => f(f(a) * f(b));
     const L = FIELD_LAYERS;
+    const level = whereLevel(L.where, 3.2, LIGHT_PER_LSUN_PC2);
+    expect(level).toBe(0);
     for (const [bulge, n, col, plane, scat, therm, hii, dig, ring] of [
       [3.7e-3, 3, 0.0123, 812.5, 4.1, 0.02, 63.1, 5.5, 0.71],
       [1e-9, 8, 7.9e-7, 1e-3, 0, 0, 1e5, 0, 2.5],
@@ -58,43 +69,92 @@ describe("the march's layers (D205)", () => {
       const tau = mul(ring, col);
       expect(mul(tau, L.dustDepth)).toBe(tau);
       const emitted = f(f(plane * col) + f(hii * col) + f(dig * col));
-      expect(f(emitted + mul(L.where[0], f(tau / 3)))).toBe(emitted);
+      const tint = whereTint(L.whereStops, 0);
+      expect(f(emitted + mul(mul(level, tint[0]), f(tau / 3)))).toBe(emitted);
     }
   });
 
   it("are all off in the brightest mode by default, and the march is not mounted", () => {
     expect(marchWanted(TUNING_DEFAULTS)).toBe(false);
     expect(diagnosticOn(TUNING_DEFAULTS)).toBe(false);
-    expect(brightestLayers(TUNING_DEFAULTS, [1, 1, 1])).toEqual({ stars: 0, gas: 0, dust: 0, dustDepth: 0, where: [0, 0, 0] });
+    expect(brightestLayers(TUNING_DEFAULTS, dustRamp(META))).toEqual(OFF);
   });
 
   it("switch each layer on at its intensity; the dust's intensity never scales its depth", () => {
     const t = { ...TUNING_DEFAULTS, compStars: true, compGas: true, compDust: true, starsIntensity: 2, gasIntensity: 0.5, dustIntensity: 4 };
-    expect(brightestLayers(t, [1, 1, 1])).toEqual({ stars: 2, gas: 0.5, dust: 4, dustDepth: 1, where: [0, 0, 0] });
+    expect(brightestLayers(t, dustRamp(META))).toEqual({ ...OFF, stars: 2, gas: 0.5, dust: 4, dustDepth: 1 });
     expect(marchWanted(t)).toBe(true);
     expect(diagnosticOn(t)).toBe(false);
   });
 
-  it("draw the dust where it is in one tint per unit depth, and dim nothing", () => {
+  it("draw the dust where it is at its intensity, dimming nothing, and nothing without a declared ramp", () => {
     const t = { ...TUNING_DEFAULTS, compDust: true, dustReading: "where" as const, dustIntensity: 2 };
-    const layers = brightestLayers(t, [1, 0.5, 0.25]);
-    expect(layers).toEqual({ stars: 0, gas: 0, dust: 0, dustDepth: 0, where: [800, 400, 200] });
-    // A column of unit depth draws at unit linear intensity at zero stops and intensity 1: WHERE_PER_TAU × the field's gain.
-    expect(WHERE_PER_TAU * LIGHT_PER_LSUN_PC2).toBe(1);
+    expect(brightestLayers(t, dustRamp(META))).toEqual({ ...OFF, where: 2 });
+    expect(brightestLayers(t, null)).toEqual(OFF);
     expect(diagnosticOn(t)).toBe(true);
     expect(diagnosticOn({ ...TUNING_DEFAULTS, compClouds: true })).toBe(true);
     expect(diagnosticOn({ ...TUNING_DEFAULTS, compCells: true })).toBe(true);
   });
+});
 
-  it("take the dust's tint from its declared ramp, at the end that draws on black", () => {
-    expect(dustTint(META)).toEqual({ field: "dust_extinction_v", tint: [1, 1, 1] });
-    const reversed = { ...META, cmaps: { ...META.cmaps, greys: { stops: ["#000000", "#808080"], diverging: false } } } as unknown as FieldsPayload;
-    const g = srgbToLinear(0x80 / 255);
-    expect(dustTint(reversed)!.tint).toEqual([g, g, g]);
-    expect(dustTint({ fields: META.fields.slice(1), cmaps: META.cmaps } as FieldsPayload)!.field).toBe("dust_surface_density");
-    expect(dustTint({ fields: [], cmaps: {} } as unknown as FieldsPayload)).toBeNull();
+describe("the dust diagnostic's normalisation (a display choice)", () => {
+  // Three R cells of the ring texture's depth row (RGBA): channel means 0.5, 3.2 and 1.
+  const rings = new Float32Array([0.6, 0.5, 0.4, 0, 3.6, 3.2, 2.8, 0, 1, 1, 1, 0, /* the next row, not depth */ 99, 99, 99, 0]);
+
+  it("is the depth ring's largest channel-mean face-on optical depth", () => {
+    expect(depthPeak(rings, 3)).toBeCloseTo(3.2, 6);
+    expect(depthPeak(new Float32Array(12), 3)).toBe(0);
+    expect(depthPeak(new Float32Array([Number.NaN, 1, 1, 0]), 1)).toBe(0);
+  });
+
+  it("draws the densest ring's face-on column at WHERE_LEVEL × intensity, before tone mapping, at zero stops", () => {
+    expect(WHERE_LEVEL).toBe(0.5);
+    const peak = depthPeak(rings, 3);
+    // A face-on ray takes the whole layer's column, Σ cDust = 1 (regimes.ts layerShare over all heights), so τ = peak;
+    // the march multiplies by the field's gain, LIGHT_PER_LSUN_PC2 at a field gain of 1 and zero stops.
+    expect(layerShare(-1e3, 1e3, 0.2)).toBeCloseTo(1, 8); // tanh clamped at ±10: 1 − 4e−9
+    for (const intensity of [1, 0.25, 4]) {
+      const drawn = whereLevel(intensity, peak, LIGHT_PER_LSUN_PC2) * peak * whereTint(GREY_STOPS, 1)[0] * LIGHT_PER_LSUN_PC2;
+      expect(drawn).toBeCloseTo(WHERE_LEVEL * intensity, 12);
+    }
+    expect(whereLevel(1, 0, LIGHT_PER_LSUN_PC2)).toBe(0); // no dust: nothing drawn, no division by zero
+    expect(whereLevel(0, 3.2, LIGHT_PER_LSUN_PC2)).toBe(0);
+  });
+
+  it("is painted by a declared ramp: a coloured one read at τ / τ_peak, grey ones kept grey", () => {
+    // The model's two dust ramps are both greys: dust_surface_density's is kept, every stop white.
+    expect(dustRamp(META)).toEqual({ field: "dust_surface_density", stops: GREY_STOPS, coloured: false });
+    // A coloured dust_extinction_v ramp wins; its stops are its cmap's, as linear light, from τ = 0 to the peak.
+    const coloured = {
+      ...META,
+      fields: [{ name: "dust_extinction_v", ramp: { kind: "ramp", cmap: "magma", scale: "linear", lo: null, hi: null } }, ...META.fields.slice(1)],
+    } as unknown as FieldsPayload;
+    const r = dustRamp(coloured)!;
+    expect(r.field).toBe("dust_extinction_v");
+    expect(r.coloured).toBe(true);
+    expect(r.stops.length).toBe(WHERE_STOPS);
+    expect(r.stops[0][2]).toBeCloseTo(srgbToLinear(4 / 255), 9);
+    expect(r.stops[WHERE_STOPS - 1][0]).toBeCloseTo(srgbToLinear(0xfc / 255), 9);
+    // Grey first, coloured second: the coloured one is used.
+    const second = {
+      ...META,
+      fields: [META.fields[0], { name: "dust_surface_density", ramp: { kind: "ramp", cmap: "magma", scale: "log", lo: null, hi: null } }],
+    } as unknown as FieldsPayload;
+    expect(dustRamp(second)!.field).toBe("dust_surface_density");
+    expect(dustRamp(second)!.coloured).toBe(true);
+    expect(dustRamp({ fields: [], cmaps: {} } as unknown as FieldsPayload)).toBeNull();
+  });
+
+  it("reads the stops linearly, clamped at the ramp's ends (the shader's whereTint)", () => {
+    const stops = Array.from({ length: WHERE_STOPS }, (_, i) => [i, 2 * i, 0] as [number, number, number]);
+    expect(whereTint(stops, 0)).toEqual([0, 0, 0]);
+    expect(whereTint(stops, 1)).toEqual([7, 14, 0]);
+    expect(whereTint(stops, 2)).toEqual([7, 14, 0]);
+    expect(whereTint(stops, -1)).toEqual([0, 0, 0]);
+    expect(whereTint(stops, 0.5)[0]).toBeCloseTo(3.5, 12);
   });
 });
+
 
 describe("the cell outlines", () => {
   it("are the level-0 grid: 33 circles from R.lo to R.hi and 32 spokes, in the disc plane", () => {

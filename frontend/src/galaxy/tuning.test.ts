@@ -87,8 +87,8 @@ describe("tuning defaults (D199)", () => {
     // source differs only where the uniforms enter: S47's declarations, the sub-sample clamp's bound (8.0
     // then, subMax = 8 now) and the dither's switch (dither = 1 takes the same hash); and S50's (D205)
     // component layers: their declarations, each layer's multiplier (1 in the field: components.ts
-    // FIELD_LAYERS), the dust's depth switch (1) and the "where it is" term (its tint 0, so it adds zero).
-    // Each edit is undone by exactly one replacement, and each replacement must find its edit.
+    // FIELD_LAYERS), the dust's depth switch (1) and the "where it is" term and its ramp function (its level
+    // 0, so it adds zero). Each edit is undone by exactly one replacement, and each must find its edit.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
     const edits: [RegExp | string, string][] = [
@@ -96,17 +96,18 @@ describe("tuning defaults (D199)", () => {
       ["1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`],
       [/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;"],
       [
-        /\n {2}\/\/ The component layers \(D205[^\n]*\n {2}\/\/[^\n]*\n {2}\/\/[^\n]*\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform vec3 dustWhere;/,
+        /\n {2}\/\/ The component layers \(D205[^\n]*(?:\n {2}\/\/[^\n]*){3}\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform float dustWhere;\n {2}uniform float wherePeak;\n {2}uniform vec3 whereStops\[\d+\];/,
         "",
       ],
+      [/\n\n {2}\/\/ The dust diagnostic's ramp \(D205\)[^\n]*\n {2}vec3 whereTint\(float t\) \{[\s\S]*?\n {4}return lo \+ \(hi - lo\) \* \(x - float\(k\)\);\n {2}\}/, ""],
       ["bulge * starsGain / float(n);", "bulge / float(n);"],
       ["starsHeight, sub) * starsGain;", "starsHeight, sub);"],
       ["hiiHeight, sub) * gasGain;", "hiiHeight, sub);"],
       ["digHeight, sub) * gasGain;", "digHeight, sub);"],
       [/(readRing\(rp\.x, \d\.0\)\) \* cDust) \* dustGain;/, "$1;"],
       [
-        /vec3 tau = (readRing\(rp\.x, \d\.0\) \* cDust);\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}emitted \+= dustWhere \* \(\(tau\.r \+ tau\.g \+ tau\.b\) \/ 3\.0\);\n {10}depth = tau \* dustDepth;/,
-        "depth = $1;",
+        /vec3 ring = (readRing\(rp\.x, \d\.0\));\n {10}vec3 tau = ring \* cDust;\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}\/\/[^\n]*\n {10}emitted \+= dustWhere \* whereTint\(\(ring\.r \+ ring\.g \+ ring\.b\) \/ 3\.0 \* wherePeak\) \* \(\(tau\.r \+ tau\.g \+ tau\.b\) \/ 3\.0\);\n {10}depth = tau \* dustDepth;/,
+        "depth = $1 * cDust;",
       ],
     ];
     let undone = now;

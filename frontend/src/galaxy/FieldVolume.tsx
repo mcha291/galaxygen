@@ -27,7 +27,7 @@ import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArray
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
-import { FIELD_LAYERS, type MarchLayers } from "./components";
+import { FIELD_LAYERS, type MarchLayers, WHERE_STOPS, depthPeak, whereLevel } from "./components";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -121,13 +121,16 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform vec4 regionWindow;
   uniform float hiiFade;
   // The component layers (D205, S50): each emitting layer's multiplier, the dust's depth switch and the
-  // "where it is" tint per unit optical depth. The field's are 1, 1, 1, 1 and 0 (components.ts FIELD_LAYERS):
-  // every term below is multiplied by one or has zero added, so the field draws as before, to the bit.
+  // "where it is" diagnostic's level per unit optical depth, its ramp's position per unit ring depth (1 / the
+  // peak) and its ramp. The field's are 1, 1, 1, 1 and 0 (components.ts FIELD_LAYERS): every term below is
+  // multiplied by one or has zero added, so the field draws as before, to the bit.
   uniform float starsGain;
   uniform float gasGain;
   uniform float dustGain;
   uniform float dustDepth;
-  uniform vec3 dustWhere;
+  uniform float dustWhere;
+  uniform float wherePeak;
+  uniform vec3 whereStops[${WHERE_STOPS}];
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -178,6 +181,18 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     float hi = phase[1];
     for (int n = 0; n < ${PHASE_POINTS - 1}; n++) {
       if (n == k) { lo = phase[n]; hi = phase[n + 1]; }
+    }
+    return lo + (hi - lo) * (x - float(k));
+  }
+
+  // The dust diagnostic's ramp (D205), components.ts whereTint line for line: its stops read linearly at t.
+  vec3 whereTint(float t) {
+    float x = clamp(t, 0.0, 1.0) * float(${WHERE_STOPS - 1});
+    int k = min(int(floor(x)), ${WHERE_STOPS - 2});
+    vec3 lo = whereStops[0];
+    vec3 hi = whereStops[1];
+    for (int n = 0; n < ${WHERE_STOPS - 1}; n++) {
+      if (n == k) { lo = whereStops[n]; hi = whereStops[n + 1]; }
     }
     return lo + (hi - lo) * (x - float(k));
   }
@@ -237,9 +252,11 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
           emitted += readPolar(plane, rp).rgb * cStars;
           emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust * dustGain;
           emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-          vec3 tau = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
-          // Where it is (D205): a diagnostic, the channels' mean depth drawn as light in one tint, dimming nothing.
-          emitted += dustWhere * ((tau.r + tau.g + tau.b) / 3.0);
+          vec3 ring = readRing(rp.x, ${RING_ROWS.depth}.0);
+          vec3 tau = ring * cDust;
+          // Where it is (D205): a diagnostic, the channels' mean depth drawn as light through a declared ramp at
+          // the ring's depth over the peak, dimming nothing.
+          emitted += dustWhere * whereTint((ring.r + ring.g + ring.b) / 3.0 * wherePeak) * ((tau.r + tau.g + tau.b) / 3.0);
           depth = tau * dustDepth;
         }
         // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
@@ -277,6 +294,8 @@ interface Props {
    * the brightest mode's component switches. The field's default draws every layer as before.
    */
   layers?: MarchLayers;
+  /** Told the depth ring's peak (the largest channel-mean face-on optical depth) when the render arrives: the dust diagnostic's caption. */
+  onDepthPeak?: (tau: number) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -304,6 +323,7 @@ export function FieldVolume({
   tuning = TUNING_DEFAULTS,
   stats,
   layers: shown = FIELD_LAYERS,
+  onDepthPeak,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -395,7 +415,9 @@ export function FieldVolume({
         gasGain: { value: FIELD_LAYERS.gas },
         dustGain: { value: FIELD_LAYERS.dust },
         dustDepth: { value: FIELD_LAYERS.dustDepth },
-        dustWhere: { value: new Vector3(...FIELD_LAYERS.where) },
+        dustWhere: { value: FIELD_LAYERS.where },
+        wherePeak: { value: 0 },
+        whereStops: { value: FIELD_LAYERS.whereStops.map((c) => new Vector3(...c)) },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -404,6 +426,8 @@ export function FieldVolume({
       depthWrite: false,
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
+    // The depth ring's peak, for the dust diagnostic's display normalisation (D205; components.ts whereLevel).
+    box.userData.depthPeak = depthPeak(rings, width);
     box.frustumCulled = false;
     return box;
   }, [frame, light]);
@@ -450,6 +474,12 @@ export function FieldVolume({
     [mesh, offscreen],
   );
 
+  const tellPeak = useRef(onDepthPeak);
+  tellPeak.current = onDepthPeak;
+  useEffect(() => {
+    if (mesh) tellPeak.current?.(Number(mesh.userData.depthPeak) || 0);
+  }, [mesh]);
+
   // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
   useEffect(() => {
     if (!mesh) return;
@@ -487,7 +517,7 @@ export function FieldVolume({
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where.join(",")}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -507,7 +537,10 @@ export function FieldVolume({
     uniforms.gasGain.value = shown.gas;
     uniforms.dustGain.value = shown.dust;
     uniforms.dustDepth.value = shown.dustDepth;
-    (uniforms.dustWhere.value as Vector3).set(...shown.where);
+    const peak = Number(mesh.userData.depthPeak) || 0;
+    uniforms.dustWhere.value = whereLevel(shown.where, peak, LIGHT_PER_LSUN_PC2);
+    uniforms.wherePeak.value = peak > 0 ? 1 / peak : 0;
+    (uniforms.whereStops.value as Vector3[]).forEach((v, i) => v.set(...shown.whereStops[i]));
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);

@@ -16,7 +16,7 @@ import {
   loadRegion,
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
-import { CLOUD_COLUMNS, brightestLayers, cloudColors, diagnosticOn, dustTint, marchWanted, rowsInWindow } from "./components";
+import { CLOUD_COLUMNS, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
@@ -115,7 +115,7 @@ const COMPONENT_SWITCHES: { key: "compStars" | "compGas" | "compDust" | "compClo
 ];
 const DUST_READINGS: { key: "acts" | "where"; label: string; what: string }[] = [
   { key: "acts", label: "as it acts", what: "Extinction of what lies behind it, and its scattered and thermal light: the physical picture" },
-  { key: "where", label: "where it is", what: "A diagnostic: its optical depth along each line of sight drawn as light in one tint, dimming nothing" },
+  { key: "where", label: "where it is", what: "A diagnostic: its optical depth along each line of sight drawn as light through a declared ramp, normalised to its peak face-on depth, dimming nothing" },
 ];
 const brightestOf = (slider: number) => Math.round(10 ** (BRIGHTEST_DECADES.lo + ((BRIGHTEST_DECADES.hi - BRIGHTEST_DECADES.lo) * slider) / 1000));
 
@@ -235,8 +235,9 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   // The brightest mode's component layers (D205): all off by default, so the mode draws as before.
   const R = meta.grid.axes.R;
   const marchOn = mode === "brightest" && marchWanted(tuning);
-  const tint = useMemo(() => dustTint(meta), [meta]);
-  const marchLayers = brightestLayers(tuning, tint?.tint ?? null);
+  const ramp = useMemo(() => dustRamp(meta), [meta]);
+  const [peakTau, setPeakTau] = useState<number | null>(null);
+  const marchLayers = brightestLayers(tuning, ramp);
   const diagnostic = mode === "brightest" && diagnosticOn(tuning);
   // The whole disc's cloud census, loaded once per query (about 17 000 clouds) and cut to the footprint here.
   const cloudsKey = mode === "brightest" && tuning.compClouds ? JSON.stringify(["clouds", query]) : null;
@@ -325,7 +326,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
         {/* The brightest mode's components (D205): the march with only the switched layers, at the slider's own
             stops (not the stars' auto-exposure, so the volumes hold still as N changes) and the whole field weight. */}
         {marchOn && (
-          <FieldVolume meta={meta} query={query} stops={exposure} weight={1} filterSet={filterSet} tuning={fieldTuning} stats={marchStats} layers={marchLayers} />
+          <FieldVolume meta={meta} query={query} stops={exposure} weight={1} filterSet={filterSet} tuning={fieldTuning} stats={marchStats} layers={marchLayers} onDepthPeak={setPeakTau} />
         )}
         {mode === "brightest" && tuning.compCells && R && <CellOutlines lo={R.lo} hi={R.hi} />}
         {mode === "brightest" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
@@ -506,6 +507,13 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
               }`}
         </p>
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
+        {mode === "brightest" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
+          <p className={styles.muted}>
+            {ramp
+              ? `dust: optical depth drawn to its peak face-on optical depth τ = ${peakTau === null ? "…" : formatNumber(peakTau, 2)} at ${WHERE_LEVEL} (a display normalisation), through ${ramp.field}'s declared ramp${ramp.coloured ? "" : ", grey"}`
+              : "dust: no dust field is declared with a ramp, so its depth is not drawn"}
+          </p>
+        )}
       </div>
 
       {bar && (

@@ -16,33 +16,73 @@ import { srgbToLinear } from "./colors";
 import type { RegionWindow } from "./regimes";
 import type { Tuning } from "./tuning";
 
+export type Rgb = [number, number, number];
+
+/** The colours the "where it is" reading's ramp is held at in the shader, evenly spaced from τ = 0 to the peak. */
+export const WHERE_STOPS = 8;
+
 /**
  * The march's layer switches, as its uniforms take them: each emitting layer's multiplier (0 is off),
- * the dust's depth switch (1: it dims what lies behind it) and the "where it is" reading's tint per
- * unit of optical depth (0: not drawn).
+ * the dust's depth switch (1: it dims what lies behind it), and the "where it is" reading's intensity
+ * (0: not drawn; FieldVolume normalises it by the depth ring's peak, whereLevel) and its ramp's stops.
  */
 export interface MarchLayers {
   stars: number;
   gas: number;
   dust: number;
   dustDepth: number;
-  where: [number, number, number];
+  where: number;
+  whereStops: readonly Rgb[];
 }
+
+/** A grey ramp kept grey: every stop white, so the drawn level alone carries the depth. */
+export const GREY_STOPS: readonly Rgb[] = Object.freeze(Array.from({ length: WHERE_STOPS }, () => [1, 1, 1] as Rgb));
 
 /**
  * The field mode's layers: everything on, the dust acting, nothing diagnostic. Each term of the march is
  * multiplied by one of these or has the zero added, so the field's picture is the march's to the bit
  * (x × 1 = x and x + 0 = x for every finite x; tuning.test.ts undoes the edits against S46's source).
  */
-export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: [0, 0, 0] as [number, number, number] });
+export const FIELD_LAYERS: Readonly<MarchLayers> = Object.freeze({ stars: 1, gas: 1, dust: 1, dustDepth: 1, where: 0, whereStops: GREY_STOPS });
 
 /**
- * A column of unit optical depth (the depth ring's channel mean times the dust's column) draws in the
- * "where it is" reading as this much light per unit tint, in the march's units (L☉/pc² before the field's
- * gain): the inverse of LIGHT_PER_LSUN_PC2, so τ = 1 draws at unit linear intensity at zero stops and a
- * field gain of 1. A display scale for a diagnostic, not a physical constant.
+ * The level the densest ring's face-on dust column draws at in the "where it is" reading, linear, before
+ * tone mapping, at intensity ×1, zero stops and a field gain of 1. **A display normalisation of a
+ * diagnostic, not physics**: the reading is scaled by the reciprocal of the depth ring's own peak, so it is
+ * readable whatever the galaxy's dust, and the caption states that peak so the picture stays quantitative.
  */
-export const WHERE_PER_TAU = 400;
+export const WHERE_LEVEL = 0.5;
+
+/**
+ * The depth ring's peak: the largest channel-mean face-on optical depth over the rings (regimes.ts
+ * planeTexture's `rings`, row RING_ROWS.depth = 0, RGBA per R cell). Zero when there is no dust.
+ */
+export function depthPeak(rings: ArrayLike<number>, width: number): number {
+  let peak = 0;
+  for (let i = 0; i < width; i += 1) {
+    const mean = (Number(rings[i * 4]) + Number(rings[i * 4 + 1]) + Number(rings[i * 4 + 2])) / 3;
+    if (Number.isFinite(mean) && mean > peak) peak = mean;
+  }
+  return peak;
+}
+
+/**
+ * The march's "where it is" multiplier, per unit of channel-mean optical depth in the march's units: the
+ * layer's intensity times WHERE_LEVEL over the peak, over the field's light per L☉/pc² (`lightPerUnit`,
+ * FieldVolume's LIGHT_PER_LSUN_PC2, which the march's gain multiplies back). A face-on ray through the
+ * densest ring takes its whole column, τ = peak, so it draws at WHERE_LEVEL × intensity. Zero without dust.
+ */
+export function whereLevel(intensity: number, peak: number, lightPerUnit: number): number {
+  return intensity > 0 && peak > 0 && lightPerUnit > 0 ? (WHERE_LEVEL * intensity) / (peak * lightPerUnit) : 0;
+}
+
+/** The shader's whereTint, line for line: the stops read linearly at τ / τ_peak, clamped to the ramp. */
+export function whereTint(stops: readonly Rgb[], t: number): Rgb {
+  const x = Math.min(1, Math.max(0, t)) * (stops.length - 1);
+  const k = Math.min(stops.length - 2, Math.floor(x));
+  const f = x - k;
+  return [0, 1, 2].map((c) => stops[k][c] + (stops[k + 1][c] - stops[k][c]) * f) as Rgb;
+}
 
 /** Does any switch ask for the march in the brightest mode? */
 export function marchWanted(t: Pick<Tuning, "compStars" | "compGas" | "compDust">): boolean {
@@ -58,47 +98,62 @@ export function diagnosticOn(t: Pick<Tuning, "compDust" | "dustReading" | "compC
  * The march's layers for the brightest mode's switches: a switched-on layer at its intensity, the rest
  * at zero. The dust "as it acts" emits its scattered and thermal light at its intensity and dims what
  * lies behind it at its published depth (the intensity never scales a depth: that would be physics);
- * "where it is" draws its depth as light in `tint` at its intensity and dims nothing.
+ * "where it is" draws its depth as light through `ramp` at its intensity (normalised to the peak by the
+ * march) and dims nothing; without a declared ramp it draws nothing (rule A9).
  */
 export function brightestLayers(
   t: Pick<Tuning, "compStars" | "compGas" | "compDust" | "dustReading" | "starsIntensity" | "gasIntensity" | "dustIntensity">,
-  tint: readonly [number, number, number] | null,
+  ramp: DustRamp | null,
 ): MarchLayers {
   const where = t.compDust && t.dustReading === "where";
   const acts = t.compDust && t.dustReading === "acts";
-  const k = where && tint ? WHERE_PER_TAU * t.dustIntensity : 0;
   return {
     stars: t.compStars ? t.starsIntensity : 0,
     gas: t.compGas ? t.gasIntensity : 0,
     dust: acts ? t.dustIntensity : 0,
     dustDepth: acts ? 1 : 0,
-    where: tint ? [tint[0] * k, tint[1] * k, tint[2] * k] : [0, 0, 0],
+    where: where && ramp ? t.dustIntensity : 0,
+    whereStops: ramp?.stops ?? GREY_STOPS,
   };
 }
 
-/** The dust fields whose declared ramp tints the "where it is" reading, the first published one. */
+/** The dust fields whose declared ramp paints the "where it is" reading, in order of preference. */
 export const DUST_TINT_FIELDS = ["dust_extinction_v", "dust_surface_density"] as const;
 
+/** The ramp the "where it is" reading is painted with: whose declaration it is, its stops (linear light), and whether it has colour. */
+export interface DustRamp {
+  field: string;
+  stops: readonly Rgb[];
+  coloured: boolean;
+}
+
 /**
- * The "where it is" reading's one tint (rule A9: from a declaration, never the viewer's): the declared
- * ramp of the first of DUST_TINT_FIELDS the model publishes, read by ramp.js at whichever of its two
- * ends is the brighter (it is drawn as light on black, and the dark end would draw nothing), as linear
- * light. Null when neither field is declared with a ramp.
+ * The "where it is" reading's ramp (rule A9: from a declaration, never the viewer's). The first of
+ * DUST_TINT_FIELDS whose declared ramp has colour, its cmap's stops read by ramp.js at WHERE_STOPS even
+ * positions, as linear light: the march reads it at τ / τ_peak. If every declared one is grey, the last of
+ * them is kept grey — every stop white, so the drawn level alone (normalised to the peak) carries the depth:
+ * a grey ramp mapped literally would draw the densest dust black, which on black is nothing. Null when no
+ * dust field is declared with a ramp.
  */
-export function dustTint(meta: Pick<FieldsPayload, "fields" | "cmaps">): { field: string; tint: [number, number, number] } | null {
+export function dustRamp(meta: Pick<FieldsPayload, "fields" | "cmaps">): DustRamp | null {
+  let grey: DustRamp | null = null;
   for (const name of DUST_TINT_FIELDS) {
     const decl = meta.fields.find((f) => f.name === name);
     if (!decl?.ramp || decl.ramp.kind !== "ramp") continue;
     try {
-      const ramp = makeRamp(decl, meta.cmaps, []) as { at(t: number): number[] };
-      const ends = [ramp.at(0), ramp.at(1)].map((c) => c.map((v) => srgbToLinear(v / 255)) as [number, number, number]);
-      const lum = (c: number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-      return { field: name, tint: lum(ends[0]) >= lum(ends[1]) ? ends[0] : ends[1] };
+      const ramp = makeRamp(decl, meta.cmaps, []) as { at(t: number): number[]; stops: number[][] };
+      const coloured = ramp.stops.some(([r, g, b]) => r !== g || g !== b);
+      if (!coloured) {
+        grey = { field: name, stops: GREY_STOPS, coloured: false };
+        continue;
+      }
+      const stops = Array.from({ length: WHERE_STOPS }, (_, i) => ramp.at(i / (WHERE_STOPS - 1)).map((v) => srgbToLinear(v / 255)) as Rgb);
+      return { field: name, stops, coloured: true };
     } catch {
       continue;
     }
   }
-  return null;
+  return grey;
 }
 
 /** The level-0 cell grid's rings and sectors (the catalogue's cells: 32 × 32 over the model's radial extent). */
