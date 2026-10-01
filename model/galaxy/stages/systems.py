@@ -455,6 +455,26 @@ class Modulation:
         k1 = (k0 + 1) % n
         return rows[:, k0] * (1.0 - w) + rows[:, k1] * w
 
+    def at_points(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """The modulation at each radius ``r`` (n,) and that row's own azimuths ``phi`` (n, k), read as
+        :meth:`at` reads it (S48: a bright star inverts its own row inside its own cell)."""
+        R, table = self.R, self.table
+        r = np.atleast_1d(np.asarray(r, dtype=float))
+        i = np.clip(np.searchsorted(R, r) - 1, 0, max(R.size - 2, 0))
+        j = np.minimum(i + 1, R.size - 1)
+        span = np.where(R[j] > R[i], R[j] - R[i], 1.0)
+        a = np.clip((r - R[i]) / span, 0.0, 1.0)[:, None]
+        n = table.shape[1]
+        x = np.mod(np.asarray(phi, dtype=float), 2.0 * math.pi) * (n / (2.0 * math.pi)) - 0.5
+        k0 = np.floor(x)
+        w = x - k0
+        k0 = k0.astype(np.intp) % n
+        k1 = (k0 + 1) % n
+        row_i, row_j = i[:, None], j[:, None]
+        near = table[row_i, k0] * (1.0 - w) + table[row_i, k1] * w
+        far = table[row_j, k0] * (1.0 - w) + table[row_j, k1] * w
+        return near * (1.0 - a) + far * a
+
     def sector_means(self, r: float, edges: np.ndarray, steps: int = 24) -> np.ndarray:
         """The modulation averaged over each sector between ``edges`` at one radius (trapezoids)."""
         frac = np.linspace(0.0, 1.0, steps + 1)

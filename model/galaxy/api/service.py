@@ -63,6 +63,7 @@ from galaxy.core.units import unit as _unit
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
+from galaxy.stages import bright as _bright
 from galaxy.stages import bubbles as _bubbles
 from galaxy.stages import planets as _planets
 from galaxy.stages import clouds as _clouds  # also the HII layer's height (S39)
@@ -78,6 +79,7 @@ CLOUDS_SLOT = "clouds"  # the slot a clouds query materialises from (S32)
 CLUSTERS_SLOT = "clusters"  # and the slot a clusters query answers for (S33)
 NEBULAR_SLOT = "nebular"  # whose HII-region columns ride on the clusters response (S35)
 BUBBLES_SLOT = "bubbles"  # whose bubble columns ride on it too, and whose remnant census /api/remnants serves (S36)
+BRIGHT_SLOT = "bright_stars"  # the slot /api/bright answers for (S48, D200)
 # The most child cells one level>0 region query may name (S32): 4096 is 64 level-0 cells at level 3,
 # about a quarter of a ring's sectors two kiloparsecs deep; a wider window at that depth is refused.
 MAX_CHILD_CELLS = 4096
@@ -113,6 +115,9 @@ MAX_STARS = 5_000_000
 # The most stars a brightest=N query returns: a magnitude-limited view is a few thousand points,
 # and a viewer that wants more than this wants the window itself.
 MAX_BRIGHTEST = 200_000
+# The most stars one /api/bright request materialises while lowering its threshold to find n inside a view
+# (S48): a view that sees a sliver of a wide window stops here, says so, and returns what it found.
+MAX_BRIGHT_POOL = 500_000
 
 
 class ApiError(Exception):
@@ -192,6 +197,18 @@ ROUTES: tuple[Route, ...] = (
         "keeps the remnants inside the level-k children the window meets.",
         ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "remnants",
+    ),
+    Route(
+        "/api/bright",
+        "Every disc star above a luminosity, complete (S48, D200): the bright catalogue's stars in the finest cells "
+        "(level 3) the (R, phi) window meets, drawn from the luminosity function by an ordered Poisson process per "
+        "cell, so a higher threshold keeps a prefix and a window's stars are a sweep's. n=N (1..200000) returns the N "
+        "brightest, inside view=<16 numbers>'s frustum when one is given (as /api/region takes it); l_min=<Lsun> "
+        "every star above it (refused past 200000 expected). Rows brightest first, each named by cell and rank; the "
+        "header's threshold says what the body is complete above. Stars younger than the cluster census's window "
+        "are the clusters'; the bulge is the field's. precision=f4 sends float32.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision"),
+        "bright",
     ),
     Route(
         "/api/blackbody",
@@ -339,6 +356,67 @@ class CellCache:
         names = list(entries[0][0]) if entries else []
         columns = {name: np.concatenate([e[0][name] for e in entries]) for name in names}
         return _catalogue.Catalogue.of(columns, counts)
+
+
+class BrightCache:
+    """The bright catalogue's finest cells, kept between requests (S48).
+
+    A cell's stars above a threshold are a prefix of its stars above any lower one (``bright.py``'s ordered
+    process), so a cell is held with the lowest threshold it was drawn to and serves any higher one by
+    cutting the prefix whose Γ lies under the higher threshold's expected count; a lower one draws the cell
+    again, longer, from the same streams. Bounded by rows (an empty cell counts as one), least recently used
+    out first. A key names the galaxy (model, grid, resolved inputs, seed); the caller makes it.
+    """
+
+    def __init__(self, max_rows: int = 2_000_000) -> None:
+        self.max_rows = max_rows
+        self._cells: OrderedDict[tuple[str, int], tuple[float, dict[str, np.ndarray], int]] = OrderedDict()
+        self._rows = 0
+        self._lock = threading.Lock()
+
+    def fetch(self, key: str, galaxy: Any, seed: int, cells: Sequence[int], l_min: float) -> Any:
+        """Every star above ``l_min`` in ``cells``, grouped by cell in the order asked, as ``materialise_bright``."""
+        cells = [int(c) for c in cells]
+        log_l = math.log10(max(float(l_min), 10.0 ** float(_bright.LOG_L_GRID[0])))
+        with self._lock:
+            held = {c: self._cells.get((key, c)) for c in cells}
+        missing = [c for c, h in held.items() if h is None or h[0] > log_l]
+        if missing:
+            made = _bright.materialise_bright(galaxy, seed, missing, l_min)
+            runs = dict(made.counts)
+            starts = np.concatenate([[0], np.cumsum([runs.get(c, 0) for c in missing])])
+            fresh = {
+                c: (log_l, {name: np.asarray(col)[starts[i]:starts[i + 1]] for name, col in made.items()}, runs.get(c, 0))
+                for i, c in enumerate(missing)
+            }
+            with self._lock:
+                for c, entry in fresh.items():
+                    old = self._cells.pop((key, c), None)
+                    if old is not None:
+                        self._rows -= max(old[2], 1)
+                    self._cells[(key, c)] = entry
+                    self._rows += max(entry[2], 1)
+                while self._rows > self.max_rows and self._cells:
+                    _, (_, _, dropped) = self._cells.popitem(last=False)
+                    self._rows -= max(dropped, 1)
+            held.update(fresh)
+        with self._lock:
+            for c in cells:
+                entry = self._cells.pop((key, c), None)
+                if entry is not None:
+                    self._cells[(key, c)] = entry
+        ceilings = galaxy.expected(cells, log_l) if cells else np.zeros(0)
+        parts: list[dict[str, np.ndarray]] = []
+        counts: list[tuple[int, int]] = []
+        for c, ceiling in zip(cells, ceilings):
+            _, columns, n = held[c]
+            keep = int(np.searchsorted(columns["gamma"], ceiling, side="left")) if n else 0
+            if keep:
+                parts.append({name: col[:keep] for name, col in columns.items()})
+                counts.append((c, keep))
+        if not parts:
+            return _bright.materialise_bright(galaxy, seed, [], l_min)
+        return _catalogue.Catalogue.of({name: np.concatenate([p[name] for p in parts]) for name in parts[0]}, counts)
 
 
 class Query:
@@ -551,6 +629,8 @@ class Service:
         self.cache_size = max(0, int(cache))
         self._cache: dict[str, Galaxy] = {}
         self.cells = CellCache()
+        self.bright = BrightCache()  # S48: the bright catalogue's finest cells
+        self._bright_galaxies: OrderedDict[str, Any] = OrderedDict()  # its per-galaxy tables, and the default limit
         # The server is threaded, and two requests for one galaxy would otherwise
         # resume the same partial run from two threads. Computation is serialised;
         # metadata, which touches nothing, is not.
@@ -1072,6 +1152,116 @@ class Service:
         }
         return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
 
+    def _bright_galaxy(self, key: str, out: Outputs, model: Model) -> tuple[Any, dict[str, float]]:
+        """The bright catalogue's tables for one galaxy, and its stage's two scalars - the default selection's
+        limit is the whole disc's brightest few thousand, materialised once through the cell cache - kept for
+        the last two galaxies asked about."""
+        with self._lock:
+            found = self._bright_galaxies.pop(key, None)
+            if found is None:
+                constants = {k: c.value for k, c in model.constants.items()}
+                spec = self.grid.spec
+                galaxy = _bright.BrightGalaxy(out.fields, self.grid.R, self.grid.t, float(spec.t_max), int(spec.n_t), constants)
+                seed = int(out.inputs["systems_seed"])
+                cells = _bright.all_cells()
+                _, info = _bright.select_brightest(
+                    galaxy, seed, cells, _bright.DEFAULT_SELECTION,
+                    fetch=lambda wanted, l: self.bright.fetch(key, galaxy, seed, wanted, l),
+                )
+                found = (galaxy, _bright.scalars(galaxy, info["l_min"]))
+            self._bright_galaxies[key] = found
+            while len(self._bright_galaxies) > 2:
+                del self._bright_galaxies[next(iter(self._bright_galaxies))]
+            return found
+
+    def _bright(self, q: Query) -> Response:
+        """Every disc star above a luminosity in one window (S48, D200): the finest cells the window meets, their
+        ordered Poisson processes cut at a threshold - found by bisection on the expected count for ``n``, given for
+        ``l_min``. Runs what the stage reads and not the stage (rule D4); the cells are cached between requests."""
+        model = self._model(q)
+        stage = _stage_for(model, BRIGHT_SLOT, self.impls)
+        R = self.grid.R
+        r_min = q.number("r_min", float(R[0]))
+        r_max = q.number("r_max", float(R[-1]))
+        phi_min = q.number("phi_min", 0.0)
+        phi_max = q.number("phi_max", 2.0 * math.pi)
+        view = _view_matrix(q.one("view"))
+        precision = q.one("precision", "f8")
+        if precision not in ("f8", "f4"):
+            raise BadRequest(f"precision={precision!r} is not f8 or f4")
+        has_n, has_l = q.one("n") is not None, q.one("l_min") is not None
+        if has_n == has_l:
+            raise BadRequest(f"give exactly one of n= (1..{MAX_BRIGHTEST}) or l_min= (Lsun)")
+        n = q.integer("n", 0) if has_n else None
+        if n is not None and not 1 <= n <= MAX_BRIGHTEST:
+            raise BadRequest(f"n={n} is outside 1..{MAX_BRIGHTEST}")
+        l_min = q.number("l_min", 0.0) if has_l else None
+        if l_min is not None and not l_min > 0.0:
+            raise BadRequest(f"l_min={l_min!r} is not a positive luminosity")
+
+        inputs = self._overrides(model, q)
+        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        seed = int(out.inputs[stage.reads_seeds[0]])
+        key = repr(("bright", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        galaxy, scalars = self._bright_galaxy(key, out, model)
+        cells = np.asarray(_catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=_catalogue.MAX_LEVEL), dtype=np.int64)
+
+        def fetch(wanted: Sequence[int], threshold: float) -> Any:
+            return self.bright.fetch(key, galaxy, seed, wanted, threshold)
+
+        faint = 10.0 ** float(_bright.LOG_L_GRID[0])
+        if n is not None:
+            rows, info = _bright.select_brightest(galaxy, seed, cells, n, view=view, fetch=fetch, pool_max=MAX_BRIGHT_POOL)
+            threshold = {"l_min": info["l_min"], "complete": info["complete"], "why": info["why"]}
+            used = info["l_min"]
+        else:
+            used = max(float(l_min), faint)
+            expected = float(galaxy.expected(cells, math.log10(used)).sum())
+            if expected > MAX_BRIGHTEST:
+                raise BadRequest(
+                    f"l_min={l_min:g} holds {expected:.0f} expected stars in this window, more than {MAX_BRIGHTEST}: "
+                    "raise it or narrow the window"
+                )
+            pool = fetch(cells, used)
+            lum = np.asarray(pool["bright_star_luminosity"], dtype=float)
+            keep = np.arange(lum.size)
+            if view is not None and keep.size:
+                keep = keep[_bright.in_frustum(view, pool["bright_star_radius"], pool["bright_star_azimuth"], pool["bright_star_height"])]
+            rows = _catalogue.Catalogue.of({name: np.asarray(col)[keep[np.argsort(-lum[keep], kind="stable")]] for name, col in pool.items()})
+            why = "every star above l_min is in the body"
+            if l_min < faint:
+                why += f"; the luminosity function starts at {faint:g} Lsun, so none fainter exists here"
+            threshold = {"l_min": used, "complete": True, "why": why}
+        log_used = math.log10(max(used, faint))
+        columns = [d.name for d in stage.publishes if d.kind.domain == "object"] + ["cell", "rank"]
+        lum = np.asarray(rows["bright_star_luminosity"], dtype=float)
+        header = {
+            "model": model.name,
+            "inputs": _inputs_json(out.inputs),
+            "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
+            "view": view is not None,
+            "cells": {"count": int(cells.size), "level": _catalogue.MAX_LEVEL,
+                      "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(_catalogue.MAX_LEVEL)},
+            "threshold": threshold,
+            # Expected over the window's cells (not the frustum): the luminosity function's count and light above l_min.
+            "count": {"returned": int(lum.size), "expected": float(galaxy.expected(cells, log_used).sum())},
+            "light": {
+                "returned": float(lum.sum()),
+                # The field's budget above l_min (the luminosity function renormalised to the field's tables) and
+                # the stars' own; they differ by how well the field's mass grid resolves the giant branch (D200).
+                "expected": float(galaxy.expected(cells, log_used, "light").sum()),
+                "expected_own": float(galaxy.expected(cells, log_used, "light_own").sum()),
+            },
+            "columns": columns,
+            "scalars": scalars,
+            "seed": seed,
+            "stages": list(ran),
+        }
+        arrays = [(c, np.asarray(rows[c])) for c in columns]
+        if precision == "f4":
+            arrays = [(c, a.astype(np.float32) if a.dtype == np.float64 else a) for c, a in arrays]
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
     def _render(self, q: Query) -> Response:
         """The components through the viewer's filters (RENDER_PHYSICS §§2, 3a; S38, V1).
 
@@ -1473,14 +1663,9 @@ def _brightest(catalogue: Any, n: int, view: np.ndarray | None) -> tuple[Any, di
     """
     keep = np.arange(catalogue.size)
     if view is not None and keep.size:
-        r = np.asarray(catalogue["star_radius"], dtype=float)
-        phi = np.asarray(catalogue["star_azimuth"], dtype=float)
-        # The viewer's frame (frontend/src/galaxy/positions.ts): y up, phi from +x towards -z.
-        p = np.stack([r * np.cos(phi), np.asarray(catalogue["star_height"], dtype=float), -r * np.sin(phi), np.ones_like(r)])
-        clip = view @ p
-        w = clip[3]
-        inside = (w > 0) & (np.abs(clip[0]) <= w) & (np.abs(clip[1]) <= w) & (np.abs(clip[2]) <= w)
-        keep = keep[inside]
+        # The viewer's frame (frontend/src/galaxy/positions.ts): y up, phi from +x towards -z; one test,
+        # shared with /api/bright (S48).
+        keep = keep[_bright.in_frustum(view, catalogue["star_radius"], catalogue["star_azimuth"], catalogue["star_height"])]
     in_view = int(keep.size)
     lum = np.nan_to_num(np.asarray(catalogue["star_luminosity"], dtype=float)[keep], nan=-np.inf)
     lit = keep[lum > -np.inf]

@@ -56,16 +56,18 @@ def chk(m, *stages):
 # it), so systems runs the round after ism's, behind clouds by the tie-break, and the planets after clusters;
 # the bubbles stage reads the HII regions, so it runs last. Until S36 both read "..., ism, globular_clusters,
 # systems, formation, habitable_zone, dust, clouds, planets, clusters, nebular". No value moves with the order.
+# Since S48 (D200) the bright catalogue reads the vertical stage's birth_population (a star's scale height), so it
+# runs the round after vertical_alpha's, after ism by the tie-break, and globular_clusters onward keep their order.
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",
-        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "stellar_halo",
-        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "globular_clusters",
+        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
 }
@@ -74,6 +76,12 @@ ORDER = {
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
 SEEDED_BASIC = {
     "black_hole_mass",
+    # S48 (D200): the bright-end-complete catalogue draws on systems_seed, so every column and both scalars are seeded.
+    "bright_star_radius", "bright_star_azimuth", "bright_star_height", "bright_star_age", "bright_star_metallicity",
+    "bright_star_mass", "bright_star_luminosity", "bright_star_temperature", "bright_star_phase",
+    "bright_star_magnitude_u", "bright_star_magnitude_b", "bright_star_magnitude_v", "bright_star_magnitude_r",
+    "bright_star_magnitude_i", "bright_star_magnitude_j", "bright_star_magnitude_h", "bright_star_magnitude_k",
+    "bright_star_limit", "bright_star_count_1e3",
     # S36 (BUILD_II Phase 10): the bubbles stage reads the seeded cluster and HII-region columns and draws the
     # remnant census on systems_seed, so all it publishes is seeded (D55), the hot phase's radial field too;
     # the catalogue's new column is seeded with the catalogue. ism's midplane density stays derived.
