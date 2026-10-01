@@ -7103,3 +7103,53 @@ its own line, `bootstrap.py` run first (S44's lesson): **`EXIT=0`, every file gr
 (one cell ≤ nine ≤ every cell) under the suite's own load; re-run alone in the same clone, both models, `EXIT=0`**
 (the load-flaky family BRIEF names; not a code defect). Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
 (the blind direct-method reading first, then the chemistry ruling). Tag `s45` on the merge (C2e), the MANUAL_TODO row.
+
+### D197. S46: the viewer reviewed (`RENDER_PLAN_II.md`), the azimuthal model made the default across the API, the viewer and the tests on the owner's ruling, and the field march's terracing — a found defect — fixed by reading the layers at jittered sub-samples along each step
+
+**The owner, in chat, on 2026-10-01:** "put a pin in the model work for now … finish building out the viewer … if the
+azimuth model is feature complete, make that the default and work on the galaxy renderer"; asked how far the default
+reaches, "API, viewer and tests"; asked which renderer parts count as finished, "not sure yet, let's review this";
+asked plan or session, "write a plan document first". Then, on the running dev server: "the field show a weird clipping
+effect that i dont think was there before" and "the viewer still defaults to basic model" — the word to start. Written
+before any code moved (D113).
+
+**(1) The review** is `docs/RENDER_PLAN_II.md`: where the viewer stands (a read-only agent's survey of the code, the
+session's walk of the built viewer on `prod`, the design record), every candidate costed, a sequence proposed and left
+to the owner. Its findings that are defects: the stars regime drew nothing in the app's pane with five WebGL context
+losses (the owner's live tab to confirm), one of 21 design components ported, no image-level test.
+
+**(2) The default: `azimuthal` first, everywhere.** `galaxy.models.DEFAULT` becomes `"azimuthal"` (the registry's
+order, so `/api`'s default and the specs' first report); the viewer's `useWorkflow` starts on it; the tests' `default`
+fixtures and `spec`'s default model read the registry's `DEFAULT` rather than the literal, so the default run is the
+azimuthal one — and every pin that the young stars' azimuths move (window-level statistics: the region syntheses,
+V3/V4's windows, the S45 diagnosis's region selection) moves with the reason in its comment. Radial and whole-galaxy
+numbers do not move by construction (`azimuthal` is `basic` with one slot swapped; every acceptance row is radial).
+`basic` stays registered and selectable; the tests that assert the two models differ in one slot keep both names.
+*Justification:* the azimuthal model is `basic` plus where today's stars form, feature complete relative to it
+(`RENDER_PLAN_II.md` §1d); a viewer whose default differs from the API's and the tests' would show a galaxy the suite
+never ran (C2's defect in another coat). *Chosen against:* the viewer alone (the owner's second option).
+
+**(3) The terracing — a found defect, and its fix.** The owner's frame (the field regime at a grazing elevation)
+shows concentric terraces and a straight cut. `FieldVolume.tsx`'s march takes 96 geometric steps along each ray and
+**reads the disc's layers once per step, at the step's midplane crossing or midpoint, with no jitter** (the jitter is
+applied to the bulge's point sample only); at a grazing view a step's in-plane extent spans many texture cells, so
+successive steps quantise R coherently across neighbouring pixels — the terraces are the steps `[verified:
+frontend/src/galaxy/FieldVolume.tsx, the loop at the march's `for (int k …)`, read 2026-10-01]`. The straight cut is
+the bounding box's face (`±rHi`, `±halfHeight`) where rays leave the volume. **The fix, ruled:** each step's layer
+light is the mean of N sub-samples along the step, N set by the step's in-plane length over the plane texture's cell
+width (at least 1, at most a stated cap), each sub-sample's position offset by the pixel's fixed hash — the same
+screen-space dither §8 already allows (fixed, not frame-seeded) — and the vertical column kept exact per sub-interval;
+the box's half-width set so that its faces fall where the plane texture is zero (beyond `rHi` the read is zero
+already), the top and bottom faces where the thickest layer's sech² is below 10⁻⁶. *Chosen against:* more steps (the
+cost is quadratic in the view's size and the terraces return at the next grazing angle); jittering the single read
+alone (noise where there was structure, but a step still reads one cell of many); adaptive steps bounded by the cell
+width (the step count explodes at grazing angles). *Gate:* the frame at the owner's camera and at face-on before and
+after, from `prod`; the field's integrated light over the frame unchanged within 10⁻³ (the sub-samples are a mean, not
+an addition); vitest's regimes tests green; `npx tsc -b` and `vite build` clean. The terraces being "not there before"
+is not established: the march has read one point per step since V2 (S39, D189) and no record shows a grazing view
+since; the record says so rather than guessing.
+
+**Protocol.** Two Opus 5.5 builders in parallel worktrees on branches cut from this commit — `session-46-default`
+(the registry, the viewer's start, the fixtures, the pins) and `session-46-march` (`FieldVolume.tsx` and its tests) —
+disjoint files, merged `--no-ff` into `session-46` after review; the image-level test (RENDER_PLAN_II §2 E2) is the next
+row, not this one. Numbers: debts from #125, decisions from D198, board rows from 46 (this row), acceptance rows from 38.
