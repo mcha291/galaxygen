@@ -7619,3 +7619,75 @@ bolometric, 5.4 % in V, 11–12 % in I, H and K — so M_V about 0.06 mag fainte
 about 5 %, the dust's absorbed starlight and with it L_IR and T_d down, the SED anchors and every render frame with
 them; the ionizing rate as the hot stars' segments say; the bright catalogue's threshold and the light split at 10³ L☉
 re-read. The numbers the build measures are recorded at this decision's close, with the table of pins moved.
+
+**Applied (`session-49-light`, 2f4e83f and 4ad9674 with `session-48` merged between; merged on `session-49` as 60a0e89;
+13 files, +385 −351).** `photometry.py` holds the one quadrature: the analytic IMF (`imf_cumulative`, `imf_number`,
+`imf_mass_formed`), `segments(age, mh)`, `log_linear_integral`, and sixteen Gauss–Legendre nodes per segment for what
+is not log-linear. `population_light`: the light, the eight bands and the bolometric flux integrated exactly along the
+segments, the colour and the ionizing rate on the nodes (16 against 128 nodes: within 3.7 × 10⁻⁵ and 3.2 × 10⁻⁶);
+`population_wind` moved to the nodes as well (a light-like integrand through the hot evolved phases; 7.5 × 10⁻⁴ over
+age at solar abundance, its integrand discontinuous at the bistability jump); `remnants.population_mass` left on its
+own 6 000-point grid (counts and masses with nodes at the kinks, no giant-branch spike). `_IMF_MASSES` is gone.
+`bright.py` lost the renormalisation, the `*_own` tables and the second budget in both headers; **its luminosity
+function's totals equal `population_light`'s exactly (difference 0.0 on all 396 isochrones).**
+
+**What moved (both models identical).**
+
+| Quantity | Before | After |
+|---|---|---|
+| `disc_luminosity` | 4.8958 × 10¹⁰ L☉ | **4.5898 × 10¹⁰** (−6.25 %) |
+| M_V | −21.2159 | **−21.1102** |
+| B − V | 0.6306 | **0.5694** |
+| Υ_V | 1.8468 | **2.0356** |
+| M_U / M_B / M_R / M_I | −20.598 / −20.585 / −21.722 / −22.242 | −20.592 / −20.541 / −21.575 / −22.062 |
+| M_J / M_H / M_K | −23.086 / −23.760 / −23.947 | −22.904 / −23.565 / −23.775 |
+| `bulge_luminosity` | 4.71 × 10⁹ | **2.73 × 10⁹ (−42 %)** |
+| `photometric_scale_length` | 4.403 kpc | 4.143 |
+| `disc_light_temperature` at R₀ | 5 722 K | 6 805 K |
+| Q | 1.65272 × 10⁵³ s⁻¹ | 1.65941 × 10⁵³ |
+| `halpha_sfr_ratio` | 0.70953 | 0.71242 |
+| the clusters' ΣL over the disc's | 0.2358 | 0.2516 |
+| T_d(R₀) / L_IR | 19.525 K / 1.6223 × 10¹⁰ L☉ | 18.823 K / 1.5675 × 10¹⁰ |
+| the render frame's B − V / M_V | 0.630641 / −21.216042 | 0.569495 / −21.110365 |
+| V2's balance (emitted over absorbed − 1) | 6.80 × 10⁻⁴ | 7.05 × 10⁻⁴ |
+| the light at 10³ L☉: young / bright / unresolved | 24.6 / 18.4 / 57.0 % | **26.3 / 18.8 / 54.9 %** |
+
+`bright_star_limit` and `bright_star_count_1e3` did not move (counts are not light); G₀(R₀) did not (it is the SFR's).
+**Two moves larger than D202's history-summed estimate, both understood.** The bulge is one old population on one
+isochrone, so it took that isochrone's whole error (the old grid read it 72 % high). And **the old radial profile was
+jagged ring to ring** — each ring's abundance picks its isochrones, and the grid's error differed between them: the old
+K-band anchors read 32.3 / 22.6 / 3.96 at 5.7 / 7.5 / 9.4 kpc; the new profile is smooth — so the ring at R₀, which sat
+on a spike, fell 18.6 % bolometric and 42 % in K where the disc as a whole fell 6.25 %. What the viewer drew as faint
+concentric structure in the field was partly this.
+
+**The rows.** No verdict changed: specs **12 pass / 20 fail / 5 not-yet-computable of 37 in both models.** Row 29
+(the Tully–Fisher slope) −7.91436 → −7.89193, a pass in [−8.56, −7.14], its scatter 0.0575 → 0.0427; row 34 (Q) as
+above, a pass; row 35 −2.0077 → −2.00774; row 37 −0.103506 → −0.103687, the recorded miss. Rows 25–28 remain not yet
+computable. The convergence instrument holds no baselines (it compares within a run): 54 ok, 0 drift.
+
+**The pins.** 43 moved, each with its old value in the comment: `test_render` 25, `test_dust` 7, `test_massive_stars`
+2, `test_nebular` 2, `test_spec` 2 (row 29's value), one each in `test_bright`, `test_bubbles`, `test_clusters`,
+`test_photometry`, `test_v4`. **No gate or identity failed**: V1's frame-against-table gate (8 × 10⁻⁵ and 1.6 × 10⁻⁴
+against 10⁻³), V2's balance, the 10⁻⁸ and 10⁻⁹ identities, the render's closure, the dust's energy balance and the
+SED's band consistency all held — nothing read the old tables by another path. **B10: no constant was fitted to the
+model's own light** (`HALPHA_PER_SFR`, `SOLAR_ABSOLUTE_MAGNITUDE_V`, `FUV_LUMINOSITY_PER_SFR`, `HII_ESCAPE_FRACTION` are
+sources'; `SED_ITERATIONS = 12` still holds its 10⁻⁴); none was changed, and none needs a ruling.
+
+**The independent gate, and what it showed (ruled).** Against a brute-force trapezoid in mass that uses neither the
+segment code nor the analytic IMF, the new tables agree to **6.3 × 10⁻⁸ when the brute force places each interval's
+stars as the segments do** (the arithmetic is right), and to **1.13 × 10⁻³ against the trapezoid with φ(m) itself**
+(1.46 × 10⁻³ at worst over all 396 isochrones; ten exceed 10⁻³) — the ruled 10⁻³ missed by a little. The cause is the
+ruled reading, not an error in it: a segment spreads its interval's stars uniformly in log L, while the IMF falls
+across intervals 10–25 % wide on the upper main sequence. **Ruling: recorded as measured, not loosened and not fixed
+here** — the test asserts 10⁻⁶ on the same-reading comparison and pins the 1.13 × 10⁻³ as the method's stated error;
+the residual is a thousandth where the defect it replaces was a fifteenth, and closing it (the IMF's own distribution
+within a segment, the luminosity a power law of mass there) would re-move the forty-three pins for it. Registered as
+**#127**. `#126` is discharged.
+
+**S49's gate.** The builder's own full suite on its branch `EXIT=0`; the session's, on the merged branch after
+`bootstrap.py`: **{{SUITE}}**; specs 12 / 20 / 5 of 37 in both models, no verdict changed; no frontend change (vitest
+140 as at S47). The register: **65 open = 11 permanent + 54 carried, 45 discharged** (#126 out, #127 in). Board row 49;
+LESSONS; RESUMING ≤ 120 with the regression numbers re-read; BRIEF for S50, the star-first viewer mode. Tag `s49` on
+the merge. **The owner's API server on :8017 was started before S48 and holds the old model in memory: it serves the
+new light, `/api/bright` and the filtered responses only after a restart, which is the owner's (or the session's on
+the owner's word).**
