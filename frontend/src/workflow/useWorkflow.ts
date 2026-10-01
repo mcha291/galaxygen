@@ -24,10 +24,46 @@ export interface Workflow {
 export const DEFAULT_MODEL = "azimuthal";
 
 /**
+ * The default galaxy (D198, rule D1 as amended): every checkpoint confirmed at its
+ * defaults, by applying flow.confirm once per checkpoint — the same step the
+ * "Confirm & lock" button takes, checkpoint by checkpoint, so the result is
+ * exactly the state those clicks would have reached (confirmed = last, current =
+ * last; flow.confirm does not advance past the last checkpoint). Never a
+ * hand-built state: that would drift from flow.js.
+ */
+export function generateDefault(s: FlowState): FlowState {
+  let next = s;
+  for (let k = 0; k < s.cat.checkpoints.length; k += 1) next = flow.confirm(next) as FlowState;
+  return next;
+}
+
+/** Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only. */
+export function isGenerated(s: FlowState | null): boolean {
+  const last = s?.cat.checkpoints.length ?? 0;
+  return !!s && last > 0 && s.confirmed === last;
+}
+
+export type View = "preview" | "science" | "galaxy";
+
+/**
+ * The tab the viewer settles on. Reopening a checkpoint un-generates the galaxy,
+ * so the Galaxy tab closes to the Preview; nothing else moves the user. Since
+ * D198 a generated galaxy no longer sends the Preview tab back to the Galaxy:
+ * "Edit galaxy" lands there with the confirmations kept.
+ */
+export function settleView(view: View, generated: boolean): View {
+  return view === "galaxy" && !generated ? "preview" : view;
+}
+
+/** "Edit galaxy": open the staged generation. A tab switch only — the flow state is not touched. */
+export const EDIT_VIEW: View = "preview";
+
+/**
  * React state around interface/flow.js. flow.js decides what is allowed (it
  * throws on anything D1 forbids); this hook only holds the result, loads each
  * model's declarations, and remembers which confirmations were discarded so the
- * rail can say so.
+ * rail can say so. The first declarations to arrive are confirmed through to the
+ * last checkpoint (generateDefault), so the viewer opens on a generated galaxy.
  */
 export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
   const [model, setModelName] = useState(initialModel);
@@ -47,7 +83,9 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
         const before = previous.current;
         setModels(stages.models);
         if (!before) {
-          setState(fresh);
+          // The first load lands on the default galaxy, generated (D198); a model
+          // switch below keeps its own behaviour.
+          setState(generateDefault(fresh));
           return;
         }
         // A model switch keeps every value and every confirmation up to the first

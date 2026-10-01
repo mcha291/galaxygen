@@ -13,7 +13,7 @@ import { SystemView } from "./system/SystemView";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber, runHash } from "./workflow/logic";
-import { useWorkflow } from "./workflow/useWorkflow";
+import { EDIT_VIEW, type View, isGenerated, settleView, useWorkflow } from "./workflow/useWorkflow";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
 
@@ -23,12 +23,13 @@ const COLOUR_FIELDS = ["star_metallicity", "star_alpha", "star_age", "star_popul
 const PAINT_CHOICES = [...COLOUR_FIELDS, PHOTOMETRIC];
 const PRESETS: Preset[] = ["oblique", "face-on", "edge-on"];
 
-type Tab = "preview" | "science" | "galaxy";
+type Tab = View;
 
 export function App() {
   const wf = useWorkflow();
   const [meta, setMeta] = useState<FieldsPayload | null>(null);
-  const [tab, setTab] = useState<Tab>("preview");
+  // The viewer lands on the default galaxy, generated on first load (D198, rule D1 as amended).
+  const [tab, setTab] = useState<Tab>("galaxy");
   const [field, setField] = useState<string>(PHOTOMETRIC);
   const [preset, setPreset] = useState<Preset>("oblique");
   const [systemStar, setSystemStar] = useState<StarName | null>(null);
@@ -45,15 +46,16 @@ export function App() {
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
   const last = wf.state?.cat.checkpoints.length ?? 0;
   // Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only.
-  const generated = !!wf.state && last > 0 && wf.state.confirmed === last;
+  const generated = isGenerated(wf.state);
   const panels = useMemo(() => (meta && current ? panelsAt(meta.fields, current.n) : null), [meta, current]);
 
-  // Confirming the last checkpoint generates the galaxy: the preview closes and the Galaxy tab
-  // takes over. Reopening a checkpoint un-generates it, so the Galaxy tab closes in turn.
+  // Reopening a checkpoint un-generates the galaxy, so the Galaxy tab closes to the Preview. A
+  // generated galaxy no longer pulls the Preview back to the Galaxy tab (D198): "Edit galaxy" lands
+  // on the Preview with every checkpoint still locked. Nothing settles before the declarations
+  // arrive, so the first load waits on the Galaxy tab while they are confirmed through.
   useEffect(() => {
-    if (tab === "preview" && generated) setTab("galaxy");
-    if (tab === "galaxy" && !generated) setTab("preview");
-  }, [tab, generated]);
+    if (wf.state) setTab((t) => settleView(t, generated));
+  }, [wf.state, generated]);
 
   // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
   // tab. The preview shows fields only, at every checkpoint including the last two.
@@ -69,14 +71,19 @@ export function App() {
   // selector shows them; the default is the azimuthal one since S46 (D197).
   const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}` : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
-    { key: "preview", label: "Preview", disabled: generated, title: generated ? "The galaxy is generated; reopen a checkpoint in the Science tab to preview it" : undefined },
+    { key: "preview", label: "Preview", title: generated ? "The staged generation: reopen a checkpoint to change the galaxy" : undefined },
     { key: "science", label: "Science" },
-    { key: "galaxy", label: "Galaxy", disabled: !generated, title: generated ? undefined : `Confirm all ${last} checkpoints to generate the galaxy` },
+    { key: "galaxy", label: "Galaxy", disabled: !!wf.state && !generated, title: generated ? undefined : `Confirm all ${last} checkpoints to generate the galaxy` },
   ];
 
   const status = (
     <>
-      {!sample && !galaxy.error && <p className={styles.status}>Generating galaxy.</p>}
+      {!sample && !galaxy.error && !(wf.error && !wf.state) && <p className={styles.status}>Generating galaxy.</p>}
+      {wf.error && !wf.state && (
+        <p className={styles.status}>
+          Loading the model failed: {wf.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
+        </p>
+      )}
       {galaxy.error && (
         <p className={styles.status}>
           Generation failed: {galaxy.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
@@ -202,6 +209,7 @@ export function App() {
                   preset={preset}
                   onPreset={setPreset}
                   onOpen={setSystemStar}
+                  onEdit={() => setTab(EDIT_VIEW)}
                 />
               )}
               {status}
