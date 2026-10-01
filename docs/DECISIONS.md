@@ -7193,7 +7193,7 @@ the terraces were new is still not established — the one-read-per-step march d
 so rather than guessing.
 
 **The gate (S46's close).** The full suite on the merged branch, backgrounded with its own line after `bootstrap.py`:
-**{{SUITE}}**; specs azimuthal first, 12 / 20 / 5 of 37 both models; vitest and `vite build` clean; the landing row (D198)
+**`EXIT=0`, every file green, run after the landing's merge with `bootstrap.py` first (the hooks path at `tools/hooks`)**; specs azimuthal first, 12 / 20 / 5 of 37 both models; vitest and `vite build` clean; the landing row (D198)
 reviewed and merged before the suite ran. Board row 46; LESSONS; RESUMING ≤ 120; BRIEF for S47 from RENDER_PLAN_II's
 sequence with the owner's choices to date. Tag `s46` on the merge.
 
