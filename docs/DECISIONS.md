@@ -7030,3 +7030,73 @@ the `prod` config (:8018) started, the viewer's own render under `wfc3n` read th
 for row 37's scalar, the server stopped; the deploy command for the owner written in BRIEF (`deploy.ps1 -Tag <merge sha>`)
 — a deploy is the owner's action, not a session's. Then the ritual: merge `--no-ff`, push, `s45` on the merge, `ls-remote`
 read back, the MANUAL_TODO row, `verify_clone --ref main`.
+
+**What the instrument read (2026-10-01; `tests/test_s45_diagnosis.py`, built by an Opus 5.5 builder on `session-45-diagnosis`
+from the aim above, every number pinned; 12 860 regions, 5 337 in 8.2–15.4 kpc, 96 rings; the published −0.10351
+reproduced to 0.0 when nothing is frozen, the identity asserted to 10⁻⁹).**
+
+| Part | Reading |
+|---|---|
+| Z′, the regions' oxygen gradient (Hα-weighted) | **−0.0784 dex/kpc** (the ring `feh_gas + alpha_fe_gas` −0.0780) |
+| G_Z, the grid's d log([N II]/Hα)/d log Z at the regions' own (age, U) | **+1.224 per dex** (16/50/84: 0.96 / 1.28 / 1.52; no region one-sided) |
+| G_age, G_U | +0.213, −0.378 per dex (759 one-sided in age, 126 below the 0.5 Myr floor) |
+| age′, U′ | −0.0081, +0.0005 dex/kpc |
+| First-order products | G_Z Z′ −0.0960, G_age age′ −0.0017, G_U U′ −0.0002; sum −0.0979 against −0.1035 |
+| Probe (i), Z frozen at the 8.2 kpc edge (age/U share) | **−0.0016 dex/kpc** |
+| Probe (ii), age and U frozen (Z share) | **−0.1177 dex/kpc** |
+| Probe (iii), all frozen (mixing) | −0.0005 |
+| G_Z over PP04's 1.754 | **0.70** (median 0.73) |
+| Row 22, the stars' present-day gradient | −0.0698 (window [−0.069, −0.049]; Trentin+24's Cepheids −0.064 ± 0.003) |
+
+**The readings applied, in the order written.**
+
+*R1 fires, in substance and not by its letter.* The age/U path carries −0.0016 of the −0.1035 (1.5 %), the mixing
+−0.0005, and the metallicity path, age and U frozen, −0.1177 — which is **0.014 from the published value, outside the
+0.01 the aim wrote**. The aim assumed the two shares add; they do not: G_Z is larger at the inner edge's younger,
+higher-U regions than averaged over the regions' own, so freezing age and U *there* overshoots. The decomposition is
+nonetheless unambiguous — the gradient is the metallicity's through the grid and nothing else — and that is what R1
+asks. The 0.01 was a method tolerance for a linear sum, not an acceptance window, and it is recorded as too tight for a
+nonlinear decomposition rather than widened: the test pins the three probes as read.
+
+*R1c fires, by both its conditions; R1a and R1b do not.* G_Z = 1.22 per dex is **below 1.4** — the grid responds at 0.70
+of PP04's empirical 1.75, so the grid's run with Z is not steeper than the empirical response but shallower (its own
+T_e(Z) and N/O(Z) already flatten N2 more than Pettini & Pagel's calibration does); R1b is dead. And Z′ = −0.078 is
+**steeper than −0.075**: the HII regions' oxygen gradient (the ring gas gradient, −0.078, which the regions inherit
+exactly) is steeper than the stars' present-day −0.070 that row 22 reads, and steeper than the Cepheids' −0.064 ± 0.003
+that row 22's window is set from — young stars that should track the gas. So the chemistry's gas-phase gradient is a
+cause, as R1c says, and its closer sits in `chemistry_dtd` / `ism` (rows 22 and 23 watch it; a fix is S46's after a
+ruling, as the aim pre-stated). **But R1c's consequence was then examined before it was written down as the whole
+answer, and it is not:** at the Cepheids' own gradient the model would read 1.22 × (−0.064) = **−0.078**, still 3.7σ
+below the blind floor, and to land inside [−0.045, −0.005] through the grid's response the gas gradient would have to
+be flatter than −0.037 dex/kpc — flatter than every stellar measurement row 22 cites and than the Cepheids by a factor
+of two. So the chemistry owns a bounded part of the miss — the 0.014 dex/kpc by which the gas gradient exceeds the
+Cepheids', worth **−0.017 dex/kpc of the ratio gradient** — and the rest is R1a's substance under R1c's letter:
+**Zhao et al.'s LAMOST N2 gradient (−0.025, i.e. an O/H gradient of −0.020 through this grid's response or −0.014
+through PP04's) and the Galaxy's Cepheid abundance gradient (−0.064) are two measurements the model cannot satisfy
+together through any response between the grid's 1.22 and PP04's 1.75 per dex.** B12: a conflict of sources is
+preserved as named rulesets, never averaged. Row 37 stays a recorded miss; nothing moves.
+
+**What the register says now.** *#117 re-described:* the row's miss has two named parts — the chemistry's (−0.017,
+#124 below) and the sources' conflict — and its closer is a third measurement read blind, **the direct-method
+HII-region O/H gradient over 8–15 kpc** (Esteban & García-Rojas 2018, Arellano-Córdova et al. 2020, as a reader
+forbidden the repository sets it): if it is flatter than −0.03 dex/kpc the Galaxy's HII gas is flatter than its Cepheids
+and the model's gas gradient is the defect in full; if steeper than −0.05, LAMOST's N2 gradient is the outlier and the
+row's source carries the conflict; between, both. *#124 opened:* the gas-phase oxygen gradient (−0.078) is steeper than
+the Cepheids' (−0.064 ± 0.003) and than the model's own stars' (−0.070); the HII regions inherit it. Carried; the closer
+is a ruling on the chemistry stage's gas gradient (what sets the gas steeper than the stars it just formed — the
+inside-out profile's present-day enrichment or the ism's mixing), with rows 22–23 re-read after. *The miss text of row
+37* (`spec.MISSES[37]`) is rewritten to these two causes and the blind-reading prediction; the "chemistry's N/H
+gradient" phrase is gone (the grid reads no N/H). The register reads **63 open = 11 permanent + 52 carried, 44
+discharged.**
+
+**Option 4, the prod check.** `npx vite build` clean; `prod` (:8018) started on `main`'s code (S45 adds tests and docs
+only), the bundle's `wfc3n` curves carry the vacuum key, a form-encoded POST to `/api/render` through the real
+transport returns 200 (6 953 080 bytes) with the three filters echoed `vacuum`, Hα 0.9453 in F656N, [O III] 0.8987 in
+F502N; `/api/fields` lists `nii_halpha_gradient_hii` (dex/kpc, galaxy, scalar); the server stopped. CI's `image.yml`
+built `ghcr.io/mcha291/galaxygen:7e0338d` (and `:83d2ca2`) on the push, so the owner's command is `./infra/deploy.ps1
+-ResourceGroup galaxygen-rg -Tag <short sha of main after this merge>` — in BRIEF; the deploy is the owner's.
+
+**The gate.** `test_s45_diagnosis` and `test_nebular` green; no model number moved, so specs stay 12 / 20 / 5 of 37 (re-run
+and read); `test_audit`'s register pins moved to 63 / 44 with #124 in the carried list; the full suite backgrounded with
+its own line, `bootstrap.py` run first (S44's lesson): **{{SUITE}}**. Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
+(the blind direct-method reading first, then the chemistry ruling). Tag `s45` on the merge (C2e), the MANUAL_TODO row.

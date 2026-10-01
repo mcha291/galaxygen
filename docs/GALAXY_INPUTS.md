@@ -692,9 +692,9 @@ defined here once and used in every entry below:
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120 | 51 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124 | 52 |
 
-So the board's **62 open** is 11 permanent and 51 carried, and no item is unruled. (S22
+So the board's **63 open** is 11 permanent and 52 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -715,7 +715,9 @@ representation and the cluster's undrawn extent, D191; S42, the owner's four ans
 #117–#120, the forbidden lines' missing row, the grid's edge and gas, the diffuse gas's lines and the instrument's
 sprite and convention, D192; S43, Audit IV, opened #121–#123, the grid's solar scale, the renderer's record and a
 misplaced grain row, and set #117's window blind, D194; S44 applied and discharged #121–#123, decided #120's
-convention half, and entered row 37 as a recorded miss under #117, D195.) The eleven
+convention half, and entered row 37 as a recorded miss under #117, D195; S45 diagnosed row 37 — the metallicity path
+is the whole gradient, the gas gradient is steeper than the Cepheids' (#124 opened) and the rest is a conflict of
+sources — D196.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3284,7 +3286,20 @@ never been judged in twenty-three sessions.
    row's note. **Carried as the row's miss.** What closes it: the prediction in the miss — read the grid's own
    [N II]/Hα run against log Z at fixed age and U times the model's d log Z/dR first (the grid's temperature run),
    then the chemistry's N/H gradient; a slope inside the window after either one change alone, with the other
-   untouched, kills the other explanation.
+   untouched, kills the other explanation. **S45 read it (D196, `tests/test_s45_diagnosis.py`):** the metallicity path
+   is the whole gradient (age and U frozen −0.1177, Z frozen −0.0016, mixing −0.0005), the grid responds at 1.22 per
+   dex of log Z — 0.70 of PP04's empirical 1.75, so the grid is not too steep — and the regions' oxygen gradient is
+   −0.078 dex/kpc, steeper than the Cepheids' −0.064 ± 0.003 (row 22's source) by 0.014, worth −0.017 of the ratio
+   gradient (#124). At the Cepheids' own gradient the model would still read −0.078, 3.7σ out; inside the window needs
+   a gas gradient flatter than −0.037, half the Cepheids'. **So the miss has two named parts and no single owner:**
+   #124's bounded share, and a conflict between Zhao et al.'s LAMOST N2 gradient (−0.025; an O/H gradient of −0.020
+   through this grid, −0.014 through PP04) and the Galaxy's Cepheid abundance gradient, preserved as named rulesets
+   (B12), never averaged. The grid reads no N/H, so the earlier "chemistry's N/H gradient" was the wrong name (D196).
+   **Carried.** What closes it: a third measurement read blind — the direct-method HII-region O/H gradient over
+   8–15 kpc (Esteban & García-Rojas 2018; Arellano-Córdova et al. 2020), set by a reader forbidden the repository:
+   flatter than −0.03 dex/kpc and the Galaxy's HII gas is flatter than its Cepheids, the model's gas gradient the
+   defect in full; steeper than −0.05 and LAMOST's N2 gradient is the outlier, the row's source carrying the conflict;
+   between, both — then #124's ruling.
 118. **3.0 % of the regions read the grid's metal-rich edge (a quarter until S44), and the grid's gas is not the
    region's** (S42, D192; re-stated at S44, D195). The grid spans log(Z/Z☉) −1.98 to +0.2; since S44 enters the
    axis on the grid's own oxygen (8.93, #121, D195) **3.0 % of the default regions** (the inner disc) are richer
@@ -3400,6 +3415,17 @@ never been judged in twenty-three sessions.
    file's `3.184e-26, 2.277e00`; `test_render` pins every key to the file's 0.01 dex list at its six printed figures
    and bounds the far-infrared rows' log–log run (the largest residual from a log–log cubic over the nine rows at λ ≥ 100 µm, 0.0078 dex corrected against 0.0157 with the old row, the bound 0.011 — 1.4× each way, the file's own run bending at 400 µm; three keys sit one unit in the sixth figure off 10^(k/100), as the file prints them), which the misplaced row violated and the identity
    could not see; the extinction ratios at the viewer's filters did not move.
+124. **The gas-phase oxygen gradient is steeper than the Cepheids' and than the model's own stars'** (S45, D196). Over
+   8.2–15.4 kpc the ring gas (`feh_gas` + `alpha_fe_gas`) falls at −0.078 dex/kpc and the HII regions inherit it
+   exactly (−0.0784 Hα-weighted, `tests/test_s45_diagnosis.py`), where the stars' present-day gradient reads −0.070
+   (row 22, itself a recorded miss against [−0.069, −0.049], #47) and Trentin et al. 2024's Cepheids — young stars that
+   should track the gas — −0.064 ± 0.003. The excess is 0.014 dex/kpc of oxygen, worth −0.017 dex/kpc of row 37's
+   [N II]/Hα gradient at the grid's 1.22 per dex, a bounded part of that miss and not the whole of it (#117). Nothing
+   in the nebular stage sets it: the chemistry and ism stages own the gas's present-day enrichment profile, and what
+   makes the gas steeper than the stars it just formed (the inside-out profile's late enrichment, or the ism's
+   mixing) was not read at S45. **Carried.** What closes it: a ruling in `chemistry_dtd` / `ism` on the gas-phase
+   gradient against a sourced gas measurement (the blind direct-method HII-region gradient #117 asks for serves
+   both), with rows 22 and 23 re-read after any change (B10).
 
 ---
 
