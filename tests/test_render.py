@@ -895,3 +895,229 @@ def test_a_point_through_the_filters_is_its_light_where_the_filters_see_it(small
     hot, cool = channels(30_000.0), channels(3_000.0)
     assert hot.max() < 0.35 and hot[2] > hot[1] > hot[0]  # an O star: blue, and a third of its light or less
     assert cool[0] > cool[1] > cool[2] and cool[2] < 0.1
+
+
+# --- S48 (D200, #114): one object's light through the curves -----------------------------------------------
+
+# The gate's sample: every tenth isochrone of the table (40 of 396: every metallicity, ages across the grid), fifty
+# points along each evenly in the table's own order (so the pre-main sequence, the main sequence, the giant branch,
+# the core-helium burners, the early and thermally pulsing AGB all appear: 299 / 411 / 191 / 198 / 116 / 90 / 91 /
+# 244 / 360 by PARSEC label 0-8), among the points 1000-100 000 K the table spans.
+GATE_THRESHOLD_WEIGHTED = 0.02  # mag, luminosity-weighted, the broadband sets (D200)
+GATE_THRESHOLD_MAX = 0.1  # mag, the broadband sets (D200)
+# A point where the exact path holds the table's own eight bands to this is "held" (below).
+HELD = 0.01
+
+
+def _isochrone_points(hot: bool = False):
+    from galaxy.stages.photometry import EXTRA, isochrones
+
+    tab = isochrones()
+    mags, log_t, log_l, label = [], [], [], []
+    for key in sorted(tab.tracks)[::10]:
+        _, ll, lt = tab.tracks[key]
+        extra = tab.extra[key]
+        if hot:
+            pick = np.flatnonzero(lt > 5.0)
+        else:
+            inside = np.flatnonzero((lt >= 3.0) & (lt <= 5.0))
+            pick = inside[np.unique(np.linspace(0, inside.size - 1, 50).round().astype(int))]
+        mags.append(extra[pick, :8]), log_t.append(lt[pick]), log_l.append(ll[pick])
+        label.append(extra[pick, EXTRA.index("label")])
+    return (np.concatenate(mags), 10.0 ** np.concatenate(log_t), 10.0 ** np.concatenate(log_l), np.concatenate(label))
+
+
+@pytest.fixture(scope="module")
+def objects():
+    mags, kelvin, light, label = _isochrone_points()
+    anchors = spectra.object_nu_l_nu(mags)
+    bands = [spectra.band_curve(b) for b in BANDS]
+    norm = np.array([np.trapezoid(c.at(c.grid()), c.grid()) for c in bands])
+    own = anchors / spectra.SED_WAVELENGTHS * norm  # each band's mean L_λ through its own curve: the magnitudes
+    held = 2.5 * np.abs(np.log10(spectra.stellar_response(anchors, kelvin, bands) / own)).max(axis=1) < HELD
+    sets = {}
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        exact = spectra.stellar_response(anchors, kelvin, parsed)
+        sets[name] = (parsed, exact, spectra.object_response(anchors, kelvin, parsed))
+    return {"anchors": anchors, "kelvin": kelvin, "light": light, "label": label, "own": own, "bands": bands,
+            "held": held, "sets": sets}
+
+
+def _mag(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    return 2.5 * np.abs(np.log10(a / b))
+
+
+def test_the_object_table_is_on_the_blackbody_route_s_temperatures():
+    from galaxy.api.service import BLACKBODY_GRID
+
+    assert np.array_equal(spectra.RESPONSE_TEMPERATURES, BLACKBODY_GRID)
+
+
+def test_an_object_s_anchors_are_its_magnitudes_through_the_zero_points():
+    mags = np.array([[5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3], [np.nan] * 8])
+    got = spectra.object_nu_l_nu(mags)
+    for k, band in enumerate(BANDS):
+        assert got[0, k] == pytest.approx(float(band_nu_l_nu(10 ** (-0.4 * mags[0, k]), band)), rel=1e-15)
+    assert np.all(np.isnan(got[1]))  # a dead star: no magnitudes, no light (B9)
+    with pytest.raises(ValueError, match="8 bands"):
+        spectra.object_nu_l_nu(np.zeros(7))
+
+
+def test_the_table_s_reference_is_a_blackbody_read_as_band_means():
+    """The reference anchors F^bb(T) are a unit blackbody's mean λL_λ through each band's own curve, the reading
+    ``band_consistent`` gives an anchor. Through rgb ``stellar_response`` of those anchors is within 0.035 mag of
+    ``blackbody_response`` at every grid temperature (measured 0.0348, at 1000 K); the blackbody's λL_λ at the
+    pivots instead reads up to 1.51 mag off (at 1075 K). The sensitivities sum to one per filter to 1e-6 (Euler:
+    the exact response is homogeneous of degree one; measured 2.3e-7 at the step 5e-4, wfc3), and a blackbody's
+    own anchors return the table's response."""
+    t = spectra.RESPONSE_TEMPERATURES
+    rgb = spectra.parse_curves(SETS["rgb"]["curves"])
+    table = spectra.response_table(rgb)
+    bb = spectra.blackbody_response(rgb, t)
+    assert _mag(np.exp(table.log_response), bb).max() < 0.035
+    pivot = spectra.SED_WAVELENGTHS * spectra.planck_share(spectra.SED_WAVELENGTHS, t)
+    assert _mag(spectra.stellar_response(pivot, t, rgb), bb).max() > 1.5
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        table = spectra.response_table(parsed)
+        assert np.abs(table.slope.sum(axis=-1) - 1.0).max() < 1e-6, name
+        light = 3.7e4
+        got = spectra.object_response(light * np.exp(table.log_anchors), t, parsed)
+        assert np.allclose(got, light * np.exp(table.log_response), rtol=1e-12, atol=0.0), name
+    assert spectra.response_table(spectra.parse_curves(SETS["rgb"]["curves"])) is spectra.response_table(rgb)  # cached
+
+
+def test_an_object_s_response_scales_with_its_light_exactly(objects):
+    """Homogeneity: every anchor ×10 is every response ×10, to 1e-9 (the c-form makes it exact, whatever the
+    differences leave in Σ a), and the shapes broadcast."""
+    a, t = objects["anchors"][::50], objects["kelvin"][::50]
+    for name, (parsed, _, _) in objects["sets"].items():
+        one = spectra.object_response(a, t, parsed)
+        assert np.allclose(spectra.object_response(10.0 * a, t, parsed), 10.0 * one, rtol=1e-9, atol=0.0), name
+    got = spectra.object_response(a[:6].reshape(2, 3, 8), t[:6].reshape(2, 3), parsed)
+    assert got.shape == (2, 3, 3) and np.allclose(got.reshape(6, 3), one[:6], rtol=1e-14, atol=0.0)
+
+
+def test_an_object_without_light_is_dark_and_without_a_temperature_missing():
+    rgb = spectra.parse_curves(SETS["rgb"]["curves"])
+    lit = spectra.object_nu_l_nu(np.array([5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3]))
+    anchors = np.stack([np.zeros(8), lit, lit, lit, np.full(8, np.nan), lit])
+    kelvin = np.array([np.nan, np.nan, 0.0, 5800.0, 5800.0, 300_000.0])
+    got = spectra.object_response(anchors, kelvin, rgb)
+    assert np.all(got[0] == 0.0) and np.all(np.isnan(got[1:3])) and np.all(np.isnan(got[4]))
+    assert np.all(got[3] > 0.0) and np.all(np.isfinite(got[5]))  # beyond the grid: the end row, not missing
+
+
+def test_an_object_through_the_table_s_own_bands_is_its_magnitudes(objects):
+    """Through the eight band curves the approximation returns the table's own magnitudes to 0.004 mag at all
+    2 000 points (measured 0.0037). The exact path does not at 39 of them: thermally pulsing AGB stars whose
+    circumstellar dust puts M_B at up to +95 (the table's own magnitudes) with their neighbouring bands tens of
+    magnitudes brighter, so ``band_consistent``'s twelve passes cannot pull a band's mean down past the light its
+    Gaussian's wings collect from the next — it misses B by up to 49.6 mag there. Those 39 are where the gate
+    below separates "all" from "held"."""
+    approx = spectra.object_response(objects["anchors"], objects["kelvin"], objects["bands"])
+    assert _mag(approx, objects["own"]).max() < 0.004
+    exact = spectra.stellar_response(objects["anchors"], objects["kelvin"], objects["bands"])
+    miss = _mag(exact, objects["own"]).max(axis=1)
+    assert (~objects["held"]).sum() == 39 and 49.0 < miss.max() < 50.0
+    assert set(objects["label"][~objects["held"]]) == {8.0}
+
+
+# Per set, per filter (in the set's order): median / max / luminosity-weighted |Δ mag| of object_response against
+# stellar_response, at all 2 000 points and at the 1 961 held ones; measured at S48 (step 5e-4).
+GATE = {
+    "rgb": {"all": ([0.0, 0.0, 0.0], [0.0818, 9.8415, 49.6045], [0.0001, 0.0082, 0.0326]),
+            "held": ([0.0, 0.0, 0.0], [0.0004, 0.0004, 0.0004], [0.0, 0.0, 0.0])},
+    "sho": {"all": ([0.0035, 0.0041, 0.0094], [7.3292, 7.0912, 296.2336], [0.0227, 0.0249, 0.2406]),
+            "held": ([0.0034, 0.0039, 0.0090], [0.5715, 0.6308, 0.2503], [0.0053, 0.0061, 0.0119])},
+    "hoo": {"all": ([0.0041, 0.0094, 0.0094], [7.0912, 296.2336, 296.2336], [0.0249, 0.2406, 0.2406]),
+            "held": ([0.0039, 0.0090, 0.0090], [0.6308, 0.2503, 0.2503], [0.0061, 0.0119, 0.0119])},
+    "wfc3": {"all": ([0.0002, 0.0024, 0.0187], [2.2735, 8.8811, 170.4449], [0.0015, 0.0243, 0.1812]),
+             "held": ([0.0002, 0.0023, 0.0182], [0.0350, 0.3219, 0.3372], [0.0002, 0.0030, 0.0198])},
+    "wfc3n": {"all": ([0.0033, 0.0041, 0.0093], [7.3915, 7.0893, 282.8214], [0.0222, 0.0249, 0.2335]),
+              "held": ([0.0032, 0.0040, 0.0090], [0.5550, 0.6313, 0.2484], [0.0051, 0.0061, 0.0117])},
+}
+
+
+@pytest.mark.parametrize("name", list(GATE))
+def test_the_object_response_against_the_exact_integral(objects, name):
+    """**D200's gate**: the linearised response against the exact ``stellar_response`` at the 2 000 isochrone
+    points, per filter, |Δ mag| = 2.5 |log10(approx / exact)|, the median, the maximum and the mean weighted by the
+    point's bolometric light (pinned in ``GATE``).
+
+    **Where the threshold holds and where it does not.** D200's threshold for the broadband sets is a weighted error
+    under 0.02 mag and a maximum under 0.1. It holds for rgb at the held points (weighted 0.0000, max 0.0004: rgb's
+    R, V and B are the table's own band curves, so its response is its anchor) and for wfc3's weighted error there
+    (0.0002 / 0.0030 / 0.0198, F438W at the edge). It does **not** hold for wfc3's maximum at the held points (0.32
+    F555W, 0.34 F438W, thermally pulsing AGB stars, label 8; 0.13 in F438W with them left out), nor at all 2 000 for
+    either set (rgb B weighted 0.033; wfc3 F438W 0.18), where the 39 points the exact path itself does not hold
+    (test above) dominate. Not loosened: the misses are asserted as misses, so a better method shows up here.
+    Tried at S48 and not enough: the diagonal second-order term (wfc3 held, max 0.067 / 1.19 / 4.76, weighted
+    0.0016 / 0.0064 / 0.0318: worse); a second reference at the best-fitting blackbody — alone, blended with the
+    first by 1/Σd², or averaged with it (wfc3 held, F438W max 0.42 / 0.39 / 0.26, weighted 0.012 / 0.013 / 0.016:
+    the weighted error better, the max not under 0.1);
+    band_consistent linearised and the final integral exact (wfc3 held max 0.53: worse — the nonlinearity is in
+    band_consistent). The step makes no difference (0.05, 0.01, 0.001 agree to 1e-4 mag).
+
+    The narrowband sets, reported: weighted 0.005-0.012 at the held points, max 0.25-0.63 (TP-AGB again; 0.08-0.27
+    without them)."""
+    parsed, exact, approx = objects["sets"][name]
+    light, held = objects["light"], objects["held"]
+    dm = _mag(approx, exact)
+    for which, mask in (("all", np.ones_like(held)), ("held", held)):
+        median, worst, weighted = GATE[name][which]
+        got_weighted = (dm[mask] * light[mask, None]).sum(axis=0) / light[mask].sum()
+        assert np.median(dm[mask], axis=0) == pytest.approx(median, abs=2e-4), which
+        assert dm[mask].max(axis=0) == pytest.approx(worst, rel=2e-3, abs=2e-4), which
+        assert got_weighted == pytest.approx(weighted, abs=2e-4), which
+    if name in ("rgb", "wfc3"):
+        weighted_held = (dm[held] * light[held, None]).sum(axis=0) / light[held].sum()
+        assert weighted_held.max() < GATE_THRESHOLD_WEIGHTED  # holds, rgb and wfc3
+        assert (dm[held].max() < GATE_THRESHOLD_MAX) == (name == "rgb")  # wfc3's maximum misses
+        weighted_all = (dm * light[:, None]).sum(axis=0) / light.sum()
+        assert weighted_all.max() > GATE_THRESHOLD_WEIGHTED and dm.max() > GATE_THRESHOLD_MAX  # both miss at all 2 000
+    if name == "wfc3":
+        quiet = held & (objects["label"] != 8)
+        assert dm[quiet].max(axis=0) == pytest.approx([0.0070, 0.0176, 0.1262], abs=2e-4)
+
+
+def test_an_object_beyond_the_grid_reads_the_end_row():
+    """The 87 points of the same isochrones hotter than 100 000 K read the table's end row (tails at 10⁵ K): within
+    0.1 mag of the exact integral through every set (measured at S48: rgb 1e-4, the rest 0.07-0.095)."""
+    mags, kelvin, _, _ = _isochrone_points(hot=True)
+    anchors = spectra.object_nu_l_nu(mags)
+    assert kelvin.size == 87
+    for name, entry in SETS.items():
+        parsed = spectra.parse_curves(entry["curves"])
+        dm = _mag(spectra.object_response(anchors, kelvin, parsed), spectra.stellar_response(anchors, kelvin, parsed))
+        assert dm.max() < 0.1, name
+
+
+def test_ten_to_the_five_objects_in_well_under_a_second(objects):
+    """The point of the table: 10⁵ objects through rgb with the table warm in 0.05 s at S48 (bound 1 s), where the
+    exact path took 1.3 s for 2 000; the table itself, once per filter set, 2.2-2.6 s."""
+    import time
+
+    parsed = objects["sets"]["rgb"][0]
+    pick = np.random.default_rng(0).integers(0, objects["kelvin"].size, 100_000)
+    a, t = objects["anchors"][pick], objects["kelvin"][pick]
+    spectra.response_table(parsed)
+    start = time.perf_counter()
+    got = spectra.object_response(a, t, parsed)
+    assert time.perf_counter() - start < 1.0 and got.shape == (100_000, 3)
+
+
+def test_today_s_painting_against_the_object_s_light(objects):
+    """#114 re-made on stars: a point painted as its bolometric light through a blackbody's share at its
+    temperature (``L × blackbody_response``, what the viewer draws today) against its light through the filters
+    (the exact ``stellar_response`` of its eight bands). Summed over the 2 000 isochrone points, the painting reads
+    1.151 / 1.093 / 1.043 of the stars' light in R / G / B; per point the median is 1.107 / 1.139 / 1.259. S41's
+    1.89 / 2.12 / 2.43 was the cluster census, each cluster one blackbody at its population's colour temperature:
+    the factor of two is a population's light not being one blackbody, a star's much less so. (A light-weighted
+    mean of the per-point ratio is not a number: the dust-shrouded AGB stars read 10²⁰ — L_bol over almost no
+    optical light.)"""
+    parsed, exact, _ = objects["sets"]["rgb"]
+    paint = objects["light"][:, None] * spectra.blackbody_response(parsed, objects["kelvin"])
+    assert paint.sum(axis=0) / exact.sum(axis=0) == pytest.approx([1.1511, 1.0929, 1.0427], abs=2e-4)
+    assert np.median(paint / exact, axis=0) == pytest.approx([1.1065, 1.1388, 1.2591], abs=2e-4)

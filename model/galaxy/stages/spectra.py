@@ -59,6 +59,8 @@ whose modified blackbody peaks near 130 µm at 20 K.
 
 from __future__ import annotations
 
+import functools
+import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -355,6 +357,123 @@ def band_curve(band: str) -> Curve:
     from SVO (``photometry.PASSBANDS``); the Gaussian shape is [inferred]. What the render gate sends."""
     p = PASSBANDS[band]
     return Curve(band, "gaussian", centre=p.reference, width=p.fwhm)
+
+
+# --- one object's light through the curves (S48, D200, #114) ---------------------------------------------
+
+# The temperatures the per-object table is built on: 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart. The
+# same grid as /api/blackbody's (``api.service.BLACKBODY_GRID``, S42), mirrored here because that module is not this
+# row's to edit; tests/test_render.py asserts the two are equal, and the row that wires this function into a route
+# can make the service read this copy so there is one [verified: np.logspace(3.0, 5.0, 193) in both, read at S48].
+RESPONSE_TEMPERATURES = np.logspace(3.0, 5.0, 193)
+_RESPONSE_LOG_MIN = 3.0
+_RESPONSE_PER_DEX = 96.0
+# The step, in natural log of one anchor, of the central differences the sensitivities are taken by. D200 named
+# δ ≈ 0.05; at 0.05 the differences' own truncation leaves Σ_k a_fk − 1 at 2.3e-3 (wfc3), at 5e-4 at 2.3e-7, within
+# the 1e-6 the ruling asks, and the responses are the same to 1e-4 mag at 0.05, 0.01 and 0.001 on the gate's 2 000
+# points [verified: measured at S48, all five sets]. Rounding is far below either: ln R is good to ~1e-14.
+RESPONSE_STEP = 5.0e-4
+# Tables kept, one per (filter set, step): the viewer offers five sets.
+_RESPONSE_CACHE = 8
+
+
+def object_nu_l_nu(magnitudes: np.ndarray) -> np.ndarray:
+    """``(..., 8)``: an object's eight absolute Vega magnitudes (in the order of ``SED_BANDS``) as its λL_λ anchors
+    in L☉, band by band through ``photometry.band_nu_l_nu`` (one source of the zero points). NaN in is NaN out: a
+    star no longer alive has no magnitudes and no light (rule B9)."""
+    from galaxy.stages.photometry import band_nu_l_nu
+
+    m = np.asarray(magnitudes, dtype=float)
+    if m.shape[-1:] != (len(SED_BANDS),):
+        raise ValueError(f"magnitudes end in an axis of {len(SED_BANDS)} bands, got shape {m.shape}")
+    return np.stack([band_nu_l_nu(10.0 ** (-0.4 * m[..., k]), b) for k, b in enumerate(SED_BANDS)], axis=-1)
+
+
+@dataclass(frozen=True)
+class ResponseTable:
+    """``stellar_response`` linearised in log about a blackbody, per temperature of ``RESPONSE_TEMPERATURES``, for
+    one filter set. Natural logs throughout.
+
+    ``log_anchors`` ``(193, 8)``: ln F_k^bb(T), the anchors of a unit-luminosity blackbody. Each is the band's mean
+    λL_λ through its own curve (``band_curve``) — the reading ``band_consistent`` gives an anchor — not the
+    blackbody's λL_λ at the band's reference wavelength: through rgb the mean anchors put ``stellar_response``
+    within 0.035 mag of ``blackbody_response`` at every grid temperature (median 0.0000), the point values within
+    1.5 mag (9.9 through wfc3), both worst at the cool end [verified: measured at S48, the five sets].
+    ``log_response`` ``(193, n_f)``: ln R_f^bb(T) = ln stellar_response(F^bb(T), T). ``slope`` ``(193, n_f, 8)``:
+    a_fk = ∂ ln R_f / ∂ ln F_k there, by central differences of ± ``step``."""
+
+    log_anchors: np.ndarray
+    log_response: np.ndarray
+    slope: np.ndarray
+    step: float
+
+
+def response_table(curves: Sequence[Curve], step: float = RESPONSE_STEP) -> ResponseTable:
+    """The table ``object_response`` reads: 193 × 17 exact evaluations (the reference and each anchor moved ± step),
+    built once per filter set and step and kept in a small LRU keyed by the curves' JSON (the form a request
+    carries them in, so equal sets share a table)."""
+    key = json.dumps([c.json() for c in curves], sort_keys=True)
+    return _response_table(key, float(step))
+
+
+@functools.lru_cache(maxsize=_RESPONSE_CACHE)
+def _response_table(key: str, step: float) -> ResponseTable:
+    curves = parse_curves(json.loads(key))
+    t = RESPONSE_TEMPERATURES
+    anchors = np.stack(
+        [np.trapezoid(planck_share(c.grid(), t) * c.at(c.grid()), c.grid(), axis=-1) / np.trapezoid(c.at(c.grid()), c.grid())
+         for c in (band_curve(b) for b in SED_BANDS)], axis=-1) * SED_WAVELENGTHS  # (193, 8)
+    n = len(SED_BANDS)
+    # Row 0 the reference; rows 1 + 2k and 2 + 2k with anchor k scaled by e^{+step} and e^{-step}.
+    scale = np.ones((1 + 2 * n, n))
+    for k in range(n):
+        scale[1 + 2 * k, k] = math.exp(step)
+        scale[2 + 2 * k, k] = math.exp(-step)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        log_r = np.log(stellar_response(anchors[:, None, :] * scale[None], np.broadcast_to(t[:, None], (t.size, 1 + 2 * n)), curves))
+    slope = np.moveaxis((log_r[:, 1::2, :] - log_r[:, 2::2, :]) / (2.0 * step), 1, 2)  # (193, n_f, 8)
+    return ResponseTable(np.log(anchors), log_r[:, 0, :], slope, step)
+
+
+def object_response(nu_l_nu: np.ndarray, kelvin: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
+    """``(*shape, n_filters)``: an object's light through each curve, L☉ if its anchors are — the quantity
+    ``stellar_response`` returns per ring, so a point and a cell are on one scale (D200) — for 10⁵ objects a
+    request: the exact machinery linearised in log about a blackbody at the object's temperature,
+
+        ln R_f = ln R_f^bb(T) + c + Σ_k a_fk(T) (u_k − c),   u_k = ln F_k − ln F_k^bb(T),   c = mean_k u_k,
+
+    the table (``response_table``) read linearly in log T. The exact response is homogeneous of degree one in the
+    anchors, so its log-sensitivities sum to one per filter (Euler), and the c-form is that sum used: scaling every
+    anchor by s adds ln s to c and nothing to u − c, so the response scales by s exactly whatever the differences
+    leave in Σ a. A blackbody's own anchors give u = 0 and return R^bb. A temperature outside 1000-100 000 K reads
+    the table's end row: the anchors still carry the shape; the tails beyond U and K are the end temperature's.
+
+    What it costs against ``stellar_response``, and where it misses D200's threshold (TP-AGB stars, whose anchors
+    are tens of e-folds from any blackbody), is measured in tests/test_render.py; a diagonal second-order term and
+    a blend with a second reference at the best-fitting blackbody were tried at S48 and did not close it.
+
+    Zero where the object has no light, NaN where an anchor is NaN or where it has light and no temperature
+    (as ``stellar_response`` gives through any curve that reaches a tail; rule B9)."""
+    f = np.asarray(nu_l_nu, dtype=float)
+    t = np.asarray(kelvin, dtype=float)
+    shape = np.broadcast_shapes(f.shape[:-1], t.shape)
+    f = np.broadcast_to(f, (*shape, f.shape[-1])).reshape(-1, f.shape[-1])
+    t = np.broadcast_to(t, shape).reshape(-1)
+    table = response_table(curves)
+    ok_t = np.isfinite(t) & (t > 0.0)
+    x = np.clip((np.log10(np.where(ok_t, t, 1.0)) - _RESPONSE_LOG_MIN) * _RESPONSE_PER_DEX, 0.0, RESPONSE_TEMPERATURES.size - 1.0)
+    i = np.minimum(x.astype(int), RESPONSE_TEMPERATURES.size - 2)
+    w = (x - i)[:, None]
+    u = np.log(np.maximum(f, 1e-300)) - (table.log_anchors[i] * (1.0 - w) + table.log_anchors[i + 1] * w)
+    c = u.mean(axis=-1, keepdims=True)
+    d = u - c
+    log_r = table.log_response[i] * (1.0 - w) + table.log_response[i + 1] * w + c
+    log_r += (1.0 - w) * np.einsum("nfk,nk->nf", table.slope[i], d) + w * np.einsum("nfk,nk->nf", table.slope[i + 1], d)
+    lit = (f > 0.0).any(axis=-1)
+    with np.errstate(over="ignore"):
+        out = np.where(lit[:, None], np.exp(log_r), 0.0)
+    out[np.isnan(f).any(axis=-1) | (lit & ~ok_t)] = np.nan
+    return out.reshape(*shape, len(curves))
 
 
 # --- the dust (S39, BUILD_II V2) ------------------------------------------------------------------------
