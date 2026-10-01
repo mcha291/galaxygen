@@ -111,7 +111,8 @@ def test_the_unresolved_top_of_the_imf():
     that, and it dies before 3.98 Myr (that is why the isochrone does not hold it) - and the
     table cannot say which wins. What it does say: about half of a star-forming galaxy's
     ionizing photons come from stars the table cannot see, so ionizing_photon_rate is a lower
-    limit by up to a factor of two. Measured at solar metallicity."""
+    limit by up to a factor of two. Measured at solar metallicity. S49 (D204): 0.488, the population's Q
+    integrated along the isochrone's points."""
     tab = isochrones()
     solar = int(np.abs(tab.mhs).argmin())
     mass, log_l, log_teff = tab.track(0, solar)
@@ -129,7 +130,7 @@ def test_the_unresolved_top_of_the_imf():
     print(f"top of the youngest isochrone {top:.1f} Msun, Q there {q_top:.3e}/s; unseen >= {fraction:.3f}")
     assert top == pytest.approx(63.8, abs=0.05)
     assert q_top == pytest.approx(4.006e49, rel=1e-3)
-    assert fraction == pytest.approx(0.489, abs=0.001)
+    assert fraction == pytest.approx(0.488, abs=0.001)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.489
 
 
 def test_how_much_of_a_populations_q_the_table_itself_covers():
@@ -155,7 +156,8 @@ def test_how_much_of_a_populations_q_the_table_itself_covers():
     assert share == pytest.approx(TABLE_COVERAGE, abs=5e-4)
 
 
-TABLE_COVERAGE = (0.2177, 0.3283, 0.4540)  # S28: the table itself carries a third of the photons
+TABLE_COVERAGE = (0.2165, 0.3174, 0.4661)  # S28: the table itself carries a third of the photons. # S49 (D204, #126): the light integrated along the isochrone's points; was
+# (0.2177, 0.3283, 0.4540), on the fixed mass grid
 
 
 # --- the wind ---------------------------------------------------------------------------------

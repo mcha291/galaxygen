@@ -551,7 +551,8 @@ def per_mass_at(table: np.ndarray, age_gyr: np.ndarray, feh: np.ndarray) -> np.n
 # population's light averaged over the ages its stars span. Reading it at one age instead - what
 # ``light.py`` did until S28 - put the last step's whole mass at the youngest isochrone and
 # made the disc's light depend on the time step: disc_luminosity read 8.77e10 at N_t = 400,
-# 5.31e10 at 2000 and 5.02e10 at 8000, and B - V 0.514, 0.616, 0.626. The average is the
+# 5.31e10 at 2000 and 5.02e10 at 8000, and B - V 0.514, 0.616, 0.626 (S28's numbers, on the fixed-grid
+# tables S49 replaced). The average is the
 # difference of a cumulative integral over age, tabulated once per metallicity on a fine
 # log-spaced age grid read exactly as :func:`population_at` reads the table (linear in log age,
 # clamped to its span, so the first 4 Myr are the youngest isochrone's).

@@ -592,7 +592,7 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # S48's wiring, measured: the cluster census's light through rgb (R, V, B) and bolometric, whole disc, against the
 # young population's (ages under the census's window) from the same decomposition. S33 measured the census's ionizing
 # photons at 1.0088 of the young population's.
-CLUSTERS_RGB_OVER_YOUNG = (0.98482, 0.98957, 1.00026)
+CLUSTERS_RGB_OVER_YOUNG = (0.98508, 0.99003, 1.00087)  # S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
 CLUSTERS_LIGHT_OVER_YOUNG = 1.01128
 
 

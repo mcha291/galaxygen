@@ -421,9 +421,10 @@ def test_rows_1_to_24_are_where_s27_left_them(judged):
 
 def test_the_tully_fisher_slope_as_the_sweep_reads_it(judged):
     """S28: -7.91436 in both models, inside Sakai et al.'s -7.85 +/- 0.71; the zero point (not
-    judged) is -19.00 at log W = 2.5 against Sakai's -19.70 and Tully & Pierce's -20.11."""
+    judged) is -19.00 at log W = 2.5 against Sakai's -19.70 and Tully & Pierce's -20.11. S49 (D204, #126): -7.89193 and
+    -18.99, the light integrated along the isochrone's points; still a pass."""
     for results in judged.values():
         r = next(r for r in results if r.n == 29)
-        assert r.status == "pass" and r.value == pytest.approx(-7.91436, abs=5e-5)
+        assert r.status == "pass" and r.value == pytest.approx(-7.89193, abs=5e-5)  # S49 (D204, #126): the light integrated along the isochrone's points; was -7.91436
         zero = float(re.search(r"zero point at log W = 2\.5 (-?[0-9.]+)", r.reason).group(1))
-        assert zero == pytest.approx(-19.00, abs=0.01)
+        assert zero == pytest.approx(-18.99, abs=0.01)  # S49 (D204, #126): the light integrated along the isochrone's points; was -19.00

@@ -44,7 +44,8 @@ def test_the_regenerated_table_reads_what_the_old_one_did():
     assert T == pytest.approx([5823.96159307, 5832.87121235, 5729.52982438], rel=1e-10)  # old: 5823.96..., 5832.87..., 5729.53...
     tab, pop = isochrones(), population_light()
     solar = int(np.abs(tab.mhs).argmin())
-    assert pop.light_per_mass[[0, -1], solar] == pytest.approx([8.01433898e02, 1.47498719e-01], rel=1e-8)  # old: 801.433898, 0.147498719
+    # old table: 801.433898, 0.147498719 (the same on both tables, S28). # S49 (D204, #126): the light integrated along the isochrone's points; was those
+    assert pop.light_per_mass[[0, -1], solar] == pytest.approx([8.04037928e02, 2.26344953e-01], rel=1e-8)
 
 
 def test_the_bands_are_the_tables_eight_and_the_sun_is_near_willmers():

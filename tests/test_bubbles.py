@@ -160,7 +160,9 @@ def test_the_default_numbers(default):
     radius = np.asarray(F["bubble_radius"], dtype=float)
     assert radius.size == 12860
     assert float(np.median(radius)) == pytest.approx(8.963, rel=0.01)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12521
+    # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
+    # was 12521
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12524
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])

@@ -62,15 +62,15 @@ SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 
 # The gate's tolerance, stated (module docstring), and what the second cut measured at S38.
 TOLERANCE = 1e-3
-MEASURED_B_V = 0.630641  # the table's 0.630552
-MEASURED_M_V = -21.216042  # the table's -21.215871
+MEASURED_B_V = 0.569495  # the table's 0.569412. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.630641 (the table's 0.630552)
+MEASURED_M_V = -21.110365  # the table's -21.110201. # S49 (D204, #126): the light integrated along the isochrone's points; was -21.216042 (the table's -21.215871)
 # The first cut's record (S38): one blackbody at the colour temperature.
-FIRST_CUT_B_V = 0.642807
-FIRST_CUT_M_V = -21.928533
+FIRST_CUT_B_V = 0.590914  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.642807
+FIRST_CUT_M_V = -21.844831  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
-FACE_ON_B_V = {"basic": 0.647469, "azimuthal": 0.647469}  # +0.0168 on the gate's
-FACE_ON_M_V = {"basic": -20.804991, "azimuthal": -20.804991}  # 0.411 mag fainter
+FACE_ON_B_V = {"basic": 0.574638, "azimuthal": 0.574638}  # +0.0051 on the gate's. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.647469 (+0.0168)
+FACE_ON_M_V = {"basic": -20.685591, "azimuthal": -20.685591}  # 0.425 mag fainter. # S49 (D204, #126): the light integrated along the isochrone's points; was -20.804991 (0.411)
 
 
 def curves(name: str) -> str:
@@ -148,8 +148,8 @@ def test_the_frame_s_colour_and_magnitude_are_the_table_s(full, model):
     m_b, m_v = band_magnitude(total[0], "B"), band_magnitude(total[1], "V")
     table = scalars(full, model.name, "colour_b_v", "absolute_magnitude_v")
     print(model.name, m_b - m_v, m_v, table)
-    assert table["colour_b_v"] == pytest.approx(0.6306, abs=5e-5)  # the targets, as published
-    assert table["absolute_magnitude_v"] == pytest.approx(-21.2159, abs=5e-5)
+    assert table["colour_b_v"] == pytest.approx(0.5694, abs=5e-5)  # the targets, as published. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.6306
+    assert table["absolute_magnitude_v"] == pytest.approx(-21.1102, abs=5e-5)  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.2159
     assert abs((m_b - m_v) - table["colour_b_v"]) < TOLERANCE
     assert abs(m_v - table["absolute_magnitude_v"]) < TOLERANCE
     # The measurement itself, pinned, so it cannot drift inside the tolerance unseen.
@@ -193,8 +193,8 @@ def test_what_the_interpolation_costs_ring_by_ring(full):
     """The joined spectrum through each band's curve against the band's own value, per ring: as anchored
     (the record), and after the twelve passes the route makes (what the gate's tolerance covers)."""
     raw = per_ring_residuals(full, 0)
-    assert np.abs(raw[:, BANDS.index("B")]).max() == pytest.approx(0.0890, abs=5e-4)
-    assert np.abs(raw[:, BANDS.index("V")]).max() == pytest.approx(0.0336, abs=5e-4)
+    assert np.abs(raw[:, BANDS.index("B")]).max() == pytest.approx(0.0865, abs=5e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0890
+    assert np.abs(raw[:, BANDS.index("V")]).max() == pytest.approx(0.0298, abs=5e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0336
     fixed = per_ring_residuals(full, None)
     v, b_v = fixed[:, BANDS.index("V")], fixed[:, BANDS.index("B")] - fixed[:, BANDS.index("V")]
     assert np.abs(v).max() < 6e-5 and np.abs(b_v).max() < 1e-4  # 5.0e-5 and 9.2e-5 at S38
@@ -233,9 +233,9 @@ def test_the_first_cut_is_recorded(full):
     lit = (b > 0) & (v > 0) & (per_ring[:, 1] > 0)
     d = ((zp["B"] - 2.5 * np.log10(per_ring[lit, 0])) - (zp["V"] - 2.5 * np.log10(per_ring[lit, 1]))) - (-2.5 * np.log10(b[lit] / v[lit]))
     weight = (f["disc_surface_brightness"] * grid.R)[lit]
-    assert d.min() == pytest.approx(-0.0796, abs=1e-3)
-    assert d.max() == pytest.approx(0.2517, abs=1e-3)
-    assert np.average(d, weights=weight) == pytest.approx(0.0647, abs=1e-3)
+    assert d.min() == pytest.approx(-0.0876, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was -0.0796
+    assert d.max() == pytest.approx(0.2417, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.2517
+    assert np.average(d, weights=weight) == pytest.approx(0.0563, abs=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.0647
 
 
 def test_the_viewer_s_rgb_b_and_v_are_the_table_s_bands():
@@ -247,13 +247,13 @@ def test_the_viewer_s_rgb_b_and_v_are_the_table_s_bands():
 
 def test_the_joined_spectrum_carries_most_of_the_published_light(full):
     """Through a box spanning the whole continuum grid the spectrum returns its bolometric light: 0.708 of
-    disc_luminosity at S38. The rest is below U, where a blackbody at the colour temperature scaled to U
+    disc_luminosity at S38, 0.692 since S49 (D204). The rest is below U, where a blackbody at the colour temperature scaled to U
     falls far short of the young stars' ultraviolet: a stated limit of the tails, not of the bands."""
     wide = json.dumps([{"name": "all", "shape": "box", "centre": 150_500.0, "width": 299_000.0}])
     header, arrays = wire.decode(full.handle("/api/render", {"filters": [wide]}).body)
     frame = float((arrays["stars"][..., 0] * cell_areas(header)).sum())
     published = scalars(full, DEFAULT_MODEL, "disc_luminosity")["disc_luminosity"]
-    assert frame / published == pytest.approx(0.708, abs=2e-3)
+    assert frame / published == pytest.approx(0.692, abs=2e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.708
 
 
 def test_the_line_is_the_nebular_field_in_two_layers(full, model):
@@ -337,13 +337,16 @@ V_ROW = {"name": "V (grain table)", "shape": "gaussian", "centre": 5470.0, "fwhm
 BALANCE_TOLERANCE = 1e-3
 # Measured at S39 (default grid), pinned beside the tolerance.
 # Keyed per model, "basic" deliberately (S46, D197).
-MEASURED_ABSORBED = {"basic": 1.000344, "azimuthal": 1.000344}  # the frame's absorbed power over dust_absorbed_luminosity
-MEASURED_EMITTED = {"basic": 0.999664, "azimuthal": 0.999664}  # the frame's TIR over dust_infrared_luminosity
-TIR_OUTSIDE = {"basic": 6.79639e-4, "azimuthal": 6.79639e-4}  # the share of the frame's Sigma_IR outside 8-1000 um
-REMOVED_SHARE = {m: [0.361486, 0.374444, 0.372646, 0.374459] for m in ("basic", "azimuthal")}  # R, V, B, V row
-CURVE_OVER_GREY = 0.744368
-THIN_OVER_SLAB = 12.184149
-PROFILE_WORST = {"basic": 9.18151e-4, "azimuthal": 9.18151e-4}
+# S49 (D204, #126): the light integrated along the isochrone's points; was 1.000344 / 0.999664 / 6.79639e-4 (both models), [0.361486, 0.374444, 0.372646, 0.374459],
+# 0.744368, 12.184149, 9.18151e-4. PROFILE_WORST is now the truncation-edge ring (23.4-24.4 kpc), which the new profile
+# lifts above 1e-3 of the peak into the measure; it is inside its own derived bound there (0.077).
+MEASURED_ABSORBED = {"basic": 1.000293, "azimuthal": 1.000293}  # the frame's absorbed power over dust_absorbed_luminosity
+MEASURED_EMITTED = {"basic": 0.999588, "azimuthal": 0.999588}  # the frame's TIR over dust_infrared_luminosity
+TIR_OUTSIDE = {"basic": 7.04826e-4, "azimuthal": 7.04826e-4}  # the share of the frame's Sigma_IR outside 8-1000 um
+REMOVED_SHARE = {m: [0.361787, 0.369547, 0.367945, 0.369544] for m in ("basic", "azimuthal")}  # R, V, B, V row
+CURVE_OVER_GREY = 0.759075
+THIN_OVER_SLAB = 12.521717
+PROFILE_WORST = {"basic": 1.1096689e-2, "azimuthal": 1.1096689e-2}
 
 
 def full_render(api: Service, model: str, curve_list: list) -> tuple[dict, dict]:
@@ -1126,10 +1129,12 @@ def test_today_s_painting_against_the_object_s_light(objects):
 # The whole disc's bolometric light split at 10^3 Lsun on the default grid (Lsun): the stars component's total, the
 # young population's (the cluster census's ages), the old stars above 10^3 (one budget since S49, D204: until then
 # the field's renormalised one and the stars' own, debt #126), and the remainder.
-SPLIT_1E3 = {"total": 4.895767e10, "young": 1.202957e10, "bright": 9.019945e9, "unresolved": 2.790815e10}
+# S49 (D204, #126): the light integrated along the isochrone's points; was total 4.895767e10, young 1.202957e10,
+# bright 9.019945e9 (the field's renormalised budget; the stars' own was 8.632747e9, which it now is), unresolved 2.790815e10.
+SPLIT_1E3 = {"total": 4.589796e10, "young": 1.204866e10, "bright": 8.632747e9, "unresolved": 2.521655e10}
 # The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
 # from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
-CLOSURE_RGB = {100.0: 4.9594e-6, 1000.0: 5.7059e-6, 10000.0: 5.6762e-6}
+CLOSURE_RGB = {100.0: 4.4855e-6, 1000.0: 5.0232e-6, 10000.0: 4.8005e-6}  # S49 (D204, #126): the light integrated along the isochrone's points; was 4.9594e-6 / 5.7059e-6 / 5.6762e-6
 
 
 def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:

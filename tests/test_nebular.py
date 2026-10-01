@@ -148,11 +148,11 @@ def test_the_default_census_numbers(default):
     assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7779  # the metal-rich inner disc sits on the floor
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
-    assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0523e7, rel=1e-3)
+    assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
     # The check that replaced the calibration (D166 -> D184): the model's photons per unit star formation are
     # 0.71 of Kennicutt & Evans 2012's Kroupa/Starburst99 steady state - the same 0.71 that puts row 34 3%
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
-    assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7095, abs=0.002)
+    assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7124, abs=0.002)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.7095
     assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
     # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
     # the model's ratio falls outward at its N/H gradient's pace.
