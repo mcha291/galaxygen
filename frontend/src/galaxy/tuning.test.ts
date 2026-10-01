@@ -56,6 +56,16 @@ describe("tuning defaults (D199)", () => {
       toneMapping: "agx",
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
+      compStars: false,
+      compGas: false,
+      compDust: false,
+      dustReading: "acts",
+      compClouds: false,
+      compCells: false,
+      starsIntensity: 1,
+      gasIntensity: 1,
+      dustIntensity: 1,
+      cloudIntensity: 1,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -72,16 +82,43 @@ describe("tuning defaults (D199)", () => {
     }
   });
 
-  it("leave the march's fragment shader as it was but for the two new uniforms", () => {
-    // The snapshot is FieldVolume's FRAGMENT taken from session-46's tip before this change. With the
-    // defaults the source differs only where the uniforms enter: their declarations, the sub-sample
-    // clamp's bound (8.0 then, subMax = 8 now) and the dither's switch (dither = 1 takes the same hash).
+  it("leave the march's fragment shader as it was but for the declared uniforms (S47's two, S50's component layers)", () => {
+    // The snapshot is FieldVolume's FRAGMENT taken from session-46's tip before S47. With the defaults the
+    // source differs only where the uniforms enter: S47's declarations, the sub-sample clamp's bound (8.0
+    // then, subMax = 8 now) and the dither's switch (dither = 1 takes the same hash); and S50's (D205)
+    // component layers: their declarations, each layer's multiplier (1 in the field: components.ts
+    // FIELD_LAYERS), the dust's depth switch (1) and the "where it is" term and its ramp function (its level
+    // 0, so it adds zero). Each edit is undone by exactly one replacement, and each must find its edit.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
-    const undone = now
-      .replace(/\n {2}\/\/ The most sub-samples[^\n]*\n {2}uniform float subMax;\n {2}\/\/ 1 offsets[^\n]*\n {2}uniform float dither;/, "")
-      .replace("1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`)
-      .replace(/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;");
+    const edits: [RegExp | string, string][] = [
+      [/\n {2}\/\/ The most sub-samples[^\n]*\n {2}uniform float subMax;\n {2}\/\/ 1 offsets[^\n]*\n {2}uniform float dither;/, ""],
+      ["1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`],
+      [/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;"],
+      [
+        /\n {2}\/\/ The component layers \(D205[^\n]*(?:\n {2}\/\/[^\n]*){3}\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform float dustWhere;\n {2}uniform vec3 whereStops\[\d+\];/,
+        "",
+      ],
+      [
+        /\n\n {2}\/\/ The dust diagnostic's ramp \(D205\)[^\n]*\n {2}vec3 whereTint\(float t\) \{[\s\S]*?\n {2}\/\/ Each ring's level[^\n]*\n {2}float readLevel\(float r\) \{\n[^\n]*\n {2}\}/,
+        "",
+      ],
+      ["bulge * starsGain / float(n);", "bulge / float(n);"],
+      ["starsHeight, sub) * starsGain;", "starsHeight, sub);"],
+      ["hiiHeight, sub) * gasGain;", "hiiHeight, sub);"],
+      ["digHeight, sub) * gasGain;", "digHeight, sub);"],
+      [/(readRing\(rp\.x, \d\.0\)\) \* cDust) \* dustGain;/, "$1;"],
+      [
+        /vec3 tau = (readRing\(rp\.x, \d\.0\)) \* cDust;\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}\/\/[^\n]*\n {10}float level = readLevel\(rp\.x\);\n {10}emitted \+= dustWhere \* level \* whereTint\(level\) \* cDust;\n {10}depth = tau \* dustDepth;/,
+        "depth = $1 * cDust;",
+      ],
+    ];
+    let undone = now;
+    for (const [from, to] of edits) {
+      const next = undone.replace(from, to);
+      expect(next, `edit not found: ${String(from)}`).not.toBe(undone);
+      undone = next;
+    }
     expect(undone).toBe(before);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
@@ -145,6 +182,24 @@ describe("tuning storage", () => {
   it("changed is empty at the defaults", () => {
     expect(changed({ ...TUNING_DEFAULTS })).toEqual({});
     expect(changed({ ...TUNING_DEFAULTS, bloomStrength: 0.5 })).toEqual({ bloomStrength: 0.5 });
+  });
+
+  it("leaves every component off by default, nothing stored, and keeps a switched one (D205)", () => {
+    for (const key of ["compStars", "compGas", "compDust", "compClouds", "compCells"] as const) expect(TUNING_DEFAULTS[key]).toBe(false);
+    expect(TUNING_DEFAULTS.dustReading).toBe("acts");
+    for (const key of ["starsIntensity", "gasIntensity", "dustIntensity", "cloudIntensity"] as const) expect(TUNING_DEFAULTS[key]).toBe(1);
+    const s = memory();
+    saveTuning({ ...TUNING_DEFAULTS }, s);
+    expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
+    const t = { ...TUNING_DEFAULTS, compDust: true, dustReading: "where" as const, cloudIntensity: 2 };
+    expect(changed(t)).toEqual({ compDust: true, dustReading: "where", cloudIntensity: 2 });
+    saveTuning(t, s);
+    expect(loadTuning(s)).toEqual(t);
+    expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
+    // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
+    const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["compCells", "compClouds", "compDust", "compGas", "compStars", "dustReading"]);
+    for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });
 

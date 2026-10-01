@@ -11,9 +11,12 @@ import {
   STAR_SAMPLE,
   loadBlackbody,
   loadBrightest,
+  loadClouds,
   loadClusters,
   loadRegion,
 } from "../api";
+import { CellOutlines, CloudMarkers } from "./ComponentLayers";
+import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { PHOTOMETRIC, exposureFor, lightColors, photometricColors, starColors } from "./colors";
@@ -102,6 +105,18 @@ const POOL_MAX_STARS = 2_000_000;
 const BRIGHTEST_SETTLE_MS = 120;
 /** The N slider's range, decades: 10² to 10⁵ stars, logarithmic. */
 const BRIGHTEST_DECADES = { lo: 2, hi: 5 };
+/** The brightest mode's component switches (D205), each a tuning value, all off by default. */
+const COMPONENT_SWITCHES: { key: "compStars" | "compGas" | "compDust" | "compClouds" | "compCells"; label: string; what: string }[] = [
+  { key: "compStars", label: "starlight", what: "The field's stellar layer and the bulge, as the volume the model publishes light for, cell by cell" },
+  { key: "compGas", label: "ionized gas", what: "The HII regions' layer and the diffuse gas's layer, with their lines, as the field draws them" },
+  { key: "compDust", label: "dust", what: "The dust: as it acts (extinction, scattered and thermal light) or where it is (a diagnostic)" },
+  { key: "compClouds", label: "molecular clouds", what: "The cloud census as markers sized by cloud_size, painted by cloud_mass's ramp (a diagnostic)" },
+  { key: "compCells", label: "cell outlines", what: "The level-0 cells, 32 rings by 32 sectors, the volumes the catalogues are drawn in (a diagnostic)" },
+];
+const DUST_READINGS: { key: "acts" | "where"; label: string; what: string }[] = [
+  { key: "acts", label: "as it acts", what: "Extinction of what lies behind it, and its scattered and thermal light: the physical picture" },
+  { key: "where", label: "where it is", what: "A diagnostic: its optical depth along each line of sight drawn as light through a declared ramp, normalised to its peak face-on depth, dimming nothing" },
+];
 const brightestOf = (slider: number) => Math.round(10 ** (BRIGHTEST_DECADES.lo + ((BRIGHTEST_DECADES.hi - BRIGHTEST_DECADES.lo) * slider) / 1000));
 
 /** The view-projection rounded so the request key does not change with the last bits of a settled camera. */
@@ -217,6 +232,40 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   );
   const bright = mode === "brightest" && brightest.value ? brightest.value : null;
 
+  // The brightest mode's component layers (D205): all off by default, so the mode draws as before.
+  const R = meta.grid.axes.R;
+  const marchOn = mode === "brightest" && marchWanted(tuning);
+  const ramp = useMemo(() => dustRamp(meta), [meta]);
+  const [dustPaint, setDustPaint] = useState<DustPaintShown | null>(null);
+  const marchLayers = brightestLayers(tuning, ramp);
+  const diagnostic = mode === "brightest" && diagnosticOn(tuning);
+  // The whole disc's cloud census, loaded once per query (about 17 000 clouds) and cut to the footprint here.
+  const cloudsKey = mode === "brightest" && tuning.compClouds ? JSON.stringify(["clouds", query]) : null;
+  const wholeDisc = { r_min: R?.lo ?? 0, r_max: rMax, phi_min: 0, phi_max: 2 * Math.PI, level: 0 };
+  const cloudCensus = useLoad<Census>(cloudsKey, (signal) => loadClouds(wholeDisc, query, signal)).value ?? null;
+  const cloudPaint = useMemo(() => {
+    if (!cloudCensus || !CLOUD_COLUMNS.every((k) => k in cloudCensus.columns)) return null;
+    try {
+      return cloudColors(meta, cloudCensus.columns, tuning.cloudIntensity);
+    } catch {
+      return null; // a census from a just-switched model, before its declarations
+    }
+  }, [meta, cloudCensus, tuning.cloudIntensity]);
+  const cloudLayer = useMemo(() => {
+    if (!cloudCensus || !cloudPaint || !seen) return null;
+    const c = cloudCensus.columns as Record<string, ArrayLike<number>>;
+    const rows = rowsInWindow(c.cloud_radius, c.cloud_azimuth, seen);
+    const of = (col: ArrayLike<number>) => Float64Array.from(rows, (i) => Number(col[i]));
+    const colors = new Float32Array(rows.length * 4);
+    rows.forEach((i, k) => colors.set(cloudPaint.subarray(4 * i, 4 * i + 4), 4 * k));
+    return {
+      positions: toScene(of(c.cloud_radius), of(c.cloud_azimuth), of(c.cloud_height)),
+      sizes: Float32Array.from(rows, (i) => Number(c.cloud_size[i])),
+      colors,
+    };
+  }, [cloudCensus, cloudPaint, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setComponent = (patch: Partial<Tuning>) => setTuning({ ...tuning, ...patch });
+
   const samplePositions = useMemo(() => positionsOf(sample), [sample]);
   const sampleColors = useMemo(() => colorsFor(meta, sample, field, exposure, blackbodyTable, pointGain), [meta, sample, field, exposure, blackbodyTable, pointGain]);
   const detailPositions = useMemo(() => (detail ? positionsOf(detail) : null), [detail]);
@@ -274,6 +323,15 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
             stats={marchStats}
           />
         )}
+        {/* The brightest mode's components (D205): the march with only the switched layers, at the slider's own
+            stops (not the stars' auto-exposure, so the volumes hold still as N changes) and the whole field weight. */}
+        {marchOn && (
+          <FieldVolume meta={meta} query={query} stops={exposure} weight={1} filterSet={filterSet} tuning={fieldTuning} stats={marchStats} layers={marchLayers} onDepth={setDustPaint} />
+        )}
+        {mode === "brightest" && tuning.compCells && R && <CellOutlines lo={R.lo} hi={R.hi} />}
+        {mode === "brightest" && tuning.compClouds && cloudLayer && cloudLayer.sizes.length > 0 && (
+          <CloudMarkers positions={cloudLayer.positions} sizes={cloudLayer.sizes} colors={cloudLayer.colors} />
+        )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
           <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} />
@@ -328,6 +386,29 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           )}
         </div>
 
+        {mode === "brightest" && (
+          <div className={styles.section}>
+            <div className={styles.label}>Components</div>
+            <div className={styles.chips}>
+              {COMPONENT_SWITCHES.map((s) => (
+                <button key={s.key} type="button" aria-pressed={tuning[s.key]} title={s.what} onClick={() => setComponent({ [s.key]: !tuning[s.key] })}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {tuning.compDust && (
+              <div className={styles.pair}>
+                {DUST_READINGS.map((r) => (
+                  <button key={r.key} type="button" aria-pressed={tuning.dustReading === r.key} title={r.what} onClick={() => setComponent({ dustReading: r.key })}>
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className={styles.muted}>cold atomic gas: published per ring, no layer height — not drawn</p>
+          </div>
+        )}
+
         <div className={styles.section}>
           <div className={styles.label}>Field painting the stars</div>
           <div className={styles.chips}>
@@ -352,7 +433,9 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
               ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, bulge, Hα and the dust's scattered and thermal light through each filter, and the dust dims each filter by its own depth along each line of sight. Exposure scales it, and the stars too when they are painted as light - through the same filters, each star's light as a blackbody of its temperature, so a hot star is dimmer here than its bolometric light.`
               : `Stars only, brightest first by published luminosity: no field, no sample. Painted as light, the view is exposed to its hundredth-brightest star, the few above burning out${
                   bright && field === PHOTOMETRIC ? ` (${autoStops >= 0 ? "+" : ""}${autoStops.toFixed(1)} stops here)` : ""
-                }, and the slider adds to that.`}
+                }, and the slider adds to that.${
+                  marchOn ? " The component volumes take the slider's stops alone, not the stars' own exposure, so they hold still as N changes." : ""
+                }`}
           </p>
         </div>
 
@@ -423,6 +506,16 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
                     : "Zoom in for stars."
               }`}
         </p>
+        {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
+        {mode === "brightest" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
+          <p className={styles.muted}>
+            {ramp
+              ? `dust: ${ramp.field}'s declared ramp${ramp.coloured ? "" : " (grey)"}, ${ramp.scale}${
+                  ramp.inferred ? " [inferred: log display scale]" : ""
+                }, τ ${dustPaint === null ? "…" : `${formatNumber(dustPaint.lo, 2)} … ${formatNumber(dustPaint.hi, 2)}`} (the top drawn at ${WHERE_LEVEL} face-on: a display normalisation)`
+              : "dust: no dust field is declared with a ramp, so its depth is not drawn"}
+          </p>
+        )}
       </div>
 
       {bar && (

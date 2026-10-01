@@ -27,6 +27,7 @@ import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArray
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -119,6 +120,16 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // faded in: inside it the field's HII steps back by the same weight (S40, no double counting).
   uniform vec4 regionWindow;
   uniform float hiiFade;
+  // The component layers (D205, S50): each emitting layer's multiplier, the dust's depth switch and the
+  // "where it is" diagnostic's light per unit of the dust's column share and its declared ramp. The field's are
+  // 1, 1, 1, 1 and 0 (components.ts FIELD_LAYERS): every term below is multiplied by one or has zero added, so
+  // the field draws as before, to the bit.
+  uniform float starsGain;
+  uniform float gasGain;
+  uniform float dustGain;
+  uniform float dustDepth;
+  uniform float dustWhere;
+  uniform vec3 whereStops[${WHERE_STOPS}];
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -173,6 +184,22 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     return lo + (hi - lo) * (x - float(k));
   }
 
+  // The dust diagnostic's ramp (D205), components.ts whereTint line for line: its stops read linearly at t.
+  vec3 whereTint(float t) {
+    float x = clamp(t, 0.0, 1.0) * float(${WHERE_STOPS - 1});
+    int k = min(int(floor(x)), ${WHERE_STOPS - 2});
+    vec3 lo = whereStops[0];
+    vec3 hi = whereStops[1];
+    for (int n = 0; n < ${WHERE_STOPS - 1}; n++) {
+      if (n == k) { lo = whereStops[n]; hi = whereStops[n + 1]; }
+    }
+    return lo + (hi - lo) * (x - float(k));
+  }
+  // Each ring's level on the dust's declared ramp (components.ts dustLevels), held in the depth row's spare channel.
+  float readLevel(float r) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.depth}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+
   void main() {
     vec3 origin = cameraPosition;
     vec3 dir = normalize(vWorld - cameraPosition);
@@ -216,19 +243,24 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         if (j >= n) break;
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
-        vec3 emitted = bulge / float(n);
+        vec3 emitted = bulge * starsGain / float(n);
         vec3 depth = vec3(0.0);
         vec2 rp = polarOf(readPoint(q0, q1, jitter));
         // Beyond rHi every texture is zero: the box's side faces clip nothing but zeros.
         if (rp.x < rHi) {
-          float cStars = column(q0.y, q1.y, starsHeight, sub);
+          float cStars = column(q0.y, q1.y, starsHeight, sub) * starsGain;
           float cDust = column(q0.y, q1.y, dustHeight, sub);
-          float cHii = column(q0.y, q1.y, hiiHeight, sub);
-          float cDig = column(q0.y, q1.y, digHeight, sub);
+          float cHii = column(q0.y, q1.y, hiiHeight, sub) * gasGain;
+          float cDig = column(q0.y, q1.y, digHeight, sub) * gasGain;
           emitted += readPolar(plane, rp).rgb * cStars;
-          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
+          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust * dustGain;
           emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-          depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          vec3 tau = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          // Where it is (D205): a diagnostic, the ring's level on the declared ramp in its declared scale, in the
+          // ramp's colour at that level, spread through the dust's layer by its column; it dims nothing.
+          float level = readLevel(rp.x);
+          emitted += dustWhere * level * whereTint(level) * cDust;
+          depth = tau * dustDepth;
         }
         // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
         // only what lies behind it, so light and dust keep their order inside a long step.
@@ -260,6 +292,13 @@ interface Props {
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin">;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
+  /**
+   * Which layers emit and how strongly, whether the dust dims, and the dust's "where it is" tint (D205):
+   * the brightest mode's component switches. The field's default draws every layer as before.
+   */
+  layers?: MarchLayers;
+  /** Told how the dust diagnostic is painted when the render arrives (field, scale, the range mapped): its caption. */
+  onDepth?: (paint: DustPaintShown | null) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -276,7 +315,19 @@ export interface MarchStats {
  * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
  * responses over the white point, each component in the layer the model names.
  */
-export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0, tuning = TUNING_DEFAULTS, stats }: Props) {
+export function FieldVolume({
+  meta,
+  query,
+  stops,
+  weight = 1,
+  filterSet = "rgb",
+  regionWindow = null,
+  hiiFade = 0,
+  tuning = TUNING_DEFAULTS,
+  stats,
+  layers: shown = FIELD_LAYERS,
+  onDepth,
+}: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
@@ -293,6 +344,8 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
   stepsNow.current = steps;
   const filteringNow = useRef(filtering);
   filteringNow.current = filtering;
+  const metaNow = useRef(meta);
+  metaNow.current = meta;
 
   const mesh = useMemo(() => {
     const R = frame?.header.grid.axes.R;
@@ -317,6 +370,20 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       thermal: a.dust_thermal,
       white,
     });
+    // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
+    // the depth row's spare channel, which the field's march never reads.
+    let paint: DustPaintShown | null = null;
+    try {
+      const dust = dustRamp(metaNow.current);
+      if (dust) {
+        const depthRow = rings.subarray(RING_ROWS.depth * width * 4, (RING_ROWS.depth + 1) * width * 4);
+        const { levels, lo, hi } = dustLevels(dust, metaNow.current.cmaps, ringDepths(depthRow, width));
+        for (let i = 0; i < width; i += 1) depthRow[i * 4 + 3] = levels[i];
+        paint = { field: dust.field, scale: dust.scale, inferred: dust.inferred, coloured: dust.coloured, lo, hi };
+      }
+    } catch {
+      paint = null; // declarations from another model in flight: the diagnostic draws nothing (its levels stay 0)
+    }
     const filter = filteringNow.current === "nearest" ? NearestFilter : LinearFilter;
     const polar = (values: Float32Array) => {
       const texture = new DataTexture(values, width, height, RGBAFormat, FloatType);
@@ -363,6 +430,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         gain: { value: 0 },
         regionWindow: { value: new Vector4(0, 0, 0, 0) },
         hiiFade: { value: 0 },
+        starsGain: { value: FIELD_LAYERS.stars },
+        gasGain: { value: FIELD_LAYERS.gas },
+        dustGain: { value: FIELD_LAYERS.dust },
+        dustDepth: { value: FIELD_LAYERS.dustDepth },
+        dustWhere: { value: FIELD_LAYERS.where },
+        whereStops: { value: FIELD_LAYERS.whereStops.map((c) => new Vector3(...c)) },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -371,6 +444,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       depthWrite: false,
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
+    if (paint) box.userData.dustPaint = paint;
     box.frustumCulled = false;
     return box;
   }, [frame, light]);
@@ -417,6 +491,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     [mesh, offscreen],
   );
 
+  const tellDepth = useRef(onDepth);
+  tellDepth.current = onDepth;
+  useEffect(() => {
+    if (mesh) tellDepth.current?.((mesh.userData.dustPaint as DustPaintShown | undefined) ?? null);
+  }, [mesh]);
+
   // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
   useEffect(() => {
     if (!mesh) return;
@@ -454,7 +534,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -470,6 +550,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     uniforms.hiiFade.value = region ? hiiFade : 0;
     uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
     uniforms.dither.value = dither ? 1 : 0;
+    uniforms.starsGain.value = shown.stars;
+    uniforms.gasGain.value = shown.gas;
+    uniforms.dustGain.value = shown.dust;
+    uniforms.dustDepth.value = shown.dustDepth;
+    uniforms.dustWhere.value = whereLevel(shown.where, LIGHT_PER_LSUN_PC2);
+    (uniforms.whereStops.value as Vector3[]).forEach((v, i) => v.set(...shown.whereStops[i]));
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);
