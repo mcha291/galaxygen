@@ -7252,3 +7252,31 @@ model, "Edit galaxy" above Rendering, the default galaxy's field drawn within tw
 (`docs/design/screenshots/s46/landing-default-galaxy.jpg`); the button opens the Preview tab with six locked
 checkpoints, each with a "Reopen checkpoint n" button, checkpoint 6's scene shown; the console clean. The owner's
 live tab on :5173 carries the same code through hot reload.
+
+### D199. S47: the field view's display choices exposed as a tuning panel of sliders, for the owner to find the combination by eye — the defaults unchanged until the owner reports one
+
+**The owner, in chat, on 2026-10-01**, after asking whether RENDER_PLAN II had been implemented for the field view ("it
+doesn't really look any different from before") and being told that the field's look rests on display choices nobody
+has ruled (the march's half-resolution cap and pixel budget, the bloom, the tone curve, the default exposure — B4 in
+`RENDER_PLAN_II.md`): **"instead of trying to nail the options in one go, can you implement them as sliders for me to
+check around with so i can find the right combination."** Written before the builder's branch merged (D113); the
+ruling was the builder's brief.
+
+**The ruling.** Every display choice that sets the field regime's look becomes a control in a "Tuning — display choices
+(experimental)" section at the bottom of the Galaxy tab's panel: *March* — the resolution cap (0.5), the pixel budget
+(0.4 MP), the step count (96; a shader recompile), the sub-sample cap (8), the dither (on), the plane texture's
+filtering (linear); *Light* — the field's gain (× 1 on the 1/400 balance), the field's residual weight at close zoom
+(0.03), the white point (6500 K); *Bloom and tone* — bloom strength, radius and threshold (0.35 / 0.45 / 1.0) and the
+tone mapping (AgX; ACES Filmic, Reinhard, Linear offered); *Points* — the default sprite's size (9 px) and the points'
+gain (× 1 on the reference luminosity). **The defaults are today's values exactly, held in one module
+(`frontend/src/galaxy/tuning.ts`) that the components read, so with nothing touched the picture is the same.** The
+values persist in `localStorage` as a UI preference (not a generated object: D5 is untouched); the panel shows the
+march target's size and its last re-march time, and a copy box of the changed values. *What it is not:* physics (D5 —
+the viewer computes none; these scale and filter light the model already integrated), or structure (RENDER_PHYSICS §8 —
+the dither stays fixed by the pixel; nothing is seeded by the frame). *What follows:* when the owner reports a
+combination, a later row makes it the default with each value declared a display choice where it is computed (A9),
+adds B4's surface-brightness-profile gate so the change is measured as well as liked, and keeps or removes the panel on
+the owner's word. *Chosen against:* ruling the values in one session from the builder's or the session's eye (the
+owner judges the picture on their own screen, and said so); a URL-parameter interface (not discoverable); exposing the
+model's fields as sliders (they are the model's, and it is pinned). Numbers: debts from #125, decisions from D200,
+board rows from 47, acceptance rows from 38.
