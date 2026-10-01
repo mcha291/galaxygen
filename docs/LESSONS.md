@@ -1245,3 +1245,6 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] A builder resumed with a ruling keeps its context and its scratch prototypes; a builder that finds a defect
   in another builder's merged work reports it with a strict xfail and a mechanism, and the session rules the fix
   (D201, D203).
+- [close] A new stage's fields meet the two-model gate (`test_sfh_azimuthal`: every shared field identical unless
+  exempted with a reason): put that file in every builder's list when a stage's output can depend on the model, and
+  expect "equal to rounding", not "bit for bit", for a sum whose order the weights change (D203's gate line).

@@ -212,6 +212,13 @@ def test_every_shared_field_is_sfhs_own(coarse, models):
              "star_bubble_radius",
              } | {n for n in b.fields if n.startswith("planet_")} | {
         "star_planet_count", "mean_planets_per_star", "giant_fraction_sample"}  # the planets' sample statistics
+    # S48 (D200, D203): the bright catalogue's cells carry the azimuthal weight - the contrast for the old stars, the
+    # star-formation modulation for the 20-100 Myr ones - so each cell's expected count, its draws, the default
+    # selection's columns and the luminosity of its faintest star differ between the models. The galaxy-wide count
+    # above a threshold is the tables' summed over cells whose weights average to one around each ring: the same
+    # number to rounding (the last bit moves with the order of the sum), not bit for bit.
+    moved |= {n for n in b.fields if n.startswith("bright_star_")}
+    assert float(a.fields["bright_star_count_1e3"]) == pytest.approx(float(b.fields["bright_star_count_1e3"]), rel=1e-12)
     same = [n for n in b.fields if n not in moved]
     differ = [n for n in same if not identical(a.fields[n], b.fields[n])]
     assert differ == []

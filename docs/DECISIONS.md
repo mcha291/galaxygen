@@ -7580,7 +7580,7 @@ redrawn); `bright_star_count_1e3` unchanged at 3.348738 × 10⁶ (it is the tabl
 
 **S48's gate.** `tests/test_bright.py`, `test_render`, `test_api`, `test_clusters`, `test_graph`, `test_audit`,
 `test_timings` green (210 tests); specs **12 / 20 / 5 of 37 in both models, unchanged** (no row added: a row on these
-numbers needs a blind window first); the full suite backgrounded after `bootstrap.py`: **{{SUITE}}**. The register:
+numbers needs a blind window first); the full suite backgrounded after `bootstrap.py`: **`EXIT=1` on the run, one failure and a real one — `tests/test_sfh_azimuthal.py`'s gate that the two models' shared fields are identical did not know the bright catalogue's fields, which differ between the models by design (each cell's expected count carries the azimuthal weight), and the file had not been in the builders' lists; the exemption was added with its reason, the galaxy-wide count asserted equal to rounding (10⁻¹²; the last bit moves with the order of the sum), and that file re-run alone `EXIT=0`; every other file green in the same run**. The register:
 **65 open = 11 permanent + 54 carried, 44 discharged** (#125, #126 opened; #114 corrected and still carried until the
 viewer draws the response). Board row 48; LESSONS; RESUMING ≤ 120; BRIEF for S49. Tag `s48` on the merge. The
 owner's word is asked on #126 (the field's light tables); the viewer's star-first mode is S49–S50's.
