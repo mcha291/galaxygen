@@ -24,7 +24,8 @@ export function useDebounced<T>(value: T, ms: number): T {
   return settled;
 }
 
-const GROUPS = ["March", "Light", "Bloom and tone", "Points"] as const;
+// "Components" holds the brightest mode's layer intensities (D205); its switches are in the mode's own section.
+const GROUPS = ["March", "Light", "Bloom and tone", "Points", "Components"] as const;
 
 function shown(control: RangeControl, value: number): string {
   const v = Number((value * (control.scale ?? 1)).toPrecision(4));
@@ -79,7 +80,7 @@ export function TuningPanel({ tuning, onChange, stats }: Props) {
           {GROUPS.map((group) => (
             <div key={group} className={styles.tuningGroup}>
               <div className={styles.label}>{group}</div>
-              {TUNING_CONTROLS.filter((c) => c.group === group).map((control) => {
+              {TUNING_CONTROLS.filter((c) => c.group === group && !c.switch).map((control) => {
                 const value = tuning[control.key];
                 const fallback = TUNING_DEFAULTS[control.key];
                 return (

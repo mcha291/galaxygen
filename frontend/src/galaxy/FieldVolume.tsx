@@ -27,6 +27,7 @@ import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArray
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { FIELD_LAYERS, type MarchLayers } from "./components";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -119,6 +120,14 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // faded in: inside it the field's HII steps back by the same weight (S40, no double counting).
   uniform vec4 regionWindow;
   uniform float hiiFade;
+  // The component layers (D205, S50): each emitting layer's multiplier, the dust's depth switch and the
+  // "where it is" tint per unit optical depth. The field's are 1, 1, 1, 1 and 0 (components.ts FIELD_LAYERS):
+  // every term below is multiplied by one or has zero added, so the field draws as before, to the bit.
+  uniform float starsGain;
+  uniform float gasGain;
+  uniform float dustGain;
+  uniform float dustDepth;
+  uniform vec3 dustWhere;
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -216,19 +225,22 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         if (j >= n) break;
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
-        vec3 emitted = bulge / float(n);
+        vec3 emitted = bulge * starsGain / float(n);
         vec3 depth = vec3(0.0);
         vec2 rp = polarOf(readPoint(q0, q1, jitter));
         // Beyond rHi every texture is zero: the box's side faces clip nothing but zeros.
         if (rp.x < rHi) {
-          float cStars = column(q0.y, q1.y, starsHeight, sub);
+          float cStars = column(q0.y, q1.y, starsHeight, sub) * starsGain;
           float cDust = column(q0.y, q1.y, dustHeight, sub);
-          float cHii = column(q0.y, q1.y, hiiHeight, sub);
-          float cDig = column(q0.y, q1.y, digHeight, sub);
+          float cHii = column(q0.y, q1.y, hiiHeight, sub) * gasGain;
+          float cDig = column(q0.y, q1.y, digHeight, sub) * gasGain;
           emitted += readPolar(plane, rp).rgb * cStars;
-          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
+          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust * dustGain;
           emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-          depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          vec3 tau = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          // Where it is (D205): a diagnostic, the channels' mean depth drawn as light in one tint, dimming nothing.
+          emitted += dustWhere * ((tau.r + tau.g + tau.b) / 3.0);
+          depth = tau * dustDepth;
         }
         // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
         // only what lies behind it, so light and dust keep their order inside a long step.
@@ -260,6 +272,11 @@ interface Props {
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin">;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
+  /**
+   * Which layers emit and how strongly, whether the dust dims, and the dust's "where it is" tint (D205):
+   * the brightest mode's component switches. The field's default draws every layer as before.
+   */
+  layers?: MarchLayers;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -276,7 +293,18 @@ export interface MarchStats {
  * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
  * responses over the white point, each component in the layer the model names.
  */
-export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0, tuning = TUNING_DEFAULTS, stats }: Props) {
+export function FieldVolume({
+  meta,
+  query,
+  stops,
+  weight = 1,
+  filterSet = "rgb",
+  regionWindow = null,
+  hiiFade = 0,
+  tuning = TUNING_DEFAULTS,
+  stats,
+  layers: shown = FIELD_LAYERS,
+}: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
@@ -363,6 +391,11 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         gain: { value: 0 },
         regionWindow: { value: new Vector4(0, 0, 0, 0) },
         hiiFade: { value: 0 },
+        starsGain: { value: FIELD_LAYERS.stars },
+        gasGain: { value: FIELD_LAYERS.gas },
+        dustGain: { value: FIELD_LAYERS.dust },
+        dustDepth: { value: FIELD_LAYERS.dustDepth },
+        dustWhere: { value: new Vector3(...FIELD_LAYERS.where) },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -454,7 +487,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where.join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -470,6 +503,11 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     uniforms.hiiFade.value = region ? hiiFade : 0;
     uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
     uniforms.dither.value = dither ? 1 : 0;
+    uniforms.starsGain.value = shown.stars;
+    uniforms.gasGain.value = shown.gas;
+    uniforms.dustGain.value = shown.dust;
+    uniforms.dustDepth.value = shown.dustDepth;
+    (uniforms.dustWhere.value as Vector3).set(...shown.where);
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);
