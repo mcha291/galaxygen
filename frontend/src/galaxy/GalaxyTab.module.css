@@ -156,6 +156,61 @@
   accent-color: var(--magenta-3);
 }
 
+/* The Tuning section (D199): display choices as controls, collapsed by default. */
+.tuningToggle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tuningGroup {
+  margin-top: var(--space-4);
+}
+
+.tuningRow {
+  margin-top: var(--space-3);
+}
+
+.tuningName {
+  flex: 1;
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  color: var(--text-body);
+}
+
+.tuningDefault {
+  padding: 0 var(--space-1);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--magenta-3);
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  cursor: pointer;
+}
+
+.tuningDefault:hover {
+  background: var(--surface-hover);
+}
+
+.tuningCopy {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-primary);
+  font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
+  resize: vertical;
+}
+
 /* Top right and bottom left fade into the view rather than sitting in boxes. */
 .regime {
   position: absolute;
