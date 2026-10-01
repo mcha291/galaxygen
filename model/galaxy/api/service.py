@@ -71,6 +71,7 @@ from galaxy.stages import clusters as _clusters
 from galaxy.stages import nebular as _nebular
 from galaxy.stages import spectra as _spectra
 from galaxy.stages import systems as _catalogue
+from galaxy.stages.disc import PC_PER_KPC
 
 JSON = "application/json"
 CATALOGUE_SLOT = "systems"  # the slot a region query materialises from
@@ -235,8 +236,11 @@ ROUTES: tuple[Route, ...] = (
         "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
         "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
         "vertical layer; the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
-        "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32.",
-        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision"),
+        "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
+        "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
+        "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
+        "the header's resolved stating the light split and the closure.",
+        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
         "render",
     ),
 )
@@ -1339,12 +1343,19 @@ class Service:
             raise BadRequest(f"precision={precision!r} is not f8 or f4")
         white = _white_point(q, curves)
         level = None if q.one("level") is None else _level(q)
+        l_min = None if q.one("l_min") is None else q.number("l_min", 0.0)
+        if l_min is not None and not l_min > 0.0:
+            raise BadRequest(f"l_min={l_min!r} is not a positive luminosity")
 
         declared = self._declared(model)
         missing = [n for n in RENDER_STARS if n not in declared]
         if missing:
             raise NotFound(f"model {model.name!r} does not publish {missing}, which the stellar component is")
         wanted = [*RENDER_STARS, *(n for n in RENDER_OPTIONAL if n in declared)]
+        if l_min is not None:
+            # S48's wiring (D200 (4)): what the field's remainder decomposes - the bright stage's reads, only those (D4).
+            bright = _stage_for(model, BRIGHT_SLOT, self.impls)
+            wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
         out, ran = self.compute(model, inputs, wanted)
         f = out.fields
@@ -1382,7 +1393,11 @@ class Service:
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
         }
-        line_about = {"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
+        resolved = None
+        if l_min is not None:
+            unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min)
+            components.append(("stars_unresolved", unresolved))
+        line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
         if "halpha_surface_brightness_hii" in f and h_thin is not None:
             hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
             components.append(("halpha_hii", hii[:, None, None] * placed[..., None] * halpha_share))
@@ -1538,7 +1553,83 @@ class Service:
                                                 "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(ran),
         }
+        if resolved is not None:
+            header["resolved"] = resolved
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
+    def _unresolved(
+        self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
+        contrast: Any, l_min: float,
+    ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
+        """The field's remainder under ``l_min`` (S48's wiring, D200 (4)): (the component on the (R, phi) grid, its
+        entry in ``components``, the header's ``resolved``).
+
+        The disc's light less the young population (ages under the cluster census's window, which the cluster
+        points carry) and less the disc stars above ``l_min`` older than it (which ``/api/bright`` carries), all
+        three from ``bright.resolve``: one decomposition of the history onto the isochrones, the luminosity
+        function renormalised to the field's tables, so unresolved + young + bright is the field's total per ring
+        and band exactly. Each of the remainder's two age parts goes through the curves on its own and is placed
+        around the ring by the weight the bright catalogue gives the same part (``bright.part_weights``: the
+        contrast for the old part, the normalised sfr_modulation for the 20-100 Myr part where the model publishes
+        it), so the points and the field agree around the arms. The SED join is not linear, so the parts' responses
+        do not sum to the total's exactly: the departure through this request's curves is measured here, per ring,
+        and stated in the header."""
+        spec = self.grid.spec
+        constants = {k: c.value for k, c in model.constants.items()}
+        res = _bright.resolve(f, float(spec.t_max), int(spec.n_t), constants, l_min)
+        T = f["disc_light_temperature"]
+        a = res.anchors
+        middle = _spectra.stellar_response(a["unresolved_middle"], T, curves)
+        old = _spectra.stellar_response(a["unresolved_old"], T, curves)
+        modulation = f["sfr_modulation"] if "sfr_modulation" in f else None
+        grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
+        weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old
+        component = middle[:, None, :] * weights[0][..., None] + old[:, None, :] * weights[1][..., None]
+        # The closure through these curves: every part through the field's machinery at the ring's temperature.
+        parts = middle + old + _spectra.stellar_response(a["young"], T, curves) + _spectra.stellar_response(
+            a["bright_middle"] + a["bright_old"], T, curves)
+        lit = per_ring > 0.0
+        departure = float(np.max(np.abs(parts[lit] / per_ring[lit] - 1.0))) if lit.any() else 0.0
+        area = 2.0 * math.pi * R * PC_PER_KPC**2  # pc² per kpc of radius, as disc_luminosity integrates
+        light = {k: float(np.trapezoid(v * area, R)) for k, v in res.light.items()}
+        fields = [*RENDER_STARS, *(["pattern_density_contrast"] if contrast is not None else []),
+                  *(n for n in _bright.RESOLVE_READS if n in f)]
+        entry = {
+            "unit": "Lsun/pc2", "fields": fields, "layer": "stars",
+            "about": "the disc's starlight no point carries: the stars component's light less the stars younger than "
+                     "the cluster census's window (the cluster points carry them) and less the disc stars above l_min "
+                     "older than it (the bright catalogue's, /api/bright with the same l_min), from one decomposition "
+                     "of the history onto the isochrones and the luminosity function renormalised to the field's "
+                     "tables; its 20-100 Myr part placed around each ring by where stars form today (sfr_modulation, "
+                     "where the model publishes it) and the older part by the pattern's contrast, as the bright "
+                     "catalogue places its stars; through each curve as the stars component is, at the ring's colour "
+                     "temperature",
+        }
+        resolved = {
+            "l_min": 10.0**res.log_l,
+            "requested": l_min,
+            "cluster_window_gyr": _bright.cluster_window(constants),
+            # Bolometric, whole disc, Lsun: the trapezoid in R disc_luminosity is. bright is the field's budget above
+            # l_min (what the remainder is cut by); bright_own what the catalogue's stars carry themselves - they differ
+            # by how well the field's mass grid resolves the giant branch (D202, debt #126).
+            "light": light,
+            "closure": {
+                "anchors": "exact",
+                "response": departure,
+                "about": "anchors: unresolved + young + bright is the stars' eight band sums per ring and band, one "
+                         "decomposition (tests/test_render.py: 1e-13). response: the largest relative departure, over "
+                         "rings and these curves, of the four parts' responses summed (each through the field's "
+                         "machinery at the ring's temperature) from the stars component's - the join is not linear",
+            },
+            "temperature": "the remainder is put through the curves at the ring's colour temperature "
+                           "(disc_light_temperature), not its own [inferred]: the luminosity function carries no colour, "
+                           "so the remainder's own correlated temperature is not computed here. Measured at S48 against "
+                           "the remainder's own (its stars' colour integrated along the isochrones): within 7.5e-5 of the "
+                           "response through rgb at every ring, within 1.5% through the narrowband and WFC3 sets (the "
+                           "20-100 Myr part, which is hotter; the older part within 0.5%); the temperature shapes only "
+                           "the blackbody tails beyond U and K and, through them, the band-consistent anchors",
+        }
+        return component, entry, resolved
 
     def _system(self, q: Query) -> Response:
         """One star's planets. It materialises one cell and takes one star out of it.
