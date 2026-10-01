@@ -7314,3 +7314,73 @@ two builders were started at this close on branches cut from `session-47`.
 **The gate.** vitest 140, `tsc -b`, `vite build` clean; no Python changed in this row's code; the full suite backgrounded
 after `bootstrap.py`: **`EXIT=0`, every file green, run on the merged tuning panel with two S48 builders working in their own worktrees at the same time (neither timing flake tripped)**. Board row 47; LESSONS; RESUMING ≤ 120; BRIEF for S48. Tag `s47` on the merge. T1 (the
 display defaults) stays open until the owner reports a combination.
+
+### D200. S48: the bright-end-complete star catalogue and the per-object filter response — the model pin lifted for these two on the owner's word; one decomposition so that points and field add up
+
+**The owner, in chat, on 2026-10-01**, shown that the viewer's "brightest" stars are the brightest of a one-in-10⁵
+number sample and that drawing the field under them needs the light accounted (D199): **"lift the pin for those two and
+implement them first."** The two are the bright-end-complete selection (`VIEWER_TASKS.md` T21) and the photometric
+points with single counting (T2, T3). The rest of the model stays pinned. The design below was ruled before code moved
+(D113) and given to the two builders as their briefs at S47's close; it is recorded here as the first commit of
+`session-48`.
+
+**(1) One decomposition, so that everything adds up.** The light stage computes each ring's light as
+`Σ_t formed(R, t) × step(t, [Fe/H](R, t))`, where `step` is a per-isochrone table averaged over the step's ages by
+`photometry.steps_over` — **linear in the table, linear in log age between isochrones, nearest in metallicity**
+`[verified: model/galaxy/stages/photometry.py, steps_over and on_fine_ages, read 2026-10-01]`. So there is a mass
+`M(R, a, z)`, M☉ formed per pc² on isochrone (a, z), independent of the quantity, with every linear quantity equal to
+`M · table`: push the identity through the same functions to get the step weights. **Gate: `M · light_per_mass`
+reproduces `disc_surface_brightness`, and `M · band_flux` each band's sum, to 10⁻⁹.** An age window is applied in step
+space (a straddling step split by sub-interval), so young + old ≡ total exactly.
+
+**(2) The luminosity function.** Per isochrone, on a grid of thresholds (log L from −1 to 6.6 in 0.05 dex): the stars,
+the bolometric light and the eight band fluxes above each threshold, per M☉ formed. Integrated **along the isochrone's
+own points** (dense in the evolved phases, where the fixed 1 500-point mass grid puts one or two points on the giant
+branch), then **each quantity renormalised per isochrone to the field's own table**: the field's quadrature is the
+total, the luminosity function distributes it. The renormalisation factors measure how well the field's mass grid
+resolves the giant branch; they are reported, pinned, and registered as a debt if any exceeds 10 % — and
+`population_light` is **not** changed in this row (it would move every photometric number: accuracy work, pinned).
+
+**(3) The bright catalogue: an ordered Poisson process in luminosity, per finest cell.** In each level-3 child cell
+(65 536 of them) the expected number of stars above L is `Λ(L)` = the child's area × `M_old · count_above(L)` × the
+child's azimuthal weight. Star i (i = 0 the brightest) has `Γ_i = E_0 + … + E_i`, unit exponentials from
+`rng(systems_seed, "bright", child, "gamma")`, and **`L_i = Λ⁻¹(Γ_i)`**. So the stars above any threshold are exactly
+those with `Γ_i < Λ(L_min)`: **complete above the threshold, a prefix as it drops, the count Poisson with the right
+mean, each child independent of the others** (D60), and nothing rejected (B8: do not sample what you can count).
+Given `L_i`: the isochrone by the differential luminosity function at `L_i`, the point on it by the IMF's number in
+the bin, the position by the inverse CDFs the catalogue uses (the pattern's contrast for old stars; the star-formation
+modulation for the 20–100 Myr ones in the azimuthal model). A star's name is (child, rank): a namespace of its own,
+not a row of the number-sampled catalogue. *Chosen against:* raising the number sample until its bright end converges
+(1.5 × 10¹¹ stars; the top of a 10⁶ pool is one 514 000 L☉ star carrying 41 % of it); importance-weighting the
+existing sample (a weighted star is not a star: it cannot be picked, and its light is a fiction on screen); a
+rejection sampler above a threshold (B8).
+
+**(4) Single counting, by age.** The cluster census carries stellar ages 0–20 Myr (its clouds' blown-open and
+dispersing phases; `cluster_luminosity` is the population's light at those ages `[verified: clusters.py, level0.py's
+GMC phases]`). **The bright catalogue covers ages ≥ 20 Myr; the clusters carry the younger light.** The field's
+remainder (S48's wiring, `/api/render` with `l_min`) is then the total minus the young population minus the old stars
+above `l_min`, all three from the same `M` and tables: **unresolved + young + bright ≡ total per ring and band**, an
+identity, with the realised census and catalogue sums within their own noise. Resolving a cluster into its own stars
+(the same process with `Λ = M_cluster × count_above` at the cluster's age) is the membership T3 asks for at close
+zoom, and is a later row. *Not covered, stated:* the bulge (one old population in a Hernquist profile) stays in the
+field; a bright star has no planetary system (it is not a catalogue row) until a later task gives it one.
+
+**(5) The per-object filter response.** An object's light through the viewer's curves, from its eight band magnitudes
+and its temperature, in the same units as the field's response per cell. The exact machinery
+(`spectra.stellar_response`: the band-consistent piecewise power law with blackbody tails) costs 12 × 8 band integrals
+per object, 20–40 s for 10⁵. So: **the exact machinery linearised in log about a blackbody at the object's
+temperature** — per request, a table over temperature of the blackbody's eight anchors, its exact response, and the
+log-sensitivities of the response to each anchor (which sum to one per filter, the response being homogeneous);
+an object's response is the reference times the anchors' log-departures weighted by the sensitivities. **Gate: against
+the exact integral on 2 000 isochrone points, the luminosity-weighted error under 0.02 mag and the worst under 0.1 mag
+for the broadband sets; the narrowband sets reported.** If the gate fails it is not loosened: a second-order term, or
+the exact path below a stated N. *Chosen against:* publishing eight band columns and letting the viewer integrate
+(D5: the viewer computes no physics); the blackbody share the viewer uses now (#114: about twice the optical light).
+
+**(6) What is new in the model's surface.** A stage `bright_stars` (checkpoint 5, seeded, on `systems_seed`), an
+object kind `bright_star` (the closed set grows by one, as it did for cloud, cluster and remnant) with position, age,
+metallicity, initial mass, luminosity, temperature, eight band magnitudes and phase; a route `/api/bright` by window
+and frustum with `n` or `l_min`, its header stating the completeness limit; `spectra.object_response` and
+`object_nu_l_nu`. No acceptance row: a row on these numbers needs a blind window first (#117's lesson). **Protocol:**
+`session-48-bright` and `session-48-response`, disjoint files, then the wiring in `api/service.py` after both merge.
+Numbers: debts from #125, decisions from D201, board rows from 48, acceptance rows from 38.
