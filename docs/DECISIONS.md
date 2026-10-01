@@ -7691,3 +7691,29 @@ LESSONS; RESUMING ≤ 120 with the regression numbers re-read; BRIEF for S50, th
 the merge. **The owner's API server on :8017 was started before S48 and holds the old model in memory: it serves the
 new light, `/api/bright` and the filtered responses only after a restart, which is the owner's (or the session's on
 the owner's word).**
+
+### D205. S50: component layers in the brightest-star mode — the starlight, the dust, the ionized gas and the cloud census as switchable volumes, for the owner to see what the model holds before the plan is decided
+
+**The owner, in chat, on 2026-10-01:** "Rather than S50, I want to work in the brightest star mode first to investigate
+how things look before deciding what to do with the plan. Since the model outputs the total brightness of stars in a
+volume of space, can we generate a render that shows these volumes? Likewise, can we generate a view that shows where
+the dust and gases are?" So S50 is this investigation, not the star-first mode `BRIEF.md` scheduled; that plan waits on
+what the owner sees. Written before any code moved (D113).
+
+**The ruling.** The brightest mode gains a "Components" section of independent switches, **all off by default, so the
+mode's picture is unchanged until one is turned on**: (1) **Starlight** — the field's stellar component and the bulge
+as the volume the march already integrates (`/api/render`'s `stars` in its layer; smooth by construction: the model
+publishes light per cell, not lumps); (2) **Ionized gas** — the HII layer and the diffuse layer with their lines, as
+the field draws them; (3) **Dust** — two readings, chosen by a second switch: *as it acts* (extinction, scattered and
+thermal light, the physical picture) and *where it is* (**a diagnostic**: the dust's optical depth per unit path drawn
+as emission, so the layer itself is visible); (4) **Molecular clouds** — the cloud census (`/api/clouds`) as markers
+at each cloud's position, sized by `cloud_size` and painted by the declared ramp of `cloud_mass` (A9: a ramp comes
+from the field's declaration, never from the viewer); (5) **Cell outlines** — the level-0 grid (32 × 32) drawn as
+lines, so the owner can see the volumes the catalogues are drawn in. Each layer has an intensity control in the
+tuning panel. **The diagnostic readings are labelled as such on screen** ("diagnostic: shows where it is, not how it
+looks"): RENDER_PHYSICS §8 forbids colour applied for appearance in the picture; a declared false-colour view of a
+published field is the viewer's scientific mode, as the checkpoint previews are. The viewer computes no physics (D5):
+every layer is a published field or census through its declared ramp or through `/api/render`. *Not in this row:*
+the star-first accounting (the layers here are for looking, and the starlight volume is the total, not the remainder
+under the points); the cold atomic gas (published per ring by the ism stage without a layer height: named in the
+panel as not drawn). Viewer-only; no model change.
