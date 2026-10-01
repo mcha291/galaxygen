@@ -49,6 +49,13 @@ isochrone is a matrix product, and ``mass @ light_per_mass`` is ``disc_surface_b
 (``tests/test_bright.py``). An age window is applied in step space: a step that straddles a boundary is
 split into its parts, each part's weights computed over its own sub-interval and scaled by its share of
 the step, so the parts sum to the step exactly.
+
+**The field's remainder** (:func:`resolve`, S48's wiring). The same decomposition in three age parts
+(:func:`part_masses`: the cluster census's, the catalogue's 20–100 Myr part, the older) and the same tables read
+at a threshold by the same rule (:func:`above_at`) split each ring's light into what the cluster points carry,
+what the bright catalogue carries and what neither does, which ``/api/render`` serves with ``l_min=`` beside the
+stars, each part placed around its ring by the weight the catalogue gives it (:func:`part_weights`). The three are
+the total exactly, per ring and band.
 """
 
 from __future__ import annotations
@@ -84,6 +91,7 @@ from galaxy.stages.vertical import POPULATIONS
 from galaxy.stages.photometry import (
     BANDS,
     EXTRA,
+    band_nu_l_nu,
     cumulative_over_age,
     isochrones,
     nearest_metallicity,
@@ -223,6 +231,11 @@ class BrightTables:
         """``light_above`` before the renormalisation: the light the stars of ``count_above`` themselves carry."""
         return self.light_above / self.light_factor[..., None]
 
+    @property
+    def band_above_own(self) -> np.ndarray:
+        """``band_above`` before the renormalisation: the band light the stars of ``count_above`` themselves carry."""
+        return self.band_above / self.band_factor[..., None, :]
+
 
 @functools.cache
 def luminosity_function() -> BrightTables:
@@ -353,6 +366,116 @@ def mass_on_isochrones(
     return out
 
 
+# The three age parts every decomposition here uses, in this order: the cluster census's (younger than its window),
+# the bright catalogue's young part (the window to ``YOUNG_STAR_AGE``, placed by sfr_modulation where the model
+# publishes it) and its old part (older, placed by the pattern's contrast).
+AGE_PARTS: tuple[str, ...] = ("young", "middle", "old")
+
+
+def part_masses(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any]) -> np.ndarray:
+    """(3, n_R, n_age, n_mh): M☉ formed per pc² on each isochrone in each of ``AGE_PARTS``, from the history the light
+    stage reads (``stars_formed_history`` over 1 − R, ``feh_history``). The windows split steps in step space, so the
+    three sum to :func:`mass_on_isochrones` of the whole history; the few 1e-16 negatives the fine-age reading leaves
+    are clipped. One copy: the bright catalogue's tables and ``/api/render``'s unresolved remainder both read it."""
+    formed = np.asarray(fields["stars_formed_history"], dtype=float) / (1.0 - float(constants["RETURN_FRACTION"]))
+    feh = fields["feh_history"]
+    cut = cluster_window(constants)
+    parts = [
+        mass_on_isochrones(formed, feh, t_max, n_t, age_max_gyr=cut),
+        mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=cut, age_max_gyr=YOUNG_STAR_AGE),
+        mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=YOUNG_STAR_AGE),
+    ]
+    return np.maximum(np.stack(parts), 0.0)
+
+
+def part_weights(contrast: np.ndarray, modulation: np.ndarray | None) -> np.ndarray:
+    """(2, n_rings, n_sectors): the azimuthal weights of the ``middle`` and ``old`` parts around each ring. The old
+    part follows the pattern's density ``contrast``; the middle part follows ``modulation`` (where stars form today)
+    normalised to its ring mean, so each ring keeps its light, or the contrast where the model publishes none. Floored
+    at zero. One rule for the bright catalogue's finest cells and for the render's grid cells."""
+    contrast = np.asarray(contrast, dtype=float)
+    if modulation is None:
+        young = contrast
+    else:
+        young = np.asarray(modulation, dtype=float)
+        mean = young.mean(axis=1, keepdims=True)
+        young = np.where(mean > 0.0, young / np.where(mean > 0.0, mean, 1.0), 1.0)
+    return np.maximum(np.stack([young, contrast]), 0.0)
+
+
+def above_at(mass: np.ndarray, table: np.ndarray, log_l: float) -> np.ndarray:
+    """``(..., *q)``: what lies above 10^``log_l`` L☉ of the stars formed on the isochrones (``mass``,
+    ``(..., n_age, n_mh)`` M☉) by a per-isochrone table above each threshold (``table``, ``(n_age, n_mh, K, *q)`` per
+    M☉ formed: a :class:`BrightTables` member). The summed curve read between the thresholds by the rule the
+    catalogue's expected counts are (:func:`_bracket`, :func:`_between`); exact at a grid threshold."""
+    k, frac = _bracket(log_l)
+    k = int(k)
+    m = np.asarray(mass, dtype=float)
+    m = m.reshape(*m.shape[:-2], -1)
+    t = np.asarray(table, dtype=float)
+    t = t.reshape(-1, *t.shape[2:])
+    return _between(np.tensordot(m, t[:, k], axes=1), np.tensordot(m, t[:, k + 1], axes=1), float(frac))
+
+
+# What :func:`resolve` reads of the bright stage's inputs: the history it decomposes, and where stars form today
+# (optional) for the middle part's weight. /api/render reads these with l_min= (rule D4: no more of the stage).
+RESOLVE_READS: tuple[str, ...] = ("stars_formed_history", "feh_history", "sfr_modulation")
+
+
+@dataclass(frozen=True)
+class Resolved:
+    """The disc's light per ring split at a luminosity (S48's wiring, D200 (4)): what the cluster census carries
+    (``young``, every star younger than its window), what the bright catalogue carries (its two parts' stars above the
+    threshold) and what neither does (``unresolved_middle``, ``unresolved_old``: the field's remainder, each part
+    placed around the ring by its own weight). All from one decomposition and one set of tables, so
+    unresolved + young + bright is the total exactly; the bright parts are the field's budget (the luminosity
+    function renormalised to the field's tables), and ``light["bright_own"]`` is what the catalogue's stars carry
+    themselves (debt #126: the field's mass grid aliases the giant branch)."""
+
+    log_l: float  # log10 of the threshold applied, L☉ (the requested one, raised to the grid's faint end)
+    anchors: dict[str, np.ndarray]  # (n_R, 8): λL_λ at the table's eight bands, L☉/pc²
+    light: dict[str, np.ndarray]  # (n_R,): bolometric, L☉/pc²
+
+
+def resolve(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any], l_min: float) -> Resolved:
+    """Split the disc's light at ``l_min`` L☉: see :class:`Resolved`. Anchors ``total``, ``young``, ``bright_middle``,
+    ``bright_old``, ``unresolved_middle``, ``unresolved_old``; light ``total``, ``young``, ``bright``, ``bright_own``,
+    ``unresolved``. The threshold is read on ``LOG_L_GRID`` by :func:`above_at` (the catalogue's rule), per ring and
+    part."""
+    tables = luminosity_function()
+    pop = population_light()
+    masses = part_masses(fields, t_max, n_t, constants)  # (3, n_R, n_age, n_mh)
+    log_l = math.log10(max(float(l_min), 10.0 ** LOG_L_GRID[0]))
+    flat = masses.reshape(*masses.shape[:2], -1)
+    bands = flat @ pop.band_flux.reshape(-1, len(BANDS))  # (3, n_R, 8): every living star of each part
+    light = flat @ pop.light_per_mass.ravel()  # (3, n_R)
+    bright_bands = above_at(masses[1:], tables.band_above, log_l)  # (2, n_R, 8): the field's budget above l_min
+    bright_light = above_at(masses[1:], tables.light_above, log_l)  # (2, n_R)
+    bright_own = above_at(masses[1:], tables.light_above_own, log_l)
+
+    def anchors(flux: np.ndarray) -> np.ndarray:
+        return np.stack([band_nu_l_nu(flux[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
+
+    return Resolved(
+        log_l=log_l,
+        anchors={
+            "total": anchors(bands.sum(axis=0)),
+            "young": anchors(bands[0]),
+            "bright_middle": anchors(bright_bands[0]),
+            "bright_old": anchors(bright_bands[1]),
+            "unresolved_middle": anchors(bands[1] - bright_bands[0]),
+            "unresolved_old": anchors(bands[2] - bright_bands[1]),
+        },
+        light={
+            "total": light.sum(axis=0),
+            "young": light[0],
+            "bright": bright_light.sum(axis=0),
+            "bright_own": bright_own.sum(axis=0),
+            "unresolved": (light[1:] - bright_light).sum(axis=0),
+        },
+    )
+
+
 # --- the ordered process: every disc star above a threshold, per finest cell ---------------------------
 
 DEFAULT_SELECTION = 3162  # the default run's selection: the viewer's default N (10^3.5 stars)
@@ -426,15 +549,9 @@ class BrightGalaxy:
         n_iso = tables.count_above.shape[0] * tables.count_above.shape[1]
         self.n_mh = tables.count_above.shape[1]
         K = LOG_L_GRID.size
-        formed = np.asarray(fields["stars_formed_history"], dtype=float) / (1.0 - float(constants["RETURN_FRACTION"]))
-        feh = fields["feh_history"]
         self.cut = cluster_window(constants)
-        # The two parts in step space; rounding in the fine-age reading leaves a few 1e-16 negatives, clipped.
-        parts = [
-            mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=self.cut, age_max_gyr=YOUNG_STAR_AGE),
-            mass_on_isochrones(formed, feh, t_max, n_t, age_min_gyr=YOUNG_STAR_AGE),
-        ]
-        mass_R = np.maximum(np.stack(parts), 0.0).reshape(2, self.R.size, n_iso)  # M☉/pc² per isochrone
+        # The two parts older than the cluster window, in step space (part_masses: the young part is the census's).
+        mass_R = part_masses(fields, t_max, n_t, constants)[1:].reshape(2, self.R.size, n_iso)  # M☉/pc² per isochrone
         self.windows = np.log10(np.array([[self.cut, YOUNG_STAR_AGE], [YOUNG_STAR_AGE, self.t_max]]) * 1e9)
         count = tables.count_above.reshape(n_iso, K)
         self.count_R = mass_R @ count  # (2, n_R, K): stars per pc² above each threshold
@@ -473,13 +590,8 @@ class BrightGalaxy:
         contrast = np.ones((middle.size, edges.size - 1)) if flat else np.array([self.pattern.sector_means(float(r), edges) for r in middle])
         table = fields.get("sfr_modulation")
         self.modulation = None if table is None else Modulation(table, self.R)
-        if self.modulation is None:
-            young = contrast
-        else:
-            young = np.array([self.modulation.sector_means(float(r), edges) for r in middle])
-            mean = young.mean(axis=1, keepdims=True)
-            young = np.where(mean > 0.0, young / np.where(mean > 0.0, mean, 1.0), 1.0)
-        self.weights = np.maximum(np.stack([young, contrast]), 0.0)  # (2, 256, 256)
+        young = None if self.modulation is None else np.array([self.modulation.sector_means(float(r), edges) for r in middle])
+        self.weights = part_weights(contrast, young)  # (2, 256, 256)
         # What the height reads: the thin/thick criterion over (radius, birth time), the two scale heights.
         self.thick = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
         self.h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
@@ -707,6 +819,12 @@ def _properties(galaxy: BrightGalaxy, cell: np.ndarray, log_l: np.ndarray, u: Ma
     return out
 
 
+def magnitudes(cat: Mapping[str, np.ndarray]) -> np.ndarray:
+    """``(n, 8)``: each star's eight absolute magnitudes in the table's band order, what ``spectra.object_nu_l_nu``
+    turns into its anchors for ``/api/bright``'s ``response`` (S48's wiring)."""
+    return np.stack([np.asarray(cat[f"bright_star_magnitude_{b.lower()}"], dtype=float) for b in BANDS], axis=-1)
+
+
 def in_frustum(view: np.ndarray, radius: np.ndarray, azimuth: np.ndarray, height: np.ndarray) -> np.ndarray:
     """Which points lie inside a view-projection matrix's frustum, in the viewer's frame (y up, phi from +x
     towards -z: frontend/src/galaxy/positions.ts) - the test /api/region's brightest mode applies."""
@@ -818,7 +936,10 @@ BRIGHT_LUMINOSITY = _column(
     "bright_star_luminosity", "Luminosity", "Lsun",
     "Bolometric, exact from the luminosity function: the star's place in its cell's ordered Poisson process "
     "inverted through the cell's expected count above each luminosity, so every disc star brighter than any "
-    "threshold is in the catalogue and a higher threshold keeps a prefix of it.", Ramp("inferno", scale="log"))
+    "threshold is in the catalogue and a higher threshold keeps a prefix of it. A point painted by this through a "
+    "blackbody's share at the star's temperature is 4-15% too bright through optical filters (D201, debt #114: a star "
+    "is nearly a blackbody, a cluster is not); /api/bright with filters= serves the star's own band light through the "
+    "viewer's curves (S48), which the viewer draws by once its star-first mode is built.", Ramp("inferno", scale="log"))
 BRIGHT_TEMPERATURE = _column(
     "bright_star_temperature", "Effective temperature", "K",
     "The isochrone's at the star's initial mass, read along the same segment as its mass.",
@@ -829,7 +950,8 @@ def _magnitude_column(band: str) -> FieldDecl:
     return _column(
         f"bright_star_magnitude_{band.lower()}", f"Absolute {band} magnitude M_{band}", "mag",
         f"The isochrone's {band}-band absolute magnitude (Vega) at the star's mass, moved by the difference between "
-        "the star's luminosity and the isochrone's at that point where the two differ. Intrinsic.",
+        "the star's luminosity and the isochrone's at that point where the two differ. Intrinsic. With the other seven "
+        "it is what /api/bright's response (filters=, S48) puts through the viewer's curves.",
         Ramp("inferno", lo=-10.0, hi=5.0), zero=False)
 
 

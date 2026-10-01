@@ -363,9 +363,9 @@ def band_curve(band: str) -> Curve:
 
 # An object's anchors are floored at this fraction of its brightest before the machinery runs (object_response only).
 ANCHOR_FLOOR = 1e-12  # [inferred: a numerical floor; it changes no response above 1e-12 of the object's peak; D201]
-# The temperatures the tails are tabulated on: 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart. The same grid
-# as /api/blackbody's (``api.service.BLACKBODY_GRID``, S42), mirrored here because that module is not this row's to
-# edit; tests/test_render.py asserts the two are equal [verified: np.logspace(3.0, 5.0, 193) in both, read at S48].
+# The temperatures the tails are tabulated on: 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart. The one copy of
+# the grid: /api/blackbody's table and the white point's range (``api.service.BLACKBODY_GRID``, S42) read it from here
+# since S48's wiring (until then the service held its own and a test asserted the two equal).
 RESPONSE_TEMPERATURES = np.logspace(3.0, 5.0, 193)
 _RESPONSE_LOG_MIN = 3.0
 _RESPONSE_PER_DEX = 96.0

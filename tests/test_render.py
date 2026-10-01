@@ -947,12 +947,6 @@ def objects():
     return {"anchors": anchors, "floored": floored, "kelvin": kelvin, "light": light, "label": label, "sets": sets}
 
 
-def test_the_object_tables_are_on_the_blackbody_route_s_temperatures():
-    from galaxy.api.service import BLACKBODY_GRID
-
-    assert np.array_equal(spectra.RESPONSE_TEMPERATURES, BLACKBODY_GRID)
-
-
 def test_an_object_s_anchors_are_its_magnitudes_through_the_zero_points():
     mags = np.array([[5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3], [np.nan] * 8])
     got = spectra.object_nu_l_nu(mags)
@@ -1125,3 +1119,106 @@ def test_today_s_painting_against_the_object_s_light(objects):
     paint = objects["light"][:, None] * spectra.blackbody_response(parsed, objects["kelvin"])
     assert paint.sum(axis=0) / exact.sum(axis=0) == pytest.approx([1.1511, 1.0929, 1.0427], abs=2e-4)
     assert np.median(paint / exact, axis=0) == pytest.approx([1.1065, 1.1388, 1.2591], abs=2e-4)
+
+
+# --- S48's wiring (D200 (4)): the field's remainder beside the stars, l_min= ------------------------------------------
+
+# The whole disc's bolometric light split at 10^3 Lsun on the default grid (Lsun): the stars component's total, the
+# young population's (the cluster census's ages), the old stars above 10^3 (the field's budget and the stars' own,
+# debt #126), and the remainder.
+SPLIT_1E3 = {"total": 4.895767e10, "young": 1.202957e10, "bright": 9.019945e9, "bright_own": 8.632747e9,
+             "unresolved": 2.790815e10}
+# The closure through rgb: the largest relative departure, over rings and filters, of the parts' responses summed
+# from the stars' (the SED join is not linear), at 10^2, 10^3 and 10^4 Lsun.
+CLOSURE_RGB = {100.0: 4.9594e-6, 1000.0: 5.7059e-6, 10000.0: 5.6762e-6}
+
+
+def _unresolved_query(model: str, l_min: float | None, **extra) -> dict:
+    query = {"model": [model], "filters": [curves("rgb")], **{k: [str(v)] for k, v in extra.items()}}
+    if l_min is not None:
+        query["l_min"] = [repr(l_min)]
+    return query
+
+
+def test_without_l_min_the_render_is_the_one_it_was(full, model):
+    """l_min= adds one component, its entry in components and axes, and the header's resolved; nothing else moves.
+    Asserted byte for byte: the body without it is the body with it, the additions taken out (both warm, so both
+    name the same stages run: none)."""
+    for l_min in (None, 1000.0, None, 1000.0):
+        got = full.handle("/api/render", _unresolved_query(model.name, l_min))
+        assert got.status == 200
+        if l_min is None:
+            plain = got
+        else:
+            header, arrays = wire.decode(got.body)
+    assert header["stages"] == [] and set(arrays) - {"stars_unresolved"} == set(wire.decode(plain.body)[1])
+    stripped = {k: v for k, v in header.items() if k != "resolved"}
+    stripped["components"] = {k: v for k, v in header["components"].items() if k != "stars_unresolved"}
+    stripped["axes"] = {k: v for k, v in header["axes"].items() if k != "stars_unresolved"}
+    assert plain.body == wire.encode(stripped, [(k, v) for k, v in arrays.items() if k != "stars_unresolved"])
+
+
+def test_the_remainder_is_its_two_parts_placed_as_the_bright_catalogue_places_them(full, model):
+    """stars_unresolved is bright.resolve's two remainder parts through the curves at the ring's colour temperature,
+    the 20-100 Myr part placed by sfr_modulation normalised around its ring where the model publishes it, the older
+    by the pattern's contrast (bright.part_weights, the catalogue's rule); in the basic model both by the contrast,
+    so it is a fixed share of the stars around each ring. The header states the split and the closure."""
+    from galaxy.stages import bright as br
+
+    header, arrays = render_q(full, _unresolved_query(model.name, 1000.0))
+    stars, rest = arrays["stars"], arrays["stars_unresolved"]
+    assert rest.shape == stars.shape and header["axes"]["stars_unresolved"] == ["R", "phi", "filter"]
+    assert header["components"]["stars_unresolved"]["layer"] == "stars"
+    names = ("stars_formed_history", "feh_history", "sfr_modulation", "pattern_density_contrast", "disc_light_temperature")
+    f = scalars(full, model.name, *(n for n in names if n != "sfr_modulation" or model.name != "basic"))
+    spec = full.grid.spec
+    res = br.resolve(f, spec.t_max, spec.n_t, {k: c.value for k, c in model.constants.items()}, 1000.0)
+    parsed = spectra.parse_curves(SETS["rgb"]["curves"])
+    middle = spectra.stellar_response(res.anchors["unresolved_middle"], f["disc_light_temperature"], parsed)
+    old = spectra.stellar_response(res.anchors["unresolved_old"], f["disc_light_temperature"], parsed)
+    w = br.part_weights(f["pattern_density_contrast"], f.get("sfr_modulation"))
+    want = middle[:, None, :] * w[0][..., None] + old[:, None, :] * w[1][..., None]
+    assert np.allclose(rest, want, rtol=1e-12, atol=0.0)
+    lit = stars > 0.0
+    assert np.all(rest[lit] >= 0.0) and np.all(rest.sum(axis=1) < stars.sum(axis=1) + 1e-300)
+    share = np.where(lit, rest / np.where(lit, stars, 1.0), np.nan)
+    spread = np.nanmax(share, axis=1) - np.nanmin(share, axis=1)
+    if model.name == "basic":
+        assert np.nanmax(spread) < 1e-12  # both parts follow the contrast
+    else:
+        assert np.nanmax(spread) > 0.05  # the middle part follows where stars form today
+    resolved = header["resolved"]
+    assert resolved["l_min"] == resolved["requested"] == 1000.0 and resolved["cluster_window_gyr"] == pytest.approx(0.02)
+    assert resolved["light"] == pytest.approx(SPLIT_1E3, rel=1e-6)
+    light = resolved["light"]
+    assert light["unresolved"] + light["young"] + light["bright"] == pytest.approx(light["total"], rel=1e-12)
+    assert light["total"] == pytest.approx(scalars(full, model.name, "disc_luminosity")["disc_luminosity"], rel=1e-12)
+    assert resolved["closure"]["anchors"] == "exact" and "[inferred]" in resolved["temperature"]
+
+
+def test_the_closure_through_rgb_is_pinned_at_three_thresholds(full):
+    """The parts - the remainder's two, the young, the bright - each through the field's machinery at the ring's
+    temperature, summed, against the stars component per ring: the join is not linear, so they differ, by under 6e-6
+    through rgb at every ring (S48; through the WFC3 set 2e-3). The header carries the number for the request's curves."""
+    for l_min, pinned in CLOSURE_RGB.items():
+        header, _ = render_q(full, _unresolved_query(DEFAULT_MODEL, l_min))
+        assert header["resolved"]["closure"]["response"] == pytest.approx(pinned, rel=1e-3), l_min
+        assert header["resolved"]["closure"]["response"] < 1e-4
+
+
+def test_l_min_rides_on_region_cells_and_is_refused_when_not_a_luminosity(small):
+    header, cells = render_q(small, _unresolved_query(DEFAULT_MODEL, 3000.0, level=2, r_min=7, r_max=9, phi_min=0, phi_max=0.4))
+    n = header["window"]["cells"]["count"]
+    assert cells["stars_unresolved"].shape == (n, 3) and np.all(cells["stars_unresolved"] < cells["stars"])
+    assert header["axes"]["stars_unresolved"] == ["cell", "filter"]
+    header, _ = render_q(small, _unresolved_query(DEFAULT_MODEL, 1e-3))  # under the luminosity function's first threshold
+    assert header["resolved"]["l_min"] == pytest.approx(0.1) and header["resolved"]["requested"] == 1e-3
+    for bad in ("0", "-5", "lots"):
+        got = small.handle("/api/render", {"filters": [curves("rgb")], "l_min": [bad]})
+        assert got.status == 400 and "l_min=" in got.json()["error"] and got.stages == ()
+
+
+def render_q(api: Service, query: dict):
+    got = api.handle("/api/render", query)
+    assert got.status == 200, got.body[:300]
+    return wire.decode(got.body)
