@@ -18,7 +18,7 @@
 // into the arms at a display power, and the per-channel extinction the viewer held (CHANNEL_EXTINCTION)
 // are gone (RENDER_PHYSICS §0's exception, closed by V2). What remains the viewer's is display only:
 // the white point, the exposure, the tone curve and the bloom, and the ray-march's own sampling (steps,
-// the jitter that turns banding into grain, the pixel budget). Structure below a (R, φ) cell of the
+// the sub-samples along each step, the jitter that turns banding into grain, the pixel budget). Structure below a (R, φ) cell of the
 // model's grid — a knot, a filament — is V3's, from the cloud catalogue.
 
 import type { Axis } from "../preview/axes";
@@ -112,6 +112,11 @@ export interface PlaneTexture {
   rings: Float32Array;
   width: number;
   height: number;
+  /**
+   * One texel's radial width, kpc: the R axis's span over the textures' width in cells (the polar
+   * textures and the ring texture share it). The march sub-samples a step finer than this in the plane.
+   */
+  cell: number;
 }
 
 /** The rows of `PlaneTexture.rings`, and where a shader samples each (texel centres). */
@@ -146,7 +151,24 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
       }
     }
   }
-  return { data, scatter, hii: line, rings, width: R.n, height: nPhi };
+  return { data, scatter, hii: line, rings, width: R.n, height: nPhi, cell: (R.hi - R.lo) / R.n };
+}
+
+/**
+ * The most sub-samples the march reads along one step (D197 (3)). At a grazing view a step's in-plane
+ * extent spans many cells of the plane texture; read once, neighbouring pixels quantise R at the same
+ * step boundaries and the disc draws as concentric terraces. A GLSL loop needs a constant bound.
+ */
+export const SUB_SAMPLES_MAX = 8;
+
+/**
+ * How many sub-samples the march reads along a step whose in-plane length is `inPlane` kpc, over a plane
+ * texture of radial cell `cell` kpc: one per cell the step crosses, at least 1, at most `max`. The
+ * shader's `n` in the march, line for line.
+ */
+export function subSamples(inPlane: number, cell: number, max: number = SUB_SAMPLES_MAX): number {
+  const n = Math.ceil(inPlane / cell);
+  return Number.isNaN(n) ? 1 : Math.min(max, Math.max(1, n));
 }
 
 /**
@@ -160,13 +182,20 @@ export function layerShare(y0: number, y1: number, h: number): number {
 }
 
 /**
- * Where the march reads the model's layers: tall enough that the thickest layer's sech² has fallen under
- * 2 × 10⁻⁴ of its midplane value (ten scale heights) and the bulge has faded, and never under 2 kpc.
+ * Where the march reads the model's layers: tall enough that the thickest layer's sech²(y / 2h) is under
+ * 10⁻⁶ of its midplane value at the box's top and bottom faces (D197 (3)), and the bulge has faded, and
+ * never under 2 kpc. At ten scale heights (S39 to S46) the faces cut the diffuse gas's layer at
+ * sech²(5) ≈ 1.8 × 10⁻⁴ of its midplane density, which a grazing ray carries across the whole box and a
+ * raised exposure shows as a straight edge. Fourteen leave sech²(7) ≈ 3.3 × 10⁻⁶, still over the ruled
+ * 10⁻⁶; sixteen leave sech²(8) ≈ 4.5 × 10⁻⁷.
  */
 export function marchHalfHeight(layers: Layers, bulgeScale: number): number {
   const heights = [layers.stars, layers.dust, layers.halpha_hii, layers.halpha_dig].map((h) => Number(h ?? 0)).filter(Number.isFinite);
-  return Math.max(10 * Math.max(0, ...heights), 12 * bulgeScale, 2);
+  return Math.max(MARCH_SCALE_HEIGHTS * Math.max(0, ...heights), 12 * bulgeScale, 2);
 }
+
+/** The box's half-height in the thickest layer's scale heights: sech²(16 / 2) ≈ 4.5 × 10⁻⁷ at the faces. */
+export const MARCH_SCALE_HEIGHTS = 16;
 
 /**
  * How visible each regime is at a view `across` kpc wide. The field is the whole galaxy and

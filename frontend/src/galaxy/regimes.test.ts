@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { RING_ROWS, balanced, depthOf, layerShare, marchHalfHeight, phaseAt, planeTexture, summed } from "./regimes";
+import {
+  MARCH_SCALE_HEIGHTS,
+  RING_ROWS,
+  SUB_SAMPLES_MAX,
+  balanced,
+  depthOf,
+  layerShare,
+  marchHalfHeight,
+  phaseAt,
+  planeTexture,
+  subSamples,
+  summed,
+} from "./regimes";
 
 // What /api/render returns since S39, in miniature: per (R, φ, filter) the stars, the HII regions' Hα and the
 // scattered light, each already placed by the model's contrast; per (R, filter) the diffuse Hα, the dust's
@@ -130,10 +142,56 @@ describe("the layers", () => {
     }
   });
 
-  it("march tall enough for the thickest layer: ten of the diffuse gas's scale heights", () => {
-    expect(marchHalfHeight({ stars: 0.36, dust: 0.36, halpha_hii: 0.18, halpha_dig: 1.4 }, 0.5)).toBeCloseTo(14, 12);
-    expect(marchHalfHeight({ stars: 0.36, dust: 0.36 }, 0.1)).toBeCloseTo(3.6, 12);
+  it("march tall enough for the thickest layer: sixteen of the diffuse gas's scale heights (D197)", () => {
+    expect(marchHalfHeight({ stars: 0.36, dust: 0.36, halpha_hii: 0.18, halpha_dig: 1.4 }, 0.5)).toBeCloseTo(22.4, 12);
+    expect(marchHalfHeight({ stars: 0.36, dust: 0.36 }, 0.1)).toBeCloseTo(5.76, 12);
+    expect(marchHalfHeight({ stars: 0.36, dust: 0.36 }, 0.6)).toBeCloseTo(7.2, 12); // the bulge's twelve scale radii
     expect(marchHalfHeight({ stars: null, dust: null }, 0)).toBe(2);
+  });
+
+  it("put the box's top and bottom faces where the thickest layer's density is under 10⁻⁶ of its midplane's", () => {
+    const sech2 = (x: number) => 1 / Math.cosh(x) ** 2;
+    const h = 1.4;
+    const y = marchHalfHeight({ stars: 0.36, dust: 0.36, halpha_dig: h }, 0.5);
+    expect(sech2(y / (2 * h))).toBeLessThan(1e-6);
+    expect(sech2((MARCH_SCALE_HEIGHTS - 2) / 2)).toBeGreaterThan(1e-6); // the smallest even multiple that meets it
+    // The column a ray leaves above the faces: 10⁻⁷ of the layer's (ten heights left 4.5 × 10⁻⁵).
+    expect(layerShare(y, 1e3, h)).toBeLessThan(2e-7);
+    expect(layerShare(10 * h, 1e3, h)).toBeGreaterThan(4e-5);
+  });
+});
+
+describe("the march's sub-samples along a step (D197)", () => {
+  it("take the plane texture's radial cell from its width in cells", () => {
+    expect(texture.cell).toBeCloseTo(0.5, 12);
+    expect(texture.cell).toBeCloseTo((R.hi - R.lo) / texture.width, 12);
+    expect(planeTexture({ R: { ...R, n: 400, lo: 0, hi: 30, width: 0.075 }, phi, stars: new Float64Array(400 * phi.n * 3), white }).cell).toBeCloseTo(0.075, 12);
+  });
+
+  it("read one per plane cell the step crosses in the plane, at least one and at most the cap", () => {
+    expect(SUB_SAMPLES_MAX).toBe(8);
+    expect(subSamples(0, 0.075)).toBe(1); // a face-on step: one read, as before
+    expect(subSamples(0.05, 0.075)).toBe(1);
+    expect(subSamples(0.075, 0.075)).toBe(1);
+    expect(subSamples(0.076, 0.075)).toBe(2);
+    expect(subSamples(0.3, 0.075)).toBe(4);
+    expect(subSamples(0.6, 0.075)).toBe(8);
+    expect(subSamples(5, 0.075)).toBe(SUB_SAMPLES_MAX); // a grazing step: capped
+    expect(subSamples(5, 0.075, 3)).toBe(3);
+    expect(subSamples(Number.NaN, 0.075)).toBe(1);
+  });
+
+  it("carry the step's exact column between them: the sub-steps' columns add to the step's, so nothing is added", () => {
+    // A straight ray's height is monotonic along a step, so the differences of tanh telescope.
+    for (const h of [0.18, 0.36, 1.4]) {
+      for (const [y0, y1] of [[-0.4, 0.3], [0.05, 0.02], [2, -3], [-0.01, 0.01]]) {
+        for (const n of [1, 2, 5, SUB_SAMPLES_MAX]) {
+          let parts = 0;
+          for (let j = 0; j < n; j += 1) parts += layerShare(y0 + ((y1 - y0) * j) / n, y0 + ((y1 - y0) * (j + 1)) / n, h);
+          expect(parts).toBeCloseTo(layerShare(y0, y1, h), 12);
+        }
+      }
+    }
   });
 });
 
