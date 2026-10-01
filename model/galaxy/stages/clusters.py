@@ -67,7 +67,16 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.clouds import cloud_counts, expected_counts
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.photometry import correlated_temperature, per_mass_at, population_at, population_light, population_wind
+from galaxy.stages.photometry import (
+    BANDS,
+    band_flux_at,
+    band_nu_l_nu,
+    correlated_temperature,
+    per_mass_at,
+    population_at,
+    population_light,
+    population_wind,
+)
 from galaxy.stages.systems import Catalogue
 
 CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
@@ -127,6 +136,16 @@ def per_mass(age_myr: np.ndarray, feh: np.ndarray) -> tuple[np.ndarray, np.ndarr
     """(Q in photons/s, wind power in L☉) per M☉ formed, for single bursts of these ages and [Fe/H]."""
     age = np.asarray(age_myr, dtype=float) / 1000.0
     return per_mass_at(population_light().ionizing_per_mass, age, feh), per_mass_at(population_wind(), age, feh)
+
+
+def band_anchors(mass: np.ndarray, age_myr: np.ndarray, feh: np.ndarray) -> np.ndarray:
+    """``(n, 8)``: each cluster's light in the table's eight bands as λL_λ anchors, L☉ (S48's wiring): a burst's
+    Σ 10^(−0.4 M_band) per M☉ formed at the cluster's age and [Fe/H] (``photometry.band_flux_at``, read as
+    ``population_at`` reads the light for ``cluster_luminosity``) times its mass formed, through each band's Vega
+    zero point (``band_nu_l_nu``). What ``/api/clusters`` puts through the viewer's curves."""
+    mass = np.asarray(mass, dtype=float)
+    flux = band_flux_at(np.asarray(age_myr, dtype=float) / 1000.0, np.asarray(feh, dtype=float), BANDS)
+    return np.stack([band_nu_l_nu(mass * flux[b], b) for b in BANDS], axis=-1)
 
 
 def materialise_clusters(

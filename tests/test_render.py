@@ -947,12 +947,6 @@ def objects():
     return {"anchors": anchors, "floored": floored, "kelvin": kelvin, "light": light, "label": label, "sets": sets}
 
 
-def test_the_object_tables_are_on_the_blackbody_route_s_temperatures():
-    from galaxy.api.service import BLACKBODY_GRID
-
-    assert np.array_equal(spectra.RESPONSE_TEMPERATURES, BLACKBODY_GRID)
-
-
 def test_an_object_s_anchors_are_its_magnitudes_through_the_zero_points():
     mags = np.array([[5.6, 5.4, 4.8, 4.4, 4.1, 3.6, 3.3, 3.3], [np.nan] * 8])
     got = spectra.object_nu_l_nu(mags)

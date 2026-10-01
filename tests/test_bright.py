@@ -397,3 +397,65 @@ def test_the_route_refuses_what_it_cannot_answer(api):
         assert says in r.json()["error"], (query, r.json())
     # the count a refused l_min would hold is said
     assert "3348738" in api.handle("/api/bright", "l_min=1000").json()["error"]
+
+
+# --- S48's wiring (D200 (5), D201): each star's band light through the viewer's curves -----------------------------
+
+
+def _rgb_curves() -> list:
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "frontend" / "src" / "galaxy" / "filters.json"
+    return json.loads(path.read_text(encoding="utf-8"))["sets"]["rgb"]["curves"]
+
+
+def _with_filters(query: str, curves: list, **extra) -> str:
+    import json
+    from urllib.parse import urlencode
+
+    return query + "&" + urlencode({"filters": json.dumps(curves), **extra})
+
+
+def test_with_filters_each_star_carries_its_band_light_through_the_curves(api):
+    """filters= adds ``response`` (stars x filters, Lsun): spectra.object_response on the star's eight magnitudes and
+    its temperature. Against the exact field machinery (stellar_response) on the same floored anchors, 200 stars: within
+    0.01 mag (D201 measured 2.8e-6 over 2 000 isochrone points). Without filters the body is the one it was, byte for
+    byte; f4 sends the response as float32 too."""
+    from galaxy.api import wire
+    from galaxy.stages import spectra
+
+    query = "r_min=7&r_max=9&phi_min=0&phi_max=0.4&n=1000"
+    assert api.handle("/api/bright", query).ok  # warm, so the bodies below name the same stages run (none)
+    curves = _rgb_curves()
+    got = api.handle("/api/bright", _with_filters(query, curves, white=6500))
+    assert got.ok
+    h, a = got.frame()
+    assert a["response"].shape == (1000, 3) and np.all(a["response"] > 0.0)
+    assert [c["name"] for c in h["filters"]] == ["R", "V", "B"] and h["response"]["unit"] == "Lsun"
+    assert h["response"]["temperature"] == "bright_star_temperature" and h["white"]["kelvin"] == 6500.0
+    parsed = spectra.parse_curves(curves)
+    anchors = spectra.object_nu_l_nu(br.magnitudes(a))
+    pick = np.linspace(0, 999, 200).round().astype(int)
+    floored = np.maximum(anchors[pick], spectra.ANCHOR_FLOOR * anchors[pick].max(axis=1, keepdims=True))
+    exact = spectra.stellar_response(floored, a["bright_star_temperature"][pick], parsed)
+    assert np.max(np.abs(2.5 * np.log10(a["response"][pick] / exact))) < 0.01
+    # A star's response is its light where the filters see it: through R, V and B together less than its bolometric.
+    assert np.all(a["response"].sum(axis=1) < a["bright_star_luminosity"])
+    plain = api.handle("/api/bright", query)
+    stripped = {k: v for k, v in h.items() if k not in ("filters", "white", "response")}
+    assert plain.body == wire.encode(stripped, [(k, v) for k, v in a.items() if k != "response"])
+    _, f4 = api.handle("/api/bright", _with_filters(query + "&precision=f4", curves)).frame()
+    assert f4["response"].dtype == np.float32 and np.array_equal(f4["response"], a["response"].astype(np.float32))
+
+
+def test_the_bright_route_refuses_bad_filters(api):
+    for query, says in (
+        ("n=10&white=6500", "white= is a blackbody's response"),
+        ("n=10&filters=rgb", "must be a JSON list"),
+        ("n=10&filters=%5B%5D", "1 to 8 curves"),
+        (_with_filters("n=10", _rgb_curves(), white=10), "white=10.0 is outside 1000..100000 K"),
+    ):
+        r = api.handle("/api/bright", query)
+        assert r.status == 400 and says in r.json()["error"], (query, r.json())
+        assert r.stages == ()

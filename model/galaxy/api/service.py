@@ -107,8 +107,9 @@ RENDER_CELL_SAMPLES = 8
 # The temperatures /api/blackbody tabulates (S42): 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart - the
 # render's own white-point range. Read linearly in log share against log T (the Wien side is an exponential in 1/T,
 # which a line in the share itself misses by 16% at 1000 K), every set's table is within the bound
-# tests/test_render.py measures of the integral at any temperature between its rows.
-BLACKBODY_GRID = np.logspace(3.0, 5.0, 193)
+# tests/test_render.py measures of the integral at any temperature between its rows. The model's one copy, the grid
+# the per-object response tabulates its tails on (S48's wiring: until then this module held a mirror of it).
+BLACKBODY_GRID = _spectra.RESPONSE_TEMPERATURES
 # A guard, not a physical limit: this is a headless service and the LOD ladder
 # that decides what a viewer should ask for arrives at S7 (GALAXY_PLAN.md §4).
 MAX_STARS = 5_000_000
@@ -186,8 +187,9 @@ ROUTES: tuple[Route, ...] = (
         "The young star-cluster census for one (R, phi) window (S33): one cluster in every cloud past its "
         "embedded phase, of the cells the window meets, each row named by cell and index as the cloud "
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
-        "clusters inside the level-k children the window meets.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
+        "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
     Route(
@@ -206,8 +208,10 @@ ROUTES: tuple[Route, ...] = (
         "brightest, inside view=<16 numbers>'s frustum when one is given (as /api/region takes it); l_min=<Lsun> "
         "every star above it (refused past 200000 expected). Rows brightest first, each named by cell and rank; the "
         "header's threshold says what the body is complete above. Stars younger than the cluster census's window "
-        "are the clusters'; the bulge is the field's. precision=f4 sends float32.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision"),
+        "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
+        "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
+        "header.",
+        ("model", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
         "bright",
     ),
     Route(
@@ -292,6 +296,50 @@ def _parse_filters(q: Query) -> list[Any]:
         raise BadRequest(f"filters= must be a JSON list of curves: {e}") from None
     except _spectra.CurveError as e:
         raise BadRequest(f"filters=: {e}") from None
+
+
+def _white_point(q: Query, curves: Sequence[Any]) -> dict[str, Any] | None:
+    """white=<K>: a blackbody's response per unit light through the curves, the viewer's white balance (S38), as the
+    header of every route that takes filters= carries it; None without it, a 400 outside the blackbody grid."""
+    if q.one("white") is None:
+        return None
+    white_k = q.number("white", 0.0)
+    if not BLACKBODY_GRID[0] <= white_k <= BLACKBODY_GRID[-1]:
+        raise BadRequest(f"white={white_k!r} is outside {BLACKBODY_GRID[0]:g}..{BLACKBODY_GRID[-1]:g} K")
+    return {"kelvin": white_k, "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]]}
+
+
+def _object_filters(q: Query) -> tuple[list[Any] | None, dict[str, Any] | None]:
+    """filters= and white= on an object route (S48): optional there, parsed and refused as /api/render does; white=
+    alone is refused, a white point being a response through curves."""
+    if q.one("filters") is None:
+        if q.one("white") is not None:
+            raise BadRequest("white= is a blackbody's response through the curves of filters=; give them with it")
+        return None, None
+    curves = _parse_filters(q)
+    return curves, _white_point(q, curves)
+
+
+# What an object route's ``response`` array is, in its header (S48, D200 (5), D201).
+OBJECT_RESPONSE_ABOUT = (
+    "each object's light through each curve, Lsun: its light in the table's eight bands U..K (a star's own magnitudes; "
+    "a cluster's, its burst's at its age and [Fe/H] times its mass) as lambda L_lambda anchors, joined as the field's "
+    "stars are - power laws between the anchors, made band-consistent, a blackbody at "
+    "its temperature beyond U and K - and integrated through the curve (spectra.object_response: the field's own "
+    "machinery on one-dimensional tables; an anchor below 1e-12 of the object's brightest is floored there). NaN where "
+    "an object has light and no temperature (B9). Drawn as a point of this light in each filter, the object and the "
+    "field are the same physics"
+)
+
+
+def _object_response_header(curves: Sequence[Any], white: dict[str, Any] | None, temperature: str) -> dict[str, Any]:
+    """What an object route's header gains with filters= (S48): the curves echoed, the white point as /api/render
+    carries it, and what the body's ``response`` array is."""
+    return {
+        "filters": [c.json() for c in curves],
+        "white": white,
+        "response": {"unit": "Lsun", "axes": ["row", "filter"], "temperature": temperature, "about": OBJECT_RESPONSE_ABOUT},
+    }
 
 
 def _json(payload: Mapping[str, Any], status: int = 200, stages: tuple[str, ...] = ()) -> Response:
@@ -750,22 +798,14 @@ class Service:
         """The blackbody response per filter on BLACKBODY_GRID: the table a point of a colour temperature is drawn
         from, as the render's white point is. A function of the curves alone; no model, no stage (rule D4)."""
         curves = _parse_filters(q)
-        white = q.one("white")
-        white_k = None
-        if white is not None:
-            white_k = q.number("white", 0.0)
-            if not BLACKBODY_GRID[0] <= white_k <= BLACKBODY_GRID[-1]:
-                raise BadRequest(f"white={white_k!r} is outside {BLACKBODY_GRID[0]:g}..{BLACKBODY_GRID[-1]:g} K")
+        white = _white_point(q, curves)
         share = _spectra.blackbody_response(curves, BLACKBODY_GRID)
         return _json({
             "filters": [c.json() for c in curves],
             "kelvin": BLACKBODY_GRID.tolist(),
             "share": share.tolist(),
             "interpolate": "log10(share) linear in log10(kelvin); a temperature off the grid takes its end's row",
-            "white": None if white_k is None else {
-                "kelvin": white_k,
-                "response": _spectra.blackbody_response(curves, np.array([white_k]))[0].tolist(),
-            },
+            "white": white,
         })
 
     def _version(self, q: Query) -> Response:
@@ -1048,6 +1088,7 @@ class Service:
         phi_min = q.number("phi_min", 0.0)
         phi_max = q.number("phi_max", 2.0 * math.pi)
         level = _level(q)
+        curves, white = _object_filters(q)
 
         inputs = self._overrides(model, q)
         # What the stage reads other than the cloud columns, which the census here draws for itself.
@@ -1101,7 +1142,14 @@ class Service:
             "columns": columns,
             "stages": list(ran),
         }
-        return Response(200, wire.MEDIA, wire.encode(header, [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]), ran)
+        arrays = [(c, census[c]) for c in columns] + [("cell", census["cell"]), ("index", census["index"])]
+        if curves is not None:
+            # S48's wiring (D200 (5)): the cluster's own band light - the burst's tables at its age and [Fe/H] times its
+            # mass, cluster_luminosity's convention - through the viewer's curves at its colour temperature.
+            anchors = _clusters.band_anchors(census["cluster_mass"], census["cluster_age"], census["cluster_metallicity"])
+            arrays.append(("response", _spectra.object_response(anchors, np.asarray(census["cluster_light_temperature"], dtype=float), curves)))
+            header.update(_object_response_header(curves, white, "cluster_light_temperature"))
+        return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _remnants(self, q: Query) -> Response:
         """The supernova-remnant census of one window (S36): the remnants of every level-0 cell the window meets,
@@ -1198,6 +1246,7 @@ class Service:
         l_min = q.number("l_min", 0.0) if has_l else None
         if l_min is not None and not l_min > 0.0:
             raise BadRequest(f"l_min={l_min!r} is not a positive luminosity")
+        curves, white = _object_filters(q)
 
         inputs = self._overrides(model, q)
         out, ran = self.compute(model, inputs, self._reads(model, stage))
@@ -1258,6 +1307,11 @@ class Service:
             "stages": list(ran),
         }
         arrays = [(c, np.asarray(rows[c])) for c in columns]
+        if curves is not None:
+            # S48's wiring (D200 (5), D201): each star's band light through the viewer's curves, at its own temperature.
+            anchors = _spectra.object_nu_l_nu(_bright.magnitudes(rows))
+            arrays.append(("response", _spectra.object_response(anchors, np.asarray(rows["bright_star_temperature"], dtype=float), curves)))
+            header.update(_object_response_header(curves, white, "bright_star_temperature"))
         if precision == "f4":
             arrays = [(c, a.astype(np.float32) if a.dtype == np.float64 else a) for c, a in arrays]
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
@@ -1283,12 +1337,7 @@ class Service:
         precision = q.one("precision", "f8")
         if precision not in ("f8", "f4"):
             raise BadRequest(f"precision={precision!r} is not f8 or f4")
-        white = q.one("white")
-        white_k = None
-        if white is not None:
-            white_k = q.number("white", 0.0)
-            if not 1000.0 <= white_k <= 100_000.0:
-                raise BadRequest(f"white={white_k!r} is outside 1000..100000 K")
+        white = _white_point(q, curves)
         level = None if q.one("level") is None else _level(q)
 
         declared = self._declared(model)
@@ -1484,10 +1533,7 @@ class Service:
             "layers": layers,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
-            "white": None if white_k is None else {
-                "kelvin": white_k,
-                "response": [_number(v) for v in _spectra.blackbody_response(curves, np.array([white_k]))[0]],
-            },
+            "white": white,
             "absent": {"lines": absent, "why": "not published by this model; and the diffuse ionized gas carries only its "
                                                 "recombination lines (S42: the grid gives the HII regions' forbidden lines)"},
             "stages": list(ran),

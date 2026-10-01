@@ -707,6 +707,12 @@ def _properties(galaxy: BrightGalaxy, cell: np.ndarray, log_l: np.ndarray, u: Ma
     return out
 
 
+def magnitudes(cat: Mapping[str, np.ndarray]) -> np.ndarray:
+    """``(n, 8)``: each star's eight absolute magnitudes in the table's band order, what ``spectra.object_nu_l_nu``
+    turns into its anchors for ``/api/bright``'s ``response`` (S48's wiring)."""
+    return np.stack([np.asarray(cat[f"bright_star_magnitude_{b.lower()}"], dtype=float) for b in BANDS], axis=-1)
+
+
 def in_frustum(view: np.ndarray, radius: np.ndarray, azimuth: np.ndarray, height: np.ndarray) -> np.ndarray:
     """Which points lie inside a view-projection matrix's frustum, in the viewer's frame (y up, phi from +x
     towards -z: frontend/src/galaxy/positions.ts) - the test /api/region's brightest mode applies."""

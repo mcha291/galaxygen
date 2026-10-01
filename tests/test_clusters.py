@@ -275,3 +275,81 @@ def test_the_clusters_route_is_the_stages_census_by_window_and_level():
     for f in fields:
         if f["name"] in ("bound_cluster_mass_total", "cluster_formation_efficiency"):
             assert "Not shown by the viewer" in f["about"] and "rule D4" in f["about"]
+
+
+# --- S48's wiring (D200 (5), D201): each cluster's own band light through the viewer's curves ----------------------
+
+
+def _rgb():
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "frontend" / "src" / "galaxy" / "filters.json"
+    return json.loads(path.read_text(encoding="utf-8"))["sets"]["rgb"]["curves"]
+
+
+SECTOR = "r_min=7&r_max=9&phi_min=0&phi_max=0.4"
+
+
+def test_with_filters_each_cluster_carries_its_band_light_through_the_curves():
+    """filters= adds ``response`` (clusters x filters, Lsun): the anchors are the burst's band sums at the cluster's age
+    and [Fe/H] times its mass (cluster_luminosity's convention), joined at its colour temperature. Through the rgb set
+    - Gaussians at the table's own R, V, B passbands - a band-consistent join returns each band's own light, so the
+    response is the anchor's mean L_lambda times the curve's area to 1e-3; and the bolometric light the same tables
+    give is the published cluster_luminosity's (the anchors and the light are one population). Without filters the
+    body is the one it was: the additions are the only difference, byte for byte."""
+    import json
+    from urllib.parse import urlencode
+
+    from galaxy.stages import spectra
+
+    svc = Service()
+    curves = _rgb()
+    assert svc.handle("/api/clusters", SECTOR).ok  # warm, so both bodies below name the same stages run (none)
+    got = svc.handle("/api/clusters", SECTOR + "&" + urlencode({"filters": json.dumps(curves), "white": 6500}))
+    assert got.status == 200
+    h, a = wire.decode(got.body)
+    n = len(a["cluster_mass"])
+    assert n > 0 and a["response"].shape == (n, 3) and np.all(a["response"] > 0.0)
+    assert [c["name"] for c in h["filters"]] == ["R", "V", "B"] and h["response"]["unit"] == "Lsun"
+    assert h["response"]["temperature"] == "cluster_light_temperature" and h["white"]["kelvin"] == 6500.0
+    parsed = spectra.parse_curves(curves)
+    assert h["white"]["response"] == pytest.approx(spectra.blackbody_response(parsed, np.array([6500.0]))[0].tolist(), rel=1e-14)
+    anchors = cu.band_anchors(a["cluster_mass"], a["cluster_age"], a["cluster_metallicity"])
+    for f, band in enumerate(("R", "V", "B")):
+        curve = spectra.band_curve(band)
+        area = np.trapezoid(curve.at(curve.grid()), curve.grid())
+        k = ph.BANDS.index(band)
+        want = anchors[:, k] / spectra.SED_WAVELENGTHS[k] * area
+        assert np.max(np.abs(a["response"][:, f] / want - 1.0)) < 1e-3, band
+    # The anchors are cluster_luminosity's population: mass x the band sums at the same age and [Fe/H].
+    flux = ph.band_flux_at(a["cluster_age"] / 1000.0, a["cluster_metallicity"], ("V",))["V"]
+    assert np.allclose(anchors[:, 2], ph.band_nu_l_nu(a["cluster_mass"] * flux, "V"), rtol=1e-14, atol=0.0)
+    # Without filters: byte-identical to the body with the additions taken out.
+    plain = svc.handle("/api/clusters", SECTOR)
+    stripped = {k: v for k, v in h.items() if k not in ("filters", "white", "response")}
+    assert plain.body == wire.encode(stripped, [(k, v) for k, v in a.items() if k != "response"])
+    # At a level, the response rides on the rows kept.
+    _, deep = wire.decode(svc.handle("/api/clusters", SECTOR + "&level=2&" + urlencode({"filters": json.dumps(curves)})).body)
+    assert deep["response"].shape == (len(deep["cluster_mass"]), 3)
+
+
+@pytest.mark.parametrize(
+    "query, says",
+    [
+        ("white=6500", "white= is a blackbody's response"),
+        ("filters=rgb", "must be a JSON list"),
+        ("filters=%5B%5D", "1 to 8 curves"),
+    ],
+)
+def test_the_clusters_route_refuses_bad_filters(query, says):
+    got = Service().handle("/api/clusters", SECTOR + "&" + query)
+    assert got.status == 400 and says in got.json()["error"] and got.stages == ()
+
+
+def test_a_white_point_off_the_grid_is_refused():
+    import json
+    from urllib.parse import urlencode
+
+    got = Service().handle("/api/clusters", urlencode({"filters": json.dumps(_rgb()), "white": 500}))
+    assert got.status == 400 and "white=500.0 is outside 1000..100000 K" in got.json()["error"]
