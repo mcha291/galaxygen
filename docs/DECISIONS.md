@@ -7384,3 +7384,34 @@ and frustum with `n` or `l_min`, its header stating the completeness limit; `spe
 `object_nu_l_nu`. No acceptance row: a row on these numbers needs a blind window first (#117's lesson). **Protocol:**
 `session-48-bright` and `session-48-response`, disjoint files, then the wiring in `api/service.py` after both merge.
 Numbers: debts from #125, decisions from D201, board rows from 48, acceptance rows from 38.
+
+### D201. S48: the per-object filter response is the exact machinery factorised into one-dimensional tables, not its linearisation — D200 (5)'s method failed its own gate; and an anchor that has vanished is floored
+
+**Ruled on the response builder's first report (2026-10-01), before its second commit (D113).** D200 (5) ruled the
+exact `stellar_response` linearised in log about a blackbody, with a gate: luminosity-weighted error under 0.02 mag and
+the worst under 0.1 mag on the broadband sets, not to be loosened. **Measured on 2 000 isochrone points: the weighted
+error holds (rgb 0.0000, wfc3 0.0002 / 0.003 / 0.0198 mag) and the worst does not (wfc3 0.035 / 0.32 / 0.34 mag, on
+TP-AGB stars; the narrowband sets 0.25–0.63).** A diagonal second-order term made it worse (4.76), a second reference
+at the best-fitting blackbody improved the weighted error and not the worst (0.26–0.42), and linearising only
+`band_consistent` was worse (0.53): the nonlinearity is in `band_consistent`. The gate stands and the method goes.
+
+**The method that replaces it** is the builder's own prototype, adopted: **the exact machinery factorised** — the
+integral of each power-law segment between neighbouring anchors tabulated against the segment's log slope, the two
+blackbody tails against log T, and `band_consistent` iterated on those tables instead of on wavelength grids. It is
+the same function as `stellar_response`, not an approximation of it: it matched to under 10⁻⁴ mag at every point where
+the exact path is itself sound, in all five sets, at 2.7 s per 10⁵ objects unoptimised. `object_response` becomes
+that; the linearised table is removed (one method per thing), its numbers kept here and in the test's docstring.
+
+**A second finding, ruled with it: an anchor that has vanished is floored.** On 39 of the 2 000 points — dust-shrouded
+TP-AGB stars whose table magnitudes reach M_B = +95 — the *exact* `stellar_response` misses the star's own band
+magnitudes by up to 49.6 mag: `band_consistent`'s multiplicative iteration does not converge on anchors forty
+decades apart. No display or sum can register light thirty magnitudes below an object's own peak, so **before the
+machinery an object's anchors are floored at 10⁻¹² of its brightest anchor** `[inferred: a numerical floor; it changes
+no response above 10⁻¹² of the object's peak]`, and the gate is then read over all 2 000 points, not only the 1 961
+where the unfloored exact path held. The per-cell field is not touched (a population's anchors are smooth and the
+field's pins must not move); if the floor is ever needed there it is a ruling of its own.
+
+**For the record, #114 re-measured on single stars:** today's painting (L × the blackbody share) against the exact
+response, summed over the 2 000 points, is 1.151 / 1.093 / 1.043 in R / G / B — a single star is nearly one blackbody
+— where S41 measured 1.89 / 2.12 / 2.43 on the cluster census. The factor of two is the *clusters'* (an integrated
+population is not a blackbody); the stars' error is 4–15 %. The debt's text is corrected at this session's close.
