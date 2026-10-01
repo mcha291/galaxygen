@@ -25,7 +25,7 @@ import {
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, WHITE_KELVIN, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { marchHalfHeight, planeTexture, RING_ROWS, summed, type RegionWindow } from "./regimes";
+import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 
 /**
  * How bright 1 L☉/pc² of white light draws at zero exposure stops, against a star point's 1 per
@@ -93,6 +93,14 @@ const VERTEX = /* glsl */ `
 // Every colour here is the model's filter integral over the white point (regimes.ts, filters.ts); the
 // dust is each channel's own optical depth from the grain model's curve. The shader only sums and dims,
 // and reads the scattered light's phase factor from the model's table by the view's |cos i|.
+//
+// Sub-samples along each step (S46, D197 (3)): a step is split into n equal sub-steps, n its in-plane
+// length over the plane texture's radial cell (regimes.ts subSamples, at most SUB_SAMPLES_MAX), and each
+// sub-step reads the layers once, at its midplane crossing or else at the pixel's fixed fraction along it,
+// and takes its own exact column, its own dust mixed through its light and its own dimming of what lies
+// behind. Read once per step, a grazing step spans many cells, and neighbouring pixels quantised R at the
+// same step boundaries: the disc drew as concentric terraces. The columns are exact per sub-step and add
+// to the step's, so the sub-samples change where the layers are read, not how much light there is.
 const FRAGMENT = /* glsl */ `
   uniform sampler2D plane;
   uniform sampler2D scatter;
@@ -101,6 +109,8 @@ const FRAGMENT = /* glsl */ `
   uniform float phase[${PHASE_POINTS}];
   uniform float rLo;
   uniform float rHi;
+  // One texel's radial width, kpc (regimes.ts PlaneTexture.cell): the sub-steps' in-plane length.
+  uniform float planeCell;
   uniform float halfHeight;
   uniform float starsHeight;
   uniform float dustHeight;
@@ -128,11 +138,11 @@ const FRAGMENT = /* glsl */ `
     return abs(safeTanh(y1 / (2.0 * h)) - safeTanh(y0 / (2.0 * h))) * 0.5 * ds / abs(dy);
   }
 
-  // Where to read the layers over a step from p0 to p1: where it crosses the midplane, or else the
-  // step's middle.
-  vec3 nearestMidplane(vec3 p0, vec3 p1) {
+  // Where to read the layers over a sub-step from p0 to p1: where it crosses the midplane, or else the
+  // pixel's fixed fraction 'at' along it (the screen-space dither, never frame-seeded: RENDER_PHYSICS §8).
+  vec3 readPoint(vec3 p0, vec3 p1, float at) {
     if (p0.y * p1.y < 0.0) return mix(p0, p1, p0.y / (p0.y - p1.y));
-    return 0.5 * (p0 + p1);
+    return mix(p0, p1, at);
   }
 
   // Radius and azimuth in the stars' frame: x = r cos φ, z = −r sin φ.
@@ -187,7 +197,8 @@ const FRAGMENT = /* glsl */ `
     // over a disc 0.3 kpc thick a few hundred parsecs away.
     float tStart = max(tNear, 0.01);
     float ratio = pow(max(tFar, tStart * 1.0001) / tStart, 1.0 / float(${STEPS}));
-    // A per-pixel offset into the first step turns banding into fine noise (the bulge's point sample).
+    // A per-pixel offset turns banding into fine noise: into each step for the bulge's point sample, and
+    // into each sub-step for the layers' reads. Fixed by the pixel, never by the frame.
     float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
     vec3 light = vec3(0.0);
     vec3 transmitted = vec3(1.0);
@@ -196,27 +207,39 @@ const FRAGMENT = /* glsl */ `
       float ds = a * (ratio - 1.0);
       vec3 p = origin + dir * (a + jitter * ds);
       float s = max(length(p), 0.02);
-      vec3 emitted = bulgeLight * bulgeScale / (6.28318531 * s * pow(s + bulgeScale, 3.0)) * 1.0e-6 * ds;
+      vec3 bulge = bulgeLight * bulgeScale / (6.28318531 * s * pow(s + bulgeScale, 3.0)) * 1.0e-6 * ds;
 
-      // The disc's layers over the whole step, [a, a + ds], read where the step is nearest the midplane.
+      // The disc's layers over the whole step, [a, a + ds], in n sub-steps of at most about one plane
+      // cell in the plane each (regimes.ts subSamples). The bulge's light is spread evenly over them, so
+      // it sits in the same dust as before; with n = 1 this is the single read per step of S39.
       vec3 p0 = origin + dir * a;
       vec3 p1 = p0 + dir * ds;
-      vec3 depth = vec3(0.0);
-      vec2 rp = polarOf(nearestMidplane(p0, p1));
-      if (rp.x < rHi) {
-        float cStars = column(p0.y, p1.y, starsHeight, ds);
-        float cDust = column(p0.y, p1.y, dustHeight, ds);
-        float cHii = column(p0.y, p1.y, hiiHeight, ds);
-        float cDig = column(p0.y, p1.y, digHeight, ds);
-        emitted += readPolar(plane, rp).rgb * cStars;
-        emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
-        emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-        depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+      int n = int(clamp(ceil(length(p1.xz - p0.xz) / planeCell), 1.0, ${SUB_SAMPLES_MAX}.0));
+      float sub = ds / float(n);
+      for (int j = 0; j < ${SUB_SAMPLES_MAX}; j++) {
+        if (j >= n) break;
+        vec3 q0 = p0 + dir * (float(j) * sub);
+        vec3 q1 = p0 + dir * (float(j + 1) * sub);
+        vec3 emitted = bulge / float(n);
+        vec3 depth = vec3(0.0);
+        vec2 rp = polarOf(readPoint(q0, q1, jitter));
+        // Beyond rHi every texture is zero: the box's side faces clip nothing but zeros.
+        if (rp.x < rHi) {
+          float cStars = column(q0.y, q1.y, starsHeight, sub);
+          float cDust = column(q0.y, q1.y, dustHeight, sub);
+          float cHii = column(q0.y, q1.y, hiiHeight, sub);
+          float cDig = column(q0.y, q1.y, digHeight, sub);
+          emitted += readPolar(plane, rp).rgb * cStars;
+          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
+          emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
+          depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+        }
+        // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
+        // only what lies behind it, so light and dust keep their order inside a long step.
+        vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
+        light += transmitted * emitted * own;
+        transmitted *= exp(-depth);
       }
-      // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself.
-      vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
-      light += transmitted * emitted * own;
-      transmitted *= exp(-depth);
     }
     gl_FragColor = vec4(light * gain, 1.0);
   }
@@ -265,7 +288,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       return null;
     }
     const a = light.arrays;
-    const { data, scatter, hii, rings, width, height } = planeTexture({
+    const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
       stars: a.stars,
@@ -308,6 +331,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         phase: { value: phase },
         rLo: { value: R.lo },
         rHi: { value: R.hi },
+        planeCell: { value: cell },
         halfHeight: { value: halfHeight },
         // The model's layers (the render header): a missing one is height 0, which draws nothing.
         starsHeight: { value: layers.stars ?? 0 },

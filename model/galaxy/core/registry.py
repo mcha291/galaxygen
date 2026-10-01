@@ -228,6 +228,11 @@ class Registry(Generic[T]):
     def names(self) -> tuple[str, ...]:
         return tuple(self._items)
 
+    def put_first(self, name: str) -> None:
+        """Move ``name`` to the front of the order (the default model leads: galaxy/models/__init__.py, D197)."""
+        item = self.get(name)
+        self._items = {name: item, **{k: v for k, v in self._items.items() if k != name}}
+
     def __iter__(self) -> Iterator[T]:
         return iter(self._items.values())
 

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.grids import GridSpec
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.models.level0 import LEVEL0
 from galaxy.stages import remnants as rm
 from galaxy.stages.photometry import imf_weights, isochrones, lookup
@@ -270,7 +271,7 @@ def test_the_solar_neighbourhood_for_audit_iii(runs):
     audit reads them: Σ_WD and the white dwarfs' share of stars plus remnants there."""
     from galaxy.stages.remnants import _per_formed
 
-    o = runs["basic"]
+    o = runs[DEFAULT_MODEL]
     R, t = o.grid.R, o.grid.t
     at = int(np.argmin(np.abs(R - LEVEL0["R_SUN"].value)))
     dt = float(o.grid.spec.t_max) / t.size

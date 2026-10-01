@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.grids import GridSpec
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import spec
 from galaxy.stages import habitable_zone as hz
@@ -115,7 +116,7 @@ def test_a_thin_disc_with_no_thickness_leaves_the_hazard_undefined(prod):
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        f = run(prod[0].get("basic"), grid=SMALL, only=ZONE + ("thin_disc_scale_height",)).fields
+        f = run(prod[0].get(DEFAULT_MODEL), grid=SMALL, only=ZONE + ("thin_disc_scale_height",)).fields
     assert float(f["thin_disc_scale_height"]) == 0.0
     assert np.all(np.isnan(np.asarray(f["sterilization_rate_history"])))
     for name in ("habitable_fraction", "habitable_zone_peak_radius", "habitable_zone_half_radius"):
@@ -147,7 +148,7 @@ def test_the_dropped_root_reading_of_eq_5_is_kept_visible(prod, monkeypatch):
     disc's edge (half the habitable stars outside 12 kpc, where 5% of the stars formed). That is what the
     model read from S30 to S37 (D179); Audit III found the root in the printed equation (A3-1, #104)."""
     monkeypatch.setattr(hz, "sterilization_distance", lambda mag, base, m_std: base * 10.0 ** (-0.4 * (mag - m_std)))
-    out = run(prod[0].get("basic"), grid=COARSE, only=ZONE)
+    out = run(prod[0].get(DEFAULT_MODEL), grid=COARSE, only=ZONE)
     f, R = out.fields, out.grid.R
     assert float(f["habitable_fraction"]) == pytest.approx(4.7514e-4, rel=1e-4)
     assert float(f["habitable_zone_peak_radius"]) == pytest.approx(10.875, abs=1e-9)

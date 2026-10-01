@@ -1183,3 +1183,24 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] An instrument an Opus builder writes from a pre-stated aim lands first time when the aim names every
   quantity, its weighting, its range and the identity it must reproduce to 10⁻⁹ before anything else is printed:
   the published value was reproduced to 0.0 and no number needed a second pass (D196).
+
+## From S46 (the viewer reviewed and the first renderer rows; the rulings by Fable, the builds by three Opus agents)
+
+- [viewer] A dither applied to one sample and not the other is no dither: the march jittered the bulge's point and read
+  the disc's layers at each step's fixed midpoint, so a grazing view quantised R coherently across pixels and drew
+  terraces. When a sample is dithered, every sample on the same ray is; and sub-sample a step that spans more than one
+  cell of what it reads (D197).
+- [viewer] A ruled number is checked by the builder's arithmetic as well as the session's: 14 h was written for a 10⁻⁶
+  floor and sech²(7) is 3.3 × 10⁻⁶; the builder set 16 h and said why. A tolerance stated in a ruling is a claim the
+  build may correct, and the record keeps both numbers (D197).
+- [viewer] A shader has no unit test, so the builder built one: a WebGL2 harness from the real fragment strings against
+  a converged reference showed the old march off by 8 × 10⁻³ at grazing views and the new within 2 × 10⁻⁴ — the gate
+  "unchanged within 10⁻³" was then read against the truth, not against the frame that was wrong (D197).
+- [infra] A default that is built from another declaration cannot be imported first: import in name order, then put
+  the default first in the registry. A registry's order is a property to set, not an accident of import (D197).
+- [viewer] Two models that differ in one slot can share every window-level pin when the window-level tests read what
+  the slot does not touch; say which fields differ (the star columns here) before predicting which pins move — the
+  prediction "window-level pins move" was wrong in the useful direction (D197).
+- [viewer] The accessibility tree's references are stable only within a page load, and `find` must precede each click;
+  a six-step confirmation walk is six round trips, which is the cost of a viewer with no deep link to a generated
+  galaxy — and the reason D198's landing is the default galaxy already generated (D198).

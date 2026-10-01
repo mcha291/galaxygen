@@ -48,6 +48,7 @@ import pytest
 from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.stages import spectra
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import slab_absorbed_fraction
@@ -67,6 +68,7 @@ MEASURED_M_V = -21.216042  # the table's -21.215871
 FIRST_CUT_B_V = 0.642807
 FIRST_CUT_M_V = -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
+# Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
 FACE_ON_B_V = {"basic": 0.647469, "azimuthal": 0.647469}  # +0.0168 on the gate's
 FACE_ON_M_V = {"basic": -20.804991, "azimuthal": -20.804991}  # 0.411 mag fainter
 
@@ -168,7 +170,7 @@ def test_every_band_of_the_frame_is_the_table_s(full):
     got = full.handle("/api/render", {"filters": [table_bands(*BANDS)]})
     header, arrays = wire.decode(got.body)
     total = frame_total(header, arrays)
-    table = scalars(full, "basic", *(f"absolute_magnitude_{b.lower()}" for b in BANDS))
+    table = scalars(full, DEFAULT_MODEL, *(f"absolute_magnitude_{b.lower()}" for b in BANDS))
     for k, band in enumerate(BANDS):
         assert band_magnitude(total[k], band) == pytest.approx(table[f"absolute_magnitude_{band.lower()}"], abs=TOLERANCE), band
 
@@ -177,7 +179,7 @@ def per_ring_residuals(api: Service, iterations: int | None) -> np.ndarray:
     """(rings with light, 8): each band's mean through its curve against the table's value at that ring, mag;
     the spectrum's anchors as published (``iterations`` 0) or made band-consistent."""
     names = [f"disc_sed_{b.lower()}" for b in BANDS]
-    f = scalars(api, "basic", *names, "disc_light_temperature")
+    f = scalars(api, DEFAULT_MODEL, *names, "disc_light_temperature")
     sed = np.stack([f[n] for n in names], axis=-1)
     points = sed if iterations == 0 else spectra.band_consistent(sed, f["disc_light_temperature"], *(() if iterations is None else (iterations,)))
     bands = [spectra.band_curve(b) for b in BANDS]
@@ -212,7 +214,7 @@ def test_the_first_cut_is_recorded(full):
     through the viewer's rgb B and V as they stood (4361/890 and 5448/840 A), tied to the table's own Sun."""
     b_v = {"B": spectra.Curve("B", "gaussian", centre=4361.0, width=890.0), "V": spectra.Curve("V", "gaussian", centre=5448.0, width=840.0)}
     zp = first_cut_zero_points(b_v)
-    f = scalars(full, "basic", "disc_surface_brightness", "disc_light_temperature", "bulge_luminosity", "bulge_light_temperature",
+    f = scalars(full, DEFAULT_MODEL, "disc_surface_brightness", "disc_light_temperature", "bulge_luminosity", "bulge_light_temperature",
                 "stars_formed_history", "feh_history")
     grid = full.grid
     per_ring = spectra.blackbody_stellar_response(f["disc_surface_brightness"], f["disc_light_temperature"], list(b_v.values()))
@@ -226,7 +228,7 @@ def test_the_first_cut_is_recorded(full):
     dt = float(grid.spec.t_max) / float(grid.spec.n_t)
     youngest = float(grid.spec.t_max) - (grid.t + 0.5 * dt)
     step = population_over(youngest, youngest + dt, f["feh_history"])
-    formed = np.asarray(f["stars_formed_history"]) / (1.0 - full.models.get("basic").constants["RETURN_FRACTION"].value)
+    formed = np.asarray(f["stars_formed_history"]) / (1.0 - full.models.get(DEFAULT_MODEL).constants["RETURN_FRACTION"].value)
     b, v = (formed * step["B"]).sum(axis=1), (formed * step["V"]).sum(axis=1)
     lit = (b > 0) & (v > 0) & (per_ring[:, 1] > 0)
     d = ((zp["B"] - 2.5 * np.log10(per_ring[lit, 0])) - (zp["V"] - 2.5 * np.log10(per_ring[lit, 1]))) - (-2.5 * np.log10(b[lit] / v[lit]))
@@ -250,7 +252,7 @@ def test_the_joined_spectrum_carries_most_of_the_published_light(full):
     wide = json.dumps([{"name": "all", "shape": "box", "centre": 150_500.0, "width": 299_000.0}])
     header, arrays = wire.decode(full.handle("/api/render", {"filters": [wide]}).body)
     frame = float((arrays["stars"][..., 0] * cell_areas(header)).sum())
-    published = scalars(full, "basic", "disc_luminosity")["disc_luminosity"]
+    published = scalars(full, DEFAULT_MODEL, "disc_luminosity")["disc_luminosity"]
     assert frame / published == pytest.approx(0.708, abs=2e-3)
 
 
@@ -334,6 +336,7 @@ IR = FILTERS["measured"]["ir"]["curves"]
 V_ROW = {"name": "V (grain table)", "shape": "gaussian", "centre": 5470.0, "fwhm": 852.44}
 BALANCE_TOLERANCE = 1e-3
 # Measured at S39 (default grid), pinned beside the tolerance.
+# Keyed per model, "basic" deliberately (S46, D197).
 MEASURED_ABSORBED = {"basic": 1.000344, "azimuthal": 1.000344}  # the frame's absorbed power over dust_absorbed_luminosity
 MEASURED_EMITTED = {"basic": 0.999664, "azimuthal": 0.999664}  # the frame's TIR over dust_infrared_luminosity
 TIR_OUTSIDE = {"basic": 6.79639e-4, "azimuthal": 6.79639e-4}  # the share of the frame's Sigma_IR outside 8-1000 um
@@ -426,8 +429,8 @@ def test_the_grey_absorption_against_the_curve_in_the_frame(full):
     edges = np.geomspace(1000.0, 300_000.0, 9)
     tiles = [{"name": f"t{k}", "shape": "box", "centre": 0.5 * (edges[k] + edges[k + 1]), "width": edges[k + 1] - edges[k]}
              for k in range(8)]
-    header, arrays = full_render(full, "basic", tiles)
-    v_header, v_arrays = full_render(full, "basic", [V_ROW])
+    header, arrays = full_render(full, DEFAULT_MODEL, tiles)
+    v_header, v_arrays = full_render(full, DEFAULT_MODEL, [V_ROW])
     area = ring_areas(header)
     light = arrays["stars"].mean(axis=1) * area[:, None]
     curve = float((light * removed_share(absorbing_depth(header, arrays))).sum())
@@ -445,7 +448,7 @@ def test_the_frame_s_light_is_conserved_by_its_scattering(full):
     **The record (S39).** The ruling's first form, optically thin single scattering τ_sca × the stars, measured
     here against the scattered light the route returns: twelve times it over the whole galaxy, because the disc's
     centre has τ_sca ≈ 30, where a thin scatterer throws thirty times the light it holds (A_V 50 at the centre)."""
-    header, arrays = full_render(full, "basic", [*SETS["rgb"]["curves"], V_ROW])
+    header, arrays = full_render(full, DEFAULT_MODEL, [*SETS["rgb"]["curves"], V_ROW])
     area = ring_areas(header)
     light = arrays["stars"].mean(axis=1)  # (R, filter)
     tau = -np.log(arrays["dust_extinction"])
@@ -453,7 +456,7 @@ def test_the_frame_s_light_is_conserved_by_its_scattering(full):
     scattered = arrays["dust_scattered"].mean(axis=1)
     absorbed = light * removed_share(absorbing_depth(header, arrays))
     assert escaped + scattered + absorbed == pytest.approx(light, rel=1e-9)
-    f = scalars(full, "basic", "dust_scattering_optical_depth")
+    f = scalars(full, DEFAULT_MODEL, "dust_scattering_optical_depth")
     thin = spectra.scattering_depth(f["dust_scattering_optical_depth"], spectra.parse_curves([V_ROW]))[:, 0] * light[:, 3]
     ratio = float((thin * area).sum() / (scattered[:, 3] * area).sum())
     print("thin over slab", ratio)
@@ -535,10 +538,10 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):
-    header, arrays = render(small, "basic", "rgb", white="6500")
+    header, arrays = render(small, DEFAULT_MODEL, "rgb", white="6500")
     disc = [f"disc_sed_{b.lower()}" for b in BANDS]
     bulge_names = [f"bulge_sed_{b.lower()}" for b in BANDS]
-    f = scalars(small, "basic", *disc, *bulge_names, "disc_light_temperature", "pattern_density_contrast", "bulge_light_temperature")
+    f = scalars(small, DEFAULT_MODEL, *disc, *bulge_names, "disc_light_temperature", "pattern_density_contrast", "bulge_light_temperature")
     parsed = spectra.parse_curves(SETS["rgb"]["curves"])
     per_ring = spectra.stellar_response(np.stack([f[n] for n in disc], axis=-1), f["disc_light_temperature"], parsed)
     want = per_ring[:, None, :] * np.maximum(f["pattern_density_contrast"], 0.0)[..., None]
@@ -551,8 +554,8 @@ def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):
 
 
 def test_a_window_is_the_slice_of_the_whole_and_wraps_at_phi_zero(small):
-    _, whole = render(small, "basic", "rgb")
-    header, part = render(small, "basic", "rgb", r_min="7", r_max="9", phi_min="6.0", phi_max="6.6")
+    _, whole = render(small, DEFAULT_MODEL, "rgb")
+    header, part = render(small, DEFAULT_MODEL, "rgb", r_min="7", r_max="9", phi_min="6.0", phi_max="6.6")
     r, p = header["window"]["R"], header["window"]["phi"]
     assert p["wraps"] and p["first"] + p["n"] > 36
     rows = np.arange(r["first"], r["first"] + r["n"])
@@ -562,14 +565,14 @@ def test_a_window_is_the_slice_of_the_whole_and_wraps_at_phi_zero(small):
     for name in ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"):
         assert np.array_equal(part[name], whole[name][rows]), name
     # A window narrower than a cell still selects the cell holding it.
-    header, one = render(small, "basic", "rgb", r_min="8.1", r_max="8.1", phi_min="1.0", phi_max="1.0")
+    header, one = render(small, DEFAULT_MODEL, "rgb", r_min="8.1", r_max="8.1", phi_min="1.0", phi_max="1.0")
     assert one["stars"].shape == (1, 1, 3)
 
 
 def test_region_cells_carry_their_mean_and_the_cells_integrate_to_the_frame(small):
-    header, frame = render(small, "basic", "rgb")
+    header, frame = render(small, DEFAULT_MODEL, "rgb")
     total = (frame["stars"] * cell_areas(header)[..., None]).sum(axis=(0, 1))
-    header, cells = render(small, "basic", "rgb", level="0")
+    header, cells = render(small, DEFAULT_MODEL, "rgb", level="0")
     assert header["window"]["cells"]["count"] == 1024 and cells["cell"].tolist() == list(range(1024))
     from galaxy.stages import systems
 
@@ -579,7 +582,7 @@ def test_region_cells_carry_their_mean_and_the_cells_integrate_to_the_frame(smal
     # The cells span R[0]..R[-1], the frame 0..R_max: they differ by the half-cells at the ends and the
     # quadrature, 1.4e-3 on this coarse grid (4e-5 on the default one, S38).
     assert by_cells == pytest.approx(total, rel=3e-3)
-    header, deep = render(small, "basic", "rgb", level="2", r_min="7", r_max="9", phi_min="0", phi_max="0.4")
+    header, deep = render(small, DEFAULT_MODEL, "rgb", level="2", r_min="7", r_max="9", phi_min="0", phi_max="0.4")
     n = header["window"]["cells"]["count"]
     assert deep["stars"].shape == (n, 3) and np.all(deep["stars"] > 0)
     for name in ("halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal"):
@@ -588,8 +591,8 @@ def test_region_cells_carry_their_mean_and_the_cells_integrate_to_the_frame(smal
 
 
 def test_float32_halves_the_payload_and_keeps_the_numbers(small):
-    _, f8 = render(small, "basic", "rgb")
-    _, f4 = render(small, "basic", "rgb", precision="f4")
+    _, f8 = render(small, DEFAULT_MODEL, "rgb")
+    _, f4 = render(small, DEFAULT_MODEL, "rgb", precision="f4")
     assert f4["stars"].dtype == np.float32
     assert np.array_equal(f4["stars"], f8["stars"].astype(np.float32))
 
@@ -717,7 +720,7 @@ def test_the_grain_table_rows_are_the_file_s():
     assert np.all(np.diff(g[:, 0]) > 0)
     identity = g[:, 4] * spectra.GRAIN_DUST_MASS_PER_H / ((1.0 - g[:, 1]) * g[:, 3]) - 1.0
     assert np.abs(identity).max() < 1.5e-3
-    c = {k: v.value for k, v in Service().models.get("basic").constants.items()}
+    c = {k: v.value for k, v in Service().models.get(DEFAULT_MODEL).constants.items()}
     row = {r[0]: r for r in spectra.GRAIN_TABLE}
     assert (row[0.547][1], row[0.547][2]) == (c["DUST_ALBEDO_V"], c["DUST_SCATTERING_G"])
     assert row[0.151356][3] / row[0.547][3] == c["DUST_EXTINCTION_RATIO_FUV"] and row[0.151356][1] == c["DUST_ALBEDO_FUV"]
@@ -791,8 +794,8 @@ def test_the_extinction_curve_at_the_viewer_s_filters():
 
 
 def test_the_dust_arrays_are_the_published_fields_through_the_curve(small):
-    header, arrays = render(small, "basic", "rgb")
-    f = scalars(small, "basic", "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")
+    header, arrays = render(small, DEFAULT_MODEL, "rgb")
+    f = scalars(small, DEFAULT_MODEL, "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")
     parsed = spectra.parse_curves(SETS["rgb"]["curves"])
     ratio = spectra.extinction_ratio(spectra.filter_references(parsed))
     assert np.allclose(arrays["dust_extinction"], 10.0 ** (-0.4 * f["dust_extinction_v"][:, None] * ratio), rtol=1e-14, atol=0)
@@ -809,7 +812,7 @@ def test_the_dust_arrays_are_the_published_fields_through_the_curve(small):
     phase = header["components"]["dust_scattered"]["phase"]
     assert phase == spectra.phase_table(f["dust_scattering_asymmetry"])
     # 20 K dust puts nothing measurable through an optical filter.
-    sigma_ir = scalars(small, "basic", "dust_infrared_surface_brightness")["dust_infrared_surface_brightness"]
+    sigma_ir = scalars(small, DEFAULT_MODEL, "dust_infrared_surface_brightness")["dust_infrared_surface_brightness"]
     assert np.all(arrays["dust_thermal"] <= 1e-30 * sigma_ir.max())
 
 
@@ -840,7 +843,7 @@ def test_the_named_instrument_draws_the_lines_through_its_measured_curves(full):
     channel at the measured curve's throughput there, and the Halpha filter holds no [N II]. The curves are STScI's,
     on vacuum wavelengths, and say so; the model's air lines are converted by Morton 1991 before they are read
     (S44, D195, #120)."""
-    header, arrays = render(full, "basic", "wfc3n", white="6500")
+    header, arrays = render(full, DEFAULT_MODEL, "wfc3n", white="6500")
     lines = header["components"]["lines_hii"]["lines"]
     assert [c["wavelengths"] for c in header["filters"]] == ["vacuum"] * 3
     # S44: was 0.962 with the air line placed on STScI's vacuum curve (D195, #120)

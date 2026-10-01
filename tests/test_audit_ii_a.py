@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.registry import INPUTS
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import spec
 from galaxy.stages import halo, sfh
@@ -34,8 +35,8 @@ VALLEY = ("alpha_sequence", "alpha_dip_depth", "alpha_split", "alpha_fe_history"
 
 
 @pytest.fixture(scope="module")
-def basic(prod):
-    return prod[0].get("basic")
+def default_model(prod):
+    return prod[0].get(DEFAULT_MODEL)
 
 
 def fast_law(tau_first):
@@ -95,13 +96,13 @@ def kick_then_churn(scale: float, eff: float):
     return moved
 
 
-def test_debt_50s_prediction_ran_the_churn_applied_to_the_mass_loses_rows_3_and_4(basic, monkeypatch):
+def test_debt_50s_prediction_ran_the_churn_applied_to_the_mass_loses_rows_3_and_4(default_model, monkeypatch):
     """#50: the churn applied to the mass takes row 4 to 3.5 kpc and row 3 to 244.9: the chemistry's kernel is
     ruled out by the disc's structure the moment the mass follows it (A-2). The row 9 half of the prediction
     (0.266, above the bracket) read the simple model's merger-split thick disc and went with it at D170."""
     eff = float(INPUTS.get("migration_efficiency").default)
     monkeypatch.setattr(sfh, "radial_transport", kick_then_churn(1.0, eff))
-    f = run(basic, only=("thin_disc_scale_length", "v_tangential_sun")).fields
+    f = run(default_model, only=("thin_disc_scale_length", "v_tangential_sun")).fields
     assert f["thin_disc_scale_length"] == pytest.approx(3.49, abs=0.1) and not inside(4, f["thin_disc_scale_length"])
     assert f["v_tangential_sun"] == pytest.approx(244.9, abs=0.5) and not inside(3, f["v_tangential_sun"])
 
@@ -115,25 +116,25 @@ def buckled(extra: float, r_half_scale: float = 1.0):
     return core
 
 
-def test_d121s_bar_prediction_ran_row_3_held_and_row_14_did_not(basic, monkeypatch):
+def test_d121s_bar_prediction_ran_row_3_held_and_row_14_did_not(default_model, monkeypatch):
     """7e9 buckled into the spheroid at the derived scale radius: row 3 249.6 (D121 said 249.4 - held), rows 12
     and 13 inside, row 14 144 (D121 said 123 - dead by 21 km/s). And no concentration lands rows 12 and 14
     together: at four times the half-mass radius row 14 still reads 121, its floor set by the enclosed mass."""
     monkeypatch.setattr(halo, "angular_momentum_core", buckled(7.0e9))
-    f = run(basic, only=("v_tangential_sun", "bulge_stellar_mass", "bulge_stellar_fraction", "bulge_velocity_dispersion")).fields
+    f = run(default_model, only=("v_tangential_sun", "bulge_stellar_mass", "bulge_stellar_fraction", "bulge_velocity_dispersion")).fields
     assert f["v_tangential_sun"] == pytest.approx(249.6, abs=0.3) and inside(3, f["v_tangential_sun"])
     assert inside(12, f["bulge_stellar_mass"]) and inside(13, f["bulge_stellar_fraction"])
     assert f["bulge_velocity_dispersion"] == pytest.approx(144.4, abs=1.5)
     for scale, row3, row14 in ((2.0, 248.4, 123.8), (4.0, 245.9, 121.5)):
         monkeypatch.setattr(halo, "angular_momentum_core", buckled(6.3e9, scale))
-        g = run(basic, only=("v_tangential_sun", "bulge_stellar_mass", "bulge_velocity_dispersion")).fields
+        g = run(default_model, only=("v_tangential_sun", "bulge_stellar_mass", "bulge_velocity_dispersion")).fields
         assert inside(12, g["bulge_stellar_mass"]) and g["v_tangential_sun"] == pytest.approx(row3, abs=0.3)
         assert g["bulge_velocity_dispersion"] == pytest.approx(row14, abs=1.5) and not inside(14, g["bulge_velocity_dispersion"])
 
 
 # --- D128: the valley's replacement prediction, attacked -----------------------------------------------
 
-def test_debt_27_a_burst_inside_the_alpha_fall_opens_a_mode_short_of_the_plateau(basic, monkeypatch):
+def test_debt_27_a_burst_inside_the_alpha_fall_opens_a_mode_short_of_the_plateau(default_model, monkeypatch):
     """D128 said a thick mode needs a rising first phase cut within ~1 Gyr. Built as a x5 burst at 1-2 Gyr on the
     fast first infall with the star formation cut 2-3 Gyr, the R0 histogram grows a mode at +0.35 holding a tenth
     of the mass in one 0.02 dex bin, twice the plateau spike - the first alpha-rich mode the model has ever made
@@ -141,14 +142,14 @@ def test_debt_27_a_burst_inside_the_alpha_fall_opens_a_mode_short_of_the_plateau
     at the plateau and makes none: the timing is the refinement."""
     monkeypatch.setattr(sfh, "first_infall", fast_law(0.55))
     monkeypatch.setattr(sfh, "star_formation_rate", Window(5.0, 1.0, 2.0, 2.0, 3.0))
-    o = run(basic, only=VALLEY)
+    o = run(default_model, only=VALLEY)
     s = r0_histogram(o)
     assert o.fields["alpha_sequence"] == "bimodal_wide" and o.fields["alpha_split"] == pytest.approx(0.21, abs=0.03)
     plain, plateau = s[27:35], s[36:38].sum()
     assert plain.max() == pytest.approx(0.103, abs=0.02) and -0.3 + 0.02 * (27 + int(np.argmax(plain)) + 0.5) == pytest.approx(0.35, abs=0.03)
     assert plain.max() > 1.5 * plateau and plateau == pytest.approx(0.051, abs=0.015)
     monkeypatch.setattr(sfh, "star_formation_rate", Window(5.0, 0.0, 0.8, 0.8, 1.5))
-    o2 = run(basic, only=VALLEY)
+    o2 = run(default_model, only=VALLEY)
     s2 = r0_histogram(o2)
     assert o2.fields["alpha_sequence"] == "bimodal_wide" and s2[27:35].max() < 0.03 and s2[36:38].sum() == pytest.approx(0.123, abs=0.02)
 
@@ -159,28 +160,28 @@ def masses(model, draws):
     return np.array([float(run(model, {s: d for s in SEEDS}, only=("black_hole_mass",)).fields["black_hole_mass"]) for d in draws])
 
 
-def test_debt_48_the_ensembles_median_residual_sits_half_a_sigma_low(basic):
+def test_debt_48_the_ensembles_median_residual_sits_half_a_sigma_low(default_model):
     """#48 said row 18's median is the mean relation at any width. The 41-draw diagonal the spec judges every
     statistical row on has a median residual of -0.58 sigma, 2.9 standard errors of a 41-sample median from
     zero, so the row's median moves with the width (1.97e7 at 0.28 dex, 9.9e6 at 0.8) while the verdict does
     not; the next diagonal reads -0.10 (A-6, debt #51)."""
-    m28, m50 = masses(basic, range(41)), masses(with_constant(basic, "BLACK_HOLE_SCATTER", 0.5), range(41))
+    m28, m50 = masses(default_model, range(41)), masses(with_constant(default_model, "BLACK_HOLE_SCATTER", 0.5), range(41))
     z = np.log10(m50 / m28) / 0.22
     assert np.median(z) == pytest.approx(-0.577, abs=0.01) and 1.2533 / math.sqrt(41) < 0.2
     assert np.median(m28) == pytest.approx(1.97e7, rel=0.02) and np.allclose(m28 / 10 ** (0.28 * z), 2.86e7, rtol=0.01)
-    assert np.median(masses(with_constant(basic, "BLACK_HOLE_SCATTER", 0.8), range(41))) == pytest.approx(9.9e6, rel=0.03)
-    z2 = np.log10(masses(with_constant(basic, "BLACK_HOLE_SCATTER", 0.5), range(41, 82)) / masses(basic, range(41, 82))) / 0.22
+    assert np.median(masses(with_constant(default_model, "BLACK_HOLE_SCATTER", 0.8), range(41))) == pytest.approx(9.9e6, rel=0.03)
+    z2 = np.log10(masses(with_constant(default_model, "BLACK_HOLE_SCATTER", 0.5), range(41, 82)) / masses(default_model, range(41, 82))) / 0.22
     assert np.median(z2) == pytest.approx(-0.10, abs=0.03)
 
 
 # --- the row 22 miss: the inner gas ----------------------------------------------------------------------------
 
-def test_row_22_does_not_see_the_inner_reservoir(basic, monkeypatch):
+def test_row_22_does_not_see_the_inner_reservoir(default_model, monkeypatch):
     """The miss's prediction named the gas inside 4 kpc. Emptied to the Galaxy's few 1e8 (the threshold capped at
     5 Msun/pc2 there) the row reads -0.0699, unmoved; capped at the R0 value everywhere inside R0 it reads -0.0794,
     further out. The row is the gas held in its own 4-12 kpc window, and its pre-committed reading - the wind's
     tilt - applies (A-7)."""
-    R = run(basic, only=("sf_threshold_surface_density",)).grid.R
+    R = run(default_model, only=("sf_threshold_surface_density",)).grid.R
 
     def capped(rule):
         def f(kappa, alpha, sigma_g, G):
@@ -188,24 +189,24 @@ def test_row_22_does_not_see_the_inner_reservoir(basic, monkeypatch):
         return f
 
     monkeypatch.setattr(sfh, "toomre_threshold", capped(lambda c: np.where(R < 4.0, np.minimum(c, 5.0), c)))
-    o = run(basic, only=("metallicity_gradient", "gas_surface_density"))
+    o = run(default_model, only=("metallicity_gradient", "gas_surface_density"))
     gas = np.asarray(o.fields["gas_surface_density"], dtype=float)
     assert np.trapezoid(np.where(R < 4.0, gas, 0.0) * 2.0 * math.pi * R, R) * 1.0e6 < 5.0e8
     assert o.fields["metallicity_gradient"] == pytest.approx(-0.0699, abs=0.0005)
-    crit_sun = float(np.interp(R_SUN, R, TOOMRE(run(basic, only=("epicyclic_frequency",)).fields["epicyclic_frequency"], 0.69, 6.0, basic.constants["G"].value)))
+    crit_sun = float(np.interp(R_SUN, R, TOOMRE(run(default_model, only=("epicyclic_frequency",)).fields["epicyclic_frequency"], 0.69, 6.0, default_model.constants["G"].value)))
     monkeypatch.setattr(sfh, "toomre_threshold", capped(lambda c: np.minimum(c, crit_sun)))
-    assert run(basic, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0794, abs=0.001)
+    assert run(default_model, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0794, abs=0.001)
     monkeypatch.setattr(sfh, "toomre_threshold", capped(lambda c: np.full_like(c, 5.0)))
-    assert run(basic, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0633, abs=0.001)
+    assert run(default_model, only=("metallicity_gradient",)).fields["metallicity_gradient"] == pytest.approx(-0.0633, abs=0.001)
 
 
 # --- debt #46: the pre-committed two-parameter sweep --------------------------------------------------------
 
-def test_debt_46s_pre_committed_sweep_cannot_discriminate(basic):
+def test_debt_46s_pre_committed_sweep_cannot_discriminate(default_model):
     """#46 named rows 3, 19 and v_esc(R0) as the sweep's judges. Row 19 is the input and never moves; v_esc(R0) is
     inside 530-580 at every w; only row 3 is left, and a one-row sweep is a fit (A-8)."""
     for w, row3, v_esc in ((0.6, 230.3, 544.1), (1.0, 249.3, 558.9), (1.3, 267.8, 577.0)):
-        m = with_constant(with_constant(basic, "CONTRACTION_A", 1.6), "CONTRACTION_W", w)
+        m = with_constant(with_constant(default_model, "CONTRACTION_A", 1.6), "CONTRACTION_W", w)
         o = run(m, only=("v_tangential_sun", "escape_velocity", "halo_virial_mass"))
         assert o.fields["v_tangential_sun"] == pytest.approx(row3, abs=0.5) and o.fields["halo_virial_mass"] == 1.1e12
         assert 530.0 < np.interp(R_SUN, o.grid.R, o.fields["escape_velocity"]) < 580.0
@@ -214,46 +215,46 @@ def test_debt_46s_pre_committed_sweep_cannot_discriminate(basic):
 
 # --- the spheroid's constant, the kernel's width, the heating constant: the smaller predictions ------------
 
-def test_the_distributions_mu_lands_rows_3_and_12_and_loses_rows_2_and_14(basic):
+def test_the_distributions_mu_lands_rows_3_and_12_and_loses_rows_2_and_14(default_model):
     """Row 12's entry: across mu = 1.06-1.40 the spheroid runs 1.46e10 down to 5.6e9 - reproduced. At 1.06 rows 3,
     12 and 13 are inside and rows 2 (1.14) and 14 (146) are out: the constant is not a lever (A-9)."""
-    lo = run(with_constant(basic, "ANGULAR_MOMENTUM_MU", 1.06), only=("bulge_stellar_mass", "v_tangential_sun", "sfr", "bulge_velocity_dispersion", "hydrogen_mass_30kpc")).fields
+    lo = run(with_constant(default_model, "ANGULAR_MOMENTUM_MU", 1.06), only=("bulge_stellar_mass", "v_tangential_sun", "sfr", "bulge_velocity_dispersion", "hydrogen_mass_30kpc")).fields
     assert lo["bulge_stellar_mass"] == pytest.approx(1.46e10, rel=0.02) and inside(12, lo["bulge_stellar_mass"])
     assert lo["v_tangential_sun"] == pytest.approx(249.4, abs=0.3) and inside(3, lo["v_tangential_sun"])
     assert lo["sfr"] == pytest.approx(1.14, abs=0.03) and lo["bulge_velocity_dispersion"] == pytest.approx(145.6, abs=1.5)
     assert lo["hydrogen_mass_30kpc"] == pytest.approx(7.53e9, rel=0.02)
-    hi = run(with_constant(basic, "ANGULAR_MOMENTUM_MU", 1.4), only=("bulge_stellar_mass",)).fields
+    hi = run(with_constant(default_model, "ANGULAR_MOMENTUM_MU", 1.4), only=("bulge_stellar_mass",)).fields
     assert hi["bulge_stellar_mass"] == pytest.approx(5.6e9, rel=0.03)
 
 
-def test_debt_28_the_narrower_kernel_lands_row_23_with_the_ratio_on_the_wrong_side(basic):
+def test_debt_28_the_narrower_kernel_lands_row_23_with_the_ratio_on_the_wrong_side(default_model):
     """S9's sweep: 2.5 kpc at 8 Gyr reads row 23 at -0.039 with young/old 1.6. Now: -0.048 (inside) with 1.22,
     under the observed 1.75; at 2.0 kpc the old gradient is steeper than the young (0.81). The ratio, not the
     row, is the discriminant, and it convicts the old stars' starting point (A-10)."""
     for eff, old, ratio in ((2.5, -0.048, 1.22), (2.0, -0.0734, 0.81)):
-        f = run(basic, {"migration_efficiency": eff}, only=("metallicity_gradient_old", "metallicity_gradient_young", "metallicity_gradient")).fields
+        f = run(default_model, {"migration_efficiency": eff}, only=("metallicity_gradient_old", "metallicity_gradient_young", "metallicity_gradient")).fields
         assert f["metallicity_gradient_old"] == pytest.approx(old, abs=0.002)
         assert f["metallicity_gradient_young"] / f["metallicity_gradient_old"] == pytest.approx(ratio, abs=0.05)
         assert f["metallicity_gradient"] == pytest.approx(-0.0698, abs=0.0005)  # the present-day gas does not migrate
-    assert inside(23, run(basic, {"migration_efficiency": 2.5}, only=("metallicity_gradient_old",)).fields["metallicity_gradient_old"])
+    assert inside(23, run(default_model, {"migration_efficiency": 2.5}, only=("metallicity_gradient_old",)).fields["metallicity_gradient_old"])
 
 
-def test_debt_42_row_6_lands_at_74_not_78(basic):
+def test_debt_42_row_6_lands_at_74_not_78(default_model):
     """The row 6 miss said MERGER_HEATING would have to fall below 78 to land it alone: 78 reads 351.4 and
     75 reads 350.3, both out; 70 reads 348.7. The number is 74, and the direction held."""
     for k, h in ((78.0, 351.4), (75.0, 350.3), (70.0, 348.7)):
-        v = run(with_constant(basic, "MERGER_HEATING", k), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"]
+        v = run(with_constant(default_model, "MERGER_HEATING", k), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"]
         assert v == pytest.approx(h, abs=0.5) and inside(6, v) == (k < 74.0)
 
 
-def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(basic):
+def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(default_model):
     """The statistical rows are judged on seeds 0-40. Seeds 41-81 read row 16 at 39.5 (41.1 on 0-40) and row 17 at
     6.33 (6.08): both verdicts hold, so the fixed sample decides row 18's number (debt #51) and not these.
     Until S25 the pair read 41.1 (42.8) and 5.94 (5.70); the bar is 6.7% longer since the pattern reads the
     lambda_d scale length and the checkpoint-1 curve (D174), so corotation moved out and the speed down."""
     vals = {"bar_pattern_speed": [], "bar_corotation_radius": []}
     for d in range(41, 82):
-        f = run(basic, {s: d for s in SEEDS}, only=tuple(vals)).fields
+        f = run(default_model, {s: d for s in SEEDS}, only=tuple(vals)).fields
         for k in vals:
             vals[k].append(float(f[k]))
     assert np.median(vals["bar_pattern_speed"]) == pytest.approx(39.48, abs=0.3) and inside(16, np.median(vals["bar_pattern_speed"]))
@@ -262,7 +263,7 @@ def test_the_second_diagonal_moves_rows_16_and_17_and_not_their_verdicts(basic):
 
 # --- row 7: the constant's citation, read (A-14) -----------------------------------------------------------
 
-def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(basic):
+def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(default_model):
     """MERGER_HEATING = 88.8 is derived from sigma_W = 35 km/s cited to Bensby, Feltzing & Lundstrom 2003. Read at
     S21 (a), that 35 is their Table 1's adopted 'characteristic' value for a selection function, with no
     uncertainty; the measurement the same paper quotes is Soubiran et al. 2003's 39 +/- 4. Net of the model's
@@ -270,7 +271,7 @@ def test_the_merger_heating_constants_citation_read_moves_row_3_and_row_6(basic)
     the simple model's row 7 at 1193, out, before D170; that thick disc went with the model.)"""
     for sigma_w, k, row3 in ((39.0, 112.3, 250.97), (37.1, 101.5, 251.00)):
         assert math.sqrt(sigma_w**2 - 27.06**2) / 0.25 == pytest.approx(k, abs=0.1)
-        f = run(with_constant(basic, "MERGER_HEATING", k), only=("v_tangential_sun",)).fields
+        f = run(with_constant(default_model, "MERGER_HEATING", k), only=("v_tangential_sun",)).fields
         assert f["v_tangential_sun"] == pytest.approx(row3, abs=0.05)
     assert inside(3, 250.97)
-    assert run(with_constant(basic, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(368.0, abs=1.0)
+    assert run(with_constant(default_model, "MERGER_HEATING", 112.3), only=("thin_disc_scale_height",)).fields["thin_disc_scale_height"] == pytest.approx(368.0, abs=1.0)

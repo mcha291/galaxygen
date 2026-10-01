@@ -7103,3 +7103,152 @@ its own line, `bootstrap.py` run first (S44's lesson): **`EXIT=0`, every file gr
 (one cell ≤ nine ≤ every cell) under the suite's own load; re-run alone in the same clone, both models, `EXIT=0`**
 (the load-flaky family BRIEF names; not a code defect). Board row 45; LESSONS; RESUMING ≤ 120; BRIEF for S46
 (the blind direct-method reading first, then the chemistry ruling). Tag `s45` on the merge (C2e), the MANUAL_TODO row.
+
+### D197. S46: the viewer reviewed (`RENDER_PLAN_II.md`), the azimuthal model made the default across the API, the viewer and the tests on the owner's ruling, and the field march's terracing — a found defect — fixed by reading the layers at jittered sub-samples along each step
+
+**The owner, in chat, on 2026-10-01:** "put a pin in the model work for now … finish building out the viewer … if the
+azimuth model is feature complete, make that the default and work on the galaxy renderer"; asked how far the default
+reaches, "API, viewer and tests"; asked which renderer parts count as finished, "not sure yet, let's review this";
+asked plan or session, "write a plan document first". Then, on the running dev server: "the field show a weird clipping
+effect that i dont think was there before" and "the viewer still defaults to basic model" — the word to start. Written
+before any code moved (D113).
+
+**(1) The review** is `docs/RENDER_PLAN_II.md`: where the viewer stands (a read-only agent's survey of the code, the
+session's walk of the built viewer on `prod`, the design record), every candidate costed, a sequence proposed and left
+to the owner. Its findings that are defects: the stars regime drew nothing in the app's pane with five WebGL context
+losses (the owner's live tab to confirm), one of 21 design components ported, no image-level test.
+
+**(2) The default: `azimuthal` first, everywhere.** `galaxy.models.DEFAULT` becomes `"azimuthal"` (the registry's
+order, so `/api`'s default and the specs' first report); the viewer's `useWorkflow` starts on it; the tests' `default`
+fixtures and `spec`'s default model read the registry's `DEFAULT` rather than the literal, so the default run is the
+azimuthal one — and every pin that the young stars' azimuths move (window-level statistics: the region syntheses,
+V3/V4's windows, the S45 diagnosis's region selection) moves with the reason in its comment. Radial and whole-galaxy
+numbers do not move by construction (`azimuthal` is `basic` with one slot swapped; every acceptance row is radial).
+`basic` stays registered and selectable; the tests that assert the two models differ in one slot keep both names.
+*Justification:* the azimuthal model is `basic` plus where today's stars form, feature complete relative to it
+(`RENDER_PLAN_II.md` §1d); a viewer whose default differs from the API's and the tests' would show a galaxy the suite
+never ran (C2's defect in another coat). *Chosen against:* the viewer alone (the owner's second option).
+
+**(3) The terracing — a found defect, and its fix.** The owner's frame (the field regime at a grazing elevation)
+shows concentric terraces and a straight cut. `FieldVolume.tsx`'s march takes 96 geometric steps along each ray and
+**reads the disc's layers once per step, at the step's midplane crossing or midpoint, with no jitter** (the jitter is
+applied to the bulge's point sample only); at a grazing view a step's in-plane extent spans many texture cells, so
+successive steps quantise R coherently across neighbouring pixels — the terraces are the steps `[verified:
+frontend/src/galaxy/FieldVolume.tsx, the loop at the march's `for (int k …)`, read 2026-10-01]`. The straight cut is
+the bounding box's face (`±rHi`, `±halfHeight`) where rays leave the volume. **The fix, ruled:** each step's layer
+light is the mean of N sub-samples along the step, N set by the step's in-plane length over the plane texture's cell
+width (at least 1, at most a stated cap), each sub-sample's position offset by the pixel's fixed hash — the same
+screen-space dither §8 already allows (fixed, not frame-seeded) — and the vertical column kept exact per sub-interval;
+the box's half-width set so that its faces fall where the plane texture is zero (beyond `rHi` the read is zero
+already), the top and bottom faces where the thickest layer's sech² is below 10⁻⁶. *Chosen against:* more steps (the
+cost is quadratic in the view's size and the terraces return at the next grazing angle); jittering the single read
+alone (noise where there was structure, but a step still reads one cell of many); adaptive steps bounded by the cell
+width (the step count explodes at grazing angles). *Gate:* the frame at the owner's camera and at face-on before and
+after, from `prod`; the field's integrated light over the frame unchanged within 10⁻³ (the sub-samples are a mean, not
+an addition); vitest's regimes tests green; `npx tsc -b` and `vite build` clean. The terraces being "not there before"
+is not established: the march has read one point per step since V2 (S39, D189) and no record shows a grazing view
+since; the record says so rather than guessing.
+
+**Protocol.** Two Opus 5.5 builders in parallel worktrees on branches cut from this commit — `session-46-default`
+(the registry, the viewer's start, the fixtures, the pins) and `session-46-march` (`FieldVolume.tsx` and its tests) —
+disjoint files, merged `--no-ff` into `session-46` after review; the image-level test (RENDER_PLAN_II §2 E2) is the next
+row, not this one. Numbers: debts from #125, decisions from D198, board rows from 46 (this row), acceptance rows from 38.
+
+**(2) applied — the default, measured against the ruling.** `session-46-default` (0e88dc5, 765ad83; merged 0ee67c5): 42
+files, +304 −214. `galaxy.models.DEFAULT = "azimuthal"`; **one change beyond the brief, sound and kept:** importing the
+default first broke the loader, because `azimuthal.py` imports `basic` and the per-declaration check wants exactly one
+registration per import — so the declarations import in name order with the default last and `Registry.put_first`
+moves it to the front; `/api`'s default, `/api/stages`' list and the specs' report order follow (`tests/test_registry.py`
+pins `DEFAULT`, `names()[0]`, basic still registered, the missing-file raise, `put_first`). `spec.py` reads `DEFAULT` for
+`MISSES` and its three defaults; `useWorkflow` starts on `DEFAULT_MODEL` (vitest); three order pins moved
+(`test_viewer.py:351`, `test_sfh_azimuthal.py:306`, `tests/js/render.test.mjs:265`). **No measured pin moved:** the two
+models publish 283 shared fields identically and differ only in the star catalogue's columns and the planets that
+follow them (plus `sfr_modulation`), and every window-level test reads clusters, clouds, HII regions and grid fields —
+identical in both; the S45 diagnosis selects by `cluster_radius` and does not move (its docstring says so). Twenty-two
+test files read `DEFAULT` for the default run; fourteen keep `"basic"` on purpose with the reason beside it (basic's
+constants, the two-model comparisons, per-model tables, the order pin). The builder's full suite `EXIT=0`, neither timing
+flake tripped; specs **azimuthal first, 12 / 20 / 5 of 37 both models**; vitest 122; `tsc -b` clean. README and the two
+stale comments corrected.
+
+**(3) applied — the march, measured against the ruling.** `session-46-march` (c21d585, merged b212111): each step split
+into n sub-steps, n = ceil(the step's in-plane length / the plane texture's radial cell (R.hi − R.lo)/N_R = 0.075 kpc),
+capped at `SUB_SAMPLES_MAX = 8`; each sub-step reads at its midplane crossing or at the pixel's fixed hash fraction along
+it, takes its own exact column (the columns add to the step's, so no 1/n), mixes its light through its own dust and dims
+what lies behind — light and dust keep their order inside a long step; the bulge's point sample spread over the sub-steps.
+**The box's half-height is 16 h, not the 14 h the ruling wrote: sech²(7) is 3.3 × 10⁻⁶, not 1.3 × 10⁻⁶, and the ruled
+10⁻⁶ needs sech²(8) = 4.5 × 10⁻⁷** — the builder's arithmetic corrected the session's, and the record says so. The
+builder measured the shader in a WebGL2 harness built from the real fragment strings (headless Edge on a local file; no
+server, no download) against a converged reference (384 steps × 32 sub-samples): the new march sits within 2.3 × 10⁻⁴
+of the reference at 30°, 8°, 3° and 1° inside the box, where the old one was off by 7 × 10⁻⁴ to 8.1 × 10⁻³ — so "the
+light unchanged within 10⁻³" holds against the truth and not against the old frame, which was the one in error; face-on
+both read 1.3–1.9 × 10⁻³ off. **The straight cut was the box's top and bottom faces** at 10 h cutting the 1.4 kpc
+diffuse layer at 1.8 × 10⁻⁴ of its midplane, carried across a grazing ray; the side faces clip only zeros (every read is
+gated by `rp.x < rHi`). Cost: 96 × 8 × 6 = 4 608 texture reads per pixel at worst (576 before); mean n 2.2 face-on,
+5.5–5.9 at 30°–3°; frame time 1.1–5× the old in the harness, ≈ 100 ms per re-march at the 400 000-pixel budget on an
+RTX 4070 — the march re-runs only when the camera moves, and a settle-then-refine scheme is RENDER_PLAN_II §2 E4's.
+vitest 121 → 125 (`subSamples`, `cell`, the sub-step columns adding to the step's, the half-height rule); `tsc -b` and
+`vite build` clean. **Verified on `prod` at the owner's camera** (edge-on preset, then a small orbit above the plane;
+`docs/design/screenshots/s46/field-grazing-before.jpg` / `-after.jpg`): the terraces gone, the console clean. Whether
+the terraces were new is still not established — the one-read-per-step march dates from V2 (S39) — and the record says
+so rather than guessing.
+
+**The gate (S46's close).** The full suite on the merged branch, backgrounded with its own line after `bootstrap.py`:
+**`EXIT=0`, every file green, run after the landing's merge with `bootstrap.py` first (the hooks path at `tools/hooks`)**; specs azimuthal first, 12 / 20 / 5 of 37 both models; vitest and `vite build` clean; the landing row (D198)
+reviewed and merged before the suite ran. Board row 46; LESSONS; RESUMING ≤ 120; BRIEF for S47 from RENDER_PLAN_II's
+sequence with the owner's choices to date. Tag `s46` on the merge.
+
+### D198. S46: the viewer lands on the Galaxy view of the default galaxy, and an "Edit galaxy" button opens the staged generation process — rule D1 amended on the owner's word
+
+**The owner, in chat, on 2026-10-01: "please change the frontend so that it starts on the galaxy view of a default
+galaxy. give the side panel an edit galaxy button that opens up the staged generation process."** Written before any
+code moved (D113).
+
+**The rule.** D1's last clause, "a page load lands on stage one", becomes: the viewer lands on the Galaxy view of the
+default galaxy — every checkpoint confirmed at its default values (A5: launching with nothing touched generates the
+Milky Way) — and "Edit galaxy" opens the staged process with the confirmations kept; reopening a stage still discards
+every later one, and confirmed controls are still disabled rather than hidden. The old text stays inside the rule as
+history. The reference client in `interface/` keeps the stage-one landing as the API's demonstration of the flow, and
+`tests/test_viewer.py` keeps pinning it: the amendment is the React viewer's, and `interface/flow.js` (the flow logic
+both clients share) does not change — the viewer confirms every checkpoint through `flow.confirm` once the model's
+declarations arrive, so what the user sees as "generated" is exactly the state six clicks would have reached.
+
+**What the build does.** (i) On load, once `useWorkflow` has the declarations, confirm every checkpoint at the defaults
+(the same `confirm` the button calls, applied `last` times, or one `flow.confirm` loop — not a hand-built state), and
+land on the Galaxy tab; the Galaxy tab's status line says "Generating galaxy." while the sample and the render load, as
+it does today. (ii) The Preview tab is no longer disabled when the galaxy is generated: it shows the workflow panel with
+every checkpoint locked and its reopen affordance as today, and the checkpoint scene of whichever checkpoint is
+selected; its title changes accordingly. The automatic switch "preview → galaxy when generated" goes (it would send the
+user straight back); "galaxy → preview when not generated" stays (reopening un-generates, and the Galaxy tab closes as
+today). (iii) The Galaxy tab's side panel gains an **Edit galaxy** button at the top of its controls, which switches to
+the Preview tab; nothing is discarded by the switch. (iv) A model switch keeps its present behaviour (confirmations up
+to the first differing checkpoint are kept). (v) vitest: a case that the initial flow after declarations is generated
+(confirmed = last), that "Edit galaxy" leaves `confirmed` untouched, and that reopening still discards; the existing
+`logic.test.ts` cases stand. *Chosen against:* a hand-built "generated" state (it would drift from `flow.js`); hiding
+the workflow behind a modal (the staged process is the product's own explanation of the galaxy, and D1 says controls
+are shown disabled, not hidden); auto-generating only when a stored flag says so (the owner asked for the default).
+*Cost:* the first frame now waits on the full pipeline (basic ~2.8 s cold, the render 2 s) where it waited on
+checkpoint one's; the status line covers it. Built by an Opus builder after `session-46-default` merges (both touch
+`useWorkflow.ts` and `App.tsx`).
+
+**Applied, measured against the ruling (`session-46-landing`, 3c3b348, merged a6a7755; four files, +129 −16).** (i) A pure
+`generateDefault(s)` in `useWorkflow.ts` applies `flow.confirm` once per checkpoint; the declarations effect runs it on
+the first load only (`setState(generateDefault(fresh))`); afterwards `confirmed === current === last` because
+`flow.confirm` caps `current` at the last checkpoint; a model switch keeps its path. The initial tab is `"galaxy"`.
+(ii) The Preview tab is never disabled; when generated its title reads "The staged generation: reopen a checkpoint to
+change the galaxy"; the effect only settles galaxy → preview when not generated, and does nothing until the state
+exists (otherwise the first load would bounce to Preview before the declarations arrive). The scene shown is the last
+checkpoint's; checkpoints 1–5 are one locked row each and clicking one asks to reopen it with the cost shown; **an
+earlier checkpoint cannot be viewed without reopening it**, because `flow.goTo` in the shared `interface/flow.js`
+treats going back to a confirmed checkpoint as reopening, and that file was out of the row's scope — the user picks
+what to reopen, as ruled; a view-without-reopen is a change to `flow.js` for a later row if the owner wants it. (iii)
+"Edit galaxy" in its own section above Rendering, the panel's own button style, `onEdit` → the Preview tab; nothing
+discarded. One addition beyond the brief, kept: if the declarations fail before any state exists, the Galaxy tab says
+"Loading the model failed: …" (the workflow panel that showed the error is no longer the landing). (v) vitest 122 → 131
+(generating gives confirmed = current = 6 and equals six clicks with the same query; a fresh or null flow is not
+generated; the tab switch leaves `confirmed`; `reopen(s, 3)` discards 4–6 and closes the Galaxy tab); `tsc -b` and
+`vite build` clean; `tests/test_viewer.py` unchanged and green (the reference client's stage-one landing stands).
+**Verified on `prod`** (a fresh load of the rebuilt bundle): the page lands on the Galaxy tab with `azimuthal` as the
+model, "Edit galaxy" above Rendering, the default galaxy's field drawn within twenty seconds of a cold server
+(`docs/design/screenshots/s46/landing-default-galaxy.jpg`); the button opens the Preview tab with six locked
+checkpoints, each with a "Reopen checkpoint n" button, checkpoint 6's scene shown; the console clean. The owner's
+live tab on :5173 carries the same code through hot reload.

@@ -44,6 +44,7 @@ def _rows():
 @pytest.fixture(scope="module")
 def basic():
     models, _, _ = production()
+    # "basic" by name, deliberately (S46, D197): S26's rulings read basic's constants, which azimuthal shares.
     return next(m for m in models if m.name == "basic")
 
 
@@ -157,6 +158,7 @@ def test_the_experimental_inputs_are_gone_and_seven_controls_remain():
 
 def test_rows_15_to_17_did_not_move(judged):
     """Phase 1b's gate: the amplitudes do not enter the bar's length, corotation or pattern speed."""
+    # basic's verdicts by name, deliberately (S46, D197): the gate was set on basic; the rows are radial.
     results = {r.n: r for r in judged["basic"]}
     assert results[15].value == pytest.approx(5.20971, abs=1e-4) and results[15].status == "fail"  # the recorded miss, #80
     assert results[16].value == pytest.approx(41.1036, abs=1e-3) and results[16].status == "pass"

@@ -345,10 +345,10 @@ def test_the_viewer_logic_holds(tmp_path):
     s = service()
     fixture = tmp_path / "catalogue.json"
     # Every registered model's declarations, keyed by name: S19's gate is that every
-    # published field reaches the viewer. One model from D170 to S27; since S27 the default, basic,
-    # and the azimuthal model after it (the default registers first).
+    # published field reaches the viewer. One model from D170 to S27; since S27 basic and the
+    # azimuthal model; since S46 (D197) the azimuthal model is the default and leads the registry.
     models = [m.name for m in production()[0]]
-    assert models == ["basic", "azimuthal"], models
+    assert models == ["azimuthal", "basic"], models
     fixture.write_text(
         json.dumps({
             "stages": s.handle("/api/stages").json(),

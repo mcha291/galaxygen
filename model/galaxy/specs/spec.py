@@ -64,6 +64,7 @@ from galaxy.core.fielddoc import IDENT, FieldDecl, Kind
 from galaxy.core.registry import Model, production
 from galaxy.core.units import UnknownUnit
 from galaxy.core.units import unit as _unit
+from galaxy.models import DEFAULT as _DEFAULT_MODEL
 from galaxy.specs import Problem, utf8_stdout
 
 MODES: tuple[str, ...] = ("pointwise", "statistical", "qualitative", "sweep")
@@ -991,7 +992,7 @@ def misses(model: str) -> Mapping[int, Miss]:
     return MappingProxyType(out)
 
 
-MISSES: Mapping[int, Miss] = misses("basic")
+MISSES: Mapping[int, Miss] = misses(_DEFAULT_MODEL)  # S46: the default model's ledger (D197)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1172,19 +1173,19 @@ def summary(results: Iterable[Result]) -> dict[str, int]:
     return counts
 
 
-def unexplained(results: Iterable[Result], model: str = "basic") -> tuple[Result, ...]:
+def unexplained(results: Iterable[Result], model: str = _DEFAULT_MODEL) -> tuple[Result, ...]:
     """Failing rows with no recorded miss for ``model``. These are what should stop a build."""
     known = misses(model)
     return tuple(r for r in results if r.status == "fail" and r.n not in known)
 
 
-def stale(results: Iterable[Result], model: str = "basic") -> tuple[Result, ...]:
+def stale(results: Iterable[Result], model: str = _DEFAULT_MODEL) -> tuple[Result, ...]:
     """Registered misses that now pass: the recorded explanation is wrong or spent (rule B10)."""
     known = misses(model)
     return tuple(r for r in results if r.status == "pass" and r.n in known)
 
 
-def problems(results: Iterable[Result], model: str = "basic") -> list[Problem]:
+def problems(results: Iterable[Result], model: str = _DEFAULT_MODEL) -> list[Problem]:
     """Everything a spec run should fail on. A recorded, still-failing miss is not one."""
     results = list(results)
     known = misses(model)

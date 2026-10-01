@@ -18,6 +18,7 @@ from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import clouds as cl
 from galaxy.stages import clusters as cu
@@ -34,14 +35,14 @@ def models():
 
 @pytest.fixture(scope="module")
 def default(models):
-    o = run(models["basic"])
-    return o, {k: v.value for k, v in models["basic"].constants.items()}
+    o = run(models[DEFAULT_MODEL])
+    return o, {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
 
 
 @pytest.fixture(scope="module")
 def coarse(models):
-    o = run(models["basic"], grid=COARSE)
-    return o, {k: v.value for k, v in models["basic"].constants.items()}
+    o = run(models[DEFAULT_MODEL], grid=COARSE)
+    return o, {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
 
 
 def _hosts(fields) -> np.ndarray:
@@ -156,7 +157,7 @@ def test_per_region_determinism_and_both_models_agree(models, coarse):
     for name in (*cu.CLUSTER_COLUMNS, "cluster_bound", "cloud_cluster_index"):
         assert np.array_equal(a[name], F[name]), name
     assert a["bound_cluster_mass_total"] == F["bound_cluster_mass_total"]
-    other = run(models["basic"], {"systems_seed": 3}, grid=COARSE).fields
+    other = run(models[DEFAULT_MODEL], {"systems_seed": 3}, grid=COARSE).fields
     assert not np.array_equal(other["cluster_mass"], F["cluster_mass"])
     assert other["bound_cluster_mass_total"] == F["bound_cluster_mass_total"]  # a population integral
 

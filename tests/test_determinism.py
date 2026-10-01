@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from galaxy.core.registry import INPUTS
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.specs import determinism
 from helpers import TINY, decl, impls, model, stage
 
@@ -85,7 +86,7 @@ def test_the_model_is_reproducible_across_processes_too(model):
 
 def test_the_spec_checks_reproducibility_across_processes_too(prod):
     """Debt #40, fixed at S12: the spec ran both halves in one interpreter; now two, under two hash seeds."""
-    assert determinism.check_reproducible_across_processes("basic") == []
+    assert determinism.check_reproducible_across_processes(DEFAULT_MODEL) == []
     rep = determinism.report(*prod)
     assert rep.count("across processes") == len(prod[0]) == 2 and "FAIL" not in rep  # one per model; two since S27
     # A synthetic model is not a production one and is checked in-process only.

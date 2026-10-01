@@ -146,6 +146,7 @@ def test_the_ionizing_photons_are_todays_star_formation_times_the_yield(photomet
 
 def test_every_photometric_field_reads_the_same_in_both_models(photometric):
     """The light is radial: the azimuthal model's modulation moves no radial field (S27), so none of these."""
+    # Both models by name, deliberately (S46, D197): the test compares them.
     basic, azimuthal = photometric["basic"].fields, photometric["azimuthal"].fields
     for name in PHOTOMETRIC:
         assert np.array_equal(np.asarray(basic[name]), np.asarray(azimuthal[name])), name

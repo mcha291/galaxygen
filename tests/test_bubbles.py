@@ -13,6 +13,7 @@ from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import bubbles as bb
 from galaxy.stages import feedback as fb
@@ -35,17 +36,17 @@ def models():
 
 @pytest.fixture(scope="module")
 def constants(models):
-    return {k: v.value for k, v in models["basic"].constants.items()}
+    return {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
 
 
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models["basic"])
+    return run(models[DEFAULT_MODEL])
 
 
 @pytest.fixture(scope="module")
 def coarse(models):
-    return run(models["basic"], grid=COARSE)
+    return run(models[DEFAULT_MODEL], grid=COARSE)
 
 
 def test_weaver_at_a_hand_computed_point():

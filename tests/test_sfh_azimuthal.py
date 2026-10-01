@@ -42,6 +42,7 @@ def identical(x, y) -> bool:
 @pytest.fixture(scope="module")
 def models():
     m = production()[0]
+    # Both models by name, deliberately (S46, D197): this module compares basic against azimuthal.
     return m.get("basic"), m.get("azimuthal")
 
 
@@ -303,7 +304,7 @@ def test_the_api_publishes_the_modulation_for_the_azimuthal_model_only():
 
     s = Service(grid=GridSpec(n_R=24, n_t=40, n_z=4, n_phi=24))
     listed = s.handle("/api/stages").json()["models"]
-    assert listed == ["basic", "azimuthal"]
+    assert listed == ["azimuthal", "basic"]  # S46: the default leads (D197)
     fields = {m: {f["name"]: f for f in s.handle("/api/fields", {"model": [m]}).json()["fields"]} for m in listed}
     assert "sfr_modulation" not in fields["basic"]
     f = fields["azimuthal"]["sfr_modulation"]

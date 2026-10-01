@@ -16,6 +16,7 @@ import pytest
 
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import Constant, MergerEvent, Model
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.stages import chemistry_dtd as C
 from galaxy.stages.chemistry import gradient
@@ -26,13 +27,13 @@ CHEM = ("metallicity_gradient", "alpha_sequence")  # the closure above these is 
 
 
 @pytest.fixture(scope="module")
-def basic(prod):
-    return prod[0].get("basic")
+def default_model(prod):
+    return prod[0].get(DEFAULT_MODEL)
 
 
 @pytest.fixture(scope="module")
-def default(basic):
-    return run(basic, only=CHEM)
+def default(default_model):
+    return run(default_model, only=CHEM)
 
 
 def out(model, **inputs):
@@ -62,8 +63,8 @@ def test_the_delay_kernel_resolution_is_fixed_whatever_the_grid():
         assert ia[:, 0].max() == 0.0 and ia.sum(axis=1) == pytest.approx(np.ones(3))
 
 
-def test_the_plateau_is_the_core_collapse_yield_ratio(basic, default):
-    c = basic.constants
+def test_the_plateau_is_the_core_collapse_yield_ratio(default_model, default):
+    c = default_model.constants
     plateau = math.log10((c["Y_O_CC"].value / c["Y_FE_CC"].value) / (c["SOLAR_OXYGEN"].value / c["SOLAR_IRON"].value))
     assert plateau == pytest.approx(0.45, abs=0.01)
     afe = default.fields["alpha_fe_history"]
@@ -111,18 +112,18 @@ def test_debt_15s_prediction_holds_and_row_22_closes(default):
     assert not -0.069 <= default.fields["metallicity_gradient"] <= -0.049
 
 
-def test_the_tilt_is_the_wind_s_radial_dependence(basic, default):
+def test_the_tilt_is_the_wind_s_radial_dependence(default_model, default):
     """Turn the dependence off (WIND_INDEX = 0: the same loss everywhere) and the tilt goes."""
-    flat = run(with_constant(basic, "WIND_INDEX", 0.0), only=CHEM)
+    flat = run(with_constant(default_model, "WIND_INDEX", 0.0), only=CHEM)
     assert flat.fields["metallicity_gradient"] > default.fields["metallicity_gradient"] + 0.01
     # With no radial dependence what is left is the infall tilt plus the delayed iron's.
     assert flat.fields["metallicity_gradient"] == pytest.approx(-0.056, abs=0.006)  # -0.049 until S18; -0.043 until S17
 
 
-def test_the_solar_calibration_is_one_constant(basic, default):
+def test_the_solar_calibration_is_one_constant(default_model, default):
     at_sun = int(np.argmin(np.abs(default.grid.R - R_SUN)))
     assert abs(default.fields["feh_gas"][at_sun]) < 0.02
-    hotter = run(with_constant(basic, "WIND_SPEED", 1100.0), only=CHEM)
+    hotter = run(with_constant(default_model, "WIND_SPEED", 1100.0), only=CHEM)
     assert hotter.fields["feh_gas"][at_sun] < default.fields["feh_gas"][at_sun] - 0.03
 
 
@@ -138,9 +139,9 @@ def test_transport_conserves_what_it_moves():
     assert np.array_equal(C.transport(R, 0.0), np.eye(R.size))
 
 
-def test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it(basic, default):
+def test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it(default_model, default):
     """GALAXY_INPUTS.md §8: without migration the local distribution is far too narrow."""
-    still = out(basic, migration_efficiency=0.0)
+    still = out(default_model, migration_efficiency=0.0)
     # Until S18 migration widened it (0.29 -> 0.30, debt #32: "migration adds little"); since S18 it narrows it a
     # little, 0.370 -> 0.360: the derived threshold steepens the old population's birth gradient (debt #28) and the
     # migrants that reach R₀ from inside carry narrower age-metallicity relations than the local one, so the
@@ -149,11 +150,11 @@ def test_the_solar_neighbourhood_has_a_spread_and_migration_makes_it(basic, defa
     assert 0.2 < default.fields["feh_spread_sun"] < 0.4  # observed ~0.2 dex [recall]
 
 
-def test_s2s_prediction_fired_migration_is_too_strong_once_the_tilt_is_right(basic, default):
+def test_s2s_prediction_fired_migration_is_too_strong_once_the_tilt_is_right(default_model, default):
     """Row 22 steepened and row 23 did not, so migration_efficiency is wrong too (debt #28)."""
     young, old = default.fields["metallicity_gradient_young"], default.fields["metallicity_gradient_old"]
     assert young / old == pytest.approx(2.55, abs=0.3)  # observed 1.75; 3.1 until S18
-    narrower = out(basic, migration_efficiency=2.5)
+    narrower = out(default_model, migration_efficiency=2.5)
     assert -0.05 <= narrower.fields["metallicity_gradient_old"] <= -0.03  # row 23 would pass (-0.048 since S18)
     assert narrower.fields["metallicity_gradient_young"] / narrower.fields["metallicity_gradient_old"] == pytest.approx(1.22, abs=0.2)  # 1.6 until S18
 
@@ -167,11 +168,11 @@ def test_there_is_no_valley_and_the_answer_is_nan_not_zero(default):
     assert math.isnan(default.fields["alpha_split"])  # rule B9: no valley is not a valley at zero
 
 
-def test_the_experiments_that_looked_for_a_valley(basic):
+def test_the_experiments_that_looked_for_a_valley(default_model):
     """Debt #27's evidence: the accretion inputs do not reach two modes, with or without a merger."""
-    free = out(basic, mergers=())
+    free = out(default_model, mergers=())
     assert free.fields["alpha_sequence"] == "single"  # debt #9, from a criterion that never named the merger
-    fast = out(basic, infall_timescale=1.0, mergers=(MergerEvent(3.8, 0.25, 0.2, "probe"),))
+    fast = out(default_model, infall_timescale=1.0, mergers=(MergerEvent(3.8, 0.25, 0.2, "probe"),))
     assert fast.fields["alpha_sequence"] == "single"
     assert 0.25 < fast.fields["alpha_dip_depth"] < C.DIP_DEPTH  # the closest any input vector comes
 
@@ -195,16 +196,16 @@ def test_the_split_criterion_never_names_the_merger():
     assert alpha_mask(afe, 0.15).tolist() == [[True, True, True, False]]  # the first, metal-free stars are thick
 
 
-def test_the_populations_still_add_up_with_a_chemical_split(basic):
-    o = run(basic, only=("thick_thin_surface_density_ratio",))
+def test_the_populations_still_add_up_with_a_chemical_split(default_model):
+    o = run(default_model, only=("thick_thin_surface_density_ratio",))
     total = o.fields["thin_disc_stellar_mass"] + o.fields["thick_disc_stellar_mass"]
     # Row 1 carries the spheroid since S17 and the populations are the disc's (D121).
     assert total == pytest.approx(o.fields["stellar_mass_total"] - o.fields["bulge_stellar_mass"], rel=0.02)
 
 
-def test_the_gradient_converges(basic):
+def test_the_gradient_converges(default_model):
     grads = [
-        run(basic, grid=GridSpec(n_R=nr, n_t=nt, n_z=6), only=CHEM).fields["metallicity_gradient"]
+        run(default_model, grid=GridSpec(n_R=nr, n_t=nt, n_z=6), only=CHEM).fields["metallicity_gradient"]
         for nr, nt in ((200, 1000), (400, 2000), (400, 4000))
     ]
     assert (max(grads) - min(grads)) / abs(np.mean(grads)) < 0.02, grads
@@ -224,13 +225,13 @@ def test_the_winds_effective_yield_and_the_fitted_one_and_how_far_they_agree(pro
     is gone (D170) and what stays is the wind's number.
     """
     models, _, _ = prod
-    basic = models.get("basic")
-    c = basic.constants
+    default_model = models.get(DEFAULT_MODEL)
+    c = default_model.constants
     y_z = (float(c["Y_O_CC"].value) * float(c["SOLAR_METALLICITY"].value) / float(c["SOLAR_OXYGEN"].value)
            + float(c["IA_METAL_TO_IRON"].value) * float(c["Y_FE_IA"].value))
     assert y_z == pytest.approx(0.0406, abs=0.0005)  # against the 0.03-0.04 usually quoted
 
-    o = run(basic, only=("metal_escape_fraction",))
+    o = run(default_model, only=("metal_escape_fraction",))
     i = int(np.argmin(abs(o.grid.R - float(c["R_SUN"].value))))
     escaped = float(o.fields["metal_escape_fraction"][i])
     assert escaped == pytest.approx(0.6990, abs=0.001)  # 0.7503 until S18 refitted WIND_SPEED 982 -> 860 under the derived threshold; 0.7536 until S17; 0.7556 until S16; 0.7567 until S15
@@ -250,7 +251,7 @@ def test_the_centres_iron_is_the_wind_and_not_the_grid(prod):
     """
     models, _, _ = prod
     peaks = [
-        float(np.nanmax(run(models.get("basic"), grid=GridSpec(n_t=n), only=("feh_gas",)).fields["feh_gas"]))
+        float(np.nanmax(run(models.get(DEFAULT_MODEL), grid=GridSpec(n_t=n), only=("feh_gas",)).fields["feh_gas"]))
         for n in (500, 1000, 2000, 4000, 8000)
     ]
     assert max(peaks) - min(peaks) < 0.10, peaks
@@ -265,8 +266,8 @@ def test_no_acceptance_row_reads_the_disc_inside_four_kiloparsecs(prod):
 
     assert GRADIENT_FIT_RANGE[0] == 4.0
     models, _, _ = prod
-    basic = models.get("basic")
-    o = run(basic, only=("feh_gas", "metallicity_gradient"))
+    default_model = models.get(DEFAULT_MODEL)
+    o = run(default_model, only=("feh_gas", "metallicity_gradient"))
     R, feh = o.grid.R, o.fields["feh_gas"]
     # The peak was the innermost ring until S18; the derived threshold rises as kappa does inside (590 Msun/pc2 at
     # the first cell), so the innermost rings hold gas that never forms stars and the peak sits at 0.5 kpc (D124).
@@ -289,11 +290,11 @@ def test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_
     from galaxy.stages.halo import mu
 
     models, _, _ = prod
-    basic = models.get("basic")
-    G = float(basic.constants["G"].value)
+    default_model = models.get(DEFAULT_MODEL)
+    G = float(default_model.constants["G"].value)
     at = {}
     for n_z in (15, 60, 960):
-        o = run(basic, grid=GridSpec(n_z=n_z), only=("escape_velocity",))
+        o = run(default_model, grid=GridSpec(n_z=n_z), only=("escape_velocity",))
         R = o.grid.R
         phi0 = -G * o.fields["halo_dark_mass"] * np.log1p(R / o.fields["halo_scale_radius"]) / (mu(o.fields["halo_concentration"]) * R)
         # Until S14 the midplane *was* this analytic NFW curve; contracted around the disc it is deeper everywhere (debt #6).
@@ -306,15 +307,15 @@ def test_the_midplane_escape_velocity_is_at_the_midplane_and_does_not_move_with_
 def test_a_coarse_time_grid_manufactures_the_valley_debt_27_is_looking_for(prod):
     """A warning for whoever chases debt #27: check the grid before believing a verdict."""
     models, _, _ = prod
-    basic = models.get("basic")
-    assert run(basic, only=("alpha_sequence",)).fields["alpha_sequence"] == "single"
-    coarse = run(basic, grid=GridSpec(n_t=8), only=("alpha_sequence",))
+    default_model = models.get(DEFAULT_MODEL)
+    assert run(default_model, only=("alpha_sequence",)).fields["alpha_sequence"] == "single"
+    coarse = run(default_model, grid=GridSpec(n_t=8), only=("alpha_sequence",))
     assert coarse.fields["alpha_sequence"] != "single"
 
 
 def test_the_ia_metal_to_iron_factor_is_a_registered_constant(prod):
     """Debt #33 (S12): the 2.0 that set the model's total-metal zero point lived in the code."""
     models, _, _ = prod
-    c = models.get("basic").constants
+    c = models.get(DEFAULT_MODEL).constants
     assert c["IA_METAL_TO_IRON"].value == 2.0 and "[recall]" in c["IA_METAL_TO_IRON"].about
     assert "IA_METAL_TO_IRON" in C.CHEMISTRY_DTD.reads_constants

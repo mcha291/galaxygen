@@ -34,8 +34,9 @@ one origin; `.github/workflows/image.yml` publishes it to ghcr.io per commit;
 `infra/deploy.ps1 -ResourceGroup <name> -Tag <commit>` rolls out that image.
 Locally, `uv run python -m galaxy.api --client frontend/dist` serves the built UI.
 
-Models are declared one file each in `model/galaxy/models/` (one today, `basic.py`,
-since D170 collapsed the earlier `simple` and `advanced` into it); a new file there
+Models are declared one file each in `model/galaxy/models/` (two today: `basic.py`,
+since D170 collapsed the earlier `simple` and `advanced` into it, and `azimuthal.py`,
+built from it since S27 and the default since S46); a new file there
 is picked up automatically. Shared constants
 live in `level0.py`, stage implementations in `model/galaxy/stages/`.
 `uv run python -m galaxy.models` prints every model's stage slots side by side

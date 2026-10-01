@@ -30,6 +30,7 @@ from galaxy.api.service import MAX_STARS, RESERVED, Response, Service, routes
 from galaxy.api.version import CLIENT, content_hash
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, production
+from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.stages import systems
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -251,7 +252,7 @@ def test_a_region_is_exactly_what_the_full_sweep_puts_there(api):
     from galaxy.run import run
 
     models, impls, table = production()
-    out = run(models.get("basic"), None, SMALL, only=systems.SYSTEMS.requires)
+    out = run(models.get(DEFAULT_MODEL), None, SMALL, only=systems.SYSTEMS.requires)
     R, t = out.grid.R, out.grid.t
     whole = systems.materialise(
         out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"])
