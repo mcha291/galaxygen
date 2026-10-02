@@ -7920,3 +7920,55 @@ within the sprites' sampling and the response's stated departure (5 × 10⁻⁶ 
 2 % at the whole galaxy, where every cluster and every star above the threshold is inside the frame; a larger gap
 means the scale in (1) is wrong by a factor, and it will show as one. Also: vitest, `tsc -b`, `vite build`; the
 dust's segment against a quadrature; frames under `docs/design/screenshots/s50/`.
+
+**Applied (2026-10-03, the session itself, Opus 5.5; no builder).** *The loaders:* `transport.js` gains `bright`
+(the one fetch unchanged); `api.ts` `loadBright` (n, view, the set's curves, the white point, f4), `loadClusters`
+with the set's light, `loadRender` with `l_min`; the old `loadBrightest` is gone with its caller. *The scale*
+(`flux.ts`, pure and tested): `fluxOf` (response over white), `pixelArea` (Ω D², the pixel's side at the point's
+depth squared times depth over distance), `spriteLight` (flux × gain over area and over the sprite's pixels times
+its pattern's mean, so the sprite sums to flux × gain / area); `psf.ts` knows each sprite's mean (the default's
+from its own profile as its 8-bit texture holds it, an instrument's from its float texture). *The points*
+(`FluxPoints.tsx`): a `ShaderMaterial` that evaluates the scale per vertex at the camera's own distance, additive;
+the bright stars and the 12 860 clusters are two such layers, picked by the view's own picker and drawn by neither
+of its sprites. *The field* (`FieldVolume`): `lMin` asks the render for the remainder and draws `stars_unresolved`
+in place of `stars`; a frame that predates the threshold draws the whole meanwhile. *The dust in front of each
+point* (T20): `flux.ts dustToPoint`, mirrored line for line in the vertex shader — the segment from the point to
+the camera, cut at sixteen of the tallest layer's heights and at the disc's radius, 48 equal steps each taking the
+layer's exact column at the depth, placement and height read at its middle, from the march's own two textures
+(handed up by `FieldVolume`, `onDust`); only while the dust is drawn as it acts. *Picking* (T23, `summary.ts`): the
+object's declared columns under their declared labels and units; nothing is labelled by the viewer (A9). *The
+mode:* "star-first" replaces "brightest"; the defaults are the picture's four; the column-painting chips and their
+legend are the field mode's and are not shown here (a point is light on a scale, not a painted dot).
+
+**The gate, read.** *The closure on screen*, measured with an instrument built for it (B1): `GalaxyView`'s
+`FrameProbe` puts `window.__galaxygenFrameSum()` on the page, which draws one fresh frame, renders the scene into a
+float target at the drawing buffer's size and adds its pixels up, before bloom and tone mapping. At the default
+galaxy, face-on at 43.6 kpc across on a 1920 × 1016 buffer, the rgb set, gas and dust off:
+the whole starlight with the points off **121 237 / 107 314 / 97 416**; the remainder with the 3 162 stars and
+12 860 clusters **121 180 / 107 280 / 97 470** — ratios **0.99953 / 0.99969 / 1.00055**, inside the predicted 2 %
+by a factor of forty; the points alone 6 640 / 7 655 / 11 540, that is 5.5 %, 7.1 % and 11.8 % of the frame, blue
+most, as the young population should be. Model-side the same split reads 0.9990 / 0.9991 / 1.0000 over the whole
+disc (remainder 0.932 / 0.914 / 0.866 of the stars, clusters 0.065 / 0.084 / 0.133, bright stars 0.002 / 0.0014 /
+0.0010). **The first reading was wrong and is recorded:** 0.73 / 0.71 / 0.71, taken before the probe drew its own
+frame — an idle pane draws none, and the sum was of a frame from before the dust was switched off. The instrument
+was fixed, not the number. *The dust's segment* against a 200 000-point quadrature of the same integral: exact for
+a face-on star (half the ring's depth in the midplane, all of it behind the layer, 10⁻⁹ in front), within 1 % at
+45°, 2 % steeply inclined, 6 % near edge-on through the centre, where 48 steps are coarse and the disc is opaque
+either way. vitest **181** (167), `tsc -b` and `vite build` clean. Frames (the dev viewer's pane, 800 × 475):
+`docs/design/screenshots/s50/star-first-face-on.jpg`, `-oblique.jpg`, `-edge-on.jpg`, and
+`whole-starlight-points-off.jpg`. No Python changed, so the suite of D207 stands (`EXIT=0`).
+
+**What the picture is, said plainly.** At the whole galaxy the clusters are the knots along the arms and a single
+bright star is a faint dot — on a black sky it shows, over the disc it is lost, as ruled. Seen from inside the
+plane at close range, edge-on, the frame is black: the camera sits in the dust. The old mode's "every star you see
+is in the top N of a 10⁻⁵ sample, exposed to itself" is gone, and with it the look of a field of bright stars at
+any zoom; the stars-alone look is the starlight switch off and the exposure raised.
+
+**Left open, each a task and not hidden.** (i) **T12, the image-level test**, is not built: this machine has no
+headless browser. (ii) **Every new threshold asks the field again**: the bright header's `l_min` moves with the
+view, and each value is a 9 MB render of which only `stars_unresolved` differs — about a second warm and a rebuilt
+volume per settled view; a remainder-only request (the route returning one component) would cut it, and is a
+model-side change (**T28**, new). (iii) A bright star opens no planetary system (T27); the field mode still does.
+(iv) Clusters stay points with no extent (T6) and no stars of their own (T24); the bulge stays glow (T25).
+(v) `colors.ts exposureFor` (the old auto-exposure) is kept, unused, against the owner wanting it back as a toggle.
+(vi) The close (board row 50, LESSONS, RESUMING and BRIEF rewritten, merge, tag `s50`, `verify_clone`) is not done.

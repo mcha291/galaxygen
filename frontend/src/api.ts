@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, blackbody, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
+import { arrays, blackbody, bright, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
@@ -154,27 +154,48 @@ export async function loadRegion(
   return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
 }
 
+/** The white point a response is drawn over (/api/render's, /api/bright's and /api/clusters' header `white`). */
+export type WhitePoint = { kelvin: number; response: (number | null)[] } | null;
+
 /**
- * The brightest-N mode: the `brightest` most luminous stars inside the camera's frustum, from the
- * window materialised at whole-galaxy sample size `stars`. Rows come brightest first, each named
- * by its own `cell` and `index` columns.
+ * The bright catalogue's stars for one view (S48, `/api/bright`): rows brightest first, each named by its level-3
+ * `cell` and its `rank` there, with `response` (N × filters, L☉ through each curve) when filters were sent.
  */
-export async function loadBrightest(
+export interface BrightFrame {
+  columns: Columns;
+  header: {
+    columns: string[];
+    /** What the body is complete above: the luminosity the field's remainder must be asked at (D208). */
+    threshold: { l_min: number; complete: boolean; why: string; prefix: string };
+    count: { returned: number; expected: number };
+    light: { returned: number; expected: number };
+    white?: WhitePoint;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * The star-first mode's stars (D208): the `n` most luminous disc stars inside the camera's frustum, complete above
+ * the header's threshold, each with its own light through the filter set. 32-bit: the light goes to a texture.
+ */
+export async function loadBright(
   window: { r_min: number; r_max: number; phi_min: number; phi_max: number },
-  stars: number,
-  brightest: number,
+  n: number,
   view: ArrayLike<number>,
+  curves: Curve[],
+  white: number,
   query: Query,
   signal?: AbortSignal,
-): Promise<Sample> {
-  const got = await region(window, { ...query, stars, brightest, view: Array.from(view) }, { signal });
-  return { columns: got.arrays as Columns, header: got.header as Sample["header"] };
+): Promise<BrightFrame> {
+  const params = { ...query, n, view: Array.from(view), filters: JSON.stringify(curves), white, precision: "f4" };
+  const got = await bright(window, params, { signal });
+  return { columns: got.arrays as Columns, header: got.header as BrightFrame["header"] };
 }
 
 /** A census of one window (S40, V3): the columns as arrays and the header the route wrote. */
 export interface Census {
   columns: Columns;
-  header: { level: number; cells: { ids: number[]; counts: number[] }; columns: string[]; [key: string]: unknown };
+  header: { level: number; cells: { ids: number[]; counts: number[] }; columns: string[]; white?: WhitePoint; [key: string]: unknown };
 }
 
 export type RegionWindowQuery = { r_min: number; r_max: number; phi_min: number; phi_max: number; level?: number };
@@ -185,9 +206,18 @@ export async function loadClouds(window: RegionWindowQuery, query: Query, signal
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 
-/** The clusters of a window with their HII regions' and bubbles' columns. */
-export async function loadClusters(window: RegionWindowQuery, query: Query, signal?: AbortSignal): Promise<Census> {
-  const got = await clusters(window, query, { signal });
+/**
+ * The clusters of a window with their HII regions' and bubbles' columns; with `light` (a filter set's curves and a
+ * white point, S48) each cluster's `response` too, its own band light through each curve.
+ */
+export async function loadClusters(
+  window: RegionWindowQuery,
+  query: Query,
+  signal?: AbortSignal,
+  light?: { curves: Curve[]; white: number },
+): Promise<Census> {
+  const params = light ? { ...query, filters: JSON.stringify(light.curves), white: light.white } : query;
+  const got = await clusters(window, params, { signal });
   return { columns: got.arrays as Columns, header: got.header as Census["header"] };
 }
 
@@ -253,7 +283,9 @@ export async function loadBlackbody(curves: Curve[], white: number, signal?: Abo
  * The whole galaxy through a filter set, at 32 bits (a texture holds no more). The filter integral
  * is the model's: the viewer sends its curves and a white point and only tone-maps what comes back.
  */
-export async function loadRender(curves: Curve[], white: number, query: Query = {}, signal?: AbortSignal): Promise<RenderFrame> {
-  const got = await render(curves, { ...query, white, precision: "f4" }, { signal });
+export async function loadRender(curves: Curve[], white: number, query: Query = {}, signal?: AbortSignal, lMin?: number | null): Promise<RenderFrame> {
+  // With `lMin` (D208) the render adds `stars_unresolved`: the stars' light no point carries, above that luminosity.
+  const params = lMin != null && lMin > 0 ? { ...query, white, precision: "f4", l_min: lMin } : { ...query, white, precision: "f4" };
+  const got = await render(curves, params, { signal });
   return { header: got.header as RenderFrame["header"], arrays: got.arrays as RenderFrame["arrays"] };
 }

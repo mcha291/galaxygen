@@ -61,7 +61,8 @@ export interface Tuning {
   spriteSize: number;
   /** A multiplier on the points' light: REFERENCE_LUMINOSITY is divided by it. */
   pointGain: number;
-  // The brightest mode's component layers (D205, S50): all off by default, so the mode draws as before.
+  // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
+  // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
   /** The mode's own picture, the N brightest stars in view as points: on by default, switched off to see a layer alone. */
   compPoints: boolean;
   /** The field's stellar layer and the bulge, as a volume. */
@@ -98,9 +99,9 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   spriteSize: STAR_SPRITE_PX,
   pointGain: 1,
   compPoints: true,
-  compStars: false,
-  compGas: false,
-  compDust: false,
+  compStars: true,
+  compGas: true,
+  compDust: true,
   dustReading: "acts",
   compClouds: false,
   compCells: false,

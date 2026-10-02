@@ -28,6 +28,8 @@ import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
 import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
+import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
+import type { PointDust } from "./FluxPoints";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -355,6 +357,13 @@ interface Props {
   layers?: MarchLayers;
   /** Told how the dust diagnostic is painted when the render arrives (field, scale, the range mapped): its caption. */
   onDepth?: (paint: DustPaintShown | null) => void;
+  /**
+   * The star-first mode's threshold (D208): with a luminosity the stellar layer is the render's remainder,
+   * `stars_unresolved` — the light no point above it carries, nor the clusters — and without one the whole.
+   */
+  lMin?: number | null;
+  /** Handed the march's dust textures for the segment to each point (T20, D208); null when the volume goes. */
+  onDust?: (dust: PointDust | null) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -383,6 +392,8 @@ export function FieldVolume({
   stats,
   layers: shown = FIELD_LAYERS,
   onDepth,
+  lMin = null,
+  onDust,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -391,8 +402,9 @@ export function FieldVolume({
   const key = lit ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value ?? null;
-  const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query]) : null;
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal));
+  const unresolved = lMin != null && lMin > 0;
+  const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
 
   // Read when the material is built, so a mesh made after a steps change compiles once, with them.
@@ -417,7 +429,9 @@ export function FieldVolume({
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
-      stars: a.stars,
+      // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
+      // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
+      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : a.stars,
       // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
       hii: summed(a.halpha_hii, a.lines_hii),
       dig: summed(a.halpha_dig, a.lines_dig),
@@ -505,9 +519,18 @@ export function FieldVolume({
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
     if (paint) box.userData.dustPaint = paint;
+    // What the star-first mode's points read for the dust in front of them (T20): the march's own textures.
+    const pointDust: PointDust = {
+      rings: ringTexture,
+      scatter: material.uniforms.scatter.value as DataTexture,
+      rLo: R.lo,
+      rHi: R.hi,
+      top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
+    };
+    box.userData.pointDust = pointDust;
     box.frustumCulled = false;
     return box;
-  }, [frame, light]);
+  }, [frame, light, unresolved]);
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -550,6 +573,13 @@ export function FieldVolume({
     },
     [mesh, offscreen],
   );
+
+  const tellDust = useRef(onDust);
+  tellDust.current = onDust;
+  useEffect(() => {
+    tellDust.current?.(mesh ? ((mesh.userData.pointDust as PointDust | undefined) ?? null) : null);
+    return () => tellDust.current?.(null);
+  }, [mesh]);
 
   const tellDepth = useRef(onDepth);
   tellDepth.current = onDepth;

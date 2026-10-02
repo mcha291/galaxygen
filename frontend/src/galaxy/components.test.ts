@@ -75,10 +75,14 @@ describe("the march's layers (D205)", () => {
     }
   });
 
-  it("are all off in the brightest mode by default, and the march is not mounted", () => {
-    expect(marchWanted(TUNING_DEFAULTS)).toBe(false);
+  it("are the picture's by default in the star-first mode: starlight, gas and the dust acting, no diagnostic (D208)", () => {
+    expect(marchWanted(TUNING_DEFAULTS)).toBe(true);
     expect(diagnosticOn(TUNING_DEFAULTS)).toBe(false);
-    expect(brightestLayers(TUNING_DEFAULTS, dustRamp(META))).toEqual(OFF);
+    expect(brightestLayers(TUNING_DEFAULTS, dustRamp(META))).toEqual({ ...OFF, stars: 1, gas: 1, dust: 1, dustDepth: 1 });
+    // Until D208 every layer was off by default (D205): switched off, the march is not mounted and nothing is drawn.
+    const none = { ...TUNING_DEFAULTS, compStars: false, compGas: false, compDust: false };
+    expect(marchWanted(none)).toBe(false);
+    expect(brightestLayers(none, dustRamp(META))).toEqual(OFF);
   });
 
   it("switch each layer on at its intensity; the dust's intensity never scales its depth", () => {
@@ -89,7 +93,7 @@ describe("the march's layers (D205)", () => {
   });
 
   it("draw the dust where it is at its intensity, dimming nothing, and nothing without a declared ramp", () => {
-    const t = { ...TUNING_DEFAULTS, compDust: true, dustReading: "where" as const, dustIntensity: 2 };
+    const t = { ...TUNING_DEFAULTS, compStars: false, compGas: false, compDust: true, dustReading: "where" as const, dustIntensity: 2 };
     expect(brightestLayers(t, dustRamp(META))).toEqual({ ...OFF, where: 2 });
     expect(brightestLayers(t, null)).toEqual(OFF);
     expect(diagnosticOn(t)).toBe(true);

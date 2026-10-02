@@ -57,9 +57,9 @@ describe("tuning defaults (D199)", () => {
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
       compPoints: true,
-      compStars: false,
-      compGas: false,
-      compDust: false,
+      compStars: true,
+      compGas: true,
+      compDust: true,
       dustReading: "acts",
       compClouds: false,
       compCells: false,
@@ -171,11 +171,11 @@ describe("tuning storage", () => {
     expect(changed({ ...TUNING_DEFAULTS, bloomStrength: 0.5 })).toEqual({ bloomStrength: 0.5 });
   });
 
-  it("leaves every component off by default, nothing stored, and keeps a switched one (D205)", () => {
-    for (const key of ["compStars", "compGas", "compDust", "compClouds", "compCells"] as const) expect(TUNING_DEFAULTS[key]).toBe(false);
-    // The star points are the mode's own picture: on by default, so the mode still draws as before, and a switch
-    // like the others, so a layer can be seen alone.
-    expect(TUNING_DEFAULTS.compPoints).toBe(true);
+  it("has the star-first picture's four on by default and the diagnostics off, nothing stored, and keeps a switched one (D205, D208)", () => {
+    // The picture is the points over the field's remainder, its gas and its dust (D208); until then every layer
+    // was off (D205). The cloud markers and the cell outlines are diagnostics and stay off.
+    for (const key of ["compPoints", "compStars", "compGas", "compDust"] as const) expect(TUNING_DEFAULTS[key]).toBe(true);
+    for (const key of ["compClouds", "compCells"] as const) expect(TUNING_DEFAULTS[key]).toBe(false);
     expect(changed({ ...TUNING_DEFAULTS, compPoints: false })).toEqual({ compPoints: false });
     expect(sanitize({ compPoints: false }).compPoints).toBe(false);
     expect(sanitize({ compPoints: "no" }).compPoints).toBe(true);
@@ -184,8 +184,8 @@ describe("tuning storage", () => {
     const s = memory();
     saveTuning({ ...TUNING_DEFAULTS }, s);
     expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
-    const t = { ...TUNING_DEFAULTS, compDust: true, dustReading: "where" as const, cloudIntensity: 2 };
-    expect(changed(t)).toEqual({ compDust: true, dustReading: "where", cloudIntensity: 2 });
+    const t = { ...TUNING_DEFAULTS, compDust: false, dustReading: "where" as const, cloudIntensity: 2 };
+    expect(changed(t)).toEqual({ compDust: false, dustReading: "where", cloudIntensity: 2 });
     saveTuning(t, s);
     expect(loadTuning(s)).toEqual(t);
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });

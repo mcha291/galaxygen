@@ -165,6 +165,20 @@ of its light and a gap 0.874, and a ring's face-on V light falls by 1.3 %
 `[verified: tests/test_dust_layer.py]`. A lane needs a gas pattern distinct
 from the stars', which the model does not publish (`RESEARCH_AREAS.md` §1).
 
+**Since S50 (D208) the points are on the field's scale.** The star-first mode
+draws the N brightest disc stars in view and every cluster as points of their
+own published light through the filter set (`response`, over the white point),
+each sprite summing to that light over the area of sky one pixel covers at the
+point — the unit the march integrates — over the render's remainder
+(`stars_unresolved`, at the bright header's own threshold), with one exposure
+for both; the dust between a point and the camera dims it per channel from the
+march's own textures. This is §7's no-double-counting made visible: the frame's
+summed light with the points on equals the whole starlight's with them off to
+0.9995 / 0.9997 / 1.0006 through rgb `[verified: DECISIONS.md D208, measured
+on screen; frontend/src/galaxy/flux.test.ts for the scale and the dust's
+segment]`. #114 (points painted as blackbodies) and #115 (the young population
+drawn twice) no longer apply in this mode; they remain the field mode's.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are
