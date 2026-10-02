@@ -7870,3 +7870,53 @@ stars are not — the gas's own pattern (`RESEARCH_AREAS.md` §1, direction d), 
 both placed, the absorbed power is 1.26 % more over the disc (4.1 % at R₀, 0.1 % at 2 kpc where the slab is
 saturated): pinned, not applied; the register's count is unchanged (66 open, 45 discharged). Tests:
 `tests/test_dust_layer.py` 18 (13), `test_render`'s array list; vitest 167 (164).
+
+### D208. S50 proper: the side track named, and the star-first mode's rulings — one scale for points and field, the layers on by default, the dust in front of each point
+
+**The owner, in chat, on 2026-10-03:** "commit what we have now as sidetrack-session-1 and then implement the
+planned session-50". **The naming.** D205–D207, written under the heading "S50" while the owner looked at what the
+model holds, are **sidetrack session 1** (branch `sidetrack-session-1`, 41f9313): the component layers, the filter
+selector and the stars switch in the brightest mode, `RESEARCH_AREAS.md`, the dust in its own layer and round each
+ring. Those entries are not edited (a decision is corrected by a later one); where they say "S50" read "the side
+track". **S50 is what `BRIEF.md` planned: the star-first mode**, built on `session-50` continued from the side
+track's tip, since it builds on that work. Written before any code moved (D113).
+
+**(1) The scale (the brief's ruling, made here).** A point's light in display channel k is its published
+`response_k` over the white point's — the same division the field's cells get — as a flux, spread over its sprite so
+that **the sprite's pixels sum to response_k / white_k over the area of sky one pixel covers at the point**, Ω D²
+in pc² (the pixel's solid angle times the squared distance: the pixel's side at the point's depth, squared, times
+the cosine of the point's angle off the view's axis), times the field's own gain (`LIGHT_PER_LSUN_PC2`, the field
+gain, the exposure's stops). That is the unit the march integrates — light per pc² across the line of sight — so a
+point sits on the field's surface-brightness scale: lost in the glow when a pixel covers thousands of pc², emerging
+as the view closes in. The sprite is the instrument's and deposits a unit sum: each channel's pattern over its own
+mean across the sprite's square. The point gain and the sprite size stay display multipliers (D199).
+**(2) One exposure.** The old mode's exposure to its hundredth-brightest star goes: field and points take the
+slider's stops alone. The consequence is the physics and is stated on the panel: at the whole galaxy a single star
+is far under the glow (the 3 162nd brightest, 34 000 L☉, in a pixel of 45 pc is 17 L☉/pc² spread over its sprite,
+under a disc of tens to hundreds), and the clusters are what stand out.
+**(3) What is drawn**, for the view's frustum: the N brightest disc stars (`/api/bright`, with `filters=`), every
+cluster of the census with its `response` (`/api/clusters`: the young population, which the bright catalogue does
+not hold), and under them the field at `/api/render?l_min=` **with `l_min` read from the bright header's
+`threshold`**, never computed by the viewer (D5) — `stars_unresolved` in place of `stars`, the bulge, the gas and
+the dust as the field draws them. With the star points switched off the volume is the whole `stars`: the total.
+**(4) The mode replaces "brightest"** and keeps its Components switches; **stars, starlight, ionized gas and dust
+are on by default** (the star-first picture is all four), dust "as it acts"; the cloud markers and cell outlines
+stay off. A setting the owner stored keeps its stored value.
+**(5) The dust in front of each point (T20).** A point is dimmed per channel by the dust between it and the
+camera: the ring's published depth times its placement, through the dust's own layer, summed along the segment in
+steps that each take the layer's exact column (D206's `column`), read from the textures the march reads. Only
+while the dust is drawn "as it acts".
+**(6) Picking (T23).** A bright star is named by (cell, rank) and has no planetary system yet (T27): a click opens
+its published columns — luminosity, temperature, phase, age, mass, the eight magnitudes — and a cluster's opens
+its own. Opening a system stays the field mode's.
+**(7) Not in this row, and said so:** the image-level test (T12) needs a headless browser this machine does not
+have (`tests/test_viewer.py` skips for the same reason); clusters resolved into their own stars (T24), bulge stars
+(T25), the faint end (T26), one star list (T27).
+
+**The gate (the brief's, made measurable).** *The closure on screen*: at fixed cameras, with the gas and the dust
+switched off, the frame's summed linear light before bloom and tone mapping in the star-first mode (the remainder +
+the cluster points + the bright points) against the same frame with the points off (the whole `stars`): equal to
+within the sprites' sampling and the response's stated departure (5 × 10⁻⁶ through rgb). Predicted to hold within
+2 % at the whole galaxy, where every cluster and every star above the threshold is inside the frame; a larger gap
+means the scale in (1) is wrong by a factor, and it will show as one. Also: vitest, `tsc -b`, `vite build`; the
+dust's segment against a quadrature; frames under `docs/design/screenshots/s50/`.
