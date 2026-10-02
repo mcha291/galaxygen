@@ -693,9 +693,9 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127 | 54 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128 | 55 |
 
-So the board's **65 open** is 11 permanent and 54 carried, and no item is unruled. (S22
+So the board's **66 open** is 11 permanent and 55 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -721,7 +721,8 @@ is the whole gradient, the gas gradient is steeper than the Cepheids' (#124 open
 sources — D196; S48, the per-object filter response, opened #125, the band curves' wings on the steepest spectra,
 and corrected #114's factor of two to the clusters', D201, and the bright catalogue opened #126, the field's light
 integrated on a mass grid that aliases the giant branch, D202; S49 fixed and discharged #126 on the owner's word and
-opened #127, the segment quadrature's thousandth on the upper main sequence, D204.) The eleven
+opened #127, the segment quadrature's thousandth on the upper main sequence, D204; S50 gave the dust its own layer
+on the owner's word, which closed #109's first part, and opened #128, the heating still one mixed slab, D206.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3193,6 +3194,13 @@ never been judged in twenty-three sessions.
    session) read by the render as the dust's layer; the infrared channel: a white point per channel ruled as
    display; the geometry: a source for the slab's scattering phase in an inclined disc, or V3's region-scale
    scattering, which needs none.
+   **S50 (D206): the layer is closed, on the owner's word.** The ism stage publishes `gas_scale_height` per ring
+   (Σ/4ρ₀ in the layer form's own h: 21 pc at the centre, 113 pc at R₀, the stars' 356 pc passed near 13 kpc, no
+   number past the stellar disc's edge at 23.7 kpc), the render returns it as the dust's layer (`layers.dust` names
+   the array `dust_height`) and the viewer composes light and dust in order inside each step, so an inclined frame
+   shows the lane `[verified: tests/test_dust_layer.py; frontend/src/galaxy/regimes.test.ts]`. **Still carried** for
+   the infrared channel's white point and the scattering phase in an inclined disc; what the closure itself left
+   open is #128.
 110. **The region regime's noise, pillar rule and tilt are stated shapes the cloud vector does not constrain**
    (S40, V3, D190). The cloud vector fixes the one-point PDF (σ_s), the mean column, the gradient and the source
    offset; the *spatial* structure needs a power spectrum it does not carry. So `region.ts` realises the log-normal
@@ -3481,6 +3489,31 @@ never been judged in twenty-three sessions.
    **Carried.** What closes it: the IMF's own distribution within a segment with the luminosity a power law of mass
    there (both integrals and the count above a threshold are then closed forms), and the forty-odd light pins
    re-read once more.
+128. **The dust is heated as one mixed slab and drawn in its own thin layer: the picture's geometry and the energy
+   budget's differ** (S50, D206). Since D206 the render spreads the dust through the gas's published layer, a few
+   tens of parsecs in the inner disc under a stellar layer of 356 pc, and the march composes them in order: a ring
+   far thicker than τ = 1 shows about half its starlight face-on. The dust stage's heating was not changed: it
+   absorbs `disc_surface_brightness` as a slab in which stars and dust are uniformly mixed, (1/2 − E₃(τ))/τ, and
+   so do the render's scattered share and the frame's balance. A thin layer under a thick stellar disc cannot
+   absorb much more than the half of a ring's light that sets out towards it; the mixed slab absorbs nearly all
+   of an opaque ring's. Measured by an independent quadrature — isotropic starlight from its own layer escaping
+   a purely absorbing dust in the gas's, ½[E₂(τA) + E₂(τB)] over the stars, which is the slab's closed form when
+   the layers are one — **the layered geometry would absorb 0.766 of what the slab does**: 1.20 × 10¹⁰ L☉ against
+   1.57 × 10¹⁰, an infrared share of 0.262 of the disc's light against the published 0.342; 0.59 of the slab's at
+   0.5 kpc, 0.91 at R₀, the same beyond 12 kpc; T_d(R₀) 18.82 → 18.52 K `[verified: tests/test_dust_layer.py]`.
+   So the published L_IR and the inner disc's T_d are the mixed slab's, about 30 % and 1.4 K over what the
+   drawn geometry implies, and the face-on record in `tests/test_render.py` (`face_on`, the mixed composition) is
+   no longer how the viewer draws a face-on disc. The gas layer's own shape is the render's sech² form, not a
+   derivation, and its outermost flare is the star-only pressure's (the field's about). **Carried.** What closes
+   it: the dust stage's absorbed fraction computed in the layered geometry from `gas_scale_height` and
+   `thin_disc_scale_height` (the quadrature above, or its closed form if one is found), the scattered share and
+   the frame's balance with it, and every pin on T_d, L_IR and the thermal component re-read — the owner's
+   ruling, since it moves published numbers; and for the flare, the gas's own weight and the halo's in the
+   midplane pressure, which is the pressure prescription's named alternative and moves the molecular fraction.
+   **S50 (D207), its second half:** the render now places the dust round each ring by the pattern's contrast
+   (`dust_placement`), as the stars are, and the heating is still the ring's mean column's. In the same mixed
+   slab, with light and dust both placed, the absorbed power is 1.26 % more over the disc and 4.1 % more at R₀
+   `[verified: tests/test_dust_layer.py]`; the closure above must take the placement with the layers.
 
 
 ---

@@ -62,6 +62,8 @@ export interface Tuning {
   /** A multiplier on the points' light: REFERENCE_LUMINOSITY is divided by it. */
   pointGain: number;
   // The brightest mode's component layers (D205, S50): all off by default, so the mode draws as before.
+  /** The mode's own picture, the N brightest stars in view as points: on by default, switched off to see a layer alone. */
+  compPoints: boolean;
   /** The field's stellar layer and the bulge, as a volume. */
   compStars: boolean;
   /** The HII layer and the diffuse layer, with their lines. */
@@ -95,6 +97,7 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   toneMapping: "agx",
   spriteSize: STAR_SPRITE_PX,
   pointGain: 1,
+  compPoints: true,
   compStars: false,
   compGas: false,
   compDust: false,
@@ -206,6 +209,10 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "pointGain", label: "point gain", group: "Points", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Divides the points' 100 L☉ reference luminosity: brighter or fainter stars against the field. A display choice.",
+  },
+  {
+    key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
+    about: "The brightest mode's own picture: the N most luminous stars in view, as points. A display choice of what is drawn.",
   },
   {
     key: "compStars", label: "starlight", group: "Components", kind: "toggle", switch: true,

@@ -273,7 +273,10 @@ def test_the_line_is_the_nebular_field_in_two_layers(full, model):
     layers = header["layers"]
     assert layers["halpha_dig"] == f["dig_scale_height"] == 1.4
     assert layers["halpha_hii"] == pytest.approx(0.5 * f["thin_disc_scale_height"] / 1000.0, rel=1e-15)  # the clouds' layer
-    assert layers["stars"] == layers["dust"] == pytest.approx(f["thin_disc_scale_height"] / 1000.0, rel=1e-15)
+    assert layers["stars"] == pytest.approx(f["thin_disc_scale_height"] / 1000.0, rel=1e-15)
+    # S50 (D206): the dust has its own layer, the gas's published height ring by ring (tests/test_dust_layer.py);
+    # until then layers["dust"] was the stars' one height (S39).
+    assert layers["dust"] == "dust_height" and arrays["dust_height"].shape == arrays["dust_extinction"].shape[:1]
     for name, entry in header["components"].items():
         assert entry["fields"] and entry["about"] and entry["layer"] in layers, name
     # The lines the model does not publish are named, not drawn dark (rule B9): since S42 it publishes all six.
@@ -537,7 +540,11 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
         assert arrays[name].shape == (48, 36, 3) and header["axes"][name] == ["R", "phi", "filter"], name
     for name in ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal"):
         assert arrays[name].shape == (48, 3) and header["axes"][name] == ["R", "filter"], name
-    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal"}
+    # The dust layer's heights ride beside the components since S50 (D206): one number per ring, no filter axis.
+    assert arrays["dust_height"].shape == (48,) and header["axes"]["dust_height"] == ["R"]
+    # And the dust's placement round each ring (D207): one factor per (R, phi) cell, no filter axis.
+    assert arrays["dust_placement"].shape == (48, 36) and header["axes"]["dust_placement"] == ["R", "phi"]
+    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement"}
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):

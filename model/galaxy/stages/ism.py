@@ -72,6 +72,40 @@ def midplane_density(pressure: np.ndarray, v_disp: float) -> np.ndarray:
     return rho / MSUN_PER_PC3_IN_G_PER_CM3
 
 
+def layer_height(sigma_gas: np.ndarray, rho0: np.ndarray, support_scale: np.ndarray | None = None) -> np.ndarray:
+    """The gas layer's scale height in pc, h = Σ / 4ρ0: the h of a sech²(z / 2h) / 4h layer — the form the
+    render spreads every component through, and the stellar heights' convention (the isothermal sheet's
+    z0 / 2) — that holds the column Σ (M☉/pc²) at the midplane density ρ0 (M☉/pc³). Two published numbers
+    fix one height; the profile between them is the form's, not derived here (D206).
+
+    NaN where the stage has no height to give (rule B9: a missing height is not a height of zero, and not a
+    computed one either): where there is no midplane density, and — given ``support_scale``, pc, the radial
+    scale over which the stars that hold the layer change (:func:`local_scale_length`) — where the quotient
+    is not smaller than it. The pressure behind ρ0 is a plane-parallel equilibrium under the stars' gravity
+    alone: at the stellar disc's edge the stars fall away within a few hundred parsecs, nothing in the
+    estimate holds the gas, and the quotient runs to kiloparsecs and then tens of them. A slab taller than
+    the distance over which its own support vanishes is not the slab the equilibrium assumed
+    ``[inferred: h < the stars' local scale length as the estimate's own domain]``.
+    """
+    sigma = np.asarray(sigma_gas, dtype=float)
+    rho = np.asarray(rho0, dtype=float)
+    held = rho > 0.0
+    h = np.where(held, sigma / (4.0 * np.where(held, rho, 1.0)), np.nan)
+    if support_scale is not None:
+        h = np.where(h < np.asarray(support_scale, dtype=float), h, np.nan)
+    return h
+
+
+def local_scale_length(sigma: np.ndarray, radius_kpc: np.ndarray) -> np.ndarray:
+    """The radial distance over which a surface density changes by a factor e, in pc: 1 / |d ln Σ / dR| on
+    the grid. Infinite where the profile is flat; NaN where there is nothing to differentiate."""
+    sigma = np.asarray(sigma, dtype=float)
+    there = sigma > 0.0
+    with np.errstate(divide="ignore"):
+        slope = np.abs(np.gradient(np.log(np.where(there, sigma, 1.0)), np.asarray(radius_kpc, dtype=float)))
+        return np.where(there, 1000.0 / slope, np.nan)
+
+
 def molecular_ratio(pressure: np.ndarray, p_norm: float, index: float) -> np.ndarray:
     """R_mol = Σ_H2/Σ_HI = (P/P_0)^α, Blitz & Rosolowsky 2006."""
     return (np.maximum(np.asarray(pressure), 0.0) / p_norm) ** index
@@ -114,6 +148,24 @@ MIDPLANE_DENSITY = FieldDecl(
         "solar radius, where Leroy et al. 2008 read 'Ph/k_B ≈ 2.3 × 10^4 cm^-3 K, corresponding to a "
         "particle density n ∼ 1 cm^-3'. What a single star's wind bubble and a supernova remnant expand "
         "into (S36)."
+    ),
+)
+
+GAS_SCALE_HEIGHT = FieldDecl(
+    name="gas_scale_height", label="Gas layer scale height h_gas(R)", unit="pc",
+    kind=Kind.FIELD, axes=("R",), ramp=Ramp("viridis", scale="log"), meaningful_zero=False,
+    about=(
+        "The gas's column over four times its midplane density: the height of a sech² layer, in the stellar "
+        "scale heights' own convention, that holds the published column at the published midplane density. "
+        "Tens of parsecs in the inner disc, about a third of the thin stellar disc's height at the solar "
+        "radius, and flaring outward as the stars that hold the gas down thin out — it passes the stars' own "
+        "height in the outer disc. The dust is taken to share it, which is what puts a dark lane inside an "
+        "inclined disc (D206). **Missing past the stellar disc's edge**: the pressure it comes from counts the "
+        "stars' gravity alone, so where the stars end nothing in it holds the gas and the quotient runs to "
+        "kiloparsecs and then tens of them. It is published only where the layer is thinner than the distance "
+        "over which the stars that hold it thin out; in a real disc the gas's own weight and the halo hold the "
+        "outer gas, so the outermost rings' flare is overstated too. Only the height is derived; the layer's "
+        "shape is the renderer's one form."
     ),
 )
 
@@ -205,9 +257,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     sigma_dust = sigma_gas * dgr
     a_v = sigma_dust * float(ctx.constants["DUST_EXTINCTION_COEFFICIENT"])
 
+    rho0 = midplane_density(pressure, v_disp)
+
     return {
         "gas_midplane_pressure": pressure,
-        "gas_midplane_density": midplane_density(pressure, v_disp),
+        "gas_midplane_density": rho0,
+        "gas_scale_height": layer_height(sigma_gas, rho0, local_scale_length(sigma_star, ctx.grid.R)),
         "gas_molecular_fraction_profile": f_mol,
         "gas_molecular_surface_density": sigma_h2,
         "gas_h2_fraction": h2_fraction,
@@ -239,7 +294,7 @@ ISM = IMPLEMENTATIONS.register(
             "thin_disc_scale_height", "feh_gas",
         ),
         publishes=(
-            MIDPLANE_PRESSURE, MIDPLANE_DENSITY, H2_FRACTION_PROFILE, MOLECULAR_SURFACE, H2_FRACTION,
+            MIDPLANE_PRESSURE, MIDPLANE_DENSITY, GAS_SCALE_HEIGHT, H2_FRACTION_PROFILE, MOLECULAR_SURFACE, H2_FRACTION,
             DUST_TO_GAS, DUST_SURFACE, DUST_EXTINCTION,
         ),
     )

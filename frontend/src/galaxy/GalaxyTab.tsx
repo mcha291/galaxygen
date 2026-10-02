@@ -105,8 +105,9 @@ const POOL_MAX_STARS = 2_000_000;
 const BRIGHTEST_SETTLE_MS = 120;
 /** The N slider's range, decades: 10² to 10⁵ stars, logarithmic. */
 const BRIGHTEST_DECADES = { lo: 2, hi: 5 };
-/** The brightest mode's component switches (D205), each a tuning value, all off by default. */
-const COMPONENT_SWITCHES: { key: "compStars" | "compGas" | "compDust" | "compClouds" | "compCells"; label: string; what: string }[] = [
+/** The brightest mode's component switches (D205), each a tuning value: the star points on by default, the layers off. */
+const COMPONENT_SWITCHES: { key: "compPoints" | "compStars" | "compGas" | "compDust" | "compClouds" | "compCells"; label: string; what: string }[] = [
+  { key: "compPoints", label: "stars", what: "The N most luminous stars in view, as points: the mode's own picture. Off shows the other layers alone" },
   { key: "compStars", label: "starlight", what: "The field's stellar layer and the bulge, as the volume the model publishes light for, cell by cell" },
   { key: "compGas", label: "ionized gas", what: "The HII regions' layer and the diffuse gas's layer, with their lines, as the field draws them" },
   { key: "compDust", label: "dust", what: "The dust: as it acts (extinction, scattered and thermal light) or where it is (a diagnostic)" },
@@ -224,13 +225,15 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
     return starsInWindow(c.star_radius, c.star_azimuth, seen);
   }, [sample, seen?.r_min, seen?.r_max, seen?.phi_min, seen?.phi_max]); // eslint-disable-line react-hooks/exhaustive-deps
   const poolStars = seen ? regionSampleSize(STAR_SAMPLE, inFootprint, POOL_TARGET_STARS, POOL_MAX_STARS) : 0;
-  const brightestKey = seen && view ? JSON.stringify([seen, poolStars, brightestN, roundedView(view.camera.viewProjection), query]) : null;
+  // No selection is asked for while the star points are switched off (the footprint still cuts the cloud census).
+  const brightestKey =
+    seen && view && tuning.compPoints ? JSON.stringify([seen, poolStars, brightestN, roundedView(view.camera.viewProjection), query]) : null;
   const brightest = useLoad<Sample>(
     brightestKey,
     (signal) => loadBrightest(seen!, poolStars, brightestN, view!.camera.viewProjection, query, signal),
     BRIGHTEST_SETTLE_MS,
   );
-  const bright = mode === "brightest" && brightest.value ? brightest.value : null;
+  const bright = mode === "brightest" && tuning.compPoints && brightest.value ? brightest.value : null;
 
   // The brightest mode's component layers (D205): all off by default, so the mode draws as before.
   const R = meta.grid.axes.R;
@@ -355,18 +358,16 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
               </button>
             ))}
           </div>
-          {mode === "field" && (
-            <>
-              <div className={styles.label}>Filters</div>
-              <div className={styles.pair}>
-                {FILTER_SET_NAMES.map((name) => (
-                  <button key={name} aria-pressed={name === filterSet} title={FILTER_SETS[name].about} onClick={() => setFilterSet(name)}>
-                    {FILTER_SETS[name].label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+          {/* The filter set is chosen in either mode (T22): the brightest mode's points and its component
+              volumes are seen through it as the field is, and a line set (SHO, HOO) is what shows the ionized gas. */}
+          <div className={styles.label}>Filters</div>
+          <div className={styles.pair}>
+            {FILTER_SET_NAMES.map((name) => (
+              <button key={name} aria-pressed={name === filterSet} title={FILTER_SETS[name].about} onClick={() => setFilterSet(name)}>
+                {FILTER_SETS[name].label}
+              </button>
+            ))}
+          </div>
           {mode === "brightest" && (
             <>
               <div className={styles.zoomHead}>
@@ -405,7 +406,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
                 ))}
               </div>
             )}
-            <p className={styles.muted}>cold atomic gas: published per ring, no layer height — not drawn</p>
+            <p className={styles.muted}>cold atomic gas: published per ring, with its layer height since D206 (the dust shares it) — not drawn yet</p>
           </div>
         )}
 
@@ -433,7 +434,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
               ? `The field under the stars is always light, seen through the ${FILTER_SETS[filterSet].label} filters: the model integrates its stars, bulge, Hα and the dust's scattered and thermal light through each filter, and the dust dims each filter by its own depth along each line of sight. Exposure scales it, and the stars too when they are painted as light - through the same filters, each star's light as a blackbody of its temperature, so a hot star is dimmer here than its bolometric light.`
               : `Stars only, brightest first by published luminosity: no field, no sample. Painted as light, the view is exposed to its hundredth-brightest star, the few above burning out${
                   bright && field === PHOTOMETRIC ? ` (${autoStops >= 0 ? "+" : ""}${autoStops.toFixed(1)} stops here)` : ""
-                }, and the slider adds to that.${
+                }, and the slider adds to that. Stars and components are seen through the ${FILTER_SETS[filterSet].label} filters.${
                   marchOn ? " The component volumes take the slider's stops alone, not the stars' own exposure, so they hold still as N changes." : ""
                 }`}
           </p>
@@ -493,7 +494,9 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           {mode === "brightest"
             ? seen === null
               ? "Nothing of the galaxy is in view."
-              : brightest.busy || !bright || !bright.header.brightest
+              : !tuning.compPoints
+                ? `${current.what} The stars are switched off: only the other components are drawn.`
+                : brightest.busy || !bright || !bright.header.brightest
                 ? `${current.what} Finding the ${brightestN.toLocaleString("en")} brightest.`
                 : `${current.what} ${bright.header.brightest.returned.toLocaleString("en")} of the ${bright.header.brightest.in_view.toLocaleString("en")} stars in view, from a pool of ${bright.header.brightest.pool.toLocaleString("en")} (a ${poolStars.toLocaleString("en")}-star galaxy). Click one to open its system.`
             : `${regime.what} ${

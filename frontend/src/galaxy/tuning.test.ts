@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
-import before from "./fieldFragment.s46.glsl?raw";
+import pinned from "./fieldFragment.d207.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
-import { CLOSE_FIELD_FLOOR, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
+import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
   BLOOM,
   MAX_RESOLUTION,
@@ -56,6 +56,7 @@ describe("tuning defaults (D199)", () => {
       toneMapping: "agx",
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
+      compPoints: true,
       compStars: false,
       compGas: false,
       compDust: false,
@@ -82,44 +83,30 @@ describe("tuning defaults (D199)", () => {
     }
   });
 
-  it("leave the march's fragment shader as it was but for the declared uniforms (S47's two, S50's component layers)", () => {
-    // The snapshot is FieldVolume's FRAGMENT taken from session-46's tip before S47. With the defaults the
-    // source differs only where the uniforms enter: S47's declarations, the sub-sample clamp's bound (8.0
-    // then, subMax = 8 now) and the dither's switch (dither = 1 takes the same hash); and S50's (D205)
-    // component layers: their declarations, each layer's multiplier (1 in the field: components.ts
-    // FIELD_LAYERS), the dust's depth switch (1) and the "where it is" term and its ramp function (its level
-    // 0, so it adds zero). Each edit is undone by exactly one replacement, and each must find its edit.
+  it("leave the march's fragment shader the one D206 and D207 ruled, with the default steps", () => {
+    // The snapshot is FieldVolume's fragment as D206 and D207 (S50) left it (D207 added the dust's placement). Until then this test undid S47's and
+    // S50's declared uniforms one replacement at a time and compared the rest with session-46's source, which
+    // proved those two rows changed no picture. D206 changes the march on purpose (the dust in its own layer,
+    // each sub-step composed in order), so the comparison ends there and the source is pinned whole: a change
+    // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
-    const edits: [RegExp | string, string][] = [
-      [/\n {2}\/\/ The most sub-samples[^\n]*\n {2}uniform float subMax;\n {2}\/\/ 1 offsets[^\n]*\n {2}uniform float dither;/, ""],
-      ["1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`],
-      [/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;"],
-      [
-        /\n {2}\/\/ The component layers \(D205[^\n]*(?:\n {2}\/\/[^\n]*){3}\n {2}uniform float starsGain;\n {2}uniform float gasGain;\n {2}uniform float dustGain;\n {2}uniform float dustDepth;\n {2}uniform float dustWhere;\n {2}uniform vec3 whereStops\[\d+\];/,
-        "",
-      ],
-      [
-        /\n\n {2}\/\/ The dust diagnostic's ramp \(D205\)[^\n]*\n {2}vec3 whereTint\(float t\) \{[\s\S]*?\n {2}\/\/ Each ring's level[^\n]*\n {2}float readLevel\(float r\) \{\n[^\n]*\n {2}\}/,
-        "",
-      ],
-      ["bulge * starsGain / float(n);", "bulge / float(n);"],
-      ["starsHeight, sub) * starsGain;", "starsHeight, sub);"],
-      ["hiiHeight, sub) * gasGain;", "hiiHeight, sub);"],
-      ["digHeight, sub) * gasGain;", "digHeight, sub);"],
-      [/(readRing\(rp\.x, \d\.0\)\) \* cDust) \* dustGain;/, "$1;"],
-      [
-        /vec3 tau = (readRing\(rp\.x, \d\.0\)) \* cDust;\n {10}\/\/ Where it is \(D205\)[^\n]*\n {10}\/\/[^\n]*\n {10}float level = readLevel\(rp\.x\);\n {10}emitted \+= dustWhere \* level \* whereTint\(level\) \* cDust;\n {10}depth = tau \* dustDepth;/,
-        "depth = $1 * cDust;",
-      ],
-    ];
-    let undone = now;
-    for (const [from, to] of edits) {
-      const next = undone.replace(from, to);
-      expect(next, `edit not found: ${String(from)}`).not.toBe(undone);
-      undone = next;
+    expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
+    // What the tuning panel and the component switches reach are uniforms, and at the field's defaults each is
+    // the identity: the sub-samples' cap, the dither, the layers' multipliers and the dust's depth switch.
+    for (const name of ["subMax", "dither", "starsGain", "gasGain", "dustGain", "dustDepth", "dustWhere"]) {
+      expect(now).toContain(`uniform float ${name};`);
     }
-    expect(undone).toBe(before);
+    expect(now).toContain(`1.0, subMax));`);
+    expect(SUB_SAMPLES_MAX).toBe(8);
+    // D206: the dust's height is read per ring, never a uniform, and the cuts are regimes.ts's.
+    expect(now).not.toContain("uniform float dustHeight");
+    expect(now).toContain(`for (int m = 0; m <= ${DUST_CUTS.length}; m++)`);
+    DUST_CUTS.forEach((c) => expect(now).toContain(`return ${c.toFixed(2)};`));
+    // D207: the dust's placement multiplies its depth, its thermal light and the diagnostic, not the scattered light.
+    expect(now).toContain("float place = scattered.a;");
+    expect(now).toMatch(/tau = readRing\(rp\.x, \d\.0\) \* place \* dustDepth;/);
+    expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
   });
@@ -186,6 +173,12 @@ describe("tuning storage", () => {
 
   it("leaves every component off by default, nothing stored, and keeps a switched one (D205)", () => {
     for (const key of ["compStars", "compGas", "compDust", "compClouds", "compCells"] as const) expect(TUNING_DEFAULTS[key]).toBe(false);
+    // The star points are the mode's own picture: on by default, so the mode still draws as before, and a switch
+    // like the others, so a layer can be seen alone.
+    expect(TUNING_DEFAULTS.compPoints).toBe(true);
+    expect(changed({ ...TUNING_DEFAULTS, compPoints: false })).toEqual({ compPoints: false });
+    expect(sanitize({ compPoints: false }).compPoints).toBe(false);
+    expect(sanitize({ compPoints: "no" }).compPoints).toBe(true);
     expect(TUNING_DEFAULTS.dustReading).toBe("acts");
     for (const key of ["starsIntensity", "gasIntensity", "dustIntensity", "cloudIntensity"] as const) expect(TUNING_DEFAULTS[key]).toBe(1);
     const s = memory();
@@ -198,7 +191,7 @@ describe("tuning storage", () => {
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
-    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["compCells", "compClouds", "compDust", "compGas", "compStars", "dustReading"]);
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
     for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });

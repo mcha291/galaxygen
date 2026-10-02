@@ -26,7 +26,7 @@ import {
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
@@ -93,6 +93,18 @@ const VERTEX = /* glsl */ `
 // behind. Read once per step, a grazing step spans many cells, and neighbouring pixels quantised R at the
 // same step boundaries: the disc drew as concentric terraces. The columns are exact per sub-step and add
 // to the step's, so the sub-samples change where the layers are read, not how much light there is.
+//
+// The dust in its own layer (S50, D206): the model publishes the gas's scale height ring by ring and the
+// render names it the dust's — tens of parsecs in the inner disc against the stars' few hundred. A sub-step
+// that spans such a layer cannot treat light and dust as mixed (that is exact only when they share a
+// profile), so it is cut at fixed multiples of the dust's height (regimes.ts DUST_CUTS) and its pieces are
+// composed front to back, each with its exact columns: the stars in front of the dust are not dimmed by it,
+// and an inclined view shows the dark lane inside the stellar disc.
+//
+// The dust round each ring (S50, D207): the render's placement — the pattern's contrast, the dust's column at
+// a cell over its ring's mean — multiplies the ring's depth, thermal light and diagnostic where the sub-step
+// reads them. The march is unchanged: a multiplication of what it already read.
+//
 // The steps are compiled in (a GLSL loop needs a constant bound): a new count is a new shader (D199).
 export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D plane;
@@ -109,8 +121,9 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // 1 offsets each step by the pixel's fixed fraction; 0 reads each sub-step at its middle (D199).
   uniform float dither;
   uniform float halfHeight;
+  // The layers' scale heights, kpc (the render header's layers). The dust's is per ring since D206 and rides in
+  // the ring texture (readHeight).
   uniform float starsHeight;
-  uniform float dustHeight;
   uniform float hiiHeight;
   uniform float digHeight;
   uniform float bulgeScale;
@@ -199,6 +212,14 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   float readLevel(float r) {
     return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.depth}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
   }
+  // The dust layer's scale height at a ring, kpc (D206): the thermal row's spare channel (regimes.ts planeTexture).
+  float readHeight(float r) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.thermal}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+  // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
+  float dustCut(int k) {
+    ${DUST_CUTS.map((c, k) => (k < DUST_CUTS.length - 1 ? `if (k == ${k}) return ${c.toFixed(2)};` : `return ${c.toFixed(2)};`)).join("\n    ")}
+  }
 
   void main() {
     vec3 origin = cameraPosition;
@@ -243,30 +264,65 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         if (j >= n) break;
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
-        vec3 emitted = bulge * starsGain / float(n);
-        vec3 depth = vec3(0.0);
+        vec3 bulgeSub = bulge * starsGain / float(n);
         vec2 rp = polarOf(readPoint(q0, q1, jitter));
-        // Beyond rHi every texture is zero: the box's side faces clip nothing but zeros.
+        // What the sub-step reads, once: each layer's light per unit of its own column, the dust's depth per
+        // unit of the dust's, and the dust layer's height at this ring (D206). Beyond rHi every texture is
+        // zero: the box's side faces clip nothing but zeros.
+        vec3 starsLight = vec3(0.0);
+        vec3 dustLight = vec3(0.0);
+        vec3 hiiLight = vec3(0.0);
+        vec3 digLight = vec3(0.0);
+        vec3 tau = vec3(0.0);
+        float hDust = 0.0;
         if (rp.x < rHi) {
-          float cStars = column(q0.y, q1.y, starsHeight, sub) * starsGain;
-          float cDust = column(q0.y, q1.y, dustHeight, sub);
-          float cHii = column(q0.y, q1.y, hiiHeight, sub) * gasGain;
-          float cDig = column(q0.y, q1.y, digHeight, sub) * gasGain;
-          emitted += readPolar(plane, rp).rgb * cStars;
-          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust * dustGain;
-          emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-          vec3 tau = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          starsLight = readPolar(plane, rp).rgb * starsGain;
           // Where it is (D205): a diagnostic, the ring's level on the declared ramp in its declared scale, in the
           // ramp's colour at that level, spread through the dust's layer by its column; it dims nothing.
           float level = readLevel(rp.x);
-          emitted += dustWhere * level * whereTint(level) * cDust;
-          depth = tau * dustDepth;
+          // The dust's column here over its ring's mean (D207): the model's placement, in the scattered
+          // light's spare channel. It multiplies the depth, the thermal light and the diagnostic — everything that
+          // is the dust's own column — and not the scattered light, already a share of the placed starlight.
+          vec4 scattered = readPolar(scatter, rp);
+          float place = scattered.a;
+          dustLight = (scattered.rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          digLight = readRing(rp.x, ${RING_ROWS.dig}.0) * gasGain;
+          tau = readRing(rp.x, ${RING_ROWS.depth}.0) * place * dustDepth;
+          hDust = readHeight(rp.x);
         }
-        // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
-        // only what lies behind it, so light and dust keep their order inside a long step.
-        vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
-        light += transmitted * emitted * own;
-        transmitted *= exp(-depth);
+        // Composed in order (D206; regimes.ts composeStep, line for line). The dust's layer is far thinner than
+        // the stars' in the inner disc, so a sub-step that spans it is cut at fixed multiples of the dust's
+        // height and its pieces taken front to back: the stars in front of the layer are not dimmed by it. The
+        // layers are symmetric about the midplane, so heights run upward along the ray in u.
+        float sgn = q1.y >= q0.y ? 1.0 : -1.0;
+        float u0 = sgn * q0.y;
+        float u1 = sgn * q1.y;
+        float du = u1 - u0;
+        bool whole = hDust <= 0.0 || du <= 1e-6 * hDust;
+        for (int m = 0; m <= ${DUST_CUTS.length}; m++) {
+          float a = u0;
+          float b = u1;
+          float share = 1.0;
+          if (whole) {
+            if (m > 0) break;
+          } else {
+            a = max(u0, m == 0 ? -1.0e9 : dustCut(m - 1) * hDust);
+            b = min(u1, m == ${DUST_CUTS.length} ? 1.0e9 : dustCut(m) * hDust);
+            if (b <= a) continue;
+            share = (b - a) / du;
+          }
+          float piece = sub * share;
+          float cDust = column(a, b, hDust, piece);
+          vec3 emitted = bulgeSub * share + starsLight * column(a, b, starsHeight, piece) + dustLight * cDust
+            + hiiLight * column(a, b, hiiHeight, piece) + digLight * column(a, b, digHeight, piece);
+          vec3 depth = tau * cDust;
+          // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each piece's dust dims only what
+          // lies behind it, so light and dust keep their order inside a long step.
+          vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
+          light += transmitted * emitted * own;
+          transmitted *= exp(-depth);
+        }
       }
     }
     gl_FragColor = vec4(light * gain, 1.0);
@@ -368,6 +424,10 @@ export function FieldVolume({
       extinction: a.dust_extinction,
       scattered: a.dust_scattered,
       thermal: a.dust_thermal,
+      // The dust's layer (D206): the render's per-ring heights where the header names them, else its one height.
+      dustHeight: typeof layers.dust === "string" ? a[layers.dust] : layers.dust,
+      // The dust round each ring (D207): the render's placement where the header names one, else an even ring.
+      dustPlacement: light.header.placement?.dust ? a[light.header.placement.dust] : null,
       white,
     });
     // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
@@ -420,9 +480,9 @@ export function FieldVolume({
         subMax: { value: SUB_SAMPLES_MAX },
         dither: { value: 1 },
         halfHeight: { value: halfHeight },
-        // The model's layers (the render header): a missing one is height 0, which draws nothing.
+        // The model's layers (the render header): a missing one is height 0, which draws nothing. The dust's
+        // height is in the ring texture, ring by ring (D206).
         starsHeight: { value: layers.stars ?? 0 },
-        dustHeight: { value: layers.dust ?? 0 },
         hiiHeight: { value: layers.halpha_hii ?? 0 },
         digHeight: { value: layers.halpha_dig ?? 0 },
         bulgeScale: { value: Math.max(bulgeScale, 1e-3) },

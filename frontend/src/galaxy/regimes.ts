@@ -7,11 +7,15 @@
 // RENDER_PHYSICS §2, "components, not colours").
 //
 // Since S39 (BUILD_II V2) every component is placed by the model and spread through a layer the
-// model names (the render header's `layers`, each a sech²(z / 2h) / 4h profile): the stars and the
-// dust's own light and scattered light in the thin disc, where the dust is mixed with them (the dust
-// stage's heating geometry); the HII regions' Hα, placed round each ring by the pattern's contrast, in
-// the clouds' layer; the diffuse gas's Hα in its own published 1.4 kpc layer, which a tilted view sees
-// brighten toward the limb. The dust dims each filter by its own depth from the grain model's curve.
+// model names (the render header's `layers`, each a sech²(z / 2h) / 4h profile): the stars in the thin
+// disc; the dust, with its own and its scattered light, in the gas's layer, whose height the model
+// publishes ring by ring since D206 (S50) — a few tens of parsecs in the inner disc, flaring outward —
+// so an inclined view sees a dark lane inside the stellar disc (until then it shared the stars' one
+// height); the HII regions' Hα, placed round each ring by the pattern's contrast, in the clouds' layer;
+// the diffuse gas's Hα in its own published 1.4 kpc layer, which a tilted view sees brighten toward
+// the limb. The dust dims each filter by its own depth from the grain model's curve, and since D207 its
+// column round each ring follows the pattern's contrast, as the model places it (`dust_placement`): heavier on
+// an arm than between arms, each ring's total unchanged.
 //
 // **What the field regime still invents at galaxy scale: nothing structural.** The seeded Hα knots,
 // the clump lattice, the dust's lead onto the arms' inner edge, the line's and the dust's crowding
@@ -64,10 +68,13 @@ export function phaseAt(factor: readonly number[] | null | undefined, cosView: n
   return factor[k] + (factor[k + 1] - factor[k]) * (x - k);
 }
 
-/** The model's layers, kpc (/api/render's header `layers`); a missing one draws its component nowhere. */
+/**
+ * The model's layers, kpc (/api/render's header `layers`); a missing one draws its component nowhere. The dust's
+ * is one height or, since D206, the name of the render's per-ring array of heights (`dust_height`).
+ */
 export interface Layers {
   stars: number | null;
-  dust: number | null;
+  dust: number | string | null;
   halpha_hii?: number | null;
   halpha_dig?: number | null;
 }
@@ -92,6 +99,16 @@ export interface PlaneFields {
   /** The dust's thermal emission per (R, filter) (`dust_thermal`). */
   thermal?: ArrayLike<number>;
   /**
+   * The dust layer's scale height, kpc: per R cell (`dust_height`, D206) or one height for every ring. Missing,
+   * or not a positive number at a ring, is no layer there: the dust is drawn nowhere (rule B9).
+   */
+  dustHeight?: ArrayLike<number> | number | null;
+  /**
+   * The dust's column at each (R, φ) cell over its ring's mean, row-major over (R, φ) (`dust_placement`, D207):
+   * the pattern's contrast, placed by the model. Missing, or not a number at a cell, is an even ring there: 1.
+   */
+  dustPlacement?: ArrayLike<number> | null;
+  /**
    * The white point: each filter's response to a unit of white light (/api/render's `white`). Every
    * channel is divided by it, so white light draws (1, 1, 1) per unit of light in any filter set.
    */
@@ -101,13 +118,18 @@ export interface PlaneFields {
 export interface PlaneTexture {
   /** The stars, in the thin disc's layer: RGB each filter's response over its white point; A unused. */
   data: Float32Array;
-  /** The scattered light, in the dust's layer, all directions together (the shader applies the phase); A unused. */
+  /**
+   * The scattered light, in the dust's layer, all directions together (the shader applies the phase). A: the
+   * dust's placement (D207), its column at the cell over the ring's mean; 1 where the render places nothing.
+   */
   scatter: Float32Array;
   /** The HII regions' Hα, in the clouds' layer, over the white point; A unused. */
   hii: Float32Array;
   /**
    * Per ring, three rows of one texel per R cell: row 0 the dust's face-on optical depth per channel,
-   * row 1 the diffuse gas's Hα and row 2 the dust's thermal emission, each over the white point; A unused.
+   * row 1 the diffuse gas's Hα and row 2 the dust's thermal emission, each over the white point. The spare
+   * channel: row 0's is the dust diagnostic's level (D205, written by FieldVolume), row 2's the dust layer's
+   * scale height, kpc (D206), row 1's unused.
    */
   rings: Float32Array;
   width: number;
@@ -128,7 +150,7 @@ export const RING_ROWS = { depth: 0, dig: 1, thermal: 2, count: 3 } as const;
  * where it is light, or −ln of its transmission where it is dust: nothing is placed, clumped or recoloured.
  */
 export function planeTexture(fields: PlaneFields): PlaneTexture {
-  const { R, phi, stars, hii, dig, extinction, scattered, thermal, white } = fields;
+  const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
   const data = new Float32Array(R.n * nPhi * 4);
@@ -136,6 +158,8 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
   const line = new Float32Array(R.n * nPhi * 4);
   const rings = new Float32Array(R.n * RING_ROWS.count * 4);
   for (let i = 0; i < R.n; i += 1) {
+    const h = Number(typeof dustHeight === "number" ? dustHeight : (dustHeight?.[i] ?? 0));
+    rings[(RING_ROWS.thermal * R.n + i) * 4 + 3] = Number.isFinite(h) && h > 0 ? h : 0;
     for (let k = 0; k < 3 && k < nF; k += 1) {
       rings[(RING_ROWS.depth * R.n + i) * 4 + k] = extinction ? depthOf(Number(extinction[i * nF + k])) : 0;
       rings[(RING_ROWS.dig * R.n + i) * 4 + k] = dig ? balanced(Number(dig[i * nF + k]), white[k]) : 0;
@@ -144,6 +168,8 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
     for (let j = 0; j < nPhi; j += 1) {
       const q = (j * R.n + i) * 4;
       const at = (i * nPhi + j) * nF;
+      const place = dustPlacement ? Number(dustPlacement[i * nPhi + j]) : 1;
+      scatter[q + 3] = Number.isFinite(place) && place >= 0 ? place : 1;
       for (let k = 0; k < 3 && k < nF; k += 1) {
         data[q + k] = balanced(Number(stars[at + k]), white[k]);
         scatter[q + k] = scattered ? balanced(Number(scattered[at + k]), white[k]) : 0;
@@ -182,15 +208,80 @@ export function layerShare(y0: number, y1: number, h: number): number {
 }
 
 /**
+ * The column of a sech²(y / 2h) / 4h layer along a ray from height y0 to y1 over a path `ds` — the shader's
+ * `column`, line for line: its share of height over the ray's slope, or for a ray running level the density at
+ * its height times the path. No layer (h ≤ 0) is no column.
+ */
+export function layerColumn(y0: number, y1: number, h: number, ds: number): number {
+  if (!(h > 0)) return 0;
+  const dy = y1 - y0;
+  if (Math.abs(dy) < 1e-4 * h) return (1 / Math.cosh(Math.min(30, Math.max(-30, (0.5 * (y0 + y1)) / (2 * h)))) ** 2 / (4 * h)) * ds;
+  return (layerShare(y0, y1, h) * ds) / Math.abs(dy);
+}
+
+/**
+ * Where the march cuts a sub-step that crosses the dust's layer, in the dust's own scale heights about the
+ * midplane (D206). Since the dust has its own height a sub-step may span the whole of a layer far thinner than
+ * the stars': treated as one mixed slab (S39's `(1 − e^−τ)/τ`, exact only when light and dust share a profile)
+ * it would dim the stars in front of the layer as if they were inside it. Cut here, each piece is composed in
+ * order along the ray, and inside a piece the mixing is a small error: beyond the last cut 1.7 × 10⁻⁵ of the
+ * dust is left, between two cuts the stars' share is a few of the dust's heights over four of their own. The
+ * march's sampling, not physics: `regimes.test.ts` holds it against a quadrature of the two layers (within
+ * 0.6 % of the unattenuated light from face-on to cos i = 0.1 over the default galaxy's rings; eight cuts at
+ * ±1, ±2.5, ±5 and ±8 left 3.6 %).
+ */
+export const DUST_CUTS = [-11, -8, -6, -4.5, -3, -2, -1, 1, 2, 3, 4.5, 6, 8, 11] as const;
+
+/**
+ * One sub-step of the march through the stars and the dust, composed in order — the shader's piece loop, line for
+ * line, for a unit face-on column of starlight in a layer `hStars` and a dust of face-on optical depth `tau` in a
+ * layer `hDust`, along a ray from height y0 to y1 over a path `path` (the same units as the heights). Returns the
+ * light that leaves the sub-step's near end and the share of what lies behind it that the sub-step lets through.
+ */
+export function composeStep(y0: number, y1: number, path: number, hStars: number, hDust: number, tau: number): { light: number; transmitted: number } {
+  // Heights run upward along the ray in u: the layers are symmetric about the midplane, so a descending ray is
+  // the ascending one mirrored.
+  const sign = y1 >= y0 ? 1 : -1;
+  const u0 = sign * y0;
+  const u1 = sign * y1;
+  const du = u1 - u0;
+  const whole = !(hDust > 0) || du <= 1e-6 * hDust;
+  let light = 0;
+  let transmitted = 1;
+  for (let m = 0; m <= DUST_CUTS.length; m += 1) {
+    let a = u0;
+    let b = u1;
+    let share = 1;
+    if (whole) {
+      if (m > 0) break;
+    } else {
+      a = Math.max(u0, m === 0 ? -1e9 : DUST_CUTS[m - 1] * hDust);
+      b = Math.min(u1, m === DUST_CUTS.length ? 1e9 : DUST_CUTS[m] * hDust);
+      if (b <= a) continue;
+      share = (b - a) / du;
+    }
+    const ds = path * share;
+    const depth = tau * layerColumn(a, b, hDust, ds);
+    const own = depth >= 1e-3 ? (1 - Math.exp(-depth)) / Math.max(depth, 1e-6) : 1 - 0.5 * depth;
+    light += transmitted * layerColumn(a, b, hStars, ds) * own;
+    transmitted *= Math.exp(-depth);
+  }
+  return { light, transmitted };
+}
+
+/**
  * Where the march reads the model's layers: tall enough that the thickest layer's sech²(y / 2h) is under
  * 10⁻⁶ of its midplane value at the box's top and bottom faces (D197 (3)), and the bulge has faded, and
  * never under 2 kpc. At ten scale heights (S39 to S46) the faces cut the diffuse gas's layer at
  * sech²(5) ≈ 1.8 × 10⁻⁴ of its midplane density, which a grazing ray carries across the whole box and a
  * raised exposure shows as a straight edge. Fourteen leave sech²(7) ≈ 3.3 × 10⁻⁶, still over the ruled
- * 10⁻⁶; sixteen leave sech²(8) ≈ 4.5 × 10⁻⁷.
+ * 10⁻⁶; sixteen leave sech²(8) ≈ 4.5 × 10⁻⁷. A dust layer given per ring (D206) does not size the box: its
+ * height passes the stars' only in the outer disc, where the dust's depth is a hundredth or less, and the
+ * formula it comes from diverges beyond the stellar disc, where there is no dust to cut.
  */
 export function marchHalfHeight(layers: Layers, bulgeScale: number): number {
-  const heights = [layers.stars, layers.dust, layers.halpha_hii, layers.halpha_dig].map((h) => Number(h ?? 0)).filter(Number.isFinite);
+  const dust = typeof layers.dust === "number" ? layers.dust : 0;
+  const heights = [layers.stars, dust, layers.halpha_hii, layers.halpha_dig].map((h) => Number(h ?? 0)).filter(Number.isFinite);
   return Math.max(MARCH_SCALE_HEIGHTS * Math.max(0, ...heights), 12 * bulgeScale, 2);
 }
 

@@ -7717,3 +7717,156 @@ every layer is a published field or census through its declared ramp or through 
 the star-first accounting (the layers here are for looking, and the starlight volume is the total, not the remainder
 under the points); the cold atomic gas (published per ring by the ism stage without a layer height: named in the
 panel as not drawn). Viewer-only; no model change.
+
+### D206. S50: the dust in its own layer — the gas's scale height published per ring and read by the render as the dust's (debt #109's layer), on the owner's word
+
+**The owner, in chat, on 2026-10-02:** asked whether a three-dimensional dust gains anything or averages out as the
+chemistry does; was told the composition averages and the place does not, that the arm pattern as it stands moves a
+ring's light by a per cent or so (a probe, recorded in `RESEARCH_AREAS.md` §1) and that the vertical layer is the
+larger gain; then: "work on adding dust verticality". **The model's pin is lifted for this piece only.** In the same
+message the owner asked for `docs/RESEARCH_AREAS.md` and the spiral's shape as its first entry: written first, a
+record and not a ruling. Also in this session, before this decision and viewer-only: the filter-set selector is shown
+in the brightest mode as it is in the field (the owner, "add the filters to the brightest mode for showing ionized
+gases": VIEWER_TASKS T22's selector). Written before any code moved (D113).
+
+**The ruling.** (1) **One field, derived**: the ism stage publishes `gas_scale_height` (R), pc — **h = Σ_gas / 4ρ₀**,
+the height of the render's one layer form, sech²(z / 2h) / 4h, that holds the published gas column at the published
+midplane density (the stellar heights' convention: `vertical.scale_height` is the isothermal sheet's z₀ / 2). No new
+constant and no source: it is debt #109's stated closure, "Σ/2ρ₀ from the ISM's midplane density", in the layer's own
+h. The profile's *shape* is the render's form, not a derivation `[inferred]`; an isothermal gas in the stars' potential
+is nearer a Gaussian, the named alternative, which holds the same column and midplane density at h = Σ / √(2π)ρ₀
+(1.6 times this h). NaN where the stage has no midplane density (B9). (2) **The dust follows the gas**: one
+dust-to-gas ratio through the layer's height `[inferred]` — the ism stage's own assumption in the plane. (3) **The
+render** returns the dust's layer per ring: `layers.dust` names an array, `dust_height` (R), kpc, where the model
+publishes the field, and stays the stars' one height where it does not. (4) **The viewer** reads that height ring by
+ring, and **orders light and dust inside a step**: with the dust thinner than the stars a step that spans the layer
+may no longer treat them as mixed (S39's `(1 − e^−τ)/τ`, exact only for one shared profile), so a step is cut at
+fixed multiples of the dust's height and each piece composed in order; the gate is the march's arithmetic, mirrored
+in TypeScript, against a brute-force quadrature of the two layers. (5) **Not changed, and registered as #128**: the
+dust stage's *heating* still treats stars and dust as one uniformly mixed slab, so do the scattered share and the
+frame's balance (model-side arithmetic, `tests/test_render.py`): after this row the picture's geometry and the energy
+budget's differ. What the layered geometry would absorb is measured by a probe and pinned beside the debt, not
+applied: it moves T_d and L_IR, and that is a ruling of its own.
+
+**What the probe read before the ruling (repo unchanged, the default galaxy):** h = 21 pc at the centre, 31 at 2 kpc,
+47 at 4, **113 at R₀** (0.32 of the thin disc's 356), 174 at 10, 438 at 15, 774 at 20 kpc; it equals the stars' height
+at 13.1 kpc; the dust-mass-weighted mean is 65 pc. Beyond the stellar disc it diverges (95 kpc at 25 kpc): the
+pressure prescription takes the stars' gravity alone, and where there are no stars nothing holds the gas — the
+field's about says so, and there is no dust there to draw. **No observed height was read before the ruling, so none
+can become a row (D113).**
+
+**The prediction that could fail (B4).** Face-on, a ring far thicker than τ = 1 shows about half its starlight (the
+near side, in front of the layer) where the mixed slab showed 1/τ of it: the inner disc brightens, the Sun's ring
+does not move by more than a few per cent (τ_V 0.47: 0.80 mixed, 0.81 layered). Edge-on, a dark lane thinner than
+the stellar disc appears, widening outward. If the face-on Sun's ring moves by more than 5 %, or the edge-on frame
+shows no lane, the ordering in the march is wrong.
+
+**Applied (2026-10-02, the session itself, Opus 5.5; no builder).** *The model:* `ism.layer_height` and the field as
+ruled, plus one thing the ruling did not foresee and the picture showed. **The quotient has no claim past the stellar
+disc's edge**: the pressure counts the stars' gravity alone, the stars fall away at 23.6 kpc within a few hundred
+parsecs, and Σ/4ρ₀ runs 1.2 kpc at 23 kpc, 10 kpc at 24, 118 kpc at 26. Drawn, those rings flooded the dust
+diagnostic with layers taller than the galaxy. Three domains were tried in order: *h < R* (cuts from 24.1 kpc and
+leaves the 2–10 kpc rings of the edge itself); *h below the height the gas's own weight would give it* (the stage's
+stated "fails in the gas-dominated outer disc" — but it refuses the inner 2 kpc too, where the central reservoir
+out-weighs the formula's stars: 52 % of the dust's mass, killed by the number); and the one kept — **h below the
+radial scale over which the stars that hold the layer change** (`ism.local_scale_length`, 1/|d ln Σ★/dR|): a slab
+taller than the distance over which its support vanishes is not the plane-parallel slab the estimate assumed
+`[inferred]`. It refuses exactly the edge: the first missing ring is 23.66 kpc at N_R 400 (23.44, 23.63, 23.64 at
+48, 120, 800), every ring inside has a height and none outside, the margin inside is never under 2.3 heights, and
+the dust left without a layer is 1.5 × 10⁻⁵ of its mass at under a thousandth of a magnitude. The outermost kept
+rings' flare (0.8–1.3 kpc at 20–23.6 kpc) is still the star-only formula's and overstated; the field's about says
+so. No acceptance row reads the field; no number of any other field moved.
+*The render:* `layers.dust` is `"dust_height"`, the array rides beside the components with `axes` `["R"]` (or
+`["cell"]` at a level, the cell's area-weighted mean), `layers.arrays` names its unit and field, and a model that
+publishes no gas height keeps S39's reading. *The viewer:* the height in the ring texture's spare channel
+(`regimes.ts planeTexture`), the march's sub-step cut at `DUST_CUTS` (±1, 2, 3, 4.5, 6, 8, 11 of the dust's heights:
+fifteen pieces) and composed front to back; `composeStep` mirrors the shader line for line. **The gate:** against a
+200 000-point quadrature of the two layers, over the default galaxy's rings from the centre (h 21 pc, τ_V 48) to
+15 kpc, three inclinations to cos i = 0.1, both directions and five steppings of the ray, the worst error is
+**0.58 % of the unattenuated light** (ruled bound 1 %; eight cuts at ±1, 2.5, 5, 8 left 3.6 %, measured first and
+replaced). The dust's own column is exact however cut (10⁻⁹), and with the dust at the stars' height the march is
+the mixed slab's (1 − e^−τ)/τ to 10⁻⁶. **The shader's snapshot test ended**: since S47 it had undone each row's
+uniforms and compared the rest with session-46's source, proving no picture moved; D206 moves the picture on
+purpose, so the source is pinned whole as `fieldFragment.d206.glsl` and `fieldFragment.s46.glsl` is removed.
+
+**The prediction, read.** Held. Face-on the Sun's ring draws 0.805 of its light against the slab's 0.796 (1.1 %,
+under the 5 % that would have killed the ordering); the innermost ring 0.434 against 0.021. Edge-on in the browser
+(the dev viewer on the restarted API) a dark lane runs through the stellar light, thin at the centre and widening
+outward; face-on and oblique the inner disc is brighter and shows no banding. **One thing is worse and is the
+diagnostic's, not the layer's:** the "where it is" reading draws each ring's *level on a logarithmic ramp*, so the
+outer rings count for half the inner ones' brightness at a thousandth of their depth, and edge-on a ray stacks tens
+of kiloparsecs of them through a layer now a kiloparsec tall — at zero stops the edge-on diagnostic saturates to
+white; at −6 stops it shows the flared layer cleanly. Its face-on normalisation was always the only one stated.
+
+**Debt #128 (opened), measured and pinned, not applied.** The dust stage still absorbs as one mixed slab:
+1.5674 × 10¹⁰ L☉, 0.3415 of the disc's light. The layered geometry — the escape of isotropic starlight from its own
+layer through a dust in the gas's, ½[E₂(τA) + E₂(τB)] averaged over the stars, which is the stage's closed form
+exactly when the layers are one (checked to 2 × 10⁻⁵) — would absorb **0.766 of that**, 0.2616 of the disc's light:
+0.59 of the slab's at 0.5 kpc, 0.91 at R₀, the same beyond 12 kpc; T_d(R₀) 18.82 → 18.52 K, 16.68 → 15.25 K at 1 kpc.
+Applying it moves T_d, L_IR, the thermal component and every pin on them, and belongs to a ruling of its own
+(the owner's). **#109** stays carried for its other two parts (the infrared channel's white point, the scattering
+phase in an inclined disc); its layer is closed. The register: 66 open = 11 permanent + 55 carried, 45 discharged.
+Tests: `tests/test_dust_layer.py` (13), `test_render` re-pinned in two places (the dust's layer, the array list);
+vitest 164 (157). `docs/RESEARCH_AREAS.md` is new. Not done here: S50's close (board row, LESSONS, RESUMING, BRIEF,
+merge, tag) and the cold timings (the stage's cost did not change: one division per ring).
+
+### D207. S50: the dust placed around each ring by the pattern's contrast, as the gas it is a share of — the stellar pattern now, a gas pattern of its own later (the owner's order)
+
+**The owner, in chat, on 2026-10-02**, after D206 and after being told what a separate gas pattern would gain and
+what it needs first (a reading of measured gas arm contrasts, and a ruling on whether the gas ridge is offset from
+the arm — `RESEARCH_AREAS.md` §1, direction d): "lets build dust first and then add the gases later". So this row
+places the dust by the pattern the model has; the gas's own pattern is a later row and replaces the factor here
+when it exists. **The pin is lifted for this piece only.** Written before any code moved (D113).
+
+**The ruling.** (1) **The dust's column around a ring is the ring's published column times
+`pattern_density_contrast`** (clipped at zero, as the stars and the HII regions' light are placed). Not a new
+assumption: `sfh_azimuthal` already takes Σ_gas(R, φ) = Σ_gas(R) c(R, φ) to place today's star formation, and the
+dust is the gas times one dust-to-gas ratio per ring (ism). The factor averages to 1 round every ring, so every
+ring keeps its dust mass and every radial field is unchanged. (2) **No stage changes and no field is added**: the
+render returns the factor as an array beside the components, `dust_placement` (R, φ), named in the header as the
+dust's placement with the field it reads, as D206 returns `dust_height`; `dust_extinction` stays the ring's mean
+column's transmission and says so. (3) **What follows the placement in the picture:** the dust's optical depth, its
+thermal emission (the dust's mass at the ring's one temperature) and the "where it is" diagnostic. **What does
+not:** the scattered light, which the model already returns per (R, φ) as a share of the placed starlight —
+multiplying it again would raise a ring's scattered light by A²/2. (4) **The layer's height stays per ring**
+`[inferred]`: nothing published says the gas is thinner or thicker on an arm. (5) **The viewer** multiplies; the
+march is D206's.
+
+**Not changed, and added to #128's record:** the heating, the scattered share and the frame's balance are still
+one mixed slab per ring at the ring's mean column. With light and dust both heavier on an arm the absorbed power
+is not the mean column's; the size is measured by a probe and pinned, not applied.
+
+**The prediction that could fail (B4).** S50's probe, with the dust as a foreground screen, read a ring's
+transmitted V light up 0.9 % at R₀, 3 % at 6 kpc and 9 % at 4 kpc when the dust is placed. In the layered geometry
+half the starlight is in front of the dust and never sees it, so **the ring's gain must be smaller than the
+screen's at every one of those radii**, and the picture must show the arms darker than the gaps in dust at 4–6 kpc
+while the Sun's ring barely changes. A gain larger than the screen's, or a ring whose mean dust depth has moved,
+means the placement is applied to the wrong thing.
+
+**Applied (2026-10-02, the session itself, Opus 5.5).** *The render:* `placement.dust` names `dust_placement`,
+the published contrast clipped at zero, `axes` `["R", "phi"]` (or `["cell"]` at a level, the cell's mean of the
+factor); `placement.arrays` gives its unit, field and what it multiplies; `placement` is null where the model has no
+pattern or no dust. `dust_extinction` is unchanged and its about says it is the ring's mean column. No stage and no
+field changed; the payload grows by one float per (R, φ) cell (0.58 MB at f4 on the default grid). *The viewer:* the
+factor rides in the scattered light's spare channel (`regimes.ts planeTexture`; 1 where none is given or a value is
+not a number) and the march multiplies the ring's depth, its thermal light and the "where it is" diagnostic by it
+where it already reads them; the scattered light is left as the model placed it. The shader's pinned source is now
+`fieldFragment.d207.glsl`.
+
+**The prediction, read — and what the ruling's own probe had left out.** *Held:* with the dust alone placed, a
+ring's face-on V light rises 0.80 % at 4 kpc, 0.82 % at 6 and 0.31 % at R₀, under the screen's 9.2 %, 3.3 % and
+0.89 % at each (`tests/test_dust_layer.py`). **But the stars are placed by the same factor, and S50's first probe
+had lit the screen evenly.** With light and dust both on the arms the ring's light does not rise at all: it falls
+0.04 % at 4 kpc, 0.98 % at 6 and 1.28 % at R₀. What the placement does to the picture is therefore not a dark
+band: at R₀ an arm's dust lets through 0.747 of its starlight and a gap's 0.874, so the dust takes about 15 % more
+of an arm's light than of a gap's while the arm holds 2.3 times the gap's stars — **the arms are muted and reddened
+by their own dust, not crossed by lanes**, and inside 2 kpc nothing changes (the layer is opaque either way). Seen
+in the browser: the physical view changes subtly and shows no artefact; the dust diagnostic face-on, an even grey
+disc until now, draws the bar and four arms. The owner had been told "soft dark bands along the arms"; this is
+less than that, and it is what a dust that follows the stars' own pattern does. A lane needs the dust somewhere the
+stars are not — the gas's own pattern (`RESEARCH_AREAS.md` §1, direction d), the row the owner has put next.
+
+**#128, its second half.** The heating is the ring's mean column's. In the same mixed slab, with light and dust
+both placed, the absorbed power is 1.26 % more over the disc (4.1 % at R₀, 0.1 % at 2 kpc where the slab is
+saturated): pinned, not applied; the register's count is unchanged (66 open, 45 discharged). Tests:
+`tests/test_dust_layer.py` 18 (13), `test_render`'s array list; vitest 167 (164).

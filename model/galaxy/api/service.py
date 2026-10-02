@@ -99,7 +99,14 @@ RENDER_OPTIONAL = (
     # The dust's three components (S39, V2): extinction, scattering, thermal emission.
     "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
     "dust_temperature", "dust_infrared_surface_brightness",
+    # The dust's own layer (S50, D206): the gas's scale height per ring.
+    "gas_scale_height",
 )
+# The render's per-ring array of the dust layer's heights, kpc (D206): what `layers.dust` names.
+RENDER_DUST_HEIGHT = "dust_height"
+# The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207): what
+# `placement.dust` names.
+RENDER_DUST_PLACEMENT = "dust_placement"
 # The dust stage's modified blackbody (S39): its shape is read with the stage's own constants, server-side.
 RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX")
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
@@ -236,7 +243,9 @@ ROUTES: tuple[Route, ...] = (
         "two volumetric layers (halpha_hii placed by the contrast, halpha_dig per ring; S39), and the dust as "
         "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
         "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
-        "vertical layer; the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
+        "vertical layer - the dust's is the gas's published scale height ring by ring, the array dust_height in "
+        "kpc (S50) - and the dust's placement around each ring, the array dust_placement (the pattern's contrast; "
+        "S50); the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
         "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
         "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
@@ -1374,12 +1383,24 @@ class Service:
         # at the scale height named here, kpc. The arrays are face-on columns; the viewer spreads each through
         # its layer and integrates along the ray (RENDER_PHYSICS §4), so a thick layer brightens at the limb.
         h_thin = float(f["thin_disc_scale_height"]) / 1000.0 if "thin_disc_scale_height" in f else None
+        # The dust's layer (S50, D206): the gas's published scale height ring by ring, the dust taken to share
+        # it — an array beside the components, named here. A model that publishes no gas height keeps S39's
+        # reading, the dust in the stars' one layer (the dust stage's heating is a uniformly mixed slab; since
+        # D206 the picture's geometry and that budget's differ, debt #128).
+        dust_height = np.asarray(f["gas_scale_height"], dtype=float) / 1000.0 if "gas_scale_height" in f else None
         layers: dict[str, Any] = {
-            "form": "sech2(z / 2h) / 4h, per kpc of height, integrating to 1",
+            "form": "sech2(z / 2h) / 4h, per kpc of height, integrating to 1; h is a number, kpc, or the name of "
+                    "the array that holds it per ring, kpc",
             "stars": h_thin,
-            # The dust is mixed with the starlight it absorbs: the dust stage's heating is a uniformly mixed slab.
-            "dust": h_thin,
+            "dust": h_thin if dust_height is None else RENDER_DUST_HEIGHT,
         }
+        if dust_height is not None:
+            layers["arrays"] = {RENDER_DUST_HEIGHT: {
+                "unit": "kpc", "fields": ["gas_scale_height"],
+                "about": "the dust layer's scale height at each ring: the gas's published scale height, the dust "
+                         "taken to share it (one dust-to-gas ratio through the layer). NaN where the model holds "
+                         "no height - past the stellar disc's edge, where there is no dust to place",
+            }}
         components: list[tuple[str, np.ndarray]] = [("stars", stars)]
         about: dict[str, Any] = {
             "stars": {
@@ -1455,7 +1476,25 @@ class Service:
                 "about": "the share of each filter's light a face-on column of the dust lets through, 10^(-0.4 A_V r), "
                          "r = A_lambda/A_V the grain model's extinction cross-section at the filter's reference "
                          "wavelength over its V row's (Draine's R_V = 3.1 table, the dust stage's). Occlusion, never a "
-                         "colour: the viewer takes its optical depth, -ln of this, through the dust's layer",
+                         "colour: the viewer takes its optical depth, -ln of this, through the dust's layer. The "
+                         "ring's mean column: around the ring the depth is this one times the dust's placement",
+            }
+        # The dust around each ring (S50, D207): its column over the ring's mean is the pattern's density contrast,
+        # the gas's share of which the dust is (the azimuthal star formation's own reading of the gas, and how the
+        # stars and the HII regions' light are placed above). An array beside the components, named in the header;
+        # it averages to 1 round every ring, so each ring keeps its published dust. Without a pattern, or without
+        # dust, there is none and the dust is even round the ring.
+        placement: dict[str, Any] | None = None
+        if contrast is not None and "dust_extinction_v" in f:
+            placement = {
+                "dust": RENDER_DUST_PLACEMENT,
+                "arrays": {RENDER_DUST_PLACEMENT: {
+                    "unit": "dimensionless", "fields": list(contrast_fields),
+                    "about": "the dust's column at each (R, phi) cell over its ring's mean: the pattern's density "
+                             "contrast, as the gas the dust is a share of is taken to follow it. It multiplies the "
+                             "dust's optical depth and its thermal light; not the scattered light, which is already "
+                             "a share of the placed starlight. It averages to 1 round every ring",
+                }},
             }
         if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
             tau_sca = _spectra.scattering_depth(f["dust_scattering_optical_depth"], curves)  # (R, filter)
@@ -1505,12 +1544,20 @@ class Service:
             cols = (j0 + np.arange(n_phi)) % phi_axis.n
             for name, value in components:
                 arrays.append((name, value[rows] if name in per_ring_names else value[rows][:, cols]))
+            if dust_height is not None:
+                arrays.append((RENDER_DUST_HEIGHT, dust_height[rows]))
+            if placement is not None:
+                arrays.append((RENDER_DUST_PLACEMENT, placed[rows][:, cols]))
             window: dict[str, Any] = {
                 "R": {"first": i0, "n": n_r, "lo": R_axis.lo + i0 * R_axis.width, "width": R_axis.width},
                 "phi": {"first": j0, "n": n_phi, "lo": phi_axis.lo + j0 * phi_axis.width, "width": phi_axis.width,
                         "wraps": bool(j0 + n_phi > phi_axis.n)},
             }
             axes = {name: ["R", "filter"] if name in per_ring_names else ["R", "phi", "filter"] for name, _ in components}
+            if dust_height is not None:
+                axes[RENDER_DUST_HEIGHT] = ["R"]
+            if placement is not None:
+                axes[RENDER_DUST_PLACEMENT] = ["R", "phi"]
         else:
             r_min = q.number("r_min", float(R[0]))
             r_max = q.number("r_max", float(R[-1]))
@@ -1526,6 +1573,15 @@ class Service:
             window = {"cells": {"count": len(cells), "of": _catalogue.CELL_COUNT * _catalogue.children_per_cell(level),
                                 "bounds": bounds if len(cells) <= 64 else []}}
             axes = {"cell": ["cell"], **{name: ["cell", "filter"] for name, _ in components}}
+            if dust_height is not None:
+                # A cell's area-weighted mean height: the layer a cell's own dust is spread through.
+                arrays.append((RENDER_DUST_HEIGHT, _cell_means(dust_height, bounds, R_axis, phi_axis, per_ring=True)))
+                axes[RENDER_DUST_HEIGHT] = ["cell"]
+            if placement is not None:
+                # A cell's area-weighted mean of the factor: the share of its ring's dust the cell holds, over its
+                # share of the ring's area.
+                arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
+                axes[RENDER_DUST_PLACEMENT] = ["cell"]
         if precision == "f4":
             arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
 
@@ -1544,6 +1600,8 @@ class Service:
             "axes": axes,
             "components": about,
             "layers": layers,
+            # Where around each ring the dust is (D207): the name of the array that places it, or null when it is even.
+            "placement": placement,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,

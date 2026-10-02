@@ -211,22 +211,28 @@ export interface RenderFrame {
     white: { kelvin: number; response: (number | null)[] } | null;
     absent: { lines: string[]; why: string };
     stages: string[];
-    /** Each component's vertical layer, kpc (S39): a sech²(z / 2h) / 4h profile at each scale height. */
+    /**
+     * Each component's vertical layer, kpc (S39): a sech²(z / 2h) / 4h profile at each scale height. The dust's is
+     * one height or, since D206, the name of the per-ring array of heights among `arrays` (`dust_height`).
+     */
     layers?: {
       stars: number | null;
-      dust: number | null;
+      dust: number | string | null;
       halpha_hii?: number | null;
       halpha_dig?: number | null;
       lines_hii?: number | null;
       lines_dig?: number | null;
     };
+    /** The dust round each ring (D207): the name of the (R, φ) array among `arrays` that places it; null when even. */
+    placement?: { dust?: string } | null;
     /** What each component reads and is; the scattered light's phase table rides here (S39). */
     components?: { dust_scattered?: { phase?: { cos_view: number[]; factor: number[] } } } & Record<string, unknown>;
     [key: string]: unknown;
   };
   /**
    * Row-major: stars, halpha_hii, lines_hii, dust_scattered (R, φ, filter); halpha_dig, lines_dig, dust_extinction,
-   * dust_thermal (R, filter) (S39; the lines_ components since S42).
+   * dust_thermal (R, filter) (S39; the lines_ components since S42); dust_height (R), kpc (D206); dust_placement
+   * (R, φ) (D207).
    */
   arrays: Record<string, Float32Array | Float64Array>;
 }
