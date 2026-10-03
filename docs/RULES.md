@@ -72,7 +72,10 @@ one model and not the other, silently* `[inferred]`.
 quantity is a realisation the physics cannot place** — where an arm's phase, a cloud complex or a filament lies —
 drawn from measured statistics on the randomness layer's own seed. It conserves the total it redistributes, cites
 its statistic, names the physics it stands in for, and is evaluable at a point. No acceptance row reads one, and
-switching the layer off changes no ring total. *Added 2026-10-03 on the owner's word* `[verified: DECISIONS.md D212]`.
+the layer changes no ring total of any field and no expected ring total of any census; realised census totals are
+conserved from L1 (D214 G1). *Added 2026-10-03 on the owner's word* `[verified: DECISIONS.md D212]`; *the last
+clause amended 2026-10-04 on the owner's word* `[verified: DECISIONS.md D215]` — **until D215 it read "switching the
+layer off changes no ring total"**, which a census drawn cell by cell at a weighted expectation does not deliver.
 **Until D212 the rule read: exactly one of three kinds.**
 
 **"Deterministic" is ambiguous and is never used unqualified in this project.**

@@ -3616,7 +3616,8 @@ never been judged in twenty-three sessions.
    **Carried.** NGC 4414 is molecule-rich and star-forming (READING_NGC_4414 rows 9–11), and the model draws its
    template quieter than the galaxy until this closes. What closes it: a gas measurement among the fit's targets
    — the reader's own split puts the HI mass and M_K in the fit — which changes the check set after results were
-   seen and is therefore **the owner's to order** (the gate's ruling 5). What kills the one-cause reading: the two
+   seen and is therefore **the owner's to order** (the gate's ruling 5). **The owner, 2026-10-04 (D215): keep the
+   current fit; no second fit.** The template stays quieter than the galaxy for the rest of the build. What kills the one-cause reading: the two
    numbers not moving together.
 135. **The model's K light per unit stellar mass is low** (S54, D213). The template reads M_K −23.27 against the
    blind-windowed [−24.62, −24.12] (disclosed; −22.98 on the first fit) at a stellar mass 0.06 dex under the
@@ -3649,8 +3650,8 @@ never been judged in twenty-three sessions.
    last digits — and five radial fields, the four forbidden-line surface brightnesses and the hot phase's
    porosity, which two physics stages bin from the realised clusters. **Carried.** No row and no check is
    affected: all are judged layer-off (I3). Rule A10's "changes no ring total" is true of every field and of
-   every census's expectation, and not of a realised census total; its text is the owner's and is unamended
-   (asked at S55's close). **What closes it: L1's ring-first draw (S60)** — a ring's objects, count and every
+   every census's expectation, and not of a realised census total; **the owner approved its amended text on
+   2026-10-04 (D215)**: no expected ring total of any census, realised totals conserved from L1. **What closes it: L1's ring-first draw (S60)** — a ring's objects, count and every
    per-object draw, on a ring stream, the layer assigning cell and azimuth — after which the list is empty and
    the realised ring totals are identical with the layer on or off. What would kill the reading: a bias in the
    on-minus-off totals over seeds, which would make it a leak and not a redraw.

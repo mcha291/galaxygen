@@ -54,7 +54,6 @@ the goals' azimuthal spectra beside the render's (`tools/goal_metrics.py`; S53's
   A subagent cannot write a report file: ask a reviewer for its findings as its final message.
 - Scripts in the scratchpad, never `$TMP`; LF newlines; `tests/test_audit.py` pins the register's counts.
 
-## Owed by the owner — S56 does not build until the second is answered
-1. A second fit of `ngc_4414` on the reader's own split, as a probe — or fit B for the rest of the build?
-2. Rule A10's last sentence amended to "expected ring totals until L1" — or the ring-first draw brought forward,
-   before P1? **The answer orders the sessions: "bring it forward" puts L1's ring-first draw ahead of this phase.**
+## The owner's answers (2026-10-04, D215)
+1. `ngc_4414`: keep the current fit; no second fit.
+2. Rule A10 amended to expected ring totals until L1; the sessions keep the plan's order: this phase is next.

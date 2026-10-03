@@ -9025,3 +9025,16 @@ discharged (#137). vitest 212 → 261. Next numbers: D215, #138, board row 56, a
 **The close (2026-10-04).** The suite on the combined state: 1194 passed, 5 skipped, `EXIT=0` (35 min, the machine
 quiet); the specs OK, 12 / 20 / 5 of 37 for both models, the template checks 0 / 5 on their five recorded misses.
 The picture run: 8 passed (seven captures to the byte, the wire test).
+
+### D215. S56: the owner's two answers after S55; then several arm modes at once and a gas ridge that follows any pattern (BUILD_III Phase P1; an Opus lead)
+
+**The owner, in chat, on 2026-10-04**, asked at S55's close the two questions the gates left for the owner alone:
+1. *Rule A10's last sentence* (gate G1, D214) — amended, or the ring-first draw brought ahead of P1? **"Amend A10,
+   keep the order."** A10 now ends: "the layer changes no ring total of any field and no expected ring total of
+   any census; realised census totals are conserved from L1 (D214 G1)", with what it read before. The sessions run
+   in the plan's order: P1 next, the ring-first draw at L1 (S60), #137 carried until then.
+2. *NGC 4414's fit* (the S54 gate, D213) — a second fit on the reader's own split as a probe, or the current one?
+   **"Keep the current fit."** Fit B is the second template for the rest of the build; no window of the reading is
+   spent; #134 stays carried and its closer is not ordered. D213's ban on a third fit stands as it is.
+
+S55's `verify_clone` on `main` at 9628f94: 1194 passed, 5 skipped, the specs OK, `EXIT=0`.
