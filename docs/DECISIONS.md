@@ -9021,3 +9021,7 @@ and the wire test walks sixteen requests under the switch, every one `layer=off`
 model with the layer on and off; convergence 0 drifts. Timings (`tools/timings.py`, cold): `clouds: whole disc`
 0.81 s on, 0.54 off; `render: whole, rgb` 2.38 / 2.17; `cloud_texture` 0.07 s. Register 75 open = 11 + 64, 45
 discharged (#137). vitest 212 → 261. Next numbers: D215, #138, board row 56, acceptance row 38.
+
+**The close (2026-10-04).** The suite on the combined state: 1194 passed, 5 skipped, `EXIT=0` (35 min, the machine
+quiet); the specs OK, 12 / 20 / 5 of 37 for both models, the template checks 0 / 5 on their five recorded misses.
+The picture run: 8 passed (seven captures to the byte, the wire test).
