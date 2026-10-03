@@ -41,32 +41,29 @@
     {
       "name": "ngc_4414-field",
       "template": "ngc_4414",
-      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20, "fov_deg": 5 },
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "field",
       "filters": "wfc3",
       "viewport": 1024,
-      "file": "e2e/frames/ngc_4414-field.png",
-      "pending": "the ngc_4414 template: /api/templates and the fitted inputs are builder A's (S54); taken once that API is merged"
+      "file": "e2e/frames/ngc_4414-field.png"
     },
     {
       "name": "ngc_4414-stars",
       "template": "ngc_4414",
-      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20, "fov_deg": 5 },
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "stars",
       "filters": "wfc3",
       "viewport": 1024,
-      "file": "e2e/frames/ngc_4414-stars.png",
-      "pending": "the ngc_4414 template: /api/templates and the fitted inputs are builder A's (S54); taken once that API is merged"
+      "file": "e2e/frames/ngc_4414-stars.png"
     },
     {
       "name": "ngc_4414-thumbnail",
       "template": "ngc_4414",
-      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20, "fov_deg": 5 },
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
       "mode": "field",
       "filters": "wfc3",
       "viewport": 256,
-      "file": "public/templates/ngc_4414.png",
-      "pending": "the ngc_4414 template: /api/templates and the fitted inputs are builder A's (S54); taken once that API is merged"
+      "file": "public/templates/ngc_4414.png"
     }
   ]
 }
