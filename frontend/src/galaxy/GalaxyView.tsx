@@ -22,11 +22,11 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
-import { type CaptureCamera, orbitPosition } from "./capture";
+import { type CaptureCamera, DEFAULT_FOV, type LensCamera, isLens, lensScale, orbitPosition, standOf } from "./capture";
 import { extent } from "./positions";
 import { type SpritePsf, psfTexture } from "./psf";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
-import { type ZoomRange, acrossOf, distanceOf, zoomOf } from "./zoom";
+import { acrossOf, clipPlanes, distanceOf, zoomOf, zoomRange } from "./zoom";
 import styles from "./GalaxyView.module.css";
 
 export type Preset = "face-on" | "edge-on" | "oblique";
@@ -38,6 +38,8 @@ export interface ViewState {
   across: number;
   /** Screen pixels per kpc at the orbit target, for a scale bar. */
   pxPerKpc: number;
+  /** The camera's vertical field of view, degrees: the lens the view is seen through (D213 ruling 5). */
+  fov: number;
   /** The orbit target in the scene, kpc: where a close view is looking. */
   target: [number, number, number];
   /** Where the camera is and what it sees: its view-projection matrix, column-major, for a frustum test. */
@@ -61,7 +63,14 @@ interface Props {
   reach?: number;
   /** Extra layers drawn in the galaxy's frame (the field, a disc image). */
   children?: ReactNode;
-  preset: Preset;
+  /** One of the three stands every galaxy has; null stands the camera at `stand`, a template's own (D213). */
+  preset: Preset | null;
+  /** A template's camera: where the view stands while no preset is chosen. Its lens is `fov`. */
+  stand?: CaptureCamera | null;
+  /** The lens, a vertical field of view in degrees: the template's (D213 ruling 5), 45° without one. */
+  fov?: number;
+  /** A new value is a fresh camera at the same stand: choosing a template again puts the view back on it. */
+  epoch?: number;
   /** Set to move the camera to this zoom; the view reports every change through onView. */
   zoom?: number;
   onView?: (view: ViewState) => void;
@@ -85,22 +94,43 @@ const TONE_MAPPINGS: Record<ToneMapping, ThreeToneMapping> = {
   linear: LinearToneMapping,
 };
 
-const FOV = 45;
-
 /**
  * The galaxy in 3D: drag to orbit, wheel to zoom towards the cursor, right-drag to pan.
  * It composites whatever it is given: the field as a child, star layers on top.
  */
-export function GalaxyView({ layers = [], pickable = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null, tuning = TUNING_DEFAULTS }: Props) {
+export function GalaxyView({
+  layers = [],
+  pickable = [],
+  reach: framing,
+  children,
+  preset,
+  stand = null,
+  fov: lens = DEFAULT_FOV,
+  epoch = 0,
+  zoom,
+  onView,
+  hdr = false,
+  additive = false,
+  psf = null,
+  tuning = TUNING_DEFAULTS,
+}: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
-  const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
+  const fov = isLens(lens) ? lens : DEFAULT_FOV;
+  // Where the view starts: a preset's stand, or the template's own camera while none is chosen.
+  const placed = preset === null ? stand : null;
+  const standRadius = placed?.radius_kpc ?? 0;
+  // The distances are the 45° view's, carried to the lens (zoom.ts): the same widths of view through any lens.
+  const range = useMemo(() => zoomRange(reach, fov, standRadius), [reach, fov, standRadius]);
+  const planes = clipPlanes(range);
+  const position = placed ? orbitPosition(placed, fov) : cameraFor(preset ?? "oblique", reach, fov);
+  const standKey = placed ? `${placed.inclination_deg},${placed.azimuth_deg},${placed.radius_kpc}` : preset;
 
   return (
     <div className={styles.view}>
       <Canvas
-        key={`${preset}:${hdr}`} // a preset is a fresh camera; orbiting from there is the user's
-        camera={{ position: cameraFor(preset, reach), fov: FOV, near: reach / 1000, far: reach * 20 }}
+        key={`${standKey}:${fov}:${epoch}:${hdr}`} // a preset, a template's stand or a lens is a fresh camera; orbiting from there is the user's
+        camera={{ position, fov, near: planes.near, far: planes.far }}
         dpr={[1, 2]}
         gl={{ alpha: true, antialias: true }}
       >
@@ -111,16 +141,20 @@ export function GalaxyView({ layers = [], pickable = [], reach: framing, childre
         {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
-        <CaptureProbe />
+        <CaptureProbe reach={reach} standRadius={standRadius} />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
-        <ZoomBridge range={range} zoom={zoom} onView={onView} />
+        <ZoomBridge reach={reach} standRadius={standRadius} zoom={zoom} onView={onView} />
       </Canvas>
     </div>
   );
 }
 
-/** Keeps the camera distance and an outside zoom slider in step, in both directions, and reports where the view is. */
-function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; onView?: (v: ViewState) => void }) {
+/**
+ * Keeps the camera distance and an outside zoom slider in step, in both directions, and reports where the view is.
+ * The lens is read from the camera at each report, never from a constant: the width of the view and the zoom's
+ * range both follow it (D213 ruling 5), and the picture test's `place` may change it under a mounted view.
+ */
+function ZoomBridge({ reach, standRadius, zoom, onView }: { reach: number; standRadius: number; zoom?: number; onView?: (v: ViewState) => void }) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const size = useThree((s) => s.size);
@@ -129,17 +163,19 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
   // and re-made on a render. It was, once per render, and each time it reported the view afresh;
   // the report set the parent's state, the parent rendered, the effect ran again, and the page
   // spent two thousand renders a second doing it until one more update locked it for good.
-  const latest = useRef({ range, size, onView });
-  latest.current = { range, size, onView };
+  const latest = useRef({ reach, standRadius, size, onView });
+  latest.current = { reach, standRadius, size, onView };
+  // The range the controls hold, for the camera's lens as it is now.
+  const rangeNow = () => zoomRange(latest.current.reach, camera.fov, Math.max(latest.current.standRadius, placedRadius(camera)));
 
   const report = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!controls) return;
     report.current = () => {
-      const { range: r, size: s, onView: notify } = latest.current;
+      const { size: s, onView: notify } = latest.current;
       const d = camera.position.distanceTo(controls.target);
-      const z = zoomOf(d, r);
-      const across = acrossOf(d, FOV, s.width / Math.max(s.height, 1));
+      const z = zoomOf(d, rangeNow());
+      const across = acrossOf(d, camera.fov, s.width / Math.max(s.height, 1));
       const { x, y, z: tz } = controls.target;
       const eye: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z];
       const last = reported.current;
@@ -153,7 +189,7 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
       reported.current = { zoom: z, x, z: tz, width: s.width, height: s.height, eye };
       camera.updateMatrixWorld();
       const viewProjection = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements.slice();
-      notify?.({ zoom: z, across, pxPerKpc: s.width / across, target: [x, y, tz], camera: { position: eye, viewProjection } });
+      notify?.({ zoom: z, across, pxPerKpc: s.width / across, fov: camera.fov, target: [x, y, tz], camera: { position: eye, viewProjection } });
     };
     const onChange = () => report.current?.();
     onChange();
@@ -161,13 +197,13 @@ function ZoomBridge({ range, zoom, onView }: { range: ZoomRange; zoom?: number; 
     return () => controls.removeEventListener("change", onChange);
   }, [camera, controls]);
   // A resize or a new zoom range changes what the view is without moving the camera.
-  useEffect(() => report.current?.(), [size.width, size.height, range.min, range.max]);
+  useEffect(() => report.current?.(), [size.width, size.height, reach, standRadius]);
 
   useEffect(() => {
     if (!controls || zoom === undefined) return;
     if (reported.current !== null && Math.abs(reported.current.zoom - zoom) < 1e-3) return;
     const direction = camera.position.clone().sub(controls.target).normalize();
-    camera.position.copy(controls.target).addScaledVector(direction, distanceOf(zoom, latest.current.range));
+    camera.position.copy(controls.target).addScaledVector(direction, distanceOf(zoom, rangeNow()));
     controls.update();
   }, [zoom, camera, controls]);
 
@@ -284,23 +320,41 @@ function FrameProbe() {
 /**
  * An instrument for the picture test (T12, rule B1; the precedent is the probe above, D208):
  * `window.__galaxygenCapture.place(camera)` stands the orbit camera at a stated inclination, azimuth and framing
- * radius about the galaxy's centre (capture.ts), and `.picture()` draws one frame and returns the canvas as it is
- * displayed - after the bloom and the tone curve, with none of the page over it - as a PNG data URL. A camera a
- * drag could reach and a copy of what is on screen: it adds nothing to what is drawn and holds no parameter of it.
+ * radius about the galaxy's centre (capture.ts) - and, where the camera states one, through a stated lens
+ * (`fov_deg`, S54: the zoom's range and the near and far planes follow it, as they do for a template's);
+ * `.where()` reads the stand back from the camera, and `.picture()` draws one frame and returns the canvas as it
+ * is displayed - after the bloom and the tone curve, with none of the page over it - as a PNG data URL. A camera a
+ * drag or a template could reach and a copy of what is on screen: it adds nothing to what is drawn and holds no
+ * parameter of it.
  */
-function CaptureProbe() {
+function CaptureProbe({ reach, standRadius }: { reach: number; standRadius: number }) {
   const gl = useThree((s) => s.gl);
-  const camera = useThree((s) => s.camera);
+  const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const advance = useThree((s) => s.advance);
   useEffect(() => {
     if (!controls) return;
     const holder = window as unknown as Record<string, unknown>;
     const probe = {
-      place(view: CaptureCamera) {
+      place(view: CaptureCamera & { fov_deg?: number }) {
+        const fov = view.fov_deg ?? camera.fov;
+        const position = orbitPosition(view, fov); // refuses a camera or a lens that is not one, before anything moves
+        // The lens, and everything that was written for one: the range the controls hold and the two planes.
+        const range = zoomRange(reach, fov, Math.max(standRadius, view.radius_kpc));
+        const planes = clipPlanes(range);
+        camera.fov = fov;
+        camera.near = planes.near;
+        camera.far = planes.far;
+        camera.updateProjectionMatrix();
+        camera.userData.placedRadius = view.radius_kpc;
+        controls.minDistance = range.min;
+        controls.maxDistance = range.max;
         controls.target.set(0, 0, 0);
-        camera.position.set(...orbitPosition(view, FOV));
+        camera.position.set(...position);
         controls.update(); // looks at the centre and tells the view's listeners, as a drag does
+      },
+      where(): LensCamera {
+        return standOf(camera.position.toArray(), controls.target.toArray(), camera.fov);
       },
       picture() {
         // The frame and its read in one task: the drawing buffer is not kept once the browser has shown it.
@@ -313,9 +367,12 @@ function CaptureProbe() {
     return () => {
       if (holder.__galaxygenCapture === probe) delete holder.__galaxygenCapture;
     };
-  }, [gl, camera, controls, advance]);
+  }, [gl, camera, controls, advance, reach, standRadius]);
   return null;
 }
+
+/** The framing radius the picture test last placed this camera at (its `place`), or 0: the range must hold it. */
+const placedRadius = (camera: PerspectiveCamera): number => Number(camera.userData.placedRadius) || 0;
 
 /** How far from the cursor, in CSS pixels, a click still picks a star. */
 const PICK_PX = 8;
@@ -408,8 +465,12 @@ function Stars({ layer, additive, psf, spriteSize }: { layer: StarLayer; additiv
   );
 }
 
-function cameraFor(preset: Preset, reach: number): [number, number, number] {
-  const d = reach * 2.4;
+/**
+ * Where a preset stands: 2.4 framing radii away at 45°, and as many times further through another lens as
+ * that lens needs to show the same width (capture.ts lensScale).
+ */
+function cameraFor(preset: Preset, reach: number, fov: number): [number, number, number] {
+  const d = reach * 2.4 * lensScale(fov);
   if (preset === "face-on") return [0, d, 0.0001]; // looking down -y; the offset keeps "up" defined
   if (preset === "edge-on") return [0, 0, d];
   return [0, d * 0.55, d * 0.85];

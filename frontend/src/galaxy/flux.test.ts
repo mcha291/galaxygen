@@ -41,6 +41,22 @@ describe("the field's scale (D208)", () => {
     expect(pixelArea(54, 54 / cos, pxPerUnit) / pixelArea(54, 54, pxPerUnit)).toBeCloseTo(cos, 12);
   });
 
+  it("does not change with the lens: the same framing through 45° and 5° gives a pixel the same sky at the centre (S54, D213)", () => {
+    // The points' pixels per kpc at unit depth as FluxPoints sets them, from the camera's own field of view.
+    const perUnit = (fov: number) => 1000 / (2 * Math.tan((fov * Math.PI) / 360));
+    const distance = (fov: number) => 20 / Math.tan((fov * Math.PI) / 360); // a 20 kpc framing radius (capture.ts distanceFor)
+    const wide = pixelArea(distance(45), distance(45), perUnit(45));
+    const long = pixelArea(distance(5), distance(5), perUnit(5));
+    expect(distance(5)).toBeCloseTo(458.075, 3);
+    expect(Math.sqrt(wide)).toBeCloseTo(40, 9); // 40 kpc over 1000 pixels: 40 pc a pixel
+    expect(long / wide).toBeCloseTo(1, 12); // so a point is drawn no brighter and no dimmer for the lens
+    // Off the centre the two differ by the perspective alone: a star 15 kpc along the near side of a 55° disc is
+    // 12.3 kpc nearer the camera, and a pixel there covers less sky - by 44 % at 45°, by 5 % at 5°.
+    const nearer = 15 * Math.sin((55 * Math.PI) / 180);
+    expect(pixelArea(distance(45) - nearer, distance(45) - nearer, perUnit(45)) / wide).toBeCloseTo(0.556, 3);
+    expect(pixelArea(distance(5) - nearer, distance(5) - nearer, perUnit(5)) / long).toBeCloseTo(0.947, 3);
+  });
+
   it("makes a sprite's pixels sum to the point's light over that area, whatever the sprite's size and shape", () => {
     const flux = 34000; // L☉: the 3 162nd brightest disc star
     const area = pixelArea(54, 54, pxPerUnit);
