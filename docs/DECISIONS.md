@@ -8346,3 +8346,64 @@ slower (58 ms against 64: the rings with no gas height skip the emission integra
 **S52's close (2026-10-03).** Opened on S51's closing suite (`EXIT=0`) and `verify_clone` of `main` at bd00151 (OK).
 Register 69 open = 11 + 58, 45 discharged (#128 carried for its placement half). The owner has not yet seen S51's
 lanes or S52's numbers; BRIEF puts that look first.
+
+### D212. S53: BUILD_III adopted — the owner's ten rulings, the rule amendments entered, the two instruments (Phase 0; an Opus lead, no Fable gate)
+
+**The owner, in chat, on 2026-10-03**, after putting two goal pictures in `docs/goals/` and reading the review against
+them: "adopt the plan". `docs/BUILD_III.md` is the third build: two templates, a physics model beside a randomness
+layer, the ten model items and the per-ring gas shock, the viewer's rendering; fourteen rows, S53–S66, every one led
+by Opus, Fable called at four gates (G1–G4) — the owner's "Fable usage is limited … make sure only work that really
+benefits from using Fable uses that, and push the rest to Opus". This session is Phase 0 and was opened by the owner
+with "read Brief and start working on the new plan"; its lead is Opus 5.5.
+
+**The ten rulings (BUILD_III §7 holds the questions; the answers are the owner's words).**
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Adopt the plan and its numbering, Opus leading every row, Fable at the four gates | "adopt the plan" |
+| 2 | The fourth kind of quantity, *synthetic*, and the layer's five rules | "yes" — after asking what the quantity is: a label for randomness that places structure the physics cannot, apart from measured scatter and from sampling |
+| 3 | `RENDER_PHYSICS.md` §8 and rule D5 amended | "approved" |
+| 4 | Templates (rules A5 and D1): the viewer lands on `milky_way`; a template may carry pins | "approved" |
+| 5 | The goal pictures committed to this public repository | "don't commit": `docs/goals/` is git-ignored; a clone does not have them |
+| 6 | A headless browser installed for the picture test | "yes" |
+| 7 | `basic` and `azimuthal` as one model with the layer switch | Not merged: "seems better to just ignore basic from now on, not worth spending effort on merging it unless there's something it does better than azimuth". `basic` is frozen; Phase R uses it once as the layer-off oracle |
+| 8 | NGC 4414's checks | "yes, do 5": five checks on properties the fit never sees, windows fixed blind, reported apart from the 37 rows |
+| 9 | Pictures first (V5, V6 before Phase R)? | "no, lets finish model part first": the model's phases S54–S61, then the viewer's S62–S65 |
+| 10 | The dependency rule stays numpy-only | "ok": numpy-only at runtime; Pillow and Playwright as development-only tools |
+
+**The rule amendments, entered from BUILD_III's Appendix A word for word** (rulings 2–4). Each amended rule keeps
+what it read before, as D193 and D198 did.
+- **A10** gains the *Synthetic* row and the paragraph that tells seeded from synthetic. Its heading now says "four
+  kinds" — the appendix gave the row and the paragraph and not the heading; four rows under "exactly one of three"
+  would have been a contradiction in the rule's own text, so the count follows the table.
+- **A5** gains the template sentence: a template is a named input set with the defaults' standing, its misfit
+  published, its pins measurements that replace the layer's draw and never a law.
+- **D1**'s landing clause: the default template, a switcher, "Edit galaxy" from the template's inputs.
+- **D5**: the viewer may evaluate a function the model publishes — form, parameters, seed, committed test vectors —
+  and adds no structure, parameter or seed of its own.
+- **`RENDER_PHYSICS.md` §8**: every visible feature traces to a published field or to the randomness layer; the
+  second ban becomes "detail the model does not publish"; a fourth is added, a synthetic field tuned to a picture.
+
+**What the amendments do not yet do.** They are rules ahead of their code. No field is synthetic and `texture_seed`
+does not exist until Phase R (S55); there is one template and no switcher until Phase T (S54). Until then the
+amended D5 and §8 permit nothing new: there is no published function for the viewer to evaluate beyond the cloud
+vector's interior. Nothing in `model/galaxy/` changed at this session; the spec table is S52's, 12 / 20 / 5 of 37.
+
+**The absorbed lists point at the plan.** `RESEARCH_AREAS.md` §1's directions a–h each name their phase (g, the
+pattern library, stays the last resort and is not built); `VIEWER_TASKS.md` names T12 (this session), T16 ii
+(Phase T), T8 (Phase R), T5–T7 and T28 (V6), T1 and T9 (V8).
+
+**The lead's readings where the plan's words left a choice** (none is a physics ruling; each is an instrument's or
+a display's):
+1. *"A baseline table — both goals, both of today's renders"* is read as: the two goal pictures, and today's
+   default galaxy captured at each goal's camera — face-on for the Milky Way's, inclined for NGC 4414's — in each of
+   the viewer's two modes (the field mode and the star-first mode), through rgb.
+2. *The inclined camera* takes its inclination from the axis ratio `goal_metrics` measures on the goal picture's
+   outline, read as a thin disc's (cos i = q). That is the framing of a picture. It is **not** NGC 4414's
+   inclination, which Phase T's reader reads with its source and its coverage; the capture list is corrected then.
+3. *The picture test is a development tool, outside the suite* — `tools/shot.py`'s precedent (S7): nothing in
+   `uv run pytest` needs a browser; the pytest side checks the capture list and the committed frames' presence, and
+   runs the browser only when asked (`GALAXYGEN_PICTURE=1`).
+4. *The opening check* (BRIEF: bootstrap, the suite, `verify_clone`) was run as one clean clone of `session-53`
+   (`tools/verify_clone.py --ref session-53`), which is `main` at 551bbbf plus four commits of documents: one run
+   that is both the suite and the clone, and that the working copy's edits cannot disturb.

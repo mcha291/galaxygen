@@ -43,7 +43,10 @@ three verdicts and the two remedies.
 this input exist if no stage needed filling?
 
 **A5. Defaults are real measured values**, so launching with nothing touched
-generates the Milky Way.
+generates the Milky Way. **A template is a named input set with the same standing**: its inputs are fitted to that galaxy's measured
+properties and the misfit is published; its pins are measurements of that galaxy which replace the randomness
+layer's draw and never a law. The default template is the Milky Way, whose inputs are the defaults.
+*Appended 2026-10-03 on the owner's word* `[verified: DECISIONS.md D212]`.
 
 **A6. Dependent stages come after their dependencies**, and the graph is
 machine-checked acyclic in CI — **per model**.
@@ -56,13 +59,21 @@ closed vocabulary, a kind, its ramp, whether it has a meaningful zero, and an
 field sets; without a declared contract a stage will read a field that exists in
 one model and not the other, silently* `[inferred]`.
 
-**A10. Every quantity is exactly one of three kinds, and the model says which.**
+**A10. Every quantity is exactly one of four kinds, and the model says which.**
 
 | | Definition | Counts against the ceiling? | Reproducible? |
 |---|---|---|---|
 | **Input** | A free control someone sets | **Yes** | Yes |
 | **Derived** | Pure function of inputs. Same inputs → same output | No | Yes |
 | **Seeded** | Function of inputs **and a seed** | No | **Yes** |
+| **Synthetic** | Function of inputs **and the layer's seed**, standing in for physics the model does not compute | No | **Yes** |
+
+**A seeded quantity is a measured scatter between galaxies or the sampling of a derived distribution. A synthetic
+quantity is a realisation the physics cannot place** — where an arm's phase, a cloud complex or a filament lies —
+drawn from measured statistics on the randomness layer's own seed. It conserves the total it redistributes, cites
+its statistic, names the physics it stands in for, and is evaluable at a point. No acceptance row reads one, and
+switching the layer off changes no ring total. *Added 2026-10-03 on the owner's word* `[verified: DECISIONS.md D212]`.
+**Until D212 the rule read: exactly one of three kinds.**
 
 **"Deterministic" is ambiguous and is never used unqualified in this project.**
 Two distinct properties claim the word: *reproducible given all arguments*, which
@@ -213,13 +224,16 @@ A session runs it and reads pass/fail.
 
 **D1. A lock means "do not re-roll this."** It can never mean "freeze this
 against upstream changes." Confirmed controls are **disabled rather than
-hidden**; reopening a stage discards every later one; **the viewer lands on the
-Galaxy view of the default galaxy** — every checkpoint confirmed at its default
-(A5: the defaults are the Milky Way) — **and "Edit galaxy" opens the staged
-process with the confirmations kept**, from which reopening a stage discards the
+hidden**; reopening a stage discards every later one; the viewer lands on the Galaxy view of **the default template**, every checkpoint confirmed at its inputs; **a
+switcher selects another template**; and "Edit galaxy" opens the staged process from the template's inputs with
+the confirmations kept, from which reopening a stage discards the
 later ones as before. *Amended 2026-10-01 on the owner's word — "starts on the
 galaxy view of a default galaxy … an edit galaxy button that opens up the staged
-generation process"* `[verified: DECISIONS.md D198]`. **Until D198 the rule read:
+generation process"* `[verified: DECISIONS.md D198]`, *and on 2026-10-03 for the
+templates* `[verified: DECISIONS.md D212]`: **until D212 the landing clause read
+"the Galaxy view of the default galaxy — every checkpoint confirmed at its default";
+the switcher is built at S54 (BUILD_III Phase T), and until then the default
+template is the only one.** **Until D198 the rule read:
 a page load lands on stage one.** The reference client in `interface/` still does,
 as the API's own demonstration of the staged flow, and `tests/test_viewer.py`
 pins that; the amendment is the React viewer's.
@@ -235,5 +249,9 @@ running the new code" is a glance rather than an investigation.
 endpoints must not touch stages. *Justification: this class of defect is
 invisible to any check run against a warm cache* (see B2) `[recall]`.
 
-**D5. The viewer computes no physics and persists no generated object.**
-Replacing the viewer means reimplementing against the same endpoints.
+**D5. The viewer computes no physics and persists no generated object.** It may evaluate a function the model
+publishes — its form, its parameters, its seed and its committed test vectors — as it evaluates the cloud
+vector's interior; it adds no structure, no parameter and no seed of its own. Replacing the viewer means
+reimplementing against the same endpoints and the same vectors. *Amended 2026-10-03 on the owner's word*
+`[verified: DECISIONS.md D212]`. **Until D212 the rule read: … persists no generated object. Replacing the
+viewer means reimplementing against the same endpoints.**

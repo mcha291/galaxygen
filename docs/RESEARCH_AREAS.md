@@ -74,6 +74,21 @@ drawn; it is that what is drawn is too regular.**
 | g | **A pattern library**: arms read from precomputed simulations, indexed by disc dominance and shear | Genuinely emergent shapes | The owner's word on a data download; a library is a lookup, not a derivation (A3) — the last resort |
 | h | **The bar's gas lanes**: a pair of straight lanes offset to the bar's leading edges, where the gas shocks | The dust lanes every barred galaxy shows along its bar | The lanes' offset and curvature against the bar's strength and pattern speed (Athanassoula 1992 is the classic; not read); the gas pattern's bar term is the stellar bar's cosine until then (D210 ruling 2) |
 
+### Absorbed by BUILD_III (2026-10-03, D212)
+Every direction above is now a phase of `docs/BUILD_III.md` (adopted by the owner on 2026-10-03), which holds its
+ruling, its reading and its gate; this section stays as the statement of the problem.
+
+| Direction | BUILD_III phase | Session | As what |
+|---|---|---|---|
+| a, several modes at once | P1 | S56 | The swing window at each radius splits a conserved power among m = 2-6; the phases are synthetic |
+| b, the arm number changing with radius | P1 | S56 | The same law: the local swing parameter, today's named alternative, becomes the law |
+| c, pitch varying along an arm | P4 | S59 | Seeded segments from the measured distributions, synthetic; the templates' pins |
+| d, the gas response | P1, P2 | S56, S57 | Built at S51; restated as a response to any stellar pattern, then derived as a steady shock per ring (gates G2, G3) |
+| e, spurs and feathers | L2 | S61 | Spacing from the ridge's Jeans length, phases synthetic |
+| f, a bar that can be absent | P3 | S58 | Presence derived from a sourced stability criterion; a residual only if a galaxy-to-galaxy scatter is read |
+| g, a pattern library | section 8 | not built | Still the last resort |
+| h, the bar's gas lanes | P3 | S58 | A synthetic template with sourced parameters, standing in for two-dimensional gas flow |
+
 ### What any remedy must keep
 - **Every ring's mean stays 1**, so no radial profile and no acceptance row moves (`tests/test_pattern.py`'s
   ring-mean gate).
@@ -84,5 +99,5 @@ drawn; it is that what is drawn is too regular.**
   (§4b's verdict C), never as a display constant.
 - **One pattern for everything that follows it**, or a stated reason a component has its own (direction d).
 
-*Status: direction d built at S51 (D210, the owner's choice on 2026-10-03; the reading in `READING_GAS_PATTERN.md`). The model is otherwise pinned (the owner, 2026-10-01); any other direction above needs the owner's
-word and a reading session before a build.*
+*Status: direction d built at S51 (D210, the owner's choice on 2026-10-03; the reading in `READING_GAS_PATTERN.md`). Since 2026-10-03 the other directions are BUILD_III's (D212; the table above): the owner's word is given, and each
+phase still opens with its reading.*
