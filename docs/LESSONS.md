@@ -1346,3 +1346,33 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] When a rule's amended text is given word for word, enter it word for word and say what else had to change
   for the rule to stay consistent with itself — A10's heading said "three kinds" over a four-row table (D212).
 
+## From S54 (the templates; an Opus lead, a blind reader, two builders, Fable at a conditional gate)
+
+- [all] A tie-break is not identification: three targets cannot fix seven controls, and a weight of 1e-3 on the
+  departures from the defaults let three controls no target measures run to the bounds of their ranges for 0.05
+  half-windows in one target. Name the free set by a rule — a control is free only if a target measures what it
+  controls — and hold the rest at the defaults by not stating them at all (D213, Fable's ruling).
+- [all] A fitted value on the bound of its range is a finding, not a fit: label it, write out what the model
+  could not do, open the debt, and neither round it nor move the range (D213).
+- [audit] Blind is spent by reading, whatever is done next: checks read on a fit that is then withdrawn are
+  *disclosed* on its successor, the first reading is printed beside every later one, and the windows nobody has
+  printed against stay blind only while nobody prints against them (D213; D192's word).
+- [audit] Do not spend a reserve window to replace a spent one in the same session: HI and H₂ share the hydrogen
+  sum, the outer speed is the shape times the peak, the infrared luminosity is the star formation rate's twin.
+  A correlated window with a blind label is the forking path (D213, Fable's ruling 2).
+- [close] A stop condition costs one short turn when the handoff is written for it: the tables as measured, the
+  options with their costs, the lead's recommendation and numbered questions, five named ranges. The gate answered
+  in two minutes and ruled one thing the lead would not have (the reader's split is the owner's alone) (D213).
+- [close] Write the predictions before the run and count them after: four of the lead's five failed and one of
+  the gate's seven. The failures were the finding — the curve fell too far where it was predicted flat (D213).
+- [viewer] A claim about a cause is a prediction: D212 said the inclined captures' m = 1 was the perspective's,
+  and through a 5° lens it is still 0.086–0.089. An inclined dusty disc is dimmer on its near side; the goal
+  picture carries 0.099 of its own. Change the one thing and read again before writing the cause down (D213).
+- [viewer] A lens is the camera's, not a constant: one `FOV` was read in the presets' stand, the orbit range, the
+  clip planes and the capture hook, while the march, the points' flux per pixel area and the footprint already
+  read the camera's matrices. The proof nothing moved at 45° is a committed frame's hash (D213).
+- [api] A named input set that overrides nothing cannot drift: `milky_way` states no input and resolves to the
+  registry's own objects, so `template=milky_way` and no template are one cache entry and the same bytes (D213).
+- [field] A second galaxy finds what the first cannot: the K light per unit mass and the frame's colour are the
+  default galaxy's too, and no Milky Way row judges either (#135, #136; rows 25–28 not judged, #82).
+

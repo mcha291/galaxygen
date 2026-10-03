@@ -8667,3 +8667,115 @@ unspent window in S54; calling any fit-B verdict blind; dropping fit A's tables 
 admitting a control by weight (the free set is named per template in data, the measuring target beside each
 control); moving a held control by any amount; rounding a bound; describing the objective's minimum beyond the
 step's resolution.
+
+**Applied (2026-10-04; two Opus 5.5 builders in worktrees, one resumed for the gate's ruling; the lead read each
+diff before merging it).**
+
+*The model side (builder A).* `galaxy/templates.py`: `milky_way` states nothing and resolves to the registry's
+defaults — a run of it is bit-identical to a run with no inputs, on arrays, and `template=milky_way` reaches the
+same cache entry and returns the same bytes as no template (`/api/arrays`, `/api/clouds`, `/api/region`).
+`template=` is a reserved parameter on the eight routes that take inputs; an unknown name is a 404 that lists
+the two. `/api/templates` runs no stage (0.2 ms, 12.7 kB). An empty merger list runs through every stage. Every
+number of `ngc_4414` carries its tag. `tools/fit_template.py ngc_4414`: a damped Gauss–Newton search with a
+coordinate search in each step, 24 steps fixed in advance, deterministic. It was reworked three times before
+either fit, each time because it stopped short of the objective's own minimum (clipping after the solve stalled
+with the peak outside its window — an optimiser's artefact, not a finding), never to move a target.
+
+*The fit under the gate's rule (fit B; 289 evaluations, 40 s).* Four controls free, each beside the target that
+measures it; the two history controls and the migration not stated by the template at all, so they are the
+registry's own defaults and cannot have moved.
+
+| Target | Window | Measured | Model | Residual (half-windows) |
+|---|---|---|---|---|
+| Peak of the curve inside 20.6 kpc | [222, 247] km/s | 237 | 239.18 | +0.175 |
+| Stellar disc scale length | [1.5, 1.9] kpc | 1.649 | 1.676 | +0.135 |
+| Stellar mass | [3.4, 5.9] × 10¹⁰ M☉ | 4.467 | 3.905 | −0.450 |
+
+| Control | Default | Fitted | Standing |
+|---|---|---|---|
+| `halo_mass` | 1.1e12 | 6.095e11 | free: the peak |
+| `disc_spin` | 0.0173 | 0.014191 | free: the scale length |
+| `halo_assembly_z` | 1.66 | 0.5 | **bound** — the model cannot lower its inner peak enough for this disc inside the range (#132) |
+| `baryon_retention` | 0.35 | 0.4919 | free: the stellar mass; inside its range |
+| `infall_timescale`, `inside_out_index`, `migration_efficiency` | 7, 1, 3.6 | 7, 1, 3.6 | held: no target measures them |
+
+Objective 0.2511. The fitted point is a point on a plateau resolved to the model's own steps (#133), not a minimum
+to the printed digits.
+
+*The five checks on fit B — all disclosed, none blind; read once.*
+
+| Check | Window | Fit B | Verdict | Fit A (blind, spent) | Debt |
+|---|---|---|---|---|---|
+| Curve shape S | [0.71, 0.86] | 0.653 | miss, low | 0.648, miss | #132 |
+| Star formation rate | [1.8, 4.7] M☉ yr⁻¹ | 0.653 | miss, low by 2.8× | 0.125, miss | #134 |
+| Hydrogen | [7.4, 14.7] × 10⁹ M☉ | 4.80 | miss, low | 3.72, miss | #134 |
+| M_K | [−24.62, −24.12] | −23.27 | miss, 0.85 mag faint | −22.98, miss | #135 |
+| B − V, face-on through dust | [0.72, 0.82] | 0.636 | miss, blue | 0.819, pass | #136 |
+
+**Fable's predictions, read.** The targets' residuals: held (+0.175, +0.135, −0.450 for +0.18, +0.14, −0.45). S
+misses low: held. The star formation rate "low by under 2×": **failed** — 2.8×. Hydrogen "near 6 × 10⁹": the
+verdict held, the number is 4.8. M_K about 1 mag faint: held (0.85 from the window's edge, 1.03 from its centre).
+B − V blue: held. One pass at best: held — none. **Five recorded misses; `python -m galaxy.specs` stays green on
+them and prints them apart from the 37 rows.**
+
+*What the misses say, once.* The template is the right size, speed and mass and the wrong galaxy inside: too
+little gas and star formation (the history is the Milky Way's, #134), too little K light for its mass (#135: the
+default galaxy shows the same — −23.77 at 4.75 × 10¹⁰ M☉, about 0.73 M☉/L☉ in K against the 0.36–0.46 NGC 4414's
+sources use), a frame bluer than the catalogues' (#136), and a curve that falls too far because the only way the
+model can hold a compact disc's peak down is a halo weak at every radius (#132). Two of those causes — the K light and
+the blue frame — show on the default galaxy too, and would have stayed unseen without a second galaxy to hold the model to.
+
+*The viewer (builder B).* The app asks `/api/templates`, lands on the default template with every checkpoint
+confirmed at its inputs and stands at its camera (face-on, where it had opened on "oblique"; the presets stay as
+buttons). The switcher is the Galaxy panel's first section: a thumbnail over each label; choosing one goes through
+the workflow's own state and sets the camera, lens and filter set in one update. "Edit galaxy" opens the staged
+process at the template's values, confirmations kept. **Edited** means anything the query sends differs from the
+template's: the button then reads "NGC 4414 · edited" and a click restores the template. The viewer sends the full
+explicit input vector, not `template=` — by ruling 2 the same point in input space — **which will have to change
+when a template carries pins** (P3–P4). An API without the route (a 404) lands on the defaults as before.
+**The lens is the camera's**: `FOV` is gone as a constant; the presets' stand, the orbit range, the near and far
+planes and the capture hook follow the lens; the march, the points' flux per pixel area, the frustum footprint,
+picking and zoom-to-cursor already read the camera. At 45° nothing moved: the two `milky_way` frames are S53's
+face-on frames to the byte. The frame's linear sum for one framing differs between 45° and 5° by 2.6 % face-on
+and 5.3 % inclined — the perspective's own 1/d², not a normalisation; the march carries a lens-dependent
+quadrature error of up to 0.5 % at its default 96 steps (0.42 % at 256), which is recorded and not changed.
+"Compare with a picture" shows a file the user picks beside the render (an object URL; nothing leaves the
+browser; the one-fetch gate holds) under a caption read from the live camera: the template, the filter set, kpc
+per pixel at the centre and arcseconds at the template's distance, the inclination, the lens. vitest 181 → 212.
+
+*The picture test by template.* Six captures, each chosen through the switcher and checked against
+`/api/templates`' own camera: `milky_way` and `ngc_4414` in both modes at 1024 px, and a 256 px thumbnail of each,
+which is the file the switcher shows (`frontend/public/templates/`). Six of six pass on the RTX 4070.
+
+**The captures beside their goals (`tools/goal_metrics.py`; display targets, never rows).** `milky_way`'s rows are
+S53's face-on rows, unchanged to the digit. NGC 4414, the goal against the template at 55° through the 5° lens
+and the `wfc3` set:
+
+| Picture | q | B−R in | B−R out | A1 | A2 | A3 | A4 | A5 | A6 | arm / interarm, blue | dark fraction | slope | points in |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| goal: NGC 4414 | 0.512 | +0.508 | +0.234 | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 2.72 | 0.157 | −2.09 | 97 |
+| `ngc_4414`, field mode | 0.618 | +0.589 | +0.199 | 0.086 | 0.101 | 0.016 | 0.023 | 0.021 | 0.020 | 1.84 | 0.004 | −6.0 | 6 |
+| `ngc_4414`, star-first mode | 0.661 | +0.601 | +0.158 | 0.089 | 0.077 | 0.021 | 0.034 | 0.022 | 0.032 | 1.97 | 0.004 | −1.0 | 884 |
+
+The template draws a bar and a two-armed pattern (seed 4414), which NGC 4414 does not have: A2 is the render's
+largest mode where the goal's spectrum is flat. P1, P3 and P4 are what change that.
+
+**A claim of D212's corrected.** D212 said of S53's inclined captures that their A1 of 0.09–0.11 "is the
+perspective's, not the galaxy's", and S53's lessons repeat it. **Through the 5° lens the A1 is still 0.086–0.089.**
+The perspective was not the cause, or not most of it: an inclined dusty disc is dimmer on its near side, where the
+dust layer stands in front of more of the stars, and that is a real m = 1 — the goal picture carries 0.099 of its
+own. The long lens stays (it removes the 4–5 % magnification and the cut-off near side), and the sentence that
+restricted the inclined rows to three columns is withdrawn.
+
+**Debts opened: #132–#136** (the halo that cannot be made weak enough; the stepped targets; the template's gas;
+the K light per unit mass; the frame's colour). Register 74 open = 11 + 63, 45 discharged. The 37 rows are
+S53's, 12 / 20 / 5. Timings (`tools/timings.py`, the new rows): `templates` 0.2 ms; `arrays: a template` 0.163 s
+cold; `render: ngc_4414 (WFC3)` 2.34 s cold, 0.38 warm, 7.5 MB.
+
+**For the owner (the gate's ruling 5; nothing waits on it).** *Told:* the five NGC 4414 checks were spent blind
+on a fit whose objective was defective (three controls at bounds); the template carries the refit with the same
+five checks, disclosed; the blind reading exists for the first fit only and is kept above. *Asked:* whether a
+later session should run a second fit on the reader's own split — M_K and the HI mass among the targets, the
+stellar mass and H₂ among the checks — as a probe of the model's history controls, not as a blind test, or
+whether fit B is the second template for the rest of the build. That choice changes the check set after results
+were seen, and is the owner's alone.
