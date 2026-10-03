@@ -734,7 +734,10 @@ def test_the_checks_are_d213_s_table_word_for_word():
     decision = text("DECISIONS.md").split("### D213.")[1]
     rows = [[c.strip().replace("`", "") for c in line.strip().strip("|").split("|")]
             for line in decision.splitlines() if line.strip().startswith("| ") and "---" not in line]
-    table = {r[0]: r for r in rows if len(r) == 4 and r[0] != "Check"}
+    # The ruling's table is the four-column one whose rows open with a check's label; the entry's later tables
+    # (the fits' controls, the readings) are other tables, some of them four columns wide too.
+    labels = {c.label for c in NGC_4414.checks}
+    table = {r[0]: r for r in rows if len(r) == 4 and r[0] in labels}
     assert len(table) == 5 and len(NGC_4414.checks) == 5
     for check in NGC_4414.checks:
         label, window, quantity, mismatch = table[check.label]

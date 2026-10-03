@@ -8779,3 +8779,12 @@ later session should run a second fit on the reader's own split — M_K and the 
 stellar mass and H₂ among the checks — as a probe of the model's history controls, not as a blind test, or
 whether fit B is the second template for the rest of the build. That choice changes the check set after results
 were seen, and is the owner's alone.
+
+**The close (2026-10-04).** The suite on the combined state: 1101 passed, 5 skipped, 2 failed, `EXIT=1` (31 min) —
+both failures the lead's own records, neither a model's: `test_audit`'s pin of the register's counts and carried
+row (69 → 74, the five debts above) and `test_templates`' parser of this entry's check table, which the entry's
+later four-column tables had widened (it now takes the rows that open with a check's label). Re-pinned and
+re-run as whole files with the docs tests: 112 passed and one failure, the load-sensitive timing test
+`test_s21b_the_catalogue_is_priced_per_cell_not_per_star` (S55's first builder was running beside it), which
+passes alone, twice (the flake S27, S35 and S45 recorded). The specs: OK, 12 / 20 / 5 of 37 for both models, the
+template checks 0 / 5 with five recorded misses. The picture run: 6 passed.
