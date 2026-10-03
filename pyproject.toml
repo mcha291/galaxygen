@@ -9,7 +9,10 @@ requires-python = ">=3.12"
 dependencies = ["numpy>=2.3,<3"]
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = [
+    "pillow>=11",
+    "pytest>=8",
+]
 
 [build-system]
 requires = ["hatchling"]
