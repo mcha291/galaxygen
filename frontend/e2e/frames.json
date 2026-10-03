@@ -1,0 +1,49 @@
+{
+  "about": "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed frame in e2e/frames/ is and what drew it. `renderer` is WebGL's UNMASKED_RENDERER string. Committed frames belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.",
+  "playwright": "1.62.1",
+  "args": [
+    "--use-angle=d3d11"
+  ],
+  "tolerance": {
+    "threshold": 0.01,
+    "maxDiffPixelRatio": 0.001
+  },
+  "frames": {
+    "face-on-field": {
+      "file": "frames/face-on-field.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 688694,
+      "sha256": "7347ae3cc610e1a9e4e8cb51bdf18c0234d4b54fd76fe8819080be0519ed0515",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "face-on-stars": {
+      "file": "frames/face-on-stars.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1080415,
+      "sha256": "3212cebb8da5d23b1e47be07c547e5258d2d8219155f4d757891f7de25940e77",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "inclined-field": {
+      "file": "frames/inclined-field.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 532351,
+      "sha256": "0b93b043eb8d452628edcdad6c01cc2b227b4c594e2e0dee7232289551da82f2",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "inclined-stars": {
+      "file": "frames/inclined-stars.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 866023,
+      "sha256": "c078d9a8e2c013e0540ed1fdf0ea7ae917ed4a8b2dedf34d9ae92dcba0bbab76",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    }
+  }
+}

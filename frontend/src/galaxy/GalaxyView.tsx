@@ -22,6 +22,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
+import { type CaptureCamera, orbitPosition } from "./capture";
 import { extent } from "./positions";
 import { type SpritePsf, psfTexture } from "./psf";
 import { type Tuning, type ToneMapping, TUNING_DEFAULTS } from "./tuning";
@@ -110,6 +111,7 @@ export function GalaxyView({ layers = [], pickable = [], reach: framing, childre
         {hdr && <HdrOutput tuning={tuning} />}
         <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
         <FrameProbe />
+        <CaptureProbe />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge range={range} zoom={zoom} onView={onView} />
       </Canvas>
@@ -276,6 +278,42 @@ function FrameProbe() {
       if (holder.__galaxygenFrameSum === probe) delete holder.__galaxygenFrameSum;
     };
   }, [gl, scene, camera, advance]);
+  return null;
+}
+
+/**
+ * An instrument for the picture test (T12, rule B1; the precedent is the probe above, D208):
+ * `window.__galaxygenCapture.place(camera)` stands the orbit camera at a stated inclination, azimuth and framing
+ * radius about the galaxy's centre (capture.ts), and `.picture()` draws one frame and returns the canvas as it is
+ * displayed - after the bloom and the tone curve, with none of the page over it - as a PNG data URL. A camera a
+ * drag could reach and a copy of what is on screen: it adds nothing to what is drawn and holds no parameter of it.
+ */
+function CaptureProbe() {
+  const gl = useThree((s) => s.gl);
+  const camera = useThree((s) => s.camera);
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  const advance = useThree((s) => s.advance);
+  useEffect(() => {
+    if (!controls) return;
+    const holder = window as unknown as Record<string, unknown>;
+    const probe = {
+      place(view: CaptureCamera) {
+        controls.target.set(0, 0, 0);
+        camera.position.set(...orbitPosition(view, FOV));
+        controls.update(); // looks at the centre and tells the view's listeners, as a drag does
+      },
+      picture() {
+        // The frame and its read in one task: the drawing buffer is not kept once the browser has shown it.
+        advance(performance.now());
+        const size = gl.getDrawingBufferSize(new Vector2());
+        return { png: gl.domElement.toDataURL("image/png"), width: size.x, height: size.y };
+      },
+    };
+    holder.__galaxygenCapture = probe;
+    return () => {
+      if (holder.__galaxygenCapture === probe) delete holder.__galaxygenCapture;
+    };
+  }, [gl, camera, controls, advance]);
   return null;
 }
 
