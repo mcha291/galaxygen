@@ -670,12 +670,15 @@ def test_the_cloud_interior_s_noise_is_published_as_the_viewer_holds_it(runs):
             d = out.decls[n]
             assert d.provenance == "synthetic" and "#110" in d.statistic and "Not shown by the viewer" in d.about
     source = (ROOT / "frontend" / "src" / "galaxy" / "region.ts").read_text(encoding="utf-8")
-    octaves = re.search(r"export const OCTAVES = (\d+);", source)
-    assert octaves and int(octaves.group(1)) == cloud_texture.INTERIOR_OCTAVES == 4
-    if "frequencies 1, 2, 4, 8 per unit, weights 1, 1/2, 1/4, 1/8" in source:  # the viewer's own statement, while it holds one
-        steps = range(cloud_texture.INTERIOR_OCTAVES)
-        assert [cloud_texture.INTERIOR_LACUNARITY**k for k in steps] == [1, 2, 4, 8]
-        assert [cloud_texture.INTERIOR_GAIN**k for k in steps] == [1, 1 / 2, 1 / 4, 1 / 8]
+    # Since builder D (S55) the viewer holds none of the three: it evaluates the interior with what the clouds'
+    # header publishes, and keeps one measured normaliser with the parameter set it was measured for. The guard
+    # therefore runs the other way round: the viewer names no octave count of its own, and the set its measured
+    # constant belongs to is the layer's.
+    assert "export const OCTAVES" not in source
+    m = re.search(r"measuredFor: \{ octaves: (\d+), lacunarity: ([\d.]+), gain: ([\d.]+) \}", source)
+    assert m, "region.ts no longer records which parameters its measured normaliser belongs to"
+    assert (float(m[1]), float(m[2]), float(m[3])) == (
+        cloud_texture.INTERIOR_OCTAVES, cloud_texture.INTERIOR_LACUNARITY, cloud_texture.INTERIOR_GAIN)
 
 
 def test_a_synthetic_field_declares_what_it_stands_in_for_what_it_conserves_and_its_statistic():
