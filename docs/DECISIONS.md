@@ -8496,3 +8496,80 @@ discharged; no debt opened. Specs 12 / 20 / 5 of 37, S52's. Next numbers: D213, 
 
 **The close (2026-10-03).** The suite on the combined state: 1048 passed, 4 skipped, `EXIT=0` (37 min; the 51 new tests
 are the two instruments'); the specs OK, 12 / 20 / 5 of 37 for `azimuthal`, as at S52. The picture run: 4 passed.
+
+### D213. S54: the templates — `milky_way` and `ngc_4414` as data, the fit and its residuals, five blind checks, the viewer's switcher (BUILD_III Phase T; an Opus lead, no Fable gate)
+
+**The ruling is BUILD_III §2 and its Phase T; what follows is what that text left to the lead, written before any
+model output for NGC 4414 exists** (D113). The owner's order of 2026-10-03: "continue with the plan, and
+automatically continue to the next session when you finish, until you need a ruiing from me. spawn fable subagents
+when you need to and in accordance with the plan."
+
+**The reading came first, blind** (`docs/READING_NGC_4414.md`; one Opus reader, forbidden the repository): seventeen
+properties read on fetched pages, a window fixed for each that has an uncertainty, every window at the Cepheid
+distance 17.7 Mpc with the 16.6–19.1 Mpc bracket inside it. What it found that the plan did not assume: **the
+rotation curve declines** (a peak of 237 km/s near 3 kpc, 185 km/s beyond 21 kpc), so "the rotation speed" is two
+numbers and their ratio; **there is no bar** (five sources) and the arms are flocculent; the optical magnitudes and
+colour are corrected to face-on, not dust-free; no tabulated v(R) exists on a readable page.
+
+**The rulings.**
+1. **A template is data** in `galaxy/templates.py`: a name, a label, an about, the model, its inputs — overrides of
+   the registry's defaults, its merger list, its seeds — a camera, a filter set, an instrument, its pins (none
+   until P3–P4), and for a fitted template the targets, the residuals and the checks. **`milky_way` overrides
+   nothing**: its inputs are resolved from the registry when asked for, so it cannot drift from the defaults.
+2. **`template=<name>` on every route that takes inputs** makes the template's inputs the base, and an input given
+   in the query still overrides it ("Edit galaxy" starts from a template and moves a control). No `template` is the
+   defaults, as today. `template=milky_way` and no template are one point in input space: one cache entry, the
+   same bytes. An unknown name is a 404 that lists the names. `/api/templates` is metadata: it runs no stage (D4).
+3. **The fit sees three properties and moves seven controls.** Targets, each with the reader's window: the curve's
+   peak, max `circular_velocity` inside 20.6 kpc, 237 ± 10 km/s [222, 247]; the stellar disc's scale length,
+   `thin_disc_scale_length`, 1.649 kpc [1.5, 1.9] (3.6 µm); the stellar mass, `stellar_mass_total`, 10^10.65 M☉
+   [3.4, 5.9] × 10¹⁰. The plan's default set; the reader would have put M_K in the fit and the stellar mass among
+   the checks, which is the named alternative. Three numbers do not fix seven controls, so the objective is the
+   sum of squared residuals in units of each target's half-window **plus a tie-break**: 10⁻³ times the sum of
+   squared departures from the defaults in units of each control's published range. The tie-break keeps a control
+   nothing measures at the Milky Way's value; it is not a prior with weight, and the residuals table says how far
+   each control moved. The search is bounded by the published ranges, deterministic, and of a step count fixed in
+   advance. **A residual it cannot remove is published, not tuned away** (B5, BUILD_III §9).
+4. **What nothing measures is not invented.** The merger list is empty — no merger of NGC 4414 was read, and the
+   default list is the Milky Way's own two events (the named alternative: keep them). Every seed is 4414: a seed
+   has no measured value, and none is chosen for the picture. **The model will draw NGC 4414 with a bar and with
+   regular arms until P3 and P4 give a template its pins; that is recorded here, not hidden.**
+5. **The camera and the instrument.** Inclination 55° — Wong et al. 2004's CO + HI fit, 55 ± 2, the inner disc the
+   picture shows; the reading's range is 52–57°, kinematic HI 52.3° the named alternative. The position angle
+   (159°) is not applied: the viewer's camera has no roll, and `goal_metrics` reads each picture in its own frame.
+   The near side is not read: azimuth 0, arbitrary. **A long lens: a field of view of 5°** against the viewer's
+   45° — S53 found the perspective puts an m = 1 of 0.09–0.11 into an inclined capture; at 5° the near side is
+   magnified by under 4 %. A display choice, per template (`milky_way` keeps 45° and stands face-on, as the plan
+   says). The filter set is `wfc3`, the Hubble broadband set the viewer holds; the goal picture's own camera and
+   filters were not read (V8). Distance 17.7 Mpc; no pixel scale (not read: None, B9).
+6. **The five checks, fixed now** — the plan's default five, each on the reader's window, each compared with the
+   quantity the reader named, read on today's model (no layer exists):
+
+   | Check | Window | The model's quantity | What still differs |
+   |---|---|---|---|
+   | The curve's shape, S = outer speed over peak | [0.71, 0.86] | mean `circular_velocity` over 20.6 kpc to the grid's edge (30 kpc), over its maximum inside 20.6 kpc | The window's outer range is 20.6–41.2 kpc, a warped disc |
+   | Star formation rate | [1.8, 4.7] M☉ yr⁻¹ | `sfr` | FUV + 22 µm on a Kroupa-type scale |
+   | Gas: atomic and molecular hydrogen | [7.4, 14.7] × 10⁹ M☉ | `hydrogen_mass_30kpc` | 28 % of the HI lies beyond 20.6 kpc; X_CO |
+   | Absolute K magnitude | [−24.62, −24.12] | `absolute_magnitude_k` | The window allows 0.15 mag of internal extinction |
+   | B − V, face-on, attenuated | [0.72, 0.82] | the face-on render's frame, B − V through the dust | RC3's statistical correction to face-on |
+
+   They are reported in their own table by `python -m galaxy.specs`, apart from the 37 rows and never counted
+   among them; a failure is a recorded miss with a debt and the run stays green on it, and a recorded miss that
+   starts passing fails the run (the acceptance table's own convention). **The reading's other windows — HI and H₂
+   apart, the outer speed, the face-on M_B, the infrared luminosity, the bulge — are not spent**: nothing prints
+   the model's number against them, so they stay blind for a later session.
+7. **The viewer** lands on `milky_way` at its camera, carries a switcher with a thumbnail of each template, takes
+   the template's camera, field of view and filter set, starts "Edit galaxy" from the template's inputs, and can
+   set a picture the user picks from disk beside the render with the render's set and scale stated (T16 ii;
+   nothing bundled, ruling 5). **The thumbnails are the picture harness's own captures of each template,
+   committed and compared by the picture test**, so one cannot go stale silently and switching costs no model run
+   for the template not shown. The capture list names a template per entry; S53's four frames give way to each
+   template at its own camera in both modes.
+
+**Predictions, before any run (B4).** (a) The fit lands the three targets inside their windows: the Milky Way's
+defaults are already close in speed and mass (251 km/s, 4.75 × 10¹⁰ M☉) and the scale length (2.44 → 1.65 kpc) is
+the spin's to move. (b) **The shape check misses high**: the model's halo holds its curve near flat, and nothing in
+seven controls makes it fall by a fifth. (c) **The colour check misses blue**: the default galaxy's face-on frame
+reads B − V 0.57 and the window starts at 0.72. (d) The hydrogen check passes (the default holds 8.1 × 10⁹); the
+star formation rate is near the window's lower edge and could fall either side; M_K is not predicted. A prediction
+that fails is reported as failed.
