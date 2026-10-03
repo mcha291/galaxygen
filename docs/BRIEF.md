@@ -1,43 +1,54 @@
-# BRIEF — for S53: BUILD_III is adopted; its Phase 0, Opus-led
+# BRIEF — for S54: BUILD_III's Phase T, the templates (an Opus lead; no Fable gate)
 
-**The state (2026-10-03).** S51 and S52 are merged (D210, D211): the gas has its own arm pattern and the dust is
-heated in the geometry it is drawn in. **`session-53` is open and holds `docs/BUILD_III.md`, the third build, adopted by
-the owner on 2026-10-03, all ten of its rulings answered (BUILD_III §7).** Register 69 open = 11 + 58, 45 discharged. Specs
-12 / 20 / 5 of 37.
-
-**Why a third build.** The owner put two goal pictures in `docs/goals/` (an artist's Milky Way; Hubble's NGC 4414)
-and asked for a review against them on two axes. The finding: the model is ahead on content and behind on shape,
-the viewer is behind the model, and the leftovers S53 was going to choose among do not close the gap. The owner's
-direction: physics up to what a fast generation affords, and **a separate randomness layer** for what the physics
-cannot place. The owner's four orders: two templates in the viewer; a clean separation of the physics model from
-the randomness layer; the ten model items and the per-ring gas shock; the viewer's rendering brought up to them. **Fable's usage is
-limited (the owner): every row of the plan is Opus-led, and Fable is called at four short gates only (BUILD_III §3).**
+**The state (2026-10-03).** S53 is merged (D212): BUILD_III is adopted, its ten rulings recorded, the rules amended
+(A10's fourth kind, A5, D1, D5, `RENDER_PHYSICS.md` §8), and Phase 0's two instruments built. No model code moved:
+specs 12 / 20 / 5 of 37; register 69 open = 11 + 58, 45 discharged. Numbers from D213, #132, row 38, board row 54.
+**Read `BUILD_III.md` §2, §3 and "Phase T" in §5: that text is the ruling you build to.**
 
 ## First
-`uv run python tools/bootstrap.py`. S52's close ran the full suite (`EXIT=0`) and `verify_clone` on `main` (OK at
-551bbbf); a session opened in a fresh context runs both again before new work.
+`uv run python tools/bootstrap.py`. S53's close ran the suite (`EXIT=0`) and `verify_clone` on `main`; a fresh
+context can open with `uv run python tools/verify_clone.py --ref main --skip-worktree-checks`, backgrounded, while it reads.
 
-## The owner's rulings (BUILD_III §7 holds the table and the owner's words; record it as D212)
-1 adopted. 2 the fourth kind, *synthetic*: yes. 3 and 4 approved. 5 the goal pictures are not committed
-(`docs/goals/` is git-ignored). 6 a headless browser: yes. 7 `basic` is ignored from now on, not merged. 8 five
-checks for NGC 4414, fitted apart. 9 the model's phases before the viewer's. 10 numpy-only at runtime; Pillow and
-Playwright as development-only tools.
+## The order (BUILD_III §5, Phase T; §3e and §3f are the agents' briefs)
+1. **One reader, before any model output for NGC 4414 exists** (blind, D113): its distance, inclination, position
+   angle, rotation speed, stellar and gas mass, star formation rate, scale length, class and bar classification,
+   each read on a fetched page with its coverage, **and a window for each of about eight properties**. Commit
+   `docs/READING_NGC_4414.md` before anything is fitted. The lead then names which the fit sees and which five are checks.
+2. **Builder A (model, API, fit):** `galaxy/templates.py` (two templates as data, every number tagged),
+   `tools/fit_template.py` (a bounded search of the seven controls; the residuals table committed, none tuned away),
+   `/api/templates` (metadata only, D4) and `template=` on every route that takes inputs, a `tools/timings.py` row.
+3. **Builder B (viewer):** the landing on `milky_way`, the switcher with model-made thumbnails, the template's camera
+   and filter set, "compare with a picture" (a file the user picks; none bundled, ruling 5); vitest on the switcher.
+4. **The five checks** read on the layer-off model (today's model: no layer exists yet), in their own table beside
+   the 37 rows, pass or miss with a debt (B5), never a refit. A capture of each template beside its goal.
 
-## Then: Phase 0 (this session, an Opus lead; no Fable gate)
-The rule amendments in `RULES.md` and `RENDER_PHYSICS.md`, **verbatim from BUILD_III's Appendix A**; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the
-plan; `tools/goal_metrics.py` and the React viewer's picture test (two Opus builders in worktrees); the baseline
-table — both goals, both of today's renders — in D212; board row 53; BRIEF for S54 (Phase T). **An Opus lead does not
-improvise a physics ruling: on a stop condition (BUILD_III §3d) it closes partially and writes `docs/HANDOFF_S<NN>.md`.**
+**Gate:** `milky_way` reproduces today's defaults **bit for bit**; the fit's residuals published; the five checks
+recorded; the timings row; vitest; the captures.
+
+## What S53 left you
+- `uv run python tools/goal_metrics.py IMAGE [--axis-ratio Q] --table` — six statistics of a picture at one standard
+  scale; `--table-header` for the header. **Give `--axis-ratio 1` for a face-on picture.** Baseline table: D212.
+- `npm --prefix frontend run picture` (compare) / `picture:update` (rewrite frames + `e2e/frames.json`): four
+  captures of the default galaxy in `frontend/e2e/captures.json`, on its own server at **:8019**. Each entry has a
+  `template` key, null today: **the spec refuses any other value until you teach it to choose a template.**
+- **The inclined camera is a placeholder**: 59.2° is the goal picture's outline read as a thin disc, azimuth 0.
+  Replace both with the template's sourced camera and regenerate.
+- **The camera's projection is yours to settle with the template** (BUILD_III §2: distance and pixel scale): the
+  viewer's 45° perspective puts an m = 1 of 0.09–0.11 into an inclined capture and cuts the near side. Hubble's
+  view is parallel. A long lens or an orthographic camera is a display choice; say which and why in D213.
 
 ## Traps
-- An Agent worktree is cut from `main`: commit the ruling first; the builder's first step is `git merge --ff-only`.
-- A stage's restricted view answers False for an undeclared constant: declare `GAS_ARM_WIDTH`, `GAS_ARM_MASK_WIDTH`
-  and `gas_arm_contrast` wherever a `GasPattern` is built, or the layout goes flat silently.
-- A census row (35, 37) moves with any redraw of the clouds, until BUILD_III's Phase R judges rows with the layer off.
-- The dust past the stellar disc's edge has no gas height: it is not heated (T_d NaN there) and not drawn.
-- Editing the register while the suite runs fails `test_progress` alone: regenerate the board (`tools/progress.py`).
-- A stale :8017 from an earlier session serves old code: stop it by PID (check its command line), then `preview_start`.
-- An idle Browser pane draws no frames: call `window.__galaxygenFrameSum()` before a screenshot.
-- Python writes CRLF here and heredoc writes have failed with Errno 22: write with `newline="\n"`, check the file.
-- A long Bash command over 8 KB is cut: put scripts in the scratchpad and run them.
-- BUILD_III §9: the layer never changes a total; no row is judged with it on; no synthetic field is tuned to a goal.
+- A template's seeds are the four that exist; `texture_seed` is Phase R's (S55). Pins are data a template *may*
+  carry and no pin is built before P3/P4 (S58–S59): NGC 4414 will show a bar until then — record it, do not hide it.
+- **Do not force NGC 4414's inputs** (BUILD_III §9): what seven controls cannot reach is a finding. A check that
+  fails is a recorded miss; a window is fixed before the model's number exists and is never widened (B5).
+- A stop condition (BUILD_III §3d) means a partial close and `docs/HANDOFF_S54.md`, not an improvised ruling.
+- An Agent worktree is cut from `main`: commit the ruling first; the builder's first step is `git merge --ff-only
+  session-54`. Worktrees rewrite `core.hooksPath`: run `tools/bootstrap.py` before the closing suite.
+- `frontend/node_modules` in a worktree: `npm --prefix frontend ci`. In the main checkout use `npm install`, never
+  `ci`, while the owner's dev server may be running. Never bind or stop :8017, :8018 or :5173.
+- The committed frames belong to this machine's renderer (`frames.json`); a changed viewer default fails the
+  picture test by design — regenerate with `picture:update` and say so in the decision.
+- Scripts go in the scratchpad, never `$TMP` (a stray `numbers.py` there shadows the standard library).
+- Editing the register or the board while the suite runs fails `test_progress` alone: regenerate with `tools/progress.py`.
+- Python writes CRLF here: write with `newline="\n"`; a Bash command over 8 KB is cut.

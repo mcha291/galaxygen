@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████████████████████████████████████████████████████████████████████████████████` **53 / 53 sessions** · repo initialised: yes
+`████████████████████████████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░` **54 / 67 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -59,6 +59,20 @@
 | ☑ | 50 | **The star-first viewer mode, after a side track on the owner's word** (D205–D209). *Sidetrack session 1* (branch `sidetrack-session-1`, D205–D207): the brightest mode's component layers (starlight, ionized gas, dust as it acts and where it is, the cloud census, the cell outlines), the filter sets and a stars switch in that mode, `docs/RESEARCH_AREAS.md` (the spiral's shape a template), **the dust in its own layer** — `gas_scale_height` per ring, Σ/4ρ₀, 113 pc at R₀, missing past the stellar disc's edge; `/api/render`'s `dust_height`; the march composing light and dust in order (0.6 % of the two layers' integral) — so an inclined disc shows the lane (#109's layer closed, **#128 opened**: the heating is still one mixed slab, the layered geometry would absorb 0.766 of it), and **the dust placed round each ring** by the pattern's contrast (`dust_placement`: the arms muted and reddened, not laned). *S50 proper* (D208): **the star-first mode** replaces brightest — the N brightest disc stars in view and every cluster as points of their own light through the set, each sprite summing to its light over the sky one pixel covers there, over `/api/render?l_min=`'s remainder; one exposure; the dust in front of each point (T20); a click opens the object's columns (T23). **The closure on screen 0.9995 / 0.9997 / 1.0006** through rgb (`window.__galaxygenFrameSum`). D209: clicking a star to open its planetary system removed. T12 not built (no headless browser); **the full suite was not run at the close, on the owner's word** (last `EXIT=0` on D207's code; S50 proper changed no Python). 66 open = 11 + 55, 45 discharged | desktop | **Fable** | **Opus 5.5** | s50 | 2026-10-03 |
 | ☑ | 51 | **The gas's own arm pattern** (D210; `RESEARCH_AREAS.md` §1 direction d, the owner's choice). *A reading session first* — three Opus readers, every number read on a fetched page (`docs/READING_GAS_PATTERN.md`): the gas's arm–interarm contrast is a ratio of means inside a mask (PHANGS: 2.73 for grand designs, 1.90 for the rest), the ridge half the stellar arm's width (0.17 of the arm-to-arm period, M51), no systematic offset for co-rotating arms. **`gas_pattern`** (checkpoint 3) publishes `gas_density_contrast`: a von Mises ridge in the stellar arm's own phase, on its crest, its amplitude derived from the ratio of means over the source's 1.5 kpc mask; `gas_arm_contrast` is the `bar` stage's, derived, no draw (amended and disclosed: the first default draw read 10.0 from a spread over segments, not galaxies). Crest 3.07, trough 0.53 at the defaults. **The render** places the dust and the HII regions' light by it: a thin dark lane along each arm's spine, seen face-on under rgb (`docs/design/screenshots/s51-*.jpg`); a ring's light at R₀ still falls, −0.85 % (predicted to rise: failed, pinned). **The model:** today's star formation and the cloud census on the ridge — the young stars' mean modulation 1.78 → 2.63; 16 822 clouds, 12 930 clusters (a redraw, the expectation identical); rows 35 and 37 read the census and moved (−1.989, −0.1055; statuses unchanged, 12 / 20 / 5). 69 open = 11 + 58, 45 discharged (#129–#131 new) | desktop | **Fable** | **Fable 5.1 lead; Opus 5.5 readers and builders** | s51 | 2026-10-03 |
 | ☑ | 52 | **The dust heated in the geometry it is drawn in** (D211; debt #128's first half, on the owner's word given during S51: an Opus agent built it uncommitted, the lead reviewed the whole diff before committing). The dust stage's absorbed fraction is the layered geometry's — stars emitting from a sech² layer of the thin disc's height, the dust absorbing in the gas's own — as a fixed 96-node quadrature (`dust.layered_absorbed_fraction`, under 3e-11 against a second path, the slab's closed form at equal layers to 4e-14), and the render's scattered share with it; G₀ keeps the mixed slab (its sources sit in the gas). **Every prediction held:** L_IR 1.5675e10 → **1.2006e10 L☉** (0.766), the infrared share 0.3415 → **0.2616**, T_d(R₀) 18.82 → **18.52 K**, the inner disc 1.4 K cooler, the frame's balance to 1e-9, every stellar and radial field and the spec table identical. The placement round the ring is measured in the new geometry (1.0007 over the disc, 1.014 at R₀) and **not applied** — it would make every dust number seeded; #128 stays carried for that half. 69 open = 11 + 58, 45 discharged | desktop | **Fable** | **Fable 5.1 lead and review; an Opus 5.5 builder** | s52 | 2026-10-03 |
+| ☑ | 53 | **BUILD_III adopted; its Phase 0** (D212; `BUILD_III.md`, the third build, on the owner's "adopt the plan"). The owner's ten rulings recorded; the rule amendments entered from the plan's Appendix A — A10's fourth kind of quantity, *synthetic*; A5's templates; D1's landing on the default template; D5 and `RENDER_PHYSICS.md` §8, which let the viewer evaluate a function the model publishes and nothing of its own; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the plan. **Two instruments (B1), each by an Opus builder:** `tools/goal_metrics.py` — six statistics of a picture at one standard scale (radial colour, the azimuthal Fourier amplitudes m = 1–8, the blue arm–interarm contrast, the dark-lane fraction, the unsharp-masked power spectrum's slope, compact sources), each returning its known value on synthetic pictures; and **the picture test, T12** — `npm --prefix frontend run picture`, four captures of the default galaxy on headless Chromium through Playwright against committed frames (byte-identical run to run; a field gain of 1.05 fails all four). Pillow and Playwright are development-only. **The baseline table** (both goal pictures, the default galaxy at each goal's camera in both modes) is in D212: the render's odd Fourier amplitudes are 0.002 against the goals' 0.05–0.10, its dark-lane fraction 0.000–0.001 against NGC 4414's 0.157, its texture slope −3.3 (field) and −0.6 (points) against −2.0. No model code, number or row moved; 69 open = 11 + 58, 45 discharged | desktop | **Opus** | **Opus 5.5 lead; two Opus 5.5 builders** | s53 | 2026-10-03 |
+| ☐ | 54 | **Phase T.** Two templates as data (`milky_way` = today's defaults bit for bit; `ngc_4414` fitted by a bounded search, the residuals published), `/api/templates`, `template=` on every route, the viewer's switcher and compare-with-a-picture; NGC 4414's five blind checks, reported apart from the 37 rows | desktop | Opus | — | s54 | — |
+| ☐ | 55 | **Phase R — the separation.** `synthetic` in the provenance vocabulary, `texture_seed`, `model/galaxy/layer/` and its noise primitives with committed vectors, `compose`, the `layer` switch through `run`, the API and the specs, invariants I1–I5 as tests, Appendix B's relabels; bit-identical with the layer on; `basic` the layer-off oracle, once | desktop | Opus; **Fable at G1** | — | s55 | — |
+| ☐ | 56 | **Phase P1.** Several arm modes at once (the swing window at each radius splits a conserved power among m = 2–6; the phases synthetic); the gas ridge as a response to any stellar pattern, S51's field recovered to 1e-9 with one mode | desktop | Opus | — | s56 | — |
+| ☐ | 57 | **Phase P2.** A pattern speed per mode (#81); the steady isothermal gas shock ring by ring — a fixed-step integration, a bisection, a declared fallback — replacing the von Mises ridge: width, contrast and offset derived; #129 and #131 re-ruled | desktop | Opus; **Fable at G2, G3** | — | s57 | — |
+| ☐ | 58 | **Phase P3.** The bar as a body (the old stars concentrated along its axis, no ring total moved), its absence derived from a sourced criterion (rows 15–17 not applicable to an unbarred galaxy), its gas lanes a synthetic template | desktop | Opus | — | s58 | — |
+| ☐ | 59 | **Phase P4.** Pitch varying along an arm in seeded segments from the measured distributions; the templates' pins (the Milky Way's arm segments and bar angle, NGC 4414 unbarred and flocculent) | desktop | Opus | — | s59 | — |
+| ☐ | 60 | **Phase L1.** `census_clustering`, a synthetic field of unit mean per level-0 cell, on the clouds' expected counts; clusters through their clouds; the 20–100 Myr bright stars near where they formed | desktop | Opus | — | s60 | — |
+| ☐ | 61 | **Phase L2.** `gas_fluctuation` published as sourced parameters with a Python evaluator and committed vectors a GLSL twin must match; it modulates the diffuse dust only; spurs at the ridge's Jeans spacing | desktop | Opus | — | s61 | — |
+| ☐ | 62 | **Phase V5.** `/api/render` returns the starlight by age (young, middle, old), each placed by its own weight and summing to `stars`; the field mode draws the three | desktop | Opus | — | s62 | — |
+| ☐ | 63 | **Phase V6.** The censuses at whole-galaxy scale: clouds as extinction (the ring's dust mass unchanged), HII regions as knots, clusters with their half-mass radius (T6), bright stars by tiles (T28), the depth-aware composite (T5) | desktop | Opus | — | s63 | — |
+| ☐ | 64 | **Phase V7.** The layer in the shader: the noise's GLSL twin against the vectors, the diffuse dust modulated per pixel, the spurs, the bar's body and lanes, the physics-only switch | desktop | Opus | — | s64 | — |
+| ☐ | 65 | **Phase V8.** The display defaults per template (T1), the sprite scaled by the template's distance and pixel scale (T9), NGC 4414's instrument look, the goal captures and the metrics' final table against S53's baseline | desktop | Opus | — | s65 | — |
+| ☐ | 66 | **Audit V.** Every citation since S51 read again, every synthetic field's conservation and statistic re-measured, I1–I5 re-derived, a picture traced feature by feature; Fable's verdict on the findings | desktop | Opus; **Fable at G4** | — | s66 | — |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -79,10 +93,9 @@ runs (2026-09-27, `s00`–`s39`, D192; 2026-09-30, `s40`–`s42`, D193). **The T
 names the tag on the remote**; `MANUAL_TODO.md` is where the truth about which tags
 exist lives, and a test asserts it carries a row for every ☑ session.
 
-**Next:** S53 (`BRIEF.md`): the owner's choice — what the gas pattern left open (the owner's look at the lanes,
-#129–#131, an offset, the bar's lanes), #128's placement half (a seeded extension of the dust stage), the
-remainder-only render (T28), how a planetary system is shown (D209), or the display defaults (T1). **The rest of the model work stays pinned**: the blind direct-method
-gradient (#117, #124), #119, #107 and Audit V wait for the word. Row 37 is diagnosed (S45, D196); Audit IV's fixes are applied (S44, D195). Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
+**Next:** S54 (`BRIEF.md`): BUILD_III's Phase T, the templates — the third build (§5f, `BUILD_III.md`, adopted by the
+owner on 2026-10-03, D212) runs S53–S66, every row led by Opus, Fable at four gates. **The model work the plan does not
+name stays pinned**: the blind direct-method gradient (#117, #124), #119, #107 and #128's placement half wait for the word. Row 37 is diagnosed (S45, D196); Audit IV's fixes are applied (S44, D195). Both builds are closed — S0–S22 (§5d) and S25–S42 (§5e,
 `BUILD_II.md`), every "done means" item met, the tags on the remote (D161, D192, D193). S23 and S24 were
 recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 2026-09-25 without a session branch or a close, and the rows say so.
@@ -660,6 +673,30 @@ that entered from a NEEDS-SOURCING has its citation read; the energy-balance,
 redistribution and catalogue-against-field tests are in the suite; every
 visible feature of the viewer traces to a published field; and the tag batch
 has been run from a desktop, which is the one item §5d could not close.
+
+## 5f. The third build — S53 to S66 (written 2026-10-03, at the owner's request; D212)
+
+**`BUILD_III.md`** is the plan, adopted by the owner on 2026-10-03 with ten rulings (its §7, recorded in D212): two
+templates (the Milky Way and NGC 4414), **the physics model beside a randomness layer** — a fourth kind of quantity,
+*synthetic*, on its own seed, conserving every total, citing its statistic, naming the physics it stands in for —
+the ten model items and the gas shock ring by ring, and the viewer's rendering brought up to them. The board rows
+above carry the deliverables; `BUILD_III.md` carries each phase's ruling, its reading and its gate, and it is what a
+session reads with `BRIEF.md` in place of this plan.
+
+- **Every row is led by Opus; Fable is called at four gates** — G1 (S55: do the invariants mean what they say), G2
+  and G3 (S57: the shock's equations, then the solver's review), G4 (S66: the audit's verdict) — each one short turn
+  on a `docs/HANDOFF_S<NN>.md` of at most 150 lines (`BUILD_III.md` §3). An Opus lead that meets a stop condition
+  (§3d) closes partially and writes a handoff; it does not improvise a ruling on physics.
+- **The model's phases run first, the viewer's after** (the owner's ruling 9): S54–S61, then S62–S65, then the audit.
+- **The goal pictures are display targets, never rows** (C6, D113), and are not in the repository (ruling 5): the
+  baseline of `tools/goal_metrics.py`'s numbers is in D212 and the final table is S65's.
+- **`basic` is frozen** (ruling 7): registered, not merged, used once at S55 as the layer-off oracle.
+
+**Done means**, for this build `[inferred]`: with the layer off the acceptance table is S52's row for row unless a
+phase's decision says which mechanism moved a row; no row reads a synthetic field; every synthetic field has its
+three declarations and its conservation test; the viewer evaluates only what the model publishes and matches the
+committed vectors; both templates load, and NGC 4414's five checks are read and recorded, pass or miss; and the goal
+metrics' final table is set beside this session's baseline and beside the plan's own "what will remain".
 
 ## 6. What the executable specs assert
 
