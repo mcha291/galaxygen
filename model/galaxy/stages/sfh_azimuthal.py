@@ -10,10 +10,14 @@ there, not here:
   be the azimuthal average. The arms do not change what the gas becomes; they change where
   stars are when they form.
 - **The modulation is the star formation law's own non-linearity** read through the
-  pattern's density contrast c(R, φ): if Σ_gas(R, φ) = Σ_gas(R) c then Ψ ∝ Σ_gas^n s(Σ_gas)
-  with the threshold's switch ``s`` applied *per cell* — an arm can carry gas over the
-  threshold the ring mean sits under — and the result is divided by its own mean around
-  the ring. So ``sfr_surface_density`` times the modulation integrates over φ back to
+  gas's own density contrast g(R, φ) (``gas_pattern``, S51, D210): Σ_gas(R, φ) = Σ_gas(R) g,
+  then Ψ ∝ Σ_gas^n s(Σ_gas) with the threshold's switch ``s`` applied *per cell* — an arm
+  can carry gas over the threshold the ring mean sits under — and the result is divided by
+  its own mean around the ring. Until S51 the gas was taken to follow the stellar contrast,
+  one cosine harmonic whose half-maximum is half the arm-to-arm period; the gas's own is a
+  narrow ridge on the stellar arm's crest, half the stellar arm's width, with an
+  arm-to-interarm ratio of means of two to three, so today's star formation crowds a
+  narrower stripe of each arm. So ``sfr_surface_density`` times the modulation integrates over φ back to
   ``sfr_surface_density`` at every radius: a redistribution, not a new source
   (RENDER_PHYSICS.md §7). Where a ring forms nothing at all the modulation is 1.
 
@@ -25,7 +29,8 @@ and an arm is exactly where both are high — and the gate is the physics: the t
 formation is the axisymmetric model's, only its place moves. The mean is taken over the
 grid's φ cells, which are uniform, so it is the φ-integral over 2π exactly.
 
-**Provenance.** ``pattern_density_contrast`` is seeded, so the modulation is seeded. The
+**Provenance.** ``gas_density_contrast`` is seeded (through the pattern's drawn pitch, arm
+number and bar), so the modulation is seeded. The
 histories are not: ``sfh_azimuthal`` *extends* ``sfh`` (``Stage.extends``), so every field
 the two share is computed by ``sfh``'s own compute in ``sfh``'s own restricted view, which
 cannot reach the contrast, and ``graph`` labels them from ``sfh``'s reads. Declaring them
@@ -65,13 +70,14 @@ SFR_MODULATION = FieldDecl(
     optional=True, provenance="seeded",
     about=(
         "Where around each ring today's stars form, relative to the ring's mean: the gas follows "
-        "the arm and bar contrast, the star formation law's own exponent and its threshold switch "
-        "are applied cell by cell, and the result is divided by its mean around the ring. So it "
-        "averages to exactly 1 on every ring and the star formation rate times it integrates back "
-        "to the axisymmetric rate: the arms move where stars form, not how many. Sharper than the "
-        "contrast, because the law is steeper than linear, and sharpest where an arm lifts gas "
-        "over a threshold the ring mean sits under. Only the azimuthal model publishes it; its "
-        "catalogue places the young stars by it."
+        "its own contrast, a narrow ridge on the stellar arm's crest (the stellar bar's term inside "
+        "the bar), not the stars' broader arm; the star formation law's own exponent and its "
+        "threshold switch are applied cell by cell, and the result is divided by its mean around "
+        "the ring. So it averages to exactly 1 on every ring and the star formation rate times it "
+        "integrates back to the axisymmetric rate: the arms move where stars form, not how many. "
+        "Sharper than the gas's contrast, because the law is steeper than linear, and sharpest "
+        "where an arm lifts gas over a threshold the ring mean sits under. Only the azimuthal "
+        "model publishes it; its catalogue places the young stars by it."
     ),
 )
 
@@ -80,7 +86,7 @@ def compute_modulation(ctx: Context, shared: Mapping[str, Any]) -> Mapping[str, 
     return {
         "sfr_modulation": sfr_modulation(
             shared["gas_surface_density"], shared["sf_threshold_surface_density"],
-            ctx.fields["pattern_density_contrast"], float(ctx.constants["KS_INDEX"]),
+            ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
         ),
     }
 
@@ -92,11 +98,11 @@ SFH_AZIMUTHAL = IMPLEMENTATIONS.register(
         about=(
             "The inside-out star formation history exactly as the axisymmetric stage computes it — "
             "every history on (R, t), no azimuth — plus where around each ring today's stars form: "
-            "the pattern's contrast read through the star formation law's own non-linearity and "
+            "the gas's own arm contrast read through the star formation law's own non-linearity and "
             "renormalised around every ring, so the total is unchanged and only its place moves."
         ),
         own=compute_modulation,
-        requires=("pattern_density_contrast",),
+        requires=("gas_density_contrast",),
         publishes=(SFR_MODULATION,),
     )
 )

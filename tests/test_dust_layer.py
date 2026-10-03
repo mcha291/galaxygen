@@ -1,4 +1,5 @@
-"""The dust in its own layer and round each ring (S50, D206 and D207; debt #109's layer, debt #128's record).
+"""The dust in its own layer and round each ring (S50, D206 and D207; debt #109's layer, debt #128's record;
+round each ring by the gas's own contrast since S51, D210 Phase 2).
 
 The ism stage publishes ``gas_scale_height`` — the gas's column over four times its midplane density, the
 h of the render's one layer form — and ``/api/render`` returns it ring by ring as the dust's layer
@@ -218,28 +219,61 @@ def test_what_the_layered_geometry_would_absorb_is_recorded_not_applied(galaxy, 
     assert at(R, absorbed, 12.0) == pytest.approx(0.995, abs=0.005)
 
 
-# --- D207: the dust round each ring -------------------------------------------------------------------
+# --- D207, and D210 since S51: the dust round each ring ----------------------------------------------
+
+# A φ grid fine enough for the gas ridge's ring mean to be 1 to rounding. The ridge is a von Mises in m φ; on n_φ
+# equal cells its grid mean picks up the harmonics whose order times m is a multiple of n_φ — on SMALL's 36 cells
+# with four arms the ninth, I₉(κ)/I₀(κ) = 6.9e-4, so a ring's grid mean is 1 to 5.8e-4 there (read at S51). On
+# 108 cells the first alias is the 27th harmonic, under 1e-15; the default grid's 360 is exact as well.
+FINE_PHI = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=108)
 
 
-def test_the_dust_is_placed_round_each_ring_by_the_pattern_s_contrast(model):
-    """`dust_placement` is the published contrast, clipped at zero as the stars' and the HII regions' placement is:
-    the dust's column at a cell over its ring's mean. It averages to 1, so every ring keeps its dust, and the
-    ring's own arrays are untouched by it."""
-    api = Service(grid=SMALL)
+def published(api: Service, model: str, *names: str) -> dict[str, np.ndarray]:
+    got = api.handle("/api/arrays", {"model": [model], "fields": [",".join(names)]})
+    arrays = wire.decode(got.body)[1]
+    return {n: np.asarray(arrays[n], dtype=float) for n in names}
+
+
+def test_the_dust_is_placed_round_each_ring_by_the_gas_s_own_contrast(model):
+    """`dust_placement` is the published gas contrast (D210), clipped at zero as every placement is: the dust's
+    column at a cell over its ring's mean, the gas the dust is a share of. Until S51 it was the stellar pattern's
+    contrast (D207). It averages to 1, so every ring keeps its dust, and the ring's own arrays are untouched by it."""
+    api = Service(grid=FINE_PHI)
     header, arrays = render(api, model.name)
-    got = api.handle("/api/arrays", {"model": [model.name], "fields": ["pattern_density_contrast"]})
-    contrast = np.asarray(wire.decode(got.body)[1]["pattern_density_contrast"])
+    gas = published(api, model.name, "gas_density_contrast")["gas_density_contrast"]
     placement = header["placement"]
     assert placement["dust"] == "dust_placement" and header["axes"]["dust_placement"] == ["R", "phi"]
     entry = placement["arrays"]["dust_placement"]
-    assert entry["unit"] == "dimensionless" and entry["fields"] == ["pattern_density_contrast"] and entry["about"]
-    np.testing.assert_array_equal(np.asarray(arrays["dust_placement"]), np.maximum(contrast, 0.0))
+    assert entry["unit"] == "dimensionless" and entry["fields"] == ["gas_density_contrast"]
+    assert "the gas's own density contrast" in entry["about"] and "not the scattered light" in entry["about"]
+    np.testing.assert_array_equal(np.asarray(arrays["dust_placement"]), np.maximum(gas, 0.0))
     assert float(np.abs(np.asarray(arrays["dust_placement"]).mean(axis=1) - 1.0).max()) < 1e-12
-    # The same factor the HII regions' light is placed by; the scattered light is the model's own share of the
-    # placed stars and is not a function of this array.
-    assert np.asarray(arrays["dust_extinction"]).shape == (SMALL.n_R, 3)  # still the ring's mean column
+    # The scattered light is the model's own share of the placed stars and is not a function of this array.
+    assert np.asarray(arrays["dust_extinction"]).shape == (FINE_PHI.n_R, 3)  # still the ring's mean column
     assert "dust_placement" not in header["components"]
     assert "times the dust's placement" in header["components"]["dust_extinction"]["about"]
+
+
+def test_the_hii_regions_follow_the_gas_and_the_stars_their_own_contrast(model):
+    """D210 ruling 7: the HII regions sit in the clouds, which are gas, so their lines are placed by the gas's
+    contrast — the same array as the dust's; the stars keep the stellar pattern's contrast."""
+    api = Service(grid=SMALL)
+    header, arrays = render(api, model.name)
+    f = published(api, model.name, "gas_density_contrast", "pattern_density_contrast")
+    gas, stellar = np.maximum(f["gas_density_contrast"], 0.0), np.maximum(f["pattern_density_contrast"], 0.0)
+    np.testing.assert_array_equal(np.asarray(arrays["dust_placement"]), gas)
+    for name in ("halpha_hii", "lines_hii"):
+        value = np.asarray(arrays[name], dtype=float)
+        ring = value[:, :1, :] / np.where(gas[:, :1] > 0.0, gas[:, :1], 1.0)[..., None]  # its ring's value, per filter
+        np.testing.assert_allclose(value, ring * gas[..., None], rtol=1e-13, atol=0.0, err_msg=name)
+        fields = header["components"][name]["fields"]
+        assert "gas_density_contrast" in fields and "pattern_density_contrast" not in fields, name
+        assert "gas's own density contrast" in header["components"][name]["about"], name
+    stars = np.asarray(arrays["stars"], dtype=float)
+    ring = stars[:, :1, :] / np.where(stellar[:, :1] > 0.0, stellar[:, :1], 1.0)[..., None]
+    np.testing.assert_allclose(stars, ring * stellar[..., None], rtol=1e-13, atol=0.0)
+    assert "pattern_density_contrast" in header["components"]["stars"]["fields"]
+    assert "gas_density_contrast" not in header["components"]["stars"]["fields"]
 
 
 def test_the_placement_rides_a_window_and_a_level_too():
@@ -263,48 +297,78 @@ def face_on_layered(tau: np.ndarray, ratio: float, n: int = 2000) -> np.ndarray:
 
 
 def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
-    """D207's prediction, and the measurement. With the dust alone placed, a ring's face-on V light rises by less
-    than the foreground screen's gain at every radius (half the stars are in front of the layer). With the stars
-    placed by the same factor — as they are — light and dust coincide, and the ring's light falls a little
-    instead: the arms are dimmed and reddened, not crossed by lanes."""
-    out = run(prod[0].get(DEFAULT_MODEL), only=FIELDS + ("pattern_density_contrast",))
+    """D207's prediction and D210's, and the measurements — the stars on the stellar contrast c, the dust on the
+    gas's ridge g since S51.
+
+    **The record, S50 (D207), the dust on c as well:** with the dust alone placed a ring's face-on V light rose
+    0.80 % at 4 kpc, 0.82 % at 6 and 0.31 % at R₀, under the foreground screen's 9.20 %, 3.27 % and 0.89 % (half
+    the stars are in front of the layer); with the stars on the same factor it fell 0.04 %, 0.98 % and 1.28 %; an
+    arm's crest let through 0.747 of its light at R₀ and a gap 0.874 (0.590 and 0.747 at 6 kpc): the arms dimmed
+    and reddened by their own dust, not crossed by lanes.
+
+    **Read at S51 (D210), the dust on g:** dust alone +1.84 %, +4.63 %, +1.97 % at 4, 6 and 8.2 kpc, under the
+    screen's +20.8 %, +18.1 %, +5.63 % (D207's prediction still holds); with the stars on c the ring's light
+    rises 0.79 % at 4 kpc and 1.72 % at 6 kpc but **still falls 0.85 % at R₀** (from 1.28 %). At R₀ the ridge's
+    crest lets through 0.579 (D207: 0.747), a gap 0.886 (0.874) and the stellar arm's flank, where c is its ring
+    mean, 0.883 — the even ring's 0.805: the dust has left the flank for the crest's stripe.
+
+    **D210's predictions, judged on these numbers (B4, nothing changed to make one hold):** (i) the ring's light
+    rises at R₀ — **failed**, −0.85 %: the ridge sits on the stellar crest (c = 1.40 there), and at R₀'s small
+    depth (τ_V 0.47) the light lost is nearly linear in the column, so it goes as the overlap of c and g round the
+    ring, which exceeds 1 when both peak together; the gain from the gaps is second order. At 4 and 6 kpc, deeper,
+    the saturation of the crest wins and the ring brightens;
+    (ii) under the screen's gain — held, −0.85 % against +5.63 % (and against S50's +0.89 %); (iii) the crest
+    transmits less than 0.747 and a gap more than 0.874 at R₀ — held, 0.579 and 0.886."""
+    out = run(prod[0].get(DEFAULT_MODEL), only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
     c = np.maximum(np.asarray(f["pattern_density_contrast"], dtype=float), 0.0)
+    g = np.maximum(np.asarray(f["gas_density_contrast"], dtype=float), 0.0)
     tau = dust.optical_depth(f["dust_extinction_v"])
     ratio = np.asarray(f["gas_scale_height"], dtype=float) / float(f["thin_disc_scale_height"])
     read = {}
     for radius in (4.0, 6.0, 8.2):
         i = int(np.argmin(np.abs(R - radius)))
         even = float(face_on_layered(np.array([tau[i]]), ratio[i])[0])
-        dust_only = float(face_on_layered(tau[i] * c[i], ratio[i]).mean()) / even - 1.0
-        both = float((c[i] * face_on_layered(tau[i] * c[i], ratio[i])).mean()) / even - 1.0
-        screen = float(np.exp(-tau[i] * c[i]).mean()) / math.exp(-tau[i]) - 1.0
-        on_arm = float(face_on_layered(np.array([tau[i] * c[i].max()]), ratio[i])[0])
-        gap = float(face_on_layered(np.array([tau[i] * c[i].min()]), ratio[i])[0])
-        assert 0.0 < dust_only < screen, radius  # the prediction (B4)
-        read[radius] = (dust_only, both, screen, on_arm, gap)
-    assert read[4.0][:3] == pytest.approx((0.0080, -0.0004, 0.0920), abs=0.0005)
-    assert read[6.0][:3] == pytest.approx((0.0082, -0.0098, 0.0327), abs=0.0005)
-    assert read[8.2][:3] == pytest.approx((0.0031, -0.0128, 0.0089), abs=0.0005)
-    # What an arm and a gap let through at the solar ring: 0.747 against 0.874, so the dust takes 15 % more of
-    # an arm's light than of a gap's — against a stellar contrast of 1.40 to 0.60 it mutes the arm, it does not
-    # darken it below the gap.
-    assert read[8.2][3:] == pytest.approx((0.747, 0.874), abs=0.002)
-    assert read[6.0][3:] == pytest.approx((0.590, 0.747), abs=0.002)
+        through = face_on_layered(tau[i] * g[i], ratio[i])
+        dust_only = float(through.mean()) / even - 1.0
+        both = float((c[i] * through).mean()) / even - 1.0
+        screen = float(np.exp(-tau[i] * g[i]).mean()) / math.exp(-tau[i]) - 1.0
+        crest = float(face_on_layered(np.array([tau[i] * g[i].max()]), ratio[i])[0])
+        gap = float(face_on_layered(np.array([tau[i] * g[i].min()]), ratio[i])[0])
+        flank = float(through[int(np.argmin(np.abs(c[i] - 1.0)))])  # the stellar arm's flank: c at its ring mean
+        assert 0.0 < dust_only < screen, radius  # D207's prediction (B4), still held
+        read[radius] = (dust_only, both, screen, crest, gap, flank)
+    assert read[4.0][:3] == pytest.approx((0.0184, 0.0079, 0.2083), abs=0.0005)  # S50: (0.0080, -0.0004, 0.0920)
+    assert read[6.0][:3] == pytest.approx((0.0463, 0.0172, 0.1806), abs=0.0005)  # S50: (0.0082, -0.0098, 0.0327)
+    assert read[8.2][:3] == pytest.approx((0.0197, -0.0085, 0.0563), abs=0.0005)  # S50: (0.0031, -0.0128, 0.0089)
+    # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the ridge (less than D207's).
+    assert read[8.2][1] < 0.0 and read[8.2][1] > -0.0128
+    # D210 (ii), held: under the screen's gain.
+    assert read[8.2][1] < read[8.2][2]
+    # D210 (iii), held: at R₀ the ridge's crest lets through less than D207's arm (0.747), a gap more than its 0.874.
+    assert read[8.2][3:] == pytest.approx((0.579, 0.886, 0.883), abs=0.002)
+    assert read[8.2][3] < 0.747 and read[8.2][4] > 0.874
+    assert read[6.0][3:] == pytest.approx((0.467, 0.765, 0.754), abs=0.002)  # S50 crest and gap: (0.590, 0.747)
+    assert read[4.0][3:] == pytest.approx((0.451, 0.576, 0.531), abs=0.002)
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
-    """Debt #128's second half (D207). The dust stage absorbs at each ring's mean column. With light and dust
-    both placed by the contrast the same mixed slab would absorb more — the arms hold more of both — by 1.3 %
-    over the disc and 4 % at the solar ring: measured here, not applied."""
+    """Debt #128's second half (D207). The dust stage absorbs at each ring's mean column. With the light placed
+    round each ring the same mixed slab would absorb another amount: measured here, not applied.
+
+    **The record, S50 (D207), light and dust both on the stellar contrast:** 1.0126 of the mean column's over the
+    disc, 1.041 at the solar ring, 1.001 at 2 kpc (the slab saturated). **Read at S51 (D210), the light on the
+    stellar contrast c and the dust on the gas's ridge g:** 1.0045 over the disc, 1.023 at R₀, 1.001 at 2 kpc —
+    the dust's ridge is narrower than the stars' arm, so less of it lies where the light is heaviest."""
     model = prod[0].get(DEFAULT_MODEL)
-    out = run(model, only=FIELDS + ("pattern_density_contrast",))
+    out = run(model, only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
     c = np.maximum(np.asarray(f["pattern_density_contrast"], dtype=float), 0.0)
+    g = np.maximum(np.asarray(f["gas_density_contrast"], dtype=float), 0.0)
     tau = (1.0 - float(model.constants["DUST_ALBEDO_V"].value)) * dust.optical_depth(f["dust_extinction_v"])
     light = np.asarray(f["disc_surface_brightness"], dtype=float) * 2.0 * math.pi * R * PC_PER_KPC**2
     mean = dust.slab_absorbed_fraction(tau)
-    placed = np.array([np.mean(ci * dust.slab_absorbed_fraction(t * ci)) for t, ci in zip(tau, c)])
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0126, abs=0.0005)
-    assert at(R, placed / mean, 8.2) == pytest.approx(1.041, abs=0.002)
-    assert at(R, placed / mean, 2.0) == pytest.approx(1.001, abs=0.002)
+    placed = np.array([np.mean(ci * dust.slab_absorbed_fraction(t * gi)) for t, ci, gi in zip(tau, c, g)])
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0045, abs=0.0005)  # S50: 1.0126
+    assert at(R, placed / mean, 8.2) == pytest.approx(1.023, abs=0.002)  # S50: 1.041
+    assert at(R, placed / mean, 2.0) == pytest.approx(1.001, abs=0.002)  # S50: 1.001

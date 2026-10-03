@@ -185,7 +185,7 @@ def test_row_37s_parts(models, default):
     assert d["identity"] == pytest.approx(0.0, abs=1e-9), T  # the stage's ring sum reproduced exactly
     assert d["identity_ring"] == pytest.approx(0.0, abs=1e-9), T
     assert d["probe_reeval"] == pytest.approx(d["published"], abs=1e-9), T
-    assert d["published"] == pytest.approx(-0.1035, abs=0.002)  # S45 diagnosis (D196)
+    assert d["published"] == pytest.approx(-0.1055, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.1035, the census redrawn
     assert d["n_regions"] == pytest.approx(12860, abs=130)  # S45 diagnosis (D196)
     assert d["n_fit"] == pytest.approx(5337, abs=55)  # S45 diagnosis (D196)
     assert d["n_rings"] == 96  # S45 diagnosis (D196)
@@ -200,26 +200,26 @@ def test_row_37s_parts(models, default):
     assert d["G_age"] == pytest.approx(0.213, abs=0.02)  # S45 diagnosis (D196)
     assert d["G_age_pct"] == pytest.approx((0.004, 0.074, 0.745), abs=0.02)  # S45 diagnosis (D196)
     assert d["G_age_clamped"] == pytest.approx(0.213, abs=0.02)  # S45 diagnosis (D196)
-    assert d["oneside_age"] == pytest.approx(759, abs=8)  # S45 diagnosis (D196)
-    assert d["outside_age"] == pytest.approx(126, abs=3)  # S45 diagnosis (D196): below the 0.5 Myr floor
+    assert d["oneside_age"] == pytest.approx(770, abs=8)  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
+    assert d["outside_age"] == pytest.approx(119, abs=3)  # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
     assert d["G_U"] == pytest.approx(-0.378, abs=0.02)  # S45 diagnosis (D196)
     assert d["G_U_pct"] == pytest.approx((-0.483, -0.450, -0.177), abs=0.02)  # S45 diagnosis (D196)
     assert (d["oneside_U"], d["outside_U"]) == (0, 0)  # S45 diagnosis (D196)
-    assert d["agep"] == pytest.approx(-0.0081, abs=0.002)  # S45 diagnosis (D196)
-    assert d["Up"] == pytest.approx(0.0005, abs=0.002)  # S45 diagnosis (D196)
+    assert d["agep"] == pytest.approx(0.0005, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0081, the census redrawn on the gas's ridge
+    assert d["Up"] == pytest.approx(0.0034, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was 0.0005, the census redrawn on the gas's ridge
     # (c)
     assert d["P_Z"] == pytest.approx(-0.0960, abs=0.002)  # S45 diagnosis (D196)
-    assert d["P_age"] == pytest.approx(-0.0017, abs=0.002)  # S45 diagnosis (D196)
-    assert d["P_U"] == pytest.approx(-0.0002, abs=0.002)  # S45 diagnosis (D196)
+    assert d["P_age"] == pytest.approx(0.0001, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0017, the census redrawn on the gas's ridge
+    assert d["P_U"] == pytest.approx(-0.0013, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0002, the census redrawn on the gas's ridge
     assert d["P_sum"] == pytest.approx(-0.0979, abs=0.002)  # S45 diagnosis (D196)
-    assert d["P_sum_minus_published"] == pytest.approx(0.0056, abs=0.002)  # S45 diagnosis (D196)
+    assert d["P_sum_minus_published"] == pytest.approx(0.0088, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was 0.0056, the census redrawn on the gas's ridge
     # (d)
     assert d["n_near"] == pytest.approx(786, abs=8)  # S45 diagnosis (D196)
-    assert d["lz0"] == pytest.approx(-0.170, abs=0.002)  # S45 diagnosis (D196)
-    assert d["la0"] == pytest.approx(6.288, abs=0.01)  # S45 diagnosis (D196)
-    assert d["lu0"] == pytest.approx(-2.014, abs=0.02)  # S45 diagnosis (D196)
-    assert d["probe_ageU"] == pytest.approx(-0.0016, abs=0.002)  # S45 diagnosis (D196): (i) Z frozen
-    assert d["probe_Z"] == pytest.approx(-0.1177, abs=0.002)  # S45 diagnosis (D196): (ii) age, U frozen
+    assert d["lz0"] == pytest.approx(-0.175, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.170, the census redrawn on the gas's ridge
+    assert d["la0"] == pytest.approx(6.365, abs=0.01)  # S45 diagnosis (D196); S51 (D210): was 6.288, the census redrawn on the gas's ridge
+    assert d["lu0"] == pytest.approx(-2.145, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge
+    assert d["probe_ageU"] == pytest.approx(-0.0028, abs=0.002)  # S45 diagnosis (D196): (i) Z frozen; S51 (D210): was -0.0016, the census redrawn on the gas's ridge
+    assert d["probe_Z"] == pytest.approx(-0.1158, abs=0.002)  # S45 diagnosis (D196): (ii) age, U frozen; S51 (D210): was -0.1177, the census redrawn on the gas's ridge
     assert d["probe_none"] == pytest.approx(-0.0005, abs=0.002)  # S45 diagnosis (D196): (iii) all frozen
     # (e)
     assert PP04 == pytest.approx(1.754, abs=1e-3)  # S45 diagnosis (D196)

@@ -141,11 +141,12 @@ def test_the_default_census_numbers(default):
     """Measured at S35 on the default grid (D184); the pins that move say why in their commit."""
     F = default.fields
     L = np.asarray(F["hii_halpha_luminosity"], dtype=float)
-    assert L.size == 12860  # one region per cluster (S33)
+    assert L.size == 12930  # one region per cluster (S33); S51 (D210): was 12860 (the clouds on the gas's ridge)
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.720, abs=0.01)
     assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(193.7, rel=0.01)
     assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.826, abs=0.01)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7779  # the metal-rich inner disc sits on the floor
+    # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7792
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
     assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
@@ -156,7 +157,9 @@ def test_the_default_census_numbers(default):
     assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
     # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
     # the model's ratio falls outward at its N/H gradient's pace.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035, abs=0.002)
+    # S51 (D210): was -0.1035 - the row reads the HII-region census, redrawn with the clouds on the gas's ridge
+    # (-0.103687 -> -0.105511); the miss stands, 0.002 further out.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1055, abs=0.002)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -265,15 +268,19 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     weighted = {n: float(np.sum(np.asarray(F[f"hii_{n}_ratio"]) * w) / w.sum()) for n in nb.FORBIDDEN}
     # S44: was 0.477 / 0.131 / 0.053 / 0.041 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93
     # (D195, #121)
-    assert weighted == pytest.approx({"oiii_5007": 0.752, "nii_6583": 0.082, "sii_6716": 0.053, "sii_6731": 0.041}, abs=2e-3)
+    # S51 (D210): [O III] 0.752 -> 0.756, the Halpha weights another draw of the census (the clouds on the gas's ridge)
+    assert weighted == pytest.approx({"oiii_5007": 0.756, "nii_6583": 0.082, "sii_6716": 0.053, "sii_6731": 0.041}, abs=2e-3)
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])
     at = {r: int(np.argmin(np.abs(R - r))) for r in (4.0, 12.0)}
     ratio = {n: {r: F[f"{n}_surface_brightness_hii"][i] / ha[i] for r, i in at.items()} for n in ("oiii_5007", "nii_6583")}
     # S44: the 4 kpc bound was 0.05 on the 8.69 scale (the ring reads 0.116 now, 0.989 at 12 kpc); the grid's
-    # log Z = 0 is Anders & Grevesse's 8.93 (D195, #121)
-    assert ratio["oiii_5007"][4.0] < 0.15 < 0.5 < ratio["oiii_5007"][12.0]
+    # log Z = 0 is Anders & Grevesse's 8.93 (D195, #121). S51 (D210): the bound was 0.15; the 4 kpc grid ring reads
+    # 0.359 (1.087 at 12 kpc): that 75 pc ring's ~80 regions are a new draw when the clouds moved onto the gas's ridge,
+    # and a handful of bright ones carry its Halpha; the regions' own Halpha-weighted mean over 3.5-4.5 kpc was 0.335
+    # and is 0.361, the neighbouring rings 0.17-0.60 before and after. One ring of a heavy-tailed census is a realisation; the gradient is what is asserted.
+    assert ratio["oiii_5007"][4.0] < 0.4 < 0.5 < ratio["oiii_5007"][12.0]
     assert ratio["nii_6583"][4.0] > ratio["nii_6583"][12.0]
     # Hbeta is Halpha over the Case B decrement in both layers.
     t_dig = float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value)

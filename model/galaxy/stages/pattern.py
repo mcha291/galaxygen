@@ -156,6 +156,19 @@ ARM_CONTRAST_MEAN = _scalar(
     "to 0.33 for a halo-dominated disc. Derived, so it lives in the derived half (D55).",
 )
 
+GAS_ARM_CONTRAST = _scalar(
+    "gas_arm_contrast", "Gas arm–interarm contrast (ratio of means)", "dimensionless",
+    "The ratio the gas's arm pattern is set to: mean gas surface density inside an arm mask of the "
+    "source's width over the mean outside it, on each ring — a ratio of means, not a peak-to-trough. "
+    "Its mean is derived as the stellar amplitude's is: the non-grand-design spirals' molecular ratio "
+    "plus the two-fold pattern's amplification weight times the way to the grand designs'. No "
+    "residual is drawn: the source's spread is over arm segments and radial bins, not galaxies, so it "
+    "is not a galaxy-to-galaxy scatter and the galaxy carries the class mean (D210 as amended, debt "
+    "#131) [verified: Querejeta et al. 2024, A&A 687, A293, Table 1; docs/READING_GAS_PATTERN.md]. "
+    "2.73 at the defaults, where m = 2 sits inside the vigorous range. Where the ridge's amplitude is "
+    "clipped to keep its trough or crest above zero, the ring's ratio falls short of this number.",
+)
+
 
 def compute_bar(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
@@ -171,6 +184,9 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
     x2, m_lo, m_hi = swing_window(dominance, shear, float(c["SWING_X_LOW"]), float(c["SWING_X_HIGH"]))
     coherence = swing_weight(2.0, m_lo, m_hi, float(c["SWING_X_HIGH"]), float(c["SWING_X_DEAD"]), float(c["SWING_X_LOW"]), float(c["SWING_X_FLOOR"]))
     floc, grand = float(c["ARM_INTERARM_FLOCCULENT"]), float(c["ARM_INTERARM_GRAND_DESIGN"])
+    # The gas's ratio of means, joined between its two classes by the same weight (D210 as amended):
+    # a derived mean with no residual, since the source's spread is not galaxy-to-galaxy (#131).
+    gas_other, gas_grand = float(c["GAS_ARM_CONTRAST_OTHER"]), float(c["GAS_ARM_CONTRAST_GRAND_DESIGN"])
     return {
         "bar_half_length": float(c["BAR_LENGTH_RATIO"]) * R_d,
         "disc_dominance": dominance,
@@ -179,6 +195,7 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
         "swing_arm_min": m_lo,
         "swing_arm_max": m_hi,
         "arm_contrast_mean": contrast_amplitude(floc + (grand - floc) * coherence),
+        "gas_arm_contrast": gas_other + (gas_grand - gas_other) * coherence,
     }
 
 
@@ -189,15 +206,18 @@ BAR = IMPLEMENTATIONS.register(
             "The bar's size, the disc's shear, and what the disc can amplify — everything about the "
             "pattern that has no draw in it. Split from the seeded half so that row 15 stays "
             "reproducible (D55). Since S26 it publishes the swing-amplification window and the mean "
-            "arm amplitude, derived from disc_dominance and shear_rate (D175)."
+            "arm amplitude, derived from disc_dominance and shear_rate (D175); since S51 the gas's "
+            "arm–interarm ratio of means, derived the same way with no draw (D210 as amended)."
         ),
         compute=compute_bar,
         reads_constants=(
             "BAR_LENGTH_RATIO", "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
             "ARM_INTERARM_GRAND_DESIGN", "ARM_INTERARM_FLOCCULENT",
+            "GAS_ARM_CONTRAST_GRAND_DESIGN", "GAS_ARM_CONTRAST_OTHER",
         ),
         requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
-        publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN),
+        publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN,
+                   GAS_ARM_CONTRAST),
     )
 )
 

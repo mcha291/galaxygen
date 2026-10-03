@@ -92,6 +92,8 @@ RENDER_BULGE = (*(f"bulge_sed_{b.lower()}" for b in _spectra.SED_BANDS), "bulge_
 RENDER_LINES_HII = tuple(f"{n}_surface_brightness_hii" for n in ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731"))
 RENDER_OPTIONAL = (
     "pattern_density_contrast", *RENDER_BULGE, "thin_disc_scale_height",
+    # The gas's own arm pattern (S51, D210): what places the dust and the HII regions' light.
+    "gas_density_contrast",
     # The line's two layers (S39, V2): the HII regions' share and the diffuse gas's, with its height.
     "halpha_surface_brightness_hii", "halpha_surface_brightness_dig", "dig_scale_height",
     # The other lines (S42): Hbeta in both layers, the forbidden lines the grid gives the HII regions.
@@ -104,8 +106,8 @@ RENDER_OPTIONAL = (
 )
 # The render's per-ring array of the dust layer's heights, kpc (D206): what `layers.dust` names.
 RENDER_DUST_HEIGHT = "dust_height"
-# The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207): what
-# `placement.dust` names.
+# The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207; the gas's
+# own contrast since S51, D210): what `placement.dust` names.
 RENDER_DUST_PLACEMENT = "dust_placement"
 # The dust stage's modified blackbody (S39): its shape is read with the stage's own constants, server-side.
 RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX")
@@ -239,13 +241,15 @@ ROUTES: tuple[Route, ...] = (
         "transmission), optionally wavelengths: air | vacuum (air unless it says so; the lines are converted to "
         "vacuum before a vacuum curve is read, S44)}, angstroms> returns, per cell of the (R, phi) grid inside the "
         "window - or per level-k region cell with level=k - each emitting component's response in each filter, never composited: stars (the "
-        "population's eight-band spectrum joined into a continuum, times the pattern's contrast), the Halpha line as "
-        "two volumetric layers (halpha_hii placed by the contrast, halpha_dig per ring; S39), and the dust as "
+        "population's eight-band spectrum joined into a continuum, times the stellar pattern's contrast), the Halpha "
+        "line as two volumetric layers (halpha_hii placed by the gas's own contrast - the regions sit in the clouds "
+        "(S51, D210) - halpha_dig per ring; S39), the other lines as lines_hii and lines_dig, placed alike, and the dust as "
         "dust_extinction (face-on transmission per filter from the grain model's curve), dust_scattered and "
         "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
         "vertical layer - the dust's is the gas's published scale height ring by ring, the array dust_height in "
-        "kpc (S50) - and the dust's placement around each ring, the array dust_placement (the pattern's contrast; "
-        "S50); the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
+        "kpc (S50) - and the dust's placement around each ring, the array dust_placement (the gas's own density "
+        "contrast, a narrow ridge on the stellar arm's crest, S51, D210; the stellar contrast where a model publishes "
+        "no gas pattern, S50); the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
         "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
         "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
@@ -1379,6 +1383,16 @@ class Service:
         stars = per_ring[:, None, :] * placed[..., None]
         halpha_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["halpha"])
         contrast_fields = ["pattern_density_contrast"] if contrast is not None else []
+        # The gas round each ring (S51, D210): its own density contrast, a narrow ridge on the stellar arm's crest,
+        # clipped at zero as the stars' is. It places what sits in the gas - the dust, a share of it, and the HII
+        # regions, which sit in the clouds. A model that publishes no gas pattern keeps D207's reading: the gas
+        # taken to follow the stars' contrast.
+        gas_contrast = f["gas_density_contrast"] if "gas_density_contrast" in f else None
+        if gas_contrast is None:
+            placed_gas, gas_fields = placed, contrast_fields
+        else:
+            placed_gas, gas_fields = np.maximum(np.asarray(gas_contrast, dtype=float), 0.0), ["gas_density_contrast"]
+        gas_by = "the gas's own density contrast" if gas_contrast is not None else "the stellar pattern's density contrast"
         # Every component's vertical layer (S39): a sech²(z / 2h) / 4h profile, integrating to one over height,
         # at the scale height named here, kpc. The arrays are face-on columns; the viewer spreads each through
         # its layer and integrates along the ray (RENDER_PHYSICS §4), so a thick layer brightens at the limb.
@@ -1419,14 +1433,15 @@ class Service:
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
         if "halpha_surface_brightness_hii" in f and h_thin is not None:
             hii = np.asarray(f["halpha_surface_brightness_hii"], dtype=float)
-            components.append(("halpha_hii", hii[:, None, None] * placed[..., None] * halpha_share))
+            components.append(("halpha_hii", hii[:, None, None] * placed_gas[..., None] * halpha_share))
             layers["halpha_hii"] = _clouds.cloud_layer_height(float(f["thin_disc_scale_height"]))
             about["halpha_hii"] = {
-                **line_about, "fields": ["halpha_surface_brightness_hii", *contrast_fields, "thin_disc_scale_height"],
+                **line_about, "fields": ["halpha_surface_brightness_hii", *gas_fields, "thin_disc_scale_height"],
                 "layer": "halpha_hii",
-                "about": "the HII regions' Halpha through each curve at its wavelength, placed around each ring by the "
-                         "pattern's density contrast (the same contrast the stars follow; it averages to 1, so each "
-                         "ring keeps its published line) in the clouds' layer, where the regions' clusters are",
+                "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
+                         f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "
+                         "stellar contrast; it averages to 1, so each ring keeps its published line) in the clouds' "
+                         "layer, where the regions' clusters are",
             }
         # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
         # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
@@ -1435,7 +1450,7 @@ class Service:
         if hii_lines and "halpha_hii" in about:
             shares = {n: _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS[n]) for n in hii_lines}
             summed = sum(np.asarray(f[f"{n}_surface_brightness_hii"], dtype=float)[:, None] * shares[n] for n in hii_lines)
-            components.append(("lines_hii", summed[:, None, :] * placed[..., None]))
+            components.append(("lines_hii", summed[:, None, :] * placed_gas[..., None]))
             layers["lines_hii"] = layers["halpha_hii"]
             about["lines_hii"] = {
                 "unit": "Lsun/pc2", "fields": [f"{n}_surface_brightness_hii" for n in hii_lines] + about["halpha_hii"]["fields"][1:],
@@ -1443,7 +1458,7 @@ class Service:
                 "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
                 "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
                          "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
-                         "summed, placed and layered as the regions' Halpha is",
+                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer",
             }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
@@ -1479,21 +1494,26 @@ class Service:
                          "colour: the viewer takes its optical depth, -ln of this, through the dust's layer. The "
                          "ring's mean column: around the ring the depth is this one times the dust's placement",
             }
-        # The dust around each ring (S50, D207): its column over the ring's mean is the pattern's density contrast,
-        # the gas's share of which the dust is (the azimuthal star formation's own reading of the gas, and how the
-        # stars and the HII regions' light are placed above). An array beside the components, named in the header;
-        # it averages to 1 round every ring, so each ring keeps its published dust. Without a pattern, or without
-        # dust, there is none and the dust is even round the ring.
+        # The dust around each ring (S50, D207; S51, D210): its column over the ring's mean is the gas's own density
+        # contrast, the gas the dust is a share of (one dust-to-gas ratio per ring) - a narrow ridge on the stellar
+        # arm's crest, where D207 had the stellar contrast. An array beside the components, named in the header; it
+        # averages to 1 round every ring, so each ring keeps its published dust. Without a pattern of either kind,
+        # or without dust, there is none and the dust is even round the ring.
         placement: dict[str, Any] | None = None
-        if contrast is not None and "dust_extinction_v" in f:
+        if gas_fields and "dust_extinction_v" in f:
             placement = {
                 "dust": RENDER_DUST_PLACEMENT,
                 "arrays": {RENDER_DUST_PLACEMENT: {
-                    "unit": "dimensionless", "fields": list(contrast_fields),
-                    "about": "the dust's column at each (R, phi) cell over its ring's mean: the pattern's density "
-                             "contrast, as the gas the dust is a share of is taken to follow it. It multiplies the "
-                             "dust's optical depth and its thermal light; not the scattered light, which is already "
-                             "a share of the placed starlight. It averages to 1 round every ring",
+                    "unit": "dimensionless", "fields": list(gas_fields),
+                    "about": (
+                        "the dust's column at each (R, phi) cell over its ring's mean: the gas's own density contrast - "
+                        "a narrow ridge on the stellar arm's crest (S51, D210) - as the gas the dust is a share of. "
+                        if gas_contrast is not None else
+                        "the dust's column at each (R, phi) cell over its ring's mean: the stellar pattern's density "
+                        "contrast, as the gas the dust is a share of is taken to follow it (this model publishes no "
+                        "gas pattern; D207). "
+                    ) + "It multiplies the dust's optical depth and its thermal light; not the scattered light, which "
+                        "is already a share of the placed starlight. It averages to 1 round every ring",
                 }},
             }
         if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
@@ -1547,7 +1567,7 @@ class Service:
             if dust_height is not None:
                 arrays.append((RENDER_DUST_HEIGHT, dust_height[rows]))
             if placement is not None:
-                arrays.append((RENDER_DUST_PLACEMENT, placed[rows][:, cols]))
+                arrays.append((RENDER_DUST_PLACEMENT, placed_gas[rows][:, cols]))
             window: dict[str, Any] = {
                 "R": {"first": i0, "n": n_r, "lo": R_axis.lo + i0 * R_axis.width, "width": R_axis.width},
                 "phi": {"first": j0, "n": n_phi, "lo": phi_axis.lo + j0 * phi_axis.width, "width": phi_axis.width,
@@ -1580,7 +1600,7 @@ class Service:
             if placement is not None:
                 # A cell's area-weighted mean of the factor: the share of its ring's dust the cell holds, over its
                 # share of the ring's area.
-                arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
+                arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed_gas[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
                 axes[RENDER_DUST_PLACEMENT] = ["cell"]
         if precision == "f4":
             arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
@@ -1600,7 +1620,7 @@ class Service:
             "axes": axes,
             "components": about,
             "layers": layers,
-            # Where around each ring the dust is (D207): the name of the array that places it, or null when it is even.
+            # Where around each ring the dust is (D207; the gas's own pattern since D210): the name of the array that places it, or null when it is even.
             "placement": placement,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,

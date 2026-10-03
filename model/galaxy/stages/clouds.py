@@ -35,9 +35,12 @@ source in the about line; nothing here is recalled (rule B9).**
   stated and tagged ``[inferred]``: the source uniformly inside the cloud's volume, the gradient's
   direction uniform and its steepness uniform on [0, 1]. So is the cloud's height, a sech² layer at
   half the thin disc's scale height (debt #95).
-- *Where* — radius inverted from Σ_H₂ within the cell's ring, azimuth from the pattern's density
-  contrast within the sector exactly as a star's is (gas follows the pattern in both models);
-  abundances read off the gas at the cloud's radius.
+- *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
+  cloud's azimuth inside its sector, from the gas's own density contrast (``gas_pattern``,
+  ``GasPattern``, S51, D210) — a narrow ridge on the stellar arm's crest, not the stars' broader
+  arm, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
+  read off the gas at the cloud's radius. The contrast averages to 1 round every ring, so a ring's
+  expected count is what it was: the clouds move round the ring, not in number.
 
 **Which cloud is which.** A cloud is named ``(cell, index)`` as a star is, on the same cell grid;
 its stream is ``(systems_seed, "cloud", cell, …)``, so rerolling the systems seed rerolls the clouds
@@ -59,7 +62,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
-from galaxy.stages.pattern import ArmPattern
+from galaxy.stages.gas_pattern import GasPattern
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_RINGS,
@@ -159,10 +162,11 @@ def law_for(radius_kpc: float, c: Mapping[str, float]) -> tuple[float, float, fl
 
 def expected_counts(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> np.ndarray:
     """The expected number of clouds in every cell, (rings, sectors): the cell's molecular mass over
-    the law's mean cloud mass at the ring's radius. A population integral, whatever a request asked for."""
+    the law's mean cloud mass at the ring's radius, shared among the ring's sectors by the gas's own
+    contrast averaged over each (S51, D210). A population integral, whatever a request asked for."""
     rings, sectors = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
-    pattern = ArmPattern.from_fields(fields)
+    pattern = GasPattern.from_fields(fields, constants)
     weights = (
         np.ones((CELL_RINGS, CELL_SECTORS))
         if pattern is None or pattern.flat
@@ -235,7 +239,7 @@ def materialise_clouds(
     rings, sectors = cell_edges(R)
     expected = expected_counts(fields, R, c)
     counts = cloud_counts(expected, seed, cells)
-    pattern = ArmPattern.from_fields(fields)
+    pattern = GasPattern.from_fields(fields, c)  # the gas's own ridge places the clouds (S51, D210)
     sigma = float(c["GMC_SURFACE_DENSITY"])
     c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
@@ -337,8 +341,10 @@ CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "Drawn by inverting the molecular surface density within the cloud's cell ring, as a "
                        "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
-                        "Drawn from the bar and arm density contrast at the cloud's radius, inside its sector, so "
-                        "clouds crowd into the arms as the gas does; the same rule in both models.")
+                        "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
+                        "narrow ridge on the stellar arm's crest, and the stellar bar's term inside the bar — so "
+                        "clouds crowd onto the arms' spines as the gas does, and each sector's share of clouds "
+                        "follows the same contrast; the same rule in both models.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
                        "molecular layer's thickness was read (debt #95).")
@@ -490,10 +496,11 @@ CLOUDS = IMPLEMENTATIONS.register(
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
+            "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",  # S51 (D210): the gas's own ridge places the clouds
         ),
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
-            "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            "gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,

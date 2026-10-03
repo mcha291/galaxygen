@@ -68,10 +68,11 @@ drawn; it is that what is drawn is too regular.**
 | a | **Several modes at once**: the contrast as a sum over m, each with its own amplitude and phase | Uneven arms, forks where modes beat, flocculence at high m | A sourced amplitude spectrum over m (the S4G Fourier decompositions the bar's amplitude already cites); whether phases are drawn or locked to the bar |
 | b | **The arm number changing with radius**: the local swing parameter rises outward | Two arms inside branching to four or more outside | The local form of X is already in `pattern.py` as the named alternative (D'Onghia 2015: two arms at 4.5 kpc, five or six at R₀); how one mode hands over to the next |
 | c | **Pitch varying along an arm**: arms as joined segments of different pitch | Kinks and arcs instead of one curve | The measured distribution of segment lengths and pitch changes (Honig & Reid 2015; Díaz-García et al. 2019) |
-| d | **A gas response distinct from the stars'**: a narrow ridge offset to the arm's inner edge inside corotation | Real dust lanes; the dust → HII → young-star sequence across an arm | A spiral pattern speed (#81); the shock's width and offset as closed forms (Roberts 1969; Gittins & Clarke 2004) |
+| d | **A gas response distinct from the stars'**: a narrow ridge on the arm, its own contrast | Real dust lanes; the dust → HII → young-star sequence across an arm | **Built at S51 (D210)**: a von Mises ridge in the stellar arm's phase, FWHM 0.17 of the period, amplitude from PHANGS's ratio of means, **no offset** — the evidence for co-rotating arms reads zero mean with scatter; the density-wave offset (Roberts 1969; Gittins & Clarke 2004) is the named alternative, needing a spiral pattern speed (#81). Open: the width is one galaxy's (#129), the HI's contrast (#130) |
 | e | **Spurs and feathers** off the gas ridge | The fine structure of a grand-design arm | Their spacing as a Jeans length of the arm's gas (Kim & Ostriker 2002; La Vigne et al. 2006); needs (d) first |
 | f | **A bar that can be absent**: the bar's presence as a draw | Unbarred and weakly barred galaxies | The bar fraction against disc dominance or mass; what the bar-derived rows (15–17) mean without one |
 | g | **A pattern library**: arms read from precomputed simulations, indexed by disc dominance and shear | Genuinely emergent shapes | The owner's word on a data download; a library is a lookup, not a derivation (A3) — the last resort |
+| h | **The bar's gas lanes**: a pair of straight lanes offset to the bar's leading edges, where the gas shocks | The dust lanes every barred galaxy shows along its bar | The lanes' offset and curvature against the bar's strength and pattern speed (Athanassoula 1992 is the classic; not read); the gas pattern's bar term is the stellar bar's cosine until then (D210 ruling 2) |
 
 ### What any remedy must keep
 - **Every ring's mean stays 1**, so no radial profile and no acceptance row moves (`tests/test_pattern.py`'s
@@ -83,5 +84,5 @@ drawn; it is that what is drawn is too regular.**
   (§4b's verdict C), never as a display constant.
 - **One pattern for everything that follows it**, or a stated reason a component has its own (direction d).
 
-*Status: recorded, not scheduled. The model is pinned (the owner, 2026-10-01); any direction above needs the owner's
+*Status: direction d built at S51 (D210, the owner's choice on 2026-10-03; the reading in `READING_GAS_PATTERN.md`). The model is otherwise pinned (the owner, 2026-10-01); any other direction above needs the owner's
 word and a reading session before a build.*

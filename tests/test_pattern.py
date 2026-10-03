@@ -40,6 +40,19 @@ def test_the_bar_length_is_reproducible_not_drawn(model):
     assert len(values) == 1
 
 
+def test_the_bar_stage_derives_the_gas_ratio_without_a_draw(model):
+    """S51 (D210 as amended): gas_arm_contrast is the derived stage's, between the two class means, and
+    no pattern seed moves it (the source's spread is over segments and bins, not galaxies; #131)."""
+    from galaxy.stages.pattern import BAR
+
+    assert "gas_arm_contrast" in {d.name for d in BAR.publishes}
+    c = model.constants
+    lo, hi = c["GAS_ARM_CONTRAST_OTHER"].value, c["GAS_ARM_CONTRAST_GRAND_DESIGN"].value
+    values = {run(model, {"pattern_seed": s}, grid=COARSE).fields["gas_arm_contrast"] for s in range(5)}
+    assert len(values) == 1
+    assert lo <= values.pop() <= hi
+
+
 def test_the_disc_shears_like_a_flat_curve(model):
     o = out(model)
     assert 0.7 < o.fields["shear_rate"] < 1.1

@@ -61,12 +61,14 @@ def chk(m, *stages):
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "chemistry_dtd", "stellar_halo",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "gas_pattern", "chemistry_dtd",
+        "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh_azimuthal", "chemistry_dtd", "stellar_halo",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
     ),
@@ -120,6 +122,9 @@ SEEDED_BASIC = {
     "bound_cluster_mass_total", "cluster_formation_efficiency",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
+    # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
+    # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
+    "gas_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
@@ -148,6 +153,8 @@ def test_production_graphs_hold(prod):
         # occurrence fields on the derived side.
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
         assert seeded == SEEDED[m.name], sorted(seeded ^ SEEDED[m.name])
+        # S51 (D210 as amended): the gas ratio is the bar stage's derived class mean, beside the stellar one.
+        assert g.provenance["gas_arm_contrast"] == g.provenance["arm_contrast_mean"] == "derived"
         assert g.provenance["giant_occurrence"] == "derived", (
             "the occurrence fields are a function of the inputs; the split at checkpoint 6 is what "
             "keeps them so (rule A10)"
