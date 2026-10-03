@@ -1,8 +1,8 @@
-# BRIEF — for S53: adopt BUILD_III (proposed), then its Phase 0
+# BRIEF — for S53: BUILD_III is adopted; its Phase 0, Opus-led
 
 **The state (2026-10-03).** S51 and S52 are merged (D210, D211): the gas has its own arm pattern and the dust is
-heated in the geometry it is drawn in. **`session-53` is open and holds one thing: `docs/BUILD_III.md`, a proposed
-third build, written on the owner's word and not yet adopted.** Register 69 open = 11 + 58, 45 discharged. Specs
+heated in the geometry it is drawn in. **`session-53` is open and holds `docs/BUILD_III.md`, the third build, adopted by
+the owner on 2026-10-03; four of its ten rulings are still open (below).** Register 69 open = 11 + 58, 45 discharged. Specs
 12 / 20 / 5 of 37.
 
 **Why a third build.** The owner put two goal pictures in `docs/goals/` (an artist's Milky Way; Hubble's NGC 4414)
@@ -17,23 +17,17 @@ limited (the owner): every row of the plan is Opus-led, and Fable is called at f
 `uv run python tools/bootstrap.py`. S52's close ran the full suite (`EXIT=0`) and `verify_clone` on `main` (OK at
 551bbbf); a session opened in a fresh context runs both again before new work.
 
-## Then: the owner's ten rulings (BUILD_III §7), recorded as D212
-1. Adopt the plan and its numbering, S53–S66, Opus leading every row and Fable at gates G1–G4. 2. The fourth kind of quantity, *synthetic*, and the layer's five
-rules. 3. `RENDER_PHYSICS.md` §8 and rule D5 amended. 4. Templates (rules A5, D1), with pins. 5. **The goal images
-committed to this public repository with their credits — they are untracked today, and the close's clean-tree
-check will fail until they are committed or moved.** 6. A headless browser installed for the picture test, or
-manual captures. 7. `basic` and `azimuthal` as one model with the layer switch. 8. NGC 4414's checks: blind
-windows or display only. 9. Pictures first (V5, V6 before Phase R)? 10. The dependency rule stays numpy-only.
+## The owner's rulings so far (BUILD_III §7 holds the table; record it as D212)
+**Answered 2026-10-03:** 1 adopted; 3 and 4 approved; 5 "don't commit" (`docs/goals/` is git-ignored); 6 yes;
+9 the model's phases first. **Open, explained in chat, awaiting the word:** 2 (the fourth kind — blocks A10's
+amendment and Phase R), 7 (one model with a switch), 8 (NGC 4414's checks — blocks Phase T's reading brief),
+10 (two development-only tools). Ask before the phase each blocks.
 
 ## Then: Phase 0 (this session, an Opus lead; no Fable gate)
 The rule amendments in `RULES.md` and `RENDER_PHYSICS.md`, **verbatim from BUILD_III's Appendix A**; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the
 plan; `tools/goal_metrics.py` and the React viewer's picture test (two Opus builders in worktrees); the baseline
 table — both goals, both of today's renders — in D212; board row 53; BRIEF for S54 (Phase T). **An Opus lead does not
 improvise a physics ruling: on a stop condition (BUILD_III §3d) it closes partially and writes `docs/HANDOFF_S<NN>.md`.**
-
-## If the owner does not adopt it
-The earlier choice stands (`git show main:docs/BRIEF.md`): the owner's look at S51's lanes and S52's numbers;
-#128's placement half; T28; how a planetary system is shown; T1; T12.
 
 ## Traps
 - An Agent worktree is cut from `main`: commit the ruling first; the builder's first step is `git merge --ff-only`.

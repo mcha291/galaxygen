@@ -27,3 +27,6 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# The owner's goal pictures: local files, not committed (BUILD_III section 7, ruling 5)
+docs/goals/

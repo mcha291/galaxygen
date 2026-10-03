@@ -1,10 +1,10 @@
 # BUILD_III — the third build: two templates, a physics model beside a randomness layer, and the pictures they are for
 
-**Status: PROPOSED 2026-10-03, on the owner's word ("please create a plan …"), awaiting adoption. Revised the same
+**Status: ADOPTED 2026-10-03 (the owner: "adopt the plan"); rulings 2, 7, 8 and 10 of §7 are still open.** Written
+that day on the owner's word ("please create a plan …") and revised the same
 day on the owner's word — "Fable usage is limited … make sure only work that really benefits from using Fable uses
 that, and push the rest to Opus": every row is now Opus-led, and Fable is called at four named gates (§3).**
-Fourteen board rows, S53–S66. Nothing here is a ruling until S53 records the owner's answers to §7 in
-`DECISIONS.md` (D212). Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
+Fourteen board rows, S53–S66. S53 records the owner's answers (§7) in `DECISIONS.md` as D212. Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
 of `GALAXY_INPUTS.md` its phase names.
 
 Everything here is `[inferred]` design unless tagged. Every source named is `[recall]` and **NEEDS SOURCING**: it is
@@ -15,7 +15,8 @@ it enters code and says what fraction it covers; S51's `READING_GAS_PATTERN.md` 
 
 ## 0. What this build is for, and what it will not reach
 
-**The goals** are two pictures in `docs/goals/`: an artist's impression of the Milky Way face-on (a long yellow bar,
+**The goals** are two pictures the owner keeps locally in `docs/goals/` (ignored by git, on the owner's word; a
+clone does not have them): an artist's impression of the Milky Way face-on (a long yellow bar,
 unequal kinked arms, dust lanes threaded with pink knots, blue arms on a warmer disc) and Hubble's NGC 4414 (an
 inclined, unbarred, flocculent disc: a yellow core, a filamentary dust web, patchy blue-white star complexes).
 **They are display targets, never acceptance rows** (C6, D113): the first is a drawing, the second is one galaxy
@@ -220,8 +221,9 @@ entries of `RESEARCH_AREAS.md` (directions a–h) and `VIEWER_TASKS.md` (T1, T5�
   amplitudes m = 1–8 by radius after deprojection, the arm–interarm contrast in the blue channel, the dark-lane
   covering fraction, the power-spectrum slope of the unsharp-masked image between stated scales, and the count of
   point sources above a threshold. Tested on synthetic images of known spectra. **Display targets, not rows.**
-- T12: the React viewer captured at fixed cameras per template (needs a headless browser; §7). Without it, the
-  lead's in-pane captures, as at S51.
+- T12: the React viewer captured at fixed cameras per template, on a headless browser the owner has allowed
+  (§7, ruling 6). The goal pictures are read from `docs/goals/` where present; the baseline table records their
+  numbers, never the pictures.
 
 **Agents:** builder A (`goal_metrics` and its tests), builder B (T12's harness). **Gate:** the metrics return known
 values on synthetic inputs; a baseline table — both goals, both of today's renders — in D212.
@@ -234,8 +236,9 @@ rate, scale length, morphological class, bar classification, each with its cover
 **Build.** `galaxy/templates.py` (the two templates as data, every number tagged); `tools/fit_template.py` (a
 bounded search of the seven controls against the measured properties, residuals table committed);
 `/api/templates` (metadata only, D4) and `template=` on every route that takes inputs; the viewer's landing on
-`milky_way`, the switcher with model-made thumbnails, the template's camera and filter set, and "compare with the
-goal" beside the render at a stated band and scale (T16 ii).
+`milky_way`, the switcher with model-made thumbnails, the template's camera and filter set, and "compare with a
+picture" beside the render at a stated band and scale (T16 ii) — **the picture is a file the user picks from disk;
+none is bundled or committed** (§7, ruling 5).
 
 **Gate:** `milky_way` reproduces the defaults bit for bit; the fit's residuals are published and none is tuned
 away; a timings row; vitest on the switcher; a capture of each template beside its goal.
@@ -265,7 +268,7 @@ recorded (rows 35 and 37 move to their uniform-placement values and then stay). 
 **Agents:** builder A (primitives, tests, vectors); builder B (provenance, `FieldDecl`, graph, switch); builder C
 (Appendix B's relabels); a reviewer whose findings go into the handoff.
 
-### Phase V5 — light by age in the field (S56) — the owner's item 4, first part
+### Phase V5 — light by age in the field (S62) — the owner's item 4, first part
 
 `/api/render` returns `stars_young`, `stars_middle`, `stars_old`, each through the curves on its own and placed by
 its own weight (the gas contrast, `sfr_modulation`, the stellar contrast), summing to `stars` per ring and filter
@@ -274,7 +277,7 @@ to rounding; the field mode draws the three. No stage changes.
 **Gate:** the closure; the arm–interarm colour difference measured before and after (goal metric); payload and
 timings. **Agents:** builder A (render route and its tests), builder B (viewer).
 
-### Phase V6 — the censuses at whole-galaxy scale (S57)
+### Phase V6 — the censuses at whole-galaxy scale (S63)
 
 - **Clouds as extinction:** the census rasterised by window and level into an opacity the march composites at the
   clouds' height; the ring's diffuse dust reduced by the clouds' share so each ring's dust mass is unchanged.
@@ -288,7 +291,7 @@ timings. **Agents:** builder A (render route and its tests), builder B (viewer).
 **Gate:** each closure (dust mass per ring, Hα per window, points plus field equal the render); the frame-time
 readout; goal metrics (dark covering fraction, point counts). **Agents:** three builders, one per group.
 
-### Phase P1 — several modes at once; the gas follows any pattern (S58) — list items 1 and 2
+### Phase P1 — several modes at once; the gas follows any pattern (S56) — list items 1 and 2
 
 **Ruled here (a conditional gate opens only if the probe contradicts it).**
 - **The law.** At each radius the weight of arm number m is the existing `swing_weight` evaluated at the *local*
@@ -313,7 +316,7 @@ published amplitudes; I1–I3; the goals' azimuthal spectra beside the render's.
 
 **Agents:** one reader; builders for the mode law, the realisation, the gas response, and the catalogue re-pins.
 
-### Phase P2 — pattern speeds; the gas shock ring by ring (S59) — "level A" — **gates G2 and G3**
+### Phase P2 — pattern speeds; the gas shock ring by ring (S57) — "level A" — **gates G2 and G3**
 
 **Reading:** the steady spiral shock (Roberts 1969; Shu, Milione & Roberts 1973); its width and offset (Gittins &
 Clarke 2004; Kim & Ostriker 2002, partly read at S51); pattern speeds of transient modes. **Then G2.**
@@ -333,7 +336,7 @@ ruling 3 is superseded where the physics signs the offset. **Then G3.**
 
 **Agents:** two readers; builder A (solver and instrument); builder B (integration and re-pins); a reviewer.
 
-### Phase P3 — the bar: a body, an absence, its lanes (S60) — list items 6, 9, 7
+### Phase P3 — the bar: a body, an absence, its lanes (S58) — list items 6, 9, 7
 
 **Reading:** bar light fractions, axis ratios and profiles from the S⁴G decompositions; the bar fraction against
 disc properties and a disc stability criterion; the gas lanes' offset and curvature.
@@ -352,14 +355,14 @@ disc properties and a disc stability criterion; the gas lanes' offset and curvat
 **Gate:** ring totals unchanged; rows 15–17 unchanged for the Milky Way; the m = 2 Fourier amplitude inside the
 bar against the sourced value. **Agents:** two readers; builders for the body, the presence and its rows, the lanes.
 
-### Phase P4 — pitch along an arm; the templates' pins (S61) — list item 8, first half
+### Phase P4 — pitch along an arm; the templates' pins (S59) — list item 8, first half
 
 Segments of seeded length and pitch change from the measured distributions (Honig & Reid 2015, read at S51;
 Díaz-García et al. 2019), continuous in phase: synthetic. The Milky Way's pins — arm segments and kinks from the
 maser fits (Reid et al. 2019), the bar's angle — and NGC 4414's (unbarred, flocculent). **Gate:** the pinned arms
 pass through the measured loci; a galaxy without pins is unchanged. **Agents:** one reader, two builders.
 
-### Phase L1 — clustered censuses; young stars near where they formed (S62) — list items 3 and 5
+### Phase L1 — clustered censuses; young stars near where they formed (S60) — list items 3 and 5
 
 **Reading:** two-point correlation functions of young clusters and molecular clouds, and how they flatten with
 age; association sizes against age.
@@ -374,7 +377,7 @@ per-region tests; the layer-off acceptance table bit-identical.
 
 **Agents:** one reader; builders for the field and clouds, the bright stars, the re-pins.
 
-### Phase L2 — structure between the clouds; spurs (S63) — list items 4 and 8, second half
+### Phase L2 — structure between the clouds; spurs (S61) — list items 4 and 8, second half
 
 **Reading:** column-density power spectra of atomic gas and dust in nearby discs and their break at the disc's
 thickness; log-normal column widths against Mach number; feather spacing.
@@ -415,40 +418,40 @@ The lead assembles the findings. **Then G4:** Fable's verdict on each, and the f
 
 | S | Phase | Deliverable | Blocked by | Lead | Fable |
 |---|---|---|---|---|---|
-| **53** | 0 | Adoption (D212), the rule amendments, `goal_metrics`, the picture test, the baseline table | the owner's §7 answers | Opus | — |
+| **53** | 0 | Adoption (D212), the rule amendments, `goal_metrics`, the picture test, the baseline table | — | Opus | — |
 | **54** | T | Two templates, the fit and its residuals, `/api/templates`, the switcher, compare-with-goal | 53 | Opus | — |
 | **55** | R | The fourth kind, `layer/` and its primitives, the switch, I1–I5, Appendix B applied | 53 | Opus | **G1** |
-| **56** | V5 | The field's light by age | nothing (can precede 55) | Opus | — |
-| **57** | V6 | Clouds, HII knots, clusters and bright stars at whole-galaxy scale | 56 | Opus | — |
-| **58** | P1 | Several modes; the gas follows any pattern | 55 | Opus | if the probe contradicts §5 |
-| **59** | P2 | Pattern speeds; the shock per ring; #81, #129, #131 re-ruled | 58 | Opus | **G2, G3** |
-| **60** | P3 | The bar's body, its absence, its lanes | 58 | Opus | — |
-| **61** | P4 | Pitch segments; the templates' pins | 58, 60 | Opus | — |
-| **62** | L1 | Clustered censuses; young stars near birth | 55, 57 | Opus | — |
-| **63** | L2 | The gas fluctuation field and its twin's vectors; spurs | 55, 59 | Opus | — |
-| **64** | V7 | The layer in the shader; the physics-only switch | 63 | Opus | — |
+| **56** | P1 | Several modes; the gas follows any pattern | 55 | Opus | if the probe contradicts §5 |
+| **57** | P2 | Pattern speeds; the shock per ring; #81, #129, #131 re-ruled | 56 | Opus | **G2, G3** |
+| **58** | P3 | The bar's body, its absence, its lanes | 56 | Opus | — |
+| **59** | P4 | Pitch segments; the templates' pins | 56, 58 | Opus | — |
+| **60** | L1 | Clustered censuses; young stars near birth | 55 | Opus | — |
+| **61** | L2 | The gas fluctuation field and its twin's vectors; spurs | 55, 57 | Opus | — |
+| **62** | V5 | The field's light by age | the model phases (the owner's order) | Opus | — |
+| **63** | V6 | Clouds, HII knots, clusters and bright stars at whole-galaxy scale | 62 | Opus | — |
+| **64** | V7 | The layer in the shader; the physics-only switch | 61, 63 | Opus | — |
 | **65** | V8 | Display defaults, instrument look, goal captures | 64, the owner's tuning | Opus | — |
 | **66** | — | Audit V | 53–65 | Opus | **G4** |
 
-55 → 58 → {59, 60} → 61 is the hard chain on the model side. 56 and 57 need nothing new from the model and give
-the first visible gain; they may run before 55 if the owner wants pictures first. 62 and 63 both stand on 55's
-primitives. **Fable's whole share is four short turns** (G1–G4), plus any conditional gate a stop condition opens.
+55 → 56 → {57, 58} → 59 is the hard chain on the model side; 60 and 61 stand on 55's primitives. **The model's
+phases come first and the viewer's follow, on the owner's word (§7, ruling 9)**; §5 keeps the phases in the order
+they were written, and this table is the order they run. **Fable's whole share is four short turns** (G1–G4), plus
+any conditional gate a stop condition opens.
 
----
+## 7. The owner's rulings (2026-10-03; S53 records them as D212)
 
-## 7. Rulings needed before starting (the owner's)
-
-1. **Adopt the plan** and its numbering, S53–S66, with Opus leading every row and Fable at the four gates.
-2. **The fourth kind** (rule A10) and the layer's five rules (§1c), in Appendix A's wording.
-3. **`RENDER_PHYSICS.md` §8 and rule D5 amended**, in Appendix A's wording.
-4. **Templates** (rules A5 and D1): the viewer lands on `milky_way`; a template may carry pins.
-5. **The goal images committed** to this public repository, with their credits — both are agency images
-   `[recall]`; the credit lines want checking before the push. They are untracked today.
-6. **A headless browser installed** for the picture test, or captures stay manual.
-7. **`basic` and `azimuthal`:** one model with the layer switch, if Phase R shows them identical.
-8. **NGC 4414's checks:** a small table of blind windows for the template, or display only.
-9. **Pictures first?** V5 and V6 before Phase R (§6).
-10. **The dependency rule stays numpy-only** (level A needs nothing more).
+| # | Question | The owner's answer |
+|---|---|---|
+| 1 | Adopt the plan and its numbering, Opus leading every row, Fable at the four gates | **"adopt the plan"** |
+| 2 | The fourth kind, *synthetic*, and the layer's five rules, in Appendix A's wording | **Open**: "elaborate on what this quantity is" — explained in chat; awaits the word. Blocks A10's amendment and Phase R, not Phase 0's instruments or Phase T |
+| 3 | `RENDER_PHYSICS.md` §8 and rule D5 amended, in Appendix A's wording | **"approved"** |
+| 4 | Templates (rules A5 and D1): the viewer lands on `milky_way`; a template may carry pins | **"approved"** |
+| 5 | The goal images committed to this public repository | **"don't commit"**: `docs/goals/` is ignored by git; the pictures are the owner's local files |
+| 6 | A headless browser installed for the picture test | **"yes"** |
+| 7 | `basic` and `azimuthal` as one model with the layer switch, if Phase R shows them identical | **Open**: "what two model variant?" — explained in chat; awaits the word. Blocks nothing before Phase R's close |
+| 8 | NGC 4414's checks: a small table of blind windows, or display only | **Open**: "please elaborate" — explained in chat; awaits the word. Blocks Phase T's reading brief |
+| 9 | Pictures first (V5, V6 before Phase R)? | **"no, lets finish model part first"**: §6 reordered |
+| 10 | The dependency rule stays numpy-only | **Open**: "is there another that you'd want to use" — answered in chat: the runtime stays numpy-only; two development-only tools are proposed (an image decoder for `goal_metrics`, the browser automation ruling 6 allows) and await the word |
 
 ---
 
