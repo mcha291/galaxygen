@@ -1,5 +1,5 @@
 """The dust in its own layer and round each ring (S50, D206 and D207; debt #109's layer, debt #128's record;
-round each ring by the gas's own contrast since S51, D210 Phase 2).
+round each ring by the gas's own contrast since S51, D210 Phase 2; heated in its own layer since S52, D211).
 
 The ism stage publishes ``gas_scale_height`` — the gas's column over four times its midplane density, the
 h of the render's one layer form — and ``/api/render`` returns it ring by ring as the dust's layer
@@ -12,10 +12,14 @@ h of the render's one layer form — and ``/api/render`` returns it ring by ring
   own height near 13 kpc, a dust-mass-weighted mean of 65 pc;
 - **the render's contract**: the array is the field in kpc, named by ``layers.dust``, per ring or per region
   cell, beside the components and never among them;
-- **debt #128's record**: the dust stage's heating is still one uniformly mixed slab. What the layered
-  geometry would absorb instead is computed here by an independent quadrature — the escape of light emitted
-  isotropically by stars in their layer through a dust in its own — and pinned, not applied: 0.766 of the
-  slab's, an infrared share of 0.262 of the disc's light against the published 0.342.
+- **debt #128's first half, applied (S52, D211)**: until S52 the dust stage heated the dust as one uniformly
+  mixed slab. What the layered geometry absorbs — the escape of light emitted isotropically by stars in their
+  layer through a dust in its own — was computed at S50 by an independent quadrature and pinned, not applied:
+  0.766 of the slab's, an infrared share of 0.262 of the disc's light against the published 0.342. Since S52 the
+  stage absorbs in that geometry (``dust.layered_absorbed_fraction``, a fixed quadrature on another path), and
+  the same independent quadrature is what its numbers are checked against here;
+- **debt #128's second half, measured and not applied**: the heating at the ring's mean column against the light
+  and the dust placed round the ring.
 """
 
 from __future__ import annotations
@@ -174,7 +178,7 @@ def test_a_window_and_a_level_carry_the_layer_too():
     assert f4.dtype == np.float32 and np.allclose(f4, whole, rtol=1e-6, equal_nan=True)
 
 
-# --- debt #128: the heating is still one mixed slab ---------------------------------------------------
+# --- debt #128's first half: the heating in the layers the dust is drawn in (S52, D211) -----------------
 
 
 def layered_escape(tau: float, ratio: float, n: int = 4000) -> float:
@@ -195,10 +199,18 @@ def test_the_layered_escape_is_the_slab_s_when_the_layers_are_one(tau):
     assert layered_escape(tau, 1.0) == pytest.approx(slab, rel=2e-5)
 
 
-def test_what_the_layered_geometry_would_absorb_is_recorded_not_applied(galaxy, prod):
-    """Debt #128. The picture's dust sits in the gas's thin layer since D206; the dust stage still heats it as
-    if it filled the stars'. A thin layer under a thick stellar disc absorbs at most about half of an opaque
-    ring's light (the half that sets out towards it), where the mixed slab absorbs nearly all of it."""
+def test_the_layered_geometry_is_applied(galaxy, prod):
+    """Debt #128's first half, closed at S52 (D211). The picture's dust sits in the gas's thin layer since D206; until
+    S52 the dust stage heated it as if it filled the stars'. A thin layer under a thick stellar disc absorbs at most
+    about half of an opaque ring's light (the half that sets out towards it), where the mixed slab absorbs nearly
+    all of it.
+
+    **The record, S50, and D211's predictions (B4), judged on these numbers:** the layered geometry absorbs 0.766 of
+    the slab's (1.5675e10 -> 1.2006e10 Lsun; predicted 0.766 to 0.3 %, **held**, 0.76594); the infrared share of the
+    disc's light 0.3415 -> 0.2616 (± 0.001, **held**, 0.26157); ring by ring 0.590 of the slab's at 0.5 kpc (τ_abs
+    11), 0.913 at R₀, 0.995 at 12 kpc (± 0.005, **held**: 0.5902, 0.9128, 0.9945). The stage's absorbed light
+    against the independent 4000-point quadrature: 7.6e-7 at worst per ring (the reference's own midpoint error),
+    1.2e-9 over the disc."""
     f, R = galaxy.fields, np.asarray(galaxy.grid.R)
     model = prod[0].get(DEFAULT_MODEL)
     light = np.asarray(f["disc_surface_brightness"], dtype=float)
@@ -206,17 +218,97 @@ def test_what_the_layered_geometry_would_absorb_is_recorded_not_applied(galaxy, 
     ratio = np.asarray(f["gas_scale_height"], dtype=float) / float(f["thin_disc_scale_height"])
     area = 2.0 * math.pi * R * PC_PER_KPC**2
     slab = float(np.trapezoid(light * dust.slab_absorbed_fraction(tau) * area, R))
-    assert slab == pytest.approx(float(f["dust_absorbed_luminosity"]), rel=1e-12)  # the stage's own number
     escape = np.array([layered_escape(t, r) if t > 0.0 and np.isfinite(r) else 1.0 for t, r in zip(tau, ratio)])
     layered = float(np.trapezoid(light * (1.0 - escape) * area, R))
+    # Applied: the stage's own number is the independent quadrature's, to the reference's own error.
+    assert float(f["dust_absorbed_luminosity"]) == pytest.approx(layered, rel=1e-8)  # S52 (D211): was the slab's, 1.5675e10
+    per_ring = np.asarray(f["dust_absorbed_surface_brightness"], dtype=float)
+    np.testing.assert_allclose(per_ring, light * (1.0 - escape), rtol=2e-6, atol=0.0)
+    assert np.array_equal(per_ring > 0.0, np.isfinite(ratio))  # no gas height, nothing absorbed (D211 ruling 2)
+    assert slab == pytest.approx(1.5675e10, rel=1e-4) and layered == pytest.approx(1.2006e10, rel=1e-4)
     assert layered / slab == pytest.approx(0.7659, abs=0.002)
-    assert slab / float(f["disc_luminosity"]) == pytest.approx(0.3415, abs=0.001)  # the published infrared share
-    assert layered / float(f["disc_luminosity"]) == pytest.approx(0.2616, abs=0.001)
+    assert slab / float(f["disc_luminosity"]) == pytest.approx(0.3415, abs=0.001)  # the infrared share until S52
+    assert layered / float(f["disc_luminosity"]) == pytest.approx(0.2616, abs=0.001)  # the published one since
     # Ring by ring: 0.59 of the slab's at 0.5 kpc (τ_abs 11), 0.91 at the solar radius, the same beyond 12 kpc.
     absorbed = (1.0 - escape) / np.where(tau > 0.0, dust.slab_absorbed_fraction(tau), 1.0)
     assert at(R, absorbed, 0.5) == pytest.approx(0.590, abs=0.005)
     assert at(R, absorbed, 8.2) == pytest.approx(0.913, abs=0.005)
     assert at(R, absorbed, 12.0) == pytest.approx(0.995, abs=0.005)
+
+
+# --- the stage's quadrature (S52, D211) ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("tau", [0.05, 0.5, 2.0, 12.0, 50.0])
+def test_the_layered_fraction_is_the_slab_s_closed_form_when_the_layers_are_one(tau):
+    """D211: if this fails the implementation is wrong, not the reading. 4e-14 at worst, measured at S52."""
+    got = float(dust.layered_absorbed_fraction(np.array([tau]), np.array([1.0]))[0])
+    assert got == pytest.approx(float(dust.slab_absorbed_fraction(np.array([tau]))[0]), rel=1e-12)
+
+
+@pytest.mark.parametrize("ratio", [0.06, 0.32, 1.0, 3.7])
+@pytest.mark.parametrize("tau", [0.05, 0.5, 2.0, 12.0, 50.0])
+def test_the_layered_fraction_is_the_independent_quadrature_s(tau, ratio):
+    """The stage's fixed quadrature (E₁ in the dust's share) against the 4000-point midpoint in the stars' share
+    (E₂): two paths. They differ by the midpoint's own error, which grows once the dust's layer is the thicker
+    (8.4e-6 at worst at ratio 2.5, read at S52), and is at rounding where the dust is the thinner."""
+    got = float(dust.layered_absorbed_fraction(np.array([tau]), np.array([ratio]))[0])
+    assert got == pytest.approx(1.0 - layered_escape(tau, ratio), rel=1e-5 if ratio > 0.5 else 1e-12)
+
+
+def fine_escape(tau: float, ratio: float) -> float:
+    """A third path, for the bound: the escape ∫ ½ sech²(x) [E₂(τA) + E₂(τ(1 − A))] dx over the stars' height x in
+    units of 2h★, x ≥ 0, by the trapezoid on a step of min(0.01, ratio / 80) to x = 24 — exponentially convergent
+    for a smooth integrand decaying as e^(−2x); it returns the slab's closed form at ratio 1 to 1.4e-14."""
+    x = np.arange(0.0, 24.0, min(0.01, ratio / 80.0))
+    weight = np.full_like(x, x[1])
+    weight[0] *= 0.5
+    above = 0.5 * (1.0 - np.tanh(x / ratio))
+    return float((0.5 / np.cosh(x) ** 2 * (expn(2, tau * above) + expn(2, tau * (1.0 - above))) * weight).sum())
+
+
+@pytest.mark.parametrize("ratio", [0.01, 0.06, 0.3, 1.5, 3.7, 10.0])
+def test_the_layered_fraction_s_stated_bound(ratio):
+    """The bound the function's docstring states: under 3e-11 of the absorbed share for ratios 0.01–10 and τ to
+    1000 (2.5e-11 at worst, read at S52)."""
+    tau = np.array([1e-6, 1e-4, 0.05, 0.5, 2.0, 12.0, 50.0, 300.0, 1000.0])
+    got = dust.layered_absorbed_fraction(tau, np.full_like(tau, ratio))
+    want = np.array([1.0 - fine_escape(t, ratio) for t in tau])
+    np.testing.assert_allclose(got, want, rtol=3e-11, atol=0.0)
+
+
+def test_the_layered_fraction_s_limits():
+    """Zero without depth or without a layer; monotone in τ; and its two limits, derived. **A sheet of dust at the
+    stars' midplane** (ratio -> 0): every star sees all the dust on one side, half its light sets out towards it,
+    so the escape is ½ + ½ E₂(τ) and the absorbed share ½(1 − E₂(τ)); approached as O(ratio). **A sheet of stars
+    in the middle of the dust** (ratio -> ∞): each star has half the column above and half below, so the escape
+    is E₂(τ/2) and the absorbed share 1 − E₂(τ/2); approached as O(1/ratio²)."""
+    zero = dust.layered_absorbed_fraction(np.array([0.0, 0.0, 2.0, 0.0]), np.array([0.3, np.nan, np.nan, np.inf]))
+    assert np.all(zero == 0.0)  # no depth, or no dust layer (the ratio is NaN)
+    small = dust.layered_absorbed_fraction(np.array([1e-9]), np.array([0.3]))[0]
+    assert 0.0 < small < 1e-7
+    tau = np.array([0.05, 0.5, 2.0, 12.0, 50.0])
+    sheet = 0.5 * (1.0 - expn(2, tau))
+    screen = 1.0 - expn(2, 0.5 * tau)
+    np.testing.assert_allclose(dust.layered_absorbed_fraction(tau, np.zeros_like(tau)), sheet, rtol=1e-13)
+    near = dust.layered_absorbed_fraction(tau, np.full_like(tau, 1e-6)) - sheet
+    assert np.all(np.abs(near) < 2e-6) and np.all(near > 0.0)
+    far = [dust.layered_absorbed_fraction(tau, np.full_like(tau, r)) - screen for r in (30.0, 100.0)]
+    assert np.all(np.abs(far[1]) < np.abs(far[0])) and np.all(np.abs(far[1]) < 2e-5)
+    np.testing.assert_allclose(dust.layered_absorbed_fraction(tau, np.full_like(tau, 1e4)), screen, rtol=1e-12)
+    # A stellar layer of no height (the ratio infinite) is the sheet itself, not "no dust".
+    np.testing.assert_allclose(dust.layered_absorbed_fraction(tau, np.full_like(tau, np.inf)), screen, rtol=1e-12)
+    grid = np.geomspace(1e-9, 1e3, 2001)
+    for ratio in (0.01, 0.06, 0.3, 1.0, 3.7, 10.0):
+        kept = dust.layered_absorbed_fraction(grid, np.full_like(grid, ratio))
+        assert np.all((kept > 0.0) & (kept < 1.0 + 3e-11)), ratio
+        # Monotone until what escapes is down to the quadrature's bound (2.6e-11 at τ = 895, ratio 3.7, read at S52).
+        clear = (1.0 - kept[1:]) > 1e-9
+        assert np.all(np.diff(kept)[clear] > 0.0) and np.all(np.diff(kept) > -1e-11), ratio
+    # The geometry's order at a fixed depth: the thinner the dust's layer under the stars', the less it absorbs.
+    order = dust.layered_absorbed_fraction(np.full(5, 2.0), np.array([0.0, 0.06, 0.32, 1.0, 3.7]))
+    assert np.all(np.diff(order) > 0.0)
+    assert order[3] == pytest.approx(float(dust.slab_absorbed_fraction(np.array([2.0]))[0]), rel=1e-12)
 
 
 # --- D207, and D210 since S51: the dust round each ring ----------------------------------------------
@@ -353,13 +445,24 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
-    """Debt #128's second half (D207). The dust stage absorbs at each ring's mean column. With the light placed
-    round each ring the same mixed slab would absorb another amount: measured here, not applied.
+    """Debt #128's second half (D207; D211 ruling 5). The dust stage absorbs at each ring's mean column. With the
+    light and the dust placed round each ring it would absorb another amount: measured here, not applied (applying
+    it would make the dust stage read seeded fields, and every dust number would move with the pattern's seed).
 
-    **The record, S50 (D207), light and dust both on the stellar contrast:** 1.0126 of the mean column's over the
-    disc, 1.041 at the solar ring, 1.001 at 2 kpc (the slab saturated). **Read at S51 (D210), the light on the
-    stellar contrast c and the dust on the gas's ridge g:** 1.0045 over the disc, 1.023 at R₀, 1.001 at 2 kpc —
-    the dust's ridge is narrower than the stars' arm, so less of it lies where the light is heaviest."""
+    **The record, in the mixed slab the stage heated in until S52.** S50 (D207), light and dust both on the stellar
+    contrast: 1.0126 of the mean column's over the disc, 1.041 at the solar ring, 1.001 at 2 kpc (the slab
+    saturated). S51 (D210), the light on the stellar contrast c and the dust on the gas's ridge g: 1.0045 over the
+    disc, 1.023 at R₀, 1.001 at 2 kpc — the dust's ridge is narrower than the stars' arm, so less of it lies where
+    the light is heaviest.
+
+    **Read at S52 (D211), in the layered geometry the stage now heats in** (c and g as at S51, each cell's absorbed
+    share the layered one at its column and the ring's ratio of heights): **1.0007 over the disc, 1.014 at R₀,
+    0.9995 at 2 kpc** (0.9974 at 4 kpc, 1.069 at 12 kpc, where little light is): the placement's effect on the
+    disc's absorbed power falls from 0.45 % to 0.07 %. A thin layer's share saturates sooner than the mixed slab's
+    (it keeps little more than the half of the light that sets out towards it), so round a ring the gaps, which lose
+    dust, lose more absorption than the crest gains, and that concavity now nearly cancels the gain from the gas's
+    crest sitting on the stellar arm's (c and g peaking together). Read on every fourth azimuth of the 360 (the mixed slab's numbers on them are the full grid's to
+    5e-10, asserted below), so that the layered quadrature runs on 90 cells a ring, not 360."""
     model = prod[0].get(DEFAULT_MODEL)
     out = run(model, only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
@@ -372,3 +475,18 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0045, abs=0.0005)  # S50: 1.0126
     assert at(R, placed / mean, 8.2) == pytest.approx(1.023, abs=0.002)  # S50: 1.041
     assert at(R, placed / mean, 2.0) == pytest.approx(1.001, abs=0.002)  # S50: 1.001
+    # Every fourth azimuth carries the ring's mean of the placement to rounding (the slab's numbers, on both).
+    every = 4
+    sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
+    assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)
+    # The layered geometry (S52, D211): the stage's own mean column, against the same placement.
+    ratio = np.asarray(f["gas_scale_height"], dtype=float) / float(f["thin_disc_scale_height"])
+    mean = dust.layered_absorbed_fraction(tau, ratio)
+    placed = (c[:, ::every] * dust.layered_absorbed_fraction(tau[:, None] * g[:, ::every], ratio[:, None])).mean(axis=1)
+    held = mean > 0.0
+    assert np.array_equal(held, np.isfinite(ratio)) and np.all(placed[~held] == 0.0)
+    q = np.where(held, placed / np.where(held, mean, 1.0), np.nan)
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0007, abs=0.0005)  # S52 (D211): was 1.0045 (mixed slab)
+    assert at(R, q, 8.2) == pytest.approx(1.014, abs=0.002)  # S52 (D211): was 1.023 (mixed slab)
+    assert at(R, q, 2.0) == pytest.approx(0.9995, abs=0.002)  # S52 (D211): was 1.001 (mixed slab)
+    assert at(R, q, 4.0) == pytest.approx(0.9974, abs=0.002)

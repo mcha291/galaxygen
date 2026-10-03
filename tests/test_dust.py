@@ -28,7 +28,7 @@ FIELDS = (
     "dust_absorbed_surface_brightness", "dust_temperature", "dust_infrared_surface_brightness",
     "dust_absorbed_luminosity", "dust_infrared_luminosity", "radiation_field_g0", "pah_fraction",
     "disc_surface_brightness", "disc_luminosity", "dust_surface_density", "dust_extinction_v",
-    "sfr_surface_density", "feh_gas",
+    "sfr_surface_density", "feh_gas", "gas_scale_height", "thin_disc_scale_height",
 )
 # The gate's tolerances, measured at S31: the per-radius balance closes to 1.41e-12 on this grid and
 # 1.46e-12 on the default one (worst at the grid's outer edge, where the dust is at 1.5 K and the
@@ -155,7 +155,10 @@ def test_the_energy_balance_closes_per_radius_and_in_total(model, coarse):
     absorbed = np.asarray(f["dust_absorbed_surface_brightness"])
     emitted = np.asarray(f["dust_infrared_surface_brightness"])
     heated = absorbed > 0.0
-    assert heated.sum() == R.size  # the grid's every ring has light and dust on the default Milky Way
+    # Every ring the gas has a layer at is lit; past the stellar disc's edge, where it has none, nothing is absorbed
+    # (S52, D211 ruling 2): 94 of the 120 rings, the first unlit at 23.625 kpc.
+    assert np.array_equal(heated, np.isfinite(np.asarray(f["gas_scale_height"], dtype=float)))
+    assert heated.sum() == 94  # S52 (D211): was 120 (every ring)
     worst = float(np.max(np.abs(emitted[heated] / absorbed[heated] - 1.0)))
     assert worst < BALANCE_PER_RADIUS, worst
     assert np.all(emitted[~heated] == 0.0)
@@ -167,12 +170,20 @@ def test_the_energy_balance_closes_per_radius_and_in_total(model, coarse):
     assert float(f["dust_infrared_luminosity"]) == pytest.approx(float(np.trapezoid(emitted * area, R)), rel=1e-14)
 
 
-def test_the_absorbed_light_is_the_slabs_share_of_the_starlight(model, coarse):
+def test_the_absorbed_light_is_the_layered_share_of_the_starlight(model, coarse):
+    """Since S52 (D211) the stars' layer through the dust's, at the published heights' ratio; until then the uniform
+    mixed slab, which is the layered share at a ratio of 1 (tests/test_dust_layer.py holds the independent check)."""
     f = coarse[model.name].fields
     light = np.asarray(f["disc_surface_brightness"])
     tau_abs = (1.0 - _c(model, "DUST_ALBEDO_V")) * np.asarray(f["dust_extinction_v"]) / (2.5 * math.log10(math.e))
-    assert np.allclose(np.asarray(f["dust_absorbed_surface_brightness"]), light * dust.slab_absorbed_fraction(tau_abs), rtol=1e-12, atol=0.0)  # tau rounded differently: 1.8e-13
-    assert np.all(np.asarray(f["dust_absorbed_surface_brightness"]) <= light)
+    ratio = np.asarray(f["gas_scale_height"], dtype=float) / float(f["thin_disc_scale_height"])
+    absorbed = np.asarray(f["dust_absorbed_surface_brightness"])
+    assert np.allclose(absorbed, light * dust.layered_absorbed_fraction(tau_abs, ratio), rtol=1e-12, atol=0.0)  # tau rounded differently
+    assert np.all(absorbed <= light)
+    # Thinner than the stars, the dust absorbs less than the mixed slab would; flared past them, more.
+    slab = light * dust.slab_absorbed_fraction(tau_abs)
+    held = np.isfinite(ratio)
+    assert np.all((absorbed < slab)[held & (ratio < 1.0)]) and np.all((absorbed > slab)[held & (ratio > 1.0)])
 
 
 def test_the_dust_is_between_10_and_60_k_wherever_the_disc_has_dust(model, coarse):
@@ -185,8 +196,12 @@ def test_the_dust_is_between_10_and_60_k_wherever_the_disc_has_dust(model, coars
     sigma = np.asarray(f["dust_surface_density"])
     disc = sigma > 1e-5 * sigma.max()
     assert disc.sum() > 0.75 * sigma.size
-    assert np.all(np.isfinite(T[disc])) and np.all((T[disc] > 10.0) & (T[disc] < 60.0))
-    assert np.all(np.isfinite(T))  # every ring is lit on this grid: no NaN
+    # Since S52 (D211 ruling 2) the dust is heated only where the gas has a layer: the disc's last ring with dust,
+    # 23.625 kpc on this grid, has none, and its dust is not heated (NaN, rule B9).
+    lit = np.isfinite(np.asarray(f["gas_scale_height"], dtype=float))
+    assert np.all(np.isfinite(T[disc & lit])) and np.all((T[disc & lit] > 10.0) & (T[disc & lit] < 60.0))
+    assert (disc & ~lit).sum() == 1  # S52 (D211): was 0 (every ring lit)
+    assert np.array_equal(np.isfinite(T), lit)  # S52 (D211): was every ring finite
 
 
 def test_the_temperature_profile_and_the_infrared_share(model, coarse):
@@ -196,16 +211,20 @@ def test_the_temperature_profile_and_the_infrared_share(model, coarse):
     and bulge together. Planck's whole-sky 19.7 K (sigma 1.4 K) is a sky average from the Sun, read to
     source beta before any row was ruled; it is a comparison, not a target (D113). S49 (D204, #126): the light
     integrated along the isochrone's points moves them to 18.268 / 20.207 / 18.829 / 16.597 / 16.458 K and
-    L_IR = 1.5665e10 Lsun, 0.3414 of the disc's light, on this grid; the numbers above were on the fixed-grid tables."""
+    L_IR = 1.5665e10 Lsun, 0.3414 of the disc's light, on this grid; the numbers above were on the fixed-grid tables.
+    S52 (D211): the dust heated with the stars and itself in their own layers moves them to 16.956 / 19.510 / 18.524 /
+    16.577 / 16.487 K and L_IR = 1.1999e10 Lsun, 0.2615 of the disc's light, on this grid: the inner disc, where the
+    dust's layer is a tenth of the stars', cools by 1.3 K, R0 by 0.3 K, and the flared outer disc warms by 0.03 K."""
     out = coarse[model.name]
     f, R = out.fields, out.grid.R
     T = np.asarray(f["dust_temperature"])
     # S49 (D204, #126): the light integrated along the isochrone's points; was 17.955, 20.414, 19.543, 16.621, 16.485
-    for r, want in ((2.0, 18.268), (5.0, 20.207), (8.2, 18.829), (12.0, 16.597), (16.0, 16.458)):
+    # S52 (D211): was 18.268, 20.207, 18.829, 16.597, 16.458
+    for r, want in ((2.0, 16.956), (5.0, 19.510), (8.2, 18.524), (12.0, 16.577), (16.0, 16.487)):
         assert float(np.interp(r, R, T)) == pytest.approx(want, abs=2e-3)
     L = float(f["dust_infrared_luminosity"])
-    assert L == pytest.approx(1.5665e10, rel=2e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 1.6185e10
-    assert L / float(f["disc_luminosity"]) == pytest.approx(0.3414, abs=2e-4)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.3311
+    assert L == pytest.approx(1.1999e10, rel=2e-4)  # S52 (D211): was 1.5665e10
+    assert L / float(f["disc_luminosity"]) == pytest.approx(0.2615, abs=2e-4)  # S52 (D211): was 0.3414
 
 
 # --- scattering, the field G0 and the PAHs -----------------------------------------------------

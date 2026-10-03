@@ -3514,6 +3514,19 @@ never been judged in twenty-three sessions.
    (`dust_placement`), as the stars are, and the heating is still the ring's mean column's. In the same mixed
    slab, with light and dust both placed, the absorbed power is 1.26 % more over the disc and 4.1 % more at R₀
    `[verified: tests/test_dust_layer.py]`; the closure above must take the placement with the layers.
+   **S52 (D211): the first half applied; what is left is the placement.** The dust stage now absorbs in the
+   layered geometry — the stars' sech² layer through the gas's, a fixed quadrature on 96 nodes
+   (`dust.layered_absorbed_fraction`), the render's scattered share with it — and the published numbers are the
+   drawn geometry's: L_IR 1.2006 × 10¹⁰ L☉ (0.766 of the slab's), the infrared share 0.2616, T_d(R₀) 18.52 K, the
+   frame's balance closed to 1e-9 `[verified: tests/test_dust_layer.py, tests/test_dust.py, tests/test_render.py]`.
+   **Still carried:** (a) the heating is each ring's *mean column's*; with the light on the stellar contrast and
+   the dust on the gas's ridge (D210) the layered geometry would absorb 1.0007 of it over the disc, 1.014 at R₀,
+   0.9995 at 2 kpc — measured, pinned, not applied, because applying it makes the dust stage read seeded fields
+   and every dust number move with `pattern_seed` (D55) for 0.07 % of the disc's absorbed light; what closes it is
+   a seeded extension of the dust stage, as `sfh_azimuthal` extends `sfh`, on the owner's word. (b) The face-on
+   record in `tests/test_render.py` (`face_on`) still composes the mixed slab. (c) The flare's pressure — the
+   gas's own weight and the halo's — as above. (d) The dust past the stellar disc's edge, 1.5 × 10⁻⁵ of the dust
+   mass, has no gas height and is no longer heated (it sat at 1.5–9 K in the slab): the render draws none there.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS

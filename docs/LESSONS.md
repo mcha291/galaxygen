@@ -1308,3 +1308,14 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   builder's first step `git merge --ff-only session-NN` (S51).
 - [close] Do not edit the register while the suite runs: the board test compares the committed board with the
   register and was the open's one failure (S51).
+- [field] "As now" in a ruling is a claim about the code: D211 said nothing is absorbed past the stellar disc's edge
+  "as now", and the slab had been heating the dust there (1.5e-5 of its mass) to 1.5–9 K. Read the state before
+  writing that a ruling keeps it (D211).
+- [field] Put a quadrature in the variable where the corner is smooth: the layered escape integrated by parts into
+  the dust's share, in t = ln(A / (1 − A)), is smooth for every ratio of heights where the stars' share is not;
+  96 fixed nodes reach 3e-11, and the limits (a sheet of dust, a sheet of stars) are closed forms to test (D211).
+- [close] "Review before committing" is served by a builder that commits nothing and leaves a patch in the
+  scratchpad: the lead reads the diff, checks it by a path of its own, applies it with `git apply`, runs the
+  affected tests, and only then commits (S52).
+- [close] The next row's builder can work during a closing suite if it is told not to run the whole suite; its
+  ruling's text is fixed before it starts and enters DECISIONS at the next session's open (S51–S52).
