@@ -374,7 +374,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (68, 45)  # S51 opened #129-#130, the gas ridge's width from one galaxy and the HI's contrast unmodelled (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
+    assert progress.debt_counts(text) == (69, 45)  # S51 opened #129-#131, the gas ridge's width from one galaxy, the HI's contrast unmodelled and the gas contrast's unread galaxy-level scatter (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",

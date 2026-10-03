@@ -8122,3 +8122,34 @@ flanks and the gaps clearer than today.
   rises; the cluster, HII, bubble and remnant counts move by a Poisson realisation, not in their expectation.
 - If a lane is not visible in the browser at R₀ face-on under rgb, the ruling is wrong about where the light is, not the
   reading.
+
+**Applied, Phase 1 (2026-10-03, an Opus 5.5 builder in a worktree, D195; a446818, on `session-51` as 04529d1).**
+`model/galaxy/stages/gas_pattern.py`: the stage and `GasPattern` (`from_fields(fields, constants)`, `flat`, `contrast`,
+`contrast_at`, `sector_means`, `azimuths`, `kappa`, `mask_half_width`, `amplitude`), the arm weight, bar weight, phase
+and bar angle from `ArmPattern._terms` itself. The mask's means are a midpoint sum on 360 fixed phase cells, the one
+cell pair the mask's edge cuts counted by its fraction inside (within 2e-7 of the integral at the clamp, 7e-6 at
+12 kpc); the sector means are exact, from the ridge's Fourier series (23 terms at κ = 4.977, the dropped tail under
+1e-15). The five constants in `level0.py`; the slot after `pattern` in `basic.py`; `tools/timings.py`'s arrays row and
+"27 stage declarations"; `tests/test_gas_pattern.py` (26) and `tests/test_graph.py`'s two execution orders and seeded
+set. The builder's full suite `EXIT=0`; the spec table identical line for line (12 / 20 / 5 in both models).
+**A correction to the worked paragraph above:** v(0) = e^κ / I₀(κ) is **5.435**, not 4.93 — the lead's slip by hand; the
+amplitudes and crests were a probe's and stand to 1.5 %: C = 2.73 → a 0.466, crest 3.07, trough 0.534; 1.90 → 0.312,
+2.38, 0.688; 5.79 → 0.709, 4.14, 0.291; at 12 kpc 2.72 and 0.613. **A clip the ruling did not name:** a is clipped
+below as well, at −1/(v(0) − 1), since a ratio under 1 makes a negative and the crest would otherwise pass zero.
+
+**Amended before Phase 2, and disclosed: ruling 5's residual is withdrawn.** *What was read first:* the default seed
+drew C = **10.02**, +1.8σ of the ruled scatter — a = 0.823, crest 4.64, trough 0.18 at R₀, the whole field 0.066–5.14.
+*Why that is the ruling's fault and not the seed's luck:* the 16th–84th percentiles the scatter was taken from are
+"over segments and bins" (the ruling's own caveat), so the draw gave one galaxy the spread of 59 arm segments' radial
+bins; a whole-disc ratio of 10 is reached by perhaps 4 % of grand-design *segments* and by no galaxy the reading found,
+and the default galaxy is the Milky Way (A5), whose own inner-disc figure is ∼1.5. Ruling 4 gave the width no residual
+because no galaxy-level spread was read (#129); ruling 5 drew one from a spread that is not galaxy-to-galaxy. The two
+cannot both be right, and ruling 4's reading of §4b is the one the project has held (a residual is a *measured*
+galaxy-to-galaxy scatter). **The amendment:** C is its derived class mean with no draw — 1.90 to 2.73 by the two-fold
+pattern's amplification weight. `gas_arm_contrast` is published by the derived `bar` stage beside `arm_contrast_mean`,
+so its label is derived (D55: a reproducible number must not wear a seeded label); `gas_pattern` reads no seed of its
+own and publishes the one field, seeded through the pattern's numbers it reads; `GAS_ARM_CONTRAST_LOG_SCATTER` leaves
+`level0.py` (a constant nobody reads is dead, S41) and its number, 0.72, is kept in debt **#131**: the gas contrast's
+galaxy-to-galaxy scatter is unread. *Disclosed, not blind* (D113's sense): the amendment was written after the draw was
+read. It moves the default toward the class mean — crest 3.07, trough 0.53 — and so away from the stronger lane; it is
+not made for the picture (RENDER_PHYSICS §8). The owner may restore the draw: one constant and one `rng` line.
