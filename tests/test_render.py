@@ -257,15 +257,18 @@ def test_the_joined_spectrum_carries_most_of_the_published_light(full):
 
 
 def test_the_line_is_the_nebular_field_in_two_layers(full, model):
-    """S39: the HII regions' share placed by the contrast in the clouds' layer, the diffuse gas's per ring in its
-    own published layer; around every ring the two are the published nebular line (V1's one array, split)."""
+    """S39: the HII regions' share placed round each ring in the clouds' layer — by the gas's own contrast since
+    S51 (D210: the regions sit in the clouds, which are gas; the stellar contrast until then) — the diffuse gas's
+    per ring in its own published layer; around every ring the two are the published nebular line (V1's one
+    array, split)."""
     header, arrays = render(full, model.name, "sho")
     f = scalars(full, model.name, "halpha_surface_brightness_nebular", "halpha_surface_brightness_hii",
-                "halpha_surface_brightness_dig", "dig_scale_height", "thin_disc_scale_height", "pattern_density_contrast")
+                "halpha_surface_brightness_dig", "dig_scale_height", "thin_disc_scale_height", "gas_density_contrast")
     for name in ("halpha_hii", "halpha_dig"):
         assert header["components"][name]["transmission"] == [0.0, 1.0, 0.0]  # [S II], Halpha, [O III] boxes
     assert np.array_equal(arrays["halpha_dig"][:, 1], f["halpha_surface_brightness_dig"])
-    placed = f["halpha_surface_brightness_hii"][:, None] * np.maximum(f["pattern_density_contrast"], 0.0)
+    assert header["components"]["halpha_hii"]["fields"] == ["halpha_surface_brightness_hii", "gas_density_contrast", "thin_disc_scale_height"]
+    placed = f["halpha_surface_brightness_hii"][:, None] * np.maximum(f["gas_density_contrast"], 0.0)
     assert np.array_equal(arrays["halpha_hii"][..., 1], placed)
     assert not arrays["halpha_hii"][..., [0, 2]].any() and not arrays["halpha_dig"][:, [0, 2]].any()
     ring = arrays["halpha_hii"][..., 1].mean(axis=1) + arrays["halpha_dig"][:, 1]
@@ -291,8 +294,9 @@ def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelength
     header, arrays = render(full, model.name, "sho")
     names = ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731")
     f = scalars(full, model.name, *(f"{n}_surface_brightness_hii" for n in names), "hbeta_surface_brightness_dig",
-                "halpha_surface_brightness_hii", "pattern_density_contrast")
-    placed = np.maximum(f["pattern_density_contrast"], 0.0)
+                "halpha_surface_brightness_hii", "gas_density_contrast")
+    placed = np.maximum(f["gas_density_contrast"], 0.0)  # the gas's own contrast since S51 (D210); the stellar until then
+    assert "gas_density_contrast" in header["components"]["lines_hii"]["fields"]
     lines = header["components"]["lines_hii"]["lines"]
     assert {n: lines[n]["transmission"] for n in names} == {
         "hbeta": [0.0, 0.0, 0.0], "oiii_5007": [0.0, 0.0, 1.0], "nii_6583": [0.0, 0.0, 0.0],
