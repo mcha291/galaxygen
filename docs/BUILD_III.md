@@ -330,9 +330,17 @@ readout; goal metrics (dark covering fraction, point counts). **Agents:** three 
 - **The law.** At each radius the weight of arm number m is the existing `swing_weight` evaluated at the *local*
   swing parameter X_m(R) — today's named alternative in `pattern.py` becomes the law; no new constant. m runs over
   the closed set 2–6.
-- **The power is conserved, not the peak.** The amplitudes satisfy Σ_m A_m(R)² = A², A the single-mode amplitude
-  the model publishes today (`arm_contrast`): the pattern's Fourier power is the sourced one, and the window says
-  how it is split. One surviving mode returns today's field exactly.
+- **The power is the sourced power where the disc amplifies, less where it does not; the peak is not conserved.**
+  At each radius the modes' power is the sourced power times the disc's gain, the gain capped at one:
+  A_m(R)² = A² · w_m(R) / max(1, Σ_k w_k(R)), A the published `arm_contrast`. Where Σ_k w_k ≥ 1 the ring carries A²
+  whole, split by the weights; below 1 the ring carries Σw · A², falling continuously to zero where the amplifier
+  is dead; no ring is normalised up. One fully amplified mode returns today's field exactly. **The modes saturate
+  together** where their peak would reach the mean: s(R) = min(1, (1 − b(R)) / Σ_m Ã_m(R)), a law of the pattern
+  stage, published as `arm_saturation`; no floor, no renormalisation after composition. *(Amended at S56's gate,
+  D215, ruling by Fable: it read "The amplitudes satisfy Σ_m A_m(R)² = A² … how it is split", which has no solution
+  on the rings no mode reaches and makes negative densities in a sixth of galaxies.)* With one pitch the field
+  is 1 + Σ_m A_m(R) cos(mχ − θ_m) + bar, χ = φ − ln R · cot i: one rigid winding whose azimuthal profile changes
+  with radius, never two pitches, until P4.
 - **The realisation (synthetic):** each mode's phase, on `texture_seed`; one pitch for all modes until P4. *(G1, D214: today there is no
   phase draw at all — a fixed convention, ln R · cot(pitch); this is a new draw, and the convention is retired.)*
 - **The gas.** With ψ = (c − 1)/A the stellar pattern scaled to unit amplitude, the ridge is v = exp(κ ψ) over its
@@ -345,8 +353,10 @@ readout; goal metrics (dark covering fraction, point counts). **Agents:** three 
 **Reading (a check, not an input):** Fourier amplitude spectra of spirals by arm number and radius, to set beside
 the law's split in the decision.
 
-**Gate:** ring means 1; the single-mode regression; a Fourier decomposition of the composed field returns the
-published amplitudes; I1–I3; the goals' azimuthal spectra beside the render's.
+**Gate:** ring means 1 to 1e-12 on every ring; the single-mode regression; the m = 2–6 cosine amplitudes recovered
+from the composed field equal the published ones (the bar's m = 2 term added at its taper) to 1e-9 on every
+ring, no exclusions; the minimum over cells ≥ 0 on every seed the suite draws; I1–I3; the goals' azimuthal
+spectra beside the render's *(the amplitude and positivity items are the gate's, D215)*.
 
 **Agents:** one reader; builders for the mode law, the realisation, the gas response, and the catalogue re-pins.
 

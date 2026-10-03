@@ -9038,3 +9038,69 @@ The picture run: 8 passed (seven captures to the byte, the wire test).
    spent; #134 stays carried and its closer is not ordered. D213's ban on a third fit stands as it is.
 
 S55's `verify_clone` on `main` at 9628f94: 1194 passed, 5 skipped, the specs OK, `EXIT=0`.
+
+**The probe before the build (BUILD_III §3g; the repo unchanged; both templates on the production grid).** The
+local swing window — X₂(R) = κ²R/(2πGΣ·2) from the checkpoint-1 disc, the local shear, the existing
+`swing_weight` — splits the power as the plan hoped: at the defaults m = 2 and 3 carry 0.85 of it at 2 kpc, the
+five modes 0.27 / 0.27 / 0.23 / 0.14 / 0.07 at 8 kpc, m = 4–6 nearly all of it at 12 kpc; 169 of 400 rings hold
+three or more modes above 5 %. `ngc_4414` has the same shape, more compact. **It contradicted the plan's text at
+two points.** (1) Past 14.9 kpc (11.6 for `ngc_4414`) no mode with m ≤ 6 survives — 202 and 246 of 400 rings,
+2.2 % and 1.0 % of the disc's mass — so "Σ_m A_m² = A²" has no solution there, and just inside, the per-ring
+normalisation hands the whole power to a ring whose total weight is 0.015. (2) Five modes of equal power peak at
+√5 A: the worst ring's Σ A_m is 0.89 at the default seed, 1.07 at the grand-design mean, and over 120 pattern
+seeds with random phases **21 galaxies had a cell of negative density** (worst −0.37; 1.6 % of the mass at most).
+
+**A conditional gate (BUILD_III §3d; §6 lists it for S56), 2026-10-04; ruling by Fable, one turn on
+`docs/HANDOFF_S56.md` (deleted at close), nothing run.**
+1. *The power follows the amplifier (the lead's N3, in a one-line form).* "At each radius the modes' power is the
+   sourced power times the disc's gain, the gain capped at one: A_m(R)² = A² · w_m(R) / max(1, Σ_k w_k(R)), w_m
+   the existing `swing_weight` at the local window, m = 2–6, A the published `arm_contrast`. Where Σ_k w_k ≥ 1 the
+   ring carries A² whole, split by the weights; where it is below 1 each mode carries A² w_m and the ring carries
+   Σw · A², falling continuously to zero where the amplifier is dead; no ring is normalised up. One fully
+   amplified mode (w_m = 1, the rest 0) carries A² alone and returns today's field exactly." Not the best mode's
+   weight: "it privileges one mode (two half-amplified modes would be weaker than one)". **Forbidden:** a step
+   where the last mode dies; the nearest-m fallback (it "retires with the draw it served"); a disc-wide
+   normalisation; any upward renormalisation; any change to the `SWING_X_*` constants to move the fade.
+2. *Saturation, a law of the pattern stage; no floor anywhere.* "The linear superposition holds while its peak
+   lies under the mean; where it would not, the arm modes saturate together: on each ring the arm amplitudes are
+   scaled by s(R) = min(1, (1 − b(R)) / Σ_m Ã_m(R)), Ã_m the amplitudes after the bar's taper, b(R) the bar's
+   tapered amplitude. s depends on R only, never on the phases; the field is ≥ 0 for every realisation; the
+   published `arm_mode_amplitude_m` are the saturated ones; s(R) is published as the derived radial field
+   `arm_saturation`." Not a floor: "a floor makes the published amplitudes false on floored rings and the gate
+   conditional on the realisation". **Forbidden:** max(c, 0), any renormalisation after composition, any exp map
+   on the stars in P1. "`compose` composes; it does not repair."
+3. *The local X's surface density.* "The local X_m(R) = κ²R/(2πGΣm) takes the disc's total surface density, stars
+   and gas together, as the spin's exponential publishes it at checkpoint 1 … Swing amplification is of the whole
+   self-gravitating disc, so this is the definition, not an approximation; the checkpoint-4 split does not feed
+   back (one-way, no iteration, D174)." The global window stays as the amplitude's coherence input; only the arm
+   number's draw retires, and D175's choice of the global form is superseded for the arm number.
+4. *What is published.* Five derived radial fields `arm_mode_amplitude_2 … _6`; five synthetic scalars
+   `arm_mode_phase_2 … _6`, uniform on [0, 2π) from `texture_seed` (its first reader), entering as
+   cos(m(φ − ln R · cot i) − θ_m), so θ = 0 is today's retired convention; `arm_multiplicity` kept as a derived
+   scalar, the m with the greatest mass-weighted power, ties to the lower m. **The fence:** nothing composes a
+   field from `arm_multiplicity`; every reader is listed at close and shown to read it as a label.
+5. *The layer off.* "A synthetic quantity is not realised, and an unrealised quantity is NaN (D164); the field
+   list is the same on and off; 0 would claim a draw that was not made." With the layer off the `texture_seed`
+   stream is never drawn, and the five amplitudes, `arm_multiplicity` and `arm_saturation` are bit-identical.
+6. *Two amendments to the plan's text.* The geometry is recorded: with one pitch the field is 1 + Σ_m A_m(R)
+   cos(mχ − θ_m) + bar, χ = φ − ln R · cot i — one rigid winding whose azimuthal profile changes with radius, never
+   two pitches, until P4. And the gas: ψ = (c − 1)/A as written — "the gas fades with the potential that drives
+   it; nothing shocks on nothing"; where a ring's contrast is 1 the ridge is 1 and no mask is formed.
+
+**The gate P1 must meet (Fable's, replacing §5's third item):** ring means 1 to 1e-12 on every ring; the m = 2–6
+cosine amplitudes recovered from the composed field equal the published ones (the bar's m = 2 term added at its
+taper) to 1e-9 on every ring, no exclusions; the minimum over cells ≥ 0 on every seed the suite draws.
+**For the owner at the close (nothing waits):** the arms and lanes fade past about 13 kpc in the Milky Way where
+today they run to the grid's edge; "the fade is the law's statement about 2.2 % / 1.0 % of the mass; arms to the
+edge would be a new ruling on the outer disc's Σ or gain, not a tweak of this one."
+
+**The gate's predictions, read on the probe re-run with its law (before any build).** *Held:* the last ring with
+any pattern is 14.81 kpc at 0.0153 A² (amplitude 0.124 A = 0.050), 11.51 kpc for `ngc_4414`; every Milky Way ring
+inside 12 kpc carries the whole A² (Σw ≥ 1 from the first ring to 13.76 kpc; half the power to 14.14 kpc; for
+`ngc_4414` 10.84 and 11.06 kpc); the saturation is 1 on every ring at the seed probed (worst Σ Ã_m + b = 0.893);
+no galaxy of 120 has a cell below zero (21 before); 67 of 120 seeds saturate some ring; at A = 0.48 the worst
+ring loses 12.7 % of its power ("≈ 10 %"). ***Failed:* "no ring-to-ring jump of A_tot larger than the largest in
+today's bar taper"** — the largest jump of A_tot / A between neighbouring rings is 0.143 (0.225 for `ngc_4414`):
+the fade from the whole power to none takes fourteen rings, about a kiloparsec, and its last steps are the square
+root's. The law is continuous in R and steep on a 75 pc grid; it is built as ruled and the jump is pinned as
+measured, not smoothed (B5).
