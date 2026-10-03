@@ -23,9 +23,11 @@ of means inside the arm mask, is two to three where the stars' is a few tens of 
   clamped at π/2 (half the period); g is affine in v, so C = [1 + a(v̄_in − 1)]/[1 + a(v̄_out − 1)]
   inverts to a = (C − 1)/[(v̄_in − 1) − C (v̄_out − 1)]. a depends on R only through θ_m, so
   inside the clamp it is one number.
-- **The contrast's mean** is derived as the stellar amplitude's is (D175): the non-grand-design
-  class's ratio to the grand designs' by the two-fold pattern's amplification weight, its residual
-  drawn log-normally on ``pattern_seed``.
+- **The contrast C** is ``gas_arm_contrast``, published by the derived ``bar`` stage: the
+  non-grand-design class's ratio to the grand designs' by the two-fold pattern's amplification
+  weight, as the stellar amplitude's mean is (D175). **No residual is drawn** (D210 as amended,
+  debt #131): the source's spread is over arm segments and radial bins, not galaxies. Phase 1 drew
+  one on ``pattern_seed`` and the default seed set the disc to a ratio of 10.
 
 **Quadratures, each a step count known in advance (A1).** The mask means v̄_in and v̄_out are
 midpoint sums over a fixed grid of ``PHASE_CELLS`` cells in θ over one period, independent of
@@ -34,9 +36,11 @@ edges. The sector means are exact: v's Fourier series, e^{κ cos θ}/I₀(κ) = 
 [I_n(κ)/I₀(κ)] cos nθ, has coefficients computed once by a ``HARMONIC_SAMPLES``-point FFT, and
 each harmonic's sector mean is a sine difference, as the stellar pattern's are.
 
-**Why its own stage.** ``pattern`` publishes seeded fields and this stage draws one more residual
-on the same seed; a separate stage keeps ``pattern``'s outputs (and every row that reads them)
-exactly what they were, and gives the gas's response one declaration with one provenance (D55).
+**Why its own stage, and why seeded.** It reads no seed of its own and draws nothing; it reads the
+pattern's drawn numbers (pitch, arm number, bar amplitude), so ``graph`` labels its one field
+seeded through those requirements (D55: a stage that reads a seeded field publishes seeded
+fields). A separate stage keeps ``pattern``'s outputs, and every row that reads them, exactly what
+they were.
 """
 
 from __future__ import annotations
@@ -52,7 +56,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.pattern import ArmPattern, invert_azimuths, swing_weight
+from galaxy.stages.pattern import ArmPattern, invert_azimuths
 
 PHASE_CELLS = 360  # the mask's fixed midpoint quadrature over one period of θ (A1)
 HARMONIC_SAMPLES = 1024  # the FFT that gives v's Fourier coefficients for the exact sector means
@@ -123,24 +127,6 @@ def mask_means(theta_m: np.ndarray, kappa: float) -> tuple[np.ndarray, np.ndarra
     cells = 2.0 * theta_m / step
     return inside / cells, (total - inside) / (PHASE_CELLS - cells)
 
-
-def _scalar(name, label, unit, about):
-    return FieldDecl(name=name, label=label, unit=unit, kind=Kind.SCALAR,
-                     meaningful_zero=True, about=about, provenance="seeded")
-
-
-GAS_ARM_CONTRAST = _scalar(
-    "gas_arm_contrast", "Gas arm–interarm contrast (ratio of means)", "dimensionless",
-    "The ratio the gas's arm pattern is set to: mean gas surface density inside an arm mask of the "
-    "source's width over the mean outside it, on each ring — a ratio of means, not a peak-to-trough. "
-    "Its mean runs from the non-grand-design spirals' molecular ratio to the grand designs' with the "
-    "two-fold pattern's amplification weight, as the stellar amplitude's does; its residual is drawn "
-    "log-normally on pattern_seed with the grand-design class's 16th–84th-percentile half-width. "
-    "Those percentiles are over arm segments and radial bins, so the per-galaxy draw also carries "
-    "the scatter within one galaxy [verified: Querejeta et al. 2024, A&A 687, A293, Table 1; "
-    "docs/READING_GAS_PATTERN.md]. Where the drawn ratio would need the ridge's trough or crest "
-    "below zero the amplitude is clipped and the ring's ratio falls short of this number.",
-)
 
 GAS_DENSITY_CONTRAST = FieldDecl(
     name="gas_density_contrast", label="Gas density contrast Σ_gas(R, φ)/Σ_gas(R)",
@@ -271,21 +257,12 @@ class GasPattern:
 
 def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
-    c = ctx.constants
-    # The mean ratio: the two classes joined by the two-fold pattern's amplification weight, exactly
-    # as the bar stage weighs the stellar arm contrast (D175); the residual log-normal (D210 ruling 5).
-    m_lo, m_hi = float(ctx.fields["swing_arm_min"]), float(ctx.fields["swing_arm_max"])
-    x_high, x_dead, x_low, x_floor = (float(c[k]) for k in ("SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_LOW", "SWING_X_FLOOR"))
-    coherence = swing_weight(2.0, m_lo, m_hi, x_high, x_dead, x_low, x_floor)
-    other, grand = float(c["GAS_ARM_CONTRAST_OTHER"]), float(c["GAS_ARM_CONTRAST_GRAND_DESIGN"])
-    mean = other + (grand - other) * coherence
-    ratio = math.exp(math.log(mean) + ctx.rng("pattern_seed", "gas_contrast").normal(0.0, float(c["GAS_ARM_CONTRAST_LOG_SCATTER"])))
-
-    shape = GasPattern.from_fields({**{k: ctx.fields[k] for k in ("bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length")},
-                                    "gas_arm_contrast": ratio}, c)
+    # Everything is read, nothing drawn: the ratio is the bar stage's derived class mean (D210 as
+    # amended), the shape the stellar pattern's drawn numbers.
+    names = ("gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length")
+    shape = GasPattern.from_fields({k: ctx.fields[k] for k in names}, ctx.constants)
     flat = shape is None or shape.flat
     return {
-        "gas_arm_contrast": ratio,
         "gas_density_contrast": np.ones((R.size, ctx.grid.phi.size)) if flat else shape.contrast(R, ctx.grid.phi),
     }
 
@@ -295,18 +272,14 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
         id="gas_pattern", slot="gas_pattern", checkpoint=3,
         about=(
             "The gas's own arm pattern: a narrow ridge on the stellar arm's crest, its width a fixed "
-            "fraction of the arm-to-arm period and its amplitude set by a measured ratio of means "
-            "inside an arm mask, drawn on pattern_seed (D210). Reads the stellar pattern's numbers, "
-            "not its amplitude, and no gas column: the gas's response, stated as a shape."
+            "fraction of the arm-to-arm period and its amplitude set by the derived ratio of means "
+            "inside an arm mask (D210 as amended). Reads the stellar pattern's numbers, not its "
+            "amplitude, and no gas column: the gas's response, stated as a shape. It draws nothing; "
+            "its field is seeded through the pattern's drawn pitch, arm number and bar."
         ),
         compute=compute_gas_pattern,
-        reads_seeds=("pattern_seed",),
-        reads_constants=(
-            "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",
-            "GAS_ARM_CONTRAST_GRAND_DESIGN", "GAS_ARM_CONTRAST_OTHER", "GAS_ARM_CONTRAST_LOG_SCATTER",
-            "SWING_X_LOW", "SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_FLOOR",
-        ),
-        requires=("bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length", "swing_arm_min", "swing_arm_max"),
-        publishes=(GAS_ARM_CONTRAST, GAS_DENSITY_CONTRAST),
+        reads_constants=("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH"),
+        requires=("gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length"),
+        publishes=(GAS_DENSITY_CONTRAST,),
     )
 )

@@ -1,16 +1,18 @@
-"""The gas's own arm pattern (S51, D210 Phase 1): a von Mises ridge on the stellar arm's crest.
+"""The gas's own arm pattern (S51, D210 Phases 1 and 1b): a von Mises ridge on the stellar arm's crest.
 
 The gates are D210's predictions that Phase 1 can be judged on alone: the contrast averages to 1
 round every ring, on the grid and per sector; the ratio of means over the source's mask is the
 published gas_arm_contrast; the ridge sits on the stellar crest with no offset and is narrower
-than the stellar arm; the stage is seeded on pattern_seed and reads no gas column.
+than the stellar arm; the field is seeded through the pattern's drawn numbers and reads no gas
+column. Since Phase 1b (D210 as amended, debt #131) the ratio is the bar stage's derived class
+mean with no draw.
 
-At the defaults (both models, pattern_seed's default draw; run on 2026-10-03): four arms, pitch
-13.54 deg, bar 0.289 of contrast over a 5.21 kpc half-length; the swing window 1.72-3.44 holds
-m = 2, so the mean ratio is the grand designs' 2.73 and the drawn **C = 10.02** (+1.8 sigma of the
-log scatter). At R0 = 8.122 kpc the mask is clamped at half the period, **a = 0.823, crest 4.64,
-trough 0.180**; at 12 kpc a = 0.788, crest 4.49, trough 0.212. The field runs 0.066-5.14 over the
-whole grid; the stellar contrast at 8 kpc runs 0.600-1.401.
+At the defaults (both models; run on 2026-10-03): four arms, pitch 13.54 deg, bar 0.289 of
+contrast over a 5.21 kpc half-length; the swing window 1.72-3.44 holds m = 2, so **C = 2.73**, the
+grand designs' mean. At R0 = 8.122 kpc the mask is clamped at half the period, **a = 0.466, crest
+3.068, trough 0.534**; at 12 kpc a = 0.387, crest 2.715, trough 0.613. The field runs 0.535-3.061
+over the whole grid; the stellar contrast at 8 kpc runs 0.600-1.401. (Phase 1's drawn C was 10.02,
+a = 0.823, crest 4.64, trough 0.180 at R0: the draw D210's amendment withdrew.)
 """
 
 from __future__ import annotations
@@ -121,29 +123,30 @@ def test_the_ratio_of_means_over_the_mask_is_the_published_contrast(model):
         assert ratio(Ri, dense, gp.contrast_at(np.full_like(dense, Ri), dense)) == pytest.approx(C, rel=2e-5), R
 
 
-# --- (d): seeded on pattern_seed alone -----------------------------------------
+# --- (d): the ratio derived, the field seeded through the pattern ----------------
 
 
-def test_the_gas_pattern_is_seeded_on_the_pattern_seed(model):
+def test_the_field_moves_with_the_pattern_seed_and_not_the_world_seed(model):
+    """The field is seeded through the pattern's drawn pitch, arm number and bar (graph labels it so,
+    D55); the stage itself reads no seed and draws nothing (D210 as amended)."""
     a = run(model, {"pattern_seed": 7}, grid=COARSE).fields
     b = run(model, {"pattern_seed": 7}, grid=COARSE).fields
     c = run(model, {"pattern_seed": 8}, grid=COARSE).fields
     w = run(model, {"pattern_seed": 7, "world_seed": 12345}, grid=COARSE).fields
-    assert a["gas_arm_contrast"] == b["gas_arm_contrast"]
     assert np.array_equal(a["gas_density_contrast"], b["gas_density_contrast"])
-    assert a["gas_arm_contrast"] != c["gas_arm_contrast"]
-    assert a["gas_arm_contrast"] == w["gas_arm_contrast"]
+    assert not np.array_equal(a["gas_density_contrast"], c["gas_density_contrast"])
     assert np.array_equal(a["gas_density_contrast"], w["gas_density_contrast"])
-    decls = {d.name: d for d in GAS_PATTERN.publishes}
-    assert {d.provenance for d in decls.values()} == {"seeded"}
+    assert GAS_PATTERN.reads_seeds == ()
+    assert [d.provenance for d in GAS_PATTERN.publishes] == ["seeded"]
 
 
-def test_the_draw_scatters_about_the_derived_mean(model):
-    """Log-normal about the class mean: twenty seeds straddle it and none is negative."""
-    values = [run(model, {"pattern_seed": s}, grid=COARSE).fields["gas_arm_contrast"] for s in range(20)]
-    assert min(values) > 0.0
-    assert min(values) < 2.73 < max(values)
-    assert len(set(values)) == 20
+def test_the_ratio_is_the_derived_class_mean_and_no_draw(model):
+    """C is the bar stage's: 2.73 at the defaults (m = 2 inside the swing window, coherence 1), and
+    the same under every pattern seed — no residual, since the source's spread is over segments
+    and bins, not galaxies (#131)."""
+    assert float(out(model).fields["gas_arm_contrast"]) == pytest.approx(2.73, abs=1e-12)
+    values = {run(model, {"pattern_seed": s}, grid=COARSE).fields["gas_arm_contrast"] for s in range(6)}
+    assert len(values) == 1
 
 
 # --- (e), (f): on the crest, and narrower ---------------------------------------
@@ -214,12 +217,16 @@ def test_the_worked_numbers_at_the_defaults(model):
     a12, crest12, trough12 = worked(2.73, 12.0)
     assert (crest12, trough12) == pytest.approx((2.69, 0.62), rel=0.015)
 
-    # The defaults' own draw, at R0 (the module docstring's numbers).
+    # The defaults' own ratio, at R0 and 12 kpc (the module docstring's numbers; D210's corrected table).
     o = out(model)
     gp = shape_of(model, o)
-    a = float(gp.amplitude(np.array([R_SUN]))[0])
-    assert float(o.fields["gas_arm_contrast"]) == pytest.approx(10.024, abs=1e-3)
-    assert a == pytest.approx(0.8227, abs=1e-4)
+    assert float(o.fields["gas_arm_contrast"]) == pytest.approx(2.73, abs=1e-12)
+    for R, (a_want, crest_want, trough_want) in ((R_SUN, (0.466, 3.068, 0.534)), (12.0, (0.387, 2.715, 0.613))):
+        a = float(gp.amplitude(np.array([R]))[0])
+        assert (a, 1.0 + a * (v0 - 1.0), 1.0 + a * (vpi - 1.0)) == pytest.approx(
+            (a_want, crest_want, trough_want), abs=1e-3), R
+    g = np.asarray(o.fields["gas_density_contrast"])
+    assert (float(g.min()), float(g.max())) == pytest.approx((0.535, 3.061), abs=1e-3)
 
 
 def test_the_mask_means_are_the_integral(model):
@@ -256,8 +263,11 @@ def test_azimuths_fall_inside_the_sector_and_follow_the_ridge(model):
     phi = gp.azimuths(u, radius, 0.0, 2.0 * np.pi, steps=720)
     assert np.all((phi >= 0.0) & (phi <= 2.0 * np.pi))
     # Drawn by the contrast, the stars sit where it is high: their mean contrast is the ring's
-    # mean square, well above 1.
-    assert float(gp.contrast_at(radius, phi).mean()) > 1.5
+    # mean square (1.42 at the defaults), well above 1 — to sampling noise, about 0.5 %.
+    ring = np.linspace(0.0, 2.0 * np.pi, 36000, endpoint=False)
+    mean_square = float((gp.contrast_at(np.full_like(ring, 12.0), ring) ** 2).mean())
+    assert mean_square > 1.2
+    assert float(gp.contrast_at(radius, phi).mean()) == pytest.approx(mean_square, rel=0.02)
 
 
 # --- (i), (j): what the stage reads, where it sits ----------------------------------
@@ -265,10 +275,11 @@ def test_azimuths_fall_inside_the_sector_and_follow_the_ridge(model):
 
 def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert GAS_PATTERN.checkpoint == 3 == PATTERN.checkpoint
-    assert not any("gas" in name for name in GAS_PATTERN.requires)
+    # No gas column: the one gas name it reads is the bar stage's derived ratio, a scalar.
+    assert [n for n in GAS_PATTERN.requires if "gas" in n] == ["gas_arm_contrast"]
     assert "arm_contrast" not in GAS_PATTERN.requires
-    assert GAS_PATTERN.reads_seeds == ("pattern_seed",)
-    assert {d.name for d in GAS_PATTERN.publishes} == {"gas_arm_contrast", "gas_density_contrast"}
+    assert GAS_PATTERN.reads_seeds == ()
+    assert {d.name for d in GAS_PATTERN.publishes} == {"gas_density_contrast"}
 
 
 def test_both_models_run_the_gas_pattern_after_the_pattern(model):

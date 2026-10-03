@@ -122,8 +122,9 @@ SEEDED_BASIC = {
     "bound_cluster_mass_total", "cluster_formation_efficiency",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
-    # S51 (D210): the gas's own arm pattern draws its ratio of means on pattern_seed.
-    "gas_arm_contrast", "gas_density_contrast",
+    # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
+    # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
+    "gas_density_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
@@ -152,6 +153,8 @@ def test_production_graphs_hold(prod):
         # occurrence fields on the derived side.
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
         assert seeded == SEEDED[m.name], sorted(seeded ^ SEEDED[m.name])
+        # S51 (D210 as amended): the gas ratio is the bar stage's derived class mean, beside the stellar one.
+        assert g.provenance["gas_arm_contrast"] == g.provenance["arm_contrast_mean"] == "derived"
         assert g.provenance["giant_occurrence"] == "derived", (
             "the occurrence fields are a function of the inputs; the split at checkpoint 6 is what "
             "keeps them so (rule A10)"

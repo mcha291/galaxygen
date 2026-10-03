@@ -686,13 +686,16 @@ LEVEL0: dict[str, Constant] = {
         "'Nominal - Grand design spirals', Sect. 2; docs/READING_GAS_PATTERN.md Reading A]. A ratio "
         "of means, not a peak-to-trough: the stellar amplitude (ARM_INTERARM_GRAND_DESIGN) is a "
         "different quantity, and measured alike the gas's log contrast is 3-4 times the stars' "
-        "[verified: Meidt et al. 2021, ApJ 913, 113, abstract, Table 1]. The mean ratio runs from "
-        "GAS_ARM_CONTRAST_OTHER to here with the two-fold pattern's amplification weight, as the "
-        "stellar amplitude's does (D175). Named alternatives: 2.53 inside narrow masks round the "
-        "ridge, 1.49 at 1.5 kpc resolution (Table 1); Meidt et al. 2021's fit log C_CO = 1.41 log "
+        "[verified: Meidt et al. 2021, ApJ 913, 113, abstract, Table 1]. The bar stage's derived "
+        "ratio runs from GAS_ARM_CONTRAST_OTHER to here with the two-fold pattern's amplification "
+        "weight, as the stellar amplitude's mean does (D175). The class's 16th-84th percentiles, "
+        "1.37-5.79, are over arm segments and radial bins, not galaxies, so they are recorded and not "
+        "drawn: the galaxy carries the class mean with no residual (D210 as amended; debt #131, which "
+        "keeps their natural-log half-width, 0.72). Named alternatives: 2.53 inside narrow masks round "
+        "the ridge, 1.49 at 1.5 kpc resolution (Table 1); Meidt et al. 2021's fit log C_CO = 1.41 log "
         "C_3.6 + 0.31, a peak-type contrast; the Milky Way's inner-Galaxy molecular mass ratio ~1.5 "
         "inside +/-10 km/s windows [verified: Colombo et al. 2022, A&A 658, A54, abstract, Sect. 5.3] "
-        "- not the default, which is a class mean with a residual. One contrast for all the gas: the "
+        "- not the default, which is a class mean. One contrast for all the gas: the "
         "HI's 1.22 at <= 2.5 kpc resolution (Table 2) is debt #130. Coverage: 17 of 27 PHANGS spirals "
         "with molecular contrasts.",
     ),
@@ -705,17 +708,6 @@ LEVEL0: dict[str, Constant] = {
         "cannot amplify a two-fold pattern takes; the whole sample's 2.22 (1.26-4.41) is the "
         "pooled value. Coverage: the spirals of the 28 with masks that are not among the 17 grand "
         "designs (27 galaxies, 59 arm segments carry molecular contrasts).",
-    ),
-    "GAS_ARM_CONTRAST_LOG_SCATTER": Constant(
-        0.72,
-        "dimensionless",
-        "Half the natural-log width of the grand-design class's 16th-84th percentile range of the "
-        "molecular ratio of means, ln(5.79/1.37)/2 = 0.72 [verified: Querejeta et al. 2024, A&A 687, "
-        "A293, Table 1; docs/READING_GAS_PATTERN.md Reading A; the arithmetic is the lead's]. Drawn "
-        "log-normally on pattern_seed as the residual a derived mean cannot carry (GALAXY_INPUTS.md "
-        "4b, verdict C). The percentiles are over arm segments and radial bins, not galaxies, so the "
-        "per-galaxy draw carries the scatter within one galaxy as scatter between galaxies. The "
-        "non-grand-design class's ln(2.94/1.12)/2 = 0.48 is the named alternative.",
     ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
