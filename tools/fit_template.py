@@ -1,28 +1,42 @@
-"""Fit a template's seven controls to its measured targets (BUILD_III Phase T; DECISIONS.md D213, ruling 3).
+"""Fit a template's free controls to its measured targets (BUILD_III Phase T; DECISIONS.md D213, ruling 3 as
+amended at the gate).
 
     uv run python tools/fit_template.py ngc_4414
     uv run python tools/fit_template.py ngc_4414 --check     # the committed values' residuals, no search
 
-**What is minimised** is the template's own objective, exactly as D213 fixes it: the sum over the
-targets of the squared residual in units of the target's half-window, plus ``Fit.tiebreak`` (10^-3)
-times the sum over the controls of the squared departure from the registry's default in units of the
-control's published range. Three numbers do not fix seven controls; the tie-break keeps a control
-nothing measures at the Milky Way's value. The template's seeds and merger list are held as the
-template states them.
+**What moves is a rule, in the template's data.** A control is free only if a fit target measures
+what it controls; ``Fit.free`` names that target beside each free control, and this tool moves those
+and no other. Every other control is never passed to the model at all, so it is the registry's
+default and cannot move by any amount. There is no option that admits a control, and none is
+admitted by a weight: the first fit of ``ngc_4414`` (D213's "fit A") let all seven move under a
+10^-3 tie-break and three that no target measures ran to their bounds.
+
+**What is minimised** is the template's own objective: the sum over the targets of the squared
+residual in units of the target's half-window, plus ``Fit.tiebreak`` (10^-3) times the sum over the
+free controls of the squared departure from the registry's default in units of the control's
+published range. The last term breaks ties among the free controls and does nothing else. The
+template's seeds and merger list are held as the template states them.
+
+**What the search leaves is a point on a plateau, not a minimum to the printed precision.** The
+model's three numbers are stepped in ``halo_mass`` and ``disc_spin`` (debt #133), so the fitted
+controls are resolved to the step - about 0.01 half-windows in the objective, a few 10^-4 of a range
+in the controls - and no further. The digits are printed in full because a rounded value is another
+point. **A control left on a bound of its range is a finding, not a fit**: the tables label it
+``bound`` and print the finding beside it, and no bound value is rounded or nudged inside.
 
 **The search** is numpy alone, deterministic, bounded by the published ranges, with every count fixed
 in advance. From the registry's defaults it takes ``ITERATIONS`` steps. A step differences the three
-targets in each control (two model evaluations per control: central, or a one-sided pair where a
+targets in each free control (two model evaluations per control: central, or a one-sided pair where a
 control stands within the width of a bound), at a width that cycles through ``FD_STEPS``, and then
 tries ``len(DAMPING)`` damped Gauss-Newton (Levenberg-Marquardt) steps of the linearised sum of
 squares, each solved with the controls held inside their ranges (:func:`bounded_step`). It moves to
 the lowest objective among those trial points *and the differencing points themselves* - so every
 step is also a coordinate search at that width - and only if that is lower than where it stands.
-The number of model evaluations is ``1 + ITERATIONS * (2 * controls + len(DAMPING))`` whatever
+The number of model evaluations is ``1 + ITERATIONS * (2 * free controls + len(DAMPING))`` whatever
 happens.
 
-**The search's coordinates** are the logarithm of every control whose range starts above zero and
-the control itself otherwise (:class:`Problem`). The coordinates are the search's own; the objective
+**The search's coordinates** are the logarithm of every free control whose range starts above zero
+and the control itself otherwise (:class:`Problem`). The coordinates are the search's own; the objective
 is D213's, each departure counted in the control's own linear range.
 
 *Why this and not a coordinate search or a simplex alone:* the objective is a sum of squares in a
@@ -33,7 +47,8 @@ not Gauss-Newton alone:* the model's three numbers are not continuous in ``halo_
 at S54 before the first fit: quantities snapped to the radial grid), so a narrow difference reads a
 tooth and not the trend, and a Gauss-Newton step judged on a stepped objective can be refused for
 ever. Three earlier forms of this search were run and discarded for where they stopped, not for what
-they found: steps clipped after the solve (0.77: not a descent direction on a bound); one width and
+they found (the objective values are the first fit's, with all seven controls free, before the free
+set was a rule): steps clipped after the solve (0.77: not a descent direction on a bound); one width and
 the trial steps only (0.25, where another start reached 0.20); the controls themselves as
 coordinates (still creeping at 0.246 after 24 steps: the valley is a hyperbola in the controls and
 near a line in their logarithms).
@@ -44,8 +59,8 @@ near a line in their logarithms).
 **Nothing is written.** The tool prints the residuals table, the controls table and the literals to
 copy into ``galaxy/templates.py`` by hand with the date; ``tests/test_templates.py`` checks that the
 committed values are where the search stops and reproduce the committed model numbers. **A target
-the search cannot reach is a finding**: it is printed and published, and no window or weight is
-moved to remove it (rule B5; BUILD_III section 9).
+the search cannot reach is a finding**: it is printed and published, and no window, weight or range
+is moved to remove it (rule B5; BUILD_III section 9).
 """
 
 from __future__ import annotations
@@ -66,10 +81,13 @@ ITERATIONS = 24  # steps: eight cycles of the three widths
 FD_STEPS = (4e-2, 2e-2, 1e-2)
 DAMPING = (0.0, 0.1, 1.0, 10.0)  # the trial steps' damping, in units of the normal matrix's own diagonal
 METHOD = (
-    f"damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step: {ITERATIONS} steps from the "
-    "registry's defaults, in the logarithm of each control whose range starts above zero, the targets differenced in "
+    f"damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step, over the free controls "
+    f"only - those a target measures, named in the template's data: {ITERATIONS} steps from the registry's "
+    "defaults, in the logarithm of each free control whose range starts above zero, the targets differenced in "
     f"each coordinate at {', '.join(f'{h:g}' for h in FD_STEPS)} of its span in turn, {len(DAMPING)} damped trial "
-    "steps solved inside the published ranges, the lowest of the trial and differencing points taken when it is lower"
+    "steps solved inside the published ranges, the lowest of the trial and differencing points taken when it is "
+    "lower. Where it stops is a point on a plateau resolved to the model's own steps - about 0.01 half-windows in "
+    "the objective, a few 1e-4 of a range in the controls - and not a minimum to the printed precision"
 )
 
 
@@ -87,7 +105,11 @@ class Result:
 
 
 class Problem:
-    """A template's fit as a function of the search coordinates ``s`` in [0, 1], one per control.
+    """A template's fit as a function of the search coordinates ``s`` in [0, 1], one per free control.
+
+    The free controls are the template's own (``Fit.free``: a control is free only if a target measures it),
+    in the registry's order. Every other control is in ``held`` and is never passed to the model, so it is
+    the registry's default by construction.
 
     A control whose range starts above zero is searched in its logarithm (``s`` runs evenly in log from lo to
     hi), the others linearly: the targets are near power laws of the positive controls - the stellar mass
@@ -107,9 +129,15 @@ class Problem:
         self._run = run
         self.template = template
         self.model = models.get(template.model)
-        self.controls = [c for c in controls(table) if c.name in self.model.input_names(table)]
+        accepted = [c for c in controls(table) if c.name in self.model.input_names(table)]
+        free = dict(template.fit.free)
+        unknown = sorted(set(free) - {c.name for c in accepted})
+        if unknown:
+            raise SystemExit(f"template {template.name!r} names {unknown} free, which are not controls of its model")
+        self.controls = [c for c in accepted if c.name in free]  # the free set, and nothing is added to it
+        self.held = [c for c in accepted if c.name not in free]  # no target measures them: the registry's defaults
         if any(not c.has_range or c.unset for c in self.controls):
-            raise SystemExit("every control needs a default and a published range to be fitted")
+            raise SystemExit("every free control needs a default and a published range to be fitted")
         self.lo = np.array([c.lo for c in self.controls], dtype=float)
         self.hi = np.array([c.hi for c in self.controls], dtype=float)
         self.span = self.hi - self.lo
@@ -121,8 +149,8 @@ class Problem:
         self.targets = template.fit.targets
         self.weight = float(template.fit.tiebreak)
         self.fields = tuple(dict.fromkeys(t.field for t in self.targets))
-        # What the fit does not move: the template's seeds and its merger list.
-        self.held = {**template.seeds, **({} if template.mergers is None else {"mergers": template.mergers})}
+        # What else the fit does not move: the template's seeds and its merger list.
+        self.fixed = {**template.seeds, **({} if template.mergers is None else {"mergers": template.mergers})}
         self.grid = grid
         self.evaluations = 0
 
@@ -140,7 +168,7 @@ class Problem:
         return {c.name: float(v) for c, v in zip(self.controls, self.x_of(s))}
 
     def departures(self, s: np.ndarray) -> np.ndarray:
-        """Each control's departure from its default in units of its published range: the tie-break's terms."""
+        """Each free control's departure from its default in units of its published range: the tie-break's terms."""
         return (self.x_of(s) - self.default) / self.span
 
     def departure_slopes(self, s: np.ndarray) -> np.ndarray:
@@ -152,7 +180,7 @@ class Problem:
         from galaxy.templates import measure
 
         self.evaluations += 1
-        out = self._run(self.model, {**self.held, **self.values(s)}, self.grid, only=self.fields)
+        out = self._run(self.model, {**self.fixed, **self.values(s)}, self.grid, only=self.fields)
         return np.array([
             measure(t.statistic, out.fields[t.field], out.grid.R, t.inside_kpc) for t in self.targets
         ])
@@ -161,7 +189,7 @@ class Problem:
         return np.array([t.residual_of(m) for t, m in zip(self.targets, numbers)])
 
     def parts(self, r: np.ndarray, s: np.ndarray) -> tuple[float, float]:
-        """(the targets' squared residuals, the weighted squared departures from the defaults)."""
+        """(the targets' squared residuals, the free controls' weighted squared departures from the defaults)."""
         d = self.departures(s)
         return float(r @ r), self.weight * float(d @ d)
 
@@ -296,14 +324,35 @@ def tables(template: Any, result: Result) -> str:
         verdict = "inside" if t.holds(m) else "OUTSIDE its window: a finding, published and not tuned away (B5)"
         lines.append(f"  {t.name:<20} {window:<24} {t.value:>12.6g} {m:>12.6g} {result.residuals[t.name]:>+10.4f}  {verdict}")
     lines.append("  (residual = (model - measured) / half-window; a window's half-width is (hi - lo) / 2)")
-    lines += ["", "controls"]
-    head = f"  {'control':<22} {'default':>12} {'fitted':>14} {'lo':>9} {'hi':>9} {'moved / range':>14}"
+    free, bounds = template.fit.free, template.fit.bounds
+    targets = {t.name: t for t in template.fit.targets}
+    lines += ["", "controls (free: a target measures it; held: none does, so it is the registry's default and does not move)"]
+    head = f"  {'control':<22} {'default':>12} {'fitted':>22} {'lo':>9} {'hi':>9} {'moved / range':>14}  standing"
     lines += [head, "  " + "-" * (len(head) - 2)]
-    for name, value in result.controls.items():
-        inp = INPUTS[name]
+    findings = []
+    for inp in INPUTS.values():
+        if inp.kind != "control":
+            continue
+        if inp.name not in result.controls:
+            lines.append(
+                f"  {inp.name:<22} {inp.default:>12.6g} {inp.default!r:>22} {inp.lo:>9.4g} {inp.hi:>9.4g} {0.0:>+14.5f}"
+                "  held at the registry's default"
+            )
+            continue
+        value = result.controls[inp.name]
         moved = (value - inp.default) / (inp.hi - inp.lo)
-        edge = "  at its bound" if value <= inp.lo or value >= inp.hi else ""
-        lines.append(f"  {name:<22} {inp.default:>12.6g} {value:>14.8g} {inp.lo:>9.4g} {inp.hi:>9.4g} {moved:>+14.5f}{edge}")
+        standing = f"free: {targets[free[inp.name]].label.lower()} measures it ({template.fit.measures[inp.name]})"
+        if value <= inp.lo or value >= inp.hi:
+            standing = "bound; " + standing
+            edge = "lower" if value <= inp.lo else "upper"
+            finding = bounds.get(inp.name, "NOT YET LABELLED in the template: a value on a bound is a finding and is written out beside it")
+            findings.append(f"  bound: {inp.name} = {value!r} is the {edge} bound of its range, a finding and not a fit: {finding}")
+        lines.append(f"  {inp.name:<22} {inp.default:>12.6g} {value!r:>22} {inp.lo:>9.4g} {inp.hi:>9.4g} {moved:>+14.5f}  {standing}")
+    lines += findings
+    lines.append(
+        "  (the fitted values are a point on a plateau resolved to the model's own steps - about 0.01 half-windows in"
+    )
+    lines.append("   the objective, a few 1e-4 of a range in the controls - not a minimum to the printed precision)")
     lines += [
         "",
         f"objective {result.objective:.6f} = targets {result.misfit:.6f} + tie-break {result.tiebreak:.6f} "
@@ -322,7 +371,7 @@ def tables(template: Any, result: Result) -> str:
 
 def literals(template: Any, result: Result) -> str:
     """What is copied into galaxy/templates.py by hand."""
-    lines = ["to copy into galaxy/templates.py (controls, then each target's model and residual, then the objective):"]
+    lines = ["to copy into galaxy/templates.py (the free controls, then each target's model and residual, then the objective):"]
     lines += [f'        "{name}": {value!r},' for name, value in result.controls.items()]
     for t in template.fit.targets:
         lines.append(f"    {t.name}: model={result.model[t.name]!r}, residual={result.residuals[t.name]!r},")
@@ -334,7 +383,7 @@ def main(argv: list[str] | None = None) -> int:
     reconfigure = getattr(sys.stdout, "reconfigure", None)
     if reconfigure is not None:
         reconfigure(encoding="utf-8", errors="backslashreplace")
-    parser = argparse.ArgumentParser(description="Fit a template's controls to its measured targets (D213).")
+    parser = argparse.ArgumentParser(description="Fit a template's free controls to its measured targets (D213).")
     parser.add_argument("template", help="a fitted template's name, e.g. ngc_4414")
     parser.add_argument("--check", action="store_true", help="no search: the committed values' residuals")
     args = parser.parse_args(argv)
