@@ -49,6 +49,7 @@ from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
 from galaxy.models import DEFAULT as DEFAULT_MODEL
+from galaxy.core.special import expn
 from galaxy.stages import spectra
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import slab_absorbed_fraction
@@ -69,8 +70,9 @@ FIRST_CUT_B_V = 0.590914  # S49 (D204, #126): the light integrated along the iso
 FIRST_CUT_M_V = -21.844831  # S49 (D204, #126): the light integrated along the isochrone's points; was -21.928533
 # The record beside the gate (S39): the same frame with the dust composed face-on (``face_on``).
 # Keyed per model, "basic" deliberately (S46, D197); the render tests below run the default model.
-FACE_ON_B_V = {"basic": 0.574638, "azimuthal": 0.574638}  # +0.0051 on the gate's. # S49 (D204, #126): the light integrated along the isochrone's points; was 0.647469 (+0.0168)
-FACE_ON_M_V = {"basic": -20.685591, "azimuthal": -20.685591}  # 0.425 mag fainter. # S49 (D204, #126): the light integrated along the isochrone's points; was -20.804991 (0.411)
+# S52 (D211): the scattered light in the stars' and the dust's own layers (less of it) moves the record.
+FACE_ON_B_V = {"basic": 0.572933, "azimuthal": 0.572933}  # +0.0034 on the gate's. # S52 (D211): was 0.574638 (+0.0051)
+FACE_ON_M_V = {"basic": -20.668268, "azimuthal": -20.668268}  # 0.442 mag fainter. # S52 (D211): was -20.685591 (0.425)
 
 
 def curves(name: str) -> str:
@@ -321,16 +323,20 @@ def test_the_other_lines_are_their_fields_through_each_curve_at_their_wavelength
 # --- V2's gate (S39): the frame's energy balance and its face-on profile --------------------------
 #
 # **The balance, and how its two sides are made commensurable.** The dust stage absorbs grey at V: every
-# wavelength of a ring's starlight loses the share a(τ) = 1 − P_esc((1 − albedo_V) τ_V) of a uniform mixed
-# slab, and the absorbed power is that share of the bolometric light. The frame's filters are not bolometric
+# wavelength of a ring's starlight loses the share a(τ) = 1 − P_esc((1 − albedo_V) τ_V) of its geometry — since
+# S52 (D211) the stars' layer through the dust's, at the ring's ratio of their heights; a uniform mixed slab
+# until then — and the absorbed power is that share of the bolometric light. The frame's filters are not bolometric
 # (its stellar continuum carries 0.708 of disc_luminosity, S38) and no sum of them is, so the removed light is
 # made commensurable **by its share, not its sum**: in each filter the frame's dust removes, from the light
-# emitted in its mixed slab and averaged over every direction a frame could be taken from, a share read from
-# ``dust_extinction`` alone (τ = −ln T, the absorbing part by the header's albedo at the filter) — and through
-# a curve at the grain table's own V row (5470 Å, where the stage's albedo was read) that share times the
-# published bolometric light is the power the frame says the dust absorbs. The direction average is taken the
-# frame's way, a mixed slab seen at every inclination μ, removed share 1 − μ(1 − e^(−τ/μ))/τ, integrated over μ by
-# quadrature — not the stage's closed form (1/2 − E₃(τ))/τ, which it equals (B3: two computations).
+# emitted in its stars' layer and averaged over every direction a frame could be taken from, a share read from
+# ``dust_extinction`` alone (τ = −ln T, the absorbing part by the header's albedo at the filter) and the
+# header's two layers (``dust_height`` over ``layers.stars``) — and through a curve at the grain table's own V
+# row (5470 Å, where the stage's albedo was read) that share times the published bolometric light is the power
+# the frame says the dust absorbs. The share is taken the frame's way, each star's light seen at every
+# inclination through the dust above and below it and averaged over the stars' heights by the trapezoid
+# (``layered_removed_share``) — not the stage's quadrature in the dust's share, which it equals (B3: two
+# computations). Until S52 it was a mixed slab seen at every inclination μ, integrated over μ by quadrature
+# against the stage's closed form (``removed_share``, kept: the layered share at a ratio of 1).
 # The infrared side needs no such step: ``dust_thermal`` through the "ir" set's TIR box, 8–1000 µm, holds all
 # but what the modified blackbody puts outside it, summed over the frame. **Tolerance 1e-3** between the two
 # sides: the one cost that separates them is the TIR box's coverage — 6.8e-4 of the frame's Σ_IR lies outside
@@ -347,12 +353,15 @@ BALANCE_TOLERANCE = 1e-3
 # S49 (D204, #126): the light integrated along the isochrone's points; was 1.000344 / 0.999664 / 6.79639e-4 (both models), [0.361486, 0.374444, 0.372646, 0.374459],
 # 0.744368, 12.184149, 9.18151e-4. PROFILE_WORST is now the truncation-edge ring (23.4-24.4 kpc), which the new profile
 # lifts above 1e-3 of the peak into the measure; it is inside its own derived bound there (0.077).
-MEASURED_ABSORBED = {"basic": 1.000293, "azimuthal": 1.000293}  # the frame's absorbed power over dust_absorbed_luminosity
-MEASURED_EMITTED = {"basic": 0.999588, "azimuthal": 0.999588}  # the frame's TIR over dust_infrared_luminosity
-TIR_OUTSIDE = {"basic": 7.04826e-4, "azimuthal": 7.04826e-4}  # the share of the frame's Sigma_IR outside 8-1000 um
-REMOVED_SHARE = {m: [0.361787, 0.369547, 0.367945, 0.369544] for m in ("basic", "azimuthal")}  # R, V, B, V row
-CURVE_OVER_GREY = 0.759075
-THIN_OVER_SLAB = 12.521717
+# S52 (D211): the dust heated in the stars' and its own layers. The frame absorbs 0.766 of what it did, the inner
+# disc's warm dust the most, so the cold outer disc's emission past 1 mm is a larger share of the frame's Sigma_IR
+# (8.56e-4, emitted over absorbed 0.999144: inside the 1e-3 tolerance, by less than before).
+MEASURED_ABSORBED = {"basic": 1.000224, "azimuthal": 1.000224}  # the frame's absorbed power over dust_absorbed_luminosity. # S52 (D211): was 1.000293
+MEASURED_EMITTED = {"basic": 0.999368, "azimuthal": 0.999368}  # the frame's TIR over dust_infrared_luminosity. # S52 (D211): was 0.999588
+TIR_OUTSIDE = {"basic": 8.55564e-4, "azimuthal": 8.55564e-4}  # the share of the frame's Sigma_IR outside 8-1000 um. # S52 (D211): was 7.04826e-4
+REMOVED_SHARE = {m: [0.275304, 0.280707, 0.280905, 0.280709] for m in ("basic", "azimuthal")}  # R, V, B, V row. # S52 (D211): was [0.361787, 0.369547, 0.367945, 0.369544]
+CURVE_OVER_GREY = 0.784105  # S52 (D211): was 0.759075
+THIN_OVER_SLAB = 18.982366  # S52 (D211): was 12.521717
 PROFILE_WORST = {"basic": 1.1096689e-2, "azimuthal": 1.1096689e-2}
 
 
@@ -376,6 +385,33 @@ def removed_share(tau: np.ndarray) -> np.ndarray:
     return ((1.0 - escaped) * MU_WEIGHT).sum(axis=-1)
 
 
+def layered_removed_share(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+    """(R, filter): the share of each ring's starlight its dust takes out, the stars and the dust in their own sech²
+    layers (S52, D211), ``ratio`` the dust's height over the stars' per ring. Each star's light at every inclination
+    through the dust above and below it, ½[E₂(τA) + E₂(τ(1 − A))] once the inclinations are integrated, averaged
+    over the stars' height x = z / 2h★ by the trapezoid on a step of min(0.25, ratio / 6) to x = 18, A the dust's
+    share above, ½[1 − tanh(x / ratio)]. Exponentially convergent: within 1.1e-11 of the dust stage's quadrature
+    (read at S52). Zero where the ratio is NaN, the dust without a layer (D211 ruling 2)."""
+    tau = np.atleast_2d(np.asarray(tau, dtype=float))
+    out = np.zeros_like(tau)
+    for i, r in enumerate(np.asarray(ratio, dtype=float)):
+        if np.isnan(r):
+            continue
+        step = min(0.25, r / 6.0)
+        x = np.arange(0.0, 18.0, step)
+        weight = np.full_like(x, step) * 0.5 / np.cosh(x) ** 2
+        weight[0] *= 0.5
+        above = 0.5 * (1.0 - np.tanh(x / r))
+        t = np.maximum(tau[i], 0.0)[:, None]
+        out[i] = 1.0 - ((expn(2, t * above) + expn(2, t * (1.0 - above))) * weight).sum(axis=-1)
+    return out
+
+
+def layer_ratio(header: dict, arrays: dict) -> np.ndarray:
+    """(R,): the dust layer's height over the stars', from the header's two layers."""
+    return np.asarray(arrays["dust_height"], dtype=float) / float(header["layers"]["stars"])
+
+
 def ring_areas(header: dict) -> np.ndarray:
     return cell_areas(header).sum(axis=1)
 
@@ -390,6 +426,9 @@ def test_the_frame_s_quadrature_over_directions_is_the_slab_s_escape():
     """The frame's direction average against the stage's closed form, over the optical depths the disc spans."""
     tau = np.geomspace(1e-6, 30.0, 400)
     assert np.abs(removed_share(tau) - slab_absorbed_fraction(tau)).max() < 1e-10  # 2.2e-11 at S39
+    # The layered share the frame reads since S52 is the mixed slab's when the layers are one (D211).
+    one = layered_removed_share(tau[::10][None, :], np.array([1.0]))[0]
+    assert np.abs(one - slab_absorbed_fraction(tau[::10])).max() < 1e-10  # 2.1e-11 at S52
 
 
 def test_the_frame_s_dust_removes_what_it_emits(full, model):
@@ -398,7 +437,7 @@ def test_the_frame_s_dust_removes_what_it_emits(full, model):
     f = scalars(full, model.name, "disc_surface_brightness", "dust_absorbed_luminosity", "dust_infrared_luminosity",
                 "dust_absorbed_surface_brightness")
     area = ring_areas(header)
-    share = removed_share(absorbing_depth(header, arrays))  # (R, filter)
+    share = layered_removed_share(absorbing_depth(header, arrays), layer_ratio(header, arrays))  # (R, filter)
     # Per filter over the image: the light each filter loses, as a share of that filter's light (R, V, B, V row).
     light = arrays["stars"].mean(axis=1) * area[:, None]
     per_filter = (light * share).sum(axis=0) / light.sum(axis=0)
@@ -407,7 +446,8 @@ def test_the_frame_s_dust_removes_what_it_emits(full, model):
     # Commensurable: the V row's share of the bolometric light, ring by ring, is the absorbed field itself ...
     absorbed = share[:, 3] * f["disc_surface_brightness"]
     lit = f["dust_absorbed_surface_brightness"] > 1e-9 * f["dust_absorbed_surface_brightness"].max()
-    # (to the direction quadrature's 2e-11 in the share, 5.4e-9 of it where the outer disc's tau is 1e-4)
+    # (to the layered quadratures' 1e-11 in the share; S39's direction quadrature read 5.4e-9 of it where the outer
+    # disc's tau is 1e-4)
     assert absorbed[lit] == pytest.approx(f["dust_absorbed_surface_brightness"][lit], rel=1e-8)
     # ... and over the image, against the published total.
     frame_absorbed = float((absorbed * area).sum())
@@ -443,15 +483,17 @@ def test_the_grey_absorption_against_the_curve_in_the_frame(full):
     v_header, v_arrays = full_render(full, DEFAULT_MODEL, [V_ROW])
     area = ring_areas(header)
     light = arrays["stars"].mean(axis=1) * area[:, None]
-    curve = float((light * removed_share(absorbing_depth(header, arrays))).sum())
-    grey = float((light * removed_share(absorbing_depth(v_header, v_arrays))[:, :1]).sum())
+    ratio = layer_ratio(header, arrays)  # the stage's geometry since S52 (D211)
+    curve = float((light * layered_removed_share(absorbing_depth(header, arrays), ratio)).sum())
+    grey = float((light * layered_removed_share(absorbing_depth(v_header, v_arrays), ratio)[:, :1]).sum())
     print("curve over grey", curve / grey)
     assert curve / grey == pytest.approx(CURVE_OVER_GREY, abs=2e-6)
 
 
 def test_the_frame_s_light_is_conserved_by_its_scattering(full):
     """The frame's three fates of the starlight, read back from the arrays over every direction, add to the light:
-    what escapes its mixed slab unextinguished (1 minus the frame's removed share at the full depth), what
+    what escapes its dust unextinguished (1 minus the frame's removed share at the full depth, in the stars' and the
+    dust's layers since S52, D211; a mixed slab until then), what
     ``dust_scattered`` carries (all directions: the phase table averages to one), and what the dust absorbs. So
     the light that leaves is the light the dust stage says escapes, 1 − a(τ_abs), in every filter.
 
@@ -462,9 +504,10 @@ def test_the_frame_s_light_is_conserved_by_its_scattering(full):
     area = ring_areas(header)
     light = arrays["stars"].mean(axis=1)  # (R, filter)
     tau = -np.log(arrays["dust_extinction"])
-    escaped = light * (1.0 - removed_share(tau))
+    ratio = layer_ratio(header, arrays)
+    escaped = light * (1.0 - layered_removed_share(tau, ratio))
     scattered = arrays["dust_scattered"].mean(axis=1)
-    absorbed = light * removed_share(absorbing_depth(header, arrays))
+    absorbed = light * layered_removed_share(absorbing_depth(header, arrays), ratio)
     assert escaped + scattered + absorbed == pytest.approx(light, rel=1e-9)
     f = scalars(full, DEFAULT_MODEL, "dust_scattering_optical_depth")
     thin = spectra.scattering_depth(f["dust_scattering_optical_depth"], spectra.parse_curves([V_ROW]))[:, 0] * light[:, 3]
@@ -809,7 +852,8 @@ def test_the_extinction_curve_at_the_viewer_s_filters():
 
 def test_the_dust_arrays_are_the_published_fields_through_the_curve(small):
     header, arrays = render(small, DEFAULT_MODEL, "rgb")
-    f = scalars(small, DEFAULT_MODEL, "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")
+    f = scalars(small, DEFAULT_MODEL, "dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry",
+                "gas_scale_height", "thin_disc_scale_height")
     parsed = spectra.parse_curves(SETS["rgb"]["curves"])
     ratio = spectra.extinction_ratio(spectra.filter_references(parsed))
     assert np.allclose(arrays["dust_extinction"], 10.0 ** (-0.4 * f["dust_extinction_v"][:, None] * ratio), rtol=1e-14, atol=0)
@@ -820,7 +864,8 @@ def test_the_dust_arrays_are_the_published_fields_through_the_curve(small):
     tau = spectra.scattering_depth(f["dust_scattering_optical_depth"], parsed)
     depth = spectra.extinction_depth(f["dust_extinction_v"], parsed)
     assert np.exp(-depth) == pytest.approx(arrays["dust_extinction"], rel=1e-14)
-    share = spectra.scattered_share(depth, tau)
+    # In the stage's geometry since S52 (D211): the stars' layer through the dust's, at the published heights' ratio.
+    share = spectra.scattered_share(depth, tau, (f["gas_scale_height"] / f["thin_disc_scale_height"])[:, None])
     assert np.allclose(arrays["dust_scattered"], share[:, None, :] * arrays["stars"], rtol=1e-12, atol=0)
     assert np.all((share >= 0.0) & (share < 1.0))
     phase = header["components"]["dust_scattered"]["phase"]

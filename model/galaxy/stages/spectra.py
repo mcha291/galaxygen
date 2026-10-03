@@ -43,7 +43,8 @@ filter whose curve peaks at 1 passes a line at its peak whole.
   4.868 × 10⁻²² cm² the dust stage's far-ultraviolet ratio is already divided by.
   **Scattering** per filter starts from the published V-band τ_sca scaled by the table's scattering
   cross section (albedo × C_ext) at the filter over the V row's; the light scattered is the stellar
-  response times the share a mixed slab of that depth scatters in the dust stage's own convention
+  response times the share the dust scatters in the dust stage's own geometry and convention — the stars'
+  layer through the dust's, at the ring's ratio of their heights since S52 (D211), a mixed slab before it
   (``scattered_share``: what the extinction removes less what the absorption keeps), not the
   ruling's optically thin τ_sca × the stars, which the disc's centre (τ_sca ≈ 30) makes thirty times
   the light there; its direction by a Henyey–Greenstein phase function at the published g
@@ -707,17 +708,21 @@ def extinction_depth(a_v: np.ndarray, curves: Sequence[Curve]) -> np.ndarray:
     return _dust.optical_depth(np.nan_to_num(np.asarray(a_v, dtype=float), nan=0.0)[..., None] * ratio)
 
 
-def scattered_share(tau_ext: np.ndarray, tau_sca: np.ndarray) -> np.ndarray:
-    """The share of a uniform mixed slab's light its dust scatters, all directions together: what the slab's
-    extinction removes, 1 − P_esc(τ_ext), less what its absorption keeps, 1 − P_esc(τ_ext − τ_sca) — the dust
-    stage's own convention, in which a scattered photon is neither lost nor sent further (``dust.py``), so that
-    the light a frame's extinction takes from a line of sight and the scattered light it adds back leave exactly
-    the light the stage says escapes. Replaces, at S39, the ruling's optically thin τ_sca × the stars, which the
-    frame measured at 12 times this over the whole galaxy: the disc's centre has τ_sca near 30, and a thin
-    scatterer there scatters thirty times the light it holds (tests/test_render.py keeps it as the record)."""
+def scattered_share(tau_ext: np.ndarray, tau_sca: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+    """The share of a ring's starlight its dust scatters, all directions together, with the stars and the dust in
+    their own layers (S52, D211): what the dust's extinction removes from the stars' light, 1 − P_esc(τ_ext), less
+    what its absorption keeps, 1 − P_esc(τ_ext − τ_sca), both in the layered geometry at the ring's ``ratio`` of
+    the dust's scale height to the stars' (``dust.layered_absorbed_fraction``; broadcast against ``tau_ext``, so
+    (R, 1) for a ring's per filter). The dust stage's own convention, in which a scattered photon is neither lost
+    nor sent further (``dust.py``), so that the light a frame's extinction takes from a line of sight and the
+    scattered light it adds back leave exactly the light the stage says escapes. A ratio of 1 is the uniform
+    mixed slab this was until S52; a ratio that is NaN (no dust layer) scatters nothing. Replaces, at S39,
+    the ruling's optically thin τ_sca × the stars, which the frame measured at 12 times the mixed slab's share over
+    the whole galaxy: the disc's centre has τ_sca near 30, and a thin scatterer there scatters thirty times the
+    light it holds (tests/test_render.py keeps it as the record)."""
     tau_ext = np.asarray(tau_ext, dtype=float)
     tau_abs = np.maximum(tau_ext - np.asarray(tau_sca, dtype=float), 0.0)
-    return _dust.slab_absorbed_fraction(tau_ext) - _dust.slab_absorbed_fraction(tau_abs)
+    return _dust.layered_absorbed_fraction(tau_ext, ratio) - _dust.layered_absorbed_fraction(tau_abs, ratio)
 
 
 # The scattering phase function [verified: Bosschaart & Olofsson 2026, arXiv:2604.08379 (HTML), eq. 3,

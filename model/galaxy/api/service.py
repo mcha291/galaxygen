@@ -1399,8 +1399,8 @@ class Service:
         h_thin = float(f["thin_disc_scale_height"]) / 1000.0 if "thin_disc_scale_height" in f else None
         # The dust's layer (S50, D206): the gas's published scale height ring by ring, the dust taken to share
         # it — an array beside the components, named here. A model that publishes no gas height keeps S39's
-        # reading, the dust in the stars' one layer (the dust stage's heating is a uniformly mixed slab; since
-        # D206 the picture's geometry and that budget's differ, debt #128).
+        # reading, the dust in the stars' one layer. Since S52 (D211) the dust stage heats the dust in these
+        # same two layers, and the scattered share below is taken in them too.
         dust_height = np.asarray(f["gas_scale_height"], dtype=float) / 1000.0 if "gas_scale_height" in f else None
         layers: dict[str, Any] = {
             "form": "sech2(z / 2h) / 4h, per kpc of height, integrating to 1; h is a number, kpc, or the name of "
@@ -1520,15 +1520,27 @@ class Service:
             tau_sca = _spectra.scattering_depth(f["dust_scattering_optical_depth"], curves)  # (R, filter)
             tau_ext = _spectra.extinction_depth(f["dust_extinction_v"], curves)
             g = float(f["dust_scattering_asymmetry"])
-            components.append(("dust_scattered", _spectra.scattered_share(tau_ext, tau_sca)[:, None, :] * stars))
+            # The geometry the share is taken in (S52, D211): the stars' layer through the dust's, at each ring's ratio
+            # of the dust's height to the stars' - the layers the header names. A model that publishes no gas height
+            # draws its dust in the stars' layer, and the ratio is 1 (the mixed slab).
+            layered = dust_height is not None and h_thin is not None
+            with np.errstate(divide="ignore"):  # a stellar layer of no height: a sheet of stars, the ratio infinite
+                ratio = dust_height / h_thin if layered else np.ones(R_axis.n)
+            share = _spectra.scattered_share(tau_ext, tau_sca, ratio[:, None])  # (R, filter)
+            components.append(("dust_scattered", share[:, None, :] * stars))
             about["dust_scattered"] = {
                 "unit": "Lsun/pc2", "fields": ["dust_scattering_optical_depth", "dust_extinction_v", "dust_scattering_asymmetry",
-                                               *RENDER_STARS, *contrast_fields],
+                                               *RENDER_STARS, *contrast_fields,
+                                               *(["gas_scale_height", "thin_disc_scale_height"] if layered else [])],
                 "layer": "dust", "phase": _spectra.phase_table(g),
                 "about": "starlight the dust scatters, all directions together: the published V-band scattering depth, "
                          "moved to each filter by the grain model's scattering cross-section, and the share of the "
-                         "stellar component a mixed slab of that depth scatters as the dust stage counts it (what the "
-                         "extinction removes less what the absorption keeps). The phase table's factor, a "
+                         "stellar component the dust of that depth scatters as the dust stage counts it (what the "
+                         "extinction removes less what the absorption keeps), "
+                         + ("with the stars and the dust in their own layers, the two the header names, at each "
+                            "ring's ratio of their heights; none where the dust has no layer. "
+                            if layered else "the stars and the dust mixed in one layer. ")
+                         + "The phase table's factor, a "
                          "Henyey-Greenstein phase function at the published g averaged over light arriving in the "
                          "disc's plane, turns it into what a view at |cos i| receives; it averages to 1 over every view",
             }

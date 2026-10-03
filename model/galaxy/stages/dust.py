@@ -11,20 +11,31 @@ Weingartner & Draine 2001 as renormalised by Draine 2003, read from Draine's own
 so are the far-ultraviolet extinction and albedo G₀ needs and the far-infrared opacity the
 temperature needs. Any other R_V is the named alternative, never an average (rule B12).
 
-**The heating balance** (ruling (b)). At each radius the disc is a slab in which stars and dust
-are uniformly mixed, and the starlight a unit area emits, ``disc_surface_brightness``, is
-absorbed with the probability that an isotropically emitted photon does not escape a slab of
-total vertical absorption optical depth τ:
+**The heating balance** (ruling (b); the geometry since S52, D211). At each radius the stars and
+the dust are two layers, as the render draws them: the stars emit isotropically from a
+sech²(z / 2h★) layer, h★ the thin disc's published scale height, and the dust absorbs in a
+sech²(z / 2h_g) layer, h_g the ring's published gas scale height, the dust taken to share the gas's
+layer. The starlight a unit area emits, ``disc_surface_brightness``, is absorbed with the
+probability that a photon emitted at a star's height does not escape the dust above or below it,
+averaged over the stars: with s the stars' cumulative share by height and
+A(s) = ½[1 − tanh(artanh(2s − 1) h★/h_g)] the dust's share above the emitter,
 
-    P_esc(τ) = (1/2 − E₃(τ)) / τ,     absorbed = Σ_L (1 − P_esc(τ))
+    P_esc = ∫₀¹ ½[E₂(τA) + E₂(τ(1 − A))] ds,     absorbed = Σ_L (1 − P_esc)
 
-(the angle-averaged escape probability of a uniform emitting and absorbing slab, both faces
-counted) ``[inferred: the integral ∫₀¹ μ (1 − e^(−τ/μ)) dμ / τ, derived here]``. τ is the
+(each emitter's escape through the column above it and the one below it, every direction counted)
+``[inferred: derived at S50, tests/test_dust_layer.py's independent quadrature; D211]``. When the
+layers are one (h_g = h★) this is the uniform mixed slab's closed form, 1 − (1/2 − E₃(τ))/τ
+(:func:`slab_absorbed_fraction`, the stage's geometry until S52); a thin layer under a thick stellar
+disc absorbs little more than the half of an opaque ring's light that sets out towards it, where
+the mixed slab absorbs nearly all of it (:func:`layered_absorbed_fraction`). Where the model holds
+no gas height (past the stellar disc's edge) there is no dust layer and nothing is absorbed. τ is the
 absorption part of the V-band optical depth, (1 − albedo_V) τ_V, and it is applied to the
 whole bolometric light: **the absorption is grey at V**. Young stars' ultraviolet is absorbed
 more strongly than that and the old stars' red light less, so the absorbed power is wrong in
 both directions by an amount this stage does not know; the report of S31 measures one side of it
 and the debt is recorded there. Scattering is taken to remove no energy and to lengthen no path.
+The dust's placement round each ring (the render's ``dust_placement``) is not applied to the
+heating: the stage absorbs at each ring's mean column (debt #128's second half, D211 ruling 5).
 
 The dust then emits that power as a modified blackbody, κ_ν = κ₀ (ν/ν₀)^β, optically thin in
 the infrared. Its power per unit dust mass, 4π ∫ κ_ν B_ν(T) dν, is analytic,
@@ -42,6 +53,9 @@ stage has no far-ultraviolet band, so the ultraviolet is the star formation rate
 Kennicutt & Evans 2012's calibration (the same table the Hα constant is read from), taken flat in
 νL_ν across the Habing band 6–13.6 eV ``[inferred]``; the midplane flux of a uniform slab of
 absorption depth τ emitting Σ in total is Σ (1 − E₂(τ/2)) / τ ``[inferred: derived as above]``.
+G₀ keeps the uniform mixed slab when the heating left it (S52, D211 ruling 4) ``[inferred]``: its
+sources are today's young stars, which the model places in the clouds' layer, inside the gas — for
+them stars and dust are mixed.
 
 **PAHs** (ruling (c)). The metallicity dependence enters because a source for it was read:
 Rémy-Ruyer et al. 2015's eq. 5, fitted across 109 galaxies, applied per radius to the gas's
@@ -109,6 +123,65 @@ def slab_absorbed_fraction(tau: np.ndarray) -> np.ndarray:
     out[thin] = 0.5 * t * (np.log(1.0 / t) + 1.5 - 0.5772156649015329) + t * t / 6.0
     t = tau[thick]
     out[thick] = 1.0 - (0.5 - expn(3, t)) / t
+    return out
+
+
+# The layered geometry's quadrature (S52, D211): Gauss–Legendre on a fixed number of nodes in
+# t = ln(A / (1 − A)) over [−LAYER_SPAN, 0], A the dust's share above an emitter. Fixed in advance (rule A1);
+# the error it was measured to is in layered_absorbed_fraction's docstring.
+LAYER_NODES = 96
+LAYER_SPAN = 40.0
+_LAYER_U, _LAYER_W = np.polynomial.legendre.leggauss(LAYER_NODES)
+LAYER_T = -0.5 * LAYER_SPAN * (1.0 - _LAYER_U)  # t ∈ (−40, 0)
+LAYER_A = 1.0 / (1.0 + np.exp(-LAYER_T))  # the dust's share above, ∈ (4e-18, ½)
+LAYER_WEIGHT = 0.5 * LAYER_SPAN * _LAYER_W * LAYER_A * (1.0 - LAYER_A)  # dA = A (1 − A) dt
+
+
+def layered_absorbed_fraction(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+    """The share of a ring's starlight its dust absorbs when the stars and the dust are two sech² layers.
+
+    The stars emit isotropically from a sech²(z / 2h★) layer, the dust absorbs in a sech²(z / 2h_g) layer
+    of total vertical absorption depth ``tau``; ``ratio`` is h_g / h★ (vectorised: the two broadcast). With s
+    the stars' cumulative share by height and A(s) = ½[1 − tanh(artanh(2s − 1) / ratio)] the dust's share above
+    the emitter, the escaping share is ∫₀¹ ½[E₂(τA) + E₂(τ(1 − A))] ds and this is one minus it (D211).
+
+    **How it is computed** ``[inferred: derived here]``. By the layers' symmetry the escape is ∫₀¹ E₂(τA(s)) ds;
+    integrated by parts over A, with s(A) = (1 − A)^r / ((1 − A)^r + A^r) (r the ratio) the stars' share below
+    the height above which the dust's share is A, it is 1 − ∫₀¹ s(A) τE₁(τA) dA. Folded about A = ½ (where
+    s(1 − A) = 1 − s(A)) and written in t = ln(A / (1 − A)) ≤ 0, where s = 1 / (1 + e^(rt)) and dA = A(1 − A) dt,
+
+        absorbed = ∫_{−∞}^0 A(1 − A) τ [s E₁(τA) + (1 − s) E₁(τ(1 − A))] dt,
+
+    whose integrand is smooth in t for every ratio: E₁'s logarithm where the dust above an emitter runs out and
+    the tails where artanh diverges become an exponential decay in t. It is integrated by Gauss–Legendre on
+    ``LAYER_NODES`` = 96 fixed nodes over t ∈ [−40, 0]; the part beyond −40 is below e⁻⁴⁰ τ (ln(1/τ) + 41) of
+    the light and is dropped. At ratio = 1, s = 1 − A and it is the uniform mixed slab's closed form,
+    :func:`slab_absorbed_fraction`.
+
+    **The error, measured at S52** (``tests/test_dust_layer.py``): against the escape integrated by the
+    trapezoid in the stars' height on a step of min(0.01, ratio / 80) to 24 heights (a second path, which
+    returns the slab's closed form at ratio = 1 to 1.4e-14), **under 3e-11 of the absorbed share** for ratio
+    from 0.01 to 10 and τ from 1e-6 to 1000 (worst 2.5e-11); at ratio 30 it grows to 8e-9 and at 100 to 4e-7
+    (the stars' share s falls from 1 to ½ within 1/ratio of t = 0, finer than the nodes there). The default
+    galaxy's ratios run from 0.06 to 3.7. Against the closed form at ratio = 1, under 4e-14 for τ in
+    {0.05, 0.5, 2, 12, 50}. Against the tests' 4000-point midpoint reference in s the difference is the
+    reference's own error: under 3e-14 for ratios up to 0.3, 2e-9 at 0.6, and up to 8.4e-6 of the share at
+    ratio 2.5 (where the dust's layer is the thicker, A(s) is not smooth at the stars' edges, s → 0 and 1,
+    and the midpoint rule meets E₂'s y ln y corner there). Monotone in τ until the escaping share is down to the
+    bound (the first step that is not, at ratio 3.7, is at τ = 895, where 2.6e-11 escapes). Its limits: ratio → 0, a sheet of dust at the stars'
+    midplane, ½(1 − E₂(τ)), approached as O(ratio); ratio → ∞, a thin sheet of stars inside a uniform
+    dust layer, 1 − E₂(τ/2), approached as O(1/ratio²).
+
+    Zero where ``tau`` is 0 and where ``ratio`` is NaN (no dust layer). The ratio is not clamped: an infinite one,
+    a stellar layer of no height, is a sheet of stars inside the dust and returns that limit, 1 − E₂(τ/2).
+    """
+    tau, ratio = np.broadcast_arrays(np.asarray(tau, dtype=float), np.asarray(ratio, dtype=float))
+    out = np.zeros(tau.shape)
+    ok = (tau > 0.0) & ~np.isnan(ratio)
+    t = tau[ok][:, None]
+    s = 1.0 / (1.0 + np.exp(ratio[ok][:, None] * LAYER_T))  # the stars' share below, at each node
+    f = s * expn(1, t * LAYER_A) + (1.0 - s) * expn(1, t * (1.0 - LAYER_A))
+    out[ok] = tau[ok] * (f * LAYER_WEIGHT).sum(axis=-1)
     return out
 
 
@@ -234,10 +307,15 @@ ABSORBED = FieldDecl(
     kind=Kind.FIELD, axes=("R",), ramp=Ramp("inferno", scale="log"), meaningful_zero=True,
     about=(
         "The disc's starlight per square parsec that the dust at that radius absorbs: disc_surface_brightness "
-        "times the probability that light emitted isotropically in a uniform mixed slab does not escape it, "
-        "(1/2 − E₃(τ))/τ subtracted from one, τ the V-band absorption depth (1 − albedo) τ_V. Grey at V: "
-        "the young stars' ultraviolet is absorbed more than that and the old stars' red light less, so this "
-        "is not exact in either direction. The bulge's light heats nothing here (it has no radial profile)."
+        "times the probability that light emitted isotropically by the stars in their own layer does not "
+        "escape the dust in its layer, the gas's, thinner than the stars' where they are dense and thicker where "
+        "the gas flares: each star's light lost through the dust above and below it, averaged over the stars' heights, "
+        "at the V-band absorption depth (1 − albedo) τ_V. A thin dust layer under a thick stellar disc "
+        "absorbs little more than the half of an opaque ring's light that sets out towards it. Zero where the "
+        "gas has no layer (past the stellar disc's edge). Grey at V: the young stars' ultraviolet is absorbed "
+        "more than that and the old stars' red light less, so this is not exact in either direction. Taken "
+        "at each ring's mean column, not the dust's placement round it. The bulge's light heats nothing here "
+        "(it has no radial profile)."
     ),
 )
 TEMPERATURE = FieldDecl(
@@ -247,7 +325,9 @@ TEMPERATURE = FieldDecl(
         "The temperature at which a modified blackbody (β = 1.62, Planck's all-sky value; opacity 16.4 cm²/g "
         "at 156 µm from Draine's grain model) emits exactly what the dust at that radius absorbs per unit "
         "mass — the heating balance solved, not fitted and not assumed. Rises slowly, as the 5.6th root of "
-        "the heating: a hundred times the light is only 2.3 times hotter. NaN where the dust absorbs nothing."
+        "the heating: a hundred times the light is only 2.3 times hotter. The heating is the starlight absorbed "
+        "with the stars and the dust in their own layers, so the inner disc, where the dust's layer is "
+        "thinnest, is cooler than a uniform mix would make it. NaN where the dust absorbs nothing."
     ),
 )
 INFRARED = FieldDecl(
@@ -258,7 +338,8 @@ INFRARED = FieldDecl(
         "spectrum at dust_temperature, integrated over 1 µm – 1 m by quadrature — the spectrum a renderer "
         "draws, integrated, rather than the temperature's own equation run backwards, so that the suite's "
         "energy-balance test compares two computations. Optically thin in the infrared. Equal to the "
-        "absorbed starlight at every radius to the quadrature's precision; nothing else heats the dust."
+        "absorbed starlight at every radius to the quadrature's precision; nothing else heats the dust, and "
+        "it absorbs with the stars and itself in their own layers, so none is emitted where the gas has no layer."
     ),
 )
 ABSORBED_TOTAL = FieldDecl(
@@ -271,8 +352,9 @@ INFRARED_TOTAL = FieldDecl(
     meaningful_zero=True,
     about=(
         "dust_infrared_surface_brightness integrated over the disc, 2πR dR: the other side. The disc's own "
-        "starlight is its only heat source, so it is a share of disc_luminosity — and grey absorption at V "
-        "makes the share uncertain, since the young stars' ultraviolet is absorbed more."
+        "starlight is its only heat source, so it is a share of disc_luminosity, absorbed with the stars and "
+        "the dust in their own layers — and grey absorption at V makes the share uncertain, since the young "
+        "stars' ultraviolet is absorbed more."
     ),
 )
 G0 = FieldDecl(
@@ -283,7 +365,9 @@ G0 = FieldDecl(
         "The light stage has no far-ultraviolet band, so the ultraviolet is today's star formation times "
         "Kennicutt & Evans 2012's far-ultraviolet calibration, taken flat in νL_ν across the band (an "
         "assumption, not a spectrum), and the flux at the midplane of a uniform slab of that emission and "
-        "the grain model's far-ultraviolet absorption. What sets the PAHs' excitation and the "
+        "the grain model's far-ultraviolet absorption — mixed, not layered as the starlight that heats the "
+        "dust is, because its sources are today's young stars, which sit in the clouds' layer inside the gas. "
+        "What sets the PAHs' excitation and the "
         "photodissociation regions' chemistry; the local field is quoted near 1.7."
     ),
 )
@@ -315,8 +399,12 @@ def compute(ctx: Context) -> Mapping[str, Any]:
     tau_v = optical_depth(a_v)
     kappa0, lam0, beta = float(c["DUST_OPACITY_REFERENCE"]), float(c["DUST_OPACITY_WAVELENGTH"]), float(c["DUST_EMISSIVITY_INDEX"])
 
-    # The heating: the starlight the slab keeps, grey at V's absorption depth.
-    absorbed = sigma_light * slab_absorbed_fraction((1.0 - albedo_v) * tau_v)  # Lsun/pc²
+    # The heating: the starlight the dust keeps, grey at V's absorption depth, with the stars and the dust in their
+    # own layers (S52, D211). No gas height, no dust layer: the ratio is NaN there and nothing is absorbed. A stellar
+    # layer of no height (a grid too coarse in time to hold a thin disc) is a sheet of stars: the ratio is infinite.
+    with np.errstate(divide="ignore"):
+        ratio = np.asarray(ctx.fields["gas_scale_height"], dtype=float) / float(ctx.fields["thin_disc_scale_height"])
+    absorbed = sigma_light * layered_absorbed_fraction((1.0 - albedo_v) * tau_v, ratio)  # Lsun/pc²
     heated = (sigma_dust > 0.0) & (absorbed > 0.0)
     per_mass = np.where(heated, absorbed / np.where(heated, sigma_dust, 1.0), 0.0) / LSUN_PER_MSUN_PER_CGS  # erg/s/g
     temperature = np.where(heated, dust_temperature(per_mass, kappa0, lam0, beta), np.nan)
@@ -353,8 +441,9 @@ DUST = IMPLEMENTATIONS.register(
         checkpoint=4,
         about=(
             "What the dust does with the starlight it sits in: scatters two thirds of what it takes out of a "
-            "V-band ray, absorbs the rest and re-emits it in the far infrared at the temperature where the "
-            "two balance, and carries PAHs in a far-ultraviolet field set by today's star formation. One "
+            "V-band ray, absorbs the rest — the starlight of the stars' layer through the dust's own, the gas's "
+            "layer — and re-emits it in the far infrared at the temperature where the two balance, and carries "
+            "PAHs in a far-ultraviolet field set by today's star formation. One "
             "grain model throughout (Draine's Milky Way R_V = 3.1); no input, no seed."
         ),
         compute=compute,
@@ -364,7 +453,10 @@ DUST = IMPLEMENTATIONS.register(
             "FUV_LUMINOSITY_PER_SFR", "HABING_FLUX", "PAH_FRACTION_GALACTIC", "PAH_METALLICITY_INTERCEPT",
             "PAH_METALLICITY_SLOPE", "OXYGEN_ABUNDANCE_SOLAR", "PAH_METALLICITY_MAX",
         ),
-        requires=("disc_surface_brightness", "dust_surface_density", "dust_extinction_v", "sfr_surface_density", "feh_gas"),
+        requires=(
+            "disc_surface_brightness", "dust_surface_density", "dust_extinction_v", "sfr_surface_density", "feh_gas",
+            "gas_scale_height", "thin_disc_scale_height",
+        ),
         publishes=(
             SCATTERING_DEPTH, COLOUR_EXCESS, SCATTERING_ASYMMETRY, ABSORBED, TEMPERATURE, INFRARED,
             ABSORBED_TOTAL, INFRARED_TOTAL, G0, PAH,

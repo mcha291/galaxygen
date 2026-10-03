@@ -22,6 +22,7 @@ import pytest
 from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core.grids import GridSpec
+from galaxy.core.special import expn
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.stages import nebular as nb
 from galaxy.stages import spectra
@@ -107,30 +108,38 @@ def test_the_v1_gate_holds_at_the_audit_mesh(svc, model):
 
 # --- V2 (D189): the frame's dust removes what it emits; the light is conserved; the layers sum -----------------
 
-_U, _W = np.polynomial.legendre.leggauss(200)
-_LN_MIN = math.log(1e-12)
-MU = np.exp(0.5 * _LN_MIN * (1.0 - _U))
-MU_WEIGHT = 0.5 * (-_LN_MIN) * _W * MU
-
-
-def _removed_share(tau: np.ndarray) -> np.ndarray:
-    t = np.asarray(tau, dtype=float)[..., None]
-    safe = np.where(t > 0.0, t, 1.0)
-    escaped = np.where(t > 0.0, MU * -np.expm1(-safe / MU) / safe, 1.0)
-    return ((1.0 - escaped) * MU_WEIGHT).sum(axis=-1)
+def _layered_removed_share(tau: np.ndarray, ratio: np.ndarray) -> np.ndarray:
+    """(R, filter): the share the dust takes out of each ring's starlight with the stars and the dust in their own sech²
+    layers (S52, D211), ``ratio`` the dust's height over the stars' per ring: each star's light through the dust above and
+    below it at every inclination, ½[E₂(τA) + E₂(τ(1 − A))], over the stars' height x = z / 2h★ by the trapezoid on a
+    step of min(0.25, ratio / 6) to x = 18; A = ½[1 − tanh(x / ratio)]. Zero where the dust has no layer (NaN)."""
+    tau = np.asarray(tau, dtype=float)
+    out = np.zeros_like(tau)
+    for i, r in enumerate(np.asarray(ratio, dtype=float)):
+        if not np.isnan(r):
+            step = min(0.25, r / 6.0)
+            x = np.arange(0.0, 18.0, step)
+            weight = np.full_like(x, step) * 0.5 / np.cosh(x) ** 2
+            weight[0] *= 0.5
+            above = 0.5 * (1.0 - np.tanh(x / r))
+            t = np.maximum(tau[i], 0.0)[:, None]
+            out[i] = 1.0 - ((expn(2, t * above) + expn(2, t * (1.0 - above))) * weight).sum(axis=-1)
+    return out
 
 
 def test_the_v2_balance_holds_at_the_audit_mesh(svc, model):
     """Absorbed = emitted in the frame. The two sides are read from the arrays as test_render reads them; against the
     published totals each side carries the frame's cells against the stage's trapezoid (3.4e-4 at 400 rings), which
     grows with the ring width; the frame-against-frame ratio carries only the TIR box's coverage. Would differ if
-    the thermal shape were not the dust stage's own at this mesh's temperatures — it is the same function."""
+    the thermal shape were not the dust stage's own at this mesh's temperatures — it is the same function. Since S52
+    (D211) the shares are the stars' and the dust's layers' (the header's two heights), not a mixed slab's."""
     header, arrays = _render(svc, model.name, [*RGB, V_ROW])
     f = _scalars(svc, model.name, "disc_surface_brightness", "dust_absorbed_luminosity", "dust_infrared_luminosity",
                  "dust_absorbed_surface_brightness", "dust_infrared_surface_brightness")
     area = _cell_areas(header).sum(axis=1)
     albedo = np.asarray(header["components"]["dust_extinction"]["albedo"])
-    share = _removed_share((1.0 - albedo) * -np.log(arrays["dust_extinction"]))
+    ratio = np.asarray(arrays["dust_height"], dtype=float) / float(header["layers"]["stars"])
+    share = _layered_removed_share((1.0 - albedo) * -np.log(arrays["dust_extinction"]), ratio)
     absorbed = share[:, 3] * f["disc_surface_brightness"]
     lit = f["dust_absorbed_surface_brightness"] > 1e-9 * f["dust_absorbed_surface_brightness"].max()
     assert absorbed[lit] == pytest.approx(f["dust_absorbed_surface_brightness"][lit], rel=1e-8)
@@ -148,9 +157,9 @@ def test_the_v2_balance_holds_at_the_audit_mesh(svc, model):
     # The light's three fates add to the light, in every filter, at every ring (exact).
     light = arrays["stars"].mean(axis=1)
     tau = -np.log(arrays["dust_extinction"])
-    escaped = light * (1.0 - _removed_share(tau))
+    escaped = light * (1.0 - _layered_removed_share(tau, ratio))
     scattered = arrays["dust_scattered"].mean(axis=1)
-    absorbed_f = light * _removed_share((1.0 - albedo) * tau)
+    absorbed_f = light * _layered_removed_share((1.0 - albedo) * tau, ratio)
     assert escaped + scattered + absorbed_f == pytest.approx(light, rel=1e-9)
 
 
