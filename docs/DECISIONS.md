@@ -8242,3 +8242,58 @@ register the lead had edited under it (`EXIT=1` on `test_progress` alone, regene
 `main` at 3df6851 OK. Three Opus readers, then four builder passes (Phase 1, 1b, 2, 3) in worktrees, the lead's
 rulings, review, patches and re-pins between them. Register 69 open = 11 + 58, 45 discharged (#129–#131). Next, on
 the owner's word given during the session: BRIEF's option 2, #128's heating in the drawn geometry, as S52.
+
+### D211. S52: the dust heated in the geometry it is drawn in — the stars' layer over the gas's, ring by ring (debt #128's first half applied, on the owner's word)
+
+**The owner, in chat, on 2026-10-03**, while S51 was closing: "when you finish, proceed to Option 2 (dust heating).
+Delegating it to an Opus agent, and review its work yourself afterwards before comiting." BRIEF's second choice, #128:
+"applying it moves T_d, L_IR and every pin on them. The owner's ruling." **The pin is lifted for this row.** Written
+before any code moved (D113); built by an Opus 5.5 agent in a worktree, uncommitted, the diff reviewed by the lead
+before it is committed.
+
+**What is wrong today (#128, D206).** The render draws the dust in the gas's own thin layer (`gas_scale_height`, 21 pc
+at the centre, 113 pc at R₀) under a stellar layer of 356 pc, and the march composes them in order. The dust stage
+still heats the dust as if stars and dust were uniformly mixed through one slab: absorbed = light × [1 − (½ − E₃(τ))/τ]
+at τ = (1 − ω)τ_V. A thin layer under a thick disc cannot absorb much more than the half of a ring's light that sets
+out towards it; the mixed slab absorbs nearly all of an opaque ring's. The render's scattered share and the frame's
+balance are the mixed slab's too.
+
+**The rulings.**
+1. **The absorbed fraction is the layered geometry's.** Stars emit isotropically from a sech²(z / 2h★) layer, h★ the
+   published `thin_disc_scale_height` (the one layer the render draws the stars in); the dust absorbs in a
+   sech²(z / 2h_g) layer, h_g the ring's published `gas_scale_height`. With s the stars' cumulative share by height and
+   A(s) = ½[1 − tanh(artanh(2s − 1) · h★/h_g)] the dust's share above the emitter, the escaping share is
+   ∫₀¹ ½[E₂(τA) + E₂(τ(1 − A))] ds and the absorbed fraction one minus it — S50's independent quadrature
+   (`tests/test_dust_layer.py`, `layered_escape`), which is the slab's closed form when the layers are one. In the stage
+   it is **a fixed quadrature**: a step count known in advance and an error bound measured against the 4000-point
+   reference and stated in the function (A1). The stage's convention is unchanged: the depth is the absorption depth
+   (1 − ω)τ, a scattered photon neither lost nor sent further.
+2. **Where the model holds no gas height** (past the stellar disc's edge) there is no dust and nothing is absorbed, as
+   now. Where the gas layer is as high as the stars' or higher (the outer flare, past ~13 kpc) the same formula holds
+   with the ratio above 1; it is not clamped.
+3. **The scattered share follows** (`spectra.scattered_share`): what the extinction removes less what the absorption
+   keeps, both in the layered geometry at the ring's ratio, per filter. The frame's balance — escaped + scattered +
+   absorbed = the light, to 1e-9 — must close as it does today (`tests/test_audit_iv.py`).
+4. **The far-ultraviolet field G₀ keeps the mixed slab** `[inferred]`: its sources are today's young stars, which the
+   model places in the clouds' layer, inside the gas — for them stars and dust *are* mixed. Said in the field's about.
+5. **The placement round the ring is not applied.** With the light on the stellar contrast and the dust on the gas's
+   ridge (D210) the absorbed power differs from the ring's mean column's by 0.45 % over the disc and 2.3 % at R₀ in the
+   mixed slab (`tests/test_dust_layer.py`). Applying it would make the dust stage read seeded fields, and every dust
+   number — T_d, L_IR, G₀'s neighbours in the stage — would wear a seeded label and move with `pattern_seed` (D55: one
+   provenance per stage) for a change under one per cent of the disc's. It is **re-measured in the layered geometry
+   and pinned, not applied**; #128 stays in the register for that half alone, reworded, with the split the remedy
+   (a seeded extension of the dust stage, as `sfh_azimuthal` extends `sfh`). The owner may order it.
+6. **The flare's pressure** (#128's last clause: the gas's own weight and the halo's in the midplane pressure) is not
+   this row: it moves the molecular fraction, a different debt's remedy.
+
+**The predictions that could fail (B4), from S50's quadrature, before any code.**
+- `dust_absorbed_luminosity` and `dust_infrared_luminosity` fall to **0.766** of today's (1.5675e10 L☉ → 1.20e10, to
+  0.3 %); the infrared share of the disc's light 0.3415 → **0.2616** (± 0.001).
+- Ring by ring the absorbed light is 0.590 of the slab's at 0.5 kpc, 0.913 at R₀, 0.995 at 12 kpc (± 0.005).
+- **T_d(R₀) 18.82 → 18.52 K** (± 0.03); the inner disc cools by more (about 1.4 K where the slab is opaque).
+- G₀, q_PAH, the scattering depth, the colour excess and every stellar and radial field are unchanged; the spec
+  table's rows are identical unless a row reads T_d or L_IR, and such a row is reported, not accepted.
+- The render's thermal component falls with L_IR; its scattered light changes; the frame's balance still closes to
+  1e-9; the star and line components are untouched.
+- If the layered fraction with the ratio set to 1 does not return the slab's closed form to the quadrature's stated
+  bound, the implementation is wrong, not the reading.
