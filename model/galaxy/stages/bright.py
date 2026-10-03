@@ -76,8 +76,9 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.grids import Axis
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.pattern import ArmPattern, invert_azimuths
+from galaxy.stages.pattern import invert_azimuths
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_SECTORS,
@@ -471,10 +472,12 @@ class BrightGalaxy:
         # and the modulation normalised to its ring mean (as the catalogue's young stars read it).
         edges = np.concatenate([self.sector_lo, self.sector_hi[-1:]])
         middle = 0.5 * (self.ring_lo + self.ring_hi)
-        self.pattern = ArmPattern.from_fields(fields)
+        # Both weights come from compose (S55, D214): no pattern and no modulation with the layer off, and then
+        # every sector of a ring holds the same share - each ring's expected count is what it was (I2).
+        self.pattern = _compose.stellar_pattern(fields)
         flat = self.pattern is None or self.pattern.flat
         contrast = np.ones((middle.size, edges.size - 1)) if flat else np.array([self.pattern.sector_means(float(r), edges) for r in middle])
-        table = fields.get("sfr_modulation")
+        table = _compose.placement_weight(fields, "sfr_modulation")
         self.modulation = None if table is None else Modulation(table, self.R)
         young = None if self.modulation is None else np.array([self.modulation.sector_means(float(r), edges) for r in middle])
         self.weights = part_weights(contrast, young)  # (2, 256, 256)
@@ -979,6 +982,7 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
             "is not covered: it stays in the field."
         ),
         compute=compute_bright,
+        placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
         reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING"),
         requires=READS,

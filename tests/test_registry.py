@@ -35,13 +35,17 @@ PLAN_INPUTS = {
     "pattern_seed",
     "systems_seed",
     "planets_seed",
+    # S55 (D214 section 3; BUILD_III section 1c): the randomness layer's own seed, the fifth. Seeds are exempt
+    # from the ceiling, and no stage reads this one until phase P1.
+    "texture_seed",
 }
 
 
 def test_input_vector_is_closed():
     assert set(INPUTS) == PLAN_INPUTS
     assert len(controls()) == 7 <= INPUT_CEILING  # the seven; 9 from S23 to S26 with the two experimental amplitudes (D175)
-    assert len(seeds()) == 4
+    assert len(seeds()) == 5  # S55 (D214): was 4; texture_seed joins, default 0, hypothesis checkpoint 3
+    assert (INPUTS["texture_seed"].default, INPUTS["texture_seed"].checkpoint_hypothesis) == (0, 3)
     assert [i.name for i in INPUTS.values() if i.kind == "events"] == ["mergers"]
 
 

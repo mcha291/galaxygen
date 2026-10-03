@@ -41,6 +41,13 @@ from galaxy import templates as _templates
 from galaxy.specs import Problem, utf8_stdout
 
 STATUSES = ("pass", "fail", "not-yet-computable")
+# The checks are read as the acceptance rows are (S55, D214; invariant I3): on the layer-off run, the physics
+# alone. The four field checks are radial and are the same bits with the layer on or off. The colour check reads
+# the face-on render, whose frame sums each ring's light round the ring while the dust's depth is the ring's own,
+# so a placement that averages to 1 leaves it to rounding: ngc_4414's reads 0.6355279197562069 layer-off against
+# 0.6355279197563419 layer-on on the production grid, 1.4e-13 apart (measured at S55; tests/test_layer.py).
+JUDGED_LAYER = False
+JUDGED_SETTING = "off"
 
 
 # --- the frame's photometry (tests/test_render.py's, until S54) ----------------------------
@@ -228,7 +235,7 @@ def evaluate_template(template: _templates.Template, service: Any) -> list[Resul
     model = service.models.get(template.model)
     declared = service._declared(model)
     fields = tuple(dict.fromkeys(c.field for c in template.checks if c.field is not None and c.field in declared))
-    out, _ = service.compute(model, _templates.overrides(template), fields)
+    out, _ = service.compute(model, _templates.overrides(template), fields, layer=JUDGED_LAYER)
     results: list[Result] = []
     for check in template.checks:
         if check.statistic == "face_on_colour":
@@ -245,7 +252,9 @@ def _frame_colour(template: _templates.Template, service: Any) -> tuple[float | 
     from galaxy.stages import spectra
 
     curves = json.dumps([spectra.band_curve(b).json() for b in FACE_ON_BANDS])
-    got = service.handle("/api/render", {"template": [template.name], "model": [template.model], "filters": [curves]})
+    got = service.handle("/api/render", {
+        "template": [template.name], "model": [template.model], "filters": [curves], "layer": [JUDGED_SETTING],
+    })
     if not got.ok:
         return None, f"/api/render answered {got.status} for this template"
     header, arrays = got.frame()
@@ -314,6 +323,7 @@ def report(
         "  window fixed before the model's number existed (D213). Reported beside the acceptance table, never counted in it.",
         "  A verdict marked disclosed is read on a fit decided after the check had already been read once: it is not",
         "  blind. That first reading - blind, spent, on a fit since withdrawn - is printed beside it.",
+        "  Read on the layer-off run, as the acceptance rows are (invariant I3, D214).",
     ]
     for name, judged in results.items():
         template = _templates.get(name)

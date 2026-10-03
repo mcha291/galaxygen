@@ -35,6 +35,12 @@ def default(models):
 
 
 @pytest.fixture(scope="module")
+def default_layer_off(models):
+    """The default run with the randomness layer off: what the acceptance rows read since S55 (D214, invariant I3)."""
+    return run(models[DEFAULT_MODEL], layer=False)
+
+
+@pytest.fixture(scope="module")
 def coarse(models):
     return run(models[DEFAULT_MODEL], grid=COARSE)
 
@@ -137,9 +143,10 @@ def test_every_region_is_a_function_of_its_cluster_and_cloud_and_the_census_matc
     assert float(F["dig_scale_height"]) == pytest.approx(1.4)
 
 
-def test_the_default_census_numbers(default):
+def test_the_default_census_numbers(default, default_layer_off):
     """Measured at S35 on the default grid (D184); the pins that move say why in their commit."""
     F = default.fields
+    judged = default_layer_off.fields  # the two acceptance rows below read the layer-off census (S55, D214)
     L = np.asarray(F["hii_halpha_luminosity"], dtype=float)
     assert L.size == 12930  # one region per cluster (S33); S51 (D210): was 12860 (the clouds on the gas's ridge)
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.720, abs=0.01)
@@ -154,12 +161,17 @@ def test_the_default_census_numbers(default):
     # 0.71 of Kennicutt & Evans 2012's Kroupa/Starburst99 steady state - the same 0.71 that puts row 34 3%
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
     assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7124, abs=0.002)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.7095
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
+    # Row 35 (KEH89 -2.0 +/- 0.5). S55 (D214): was -2.008 (abs 0.02; the layer-on census reads -1.9893), read layer-off
+    assert float(judged["hii_luminosity_function_slope"]) == pytest.approx(-2.0812, abs=0.02)
     # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
     # the model's ratio falls outward at its N/H gradient's pace.
     # S51 (D210): was -0.1035 - the row reads the HII-region census, redrawn with the clouds on the gas's ridge
     # (-0.103687 -> -0.105511); the miss stands, 0.002 further out.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1055, abs=0.002)
+    # S55 (D214): was -0.1055, read layer-off (-0.105511 -> -0.102973: the census placed by no pattern); still a miss
+    assert float(judged["nii_halpha_gradient_hii"]) == pytest.approx(-0.1030, abs=0.002)
+    # The layer-on census, which the viewer draws, keeps the numbers it had (tests/test_layer.py holds every bit).
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-1.9893, abs=1e-3)
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.105511, abs=1e-5)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):

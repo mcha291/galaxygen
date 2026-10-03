@@ -48,6 +48,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, extend
+from galaxy.layer import compose as _compose
 from galaxy.stages.sfh import SFH, star_formation_rate
 
 
@@ -83,10 +84,16 @@ SFR_MODULATION = FieldDecl(
 
 
 def compute_modulation(ctx: Context, shared: Mapping[str, Any]) -> Mapping[str, Any]:
+    # A composed field made from a composed field (S55, D214): this stage composes, it is not a physics stage,
+    # and every history above it is still sfh's own. With the layer off compose gives 1 everywhere, exactly -
+    # the law run on a contrast of ones would give 1 only to rounding, a ring's mean of equal numbers.
     return {
-        "sfr_modulation": sfr_modulation(
-            shared["gas_surface_density"], shared["sf_threshold_surface_density"],
-            ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
+        "sfr_modulation": _compose.field(
+            ctx.fields, (ctx.grid.R.size, ctx.grid.phi.size),
+            lambda: sfr_modulation(
+                shared["gas_surface_density"], shared["sf_threshold_surface_density"],
+                ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
+            ),
         ),
     }
 

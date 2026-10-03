@@ -20,6 +20,14 @@ galaxy, and what lets the spec ensemble stop rebuilding a star catalogue to read
 a pattern speed (debt #24). Neither changes any value: a stage is a pure
 function of its declared reads, so running fewer of them cannot move the ones
 that do run — asserted rather than argued, in ``tests/test_run.py``.
+
+**The randomness layer's switch** (S55, BUILD_III section 1e, DECISIONS.md D214). ``layer=True`` is the
+model as it has always run. ``layer=False`` is the physics alone: the composed fields are their neutral
+value, 1, the censuses are placed by no pattern, and the layer's realisation stages publish their neutral
+values; every law, every measured scatter and every ring total is unchanged. The runner only *carries* the
+setting — to each stage's ``Context`` and onto the run's fields (``core.stage.Fields``), where a later
+materialisation finds it — and never reads it: ``galaxy.layer.compose`` is the one place that does. A run
+cannot be resumed under the other setting.
 """
 
 from __future__ import annotations
@@ -33,7 +41,8 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
 from galaxy.core.registry import Input, Model, Registry, production
-from galaxy.core.stage import Context, Stage
+from galaxy.core.stage import Context, Fields, LayerError, Stage
+from galaxy.layer import compose as _compose
 from galaxy.specs import graph as _graph
 
 
@@ -58,6 +67,12 @@ class Outputs:
     decls: dict[str, FieldDecl]
     order: tuple[str, ...]  # implementation ids whose fields are present, in execution order
     ran: tuple[str, ...] = ()  # what this call executed; differs from order under resume=
+    layer: bool = True  # whether the run composed the randomness layer (S55, D214): what ``fields`` carry
+
+    def __post_init__(self) -> None:
+        # The fields carry the run's setting wherever they go (a catalogue is materialised from them later, by
+        # the API or a test), so an Outputs cannot hold fields that say otherwise, or that say nothing.
+        self.fields = Fields(self.fields, layer=self.layer)
 
 
 def resolve_inputs(
@@ -127,17 +142,23 @@ def _check_value(decl: FieldDecl, value: Any, grid: Grid, stage: Stage, column_l
     return arr
 
 
-def _check_resumable(model: Model, g: Grid, resolved: Mapping[str, Any], resume: Outputs) -> None:
+def _check_resumable(model: Model, g: Grid, resolved: Mapping[str, Any], resume: Outputs, layer: bool) -> None:
     """``resume`` must describe the same galaxy, or its fields are someone else's.
 
     Checked rather than documented: a resumed run that silently mixes two input
     vectors would publish a self-consistent galaxy that no input vector
-    generates, and nothing downstream could detect it (rule B13).
+    generates, and nothing downstream could detect it (rule B13). The layer's
+    setting is part of what the galaxy is (S55): a layer-off run continued with
+    the layer on would hold ones for a contrast and arms in its catalogue.
     """
     if resume.model != model.name:
         raise RunError(f"cannot resume model {model.name!r} from an {resume.model!r} run")
     if resume.grid.spec != g.spec:
         raise RunError(f"cannot resume: grid {resume.grid.spec} is not {g.spec}")
+    try:
+        _compose.agree(resume.fields, layer)
+    except LayerError as e:
+        raise RunError(str(e)) from None
     for name in set(resolved) & set(resume.inputs):
         if resolved[name] != resume.inputs[name]:
             raise RunError(
@@ -154,8 +175,10 @@ def run(
     table: Mapping[str, Input] | None = None,
     only: Iterable[str] | None = None,
     resume: Outputs | None = None,
+    layer: bool = True,
 ) -> Outputs:
-    """Execute ``model``. ``only`` restricts the work to what those fields need (rule D4)."""
+    """Execute ``model``. ``only`` restricts the work to what those fields need (rule D4); ``layer=False`` runs
+    the physics alone, the randomness layer's composed fields and placements at their neutral values (D214)."""
     if impls is None or table is None:
         _, prod_impls, prod_table = production()
         impls = prod_impls if impls is None else impls
@@ -173,12 +196,13 @@ def run(
     seeds = {n: v for n, v in resolved.items() if table[n].kind == "seed"}
     constants = {k: c.value for k, c in model.constants.items()}
 
-    fields: dict[str, Any] = {}
+    layer = bool(layer)
+    fields: dict[str, Any] = Fields(layer=layer)
     decls: dict[str, FieldDecl] = {}
     column_lengths: dict[str, int] = {}
     done: tuple[str, ...] = ()
     if resume is not None:
-        _check_resumable(model, g, resolved, resume)
+        _check_resumable(model, g, resolved, resume, layer)
         fields.update(resume.fields)
         decls.update(resume.decls)
         for name, decl in decls.items():
@@ -189,7 +213,7 @@ def run(
         plan = tuple(st for st in plan if st.id not in set(done))
 
     for stage in plan:
-        ctx = Context(stage, g, resolved, seeds, constants, fields)
+        ctx = Context(stage, g, resolved, seeds, constants, fields, layer=layer)
         result = stage.compute(ctx)
         if not isinstance(result, Mapping):
             raise PublishError(f"stage {stage.id!r} must return a mapping of field name -> value")
@@ -204,4 +228,4 @@ def run(
             decls[decl.name] = decl
     ran = tuple(s.id for s in plan)
     order = tuple(st.id for st in graph.order if st.id in set(done) | set(ran))
-    return Outputs(model.name, g, resolved, fields, decls, order, ran)
+    return Outputs(model.name, g, resolved, fields, decls, order, ran, layer)

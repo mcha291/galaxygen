@@ -835,13 +835,20 @@ def test_the_noise_imports_only_numpy_and_the_standard_library():
     assert imported_modules(ROOT / "model" / "galaxy" / "layer" / "__init__.py") <= {"__future__", "__future__.annotations"}
 
 
-def test_nothing_in_the_stages_the_core_or_the_api_reads_the_layer_yet():
+def test_the_noise_is_a_leaf_and_nothing_in_the_model_reads_it_yet():
     """Phase R, item 2: the primitives have no reader in this branch. The first reader removes its package
-    from this list in the decision that adds it."""
+    from this list in the decision that adds it.
+
+    S55 (D214 section 4), narrowed from "nothing in the stages, the core or the api imports galaxy.layer": the
+    layer's other modules are read since Phase R's own builder B - ``compose`` by the runner, the pattern and
+    census stages and the API, ``cloud_texture`` by the stage registry - so what is held here is the noise
+    alone. It imports nothing of the project (the test above) and no module of the model imports it: the
+    switch, the fourth kind and the relabelled cloud columns were built without touching a primitive."""
     package = ROOT / "model" / "galaxy"
-    for folder in ("stages", "core", "api"):
-        files = sorted((package / folder).rglob("*.py"))
-        assert files, folder
-        for path in files:
-            for name in imported_modules(path):
-                assert "layer" not in name.split("."), f"{path.relative_to(ROOT)} imports {name}"
+    noise_file = package / "layer" / "noise.py"
+    files = [p for p in sorted(package.rglob("*.py")) if p != noise_file]
+    assert len(files) > 40
+    for path in files:
+        for name in imported_modules(path):
+            parts = name.lstrip(".").split(".")
+            assert "noise" not in parts, f"{path.relative_to(ROOT)} imports {name}"

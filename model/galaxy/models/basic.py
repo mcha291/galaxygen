@@ -44,6 +44,7 @@ BASIC = MODELS.register(
             ("systems", "systems"),
             ("bright_stars", "bright_stars"),
             ("clouds", "clouds"),
+            ("cloud_texture", "cloud_texture"),  # S55 (D214): the layer's stage, the four cloud columns `clouds` drew
             ("clusters", "clusters"),
             ("nebular", "nebular"),
             ("bubbles", "bubbles"),
