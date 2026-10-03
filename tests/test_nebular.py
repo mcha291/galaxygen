@@ -157,7 +157,9 @@ def test_the_default_census_numbers(default):
     assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.008, abs=0.02)  # row 35 (KEH89 -2.0 +/- 0.5)
     # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
     # the model's ratio falls outward at its N/H gradient's pace.
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1035, abs=0.002)
+    # S51 (D210): was -0.1035 - the row reads the HII-region census, redrawn with the clouds on the gas's ridge
+    # (-0.103687 -> -0.105511); the miss stands, 0.002 further out.
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.1055, abs=0.002)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):

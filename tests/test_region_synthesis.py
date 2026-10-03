@@ -58,11 +58,11 @@ def _clusters_against_field(svc, window, level):
 @pytest.mark.parametrize(
     "window, level, measured",
     [
-        # S51 (D210): the clouds, so the clusters, on the gas's own ridge - another draw of the same census. The disc's
-        # ratio does not depend on where the field is placed round a ring; the sector's does, and /api/render places
-        # the HII Halpha by the stellar contrast until D210's Phase 2 moves it to the gas's: re-read it then.
+        # S51 (D210): the clouds, so the clusters, on the gas's own ridge - another draw of the same census - and
+        # /api/render's HII Halpha placed by the same gas contrast (Phases 2 and 3 together, read by the lead). The
+        # disc's ratio does not depend on where the field is placed round a ring; the sector's does.
         (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 1.0140),  # the disc: 12 670 clusters, noise 0.060; S51 (D210): was 0.9801 (12 597, 0.061)
-        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9949),  # a quarter-disc sector at level 1: 2 476 clusters, noise 0.161; S51 (D210): was 0.9744 (2 499, 0.138)
+        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9942),  # a quarter-disc sector at level 1: 2 476 clusters, noise 0.161; S51 (D210): was 0.9744 (2 499, 0.138)
     ],
 )
 def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, measured):
@@ -77,12 +77,12 @@ def test_small_windows_are_recorded_not_gated(svc):
     realised noise low; 1.4 and 1.1 of the population's sigma(N), D190). Pinned as the record, no pass/fail on the ratio."""
     r1, n1, k1 = _clusters_against_field(svc, _window(6.0, 10.0, 0.0, 1.2), 1)
     r2, n2, k2 = _clusters_against_field(svc, _window(7.0, 9.0, 0.0, 0.8), 2)
-    # S51 (D210): the clusters on the gas's ridge, the field still placed by the stellar contrast until Phase 2 (re-read
-    # then); was 0.6745 / 832, 0.5107 / 246, z -1.36 / -1.11
-    assert r1 == pytest.approx(0.6910, abs=1e-3) and k1 == 806
-    assert r2 == pytest.approx(0.4785, abs=1e-3) and k2 == 212
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.29, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.12, abs=0.02)
+    # S51 (D210): the clusters and the field's HII Halpha both on the gas's ridge; was 0.6745 / 832, 0.5107 / 246,
+    # z -1.36 / -1.11
+    assert r1 == pytest.approx(0.6971, abs=1e-3) and k1 == 806
+    assert r2 == pytest.approx(0.4670, abs=1e-3) and k2 == 212
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.26, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.14, abs=0.02)
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
@@ -114,12 +114,11 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     assert abs(float(z.mean())) < 0.5  # three standard errors of the mean at sd 1.16 over sixty windows
     assert 0.7 < float(z.std()) < 1.5  # one galaxy-wide moment for a luminosity function that varies with radius
     assert float(np.mean(np.abs(z) < 3.0)) >= 0.95
-    # the record, dated S40; S51 (D210): z mean 0.15 -> 0.128 (sd 1.16 -> 1.06, all sixty inside 3), median 0.8567 ->
-    # 0.9183, mean 1.0853 -> 1.0673 - the clusters on the gas's ridge, the field still placed by the stellar contrast
-    # until D210's Phase 2 moves /api/render's HII Halpha to the gas's: re-read then
-    assert float(z.mean()) == pytest.approx(0.128, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.9183, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(1.0673, abs=1e-3)
+    # the record, dated S40; S51 (D210): z mean 0.15 -> 0.139 (sd 1.16 -> 1.09, 90 % inside 2 and 97 % inside 3),
+    # median 0.8567 -> 0.9061, mean 1.0853 -> 1.0782 - the clusters and the field's HII Halpha both on the gas's ridge
+    assert float(z.mean()) == pytest.approx(0.139, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.9061, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(1.0782, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])
