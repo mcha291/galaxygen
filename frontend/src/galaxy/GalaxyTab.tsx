@@ -18,6 +18,10 @@ import { CellOutlines, CloudMarkers } from "./ComponentLayers";
 import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
+import { type Template, switcherItems, templateLabel } from "../workflow/templates";
+import { DEFAULT_FOV } from "./capture";
+import { type ComparePicture, ComparePane, ComparePicker, RenderCaption } from "./PictureBeside";
+import { compareCaption } from "./compare";
 import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
@@ -35,7 +39,7 @@ import { extent, toScene } from "./positions";
 import { REGIME_KPC, regimeWeights, regionAround, regionSampleSize, starsInWindow } from "./regimes";
 import { type Tuning, loadTuning, saveTuning } from "./tuning";
 import { TuningPanel, useDebounced } from "./TuningPanel";
-import { scaleBar } from "./zoom";
+import { ZOOM_SPAN, scaleBar } from "./zoom";
 import styles from "./GalaxyTab.module.css";
 
 interface Props {
@@ -47,11 +51,32 @@ interface Props {
   exposure: number;
   onExposure(stops: number): void;
   query: Query;
-  preset: Preset;
-  onPreset(p: Preset): void;
+  /** One of the three stands, or null: the view stands at the template's own camera (D213 ruling 5). */
+  preset: Preset | null;
+  onPreset(p: Preset | null): void;
   /** "Edit galaxy": open the staged generation with the confirmations kept (D198). Discards nothing. */
   onEdit(): void;
+  /** The filter set the galaxy is seen through: the app's since S54, because a template brings its own. */
+  filterSet: FilterSetName;
+  onFilterSet(name: FilterSetName): void;
+  /** The templates `/api/templates` publishes (S54, D213); none where the API has none, and then no switcher. */
+  templates: Template[];
+  /** The template the galaxy is, or was edited from. Its camera, lens and filter set are the view's. */
+  template: Template | null;
+  edited: boolean;
+  /** Choose a template: regenerate at its inputs and stand at its camera. */
+  onTemplate(name: string): void;
+  /** Counts the landings on a template: a new count is a fresh camera at the template's stand. */
+  selection: number;
+  /** "Compare with a picture" (T16 ii): a picture chosen from disk, set beside the render; null without one. */
+  picture: ComparePicture | null;
+  onPicture(file: File | null): void;
 }
+
+/** A thumbnail that is not there (a template with no capture yet) leaves its button with the label alone. */
+const hideMissing = (e: { currentTarget: HTMLImageElement }) => {
+  e.currentTarget.style.display = "none";
+};
 
 const SHORT: Record<string, string> = {
   star_metallicity: "[Fe/H]",
@@ -123,11 +148,11 @@ const roundedView = (m: number[]) => m.map((v) => Number(v.toPrecision(5)));
 
 /**
  * The zoom slider position that makes the view `width` kpc across. The slider is linear in
- * log distance over GalaxyView's range (reach/200 to 8 reach, a factor of 1600) and the width
- * is proportional to distance, so it is a shift from where the view is now.
+ * log distance over GalaxyView's range (zoom.ts zoomRange: a factor of ZOOM_SPAN through any lens) and the
+ * width is proportional to distance, so it is a shift from where the view is now.
  */
 function zoomForWidth(view: ViewState, width: number): number {
-  return Math.min(1, Math.max(0, view.zoom - Math.log(width / view.across) / Math.log(1600)));
+  return Math.min(1, Math.max(0, view.zoom - Math.log(width / view.across) / Math.log(ZOOM_SPAN)));
 }
 
 function colorsFor(
@@ -154,11 +179,41 @@ function positionsOf(sample: Sample): Float32Array {
  * The finished galaxy in its three regimes (design brief §3), handed over by zoom: the field
  * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
  */
-export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposure, onExposure, query, preset, onPreset, onEdit }: Props) {
-  const [zoom, setZoom] = useState<number | undefined>(undefined);
+export function GalaxyTab({
+  meta,
+  sample,
+  fields,
+  field: chosen,
+  onField,
+  exposure,
+  onExposure,
+  query,
+  preset,
+  onPreset,
+  onEdit,
+  filterSet,
+  onFilterSet: setFilterSet,
+  templates,
+  template,
+  edited,
+  onTemplate,
+  selection,
+  picture,
+  onPicture,
+}: Props) {
+  // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
+  // camera at its own stand, and an ask made of the one before it must not move it (it did, for the presets,
+  // until S54: the slider's last position outlived the camera).
+  const cameraKey = `${selection}:${preset}`;
+  const [zoomAsk, setZoomAsk] = useState<{ of: string; zoom: number } | null>(null);
+  const zoom = zoomAsk?.of === cameraKey ? zoomAsk.zoom : undefined;
+  const setZoom = (value: number) => setZoomAsk({ of: cameraKey, zoom: value });
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
-  const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
+  // The template's camera and lens (D213 ruling 5): the view stands there while no preset is chosen, and keeps
+  // the lens under a preset. Without templates (an API from before S54) the presets and the 45° lens, as before.
+  const fov = template?.camera.fov_deg ?? DEFAULT_FOV;
+  const stands = switcherItems(templates, template?.name ?? null, edited, import.meta.env.BASE_URL);
   // The Tuning panel's display choices (D199): a UI preference kept in localStorage, today's values by default.
   const [tuning, setTuningState] = useState<Tuning>(() => loadTuning());
   const setTuning = (t: Tuning) => {
@@ -334,10 +389,36 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
 
   const shown = weights.active === "stars" && detail ? detail : sample;
   const current = MODES.find((m) => m.key === mode)!;
+  // How far the camera stands from what it looks at, kpc: what a long lens changes and the width of view does not.
+  const eyeDistance = view ? Math.hypot(...view.camera.position.map((v, k) => v - view.target[k])) : null;
+  // What the render is, for a picture set beside it (T16 ii): read from the view as it stands now.
+  const caption =
+    picture && view
+      ? compareCaption(
+          { pxPerKpc: view.pxPerKpc, fov: view.fov, position: view.camera.position, target: view.target },
+          { label: template ? templateLabel(template, edited) : null, filters: FILTER_SETS[filterSet].label, distanceMpc: template?.instrument.distance_mpc ?? null },
+        )
+      : null;
 
   return (
     <>
-      <GalaxyView layers={layers} pickable={pickable} reach={reach} preset={preset} zoom={zoom} onView={setView} hdr additive={field === PHOTOMETRIC} psf={spritePsf} tuning={tuning}>
+      {/* The render: the whole stage, or its left half while a picture is set beside it (same height). */}
+      <div className={picture ? styles.renderHalf : styles.render}>
+      <GalaxyView
+        layers={layers}
+        pickable={pickable}
+        reach={reach}
+        preset={preset}
+        stand={template?.camera ?? null}
+        fov={fov}
+        epoch={selection}
+        zoom={zoom}
+        onView={setView}
+        hdr
+        additive={field === PHOTOMETRIC}
+        psf={spritePsf}
+        tuning={tuning}
+      >
         {mode === "field" && (
           <FieldVolume
             meta={meta}
@@ -384,13 +465,41 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} />
         )}
       </GalaxyView>
+      </div>
+      {picture && <ComparePane picture={picture} onDismiss={() => onPicture(null)} />}
 
       <div className={styles.panel}>
         <div className={styles.section}>
+          {/* The switcher (S54, D213 ruling 7; rule D1): each template with its thumbnail, a capture of the picture
+              test's own. Choosing one regenerates at its inputs and stands at its camera, lens and filter set. */}
+          {stands.length > 0 && (
+            <>
+              <div className={styles.label}>Galaxy</div>
+              <div className={styles.templates} role="group" aria-label="Template">
+                {stands.map((t) => (
+                  <button key={t.name} type="button" aria-pressed={t.pressed} title={t.title} onClick={() => onTemplate(t.name)}>
+                    <img src={t.thumbnail} alt="" onError={hideMissing} />
+                    <span>{t.caption}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div className={styles.pair}>
-            <button type="button" title="Open the staged generation and reopen a checkpoint to change the galaxy" onClick={onEdit}>
+            <button
+              type="button"
+              title={
+                template
+                  ? `Open the staged generation from ${templateLabel(template, edited)}'s inputs and reopen a checkpoint to change the galaxy`
+                  : "Open the staged generation and reopen a checkpoint to change the galaxy"
+              }
+              onClick={onEdit}
+            >
               Edit galaxy
             </button>
+          </div>
+          <div className={styles.pair}>
+            <ComparePicker picture={picture} onPick={onPicture} onDismiss={() => onPicture(null)} />
           </div>
         </div>
         <div className={styles.section}>
@@ -511,13 +620,26 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
 
         <div className={styles.section}>
           <div className={styles.label}>Projection</div>
-          <div className={styles.pair}>
+          <div className={styles.chips}>
+            {/* The template's own camera (D213 ruling 5), beside the three stands every galaxy has. */}
+            {template && (
+              <button
+                aria-pressed={preset === null}
+                title={`${template.label}'s camera: inclination ${formatNumber(template.camera.inclination_deg, 3)}°, over azimuth ${formatNumber(template.camera.azimuth_deg, 3)}°, ${formatNumber(template.camera.radius_kpc, 3)} kpc framed`}
+                onClick={() => onPreset(null)}
+              >
+                template
+              </button>
+            )}
             {(["face-on", "edge-on", "oblique"] as Preset[]).map((p) => (
               <button key={p} aria-pressed={p === preset} onClick={() => onPreset(p)}>
                 {p}
               </button>
             ))}
           </div>
+          <p className={styles.muted}>
+            {`A ${formatNumber(view?.fov ?? fov, 3)}° lens${template ? `, ${template.label}'s` : ""}: the camera stands ${eyeDistance === null ? "—" : formatNumber(eyeDistance, 3)} kpc from what it looks at.`}
+          </p>
         </div>
 
         <div className={styles.section}>
@@ -553,6 +675,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
         <TuningPanel tuning={tuning} onChange={setTuning} stats={marchStats} />
       </div>
 
+      {/* The view's own captions sit over the render's half, wherever the stage is split. */}
+      <div className={picture ? styles.overHalf : styles.over}>
       <div className={styles.regime}>
         <div className={styles.regimeHead}>
           <span className={styles.muted}>{mode === "field" ? `regime ${REGIMES.indexOf(regime) + 1} of 3` : "mode 2 of 2"}</span>
@@ -598,6 +722,8 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
           <div className={styles.muted}>{formatNumber(bar.kpc, 2)} kpc</div>
         </div>
       )}
+      {caption && <RenderCaption lines={caption.lines} />}
+      </div>
     </>
   );
 }

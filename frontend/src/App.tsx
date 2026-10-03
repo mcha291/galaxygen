@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { PHOTOMETRIC } from "./galaxy/colors";
+import type { ComparePicture } from "./galaxy/PictureBeside";
 import { Exposure } from "./galaxy/Exposure";
+import type { FilterSetName } from "./galaxy/filters";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
 import { type Preset } from "./galaxy/GalaxyView";
 import { CheckpointScene } from "./preview/CheckpointScene";
@@ -11,7 +13,8 @@ import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
-import { formatNumber, runHash } from "./workflow/logic";
+import { runHash } from "./workflow/logic";
+import { templateLabel } from "./workflow/templates";
 import { EDIT_VIEW, type View, isGenerated, settleView, useWorkflow } from "./workflow/useWorkflow";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
@@ -30,9 +33,40 @@ export function App() {
   // The viewer lands on the default galaxy, generated on first load (D198, rule D1 as amended).
   const [tab, setTab] = useState<Tab>("galaxy");
   const [field, setField] = useState<string>(PHOTOMETRIC);
-  const [preset, setPreset] = useState<Preset>("oblique");
+  // Where the Galaxy view stands: one of the presets, or null for the template's own camera (D213 ruling 5).
+  // "oblique" until a template is landed on, and for good where the API has none (one from before S54).
+  const [preset, setPreset] = useState<Preset | null>("oblique");
+  const [filterSet, setFilterSet] = useState<FilterSetName>("rgb");
   const [charts, setCharts] = useState(false);
   const [exposure, setExposure] = useState(0); // photometric exposure, in stops
+  // "Compare with a picture" (T16 ii): a file the user picked, shown through an object URL. It never leaves
+  // the browser, and its URL is released when it is replaced or dismissed.
+  const [picture, setPicture] = useState<ComparePicture | null>(null);
+  useEffect(
+    () => () => {
+      if (picture) URL.revokeObjectURL(picture.url);
+    },
+    [picture],
+  );
+
+  // A template landed on - the first load, or one chosen in the switcher - brings its camera and its filter
+  // set (rule D1 as amended; D213 rulings 5 and 7). What the user changes after that is theirs until the next.
+  const landed = wf.template;
+  useEffect(() => {
+    if (!landed) return;
+    setPreset(null);
+    setFilterSet(landed.filters);
+  }, [wf.selection]); // eslint-disable-line react-hooks/exhaustive-deps -- a landing, not every render of the same template
+  // The switcher's choice: the workflow regenerates at the template's inputs (its own state, its own query), and
+  // the view takes the template's stand and filters in the same update, so the canvas is made once.
+  const chooseTemplate = (name: string) => {
+    const chosen = wf.templates.find((t) => t.name === name);
+    if (!chosen) return;
+    wf.selectTemplate(name);
+    setPreset(null);
+    setFilterSet(chosen.filters);
+  };
+  const pickPicture = (file: File | null) => setPicture(file ? { url: URL.createObjectURL(file), name: file.name } : null);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -57,6 +91,8 @@ export function App() {
 
   // The star sample runs every stage, so it is only asked for where stars are drawn: the Galaxy
   // tab. The preview shows fields only, at every checkpoint including the last two.
+  // The staged preview keeps its three stands; while the Galaxy view is at a template's camera it shows the oblique one.
+  const previewPreset: Preset = preset ?? "oblique";
   const drawsStars = tab === "galaxy";
   const sampleKey = drawsStars && query ? JSON.stringify(query) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(query!, signal));
@@ -66,6 +102,8 @@ export function App() {
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
   // selector shows them; the default is the azimuthal one since S46 (D197).
   const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}` : "";
+  // The template the galaxy is, in every tab: its label, and "edited" once an input or the model has changed.
+  const galaxyName = wf.template && wf.state ? templateLabel(wf.template, wf.edited) : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
     { key: "preview", label: "Preview", title: generated ? "The staged generation: reopen a checkpoint to change the galaxy" : undefined },
     { key: "science", label: "Science" },
@@ -102,6 +140,14 @@ export function App() {
             ))}
           </div>
         )}
+        {galaxyName && (
+          <span
+            className={styles.galaxyName}
+            title={wf.edited ? `Edited from the ${wf.template!.label} template: choose it again in the Galaxy view to restore it` : wf.template!.about}
+          >
+            {galaxyName}
+          </span>
+        )}
         <span className={styles.hash} title="Run hash of the input vector · model · world seed">{hash}</span>
         <span className={styles.spacer} />
         <div className={styles.segmented} role="tablist" aria-label="View">
@@ -130,7 +176,7 @@ export function App() {
                   n={current.n}
                   meta={meta}
                   query={query}
-                  preset={preset}
+                  preset={previewPreset}
                   exposure={exposure}
                   charts={charts}
                 />
@@ -152,7 +198,7 @@ export function App() {
                   </div>
                   <div className={styles.segmented}>
                     {PRESETS.map((p) => (
-                      <button key={p} aria-pressed={p === preset} onClick={() => setPreset(p)}>
+                      <button key={p} aria-pressed={p === previewPreset} onClick={() => setPreset(p)}>
                         {p}
                       </button>
                     ))}
@@ -201,6 +247,15 @@ export function App() {
                   preset={preset}
                   onPreset={setPreset}
                   onEdit={() => setTab(EDIT_VIEW)}
+                  filterSet={filterSet}
+                  onFilterSet={setFilterSet}
+                  templates={wf.templates}
+                  template={wf.template}
+                  edited={wf.edited}
+                  onTemplate={chooseTemplate}
+                  selection={wf.selection}
+                  picture={picture}
+                  onPicture={pickPicture}
                 />
               )}
               {status}
