@@ -639,6 +639,84 @@ LEVEL0: dict[str, Constant] = {
         "flocculent 0.35. Drawn on pattern_seed as the residual a derived mean cannot carry "
         "(GALAXY_INPUTS.md 4b, verdict C).",
     ),
+    # --- the gas's own arm pattern (S51, D210; the reading is docs/READING_GAS_PATTERN.md) ---
+    "GAS_ARM_WIDTH": Constant(
+        0.17,
+        "dimensionless",
+        "Full width at half maximum of the gas's arm ridge as a fraction of the arm-to-arm period, "
+        "constant with radius. M51's gas (CO 1-0 plus HI, total hydrogen surface density) has arms "
+        "'~30 degree (FWHM) for inner arms and ~5 degree for outer arms' against the stellar mass "
+        "map's ~60 and ~30, Gaussian fits to azimuthal profiles at 240 pc [verified: Egusa et al. "
+        "2017, MNRAS 465, 460, arXiv:1610.06642, Sects. 3.1-3.2; docs/READING_GAS_PATTERN.md "
+        "Reading B]; with two arms the period is 180 degrees, so 0.17 for the gas's inner arms "
+        "against 0.33 for the stars' - the gas ridge half the stellar arm's width (the fractions are "
+        "the reader's arithmetic; the text says FWHM where Fig. 4's caption says sigma, and the text "
+        "is taken). A fraction of the period, so the absolute width grows outward as every tracer's "
+        "does. The gas pattern stage turns it into a von Mises concentration, kappa = ln 2 / (1 - "
+        "cos(pi W)) = 4.98, exact for that shape. Named alternatives: isothermal spiral shocks "
+        "0.05-0.16 of the spacing [verified: Kim & Ostriker 2002, ApJ 570, 132, Table 1]; the Milky "
+        "Way's masers (young stars, not gas) 0.30 as an FWHM [verified: Reid et al. 2019, ApJ 885, "
+        "131, Sect. 3; the fraction the reader's arithmetic]; M51's outer arms 0.03, at the beam. "
+        "Coverage: one galaxy, its inner arms (debt #129).",
+    ),
+    "GAS_ARM_MASK_WIDTH": Constant(
+        1.5,
+        "kpc",
+        "Full width, perpendicular to the arm, of the arm mask inside which the gas's ratio of means "
+        "is measured: PHANGS's masks are log-spirals traced at 3.6 micron and widened in 500 pc steps "
+        "until the CO flux gain falls below 1.25, 'typically 1-2 kpc wide', and the default where "
+        "coverage is poor is 'the median (1.5 kpc) width across the whole PHANGS sample' [verified: "
+        "Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Sect. 3.2; "
+        "docs/READING_GAS_PATTERN.md Readings A-B]. The gas pattern stage derives the ridge's "
+        "amplitude from the measured ratio over this mask, in the ridge's phase m (W/2)/(R sin p), "
+        "clamped at half the period - which a 1.5 kpc mask reaches on a four-armed disc inside 12 kpc "
+        "at the defaults, so the clamp is the source's geometry. Named alternative: the narrow masks "
+        "cut round the CO or H-alpha ridge, 'typical widths between 500 and 1000 pc, so about half "
+        "the width of the original masks' [verified: Querejeta et al. 2024, A&A 687, A293, Appendix E "
+        "and Sect. 2.6.1], whose ratio is GAS_ARM_CONTRAST_GRAND_DESIGN's narrow-mask alternative. "
+        "Coverage: the PHANGS-ALMA spirals given masks (28 of 74).",
+    ),
+    "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
+        2.73,
+        "dimensionless",
+        "Molecular gas arm-interarm contrast of grand-design spirals as a ratio of means - mean "
+        "surface density inside the arm mask over the mean in the ring outside it, per 500 pc radial "
+        "bin and spiral segment, at ~100 pc: 2.73 (16th-84th percentiles 1.37-5.79) for the 17 "
+        "grand designs [verified: Querejeta et al. 2024, A&A 687, A293, arXiv:2405.05364, Table 1 "
+        "'Nominal - Grand design spirals', Sect. 2; docs/READING_GAS_PATTERN.md Reading A]. A ratio "
+        "of means, not a peak-to-trough: the stellar amplitude (ARM_INTERARM_GRAND_DESIGN) is a "
+        "different quantity, and measured alike the gas's log contrast is 3-4 times the stars' "
+        "[verified: Meidt et al. 2021, ApJ 913, 113, abstract, Table 1]. The mean ratio runs from "
+        "GAS_ARM_CONTRAST_OTHER to here with the two-fold pattern's amplification weight, as the "
+        "stellar amplitude's does (D175). Named alternatives: 2.53 inside narrow masks round the "
+        "ridge, 1.49 at 1.5 kpc resolution (Table 1); Meidt et al. 2021's fit log C_CO = 1.41 log "
+        "C_3.6 + 0.31, a peak-type contrast; the Milky Way's inner-Galaxy molecular mass ratio ~1.5 "
+        "inside +/-10 km/s windows [verified: Colombo et al. 2022, A&A 658, A54, abstract, Sect. 5.3] "
+        "- not the default, which is a class mean with a residual. One contrast for all the gas: the "
+        "HI's 1.22 at <= 2.5 kpc resolution (Table 2) is debt #130. Coverage: 17 of 27 PHANGS spirals "
+        "with molecular contrasts.",
+    ),
+    "GAS_ARM_CONTRAST_OTHER": Constant(
+        1.90,
+        "dimensionless",
+        "Molecular gas arm-interarm ratio of means for the PHANGS spirals that are not grand designs: "
+        "1.90 (16th-84th percentiles 1.12-2.94) [verified: Querejeta et al. 2024, A&A 687, A293, "
+        "Table 1; docs/READING_GAS_PATTERN.md Reading A]. The end of the mean ratio a disc that "
+        "cannot amplify a two-fold pattern takes; the whole sample's 2.22 (1.26-4.41) is the "
+        "pooled value. Coverage: the spirals of the 28 with masks that are not among the 17 grand "
+        "designs (27 galaxies, 59 arm segments carry molecular contrasts).",
+    ),
+    "GAS_ARM_CONTRAST_LOG_SCATTER": Constant(
+        0.72,
+        "dimensionless",
+        "Half the natural-log width of the grand-design class's 16th-84th percentile range of the "
+        "molecular ratio of means, ln(5.79/1.37)/2 = 0.72 [verified: Querejeta et al. 2024, A&A 687, "
+        "A293, Table 1; docs/READING_GAS_PATTERN.md Reading A; the arithmetic is the lead's]. Drawn "
+        "log-normally on pattern_seed as the residual a derived mean cannot carry (GALAXY_INPUTS.md "
+        "4b, verdict C). The percentiles are over arm segments and radial bins, not galaxies, so the "
+        "per-galaxy draw carries the scatter within one galaxy as scatter between galaxies. The "
+        "non-grand-design class's ln(2.94/1.12)/2 = 0.48 is the named alternative.",
+    ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
         "dimensionless",

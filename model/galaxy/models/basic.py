@@ -39,6 +39,7 @@ BASIC = MODELS.register(
             ("dust", "dust"),
             ("bar", "bar"),
             ("pattern", "pattern"),
+            ("gas_pattern", "gas_pattern"),
             ("population", "population"),
             ("systems", "systems"),
             ("bright_stars", "bright_stars"),
