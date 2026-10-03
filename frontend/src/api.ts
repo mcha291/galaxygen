@@ -1,11 +1,12 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, blackbody, bright, clouds, clusters, fields, inputs, region, remnants, render, stages } from "@interface/transport.js";
+import { arrays, blackbody, bright, clouds, clusters, fields, get, inputs, region, remnants, render, stages } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
 import type { Checkpoint, InputDecl } from "./workflow/logic";
+import { type Templates, readTemplates } from "./workflow/templates";
 
 /** How many stars the galaxy view asks for: the materialised sample (D61). */
 export const STAR_SAMPLE = 20_000;
@@ -65,6 +66,15 @@ export async function loadDeclarations(
 ): Promise<{ stages: StagesPayload; inputs: InputsPayload }> {
   const [s, i] = await Promise.all([stages({ model, signal }), inputs({ model, signal })]);
   return { stages: s as StagesPayload, inputs: i as InputsPayload };
+}
+
+/**
+ * The templates (S54, D213): `/api/templates`, metadata that runs no stage (rule D4), through the transport's
+ * own `get`. **Null where the API has no such route** (a 404: an API from before S54) - the viewer then lands
+ * on the default galaxy as it did before the templates, with no switcher (workflow/templates.ts readTemplates).
+ */
+export async function loadTemplates(signal?: AbortSignal): Promise<Templates | null> {
+  return readTemplates(() => get("/api/templates", {}, { signal }));
 }
 
 /** A lighter download of a history: fewer time steps and/or 32-bit floats. The model still runs at full resolution. */
