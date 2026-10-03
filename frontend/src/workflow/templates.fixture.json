@@ -1,0 +1,61 @@
+{
+  "about": "A fixture for vitest (templates.test.ts): the shape `/api/templates` answers with, as S54's contract states it (D213 rulings 1, 2, 5 and 7). Not data the viewer runs on - the viewer's templates come from the route alone (rule D5) and nothing in src/ but the tests imports this file. The cameras, the lenses, the filter sets and the distance are D213's; every other number is illustrative.",
+  "payload": {
+    "default": "milky_way",
+    "templates": [
+      {
+        "name": "milky_way",
+        "label": "Milky Way",
+        "about": "The defaults: the galaxy every acceptance row is judged on.",
+        "model": "azimuthal",
+        "inputs": {
+          "controls": {
+            "halo_mass": 1.1e12,
+            "disc_spin": 0.0173,
+            "halo_assembly_z": 1.66,
+            "baryon_retention": 0.35,
+            "infall_timescale": 7.0,
+            "inside_out_index": 1.0,
+            "migration_efficiency": 3.6
+          },
+          "seeds": { "world_seed": 0, "pattern_seed": 0, "systems_seed": 0, "planets_seed": 0 },
+          "mergers": [
+            { "time": 3.8, "mass_ratio": 0.25, "gas_fraction": 0.5, "about": "Gaia-Enceladus/Sausage" },
+            { "time": 8.0, "mass_ratio": 0.02, "gas_fraction": 0.1, "about": "Sagittarius" }
+          ]
+        },
+        "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
+        "filters": "rgb",
+        "instrument": { "distance_mpc": null, "pixel_scale_arcsec": null },
+        "pins": [],
+        "fit": null,
+        "checks": []
+      },
+      {
+        "name": "ngc_4414",
+        "label": "NGC 4414",
+        "about": "Fitted to three measured properties of NGC 4414; five more are checked blind.",
+        "model": "azimuthal",
+        "inputs": {
+          "controls": {
+            "halo_mass": 9.0e11,
+            "disc_spin": 0.0117,
+            "halo_assembly_z": 1.66,
+            "baryon_retention": 0.33,
+            "infall_timescale": 7.0,
+            "inside_out_index": 1.0,
+            "migration_efficiency": 3.6
+          },
+          "seeds": { "world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414 },
+          "mergers": []
+        },
+        "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20, "fov_deg": 5 },
+        "filters": "wfc3",
+        "instrument": { "distance_mpc": 17.7, "pixel_scale_arcsec": null },
+        "pins": [],
+        "fit": { "targets": [], "controls": [] },
+        "checks": []
+      }
+    ]
+  }
+}

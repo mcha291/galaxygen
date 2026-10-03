@@ -23,9 +23,10 @@ export default defineConfig({
   timeout: 240_000,
   reporter: [["list"]],
   outputDir: "e2e/.output",
-  // Committed frames at stable names, one per capture and no platform suffix: e2e/frames/<name>.png, which is
-  // also the path tools/goal_metrics.py reads.
-  snapshotPathTemplate: "{testDir}/frames/{arg}{ext}",
+  // Committed pictures at stable names and no platform suffix, each at the path its capture states from
+  // frontend/ (captures.json `file`): e2e/frames/<name>.png, the path tools/goal_metrics.py reads, or a template's
+  // thumbnail under public/templates/, where the app serves it from (S54, D213 ruling 7).
+  snapshotPathTemplate: "{testDir}/../{arg}{ext}",
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     browserName: "chromium",

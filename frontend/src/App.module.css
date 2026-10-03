@@ -28,6 +28,13 @@
   color: var(--text-primary);
 }
 
+/* The template the galaxy is (S54): its label, and "edited" once it is no longer the template. */
+.galaxyName {
+  font: var(--weight-medium) var(--size-xs) / 1.4 var(--font-mono);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
 .hash {
   font: var(--weight-regular) var(--size-2xs) / 1.4 var(--font-mono);
   color: var(--text-muted);
