@@ -74,6 +74,18 @@ def test_the_gas_contrast_averages_to_one_around_every_ring(model):
     assert np.allclose(g.mean(axis=1), 1.0, atol=1e-9)
 
 
+def test_every_ring_keeps_its_gas_on_a_coarse_phi_grid(model):
+    """Sampled at cell centres on 36 cells, a four-armed ridge's ninth harmonic aliases onto the grid: 6e-4 of the
+    ring's mean, found by Phase 2's builder at S51. The stage divides such a ring by its sampled mean, and leaves
+    the default grid's field the closed form bit for bit (nothing there aliases)."""
+    coarse = run(model, grid=GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36), only=("gas_density_contrast",))
+    g = np.asarray(coarse.fields["gas_density_contrast"])
+    assert np.all(g >= 0.0) and float(np.abs(g.mean(axis=1) - 1.0).max()) < 1e-12
+    o = out(model)
+    closed = shape_of(model, o).contrast(o.grid.R, o.grid.phi)
+    np.testing.assert_array_equal(np.asarray(o.fields["gas_density_contrast"]), closed)
+
+
 def test_the_sector_means_average_to_one_and_are_exact(model):
     """Twelve sectors at four radii: their mean is the ring's, 1; and each sector's mean is the
     dense numerical average of contrast_at over it (the series is exact to its dropped tail)."""

@@ -103,7 +103,7 @@ const VERTEX = /* glsl */ `
 // composed front to back, each with its exact columns: the stars in front of the dust are not dimmed by it,
 // and an inclined view shows the dark lane inside the stellar disc.
 //
-// The dust round each ring (S50, D207): the render's placement — the pattern's contrast, the dust's column at
+// The dust round each ring (S50, D207): the render's placement — the gas's own contrast since D210, the dust's column at
 // a cell over its ring's mean — multiplies the ring's depth, thermal light and diagnostic where the sub-step
 // reads them. The march is unchanged: a multiplication of what it already read.
 //

@@ -69,6 +69,12 @@ _THETA = -math.pi + (np.arange(PHASE_CELLS) + 0.5) * (2.0 * math.pi / PHASE_CELL
 _ORDER = np.argsort(np.abs(_THETA), kind="stable")
 
 
+RING_MEAN_TOLERANCE = 1e-12  # a sampled ring mean further from 1 than this is renormalised (a coarse phi grid)
+
+
+RING_MEAN_TOLERANCE = 1e-12  # a sampled ring mean further from 1 than this is renormalised (a coarse phi grid)
+
+
 def kappa_for_width(width: float) -> float:
     """The von Mises concentration whose full width at half maximum is ``width`` of the period.
 
@@ -262,9 +268,16 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     names = ("gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length")
     shape = GasPattern.from_fields({k: ctx.fields[k] for k in names}, ctx.constants)
     flat = shape is None or shape.flat
-    return {
-        "gas_density_contrast": np.ones((R.size, ctx.grid.phi.size)) if flat else shape.contrast(R, ctx.grid.phi),
-    }
+    if flat:
+        return {"gas_density_contrast": np.ones((R.size, ctx.grid.phi.size))}
+    field = shape.contrast(R, ctx.grid.phi)
+    # Every ring keeps its gas on any grid. Sampled at cell centres, the ridge's harmonics alias where the
+    # arm number times a harmonic equals the cell count: nothing on the default 360 cells, 6e-4 of the ring's
+    # mean on 36 cells with four arms (the ninth harmonic). A ring whose sampled mean has left 1 is divided
+    # by it; one that has not is untouched, so the default grid's field is the closed form bit for bit.
+    mean = field.mean(axis=1, keepdims=True)
+    off = np.abs(mean - 1.0) > RING_MEAN_TOLERANCE
+    return {"gas_density_contrast": np.where(off, field / np.where(off, mean, 1.0), field)}
 
 
 GAS_PATTERN = IMPLEMENTATIONS.register(

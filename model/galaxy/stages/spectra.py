@@ -32,7 +32,7 @@ filter whose curve peaks at 1 passes a line at its peak whole.
   exactly rather than on a grid (§3). Only Hα is published per cell today (``nebular``);
   [O III], [S II] and [N II] wait on the photoionization grid (D184) and are listed as absent,
   not as zero (rule B9). Since S39 (V2) the line is two volumetric components: the HII
-  regions' share placed around each ring by the pattern's contrast in the clouds' layer, and
+  regions' share placed around each ring by the gas's own contrast (S51, D210) in the clouds' layer, and
   the diffuse gas's in its own published layer (``api/service.py``'s render).
 - *Dust* (S39, BUILD_II V2; the orchestrator's ruling (a), D113). Three components from one
   grain model, the one the ``dust`` stage read its albedo, g and opacity from: Draine's

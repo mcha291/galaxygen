@@ -11,11 +11,11 @@
 // disc; the dust, with its own and its scattered light, in the gas's layer, whose height the model
 // publishes ring by ring since D206 (S50) — a few tens of parsecs in the inner disc, flaring outward —
 // so an inclined view sees a dark lane inside the stellar disc (until then it shared the stars' one
-// height); the HII regions' Hα, placed round each ring by the pattern's contrast, in the clouds' layer;
+// height); the HII regions' Hα, placed round each ring by the gas's own contrast (D210), in the clouds' layer;
 // the diffuse gas's Hα in its own published 1.4 kpc layer, which a tilted view sees brighten toward
 // the limb. The dust dims each filter by its own depth from the grain model's curve, and since D207 its
-// column round each ring follows the pattern's contrast, as the model places it (`dust_placement`): heavier on
-// an arm than between arms, each ring's total unchanged.
+// column round each ring follows the model's placement (`dust_placement`): the gas's own contrast since D210, a
+// narrow ridge on each arm's crest, each ring's total unchanged.
 //
 // **What the field regime still invents at galaxy scale: nothing structural.** The seeded Hα knots,
 // the clump lattice, the dust's lead onto the arms' inner edge, the line's and the dust's crowding
@@ -105,7 +105,7 @@ export interface PlaneFields {
   dustHeight?: ArrayLike<number> | number | null;
   /**
    * The dust's column at each (R, φ) cell over its ring's mean, row-major over (R, φ) (`dust_placement`, D207):
-   * the pattern's contrast, placed by the model. Missing, or not a number at a cell, is an even ring there: 1.
+   * the gas's own contrast since D210, placed by the model. Missing, or not a number at a cell, is an even ring there: 1.
    */
   dustPlacement?: ArrayLike<number> | null;
   /**

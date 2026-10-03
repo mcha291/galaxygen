@@ -156,15 +156,15 @@ def test_the_v2_balance_holds_at_the_audit_mesh(svc, model):
 
 def test_the_line_layers_and_the_s42_lines_sum_to_their_fields_at_the_audit_mesh(svc, model):
     """Exact identities: HII + DIG = the published nebular Hα per ring; the S42 line component through SHO is the
-    [S II] pair in red and [O III] in blue, placed by the contrast; Hβ in both layers is Hα over the decrement at
+    [S II] pair in red and [O III] in blue, placed by the gas's own contrast (S51, D210); Hβ in both layers is Hα over the decrement at
     the gas's temperature; and each ring's [N II] over Hα is the census's own Hα-weighted ratio there (nebular.ring_ratios)."""
     header, arrays = _render(svc, model.name, SHO)
     names = ("hbeta", "oiii_5007", "nii_6583", "sii_6716", "sii_6731")
     f = _scalars(svc, model.name, "halpha_surface_brightness_nebular", "halpha_surface_brightness_hii", "halpha_surface_brightness_dig",
-                 "pattern_density_contrast", "hbeta_surface_brightness_dig", *(f"{n}_surface_brightness_hii" for n in names))
+                 "gas_density_contrast", "hbeta_surface_brightness_dig", *(f"{n}_surface_brightness_hii" for n in names))
     ring = arrays["halpha_hii"][..., 1].mean(axis=1) + arrays["halpha_dig"][:, 1]
     assert ring == pytest.approx(f["halpha_surface_brightness_nebular"], rel=1e-12, abs=0.0)
-    placed = np.maximum(f["pattern_density_contrast"], 0.0)
+    placed = np.maximum(f["gas_density_contrast"], 0.0)
     sii = (f["sii_6716_surface_brightness_hii"] + f["sii_6731_surface_brightness_hii"])[:, None] * placed
     assert np.allclose(arrays["lines_hii"][..., 0], sii, rtol=1e-12, atol=0.0)
     assert np.allclose(arrays["lines_hii"][..., 2], f["oiii_5007_surface_brightness_hii"][:, None] * placed, rtol=1e-12, atol=0.0)
