@@ -867,7 +867,8 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     offset_decl, angle_decl = on.decls["cloud_source_offset"], on.decls["cloud_source_angle"]
     text = offset_decl.conserves
     assert text == angle_decl.conserves and text.startswith("The cloud's mass and the cluster's mass: the column places, it does not weigh.")
-    for phrase in ("249 pc against a 75 pc radial step", "1 610 of 12 930 clusters (12.5 %, 43.8 % of the cluster mass)",
+    for phrase in ("by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
+                   "1 610 of 12 930 clusters (12.5 %, 43.7 % of the cluster mass)",
                    "157 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
@@ -882,12 +883,13 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
     assert int(moved.sum()) == 1610 and moved.mean() == pytest.approx(0.125, abs=5e-4)
-    # The share of the cluster mass that crosses: 0.43747, which the declaration prints as 43.8 %.
+    # The share of the cluster mass that crosses: 0.43747, printed as 43.7 % (the gate's text carried the review's 43.8).
     assert mass[moved].sum() / mass.sum() == pytest.approx(0.4375, abs=5e-4)
     edges, _ = sy.cell_edges(R)
     assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 157
-    # "the offset reaches 249 pc": the largest radial displacement of a cluster from its cloud. The offset's own
-    # length reaches 265 pc (it is not all radial); it is the radial part that crosses rings.
+    # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
+    # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
+    # 249 pc"; the declaration says which of the two each number is (D214, the close).
     assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(248.5, abs=0.1)
     assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(265.2, abs=0.1)
 

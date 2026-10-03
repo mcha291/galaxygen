@@ -8979,3 +8979,45 @@ draw makes it hold for realised totals too. **Asked:** approve A10's last senten
 no ring total of any field and no expected ring total of any census; realised census totals are conserved from L1
 (D214 G1)" — or bring the ring-first draw forward, before P1? Until answered, A10 stands as the owner approved it
 and the record here says where the code falls short of it.
+
+**The gate's changes, applied (2026-10-04; builders B and D resumed; the lead's documents).** All fourteen.
+1–2, 13–14 (the lead's): BUILD_III §1c rule 2, §1d I1, I2, I4 and §1e amended to Fable's wording, each with what it
+read before; L1's text gains the ring-first draw and P1's the note that its phases are a new draw; ruling 1's
+sentence struck through in place; #137 opened, #95 and #110 extended; the predictions reported above.
+3. `FieldDecl(composed=True, neutral=1.0)` on the three φ fields; nothing reads the axes; `compose.field` takes
+   the neutral from the declaration; I1's test walks it and a tiny model holds the two cases the axes rule got
+   wrong (an undeclared φ field is bit-identical; a composed field of neutral 2 is 2).
+4. `CLOUD_INTERIOR_OCTAVES`, `_LACUNARITY`, `_GAIN` (4, 2.0, 0.5) are level-0 constants under #110; their
+   FieldDecls are gone and a layer-on run's fields are S54's name for name again (332 / 331). `/api/clouds`'
+   header carries `cloud_interior: {octaves, lacunarity, gain}` — the one constant-bearing key of the API, named
+   as the exception in the service's text and in a test — and the viewer reads it there, accepts no other shape,
+   and draws smooth clouds with a note when it is absent.
+5–6. The offset's and the angle's `conserves` say what they do not keep; each of the four columns' about names
+   `systems_seed` and L1. **Two of the gate's numbers are corrected to the measurement**: the handoff's "the offset
+   reaches 249 pc" was the largest *radial displacement* of a cluster from its cloud (248.5 pc; the offset's own
+   length reaches 265 pc), and "43.8 %" of the cluster mass is 43.7 % (0.43747). The declaration, #95 and the test
+   carry the measured ones; the quotations of the gate above are left as given.
+7–8. I4's test names `{nebular, bubbles}`, derived from the graph, and a third binner built in the test is found;
+   the source test holds `ArmPattern(` and `GasPattern(` to the two pattern modules and `compose.py`.
+9. Row 37's miss leads with the layer-off reading and keeps its history; `test_s45_diagnosis` runs layer-off,
+   seven pins re-read (the published gradient −0.1055 → −0.1030; 119 → 136 regions outside the age grid; the age
+   path 0.0005 → −0.0059; the U path 0.0034 → −0.0005). **Its conclusion holds, and "−0.0957 either way" was
+   wrong by a digit**: the metallicity path's product is −0.0957 layer-off and −0.0956 on the layer-on census.
+10. Every array of the render is held to its ring in one of three named groups: placed (R, φ) components, even
+   round the ring layer-off and ring totals equal to 1e-12; per-ring components, bit-identical; and one census
+   statistic, `lines_hii`, which does not keep its ring (up to a factor of six in a thin ring on the production
+   grid) and is #137's.
+11–12. The composed fields' abouts, the render header under `layer: off`, `run.py`, the `/api` text and
+   `texture_seed`'s about say what holds: every *expected* ring total, no radial field but the census
+   statistics. `CENSUS_STATISTICS` is the measured fourteen, each naming its stage, its census and its function.
+
+**I5, measured on screen.** Physics only against layered, the Milky Way template's field frame: 1.0026 / 1.0012 /
+0.9994 in R, G, B; starlight alone with the whole disc in frame 1.00003 (the frame's edge at 20 kpc and the
+dust's non-linear extinction are the rest). The seven committed frames are byte-identical on the combined state,
+and the wire test walks sixteen requests under the switch, every one `layer=off`.
+
+**Checks.** `python -m galaxy.specs`: 12 / 20 / 5 of 37 for both models, judged layer-off; the template checks
+0 / 5, the five disclosed misses' numbers unchanged to their printed digits; determinism reproducible for each
+model with the layer on and off; convergence 0 drifts. Timings (`tools/timings.py`, cold): `clouds: whole disc`
+0.81 s on, 0.54 off; `render: whole, rgb` 2.38 / 2.17; `cloud_texture` 0.07 s. Register 75 open = 11 + 64, 45
+discharged (#137). vitest 212 → 261. Next numbers: D215, #138, board row 56, acceptance row 38.

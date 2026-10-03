@@ -25,7 +25,7 @@ on the randomness layer's own seed" forbids. The contradiction stands until L1 m
 of the four declarations says so. ``texture_seed`` is not read here.
 
 **What the offset does not keep** (gate G1, change 5). The source's offset and direction place the cluster; the
-offset reaches 249 pc against a 75 pc radial step, so a cluster can stand in another ring than its cloud, and what
+offset moves a cluster by up to 249 pc in radius against a 75 pc radial step, so it can stand in another ring than its cloud, and what
 the stages that bin clusters by radius publish moves with it. The two declarations say so with the numbers; there
 is no clamp in Phase R, because no value moves in Phase R.
 
@@ -119,8 +119,9 @@ _CONSERVES_GRADIENT = (
 # Measured at S55 on the production grid at the default inputs, the layer on.
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S55 the offset reaches 249 pc against a 75 pc radial step and puts 1 610 of 12 930 "
-    "clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 157 in another cell ring than their "
+    "its cloud's ring: at S55 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
+    "against a 75 pc radial step and puts 1 610 of 12 930 "
+    "clusters (12.5 %, 43.7 % of the cluster mass) in another radial ring and 157 in another cell ring than their "
     "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
     "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
 )

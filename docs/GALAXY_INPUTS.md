@@ -3028,8 +3028,8 @@ never been judged in twenty-three sessions.
    **S55 (D214, gate G1):** the four columns of the cloud's internal structure — the source's offset and angle,
    the density gradient and its angle — are now *synthetic*, published by the layer stage `cloud_texture` on the
    same streams and with the same values, their statistic "none read" under this debt. **The offset does not keep
-   a cluster in its cloud's ring**: it reaches 249 pc against a 75 pc radial step and puts 1 610 of 12 930
-   clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 157 in another cell ring, so a ring's
+   a cluster in its cloud's ring**: it moves a cluster by up to 249 pc in radius (its own length reaches 265 pc)
+   against a 75 pc radial step and puts 1 610 of 12 930 clusters (12.5 %, 43.7 % of the cluster mass) in another radial ring and 157 in another cell ring, so a ring's
    realised cluster mass, and what the HII and bubble stages bin from it, move with it; L1 (S60) decides whether
    the offset is bounded to the cell or the cluster is binned by its cloud's ring. `cloud_height` is as unsourced
    and stays seeded (BUILD_III Appendix B): whether a cloud's height is a placement, and so the layer's, or a
