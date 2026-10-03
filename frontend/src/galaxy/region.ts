@@ -5,8 +5,8 @@
 // cell-and-index path, so the same cloud is the same at every approach and at every level (§5c, D181).
 // Nothing here is physics the model does not publish: the noise is a construction that realises the
 // published one-point distribution. Since S55 (D214 §5; rule D5 as amended) its three parameters - the octave
-// count, the lacunarity and the gain - are the model's too, read from `/api/clouds`' header with the census,
-// and with the randomness layer off (the header's `layer`) the interior is smooth (region.test.ts).
+// count, the lacunarity and the gain - are the model's too, read from `/api/clouds`' header (`cloud_interior`)
+// with the census, and with the randomness layer off (the header's `layer`) the interior is smooth (region.test.ts).
 
 /**
  * The hierarchy level a view `across` kpc wide asks for: level 0 down to the stars handover (4 kpc),
@@ -55,9 +55,10 @@ export function valueNoise(x: number, y: number, z: number, seed: number): numbe
 /**
  * The cloud interior's noise as the model publishes it (S55, D214 §5; rule D5 as amended): how many octaves of
  * the value noise are summed, the ratio of one octave's frequency to the last one's, and of its amplitude.
- * **The viewer holds none of the three**: `/api/clouds` carries them in its header's `scalars` with the census
- * they belong to (the layer stage `cloud_texture`'s synthetic scalars), and the interior is evaluated with what
- * arrived - here and in the shader alike (`regionFragment`).
+ * **The viewer holds none of the three**: they are constants of the model - parameters of a synthetic function,
+ * the same with the layer on and off, and so no stage's scalars (gate G1's ruling) - and `/api/clouds` carries
+ * them in its header under `cloud_interior`, with the census they belong to. The interior is evaluated with what
+ * arrived, here and in the shader alike (`regionFragment`).
  */
 export interface Interior {
   octaves: number;
@@ -65,19 +66,19 @@ export interface Interior {
   gain: number;
 }
 
-/** The three scalars' names in `/api/clouds`' header. */
-export const INTERIOR_SCALARS = { octaves: "cloud_interior_octaves", lacunarity: "cloud_interior_lacunarity", gain: "cloud_interior_gain" } as const;
+/** The key of `/api/clouds`' header that carries the three: `{"octaves": 4, "lacunarity": 2.0, "gain": 0.5}`. */
+export const INTERIOR_KEY = "cloud_interior";
 
 /**
- * The published parameters, read from a clouds header's scalars; null where the header carries no usable set
- * (an API from before S55 publishes none): a whole number of octaves, at least one, and a positive finite
- * lacunarity and gain. Nothing is filled in for a number that is not there.
+ * The published parameters, read from a clouds header's `cloud_interior`; null where the header carries no
+ * usable set (an API that publishes none): a whole number of octaves, at least one, and a positive finite
+ * lacunarity and gain. Nothing is filled in for a number that is not there, and no other place in the header is
+ * looked in: the three stood among `scalars` for a few commits of S55, and that shape is gone.
  */
-export function interiorOf(scalars: unknown): Interior | null {
-  const s = (scalars ?? {}) as Record<string, unknown>;
-  const octaves = s[INTERIOR_SCALARS.octaves];
-  const lacunarity = s[INTERIOR_SCALARS.lacunarity];
-  const gain = s[INTERIOR_SCALARS.gain];
+export function interiorOf(header: unknown): Interior | null {
+  const carried = (header as Record<string, unknown> | null | undefined)?.[INTERIOR_KEY];
+  if (typeof carried !== "object" || carried === null || Array.isArray(carried)) return null;
+  const { octaves, lacunarity, gain } = carried as Record<string, unknown>;
   const positive = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
   if (!positive(octaves) || !Number.isInteger(octaves) || !positive(lacunarity) || !positive(gain)) return null;
   return { octaves, lacunarity, gain };
@@ -136,11 +137,11 @@ export function interiorNoise(published: Interior | null): InteriorNoise | null 
  * A smooth cloud keeps its mass, its radius and its mean column: the density ratio is 1 where the noise's
  * log-normal factor has mean 1.
  */
-export function cloudInterior(layerOff: boolean, scalars: unknown): { noise: InteriorNoise | null; note: string | null } {
+export function cloudInterior(layerOff: boolean, header: unknown): { noise: InteriorNoise | null; note: string | null } {
   if (layerOff) return { noise: null, note: null };
-  const published = interiorOf(scalars);
+  const published = interiorOf(header);
   if (!published) {
-    return { noise: null, note: "cloud interiors are drawn smooth: this API publishes no cloud-interior noise (cloud_interior_octaves, _lacunarity, _gain), and the viewer holds none of its own" };
+    return { noise: null, note: "cloud interiors are drawn smooth: this API publishes no cloud-interior noise (/api/clouds' header carries no cloud_interior), and the viewer holds none of its own" };
   }
   const noise = interiorNoise(published);
   if (noise) return { noise, note: null };
