@@ -20,7 +20,8 @@ const RANGES: Record<string, [number, number, number]> = {
   inside_out_index: [0, 3, 4],
   migration_efficiency: [0, 8, 4],
 };
-const SEEDS: Record<string, number> = { world_seed: 1, pattern_seed: 3, systems_seed: 5, planets_seed: 6 };
+// The seeds and their checkpoints, as /api/inputs declares them: five since S55 (D214), the layer's own at the pattern's.
+const SEEDS: Record<string, number> = { world_seed: 1, pattern_seed: 3, systems_seed: 5, planets_seed: 6, texture_seed: 3 };
 
 function fresh(model = "azimuthal"): FlowState {
   const milkyWay = parseTemplates(PAYLOAD).templates[0];
@@ -47,7 +48,7 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
     expect(ngc.filters).toBe("wfc3");
     expect(ngc.instrument).toEqual({ distance_mpc: 17.7, pixel_scale_arcsec: null });
     expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null });
-    expect(ngc.inputs.seeds).toEqual({ world_seed: 4414, pattern_seed: 4414, systems_seed: 4414, planets_seed: 4414 });
+    expect(ngc.inputs.seeds).toEqual({ world_seed: 4414, pattern_seed: 4414, systems_seed: 4414, planets_seed: 4414, texture_seed: 4414 });
     expect(ngc.inputs.mergers).toEqual([]);
     expect(milkyWay.inputs.mergers).toHaveLength(2);
     expect(templateOf(got, "ngc_4414")).toBe(ngc);
@@ -153,6 +154,36 @@ describe("landing on a template (rule D1 as amended)", () => {
     expect(state.values.disc_spin).toBe(0.0117); // the controls open at the template's values
     expect(state.values.world_seed).toBe(4414);
     expect(isEdited(state, "azimuthal", ngc)).toBe(false); // reopened, nothing changed: still the template's inputs
+  });
+});
+
+describe("the fifth seed, texture_seed (S55, D214): the rail and the templates are data-driven", () => {
+  const { templates } = parseTemplates(PAYLOAD);
+  const [milkyWay, ngc] = templates;
+
+  it("stands at the checkpoint /api/inputs declares it at, beside the pattern's seed, with no code naming it", () => {
+    const state = fresh();
+    expect(state.cat.inputs.get("texture_seed")).toMatchObject({ kind: "seed", checkpoint: 3, default: 0 });
+    expect(state.cat.checkpoints.find((c) => c.n === 3)?.inputs).toEqual(["pattern_seed", "texture_seed"]);
+    // What a reroll at the checkpoint draws: both of its seeds (the rail names each, Workflow.tsx).
+    expect(flow.seedsAt(state, 3)).toEqual(["pattern_seed", "texture_seed"]);
+    expect(state.values.texture_seed).toBe(0);
+  });
+
+  it("takes a template's value and sends it: the query carries the fifth seed", () => {
+    const landed = landOn(fresh(), ngc);
+    expect(landed.values.texture_seed).toBe(4414);
+    expect((flow.query(landed) as Record<string, unknown>).texture_seed).toBe(4414);
+    expect((flow.query(landOn(fresh(), milkyWay)) as Record<string, unknown>).texture_seed).toBe(0);
+  });
+
+  it("is an input like the others: rerolled, the galaxy is no longer the template", () => {
+    const open = reopen(landOn(fresh(), ngc), 3).state;
+    const both = flow.reroll(open, flow.seedsAt(open, 3), (name: string) => (name === "texture_seed" ? 7 : 8)) as FlowState;
+    expect([both.values.pattern_seed, both.values.texture_seed]).toEqual([8, 7]);
+    const alone = flow.reroll(open, ["texture_seed"], () => 7) as FlowState;
+    expect([alone.values.pattern_seed, alone.values.texture_seed]).toEqual([4414, 7]);
+    expect(isEdited(alone, "azimuthal", ngc)).toBe(true);
   });
 });
 
