@@ -116,7 +116,74 @@ class CheckMiss:
 # template name -> check name -> its recorded miss. An entry is the lead's: it carries the debt's
 # number, which is taken when the entry is written (never reserved), e.g.
 #     "ngc_4414": {"curve_shape": CheckMiss(debt=<n>, since="S54", reason="...", prediction="...")},
-CHECK_MISSES: Mapping[str, Mapping[str, CheckMiss]] = {}
+CHECK_MISSES: Mapping[str, Mapping[str, CheckMiss]] = {
+    # S54 (D213, as amended at the gate): all five read on the refit, every verdict disclosed. No third fit of
+    # this template is made in the build, so each miss stands until the model changes under it.
+    "ngc_4414": {
+        "curve_shape": CheckMiss(
+            debt=132,
+            since="S54",
+            reason=(
+                "0.653 against [0.71, 0.86]: the curve falls too far. The fit holds the peak down by assembling "
+                "the halo as late as the range allows (the assembly epoch on its bound), and a halo that weak "
+                "leaves the outer curve low: the peak and the shape pull the one control opposite ways."
+            ),
+            prediction=(
+                "A halo whose concentration can fall without its outer mass falling - the concentration floor, or "
+                "the concentration-mass relation - lifts the shape toward the window at the same peak; a shape "
+                "that stays low with the assembly epoch inside its range kills this."
+            ),
+        ),
+        "star_formation_rate": CheckMiss(
+            debt=134,
+            since="S54",
+            reason=(
+                "0.653 against [1.8, 4.7] Msun/yr: no fit target measures a history, so the two history controls "
+                "are the Milky Way's, and at them a disc this compact has burnt its gas."
+            ),
+            prediction=(
+                "With a gas measurement among the targets (the reader's own split, the owner's to order) the "
+                "history controls are measured and the rate rises with the gas; a rate still under 1.8 at the "
+                "measured hydrogen mass kills this and puts the miss in the star formation law."
+            ),
+        ),
+        "hydrogen_mass": CheckMiss(
+            debt=134,
+            since="S54",
+            reason=(
+                "4.80e9 against [7.4, 14.7]e9 Msun: the same reservoir as the star formation rate's miss. The "
+                "window also holds HI beyond the model's 30 kpc edge (28 % of it lies past 20.6 kpc)."
+            ),
+            prediction="As the star formation rate's: the two move together or the reading of one cause is wrong.",
+        ),
+        "absolute_magnitude_k": CheckMiss(
+            debt=135,
+            since="S54",
+            reason=(
+                "-23.27 against [-24.62, -24.12], 0.85 mag faint, with the stellar mass 0.06 dex under the "
+                "measured one: about 0.15 mag is the mass and the rest is the model's K light per unit stellar "
+                "mass, which is low on the default galaxy too (-23.77 at 4.75e10 Msun)."
+            ),
+            prediction=(
+                "The default galaxy's K-band mass-to-light ratio read against a sourced one closes it or names "
+                "the isochrones' K band; a K light per unit mass inside the sourced range kills this."
+            ),
+        ),
+        "colour_b_v_face_on": CheckMiss(
+            debt=136,
+            since="S54",
+            reason=(
+                "0.636 against [0.72, 0.82]: the face-on frame through the dust is bluer than the catalogues' "
+                "face-on colour, as the default galaxy's is (0.57)."
+            ),
+            prediction=(
+                "The window is corrected to face-on by a formula in the axis ratio and still holds the face-on "
+                "dust; a model frame with the dust's reddening applied as the catalogues' correction leaves it "
+                "would land inside, and one that stays bluer than 0.72 puts the miss in the stars' colour."
+            ),
+        ),
+    },
+}
 
 
 # --- the evaluation ------------------------------------------------------------------------
