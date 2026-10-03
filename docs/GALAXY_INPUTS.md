@@ -693,9 +693,9 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128 | 55 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130 | 57 |
 
-So the board's **66 open** is 11 permanent and 55 carried, and no item is unruled. (S22
+So the board's **68 open** is 11 permanent and 57 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3514,6 +3514,30 @@ never been judged in twenty-three sessions.
    (`dust_placement`), as the stars are, and the heating is still the ring's mean column's. In the same mixed
    slab, with light and dust both placed, the absorbed power is 1.26 % more over the disc and 4.1 % more at R₀
    `[verified: tests/test_dust_layer.py]`; the closure above must take the placement with the layers.
+129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
+   the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
+   galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
+   465, 460, Sects. 3.1–3.2; docs/READING_GAS_PATTERN.md, reading B]` — and its outer arms read 0.03, the paper's figure
+   caption calls the fitted width σ where its text says FWHM, and no sample-wide distribution of gas ridge widths
+   against the spacing was found (PHANGS's ridge masks are 500–1000 pc without a spacing; the Milky Way's maser arms
+   trace young stars, 0.30 FWHM of the spacing, and its ¹³CO clouds 579 pc inflated by kinematic distances). So the
+   width is a constant with no seeded residual (§4b: a residual needs a measured spread), and the lane the picture
+   draws is as wide as M51's inner arms say. **Carried.** What closes it: a sample-wide measurement of the gas ridge's
+   width over the arm-to-arm spacing with its spread (the PHANGS ridge masks against their galaxies' arm numbers would
+   do), the constant's mean re-read and the spread drawn on `pattern_seed`. What kills the reading: Egusa's bars being σ,
+   which would make the ridge 0.39 of the period, wider than the model's stellar cosine's half-maximum.
+130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
+   contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
+   and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
+   dust-to-gas ratio (ism). The atomic gas is measured "typically ∼10 % lower than the H2 contrast" at a matched beam
+   and 1.22 (1.01–1.79) at ≤ 2.5 kpc resolution, a lower bound `[verified: Querejeta et al. 2024, A&A 687, A293, Table 2;
+   docs/READING_GAS_PATTERN.md, reading A]`; M51's HI holds 1.6 ± 0.3 flat over 10 kpc `[verified: Vlahakis et al.
+   2013, MNRAS 433, 1837, Table 5]`. Where the disc is atomic — outside the molecular ring, `gas_molecular_surface_density`
+   a small share of the column — the dust's placement overstates the arm's share of the column by the difference.
+   **Carried.** What closes it: the ism stage's molecular fraction per ring weighting two contrasts, the molecular one on
+   the ridge and the atomic one from a source read at arm-width resolution, into one placement; the dust diagnostic
+   re-read outside R₀. What kills the reading: a matched-resolution HI contrast equal to the molecular one, which would
+   make this a resolution artefact and the one-contrast model right.
 
 
 ---
