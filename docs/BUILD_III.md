@@ -1,6 +1,6 @@
 # BUILD_III — the third build: two templates, a physics model beside a randomness layer, and the pictures they are for
 
-**Status: ADOPTED 2026-10-03 (the owner: "adopt the plan"); rulings 2, 7, 8 and 10 of §7 are still open.** Written
+**Status: ADOPTED 2026-10-03 (the owner: "adopt the plan"); all ten rulings of §7 are answered.** Written
 that day on the owner's word ("please create a plan …") and revised the same
 day on the owner's word — "Fable usage is limited … make sure only work that really benefits from using Fable uses
 that, and push the rest to Opus": every row is now Opus-led, and Fable is called at four named gates (§3).**
@@ -95,7 +95,10 @@ applied to a realisation.**
 stages, and `compose` (law × realisation → the (R, φ) fields and placement weights). `run(model, inputs,
 layer=True)`; every route takes `layer=off`. With the layer off the composed fields are their neutral value, 1.
 **Existing draw streams keep their seeds and their values** (Phase R is behaviour-preserving); `texture_seed` feeds
-only fields this build adds.
+only fields this build adds. **`basic` is frozen** (§7, ruling 7): it stays registered and is not merged; no phase
+is required to keep it working beyond Phase R, which uses it once as the oracle for I1 (the layer-off `azimuthal`
+against `basic`, field for field). Where a later phase would need work to keep a `basic`-parametrised test green,
+the test is narrowed to `azimuthal` and the decision says so.
 
 ---
 
@@ -225,6 +228,9 @@ entries of `RESEARCH_AREAS.md` (directions a–h) and `VIEWER_TASKS.md` (T1, T5�
   (§7, ruling 6). The goal pictures are read from `docs/goals/` where present; the baseline table records their
   numbers, never the pictures.
 
+**Development-only tools (§7, ruling 10):** Pillow in the Python dev group, Playwright in the frontend's dev
+dependencies; neither is imported by `model/galaxy/`.
+
 **Agents:** builder A (`goal_metrics` and its tests), builder B (T12's harness). **Gate:** the metrics return known
 values on synthetic inputs; a baseline table — both goals, both of today's renders — in D212.
 
@@ -240,8 +246,15 @@ bounded search of the seven controls against the measured properties, residuals 
 picture" beside the render at a stated band and scale (T16 ii) — **the picture is a file the user picks from disk;
 none is bundled or committed** (§7, ruling 5).
 
+**NGC 4414's five checks (§7, ruling 8).** The reader fixes a window for each of about eight measured properties
+**before any model output for the template exists** (blind, D113). The fit uses some — rotation speed, scale
+length, stellar mass — and **five the fit never sees** are the checks — by default gas mass, star formation rate,
+integrated colour, absolute magnitude and the rotation curve's shape, the lead choosing from what the reading
+supports. They are reported in their own table beside the 37 rows, never among them, judged with the layer off; a
+failure is a recorded miss with its debt (B5), not a reason to refit.
+
 **Gate:** `milky_way` reproduces the defaults bit for bit; the fit's residuals are published and none is tuned
-away; a timings row; vitest on the switcher; a capture of each template beside its goal.
+away; the five checks read and recorded, pass or miss; a timings row; vitest on the switcher; a capture of each template beside its goal.
 
 **Agents:** one reader; builder A (model, API, fit tool); builder B (viewer).
 
@@ -259,8 +272,8 @@ away; a timings row; vitest on the switcher; a capture of each template beside i
 4. **Appendix B applied**: the four cloud columns and the viewer's cloud noise relabelled synthetic with their
    three declarations (the statistic "none read" is a debt, not an excuse: #95 and #110 stay open); every other
    site keeps its kind. **No stream changes its seed or its value.**
-5. `azimuthal` and `basic`: if the layer-off run of `azimuthal` equals `basic` field for field, the lead recommends
-   one model with the switch (§7's ruling 7) and does not collapse them itself.
+5. `basic` as the oracle, once: the layer-off run of `azimuthal` equals `basic` field for field (I1's independent
+   check). `basic` is then frozen and not merged (§7's ruling 7); if the two differ, that is a finding for G1.
 
 **Gate:** bit-identical outputs with the layer on; I1–I5 green; the layer-off acceptance table read once and
 recorded (rows 35 and 37 move to their uniform-placement values and then stay). **Then G1.**
@@ -443,15 +456,15 @@ any conditional gate a stop condition opens.
 | # | Question | The owner's answer |
 |---|---|---|
 | 1 | Adopt the plan and its numbering, Opus leading every row, Fable at the four gates | **"adopt the plan"** |
-| 2 | The fourth kind, *synthetic*, and the layer's five rules, in Appendix A's wording | **Open**: "elaborate on what this quantity is" — explained in chat; awaits the word. Blocks A10's amendment and Phase R, not Phase 0's instruments or Phase T |
+| 2 | The fourth kind, *synthetic*, and the layer's five rules, in Appendix A's wording | **"yes"**, after asking what the quantity is: a label for randomness that places structure the physics cannot, apart from measured scatter and from sampling |
 | 3 | `RENDER_PHYSICS.md` §8 and rule D5 amended, in Appendix A's wording | **"approved"** |
 | 4 | Templates (rules A5 and D1): the viewer lands on `milky_way`; a template may carry pins | **"approved"** |
 | 5 | The goal images committed to this public repository | **"don't commit"**: `docs/goals/` is ignored by git; the pictures are the owner's local files |
 | 6 | A headless browser installed for the picture test | **"yes"** |
-| 7 | `basic` and `azimuthal` as one model with the layer switch, if Phase R shows them identical | **Open**: "what two model variant?" — explained in chat; awaits the word. Blocks nothing before Phase R's close |
-| 8 | NGC 4414's checks: a small table of blind windows, or display only | **Open**: "please elaborate" — explained in chat; awaits the word. Blocks Phase T's reading brief |
+| 7 | `basic` and `azimuthal` as one model with the layer switch | **Not merged: "seems better to just ignore basic from now on, not worth spending effort on merging it unless there's something it does better than azimuth".** `basic` is frozen: no new work targets it (§1e) |
+| 8 | NGC 4414's checks: a small table of blind windows, or display only | **"yes, do 5"**: five checks, fitted apart (Phase T) |
 | 9 | Pictures first (V5, V6 before Phase R)? | **"no, lets finish model part first"**: §6 reordered |
-| 10 | The dependency rule stays numpy-only | **Open**: "is there another that you'd want to use" — answered in chat: the runtime stays numpy-only; two development-only tools are proposed (an image decoder for `goal_metrics`, the browser automation ruling 6 allows) and await the word |
+| 10 | The dependency rule stays numpy-only | **"ok"**: the runtime stays numpy-only; two development-only tools are allowed — Pillow, to read pictures in `goal_metrics`, and Playwright, for the picture test |
 
 ---
 

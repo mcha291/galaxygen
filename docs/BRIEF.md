@@ -2,7 +2,7 @@
 
 **The state (2026-10-03).** S51 and S52 are merged (D210, D211): the gas has its own arm pattern and the dust is
 heated in the geometry it is drawn in. **`session-53` is open and holds `docs/BUILD_III.md`, the third build, adopted by
-the owner on 2026-10-03; four of its ten rulings are still open (below).** Register 69 open = 11 + 58, 45 discharged. Specs
+the owner on 2026-10-03, all ten of its rulings answered (BUILD_III §7).** Register 69 open = 11 + 58, 45 discharged. Specs
 12 / 20 / 5 of 37.
 
 **Why a third build.** The owner put two goal pictures in `docs/goals/` (an artist's Milky Way; Hubble's NGC 4414)
@@ -17,11 +17,11 @@ limited (the owner): every row of the plan is Opus-led, and Fable is called at f
 `uv run python tools/bootstrap.py`. S52's close ran the full suite (`EXIT=0`) and `verify_clone` on `main` (OK at
 551bbbf); a session opened in a fresh context runs both again before new work.
 
-## The owner's rulings so far (BUILD_III §7 holds the table; record it as D212)
-**Answered 2026-10-03:** 1 adopted; 3 and 4 approved; 5 "don't commit" (`docs/goals/` is git-ignored); 6 yes;
-9 the model's phases first. **Open, explained in chat, awaiting the word:** 2 (the fourth kind — blocks A10's
-amendment and Phase R), 7 (one model with a switch), 8 (NGC 4414's checks — blocks Phase T's reading brief),
-10 (two development-only tools). Ask before the phase each blocks.
+## The owner's rulings (BUILD_III §7 holds the table and the owner's words; record it as D212)
+1 adopted. 2 the fourth kind, *synthetic*: yes. 3 and 4 approved. 5 the goal pictures are not committed
+(`docs/goals/` is git-ignored). 6 a headless browser: yes. 7 `basic` is ignored from now on, not merged. 8 five
+checks for NGC 4414, fitted apart. 9 the model's phases before the viewer's. 10 numpy-only at runtime; Pillow and
+Playwright as development-only tools.
 
 ## Then: Phase 0 (this session, an Opus lead; no Fable gate)
 The rule amendments in `RULES.md` and `RENDER_PHYSICS.md`, **verbatim from BUILD_III's Appendix A**; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the
