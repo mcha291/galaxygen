@@ -1,5 +1,5 @@
 {
-  "about": "The picture test's capture list (T12, BUILD_III Phase 0; the templates since S54, D213 ruling 7): each entry is one picture of the React viewer's Galaxy view of a template, taken by e2e/picture.spec.ts on headless Chromium and compared with its committed file. Data, not code: a capture is added here and its picture written by `npm --prefix frontend run picture:update`. Each template is taken at its own camera, lens and filter set, in both modes, and once small: its thumbnail, which the app's switcher serves. The pictures are display captures, never acceptance rows (C6, D113).",
+  "about": "The picture test's capture list (T12, BUILD_III Phase 0; the templates since S54, D213 ruling 7): each entry is one picture of the React viewer's Galaxy view of a template, taken by e2e/picture.spec.ts on headless Chromium and compared with its committed file. Data, not code: a capture is added here and its picture written by `npm --prefix frontend run picture:update`. Each template is taken at its own camera, lens and filter set, in both modes, and once small: its thumbnail, which the app's switcher serves. Since S55 (D214, invariant I5) the default template is taken once more with the randomness layer off, through the viewer's 'physics only' switch. The pictures are display captures, never acceptance rows (C6, D113).",
   "fields": {
     "name": "The capture's name, lower-case letters, digits, underscores and hyphens: the template's name, a hyphen, and what the picture is.",
     "template": "The template captured, by its name in /api/templates. The test chooses it in the viewer's switcher, as a user would; the default one is the template the viewer lands on.",
@@ -7,6 +7,7 @@
     "mode": "field or stars: the Rendering buttons 'field' and 'star-first' (GalaxyTab's two modes).",
     "filters": "The template's filter set, one of the viewer's (src/galaxy/filters.json and instruments.json `sets`), as /api/templates states it.",
     "viewport": "The picture's side in pixels: square, at a device pixel ratio of 1. A thumbnail is drawn at its own size, not scaled down from a frame.",
+    "layer": "Present only on a capture taken with the randomness layer off (S55, D214: invariant I5), and then \"off\": the test presses the viewer's own 'physics only' switch, holds every request made after it to layer=off, and compares the frame's summed light with the same view's with the layer. Absent, the layer is on, the viewer's default: every other capture.",
     "file": "Where the picture is committed, from frontend/: e2e/frames/<name>.png for a frame (the path tools/goal_metrics.py reads), public/templates/<template>.png for a thumbnail (where the app serves it from: src/workflow/templates.ts thumbnailOf).",
     "pending": "Present only while the picture cannot be taken: says what it waits on. The test skips the capture until the API serves its template, and tests/test_picture.py refuses the mark once the model has templates."
   },
@@ -28,6 +29,16 @@
       "filters": "rgb",
       "viewport": 1024,
       "file": "e2e/frames/milky_way-stars.png"
+    },
+    {
+      "name": "milky_way-physics-only",
+      "template": "milky_way",
+      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
+      "mode": "field",
+      "filters": "rgb",
+      "viewport": 1024,
+      "layer": "off",
+      "file": "e2e/frames/milky_way-physics-only.png"
     },
     {
       "name": "milky_way-thumbnail",

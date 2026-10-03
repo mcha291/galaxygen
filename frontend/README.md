@@ -59,6 +59,37 @@ inputs, camera, lens and filter set come from `/api/templates` (rule D5).
   The file is shown through an object URL: it never leaves the browser, and no
   picture is bundled.
 
+## Physics only (S55, D214)
+
+The viewer's half of invariant I5: a switch in the Galaxy panel, under
+"Rendering", off by default. On, the galaxy is drawn from the physics model
+alone - `layer=off` on every request the Galaxy view makes for model data.
+
+- **One place adds it:** `galaxy/layer.ts` `layerQuery`, called once, in
+  `App.tsx`. The result is the query the star sample and the Galaxy tab take,
+  and every loader below spreads the query it is given, so a loader added
+  later sends the switch without knowing of it. With the switch off the
+  workflow's own query is passed on untouched: no `layer` parameter at all.
+- **One place checks the answer:** every binary route in `api.ts` is called
+  through `route`, which holds the header's echoed `layer` to the one asked
+  for. A frame made under the other setting (an API from before S55 echoes
+  nothing) is refused - thrown, so it is not drawn (`useLoad` drops what it
+  showed before), and reported, so the page says so and offers the way back.
+- **Display state, not an input:** it is no part of the workflow's query. The
+  run hash is the input vector's and does not move; the top bar adds
+  "· physics only" after it while the Galaxy tab is drawn that way. A template
+  is not "edited" by it, and "Edit galaxy" keeps it. **The staged Preview and
+  the Science tab do not follow it**: they show the model as it is generated,
+  with the layer.
+- **The cloud interior** (`galaxy/region.ts`, rule D5 as amended): the noise's
+  octave count, lacunarity and gain are read from `/api/clouds`' header
+  (`cloud_interior_octaves`, `_lacunarity`, `_gain`) with the census they
+  belong to, and written into the march's shader from there. The viewer keeps
+  one measured number, the summed octaves' standard deviation, with the
+  parameter set it was measured for; a census that publishes another set, or
+  none, is drawn smooth and the page says why. With the layer off the
+  interior is smooth: each cloud its published mass in its published radius.
+
 ## The picture test (T12)
 
 The Galaxy view of each template, captured on headless Chromium and compared
@@ -81,6 +112,15 @@ npm --prefix frontend exec -- playwright install chromium   # once per machine: 
   `public/templates/<template>.png`, a render of its own size and not a frame
   scaled down. A picture is the canvas as displayed, after the bloom and the
   tone curve, with none of the page over it.
+- **The layer off (S55):** one more frame, `milky_way-physics-only`, is
+  `milky_way-field`'s view with the "physics only" switch pressed (the list's
+  `layer: "off"`; every other entry omits the key). The test presses the real
+  control, holds every request made after it to `layer=off`, then releases it
+  and compares the two frames' summed linear light: the model conserves each
+  ring's totals, so the sums agree to a quarter of a percent (the frame's edge
+  and the dust account for the rest: `e2e/settings.ts` `LAYER_SUM_TOLERANCE`).
+  A last test, not a capture, walks both modes and a region under the switch
+  and holds every request for model data to `layer=off`.
 - **How:** `e2e/picture.spec.ts` chooses the template in the viewer's switcher
   and the mode by its button, as a user would, and uses two instruments on
   `window` (`GalaxyView.tsx`): `__galaxygenCapture`, whose `where()` reads the
