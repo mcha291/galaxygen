@@ -8493,3 +8493,6 @@ not move (colour, dark fraction, slope).
 **Checks.** Opened on a clean clone of `session-53` at 9e0b4ad: 997 passed, 3 skipped, the specs OK, `EXIT=0`
 (31 min). No stage's cost changed, so no cold timings are owed (B2). Register unchanged: 69 open = 11 + 58, 45
 discharged; no debt opened. Specs 12 / 20 / 5 of 37, S52's. Next numbers: D213, #132, board row 54, acceptance row 38.
+
+**The close (2026-10-03).** The suite on the combined state: 1048 passed, 4 skipped, `EXIT=0` (37 min; the 51 new tests
+are the two instruments'); the specs OK, 12 / 20 / 5 of 37 for `azimuthal`, as at S52. The picture run: 4 passed.
