@@ -82,9 +82,10 @@ alone - `layer=off` on every request the Galaxy view makes for model data.
   the Science tab do not follow it**: they show the model as it is generated,
   with the layer.
 - **The cloud interior** (`galaxy/region.ts`, rule D5 as amended): the noise's
-  octave count, lacunarity and gain are read from `/api/clouds`' header
-  (`cloud_interior_octaves`, `_lacunarity`, `_gain`) with the census they
-  belong to, and written into the march's shader from there. The viewer keeps
+  octave count, lacunarity and gain are constants of the model, read from
+  `/api/clouds`' header (`cloud_interior: {octaves, lacunarity, gain}`, not
+  among its `scalars`) with the census they belong to, and written into the
+  march's shader from there. The viewer keeps
   one measured number, the summed octaves' standard deviation, with the
   parameter set it was measured for; a census that publishes another set, or
   none, is drawn smooth and the page says why. With the layer off the
@@ -120,7 +121,10 @@ npm --prefix frontend exec -- playwright install chromium   # once per machine: 
   ring's totals, so the sums agree to a quarter of a percent (the frame's edge
   and the dust account for the rest: `e2e/settings.ts` `LAYER_SUM_TOLERANCE`).
   A last test, not a capture, walks both modes and a region under the switch
-  and holds every request for model data to `layer=off`.
+  and holds every request for model data to `layer=off`. It is the one place
+  the region regime is exercised (no capture stands that close), so it also
+  holds the cloud census's header to `cloud_interior` and sees the region's
+  clouds drawn with that noise, not smooth with a note.
 - **How:** `e2e/picture.spec.ts` chooses the template in the viewer's switcher
   and the mode by its button, as a user would, and uses two instruments on
   `window` (`GalaxyView.tsx`): `__galaxygenCapture`, whose `where()` reads the
@@ -148,9 +152,10 @@ npm --prefix frontend exec -- playwright install chromium   # once per machine: 
   a frame from one renderer is not a gate on another. Measured at S53 on two
   of the captures, SwiftShader against the RTX 4070: a quarter of the pixels
   differ by 1/255, and 0.09 % (face-on, field) and 0.16 % (inclined, stars) by
-  more than 2/255 - at the tolerance below, one on each side of it. Four
-  captures take about 30 s on the GPU (4-10 s each) and 13-29 s each on
-  SwiftShader.
+  more than 2/255 - at the tolerance below, one on each side of it. Measured
+  at S55 on the GPU: the seven captures take 4-11 s each and the wire test
+  about 20 s, some 70 s for the eight tests. On SwiftShader a capture took
+  13-29 s (S53).
 - **The tolerance** (`e2e/settings.ts`): a pixel is different beyond 0.01 of
   pixelmatch's colour distance (about 2/255 in every channel) and a frame fails
   beyond 0.1 % of its pixels. Measured at S53: a capture run again is the same

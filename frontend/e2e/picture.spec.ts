@@ -240,6 +240,9 @@ async function release(page: Page, label: string) {
   await expect(button).toHaveAttribute("aria-pressed", "false");
 }
 
+/** A galaxy-bin/1 frame's header: the magic, the header's length, the header (interface/transport.js decode). */
+const wireHeader = (body: Buffer) => JSON.parse(body.subarray(8, 8 + body.readUInt32LE(4)).toString("utf-8")) as Record<string, unknown>;
+
 /** The requests for model data among `asked`: those to a route that takes an input vector. */
 const forModelData = (asked: Asked[]) => asked.filter((a) => INPUT_ROUTES.includes(a.route));
 
@@ -393,8 +396,18 @@ for (const capture of CAPTURES) {
 // catalogue, its whole-disc clusters and the cloud census, then a region's stars, clusters, clouds, remnants and
 // render - and holds every request for model data made after the switch was pressed to layer=off. Nothing is
 // compared as a picture here.
+//
+// It is also the one place the region regime is exercised: no capture stands that close. So it holds the cloud
+// census's header to the shape the viewer reads the interior noise from (`cloud_interior`, gate G1's ruling:
+// constants of the model under their own key, not a stage's scalars) and sees that, with the layer back, the
+// region's clouds are drawn with that noise - a header the viewer cannot read it from is drawn smooth, and says so.
 test("physics only on the wire: every request for model data carries layer=off, in both modes and in a region", async ({ page }) => {
   const net = watchApi(page);
+  // Every /api/clouds header the page is answered with (a request the page gave up on has no body to read).
+  const censuses: Promise<Record<string, unknown> | null>[] = [];
+  page.on("response", (r) => {
+    if (new URL(r.url()).pathname === "/api/clouds" && r.ok()) censuses.push(r.body().then(wireHeader, () => null));
+  });
   await page.setViewportSize(CHOOSING_VIEWPORT);
   await page.goto("/");
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
@@ -430,4 +443,20 @@ test("physics only on the wire: every request for model data carries layer=off, 
   const after = forModelData(net.asked.slice(released));
   expect(after.length).toBeGreaterThan(0);
   expect(after.filter((a) => a.layer !== null), "requests naming the layer after the switch was released").toEqual([]);
+
+  // The cloud census, as it was answered under each setting: the interior noise's three parameters under
+  // `cloud_interior`, with the layer on and off alike, and none of them among the scalars.
+  const headers = (await Promise.all(censuses)).filter((h): h is Record<string, unknown> => h !== null);
+  expect([...new Set(headers.map((h) => h.layer))].sort(), "the settings /api/clouds was answered under").toEqual(["off", "on"]);
+  for (const header of headers) {
+    const interior = header.cloud_interior as Record<string, unknown> | undefined;
+    expect(interior, `/api/clouds (layer ${String(header.layer)}) carries no cloud_interior`).toBeDefined();
+    expect(Object.keys(interior!).sort()).toEqual(["gain", "lacunarity", "octaves"]);
+    for (const value of Object.values(interior!)) expect(typeof value).toBe("number");
+    expect(Object.keys((header.scalars ?? {}) as object).filter((name) => name.startsWith("cloud_interior")), "interior parameters among the scalars").toEqual([]);
+  }
+  // And the viewer read them there: the region's clouds are drawn with the published noise, not smooth with a note.
+  await expect(page.getByRole("button", { name: "stars", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/cloud interiors are drawn smooth/)).toHaveCount(0);
+  console.log(`physics only on the wire: ${headers.length} cloud censuses, each with cloud_interior ${JSON.stringify(headers[0].cloud_interior)}`);
 });

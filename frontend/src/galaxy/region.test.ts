@@ -7,7 +7,7 @@ import {
   CLOUD_SAMPLES,
   ERG_S_CM3_TO_LSUN_PC3,
   FIELD_SIGMA_MEASURED,
-  INTERIOR_SCALARS,
+  INTERIOR_KEY,
   type InteriorNoise,
   KIND,
   LEVEL_KPC,
@@ -33,10 +33,12 @@ import {
 } from "./region";
 import { REGIME_KPC } from "./regimes";
 
-// What `/api/clouds`' header carries under `scalars` (S55, D214 §5), as the model answers today - with the layer
-// on and off alike - beside the census's other scalars. A fixture of the route's shape: the viewer's interior is
-// evaluated with whatever arrives, and these are the values the pins below were computed at.
-const PUBLISHED = { cloud_extinction_v: 2.9696, cloud_interior_octaves: 4, cloud_interior_lacunarity: 2, cloud_interior_gain: 0.5 };
+// What `/api/clouds`' header carries (S55, D214 §5 as gate G1 ruled it): the interior noise's three parameters
+// under `cloud_interior` - constants of the model, the same with the layer on and off, and no stage's scalars -
+// beside the census's scalars. A fixture of the route's shape: the viewer's interior is evaluated with whatever
+// arrives, and these are the values the pins below were computed at (JSON's 2.0 is the number 2).
+const INTERIOR = { octaves: 4, lacunarity: 2.0, gain: 0.5 };
+const PUBLISHED = { layer: "on", scalars: { cloud_extinction_v: 2.9696 }, cloud_interior: INTERIOR };
 const NOISE = interiorNoise(interiorOf(PUBLISHED))!;
 
 describe("the level the view asks for", () => {
@@ -113,20 +115,33 @@ describe("the seeded noise", () => {
 });
 
 describe("the cloud interior's parameters are the model's (S55, D214 section 5; rule D5 as amended)", () => {
-  it("reads the three from the clouds header's scalars and fills nothing in", () => {
+  it("reads the three from the clouds header's cloud_interior and fills nothing in", () => {
+    expect(INTERIOR_KEY).toBe("cloud_interior");
     expect(interiorOf(PUBLISHED)).toEqual({ octaves: 4, lacunarity: 2, gain: 0.5 });
-    expect(Object.values(INTERIOR_SCALARS)).toEqual(["cloud_interior_octaves", "cloud_interior_lacunarity", "cloud_interior_gain"]);
+    // the header as the wire carries it, parsed: {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
+    expect(interiorOf(JSON.parse('{"layer": "off", "cloud_interior": {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}}'))).toEqual({ octaves: 4, lacunarity: 2, gain: 0.5 });
     // whatever the model publishes is what is read: another set arrives as itself
-    expect(interiorOf({ cloud_interior_octaves: 6, cloud_interior_lacunarity: 2.5, cloud_interior_gain: 0.4 })).toEqual({ octaves: 6, lacunarity: 2.5, gain: 0.4 });
-    // an API from before S55 publishes none, and a number that is not there is not invented
-    expect(interiorOf({ cloud_extinction_v: 2.9696 })).toBeNull();
+    expect(interiorOf({ cloud_interior: { octaves: 6, lacunarity: 2.5, gain: 0.4 } })).toEqual({ octaves: 6, lacunarity: 2.5, gain: 0.4 });
+    // an API that publishes none, and a number that is not there, is not invented
+    expect(interiorOf({ layer: "on", scalars: { cloud_extinction_v: 2.9696 } })).toBeNull();
     expect(interiorOf(undefined)).toBeNull();
+    expect(interiorOf(null)).toBeNull();
+    for (const carried of [null, 4, "4, 2, 0.5", [4, 2, 0.5], {}]) expect(interiorOf({ cloud_interior: carried })).toBeNull();
     for (const [key, bad] of [
-      ["cloud_interior_octaves", 3.5], ["cloud_interior_octaves", 0], ["cloud_interior_octaves", "4"], ["cloud_interior_lacunarity", Number.NaN],
-      ["cloud_interior_lacunarity", 0], ["cloud_interior_gain", -0.5], ["cloud_interior_gain", Number.POSITIVE_INFINITY], ["cloud_interior_gain", null],
+      ["octaves", 3.5], ["octaves", 0], ["octaves", "4"], ["octaves", undefined], ["lacunarity", Number.NaN],
+      ["lacunarity", 0], ["gain", -0.5], ["gain", Number.POSITIVE_INFINITY], ["gain", null],
     ] as const) {
-      expect(interiorOf({ ...PUBLISHED, [key]: bad })).toBeNull();
+      expect(interiorOf({ ...PUBLISHED, cloud_interior: { ...INTERIOR, [key]: bad } })).toBeNull();
     }
+  });
+
+  it("does not read the shape that is gone: the three among the header's scalars are not parameters", () => {
+    // For a few commits of S55 the three were a layer stage's scalars; gate G1 made them constants under their own
+    // key. One shape is read, not both: a header of the old shape publishes, to this viewer, no interior noise.
+    const old = { layer: "on", scalars: { cloud_extinction_v: 2.9696, cloud_interior_octaves: 4, cloud_interior_lacunarity: 2, cloud_interior_gain: 0.5 } };
+    expect(interiorOf(old)).toBeNull();
+    expect(interiorOf(old.scalars)).toBeNull();
+    expect(cloudInterior(false, old)).toEqual({ noise: null, note: expect.stringMatching(/publishes no cloud-interior noise \(\/api\/clouds' header carries no cloud_interior\)/) });
   });
 
   it("reproduces, to the bit, what the viewer drew while the parameters were its own", () => {
@@ -171,10 +186,10 @@ describe("the cloud interior's parameters are the model's (S55, D214 section 5; 
       expect(interiorNoise(other)).toBeNull();
     }
     expect(cloudInterior(false, PUBLISHED)).toEqual({ noise: NOISE, note: null });
-    const unmeasured = cloudInterior(false, { ...PUBLISHED, cloud_interior_octaves: 6 });
+    const unmeasured = cloudInterior(false, { ...PUBLISHED, cloud_interior: { ...INTERIOR, octaves: 6 } });
     expect(unmeasured.noise).toBeNull();
     expect(unmeasured.note).toMatch(/drawn smooth: the model publishes a noise of 6 octaves, lacunarity 2, gain 0.5, and the viewer's normaliser was measured for 4, 2, 0.5/);
-    const unpublished = cloudInterior(false, { cloud_extinction_v: 2.9696 });
+    const unpublished = cloudInterior(false, { layer: "on", scalars: { cloud_extinction_v: 2.9696 } });
     expect(unpublished.noise).toBeNull();
     expect(unpublished.note).toMatch(/publishes no cloud-interior noise/);
   });

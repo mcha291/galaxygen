@@ -120,7 +120,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     texture.magFilter = NearestFilter;
     // The clouds' interiors (S55): the noise this census's own header publishes, or smooth - the physics alone
     // where the header says the layer is off, and where there is no noise the viewer can evaluate (said in `note`).
-    const interior = cloudInterior(echoedLayer(clouds.header) === "off", clouds.header.scalars);
+    const interior = cloudInterior(echoedLayer(clouds.header) === "off", clouds.header);
     const fragment = regionFragment(interior.noise);
     const material = (mode: number) =>
       new ShaderMaterial({

@@ -120,9 +120,11 @@ describe("the header's echo, checked where every frame is read", () => {
   });
 
   it("hands on a frame that echoes what was asked, header and all", async () => {
-    echo = (params) => ({ ...honest(params), scalars: { cloud_interior_octaves: 4 } });
+    echo = (params) => ({ ...honest(params), scalars: { cloud_extinction_v: 2.9696 }, cloud_interior: { octaves: 4, lacunarity: 2.0, gain: 0.5 } });
     const census = await loadClouds({ ...WINDOW, level: 1 }, layerQuery(QUERY, true));
     expect(census.header.layer).toBe("off");
-    expect(census.header.scalars).toEqual({ cloud_interior_octaves: 4 });
+    expect(census.header.scalars).toEqual({ cloud_extinction_v: 2.9696 });
+    // the interior noise's parameters ride under their own key, with the layer off as with it on (region.ts interiorOf)
+    expect(census.header.cloud_interior).toEqual({ octaves: 4, lacunarity: 2, gain: 0.5 });
   });
 });
