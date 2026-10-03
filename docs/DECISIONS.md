@@ -7994,3 +7994,131 @@ suite and without `verify_clone`**: the last full suite (`EXIT=0`) ran on D207's
 changed no Python — `interface/transport.js` gained one export, the rest is the React viewer (vitest 176, `tsc -b`
 and `vite build` clean). The next session runs `bootstrap.py` and the suite first. `sidetrack-session-1` is pushed
 as the side track's own name; it is contained in `session-50` and so in `main`.
+
+### D210. S51: the gas's own arm pattern — a narrow ridge on the stellar arm's crest, its contrast the measured ratio of means, no offset (RESEARCH_AREAS §1 direction d; the owner's choice)
+
+**The owner, in chat, on 2026-10-03:** "let's do option 1 (the gas arm pattern)" — BRIEF's first choice, D207's "the
+gas's own pattern is a later row". **The pin is lifted for this row** (the owner, 2026-10-01, pinned the model; D207
+lifted it for the dust's placement; this row adds one stage and moves what reads the gas): every radial field and
+every acceptance row is unchanged by construction, and the catalogue's pins move where the gas moves. Written before
+any code moved (D113), after the reading session RESEARCH_AREAS §1 asked for. **The reading** — three Opus readers,
+every number read on a fetched page, the arithmetic marked as theirs — is `docs/READING_GAS_PATTERN.md`, the record
+the constants' about lines cite.
+
+**What was read.**
+1. *The gas's arm–interarm contrast is a ratio of means inside a mask, never a peak-to-trough.* The one sample-wide
+   measurement is PHANGS's: molecular Σ inside the arm mask over the ring outside it, **2.22** (16th–84th percentile
+   1.26–4.41) over 27 spirals and 59 arm segments at ~100 pc, the masks "typically ∼1−2 kpc" wide; **2.73** (1.37–5.79)
+   for the 17 grand designs and **1.90** (1.12–2.94) for the rest; 2.53 inside narrow masks cut round the CO ridge;
+   1.49 at 1.5 kpc resolution; HI **1.22** (1.01–1.79) at ≤ 2.5 kpc resolution, "typically ∼10 % lower than the H2
+   contrast" at a matched beam; the same paper's *stellar* ratio of means **1.28** `[verified: Querejeta et al. 2024, A&A
+   687, A293, arXiv:2405.05364, Tables 1–2, Sects. 2, 2.6.1, 3.6]`. The model's stellar amplitude is Elmegreen et al.
+   2011's 1.14 mag **peak-to-trough** (a factor 2.9), a different quantity: measured alike, the gas's log contrast is
+   3–4 times the stars' `[verified: Meidt et al. 2021, ApJ 913, 113, abstract, Table 1: 84th-percentile 0.50 dex in CO
+   against 0.11 dex at 3.6 µm, 67 galaxies at 150 pc]`. M51 alone reads 1.7 ± 0.5 (CO 1–0 at 600 pc) and HI 1.6 ± 0.3,
+   flat over 10 kpc `[verified: Vlahakis et al. 2013, MNRAS 433, 1837, Table 5]`, and 3.78 on PAWS's masks at 40 pc
+   `[verified: Colombo et al. 2014, ApJ 784, 3, Table 2; the ratio is the reader's arithmetic]`. The Milky Way: inner
+   Galaxy molecular mass arm/interarm **∼1.5** over −60° ≤ l ≤ 18°, the authors concluding the Galaxy "would classify
+   as flocculent" `[verified: Colombo et al. 2022, A&A 658, A54, abstract, Sect. 5.3]`; 3.6 (inner H2), 13:1 (outer CO,
+   two longitude windows) and 4 (outer HI) are read only through a review `[verified: Ferrière 2001, RMP 73, 1031,
+   Sects. II.B, III.C; the primaries not read]`.
+2. *The ridge's width.* The one paper measuring gas and stars the same way in one galaxy fits Gaussians to azimuthal
+   profiles: the gas (CO + HI) arms **≈ 30°** FWHM in M51's inner arms (r = 30–150″) and ≈ 5° in the outer, the stellar
+   mass ≈ 60° and ≈ 30° — with two arms, **0.17** of the arm-to-arm period for the gas against 0.33 for the stars, the
+   gas ridge half the stellar arm's width `[verified: Egusa et al. 2017, MNRAS 465, 460, arXiv:1610.06642, Sects. 3.1–3.2;
+   the fractions the reader's arithmetic; the text says FWHM, Fig. 4's caption says σ — the text is taken]`. PHANGS's
+   ridge masks run 500–1000 pc, "about half the width of the original masks" `[verified: Querejeta et al. 2024, Sect.
+   2.6.1]`; the original masks' median width is 1.5 kpc `[verified: Querejeta et al. 2021, A&A 656, A133, Sect. 3.2]`.
+   The Milky Way's maser arms (young stars, not gas) have σ = 336 + 36 (R − 8.15) pc `[verified: Reid et al. 2019, ApJ
+   885, 131, Sect. 3]`, a near-constant 0.13 of the perpendicular spacing with four arms; its ¹³CO clouds a median full
+   width of 579 pc, "more than a factor of two larger" than the masers' `[verified: Colombo et al. 2022, Sect. 5.3, Table
+   2]`. Theory: isothermal shocks 0.05–0.16 of the spacing `[verified: Kim & Ostriker 2002, ApJ 570, 132, Table 1]`; a 3D
+   multiphase arm 10 % `[verified: Kim, Kim & Ostriker 2010, ApJ 719, 1, abstract]`. Dust lanes themselves ≈ 150 pc,
+   ∼1 % of the spacing, at the resolution limit `[verified: Elmegreen et al. 2014, ApJ 780, 32, Sect. 5.1]`.
+3. *The offset.* Theory: if the arms are swing-amplified, "both the gas and stellar arms follow the local galactic
+   rotational velocity" and the gas condenses at the potential's bottom with no clear offset to the young stars
+   `[verified: Wada, Baba & Saitoh 2011, ApJ 735, 1, abstract, Sect. 3.2]`; "for dynamic arms, a systematic offset is not
+   expected" `[verified: Dobbs & Baba 2014, PASA 31, e035, Sect. 4]`; live discs "show no systematic radial dependence
+   of the arm-gas offsets" where a steady potential puts the lane downstream inside and upstream outside `[verified:
+   Baba, Morokuma-Matsui & Egusa 2015, PASJ 67, L4, abstract, Sect. 4]`. Observation: no systematic offset in 12 THINGS
+   galaxies `[verified: Foyle et al. 2011, ApJ 735, 101, abstract, Sect. 5]`; in PHANGS 10 of 24 galaxies show no
+   significant CO→Hα offset, 10 a positive one with no radial trend, 4 the density-wave trend; the per-galaxy mean
+   230 pc, the scatter's median 1 kpc `[verified: Querejeta et al. 2025, arXiv:2509.01668, Sects. 4–6]`; of 13 two-armed
+   galaxies 5 show the 8 µm shock inside the stellar arm, 4 no pattern, 4 unmeasurable `[verified: Kendall, Clarke &
+   Kennicutt 2015, MNRAS 446, 4155, Sect. 4.1.1]`. The Milky Way's gas tracers sit at one longitude at each tangency and
+   the old-star arm 120–530 pc outside them `[verified: Hou & Han 2015, MNRAS 454, 626, Sects. 3–4]`, against a claimed
+   fixed ordering with hot dust ∼340 pc inside the CO `[verified: Vallée 2016, ApJ 821, 53, abstract]`. Against the
+   implication itself: swing-amplified disturbances "develop wave-like properties" later `[verified: Sellwood & Masters
+   2022, ARA&A 60, 73, Sect. 5.3]`.
+
+**The rulings.**
+1. **One field, `gas_density_contrast` (R, φ)** — Σ_gas(R, φ)/Σ_gas(R), mean 1 round every ring — from a new
+   checkpoint-3 stage **`gas_pattern`**, slot `gas_pattern`, after `pattern` in both models' tuples, reading the pattern's
+   published numbers (`arm_contrast` is not among them: the gas has its own amplitude) and no gas column: it is the gas's
+   *response* to the stellar pattern and states its shape without one. Provenance seeded (it reads seeded fields and
+   draws its own residual on `pattern_seed`). One scalar beside it, **`gas_arm_contrast`**: the ratio of means the stage
+   was set to, after the draw.
+2. **The form: a von Mises ridge in the stellar arm's own phase.**
+   g = 1 + w_arm(R) · a(R) · (v(θ) − 1) + w_bar(R) · B · cos 2(φ − φ_bar), θ = m (φ − ln R · cot p),
+   v(θ) = e^{κ cos θ} / I₀(κ) (unit ring mean in closed form; numpy's `i0`); w_arm, w_bar, m, p, B and φ_bar exactly the
+   stellar pattern's (`ArmPattern._terms`). **The bar term is the stellar bar's** — the gas's response to a bar is a
+   pair of straight lanes offset to its leading edges, which is not this row (a direction added to RESEARCH_AREAS §1).
+   Ring mean 1 exactly for integer m; evaluable at a point (`contrast_at`); per sector and for the mask by a fixed
+   quadrature on the grid's own φ cells, a step count known in advance (A1); reproducible from `pattern_seed` alone.
+3. **No offset: the ridge's crest is the stellar arm's crest.** The evidence for co-rotating arms reads zero mean with
+   scatter, and the model publishes no spiral pattern speed (#81) to sign an offset with. The density-wave law
+   Δφ = (Ω − Ω_p) · t, the shock on the inner edge inside corotation, is the named alternative, recorded in the field's
+   about and not adopted. No zero-valued field is published for it (A4): the about line says so.
+4. **The width is a fraction of the arm-to-arm period**, `GAS_ARM_WIDTH` = **0.17** (FWHM over the period; Egusa 2017's
+   inner arms), constant with radius — the absolute width then grows outward as every tracer's does (Reid 2019, Honig &
+   Reid 2015, Savchenko 2020) — and κ = ln 2 / (1 − cos(π · GAS_ARM_WIDTH)) = 4.98, exact for a von Mises, no Gaussian
+   limit. The named alternatives: the shock models' 0.05–0.16, the masers' 0.30 (FWHM) for young stars, M51's outer 0.03.
+   **One galaxy's number** → debt #129.
+5. **The amplitude a is derived from the measured ratio of means with the source's own mask.** The mask is the
+   source's: `GAS_ARM_MASK_WIDTH` = **1.5 kpc** full width perpendicular to the arm (Querejeta 2021's median), in phase
+   θ_m = m · (W/2) / (R sin p), **clamped at π/2** — half the period — which is what a 1.5 kpc mask covers on a four-armed
+   disc inside 12 kpc at the defaults (the perpendicular spacing (2πR/m) sin p is 2.9 kpc at R₀), so the clamp is the
+   source's geometry, not a device. g is affine in v, so with v̄_in and v̄_out the ridge's means inside and outside the mask,
+   C = [1 + a(v̄_in − 1)] / [1 + a(v̄_out − 1)] inverts to **a = (C − 1) / [(v̄_in − 1) − C (v̄_out − 1)]**, clipped where the
+   trough would go negative (a ≤ 1/(1 − v(π))). C's mean is derived as the stellar amplitude's is (D175): the
+   non-grand-design class's `GAS_ARM_CONTRAST_OTHER` 1.90 to the grand designs' `GAS_ARM_CONTRAST_GRAND_DESIGN` 2.73 by
+   the two-fold pattern's amplification weight (`swing_weight(2, …)`, the bar stage's coherence), its residual drawn
+   log-normally on `pattern_seed` ("gas_contrast") with `GAS_ARM_CONTRAST_LOG_SCATTER` = ln(5.79/1.37)/2 = **0.72**, the
+   grand-design class's 16th–84th half-width (§4b verdict C; the percentiles are over segments and bins, so the draw
+   carries within-galaxy scatter as galaxy-to-galaxy — said in the about). Named alternatives: the narrow-mask 2.53, the
+   1.5 kpc-resolution 1.49, Meidt's log C_CO = 1.41 log C_3.6 + 0.31, and for the Milky Way SEDIGISM's 1.5 (an
+   inner-Galaxy mass ratio inside ±10 km/s windows: not the default, which is a class mean with a residual, A5 read as
+   D175 read it).
+6. **One contrast for all the gas.** The model has one gas column per ring and one dust-to-gas ratio (ism), so the
+   molecular contrast places the dust and feeds the star formation law; the HI's lower, resolution-limited 1.22 is
+   recorded as debt #130, not modelled.
+7. **What reads it.** *The render* (render-only, as BRIEF orders): `dust_placement` becomes the gas contrast, and the
+   HII regions' Hα and lines (`halpha_hii`, `lines_hii`) are placed by it — the regions sit in the clouds, which are gas;
+   the stars' components keep the stellar contrast and `sfr_modulation`; the viewer changes nothing (it multiplies what
+   the header names, D207). *The model:* `sfh_azimuthal`'s Σ_gas(R, φ) = Σ_gas(R) · g — the gas contrast is literally
+   what that stage assumed of the stellar one; the cloud census's expected counts per cell and its azimuths read the gas
+   pattern (`GasPattern.sector_means`, `.contrast`), and so, through the clouds, do the clusters, the HII regions, the
+   bubbles and the remnants. `systems` and `bright` are unchanged in code: the old stars follow the mass and the young
+   follow `sfr_modulation`, which now follows the gas.
+8. **Order of build and record.** Phase 1 the stage and its tests (an Opus builder in a worktree, D195); Phase 2 the
+   render's placement and `tests/test_dust_layer.py`'s re-read; Phase 3 `sfh_azimuthal` and the clouds with every moved
+   pin re-pinned and its before/after listed here. The suite's rows identical throughout.
+
+**Worked at the defaults (four arms, pitch 13.5°, the clamp active inside 12 kpc, the mean C before the draw).**
+κ = 4.98; v(0) = 4.93, v(π) = 2.5 × 10⁻⁴; C = 2.73 → a = 0.462, crest 3.04, trough 0.54; C = 1.90 → a = 0.308, 2.36 and
+0.69; the class's 84th percentile 5.79 → a = 0.706, 4.12 and 0.29. At 12 kpc (f = 0.34): 2.69 and 0.62. The stellar
+contrast on the same rings runs 0.60–1.40 (D207). So where D207's dust took 15 % more of an arm's light than of a gap's
+across the whole arm, the ridge now takes a narrow stripe — 0.17 of the period — out of the arm's spine and leaves its
+flanks and the gaps clearer than today.
+
+**The predictions that could fail (B4).**
+- Every ring's mean of `gas_density_contrast` is 1 to 1e-9 on the grid, per sector and at the mask; every radial field
+  and every acceptance row identical to S49's (12 / 20 / 5, the same numbers).
+- With the dust on the ridge, a ring's face-on V light **rises** where D207 saw it fall (−1.28 % at R₀): the dust leaves the
+  gaps and the arm's flanks, where most of the stars are. The gain must be positive at R₀ and under the screen's 0.89 %.
+- The dust diagnostic face-on draws a stripe narrower than the arm, centred on it; an arm's crest transmits less than
+  D207's 0.747 and a gap more than 0.874.
+- The young stars crowd tighter: the catalogue's young mean modulation (D176: 1.78 against the contrast path's 1.18)
+  rises; the cluster, HII, bubble and remnant counts move by a Poisson realisation, not in their expectation.
+- If a lane is not visible in the browser at R₀ face-on under rgb, the ruling is wrong about where the light is, not the
+  reading.
