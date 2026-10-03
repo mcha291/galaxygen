@@ -95,7 +95,7 @@ recorded after the fact (D171): their work ran on `main` between 2026-09-13 and
 > and its listing was pasted under D161 (S42's close, D192). The board said so until then,
 > which is the whole purpose of the column.
 
-**Open debts:** 66 (`GALAXY_INPUTS.md` §11). **Discharged:** 45.
+**Open debts:** 68 (`GALAXY_INPUTS.md` §11). **Discharged:** 45.
 
 > S22 ruled all 43 that were open when it started: 17 discharged, **14 ruled permanent**
 > and **12 carried**, none left unruled — and opened one of its own, #79, the acceptance
