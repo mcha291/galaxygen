@@ -9104,3 +9104,20 @@ today's bar taper"** — the largest jump of A_tot / A between neighbouring ring
 the fade from the whole power to none takes fourteen rings, about a kiloparsec, and its last steps are the square
 root's. The law is continuous in R and steep on a 75 pc grid; it is built as ruled and the jump is pinned as
 measured, not smoothed (B5).
+
+**What the plan's and the gate's text left to the lead (written before the build).**
+1. *The mask's share with several modes.* The plan's gas rule takes "the level that encloses the same share of
+   the ring the 1.5 kpc mask did". S51's share is m W / (2πR sin i), capped at a half: it needs an arm number,
+   and the fence forbids `arm_multiplicity`. **The share uses the ring's power-weighted arm number**,
+   m_eff(R) = Σ_m m A_m² / Σ_m A_m², a derived radial quantity of the law (it is m for one mode, so the regression
+   holds; it does not depend on the phases). The named alternative: count the realised crests of ψ on the ring,
+   which would make a law depend on a realisation.
+2. *One builder, not four.* The plan lists builders for the mode law, the realisation, the gas response and the
+   re-pins; they meet in three files (`pattern.py`, `gas_pattern.py`, `layer/compose.py`) and are built by one
+   agent in that order, each with its tests before the next.
+3. *The reference.* S55's bit-level reference was of S54 with the layer on; from this phase the layer-on galaxy
+   changes by design. **The reference becomes S55's layer-off run**: every field that exists in both is
+   bit-identical layer-off, except a closed, named list (`arm_multiplicity`, now derived), and the rows are judged
+   there. Layer-on, every moved pin is re-read with its old value in the comment.
+4. *The reading is a check, not an input* (the plan): one blind reader on the Fourier amplitudes of spirals by arm
+   number and radius, set beside the law's split at the close. The law is not adjusted to it.
