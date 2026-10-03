@@ -169,9 +169,16 @@ ROUTES: tuple[Route, ...] = (
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
         "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [], fit: null | {targets: "
         "[{name, label, field, unit, value, half_window, window: [lo, hi], source, model, residual}], controls: "
-        "[{name, default, fitted, lo, hi}], objective, objective_value, tool, method, date, evaluations}, checks: "
-        "[{name, label, unit, window: [lo, hi], quantity, mismatch, source}] - the windows only, never the model's "
-        "number: the verdicts are the specs' report - and sources: {<dotted path of a number>: its tag}}]}. "
+        "[{name, default, fitted, lo, hi, free, measured_by, measures, bound, finding}] - a control is free only if "
+        "a target measures it (measured_by names the target, measures says how) and is otherwise held at the "
+        "registry's default; bound is true where a free control was left on a bound of its range, which is a finding "
+        "and not a fit, written out in finding - objective, objective_value, tool, method, date, evaluations}, checks: "
+        "[{name, label, unit, window: [lo, hi], quantity, mismatch, source, standing, standing_about, first_reading}] "
+        "- the windows only, never the model's number for the template as it stands: those verdicts are the specs' "
+        "report; standing is blind or disclosed (a verdict on a fit decided after the check was first read is "
+        "disclosed, and standing_about says why), first_reading is null or {fit, value, verdict, standing, source}, "
+        "the record of the one reading spent on a fit since withdrawn - and sources: {<dotted path of a number>: "
+        "its tag}}]}. "
         "template=<name> on a route that takes inputs makes that template's inputs the base, which an input in "
         "the query still overrides; the default template is the registry's defaults, so naming it changes nothing. "
         "Runs no stage.",
@@ -641,8 +648,9 @@ def _event_json(event: MergerEvent) -> dict[str, Any]:
 def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[str, Any]:
     """A template on the wire (S54, D213): its inputs fully resolved against ``table``, in /api/inputs' shapes.
 
-    A check carries its window and never a model number; the fit's three model numbers are the committed
-    ones the template holds. Nothing here is computed from a stage (rule D4).
+    A check carries its window and never the model's number for the template as it stands - only its standing
+    and, where one was spent, the first reading on a withdrawn fit; the fit's three model numbers are the
+    committed ones the template holds. Nothing here is computed from a stage (rule D4).
     """
     resolved = _tpl.resolve(template, table)
     fit = None
@@ -660,6 +668,12 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
                 {
                     "name": name, "default": None if table[name].unset else _number(table[name].default),
                     "fitted": _number(value), "lo": table[name].lo, "hi": table[name].hi,
+                    # S54 (D213 as amended): free only if a target measures it; a free control on a bound is a finding.
+                    "free": name in template.fit.free,
+                    "measured_by": template.fit.free.get(name),
+                    "measures": template.fit.measures.get(name),
+                    "bound": name in template.fit.bounds,
+                    "finding": template.fit.bounds.get(name),
                 }
                 for name, value in resolved.items() if table[name].kind == "control"
             ],
@@ -697,6 +711,12 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             {
                 "name": c.name, "label": c.label, "unit": c.unit, "window": list(c.window),
                 "quantity": c.quantity, "mismatch": c.mismatch, "source": c.source,
+                "standing": c.standing, "standing_about": c.standing_about,
+                "first_reading": None if c.first_reading is None else {
+                    "fit": c.first_reading.fit, "value": _number(c.first_reading.value),
+                    "verdict": c.first_reading.verdict, "standing": c.first_reading.standing,
+                    "source": c.first_reading.source,
+                },
             }
             for c in template.checks
         ],

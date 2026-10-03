@@ -12,6 +12,12 @@ and its reason in :data:`CHECK_MISSES`, it still prints ``fail`` (rule B5 relaxe
 stays green on it; a failing check with no entry fails the run, and so does a recorded miss that has
 started passing — the recorded explanation is then wrong or spent.
 
+**A verdict says whether it is blind.** A check's window was fixed blind; a verdict is blind only if
+the fit it is read on was fixed before any check was read. ``ngc_4414``'s five were read once on its
+first fit ("fit A", D213), which was then withdrawn for a defect in its objective, so every verdict
+on the fit that stands is **disclosed** (D192: read is read) and prints that word in its row, with
+fit A's value and verdict - the blind reading, spent - beside it.
+
 **The colour check is the render's frame.** B − V "face-on, through the dust" is what the viewer draws
 of a face-on disc: ``/api/render``'s stars through the table's own B and V, each cell's light through
 its own mixed dust with the scattered light and the thermal emission composed in, summed over the
@@ -124,17 +130,21 @@ class Result:
     status: str
     reason: str
     value: float | None = None
+    standing: str = "blind"  # blind | disclosed: the template's own word for this check
+    first: Any = None  # the check's first reading on a withdrawn fit (templates.FirstReading), where it has one
 
 
 def judge(template: _templates.Template, check: _templates.Check, value: float | None, why: str = "") -> Result:
     """One check against its window. ``value`` None is "the model does not publish this" (rule B9)."""
+    kept = {"standing": check.standing, "first": check.first_reading}
     if value is None or not np.isfinite(value):
-        return Result(template.name, check.name, check.label, "not-yet-computable", why or "the model publishes no number for it")
+        return Result(template.name, check.name, check.label, "not-yet-computable",
+                      why or "the model publishes no number for it", **kept)
     ok = check.holds(value)
     lo, hi = check.window
     return Result(
         template.name, check.name, check.label, "pass" if ok else "fail",
-        f"{value:.6g} {'in' if ok else 'not in'} [{lo:.6g}, {hi:.6g}] {check.unit}", float(value),
+        f"{value:.6g} {'in' if ok else 'not in'} [{lo:.6g}, {hi:.6g}] {check.unit}", float(value), **kept,
     )
 
 
@@ -235,6 +245,8 @@ def report(
         "template checks",
         "  NOT acceptance rows: each is a measured property of one template's own galaxy that its fit never saw, on a",
         "  window fixed before the model's number existed (D213). Reported beside the acceptance table, never counted in it.",
+        "  A verdict marked disclosed is read on a fit decided after the check had already been read once: it is not",
+        "  blind. That first reading - blind, spent, on a fit since withdrawn - is printed beside it.",
     ]
     for name, judged in results.items():
         template = _templates.get(name)
@@ -256,7 +268,10 @@ def report(
             tag = ""
             if r.name in known and r.status == "fail":
                 tag = f" [recorded miss, debt #{known[r.name].debt}, since {known[r.name].since}]"
-            lines.append(f"    {r.name:<{width}} {r.status:<19} {r.label}: {r.reason}{tag}")
+            first = ""
+            if r.first is not None:
+                first = f"; first reading ({r.first.fit}, {r.first.standing}): {r.first.value:.6g}, {r.first.verdict}"
+            lines.append(f"    {r.name:<{width}} {r.status:<19} {r.standing:<10} {r.label}: {r.reason}{first}{tag}")
     for p in problems(results, ledger):
         lines.append(f"    FAIL {p}")
     return "\n".join(lines)

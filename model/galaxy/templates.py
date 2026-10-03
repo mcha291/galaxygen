@@ -8,7 +8,14 @@ Nothing here computes: the inputs are resolved against the registry by :func:`re
 
 **Two are registered.** ``milky_way`` is the default and overrides nothing, so it cannot drift from
 the registry's defaults (the gate: a run of it is bit-identical to a run with no inputs given).
-``ngc_4414``'s seven controls are the fit's, its merger list is empty and every seed is 4414.
+``ngc_4414`` sets the four controls its fit's targets measure and leaves the other three to the
+registry; its merger list is empty and every seed is 4414.
+
+**A fit's free set is a rule, in data** ``[verified: DECISIONS.md D213, as amended at the gate, ruling 1]``:
+a control is free only if a fit target measures what it controls, and ``Fit.free`` names that target
+beside each free control. Every other control is not stated by the template at all, so it is the
+registry's default by construction and cannot move by any amount. A free control that ends on a bound
+of its range is a finding, labelled in ``Fit.bounds`` with the finding written out (ruling 3).
 
 **Every number carries its tag** (rule B14). A target and a check carry their own ``source``; every
 other number of a template is tagged in ``sources`` under its dotted path (``camera.fov_deg``,
@@ -16,8 +23,11 @@ other number of a template is tagged in ``sources`` under its dotted path (``cam
 with the reading's source key; a display choice of the lead's is ``[inferred]``; a fitted number
 says so, with the tool, the date and the test that reproduces it.
 
-**What a template does not hold.** No model output but the fit's own three numbers: a check holds
-its window and never the model's number, which only ``python -m galaxy.specs`` prints.
+**What a template does not hold.** No model output of the galaxy as it stands but the fit's own three
+numbers: a check holds its window and never the model's number, which only ``python -m galaxy.specs``
+prints. A check does hold its **first reading** where it has one - the value read once, blind, on a
+fit since withdrawn - and its **standing**: ``disclosed`` where the fit it is judged on was decided
+after that reading (ruling 2), so no verdict on it is ever called blind.
 """
 
 from __future__ import annotations
@@ -142,11 +152,36 @@ class Target:
         return self.window[0] <= model <= self.window[1]
 
 
+STANDINGS: tuple[str, ...] = ("blind", "disclosed")
+VERDICTS: tuple[str, ...] = ("pass", "fail")
+
+
+@dataclass(frozen=True, slots=True)
+class FirstReading:
+    """A check's value as it was read once on an earlier fit of the template, since withdrawn: a record, kept
+    beside the check so the specs' report prints it next to the verdict on the fit that stands."""
+
+    fit: str  # the fit it was read on, as the decision record names it
+    value: float  # as the specs' report printed it
+    verdict: str  # pass | fail, against the same window
+    standing: str  # blind: read before any model output for the template existed
+    source: str
+
+    def __post_init__(self) -> None:
+        if self.verdict not in VERDICTS or self.standing not in STANDINGS:
+            raise TemplateError(f"a first reading's verdict is one of {VERDICTS} and its standing one of {STANDINGS}")
+        if not any(tag in self.source for tag in TAGS):
+            raise TemplateError("a first reading's source carries no tag (rule B14)")
+
+
 @dataclass(frozen=True, slots=True)
 class Check:
     """One measured property the fit never sees: its window, the model's quantity, what still differs.
 
-    It holds no model number: the result is the specs' report, never the template's data.
+    It holds no model number of the template as it stands: that result is the specs' report, never the
+    template's data. It holds its standing - ``blind`` if the fit it is judged on was fixed before any of
+    the checks was read, ``disclosed`` if not, with the sentence that says why - and the first reading where
+    one was spent on a withdrawn fit.
     """
 
     name: str
@@ -159,6 +194,9 @@ class Check:
     statistic: str
     field: str | None = None  # the published field read; None where the quantity is the render's frame
     inside_kpc: float | None = None
+    standing: str = "blind"
+    standing_about: str = ""  # one sentence: why the verdict on the fit that stands is not blind
+    first_reading: FirstReading | None = None
 
     def __post_init__(self) -> None:
         _check_window(self.name, self.window, self.source, self.statistic)
@@ -166,6 +204,15 @@ class Check:
             raise TemplateError(f"check {self.name}: the quantity and what still differs are both stated")
         if (self.field is None) != (self.statistic == "face_on_colour"):
             raise TemplateError(f"check {self.name}: a field is named exactly when the statistic reads one")
+        if self.standing not in STANDINGS:
+            raise TemplateError(f"check {self.name}: standing {self.standing!r} is not one of {STANDINGS}")
+        if (self.standing == "disclosed") != bool(self.standing_about.strip()):
+            raise TemplateError(f"check {self.name}: a disclosed check says why in one sentence, a blind one says nothing")
+        if self.first_reading is not None:
+            if self.standing != "disclosed":
+                raise TemplateError(f"check {self.name}: a check read once already is disclosed on any later fit")
+            if (self.first_reading.verdict == "pass") != self.holds(self.first_reading.value):
+                raise TemplateError(f"check {self.name}: the first reading's verdict is not its value against the window")
 
     def holds(self, model: float) -> bool:
         return self.window[0] <= model <= self.window[1]
@@ -184,16 +231,39 @@ def _check_window(name: str, window: tuple[float, float], source: str, statistic
 
 @dataclass(frozen=True, slots=True)
 class Fit:
-    """What the offline search was given and what it left (D213, ruling 3)."""
+    """What the offline search was given and what it left (D213, ruling 3 as amended at the gate).
+
+    ``free`` is the fit's free set, fixed by a rule and not by a weight: a control is free only if a target
+    measures what it controls, and the mapping names that target beside each one. No other control is the
+    search's to move. ``bounds`` labels each free control the search left on a bound of its published range,
+    with the finding written out: a value on a bound is a finding, not a fit.
+    """
 
     targets: tuple[Target, ...]
-    tiebreak: float  # the weight of the departures from the defaults in the objective
+    free: Mapping[str, str]  # free control -> the name of the target that measures it
+    measures: Mapping[str, str]  # free control -> how that target measures it, in words
+    bounds: Mapping[str, str]  # free control left on a bound -> the finding, with its debt
+    tiebreak: float  # the weight of the free controls' departures from the defaults in the objective
     objective: str  # the objective in words, with its value at the fitted point
     objective_value: float
     tool: str
     method: str
     date: str
     evaluations: int
+
+    def __post_init__(self) -> None:
+        for name in ("free", "measures", "bounds"):
+            object.__setattr__(self, name, MappingProxyType(dict(getattr(self, name))))
+        targets = {t.name for t in self.targets}
+        if not self.free:
+            raise TemplateError("a fit names its free controls: none is admitted any other way")
+        for control, target in self.free.items():
+            if target not in targets:
+                raise TemplateError(f"free control {control}: {target!r} is not one of the fit's targets")
+        if set(self.measures) != set(self.free) or not all(v.strip() for v in self.measures.values()):
+            raise TemplateError("every free control says how its target measures it")
+        if not set(self.bounds) <= set(self.free) or not all(v.strip() for v in self.bounds.values()):
+            raise TemplateError("only a free control can stand on a bound, and its finding is written out")
 
 
 @dataclass(frozen=True, slots=True)
@@ -248,6 +318,19 @@ class Template:
             if not any(tag in source for tag in TAGS):
                 raise TemplateError(f"template {self.name}: the source of {path} carries no tag (rule B14)")
         if self.fit is not None:
+            # The free set is the stated set: a control the targets do not measure is not stated, so it is the
+            # registry's default and cannot have moved; a free control on a bound is labelled, and only those.
+            if set(self.controls) != set(self.fit.free):
+                raise TemplateError(
+                    f"template {self.name}: the controls it states {sorted(self.controls)} are not the fit's free "
+                    f"set {sorted(self.fit.free)}: a control no target measures stays at the registry's default"
+                )
+            on_bound = {n for n, v in self.controls.items() if v in (table[n].lo, table[n].hi)}
+            if on_bound != set(self.fit.bounds):
+                raise TemplateError(
+                    f"template {self.name}: {sorted(on_bound)} stand on a bound and {sorted(self.fit.bounds)} are "
+                    "labelled: a value on a bound is a finding and is written out"
+                )
             fitted = {t.field for t in self.fit.targets}
             seen = fitted & {c.field for c in self.checks if c.statistic == "scalar"}
             if seen:
@@ -298,9 +381,22 @@ _READING = "READING_NGC_4414.md"
 # arcsec"; 240 x 0.08581 kpc/arcsec = 20.6 kpc].
 NGC_4414_INNER_DISC_KPC = 20.6
 _FITTED = (
-    "fitted 2026-10-04 by tools/fit_template.py ngc_4414 (D213, ruling 3) "
+    "fitted 2026-10-04 by tools/fit_template.py ngc_4414, free because a target measures it (D213 as amended at "
+    "the gate, ruling 1): a point on a plateau resolved to the model's own steps, not a minimum to the printed "
+    "precision "
     "[verified: tests/test_templates.py::test_the_committed_fit_is_where_the_search_stops_and_reproduces_its_numbers]"
 )
+# Why every verdict on the fit that stands is disclosed and none is blind (D213 as amended, ruling 2).
+_DISCLOSED = (
+    "The fit this check is judged on was decided after four of the five checks had been read on fit A, and read "
+    "is read: its verdict is disclosed, never blind (D213, amended at the gate)."
+)
+_FIT_A = "[verified: DECISIONS.md D213, 'The first reading: fit A': read once on the production grid, 2026-10-04, blind]"
+
+
+def _first(value: float, verdict: str) -> FirstReading:
+    return FirstReading(fit="fit A", value=value, verdict=verdict, standing="blind", source=_FIT_A)
+
 _SEED = (
     "[inferred] a seed has no measured value and none is chosen for the picture: every seed is the "
     "catalogue number, 4414 [verified: DECISIONS.md D213, ruling 4]"
@@ -333,29 +429,32 @@ NGC_4414 = Template(
     name="ngc_4414",
     label="NGC 4414",
     about=(
-        "An unbarred flocculent Sc spiral at 17.7 Mpc, seen at 55 degrees. Its seven controls are fitted to three "
-        "measured properties - the rotation curve's peak, the stellar disc's scale length and the stellar mass - "
-        "and what the fit could not remove is published beside them: all three land inside their windows, none on "
-        "its value, and three controls end on a bound of their range. Five more measured properties the fit never "
-        "saw are checks, judged by the specs. Nothing measures its mergers or its seeds, so the merger list is "
-        "empty and every seed is 4414. The model draws it with a bar and with regular arms: no source finds a "
-        "bar in NGC 4414 and its arms are flocculent, and a template takes its measured structure as pins only "
-        "from build phases P3 and P4 on. The position angle (159 degrees) is not applied: the camera has no roll."
+        "An unbarred flocculent Sc spiral at 17.7 Mpc, seen at 55 degrees. Three measured properties - the rotation "
+        "curve's peak, the stellar disc's scale length and the stellar mass - fit the four controls they measure: "
+        "the halo's mass, the disc's spin, the halo's assembly redshift and the share of the baryons kept. The other "
+        "three controls no target measures, so they stay at the Milky Way's values. What the fit could not remove is "
+        "published beside it: all three targets land inside their windows, none on its value, and the assembly "
+        "redshift ends on the lower bound of its range - a finding, not a fit. Five more measured properties the "
+        "fit never saw are checks, judged by the specs; they were read once on an earlier fit, since withdrawn, so "
+        "every verdict on this one is disclosed and none is blind. Nothing measures its mergers or its seeds, so the "
+        "merger list is empty and every seed is 4414. The model draws it with a bar and with regular arms: no source "
+        "finds a bar in NGC 4414 and its arms are flocculent, and a template takes its measured structure as pins "
+        "only from build phases P3 and P4 on. The position angle (159 degrees) is not applied: the camera has no roll."
     ),
     model="azimuthal",
-    # The seven controls as the fit leaves them (tools/fit_template.py ngc_4414, 2026-10-04), copied by hand
-    # from the tool's output at full precision: the search stops on a stepped objective, so a rounded value
-    # is another point. Three stand on a bound of their range - the halo assembled as late, the baryons kept
-    # as fully and the gas fallen in as fast as the ranges allow - and migration_efficiency is unmoved: the
-    # three targets do not see it. That is the fit's finding, published and not tuned away (B5).
+    # The four free controls as the fit leaves them (tools/fit_template.py ngc_4414, 2026-10-04), copied by hand
+    # from the tool's output. **They are a point on a plateau, resolved to the model's own steps - about 0.01
+    # half-windows in the objective, a few 1e-4 of a range in the controls - and not a minimum to the printed
+    # precision** (debt #133: the three target fields are stepped in halo_mass and disc_spin). The sixteen
+    # digits stay because a rounded value is another point. infall_timescale, inside_out_index and
+    # migration_efficiency are not stated: no target measures them, so they are the registry's defaults and
+    # do not move by any amount (D213 as amended at the gate, ruling 1). The first fit, which moved them, is
+    # withdrawn and kept in D213 as the first reading.
     controls={
-        "halo_mass": 589186551731.6183,
-        "disc_spin": 0.014085408391676634,
-        "halo_assembly_z": 0.5,
-        "baryon_retention": 0.5,
-        "infall_timescale": 1.0,
-        "inside_out_index": 0.45000000000000007,
-        "migration_efficiency": 3.6,
+        "halo_mass": 609546153006.4983,
+        "disc_spin": 0.014191065730401048,
+        "halo_assembly_z": 0.5,  # bound: the lower bound of its range, a finding and not a fit (Fit.bounds, debt #132)
+        "baryon_retention": 0.4918931810399049,
     },
     seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414},
     mergers=(),
@@ -380,8 +479,8 @@ NGC_4414 = Template(
                     "same line-of-sight speed deprojected at 57 degrees]. The model's number is the largest "
                     "circular speed inside 20.6 kpc [verified: DECISIONS.md D213, ruling 3]"
                 ),
-                model=238.8482146686635,
-                residual=0.14785717349308014,
+                model=239.1813996587132,
+                residual=0.17451197269705518,
             ),
             Target(
                 name="disc_scale_length",
@@ -396,8 +495,8 @@ NGC_4414 = Template(
                     "h_r = 19.22 arcsec at 3.6 micron, 1.649 kpc at 17.7 Mpc; Wat19's two inner segments span "
                     "the window with the distance bracket]"
                 ),
-                model=1.673357386927466,
-                residual=0.12178693463733017,
+                model=1.6760444551064766,
+                residual=0.1352222755323829,
             ),
             Target(
                 name="stellar_mass",
@@ -411,27 +510,50 @@ NGC_4414 = Template(
                     f"[verified: {_READING}, row 8 and window W-E; z0MGS (Leroy et al. 2019, table 4): "
                     "log M* = 10.65 +/- 0.10 at 17.7 Mpc, WISE 3.4 micron, a Kroupa-type IMF]"
                 ),
-                model=39731914953.735306,
-                residual=-0.39491554090888364,
+                model=39047506448.23065,
+                residual=-0.449668221349256,
             ),
         ),
+        free={
+            "halo_mass": "curve_peak",
+            "disc_spin": "disc_scale_length",
+            "halo_assembly_z": "curve_peak",
+            "baryon_retention": "stellar_mass",
+        },
+        measures={
+            "halo_mass": "the peak",
+            "disc_spin": "the scale length",
+            "halo_assembly_z": "the peak at a given disc, through the concentration",
+            "baryon_retention": "the stellar mass at a given halo",
+        },
+        bounds={
+            "halo_assembly_z": (
+                "the model cannot lower its inner peak enough for this disc inside the range; the concentration "
+                "floor, or the concentration–mass relation, is the debt (debt #132) "
+                "[verified: DECISIONS.md D213 as amended at the gate, ruling 3]"
+            ),
+        },
         tiebreak=1e-3,
         objective=(
             "the sum over the three targets of ((model - value) / half-window)^2, plus 0.001 times the sum over "
-            "the seven controls of ((fitted - default) / (hi - lo))^2: the tie-break keeps a control nothing "
-            "measures at the Milky Way's value and is not a prior with weight. At the fitted point it is 0.1931: "
-            "0.1927 from the targets, 0.0004 from the tie-break"
+            "the four free controls of ((fitted - default) / (hi - lo))^2: the last term breaks ties among the free "
+            "controls and does nothing else. Where the search stops it is 0.2511 - 0.2509 from the targets, 0.0002 "
+            "from the tie-break - on a plateau resolved to the model's own steps, about 0.01 half-windows in the "
+            "objective: not a minimum to the printed precision"
         ),
-        objective_value=0.19308404030467408,
+        objective_value=0.2511141040064585,
         tool="tools/fit_template.py ngc_4414",
         method=(
-            "damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step: 24 steps from the "
-            "registry's defaults, in the logarithm of each control whose range starts above zero, the targets "
-            "differenced in each coordinate at 0.04, 0.02, 0.01 of its span in turn, 4 damped trial steps solved "
-            "inside the published ranges, the lowest of the trial and differencing points taken when it is lower"
+            "damped Gauss-Newton (Levenberg-Marquardt) with a coordinate search in every step, over the free controls "
+            "only - those a target measures, named in the template's data: 24 steps from the registry's defaults, in "
+            "the logarithm of each free control whose range starts above zero, the targets differenced in each "
+            "coordinate at 0.04, 0.02, 0.01 of its span in turn, 4 damped trial steps solved inside the published "
+            "ranges, the lowest of the trial and differencing points taken when it is lower. Where it stops is a "
+            "point on a plateau resolved to the model's own steps - about 0.01 half-windows in the objective, a few "
+            "1e-4 of a range in the controls - and not a minimum to the printed precision"
         ),
         date="2026-10-04",
-        evaluations=433,
+        evaluations=289,
     ),
     checks=(
         Check(
@@ -448,6 +570,9 @@ NGC_4414 = Template(
             statistic="curve_shape",
             field="circular_velocity",
             inside_kpc=NGC_4414_INNER_DISC_KPC,
+            standing="disclosed",
+            standing_about=_DISCLOSED,
+            first_reading=_first(0.64787, "fail"),
         ),
         Check(
             name="star_formation_rate",
@@ -462,6 +587,9 @@ NGC_4414 = Template(
             ),
             statistic="scalar",
             field="sfr",
+            standing="disclosed",
+            standing_about=_DISCLOSED,
+            first_reading=_first(0.125061, "fail"),
         ),
         Check(
             name="hydrogen_mass",
@@ -476,6 +604,9 @@ NGC_4414 = Template(
             ),
             statistic="scalar",
             field="hydrogen_mass_30kpc",
+            standing="disclosed",
+            standing_about=_DISCLOSED,
+            first_reading=_first(3.72206e9, "fail"),
         ),
         Check(
             name="absolute_magnitude_k",
@@ -490,6 +621,9 @@ NGC_4414 = Template(
             ),
             statistic="scalar",
             field="absolute_magnitude_k",
+            standing="disclosed",
+            standing_about=_DISCLOSED,
+            first_reading=_first(-22.9793, "fail"),
         ),
         Check(
             name="colour_b_v_face_on",
@@ -503,13 +637,13 @@ NGC_4414 = Template(
                 "corrected to face-on and still attenuated, +/- 0.05 from the observed totals' spread]"
             ),
             statistic="face_on_colour",
+            standing="disclosed",
+            standing_about=_DISCLOSED,
+            first_reading=_first(0.818747, "pass"),
         ),
     ),
     sources={
-        **{f"inputs.controls.{name}": _FITTED for name in (
-            "halo_mass", "disc_spin", "halo_assembly_z", "baryon_retention", "infall_timescale",
-            "inside_out_index", "migration_efficiency",
-        )},
+        **{f"inputs.controls.{name}": _FITTED for name in ("halo_mass", "disc_spin", "halo_assembly_z", "baryon_retention")},
         **{f"inputs.seeds.{name}": _SEED for name in ("world_seed", "pattern_seed", "systems_seed", "planets_seed")},
         "inputs.mergers": (
             "[verified: DECISIONS.md D213, ruling 4: no merger of NGC 4414 was read, and what nothing measures is "
