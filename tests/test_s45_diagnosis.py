@@ -8,6 +8,14 @@ On the default run (``basic`` at S45; ``azimuthal`` since S46, D197, whose regio
 stage's own ring sum and the row's own fit; (e) G_Z against PP04's 1/0.57 per dex; (f) row 22 beside Z′.
 
 Re-run: ``uv run pytest -q tests/test_s45_diagnosis.py -s -p no:cacheprovider``.
+
+**Since S55 (D214, gate G1 change 9) the diagnosis reads the layer-off run**, the census the acceptance table judges
+row 37 on (invariant I3): the HII regions placed by no pattern, another draw at the same expected counts. Six pins
+moved with that redraw and say so (the published gradient, the regions below the age floor, age′, U′, the sum's
+distance from the published gradient, the regions near the inner edge) and one was re-pinned at the edge of its
+tolerance (G_U's 84th percentile). **The diagnosis's conclusion did not move**: the metallicity path's product
+G_Z · Z′ is −0.0957 layer-off (−0.0956 on the layer-on census), the age and U paths are a hundredth of it, and the
+substitution probes read the same - Z alone carries the gradient.
 """
 
 from __future__ import annotations
@@ -34,7 +42,9 @@ def models():
 
 @pytest.fixture(scope="module")
 def default(models):
-    return run(models[DEFAULT_MODEL])
+    # S55 (D214, gate G1 change 9): the diagnosis reads the census the row is judged on - the layer-off run
+    # (invariant I3). Until S55 it read the layer-on census; the pins that moved with the redraw say so below.
+    return run(models[DEFAULT_MODEL], layer=False)
 
 
 def _wmean(x: np.ndarray, w: np.ndarray) -> float:
@@ -185,7 +195,8 @@ def test_row_37s_parts(models, default):
     assert d["identity"] == pytest.approx(0.0, abs=1e-9), T  # the stage's ring sum reproduced exactly
     assert d["identity_ring"] == pytest.approx(0.0, abs=1e-9), T
     assert d["probe_reeval"] == pytest.approx(d["published"], abs=1e-9), T
-    assert d["published"] == pytest.approx(-0.1055, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.1035, the census redrawn
+    # S45 diagnosis (D196); S51 (D210): was -0.1035, the census redrawn
+    assert d["published"] == pytest.approx(-0.1030, abs=0.002)  # S55 (D214): was -0.1055, read layer-off
     assert d["n_regions"] == pytest.approx(12860, abs=130)  # S45 diagnosis (D196)
     assert d["n_fit"] == pytest.approx(5337, abs=55)  # S45 diagnosis (D196)
     assert d["n_rings"] == 96  # S45 diagnosis (D196)
@@ -201,20 +212,26 @@ def test_row_37s_parts(models, default):
     assert d["G_age_pct"] == pytest.approx((0.004, 0.074, 0.745), abs=0.02)  # S45 diagnosis (D196)
     assert d["G_age_clamped"] == pytest.approx(0.213, abs=0.02)  # S45 diagnosis (D196)
     assert d["oneside_age"] == pytest.approx(770, abs=8)  # S45 diagnosis (D196); S51 (D210): was 759, the census redrawn on the gas's ridge
-    assert d["outside_age"] == pytest.approx(119, abs=3)  # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
+    # S45 diagnosis (D196): below the 0.5 Myr floor; S51 (D210): was 126, the census redrawn on the gas's ridge
+    assert d["outside_age"] == pytest.approx(136, abs=3)  # S55 (D214): was 119, read layer-off
     assert d["G_U"] == pytest.approx(-0.378, abs=0.02)  # S45 diagnosis (D196)
-    assert d["G_U_pct"] == pytest.approx((-0.483, -0.450, -0.177), abs=0.02)  # S45 diagnosis (D196)
+    # S45 diagnosis (D196). The 84th percentile: S55 (D214): was -0.177, read layer-off (0.019 of its 0.02 tolerance)
+    assert d["G_U_pct"] == pytest.approx((-0.483, -0.450, -0.196), abs=0.02)
     assert (d["oneside_U"], d["outside_U"]) == (0, 0)  # S45 diagnosis (D196)
-    assert d["agep"] == pytest.approx(0.0005, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0081, the census redrawn on the gas's ridge
-    assert d["Up"] == pytest.approx(0.0034, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was 0.0005, the census redrawn on the gas's ridge
+    # S45 diagnosis (D196); S51 (D210): was -0.0081, the census redrawn on the gas's ridge
+    assert d["agep"] == pytest.approx(-0.0059, abs=0.002)  # S55 (D214): was 0.0005, read layer-off
+    # S45 diagnosis (D196); S51 (D210): was 0.0005, the census redrawn on the gas's ridge
+    assert d["Up"] == pytest.approx(-0.0005, abs=0.002)  # S55 (D214): was 0.0034, read layer-off
     # (c)
     assert d["P_Z"] == pytest.approx(-0.0960, abs=0.002)  # S45 diagnosis (D196)
     assert d["P_age"] == pytest.approx(0.0001, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0017, the census redrawn on the gas's ridge
     assert d["P_U"] == pytest.approx(-0.0013, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.0002, the census redrawn on the gas's ridge
     assert d["P_sum"] == pytest.approx(-0.0979, abs=0.002)  # S45 diagnosis (D196)
-    assert d["P_sum_minus_published"] == pytest.approx(0.0088, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was 0.0056, the census redrawn on the gas's ridge
+    # S45 diagnosis (D196); S51 (D210): was 0.0056, the census redrawn on the gas's ridge
+    assert d["P_sum_minus_published"] == pytest.approx(0.0062, abs=0.002)  # S55 (D214): was 0.0088, read layer-off
     # (d)
-    assert d["n_near"] == pytest.approx(786, abs=8)  # S45 diagnosis (D196)
+    # S45 diagnosis (D196)
+    assert d["n_near"] == pytest.approx(777, abs=8)  # S55 (D214): was 786 (783 on the layer-on census at S54), read layer-off
     assert d["lz0"] == pytest.approx(-0.175, abs=0.002)  # S45 diagnosis (D196); S51 (D210): was -0.170, the census redrawn on the gas's ridge
     assert d["la0"] == pytest.approx(6.365, abs=0.01)  # S45 diagnosis (D196); S51 (D210): was 6.288, the census redrawn on the gas's ridge
     assert d["lu0"] == pytest.approx(-2.145, abs=0.02)  # S45 diagnosis (D196); S51 (D210): was -2.014, the census redrawn on the gas's ridge

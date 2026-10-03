@@ -1,7 +1,9 @@
 """The randomness layer: realisations standing in for physics the model does not compute (BUILD_III section 1).
 
 The physics model publishes laws and statistics; the layer publishes realisations, on its own seed, conserving
-every total, from sourced statistics, labelled with the physics they stand in for, and evaluable at a point.
+every ring total of a field it multiplies and every expected total of a census it places (every realised one from
+L1: BUILD_III section 1c rule 2 as amended at gate G1), from sourced statistics, labelled with the physics they
+stand in for, and evaluable at a point.
 
     galaxy/layer/noise.py           the noise primitives: integer hash, value noise, octaves to a spectral slope,
                                     shear, the per-cell unit-mean log-normal map

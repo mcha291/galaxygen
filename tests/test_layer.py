@@ -5,22 +5,30 @@ Phase R is a behaviour-preserving restructure. What this file holds, in the orde
 - **Behaviour preserved.** With the layer on, every field of both models on the production grid and every array of
   every input route's body is bit-identical to the reference captured at S54's state, before any of Phase R's
   model code moved (``tests/layer_reference.py``, ``tests/layer_reference_s54.json``).
-- **I1.** With the layer off the model runs, and every field without a phi axis and every scalar that is not a
-  census statistic is bit-identical to the layer-on run. The census statistics are a closed list, here.
-- **I2.** A census's expected count per ring is the same with the layer on or off; only placements differ.
+- **I1.** With the layer off the model runs, and every field not declared composed - every scalar, every history,
+  every radial field, a phi-axis field too - is bit-identical to the layer-on run, except the census statistics, a
+  closed list here, each entry naming the census it is computed from. Every composed field is its declared neutral.
+- **I2.** A census's expected count per ring is the same with the layer on or off, to 1e-12. Until L1 the realised
+  counts, and every total summed over realised objects, differ by re-draw noise.
 - **I3.** The acceptance table and the templates' checks are judged on the layer-off run, and no row names a
   synthetic or a composed field.
 - **I4.** No physics stage requires a composed or a synthetic field: the graph refuses one that is not a declared
-  placement reader, a composing stage or a layer stage, and ``compose`` refuses it again at run time.
+  placement reader, a composing stage or a layer stage, and ``compose`` refuses it again at run time. Placement
+  also reaches physics through the realised catalogues: the stages that bin realised objects are a closed list.
 - **I5 (the API's half).** Every route that takes inputs takes ``layer=off``; on and off never share a cache entry;
   any other value is a 400; the header echoes the setting.
 - **The oracle.** Layer-off ``azimuthal`` equals layer-off ``basic`` on every field they share.
 - **Appendix B applied.** The four cloud columns are the layer's, synthetic, the bits they were with the layer on and
   zero with it off; ``texture_seed`` is the fifth seed and no stage reads it yet.
-- **One reader of the switch.** No module of the model but ``galaxy/layer/compose.py`` branches on the setting, and
-  none calls ``.from_fields(``.
+- **One reader of the switch.** No module of the model but ``galaxy/layer/compose.py`` branches on the setting, none
+  calls ``.from_fields(``, and none but the pattern stages' own modules constructs a pattern object.
 
-A *composed* field is identified in data: it has a phi axis (``FieldDecl.composed``). There is no list of them here.
+**As amended at gate G1 (D214, ruling by Fable).** A *composed* field is one that declares itself so, with its
+neutral value (``FieldDecl(composed=True, neutral=...)``): nothing here, and nothing in the model, reads the axes.
+The invariants are stated on *expected* totals: a census draws each cell's count at an expectation that carries the
+placement weight, so with the layer off its realised objects are another draw. **No per-object on/off assertion is
+made, and none should be added** (gate G1, Q6): with different realised counts the objects of the two runs do not
+correspond.
 """
 
 from __future__ import annotations
@@ -58,27 +66,41 @@ PACKAGE = ROOT / "model" / "galaxy"
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 MODELS = ("azimuthal", "basic")
 
-# --- the closed list (D214 section 1, "I1 as tested") -------------------------------------------------------------
-# A census statistic is a scalar or a radial field computed from realised objects. These, and no other field without
-# a phi axis outside the catalogues' own columns, differ between the layer-on and the layer-off run; a field outside
-# this list that moves fails test_i1. Each line names the census whose objects it is computed from.
+# --- the closed list (BUILD_III section 1d, I1 as amended at gate G1; D214 change 12) ------------------------------
+# A census statistic is a scalar or a radial field computed from realised objects. These fourteen - the measured
+# fourteen, nine scalars and five radial fields - and no other field outside the catalogues' own columns and the
+# declared composed fields, differ between the layer-on and the layer-off run; a field outside this list that moves
+# fails test_i1. Each entry names (the stage that publishes it, the census whose realised objects it is computed
+# from, and where: the function that computes it). After L1's ring-first draw the list is empty.
 CENSUS_STATISTICS = {
-    # the star sample (systems): how many stars the seeded rounding realised
-    "catalogue_size",
-    # the sample's planets (planets): counts and shares over the sample's stars
-    "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample",
-    # the bright catalogue: the luminosity its default selection's few thousand brightest stars are complete above
-    "bright_star_limit",
-    # the cloud census: the mass its realised clouds hold
-    "cloud_mass_total",
-    # the HII-region census (nebular): the regions' leaked share, the luminosity function's fitted slope (row 35), the
-    # [N II]/Halpha gradient (row 37) and the four forbidden lines' ring light, each a sum over the regions in a ring
-    "dig_halpha_fraction", "hii_luminosity_function_slope", "nii_halpha_gradient_hii",
-    "oiii_5007_surface_brightness_hii", "nii_6583_surface_brightness_hii", "sii_6716_surface_brightness_hii",
-    "sii_6731_surface_brightness_hii",
-    # the bubble and remnant censuses: the hot phase's filling per ring, a sum over the realised bubbles
-    "hot_phase_porosity",
+    "catalogue_size": ("systems", "the star sample",
+                       "systems.compute_systems: the rows that systems.cell_counts' seeded rounding realised"),
+    "planet_count_sample": ("planets", "the star sample's planets",
+                            "planets.compute_planets: the planets drawn for the sample's stars, counted"),
+    "mean_planets_per_star": ("planets", "the star sample's planets",
+                              "planets.compute_planets: the planets per star, averaged over the sample's stars"),
+    "giant_fraction_sample": ("planets", "the star sample's planets",
+                              "planets.compute_planets: the share of the sample's stars with a giant"),
+    "bright_star_limit": ("bright_stars", "the bright catalogue",
+                          "bright.select_brightest, through bright.scalars: the luminosity the default selection's "
+                          "brightest few thousand realised stars are complete above"),
+    "cloud_mass_total": ("clouds", "the cloud census",
+                         "clouds.compute_clouds: the realised clouds' cloud_mass, summed"),
+    "dig_halpha_fraction": ("nebular", "the HII-region census",
+                            "nebular.leaked_fraction: the regions' leaked share, a sum over the realised clusters"),
+    "hii_luminosity_function_slope": ("nebular", "the HII-region census",
+                                      "nebular.luminosity_function_slope: a fit to the realised regions' "
+                                      "hii_halpha_luminosity (acceptance row 35)"),
+    "nii_halpha_gradient_hii": ("nebular", "the HII-region census",
+                                "nebular.nii_halpha_gradient, over the [N II] ring light below (acceptance row 37)"),
+    **{f"{line}_surface_brightness_hii": ("nebular", "the HII-region census",
+                                          "nebular.compute_nebular: the ring's Halpha times nebular.ring_ratios - the "
+                                          "regions' line ratio weighted by their Halpha, binned by cluster_radius")
+       for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")},
+    "hot_phase_porosity": ("bubbles", "the clusters' bubbles (with the remnants, which no placement moves)",
+                           "bubbles.hot_phase_porosity: the realised bubbles' volumes, binned by cluster_radius"),
 }
+assert len(CENSUS_STATISTICS) == 14  # nine scalars, five radial fields: the fourteen measured at S55, minus nothing
 # The object classes a placement moves: every column of these is a catalogue's, not a statistic.
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
 # And the one census no pattern places (bubbles.remnant_expected shares a ring evenly among its sectors).
@@ -136,8 +158,9 @@ def test_layer_on_every_field_is_the_s54_reference_bit_for_bit(runs, reference, 
     assert not set(held) - set(now), sorted(set(held) - set(now))  # no field was lost
     moved = [n for n in held if now[n] != held[n]]
     assert moved == [], moved
-    # What Phase R adds, and only this: the cloud-interior noise's three scalars (D214 section 5).
-    assert set(now) - set(held) == set(layer_reference.ADDED_SCALARS)
+    # Phase R adds no field: the cloud-interior noise's three numbers are constants of the model, not fields (D214
+    # section 5 as ruled at gate G1, change 4), and the four cloud columns only changed their publisher.
+    assert set(now) == set(held)
 
 
 def test_layer_on_a_template_s_fields_are_the_reference_too(prod, reference):
@@ -181,20 +204,31 @@ def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
 
 @pytest.mark.parametrize("name", MODELS)
 def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(runs, name):
+    """I1 as amended at gate G1, walked from the declarations: a field is composed because it says so, and what it
+    says is the value it must be with the layer off. Nothing here reads an axis."""
     on, off = runs[name, True], runs[name, False]
     assert set(on.fields) == set(off.fields) and on.order == off.order  # the same model ran, every stage of it
-    composed = [n for n, d in on.decls.items() if d.composed]
-    assert composed and all("phi" in on.decls[n].axes for n in composed)
-    for n in composed:  # the neutral value: exactly 1 everywhere, not 1 to rounding
-        assert np.all(np.asarray(off.fields[n]) == 1.0), n
-        assert not np.all(np.asarray(on.fields[n]) == 1.0), n  # and the layer on does place
+    composed = {n: d for n, d in on.decls.items() if d.composed}
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if name == "azimuthal" else set())
+    for n, d in composed.items():
+        # Exactly its declared neutral everywhere with the layer off - the number, not that number to rounding -
+        # and not everywhere its neutral with the layer on: the layer does place.
+        assert isinstance(d.neutral, float) and d.neutral == 1.0, n
+        assert np.all(np.asarray(off.fields[n]) == d.neutral), n
+        assert not np.all(np.asarray(on.fields[n]) == d.neutral), n
 
     moved_statistics = set()
     for n, d in on.decls.items():
         if d.composed:
             continue
+        # Every field that does not declare itself composed is held to bit-identity, whatever its axes: a field
+        # over phi tabulated in a pattern's own frame (P2, P3) will be physics, and is not exempt.
         if d.kind.domain == "object":
-            # A catalogue's column: a placement moves it, unless no pattern places that census at all.
+            # A catalogue's own columns. A census that no pattern places is the same census, bit for bit. One that
+            # a pattern places is another draw with the layer off - other counts per cell, so other objects - and
+            # **no per-object on/off assertion is made, here or anywhere** (gate G1, Q6: "with different realised
+            # counts the objects do not correspond"). What is asserted of those censuses is I2 (the expected counts
+            # per ring) and the statistics computed from them, below.
             if d.of in UNPLACED_OBJECTS:
                 assert same(on.fields[n], off.fields[n]), n
             else:
@@ -203,9 +237,45 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
         if not same(on.fields[n], off.fields[n]):
             moved_statistics.add(n)
     # Every other field - every radial field, every history, every scalar - is the bit it was, but for the list.
-    assert moved_statistics <= CENSUS_STATISTICS, sorted(moved_statistics - CENSUS_STATISTICS)
+    assert moved_statistics <= set(CENSUS_STATISTICS), sorted(moved_statistics - set(CENSUS_STATISTICS))
     # And the list is not padded: each entry does move on the production grid at the default seeds.
-    assert moved_statistics == CENSUS_STATISTICS, sorted(CENSUS_STATISTICS - moved_statistics)
+    assert moved_statistics == set(CENSUS_STATISTICS), sorted(set(CENSUS_STATISTICS) - moved_statistics)
+    # Each entry says which stage publishes it, and that stage is where the model publishes it.
+    producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
+    for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
+        assert producer[n] == stage_id and census and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
+        assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
+    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 9
+
+
+def test_i1_holds_an_undeclared_phi_field_to_bit_identity_and_a_declared_one_to_its_neutral(prod):
+    """The case the axes rule got wrong (gate G1, F12): a phi-axis field that is physics - tabulated in a pattern's
+    own frame, P2's and P3's - is not composed, and is the same bits with the layer on or off; and a composed field
+    need not be 1 when the layer is off: it is whatever its declaration says."""
+    def physics(ctx):
+        return {"frame_field": np.cos(ctx.grid.phi)[None, :] * (1.0 + ctx.grid.R)[:, None]}
+
+    def composing(ctx):
+        cells = (ctx.grid.R.size, ctx.grid.phi.size)
+        return {"placed_field": compose.field(ctx.fields, PLACED, cells, lambda: 2.0 + np.sin(ctx.grid.phi)[None, :] * np.ones(cells))}
+
+    PLACED = decl("placed_field", axes=("R", "phi"), composed=True, neutral=2.0)
+    frame = decl("frame_field", axes=("R", "phi"))
+    assert not frame.composed and frame.neutral is None and PLACED.composed and PLACED.neutral == 2.0
+    a, b = stage("frame", (frame,), compute=physics), stage("placing", (PLACED,), compute=composing)
+    assert not a.composes and not a.may_place and b.composes
+    m, table = model("m", a, b), production()[2]
+    on = run(m, grid=SMALL, impls=impls(a, b), table=table, layer=True)
+    off = run(m, grid=SMALL, impls=impls(a, b), table=table, layer=False)
+    assert same(on.fields["frame_field"], off.fields["frame_field"]) and np.ptp(on.fields["frame_field"]) > 0
+    assert np.all(off.fields["placed_field"] == 2.0) and not np.all(on.fields["placed_field"] == 2.0)
+    # A stage cannot compose a field that does not declare it: compose refuses, layer on or off (the stage is given
+    # a census's standing here so that it is the declaration compose refuses, not the stage).
+    undeclared = stage("frame", (frame,), placement_reader=True,
+                       compute=lambda ctx: {"frame_field": compose.field(ctx.fields, frame, (1,), lambda: np.ones(1))})
+    for layer in (True, False):
+        with pytest.raises(LayerError, match="not declared composed"):
+            run(model("m", undeclared), grid=SMALL, impls=impls(undeclared), table=table, layer=layer)
 
 
 @pytest.mark.parametrize("name", MODELS)
@@ -380,9 +450,73 @@ def test_i4_the_production_graphs_declare_their_readers(prod):
         assert "layer stages: cloud_texture" in report and "input unread by ruling: texture_seed" in report
 
 
+def binning_stages(g) -> set[str]:
+    """The physics stages a placement reaches through the realised catalogues, read from the graph: a stage that is
+    neither a placement reader, a composing stage nor a layer stage, and requires a catalogue column a placement
+    reader or a layer stage publishes - or a field of a stage that does."""
+    carried = {d.name for st in g.order if st.placement_reader or st.layer_stage for d in st.publishes
+               if d.kind.domain == "object" or d.provenance == "synthetic"}
+    found: set[str] = set()
+    for st in g.order:
+        if not st.may_place and any(n in carried for n in st.requires + st.requires_optional):
+            found.add(st.id)
+            carried |= set(st.published_names)
+    return found
+
+
+# The physics stages that bin realised objects (I4 as amended at gate G1, change 7): **a closed list**. Each reads
+# `cluster_radius`, which carries the layer's synthetic source offset, and bins by it - `nebular` the regions' line
+# ratios per ring (nebular.ring_ratios), `bubbles` the bubbles' volumes per ring (bubbles.hot_phase_porosity). What
+# they publish from that is in CENSUS_STATISTICS. A third stage appearing here fails the test below: from L1 what
+# they bin per ring does not depend on placement, and until then no new physics may be built on a placed catalogue.
+BINNING_STAGES = {"nebular", "bubbles"}
+
+
+def test_i4_the_stages_that_bin_realised_objects_are_a_closed_list(prod):
+    """Placement reaches physics through the realised catalogues, and the graph's field check cannot see it: a
+    cluster's radius is a seeded column of a placement reader. So the transitive case is held by name, derived from
+    the code: who requires a placed catalogue's column without being a reader."""
+    models, impls_, table = prod
+    for m in models:
+        g = graph.analyse(m, impls_, table)
+        assert binning_stages(g) == BINNING_STAGES, sorted(binning_stages(g) ^ BINNING_STAGES)
+        stages = {st.id: st for st in g.order}
+        clusters = stages["clusters"]
+        # The column that carries the offset: a placement reader's, drawn from the layer's synthetic columns.
+        assert clusters.placement_reader and "cluster_radius" in clusters.published_names
+        assert {"cloud_source_offset", "cloud_source_angle"} <= set(clusters.requires)
+        assert g.provenance["cloud_source_offset"] == "synthetic" and g.provenance["cluster_radius"] == "seeded"
+        readers = {st.id for st in g.order if "cluster_radius" in st.requires + st.requires_optional}
+        assert readers == BINNING_STAGES
+        for sid in BINNING_STAGES:
+            st = stages[sid]
+            assert not st.placement_reader and not st.composes and not st.layer_stage and not st.may_place, sid
+            # No composed and no synthetic field among what it requires: the graph's own check passes it.
+            for n in st.requires + st.requires_optional:
+                d = next(d for s in g.order for d in s.publishes if d.name == n)
+                assert not d.composed and d.provenance != "synthetic", (sid, n)
+        # And what they publish from the binned objects is what the closed list of census statistics names.
+        binned = {n for n, (sid, _, _) in CENSUS_STATISTICS.items() if sid in BINNING_STAGES}
+        assert len(binned) == 8 and all(g.producer[n] in BINNING_STAGES for n in binned)
+    # The derivation sees a third one: a physics stage that reads a cluster column is found.
+    m = models.get(DEFAULT_MODEL)
+    third = stage("ring_sums", (decl("cluster_ring_mass", provenance="seeded"),), requires=("cluster_radius", "cluster_mass"),
+                  checkpoint=5)
+    widened = {**{st.id: st for st in impls_}, "ring_sums": third}
+    wider = replace(m, stages=(*m.stages, ("ring_sums", "ring_sums")))
+    g = graph.analyse(wider, widened, table)
+    assert g.ok and binning_stages(g) == BINNING_STAGES | {"ring_sums"}
+
+
 def test_i4_the_graph_refuses_a_physics_stage_that_requires_a_composed_field():
-    contrast = decl("contrast", axes=("R", "phi"))
+    contrast = decl("contrast", axes=("R", "phi"), composed=True, neutral=1.0)
     assert contrast.composed and not decl("profile").composed
+    # Declared, not read off the axes (gate G1, change 3): a phi-axis field that does not declare itself composed
+    # is physics, and a physics stage may require it.
+    in_frame = decl("in_frame", axes=("R", "phi"))
+    tabulated, reads_it = stage("tabulated", (in_frame,)), stage("physics", ("g",), requires=("in_frame",))
+    assert not in_frame.composed and not tabulated.composes
+    assert graph.check([model("m", tabulated, reads_it)], impls(tabulated, reads_it), INPUTS) == []
     composer = stage("composer", (contrast,))
     physics = stage("physics", ("g",), requires=("contrast",))
     m = model("m", composer, physics)
@@ -390,14 +524,18 @@ def test_i4_the_graph_refuses_a_physics_stage_that_requires_a_composed_field():
     assert [p.code for p in problems] == ["layer-reader"]
     assert "'physics'" in problems[0].detail and "'contrast'" in problems[0].detail and "invariant I4" in problems[0].detail
     # An optional requirement is a requirement.
-    optional = decl("contrast", axes=("R", "phi"), optional=True)
+    optional = decl("contrast", axes=("R", "phi"), optional=True, composed=True, neutral=1.0)
     po, optional_reader = stage("composer", (optional,)), stage("physics", ("g",), requires_optional=("contrast",))
     assert [p.code for p in graph.check([model("m", po, optional_reader)], impls(po, optional_reader), INPUTS)] == ["layer-reader"]
     # A declared placement reader may, and so may a stage that composes a field of its own from it.
     reader = stage("physics", ("g",), requires=("contrast",), placement_reader=True)
     assert graph.check([model("m", composer, reader)], impls(composer, reader), INPUTS) == []
-    second = stage("physics", (decl("g", axes=("R", "phi")),), requires=("contrast",))
+    second = stage("physics", (decl("g", axes=("R", "phi"), composed=True, neutral=1.0),), requires=("contrast",))
     assert second.composes and graph.check([model("m", composer, second)], impls(composer, second), INPUTS) == []
+    # Publishing a field over phi without declaring it composed lends no such right.
+    undeclared = stage("physics", (decl("g", axes=("R", "phi")),), requires=("contrast",))
+    assert not undeclared.composes
+    assert [p.code for p in graph.check([model("m", composer, undeclared)], impls(composer, undeclared), INPUTS)] == ["layer-reader"]
 
 
 def test_i4_the_graph_refuses_a_physics_stage_that_requires_a_synthetic_field():
@@ -531,30 +669,77 @@ def test_i5_on_and_off_never_share_a_cache_entry():
 
 
 def test_i5_what_layer_off_serves():
-    """The contract the viewer builds against: the composed fields 1, the cloud texture columns 0, the cloud
-    interior's three scalars in the header either way, the render's frame placed evenly round each ring."""
+    """The contract the viewer builds against: the composed fields at their neutral, the cloud texture columns 0, the
+    cloud interior's three parameters in the header either way, the render's frame even round each ring."""
     svc = Service(grid=SMALL)
     on_h, on = svc.handle("/api/clouds", SECTOR).frame()
     off_h, off = svc.handle("/api/clouds", SECTOR + "&layer=off").frame()
-    interior = {"cloud_interior_octaves": 4.0, "cloud_interior_lacunarity": 2.0, "cloud_interior_gain": 0.5}
     for header in (on_h, off_h):
-        assert {k: header["scalars"][k] for k in interior} == interior
+        assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
+        assert not [k for k in header["scalars"] if "interior" in k]
         assert header["columns"] == list(cl.WIRE_COLUMNS)
     assert len(off["cloud_radius"]) > 20
     for name in cl.TEXTURE_COLUMNS:
         assert np.all(off[name] == 0.0) and np.any(on[name] != 0.0), name
-    # The render: every component placed round a ring is the ring's own value in every cell, and the dust's
-    # placement is 1.
-    header, arrays = svc.handle("/api/render", {"filters": [B_V], "layer": ["off"]}).frame()
-    assert header["layer"] == "off" and np.all(arrays["dust_placement"] == 1.0)
-    for name in ("stars", "halpha_hii", "dust_scattered"):
-        assert np.all(arrays[name] == arrays[name][:, :1, :]), name
-    lit = svc.handle("/api/render", {"filters": [B_V]}).frame()[1]
-    assert not np.all(lit["stars"] == lit["stars"][:, :1, :])
-    # Each ring keeps its light: the frame's total through each filter is the layer-on frame's to rounding.
-    total_off = checks.frame_total(header, arrays)
-    total_on = checks.frame_total(svc.handle("/api/render", {"filters": [B_V]}).frame()[0], lit)
-    assert np.allclose(total_off, total_on, rtol=1e-12)
+
+
+# The render's components, by what each keeps ring by ring between the layer on and off (gate G1, change 10: "each
+# ring keeps its light" is every component's claim, not the stars' alone). Measured at S55 on the small and the
+# production grid through two filter sets: every component but one is the same ring total to 1.1e-14, the per-ring
+# ones to the bit. The one is `lines_hii`, summed from the HII regions' four forbidden lines' ring light - the four
+# radial fields CENSUS_STATISTICS names, a sum over realised regions - and it is a census statistic in the render
+# too: up to a factor of six in a thinly populated ring on the production grid.
+RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement")  # (R, phi, ...)
+RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height")  # (R, ...)
+RENDER_CENSUS_STATISTICS = ("lines_hii",)
+WIDE = json.dumps([{"name": "optical", "shape": "box", "centre": 5500.0, "width": 4000.0},
+                   {"name": "far_infrared", "shape": "box", "centre": 1.0e6, "width": 1.0e6}])
+
+
+@pytest.mark.parametrize("curves", [B_V, WIDE], ids=["B and V", "optical and far infrared"])
+def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_statistic(curves):
+    svc = Service(grid=SMALL)
+    q = {"filters": [curves], "l_min": ["1000"]}  # l_min: the unresolved remainder is a component too
+    on_h, on = svc.handle("/api/render", q).frame()
+    off_h, off = svc.handle("/api/render", {**q, "layer": ["off"]}).frame()
+    assert (on_h["layer"], off_h["layer"]) == ("on", "off") and list(on) == list(off)
+    # Every array of the response is in exactly one of the three groups: a new component must be placed in one.
+    assert set(on) == {*RENDER_PLACED, *RENDER_PER_RING, *RENDER_CENSUS_STATISTICS}
+
+    def rings(arrays, name):
+        return np.asarray(arrays[name], dtype=float).sum(axis=1)
+
+    for name in RENDER_PLACED:
+        assert on_h["axes"][name][:2] == ["R", "phi"], name
+        # Layer off: even round the ring - every cell holds its ring's own value. Layer on: it is placed.
+        cell = off[name][:, :1]
+        assert np.all(off[name] == cell) and not np.all(on[name] == on[name][:, :1]), name
+        # And each ring keeps its total, to rounding: the placement averages to 1 round every ring.
+        assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
+    assert np.all(off["dust_placement"] == 1.0)
+    for name in RENDER_PER_RING:
+        assert on_h["axes"][name][0] == "R" and "phi" not in on_h["axes"][name], name
+        assert same(on[name], off[name]), name  # a ring's own value, the same bits either way
+    for name in RENDER_CENSUS_STATISTICS:
+        # Not conserved ring by ring, and said so: the regions the ring's line light is summed over are another
+        # draw. Even round the ring all the same, and the Halpha it is built on (halpha_hii, above) is conserved.
+        assert np.all(off[name] == off[name][:, :1]), name
+        a, b = rings(on, name), rings(off, name)
+        assert not np.allclose(a, b, rtol=1e-3, atol=0.0), name
+        assert on_h["components"][name]["fields"][:4] == [f"{line}_surface_brightness_hii" for line in ("hbeta", "oiii_5007", "nii_6583", "sii_6716")]
+        assert {f for f in on_h["components"][name]["fields"] if f in CENSUS_STATISTICS} == {
+            f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")}
+    # The frame: every conserving component's light, summed over the disc with the bulge, is the same to rounding.
+    for name in ("stars", "stars_unresolved", "halpha_hii", "dust_scattered"):
+        total_on = checks.frame_total(on_h, {**on, "stars": on[name]})
+        total_off = checks.frame_total(off_h, {**off, "stars": off[name]})
+        assert np.allclose(total_on, total_off, rtol=1e-12, atol=0.0), name
+    # What the header says of a placement is true of this response (gate G1, change 11).
+    for name in ("stars", "stars_unresolved", "halpha_hii", "lines_hii"):
+        assert "layer is off" in off_h["components"][name]["about"] and "neutral value, 1" in off_h["components"][name]["about"], name
+        assert "layer is off" not in on_h["components"][name]["about"], name
+    placed = off_h["placement"]["arrays"]["dust_placement"]["about"]
+    assert "layer is off" in placed and "layer is off" not in on_h["placement"]["arrays"]["dust_placement"]["about"]
 
 
 def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
@@ -562,13 +747,24 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
     fields = svc.handle("/api/fields", f"model={model.name}").json()["fields"]
     assert {f["provenance"] for f in fields} == set(PROVENANCE) == {"derived", "seeded", "synthetic"}
     synthetic = [f for f in fields if f["provenance"] == "synthetic"]
-    assert {f["name"] for f in synthetic} == {*cl.TEXTURE_COLUMNS, *layer_reference.ADDED_SCALARS}
+    # The four cloud columns and nothing else: the interior's three numbers are constants, not fields (G1, change 4).
+    assert {f["name"] for f in synthetic} == set(cl.TEXTURE_COLUMNS)
+    assert not [f["name"] for f in fields if "cloud_interior" in f["name"]]
     for f in fields:
         if f["provenance"] == "synthetic":
             assert all(isinstance(f[k], str) and f[k].strip() for k in SYNTHETIC_DECLARATIONS), f["name"]
-            assert f["stage"] == "cloud_texture" and re.search(r"none read \(#(95|110)\)", f["statistic"]), f["name"]
+            assert f["stage"] == "cloud_texture" and re.search(r"none read \(#95\)", f["statistic"]), f["name"]
+            # Which seed, in each of the four (G1, change 6).
+            assert "Drawn on `systems_seed`, the stream Phase R keeps; on `texture_seed` from L1." in f["about"], f["name"]
         else:
             assert not set(SYNTHETIC_DECLARATIONS) & set(f), f["name"]
+    # A composed field says so, with its neutral value; no other entry carries either key (G1, change 3).
+    composed = {f["name"]: f for f in fields if "composed" in f or "neutral" in f}
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if model.name == "azimuthal" else set())
+    for name, f in composed.items():
+        assert f["composed"] is True and f["neutral"] == 1.0 and f["provenance"] == "seeded", name
+        assert "A composed field: with the randomness layer off it is 1 everywhere" in f["about"], name
+        assert f["stage"] in ("pattern", "gas_pattern", "sfh_azimuthal")  # a composing stage lives in stages/, not layer/
     seeds_ = svc.handle("/api/inputs", f"model={model.name}").json()["seeds"]
     assert [s["name"] for s in seeds_] == [s.name for s in seeds()] and len(seeds_) == 5
     texture = next(s for s in seeds_ if s["name"] == "texture_seed")
@@ -592,21 +788,24 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     differ = [n for n in b.fields if not same(a.fields[n], b.fields[n])]
     assert differ == [], differ
     columns = [n for n, d in b.decls.items() if d.kind.domain == "object"]
-    assert len(columns) > 100 and len(b.fields) == 334
+    # 331: S54's fields, name for name (334 while the interior's three numbers were scalars, before gate G1).
+    assert len(columns) > 100 and len(b.fields) == 331
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
-    """The second comparison D214 names: layer-off ``azimuthal`` against layer-on ``basic``, the fields without a phi
-    axis. It holds on every radial field, history and scalar that is not a census statistic - 218 fields, bit for
-    bit. It does not hold on the catalogues' columns or the census statistics, and cannot: layer-on ``basic`` places
-    its censuses by the pattern. Those are exactly the fields I1 lets move, in ``basic`` itself (test_i1)."""
+    """The second comparison D214 names: layer-off ``azimuthal`` against layer-on ``basic``, the fields not declared
+    composed. It holds on every radial field, history and scalar that is not a census statistic - 215 fields, bit
+    for bit. It does not hold on the catalogues' columns or the census statistics, and cannot: layer-on ``basic``
+    places its censuses by the pattern. Those are exactly the fields I1 lets move, in ``basic`` itself (test_i1) -
+    I1's list again, and not an independent check (D214, the predictions as read)."""
     a, b = runs["azimuthal", False], runs["basic", True]
     differ = {n for n, d in b.decls.items() if not d.composed and not same(a.fields[n], b.fields[n])}
     statistics = {n for n in differ if b.decls[n].kind.domain != "object"}
-    assert statistics == CENSUS_STATISTICS
+    assert statistics == set(CENSUS_STATISTICS)
     assert {b.decls[n].of for n in differ - statistics} == PLACED_OBJECTS
     held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
-    assert len(held) == 218 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
+    # 215 = basic's 331 fields less its 2 composed ones, the 100 placed columns and the 14 census statistics.
+    assert len(held) == 215 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
 
 
 def test_the_oracle_holds_layer_off_on_a_small_grid_and_another_seed(prod):
@@ -658,17 +857,83 @@ def test_the_cloud_texture_is_neutral_with_the_layer_off(runs, name):
     assert not same(on.fields["cluster_radius"], np.asarray(on.fields["cloud_radius"])[hosts_on])
 
 
-def test_the_cloud_interior_s_noise_is_published_as_the_viewer_holds_it(runs):
-    """D214 section 5, rule D5 as amended: the viewer may evaluate a function the model publishes and holds no
-    parameter of its own, so the octave count, lacunarity and gain it uses today are the layer's scalars - read from
-    the viewer's own source here, so the two cannot drift before the viewer reads the model's."""
-    for key, out in runs.items():
-        got = {n: out.fields[n] for n in layer_reference.ADDED_SCALARS}
-        assert got == {"cloud_interior_octaves": 4.0, "cloud_interior_lacunarity": 2.0, "cloud_interior_gain": 0.5}, key
-        assert got == cloud_texture.interior_scalars()
-        for n in got:
-            d = out.decls[n]
-            assert d.provenance == "synthetic" and "#110" in d.statistic and "Not shown by the viewer" in d.about
+def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_are_the_model_s(runs):
+    """Gate G1, change 5 (BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with
+    the measured number"). The source's offset and direction place the cluster, and a cluster can leave its cloud's
+    ring. The declaration's numbers are measured here on the production grid at the default inputs, the layer on -
+    so the text cannot drift from the model. No clamp: nothing here changes a value."""
+    on = runs[DEFAULT_MODEL, True]
+    F, R = on.fields, on.grid.R
+    offset_decl, angle_decl = on.decls["cloud_source_offset"], on.decls["cloud_source_angle"]
+    text = offset_decl.conserves
+    assert text == angle_decl.conserves and text.startswith("The cloud's mass and the cluster's mass: the column places, it does not weigh.")
+    for phrase in ("249 pc against a 75 pc radial step", "1 610 of 12 930 clusters (12.5 %, 43.8 % of the cluster mass)",
+                   "157 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+        assert phrase in text, phrase
+    # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
+    for name in ("cloud_density_gradient", "cloud_gradient_angle"):
+        assert on.decls[name].conserves.startswith("The cloud's mass and the census's count") and "249 pc" not in on.decls[name].conserves
+    hosts = np.asarray(F["cloud_cluster_index"]) >= 0
+    cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
+    mass = np.asarray(F["cluster_mass"])
+    step = float(R[1] - R[0])
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12930
+    # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
+    ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
+    moved = ring(cloud_r) != ring(cluster_r)
+    assert int(moved.sum()) == 1610 and moved.mean() == pytest.approx(0.125, abs=5e-4)
+    # The share of the cluster mass that crosses: 0.43747, which the declaration prints as 43.8 %.
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4375, abs=5e-4)
+    edges, _ = sy.cell_edges(R)
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 157
+    # "the offset reaches 249 pc": the largest radial displacement of a cluster from its cloud. The offset's own
+    # length reaches 265 pc (it is not all radial); it is the radial part that crosses rings.
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(248.5, abs=0.1)
+    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(265.2, abs=0.1)
+
+
+def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):
+    """D214 section 5 as ruled at gate G1 (change 4): "the three interior scalars are not synthetic. A constant 4, 2,
+    0.5, the same on and off, is not 'a realisation from the layer's seed'. They are parameters of a synthetic
+    function and are published as constants of the model ... not as fields of any stage". Three level-0 constants,
+    declared by the layer's stage, carried by /api/clouds' header as ``cloud_interior`` - the one constant this API
+    serves, by the gate's explicit exception (rule D5 as amended: a parameter of a function the viewer evaluates)."""
+    models, impls_, _ = prod
+    names = dict(cloud_texture.INTERIOR_CONSTANTS)
+    assert names == {"octaves": "CLOUD_INTERIOR_OCTAVES", "lacunarity": "CLOUD_INTERIOR_LACUNARITY", "gain": "CLOUD_INTERIOR_GAIN"}
+    for m in models:
+        c = constants(m)
+        assert cloud_texture.interior(c) == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
+        assert isinstance(cloud_texture.interior(c)["octaves"], int)
+        for constant in names.values():
+            about = m.constants[constant].about
+            assert "The viewer's own choice, none read, #110" in about and "[verified: frontend/src/galaxy/region.ts at tag s54" in about
+        # Declared by the layer's stage and by no other; not a field of any stage, in either run.
+        readers = sorted(sid for _, sid in m.stages if set(names.values()) & set(impls_.get(sid).reads_constants))
+        assert readers == ["cloud_texture"] and set(names.values()) <= set(impls_.get("cloud_texture").reads_constants)
+    for out in runs.values():
+        assert not [n for n in out.fields if "cloud_interior" in n]
+    assert [d.name for d in impls_.get("cloud_texture").publishes] == list(cl.TEXTURE_COLUMNS)
+    # A parameter set that is not a noise is refused where it is read.
+    good = constants(models.get(DEFAULT_MODEL))
+    for constant, bad in (("CLOUD_INTERIOR_OCTAVES", 0), ("CLOUD_INTERIOR_OCTAVES", 2.5), ("CLOUD_INTERIOR_LACUNARITY", 0.0),
+                          ("CLOUD_INTERIOR_GAIN", float("nan"))):
+        with pytest.raises(ValueError, match="cloud-interior noise"):
+            cloud_texture.interior({**good, constant: bad})
+    # The API: the exception is this one key of this one route, by the wire's names; no constant's name is served,
+    # and no other response carries the key.
+    svc = Service(grid=SMALL)
+    for query in (SECTOR, SECTOR + "&layer=off", "model=basic&" + SECTOR):
+        header = svc.handle("/api/clouds", query).frame()[0]
+        assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
+        assert set(header["scalars"]) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}
+        assert not re.search(r"CLOUD_INTERIOR", json.dumps(header))
+    for path in INPUT_ROUTES:
+        if path != "/api/clouds":
+            assert "cloud_interior" not in svc.handle(path, QUERIES[path]).frame()[0], path
+    for path in ("/api", "/api/fields", "/api/stages", "/api/inputs", "/api/templates"):
+        text = svc.handle(path).body.decode("utf-8")
+        assert "CLOUD_INTERIOR" not in text and '"constants"' not in text, path
     source = (ROOT / "frontend" / "src" / "galaxy" / "region.ts").read_text(encoding="utf-8")
     # Since builder D (S55) the viewer holds none of the three: it evaluates the interior with what the clouds'
     # header publishes, and keeps one measured normaliser with the parameter set it was measured for. The guard
@@ -677,14 +942,14 @@ def test_the_cloud_interior_s_noise_is_published_as_the_viewer_holds_it(runs):
     assert "export const OCTAVES" not in source
     m = re.search(r"measuredFor: \{ octaves: (\d+), lacunarity: ([\d.]+), gain: ([\d.]+) \}", source)
     assert m, "region.ts no longer records which parameters its measured normaliser belongs to"
-    assert (float(m[1]), float(m[2]), float(m[3])) == (
-        cloud_texture.INTERIOR_OCTAVES, cloud_texture.INTERIOR_LACUNARITY, cloud_texture.INTERIOR_GAIN)
+    interior = cloud_texture.interior(good)  # the model's constants: what the measured normaliser must belong to
+    assert (float(m[1]), float(m[2]), float(m[3])) == (interior["octaves"], interior["lacunarity"], interior["gain"])
 
 
 def test_a_synthetic_field_declares_what_it_stands_in_for_what_it_conserves_and_its_statistic():
     base = dict(name="f", label="f", unit="dimensionless", kind=Kind.FIELD, axes=("R",), ramp=Ramp("greys"), about="a test field")
     ok = FieldDecl(**base, **SYNTHETIC)
-    assert ok.provenance == "synthetic" and ok.contract()[-3:] == ("a physics", "a total", "none read (#95)")
+    assert ok.provenance == "synthetic" and ok.contract()[-5:-2] == ("a physics", "a total", "none read (#95)")
     for missing in SYNTHETIC_DECLARATIONS:
         with pytest.raises(DeclarationError, match="a synthetic field declares"):
             FieldDecl(**base, **{**SYNTHETIC, missing: "  "})
@@ -701,6 +966,38 @@ def test_a_synthetic_field_declares_what_it_stands_in_for_what_it_conserves_and_
     assert FieldDecl(**base, **{**SYNTHETIC, "statistic": "none read (#110)"}).statistic.endswith("(#110)")
     with pytest.raises(DeclarationError, match="provenance"):
         FieldDecl(**base, provenance="composed")
+
+
+def test_a_composed_field_declares_itself_and_its_neutral_value():
+    """Gate G1, change 3: composed is a declaration with its neutral value, the two refused apart, and nothing is
+    read off the axes - a field over phi is not composed unless it says so, and a composed one need not be over phi."""
+    over_phi = dict(name="f", label="f", unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"), ramp=Ramp("greys"), about="a test field")
+    plain = FieldDecl(**over_phi)
+    assert plain.composed is False and plain.neutral is None and plain.contract()[-2:] == (False, None)
+    declared = FieldDecl(**over_phi, composed=True, neutral=1)
+    assert declared.composed is True and declared.neutral == 1.0 and isinstance(declared.neutral, float)
+    assert declared.contract()[-2:] == (True, 1.0) and declared.contract() != plain.contract()
+    radial = FieldDecl(**{**over_phi, "axes": ("R",)}, composed=True, neutral=0.0)  # the axes say nothing either way
+    assert radial.composed and radial.neutral == 0.0
+    with pytest.raises(DeclarationError, match="a neutral value is a composed field's declaration"):
+        FieldDecl(**over_phi, neutral=1.0)
+    for missing in (None, float("nan"), float("inf"), True, "1"):
+        with pytest.raises(DeclarationError, match="declares its neutral value"):
+            FieldDecl(**over_phi, composed=True, neutral=missing)
+    with pytest.raises(DeclarationError, match="composed is True or False"):
+        FieldDecl(**over_phi, composed=1, neutral=1.0)
+    # A composed field is a continuous grid field: a scalar or a column is not composed.
+    with pytest.raises(DeclarationError, match="continuous grid field"):
+        FieldDecl(name="s", label="s", unit="dimensionless", kind=Kind.SCALAR, about="a scalar", composed=True, neutral=1.0)
+    # compose gives the declared neutral, and refuses a field that does not declare one.
+    assert np.all(compose.neutral(declared, (2, 3)) == 1.0) and compose.neutral(radial, (4,)).tolist() == [0.0] * 4
+    with pytest.raises(LayerError, match="not declared composed"):
+        compose.neutral(plain, (2, 3))
+    # No source in the model reads the axes to decide it: FieldDecl holds a field named composed, not a property.
+    source = (PACKAGE / "core" / "fielddoc.py").read_text(encoding="utf-8")
+    assert "composed: bool = False" in source and '"phi" in self.axes' not in source
+    for path in model_sources():
+        assert not re.search(r'["\']phi["\'] in \w+(\.\w+)*\.axes', path.read_text(encoding="utf-8")), path.name
 
 
 def test_texture_seed_is_the_fifth_seed_and_no_stage_reads_it_yet(prod):
@@ -750,6 +1047,31 @@ def test_compose_is_the_only_caller_of_from_fields():
     assert calls["layer/compose.py"] == 3  # the stellar pattern, the gas pattern, and the docstring that says so
     defined = [p.relative_to(PACKAGE).as_posix() for p in model_sources() if "def from_fields(" in p.read_text(encoding="utf-8")]
     assert defined == ["stages/gas_pattern.py", "stages/pattern.py"]
+
+
+def test_no_module_but_the_pattern_stages_constructs_a_pattern_object():
+    """Gate G1, change 8: ``.from_fields(`` is one door to a pattern object and the constructor is the other. Outside
+    the two pattern stages' own modules and ``compose.py`` nothing in the model calls ``ArmPattern(`` or
+    ``GasPattern(`` - read from the syntax tree, so a type annotation or a docstring is not a call. Where they are
+    called: the ``pattern`` stage builds the stellar law from the numbers it has just drawn, to publish its composed
+    field through ``compose.field``; and the gas law builds a stellar law of unit amplitude to take its arm weight,
+    bar weight and phase from (``GasPattern._stellar``) - a law reading a law, placing nothing."""
+    calls: dict[str, dict[str, int]] = {}
+    for path in model_sources():
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.Call):
+                continue
+            called = node.func.id if isinstance(node.func, ast.Name) else node.func.attr if isinstance(node.func, ast.Attribute) else None
+            if called in ("ArmPattern", "GasPattern"):
+                where = calls.setdefault(path.relative_to(PACKAGE).as_posix(), {})
+                where[called] = where.get(called, 0) + 1
+    assert set(calls) <= {"stages/pattern.py", "stages/gas_pattern.py", "layer/compose.py"}, calls
+    assert calls == {"stages/pattern.py": {"ArmPattern": 1}, "stages/gas_pattern.py": {"ArmPattern": 1}}, calls
+    # The text agrees with the tree: the token appears in no other module's code or comments either.
+    for path in model_sources():
+        name = path.relative_to(PACKAGE).as_posix()
+        if name not in ("stages/pattern.py", "stages/gas_pattern.py", "layer/compose.py"):
+            assert not re.search(r"\b(ArmPattern|GasPattern)\(", path.read_text(encoding="utf-8")), name
 
 
 def names_the_switch(node: ast.AST) -> bool:

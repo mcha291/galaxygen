@@ -18,6 +18,7 @@ phi)`` so that ``(t, R)`` can never be confused with ``(R, t)``.
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -123,8 +124,14 @@ class FieldDecl:
     provenance: str = "derived"  # rule A10: derived (inputs only), seeded (inputs + seed) or synthetic (the layer's)
     # A synthetic field's three declarations (S55, D214): required and non-empty there, refused anywhere else.
     stands_in_for: str = ""  # the physics the model does not compute, which this realisation stands in for
-    conserves: str = ""  # the total it redistributes and never changes
+    conserves: str = ""  # what it keeps, and what it does not keep, with the measured number (BUILD_III 1c, rule 2)
     statistic: str = ""  # the measured statistic it is drawn to, cited; "none read" only with the debt's number
+    # A composed field (S55, D214 as ruled at gate G1, change 3): a law applied to a realisation of the randomness
+    # layer, with the value it takes everywhere when the layer is off. **A declaration, never read off the axes**:
+    # a phi-axis field tabulated in a pattern's own frame is physics and is simply not declared composed. The two
+    # go together - a neutral without the declaration, or the declaration without one, is refused.
+    composed: bool = False
+    neutral: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not IDENT.match(self.name):
@@ -153,13 +160,27 @@ class FieldDecl:
         self._check_synthetic()
         self._check_domain(kind)
         self._check_values(kind)
+        self._check_composed(kind)
 
-    @property
-    def composed(self) -> bool:
-        """A law applied to a realisation (BUILD_III section 1a): a field with a phi axis. Nothing the model
-        computes says where round a ring a structure lies, so whatever varies round one was placed by the
-        randomness layer - identified by the axes, not by a flag someone could forget to set (D214 section 1)."""
-        return "phi" in self.axes
+    def _check_composed(self, kind: Kind) -> None:
+        if not isinstance(self.composed, bool):
+            raise DeclarationError(f"field {self.name}: composed is True or False, got {self.composed!r}")
+        if not self.composed:
+            if self.neutral is not None:
+                raise DeclarationError(
+                    f"field {self.name}: a neutral value is a composed field's declaration; declare composed=True "
+                    "or give none"
+                )
+            return
+        if kind is not Kind.FIELD:
+            raise DeclarationError(f"field {self.name}: a composed field is a continuous grid field, not a {kind.value}")
+        value = self.neutral
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise DeclarationError(
+                f"field {self.name}: a composed field declares its neutral value - the number it is everywhere "
+                f"with the randomness layer off - got {value!r}"
+            )
+        object.__setattr__(self, "neutral", float(value))
 
     def _check_synthetic(self) -> None:
         given = {n: getattr(self, n) for n in SYNTHETIC_DECLARATIONS}
@@ -252,4 +273,6 @@ class FieldDecl:
             self.stands_in_for,
             self.conserves,
             self.statistic,
+            self.composed,
+            self.neutral,
         )

@@ -219,8 +219,8 @@ class Stage:
     # provenance per stage), and no other stage publishes one.
     layer_stage: bool = False
     # A *placement reader* is a census stage allowed to consume a composed placement weight or a synthetic
-    # field. Any other stage that requires one fails the graph, unless it composes (publishes a field with a
-    # phi axis) or is a layer stage itself.
+    # field. Any other stage that requires one fails the graph, unless it composes (publishes a field declared
+    # composed) or is a layer stage itself.
     placement_reader: bool = False
 
     def __post_init__(self) -> None:
@@ -304,8 +304,9 @@ class Stage:
 
     @property
     def composes(self) -> bool:
-        """A *composing stage*: it publishes a composed field (``FieldDecl.composed``, a phi axis), a law applied
-        to a realisation. Read from the declarations, so it cannot be declared wrongly (D214 section 1)."""
+        """A *composing stage*: it publishes a field declared composed (``FieldDecl(composed=True, neutral=...)``),
+        a law applied to a realisation. It stays in ``stages/`` - its law is physics, and under ``layer/`` its
+        fields would be synthetic, which they are not (D214, gate G1 changes 3 and 4)."""
         return any(p.composed for p in self.publishes)
 
     @property

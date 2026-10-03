@@ -170,7 +170,8 @@ def expected_counts(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping
     rings, sectors = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
     # The gas's pattern, from compose (S55, D214): none with the layer off, and every sector of a ring then
-    # expects the same number of clouds. The ring's total is the same either way (invariant I2).
+    # expects the same number of clouds. The ring's *expected* total is the same either way (invariant I2); the
+    # realised clouds are each cell's own Poisson draw at its own expectation, so they are another draw (until L1).
     pattern = _compose.gas_pattern(fields, constants)
     weights = (
         np.ones((CELL_RINGS, CELL_SECTORS))

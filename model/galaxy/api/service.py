@@ -21,7 +21,10 @@ cannot be hidden by a cache: an endpoint that touched a stage says so.
   names.
 
 **What is not published** (rule D5): constants, stage source, model internals of
-any kind. The viewer gets declarations, numbers and ramps; it cannot reconstruct
+any kind - with one exception, named: ``/api/clouds``' header carries ``cloud_interior``,
+the three parameters of the noise a renderer synthesises a cloud's interior with, which
+are constants of the model (DECISIONS.md D214, gate G1 change 4: a parameter of a
+function the viewer evaluates, which rule D5 as amended forbids the viewer to hold itself). The viewer gets declarations, numbers and ramps; it cannot reconstruct
 the model from them, and replacing it means reimplementing against these
 endpoints rather than against the physics.
 
@@ -61,7 +64,7 @@ from galaxy.core.registry import (
 )
 from galaxy.core.stage import CHECKPOINTS, Stage
 from galaxy.core.units import unit as _unit
-from galaxy.layer import cloud_texture as _cloud_texture  # the three cloud-interior scalars /api/clouds carries (S55)
+from galaxy.layer import cloud_texture as _cloud_texture  # the cloud-interior noise's parameters /api/clouds carries (S55)
 from galaxy.layer import compose as _compose  # the one reader of the layer's switch (S55, D214)
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
@@ -117,6 +120,12 @@ RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "D
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
 # interpolated at 8 x 8 midpoints, area-weighted.
 RENDER_CELL_SAMPLES = 8
+# What a render's header adds, under layer=off, to each text that says a component is placed by a composed field
+# (gate G1, change 11): the text names the law; this says what the field is in this response.
+EVEN_ROUND_THE_RING = (
+    " In this response the randomness layer is off (layer: off): every composed field named here is its neutral "
+    "value, 1, so this is even round each ring - each cell holds its ring's own value."
+)
 # The temperatures /api/blackbody tabulates (S42): 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart - the
 # render's own white-point range. Read linearly in log share against log T (the Wien side is an exponential in 1/T,
 # which a line in the share itself misses by 16% at 1000 K), every set's table is within the bound
@@ -215,7 +224,8 @@ ROUTES: tuple[Route, ...] = (
         "/api/clouds",
         "The molecular-cloud census for one (R, phi) window (S32): every cloud of the cells the window "
         "meets, each row named by cell and index; level=k keeps the clouds inside the level-k children "
-        "the window meets.",
+        "the window meets. The header's cloud_interior is {octaves, lacunarity, gain}: the noise a renderer "
+        "synthesises a cloud's interior with (S55).",
         ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clouds",
     ),
@@ -593,6 +603,9 @@ def field_json(decl: FieldDecl, stage: Stage) -> dict[str, Any]:
     # A synthetic field carries its three declarations (S55, D214 section 2; rule A10): what it stands in for,
     # what it conserves, the statistic it is drawn to. No other field has them, and no other entry gains a key.
     synthetic = {n: getattr(decl, n) for n in SYNTHETIC_DECLARATIONS if getattr(decl, n)}
+    # A composed field says so, with the value it is everywhere under layer=off (gate G1, change 3); as above,
+    # only those entries carry the two keys.
+    composed = {"composed": True, "neutral": decl.neutral} if decl.composed else {}
     return {
         "name": decl.name,
         "label": decl.label,
@@ -613,6 +626,7 @@ def field_json(decl: FieldDecl, stage: Stage) -> dict[str, Any]:
         "stage": stage.id,
         "checkpoint": stage.checkpoint,
         **synthetic,
+        **composed,
     }
 
 
@@ -950,10 +964,12 @@ class Service:
             "inputs_are": "any query parameter that is not one of a route's params",
             # S55 (D214, invariant I5): the switch every route that takes inputs carries.
             "layer": "layer=off on a route that takes inputs answers for the physics alone: the randomness layer's "
-                     "composed fields (those over R and phi) are 1 everywhere, the censuses are placed by no "
-                     "pattern, the cloud texture columns are 0, and every ring total, radial field and law is "
-                     "what it is with the layer on. Absent or layer=on is the default; any other value is a 400. "
-                     "The response's header echoes it as layer.",
+                     "composed fields (those /api/fields marks composed) are their neutral value everywhere, the "
+                     "censuses are placed by no pattern and the cloud texture columns are 0. Every law, every ring "
+                     "total of a field and every expected ring total of a census is what it is with the layer on, "
+                     "and so is every radial field but the census statistics: a census's realised objects are "
+                     "another draw, so what is summed over them moves by that re-draw. Absent or layer=on is the "
+                     "default; any other value is a 400. The response's header echoes it as layer.",
         })
 
     def _blackbody(self, q: Query) -> Response:
@@ -1245,10 +1261,14 @@ class Service:
                     np.array([1.0e5]), np.array([_clouds.cloud_radius_pc(np.array([1.0e5]), float(constants["GMC_SURFACE_DENSITY"]))[0]]),
                     float(constants["HII_MASS_PER_HYDROGEN"]), _clouds._grain_v_extinction(),
                 )[0]),
-                # S55 (D214 section 5): the shape of the noise a renderer synthesises a cloud's interior from -
-                # the layer stage's three synthetic scalars, the viewer's own numbers until then (rule D5).
-                **_cloud_texture.interior_scalars(),
             },
+            # S55 (D214 section 5, as ruled at gate G1, change 4): the shape of the noise a renderer synthesises a
+            # cloud's interior from - its octave count, lacunarity and gain. **Three constants of the model, and
+            # the one place this API serves a constant**: the gate's explicit exception to "what is not published:
+            # constants" (this module's docstring), for a parameter of a function the viewer evaluates (rule D5 as
+            # amended, D212) - the viewer may hold no parameter of its own, so the model's must reach it. By the
+            # wire's own names, never the constants'; not among the scalars, which are a stage's fields.
+            "cloud_interior": _cloud_texture.interior(constants),
             "columns": columns,
             "stages": list(ran),
         }
@@ -1551,6 +1571,9 @@ class Service:
         # The composed fields are read through compose (S55, D214): what the run published, which with layer=off
         # is 1 everywhere, so every component below is then its ring's own value round the ring.
         contrast = _compose.published(f, "pattern_density_contrast")
+        # What the header says of a placement is true under layer=off too (gate G1, change 11): each text that
+        # names a composed field gains this sentence then, and nothing with the layer on.
+        even = _compose.words(f, "", EVEN_ROUND_THE_RING)
         # The stellar light follows the pattern's density contrast around each ring (a constant mass-to-light
         # ratio in azimuth), which averages to 1 around every ring, so each ring keeps its published light.
         placed = np.ones((R.size, phi_axis.n)) if contrast is None else np.maximum(np.asarray(contrast, dtype=float), 0.0)
@@ -1595,7 +1618,7 @@ class Service:
                 "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *contrast_fields], "layer": "stars",
                 "about": "the population's own spectrum - the eight bands' lambda L_lambda at their reference "
                          "wavelengths, power laws between them, a blackbody at the colour temperature beyond U and K - "
-                         "through each curve, placed around each ring by the pattern's density contrast",
+                         "through each curve, placed around each ring by the pattern's density contrast" + even,
                 "bands": list(_spectra.SED_BANDS),
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
@@ -1603,6 +1626,7 @@ class Service:
         resolved = None
         if l_min is not None:
             unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min)
+            about["stars_unresolved"]["about"] += even
             components.append(("stars_unresolved", unresolved))
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
         if "halpha_surface_brightness_hii" in f and h_thin is not None:
@@ -1615,7 +1639,7 @@ class Service:
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "
                          "stellar contrast; it averages to 1, so each ring keeps its published line) in the clouds' "
-                         "layer, where the regions' clusters are",
+                         "layer, where the regions' clusters are" + even,
             }
         # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
         # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
@@ -1632,7 +1656,7 @@ class Service:
                 "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
                 "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
                          "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
-                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer",
+                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer" + even,
             }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
@@ -1687,7 +1711,7 @@ class Service:
                         "contrast, as the gas the dust is a share of is taken to follow it (this model publishes no "
                         "gas pattern; D207). "
                     ) + "It multiplies the dust's optical depth and its thermal light; not the scattered light, which "
-                        "is already a share of the placed starlight. It averages to 1 round every ring",
+                        "is already a share of the placed starlight. It averages to 1 round every ring" + even,
                 }},
             }
         if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
