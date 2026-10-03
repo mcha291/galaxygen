@@ -8807,9 +8807,12 @@ are their neutral value, 1". Read against the code:
   their code already takes for a model without one). Every scalar the `bar`, `pattern` and `gas_pattern` stages
   publish — the arm number, the pitch, the amplitudes, the pattern speed, the gas contrast — is unchanged: those
   are laws and measured scatters, and they are still drawn. What is switched off is where the arms *are*.
-- So the switch is wider than the fields labelled synthetic in this phase. The arm and bar phases stay *seeded*
-  on `pattern_seed` until P1 moves them to `texture_seed` (Appendix B: "every other site keeps its kind"), and
-  the switch already treats what they place as the layer's. **That the label and the switch disagree for two
+- So the switch is wider than the fields labelled synthetic in this phase. ~~The arm and bar phases stay *seeded*
+  on `pattern_seed` until P1 moves them to `texture_seed`~~ **[corrected at G1: there is no phase draw — the arm
+  phase is ln R · cot(pitch) and the bar's angle ln(a_bar) · cot(pitch), a fixed convention; the three fields are
+  labelled seeded because their stages draw amplitudes and a pitch (D55), and P1's phases on `texture_seed` are a
+  new draw]** (Appendix B: "every other site keeps its kind"), and the switch already treats what they place as
+  the layer's. **That the label and the switch disagree for two
   sessions is the first question for G1.**
 - **I1 as tested:** layer-off against layer-on, every field with no φ axis and every scalar that is not a census
   statistic is bit-identical. A *census statistic* is a scalar or a radial field computed from realised objects
@@ -8859,7 +8862,9 @@ reader. **The viewer's cloud-interior noise** (`frontend/src/galaxy/region.ts`: 
 cloud vector, its octave weights the viewer's own) is the second relabel: the amended D5 lets the viewer evaluate
 a function the model publishes and forbids a parameter of its own, so the model publishes the function's
 parameters — the octave count, lacunarity and weights the viewer uses today, bit for bit — as a synthetic scalar
-set from `cloud_texture`, statistic "none read" under #110, and the viewer reads them instead of holding them.
+set from `cloud_texture`, statistic "none read" under #110, and the viewer reads them instead of holding them
+**[amended at G1: they are constants of the model under #110, not synthetic fields — a constant that is the same
+with the layer on and off is not a realisation]**.
 With the layer off the interior is smooth.
 
 **6. What does not change.** No stream's seed or value. No radial field. No acceptance row but 35 and 37, and
@@ -8878,3 +8883,99 @@ the two models are equal column for column. (d) Census totals move by Poisson no
 puts to Fable: do the invariants, as tested, mean what §1d says; is anything labelled synthetic that is physics,
 or the reverse; and this entry's own open readings — the switch wider than the label (ruling 1), a layer stage as
 the unit of provenance (2), the unread seed (3), the neutral values (5).
+
+**Built (2026-10-04; four Opus 5.5 agents: three builders in worktrees and a reviewer, read-only).**
+- *The noise primitives* (builder A; `layer/noise.py`, `tests/test_layer_noise.py`, 31 tests). The hash is
+  `lowbias32` `[verified: C. Wellons, hash-prospector README, https://github.com/skeeto/hash-prospector, read
+  2026-10-04]` chained over a salted seed, the octave and the lattice integers, in 32-bit unsigned arithmetic only;
+  the lattice value (h >> 8) · 2⁻²³ − 1 is the same bits in float32 and float64. **Value noise with the quintic
+  fade, divided by its own standard deviation at the point** (√3 / √Π(1 − 2s(1 − s))): unit variance everywhere, so
+  a sum's normaliser is exact — the builder's choice over gradient noise (fewer operations for the shader's twin;
+  gradient noise is zero on every lattice point), at the measured price of a staircase spectrum (ripple 0.04–0.08
+  dex about the line). Octave gain L^(1 − slope/2) in two dimensions and L^((3 − slope)/2) in three; a top-octave
+  factor 1/√(1 − L^−slope) for the missing finer octaves; measured slopes 1.495 / 2.497 / 3.544 for 1.5 / 2.5 /
+  3.5 (tolerance 0.15); a plane through a three-dimensional sum reads 0.03–0.07 steeper than slope − 1, stated and
+  not fitted away. Shear x′ = x − s·y: the spectrum's axis ratio 1 + s²/2 + |s|√(1 + s²/4), measured within 1.7 %.
+  The log-normal map's quadrature mean is 1 to 7e-16 per cell; off the quadrature points, rms 8e-4 at σ = 1 with
+  16 points a side. float32 against float64 over the vectors: 5.5e-7 at worst — on positions exact in float32;
+  at galaxy coordinates of 10⁴ the 24 bits of position give 5e-3, so a shader must keep lattice coordinates small.
+  632 committed vectors (`layer/vectors.json`); regenerating them is a decision's act. Nothing reads it yet.
+- *The model side* (builder B). Everything D214 ruled, with `tests/test_layer.py` (52 tests) and a reference
+  captured from S54 before any code moved (`tests/layer_reference_s54.json`: a digest per field and per route).
+  The flag travels run → `Context` → the run's `Fields` → the materialisers → the API, and a plain mapping of
+  fields is refused, so a layer-on catalogue cannot be made from a layer-off run. Placement readers: `systems`,
+  `bright_stars`, `clouds`, `clusters`, `planets` (it rebuilds the star layout). `cloud_texture` at checkpoint 5.
+- *The viewer* (builder D). "Physics only": `layerQuery` adds `layer=off` in one place and every binary route
+  checks the header's echo; a frame that says otherwise is refused and said. The switch is display state: it
+  edits no template and does not move the run hash. The staged Preview and Science tabs do not follow it. The
+  cloud interior is evaluated with the published octave count, lacunarity and gain; the shader's text at the
+  published values is S54's to the byte (its sha256 pinned). vitest 212 → 260. One layer-off capture,
+  `milky_way-physics-only`: the arms and the bar gone.
+
+**The predictions, read (B4).** (a) Layer on, nothing moved: **held** — 332 / 331 fields and the routes' arrays
+bit-identical to the `s54` tag, re-derived by the reviewer from the tag itself; the six frames to the byte.
+(b) Row 37 within 0.005 of −0.1055: **held** (−0.1030, a miss still). Row 35 "by little": **failed at the default
+seed** — −1.989 → −2.081, 1.7 σ of its own seed scatter; over twelve seeds the off-minus-on difference is
+−0.011 ± 0.054, so there is no shift, only a redraw, and "by little" was not a prediction that seed scatter
+allows. (c) The oracle: **held** — layer-off, `azimuthal` equals `basic` on all 334 shared fields; against
+layer-on `basic` it holds on 218 fields and not on the catalogues and the census statistics, which is I1's list
+again and not an independent check. (d) The cloud count within 3 % of 16 822: **held** — 16 754 (−0.40 %);
+clusters 12 930 → 12 923.
+
+**The reviewer's finding that the design did not foresee.** The layer "never changes a total" in expectation
+only. A census draws each cell's count on the cell's own stream at an expectation that carries the composed
+weight, so the switch re-draws which objects exist. Layer off against on: realised cloud mass −1.9 % galaxy-wide
+and up to 19 % in a cell ring; cluster mass −5.8 %; the census's HII Hα −8.1 %, up to 43 % in a ring; over six
+seeds −1.0 ± 1.7 %, −2.2 ± 2.9 %, −2.1 ± 6.0 % — noise, not bias. Fourteen published quantities move, five of
+them radial fields (the four forbidden-line Σ(R) and `hot_phase_porosity`). Expected counts per ring are identical
+to 1e-12. Also found: `cloud_source_offset` (to 249 pc against a 75 pc radial step) puts 12.5 % of clusters, 43.8 %
+of the cluster mass, in another radial ring than their cloud; **ruling 1 above mis-described the code** — there is
+no phase draw: the arm phase is ln R · cot(pitch) and the bar's angle ln(a_bar) · cot(pitch), a fixed convention;
+and "composed = has a φ axis" would neutralise P2's and P3's fields.
+
+**The gate (G1), 2026-10-04; ruling by Fable, one turn on `docs/HANDOFF_S55.md` (deleted at close), nothing run.**
+"Phase R merges once changes 1–14 below are made. The design stands. The invariants are true as restated below;
+the one thing they do not deliver — realised ring totals — cannot be delivered by a behaviour-preserving phase and
+is ordered for L1."
+1. *The invariants (F1).* "The censuses have always drawn realised counts per cell at a weighted expectation; the
+   layer did not introduce that, and Phase R, which keeps every stream and every S54 bit, cannot remove it. But
+   §1c rule 2 and A10 promise a conservation the code does not deliver, and the record says so plainly rather than
+   redefining 'total' quietly." BUILD_III §1c rule 2, §1d I1, I2 and I4 and §1e are amended to Fable's wording
+   (entered there, with what each read before). A10's last sentence is **not** edited: it is the owner's.
+2. *Labels (F7, F8).* (a) "The switch is right and the label lags; that is Appendix B's 'every other site keeps
+   its kind', accepted for Phase R. … There is no phase draw today … a fixed convention, a degenerate realisation
+   of physics the model does not compute (§1a), so switching it off is right and P1's phase on `texture_seed` is
+   a new draw, not a moved one." **Ruling 1's sentence "the arm and bar phases stay seeded on `pattern_seed`" is
+   wrong and is withdrawn here**: nothing draws a phase until P1. (b) "The three interior scalars are not
+   synthetic. A constant 4, 2, 0.5, the same on and off, is not 'a realisation from the layer's seed'. They are
+   parameters of a synthetic function and are published as constants of the model … not as fields of any stage";
+   ruling 2 gains: "a layer stage's *fields* are synthetic; a constant it declares is a constant." (c)
+   `cloud_texture` on `systems_seed` "is what §1e requires of Phase R and contradicts A10 until L1; each of the
+   four declarations says so"; rule 1's "rerolling `texture_seed` changes placements" is not yet true of any
+   field. (d) `cloud_height` stays seeded; whether a cloud's height is a placement or a sample of the vertical
+   profile is L1's, and #95 gains the line.
+3. *Composed is a declaration (F12).* An explicit declaration on the field with its neutral value; nothing reads
+   the axes; I1's test walks it and holds every undeclared field, φ axis or not, to bit-identity.
+4. *A composing stage stays in `stages/`* (F9): "its law is physics, and under `layer/` its fields would become
+   synthetic by D214 §2, which they are not." I4's test names the physics stages that bin realised objects
+   (`nebular`, `bubbles`) as a closed list.
+5. *The offset and the viewer (F2).* The offset's and the angle's `conserves` say what they do not keep, with the
+   numbers; no clamp in Phase R. The viewer's remaining literals and the interior's non-conserving ray column are
+   one debt beside #110, discharged by V7 when the layer's noise replaces the function.
+6. *Tests and records.* No per-object on/off assertion is invented ("with different realised counts the objects
+   do not correspond"); "each ring keeps its light" sums every component; `test_s45_diagnosis` runs layer-off.
+
+**Debts by phase (Fable).** **L1 (S60):** the ring-first draw — a ring's objects, count and every per-object draw,
+on a ring stream, the layer assigning cell and azimuth; `cloud_texture` to `texture_seed`; the offset's ring
+crossing settled; `cloud_height`'s kind; after it `CENSUS_STATISTICS` is empty and the binners' list carries no
+placement. **P1 (S56):** the mode phases become a draw on `texture_seed`; the convention retired. **V7 (S64):** the
+viewer's interior function replaced by the layer's noise and its vectors. **P2, P3:** a φ-axis field tabulated in
+a pattern's frame is simply not declared composed.
+
+**For the owner (the merge does not wait).** Appendix A's A10 says the layer "changes no ring total". In the code
+a census's realised ring total is a draw whose expectation the layer preserves, so with the layer off realised
+totals move by re-draw noise. Fable's reading: A10 holds for expected totals until L1 (S60), where the ring-first
+draw makes it hold for realised totals too. **Asked:** approve A10's last sentence amended to "the layer changes
+no ring total of any field and no expected ring total of any census; realised census totals are conserved from L1
+(D214 G1)" — or bring the ring-first draw forward, before P1? Until answered, A10 stands as the owner approved it
+and the record here says where the code falls short of it.
