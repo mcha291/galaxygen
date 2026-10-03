@@ -12,11 +12,13 @@ What is digested, on the production grid:
 - **each route that takes inputs**, for one window and for the whole disc: every array of the body (name,
   dtype, shape, sha256, in the body's order) and the header.
 
-**The header is compared after the fields Phase R adds are taken out** (:func:`normalise`): the fifth seed
-among ``inputs`` (``texture_seed``, D214 section 3), the ``layer`` echo (section 1), the three cloud-interior
-scalars riding in ``/api/clouds``' ``scalars`` (section 5), and ``stages`` (what a request ran depends on what
-the service had already run). A body's own sha256 is recorded too, for the record: it is not compared,
-because those additions change it by construction.
+**The header is compared after the keys Phase R adds are taken out** (:func:`normalise`): the fifth seed
+among ``inputs`` (``texture_seed``, D214 section 3), the ``layer`` echo (section 1), ``/api/clouds``'
+``cloud_interior`` (the cloud-interior noise's three parameters, constants of the model: section 5 as ruled at
+gate G1, change 4 - until then three scalars, which a first pass of this module took out of ``scalars``), and
+``stages`` (what a request ran depends on what the service had already run). A body's own sha256 is recorded
+too, for the record: it is not compared, because those additions change it by construction. **Phase R adds no
+field**: a layer-on run's fields are S54's, name for name.
 
 ``uv run python tests/layer_reference.py`` prints the digest's own sha256 and writes nothing;
 ``... write`` rewrites the reference, which is a deliberate act a decision must record.
@@ -40,8 +42,7 @@ WINDOW = "r_min=7.5&r_max=9&phi_min=0.2&phi_max=0.9"
 NARROW = "r_min=8&r_max=8.4&phi_min=0.3&phi_max=0.4"
 # Phase R's additions to a header, taken out before it is compared (the module's docstring).
 ADDED_INPUTS = ("texture_seed",)
-ADDED_KEYS = ("layer", "stages")
-ADDED_SCALARS = ("cloud_interior_octaves", "cloud_interior_lacunarity", "cloud_interior_gain")
+ADDED_KEYS = ("layer", "stages", "cloud_interior")
 
 
 def _sha(raw: bytes) -> str:
@@ -66,9 +67,6 @@ def normalise(header: dict[str, Any]) -> dict[str, Any]:
     if isinstance(out.get("inputs"), dict):
         for name in ADDED_INPUTS:
             out["inputs"].pop(name, None)
-    if isinstance(out.get("scalars"), dict):
-        for name in ADDED_SCALARS:
-            out["scalars"].pop(name, None)
     return out
 
 

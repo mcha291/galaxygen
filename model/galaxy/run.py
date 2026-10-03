@@ -22,9 +22,13 @@ function of its declared reads, so running fewer of them cannot move the ones
 that do run — asserted rather than argued, in ``tests/test_run.py``.
 
 **The randomness layer's switch** (S55, BUILD_III section 1e, DECISIONS.md D214). ``layer=True`` is the
-model as it has always run. ``layer=False`` is the physics alone: the composed fields are their neutral
-value, 1, the censuses are placed by no pattern, and the layer's realisation stages publish their neutral
-values; every law, every measured scatter and every ring total is unchanged. The runner only *carries* the
+model as it has always run. ``layer=False`` is the physics alone: the composed fields are their declared
+neutral value, the censuses are placed by no pattern, and the layer's realisation stages publish their neutral
+values. Every law and every measured scatter is unchanged, and so is every ring total of a field and every
+*expected* ring total of a census; no radial field moves but the census statistics - a census draws each
+cell's count at an expectation that carries the placement weight, so its realised objects are another draw
+with the layer off, and what is summed over them moves by that re-draw until BUILD_III's L1 (D214, gate G1;
+the closed list is ``tests/test_layer.py``'s ``CENSUS_STATISTICS``). The runner only *carries* the
 setting — to each stage's ``Context`` and onto the run's fields (``core.stage.Fields``), where a later
 materialisation finds it — and never reads it: ``galaxy.layer.compose`` is the one place that does. A run
 cannot be resumed under the other setting.
@@ -178,7 +182,8 @@ def run(
     layer: bool = True,
 ) -> Outputs:
     """Execute ``model``. ``only`` restricts the work to what those fields need (rule D4); ``layer=False`` runs
-    the physics alone, the randomness layer's composed fields and placements at their neutral values (D214)."""
+    the physics alone, the randomness layer's composed fields and placements at their neutral values (D214): every
+    expected ring total kept, the censuses' realised objects another draw."""
     if impls is None or table is None:
         _, prod_impls, prod_table = production()
         impls = prod_impls if impls is None else impls

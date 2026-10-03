@@ -139,6 +139,9 @@ GAS_DENSITY_CONTRAST = FieldDecl(
     name="gas_density_contrast", label="Gas density contrast Σ_gas(R, φ)/Σ_gas(R)",
     unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"),
     ramp=Ramp("magma", lo=0.0, hi=4.0), meaningful_zero=True, provenance="seeded",
+    # S55 (D214, gate G1 change 3): composed - the ridge's law applied to where the arms are - and 1 everywhere
+    # with the randomness layer off.
+    composed=True, neutral=1.0,
     about=(
         "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. "
         "A von Mises ridge in the stellar arm's own phase, its full width at half maximum a fixed "
@@ -150,7 +153,9 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "offset field is published for it. Inside the bar the term is the stellar bar's own. The "
         "ridge's amplitude is derived from the measured ratio of means (gas_arm_contrast) over "
         "the source's own arm mask, a fixed width perpendicular to the arm, at most half the "
-        "period. The gas's response to the stellar pattern: it reads no gas column."
+        "period. The gas's response to the stellar pattern: it reads no gas column. A composed "
+        "field: with the randomness layer off it is 1 everywhere - the ratio of means, the width "
+        "and the mask are unchanged, and nothing says where the ridge is."
     ),
 )
 
@@ -266,20 +271,25 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
     # Everything is read, nothing drawn: the ratio is the bar stage's derived class mean (D210 as
     # amended), the shape the stellar pattern's drawn numbers.
-    # The pattern object comes from compose (S55, D214), which gives none with the layer off: the field is then
-    # its neutral value, 1 everywhere, and the ratio the bar stage derived is untouched.
-    shape = _compose.gas_pattern(ctx.fields, ctx.constants)
-    flat = shape is None or shape.flat
-    if flat:
-        return {"gas_density_contrast": np.ones((R.size, ctx.grid.phi.size))}
-    field = shape.contrast(R, ctx.grid.phi)
-    # Every ring keeps its gas on any grid. Sampled at cell centres, the ridge's harmonics alias where the
-    # arm number times a harmonic equals the cell count: nothing on the default 360 cells, 6e-4 of the ring's
-    # mean on 36 cells with four arms (the ninth harmonic). A ring whose sampled mean has left 1 is divided
-    # by it; one that has not is untouched, so the default grid's field is the closed form bit for bit.
-    mean = field.mean(axis=1, keepdims=True)
-    off = np.abs(mean - 1.0) > RING_MEAN_TOLERANCE
-    return {"gas_density_contrast": np.where(off, field / np.where(off, mean, 1.0), field)}
+    # A composed field (S55, D214): with the layer off compose gives the neutral value the declaration states,
+    # everywhere, and the ratio the bar stage derived is untouched. With it on, the pattern object comes from
+    # compose too, and a pattern with nothing to place (unresolved, or a ratio of 1 with no bar) is the neutral.
+    cells = (R.size, ctx.grid.phi.size)
+
+    def ridge() -> np.ndarray:
+        shape = _compose.gas_pattern(ctx.fields, ctx.constants)
+        if shape is None or shape.flat:
+            return _compose.neutral(GAS_DENSITY_CONTRAST, cells)
+        field = shape.contrast(R, ctx.grid.phi)
+        # Every ring keeps its gas on any grid. Sampled at cell centres, the ridge's harmonics alias where the
+        # arm number times a harmonic equals the cell count: nothing on the default 360 cells, 6e-4 of the ring's
+        # mean on 36 cells with four arms (the ninth harmonic). A ring whose sampled mean has left 1 is divided
+        # by it; one that has not is untouched, so the default grid's field is the closed form bit for bit.
+        mean = field.mean(axis=1, keepdims=True)
+        aliased = np.abs(mean - 1.0) > RING_MEAN_TOLERANCE
+        return np.where(aliased, field / np.where(aliased, mean, 1.0), field)
+
+    return {"gas_density_contrast": _compose.field(ctx.fields, GAS_DENSITY_CONTRAST, cells, ridge)}
 
 
 GAS_PATTERN = IMPLEMENTATIONS.register(

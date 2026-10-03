@@ -79,11 +79,10 @@ ORDER = {
     ),
 }
 # The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's one stage publishes, in both
-# models - the four cloud columns the clouds stage drew as seeded until then, and the cloud-interior noise's shape.
-SYNTHETIC = {
-    "cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle",
-    "cloud_interior_octaves", "cloud_interior_lacunarity", "cloud_interior_gain",
-}
+# models - the four cloud columns the clouds stage drew as seeded until then. The cloud-interior noise's three
+# numbers are constants of the model, not fields (gate G1, change 4: "a layer stage's fields are synthetic; a
+# constant it declares is a constant").
+SYNTHETIC = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.

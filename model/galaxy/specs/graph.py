@@ -25,7 +25,9 @@ Beyond acyclicity this module checks three things the plan makes load-bearing:
   stage publishes one. A stage that reads a synthetic field is seeded: its
   fields are functions of the inputs and a seed, and only the layer realises.
 - **The randomness layer's readers** (invariant I4, S55). A *composed* field is a
-  law applied to a realisation: any field with a phi axis (``FieldDecl.composed``).
+  law applied to a realisation, and says so: ``FieldDecl(composed=True, neutral=...)``
+  (gate G1: a declaration, never read off the axes - a phi-axis field tabulated in a
+  pattern's own frame is physics and is not declared).
   A stage may require a composed or a synthetic field only if it is a declared
   *placement reader* (a census), a *composing stage* (it publishes a composed
   field itself) or a layer stage. Anything else is a physics stage reading a
@@ -88,7 +90,7 @@ class Graph:
 
     @property
     def composing_stages(self) -> tuple[str, ...]:
-        """The stages that publish a composed field (a phi axis), in execution order."""
+        """The stages that publish a field declared composed, in execution order."""
         return tuple(st.id for st in self.order if st.composes)
 
     @property
@@ -172,7 +174,7 @@ def stage_provenance(st: Stage, known: Mapping[str, str]) -> dict[str, str]:
 def layer_problems(model: Model, stages: Mapping[str, Stage]) -> list[Problem]:
     """Invariant I4 and where a layer stage lives (S55, D214 sections 1 and 2).
 
-    A stage that requires a composed field (a phi axis) or a synthetic one is a placement reader, a composing
+    A stage that requires a field declared composed or a synthetic one is a placement reader, a composing
     stage or a layer stage, or it is a problem; a base is judged on its own requirements. A stage declares
     itself a layer stage exactly when its compute lives under ``galaxy/layer/``.
     """
@@ -185,7 +187,7 @@ def layer_problems(model: Model, stages: Mapping[str, Stage]) -> list[Problem]:
                 d = decl.get(name)
                 if d is None or not (d.composed or d.provenance == "synthetic"):
                     continue
-                what = "composed (a law applied to a realisation: it has a phi axis)" if d.composed else "synthetic"
+                what = "declared composed (a law applied to a realisation)" if d.composed else "synthetic"
                 via = "" if st.id == sid else f" through its base {st.id!r}"
                 problems.append(Problem(
                     model.name, "layer-reader",

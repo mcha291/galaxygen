@@ -5,7 +5,8 @@ to a realisation". The physics stages hold the laws (how strong an arm is, how w
 ring holds); the layer holds the realisations (where the arms are, how a cloud leans). This module is where the two
 meet, and **the only place in the model that asks whether the layer is on** (DECISIONS.md D214 sections 1 and 4;
 rule B13: a switch read in one place cannot be forgotten in another). ``tests/test_layer.py`` holds that by reading
-the source: no other module under ``model/galaxy/`` branches on the setting, and none calls ``.from_fields(``.
+the source: no other module under ``model/galaxy/`` branches on the setting, none calls ``.from_fields(``, and
+none but the two pattern stages' own modules constructs a pattern object.
 
 **What a caller gets.**
 
@@ -14,13 +15,19 @@ the source: no other module under ``model/galaxy/`` branches on the setting, and
   handles for a model that publishes none (a uniform weight round the ring).
 - A *placement weight* (:func:`placement_weight`): a published composed field as a census reads it - the array, or
   ``None`` with the layer off or where the model publishes none.
-- A *composed field* (:func:`field`): what a composing stage publishes over (R, phi) - what its law makes, or ones
-  with the layer off. :func:`published` reads one back from a run's fields (it is ones there with the layer off).
+- A *composed field* (:func:`field`): what a composing stage publishes - what its law makes, or with the layer off
+  the neutral value **its declaration states** (``FieldDecl(composed=True, neutral=...)``; gate G1, change 3: a
+  field is composed because it says so, never because of its axes). :func:`published` reads one back from a run's
+  fields (it is its neutral there with the layer off).
 - A *realisation* (:func:`realise`, :func:`cloud_texture`): what a layer stage draws, or its neutral value.
 
 With the layer off every scalar the physics stages publish is unchanged - the arm number, the pitch, the
 amplitudes, the gas's ratio of means are laws and measured scatters, and they are still drawn. What is switched off
-is where the arms *are* (D214 section 1).
+is where the arms *are* (D214 section 1). **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
+amended at G1): every ring total of a field a composed field multiplies, and every *expected* count and expected
+total of a census it places. A census draws each cell's count on the cell's own stream at an expectation that
+carries the composed weight, so with the layer off its *realised* objects are another draw, and the statistics
+computed from them move by that re-draw noise until L1's ring-first draw.
 
 **How the setting reaches here.** ``run(model, inputs, grid, layer=...)`` gives it to every stage's
 :class:`~galaxy.core.stage.Context` and records it on the run's fields (:class:`~galaxy.core.stage.Fields`, and the
@@ -76,6 +83,12 @@ def setting(source: Any) -> str:
     return "on" if _on(source) else "off"
 
 
+def words(source: Any, on: str, off: str) -> str:
+    """One of two texts by the run's setting: for a response that describes what it placed by, so that what it
+    says of a composed field is true with the layer off too (gate G1, change 11)."""
+    return on if _on(source) else off
+
+
 def agree(fields: Any, layer: bool) -> None:
     """Refuse to continue a run under the other setting: its composed fields were made under its own."""
     if _on(fields) != bool(layer):
@@ -111,18 +124,32 @@ def gas_pattern(source: Any, constants: Mapping[str, Any]) -> Any:
 # --- composed fields -----------------------------------------------------------------------------------
 
 
-def field(source: Any, shape: tuple[int, ...], make: Callable[[], np.ndarray]) -> np.ndarray:
-    """A composed (R, phi) field: ``make()``, the law applied to the realisation, or its neutral value - 1
-    everywhere - with the layer off. ``make`` is not called then: nothing of the realisation is computed."""
+def neutral(decl: Any, shape: tuple[int, ...]) -> np.ndarray:
+    """A composed field at its declared neutral value everywhere (``FieldDecl.neutral``): what it is with the layer
+    off, and what a law that has nothing to place (a flat pattern) makes with it on."""
+    if not getattr(decl, "composed", False):
+        raise LayerError(
+            f"field {getattr(decl, 'name', decl)!r} is not declared composed: only a declared composed field has a "
+            "neutral value (FieldDecl(composed=True, neutral=...))"
+        )
+    return np.full(shape, decl.neutral)
+
+
+def field(source: Any, decl: Any, shape: tuple[int, ...], make: Callable[[], np.ndarray]) -> np.ndarray:
+    """A composed field: ``make()``, the law applied to the realisation, or - with the layer off - the neutral value
+    its declaration states, everywhere. ``decl`` is the field's own ``FieldDecl``, which must declare it composed;
+    the neutral is read from it and nowhere else. ``make`` is not called with the layer off: nothing of the
+    realisation is computed."""
     if not _on(source):
-        return np.ones(shape)
+        return neutral(decl, shape)
+    neutral(decl, (0,))  # an undeclared field is refused with the layer on too, not only when it is switched off
     return make()
 
 
 def published(source: Any, name: str) -> Any:
     """A composed field as a run published it, or None where the model publishes none. With the layer off the
-    run published ones (:func:`field`), so this is the neutral value then. For a reader that draws the field
-    itself - the API's render - rather than placing a census by it."""
+    run published its neutral value everywhere (:func:`field`), so this is the neutral value then. For a reader
+    that draws the field itself - the API's render - rather than placing a census by it."""
     _on(source)  # a mapping that does not carry the setting is refused here as everywhere
     fields = getattr(source, "fields", source)
     return fields.get(name)

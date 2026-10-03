@@ -156,11 +156,11 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
     assert r.status == 200
     header, _ = wire.decode(r.body)
     scalars = header["scalars"]
-    # S40: A_V. S55 (D214 section 5): the cloud-interior noise's octave count, lacunarity and gain, the layer stage
-    # cloud_texture's three synthetic scalars, ride here too - a renderer reads them instead of holding them (D5).
-    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v",
-                            "cloud_interior_octaves", "cloud_interior_lacunarity", "cloud_interior_gain"}
-    assert (scalars["cloud_interior_octaves"], scalars["cloud_interior_lacunarity"], scalars["cloud_interior_gain"]) == (4.0, 2.0, 0.5)
+    assert set(scalars) == {"cloud_count_total", "cloud_forcing_parameter", "cloud_lifetime", "cloud_extinction_v"}  # S40: A_V
+    # S55 (D214 section 5 as ruled at gate G1, change 4): the cloud-interior noise's octave count, lacunarity and
+    # gain ride in the header under their own key, not among the scalars - they are constants of the model, not a
+    # stage's fields - so a renderer reads them instead of holding them (rule D5 as amended).
+    assert header["cloud_interior"] == {"octaves": 4, "lacunarity": 2.0, "gain": 0.5}
     assert scalars["cloud_extinction_v"] == pytest.approx(2.9696, abs=1e-3)  # 42 Msun/pc2 x 3/2 through Draine's V row
     assert scalars["cloud_lifetime"] == pytest.approx(26.0)
     assert 0.0 < scalars["cloud_forcing_parameter"] < 1.0
