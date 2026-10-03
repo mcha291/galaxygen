@@ -107,37 +107,9 @@ def scalars(api: Service, model: str, *names: str) -> dict[str, float]:
     return {**header["scalars"], **arrays}
 
 
-def cell_areas(header: dict) -> np.ndarray:
-    """pc² of every (R, φ) cell of the window: R dR dφ at the cell's centre radius."""
-    r_axis, phi_axis = header["window"]["R"], header["window"]["phi"]
-    R = r_axis["lo"] + (np.arange(r_axis["n"]) + 0.5) * r_axis["width"]
-    return (R * r_axis["width"] * phi_axis["width"] * PC_PER_KPC**2)[:, None] * np.ones(phi_axis["n"])
-
-
-def band_magnitude(response: np.ndarray, band: str) -> np.ndarray:
-    """A Vega magnitude from a response through ``band_curve(band)``: the mean L_λ over the curve against a
-    zero-magnitude source's at 10 pc (``photometry.band_nu_l_nu`` of unit flux over the reference wavelength)."""
-    curve = spectra.band_curve(band)
-    lam = curve.grid()
-    mean = np.asarray(response) / np.trapezoid(curve.at(lam), lam)
-    zero = float(band_nu_l_nu(np.array(1.0), band)) / PASSBANDS[band].reference
-    return -2.5 * np.log10(mean / zero)
-
-
-def frame_total(header: dict, arrays: dict) -> np.ndarray:
-    """Each filter's response summed over the frame's cells, plus the bulge's: L☉."""
-    return (arrays["stars"] * cell_areas(header)[..., None]).sum(axis=(0, 1)) + np.asarray(header["bulge"])
-
-
-def face_on(header: dict, arrays: dict) -> dict:
-    """The frame's stars with the dust composed face-on (S39): light mixed through its own dust leaves (1 − T)/τ
-    of itself, τ = −ln T the column's depth in each filter; the scattered light joins it at the face-on phase
-    factor; the thermal emission is added undimmed (optically thin)."""
-    tau = -np.log(arrays["dust_extinction"])[:, None, :]
-    own = np.where(tau > 1e-12, -np.expm1(-tau) / np.where(tau > 1e-12, tau, 1.0), 1.0)
-    phase = header["components"]["dust_scattered"]["phase"]["factor"][-1]
-    lit = (arrays["stars"] + phase * arrays["dust_scattered"]) * own + arrays["dust_thermal"][:, None, :]
-    return {**arrays, "stars": lit}
+# S54 (D213): the frame's photometry - cell_areas, band_magnitude, frame_total, face_on - moved, unchanged, to
+# galaxy/specs/templates.py, where the templates' colour check reads the same computation.
+from galaxy.specs.templates import band_magnitude, cell_areas, face_on, frame_total  # noqa: E402
 
 
 # --- the gate -------------------------------------------------------------------------------

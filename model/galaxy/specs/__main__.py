@@ -2,7 +2,8 @@
 
 Exit status is non-zero if any spec reports a problem, if an acceptance
 quantity fails without being a recorded miss, or if a recorded miss has started
-passing. Not-yet-computable quantities do not fail the run, and neither does a
+passing; a template's blind checks (``specs.templates``, S54) are held to the same
+two conditions in their own table. Not-yet-computable quantities do not fail the run, and neither does a
 miss that is registered for that model (``spec.misses``) with its debt and its reason — it
 still prints as ``fail`` (rule B5 relaxes nothing), it just does not pretend to
 be news.
@@ -13,7 +14,7 @@ from __future__ import annotations
 import sys
 
 from galaxy.core.registry import production
-from galaxy.specs import convergence, determinism, graph, performance, preflight, spec, utf8_stdout
+from galaxy.specs import convergence, determinism, graph, performance, preflight, spec, templates, utf8_stdout
 
 
 def main() -> int:
@@ -34,6 +35,12 @@ def main() -> int:
     spec_results = spec.evaluate_models(models)
     print(spec.report(models, spec_results))
     bad |= any(spec.problems(r, name) for name, r in spec_results.items())
+
+    # S54 (D213): the templates' blind checks, in their own table after the acceptance rows and never among
+    # them; an unrecorded miss or a recorded one that passes fails the run, as for the rows.
+    template_results = templates.evaluate()
+    print(templates.report(template_results))
+    bad |= bool(templates.problems(template_results))
 
     # S10: the grid swept one axis at a time, and the profile. The sweep can fail
     # the run (a scalar that moves more than its target's width); the profile is

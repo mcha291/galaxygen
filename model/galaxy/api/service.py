@@ -9,8 +9,8 @@ cannot be hidden by a cache: an endpoint that touched a stage says so.
 
 **Where the answers come from.**
 
-- Metadata (``version``, ``stages``, ``fields``, ``inputs``) is answered from
-  declarations — ``Stage``, ``FieldDecl``, ``Input`` — which exist without
+- Metadata (``version``, ``stages``, ``fields``, ``inputs``, ``templates``) is answered from
+  declarations — ``Stage``, ``FieldDecl``, ``Input``, ``Template`` — which exist without
   anything being computed. These routes run no stage, ever, and it is not a
   matter of care: there is no runner in their path to call.
 - ``arrays`` runs the dependency closure above the fields asked for, and nothing
@@ -45,6 +45,7 @@ from urllib.parse import parse_qsl
 
 import numpy as np
 
+from galaxy import templates as _tpl  # the named galaxies (S54); Service._templates is the route
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
@@ -161,10 +162,27 @@ ROUTES: tuple[Route, ...] = (
     Route("/api/fields", "Field declarations and the cmap stops behind them (rule A9).", ("model",), "fields"),
     Route("/api/inputs", "The input registry: defaults, ranges, seeds, event list.", ("model",), "inputs"),
     Route(
+        "/api/templates",
+        "The named galaxies, as data (S54, D213): {default: <name>, templates: [{name, label, about, model, "
+        "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
+        "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
+        "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [], fit: null | {targets: "
+        "[{name, label, field, unit, value, half_window, window: [lo, hi], source, model, residual}], controls: "
+        "[{name, default, fitted, lo, hi}], objective, objective_value, tool, method, date, evaluations}, checks: "
+        "[{name, label, unit, window: [lo, hi], quantity, mismatch, source}] - the windows only, never the model's "
+        "number: the verdicts are the specs' report - and sources: {<dotted path of a number>: its tag}}]}. "
+        "template=<name> on a route that takes inputs makes that template's inputs the base, which an input in "
+        "the query still overrides; the default template is the registry's defaults, so naming it changes nothing. "
+        "Runs no stage.",
+        (),
+        "templates",
+    ),
+    Route(
         "/api/arrays",
         "Named fields as binary arrays, plus the galaxy-level scalars. t_samples=N keeps N evenly spaced "
         "time steps of fields over t; precision=f4 sends float fields as float32.",
-        ("model", "fields", "t_samples", "precision"),
+        ("model", "template", "fields", "t_samples", "precision"),
         "arrays",
     ),
     Route(
@@ -175,13 +193,13 @@ ROUTES: tuple[Route, ...] = (
         "inside that frustum. level=k (0..3, S32) names the cell hierarchy's depth: each level-k cell "
         "holds its parent's stars that fall inside it plus its own, 4^k times the sample density, every "
         "row named by level, cell and index columns.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view", "level"),
+        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view", "level"),
         "region",
     ),
     Route(
         "/api/system",
         "One star's planets and belts, by the (level, cell, index) that names it (level 0 by default).",
-        ("model", "cell", "index", "stars", "level"),
+        ("model", "template", "cell", "index", "stars", "level"),
         "system",
     ),
     Route(
@@ -189,7 +207,7 @@ ROUTES: tuple[Route, ...] = (
         "The molecular-cloud census for one (R, phi) window (S32): every cloud of the cells the window "
         "meets, each row named by cell and index; level=k keeps the clouds inside the level-k children "
         "the window meets.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clouds",
     ),
     Route(
@@ -199,7 +217,7 @@ ROUTES: tuple[Route, ...] = (
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
         "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
         "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
+        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
     Route(
@@ -207,7 +225,7 @@ ROUTES: tuple[Route, ...] = (
         "The supernova-remnant census for one (R, phi) window (S36): every visible remnant of the cells the "
         "window meets, each row named by cell and index, with its blast wave's size, shell and phase; level=k "
         "keeps the remnants inside the level-k children the window meets.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "remnants",
     ),
     Route(
@@ -222,7 +240,7 @@ ROUTES: tuple[Route, ...] = (
         "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
         "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
         "header.",
-        ("model", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
+        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
         "bright",
     ),
     Route(
@@ -254,7 +272,7 @@ ROUTES: tuple[Route, ...] = (
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
         "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
         "the header's resolved stating the light split and the closure.",
-        ("model", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
+        ("model", "template", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
         "render",
     ),
 )
@@ -620,6 +638,72 @@ def _event_json(event: MergerEvent) -> dict[str, Any]:
     }
 
 
+def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[str, Any]:
+    """A template on the wire (S54, D213): its inputs fully resolved against ``table``, in /api/inputs' shapes.
+
+    A check carries its window and never a model number; the fit's three model numbers are the committed
+    ones the template holds. Nothing here is computed from a stage (rule D4).
+    """
+    resolved = _tpl.resolve(template, table)
+    fit = None
+    if template.fit is not None:
+        fit = {
+            "targets": [
+                {
+                    "name": t.name, "label": t.label, "field": t.field, "unit": t.unit,
+                    "value": _number(t.value), "half_window": _number(t.half_window), "window": list(t.window),
+                    "source": t.source, "model": _number(t.model), "residual": _number(t.residual),
+                }
+                for t in template.fit.targets
+            ],
+            "controls": [
+                {
+                    "name": name, "default": None if table[name].unset else _number(table[name].default),
+                    "fitted": _number(value), "lo": table[name].lo, "hi": table[name].hi,
+                }
+                for name, value in resolved.items() if table[name].kind == "control"
+            ],
+            "objective": template.fit.objective,
+            "objective_value": _number(template.fit.objective_value),
+            "tool": template.fit.tool,
+            "method": template.fit.method,
+            "date": template.fit.date,
+            "evaluations": template.fit.evaluations,
+        }
+    return {
+        "name": template.name,
+        "label": template.label,
+        "about": template.about,
+        "model": template.model,
+        "inputs": {
+            "controls": {n: _number(v) for n, v in resolved.items() if table[n].kind == "control"},
+            "seeds": {n: int(v) for n, v in resolved.items() if table[n].kind == "seed"},
+            "mergers": [_event_json(e) for e in resolved.get("mergers", ())],
+        },
+        "camera": {
+            "inclination_deg": template.camera.inclination_deg,
+            "azimuth_deg": template.camera.azimuth_deg,
+            "radius_kpc": template.camera.radius_kpc,
+            "fov_deg": template.camera.fov_deg,
+        },
+        "filters": template.filters,
+        "instrument": {
+            "distance_mpc": template.instrument.distance_mpc,
+            "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
+        },
+        "pins": list(template.pins),
+        "fit": fit,
+        "checks": [
+            {
+                "name": c.name, "label": c.label, "unit": c.unit, "window": list(c.window),
+                "quantity": c.quantity, "mismatch": c.mismatch, "source": c.source,
+            }
+            for c in template.checks
+        ],
+        "sources": dict(template.sources),
+    }
+
+
 def grid_json(grid: Grid) -> dict[str, Any]:
     """The axes a field is sampled on: the viewer cannot place an image without them."""
     return {
@@ -724,8 +808,20 @@ class Service:
             # A rejected input vector is the caller's mistake, not the server's.
             return _json({"error": str(e), "route": route}, 400)
 
+    def _template(self, q: Query) -> _tpl.Template | None:
+        """template=<name>: the named galaxy whose inputs a request starts from (S54, D213); None without it."""
+        name = q.one("template")
+        if name is None:
+            return None
+        if name not in _tpl.TEMPLATES:
+            raise NotFound(f"no template {name!r}; registered: {list(_tpl.TEMPLATES)}")
+        return _tpl.TEMPLATES[name]
+
     def _model(self, q: Query) -> Model:
-        name = q.one("model") or self.models.names()[0]
+        # A template names its model; model= still chooses, and without either it is the first registered.
+        template = self._template(q)
+        named = template.model if template is not None and template.model in self.models else self.models.names()[0]
+        name = q.one("model") or named
         if name not in self.models:
             raise NotFound(f"no model {name!r}; registered: {list(self.models.names())}")
         return self.models.get(name)
@@ -735,8 +831,14 @@ class Service:
         return _graph.analyse(model, self.impls, self.table)
 
     def _overrides(self, model: Model, q: Query) -> dict[str, Any]:
+        """The inputs a request gives: its template's overrides as the base (S54, D213), then every input in the
+        query over them. The default template overrides nothing, so naming it and naming none are one point in
+        input space - one cache entry, the same bytes."""
         accepted = set(model.input_names(self.table))
+        template = self._template(q)
         out: dict[str, Any] = {}
+        if template is not None:
+            out.update({n: v for n, v in _tpl.overrides(template).items() if n in accepted})
         for name, raw in q.rest().items():
             if name not in accepted:
                 raise NotFound(f"model {model.name!r} has no input {name!r}")
@@ -897,6 +999,13 @@ class Service:
             "controls": [input_json(i) for i in accepted if i.kind == "control"],
             "seeds": [input_json(i) for i in accepted if i.kind == "seed"],
             "events": [input_json(i) for i in accepted if i.kind == "events"],
+        })
+
+    def _templates(self, q: Query) -> Response:
+        """The named galaxies, from their declarations and the input table: no model, no stage (rule D4)."""
+        return _json({
+            "default": _tpl.DEFAULT,
+            "templates": [template_json(t, self.table) for t in _tpl.TEMPLATES.values()],
         })
 
     def _arrays(self, q: Query) -> Response:
