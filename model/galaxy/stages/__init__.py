@@ -23,6 +23,9 @@ from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and r
 from . import systems  # noqa: F401  (checkpoint 5)
 from . import bright  # noqa: F401  (checkpoint 5: every disc star above a luminosity, S48)
 from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
+# The randomness layer's realisation stages live under galaxy/layer/ and register here with the rest, so that
+# importing this package still registers every implementation a model maps a slot to (S55, D214).
+from galaxy.layer import cloud_texture  # noqa: F401, E402  (checkpoint 5, synthetic: a cloud's interior)
 from . import clusters  # noqa: F401  (checkpoint 5: the young star clusters the clouds make, S33)
 from . import nebular  # noqa: F401  (checkpoint 5: the clusters' HII regions and the diffuse ionized gas, S35)
 from . import bubbles  # noqa: F401  (checkpoint 5: wind bubbles, supernova remnants and the hot phase, S36)

@@ -181,8 +181,12 @@ def test_a_template_is_refused_what_the_registry_does_not_hold():
         replace(NGC_4414, controls={"bar_strength": 1.0}).validate()
     with pytest.raises(templates.TemplateError, match="outside"):
         replace(NGC_4414, controls={**NGC_4414.controls, "disc_spin": 0.5}).validate()
+    # S55 (D214 section 3): the example was texture_seed, which the registry did not hold until the randomness
+    # layer's seed joined it - and which this template now states (4414). A seed nobody registered is still refused.
     with pytest.raises(templates.TemplateError, match="not a registered seed"):
-        replace(NGC_4414, seeds={"texture_seed": 1}).validate()
+        replace(NGC_4414, seeds={"glitter_seed": 1}).validate()
+    assert NGC_4414.seeds["texture_seed"] == 4414 and "texture_seed" not in MILKY_WAY.seeds
+    assert templates.resolve(MILKY_WAY)["texture_seed"] == 0  # the default template: the registry's own
     with pytest.raises(templates.TemplateError, match="no source"):
         replace(NGC_4414, sources={}).validate()
     with pytest.raises(templates.TemplateError, match="carries no tag"):
@@ -803,9 +807,12 @@ def test_the_checks_are_judged_on_the_template_s_own_run():
         assert (r.status == "pass") == c.holds(r.value)
         assert f"{r.value:.6g}" in r.reason and ("not in" in r.reason) == (r.status == "fail")
         assert r.standing == "disclosed" and r.first is c.first_reading  # the standing and fit A's reading ride along
-    # Each number is the template's own galaxy's, read as the definition says.
+    # Each number is the template's own galaxy's, read as the definition says - and, since S55 (D214, invariant
+    # I3), on the layer-off run, as the acceptance rows are: the four field checks are the same bits either way,
+    # and the frame's colour moves in its fourteenth decimal with the placement (so the render below is asked off).
+    assert checks.JUDGED_LAYER is False and checks.JUDGED_SETTING == "off"
     out, _ = api.compute(api.models.get(NGC_4414.model), templates.overrides(NGC_4414),
-                         ("circular_velocity", "sfr", "hydrogen_mass_30kpc", "absolute_magnitude_k"))
+                         ("circular_velocity", "sfr", "hydrogen_mass_30kpc", "absolute_magnitude_k"), layer=False)
     by_name = {r.name: r.value for r in judged}
     assert by_name["curve_shape"] == templates.curve_shape(out.fields["circular_velocity"], out.grid.R, 20.6)
     assert by_name["star_formation_rate"] == out.fields["sfr"]
@@ -813,7 +820,7 @@ def test_the_checks_are_judged_on_the_template_s_own_run():
     assert by_name["absolute_magnitude_k"] == out.fields["absolute_magnitude_k"]
     # The colour is the frame's through its dust, not its stars' alone. (Which way the dust moves it is the
     # galaxy's: reddening against scattered light. On this grid this template's frame is bluer through its dust.)
-    got = api.handle("/api/render", {"template": ["ngc_4414"], "filters": [json.dumps(
+    got = api.handle("/api/render", {"template": ["ngc_4414"], "layer": ["off"], "filters": [json.dumps(
         [spectra.band_curve(b).json() for b in checks.FACE_ON_BANDS])]})
     header, arrays = got.frame()
     assert by_name["colour_b_v_face_on"] == checks.face_on_colour(header, arrays)

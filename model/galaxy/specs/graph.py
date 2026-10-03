@@ -19,6 +19,18 @@ Beyond acyclicity this module checks three things the plan makes load-bearing:
   A stage that extends another (``Stage.extends``, S27) republishes the base's
   fields at the base's provenance, because the base computes them in its own
   restricted view; only the extension's own fields see its extra reads.
+  **Since S55 (D214) there is a fourth kind, and its unit is still the stage**
+  (D55 kept): a *layer stage* - one that lives under ``galaxy/layer/`` and
+  declares itself one - publishes synthetic fields, all of them, and no other
+  stage publishes one. A stage that reads a synthetic field is seeded: its
+  fields are functions of the inputs and a seed, and only the layer realises.
+- **The randomness layer's readers** (invariant I4, S55). A *composed* field is a
+  law applied to a realisation: any field with a phi axis (``FieldDecl.composed``).
+  A stage may require a composed or a synthetic field only if it is a declared
+  *placement reader* (a census), a *composing stage* (it publishes a composed
+  field itself) or a layer stage. Anything else is a physics stage reading a
+  placement, and fails here. A base stage is judged on its own requirements, so
+  an extension that composes does not lend its base the right.
 """
 
 from __future__ import annotations
@@ -36,6 +48,19 @@ class GraphError(ValueError):
     """The graph cannot be built: a cycle, an unknown implementation, or a missing producer."""
 
 
+# Where a layer stage lives (D214 section 2): the package its compute is written in.
+LAYER_PACKAGE = "galaxy.layer"
+
+# The inputs a ruling leaves without a reader, each with the ruling. Every other seed binds at its earliest
+# reader's checkpoint, and one that no stage reads is reported unbound (``Graph.unbound_inputs``), which
+# ``tests/test_spec.py`` holds empty. **Exactly one exception, named**: ``texture_seed`` feeds only fields the
+# third build adds, and its first reader is P1's mode phases; no dummy reader is invented for it (rule A4).
+# ``tests/test_layer.py`` fails the day a stage reads it - this entry is removed then.
+UNREAD_BY_RULING: Mapping[str, str] = {
+    "texture_seed": "DECISIONS.md D214 section 3: no stage reads it until BUILD_III phase P1",
+}
+
+
 @dataclass
 class Graph:
     model: Model
@@ -48,7 +73,28 @@ class Graph:
 
     @property
     def unbound_inputs(self) -> tuple[str, ...]:
-        return tuple(n for n, c in self.input_checkpoint.items() if c is None)
+        """The inputs no stage reads, less the one a ruling leaves unread (``UNREAD_BY_RULING``)."""
+        return tuple(n for n, c in self.input_checkpoint.items() if c is None and n not in UNREAD_BY_RULING)
+
+    @property
+    def unread_by_ruling(self) -> tuple[str, ...]:
+        """The inputs no stage reads because a ruling says none does yet."""
+        return tuple(n for n, c in self.input_checkpoint.items() if c is None and n in UNREAD_BY_RULING)
+
+    @property
+    def placement_readers(self) -> tuple[str, ...]:
+        """The census stages declared to consume a composed weight or a synthetic field, in execution order."""
+        return tuple(st.id for st in self.order if st.placement_reader)
+
+    @property
+    def composing_stages(self) -> tuple[str, ...]:
+        """The stages that publish a composed field (a phi axis), in execution order."""
+        return tuple(st.id for st in self.order if st.composes)
+
+    @property
+    def layer_stages(self) -> tuple[str, ...]:
+        """The randomness layer's realisation stages, in execution order."""
+        return tuple(st.id for st in self.order if st.layer_stage)
 
     @property
     def ok(self) -> bool:
@@ -107,11 +153,63 @@ def stage_provenance(st: Stage, known: Mapping[str, str]) -> dict[str, str]:
     fields it republishes are computed by its base in the base's own restricted view, so they
     take the base's provenance, and only the extension's own fields see its extra reads.
     """
-    seeded = bool(st.reads_seeds) or any(known.get(n) == "seeded" for n in st.requires + st.requires_optional)
-    out = {name: ("seeded" if seeded else "derived") for name in st.published_names}
+    if st.layer_stage:
+        # S55 (D214 section 2): the layer's stage is the unit of the fourth kind. Whatever seed it draws on, what
+        # it publishes is a realisation standing in for physics the model does not compute.
+        out = {name: "synthetic" for name in st.published_names}
+    else:
+        # A synthetic field is a function of the inputs and a seed too, so its readers are seeded; only a layer
+        # stage publishes synthetic.
+        seeded = bool(st.reads_seeds) or any(
+            known.get(n) in ("seeded", "synthetic") for n in st.requires + st.requires_optional
+        )
+        out = {name: ("seeded" if seeded else "derived") for name in st.published_names}
     if st.extends is not None:
         out.update(stage_provenance(st.extends, known))
     return out
+
+
+def layer_problems(model: Model, stages: Mapping[str, Stage]) -> list[Problem]:
+    """Invariant I4 and where a layer stage lives (S55, D214 sections 1 and 2).
+
+    A stage that requires a composed field (a phi axis) or a synthetic one is a placement reader, a composing
+    stage or a layer stage, or it is a problem; a base is judged on its own requirements. A stage declares
+    itself a layer stage exactly when its compute lives under ``galaxy/layer/``.
+    """
+    decl = {d.name: d for st in stages.values() for d in st.publishes}
+    problems: list[Problem] = []
+
+    def judge(st: Stage, sid: str) -> None:
+        if not st.may_place:
+            for name in st.requires + st.requires_optional:
+                d = decl.get(name)
+                if d is None or not (d.composed or d.provenance == "synthetic"):
+                    continue
+                what = "composed (a law applied to a realisation: it has a phi axis)" if d.composed else "synthetic"
+                via = "" if st.id == sid else f" through its base {st.id!r}"
+                problems.append(Problem(
+                    model.name, "layer-reader",
+                    f"stage {sid!r}{via} requires {name!r}, which is {what}, and is neither a placement reader, "
+                    "a composing stage nor a layer stage: no physics stage reads the randomness layer (invariant I4)",
+                ))
+        if st.extends is not None:
+            judge(st.extends, sid)
+
+    for sid, st in stages.items():
+        judge(st, sid)
+        lives = st.home == LAYER_PACKAGE or st.home.startswith(LAYER_PACKAGE + ".")
+        if st.layer_stage and not lives:
+            problems.append(Problem(
+                model.name, "layer-stage",
+                f"stage {sid!r} declares itself a layer stage but its compute lives in {st.home or 'no module'!r}, "
+                f"not under {LAYER_PACKAGE}",
+            ))
+        elif lives and not st.layer_stage:
+            problems.append(Problem(
+                model.name, "layer-stage",
+                f"stage {sid!r} lives in {st.home!r} and does not declare itself a layer stage (layer_stage=True)",
+            ))
+    return problems
 
 
 def analyse(
@@ -188,6 +286,9 @@ def analyse(
                     )
                 )
 
+    # The randomness layer's readers and its stages (invariant I4, S55).
+    problems.extend(layer_problems(model, stages))
+
     # Input and seed checkpoints: derived from readers, compared to the hypothesis.
     accepted = set(model.input_names(table))
     input_checkpoint: dict[str, int | None] = {}
@@ -256,6 +357,11 @@ def report(
         bound = {n: c for n, c in g.input_checkpoint.items() if c is not None}
         lines.append("    inputs bound: " + (", ".join(f"{n}@{c}" for n, c in sorted(bound.items())) or "(none)"))
         lines.append(f"    inputs unbound: {len(g.unbound_inputs)} " + (", ".join(g.unbound_inputs) if g.unbound_inputs else ""))
+        for name in g.unread_by_ruling:
+            lines.append(f"    input unread by ruling: {name} ({UNREAD_BY_RULING[name]})")
+        lines.append("    layer stages: " + (", ".join(g.layer_stages) or "(none)"))
+        lines.append("    composing stages: " + (", ".join(g.composing_stages) or "(none)"))
+        lines.append("    placement readers: " + (", ".join(g.placement_readers) or "(none)"))
         for p in g.problems:
             lines.append(f"    FAIL {p}")
     return "\n".join(lines)

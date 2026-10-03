@@ -46,7 +46,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.special import normal_cdf
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.pattern import ArmPattern
+from galaxy.layer import compose as _compose
 from galaxy.stages.systems import CATALOGUE_SAMPLE, CELL_SECTORS, cell_counts
 
 # Conversions. A factor is a factual claim and carries a citation (units.py holds
@@ -755,7 +755,9 @@ def compute_planets(ctx: Context) -> Mapping[str, Any]:
     counts = cell_counts(
         ctx.fields["stellar_surface_density"], ctx.grid.R,
         int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE,
-        pattern=ArmPattern.from_fields(ctx.fields),  # the same layout the catalogue drew, or stars get renamed
+        # The same layout the catalogue drew, or stars get renamed: the catalogue's own pattern, from compose
+        # (S55, D214) - none with the layer off, as the catalogue itself was then laid out.
+        pattern=_compose.stellar_pattern(ctx.fields),
     )
     columns, per_star = materialise(ctx.fields, counts, int(ctx.seeds["planets_seed"]), constants)
     giants = np.zeros(len(per_star), dtype=bool)
@@ -782,6 +784,9 @@ PLANETS = IMPLEMENTATIONS.register(
             "catalogue, seeded by planets_seed. §12's object half, which is chaotic by construction."
         ),
         compute=compute_planets,
+        # S55 (D214, I4): it inherits the star catalogue's objects, and names each by the layout the catalogue
+        # was placed in - the stellar pattern's sector weights - so it reads the same composed weight.
+        placement_reader=True,
         reads_seeds=("planets_seed", "systems_seed"),
         reads_constants=PLANETS_CONSTANTS,
         requires=(

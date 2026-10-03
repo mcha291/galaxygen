@@ -56,6 +56,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 from galaxy.stages.pattern import ArmPattern, invert_azimuths
 
 PHASE_CELLS = 360  # the mask's fixed midpoint quadrature over one period of θ (A1)
@@ -265,8 +266,9 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
     # Everything is read, nothing drawn: the ratio is the bar stage's derived class mean (D210 as
     # amended), the shape the stellar pattern's drawn numbers.
-    names = ("gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length")
-    shape = GasPattern.from_fields({k: ctx.fields[k] for k in names}, ctx.constants)
+    # The pattern object comes from compose (S55, D214), which gives none with the layer off: the field is then
+    # its neutral value, 1 everywhere, and the ratio the bar stage derived is untouched.
+    shape = _compose.gas_pattern(ctx.fields, ctx.constants)
     flat = shape is None or shape.flat
     if flat:
         return {"gas_density_contrast": np.ones((R.size, ctx.grid.phi.size))}

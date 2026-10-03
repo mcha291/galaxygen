@@ -38,7 +38,7 @@ from galaxy.core.stage import Stage
 from galaxy.specs import Problem, utf8_stdout
 from galaxy.specs.graph import resolve_stages
 
-SCAN_PACKAGES: tuple[str, ...] = ("galaxy.stages",)
+SCAN_PACKAGES: tuple[str, ...] = ("galaxy.stages", "galaxy.layer")  # the layer's stages since S55 (D214)
 
 
 @dataclass

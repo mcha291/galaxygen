@@ -31,10 +31,13 @@ source in the about line; nothing here is recalled (rule B9).**
   7 Myr). No *remnant* state: a dispersed cloud is not molecular gas, and no source gave the phase a
   duration (debt #95).
 - *What no source gives* — the offset of the embedded source from the cloud's centre and the
-  direction and steepness of the cloud's density gradient are seeded draws with the distribution
+  direction and steepness of the cloud's density gradient are draws with the distribution
   stated and tagged ``[inferred]``: the source uniformly inside the cloud's volume, the gradient's
-  direction uniform and its steepness uniform on [0, 1]. So is the cloud's height, a sech² layer at
-  half the thin disc's scale height (debt #95).
+  direction uniform and its steepness uniform on [0, 1]. **Since S55 (D214, BUILD_III Appendix B) these
+  four are the randomness layer's**: synthetic, published by its stage ``cloud_texture``
+  (``galaxy/layer/cloud_texture.py``), drawn on the same streams as before and zero with the layer off;
+  a census materialised here carries them through ``galaxy.layer.compose``. The cloud's height, a sech²
+  layer at half the thin disc's scale height, stays this stage's seeded draw (debt #95).
 - *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
   cloud's azimuth inside its sector, from the gas's own density contrast (``gas_pattern``,
   ``GasPattern``, S51, D210) — a narrow ridge on the stellar arm's crest, not the stars' broader
@@ -60,9 +63,9 @@ from galaxy.core import seeds as _seeds
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
-from galaxy.stages.gas_pattern import GasPattern
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_RINGS,
@@ -166,7 +169,9 @@ def expected_counts(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping
     contrast averaged over each (S51, D210). A population integral, whatever a request asked for."""
     rings, sectors = cell_edges(R)
     ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
-    pattern = GasPattern.from_fields(fields, constants)
+    # The gas's pattern, from compose (S55, D214): none with the layer off, and every sector of a ring then
+    # expects the same number of clouds. The ring's total is the same either way (invariant I2).
+    pattern = _compose.gas_pattern(fields, constants)
     weights = (
         np.ones((CELL_RINGS, CELL_SECTORS))
         if pattern is None or pattern.flat
@@ -198,6 +203,22 @@ CLOUD_COLUMNS: tuple[str, ...] = (
     "cloud_velocity_dispersion", "cloud_mach_number", "cloud_density_pdf_width",
     "cloud_age", "cloud_source_offset", "cloud_source_angle", "cloud_density_gradient",
     "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
+)
+# The four columns the randomness layer realises and its stage ``cloud_texture`` publishes (S55, D214 section 5;
+# BUILD_III Appendix B): where a cloud's embedded source sits and how its density leans. Until S55 this stage
+# drew and published them as seeded; the draws - their seed, their streams, their values - are unchanged, and
+# live in ``galaxy/layer/cloud_texture.py``. A census materialised here still carries them (the cluster census
+# and ``/api/clouds`` read whole clouds), obtained through ``galaxy.layer.compose``.
+TEXTURE_COLUMNS: tuple[str, ...] = (
+    "cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle",
+)
+# Every column of a cloud on the wire, in the order ``/api/clouds`` has always sent them: this stage's own with the
+# layer's four where they stood before S55, so a response's columns did not move when their publisher did.
+WIRE_COLUMNS: tuple[str, ...] = (
+    "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
+    "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
+    "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
+    "cloud_cluster_index",
 )
 
 # The dust's V-band extinction cross-section per hydrogen atom, cm^2/H: the grain table's own V row
@@ -233,13 +254,19 @@ def materialise_clouds(
     seed: int,
     constants: Mapping[str, float],
     cells: Sequence[int] | None = None,
+    *,
+    texture: bool = True,
 ) -> Catalogue:
-    """The clouds of ``cells`` (every cell when None), exactly the clouds a full sweep would give (D60)."""
+    """The clouds of ``cells`` (every cell when None), exactly the clouds a full sweep would give (D60).
+
+    ``texture`` says whether the census carries the randomness layer's four columns (``TEXTURE_COLUMNS``): a
+    whole cloud does, which is what the cluster census and the API read; the ``clouds`` stage publishes its own
+    columns only and passes False, the layer's stage publishing the four (S55, D214 section 5)."""
     c = constants
     rings, sectors = cell_edges(R)
     expected = expected_counts(fields, R, c)
     counts = cloud_counts(expected, seed, cells)
-    pattern = GasPattern.from_fields(fields, c)  # the gas's own ridge places the clouds (S51, D210)
+    pattern = _compose.gas_pattern(fields, c)  # the gas's own ridge places the clouds (S51, D210); none, layer off
     sigma = float(c["GMC_SURFACE_DENSITY"])
     c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
@@ -281,22 +308,22 @@ def materialise_clouds(
         columns.setdefault("cloud_mach_number", []).append(mach)
         columns.setdefault("cloud_density_pdf_width", []).append(np.sqrt(np.log1p(b * b * mach * mach)))
         columns.setdefault("cloud_age", []).append(age)
-        columns.setdefault("cloud_source_offset", []).append(size * np.cbrt(draw("source_offset")))
-        columns.setdefault("cloud_source_angle", []).append(2.0 * math.pi * draw("source_angle"))
-        columns.setdefault("cloud_density_gradient", []).append(draw("gradient"))
-        columns.setdefault("cloud_gradient_angle", []).append(2.0 * math.pi * draw("gradient_angle"))
         columns.setdefault("cloud_metallicity", []).append(np.interp(radius, R, feh_gas))
         columns.setdefault("cloud_alpha", []).append(np.interp(radius, R, alpha_gas))
         states.append(state_of(age, phases))
         columns.setdefault("cloud_cluster_index", []).append(cluster_indices(states[-1]))
 
+    own = tuple(n for n in CLOUD_COLUMNS if n not in TEXTURE_COLUMNS)
     if not columns:
         empty = np.zeros(0)
-        return Catalogue.of(
-            {n: empty for n in CLOUD_COLUMNS} | {"cloud_cluster_index": empty, "cloud_state": empty.astype(np.int64)}, counts
-        )
-    out: dict[str, Any] = {name: np.concatenate(parts) for name, parts in columns.items()}
-    out["cloud_state"] = np.concatenate(states)
+        out: dict[str, Any] = {n: empty for n in own} | {"cloud_cluster_index": empty, "cloud_state": empty.astype(np.int64)}
+    else:
+        out = {name: np.concatenate(parts) for name, parts in columns.items()}
+        out["cloud_state"] = np.concatenate(states)
+    if texture:
+        # The layer's four columns for these cells (S55): the same streams as ever with the layer on, zero with
+        # it off. compose decides which, from the run the fields belong to.
+        out.update(_compose.cloud_texture(fields, seed, counts, out["cloud_size"]))
     return Catalogue.of(out, counts)
 
 
@@ -316,9 +343,7 @@ NOT_DRAWN_WHY: dict[str, str] = {
     "cloud_state": "the state is drawn through what it sets: a cloud past its embedded phase holds a cluster "
                    "(`cloud_cluster_index`), whose cavity, HII sphere and point of light the viewer draws; the "
                    "category itself is not a look.",
-    "cloud_source_offset": "it is drawn where the cluster stands: the cluster census places its cluster by this "
-                           "offset, and the cavity is carved at the cluster's position.",
-    "cloud_source_angle": "it is drawn where the cluster stands, as the offset is.",
+    # cloud_source_offset and cloud_source_angle: with their declarations, galaxy/layer/cloud_texture.py (S55).
     "cloud_metallicity": "no line comes from molecular gas in the render; the abundance reaches the picture through "
                          "the cluster's light (the isochrones at its [Fe/H]) and its HII region's emissivity at the "
                          "temperature the oxygen sets.",
@@ -379,19 +404,9 @@ CLOUD_STATE = FieldDecl(
         + _not_drawn("cloud_state")
     ),
 )
-CLOUD_SOURCE_OFFSET = _column("cloud_source_offset", "Embedded source offset", "pc",
-                              "How far from the cloud's centre its embedded cluster sits, drawn uniformly over "
-                              "the cloud's volume: pillars are the shadows of clumps that survived the ionization "
-                              "front eating the cloud from one side, so this is what makes them point one way. No "
-                              "source gives the distribution (debt #95).")
-CLOUD_SOURCE_ANGLE = _column("cloud_source_angle", "Embedded source direction", "rad",
-                             "The direction from the cloud's centre to its embedded source, in the plane, uniform.")
-CLOUD_GRADIENT = _column("cloud_density_gradient", "Density gradient", "dimensionless",
-                         "How steeply the cloud's density runs across it, 0 flat to 1 the whole contrast over one "
-                         "radius, drawn uniform: bubbles sit off-centre because they expand into a gradient. No "
-                         "source gives the distribution (debt #95).")
-CLOUD_GRADIENT_ANGLE = _column("cloud_gradient_angle", "Density gradient direction", "rad",
-                               "The direction the density increases in, in the plane, uniform.")
+# The embedded source's offset and direction and the density gradient's steepness and direction were declared
+# here until S55; they are the randomness layer's (BUILD_III Appendix B) and are declared, drawn and published in
+# galaxy/layer/cloud_texture.py, synthetic, each with what it stands in for, what it conserves and its statistic.
 CLOUD_METALLICITY = _column("cloud_metallicity", "[Fe/H]", "dex",
                             "The present-day gas iron abundance at the cloud's radius: what the stars it makes "
                             "are born with, and what sets its dust.", ramp=Ramp("plasma"))
@@ -464,7 +479,8 @@ CLOUD_LIFETIME = FieldDecl(
 def compute_clouds(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
     R = ctx.grid.R
-    catalogue = materialise_clouds(ctx.fields, R, int(ctx.seeds["systems_seed"]), c)
+    # The stage's own columns: the layer's four are cloud_texture's to publish (S55, D214 section 5).
+    catalogue = materialise_clouds(ctx.fields, R, int(ctx.seeds["systems_seed"]), c, texture=False)
     expected = expected_counts(ctx.fields, R, c)
     return {
         **catalogue,
@@ -489,6 +505,7 @@ CLOUDS = IMPLEMENTATIONS.register(
             "star catalogue's grid with the parameter vector a renderer synthesises the interior from."
         ),
         compute=compute_clouds,
+        placement_reader=True,  # S55 (D214, I4): a census, placed round each ring by the gas's own pattern
         reads_seeds=("systems_seed",),
         reads_constants=(
             "HII_MASS_PER_HYDROGEN",  # S40: the cloud's column density per hydrogen, for its A_V
@@ -504,8 +521,7 @@ CLOUDS = IMPLEMENTATIONS.register(
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
-            CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT,
-            CLOUD_GRADIENT_ANGLE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
+            CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
             CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME, CLOUD_EXTINCTION_V,
         ),
     )

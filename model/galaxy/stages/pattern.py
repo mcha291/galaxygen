@@ -43,6 +43,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 
 SHEAR_RADIUS_IN_SCALE_LENGTHS = 2.2  # ruling 3: take the scaled form
 # The closed set an arm number is drawn from since S26 (D175): two to ARM_MULTIPLICITY_MAX. Until
@@ -427,7 +428,12 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
         "arm_multiplicity": arms,
         "arm_contrast": arm_contrast,
         "bar_contrast": bar_contrast,
-        "pattern_density_contrast": np.ones((R.size, ctx.grid.phi.size)) if shape.flat else shape.contrast(R, ctx.grid.phi),
+        # The one composed field here (S55, D214): the law above applied to where the arms are. With the layer
+        # off it is 1 everywhere and every scalar above is what it was - compose is the one place that asks.
+        "pattern_density_contrast": _compose.field(
+            ctx.fields, (R.size, ctx.grid.phi.size),
+            lambda: np.ones((R.size, ctx.grid.phi.size)) if shape.flat else shape.contrast(R, ctx.grid.phi),
+        ),
     }
 
 

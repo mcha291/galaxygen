@@ -391,6 +391,9 @@ CLUSTERS = IMPLEMENTATIONS.register(
             "members emit summed over the IMF."
         ),
         compute=compute_clusters,
+        # S55 (D214, I4): a census placed through its cloud - by the cloud census's layout (the gas's pattern)
+        # and by the layer's source offset and direction, synthetic columns of the cloud_texture stage.
+        placement_reader=True,
         reads_seeds=("systems_seed",),
         reads_constants=(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",

@@ -1083,16 +1083,30 @@ def evaluate_all(
     return [evaluate(q, fields, decls, model, ensemble, swept) for q in QUANTITIES]
 
 
+def judged(run_kwargs: Mapping[str, Any]) -> dict[str, Any]:
+    """The run every acceptance number is read on: **the physics alone, the randomness layer off** (invariant I3,
+    BUILD_III section 1d; DECISIONS.md D214).
+
+    A row judges a law against a measurement; where the layer happened to place an arm or a cloud is not a law,
+    and a row that moved when a placement was redrawn (rows 35 and 37 did, at S51) was judging the draw. So the
+    table, its ensemble, its sweeps and the convergence sweep all run with ``layer=False``, and none takes a
+    ``layer=`` of its own: there is no judging a row with the layer on (BUILD_III section 9).
+    """
+    if "layer" in run_kwargs:
+        raise SpecError("the acceptance table is judged on the layer-off run and takes no layer= (invariant I3)")
+    return {**run_kwargs, "layer": False}
+
+
 def run(
     model: Model,
     ensemble: Mapping[str, Sequence[float]] | None = None,
     swept: Mapping[int, tuple[np.ndarray, np.ndarray]] | None = None,
     **run_kwargs: Any,
 ) -> list[Result]:
-    """Run ``model`` with default inputs and judge every quantity."""
+    """Run ``model`` with default inputs, the layer off (:func:`judged`), and judge every quantity."""
     from galaxy.run import run as _run
 
-    out = _run(model, **run_kwargs)
+    out = _run(model, **judged(run_kwargs))
     return evaluate_all(out.fields, out.decls, model.name, ensemble, swept)
 
 
@@ -1110,7 +1124,7 @@ def sweep(model: Model, q: Quantity, **run_kwargs: Any) -> tuple[np.ndarray, np.
     control = table[q.sweep.input]
     xs, ys = [], []
     for value in q.sweep.values(float(control.lo), float(control.hi)):
-        out = _run(model, {q.sweep.input: float(value)}, only=(q.field, q.sweep.abscissa), **run_kwargs)
+        out = _run(model, {q.sweep.input: float(value)}, only=(q.field, q.sweep.abscissa), **judged(run_kwargs))
         if q.field not in out.fields or q.sweep.abscissa not in out.fields:
             return np.zeros(0), np.zeros(0)
         xs.append(q.sweep.x(out.fields[q.sweep.abscissa]))
@@ -1153,7 +1167,7 @@ def ensemble(
     seed_names = [name for name, inp in table.items() if inp.kind == "seed"]
     collected: dict[str, list[float]] = {}
     for draw in range(n):
-        out = _run(model, {name: draw for name in seed_names}, only=tuple(fields), **run_kwargs)
+        out = _run(model, {name: draw for name in seed_names}, only=tuple(fields), **judged(run_kwargs))
         for field in fields:
             if field in out.fields:
                 collected.setdefault(field, []).append(float(out.fields[field]))
@@ -1214,7 +1228,7 @@ def report(
     models = list(models)
     if results is None:
         results = evaluate_models(models, **run_kwargs)
-    lines = ["spec"]
+    lines = ["spec", "  judged on the layer-off run: the physics alone, no placement of the randomness layer (invariant I3, D214)"]
     bad = untestable()
     if bad:
         lines.append(
