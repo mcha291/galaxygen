@@ -67,6 +67,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.stages.clouds import cloud_counts, expected_counts
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.photometry import (
     BANDS,
     band_flux_at,
@@ -399,11 +400,12 @@ CLUSTERS = IMPLEMENTATIONS.register(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING", "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
-            "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",  # S51 (D210): the cloud census's layout is the gas pattern's
+            *GAS_PATTERN_CONSTANTS,  # S51 (D210): the cloud census's layout is the gas pattern's
         ),
         requires=(
-            *CLOUD_READS, "gas_molecular_surface_density", "gas_arm_contrast", "bar_contrast", "arm_multiplicity",
-            "pitch_angle", "bar_half_length", "stars_formed_history", "sfr_surface_density",
+            *CLOUD_READS, "gas_molecular_surface_density",
+            *GAS_PATTERN_READS,  # S56 (D215): the layout's ridge follows the stellar modes and their phases
+            "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(
             CLUSTER_RADIUS, CLUSTER_AZIMUTH, CLUSTER_HEIGHT, CLUSTER_MASS, CLUSTER_HALF_MASS_RADIUS, CLUSTER_AGE,

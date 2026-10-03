@@ -47,6 +47,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.special import normal_cdf
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.stages.pattern import PATTERN_READS
 from galaxy.stages.systems import CATALOGUE_SAMPLE, CELL_SECTORS, cell_counts
 
 # Conversions. A factor is a factual claim and carries a citation (units.py holds
@@ -757,7 +758,7 @@ def compute_planets(ctx: Context) -> Mapping[str, Any]:
         int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE,
         # The same layout the catalogue drew, or stars get renamed: the catalogue's own pattern, from compose
         # (S55, D214) - none with the layer off, as the catalogue itself was then laid out.
-        pattern=_compose.stellar_pattern(ctx.fields),
+        pattern=_compose.stellar_pattern(ctx.fields, ctx.grid.R),
     )
     columns, per_star = materialise(ctx.fields, counts, int(ctx.seeds["planets_seed"]), constants)
     giants = np.zeros(len(per_star), dtype=bool)
@@ -791,7 +792,7 @@ PLANETS = IMPLEMENTATIONS.register(
         reads_constants=PLANETS_CONSTANTS,
         requires=(
             "stellar_surface_density", "star_mass", "star_metallicity", "star_age",
-            "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
         ),
         publishes=(
             PLANET_SEMI_MAJOR_AXIS, PLANET_MASS, PLANET_RADIUS, PLANET_INSOLATION,

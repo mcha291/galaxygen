@@ -269,7 +269,7 @@ def test_the_young_stars_follow_the_modulation_and_the_old_ones_the_contrast(coa
     for name in ("star_radius", "star_height", "star_mass", "star_population"):
         assert np.array_equal(ca[name], cb[name]), name
     mod = systems.Modulation(a.fields["sfr_modulation"], a.grid.R)
-    pattern = ArmPattern.from_fields(a.fields)
+    pattern = ArmPattern.from_fields(a.fields, a.grid.R)  # S56 (D215): the modes are published on the grid radii
 
     def mean_at(table, cat, pick):
         return float(np.mean([table(np.array([r]), np.array([p]))[0, 0]

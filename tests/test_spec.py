@@ -328,7 +328,7 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
     models, _, _ = prod
     m = models.get(DEFAULT_MODEL)
     seed_names = [n for n, i in INPUTS.items() if i.kind == "seed"]
-    assert len(seed_names) == 5  # S55 (D214): was 4; texture_seed, the randomness layer's, which nothing reads yet
+    assert len(seed_names) == 5  # S55 (D214): was 4; texture_seed, the randomness layer's (read since S56, D215)
     # Harmless today: no published quantity depends on more than one seed, so the
     # diagonal and the marginal agree. The test is what notices if that changes.
     alone = float(run(m, {"pattern_seed": 3}, only=("bar_pattern_speed",)).fields["bar_pattern_speed"])
@@ -352,8 +352,9 @@ def test_world_seed_is_live_and_every_declared_seed_is_bound(prod):
     models, impls, table = prod
     for m in models:
         read = {s for st in build(m, impls, table).order for s in st.reads_seeds}
-        assert read == {"world_seed", "pattern_seed", "systems_seed", "planets_seed"}
-        assert build(m, impls, table).unbound_inputs == ()
+        # S56 (D215): was the four; the layer's arm_phases stage is texture_seed's first reader.
+        assert read == {"world_seed", "pattern_seed", "systems_seed", "planets_seed", "texture_seed"}
+        assert build(m, impls, table).unbound_inputs == () and build(m, impls, table).unread_by_ruling == ()
         # And it moves something: rerolling it alone changes M_• and nothing upstream.
         a = _run(m, {"world_seed": 0}, only=("black_hole_mass", "bulge_velocity_dispersion"))
         b = _run(m, {"world_seed": 5}, only=("black_hole_mass", "bulge_velocity_dispersion"))

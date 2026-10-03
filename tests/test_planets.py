@@ -237,7 +237,7 @@ def test_a_system_is_the_same_alone_as_in_the_sample(model):
     """D60 one level down: (cell, index) names a system, and naming it is enough."""
     o = out(model)
     fields = o.fields
-    counts = cell_counts(fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(fields))
+    counts = cell_counts(fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(fields, o.grid.R))  # S56 (D215): on the grid radii
     offsets = np.cumsum([0] + [n for _, n in counts])
     planets_before = np.cumsum(np.concatenate([[0], fields["star_planet_count"]])).astype(int)
 

@@ -38,6 +38,7 @@ BASIC = MODELS.register(
             ("supernovae", "supernovae"),
             ("dust", "dust"),
             ("bar", "bar"),
+            ("arm_phases", "arm_phases"),  # S56 (D215): the layer's stage, the arm modes' phases on texture_seed
             ("pattern", "pattern"),
             ("gas_pattern", "gas_pattern"),
             ("population", "population"),
