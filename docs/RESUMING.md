@@ -3,7 +3,7 @@
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
 of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S50: S0–S22
 (§5d), S25–S42 (§5e), S43–S45, S46–S47 the viewer, S48 the bright catalogue, S49 the light tables, S50 the dust's layer
-and the star-first mode (D205–D209), S51 the gas's own arm pattern (D210). `BRIEF.md` is S52's: #128, the dust's heating.**
+and the star-first mode (D205–D209), S51 the gas's own arm pattern (D210), S52 the dust heated in its own layer (D211). `BRIEF.md` is S53's: the owner's choice.**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -13,7 +13,7 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 ```
 Then RULES.md in full, BRIEF.md, whatever plan the owner names; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
-tools/hooks`; LF newlines. **Numbers are sequential**: debts from #132, decisions from D211, board rows from 52,
+tools/hooks`; LF newlines. **Numbers are sequential**: debts from #132, decisions from D212, board rows from 53,
 acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
@@ -85,7 +85,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `lo == hi` says "no testable target" (D100; rows 20, 21, 25–28, 36); a row whose source does not say what it
   measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-10-03, after S51 (D174–D210 hold the before/after; **S51 redrew the cloud census**)
+## What the instruments said on 2026-10-03, after S52 (D174–D211 hold the before/after; **S51 redrew the census, S52 moved the dust's numbers**)
 - graph acyclic for both models; preflight OK, 7 of 12 controls; determinism reproducible for both; spec **12 pass /
   20 fail / 5 not-yet-computable of 37, identical** (row 34 green since S42 on the blind window; row 37 a miss, #117); convergence
   0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.892; rows 30 / 31 0.0176069 / 0.0065332 yr⁻¹ (#88);
@@ -94,16 +94,16 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
 - Regression numbers: z_f 1.66, c₂₀₀ 8.24, R_d 2.60486 (thin 2.44138), M_star 4.751e10, SFR 1.7551515, H 8.088e9,
   WIND_SPEED 860.3, MERGER_HEATING 88.8, `swing_x` 3.334; rows 16 / 17 medians 41.10 / 6.08; **M_V −21.1102, B − V 0.5694,
   Υ_V 2.0356, disc_luminosity 4.5898e10, Q 1.6594e53 s⁻¹ (S49)**; remnant_mass_fraction 0.214686 (#85), PN count 14 732; T_d(R₀)
-  **18.82 K, L_IR 1.5675e10 L☉ (S49)**, G₀(R₀) 2.64, q_PAH(R₀) 0.0908 (S31); **16 822 clouds** (S51), Mach median 6.5 (S32); **12 930 clusters**,
+  **18.52 K, L_IR 1.2006e10 L☉, the infrared share 0.2616 (S52, the layered geometry)**, G₀(R₀) 2.64, q_PAH(R₀) 0.0908 (S31); **16 822 clouds** (S51), Mach median 6.5 (S32); **12 930 clusters**,
   ε 0.0206, ΣQ / young Q **1.0382** (S51); gc_survival 0.0250, gc mean 6.97e7 (#97), halo_stellar_mass 3.03e9 (S34); 12 930
   HII regions, R_S median 0.72 pc, n_e 194, log U −2.83, census/field 0.990, halpha_sfr_ratio 0.7124 (#100), DIG 0.30
   (S35); bubbles median 9 pc, 1 464 remnants, porosity(R₀) 0.029 (S51); render frame B − V 0.569495, M_V −21.110365;
-  balance 0.999295 (S49); clusters' HII Hα / field **1.0140 / 0.9942**, √⟨L²⟩/⟨L⟩ 6.798 (S51), `cloud_extinction_v` 2.9696
+  balance 0.999144 (S52); clusters' HII Hα / field **1.0140 / 0.9942**, √⟨L²⟩/⟨L⟩ 6.798 (S51), `cloud_extinction_v` 2.9696
   (S40); clusters' ΣL 0.2436 of the disc's (S51); a star's blackbody painting 1.15 / 1.09 / 1.04× its filter light (S48);
   **S44 (the grid on 8.93): Hα-weighted [O III]/Hα 0.756 (S51), [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % at the +0.2 dex
   edge, 2.6 % at the age floor; WFC3 SHO on vacuum curves: Hα 0.945 F656N, [O III] 0.899 F502N, [S II] 0.958 / 0.863 F673N;
   49 tags on the remote.** Performance: basic ~2.8 s cold; render rgb 2.1 s cold, 6.9 MB; clusters 1.7 s; `/api/blackbody` 5 ms.
-- Register: **69 open — 11 permanent, 58 carried — and 45 discharged** (#129–#131 opened at S51, D210). **The gas pattern:** `gas_arm_contrast` 2.73, crest 3.07 / trough 0.53 at R₀, young stars' mean modulation 2.63 (1.78). `bright_star_limit` 33 788 L☉,
+- Register: **69 open — 11 permanent, 58 carried — and 45 discharged** (#129–#131 opened at S51, D210; #128's first half applied at S52, D211). **The gas pattern:** `gas_arm_contrast` 2.73, crest 3.07 / trough 0.53 at R₀, young stars' mean modulation 2.63 (1.78). `bright_star_limit` 33 788 L☉,
   3.35e6 stars > 10³ L☉; light at 10³: 26.3 % young / 18.8 % bright / 54.9 % unresolved; **a stale :8017 is stopped by PID before it serves new code**.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)
