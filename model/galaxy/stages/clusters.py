@@ -396,9 +396,10 @@ CLUSTERS = IMPLEMENTATIONS.register(
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING", "CLUSTER_BOUND_FRACTION", "CLUSTER_DISSOLUTION_AGE", "CLUSTER_HALF_MASS_DENSITY",
+            "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",  # S51 (D210): the cloud census's layout is the gas pattern's
         ),
         requires=(
-            *CLOUD_READS, "gas_molecular_surface_density", "arm_contrast", "bar_contrast", "arm_multiplicity",
+            *CLOUD_READS, "gas_molecular_surface_density", "gas_arm_contrast", "bar_contrast", "arm_multiplicity",
             "pitch_angle", "bar_half_length", "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(

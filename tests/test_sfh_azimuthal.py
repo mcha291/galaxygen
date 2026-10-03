@@ -76,7 +76,8 @@ def test_sfh_azimuthal_extends_sfh_and_adds_one_optional_field():
     assert own == [SFR_MODULATION]
     assert SFR_MODULATION.optional and SFR_MODULATION.provenance == "seeded"
     assert SFR_MODULATION.axes == ("R", "phi") and SFR_MODULATION.unit == "dimensionless"
-    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == {"pattern_density_contrast"}
+    # S51 (D210): the gas's own contrast, not the stellar one (was pattern_density_contrast).
+    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == {"gas_density_contrast"}
     # Rule D5: no constant's name in what the viewer reads.
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", SFR_MODULATION.about + SFH_AZIMUTHAL.about)
 
@@ -168,8 +169,9 @@ def test_the_modulation_is_a_redistribution_of_the_axisymmetric_rate(models, pat
     dphi = o.grid["phi"].width
     total = float(np.trapezoid((psi[:, None] * M).sum(axis=1) * dphi * R, R))
     assert total == pytest.approx(float(o.fields["sfr"]), rel=1e-12)
-    # And it is not the contrast: it moves where stars form, sharper than the mass.
-    c = np.asarray(run(azimuthal, {"pattern_seed": pattern_seed}, COARSE, only=("pattern_density_contrast",)).fields["pattern_density_contrast"])
+    # And it is not the contrast: it moves where stars form, sharper than the gas it reads (S51, D210:
+    # the gas's own contrast, the stage's input, in place of the stellar one).
+    c = np.asarray(run(azimuthal, {"pattern_seed": pattern_seed}, COARSE, only=("gas_density_contrast",)).fields["gas_density_contrast"])
     i = int(np.argmin(np.abs(R - 8.2)))
     assert M[i].max() / max(M[i].min(), 1e-12) > c[i].max() / c[i].min()
     assert np.corrcoef(M[i], c[i])[0, 1] > 0.9
@@ -185,7 +187,8 @@ def test_a_gas_weighted_normalisation_would_have_made_stars(coarse):
     normalisation would have taken a fifth of the star formation out of the ring.
     """
     _, a = coarse
-    M, c = np.asarray(a.fields["sfr_modulation"]), np.asarray(a.fields["pattern_density_contrast"])
+    # S51 (D210): weighted by the gas the stage reads, its own contrast (was pattern_density_contrast).
+    M, c = np.asarray(a.fields["sfr_modulation"]), np.asarray(a.fields["gas_density_contrast"])
     i = int(np.argmin(np.abs(a.grid.R - 8.2)))
     weighted = float((c[i] * M[i]).sum() / c[i].sum())
     assert abs(M[i].mean() - 1.0) < 1e-12
