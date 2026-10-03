@@ -435,19 +435,24 @@ Across levels of the hierarchy, a parent's stars are its children's.
 
 ## 8. What the renderer may not do
 
-**Every visible feature traces to a published field or to a seeded draw from
-one, and the seed comes from the model, not from the frame.**
-
-It would be very easy to make this beautiful with noise textures that aren't from
-the model. That is rule A4 read backwards — the renderer inventing structure the
-physics does not have. A galaxy-flavoured noise generator with a physics model
-bolted to the side is the failure mode, and it is hard to detect after the fact
-because it looks correct.
+**Every visible feature traces to a published field, or to the randomness layer: a synthetic field the model
+publishes, on the model's seed.** The failure mode is unchanged — a galaxy-flavoured noise generator with a
+physics model bolted to the side — and what keeps the layer from being one is that it is the model's, it
+conserves every total, its statistics are sourced, it names the physics it stands in for, and it can be switched
+off to show the physics alone.
 
 Specifically forbidden:
 - frame-seeded or time-seeded noise (it would shimmer, and it is not a structure)
-- detail added below the scale the cloud vector constrains
+- detail the model does not publish: structure, parameters or seeds of the viewer's own
 - colour applied for appearance rather than derived from the filter integral
+- a synthetic field tuned to a picture rather than to its cited statistic
+
+*Amended 2026-10-03 on the owner's word (BUILD_III §7, ruling 3; Appendix A)* `[verified: DECISIONS.md D212]`.
+**Until D212 this section read:** "Every visible feature traces to a published field or to a seeded draw from
+one, and the seed comes from the model, not from the frame", with a paragraph on noise textures as rule A4 read
+backwards — the renderer inventing structure the physics does not have, hard to detect after the fact because it
+looks correct — and its second ban was "detail added below the scale the cloud vector constrains". The layer
+itself is built from S55 (BUILD_III Phase R); until then no synthetic field exists.
 
 The viewer's clump lattice and Hα knots (§0) were the one standing exception,
 dated; V2 removed them at S39, and nothing of that kind may be added.

@@ -1319,3 +1319,30 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   affected tests, and only then commits (S52).
 - [close] The next row's builder can work during a closing suite if it is told not to run the whole suite; its
   ruling's text is fixed before it starts and enters DECISIONS at the next session's open (S51–S52).
+
+## From S53 (BUILD_III adopted and its Phase 0; an Opus lead, two Opus builders, no Fable)
+
+- [close] An opening check that the working copy cannot disturb is `tools/verify_clone.py --ref session-NN
+  --skip-worktree-checks`, backgrounded with its exit status appended: one run is both the suite and the clone, and
+  the lead edits the records and launches builders while it runs (S53; 31 min for 997 tests).
+- [infra] `$TMP` on this machine holds a stray `numbers.py` that shadows the standard library for any script run
+  from there (numpy's import dies inside it): keep scripts in the session's scratchpad, never in `$TMP` (S53; S15 met the
+  same shadow).
+- [viewer] A capture of the WebGL viewer is reproducible to the byte on one renderer and not across renderers: the
+  march's jitter is fixed by the pixel, so the same capture is the same file, while SwiftShader and a GPU differ in
+  the last bit over a quarter of the pixels. Commit the renderer's name beside the frames and regenerate them on
+  another machine (`frontend/e2e/frames.json`, D212).
+- [viewer] Headless Chromium draws WebGL on the CPU unless told otherwise: `--use-angle=d3d11` alone puts it on the
+  GPU here, and the headless shell launches where the full `chrome.exe` does not (D212).
+- [viewer] An inclined capture through a perspective camera carries an m = 1 of its own (0.09–0.11 here against
+  0.002–0.012 face-on): do not read a deprojected Fourier amplitude off a perspective view, and settle the camera's
+  projection where the template's camera is ruled (D212).
+- [audit] A picture statistic needs a standard scale and a stated outline before two pictures share a table: every
+  metric of `tools/goal_metrics.py` is taken with the 90 %-light outline's radius at 256 px, and a face-on picture
+  with a bright bar must be given its axis ratio (the estimate returned 0.85 for a face-on drawing) (D212).
+- [audit] A local mean makes a bar's surroundings read as dark lanes and a local median does not: the first cut of
+  the dark-lane fraction read 0.064 on the Milky Way drawing and 0.008 after, and the test pins both behaviours
+  (builder A's finding, D212).
+- [close] When a rule's amended text is given word for word, enter it word for word and say what else had to change
+  for the rule to stay consistent with itself — A10's heading said "three kinds" over a four-row table (D212).
+

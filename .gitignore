@@ -13,6 +13,11 @@ dist/
 node_modules/
 frontend/dist/
 *.tsbuildinfo
+# The picture test's run output (T12): a failed comparison's actual, expected and diff. The committed
+# frames are frontend/e2e/frames/, which is tracked.
+frontend/e2e/.output/
+frontend/test-results/
+frontend/playwright-report/
 
 # Credentials never enter the repository (rule C2c)
 .env
@@ -27,3 +32,6 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# The owner's goal pictures: local files, not committed (BUILD_III section 7, ruling 5)
+docs/goals/

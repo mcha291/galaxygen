@@ -8,9 +8,13 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "picture": "npm run build && playwright test",
+    "picture:update": "npm run build && playwright test --update-snapshots=all",
+    "typecheck:e2e": "tsc -p e2e"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@types/node": "^22.20.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

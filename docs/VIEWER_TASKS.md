@@ -9,6 +9,18 @@ appearance). The model is pinned (the owner, 2026-10-01): a task marked **Model*
 owner's leave. **The owner lifted the pin for T2, T3 and T21 on 2026-10-01 ("lift the pin for those two and implement
 them first"): they are S48's, designed in D200, with `BRIEF.md` the working plan.** Costs are in sessions.
 
+**Absorbed by BUILD_III (2026-10-03, D212).** `docs/BUILD_III.md`, adopted by the owner, takes these rows and holds
+their rulings and gates; the rows below stay as the statement of each task, and the rest of this list is outside
+that build unless a phase names it (BUILD_III section 8).
+
+| Task | BUILD_III phase | Session | Note |
+|---|---|---|---|
+| T12, the picture test | 0 | S53 | Built: `npm --prefix frontend run picture` (Playwright, a development-only tool) |
+| T16 (ii), compare with a picture | T | S54 | The picture is a file the user picks; none is bundled |
+| T8, the cloud noise's index | R | S55 | Relabelled synthetic with its three declarations; #110 stays open |
+| T5, T6, T7, T28 | V6 | S63 | The depth-aware composite; clusters as Plummer profiles (ruled in the plan); HII knots with the smooth layer reduced by what they carry; bright stars by tiles |
+| T1 and T9 | V8 | S65 | Display defaults per template; the sprite scaled by the template's distance and pixel scale (ruled in the plan) |
+
 ## 0. Done (for orientation)
 
 | Session | What |

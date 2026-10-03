@@ -8346,3 +8346,153 @@ slower (58 ms against 64: the rings with no gas height skip the emission integra
 **S52's close (2026-10-03).** Opened on S51's closing suite (`EXIT=0`) and `verify_clone` of `main` at bd00151 (OK).
 Register 69 open = 11 + 58, 45 discharged (#128 carried for its placement half). The owner has not yet seen S51's
 lanes or S52's numbers; BRIEF puts that look first.
+
+### D212. S53: BUILD_III adopted — the owner's ten rulings, the rule amendments entered, the two instruments (Phase 0; an Opus lead, no Fable gate)
+
+**The owner, in chat, on 2026-10-03**, after putting two goal pictures in `docs/goals/` and reading the review against
+them: "adopt the plan". `docs/BUILD_III.md` is the third build: two templates, a physics model beside a randomness
+layer, the ten model items and the per-ring gas shock, the viewer's rendering; fourteen rows, S53–S66, every one led
+by Opus, Fable called at four gates (G1–G4) — the owner's "Fable usage is limited … make sure only work that really
+benefits from using Fable uses that, and push the rest to Opus". This session is Phase 0 and was opened by the owner
+with "read Brief and start working on the new plan"; its lead is Opus 5.5.
+
+**The ten rulings (BUILD_III §7 holds the questions; the answers are the owner's words).**
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Adopt the plan and its numbering, Opus leading every row, Fable at the four gates | "adopt the plan" |
+| 2 | The fourth kind of quantity, *synthetic*, and the layer's five rules | "yes" — after asking what the quantity is: a label for randomness that places structure the physics cannot, apart from measured scatter and from sampling |
+| 3 | `RENDER_PHYSICS.md` §8 and rule D5 amended | "approved" |
+| 4 | Templates (rules A5 and D1): the viewer lands on `milky_way`; a template may carry pins | "approved" |
+| 5 | The goal pictures committed to this public repository | "don't commit": `docs/goals/` is git-ignored; a clone does not have them |
+| 6 | A headless browser installed for the picture test | "yes" |
+| 7 | `basic` and `azimuthal` as one model with the layer switch | Not merged: "seems better to just ignore basic from now on, not worth spending effort on merging it unless there's something it does better than azimuth". `basic` is frozen; Phase R uses it once as the layer-off oracle |
+| 8 | NGC 4414's checks | "yes, do 5": five checks on properties the fit never sees, windows fixed blind, reported apart from the 37 rows |
+| 9 | Pictures first (V5, V6 before Phase R)? | "no, lets finish model part first": the model's phases S54–S61, then the viewer's S62–S65 |
+| 10 | The dependency rule stays numpy-only | "ok": numpy-only at runtime; Pillow and Playwright as development-only tools |
+
+**The rule amendments, entered from BUILD_III's Appendix A word for word** (rulings 2–4). Each amended rule keeps
+what it read before, as D193 and D198 did.
+- **A10** gains the *Synthetic* row and the paragraph that tells seeded from synthetic. Its heading now says "four
+  kinds" — the appendix gave the row and the paragraph and not the heading; four rows under "exactly one of three"
+  would have been a contradiction in the rule's own text, so the count follows the table.
+- **A5** gains the template sentence: a template is a named input set with the defaults' standing, its misfit
+  published, its pins measurements that replace the layer's draw and never a law.
+- **D1**'s landing clause: the default template, a switcher, "Edit galaxy" from the template's inputs.
+- **D5**: the viewer may evaluate a function the model publishes — form, parameters, seed, committed test vectors —
+  and adds no structure, parameter or seed of its own.
+- **`RENDER_PHYSICS.md` §8**: every visible feature traces to a published field or to the randomness layer; the
+  second ban becomes "detail the model does not publish"; a fourth is added, a synthetic field tuned to a picture.
+
+**What the amendments do not yet do.** They are rules ahead of their code. No field is synthetic and `texture_seed`
+does not exist until Phase R (S55); there is one template and no switcher until Phase T (S54). Until then the
+amended D5 and §8 permit nothing new: there is no published function for the viewer to evaluate beyond the cloud
+vector's interior. Nothing in `model/galaxy/` changed at this session; the spec table is S52's, 12 / 20 / 5 of 37.
+
+**The absorbed lists point at the plan.** `RESEARCH_AREAS.md` §1's directions a–h each name their phase (g, the
+pattern library, stays the last resort and is not built); `VIEWER_TASKS.md` names T12 (this session), T16 ii
+(Phase T), T8 (Phase R), T5–T7 and T28 (V6), T1 and T9 (V8).
+
+**The lead's readings where the plan's words left a choice** (none is a physics ruling; each is an instrument's or
+a display's):
+1. *"A baseline table — both goals, both of today's renders"* is read as: the two goal pictures, and today's
+   default galaxy captured at each goal's camera — face-on for the Milky Way's, inclined for NGC 4414's — in each of
+   the viewer's two modes (the field mode and the star-first mode), through rgb.
+2. *The inclined camera* takes its inclination from the axis ratio `goal_metrics` measures on the goal picture's
+   outline, read as a thin disc's (cos i = q). That is the framing of a picture. It is **not** NGC 4414's
+   inclination, which Phase T's reader reads with its source and its coverage; the capture list is corrected then.
+3. *The picture test is a development tool, outside the suite* — `tools/shot.py`'s precedent (S7): nothing in
+   `uv run pytest` needs a browser; the pytest side checks the capture list and the committed frames' presence, and
+   runs the browser only when asked (`GALAXYGEN_PICTURE=1`).
+4. *The opening check* (BRIEF: bootstrap, the suite, `verify_clone`) was run as one clean clone of `session-53`
+   (`tools/verify_clone.py --ref session-53`), which is `main` at 551bbbf plus four commits of documents: one run
+   that is both the suite and the clone, and that the working copy's edits cannot disturb.
+
+**Applied (2026-10-03; two Opus 5.5 builders in worktrees, each on its own files; the lead read each diff against
+the phase's gate before merging it — the plan's reviewer agent (§3g) was the lead's own reading here, the lead not
+being either builder).**
+
+*The instrument for pictures, `tools/goal_metrics.py`* (builder A; `tests/test_goal_metrics.py`, 43 tests, 24 s).
+Six statistics of a picture, each with its definition in the module's docstring and in its JSON: the radial colour
+profile (B − R and G − R in magnitudes of ring means); the azimuthal Fourier amplitudes A_m, m = 1–8, on the
+deprojected luminance (a pattern 1 + A cos mφ returns A/2); the arm–interarm contrast in blue (the ring's profile
+cut to m ≤ 8, its 90th percentile over its 10th); the dark-lane covering fraction (pixels under 0.75 of a local
+median); the power-spectrum slope of the unsharp-masked picture between wavelengths 0.1 a and 0.02 a; and the count
+of compact sources standing 5 robust sigmas out of their surroundings, inside and outside the outline. **They are
+statistics of display values, not photometry, and none is a row** (C6, D113). So that pictures of different sizes
+compare, every metric is taken with the outline's semi-major radius `a` at 256 px; the outline (centre, axis ratio,
+angle, `a`) is given or estimated from the 90 %-light set's moments, and the estimate is always reported.
+Gate — known values on synthetic pictures: colour gradients to 1e-4 mag, A_m to 0.2 % face-on and inclined (and a
+control: the inclined pattern read as face-on misses), the contrast's closed form to 0.5 %, planted covering
+fractions to 0.002, power-law slopes 0 to −3 within 0.1, planted sources counted exactly, the outline's planted
+geometry to 1 %. Two of the builder's predictions failed and are pinned as measured, not relaxed (B5): foreground
+stars holding 3 % of the light move `a` out by 8 %; a picture with 10 % noise is not held to exactly zero sources.
+The lead's own check, on a picture made by a script of the lead's and not by the tests' helpers (B3): an inclined
+(q 0.6, 30°) four-armed disc of amplitude 0.4 returned q 0.603, 30.01°, A₄ 0.1999 for 0.2, the contrast 2.226 for
+2.228, G − R 0.2423 for 0.2423. Pillow 12.3.0 is in the `dev` group; `dependencies` is numpy alone, and a test
+scans `model/` for an import of it.
+
+*The picture test, T12* (builder B). `npm --prefix frontend run picture` builds the viewer, serves it with the API
+from one origin on **port 8019** (never 8017, 8018 or 5173), and captures `frontend/e2e/captures.json`'s list on
+headless Chromium through `@playwright/test` 1.62.1 (pinned: its Chromium is build 1234, already on the machine;
+nothing but the npm package was downloaded), comparing each with a committed frame in `frontend/e2e/frames/`;
+`picture:update` rewrites the frames and `frames.json`, which records the renderer that drew each. One hook beside
+the frame probe, `window.__galaxygenCapture`: `place` stands the orbit camera at a stated inclination, azimuth and
+framing radius, `picture` returns the canvas as displayed; the mode and the filter set are chosen through the
+viewer's own buttons. A view is ready when no `/api` request has moved for 1.5 s, the frame's linear sum is lit and
+the same over three probes, and two pictures a probe apart are the same bytes.
+Gate — "the captures exist; a changed gain fails it": the same capture run again is the same file byte for byte
+(nine runs; the march's jitter is fixed by the pixel); the field gain's default raised from 1 to 1.25 failed all
+four, 54–67 % of each frame's pixels over the threshold, and to 1.05 failed all four at 1.2–3.2 % against an
+allowance of 0.1 %. **The frames belong to their renderer** (ANGLE on Direct3D 11, the RTX 4070): SwiftShader's
+differ in 0.09–0.16 % of pixels by more than 2/255, which is at the allowance, so on another machine the frames are
+regenerated and the comparison is local. The pytest side (`tests/test_picture.py`) needs no browser and runs the
+real thing only under `GALAXYGEN_PICTURE=1`. vitest 176 → 181. In the lead's checkout the run reproduced the
+builder's frames byte for byte (4 passed, 33 s).
+
+**The baseline (2026-10-03; today's default galaxy, seed and all, on S52's model).** The inclined camera stands at
+59.2°: the axis ratio 0.512 measured on the NGC 4414 picture's outline, read as a thin disc's (reading 2 above).
+Face-on pictures were measured with the axis ratio given as 1 (the Milky Way drawing's bright bar makes its
+estimated outline 0.85); the inclined ones with the outline estimated. `a` is the 90 %-light outline's semi-major
+radius in the picture's own pixels.
+
+| Picture | a px | q | B−R in | B−R out | Δ(B−R) | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | arm / interarm, blue | dark fraction | slope | points in | points out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 2006 | 1 (given) | −0.459 | −0.813 | −0.354 | 0.052 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 0.025 | 0.029 | 1.83 | 0.0066 | −1.99 | 518 | 139 |
+| render: face-on, field mode | 339 | 1 (given) | +0.483 | +0.123 | −0.360 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 0.002 | 0.042 | 1.58 | 0.0000 | −3.32 | 25 | 21 |
+| render: face-on, star-first mode | 367 | 1 (given) | +0.484 | +0.079 | −0.405 | 0.012 | 0.030 | 0.014 | 0.154 | 0.017 | 0.009 | 0.012 | 0.029 | 2.16 | 0.0005 | −0.61 | 1316 | 1108 |
+| goal: NGC 4414 (Hubble) | 664 | 0.512 | +0.508 | +0.234 | −0.274 | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 0.030 | 0.033 | 2.72 | 0.1572 | −2.09 | 97 | 311 |
+| render: inclined, field mode | 420 | 0.552 | +0.360 | −0.028 | −0.389 | 0.091 | 0.039 | 0.043 | 0.037 | 0.024 | 0.027 | 0.018 | 0.015 | 1.63 | 0.0000 | −3.53 | 14 | 8 |
+| render: inclined, star-first mode | 444 | 0.551 | +0.383 | −0.044 | −0.427 | 0.111 | 0.051 | 0.070 | 0.057 | 0.036 | 0.039 | 0.027 | 0.016 | 2.01 | 0.0011 | −0.66 | 787 | 503 |
+
+**What the table says, read once and not acted on** (display targets: nothing is tuned to them, BUILD_III §9).
+- *The pattern is too regular, as a number.* Face-on, the render's power is in m = 4 and its harmonic m = 8 (the
+  default seed draws four arms) and its odd amplitudes are 0.002: a perfect four-fold symmetry. The drawing has
+  0.05–0.06 at m = 1, 3 and 5 beside its m = 2 of 0.19; NGC 4414 is flat, 0.03–0.07 at every m. Phase P1 is what
+  spreads the power.
+- *There are no dark lanes by this measure.* 0.0000–0.0011 of the render's disc is under three quarters of its
+  surroundings, against 0.0066 of the drawing and **0.157 of NGC 4414**. S51's lane is there to the eye and is
+  too shallow for the threshold. Phases L1, L2 and V6 are what this number waits on.
+- *The texture is missing in one mode and all points in the other.* The unsharp-masked slope is −3.3 to −3.5 in
+  the field mode (smooth: nothing between 0.02 a and 0.1 a) and −0.6 in the star-first mode (near white: isolated
+  points), against −2.0 and −2.1 for the two goals.
+- *Colour.* The render reddens inward by about what both goals do (Δ −0.36 to −0.43 against −0.35 and −0.27). Its
+  inner colour is NGC 4414's (+0.48 / +0.36 against +0.51) and nothing like the drawing's blue-white (−0.46),
+  which is a drawing's palette.
+- *The star-first mode has more points than either goal* (1316 inside the outline against 518 and 97): V8's sprite
+  ruling (T9), a point scaled by the template's distance and pixel scale, is where that count is settled.
+
+**Found, for Phase T (not a debt; a camera is a template's).** The viewer's camera is a 45° perspective from 2.4
+framing radii; the inclined capture's near side is magnified and leaves the frame, and deprojecting it by an axis
+ratio is approximate — **the inclined renders' A1 of 0.09–0.11 is the perspective's, not the galaxy's** (the
+face-on renders read 0.002–0.012). Hubble's picture is, at a galaxy's distance, a parallel projection.
+The template's camera (BUILD_III §2: "distance and pixel scale") is where a long lens or an orthographic view is
+chosen; until then an inclined render's row is compared with NGC 4414's only in the columns the perspective does
+not move (colour, dark fraction, slope).
+
+**Checks.** Opened on a clean clone of `session-53` at 9e0b4ad: 997 passed, 3 skipped, the specs OK, `EXIT=0`
+(31 min). No stage's cost changed, so no cold timings are owed (B2). Register unchanged: 69 open = 11 + 58, 45
+discharged; no debt opened. Specs 12 / 20 / 5 of 37, S52's. Next numbers: D213, #132, board row 54, acceptance row 38.
+
+**The close (2026-10-03).** The suite on the combined state: 1048 passed, 4 skipped, `EXIT=0` (37 min; the 51 new tests
+are the two instruments'); the specs OK, 12 / 20 / 5 of 37 for `azimuthal`, as at S52. The picture run: 4 passed.
