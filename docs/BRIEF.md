@@ -10,24 +10,26 @@ and asked for a review against them on two axes. The finding: the model is ahead
 the viewer is behind the model, and the leftovers S53 was going to choose among do not close the gap. The owner's
 direction: physics up to what a fast generation affords, and **a separate randomness layer** for what the physics
 cannot place. The owner's four orders: two templates in the viewer; a clean separation of the physics model from
-the randomness layer; the ten model items and the per-ring gas shock; the viewer's rendering brought up to them.
+the randomness layer; the ten model items and the per-ring gas shock; the viewer's rendering brought up to them. **Fable's usage is
+limited (the owner): every row of the plan is Opus-led, and Fable is called at four short gates only (BUILD_III §3).**
 
 ## First
 `uv run python tools/bootstrap.py`. S52's close ran the full suite (`EXIT=0`) and `verify_clone` on `main` (OK at
 551bbbf); a session opened in a fresh context runs both again before new work.
 
 ## Then: the owner's ten rulings (BUILD_III §7), recorded as D212
-1. Adopt the plan and its numbering, S53–S66. 2. The fourth kind of quantity, *synthetic*, and the layer's five
+1. Adopt the plan and its numbering, S53–S66, Opus leading every row and Fable at gates G1–G4. 2. The fourth kind of quantity, *synthetic*, and the layer's five
 rules. 3. `RENDER_PHYSICS.md` §8 and rule D5 amended. 4. Templates (rules A5, D1), with pins. 5. **The goal images
 committed to this public repository with their credits — they are untracked today, and the close's clean-tree
 check will fail until they are committed or moved.** 6. A headless browser installed for the picture test, or
 manual captures. 7. `basic` and `azimuthal` as one model with the layer switch. 8. NGC 4414's checks: blind
 windows or display only. 9. Pictures first (V5, V6 before Phase R)? 10. The dependency rule stays numpy-only.
 
-## Then: Phase 0 (this session, Fable leads)
-The rule amendments in `RULES.md` and `RENDER_PHYSICS.md`; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the
+## Then: Phase 0 (this session, an Opus lead; no Fable gate)
+The rule amendments in `RULES.md` and `RENDER_PHYSICS.md`, **verbatim from BUILD_III's Appendix A**; `RESEARCH_AREAS.md` and `VIEWER_TASKS.md` pointed at the
 plan; `tools/goal_metrics.py` and the React viewer's picture test (two Opus builders in worktrees); the baseline
-table — both goals, both of today's renders — in D212; board row 53; BRIEF for S54 (Phase T, an Opus-led session).
+table — both goals, both of today's renders — in D212; board row 53; BRIEF for S54 (Phase T). **An Opus lead does not
+improvise a physics ruling: on a stop condition (BUILD_III §3d) it closes partially and writes `docs/HANDOFF_S<NN>.md`.**
 
 ## If the owner does not adopt it
 The earlier choice stands (`git show main:docs/BRIEF.md`): the owner's look at S51's lanes and S52's numbers;
