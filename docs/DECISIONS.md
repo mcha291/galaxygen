@@ -8193,3 +8193,52 @@ ridge g; S50's reading, dust on c, beside each).**
   lane is on the arm's crest, not its inner edge: that is ruling 3, and what an offset would change.
 - **#128's second half, re-read:** with light on c and dust on g the mixed slab would absorb 1.0045 of the mean
   column's over the disc (1.0126 at S50), 1.023 at R₀ (1.041), 1.001 at 2 kpc (the same). Pinned, not applied.
+
+**Applied, Phase 3 (2026-10-03; an Opus 5.5 builder in a worktree, e1bff34 and f990509, on `session-51` as e6e05b5 and
+c5dd870; the lead's 151d831).** `sfh_azimuthal` reads `gas_density_contrast` — Σ_gas(R, φ) = Σ_gas(R) · g, the law and
+its switch unchanged; the cloud census's expected counts and azimuths read `GasPattern` (`clouds.py`), and
+`clusters.py` declares the same fields and the two constants, since it redraws the cloud counts and a stage's
+restricted view answers False for a constant it has not declared — the pattern would have come back None and the
+layout flat, silently. `systems`, `bright`, `nebular`, `bubbles`, `planets` and `service.py` unchanged in code; the
+stage order unchanged.
+
+**The model's predictions, read.**
+- **"The young stars crowd tighter" — held.** On the coarse grid at 200 000 stars the young stars' mean modulation
+  goes **1.779 → 2.628** (the contrast path's 1.176 → 1.254; 525 and 540 young stars); the old stars' mean contrast is
+  unchanged. `sfr_modulation` at R₀ runs 0.0098–6.02 where it ran 0.024–2.51; at 6 kpc 0.015–5.87 (0.033–2.55).
+- **"The counts move by a realisation, not in expectation" — held for the clouds, clusters, HII regions and
+  bubbles; wrong about the remnants.** The expected cloud count is 16 693.433 before and after, ring by ring; the
+  drawn census 16 704 → **16 822** clouds, 12 860 → **12 930** clusters and HII regions and bubbles. Over 16
+  `systems_seed`s the default seed's shifts are 0.5–1.2 σ of the seed-to-seed spread and the old and new means agree
+  within a standard error (clouds +0.7 % against 0.6 %, cluster mass +3.3 % against 2.8 %, HII Hα +2.9 % against
+  5.8 %). **The remnants do not move (1 464)**: their census reads no pattern — ruling 7's "through the clouds … the
+  remnants" was the lead's error.
+- **"Every acceptance row identical" — failed for two rows, and the ruling was wrong to promise it.** Rows 35 and 37
+  read the HII-region census, a realisation: **row 35** −2.00774 → **−1.98926** (passes, as before); **row 37**
+  −0.103687 → **−0.105511** (a recorded miss under #117, as before, 0.002 further out; `spec.MISSES` says so). Every
+  other row's number is identical and the table is 12 / 20 / 5 in both models. Row 37's diagnosis re-read on the
+  redrawn census (`tests/test_s45_diagnosis.py`): the metallicity path alone −0.1158 of −0.1055, age and U −0.0028,
+  all frozen −0.0004 — D196's finding stands; the near-R₀ reference moved with its 783 regions (log U −2.01 → −2.15,
+  log age 6.29 → 6.37, luminosity-weighted means of a different draw).
+
+**Re-pinned, each marked `# S51 (D210): was …` beside it** (census redrawn unless said): `bright_star_limit`
+33 960 → 33 788 L☉ and the bright and cluster light ratios through rgb (`test_bright`; the 20–100 Myr stars follow
+the sharper modulation); clusters 12 860 → 12 930, their mass 3.613e7 → 3.733e7, ΣQ / young Q 1.0088 → 1.0382 (inside
+its own 3σ gate), formation rate / SFR 1.029 → 1.063 (`test_clusters`); bubbles 12 930, porosity(R₀) 0.0334 → 0.0286
+(one ring; 16 seeds read 0.024 ± 0.010 before and 0.022 ± 0.008 after) (`test_bubbles`); Hα-weighted [O III]/Hα
+0.752 → 0.756 and one 75 pc ring's bound at 4 kpc (`test_nebular`); clusters' light / the disc's 0.2516 → 0.2436 on
+the coarse grid (`test_v4`); the census against the field's HII Hα, both on the ridge: the disc 0.9801 → 1.0140, a
+quarter-disc sector 0.9744 → 0.9942, the small windows 0.6745 / 0.5107 → 0.6971 / 0.4670, sixty windows' z mean
+0.15 → 0.139, √⟨L²⟩/⟨L⟩ 6.898 → 6.798 (`test_region_synthesis`; every gate holds). **Unchanged:** every radial field,
+T_d, L_IR, the frame's colour and balance, the render's array set.
+
+**Cold timings (`tools/timings.py`, 2026-10-03, the machine quiet).** `arrays: gas pattern` 0.022 s cold, 1.15 MB
+(halo, disc, bar, pattern, gas_pattern); `az: modulation` 0.175; `clouds: whole disc` 0.886; `clusters: whole disc`
+2.055; `bright: whole disc` 3.775; `render: whole, rgb` 2.421 s, 7.52 MB; `render: unresolved` 3.200 s, 9.25 MB.
+The stage adds nothing a stopwatch sees to any route that already ran the pattern.
+
+**S51's close (2026-10-03).** The suite at the open ran on S50's code with one failure, the board against a
+register the lead had edited under it (`EXIT=1` on `test_progress` alone, regenerated and green); `verify_clone` of
+`main` at 3df6851 OK. Three Opus readers, then four builder passes (Phase 1, 1b, 2, 3) in worktrees, the lead's
+rulings, review, patches and re-pins between them. Register 69 open = 11 + 58, 45 discharged (#129–#131). Next, on
+the owner's word given during the session: BRIEF's option 2, #128's heating in the drawn geometry, as S52.
