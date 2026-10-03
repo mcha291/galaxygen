@@ -17,6 +17,8 @@ them first"): they are S48's, designed in D200, with `BRIEF.md` the working plan
 | S46 | `azimuthal` the default everywhere; the field march's terracing fixed (jittered sub-samples, the box at 16 h); the viewer lands on the Galaxy view of the default galaxy, "Edit galaxy" opens the staged process (D197, D198) |
 | S47 | The tuning panel: the field's display choices as sliders, today's values as defaults (D199) |
 | S48 | **The model side of T2, T3 and T21**: the bright-end-complete catalogue (`/api/bright`), the per-object filter response (`filters=` on `/api/bright` and `/api/clusters`), the field's unresolved remainder (`/api/render?l_min=`), single counting by age (the clusters carry the first 20 Myr) with the closure identity to 10⁻¹³ (D200–D203). **What remains of them is the viewer's**: the star-first mode that draws these (§4), and resolving a cluster into its own stars at close zoom (the second half of T3) |
+| S50 | The brightest mode's component layers (D205); the filter sets chosen in either mode (T22's selector) and the star points themselves a switch, on by default, so a layer can be seen alone; **the dust in its own layer**: the gas's scale height published per ring and read by the render as the dust's, the march composing light and dust in order inside a step (D206; #109's layer closed, #128 opened: the heating is still a mixed slab); **the dust placed round each ring** by the pattern's contrast (D207: the arms muted and reddened, not laned — a lane waits on a gas pattern of its own). `docs/RESEARCH_AREAS.md` opened, with the spiral's shape as its first entry |
+| S50 | **The star-first mode** (D208), replacing "brightest": the N brightest disc stars in view (`/api/bright`) and every cluster with its own light through the set, as points on the field's scale, over the render's remainder (`l_min` from the bright header); one exposure for field and points; the dust in front of each point (**T20**); a click opens the object's published columns (**T23**); the filter sets in the mode (**T22**). The closure measured on screen: 0.9995 / 0.9997 / 1.0006 through rgb. **Not done: T12** (no headless browser here). New: **T28**, a remainder-only render request, so a new threshold does not refetch the whole field |
 
 ## 1. In progress
 
@@ -77,8 +79,8 @@ is 41 % of it: the pool's light is not converged at the bright end, and the pool
 | Clusters | Points below 4 kpc, bolometric | **None** | Photometric (T2), with extent (T6), counted once (T3) |
 | Which stars | 20 000 sampled (whole galaxy); 60 000–1 000 000 per region | The pool's top N in the frustum, any zoom | The level's own stars (T4) |
 | **Completeness at the bright end** | Not claimed (the field carries the light) | **The sample's brightest, not the galaxy's**: a real magnitude-limited view has every star above a luminosity; the pool has a random 10⁻⁵ of them | Not in the plan (**T21**, Model: count the stars above a luminosity per cell and materialise those — rule B8, do not sample what you can count) |
-| Point colour | Blackbody share at T through the set (T2's 2× error) | The same; the filter-set chips are hidden in this mode, so the last set chosen applies | The object's band light through the set (T2) |
-| Filter sets and instrument sprite | Five sets; Airy sprite on WFC3 | Inherited silently from field mode | As field, chosen in either mode (**T22**) |
+| Point colour | Blackbody share at T through the set (T2's 2× error) | The same, through the set chosen in the mode (S50) | The object's band light through the set (T2) |
+| Filter sets and instrument sprite | Five sets; Airy sprite on WFC3 | **The same five sets, chosen in the mode since S50** (the owner, 2026-10-02: a line set is what shows the ionized-gas component); the sprite follows the set | As field, chosen in either mode (**T22**: the selector done, the sprite's scale still T9) |
 | Exposure | Manual stops over a fixed gain | Automatic, to the hundredth-brightest star, plus stops | One rule for both (a ruling) |
 | Handover by zoom | Three regimes at 25 and 4 kpc | None needed: the frustum selects | The frustum selection for points, the field under it |
 | Picking a star | Yes | Yes | Yes; clusters too (**T23**) |
@@ -106,7 +108,7 @@ into its own stars at close zoom (stars under 20 Myr exist only as cluster point
 process on its Hernquist profile); **T26** the faint end below 0.1 L☉ with finer cells so a close view stays
 affordable; **T27** one star list — the number-sampled catalogue (which carries the planetary systems and is about one
 star in 10⁵–10⁷ of the galaxy: 20 000 by default, at most 5 × 10⁶) re-keyed onto the complete list's identities, so
-any drawn star can be picked and its system opened; today a bright star is named (level-3 cell, rank) and has no
+any drawn star can be named on one list (opening its system from a click was removed on the owner's word, D209: the system's information is to be shown another way, not yet decided); today a bright star is named (level-3 cell, rank) and has no
 system. T24–T26 are about two sessions together, T27 two to three; all four are model work beyond the two pieces the
 pin was lifted for and need the owner's word. **The owner's open choice at handoff:** the star-first viewer mode first
 on what exists (the session's recommendation), or T24–T26 first. The owner has ideas of their own for the viewer to

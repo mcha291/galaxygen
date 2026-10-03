@@ -21,6 +21,20 @@ export function psfProfile(r: number, core = 0.3, beta = 2.2): number {
 
 let cached: CanvasTexture | null = null;
 
+/**
+ * The default sprite's mean over its square, as its texture holds it (8-bit alpha on a `size` grid): what the
+ * star-first mode divides by so that a sprite's pixels sum to the point's light (flux.ts, D208). The same for
+ * every channel: the sprite is white.
+ */
+export function psfMean(size = 64): number {
+  const half = size / 2;
+  let sum = 0;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) sum += Math.round(255 * psfProfile(Math.hypot(x + 0.5 - half, y + 0.5 - half) / half)) / 255;
+  }
+  return sum / (size * size);
+}
+
 export function psfTexture(size = 64): CanvasTexture {
   if (cached) return cached;
   const canvas = document.createElement("canvas");
@@ -117,6 +131,18 @@ export interface SpritePsf {
   /** Pixels on screen. */
   size: number;
   alphaTest: number;
+  /** Each channel's deposited pattern (rgb × alpha) averaged over the sprite's square: the star-first mode's unit sum (D208). */
+  mean: [number, number, number];
+}
+
+/** Each channel's mean of a float sprite's deposited pattern, channel × alpha, over its square (airyTexture's layout). */
+export function patternMean(data: ArrayLike<number>): [number, number, number] {
+  const texels = data.length / 4;
+  const sum: [number, number, number] = [0, 0, 0];
+  for (let p = 0; p < data.length; p += 4) {
+    for (let k = 0; k < 3; k += 1) sum[k] += Number(data[p + k]) * Number(data[p + 3]);
+  }
+  return [sum[0] / texels, sum[1] / texels, sum[2] / texels];
 }
 
 const instrumentCache = new Map<string, SpritePsf>();
@@ -130,7 +156,8 @@ export function instrumentPsf(set: FilterSet): SpritePsf | null {
   if (!psf) {
     // The sprite is larger than the default's nine pixels so its first rings are resolved on screen; its core stays
     // about two pixels across in red, as the default's does.
-    psf = { texture: airyTexture(pivots), size: 25, alphaTest: 0 };
+    const texture = airyTexture(pivots);
+    psf = { texture, size: 25, alphaTest: 0, mean: patternMean(texture.image.data as Float32Array) };
     instrumentCache.set(key, psf);
   }
   return psf;

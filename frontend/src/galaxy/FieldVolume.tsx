@@ -26,7 +26,10 @@ import {
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
+import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
+import type { PointDust } from "./FluxPoints";
 import { STEPS, type Tuning, TUNING_DEFAULTS } from "./tuning";
 
 /**
@@ -92,6 +95,18 @@ const VERTEX = /* glsl */ `
 // behind. Read once per step, a grazing step spans many cells, and neighbouring pixels quantised R at the
 // same step boundaries: the disc drew as concentric terraces. The columns are exact per sub-step and add
 // to the step's, so the sub-samples change where the layers are read, not how much light there is.
+//
+// The dust in its own layer (S50, D206): the model publishes the gas's scale height ring by ring and the
+// render names it the dust's — tens of parsecs in the inner disc against the stars' few hundred. A sub-step
+// that spans such a layer cannot treat light and dust as mixed (that is exact only when they share a
+// profile), so it is cut at fixed multiples of the dust's height (regimes.ts DUST_CUTS) and its pieces are
+// composed front to back, each with its exact columns: the stars in front of the dust are not dimmed by it,
+// and an inclined view shows the dark lane inside the stellar disc.
+//
+// The dust round each ring (S50, D207): the render's placement — the pattern's contrast, the dust's column at
+// a cell over its ring's mean — multiplies the ring's depth, thermal light and diagnostic where the sub-step
+// reads them. The march is unchanged: a multiplication of what it already read.
+//
 // The steps are compiled in (a GLSL loop needs a constant bound): a new count is a new shader (D199).
 export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   uniform sampler2D plane;
@@ -108,8 +123,9 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // 1 offsets each step by the pixel's fixed fraction; 0 reads each sub-step at its middle (D199).
   uniform float dither;
   uniform float halfHeight;
+  // The layers' scale heights, kpc (the render header's layers). The dust's is per ring since D206 and rides in
+  // the ring texture (readHeight).
   uniform float starsHeight;
-  uniform float dustHeight;
   uniform float hiiHeight;
   uniform float digHeight;
   uniform float bulgeScale;
@@ -119,6 +135,16 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
   // faded in: inside it the field's HII steps back by the same weight (S40, no double counting).
   uniform vec4 regionWindow;
   uniform float hiiFade;
+  // The component layers (D205, S50): each emitting layer's multiplier, the dust's depth switch and the
+  // "where it is" diagnostic's light per unit of the dust's column share and its declared ramp. The field's are
+  // 1, 1, 1, 1 and 0 (components.ts FIELD_LAYERS): every term below is multiplied by one or has zero added, so
+  // the field draws as before, to the bit.
+  uniform float starsGain;
+  uniform float gasGain;
+  uniform float dustGain;
+  uniform float dustDepth;
+  uniform float dustWhere;
+  uniform vec3 whereStops[${WHERE_STOPS}];
   varying vec3 vWorld;
 
   // The column of a sech²(y / 2h) / 4h layer, which integrates to 1 over height, along the ray
@@ -173,6 +199,30 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
     return lo + (hi - lo) * (x - float(k));
   }
 
+  // The dust diagnostic's ramp (D205), components.ts whereTint line for line: its stops read linearly at t.
+  vec3 whereTint(float t) {
+    float x = clamp(t, 0.0, 1.0) * float(${WHERE_STOPS - 1});
+    int k = min(int(floor(x)), ${WHERE_STOPS - 2});
+    vec3 lo = whereStops[0];
+    vec3 hi = whereStops[1];
+    for (int n = 0; n < ${WHERE_STOPS - 1}; n++) {
+      if (n == k) { lo = whereStops[n]; hi = whereStops[n + 1]; }
+    }
+    return lo + (hi - lo) * (x - float(k));
+  }
+  // Each ring's level on the dust's declared ramp (components.ts dustLevels), held in the depth row's spare channel.
+  float readLevel(float r) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.depth}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+  // The dust layer's scale height at a ring, kpc (D206): the thermal row's spare channel (regimes.ts planeTexture).
+  float readHeight(float r) {
+    return textureLod(rings, vec2((r - rLo) / (rHi - rLo), (${RING_ROWS.thermal}.0 + 0.5) / ${RING_ROWS.count}.0), 0.0).a;
+  }
+  // Where a sub-step is cut as it crosses the dust's layer, in the dust's scale heights (regimes.ts DUST_CUTS).
+  float dustCut(int k) {
+    ${DUST_CUTS.map((c, k) => (k < DUST_CUTS.length - 1 ? `if (k == ${k}) return ${c.toFixed(2)};` : `return ${c.toFixed(2)};`)).join("\n    ")}
+  }
+
   void main() {
     vec3 origin = cameraPosition;
     vec3 dir = normalize(vWorld - cameraPosition);
@@ -216,25 +266,65 @@ export const fieldFragment = (steps: number = STEPS): string => /* glsl */ `
         if (j >= n) break;
         vec3 q0 = p0 + dir * (float(j) * sub);
         vec3 q1 = p0 + dir * (float(j + 1) * sub);
-        vec3 emitted = bulge / float(n);
-        vec3 depth = vec3(0.0);
+        vec3 bulgeSub = bulge * starsGain / float(n);
         vec2 rp = polarOf(readPoint(q0, q1, jitter));
-        // Beyond rHi every texture is zero: the box's side faces clip nothing but zeros.
+        // What the sub-step reads, once: each layer's light per unit of its own column, the dust's depth per
+        // unit of the dust's, and the dust layer's height at this ring (D206). Beyond rHi every texture is
+        // zero: the box's side faces clip nothing but zeros.
+        vec3 starsLight = vec3(0.0);
+        vec3 dustLight = vec3(0.0);
+        vec3 hiiLight = vec3(0.0);
+        vec3 digLight = vec3(0.0);
+        vec3 tau = vec3(0.0);
+        float hDust = 0.0;
         if (rp.x < rHi) {
-          float cStars = column(q0.y, q1.y, starsHeight, sub);
-          float cDust = column(q0.y, q1.y, dustHeight, sub);
-          float cHii = column(q0.y, q1.y, hiiHeight, sub);
-          float cDig = column(q0.y, q1.y, digHeight, sub);
-          emitted += readPolar(plane, rp).rgb * cStars;
-          emitted += (readPolar(scatter, rp).rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0)) * cDust;
-          emitted += readPolar(hii, rp).rgb * cHii * (1.0 - hiiFade * inRegion(rp)) + readRing(rp.x, ${RING_ROWS.dig}.0) * cDig;
-          depth = readRing(rp.x, ${RING_ROWS.depth}.0) * cDust;
+          starsLight = readPolar(plane, rp).rgb * starsGain;
+          // Where it is (D205): a diagnostic, the ring's level on the declared ramp in its declared scale, in the
+          // ramp's colour at that level, spread through the dust's layer by its column; it dims nothing.
+          float level = readLevel(rp.x);
+          // The dust's column here over its ring's mean (D207): the model's placement, in the scattered
+          // light's spare channel. It multiplies the depth, the thermal light and the diagnostic — everything that
+          // is the dust's own column — and not the scattered light, already a share of the placed starlight.
+          vec4 scattered = readPolar(scatter, rp);
+          float place = scattered.a;
+          dustLight = (scattered.rgb * scattering + readRing(rp.x, ${RING_ROWS.thermal}.0) * place) * dustGain + dustWhere * level * whereTint(level) * place;
+          hiiLight = readPolar(hii, rp).rgb * (1.0 - hiiFade * inRegion(rp)) * gasGain;
+          digLight = readRing(rp.x, ${RING_ROWS.dig}.0) * gasGain;
+          tau = readRing(rp.x, ${RING_ROWS.depth}.0) * place * dustDepth;
+          hDust = readHeight(rp.x);
         }
-        // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each sub-step's dust dims
-        // only what lies behind it, so light and dust keep their order inside a long step.
-        vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
-        light += transmitted * emitted * own;
-        transmitted *= exp(-depth);
+        // Composed in order (D206; regimes.ts composeStep, line for line). The dust's layer is far thinner than
+        // the stars' in the inner disc, so a sub-step that spans it is cut at fixed multiples of the dust's
+        // height and its pieces taken front to back: the stars in front of the layer are not dimmed by it. The
+        // layers are symmetric about the midplane, so heights run upward along the ray in u.
+        float sgn = q1.y >= q0.y ? 1.0 : -1.0;
+        float u0 = sgn * q0.y;
+        float u1 = sgn * q1.y;
+        float du = u1 - u0;
+        bool whole = hDust <= 0.0 || du <= 1e-6 * hDust;
+        for (int m = 0; m <= ${DUST_CUTS.length}; m++) {
+          float a = u0;
+          float b = u1;
+          float share = 1.0;
+          if (whole) {
+            if (m > 0) break;
+          } else {
+            a = max(u0, m == 0 ? -1.0e9 : dustCut(m - 1) * hDust);
+            b = min(u1, m == ${DUST_CUTS.length} ? 1.0e9 : dustCut(m) * hDust);
+            if (b <= a) continue;
+            share = (b - a) / du;
+          }
+          float piece = sub * share;
+          float cDust = column(a, b, hDust, piece);
+          vec3 emitted = bulgeSub * share + starsLight * column(a, b, starsHeight, piece) + dustLight * cDust
+            + hiiLight * column(a, b, hiiHeight, piece) + digLight * column(a, b, digHeight, piece);
+          vec3 depth = tau * cDust;
+          // Light mixed through its own dust leaves (1 − e^−τ)/τ of itself; each piece's dust dims only what
+          // lies behind it, so light and dust keep their order inside a long step.
+          vec3 own = mix(vec3(1.0) - 0.5 * depth, (vec3(1.0) - exp(-depth)) / max(depth, vec3(1e-6)), step(vec3(1e-3), depth));
+          light += transmitted * emitted * own;
+          transmitted *= exp(-depth);
+        }
       }
     }
     gl_FragColor = vec4(light * gain, 1.0);
@@ -260,6 +350,20 @@ interface Props {
   tuning?: Pick<Tuning, "resolution" | "pixelBudget" | "steps" | "subMax" | "dither" | "filtering" | "fieldGain" | "whiteKelvin">;
   /** Filled in at each re-march: the target's size and the CPU-side time of the march's render call. */
   stats?: MarchStats;
+  /**
+   * Which layers emit and how strongly, whether the dust dims, and the dust's "where it is" tint (D205):
+   * the brightest mode's component switches. The field's default draws every layer as before.
+   */
+  layers?: MarchLayers;
+  /** Told how the dust diagnostic is painted when the render arrives (field, scale, the range mapped): its caption. */
+  onDepth?: (paint: DustPaintShown | null) => void;
+  /**
+   * The star-first mode's threshold (D208): with a luminosity the stellar layer is the render's remainder,
+   * `stars_unresolved` — the light no point above it carries, nor the clusters — and without one the whole.
+   */
+  lMin?: number | null;
+  /** Handed the march's dust textures for the segment to each point (T20, D208); null when the volume goes. */
+  onDust?: (dust: PointDust | null) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -276,7 +380,21 @@ export interface MarchStats {
  * is the model's filter integral (/api/render): the viewer sends the set's curves and draws the
  * responses over the white point, each component in the layer the model names.
  */
-export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb", regionWindow = null, hiiFade = 0, tuning = TUNING_DEFAULTS, stats }: Props) {
+export function FieldVolume({
+  meta,
+  query,
+  stops,
+  weight = 1,
+  filterSet = "rgb",
+  regionWindow = null,
+  hiiFade = 0,
+  tuning = TUNING_DEFAULTS,
+  stats,
+  layers: shown = FIELD_LAYERS,
+  onDepth,
+  lMin = null,
+  onDust,
+}: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
   const names = SCALARS.filter((n) => declared(n));
@@ -284,8 +402,9 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
   const key = lit ? JSON.stringify([names, query]) : null;
   const loaded = useLoad<Frame>(key, (signal) => loadArrays(names, query, signal));
   const frame = loaded.value ?? null;
-  const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query]) : null;
-  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal));
+  const unresolved = lMin != null && lMin > 0;
+  const renderKey = lit ? JSON.stringify([filterSet, whiteKelvin, query, unresolved ? lMin : null]) : null;
+  const rendered = useLoad<RenderFrame>(renderKey, (signal) => loadRender(curvesOf(filterSet), whiteKelvin, query, signal, unresolved ? lMin : null));
   const light = rendered.value && "stars" in rendered.value.arrays ? rendered.value : null;
 
   // Read when the material is built, so a mesh made after a steps change compiles once, with them.
@@ -293,6 +412,8 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
   stepsNow.current = steps;
   const filteringNow = useRef(filtering);
   filteringNow.current = filtering;
+  const metaNow = useRef(meta);
+  metaNow.current = meta;
 
   const mesh = useMemo(() => {
     const R = frame?.header.grid.axes.R;
@@ -308,15 +429,35 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
-      stars: a.stars,
+      // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
+      // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
+      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : a.stars,
       // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
       hii: summed(a.halpha_hii, a.lines_hii),
       dig: summed(a.halpha_dig, a.lines_dig),
       extinction: a.dust_extinction,
       scattered: a.dust_scattered,
       thermal: a.dust_thermal,
+      // The dust's layer (D206): the render's per-ring heights where the header names them, else its one height.
+      dustHeight: typeof layers.dust === "string" ? a[layers.dust] : layers.dust,
+      // The dust round each ring (D207): the render's placement where the header names one, else an even ring.
+      dustPlacement: light.header.placement?.dust ? a[light.header.placement.dust] : null,
       white,
     });
+    // The dust diagnostic's levels (D205): each ring's place on its declared ramp in its declared scale, kept in
+    // the depth row's spare channel, which the field's march never reads.
+    let paint: DustPaintShown | null = null;
+    try {
+      const dust = dustRamp(metaNow.current);
+      if (dust) {
+        const depthRow = rings.subarray(RING_ROWS.depth * width * 4, (RING_ROWS.depth + 1) * width * 4);
+        const { levels, lo, hi } = dustLevels(dust, metaNow.current.cmaps, ringDepths(depthRow, width));
+        for (let i = 0; i < width; i += 1) depthRow[i * 4 + 3] = levels[i];
+        paint = { field: dust.field, scale: dust.scale, inferred: dust.inferred, coloured: dust.coloured, lo, hi };
+      }
+    } catch {
+      paint = null; // declarations from another model in flight: the diagnostic draws nothing (its levels stay 0)
+    }
     const filter = filteringNow.current === "nearest" ? NearestFilter : LinearFilter;
     const polar = (values: Float32Array) => {
       const texture = new DataTexture(values, width, height, RGBAFormat, FloatType);
@@ -353,9 +494,9 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         subMax: { value: SUB_SAMPLES_MAX },
         dither: { value: 1 },
         halfHeight: { value: halfHeight },
-        // The model's layers (the render header): a missing one is height 0, which draws nothing.
+        // The model's layers (the render header): a missing one is height 0, which draws nothing. The dust's
+        // height is in the ring texture, ring by ring (D206).
         starsHeight: { value: layers.stars ?? 0 },
-        dustHeight: { value: layers.dust ?? 0 },
         hiiHeight: { value: layers.halpha_hii ?? 0 },
         digHeight: { value: layers.halpha_dig ?? 0 },
         bulgeScale: { value: Math.max(bulgeScale, 1e-3) },
@@ -363,6 +504,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
         gain: { value: 0 },
         regionWindow: { value: new Vector4(0, 0, 0, 0) },
         hiiFade: { value: 0 },
+        starsGain: { value: FIELD_LAYERS.stars },
+        gasGain: { value: FIELD_LAYERS.gas },
+        dustGain: { value: FIELD_LAYERS.dust },
+        dustDepth: { value: FIELD_LAYERS.dustDepth },
+        dustWhere: { value: FIELD_LAYERS.where },
+        whereStops: { value: FIELD_LAYERS.whereStops.map((c) => new Vector3(...c)) },
       },
       vertexShader: VERTEX,
       fragmentShader: fieldFragment(stepsNow.current),
@@ -371,9 +518,19 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
       depthWrite: false,
     });
     const box = new Mesh(new BoxGeometry(2 * R.hi, 2 * halfHeight, 2 * R.hi), material);
+    if (paint) box.userData.dustPaint = paint;
+    // What the star-first mode's points read for the dust in front of them (T20): the march's own textures.
+    const pointDust: PointDust = {
+      rings: ringTexture,
+      scatter: material.uniforms.scatter.value as DataTexture,
+      rLo: R.lo,
+      rHi: R.hi,
+      top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
+    };
+    box.userData.pointDust = pointDust;
     box.frustumCulled = false;
     return box;
-  }, [frame, light]);
+  }, [frame, light, unresolved]);
 
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -417,6 +574,19 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     [mesh, offscreen],
   );
 
+  const tellDust = useRef(onDust);
+  tellDust.current = onDust;
+  useEffect(() => {
+    tellDust.current?.(mesh ? ((mesh.userData.pointDust as PointDust | undefined) ?? null) : null);
+    return () => tellDust.current?.(null);
+  }, [mesh]);
+
+  const tellDepth = useRef(onDepth);
+  tellDepth.current = onDepth;
+  useEffect(() => {
+    if (mesh) tellDepth.current?.((mesh.userData.dustPaint as DustPaintShown | undefined) ?? null);
+  }, [mesh]);
+
   // A new step count is a new shader (the loop's bound is compiled in); the caller debounces it.
   useEffect(() => {
     if (!mesh) return;
@@ -454,7 +624,7 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;
@@ -470,6 +640,12 @@ export function FieldVolume({ meta, query, stops, weight = 1, filterSet = "rgb",
     uniforms.hiiFade.value = region ? hiiFade : 0;
     uniforms.subMax.value = Math.min(SUB_SAMPLES_MAX, Math.max(1, Math.round(subMax)));
     uniforms.dither.value = dither ? 1 : 0;
+    uniforms.starsGain.value = shown.stars;
+    uniforms.gasGain.value = shown.gas;
+    uniforms.dustGain.value = shown.dust;
+    uniforms.dustDepth.value = shown.dustDepth;
+    uniforms.dustWhere.value = whereLevel(shown.where, LIGHT_PER_LSUN_PC2);
+    (uniforms.whereStops.value as Vector3[]).forEach((v, i) => v.set(...shown.whereStops[i]));
     const before = gl.getRenderTarget();
     gl.setRenderTarget(offscreen.target);
     gl.setClearColor(0x000000, 0);

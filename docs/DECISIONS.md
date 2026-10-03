@@ -7691,3 +7691,306 @@ LESSONS; RESUMING ≤ 120 with the regression numbers re-read; BRIEF for S50, th
 the merge. **The owner's API server on :8017 was started before S48 and holds the old model in memory: it serves the
 new light, `/api/bright` and the filtered responses only after a restart, which is the owner's (or the session's on
 the owner's word).**
+
+### D205. S50: component layers in the brightest-star mode — the starlight, the dust, the ionized gas and the cloud census as switchable volumes, for the owner to see what the model holds before the plan is decided
+
+**The owner, in chat, on 2026-10-01:** "Rather than S50, I want to work in the brightest star mode first to investigate
+how things look before deciding what to do with the plan. Since the model outputs the total brightness of stars in a
+volume of space, can we generate a render that shows these volumes? Likewise, can we generate a view that shows where
+the dust and gases are?" So S50 is this investigation, not the star-first mode `BRIEF.md` scheduled; that plan waits on
+what the owner sees. Written before any code moved (D113).
+
+**The ruling.** The brightest mode gains a "Components" section of independent switches, **all off by default, so the
+mode's picture is unchanged until one is turned on**: (1) **Starlight** — the field's stellar component and the bulge
+as the volume the march already integrates (`/api/render`'s `stars` in its layer; smooth by construction: the model
+publishes light per cell, not lumps); (2) **Ionized gas** — the HII layer and the diffuse layer with their lines, as
+the field draws them; (3) **Dust** — two readings, chosen by a second switch: *as it acts* (extinction, scattered and
+thermal light, the physical picture) and *where it is* (**a diagnostic**: the dust's optical depth per unit path drawn
+as emission, so the layer itself is visible); (4) **Molecular clouds** — the cloud census (`/api/clouds`) as markers
+at each cloud's position, sized by `cloud_size` and painted by the declared ramp of `cloud_mass` (A9: a ramp comes
+from the field's declaration, never from the viewer); (5) **Cell outlines** — the level-0 grid (32 × 32) drawn as
+lines, so the owner can see the volumes the catalogues are drawn in. Each layer has an intensity control in the
+tuning panel. **The diagnostic readings are labelled as such on screen** ("diagnostic: shows where it is, not how it
+looks"): RENDER_PHYSICS §8 forbids colour applied for appearance in the picture; a declared false-colour view of a
+published field is the viewer's scientific mode, as the checkpoint previews are. The viewer computes no physics (D5):
+every layer is a published field or census through its declared ramp or through `/api/render`. *Not in this row:*
+the star-first accounting (the layers here are for looking, and the starlight volume is the total, not the remainder
+under the points); the cold atomic gas (published per ring by the ism stage without a layer height: named in the
+panel as not drawn). Viewer-only; no model change.
+
+### D206. S50: the dust in its own layer — the gas's scale height published per ring and read by the render as the dust's (debt #109's layer), on the owner's word
+
+**The owner, in chat, on 2026-10-02:** asked whether a three-dimensional dust gains anything or averages out as the
+chemistry does; was told the composition averages and the place does not, that the arm pattern as it stands moves a
+ring's light by a per cent or so (a probe, recorded in `RESEARCH_AREAS.md` §1) and that the vertical layer is the
+larger gain; then: "work on adding dust verticality". **The model's pin is lifted for this piece only.** In the same
+message the owner asked for `docs/RESEARCH_AREAS.md` and the spiral's shape as its first entry: written first, a
+record and not a ruling. Also in this session, before this decision and viewer-only: the filter-set selector is shown
+in the brightest mode as it is in the field (the owner, "add the filters to the brightest mode for showing ionized
+gases": VIEWER_TASKS T22's selector). Written before any code moved (D113).
+
+**The ruling.** (1) **One field, derived**: the ism stage publishes `gas_scale_height` (R), pc — **h = Σ_gas / 4ρ₀**,
+the height of the render's one layer form, sech²(z / 2h) / 4h, that holds the published gas column at the published
+midplane density (the stellar heights' convention: `vertical.scale_height` is the isothermal sheet's z₀ / 2). No new
+constant and no source: it is debt #109's stated closure, "Σ/2ρ₀ from the ISM's midplane density", in the layer's own
+h. The profile's *shape* is the render's form, not a derivation `[inferred]`; an isothermal gas in the stars' potential
+is nearer a Gaussian, the named alternative, which holds the same column and midplane density at h = Σ / √(2π)ρ₀
+(1.6 times this h). NaN where the stage has no midplane density (B9). (2) **The dust follows the gas**: one
+dust-to-gas ratio through the layer's height `[inferred]` — the ism stage's own assumption in the plane. (3) **The
+render** returns the dust's layer per ring: `layers.dust` names an array, `dust_height` (R), kpc, where the model
+publishes the field, and stays the stars' one height where it does not. (4) **The viewer** reads that height ring by
+ring, and **orders light and dust inside a step**: with the dust thinner than the stars a step that spans the layer
+may no longer treat them as mixed (S39's `(1 − e^−τ)/τ`, exact only for one shared profile), so a step is cut at
+fixed multiples of the dust's height and each piece composed in order; the gate is the march's arithmetic, mirrored
+in TypeScript, against a brute-force quadrature of the two layers. (5) **Not changed, and registered as #128**: the
+dust stage's *heating* still treats stars and dust as one uniformly mixed slab, so do the scattered share and the
+frame's balance (model-side arithmetic, `tests/test_render.py`): after this row the picture's geometry and the energy
+budget's differ. What the layered geometry would absorb is measured by a probe and pinned beside the debt, not
+applied: it moves T_d and L_IR, and that is a ruling of its own.
+
+**What the probe read before the ruling (repo unchanged, the default galaxy):** h = 21 pc at the centre, 31 at 2 kpc,
+47 at 4, **113 at R₀** (0.32 of the thin disc's 356), 174 at 10, 438 at 15, 774 at 20 kpc; it equals the stars' height
+at 13.1 kpc; the dust-mass-weighted mean is 65 pc. Beyond the stellar disc it diverges (95 kpc at 25 kpc): the
+pressure prescription takes the stars' gravity alone, and where there are no stars nothing holds the gas — the
+field's about says so, and there is no dust there to draw. **No observed height was read before the ruling, so none
+can become a row (D113).**
+
+**The prediction that could fail (B4).** Face-on, a ring far thicker than τ = 1 shows about half its starlight (the
+near side, in front of the layer) where the mixed slab showed 1/τ of it: the inner disc brightens, the Sun's ring
+does not move by more than a few per cent (τ_V 0.47: 0.80 mixed, 0.81 layered). Edge-on, a dark lane thinner than
+the stellar disc appears, widening outward. If the face-on Sun's ring moves by more than 5 %, or the edge-on frame
+shows no lane, the ordering in the march is wrong.
+
+**Applied (2026-10-02, the session itself, Opus 5.5; no builder).** *The model:* `ism.layer_height` and the field as
+ruled, plus one thing the ruling did not foresee and the picture showed. **The quotient has no claim past the stellar
+disc's edge**: the pressure counts the stars' gravity alone, the stars fall away at 23.6 kpc within a few hundred
+parsecs, and Σ/4ρ₀ runs 1.2 kpc at 23 kpc, 10 kpc at 24, 118 kpc at 26. Drawn, those rings flooded the dust
+diagnostic with layers taller than the galaxy. Three domains were tried in order: *h < R* (cuts from 24.1 kpc and
+leaves the 2–10 kpc rings of the edge itself); *h below the height the gas's own weight would give it* (the stage's
+stated "fails in the gas-dominated outer disc" — but it refuses the inner 2 kpc too, where the central reservoir
+out-weighs the formula's stars: 52 % of the dust's mass, killed by the number); and the one kept — **h below the
+radial scale over which the stars that hold the layer change** (`ism.local_scale_length`, 1/|d ln Σ★/dR|): a slab
+taller than the distance over which its support vanishes is not the plane-parallel slab the estimate assumed
+`[inferred]`. It refuses exactly the edge: the first missing ring is 23.66 kpc at N_R 400 (23.44, 23.63, 23.64 at
+48, 120, 800), every ring inside has a height and none outside, the margin inside is never under 2.3 heights, and
+the dust left without a layer is 1.5 × 10⁻⁵ of its mass at under a thousandth of a magnitude. The outermost kept
+rings' flare (0.8–1.3 kpc at 20–23.6 kpc) is still the star-only formula's and overstated; the field's about says
+so. No acceptance row reads the field; no number of any other field moved.
+*The render:* `layers.dust` is `"dust_height"`, the array rides beside the components with `axes` `["R"]` (or
+`["cell"]` at a level, the cell's area-weighted mean), `layers.arrays` names its unit and field, and a model that
+publishes no gas height keeps S39's reading. *The viewer:* the height in the ring texture's spare channel
+(`regimes.ts planeTexture`), the march's sub-step cut at `DUST_CUTS` (±1, 2, 3, 4.5, 6, 8, 11 of the dust's heights:
+fifteen pieces) and composed front to back; `composeStep` mirrors the shader line for line. **The gate:** against a
+200 000-point quadrature of the two layers, over the default galaxy's rings from the centre (h 21 pc, τ_V 48) to
+15 kpc, three inclinations to cos i = 0.1, both directions and five steppings of the ray, the worst error is
+**0.58 % of the unattenuated light** (ruled bound 1 %; eight cuts at ±1, 2.5, 5, 8 left 3.6 %, measured first and
+replaced). The dust's own column is exact however cut (10⁻⁹), and with the dust at the stars' height the march is
+the mixed slab's (1 − e^−τ)/τ to 10⁻⁶. **The shader's snapshot test ended**: since S47 it had undone each row's
+uniforms and compared the rest with session-46's source, proving no picture moved; D206 moves the picture on
+purpose, so the source is pinned whole as `fieldFragment.d206.glsl` and `fieldFragment.s46.glsl` is removed.
+
+**The prediction, read.** Held. Face-on the Sun's ring draws 0.805 of its light against the slab's 0.796 (1.1 %,
+under the 5 % that would have killed the ordering); the innermost ring 0.434 against 0.021. Edge-on in the browser
+(the dev viewer on the restarted API) a dark lane runs through the stellar light, thin at the centre and widening
+outward; face-on and oblique the inner disc is brighter and shows no banding. **One thing is worse and is the
+diagnostic's, not the layer's:** the "where it is" reading draws each ring's *level on a logarithmic ramp*, so the
+outer rings count for half the inner ones' brightness at a thousandth of their depth, and edge-on a ray stacks tens
+of kiloparsecs of them through a layer now a kiloparsec tall — at zero stops the edge-on diagnostic saturates to
+white; at −6 stops it shows the flared layer cleanly. Its face-on normalisation was always the only one stated.
+
+**Debt #128 (opened), measured and pinned, not applied.** The dust stage still absorbs as one mixed slab:
+1.5674 × 10¹⁰ L☉, 0.3415 of the disc's light. The layered geometry — the escape of isotropic starlight from its own
+layer through a dust in the gas's, ½[E₂(τA) + E₂(τB)] averaged over the stars, which is the stage's closed form
+exactly when the layers are one (checked to 2 × 10⁻⁵) — would absorb **0.766 of that**, 0.2616 of the disc's light:
+0.59 of the slab's at 0.5 kpc, 0.91 at R₀, the same beyond 12 kpc; T_d(R₀) 18.82 → 18.52 K, 16.68 → 15.25 K at 1 kpc.
+Applying it moves T_d, L_IR, the thermal component and every pin on them, and belongs to a ruling of its own
+(the owner's). **#109** stays carried for its other two parts (the infrared channel's white point, the scattering
+phase in an inclined disc); its layer is closed. The register: 66 open = 11 permanent + 55 carried, 45 discharged.
+Tests: `tests/test_dust_layer.py` (13), `test_render` re-pinned in two places (the dust's layer, the array list);
+vitest 164 (157). `docs/RESEARCH_AREAS.md` is new. Not done here: S50's close (board row, LESSONS, RESUMING, BRIEF,
+merge, tag) and the cold timings (the stage's cost did not change: one division per ring).
+
+### D207. S50: the dust placed around each ring by the pattern's contrast, as the gas it is a share of — the stellar pattern now, a gas pattern of its own later (the owner's order)
+
+**The owner, in chat, on 2026-10-02**, after D206 and after being told what a separate gas pattern would gain and
+what it needs first (a reading of measured gas arm contrasts, and a ruling on whether the gas ridge is offset from
+the arm — `RESEARCH_AREAS.md` §1, direction d): "lets build dust first and then add the gases later". So this row
+places the dust by the pattern the model has; the gas's own pattern is a later row and replaces the factor here
+when it exists. **The pin is lifted for this piece only.** Written before any code moved (D113).
+
+**The ruling.** (1) **The dust's column around a ring is the ring's published column times
+`pattern_density_contrast`** (clipped at zero, as the stars and the HII regions' light are placed). Not a new
+assumption: `sfh_azimuthal` already takes Σ_gas(R, φ) = Σ_gas(R) c(R, φ) to place today's star formation, and the
+dust is the gas times one dust-to-gas ratio per ring (ism). The factor averages to 1 round every ring, so every
+ring keeps its dust mass and every radial field is unchanged. (2) **No stage changes and no field is added**: the
+render returns the factor as an array beside the components, `dust_placement` (R, φ), named in the header as the
+dust's placement with the field it reads, as D206 returns `dust_height`; `dust_extinction` stays the ring's mean
+column's transmission and says so. (3) **What follows the placement in the picture:** the dust's optical depth, its
+thermal emission (the dust's mass at the ring's one temperature) and the "where it is" diagnostic. **What does
+not:** the scattered light, which the model already returns per (R, φ) as a share of the placed starlight —
+multiplying it again would raise a ring's scattered light by A²/2. (4) **The layer's height stays per ring**
+`[inferred]`: nothing published says the gas is thinner or thicker on an arm. (5) **The viewer** multiplies; the
+march is D206's.
+
+**Not changed, and added to #128's record:** the heating, the scattered share and the frame's balance are still
+one mixed slab per ring at the ring's mean column. With light and dust both heavier on an arm the absorbed power
+is not the mean column's; the size is measured by a probe and pinned, not applied.
+
+**The prediction that could fail (B4).** S50's probe, with the dust as a foreground screen, read a ring's
+transmitted V light up 0.9 % at R₀, 3 % at 6 kpc and 9 % at 4 kpc when the dust is placed. In the layered geometry
+half the starlight is in front of the dust and never sees it, so **the ring's gain must be smaller than the
+screen's at every one of those radii**, and the picture must show the arms darker than the gaps in dust at 4–6 kpc
+while the Sun's ring barely changes. A gain larger than the screen's, or a ring whose mean dust depth has moved,
+means the placement is applied to the wrong thing.
+
+**Applied (2026-10-02, the session itself, Opus 5.5).** *The render:* `placement.dust` names `dust_placement`,
+the published contrast clipped at zero, `axes` `["R", "phi"]` (or `["cell"]` at a level, the cell's mean of the
+factor); `placement.arrays` gives its unit, field and what it multiplies; `placement` is null where the model has no
+pattern or no dust. `dust_extinction` is unchanged and its about says it is the ring's mean column. No stage and no
+field changed; the payload grows by one float per (R, φ) cell (0.58 MB at f4 on the default grid). *The viewer:* the
+factor rides in the scattered light's spare channel (`regimes.ts planeTexture`; 1 where none is given or a value is
+not a number) and the march multiplies the ring's depth, its thermal light and the "where it is" diagnostic by it
+where it already reads them; the scattered light is left as the model placed it. The shader's pinned source is now
+`fieldFragment.d207.glsl`.
+
+**The prediction, read — and what the ruling's own probe had left out.** *Held:* with the dust alone placed, a
+ring's face-on V light rises 0.80 % at 4 kpc, 0.82 % at 6 and 0.31 % at R₀, under the screen's 9.2 %, 3.3 % and
+0.89 % at each (`tests/test_dust_layer.py`). **But the stars are placed by the same factor, and S50's first probe
+had lit the screen evenly.** With light and dust both on the arms the ring's light does not rise at all: it falls
+0.04 % at 4 kpc, 0.98 % at 6 and 1.28 % at R₀. What the placement does to the picture is therefore not a dark
+band: at R₀ an arm's dust lets through 0.747 of its starlight and a gap's 0.874, so the dust takes about 15 % more
+of an arm's light than of a gap's while the arm holds 2.3 times the gap's stars — **the arms are muted and reddened
+by their own dust, not crossed by lanes**, and inside 2 kpc nothing changes (the layer is opaque either way). Seen
+in the browser: the physical view changes subtly and shows no artefact; the dust diagnostic face-on, an even grey
+disc until now, draws the bar and four arms. The owner had been told "soft dark bands along the arms"; this is
+less than that, and it is what a dust that follows the stars' own pattern does. A lane needs the dust somewhere the
+stars are not — the gas's own pattern (`RESEARCH_AREAS.md` §1, direction d), the row the owner has put next.
+
+**#128, its second half.** The heating is the ring's mean column's. In the same mixed slab, with light and dust
+both placed, the absorbed power is 1.26 % more over the disc (4.1 % at R₀, 0.1 % at 2 kpc where the slab is
+saturated): pinned, not applied; the register's count is unchanged (66 open, 45 discharged). Tests:
+`tests/test_dust_layer.py` 18 (13), `test_render`'s array list; vitest 167 (164).
+
+### D208. S50 proper: the side track named, and the star-first mode's rulings — one scale for points and field, the layers on by default, the dust in front of each point
+
+**The owner, in chat, on 2026-10-03:** "commit what we have now as sidetrack-session-1 and then implement the
+planned session-50". **The naming.** D205–D207, written under the heading "S50" while the owner looked at what the
+model holds, are **sidetrack session 1** (branch `sidetrack-session-1`, 41f9313): the component layers, the filter
+selector and the stars switch in the brightest mode, `RESEARCH_AREAS.md`, the dust in its own layer and round each
+ring. Those entries are not edited (a decision is corrected by a later one); where they say "S50" read "the side
+track". **S50 is what `BRIEF.md` planned: the star-first mode**, built on `session-50` continued from the side
+track's tip, since it builds on that work. Written before any code moved (D113).
+
+**(1) The scale (the brief's ruling, made here).** A point's light in display channel k is its published
+`response_k` over the white point's — the same division the field's cells get — as a flux, spread over its sprite so
+that **the sprite's pixels sum to response_k / white_k over the area of sky one pixel covers at the point**, Ω D²
+in pc² (the pixel's solid angle times the squared distance: the pixel's side at the point's depth, squared, times
+the cosine of the point's angle off the view's axis), times the field's own gain (`LIGHT_PER_LSUN_PC2`, the field
+gain, the exposure's stops). That is the unit the march integrates — light per pc² across the line of sight — so a
+point sits on the field's surface-brightness scale: lost in the glow when a pixel covers thousands of pc², emerging
+as the view closes in. The sprite is the instrument's and deposits a unit sum: each channel's pattern over its own
+mean across the sprite's square. The point gain and the sprite size stay display multipliers (D199).
+**(2) One exposure.** The old mode's exposure to its hundredth-brightest star goes: field and points take the
+slider's stops alone. The consequence is the physics and is stated on the panel: at the whole galaxy a single star
+is far under the glow (the 3 162nd brightest, 34 000 L☉, in a pixel of 45 pc is 17 L☉/pc² spread over its sprite,
+under a disc of tens to hundreds), and the clusters are what stand out.
+**(3) What is drawn**, for the view's frustum: the N brightest disc stars (`/api/bright`, with `filters=`), every
+cluster of the census with its `response` (`/api/clusters`: the young population, which the bright catalogue does
+not hold), and under them the field at `/api/render?l_min=` **with `l_min` read from the bright header's
+`threshold`**, never computed by the viewer (D5) — `stars_unresolved` in place of `stars`, the bulge, the gas and
+the dust as the field draws them. With the star points switched off the volume is the whole `stars`: the total.
+**(4) The mode replaces "brightest"** and keeps its Components switches; **stars, starlight, ionized gas and dust
+are on by default** (the star-first picture is all four), dust "as it acts"; the cloud markers and cell outlines
+stay off. A setting the owner stored keeps its stored value.
+**(5) The dust in front of each point (T20).** A point is dimmed per channel by the dust between it and the
+camera: the ring's published depth times its placement, through the dust's own layer, summed along the segment in
+steps that each take the layer's exact column (D206's `column`), read from the textures the march reads. Only
+while the dust is drawn "as it acts".
+**(6) Picking (T23).** A bright star is named by (cell, rank) and has no planetary system yet (T27): a click opens
+its published columns — luminosity, temperature, phase, age, mass, the eight magnitudes — and a cluster's opens
+its own. Opening a system stays the field mode's.
+**(7) Not in this row, and said so:** the image-level test (T12) needs a headless browser this machine does not
+have (`tests/test_viewer.py` skips for the same reason); clusters resolved into their own stars (T24), bulge stars
+(T25), the faint end (T26), one star list (T27).
+
+**The gate (the brief's, made measurable).** *The closure on screen*: at fixed cameras, with the gas and the dust
+switched off, the frame's summed linear light before bloom and tone mapping in the star-first mode (the remainder +
+the cluster points + the bright points) against the same frame with the points off (the whole `stars`): equal to
+within the sprites' sampling and the response's stated departure (5 × 10⁻⁶ through rgb). Predicted to hold within
+2 % at the whole galaxy, where every cluster and every star above the threshold is inside the frame; a larger gap
+means the scale in (1) is wrong by a factor, and it will show as one. Also: vitest, `tsc -b`, `vite build`; the
+dust's segment against a quadrature; frames under `docs/design/screenshots/s50/`.
+
+**Applied (2026-10-03, the session itself, Opus 5.5; no builder).** *The loaders:* `transport.js` gains `bright`
+(the one fetch unchanged); `api.ts` `loadBright` (n, view, the set's curves, the white point, f4), `loadClusters`
+with the set's light, `loadRender` with `l_min`; the old `loadBrightest` is gone with its caller. *The scale*
+(`flux.ts`, pure and tested): `fluxOf` (response over white), `pixelArea` (Ω D², the pixel's side at the point's
+depth squared times depth over distance), `spriteLight` (flux × gain over area and over the sprite's pixels times
+its pattern's mean, so the sprite sums to flux × gain / area); `psf.ts` knows each sprite's mean (the default's
+from its own profile as its 8-bit texture holds it, an instrument's from its float texture). *The points*
+(`FluxPoints.tsx`): a `ShaderMaterial` that evaluates the scale per vertex at the camera's own distance, additive;
+the bright stars and the 12 860 clusters are two such layers, picked by the view's own picker and drawn by neither
+of its sprites. *The field* (`FieldVolume`): `lMin` asks the render for the remainder and draws `stars_unresolved`
+in place of `stars`; a frame that predates the threshold draws the whole meanwhile. *The dust in front of each
+point* (T20): `flux.ts dustToPoint`, mirrored line for line in the vertex shader — the segment from the point to
+the camera, cut at sixteen of the tallest layer's heights and at the disc's radius, 48 equal steps each taking the
+layer's exact column at the depth, placement and height read at its middle, from the march's own two textures
+(handed up by `FieldVolume`, `onDust`); only while the dust is drawn as it acts. *Picking* (T23, `summary.ts`): the
+object's declared columns under their declared labels and units; nothing is labelled by the viewer (A9). *The
+mode:* "star-first" replaces "brightest"; the defaults are the picture's four; the column-painting chips and their
+legend are the field mode's and are not shown here (a point is light on a scale, not a painted dot).
+
+**The gate, read.** *The closure on screen*, measured with an instrument built for it (B1): `GalaxyView`'s
+`FrameProbe` puts `window.__galaxygenFrameSum()` on the page, which draws one fresh frame, renders the scene into a
+float target at the drawing buffer's size and adds its pixels up, before bloom and tone mapping. At the default
+galaxy, face-on at 43.6 kpc across on a 1920 × 1016 buffer, the rgb set, gas and dust off:
+the whole starlight with the points off **121 237 / 107 314 / 97 416**; the remainder with the 3 162 stars and
+12 860 clusters **121 180 / 107 280 / 97 470** — ratios **0.99953 / 0.99969 / 1.00055**, inside the predicted 2 %
+by a factor of forty; the points alone 6 640 / 7 655 / 11 540, that is 5.5 %, 7.1 % and 11.8 % of the frame, blue
+most, as the young population should be. Model-side the same split reads 0.9990 / 0.9991 / 1.0000 over the whole
+disc (remainder 0.932 / 0.914 / 0.866 of the stars, clusters 0.065 / 0.084 / 0.133, bright stars 0.002 / 0.0014 /
+0.0010). **The first reading was wrong and is recorded:** 0.73 / 0.71 / 0.71, taken before the probe drew its own
+frame — an idle pane draws none, and the sum was of a frame from before the dust was switched off. The instrument
+was fixed, not the number. *The dust's segment* against a 200 000-point quadrature of the same integral: exact for
+a face-on star (half the ring's depth in the midplane, all of it behind the layer, 10⁻⁹ in front), within 1 % at
+45°, 2 % steeply inclined, 6 % near edge-on through the centre, where 48 steps are coarse and the disc is opaque
+either way. vitest **181** (167), `tsc -b` and `vite build` clean. Frames (the dev viewer's pane, 800 × 475):
+`docs/design/screenshots/s50/star-first-face-on.jpg`, `-oblique.jpg`, `-edge-on.jpg`, and
+`whole-starlight-points-off.jpg`. No Python changed, so the suite of D207 stands (`EXIT=0`).
+
+**What the picture is, said plainly.** At the whole galaxy the clusters are the knots along the arms and a single
+bright star is a faint dot — on a black sky it shows, over the disc it is lost, as ruled. Seen from inside the
+plane at close range, edge-on, the frame is black: the camera sits in the dust. The old mode's "every star you see
+is in the top N of a 10⁻⁵ sample, exposed to itself" is gone, and with it the look of a field of bright stars at
+any zoom; the stars-alone look is the starlight switch off and the exposure raised.
+
+**Left open, each a task and not hidden.** (i) **T12, the image-level test**, is not built: this machine has no
+headless browser. (ii) **Every new threshold asks the field again**: the bright header's `l_min` moves with the
+view, and each value is a 9 MB render of which only `stars_unresolved` differs — about a second warm and a rebuilt
+volume per settled view; a remainder-only request (the route returning one component) would cut it, and is a
+model-side change (**T28**, new). (iii) A bright star opens no planetary system (T27); the field mode still does.
+(iv) Clusters stay points with no extent (T6) and no stars of their own (T24); the bulge stays glow (T25).
+(v) `colors.ts exposureFor` (the old auto-exposure) is kept, unused, against the owner wanting it back as a toggle.
+(vi) The close (board row 50, LESSONS, RESUMING and BRIEF rewritten, merge, tag `s50`, `verify_clone`) is not done.
+
+### D209. S50: clicking a star to open its planetary system removed from the viewer, on the owner's word
+
+**The owner, in chat, on 2026-10-03:** "remove the clicking star to open star system design entirely. we'll think
+of another way to show that system information later." **Removed from the React viewer:** the field mode's star
+picking (the sample's and a region's stars are drawn, not picked), the `SystemView` overlay and its rail
+(`frontend/src/system/`, with `rail.test.ts`'s five tests), `App`'s open-system state, `GalaxyTab`'s `onOpen`,
+`api.ts`'s `loadSystem`, `SystemFrame` and `StarName`, the `.openSystem` style, and every caption that offered it
+("Click one to open its system", "Systems become openable", "Stars and their systems open in the Galaxy tab").
+**Kept, because the other way will need them and nothing in the viewer reaches them now:** the model's planets
+stage, `/api/system` and `transport.js`'s `system`, and the reference client in `interface/`, which is the API's
+own demonstration of the staged flow and is pinned by `tests/test_viewer.py` (rule D1's note). **Also kept:** the
+star-first mode's click on a bright star or a cluster, which opens the object's published columns and no system
+(D208 (6)). T27's "any drawn star can be picked and its system opened" is withdrawn with it; how a system's
+information is shown is the owner's to decide. vitest 176 (181, less `rail.test.ts`'s five), `tsc -b` clean.
+
+**S50's close (2026-10-03).** The owner, after D209: "yes, merge them into main", then "don't run tests, i want to
+continue onto the next session". So the close is the records, the merge, the tag and the push, **without the full
+suite and without `verify_clone`**: the last full suite (`EXIT=0`) ran on D207's code, and S50 proper (D208, D209)
+changed no Python — `interface/transport.js` gained one export, the rest is the React viewer (vitest 176, `tsc -b`
+and `vite build` clean). The next session runs `bootstrap.py` and the suite first. `sidetrack-session-1` is pushed
+as the side track's own name; it is contained in `session-50` and so in `main`.

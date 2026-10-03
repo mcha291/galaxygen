@@ -6,6 +6,7 @@ import {
   AdditiveBlending,
   AgXToneMapping,
   Color,
+  FloatType,
   LinearToneMapping,
   Matrix4,
   NormalBlending,
@@ -13,6 +14,7 @@ import {
   ReinhardToneMapping,
   type ToneMapping as ThreeToneMapping,
   Vector2,
+  WebGLRenderTarget,
 } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
@@ -52,6 +54,8 @@ export interface StarLayer {
 interface Props {
   /** The star layers: the whole-galaxy sample and, close up, a region's own stars. */
   layers?: StarLayer[];
+  /** Points drawn by a child on its own terms (the star-first mode's, D208) and only picked here. */
+  pickable?: StarLayer[];
   /** Framing radius in kpc; without one the first layer's stars set it. */
   reach?: number;
   /** Extra layers drawn in the galaxy's frame (the field, a disc image). */
@@ -86,7 +90,7 @@ const FOV = 45;
  * The galaxy in 3D: drag to orbit, wheel to zoom towards the cursor, right-drag to pan.
  * It composites whatever it is given: the field as a child, star layers on top.
  */
-export function GalaxyView({ layers = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null, tuning = TUNING_DEFAULTS }: Props) {
+export function GalaxyView({ layers = [], pickable = [], reach: framing, children, preset, zoom, onView, hdr = false, additive = false, psf = null, tuning = TUNING_DEFAULTS }: Props) {
   const first = layers[0]?.positions;
   const reach = useMemo(() => framing || (first ? extent(first) : 0) || 20, [first, framing]);
   const range = useMemo<ZoomRange>(() => ({ min: reach / 200, max: reach * 8 }), [reach]);
@@ -104,7 +108,8 @@ export function GalaxyView({ layers = [], reach: framing, children, preset, zoom
           <Stars key={i} layer={layer} additive={additive} psf={psf} spriteSize={tuning.spriteSize} />
         ))}
         {hdr && <HdrOutput tuning={tuning} />}
-        <Picker layers={layers} />
+        <Picker layers={pickable.length > 0 ? [...layers, ...pickable] : layers} />
+        <FrameProbe />
         <OrbitControls makeDefault enableDamping dampingFactor={0.12} zoomToCursor minDistance={range.min} maxDistance={range.max} />
         <ZoomBridge range={range} zoom={zoom} onView={onView} />
       </Canvas>
@@ -226,6 +231,51 @@ function HdrOutput({ tuning }: { tuning: ViewTuning }) {
   }, [gl, composer, toneMapping]);
   // A positive priority takes the render over from react-three-fiber.
   useFrame(() => composer.render(), 1);
+  return null;
+}
+
+/**
+ * An instrument for the star-first mode's gate (D208, rule B1): the frame's summed linear light per channel,
+ * before bloom and tone mapping. `window.__galaxygenFrameSum()` draws the scene once into a float target at the
+ * drawing buffer's size and adds its pixels up, so two component settings at one camera can be compared as light
+ * (the points and the field's remainder against the whole field). It changes nothing that is drawn.
+ */
+function FrameProbe() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const advance = useThree((s) => s.advance);
+  useEffect(() => {
+    const holder = window as unknown as Record<string, unknown>;
+    const probe = () => {
+      // One frame first, so the march and the points' uniforms are this moment's: a hidden or throttled tab
+      // draws no frames on its own, and the probe would add up a frame from before the last change.
+      advance(performance.now());
+      const size = gl.getDrawingBufferSize(new Vector2());
+      const target = new WebGLRenderTarget(size.x, size.y, { type: FloatType, depthBuffer: false });
+      const before = gl.getRenderTarget();
+      const clear = gl.getClearColor(new Color());
+      const alpha = gl.getClearAlpha();
+      gl.setRenderTarget(target);
+      gl.setClearColor(0x000000, 1);
+      gl.clear();
+      gl.render(scene, camera);
+      const pixels = new Float32Array(size.x * size.y * 4);
+      gl.readRenderTargetPixels(target, 0, 0, size.x, size.y, pixels);
+      gl.setRenderTarget(before);
+      gl.setClearColor(clear, alpha);
+      target.dispose();
+      const sum = [0, 0, 0];
+      for (let p = 0; p < pixels.length; p += 4) {
+        for (let k = 0; k < 3; k += 1) sum[k] += pixels[p + k];
+      }
+      return { sum, width: size.x, height: size.y };
+    };
+    holder.__galaxygenFrameSum = probe;
+    return () => {
+      if (holder.__galaxygenFrameSum === probe) delete holder.__galaxygenFrameSum;
+    };
+  }, [gl, scene, camera, advance]);
   return null;
 }
 

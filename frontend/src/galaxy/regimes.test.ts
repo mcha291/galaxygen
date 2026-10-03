@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DUST_CUTS,
   MARCH_SCALE_HEIGHTS,
   RING_ROWS,
   SUB_SAMPLES_MAX,
   balanced,
+  composeStep,
   depthOf,
+  layerColumn,
   layerShare,
   marchHalfHeight,
   phaseAt,
@@ -97,7 +100,9 @@ describe("planeTexture", () => {
 
   it("draws the components it is not given as nothing", () => {
     const bare = planeTexture({ R, phi, stars, white });
-    expect(bare.hii.every((v) => v === 0) && bare.scatter.every((v) => v === 0) && bare.rings.every((v) => v === 0)).toBe(true);
+    expect(bare.hii.every((v) => v === 0) && bare.rings.every((v) => v === 0)).toBe(true);
+    // The scattered light is nothing; its spare channel is the dust's placement, an even ring (1) when none is given.
+    expect(bare.scatter.every((v, n) => v === (n % 4 === 3 ? 1 : 0))).toBe(true);
   });
 });
 
@@ -192,6 +197,151 @@ describe("the march's sub-samples along a step (D197)", () => {
         }
       }
     }
+  });
+});
+
+describe("the dust in its own layer (D206)", () => {
+  it("holds each ring's height in the thermal row's spare channel, and no height where there is none", () => {
+    const heights = Float64Array.from({ length: R.n }, (_, i) => 0.02 + 0.01 * i);
+    heights[7] = Number.NaN;
+    heights[8] = -1;
+    const flared = planeTexture({ R, phi, stars, extinction, thermal, dustHeight: heights, white });
+    const at = (t: typeof flared, i: number) => t.rings[(RING_ROWS.thermal * R.n + i) * 4 + 3];
+    for (const i of [0, 6, 20, 39]) expect(at(flared, i)).toBe(Math.fround(heights[i]));
+    expect(at(flared, 7)).toBe(0); // a missing number is no layer, never a guess (B9)
+    expect(at(flared, 8)).toBe(0);
+    const flat = planeTexture({ R, phi, stars, extinction, dustHeight: 0.36, white });
+    for (const i of [0, 39]) expect(at(flat, i)).toBe(Math.fround(0.36)); // a render that names one height
+    for (let i = 0; i < R.n; i += 1) expect(at(texture, i)).toBe(0); // none given: the dust is drawn nowhere
+    // The other rows' light and the depth row are untouched by it.
+    expect(flared.rings[(RING_ROWS.thermal * R.n + 20) * 4]).toBe(texture.rings[(RING_ROWS.thermal * R.n + 20) * 4]);
+    expect(flared.rings[(RING_ROWS.depth * R.n + 20) * 4 + 3]).toBe(0);
+  });
+
+  it("does not size the march's box by a per-ring layer", () => {
+    expect(marchHalfHeight({ stars: 0.36, dust: "dust_height", halpha_hii: 0.18, halpha_dig: 1.4 }, 0.5)).toBeCloseTo(22.4, 12);
+    expect(marchHalfHeight({ stars: 0.36, dust: "dust_height" }, 0.1)).toBeCloseTo(5.76, 12);
+  });
+
+  it("takes a layer's column as the shader does: exact along a slope, the density times the path when level", () => {
+    expect(layerColumn(-50, 50, 0.1, 100)).toBeCloseTo(1, 8); // face-on: the whole column (tanh is clamped at ±10)
+    expect(layerColumn(-50, 50, 0.1, 200)).toBeCloseTo(2, 7); // at cos i = 0.5: twice it
+    expect(layerColumn(0.05, 0.05, 0.1, 3)).toBeCloseTo((3 / 0.4) / Math.cosh(0.25) ** 2, 12);
+    expect(layerColumn(-1, 1, 0, 2)).toBe(0);
+    expect(layerColumn(-1, 1, Number.NaN, 2)).toBe(0);
+  });
+
+  // The two layers integrated along a ray by brute force: starlight of unit face-on column in a sech² layer
+  // hStars, dimmed by the dust in front of it, of face-on depth tau in a sech² layer hDust.
+  const sech2 = (x: number) => 1 / Math.cosh(Math.min(30, Math.max(-30, x))) ** 2;
+  const density = (y: number, h: number) => sech2(y / (2 * h)) / (4 * h);
+  const quadrature = (y0: number, y1: number, path: number, hStars: number, hDust: number, tau: number, n = 200_000) => {
+    let light = 0;
+    let depth = 0;
+    const dt = path / n;
+    for (let k = 0; k < n; k += 1) {
+      const y = y0 + ((y1 - y0) * (k + 0.5)) / n;
+      const d = tau * density(y, hDust) * dt;
+      light += density(y, hStars) * dt * Math.exp(-(depth + 0.5 * d));
+      depth += d;
+    }
+    return light;
+  };
+  const marched = (y0: number, y1: number, path: number, hStars: number, hDust: number, tau: number, edges: number[]) => {
+    let light = 0;
+    let transmitted = 1;
+    for (let k = 0; k + 1 < edges.length; k += 1) {
+      const step = composeStep(y0 + (y1 - y0) * edges[k], y0 + (y1 - y0) * edges[k + 1], path * (edges[k + 1] - edges[k]), hStars, hDust, tau);
+      light += transmitted * step.light;
+      transmitted *= step.transmitted;
+    }
+    return { light, transmitted };
+  };
+  // The default galaxy's rings (the dust layer's height, kpc, and its V depth) from the centre to 15 kpc, measured
+  // at S50, under the thin disc's 0.3557 kpc; and one ring whose dust shares the stars' height.
+  const H_STARS = 0.3557;
+  const RINGS: [number, number][] = [[0.0213, 47.9], [0.0257, 21.4], [0.0312, 9.04], [0.0469, 2.49], [0.0702, 1.08], [0.1131, 0.472], [0.1735, 0.222], [0.438, 0.025]];
+  // How a ray's crossing of the disc may be stepped: whole, split just off the midplane, unevenly, and evenly.
+  const STEPPINGS = [[0, 1], [0, 0.4983, 1], [0, 0.5021, 1], [0, 0.31, 0.493, 0.5003, 0.52, 1], Array.from({ length: 25 }, (_, k) => k / 24)];
+
+  it("composes a step in order: within 1 % of the unattenuated light of the two layers' own integral, however stepped", () => {
+    let worst = 0;
+    for (const [hDust, tau] of RINGS) {
+      for (const cosView of [1, 0.5, 0.1]) {
+        for (const from of [6, -6]) {
+          const path = 12 / cosView;
+          const want = quadrature(from, -from, path, H_STARS, hDust, tau) * cosView;
+          for (const edges of STEPPINGS) {
+            const got = marched(from, -from, path, H_STARS, hDust, tau, edges);
+            worst = Math.max(worst, Math.abs(got.light * cosView - want));
+            expect(got.transmitted).toBeCloseTo(Math.exp(-tau * layerColumn(from, -from, hDust, path)), 9); // the dust's own column, however cut
+          }
+        }
+      }
+    }
+    expect(worst).toBeLessThan(0.01);
+    expect(worst).toBeGreaterThan(0.004); // 0.0058 as measured, at the innermost ring seen at cos i = 0.1
+  });
+
+  it("shows the near side of a thick ring, where one mixed slab showed 1/τ of it", () => {
+    const [hDust, tau] = RINGS[0];
+    const layered = composeStep(6, -6, 12, H_STARS, hDust, tau).light;
+    expect(layered).toBeGreaterThan(0.42); // 0.434 by the integral: nearly the half in front of the layer
+    expect(layered).toBeLessThan(0.5);
+    expect((1 - Math.exp(-tau)) / tau).toBeLessThan(0.021); // the same ring as one slab
+    // The Sun's ring barely moves: 0.805 layered against 0.796 mixed (D206's prediction, under 5 %).
+    const sun = composeStep(6, -6, 12, H_STARS, 0.1131, 0.472).light;
+    expect(sun).toBeCloseTo(0.805, 2);
+    expect(Math.abs(sun - (1 - Math.exp(-0.472)) / 0.472) / sun).toBeLessThan(0.05);
+  });
+
+  it("is the mixed slab where the dust shares the stars' layer, and the bare column where there is no dust", () => {
+    for (const tau of [0.3, 5]) {
+      for (const edges of STEPPINGS) {
+        expect(marched(6, -6, 12, H_STARS, H_STARS, tau, edges).light).toBeCloseTo((1 - Math.exp(-tau)) / tau, 6);
+      }
+    }
+    expect(composeStep(6, -6, 12, H_STARS, 0, 3)).toEqual({ light: layerColumn(6, -6, H_STARS, 12), transmitted: 1 });
+    expect(composeStep(0.2, 0.2, 2, H_STARS, 0.05, 3).transmitted).toBeCloseTo(Math.exp(-3 * layerColumn(0.2, 0.2, 0.05, 2)), 12); // a level ray: one piece
+  });
+
+  it("cuts symmetrically, far enough out that the dust beyond the last cut is nothing", () => {
+    expect(DUST_CUTS.map((c) => -c).reverse()).toEqual([...DUST_CUTS]);
+    expect([...DUST_CUTS].sort((a, b) => a - b)).toEqual([...DUST_CUTS]);
+    expect(layerShare(DUST_CUTS[DUST_CUTS.length - 1], 1e3, 1)).toBeLessThan(2e-5);
+  });
+});
+
+describe("the dust round each ring (D207)", () => {
+  it("holds the model's placement in the scattered light's spare channel, cell for cell", () => {
+    const placedDust = planeTexture({ R, phi, stars, extinction, scattered, dustPlacement: contrast, white });
+    for (const [i, j] of [[3, 0], [10, 47], [30, 179]]) {
+      const q = (j * R.n + i) * 4;
+      expect(placedDust.scatter[q + 3]).toBe(Math.fround(contrast[i * phi.n + j]));
+      // The scattered light itself is not multiplied again: it is the model's, already placed.
+      for (let k = 0; k < 3; k += 1) expect(placedDust.scatter[q + k]).toBe(texture.scatter[q + k]);
+    }
+  });
+
+  it("keeps every ring's dust: the placement averages to 1 round the ring, and the depth row is the ring's mean", () => {
+    const placedDust = planeTexture({ R, phi, stars, extinction, dustPlacement: contrast, white });
+    for (const i of [0, 10, 39]) {
+      let sum = 0;
+      for (let j = 0; j < phi.n; j += 1) sum += placedDust.scatter[(j * R.n + i) * 4 + 3];
+      expect(sum / phi.n).toBeCloseTo(1, 6);
+      for (let k = 0; k < 3; k += 1) expect(placedDust.rings[(RING_ROWS.depth * R.n + i) * 4 + k]).toBe(ring(RING_ROWS.depth, i, k));
+    }
+  });
+
+  it("draws an even ring where the placement is missing or is not a number", () => {
+    const broken = Float64Array.from(contrast);
+    broken[10 * phi.n + 47] = Number.NaN;
+    broken[30 * phi.n + 179] = -0.2;
+    const placedDust = planeTexture({ R, phi, stars, extinction, dustPlacement: broken, white });
+    expect(placedDust.scatter[(47 * R.n + 10) * 4 + 3]).toBe(1);
+    expect(placedDust.scatter[(179 * R.n + 30) * 4 + 3]).toBe(1);
+    for (const [i, j] of [[3, 0], [10, 47]]) expect(texture.scatter[(j * R.n + i) * 4 + 3]).toBe(1); // none given
+    expect(planeTexture({ R, phi, stars, dustPlacement: null, white }).scatter[3]).toBe(1);
   });
 });
 

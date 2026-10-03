@@ -133,6 +133,52 @@ noise's octaves and the pillar threshold are shapes the vector does not
 constrain; a display budget of 256 objects; the composite is a screen-space
 pass; the stars stay on the level-0 sample.
 
+**Since S50 (D206) the dust has its own layer.** Until then the render put the
+dust at the stars' one scale height, because the dust stage heats it as a slab
+mixed with them, and an edge-on frame showed no lane (#109). The ism stage now
+publishes `gas_scale_height` per ring — the gas's column over four times its
+midplane density, the h of the one layer form, missing past the stellar disc's
+edge — and `/api/render` returns it as the dust's (`layers.dust` names the
+array `dust_height`, kpc): 21 pc at the centre, 113 pc at R₀ against the thin
+disc's 356, passing the stars' height near 13 kpc `[verified:
+model/galaxy/stages/ism.py; tests/test_dust_layer.py]`. The viewer reads the
+height ring by ring and cuts every sub-step that crosses the layer at fixed
+multiples of the dust's height, composing the pieces front to back, so the
+stars in front of the dust are not dimmed by it: within 0.6 % of the two
+layers' own integral from face-on to cos i = 0.1 `[verified:
+frontend/src/galaxy/regimes.ts, composeStep; regimes.test.ts]`. An inclined
+disc shows a dark lane inside the stellar light, and a face-on ring far thicker
+than τ = 1 shows about half its light where the mixed slab showed 1/τ.
+**Stated, not hidden (#128):** the energy budget is still the mixed slab's —
+the dust's heating, its scattered share and the frame's balance are computed
+as before — so the picture's geometry and the budget's now differ; the layered
+geometry would absorb 0.77 of what the slab does.
+
+**Since S50 (D207) the dust is placed round each ring.** `/api/render` returns
+`dust_placement` (R, φ), the pattern's density contrast — the gas the dust is a
+share of is taken to follow it, as the azimuthal star formation already reads
+it — and the viewer multiplies the ring's depth and thermal light by it; the
+scattered light is already a share of the placed stars. Every ring keeps its
+dust. Because the stars follow the same factor the arms are muted and reddened
+by their own dust rather than crossed by lanes: at R₀ an arm lets through 0.747
+of its light and a gap 0.874, and a ring's face-on V light falls by 1.3 %
+`[verified: tests/test_dust_layer.py]`. A lane needs a gas pattern distinct
+from the stars', which the model does not publish (`RESEARCH_AREAS.md` §1).
+
+**Since S50 (D208) the points are on the field's scale.** The star-first mode
+draws the N brightest disc stars in view and every cluster as points of their
+own published light through the filter set (`response`, over the white point),
+each sprite summing to that light over the area of sky one pixel covers at the
+point — the unit the march integrates — over the render's remainder
+(`stars_unresolved`, at the bright header's own threshold), with one exposure
+for both; the dust between a point and the camera dims it per channel from the
+march's own textures. This is §7's no-double-counting made visible: the frame's
+summed light with the points on equals the whole starlight's with them off to
+0.9995 / 0.9997 / 1.0006 through rgb `[verified: DECISIONS.md D208, measured
+on screen; frontend/src/galaxy/flux.test.ts for the scale and the dust's
+segment]`. #114 (points painted as blackbodies) and #115 (the young population
+drawn twice) no longer apply in this mode; they remain the field mode's.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are

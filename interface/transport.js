@@ -183,3 +183,8 @@ export const clusters = (window = {}, params = {}, options) =>
   frame("/api/clusters", { ...params, ...window }, options);
 export const remnants = (window = {}, params = {}, options) =>
   frame("/api/remnants", { ...params, ...window }, options);
+
+/** The bright-end-complete star catalogue of one window (S48): the n brightest inside a view's frustum, or every
+ * star above l_min. `filters` (a JSON string of curves, as /api/render takes them) adds each star's response. */
+export const bright = (window = {}, params = {}, options) =>
+  frame("/api/bright", { ...params, ...window }, options);

@@ -31,6 +31,8 @@ export const STAR_SPRITE_PX = 9;
 
 export type ToneMapping = "agx" | "aces" | "reinhard" | "linear";
 export type Filtering = "linear" | "nearest";
+/** The dust's two readings in the brightest mode's components (D205): the physical one and the diagnostic. */
+export type DustReading = "acts" | "where";
 
 export interface Tuning {
   /** The march target's largest share of the drawing buffer on a side. */
@@ -59,6 +61,25 @@ export interface Tuning {
   spriteSize: number;
   /** A multiplier on the points' light: REFERENCE_LUMINOSITY is divided by it. */
   pointGain: number;
+  // The star-first mode's component layers (D205, D208): the picture's four on by default (the stars, the
+  // starlight, the ionized gas and the dust as it acts), the two diagnostics off.
+  /** The mode's own picture, the N brightest stars in view as points: on by default, switched off to see a layer alone. */
+  compPoints: boolean;
+  /** The field's stellar layer and the bulge, as a volume. */
+  compStars: boolean;
+  /** The HII layer and the diffuse layer, with their lines. */
+  compGas: boolean;
+  /** The dust, in the reading `dustReading` names. */
+  compDust: boolean;
+  dustReading: DustReading;
+  /** The cloud census as markers. */
+  compClouds: boolean;
+  /** The level-0 cells' edges. */
+  compCells: boolean;
+  starsIntensity: number;
+  gasIntensity: number;
+  dustIntensity: number;
+  cloudIntensity: number;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -77,6 +98,17 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   toneMapping: "agx",
   spriteSize: STAR_SPRITE_PX,
   pointGain: 1,
+  compPoints: true,
+  compStars: true,
+  compGas: true,
+  compDust: true,
+  dustReading: "acts",
+  compClouds: false,
+  compCells: false,
+  starsIntensity: 1,
+  gasIntensity: 1,
+  dustIntensity: 1,
+  cloudIntensity: 1,
 });
 
 export type TuningKey = keyof Tuning;
@@ -84,7 +116,9 @@ export type TuningKey = keyof Tuning;
 interface Base {
   key: TuningKey;
   label: string;
-  group: "March" | "Light" | "Bloom and tone" | "Points";
+  group: "March" | "Light" | "Bloom and tone" | "Points" | "Components";
+  /** Switched in the brightest mode's Components section, not in the Tuning panel. */
+  switch?: boolean;
   /** What it does, one line, and that it is a display choice. */
   about: string;
 }
@@ -176,6 +210,51 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "pointGain", label: "point gain", group: "Points", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Divides the points' 100 L☉ reference luminosity: brighter or fainter stars against the field. A display choice.",
+  },
+  {
+    key: "compPoints", label: "stars", group: "Components", kind: "toggle", switch: true,
+    about: "The brightest mode's own picture: the N most luminous stars in view, as points. A display choice of what is drawn.",
+  },
+  {
+    key: "compStars", label: "starlight", group: "Components", kind: "toggle", switch: true,
+    about: "The brightest mode's starlight volume: the field's stellar layer and the bulge (D205). A display choice of what is drawn.",
+  },
+  {
+    key: "compGas", label: "ionized gas", group: "Components", kind: "toggle", switch: true,
+    about: "The HII layer and the diffuse layer with their lines, as the field draws them (D205). A display choice of what is drawn.",
+  },
+  {
+    key: "compDust", label: "dust", group: "Components", kind: "toggle", switch: true,
+    about: "The dust, as it acts or where it is (D205). A display choice of what is drawn.",
+  },
+  {
+    key: "dustReading", label: "dust reading", group: "Components", kind: "select", switch: true,
+    options: [{ value: "acts", label: "as it acts" }, { value: "where", label: "where it is" }],
+    about: "As it acts: extinction, scattered and thermal light. Where it is: a diagnostic, its optical depth drawn as light. A display choice.",
+  },
+  {
+    key: "compClouds", label: "molecular clouds", group: "Components", kind: "toggle", switch: true,
+    about: "The cloud census as markers, sized by cloud_size, painted by cloud_mass's ramp: a diagnostic display.",
+  },
+  {
+    key: "compCells", label: "cell outlines", group: "Components", kind: "toggle", switch: true,
+    about: "The level-0 cells' edges, 32 rings by 32 sectors: a diagnostic display.",
+  },
+  {
+    key: "starsIntensity", label: "starlight intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
+    about: "Multiplies the starlight volume, on the field's gain and the slider's stops. A display balance.",
+  },
+  {
+    key: "gasIntensity", label: "ionized gas intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
+    about: "Multiplies the ionized gas's light, on the field's gain and the slider's stops. A display balance.",
+  },
+  {
+    key: "dustIntensity", label: "dust intensity", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
+    about: "Multiplies the dust's own light (as it acts) or its drawn depth (where it is); never its extinction. A display balance.",
+  },
+  {
+    key: "cloudIntensity", label: "cloud marker brightness", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
+    about: "Multiplies the cloud markers' ramp colour. A display balance.",
   },
 ];
 

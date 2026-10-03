@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { fieldFragment } from "./FieldVolume";
-import before from "./fieldFragment.s46.glsl?raw";
+import pinned from "./fieldFragment.d207.glsl?raw";
 import { WHITE_KELVIN } from "./filters";
-import { CLOSE_FIELD_FLOOR, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
+import { CLOSE_FIELD_FLOOR, DUST_CUTS, REGIME_KPC, SUB_SAMPLES_MAX, regimeWeights } from "./regimes";
 import {
   BLOOM,
   MAX_RESOLUTION,
@@ -56,6 +56,17 @@ describe("tuning defaults (D199)", () => {
       toneMapping: "agx",
       spriteSize: STAR_SPRITE_PX,
       pointGain: 1,
+      compPoints: true,
+      compStars: true,
+      compGas: true,
+      compDust: true,
+      dustReading: "acts",
+      compClouds: false,
+      compCells: false,
+      starsIntensity: 1,
+      gasIntensity: 1,
+      dustIntensity: 1,
+      cloudIntensity: 1,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -72,17 +83,30 @@ describe("tuning defaults (D199)", () => {
     }
   });
 
-  it("leave the march's fragment shader as it was but for the two new uniforms", () => {
-    // The snapshot is FieldVolume's FRAGMENT taken from session-46's tip before this change. With the
-    // defaults the source differs only where the uniforms enter: their declarations, the sub-sample
-    // clamp's bound (8.0 then, subMax = 8 now) and the dither's switch (dither = 1 takes the same hash).
+  it("leave the march's fragment shader the one D206 and D207 ruled, with the default steps", () => {
+    // The snapshot is FieldVolume's fragment as D206 and D207 (S50) left it (D207 added the dust's placement). Until then this test undid S47's and
+    // S50's declared uniforms one replacement at a time and compared the rest with session-46's source, which
+    // proved those two rows changed no picture. D206 changes the march on purpose (the dust in its own layer,
+    // each sub-step composed in order), so the comparison ends there and the source is pinned whole: a change
+    // to the march is a change to this file, made knowingly. The panel's values are uniforms, not source.
     const now = fieldFragment();
     expect(fieldFragment(STEPS)).toBe(now);
-    const undone = now
-      .replace(/\n {2}\/\/ The most sub-samples[^\n]*\n {2}uniform float subMax;\n {2}\/\/ 1 offsets[^\n]*\n {2}uniform float dither;/, "")
-      .replace("1.0, subMax));", `1.0, ${SUB_SAMPLES_MAX}.0));`)
-      .replace(/dither > 0\.5 \? (fract\(sin\(dot\(gl_FragCoord\.xy, vec2\(12\.9898, 78\.233\)\)\) \* 43758\.5453\)) : 0\.5;/, "$1;");
-    expect(undone).toBe(before);
+    expect(now.replace(/\r\n/g, "\n")).toBe(pinned.replace(/\r\n/g, "\n"));
+    // What the tuning panel and the component switches reach are uniforms, and at the field's defaults each is
+    // the identity: the sub-samples' cap, the dither, the layers' multipliers and the dust's depth switch.
+    for (const name of ["subMax", "dither", "starsGain", "gasGain", "dustGain", "dustDepth", "dustWhere"]) {
+      expect(now).toContain(`uniform float ${name};`);
+    }
+    expect(now).toContain(`1.0, subMax));`);
+    expect(SUB_SAMPLES_MAX).toBe(8);
+    // D206: the dust's height is read per ring, never a uniform, and the cuts are regimes.ts's.
+    expect(now).not.toContain("uniform float dustHeight");
+    expect(now).toContain(`for (int m = 0; m <= ${DUST_CUTS.length}; m++)`);
+    DUST_CUTS.forEach((c) => expect(now).toContain(`return ${c.toFixed(2)};`));
+    // D207: the dust's placement multiplies its depth, its thermal light and the diagnostic, not the scattered light.
+    expect(now).toContain("float place = scattered.a;");
+    expect(now).toMatch(/tau = readRing\(rp\.x, \d\.0\) \* place \* dustDepth;/);
+    expect(now).toMatch(/\(scattered\.rgb \* scattering \+ readRing\(rp\.x, \d\.0\) \* place\) \* dustGain \+ dustWhere \* level \* whereTint\(level\) \* place;/);
     expect(fieldFragment(128)).toContain("k < 128; k++");
     expect(fieldFragment(128)).toContain("1.0 / float(128)");
   });
@@ -145,6 +169,30 @@ describe("tuning storage", () => {
   it("changed is empty at the defaults", () => {
     expect(changed({ ...TUNING_DEFAULTS })).toEqual({});
     expect(changed({ ...TUNING_DEFAULTS, bloomStrength: 0.5 })).toEqual({ bloomStrength: 0.5 });
+  });
+
+  it("has the star-first picture's four on by default and the diagnostics off, nothing stored, and keeps a switched one (D205, D208)", () => {
+    // The picture is the points over the field's remainder, its gas and its dust (D208); until then every layer
+    // was off (D205). The cloud markers and the cell outlines are diagnostics and stay off.
+    for (const key of ["compPoints", "compStars", "compGas", "compDust"] as const) expect(TUNING_DEFAULTS[key]).toBe(true);
+    for (const key of ["compClouds", "compCells"] as const) expect(TUNING_DEFAULTS[key]).toBe(false);
+    expect(changed({ ...TUNING_DEFAULTS, compPoints: false })).toEqual({ compPoints: false });
+    expect(sanitize({ compPoints: false }).compPoints).toBe(false);
+    expect(sanitize({ compPoints: "no" }).compPoints).toBe(true);
+    expect(TUNING_DEFAULTS.dustReading).toBe("acts");
+    for (const key of ["starsIntensity", "gasIntensity", "dustIntensity", "cloudIntensity"] as const) expect(TUNING_DEFAULTS[key]).toBe(1);
+    const s = memory();
+    saveTuning({ ...TUNING_DEFAULTS }, s);
+    expect(s.store.has(TUNING_STORAGE_KEY)).toBe(false);
+    const t = { ...TUNING_DEFAULTS, compDust: false, dustReading: "where" as const, cloudIntensity: 2 };
+    expect(changed(t)).toEqual({ compDust: false, dustReading: "where", cloudIntensity: 2 });
+    saveTuning(t, s);
+    expect(loadTuning(s)).toEqual(t);
+    expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
+    // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
+    const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
+    for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });
 
