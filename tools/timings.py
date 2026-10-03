@@ -37,6 +37,10 @@ ROOT = Path(__file__).resolve().parents[1]
 _RGB = json.dumps(
     json.loads((ROOT / "frontend" / "src" / "galaxy" / "filters.json").read_text(encoding="utf-8"))["sets"]["rgb"]["curves"]
 )
+# The Hubble broadband set, as the viewer sends it for a template that names it (S54): about 20 KB of measured curves.
+_WFC3 = json.dumps(
+    json.loads((ROOT / "frontend" / "src" / "galaxy" / "instruments.json").read_text(encoding="utf-8"))["sets"]["wfc3"]["curves"]
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +59,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("stages", "/api/stages", "", "27 stage declarations (S51)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
+    Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54)"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
     Endpoint("arrays: history", "/api/arrays", "fields=feh_history", "400 x 2000, checkpoint 4"),
     Endpoint("arrays: scalar", "/api/arrays", "fields=stellar_mass_total", "one number"),
@@ -97,6 +102,13 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # S48's wiring: the field's remainder under 10^3 Lsun beside the stars (bright.resolve, four more responses).
     Endpoint("render: unresolved", "/api/render", urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "l_min": 1000}),
              "as the whole rgb render, plus stars_unresolved and the closure"),
+    # The templates (S54, D213): a named galaxy's inputs as the base of a request - a profile, and the render the
+    # viewer asks for when it switches to NGC 4414: its fitted inputs, no merger, the Hubble broadband set.
+    Endpoint("arrays: a template", "/api/arrays", "template=ngc_4414&fields=stellar_surface_density",
+             "400 floats, checkpoint 1, NGC 4414's inputs"),
+    Endpoint("render: ngc_4414", "/api/render",
+             urlencode({"template": "ngc_4414", "filters": _WFC3, "white": 6500, "precision": "f4"}),
+             "the whole render of NGC 4414 through WFC3's three measured curves"),
 )
 
 
