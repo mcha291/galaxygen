@@ -19,7 +19,19 @@ import { fileURLToPath } from "node:url";
 import { type Page, expect, test } from "@playwright/test";
 
 import type { LensCamera } from "../src/galaxy/capture";
-import { CHOOSING_VIEWPORT, DEFAULT_TEMPLATE, GPU_ARGS, MODE_BUTTON, READY, SELECTION_TEXT, STAND_TOLERANCE, TOLERANCE } from "./settings";
+import {
+  CHOOSING_VIEWPORT,
+  DEFAULT_TEMPLATE,
+  GPU_ARGS,
+  INPUT_ROUTES,
+  LAYER_SUM_TOLERANCE,
+  MODE_BUTTON,
+  PHYSICS_ONLY_BUTTON,
+  READY,
+  SELECTION_TEXT,
+  STAND_TOLERANCE,
+  TOLERANCE,
+} from "./settings";
 
 interface Capture {
   name: string;
@@ -28,6 +40,8 @@ interface Capture {
   mode: keyof typeof MODE_BUTTON;
   filters: string;
   viewport: number;
+  /** "off": taken with the viewer's "physics only" switch pressed (S55, invariant I5). Absent or "on": the layer on. */
+  layer?: "on" | "off";
   /** Where the picture is committed, from frontend/: e2e/frames/<name>.png, or public/templates/<template>.png. */
   file: string;
   /** Present while the picture cannot be taken yet; says what it waits on. */
@@ -72,6 +86,7 @@ declare global {
 
 const here = (name: string) => fileURLToPath(new URL(name, import.meta.url));
 const read = <T>(path: string) => JSON.parse(readFileSync(path, "utf-8")) as T;
+type Net = ReturnType<typeof watchApi>;
 type Labels = { sets: Record<string, { label: string }> };
 const CAPTURES = read<{ captures: Capture[] }>(here("./captures.json")).captures;
 // The viewer's filter sets: the stand-ins and the named instruments (src/galaxy/filters.ts FILTER_SETS).
@@ -83,14 +98,26 @@ const FRAMES_ABOUT =
   "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. " +
   "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.";
 
-/** The /api requests of a page: how many are in flight, and when one last began or ended. */
+/** One /api request as it left the page: its route and the `layer` it asked with (null: no such parameter). */
+interface Asked {
+  route: string;
+  layer: string | null;
+}
+
+/**
+ * The /api requests of a page: how many are in flight, when one last began or ended, and each one's route and
+ * `layer` parameter - read from the URL's query, or from the body of a query sent as a POST (transport.js MAX_URL).
+ */
 function watchApi(page: Page) {
-  const net = { inflight: 0, last: Date.now() };
+  const net = { inflight: 0, last: Date.now(), asked: [] as Asked[] };
   const isApi = (url: string) => new URL(url).pathname.startsWith("/api/");
   page.on("request", (r) => {
     if (!isApi(r.url())) return;
     net.inflight += 1;
     net.last = Date.now();
+    const at = new URL(r.url());
+    const params = r.method() === "POST" ? new URLSearchParams(r.postData() ?? "") : at.searchParams;
+    net.asked.push({ route: at.pathname, layer: params.get("layer") });
   });
   const ended = (url: string) => {
     if (!isApi(url)) return;
@@ -168,7 +195,7 @@ const picture = async (page: Page) => {
  * bytes. The star-first mode has first to say its selection has arrived (SELECTION_TEXT): its points are asked for
  * 250 ms after the camera stops, and the field under them is asked for again once their threshold is known.
  */
-async function settle(page: Page, net: { inflight: number; last: number }, mode: Capture["mode"]) {
+async function settle(page: Page, net: Net, mode: Capture["mode"]) {
   const deadline = Date.now() + READY.timeoutMs;
   if (mode === "stars") await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
   let last = "";
@@ -191,6 +218,30 @@ async function settle(page: Page, net: { inflight: number; last: number }, mode:
   }
   throw new Error("two pictures of a still view were never the same bytes");
 }
+
+/**
+ * No /api request in flight, and none begun or ended for READY.quietMs - counted from this call at the earliest,
+ * since what was just pressed asks for its data only when the viewer's debounce (350 ms) has run: a page that was
+ * quiet before the press is not yet quiet after it.
+ */
+async function quiet(page: Page, net: Net) {
+  const from = Date.now();
+  const deadline = from + READY.timeoutMs;
+  while (!(net.inflight === 0 && Date.now() - Math.max(net.last, from) >= READY.quietMs)) {
+    if (Date.now() > deadline) throw new Error(`the page was not quiet in ${READY.timeoutMs} ms: ${net.inflight} requests in flight`);
+    await page.waitForTimeout(READY.probeMs);
+  }
+}
+
+/** Release one of the viewer's toggles, and see that it is. */
+async function release(page: Page, label: string) {
+  const button = page.getByRole("button", { name: label, exact: true });
+  if ((await button.getAttribute("aria-pressed")) === "true") await button.click();
+  await expect(button).toHaveAttribute("aria-pressed", "false");
+}
+
+/** The requests for model data among `asked`: those to a route that takes an input vector. */
+const forModelData = (asked: Asked[]) => asked.filter((a) => INPUT_ROUTES.includes(a.route));
 
 /** WebGL's unmasked renderer, read on the viewer's own canvas. */
 const rendererOf = (page: Page) =>
@@ -253,11 +304,30 @@ for (const capture of CAPTURES) {
       await press(page, filters.label);
     }
     await press(page, MODE_BUTTON[capture.mode], capture.mode === "field" ? MODE_BUTTON.stars : undefined);
+    // The layer's switch (S55, D214: invariant I5), through the real control. What was asked before it is the
+    // landing, with the layer; everything from here on is asked under the switch.
+    const physicsOnly = capture.layer === "off";
+    if (physicsOnly) await quiet(page, net);
+    const before = net.asked.length;
+    if (physicsOnly) await press(page, PHYSICS_ONLY_BUTTON);
     await squareCanvas(page, side);
 
     const shot = await settle(page, net, capture.mode);
     expect([shot.width, shot.height]).toEqual([side, side]);
     await standsAt(page, capture.camera); // and it is still there: nothing moved the camera while the view settled
+
+    // The switch on the wire. Released, no request names the layer at all: the requests are S54's, to the letter.
+    // Pressed, every request for model data made since carries layer=off - and the three the field mode draws
+    // from were all asked again (the star sample, the fields the march reads, the render).
+    if (physicsOnly) {
+      const sinceSwitch = forModelData(net.asked.slice(before));
+      expect(sinceSwitch.filter((a) => a.layer !== "off"), `${capture.name}: requests made under physics only without layer=off`).toEqual([]);
+      expect([...new Set(sinceSwitch.map((a) => a.route))]).toEqual(expect.arrayContaining(["/api/arrays", "/api/region", "/api/render"]));
+      await expect(page.getByText(`· ${PHYSICS_ONLY_BUTTON}`)).toBeVisible(); // the hash line says so, after the hash
+      await expect(page.getByRole("alert")).toHaveCount(0); // and no frame was refused for its layer
+    } else {
+      expect(net.asked.filter((a) => a.layer !== null), `${capture.name}: requests naming the layer with the switch released`).toEqual([]);
+    }
     const renderer = await rendererOf(page);
     const seconds = (Date.now() - started) / 1000;
     const selection = capture.mode === "stars" ? ((await page.getByText(SELECTION_TEXT).textContent())?.match(/[\d,]+ stars: [^.]*\./)?.[0] ?? "") : "";
@@ -288,6 +358,20 @@ for (const capture of CAPTURES) {
       }
       throw error;
     }
+    // What the layer does to the light (S55): the same view with the switch released again, read as light. The
+    // model conserves each ring's totals, so the frame's summed linear light should all but hold; the picture
+    // itself must differ (the arms and the bar are the layer's).
+    if (physicsOnly) {
+      const off = shot.sum.split(",").map(Number);
+      await release(page, PHYSICS_ONLY_BUTTON);
+      const layered = await settle(page, net, capture.mode);
+      const on = layered.sum.split(",").map(Number);
+      const ratio = off.map((v, k) => v / on[k]);
+      console.log(`${capture.name}: frame sum with the layer ${layered.sum}; physics only over it, per channel: ${ratio.map((r) => r.toFixed(5)).join(", ")}`);
+      await testInfo.attach("layer.json", { body: JSON.stringify({ physicsOnly: off, layered: on, ratio }, null, 2), contentType: "application/json" });
+      expect(layered.png.equals(shot.png), "the picture with the layer is the physics-only picture: the switch drew nothing different").toBe(false);
+      for (const r of ratio) expect(Math.abs(r - 1), `the frame's light moved by more than ${LAYER_SUM_TOLERANCE} with the layer off: ${ratio.join(", ")}`).toBeLessThan(LAYER_SUM_TOLERANCE);
+    }
     if (updating) {
       const bytes = readFileSync(path);
       record(capture.name, {
@@ -303,3 +387,47 @@ for (const capture of CAPTURES) {
     }
   });
 }
+
+// The switch on the wire, in every request shape the Galaxy view has (S55, D214: invariant I5; rule B13). The
+// captures above show it for the field mode's three routes; this walks the rest - the star-first mode's bright
+// catalogue, its whole-disc clusters and the cloud census, then a region's stars, clusters, clouds, remnants and
+// render - and holds every request for model data made after the switch was pressed to layer=off. Nothing is
+// compared as a picture here.
+test("physics only on the wire: every request for model data carries layer=off, in both modes and in a region", async ({ page }) => {
+  const net = watchApi(page);
+  await page.setViewportSize(CHOOSING_VIEWPORT);
+  await page.goto("/");
+  await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
+  await quiet(page, net);
+  expect(net.asked.filter((a) => a.layer !== null), "requests naming the layer before the switch was touched").toEqual([]);
+
+  await press(page, PHYSICS_ONLY_BUTTON);
+  const before = net.asked.length;
+  await quiet(page, net);
+  // The star-first mode: the N brightest in view, every cluster, and - a diagnostic layer - the cloud census.
+  await press(page, MODE_BUTTON.stars);
+  await expect(page.getByText(SELECTION_TEXT)).toBeVisible({ timeout: READY.timeoutMs });
+  await press(page, "molecular clouds");
+  await quiet(page, net);
+  // Back in the field mode, down to a region: the zoom's own "stars" regime button.
+  await press(page, MODE_BUTTON.field, MODE_BUTTON.stars);
+  await press(page, "stars");
+  await quiet(page, net);
+
+  const asked = forModelData(net.asked.slice(before));
+  expect(asked.filter((a) => a.layer !== "off"), "requests made under physics only without layer=off").toEqual([]);
+  const routes = [...new Set(asked.map((a) => a.route))].sort();
+  // Every route the viewer asks for model data (/api/system has had no caller since D209).
+  expect(routes).toEqual(INPUT_ROUTES.filter((r) => r !== "/api/system").sort());
+  await expect(page.getByText(`· ${PHYSICS_ONLY_BUTTON}`)).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  console.log(`physics only on the wire: ${asked.length} requests for model data after the switch, all layer=off, over ${routes.join(", ")}`);
+
+  // Released, the same view is asked for again and no request names the layer.
+  const released = net.asked.length;
+  await release(page, PHYSICS_ONLY_BUTTON);
+  await quiet(page, net);
+  const after = forModelData(net.asked.slice(released));
+  expect(after.length).toBeGreaterThan(0);
+  expect(after.filter((a) => a.layer !== null), "requests naming the layer after the switch was released").toEqual([]);
+});

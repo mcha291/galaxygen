@@ -1,5 +1,5 @@
 import { Check, Plus, RotateCcw, X } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Button } from "../ui/Button";
 import { MergerTimeline } from "./MergerTimeline";
@@ -75,7 +75,9 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
         const invalidated = wf.discarded.has(cp.n) && status !== "locked";
         const decls = cp.inputs.map((name) => state.cat.inputs.get(name)!);
         const seedOnly = decls.every((d) => d.kind === "seed");
-        const seed = decls.find((d) => d.kind === "seed");
+        // Every seed of the checkpoint: a reroll there draws them all (flow.seedsAt), and since S55 checkpoint 3
+        // has two, the pattern's and the randomness layer's (`texture_seed`), so the rail names each.
+        const seeds = decls.filter((d) => d.kind === "seed");
         // As in the design, only the checkpoint in hand is expanded; the rest are one row each.
         const open = cp.n === state.current;
         const badge = badgeOf(status, cp.n, invalidated);
@@ -127,8 +129,8 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
               <div className={styles.body}>
                 {seedOnly && status === "editing" && (
                   <p className={styles.seedOnly}>
-                    No scalar controls at this checkpoint. Its output is determined by everything confirmed above plus one
-                    seed, <code>{seed?.name}</code>. A reroll is the only edit there is.
+                    No scalar controls at this checkpoint. Its output is determined by everything confirmed above plus{" "}
+                    {seeds.length > 1 ? "its seeds" : "one seed"}, <SeedNames seeds={seeds} />. A reroll is the only edit there is.
                   </p>
                 )}
 
@@ -143,9 +145,9 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
                     </Button>
                   )}
                   {status === "locked" && <Button onClick={() => requestReopen(cp.n)}>Reopen to edit</Button>}
-                  {status === "editing" && seed && (
+                  {status === "editing" && seeds.length > 0 && (
                     <Button icon={<RotateCcw />} onClick={() => { setAskingReopen(null); setAskingReroll(cp.n); }}>
-                      Reroll seed
+                      {seeds.length > 1 ? "Reroll seeds" : "Reroll seed"}
                     </Button>
                   )}
                 </div>
@@ -163,11 +165,11 @@ export function WorkflowPanel({ wf, tMax = 13.8, className }: { wf: WorkflowApi;
                   </div>
                 )}
 
-                {askingReroll === cp.n && seed && (
+                {askingReroll === cp.n && seeds.length > 0 && (
                   <RerollAsk
                     state={state}
                     cp={cp}
-                    seed={seed}
+                    seeds={seeds}
                     onReroll={() => { setAskingReroll(null); wf.reroll(cp.n); }}
                     onCancel={() => setAskingReroll(null)}
                   />
@@ -187,14 +189,28 @@ function chipTitle(status: string, n: number): string {
   return `Open checkpoint ${n}`;
 }
 
-function RerollAsk({ state, cp, seed, onReroll, onCancel }: {
-  state: FlowState; cp: Checkpoint; seed: InputDecl; onReroll(): void; onCancel(): void;
+/** A checkpoint's seeds by name, each in code: "a", "a and b", "a, b and c". */
+function SeedNames({ seeds }: { seeds: InputDecl[] }) {
+  return (
+    <>
+      {seeds.map((s, i) => (
+        <Fragment key={s.name}>
+          {i > 0 && (i === seeds.length - 1 ? " and " : ", ")}
+          <code>{s.name}</code>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+function RerollAsk({ state, cp, seeds, onReroll, onCancel }: {
+  state: FlowState; cp: Checkpoint; seeds: InputDecl[]; onReroll(): void; onCancel(): void;
 }) {
   const later = rerollCost(state, cp.n);
   return (
     <div className={styles.ask}>
       <p>
-        <code>{seed.name}</code> gets a new value. {later.length > 0
+        <SeedNames seeds={seeds} /> {seeds.length > 1 ? "get new values" : "gets a new value"}. {later.length > 0
           ? `Checkpoint ${cp.n} and ${later.length > 1 ? "checkpoints" : "checkpoint"} ${spanOf(later)} are regenerated; nothing earlier changes.`
           : `Checkpoint ${cp.n} is regenerated; nothing earlier changes.`}
       </p>

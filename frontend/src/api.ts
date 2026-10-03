@@ -1,9 +1,10 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, blackbody, bright, clouds, clusters, fields, get, inputs, region, remnants, render, stages } from "@interface/transport.js";
+import * as wire from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
+import { checkLayer, reportLayerFault } from "./galaxy/layer";
 import type { Axis } from "./preview/axes";
 import type { Checkpoint, InputDecl } from "./workflow/logic";
 import { type Templates, readTemplates } from "./workflow/templates";
@@ -13,6 +14,40 @@ export const STAR_SAMPLE = 20_000;
 
 export type Columns = Record<string, ArrayLike<number | bigint>>;
 export type Query = Record<string, unknown>;
+
+// The JSON routes: declarations and tables that take no input vector, so the layer's switch is not theirs.
+const { blackbody, fields, get, inputs, stages } = wire;
+
+type Options = { signal?: AbortSignal };
+type Answer = { header: unknown; arrays: unknown };
+
+/**
+ * A binary route, held to the request that asked it (S55, D214: invariant I5's viewer half). Every route that
+ * takes inputs takes `layer` and echoes it in its header; the frame that comes back must say the setting that was
+ * asked for (galaxy/layer.ts `checkLayer`), or it is refused here - reported to the page and thrown, so it is not
+ * drawn. **Every loader below calls the transport through one of these and through nothing else**: the raw routes
+ * are not in this file's scope by name, so a loader added later cannot skip the check (rule B13).
+ */
+function route<First, Got extends Answer>(path: string, call: (first: First, params: Query, options?: Options) => Promise<Got>) {
+  return async (first: First, params: Query, options?: Options): Promise<Got> => {
+    const got = await call(first, params, options);
+    try {
+      checkLayer(path, params, got.header);
+    } catch (error) {
+      reportLayerFault((error as Error).message);
+      throw error;
+    }
+    return got;
+  };
+}
+
+const arrays = route("/api/arrays", wire.arrays);
+const region = route("/api/region", wire.region);
+const render = route("/api/render", wire.render);
+const clouds = route("/api/clouds", wire.clouds);
+const clusters = route("/api/clusters", wire.clusters);
+const remnants = route("/api/remnants", wire.remnants);
+const bright = route("/api/bright", wire.bright);
 
 export interface FieldDecl {
   name: string;
