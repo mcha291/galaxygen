@@ -693,9 +693,9 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136 | 63 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137 | 64 |
 
-So the board's **74 open** is 11 permanent and 63 carried, and no item is unruled. (S22
+So the board's **75 open** is 11 permanent and 64 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -725,7 +725,8 @@ opened #127, the segment quadrature's thousandth on the upper main sequence, D20
 on the owner's word, which closed #109's first part, and opened #128, the heating still one mixed slab, D206; S51 opened
 #129–#131, the gas ridge's width, the HI's contrast and the contrast's unread scatter, D210; S54, the templates, opened
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
-targets, the template's gas, the K light per unit mass and the frame's colour, D213.) The eleven
+targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
+the layer's totals conserved in expectation only until the ring-first draw, D214.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3024,6 +3025,15 @@ never been judged in twenty-three sessions.
    a source for any of the four (a measured HII-region offset distribution, a molecular scale height —
    e.g. the CO layer's half-thickness — a remnant-shell visibility time), each a constant with a citation
    replacing a stated guess; what the stated guesses cost is visible only in V3's synthesis.
+   **S55 (D214, gate G1):** the four columns of the cloud's internal structure — the source's offset and angle,
+   the density gradient and its angle — are now *synthetic*, published by the layer stage `cloud_texture` on the
+   same streams and with the same values, their statistic "none read" under this debt. **The offset does not keep
+   a cluster in its cloud's ring**: it reaches 249 pc against a 75 pc radial step and puts 1 610 of 12 930
+   clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 157 in another cell ring, so a ring's
+   realised cluster mass, and what the HII and bubble stages bin from it, move with it; L1 (S60) decides whether
+   the offset is bounded to the cell or the cluster is binned by its cloud's ring. `cloud_height` is as unsourced
+   and stays seeded (BUILD_III Appendix B): whether a cloud's height is a placement, and so the layer's, or a
+   sample of the model's vertical profile is L1's to rule with the census's redraw.
 
 96. **The cluster census inherits the clouds' mass function, not the review's** (S33, BUILD_II Phase 11,
    D182). One cluster per cloud past its embedded phase at an efficiency derived from the local depletion
@@ -3217,6 +3227,18 @@ never been judged in twenty-three sessions.
    Mach number's width rests on (the σ–ℓ relation, Heyer et al. 2009 / Larson 1981 — one constant), the octave
    weights derived from it (w_k ∝ 2^{−kβ/2}); the pillar rule as a column condition from Q and the clump's density;
    the realised mean set to 1 by measurement, as `FIELD_SIGMA` is.
+   **S55 (D214, gate G1):** the octave count, lacunarity and gain (4, 2, 0.5) are now constants of the model
+   under this debt, published in the clouds' header, and the viewer evaluates the interior with them; a set other
+   than the one its measured normaliser belongs to draws smooth clouds. **What the viewer still holds of the
+   function, against rule D5 as amended**: the per-octave lattice offsets (17.3, 31.7, 47.1 per octave) and seed
+   stride (1013), its own hash constants, the smoothstep and the centring, the measured 0.2088, the tilt's clamps
+   (0.05, 0.95) and linear form, the packing of (cell, index) into a seed, one lattice cell per cloud radius, four
+   samples per chord, the pillar rule. **And the interior does not conserve a ray's column in expectation**: over
+   4000 seeds a diameter along the lattice reads 1.20 / 1.53 / 1.78 × the smooth column at σ_s 0.8 / 1.4 / 2.0 and
+   an off-axis chord 0.94 / 0.82 / 0.63 (value noise has more variance on lattice planes, and the lattice is
+   centred on the cloud and aligned with the scene); the volume mean is 1.016 / 0.993 / 0.888. Nothing more is
+   published for a function about to be retired: **V7 (S64) discharges this** by replacing it with the layer's
+   noise and its committed vectors.
 111. **The region volume's display budget drops light the field has already given up** (S40, V3, D190). One march
    loops over at most 256 objects per pixel — the 128 heaviest clouds, the 64 brightest HII regions, the 64
    brightest shells — while a level-1 window (a view 1–4 kpc across asks `regionAround` for ±4 kpc of radius) holds
@@ -3614,6 +3636,24 @@ never been judged in twenty-three sessions.
    read separately against a sourced face-on attenuation for an Sc disc (the catalogues' own A_B − A_V), which
    says whether the dust reddens too little or the stars are too blue. What kills the dust reading: a frame still
    under 0.72 with the catalogues' face-on reddening applied by hand.
+137. **The layer conserves expected totals, not realised ones, until the censuses are drawn ring-first** (S55, D214,
+   gate G1). A census draws each cell's count on the cell's own stream at an expectation that already carries
+   the composed weight, so switching the layer off re-draws which objects exist, not only where they are.
+   Measured, layer off against on at the defaults: realised cloud mass −1.9 % galaxy-wide and up to 19 % in a cell
+   ring; cluster mass −5.8 %; the census's HII Hα −8.1 %, up to 43 % in a ring; over six seeds −1.0 ± 1.7 %,
+   −2.2 ± 2.9 %, −2.1 ± 6.0 % — re-draw noise, not bias `[verified: tests/test_layer.py; the S55 review's
+   probes, D214]`. Expected counts per ring are identical to 1e-12, and no analytic radial field moves. Fourteen
+   published quantities move, a closed list (`tests/test_layer.py`, `CENSUS_STATISTICS`): nine scalars — the
+   star sample's size, three planet-sample statistics, the bright catalogue's limit, the realised cloud mass, the
+   HII luminosity function's slope and the [N II]/Hα gradient (rows 35 and 37), and the diffuse fraction in its
+   last digits — and five radial fields, the four forbidden-line surface brightnesses and the hot phase's
+   porosity, which two physics stages bin from the realised clusters. **Carried.** No row and no check is
+   affected: all are judged layer-off (I3). Rule A10's "changes no ring total" is true of every field and of
+   every census's expectation, and not of a realised census total; its text is the owner's and is unamended
+   (asked at S55's close). **What closes it: L1's ring-first draw (S60)** — a ring's objects, count and every
+   per-object draw, on a ring stream, the layer assigning cell and azimuth — after which the list is empty and
+   the realised ring totals are identical with the layer on or off. What would kill the reading: a bias in the
+   on-minus-off totals over seeds, which would make it a leak and not a redraw.
 
 
 ---
