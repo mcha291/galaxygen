@@ -124,7 +124,7 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     first = bb.first_supernova_age()
     assert first == pytest.approx(10.0**6.6 / 1.0e6)  # the youngest isochrone, 3.98 Myr
     young = age < first
-    assert young.sum() == 2568
+    assert young.sum() == 2583  # S51 (D210): was 2568 (the clouds on the gas's ridge: another draw of the census)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -158,11 +158,11 @@ def test_the_default_numbers(default):
     """Measured at S36 on the default grid; a pin that moves says why in its commit."""
     F = default.fields
     radius = np.asarray(F["bubble_radius"], dtype=float)
-    assert radius.size == 12860
+    assert radius.size == 12930  # S51 (D210): was 12860 (one bubble per cluster; the clouds on the gas's ridge)
     assert float(np.median(radius)) == pytest.approx(8.963, rel=0.01)
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
-    # was 12521
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12524
+    # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12582
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -178,7 +178,9 @@ def test_the_default_numbers(default):
     assert (int((kind == 0).sum()), int((kind == 1).sum())) == (1071, 393)
     R = default.grid.R
     i = int(np.argmin(abs(R - 8.2)))
-    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0334, abs=0.001)
+    # S51 (D210): was 0.0334 - one cell ring's bubbles, an r^3-weighted sum, are another draw when the clouds sit on the
+    # gas's ridge; over sixteen systems seeds R0 reads 0.024 +/- 0.010 before and 0.022 +/- 0.008 after
+    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0286, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
     assert n_mid == pytest.approx(0.688, abs=0.002)
 

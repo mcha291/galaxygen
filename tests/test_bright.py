@@ -208,7 +208,9 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # 3.35e6 such stars above 10^3 Lsun (and 3.5e7 above 10^2, 6.4e4 above 10^4, 3e-4 expected above 10^5).
     # S48 (D203): the within-interval draw - 33 910.75 until then; the same 3162 stars by Gamma, the luminosity of
     # each now uniform across its segment's overlap with its interval. The expected count is the tables' (unmoved).
-    assert F["bright_star_limit"] == pytest.approx(33960.12, rel=1e-6)
+    # S51 (D210): the 20-100 Myr stars' cell weights follow sfr_modulation, which now reads the gas's own ridge, so
+    # the cells' Gamma draws and the 3162nd star move; the expected count is still the tables'.
+    assert F["bright_star_limit"] == pytest.approx(33787.518, rel=1e-6)  # S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -507,7 +509,9 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # S48's wiring, measured: the whole disc's bright stars above 10^4 Lsun through rgb (R, V, B) against the expectation
 # from their own budget. Until D203 the bolometric light held (z = +0.08) and the band light did not (0.977 / 0.915 /
 # 0.826, z = -3.9 / -14 / -26); S48 (D203): the within-interval draw - 1.0033 / 1.0044 / 1.0041, z = +0.54 / +0.66 / +0.51.
-BRIGHT_RGB_OVER_OWN = (1.00325, 1.00435, 1.00412)
+# S51 (D210): the young stars' cells follow the gas's own ridge through sfr_modulation - another realisation of
+# the same budget.
+BRIGHT_RGB_OVER_OWN = (1.00065, 1.00380, 1.00503)  # S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -592,16 +596,20 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # S48's wiring, measured: the cluster census's light through rgb (R, V, B) and bolometric, whole disc, against the
 # young population's (ages under the census's window) from the same decomposition. S33 measured the census's ionizing
 # photons at 1.0088 of the young population's.
-CLUSTERS_RGB_OVER_YOUNG = (0.98508, 0.99003, 1.00087)  # S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 1.01128
+# S51 (D210): the clouds, and so the clusters, sit in the gas's own ridge - a different Poisson realisation of the
+# same expected census (whole-disc cluster light +3.2 %, its seed-to-seed spread 4.4 %).
+CLUSTERS_RGB_OVER_YOUNG = (1.02504, 1.02748, 1.03528)  # S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
+CLUSTERS_LIGHT_OVER_YOUNG = 1.04343  # S51 (D210): was 1.01128
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):
     """(b) the single counting's other half: the census's clusters (one per cloud past its embedded phase, ages 0-20 Myr)
     summed over the whole disc, through rgb and bolometric, against the young part of the decomposition the field's
-    remainder is cut by. Within 1.5 % in every filter and 1.1 % bolometric: the clusters carry the young light, so the
-    remainder that leaves it out counts no star twice and drops none. A realisation (the census is a Poisson draw of
-    clouds), seeded, so pinned tight."""
+    remainder is cut by. Within 1.5 % in every filter and 1.1 % bolometric until S51; 3.6 % and 4.4 % since (D210: the
+    clouds on the gas's ridge, another draw of the same census; the clusters' light moved +3.2 %, its seed-to-seed
+    spread 4.4 %): the clusters
+    carry the young light, so the remainder that leaves it out counts no star twice and drops none. A realisation (the
+    census is a Poisson draw of clouds), seeded, so pinned tight."""
     _, (hc, ac) = through_rgb
     spec = default.grid.spec
     res = br.resolve(default.fields, spec.t_max, spec.n_t, _constants(models), 1e4)
