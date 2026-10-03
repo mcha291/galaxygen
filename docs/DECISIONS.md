@@ -8153,3 +8153,43 @@ own and publishes the one field, seeded through the pattern's numbers it reads; 
 galaxy-to-galaxy scatter is unread. *Disclosed, not blind* (D113's sense): the amendment was written after the draw was
 read. It moves the default toward the class mean — crest 3.07, trough 0.53 — and so away from the stronger lane; it is
 not made for the picture (RENDER_PHYSICS §8). The owner may restore the draw: one constant and one `rng` line.
+
+**Applied, Phase 1b and Phase 2 (2026-10-03; Opus 5.5 builders in worktrees; eb45d2c and 26ae2ce, the lead's 5322eb8).**
+*Phase 1b, the amendment:* `gas_arm_contrast` is the `bar` stage's, derived (2.73 at the defaults, the two-fold weight
+being 1 there) and identical under every seed; `gas_pattern` reads no seed and publishes the one field, which `graph`
+labels seeded through `pitch_angle`, `arm_multiplicity` and `bar_contrast`. At the defaults a = 0.466, crest 3.068,
+trough 0.534 at R₀; 0.387, 2.715 and 0.613 at 12 kpc; the field 0.535–3.061 on the grid. Specs identical.
+*Phase 2, the render:* `/api/render` requests `gas_density_contrast`; `dust_placement`, `halpha_hii` and `lines_hii`
+are placed by it (clipped at zero; the stellar contrast where a model publishes no gas pattern), on the whole grid,
+in a window and at a level; the stars' components and the scattered light are as they were; the header's `fields`
+and abouts say which contrast places what. No viewer code changed (comments only); vitest and `tsc -b` clean.
+*Found by Phase 2's builder and fixed by the lead:* sampled at cell centres on a 36-cell φ grid the four-armed
+ridge's ninth harmonic aliases and a ring's mean leaves 1 by 5.8e-4 (1.1e-10 on 72 cells, exact on 108 and on the
+default 360). The stage now divides such a ring by its sampled mean and leaves the default grid's field the closed
+form bit for bit (`RING_MEAN_TOLERANCE`; `tests/test_gas_pattern.py`). **The first prediction above was worded for
+the default grid and is true there; on a coarse grid it needed this.**
+
+**The render's predictions, read (`tests/test_dust_layer.py`; face-on V, stars on the stellar contrast c, dust on the
+ridge g; S50's reading, dust on c, beside each).**
+
+| R, kpc | dust alone | light and dust both placed | foreground screen | at the ridge's crest | in the gap | on the arm's flank |
+|---|---|---|---|---|---|---|
+| 4.0 | +1.84 % (+0.80) | **+0.79 %** (−0.04) | +20.8 % (+9.20) | 0.451 (0.479) | 0.576 (0.565) | 0.531 (0.507) |
+| 6.0 | +4.63 % (+0.82) | **+1.72 %** (−0.98) | +18.1 % (+3.27) | 0.467 (0.590) | 0.765 (0.747) | 0.754 (0.653) |
+| 8.2 | +1.97 % (+0.31) | **−0.85 %** (−1.28) | +5.63 % (+0.89) | 0.579 (0.747) | 0.886 (0.874) | 0.883 (0.806) |
+
+- **"A ring's face-on V light rises at R₀" — failed: −0.85 %** (D207's −1.28 %). The ridge sits on the stellar crest,
+  where c = 1.40; at R₀'s small depth (τ_V 0.47) the light lost is nearly linear in the column, so it follows the
+  overlap of c and g round the ring, 1.166 there, which is still above 1. At 4 and 6 kpc, where the dust is deeper,
+  the ring does brighten. The lead predicted the sign from where *most* of the stars are and forgot that the ridge
+  takes its light from where the stars are *densest*. Pinned as read (B5).
+- **"Under the screen's gain" — held** (−0.85 % against +5.63 %).
+- **"The crest transmits less than 0.747 and the gap more than 0.874" — held: 0.579 and 0.886**; the arm's flank,
+  where the stellar contrast is at its mean, 0.883 against D207's 0.806.
+- **"A lane is visible in the browser at R₀ face-on under rgb" — held.** Each of the four arms carries a thin dark
+  stripe along its spine, in the field mode and the star-first mode, face-on and oblique; the dust's "where it is"
+  diagnostic draws four narrow ridges and the bar where D207 drew four broad arms
+  (`docs/design/screenshots/s51-gas-lanes-face-on.jpg`, `s51-gas-lanes-oblique.jpg`, `s51-dust-where-it-is.jpg`). The
+  lane is on the arm's crest, not its inner edge: that is ruling 3, and what an offset would change.
+- **#128's second half, re-read:** with light on c and dust on g the mixed slab would absorb 1.0045 of the mean
+  column's over the disc (1.0126 at S50), 1.023 at R₀ (1.041), 1.001 at 2 kpc (the same). Pinned, not applied.
