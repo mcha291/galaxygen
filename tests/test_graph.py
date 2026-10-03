@@ -58,21 +58,31 @@ def chk(m, *stages):
 # systems, formation, habitable_zone, dust, clouds, planets, clusters, nebular". No value moves with the order.
 # Since S48 (D200) the bright catalogue reads the vertical stage's birth_population (a star's scale height), so it
 # runs the round after vertical_alpha's, after ism by the tie-break, and globular_clusters onward keep their order.
+# Since S55 (D214 section 5) the layer's cloud_texture stage reads the clouds' sizes and publishes the four cloud
+# columns the cluster census reads, so it runs the round after clouds' - systems' round, behind systems by the
+# tie-break - and the clusters the round after it, behind planets. Until S55 both ended "..., dust, clouds,
+# systems, clusters, planets, nebular, bubbles". Recomputed from graph.analyse, not edited by hand; no value moves
+# with the order.
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "gas_pattern", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
+        "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "systems", "clusters", "planets", "nebular", "bubbles",
+        "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
 }
+# The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's one stage publishes, in both
+# models - the four cloud columns the clouds stage drew as seeded until then. The cloud-interior noise's three
+# numbers are constants of the model, not fields (gate G1, change 4: "a layer stage's fields are synthetic; a
+# constant it declares is a constant").
+SYNTHETIC = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
@@ -110,8 +120,9 @@ SEEDED_BASIC = {
     "gc_system_mass", "gc_count_estimate",
     # The molecular-cloud census (S32): every column and scalar of a stage that reads systems_seed.
     "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
-    "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
-    "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
+    # S55 (D214): the source's offset and direction and the gradient's steepness and direction left this set -
+    # they are the layer's, synthetic (SYNTHETIC above), drawn on the same streams by the cloud_texture stage.
+    "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_metallicity", "cloud_alpha",
     "cloud_extinction_v",  # S40 (V3): the cloud's central A_V from its mass, size and the grain table
     "cloud_count_total", "cloud_mass_total", "cloud_forcing_parameter", "cloud_lifetime",
     # S33: which cluster a cloud holds, and the cluster census (a stage that reads systems_seed).
@@ -153,6 +164,10 @@ def test_production_graphs_hold(prod):
         # occurrence fields on the derived side.
         seeded = {n for n, p in g.provenance.items() if p == "seeded"}
         assert seeded == SEEDED[m.name], sorted(seeded ^ SEEDED[m.name])
+        # S55 (D214): the fourth kind, and only the layer's stage publishes it.
+        synthetic = {n for n, p in g.provenance.items() if p == "synthetic"}
+        assert synthetic == SYNTHETIC, sorted(synthetic ^ SYNTHETIC)
+        assert g.layer_stages == ("cloud_texture",) and {g.producer[n] for n in SYNTHETIC} == {"cloud_texture"}
         # S51 (D210 as amended): the gas ratio is the bar stage's derived class mean, beside the stellar one.
         assert g.provenance["gas_arm_contrast"] == g.provenance["arm_contrast_mean"] == "derived"
         assert g.provenance["giant_occurrence"] == "derived", (

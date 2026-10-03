@@ -18,6 +18,7 @@ phi)`` so that ``(t, R)`` can never be confused with ``(R, t)``.
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -34,7 +35,13 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
 OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census); bright_star: S48 (D200, the bright-end-complete catalogue)
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
-PROVENANCE: tuple[str, ...] = ("derived", "seeded")  # rule A10; inputs are the third kind
+PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other
+# What only a synthetic field declares, and must (BUILD_III section 1c, rules 2-4; DECISIONS.md D214 section 2).
+SYNTHETIC_DECLARATIONS: tuple[str, ...] = ("stands_in_for", "conserves", "statistic")
+# A statistic that was not read says so, and may only beside the debt that owes it (BUILD_III section 9: an
+# unsourced draw is not excused by the label).
+_NONE_READ = re.compile(r"none read", re.IGNORECASE)
+_DEBT = re.compile(r"#\d+")
 
 
 class DeclarationError(ValueError):
@@ -114,7 +121,17 @@ class FieldDecl:
     ramp: Ramp | Palette | None = None
     meaningful_zero: bool = False
     optional: bool = False  # present in some models only; readers must handle absence
-    provenance: str = "derived"  # rule A10: derived (inputs only) or seeded (inputs + seed)
+    provenance: str = "derived"  # rule A10: derived (inputs only), seeded (inputs + seed) or synthetic (the layer's)
+    # A synthetic field's three declarations (S55, D214): required and non-empty there, refused anywhere else.
+    stands_in_for: str = ""  # the physics the model does not compute, which this realisation stands in for
+    conserves: str = ""  # what it keeps, and what it does not keep, with the measured number (BUILD_III 1c, rule 2)
+    statistic: str = ""  # the measured statistic it is drawn to, cited; "none read" only with the debt's number
+    # A composed field (S55, D214 as ruled at gate G1, change 3): a law applied to a realisation of the randomness
+    # layer, with the value it takes everywhere when the layer is off. **A declaration, never read off the axes**:
+    # a phi-axis field tabulated in a pattern's own frame is physics and is simply not declared composed. The two
+    # go together - a neutral without the declaration, or the declaration without one, is refused.
+    composed: bool = False
+    neutral: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not IDENT.match(self.name):
@@ -140,8 +157,50 @@ class FieldDecl:
             )
         object.__setattr__(self, "axes", tuple(self.axes))
         object.__setattr__(self, "categories", tuple(self.categories))
+        self._check_synthetic()
         self._check_domain(kind)
         self._check_values(kind)
+        self._check_composed(kind)
+
+    def _check_composed(self, kind: Kind) -> None:
+        if not isinstance(self.composed, bool):
+            raise DeclarationError(f"field {self.name}: composed is True or False, got {self.composed!r}")
+        if not self.composed:
+            if self.neutral is not None:
+                raise DeclarationError(
+                    f"field {self.name}: a neutral value is a composed field's declaration; declare composed=True "
+                    "or give none"
+                )
+            return
+        if kind is not Kind.FIELD:
+            raise DeclarationError(f"field {self.name}: a composed field is a continuous grid field, not a {kind.value}")
+        value = self.neutral
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise DeclarationError(
+                f"field {self.name}: a composed field declares its neutral value - the number it is everywhere "
+                f"with the randomness layer off - got {value!r}"
+            )
+        object.__setattr__(self, "neutral", float(value))
+
+    def _check_synthetic(self) -> None:
+        given = {n: getattr(self, n) for n in SYNTHETIC_DECLARATIONS}
+        if self.provenance != "synthetic":
+            stated = [n for n, v in given.items() if v]
+            if stated:
+                raise DeclarationError(
+                    f"field {self.name}: {stated} are a synthetic field's declarations; this one is {self.provenance}"
+                )
+            return
+        missing = [n for n, v in given.items() if not isinstance(v, str) or not v.strip()]
+        if missing:
+            raise DeclarationError(
+                f"field {self.name}: a synthetic field declares {missing} - what it stands in for, what it "
+                "conserves and the statistic it is drawn to (rule A10)"
+            )
+        if _NONE_READ.search(self.statistic) and not _DEBT.search(self.statistic):
+            raise DeclarationError(
+                f"field {self.name}: a statistic that was not read is a debt, and names it: 'none read (#<debt>)'"
+            )
 
     def _check_domain(self, kind: Kind) -> None:
         if kind.domain == "grid":
@@ -211,4 +270,9 @@ class FieldDecl:
             self.meaningful_zero,
             self.optional,
             self.provenance,
+            self.stands_in_for,
+            self.conserves,
+            self.statistic,
+            self.composed,
+            self.neutral,
         )

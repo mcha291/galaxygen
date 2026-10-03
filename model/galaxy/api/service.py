@@ -21,7 +21,10 @@ cannot be hidden by a cache: an endpoint that touched a stage says so.
   names.
 
 **What is not published** (rule D5): constants, stage source, model internals of
-any kind. The viewer gets declarations, numbers and ramps; it cannot reconstruct
+any kind - with one exception, named: ``/api/clouds``' header carries ``cloud_interior``,
+the three parameters of the noise a renderer synthesises a cloud's interior with, which
+are constants of the model (DECISIONS.md D214, gate G1 change 4: a parameter of a
+function the viewer evaluates, which rule D5 as amended forbids the viewer to hold itself). The viewer gets declarations, numbers and ramps; it cannot reconstruct
 the model from them, and replacing it means reimplementing against these
 endpoints rather than against the physics.
 
@@ -49,7 +52,7 @@ from galaxy import templates as _tpl  # the named galaxies (S54); Service._templ
 from galaxy.api import wire
 from galaxy.api.version import CLIENT, SERVER, content_hash
 from galaxy.core.cmaps import COLORMAPS
-from galaxy.core.fielddoc import SCALES, FieldDecl, Palette, Ramp
+from galaxy.core.fielddoc import SCALES, SYNTHETIC_DECLARATIONS, FieldDecl, Palette, Ramp
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
 from galaxy.core.registry import (
     INPUT_CEILING,
@@ -61,6 +64,8 @@ from galaxy.core.registry import (
 )
 from galaxy.core.stage import CHECKPOINTS, Stage
 from galaxy.core.units import unit as _unit
+from galaxy.layer import cloud_texture as _cloud_texture  # the cloud-interior noise's parameters /api/clouds carries (S55)
+from galaxy.layer import compose as _compose  # the one reader of the layer's switch (S55, D214)
 from galaxy.run import Outputs, RunError
 from galaxy.run import run as _run
 from galaxy.specs import graph as _graph
@@ -115,6 +120,12 @@ RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "D
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
 # interpolated at 8 x 8 midpoints, area-weighted.
 RENDER_CELL_SAMPLES = 8
+# What a render's header adds, under layer=off, to each text that says a component is placed by a composed field
+# (gate G1, change 11): the text names the law; this says what the field is in this response.
+EVEN_ROUND_THE_RING = (
+    " In this response the randomness layer is off (layer: off): every composed field named here is its neutral "
+    "value, 1, so this is even round each ring - each cell holds its ring's own value."
+)
 # The temperatures /api/blackbody tabulates (S42): 193 log-spaced from 1000 K to 100 000 K, 1/96 dex apart - the
 # render's own white-point range. Read linearly in log share against log T (the Wien side is an exponential in 1/T,
 # which a line in the share itself misses by 16% at 1000 K), every set's table is within the bound
@@ -189,7 +200,7 @@ ROUTES: tuple[Route, ...] = (
         "/api/arrays",
         "Named fields as binary arrays, plus the galaxy-level scalars. t_samples=N keeps N evenly spaced "
         "time steps of fields over t; precision=f4 sends float fields as float32.",
-        ("model", "template", "fields", "t_samples", "precision"),
+        ("model", "template", "layer", "fields", "t_samples", "precision"),
         "arrays",
     ),
     Route(
@@ -200,21 +211,22 @@ ROUTES: tuple[Route, ...] = (
         "inside that frustum. level=k (0..3, S32) names the cell hierarchy's depth: each level-k cell "
         "holds its parent's stars that fall inside it plus its own, 4^k times the sample density, every "
         "row named by level, cell and index columns.",
-        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view", "level"),
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "stars", "brightest", "view", "level"),
         "region",
     ),
     Route(
         "/api/system",
         "One star's planets and belts, by the (level, cell, index) that names it (level 0 by default).",
-        ("model", "template", "cell", "index", "stars", "level"),
+        ("model", "template", "layer", "cell", "index", "stars", "level"),
         "system",
     ),
     Route(
         "/api/clouds",
         "The molecular-cloud census for one (R, phi) window (S32): every cloud of the cells the window "
         "meets, each row named by cell and index; level=k keeps the clouds inside the level-k children "
-        "the window meets.",
-        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        "the window meets. The header's cloud_interior is {octaves, lacunarity, gain}: the noise a renderer "
+        "synthesises a cloud's interior with (S55).",
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "clouds",
     ),
     Route(
@@ -224,7 +236,7 @@ ROUTES: tuple[Route, ...] = (
         "that holds it names it, with its HII region's columns (S35) and its bubble's (S36); level=k keeps the "
         "clusters inside the level-k children the window meets. filters= (as /api/render takes it, S48) adds response, "
         "each cluster's own band light through each curve in Lsun; white=<K> the white point, as /api/render's header.",
-        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level", "filters", "white"),
         "clusters",
     ),
     Route(
@@ -232,7 +244,7 @@ ROUTES: tuple[Route, ...] = (
         "The supernova-remnant census for one (R, phi) window (S36): every visible remnant of the cells the "
         "window meets, each row named by cell and index, with its blast wave's size, shell and phase; level=k "
         "keeps the remnants inside the level-k children the window meets.",
-        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "level"),
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "level"),
         "remnants",
     ),
     Route(
@@ -247,7 +259,7 @@ ROUTES: tuple[Route, ...] = (
         "are the clusters'; the bulge is the field's. precision=f4 sends float32. filters= (as /api/render takes it) "
         "adds response, each star's band light through each curve in Lsun; white=<K> the white point, as /api/render's "
         "header.",
-        ("model", "template", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
+        ("model", "template", "layer", "r_min", "r_max", "phi_min", "phi_max", "view", "n", "l_min", "precision", "filters", "white"),
         "bright",
     ),
     Route(
@@ -279,7 +291,7 @@ ROUTES: tuple[Route, ...] = (
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
         "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
         "the header's resolved stating the light split and the closure.",
-        ("model", "template", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
+        ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
         "render",
     ),
 )
@@ -588,6 +600,12 @@ def _ramp(ramp: Ramp | Palette | None) -> dict[str, Any] | None:
 def field_json(decl: FieldDecl, stage: Stage) -> dict[str, Any]:
     """A field declaration on the wire. The ramp travels with it and nowhere else (rule A9)."""
     u = _unit(decl.unit)
+    # A synthetic field carries its three declarations (S55, D214 section 2; rule A10): what it stands in for,
+    # what it conserves, the statistic it is drawn to. No other field has them, and no other entry gains a key.
+    synthetic = {n: getattr(decl, n) for n in SYNTHETIC_DECLARATIONS if getattr(decl, n)}
+    # A composed field says so, with the value it is everywhere under layer=off (gate G1, change 3); as above,
+    # only those entries carry the two keys.
+    composed = {"composed": True, "neutral": decl.neutral} if decl.composed else {}
     return {
         "name": decl.name,
         "label": decl.label,
@@ -607,6 +625,8 @@ def field_json(decl: FieldDecl, stage: Stage) -> dict[str, Any]:
         "about": decl.about,
         "stage": stage.id,
         "checkpoint": stage.checkpoint,
+        **synthetic,
+        **composed,
     }
 
 
@@ -750,12 +770,13 @@ class Galaxy:
     stages than it needs, because a stage that has not run is not in it.
     """
 
-    __slots__ = ("model", "inputs", "grid", "_impls", "_table", "_out")
+    __slots__ = ("model", "inputs", "grid", "layer", "_impls", "_table", "_out")
 
-    def __init__(self, model: Model, inputs: Mapping[str, Any], grid: Grid, impls: Any, table: Any) -> None:
+    def __init__(self, model: Model, inputs: Mapping[str, Any], grid: Grid, impls: Any, table: Any, layer: bool = True) -> None:
         self.model = model
         self.inputs = dict(inputs)
         self.grid = grid
+        self.layer = bool(layer)  # the randomness layer's setting (S55): part of which galaxy this is
         self._impls = impls
         self._table = table
         self._out: Outputs | None = None
@@ -763,7 +784,7 @@ class Galaxy:
     def need(self, fields: Sequence[str]) -> tuple[Outputs, tuple[str, ...]]:
         out = _run(
             self.model, self.inputs, self.grid,
-            impls=self._impls, table=self._table, only=tuple(fields), resume=self._out,
+            impls=self._impls, table=self._table, only=tuple(fields), resume=self._out, layer=self.layer,
         )
         self._out = out
         return out, out.ran
@@ -882,13 +903,24 @@ class Service:
                 out[name] = _events(name, raw)
         return out
 
-    def compute(self, model: Model, inputs: Mapping[str, Any], fields: Sequence[str]) -> tuple[Outputs, tuple[str, ...]]:
-        """Advance the galaxy at this point in input space far enough to answer, no further."""
-        key = repr((model.name, self.grid.spec, sorted(inputs.items(), key=lambda kv: kv[0])))
+    def _layer(self, q: Query) -> bool:
+        """layer=off: the physics alone, the randomness layer's composed fields and placements at their neutral
+        values (S55, D214; invariant I5). Absent or ``on`` is the model as it has always been served."""
+        raw = q.one("layer", "on")
+        if raw not in _compose.SETTINGS:
+            raise BadRequest(f"layer={raw!r} is not one of {list(_compose.SETTINGS)}")
+        return _compose.SETTINGS[raw]
+
+    def compute(
+        self, model: Model, inputs: Mapping[str, Any], fields: Sequence[str], layer: bool = True,
+    ) -> tuple[Outputs, tuple[str, ...]]:
+        """Advance the galaxy at this point in input space far enough to answer, no further. The layer's setting
+        is part of the point: a layer-off galaxy and a layer-on one never share an entry (S55)."""
+        key = repr((model.name, self.grid.spec, sorted(inputs.items(), key=lambda kv: kv[0]), bool(layer)))
         with self._lock:
             found = self._cache.pop(key, None)
             if found is None:
-                found = Galaxy(model, inputs, self.grid, self.impls, self.table)
+                found = Galaxy(model, inputs, self.grid, self.impls, self.table, layer)
             if self.cache_size:
                 self._cache[key] = found
                 while len(self._cache) > self.cache_size:
@@ -930,6 +962,14 @@ class Service:
             "models": list(self.models.names()),
             "routes": [{"path": r.path, "about": r.about, "params": list(r.params)} for r in ROUTES],
             "inputs_are": "any query parameter that is not one of a route's params",
+            # S55 (D214, invariant I5): the switch every route that takes inputs carries.
+            "layer": "layer=off on a route that takes inputs answers for the physics alone: the randomness layer's "
+                     "composed fields (those /api/fields marks composed) are their neutral value everywhere, the "
+                     "censuses are placed by no pattern and the cloud texture columns are 0. Every law, every ring "
+                     "total of a field and every expected ring total of a census is what it is with the layer on, "
+                     "and so is every radial field but the census statistics: a census's realised objects are "
+                     "another draw, so what is summed over them moves by that re-draw. Absent or layer=on is the "
+                     "default; any other value is a 400. The response's header echoes it as layer.",
         })
 
     def _blackbody(self, q: Query) -> Response:
@@ -1046,7 +1086,8 @@ class Service:
             raise BadRequest(f"t_samples={t_samples} is negative")
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, wanted)
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, wanted, layer)
 
         # Fewer time steps are a download choice, not a coarser model: the galaxy is computed
         # on its own grid and every stride-th step is sent, sampled, never averaged (rule B9).
@@ -1074,6 +1115,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "grid": grid,
             "fields": list(wanted),
             "scalars": scalars,
@@ -1105,9 +1147,10 @@ class Service:
             raise BadRequest("brightest= is a level-0 selection; below level 0 every row already carries its name")
 
         inputs = self._overrides(model, q)
+        layer = self._layer(q)
         # What the catalogue *reads*, which is not the catalogue: the closure
         # above these fields stops one stage short of materialising anything.
-        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        out, ran = self.compute(model, inputs, self._reads(model, stage), layer)
         seed_name = stage.reads_seeds[0] if stage.reads_seeds else None
         seed = int(out.inputs[seed_name]) if seed_name else 0
 
@@ -1115,7 +1158,7 @@ class Service:
         if level and len(cells) > MAX_CHILD_CELLS:
             raise BadRequest(f"level={level} over this window names {len(cells)} cells, more than {MAX_CHILD_CELLS}: narrow the window")
         migration = float(out.inputs["migration_efficiency"])
-        key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed, level))
+        key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed, level, _compose.setting(out.fields)))
         catalogue = self.cells.catalogue(
             key, cells,
             # level= only below level 0, so the level-0 call keeps its signature for the instruments
@@ -1134,6 +1177,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
             "level": level,
             # With brightest=N the rows are a selection, named by their own cell and index columns
@@ -1173,15 +1217,19 @@ class Service:
         level = _level(q)
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, self._reads(model, stage), layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
-        key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         census = self.cells.catalogue(
             key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted),
         )
-        columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in census]
+        # A whole cloud: the census's own columns and the randomness layer's four (the embedded source's offset
+        # and direction, the density gradient's steepness and direction - published by the layer's cloud_texture
+        # stage since S55, D214), in the order this route has always sent them. With layer=off the four are 0.
+        columns = [name for name in _clouds.WIRE_COLUMNS if name in census]
         census = _named(census)  # S40: every row named by (cell, index)
         kept = None
         if level:
@@ -1189,6 +1237,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
             "level": level,
             "cells": {
@@ -1213,6 +1262,13 @@ class Service:
                     float(constants["HII_MASS_PER_HYDROGEN"]), _clouds._grain_v_extinction(),
                 )[0]),
             },
+            # S55 (D214 section 5, as ruled at gate G1, change 4): the shape of the noise a renderer synthesises a
+            # cloud's interior from - its octave count, lacunarity and gain. **Three constants of the model, and
+            # the one place this API serves a constant**: the gate's explicit exception to "what is not published:
+            # constants" (this module's docstring), for a parameter of a function the viewer evaluates (rule D5 as
+            # amended, D212) - the viewer may hold no parameter of its own, so the model's must reach it. By the
+            # wire's own names, never the constants'; not among the scalars, which are a stage's fields.
+            "cloud_interior": _cloud_texture.interior(constants),
             "columns": columns,
             "stages": list(ran),
         }
@@ -1236,13 +1292,14 @@ class Service:
         curves, white = _object_filters(q)
 
         inputs = self._overrides(model, q)
+        layer = self._layer(q)
         # What the stage reads other than the cloud columns, which the census here draws for itself.
         reads = tuple(n for n in self._reads(model, stage) if n not in _clusters.CLOUD_READS)
-        out, ran = self.compute(model, inputs, reads)
+        out, ran = self.compute(model, inputs, reads, layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
-        key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
 
         def draw(wanted: Sequence[int]) -> Any:
             clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted)
@@ -1263,6 +1320,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
             "level": level,
             "cells": {
@@ -1311,11 +1369,12 @@ class Service:
         level = _level(q)
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, tuple(n for n in self._reads(model, stage) if n in _bubbles.REMNANT_READS))
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, tuple(n for n in self._reads(model, stage) if n in _bubbles.REMNANT_READS), layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
-        key = repr(("remnants", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        key = repr(("remnants", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         census = self.cells.catalogue(
             key, parents, lambda wanted: _bubbles.materialise_remnants(out.fields, R, seed, constants, wanted),
         )
@@ -1327,6 +1386,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
             "level": level,
             "cells": {
@@ -1394,9 +1454,10 @@ class Service:
         curves, white = _object_filters(q)
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, self._reads(model, stage))
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, self._reads(model, stage), layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
-        key = repr(("bright", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed))
+        key = repr(("bright", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         galaxy, scalars = self._bright_galaxy(key, out, model)
         cells = np.asarray(_catalogue.cells_in(R, r_min, r_max, phi_min, phi_max, level=_catalogue.MAX_LEVEL), dtype=np.int64)
 
@@ -1432,6 +1493,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "region": {"r_min": r_min, "r_max": r_max, "phi_min": phi_min, "phi_max": phi_max},
             "view": view is not None,
             "cells": {"count": int(cells.size), "level": _catalogue.MAX_LEVEL,
@@ -1497,7 +1559,8 @@ class Service:
             bright = _stage_for(model, BRIGHT_SLOT, self.impls)
             wanted += [n for n in self._reads(model, bright) if n in _bright.RESOLVE_READS and n not in wanted]
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, wanted)
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, wanted, layer)
         f = out.fields
         R_axis, phi_axis = out.grid.axes["R"], out.grid.axes["phi"]
         R = out.grid.R
@@ -1505,7 +1568,12 @@ class Service:
         # The components on the whole grid: the stars per (R, phi), the line and the dust per R.
         sed = np.stack([np.asarray(f[f"disc_sed_{b.lower()}"], dtype=float) for b in _spectra.SED_BANDS], axis=-1)
         per_ring = _spectra.stellar_response(sed, f["disc_light_temperature"], curves)
-        contrast = f["pattern_density_contrast"] if "pattern_density_contrast" in f else None
+        # The composed fields are read through compose (S55, D214): what the run published, which with layer=off
+        # is 1 everywhere, so every component below is then its ring's own value round the ring.
+        contrast = _compose.published(f, "pattern_density_contrast")
+        # What the header says of a placement is true under layer=off too (gate G1, change 11): each text that
+        # names a composed field gains this sentence then, and nothing with the layer on.
+        even = _compose.words(f, "", EVEN_ROUND_THE_RING)
         # The stellar light follows the pattern's density contrast around each ring (a constant mass-to-light
         # ratio in azimuth), which averages to 1 around every ring, so each ring keeps its published light.
         placed = np.ones((R.size, phi_axis.n)) if contrast is None else np.maximum(np.asarray(contrast, dtype=float), 0.0)
@@ -1516,7 +1584,7 @@ class Service:
         # clipped at zero as the stars' is. It places what sits in the gas - the dust, a share of it, and the HII
         # regions, which sit in the clouds. A model that publishes no gas pattern keeps D207's reading: the gas
         # taken to follow the stars' contrast.
-        gas_contrast = f["gas_density_contrast"] if "gas_density_contrast" in f else None
+        gas_contrast = _compose.published(f, "gas_density_contrast")
         if gas_contrast is None:
             placed_gas, gas_fields = placed, contrast_fields
         else:
@@ -1550,7 +1618,7 @@ class Service:
                 "unit": "Lsun/pc2", "fields": [*RENDER_STARS, *contrast_fields], "layer": "stars",
                 "about": "the population's own spectrum - the eight bands' lambda L_lambda at their reference "
                          "wavelengths, power laws between them, a blackbody at the colour temperature beyond U and K - "
-                         "through each curve, placed around each ring by the pattern's density contrast",
+                         "through each curve, placed around each ring by the pattern's density contrast" + even,
                 "bands": list(_spectra.SED_BANDS),
                 "wavelength": _spectra.SED_WAVELENGTHS.tolist(),
             },
@@ -1558,6 +1626,7 @@ class Service:
         resolved = None
         if l_min is not None:
             unresolved, about["stars_unresolved"], resolved = self._unresolved(model, f, R, curves, per_ring, contrast, l_min)
+            about["stars_unresolved"]["about"] += even
             components.append(("stars_unresolved", unresolved))
         line_about ={"unit": "Lsun/pc2", "wavelength": _spectra.LINE_WAVELENGTHS["halpha"], "transmission": halpha_share.tolist()}
         if "halpha_surface_brightness_hii" in f and h_thin is not None:
@@ -1570,7 +1639,7 @@ class Service:
                 "about": f"the HII regions' Halpha through each curve at its wavelength, placed around each ring by "
                          f"{gas_by} (S51, D210: the regions sit in the clouds, which are gas; the stars keep the "
                          "stellar contrast; it averages to 1, so each ring keeps its published line) in the clouds' "
-                         "layer, where the regions' clusters are",
+                         "layer, where the regions' clusters are" + even,
             }
         # The other lines (S42): each HII-region line through each curve at its own wavelength, placed and layered
         # as the regions' Halpha is; the diffuse gas's Hbeta beside its Halpha. One component per layer, summed
@@ -1587,7 +1656,7 @@ class Service:
                 "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": shares[n].tolist()} for n in hii_lines},
                 "about": "the HII regions' other lines - Hbeta by Case B, the forbidden lines off Byler et al. 2017's grid "
                          "at the regions' own metallicity, age and log U - each through each curve at its wavelength, "
-                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer",
+                         f"summed, placed and layered as the regions' Halpha is - by {gas_by}, in the clouds' layer" + even,
             }
         if "halpha_surface_brightness_dig" in f and "dig_scale_height" in f:
             dig = np.asarray(f["halpha_surface_brightness_dig"], dtype=float)
@@ -1642,7 +1711,7 @@ class Service:
                         "contrast, as the gas the dust is a share of is taken to follow it (this model publishes no "
                         "gas pattern; D207). "
                     ) + "It multiplies the dust's optical depth and its thermal light; not the scattered light, which "
-                        "is already a share of the placed starlight. It averages to 1 round every ring",
+                        "is already a share of the placed starlight. It averages to 1 round every ring" + even,
                 }},
             }
         if all(n in f for n in ("dust_extinction_v", "dust_scattering_optical_depth", "dust_scattering_asymmetry")):
@@ -1753,6 +1822,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "set": q.one("set"),
             "filters": [c.json() for c in curves],
             "level": level,
@@ -1798,7 +1868,7 @@ class Service:
         a = res.anchors
         middle = _spectra.stellar_response(a["unresolved_middle"], T, curves)
         old = _spectra.stellar_response(a["unresolved_old"], T, curves)
-        modulation = f["sfr_modulation"] if "sfr_modulation" in f else None
+        modulation = _compose.published(f, "sfr_modulation")
         grid_contrast = np.ones((R.size, self.grid.axes["phi"].n)) if contrast is None else contrast
         weights = _bright.part_weights(grid_contrast, modulation)  # (2, R, phi): middle, old
         component = middle[:, None, :] * weights[0][..., None] + old[:, None, :] * weights[1][..., None]
@@ -1871,7 +1941,8 @@ class Service:
             raise BadRequest(f"stars={stars} is outside 1..{MAX_STARS}")
 
         inputs = self._overrides(model, q)
-        out, ran = self.compute(model, inputs, self._reads(model, catalogue))
+        layer = self._layer(q)
+        out, ran = self.compute(model, inputs, self._reads(model, catalogue), layer)
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
         here = _catalogue.materialise(
             out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
@@ -1892,6 +1963,7 @@ class Service:
         header = {
             "model": model.name,
             "inputs": _inputs_json(out.inputs),
+            "layer": _compose.setting(out.fields),
             "star": star,
             "level": level,
             "cell": cell,

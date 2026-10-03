@@ -118,10 +118,46 @@ class Restricted(Mapping[str, Any]):
         return sum(1 for _ in self)
 
 
+class LayerError(RuntimeError):
+    """A mapping of fields does not say whether the randomness layer is on, or two that must agree do not."""
+
+
+class Fields(dict):
+    """A run's published fields, carrying the run's setting of the randomness layer (S55, D214 section 1).
+
+    ``layer`` is what the run was asked for (``run(..., layer=...)``). It travels with the fields because a
+    catalogue is materialised from a mapping of fields long after the run that made them - by a later stage,
+    by the API for one window - and what it places by must be the run's: a catalogue with the layer's
+    placements drawn from a run without them would be a galaxy no request generates. ``galaxy.layer.compose``
+    is the one reader (rule B13); nothing here or in the runner branches on it. A plain ``dict`` of fields does
+    not carry it and ``compose`` refuses one.
+    """
+
+    __slots__ = ("layer",)
+
+    def __init__(self, data: Mapping[str, Any] | Iterable[tuple[str, Any]] = (), *, layer: bool) -> None:
+        super().__init__(data)
+        self.layer = bool(layer)
+
+
+class FieldView(Restricted):
+    """A stage's restricted view of the fields, carrying the run's layer setting and whether this stage may
+    place by it: ``galaxy.layer.compose`` reads both, so a stage that hands ``ctx.fields`` to a materialiser
+    hands the setting with it, and a stage that is neither a placement reader, a composing stage nor a layer
+    stage is refused a composed weight (invariant I4, checked in the graph and again here at run time)."""
+
+    __slots__ = ("layer", "placement")
+
+    def __init__(self, data: Mapping[str, Any], stage: Stage, layer: bool) -> None:
+        super().__init__(data, stage.requires, "field", stage.id, stage.requires_optional)
+        self.layer = bool(layer)
+        self.placement = stage.may_place
+
+
 class Context:
     """What a stage sees while computing. Built by the runner, one per stage."""
 
-    __slots__ = ("grid", "inputs", "seeds", "constants", "fields", "stage")
+    __slots__ = ("grid", "inputs", "seeds", "constants", "fields", "stage", "layer")
 
     def __init__(
         self,
@@ -131,13 +167,18 @@ class Context:
         seeds: Mapping[str, int],
         constants: Mapping[str, Any],
         fields: Mapping[str, Any],
+        *,
+        layer: bool = True,
     ) -> None:
         self.stage = stage
         self.grid = grid
+        # Whether the run composes the randomness layer (S55, D214): carried, never read here. A stage does not
+        # read it either - it asks galaxy.layer.compose, which answers with the neutral value when it is off.
+        self.layer = bool(layer)
         self.inputs = Restricted(inputs, stage.reads_inputs, "input", stage.id)
         self.seeds = Restricted(seeds, stage.reads_seeds, "seed", stage.id)
         self.constants = Restricted(constants, stage.reads_constants, "constant", stage.id)
-        self.fields = Restricted(fields, stage.requires, "field", stage.id, stage.requires_optional)
+        self.fields = FieldView(fields, stage, self.layer)
 
     def rng(self, seed_name: str, *path: _seeds.PathPart) -> np.random.Generator:
         """An independent stream for this stage under a declared seed.
@@ -173,6 +214,14 @@ class Stage:
     requires_optional: tuple[str, ...] = ()
     publishes: tuple[FieldDecl, ...] = ()
     extends: Stage | None = None  # the implementation whose fields this one republishes (S27)
+    # S55 (D214): the two declarations the graph holds invariant I4 with.
+    # A *layer stage* lives under galaxy/layer/ and publishes synthetic fields, all of them (D55 kept: one
+    # provenance per stage), and no other stage publishes one.
+    layer_stage: bool = False
+    # A *placement reader* is a census stage allowed to consume a composed placement weight or a synthetic
+    # field. Any other stage that requires one fails the graph, unless it composes (publishes a field declared
+    # composed) or is a layer stage itself.
+    placement_reader: bool = False
 
     def __post_init__(self) -> None:
         for attr in ("id", "slot"):
@@ -210,6 +259,9 @@ class Stage:
         selfdep = set(names) & (set(self.requires) | set(self.requires_optional))
         if selfdep:
             raise StageError(f"stage {self.id}: requires what it publishes: {sorted(selfdep)}")
+        for attr in ("layer_stage", "placement_reader"):
+            if not isinstance(getattr(self, attr), bool):
+                raise StageError(f"stage {self.id}: {attr} is True or False, got {getattr(self, attr)!r}")
         if self.extends is not None:
             self._check_extension(self.extends)
 
@@ -251,6 +303,25 @@ class Stage:
         return tuple(p.name for p in self.publishes)
 
     @property
+    def composes(self) -> bool:
+        """A *composing stage*: it publishes a field declared composed (``FieldDecl(composed=True, neutral=...)``),
+        a law applied to a realisation. It stays in ``stages/`` - its law is physics, and under ``layer/`` its
+        fields would be synthetic, which they are not (D214, gate G1 changes 3 and 4)."""
+        return any(p.composed for p in self.publishes)
+
+    @property
+    def may_place(self) -> bool:
+        """Whether this stage may consume a composed weight or a synthetic field (invariant I4)."""
+        return self.placement_reader or self.layer_stage or self.composes
+
+    @property
+    def home(self) -> str:
+        """The module this stage's compute is written in: an extension's is its own half's. What says whether a
+        stage lives under ``galaxy/layer/`` (D214 section 2)."""
+        compute = getattr(self.compute, "own", self.compute)
+        return str(getattr(compute, "__module__", "") or "")
+
+    @property
     def checkpoint_name(self) -> str:
         return CHECKPOINTS[self.checkpoint - 1]
 
@@ -272,7 +343,9 @@ class Extension:
         self.own = own
 
     def __call__(self, ctx: Context) -> Mapping[str, Any]:
-        inner = Context(self.base, ctx.grid, ctx.inputs, ctx.seeds, ctx.constants, ctx.fields)
+        # The base's own view: its own reads, and its own standing with the layer (a base that neither places
+        # nor composes cannot reach a composed weight through an extension that does).
+        inner = Context(self.base, ctx.grid, ctx.inputs, ctx.seeds, ctx.constants, ctx.fields, layer=ctx.layer)
         shared = dict(self.base.compute(inner))
         extra = dict(self.own(ctx, MappingProxyType(shared)))
         clash = sorted(set(extra) & set(shared))
@@ -294,6 +367,7 @@ def extend(
     requires: tuple[str, ...] = (),
     requires_optional: tuple[str, ...] = (),
     publishes: tuple[FieldDecl, ...] = (),
+    placement_reader: bool = False,
 ) -> Stage:
     """A second implementation of ``base``'s slot: the base's reads and fields, plus these."""
 
@@ -313,4 +387,5 @@ def extend(
         requires_optional=union(base.requires_optional, requires_optional),
         publishes=base.publishes + tuple(publishes),
         extends=base,
+        placement_reader=placement_reader,
     )

@@ -69,8 +69,10 @@ applied to a realisation.**
 
 1. **In the model, on its own seed** (`texture_seed`, a fifth seed): rerolling it changes placements and texture and
    nothing else. Never frame-seeded, never in the viewer's own code.
-2. **Conserving.** A synthetic field redistributes inside a ring or a cell; it never changes a total. Each declares
-   what it conserves (`FieldDecl.conserves`).
+2. **Conserving.** A synthetic field redistributes inside a ring or a cell. It changes no ring total of a field it
+   multiplies, and no expected count or expected total of a census it places; from L1, no realised ring total
+   either. Each declares what it conserves (`FieldDecl.conserves`), and a declaration states what it does not
+   keep, with the measured number. *(Amended at gate G1, D214: until then it read "it never changes a total".)*
 3. **Sourced statistics.** Its spectrum, contrast or correlation is a measured one, cited; its anisotropy comes from
    the model's own shear. Each declares the statistic (`FieldDecl.statistic`).
 4. **Labelled.** Each declares the physics it stands in for (`FieldDecl.stands_in_for`), so the day that physics is
@@ -80,19 +82,37 @@ applied to a realisation.**
 
 ### 1d. The invariants (machine-checked from Phase R on)
 
-- **I1.** With the layer off, the model runs, and every field without a φ axis and every scalar that is not a census
-  statistic is bit-identical to the layer-on run.
-- **I2.** A census's expected counts per ring are identical with the layer on or off; only placements differ.
+- **I1.** With the layer off, the model runs, and every field not declared composed — every scalar, every history,
+  every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
+  run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
+  which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
+  list is empty.
+- **I2.** A census's expected counts per ring — the numbers the draws are given, summed round the ring — are
+  identical with the layer on or off to 1e-12. Until L1 the realised counts, and every total summed over realised
+  objects, differ between the two runs by re-draw noise (measured S55: cloud mass −1.9 % galaxy-wide, up to 19 %
+  in a cell ring; cluster mass −5.8 %; HII Hα −8.1 %, up to 43 % in a ring; over six seeds −1.0 ± 1.7 %,
+  −2.2 ± 2.9 %, −2.1 ± 6.0 % — noise, not bias). From L1 a ring's objects are drawn on the ring's stream before
+  the layer places them, and the realised totals are identical too.
 - **I3.** The acceptance table is judged on the layer-off run. No row reads a synthetic field. (Rows 35 and 37 read
   the HII census and moved with S51's redraw; under I3 they stop moving with placement.)
-- **I4.** No physics stage requires a synthetic field, except the census stages, which consume composed placement
-  weights only and are declared *placement readers* in the graph.
+- **I4.** No physics stage requires a synthetic or composed field; the census stages consume composed placement
+  weights only and are declared placement readers. Placement also reaches physics through the realised
+  catalogues: the stages that bin realised objects (`nebular`, `bubbles`, by `cluster_radius`) are a closed list
+  in the test, and from L1 what they bin per ring does not depend on placement.
 - **I5.** The viewer and the API carry a switch: physics only, or physics with the layer.
+
+*I1, I2 and I4 were amended at gate G1 (S55, D214; ruling by Fable). As adopted they read: "every field without a φ
+axis and every scalar that is not a census statistic is bit-identical"; "expected counts per ring are identical
+with the layer on or off; only placements differ"; "no physics stage requires a synthetic field, except the census
+stages". The first two promised a conservation of realised totals that a census drawn cell by cell at a weighted
+expectation does not deliver; the ring-first draw that delivers it is L1's (S60).*
 
 ### 1e. Where things live
 
 `model/galaxy/stages/` stays the physics. `model/galaxy/layer/` is new: the noise primitives, the realisation
-stages, and `compose` (law × realisation → the (R, φ) fields and placement weights). `run(model, inputs,
+stages, and `compose` — the gate, law × realisation — lives in `layer/`; a law stays with its stage; a stage that
+publishes a composed field is a *composing stage*, declared so in the graph, and lives in `stages/` *(amended at
+G1, D214)*. `run(model, inputs,
 layer=True)`; every route takes `layer=off`. With the layer off the composed fields are their neutral value, 1.
 **Existing draw streams keep their seeds and their values** (Phase R is behaviour-preserving); `texture_seed` feeds
 only fields this build adds. **`basic` is frozen** (§7, ruling 7): it stays registered and is not merged; no phase
@@ -313,7 +333,8 @@ readout; goal metrics (dark covering fraction, point counts). **Agents:** three 
 - **The power is conserved, not the peak.** The amplitudes satisfy Σ_m A_m(R)² = A², A the single-mode amplitude
   the model publishes today (`arm_contrast`): the pattern's Fourier power is the sourced one, and the window says
   how it is split. One surviving mode returns today's field exactly.
-- **The realisation (synthetic):** each mode's phase, on `texture_seed`; one pitch for all modes until P4.
+- **The realisation (synthetic):** each mode's phase, on `texture_seed`; one pitch for all modes until P4. *(G1, D214: today there is no
+  phase draw at all — a fixed convention, ln R · cot(pitch); this is a new draw, and the convention is retired.)*
 - **The gas.** With ψ = (c − 1)/A the stellar pattern scaled to unit amplitude, the ridge is v = exp(κ ψ) over its
   ring mean (a fixed quadrature on the ring's cells), κ as S51 has it; the amplitude a(R) keeps S51's rule, the
   mask being the cells where ψ exceeds the level that encloses the same share of the ring the 1.5 kpc mask did.
@@ -385,8 +406,16 @@ and multiplies the clouds' expected counts; clusters inherit it through their cl
 20–100 Myr stars follow the same field with its finest octaves dropped as age grows. Its slope and amplitude are
 the sourced correlation function's; where the reading gives a range, the median, the range in the about.
 
+**Ordered here at gate G1 (S55, D214).** *The ring-first draw:* a ring's objects — its count and every per-object
+draw — are drawn on a ring stream before the layer places them; the layer assigns the cell and the azimuth. After
+it `tests/test_layer.py::CENSUS_STATISTICS` is empty and the realised ring totals are identical with the layer on
+or off (I2's second half). `cloud_texture` moves to `texture_seed`; the cloud's offset is bounded to its cell or
+the cluster is binned by its cloud's ring; whether `cloud_height` is a placement or a sample of the vertical
+profile is ruled. D60 (per-region determinism) must survive it: a cell's objects from the ring's draw and a
+fixed allocation, without materialising the ring's other cells' objects.
+
 **Gate:** the census's measured correlation function returns the sourced slope over the sourced range; I2; D60's
-per-region tests; the layer-off acceptance table bit-identical.
+per-region tests; the layer-off acceptance table bit-identical. After the ring-first draw: the realised ring totals identical on and off.
 
 **Agents:** one reader; builders for the field and clouds, the bright stars, the re-pins.
 

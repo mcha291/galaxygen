@@ -328,7 +328,7 @@ def test_the_ensemble_samples_the_diagonal_of_seed_space(prod):
     models, _, _ = prod
     m = models.get(DEFAULT_MODEL)
     seed_names = [n for n, i in INPUTS.items() if i.kind == "seed"]
-    assert len(seed_names) == 4
+    assert len(seed_names) == 5  # S55 (D214): was 4; texture_seed, the randomness layer's, which nothing reads yet
     # Harmless today: no published quantity depends on more than one seed, so the
     # diagonal and the marginal agree. The test is what notices if that changes.
     alone = float(run(m, {"pattern_seed": 3}, only=("bar_pattern_speed",)).fields["bar_pattern_speed"])

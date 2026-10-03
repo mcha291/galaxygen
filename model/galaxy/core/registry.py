@@ -244,7 +244,8 @@ class Registry(Generic[T]):
 
 
 # --- the closed input vector -------------------------------------------------
-# 7 controls, 4 seeds, 1 event list [verified: GALAXY_PLAN.md §8; GALAXY_INPUTS.md §3, §11].
+# 7 controls, 4 seeds, 1 event list [verified: GALAXY_PLAN.md §8; GALAXY_INPUTS.md §3, §11]; a fifth seed,
+# texture_seed, since S55 [verified: DECISIONS.md D214 section 3; BUILD_III.md section 1c].
 
 _INPUTS: tuple[Input, ...] = (
     Input(
@@ -455,6 +456,21 @@ _INPUTS: tuple[Input, ...] = (
         "hash(planets_seed, star_id).",
         default=0,
         checkpoint_hypothesis=6,
+    ),
+    Input(
+        "texture_seed",
+        "Texture seed",
+        "seed",
+        "Seeds the randomness layer: the realisations that stand in for physics the model does not compute - "
+        "where an arm's phase, a cloud complex or a filament lies. It feeds only the synthetic fields BUILD_III "
+        "adds, so rerolling it changes placements and texture and nothing else: no ring total of a field, no "
+        "expected ring total of a census, no radial field but the census statistics (what is summed over a "
+        "census's realised objects, which a placement re-draws until phase L1), no acceptance row. No stage "
+        "reads it until phase P1: its first reader is the arm modes' phases, at the pattern's checkpoint, and "
+        "until that stage exists the seed is accepted and moves nothing (D214). The draws that existed before "
+        "the layer keep the seeds they had: the four cloud texture columns are drawn on the systems seed until L1.",
+        default=0,
+        checkpoint_hypothesis=3,
     ),
 )
 

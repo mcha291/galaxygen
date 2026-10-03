@@ -1376,3 +1376,35 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [field] A second galaxy finds what the first cannot: the K light per unit mass and the frame's colour are the
   default galaxy's too, and no Milky Way row judges either (#135, #136; rows 25–28 not judged, #82).
 
+## From S55 (the separation; an Opus lead, three builders, a reviewer, Fable at gate G1)
+
+- [all] "Conserves a total" has to say which total: a census drawn cell by cell at a weighted expectation keeps
+  its *expected* ring totals under any redistribution of the weight and none of its realised ones. Draw a ring's
+  objects first and let the weight place them, or state the invariant on expectations and name what moves (D214,
+  gate G1; #137).
+- [audit] An independent reviewer that re-derives the reference instead of trusting it finds what the builders'
+  own tests cannot: the invariants' tests passed, and the measured realised totals (−1.9 % cloud mass, −8.1 % Hα)
+  were outside what any of them asserted. Give the reviewer the plan's sentences and ask for the gap (D214).
+- [audit] A test that exempts a class wholesale asserts nothing about it: I1's test skipped every object column
+  and every φ-axis field. Hold what is declared, and make the exemption a closed list of names with a reason each.
+- [all] Identify a kind by a declaration, not by a shape: "composed = has a φ axis" was true of three fields and
+  would have forced the next phase's shock profile to 1. A flag with its neutral value costs one line (D214).
+- [all] A constant is not a realisation: three numbers that are the same with the layer on and off were labelled
+  synthetic because a layer stage published them. A label follows what the quantity is, not where it lives (G1).
+- [close] Read the code before ruling on it: D214 said the arm phases "stay seeded on `pattern_seed`" and there is
+  no phase draw at all, only a convention. The reviewer caught it; the ruling is corrected in place, struck
+  through, with what it read.
+- [close] A behaviour-preserving phase needs its reference captured before the first edit and re-derived by
+  someone else afterwards: the builder committed a digest of every field and route from S54, and the reviewer
+  rebuilt it from the `s54` tag with `git archive` (D214).
+- [infra] A subagent cannot write a report file to the scratchpad ("return findings as text"): ask for the
+  findings as its final message and save them yourself.
+- [viewer] A switch the viewer sends belongs in one function on the way out and one check on the way back:
+  `layerQuery` is called once and every binary route compares the header's echo, so a loader added later cannot
+  draw a layered frame under "physics only" (D214).
+- [viewer] To keep a shader byte-identical while its numbers move into data, write the values into its source
+  and pin the text's hash; a uniform lets the compiler fold a literal differently (builder D, D214).
+- [field] Value noise divided by its pointwise standard deviation has unit variance at every point, so a sum of
+  octaves normalises exactly; the price is a staircase spectrum (0.04–0.08 dex of ripple). 24 bits of position,
+  not the construction, limit a float32 twin: keep lattice coordinates small (builder A, D214).
+

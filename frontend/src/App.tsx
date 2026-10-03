@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { PHOTOMETRIC } from "./galaxy/colors";
+import { PHYSICS_ONLY, layerQuery, onLayerFault } from "./galaxy/layer";
 import type { ComparePicture } from "./galaxy/PictureBeside";
 import { Exposure } from "./galaxy/Exposure";
 import type { FilterSetName } from "./galaxy/filters";
@@ -68,6 +69,19 @@ export function App() {
   };
   const pickPicture = (file: File | null) => setPicture(file ? { url: URL.createObjectURL(file), name: file.name } : null);
 
+  // "Physics only" (S55, D214: invariant I5's viewer half): the Galaxy view asks the model with the randomness
+  // layer off. Display state held here, not an input: it is no part of the workflow's query (so no template is
+  // "edited" by it and the run hash is unmoved), and it outlives the Galaxy tab, so "Edit galaxy" keeps it.
+  const [physicsOnly, setPhysicsOnlyState] = useState(false);
+  // A frame the API made under the other setting than the one asked for (galaxy/layer.ts): refused where it was
+  // read, and said here. Changing the switch asks again, so it clears what the last asking was told.
+  const [layerFault, setLayerFault] = useState<string | null>(null);
+  useEffect(() => onLayerFault(setLayerFault), []);
+  const setPhysicsOnly = (on: boolean) => {
+    setLayerFault(null);
+    setPhysicsOnlyState(on);
+  };
+
   useEffect(() => {
     const abort = new AbortController();
     loadFields(wf.model, abort.signal).then(setMeta).catch(() => undefined);
@@ -75,6 +89,12 @@ export function App() {
   }, [wf.model]);
 
   const query = wf.query;
+  // What the Galaxy view asks the model with: the workflow's query and, under "physics only", `layer=off`. The
+  // one place the parameter is added - the star sample below and every loader of the Galaxy tab take this query
+  // and no other. The staged Preview and the Science tab keep the workflow's own query: they show the model as
+  // it is generated, with the layer, whatever the switch says, and the hash line marks the switch on the Galaxy
+  // tab alone.
+  const galaxyQuery = query ? layerQuery(query, physicsOnly) : null;
   const current = wf.state?.cat.checkpoints.find((c) => c.n === wf.state!.current) ?? null;
   const last = wf.state?.cat.checkpoints.length ?? 0;
   // Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only.
@@ -94,14 +114,17 @@ export function App() {
   // The staged preview keeps its three stands; while the Galaxy view is at a template's camera it shows the oblique one.
   const previewPreset: Preset = preset ?? "oblique";
   const drawsStars = tab === "galaxy";
-  const sampleKey = drawsStars && query ? JSON.stringify(query) : null;
-  const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(query!, signal));
+  const sampleKey = drawsStars && galaxyQuery ? JSON.stringify(galaxyQuery) : null;
+  const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(galaxyQuery!, signal));
   const sample = galaxy.value;
 
   const seed = wf.state?.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
   // selector shows them; the default is the azimuthal one since S46 (D197).
-  const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}` : "";
+  // The hash is the input vector's, the workflow's query: the layer's switch is not an input and does not move
+  // it. While the Galaxy view is drawn physics only the line says so after the hash, in words.
+  const layerMark = physicsOnly && tab === "galaxy" ? ` · ${PHYSICS_ONLY}` : "";
+  const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}${layerMark}` : "";
   // The template the galaxy is, in every tab: its label, and "edited" once an input or the model has changed.
   const galaxyName = wf.template && wf.state ? templateLabel(wf.template, wf.edited) : "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
@@ -118,9 +141,21 @@ export function App() {
           Loading the model failed: {wf.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
         </p>
       )}
-      {galaxy.error && (
+      {galaxy.error && !layerFault && (
         <p className={styles.status}>
           Generation failed: {galaxy.error}. Check that the API is running (<code>uv run python -m galaxy.api</code>).
+        </p>
+      )}
+      {/* A frame refused for its layer setting is not drawn; with the star sample refused the panel that holds
+          the switch is gone too, so the way back is here. */}
+      {layerFault && (
+        <p className={styles.status} role="alert">
+          {layerFault}.{" "}
+          {physicsOnly && (
+            <button type="button" className={styles.footToggle} onClick={() => setPhysicsOnly(false)}>
+              draw the galaxy with the layer
+            </button>
+          )}
         </p>
       )}
       {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
@@ -148,7 +183,12 @@ export function App() {
             {galaxyName}
           </span>
         )}
-        <span className={styles.hash} title="Run hash of the input vector · model · world seed">{hash}</span>
+        <span
+          className={styles.hash}
+          title={`Run hash of the input vector · model · world seed${layerMark ? " · the Galaxy view is drawn with the randomness layer off (a display setting: no input, so the hash is the same)" : ""}`}
+        >
+          {hash}
+        </span>
         <span className={styles.spacer} />
         <div className={styles.segmented} role="tablist" aria-label="View">
           {tabs.map((t) => (
@@ -234,7 +274,7 @@ export function App() {
 
           {tab === "galaxy" && (
             <div className={styles.canvasStage}>
-              {meta && sample && query && (
+              {meta && sample && galaxyQuery && (
                 <GalaxyTab
                   meta={meta}
                   sample={sample}
@@ -243,7 +283,9 @@ export function App() {
                   onField={setField}
                   exposure={exposure}
                   onExposure={setExposure}
-                  query={query}
+                  query={galaxyQuery}
+                  physicsOnly={physicsOnly}
+                  onPhysicsOnly={setPhysicsOnly}
                   preset={preset}
                   onPreset={setPreset}
                   onEdit={() => setTab(EDIT_VIEW)}

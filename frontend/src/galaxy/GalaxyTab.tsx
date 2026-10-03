@@ -29,6 +29,7 @@ import { FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume"
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
+import { PHYSICS_ONLY } from "./layer";
 import { levelFor } from "./region";
 import { RegionVolume } from "./RegionVolume";
 import { FILTER_SETS, FILTER_SET_NAMES, type FilterSetName, curvesOf } from "./filters";
@@ -71,7 +72,20 @@ interface Props {
   /** "Compare with a picture" (T16 ii): a picture chosen from disk, set beside the render; null without one. */
   picture: ComparePicture | null;
   onPicture(file: File | null): void;
+  /**
+   * "Physics only" (S55, D214: invariant I5): the galaxy drawn from the physics model alone, the randomness layer
+   * off. The app's, so it outlives this tab; `query` above already carries it (`layer=off`, added in one place,
+   * App.tsx), so every loader here and below sends it without knowing of it. Display state, not an input.
+   */
+  physicsOnly: boolean;
+  onPhysicsOnly(on: boolean): void;
 }
+
+/** What the "physics only" switch says of itself. */
+const PHYSICS_ONLY_WHAT =
+  "Draw the physics model alone, the randomness layer off: no arm, bar or gas-ridge placement round a ring (the three azimuthal fields are 1), " +
+  "the censuses placed uniformly round each ring, and every cloud smooth inside. Each ring's totals are the same - mass, light, dust, star formation, " +
+  "expected counts - so this is the galaxy the acceptance rows are judged on. A display setting, not an input: the run hash and the template are unchanged.";
 
 /** A thumbnail that is not there (a template with no capture yet) leaves its button with the label alone. */
 const hideMissing = (e: { currentTarget: HTMLImageElement }) => {
@@ -200,6 +214,8 @@ export function GalaxyTab({
   selection,
   picture,
   onPicture,
+  physicsOnly,
+  onPhysicsOnly,
 }: Props) {
   // The zoom slider's ask belongs to the camera it was made of: a template chosen or a preset pressed is a fresh
   // camera at its own stand, and an ask made of the one before it must not move it (it did, for the presets,
@@ -210,6 +226,8 @@ export function GalaxyTab({
   const setZoom = (value: number) => setZoomAsk({ of: cameraKey, zoom: value });
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
+  // Why the region's clouds are drawn smooth inside, where it is not the switch's doing (RegionVolume, S55).
+  const [interiorNote, setInteriorNote] = useState<string | null>(null);
   // The template's camera and lens (D213 ruling 5): the view stands there while no preset is chosen, and keeps
   // the lens under a preset. Without templates (an API from before S54) the presets and the 45° lens, as before.
   const fov = template?.camera.fov_deg ?? DEFAULT_FOV;
@@ -462,7 +480,7 @@ export function GalaxyTab({
         )}
         {/* The region regime (V3, S40): the window's clouds, HII regions and shells, at the level the view needs. */}
         {mode === "field" && area && view && weights.stars > 0 && (
-          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} />
+          <RegionVolume query={query} window={area} level={level} clusters={regionClusters} stops={exposure} weight={weights.stars} filterSet={filterSet} whiteKelvin={whiteKelvin} onInterior={setInteriorNote} />
         )}
       </GalaxyView>
       </div>
@@ -518,6 +536,12 @@ export function GalaxyTab({
                 {m.label}
               </button>
             ))}
+          </div>
+          {/* The layer's switch (S55, I5), in either mode: off by default, the galaxy with its layer. */}
+          <div className={styles.pair}>
+            <button type="button" aria-pressed={physicsOnly} title={PHYSICS_ONLY_WHAT} onClick={() => onPhysicsOnly(!physicsOnly)}>
+              {PHYSICS_ONLY}
+            </button>
           </div>
           {/* The filter set is chosen in either mode (T22): the star-first mode's points and its component
               volumes are seen through it as the field is, and a line set (SHO, HOO) is what shows the ionized gas. */}
@@ -704,6 +728,10 @@ export function GalaxyTab({
                     : "Zoom in for stars."
               }`}
         </p>
+        {physicsOnly && (
+          <p className={styles.muted}>physics only: the randomness layer is off - no arm or bar is placed, the censuses lie uniformly round each ring, and each ring's totals are unchanged</p>
+        )}
+        {mode === "field" && interiorNote && <p className={styles.muted}>{interiorNote}</p>}
         {diagnostic && <p className={styles.muted}>diagnostic: shows where it is, not how it looks</p>}
         {mode === "stars" && marchOn && tuning.compDust && tuning.dustReading === "where" && (
           <p className={styles.muted}>

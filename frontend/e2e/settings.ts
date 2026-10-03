@@ -31,6 +31,36 @@ export const TOLERANCE = { threshold: 0.01, maxDiffPixelRatio: 0.001 };
 /** The mode buttons' labels under "Rendering" (GalaxyTab's MODES), by the capture list's mode names. */
 export const MODE_BUTTON = { field: "field", stars: "star-first" } as const;
 
+/**
+ * The layer's switch under "Rendering" (S55, D214: invariant I5), by its label - src/galaxy/layer.ts PHYSICS_ONLY,
+ * which tests/test_picture.py holds this to. A capture whose `layer` is "off" is taken with it pressed.
+ */
+export const PHYSICS_ONLY_BUTTON = "physics only";
+
+/**
+ * The routes that take an input vector, and so the layer's switch (the API's own list: every route but the
+ * declarations, the templates and the blackbody table). Under "physics only" every request to one of them carries
+ * `layer=off`; with the switch released none carries a `layer` parameter at all.
+ */
+export const INPUT_ROUTES = ["/api/arrays", "/api/region", "/api/system", "/api/render", "/api/clouds", "/api/clusters", "/api/remnants", "/api/bright"];
+
+/**
+ * How far the frame's summed linear light may move, per channel, when the layer is switched off (the spec reads
+ * the same view both ways through `__galaxygenFrameSum`). The model conserves each ring's totals, so the light
+ * emitted is the same. Measured at S55 on the Milky Way template, face-on, field mode, rgb: physics only over
+ * layered 1.00257, 1.00115, 0.99942 - a quarter of a percent at most. Why not exactly 1, measured the same day
+ * with the star-first mode's component switches (the points off, so the starlight volume is all the starlight):
+ * - **the starlight alone, the whole disc in the frame (45 kpc framed): 1.00003** in every channel - the totals
+ *   are conserved, to the march's quadrature;
+ * - **the frame's edge**: at the template's 20 kpc the disc runs past the frame, and what is cut off depends on
+ *   where round the ring the light lies - the starlight alone reads 1.0008 to 1.0013;
+ * - **the dust**: what it removes is not linear in its column, so the same dust and stars placed otherwise round a
+ *   ring lose another share - with the dust on, the whole disc in the frame, 1.0007, 0.9992, 0.9975.
+ * The bound is four times the capture's largest move: a layer that changed a ring's total would move the sum by
+ * far more than these two rearrangements do.
+ */
+export const LAYER_SUM_TOLERANCE = 0.01;
+
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
 export const SELECTION_TEXT = /every disc star in view above/;
 

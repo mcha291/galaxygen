@@ -48,6 +48,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, extend
+from galaxy.layer import compose as _compose
 from galaxy.stages.sfh import SFH, star_formation_rate
 
 
@@ -68,6 +69,9 @@ SFR_MODULATION = FieldDecl(
     name="sfr_modulation", label="Star formation modulation Ψ(R, φ)/Ψ(R)", unit="dimensionless",
     kind=Kind.FIELD, axes=("R", "phi"), ramp=Ramp("magma", scale="log"), meaningful_zero=True,
     optional=True, provenance="seeded",
+    # S55 (D214, gate G1 change 3): composed - the star formation law read through the gas's composed contrast -
+    # and 1 everywhere with the randomness layer off.
+    composed=True, neutral=1.0,
     about=(
         "Where around each ring today's stars form, relative to the ring's mean: the gas follows "
         "its own contrast, a narrow ridge on the stellar arm's crest (the stellar bar's term inside "
@@ -77,16 +81,25 @@ SFR_MODULATION = FieldDecl(
         "integrates back to the axisymmetric rate: the arms move where stars form, not how many. "
         "Sharper than the gas's contrast, because the law is steeper than linear, and sharpest "
         "where an arm lifts gas over a threshold the ring mean sits under. Only the azimuthal "
-        "model publishes it; its catalogue places the young stars by it."
+        "model publishes it; its catalogue places the young stars by it. A composed field: with the "
+        "randomness layer off it is 1 everywhere, and the young stars are placed as the old ones are, "
+        "evenly round each ring."
     ),
 )
 
 
 def compute_modulation(ctx: Context, shared: Mapping[str, Any]) -> Mapping[str, Any]:
+    # A composed field made from a composed field (S55, D214): this stage composes, it is not a physics stage,
+    # and every history above it is still sfh's own. With the layer off compose gives the declared neutral
+    # everywhere, exactly - the law run on a contrast of ones would give 1 only to rounding, a ring's mean of
+    # equal numbers.
     return {
-        "sfr_modulation": sfr_modulation(
-            shared["gas_surface_density"], shared["sf_threshold_surface_density"],
-            ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
+        "sfr_modulation": _compose.field(
+            ctx.fields, SFR_MODULATION, (ctx.grid.R.size, ctx.grid.phi.size),
+            lambda: sfr_modulation(
+                shared["gas_surface_density"], shared["sf_threshold_surface_density"],
+                ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
+            ),
         ),
     }
 

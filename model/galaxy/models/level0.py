@@ -676,6 +676,34 @@ LEVEL0: dict[str, Constant] = {
         "and Sect. 2.6.1], whose ratio is GAS_ARM_CONTRAST_GRAND_DESIGN's narrow-mask alternative. "
         "Coverage: the PHANGS-ALMA spirals given masks (28 of 74).",
     ),
+    # The cloud interior's noise (S55, DECISIONS.md D214 as ruled at gate G1, change 4): the three parameters of the
+    # function a renderer synthesises a cloud's interior with. **Constants of the model, not fields of any stage**:
+    # the same with the randomness layer on or off, so not "a realisation from the layer's seed". The layer's
+    # cloud_texture stage declares them; they reach the viewer in /api/clouds' header as cloud_interior (the gate's
+    # exception for a parameter of a function the viewer evaluates, rule D5 as amended), and nowhere else.
+    "CLOUD_INTERIOR_OCTAVES": Constant(
+        4,
+        "count",
+        "How many octaves of value noise a renderer sums to synthesise a molecular cloud's interior. The viewer's "
+        "own choice, none read, #110: it is the number the viewer held until S55 [verified: "
+        "frontend/src/galaxy/region.ts at tag s54, 'export const OCTAVES = 4'], published here because the "
+        "viewer may evaluate a function the model publishes and holds no parameter of its own. Until a spectrum "
+        "of cloud structure is read the noise's spectral index is unsourced and the debt stays open.",
+    ),
+    "CLOUD_INTERIOR_LACUNARITY": Constant(
+        2.0,
+        "dimensionless",
+        "The ratio of one octave's spatial frequency to the last one's in the cloud-interior noise: two, so four "
+        "octaves stand at one, two, four and eight cycles per cloud radius. The viewer's own choice, none read, "
+        "#110 [verified: frontend/src/galaxy/region.ts at tag s54, 'frequencies 1, 2, 4, 8 per unit'].",
+    ),
+    "CLOUD_INTERIOR_GAIN": Constant(
+        0.5,
+        "dimensionless",
+        "The ratio of one octave's amplitude to the last one's in the cloud-interior noise: a half, so four "
+        "octaves weigh one, a half, a quarter and an eighth. The viewer's own choice, none read, #110 [verified: "
+        "frontend/src/galaxy/region.ts at tag s54, 'weights 1, 1/2, 1/4, 1/8'].",
+    ),
     "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
         2.73,
         "dimensionless",

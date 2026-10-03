@@ -28,14 +28,13 @@ import { type Census, type Query, type RenderFrame, loadClouds, loadRemnants, lo
 import { useLoad } from "../useLoad";
 import { LIGHT_PER_LSUN_PC2 } from "./FieldVolume";
 import { type FilterSetName, WHITE_KELVIN, curvesOf, whiteOf } from "./filters";
-import { FIELD_SIGMA, type LineWeights, MAX_OBJECTS, OBJECT_FLOATS, OCTAVES, packObjects, sortedFrom } from "./region";
+import { echoedLayer } from "./layer";
+import { type LineWeights, MAX_OBJECTS, OBJECT_FLOATS, cloudInterior, packObjects, regionFragment, sortedFrom } from "./region";
 import type { RegionWindow } from "./regimes";
 
 /** The most pixels the region is marched at (as FieldVolume's budget): the loop over objects runs per pixel. */
 const PIXEL_BUDGET = 400_000;
 const MAX_RESOLUTION = 0.5;
-/** Samples of a cloud's density along each chord through it. */
-const CLOUD_SAMPLES = 4;
 
 const COMPOSITE_VERTEX = /* glsl */ `
   varying vec2 vUv;
@@ -59,115 +58,8 @@ const VERTEX = /* glsl */ `
   }
 `;
 
-// region.ts's hash3 / valueNoise / unitField / densityRatio, line for line in 32-bit unsigned arithmetic, so the
-// shader draws the field the vitest measures (the float32 division at the end differs from float64 at 1e-7).
-const FRAGMENT = /* glsl */ `
-  precision highp float;
-  precision highp int;
-  uniform sampler2D objects;
-  uniform int count;
-  uniform vec3 lineWeight;
-  uniform vec3 extRatio;
-  uniform float gain;
-  uniform float weight;
-  uniform int mode;
-  varying vec3 vWorld;
-
-  float hash01(int x, int y, int z, int seed) {
-    uint h = uint(x) * 374761393u + uint(y) * 668265263u + uint(z) * 2147483647u + uint(seed) * 1597334677u;
-    h = (h ^ (h >> 13u)) * 1274126177u;
-    h = h ^ (h >> 16u);
-    return float(h) / 4294967296.0;
-  }
-  float valueNoise(vec3 p, int seed) {
-    vec3 i = floor(p);
-    vec3 f = p - i;
-    vec3 s = f * f * (3.0 - 2.0 * f);
-    int ix = int(i.x), iy = int(i.y), iz = int(i.z);
-    float c000 = hash01(ix, iy, iz, seed), c100 = hash01(ix + 1, iy, iz, seed);
-    float c010 = hash01(ix, iy + 1, iz, seed), c110 = hash01(ix + 1, iy + 1, iz, seed);
-    float c001 = hash01(ix, iy, iz + 1, seed), c101 = hash01(ix + 1, iy, iz + 1, seed);
-    float c011 = hash01(ix, iy + 1, iz + 1, seed), c111 = hash01(ix + 1, iy + 1, iz + 1, seed);
-    float x00 = c000 + (c100 - c000) * s.x;
-    float x10 = c010 + (c110 - c010) * s.x;
-    float x01 = c001 + (c101 - c001) * s.x;
-    float x11 = c011 + (c111 - c011) * s.x;
-    float y0 = x00 + (x10 - x00) * s.y;
-    float y1 = x01 + (x11 - x01) * s.y;
-    return y0 + (y1 - y0) * s.z;
-  }
-  float unitField(vec3 p, int seed) {
-    float sum = 0.0;
-    float f = 1.0;
-    float w = 1.0;
-    for (int k = 0; k < ${OCTAVES}; k++) {
-      vec3 q = p * f + vec3(17.3, 31.7, 47.1) * float(k);
-      sum += (valueNoise(q, seed + 1013 * k) - 0.5) * w;
-      f *= 2.0;
-      w *= 0.5;
-    }
-    return sum / ${FIELD_SIGMA.toFixed(6)};
-  }
-  float densityRatio(vec3 p, int seed, float sigmaS, float gradient, float angle) {
-    float g = unitField(p, seed);
-    float tilt = max(0.05, 1.0 + min(0.95, abs(gradient)) * (p.x * cos(angle) + p.z * sin(angle)));
-    return tilt * exp(sigmaS * g - 0.5 * sigmaS * sigmaS);
-  }
-
-  vec4 obj(int i, int row) { return texelFetch(objects, ivec2(row, i), 0); }
-  bool sphere(vec3 o, vec3 d, vec3 c, float r, out float t0, out float t1) {
-    vec3 oc = o - c;
-    float b = dot(oc, d);
-    float h = b * b - (dot(oc, oc) - r * r);
-    if (h < 0.0) { t0 = 0.0; t1 = 0.0; return false; }
-    h = sqrt(h);
-    t0 = max(-b - h, 0.0);
-    t1 = -b + h;
-    return t1 > t0;
-  }
-
-  void main() {
-    vec3 origin = cameraPosition;
-    vec3 dir = normalize(vWorld - cameraPosition);
-    vec3 light = vec3(0.0);
-    vec3 trans = vec3(1.0);
-    for (int i = 0; i < ${MAX_OBJECTS}; i++) {
-      if (i >= count) break;
-      vec4 a = obj(i, 0);
-      vec4 b = obj(i, 1);
-      vec4 c = obj(i, 2);
-      vec4 e = obj(i, 3);
-      float t0, t1;
-      if (!sphere(origin, dir, a.xyz, a.w, t0, t1)) continue;
-      int kind = int(b.x + 0.5);
-      if (kind == 1) {
-        // An HII region: uniform emissivity (L_sun/pc^3) over the chord in pc - brighter toward the limb for free -
-        // in its own colour per unit Halpha, every line it carries through the filters (S42).
-        light += trans * c.x * (t1 - t0) * 1000.0 * c.yzw;
-      } else if (kind == 2) {
-        // A shell: the chord through the sphere less the chord through its hollow.
-        float i0, i1;
-        float inner = sphere(origin, dir, a.xyz, max(a.w - c.y, 0.0), i0, i1) ? i1 - i0 : 0.0;
-        light += trans * c.x * ((t1 - t0) - inner) * 1000.0 * lineWeight;
-      } else {
-        // A cloud: the published mean column made log-normal by its own seeded field; inside its cluster's cavity
-        // only the clumps denser than e^sigma survive - the pillars (HANDOFF_S40 R3).
-        int seed = ((int(b.y) & 0xffff) << 15) ^ (int(b.z) & 0x7fff);
-        float ds = (t1 - t0) / float(${CLOUD_SAMPLES});
-        float tau = 0.0;
-        for (int k = 0; k < ${CLOUD_SAMPLES}; k++) {
-          vec3 p = origin + dir * (t0 + (float(k) + 0.5) * ds);
-          float rho = densityRatio((p - a.xyz) / a.w, seed, b.w, c.x, c.y);
-          if (e.w > 0.0 && length(p - e.xyz) < e.w && rho < exp(b.w)) rho = 0.0;
-          tau += c.z * rho * ds;
-        }
-        trans *= exp(-tau * extRatio);
-      }
-    }
-    if (mode == 0) gl_FragColor = vec4(light * gain, 1.0);
-    else gl_FragColor = vec4(mix(vec3(1.0), trans, weight), 1.0);
-  }
-`;
+// The march's fragment shader is region.ts's `regionFragment`: built for the census it draws, with the cloud
+// interior's noise as that census's header publishes it (S55, D214 §5), or smooth where there is none to draw.
 
 interface Props {
   query: Query;
@@ -182,6 +74,12 @@ interface Props {
   filterSet?: FilterSetName;
   /** The white point, K (the Tuning panel's, D199): the same one the field is drawn with. */
   whiteKelvin?: number;
+  /**
+   * Told why the clouds' interiors are drawn smooth where that is not the layer's switch (S55): the model publishes
+   * no noise, or one the viewer's normaliser was not measured for. Null while they are drawn as published, while
+   * the layer is off, and when the volume goes.
+   */
+  onInterior?: (note: string | null) => void;
 }
 
 /**
@@ -191,7 +89,7 @@ interface Props {
  * of a cloud included (an approximation of the composite, stated in HANDOFF_S40). The line's per-filter weight and
  * the dust's extinction ratios are the model's (`/api/render` at the region's level), the white point the viewer's.
  */
-export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN }: Props) {
+export function RegionVolume({ query, window, level, clusters, stops, weight, filterSet = "rgb", whiteKelvin = WHITE_KELVIN, onInterior }: Props) {
   const place = { ...window, level };
   const key = JSON.stringify([place, query]);
   const clouds = useLoad<Census>(key, (signal) => loadClouds(place, query, signal)).value ?? null;
@@ -220,6 +118,10 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
     const texture = new DataTexture(new Float32Array(MAX_OBJECTS * OBJECT_FLOATS), 4, MAX_OBJECTS, RGBAFormat, FloatType);
     texture.minFilter = NearestFilter;
     texture.magFilter = NearestFilter;
+    // The clouds' interiors (S55): the noise this census's own header publishes, or smooth - the physics alone
+    // where the header says the layer is off, and where there is no noise the viewer can evaluate (said in `note`).
+    const interior = cloudInterior(echoedLayer(clouds.header) === "off", clouds.header);
+    const fragment = regionFragment(interior.noise);
     const material = (mode: number) =>
       new ShaderMaterial({
         uniforms: {
@@ -232,7 +134,7 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
           mode: { value: mode },
         },
         vertexShader: VERTEX,
-        fragmentShader: FRAGMENT,
+        fragmentShader: fragment,
         side: BackSide,
         depthTest: false,
         depthWrite: false,
@@ -246,8 +148,15 @@ export function RegionVolume({ query, window, level, clusters, stops, weight, fi
       m.frustumCulled = false;
       return m;
     });
-    return { table, texture, meshes, sorted: new Float32Array(MAX_OBJECTS * OBJECT_FLOATS) };
+    return { table, texture, meshes, sorted: new Float32Array(MAX_OBJECTS * OBJECT_FLOATS), note: interior.note };
   }, [clouds, clusters, remnants, rendered]);
+
+  // Why the interiors are smooth, where it is not the switch: said on the page by the tab, unsaid when this goes.
+  const note = built?.note ?? null;
+  useEffect(() => {
+    onInterior?.(note);
+    return () => onInterior?.(null);
+  }, [note]); // eslint-disable-line react-hooks/exhaustive-deps -- the tab's setter; the note is what changes
 
   const gl = useThree((state) => state.gl);
 

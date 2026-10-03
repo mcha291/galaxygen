@@ -51,6 +51,7 @@ from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.feedback import star_bubble_radius
@@ -596,7 +597,9 @@ def materialise(
     ])
     ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
 
-    pattern = ArmPattern.from_fields(fields)
+    # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
+    # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
+    pattern = _compose.stellar_pattern(fields)
     parents = None if cells is None else sorted({parent_of(int(c), level)[0] for c in cells}) if level else cells
     counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, parents, pattern)
 
@@ -619,8 +622,9 @@ def materialise(
     churn = Churn(R, t, fields["sfr_surface_density_history"], ring_index, migration)
     # Where stars form today, when the model publishes it (the azimuthal model, S27): read
     # optionally, so the same stage draws both models' catalogues, and tabulated over every
-    # ring and sector for the same reason the arrival law is (D60).
-    table = fields.get("sfr_modulation")
+    # ring and sector for the same reason the arrival law is (D60). A composed weight, so it comes from
+    # compose (S55): none with the layer off, and the catalogue is drawn as a model without the field draws it.
+    table = _compose.placement_weight(fields, "sfr_modulation")
     young = (
         None if table is None
         else YoungStars(Modulation(table, R), pattern, churn.arrive, t, edges, cell_edges(R)[1])
@@ -1057,6 +1061,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
             "drawn by inverting densities the model already published."
         ),
         compute=compute_systems,
+        placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
         reads_inputs=("migration_efficiency",),
         requires=(

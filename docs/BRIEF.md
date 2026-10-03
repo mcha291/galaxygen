@@ -1,58 +1,60 @@
-# BRIEF — for S55: BUILD_III's Phase R, the separation; it ends at gate G1 (an Opus lead)
+# BRIEF — for S56: BUILD_III's Phase P1, several arm modes at once; the gas follows any pattern (an Opus lead)
 
-**The state (2026-10-04).** S54 is merged (D213): two templates as data, `template=` on every route that takes
-inputs, `/api/templates`, the viewer's switcher and a lens per template. `ngc_4414` is fitted on four free controls
-(the gate's rule: a control is free only if a target measures it); **all five of its checks miss, disclosed, debts
-#132–#136**. The 37 rows are unmoved: 12 / 20 / 5. Register 74 open = 11 + 63, 45 discharged. Numbers from D214,
-#137, row 38, board row 55. **The owner's standing order (2026-10-03): run the sessions back to back, stop only for
-a ruling that is the owner's, spawn Fable subagents at the plan's gates.**
+**The state (2026-10-04).** S55 is merged (D214): the physics model and the randomness layer are separate in the
+code. `run(layer=)` and `layer=off` on every route; `galaxy/layer/` holds `noise.py` (the primitives and 632
+committed vectors, read by nothing yet), `compose.py` (the one place that tests the switch) and the layer stage
+`cloud_texture`; the 37 rows and the template checks are judged layer-off; the viewer has "physics only". Gate G1
+ruled the invariants hold on **expected** totals until L1 (#137). Rows layer-off: 35 −2.081 (passes), 37 −0.1030
+(a miss); 12 / 20 / 5. Register 75 open = 11 + 64, 45 discharged. Numbers from D215, #138, row 38, board row 56.
+**The owner's standing order: run the sessions back to back, stop only for a ruling that is the owner's, spawn
+Fable at the plan's gates.**
 
 ## First
-`uv run python tools/bootstrap.py`. S54's close ran the suite (`EXIT=0`) and `verify_clone` on `main`.
-**Read `BUILD_III.md` §1 (all of it), "Phase R" in §5, Appendix A's A10 text and Appendix B: that is the ruling.**
+`uv run python tools/bootstrap.py` (S55's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md` §1 (as amended at G1), "Phase P1" in §5 and Appendix B: that text is the ruling.** P1 has no
+planned gate; a conditional one opens only if the probe contradicts §5 (BUILD_III §3d).
 
-## Phase R in one paragraph
-A behaviour-preserving restructure: **with the layer on, every published number is bit-identical to today's.**
-`synthetic` joins the provenance vocabulary; `FieldDecl` gains `stands_in_for`, `conserves`, `statistic`, required
-for synthetic fields; `texture_seed` joins the seeds and binds at the layer's earliest reader;
-`model/galaxy/layer/` holds the noise primitives (built and tested first: a point-evaluable lattice noise in
-32-bit integer arithmetic a GLSL twin can match, octaves to a stated slope, a shear transform, a unit-mean
-log-normal map per cell, committed test vectors), `compose`, and the `layer` switch through `run`, every route and
-`galaxy.specs`; invariants I1–I5 as tests; Appendix B's relabels (four cloud columns and the viewer's cloud noise:
-synthetic, their debts #95 and #110 still open); `basic` as the layer-off oracle, once.
+## Phase P1 in one paragraph (the plan's ruling; build to it)
+At each radius the weight of arm number m is the existing `swing_weight` at the *local* swing parameter X_m(R)
+(today's named alternative in `pattern.py` becomes the law; m = 2–6; no new constant). **Power is conserved, not
+the peak:** Σ_m A_m(R)² = A², A today's single-mode amplitude; one surviving mode returns today's field exactly.
+The realisation, *synthetic*: each mode's phase, a **new draw on `texture_seed`** — G1 found there is no phase
+draw today, only the convention ln R · cot(pitch), so nothing is "moved". The gas: with ψ = (c − 1)/A the stellar
+pattern scaled to unit amplitude, the ridge is exp(κψ) over its ring mean, S51's κ and amplitude rule, the mask
+the cells where ψ exceeds the level that encloses the share of the ring the 1.5 kpc mask did; **with one mode it
+is S51's field to 1e-9, the regression gate.** The arm-number draw retires (Appendix B); the pitch's, the
+amplitude's and the bar's scatter stay seeded.
 
-## Before any builder starts: pin down what "layer off" turns off today
-BUILD_III §1e says "with the layer off the composed fields are their neutral value, 1", and Phase R's gate says
-rows 35 and 37 "move to their uniform-placement values" and that layer-off `azimuthal` equals `basic` field for
-field. Appendix B relabels only the cloud columns. **So the switch is wider than the fields labelled synthetic
-today: it neutralises the placement weights the censuses read** (the stellar and gas contrasts, `sfr_modulation`),
-whose realisations (the arm phases) become synthetic only at P1. Read the code (`systems.py`, `bright.py`,
-`clouds.py`, `sfh_azimuthal.py`, `gas_pattern.py`, the render) and write, as D214's first commit, exactly which
-fields are composed, what each is with the layer off, and what I1's "field without a φ axis" covers. **If the
-plan's sentences cannot all hold at once, that is a stop condition: put it in the G1 handoff, do not choose.**
+## The order
+1. **A probe, repo unchanged, before any build** (BUILD_III §3g): the split of power among m = 2–6 by radius at
+   the defaults and at `ngc_4414`'s inputs, and the single-mode limit. If it contradicts the plan's text — a
+   degenerate split, no single-mode limit for the field or the ridge — **stop and write the handoff.**
+2. **One reader (a check, not an input):** Fourier amplitude spectra of spirals by arm number and radius, set
+   beside the law's split in D215. Blind to the model's split.
+3. **D215's ruling committed first**, then builders (§3f): the mode law; the realisation (the phases, a layer
+   stage, the first reader of `texture_seed` — remove `graph.UNREAD_BY_RULING`'s one entry, the test that guards
+   it says so); the gas response; the catalogues' re-pins. Then an Opus reviewer on the diff.
 
-## Agents (BUILD_III §3f), then the gate
-Builder A: `layer/` primitives, their tests and vectors. Builder B: provenance, `FieldDecl`, the graph's
-*placement readers* (I4), the switch through `run`, the API (`layer=off`) and the specs (I3: the acceptance table
-and the template checks judged layer-off). Builder C: Appendix B's relabels. Then an Opus reviewer reads the three
-diffs against I1–I5; its findings go into `docs/HANDOFF_S55.md` (150 lines at most) with the numbered questions:
-do the invariants, as tested, mean what §1d says; is anything labelled synthetic that is physics, or the reverse.
-**Spawn Fable on the handoff (one turn, it reads the handoff and five ranges, runs nothing); transcribe its answer
-into D214; fix to it; merge only after.**
+**Gate:** ring means 1; the single-mode regression (1e-9); a Fourier decomposition of the composed field returns
+the published amplitudes; I1–I3 (`tests/test_layer.py`; a new composed field declares itself and its neutral);
+the goals' azimuthal spectra beside the render's (`tools/goal_metrics.py`; S53's and S54's tables the baseline).
+
+## What changes for everything downstream (say so in D215)
+- **With the layer on, the default galaxy changes**: several modes replace one, the censuses are re-placed, the
+  six layered frames change (regenerate with `picture:update`, and say so). Layer-off nothing may move: the 37
+  rows, the template checks and every radial field are judged there and must be bit-identical to S55's.
+- The phases are the first field on `texture_seed`: rerolling it changes placements and nothing else (§1c rule 1).
+  `ngc_4414`'s picture changes with the modes; its fit and its checks may not (D213).
 
 ## Traps
-- `tests/test_templates.py` fails when a seed is registered: give both templates their `texture_seed` (0 and 4414).
-  The viewer sends the full explicit input vector, so a new seed reaches it through `/api/inputs`.
-- No stream changes its seed or its value: the relabels are labels. A re-pin in this phase means something moved.
-- A census row (35, 37) is read layer-off once and re-pinned once, with the reason; nothing else in the table moves.
-- `basic` is frozen: where a `basic`-parametrised test would need work, narrow it to `azimuthal` and say so in D214.
-- The picture test's six frames must stay byte-identical (the layer is on by default): `npm --prefix frontend run picture`.
-- An Agent worktree is cut from `main`: commit the ruling first; a builder's first step is `git merge --ff-only
-  session-55`, then bootstrap. Worktrees rewrite `core.hooksPath`: bootstrap before the closing suite.
-- No third fit of `ngc_4414` (D213, forbidden); no unspent NGC 4414 window is read.
-- Scripts go in the scratchpad, never `$TMP`; Python writes CRLF (`newline="\n"`); a Bash command over 8 KB is cut.
-- Editing the register or the board while the suite runs fails `test_progress` alone: `tools/progress.py`.
+- A composed field is a declaration (`composed`, `neutral`), not a φ axis (G1). A pattern object is built only
+  through `layer/compose.py`; a source test refuses `ArmPattern(` / `GasPattern(` / `.from_fields(` elsewhere.
+- `CENSUS_STATISTICS` (fourteen names) is closed: a fifteenth is a finding. Rows 35 and 37 must not move here.
+- No third fit of `ngc_4414`, no unspent NGC 4414 window read (D213). No ring-first draw here: it is L1's.
+- A builder's first step is `git merge --ff-only session-56`, then bootstrap (again before the closing suite).
+  A subagent cannot write a report file: ask a reviewer for its findings as its final message.
+- Scripts in the scratchpad, never `$TMP`; LF newlines; `tests/test_audit.py` pins the register's counts.
 
-## Owed to the owner (asked at S54's close; nothing waits on it)
-A second fit of `ngc_4414` on the reader's own split (M_K and HI in the fit), as a probe, or fit B for the rest
-of the build? Until the owner says, fit B stands and #134 stays carried.
+## Owed by the owner — S56 does not build until the second is answered
+1. A second fit of `ngc_4414` on the reader's own split, as a probe — or fit B for the rest of the build?
+2. Rule A10's last sentence amended to "expected ring totals until L1" — or the ring-first draw brought forward,
+   before P1? **The answer orders the sessions: "bring it forward" puts L1's ring-first draw ahead of this phase.**

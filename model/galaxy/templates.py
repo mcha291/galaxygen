@@ -456,7 +456,9 @@ NGC_4414 = Template(
         "halo_assembly_z": 0.5,  # bound: the lower bound of its range, a finding and not a fit (Fit.bounds, debt #132)
         "baryon_retention": 0.4918931810399049,
     },
-    seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414},
+    # texture_seed since S55 (D214 section 3): the randomness layer's seed, the catalogue number as the rest are.
+    # No stage reads it yet, so it moves no number of this template until BUILD_III's phase P1.
+    seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414, "texture_seed": 4414},
     mergers=(),
     camera=Camera(inclination_deg=55.0, azimuth_deg=0.0, radius_kpc=15.0, fov_deg=5.0),
     filters="wfc3",
@@ -645,6 +647,11 @@ NGC_4414 = Template(
     sources={
         **{f"inputs.controls.{name}": _FITTED for name in ("halo_mass", "disc_spin", "halo_assembly_z", "baryon_retention")},
         **{f"inputs.seeds.{name}": _SEED for name in ("world_seed", "pattern_seed", "systems_seed", "planets_seed")},
+        "inputs.seeds.texture_seed": (
+            "[inferred] a seed has no measured value and none is chosen for the picture: the randomness layer's "
+            "seed is the catalogue number, 4414, as every seed of this template is "
+            "[verified: DECISIONS.md D214, section 3: both templates gain it, 0 and 4414]"
+        ),
         "inputs.mergers": (
             "[verified: DECISIONS.md D213, ruling 4: no merger of NGC 4414 was read, and what nothing measures is "
             "not invented - the list is empty and not the Milky Way's two events]"

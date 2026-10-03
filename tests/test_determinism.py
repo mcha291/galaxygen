@@ -88,7 +88,10 @@ def test_the_spec_checks_reproducibility_across_processes_too(prod):
     """Debt #40, fixed at S12: the spec ran both halves in one interpreter; now two, under two hash seeds."""
     assert determinism.check_reproducible_across_processes(DEFAULT_MODEL) == []
     rep = determinism.report(*prod)
-    assert rep.count("across processes") == len(prod[0]) == 2 and "FAIL" not in rep  # one per model; two since S27
+    # One per model and per setting of the randomness layer: two models since S27, both settings since S55 (D214)
+    # - was 2, one per model, until the spec covered the layer-off run.
+    assert rep.count("across processes") == 2 * len(prod[0]) == 4 and "FAIL" not in rep
+    assert rep.count("layer on: reproducible across processes") == rep.count("layer off: reproducible across processes") == 2
     # A synthetic model is not a production one and is checked in-process only.
     s = stage("s", ("f",), compute=lambda ctx: {"f": np.zeros(ctx.grid.shape(("R",)))})
     assert not determinism._is_production(model("m", s))

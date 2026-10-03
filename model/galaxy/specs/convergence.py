@@ -113,9 +113,12 @@ def sweep(
     base: GridSpec = DEFAULT,
     **run_kwargs: object,
 ) -> Report:
-    """Every published acceptance scalar of ``model`` at every grid of every sweep."""
+    """Every published acceptance scalar of ``model`` at every grid of every sweep, read as the table reads
+    them: on the layer-off run (``spec.judged``, invariant I3)."""
     from galaxy.run import run
+    from galaxy.specs.spec import judged
 
+    run_kwargs = judged(run_kwargs)
     rep = Report()
     fields = tuple(q.field for q in QUANTITIES if q.field is not None)
     at_default = run(model, grid=base, only=fields, **run_kwargs)

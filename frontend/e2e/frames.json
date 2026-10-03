@@ -29,6 +29,16 @@
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
+    "milky_way-physics-only": {
+      "file": "e2e/frames/milky_way-physics-only.png",
+      "template": "milky_way",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 546974,
+      "sha256": "29b842959a29f23fc07fb63326aa6e0c254790babb5fe01a3756b5e0b4e4c53b",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
     "milky_way-thumbnail": {
       "file": "public/templates/milky_way.png",
       "template": "milky_way",

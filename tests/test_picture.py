@@ -6,7 +6,9 @@ each template's thumbnail in ``frontend/public/templates/``, which the app's swi
 development instrument (BUILD_III section 7, rulings 6 and 10; the precedent is ``tools/shot.py``): nothing
 in this suite depends on a browser being installed, and CI has none. What is checked here is what can be
 checked without one: the capture list is well formed and holds each template in both modes and once as a
-thumbnail, every capture has its picture at the stated size where the list says it is, the record beside
+thumbnail - and, since S55 (D214: invariant I5), the default template once with the randomness layer off, taken
+through the viewer's "physics only" switch - every capture has its picture at the stated size where the list
+says it is, the record beside
 the frames describes those very files, the list's cameras and filter sets are the templates' own, and
 Playwright stays a development tool of the frontend - not a dependency of the viewer, not imported by it,
 and unknown to the model.
@@ -42,10 +44,13 @@ THUMBNAILS = FRONTEND / "public" / "templates"  # where the app serves a templat
 TEMPLATE = re.compile(r"[a-z0-9]+(_[a-z0-9]+)*")  # src/workflow/templates.ts NAME: a path segment of its thumbnail
 NAME = re.compile(r"[a-z0-9]+(_[a-z0-9]+)*(-[a-z0-9]+)+")  # <template>-<what the picture is>
 ENTRY_KEYS = {"name", "template", "camera", "mode", "filters", "viewport", "file"}
-OPTIONAL_KEYS = {"pending"}
+OPTIONAL_KEYS = {"pending", "layer"}
 CAMERA_KEYS = {"inclination_deg", "azimuth_deg", "radius_kpc", "fov_deg"}
 MODES = {"field", "stars"}  # the spec's MODE_BUTTON: the Rendering buttons "field" and "star-first"
 THUMBNAIL = "thumbnail"  # a thumbnail's capture is named <template>-thumbnail
+PHYSICS_ONLY = "physics-only"  # the layer-off capture is named <template>-physics-only (S55, D214: invariant I5)
+# The spec's tests that are not captures: "physics only on the wire" (every request shape under the switch).
+WIRE_TESTS = 1
 PLAYWRIGHT = "@playwright/test"
 
 
@@ -70,6 +75,11 @@ def filter_sets() -> dict:
 
 def is_thumbnail(c: dict) -> bool:
     return c["file"].startswith("public/")
+
+
+def layer_off(c: dict) -> bool:
+    """A capture taken with the viewer's "physics only" switch pressed: the list's `layer` is "off" (absent: on)."""
+    return c.get("layer") == "off"
 
 
 def png_size(path: Path) -> tuple[int, int]:
@@ -116,6 +126,10 @@ def test_the_capture_list_is_well_formed():
             assert c["file"] == f"e2e/frames/{c['name']}.png", f"{c['name']}: {c['file']}"
         if "pending" in c:
             assert isinstance(c["pending"], str) and c["pending"].strip(), c["name"]
+        # The layer is named only where it is off, and the capture's name says so: every other entry omits the key.
+        if "layer" in c:
+            assert c["layer"] == "off", f"{c['name']}: layer {c['layer']!r}; a capture with the layer on omits the key"
+        assert layer_off(c) == (c["name"] == f"{c['template']}-{PHYSICS_ONLY}"), f"{c['name']}: layer {c.get('layer')!r}"
 
 
 def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
@@ -125,7 +139,8 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
         by_template.setdefault(c["template"], []).append(c)
     assert {"milky_way", "ngc_4414"} <= set(by_template), f"the list's templates: {sorted(by_template)}"
     for template, listed in by_template.items():
-        frames = [c for c in listed if not is_thumbnail(c)]
+        # The frames with the layer, the viewer's default: the layer-off capture is held by its own test below.
+        frames = [c for c in listed if not is_thumbnail(c) and not layer_off(c)]
         thumbnails = [c for c in listed if is_thumbnail(c)]
         assert sorted(c["mode"] for c in frames) == sorted(MODES), f"{template}: frames in modes {[c['mode'] for c in frames]}"
         assert len(thumbnails) == 1, f"{template}: {len(thumbnails)} thumbnails"
@@ -138,6 +153,28 @@ def test_the_list_holds_each_template_in_both_modes_and_once_as_a_thumbnail():
     milky_way, ngc = by_template["milky_way"][0], by_template["ngc_4414"][0]
     assert (milky_way["camera"]["inclination_deg"], milky_way["camera"]["fov_deg"], milky_way["filters"]) == (0, 45, "rgb")
     assert (ngc["camera"]["inclination_deg"], ngc["camera"]["fov_deg"], ngc["filters"]) == (55, 5, "wfc3")
+
+
+def test_the_list_holds_one_capture_with_the_layer_off_through_the_real_switch():
+    """S55 (D214: invariant I5's viewer half): the Milky Way template at its own camera, field mode, 1024 px, with
+    the "physics only" switch pressed - the same view as `milky_way-field` but for the layer, so the two frames
+    differ by the layer alone. The spec presses the switch by the label the viewer gives it."""
+    off = [c for c in captures() if layer_off(c)]
+    assert [c["name"] for c in off] == [f"milky_way-{PHYSICS_ONLY}"], [c["name"] for c in off]
+    (capture,) = off
+    (field,) = [c for c in captures() if c["name"] == "milky_way-field"]
+    same = ("template", "camera", "mode", "filters", "viewport")
+    assert {k: capture[k] for k in same} == {k: field[k] for k in same}, "the layer-off capture is not milky_way-field's view"
+    assert capture["mode"] == "field" and capture["viewport"] == 1024 and not is_thumbnail(capture)
+    # The control is the viewer's own: one label, stated once in the viewer and once in the spec's settings.
+    viewer = re.search(r'export const PHYSICS_ONLY = "([^"]+)";', (FRONTEND / "src" / "galaxy" / "layer.ts").read_text(encoding="utf-8"))
+    pressed = re.search(r'export const PHYSICS_ONLY_BUTTON = "([^"]+)";', (E2E / "settings.ts").read_text(encoding="utf-8"))
+    assert viewer and pressed and viewer[1] == pressed[1] == "physics only"
+    spec = (E2E / "picture.spec.ts").read_text(encoding="utf-8")
+    assert 'if (physicsOnly) await press(page, PHYSICS_ONLY_BUTTON);' in spec, "the spec no longer presses the switch for a layer-off capture"
+    # And the query's `layer` is added in one place, which the star sample and the Galaxy tab both take (rule B13).
+    app = (FRONTEND / "src" / "App.tsx").read_text(encoding="utf-8")
+    assert app.count("layerQuery(") == 1 and "loadSample(galaxyQuery!" in app and "query={galaxyQuery}" in app
 
 
 def test_the_app_serves_a_thumbnail_from_where_the_list_writes_it():
@@ -297,4 +334,4 @@ def test_the_viewer_draws_the_committed_frames():
     assert npm, "GALAXYGEN_PICTURE=1 but npm is not on PATH"
     proc = subprocess.run([npm, "--prefix", "frontend", "run", "picture"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1500)
     assert proc.returncode == 0, proc.stdout[-6000:] + proc.stderr[-2000:]
-    assert f"{len(taken())} passed" in proc.stdout, proc.stdout[-2000:]
+    assert f"{len(taken()) + WIRE_TESTS} passed" in proc.stdout, proc.stdout[-2000:]

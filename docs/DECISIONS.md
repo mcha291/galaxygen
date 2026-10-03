@@ -8788,3 +8788,240 @@ re-run as whole files with the docs tests: 112 passed and one failure, the load-
 `test_s21b_the_catalogue_is_priced_per_cell_not_per_star` (S55's first builder was running beside it), which
 passes alone, twice (the flake S27, S35 and S45 recorded). The specs: OK, 12 / 20 / 5 of 37 for both models, the
 template checks 0 / 5 with five recorded misses. The picture run: 6 passed.
+
+### D214. S55: the separation — the fourth kind in the code, `model/galaxy/layer/`, the switch, invariants I1–I5, Appendix B applied (BUILD_III Phase R; an Opus lead; gate G1 before the merge)
+
+**The ruling is BUILD_III §1, its Phase R and its Appendix B.** This entry is written before any code moves (D113)
+and says what that text left to the lead: what the switch turns off today, where each piece lives, and what the
+gate will be asked. **Phase R is behaviour-preserving: with the layer on, every published number, every catalogue
+row and every committed frame is bit-identical to S54's.**
+
+**1. What is composed today, and what "layer off" means.** BUILD_III §1a: "a composed field — a density contrast
+over (R, φ), a census placement — is a law applied to a realisation"; §1e: "with the layer off the composed fields
+are their neutral value, 1". Read against the code:
+- **The composed fields are the three with a φ axis** — `pattern_density_contrast` (the `pattern` stage),
+  `gas_density_contrast` (`gas_pattern`), `sfr_modulation` (`sfh_azimuthal`) — **and the pattern objects the
+  censuses rebuild from the pattern's scalars** (`ArmPattern.from_fields`, `GasPattern.from_fields` in `systems`,
+  `bright`, `clouds`), which are the same laws applied to the same realisation without passing through the grid.
+- **With the layer off** the three fields are 1 everywhere and the censuses get no pattern (the uniform weight
+  their code already takes for a model without one). Every scalar the `bar`, `pattern` and `gas_pattern` stages
+  publish — the arm number, the pitch, the amplitudes, the pattern speed, the gas contrast — is unchanged: those
+  are laws and measured scatters, and they are still drawn. What is switched off is where the arms *are*.
+- So the switch is wider than the fields labelled synthetic in this phase. ~~The arm and bar phases stay *seeded*
+  on `pattern_seed` until P1 moves them to `texture_seed`~~ **[corrected at G1: there is no phase draw — the arm
+  phase is ln R · cot(pitch) and the bar's angle ln(a_bar) · cot(pitch), a fixed convention; the three fields are
+  labelled seeded because their stages draw amplitudes and a pitch (D55), and P1's phases on `texture_seed` are a
+  new draw]** (Appendix B: "every other site keeps its kind"), and the switch already treats what they place as
+  the layer's. **That the label and the switch disagree for two
+  sessions is the first question for G1.**
+- **I1 as tested:** layer-off against layer-on, every field with no φ axis and every scalar that is not a census
+  statistic is bit-identical. A *census statistic* is a scalar or a radial field computed from realised objects
+  (the cloud, cluster, HII-region, bubble and remnant censuses' counts, sums and fitted slopes — rows 35 and 37
+  read two of them); the test names them in a closed list, and a field outside the list that moves is a failure.
+- **I2 as tested:** each census's *expected* count per ring — the number the Poisson draw is given, summed round
+  the ring — is identical with the layer on or off, to rounding.
+- **I3:** `galaxy.specs` judges the 37 rows and the templates' checks on the layer-off run. Rows 35 and 37 are
+  read once layer-off and re-pinned once; no other row may move, and one that does is a stop condition.
+- **I4:** the graph declares *placement readers* — the stages allowed to consume a composed weight: `systems`,
+  `bright`, `clouds`, `clusters` (through its cloud), and the stages that inherit their objects. Any other stage
+  that requires a composed or synthetic field fails the graph check. `sfh_azimuthal` publishes a composed field
+  and reads one; it is a composing stage, not a physics stage, and the graph says so.
+- **I5 in this phase:** every route that takes inputs takes `layer=off` (on is the default and is today's
+  behaviour; the cache key carries it); the viewer carries a "physics only" switch that sends it. The shader's
+  half of the switch is V7's.
+- **The oracle:** layer-off `azimuthal` against layer-off `basic`, every shared field and every catalogue column
+  equal; and layer-off `azimuthal`'s fields without a φ axis against layer-on `basic`'s. Run once, pinned as a
+  test narrowed to this comparison; `basic` is frozen after it (BUILD_III §7, ruling 7).
+
+**2. The fourth kind in the code.** `core/fielddoc.py`: `PROVENANCE` gains `synthetic`; `FieldDecl` gains
+`stands_in_for`, `conserves`, `statistic`, required and non-empty for a synthetic field and refused on any other.
+`statistic` may say "none read" only with a debt number beside it (BUILD_III §9: an unsourced draw is not excused
+by the label). The graph's rule (D55: one provenance per stage) is kept: **a stage is synthetic if it is a layer
+stage** — it lives under `model/galaxy/layer/`, declares itself one, and every field it publishes is synthetic.
+
+**3. `texture_seed`.** A fifth seed, default 0, in the registry. BUILD_III: it "binds at the layer's earliest
+reader" and "feeds only fields this build adds". **No stage reads it in this phase** (the first is P1's mode
+phases, at checkpoint 3), so its checkpoint hypothesis is 3 and the graph's unbound-seed check carries one named
+exception, `texture_seed`, that a test removes the day a stage reads it. No dummy reader is invented (A4). Both
+templates gain it: 0 and 4414.
+
+**4. `model/galaxy/layer/`.** `noise.py` — the primitives, built first and tested on their own (builder A; the
+ruling it builds to is in its brief and is entered below at the merge). `compose.py` — the one place a stage or
+the API obtains a pattern object or a composed (R, φ) field; it returns the neutral value when the layer is off,
+and nothing else in the model tests the switch. The realisation stages: in this phase one, **`cloud_texture`**.
+
+**5. Appendix B applied.** The four cloud columns — `cloud_source_offset`, `cloud_source_angle`,
+`cloud_density_gradient`, `cloud_gradient_angle` — move out of the `clouds` stage into the layer stage
+`cloud_texture`, synthetic, each with its three declarations: they stand in for the cloud's internal structure
+(where its embedded source formed and how its density leans — turbulent fragmentation the model does not compute),
+they conserve the cloud's mass and count (they place, they do not weigh), and their statistic is "none read" under
+#95. **The draws keep their seed, their stream paths and their values**: the same four numbers per cloud, now
+published by a layer stage. With the layer off they are their neutral values — no offset, no gradient, angles 0 —
+and a cluster stands at its cloud's centre. `clusters` reads the offset to place its cluster and is a placement
+reader. **The viewer's cloud-interior noise** (`frontend/src/galaxy/region.ts`: a log-normal interior from the
+cloud vector, its octave weights the viewer's own) is the second relabel: the amended D5 lets the viewer evaluate
+a function the model publishes and forbids a parameter of its own, so the model publishes the function's
+parameters — the octave count, lacunarity and weights the viewer uses today, bit for bit — as a synthetic scalar
+set from `cloud_texture`, statistic "none read" under #110, and the viewer reads them instead of holding them
+**[amended at G1: they are constants of the model under #110, not synthetic fields — a constant that is the same
+with the layer on and off is not a realisation]**.
+With the layer off the interior is smooth.
+
+**6. What does not change.** No stream's seed or value. No radial field. No acceptance row but 35 and 37, and
+those only because they are read layer-off from now on. The six committed frames, byte for byte (the layer is on
+by default). `ngc_4414`'s fit: the targets are radial; the committed controls are not touched (D213).
+
+**Predictions (B4).** (a) With the layer on, the determinism spec, every pinned number and the six frames are
+unchanged: no re-pin outside rows 35 and 37. (b) Layer-off, rows 35 and 37 move — row 35 (the HII luminosity
+function's slope) by little, since a luminosity function does not know where its regions sit; row 37 (the [N II]/Hα
+gradient over 8.2–15.4 kpc) by more than its fit's noise only if the arms' placement correlates with radius, which
+it should not: predicted within 0.005 dex kpc⁻¹ of today's −0.1055, still a miss. (c) The oracle holds: layer-off,
+the two models are equal column for column. (d) Census totals move by Poisson noise only: the cloud count within
+3 % of 16 822. A prediction that fails is reported as failed.
+
+**The gate (G1), before the merge.** An Opus reviewer reads the builders' diffs against I1–I5; `docs/HANDOFF_S55.md`
+puts to Fable: do the invariants, as tested, mean what §1d says; is anything labelled synthetic that is physics,
+or the reverse; and this entry's own open readings — the switch wider than the label (ruling 1), a layer stage as
+the unit of provenance (2), the unread seed (3), the neutral values (5).
+
+**Built (2026-10-04; four Opus 5.5 agents: three builders in worktrees and a reviewer, read-only).**
+- *The noise primitives* (builder A; `layer/noise.py`, `tests/test_layer_noise.py`, 31 tests). The hash is
+  `lowbias32` `[verified: C. Wellons, hash-prospector README, https://github.com/skeeto/hash-prospector, read
+  2026-10-04]` chained over a salted seed, the octave and the lattice integers, in 32-bit unsigned arithmetic only;
+  the lattice value (h >> 8) · 2⁻²³ − 1 is the same bits in float32 and float64. **Value noise with the quintic
+  fade, divided by its own standard deviation at the point** (√3 / √Π(1 − 2s(1 − s))): unit variance everywhere, so
+  a sum's normaliser is exact — the builder's choice over gradient noise (fewer operations for the shader's twin;
+  gradient noise is zero on every lattice point), at the measured price of a staircase spectrum (ripple 0.04–0.08
+  dex about the line). Octave gain L^(1 − slope/2) in two dimensions and L^((3 − slope)/2) in three; a top-octave
+  factor 1/√(1 − L^−slope) for the missing finer octaves; measured slopes 1.495 / 2.497 / 3.544 for 1.5 / 2.5 /
+  3.5 (tolerance 0.15); a plane through a three-dimensional sum reads 0.03–0.07 steeper than slope − 1, stated and
+  not fitted away. Shear x′ = x − s·y: the spectrum's axis ratio 1 + s²/2 + |s|√(1 + s²/4), measured within 1.7 %.
+  The log-normal map's quadrature mean is 1 to 7e-16 per cell; off the quadrature points, rms 8e-4 at σ = 1 with
+  16 points a side. float32 against float64 over the vectors: 5.5e-7 at worst — on positions exact in float32;
+  at galaxy coordinates of 10⁴ the 24 bits of position give 5e-3, so a shader must keep lattice coordinates small.
+  632 committed vectors (`layer/vectors.json`); regenerating them is a decision's act. Nothing reads it yet.
+- *The model side* (builder B). Everything D214 ruled, with `tests/test_layer.py` (52 tests) and a reference
+  captured from S54 before any code moved (`tests/layer_reference_s54.json`: a digest per field and per route).
+  The flag travels run → `Context` → the run's `Fields` → the materialisers → the API, and a plain mapping of
+  fields is refused, so a layer-on catalogue cannot be made from a layer-off run. Placement readers: `systems`,
+  `bright_stars`, `clouds`, `clusters`, `planets` (it rebuilds the star layout). `cloud_texture` at checkpoint 5.
+- *The viewer* (builder D). "Physics only": `layerQuery` adds `layer=off` in one place and every binary route
+  checks the header's echo; a frame that says otherwise is refused and said. The switch is display state: it
+  edits no template and does not move the run hash. The staged Preview and Science tabs do not follow it. The
+  cloud interior is evaluated with the published octave count, lacunarity and gain; the shader's text at the
+  published values is S54's to the byte (its sha256 pinned). vitest 212 → 260. One layer-off capture,
+  `milky_way-physics-only`: the arms and the bar gone.
+
+**The predictions, read (B4).** (a) Layer on, nothing moved: **held** — 332 / 331 fields and the routes' arrays
+bit-identical to the `s54` tag, re-derived by the reviewer from the tag itself; the six frames to the byte.
+(b) Row 37 within 0.005 of −0.1055: **held** (−0.1030, a miss still). Row 35 "by little": **failed at the default
+seed** — −1.989 → −2.081, 1.7 σ of its own seed scatter; over twelve seeds the off-minus-on difference is
+−0.011 ± 0.054, so there is no shift, only a redraw, and "by little" was not a prediction that seed scatter
+allows. (c) The oracle: **held** — layer-off, `azimuthal` equals `basic` on all 334 shared fields; against
+layer-on `basic` it holds on 218 fields and not on the catalogues and the census statistics, which is I1's list
+again and not an independent check. (d) The cloud count within 3 % of 16 822: **held** — 16 754 (−0.40 %);
+clusters 12 930 → 12 923.
+
+**The reviewer's finding that the design did not foresee.** The layer "never changes a total" in expectation
+only. A census draws each cell's count on the cell's own stream at an expectation that carries the composed
+weight, so the switch re-draws which objects exist. Layer off against on: realised cloud mass −1.9 % galaxy-wide
+and up to 19 % in a cell ring; cluster mass −5.8 %; the census's HII Hα −8.1 %, up to 43 % in a ring; over six
+seeds −1.0 ± 1.7 %, −2.2 ± 2.9 %, −2.1 ± 6.0 % — noise, not bias. Fourteen published quantities move, five of
+them radial fields (the four forbidden-line Σ(R) and `hot_phase_porosity`). Expected counts per ring are identical
+to 1e-12. Also found: `cloud_source_offset` (to 249 pc against a 75 pc radial step) puts 12.5 % of clusters, 43.8 %
+of the cluster mass, in another radial ring than their cloud; **ruling 1 above mis-described the code** — there is
+no phase draw: the arm phase is ln R · cot(pitch) and the bar's angle ln(a_bar) · cot(pitch), a fixed convention;
+and "composed = has a φ axis" would neutralise P2's and P3's fields.
+
+**The gate (G1), 2026-10-04; ruling by Fable, one turn on `docs/HANDOFF_S55.md` (deleted at close), nothing run.**
+"Phase R merges once changes 1–14 below are made. The design stands. The invariants are true as restated below;
+the one thing they do not deliver — realised ring totals — cannot be delivered by a behaviour-preserving phase and
+is ordered for L1."
+1. *The invariants (F1).* "The censuses have always drawn realised counts per cell at a weighted expectation; the
+   layer did not introduce that, and Phase R, which keeps every stream and every S54 bit, cannot remove it. But
+   §1c rule 2 and A10 promise a conservation the code does not deliver, and the record says so plainly rather than
+   redefining 'total' quietly." BUILD_III §1c rule 2, §1d I1, I2 and I4 and §1e are amended to Fable's wording
+   (entered there, with what each read before). A10's last sentence is **not** edited: it is the owner's.
+2. *Labels (F7, F8).* (a) "The switch is right and the label lags; that is Appendix B's 'every other site keeps
+   its kind', accepted for Phase R. … There is no phase draw today … a fixed convention, a degenerate realisation
+   of physics the model does not compute (§1a), so switching it off is right and P1's phase on `texture_seed` is
+   a new draw, not a moved one." **Ruling 1's sentence "the arm and bar phases stay seeded on `pattern_seed`" is
+   wrong and is withdrawn here**: nothing draws a phase until P1. (b) "The three interior scalars are not
+   synthetic. A constant 4, 2, 0.5, the same on and off, is not 'a realisation from the layer's seed'. They are
+   parameters of a synthetic function and are published as constants of the model … not as fields of any stage";
+   ruling 2 gains: "a layer stage's *fields* are synthetic; a constant it declares is a constant." (c)
+   `cloud_texture` on `systems_seed` "is what §1e requires of Phase R and contradicts A10 until L1; each of the
+   four declarations says so"; rule 1's "rerolling `texture_seed` changes placements" is not yet true of any
+   field. (d) `cloud_height` stays seeded; whether a cloud's height is a placement or a sample of the vertical
+   profile is L1's, and #95 gains the line.
+3. *Composed is a declaration (F12).* An explicit declaration on the field with its neutral value; nothing reads
+   the axes; I1's test walks it and holds every undeclared field, φ axis or not, to bit-identity.
+4. *A composing stage stays in `stages/`* (F9): "its law is physics, and under `layer/` its fields would become
+   synthetic by D214 §2, which they are not." I4's test names the physics stages that bin realised objects
+   (`nebular`, `bubbles`) as a closed list.
+5. *The offset and the viewer (F2).* The offset's and the angle's `conserves` say what they do not keep, with the
+   numbers; no clamp in Phase R. The viewer's remaining literals and the interior's non-conserving ray column are
+   one debt beside #110, discharged by V7 when the layer's noise replaces the function.
+6. *Tests and records.* No per-object on/off assertion is invented ("with different realised counts the objects
+   do not correspond"); "each ring keeps its light" sums every component; `test_s45_diagnosis` runs layer-off.
+
+**Debts by phase (Fable).** **L1 (S60):** the ring-first draw — a ring's objects, count and every per-object draw,
+on a ring stream, the layer assigning cell and azimuth; `cloud_texture` to `texture_seed`; the offset's ring
+crossing settled; `cloud_height`'s kind; after it `CENSUS_STATISTICS` is empty and the binners' list carries no
+placement. **P1 (S56):** the mode phases become a draw on `texture_seed`; the convention retired. **V7 (S64):** the
+viewer's interior function replaced by the layer's noise and its vectors. **P2, P3:** a φ-axis field tabulated in
+a pattern's frame is simply not declared composed.
+
+**For the owner (the merge does not wait).** Appendix A's A10 says the layer "changes no ring total". In the code
+a census's realised ring total is a draw whose expectation the layer preserves, so with the layer off realised
+totals move by re-draw noise. Fable's reading: A10 holds for expected totals until L1 (S60), where the ring-first
+draw makes it hold for realised totals too. **Asked:** approve A10's last sentence amended to "the layer changes
+no ring total of any field and no expected ring total of any census; realised census totals are conserved from L1
+(D214 G1)" — or bring the ring-first draw forward, before P1? Until answered, A10 stands as the owner approved it
+and the record here says where the code falls short of it.
+
+**The gate's changes, applied (2026-10-04; builders B and D resumed; the lead's documents).** All fourteen.
+1–2, 13–14 (the lead's): BUILD_III §1c rule 2, §1d I1, I2, I4 and §1e amended to Fable's wording, each with what it
+read before; L1's text gains the ring-first draw and P1's the note that its phases are a new draw; ruling 1's
+sentence struck through in place; #137 opened, #95 and #110 extended; the predictions reported above.
+3. `FieldDecl(composed=True, neutral=1.0)` on the three φ fields; nothing reads the axes; `compose.field` takes
+   the neutral from the declaration; I1's test walks it and a tiny model holds the two cases the axes rule got
+   wrong (an undeclared φ field is bit-identical; a composed field of neutral 2 is 2).
+4. `CLOUD_INTERIOR_OCTAVES`, `_LACUNARITY`, `_GAIN` (4, 2.0, 0.5) are level-0 constants under #110; their
+   FieldDecls are gone and a layer-on run's fields are S54's name for name again (332 / 331). `/api/clouds`'
+   header carries `cloud_interior: {octaves, lacunarity, gain}` — the one constant-bearing key of the API, named
+   as the exception in the service's text and in a test — and the viewer reads it there, accepts no other shape,
+   and draws smooth clouds with a note when it is absent.
+5–6. The offset's and the angle's `conserves` say what they do not keep; each of the four columns' about names
+   `systems_seed` and L1. **Two of the gate's numbers are corrected to the measurement**: the handoff's "the offset
+   reaches 249 pc" was the largest *radial displacement* of a cluster from its cloud (248.5 pc; the offset's own
+   length reaches 265 pc), and "43.8 %" of the cluster mass is 43.7 % (0.43747). The declaration, #95 and the test
+   carry the measured ones; the quotations of the gate above are left as given.
+7–8. I4's test names `{nebular, bubbles}`, derived from the graph, and a third binner built in the test is found;
+   the source test holds `ArmPattern(` and `GasPattern(` to the two pattern modules and `compose.py`.
+9. Row 37's miss leads with the layer-off reading and keeps its history; `test_s45_diagnosis` runs layer-off,
+   seven pins re-read (the published gradient −0.1055 → −0.1030; 119 → 136 regions outside the age grid; the age
+   path 0.0005 → −0.0059; the U path 0.0034 → −0.0005). **Its conclusion holds, and "−0.0957 either way" was
+   wrong by a digit**: the metallicity path's product is −0.0957 layer-off and −0.0956 on the layer-on census.
+10. Every array of the render is held to its ring in one of three named groups: placed (R, φ) components, even
+   round the ring layer-off and ring totals equal to 1e-12; per-ring components, bit-identical; and one census
+   statistic, `lines_hii`, which does not keep its ring (up to a factor of six in a thin ring on the production
+   grid) and is #137's.
+11–12. The composed fields' abouts, the render header under `layer: off`, `run.py`, the `/api` text and
+   `texture_seed`'s about say what holds: every *expected* ring total, no radial field but the census
+   statistics. `CENSUS_STATISTICS` is the measured fourteen, each naming its stage, its census and its function.
+
+**I5, measured on screen.** Physics only against layered, the Milky Way template's field frame: 1.0026 / 1.0012 /
+0.9994 in R, G, B; starlight alone with the whole disc in frame 1.00003 (the frame's edge at 20 kpc and the
+dust's non-linear extinction are the rest). The seven committed frames are byte-identical on the combined state,
+and the wire test walks sixteen requests under the switch, every one `layer=off`.
+
+**Checks.** `python -m galaxy.specs`: 12 / 20 / 5 of 37 for both models, judged layer-off; the template checks
+0 / 5, the five disclosed misses' numbers unchanged to their printed digits; determinism reproducible for each
+model with the layer on and off; convergence 0 drifts. Timings (`tools/timings.py`, cold): `clouds: whole disc`
+0.81 s on, 0.54 off; `render: whole, rgb` 2.38 / 2.17; `cloud_texture` 0.07 s. Register 75 open = 11 + 64, 45
+discharged (#137). vitest 212 → 261. Next numbers: D215, #138, board row 56, acceptance row 38.
+
+**The close (2026-10-04).** The suite on the combined state: 1194 passed, 5 skipped, `EXIT=0` (35 min, the machine
+quiet); the specs OK, 12 / 20 / 5 of 37 for both models, the template checks 0 / 5 on their five recorded misses.
+The picture run: 8 passed (seven captures to the byte, the wire test).

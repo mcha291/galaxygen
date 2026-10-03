@@ -43,6 +43,7 @@ import numpy as np
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
+from galaxy.layer import compose as _compose
 
 SHEAR_RADIUS_IN_SCALE_LENGTHS = 2.2  # ruling 3: take the scaled form
 # The closed set an arm number is drawn from since S26 (D175): two to ARM_MULTIPLICITY_MAX. Until
@@ -283,10 +284,15 @@ DENSITY_CONTRAST = FieldDecl(
     name="pattern_density_contrast", label="Bar and arm density contrast Σ(R, φ)/Σ(R)",
     unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"),
     ramp=Ramp("magma", lo=0.0, hi=2.0), meaningful_zero=True, provenance="seeded",
+    # S55 (D214, gate G1 change 3): composed - the law (the amplitudes, the arm number, the pitch) applied to
+    # where the arms are - and 1 everywhere with the randomness layer off.
+    composed=True, neutral=1.0,
     about=(
         "The non-axisymmetric factor the star catalogue samples azimuth from: 1 on average around "
         "every ring, so the radial profile and every radial row are unchanged. A logarithmic spiral "
-        "of the drawn pitch angle and multiplicity outside the bar, a straight m = 2 bar inside it."
+        "of the drawn pitch angle and multiplicity outside the bar, a straight m = 2 bar inside it. "
+        "A composed field: with the randomness layer off it is 1 everywhere - the amplitudes, the arm "
+        "number and the pitch are still drawn, and nothing says where the arms are."
     ),
 )
 
@@ -419,6 +425,7 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
         BAR_CONTRAST_CAP,
     )
     shape = ArmPattern(arm_contrast, bar_contrast, arms, pitch_angle, a_bar)
+    cells = (R.size, ctx.grid.phi.size)
 
     return {
         "bar_corotation_radius": corotation,
@@ -427,7 +434,13 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
         "arm_multiplicity": arms,
         "arm_contrast": arm_contrast,
         "bar_contrast": bar_contrast,
-        "pattern_density_contrast": np.ones((R.size, ctx.grid.phi.size)) if shape.flat else shape.contrast(R, ctx.grid.phi),
+        # The one composed field here (S55, D214): the law above applied to where the arms are. With the layer
+        # off it is its declared neutral everywhere and every scalar above is what it was - compose is the one
+        # place that asks, and the neutral is the declaration's, not a number written here.
+        "pattern_density_contrast": _compose.field(
+            ctx.fields, DENSITY_CONTRAST, cells,
+            lambda: _compose.neutral(DENSITY_CONTRAST, cells) if shape.flat else shape.contrast(R, ctx.grid.phi),
+        ),
     }
 
 

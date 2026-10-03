@@ -15,6 +15,10 @@ Two properties, both checked empirically rather than assumed:
   every time (rule B3). A production model is therefore also run in two fresh
   interpreters under two hash seeds and the fields' bytes compared.
 
+**Both settings of the randomness layer** (S55, DECISIONS.md D214). ``run(..., layer=False)`` is a different
+path through the censuses and the composed fields, so each model is checked with the layer on and with it
+off, in one interpreter and across two.
+
 Three golden values pin the derivation. If numpy changes its Generator streams,
 ``GOLDEN_DRAW`` fails; that is the instrument working, not a nuisance. Update it
 deliberately, with a DECISIONS.md entry, and re-examine anything calibrated
@@ -49,6 +53,8 @@ GOLDEN_DRAW = 0.45544494417321946  # seeds.rng(12345, "golden").random()
 SMALL = GridSpec(n_R=16, n_t=8, n_z=4, n_phi=6)
 ROOT = Path(__file__).resolve().parents[3]
 HASH_SEEDS: tuple[str, ...] = ("0", "1")
+# The randomness layer's two settings, each with the words a report and a problem name it by (S55).
+LAYERS: Mapping[bool, str] = {True: "layer on", False: "layer off"}
 
 # Run in a fresh interpreter: one production model at one grid, every field hashed.
 _ACROSS = """
@@ -58,7 +64,7 @@ from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
 from galaxy.run import run
 models, _, _ = production()
-o = run(models.get(sys.argv[1]), grid=GridSpec(**json.loads(sys.argv[2])))
+o = run(models.get(sys.argv[1]), grid=GridSpec(**json.loads(sys.argv[2])), layer=bool(int(sys.argv[3])))
 out = {}
 for name, v in sorted(o.fields.items()):
     a = np.asarray(v)
@@ -85,17 +91,18 @@ def check_reproducible(
     table: Mapping[str, Input],
     grid: GridSpec = SMALL,
     inputs: Mapping[str, Any] | None = None,
+    layer: bool = True,
 ) -> list[Problem]:
     from galaxy.run import run
 
-    a = run(model, inputs, grid, impls=impls, table=table)
-    b = run(model, inputs, grid, impls=impls, table=table)
+    a = run(model, inputs, grid, impls=impls, table=table, layer=layer)
+    b = run(model, inputs, grid, impls=impls, table=table, layer=layer)
     problems: list[Problem] = []
     if a.order != b.order:
-        problems.append(Problem(model.name, "irreproducible", f"stage order differs: {a.order} vs {b.order}"))
+        problems.append(Problem(model.name, "irreproducible", f"stage order differs ({LAYERS[layer]}): {a.order} vs {b.order}"))
     for name, value in a.fields.items():
         if name not in b.fields or not _equal(value, b.fields[name]):
-            problems.append(Problem(model.name, "irreproducible", f"field {name!r} differs between two identical runs"))
+            problems.append(Problem(model.name, "irreproducible", f"field {name!r} differs between two identical runs ({LAYERS[layer]})"))
     return problems
 
 
@@ -105,27 +112,27 @@ def _is_production(model: Model) -> bool:
 
 
 def check_reproducible_across_processes(
-    model_name: str, grid: GridSpec = SMALL, hash_seeds: Iterable[str] = HASH_SEEDS
+    model_name: str, grid: GridSpec = SMALL, hash_seeds: Iterable[str] = HASH_SEEDS, layer: bool = True,
 ) -> list[Problem]:
     """The production model ``model_name`` run in one fresh interpreter per hash seed; fields compared by hash."""
     seen: list[dict[str, Any]] = []
     for hs in hash_seeds:
         proc = subprocess.run(
-            [sys.executable, "-c", _ACROSS, model_name, json.dumps(asdict(grid))],
+            [sys.executable, "-c", _ACROSS, model_name, json.dumps(asdict(grid)), str(int(layer))],
             capture_output=True, text=True, cwd=str(ROOT), check=False,
             env={**os.environ, "PYTHONHASHSEED": hs},
         )
         if proc.returncode != 0:
-            return [Problem(model_name, "irreproducible", f"run under PYTHONHASHSEED={hs} failed: {proc.stderr[-500:]}")]
+            return [Problem(model_name, "irreproducible", f"run under PYTHONHASHSEED={hs} ({LAYERS[layer]}) failed: {proc.stderr[-500:]}")]
         seen.append(json.loads(proc.stdout.splitlines()[-1]))
     problems: list[Problem] = []
     first = seen[0]
     for other in seen[1:]:
         if other["order"] != first["order"]:
-            problems.append(Problem(model_name, "irreproducible", f"stage order differs across processes: {first['order']} vs {other['order']}"))
+            problems.append(Problem(model_name, "irreproducible", f"stage order differs across processes ({LAYERS[layer]}): {first['order']} vs {other['order']}"))
         for name, digest in first["fields"].items():
             if other["fields"].get(name) != digest:
-                problems.append(Problem(model_name, "irreproducible", f"field {name!r} differs between two processes (PYTHONHASHSEED {list(hash_seeds)})"))
+                problems.append(Problem(model_name, "irreproducible", f"field {name!r} differs between two processes (PYTHONHASHSEED {list(hash_seeds)}, {LAYERS[layer]})"))
     return problems
 
 
@@ -173,9 +180,10 @@ def check(
 ) -> list[Problem]:
     out = check_golden() + check_region()
     for m in models:
-        out.extend(check_reproducible(m, impls, table, grid))
-        if _is_production(m):
-            out.extend(check_reproducible_across_processes(m.name, grid))
+        for layer in LAYERS:
+            out.extend(check_reproducible(m, impls, table, grid, layer=layer))
+            if _is_production(m):
+                out.extend(check_reproducible_across_processes(m.name, grid, layer=layer))
     return out
 
 
@@ -193,13 +201,14 @@ def report(
     lines.append("  per-region (order-independent child seeds): " + ("OK" if not r else "FAIL"))
     failures: list[Problem] = list(g + r)
     for m in models:
-        p = check_reproducible(m, impls, table, grid)
-        lines.append(f"  model {m.name}: reproducible " + ("OK" if not p else "FAIL"))
-        failures.extend(p)
-        if _is_production(m):
-            x = check_reproducible_across_processes(m.name, grid)
-            lines.append(f"  model {m.name}: reproducible across processes (PYTHONHASHSEED {list(HASH_SEEDS)}) " + ("OK" if not x else "FAIL"))
-            failures.extend(x)
+        for layer, words in LAYERS.items():
+            p = check_reproducible(m, impls, table, grid, layer=layer)
+            lines.append(f"  model {m.name}, {words}: reproducible " + ("OK" if not p else "FAIL"))
+            failures.extend(p)
+            if _is_production(m):
+                x = check_reproducible_across_processes(m.name, grid, layer=layer)
+                lines.append(f"  model {m.name}, {words}: reproducible across processes (PYTHONHASHSEED {list(HASH_SEEDS)}) " + ("OK" if not x else "FAIL"))
+                failures.extend(x)
     for p in failures:
         lines.append(f"    FAIL {p}")
     return "\n".join(lines)

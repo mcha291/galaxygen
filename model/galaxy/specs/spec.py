@@ -820,12 +820,19 @@ _MISSES: tuple[Miss, ...] = (
         debt=117,
         since="S44",
         reason=(
-            "-0.1035 dex/kpc against [-0.045, -0.005], 6.5 sigma below the window's floor and in the direction the "
+            "-0.1030 dex/kpc against [-0.045, -0.005], 6.4 sigma below the window's floor and in the direction the "
             "blind reader named as the killing one ('a model whose [N II]/Halpha follows N/H (about -0.06 to -0.08 "
-            "dex/kpc) fails'). As built on the 8.69 scale the model read -0.0815; on the grid's own scale (D195, #121) "
-            "it steepened to -0.1035 - the offset moved it out, not in (-0.1055 since S51, when the census the row "
-            "reads was redrawn with the clouds on the gas's own ridge, D210). **Diagnosed at S45 (D196, "
-            "tests/test_s45_diagnosis.py):** the gradient is the metallicity's through the grid and nothing else - with "
+            "dex/kpc) fails'). The reading's history: as built on the 8.69 scale the model read -0.0815; on the "
+            "grid's own scale (D195, #121) it steepened to -0.1035 - the offset moved it out, not in; -0.1055 from "
+            "S51, when the census the row reads was redrawn with the clouds on the gas's own ridge (D210); **-0.1030 "
+            "(-0.102973) since S55, when the table began to be judged on the layer-off run (D214, invariant I3)**: "
+            "the HII-region census placed by no pattern is another draw at the same expected counts, the row moved "
+            "by 0.0025 with it (6.7 to 6.4 sigma out), and from here it does not move when a placement is redrawn. "
+            "The three readings since S44 differ by how the census was placed and drawn, not by any change to the "
+            "nebular physics. **Diagnosed at S45 (D196, tests/test_s45_diagnosis.py, which reads the layer-off "
+            "census since S55 and finds the same parts: the metallicity path's product -0.0957 layer-off, -0.0956 "
+            "on the layer-on census):** the numbers that follow are S45's own. The gradient is the metallicity's "
+            "through the grid and nothing else - with "
             "the regions' age and U frozen at the 8.2 kpc edge the ring fit reads -0.1177, with their log Z frozen "
             "-0.0016, with all three frozen -0.0005; the grid's own response is 1.22 per dex of log Z, 0.70 of PP04's "
             "empirical 1.75, so the grid is not too steep (its T_e and N/O run with Z already flatten N2 more than "
@@ -1083,16 +1090,30 @@ def evaluate_all(
     return [evaluate(q, fields, decls, model, ensemble, swept) for q in QUANTITIES]
 
 
+def judged(run_kwargs: Mapping[str, Any]) -> dict[str, Any]:
+    """The run every acceptance number is read on: **the physics alone, the randomness layer off** (invariant I3,
+    BUILD_III section 1d; DECISIONS.md D214).
+
+    A row judges a law against a measurement; where the layer happened to place an arm or a cloud is not a law,
+    and a row that moved when a placement was redrawn (rows 35 and 37 did, at S51) was judging the draw. So the
+    table, its ensemble, its sweeps and the convergence sweep all run with ``layer=False``, and none takes a
+    ``layer=`` of its own: there is no judging a row with the layer on (BUILD_III section 9).
+    """
+    if "layer" in run_kwargs:
+        raise SpecError("the acceptance table is judged on the layer-off run and takes no layer= (invariant I3)")
+    return {**run_kwargs, "layer": False}
+
+
 def run(
     model: Model,
     ensemble: Mapping[str, Sequence[float]] | None = None,
     swept: Mapping[int, tuple[np.ndarray, np.ndarray]] | None = None,
     **run_kwargs: Any,
 ) -> list[Result]:
-    """Run ``model`` with default inputs and judge every quantity."""
+    """Run ``model`` with default inputs, the layer off (:func:`judged`), and judge every quantity."""
     from galaxy.run import run as _run
 
-    out = _run(model, **run_kwargs)
+    out = _run(model, **judged(run_kwargs))
     return evaluate_all(out.fields, out.decls, model.name, ensemble, swept)
 
 
@@ -1110,7 +1131,7 @@ def sweep(model: Model, q: Quantity, **run_kwargs: Any) -> tuple[np.ndarray, np.
     control = table[q.sweep.input]
     xs, ys = [], []
     for value in q.sweep.values(float(control.lo), float(control.hi)):
-        out = _run(model, {q.sweep.input: float(value)}, only=(q.field, q.sweep.abscissa), **run_kwargs)
+        out = _run(model, {q.sweep.input: float(value)}, only=(q.field, q.sweep.abscissa), **judged(run_kwargs))
         if q.field not in out.fields or q.sweep.abscissa not in out.fields:
             return np.zeros(0), np.zeros(0)
         xs.append(q.sweep.x(out.fields[q.sweep.abscissa]))
@@ -1153,7 +1174,7 @@ def ensemble(
     seed_names = [name for name, inp in table.items() if inp.kind == "seed"]
     collected: dict[str, list[float]] = {}
     for draw in range(n):
-        out = _run(model, {name: draw for name in seed_names}, only=tuple(fields), **run_kwargs)
+        out = _run(model, {name: draw for name in seed_names}, only=tuple(fields), **judged(run_kwargs))
         for field in fields:
             if field in out.fields:
                 collected.setdefault(field, []).append(float(out.fields[field]))
@@ -1214,7 +1235,7 @@ def report(
     models = list(models)
     if results is None:
         results = evaluate_models(models, **run_kwargs)
-    lines = ["spec"]
+    lines = ["spec", "  judged on the layer-off run: the physics alone, no placement of the randomness layer (invariant I3, D214)"]
     bad = untestable()
     if bad:
         lines.append(

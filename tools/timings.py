@@ -56,9 +56,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "27 stage declarations (S51)"),
+    Endpoint("stages", "/api/stages", "", "28 stage declarations (S55: the layer's cloud_texture)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
-    Endpoint("inputs", "/api/inputs", "", "7 controls, 4 seeds, 1 event list"),
+    Endpoint("inputs", "/api/inputs", "", "7 controls, 5 seeds (S55: texture_seed), 1 event list"),
     Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54)"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
     Endpoint("arrays: history", "/api/arrays", "fields=feh_history", "400 x 2000, checkpoint 4"),
@@ -109,6 +109,15 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("render: ngc_4414", "/api/render",
              urlencode({"template": "ngc_4414", "filters": _WFC3, "white": 6500, "precision": "f4"}),
              "the whole render of NGC 4414 through WFC3's three measured curves"),
+    # The randomness layer's switch (S55, D214): the same requests with layer=off - the physics alone. The rows
+    # above them are the layer on; the switch should cost nothing, and a census placed by no pattern a little less.
+    Endpoint("clouds: whole, layer off", "/api/clouds", "layer=off",
+             "every cloud, placed by no pattern; the four texture columns 0"),
+    Endpoint("region: whole, layer off", "/api/region", "stars=20000&layer=off",
+             "every cell, the published sample, placed by no pattern"),
+    Endpoint("render: whole, layer off", "/api/render",
+             urlencode({"filters": _RGB, "white": 6500, "precision": "f4", "layer": "off"}),
+             "as the whole rgb render, every component even round its ring"),
 )
 
 
