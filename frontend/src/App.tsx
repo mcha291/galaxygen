@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { loadFields, loadSample, type FieldsPayload, type Sample, type StarName } from "./api";
+import { loadFields, loadSample, type FieldsPayload, type Sample } from "./api";
 import { PHOTOMETRIC } from "./galaxy/colors";
 import { Exposure } from "./galaxy/Exposure";
 import { GalaxyTab } from "./galaxy/GalaxyTab";
@@ -9,7 +9,6 @@ import { CheckpointScene } from "./preview/CheckpointScene";
 import { Preview as ScienceView } from "./preview/Preview";
 import { Published } from "./preview/Published";
 import { panelsAt } from "./preview/panels";
-import { SystemView } from "./system/SystemView";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { formatNumber, runHash } from "./workflow/logic";
@@ -32,7 +31,6 @@ export function App() {
   const [tab, setTab] = useState<Tab>("galaxy");
   const [field, setField] = useState<string>(PHOTOMETRIC);
   const [preset, setPreset] = useState<Preset>("oblique");
-  const [systemStar, setSystemStar] = useState<StarName | null>(null);
   const [charts, setCharts] = useState(false);
   const [exposure, setExposure] = useState(0); // photometric exposure, in stops
 
@@ -63,8 +61,6 @@ export function App() {
   const sampleKey = drawsStars && query ? JSON.stringify(query) : null;
   const galaxy = useLoad<Sample>(sampleKey, (signal) => loadSample(query!, signal));
   const sample = galaxy.value;
-  // A new galaxy is a new set of stars: an open system named a star in the old one.
-  useEffect(() => setSystemStar(null), [sample]);
 
   const seed = wf.state?.values.world_seed;
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
@@ -91,9 +87,6 @@ export function App() {
       )}
       {galaxy.busy && sample && <div className={styles.busy} aria-hidden />}
     </>
-  );
-  const system = systemStar && meta && query && (
-    <SystemView star={systemStar} query={query} meta={meta} onClose={() => setSystemStar(null)} />
   );
 
   return (
@@ -174,10 +167,9 @@ export function App() {
                   <div className={styles.captionNote}>
                     {current.stages.join(" · ")}
                   </div>
-                  <p>Drag to orbit, scroll to zoom. Stars and their systems open in the Galaxy tab.</p>
+                  <p>Drag to orbit, scroll to zoom. The stars are drawn in the Galaxy tab.</p>
                 </div>
               )}
-              {system}
             </div>
           )}
 
@@ -208,12 +200,10 @@ export function App() {
                   query={query}
                   preset={preset}
                   onPreset={setPreset}
-                  onOpen={setSystemStar}
                   onEdit={() => setTab(EDIT_VIEW)}
                 />
               )}
               {status}
-              {system}
             </div>
           )}
         </ErrorBoundary>

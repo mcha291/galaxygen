@@ -7972,3 +7972,18 @@ model-side change (**T28**, new). (iii) A bright star opens no planetary system 
 (iv) Clusters stay points with no extent (T6) and no stars of their own (T24); the bulge stays glow (T25).
 (v) `colors.ts exposureFor` (the old auto-exposure) is kept, unused, against the owner wanting it back as a toggle.
 (vi) The close (board row 50, LESSONS, RESUMING and BRIEF rewritten, merge, tag `s50`, `verify_clone`) is not done.
+
+### D209. S50: clicking a star to open its planetary system removed from the viewer, on the owner's word
+
+**The owner, in chat, on 2026-10-03:** "remove the clicking star to open star system design entirely. we'll think
+of another way to show that system information later." **Removed from the React viewer:** the field mode's star
+picking (the sample's and a region's stars are drawn, not picked), the `SystemView` overlay and its rail
+(`frontend/src/system/`, with `rail.test.ts`'s five tests), `App`'s open-system state, `GalaxyTab`'s `onOpen`,
+`api.ts`'s `loadSystem`, `SystemFrame` and `StarName`, the `.openSystem` style, and every caption that offered it
+("Click one to open its system", "Systems become openable", "Stars and their systems open in the Galaxy tab").
+**Kept, because the other way will need them and nothing in the viewer reaches them now:** the model's planets
+stage, `/api/system` and `transport.js`'s `system`, and the reference client in `interface/`, which is the API's
+own demonstration of the staged flow and is pinned by `tests/test_viewer.py` (rule D1's note). **Also kept:** the
+star-first mode's click on a bright star or a cluster, which opens the object's published columns and no system
+(D208 (6)). T27's "any drawn star can be picked and its system opened" is withdrawn with it; how a system's
+information is shown is the owner's to decide. vitest 176 (181, less `rail.test.ts`'s five), `tsc -b` clean.

@@ -108,7 +108,7 @@ into its own stars at close zoom (stars under 20 Myr exist only as cluster point
 process on its Hernquist profile); **T26** the faint end below 0.1 L☉ with finer cells so a close view stays
 affordable; **T27** one star list — the number-sampled catalogue (which carries the planetary systems and is about one
 star in 10⁵–10⁷ of the galaxy: 20 000 by default, at most 5 × 10⁶) re-keyed onto the complete list's identities, so
-any drawn star can be picked and its system opened; today a bright star is named (level-3 cell, rank) and has no
+any drawn star can be named on one list (opening its system from a click was removed on the owner's word, D209: the system's information is to be shown another way, not yet decided); today a bright star is named (level-3 cell, rank) and has no
 system. T24–T26 are about two sessions together, T27 two to three; all four are model work beyond the two pieces the
 pin was lifted for and need the owner's word. **The owner's open choice at handoff:** the star-first viewer mode first
 on what exists (the session's recommendation), or T24–T26 first. The owner has ideas of their own for the viewer to

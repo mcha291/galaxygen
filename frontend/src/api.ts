@@ -1,7 +1,7 @@
 // The app's view of the API. No network code lives here: every request goes
 // through interface/transport.js, the project's one fetch (rule D2), and every
 // colour comes from the field declarations it returns (rule A9).
-import { arrays, blackbody, bright, clouds, clusters, fields, inputs, region, remnants, render, stages, system } from "@interface/transport.js";
+import { arrays, blackbody, bright, clouds, clusters, fields, inputs, region, remnants, render, stages } from "@interface/transport.js";
 
 import type { Curve } from "./galaxy/filters";
 import type { Axis } from "./preview/axes";
@@ -96,42 +96,6 @@ export async function loadArrays(names: string[], query: Query = {}, signal?: Ab
   const params = sampling ? { ...query, t_samples: sampling.tSamples, precision: sampling.precision } : query;
   const got = await arrays(names, params, { signal });
   return { header: got.header as Frame["header"], arrays: got.arrays as Frame["arrays"] };
-}
-
-export interface SystemFrame {
-  header: {
-    star: Record<string, number>;
-    cell: number;
-    index: number;
-    planets: number;
-    belts: { kind: string; inner: number; outer: number }[];
-    columns: string[];
-    stars: { requested: number; seed: number; planets_seed: number };
-    stages: string[];
-  };
-  arrays: Record<string, Float64Array | BigInt64Array>;
-}
-
-/**
- * One star's planets and belts, by the (cell, index) the region response named
- * it with. The server materialises that one cell, not the galaxy, and asks for
- * the same sample size so the same star is the same star.
- */
-/**
- * A star's name: its cell, its index there, and the whole-galaxy sample size it was named in.
- * The index only means something at that size, so a star picked in a close region view
- * (a larger sample) opens with that size and not the base one.
- */
-export interface StarName {
-  cell: number;
-  index: number;
-  stars?: number;
-}
-
-export async function loadSystem(star: StarName, query: Query, signal?: AbortSignal): Promise<SystemFrame> {
-  const { cell, index } = star;
-  const got = await system({ cell, index }, { ...query, stars: star.stars ?? STAR_SAMPLE }, { signal });
-  return { header: got.header as SystemFrame["header"], arrays: got.arrays as SystemFrame["arrays"] };
 }
 
 /** The whole-galaxy star sample for one input vector: every cell, STAR_SAMPLE stars in all. */

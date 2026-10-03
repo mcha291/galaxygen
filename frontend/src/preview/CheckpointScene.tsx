@@ -71,7 +71,7 @@ const NOT_AN_EPOCH = new Set(["stars_formed_history"]);
 /** The preview for one checkpoint: only what that checkpoint has computed, never the finished galaxy. */
 export function CheckpointScene({ n, meta, query, preset, exposure, charts = false }: Props) {
   // From Systems on the galaxy is whole, and its preview is the field regime only: the light
-  // integrated through the published fields. Stars, and the systems they open, are the Galaxy tab's.
+  // integrated through the published fields. Stars are the Galaxy tab's.
   if (n >= 5) {
     return (
       <GalaxyView reach={20} preset={preset} hdr>

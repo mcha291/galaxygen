@@ -28,7 +28,7 @@ const PRODUCES: Record<number, string> = {
   3: "Bar and spiral arms, on the disc's own dynamics",
   4: "Gradients and histories; disc colours by [Fe/H] — first recognisable galaxy",
   5: "Resolves into individual stars",
-  6: "Systems become openable",
+  6: "Planetary systems for every star",
 };
 
 function badgeOf(status: string, n: number, invalidated: boolean): { label: string; tone: string } {

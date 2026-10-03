@@ -1,4 +1,3 @@
-import { identify } from "@interface/stars.js";
 import { useMemo, useRef, useState } from "react";
 
 import {
@@ -8,7 +7,6 @@ import {
   type FieldsPayload,
   type Query,
   type Sample,
-  type StarName,
   STAR_SAMPLE,
   loadBlackbody,
   loadBright,
@@ -51,8 +49,6 @@ interface Props {
   query: Query;
   preset: Preset;
   onPreset(p: Preset): void;
-  /** A star was clicked: open its system. */
-  onOpen(star: StarName): void;
   /** "Edit galaxy": open the staged generation with the confirmations kept (D198). Discards nothing. */
   onEdit(): void;
 }
@@ -157,9 +153,8 @@ function positionsOf(sample: Sample): Float32Array {
 /**
  * The finished galaxy in its three regimes (design brief §3), handed over by zoom: the field
  * for the whole galaxy, the sample as it fills the view, and a region's own stars close up.
- * Any star drawn can be clicked to open its system.
  */
-export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposure, onExposure, query, preset, onPreset, onOpen, onEdit }: Props) {
+export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposure, onExposure, query, preset, onPreset, onEdit }: Props) {
   const [zoom, setZoom] = useState<number | undefined>(undefined);
   const [view, setView] = useState<ViewState | null>(null);
   const [mode, setMode] = useState<Mode>("field");
@@ -318,16 +313,14 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
   // The framing radius comes from the sample in both modes, so the zoom slider means the same thing in each.
   const reach = useMemo(() => extent(samplePositions) || DISC_RADIUS, [samplePositions]);
 
-  const open = (from: Sample, row: number) => {
-    const name = identify(from.header, row) as { cell: number; index: number } | null;
-    if (name) onOpen({ ...name, stars: from.header.stars.requested });
-  };
 
   const layers: StarLayer[] = [];
   if (mode === "field") {
-    if (sampleColors) layers.push({ positions: samplePositions, colors: sampleColors, opacity: weights.sampled, onPick: (row) => open(sample, row) });
+    // Drawn, not picked: clicking a star to open its planetary system was removed (D209); the system's
+    // information will be shown another way.
+    if (sampleColors) layers.push({ positions: samplePositions, colors: sampleColors, opacity: weights.sampled });
     if (detail && detailPositions && detailColors && weights.stars > 0) {
-      layers.push({ positions: detailPositions, colors: detailColors, opacity: weights.stars, onPick: (row) => open(detail, row) });
+      layers.push({ positions: detailPositions, colors: detailColors, opacity: weights.stars });
     }
     // Clusters as objects (V4, S41): each a point of the light its stars sum to, in the region regime.
     if (clusterPositions && clusterColors && weights.stars > 0 && field === PHOTOMETRIC) {
@@ -483,7 +476,7 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
                 <span className={styles.value}>{r.value}</span>
               </div>
             ))}
-            <p className={styles.muted}>The model's published numbers for this object. A bright star has no planetary system yet: systems open from the field mode's stars.</p>
+            <p className={styles.muted}>The model's published numbers for this object.</p>
           </div>
         )}
 
@@ -581,9 +574,9 @@ export function GalaxyTab({ meta, sample, fields, field: chosen, onField, exposu
                 weights.active === "stars"
                   ? region.busy || !detail
                     ? "Loading this region's stars."
-                    : `${detail.header.stars.materialised.toLocaleString("en")} stars here, of a ${regionStars.toLocaleString("en")}-star galaxy. Click one to open its system.`
+                    : `${detail.header.stars.materialised.toLocaleString("en")} stars here, of a ${regionStars.toLocaleString("en")}-star galaxy.`
                   : weights.active === "sampled"
-                    ? `${sample.header.stars.materialised.toLocaleString("en")} stars. Click one to open its system.`
+                    ? `${sample.header.stars.materialised.toLocaleString("en")} stars.`
                     : "Zoom in for stars."
               }`}
         </p>

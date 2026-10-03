@@ -207,13 +207,6 @@
   color: var(--text-muted);
 }
 
-.openSystem {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin-bottom: var(--space-3);
-}
-
 .caption {
   position: absolute;
   bottom: var(--space-5);
