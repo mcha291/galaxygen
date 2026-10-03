@@ -1271,3 +1271,23 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   after that server restarts. Say so when a session changes the model under a server it does not own (D204).
 - [close] Do not move a pinned document while the suite that reads it is running: the register's count test failed on
   a half-moved register. Write the records before starting the suite, or after its exit line (D204's gate line).
+
+## From S50 (a side track and the star-first mode; Opus 5.5 throughout)
+
+- [close] A side track the owner opens inside a session gets its own name the moment it is named, and the planned
+  session's rulings say what it builds on: S50's branch carried the side track's commits from its first day, so
+  "merging the two" was already done and the planned work depended on the side track's components (D208, D209).
+- [viewer] Look at the picture before calling a field done: the dust's per-ring height read well in its tests and
+  flooded the dust diagnostic with layers tens of kiloparsecs tall past the stellar disc's edge; the first two domain
+  rules tried each failed by the number (one left the edge, one refused 52 % of the dust) before the stars' own scale
+  length held (D206).
+- [viewer] A probe of the frame must draw its own frame first: an idle browser pane draws none, and the first closure
+  reading (0.71) summed a frame from before the dust was switched off. Fix the instrument, not the number (D208).
+- [viewer] Two layers with different heights cannot be mixed inside one ray-march step; cut the step at fixed
+  multiples of the thinner layer and compose the pieces in order, and hold the cut set against a brute-force
+  quadrature (eight cuts left 3.6 %, fourteen 0.6 %) (D206).
+- [field] A placement probe must place everything that is placed: S50's first estimate of the dust's arm placement lit
+  the screen evenly and promised soft dark bands; with the stars on the same arms the ring's light falls instead and
+  the arms are muted, not laned (D207).
+- [close] The owner may end a close without the suite: say so in the board row and in BRIEF, and make the suite the
+  next session's first step (S50's close, D209).

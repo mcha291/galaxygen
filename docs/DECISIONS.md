@@ -7987,3 +7987,10 @@ own demonstration of the staged flow and is pinned by `tests/test_viewer.py` (ru
 star-first mode's click on a bright star or a cluster, which opens the object's published columns and no system
 (D208 (6)). T27's "any drawn star can be picked and its system opened" is withdrawn with it; how a system's
 information is shown is the owner's to decide. vitest 176 (181, less `rail.test.ts`'s five), `tsc -b` clean.
+
+**S50's close (2026-10-03).** The owner, after D209: "yes, merge them into main", then "don't run tests, i want to
+continue onto the next session". So the close is the records, the merge, the tag and the push, **without the full
+suite and without `verify_clone`**: the last full suite (`EXIT=0`) ran on D207's code, and S50 proper (D208, D209)
+changed no Python — `interface/transport.js` gained one export, the rest is the React viewer (vitest 176, `tsc -b`
+and `vite build` clean). The next session runs `bootstrap.py` and the suite first. `sidetrack-session-1` is pushed
+as the side track's own name; it is contained in `session-50` and so in `main`.
