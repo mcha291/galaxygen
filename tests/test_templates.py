@@ -1,0 +1,923 @@
+"""The templates (S54, BUILD_III Phase T; DECISIONS.md D213): two named galaxies as data, the fit, the checks.
+
+**The gates.** ``milky_way`` is the registry's defaults exactly, and a run of it is bit-identical to a run
+with no inputs given - asserted on every published array, not on a hash of a few. ``template=milky_way``
+and no template are one point in input space: one cache entry, the same bytes. An input in the query
+overrides the template's; an unknown template is a 404 that names the registered ones. ``/api/templates``
+is metadata and runs no stage (rule D4).
+
+**The fit (D213 as amended at the gate).** The free set is a rule, in the template's data: a control is free
+only if a target measures what it controls, and ``ngc_4414`` names four with the target beside each. The
+other three are not stated at all, so they are the registry's defaults object for object, the tool never
+passes them to the model, and nothing admits a control by weight. The committed values are where
+``tools/fit_template.py``'s search stops - a point on a plateau resolved to the model's own steps, not a
+minimum to the printed precision - and the three model numbers committed beside them are what the model
+gives there. Where the search stops is what is tested, not a zero gradient: the three targets carry steps in
+``halo_mass`` and ``disc_spin`` (debt #133; ``test_the_model_s_targets_are_stepped...`` pins it), so a
+derivative at the committed point reads a tooth. One further cycle of the search from the committed values
+finds nothing lower. A free control left on a bound is labelled ``bound`` with its finding (debt #132). The
+whole search re-run from the registry's defaults (forty seconds) is opt-in: ``GALAXYGEN_REFIT=1``.
+
+**The checks.** Each is defined as D213's table words it and on the reading's window. Each was read once,
+blind, on the first fit (fit A, withdrawn): that reading is data beside the check, and every verdict on the
+fit that stands is ``disclosed``, never blind. The verdicts are ``python -m galaxy.specs``'s to print, and
+nothing here pins the model's number for one on the fit that stands (the ledger of recorded misses is the
+lead's).
+"""
+
+from __future__ import annotations
+
+import inspect
+import json
+import math
+import os
+import re
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+import fit_template
+from galaxy import templates
+from galaxy.api import wire
+from galaxy.api.service import RESERVED, Service, routes
+from galaxy.core.grids import GridSpec
+from galaxy.core.registry import INPUTS, MergerEvent, controls, seeds
+from galaxy.models import DEFAULT as DEFAULT_MODEL
+from galaxy.models.level0 import LEVEL0
+from galaxy.run import run
+from galaxy.specs import Problem
+from galaxy.specs import templates as checks
+from galaxy.stages import spectra
+
+ROOT = Path(__file__).resolve().parents[1]
+SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
+MILKY_WAY = templates.TEMPLATES["milky_way"]
+NGC_4414 = templates.TEMPLATES["ngc_4414"]
+# The routes that take inputs: every one whose handler lays a request's inputs over the registry's.
+INPUT_ROUTES = ("/api/arrays", "/api/region", "/api/system", "/api/clouds", "/api/clusters", "/api/remnants",
+                "/api/bright", "/api/render")
+SECTOR = "r_min=7&r_max=9&phi_min=0&phi_max=0.4"
+B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} for b, c in (("B", 4400.0), ("V", 5500.0))])
+
+
+def text(name: str) -> str:
+    return (ROOT / "docs" / name).read_text(encoding="utf-8")
+
+
+def same(a, b) -> bool:
+    """Bit for bit: arrays by dtype, shape and every element (NaN equal to NaN), scalars and labels by value."""
+    if isinstance(a, np.ndarray) or isinstance(b, np.ndarray):
+        a, b = np.asarray(a), np.asarray(b)
+        if a.dtype != b.dtype or a.shape != b.shape:
+            return False
+        return a.tobytes() == b.tobytes()
+    if isinstance(a, float) and isinstance(b, float):
+        return a == b or (math.isnan(a) and math.isnan(b))
+    return a == b
+
+
+# --- the registry of two ---------------------------------------------------------------------
+
+
+def test_two_templates_are_registered_and_the_default_leads():
+    assert templates.names() == ("milky_way", "ngc_4414")
+    assert templates.DEFAULT == "milky_way" and templates.get("milky_way") is MILKY_WAY
+    with pytest.raises(KeyError, match="registered"):
+        templates.get("andromeda")
+    for t in templates.TEMPLATES.values():
+        t.validate()
+        assert t.model == DEFAULT_MODEL and t.pins == ()
+    assert (MILKY_WAY.filters, NGC_4414.filters) == ("rgb", "wfc3")
+
+
+def test_milky_way_overrides_nothing_and_resolves_to_the_registry_s_defaults():
+    """Ruling 1: its inputs are resolved from the registry when asked for, so it cannot drift from the defaults."""
+    assert templates.overrides(MILKY_WAY) == {}
+    assert not MILKY_WAY.controls and not MILKY_WAY.seeds and MILKY_WAY.mergers is None
+    assert MILKY_WAY.fit is None and MILKY_WAY.checks == ()
+    resolved = templates.resolve(MILKY_WAY)
+    assert list(resolved) == list(INPUTS)
+    for name, inp in INPUTS.items():
+        assert resolved[name] is inp.default, name  # the registry's own object, not a copy of its value
+
+
+def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
+    """The gate (BUILD_III Phase T): every published field of the whole pipeline on the production grid."""
+    model = prod[0].get(MILKY_WAY.model)
+    bare = run(model)
+    named = run(model, templates.resolve(MILKY_WAY))
+    assert named.inputs == bare.inputs and named.order == bare.order
+    assert set(named.fields) == set(bare.fields) and len(bare.fields) > 300
+    arrays = 0
+    for name, value in bare.fields.items():
+        assert same(value, named.fields[name]), f"{name} differs between the template and the bare run"
+        arrays += isinstance(value, np.ndarray)
+    assert arrays > 150  # the comparison is on arrays, not on a handful of scalars
+
+
+FREE = {"halo_mass": "curve_peak", "disc_spin": "disc_scale_length", "halo_assembly_z": "curve_peak",
+        "baryon_retention": "stellar_mass"}
+HELD = ("infall_timescale", "inside_out_index", "migration_efficiency")
+
+
+def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
+    """D213 as amended, ruling 1: a control is free only if a fit target measures what it controls; every other
+    control stays at the registry's default and does not move. Ruling 4: no merger, every seed 4414."""
+    assert dict(NGC_4414.fit.free) == FREE and set(NGC_4414.controls) == set(FREE)
+    assert set(FREE) | set(HELD) == {c.name for c in controls()}
+    assert set(FREE.values()) == {t.name for t in NGC_4414.fit.targets}  # each target measures something
+    assert dict(NGC_4414.fit.measures) == {
+        "halo_mass": "the peak", "disc_spin": "the scale length",
+        "halo_assembly_z": "the peak at a given disc, through the concentration",
+        "baryon_retention": "the stellar mass at a given halo",
+    }
+    for c in controls():
+        if c.name in FREE:
+            assert c.lo <= NGC_4414.controls[c.name] <= c.hi, c.name
+    # The held controls are not stated, so they are the registry's own defaults, exactly, and cannot have moved.
+    resolved = templates.resolve(NGC_4414)
+    given = templates.overrides(NGC_4414)
+    for name in HELD:
+        assert name not in NGC_4414.controls and name not in given and name not in NGC_4414.sources
+        assert resolved[name] is INPUTS[name].default and resolved[name] == INPUTS[name].default, name
+    assert (resolved["infall_timescale"], resolved["inside_out_index"], resolved["migration_efficiency"]) == (7.0, 1.0, 3.6)
+    assert dict(NGC_4414.seeds) == {s.name: 4414 for s in seeds()}  # a new seed in the registry fails here
+    assert NGC_4414.mergers == ()
+    assert set(resolved) == set(INPUTS) and resolved["mergers"] == ()
+    assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers"}
+    assert (NGC_4414.camera.inclination_deg, NGC_4414.camera.azimuth_deg, NGC_4414.camera.fov_deg) == (55.0, 0.0, 5.0)
+    assert (MILKY_WAY.camera.inclination_deg, MILKY_WAY.camera.azimuth_deg, MILKY_WAY.camera.radius_kpc,
+            MILKY_WAY.camera.fov_deg) == (0.0, 270.0, 20.0, 45.0)
+    assert (NGC_4414.instrument.distance_mpc, NGC_4414.instrument.pixel_scale_arcsec) == (17.7, None)
+    assert (MILKY_WAY.instrument.distance_mpc, MILKY_WAY.instrument.pixel_scale_arcsec) == (None, None)
+    # The frame holds the disc: the 3.6 micron isophote the source's tag names, 153.5 arcsec at 17.7 Mpc.
+    assert 153.5 * 17.7e3 * math.radians(1.0 / 3600.0) < NGC_4414.camera.radius_kpc
+
+
+def test_a_bound_is_labelled_and_its_finding_written_out():
+    """Ruling 3: a value on a bound is a finding, not a fit. It is labelled in the template's data with the
+    finding in the ruling's words and its debt; no bound value is rounded or nudged inside."""
+    table = {c.name: c for c in controls()}
+    on_bound = {n for n, v in NGC_4414.controls.items() if v in (table[n].lo, table[n].hi)}
+    assert on_bound == set(NGC_4414.fit.bounds) == {"halo_assembly_z"}
+    assert NGC_4414.controls["halo_assembly_z"] == table["halo_assembly_z"].lo == 0.5  # the bound itself, exactly
+    finding = NGC_4414.fit.bounds["halo_assembly_z"]
+    ruled = ("the model cannot lower its inner peak enough for this disc inside the range; the concentration "
+             "floor, or the concentration–mass relation, is the debt")
+    assert finding.startswith(ruled) and "debt #132" in finding and "[verified: DECISIONS.md D213" in finding
+    assert ruled in " ".join(text("DECISIONS.md").split())  # the ruling's own sentence, whatever its line breaks
+    # No published range moved: the registry's are the ones the ruling quotes.
+    assert [(c.name, c.lo, c.hi) for c in controls()] == [
+        ("halo_mass", 1e11, 1e13), ("disc_spin", 0.005, 0.05), ("halo_assembly_z", 0.5, 5.0),
+        ("baryon_retention", 0.05, 0.5), ("infall_timescale", 1.0, 14.0), ("inside_out_index", 0.0, 3.0),
+        ("migration_efficiency", 0.0, 8.0)]
+
+
+def test_a_template_is_refused_what_the_registry_does_not_hold():
+    from dataclasses import replace
+
+    with pytest.raises(templates.TemplateError, match="not a registered control"):
+        replace(NGC_4414, controls={"bar_strength": 1.0}).validate()
+    with pytest.raises(templates.TemplateError, match="outside"):
+        replace(NGC_4414, controls={**NGC_4414.controls, "disc_spin": 0.5}).validate()
+    with pytest.raises(templates.TemplateError, match="not a registered seed"):
+        replace(NGC_4414, seeds={"texture_seed": 1}).validate()
+    with pytest.raises(templates.TemplateError, match="no source"):
+        replace(NGC_4414, sources={}).validate()
+    with pytest.raises(templates.TemplateError, match="carries no tag"):
+        replace(NGC_4414, sources={**NGC_4414.sources, "camera.fov_deg": "a long lens"}).validate()
+    with pytest.raises(templates.TemplateError, match="they are not checks"):
+        replace(NGC_4414, checks=(replace(NGC_4414.checks[1], field="stellar_mass_total", first_reading=None),)).validate()
+
+
+def test_a_fit_cannot_move_a_control_no_target_measures():
+    """The free set is the stated set. A template that states a held control - at its default or anywhere else -
+    is refused; so is a free control with no target, a bound without its label and a label without its bound."""
+    from dataclasses import replace
+
+    fit = NGC_4414.fit
+    moved = {**NGC_4414.controls, "infall_timescale": 1.0}
+    with pytest.raises(templates.TemplateError, match="stays at the registry's default"):
+        replace(NGC_4414, controls=moved, sources={**NGC_4414.sources, "inputs.controls.infall_timescale": "[inferred] x"}).validate()
+    at_default = {**NGC_4414.controls, "migration_efficiency": 3.6}
+    with pytest.raises(templates.TemplateError, match="stays at the registry's default"):
+        replace(NGC_4414, controls=at_default, sources={**NGC_4414.sources, "inputs.controls.migration_efficiency": "[inferred] x"}).validate()
+    with pytest.raises(templates.TemplateError, match="not one of the fit's targets"):
+        replace(fit, free={**fit.free, "infall_timescale": "star_formation_rate"}, measures={**fit.measures, "infall_timescale": "x"})
+    with pytest.raises(templates.TemplateError, match="none is admitted any other way"):
+        replace(fit, free={}, measures={}, bounds={})
+    with pytest.raises(templates.TemplateError, match="says how its target measures it"):
+        replace(fit, measures={})
+    with pytest.raises(templates.TemplateError, match="only a free control can stand on a bound"):
+        replace(fit, bounds={**fit.bounds, "infall_timescale": "x"})
+    with pytest.raises(templates.TemplateError, match="a value on a bound is a finding"):
+        replace(NGC_4414, fit=replace(fit, bounds={})).validate()
+    with pytest.raises(templates.TemplateError, match="a value on a bound is a finding"):
+        replace(NGC_4414, fit=replace(fit, bounds={**fit.bounds, "disc_spin": "x"})).validate()
+
+
+# --- every number carries its tag (rule B14) ---------------------------------------------------
+
+
+def test_every_number_of_ngc_4414_has_a_tag_and_the_tag_s_citation_exists():
+    reading = text("READING_NGC_4414.md")
+    decisions = text("DECISIONS.md")
+    assert "### D213." in decisions
+    paths = templates.numbers(NGC_4414)
+    assert len(paths) == 4 + len(seeds()) + 1 + 4 + 1  # the free controls, seeds, the merger list, the camera, the distance
+    tagged = {path: NGC_4414.sources[path] for path in paths}
+    tagged |= {f"fit.targets.{t.name}": t.source for t in NGC_4414.fit.targets}
+    tagged |= {f"checks.{c.name}": c.source for c in NGC_4414.checks}
+    for path, source in tagged.items():
+        assert any(tag in source for tag in templates.TAGS), path
+        for cited in re.findall(r"tests/test_templates\.py::(\w+)", source):
+            assert callable(globals().get(cited)), f"{path} cites a test that is not here: {cited}"
+    # A read number names the reading and one of its source keys; a display choice says it is one.
+    keys = {"camera.inclination_deg": "W04", "instrument.distance_mpc": "F01", "camera.radius_kpc": "S4G",
+            "fit.targets.curve_peak": "P16", "fit.targets.disc_scale_length": "S4G", "fit.targets.stellar_mass": "z0MGS",
+            "checks.curve_shape": "P16", "checks.star_formation_rate": "z0MGS", "checks.hydrogen_mass": "H03",
+            "checks.absolute_magnitude_k": "2MRS", "checks.colour_b_v_face_on": "RC3"}
+    for path, key in keys.items():
+        assert "READING_NGC_4414.md" in tagged[path] and key in tagged[path], path
+        assert re.search(rf"\*\*{re.escape(key)}\b|{re.escape(key)}/", reading), f"{key} is not a source key of the reading"
+    for path in ("camera.azimuth_deg", "camera.radius_kpc", "camera.fov_deg", *(f"inputs.seeds.{s.name}" for s in seeds())):
+        assert "[inferred]" in tagged[path], path
+    for name in FREE:
+        fitted = tagged[f"inputs.controls.{name}"]
+        assert "fitted 2026-10-0" in fitted and "tools/fit_template.py ngc_4414" in fitted and "[verified:" in fitted
+        assert "a target measures it" in fitted and "plateau" in fitted and "not a minimum to the printed precision" in fitted
+    assert not any(f"inputs.controls.{name}" in tagged for name in HELD)  # a held control states no number of its own
+    assert "no merger of NGC 4414 was read" in tagged["inputs.mergers"]
+    # What was not read is None and carries no source to dress it as a number (rule B9).
+    assert "instrument.pixel_scale_arcsec" not in NGC_4414.sources
+    # The numbers the tags quote are the reading's own.
+    for quoted in ("V_max = 237 ± 10, V_flat = 185 ± 10", "h_r = 19.22″", "log M* = 10.65 ± 0.10", "i = 55 ± 2",
+                   "μ_Z = 31.24, D_Z = 17.70 Mpc", "(B−V)_T⁰ = 0.77", "153.5″"):
+        assert quoted in reading, quoted
+
+
+# --- template= on the routes that take inputs --------------------------------------------------
+
+
+def test_every_route_that_takes_inputs_takes_a_template():
+    assert "template" in RESERVED and "template" not in INPUTS
+    by_path = {r.path: r for r in routes()}
+    for path in INPUT_ROUTES:
+        assert "template" in by_path[path].params, path
+    # ... and those are all of them: a route that names a model and is not metadata lays inputs over it.
+    metadata = {"/api/stages", "/api/fields", "/api/inputs"}
+    assert {r.path for r in routes() if "model" in r.params} - metadata == set(INPUT_ROUTES)
+    source = inspect.getsource(Service)
+    for path in INPUT_ROUTES:
+        handler = getattr(Service, "_" + by_path[path].handler)
+        assert "self._overrides(model, q)" in inspect.getsource(handler), path
+    assert source.count("self._overrides(model, q)") == len(INPUT_ROUTES)
+
+
+@pytest.mark.parametrize("route, query", [
+    ("/api/arrays", "fields=stellar_surface_density,stellar_mass_total"),
+    ("/api/clouds", SECTOR),
+    ("/api/region", SECTOR),
+])
+def test_naming_the_default_template_is_naming_none(route, query):
+    """Ruling 2: one point in input space - one cache entry, the same bytes."""
+    api = Service(grid=SMALL)
+    bare = api.handle(route, query)  # cold: it runs the closure
+    named = api.handle(route, query + "&template=milky_way")
+    again = api.handle(route, query)
+    assert bare.status == named.status == again.status == 200
+    assert bare.stages and named.stages == (), "the template reached another cache entry and ran the stages again"
+    assert len(api._cache) == 1
+    assert named.body == again.body  # warm against warm: the same bytes
+    assert bare.frame()[0]["inputs"] == named.frame()[0]["inputs"]
+    # ... and cold against cold, on a second service: the same bytes as the bare request's.
+    cold = Service(grid=SMALL).handle(route, "template=milky_way&" + query)
+    assert cold.stages == bare.stages and cold.body == bare.body
+
+
+def test_a_template_s_inputs_are_the_base_and_the_query_overrides_them():
+    api = Service(grid=SMALL)
+    base = api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414")
+    assert base.status == 200
+    published = next(t for t in api.handle("/api/templates").json()["templates"] if t["name"] == "ngc_4414")["inputs"]
+    got = base.frame()[0]["inputs"]
+    assert {n: got[n] for n in published["controls"]} == published["controls"]
+    assert {n: got[n] for n in published["seeds"]} == published["seeds"] and got["mergers"] == []
+    # "Edit galaxy" starts from the template and moves a control: the control is the query's, the rest the template's.
+    moved = api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414&halo_mass=2e12&world_seed=7").frame()[0]
+    assert moved["inputs"]["halo_mass"] == 2e12 and moved["inputs"]["world_seed"] == 7
+    assert {n: v for n, v in moved["inputs"].items() if n not in ("halo_mass", "world_seed")} == {
+        n: v for n, v in got.items() if n not in ("halo_mass", "world_seed")}
+    assert moved["scalars"]["stellar_mass_total"] != base.frame()[0]["scalars"]["stellar_mass_total"]
+    event = '[{"time":5,"mass_ratio":0.3,"gas_fraction":0.4}]'
+    merged = api.handle("/api/arrays", f"fields=last_major_merger_time&template=ngc_4414&mergers={event}").frame()[0]
+    assert merged["scalars"]["last_major_merger_time"] == 5.0
+    assert api.handle("/api/arrays", "fields=last_major_merger_time&template=ngc_4414").frame()[0]["scalars"][
+        "last_major_merger_time"] == 0.0  # the template's list is empty: no merger, not the Milky Way's two
+    # The same inputs spelled out with no template are the same point: the same cache entry.
+    api = Service(grid=SMALL)
+    first = api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414")
+    spelled = "&".join(f"{n}={v!r}" for n, v in {**NGC_4414.controls, **NGC_4414.seeds}.items()) + "&mergers=[]"
+    second = api.handle("/api/arrays", "fields=stellar_mass_total&" + spelled)
+    assert first.stages and second.stages == () and len(api._cache) == 1
+    # A range is still enforced on what the query gives, and the model= parameter still chooses the model.
+    assert api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414&disc_spin=0.5").status == 400
+    other = next(n for n in api.models.names() if n != NGC_4414.model)
+    assert api.handle("/api/arrays", f"fields=stellar_mass_total&template=ngc_4414&model={other}").frame()[0]["model"] == other
+    assert first.frame()[0]["model"] == NGC_4414.model
+
+
+@pytest.mark.parametrize("route", INPUT_ROUTES)
+def test_an_unknown_template_is_a_404_that_names_the_registered_ones(route):
+    got = Service(grid=SMALL).handle(route, "template=andromeda&fields=stellar_mass_total&cell=0&index=0&n=10&filters=" + B_V)
+    assert got.status == 404 and got.stages == ()
+    assert got.json()["error"] == "no template 'andromeda'; registered: ['milky_way', 'ngc_4414']"
+
+
+def test_a_template_given_twice_is_refused():
+    assert Service(grid=SMALL).handle("/api/arrays", "fields=sfr&template=milky_way&template=ngc_4414").status == 400
+
+
+# --- /api/templates: metadata ----------------------------------------------------------------
+
+TEMPLATE_KEYS = {"name", "label", "about", "model", "inputs", "camera", "filters", "instrument", "pins", "fit", "checks", "sources"}
+TARGET_KEYS = {"name", "label", "field", "unit", "value", "half_window", "window", "source", "model", "residual"}
+FIT_KEYS = {"targets", "controls", "objective", "objective_value", "tool", "method", "date", "evaluations"}
+CHECK_KEYS = {"name", "label", "unit", "window", "quantity", "mismatch", "source", "standing", "standing_about", "first_reading"}
+CONTROL_KEYS = {"name", "default", "fitted", "lo", "hi", "free", "measured_by", "measures", "bound", "finding"}
+FIRST_READING_KEYS = {"fit", "value", "verdict", "standing", "source"}
+
+
+def test_the_templates_route_runs_no_stage_and_cannot(monkeypatch):
+    """Rule D4, both forms: it ran nothing, and there is no runner in its path to run."""
+    cold = Service(grid=SMALL).handle("/api/templates")
+    assert cold.status == 200 and cold.stages == ()
+
+    def refuse(*a, **kw):
+        raise AssertionError("a metadata endpoint reached the runner (rule D4)")
+
+    monkeypatch.setattr("galaxy.api.service._run", refuse)
+    api = Service(grid=SMALL)
+    assert api.handle("/api/templates").body == cold.body and api._cache == {}
+    listed = {r["path"]: r for r in api.handle("/api").json()["routes"]}
+    assert listed["/api/templates"]["params"] == []
+
+
+def test_the_templates_route_has_the_stated_shape():
+    api = Service(grid=SMALL)
+    payload = api.handle("/api/templates").json()
+    assert set(payload) == {"default", "templates"} and payload["default"] == "milky_way"
+    assert [t["name"] for t in payload["templates"]] == ["milky_way", "ngc_4414"]
+    registry = api.handle("/api/inputs").json()
+    viewer_sets = set(json.loads((ROOT / "frontend/src/galaxy/filters.json").read_text(encoding="utf-8"))["sets"])
+    viewer_sets |= set(json.loads((ROOT / "frontend/src/galaxy/instruments.json").read_text(encoding="utf-8"))["sets"])
+    for t in payload["templates"]:
+        assert set(t) == TEMPLATE_KEYS, t["name"]
+        assert t["model"] in api.models and t["label"] and t["about"]
+        # The inputs, fully resolved, in the shapes /api/inputs uses.
+        assert set(t["inputs"]) == {"controls", "seeds", "mergers"}
+        assert list(t["inputs"]["controls"]) == [c["name"] for c in registry["controls"]]
+        assert list(t["inputs"]["seeds"]) == [s["name"] for s in registry["seeds"]]
+        assert all(isinstance(v, float) for v in t["inputs"]["controls"].values())
+        assert all(isinstance(v, int) for v in t["inputs"]["seeds"].values())
+        for event in t["inputs"]["mergers"]:
+            assert set(event) == {"time", "mass_ratio", "gas_fraction", "about"}
+        assert list(t["camera"]) == ["inclination_deg", "azimuth_deg", "radius_kpc", "fov_deg"]
+        assert all(isinstance(v, float) for v in t["camera"].values())
+        assert t["filters"] in viewer_sets, "a template names a filter set the viewer holds"
+        assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"] and t["pins"] == []
+    mw, ngc = payload["templates"]
+    assert mw["inputs"]["controls"] == {c["name"]: c["default"] for c in registry["controls"]}
+    assert mw["inputs"]["seeds"] == {s["name"]: s["default"] for s in registry["seeds"]}
+    assert mw["inputs"]["mergers"] == registry["events"][0]["default"]
+    assert mw["fit"] is None and mw["checks"] == [] and mw["instrument"] == {"distance_mpc": None, "pixel_scale_arcsec": None}
+    assert mw["camera"] == {"inclination_deg": 0.0, "azimuth_deg": 270.0, "radius_kpc": 20.0, "fov_deg": 45.0}
+    assert ngc["inputs"]["mergers"] == [] and set(ngc["inputs"]["seeds"].values()) == {4414}
+    assert ngc["camera"] == {"inclination_deg": 55.0, "azimuth_deg": 0.0, "radius_kpc": NGC_4414.camera.radius_kpc, "fov_deg": 5.0}
+    assert ngc["instrument"] == {"distance_mpc": 17.7, "pixel_scale_arcsec": None}
+    fit = ngc["fit"]
+    assert set(fit) == FIT_KEYS and [t["name"] for t in fit["targets"]] == ["curve_peak", "disc_scale_length", "stellar_mass"]
+    for target in fit["targets"]:
+        assert set(target) == TARGET_KEYS
+        lo, hi = target["window"]
+        assert target["half_window"] == pytest.approx((hi - lo) / 2.0)
+        assert target["residual"] == pytest.approx((target["model"] - target["value"]) / target["half_window"], rel=1e-12)
+    assert [c["name"] for c in fit["controls"]] == list(ngc["inputs"]["controls"])
+    for c, r in zip(fit["controls"], registry["controls"]):
+        assert set(c) == CONTROL_KEYS
+        assert (c["default"], c["lo"], c["hi"]) == (r["default"], r["lo"], r["hi"])
+        assert c["fitted"] == ngc["inputs"]["controls"][c["name"]] and c["lo"] <= c["fitted"] <= c["hi"]
+        # Free with the target that measures it, or held at the registry's default; a bound is flagged with its finding.
+        assert c["free"] == (c["name"] in FREE) and c["measured_by"] == FREE.get(c["name"])
+        assert (c["measures"] is not None) == c["free"]
+        assert c["free"] or c["fitted"] == c["default"]
+        assert c["bound"] == (c["fitted"] in (c["lo"], c["hi"])) == (c["finding"] is not None)
+    assert [c["name"] for c in fit["controls"] if c["bound"]] == ["halo_assembly_z"]
+    assert "debt #132" in next(c["finding"] for c in fit["controls"] if c["bound"])
+    assert isinstance(fit["objective"], str) and "half-window" in fit["objective"] and "0.001" in fit["objective"]
+    assert fit["tool"] == "tools/fit_template.py ngc_4414" and (ROOT / "tools" / "fit_template.py").is_file()
+    # The checks: the windows only. No model number of the template as it stands rides with one - those verdicts
+    # are the specs' report - but its standing does, and the record of its first reading on the withdrawn fit.
+    assert [c["name"] for c in ngc["checks"]] == ["curve_shape", "star_formation_rate", "hydrogen_mass",
+                                                 "absolute_magnitude_k", "colour_b_v_face_on"]
+    for c in ngc["checks"]:
+        assert set(c) == CHECK_KEYS and len(c["window"]) == 2 and c["window"][0] < c["window"][1]
+        assert c["standing"] == "disclosed" and "fit A" in c["standing_about"] and "never blind" in c["standing_about"]
+        first = c["first_reading"]
+        assert set(first) == FIRST_READING_KEYS and (first["fit"], first["standing"]) == ("fit A", "blind")
+        assert first["verdict"] == ("pass" if c["window"][0] <= first["value"] <= c["window"][1] else "fail")
+    assert set(ngc["sources"]) == set(templates.numbers(NGC_4414))
+    # The route's about states the shape: every key of a template, of a fit and of a check is named in it.
+    about = next(r.about for r in routes() if r.path == "/api/templates")
+    for key in (TEMPLATE_KEYS | FIT_KEYS | CHECK_KEYS | TARGET_KEYS | CONTROL_KEYS | FIRST_READING_KEYS
+                | {"default", "templates", "controls", "seeds", "mergers"}):
+        assert re.search(rf"\b{key}\b", about), f"the route's about does not name {key}"
+    assert "Runs no stage" in about
+
+
+def test_the_templates_route_publishes_no_model_internals():
+    """Rule D5: no constant's name, whatever a source string quotes."""
+    body = Service(grid=SMALL).handle("/api/templates").body.decode("utf-8")
+    for name in LEVEL0:
+        assert not re.search(rf"\b{name}\b", body), f"constant {name} is published"
+
+
+def test_the_route_has_a_timing_row_and_a_templated_request_has_one():
+    from timings import ENDPOINTS
+
+    assert any(e.route == "/api/templates" and not e.query for e in ENDPOINTS)
+    assert any("template=ngc_4414" in e.query for e in ENDPOINTS)
+
+
+# --- the fit ---------------------------------------------------------------------------------
+
+
+def test_the_objective_is_d213_s():
+    """Squared residuals in half-windows, plus 1e-3 times the free controls' squared departures in units of each
+    one's range: a tie-breaker among the free controls and nothing else (D213 as amended, ruling 1)."""
+    assert NGC_4414.fit.tiebreak == 1e-3
+    p = fit_template.Problem(NGC_4414, SMALL)
+    # The free set is the template's, in the registry's order; the rest are held and are not the search's.
+    assert [c.name for c in p.controls] == list(FREE) == [c.name for c in controls() if c.name in FREE]
+    assert [c.name for c in p.held] == list(HELD) and p.weight == 1e-3
+    assert p.fixed == {**NGC_4414.seeds, "mergers": ()}  # the fit holds the template's seeds and its merger list
+    assert p.fields == ("circular_velocity", "thin_disc_scale_length", "stellar_mass_total")
+    # A departure is counted in the control's own linear range, whatever coordinate the search moves in.
+    values = {c.name: c.default for c in controls()} | {"disc_spin": 0.0173 + 0.0045, "halo_mass": 1.1e12 + 9.9e11}
+    s = p.s_of(values)
+    assert s.shape == (4,)
+    assert p.departures(s) == pytest.approx([0.1, 0.1, 0, 0], abs=1e-12)
+    assert p.departures(p.s0) == pytest.approx(np.zeros(4), abs=1e-15)
+    r = np.array([0.5, -2.0, 1.0])
+    assert p.parts(r, s) == pytest.approx((0.25 + 4.0 + 1.0, 1e-3 * 0.02))
+    assert p.objective(r, s) == pytest.approx(5.25002)
+    assert p.values(s) == pytest.approx({n: values[n] for n in FREE}, rel=1e-12)
+    # The search's coordinates: the logarithm where a range starts above zero - all four of the free ones.
+    assert p.log.all()
+    assert p.values(np.zeros(4)) == {c.name: c.lo for c in controls() if c.name in FREE}
+    assert p.values(np.ones(4)) == {c.name: c.hi for c in controls() if c.name in FREE}
+    assert p.s_of({c.name: math.sqrt(c.lo * c.hi) for c in controls() if c.name in FREE}) == pytest.approx(np.full(4, 0.5))
+    step = 1e-6
+    slopes = (p.departures(p.s0 + step) - p.departures(p.s0 - step)) / (2 * step)
+    assert p.departure_slopes(p.s0) == pytest.approx(slopes, rel=1e-8)
+    # A residual is counted in half-windows of the reader's window, about the reader's value.
+    peak, length, mass = NGC_4414.fit.targets
+    assert (peak.value, peak.window, peak.half_window) == (237.0, (222.0, 247.0), 12.5)
+    assert (length.value, length.window) == (1.649, (1.5, 1.9)) and length.half_window == pytest.approx(0.2)
+    assert mass.value == pytest.approx(10**10.65) and mass.window == (3.4e10, 5.9e10) and mass.half_window == 1.25e10
+    assert peak.residual_of(249.5) == 1.0 and peak.holds(247.0) and not peak.holds(247.01)
+    assert (peak.inside_kpc, peak.statistic, peak.field) == (20.6, "curve_peak", "circular_velocity")
+    # The words say what the last term is, and no more.
+    assert "breaks ties among the free controls and does nothing else" in NGC_4414.fit.objective
+    assert "the four free controls" in NGC_4414.fit.objective and "keeps a control" not in NGC_4414.fit.objective
+
+
+def test_the_tool_moves_the_free_controls_and_never_passes_a_held_one():
+    """The model is handed the template's seeds, its merger list and the four free controls: a held control is
+    not among the inputs of any evaluation, so it is the registry's default by construction."""
+    from dataclasses import replace
+
+    p = fit_template.Problem(NGC_4414, SMALL)
+    seen = []
+    real = p._run
+
+    def spy(model, inputs, *a, **kw):
+        seen.append(dict(inputs))
+        return real(model, inputs, *a, **kw)
+
+    p._run = spy
+    J, probes = p.jacobian(p.s0.copy(), p.residuals_of(p.model_numbers(p.s0)), 0.02)
+    assert J.shape == (3, 4) and len(probes) == 8 and len(seen) == 9
+    for inputs in seen:
+        assert set(inputs) == set(FREE) | {s.name for s in seeds()} | {"mergers"}
+        assert not set(inputs) & set(HELD)
+    # No argument of the tool admits a control: the free set is read from the template's data and nowhere else.
+    assert set(inspect.signature(fit_template.fit).parameters) == {"template", "grid", "start", "iterations"}
+    assert set(inspect.signature(fit_template.Problem.__init__).parameters) == {"self", "template", "grid"}
+    source = inspect.getsource(fit_template.main)
+    assert source.count("add_argument") == 2 and '"--check"' in source
+    # A template that names fewer free controls is fitted in fewer; one that names a stranger is refused.
+    fewer = replace(NGC_4414, fit=replace(NGC_4414.fit, free={"disc_spin": "disc_scale_length"},
+                                          measures={"disc_spin": "the scale length"}, bounds={}))
+    assert [c.name for c in fit_template.Problem(fewer, SMALL).controls] == ["disc_spin"]
+    stranger = replace(NGC_4414, fit=replace(NGC_4414.fit, free={"bar_strength": "curve_peak"},
+                                             measures={"bar_strength": "x"}, bounds={}))
+    with pytest.raises(SystemExit, match="not controls of its model"):
+        fit_template.Problem(stranger, SMALL)
+
+
+def test_the_search_s_counts_are_fixed_in_advance():
+    assert (fit_template.ITERATIONS, fit_template.FD_STEPS, fit_template.DAMPING) == (24, (4e-2, 2e-2, 1e-2), (0.0, 0.1, 1.0, 10.0))
+    assert NGC_4414.fit.evaluations == 1 + 24 * (2 * 4 + 4) == 289
+    assert NGC_4414.fit.method == fit_template.METHOD  # the template states the method the tool states
+    assert NGC_4414.fit.date == "2026-10-04"
+    # Ruling 4: what the search leaves is a point on a plateau resolved to the step, and the words say so.
+    for words in (NGC_4414.fit.method, NGC_4414.fit.objective):
+        assert "plateau" in words and "not a minimum to the printed precision" in words and "0.01 half-windows" in words
+    assert "a few 1e-4 of a range in the controls" in NGC_4414.fit.method
+
+
+def test_a_bounded_step_stays_inside_the_ranges_and_solves_the_free_controls():
+    normal = np.array([[4.0, 1.0, 0.0], [1.0, 3.0, 0.0], [0.0, 0.0, 2.0]])
+    rhs = np.array([1.0, -6.0, 0.4])
+    s = np.array([0.5, 0.2, 0.5])
+    plain = np.linalg.solve(normal, rhs)
+    assert s[1] + plain[1] < 0.0 and s[0] + plain[0] > 1.0  # the unbounded step carries two controls out of range
+    step = fit_template.bounded_step(normal, rhs, s, 0.0)
+    assert s[1] + step[1] == 0.0 and np.all((s + step >= 0.0) & (s + step <= 1.0))
+    # The second reaches its bound first and is held there; the first, solved again with it held, stays inside
+    # its range - a clipped step would have pinned it on its bound too.
+    assert step[0] == pytest.approx((rhs[0] - normal[0, 1] * step[1]) / normal[0, 0]) and s[0] + step[0] == pytest.approx(0.8)
+    assert step[2] == pytest.approx(0.2)
+    inside = np.array([0.4, 0.3, 0.2])
+    assert fit_template.bounded_step(normal, inside, s, 0.0) == pytest.approx(np.linalg.solve(normal, inside))
+    damped = fit_template.bounded_step(normal, inside, s, 10.0)
+    assert np.all(np.abs(damped) < np.abs(np.linalg.solve(normal, inside)))
+    # A control standing on its bound with the step pointing outwards does not move, and the rest are solved.
+    on_bound = fit_template.bounded_step(normal, rhs, np.array([0.5, 0.0, 0.5]), 0.0)
+    assert on_bound[1] == 0.0 and on_bound[0] == pytest.approx(0.25)
+
+
+def test_the_committed_fit_is_where_the_search_stops_and_reproduces_its_numbers():
+    """The committed controls on the production grid: the model's three numbers there are the committed ones,
+    and one more cycle of the search from them - the targets differenced at each of the three widths, twelve
+    damped trial steps, 37 model evaluations - finds nothing lower. A point on a plateau resolved to the
+    model's steps, which is all the search claims."""
+    here = fit_template.at(NGC_4414)
+    assert here.evaluations == 1
+    assert here.controls == pytest.approx(dict(NGC_4414.controls), rel=1e-12) and set(here.controls) == set(FREE)
+    for target in NGC_4414.fit.targets:
+        assert here.model[target.name] == pytest.approx(target.model, rel=1e-9), target.name
+        assert here.residuals[target.name] == pytest.approx(target.residual, rel=1e-7, abs=1e-9), target.name
+        assert target.residual == pytest.approx(target.residual_of(target.model), rel=1e-12)
+        assert target.holds(target.model)  # S54: every target inside its window, none on its value
+    assert here.objective == pytest.approx(NGC_4414.fit.objective_value, rel=1e-9)
+    assert here.objective == pytest.approx(here.misfit + here.tiebreak) and here.tiebreak == pytest.approx(1.73e-4, rel=5e-3)
+    assert f"{NGC_4414.fit.objective_value:.4f}" in NGC_4414.fit.objective  # the words carry the number
+    cycle = fit_template.fit(NGC_4414, start=templates.resolve(NGC_4414), iterations=len(fit_template.FD_STEPS))
+    assert cycle.evaluations == 1 + 3 * (2 * 4 + 4)
+    assert cycle.objective == here.objective and cycle.controls == here.controls
+    assert cycle.history == (here.objective,) * 3
+    # The held controls did not move by any amount: the galaxy the fit was read on has the registry's own.
+    resolved = templates.resolve(NGC_4414)
+    assert all(resolved[name] is INPUTS[name].default for name in HELD)
+
+
+@pytest.mark.skipif(os.environ.get("GALAXYGEN_REFIT") != "1", reason="the whole search is forty seconds: GALAXYGEN_REFIT=1 runs it")
+def test_the_fit_re_run_from_the_defaults_lands_on_the_committed_values():
+    """The whole search again (289 model evaluations): deterministic, so the same answer."""
+    result = fit_template.fit(NGC_4414)
+    assert result.evaluations == NGC_4414.fit.evaluations
+    assert result.controls == pytest.approx(dict(NGC_4414.controls), rel=1e-9)
+    assert result.objective == pytest.approx(NGC_4414.fit.objective_value, rel=1e-9)
+    assert result.history[-1] == result.history[-3]  # it had stopped moving before the last cycle ended
+    text_out = fit_template.tables(NGC_4414, result)
+    for word in ("residuals", "controls", "half-window", "moved / range", "objective"):
+        assert word in text_out
+
+
+def test_the_tool_prints_the_two_tables_for_the_committed_fit():
+    """The residuals table and the controls table: each free control with the target that measures it, each held
+    one as held, the bound labelled with its finding beside it, and the plateau stated."""
+    here = fit_template.at(NGC_4414)
+    out = fit_template.tables(NGC_4414, here)
+    lines = out.splitlines()
+    assert "residuals" in out and "moved / range" in out and "half-window" in out
+    assert sum(line.endswith("  inside") for line in lines) == 3 and "OUTSIDE" not in out
+    assert sum("held at the registry's default" in line for line in lines) == 3
+    for name in HELD:
+        row = next(line for line in lines if line.strip().startswith(name))
+        assert row.endswith("held at the registry's default") and "+0.00000" in row and "bound" not in row
+    for name, target in FREE.items():
+        row = next(line for line in lines if line.strip().startswith(name))
+        assert "free: " in row and NGC_4414.fit.measures[name] in row
+        assert ("bound; free:" in row) == (name == "halo_assembly_z")
+    finding = next(line for line in lines if line.strip().startswith("bound: "))
+    assert "halo_assembly_z = 0.5 is the lower bound of its range, a finding and not a fit" in finding
+    assert "the model cannot lower its inner peak enough for this disc inside the range" in finding and "debt #132" in finding
+    assert "a point on a plateau" in out and "not a minimum to the printed precision" in out
+    assert f"objective {NGC_4414.fit.objective_value:.6f}" in out
+    paste = fit_template.literals(NGC_4414, here)
+    assert all(f'"{name}": ' in paste for name in FREE) and not any(f'"{name}": ' in paste for name in HELD)
+    assert repr(NGC_4414.fit.targets[0].model)[:12] in paste
+
+
+def test_the_model_s_targets_are_stepped_in_halo_mass_and_disc_spin():
+    """Debt #133, the finding the search's differencing widths answer (S54): along disc_spin, from the registry's defaults
+    with this template's seeds and no merger, the stellar mass falls smoothly by about 6.7e5 Msun per 2.5e-4 of
+    the range, and at one place between two such points it falls by 1.7e8 - a step of 0.014 half-windows. A
+    derivative taken across it reads the step, not the trend, and what the fit leaves is a point on a plateau
+    resolved to this step, not a minimum (D213 as amended, ruling 4)."""
+    p = fit_template.Problem(NGC_4414)
+    table = {c.name: c for c in controls()}
+    spin = table["disc_spin"]
+    mass = []
+    for k in range(-6, 3):
+        values = {c.name: c.default for c in controls()} | {"disc_spin": spin.default + k * 2.5e-4 * (spin.hi - spin.lo)}
+        mass.append(p.model_numbers(p.s_of(values))[2])
+    drops = -np.diff(mass)
+    assert np.median(drops) == pytest.approx(6.7e5, rel=0.05)
+    assert drops.max() == pytest.approx(1.71e8, rel=0.05) and drops.max() > 100 * np.median(drops)
+    assert drops.max() / NGC_4414.fit.targets[2].half_window == pytest.approx(0.0137, abs=5e-4)
+
+
+# --- the checks' definitions -----------------------------------------------------------------
+
+
+def test_the_shape_number_on_a_curve_of_known_ratio():
+    """S = mean speed from 20.6 kpc to the grid's edge over the maximum inside 20.6 kpc."""
+    R = (np.arange(400) + 0.5) * 0.075
+    speed = np.where(R < 20.6, 200.0, 150.0)
+    speed[40] = 250.0  # the peak, at 3.04 kpc
+    assert templates.curve_peak(speed, R, 20.6) == 250.0
+    assert templates.curve_shape(speed, R, 20.6) == pytest.approx(0.6, rel=1e-15)
+    # A faster ring beyond 20.6 kpc is not the peak: it raises the outer mean, never the denominator.
+    speed[390] = 400.0
+    assert templates.curve_peak(speed, R, 20.6) == 250.0
+    assert templates.curve_shape(speed, R, 20.6) == pytest.approx((150.0 * 124 + 400.0) / 125 / 250.0)
+    assert int((R >= 20.6).sum()) == 125 and R[R >= 20.6][0] == pytest.approx(20.6625)
+    # A flat curve is S = 1, and one that falls by a fifth is inside the window.
+    assert templates.curve_shape(np.full(400, 220.0), R, 20.6) == 1.0
+    shape = next(c for c in NGC_4414.checks if c.name == "curve_shape")
+    assert shape.holds(templates.curve_shape(np.where(R < 20.6, 237.0, 185.0), R, 20.6)) and not shape.holds(1.0)
+    assert templates.measure("curve_shape", speed, R, 20.6) == templates.curve_shape(speed, R, 20.6)
+    assert templates.measure("scalar", np.float64(3.5)) == 3.5
+    with pytest.raises(templates.TemplateError):
+        templates.measure("face_on_colour", speed, R, 20.6)
+
+
+def test_each_check_names_a_published_field_in_its_unit(prod):
+    """The hydrogen field named exists, and so does every other; a scalar check is in its field's own unit."""
+    models, impls, _ = prod
+    model = models.get(NGC_4414.model)
+    declared = {d.name: d for sid in model.stage_map.values() for d in impls.get(sid).publishes}
+    by_name = {c.name: c for c in NGC_4414.checks}
+    assert by_name["hydrogen_mass"].field == "hydrogen_mass_30kpc" and "hydrogen_mass_30kpc" in declared
+    assert {c.field for c in NGC_4414.checks} == {"circular_velocity", "sfr", "hydrogen_mass_30kpc", "absolute_magnitude_k", None}
+    for c in NGC_4414.checks:
+        if c.field is None:
+            assert c.statistic == "face_on_colour"
+            continue
+        assert c.field in declared, c.name
+        if c.statistic == "scalar":
+            assert declared[c.field].unit == c.unit and declared[c.field].kind.domain == "galaxy", c.name
+    for t in NGC_4414.fit.targets:
+        assert t.field in declared and (t.statistic != "scalar" or declared[t.field].unit == t.unit), t.name
+    assert declared["circular_velocity"].unit == "km/s" and declared["circular_velocity"].axes == ("R",)
+    # The fit never sees a check: no check reads a field the fit is given, but the curve, by another statistic.
+    fitted = {(t.field, t.statistic) for t in NGC_4414.fit.targets}
+    assert not fitted & {(c.field, c.statistic) for c in NGC_4414.checks}
+
+
+def _reading_windows() -> dict[int, tuple[float, float]]:
+    """The summary table's windows, by row number: the bold ``[lo, hi]`` of the "Window at 17.7 Mpc" column."""
+    powers = {"×10¹⁰": 1e10, "×10⁹": 1e9}
+    out: dict[int, tuple[float, float]] = {}
+    for line in text("READING_NGC_4414.md").splitlines():
+        cells = [c.strip() for c in line.split("|")]
+        if len(cells) < 7 or not cells[1].isdigit():
+            continue
+        found = re.search(r"\*\*\[([^\],]+), ([^\]]+)\]\s*(×10\S+)?", cells[5])
+        if found:
+            scale = powers.get(found.group(3) or "", 1.0)
+            out[int(cells[1])] = tuple(float(v.replace("−", "-")) * scale for v in found.group(1, 2))
+    return out
+
+
+def test_each_window_is_the_reading_s():
+    """Every window the template states is a row of READING_NGC_4414.md's summary table, fixed before any model
+    output for this galaxy existed (D113); none is widened here."""
+    rows = _reading_windows()
+    assert len(rows) >= 13
+    targets = {t.name: t for t in NGC_4414.fit.targets}
+    by_name = {c.name: c for c in NGC_4414.checks}
+    assert targets["curve_peak"].window == rows[4] == (222.0, 247.0)
+    assert targets["disc_scale_length"].window == rows[7] == (1.5, 1.9)
+    assert targets["stellar_mass"].window == pytest.approx(rows[8]) and rows[8] == pytest.approx((3.4e10, 5.9e10))
+    assert by_name["curve_shape"].window == rows[6] == (0.71, 0.86)
+    assert by_name["star_formation_rate"].window == rows[11] == (1.8, 4.7)
+    assert by_name["absolute_magnitude_k"].window == rows[12] == (-24.62, -24.12)
+    assert by_name["colour_b_v_face_on"].window == rows[14] == (0.72, 0.82)
+    # Hydrogen is the atomic and the molecular windows summed edge to edge (the reading's W-G: "range [7.4, 14.7]").
+    assert by_name["hydrogen_mass"].window == pytest.approx((rows[9][0] + rows[10][0], rows[9][1] + rows[10][1]))
+    assert by_name["hydrogen_mass"].window == (7.4e9, 14.7e9)
+    assert "Total hydrogen (W-F + W-G centres): 4.46 + 6.03 = 10.5e9, range [7.4, 14.7]" in text("READING_NGC_4414.md")
+    # 20.6 kpc is the inner disc's edge, 240 arcsec at 17.7 Mpc.
+    assert 240.0 * 17.7e3 * math.radians(1.0 / 3600.0) == pytest.approx(templates.NGC_4414_INNER_DISC_KPC, abs=0.01)
+    for name in (*targets, *by_name):
+        assert {**targets, **by_name}[name].inside_kpc in (None, 20.6)
+
+
+def test_the_checks_are_d213_s_table_word_for_word():
+    """Label, window, the model's quantity and what still differs: the ruling's own row for each check."""
+    decision = text("DECISIONS.md").split("### D213.")[1]
+    rows = [[c.strip().replace("`", "") for c in line.strip().strip("|").split("|")]
+            for line in decision.splitlines() if line.strip().startswith("| ") and "---" not in line]
+    # The ruling's table is the four-column one whose rows open with a check's label; the entry's later tables
+    # (the fits' controls, the readings) are other tables, some of them four columns wide too.
+    labels = {c.label for c in NGC_4414.checks}
+    table = {r[0]: r for r in rows if len(r) == 4 and r[0] in labels}
+    assert len(table) == 5 and len(NGC_4414.checks) == 5
+    for check in NGC_4414.checks:
+        label, window, quantity, mismatch = table[check.label]
+        assert check.quantity == quantity and check.mismatch == mismatch, check.name
+        lo, hi = (float(v.replace("−", "-")) for v in re.match(r"\[([^,]+), ([^\]]+)\]", window).groups())
+        scale = 1e9 if "10⁹" in window else 1.0
+        assert check.window == pytest.approx((lo * scale, hi * scale)), check.name
+    # ... and the three targets are the ruling's, with its fields and windows.
+    ruling = decision.replace("`", "")
+    for words in ("max circular_velocity inside 20.6 kpc, 237 ± 10 km/s [222, 247]", "thin_disc_scale_length, 1.649 kpc [1.5, 1.9]",
+                  "stellar_mass_total, 10^10.65 M☉\n   [3.4, 5.9] × 10¹⁰"):
+        assert words in ruling, words
+
+
+# --- both templates run ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", templates.names())
+def test_a_template_runs_end_to_end_on_a_small_grid(prod, name):
+    """Every stage of the template's model, on its inputs: NGC 4414's list of no mergers and its seeds included."""
+    template = templates.get(name)
+    model = prod[0].get(template.model)
+    out = run(model, templates.resolve(template), SMALL)
+    assert out.ran == out.order and len(out.ran) == len(model.stages)
+    assert out.inputs == templates.resolve(template)
+    for field in ("stellar_mass_total", "sfr", "hydrogen_mass_30kpc", "absolute_magnitude_k", "thin_disc_scale_length"):
+        assert np.isfinite(out.fields[field]) and field in out.decls, field
+    assert np.all(np.isfinite(out.fields["circular_velocity"])) and out.fields["catalogue_size"] > 0
+    if template.mergers == ():
+        assert out.fields["last_major_merger_time"] == 0.0
+
+
+@pytest.mark.parametrize("route, query", [
+    ("/api/region", SECTOR),
+    ("/api/system", "cell=300&index=0"),
+    ("/api/clouds", SECTOR),
+    ("/api/clusters", SECTOR),
+    ("/api/remnants", SECTOR),
+    ("/api/bright", SECTOR + "&n=50"),
+    ("/api/render", "filters=" + B_V),
+])
+def test_every_route_answers_for_ngc_4414(route, query):
+    api = Service(grid=SMALL)
+    got = api.handle(route, "template=ngc_4414&" + query)
+    assert got.status == 200, got.body[:300]
+    header, _ = wire.decode(got.body)
+    assert header["inputs"]["mergers"] == [] and header["inputs"]["world_seed"] == 4414
+    assert header["inputs"]["halo_mass"] == NGC_4414.controls["halo_mass"]
+
+
+# --- the checks' report ------------------------------------------------------------------------
+
+
+def test_the_checks_are_judged_on_the_template_s_own_run():
+    """On a small grid, for speed: five results for NGC 4414, none for the Milky Way, each a number against its window."""
+    api = Service(grid=SMALL)
+    results = checks.evaluate(service=api)
+    assert list(results) == ["milky_way", "ngc_4414"] and results["milky_way"] == []
+    judged = results["ngc_4414"]
+    assert [r.name for r in judged] == [c.name for c in NGC_4414.checks]
+    for r, c in zip(judged, NGC_4414.checks):
+        assert r.status in ("pass", "fail") and math.isfinite(r.value)
+        assert (r.status == "pass") == c.holds(r.value)
+        assert f"{r.value:.6g}" in r.reason and ("not in" in r.reason) == (r.status == "fail")
+        assert r.standing == "disclosed" and r.first is c.first_reading  # the standing and fit A's reading ride along
+    # Each number is the template's own galaxy's, read as the definition says.
+    out, _ = api.compute(api.models.get(NGC_4414.model), templates.overrides(NGC_4414),
+                         ("circular_velocity", "sfr", "hydrogen_mass_30kpc", "absolute_magnitude_k"))
+    by_name = {r.name: r.value for r in judged}
+    assert by_name["curve_shape"] == templates.curve_shape(out.fields["circular_velocity"], out.grid.R, 20.6)
+    assert by_name["star_formation_rate"] == out.fields["sfr"]
+    assert by_name["hydrogen_mass"] == out.fields["hydrogen_mass_30kpc"]
+    assert by_name["absolute_magnitude_k"] == out.fields["absolute_magnitude_k"]
+    # The colour is the frame's through its dust, not its stars' alone. (Which way the dust moves it is the
+    # galaxy's: reddening against scattered light. On this grid this template's frame is bluer through its dust.)
+    got = api.handle("/api/render", {"template": ["ngc_4414"], "filters": [json.dumps(
+        [spectra.band_curve(b).json() for b in checks.FACE_ON_BANDS])]})
+    header, arrays = got.frame()
+    assert by_name["colour_b_v_face_on"] == checks.face_on_colour(header, arrays)
+    bare = checks.frame_total(header, arrays)
+    assert by_name["colour_b_v_face_on"] != float(checks.band_magnitude(bare[0], "B") - checks.band_magnitude(bare[1], "V"))
+
+
+def test_the_colour_check_s_computation_is_the_render_gate_s_record():
+    """One computation, two readers: on the default galaxy it is tests/test_render.py's pinned face-on frame."""
+    import test_render
+
+    assert test_render.face_on is checks.face_on and test_render.frame_total is checks.frame_total
+    assert test_render.band_magnitude is checks.band_magnitude and test_render.cell_areas is checks.cell_areas
+    value, why = checks._frame_colour(MILKY_WAY, Service())
+    assert why == "" and value == pytest.approx(test_render.FACE_ON_B_V[DEFAULT_MODEL], abs=2e-6)
+
+
+def _result(name: str, status: str, value: float = 1.0) -> checks.Result:
+    return checks.Result("ngc_4414", name, name, status, f"{value} somewhere", value)
+
+
+def test_a_check_s_miss_is_recorded_or_it_fails_the_run():
+    """The acceptance table's convention (spec.MISSES): an unrecorded miss fails the run, a recorded one does not
+    and still prints fail, and a recorded miss that starts passing fails it."""
+    results = {"milky_way": [], "ngc_4414": [_result("curve_shape", "fail"), _result("hydrogen_mass", "pass"),
+                                             _result("colour_b_v_face_on", "not-yet-computable")]}
+    unrecorded = checks.problems(results, {})
+    assert [p.code for p in unrecorded] == ["template-check"] and isinstance(unrecorded[0], Problem)
+    assert "curve_shape" in unrecorded[0].detail and "not a recorded miss" in unrecorded[0].detail
+    miss = checks.CheckMiss(debt=132, since="S54", reason="the halo holds the curve flat")
+    assert checks.problems(results, {"ngc_4414": {"curve_shape": miss}}) == []
+    stale = checks.problems(results, {"ngc_4414": {"curve_shape": miss, "hydrogen_mass": miss}})
+    assert [p.code for p in stale] == ["stale-check-miss"] and "now passes" in stale[0].detail and "#132" in stale[0].detail
+    unknown = checks.problems(results, {"ngc_4414": {"curve_shape": miss, "bar_length": miss}, "andromeda": {}})
+    assert sorted(p.code for p in unknown) == ["unknown-check-miss", "unknown-check-miss"]
+    with pytest.raises(ValueError):
+        checks.CheckMiss(debt=0, since="S54", reason="x")
+    with pytest.raises(ValueError):
+        checks.CheckMiss(debt=132, since="S54", reason=" ")
+    # The report: its own table, headed so nobody reads it as acceptance rows.
+    report = checks.report(results, {"ngc_4414": {"curve_shape": miss}})
+    lines = report.splitlines()
+    assert lines[0] == "template checks" and "NOT acceptance rows" in lines[1] and "never counted in it" in lines[2]
+    assert "template milky_way (Milky Way): states no checks" in report
+    assert "template ngc_4414 (NGC 4414), model azimuthal: 1 pass, 1 fail, 1 not-yet-computable of 3 checks (1 of the failures recorded as misses)" in report
+    assert "[recorded miss, debt #132, since S54]" in report and "FAIL" not in report
+    assert "FAIL [ngc_4414] template-check" in checks.report(results, {})
+    assert checks.summary(results["ngc_4414"]) == {"pass": 1, "fail": 1, "not-yet-computable": 1}
+
+
+def test_every_verdict_on_the_fit_that_stands_is_disclosed_and_fit_a_s_reading_is_kept():
+    """D213 as amended, ruling 2: the five were read once, blind, on fit A; the refit was decided after four of
+    them were read, so no verdict on it is blind. Fit A's values and verdicts stay as data beside the checks,
+    and they are the decision record's own table."""
+    decision = text("DECISIONS.md").split("### D213.")[1]
+    assert "**The first reading: fit A" in decision and "All five checks on fit B are **disclosed**" in decision
+    rows = [[c.strip() for c in line.strip().strip("|").split("|")] for line in decision.splitlines() if line.startswith("| ")]
+    recorded = {r[0]: r for r in rows if len(r) == 5 and r[3].startswith(("miss", "pass"))}
+    assert len(recorded) == 5
+    names = {"curve_shape": "Curve shape S", "star_formation_rate": "Star formation rate", "hydrogen_mass": "Hydrogen",
+             "absolute_magnitude_k": "M_K", "colour_b_v_face_on": "B − V, face-on through dust"}
+    for check in NGC_4414.checks:
+        assert check.standing == "disclosed"
+        assert "decided after four of the five checks had been read on fit A" in check.standing_about
+        first = check.first_reading
+        assert (first.fit, first.standing) == ("fit A", "blind") and "DECISIONS.md D213" in first.source
+        row = recorded[names[check.name]]
+        scale = 1e9 if check.name == "hydrogen_mass" else 1.0
+        digits = 2 if check.name in ("hydrogen_mass", "absolute_magnitude_k") else 3
+        assert round(first.value / scale, digits) == float(row[2].replace("−", "-")), check.name
+        assert first.verdict == ("pass" if row[3].startswith("pass") else "fail") == ("pass" if check.holds(first.value) else "fail")
+    assert [c.first_reading.verdict for c in NGC_4414.checks] == ["fail", "fail", "fail", "fail", "pass"]
+    # The data refuses a check that was read once and calls its next verdict blind, and a verdict that is not its value's.
+    from dataclasses import replace
+
+    with pytest.raises(templates.TemplateError, match="disclosed on any later fit"):
+        replace(NGC_4414.checks[0], standing="blind", standing_about="")
+    with pytest.raises(templates.TemplateError, match="says why"):
+        replace(NGC_4414.checks[0], standing_about="")
+    with pytest.raises(templates.TemplateError, match="not its value against the window"):
+        replace(NGC_4414.checks[0], first_reading=replace(NGC_4414.checks[0].first_reading, verdict="pass"))
+    # The report prints the word in each row, and fit A's reading beside the new one.
+    judged = [checks.judge(NGC_4414, c, c.window[0] - 1.0) for c in NGC_4414.checks]
+    report = checks.report({"ngc_4414": judged}, {})
+    assert "A verdict marked disclosed" in report and "it is not" in report and "blind. That first reading" in report
+    for c in NGC_4414.checks:
+        row = next(line for line in report.splitlines() if line.strip().startswith(c.name + " "))
+        assert " disclosed " in row and " blind " not in row.split("first reading")[0]
+        assert f"first reading (fit A, blind): {c.first_reading.value:.6g}, {c.first_reading.verdict}" in row
+
+
+def test_the_ledger_names_only_checks_a_template_states():
+    for name, entries in checks.CHECK_MISSES.items():
+        stated = {c.name for c in templates.get(name).checks}
+        assert set(entries) <= stated, name
+        assert all(isinstance(m, checks.CheckMiss) for m in entries.values())
+
+
+def test_the_specs_print_the_checks_after_the_acceptance_table_and_never_among_its_rows():
+    from galaxy.specs import __main__ as entry
+    from galaxy.specs import spec
+
+    source = inspect.getsource(entry.main)
+    assert source.index("spec.report(") < source.index("templates.report(") < source.index("convergence.report(")
+    assert "bad |= bool(templates.problems(template_results))" in source
+    assert len(spec.QUANTITIES) == 37  # the checks added no row
+    assert not {c.name for c in NGC_4414.checks} & {q.name for q in spec.QUANTITIES}

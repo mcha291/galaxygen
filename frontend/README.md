@@ -24,32 +24,78 @@ npm --prefix frontend run build  # tsc + vite build into frontend/dist
 - **`.npmrc`** sets `legacy-peer-deps`: react-three-fiber lists React Native
   and Expo as optional peers, which npm 11 fails to resolve for a web-only app.
 
+## Templates (S54, D213)
+
+The viewer lands on the Galaxy view of the default template and carries a
+switcher (rule D1 as amended). Nothing about a template lives here: its
+inputs, camera, lens and filter set come from `/api/templates` (rule D5).
+
+- **Landing and switching:** `workflow/useWorkflow.ts` asks for the templates,
+  then for the template's model, and lays the template's inputs on a fresh flow
+  through `interface/flow.js` (`workflow/templates.ts`), every checkpoint
+  confirmed. Choosing a template in the Galaxy panel is the same landing again.
+  The query sent to every route stays the whole input vector, so "Edit galaxy"
+  opens the staged process at the template's values with the confirmations
+  kept, and a changed control is one changed value. An edited galaxy is no
+  longer the template: its button is released and reads "<label> · edited",
+  the top bar says the same, and choosing it again restores the template.
+- **An older API:** one without `/api/templates` answers 404, and the viewer
+  then lands as it did before - the default galaxy at the published defaults,
+  the 45 degree lens, no switcher (`readTemplates`).
+- **The camera and the lens:** a template states an inclination, an azimuth, a
+  framing radius and a vertical field of view (`galaxy/capture.ts`). The view
+  stands there until a preset is pressed ("template" beside face-on, edge-on,
+  oblique) and keeps the template's lens under a preset. Every distance written
+  for the 45 degree lens - the presets' stand, the zoom's range, the near and
+  far planes - is carried to the lens by `lensScale` (`galaxy/zoom.ts`), so a
+  view is the same number of kiloparsecs across through any lens. The march
+  and the star-first mode's points read the camera itself and needed nothing.
+- **Thumbnails:** `public/templates/<name>.png`, each a capture of the picture
+  test's own (below), so one cannot go stale silently.
+- **Compare with a picture (T16 ii):** a button in the Galaxy panel picks an
+  image file from disk and sets it beside the render at the same height, the
+  render captioned with the template, the filter set, kiloparsecs per pixel at
+  the centre (and arcseconds, at the template's distance) and the inclination.
+  The file is shown through an object URL: it never leaves the browser, and no
+  picture is bundled.
+
 ## The picture test (T12)
 
-The Galaxy view captured at fixed cameras on headless Chromium and compared
-with committed frames. A development instrument (BUILD_III section 7, rulings 6
+The Galaxy view of each template, captured on headless Chromium and compared
+with committed pictures. A development instrument (BUILD_III section 7, rulings 6
 and 10): Playwright is a dev dependency, nothing in `src/` or in the model
 knows of it, and the pytest suite does not need a browser.
 
 ```
-npm --prefix frontend run picture          # build, capture, compare with e2e/frames/*.png
-npm --prefix frontend run picture:update   # build, capture, rewrite the frames and e2e/frames.json
+npm --prefix frontend run picture          # build, capture, compare with the committed pictures
+npm --prefix frontend run picture:update   # build, capture, rewrite the pictures and e2e/frames.json
 GALAXYGEN_PICTURE=1 uv run pytest tests/test_picture.py   # the same comparison, from pytest
 npm --prefix frontend exec -- playwright install chromium   # once per machine: the browser build
 ```
 
-- **What is captured:** `e2e/captures.json` lists each picture: a camera
-  (inclination from face-on, the azimuth it stands over, a framing radius in
-  kpc), a mode (`field` or `stars`), a filter set and a square size. The frame
-  is `e2e/frames/<name>.png`: the canvas as displayed, after the bloom and the
+- **What is captured:** `e2e/captures.json` lists each picture: a template, a
+  mode (`field` or `stars`), a square size and the file it is committed as,
+  with the template's camera, lens and filter set stated beside it. Each
+  template is taken in both modes at 1024 px - `e2e/frames/<name>.png` - and
+  once at 256 px in the field mode: its thumbnail,
+  `public/templates/<template>.png`, a render of its own size and not a frame
+  scaled down. A picture is the canvas as displayed, after the bloom and the
   tone curve, with none of the page over it.
-- **How:** `e2e/picture.spec.ts` chooses the mode and the filters by the
-  viewer's own buttons and uses two instruments on `window` (`GalaxyView.tsx`):
-  `__galaxygenCapture` to place the camera and take the picture, and
-  `__galaxygenFrameSum` to see the view has stopped changing. A view is ready
-  when no `/api` request has run for 1.5 s, the frame's summed light is the same
-  over three probes, the star-first mode has named its selection, and two
-  pictures in a row are the same bytes.
+- **How:** `e2e/picture.spec.ts` chooses the template in the viewer's switcher
+  and the mode by its button, as a user would, and uses two instruments on
+  `window` (`GalaxyView.tsx`): `__galaxygenCapture`, whose `where()` reads the
+  camera's stand and lens back and whose `picture()` takes the picture, and
+  `__galaxygenFrameSum` to see the view has stopped changing. The stand, the
+  lens and the pressed filter set must be the ones the list states, and the
+  list's must be `/api/templates`' own: a camera that moves in the model fails
+  by name. A view is ready when no `/api` request has run for 1.5 s, the
+  frame's summed light is the same over three probes, the star-first mode has
+  named its selection, and two pictures in a row are the same bytes.
+- **Against an API without templates** the default template's captures can
+  still be taken (its inputs are the published defaults): the test places the
+  camera, the lens and the filters itself through `__galaxygenCapture.place`.
+  A capture marked `pending` in the list is skipped until the API serves its
+  template; `tests/test_picture.py` refuses the mark once it does.
 - **The server** is the API serving `dist/` on **port 8019**
   (`playwright.config.ts`), started for the run and stopped after it; one
   already answering there is used and left alone. Ports 8017, 8018 and 5173 are
@@ -57,7 +103,7 @@ npm --prefix frontend exec -- playwright install chromium   # once per machine: 
 - **The renderer:** the browser runs with `--use-angle=d3d11`, which draws on
   the machine's GPU instead of on the CPU (SwiftShader). Each run prints
   WebGL's `UNMASKED_RENDERER` string and `e2e/frames.json` records the one each
-  frame was drawn by. **Committed frames belong to that renderer.** On another
+  picture was drawn by. **Committed pictures belong to that renderer.** On another
   machine or after a driver change, run `picture:update` and compare locally:
   a frame from one renderer is not a gate on another. Measured at S53 on two
   of the captures, SwiftShader against the RTX 4070: a quarter of the pixels

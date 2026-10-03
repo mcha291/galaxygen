@@ -1,0 +1,208 @@
+// The templates (S54, D213; rule D1 as amended at D212): a named galaxy is an input set, a camera, a lens and a
+// filter set, published by `/api/templates`. The viewer holds none of it (rule D5): this file reads what the
+// route answers, lays a template's inputs on the workflow's own state through interface/flow.js, and says what
+// the switcher shows. Pure: no React, no network (the route is asked for through api.ts and the one transport).
+import * as flow from "@interface/flow.js";
+
+import { type LensCamera, isLens } from "../galaxy/capture";
+import { FILTER_SET_NAMES, type FilterSetName } from "../galaxy/filters";
+import type { FlowState, MergerEvent } from "./logic";
+
+/** One template, as `/api/templates` publishes it. `inputs` is fully resolved: every control, every seed, the event list. */
+export interface Template {
+  name: string;
+  label: string;
+  about: string;
+  model: string;
+  inputs: { controls: Record<string, number>; seeds: Record<string, number>; mergers: MergerEvent[] };
+  /** Where the Galaxy view stands and through which lens (D213 ruling 5). */
+  camera: LensCamera;
+  /** The filter set the galaxy is first seen through: one of the viewer's own (filters.ts). */
+  filters: FilterSetName;
+  /** What the template states of the instrument; a number not read is null (rule B9). */
+  instrument: { distance_mpc: number | null; pixel_scale_arcsec: number | null };
+  /** Carried as published and not read here: pins arrive at P3-P4, the fit and the checks are the model's records. */
+  pins: unknown[];
+  fit: unknown;
+  checks: unknown[];
+}
+
+export interface Templates {
+  /** The template the viewer lands on (rule D1). */
+  default: string;
+  templates: Template[];
+}
+
+/** A template's name is a path segment of its thumbnail and a button's key: lower-case letters, digits, underscores. */
+const NAME = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+/** The event list's input, as `/api/inputs` names it. */
+export const EVENTS_INPUT = "mergers";
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+const isNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+function numbers(value: unknown, what: string): Record<string, number> {
+  if (!isRecord(value)) throw new Error(`${what} is not an object of numbers`);
+  for (const [key, v] of Object.entries(value)) if (!isNumber(v)) throw new Error(`${what}.${key} is not a number: ${String(v)}`);
+  return value as Record<string, number>;
+}
+
+const numberOrNull = (v: unknown): number | null => (isNumber(v) ? v : null);
+
+function parseTemplate(raw: unknown): Template {
+  if (!isRecord(raw) || typeof raw.name !== "string" || !NAME.test(raw.name)) {
+    throw new Error(`a template without a usable name: ${JSON.stringify(isRecord(raw) ? raw.name : raw)}`);
+  }
+  const at = `template ${raw.name}`;
+  if (typeof raw.label !== "string" || !raw.label.trim()) throw new Error(`${at} has no label`);
+  if (typeof raw.model !== "string" || !raw.model) throw new Error(`${at} names no model`);
+  if (!isRecord(raw.inputs)) throw new Error(`${at} has no inputs`);
+  if (!Array.isArray(raw.inputs.mergers)) throw new Error(`${at}: inputs.mergers is not a list`);
+  const camera = raw.camera;
+  if (!isRecord(camera)) throw new Error(`${at} has no camera`);
+  const { inclination_deg, azimuth_deg, radius_kpc, fov_deg } = camera;
+  if (!isNumber(inclination_deg) || inclination_deg < 0 || inclination_deg > 180 || !isNumber(azimuth_deg) || !isNumber(radius_kpc) || radius_kpc <= 0) {
+    throw new Error(`${at}: camera inclination ${String(inclination_deg)}, azimuth ${String(azimuth_deg)}, radius ${String(radius_kpc)}`);
+  }
+  if (!isNumber(fov_deg) || !isLens(fov_deg)) throw new Error(`${at}: a field of view of ${String(fov_deg)} degrees is not a lens`);
+  // A set the viewer does not hold is refused, not replaced: the template says what it is seen through.
+  if (typeof raw.filters !== "string" || !(FILTER_SET_NAMES as string[]).includes(raw.filters)) {
+    throw new Error(`${at} names the filter set ${JSON.stringify(raw.filters)}; the viewer holds ${FILTER_SET_NAMES.join(", ")}`);
+  }
+  const instrument = isRecord(raw.instrument) ? raw.instrument : {};
+  return {
+    name: raw.name,
+    label: raw.label,
+    about: typeof raw.about === "string" ? raw.about : "",
+    model: raw.model,
+    inputs: {
+      controls: numbers(raw.inputs.controls, `${at}: inputs.controls`),
+      seeds: numbers(raw.inputs.seeds, `${at}: inputs.seeds`),
+      mergers: raw.inputs.mergers as MergerEvent[],
+    },
+    camera: { inclination_deg, azimuth_deg, radius_kpc, fov_deg },
+    filters: raw.filters as FilterSetName,
+    instrument: { distance_mpc: numberOrNull(instrument.distance_mpc), pixel_scale_arcsec: numberOrNull(instrument.pixel_scale_arcsec) },
+    pins: Array.isArray(raw.pins) ? raw.pins : [],
+    fit: raw.fit ?? null,
+    checks: Array.isArray(raw.checks) ? raw.checks : [],
+  };
+}
+
+/**
+ * `/api/templates`' answer, checked where the viewer leans on it: each template's name, label, model, inputs,
+ * camera with its lens and filter set, and the default being one of them. Anything else is carried as it came.
+ * A payload that fails is an error the viewer shows, never a template half applied.
+ */
+export function parseTemplates(payload: unknown): Templates {
+  if (!isRecord(payload) || !Array.isArray(payload.templates) || payload.templates.length === 0) {
+    throw new Error("/api/templates lists no templates");
+  }
+  const templates = payload.templates.map(parseTemplate);
+  const names = templates.map((t) => t.name);
+  if (new Set(names).size !== names.length) throw new Error(`/api/templates repeats a name: ${names.join(", ")}`);
+  if (typeof payload.default !== "string" || !names.includes(payload.default)) {
+    throw new Error(`/api/templates' default ${JSON.stringify(payload.default)} is not one of ${names.join(", ")}`);
+  }
+  return { default: payload.default, templates };
+}
+
+/**
+ * Ask for the templates through `ask` (api.ts hands in the transport's `get`). **An API from before S54 has no
+ * such route and answers 404: that is null here, not an error**, and the viewer then lands as it did before
+ * the templates - the default galaxy at the published defaults, no switcher. A viewer pointed at an older API
+ * must still land. Every other failure (the API down, a payload that does not parse) is thrown.
+ */
+export async function readTemplates(ask: () => Promise<unknown>): Promise<Templates | null> {
+  let payload: unknown;
+  try {
+    payload = await ask();
+  } catch (error) {
+    if ((error as { status?: unknown }).status === 404) return null;
+    throw error;
+  }
+  return parseTemplates(payload);
+}
+
+export function templateOf(templates: Templates | null, name: string | null): Template | null {
+  return templates?.templates.find((t) => t.name === name) ?? null;
+}
+
+/**
+ * A template's inputs laid on a fresh flow: each control, each seed and the event list set through
+ * `flow.setValue`, the step a user's own edit takes - so a value outside its published range, or an input the
+ * model does not have, is refused there (a FlowError) rather than sent. Nothing is confirmed here.
+ */
+export function applyTemplate(fresh: FlowState, template: Template): FlowState {
+  let state = fresh;
+  for (const [name, value] of Object.entries({ ...template.inputs.controls, ...template.inputs.seeds })) {
+    state = flow.setValue(state, name, value) as FlowState;
+  }
+  if (state.cat.inputs.has(EVENTS_INPUT) || template.inputs.mergers.length > 0) {
+    state = flow.setValue(state, EVENTS_INPUT, template.inputs.mergers.map((event) => ({ ...event }))) as FlowState;
+  }
+  return state;
+}
+
+/**
+ * Whether the galaxy asked for is no longer the template: another model, or an input vector that differs from
+ * the template's in what the API is sent (`flow.query`: every value, the events as JSON). A reopened checkpoint
+ * whose values still stand is not an edit; a moved control, a re-rolled seed or a changed event list is.
+ */
+export function isEdited(state: FlowState, model: string, template: Template): boolean {
+  if (model !== template.model) return true;
+  let base: Record<string, unknown>;
+  try {
+    base = flow.query(applyTemplate(flow.initial(state.cat) as FlowState, template)) as Record<string, unknown>;
+  } catch {
+    return true; // the template does not fit this model's inputs, so this galaxy is not it
+  }
+  const now = flow.query(state) as Record<string, unknown>;
+  return Object.keys(base).some((name) => base[name] !== now[name]);
+}
+
+/** The template's name as the viewer writes it: its label, with "edited" once the galaxy is no longer it. */
+export function templateLabel(template: Template, edited: boolean): string {
+  return edited ? `${template.label} · edited` : template.label;
+}
+
+/**
+ * Where the app serves a template's thumbnail from: `public/templates/<name>.png`, a capture of the picture
+ * test's own (D213 ruling 7; e2e/captures.json), so choosing a template costs no model run for the others.
+ */
+export function thumbnailOf(name: string, base = "/"): string {
+  return `${base}templates/${name}.png`;
+}
+
+export interface SwitcherItem {
+  name: string;
+  /** The button's text: the label, or "<label> · edited" on the template the galaxy was edited from. */
+  caption: string;
+  /** Pressed only while the galaxy shown is this template, unedited. */
+  pressed: boolean;
+  /** The galaxy shown started from this template and has been changed since. */
+  edited: boolean;
+  thumbnail: string;
+  title: string;
+}
+
+/**
+ * What the switcher shows (D213 ruling 7). The chosen template is pressed while the galaxy is the template. Once
+ * a control, a seed, the event list or the model has been changed, **the galaxy is no longer the template**: its
+ * button is released and reads "<label> · edited", and choosing it again restores the template - its inputs,
+ * its camera, its lens and its filter set. The thumbnail stays the template's own, never the edited galaxy's.
+ */
+export function switcherItems(templates: Template[], chosen: string | null, edited: boolean, base = "/"): SwitcherItem[] {
+  return templates.map((t) => {
+    const from = t.name === chosen;
+    const changed = from && edited;
+    return {
+      name: t.name,
+      caption: templateLabel(t, changed),
+      pressed: from && !edited,
+      edited: changed,
+      thumbnail: thumbnailOf(t.name, base),
+      title: changed ? `${t.about} Edited since: choose it again to restore the template.`.trim() : t.about,
+    };
+  });
+}

@@ -230,6 +230,84 @@
   gap: var(--space-3);
 }
 
+/* The render and the captions over it: the whole stage, or - while a picture is set beside it (T16 ii, S54) -
+   the left of two equal halves of what the control panel leaves free (300 px: its 268 and its margins), so the
+   render and the picture are the same size and neither is under the panel. PictureBeside.module.css holds the
+   right half. The view inside is absolute and fills whichever it is given. */
+.render,
+.renderHalf,
+.over,
+.overHalf {
+  position: absolute;
+  inset: 0;
+}
+
+.renderHalf,
+.overHalf {
+  left: 300px;
+  right: calc((100% - 300px) / 2);
+}
+
+@media (max-width: 640px) {
+  /* The panel is a bottom sheet here: the two halves are the stage's own. */
+  .renderHalf,
+  .overHalf {
+    left: 0;
+    right: 50%;
+  }
+}
+
+.over,
+.overHalf {
+  pointer-events: none;
+}
+
+/* The template switcher (S54, D213): each template a button with its thumbnail over its label, in the
+   panel's own chip style. */
+.templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.templates button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end; /* the label keeps its place where a thumbnail is not there yet */
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: var(--hair) solid var(--border-line);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-body);
+  font: var(--weight-regular) var(--size-xs) / 1.2 var(--font-mono);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+
+.templates button:hover {
+  background: var(--surface-hover);
+}
+
+.templates button[aria-pressed="true"] {
+  border-color: var(--magenta-4);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+}
+
+.templates img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 1px;
+  background: var(--void-0);
+}
+
 .regimeName {
   font: var(--weight-medium) var(--size-2xs) / 1 var(--font-mono);
   letter-spacing: 0.1em;

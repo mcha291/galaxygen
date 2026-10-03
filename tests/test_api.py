@@ -35,7 +35,7 @@ from galaxy.stages import systems
 
 ROOT = Path(__file__).resolve().parents[1]
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
-METADATA = ("/api", "/api/version", "/api/stages", "/api/fields", "/api/inputs")
+METADATA = ("/api", "/api/version", "/api/stages", "/api/fields", "/api/inputs", "/api/templates")  # S54 (D213): the templates
 
 
 def service(**kw):

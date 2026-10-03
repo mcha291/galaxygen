@@ -1,48 +1,69 @@
 {
-  "about": "The picture test's capture list (T12, BUILD_III Phase 0): each entry is one picture of the React viewer, taken by e2e/picture.spec.ts on headless Chromium and compared with the committed frame e2e/frames/<name>.png. Data, not code: a capture is added here and its frame written by `npm --prefix frontend run picture:update`. The frames are display captures, never acceptance rows (C6, D113).",
+  "about": "The picture test's capture list (T12, BUILD_III Phase 0; the templates since S54, D213 ruling 7): each entry is one picture of the React viewer's Galaxy view of a template, taken by e2e/picture.spec.ts on headless Chromium and compared with its committed file. Data, not code: a capture is added here and its picture written by `npm --prefix frontend run picture:update`. Each template is taken at its own camera, lens and filter set, in both modes, and once small: its thumbnail, which the app's switcher serves. The pictures are display captures, never acceptance rows (C6, D113).",
   "fields": {
-    "name": "The frame's file name without .png, lower-case letters, digits and hyphens: e2e/frames/<name>.png, the path tools/goal_metrics.py reads.",
-    "template": "The galaxy captured. null is the default galaxy the viewer lands on (D198). Phase T (S54) names a template here; until then the test refuses any other value.",
-    "camera": "Where the galaxy is seen from, about its centre (src/galaxy/capture.ts): inclination_deg from face-on (0) to edge-on (90); azimuth_deg, the model's galactocentric azimuth the camera stands over - the near side of an inclined disc, drawn at the bottom of the picture, and face-on only a turn of the picture (270 is the app's face-on preset); radius_kpc, half the picture's height at the centre's distance. The orbit camera keeps the disc's axis upright, so an inclined disc's major axis is horizontal: there is no roll. The view is the viewer's 45 degree perspective, from 2.414 radii away.",
+    "name": "The capture's name, lower-case letters, digits, underscores and hyphens: the template's name, a hyphen, and what the picture is.",
+    "template": "The template captured, by its name in /api/templates. The test chooses it in the viewer's switcher, as a user would; the default one is the template the viewer lands on.",
+    "camera": "Where the template is seen from and through which lens, as /api/templates states it (src/galaxy/capture.ts): inclination_deg from face-on (0) to edge-on (90); azimuth_deg, the model's galactocentric azimuth the camera stands over - the near side of an inclined disc, drawn at the bottom of the picture, and face-on only a turn of the picture (270 is the app's face-on preset); radius_kpc, half the picture's height at the centre's distance; fov_deg, the perspective camera's vertical field of view. Stated here so that a picture says what it is of; the template is the source, and the test fails by name where the two differ. The orbit camera keeps the disc's axis upright, so an inclined disc's major axis is horizontal: there is no roll.",
     "mode": "field or stars: the Rendering buttons 'field' and 'star-first' (GalaxyTab's two modes).",
-    "filters": "A filter set of src/galaxy/filters.json's `sets`, chosen by its button.",
-    "viewport": "The picture's side in pixels: square, at a device pixel ratio of 1.",
-    "placeholder": "Present where a value stands in for one not yet measured; says what replaces it."
+    "filters": "The template's filter set, one of the viewer's (src/galaxy/filters.json and instruments.json `sets`), as /api/templates states it.",
+    "viewport": "The picture's side in pixels: square, at a device pixel ratio of 1. A thumbnail is drawn at its own size, not scaled down from a frame.",
+    "file": "Where the picture is committed, from frontend/: e2e/frames/<name>.png for a frame (the path tools/goal_metrics.py reads), public/templates/<template>.png for a thumbnail (where the app serves it from: src/workflow/templates.ts thumbnailOf).",
+    "pending": "Present only while the picture cannot be taken: says what it waits on. The test skips the capture until the API serves its template, and tests/test_picture.py refuses the mark once the model has templates."
   },
   "captures": [
     {
-      "name": "face-on-field",
-      "template": null,
-      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20 },
-      "mode": "field",
-      "filters": "rgb",
-      "viewport": 1024
-    },
-    {
-      "name": "face-on-stars",
-      "template": null,
-      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20 },
-      "mode": "stars",
-      "filters": "rgb",
-      "viewport": 1024
-    },
-    {
-      "name": "inclined-field",
-      "template": null,
-      "camera": { "inclination_deg": 59.2, "azimuth_deg": 0, "radius_kpc": 20 },
+      "name": "milky_way-field",
+      "template": "milky_way",
+      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
       "mode": "field",
       "filters": "rgb",
       "viewport": 1024,
-      "placeholder": "inclination_deg 59.2 is the thin-disc reading (cos i = q) of the axis ratio 0.512 that tools/goal_metrics.py measures on the outline of the NGC 4414 goal picture (S53, D212): the framing of a picture, not the galaxy's inclination. azimuth_deg 0 is arbitrary. Phase T (S54) replaces both with the template's sourced camera"
+      "file": "e2e/frames/milky_way-field.png"
     },
     {
-      "name": "inclined-stars",
-      "template": null,
-      "camera": { "inclination_deg": 59.2, "azimuth_deg": 0, "radius_kpc": 20 },
+      "name": "milky_way-stars",
+      "template": "milky_way",
+      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
       "mode": "stars",
       "filters": "rgb",
       "viewport": 1024,
-      "placeholder": "inclination_deg 59.2 is the thin-disc reading (cos i = q) of the axis ratio 0.512 that tools/goal_metrics.py measures on the outline of the NGC 4414 goal picture (S53, D212): the framing of a picture, not the galaxy's inclination. azimuth_deg 0 is arbitrary. Phase T (S54) replaces both with the template's sourced camera"
+      "file": "e2e/frames/milky_way-stars.png"
+    },
+    {
+      "name": "milky_way-thumbnail",
+      "template": "milky_way",
+      "camera": { "inclination_deg": 0, "azimuth_deg": 270, "radius_kpc": 20, "fov_deg": 45 },
+      "mode": "field",
+      "filters": "rgb",
+      "viewport": 256,
+      "file": "public/templates/milky_way.png"
+    },
+    {
+      "name": "ngc_4414-field",
+      "template": "ngc_4414",
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
+      "mode": "field",
+      "filters": "wfc3",
+      "viewport": 1024,
+      "file": "e2e/frames/ngc_4414-field.png"
+    },
+    {
+      "name": "ngc_4414-stars",
+      "template": "ngc_4414",
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
+      "mode": "stars",
+      "filters": "wfc3",
+      "viewport": 1024,
+      "file": "e2e/frames/ngc_4414-stars.png"
+    },
+    {
+      "name": "ngc_4414-thumbnail",
+      "template": "ngc_4414",
+      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 15, "fov_deg": 5 },
+      "mode": "field",
+      "filters": "wfc3",
+      "viewport": 256,
+      "file": "public/templates/ngc_4414.png"
     }
   ]
 }

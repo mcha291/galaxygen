@@ -1,5 +1,5 @@
 {
-  "about": "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed frame in e2e/frames/ is and what drew it. `renderer` is WebGL's UNMASKED_RENDERER string. Committed frames belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.",
+  "about": "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. `file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.",
   "playwright": "1.62.1",
   "args": [
     "--use-angle=d3d11"
@@ -9,8 +9,9 @@
     "maxDiffPixelRatio": 0.001
   },
   "frames": {
-    "face-on-field": {
-      "file": "frames/face-on-field.png",
+    "milky_way-field": {
+      "file": "e2e/frames/milky_way-field.png",
+      "template": "milky_way",
       "width": 1024,
       "height": 1024,
       "bytes": 688694,
@@ -18,8 +19,9 @@
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
-    "face-on-stars": {
-      "file": "frames/face-on-stars.png",
+    "milky_way-stars": {
+      "file": "e2e/frames/milky_way-stars.png",
+      "template": "milky_way",
       "width": 1024,
       "height": 1024,
       "bytes": 1080415,
@@ -27,21 +29,43 @@
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
-    "inclined-field": {
-      "file": "frames/inclined-field.png",
-      "width": 1024,
-      "height": 1024,
-      "bytes": 507822,
-      "sha256": "7e52bc799a4fb4681480cb816179e663731a6b8822472bb2f906c0679481d450",
+    "milky_way-thumbnail": {
+      "file": "public/templates/milky_way.png",
+      "template": "milky_way",
+      "width": 256,
+      "height": 256,
+      "bytes": 72864,
+      "sha256": "e6d10b210d624438d5c05fccd5fde1922932fbd5fedcc5158ef3f72e0ec27b19",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
-    "inclined-stars": {
-      "file": "frames/inclined-stars.png",
+    "ngc_4414-field": {
+      "file": "e2e/frames/ngc_4414-field.png",
+      "template": "ngc_4414",
       "width": 1024,
       "height": 1024,
-      "bytes": 823267,
-      "sha256": "72d5347df1580345aa439b06b950811b8de97a9f8694c87a44c2b24032b0df69",
+      "bytes": 542395,
+      "sha256": "6edc33d1bf016d546184c5937cf41201d5ad9bf9ccee39e55b7594bc1d786e18",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "ngc_4414-stars": {
+      "file": "e2e/frames/ngc_4414-stars.png",
+      "template": "ngc_4414",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 830515,
+      "sha256": "51743bb45465cb9acc33c0f752edfb260fc5e87a88df0530fe0e064cc9368699",
+      "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "browser": "chromium 151.0.7922.34"
+    },
+    "ngc_4414-thumbnail": {
+      "file": "public/templates/ngc_4414.png",
+      "template": "ngc_4414",
+      "width": 256,
+      "height": 256,
+      "bytes": 53977,
+      "sha256": "754d31b054cd2a458c2002d7db92a43fa8cde08ac5cb8931f9bd558de83bed6e",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     }

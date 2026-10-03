@@ -693,9 +693,9 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131 | 58 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136 | 63 |
 
-So the board's **69 open** is 11 permanent and 58 carried, and no item is unruled. (S22
+So the board's **74 open** is 11 permanent and 63 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -722,7 +722,10 @@ sources — D196; S48, the per-object filter response, opened #125, the band cur
 and corrected #114's factor of two to the clusters', D201, and the bright catalogue opened #126, the field's light
 integrated on a mass grid that aliases the giant branch, D202; S49 fixed and discharged #126 on the owner's word and
 opened #127, the segment quadrature's thousandth on the upper main sequence, D204; S50 gave the dust its own layer
-on the owner's word, which closed #109's first part, and opened #128, the heating still one mixed slab, D206.) The eleven
+on the owner's word, which closed #109's first part, and opened #128, the heating still one mixed slab, D206; S51 opened
+#129–#131, the gas ridge's width, the HI's contrast and the contrast's unread scatter, D210; S54, the templates, opened
+#132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
+targets, the template's gas, the K light per unit mass and the frame's colour, D213.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3563,6 +3566,54 @@ never been judged in twenty-three sessions.
    mean drawn log-normally on `pattern_seed`; or the within-galaxy scatter used as what it is, an arm-to-arm and
    ring-to-ring variation of the ridge (RESEARCH_AREAS §1, direction a). What kills the reading: per-galaxy means as
    wide as the segments' spread, which would make the withdrawn draw right.
+
+132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
+   amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
+   the lower bound of its range, 0.5: a disc this compact and massive (1.68 kpc, 3.9e10 M☉) makes a peak above
+   237 km/s by itself, and the search lowers the halo's concentration as far as the range lets it. The peak lands
+   (239.2), and the curve then falls too far: the shape check reads 0.653 against [0.71, 0.86] — a disclosed
+   verdict, the blind one having been spent on the withdrawn first fit (0.648). **Carried.** The model's
+   concentration is set by the assembly epoch (D117), and a late-assembled halo is weak at every
+   radius: the inner curve and the outer curve cannot be moved apart. What closes it: a sourced
+   concentration–mass relation with its scatter as the halo's second degree of freedom (D117 read Dutton & Macciò
+   for the median only), or a floor on the concentration read from a source. What kills the reading: a shape
+   inside the window at the same bound, or a fit that still ends on the bound with the concentration free.
+133. **The fit's targets are stepped in the controls** (S54, D213). `circular_velocity`'s peak, the fitted scale
+   length and the stellar mass jump as `halo_mass` and `disc_spin` move: 0.014 half-windows of stellar mass
+   (1.7e8 M☉) across 2.5e-4 of the spin's range, where the smooth trend is 6.7e5 `[verified:
+   tests/test_templates.py, the step's pin]`. Quantities snapped to the radial grid somewhere upstream; the cause
+   is not traced. **Carried.** A fit on this model is a point on a plateau resolved to the step — about 0.01
+   half-windows in the objective, a few 1e-4 of a range in the controls — and the template says so; its sixteen
+   digits stay because a rounded value is another point. What closes it: the snapping found and interpolated; a
+   fix that moves the fitted point is the same rule re-run, not a refit (the gate's ruling 4).
+134. **NGC 4414's template is gas-poor: its history controls are the Milky Way's** (S54, D213 as amended). No fit
+   target measures a star formation history, so `infall_timescale` and `inside_out_index` stay at the registry's
+   defaults (the gate's rule: a control is free only if a target measures it), and at them the fitted disc holds
+   4.80e9 M☉ of hydrogen against [7.4, 14.7]e9 and forms 0.65 M☉ yr⁻¹ against [1.8, 4.7] — both disclosed
+   verdicts; the withdrawn first fit, which let the infall time run to its 1 Gyr bound, read 3.72e9 and 0.125.
+   **Carried.** NGC 4414 is molecule-rich and star-forming (READING_NGC_4414 rows 9–11), and the model draws its
+   template quieter than the galaxy until this closes. What closes it: a gas measurement among the fit's targets
+   — the reader's own split puts the HI mass and M_K in the fit — which changes the check set after results were
+   seen and is therefore **the owner's to order** (the gate's ruling 5). What kills the one-cause reading: the two
+   numbers not moving together.
+135. **The model's K light per unit stellar mass is low** (S54, D213). The template reads M_K −23.27 against the
+   blind-windowed [−24.62, −24.12] (disclosed; −22.98 on the first fit) at a stellar mass 0.06 dex under the
+   measured one, and the default galaxy reads −23.77 at 4.75e10 M☉: with M_K☉ = 3.27 `[recall]` that is about
+   0.73 M☉/L☉ in K, where NGC 4414's sources read 0.36–0.46 (READING_NGC_4414: z0MGS's Υ₃.₄ = 0.36;
+   Vallejo et al. 2002's K′ 0.42–0.46 at their 19.2 Mpc). **Carried.** Not a fit matter: about 0.15 mag of the miss is the mass and
+   the rest is light per unit mass. Suspects, none tested: `stellar_mass_total` counts remnants and the mass
+   locked (#85) where a 3.4 µm mass counts light-emitting stars; the isochrones' K band on the giant branches; a
+   population older than the galaxy's. What closes it: the default galaxy's Υ_K set beside a sourced Milky Way
+   value, then the term that differs.
+136. **The model's face-on frame is bluer than the catalogues' face-on colour** (S54, D213). The template's frame
+   through its dust reads B − V 0.636 against [0.72, 0.82] (RC3 and HyperLeda agree on 0.77, corrected to face-on,
+   not dust-free; disclosed — the first fit, a quenched disc, read 0.819 and passed by 0.001), and the default
+   galaxy's reads 0.57. On a small grid the template's frame is bluer through the dust than its stars alone
+   (0.637 against 0.673; builder A, not read on the production grid): scattered light is blue, and the layered
+   dust under a thicker stellar layer removes little. **Carried.** What closes it: the frame's three dust terms
+   read separately against a sourced face-on attenuation for an Sc disc (the catalogues' own A_B − A_V), which
+   says whether the dust reddens too little or the stars are too blue. What kills the dust reading: a frame still
+   under 0.72 with the catalogues' face-on reddening applied by hand.
 
 
 ---

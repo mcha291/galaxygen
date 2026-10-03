@@ -34,6 +34,27 @@ export const MODE_BUTTON = { field: "field", stars: "star-first" } as const;
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
 export const SELECTION_TEXT = /every disc star in view above/;
 
+/**
+ * The page's size while the template, the mode and the filters are chosen: wide enough that the panel is the
+ * desktop's and every button is on screen. The canvas is brought to the capture's own size after the choosing
+ * (a 256 px thumbnail's page is a phone's, its panel a bottom sheet).
+ */
+export const CHOOSING_VIEWPORT = { width: 1280, height: 900 };
+
+/**
+ * The template whose inputs are the published defaults (D213 ruling 1: `milky_way` overrides nothing). Against an
+ * API from before the templates the viewer lands on the default galaxy with no switcher, and this template's
+ * captures - only this one's - can still be taken there, the test placing its camera, lens and filter set.
+ */
+export const DEFAULT_TEMPLATE = "milky_way";
+
+/**
+ * How closely the view must stand at the capture's camera, read back from the camera itself: a thousandth of a
+ * degree (face-on stands 0.0006 degrees off the axis, capture.ts MIN_INCLINATION) and a millionth of a
+ * kiloparsec of framing radius. The lens is compared exactly.
+ */
+export const STAND_TOLERANCE = { degrees: 1e-3, kpc: 1e-6 };
+
 /** How the test decides a view is ready: see the spec's `settle`. */
 export const READY = {
   /** No /api request in flight, and none begun or finished for this long: longer than every debounce in the viewer (350 ms). */
@@ -44,4 +65,6 @@ export const READY = {
   stillProbes: 3,
   /** The longest a capture waits to become ready: the first load computes the galaxy. */
   timeoutMs: 180_000,
+  /** The longest the camera takes to stand where a template or the test put it: a canvas remade, not a model run. */
+  standMs: 30_000,
 };
