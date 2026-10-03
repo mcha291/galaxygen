@@ -22,6 +22,9 @@ field**: a layer-on run's fields are S54's, name for name.
 
 ``uv run python tests/layer_reference.py`` prints the digest's own sha256 and writes nothing;
 ``... write`` rewrites the reference, which is a deliberate act a decision must record.
+
+**Since S56 (D215) there is a second reference, of S55 with the layer off** (``... off`` / ``... write-off``,
+``tests/layer_reference_s55.json``): see the section at the end of this module.
 """
 
 from __future__ import annotations
@@ -169,7 +172,137 @@ def load() -> dict[str, Any]:
     return json.loads(REFERENCE.read_text(encoding="utf-8"))
 
 
+# --- the layer-off reference (S56, DECISIONS.md D215) --------------------------------------------------------------
+#
+# From Phase P1 the layer-on galaxy changes by design (several arm modes at once, their phases a new draw), so S54's
+# layer-on reference above stops being a statement about anything. **The reference becomes S55's layer-off run**
+# (D215, the lead's reading 3): every field of both models at both templates' inputs with ``layer=False``, and every
+# input route with ``layer=off``, digested at S55's state (session-56 at 9b54398, before any of P1's model code
+# moved) and committed as ``tests/layer_reference_s55.json``. A later phase holds its layer-off run to it, field by
+# field, with a closed, named list of exceptions.
+#
+# It also holds, under ``single_mode``, the two composed fields **as S55 made them with the layer on** - the stellar
+# contrast and the gas's ridge on each template's own scalars, at the drawn arm number (4 for both) and at 2 - which
+# is what P1's single-mode regression is held to. They are made by ``tests/s55_patterns.py``, a frozen copy of S55's
+# two classes that was checked bit for bit against the classes themselves, and against the published fields, at
+# capture.
+
+REFERENCE_OFF = Path(__file__).resolve().parent / "layer_reference_s55.json"
+TEMPLATES_OFF = ("milky_way", "ngc_4414")
+SINGLE_MODES = (4.0, 2.0)
+# What a header is compared without: only what a request ran, which depends on what the service already held.
+OFF_KEYS = ("stages",)
+
+
+def off_inputs(template: str) -> dict[str, Any]:
+    from galaxy import templates
+
+    return templates.overrides(templates.TEMPLATES[template])
+
+
+def off_label(model: str, template: str) -> str:
+    return model if template == "milky_way" else f"{model}@{template}"
+
+
+def fields_digest_off() -> dict[str, dict[str, str]]:
+    return {off_label(model, t): run_digest(model, off_inputs(t), layer=False) for t in TEMPLATES_OFF for model in MODELS}
+
+
+def normalise_off(header: dict[str, Any]) -> dict[str, Any]:
+    out = copy.deepcopy(header)
+    for key in OFF_KEYS:
+        out.pop(key, None)
+    return out
+
+
+def routes_digest_off(labels: tuple[str, ...] | None = None) -> dict[str, dict[str, Any]]:
+    from galaxy.api import wire
+    from galaxy.api.service import Service
+
+    service = Service()
+    out: dict[str, dict[str, Any]] = {}
+    for label, path, query in requests():
+        if labels is not None and label not in labels:
+            continue
+        got = service.handle(path, {**query, "layer": ["off"]})
+        if not got.ok:
+            out[label] = {"status": got.status, "error": got.json().get("error")}
+            continue
+        header, arrays = wire.decode(got.body)
+        out[label] = {
+            "status": got.status,
+            "header": _sha(json.dumps(normalise_off(header), sort_keys=True).encode("utf-8")),
+            "arrays": [[spec["name"], value_digest(arrays[spec["name"]])] for spec in header["arrays"]],
+        }
+    return out
+
+
+def single_mode_scalars(template: str) -> dict[str, float]:
+    """The scalars S55's two laws were built from, on the default model at a template's inputs. None of them is the
+    arm number: the pitch, the two amplitudes, the bar's length and the gas's ratio keep their streams in P1."""
+    from galaxy.core.registry import production
+    from galaxy.run import run
+
+    models, _, _ = production()
+    names = ("arm_contrast", "bar_contrast", "pitch_angle", "bar_half_length", "gas_arm_contrast")
+    out = run(models.get(MODELS[0]), off_inputs(template), only=names, layer=False)
+    return {n: float(out.fields[n]) for n in names}
+
+
+def single_mode_fields(template: str, m: float) -> tuple[np.ndarray, np.ndarray]:
+    """(stars, gas): S55's two composed fields on the production grid for one arm number, by the frozen copy."""
+    import s55_patterns as s55
+    from galaxy.core.grids import DEFAULT
+    from galaxy.core.registry import production
+
+    models, _, _ = production()
+    c = models.get(MODELS[0]).constants
+    f = single_mode_scalars(template)
+    grid = DEFAULT.build()
+    stars = s55.stellar_contrast(grid.R, grid.phi, f["arm_contrast"], f["bar_contrast"], m, f["pitch_angle"], f["bar_half_length"])
+    gas = s55.gas_contrast(grid.R, grid.phi, f["gas_arm_contrast"], f["bar_contrast"], m, f["pitch_angle"], f["bar_half_length"],
+                           float(c["GAS_ARM_WIDTH"].value), float(c["GAS_ARM_MASK_WIDTH"].value))
+    return stars, gas
+
+
+def single_mode_digest() -> dict[str, dict[str, dict[str, str]]]:
+    out: dict[str, dict[str, dict[str, str]]] = {}
+    for template in TEMPLATES_OFF:
+        for m in SINGLE_MODES:
+            stars, gas = single_mode_fields(template, m)
+            out.setdefault(template, {})[f"m{m:.0f}"] = {"stars": value_digest(stars), "gas": value_digest(gas)}
+    return out
+
+
+def digest_off() -> dict[str, Any]:
+    return {"fields": fields_digest_off(), "routes": routes_digest_off(), "single_mode": single_mode_digest()}
+
+
+def load_off() -> dict[str, Any]:
+    return json.loads(REFERENCE_OFF.read_text(encoding="utf-8"))
+
+
+def main_off(argv: list[str]) -> int:
+    made = digest_off()
+    text = json.dumps(made, indent=1, sort_keys=True) + "\n"
+    print("layer-off digest sha256", _sha(text.encode("utf-8")), "fields", {k: len(v) for k, v in made["fields"].items()},
+          "routes", len(made["routes"]))
+    if argv[1:] == ["write-off"]:
+        with open(REFERENCE_OFF, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        print("wrote", REFERENCE_OFF.name)
+    elif REFERENCE_OFF.exists():
+        held = load_off()
+        moved = [f"fields/{m}/{n}" for m, fs in made["fields"].items() for n, v in fs.items() if held["fields"].get(m, {}).get(n) != v]
+        moved += [f"routes/{k}" for k, v in made["routes"].items() if v != held["routes"].get(k)]
+        moved += [f"single_mode/{t}/{m}" for t, ms in made["single_mode"].items() for m, v in ms.items() if held["single_mode"].get(t, {}).get(m) != v]
+        print("differs from the layer-off reference:", moved or "nothing")
+    return 0
+
+
 def main(argv: list[str]) -> int:
+    if argv[1:] in (["off"], ["write-off"]):
+        return main_off(argv)
     made = digest()
     text = json.dumps(made, indent=1, sort_keys=True) + "\n"
     print("digest sha256", _sha(text.encode("utf-8")), "fields", {k: len(v) for k, v in made["fields"].items()},
