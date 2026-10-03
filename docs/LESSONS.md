@@ -1291,3 +1291,20 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   the arms are muted, not laned (D207).
 - [close] The owner may end a close without the suite: say so in the board row and in BRIEF, and make the suite the
   next session's first step (S50's close, D209).
+- [field] A gas arm contrast is a ratio of means inside a mask, not a peak-to-trough: set the model's number to the
+  source's quantity over the source's own mask and derive the amplitude from it. Read as a peak-to-trough, PHANGS's 2.7
+  looks smaller than the stars' 2.9 when it is three times theirs in the log (D210).
+- [field] A residual is a galaxy-to-galaxy spread or it is not drawn. Percentiles over arm segments and radial bins,
+  drawn once per galaxy, set the default disc to a ratio of 10 on the first seed; ask of every scatter what it is a
+  scatter over before it becomes a draw (D210's amendment, #131).
+- [field] A point-sampled ridge aliases on a coarse azimuth grid where arm number times harmonic equals the cell
+  count: assert a ring-mean gate on the coarse grids the tests use, not only on the default one (D210).
+- [field] Predict a placement's sign from the overlap of light and dust round the ring, not from where most of the
+  light is: a ridge on the stellar crest still dims a ring whose depth is small, because it sits where the stars are
+  densest (D210's failed prediction).
+- [audit] A lead's hand arithmetic in a ruling is a claim like any other: D210 wrote v(0) = 4.93 for 5.435 and a
+  builder's test caught it. Probe every worked number before it is written (D210).
+- [infra] An Agent worktree is cut from main, not from the session's branch: commit the ruling first, and make a
+  builder's first step `git merge --ff-only session-NN` (S51).
+- [close] Do not edit the register while the suite runs: the board test compares the committed board with the
+  register and was the open's one failure (S51).
