@@ -8573,3 +8573,97 @@ seven controls makes it fall by a fifth. (c) **The colour check misses blue**: t
 reads B − V 0.57 and the window starts at 0.72. (d) The hydrogen check passes (the default holds 8.1 × 10⁹); the
 star formation rate is near the window's lower edge and could fall either side; M_K is not predicted. A prediction
 that fails is reported as failed.
+
+**The first reading: fit A, ruling 3 run as written (2026-10-04; builder A, `tools/fit_template.py`, 433 model
+evaluations, deterministic, four of five starts at the same point).** The three targets landed inside their
+windows — prediction (a) held — and **three controls ran to a bound of their range**:
+
+| Target | Window | Measured | Model | Residual (half-windows) |
+|---|---|---|---|---|
+| Peak of the curve inside 20.6 kpc | [222, 247] km/s | 237 | 238.85 | +0.148 |
+| Stellar disc scale length | [1.5, 1.9] kpc | 1.649 | 1.673 | +0.122 |
+| Stellar mass | [3.4, 5.9] × 10¹⁰ M☉ | 4.467 | 3.973 | −0.395 |
+
+| Control | Default | Fit A | Range | |
+|---|---|---|---|---|
+| `halo_mass` | 1.1e12 | 5.89e11 | 1e11–1e13 | |
+| `disc_spin` | 0.0173 | 0.01409 | 0.005–0.05 | |
+| `halo_assembly_z` | 1.66 | 0.5 | 0.5–5 | at its bound |
+| `baryon_retention` | 0.35 | 0.5 | 0.05–0.5 | at its bound |
+| `infall_timescale` | 7 Gyr | 1 Gyr | 1–14 | at its bound |
+| `inside_out_index` | 1 | 0.45 | 0–3 | |
+| `migration_efficiency` | 3.6 | 3.6 | 0–8 | no target sees it |
+
+The objective read 0.1931: 0.1927 from the targets, 0.0004 from the tie-break. The infall time went from 7 Gyr to
+its 1 Gyr bound for a gain of about 0.05 half-windows in the stellar mass. **The five checks, read once on fit A
+(blind; that reading is spent):**
+
+| Check | Window | Fit A | Verdict | Prediction |
+|---|---|---|---|---|
+| Curve shape S | [0.71, 0.86] | 0.648 | miss, low | (b) "misses high": **failed** |
+| Star formation rate | [1.8, 4.7] M☉ yr⁻¹ | 0.125 | miss, fourteen times low | (d) "near the lower edge": **failed** |
+| Hydrogen | [7.4, 14.7] × 10⁹ M☉ | 3.72 | miss, low | (d) "passes": **failed** |
+| M_K | [−24.62, −24.12] | −22.98 | miss, 1.14 mag faint | not predicted |
+| B − V, face-on through dust | [0.72, 0.82] | 0.819 | pass, by 0.001 | (c) "misses blue": **failed** |
+
+A quenched disc: old, red, gas-poor. Also found by the builder: the three target fields are stepped in `halo_mass`
+and `disc_spin` (0.014 half-windows across 2.5e-4 of the spin's range).
+
+**A conditional gate (BUILD_III §3d), 2026-10-04.** The lead stopped: ruling 3 could not be followed as written and
+mean what it said, and a refit chosen after four misses was not the lead's call — Phase T's text says of a failed
+check "not a reason to refit". `docs/HANDOFF_S54.md` (deleted at close) put five options to Fable, spawned as a
+subagent on the owner's standing order; one turn, nothing run.
+
+**D213, amended in place at the §3d gate; ruling by Fable.**
+
+1. *The fit.* "Ruling 3's tie-break failed its stated purpose: at 10⁻³ it breaks exact ties and nothing else, and
+   three unmeasured controls ran to their bounds. The fit's free set is therefore fixed by a rule, not a weight: **a
+   control is free only if a fit target measures what it controls; every other control stays at the registry's
+   default and does not move.** Of the seven, the three structure targets measure `halo_mass` (the peak),
+   `disc_spin` (the scale length), `halo_assembly_z` (the peak at a given disc, through the concentration) and
+   `baryon_retention` (the stellar mass at a given halo); they do not measure `infall_timescale`,
+   `inside_out_index` or `migration_efficiency` — fit A moved the first for 0.05 half-windows in one target, which
+   is the proof. […] The tie-break stays in the objective at 10⁻³ as what it is, a tie-breaker […], and the text
+   no longer claims more. Fit A is withdrawn from the template and kept in this decision as the first reading."
+   *(The lead's note: the ruling's sentence counts "five controls free"; its rule names four, and the three it
+   names as unmeasured are held. Four are free. `migration_efficiency` did not move in any fit, so this is the
+   handoff's fit B.)*
+2. *The checks' standing.* "All five checks on fit B are **disclosed** (D192): the decision to refit was made after
+   four of them were read on fit A, and read is read (M_K included). Each verdict in `galaxy.specs` and the
+   template carries the word `disclosed`; fit A's verdicts are printed beside them. **No unspent window is spent in
+   S54.** None is independent of what was read: HI and H₂ apart share the hydrogen sum; the outer speed is S × the
+   peak; the infrared luminosity is the SFR's twin (the reader says so); the face-on M_B stands between M_K and
+   B − V; the bulge is weak by the reader's own word. Spent now they would be the forking path with a blind label
+   on it. They stay for a later session, which spends them as 'window fixed blind, spent after fit B'. The 'checks
+   fitted apart' half of the owner's ruling 8 is intact on fit B — no check is a target; the 'blind' half was spent
+   on fit A and the record says so."
+3. *A control on its bound.* "A value on a bound is a finding, not a fit. It may stand in a published template
+   only when the targets measure the control, it is labelled `bound` in the template and the residuals table, and
+   the finding is written out: for `halo_assembly_z` = 0.5, 'the model cannot lower its inner peak enough for this
+   disc inside the range; the concentration floor, or the concentration–mass relation, is the debt'. A control the
+   targets do not measure may not sit on a bound, because it may not move at all. No published range is widened or
+   narrowed after a fit; no bound value is rounded or nudged inside. Fit C is not taken: holding a measured control
+   and publishing −0.72 is less honest than publishing the bound."
+4. *The stepped targets.* "A debt to open as it stands, and one change to what the fit claims: the fitted controls
+   are a point on a plateau, resolved to the step (about 0.01 half-windows in the objective, a few 10⁻⁴ of a range
+   in the controls), not a minimum to the printed precision. The template's comment says so; the sixteen digits
+   stay because a rounded value is another point. […] Trace the grid snapping in a later session; a fix that moves
+   the fitted point is not a refit under this ruling, it is re-running the same rule."
+5. *The owner.* Nothing blocks. At the close the owner is told that the five checks were spent blind on a fit
+   whose objective was defective and that the template carries fit B with the same five, disclosed; and is asked
+   whether a later session should run a second fit on the reader's own split (M_K and HI in, stellar mass and H₂
+   out) as a probe of the history controls, not as a blind test — "O4 is not the lead's to take: ruling 8 fixed
+   the split, and changing the check set after results were seen is the owner's choice alone."
+
+**Fable's predictions on fit B (B4).** The three targets inside, residuals near +0.18, +0.14, −0.45. S still misses
+low (the assembly stays at 0.5 and the curve falls too far — the opposite of D213's (b)); the star formation rate
+misses low by under 2×, not 14×; hydrogen misses low, near 6 × 10⁹; M_K misses faint by about 1 mag, of which
+~0.8 mag is the model's K light per unit mass, "a debt to open in its own right, not a fit matter"; B − V lands
+below 0.72, a miss blue. "Expected: 1 pass of 5 at best."
+
+**Forbidden afterwards (Fable).** A third fit of `ngc_4414` anywhere in Build III without a DECISIONS entry the
+owner has answered; any change to the target set, the check set, the windows or the published ranges; spending an
+unspent window in S54; calling any fit-B verdict blind; dropping fit A's tables from the record; the fit tool
+admitting a control by weight (the free set is named per template in data, the measuring target beside each
+control); moving a held control by any amount; rounding a bound; describing the objective's minimum beyond the
+step's resolution.
