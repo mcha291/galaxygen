@@ -8407,3 +8407,89 @@ a display's):
 4. *The opening check* (BRIEF: bootstrap, the suite, `verify_clone`) was run as one clean clone of `session-53`
    (`tools/verify_clone.py --ref session-53`), which is `main` at 551bbbf plus four commits of documents: one run
    that is both the suite and the clone, and that the working copy's edits cannot disturb.
+
+**Applied (2026-10-03; two Opus 5.5 builders in worktrees, each on its own files; the lead read each diff against
+the phase's gate before merging it — the plan's reviewer agent (§3g) was the lead's own reading here, the lead not
+being either builder).**
+
+*The instrument for pictures, `tools/goal_metrics.py`* (builder A; `tests/test_goal_metrics.py`, 43 tests, 24 s).
+Six statistics of a picture, each with its definition in the module's docstring and in its JSON: the radial colour
+profile (B − R and G − R in magnitudes of ring means); the azimuthal Fourier amplitudes A_m, m = 1–8, on the
+deprojected luminance (a pattern 1 + A cos mφ returns A/2); the arm–interarm contrast in blue (the ring's profile
+cut to m ≤ 8, its 90th percentile over its 10th); the dark-lane covering fraction (pixels under 0.75 of a local
+median); the power-spectrum slope of the unsharp-masked picture between wavelengths 0.1 a and 0.02 a; and the count
+of compact sources standing 5 robust sigmas out of their surroundings, inside and outside the outline. **They are
+statistics of display values, not photometry, and none is a row** (C6, D113). So that pictures of different sizes
+compare, every metric is taken with the outline's semi-major radius `a` at 256 px; the outline (centre, axis ratio,
+angle, `a`) is given or estimated from the 90 %-light set's moments, and the estimate is always reported.
+Gate — known values on synthetic pictures: colour gradients to 1e-4 mag, A_m to 0.2 % face-on and inclined (and a
+control: the inclined pattern read as face-on misses), the contrast's closed form to 0.5 %, planted covering
+fractions to 0.002, power-law slopes 0 to −3 within 0.1, planted sources counted exactly, the outline's planted
+geometry to 1 %. Two of the builder's predictions failed and are pinned as measured, not relaxed (B5): foreground
+stars holding 3 % of the light move `a` out by 8 %; a picture with 10 % noise is not held to exactly zero sources.
+The lead's own check, on a picture made by a script of the lead's and not by the tests' helpers (B3): an inclined
+(q 0.6, 30°) four-armed disc of amplitude 0.4 returned q 0.603, 30.01°, A₄ 0.1999 for 0.2, the contrast 2.226 for
+2.228, G − R 0.2423 for 0.2423. Pillow 12.3.0 is in the `dev` group; `dependencies` is numpy alone, and a test
+scans `model/` for an import of it.
+
+*The picture test, T12* (builder B). `npm --prefix frontend run picture` builds the viewer, serves it with the API
+from one origin on **port 8019** (never 8017, 8018 or 5173), and captures `frontend/e2e/captures.json`'s list on
+headless Chromium through `@playwright/test` 1.62.1 (pinned: its Chromium is build 1234, already on the machine;
+nothing but the npm package was downloaded), comparing each with a committed frame in `frontend/e2e/frames/`;
+`picture:update` rewrites the frames and `frames.json`, which records the renderer that drew each. One hook beside
+the frame probe, `window.__galaxygenCapture`: `place` stands the orbit camera at a stated inclination, azimuth and
+framing radius, `picture` returns the canvas as displayed; the mode and the filter set are chosen through the
+viewer's own buttons. A view is ready when no `/api` request has moved for 1.5 s, the frame's linear sum is lit and
+the same over three probes, and two pictures a probe apart are the same bytes.
+Gate — "the captures exist; a changed gain fails it": the same capture run again is the same file byte for byte
+(nine runs; the march's jitter is fixed by the pixel); the field gain's default raised from 1 to 1.25 failed all
+four, 54–67 % of each frame's pixels over the threshold, and to 1.05 failed all four at 1.2–3.2 % against an
+allowance of 0.1 %. **The frames belong to their renderer** (ANGLE on Direct3D 11, the RTX 4070): SwiftShader's
+differ in 0.09–0.16 % of pixels by more than 2/255, which is at the allowance, so on another machine the frames are
+regenerated and the comparison is local. The pytest side (`tests/test_picture.py`) needs no browser and runs the
+real thing only under `GALAXYGEN_PICTURE=1`. vitest 176 → 181. In the lead's checkout the run reproduced the
+builder's frames byte for byte (4 passed, 33 s).
+
+**The baseline (2026-10-03; today's default galaxy, seed and all, on S52's model).** The inclined camera stands at
+59.2°: the axis ratio 0.512 measured on the NGC 4414 picture's outline, read as a thin disc's (reading 2 above).
+Face-on pictures were measured with the axis ratio given as 1 (the Milky Way drawing's bright bar makes its
+estimated outline 0.85); the inclined ones with the outline estimated. `a` is the 90 %-light outline's semi-major
+radius in the picture's own pixels.
+
+| Picture | a px | q | B−R in | B−R out | Δ(B−R) | A1 | A2 | A3 | A4 | A5 | A6 | A7 | A8 | arm / interarm, blue | dark fraction | slope | points in | points out |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 2006 | 1 (given) | −0.459 | −0.813 | −0.354 | 0.052 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 0.025 | 0.029 | 1.83 | 0.0066 | −1.99 | 518 | 139 |
+| render: face-on, field mode | 339 | 1 (given) | +0.483 | +0.123 | −0.360 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 0.002 | 0.042 | 1.58 | 0.0000 | −3.32 | 25 | 21 |
+| render: face-on, star-first mode | 367 | 1 (given) | +0.484 | +0.079 | −0.405 | 0.012 | 0.030 | 0.014 | 0.154 | 0.017 | 0.009 | 0.012 | 0.029 | 2.16 | 0.0005 | −0.61 | 1316 | 1108 |
+| goal: NGC 4414 (Hubble) | 664 | 0.512 | +0.508 | +0.234 | −0.274 | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 0.030 | 0.033 | 2.72 | 0.1572 | −2.09 | 97 | 311 |
+| render: inclined, field mode | 420 | 0.552 | +0.360 | −0.028 | −0.389 | 0.091 | 0.039 | 0.043 | 0.037 | 0.024 | 0.027 | 0.018 | 0.015 | 1.63 | 0.0000 | −3.53 | 14 | 8 |
+| render: inclined, star-first mode | 444 | 0.551 | +0.383 | −0.044 | −0.427 | 0.111 | 0.051 | 0.070 | 0.057 | 0.036 | 0.039 | 0.027 | 0.016 | 2.01 | 0.0011 | −0.66 | 787 | 503 |
+
+**What the table says, read once and not acted on** (display targets: nothing is tuned to them, BUILD_III §9).
+- *The pattern is too regular, as a number.* Face-on, the render's power is in m = 4 and its harmonic m = 8 (the
+  default seed draws four arms) and its odd amplitudes are 0.002: a perfect four-fold symmetry. The drawing has
+  0.05–0.06 at m = 1, 3 and 5 beside its m = 2 of 0.19; NGC 4414 is flat, 0.03–0.07 at every m. Phase P1 is what
+  spreads the power.
+- *There are no dark lanes by this measure.* 0.0000–0.0011 of the render's disc is under three quarters of its
+  surroundings, against 0.0066 of the drawing and **0.157 of NGC 4414**. S51's lane is there to the eye and is
+  too shallow for the threshold. Phases L1, L2 and V6 are what this number waits on.
+- *The texture is missing in one mode and all points in the other.* The unsharp-masked slope is −3.3 to −3.5 in
+  the field mode (smooth: nothing between 0.02 a and 0.1 a) and −0.6 in the star-first mode (near white: isolated
+  points), against −2.0 and −2.1 for the two goals.
+- *Colour.* The render reddens inward by about what both goals do (Δ −0.36 to −0.43 against −0.35 and −0.27). Its
+  inner colour is NGC 4414's (+0.48 / +0.36 against +0.51) and nothing like the drawing's blue-white (−0.46),
+  which is a drawing's palette.
+- *The star-first mode has more points than either goal* (1316 inside the outline against 518 and 97): V8's sprite
+  ruling (T9), a point scaled by the template's distance and pixel scale, is where that count is settled.
+
+**Found, for Phase T (not a debt; a camera is a template's).** The viewer's camera is a 45° perspective from 2.4
+framing radii; the inclined capture's near side is magnified and leaves the frame, and deprojecting it by an axis
+ratio is approximate — **the inclined renders' A1 of 0.09–0.11 is the perspective's, not the galaxy's** (the
+face-on renders read 0.002–0.012). Hubble's picture is, at a galaxy's distance, a parallel projection.
+The template's camera (BUILD_III §2: "distance and pixel scale") is where a long lens or an orthographic view is
+chosen; until then an inclined render's row is compared with NGC 4414's only in the columns the perspective does
+not move (colour, dark fraction, slope).
+
+**Checks.** Opened on a clean clone of `session-53` at 9e0b4ad: 997 passed, 3 skipped, the specs OK, `EXIT=0`
+(31 min). No stage's cost changed, so no cold timings are owed (B2). Register unchanged: 69 open = 11 + 58, 45
+discharged; no debt opened. Specs 12 / 20 / 5 of 37, S52's. Next numbers: D213, #132, board row 54, acceptance row 38.

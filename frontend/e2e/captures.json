@@ -29,20 +29,20 @@
     {
       "name": "inclined-field",
       "template": null,
-      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20 },
+      "camera": { "inclination_deg": 59.2, "azimuth_deg": 0, "radius_kpc": 20 },
       "mode": "field",
       "filters": "rgb",
       "viewport": 1024,
-      "placeholder": "inclination_deg 55 and azimuth_deg 0 are placeholders for NGC 4414's camera: the lead replaces the inclination with the one the axis ratio measured on the goal picture gives, and regenerates the frame"
+      "placeholder": "inclination_deg 59.2 is the thin-disc reading (cos i = q) of the axis ratio 0.512 that tools/goal_metrics.py measures on the outline of the NGC 4414 goal picture (S53, D212): the framing of a picture, not the galaxy's inclination. azimuth_deg 0 is arbitrary. Phase T (S54) replaces both with the template's sourced camera"
     },
     {
       "name": "inclined-stars",
       "template": null,
-      "camera": { "inclination_deg": 55, "azimuth_deg": 0, "radius_kpc": 20 },
+      "camera": { "inclination_deg": 59.2, "azimuth_deg": 0, "radius_kpc": 20 },
       "mode": "stars",
       "filters": "rgb",
       "viewport": 1024,
-      "placeholder": "inclination_deg 55 and azimuth_deg 0 are placeholders for NGC 4414's camera: the lead replaces the inclination with the one the axis ratio measured on the goal picture gives, and regenerates the frame"
+      "placeholder": "inclination_deg 59.2 is the thin-disc reading (cos i = q) of the axis ratio 0.512 that tools/goal_metrics.py measures on the outline of the NGC 4414 goal picture (S53, D212): the framing of a picture, not the galaxy's inclination. azimuth_deg 0 is arbitrary. Phase T (S54) replaces both with the template's sourced camera"
     }
   ]
 }

@@ -31,8 +31,8 @@
       "file": "frames/inclined-field.png",
       "width": 1024,
       "height": 1024,
-      "bytes": 532351,
-      "sha256": "0b93b043eb8d452628edcdad6c01cc2b227b4c594e2e0dee7232289551da82f2",
+      "bytes": 507822,
+      "sha256": "7e52bc799a4fb4681480cb816179e663731a6b8822472bb2f906c0679481d450",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
@@ -40,8 +40,8 @@
       "file": "frames/inclined-stars.png",
       "width": 1024,
       "height": 1024,
-      "bytes": 866023,
-      "sha256": "c078d9a8e2c013e0540ed1fdf0ea7ae917ed4a8b2dedf34d9ae92dcba0bbab76",
+      "bytes": 823267,
+      "sha256": "72d5347df1580345aa439b06b950811b8de97a9f8694c87a44c2b24032b0df69",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     }
