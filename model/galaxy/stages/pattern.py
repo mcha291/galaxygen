@@ -36,10 +36,12 @@ of that number from the centre to the grid's edge. Since S56 the arm number is n
 window is evaluated **at every radius** (:func:`local_swing_weights`) and its weights split the
 arms' power among m = 2 … 6 there (:func:`mode_law`):
 
-- *The window.* X₂(R) = κ²R / (2πGΣ · 2) with the checkpoint-1 disc's epicyclic frequency and its
-  total surface density (stars and gas together: swing amplification is of the whole
-  self-gravitating disc), the local shear Γ(R) = 1 − d ln v / d ln R, m_lo = X₂/(Γ x_high),
-  m_hi = X₂/(Γ x_low), and w_m(R) the existing :func:`swing_weight`, unchanged.
+- *The window.* X(R) = κ²R / (2πGΣ) - Toomre's X at m = 1, equal to m·X_m - with the
+  checkpoint-1 disc's epicyclic frequency and its total surface density (stars and gas together:
+  swing amplification is of the whole self-gravitating disc), the local shear
+  Γ(R) = 1 − d ln v / d ln R, m_lo = X/(Γ x_high), m_hi = X/(Γ x_low), and w_m(R) the existing
+  :func:`swing_weight`, unchanged: mode m is amplified whole where x_low ≤ X/(mΓ) ≤ x_high.
+  (The first two passes of S56 built this window on X/2, the lead's error; D215 ruling 11.)
 - *The gain, capped at one.* A_m(R)² = A² · w_m(R) / max(1, Σ_k w_k(R)), A the published
   ``arm_contrast``. Where Σw ≥ 1 the ring carries A² whole, split by the weights; below 1 it
   carries Σw · A², falling continuously to zero where the amplifier is dead. No ring is
@@ -102,24 +104,26 @@ PATTERN_READS: tuple[str, ...] = ("bar_contrast", "pitch_angle", "bar_half_lengt
 
 
 def swing_window(disc_dominance: float, shear: float, x_low: float, x_high: float) -> tuple[float, float, float]:
-    """(X₂, m_lo, m_hi): Toomre's X for m = 2 in the Mestel form, and the arm numbers the disc amplifies.
+    """(X, m_lo, m_hi): Toomre's X at m = 1 in the Mestel form, and the arm numbers the disc amplifies.
 
     For a flat curve κ² = 2v²/R² and a disc whose own rotation is v_d² = 2πGΣR (Mestel), so
     X_m = κ²R/(2πGΣm) = 2/(m f_d) with f_d = v_d²/v² the disc's share of the rotation — the
-    published ``disc_dominance``. Vigorous amplification for x_low < X/Γ < x_high therefore means
-    X₂/(Γ x_high) ≤ m ≤ X₂/(Γ x_low), the review's 1/f_d ≲ m ≲ 2/f_d at Γ = 1 [verified:
-    Sellwood & Masters 2022 §4.2.3.2]. The alternative is the local form with the exponential
-    disc's own Σ(2.2 R_d), which reads X₂ = 2.7 at the defaults and prefers m = 3–4 there; it
-    increases outward (D'Onghia 2015: two arms at 4.5 kpc, five or six at R₀), so it needs a
-    radius chosen by hand, and the global form was chosen before either number was read (D175).
+    published ``disc_dominance``. The first value returned is 2/f_d = m·X_m: **X at m = 1**, the
+    Mestel identity, and not X for two arms (which is 1/f_d; S26 to S56's second pass labelled it
+    X₂, a mislabel the value never shared: D215 ruling 11). Vigorous amplification for
+    x_low < X_m/Γ < x_high therefore means X/(Γ x_high) ≤ m ≤ X/(Γ x_low), the review's
+    1/f_d ≲ m ≲ 2/f_d at Γ = 1 [verified: Sellwood & Masters 2022 §4.2.3.2]. The alternative is
+    the local form with the exponential disc's own Σ; it increases outward (D'Onghia 2015: two
+    arms at 4.5 kpc, five or six at R₀), so it needs a radius chosen by hand, and the global form
+    was chosen before either number was read (D175).
     **Since S56 (D215) the local form is the law for the arm number** - evaluated at every radius,
     so no radius is chosen (:func:`local_swing_weights`) - and this global form stays as the
     amplitude's coherence input only: D175's choice is superseded for the arm number.
     """
     f_d = min(max(float(disc_dominance), 1e-6), 1.0)
     gamma = float(shear) if math.isfinite(shear) and shear > 0.0 else 1.0
-    x2 = 2.0 / f_d
-    return x2, x2 / (gamma * x_high), x2 / (gamma * x_low)
+    x_one = 2.0 / f_d
+    return x_one, x_one / (gamma * x_high), x_one / (gamma * x_low)
 
 
 def swing_weight(m: float, m_lo: float, m_hi: float, x_high: float, x_dead: float, x_low: float, x_floor: float) -> float:
@@ -158,10 +162,12 @@ def local_shear(R: np.ndarray, v: np.ndarray) -> np.ndarray:
 
 
 def local_swing_x(R: np.ndarray, kappa: np.ndarray, sigma: np.ndarray, G: float) -> np.ndarray:
-    """Toomre's X for two arms at every radius, X₂(R) = κ²R / (2πGΣ · 2).
+    """Toomre's X at every radius, X(R) = κ²R / (2πGΣ): X at m = 1, equal to m·X_m for every m.
 
     ``kappa`` in km/s/kpc, ``sigma`` in M☉/pc² (as the disc publishes it) and ``G`` in
-    kpc (km/s)²/M☉, so X is a pure number. Σ is the checkpoint-1 disc's **total** surface density,
+    kpc (km/s)²/M☉, so X is a pure number. S56's first two passes divided by a further 2 (X for
+    two arms, i.e. X/2, handed to a window that takes X): the lead's error, corrected by D215
+    ruling 11. Σ is the checkpoint-1 disc's **total** surface density,
     stars and gas together, as the spin's exponential publishes it: swing amplification is of the
     whole self-gravitating disc, so that is the definition and not an approximation; the
     checkpoint-4 split into stars and gas does not feed back (one way, no iteration: D174, D215
@@ -169,7 +175,7 @@ def local_swing_x(R: np.ndarray, kappa: np.ndarray, sigma: np.ndarray, G: float)
     """
     R = np.asarray(R, dtype=float)
     sigma_kpc2 = np.maximum(np.asarray(sigma, dtype=float) * PC_PER_KPC**2, 1e-30)
-    return np.asarray(kappa, dtype=float) ** 2 * R / (2.0 * math.pi * G * sigma_kpc2 * 2.0)
+    return np.asarray(kappa, dtype=float) ** 2 * R / (2.0 * math.pi * G * sigma_kpc2)
 
 
 def local_swing_weights(
@@ -178,19 +184,20 @@ def local_swing_weights(
 ) -> np.ndarray:
     """w_m(R), shape (modes, R): how strongly the disc amplifies each arm number at each radius.
 
-    The local window - m_lo = X₂(R)/(Γ(R) x_high), m_hi = X₂(R)/(Γ(R) x_low) - handed to
-    :func:`swing_weight`, the same function the global window uses, for every m of
-    :data:`ARM_MODES`; an arm number above ``m_max`` has no weight. A shear that is not finite or
-    not positive is read as 1, as :func:`swing_window` reads it; a ring whose X is not finite
-    amplifies nothing. One call of the weight per mode per ring: the count is the grid's (A1).
+    The local window - m_lo = X(R)/(Γ(R) x_high), m_hi = X(R)/(Γ(R) x_low), X the local X at
+    m = 1 (:func:`local_swing_x`) - handed to :func:`swing_weight`, the same function the global
+    window uses, for every m of :data:`ARM_MODES`; an arm number above ``m_max`` has no weight. A
+    shear that is not finite or not positive is read as 1, as :func:`swing_window` reads it; a
+    ring whose X is not finite amplifies nothing. One call of the weight per mode per ring: the
+    count is the grid's (A1).
     """
     R = np.asarray(R, dtype=float)
-    x2 = local_swing_x(R, kappa, sigma, G)
+    x_one = local_swing_x(R, kappa, sigma, G)
     gamma = local_shear(R, v)
     w = np.zeros((len(ARM_MODES), R.size))
     for i in range(R.size):
         g = float(gamma[i]) if math.isfinite(gamma[i]) and gamma[i] > 0.0 else 1.0
-        m_lo, m_hi = float(x2[i]) / (g * x_high), float(x2[i]) / (g * x_low)
+        m_lo, m_hi = float(x_one[i]) / (g * x_high), float(x_one[i]) / (g * x_low)
         for k, m in enumerate(ARM_MODES):
             if m <= m_max:
                 w[k, i] = swing_weight(float(m), m_lo, m_hi, x_high, x_dead, x_low, x_floor)
@@ -295,11 +302,15 @@ SHEAR = _scalar(
 
 
 SWING_X = _scalar(
-    "swing_x", "Swing-amplification X for two arms", "dimensionless",
-    "Toomre's X = κ²R/(2πGΣm) at m = 2 in the Mestel form, 2/disc_dominance (S26, D175): the "
-    "first link of §4b's chain, disc dominance → the arms the disc can amplify. 3.3 at the "
-    "defaults, against the vigorous range of 1–2 the level-0 window holds: a two-armed pattern "
-    "is at the edge of what this disc amplifies, three arms are inside it.",
+    "swing_x", "Swing-amplification X at m = 1 (m·X_m)", "dimensionless",
+    "Toomre's X_m = κ²R/(2πGΣm) times m, in the Mestel form: 2/disc_dominance, X at m = 1 (S26, "
+    "D175) - not X for two arms, which is half of it; until S56 this field was labelled as the "
+    "two-armed X, a mislabel of the words and not of the number (D215 ruling 11). The first link of "
+    "§4b's chain, disc dominance → the arms the disc can amplify: an m-armed pattern is amplified "
+    "vigorously where this number over m and over the shear lies in the level-0 window's range of "
+    "1–2. 3.3 at the defaults, so two and three arms are inside the range and four is past its "
+    "edge. Kept as the amplitude's coherence input only: since S56 the arm numbers the disc "
+    "carries come from the local X at every radius, in the pattern stage.",
 )
 
 SWING_ARM_MIN = _scalar(
@@ -328,8 +339,12 @@ ARM_CONTRAST_MEAN = _scalar(
 
 GAS_ARM_CONTRAST = _scalar(
     "gas_arm_contrast", "Gas arm–interarm contrast (ratio of means)", "dimensionless",
-    "The ratio the gas's arm pattern is set to: mean gas surface density inside an arm mask of the "
-    "source's width over the mean outside it, on each ring — a ratio of means, not a peak-to-trough. "
+    "The ratio the gas's arm pattern is set to where the arms are whole: mean gas surface density "
+    "inside an arm mask of the source's width over the mean outside it — a ratio of means, not a "
+    "peak-to-trough. Since S56 it is not the ratio on every ring: it fades with the stellar forcing, "
+    "C(R) = 1 + (C − 1)·ρ(R) with ρ the modes' root-sum-square amplitude over the arm amplitude, "
+    "capped at one - this number where the disc carries the arms' power whole, falling to 1 (no "
+    "pattern) where the disc amplifies no mode (D215 ruling 8). "
     "Its mean is derived as the stellar amplitude's is: the non-grand-design spirals' molecular ratio "
     "plus the two-fold pattern's amplification weight times the way to the grand designs'. No "
     "residual is drawn: the source's spread is over arm segments and radial bins, not galaxies, so it "
@@ -351,7 +366,7 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
     v_halo = float(np.interp(at, R, halo))
     dominance = 1.0 - (v_halo / v_total) ** 2 if v_total > 0.0 else 0.0
     shear = shear_rate(R, total, at)
-    x2, m_lo, m_hi = swing_window(dominance, shear, float(c["SWING_X_LOW"]), float(c["SWING_X_HIGH"]))
+    x_one, m_lo, m_hi = swing_window(dominance, shear, float(c["SWING_X_LOW"]), float(c["SWING_X_HIGH"]))
     coherence = swing_weight(2.0, m_lo, m_hi, float(c["SWING_X_HIGH"]), float(c["SWING_X_DEAD"]), float(c["SWING_X_LOW"]), float(c["SWING_X_FLOOR"]))
     floc, grand = float(c["ARM_INTERARM_FLOCCULENT"]), float(c["ARM_INTERARM_GRAND_DESIGN"])
     # The gas's ratio of means, joined between its two classes by the same weight (D210 as amended):
@@ -361,7 +376,7 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
         "bar_half_length": float(c["BAR_LENGTH_RATIO"]) * R_d,
         "disc_dominance": dominance,
         "shear_rate": shear,
-        "swing_x": x2,
+        "swing_x": x_one,  # 2/f_d = m·X_m: X at m = 1, not X for two arms (D215 ruling 11)
         "swing_arm_min": m_lo,
         "swing_arm_max": m_hi,
         "arm_contrast_mean": contrast_amplitude(floc + (grand - floc) * coherence),
@@ -426,8 +441,9 @@ ARM_MULTIPLICITY = _scalar(
     "each ring weighted by its mass (the disc's surface density times its area), a tie going to the "
     "lower number. **Nothing composes a field or places an object from it** - the arms are the "
     "five modes' amplitudes at every radius (arm_mode_amplitude_2 … 6) and their phases - so a "
-    "galaxy whose label reads 3 carries two arms inside, three or four at mid-disc and five or six "
-    "beyond. Not a number at all where no mode carries any power - a disc that amplifies nothing, or "
+    "galaxy whose label reads 6 carries three to six arms at once inside, four to six at the solar "
+    "radius and six alone on its last rings; the label weighs the amplitudes as published, the bar's "
+    "taper in them, so it leans to the arm numbers of the outer disc. Not a number at all where no mode carries any power - a disc that amplifies nothing, or "
     "a draw of no arm amplitude: a galaxy with no arms has no arm number. From S26 to S55 this was a "
     "seeded draw weighted by the swing window at one radius, and the whole pattern was one cosine "
     "of the drawn number; the draw retired at S56, when the window became the split of power among "
@@ -462,8 +478,9 @@ def _mode_amplitude(m: int) -> FieldDecl:
             "amplifier's weight at the local X and shear, over the sum of the five modes' weights where that "
             "sum exceeds one - so where the disc amplifies several arm numbers they share the sourced power, "
             "and where it amplifies none there is no arm: the power falls continuously to zero outward and is "
-            "never normalised up. Two and three arms carry the inner disc, five and six the outer; past about "
-            "15 kpc at the defaults no mode with six arms or fewer survives. The same with the randomness "
+            "never normalised up. At the defaults three to six arms share the inner disc, four to six the solar "
+            "radius and six alone the last rings; past about 12 kpc no mode with six arms or fewer survives. "
+            "The same with the randomness "
             "layer on or off: the layer only says where the crests are. Labelled seeded because it carries "
             "the drawn arm and bar amplitudes and its stage reads the pattern seed (D55); the split among the "
             "modes has no draw in it."

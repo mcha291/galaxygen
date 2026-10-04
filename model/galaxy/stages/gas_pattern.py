@@ -95,13 +95,13 @@ half-width of 0.5: S51's quadrature, reproduced and not refined.
 difference. For one mode the ridge is analytic and the series' dropped tail is under 1e-15. With
 several modes V(q(χ)) is continuous but has corners where ψ passes a level at which the superlevel
 set gains or loses a piece, so the series falls off slowly and ``HARMONIC_SAMPLES`` = 1024 gives
-the sector means to about 1e-3 of the ring's mean (1.2e-3 at worst over thirty-two sectors on both
-templates; pinned in ``tests/test_modes.py``); they still average to 1 round the ring exactly,
-which is what keeps a ring's expected count.
+the sector means to one or two parts in 10³ of the ring's mean (1.1e-3 at worst over thirty-two
+sectors for the Milky Way template and 1.9e-3 for ``ngc_4414``; pinned in ``tests/test_modes.py``);
+they still average to 1 round the ring exactly, which is what keeps a ring's expected count.
 
 **The grid field** is the ridge sampled at the model's φ cells. One mode's ridge is analytic and its
 sampled ring mean is 1 to rounding on the default grid; several modes' is not smooth, and its
-sampled mean leaves 1 by a few parts in 10⁴. The stage divides a ring by its sampled mean wherever
+sampled mean leaves 1 by up to about one part in 10³. The stage divides a ring by its sampled mean wherever
 that has left 1 by more than ``RING_MEAN_TOLERANCE`` (as it has since S51 for a coarse φ grid), so
 every ring keeps its gas; the sampled field can therefore pass the form's bound by that factor.
 
@@ -131,6 +131,7 @@ from galaxy.stages.pattern import (
     PATTERN_READS,
     PHASE_FIELDS,
     bar_terms,
+    effective_arm_number,
     invert_azimuths,
 )
 
@@ -547,13 +548,10 @@ class GasPattern:
 
     def effective_arm_number(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
         """m_eff(R) = Σ_m m u_m² / Σ_m u_m² (the taper and the arm amplitude cancel): the ring's
-        power-weighted arm number; NaN on a ring with no mode. (``unit``: the amplitudes at ``R``, where the
-        caller already holds them.)"""
-        power = (self.unit_at(R) if unit is None else unit) ** 2
-        total = power.sum(axis=0)
-        m = _M.reshape((-1,) + (1,) * (power.ndim - 1))
-        with np.errstate(divide="ignore", invalid="ignore"):
-            return np.where(total > 0.0, (m * power).sum(axis=0) / np.where(total > 0.0, total, 1.0), np.nan)
+        power-weighted arm number; NaN on a ring with no mode. The pattern stage's one function
+        (:func:`galaxy.stages.pattern.effective_arm_number`), on the unit amplitudes at ``R``. (``unit``: the
+        amplitudes at ``R``, where the caller already holds them.)"""
+        return effective_arm_number(self.unit_at(R) if unit is None else unit)
 
     def mask_share(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
         """The share of the ring the source's arm mask covers: m_eff W_m / (2π R sin p), at most a half and
