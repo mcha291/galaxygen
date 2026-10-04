@@ -1,9 +1,9 @@
 # Resuming
 
 How to open the repository, where things are, what the instruments say. GALAXY_PLAN.md's board is the only record
-of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S56: S0–S22
+of what is done (A9); this file is rewritten each session, capped at 120 lines (C3). **Every row is ☑ through S57: S0–S22
 (§5d), S25–S42 (§5e), S43–S45, S46–S47 the viewer, S48 the bright catalogue, S49 the light tables, S50 the dust's layer
-and the star-first mode (D205–D209), S51 the gas's own arm pattern (D210), S52 the dust heated in its own layer (D211), S53 BUILD_III adopted and its Phase 0 (D212), S54 the templates (D213), S55 the separation (D214, gate G1), S56 several arm modes (D215, three gate turns). Rows 57–66 are the third build's (`BUILD_III.md`, GALAXY_PLAN §5f): Opus leads, Fable at four gates and at a stop condition. `BRIEF.md` is S57's: Phase P2, gates G2 and G3, once the owner answers S56's question.**
+and the star-first mode (D205–D209), S51 the gas's own arm pattern (D210), S52 the dust heated in its own layer (D211), S53 BUILD_III adopted and its Phase 0 (D212), S54 the templates (D213), S55 the separation (D214, gate G1), S56 several arm modes (D215, three gate turns), S57 the gas's steady response (D216, gates G2 and G3: no arm shocks). Rows 58–66 are the third build's (`BUILD_III.md`, GALAXY_PLAN §5f): Opus leads, Fable at the gates and at a stop condition. `BRIEF.md` is S58's: Phase P3, the bar.**
 
 ## Open a session (rules C1, C2b)
 ```
@@ -13,18 +13,18 @@ uv run pytest && uv run python -m galaxy.specs    # the suite, then the spec rep
 ```
 Then RULES.md in full, BRIEF.md, **BUILD_III.md (the phase's text is its ruling)**; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
-tools/hooks`; LF newlines. **Numbers are sequential**: debts from #141, decisions from D216, board rows from 57,
+tools/hooks`; LF newlines. **Numbers are sequential**: debts from #145, decisions from D217, board rows from 58,
 acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
 docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5e), GALAXY_INPUTS (§11 register), DECISIONS, LESSONS,
-                MANUAL_TODO, BUILD_II (done), **BUILD_III (the plan in force, S53–S66)**, RENDER_PHYSICS (the contract), **VIEWER_TASKS (the list, S47)**, **RESEARCH_AREAS (S50)**, **READING_GAS_PATTERN (S51)**, **READING_NGC_4414 (S54: the blind windows; six unspent)**, **READING_ARM_MODES (S56: the observed mode spectra, a check)**, AUDIT_*.md (the
+                MANUAL_TODO, BUILD_II (done), **BUILD_III (the plan in force, S53–S66)**, RENDER_PHYSICS (the contract), **VIEWER_TASKS (the list, S47)**, **RESEARCH_AREAS (S50)**, **READING_GAS_PATTERN (S51)**, **READING_NGC_4414 (S54: the blind windows; six unspent)**, **READING_ARM_MODES (S56: the observed mode spectra, a check)**, **READING_GAS_SHOCK (S57: the shock's equations, the checkable cases — Kim, Kim & Kim 2014's Table 1 for P3's shocked branch — and pattern speeds)**, AUDIT_*.md (the
                 _BLIND files hold the windows rows 32, 34 and 37 cite)
 model/galaxy/core/    units (closed; grew at S28, S30, S31), special, cmaps, fielddoc (FieldDecl: optional, contract,
                 provenance **derived | seeded | synthetic (S55), `composed` + `neutral`**; OBJECTS closed: system star planet belt moon cloud cluster remnant), stage (CHECKPOINTS 1–6;
                 Stage.extends / extend()), registry (INPUTS: 7 controls + **5 seeds (`texture_seed`: the arm phases since S56)** + mergers; MODELS; IMPLEMENTATIONS), seeds, grids
 model/galaxy/models/  level0 (constants), **azimuthal (default since S46, D197)**, basic · stages/ cp1 halo, disc, nucleus ·
-                cp2 assembly · cp3 bar + pattern (**S56: the local swing window's mode amplitudes, `arm_saturation`; `arm_multiplicity` a label**) + **gas_pattern (S51; S56: the ridge by rank, #140)** · cp4 sfh, sfh_azimuthal, chemistry_dtd, supernovae, vertical_alpha, ism, light
+                cp2 assembly · cp3 bar + pattern (**S56: the local swing window's mode amplitudes, `arm_saturation`; `arm_multiplicity` a label**) (**S57: `arm_pattern_speed` = Ω(R), a statement of the frame**) + **gas_pattern (S51; S57: the gas's steady corotating response per ring — `gas_response.py` the solver, 1440 cells, Newton, raises if a ring does not converge; the published field is the law's mean over each φ cell, a point reads the law; D216)** · cp4 sfh, sfh_azimuthal, chemistry_dtd, supernovae, vertical_alpha, ism, light
                 (Σ_L, colour, eight bands, Q), dust, stellar_halo · cp5 population + systems (the star columns; the cell
                 hierarchy, MAX_LEVEL 3) + clouds (S32 census; `cloud_extinction_v`, S40) + clusters (S33; S41 `cluster_luminosity`,
                 `cluster_light_temperature`) + nebular (S35: HII regions, Hα per volume, the DIG; **S42: the four forbidden
@@ -85,7 +85,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   `lo == hi` says "no testable target" (D100; rows 20, 21, 25–28, 36); a row whose source does not say what it
   measures names no field (D177). New rows from 37.
 
-## What the instruments said on 2026-10-04, after S56 (D174–D215 hold the before/after; **the rows are judged layer-off: 35 −2.081, 37 −0.1030, unmoved; layer on the galaxy has several arm modes since S56 — clouds 16 660, clusters 12 814, the gas's crest 3.06 at R₀**; the pictures' tables are in D212 and D213; `ngc_4414`: peak 239.18 km/s, 1.676 kpc, 3.905e10 M☉, five disclosed misses #132–#136)
+## What the instruments said on 2026-10-04, after S57 (D174–D216 hold the before/after; **the rows are judged layer-off: 35 −2.081, 37 −0.1030, unmoved; layer on (several arm modes since S56, the gas's steady response since S57) — clouds 16 667, clusters 12 829, the gas at R₀ crest 2.74 / trough 0.025, the field 0.020–3.09**; the pictures' tables are in D212 and D213; `ngc_4414`: peak 239.18 km/s, 1.676 kpc, 3.905e10 M☉, five disclosed misses #132–#136)
 - graph acyclic for both models; preflight OK, 7 of 12 controls; determinism reproducible for both; spec **12 pass /
   20 fail / 5 not-yet-computable of 37, identical** (row 34 green since S42 on the blind window; row 37 a miss, #117); convergence
   0 drifts; row 3 251.026 (#11); row 15 5.20971 (#80); row 29 −7.892; rows 30 / 31 0.0176069 / 0.0065332 yr⁻¹ (#88);
@@ -103,7 +103,7 @@ tools/          progress (the board), bootstrap, verify_clone, timings, scaling,
   **S44 (the grid on 8.93): Hα-weighted [O III]/Hα 0.756 (S51), [N II]/Hα 0.082, [S II] 0.053 + 0.041; 3.0 % at the +0.2 dex
   edge, 2.6 % at the age floor; WFC3 SHO on vacuum curves: Hα 0.945 F656N, [O III] 0.899 F502N, [S II] 0.958 / 0.863 F673N;
   56 tags on the remote.** Performance: basic ~2.8 s cold; render rgb 2.1 s cold, 6.9 MB; clusters 1.7 s; `/api/blackbody` 5 ms.
-- Register: **78 open — 11 permanent, 67 carried — and 45 discharged** (#138–#140 at S56, D215: the law against the reading, the phases, the ranked ridge; #137 at S55: expected totals only until L1; #132–#136 at S54, D213; #129–#131 at S51; #128's first half applied at S52). **The gas pattern:** `gas_arm_contrast` 2.73, crest 3.07 / trough 0.53 at R₀, young stars' mean modulation 2.63 (1.78). `bright_star_limit` 33 788 L☉,
+- Register: **81 open — 11 permanent, 70 carried — and 46 discharged** (S57, D216: #140 discharged; #141–#144 the response's steady state, razor-thin forcing, amplitude on the whole disc, the infall's shocks; #81, #129, #131 re-ruled; #138–#139 at S56; #137 at S55: expected totals only until L1; #132–#136 at S54, D213; #129–#131 at S51; #128's first half applied at S52). **The gas pattern (S57):** no input but the stellar modes; the disclosed check (layer on, not a row): ratio of means over 6–10 kpc 2.571 (`ngc_4414` 1.881) against `gas_arm_contrast` 2.73; the width 0.466 / 0.512 of the period against 0.17 (`tests/gas_check.py`), a miss; `sfr_modulation` peaks at 6.58; pitch ≤ 2.7° forces enormously (#142). `bright_star_limit` 33 788 L☉,
   3.35e6 stars > 10³ L☉; light at 10³: 26.3 % young / 18.8 % bright / 54.9 % unresolved; **a stale :8017 is stopped by PID before it serves new code**.
 
 ## Close a session (GALAXY_PLAN.md §5, in this order)

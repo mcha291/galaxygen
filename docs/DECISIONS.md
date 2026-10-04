@@ -9581,3 +9581,95 @@ cell-averaged field re-pinned. No further Fable turn is owed if all hold; a rema
 whose bits move, owes one. Nothing is the owner's before the merge. Told at the close, first: the G2 mechanism
 change (no arm shocks); the low-pitch regime and the pitch-floor option, theirs to order with a source;
 `ngc_4414`'s seven outer rings under PHANGS's band; the width's miss at 2.5–3.0×, with its two named suspects."
+
+**The changes applied (builder B's second and third passes) and read.** The criterion is the ruled one in
+`gas_response._measure`, for both members; the two tolerances and the two counts keep their numbers; a ring whose
+residual is between the absolute tolerance and a per-ring ceiling 4(ε²/h²)ulp(max|φ|) gets the per-cell test and no
+other needs it (a shortcut, held to the eager rule bit for bit by a test on 33 solver cases and on the model's
+rings). **Nothing raises:** the suite's 240 galaxies, the two templates and 300 pattern seeds per template — worst
+floor 5.8e-10 (Milky Way) and 9.7e-10 (`ngc_4414`), both at pattern seed 216 on the pitch's 1° clip; the worst
+residual 0.49 of its bound; s from 3.9e-41 to 14.0 and from 2.7e-79 to 14.8; at most 11 Newton steps.
+`test_s22_rulings` passes unedited. **Bit identity across the change:** the instrument's cases are bit-identical
+and Sormani's threshold is 0.7202298134565353 before and after; of 842 galaxies **816 are bit-identical, 22 that
+raised now converge, and 4 moved** — one of the suite's (`ngc_4414`, pattern seed 1, texture seed 1) and three of
+the sweep's — each on inner rings (0.26–0.79 kpc, arm weight at most 5.2e-4) by at most 2.0e-15 of the profile,
+one published cell by 5.55e-17. On those rings the first build's last one or two steps had wandered on the
+rounding floor until one landed under 1e-10. **Put back to Fable (a follow-up, nothing read): "Accepted as built.
+My 'bit-identical' assertion was too strong where the old acceptance was itself a chance landing inside the floor
+… 'Continue Newton while the residual strictly falls after the floor is met' is refused: on the floor the
+residual wanders rather than falls, so that rule would put the chance back in."** The lazy evaluation is
+"acceptable: the ceiling is a theorem"; the cell mean is "the exact mean over the cell's φ-extent at the grid
+ring's own radius; the field is ring by ring and the R-blend serves points between rings"; and "with 1–4 settled
+the condition stands as the suite green on the lead's run and the reviewer's independent check of the second
+pass; no further turn is owed". The suite's moved galaxy is asserted against the first build's rule made again
+(a floor of zero): one ring differs, by 1.78e-15, under the bound 2.5e-15.
+- *The published field is the law's mean over each φ cell at the ring's own radius:* ring mean 1 to 9.7e-14 on the
+  default grid and 2e-14 on 36-, 108- and 500-cell grids, never divided; the three small-grid tests are back at
+  1e-12; the field's range 0.0199–3.092 (Milky Way) and 0.0143–2.688 (`ngc_4414`), over the suite's seeds 0.0017–
+  6.77; at R₀ crest 2.740, trough 0.0254. A point, a sector and the cloud and cluster censuses read the law itself;
+  the star sample's young stars are placed through `sfr_modulation`, a grid table made from the published field.
+- *Errors pinned as measured, 1440 cells:* the cell-mean field against a 5760-cell solve 2.1e-4 (the h² law: five
+  times less at 2880); linear interpolation on s 3.5e-4 beyond 6 kpc and 1.2e-3 on the worst ring inside the bar's
+  reach (1.5e-5 of the field there), the point field 3.0e-4, between rings 5.7e-4 / 7.9e-4.
+- *The saturation, by hand, on the most saturated suite seed* (`ngc_4414`, pattern seed 28: 0.574, where the gate
+  had quoted 0.62): on two saturated rings Σ_m A_m = 1 − B·taper to rounding, the stage's f within 3e-16 of the
+  hand's, a dense Newton within 3e-13; the bound holds on every ring of every suite seed.
+- *The disclosed check, layer on, default seeds, not an acceptance row (I3):* the ratio of means of s in S56's
+  mask over 6–10 kpc — Milky Way median 2.571 (2.05–3.19), 53 of 53 rings inside 1.37–5.79, **a hit, disclosed
+  (D113)**; `ngc_4414` median 1.881 inside, seven of its 53 rings (the outer ones, 9.49–9.94 kpc) below the 16th
+  percentile, recorded. *The width*, the tallest crest's full width at half maximum over the period of the mode of
+  largest forcing: 0.466 (0.423–0.481) and 0.512 (0.479–0.526) against 0.17 — **a miss on every ring, 2.49–2.83
+  and 2.82–3.09 times**; the first build's reading (the largest amplitude, the lower arm number on a tie: 0.311
+  and 0.422) was the kindest and is replaced; the higher tie reads 0.466 and 0.506. Suspects: #144, then #142.
+- *The offset:* zero for a lone mode, exactly. With several, the gas's tallest crest against the stellar sum's is
+  within one solver cell (0.25°) on the Milky Way template (53 of 53 rings over 6–10 kpc, 161 of 165 overall) and
+  up to 5 cells (1.25°) over 6–10 kpc, 7 at most over the disc, on `ngc_4414`; **signed, it falls on both sides**
+  — over the suite's 240 galaxies 11 697 rings at the smaller χ, 11 012 in the same cell, 12 298 at the larger —
+  "the mode-by-mode weighting, measured, not ruled; no offset is put in and none is published". (On the Milky Way
+  template's 6–10 kpc alone all 48 displaced rings sit one cell to the larger χ.)
+- *The two retired constants* are out of the model's registry and in `tests/gas_check.py` with their sources
+  verbatim; the render header's dust-placement sentence says "its steady response to the stellar arms" and seven
+  digests of S55's reference were re-pinned for that phrase alone (the arrays under them unchanged).
+
+**The reviewer's second pass (the same Opus reviewer; its own runs on both commits, a 60-digit referee).** "No
+blocker. Every merge assertion holds on my own runs except the bit-identity of the four moved cases, which are
+exactly the builder's four … Old and new are equally the solution: both within 1.3 to 4.3 ulp of the exact
+discrete profile, the new at most 0.2 ulp farther." Lazy against its own eager re-implementation: no mismatch on
+39 366 ring states. One note kept as a comment in the test: the criterion implies max(1e-10, F_k) + F_k/2 +
+4uε²/h² for a re-logged profile, and the gate's tighter wording holds only because accepted residuals sit under
+half their floor (0.95 of the bound at worst); if it ever fails, the bound is what to re-read. Two pins the second
+pass had loosened were re-read by the lead (the field's extremes over the suite's seeds, 0.0016862 and 6.7716).
+
+**The pictures, measured (`tools/goal_metrics.py`; display targets, never rows).** Four frames regenerated after
+the pins were read; the physics-only frame is S55's to the byte.
+
+| Picture | A1 | A2 | A3 | A4 | A5 | A6 | dominant m | arm / interarm, blue | dark fraction | slope |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `milky_way`, field — S56 | 0.030 | 0.039 | 0.016 | 0.048 | 0.050 | 0.045 | 5 | 1.52 | 0.0245 | −4.21 |
+| `milky_way`, field — now | 0.007 | 0.028 | 0.024 | 0.043 | 0.046 | 0.042 | 5 | 1.44 | 0.0190 | −4.04 |
+| `milky_way`, star-first — S56 | 0.017 | 0.030 | 0.042 | 0.061 | 0.088 | 0.074 | 5 | 1.98 | 0.0334 | −0.58 |
+| `milky_way`, star-first — now | 0.014 | 0.029 | 0.038 | 0.052 | 0.077 | 0.075 | 5 | 1.75 | 0.0285 | −0.58 |
+| `ngc_4414`, field — S56 | 0.085 | 0.092 | 0.019 | 0.025 | 0.017 | 0.017 | 2 | 1.66 | 0.003 | −5.6 |
+| `ngc_4414`, field — now | 0.083 | 0.091 | 0.022 | 0.028 | 0.018 | 0.019 | 2 | 1.73 | 0.0001 | −5.8 |
+| `ngc_4414`, star-first — S56 | 0.085 | 0.086 | 0.026 | 0.029 | 0.027 | 0.026 | 2 | 1.88 | 0.003 | −1.0 |
+| `ngc_4414`, star-first — now | 0.084 | 0.082 | 0.030 | 0.031 | 0.028 | 0.024 | 1 | 1.79 | 0.0003 | −1.0 |
+
+The lanes are broader and register less: the Milky Way's dark fraction falls from 0.025 to 0.019 and `ngc_4414`'s
+to nothing, as a ridge two to three times wider would have it (the goals read 0.0066 and 0.157).
+
+**Cold timings (`tools/timings.py`; S56 → now):** the gas pattern 0.32 → 0.31 s; `clouds: whole disc` 2.98 → 1.46 s;
+`clusters: whole disc` 3.99 → 3.03 s; `render: whole, rgb` 4.42 → 3.62 s; `region: whole disc` 1.09 → 1.31 s;
+layer-off rows unchanged (clouds 0.74, render 2.71). The solve of a galaxy's rings takes 0.23 s and a second
+pattern of the same run 1.4 ms.
+
+**Debts.** #140 discharged. Opened: **#141** (the steady state against an arm's lifetime), **#142** (the
+razor-thin forcing: the emptied interarm, the tightly wound regime, the width's second suspect), **#143** (the
+stellar amplitude applied to the whole disc's Σ), **#144** (the infall's shocks, the width's first suspect; the
+steady shocked branch is P3's). Re-ruled: #81 (first half closed: the arms' frame is Ω(R); the cut is the arm's
+lifetime), #129 and #131 (inputs no longer; a check's targets). Register 81 open = 11 + 70, 46 discharged.
+
+**For the owner, at the close.** (1) Their item 3's "steady 1-D gas shock per ring" has become the steady
+corotating response per ring: no arm shocks; the shocked branch is P3's bar's. (2) The low-pitch regime: a galaxy
+that draws a pitch under about 2.7° is forced enormously by the razor-thin law; a floor on the drawn pitch is
+theirs to order, with a read source. (3) `ngc_4414`'s seven outer rings read under PHANGS's band. (4) The width's
+miss at 2.5–3.1 times, with its two named suspects.

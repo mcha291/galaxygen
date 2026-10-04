@@ -692,10 +692,11 @@ defined here once and used in every entry below:
 | **discharged** at S42 | **108** (per-filter dust at V2, D189; the named instrument on the owner's word, D192) | 1 |
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
+| **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140 | 67 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144 | 70 |
 
-So the board's **78 open** is 11 permanent and 67 carried, and no item is unruled. (S22
+So the board's **81 open** is 11 permanent and 70 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -727,7 +728,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -2878,6 +2879,13 @@ never been judged in twenty-three sessions.
    modulation 1.78 against the contrast path's 1.18, D176). What kills the reading: a source
    giving the age at which a stellar population's arm–interarm contrast has decayed to the old
    disc's, which would make the cut a constant with a citation rather than a mechanism's absence.
+   **Re-ruled at S57 (D216): the first half is closed.** The arms' pattern speed is Ω(R) — every arm mode is
+   steady in the frame turning with its own ring (gate G2 item 1) — published by `bar` as `arm_pattern_speed`, a
+   statement of the frame and not a measurement. So there is no crossing time: a young population does not leave
+   its arm, the arm dissolves under it. The 0.1 Gyr stays and is re-sourced as the arm's lifetime, 100–160 Myr
+   `[verified: Grand, Kawata & Cropper 2012, arXiv:1112.0019; Baba, Saitoh & Wada 2013, arXiv:1211.5401;
+   docs/READING_GAS_SHOCK.md Part B, rows A1, A3 — simulations, not observations]`. Still carried for the second
+   half: a sharp cut where a decay belongs, and a lifetime taken from two N-body papers.
 82. **Rows 25–28 cannot be judged: the source's magnitudes are not stated extinction-corrected and the
    model's light is intrinsic** (S28, BUILD_II Phase 3, D177). BHG16 Table 2 quotes M_B −20.70, M_V
    −21.37, B − V 0.73, Υ_V 1.70 for the Galaxy `[verified: arXiv:1602.07702 Table 2, read at S28]`,
@@ -3565,6 +3573,13 @@ never been judged in twenty-three sessions.
    width over the arm-to-arm spacing with its spread (the PHANGS ridge masks against their galaxies' arm numbers would
    do), the constant's mean re-read and the spread drawn on `pattern_seed`. What kills the reading: Egusa's bars being σ,
    which would make the ridge 0.39 of the period, wider than the model's stellar cosine's half-maximum.
+   **Re-ruled at S57 (D216): the width is no longer an input.** The ridge's width is derived (the gas's steady
+   response), and 0.17 survives as a check's target, kept with its source in `tests/gas_check.py`. **The check
+   misses on every ring**, layer on, default seeds, 53 rings over 6–10 kpc: the full width at half maximum of the
+   tallest crest over the period of the most strongly forced mode reads 0.466 (0.423–0.481) for the Milky Way
+   template and 0.512 (0.479–0.526) for `ngc_4414`, 2.5–3.1 times the target (the first build's reading, by the
+   largest amplitude with the lower arm number on a tie, was the kindest, 0.311, and is replaced). Suspects, in
+   order: #144, then #142. Still carried: one galaxy's number is now the check's.
 130. **One contrast for all the gas: the HI's lower one is recorded, not modelled** (S51, D210). The gas pattern's
    contrast is the molecular one — 2.73 for grand designs, 1.90 for the rest, a ratio of means over a 1.5 kpc mask —
    and it places the dust and feeds the star formation law, because the model has one gas column per ring and one
@@ -3589,6 +3604,14 @@ never been judged in twenty-three sessions.
    mean drawn log-normally on `pattern_seed`; or the within-galaxy scatter used as what it is, an arm-to-arm and
    ring-to-ring variation of the ridge (RESEARCH_AREAS §1, direction a). What kills the reading: per-galaxy means as
    wide as the segments' spread, which would make the withdrawn draw right.
+   **Re-ruled at S57 (D216): the ratio of means is no longer an input.** The gas's contrast is derived, and
+   `gas_arm_contrast` survives as a check's target. **The disclosed check** (layer on, default seeds, not an
+   acceptance row: it reads a composed field, and invariant I3 forbids a row that does; disclosed because the
+   probe had printed 2.56): the ratio of means of the response inside S56's mask against outside it, per ring
+   over 6–10 kpc — the Milky Way template median 2.571 (2.05–3.19), all 53 rings inside 1.37–5.79, a hit;
+   `ngc_4414` median 1.881, inside, seven of its 53 rings (the outer ones) under the 16th percentile, recorded.
+   The ring-to-ring spread is now the model's own. Still carried: the target is a class mean whose spread is over
+   segments.
 
 132. **The halo cannot be made weak enough for a compact disc: the assembly epoch fits to its bound** (S54, D213 as
    amended at the gate). Fitted to NGC 4414's peak speed, scale length and stellar mass, `halo_assembly_z` ends on
@@ -3679,7 +3702,7 @@ never been judged in twenty-three sessions.
    started each arm at a tip of the bar; a drawn phase for m = 2 does not. **Carried.** What closes it: a reading
    on the phase of spiral arms relative to bar ends and between modes (P3's reading is the place), or P4's pins
    for a template whose arms are measured.
-140. **The gas ridge is placed by rank along each ring: a one-session instrument** (S56, D215 rulings 7–10). The
+140. ~~**The gas ridge is placed by rank along each ring: a one-session instrument**~~ **DISCHARGED at S57** (S56, D215 rulings 7–10; retired D216). The
    exponential of a sum of modes made knots (a crest of 11 at R₀ where one mode's is 3.07), so on each ring the
    gas takes one mode's ridge values in the order of the stellar pattern. That keeps the sourced ratio of means
    and one mode's histogram on every ring, and costs four things: it is not local (a point's gas depends on its
@@ -3687,9 +3710,51 @@ never been judged in twenty-three sessions.
    crest takes a wide ridge, a low one none; the published field passes the form's exact bound [0.534, 3.068] by
    up to 2.5e-3, because each ring is divided by its sampled mean and a ranked ridge's 360-cell mean is off 1 by
    1.05e-3 (the law itself is inside the bound), and the sector means are good to 2e-3; and the cloud census is
-   three and a half times slower (0.85 → 2.98 s cold; the render 2.47 → 4.42 s). **Carried to S57**: P2's steady
-   shock per ring replaces the ridge, measures the fade's exponent (ruling 8 took it as 1), and must bring the
-   cost back. The named alternative, not adopted: a power-weighted mixture of one-mode ridges.
+   three and a half times slower (0.85 → 2.98 s cold; the render 2.47 → 4.42 s). What closed it: at gate G2 the arms' frame was
+   ruled Ω_p(R) = Ω(R), so no arm shocks, and the ridge is the gas's steady corotating response under uniform
+   potential vorticity, solved ring by ring (`gas_response`, `gas_pattern`; D216) — a local law again, its contrast
+   and width derived, never divided by a sampled mean (the published field is the law's mean over each cell's
+   azimuth, 1 round every ring to 1e-13 on any grid), the fade linear in the forcing by the equation itself, and
+   the cost repaid (the cloud census 3.67 → 1.17 s cold). What it left: #141–#144, the response's declared
+   approximations.
+141. **The gas's response is a steady state the arms may not live long enough to reach** (S57, D216 gate G2 item 4).
+   The response relaxes on the ridge's sound crossing, about 10² Myr at R₀, and a swing-amplified arm lives
+   100–160 Myr `[verified: Grand, Kawata & Cropper 2012, arXiv:1112.0019; Baba, Saitoh & Wada 2013, arXiv:1211.5401;
+   docs/READING_GAS_SHOCK.md Part B, rows A1, A3]`; the simulations of such arms reject steadiness outright
+   (`[verified: Wada, Baba & Saitoh 2011; Dobbs & Bonnell 2008; READING_GAS_SHOCK.md Part C, C1.4]`). Level A has
+   no time-dependent member, so the model publishes the state the gas is relaxing towards. **Carried.** What closes
+   it: level B or C (a gas flow stepped in time, out of BUILD_III's scope), or a sourced factor for how far a
+   response has relaxed after an arm's lifetime. What kills the reading: a measured gas contrast in co-rotating
+   arms equal to the steady one's.
+142. **The forcing is a razor-thin disc's: it overstates the many-armed and the tightly wound** (S57, D216 gate G2
+   item 5, gate G3 item 2). f_m = m A_m/(X sin p) uses the WKB potential of a disc with no thickness; no source read
+   gives the finite-thickness reduction, and checkpoint 3 has no scale height. Three findings sit under it: the
+   gas between the arms is nearly emptied where Σf > 1 (troughs of 0.007–0.02 of the ring's mean over 6–8 kpc at
+   the defaults); the derived ridge is as wide as the stellar arm (#129's miss, second suspect: k h ≈ 1 at
+   h = 0.3 kpc for m = 5, 6, so up to 2× overstated); and at a drawn pitch under about 2.7° — 20 of 600 pattern
+   seeds, 5–6 of 300 on the draw's 1° clip — Σf is 60–79 on the inner rings and s runs from 10⁻⁷⁹ to 15, the
+   arm-to-arm spacing there comparable to the disc's thickness (k h ≈ 8). Published as the law gives it, nothing
+   clipped. **Carried.** What closes it: a read source for the reduction factor and a scale height the pattern's
+   checkpoint may use; or, the owner's to order with a read source, a floor on the drawn pitch (the draw is the
+   stellar pattern's law, and changing it moves layer-off fields on those seeds). What kills the reading: a
+   thickness factor that leaves the interarm troughs under a tenth.
+143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
+   item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
+   together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
+   follows the pattern since S25, one way, no iteration). The measured amplitude is the old stars'. Where the disc
+   is gas-rich the forcing is overstated by the gas's share. **Carried.** What closes it: a split of Σ a
+   checkpoint-3 stage may read without a cycle. What kills the reading: the gas's own arm carrying the stars'
+   fractional amplitude or more, which the response itself says it does.
+144. **The gas falling into a co-rotating arm shocks, and level A has no such shock** (S57, D216 gate G2 item 2). In
+   the frame of a co-rotating arm no gas flows through, so there is no steady galactic shock; but the simulations
+   show gas converging on the potential minimum from both sides at Mach ~2 and shocking as it arrives, a
+   time-dependent compression `[verified: Wada, Baba & Saitoh 2011, arXiv:1104.1287; Dobbs & Baba 2014 §3.7;
+   READING_GAS_SHOCK.md Part C, C1.4]`. It is the first suspect for #129's miss: the steady pressure-and-rotation
+   balance gives a ridge 2.5–3.1 times the measured width. The steady shocked branch itself is deferred to P3,
+   whose bar has a real pattern speed (BUILD_III Phase P3; certified on Kim, Kim & Kim 2014's Table 1 before the
+   model calls it). **Carried.** What closes it: with #141, a time-dependent response; or a sourced width for
+   the gas ridge of a co-rotating arm used as a check with its own row. What kills the reading: a co-rotating
+   arm's gas ridge measured as wide as the stellar arm.
 
 
 ---
