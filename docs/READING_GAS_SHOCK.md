@@ -5,6 +5,16 @@ what is below the rules; each part is entered as written. Part A is the shock's 
 profiles a solver can be checked against; Part B is pattern speeds and the gas ridge's place and width. Gate G2
 rules on them before anything is built (D216).
 
+**Part C (added when S57 resumed, 2026-10-04).** Part A arrived as the earlier session paused and was entered
+then. The resuming session, told that reader 1 had been cut off, put the same question to a fresh reader, also
+blind to the repository, before it saw that Part A had landed: Part C is that reader's note as returned, its
+headings one level down and its section labels changed from A to C. **The two readings are independent and
+agree** on the system of equations, the regularity condition at the sonic point, the isothermal jump, and Kim,
+Kim & Kim 2014's Table 1 to the digit. They differ in what each could open: Part A's reader read Roberts 1969
+and Shu, Milione & Roberts 1973 as page images (rows B to F of its table); Part C's reader could not open the
+scans and read Lee & Shu 2012, Lee 2014 and the simulation papers on co-rotating arms instead, and states the
+two closures of the steady state exactly at corotation (C3).
+
 ---
 
 ## Part B — pattern speeds, and where the gas ridge sits (reader 2)
@@ -317,3 +327,321 @@ hydrodynamic, dimensionless case; then row B, row C (base-subsonic: the regime t
 **Open for the gate:** the multi-mode extension has no published check (its only anchors are the single-mode
 limit and the per-mode linear response); exact corotation needs a ruling (the sources supply only the linear
 limit there); the base-subsonic search window can be narrower than π/1000.
+
+---
+
+## Part C — the same question read a second time: equations, sonic point, jump, a profile to check against, and the corotating case (a third reader)
+
+Reading done only by web search and web fetch; nothing local was opened, no code was run. The fetch tool returns
+a small model's transcription of an HTML page and refuses long quotes, so "as printed" below means "as transcribed
+from ar5iv / arxiv.org HTML", read at least twice where load-bearing (stated per item). **Roberts 1969 and Shu,
+Milione & Roberts 1973 were NOT read** (scans; see C5): every equation below comes from later restatements, and the
+original symbol names w_perp0, w_par0 were not seen on any fetched page.
+
+Source keys (the URL each tag refers to):
+
+- S1 = Kim, Kim & Kim 2014, ApJ 789, 68, arXiv:1405.5874 — https://ar5iv.labs.arxiv.org/html/1405.5874 and
+  https://arxiv.org/html/1405.5874 (title and authors confirmed on both)
+- S2 = Gittins & Clarke 2004, MNRAS 349, 909, arXiv:astro-ph/0312562 — https://ar5iv.labs.arxiv.org/html/astro-ph/0312562
+  (title/authors/journal confirmed at https://arxiv.org/abs/astro-ph/0312562)
+- S3 = Lee & Shu 2012, ApJ 756, 45, arXiv:1207.0875 — https://ar5iv.labs.arxiv.org/html/1207.0875
+- S4 = Lee 2014, arXiv:1407.5215 — https://arxiv.org/html/1407.5215
+- S5 = Kim & Ostriker 2002, ApJ 570, 132, arXiv:astro-ph/0111398 — https://ar5iv.labs.arxiv.org/html/astro-ph/0111398
+- S6 = Sormani, Sobacchi, Shore, Tress & Klessen 2017, arXiv:1707.00301 — https://ar5iv.labs.arxiv.org/html/1707.00301
+  and https://arxiv.org/html/1707.00301
+- S7 = Dobbs & Baba 2014, PASA 31, 35, arXiv:1407.5062 — https://ned.ipac.caltech.edu/level5/March15/Dobbs/Dobbs3.html
+- S8 = Wada, Baba & Saitoh 2011, ApJ 735, 1, arXiv:1104.1287 — https://arxiv.org/html/1104.1287
+- S9 = Baba, Morokuma-Matsui & Egusa 2015, PASJ 67, L4, arXiv:1505.02881 — https://ar5iv.labs.arxiv.org/html/1505.02881
+- S10 = Baba et al. 2016, MNRAS 460, 2472, arXiv:1604.06879 — https://ar5iv.labs.arxiv.org/html/1604.06879
+- S11 = Dobbs & Bonnell 2008, MNRAS 385, 1893, arXiv:0801.3562 — https://arxiv.org/html/0801.3562
+- S12 = Bovy, "Dynamics and Astrophysics of Galaxies", ch. 20.1 —
+  https://galaxiesbook.org/chapters/IV-04.-Internal-Evolution-in-Galaxies_1-The-(in)stability-of-disks.html
+- S13 = Kim & Kim 2014, MNRAS 440, 208, arXiv:1402.2291 — https://ar5iv.labs.arxiv.org/html/1402.2291
+- S14 = Wada & Koda 2004, arXiv:astro-ph/0308203 — https://arxiv.org/html/astro-ph/0308203
+- S15 = Yanez, Norman, Martos & Hayes 2008, arXiv:0710.1331 — https://ar5iv.labs.arxiv.org/html/0710.1331
+- S16 = Martinez-Garcia, Gonzalez-Lopezlira & Gomez 2009, arXiv:0911.0161 — https://ar5iv.labs.arxiv.org/html/0911.0161
+
+### C1 Summary tables
+
+#### C1.1 The equations (three restatements; all isothermal unless said, no self-gravity, no field, tightly wound)
+
+| Item | S1 (local Cartesian x normal, y along arm) | S2 (spiral coords eta, xi; dimensionless) | S3 (eta, xi; dimensionless) |
+|---|---|---|---|
+| Coordinates | x perp. to arm, y parallel; frame at R rotating at Omega_p; L = 2 pi R sin i / m | `d eta = -k dR + m d theta`; `d xi = -m dR/R - k R d theta`; k = -m/(R tan i) | `eta = m phi - Phi(varpi)` (29); `d eta = m(cot i d varpi/varpi + d phi)` (30); `d xi = m(d varpi/varpi + cot i d phi)` (31) |
+| Unperturbed flow | `u_c = R(Omega - Omega_p) sin i`; `v_c = R(Omega - Omega_p) - q Omega x` | `u_eta0 = R0(Omega - Omega_P) sin i`; `u_xi0 = R0(Omega - Omega_P) cos i` | `nu = -u_eta0/(2UV)^(1/2) = m(Omega_p - Omega)/kappa` (42) |
+| Potential | `Phi_s = Phi_0 cos(2 pi x/L)`; minimum at x = L/2 | `V_S = A cos(chi)`, chi = Phi(R) - m(theta - Omega_P t); eta = -chi + pi so eta = 0 is the minimum | `V_* = -A(varpi) cos[m phi - Phi(varpi)]` (7); minimum at eta = 0 |
+| Forcing F | `F = (m/sin i) Phi_0/(R^2 Omega^2)` | `F = m A/(v^2 sin i)`, v = circular speed | `F = abs(k_varpi) A/(varpi Omega^2)` (8); `f = (Omega/kappa)^2 (m F/sin i)` (9) |
+| Continuity | `Sigma_0 u_T0 = Sigma_c u_c` (8) | (implied; sigma follows from u) | `(1 + sigma)(-nu + u) = -nu` (53) |
+| Normal eq. | `(u_T0 - c_s^2/u_T0) du_T0/dx = 2 Omega v_0 + R Omega^2 F sin(2 pi x/L)` (11) | `du/d eta = (u - nu)(v - f sin eta)/((u - nu)^2 - x)` | `du/d eta = (-nu + u)(v - alpha d phi/d eta - f sin eta)/((-nu + u)^2 - xhat)` (51) |
+| Parallel eq. | `u_T0 dv_0/dx = -(kappa^2/(2 Omega)) u_0` (10), u_0 = u_T0 - u_c | `dv/d eta = u/(nu - u)` | `dv/d eta = u/(nu - u)` (52) |
+| Scalings | a = c_s/(R Omega); kappa^2 = (4 - 2q) Omega^2 | `u = u_eta1/sqrt(2UV)`, `v = u_xi1/V`, `f = F R0 Omega/(2V)`, `nu = -u_eta0/sqrt(2UV)`, `x = a^2/(2UV)` | same u, v; `U = varpi Omega sin i/m`, `V = varpi kappa^2 sin i/(2 Omega m)` (36-37); `x_t0 = v_t0^2/(2UV)` (43) |
+
+Tags: column S1 [verified: Kim, Kim & Kim 2014, arXiv:1405.5874, Sec. 2-3, eqs. 8-11, S1; eq. 11 and the F
+definition read four times across two hosts, identical]. Column S2 [verified: Gittins & Clarke 2004,
+astro-ph/0312562, Sec. 2 and App. A, S2; ODEs, f, nu, x read three times on one host, identical]. Column S3
+[verified: Lee & Shu 2012, arXiv:1207.0875, eqs. 7-9, 29-31, 36-37, 42-43, 51-53, S3; eqs. 51-53 read twice,
+identical]. The unmagnetised, non-self-gravitating, isothermal limit of S3 is alpha = 0, x_A0 = 0, xhat = x
+(S3 itself is logatropic: xhat = x_t0/(1+sigma) + x_A0 (1+sigma); see C4).
+
+The three are the same system [the reader's derivation, by substituting d/dx = (m/(R sin i)) d/d eta and
+eta = 2 pi x/L - pi into S1's eqs. 10-11; it reproduces S2's f = F R Omega/(2V) and S3's eq. 9 exactly]. In one
+notation, with `w = u - nu` (total normal speed in units of sqrt(2UV) = kappa R sin i/m), `s = Sigma/Sigma_0`:
+
+    (w - x/w) dw/d eta = v - f sin eta        dv/d eta = -1 - nu/w = s - 1        s w = -nu
+    nu = m(Omega_p - Omega)/kappa    x = (m a/(kappa R sin i))^2 = (k a/kappa)^2    f = (Omega/kappa)^2 m F/sin i
+
+Period 2 pi in eta; eta = 0 the potential minimum; inside corotation nu < 0 and gas moves towards +eta. The second
+equation is the statement that potential vorticity is uniform (S1 prints `xi_0 = kappa^2/(2 Omega Sigma_c)`, "constant
+everywhere") [verified: S1, Sec. 3; S5 eq. 10 prints the same relation as `q = 2 - (2 - q_0) Sigma/Sigma_0`].
+
+Approximations as stated: local (abs(x), abs(y) << R), tightly wound (sin i << 1), isothermal, razor-thin, no
+self-gravity, no field, steady in the pattern frame, variation only normal to the arm [verified: S1 Sec. 2; S3
+Sec. 2 ("first-order asymptotic expansion in sin i")]. Periodicity: "u_0 and v_0 are periodic at x/L = 0 and 1"
+(S1); period 2 pi in eta (S2, S3).
+
+**F as a fraction of what.** S5: "amplitude of the perturbed radial force 2 pi abs(Phi_0)/L_x as a fraction of the
+mean axisymmetric gravitational force", `F = (2/sin i) abs(Phi_0)/(Omega_0^2 R_0^2)` (m = 2) [verified: Kim &
+Ostriker 2002, astro-ph/0111398, Sec. 2, S5]. S2: "ratio of the amplitude of the perturbation force to the
+axisymmetric force". S3: fraction "of the axisymmetric gravitational acceleration", typical 5 to 10 %.
+
+**F from a stellar surface-density contrast.** No source read states it. S3 says A(varpi) is "given ... from stellar
+density-wave theory". The WKB Poisson relation `Phi_1 = -2 pi G Sigma_1/abs(k)` is printed [verified: Bovy, S12,
+eq. 20.15, read twice]. Composition [the reader's derivation]: `F = abs(k) A/(R Omega^2) = 2 pi G Sigma_*1/(R Omega^2)`,
+razor-thin, one Fourier mode; a finite-thickness reduction is not in any source read.
+
+#### C1.2 Sonic point and jump
+
+| Item | Statement | Tag |
+|---|---|---|
+| Sonic condition | `u_T0 = c_s` (S1); `u = nu + sqrt(x)` i.e. u_eta = a (S2); `(-nu + u)^2 - xhat = 0` (S3 eq. 56) | verified S1, S2, S3 |
+| Singularity | the denominator of the normal equation vanishes; a smooth passage needs the numerator to vanish too | verified S2, S3 ("both the numerator and denominator to be zero") |
+| Regularity | `v(eta_SP) = f sin eta_SP` (S2); `beta_0 = -(F/2) sin(2 pi x_sp/L)` (S1 eq. 15), the same thing | verified S2, S1 (twice) |
+| Slope at the sonic point | S1: `u_T0/(R Omega) = a + alpha_1 d eta + ...`, `v_0/(R Omega) = beta_0 + beta_1 d eta + ...`, `d eta = (x - x_sp)/R`; `alpha_1 = [beta_1 + (F/sin i) cos(2 pi x_sp/L)]^(1/2)` (16); `beta_1 = (u_c - c_s)/c_s` (17) | verified S1, read three times, two hosts |
+| Jump | `Delta(u_T0 Sigma_0) = 0` (20a); `Delta((c_s^2 + u_T0^2) Sigma_0) = 0` (20b); `Delta(v_0) = 0` (20c); hence `u_T0(s+) u_T0(s-) = c_s^2` (21); `mu = Sigma(s+)/Sigma(s-)` (22) | verified S1 |
+| Jump (S2) | `u_sup * u_shock = a^2` | verified S2 |
+| No-shock regime | "In the limit of small F, the solutions reach the first-order response, which is sinusoidal in u and v" | verified S2 |
+| Shock threshold | Shu et al. 1973: "even a very weak spiral forcing (F > 0.9%) for their model parameters results in shocks" | verified S1 (S1's report of SMR73; SMR73 itself not read) |
+| Shock threshold | "For c_s = 8 km/s, the forcing required to produce a shock is around a few %" | verified S7, Sec. 3.5 |
+| Shock threshold, exact | `Phi_c = 0.07297` for L = 1, c_s = 0.7 in units F_y = Omega = 1 (base flow u_0x = 1/2, subsonic) | verified S6, Sec. 3.2.1, two hosts |
+
+S1's eqs. 16-17 are printed without m, q or kappa. They are the m = 2, q = 1 case of [the reader's derivation]
+`alpha_1^2 = beta_1 + (m F/(2 sin i)) cos(2 pi x_sp/L)`, `beta_1 = (kappa^2/(2 Omega^2))(u_c - c_s)/c_s`; in the
+unified variables `(dw/d eta)^2 = (1/2)(-1 - nu/sqrt(x) - f cos eta_sp)` at w = sqrt(x). The positive root is the
+subsonic-to-supersonic passage downstream of the shock.
+
+#### C1.3 Published profiles with parameters
+
+| Source | Parameters | Printed numbers | Use |
+|---|---|---|---|
+| S1 Table 1 | q = 1, m = 2, sin i = 0.1, Omega_p/Omega = 0.5, c_s/(R Omega) = 0.027, potential minimum at x/L = 0.5 | F = 0.03: x_sp/L 0.458, x_sh/L 0.402, mu 5.67; F = 0.05: 0.507, 0.431, 11.6; F = 0.10: 0.615, 0.495, 34.5; F = 0.20: 0.699, 0.560, 97.3 | exact check (table) |
+| S1 text | same | `Sigma_0(x_sp)/Sigma_c = u_c/c_s = 1.86` | exact check (text) |
+| S6 | L = 1, c_s = 0.7, F_y = Omega = 1, `Phi = Phi_0 cos(2 pi x/L)` | Phi_c = 0.07297: smooth solution first touches the sound speed; shock first appears at x = 0 (the potential maximum) | exact check of the no-shock threshold (text) |
+| S5 text | F = 3 %, c_s = 7 km/s, Omega_p = Omega_0/2, sin i = 0.1, R_0 = 10 kpc, Omega_0 = 26 km/s/kpc, L_x = 3.1 kpc; self-gravitating AND magnetised | Q_0 = 2.0, beta_0 = 10: Sigma_max/Sigma_0 ~ 2.5, shock at x/L_x ~ -0.02, thickness ~ 0.03; Q_0 = 1.5, beta_0 = 1: ~ 3.8, ~ -0.05, ~ 0.02 | band only |
+| S4 | varpi = 2 kpc, i = 21 deg, Omega_p = 40, Omega = 127, kappa = 186 km/s/kpc, v_t0 = 10 km/s; nu = -0.933, f = 0.2, x_t0 = 0.022, x_A0 = 0.02, F ~ 8 %; logatropic, magnetised | Sigma_peak/Sigma_0 ~ 13; arm width (eta_mp - eta_sh) ~ 10 % or less of 2.25 kpc | band only |
+| S3 | varpi = 5 kpc (M81), Omega/kappa = 0.666, tan i = 0.249, F = 11.5 %, alpha = 0.35, nu = -0.666, x_t0 = 0.1, x_A0 = 0.1; logatropic, magnetised, self-gravitating | arm FWHM ~ 12 % of the arm spacing, ~ 480 pc | band only |
+| S2 standard model | m = 2, sin i = 0.1, Omega_P = 13 km/s/kpc, a = 8 km/s, F_0 = 0.05 at R_0 = 8.5 kpc, v_0 = 220 km/s | none printed; offset Theta = eta_shock runs from ~0 near 5 kpc towards -pi near 11 kpc (figure read-off) | qualitative |
+
+Tags: S1 [verified: Kim, Kim & Kim 2014, arXiv:1405.5874, Table 1 "Properties of Equilibrium Spiral Shocks" and
+Sec. 3 text, S1; covers one ring, one pattern speed, four forcings, unmagnetised, non-self-gravitating; the table
+was read four times on two hosts with identical digits]. Quantities: x_sp = sonic point, x_sh = shock front,
+mu = post-shock over pre-shock surface density; x runs 0 to L in the flow direction (u_c > 0). S6 [verified:
+Sormani et al. 2017, arXiv:1707.00301, Sec. 3.2.1, S6; one parameter set]. S5 [verified: Kim & Ostriker 2002,
+Sec. 3, S5; two models, values printed with "approximately"; x from -L_x/2 to L_x/2, minimum at x = 0]. S4
+[verified: Lee 2014, arXiv:1407.5215, Table 2 and text near Fig. 6, S4; single read]. S3 [verified: Lee & Shu
+2012, Table 2 and text near Fig. 4, S3]. S2 [verified: Gittins & Clarke 2004, Table of the standard model and
+Fig. 12 description, S2; parameters partly confirmed by S16, which reuses m = 2, sin i = 0.1, Omega_p = 13,
+a = 8, F = 0.05].
+
+S1's benchmark in the unified variables [the reader's arithmetic from the verified table; not printed anywhere]:
+nu = -1/sqrt(2) = -0.70711; f = 10 F; x = 200 a^2 = 0.1458 for a = 0.027, or 0.1450 for a = 7/260 (see C4, item 8).
+
+| F | f | eta_sp (rad) | eta_sh (rad) | mu | pre-shock Mach sqrt(mu) | Sigma(s-)/Sigma_c | Sigma(s+)/Sigma_c | (x_sp - x_sh)/L |
+|---|---|---|---|---|---|---|---|---|
+| 0.03 | 0.3 | -0.264 | -0.616 | 5.67 | 2.38 | 0.78 | 4.4 | 0.056 |
+| 0.05 | 0.5 | +0.044 | -0.434 | 11.6 | 3.41 | 0.55 | 6.3 | 0.076 |
+| 0.10 | 1.0 | +0.723 | -0.031 | 34.5 | 5.87 | 0.32 | 10.9 | 0.120 |
+| 0.20 | 2.0 | +1.250 | +0.377 | 97.3 | 9.86 | 0.19 | 18.3 | 0.139 |
+
+Only columns F and mu are printed; eta = 2 pi (x/L - 0.5); the densities use Sigma u_T0 = Sigma_c u_c with
+u_c/c_s = 1.857 and the isothermal jump (mu = Mach^2); normal speeds before/after are c_s sqrt(mu) and c_s/sqrt(mu).
+A consistency check the reader made by hand: alpha_1^2 from eq. 16 is positive at every tabulated x_sp
+(0.57, 0.36, 0.11, 0.23), as a transonic passage requires.
+
+#### C1.4 The corotating case (Omega_p = Omega on the ring)
+
+| Source | What is derived or measured | Tag |
+|---|---|---|
+| S7 Sec. 3.7 | "gas effectively falls in to the minimum of the potential, from both sides of the spiral arm"; "a systematic offset is not expected"; "the gaseous arm remains until the stellar arm disperses"; gas "can still clearly undergo shocks as it falls into the minimum" | verified S7 (review; no equation, no number) |
+| S8 | no galactic shock; gas converges to "near the bottom of the stellar spirals"; relative speed ~15 km/s or less; Mach ~2 against ~10-40 in the rigid-pattern run; arm density changes over ~100 Myr | verified S8 (N-body/SPH, 10 pc softening, multiphase, self-gravity, feedback; single read) |
+| S9 | dynamic arms: arm-gas offset "no clear radial dependence"; steady arms: a systematic trend with radius | verified S9 (offset = gas azimuth relative to the potential minimum) |
+| S10 | dynamic arm: "V_R ~ 0" in the arm with tangential streaming "typically ~10 km/s"; steady arm: radial streaming and a sudden change at the shock | verified S10 (ASURA-2 SPH, 10 pc softening, multiphase) |
+| S11 | active N-body potential: gas "accumulate[s] in the potential minima"; densest gas coincides with the minimum; no pattern speed defined | verified S11 (SPH, isothermal 100 K and 1e4 K phases, no self-gravity) |
+| S2 | the band round corotation where u_eta0 < a ("base-subsonic"): "a broad density peak at eta = 0", shock weak or absent | verified S2 |
+| S12 | linear WKB fluid response: `u_R1 = -omega k Phi_1/(kappa^2 - omega^2 + c_s^2 k^2)` (20.35), `Sigma_1 = (k Sigma_0/omega) u_R1` (20.17), general-m dispersion relation with (omega - m Omega) (20.45) | verified S12 (20.35 read once, 20.17 and 20.45 once; printed for m = 0) |
+| S5 eq. 10 | potential-vorticity conservation fixes the local shear: `q = 2 - (2 - q_0) Sigma/Sigma_0` | verified S5, read twice |
+
+No source read gives a steady profile or a density contrast for the corotating case, and none addresses
+uniqueness. The simulation papers reject steadiness outright (S8, S11).
+
+### C2 Per-source notes
+
+**S1, Kim, Kim & Kim 2014** (covers: the whole of items 1-4 for one ring; nothing on corotation). The cleanest
+restatement and the only tabulated solution found. Momentum equation as printed:
+`dv/dt + v_T . grad v = -c_s^2 grad ln Sigma + q Omega u yhat - 2 Omega x v - grad Phi_s`, v = (u, v) the induced
+velocity, v_T = v + v_c. Steady equations 8-11 as in C1.1; eq. 9 before combination:
+`u_T0 du_0/dx = -(c_s^2/Sigma_0) dSigma_0/dx + 2 Omega v_0 - dPhi_s/dx`. Method, quoted: "We first choose x_sp
+arbitrarily for given F and then integrate equations (10) and (11) starting from x_sp in both forward and backward
+directions ... We determine x_sh from equation (20c), and check the jump condition for the perpendicular velocity
+... If equation (21) is not satisfied within tolerance (typically ~1e-5), we ... repeat the calculation by changing
+x_sp iteratively". Parameters: "q = 1, m = 2, sin i = 0.1, Omega_p/Omega = 0.5, F = 3-10%, c_s/(R Omega) = 0.027
+(c_s/7 km/s)(Omega/26 km/s/kpc)^-1 (R/10 kpc)^-1". Fig. 1 shows profiles for F = 3, 5, 10 % with the sonic point
+marked; the sonic point lies downstream of the shock ("The gas should be accelerated downstream and pass through
+the sonic point"). Further coefficients as transcribed once, not cross-checked, not to be coded from this note:
+`alpha_2 = alpha_1^2/(6a) - u_c/(R Omega)/(6 a^2) + 2 beta_0/(3 alpha_1 sin^2 i)`, `beta_2 = -(1 + beta_1) alpha_1/(2a)`.
+
+**S2, Gittins & Clarke 2004** (covers: items 1-3 in the Roberts/SMR73 spiral coordinates, a radial sequence of
+solutions, the base-subsonic band; no printed solution numbers). Dimensional equations as transcribed:
+`d u_eta1/d eta = U (u_eta0 + u_eta1)[2 u_xi1 - F R_0 Omega sin eta]/[(u_eta0 + u_eta1)^2 - a^2]`,
+`d u_xi1/d eta = -V u_eta1/(u_eta0 + u_eta1)`, `U = (sin i/m) R_0 Omega`, `V = (sin i/m) R_0 kappa^2/(2 Omega)`.
+Appendix A removes the singularity with `u = nu + sqrt(x) + utilde`, `v = f sin eta + vtilde`, `wtilde = utilde^2`:
+`d wtilde/d eta = 2 (sqrt(x) +/- sqrt(wtilde)) vtilde/(2 sqrt(x) +/- sqrt(wtilde))`,
+`d vtilde/d eta = -1 - f cos eta - nu/(sqrt(x) +/- sqrt(wtilde))`, the sign choosing the supersonic or subsonic
+branch (single read; consistent with the reader's slope formula in C1.2). Algorithm: guess eta_SP; integrate forward
+along the subsonic branch and backward along the supersonic branch; map the supersonic branch through
+`u_sup u_shock = a^2`; the shock is where that mapped branch crosses the subsonic one in the (v, u) plane; adjust
+eta_SP until the solution is 2 pi periodic. Definitions: base-supersonic is `u_eta0 > a`, base-subsonic `u_eta0 < a`,
+the latter "either side of the corotation radius". Shock formation: "If the strength F of the perturbation is
+gradually increased, starting from an entirely subsonic solution, then at some point ... u_eta will pass the sound
+speed a. Any solution must now contain a sonic point". Several shocks: "Many solutions show secondary peaks in the
+density ... especially near the ultraharmonic resonances ... If a secondary peak crosses the sonic line, a second
+shock will occur"; no solutions were found between 11 and 12.5 kpc in the standard model, and "solutions are
+difficult or impossible to find for F >~ 0.1 and sin i >~ 0.2". Offset `Theta = m(theta_shock - theta_min) = eta_shock`:
+near the minimum at small radii, moving upstream towards the potential maximum with radius. Rotation curve
+`v(R) = v_max sqrt[F_b eps_b R exp(-eps_b R) + 1 - exp(-eps_d R)]`, `A(R) = A_0 R exp(-eps_s R)`, 1/eps_d = 1.5 kpc,
+1/eps_s = 10 kpc, F_b = 0.
+
+**S3, Lee & Shu 2012; S4, Lee 2014** (cover: the equations in Shu's own later notation with self-gravity and field
+added; one equilibrium each; logatropic, so not a digit check for an isothermal solver). Pressure
+`Pi = Sigma_0 v_t0^2 ln(Sigma/Sigma_0)`, signal speed `v_t^2 = v_t0^2 (Sigma_0/Sigma)`. Sonic-point slope, eq. 58, as
+transcribed once: `du/d eta = [-u_mp/y_mp - alpha phi'' - f cos eta_mp]^(1/2)/[2 + x_t0/(nu y_mp) - x_A0 nu/y_mp^3]^(1/2)`.
+Integration starts at the magnetosonic point by Taylor expansion and proceeds both ways; self-gravity is added by
+iteration with a relaxation parameter. "Solutions with multiple magnetosonic points and shocks are also possible,
+but their study is beyond the scope of this paper"; "we deliberately stay away from corotation". S4's Table 2 is
+internally consistent with the definitions [the reader's arithmetic: 2(40 - 127)/186 = -0.935 against nu = -0.933;
+U = 45.5, V = 48.8 km/s give v_t0^2/(2UV) = 0.0225 against x_t0 = 0.022; f = 0.2 gives F = 7.7 %].
+
+**S5, Kim & Ostriker 2002** (covers: local frame, F definition, PV relation, two approximate profiles with
+self-gravity and field). Background `v_0 = [R_0(Omega_0 - Omega_p) - q_0 Omega_0 x](sin i xhat + cos i yhat)`;
+`Phi_ext = Phi_0 cos(2 pi x/L_x)` with Phi_0 < 0. Profiles are found by time-dependent relaxation, raising F slowly
+(about five orbits), not by shooting. PV: `xi = abs(curl v_T + 2 Omega_0)/Sigma`, giving eq. 10 and
+`Q = Q_0 (Sigma/Sigma_0)^(-1/2)`; shear reverses where Sigma/Sigma_0 > 2 for q_0 = 1. Weak forcing: "the shock
+disappears, leaving quite symmetric density configurations". Non-self-gravitating counterparts are drawn dashed in
+Figs. 2a, 3a with no numbers printed. No steady 1D solution exists below Q_sp ~ 0.8, 0.5, 0.4 (no field, beta = 10,
+beta = 1) [verified: abstract via search listing and S5].
+
+**S6, Sormani et al. 2017** (covers: a no-shear toy of the same system; the threshold to four digits). Equations
+`dv/dt + (v.grad)v = -grad P/rho - grad Phi - 2 Omega x v + F`, steady form in units F_y = Omega = 1:
+`u_0y' = -2 + 1/u_0x` (13), `u_0x' = (2 u_0y - Phi')/(u_0x - c_s^2/u_0x)` (14); uniform solution u_0x = 1/2,
+u_0y = 0; "If c_s > 1/2, the Phi_0 = 0 solution is subsonic". "For Phi_0 < Phi_c the solution does not contain a
+shock"; above it "the solution must contain a shock", which first appears at x = 0, the maximum of Phi. A value
+Phi_c ~ 0.0148 for c_s = 0.3 was returned by one fetch and reported absent by a second: unverified, not used.
+Mapping to the unified variables [the reader's derivation]: kappa^2/(2 Omega) -> 2 Omega (kappa = 2 Omega),
+u_c = 1/2, k = 2 pi/L, so nu = -pi/2 = -1.5708, x = (pi c_s)^2 = 4.836, f = pi^2 Phi_0, hence f_c = 0.7202; their
+x = 0 is eta = +/- pi.
+
+**S7, Dobbs & Baba 2014** (covers: review statements on items 2, 3, 5). Shock position: "For warm gas and moderate
+forcing, a narrow shock is expected ahead of the minimum of the potential. If the gas is cold however, a very
+narrow shock is expected after the minimum". Ultraharmonic: "Gas undergoes a secondary compression ... at the
+ultraharmonic resonance (n = 2)", arms bifurcate for F >= 5 %. Resonance equation 38 as transcribed:
+`kappa = m(Omega - Omega_p)/n` (see C4, item 9).
+
+**S13, Kim & Kim 2014** (covers: global isothermal runs, c_s = 10 km/s, pitch 20 deg, F = 5, 10, 20 %). Shocks are
+"weak" at corotation; quasi-steady shocks need `M_perp/sin p <~ 20 + 100 F`; the shock moves upstream as M_perp
+rises; branches at the 4:1 resonance. Single read. **S14**: "If the spiral potential is too weak (e.g. amplitude
+... less than a few % of the axisymmetric one), shocks do not appear". **S15**: reports SMR73's ultraharmonic
+resonances as points where "the amplitude became infinite", with "a secondary compression"; its own runs show two
+pairs of shocks near the first ultraharmonic resonance. **S16**: reuses S2's parameters, prints no solution numbers.
+
+### C3 What a solver should integrate
+
+**Recommendation.** Integrate the unified system of C1.1 in (w, v) with the three numbers (nu, x, f) per ring, by
+S1's procedure: place the sonic point at a trial eta_sp, start with w = sqrt(x), v = f sin eta_sp and the positive
+slope of C1.2, integrate downstream on the supersonic branch and upstream on the subsonic branch, wrap by 2 pi,
+find the shock where v is continuous and require w(s-) w(s+) = x there; iterate eta_sp. S2's change of variables is
+the alternative way through the singular point. It predicts: one shock per period, upstream of the minimum for weak
+forcing and downstream for strong; S1's Table 1 to three figures for (nu, x) = (-0.7071, 0.1450 or 0.1458) and
+f = 0.3, 0.5, 1, 2. Shown wrong by: any tabulated x_sp/L, x_sh/L off by more than 0.001 or mu off by more than the
+last printed digit under both values of x; a density at the sonic point other than -nu/sqrt(x); potential vorticity
+not uniform.
+
+**Branch for no shock.** If w stays on one side of sqrt(x) over the whole period the solution is smooth and periodic
+and is found as a boundary-value problem, not by shooting from a sonic point (there is none). The small-f limit is
+[the reader's derivation from the verified ODEs] `sigma = f cos eta/(1 - nu^2 + x)`, `v = f sin eta/(1 - nu^2 + x)`,
+`u = nu f cos eta/(1 - nu^2 + x)`, i.e. `Sigma_1/Sigma_0 = k^2 A cos eta/(kappa^2 - m^2 (Omega - Omega_p)^2 + k^2 a^2)`,
+which agrees with the composition of S12's eqs. 20.17 and 20.35. It predicts: a density maximum at the minimum when
+1 - nu^2 + x > 0, a response that diverges at nu^2 = 1 + x, and harmonic n of the forcing resonant at
+n^2 (nu^2 - x) = 1 (the ultraharmonic condition in these variables, the reader's). Exact check: S6's threshold,
+(nu, x) = (-1.5708, 4.836), the smooth solution first reaching w = sqrt(x) at f = 0.7202, at eta = +/- pi. Shown
+wrong by: a threshold off in the fourth digit, or first contact elsewhere than the potential maximum.
+
+**The ring at corotation.** At nu = 0 the mass flux is zero, w = 0, and the normal equation reduces to
+`x d ln s/d eta = v - f sin eta` with v free: any s(eta) is steady if v balances it, so the steady state is not
+unique [the reader's derivation; no source addresses it]. Two closures, named:
+(a) uniform potential vorticity, the nu -> 0 limit of the Roberts family, `dv/d eta = s - 1`, giving
+`x d^2 ln s/d eta^2 = s - 1 - f cos eta`, periodic, mean of s equal to 1 automatically; linear amplitude f/(1 + x),
+i.e. `Sigma_1/Sigma_0 = k^2 A/(kappa^2 + k^2 a^2)`. It predicts a symmetric arm centred on the minimum, no offset,
+V_R = 0 in the arm with tangential streaming of amplitude v, as S7, S9 and S10 describe.
+(b) hydrostatic, v = 0: `s proportional to exp((f/x) cos eta)`, linear amplitude f/x = A/a^2; closure (a) is smaller
+by x/(1 + x) in the linear regime (0.13 at x = 0.145). It would hold only if the Coriolis term were absent.
+Shown wrong by: a measured arm-interarm contrast in the simulations of S8-S11 (none prints one for cold-free
+isothermal gas), or a ruling that swing-amplified arms last too briefly (~100 Myr, S8) for either steady state.
+A third alternative is to keep nu small but non-zero from the arm's own pattern speed and use the smooth branch.
+
+**Several modes at once** [the reader's note; no source]: the sources force with one sinusoid. A sum over m keeps a
+steady one-dimensional problem only if every mode shares the pattern speed and pitch, the forcing becoming a sum of
+harmonics over the period of the lowest common pattern; otherwise the response is time-dependent.
+
+### C4 Conflicts between sources
+
+1. **F by sin i or tan i.** S1, S2, S5 use `m Phi_0/(R^2 Omega^2 sin i)`; S3 uses `abs(k_varpi) A/(varpi Omega^2)`
+   with k_varpi = m cot i/varpi from its eq. 30, larger by 1/cos i (0.5 % at sin i = 0.1, 3 % at tan i = 0.249).
+2. **Phase and sign of the potential.** Minimum at x = L/2 with Phi_0 > 0 (S1); at x = 0 with Phi_0 < 0 (S5); at
+   eta = 0 via eta = -chi + pi (S2) or V = -A cos eta (S3); S6 puts the maximum at x = 0. Forcing sign follows.
+3. **Equation of state.** Isothermal in S1, S2, S5, S6; logatropic in S3, S4. Their profiles are not comparable.
+4. **Shock threshold.** 0.9 % (SMR73 as reported by S1, "for their model parameters"), "a few %" at c_s = 8 km/s
+   (S7), "less than a few %" gives none (S14). Different parameters; no source gives the threshold as a formula.
+5. **Shock position.** S7: ahead of the minimum for warm gas, after it for cold. S1: upstream for F <= 0.10,
+   downstream at 0.20, at fixed sound speed. S2: upstream, increasingly so with radius. Same sign of trend, three
+   different control variables; not reconciled by any source.
+6. **Kim, Kim & Kim 2015 (arXiv:1506.07178), Table 1.** Same parameters as S1. ar5iv does not carry the table;
+   arxiv.org/html returned three mutually inconsistent sets (mu = 2.18; 2.45 and 4.48; 2.45 and 6.28 for F = 5 and
+   10 %), none equal to S1's 11.6 and 34.5, with a pre-shock density of exactly 1.000 that mass conservation
+   forbids. Treated as mis-transcription; not used; a human should open that table.
+7. **Transcription disagreements.** S2's U once as `sin i/(m R_0 Omega)` (dimensionally impossible) and once as
+   `(sin i/m) R_0 Omega`; the latter matches S3. S3's eq. 43 once as x_t0 and once as x_t0^2; S4's numbers fix it
+   as `x_t0 = v_t0^2/(2UV)`. One fetch of S3 said gas moves to decreasing eta; the equations and S2 ("moving
+   outward in eta") say increasing eta inside corotation.
+8. **S1's sound speed.** 0.027 gives u_c/c_s = 1.852; the printed 1.86 matches 7/260 = 0.02692 (1.857). A solver
+   should try both.
+9. **S7 eq. 38** reads `kappa = m(Omega - Omega_p)/n`; the ultraharmonic condition as usually written is
+   `m(Omega - Omega_p) = kappa/n` [recall — NOT READ]; S7's sentence says "or vice versa". S2 places an
+   ultraharmonic resonance at 13 kpc; for a flat 220 km/s curve and Omega_p = 13 the reader's arithmetic puts
+   n = 2 at 10.9 kpc and n = 3 at 12.9 kpc, so S2's is probably n = 3, or its rotation curve differs.
+
+### C5 What could not be read
+
+- **Roberts 1969 (ApJ 158, 123)** and **Shu, Milione & Roberts 1973 (ApJ 183, 819)**: ADS abstract pages returned
+  HTTP 405; the scan manifest was empty; the ADS PDFs timed out or came back as unparsed binary. Not read at all.
+  The original symbols [recall — NOT READ]: w_perp0 = R(Omega - Omega_p) sin i, w_par0 = R(Omega - Omega_p) cos i,
+  equations in eta with the same structure as S2's. SMR73's table of cases, its "effective acoustic speed"
+  criterion for narrow or broad compression (seen only in a search-listing abstract) and its 0.9 % are unread.
+- **Shu 2016, ARA&A 54, 667**: paywalled. **Woodward 1975; Lubow, Balbus & Cowie 1986; Balbus 1988; Binney &
+  Tremaine sec. 6.2-6.3; Chakrabarti, Laughlin & Shu 2003; Baba et al. 2017; Kim & Ostriker 2006**: not attempted
+  or not reachable; nothing from them is used.
+- **Kim, Kim & Kim 2015, Table 1** (C4 item 6). **All arXiv PDFs**: the fetch tool cannot parse them; only HTML
+  renderings were read. **Figures**: none seen; every figure statement is the paper's own text.
+- A search listing attributed "3-4 %" for the shock threshold to SMR73; the page it came from was not identified
+  (Elmegreen's arXiv:1101.3109 was fetched and does not contain it). Not used.
+- Not found anywhere: a steady corotating gas profile; F in terms of a stellar surface-density contrast; a
+  threshold formula in (nu, x, f); pre- and post-shock densities printed for an isothermal, unmagnetised solution
+  (C1.3's are derived from mu).
