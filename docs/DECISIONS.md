@@ -9904,3 +9904,83 @@ optical radius). **Outside the bar nothing changed**: 0.007 / 0.147 / 0.230 / 0.
 sources, local swing theory against the Fourier reading … recorded as a finding and put to the owner; it is not
 reopened with a constant". `ngc_4414`, unbarred: 0.193 / 0.236 / 0.239 / 0.191 / 0.140, A3/A2 1.11, m = 5–6 from
 6.6 kpc, and its two-armed amplitude now falls outward (0.167 at 2 kpc, 0.099 at 6: statement 10 missed).
+
+**The follow-up applied (the builder's second pass) and checked (the reviewer's one pass on that change).** The gas
+pattern publishes a second composed field, `star_formation_gas_contrast`: inside the bar's reach the blend with
+the footprint-uniform field — on each ring the lanes' own base outside the body's footprint and
+base + (1 − base)/share inside it, two levels, no ridge, exactly 1 where the footprint fills the ring — and
+`sfr_modulation` reads it; the star sample's and the bright catalogue's young stars follow. `gas_density_contrast`,
+the dust's placement, the clouds, and the clusters, HII regions and bubbles born in them keep the lanes. *Read:*
+the star formation in a ring's top tenth of cells at 2–3.3 kpc is 14.9–28.0 % (the laned alternative: 88.1–95.7 %),
+the largest modulation 7.41 at 4.31 kpc (17.62 at 3.49 kpc); the bright stars' two-fold crest sits on the bar's
+axis within noise where it had led by 28°; at 8 kpc nothing moved, bit for bit. The two fields are the same bits
+on every ring at or past the bar's end and on every cell of an unbarred galaxy. Forty-five fields moved on the
+Milky Way template, all of the star sample, the bright catalogue and the planets; no cloud, cluster, HII, bubble,
+dust or gas number; layer off exactly what had moved before and the one new field at 1. The reviewer: "BLOCKER:
+none. SHOULD FIX: none … Is item 3 applied as ruled: yes." Its note, put to Fable and confirmed: "clouds are gas
+and go where the gas is, so the cloud census keeps L, and a cluster, its HII region and its bubble are born in a
+cloud and stay with it … The split — young field stars and bright stars by the footprint, clusters by their
+clouds on the lanes — is the consequence": 37 % of the clusters at 0.3–0.9 a sit in the 9.4 % of cells with laned
+gas above twice the mean, leading the bar by 24°.
+- *Recorded as consequences, each pinned in `tests/test_bar.py`:* the whole field's m = 2 maximum inside a against
+  the drawn amplitude, −0.0059 to +0.0081 over the Milky Way's suite seeds; the saturation against the cosine's
+  on 26 of 60 pattern seeds, 0.687 → 1.000 at the bar's end at worst (seed 34); the corner of the controls where
+  55 cells are exactly zero on eight rings (0.71–1.24 kpc), nothing negative, no NaN; the lanes' cliff (ring peaks
+  5.23, 4.89, 4.45, then 1); no nuclear ring; the two clocks' thresholds 0.3295 and 0.3276.
+
+**The picture test's layer bound (found when the frames were retaken; a follow-up to the gate).** With the lanes
+the layered Milky Way frame is 1.5 % brighter than physics-only (physics-only over layered 0.98487 / 0.98688 /
+0.98845), past the test's 0.01. Fable: "Not a bug. Section 9's totals are what is emitted, held or formed — mass,
+dust, light at the source, star formation — and none moved. Emergent light through dust is a transfer outcome,
+and exp(−τ) is convex in the column, so by Jensen a conserving placement that concentrates a ring's dust can only
+raise its mean transmission … Split the assertion by principle. (i) A dust-free capture agrees layer on and off
+within 0.01 per channel. (ii) With dust, physics-only over layered ≤ 1 + 1e-3 per channel, and the measured
+ratios pinned to 1e-3 with the reason 'the lanes' dust, D217; moves with the lane width'. Do not keep 0.01 on the
+dusty frame by treating the lanes' dust differently … Dust follows the gas, as ruled. The lanes are dust lanes: a
+lane whose dust is not on it does not exist in the picture." *Built (the viewer builder's second pass):* the
+dust-free pair reads 1.00001 / 1.00005 / 1.00004 (taken in the star-first mode with the points and the dust
+switched off: the field mode has no component switches); the same state drawn twice gives the same sum to the
+last digit, so the 1e-3 is room for another renderer's arithmetic, not a measured noise; every capture asserts
+that each model-data request names its template. The picture run: 8 passed; the physics-only frame is the
+committed one byte for byte.
+
+**The pictures, measured (`tools/goal_metrics.py`; display targets, never rows).** Four frames and both
+thumbnails retaken after the pins were read.
+
+| Picture | A1 | A2 | A3 | A4 | A5 | A6 | dominant m | arm / interarm, blue | dark fraction | slope |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `milky_way`, field — S57 | 0.007 | 0.028 | 0.024 | 0.043 | 0.046 | 0.042 | 5 | 1.44 | 0.0190 | −4.04 |
+| `milky_way`, field — now | 0.008 | 0.018 | 0.026 | 0.051 | 0.046 | 0.047 | 4 | 1.40 | 0.0198 | −3.63 |
+| `milky_way`, star-first — S57 | 0.014 | 0.029 | 0.038 | 0.052 | 0.077 | 0.075 | 5 | 1.75 | 0.0285 | −0.58 |
+| `milky_way`, star-first — now | 0.014 | 0.021 | 0.037 | 0.055 | 0.076 | 0.078 | 6 | 1.73 | 0.0290 | −0.59 |
+| `ngc_4414`, field — S57 | 0.083 | 0.091 | 0.022 | 0.028 | 0.018 | 0.019 | 2 | 1.73 | 0.0001 | −5.8 |
+| `ngc_4414`, field — now | 0.071 | 0.103 | 0.031 | 0.038 | 0.025 | 0.023 | 2 | 1.72 | 0.0023 | −5.6 |
+| `ngc_4414`, star-first — S57 | 0.084 | 0.082 | 0.030 | 0.031 | 0.028 | 0.024 | 1 | 1.79 | 0.0003 | −1.0 |
+| `ngc_4414`, star-first — now | 0.073 | 0.093 | 0.037 | 0.039 | 0.032 | 0.025 | 2 | 1.77 | 0.0029 | −1.1 |
+
+To the eye: the Milky Way template shows the bar's body with two short dark lanes hooked off its ends, stopping
+abruptly at the bar's end (the cliff, #147); `ngc_4414` is unbarred with its arms wound into the centre, and its
+frame carries faint straight streaks above the nucleus — the under-resolved arm modes and the emptied gas of an
+unbarred disc's inner rings (#142, #149), not structure. The statistic's m = 2 for the inclined `ngc_4414` frame
+is the inclination's, as at S54.
+
+**Cold timings (`tools/timings.py`; S57 → now):** the arm pattern 0.032 → 0.17 s (the body); the gas pattern 0.31 →
+0.61 s (the lanes and the second field); `region: whole disc` 1.31 → 1.65 s; `clouds: whole disc` 1.46 → 1.57 s;
+`clusters: whole disc` 3.03 → 2.88 s; `render: whole, rgb` 3.62 → 3.45 s.
+
+**Debts.** Opened: **#145** (the presence's criterion: bars nearly everything, no mass dependence, wrong for NGC
+4414; the Q-dependence unmodelled), **#146** (the body: its light share uncomputable at checkpoint 3, its m = 2
+peak at 0.41 a against 0.76–0.94, its axis ratio undrawn), **#147** (the lanes: the width a placeholder, with the
+cluster and frame numbers it carries; the cliff; no ring), **#148** (two clocks), **#149** (no bar-driven arm; an
+unbarred disc's arms to the centre). Amended: #80 (the reading's bar lengths, a conflict for its reopening), #128
+(the placement half grown to 3.5 %), #138 (re-read: with the owner), #139 (re-ruled for m = 2), #142 (the regime
+at an unbarred centre; the exact zeros). Register 86 open = 11 + 75, 46 discharged.
+
+**For the owner, at the close (the gate's list; none awaited).** (1) `ngc_4414` is shown unbarred, as observed —
+one template field restores the old picture; a pin holds through edited controls, so in the viewer the derived
+criterion never decides, and a "derived presence" switch is theirs. (2) The criterion bars nearly every input;
+Erwin 2018's measured frequency as a draw is theirs to order. (3) The lanes' width is a placeholder, theirs to
+tune live: it moves the frame's light by 1.5 % and puts a third of the bar's clusters on a tenth of its cells;
+the lanes end in a cliff and make no nuclear ring; the same physics sits unplaced in the model's dust heating
+(#128), a session's candidate. (4) #138: outside the bar m = 5–6 still dominate — a conflict of sources, theirs.
+(5) From S57, still theirs: a floor on the drawn pitch (#142).
