@@ -119,13 +119,14 @@ _CONSERVES_GRADIENT = (
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
 # Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
 # and 43.7 % of the mass, 157 in another cell ring), again at S56 when the census became another draw (D215: the
-# clouds follow five arm modes' ridge, not one's: 1 598 of 12 814, 12.5 % and 43.8 %, 137), and again at S57 when
-# the clouds came to follow the gas's steady response to those modes (D216).
+# clouds follow five arm modes' ridge, not one's: 1 598 of 12 814, 12.5 % and 43.8 %, 137), again at S57 when
+# the clouds came to follow the gas's steady response to those modes (D216: 1 598 of 12 829, 12.5 % and 43.7 %,
+# 139), and again at S58 when the bar's reach came to hold its lanes and the two-armed mode the bar's phase (D217).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S57 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 598 of 12 829 "
-    "clusters (12.5 %, 43.7 % of the cluster mass) in another radial ring and 139 in another cell ring than their "
+    "its cloud's ring: at S58 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
+    "against a 75 pc radial step and puts 1 600 of 12 826 "
+    "clusters (12.5 %, 43.6 % of the cluster mass) in another radial ring and 137 in another cell ring than their "
     "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
     "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
 )

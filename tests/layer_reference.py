@@ -122,15 +122,25 @@ def requests() -> list[tuple[str, str, dict[str, list[str]]]]:
 def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[str, Any]:
     from galaxy.api import wire
 
+    from galaxy.core.registry import pins
+
     got = service.handle(path, query)
     if not got.ok:
         return {"status": got.status, "error": got.json().get("error")}
     header, arrays = wire.decode(got.body)
-    return {
+    # S58 (D217 item 2): a template's pin rides among a request's inputs, and S55 knew none. The header is digested
+    # with the pins taken out of its inputs - so every other word of it is still held to S55's - and the pins it
+    # carried are returned beside the digest, for the test to read (none, but for a template that states one).
+    header = normalise(header)
+    pinned = {i.name: header["inputs"].pop(i.name) for i in pins() if i.name in header.get("inputs", {})}
+    out = {
         "status": got.status,
-        "header": _sha(json.dumps(normalise(header), sort_keys=True).encode("utf-8")),
+        "header": _sha(json.dumps(header, sort_keys=True).encode("utf-8")),
         "arrays": [[spec["name"], value_digest(arrays[spec["name"]])] for spec in header["arrays"]],
     }
+    if pinned:
+        out["pinned"] = pinned
+    return out
 
 
 def run_digest(model_name: str, inputs: dict[str, Any] | None = None, **run_kwargs: Any) -> dict[str, str]:
@@ -219,7 +229,8 @@ def load() -> dict[str, Any]:
 
 def differences(made: dict[str, Any], held: dict[str, Any]) -> list[str]:
     moved = [f"fields/{m}/{n}" for m, fs in held["fields"].items() for n, v in fs.items() if made["fields"].get(m, {}).get(n) != v]
-    moved += [f"routes/{k}" for k, v in held["routes"].items() if made["routes"].get(k) != v]
+    # (a route's digest is compared on what the reference holds of it: the pins a header carries since S58 are beside it)
+    moved += [f"routes/{k}" for k, v in held["routes"].items() if {n: made["routes"].get(k, {}).get(n) for n in v} != v]
     moved += [f"single_mode/{t}/{m}" for t, ms in held["single_mode"].items() for m, v in ms.items()
               if made["single_mode"].get(t, {}).get(m) != v]
     return moved
