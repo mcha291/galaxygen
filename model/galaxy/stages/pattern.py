@@ -345,9 +345,10 @@ class BarBody:
     **in the bar's frame**, ψ = φ − φ_bar, shaped (R, CELLS). The edge m = 1 is the law's, not the circle R = a:
     a boxy body (c > 2) stands a little proud of that circle beside its own axis - to 1.0007 a at this shape,
     (1 + q⁶)^{1/6} for c = 3 - so the first ring past the half-length can hold a sliver of it (1e-7 of the
-    central density on the production grid), and holds it. With a normalisation N in M☉/pc² the body's surface density is N · unit, the ring's share
-    β = N ⟨unit⟩/Σ, the contrast's departure from 1 is N (unit − ⟨unit⟩)/Σ - of mean 0 round the ring by
-    construction, ⟨·⟩ being the mean of the same samples - and its depth b = N (⟨unit⟩ − min unit)/Σ.
+    central density on the production grid), and holds it. With a normalisation N in M☉/pc² the body's
+    surface density is N · unit, the ring's share β = N ⟨unit⟩/Σ, the contrast's departure from 1 is
+    N (unit − ⟨unit⟩)/Σ - of mean 0 round the ring by construction, ⟨·⟩ being the mean of the same samples -
+    and its depth b = N (⟨unit⟩ − min unit)/Σ.
     Σ is checkpoint 1's total disc on the grid radii. Nothing here knows the bar's angle but the cell
     means, which are taken over a grid's own φ cells.
     """

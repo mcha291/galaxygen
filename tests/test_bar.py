@@ -520,6 +520,41 @@ def test_the_body_rederived_by_hand_on_the_milky_way_template(prod):
     assert closed == pytest.approx(share, rel=5e-4)
 
 
+def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod):
+    """D217 item 5: "b(R) := 1 − min_φ(body contrast)(R) = β(R) − min_φ Σ_bar/Σ; s(R) = min(1, (1 − b)/ΣÃ_m) as
+    today, so the composed field stays positive by the same bound." Read where the bound binds: the Milky Way's
+    inputs at pattern seed 28, the most saturated barred galaxy of the suite's sixty (a drawn arm amplitude of
+    0.786, a bar amplitude of 0.410, a share of 0.1438; the smallest saturation 0.643, at 7.91 kpc; 84 saturated
+    rings, 5.06 to 11.29 kpc). The depth is this file's - the body's profile and the normalisation from the
+    published share, by hand. **On every saturated ring the published amplitudes and the depth add up to 1 to
+    rounding; on every other ring to less.** Three of the saturated rings hold some of the body (two inside the
+    half-length and the sliver's ring): there the modes are scaled to 1 − b and not to 1. And the composed field
+    of that galaxy is non-negative on every cell, with nothing floored."""
+    model = the_model(prod)
+    o = run(model, inputs_of("milky_way", pattern_seed=28, texture_seed=0), only=STELLAR)
+    F, R = o.fields, o.grid.R
+    a, B, share = float(F["bar_half_length"]), float(F["bar_contrast"]), float(F["bar_mass_share"])
+    assert (B, float(F["arm_contrast"]), share) == pytest.approx((0.41008, 0.78587, 0.14384), abs=2e-5)
+    sigma = np.asarray(F["disc_surface_density"], dtype=float)
+    _, p = hand_body(R, a)
+    P = p.mean(axis=1)
+    areas = R * (R[1] - R[0])
+    normalisation = share * float((sigma * areas).sum()) / float((P * areas).sum())
+    depth = normalisation * (P - p.min(axis=1)) / sigma
+    saturation = np.asarray(F["arm_saturation"], dtype=float)
+    total = np.sum([np.asarray(F[k], dtype=float) for k in pt.AMPLITUDE_FIELDS], axis=0)
+    saturated = saturation < 1.0
+    assert int(saturated.sum()) == 84 and (float(R[saturated].min()), float(R[saturated].max())) == pytest.approx((5.0625, 11.2875), abs=1e-6)
+    assert (float(saturation.min()), float(R[int(np.argmin(saturation))])) == pytest.approx((0.6433, 7.9125), abs=2e-4)
+    assert float(np.abs(total[saturated] + depth[saturated] - 1.0).max()) < 1e-15
+    assert np.all(total[~saturated] + depth[~saturated] < 1.0) and np.all(saturation[~saturated] == 1.0)
+    with_body = saturated & (depth > 0.0)
+    assert int(with_body.sum()) == 3 and float(depth[with_body].max()) == pytest.approx(1.070e-3, rel=0.02)
+    assert np.all(total[with_body] < 1.0) and np.allclose(total[with_body], 1.0 - depth[with_body], rtol=0.0, atol=1e-15)
+    field = np.asarray(F["pattern_density_contrast"])
+    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.03145, abs=2e-5)
+
+
 def test_a_point_reads_the_body_between_its_two_rings_in_the_bar_s_frame(prod):
     """Evaluable at a point (D60): the body at (R, φ) is its two neighbouring grid rings' profiles read at φ − φ_bar
     - linear between the cells' centres - and blended linearly in R; at a grid radius it is the ring's own. The
