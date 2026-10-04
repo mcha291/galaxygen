@@ -9677,3 +9677,14 @@ miss at 2.5–3.1 times, with its two named suspects.
 **The close (2026-10-04).** The suite on the combined state: 1286 passed, 5 skipped, `EXIT=0`; the specs OK, 12 / 20 / 5
 of 37 for both models, the template checks 0 / 5 on their five recorded misses. The picture run: 8 passed. The
 handoff is deleted.
+
+### D217. S58: the bar — a body, an absence, its lanes (BUILD_III Phase P3; an Opus lead)
+
+**This session is Phase P3** (BUILD_III §5), opened on 2026-10-04 straight after S57's close on the owner's
+standing order. The reading came first, by two readers blind to the model (`docs/READING_BAR.md`: Part A the
+bar's light share, shape, profile and size, the bar fraction against disc properties and the stability criteria;
+Part B the lanes, the gas inside the bar, the arms against the bar, and how far a bar-driven two-armed response
+reaches). Inherited from D216: how the bar's potential enters the gas's forcing is a conditional gate's, not the
+lead's (item 8); the shocked branch, if used, is certified first (item 10); debt #138 is re-read once at this
+phase's close, and #139's reading is Part B's.
+
