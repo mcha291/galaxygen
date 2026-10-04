@@ -9184,3 +9184,65 @@ side; a post-composition cap or floor; a one-mode special case; anything read fr
 law — a point's gas depends on its whole ring's ψ — and P2's shock replaces it at S57; and on rings with several
 modes the ridge's width is not the measured one (a tall crest takes a wider ridge, a low one none). "If the owner
 dislikes the look, the named alternative in 7 is the fallback, a new ruling, not a tweak of this one."
+
+**The second pass, built; and the review (an Opus 5.5 reviewer, read-only, with probes of its own).** The ranked
+ridge was built as ruled: q, the measure of the superlevel set, from crossings bracketed on cells cut at ψ's
+extrema (an addition to the ruling's wording: on bare cells two crossings in one cell are missed) and refined by
+a bounded Newton step to 1e-12; one mode is S51's field to 1.4e-12 through the general path; against the
+reviewer's own polynomial-root oracle q agrees to 2.9e-9 on 12 618 points; the ratio of means equals C(R) on every
+ring; the fade ends on a ring of exactly 1; per-region determinism holds. **The census-against-field worry is
+closed by measurement**: over 44 `systems_seed`s the census's Q over the light stage's is 0.999 ± 0.009 with the
+layer on and 1.001 ± 0.009 off; the default seed's 0.966 is half a standard deviation of one draw, and the three
+ratios that "did not move back" are one draw, not three pieces of evidence. *One gate item is met by the law and
+not by the published field*: the stage divides each ring by its sampled mean (as it has since S51, so every ring
+keeps its gas to 1e-12), and a ranked ridge is not analytic, so its 360-cell mean is off 1 by up to 9.5e-4 — the
+published field passes the exact bound [0.533963, 3.067524] by up to 2.6e-3. Nothing was added after composition;
+the test asserts the law strictly and pins the published breach. It is carried to S57's gate G2 with the ridge it
+belongs to, which that phase retires.
+
+**The reviewer's blocker: the window was probed and built on X_m/2. The error is the lead's.** The probe, the
+first handoff and the builder's brief all wrote "X₂(R) = κ²R/(2πGΣ·2); m_lo = X₂/(Γ x_high)". S26's window
+formula takes x = 2/f_d, which is m·X_m — X at m = 1 — and not X₂; its own variable name and `swing_x`'s about call
+it "X at m = 2", which is where the slip came from. So the source's ranges were applied to half the source's
+variable. The reviewer re-derived three rings from the published κ, Σ and v: the module's weights equal "the
+window on X_m/2" to 9e-16 on all 400 rings, and on X_m they differ by up to 1.0. No test could find it — the tests
+recompute with the module's formula — and **every prediction the first gate turn made was read off the same wrong
+probe**. The law under four windows, re-probed (mass-weighted power, m = 2…6, Milky Way / `ngc_4414`): as built
+0.40 / 0.32 / 0.17 / 0.07 / 0.04 and 0.59 / 0.30 / 0.07 / 0.02 / 0.02; **on X_m, the plan's law, 0.08 / 0.21 /
+0.24 / 0.25 / 0.22 and 0.19 / 0.24 / 0.24 / 0.19 / 0.14**; S26's Mestel form ring by ring 0.20 / 0.25 / 0.24 /
+0.19 / 0.14; S26's global window on every ring 0.29 / 0.29 / 0.23 / 0.13 / 0.06.
+
+**A third gate turn, 2026-10-04; ruling by Fable on the third `docs/HANDOFF_S56.md`, nothing run.**
+11. *The law is the local swing window on the correct variable.* "At every ring the variable is
+    X(R) = κ²(R)·R / (2πG Σ(R)): Toomre's X at m = 1, equal to m·X_m. Σ is checkpoint 1's total disc surface
+    density … Γ(R) is `local_shear(R, v)` as built, read as 1 where not finite or not positive. The source's
+    ranges apply to X_m/Γ = X/(mΓ) unchanged: vigorous for x_low < X_m/Γ < x_high, hence m_lo = X/(Γ·x_high),
+    m_hi = X/(Γ·x_low) … the constants are S26's, no new one. … Where no mode survives on a ring the forcing
+    amplitude is 0 and the ring is axisymmetric — that *is* the fade of gate ruling 1; no floor, no fallback
+    mode, nothing added." `swing_window`'s `x2` and `swing_x`'s about are relabelled: 2/f_d is m·X_m, X at m = 1.
+    A new test re-derives w_m by hand on three rings, independent of the module, one where the two windows differ
+    by at least 0.5 in some weight. "It is the plan's law as the owner adopted it and as ruling 3 defined it, and
+    it is the only column that is a derivation." The Mestel form ring by ring "is forbidden as a law: … the Mestel
+    identity applied ring by ring to an exponential disc … a derivation in name only". The window as built is
+    forbidden. S26's global window "is a sourced law, but it is D175's choice that the owner's plan superseded;
+    returning to it is a plan change, which is the owner's, not a gate's".
+12. *The blind reading stays a check, not an input* — "it became neither by failing". **A debt is opened**: the law
+    fails the reading's statements 1 (A3/A2 ≈ 1.6 against 0.33 ± 0.19), 6 (dominant m ≥ 3 inside 0.5 R25, where
+    real discs are two-armed) and 8 (m = 5–6 dominant from 8 kpc), and statement 3 marginally for `ngc_4414`; it
+    meets statement 14. "What closes it: P3's bar-driven m = 2 is the stated physical answer to 6 and 1 — two
+    strong inner arms in real discs are driven patterns, not local swing — so the debt is re-read once at P3's
+    close. … An m = 1 term is *not* a closer." If statement 8 still fails after P3 it is a conflict of sources,
+    "recorded as a finding and put to the owner; it is not reopened with a constant".
+13. *The first turn's predictions* stand in the record as "read on a wrong probe (X/2)" and are superseded:
+    Milky Way whole power to 11.1 kpc, the last ring with any mode 12.3 kpc, the worst ring's Σ Ã_m + b 0.795 at
+    the default seed (saturation 1); at 2 / 6 / 8 / 10 kpc the shares .12 .24 .24 .23 .17, .03 .25 .25 .25 .23,
+    0 .15 .28 .28 .28, 0 0 .16 .40 .43. Nothing in rulings 1–10 changes in form.
+**Forbidden (Fable):** the window as built; the Mestel form as the law; "any blend of windows, scale factor,
+floor, cap, hand-chosen radius or added constant that moves W1 toward the reading; a viewer switch among windows;
+building P3's bar early, or an m = 1 term, in S56 to rescue the picture; reading the frames before the pins."
+**The owner's part — the build does not wait.** "Whether the plan's law is kept against the reading is the
+owner's … S56 builds W1, re-reads the pins, regenerates the frames, and at its close the owner is asked, with both
+templates' frames and the four-window table set beside the reading": (a) keep the law and carry the debt to P3's
+close; or (b) replace the arm-number law with S26's global window on every ring — no radial branching, the fade
+never triggering — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and 0.43 / 0.36 / 0.18 / 0.04 / 0 and in turn
+fails the reading's statements 4 and 15. "No third option is offered. (a) is the default if unanswered."
