@@ -1695,7 +1695,7 @@ class Service:
         # The dust around each ring (S50, D207; S51, D210): its column over the ring's mean is the gas's own density
         # contrast, the gas the dust is a share of (one dust-to-gas ratio per ring) - the gas's steady response to
         # the stellar arms (S57, D216), where D207 had the stellar contrast. An array beside the components, named in
-        # the header; it averages to 1 round every ring (to the grid's sampling: 1e-13), so each ring keeps its
+        # the header; it averages to 1 round every ring (to rounding, on any grid: the law's mean over each cell), so each ring keeps its
         # published dust. Without a pattern of either kind,
         # or without dust, there is none and the dust is even round the ring.
         placement: dict[str, Any] | None = None

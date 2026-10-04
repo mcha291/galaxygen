@@ -328,6 +328,9 @@ def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
     relogged = np.abs(gr.residual(s[carries], forcing, eps[carries]))
     floor = gr.rounding_floor(s[carries], eps[carries])
     inv_h2 = (gr.CELLS / (2.0 * math.pi)) ** 2
+    # The reviewer's note (D216): the criterion itself implies only max(1e-10, F_k) + F_k/2 + 4u ε²/h² for the
+    # re-logged profile; the gate's tighter wording holds because accepted residuals sit under half their floor
+    # (0.95 of this bound at worst over 842 galaxies). If it ever fails, the bound is what to re-read, not the solver.
     assert np.all(relogged <= np.maximum(1e-10, floor + 4.0 * ROUNDING * (eps[carries] ** 2)[:, None] * inv_h2))
     assert np.all(d.residual <= np.maximum(1e-10, d.floor))
     # The floor of ln s as the solver held it and of the logarithm taken again: the same spacing of doubles, but
@@ -485,7 +488,9 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
     assert worst["residual"] == pytest.approx(1.305e-10, rel=0.01) and worst["relogged"] < 5e-10
     assert worst["mean"] < 2e-13 and worst["ring_mean"] < 2e-13 and worst["sum"] < 1e-13
     assert 0.0 < worst["min_s"] < 1e-40 and worst["max_s"] == pytest.approx(14.39, abs=0.02)
-    assert worst["margin"] >= 0.0 and worst["min_g"] > 1e-3 and worst["max_g"] == pytest.approx(6.78, abs=0.03)
+    # S57 (D216 G3, the reviewer's second pass): the second build had loosened these two to `> 1e-3` and `abs=0.03`;
+    # re-read on the cell-averaged field: 0.0016862 (ngc_4414, pattern seed 55) and 6.77163 (Milky Way, seed 40).
+    assert worst["margin"] >= 0.0 and worst["min_g"] == pytest.approx(1.6862e-3, rel=1e-3) and worst["max_g"] == pytest.approx(6.7716, abs=1e-3)
     # Which galaxies have a ring whose floor is the bound: seventeen, at the lowest drawn pitches.
     assert len(on_floor) == 17 and max(on_floor.values()) < 7.7 and worst["on_floor"] == 50
     assert {k[:2] for k in on_floor} == {("milky_way", 1), ("milky_way", 33), ("milky_way", 40), ("ngc_4414", 1), ("ngc_4414", 18),
@@ -801,7 +806,7 @@ def midpoint_error(s: np.ndarray) -> np.ndarray:
 @pytest.mark.parametrize("template", TEMPLATES)
 def test_the_interpolation_errors_are_pinned_as_measured(prod, template):
     """Gate G3 item 5: "1440 cells stand. Pinned as measured: s 3.5e-4 beyond 6 kpc, 1.2e-3 inside the bar's
-    reach (≤ 1.2e-5 of the field there), the point field 3.0e-4, the R-interpolation 5.7e-4 / 7.9e-4."
+    reach (≤ 1.2e-5 of the field there as the gate read it; 1.45e-5 for `ngc_4414` as measured below), the point field 3.0e-4, the R-interpolation 5.7e-4 / 7.9e-4."
 
     **In χ, at the cells' midpoints** (the worst place for the point function: h²/8 · max|s″|). The instrument's
     two hard rings read 1.96e-4 and 1.54e-4. The model's rings, per quantity: **s beyond 6 kpc 3.5e-4 at worst for
