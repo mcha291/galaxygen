@@ -9984,3 +9984,7 @@ tune live: it moves the frame's light by 1.5 % and puts a third of the bar's clu
 the lanes end in a cliff and make no nuclear ring; the same physics sits unplaced in the model's dust heating
 (#128), a session's candidate. (4) #138: outside the bar m = 5–6 still dominate — a conflict of sources, theirs.
 (5) From S57, still theirs: a floor on the drawn pitch (#142).
+
+**The close (2026-10-05).** The suite on the combined state: 1323 passed, 5 skipped, `EXIT=0`; the specs OK, 12 / 20 / 5
+of 37 for both models, the template checks 0 / 5 on their five recorded misses. The picture run: 8 passed. The
+handoff is deleted.
