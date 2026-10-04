@@ -342,8 +342,10 @@ class BarBody:
     ring (D217 item 4).
 
     ``unit`` is (1 − m²)ⁿ inside m = 1 and 0 outside, on the cells' centres ψ_k (``gas_response.cell_centres``)
-    **in the bar's frame**, ψ = φ − φ_bar, shaped (R, CELLS); a ring at or beyond the half-length holds none
-    of it. With a normalisation N in M☉/pc² the body's surface density is N · unit, the ring's share
+    **in the bar's frame**, ψ = φ − φ_bar, shaped (R, CELLS). The edge m = 1 is the law's, not the circle R = a:
+    a boxy body (c > 2) stands a little proud of that circle beside its own axis - to 1.0007 a at this shape,
+    (1 + q⁶)^{1/6} for c = 3 - so the first ring past the half-length can hold a sliver of it (1e-7 of the
+    central density on the production grid), and holds it. With a normalisation N in M☉/pc² the body's surface density is N · unit, the ring's share
     β = N ⟨unit⟩/Σ, the contrast's departure from 1 is N (unit − ⟨unit⟩)/Σ - of mean 0 round the ring by
     construction, ⟨·⟩ being the mean of the same samples - and its depth b = N (⟨unit⟩ − min unit)/Σ.
     Σ is checkpoint 1's total disc on the grid radii. Nothing here knows the bar's angle but the cell
@@ -364,7 +366,9 @@ class BarBody:
         if self.surface_density.shape != self.R.shape:
             raise ValueError(f"a bar's body holds the disc's surface density on its {self.R.size} radii; got {self.surface_density.shape}")
         unit = np.zeros((self.R.size, CELLS))
-        inside = self.R < self.half_length  # on the bar's own axis m = R/a: a ring at or past a holds no body
+        # The rings the body can reach: inside the corner of its bounding box, a (1 + q²)^½ - a bound, not the
+        # law's edge, which m < 1 decides cell by cell below.
+        inside = self.R < self.half_length * math.sqrt(1.0 + self.axis_ratio**2)
         if inside.any():
             psi = _cells.cell_centres(CELLS)
             radius = self.R[inside, None]
@@ -375,7 +379,13 @@ class BarBody:
 
     @property
     def holds(self) -> np.ndarray:
-        """(R,) bool: the grid rings inside the bar's half-length - the ones that hold some of the body."""
+        """(R,) bool: the grid rings that hold some of the body - a cell of theirs lies inside m = 1."""
+        return self.unit.any(axis=1)
+
+    @property
+    def inside(self) -> np.ndarray:
+        """(R,) bool: the grid rings inside the bar's half-length, R < a: the rings the drawn amplitude is the
+        largest two-fold amplitude over (D217 item 4: "the published field's A₂ maximum inside a")."""
         return self.R < self.half_length
 
     @property
@@ -438,10 +448,10 @@ def body_share(body: BarBody, bar_contrast: float, edges: np.ndarray, angle: flo
     ``bar_contrast`` B sets the normalisation so that the published field's A₂ maximum inside a equals B").
     The amplitude is linear in the normalisation, so this is one division; 0 where the grid holds no ring
     inside the bar."""
-    holds = body.holds
-    if not holds.any():
+    inside = body.inside
+    if not inside.any():
         return 0.0
-    peak = float(body.amplitude(edges, angle)[holds].max())
+    peak = float(body.amplitude(edges, angle)[inside].max())
     return body.mass_share(bar_contrast / peak) if peak > 0.0 else 0.0
 
 
@@ -899,8 +909,8 @@ class ArmPattern:
     **The bar's body** (S58, D217 items 4-5) is :class:`BarBody` at the normalisation the published
     ``bar_mass_share`` states, laid on the fixed cells of each grid ring in the bar's frame. A point reads
     its two neighbouring grid rings' profiles at its own φ − φ_bar - linear between the cells' centres -
-    and blends them linearly in R (the gas pattern's way, D216 item 9); a ring at or past the half-length
-    holds no body. :meth:`sector_means` and :meth:`published` take the body's exact mean over a sector
+    and blends them linearly in R (the gas pattern's way, D216 item 9); a ring past the body's edge holds
+    none of it. :meth:`sector_means` and :meth:`published` take the body's exact mean over a sector
     (``gas_response.sector_mean``), so sectors that tile a ring average to 1 to rounding on any grid, with
     nothing divided. Until S58 the bar was one cosine, B e^{−(R/a)⁴} cos 2(φ − φ_bar).
 
