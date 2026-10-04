@@ -310,7 +310,7 @@ class Winding:
     that **no cotangent is taken**: a segment of nearly no pitch is a short radial step with a whole Δβ of
     phase in it, steep and continuous, and nothing is floored or clipped. (A pitch of exactly 0 has no radial
     extent and no advance: a null segment. Past ±90° the pitch is read as a line's inclination, modulo 180°:
-    1.6 standard deviations up at a pitch of 45 degrees, 3.8 at 28.9, 10 at 13.5.) Φ is linear in ln R between
+    1.8 standard deviations up at a pitch of 45 degrees, 3.8 at 28.9, 10 at 13.5.) Φ is linear in ln R between
     the knots, so it is **continuous everywhere, its slope jumping at the knots and nowhere else**, and exact
     at any radius: a point reads it at its own R.
 
