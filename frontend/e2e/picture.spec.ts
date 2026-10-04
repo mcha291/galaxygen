@@ -22,6 +22,9 @@ import type { LensCamera } from "../src/galaxy/capture";
 import {
   CHOOSING_VIEWPORT,
   DEFAULT_TEMPLATE,
+  DUSTY_LAYER_RATIO,
+  DUSTY_RATIO_PIN,
+  DUST_FREE,
   GPU_ARGS,
   INPUT_ROUTES,
   LAYER_SUM_TOLERANCE,
@@ -31,6 +34,7 @@ import {
   SELECTION_TEXT,
   STAND_TOLERANCE,
   TOLERANCE,
+  TRANSFER_SLACK,
 } from "./settings";
 
 interface Capture {
@@ -98,15 +102,20 @@ const FRAMES_ABOUT =
   "Written by `npm --prefix frontend run picture:update` (e2e/picture.spec.ts), never by hand: what each committed picture of e2e/captures.json is and what drew it. " +
   "`file` is from frontend/. `renderer` is WebGL's UNMASKED_RENDERER string. Committed pictures belong to that renderer: on another machine `picture:update` regenerates them and the comparison is then local to it.";
 
-/** One /api request as it left the page: its route and the `layer` it asked with (null: no such parameter). */
+/**
+ * One /api request as it left the page: its route, the `layer` it asked with and the `template` it named (null: no
+ * such parameter).
+ */
 interface Asked {
   route: string;
   layer: string | null;
+  template: string | null;
 }
 
 /**
- * The /api requests of a page: how many are in flight, when one last began or ended, and each one's route and
- * `layer` parameter - read from the URL's query, or from the body of a query sent as a POST (transport.js MAX_URL).
+ * The /api requests of a page: how many are in flight, when one last began or ended, and each one's route, `layer`
+ * and `template` parameters - read from the URL's query, or from the body of a query sent as a POST (transport.js
+ * MAX_URL).
  */
 function watchApi(page: Page) {
   const net = { inflight: 0, last: Date.now(), asked: [] as Asked[] };
@@ -117,7 +126,7 @@ function watchApi(page: Page) {
     net.last = Date.now();
     const at = new URL(r.url());
     const params = r.method() === "POST" ? new URLSearchParams(r.postData() ?? "") : at.searchParams;
-    net.asked.push({ route: at.pathname, layer: params.get("layer") });
+    net.asked.push({ route: at.pathname, layer: params.get("layer"), template: params.get("template") });
   });
   const ended = (url: string) => {
     if (!isApi(url)) return;
@@ -233,18 +242,51 @@ async function quiet(page: Page, net: Net) {
   }
 }
 
-/** Release one of the viewer's toggles, and see that it is. */
-async function release(page: Page, label: string) {
-  const button = page.getByRole("button", { name: label, exact: true });
+/** Release one of the viewer's toggles, and see that it is. `siblingOf` names a button of the same group, as `press` takes it. */
+async function release(page: Page, label: string, siblingOf?: string) {
+  const exact = (name: string) => page.getByRole("button", { name, exact: true });
+  const button = siblingOf ? exact(siblingOf).locator("xpath=..").getByRole("button", { name: label, exact: true }) : exact(label);
   if ((await button.getAttribute("aria-pressed")) === "true") await button.click();
   await expect(button).toHaveAttribute("aria-pressed", "false");
 }
+
+/** A frame's summed linear light per channel, from `settle`'s reading of it. */
+const lightOf = (shot: { sum: string }) => shot.sum.split(",").map(Number);
+
+/** One frame's light over another's, per channel. */
+const over = (a: number[], b: number[]) => a.map((v, k) => v / b[k]);
+
+/** The largest move from 1 among ratios. */
+const farthest = (ratio: number[]) => Math.max(...ratio.map((r) => Math.abs(r - 1)));
+
+const five = (ratio: number[]) => ratio.map((r) => r.toFixed(5)).join(", ");
 
 /** A galaxy-bin/1 frame's header: the magic, the header's length, the header (interface/transport.js decode). */
 const wireHeader = (body: Buffer) => JSON.parse(body.subarray(8, 8 + body.readUInt32LE(4)).toString("utf-8")) as Record<string, unknown>;
 
 /** The requests for model data among `asked`: those to a route that takes an input vector. */
 const forModelData = (asked: Asked[]) => asked.filter((a) => INPUT_ROUTES.includes(a.route));
+
+/**
+ * The template on the wire (S58, D217 item 2): every request for model data names the template the galaxy was
+ * started from - `template=<name>` beside its inputs, which is what brings the template's pins to the run (NGC 4414
+ * was drawn barred until the viewer sent it). The viewer lands on the default template and the test then chooses
+ * the capture's, so the requests are the landing's, naming the default, and from the first that names the
+ * capture's template on, every one names it: none goes back and none is nameless. Read off the requests
+ * themselves, so nothing here depends on when a press reached the page. Against an API without templates (one
+ * from before S54) no request names one.
+ */
+function namesItsTemplate(what: string, asked: Asked[], template: string, served: Served | null) {
+  const data = forModelData(asked);
+  if (!served) {
+    expect(data.filter((a) => a.template !== null), `${what}: requests naming a template to an API that serves none`).toEqual([]);
+    return;
+  }
+  const first = data.findIndex((a) => a.template === template);
+  expect(first, `${what}: no request for model data names the template ${template}`).toBeGreaterThanOrEqual(0);
+  expect(data.slice(0, first).filter((a) => a.template !== served.default), `${what}: requests before ${template} was chosen that do not name the landing's template, ${served.default}`).toEqual([]);
+  expect(data.slice(first).filter((a) => a.template !== template), `${what}: requests made of ${template} that do not name it`).toEqual([]);
+}
 
 /** WebGL's unmasked renderer, read on the viewer's own canvas. */
 const rendererOf = (page: Page) =>
@@ -319,7 +361,8 @@ for (const capture of CAPTURES) {
     expect([shot.width, shot.height]).toEqual([side, side]);
     await standsAt(page, capture.camera); // and it is still there: nothing moved the camera while the view settled
 
-    // The switch on the wire. Released, no request names the layer at all: the requests are S54's, to the letter.
+    // The switch on the wire. Released, no request names the layer at all: the requests are those of a viewer
+    // without the switch (S54's, but for the `template` they name since S58, held to the capture's below).
     // Pressed, every request for model data made since carries layer=off - and the three the field mode draws
     // from were all asked again (the star sample, the fields the march reads, the render).
     if (physicsOnly) {
@@ -361,20 +404,68 @@ for (const capture of CAPTURES) {
       }
       throw error;
     }
-    // What the layer does to the light (S55): the same view with the switch released again, read as light. The
-    // model conserves each ring's totals, so the frame's summed linear light should all but hold; the picture
-    // itself must differ (the arms and the bar are the layer's).
+    // What the layer does to the light (S55; split by principle at S58, D217's follow-up): the same view with
+    // the switch released again, read as light. The model conserves each ring's totals, so what a ring emits is
+    // the same with the layer and without; the picture itself must differ (the arms and the bar are the layer's).
+    // What reaches the camera is held by two principles, each where it applies (settings.ts states the numbers):
+    // (ii) the transfer principle, on this frame, which has the dust; (i) the conserving principle, on the same
+    // view with the dust switched off.
     if (physicsOnly) {
-      const off = shot.sum.split(",").map(Number);
+      const off = lightOf(shot);
       await release(page, PHYSICS_ONLY_BUTTON);
       const layered = await settle(page, net, capture.mode);
-      const on = layered.sum.split(",").map(Number);
-      const ratio = off.map((v, k) => v / on[k]);
-      console.log(`${capture.name}: frame sum with the layer ${layered.sum}; physics only over it, per channel: ${ratio.map((r) => r.toFixed(5)).join(", ")}`);
-      await testInfo.attach("layer.json", { body: JSON.stringify({ physicsOnly: off, layered: on, ratio }, null, 2), contentType: "application/json" });
+      const on = lightOf(layered);
+      const ratio = over(off, on);
       expect(layered.png.equals(shot.png), "the picture with the layer is the physics-only picture: the switch drew nothing different").toBe(false);
-      for (const r of ratio) expect(Math.abs(r - 1), `the frame's light moved by more than ${LAYER_SUM_TOLERANCE} with the layer off: ${ratio.join(", ")}`).toBeLessThan(LAYER_SUM_TOLERANCE);
+      // The frame noise the transfer principle's allowance stands for: the physics-only state entered a second
+      // time (the switch pressed again, the view asked for and drawn again), its light over the first reading's.
+      await press(page, PHYSICS_ONLY_BUTTON);
+      const again = await settle(page, net, capture.mode);
+      const noise = farthest(over(lightOf(again), off));
+      console.log(`${capture.name}: frame sum with the layer ${layered.sum}; physics only over it, per channel: ${five(ratio)}; the physics-only frame taken twice differs by ${noise.toExponential(2)}`);
+      expect(noise, `the same state drawn twice differs by ${noise}: the allowance ${TRANSFER_SLACK} no longer stands for the frame's noise`).toBeLessThan(TRANSFER_SLACK);
+
+      // (ii) The transfer principle. The dust's transmission exp(-tau) is convex in its column, so dust
+      // concentrated round a ring - the same dust, conserved - can only raise the ring's mean transmission: with
+      // the layer the frame is no dimmer than without it, and physics only over layered is at most 1 (plus the
+      // frame's noise). How far under 1 is the lanes' dust (the bar's gas lanes, D217), and moves with the lane
+      // width: pinned, so that a change to the lanes is seen here and re-read, not absorbed by a wide bound.
+      for (const [k, r] of ratio.entries()) {
+        expect(r, `physics only is brighter than the layered frame by more than ${TRANSFER_SLACK} in channel ${k}: a conserving placement of the dust can only raise the transmission (${five(ratio)})`).toBeLessThanOrEqual(1 + TRANSFER_SLACK);
+        expect(Math.abs(r - DUSTY_LAYER_RATIO[k]), `channel ${k}: physics only over layered is ${r.toFixed(5)}, pinned at ${DUSTY_LAYER_RATIO[k]} to ${DUSTY_RATIO_PIN} - the lanes' dust, D217; moves with the lane width (${five(ratio)})`).toBeLessThanOrEqual(DUSTY_RATIO_PIN);
+      }
+
+      // (i) The conserving principle, where it applies: the same view with no dust in it. Through the viewer's
+      // own switches - the star-first mode's components, the only place the viewer has them: "stars" off, so the
+      // starlight volume is the whole of the stars' light (the field's own march, no points over it), and "dust"
+      // off, which takes its extinction, its scattered and its thermal light out of the march. Starlight and
+      // ionized gas stay. Physics only is still pressed; then released for the layered frame. Two sums compared
+      // with each other: no picture of either is committed.
+      await press(page, MODE_BUTTON.stars);
+      for (const label of DUST_FREE.released) await release(page, label, DUST_FREE.beside);
+      for (const label of DUST_FREE.kept) await expect(page.getByRole("button", { name: label, exact: true })).toHaveAttribute("aria-pressed", "true");
+      await standsAt(page, capture.camera);
+      // With the points off there is no selection to wait for: the view settles as the field mode's does.
+      const freeOff = await settle(page, net, "field");
+      const sinceFree = net.asked.length;
+      await release(page, PHYSICS_ONLY_BUTTON);
+      const freeOn = await settle(page, net, "field");
+      expect(forModelData(net.asked.slice(sinceFree)).filter((a) => a.layer !== null), "requests naming the layer for the dust-free frame with the switch released").toEqual([]);
+      expect([freeOff.width, freeOff.height, freeOn.width, freeOn.height]).toEqual([side, side, side, side]);
+      await standsAt(page, capture.camera);
+      const free = over(lightOf(freeOff), lightOf(freeOn));
+      // The dust is out of both: without its extinction each frame is brighter than its dusty counterpart.
+      const lift = { layered: over(lightOf(freeOn), on), physicsOnly: over(lightOf(freeOff), off) };
+      console.log(`${capture.name}: without the dust, frame sum with the layer ${freeOn.sum} and physics only ${freeOff.sum}; physics only over layered, per channel: ${five(free)}; dust-free over dusty: layered ${five(lift.layered)}, physics only ${five(lift.physicsOnly)}`);
+      await testInfo.attach("layer.json", {
+        body: JSON.stringify({ dusty: { physicsOnly: off, layered: on, ratio, noise }, dustFree: { physicsOnly: lightOf(freeOff), layered: lightOf(freeOn), ratio: free }, dustFreeOverDusty: lift }, null, 2),
+        contentType: "application/json",
+      });
+      expect(freeOn.png.equals(freeOff.png), "without the dust the picture with the layer is the physics-only picture").toBe(false);
+      for (const r of [...lift.layered, ...lift.physicsOnly]) expect(r, `the dust-free frame is not brighter than the dusty one: the dust switch took nothing out (${five(lift.layered)}; ${five(lift.physicsOnly)})`).toBeGreaterThan(1);
+      for (const r of free) expect(Math.abs(r - 1), `without the dust the frame's light moved by more than ${LAYER_SUM_TOLERANCE} with the layer off: ${five(free)}`).toBeLessThan(LAYER_SUM_TOLERANCE);
     }
+    namesItsTemplate(capture.name, net.asked, capture.template, served);
     if (updating) {
       const bytes = readFileSync(path);
       record(capture.name, {
@@ -409,6 +500,7 @@ test("physics only on the wire: every request for model data carries layer=off, 
     if (new URL(r.url()).pathname === "/api/clouds" && r.ok()) censuses.push(r.body().then(wireHeader, () => null));
   });
   await page.setViewportSize(CHOOSING_VIEWPORT);
+  const served = await servedTemplates(page);
   await page.goto("/");
   await page.waitForFunction(() => !!window.__galaxygenCapture && !!window.__galaxygenFrameSum, null, { timeout: READY.timeoutMs });
   await quiet(page, net);
@@ -443,6 +535,9 @@ test("physics only on the wire: every request for model data carries layer=off, 
   const after = forModelData(net.asked.slice(released));
   expect(after.length).toBeGreaterThan(0);
   expect(after.filter((a) => a.layer !== null), "requests naming the layer after the switch was released").toEqual([]);
+  // And the template (S58): the galaxy landed on is the default one, and every request made of it - on every
+  // route above, in a URL or in a POST's body, with the layer and without - names it.
+  namesItsTemplate("physics only on the wire", net.asked, served?.default ?? DEFAULT_TEMPLATE, served);
 
   // The cloud census, as it was answered under each setting: the interior noise's three parameters under
   // `cloud_interior`, with the layer on and off alike, and none of them among the scalars.

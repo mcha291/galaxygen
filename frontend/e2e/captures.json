@@ -7,7 +7,7 @@
     "mode": "field or stars: the Rendering buttons 'field' and 'star-first' (GalaxyTab's two modes).",
     "filters": "The template's filter set, one of the viewer's (src/galaxy/filters.json and instruments.json `sets`), as /api/templates states it.",
     "viewport": "The picture's side in pixels: square, at a device pixel ratio of 1. A thumbnail is drawn at its own size, not scaled down from a frame.",
-    "layer": "Present only on a capture taken with the randomness layer off (S55, D214: invariant I5), and then \"off\": the test presses the viewer's own 'physics only' switch, holds every request made after it to layer=off, and compares the frame's summed light with the same view's with the layer. Absent, the layer is on, the viewer's default: every other capture.",
+    "layer": "Present only on a capture taken with the randomness layer off (S55, D214: invariant I5), and then \"off\": the test presses the viewer's own 'physics only' switch, holds every request made after it to layer=off, and compares the frame's summed light with the same view's with the layer - as it is captured, with its dust (the transfer principle), and with the dust switched off (the conserving principle; S58, e2e/settings.ts). Absent, the layer is on, the viewer's default: every other capture.",
     "file": "Where the picture is committed, from frontend/: e2e/frames/<name>.png for a frame (the path tools/goal_metrics.py reads), public/templates/<template>.png for a thumbnail (where the app serves it from: src/workflow/templates.ts thumbnailOf).",
     "pending": "Present only while the picture cannot be taken: says what it waits on. The test skips the capture until the API serves its template, and tests/test_picture.py refuses the mark once the model has templates."
   },

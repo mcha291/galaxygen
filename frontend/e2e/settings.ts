@@ -44,22 +44,59 @@ export const PHYSICS_ONLY_BUTTON = "physics only";
  */
 export const INPUT_ROUTES = ["/api/arrays", "/api/region", "/api/system", "/api/render", "/api/clouds", "/api/clusters", "/api/remnants", "/api/bright"];
 
+// --- what the layer may do to the frame's light (S55, D214: invariant I5; split by principle at S58, D217's follow-up) ---
+// The spec reads the layer-off capture's view both ways through `__galaxygenFrameSum`: the frame's summed linear
+// light per channel, physics only over layered. The model conserves each ring's totals, so what a ring EMITS is
+// the same with the layer and without. What REACHES the camera is another matter where there is dust, so the one
+// bound S55 put on the capture's frame (0.01, measured then at 1.00257, 1.00115, 0.99942) is two statements since
+// S58, each held where its principle applies. The gate's ruling: "Do not keep 0.01 on the dusty frame by treating
+// the lanes' dust differently."
+
 /**
- * How far the frame's summed linear light may move, per channel, when the layer is switched off (the spec reads
- * the same view both ways through `__galaxygenFrameSum`). The model conserves each ring's totals, so the light
- * emitted is the same. Measured at S55 on the Milky Way template, face-on, field mode, rgb: physics only over
- * layered 1.00257, 1.00115, 0.99942 - a quarter of a percent at most. Why not exactly 1, measured the same day
- * with the star-first mode's component switches (the points off, so the starlight volume is all the starlight):
- * - **the starlight alone, the whole disc in the frame (45 kpc framed): 1.00003** in every channel - the totals
- *   are conserved, to the march's quadrature;
- * - **the frame's edge**: at the template's 20 kpc the disc runs past the frame, and what is cut off depends on
- *   where round the ring the light lies - the starlight alone reads 1.0008 to 1.0013;
- * - **the dust**: what it removes is not linear in its column, so the same dust and stars placed otherwise round a
- *   ring lose another share - with the dust on, the whole disc in the frame, 1.0007, 0.9992, 0.9975.
- * The bound is four times the capture's largest move: a layer that changed a ring's total would move the sum by
- * far more than these two rearrangements do.
+ * (i) The conserving principle, where it applies - **the view with no dust in it**: how far the frame's light may
+ * move, per channel, when the layer is switched off. Measured at S58 on the Milky Way template at its own camera
+ * (face-on, 20 kpc framed, rgb, 1024 px), starlight and ionized gas, the dust switched off: physics only over
+ * layered **1.00001, 1.00005, 1.00004** (1.0000104, 1.0000461, 1.0000396) - the totals are conserved, to the
+ * march's quadrature and what the frame's edge cuts off (the disc runs past a 20 kpc frame, and how much of a
+ * ring's light lies outside depends on where round the ring it is placed; S55's pattern read 1.0008 to 1.0013
+ * here, and 1.00003 with the whole disc in the frame). A layer that changed a ring's total would move the sum by
+ * far more than the bound.
  */
 export const LAYER_SUM_TOLERANCE = 0.01;
+
+/**
+ * How the dust-free view is reached: through the viewer's own component switches, which it has in the star-first
+ * mode alone (GalaxyTab's COMPONENT_SWITCHES; the field mode has none). `released` are switched off - "stars", the
+ * points, so that the starlight volume is the whole of the stars' light and the frame is the field's own march
+ * with nothing over it; and "dust", which takes its extinction, its scattered and its thermal light out of that
+ * march (components.ts brightestLayers: dust 0, dustDepth 0). `kept` stay on. `beside` names a button of the same
+ * group, so that "stars" is the component and no other button of that name. Measured at S58: without the dust the
+ * frame is 1.35 to 1.38 times as bright as with it, in every channel, layered and physics only alike.
+ */
+export const DUST_FREE = { released: ["stars", "dust"], kept: ["starlight", "ionized gas"], beside: "starlight" } as const;
+
+/**
+ * (ii) The transfer principle, on the capture's own frame, which has the dust: transmission exp(-tau) is convex in
+ * the dust's column, so the same dust concentrated round a ring (a conserving placement) can only raise the ring's
+ * mean transmission. The layered frame is therefore no dimmer than the physics-only one: **physics only over
+ * layered is at most 1, plus this**, per channel. It stands for the frame's noise, **measured at S58 as zero** on
+ * the renderer in frames.json: the same state drawn twice is the same sum to the last digit, both within a page
+ * (physics only pressed, released and pressed again: a relative difference of 0) and across two page loads (the
+ * layered frame of `milky_way-field` and of `milky_way-physics-only`: 32451.434562054346, 28458.472909397446,
+ * 26434.91662099352 in both). So nothing of it is spent on run-to-run noise here; it is the room left for another
+ * renderer's arithmetic, and the spec fails if the same state drawn twice ever differs by as much.
+ */
+export const TRANSFER_SLACK = 1e-3;
+
+/**
+ * Physics only over layered on the dusty frame, per channel (R, G, B), as measured at S58 (0.9848697, 0.9868845,
+ * 0.9884525): with the layer the frame is 1.2 to 1.5 % brighter. **The lanes' dust, D217; moves with the lane
+ * width**: the bar's gas lanes gather a ring's dust into a narrow range of azimuth, and by (ii) that lets more of
+ * the ring's light through. Pinned to DUSTY_RATIO_PIN, so that a change to the lanes (or to anything else that
+ * places the dust) is seen here and the numbers re-read, not absorbed by a bound wide enough to hold any of them.
+ */
+export const DUSTY_LAYER_RATIO = [0.98487, 0.98688, 0.98845] as const;
+export const DUSTY_RATIO_PIN = 1e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
 export const SELECTION_TEXT = /every disc star in view above/;
