@@ -9246,3 +9246,76 @@ templates' frames and the four-window table set beside the reading": (a) keep th
 close; or (b) replace the arm-number law with S26's global window on every ring — no radial branching, the fade
 never triggering — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and 0.43 / 0.36 / 0.18 / 0.04 / 0 and in turn
 fails the reading's statements 4 and 15. "No third option is offered. (a) is the default if unanswered."
+
+**Built to ruling 11 (the builder's third pass, 2026-10-04) and read.** `local_swing_x` is X(R) = κ²R/(2πGΣ);
+`swing_window`'s variable is renamed and `swing_x`'s about says what 2/f_d is (m·X_m, X at m = 1), its value and
+the global window's unchanged to the bit. **A test now re-derives the weights by hand** on three rings from the
+published κ, Σ and v, with none of the module's functions: at 7.99 kpc X = 7.93, Γ = 1.10 and the weights are
+0, 0.548, 1, 1, 1, where the window as first built gave 1, 1, 0.849, 0.527, 0.264; the published amplitudes
+follow from the hand's weights to 1e-9. The lead's own probe, written before the builder's, gives the same shares.
+- *Ruling 13's predictions, all held:* Milky Way mass-weighted power m = 2…6 0.078 / 0.212 / 0.238 / 0.248 / 0.225
+  (on the gain; on the published amplitudes, which carry the bar's taper, 0.014 / 0.157 / 0.231 / 0.281 / 0.317);
+  the whole power to 11.14 kpc, the last ring with a mode 12.34 kpc at 0.032 A², the fade over seventeen rings;
+  the worst ring's Σ Ã_m + b 0.795, the saturation 1 on every ring at both templates' seeds; `ngc_4414` 0.194 /
+  0.236 / 0.239 / 0.191 / 0.140, whole to 9.19 kpc, gone at 9.94. No cell negative on 240 seeded galaxies (lowest
+  +0.0025); the one-mode stellar field byte-identical to S55's. The first turn's "no jump larger than the bar
+  taper's" still fails: 0.178 between the last two rings.
+- *`arm_multiplicity`:* **Milky Way 6, `ngc_4414` 4** (S55 drew 4 for both). It is a label: nothing reads it.
+- *The gas:* at R₀ a = 0.466, crest 3.059, trough 0.534 — S51's own, because the mask's share sits at its cap on
+  every full-power ring; at 6 kpc 2.67 / 0.57; the ratio of means 2.73 out to 11.14 kpc and fading to 1.31 at the
+  last ring; an independent measurement of the ratio (ψ written out on 72 000 points, ranked by a sort) agrees to
+  2e-6. `sfr_modulation` peaks at 6.1 (41.6 on the exponential ridge).
+- *Layer on, the default galaxy:* clouds 16 822 → 16 660, clusters 12 930 → 12 814; the census's Q over the
+  field's 1.038 → 0.987, the HII census over the field 1.014 → 0.965 (disc) and 0.994 → 1.042 (a sector) — one
+  draw each, inside their tolerances; a ring's light at R₀ still falls, −0.89 % (D210's prediction (i), failed at
+  S51, fails still). Rows 35 and 37 on the layer-on census, for the record: −2.061, −0.1026.
+- *Layer off, against S55:* every field S55 had is S55's bits except `arm_multiplicity` (4 → 6 for the Milky Way;
+  unchanged for `ngc_4414`); the 37 rows and the five template checks unmoved; `specs: OK`, 12 / 20 / 5.
+- *Cold timings (`tools/timings.py`; S55 → now):* the gas stage 0.024 → 0.32 s; `clouds: whole disc` 0.85 → 2.98 s;
+  `clusters: whole disc` 1.96 → 3.99 s; `render: whole, rgb` 2.47 → 4.42 s; `region: whole disc` 0.81 → 1.09 s;
+  layer-off rows unchanged. The ranked ridge is the cost: each cloud is ranked on the ring at its own radius.
+
+**The pictures, measured (`tools/goal_metrics.py`; display targets, never rows).** Six frames regenerated; the
+physics-only frame is S55's to the byte.
+
+| Picture | A1 | A2 | A3 | A4 | A5 | A6 | dominant m | arm / interarm, blue | dark fraction | slope |
+|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 0.052 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 2 | 1.83 | 0.0066 | −1.99 |
+| `milky_way`, field — S54 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 4 | 1.58 | 0.0000 | −3.32 |
+| `milky_way`, field — now | 0.030 | 0.039 | 0.016 | 0.048 | 0.050 | 0.045 | 5 | 1.52 | 0.0245 | −4.21 |
+| `milky_way`, star-first — now | 0.017 | 0.030 | 0.042 | 0.061 | 0.088 | 0.074 | 5 | 1.98 | 0.0334 | −0.58 |
+| goal: NGC 4414 (Hubble) | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 1 | 2.72 | 0.157 | −2.09 |
+| `ngc_4414`, field — S54 | 0.086 | 0.101 | 0.016 | 0.023 | 0.021 | 0.020 | 2 | 1.84 | 0.004 | −6.0 |
+| `ngc_4414`, field — now | 0.085 | 0.092 | 0.019 | 0.025 | 0.017 | 0.017 | 2 | 1.66 | 0.003 | −5.6 |
+| `ngc_4414`, star-first — now | 0.085 | 0.086 | 0.026 | 0.029 | 0.027 | 0.026 | 2 | 1.88 | 0.003 | −1.0 |
+
+The Milky Way's spectrum is broad where it was a single spike, with the weight on m = 4–6 where the drawing's is
+on m = 2 and 4; its lanes now register (0.025–0.033 of the disc under three quarters of its surroundings, against
+0.0000–0.0005 and the drawing's 0.0066). `ngc_4414` is still the bar's m = 2: its arm modes are weak under the
+taper, and the picture waits on P3.
+
+**The blind reading set beside the law (`READING_ARM_MODES.md`; ruling 12).** The law fails statement 1 (A3/A2:
+1.6 against 0.33 ± 0.19), statement 6 (two arms inside half the optical radius: the law has m ≥ 3 dominant
+there) and statement 8 (no m = 5–6 dominance observed: the law's from 8 kpc); it meets statement 7 (the dominant
+m rises outward) and statement 14 (arms end inside the optical disc). **Debt #138**, re-read at P3's close.
+
+**Carried to S57's gate G2 with the ridge it concerns (no turn spent here).** (i) The gas's published field passes
+the form's exact bound by up to 2.5e-3, because each ring is divided by its sampled mean (S51's conservation step)
+and a ranked ridge's 360-cell mean is off 1 by up to 1.05e-3; the law itself is inside the bound on all 240
+galaxies. (ii) I1 by one unit in the last place: `cloud_count_total` and `bright_star_count_1e3` are *expected*
+totals summed over cells whose placement weights average to 1 only to rounding; layer on and off they now differ
+by one ulp, are held to one ulp in the test by name, and are not census statistics. (iii) The fade's exponent,
+which ruling 8 leaves to P2's solver. **Debts opened: #138** (the law against the reading), **#139** (the
+phases' statistic — uniform and independent of one another and of the bar, `[inferred]`, no source read; the
+two-armed mode no longer starts at the bar's tips), **#140** (the ranked ridge: a one-session instrument, not a
+local law, its width the measured one only for a single mode, three times the census's cost). Register 78 open =
+11 + 67, 45 discharged.
+
+**For the owner, at the close (the third turn's ruling; (a) is the default if unanswered).** The plan's
+arm-number law, correctly built, makes the Milky Way template four-to-six-armed in starlight outside the bar
+until P3's bar exists, and the reading says real discs are two-armed inside half the optical radius with m = 3 or
+m = 1 taking over outside, never m = 5–6. **(a)** Keep the law and carry debt #138 to P3's close; or **(b)**
+replace the arm-number law with S26's global window on every ring — no change of arm number with radius, arms to
+the disc's edge — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and, for `ngc_4414`, 0.43 / 0.36 / 0.18 / 0.04 / 0,
+and in turn fails the reading on a coherent pattern reaching the edge of a flocculent disc. If (b), S57 opens
+with that swap — one function, the same independent test, the pins re-read — and no further gate turn.

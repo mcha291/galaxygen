@@ -693,9 +693,9 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137 | 64 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140 | 67 |
 
-So the board's **75 open** is 11 permanent and 64 carried, and no item is unruled. (S22
+So the board's **78 open** is 11 permanent and 67 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -726,7 +726,8 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #129–#131, the gas ridge's width, the HI's contrast and the contrast's unread scatter, D210; S54, the templates, opened
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
-the layer's totals conserved in expectation only until the ring-first draw, D214.) The eleven
+the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3654,7 +3655,41 @@ never been judged in twenty-three sessions.
    2026-10-04 (D215)**: no expected ring total of any census, realised totals conserved from L1. **What closes it: L1's ring-first draw (S60)** — a ring's objects, count and every
    per-object draw, on a ring stream, the layer assigning cell and azimuth — after which the list is empty and
    the realised ring totals are identical with the layer on or off. What would kill the reading: a bias in the
-   on-minus-off totals over seeds, which would make it a leak and not a redraw.
+   on-minus-off totals over seeds, which would make it a leak and not a redraw. **S56:** two *expected* totals
+   (`cloud_count_total`, `bright_star_count_1e3`) now differ by one unit in the last place with the layer on and
+   off — a sum over cells whose weights average to 1 only to rounding; held to one ulp by name, carried to G2.
+138. **The arm-number law fails the observed arm-mode spectra** (S56, D215 ruling 12). The law is the local swing
+   window: at each ring the power goes to the modes with 1 < X_m/Γ < 2, X_m = κ²R/(2πGΣm) on the checkpoint-1
+   disc. Built correctly it gives the Milky Way template 0.08 / 0.21 / 0.24 / 0.25 / 0.22 of its arm power in
+   m = 2…6 (`ngc_4414` 0.19 / 0.24 / 0.24 / 0.19 / 0.14), m ≥ 3 dominant at every radius and m = 5–6 from 8 kpc.
+   The blind reading (`READING_ARM_MODES.md`, read as a check and not an input) says otherwise in starlight:
+   A3/A2 = 0.33 ± 0.19 (grand design) to 0.58 ± 0.11 (flocculent) against the law's 1.6 (statement 1); two arms
+   inside half the optical radius in 83 % of multiple-arm galaxies (statement 6); no source showing m = 5 or 6
+   dominant at any radius (statement 8). It meets the statements that the dominant m rises outward and that arms
+   end inside the optical disc. **Carried.** The stated physical answer is that two strong inner arms are a
+   driven pattern — a bar, a companion — and not local swing amplification: **re-read once at P3's close (S58)**
+   with the bar's m = 2 built, same statements, same table. An m = 1 term is not a closer (lopsidedness lies
+   outside the split). If statement 8 still fails after P3 it is a conflict of sources, local swing theory
+   against the Fourier reading, to record and put to the owner — not to mend with a constant. The owner's
+   alternative, asked at S56's close: S26's global window on every ring (D215).
+139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
+   uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
+   differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
+   synthetic field to cite its statistic or carry a debt. What it gives up: until S55 the pattern's convention
+   started each arm at a tip of the bar; a drawn phase for m = 2 does not. **Carried.** What closes it: a reading
+   on the phase of spiral arms relative to bar ends and between modes (P3's reading is the place), or P4's pins
+   for a template whose arms are measured.
+140. **The gas ridge is placed by rank along each ring: a one-session instrument** (S56, D215 rulings 7–10). The
+   exponential of a sum of modes made knots (a crest of 11 at R₀ where one mode's is 3.07), so on each ring the
+   gas takes one mode's ridge values in the order of the stellar pattern. That keeps the sourced ratio of means
+   and one mode's histogram on every ring, and costs four things: it is not local (a point's gas depends on its
+   whole ring's pattern); on a ring with several modes the ridge's width is not the measured one (#129) — a tall
+   crest takes a wide ridge, a low one none; the published field passes the form's exact bound [0.534, 3.068] by
+   up to 2.5e-3, because each ring is divided by its sampled mean and a ranked ridge's 360-cell mean is off 1 by
+   1.05e-3 (the law itself is inside the bound), and the sector means are good to 2e-3; and the cloud census is
+   three and a half times slower (0.85 → 2.98 s cold; the render 2.47 → 4.42 s). **Carried to S57**: P2's steady
+   shock per ring replaces the ridge, measures the fade's exponent (ruling 8 took it as 1), and must bring the
+   cost back. The named alternative, not adopted: a power-weighted mixture of one-mode ridges.
 
 
 ---
