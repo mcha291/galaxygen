@@ -34,7 +34,9 @@ LEVEL0: dict[str, Constant] = {
         0.07,
         "km/s/kpc",
         "Hubble constant, 70 km/s/Mpc, i.e. h = 0.7 [verified: GALAXY_INPUTS.md §2, citing BHG16 "
-        "§1]. Read only to form ρ_crit = 3H₀²/8πG, which fixes R₂₀₀. The local-distance-ladder and "
+        "§1]. Read to form ρ_crit = 3H₀²/8πG, which fixes R₂₀₀, and since S58 by the bar stage, "
+        "which turns the halo's assembly redshift into the disc's age with it (a flat universe's "
+        "lookback time, with OMEGA_M). The local-distance-ladder and "
         "CMB values differ by about 8%; that propagates to R₂₀₀ as 8% and to R_d through λ_d, and "
         "is not modelled.",
     ),
@@ -833,8 +835,12 @@ LEVEL0: dict[str, Constant] = {
         "Median of the bar's maximum normalised m = 2 Fourier density amplitude, A_2^max, over the 587 "
         "barred S4G galaxies at 3.6 micron: median 0.374, mean 0.412, 16th-84th percentiles 0.214-0.609 "
         "[verified: Diaz-Garcia et al. 2016, A&A 587, A160, VizieR J/A+A/587/A160 tablea3.dat column "
-        "A2, read and reduced on 2026-09-26 (D175)]. A pure cos 2phi bar has A_2 equal to its "
-        "amplitude, so this is the bar_contrast like for like. The median rather than the mean because "
+        "A2, read and reduced on 2026-09-26 (D175)]. Since S58 (D217) the bar is a body normalised so "
+        "that the m = 2 amplitude of the bar's part of the published stellar field, at its largest over "
+        "the rings inside the half-length, is the drawn bar_contrast: a maximum over radius against the "
+        "source's maximum over radius, like for like in the amplitude (not in where the maximum falls: "
+        "the body's is near four tenths of the half-length, the stacks' nearer its end). Until S58 the "
+        "bar was a pure cos 2phi term, whose A_2 is its amplitude at every radius. The median rather than the mean because "
         "the distribution is skewed (maximum 1.3). Elmegreen et al. 2011's 13 grand designs read a "
         "peak m = 2 of 0.43 +/- 0.12 (Table 2), the named alternative. Not derived from the bar's "
         "length: the correlation is real ('long bars are typically strong', the same paper's abstract) "
@@ -844,9 +850,12 @@ LEVEL0: dict[str, Constant] = {
         0.52,
         "dimensionless",
         "Half the natural-log width of A_2^max's 16th-84th percentile range, ln(0.609/0.214)/2 "
-        "[verified: the same VizieR table]. Drawn log-normally on pattern_seed and capped at 0.9, since "
-        "an amplitude at 1 empties the inter-bar sector and a Fourier amplitude above 1 describes a "
-        "peaked bar no single cosine can (the table's top 2% exceed 0.9).",
+        "[verified: the same VizieR table]. Drawn log-normally on pattern_seed and capped at 0.9 (the "
+        "table's top 2% exceed 0.9). The cap was set for the cosine bar the model held until S58 - a "
+        "cosine's amplitude at 1 empties the inter-bar sector, and a Fourier amplitude above 1 describes "
+        "a peaked bar no single cosine can. The body that replaced it (D217) is nowhere near empty at "
+        "the cap: at 0.9 its contrast is nowhere under 0.266. So the cap no longer keeps the field "
+        "positive; it is kept, unchanged, so that every drawn amplitude is the one it was.",
     ),
     "SOLAR_METALLICITY": Constant(
         0.0142,

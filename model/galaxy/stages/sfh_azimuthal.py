@@ -22,6 +22,17 @@ there, not here:
   leaves the gaps. So ``sfr_surface_density`` times the modulation integrates over φ back to
   ``sfr_surface_density`` at every radius: a redistribution, not a new source
   (RENDER_PHYSICS.md §7). Where a ring forms nothing at all the modulation is 1.
+- **Inside a bar's reach it reads the bar's footprint, not the lanes** (S58, D217's follow-up at
+  the gate). The gas's own contrast there carries the bar's two gas lanes, whose width is a
+  declared placeholder no source gave; "the lanes' one unsourced number (the width) must not
+  drive a census". So g here is ``star_formation_gas_contrast``, which ``gas_pattern``
+  publishes beside its own contrast: the same blend with the lanes' excess spread evenly over
+  the stellar bar's footprint - the measured ratio of the gas inside the footprint to the gas
+  outside it kept, no ridge. Outside every bar's reach and in an unbarred galaxy the two
+  fields are the same numbers, so nothing moves there. The dust and the cloud census keep the
+  lanes. (The laned alternative, as the gate read it before ruling: 88-93 % of a ring's star
+  formation in its top tenth of cells at 2-3.3 kpc, and a largest modulation of 17.2 - the
+  placeholder's ridge raised to the law's exponent.)
 
 **Why the normalisation is the plain ring mean.** BUILD_II Phase 2 words it as "its
 gas-weighted mean around the ring is 1", and the gate beside it as "integrates to the
@@ -31,7 +42,7 @@ and an arm is exactly where both are high — and the gate is the physics: the t
 formation is the axisymmetric model's, only its place moves. The mean is taken over the
 grid's φ cells, which are uniform, so it is the φ-integral over 2π exactly.
 
-**Provenance.** ``gas_density_contrast`` is seeded (through the pattern's drawn pitch, amplitudes
+**Provenance.** ``star_formation_gas_contrast`` is seeded (through the pattern's drawn pitch, amplitudes
 and bar, and since S56 the layer's phases of the arm modes), so the modulation is seeded. The
 histories are not: ``sfh_azimuthal`` *extends* ``sfh`` (``Stage.extends``), so every field
 the two share is computed by ``sfh``'s own compute in ``sfh``'s own restricted view, which
@@ -76,8 +87,10 @@ SFR_MODULATION = FieldDecl(
     composed=True, neutral=1.0,
     about=(
         "Where around each ring today's stars form, relative to the ring's mean: the gas follows "
-        "its own contrast, its steady response to the stellar arms (the stellar bar's term inside "
-        "the bar), not the stars' own contrast; the star formation law's own exponent and its "
+        "its own contrast, its steady response to the stellar arms, not the stars' own contrast - "
+        "and inside a bar's reach the gas raised evenly over the stellar bar's footprint, not the "
+        "bar's two gas lanes, whose width no source gave: star formation follows the bar's "
+        "footprint; the star formation law's own exponent and its "
         "threshold switch are applied cell by cell, and the result is divided by its mean around "
         "the ring. So it averages to exactly 1 on every ring and the star formation rate times it "
         "integrates back to the axisymmetric rate: the arms move where stars form, not how many. "
@@ -100,7 +113,7 @@ def compute_modulation(ctx: Context, shared: Mapping[str, Any]) -> Mapping[str, 
             ctx.fields, SFR_MODULATION, (ctx.grid.R.size, ctx.grid.phi.size),
             lambda: sfr_modulation(
                 shared["gas_surface_density"], shared["sf_threshold_surface_density"],
-                ctx.fields["gas_density_contrast"], float(ctx.constants["KS_INDEX"]),
+                ctx.fields["star_formation_gas_contrast"], float(ctx.constants["KS_INDEX"]),
             ),
         ),
     }
@@ -113,11 +126,12 @@ SFH_AZIMUTHAL = IMPLEMENTATIONS.register(
         about=(
             "The inside-out star formation history exactly as the axisymmetric stage computes it — "
             "every history on (R, t), no azimuth — plus where around each ring today's stars form: "
-            "the gas's own arm contrast read through the star formation law's own non-linearity and "
+            "the gas's own arm contrast - inside a bar's reach, the gas raised evenly over the bar's "
+            "footprint - read through the star formation law's own non-linearity and "
             "renormalised around every ring, so the total is unchanged and only its place moves."
         ),
         own=compute_modulation,
-        requires=("gas_density_contrast",),
+        requires=("star_formation_gas_contrast",),
         publishes=(SFR_MODULATION,),
     )
 )

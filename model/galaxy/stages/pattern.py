@@ -126,7 +126,10 @@ BAR_PRESENT: tuple[str, str] = ("no", "yes")  # the verdict's two labels, in thi
 # (level0, ARM_MULTIPLICITY_MAX's about line).
 ARM_MULTIPLICITIES: tuple[float, ...] = (2.0, 3.0, 4.0, 5.0, 6.0)
 ARM_MODES: tuple[int, ...] = tuple(int(m) for m in ARM_MULTIPLICITIES)
-BAR_CONTRAST_CAP = 0.9  # a cosine bar above this empties its inter-bar sector (BAR_CONTRAST_LOG_SCATTER)
+# The draw's cap. Set for the cosine bar S26-S57 held (near 1 a cosine empties its inter-bar sector); the body
+# S58 put in its place is nowhere under 0.266 at 0.9, so the cap is kept for the draws' sake, not the field's
+# (BAR_CONTRAST_LOG_SCATTER).
+BAR_CONTRAST_CAP = 0.9
 PC_PER_KPC = 1000.0  # a definition: the disc's surface density is published per square parsec
 
 
@@ -290,7 +293,16 @@ def cosmic_time(redshift: float, hubble: float, omega_m: float) -> float:
 def lookback_time(redshift: float, hubble: float, omega_m: float) -> float:
     """How long ago ``redshift`` was, in Gyr: t(0) − t(z) of :func:`cosmic_time`. The disc's age since the
     halo's assembly redshift is this (D217 item 1: "the disc's age since ``halo_assembly_z``"); the model
-    held no function from that redshift to a time until S58 - the halo reads it for its concentration only."""
+    held no function from that redshift to a time until S58 - the halo reads it for its concentration only.
+
+    **Two clocks, a declared debt.** By this cosmology the universe is 13.467 Gyr old (H₀ = 70 km/s/Mpc,
+    Ω_M = 0.3, flat); the grid's time axis runs to ``t_max`` = 13.8 Gyr, "cosmic time from t = 0"
+    (``core/grids.py``). The model so holds two ages of the universe, 2.5 % apart, and the bar's presence is
+    judged on this one. What the choice moves: at the default assembly redshift (1.66, a lookback of
+    9.625 Gyr) a disc is barred above f_d = 0.3295; with the same lookback stretched to the grid's clock
+    (× 13.8/13.467: 9.863 Gyr) the threshold would be 0.3276. Neither clock is reconciled with the other
+    here.
+    """
     return cosmic_time(0.0, hubble, omega_m) - cosmic_time(redshift, hubble, omega_m)
 
 

@@ -369,7 +369,7 @@ CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
-                        "steady response to the stellar arms, and the stellar bar's term inside the bar — so "
+                        "steady response to the stellar arms, and the bar's two gas lanes inside the bar — so "
                         "clouds crowd onto the arms as the gas does, and each sector's share of clouds "
                         "follows the same contrast; the same rule in both models.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
