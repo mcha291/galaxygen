@@ -101,15 +101,17 @@ def test_arm_multiplicity_is_a_label_from_the_closed_set_and_no_longer_a_draw(mo
     the arm number was one seeded draw, weighted by the swing window. The draw retired: the window at every radius
     splits the arms' power among the five modes, and ``arm_multiplicity`` is the label of the mode carrying the most
     mass-weighted power. It is a member of the closed set, and it follows the disc, not the pattern seed: the seed
-    reaches it only through the saturation and the bar's taper, which weigh the rings, and at the default inputs
-    every one of thirty seeds reads 3."""
+    reaches it only through the saturation, which weighs the rings, and at the default inputs every one of thirty
+    seeds reads 6 (D215 ruling 11, the window on X at m = 1; on the X / 2 window of S56's first two passes: 3)."""
     only = ("arm_multiplicity", *AMPLITUDE_FIELDS)
     seen = {run(model, {"pattern_seed": s}, grid=COARSE, only=only).fields["arm_multiplicity"] for s in range(30)}
-    assert seen == {3.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
-    # The disc moves it: a halo-dominated disc carries six arms, a disc-dominated one two.
+    assert seen == {6.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
+    # The disc moves it: a disc-dominated disc's label is four arms where the default's and a halo-dominated one's
+    # are six (the label weighs the published amplitudes, the bar's taper in them, so it leans to the outer disc's
+    # arm numbers; on the X / 2 window these read 6 and 2 beside the default's 3).
     halo = run(model, {"disc_spin": 0.03, "baryon_retention": 0.15}, grid=COARSE, only=only).fields["arm_multiplicity"]
     disc = run(model, {"disc_spin": 0.01, "baryon_retention": 0.5}, grid=COARSE, only=only).fields["arm_multiplicity"]
-    assert (halo, disc) == (6.0, 2.0)
+    assert (halo, disc) == (6.0, 4.0)
     # Five radial fields, one per arm number of the closed set, each non-negative and under 1.
     o = run(model, grid=COARSE, only=only)
     assert AMPLITUDE_FIELDS == tuple(f"arm_mode_amplitude_{int(m)}" for m in ARM_MULTIPLICITIES)

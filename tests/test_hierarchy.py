@@ -103,7 +103,7 @@ def test_union_prefix_and_determinism_at_every_level(fields, level):
     assert names(small) <= names(alone)
     # And the level-0 catalogue is untouched by the machinery: no name columns, the sample as always.
     # S56 (D215): was 22 - the cell's share of its ring is the stellar pattern's sector mean, and the pattern is five modes now.
-    assert "level" not in parent and parent.size == 9
+    assert "level" not in parent and parent.size == 14
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields):

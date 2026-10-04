@@ -110,6 +110,21 @@ assert len(CENSUS_STATISTICS) == 14  # nine scalars, five radial fields: the fou
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
 # And the one census no pattern places (bubbles.remnant_expected shares a ring evenly among its sectors).
 UNPLACED_OBJECTS = {"remnant"}
+# Two scalars are a census's *expected* total: the expected counts summed over every cell, each cell carrying its
+# sector's placement weight. The weights average to 1 round a ring to rounding and not to the bit, so the total is
+# the same number with the layer on or off, and between two realisations, **to its last bit or the one beside it**:
+# found at S56 between two texture seeds (first pass), and between the layer on and off when the window was
+# corrected (third pass, D215 ruling 11: at the default seeds `cloud_count_total` is 16693.43298750999 on and
+# 16693.432987509994 off - until then the two happened to be the same bits, and I1's test held them to that).
+# The layer-off value is S55's own bits (the reference). Held to one unit in the last place here; reported to the
+# gate, since I1 says "bit for bit" and an expected total is no census statistic.
+EXPECTED_TOTALS = {"cloud_count_total", "bright_star_count_1e3"}
+
+
+def same_expected_total(a, b) -> bool:
+    """Equal, or apart by one unit in the last place: what an expected total is held to (above)."""
+    a, b = float(a), float(b)
+    return abs(a - b) <= float(np.spacing(max(abs(a), abs(b))))
 
 
 def same(a, b) -> bool:
@@ -155,8 +170,10 @@ def small(prod):
 
 # The fields of a layer-off run that are not S55's bits, by name: **a closed list** (D215, the lead's reading 3).
 # `arm_multiplicity` was the drawn arm number (4 for both templates) and is the derived dominant one - the mode
-# carrying the most mass-weighted power: 3 for the Milky Way, 2 for ngc_4414. Nothing else of S55 moved.
-LAYER_OFF_EXCEPTIONS = {"arm_multiplicity": {"milky_way": (4.0, 3.0), "ngc_4414": (4.0, 2.0)}}
+# carrying the most mass-weighted power: 6 for the Milky Way, and 4 for ngc_4414 - the number S55 drew, by another
+# road, so that template's field is S55's bits and only the Milky Way's differs. Nothing else of S55 moved.
+# (On the X / 2 window of S56's first two passes the labels were 3 and 2: D215 ruling 11.)
+LAYER_OFF_EXCEPTIONS = {"arm_multiplicity": {"milky_way": (4.0, 6.0), "ngc_4414": (4.0, 4.0)}}
 # And the fields P1 adds, which S55 did not publish: the law's five amplitudes and its saturation, radial and the
 # same on and off; the layer's five phases, not numbers with the layer off.
 ADDED_AT_S56 = {*pt.AMPLITUDE_FIELDS, "arm_saturation", *pt.PHASE_FIELDS}
@@ -173,7 +190,10 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     now = {n: layer_reference.value_digest(v) for n, v in out.fields.items()}
     assert not set(held) - set(now), sorted(set(held) - set(now))  # no field was lost
     moved = {n for n in held if now[n] != held[n]}
-    assert moved == set(LAYER_OFF_EXCEPTIONS), sorted(moved ^ set(LAYER_OFF_EXCEPTIONS))
+    # The fields of the named list whose value on this template is not S55's (the label can land on S55's number).
+    named = {n for n, by_template in LAYER_OFF_EXCEPTIONS.items() if by_template[template][0] != by_template[template][1]}
+    assert moved == named, sorted(moved ^ named)
+    assert moved == ({"arm_multiplicity"} if template == "milky_way" else set())
     for n, by_template in LAYER_OFF_EXCEPTIONS.items():
         was, is_now = by_template[template]
         assert held[n] == layer_reference.value_digest(was) and out.fields[n] == is_now, (n, template)
@@ -253,6 +273,11 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
             assert n in pt.PHASE_FIELDS and d.kind.domain == "galaxy", n
             assert np.isnan(off.fields[n]) and 0.0 <= on.fields[n] < 2.0 * np.pi, n
             continue
+        if n in EXPECTED_TOTALS:
+            # S56 (D215 ruling 11): was held to the bit, as every field below is - and it was the same bits until the
+            # window was corrected. An expected total is the same to its last place (EXPECTED_TOTALS, above).
+            assert same_expected_total(on.fields[n], off.fields[n]), (n, float(on.fields[n]), float(off.fields[n]))
+            continue
         if not same(on.fields[n], off.fields[n]):
             moved_statistics.add(n)
     # Every other field - every radial field, every history, every scalar - is the bit it was, but for the list.
@@ -265,6 +290,11 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
         assert producer[n] == stage_id and census and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
         assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
     assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 9
+    # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place lower with
+    # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
+    assert not EXPECTED_TOTALS & set(CENSUS_STATISTICS)
+    assert float(on.fields["cloud_count_total"]) == 16693.43298750999 and float(off.fields["cloud_count_total"]) == 16693.432987509994
+    assert same(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
 
 
 def test_i1_holds_an_undeclared_phi_field_to_bit_identity_and_a_declared_one_to_its_neutral(prod):
@@ -367,7 +397,7 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     n_on, n_off = len(runs[name, True].fields["cloud_radius"]), len(runs[name, False].fields["cloud_radius"])
     # S56 (D215): was n_on == 16822 - S51's census, placed by one four-armed ridge; placed by five modes' ridge it
     # is another draw. The layer-off census is S55's own (16 754), and the two still differ by the draw alone.
-    assert n_on == 16765 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    assert n_on == 16660 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -438,8 +468,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.102973, abs=1e-6)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.07374, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.105544, abs=1e-6)
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.06083, abs=1e-5)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.102613, abs=1e-6)
         # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
         assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
         for q in spec.QUANTITIES:
@@ -849,7 +879,9 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     places its censuses by the pattern. Those are exactly the fields I1 lets move, in ``basic`` itself (test_i1) -
     I1's list again, and not an independent check (D214, the predictions as read)."""
     a, b = runs["azimuthal", False], runs["basic", True]
-    differ = {n for n, d in b.decls.items() if not d.composed and not same(a.fields[n], b.fields[n])}
+    # S56 (D215 ruling 11): an expected total is held to its last place, not its last bit (EXPECTED_TOTALS, above).
+    differ = {n for n, d in b.decls.items() if not d.composed and not same(a.fields[n], b.fields[n])
+              and not (n in EXPECTED_TOTALS and same_expected_total(a.fields[n], b.fields[n]))}
     # S56 (D215): the layer's five phases are numbers in the layer-on run and not in the layer-off one.
     phases = {n for n in differ if b.decls[n].provenance == "synthetic" and b.decls[n].kind.domain == "galaxy"}
     assert phases == set(pt.PHASE_FIELDS)
@@ -944,8 +976,8 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # measured on S51's census at S55; the layer-on census is another draw since P1 and the declaration was re-read.
     for phrase in ("at S56 the offset moves a cluster",
                    "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 581 of 12 910 clusters (12.2 %, 41.9 % of the cluster mass)",
-                   "144 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+                   "1 598 of 12 814 clusters (12.5 %, 43.8 % of the cluster mass)",
+                   "137 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
@@ -954,17 +986,17 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12910  # S56 (D215): was 12930
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12814  # S56 (D215): was 12930
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
-    assert int(moved.sum()) == 1581 and moved.mean() == pytest.approx(0.1225, abs=5e-4)  # S56 (D215): was 1610, 0.125
-    # The share of the cluster mass that crosses: 0.41915, printed as 41.9 %. S56 (D215): was 0.43747 (43.7 %; the
+    assert int(moved.sum()) == 1598 and moved.mean() == pytest.approx(0.1247, abs=5e-4)  # S56 (D215): was 1610, 0.125
+    # The share of the cluster mass that crosses: 0.43796, printed as 43.8 %. S56 (D215): was 0.43747 (43.7 %; the
     # gate's text carried the review's 43.8).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4192, abs=5e-4)
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4380, abs=5e-4)
     edges, _ = sy.cell_edges(R)
     # S56 (D215): was 157
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 144
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 137
     # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1120,9 +1152,9 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     # Two scalars are a census's *expected* total - the expected counts summed over every cell, each carrying its
     # sector's placement weight. The weights average to 1 round a ring to rounding, not to the bit, so the sum is
     # the same to 1e-12 (rule 2: "no expected count or expected total") and can differ in its last bit between
-    # two realisations: measured 1 ulp here. (Between the layer on and off at the default seeds they happen to be
-    # the same bits, which is what test_i1 sees.)
-    expected_totals = {"cloud_count_total", "bright_star_count_1e3"}
+    # two realisations: measured 1 ulp here. (Between the layer on and off at the default seeds they were the same
+    # bits until the window was corrected, and are one unit in the last place apart since: EXPECTED_TOTALS, above.)
+    expected_totals = EXPECTED_TOTALS
     moved_statistics, placed = set(), set()
     for n, d in a.decls.items():
         equal = same(a.fields[n], b.fields[n])

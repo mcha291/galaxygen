@@ -119,12 +119,12 @@ _CONSERVES_GRADIENT = (
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
 # Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
 # and 43.7 % of the mass, 157 in another cell ring), and again at S56 when the census became another draw (D215: the
-# clouds follow five arm modes' ridge, not one's).
+# clouds follow five arm modes' ridge, not one's; read on the window of D215 ruling 11, the third gate turn).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
     "its cloud's ring: at S56 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 581 of 12 910 "
-    "clusters (12.2 %, 41.9 % of the cluster mass) in another radial ring and 144 in another cell ring than their "
+    "against a 75 pc radial step and puts 1 598 of 12 814 "
+    "clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 137 in another cell ring than their "
     "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
     "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
 )
