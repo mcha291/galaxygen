@@ -9489,3 +9489,95 @@ plain step. The base-supersonic smooth branch runs through the same code and is 
 solver's own discretisation by 3.2e-5; at 2880 cells 4.9e-5 and 8e-6, at twice the cost (0.47–0.65 s per 400 rings
 at 1440). "1440 stands. 1.96e-4 is the expected order … 'worse' meant an order above, which this is not. Pin both
 numbers at 1440 … with the 2880-cell values recorded beside them as the convergence check, not as a target."
+
+**Built to the ruling (builder B, an Opus agent in a worktree) and read.** `gas_pattern` is the law of item 5 on
+every grid ring that carries a mode, forced by the untapered amplitudes, composed with the bar as item 8, read at
+a point as item 9, never divided, with no fallback; the ranked ridge and its machinery are deleted; `bar`
+publishes `arm_pattern_speed`. *Layer off* all 343 earlier fields are bit-identical for both templates and the
+specs read 12 / 20 / 5 of 37, the template checks 0 / 5. *The predictions:* outside the bar's reach held — 7.99 kpc
+2.797 / 0.0171 / 2.571, 10.0 kpc 2.090 / 0.182 / 2.037, 11.0 kpc 1.765 / 0.385 / 1.886, 12.0 kpc 1.198 / 0.811 /
+1.281; inside it not held, as the ruling foresaw (the probe had used tapered amplitudes): at 4.0 kpc s reads 4.17 /
+4.5e-7 / 3.81 and the composed field 2.01 / 0.50, at 6.0 kpc 3.48 / 2.5e-4 / 3.21 and 3.01 / 0.13. Newton took at
+most 9 steps on the templates and 11 over the suite's seeds. *Layer on, the default galaxy:* clouds 16 660 →
+16 667, clusters 12 814 → 12 829, the census's Q over the field's 0.987 → 0.970, rows 35 and 37 for the record
+−2.070 and −0.1039; a ring's light at R₀ through the dust now falls 1.82 % (0.89 % on the ranked ridge; D207's
+1.28 %), so D210's prediction (i) fails further. *Cost, cold:* the stage 0.38 → 0.27 s, clouds over the whole disc
+3.67 → 1.14 s, clusters 4.94 → 2.53 s, the render 5.32 → 3.07 s: #140's cost is repaid.
+
+**What the build found that the gate had not foreseen: tightly wound galaxies raised.** A galaxy whose drawn pitch
+is under about 2.7° has ε = 0.7–2.6 and Σf = 60–79 on its inner rings (both go as 1/sin p), and five of 300 Milky
+Way pattern seeds and fifteen of 300 for `ngc_4414` raised `ConvergenceError`; an existing test
+(`test_s22_rulings`'s three diagonals, seed 122, pitch on its 1° clip) failed for it. Builder B added no fallback
+and pinned the failures as failures.
+
+**The independent review (an Opus reviewer, read-only, its own arithmetic: a 60-digit referee, a Fourier
+collocation solver, errors planted in a scratch copy).** "The law as coded is the law as ruled, and the solver is
+sound. One blocker." It re-derived ε, f_m and X on paper and on three rings from the published fields
+(X(7.9875 kpc) = 7.92860), found the taper applied once and the sign right, and its own spectral solver within
+1.3e-4, 2.6e-5 and 1.2e-5 of the model's rings (the cells' h² error); every small error it planted moved Sormani's
+threshold to the third digit. **The blocker:** the absolute tolerance 1e-10 lies under the rounding of doubles on
+those rings. Newton converges quadratically and then sits at 1.43e-10; that iterate is within 0.66 ulp of the
+exact discrete solution, whose own correctly rounded residual is 1.30–1.42e-10 — the ring is solved and still
+raised, and which galaxies raised was chance (one seed raised at one texture seed and passed at two others).
+Should-fix: the width's "strongest mode" rested on a tie-break that gave the kindest reading; the saturation sits
+inside the "untapered" amplitude, unruled and untested; ring totals held only on φ grids that divide 1440 (2e-3
+off on 36 cells), with a remedy needing no division — cell averages.
+
+**Gate G3, 2026-10-04; verdict by Fable (the same agent, one turn on the rewritten `docs/HANDOFF_S57.md` and its
+five ranges, nothing run).** Fable checked the rounding-floor bound on paper: "the bound's form is right. Its
+size: at ε = 1, h = 2π/1440, ε²/h² = 5.25e4, |φ| in [8, 16) gives 1.9e-10, in [4, 8) 9.3e-11 — the measured floors
+1.0–1.4e-10 and the 9.7e-11 near-miss are exactly this."
+1. *G3's question.* "Yes: the threshold is reproduced for the right reason. Each planted error in a term the two
+   members share moved it to the third digit, so no wrong shared term can pass. It certifies what the μ = 0
+   member shares: the state function, the residual, the cyclic solve, the outer loop. It does not certify the
+   member's own branch — the plain step and the J-fall halving, which the moving branch never runs; those are
+   certified by the independent dense Newton against the stage's profiles and the hand linear limits, which the
+   suite already holds."
+2. *The criterion (B1).* "A cell is converged when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k), F_k = 2(ε²/h²)(½ulp(φ_{k−1})
+   + ulp(φ_k) + ½ulp(φ_{k+1})) — the factor 2 covering the arithmetic's own rounding; a ring is converged when
+   every cell is and |Σr_k| < SUM_TOLERANCE × cells (unchanged). A theorem about the rounded exact solution, not a
+   loosened number." The gate's residual item now reads: "on every cell |r_k| ≤ max(1e-10, F_k), F_k recorded per
+   ring as its rounding floor; |Σr_k|/cells < 1e-13; the returned s re-logged satisfies the same with F_k +
+   4u·ε²/h²". The two pinned failures must converge; the 300-seed sweeps must raise nowhere — "a remaining raise
+   owes another turn, not a fallback"; every converged solution is bit-identical before and after. A change to
+   the pitch draw "is refused this session: the pitch draw's clip is the stellar pattern's law and changing it
+   breaks layer-off bit-identity on those seeds; it is the owner's to order with a read source. The low-pitch
+   regime is published as the law gives it (nothing clipped) and recorded as a finding under the razor-thin debt:
+   at drawn pitch ≤ 2.7°, Σf = 60–79, s from 2e-44 to 14, the arm-to-arm spacing then comparable to the disc's
+   thickness (kh ≈ 8), the forcing overstated by about that factor."
+3. *The saturation: saturated, as built.* "A_m is the stellar field's actual cosine amplitude on the ring
+   (published over (1 − taper)), the saturation in it, because the gas answers the stars that exist." A hand
+   test is owed on the most saturated seed (s_sat 0.62), and Σ_m A_m(published) ≤ 1 − B·taper asserted on every
+   ring of every suite seed.
+4. *Cell averages.* "The published (R, φ) field is the law's mean over each grid cell — the interpolant
+   integrated exactly — so its ring mean is 1 to rounding on every grid with no division (pin 1e-13); the three
+   small-grid tests return to 1e-12. `contrast_at`, `response_at` and the censuses keep the point function: a
+   cell's expected count is its area times its mean, a placed object reads the law at its point, and the two are
+   the same measure." Items 9 and 11 (i) are reworded so.
+5. *1440 cells stand.* Pinned as measured: s 3.5e-4 beyond 6 kpc, 1.2e-3 inside the bar's reach (≤ 1.2e-5 of the
+   field there), the point field 3.0e-4, the R-interpolation 5.7e-4 / 7.9e-4. "Doubling the cost for 4× on 3e-4,
+   against declared approximations of order 2×, buys nothing any check judges."
+6. *The width's definition, fixed now.* "The FWHM of the ring's tallest crest of s as a fraction of the period
+   2π/m of the mode of largest forcing m·A_m — the mode the gas answers most strongly — not a tie-break on
+   amplitude. Recorded: Milky Way 0.466 (0.423–0.481), `ngc_4414` 0.512, against 0.17: a miss by 2.5–3.0× on every
+   ring; the other two readings printed beside it with the note that the build's first reading (0.311) was the
+   kindest and is replaced."
+7. *The record.* The disclosed check: "a hit, disclosed (D113): Milky Way median 2.571, 53 of 53 rings inside
+   1.37–5.79; `ngc_4414` median 1.881 inside, seven of its 53 rings (the outer ones) below the 16th percentile,
+   recorded". The offset: "zero for a lone mode, exactly, by the equation's symmetry; with several modes the gas
+   crest and the stellar sum's crest are within one solver cell (0.25°) on the default galaxy because each mode
+   is answered with its own weight; no offset is put in and none is published". "The two retired constants leave
+   the model's registry and live in `tests/` with their sources: a stage may not declare reads it does not make."
+   The render header's "a narrow ridge" is corrected and S55's reference digest re-pinned for that one reason.
+**Forbidden in applying these (Fable):** "any change to a converged solution's bits; a fallback, catch or clip on
+the two failing galaxies; loosening RESIDUAL_TOLERANCE or SUM_TOLERANCE as numbers; a relative criterion with a
+chosen τ; changing the pitch draw; dividing the averaged field; choosing the width's mode after reading which
+reads best; moving any prediction, pin or check target to make a number hold; touching the instrument's cases
+except to assert they are unchanged."
+**The merge.** "S57 may merge once items 2–7 are applied and the suite is green on the lead's and the reviewer's
+independent check, with these asserted: zero raises on the 300-seed sweeps; 238 solutions bit-identical across
+B1; the instrument's cases bit-identical and the threshold unmoved; layer-off 343 fields bit-identical; the
+cell-averaged field re-pinned. No further Fable turn is owed if all hold; a remaining raise, or any solution
+whose bits move, owes one. Nothing is the owner's before the merge. Told at the close, first: the G2 mechanism
+change (no arm shocks); the low-pitch regime and the pitch-floor option, theirs to order with a source;
+`ngc_4414`'s seven outer rings under PHANGS's band; the width's miss at 2.5–3.0×, with its two named suspects."
