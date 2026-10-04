@@ -1,118 +1,80 @@
-# HANDOFF_S56 — a conditional gate: Phase P1's law cannot be followed as written at two points
+# HANDOFF_S56 (second turn) — the gas ridge on several modes: built as written, it does not fade and it spikes
 
-**For Fable, one short turn (BUILD_III §3c; §6 lists S56's gate as "if the probe contradicts §5"). Read this file
-and at most the four ranges named at the end. Run nothing, explore nothing, write nothing. Answer in at most 80
-lines: the ruling on each numbered question in final wording, with what it predicts and what is forbidden.**
-Written by the Opus lead of S56, 2026-10-04, from a probe with the repository unchanged (BUILD_III §3g). Nothing is
-built. The owner's answers after S55 are recorded (D215): rule A10 amended to expected ring totals until L1, the
-plan's order kept; `ngc_4414` keeps its fit.
+**For Fable, one short turn (BUILD_III §3c, §3d). Read this file and at most the three ranges named at the end.
+Run nothing, explore nothing, write nothing. Answer in at most 60 lines: the ruling in final wording, what it
+predicts, what is forbidden.** Written by the Opus lead of S56, 2026-10-04. Your first ruling of this session (the
+power follows the amplifier; the modes saturate together; phases on `texture_seed`; NaN with the layer off) is
+transcribed in D215 and **built and green**: the stellar field is byte-identical to S55 with one mode; the m = 2–6
+amplitudes are recovered to 4e-15 on every ring; no cell is below zero on 240 seeded galaxies (lowest +0.0026);
+layer-off, 331 of 332 fields are bit-identical to S55 (the exception `arm_multiplicity`, 4 → 3; `ngc_4414` 4 → 2);
+the 37 rows and the five template checks have not moved. This turn is about the gas only.
 
-## Phase P1's ruling, as the plan states it (BUILD_III §5)
+## What was ruled for the gas, and what it gives
 
-- *The law.* At each radius the weight of arm number m is the existing `swing_weight` evaluated at the local swing
-  parameter X_m(R) — today's named alternative in `pattern.py` becomes the law; no new constant; m = 2–6.
-- *The power is conserved, not the peak.* Σ_m A_m(R)² = A², A the single-mode amplitude the model publishes today
-  (`arm_contrast`). One surviving mode returns today's field exactly.
-- *The realisation (synthetic):* each mode's phase, on `texture_seed`; one pitch for all modes until P4.
-- *The gas:* the ridge is exp(κψ) over its ring mean, ψ = (c − 1)/A the stellar pattern at unit amplitude; with
-  one mode it is S51's field to 1e-9.
+The plan (BUILD_III §5): "with ψ = (c − 1)/A the stellar pattern scaled to unit amplitude, the ridge is
+v = exp(κψ) over its ring mean, κ as S51 has it; the amplitude a(R) keeps S51's rule" — a(R) is set so that the
+ratio of the gas's mean inside the arm mask to its mean outside equals the published `gas_arm_contrast` (2.73 at
+the defaults; PHANGS's ratio of means). Your ruling 6: "ψ = (c − 1)/A stays as written — the gas fades with the
+potential that drives it; nothing shocks on nothing."
 
-## The probe (both templates, the production grid; the phases drawn by the probe, no model stream touched)
+Built exactly so (g = 1 + w_arm · a(R) · (v − 1) + the bar's term; κ = 4.98 from the measured width; the mask the
+top share of the ring in ψ, the share from the power-weighted arm number). With one mode it is S51's field to
+3e-15. **With several modes, on the default galaxy:**
 
-`swing_weight(m, m_lo, m_hi, …)` is 1 inside the window, falls log-linearly to 0 at `SWING_X_DEAD` (too few arms)
-and `SWING_X_FLOOR` (too many). Locally: X₂(R) = κ²R / (2πGΣ·2) with the checkpoint-1 disc's `epicyclic_frequency`
-and `disc_surface_density`, the shear Γ(R) = 1 − d ln v / d ln R, the window m_lo = X₂/(Γ x_high), m_hi = X₂/(Γ x_low).
+1. **It does not fade.** The ratio-of-means rule sets 2.73 on every ring that carries any mode, so a(R) *grows* as
+   the ridge flattens. At the last ring with a pattern (14.8 kpc; stellar amplitude 0.05, stars 0.95–1.05) the gas
+   runs 0.34–1.90; the next ring is exactly 1. Your sentence and the rule you kept contradict each other.
+2. **It spikes.** ψ is at unit *power*, so where crests meet it reaches Σ u_m = 2.19 at R₀, and e^{κψ} is a map
+   calibrated on a cosine of reach 1. The crest at R₀ is **11.3** where S51's was 3.07 (trough 0.57 against 0.53);
+   the field's range is 0.34–15.5 where it was 0.53–3.06; 1.0 % of cells hold 9.3 % of the gas;
+   `sfr_modulation` peaks at 41.6. Downstream, layer-on only: clouds 16 822 → 16 718, clusters 12 930 → 12 863,
+   the census's Q over the field's 1.038 → 0.969, the HII census over the field 1.014 → 0.945. The ratio of means
+   is still 2.73 on every ring by construction: the sourced number is honoured and the picture is a few knots.
 
-**The split is what the plan hoped for.** Milky Way defaults (A = 0.401, today's drawn m = 4), power shares m = 2…6:
+## Measured alternatives (the default galaxy, production grid; ring means 1 to 1e-15 in all)
 
-| R kpc | X₂(R) | Γ | m = 2 | 3 | 4 | 5 | 6 | Σ_m w_m |
+| Form | Field's range | R = 4 kpc | R₀ = 8.2 | 12 kpc | 14 kpc | last ring 14.8 | Cells > 4 hold | ⟨g²⟩ by mass |
 |---|---|---|---|---|---|---|---|---|
-| 2.0 | 1.54 | 0.63 | 0.50 | 0.35 | 0.15 | 0 | 0 | — |
-| 4.0 | 2.13 | 0.82 | 0.45 | 0.36 | 0.17 | 0.02 | 0 | — |
-| 6.0 | 2.83 | 0.98 | 0.38 | 0.35 | 0.20 | 0.08 | 0 | — |
-| 8.0 | 3.96 | 1.10 | 0.27 | 0.27 | 0.23 | 0.14 | 0.07 | — |
-| 10.0 | 6.00 | 1.17 | 0.09 | 0.24 | 0.24 | 0.24 | 0.19 | 4.19 (the maximum, at 9.9 kpc) |
-| 12.0 | 9.82 | 1.19 | 0 | 0.07 | 0.30 | 0.32 | 0.32 | — |
-| 14.8 | — | 1.19 | 0 | 0 | 0 | 0 | 1 | 0.015 (the last ring with a mode) |
-| ≥ 14.9 | 23 → 576 | 1.2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| S51, one mode (the regression) | 0.53–3.06 | — | 0.53–3.07 | 0.61–2.72 | — | — | 0 | — |
+| **A. As built** (ψ at unit power) | 0.34–15.5 | 0.66–2.37 | 0.57–11.4 | 0.58–15.5 | 0.57–7.3 | 0.34–1.90 | 9.3 % of the gas | 1.84 |
+| **B.** ψ over its peak bound, ψ = Σ A_m cos / Σ A_m ∈ [−1, 1] | 0.51–9.7 | 0.65–1.87 | 0.51–5.4 | 0.54–9.6 | 0.56–6.1 | 0.58–2.87 | 4.6 % | 1.36 |
+| **C.** A with the ratio following the gain, C(R) = 1 + (C − 1)·min(1, Σw) | 0.56–15.5 | as A | as A | as A | 0.63–6.4 | 0.98–1.02 | 9.3 % | 1.84 |
+| **B + C** | 0.51–9.7 | 0.65–1.87 | 0.51–5.4 | 0.54–9.6 | 0.62–5.4 | 0.99–1.05 | 4.6 % | 1.36 |
 
-Two arms inside, five and six at the solar radius and beyond; 169 of 400 rings hold three or more modes above 5 %.
-`ngc_4414` is the same shape, more compact: two modes inside 5 kpc, 4–6 at 8–10 kpc, nothing past 11.5 kpc.
+Even with ψ bounded by 1 (B) the crest is 5–10: with several modes ψ sits near 0 over most of a ring and reaches
+its bound only where every crest aligns, so the ring mean of e^{κψ} is small and the aligned point towers over it.
+**The exponential of a sum of modes makes knots, not ridges, whatever the scaling.**
 
-**Contradiction 1 — rings with no surviving mode.** X grows without bound as Σ falls: past 14.9 kpc (Milky Way;
-2.2 % of the disc's mass lies outside) and 11.6 kpc (`ngc_4414`; 1.0 %) every weight for m ≤ 6 is zero — 202 and
-246 of 400 rings. There "Σ_m A_m² = A²" has no solution. And just inside, the per-ring normalisation hands the full
-power A² to a ring whose total weight is 0.015: the pattern is at full strength where the amplifier is at 1.5 % of
-one mode, and gone at the next ring. Today's single spiral runs to the grid's edge at full amplitude.
-`compute_pattern` already has a fallback for a *global* window that selects nothing: the m nearest its centre.
+**A form not built or measured, for your judgement — E, the ridge by rank.** On each ring the cells take S51's
+ridge values in the order of ψ: v(φ) = V(q(φ)), q the fraction of the ring with ψ above ψ(φ) and V the von Mises
+ridge as a function of that fraction (for one mode q = |θ|/π, so it is S51's field exactly). Every ring then has
+S51's histogram — crest 3.07, trough 0.53 at R₀, the ratio of means 2.73 with the same mask by construction — and
+the gas lies along the stellar crests in order of their height. It is evaluable at a point (the ring's ψ is
+ranked on the fixed 360-cell quadrature the mask already uses). What it gives up: the ridge's width is the
+measured one only for one mode; with several, a tall crest takes a wider ridge and a low crest none.
 
-**Contradiction 2 — the conserved-power sum makes negative densities.** A cosine's peak is A; five modes of equal
-power peak at √5 A. The worst ring's Σ_m A_m is 0.89 at the default seed (A = 0.40, still positive), 1.07 at the
-grand-design mean with no scatter (A = 0.48), 1.38 at +1σ of the amplitude's scatter. Over 120 pattern seeds with
-random phases, bar term included: **21 galaxies of 120 have a cell below zero** (25 for `ngc_4414`); the minimum
-contrast has median +0.215 and worst −0.374; the mass-weighted share of negative cells is 0 at the median and
-1.6 % at worst. A (the seeded amplitude) has median 0.46, 5–95 % 0.19–0.72. Today's single mode cannot go negative
-(A < 1, and the bar's cap is 0.9 under a taper that never sums the two at full weight).
+## Constraints you set that still bind
 
-**What holds.** One fully amplified surviving mode (w = 1 for one m, 0 for the rest) returns today's field; 8–9
-rings are in that state. The gas ridge's definition (exp(κψ) over its ring mean) is positive for any ψ.
-
-## The options
-
-**Q1, the rings the amplifier does not reach, and the normalisation.**
-- **N1.** Per-ring normalisation as written; no pattern where no mode survives (contrast 1). The pattern ends at
-  14.8 kpc in a step from full power to none.
-- **N2.** Per-ring normalisation, and the existing fallback (the nearest m, here 6) where none survives: arms to
-  the grid's edge at full power, as today, six-fold.
-- **N3.** The power follows the amplifier: A_tot(R)² = A² · max_m w_m(R), split among the modes by w_m / Σw. Full
-  power wherever at least one mode is vigorously amplified (every ring inside ≈ 12 kpc), fading continuously to
-  zero as the best mode's weight falls; one fully amplified mode still returns today's field exactly; no new
-  constant. "Power conserved" then means *the sourced power where the disc amplifies, less where it does not*.
-- **N4.** One normalisation for the whole disc: A_m(R)² = A² w_m(R) / W with W the mass-weighted mean of Σ_m w_m,
-  so the disc-averaged power is the sourced one. Local power then exceeds A² where several modes are in the
-  window (Σw reaches 4.2), which makes contradiction 2 worse, and no ring returns today's field.
-
-**Q2, positivity.**
-- **P1.** A floor: the composed contrast is max(c, 0), each ring renormalised to mean 1. Touches only the cells
-  that would be negative (none at the default seed; at most 1.6 % of the mass); the single-mode field is
-  untouched; the published amplitudes are the pre-floor ones and the Fourier gate is asserted on unfloored rings,
-  the floored share published.
-- **P2.** A bound on the peak: on a ring where Σ_m A_m (with the bar's term) would exceed 1, the arm amplitudes
-  are scaled down together to make it 1. Positive for any phases; the law stays a law (no dependence on the
-  realisation); costs power on those rings — at A = 0.48, about a tenth of it at the worst ring; roughly half of
-  all seeds lose some.
-- **P3.** A positive map: c = exp(s) / ⟨exp(s)⟩_ring with s the sum of modes — the form the gas ridge already has.
-  Always positive, ring mean 1; **the single-mode field is no longer today's cosine**, so every pin on the stellar
-  contrast and the "returns today's field exactly" clause go.
-- **P4.** Cap the seeded amplitude so √5 A ≤ 1 − bar: changes the amplitude's sourced distribution.
-
-**The lead's recommendation: N3 and P1.** N3 keeps the regression clause, needs no constant and removes the step;
-P1 is the smallest departure and leaves the default galaxy's law untouched. Named alternatives: N1 (the plan's
-words, with the step recorded as a debt) and P2 (a law-side bound, at the price of power in half the galaxies).
+No new constant; the single-mode regression to 1e-9; ring means 1; the gas finite everywhere; nothing composed
+from `arm_multiplicity`; the stellar side is not reopened. P2 (S57, gates G2 and G3) replaces this ridge by the
+steady shock per ring: whatever is ruled here is published for one session and is the instrument P2's solver is
+compared against at one mode.
 
 ## Questions
 
-1. Q1: which of N1–N4, or another form? In final wording. If N3: is "max_m w_m" the right measure of the
-   amplifier's strength, and does the amended sentence replace "Σ_m A_m(R)² = A²" in BUILD_III §5?
-2. Q2: which of P1–P4, or another? If P1: is a floor a property of `compose` (the composed field) or of the law,
-   and what does the Fourier gate assert?
-3. The local X uses the checkpoint-1 disc's Σ (the spin's exponential, stars and gas together) because the
-   pattern stage is at checkpoint 3 and star formation at 4 (D174). Acceptable, or must it say more?
-4. `arm_multiplicity` (the drawn m, published and read by the gas pattern and the viewer) retires with its draw
-   (Appendix B). The lead proposes: five radial fields `arm_mode_amplitude_2 … _6` (derived, the law), five
-   synthetic scalars for the phases (a layer stage on `texture_seed`, the first reader of that seed), and
-   `arm_multiplicity` kept as a derived scalar — the mode holding the most mass-weighted power — so what reads it
-   keeps a meaning. Right, or should the scalar go?
-5. With the layer off the three composed fields are 1 (S55). The mode amplitudes are radial, derived, and
-   bit-identical on and off; the phases are synthetic and their neutral is not 0-phase-but-drawn: with the layer
-   off no field reads them. Is a synthetic scalar with the layer off published as NaN (D164: dead is NaN), as 0,
-   or unpublished?
-6. Anything in the plan's P1 text this probe makes you want to change beyond Q1 and Q2 (for instance: one pitch
-   for all modes means every mode's arms are parallel logarithmic spirals that only beat in azimuth).
+1. **The fade.** Which rule makes the gas fade with the potential: C (the ratio of means follows the disc's gain,
+   the number that already scales the stellar power), the ratio following the amplitude (√gain), or another?
+2. **The spike.** A as built, B, E, or another form? If E: is a rank map a law the model may publish for one
+   session, and what is its named alternative?
+3. Is the answer the same inside the bar's reach, where S51 keeps the taper and the bar's term outside the ridge
+   (the builder kept that: it is the only reading under which one mode is S51's field)?
+4. `sfr_modulation` and the censuses follow the gas. Is a bound on the gas's crest (e.g. S51's single-mode crest)
+   a property the ruling should guarantee, or only report?
 
-## The ranges you may read (at most these four)
+## The ranges you may read (at most these three)
 
-1. `docs/BUILD_III.md` lines 327–352 — Phase P1's text.
-2. `model/galaxy/stages/pattern.py` lines 55–83 — `swing_window` and `swing_weight`.
-3. `model/galaxy/stages/pattern.py` lines 300–345 and 390–445 — `ArmPattern` and `compute_pattern`.
-4. `docs/DECISIONS.md` — D215, from the line starting `### D215.` to the end of the file.
+1. `model/galaxy/stages/gas_pattern.py` lines 1–68 — the stage's docstring: the form, the ridge, the mask, the
+   amplitude, as built.
+2. `model/galaxy/stages/gas_pattern.py` lines 263–342 — `_ring` (the quadrature, the mask, a(R)) and `contrast`.
+3. `docs/DECISIONS.md` — D215, from the line starting `**A conditional gate (BUILD_III §3d; §6 lists it for S56)`
+   to the end of the file.
