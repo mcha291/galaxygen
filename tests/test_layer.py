@@ -792,36 +792,19 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
     def rings(arrays, name):
         return np.asarray(arrays[name], dtype=float).sum(axis=1)
 
-    def apart(a, b) -> float:
-        return float((np.abs(a - b) / np.where(b != 0.0, np.abs(b), 1.0)).max())
-
-    # S57 (D216 item 11 i): was rtol 1e-12 for every placed component on this small grid. The two the gas's
-    # pattern places are held to that **on the production grid** (below), where the grid's 360 cells sample the
-    # response's ring mean to rounding. On this grid's 36 cells the sampled mean leaves 1 by 1.257e-3 (the 36th
-    # harmonic, aliased), the stage no longer divides a ring by it, and a ring's line light and dust column leave
-    # their layer-off totals by that much: pinned as it is, and reported to the gate.
-    GAS_PLACED = ("halpha_hii", "dust_placement")
+    # S57 (D216 G3 item 4): every placed component keeps its ring to rounding on this small grid again. S57's first
+    # build published the gas's response at the cells' centres, whose sampled mean on 36 cells left 1 by 1.257e-3,
+    # and the two components the gas places (halpha_hii, dust_placement) had been re-pinned to that here, with the
+    # 1e-12 moved to the production grid. The published field is now the law's mean over each grid cell: a ring's
+    # cells average to 1 to rounding on any grid, with nothing divided, and the rule below is the one it was.
     for name in RENDER_PLACED:
         assert on_h["axes"][name][:2] == ["R", "phi"], name
         # Layer off: even round the ring - every cell holds its ring's own value. Layer on: it is placed.
         cell = off[name][:, :1]
         assert np.all(off[name] == cell) and not np.all(on[name] == on[name][:, :1]), name
-        # And each ring keeps its total: the placement averages to 1 round every ring - to rounding for what the
-        # stellar pattern places, to the grid's sampling for what the gas's does.
-        if name in GAS_PLACED:
-            assert apart(rings(on, name), rings(off, name)) == pytest.approx(1.257e-3, rel=0.02), name
-        else:
-            assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
+        # And each ring keeps its total, to rounding: the placement averages to 1 round every ring.
+        assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
     assert np.all(off["dust_placement"] == 1.0)
-    production_grid = Service()
-    full_h, full = production_grid.handle("/api/render", q).frame()
-    full_off_h, full_off = production_grid.handle("/api/render", {**q, "layer": ["off"]}).frame()
-    for name in RENDER_PLACED:
-        # Measured 8e-14 at worst (halpha_hii and dust_placement; 1e-14 for the three the stellar pattern places).
-        assert apart(rings(full, name), rings(full_off, name)) < 1e-12, name
-    for name in ("stars", "stars_unresolved", "halpha_hii", "dust_scattered"):
-        assert np.allclose(checks.frame_total(full_h, {**full, "stars": full[name]}),
-                           checks.frame_total(full_off_h, {**full_off, "stars": full_off[name]}), rtol=1e-12, atol=0.0), name
     for name in RENDER_PER_RING:
         assert on_h["axes"][name][0] == "R" and "phi" not in on_h["axes"][name], name
         assert same(on[name], off[name]), name  # a ring's own value, the same bits either way
@@ -834,12 +817,12 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
         assert on_h["components"][name]["fields"][:4] == [f"{line}_surface_brightness_hii" for line in ("hbeta", "oiii_5007", "nii_6583", "sii_6716")]
         assert {f for f in on_h["components"][name]["fields"] if f in CENSUS_STATISTICS} == {
             f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")}
-    # The frame: every conserving component's light, summed over the disc with the bulge, is the same to rounding -
-    # and on this small grid the HII line's to the gas pattern's sampling (S57: was 1e-12; measured 4e-7 and 5e-6).
+    # The frame: every conserving component's light, summed over the disc with the bulge, is the same to rounding.
+    # (S57 (D216 G3): the first build's `1e-5` for the HII line on this grid is back at 1e-12.)
     for name in ("stars", "stars_unresolved", "halpha_hii", "dust_scattered"):
         total_on = checks.frame_total(on_h, {**on, "stars": on[name]})
         total_off = checks.frame_total(off_h, {**off, "stars": off[name]})
-        assert np.allclose(total_on, total_off, rtol=1e-5 if name in GAS_PLACED else 1e-12, atol=0.0), name
+        assert np.allclose(total_on, total_off, rtol=1e-12, atol=0.0), name
     # What the header says of a placement is true of this response (gate G1, change 11).
     for name in ("stars", "stars_unresolved", "halpha_hii", "lines_hii"):
         assert "layer is off" in off_h["components"][name]["about"] and "neutral value, 1" in off_h["components"][name]["about"], name
@@ -1219,14 +1202,12 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     expect_a, expect_b = ring_expectations(a, m), ring_expectations(b, m)
     for census in expect_a:
         assert np.allclose(expect_a[census], expect_b[census], rtol=1e-12, atol=0.0), census
-    # Each composed field keeps every ring's mean under either realisation - the stellar contrast and the
-    # modulation to rounding; the gas's to this small grid's sampling. S57 (D216 item 11 i): was `< 1e-12` for all
-    # three - the gas pattern stage divided a ring by its sampled mean and no longer does; on these 36 cells the
-    # response's ring mean samples 1.26e-3 and 1.5e-4 off 1 under the two seeds (1e-13 on the production grid's 360).
-    for out, off_one in ((a, 1.257e-3), (b, 1.54e-4)):
-        for n in ("pattern_density_contrast", "sfr_modulation"):
+    # Each composed field keeps every ring's mean under either realisation. S57 (D216 G3 item 4): the first build
+    # had pinned the gas's at 1.257e-3 and 1.54e-4 on these 36 cells (its centre samples, no longer divided by
+    # their mean); the published field is the law's mean over each cell and the three are at 1e-12 again.
+    for out in (a, b):
+        for n in ("pattern_density_contrast", "gas_density_contrast", "sfr_modulation"):
             assert float(np.abs(np.asarray(out.fields[n]).mean(axis=1) - 1.0).max()) < 1e-12, n
-        assert float(np.abs(np.asarray(out.fields["gas_density_contrast"]).mean(axis=1) - 1.0).max()) == pytest.approx(off_one, rel=0.02)
 
 
 # --- one reader of the switch (rule B13) ---------------------------------------------------------------------------

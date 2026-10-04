@@ -7,41 +7,54 @@ measured ratio of means, since S56 laid round each ring by rank. Gate G2 of S57 
 ridge. What is tested, in the gate's order:
 
 - **the gate**, on every ring of both templates and of the 240 seeded galaxies the suite draws: the discrete
-  residual, the ring's mean on the solver's cells with no division, positivity and the bound w_bar (1 − B), the
-  grid field's sampled mean, Newton's counts, finiteness, the sector means;
+  residual as gate G3 words it (under 1e-10 or under the cell's rounding floor, the returned profile re-logged
+  too), the ring's mean on the solver's cells with no division, positivity and the bound w_bar (1 − B), the
+  published field's ring mean, Newton's counts, finiteness, the sector means, the saturation's bound;
 - **the law re-derived by hand** on three rings from the published fields, with a dense Newton and a spectral
-  derivative written here, and the bar's composition on a ring inside its reach;
-- **the two interpolation errors**, in χ and in R, pinned as measured;
+  derivative written here, and the published cell means with the bar's composition; and again on the suite's most
+  saturated seed (gate G3 item 3: the forcing's amplitude carries the saturation);
+- **the published field is the law's mean over each grid cell** (G3 item 4): ring means 1 to 1e-13 on any φ grid
+  with nothing divided, and its error against the exact solution's cell means with the h² law;
+- **the two interpolation errors** of the point function, in χ and in R, pinned as measured (G3 item 5);
 - **the predictions** of D216, read before they are judged (B4), with the as-built numbers;
 - **the disclosed check** (not an acceptance row; invariant I3 stands): the ratio of means in the source's mask
   against PHANGS's 2.73 within 1.37-5.79, and the crest's width against 0.17 - layer on, both templates.
 
 **Read on 2026-10-04, the Milky Way template at its default seeds** (165 rings carry a mode; `ngc_4414`: 133):
-Newton 8 steps at most and one halving (9 and none); the residual 5.3e-12 (9.0e-12); the ring mean on the
-solver's cells off 1 by 8.8e-14 (9.6e-14); the grid field's sampled ring mean off 1 by 7.1e-14 (9.5e-14) on the
-default grid with nothing divided; s between 4.5e-11 and 5.70 (1.8e-17 and 4.73), both extremes deep inside the
-bar where the arm's weight is under 1 %; the published field between 0.0199 and 3.093 (0.0142 and 2.689), its
-margin over w_bar (1 − B) 9.2e-6 (1.3e-6). At R₀ the crest is 2.74 and the trough 0.025 (S56's ridge: 3.06 and
-0.534): the gas between the arms is nearly emptied where the modes' forcing sums past 1, as the gate predicted.
+Newton 8 steps at most and one halving (9 and none); the residual 5.3e-12 (9.0e-12), the rounding floor 1.3e-11
+(1.9e-11) - the absolute tolerance governs; the ring mean on the solver's cells off 1 by 8.8e-14 (9.6e-14); the
+published field's ring mean off 1 by 7.1e-14 (9.7e-14) on the default grid and 1e-14 on a 36-, 108- or 500-cell
+one, with nothing divided; s between 4.5e-11 and 5.70 (1.8e-17 and 4.73), both extremes deep inside the bar where
+the arm's weight is under 1 %; the published field between 0.0199 and 3.092 (0.0143 and 2.688), its margin over
+w_bar (1 − B) 2.0e-5 (7.7e-6). At R₀ the crest is 2.74 and the trough 0.025 (S56's ridge: 3.06 and 0.534): the
+gas between the arms is nearly emptied where the modes' forcing sums past 1, as the gate predicted.
 
-**Not as the gate expected, recorded and not mended** (B5): (i) two of the 240 seeded galaxies - `ngc_4414` at
-pattern seed 33, either texture seed - draw a pitch of 1.78 degrees, and the solver cannot converge five of their
-inner rings (residual stalled at 1.0-1.3e-10 against the 1e-10 tolerance: its rounding floor at ε ≈ 1), so the
-model raises for them, as ruled, and the test pins that it does; (ii) the interpolation in χ is off by up to
-3.5e-4 at the cells' midpoints outside the bar's reach and 1.2e-3 inside it (3.0e-4 of the published field), not
-the 2.0e-4 the two hard rings of the instrument's tests read; (iii) with several modes the gas's crest is within
-a degree of the stellar crest, not on it to the cell.
+**What the first build found, and what gate G3 ruled** (D216). (i) Tightly wound galaxies raised: at a drawn
+pitch under about 2.7 degrees ε is of order 1 and the forcing's sum 60-80, the residual's rounding floor passes
+the absolute 1e-10, and two of the 240 seeded galaxies (``ngc_4414`` at pattern seed 33) - 20 of 600 over a sweep
+of 300 pattern seeds a template - were solved and still raised. Since G3 a cell is converged under 1e-10 **or
+under its rounding floor**; all 240 and all 600 converge, and the regime is published as the law gives it.
+**One of the 238 that converged before moved its bits** (``ngc_4414`` at pattern seed 1, texture seed 1: one ring
+at 0.49 kpc stops at 8 Newton steps where the absolute tolerance took 10; the profile moves by 1.8e-15 of itself
+and the published field not at all) and three of the sweep's 580: reported to the gate, which asked for none.
+(ii) The interpolation in χ reads 3.5e-4 outside the bar's reach and 1.2e-3 inside it (3.0e-4 of the point
+field), not the 2.0e-4 of the instrument's two hard rings: 1440 cells stand, pinned per quantity. (iii) The
+offset is zero for a lone mode; with several modes the two crests are within one solver cell on the default
+galaxy's mid disc and up to five cells on ``ngc_4414``'s. (iv) The published field is cell means, not centre
+samples: ring totals hold on every grid.
 """
 
 from __future__ import annotations
 
 import ast
+import functools
 import math
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+import gas_check
 from galaxy import templates
 from galaxy.core.grids import DEFAULT, GridSpec
 from galaxy.layer import compose
@@ -50,7 +63,7 @@ from galaxy.run import run
 from galaxy.stages import gas_pattern as gm
 from galaxy.stages import gas_response as gr
 from galaxy.stages import pattern as pt
-from galaxy.stages.gas_pattern import GAS_CHECK_CONSTANTS, GAS_PATTERN, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, GasPattern
+from galaxy.stages.gas_pattern import GAS_PATTERN, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, GasPattern
 from galaxy.stages.pattern import BAR, PATTERN
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
@@ -59,11 +72,14 @@ TEMPLATES = ("milky_way", "ngc_4414")
 R_SUN = 8.122
 G_HAND = 4.30091727e-6  # kpc (km/s)^2 / Msun, written here; the model's constant is held to it
 SOUND_SPEED_HAND = 6.0  # km/s, written here; the model's GAS_DISPERSION is held to it
-MASK_WIDTH_HAND = 1.5   # kpc: PHANGS's median mask width (the check's definition)
-WIDTH_TARGET = 0.17     # the measured gas arm's full width at half maximum over its period (the width's target)
+# The disclosed check's two numbers are no constants of the model since gate G3 (item 7): they live in
+# tests/gas_check.py with their sources. PHANGS's median mask width, and the measured gas arm's width over its period.
+MASK_WIDTH = gas_check.GAS_ARM_MASK_WIDTH
+WIDTH_TARGET = gas_check.GAS_ARM_WIDTH
 RATIO_TARGET, RATIO_LOW, RATIO_HIGH = 2.73, 1.37, 5.79  # PHANGS's grand designs: the mean and its 16th-84th percentiles
 PATTERN_FIELDS = ("gas_density_contrast", "pattern_density_contrast", "gas_arm_contrast", "arm_pattern_speed",
-                  "circular_velocity", *GAS_PATTERN_READS)
+                  "circular_velocity", "arm_saturation", *GAS_PATTERN_READS)
+ROUNDING = 2.0**-53  # u: half a unit in the last place of 1
 _RUNS: dict[object, object] = {}
 
 
@@ -113,203 +129,6 @@ def one_mode(m: int = 4, strength: float = 1.0, **more) -> GasPattern:
     return synthetic(unit, **more)
 
 
-# --- a redistribution, not a source ----------------------------------------------------------------------------
-
-
-def test_the_gas_contrast_averages_to_one_around_every_ring(model):
-    """Positive, finite, and mean 1 round every ring of the published field - with nothing divided: the sampled
-    mean of the grid's 360 cells is the law's own, 1 to 1e-13."""
-    o = out(model)
-    g = np.asarray(o.fields["gas_density_contrast"])
-    assert g.shape == (o.grid.R.size, o.grid.phi.size)
-    assert np.all(g > 0.0) and np.all(np.isfinite(g))
-    assert float(np.abs(g.mean(axis=1) - 1.0).max()) < 1e-12
-    assert not np.all(g == 1.0)
-
-
-@pytest.mark.parametrize("template", TEMPLATES)
-def test_the_grid_field_is_the_law_at_the_cells_centres_and_is_never_divided(prod, template):
-    """D216 item 11 (i): "the new field is never divided by a sampled mean; the model grid's sampled mean is
-    asserted against a pinned tolerance (measure it, expected far under 1e-6)".
-
-    The published field is the pattern's point function at the grid's cell centres, bit for bit - so no step
-    stands between the law and the field, a division least of all. **Measured on the default grid: the sampled
-    ring mean is off 1 by 7.1e-14 at worst for the Milky Way template and 9.5e-14 for ``ngc_4414``** - rounding:
-    the solver's 1440 cells are four to each of the grid's 360, so a ring's cells sample the linear interpolant
-    at one place between two solver cells and what is left is the response's harmonics from the 360th up. Pinned
-    under 5e-13. **On a coarse φ grid it is not rounding**: 36 cells alias the response's 36th harmonic (the
-    sixth of a six-armed mode) and the sampled mean leaves 1 by 1.3e-3 (1.1e-3) - from S51 to S56 the stage
-    divided that out; it no longer does, and the number is pinned as it is."""
-    model = prod[0].get(DEFAULT_MODEL)
-    o = template_run(prod, template)
-    R, phi = o.grid.R, o.grid.phi
-    g = np.asarray(o.fields["gas_density_contrast"])
-    gp = shape_of(model, o)
-    assert g.tobytes() == gp.contrast(R, phi).tobytes()
-    assert g.tobytes() == gp.contrast_at(R[:, None], phi[None, :]).tobytes()
-    assert float(np.abs(g.mean(axis=1) - 1.0).max()) < 5e-13
-    # The module holds no tolerance to renormalise by, and its source does not divide a field by a mean.
-    assert not hasattr(gm, "RING_MEAN_TOLERANCE")
-    source = (Path(gm.__file__)).read_text(encoding="utf-8")
-    assert ".mean(" not in source
-    coarse = run(model, templates.overrides(templates.TEMPLATES[template]), SMALL, only=("gas_density_contrast",))
-    small = np.asarray(coarse.fields["gas_density_contrast"])
-    assert np.all(small > 0.0)
-    assert float(np.abs(small.mean(axis=1) - 1.0).max()) == pytest.approx({"milky_way": 1.257e-3, "ngc_4414": 1.056e-3}[template], rel=0.02)
-
-
-def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
-    """Twelve sectors at five radii: their mean is the ring's, 1, to rounding; and each sector's mean is the
-    dense average of ``contrast_at`` over it to the dense average's own error (a midpoint rule on a piecewise
-    linear function: 4000 points a sector) - the series of S56 was good to 1e-3 on a ranked ridge; this is the
-    interpolant's own integral. Also between two grid rings, where a point blends two profiles."""
-    o = out(model)
-    gp = shape_of(model, o)
-    R = o.grid.R
-    edges = np.linspace(0.0, 2.0 * np.pi, 13)
-    worst = 0.0
-    for radius in (1.0, 3.0, 6.0, 10.0, float(0.3 * R[120] + 0.7 * R[121])):
-        means = gp.sector_means(radius, edges)
-        assert float(means.mean()) == pytest.approx(1.0, abs=1e-12)
-        dense = []
-        for a, b in zip(edges[:-1], edges[1:]):
-            phi = a + (np.arange(4000) + 0.5) * (b - a) / 4000
-            dense.append(float(gp.contrast_at(np.full_like(phi, radius), phi).mean()))
-        worst = max(worst, float(np.abs(means - np.array(dense)).max()))
-        assert means.max() > 1.0 > means.min()  # the arms are resolved: not a flat ring
-    assert worst < 2e-7  # measured 4e-8: the midpoint rule's, not the means'
-    # Thirty-two sectors, unequal ones, and a ring past the last mode and the bar: every sector exactly 1.
-    uneven = np.concatenate([[0.0], np.sort(np.random.default_rng(5).uniform(0.0, 2.0 * np.pi, 31)), [2.0 * np.pi]])
-    means = gp.sector_means(8.0, uneven)
-    assert float((means * np.diff(uneven)).sum() / (2.0 * np.pi)) == pytest.approx(1.0, abs=1e-12)
-    assert np.all(gp.sector_means(20.0, edges) == 1.0)
-
-
-# --- the gate ----------------------------------------------------------------------------------------------------
-
-
-def gate(gp: GasPattern, phi: np.ndarray) -> dict[str, float]:
-    """The gate's numbers for one pattern (D216, "the gate (every ring, every seed, both templates)"), each
-    recomputed here from the profiles and not read off the solver's own report - but for Newton's counts and the
-    residual, which is given both ways: ``residual`` is the solver's own, of ln s as it iterated it, and
-    ``recomputed`` is the residual of the profile it returned, s, whose logarithm is taken again here. The two
-    differ by the rounding of exp and log, which the equation multiplies by 2 ε²/h² (the solver's rounding floor)."""
-    R = gp.R
-    s, carries, d = gp.profiles, gp.carries, gp.diagnostics
-    f, eps = gp.forcing_amplitudes(), gp.epsilon()
-    forcing = gr.forcing(pt.ARM_MODES, f[carries], np.asarray(gp.phases))
-    recomputed = float(np.abs(gr.residual(s[carries], forcing, eps[carries])).max())
-    assert np.all(s[~carries] == 1.0)  # a ring with no mode has s = 1
-    taper, _, _ = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)
-    law = gp.contrast(R, phi)
-    assert np.all(np.isfinite(s)) and np.all(np.isfinite(law))
-    return {
-        "residual": float(d.worst_residual), "recomputed": recomputed,
-        "mean": float(np.abs(s.sum(axis=1) / s.shape[1] - 1.0).max()),
-        "min_s": float(s.min()), "max_s": float(s.max()),
-        "margin": float((law - (taper * (1.0 - gp.bar))[:, None]).min()),  # min g − w_bar (1 − B), ring by ring
-        "sampled": float(np.abs(law.sum(axis=1) / law.shape[1] - 1.0).max()),
-        "steps": float(d.worst_steps), "halvings": float(d.worst_halvings),
-        "max_g": float(law.max()), "min_g": float(law.min()),
-    }
-
-
-@pytest.mark.parametrize("template", TEMPLATES)
-def test_gate_every_ring_of_both_templates(prod, template):
-    """The gate at each template's own seeds, on every ring, with the numbers as read (the module docstring)."""
-    model = prod[0].get(DEFAULT_MODEL)
-    o = template_run(prod, template)
-    gp = shape_of(model, o)
-    got = gate(gp, o.grid.phi)
-    want = {
-        "milky_way": dict(rings=165, steps=8, halvings=1, min_s=4.50e-11, max_s=5.6975, min_g=0.019924, max_g=3.09294),
-        "ngc_4414": dict(rings=133, steps=9, halvings=0, min_s=1.81e-17, max_s=4.7322, min_g=0.014249, max_g=2.68897),
-    }[template]
-    assert int(gp.carries.sum()) == want["rings"]
-    assert got["residual"] < gr.RESIDUAL_TOLERANCE == 1e-10          # measured 5.3e-12 and 9.0e-12
-    assert got["recomputed"] < 1e-10                                 # and of the returned profile, recomputed here
-    assert got["mean"] < 1e-12                                       # measured 8.8e-14 and 9.6e-14, nothing divided
-    assert got["min_s"] > 0.0 and got["margin"] >= 0.0               # nothing clipped: the law's own positivity
-    assert got["sampled"] < 5e-13                                    # measured 7.1e-14 and 9.5e-14
-    assert (got["steps"], got["halvings"]) == (want["steps"], want["halvings"])
-    assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
-    assert got["min_s"] == pytest.approx(want["min_s"], rel=0.02) and got["max_s"] == pytest.approx(want["max_s"], abs=2e-4)
-    assert (got["min_g"], got["max_g"]) == pytest.approx((want["min_g"], want["max_g"]), abs=2e-5)
-    # The bound of D216 item 12, [w_bar (1 − B), max s]: the margin under it is small where the arm's weight is.
-    assert 0.0 < got["margin"] < 2e-5 and got["max_g"] <= got["max_s"]
-    assert not np.any(np.asarray(o.fields["gas_density_contrast"]) > 4.0)  # the declared ramp holds the field
-
-
-def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
-    """The gate on the suite's seeds - sixty pattern seeds by two texture seeds for each template's inputs, the 240
-    galaxies the stellar positivity test draws (``tests/test_modes.py``): on every ring the discrete residual under
-    1e-10 on every cell; the ring's mean 1 to 1e-12 on the solver's cells with no division; min s > 0 and
-    min g ≥ w_bar (1 − B) with nothing clipped; the grid field's sampled mean within its pinned tolerance; Newton's
-    counts under the solver's maxima; finite everywhere; the sector means averaging to 1.
-
-    **238 of the 240 meet it. Two do not, and are pinned as they fail (B5), for gate G3 to rule:** ``ngc_4414`` at
-    pattern seed 33 (either texture seed) draws a pitch of 1.78 degrees, so ε = a/(κR sin p) is about 1 on its inner
-    rings and the forcing's sum 60-80; the solver stalls there at a residual of 1.0-1.3e-10 - its rounding floor,
-    2ε² ulp(ln s)/h², which the instrument's own docstring says "cannot converge in doubles and raises" - and
-    raises ``ConvergenceError`` after its 120 steps. The model raises with it: there is no fallback (item 7) and
-    none was added. (A sweep of 300 pattern seeds a template, outside this test: 5 and 13 galaxies raise, every one
-    at a drawn pitch under 2.7 degrees.)"""
-    model = prod[0].get(DEFAULT_MODEL)
-    c = constants(model)
-    edges = np.linspace(0.0, 2.0 * np.pi, 33)
-    worst: dict[str, float] = {}
-    raised: dict[tuple[str, int, int], tuple[float, int, float]] = {}
-    relogged: dict[tuple[str, int, int], float] = {}
-    met = 0
-    for template in TEMPLATES:
-        for pattern_seed in range(60):
-            for texture_seed in (0, 1):
-                given = {**templates.overrides(templates.TEMPLATES[template]), "pattern_seed": pattern_seed, "texture_seed": texture_seed}
-                o = run(model, given, only=GAS_PATTERN_READS)
-                gp = compose.gas_pattern(o.fields, o.grid.R, c)
-                assert gp is not None and not gp.flat
-                try:
-                    got = gate(gp, o.grid.phi)
-                except gr.ConvergenceError as error:
-                    raised[(template, pattern_seed, texture_seed)] = (float(error.residual), int(error.steps), float(o.fields["pitch_angle"]))
-                    continue
-                label = (template, pattern_seed, texture_seed)
-                assert got["residual"] < 1e-10, label
-                if got["recomputed"] >= 1e-10:
-                    relogged[label] = float(o.fields["pitch_angle"])
-                assert got["mean"] < 1e-12, label
-                assert got["min_s"] > 0.0 and got["margin"] >= 0.0, label
-                assert got["sampled"] < 1e-12, label
-                assert got["steps"] <= gr.MAX_NEWTON_STEPS and got["halvings"] <= gr.MAX_HALVINGS, label
-                for radius in (3.0, 8.0):
-                    assert float(gp.sector_means(radius, edges).mean()) == pytest.approx(1.0, abs=1e-12), label
-                for key, value in got.items():
-                    worst[key] = min(worst.get(key, value), value) if key in ("min_s", "margin", "min_g") else max(worst.get(key, value), value)
-                met += 1
-    assert met == 238 and set(raised) == {("ngc_4414", 33, 0), ("ngc_4414", 33, 1)}
-    for residual, steps, pitch in raised.values():
-        assert steps == gr.MAX_NEWTON_STEPS and 1.0e-10 <= residual < 1.5e-10 and pitch == pytest.approx(1.780, abs=2e-3)
-    # The worst seen over the 238, recorded: Newton's counts (the maxima are 120 and 30); the residual, 9.7e-11
-    # (``ngc_4414`` at pattern seed 1, pitch 2.06 degrees: just under the tolerance, on the same rounding floor
-    # the two failures sit just over); the ring mean 1.0e-13; the sampled grid mean 2.5e-13; s from 2.4e-44 to
-    # 14.39; the published field from 0.0017 to 6.78 (above the declared ramp's 4 on seeds that draw a strong arm
-    # or a low pitch; under it at both templates' own seeds); its margin over w_bar (1 − B) 3.0e-9 at the least.
-    assert (worst["steps"], worst["halvings"]) == (11, 2)
-    assert 5e-11 < worst["residual"] < 1e-10 and worst["mean"] < 2e-13 and worst["sampled"] < 5e-13
-    assert 0.0 < worst["min_s"] < 1e-40 and worst["max_s"] == pytest.approx(14.39, abs=0.02)
-    assert worst["margin"] >= 0.0 and worst["min_g"] == pytest.approx(1.68e-3, rel=0.02) and worst["max_g"] == pytest.approx(6.78, abs=0.01)
-    # **The same floor, seen in the profiles that did converge**: the solver holds its residual under 1e-10 in
-    # ln s as it iterated it; the residual of the profile it returns, s, with the logarithm taken again, passes
-    # 1e-10 on a few galaxies - seven as read, 4.4e-10 at worst, every one at a drawn pitch of 2.1 degrees or less
-    # (ε of order 1, where exp and log's rounding times 2 ε²/h² is that large). Recorded for G3 with the failures.
-    assert 1e-10 < worst["recomputed"] < 1e-9
-    assert 1 <= len(relogged) <= 12 and max(relogged.values()) < 2.1 and {k[:2] for k in relogged} <= {
-        ("milky_way", 22), ("milky_way", 33), ("ngc_4414", 1), ("ngc_4414", 22)}
-
-
-# --- the law, re-derived by hand ---------------------------------------------------------------------------------
-
-
 def hand_newton(forcing: np.ndarray, eps: float) -> tuple[np.ndarray, int]:
     """The discrete equation ε² (φ_{k+1} − 2φ_k + φ_{k−1})/h² = e^{φ_k} − 1 − g_k on the ring's cells, solved here by
     a dense Newton in φ = ln s from s = 1 - a full matrix and numpy's general solver, the step halved while the
@@ -337,6 +156,360 @@ def hand_newton(forcing: np.ndarray, eps: float) -> tuple[np.ndarray, int]:
     raise AssertionError("the hand Newton did not converge in 60 steps")
 
 
+def hand_cell_means(profile: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
+    """The mean, over each interval [lo_j, hi_j] of χ, of the periodic piecewise-linear function through ``profile``
+    on the ring's cell centres χ_k = −π + (k + ½) 2π/n: the trapezoid rule on the function's own breakpoints, which
+    is its exact integral. This file's arithmetic - no function of ``gas_response`` or ``gas_pattern``."""
+    n = profile.size
+    h = 2.0 * math.pi / n
+    centres = -math.pi + (np.arange(-n, 2 * n) + 0.5) * h  # three turns of the ring
+    values = np.tile(profile, 3)
+    means = []
+    for a, b in zip(lo, hi):
+        turn = math.floor((a + math.pi) / (2.0 * math.pi))
+        a0, b0 = a - 2.0 * math.pi * turn, b - 2.0 * math.pi * turn
+        nodes = np.concatenate([[a0], centres[(centres > a0) & (centres < b0)], [b0]])
+        height = np.interp(nodes, centres, values)
+        means.append(float((0.5 * (height[1:] + height[:-1]) * np.diff(nodes)).sum()) / (b0 - a0))
+    return np.array(means)
+
+
+# --- a redistribution, not a source ----------------------------------------------------------------------------
+
+
+def test_the_gas_contrast_averages_to_one_around_every_ring(model):
+    """Positive, finite, and mean 1 round every ring of the published field - with nothing divided: each value is
+    the law's mean over its cell, and a ring's cells tile the ring."""
+    o = out(model)
+    g = np.asarray(o.fields["gas_density_contrast"])
+    assert g.shape == (o.grid.R.size, o.grid.phi.size)
+    assert np.all(g > 0.0) and np.all(np.isfinite(g))
+    assert float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max()) < 1e-13
+    assert not np.all(g == 1.0)
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divided(prod, template):
+    """Gate G3 item 4 (it rewords D216 items 9 and 11 i): "the published (R, φ) field is the law's mean over each
+    grid cell - the interpolant integrated exactly - so its ring mean is 1 to rounding on every grid with no
+    division (pin 1e-13) ... ``contrast_at``, ``response_at`` and the censuses keep the point function".
+
+    The published field is ``GasPattern.cell_means`` on the grid's own φ edges, bit for bit, and each of its rows
+    is ``sector_means`` at that ring's radius, bit for bit: no step stands between the law and the field, a
+    division least of all. **Measured: the ring mean is off 1 by 7.1e-14 (the Milky Way template) and 9.7e-14
+    (``ngc_4414``) on the default grid - the solver's own ring mean, which it holds to 1e-13 - and by 1e-14 and
+    2e-15 on grids of 36, 108, 500 and 720 φ cells.** (The first build published the point function at the cells'
+    centres: 7e-14 on 360 cells, which divide the solver's 1440, but 2e-6 on 108 and 1.3e-3 on 36 - the response's
+    harmonics aliased - and three small-grid tests had been re-pinned to that. They are back at 1e-12.)
+    A cell's mean is not its centre's value: the two differ by up to 1.7e-3 of the ring's mean (on the flank of a
+    crest, where the profile curves); and it is never under w_bar (1 − B)."""
+    model = prod[0].get(DEFAULT_MODEL)
+    o = template_run(prod, template)
+    R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
+    g = np.asarray(o.fields["gas_density_contrast"])
+    gp = shape_of(model, o)
+    assert g.tobytes() == gp.cell_means(R, edges).tobytes()
+    for i in (3, 60, 106, 133, 160, 399):
+        assert g[i].tobytes() == gp.sector_means(float(R[i]), edges).tobytes(), i
+    assert float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max()) < 1e-13
+    taper = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[0]
+    assert float((g - (taper * (1.0 - gp.bar))[:, None]).min()) >= 0.0 and g.min() > 0.0
+    # Against the point function at the cells' centres: another number, by the profile's curvature across a cell.
+    point = gp.contrast(R, phi)
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 1.718e-3, "ngc_4414": 1.716e-3}[template], rel=0.02)
+    assert float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max()) < 5e-13  # 360 divides 1440: rounding here
+    # The module holds no tolerance to renormalise by, and its source does not divide a field by a mean.
+    assert not hasattr(gm, "RING_MEAN_TOLERANCE")
+    assert ".mean(" not in Path(gm.__file__).read_text(encoding="utf-8")
+    # Any φ grid: the ring keeps its gas to rounding, and the centre samples do not.
+    given = templates.overrides(templates.TEMPLATES[template])
+    for n_phi, sampled in ((36, {"milky_way": 1.257e-3, "ngc_4414": 1.056e-3}[template]), (108, None), (500, None)):
+        coarse = run(model, given, GridSpec(n_R=48, n_t=64, n_z=8, n_phi=n_phi), only=GAS_PATTERN_READS + ("gas_density_contrast",))
+        small = np.asarray(coarse.fields["gas_density_contrast"])
+        assert small.shape[1] == n_phi and np.all(small > 0.0)
+        assert float(np.abs(small.sum(axis=1) / n_phi - 1.0).max()) < 1e-13, n_phi  # measured 1.2e-14 and 2e-15
+        if sampled is not None:  # what the centre samples read on this grid: the first build's field
+            centre = compose.gas_pattern(coarse.fields, coarse.grid.R, constants(model)).contrast(coarse.grid.R, coarse.grid.phi)
+            assert float(np.abs(centre.sum(axis=1) / n_phi - 1.0).max()) == pytest.approx(sampled, rel=0.02)
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_the_cell_averaged_field_against_the_exact_solution_s_cell_means(prod, template):
+    """Gate G3 item 4: "re-measure and pin the averaged field's error against the exact solution's cell means".
+    The reference is the same equation solved on finer cells - 2880 and 5760 - and averaged over the same grid
+    cells. **The h² law**: the error of a cell mean at n solver cells is c/n² (the solver's second-order error and
+    the linear interpolant's, both; a cell's mean feels them averaged over the grid cell, so it is smaller than the
+    point function's error at a midpoint), so against the 5760-cell reference the 1440-cell means are off by
+    c (1 − 1/16)/1440² and the 2880-cell ones by c (1/4 − 1/16)/1440²: **their ratio is 5, and it reads 5.00**.
+    The 1440-cell error against the exact solution is then 16/15 of the first.
+
+    **As measured (the Milky Way template; ``ngc_4414``): of the published field 2.1e-4 (2.1e-4) at worst, at
+    5.5 kpc (3.6 kpc); of s itself 9.2e-4 (9.1e-4), deep inside the bar where the arm's weight is under 1 %, and
+    2.5e-4 (6.1e-5) beyond 6 kpc.** The cell count is the ruling's (G3 item 5) and is not touched."""
+    model = prod[0].get(DEFAULT_MODEL)
+    o = template_run(prod, template)
+    R, edges = o.grid.R, o.grid["phi"].edges
+    gp = shape_of(model, o)
+    carries = gp.carries
+    f, eps = gp.forcing_amplitudes()[carries], gp.epsilon()[carries]
+    taper, phase, _ = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)
+    lo, hi = edges[None, :-1] - phase[carries, None], edges[None, 1:] - phase[carries, None]
+    means = {gr.CELLS: gr.sector_mean(gp.profiles[carries], lo, hi)}
+    for cells in (2880, 5760):
+        fine, _ = gr.solve(gr.forcing(pt.ARM_MODES, f, np.asarray(gp.phases), cells), eps)
+        means[cells] = gr.sector_mean(fine, lo, hi)
+    weight = (1.0 - taper[carries])[:, None]
+    at_1440, at_2880 = np.abs(means[1440] - means[5760]), np.abs(means[2880] - means[5760])
+    got = (float(at_1440.max()), float((at_1440 * weight).max()), float(at_1440[R[carries] > 6.0].max()))
+    want = {"milky_way": (9.207e-4, 2.105e-4, 2.458e-4), "ngc_4414": (9.144e-4, 2.101e-4, 6.122e-5)}[template]
+    assert got == pytest.approx(want, rel=0.01), got
+    assert float(at_1440.max() / at_2880.max()) == pytest.approx(5.0, abs=0.03)
+    assert float((at_1440 * weight).max() / (at_2880 * weight).max()) == pytest.approx(5.0, abs=0.03)
+    # The published field's own arm part is those 1440-cell means: its error is the weighted one above.
+    published = np.asarray(o.fields["gas_density_contrast"])[carries]
+    bar = (np.sin(2.0 * (edges[1:] - pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[2])) - np.sin(2.0 * (edges[:-1] - pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[2]))) / (2.0 * np.diff(edges))
+    exact = weight * means[5760] + taper[carries, None] * (1.0 + gp.bar * bar[None, :])
+    assert float(np.abs(published - exact).max()) == pytest.approx(want[1], rel=0.01)
+
+
+def test_the_sector_means_are_the_exact_means_of_the_point_function(model):
+    """Twelve sectors at five radii: their mean is the ring's, 1, to rounding; and each sector's mean is the
+    dense average of ``contrast_at`` over it to the dense average's own error (a midpoint rule on a piecewise
+    linear function: 4000 points a sector) - the series of S56 was good to 1e-3 on a ranked ridge; this is the
+    interpolant's own integral. Also between two grid rings, where a point blends two profiles."""
+    o = out(model)
+    gp = shape_of(model, o)
+    R = o.grid.R
+    edges = np.linspace(0.0, 2.0 * np.pi, 13)
+    worst = 0.0
+    for radius in (1.0, 3.0, 6.0, 10.0, float(0.3 * R[120] + 0.7 * R[121])):
+        means = gp.sector_means(radius, edges)
+        assert float(means.mean()) == pytest.approx(1.0, abs=1e-12)
+        dense = []
+        for a, b in zip(edges[:-1], edges[1:]):
+            phi = a + (np.arange(4000) + 0.5) * (b - a) / 4000
+            dense.append(float(gp.contrast_at(np.full_like(phi, radius), phi).mean()))
+        worst = max(worst, float(np.abs(means - np.array(dense)).max()))
+        assert means.max() > 1.0 > means.min()  # the arms are resolved: not a flat ring
+        # and the many-radii form the stage publishes with is this one, at any radius
+        assert gp.cell_means(np.array([radius]), edges)[0].tobytes() == means.tobytes()
+    assert worst < 2e-7  # measured 4e-8: the midpoint rule's, not the means'
+    # Thirty-two sectors, unequal ones, and a ring past the last mode and the bar: every sector exactly 1.
+    uneven = np.concatenate([[0.0], np.sort(np.random.default_rng(5).uniform(0.0, 2.0 * np.pi, 31)), [2.0 * np.pi]])
+    means = gp.sector_means(8.0, uneven)
+    assert float((means * np.diff(uneven)).sum() / (2.0 * np.pi)) == pytest.approx(1.0, abs=1e-12)
+    assert np.all(gp.sector_means(20.0, edges) == 1.0) and np.all(gp.cell_means(np.array([20.0, 25.0]), edges) == 1.0)
+
+
+# --- the gate ----------------------------------------------------------------------------------------------------
+
+
+def gate(gp: GasPattern, edges: np.ndarray) -> dict[str, float]:
+    """The gate's numbers for one pattern (D216, "the gate (every ring, every seed, both templates)"), with its
+    residual item as gate G3 words it (item 2): "on every cell |r_k| ≤ max(1e-10, F_k), F_k recorded per ring as
+    its rounding floor; |Σr_k|/cells < 1e-13; the returned s re-logged satisfies the same with F_k + 4u·ε²/h²".
+
+    The solver's own residual and floor are its report's (per ring: the largest of each; the cell-by-cell rule is
+    the solver's convergence itself). The re-logged statement is asserted here on every cell of every ring, from
+    the profile the pattern holds, with ``gas_response.residual`` and ``gas_response.rounding_floor``. Everything
+    else is recomputed from the profiles."""
+    R = gp.R
+    s, carries, d = gp.profiles, gp.carries, gp.diagnostics
+    f, eps = gp.forcing_amplitudes(), gp.epsilon()
+    forcing = gr.forcing(pt.ARM_MODES, f[carries], np.asarray(gp.phases))
+    relogged = np.abs(gr.residual(s[carries], forcing, eps[carries]))
+    floor = gr.rounding_floor(s[carries], eps[carries])
+    inv_h2 = (gr.CELLS / (2.0 * math.pi)) ** 2
+    assert np.all(relogged <= np.maximum(1e-10, floor + 4.0 * ROUNDING * (eps[carries] ** 2)[:, None] * inv_h2))
+    assert np.all(d.residual <= np.maximum(1e-10, d.floor))
+    # The floor of ln s as the solver held it and of the logarithm taken again: the same spacing of doubles, but
+    # where a cell's ln s sits on a power of two (a factor 2 there, on that cell).
+    assert np.all((floor.max(axis=1) <= 2.0 * d.floor) & (d.floor <= 2.0 * floor.max(axis=1)))
+    assert np.all(s[~carries] == 1.0)  # a ring with no mode has s = 1
+    taper, _, _ = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)
+    field = gp.cell_means(R, edges)  # what the stage publishes
+    assert np.all(np.isfinite(s)) and np.all(np.isfinite(field))
+    return {
+        "residual": float(d.worst_residual), "relogged": float(relogged.max()), "floor": float(d.floor.max()),
+        "over": float((d.residual / np.maximum(1e-10, d.floor)).max()),  # the residual over what it is held under
+        "on_floor": float((d.floor > 1e-10).sum()),  # rings whose floor, not the tolerance, is the bound
+        "sum": float(np.abs(d.residual_sum).max() / gr.CELLS),
+        "mean": float(np.abs(s.sum(axis=1) / s.shape[1] - 1.0).max()),
+        "min_s": float(s.min()), "max_s": float(s.max()),
+        "margin": float((field - (taper * (1.0 - gp.bar))[:, None]).min()),  # min g − w_bar (1 − B), ring by ring
+        "ring_mean": float(np.abs(field.sum(axis=1) / field.shape[1] - 1.0).max()),
+        "steps": float(d.worst_steps), "halvings": float(d.worst_halvings),
+        "max_g": float(field.max()), "min_g": float(field.min()),
+    }
+
+
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_gate_every_ring_of_both_templates(prod, template):
+    """The gate at each template's own seeds, on every ring, with the numbers as read (the module docstring)."""
+    model = prod[0].get(DEFAULT_MODEL)
+    o = template_run(prod, template)
+    gp = shape_of(model, o)
+    got = gate(gp, o.grid["phi"].edges)
+    want = {
+        "milky_way": dict(rings=165, steps=8, halvings=1, min_s=4.50e-11, max_s=5.6975, min_g=0.019943, max_g=3.092221, floor=1.279e-11),
+        "ngc_4414": dict(rings=133, steps=9, halvings=0, min_s=1.81e-17, max_s=4.7322, min_g=0.014257, max_g=2.688408, floor=1.933e-11),
+    }[template]
+    assert int(gp.carries.sum()) == want["rings"]
+    # The residual: at these pitches (13.5 and 14.3 degrees) every ring's floor is far under 1e-10 and the absolute
+    # tolerance governs, as it did before G3. Measured 5.3e-12 and 9.0e-12, re-logged the same.
+    assert got["floor"] == pytest.approx(want["floor"], rel=0.01) and got["on_floor"] == 0
+    assert got["residual"] < gr.RESIDUAL_TOLERANCE == 1e-10 and got["relogged"] < 1e-10
+    assert got["sum"] < gr.SUM_TOLERANCE == 1e-13
+    assert got["mean"] < 1e-12                                       # measured 8.8e-14 and 9.6e-14, nothing divided
+    assert got["min_s"] > 0.0 and got["margin"] >= 0.0               # nothing clipped: the law's own positivity
+    assert got["ring_mean"] < 1e-13                                  # measured 7.1e-14 and 9.7e-14: the cell means
+    assert (got["steps"], got["halvings"]) == (want["steps"], want["halvings"])
+    assert got["steps"] <= gr.MAX_NEWTON_STEPS == 120 and got["halvings"] <= gr.MAX_HALVINGS == 30
+    assert got["min_s"] == pytest.approx(want["min_s"], rel=0.02) and got["max_s"] == pytest.approx(want["max_s"], abs=2e-4)
+    # S57 (D216 G3): were (0.019924, 3.09294) and (0.014249, 2.68897), the point function at the cells' centres.
+    assert (got["min_g"], got["max_g"]) == pytest.approx((want["min_g"], want["max_g"]), abs=2e-5)
+    # The bound of D216 item 12, [w_bar (1 − B), max s]: the margin under it is small where the arm's weight is.
+    # S57 (D216 G3): was under 2e-5 (9.2e-6 and 1.3e-6 on the centre samples; 2.0e-5 and 7.7e-6 on the cell means).
+    assert 0.0 < got["margin"] < 3e-5 and got["max_g"] <= got["max_s"]
+    # At the templates' own seeds the field stays under the declared ramp's top. That top is the viewer's display
+    # range, not a cap on the field: nothing clips to it, and seeds that draw a strong arm or a low pitch pass it
+    # (6.8 at most over the suite's seeds; the test below).
+    assert gm.GAS_DENSITY_CONTRAST.ramp.hi == 4.0 and not np.any(np.asarray(o.fields["gas_density_contrast"]) > 4.0)
+
+
+def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
+    """The gate on the suite's seeds - sixty pattern seeds by two texture seeds for each template's inputs, the 240
+    galaxies the stellar positivity test draws (``tests/test_modes.py``): on every ring the residual item as gate
+    G3 words it (``gate``, above); the ring's mean 1 to 1e-12 on the solver's cells with no division; min s > 0 and
+    min g ≥ w_bar (1 − B) with nothing clipped; the published field's ring mean within its pinned 2e-13; Newton's
+    counts under the solver's maxima; finite everywhere; the sector means averaging to 1; and the stellar
+    amplitudes the forcing is made of inside the saturation's bound, Σ_m A_m ≤ 1 − B·taper, on every ring (G3
+    item 3).
+
+    **All 240 meet it.** The first build's two failures - ``ngc_4414`` at pattern seed 33, either texture seed, a
+    drawn pitch of 1.78 degrees: ε = a/(κR sin p) about 1 on the inner rings, the forcing's sum 60-80, the
+    residual stalled at 1.0-1.3e-10 against an absolute 1e-10 for 120 steps - **now converge in 10 steps at most**:
+    their worst ring's rounding floor is 3.38e-10 and its residual 1.31e-10 and 1.24e-10, 0.48 and 0.49 of what
+    it is held under; 50 and 48 of their 133 rings have a floor above 1e-10. Seventeen of the 240 galaxies have
+    such a ring (249 rings in all), every one at a drawn pitch under 7.7 degrees.
+
+    **One galaxy that converged before G3 is not the bits it was** (the forbidden "any change to a converged
+    solution's bits" could not be kept with the criterion as ruled, and is reported): ``ngc_4414`` at pattern seed
+    1, texture seed 1 (pitch 2.06 degrees). Its ring at 0.49 kpc (arm weight 3.7e-4) took 10 Newton steps under
+    the absolute tolerance - the last two wandering on the rounding floor until one landed at 9.5e-11 - and takes
+    8 now, stopping at 1.19e-10 under a floor of 2.5e-10. The two profiles differ by 1.8e-15 of themselves; the
+    published field, the point function and the sector means of that galaxy are bit for bit what they were.
+    (Outside this test, a sweep of 300 pattern seeds a template at the template's own texture seed: no galaxy
+    raises where 5 and 15 did; the worst floor 5.8e-10 and 9.7e-10, the worst residual over its bound 0.49; s from
+    3.9e-41 to 14.0 and from 2.7e-79 to 14.8; of the 580 that did not raise before, three more moved, as this one.)"""
+    model = prod[0].get(DEFAULT_MODEL)
+    c = constants(model)
+    edges = np.linspace(0.0, 2.0 * np.pi, 33)
+    worst: dict[str, float] = {}
+    held: dict[tuple[str, int, int], dict[str, float]] = {}
+    on_floor: dict[tuple[str, int, int], float] = {}
+    saturated_most = 0.0
+    for template in TEMPLATES:
+        for pattern_seed in range(60):
+            for texture_seed in (0, 1):
+                given = {**templates.overrides(templates.TEMPLATES[template]), "pattern_seed": pattern_seed, "texture_seed": texture_seed}
+                o = run(model, given, only=GAS_PATTERN_READS)
+                gp = compose.gas_pattern(o.fields, o.grid.R, c)
+                assert gp is not None and not gp.flat
+                label = (template, pattern_seed, texture_seed)
+                got = gate(gp, o.grid["phi"].edges)  # raises nowhere: every ring of every galaxy converges
+                held[label] = got
+                assert got["over"] <= 1.0 and got["sum"] < 1e-13, label
+                assert got["mean"] < 1e-12, label
+                assert got["min_s"] > 0.0 and got["margin"] >= 0.0, label
+                assert got["ring_mean"] < 2e-13, label
+                assert got["steps"] <= gr.MAX_NEWTON_STEPS and got["halvings"] <= gr.MAX_HALVINGS, label
+                if got["on_floor"]:
+                    on_floor[label] = float(o.fields["pitch_angle"])
+                for radius in (3.0, 8.0):
+                    assert float(gp.sector_means(radius, edges).mean()) == pytest.approx(1.0, abs=1e-12), label
+                # The stellar amplitudes the forcing is made of, as published: inside the saturation's bound.
+                taper = pt.bar_terms(o.grid.R, float(o.fields["pitch_angle"]), float(o.fields["bar_half_length"]))[0]
+                total = np.sum([np.asarray(o.fields[n], dtype=float) for n in pt.AMPLITUDE_FIELDS], axis=0)
+                excess = float((total - (1.0 - float(o.fields["bar_contrast"]) * taper)).max())
+                assert excess <= 1e-12, label
+                saturated_most = max(saturated_most, excess)
+                for key, value in got.items():
+                    worst[key] = min(worst.get(key, value), value) if key in ("min_s", "margin", "min_g") else max(worst.get(key, value), value)
+    assert len(held) == 240
+    # The two that raised at the first build, as they converge now (their floors and residuals, as read).
+    for label, residual in ((("ngc_4414", 33, 0), 1.305e-10), (("ngc_4414", 33, 1), 1.238e-10)):
+        got = held[label]
+        assert got["floor"] == pytest.approx(3.384e-10, rel=0.01) and got["residual"] == pytest.approx(residual, rel=0.01), label
+        assert got["steps"] == 10 and got["residual"] > 1e-10 and 0.3 < got["over"] < 0.5, label
+        assert on_floor[label] == pytest.approx(1.780, abs=2e-3) and got["on_floor"] in (48, 50), label
+    # The one whose bits moved with the criterion (the docstring): 9 steps at most over its rings now, its worst
+    # ring's residual 1.19e-10 under a floor of 2.5e-10 (the absolute tolerance had left it at 9.7e-11).
+    moved = held[("ngc_4414", 1, 1)]
+    assert moved["residual"] == pytest.approx(1.186e-10, rel=0.01) and moved["floor"] == pytest.approx(2.516e-10, rel=0.01) and moved["steps"] == 9
+    # The worst seen over the 240, recorded: Newton's counts (the maxima are 120 and 30); the largest floor and the
+    # residual nearest its bound - under half of it everywhere, since the bound carries a factor 2 for the
+    # residual's own arithmetic; the ring mean 1.0e-13 on the solver's cells; the published ring mean; s from
+    # 2.4e-44 to 14.39; the published field from 0.0017 to 6.8; its margin over w_bar (1 − B).
+    # S57 (D216 G3): was `5e-11 < worst residual < 1e-10` over the 238 - a pin that sat on the rounding floor it
+    # is now judged against. The residual over its bound is the robust reading.
+    assert (worst["steps"], worst["halvings"]) == (11, 2)
+    assert worst["floor"] == pytest.approx(3.384e-10, rel=0.01) and 0.45 < worst["over"] < 0.5
+    assert worst["residual"] == pytest.approx(1.305e-10, rel=0.01) and worst["relogged"] < 5e-10
+    assert worst["mean"] < 2e-13 and worst["ring_mean"] < 2e-13 and worst["sum"] < 1e-13
+    assert 0.0 < worst["min_s"] < 1e-40 and worst["max_s"] == pytest.approx(14.39, abs=0.02)
+    assert worst["margin"] >= 0.0 and worst["min_g"] > 1e-3 and worst["max_g"] == pytest.approx(6.78, abs=0.03)
+    # Which galaxies have a ring whose floor is the bound: seventeen, at the lowest drawn pitches.
+    assert len(on_floor) == 17 and max(on_floor.values()) < 7.7 and worst["on_floor"] == 50
+    assert {k[:2] for k in on_floor} == {("milky_way", 1), ("milky_way", 33), ("milky_way", 40), ("ngc_4414", 1), ("ngc_4414", 18),
+                                        ("ngc_4414", 28), ("ngc_4414", 33), ("ngc_4414", 40), ("ngc_4414", 52)}
+    # The saturation's bound is met with equality on a saturated ring, to rounding (the excess is rounding's).
+    assert -1e-15 < saturated_most <= 1e-12
+
+
+def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, monkeypatch):
+    """D216 item 7: "a ring that fails to converge within the counts is a build failure (raise) ... there is no
+    fallback and no linear substitute". Since gate G3 the galaxies that raised at the first build converge, so the
+    failure is forced as the instrument's own test forces it - the solver is given fewer Newton steps than a ring
+    needs - and it is shown to come through every door uncaught: the pattern's profiles, a point, a sector, the
+    cell means, the stage and the whole run."""
+    model = prod[0].get(DEFAULT_MODEL)
+    given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 33}
+    o = run(model, given, only=GAS_PATTERN_READS)
+    assert float(o.fields["pitch_angle"]) == pytest.approx(1.780, abs=2e-3)
+    # With the steps it needs (10 at most) this galaxy - the pattern seed that raised before G3 - is solved, its
+    # worst ring on a rounding floor above the absolute tolerance.
+    gm.forget_solutions()
+    solved = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    assert 5 < solved.diagnostics.worst_steps <= 10 and solved.profiles.min() > 0.0 and solved.diagnostics.floor.max() > 1e-10
+    full = np.asarray(run(model, given, only=("gas_density_contrast",)).fields["gas_density_contrast"])
+    assert np.all(np.isfinite(full)) and full.min() > 0.0
+    # Refused its steps, it raises - and nothing between the solver and the caller catches it.
+    gm.forget_solutions()  # the cache must not hand back the solution just made
+    monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, max_steps=4))
+    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    assert not gp.flat
+    with pytest.raises(gr.ConvergenceError, match="Newton did not converge") as failure:
+        gp.profiles
+    assert failure.value.steps == 4 and failure.value.residual > 1e-10
+    for call in (lambda: gp.contrast_at(np.array([8.0]), np.array([1.0])),
+                 lambda: gp.sector_means(8.0, np.linspace(0.0, 2.0 * np.pi, 5)),
+                 lambda: gp.cell_means(o.grid.R, o.grid["phi"].edges),
+                 lambda: run(model, given, only=("gas_density_contrast",)),
+                 lambda: run(model, only=("gas_density_contrast",))):  # the default galaxy needs 8 steps: it raises too
+        with pytest.raises(gr.ConvergenceError):
+            call()
+    assert len(gm._SOLUTIONS) == 0  # a failure is not kept
+    # With the layer off there is no pattern to solve, and the galaxy runs whatever the solver is given.
+    off = run(model, given, only=("gas_density_contrast",), layer=False)
+    assert np.all(np.asarray(off.fields["gas_density_contrast"]) == 1.0)
+    monkeypatch.undo()
+    gm.forget_solutions()
+
+
+# --- the law, re-derived by hand ---------------------------------------------------------------------------------
+
+
 def test_the_law_rederived_by_hand_on_three_rings(prod):
     """D216's law on three rings of the default galaxy, independent of the modules: f_m and ε are computed here
     from the **published** ``epicyclic_frequency``, ``disc_surface_density``, pitch, amplitudes, phases and the
@@ -351,14 +524,17 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
         10.0125   23.905  30.879  12.00573  0.082903  0       0       0.23099 0.45286 0.56434   1.00000
 
     X(7.99 kpc) = 7.93 is D215's hand anchor, and Ω and κ there are the probe's 30.9 and 41.4. At every ring the
-    published field is held to the composition g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)) written out here; at
-    4 kpc, inside the bar's reach, the bar's term carries 0.70 of the weight. The spectral residual of the
-    differential equation reads 4.8e-4, 9.1e-5 and 3.8e-5 on the three rings: the cells' second-order error."""
+    **published field** is held to the composition written out here: the mean over each grid cell of
+    g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)) - the hand's ring integrated over the cell by the trapezoid rule
+    on its own breakpoints, the bar's cosine by its own integral (gate G3 item 4). At 4 kpc, inside the bar's
+    reach, the bar's term carries 0.70 of the weight. The spectral residual of the differential equation reads
+    4.8e-4, 9.1e-5 and 3.8e-5 on the three rings: the cells' second-order error."""
     model = prod[0].get(DEFAULT_MODEL)
     c = constants(model)
     assert c["G"] == pytest.approx(G_HAND, rel=1e-9) and c["GAS_DISPERSION"] == SOUND_SPEED_HAND
     o = template_run(prod, "milky_way")
-    F, R, phi = o.fields, o.grid.R, o.grid.phi
+    F, R, edges = o.fields, o.grid.R, o.grid["phi"].edges
+    assert edges[0] == 0.0 and edges[-1] == pytest.approx(2.0 * math.pi, rel=1e-15) and edges.size == 361
     kappa, sigma, v = (np.asarray(F[k], dtype=float) for k in ("epicyclic_frequency", "disc_surface_density", "circular_velocity"))
     assert o.decls["disc_surface_density"].unit == "Msun/pc2" and o.decls["epicyclic_frequency"].unit == "km/s/kpc"
     pitch = math.radians(float(F["pitch_angle"]))
@@ -392,39 +568,105 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
         assert gp.forcing_amplitudes()[i].tolist() == pytest.approx(f, rel=1e-12, abs=1e-15)
         assert float(gp.epsilon()[i]) == pytest.approx(eps, rel=1e-13)
         forcing = sum(f_m * np.cos(m * chi - t) for m, f_m, t in zip((2, 3, 4, 5, 6), f, theta))
-        # Road one: the dense Newton on the same cells.
+        # Road one: the dense Newton on the same cells (measured: 1e-13, 1e-14 and 7e-15 apart).
         by_hand, steps = hand_newton(forcing, eps)
         model_ring = gp.profiles[i]
         assert steps <= 12 and float(np.abs(model_ring - by_hand).max()) < 1e-9, (radius, steps, float(np.abs(model_ring - by_hand).max()))
         assert float(np.abs(model_ring / by_hand - 1.0).max()) < 1e-8, radius  # in the trough too, where s is 1e-6
         assert abs(float(model_ring.sum()) / n - 1.0) < 1e-12 and model_ring.min() > 0.0
         # Road two: the differential equation, ε² (ln s)″ = s − 1 − g, the second derivative taken spectrally. What
-        # is left is the cells' second-order error, ε² h²/12 max|(ln s)⁗|, against terms of order 1: pinned as read.
+        # is left is the cells' second-order error, ε² h²/12 max|(ln s)⁗|: pinned as read.
         log_s = np.log(model_ring)
         k = np.fft.rfftfreq(n, d=1.0 / n)
         second = np.fft.irfft(-(k**2) * np.fft.rfft(log_s), n=n)
         ode = eps**2 * second - (model_ring - 1.0 - forcing)
         assert float(np.abs(ode).max()) == pytest.approx(ode_want, rel=0.03), (radius, float(np.abs(ode).max()))
-        # The composition, at the grid's own cells: the hand's ring read at each cell's χ, linear between two cell
-        # centres, weighed by 1 − taper, and the bar's own term by the taper.
+        # The published field, at the grid's own cells: the hand's ring averaged over each cell's χ - the cell's φ
+        # edges less the winding at the ring's radius - weighed by 1 − taper, and the bar's own term, averaged over
+        # the same cell, by the taper. S57 (D216 G3): was the hand's ring read at each cell's centre.
         winding, bar_angle = math.log(Ri) / math.tan(pitch), math.log(a_bar) / math.tan(pitch)
-        place = (phi - winding + math.pi) / h - 0.5
-        lower = np.floor(place).astype(int)
-        share = place - lower
-        ring = (1.0 - share) * by_hand[lower % n] + share * by_hand[(lower + 1) % n]
-        composed = (1.0 - taper) * ring + taper * (1.0 + B * np.cos(2.0 * (phi - bar_angle)))
-        assert float(np.abs(published[i] - composed).max()) < 1e-9, radius
-        assert published[i].min() >= taper * (1.0 - B)
+        lo, hi = edges[:-1], edges[1:]
+        ring = hand_cell_means(by_hand, lo - winding, hi - winding)
+        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
+        composed = (1.0 - taper) * ring + taper * (1.0 + B * bar)
+        assert float(np.abs(published[i] - composed).max()) < 1e-11, (radius, float(np.abs(published[i] - composed).max()))
+        assert published[i].min() >= taper * (1.0 - B) and abs(float(published[i].sum()) / 360.0 - 1.0) < 1e-13
     # Inside the bar's reach the two terms are both there: at 4 kpc the bar carries 0.70 of the weight.
+    # S57 (D216 G3): was (2.0112, 0.5010), the centre samples.
     i = row(o, 4.0125)
-    assert float(published[i].max()) == pytest.approx(2.0112, abs=2e-3) and float(published[i].min()) == pytest.approx(0.5010, abs=2e-3)
+    assert float(published[i].max()) == pytest.approx(2.0108, abs=1e-3) and float(published[i].min()) == pytest.approx(0.5010, abs=1e-3)
 
 
-def test_one_weak_mode_is_the_linear_response_and_sits_on_the_stellar_crest():
+def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(prod):
+    """Gate G3 item 3: "A_m is the stellar field's actual cosine amplitude on the ring (published over (1 − taper)),
+    the saturation in it, because the gas answers the stars that exist" - the forcing is the saturated one, as
+    built. The hand test it owes, on the suite's most saturated pattern seed and from the published fields alone.
+
+    Over the suite's seeds (sixty pattern seeds, each template's inputs) the smallest saturation is 0.574, on
+    ``ngc_4414`` at pattern seed 28 (0.642 on the Milky Way template, the same seed; the arm amplitude draws 0.786
+    and the bar's 0.410); 83 of its rings are saturated, from 3.1 to 9.3 kpc. Two of them are read: the most
+    saturated ring of all (5.36 kpc, the taper 4e-3) and the most saturated one outside the bar's reach (the taper
+    under 1e-6). On each: the published amplitudes sum to 1 − B·taper to rounding - that is what saturated means;
+    f_m = m A_m(published)/((1 − taper) X sin p), by this file's arithmetic, is the stage's forcing to 1e-15; and
+    this file's dense Newton on that forcing is the stage's profile to 1e-10. The unsaturated amplitude A √gain
+    would force 1/0.57 times harder: it is not what the stage uses."""
+    model = prod[0].get(DEFAULT_MODEL)
+    lowest = min(
+        (float(np.min(run(model, {**templates.overrides(templates.TEMPLATES[t]), "pattern_seed": seed, "texture_seed": 0},
+                          only=("arm_saturation",)).fields["arm_saturation"])), t, seed)
+        for t in TEMPLATES for seed in range(60))
+    assert lowest[1:] == ("ngc_4414", 28) and lowest[0] == pytest.approx(0.5744, abs=2e-4)
+    given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 28, "texture_seed": 0}
+    o = run(model, given, only=PATTERN_FIELDS)
+    F, R = o.fields, o.grid.R
+    gp = shape_of(model, o)
+    saturation = np.asarray(F["arm_saturation"], dtype=float)
+    kappa, sigma = (np.asarray(F[k], dtype=float) for k in ("epicyclic_frequency", "disc_surface_density"))
+    pitch = math.radians(float(F["pitch_angle"]))
+    a_bar, B, A = float(F["bar_half_length"]), float(F["bar_contrast"]), float(F["arm_contrast"])
+    assert (math.degrees(pitch), A, B) == pytest.approx((7.615, 0.7859, 0.4101), abs=2e-3)
+    theta = [float(F[n]) for n in pt.PHASE_FIELDS]
+    taper_all = np.exp(-((R / a_bar) ** 4))
+    assert int((saturation < 1.0).sum()) == 83 and (R[saturation < 1.0].min(), R[saturation < 1.0].max()) == pytest.approx((3.1125, 9.2625), abs=1e-6)
+    most = int(np.argmin(saturation))
+    outside = int(np.flatnonzero(taper_all < 1e-6)[np.argmin(saturation[taper_all < 1e-6])])
+    n = gr.CELLS
+    chi = -math.pi + (np.arange(n) + 0.5) * (2.0 * math.pi / n)
+    read = {}
+    for i in (most, outside):
+        Ri, taper = float(R[i]), float(taper_all[i])
+        published = [float(np.asarray(F[pt.amplitude_field(m)])[i]) for m in (2, 3, 4, 5, 6)]
+        # Saturated: the modes' amplitudes and the bar's add up to 1 exactly - to rounding.
+        assert saturation[i] < 1.0 and sum(published) == pytest.approx(1.0 - B * taper, rel=1e-15, abs=0.0), Ri
+        x = float(kappa[i]) ** 2 * Ri / (2.0 * math.pi * G_HAND * float(sigma[i]) * 1.0e6)
+        eps = SOUND_SPEED_HAND / (float(kappa[i]) * Ri * math.sin(pitch))
+        f = [m * a / ((1.0 - taper) * x * math.sin(pitch)) for m, a in zip((2, 3, 4, 5, 6), published)]
+        stage = gp.forcing_amplitudes()[i]
+        assert stage.tolist() == pytest.approx(f, rel=1e-15, abs=0.0), (Ri, (stage / np.array(f) - 1.0).tolist())
+        assert float(gp.epsilon()[i]) == pytest.approx(eps, rel=1e-15)
+        forcing = sum(f_m * np.cos(m * chi - t) for m, f_m, t in zip((2, 3, 4, 5, 6), f, theta))
+        by_hand, steps = hand_newton(forcing, eps)
+        ring = gp.profiles[i]
+        assert float(np.abs(ring - by_hand).max()) < 1e-10 and float(np.abs(ring / by_hand - 1.0).max()) < 1e-8, Ri
+        read[i] = (Ri, float(saturation[i]), taper, sum(f), eps, float(ring.max()), float(ring.min()), steps)
+        # The unsaturated amplitude, A √gain (the saturation taken back out), is another forcing by 1/saturation.
+        carried = np.array(f) > 0.0
+        unsaturated = np.array(f)[carried] / float(saturation[i])
+        assert carried.sum() >= 3 and float(np.abs(stage[carried] / unsaturated - 1.0).max()) == pytest.approx(1.0 - float(saturation[i]), rel=1e-12)
+    # The two rings, as read: R, the saturation, the taper; the forcing's sum, ε, the crest and the trough of s.
+    # 5.36 kpc: 0.574, 4.3e-3; Σf 5.44, ε 0.151, s from 4.3e-4 to 4.83. 6.79 kpc: 0.636, 8.5e-7; Σf 4.31, ε 0.169,
+    # s from 9.0e-3 to 4.12. (The hand's Newton took 7 steps on each.)
+    assert read[most][:3] == pytest.approx((5.3625, 0.5744, 4.308e-3), abs=2e-4)
+    assert read[most][3:7] == pytest.approx((5.440, 0.1508, 4.829, 4.26e-4), rel=2e-3)
+    assert read[outside][:2] == pytest.approx((6.7875, 0.6364), abs=2e-4) and read[outside][2] == pytest.approx(8.47e-7, rel=0.01)
+    assert read[outside][3:7] == pytest.approx((4.311, 0.1693, 4.121, 9.00e-3), rel=2e-3)
+
+
+def test_one_weak_mode_is_the_linear_response_and_a_lone_mode_has_no_offset():
     """Two anchors on a made-up disc, with the arithmetic written here. A weak mode's response is the linear one,
     s − 1 = f/(1 + m² ε²) cos(mχ − θ) - so f and ε reach the solver as the law writes them, sign and phase
-    included. And **no offset** (D210 ruling 3, D216 item 12: "offset zero by symmetry"): one mode's response is
-    even about the mode's crest, so the gas's crest is the stellar crest, at any amplitude."""
+    included. And **the offset is zero for a lone mode, exactly, by the equation's symmetry** (D210 ruling 3, D216
+    item 12; gate G3 item 7): one mode's response is even about the mode's crest at any amplitude."""
     R = DEFAULT.build().R
     i = int(np.argmin(np.abs(R - 8.0)))
     m, theta, arm, pitch = 4, 0.7, 0.4, 13.5
@@ -453,24 +695,44 @@ def test_one_weak_mode_is_the_linear_response_and_sits_on_the_stellar_crest():
     assert min(away, 2.0 * math.pi / m - away) <= 2.0 * math.pi / gr.CELLS
 
 
-def test_the_gas_s_crest_is_within_a_degree_of_the_stellar_crest(prod):
-    """D216's prediction "offset 0 on every ring", read on the default galaxy's several modes: **held to a degree,
-    not to the cell**. One mode's response is even about its crest (the test above). A ring of several modes is
-    not one mode: the gas answers each mode with its own weight, m/(1 + m² ε²) against the stars' 1, so the two
-    sums need not peak in the same cell - at 7 and 8 kpc they peak one cell (a degree) apart; at 6, 9, 10, 11 and
-    12 kpc in the same cell. No offset is put in and none is published."""
-    o = template_run(prod, "milky_way")
-    g, s = np.asarray(o.fields["gas_density_contrast"]), np.asarray(o.fields["pattern_density_contrast"])
-    n = o.grid.phi.size
-    apart = []
-    for radius in (6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0):
-        i = row(o, radius)
-        d = abs(int(g[i].argmax()) - int(s[i].argmax()))
-        apart.append(min(d, n - d))
-    assert apart == [0, 1, 1, 0, 0, 0, 0]
+@pytest.mark.parametrize("template", TEMPLATES)
+def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, template):
+    """D216's prediction "offset 0 on every ring", as gate G3 words the record (item 7): "zero for a lone mode,
+    exactly, by the equation's symmetry; with several modes the gas crest and the stellar sum's crest are within
+    one solver cell (0.25°) on the default galaxy because each mode is answered with its own weight; no offset is
+    put in and none is published". Read here on the solver's own cells, the tallest crest of s against the tallest
+    crest of the stellar modes' sum, ring by ring.
+
+    **The Milky Way template: within one solver cell on every one of the 53 rings over 6-10 kpc (the same cell on
+    5, one apart on 48), and on 161 of the 165 rings that carry a mode; two rings read two cells, and on two (12.1
+    and 12.2 kpc, where the six-armed mode is all but alone and six nearly equal crests stand) the gas's tallest
+    crest is another arm's. ``ngc_4414`` is not within a cell: over 6-10 kpc the two are the same cell on 20 rings,
+    one apart on 12, two on 13, and three to five on 8 (five cells is 1.25 degrees); 7 at most over the disc.**
+    G3's wording is the default galaxy's, and holds on it over the band the check reads; the other template's
+    reading is recorded beside it."""
+    model = prod[0].get(DEFAULT_MODEL)
+    o = template_run(prod, template)
+    R = o.grid.R
+    gp = shape_of(model, o)
+    s, psi = gp.profiles, gp.stellar_sum()
+
+    def apart(i: int) -> int:
+        d = abs(int(s[i].argmax()) - int(psi[i].argmax()))
+        return min(d, gr.CELLS - d)
+
+    band = [apart(i) for i in np.flatnonzero(gp.carries & (R >= 6.0) & (R <= 10.0))]
+    every = [apart(i) for i in np.flatnonzero(gp.carries)]
+    same_arm = [d for d in every if d <= 10]
+    want = {
+        "milky_way": dict(band=[5, 48], most=2, other_arm=2, within_one=161),
+        "ngc_4414": dict(band=[20, 12, 13, 2, 4, 2], most=7, other_arm=0, within_one=37),
+    }[template]
+    assert np.bincount(band).tolist() == want["band"] and len(band) == 53
+    assert max(same_arm) == want["most"] and len(every) - len(same_arm) == want["other_arm"]
+    assert sum(1 for d in every if d <= 1) == want["within_one"]
 
 
-# --- the interpolation, in χ and in R (D216 item 9: "measured and pinned") ---------------------------------------
+# --- the interpolation of the point function, in χ and in R (D216 item 9; gate G3 item 5) -----------------------
 
 
 def midpoint_error(s: np.ndarray) -> np.ndarray:
@@ -486,16 +748,19 @@ def midpoint_error(s: np.ndarray) -> np.ndarray:
 
 @pytest.mark.parametrize("template", TEMPLATES)
 def test_the_interpolation_errors_are_pinned_as_measured(prod, template):
-    """**In χ, at the cells' midpoints** (the worst place: h²/8 · max|s″|). The instrument's two hard rings read
-    1.96e-4 and 1.54e-4, and the gate ruled 1440 cells on that ("the expected order"). **The model's rings read
-    more, and are pinned as they are (B5): 3.5e-4 at worst outside the bar's reach for the Milky Way template
-    (9.2e-5 for ``ngc_4414`` beyond 6 kpc), and 1.2e-3 on s deep inside the bar** - where the untapered forcing
-    sums to 4-6 and the crest stands at 4-5.7 - **which is 3.0e-4 (2.9e-4) of the published field**, the arm's
-    weight there being under 1 %. The cell count is the ruling's and is not touched.
+    """Gate G3 item 5: "1440 cells stand. Pinned as measured: s 3.5e-4 beyond 6 kpc, 1.2e-3 inside the bar's
+    reach (≤ 1.2e-5 of the field there), the point field 3.0e-4, the R-interpolation 5.7e-4 / 7.9e-4."
+
+    **In χ, at the cells' midpoints** (the worst place for the point function: h²/8 · max|s″|). The instrument's
+    two hard rings read 1.96e-4 and 1.54e-4. The model's rings, per quantity: **s beyond 6 kpc 3.5e-4 at worst for
+    the Milky Way template (9.2e-5 for ``ngc_4414``); s inside the bar's reach 1.2e-3 (1.2e-3)** - where the
+    untapered forcing sums to 4-6 and the crest stands at 4-5.7 - **which on that ring is 9.4e-6 (1.4e-5) of the
+    field, the arm's weight there being under 1.2 %; the point field 3.0e-4 (2.9e-4) at worst over every ring.**
+    (The published field is cell means, whose error is smaller: the test of the cell-averaged field, above.)
 
     **In R, midway between two grid rings**, against a ring solved there with the law's inputs linear in R
     between the two rings (the amplitudes as ``ArmPattern`` reads them, κ and Σ alike): the blend of the two
-    neighbours at the same χ is off by 5.7e-4 (7.9e-4) of the published field at worst, its median 8e-5 (1.7e-4);
+    neighbours at the same χ is off by 5.7e-4 (7.9e-4) of the point field at worst, its median 8e-5 (1.7e-4);
     on s itself by 0.22 (0.30), on the innermost pair, where ε falls by a third between two rings and the arm's
     weight is 1e-7. The worst pairs are where a mode enters or leaves between two rings."""
     model = prod[0].get(DEFAULT_MODEL)
@@ -508,9 +773,11 @@ def test_the_interpolation_errors_are_pinned_as_measured(prod, template):
     spectrum = np.abs(np.fft.rfft(s, axis=1)) / s.shape[1]
     assert float(spectrum[:, 480:].max()) < 1e-13  # resolved: nothing left above two thirds of the Nyquist number
     error = midpoint_error(s)
-    want = {"milky_way": (1.240e-3, 2.963e-4, 3.486e-4), "ngc_4414": (1.210e-3, 2.886e-4, 9.232e-5)}[template]
-    got = (float(error.max()), float((error * (1.0 - taper)).max()), float(error[R > 6.0].max()))
+    worst = int(np.argmax(error))
+    want = {"milky_way": (1.240e-3, 2.963e-4, 3.486e-4, 9.37e-6), "ngc_4414": (1.210e-3, 2.886e-4, 9.232e-5, 1.45e-5)}[template]
+    got = (float(error.max()), float((error * (1.0 - taper)).max()), float(error[R > 6.0].max()), float(error[worst] * (1.0 - taper[worst])))
     assert got == pytest.approx(want, rel=0.01), got
+    assert 1.0 - taper[worst] < 0.012 and R[worst] < 2.0  # the worst ring of s: deep inside the bar's reach
     # The interpolant the pattern reads is that linear one: at a midpoint, the mean of the two cells.
     chi = gr.cell_centres() + math.pi / gr.CELLS
     i = int(np.argmax(error * (1.0 - taper)))
@@ -541,41 +808,42 @@ def test_the_gate_s_predictions_as_measured(prod):
     made them forced with the *tapered* amplitudes; the ruling forces with the untapered ones and composes with the
     bar afterwards (item 8), so "outside the bar's reach these are the ruling's" (Fable).
 
-        R kpc     predicted: crest / trough / ratio     as built, s: crest / trough / ratio     as built, g: crest / trough
+        R kpc     predicted: crest / trough / ratio     as built, s: crest / trough / ratio     published g: crest / trough
         4.0125    1.91 / 0.37  / 1.57                   4.170 / 4.5e-7 / 3.811                  2.011 / 0.501
-        5.9625    3.02 / 0.007 / 2.69                   3.480 / 2.5e-4 / 3.208                  3.010 / 0.128
+        5.9625    3.02 / 0.007 / 2.69                   3.480 / 2.5e-4 / 3.208                  3.009 / 0.128
         7.9875    2.79 / 0.018 / 2.56                   2.797 / 0.0171 / 2.571                  2.787 / 0.0220
-        10.0125   2.09 / 0.18  / 2.04                   2.090 / 0.1819 / 2.037                  2.089 / 0.1822
-        10.9875   1.77 / 0.38  / 1.89                   1.765 / 0.3845 / 1.886                  1.765 / 0.3845
-        12.0375   1.20 / 0.81  / 1.28                   1.198 / 0.8114 / 1.281                  1.198 / 0.8116
+        10.0125   2.09 / 0.18  / 2.04                   2.090 / 0.1819 / 2.037                  2.089 / 0.1823
+        10.9875   1.77 / 0.38  / 1.89                   1.765 / 0.3845 / 1.886                  1.764 / 0.3847
+        12.0375   1.20 / 0.81  / 1.28                   1.198 / 0.8114 / 1.281                  1.198 / 0.8117
 
-    **Held** at 10, 11 and 12 kpc, to the figures given. **Held at R₀ to the taper's share**: the taper is 0.0040
-    at 7.99 kpc, the untapered forcing 0.4 % stronger, and the crest and the ratio stand 0.3-0.4 % above the
-    probe's (the trough 5 % under: 0.0171 against 0.018). **Not held inside the bar's reach, as foreseen**: at 4
-    and 6 kpc s answers the untapered forcing (its sum 3.7 and 2.8, against the probe's 1.1 and 2.3) and is far
-    stronger than the probe's; the published field there is s at 0.30 and 0.82 of the weight with the bar's own
-    term. Nothing was changed to make a number hold.
+    (The published g is the cells' means since gate G3: its crest reads a few 1e-4 under the point function's and
+    its trough as much over.) **Held** at 10, 11 and 12 kpc, to the figures given. **Held at R₀ to the taper's
+    share**: the taper is 0.0040 at 7.99 kpc, the untapered forcing 0.4 % stronger, and the crest and the ratio
+    stand 0.3-0.4 % above the probe's (the trough 5 % under: 0.0171 against 0.018). **Not held inside the bar's
+    reach, as foreseen**: at 4 and 6 kpc s answers the untapered forcing (its sum 3.7 and 2.8, against the probe's
+    1.1 and 2.3) and is far stronger than the probe's; the published field there is s at 0.30 and 0.82 of the
+    weight with the bar's own term. Nothing was changed to make a number hold.
 
     Also read: "interarm nearly empty where the forcing's sum exceeds 1 (6-8 kpc)" - held, the trough of s
     2.9e-4 to 0.017 there; "Newton at most 8 steps here" - held, 8; "34 on ``ngc_4414``" - the probe's own Newton;
     the instrument takes 9."""
     model = prod[0].get(DEFAULT_MODEL)
-    c = constants(model)
-    assert c["GAS_ARM_MASK_WIDTH"] == MASK_WIDTH_HAND
     o = template_run(prod, "milky_way")
     R = o.grid.R
     g = np.asarray(o.fields["gas_density_contrast"])
     gp = shape_of(model, o)
-    s, ratio = gp.profiles, gp.arm_ratio(MASK_WIDTH_HAND)
+    s, ratio = gp.profiles, gp.arm_ratio(MASK_WIDTH)
     f_sum = gp.forcing_amplitudes().sum(axis=1)
     table = (
-        # R, predicted (crest, trough, ratio), as built s (crest, trough, ratio), as built g (crest, trough), held
-        (4.0125, (1.91, 0.37, 1.57), (4.1701, 4.48e-7, 3.8106), (2.0112, 0.5010), False),
-        (5.9625, (3.02, 0.007, 2.69), (3.4796, 2.54e-4, 3.2080), (3.0096, 0.1282), False),
-        (7.9875, (2.79, 0.018, 2.56), (2.7967, 0.0171, 2.5705), (2.7874, 0.0220), True),
-        (10.0125, (2.09, 0.18, 2.04), (2.0896, 0.1819, 2.0375), (2.0892, 0.1822), True),
-        (10.9875, (1.77, 0.38, 1.89), (1.7648, 0.3845, 1.8857), (1.7646, 0.3845), True),
-        (12.0375, (1.20, 0.81, 1.28), (1.1984, 0.8114, 1.2812), (1.1982, 0.8116), True),
+        # R, predicted (crest, trough, ratio), as built s (crest, trough, ratio), published g (crest, trough), held
+        # S57 (D216 G3): the published g were (2.0112, 0.5010), (3.0096, 0.1282), (2.7874, 0.0220), (2.0892, 0.1822),
+        # (1.7646, 0.3845), (1.1982, 0.8116) - the point function at the cells' centres; they are the cells' means.
+        (4.0125, (1.91, 0.37, 1.57), (4.1701, 4.48e-7, 3.8106), (2.0108, 0.5010), False),
+        (5.9625, (3.02, 0.007, 2.69), (3.4796, 2.54e-4, 3.2080), (3.0088, 0.1282), False),
+        (7.9875, (2.79, 0.018, 2.56), (2.7967, 0.0171, 2.5705), (2.7868, 0.0220), True),
+        (10.0125, (2.09, 0.18, 2.04), (2.0896, 0.1819, 2.0375), (2.0888, 0.1823), True),
+        (10.9875, (1.77, 0.38, 1.89), (1.7648, 0.3845, 1.8857), (1.7642, 0.3847), True),
+        (12.0375, (1.20, 0.81, 1.28), (1.1984, 0.8114, 1.2812), (1.1981, 0.8117), True),
     )
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
@@ -583,7 +851,7 @@ def test_the_gate_s_predictions_as_measured(prod):
         got = (float(s[i].max()), float(s[i].min()), float(ratio[i]))
         assert got[0] == pytest.approx(built[0], abs=2e-3) and got[2] == pytest.approx(built[2], abs=2e-3), radius
         assert got[1] == pytest.approx(built[1], rel=0.03), radius
-        assert (float(g[i].max()), float(g[i].min())) == pytest.approx(composed, abs=2e-3), radius
+        assert (float(g[i].max()), float(g[i].min())) == pytest.approx(composed, abs=2e-4), radius
         # Against the prediction: the crest and the ratio within 0.5 % and the trough within 0.006 where it held.
         near = abs(got[0] / predicted[0] - 1.0) < 5e-3 and abs(got[2] / predicted[2] - 1.0) < 5e-3 and abs(got[1] - predicted[1]) < 6e-3
         assert near == held, (radius, got, predicted)
@@ -604,64 +872,98 @@ def test_disclosed_check_the_ratio_of_means_and_the_width(prod, template):
     """**A disclosed check, not an acceptance row** (D216, the gate's follow-up: "row 38 is not an acceptance row;
     the number 38 is not taken; I3 stands as tested"). Layer on, each template at its default seeds, per ring over
     6-10 kpc. **Disclosed** (D113): the probe printed 2.56 at R₀ and 2.0-2.8 over 6-10 kpc before the check was
-    defined, so it cannot be a blind test. The definitions are the ruling's, fixed before the build's numbers.
+    defined, so it cannot be a blind test. The definitions are the gates', fixed before the numbers they judge.
 
     *The ratio of means*: the mean of s inside the source's arm mask - the share m_eff W/(2π R sin p) of the ring,
     at most a half, where the stellar modes' sum is highest (S56's mask) - over its mean outside, against PHANGS's
-    2.73 within its 16th-84th percentiles 1.37-5.79. **As read: the Milky Way template's median over 6-10 kpc is
-    2.571, inside - a hit, disclosed - and every one of its 53 rings is inside (2.052 to 3.192). ``ngc_4414``'s
-    median is 1.881, inside; 46 of its 53 rings are inside and the 7 outermost, where its arms fade (9.49 to
-    9.94 kpc), fall under 1.37, down to 1.076.** Nothing was tuned to land it.
+    2.73 within its 16th-84th percentiles 1.37-5.79. **The verdict, in gate G3's words (item 7): "a hit, disclosed
+    (D113): Milky Way median 2.571, 53 of 53 rings inside 1.37-5.79; ``ngc_4414`` median 1.881 inside, seven of
+    its 53 rings (the outer ones) below the 16th percentile, recorded".** Those seven are 9.49 to 9.94 kpc, where
+    its arms fade, down to 1.076. Nothing was tuned to land it.
 
-    *The width*: the full width at half maximum of the ring's tallest crest, the half level midway between the
-    ring's trough and crest, over the period 2π/m of the ring's strongest mode, against the measured 0.17.
-    **As read: a miss on every ring of both templates, as predicted (0.23-0.48): 0.211 to 0.481, median 0.311,
-    for the Milky Way template - 1.24 to 2.83 times the measured width (the prediction's low end was 0.23: the
-    narrowest ring, at 6.04 kpc, answers the untapered forcing) - and 0.262 to 0.508, median 0.422, for
-    ``ngc_4414``, 1.54 to 2.99 times.** Its two named suspects (D216, "Honesty"): the steady pressure-balanced response in place of the
-    simulations' converging infall, and the razor-thin forcing of the five- and six-armed modes."""
+    *The width*, as gate G3 fixed its definition (item 6): "the FWHM of the ring's tallest crest of s as a fraction
+    of the period 2π/m of the mode of largest forcing m·A_m - the mode the gas answers most strongly - not a
+    tie-break on amplitude", the half level midway between the ring's trough and crest, against the measured 0.17.
+    **As read: the Milky Way template 0.466 at the median, 0.423 to 0.481; ``ngc_4414`` 0.512, 0.479 to 0.526 - a
+    miss on every ring, by 2.5 to 2.8 times and by 2.8 to 3.1 times** (G3 recorded "2.5-3.0× on every ring";
+    ``ngc_4414``'s widest ring reads 3.09). Its two named suspects (D216, "Honesty"): the steady pressure-balanced
+    response in place of the simulations' converging infall, and the razor-thin forcing of the five- and six-armed
+    modes.
+
+    **The other two readings, printed beside it and not the check** (G3: "the build's first reading (0.311) was
+    the kindest and is replaced"). The first build read the period of the mode of *largest amplitude*; on 52 of
+    the Milky Way's 53 rings (32 of ``ngc_4414``'s) the top amplitude is a tie between arm numbers - the gain is
+    whole for each - and it took the lower one, as the probe had: 0.311 at the median, 0.211 to 0.481 (0.422, 0.262
+    to 0.508), a miss by 1.2 to 2.8 times. Taking the higher tied arm number: 0.466, 0.352 to 0.481 (0.506, 0.437
+    to 0.525). A miss on every ring under every reading."""
     model = prod[0].get(DEFAULT_MODEL)
     c = constants(model)
-    assert (c["GAS_ARM_MASK_WIDTH"], c["GAS_ARM_WIDTH"]) == (MASK_WIDTH_HAND, WIDTH_TARGET)
+    assert "GAS_ARM_MASK_WIDTH" not in c and "GAS_ARM_WIDTH" not in c  # the model reads neither: tests/gas_check.py
+    assert (MASK_WIDTH, WIDTH_TARGET) == (1.5, 0.17)
     o = template_run(prod, template)
     F, R = o.fields, o.grid.R
     assert float(F["gas_arm_contrast"]) == pytest.approx(RATIO_TARGET, abs=1e-12)  # the target, and no stage's input
     gp = shape_of(model, o)
     band = (R >= 6.0) & (R <= 10.0) & gp.carries
-    ratio, width = gp.arm_ratio(MASK_WIDTH_HAND)[band], gp.arm_width()[band]
+    ratio, width = gp.arm_ratio(MASK_WIDTH)[band], gp.arm_width()[band]
+    # The arm numbers the three readings take on every ring, from the published amplitudes, by this file's arithmetic.
+    modes = np.arange(2.0, 7.0)
+    amplitudes = np.stack([np.asarray(F[n], dtype=float) for n in pt.AMPLITUDE_FIELDS])
+    by_forcing = modes[np.argmax(modes[:, None] * amplitudes, axis=0)]
+    lower_tied = modes[np.argmax(amplitudes, axis=0)]
+    higher_tied = modes[len(modes) - 1 - np.argmax(amplitudes[::-1], axis=0)]
+    tied = int(((amplitudes == amplitudes.max(axis=0)).sum(axis=0) > 1)[band].sum())
+    assert np.array_equal(gp.strongest_forcing()[band], by_forcing[band])
+    # One measurement - the crest's width in radians - read against three periods.
+    readings = {"largest forcing (the check)": width,
+                "largest amplitude, the lower arm number on a tie (the first build's)": gp.arm_width(lower_tied)[band],
+                "largest amplitude, the higher arm number on a tie": gp.arm_width(higher_tied)[band]}
+    assert np.allclose(readings["largest amplitude, the higher arm number on a tie"] / higher_tied[band], width / by_forcing[band], rtol=1e-12)
+    for name, values in readings.items():
+        print(f"{template}: width by the {name}: median {np.median(values):.3f}, {values.min():.3f} to {values.max():.3f}, "
+              f"{values.min() / WIDTH_TARGET:.2f} to {values.max() / WIDTH_TARGET:.2f} times the measured {WIDTH_TARGET}")
     want = {
-        "milky_way": dict(rings=53, ratio=(2.5705, 2.0523, 3.1921), inside=53, width=(0.3107, 0.2114, 0.4807)),
-        "ngc_4414": dict(rings=53, ratio=(1.8814, 1.0762, 2.8299), inside=46, width=(0.4218, 0.2620, 0.5083)),
+        "milky_way": dict(rings=53, ratio=(2.5705, 2.0523, 3.1921), inside=53, tied=52,
+                          width=(0.4660, 0.4229, 0.4807), lower=(0.3107, 0.2114, 0.4807), higher=(0.4660, 0.3524, 0.4807)),
+        "ngc_4414": dict(rings=53, ratio=(1.8814, 1.0762, 2.8299), inside=46, tied=32,
+                         width=(0.5120, 0.4790, 0.5260), lower=(0.4218, 0.2620, 0.5083), higher=(0.5061, 0.4366, 0.5253)),
     }[template]
-    assert int(band.sum()) == want["rings"]
+    assert int(band.sum()) == want["rings"] and tied == want["tied"]
     assert (float(np.median(ratio)), float(ratio.min()), float(ratio.max())) == pytest.approx(want["ratio"], abs=2e-3)
-    assert (float(np.median(width)), float(width.min()), float(width.max())) == pytest.approx(want["width"], abs=2e-3)
+    # S57 (D216 G3 item 6): the check's width was (0.3107, 0.2114, 0.4807) and (0.4218, 0.2620, 0.5083) - the reading
+    # by the largest amplitude, the lower arm number on a tie, which is kept below as the record of the first build.
+    for values, key in zip(readings.values(), ("width", "lower", "higher")):
+        assert (float(np.median(values)), float(values.min()), float(values.max())) == pytest.approx(want[key], abs=2e-3), key
     # The verdicts, as read: the median ratio inside PHANGS's percentiles (a hit, disclosed) ...
     assert RATIO_LOW <= float(np.median(ratio)) <= RATIO_HIGH
     assert int(((ratio >= RATIO_LOW) & (ratio <= RATIO_HIGH)).sum()) == want["inside"] and np.all(ratio <= RATIO_HIGH)
-    # ... and the width a miss on every ring: wider than the measured arm, by 1.2 to 3.0 times.
-    assert np.all(width > WIDTH_TARGET) and 1.2 < float(width.min()) / WIDTH_TARGET and float(width.max()) / WIDTH_TARGET < 3.0
+    below = R[band][ratio < RATIO_LOW]
+    assert below.size == want["rings"] - want["inside"] and (below.size == 0 or (below.min() == pytest.approx(9.4875, abs=1e-6) and below.max() == pytest.approx(9.9375, abs=1e-6)))
+    # ... and the width a miss on every ring, under every reading: wider than the measured arm - by 2.5 to 3.1 times
+    # as the check reads it.
+    for values in readings.values():
+        assert np.all(values > WIDTH_TARGET)
+    assert 2.45 < float(width.min()) / WIDTH_TARGET and float(width.max()) / WIDTH_TARGET < 3.1
 
     # The two measurements, re-made here on one ring by this file's arithmetic (a sort and a walk), from the
     # published amplitudes and phases: the module's helpers are these.
     i = row(o, 8.0)
-    amplitudes = np.array([float(np.asarray(F[n])[i]) for n in pt.AMPLITUDE_FIELDS])
+    amplitudes = amplitudes[:, i]
     phases = np.array([float(F[n]) for n in pt.PHASE_FIELDS])
-    modes = np.arange(2.0, 7.0)
     chi = -math.pi + (np.arange(1440) + 0.5) * (2.0 * math.pi / 1440)
     psi = (amplitudes[:, None] * np.cos(modes[:, None] * chi[None, :] - phases[:, None])).sum(axis=0)
     m_eff = float((modes * amplitudes**2).sum() / (amplitudes**2).sum())
-    share = min(0.5, m_eff * MASK_WIDTH_HAND / (2.0 * math.pi * float(R[i]) * math.sin(math.radians(float(F["pitch_angle"])))))
+    share = min(0.5, m_eff * MASK_WIDTH / (2.0 * math.pi * float(R[i]) * math.sin(math.radians(float(F["pitch_angle"])))))
     s = gp.profiles[i]
     order = np.argsort(-psi, kind="stable")
     inside = int(round(share * s.size))
     by_hand = float(s[order[:inside]].mean() / s[order[inside:]].mean())
-    assert float(gp.arm_ratio(MASK_WIDTH_HAND)[i]) == pytest.approx(by_hand, rel=2e-3)  # a whole cell at the cut, against a share of it
+    assert float(gp.arm_ratio(MASK_WIDTH)[i]) == pytest.approx(by_hand, rel=2e-3)  # a whole cell at the cut, against a share of it
     half = 0.5 * (float(s.max()) + float(s.min()))
-    crest = int(np.argmax(s))
-    ahead = next(k for k in range(1, s.size) if s[(crest + k) % s.size] <= half)
-    behind = next(k for k in range(1, s.size) if s[(crest - k) % s.size] <= half)
-    strongest = float(modes[int(np.argmax(amplitudes))])  # the largest amplitude; the lower arm number on a tie
+    top = int(np.argmax(s))
+    ahead = next(k for k in range(1, s.size) if s[(top + k) % s.size] <= half)
+    behind = next(k for k in range(1, s.size) if s[(top - k) % s.size] <= half)
+    strongest = float(modes[int(np.argmax(modes * amplitudes))])  # the mode of largest forcing m·A_m
     cells = (ahead + behind - 1) * (2.0 * math.pi / s.size) / (2.0 * math.pi / strongest)
     assert float(gp.arm_width()[i]) == pytest.approx(cells, abs=1.5 * strongest / s.size)  # whole cells against the crossing
 
@@ -686,58 +988,81 @@ def test_the_check_s_measurements_on_shapes_whose_answers_are_known():
     assert a != b and abs(a - b) < 1e-5
     share = gm.mask_share(np.array([4.0, 4.0, np.nan]), np.array([8.0, 2.0, 8.0]), 0.25, 1.5)
     assert share[0] == pytest.approx(4.0 * 1.5 / (2.0 * math.pi * 8.0 * 0.25)) and share[1] == 0.5 and math.isnan(share[2])
+    # The width's mode is the one of largest forcing m·A_m: with equal amplitudes that is the highest arm number.
+    R = DEFAULT.build().R
+    unit = np.zeros((5, R.size))
+    unit[1:4] = 1.0 / math.sqrt(3.0)  # three, four and five arms at one amplitude: a tie the amplitude cannot break
+    assert np.all(synthetic(unit).strongest_forcing() == 5.0)
+    unit[1] = 0.9  # m·A: 3 × 0.9 = 2.7 against 5 × 0.577 = 2.89 - still five; at 0.97, 2.91: three
+    assert np.all(synthetic(unit).strongest_forcing() == 5.0)
+    unit[1] = 0.97
+    assert np.all(synthetic(unit).strongest_forcing() == 3.0)
 
 
 def test_nothing_of_the_ridge_builds_the_field(prod):
     """D216 item 11 (iv): "nothing replaces the amplitude: s is the field; ``gas_arm_contrast`` and S56's mask
-    survive only as [the check's] target and definition; ``GAS_ARM_WIDTH`` only as the width miss's target". The
-    pattern is built from fields and constants that hold none of the three; no stage requires the ratio; the
-    stage declares the check's two constants (a constant must have a stage: preflight) and its module's code
-    names them once, in that declaration; and the retired machinery is gone from the module."""
+    survive only as [the check's] target and definition; ``GAS_ARM_WIDTH`` only as the width miss's target". And
+    gate G3 item 7: "the two retired constants leave the model's registry and live in ``tests/`` with their
+    sources: a stage may not declare reads it does not make." The model declares neither constant and no stage
+    names one; the pattern is built from the law's two constants; no stage requires the ratio; and the retired
+    machinery is gone from the module."""
     models, impls_, _ = prod
     model = models.get(DEFAULT_MODEL)
-    assert GAS_PATTERN_CONSTANTS == ("G", "GAS_DISPERSION") and GAS_CHECK_CONSTANTS == ("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH")
-    assert GAS_PATTERN.reads_constants == (*GAS_PATTERN_CONSTANTS, *GAS_CHECK_CONSTANTS)
-    assert "gas_arm_contrast" not in GAS_PATTERN_READS and not set(GAS_CHECK_CONSTANTS) & set(GAS_PATTERN_CONSTANTS)
+    assert GAS_PATTERN_CONSTANTS == ("G", "GAS_DISPERSION") and not hasattr(gm, "GAS_CHECK_CONSTANTS")
+    assert GAS_PATTERN.reads_constants == GAS_PATTERN_CONSTANTS and "gas_arm_contrast" not in GAS_PATTERN_READS
+    retired = ("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH")
     for m in models:
+        assert not set(retired) & set(m.constants), m.name
+        assert {"GAS_ARM_CONTRAST_GRAND_DESIGN", "GAS_ARM_CONTRAST_OTHER", "G", "GAS_DISPERSION"} <= set(m.constants)
         readers = [sid for _, sid in m.stages if "gas_arm_contrast" in impls_.get(sid).requires + impls_.get(sid).requires_optional]
         assert readers == [], readers
-        declaring = sorted(sid for _, sid in m.stages if set(GAS_CHECK_CONSTANTS) & set(impls_.get(sid).reads_constants))
-        assert declaring == ["gas_pattern"], declaring
-    # The pattern from fields and the law's two constants alone is the pattern from all of them: the same bits.
+        declaring = sorted(sid for _, sid in m.stages if set(retired) & set(impls_.get(sid).reads_constants))
+        assert declaring == [], declaring
+        # ... and every stage that places by the gas declares the two the law does read.
+        for sid in ("gas_pattern", "clouds", "cloud_texture", "clusters"):
+            assert set(GAS_PATTERN_CONSTANTS) <= set(impls_.get(sid).reads_constants), sid
+    # They live in tests/, with the values the model held and their sources.
+    assert (gas_check.GAS_ARM_WIDTH, gas_check.GAS_ARM_MASK_WIDTH) == (0.17, 1.5)
+    assert "[verified: Egusa et al. 2017, MNRAS 465, 460, arXiv:1610.06642" in gas_check.GAS_ARM_WIDTH_SOURCE
+    assert "[verified: Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491" in gas_check.GAS_ARM_MASK_WIDTH_SOURCE
+    # The pattern from fields and the law's two constants alone is the pattern the stage published: the same bits.
     o = template_run(prod, "milky_way")
-    R, phi = o.grid.R, o.grid.phi
+    R, edges = o.grid.R, o.grid["phi"].edges
     c = constants(model)
     lean = compose.gas_pattern(o.fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS})
-    assert lean.contrast(R, phi).tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()
+    assert lean.cell_means(R, edges).tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()
     fields = {n: o.fields[n] for n in GAS_PATTERN_READS}
-    assert GasPattern.from_fields(fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS}).contrast(R, phi).tobytes() == lean.contrast(R, phi).tobytes()
+    assert GasPattern.from_fields(fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS}).cell_means(R, edges).tobytes() == lean.cell_means(R, edges).tobytes()
     assert GasPattern.from_fields(fields, R, {"G": c["G"]}) is None  # a constant the law reads is missing: no pattern
-    # The module's code (docstrings apart) names each of the check's constants once: in the declaration.
-    tree = ast.parse(Path(gm.__file__).read_text(encoding="utf-8"))
-    docstrings = {id(n.body[0].value) for n in ast.walk(tree)
-                  if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef)) and n.body
-                  and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
-    strings = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docstrings]
-    for name in (*GAS_CHECK_CONSTANTS, "gas_arm_contrast"):
-        assert sum(1 for text in strings if name in text) == (1 if name in GAS_CHECK_CONSTANTS else 0), name
-    for retired in ("_Rings", "ridge_value", "kappa_for_width", "mask_means", "pattern_period", "PHASE_CELLS",
-                    "HARMONIC_SAMPLES", "RING_MEAN_TOLERANCE", "NEWTON_STEPS", "BISECTION_STEPS"):
-        assert not hasattr(gm, retired), retired
-    for retired in ("rank", "ridge", "amplitude", "ratio_at", "forcing", "extremes", "ratio", "width", "mask_width"):
-        assert not hasattr(GasPattern, retired), retired
-    # Forbidden forms (D216), held by what the code does, read from the syntax tree: nothing is clipped, no error is
-    # caught (so no fallback on a ring that did not converge), and no string names an arm number.
-    assert [n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute) and n.attr == "clip"] == []
-    assert not any(isinstance(n, (ast.Try, ast.ExceptHandler)) for n in ast.walk(tree))
-    assert not any("arm_multiplicity" in text for text in strings)
+    # No module of the model names either retired constant in its code (docstrings and comments apart).
+    package = Path(gm.__file__).resolve().parents[1]
+    named = []
+    for path in sorted(package.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        docstrings = {id(n.body[0].value) for n in ast.walk(tree)
+                      if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef)) and n.body
+                      and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
+        strings = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docstrings]
+        named += [(path.name, name) for name in retired for text in strings if name in text]
+        if path.name == Path(gm.__file__).name and path.parent.name == "stages":
+            own_tree, own_strings = tree, strings
+    assert named == [], named  # not as a key, not in a declaration, not in an about line: the registry does not know them
+    assert not any("gas_arm_contrast" in text or "arm_multiplicity" in text or "arm_pattern_speed" in text for text in own_strings)
+    for name in ("_Rings", "ridge_value", "kappa_for_width", "mask_means", "pattern_period", "PHASE_CELLS",
+                 "HARMONIC_SAMPLES", "RING_MEAN_TOLERANCE", "NEWTON_STEPS", "BISECTION_STEPS"):
+        assert not hasattr(gm, name), name
+    for name in ("rank", "ridge", "amplitude", "ratio_at", "forcing", "extremes", "ratio", "width", "mask_width"):
+        assert not hasattr(GasPattern, name), name
+    # Forbidden forms (D216), held by what the code does, read from the syntax tree: nothing is clipped and no error
+    # is caught (so no fallback on a ring that did not converge).
+    assert [n.attr for n in ast.walk(own_tree) if isinstance(n, ast.Attribute) and n.attr == "clip"] == []
+    assert not any(isinstance(n, (ast.Try, ast.ExceptHandler)) for n in ast.walk(own_tree))
     # And nothing reads the frame's field: the flow is 0 by construction, not a difference of two speeds. The one
     # call of the solver hands it the constant 0 as the flow.
     for m in models:
         readers = [sid for _, sid in m.stages if "arm_pattern_speed" in impls_.get(sid).requires + impls_.get(sid).requires_optional]
         assert readers == [] and "arm_pattern_speed" in impls_.get("bar").published_names
-    assert not any("arm_pattern_speed" in text for text in strings)
-    solves = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "solve"]
+    solves = [n for n in ast.walk(own_tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "solve"]
     assert len(solves) == 1 and isinstance(solves[0].args[2], ast.Constant) and solves[0].args[2].value == 0.0 and not solves[0].keywords
 
 
@@ -790,19 +1115,28 @@ def test_the_ratio_is_the_derived_class_mean_and_no_draw(model):
 # --- one function at points and on the grid ------------------------------------------------------------------
 
 
-def test_contrast_at_agrees_with_the_grid(model):
+def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_means(model):
     o = out(model)
     gp = shape_of(model, o)
-    R, phi = o.grid.R, o.grid.phi
-    on_grid = gp.contrast(R, phi)
-    assert on_grid.tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()  # S57: the samples themselves
+    R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
+    on_mesh = gp.contrast(R, phi)
+    # S57 (D216 G3): was `on_mesh.tobytes() == published` - the first build published these samples. The published
+    # field is the cells' means; the point function at a cell's centre is within 1.7e-3 of its cell's mean.
+    published = np.asarray(o.fields["gas_density_contrast"])
+    assert published.tobytes() == gp.cell_means(R, edges).tobytes() and published.tobytes() != on_mesh.tobytes()
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(1.718e-3, rel=0.02)
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
-    assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_grid[idx])
+    assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_mesh[idx])
+    assert np.array_equal(gp.contrast_at(R[:, None], phi[None, :]), on_mesh)
     # Points that share a radius unevenly: each is the single point's value.
     radii = np.concatenate([np.full(7, R[100]), np.full(3, R[150])])
     azimuths = np.linspace(0.3, 5.9, 10)
     alone = np.array([gp.contrast_at(np.array([r]), np.array([p]))[0] for r, p in zip(radii, azimuths)])
     assert np.array_equal(gp.contrast_at(radii, azimuths), alone)
+    # A cell's mean is the dense average of the point function over the cell (the same measure, G3 item 4).
+    i, j = 106, 200
+    dense = edges[j] + (np.arange(2000) + 0.5) * (edges[j + 1] - edges[j]) / 2000
+    assert float(gp.contrast_at(np.full_like(dense, R[i]), dense).mean()) == pytest.approx(float(published[i, j]), abs=1e-7)
 
 
 def test_a_point_reads_its_two_rings_at_its_own_winding_phase(model):
@@ -856,20 +1190,21 @@ def test_azimuths_fall_inside_the_sector_and_follow_the_arms(model):
 
 
 def test_the_default_field_s_range_and_its_mean_square(model):
-    """The default galaxy's field as read: its range; at R₀ the crest and the trough; and ⟨g²⟩ - the factor a
-    process quadratic in the gas gains from the arms - at R₀ and by gas mass over the disc."""
+    """The default galaxy's published field as read: its range; at R₀ the crest and the trough; and ⟨g²⟩ - the
+    factor a process quadratic in the gas gains from the arms - at R₀ and by gas mass over the disc."""
     o = out(model)
     F, R = o.fields, o.grid.R
     g = np.asarray(F["gas_density_contrast"])
     # S57 (D216): was (0.5336, 3.0688), the ranked ridge's form; the response empties the gaps between the arms.
-    assert (float(g.min()), float(g.max())) == pytest.approx((0.01992, 3.09294), abs=2e-4)
+    # S57 (D216 G3): was (0.01992, 3.09294), the centre samples; the cells' means read (0.01994, 3.09222).
+    assert (float(g.min()), float(g.max())) == pytest.approx((0.019943, 3.092221), abs=2e-5)
     i = row(o, R_SUN)
-    # S57 (D216): was crest 3.0592, trough 0.5340 at R0.
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.7403, 0.02534), abs=2e-3)
-    # S57 (D216): was 1.603 at R0 and 1.194 by gas mass.
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.3443, abs=3e-3)
+    # S57 (D216): was crest 3.0592, trough 0.5340 at R0. S57 (D216 G3): was (2.7403, 0.02534) on the centre samples.
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.73964, 0.025373), abs=2e-5)
+    # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.34398, abs=2e-5)
     weight = np.asarray(F["gas_surface_density"]) * R
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.1157, abs=3e-3)
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.11562, abs=2e-5)
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
@@ -886,6 +1221,8 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert set(pt.AMPLITUDE_FIELDS) | set(pt.PHASE_FIELDS) <= set(GAS_PATTERN.requires)
     assert GAS_PATTERN.reads_seeds == ()
     assert {d.name for d in GAS_PATTERN.publishes} == {"gas_density_contrast"}
+    about = GAS_PATTERN.publishes[0].about
+    assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
 
 
 def test_both_models_run_the_gas_pattern_after_the_pattern(model):
@@ -902,17 +1239,21 @@ def test_a_flat_pattern_publishes_ones_and_a_ring_with_no_mode_is_one():
     assert not one_mode(4).flat
     assert not one_mode(4, strength=0.0, bar=0.3).flat    # the bar's term alone
     # A ring that carries no mode: s = 1 exactly, the solver is not asked, and the field there is the bar's own.
-    R = DEFAULT.build().R
+    grid = DEFAULT.build()
+    R, phi, edges = grid.R, grid.phi, grid["phi"].edges
     unit = np.zeros((5, R.size))
     unit[2, R < 10.0] = 1.0
     gp = synthetic(unit, bar=0.3)
     assert np.array_equal(gp.carries, R < 10.0) and np.all(gp.profiles[R >= 10.0] == 1.0)
     assert gp.diagnostics.steps.size == int((R < 10.0).sum())
-    phi = DEFAULT.build().phi
     field = gp.contrast(R, phi)
     taper, _, bar_angle = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)
     beyond = R >= 10.0
     assert np.array_equal(field[beyond], (1.0 - taper[beyond, None]) + taper[beyond, None] * (1.0 + 0.3 * np.cos(2.0 * (phi[None, :] - bar_angle))))
+    # ... and its cell means there are the bar's own term averaged over each cell: 1 to 1e-14 at 10 kpc and beyond.
+    means = gp.cell_means(R, edges)
+    bar = (np.sin(2.0 * (edges[1:] - bar_angle)) - np.sin(2.0 * (edges[:-1] - bar_angle))) / (2.0 * np.diff(edges))
+    assert np.array_equal(means[beyond], (1.0 - taper[beyond, None]) + taper[beyond, None] * (1.0 + 0.3 * bar[None, :]))
     assert np.all(np.isnan(gp.arm_ratio(1.5)[beyond])) and np.all(np.isnan(gp.arm_width()[beyond]))
     bar_only = one_mode(4, strength=0.0, bar=0.3)
     assert bar_only.diagnostics is None and np.all(bar_only.profiles == 1.0)
@@ -936,34 +1277,6 @@ def test_the_two_weights_sum_to_one_or_the_composition_is_refused():
             gm.blend_weights(bad)
 
 
-def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod):
-    """D216 item 7: "a ring that fails to converge within the counts is a build failure (raise) ... there is no
-    fallback and no linear substitute". Shown on the galaxy of the suite's seeds that does it (``ngc_4414`` at
-    pattern seed 33: a drawn pitch of 1.78 degrees): asking the pattern for a profile, a point or a sector raises
-    the solver's own error, and the stage raises it with the run."""
-    model = prod[0].get(DEFAULT_MODEL)
-    given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 33}
-    o = run(model, given, only=GAS_PATTERN_READS)
-    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
-    assert not gp.flat and float(o.fields["pitch_angle"]) == pytest.approx(1.780, abs=2e-3)
-    with pytest.raises(gr.ConvergenceError, match="Newton did not converge"):
-        gp.profiles
-    with pytest.raises(gr.ConvergenceError):
-        gp.contrast_at(np.array([8.0]), np.array([1.0]))
-    with pytest.raises(gr.ConvergenceError):
-        gp.sector_means(8.0, np.linspace(0.0, 2.0 * np.pi, 5))
-    with pytest.raises(gr.ConvergenceError):
-        run(model, given, only=("gas_density_contrast",))
-    # Why: ε is of order 1 on the inner rings at that pitch (0.07-0.09 at the template's own 14.3 degrees) and the
-    # forcing's sum 60-80, where the solver's rounding floor passes its tolerance.
-    eps, f = gp.epsilon(), gp.forcing_amplitudes()
-    inner = o.grid.R < 1.0
-    assert float(eps[inner].min()) == pytest.approx(0.7035, abs=1e-3) and float(f[inner].sum(axis=1).max()) == pytest.approx(79.06, abs=0.05)
-    # With the layer off there is no pattern to solve, and the galaxy runs.
-    off = run(model, given, only=("gas_density_contrast",), layer=False)
-    assert np.all(np.asarray(off.fields["gas_density_contrast"]) == 1.0)
-
-
 def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     """The pattern solves its rings once, the first time a profile is asked for. Several stages of a run build the
     same pattern, so the last few solutions are kept under a digest of what was solved; a solution from the cache
@@ -971,7 +1284,7 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, "milky_way")
     c = constants(model)
-    R, phi = o.grid.R, o.grid.phi
+    R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
     gm.forget_solutions()
     first = compose.gas_pattern(o.fields, R, c)
     cold = first.profiles
@@ -979,12 +1292,13 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     second = compose.gas_pattern(o.fields, R, c)
     assert second.profiles.tobytes() == cold.tobytes() and len(gm._SOLUTIONS) == 1
     assert second.contrast(R, phi).tobytes() == first.contrast(R, phi).tobytes()
+    assert second.cell_means(R, edges).tobytes() == first.cell_means(R, edges).tobytes()
     # Without the cache, and one ring at a time: the same bits (the solver gives a ring the same arithmetic alone
     # as in any batch).
     f, eps, carries = first.forcing_amplitudes(), first.epsilon(), first.carries
     fresh, diagnostics = gm.respond(f[carries], first.phases, eps[carries], cache=False)
     assert fresh.tobytes() == cold[carries].tobytes() and len(gm._SOLUTIONS) == 1
-    assert np.array_equal(diagnostics.steps, first.diagnostics.steps)
+    assert np.array_equal(diagnostics.steps, first.diagnostics.steps) and np.array_equal(diagnostics.floor, first.diagnostics.floor)
     for i in np.flatnonzero(carries)[[0, 37, 90, -1]]:
         alone, _ = gm.respond(f[i:i + 1], first.phases, eps[i:i + 1], cache=False)
         assert alone[0].tobytes() == cold[i].tobytes()

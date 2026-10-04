@@ -123,24 +123,20 @@ def single_mode(R, m: int, f: dict[str, float]) -> tuple[pt.ArmPattern, np.ndarr
 def test_gate_every_ring_of_the_composed_fields_has_mean_one(prod, template, grid):
     """Ring means 1 to 1e-12 on every ring, both templates, several texture seeds: a phase moves a cosine round its
     ring and no mode has a mean. The gas's response has mean 1 over the ring and is positive and finite everywhere.
-    **Its sampled mean on the grid's own cells is not divided out since S57** (D216 item 11 i): on the production
-    grid's 360 cells it is 1 to rounding (1e-13: the solver's 1440 cells are four to each); on the small grid's 36
-    it is the response's 36th harmonic aliased, up to 2.5e-3 for the Milky Way template and 1.4e-3 for
-    ``ngc_4414`` over these seeds - pinned as it is, where S56's stage divided the ring by it."""
-    small = grid is SMALL
-    worst = 0.0
+    **Nothing is divided since S57** (D216 item 11 i), **and the published field is the law's mean over each grid
+    cell** (gate G3 item 4), so a ring's cells average to 1 to rounding on any grid: 1e-13 on the production grid
+    and on the small grid's 36 cells alike. (S57's first build published the response at the cells' centres, whose
+    sampled mean on 36 cells left 1 by up to 2.5e-3, and this test had been re-pinned to that; S56's stage divided
+    a ring by its sampled mean.)"""
     for seed in TEXTURE_SEEDS:
         o = pattern_run(prod, template, grid, texture_seed=seed)
         stars, gas = np.asarray(o.fields["pattern_density_contrast"]), np.asarray(o.fields["gas_density_contrast"])
         assert stars.shape == gas.shape == (o.grid.R.size, o.grid.phi.size)
         assert float(np.abs(stars.mean(axis=1) - 1.0).max()) < 1e-12, (template, seed)
-        off = float(np.abs(gas.mean(axis=1) - 1.0).max())
-        worst = max(worst, off)
-        # S57 (D216): was `< 1e-12` on both grids - the stage's division by the sampled mean, retired.
-        assert np.all(np.isfinite(gas)) and np.all(gas > 0.0) and off < (3e-3 if small else 1e-12), (template, seed)
+        # S57 (D216 G3): was `< 3e-3` on the small grid, the worst pinned at 2.485e-3 and 1.420e-3 - the centre
+        # samples of the first build. Back at 1e-12 on both grids (measured 1e-13 at worst), by the cells' means.
+        assert np.all(np.isfinite(gas)) and np.all(gas > 0.0) and float(np.abs(gas.mean(axis=1) - 1.0).max()) < 1e-12, (template, seed)
         assert not np.all(stars == 1.0) and not np.all(gas == 1.0)
-    if small:
-        assert worst == pytest.approx({"milky_way": 2.485e-3, "ngc_4414": 1.420e-3}[template], rel=0.02), worst
 
 
 # --- the gate: the Fourier amplitudes ------------------------------------------------------------------------------
@@ -682,11 +678,12 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     assert not stars.flat and not gas.flat
     assert stars.contrast(R, phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
     # S57 (D216): was "the law at the cells' centres over each ring's sampled mean, where that has left 1" (a ranked
-    # ridge's did: by 8.75e-4 and 1.25e-3). The gas's published field is now the law at the cells' centres itself,
-    # bit for bit, and its sampled ring mean is 1 to rounding with nothing divided (tests/test_gas_pattern.py).
-    law = gas.contrast(R, phi)
+    # ridge's did: by 8.75e-4 and 1.25e-3). S57 (D216 G3 item 4): the gas's published field is the law's mean over
+    # each grid cell, bit for bit - the first build published the law at the cells' centres - and its ring mean is
+    # 1 to rounding with nothing divided (tests/test_gas_pattern.py).
+    law = gas.cell_means(R, o.grid["phi"].edges)
     assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
-    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 5e-13
+    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 1e-13
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)
         assert np.allclose(shape.contrast_at(R[:, None], phi[None, :]), on_grid, rtol=0.0, atol=1e-12)
