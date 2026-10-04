@@ -9688,3 +9688,98 @@ reaches). Inherited from D216: how the bar's potential enters the gas's forcing 
 lead's (item 8); the shocked branch, if used, is certified first (item 10); debt #138 is re-read once at this
 phase's close, and #139's reading is Part B's.
 
+
+**The probes before the build (the repository unchanged).** Read on the model's discs, by hand from published
+fields: `milky_way` R_d 2.605 kpc, V_max 250.1, ELN's ε = V_max/(G M_d/R_d)^½ = 0.804, the disc's share of V² at
+2.2 R_d (the published `disc_dominance`) 0.600, Fujii et al. 2018's t_b = 0.146 exp(1.38/f_d) = 1.46 Gyr;
+`ngc_4414` 1.755 kpc, 239.2, 0.715, 0.756, 0.91 Gyr. **Every criterion read bars both templates, and NGC 4414 has
+no bar** (RC3 SA; S⁴G fits none). ε and f_d do not depend on the halo's mass at all (checkpoint 1 is scale-free);
+over the controls' ranges, one at a time, a disc is unbarred only at `disc_spin` 0.05 (by ELN alone) and at
+`baryon_retention` 0.05. A body as a two-dimensional component of axis ratio 0.4 holding a tenth of the stellar
+disc gives an m = 2 maximum of 0.20–0.27 at 0.4–0.5 of the bar's half-length, where the S⁴G stacks read 0.23–0.41
+at 0.76–0.94 of it and the model draws 0.374 in the median: two sourced numbers for one thing that do not agree
+through the profiles tried. A stop condition (§3d): a source contradicts what the plan assumed, and "the gas
+response feels the bar's potential" meets D216's item 8.
+
+**A conditional gate, 2026-10-04; ruling by Fable (the agent of D216's gates, resumed; one turn on
+`docs/HANDOFF_S58.md` and its five ranges, nothing run).** Checked on paper: the body's contrast 1 − β(R) +
+Σ_bar/Σ⋆ has ring mean exactly 1, minimum ≥ 1 − β > 0, and an m = 2 amplitude exactly linear in the body's
+normalisation — "so A₂^max fixes the share and the share fixes A₂^max, one number"; Fujii's time gives 7.5 Gyr at
+f_d = 0.35 and 14.6 Gyr at 0.30. "One physics departure from the plan: the 1-D steady shocked branch assumes a
+tightly wound forcing (sin i ≪ 1, locally one-dimensional flow); a bar is the opposite limit (kR = 2, strongly
+two-dimensional x₁/x₂ flow), so the certified shocked branch is NOT the bar's instrument either. It stays deferred
+with no user; the plan's text is amended to say so."
+1. *Presence:* "derived, no draw, Fujii's criterion — barred where t_b(f_d) < the disc's age since
+   `halo_assembly_z`, f_d the published `disc_dominance`; `bar_formation_time` published on every galaxy. ELN is
+   refused (rejected by two sources, wrong for 55 % in one test); Erwin's logistic as a draw is refused this
+   session: the plan rules a derived presence and checkpoint 3 has no stellar mass; it is the named alternative
+   for the owner. Fujii's Q-dependence (0.27–8.8 Gyr at one f_d) is a debt." Recorded before the build as a
+   finding: "the criterion bars nearly the whole input space with no mass dependence, against measured fractions
+   of 0.5–0.7; it is wrong for NGC 4414."
+2. *A pin* "is a template-only field `bar_present` (true/false, the observed class with its source) that replaces
+   the derived presence when given; the derived time is still published beside it, so the disagreement is
+   visible. `milky_way` pins barred, `ngc_4414` pins unbarred. This is a measured fact entering as template
+   structure, not a fit: no parameter is set to a number."
+3. *An unbarred galaxy* "publishes NaN for `bar_contrast`, `bar_half_length` and the bar's angle (D164); the body
+   and the lanes are absent; the taper is 0 on every ring (so w_arm = 1, w_bar = 0, b = 0, saturation
+   min(1, 1/ΣÃ)); the arm modes run to the centre. Required change: `bar_terms` and both `flat` tests must read a
+   NaN bar as 'no bar, taper 0', not as an unresolved pattern. Rows 15–17 are not applicable to it and unchanged
+   for the Milky Way."
+4. *The body:* "Σ_bar(m) with m = ((|x|/a)^c + (|y|/(q a))^c)^{1/c}, q = 0.4, c = 3, profile Ferrers exponent 2 in
+   m with the cutoff at the bar's half-length a (the fitting function of the decompositions the statistics come
+   from; no free r_e), the share taken ring by ring from the ring's own stars: contrast 1 − β(R) + Σ_bar(R,φ)/Σ(R),
+   Σ the cp1 total disc (declared, debt: no stellar/gas split, no bulge at cp3). It replaces the cosine in
+   `pattern_density_contrast`. Input: the drawn `bar_contrast` B sets the normalisation so that the published
+   field's A₂ maximum inside a equals B. Checks, not inputs: the light share (0.10 of total light) — not
+   computable at checkpoint 3; a debt closed at checkpoint 4; and the A₂ profile's peak radius against the stacks'
+   0.76–0.94 a — predicted missed, the bulge's dilution of inner A₂ in the stacks named as the suspect. No draw of
+   q: debt."
+5. *Saturation with a body:* "b(R) := 1 − min_φ(body contrast)(R) = β(R) − min_φ Σ_bar/Σ; s(R) = min(1, (1 − b)/ΣÃ_m)
+   as today, so the composed field stays positive by the same bound. The arms' taper e^{−(R/a)⁴} and the gas blend
+   weights (1 − taper, taper) are unchanged."
+6. *Gas inside the bar's reach:* "D216 item 8's blend with the lane field L(R,φ) in place of (1 + B cos 2(φ −
+   φ_bar)): g = w_arm s + w_bar L, L of ring mean 1 and positive. 'The gas feels the bar's potential' becomes,
+   this phase, the synthetic lanes; the shocked branch is not the bar's and is not built."
+7. *Lanes, geometry:* "two point-symmetric constant-curvature arcs on the leading side, each from the bar's end on
+   the major axis (R = a) to the minor axis at the nuclear ring, concave to the major axis; κ·a = 1.15
+   (Sánchez-Menguiano et al. 2015's median, no draw: the strength law is an envelope with a spread, debt);
+   r_ring = 0.10 a (the simulation law at Q_b 0.3–0.5 gives 0.085–0.11 a, inside AINUR's a/4; Q_b is not computed
+   for the body: debt). Leading side needs the sense of rotation: the arms' trailing sense gives it."
+8. *Lanes, gas:* "on each ring inside a the ring's gas is a uniform base plus the lanes; the ratio of the mean
+   inside the body's footprint (m ≤ 1) to the mean outside it is 2.6 (Querejeta et al. 2021's medians 11.5 against
+   4.5, at 1.5 kpc, applied on every ring: debt), so base = 1/(1 + 1.6·share(R)), share the footprint's fraction of
+   the ring, and the excess lies on the lanes as a Gaussian across the arc of FWHM 0.10 a — unsourced, a declared
+   placeholder with a debt, the one number this ruling cannot source. Conserving by construction; nothing drawn.
+   The lane's peak over the ring mean is then derived and read against Kim, Seo & Kim 2012's one simulation
+   (~10×): a check. The lanes live in `gas_density_contrast`; dust follows the gas as it does now."
+9. *Arms next to the bar:* "θ₂ = 0 in a barred galaxy (the m = 2 crest at R = a on the bar's axis, S55's
+   convention; Block et al. 2004's ±20° is a detection window, not a scatter: no draw); #139 re-ruled for m = 2
+   only, m ≥ 3 and an unbarred galaxy's m = 2 stay uniform. No bar-driven amplitude is built (none is sourced
+   against radius). #138's re-read at the close stands on what is built: the phase tie and the taper."
+10. *The bar's length* is "left to #80 (row 15 passes at 5.21); the reading's 1.25–1.5 h and Erwin 2019's 2.27 kpc
+    are recorded under #80 as a conflict for its reopening."
+
+**Its predictions (B4; read before they are judged).** Milky Way: B = 0.289 → the body's share of the cp1 disc
+0.110, β_max ≈ 0.39, A₂^max = 0.289 at ≈ 0.42 a = 2.2 kpc (today's cosine peaks at 0), A₂(0.85 a) ≈ 0.046, the
+minimum stellar contrast before the arms ≈ 0.77; lanes from (5.21 kpc, φ_bar) to 0.52 kpc with radius of curvature
+4.5 kpc; the gas's base inside the footprint-filled rings (R < 2.1 kpc) 0.385; rows 15–17 unchanged. `ngc_4414`:
+unbarred, the bar's fields NaN, arms to the centre; its two disclosed checks over 6–10 kpc unchanged to three
+figures (1.881 and 0.512); t_b 0.91 Gyr published beside the pin. Both A₂ peak radii miss 0.76–0.94 a.
+**The gate.** "Stellar ring means 1 to 1e-12 on cells, nothing clipped; min contrast > 0 on every suite seed (a
+seed that fails is reported, B5, not clipped); A₂^max of the published field inside a equals B to 1e-6 on every
+barred seed; the A₂ peak radius and A₂(0.85 a) recorded; gas ring means 1 to 1e-13 with the lanes, g ≥ w_bar·min L
+> 0; every field not the bar's bit-identical on both templates layer off (the Milky Way's whole field set outside
+the body's and lanes' support; `ngc_4414`'s everything but the taper's reach); 240 suite seeds + templates build
+with no raise and no NaN leaking from an unbarred galaxy; the predictions read first."
+**Forbidden (Fable):** "drawing anything for the lanes or q; tuning the share, r_ring, κa, the width or the 2.6
+to land a check; a bulge or stellar Σ invented at cp3; the shocked branch for the bar; moving the bar length; a
+fit of `ngc_4414`; refusing the pin's consequences on its checks (re-pin with the reason 'unbarred, as
+observed')."
+**Unrulable here, and what settles it:** "the lane width (a sub-kpc H₂ or dust-lane width statistic); the bar's
+Q_b (a Poisson solve of the body, level B, or a read Q_b–A₂ relation); the light share and the A₂ peak
+(checkpoint 4's bulge and stellar Σ). The body, the presence, the pin and the phase tie can be built now; the
+lanes can be built now with the placeholder declared."
+**The owner's part: nothing blocks.** "Told at the close, first: `ngc_4414` is shown unbarred as observed — a
+one-field flip of the pin restores the picture with nothing else changed; the criterion bars nearly everything
+(Erwin's frequency as a draw is theirs to order); the lane width is a placeholder they may set live if they prefer
+a slider to a debt."

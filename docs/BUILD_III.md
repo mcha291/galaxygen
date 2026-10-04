@@ -410,6 +410,11 @@ disc properties and a disc stability criterion; the gas lanes' offset and curvat
   sonic point in Gittins & Clarke's regularised variables, the isothermal jump, a bisection on the sonic point's
   phase alone — **it is certified before the model calls it** on Kim, Kim & Kim 2014's Table 1 under both
   x = 0.1450 and 0.1458, and on Shu, Milione & Roberts 1973's rows B–D (`READING_GAS_SHOCK.md` Part A, A3).
+  *(Amended at S58's conditional gate, D217; ruling by Fable: the one-dimensional steady shocked branch assumes a
+  tightly wound forcing; a bar is the opposite limit — k R = 2, a two-dimensional x₁/x₂ flow — so it is not the
+  bar's instrument either. It stays deferred with no user. In this phase "the gas response feels the bar's
+  potential" is the synthetic lanes, blended as D216's item 8 blends the bar; presence is Fujii et al. 2018's
+  formation time against the disc's age, with a template pin `bar_present` for a measured class.)*
 
 **Gate:** ring totals unchanged; rows 15–17 unchanged for the Milky Way; the m = 2 Fourier amplitude inside the
 bar against the sourced value. **Agents:** two readers; builders for the body, the presence and its rows, the lanes.
