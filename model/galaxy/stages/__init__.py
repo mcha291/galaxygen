@@ -16,6 +16,9 @@ from . import vertical_alpha  # noqa: F401  (and its vertical slot)
 from . import ism  # noqa: F401  (checkpoint 3, after both chemistries and both verticals)
 from . import light  # noqa: F401  (checkpoint 3: the disc's unresolved light)
 from . import pattern  # noqa: F401  (checkpoint 3, seeded)
+# The randomness layer's realisation stages live under galaxy/layer/ and register here with the rest, so that
+# importing this package still registers every implementation a model maps a slot to (S55, D214).
+from galaxy.layer import arm_phases  # noqa: F401, E402  (checkpoint 3, synthetic: where each arm mode's crests lie, S56)
 from . import gas_pattern  # noqa: F401  (checkpoint 3, seeded: the gas's own arm ridge, S51, D210)
 from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation: the azimuthal model, S27)
 from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
@@ -23,8 +26,6 @@ from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and r
 from . import systems  # noqa: F401  (checkpoint 5)
 from . import bright  # noqa: F401  (checkpoint 5: every disc star above a luminosity, S48)
 from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
-# The randomness layer's realisation stages live under galaxy/layer/ and register here with the rest, so that
-# importing this package still registers every implementation a model maps a slot to (S55, D214).
 from galaxy.layer import cloud_texture  # noqa: F401, E402  (checkpoint 5, synthetic: a cloud's interior)
 from . import clusters  # noqa: F401  (checkpoint 5: the young star clusters the clouds make, S33)
 from . import nebular  # noqa: F401  (checkpoint 5: the clusters' HII regions and the diffuse ionized gas, S35)

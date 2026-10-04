@@ -55,7 +55,7 @@ from galaxy.layer import compose as _compose
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.feedback import star_bubble_radius
-from galaxy.stages.pattern import ArmPattern, invert_azimuths
+from galaxy.stages.pattern import PATTERN_READS, ArmPattern, invert_azimuths
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
 from galaxy.stages.photometry import lookup_columns
@@ -599,7 +599,7 @@ def materialise(
 
     # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
     # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
-    pattern = _compose.stellar_pattern(fields)
+    pattern = _compose.stellar_pattern(fields, R)
     parents = None if cells is None else sorted({parent_of(int(c), level)[0] for c in cells}) if level else cells
     counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, parents, pattern)
 
@@ -1067,7 +1067,7 @@ SYSTEMS = IMPLEMENTATIONS.register(
         requires=(
             "stellar_surface_density", "thin_disc_scale_height", "thick_disc_scale_height",
             "birth_population", "sfr_surface_density_history", "feh_history", "alpha_fe_history",
-            "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
             "gas_midplane_density",  # S36: what a star's wind bubble expands into
         ),
         # Where stars form today: the azimuthal model's own field, absent in basic (S27).

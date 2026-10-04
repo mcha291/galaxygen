@@ -78,7 +78,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.disc import PC_PER_KPC
-from galaxy.stages.pattern import invert_azimuths
+from galaxy.stages.pattern import PATTERN_READS, invert_azimuths
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_SECTORS,
@@ -474,7 +474,7 @@ class BrightGalaxy:
         middle = 0.5 * (self.ring_lo + self.ring_hi)
         # Both weights come from compose (S55, D214): no pattern and no modulation with the layer off, and then
         # every sector of a ring holds the same share - each ring's expected count is what it was (I2).
-        self.pattern = _compose.stellar_pattern(fields)
+        self.pattern = _compose.stellar_pattern(fields, self.R)
         flat = self.pattern is None or self.pattern.flat
         contrast = np.ones((middle.size, edges.size - 1)) if flat else np.array([self.pattern.sector_means(float(r), edges) for r in middle])
         table = _compose.placement_weight(fields, "sfr_modulation")
@@ -946,7 +946,7 @@ BRIGHT_COUNT_1E3 = FieldDecl(
 
 READS = (
     "stars_formed_history", "feh_history", "birth_population", "thin_disc_scale_height", "thick_disc_scale_height",
-    "arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+    *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
 )
 
 

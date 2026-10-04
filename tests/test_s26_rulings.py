@@ -1,5 +1,8 @@
 """S26's measurements (BUILD_II Phase 1b, D175): the arm and bar amplitudes derived and seeded, the arm number drawn
-from what the disc amplifies, and the two experimental inputs gone.
+from what the disc amplifies, and the two experimental inputs gone. **Since S56 (D215) the arm number is not drawn**:
+the window that weighted the draw is evaluated at every radius and splits the arms' power among the arm numbers. What
+is still true here is kept - the window, its constants, the amplitudes' sources - and the one test that read the
+draw's odds states the law's split instead.
 
 Every constant that entered level0 here was read from a source, and where the source is a table the
 class means are recomputed from its rows rather than trusted (rule B9; S21 (a)'s A-14). Pinned as
@@ -16,7 +19,7 @@ import pytest
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, production
 from galaxy.run import run
-from galaxy.stages.pattern import ARM_MULTIPLICITIES, BAR_CONTRAST_CAP, contrast_amplitude, swing_weight, swing_window
+from galaxy.stages.pattern import AMPLITUDE_FIELDS, ARM_MULTIPLICITIES, BAR_CONTRAST_CAP, contrast_amplitude, swing_weight, swing_window
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 
@@ -117,25 +120,62 @@ def _odds(basic, inputs, n=60):
     ms, arms, bars = [], [], []
     for s in range(n):
         f = run(basic, {"pattern_seed": s, **inputs}, grid=COARSE, only=("arm_multiplicity", "arm_contrast", "bar_contrast")).fields
-        ms.append(int(f["arm_multiplicity"])); arms.append(float(f["arm_contrast"])); bars.append(float(f["bar_contrast"]))
+        ms.append(float(f["arm_multiplicity"])); arms.append(float(f["arm_contrast"])); bars.append(float(f["bar_contrast"]))
     return np.array(ms), np.array(arms), np.array(bars)
 
 
-def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
-    """The lever the pitch-shear relation never had (debt #22): disc dominance moves the drawn m.
+def _power(model, inputs, grid=COARSE):
+    """(R, each mode's share of each ring's arm power, each mode's share of the disc's mass-weighted arm power)."""
+    o = run(model, inputs, grid=grid, only=(*AMPLITUDE_FIELDS, "disc_surface_density"))
+    R = o.grid.R
+    power = np.stack([np.asarray(o.fields[n]) for n in AMPLITUDE_FIELDS]) ** 2
+    total = power.sum(axis=0)
+    ring = np.where(total > 0.0, power / np.where(total > 0.0, total, 1.0), 0.0)
+    weighted = (np.asarray(o.fields["disc_surface_density"]) * R * np.gradient(R))[None, :] * power
+    return R, ring, weighted.sum(axis=1) / weighted.sum()
 
-    200 seeds at S26 read {2: 47, 3: 59, 4: 55, 5: 27, 6: 12} at the defaults, {3: 13, 4: 55, 5: 68,
-    6: 64} for a disc holding 30% of its rotation (the flocculent regime, m >= 4) and {2: 81, 3: 81,
-    4: 35, 5: 3} for one holding 76%. Sixty seeds here; the claims are about majorities.
+
+def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
+    """The lever the pitch-shear relation never had (debt #22): disc dominance moves the arm number.
+
+    **S56 (D215): the draw this test pinned has retired.** From S26 to S55 the arm number was one seeded draw
+    weighted by the swing window at 2.2 scale lengths, and this test read its odds: 200 seeds at S26 gave
+    {2: 47, 3: 59, 4: 55, 5: 27, 6: 12} at the defaults, {3: 13, 4: 55, 5: 68, 6: 64} for a disc holding 30% of its
+    rotation (the flocculent regime, m >= 4) and {2: 81, 3: 81, 4: 35, 5: 3} for one holding 76%. What it claimed
+    is still true and is now a statement of the law, with no seed in it: the same window, evaluated at every radius,
+    splits the arms' power among the arm numbers - so the claims are about where the power is, not about majorities
+    of draws, and every pattern seed gives the same split.
+
+    The split at the defaults, as S56's probe printed it (D215's handoff), on the production grid: 0.50 / 0.35 /
+    0.15 / 0 / 0 at 2 kpc, 0.27 / 0.27 / 0.23 / 0.14 / 0.07 at 8 kpc, 0 / 0.07 / 0.30 / 0.32 / 0.32 at 12 kpc - two
+    arms inside, five and six at the solar radius and beyond (D'Onghia 2015: two arms at 4.5 kpc, five or six at R0).
     """
-    default, _, _ = _odds(basic, {})
-    halo, arms_halo, _ = _odds(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
-    disc, arms_disc, _ = _odds(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
-    assert set(default) <= set(int(m) for m in ARM_MULTIPLICITIES) and len(set(default)) >= 4
-    assert (halo >= 4).mean() > 0.8, "a halo-dominated disc is multi-armed"
-    assert 2 not in set(halo), "two arms cannot be amplified at X_2 = 7.7"
-    assert (disc <= 3).mean() > 0.7, "a disc-dominated disc is two- or three-armed"
+    R, ring, _ = _power(basic, {}, grid=GridSpec())
+    for r, want in ((2.0, (0.50, 0.35, 0.15, 0.0, 0.0)), (8.0, (0.27, 0.27, 0.23, 0.14, 0.07)), (12.0, (0.0, 0.07, 0.30, 0.32, 0.32))):
+        assert ring[:, int(np.argmin(np.abs(R - r)))].tolist() == pytest.approx(want, abs=0.01), r
+    # Over the whole disc, by mass (the coarse grid here): 0.25 / 0.27 / 0.22 / 0.15 / 0.11 at the defaults; a disc
+    # holding 30% of its rotation carries 0.91 of its arm power in four to six arms and 0.003 in two; one holding 76%
+    # carries 0.78 in two and three.
+    _, _, default = _power(basic, {})
+    _, _, halo = _power(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
+    _, _, disc = _power(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
+    assert default.tolist() == pytest.approx([0.250, 0.272, 0.215, 0.153, 0.111], abs=5e-3)
+    assert halo[2:].sum() == pytest.approx(0.912, abs=5e-3), "a halo-dominated disc is multi-armed"
+    assert halo[0] == pytest.approx(0.003, abs=2e-3), "two arms cannot be amplified at X_2 = 7.7"
+    assert disc[:2].sum() == pytest.approx(0.777, abs=5e-3), "a disc-dominated disc is two- or three-armed"
+    # The label follows, and the pattern seed does not move it: 3 at the defaults on every seed, 6 for the
+    # halo-dominated disc (not a number on the two seeds of sixty that draw no arm amplitude at all), 2 for the
+    # disc-dominated one.
+    label, _, _ = _odds(basic, {})
+    label_halo, arms_halo, _ = _odds(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
+    label_disc, arms_disc, _ = _odds(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
+    assert set(label) == {3.0} and set(label_disc) == {2.0}
+    assert set(label_halo[np.isfinite(label_halo)]) == {6.0} and int(np.isnan(label_halo).sum()) == 2
+    assert np.all(arms_halo[np.isnan(label_halo)] == 0.0), "no arms, no arm number"
     assert arms_halo.mean() < arms_disc.mean(), "the flocculent regime's arms are weaker (Elmegreen et al. 2011 §4.2)"
+    # And the split has no seed in it: another pattern seed, the same shares ring by ring.
+    _, again, _ = _power(basic, {"pattern_seed": 11})
+    assert np.allclose(again, _power(basic, {})[1], rtol=1e-12, atol=1e-15)
 
 
 def test_the_amplitudes_are_seeded_about_derived_means(basic):

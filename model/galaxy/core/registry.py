@@ -465,9 +465,11 @@ _INPUTS: tuple[Input, ...] = (
         "where an arm's phase, a cloud complex or a filament lies. It feeds only the synthetic fields BUILD_III "
         "adds, so rerolling it changes placements and texture and nothing else: no ring total of a field, no "
         "expected ring total of a census, no radial field but the census statistics (what is summed over a "
-        "census's realised objects, which a placement re-draws until phase L1), no acceptance row. No stage "
-        "reads it until phase P1: its first reader is the arm modes' phases, at the pattern's checkpoint, and "
-        "until that stage exists the seed is accepted and moves nothing (D214). The draws that existed before "
+        "census's realised objects, which a placement re-draws until phase L1), no acceptance row. Its first "
+        "reader, since phase P1 (S56, D215), is the arm modes' phases, at the pattern's checkpoint: rerolling it "
+        "turns each of the five arm modes by its own angle, so the arms and everything placed by them move, and "
+        "no amplitude does; from S55 until that stage existed the seed was accepted and moved nothing (D214). "
+        "With the layer off it is not drawn. The draws that existed before "
         "the layer keep the seeds they had: the four cloud texture columns are drawn on the systems seed until L1.",
         default=0,
         checkpoint_hypothesis=3,

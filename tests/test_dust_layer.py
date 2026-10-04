@@ -317,6 +317,9 @@ def test_the_layered_fraction_s_limits():
 # equal cells its grid mean picks up the harmonics whose order times m is a multiple of n_φ — on SMALL's 36 cells
 # with four arms the ninth, I₉(κ)/I₀(κ) = 6.9e-4, so a ring's grid mean is 1 to 5.8e-4 there (read at S51). On
 # 108 cells the first alias is the 27th harmonic, under 1e-15; the default grid's 360 is exact as well.
+# S56 (D215): that was one four-armed mode's ridge. The ridge of five modes' sum is sharper and carries six-armed
+# harmonics, so on 108 cells a ring's sampled mean can leave 1; the stage divides such a ring by its sampled mean
+# (as it always did on 36 cells), which is what keeps the mean below to 1e-12 on this grid.
 FINE_PHI = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=108)
 
 
@@ -410,7 +413,17 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     ring, which exceeds 1 when both peak together; the gain from the gaps is second order. At 4 and 6 kpc, deeper,
     the saturation of the crest wins and the ring brightens;
     (ii) under the screen's gain — held, −0.85 % against +5.63 % (and against S50's +0.89 %); (iii) the crest
-    transmits less than 0.747 and a gap more than 0.874 at R₀ — held, 0.579 and 0.886."""
+    transmits less than 0.747 and a gap more than 0.874 at R₀ — held, 0.579 and 0.886.
+
+    **Read again at S56 (D215), on five arm modes** (the stars on their sum c, the gas's ridge g the exponential of
+    that sum at unit amplitude: far narrower, 3 % of the ring above its half level where one mode's had 17 %, its
+    crest 11 times the ring's mean at R₀ where it was 3): dust alone +2.84 %, +5.92 %, +4.53 % at 4, 6 and 8.2 kpc,
+    under the screen's +31.6 %, +22.8 %, +12.2 % (D207's prediction still holds); with the stars on c the ring's
+    light rises 1.30 %, 3.59 % and **2.18 % at R₀**. So D210's prediction (i), which failed on one mode's ridge
+    (−0.85 %), **holds on this field** — recorded as read, and no claim that it was right for its own reason: the
+    dust now sits in a stripe so narrow that most of the ring's stars, the crest's included, are clear of it. (ii)
+    held, +2.18 % against +12.2 %; (iii) held, the crest lets through 0.355, a gap 0.880, the stellar flank 0.879
+    (the even ring's 0.805)."""
     out = run(prod[0].get(DEFAULT_MODEL), only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
     c = np.maximum(np.asarray(f["pattern_density_contrast"], dtype=float), 0.0)
@@ -430,18 +443,22 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
         flank = float(through[int(np.argmin(np.abs(c[i] - 1.0)))])  # the stellar arm's flank: c at its ring mean
         assert 0.0 < dust_only < screen, radius  # D207's prediction (B4), still held
         read[radius] = (dust_only, both, screen, crest, gap, flank)
-    assert read[4.0][:3] == pytest.approx((0.0184, 0.0079, 0.2083), abs=0.0005)  # S50: (0.0080, -0.0004, 0.0920)
-    assert read[6.0][:3] == pytest.approx((0.0463, 0.0172, 0.1806), abs=0.0005)  # S50: (0.0082, -0.0098, 0.0327)
-    assert read[8.2][:3] == pytest.approx((0.0197, -0.0085, 0.0563), abs=0.0005)  # S50: (0.0031, -0.0128, 0.0089)
-    # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the ridge (less than D207's).
-    assert read[8.2][1] < 0.0 and read[8.2][1] > -0.0128
+    # S56 (D215): were (0.0184, 0.0079, 0.2083), (0.0463, 0.0172, 0.1806) and (0.0197, -0.0085, 0.0563) on one
+    # four-armed mode (S51); S50: (0.0080, -0.0004, 0.0920), (0.0082, -0.0098, 0.0327), (0.0031, -0.0128, 0.0089).
+    assert read[4.0][:3] == pytest.approx((0.0284, 0.0130, 0.3162), abs=0.0005)
+    assert read[6.0][:3] == pytest.approx((0.0592, 0.0359, 0.2275), abs=0.0005)
+    assert read[8.2][:3] == pytest.approx((0.0453, 0.0218, 0.1223), abs=0.0005)
+    # D210 (i): read and failed at S51 (the ring's light at R₀ still fell, -0.85 %, less than D207's -1.28 %). S56
+    # (D215): was `read[8.2][1] < 0.0 and read[8.2][1] > -0.0128`; on five modes' ridge the ring's light rises.
+    assert read[8.2][1] > 0.0
     # D210 (ii), held: under the screen's gain.
     assert read[8.2][1] < read[8.2][2]
     # D210 (iii), held: at R₀ the ridge's crest lets through less than D207's arm (0.747), a gap more than its 0.874.
-    assert read[8.2][3:] == pytest.approx((0.579, 0.886, 0.883), abs=0.002)
+    assert read[8.2][3:] == pytest.approx((0.355, 0.880, 0.879), abs=0.002)  # S56 (D215): was (0.579, 0.886, 0.883)
     assert read[8.2][3] < 0.747 and read[8.2][4] > 0.874
-    assert read[6.0][3:] == pytest.approx((0.467, 0.765, 0.754), abs=0.002)  # S50 crest and gap: (0.590, 0.747)
-    assert read[4.0][3:] == pytest.approx((0.451, 0.576, 0.531), abs=0.002)
+    # S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
+    assert read[6.0][3:] == pytest.approx((0.407, 0.764, 0.734), abs=0.002)
+    assert read[4.0][3:] == pytest.approx((0.432, 0.577, 0.520), abs=0.002)  # S56 (D215): was (0.451, 0.576, 0.531)
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
@@ -462,7 +479,15 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     (it keeps little more than the half of the light that sets out towards it), so round a ring the gaps, which lose
     dust, lose more absorption than the crest gains, and that concavity now nearly cancels the gain from the gas's
     crest sitting on the stellar arm's (c and g peaking together). Read on every fourth azimuth of the 360 (the mixed slab's numbers on them are the full grid's to
-    5e-10, asserted below), so that the layered quadrature runs on 90 cells a ring, not 360."""
+    5e-10, asserted below), so that the layered quadrature runs on 90 cells a ring, not 360.
+
+    **Read again at S56 (D215), on five arm modes** (c their sum, g the far narrower ridge of that sum). The mixed
+    slab: 0.9859 over the disc, 0.940 at R₀, 1.001 at 2 kpc. The layered geometry: **0.9784 over the disc, 0.927 at
+    R₀, 0.9995 at 2 kpc** (0.9943 at 4 kpc, 1.006 at 12 kpc). The placement's effect on the disc's absorbed power
+    is −2.2 % where it was +0.07 %: most of a ring's dust now sits in a stripe a few per cent of the ring wide,
+    where it is deep and absorbs little more for being deeper, and the rest of the ring is nearly clear. Still
+    measured and not applied (#128's second half). Read on every **second** azimuth now: the ridge is too sharp for
+    90 cells (the slab's ring means on every fourth are the full grid's only to 3e-6; on every second, to 2e-10)."""
     model = prod[0].get(DEFAULT_MODEL)
     out = run(model, only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
@@ -472,11 +497,13 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     light = np.asarray(f["disc_surface_brightness"], dtype=float) * 2.0 * math.pi * R * PC_PER_KPC**2
     mean = dust.slab_absorbed_fraction(tau)
     placed = np.array([np.mean(ci * dust.slab_absorbed_fraction(t * gi)) for t, ci, gi in zip(tau, c, g)])
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0045, abs=0.0005)  # S50: 1.0126
-    assert at(R, placed / mean, 8.2) == pytest.approx(1.023, abs=0.002)  # S50: 1.041
+    # S56 (D215): was 1.0045 (S51, one mode's ridge); S50: 1.0126
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9859, abs=0.0005)
+    assert at(R, placed / mean, 8.2) == pytest.approx(0.940, abs=0.002)  # S56 (D215): was 1.023; S50: 1.041
     assert at(R, placed / mean, 2.0) == pytest.approx(1.001, abs=0.002)  # S50: 1.001
-    # Every fourth azimuth carries the ring's mean of the placement to rounding (the slab's numbers, on both).
-    every = 4
+    # Every second azimuth carries the ring's mean of the placement to rounding (the slab's numbers, on both).
+    # S56 (D215): was every fourth - five modes' ridge is too sharp for 90 cells a ring (3e-6 there, 2e-10 on 180).
+    every = 2
     sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
     assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)
     # The layered geometry (S52, D211): the stage's own mean column, against the same placement.
@@ -486,7 +513,8 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     held = mean > 0.0
     assert np.array_equal(held, np.isfinite(ratio)) and np.all(placed[~held] == 0.0)
     q = np.where(held, placed / np.where(held, mean, 1.0), np.nan)
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0007, abs=0.0005)  # S52 (D211): was 1.0045 (mixed slab)
-    assert at(R, q, 8.2) == pytest.approx(1.014, abs=0.002)  # S52 (D211): was 1.023 (mixed slab)
+    # S56 (D215): was 1.0007 (one mode's ridge); S52 (D211): was 1.0045 (mixed slab)
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9784, abs=0.0005)
+    assert at(R, q, 8.2) == pytest.approx(0.927, abs=0.002)  # S56 (D215): was 1.014; S52 (D211): was 1.023 (mixed slab)
     assert at(R, q, 2.0) == pytest.approx(0.9995, abs=0.002)  # S52 (D211): was 1.001 (mixed slab)
-    assert at(R, q, 4.0) == pytest.approx(0.9974, abs=0.002)
+    assert at(R, q, 4.0) == pytest.approx(0.9943, abs=0.002)  # S56 (D215): was 0.9974

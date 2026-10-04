@@ -11,9 +11,10 @@ import numpy as np
 import pytest
 
 from galaxy.core.grids import GridSpec
+from galaxy.layer import compose
 from galaxy.run import run
 from galaxy.specs import spec
-from galaxy.stages.pattern import ARM_MULTIPLICITIES, ArmPattern, shear_rate
+from galaxy.stages.pattern import AMPLITUDE_FIELDS, ARM_MULTIPLICITIES, ArmPattern, shear_rate
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 
@@ -95,10 +96,26 @@ def test_the_bar_is_fast(model):
     assert 0.6 < ratio < 1.9      # 1.2 ± 0.2, drawn, so a few sigma either way
 
 
-def test_arm_multiplicity_is_drawn_from_the_closed_set(model):
-    seen = {run(model, {"pattern_seed": s}, grid=COARSE).fields["arm_multiplicity"] for s in range(30)}
-    assert seen <= set(ARM_MULTIPLICITIES)
-    assert len(seen) > 1, "a draw that never varies is not a draw"
+def test_arm_multiplicity_is_a_label_from_the_closed_set_and_no_longer_a_draw(model):
+    """S56 (D215): until S56 this test read "drawn from the closed set ... a draw that never varies is not a draw" -
+    the arm number was one seeded draw, weighted by the swing window. The draw retired: the window at every radius
+    splits the arms' power among the five modes, and ``arm_multiplicity`` is the label of the mode carrying the most
+    mass-weighted power. It is a member of the closed set, and it follows the disc, not the pattern seed: the seed
+    reaches it only through the saturation and the bar's taper, which weigh the rings, and at the default inputs
+    every one of thirty seeds reads 3."""
+    only = ("arm_multiplicity", *AMPLITUDE_FIELDS)
+    seen = {run(model, {"pattern_seed": s}, grid=COARSE, only=only).fields["arm_multiplicity"] for s in range(30)}
+    assert seen == {3.0} and seen <= set(ARM_MULTIPLICITIES), "the label is the disc's, not the seed's"
+    # The disc moves it: a halo-dominated disc carries six arms, a disc-dominated one two.
+    halo = run(model, {"disc_spin": 0.03, "baryon_retention": 0.15}, grid=COARSE, only=only).fields["arm_multiplicity"]
+    disc = run(model, {"disc_spin": 0.01, "baryon_retention": 0.5}, grid=COARSE, only=only).fields["arm_multiplicity"]
+    assert (halo, disc) == (6.0, 2.0)
+    # Five radial fields, one per arm number of the closed set, each non-negative and under 1.
+    o = run(model, grid=COARSE, only=only)
+    assert AMPLITUDE_FIELDS == tuple(f"arm_mode_amplitude_{int(m)}" for m in ARM_MULTIPLICITIES)
+    for name in AMPLITUDE_FIELDS:
+        a = np.asarray(o.fields[name])
+        assert a.shape == (o.grid.R.size,) and np.all((a >= 0.0) & (a < 1.0)) and a.max() > 0.05, name
 
 
 def test_the_contrast_averages_to_one_around_every_ring(model):
@@ -111,8 +128,9 @@ def test_the_contrast_averages_to_one_around_every_ring(model):
     assert field.shape == (o.grid.R.size, o.grid.phi.size)
     assert np.all(field >= 0.0)
     assert np.allclose(field.mean(axis=1), 1.0, atol=1e-9)
-    shape = ArmPattern.from_fields(o.fields)
-    assert shape is not None and not shape.flat
+    # S56 (D215): the pattern object holds the modes' amplitudes on the run's grid radii, and comes from compose.
+    shape = compose.stellar_pattern(o.fields, o.grid.R)
+    assert isinstance(shape, ArmPattern) and not shape.flat
     edges = np.linspace(0.0, 2.0 * np.pi, 13)
     for R in (1.0, 3.0, 6.0, 12.0):
         assert float(shape.sector_means(R, edges).mean()) == pytest.approx(1.0, abs=1e-9)
