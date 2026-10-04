@@ -87,19 +87,66 @@ def test_two_templates_are_registered_and_the_default_leads():
         templates.get("andromeda")
     for t in templates.TEMPLATES.values():
         t.validate()
-        assert t.model == DEFAULT_MODEL and t.pins == ()
+        # S58 (D217 item 2): was `t.pins == ()` - each template pins the one measured fact of its structure there
+        # is a pin for, the observed bar class (the tests of the pin are below).
+        assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == ["bar_present"]
     assert (MILKY_WAY.filters, NGC_4414.filters) == ("rgb", "wfc3")
 
 
 def test_milky_way_overrides_nothing_and_resolves_to_the_registry_s_defaults():
-    """Ruling 1: its inputs are resolved from the registry when asked for, so it cannot drift from the defaults."""
-    assert templates.overrides(MILKY_WAY) == {}
+    """Ruling 1: its inputs are resolved from the registry when asked for, so it cannot drift from the defaults.
+
+    S58 (D217 item 2): the template states one thing the registry does not - its pin, the observed bar class - and
+    nothing else: no control, no seed, no event list. Until S58 its overrides were empty and its resolved inputs
+    the registry's whole table; they are the pin, and the table's controls, seeds and event list with the pin."""
+    assert templates.overrides(MILKY_WAY) == {"bar_present": True} == templates.pinned(MILKY_WAY)  # S58 (D217): was {}
     assert not MILKY_WAY.controls and not MILKY_WAY.seeds and MILKY_WAY.mergers is None
     assert MILKY_WAY.fit is None and MILKY_WAY.checks == ()
     resolved = templates.resolve(MILKY_WAY)
     assert list(resolved) == list(INPUTS)
     for name, inp in INPUTS.items():
-        assert resolved[name] is inp.default, name  # the registry's own object, not a copy of its value
+        if inp.kind == "pin":
+            assert resolved[name] is True and inp.default is None, name  # a pin has no default: the template's is the only one
+        else:
+            assert resolved[name] is inp.default, name  # the registry's own object, not a copy of its value
+
+
+def test_a_pin_is_a_measured_fact_with_its_source_and_replaces_nothing_but_the_verdict():
+    """D217 item 2: "a template-only field ``bar_present`` (true/false, the observed class with its source) that
+    replaces the derived presence when given ... ``milky_way`` pins barred, ``ngc_4414`` pins unbarred. This is a
+    measured fact entering as template structure, not a fit: no parameter is set to a number." """
+    from dataclasses import replace
+
+    mw, ngc = MILKY_WAY.pins[0], NGC_4414.pins[0]
+    assert (mw.name, mw.value, ngc.name, ngc.value) == ("bar_present", True, "bar_present", False)
+    assert "Bland-Hawthorn & Gerhard 2016" in mw.source and "rows 15-17" in mw.source and "[verified:" in mw.source
+    assert "READING_NGC_4414.md, row 16" in ngc.source and "RC3 SA" in ngc.source and "S4G fits no bar component" in ngc.source
+    assert "D217 item 2" in mw.source and "D217 item 2" in ngc.source
+    reading = " ".join(text("READING_NGC_4414.md").split())
+    assert "NGC 4414 has no bar" in reading and "S4G fits none" in reading and "SA(rs)c? (RC3)" in reading
+    assert templates.pinned(NGC_4414) == {"bar_present": False} and templates.overrides(NGC_4414)["bar_present"] is False
+    # It is an input of its own kind: no control, no seed; not a number of the template (it carries its own source),
+    # so it is no path of `numbers` and no free control of a fit.
+    assert INPUTS["bar_present"].kind == "pin" and "bar_present" not in {c.name for c in controls()} | {x.name for x in seeds()}
+    assert not any("bar_present" in path for path in templates.numbers(NGC_4414)) and "bar_present" not in NGC_4414.fit.free
+    assert "pinned unbarred, as observed" in NGC_4414.about and "the Milky Way is barred" in MILKY_WAY.about
+    # Refused: a value that is not a class, a pin without a tagged source, a name the registry does not hold as a
+    # pin, the same input pinned twice.
+    with pytest.raises(templates.TemplateError, match="True or False"):
+        templates.Pin("bar_present", 1, "[inferred] x")  # type: ignore[arg-type]
+    with pytest.raises(templates.TemplateError, match="carries no tag"):
+        templates.Pin("bar_present", True, "the galaxy's bar")
+    with pytest.raises(templates.TemplateError, match="not a registered pin"):
+        replace(NGC_4414, pins=(templates.Pin("halo_mass", True, "[inferred] x"),)).validate()
+    with pytest.raises(templates.TemplateError, match="each input pinned once"):
+        replace(NGC_4414, pins=(ngc, ngc))
+    with pytest.raises(templates.TemplateError, match="each input pinned once"):
+        replace(NGC_4414, pins=({"name": "bar_present", "value": False},))
+    # A one-field flip restores the barred picture with nothing else changed (D217, the owner's part): the template
+    # with its pin flipped is the same inputs but for the pin.
+    flipped = replace(NGC_4414, pins=(replace(ngc, value=True),))
+    flipped.validate()
+    assert {k: v for k, v in templates.resolve(flipped).items() if k != "bar_present"} == {k: v for k, v in templates.resolve(NGC_4414).items() if k != "bar_present"}
 
 
 def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
@@ -107,13 +154,21 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     model = prod[0].get(MILKY_WAY.model)
     bare = run(model)
     named = run(model, templates.resolve(MILKY_WAY))
-    assert named.inputs == bare.inputs and named.order == bare.order
+    # S58 (D217 item 2): was `named.inputs == bare.inputs`. The template pins the Milky Way barred; the bare run
+    # pins nothing and derives - barred, at the defaults - so the two differ by the pin among their inputs and
+    # **by no bit of any field**, which is the gate, below.
+    assert named.inputs == {**bare.inputs, "bar_present": True} and "bar_present" not in bare.inputs and named.order == bare.order
+    assert bare.fields["bar_present"] == named.fields["bar_present"] == "yes"
     assert set(named.fields) == set(bare.fields) and len(bare.fields) > 300
     arrays = 0
     for name, value in bare.fields.items():
         assert same(value, named.fields[name]), f"{name} differs between the template and the bare run"
         arrays += isinstance(value, np.ndarray)
     assert arrays > 150  # the comparison is on arrays, not on a handful of scalars
+    # ... and with the layer off, the run the acceptance table is judged on.
+    off, named_off = run(model, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)
+    for name, value in off.fields.items():
+        assert same(value, named_off.fields[name]), f"{name} differs between the template and the bare run, layer off"
 
 
 FREE = {"halo_mass": "curve_peak", "disc_spin": "disc_scale_length", "halo_assembly_z": "curve_peak",
@@ -145,7 +200,8 @@ def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
     assert dict(NGC_4414.seeds) == {s.name: 4414 for s in seeds()}  # a new seed in the registry fails here
     assert NGC_4414.mergers == ()
     assert set(resolved) == set(INPUTS) and resolved["mergers"] == ()
-    assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers"}
+    # S58 (D217 item 2): the pin joins what the template states - a measured class, not a control.
+    assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers", "bar_present"} and given["bar_present"] is False
     assert (NGC_4414.camera.inclination_deg, NGC_4414.camera.azimuth_deg, NGC_4414.camera.fov_deg) == (55.0, 0.0, 5.0)
     assert (MILKY_WAY.camera.inclination_deg, MILKY_WAY.camera.azimuth_deg, MILKY_WAY.camera.radius_kpc,
             MILKY_WAY.camera.fov_deg) == (0.0, 270.0, 20.0, 45.0)
@@ -285,19 +341,63 @@ def test_every_route_that_takes_inputs_takes_a_template():
     ("/api/region", SECTOR),
 ])
 def test_naming_the_default_template_is_naming_none(route, query):
-    """Ruling 2: one point in input space - one cache entry, the same bytes."""
+    """Ruling 2 (D213): "one point in input space - one cache entry, the same bytes" - **as S58 leaves it (D217 item
+    2): the same galaxy, two points in input space.** The default template pins the Milky Way barred; a request
+    that names no template pins nothing and the model derives - barred, at the defaults. So the two requests hold
+    the same arrays and the same scalars, bit for bit, and their headers differ in one word: the template's request
+    carries the pin among its inputs. They are two cache entries, and naming the template runs the stages again.
+    Reported to the lead: D213's "one cache entry, the same bytes" does not survive a pin on the default template."""
     api = Service(grid=SMALL)
     bare = api.handle(route, query)  # cold: it runs the closure
     named = api.handle(route, query + "&template=milky_way")
     again = api.handle(route, query)
     assert bare.status == named.status == again.status == 200
-    assert bare.stages and named.stages == (), "the template reached another cache entry and ran the stages again"
-    assert len(api._cache) == 1
-    assert named.body == again.body  # warm against warm: the same bytes
-    assert bare.frame()[0]["inputs"] == named.frame()[0]["inputs"]
-    # ... and cold against cold, on a second service: the same bytes as the bare request's.
+    # S58 (D217): was `named.stages == ()` and one cache entry.
+    assert bare.stages and named.stages == bare.stages and again.stages == ()
+    assert len(api._cache) == 2
+    warm = api.handle(route, query + "&template=milky_way")
+    assert warm.stages == () and len(api._cache) == 2 and again.body == api.handle(route, query).body  # warm against warm
+    bare_head, bare_arrays = bare.frame()
+    named_head, named_arrays = named.frame()
+    # S58 (D217): was `bare inputs == named inputs` and `named.body == bare.body`.
+    assert named_head["inputs"] == {**bare_head["inputs"], "bar_present": True} and "bar_present" not in bare_head["inputs"]
+    assert {k: v for k, v in named_head.items() if k != "inputs"} == {k: v for k, v in bare_head.items() if k != "inputs"}
+    assert list(named_arrays) == list(bare_arrays)
+    for name, array in bare_arrays.items():
+        assert same(array, named_arrays[name]), name
+    # ... and cold against cold, on a second service: the same bytes as the first named request's.
     cold = Service(grid=SMALL).handle(route, "template=milky_way&" + query)
-    assert cold.stages == bare.stages and cold.body == bare.body
+    assert cold.stages == bare.stages and cold.body == named.body
+
+
+def test_a_pin_is_given_by_a_template_and_by_no_query_parameter():
+    """D217 item 2: "a template-only field". The API takes a pin from ``template=`` alone: naming one as an input
+    is a 400 that says so, whatever its value, with a template or without; ``/api/inputs`` does not offer it; and
+    ``/api/templates`` publishes each template's pins with their sources."""
+    api = Service(grid=SMALL)
+    for query in ("fields=bar_present&bar_present=false", "fields=bar_present&bar_present=true", "fields=bar_present&bar_present=0",
+                  "fields=bar_present&template=ngc_4414&bar_present=true"):
+        got = api.handle("/api/arrays", query)
+        assert got.status == 400 and got.stages == () and "is a template's pin, not an input a request may set" in got.json()["error"], query
+    listed = api.handle("/api/inputs").json()
+    assert set(listed) == {"model", "ceiling", "controls", "seeds", "events"}
+    assert "bar_present" not in [i["name"] for kind in ("controls", "seeds", "events") for i in listed[kind]]
+    assert len(listed["controls"]) == 7 and len(listed["seeds"]) == 5 and len(listed["events"]) == 1
+    # What the three ways of asking say: no template derives (barred at the defaults); each template states its class.
+    wanted = "fields=bar_present,bar_formation_time,bar_half_length"
+    bare, mw, ngc = (api.handle("/api/arrays", wanted + extra).frame()[0] for extra in ("", "&template=milky_way", "&template=ngc_4414"))
+    assert (bare["scalars"]["bar_present"], mw["scalars"]["bar_present"], ngc["scalars"]["bar_present"]) == ("yes", "yes", "no")
+    assert "bar_present" not in bare["inputs"] and mw["inputs"]["bar_present"] is True and ngc["inputs"]["bar_present"] is False
+    assert bare["scalars"]["bar_half_length"] == mw["scalars"]["bar_half_length"] and ngc["scalars"]["bar_half_length"] is None
+    assert ngc["scalars"]["bar_formation_time"] == pytest.approx(0.905, abs=0.01)  # published beside the pin
+    # "Edit galaxy" from a template keeps its pin: the query moves a control, the template still says the class.
+    edited = api.handle("/api/arrays", wanted + "&template=ngc_4414&halo_mass=2e12").frame()[0]
+    assert edited["inputs"]["bar_present"] is False and edited["scalars"]["bar_present"] == "no"
+    # The same controls, seeds and event list with no template are the disc the model derives a bar for.
+    spelled = "&".join(f"{n}={v!r}" for n, v in {**NGC_4414.controls, **NGC_4414.seeds}.items()) + "&mergers=[]"
+    unpinned = api.handle("/api/arrays", wanted + "&" + spelled).frame()[0]
+    assert "bar_present" not in unpinned["inputs"] and unpinned["scalars"]["bar_present"] == "yes"
+    assert unpinned["scalars"]["bar_formation_time"] == ngc["scalars"]["bar_formation_time"]
 
 
 def test_a_template_s_inputs_are_the_base_and_the_query_overrides_them():
@@ -319,12 +419,17 @@ def test_a_template_s_inputs_are_the_base_and_the_query_overrides_them():
     assert merged["scalars"]["last_major_merger_time"] == 5.0
     assert api.handle("/api/arrays", "fields=last_major_merger_time&template=ngc_4414").frame()[0]["scalars"][
         "last_major_merger_time"] == 0.0  # the template's list is empty: no merger, not the Milky Way's two
-    # The same inputs spelled out with no template are the same point: the same cache entry.
+    # The same inputs spelled out beside the template are the same point: the same cache entry. S58 (D217 item 2):
+    # was "spelled out with no template" - without the template the pin is not given, and that is another galaxy
+    # (the model derives a bar for this disc): another point, another entry, the same stellar mass.
     api = Service(grid=SMALL)
     first = api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414")
     spelled = "&".join(f"{n}={v!r}" for n, v in {**NGC_4414.controls, **NGC_4414.seeds}.items()) + "&mergers=[]"
-    second = api.handle("/api/arrays", "fields=stellar_mass_total&" + spelled)
+    second = api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414&" + spelled)
     assert first.stages and second.stages == () and len(api._cache) == 1
+    third = api.handle("/api/arrays", "fields=stellar_mass_total&" + spelled)
+    assert third.stages and len(api._cache) == 2
+    assert third.frame()[0]["scalars"] == first.frame()[0]["scalars"] and "bar_present" not in third.frame()[0]["inputs"]
     # A range is still enforced on what the query gives, and the model= parameter still chooses the model.
     assert api.handle("/api/arrays", "fields=stellar_mass_total&template=ngc_4414&disc_spin=0.5").status == 400
     other = next(n for n in api.models.names() if n != NGC_4414.model)
@@ -381,6 +486,7 @@ def test_the_templates_route_has_the_stated_shape():
         assert t["model"] in api.models and t["label"] and t["about"]
         # The inputs, fully resolved, in the shapes /api/inputs uses.
         assert set(t["inputs"]) == {"controls", "seeds", "mergers"}
+        # (S58: a pin is not among the inputs' three shapes - /api/inputs offers none - and travels under "pins".)
         assert list(t["inputs"]["controls"]) == [c["name"] for c in registry["controls"]]
         assert list(t["inputs"]["seeds"]) == [s["name"] for s in registry["seeds"]]
         assert all(isinstance(v, float) for v in t["inputs"]["controls"].values())
@@ -390,7 +496,10 @@ def test_the_templates_route_has_the_stated_shape():
         assert list(t["camera"]) == ["inclination_deg", "azimuth_deg", "radius_kpc", "fov_deg"]
         assert all(isinstance(v, float) for v in t["camera"].values())
         assert t["filters"] in viewer_sets, "a template names a filter set the viewer holds"
-        assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"] and t["pins"] == []
+        # S58 (D217 item 2): was `t["pins"] == []`.
+        assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"]
+        assert [set(p) for p in t["pins"]] == [{"name", "value", "source"}] and t["pins"][0]["name"] == "bar_present"
+        assert t["pins"][0]["value"] is (t["name"] == "milky_way") and "[verified:" in t["pins"][0]["source"]
     mw, ngc = payload["templates"]
     assert mw["inputs"]["controls"] == {c["name"]: c["default"] for c in registry["controls"]}
     assert mw["inputs"]["seeds"] == {s["name"]: s["default"] for s in registry["seeds"]}

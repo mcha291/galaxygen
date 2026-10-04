@@ -65,8 +65,10 @@ def _clusters_against_field(svc, window, level):
         # ring in the order of the modes' sum) - another draw of the same census again.
         # S57 (D216): the clouds placed by the gas's steady response to the arm modes, and the field's HII Halpha by
         # the same response - another draw of the same census again.
-        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9470),  # the disc: 12 572 clusters, noise 0.058; S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
-        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9738),  # a quarter-disc sector at level 1: 2 513 clusters, noise 0.145; S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
+        # S58 (D217): inside the bar's reach the clouds, and the field's HII Halpha, follow the bar's lanes, and the
+        # two-armed mode sits on the bar's axis - another draw of the same census again.
+        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9607),  # the disc: 12 569 clusters, noise 0.058; S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
+        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9675),  # a quarter-disc sector at level 1: 2 534 clusters, noise 0.145; S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
     ],
 )
 def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, measured):
@@ -85,17 +87,19 @@ def test_small_windows_are_recorded_not_gated(svc):
     # z -1.36 / -1.11
     # S56 (D215): the ridge on five arm modes, another draw; was 0.6971 / 806, 0.4670 / 212, z -1.26 / -1.14
     # S57 (D216): the gas's steady response, another draw; was 0.6865 / 697, 0.5534 / 230, z -1.31 / -1.07
-    assert r1 == pytest.approx(0.6427, abs=1e-3) and k1 == 844
-    assert r2 == pytest.approx(0.4462, abs=1e-3) and k2 == 271
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.59, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.40, abs=0.02)
+    # S58 (D217): the lanes and the bar-tied phase, another draw; was 0.6427 / 844, 0.4462 / 271, z -1.59 / -1.40
+    assert r1 == pytest.approx(0.6377, abs=1e-3) and k1 == 847
+    assert r2 == pytest.approx(0.4384, abs=1e-3) and k2 == 270
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.63, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.43, abs=0.02)
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
 # of N regions scatters by C_POP / sqrt(N) about the field - 0.24 at N 832, 0.44 at N 246, 0.06 over the disc.
 # S51 (D210): was 6.898 - 12 670 regions, another draw of the census (the clouds on the gas's ridge)
 # S56 (D215): was 6.798 - 12 557 regions, another draw again (the ridge follows five arm modes)
-C_POP = 6.511  # S57 (D216): was 6.306 - 12 572 regions, another draw again (the clouds on the gas's steady response)
+# S57 (D216): was 6.306 - 12 572 regions, another draw again (the clouds on the gas's steady response)
+C_POP = 6.465  # S58 (D217): was 6.511 - 12 569 regions, another draw again (the clouds on the bar's lanes inside its reach)
 
 
 def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
@@ -132,9 +136,12 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     # mean 1.0782 -> 1.0455 - the ridge on five arm modes, another draw of the census
     # S57 (D216): z mean 0.119 -> 0.056 (sd 1.08 -> 1.25, 93 % inside 2 and 97 % inside 3), median 0.9528 -> 0.8353,
     # mean 1.0455 -> 1.0353 - the clouds and the field's HII Halpha both on the gas's steady response, another draw
-    assert float(z.mean()) == pytest.approx(0.056, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.8353, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(1.0353, abs=1e-3)
+    # S58 (D217): z mean 0.056 -> 0.093 (sd 1.25 -> 1.29, 93 % inside 2 and 97 % inside 3), median 0.8353 -> 0.8787,
+    # mean 1.0353 -> 1.0519 - inside the bar's reach the clouds and the field's HII Halpha follow the bar's lanes,
+    # another draw; the windows run from 95 to 336 clusters (median 157)
+    assert float(z.mean()) == pytest.approx(0.093, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.8787, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(1.0519, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])

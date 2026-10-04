@@ -1046,10 +1046,9 @@ def evaluate(
     if q.only_if is not None:
         # S58 (D217 item 3): a row of a galaxy that has what it measures. Where the galaxy does not, the row is not
         # applicable - not judged, and never a pass by default (rule B9): the third status, with its reason.
+        # (A model that does not publish the gate cannot say the row does not apply, and is judged on the row.)
         gate, wanted = q.only_if
-        if gate not in fields:
-            return Result(q.n, q.name, nyc, f"field {gate!r}, which says whether the row applies, is not published by model {model!r}")
-        if fields[gate] != wanted:
+        if gate in fields and fields[gate] != wanted:
             return Result(q.n, q.name, nyc, f"not applicable: {gate} is {fields[gate]!r}, and the row is of a galaxy where it is {wanted!r}")
     if q.mode == "qualitative":
         if decl.kind is not Kind.CATEGORY_SCALAR:

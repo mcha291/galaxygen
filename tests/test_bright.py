@@ -214,7 +214,10 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # cells' Gamma draws and the 3162nd star move again; the expected count is still the tables'.
     # S57 (D216): the modulation reads the gas's steady response to the arm modes, so the young stars' cell weights,
     # the cells' Gamma draws and the 3162nd star move again; the expected count is still the tables'.
-    assert F["bright_star_limit"] == pytest.approx(34635.740, rel=1e-6)  # S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S58 (D217): the gas inside the bar's reach lies on the bar's lanes and the two-armed mode on the bar's axis, so
+    # the modulation, the young stars' cell weights, the cells' Gamma draws and the 3162nd star move again; the
+    # expected count is still the tables'.
+    assert F["bright_star_limit"] == pytest.approx(34617.696, rel=1e-6)  # S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -518,7 +521,9 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # S56 (D215): the cells' weights follow five arm modes - another realisation again, inside the 4-sigma gate below.
 # S57 (D216): the young stars' cells follow the gas's steady response through sfr_modulation - another realisation
 # again, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00198, 1.00322, 1.00488)  # S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S58 (D217): the young stars' cells follow the lanes inside the bar's reach and the bar-tied two-armed mode -
+# another realisation again, inside the same gate.
+BRIGHT_RGB_OVER_OWN = (1.00235, 1.00392, 1.00461)  # S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -608,8 +613,10 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # S56 (D215): the gas's ridge follows five arm modes at their own phases - another Poisson realisation again.
 # S57 (D216): the clouds are placed by the gas's steady response to the arm modes - another Poisson realisation again
 # (whole-disc cluster light -1.0 %).
-CLUSTERS_RGB_OVER_YOUNG = (0.96043, 0.96399, 0.97313)  # S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 0.97957  # S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
+# S58 (D217): the clouds inside the bar's reach are placed by the bar's lanes, and the two-armed mode sits on the
+# bar's axis - another Poisson realisation again (whole-disc cluster light +0.7 %).
+CLUSTERS_RGB_OVER_YOUNG = (0.96011, 0.96524, 0.97627)  # S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
+CLUSTERS_LIGHT_OVER_YOUNG = 0.98645  # S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):
