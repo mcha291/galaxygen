@@ -71,20 +71,22 @@ put in.
   ``response_at``, ``azimuths`` and the censuses keep the point function: a cell's expected count is its area
   times its mean, a placed object reads the law at its own point, and the two are the same measure.
 - **The offset** (D210 ruling 3, now derived; gate G3 item 7 and its follow-up): zero for a lone mode,
-  exactly, by the equation's symmetry about the mode's crest; with several modes, within one solver cell
-  (0.25 degrees) on the Milky Way template and up to about a degree on ``ngc_4414`` - the mode-by-mode
+  exactly, by the equation's symmetry about the mode's crest; with several modes, within half a degree over
+  the mid disc on the Milky Way template and up to about a degree on ``ngc_4414`` - the mode-by-mode
   weighting (each mode is answered with its own weight, m/(1 + m²ε²) in the linear limit, against the stars'
-  1), measured, not ruled; no offset is put in and none is published. As read on the solver's cells, the
-  tallest crest of s against the tallest crest of the stellar modes' sum: the Milky Way template within one
-  cell on 53 of 53 rings over 6-10 kpc and on 161 of the 165 rings that carry a mode (two rings read two
-  cells; on two, where six nearly equal crests stand, the tallest is another arm's); ``ngc_4414`` up to 5
-  cells (1.25 degrees) over 6-10 kpc and 7 at most over the disc. **It has no one sign**: on the Milky Way
-  template the gas's crest sits one cell to the larger χ on 48 of the 53 mid-disc rings and to the smaller χ
-  on 41 of the rings inside 6 kpc; on ``ngc_4414`` to the smaller χ on 27 of the 53, the larger on 6, and
-  over its disc 95 rings to the smaller and 16 to the larger; over the suite's 240 seeded galaxies the two
-  sides are met about equally (11 697 rings to the smaller χ, 12 298 to the larger, 11 012 on the same cell,
-  of the rings whose two tallest crests are the same arm's). It is the modes' weighting, not a displacement
-  downstream or upstream of the arm.
+  1), measured, not ruled; no offset is put in and none is published. As read on the solver's cells (a
+  quarter of a degree each), the tallest crest of s against the tallest crest of the stellar modes' sum,
+  **since S58, with the two-armed mode's phase the bar's**: the Milky Way template within one cell on 50 of
+  53 rings over 6-10 kpc (three read two) and on 103 of the 165 rings that carry a mode, 53 reading two cells
+  and two three (on two more, where six nearly equal crests stand, the tallest is another arm's);
+  ``ngc_4414`` up to 5 cells (1.25 degrees) over 6-10 kpc and 7 at most over the disc. (As S57 read the
+  Milky Way template, its two-armed phase a draw: within one cell on 53 of 53 and on 161 of 165.) **It has
+  no one sign**: on the Milky Way template the gas's crest sits to the larger χ on 52 of the 53 mid-disc
+  rings and to the smaller χ on the 12 rings inside 0.9 kpc; on ``ngc_4414`` to the smaller χ on 27 of the
+  53, the larger on 6, and over its disc 95 rings to the smaller and 16 to the larger; over the suite's 240
+  seeded galaxies both sides are met (12 008 rings to the smaller χ, 13 738 to the larger, 9 280 on the same
+  cell, of the rings whose two tallest crests are the same arm's). It is the modes' weighting, not a
+  displacement downstream or upstream of the arm.
 - **Declared approximations, each a debt** (items 4-5): steadiness (the response relaxes on the ridge's
   sound crossing, about as long as an arm lives); the razor-thin WKB potential, which overstates the high
   arm numbers; the stellar mode's fractional amplitude applied to the total disc.
@@ -96,8 +98,9 @@ layer on: the ratio of the means of s inside the source's arm mask against outsi
 :func:`ratio_of_means`), and the full width at half maximum of a ring's tallest crest (:func:`crest_width`)
 over the period of the mode the gas answers most strongly, the one of largest forcing m·A_m. As read over
 6-10 kpc: the ratio a hit on the Milky Way template (median 2.571, 53 of 53 rings inside the source's band) and
-on ``ngc_4414`` but for its seven outer rings (median 1.881); the width a miss on every ring, 2.49-2.83 times
-the measured 0.17 on the Milky Way template and 2.82-3.09 times on ``ngc_4414``. No stage
+on ``ngc_4414`` but for its seven outer rings (median 1.881); the width a miss on every ring, 2.52-2.83 times
+the measured 0.17 on the Milky Way template (2.49-2.83 until S58 tied the two-armed mode's phase to the bar) and
+2.82-3.09 times on ``ngc_4414``. No stage
 computes with them, and the mask's width and the measured width are no constants of the model: they left its
 registry at gate G3 ("a stage may not declare reads it does not make") and live in ``tests/`` with their
 sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
