@@ -478,7 +478,9 @@ class BrightGalaxy:
         flat = self.pattern is None or self.pattern.flat
         contrast = np.ones((middle.size, edges.size - 1)) if flat else np.array([self.pattern.sector_means(float(r), edges) for r in middle])
         table = _compose.placement_weight(fields, "sfr_modulation")
-        self.modulation = None if table is None else Modulation(table, self.R)
+        # S59 (D218, the gate's follow-up, item 1): the modulation's rows are read at the point's own winding
+        # coordinate, by the winding of the pattern compose has just given - the reader the star sample uses.
+        self.modulation = None if table is None else Modulation(table, self.R, self.pattern)
         young = None if self.modulation is None else np.array([self.modulation.sector_means(float(r), edges) for r in middle])
         self.weights = part_weights(contrast, young)  # (2, 256, 256)
         # What the height reads: the thin/thick criterion over (radius, birth time), the two scale heights.

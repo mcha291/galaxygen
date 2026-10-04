@@ -36,6 +36,8 @@ are derived means with seeded residuals since S26 (D175).
 :data:`YOUNG_STAR_AGE` takes its azimuth from that instead, and a cell's share of young
 stars follows the sector's modulation over its contrast (:class:`YoungStars`). The cell
 counts are still the contrast's, so a star's name is the same whichever model drew it.
+Since S59 (D218) the field is read between two grid rings at the point's own winding
+coordinate, as the pattern itself is (:class:`Modulation`), not at fixed azimuth.
 """
 
 from __future__ import annotations
@@ -55,7 +57,8 @@ from galaxy.layer import compose as _compose
 from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_columns
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.feedback import star_bubble_radius
-from galaxy.stages.pattern import PATTERN_READS, ArmPattern, invert_azimuths
+from galaxy.stages import gas_response as _cells  # a ring's row read between its cells' centres, and its exact means
+from galaxy.stages.pattern import PATTERN_READS, ArmPattern, invert_azimuths, ring_bracket
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
 from galaxy.stages.photometry import lookup_columns
@@ -432,60 +435,106 @@ class Churn:
 class Modulation:
     """Where stars form today around each ring (``sfr_modulation``), read for the young stars.
 
-    A grid field on (R, φ), not an analytic pattern, so it is read bilinearly: linearly in R
-    between grid radii, linearly and periodically in φ between the φ cells' centres (the grid's
-    own ``Axis.centres``: cell k at (k + ½) 2π/n).
+    A grid field on (R, φ): one row a grid ring, a cell's value on the cell's centre (the grid's own
+    ``Axis.centres``: cell k at (k + ½) 2π/n). **A point reads it as every other reader of the arms reads a
+    ring's profile - at the point's own χ = φ − Φ(R)** (S59, D218, the gate's follow-up, item 1): a point at
+    radius r between the grid rings R_i and R_j reads ring i's row at the azimuth φ − (Φ(r) − Φ(R_i)) and ring
+    j's at φ − (Φ(r) − Φ(R_j)) - each row turned by what the winding turns between the ring and the point -
+    linearly and periodically in azimuth between the cells' centres, and blends the two linearly in R. Φ is the
+    stellar pattern's own winding (``ArmPattern.winding_phase``: the segments' where the layer laid them,
+    ln R · cot(pitch) where it laid none), and the pattern object is the one the census already has from
+    ``compose``. At a grid radius the turn is zero and the read is the ring's own row.
+
+    Until then (S27) the two rows were blended at fixed φ. Two rings a gap apart hold the same arm at azimuths
+    Φ(R_j) − Φ(R_i) apart, so that blend was a double image of the arm between them: by 2 degrees at a pitch of
+    13.5 degrees at the solar circle, by 15 for a tightly wound disc, and by tens of degrees across a nearly
+    circular segment of the winding - a quarter to a third of the young stars' weight misplaced there, where
+    the stellar pattern, the gas, the clouds and the clusters put the arm in one place. **The wound read
+    applies always**, segments or none: two readers of one field must agree. (With the layer off the census
+    takes no modulation at all: ``compose.placement_weight`` gives none.)
+
+    **What the wound read does not know: the bar.** Inside a bar's reach the field holds the bar's footprint
+    too, which stands in the bar's frame, at fixed φ, and is not wound; a ring's row holds the two blended
+    through the star formation law, so no reader of the row can turn the one and not the other. Past the
+    bar's half-length the wound read is the law to a few parts in a thousand; inside it the wound read turns
+    the footprint with the arms and the old read double-imaged the arms on a still footprint, and neither is
+    the law: at the Milky Way template's default seeds 15 % of a ring's young weight is misplaced on the worst
+    ring inside the half-length (2.7 kpc; 8 % by the fixed-φ blend on its worst), 17 % against 25 % at a pitch
+    of 9 degrees, and at a pitch of 1 degree 71 % against 38 % (``tests/test_segments.py`` holds the numbers).
+    **A declared approximation of
+    this reader, and a debt**: the law is exact at a point (``GasPattern.star_formation_contrast_at``), and a
+    reader that is exact inside a bar must hold the arms' part and the bar's part apart.
+
+    Every entry point is the one point function: :meth:`at` and :meth:`at_points` are it, :meth:`sector_means`
+    its exact mean over a sector (each ring's interpolant integrated piece by piece,
+    ``gas_response.sector_mean`` - no quadrature, so sectors that tile a ring average to the rows' means to
+    rounding), and :meth:`azimuths` its inverse CDF. So a cell's expected young count and the placement of its
+    stars are one measure.
+
+    ``pattern`` is the stellar pattern of the same run (``compose.stellar_pattern``), required: there is no
+    default, so that no caller reads the field unwound by forgetting it. None - a model that publishes a
+    modulation and no pattern - or a pattern whose pitch is not a number (unresolved: the field is then 1
+    everywhere) has no winding, and the rows are read at the point's own φ.
     """
 
-    __slots__ = ("table", "R")
+    __slots__ = ("table", "R", "_phase", "_rings")
 
-    def __init__(self, table: np.ndarray, R: np.ndarray) -> None:
+    def __init__(self, table: np.ndarray, R: np.ndarray, pattern: ArmPattern | None) -> None:
         self.table = np.asarray(table, dtype=float)
         self.R = np.asarray(R, dtype=float)
+        wound = pattern is not None and math.isfinite(pattern.pitch_deg)
+        self._phase = pattern.winding_phase if wound else None
+        self._rings = pattern.winding_phase(self.R) if wound else None  # Φ at the grid rings
 
-    def at(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """The modulation at each radius ``r`` (one row each) and every azimuth ``phi``."""
-        R, table = self.R, self.table
-        r = np.atleast_1d(np.asarray(r, dtype=float))
-        i = np.clip(np.searchsorted(R, r) - 1, 0, max(R.size - 2, 0))
-        j = np.minimum(i + 1, R.size - 1)
-        span = np.where(R[j] > R[i], R[j] - R[i], 1.0)
-        a = np.clip((r - R[i]) / span, 0.0, 1.0)[:, None]
-        rows = table[i] * (1.0 - a) + table[j] * a  # (len(r), n_phi)
-        n = table.shape[1]
-        x = np.mod(np.asarray(phi, dtype=float), 2.0 * math.pi) * (n / (2.0 * math.pi)) - 0.5
-        k0 = np.floor(x)
-        w = x - k0
-        k0 = k0.astype(np.intp) % n
-        k1 = (k0 + 1) % n
-        return rows[:, k0] * (1.0 - w) + rows[:, k1] * w
+    def _bracket(self, r: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """For each radius: its two grid rings, the share of the upper, and what the winding turns from each
+        ring to the radius, Φ(r) − Φ(R_ring) (zero with no winding)."""
+        lower, upper, share = ring_bracket(self.R, r)
+        if self._phase is None:
+            zero = np.zeros(r.shape)
+            return lower, upper, share, zero, zero
+        here = self._phase(r)
+        return lower, upper, share, here - self._rings[lower], here - self._rings[upper]
 
     def at_points(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """The modulation at each radius ``r`` (n,) and that row's own azimuths ``phi`` (n, k), read as
-        :meth:`at` reads it (S48: a bright star inverts its own row inside its own cell)."""
-        R, table = self.R, self.table
+        """The modulation at each radius ``r`` (n,) and that row's own azimuths ``phi`` (n, k): the point
+        function (S48: a bright star inverts its own row inside its own cell)."""
         r = np.atleast_1d(np.asarray(r, dtype=float))
-        i = np.clip(np.searchsorted(R, r) - 1, 0, max(R.size - 2, 0))
-        j = np.minimum(i + 1, R.size - 1)
-        span = np.where(R[j] > R[i], R[j] - R[i], 1.0)
-        a = np.clip((r - R[i]) / span, 0.0, 1.0)[:, None]
-        n = table.shape[1]
-        x = np.mod(np.asarray(phi, dtype=float), 2.0 * math.pi) * (n / (2.0 * math.pi)) - 0.5
-        k0 = np.floor(x)
-        w = x - k0
-        k0 = k0.astype(np.intp) % n
-        k1 = (k0 + 1) % n
-        row_i, row_j = i[:, None], j[:, None]
-        near = table[row_i, k0] * (1.0 - w) + table[row_i, k1] * w
-        far = table[row_j, k0] * (1.0 - w) + table[row_j, k1] * w
-        return near * (1.0 - a) + far * a
+        phi = np.asarray(phi, dtype=float)
+        if phi.ndim != 2 or phi.shape[0] != r.size:
+            raise ValueError(f"each of the {r.size} radii reads its own row of azimuths; got azimuths shaped {phi.shape}")
+        lower, upper, share, turn_lower, turn_upper = self._bracket(r)
+        table = self.table
 
-    def sector_means(self, r: float, edges: np.ndarray, steps: int = 24) -> np.ndarray:
-        """The modulation averaged over each sector between ``edges`` at one radius (trapezoids)."""
-        frac = np.linspace(0.0, 1.0, steps + 1)
-        sub = edges[:-1, None] + (edges[1:] - edges[:-1])[:, None] * frac[None, :]
-        f = self.at(np.array([r]), sub.ravel()).reshape(sub.shape)
-        return (0.5 * (f[:, 0] + f[:, -1]) + f[:, 1:-1].sum(axis=1)) / steps
+        def read(ring: np.ndarray, turn: np.ndarray) -> np.ndarray:
+            # ``gas_response.interpolate``'s own arithmetic on the two cells an azimuth lies between, the ring
+            # picked row by row (no row is copied whole). The grid's cell k is centred at (k + ½) 2π/n and
+            # gas_response's at −π + (k + ½) 2π/n: φ − π is its χ.
+            below, above, weight, _ = _cells.bracket(phi - (turn + math.pi)[:, None], table.shape[1])
+            first, second = table[ring[:, None], below], table[ring[:, None], above]
+            rising = second >= first
+            return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
+
+        return read(lower, turn_lower) * (1.0 - share)[:, None] + read(upper, turn_upper) * share[:, None]
+
+    def at(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """The modulation at each radius ``r`` (one row each) and every azimuth ``phi``: :meth:`at_points` on
+        the mesh."""
+        r = np.atleast_1d(np.asarray(r, dtype=float))
+        phi = np.asarray(phi, dtype=float)
+        return self.at_points(r, np.broadcast_to(phi[None, :], (r.size, phi.size)))
+
+    def sector_means(self, r: float, edges: np.ndarray) -> np.ndarray:
+        """The modulation averaged over each sector between ``edges`` at one radius: the exact mean of the
+        point function - each of the two rings' interpolants integrated piece by piece over the sector as the
+        winding turns it, blended as a point blends them."""
+        radius = np.array([float(r)])
+        lower, upper, share, turn_lower, turn_upper = self._bracket(radius)
+        edges = np.asarray(edges, dtype=float)
+        lo, hi = edges[:-1], edges[1:]
+        near = _cells.sector_mean(self.table[int(lower[0])], lo - (turn_lower[0] + math.pi), hi - (turn_lower[0] + math.pi))
+        far = _cells.sector_mean(self.table[int(upper[0])], lo - (turn_upper[0] + math.pi), hi - (turn_upper[0] + math.pi))
+        return near * (1.0 - share[0]) + far * share[0]
 
     def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
         """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8)."""
@@ -628,10 +677,12 @@ def materialise(
     # optionally, so the same stage draws both models' catalogues, and tabulated over every
     # ring and sector for the same reason the arrival law is (D60). A composed weight, so it comes from
     # compose (S55): none with the layer off, and the catalogue is drawn as a model without the field draws it.
+    # The young stars' reader follows the pattern's winding (S59, D218, the gate's follow-up, item 1): it takes
+    # the pattern object compose has just given, and reads each ring's row at the point's own χ.
     table = _compose.placement_weight(fields, "sfr_modulation")
     young = (
         None if table is None
-        else YoungStars(Modulation(table, R), pattern, churn.arrive, t, edges, cell_edges(R)[1])
+        else YoungStars(Modulation(table, R, pattern), pattern, churn.arrive, t, edges, cell_edges(R)[1])
     )
     width = 2.0 * math.pi / CELL_SECTORS
 
