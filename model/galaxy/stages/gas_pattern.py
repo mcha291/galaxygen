@@ -13,7 +13,10 @@ put in.
   steady together. So nothing flows through an arm and nothing shocks in it: there is no sonic point and no
   jump. The derived ``bar`` stage publishes that frame as ``arm_pattern_speed``; nothing here reads it, and
   the flow handed to the solver is 0 by construction.
-- **The law** (item 5), on each grid ring, with χ = φ − ln R · cot p the pattern coordinate and s(χ) the gas's
+- **The law** (item 5), on each grid ring, with χ = φ − Φ(R) the pattern coordinate (Φ = ln R · cot p until S59; since
+  then the winding in seeded segments, ``pattern.Winding`` - geometry only: ε and f below keep the disc's own
+  pitch p, a declared approximation, D218 item 4: "the gas answers each ring at the disc's mean pitch; on a
+  segment its normal wavenumber is off by sin p/sin p_seg") and s(χ) the gas's
   surface density over its ring mean:
 
       ε² d²ln s/dχ² = s − 1 − Σ_m f_m cos(m χ − θ_m)
@@ -158,6 +161,9 @@ from galaxy.stages.pattern import (
     invert_azimuths,
     local_swing_x,
     ring_bracket,
+    rotation_sense,
+    WINDING_FIELDS,
+    Winding,
 )
 
 CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is held on their centres
@@ -170,6 +176,8 @@ CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is h
 GAS_PATTERN_READS: tuple[str, ...] = (
     "arm_contrast", "pitch_angle", "bar_half_length", "bar_axis_ratio", "bar_boxiness",
     *AMPLITUDE_FIELDS, *PHASE_FIELDS, "epicyclic_frequency", "disc_surface_density",
+    # S59 (D218): the winding's anchor and the layer's segment rows - the geometry of χ, and nothing of ε or f.
+    *WINDING_FIELDS,
 )
 # The lanes' four numbers (S58): the arcs' curvature, where they end, the gas inside the footprint over the gas
 # outside it, and the lane's width - the last a declared placeholder (D217 item 8).
@@ -241,20 +249,6 @@ def blend_weights(taper: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 # --------------------------------------------------------------------------------------------------------------
 # The gas inside the bar's reach: the lanes (S58, BUILD_III Phase P3; DECISIONS.md D217 items 6-8)
 # --------------------------------------------------------------------------------------------------------------
-
-
-def rotation_sense(pitch_deg: float) -> float:
-    """The sign of the disc's rotation in azimuth: −1, the disc turns towards decreasing φ.
-
-    Derived from the winding the model already uses, not chosen: an arm's crest lies at φ = ln R · cot(pitch) +
-    a constant (``pattern.bar_terms``' winding phase, the pitch held inside 1-89 degrees so cot > 0), so its
-    azimuth grows outwards. **The arms are trailing** - an arm's outer end lags the rotation - so the disc turns
-    the other way, towards decreasing φ. The bar turns with the disc's sense, and its *leading* side is the side
-    it is turning into: the smaller azimuths. Read off the winding itself, so a winding of the other hand would
-    carry its lanes to the other side.
-    """
-    _, phase, _ = bar_terms(np.array([1.0, math.e]), pitch_deg, float("nan"))
-    return -math.copysign(1.0, float(phase[1] - phase[0]))
 
 
 def ring_quadrature(values: np.ndarray) -> np.ndarray:
@@ -486,6 +480,9 @@ class GasPattern:
     ring_ratio: float = float("nan")      # r_ring / a
     gas_ratio: float = float("nan")       # the mean inside the footprint over the mean outside it
     lane_width: float = float("nan")      # the lane's FWHM / a: a declared placeholder
+    # S59 (D218 items 1, 4): the segmented winding χ is taken in - geometry only. ε and f keep ``pitch_deg``, the
+    # disc's own pitch; so do the bar's angle and the lanes' side. None is ln R · cot(pitch).
+    winding: Winding | None = None
     flat: bool = field(init=False)
     barred: bool = field(init=False)
     _solved: dict = field(init=False, repr=False)
@@ -548,6 +545,7 @@ class GasPattern:
             float(constants["G"]), float(constants["GAS_DISPERSION"]),
             float(fields["bar_axis_ratio"]), float(fields["bar_boxiness"]),
             *(float(constants[k]) for k in LANE_CONSTANTS),
+            Winding.from_fields(fields),
         )
 
     # --- the law's inputs on the grid rings ------------------------------------------------------------
@@ -681,7 +679,7 @@ class GasPattern:
         """w_arm s + w_bar (the bar's profiles) at points; ``bar`` gives the profiles, asked of a barred pattern only."""
         R = np.asarray(R, dtype=float)
         phi = np.asarray(phi, dtype=float)
-        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
+        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length, self.winding)
         w_arm, w_bar = blend_weights(taper)
         arms = w_arm * self.response_at(R, phi - phase)
         return arms + w_bar * self._read(bar(), R, phi - bar_angle) if self.barred else arms
@@ -732,7 +730,7 @@ class GasPattern:
         R = np.asarray(R, dtype=float)
         edges = np.asarray(edges, dtype=float)
         lo, hi = edges[:-1], edges[1:]
-        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
+        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length, self.winding)
         w_arm, w_bar = blend_weights(taper)
         lower, upper, share = self._between(R)
 
@@ -772,7 +770,7 @@ class GasPattern:
         solved = self._rings()
         profiles, carries = solved["profiles"], solved["carries"]
         radius = np.array([float(R)])
-        taper, phase, bar_angle = bar_terms(radius, self.pitch_deg, self.bar_length)
+        taper, phase, bar_angle = bar_terms(radius, self.pitch_deg, self.bar_length, self.winding)
         w_arm, w_bar = blend_weights(taper)
         edges = np.asarray(edges, dtype=float)
         lo, hi = edges[:-1], edges[1:]

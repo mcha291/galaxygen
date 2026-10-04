@@ -25,7 +25,7 @@ def test_production_runs(model):
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
     # S3 set the last default, so every input resolves. S58 (D217): was `== set(INPUTS)` - a pin has no default,
     # so one that is not given is not among a run's inputs, and the stage that reads it derives.
-    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present"}
+    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present", "pitch_angle", "sun_bar_angle"}  # S59 (D218): was - {"bar_present"}; two more pins
     assert out.fields["bar_present"] == "yes"  # derived, at the defaults
 
 

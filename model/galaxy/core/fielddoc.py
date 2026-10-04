@@ -33,7 +33,7 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 # Closed vocabularies. Extend by editing here, with a DECISIONS.md entry.
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
-OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census); bright_star: S48 (D200, the bright-end-complete catalogue)
+OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star", "arm_segment")  # arm_segment: S59 (D218, the winding's seeded segments, the layer's); cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census); bright_star: S48 (D200, the bright-end-complete catalogue)
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other
 # What only a synthetic field declares, and must (BUILD_III section 1c, rules 2-4; DECISIONS.md D214 section 2).

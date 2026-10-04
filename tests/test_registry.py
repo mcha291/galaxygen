@@ -43,6 +43,9 @@ PLAN_INPUTS = {
     # S58 (D217 item 2): a template's pin, the fourth kind of input - the observed bar class in place of the
     # derived presence. Not a control: no range, no default, exempt from the ceiling, offered by no request.
     "bar_present",
+    # S59 (D218 items 5-6): two pins that are measured numbers - a template's mean pitch, and the bar's angle to
+    # the Sun-centre line.
+    "pitch_angle", "sun_bar_angle",
 }
 
 
@@ -54,8 +57,9 @@ def test_input_vector_is_closed():
     assert [i.name for i in INPUTS.values() if i.kind == "events"] == ["mergers"]
     # S58 (D217): one pin, and it is none of the other kinds.
     assert INPUT_KINDS == ("control", "seed", "events", "pin")
-    assert [i.name for i in pins()] == ["bar_present"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
-    assert len(INPUTS) == 7 + 5 + 1 + 1
+    # S59 (D218): was ["bar_present"] and 7 + 5 + 1 + 1 - two more pins, each a measured number with its unit.
+    assert [i.name for i in pins()] == ["bar_present", "pitch_angle", "sun_bar_angle"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
+    assert len(INPUTS) == 7 + 5 + 1 + 3
 
 
 def test_a_pin_has_no_default_no_range_and_no_unit_and_is_not_a_control():
@@ -69,8 +73,19 @@ def test_a_pin_has_no_default_no_range_and_no_unit_and_is_not_a_control():
     for bad in (dict(default=True), dict(default=False), dict(default=UNSET, default_owner="S58"), dict(lo=0.0, hi=1.0)):
         with pytest.raises(RegistryError, match="a pin has no default and no range"):
             Input("some_pin", "A pin", "pin", "about", **{"default": None, **bad})
+    # S59 (D218 items 5-6): was `raises(RegistryError, match="carry no unit")` for a pin with a unit. A pin is a
+    # class (no unit: True or False) or a measured number, which carries its unit; an unknown unit is refused, and
+    # a seed still carries none.
+    number = Input("some_pin", "A pin", "pin", "about", unit="deg", default=None)
+    assert (number.kind, number.unit, number.default) == ("pin", "deg", None)
+    for name in ("pitch_angle", "sun_bar_angle"):
+        measured = INPUTS[name]
+        assert (measured.kind, measured.default, measured.unit, measured.lo, measured.hi, measured.checkpoint_hypothesis) == ("pin", None, "deg", None, None, 3)
+        assert "not a control" in measured.about and "template" in measured.about and "No request offers it" in measured.about
+    with pytest.raises(RegistryError):
+        Input("some_pin", "A pin", "pin", "about", unit="furlongs", default=None)
     with pytest.raises(RegistryError, match="carry no unit"):
-        Input("some_pin", "A pin", "pin", "about", unit="dimensionless", default=None)
+        Input("some_seed", "A seed", "seed", "about", unit="deg", default=0)
 
 
 def test_every_input_carries_a_checkpoint_hypothesis():

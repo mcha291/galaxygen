@@ -150,7 +150,16 @@ PHASE_FIELDS: tuple[str, ...] = tuple(phase_field(m) for m in ARM_MODES)
 BODY_FIELDS: tuple[str, ...] = ("bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", "disc_surface_density")
 # What the stellar pattern is built from, and so what every stage that places by it requires (S56, D215:
 # the modes, never ``arm_multiplicity``; S58, D217: the body, and the disc's surface density with it).
-PATTERN_READS: tuple[str, ...] = ("bar_contrast", "pitch_angle", "bar_half_length", *BODY_FIELDS, *AMPLITUDE_FIELDS, *PHASE_FIELDS)
+# The winding's segments (S59, D218 items 1-2): the layer's raw draws, one row a segment - its azimuthal extent
+# and its pitch's residual - and the radius the winding is anchored at. The rows are laid from the anchor: the
+# first SEGMENTS_OUTWARD outward, in order, then SEGMENTS_INWARD inward, in order. Fixed counts (rule A1), far
+# more than a disc needs (about six outward and thirty inward); a winding asked past what they reach raises.
+SEGMENTS_OUTWARD = 64
+SEGMENTS_INWARD = 192
+SEGMENT_FIELDS: tuple[str, ...] = ("arm_segment_extent", "arm_segment_pitch_residual")
+WINDING_FIELDS: tuple[str, ...] = ("arm_winding_anchor_radius", *SEGMENT_FIELDS)
+RADIUS_FLOOR = 1e-3  # kpc: no winding phase is asked inside this (the floor ``bar_terms`` has always held)
+PATTERN_READS: tuple[str, ...] = ("bar_contrast", "pitch_angle", "bar_half_length", *BODY_FIELDS, *AMPLITUDE_FIELDS, *PHASE_FIELDS, *WINDING_FIELDS)
 
 
 def swing_window(disc_dominance: float, shear: float, x_low: float, x_high: float) -> tuple[float, float, float]:
@@ -254,8 +263,122 @@ def local_swing_weights(
     return w
 
 
-def bar_terms(R: np.ndarray, pitch_deg: float, bar_length: float) -> tuple[np.ndarray, np.ndarray, float]:
-    """Per radius the bar's taper and the winding phase ln R · cot(pitch); and the bar's position angle.
+def law_cot(pitch_deg: float) -> float:
+    """cot of the disc's pitch, the pitch held inside 1-89 degrees: the slope of the unsegmented winding."""
+    return 1.0 / math.tan(math.radians(min(max(pitch_deg, 1.0), 89.0)))
+
+
+@dataclass(frozen=True, slots=True, eq=False)
+class Winding:
+    """Φ(R), the common winding of every arm mode, in seeded segments (S59, BUILD_III Phase P4; D218 items 1-3).
+
+    χ = φ − Φ(R). Until S59 Φ = ln R · cot p, one pitch. Now Φ(R) = Φ(R_A) + ∫ cot p(R′) dR′/R′ with p
+    piecewise constant on radial segments, anchored at R_A - the bar's half-length, or where it would be in an
+    unbarred galaxy - with Φ(R_A) = ln R_A · cot p, **so the bar's angle is exactly what it was** and the
+    two-armed crest of a barred galaxy stays on the bar's axis at R = a.
+
+    Built from published numbers and nothing else (rule A9), by every reader alike: the disc's pitch
+    (``pitch_angle``), the anchor (``arm_winding_anchor_radius``) and the layer's rows (``arm_segment_extent``
+    Δβ in radians, ``arm_segment_pitch_residual`` δ in degrees; the first :data:`SEGMENTS_OUTWARD` rows run
+    outward from the anchor, the rest inward). A segment's pitch is p_seg = p + δ; across it ln R advances by
+    Δβ |tan p_seg| and the phase by Δβ sign(tan p_seg), outward - which is cot p_seg per unit ln R, written so
+    that **no cotangent is taken**: a segment of nearly no pitch is a short radial step with a whole Δβ of
+    phase in it, steep and continuous, and nothing is floored or clipped. (A pitch of exactly 0 has no radial
+    extent and no advance: a null segment. Past ±90° - 7.6 σ of the draw - the pitch is read as a line's
+    inclination, modulo 180°.) Φ is linear in ln R between the knots, so it is **continuous everywhere, its
+    slope jumping at the knots and nowhere else**, and exact at any radius: a point reads it at its own R.
+
+    A common winding is a per-ring shift of every mode's phase: it changes no ring's mean and no amplitude.
+    """
+
+    pitch_deg: float      # p, the disc's pitch: ``pitch_angle``
+    anchor: float         # R_A, kpc
+    extent: np.ndarray    # Δβ per row, rad
+    residual: np.ndarray  # δ per row, deg
+    knots: np.ndarray = field(init=False, repr=False)    # ln R at the segments' ends, ascending
+    phases: np.ndarray = field(init=False, repr=False)   # Φ at the knots
+    pitches: np.ndarray = field(init=False, repr=False)  # p_seg between consecutive knots, deg, inside out
+
+    def __post_init__(self) -> None:
+        extent = np.asarray(self.extent, dtype=float)
+        residual = np.asarray(self.residual, dtype=float)
+        rows = SEGMENTS_OUTWARD + SEGMENTS_INWARD
+        if extent.shape != (rows,) or residual.shape != (rows,):
+            raise ValueError(f"a winding holds {rows} segment rows; got {extent.shape} and {residual.shape}")
+        pitch = self.pitch_deg + residual
+        tangent = np.tan(np.radians(pitch))
+        reach, advance = extent * np.abs(tangent), extent * np.sign(tangent)
+        x0 = math.log(max(self.anchor, RADIUS_FLOOR))
+        p0 = float(x0 * law_cot(self.pitch_deg))  # the bar's angle, as ``bar_terms`` has always made it
+        out, inn = slice(0, SEGMENTS_OUTWARD), slice(SEGMENTS_OUTWARD, rows)
+        knots = np.concatenate([(x0 - np.cumsum(reach[inn]))[::-1], [x0], x0 + np.cumsum(reach[out])])
+        phases = np.concatenate([(p0 - np.cumsum(advance[inn]))[::-1], [p0], p0 + np.cumsum(advance[out])])
+        pitches = np.concatenate([pitch[inn][::-1], pitch[out]])
+        for name, value in (("extent", extent), ("residual", residual), ("knots", knots), ("phases", phases), ("pitches", pitches)):
+            value.setflags(write=False)
+            object.__setattr__(self, name, value)
+
+    @classmethod
+    def from_fields(cls, fields: Mapping[str, Any]) -> "Winding | None":
+        """The winding of a run's published fields, or None where the layer laid no segment (the plain winding
+        ln R · cot p, which ``bar_terms`` then makes as it always has)."""
+        if any(n not in fields for n in (*WINDING_FIELDS, "pitch_angle")):
+            return None
+        extent = np.asarray(fields["arm_segment_extent"], dtype=float)
+        pitch, anchor = float(fields["pitch_angle"]), float(fields["arm_winding_anchor_radius"])
+        if extent.size == 0 or not (math.isfinite(pitch) and math.isfinite(anchor)):
+            return None
+        return cls(pitch, anchor, extent, np.asarray(fields["arm_segment_pitch_residual"], dtype=float))
+
+    @property
+    def anchor_phase(self) -> float:
+        """Φ(R_A) = ln R_A · cot p: the bar's angle where there is a bar."""
+        return float(self.phases[SEGMENTS_INWARD])
+
+    def phase(self, R: np.ndarray) -> np.ndarray:
+        """Φ at ``R`` (kpc, any shape; a radius under :data:`RADIUS_FLOOR` is read at the floor): linear in ln R
+        between the knots. A radius past what the fixed rows reach raises - never extended, never clipped."""
+        x = np.log(np.maximum(np.asarray(R, dtype=float), RADIUS_FLOOR))
+        if x.size and (np.nanmin(x) < self.knots[0] or np.nanmax(x) > self.knots[-1]):
+            raise ArithmeticError(
+                f"the winding's {SEGMENTS_INWARD} inward and {SEGMENTS_OUTWARD} outward segments reach "
+                f"{math.exp(self.knots[0]):.3g}-{math.exp(self.knots[-1]):.3g} kpc and were asked at "
+                f"{math.exp(float(np.nanmin(x))):.3g}-{math.exp(float(np.nanmax(x))):.3g} kpc"
+            )
+        return np.interp(x, self.knots, self.phases)
+
+    def segments(self, inner: float, outer: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """(inner radius, outer radius, pitch in degrees, azimuthal extent in radians) of every segment that
+        overlaps [``inner``, ``outer``] kpc, inside out: what the checks of the draw read."""
+        lo, hi = self.knots[:-1], self.knots[1:]
+        on = (hi >= math.log(max(inner, RADIUS_FLOOR))) & (lo <= math.log(max(outer, RADIUS_FLOOR)))
+        extents = np.concatenate([self.extent[SEGMENTS_OUTWARD:][::-1], self.extent[:SEGMENTS_OUTWARD]])
+        return np.exp(lo[on]), np.exp(hi[on]), self.pitches[on], extents[on]
+
+
+def rotation_sense(pitch_deg: float) -> float:
+    """The sign of the disc's rotation in azimuth: −1, the disc turns towards decreasing φ.
+
+    Derived from the winding the model already uses, not chosen: an arm's crest lies at φ = ln R · cot(pitch) +
+    a constant (:func:`bar_terms`' winding phase, the pitch held inside 1-89 degrees so cot > 0), so its
+    azimuth grows outwards. **The arms are trailing** - an arm's outer end lags the rotation - so the disc turns
+    the other way, towards decreasing φ. The bar turns with the disc's sense, and its *leading* side is the side
+    it is turning into: the smaller azimuths. Read off the disc's own winding - the unsegmented one, of
+    ``pitch_angle`` (S59, D218 item 4: the lanes' side is the rotation's, and a reversed segment does not turn
+    the disc round) - so a winding of the other hand would carry its lanes to the other side.
+    """
+    _, phase, _ = bar_terms(np.array([1.0, math.e]), pitch_deg, float("nan"))
+    return -math.copysign(1.0, float(phase[1] - phase[0]))
+
+
+def bar_terms(R: np.ndarray, pitch_deg: float, bar_length: float, winding: Winding | None = None) -> tuple[np.ndarray, np.ndarray, float]:
+    """Per radius the bar's taper and the winding phase Φ(R); and the bar's position angle.
+
+    **The one place the winding is evaluated** (S59, D218): Φ is ``winding``'s where the layer laid segments
+    (:class:`Winding`), and ln R · cot(pitch) where it laid none - the layer off, or a caller that asks for the
+    disc's own unsegmented winding (the rotation's sense, the bar's angle). The bar's angle is ln(a) · cot(pitch)
+    either way: the segments are anchored there.
+
 
     The bar gives way to the arms over its own half-length: a smooth taper e^{−(R/a)⁴}, so the
     density has no seam at the bar's end. The bar lies along the winding's phase at its end,
@@ -267,10 +390,11 @@ def bar_terms(R: np.ndarray, pitch_deg: float, bar_length: float) -> tuple[np.nd
     """
     R = np.maximum(np.asarray(R, dtype=float), 1e-3)
     cot = 1.0 / math.tan(math.radians(min(max(pitch_deg, 1.0), 89.0)))
+    phase = np.log(R) * cot if winding is None else winding.phase(R)
     if math.isnan(bar_length):
-        return np.zeros(R.shape), np.log(R) * cot, float("nan")
+        return np.zeros(R.shape), phase, float("nan")
     taper = np.exp(-((R / max(bar_length, 1e-3)) ** 4))
-    return taper, np.log(R) * cot, float(math.log(max(bar_length, 1e-3)) * cot)
+    return taper, phase, float(math.log(max(bar_length, 1e-3)) * cot)
 
 
 # --- the bar's presence (S58, D217 items 1-3) ---------------------------------
@@ -542,6 +666,17 @@ BAR_HALF_LENGTH = _scalar(
     "amplitude, corotation radius and pattern speed are not numbers either.",
 )
 
+ARM_WINDING_ANCHOR = _scalar(
+    "arm_winding_anchor_radius", "Radius the arms' winding is anchored at", "kpc",
+    "Where the arms' common winding is pinned to the phase it had before it was cut into segments: the bar's "
+    "half-length in a barred galaxy, and the same two disc scale lengths - where the bar would end - in an "
+    "unbarred one. From there the winding is laid outward and inward in segments of their own pitch, so at "
+    "this radius the arms pass exactly where one unbroken logarithmic spiral of the disc's pitch would carry "
+    "them; in a barred galaxy that is the bar's end, which keeps the bar's angle what it was and the two-armed "
+    "crest on the bar's axis there. A law's number: the same with the randomness layer on or off, and a number "
+    "whether the galaxy has a bar or not.",
+)
+
 BAR_FORMATION_TIME = _scalar(
     "bar_formation_time", "Bar formation time", "Gyr",
     "How long a disc this dominant takes to form a bar: a fitted time scale times the exponential of a fitted "
@@ -704,6 +839,8 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
         "bar_formation_time": formation,
         "bar_present": BAR_PRESENT[int(present)],
         "bar_half_length": float(c["BAR_LENGTH_RATIO"]) * R_d if present else nan,
+        # S59 (D218 item 1): where the winding is anchored - the bar's half-length, or where it would be.
+        "arm_winding_anchor_radius": float(c["BAR_LENGTH_RATIO"]) * R_d,
         "bar_axis_ratio": float(c["BAR_AXIS_RATIO"]) if present else nan,
         "bar_boxiness": float(c["BAR_BOXINESS"]) if present else nan,
         "bar_profile_index": float(c["BAR_PROFILE_INDEX"]) if present else nan,
@@ -749,7 +886,8 @@ BAR = IMPLEMENTATIONS.register(
         requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
         publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN,
                    GAS_ARM_CONTRAST, ARM_PATTERN_SPEED,
-                   BAR_FORMATION_TIME, BAR_PRESENT_DECL, BAR_AXIS_RATIO, BAR_BOXINESS, BAR_PROFILE_INDEX),
+                   BAR_FORMATION_TIME, BAR_PRESENT_DECL, BAR_AXIS_RATIO, BAR_BOXINESS, BAR_PROFILE_INDEX,
+                   ARM_WINDING_ANCHOR),
     )
 )
 
@@ -778,7 +916,32 @@ PITCH_ANGLE = _scalar(
     "weak the draw dominates**, so arm winding is not a consequence of the mass distribution and "
     "anything reading this inherits a random component — the flag ruling 3 asks for. It is also a "
     "live instance of rule B11: a relation that fits the validation table can still be the wrong "
-    "relation.",
+    "relation. Since S59 it is the disc's own pitch about which the winding's segments scatter, and "
+    "the pitch the gas's response and the bar's angle read; and where a template pins the measured "
+    "mean pitch of its galaxy's arms, this is the pinned number and the draw is published beside it "
+    "as the drawn pitch.",
+    provenance="seeded",
+)
+
+PITCH_ANGLE_DRAWN = _scalar(
+    "pitch_angle_drawn", "Spiral arm pitch angle, as the law draws it", "deg",
+    "The pitch the model's own law gives this galaxy: the mean of the shear trend plus the drawn "
+    "scatter, on the pattern seed - the number the pitch angle is wherever no template pins a measured "
+    "one. Published beside a pinned pitch so the law's miss can be read: the one pinned galaxy's arms "
+    "are measured at about 29 degrees where the law draws about 14, 2.4 times the draw's own scatter - "
+    "a finding against the pitch law, recorded and not tuned. Nothing reads it.",
+    provenance="seeded",
+)
+
+SUN_AZIMUTH = _scalar(
+    "sun_azimuth", "Azimuth of the Sun", "rad",
+    "Where the Sun stands round the disc, for the one galaxy that has an observer inside it: the bar's "
+    "angle taken back, against the disc's rotation, by the measured angle between the bar and the line "
+    "from the Sun to the centre - so the bar's near end is ahead of the Sun in the direction the disc "
+    "turns. Given in the range of a full turn. It places measured positions - the mapped arms of the "
+    "Milky Way, given in azimuth from the Sun - in the model's frame; no field of the galaxy reads it, "
+    "and nothing of the arms is placed by it. Not a number where no template states the angle, or in a "
+    "galaxy with no bar. Labelled seeded: the bar's angle carries the drawn pitch.",
     provenance="seeded",
 )
 
@@ -944,6 +1107,7 @@ class ArmPattern:
     index: float = float("nan")         # n, the profile's exponent
     share: float = float("nan")         # the published bar_mass_share: the body's normalisation, as a mass share
     surface_density: np.ndarray | None = None  # (R,): checkpoint 1's total disc Σ, M☉/pc², which the share is of
+    winding: Winding | None = None  # S59 (D218): the segmented winding the modes share; None is ln R · cot(pitch)
     flat: bool = field(init=False)
     barred: bool = field(init=False)
     body: BarBody | None = field(init=False, repr=False)
@@ -1001,6 +1165,7 @@ class ArmPattern:
             float(fields["bar_contrast"]), float(fields["pitch_angle"]), float(fields["bar_half_length"]),
             float(fields["bar_axis_ratio"]), float(fields["bar_boxiness"]), float(fields["bar_profile_index"]),
             float(fields["bar_mass_share"]), np.asarray(fields["disc_surface_density"], dtype=float),
+            Winding.from_fields(fields),
         )
 
     # --- the bar's body ---------------------------------------------------------------------------------
@@ -1063,7 +1228,7 @@ class ArmPattern:
 
     def _terms(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Per radius: the modes' amplitudes and the winding phase."""
-        _, phase, _ = bar_terms(R, self.pitch_deg, self.bar_length)
+        _, phase, _ = bar_terms(R, self.pitch_deg, self.bar_length, self.winding)
         return self.amplitudes_at(R), phase
 
     def _arms(self, weights: list[np.ndarray], chi: np.ndarray) -> np.ndarray | float:
@@ -1191,7 +1356,11 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
     m_lo, m_hi = float(ctx.fields["swing_arm_min"]), float(ctx.fields["swing_arm_max"])
     x_high, x_dead, x_low, x_floor = (float(c[k]) for k in ("SWING_X_HIGH", "SWING_X_DEAD", "SWING_X_LOW", "SWING_X_FLOOR"))
-    pitch_angle = float(np.clip(pitch, 1.0, 60.0))
+    pitch_drawn = float(np.clip(pitch, 1.0, 60.0))
+    # S59 (D218 item 6): a template's measured mean pitch replaces the draw - made above on its stream all the
+    # same, and published beside the pin. Read with .get: given by no template, the draw stands.
+    pinned_pitch = ctx.inputs.get("pitch_angle")
+    pitch_angle = pitch_drawn if pinned_pitch is None else float(pinned_pitch)
     # The amplitudes: derived means, seeded residuals (§4b verdict C). The arms' residual is drawn
     # in magnitudes of arm–interarm contrast about the derived mean; the bar's log-normally.
     floc, grand = float(c["ARM_INTERARM_FLOCCULENT"]), float(c["ARM_INTERARM_GRAND_DESIGN"])
@@ -1243,10 +1412,21 @@ def compute_pattern(ctx: Context) -> Mapping[str, Any]:
             return _compose.neutral(DENSITY_CONTRAST, cells)
         return shape.published(R, ctx.grid.phi, phi_edges)
 
+    # S59 (D218 item 5): where the Sun stands - the bar's angle taken back by the pinned angle against the
+    # rotation, so the bar's near end is at positive β (β from the Sun, increasing with the rotation). Not a
+    # number without the pin or without a bar. It is read by no stage.
+    sun_bar_angle = ctx.inputs.get("sun_bar_angle")
+    sun_azimuth = nan
+    if sun_bar_angle is not None and barred:
+        bar_angle = bar_terms(R, pitch_angle, a_bar)[2]
+        sun_azimuth = float((bar_angle - rotation_sense(pitch_angle) * math.radians(float(sun_bar_angle))) % (2.0 * math.pi))
+
     return {
         "bar_corotation_radius": corotation,
         "bar_pattern_speed": (v_cr / corotation if corotation > 0.0 else 0.0) if barred else nan,
         "pitch_angle": pitch_angle,
+        "pitch_angle_drawn": pitch_drawn,
+        "sun_azimuth": sun_azimuth,
         "arm_multiplicity": dominant_mode(R, sigma, law.amplitudes),
         "arm_contrast": arm_contrast,
         "bar_contrast": bar_contrast,
@@ -1277,6 +1457,9 @@ PATTERN = IMPLEMENTATIONS.register(
         ),
         compute=compute_pattern,
         reads_seeds=("pattern_seed",),
+        # S59 (D218 items 5-6): two pins - a template's measured mean pitch, and the bar's angle to the
+        # Sun-centre line - given by a template or not at all (read with .get).
+        reads_inputs=("pitch_angle", "sun_bar_angle"),
         reads_constants=(
             "FAST_BAR_RATIO", "FAST_BAR_SCATTER",
             "PITCH_SHEAR_INTERCEPT", "PITCH_SHEAR_SLOPE", "PITCH_SCATTER",
@@ -1293,8 +1476,10 @@ PATTERN = IMPLEMENTATIONS.register(
             # S58 (D217 item 4): the body's shape, the derived stage's. The surface density the body is a share
             # of is the one above: checkpoint 1's total disc - no stellar/gas split and no bulge here.
             "bar_axis_ratio", "bar_boxiness", "bar_profile_index",
+            # S59 (D218): the winding's anchor and the layer's segment rows, which only the composed field reads.
+            *WINDING_FIELDS,
         ),
-        publishes=(COROTATION, PATTERN_SPEED, PITCH_ANGLE, ARM_MULTIPLICITY, ARM_CONTRAST, BAR_CONTRAST, BAR_MASS_SHARE,
+        publishes=(COROTATION, PATTERN_SPEED, PITCH_ANGLE, PITCH_ANGLE_DRAWN, SUN_AZIMUTH, ARM_MULTIPLICITY, ARM_CONTRAST, BAR_CONTRAST, BAR_MASS_SHARE,
                    *ARM_MODE_AMPLITUDES, ARM_SATURATION, DENSITY_CONTRAST),
     )
 )

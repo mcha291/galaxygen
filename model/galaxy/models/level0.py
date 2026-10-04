@@ -829,6 +829,57 @@ LEVEL0: dict[str, Constant] = {
         "input (D216; see GAS_ARM_CONTRAST_GRAND_DESIGN). Coverage: the spirals of the 28 with masks that are not among the 17 grand "
         "designs (27 galaxies, 59 arm segments carry molecular contrasts).",
     ),
+    # --- the winding's segments (S59, BUILD_III Phase P4; DECISIONS.md D218 items 1-2) ---------------------
+    "ARM_SEGMENT_EXTENT_MEDIAN": Constant(
+        60.0,
+        "deg",
+        "Median azimuthal extent of one segment of a spiral arm - a stretch between breaks in the HII regions' "
+        "density or scatter or an apparent change of pitch, fitted as one logarithmic spiral: median 60 deg, "
+        "quartiles 50-80, range 20-180, mean 67.8 over 38 segments of four galaxies. **The reader's arithmetic "
+        "on Honig & Reid 2015's 38 printed rows**, from the printed azimuth ranges: no such statistic is printed "
+        "in the paper [verified: Honig & Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5, "
+        "https://arxiv.org/pdf/1412.1012; docs/READING_ARM_SEGMENTS.md A1.1 and A2, HR15, where the rows are "
+        "printed so the arithmetic can be re-run]. The median of the log-normal a segment's extent is drawn "
+        "from (D218 item 2).",
+    ),
+    "ARM_SEGMENT_EXTENT_LOG_SCATTER": Constant(
+        0.35,
+        "dimensionless",
+        "The natural-log width of the segment extent's log-normal: with the median of 60 deg it gives quartiles "
+        "47-76 deg against the 50-80 of the 38 rows - the reader's fit to its own arithmetic on Honig & Reid "
+        "2015's 38 printed rows, not a number the paper prints [verified: docs/READING_ARM_SEGMENTS.md A3, a "
+        "lognormal of median 60 deg and a log-width of about 0.35; DECISIONS.md D218 item 2].",
+    ),
+    "ARM_SEGMENT_EXTENT_MIN": Constant(
+        20.0,
+        "deg",
+        "The shortest segment among Honig & Reid 2015's 38 printed rows (the reader's arithmetic on the printed "
+        "azimuth ranges): a drawn extent under it is drawn again, not clipped [verified: "
+        "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2: redrawn outside "
+        "20-180 deg, the bounds being the sample's range].",
+    ),
+    "ARM_SEGMENT_EXTENT_MAX": Constant(
+        180.0,
+        "deg",
+        "The longest segment among Honig & Reid 2015's 38 printed rows (the reader's arithmetic on the printed "
+        "azimuth ranges): a drawn extent over it is drawn again, not clipped [verified: "
+        "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2].",
+    ),
+    "ARM_SEGMENT_PITCH_SCATTER": Constant(
+        10.0,
+        "deg",
+        "Standard deviation of a segment's pitch about the galaxy's own: each segment's pitch is the galaxy's "
+        "pitch plus an independent normal residual of this width, untruncated - a reversed segment and one of "
+        "nearly no pitch are measured (3 of the 38 rows are reversed) and are allowed. The pooled sd of the 38 "
+        "rows' pitches is 9.9 deg (mean 15.0; four galaxies) - **the reader's arithmetic on Honig & Reid 2015's "
+        "38 printed rows** [verified: Honig & Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5; "
+        "docs/READING_ARM_SEGMENTS.md A1.1]; beside it, S4G's measured spread among one galaxy's logarithmic "
+        "segments, mean sigma = 9.5 +/- 0.3 deg over 391 galaxies - about 10 deg between segments on "
+        "average [verified: Diaz-Garcia, Salo, Knapen & Herrera-Endoqui 2019, A&A 631, A94 = arXiv:1908.04246, "
+        "§3, §6, Table 2, https://ar5iv.labs.arxiv.org/html/1908.04246; docs/READING_ARM_SEGMENTS.md A1.1, "
+        "DG19]. 10 is the ruling's value between the two (D218 item 2). No correlation between consecutive "
+        "segments and no arm-to-arm term is put in: a common winding has neither (a debt).",
+    ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
         "dimensionless",

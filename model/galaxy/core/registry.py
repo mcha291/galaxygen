@@ -61,7 +61,7 @@ class Input:
     label: str
     kind: str  # control | seed | events | pin
     about: str
-    unit: str | None = None  # required for controls; None for seeds, event lists and pins
+    unit: str | None = None  # required for controls; None for seeds, event lists and a pin that is a class (True or False); a pin that is a measured number carries its unit (S59, D218)
     default: object = UNSET  # a pin's is None: no pin is given, and the model derives
     lo: float | None = None  # control range for the viewer; None = not yet set
     hi: float | None = None
@@ -86,6 +86,13 @@ class Input:
                 isinstance(self.default, bool) or not isinstance(self.default, (int, float))
             ):
                 raise RegistryError(f"input {self.name}: control default must be a number or UNSET")
+        elif self.kind == "pin":
+            # S59 (D218 items 5-6): a pin is a class (no unit: True or False) or a measured number (its unit).
+            if self.unit is not None:
+                try:
+                    _unit(self.unit)
+                except UnknownUnit as e:
+                    raise RegistryError(f"input {self.name}: {e}") from None
         else:
             if self.unit is not None:
                 raise RegistryError(f"input {self.name}: {self.kind} inputs carry no unit")
@@ -494,6 +501,37 @@ _INPUTS: tuple[Input, ...] = (
         "still published beside it, so a disagreement between the criterion and the galaxy is visible. No "
         "request offers it: the API takes it from template=<name> alone, it has no range and no default, and "
         "it does not count against the ceiling. An input that is not given is not among a run's inputs.",
+        default=None,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "pitch_angle",
+        "Arm pitch angle (a template's pin)",
+        "pin",
+        "A pin, not a control (S59, D218 item 6): the measured mean pitch of one named galaxy's arm segments, "
+        "with its source, stated by a template in place of the pitch the model draws about its shear law. A "
+        "number in degrees: it replaces the drawn value in the published pitch_angle - the winding, the bar's "
+        "angle and the gas's response all read it - and the law's own draw is still made on its stream and "
+        "published beside it as pitch_angle_drawn, so a disagreement between the law and the galaxy is visible. "
+        "A measured mean entering as template structure, as the bar's presence does: nothing is fitted. Given "
+        "by no template, nothing is pinned. No request offers it: the API takes it from template=<name> alone, "
+        "it has no range and no default, and it does not count against the ceiling.",
+        unit="deg",
+        default=None,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "sun_bar_angle",
+        "Angle of the bar to the Sun-centre line (a template's pin)",
+        "pin",
+        "A pin, not a control (S59, D218 item 5): for the one galaxy that has an observer inside it, the angle "
+        "between the bar's long axis and the line from the Sun to the centre, in degrees, with the bar's near "
+        "end ahead of that line in the direction the disc turns. It places the Sun: the published sun_azimuth "
+        "is the bar's angle taken back by this much against the rotation. It moves nothing else - no field of "
+        "the galaxy reads where the Sun is - and where no template gives it, or the galaxy has no bar, the "
+        "Sun's azimuth is not a number. No request offers it: the API takes it from template=<name> alone, it "
+        "has no range and no default, and it does not count against the ceiling.",
+        unit="deg",
         default=None,
         checkpoint_hypothesis=3,
     ),

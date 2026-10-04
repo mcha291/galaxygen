@@ -43,6 +43,7 @@ after that reading (ruling 2), so no verdict on it is ever called blind.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -134,20 +135,22 @@ class Instrument:
 class Pin:
     """One measured fact of the galaxy's structure, stated in place of what the model derives (D217 item 2).
 
-    ``name`` is a pin input of the registry (kind ``pin``); ``value`` is the observed class, True or False;
-    ``source`` carries its tag (rule B14). Nothing is fitted and no number is set: the model's derivation is
-    replaced, and what it would have said is still published beside the pinned verdict.
+    ``name`` is a pin input of the registry (kind ``pin``); ``value`` is the observed class, True or False,
+    or - since S59 (D218 items 5-6), for a pin the registry gives a unit - a measured number in that unit;
+    ``source`` carries its tag (rule B14). Nothing is fitted: the model's derivation or draw is replaced, and
+    what it would have said is still published beside the pinned value. Which of the two a pin is, is the
+    registry's (the pin's unit), and a template is held to it when it is built.
     """
 
     name: str
-    value: bool
+    value: bool | float
     source: str
 
     def __post_init__(self) -> None:
         if not IDENT.match(self.name):
             raise TemplateError(f"pin name {self.name!r} must match {IDENT.pattern}")
-        if not isinstance(self.value, bool):
-            raise TemplateError(f"pin {self.name}: the observed class is True or False, got {self.value!r}")
+        if not isinstance(self.value, bool) and not (isinstance(self.value, (int, float)) and math.isfinite(self.value)):
+            raise TemplateError(f"pin {self.name}: the observed class is True or False, or a measured finite number; got {self.value!r}")
         if not any(tag in self.source for tag in TAGS):
             raise TemplateError(f"pin {self.name}: the source carries no tag (rule B14)")
 
@@ -354,6 +357,12 @@ class Template:
             inp = table.get(pin.name)
             if inp is None or inp.kind != "pin":
                 raise TemplateError(f"template {self.name}: {pin.name!r} is not a registered pin")
+            if (inp.unit is None) != isinstance(pin.value, bool):
+                raise TemplateError(
+                    f"template {self.name}: pin {pin.name!r} is "
+                    + ("a class, True or False" if inp.unit is None else f"a measured number in {inp.unit}")
+                    + f", got {pin.value!r}"
+                )
         missing =[path for path in numbers(self) if path not in self.sources]
         if missing:
             raise TemplateError(f"template {self.name}: no source for {missing} (rule B14)")
@@ -392,7 +401,7 @@ def numbers(template: Template) -> tuple[str, ...]:
     return tuple(paths)
 
 
-def pinned(template: Template) -> dict[str, bool]:
+def pinned(template: Template) -> dict[str, bool | float]:
     """The template's pins as inputs: {pin input: the observed class} (S58, D217 item 2)."""
     return {p.name: p.value for p in template.pins}
 
@@ -482,6 +491,23 @@ MILKY_WAY = Template(
                 "[verified: DECISIONS.md D217 item 2: milky_way pins barred]"
             ),
         ),
+        # S59 (D218 item 5): where the Sun is. The bar's long axis stands 28-33 degrees from the Sun-centre line,
+        # its near end at positive Galactic longitude - ahead of that line in the direction of rotation; 30 is
+        # the ruling's value inside the measured range. It places the published sun_azimuth and moves no field
+        # of the galaxy. Nothing of the arms' loci is pinned: a sum of modes with drawn phases holds no arm.
+        Pin(
+            name="sun_bar_angle",
+            value=30.0,
+            source=(
+                "[verified: Wegg, Gerhard & Portail 2015, MNRAS 450, 4050 = arXiv:1504.01401, abstract, "
+                "https://ar5iv.labs.arxiv.org/html/1504.01401: the long bar's angle to the line of sight "
+                "'(28-33) deg'; best-fit 28.4 (one component), 29.1/30.0 (two)] [verified: Bland-Hawthorn & "
+                "Gerhard 2016, ARA&A 54, 529 = arXiv:1602.07702, §4.2.1, §4.3: long bar 28-33 deg, the box/peanut "
+                "bulge 27 +/- 2 deg] (docs/READING_ARM_SEGMENTS.md A1.3, W15 and BHG16) "
+                "[verified: DECISIONS.md D218 item 5: sun_azimuth = phi_bar - 30 deg in the rotation's sense, the "
+                "bar's near end at beta > 0]"
+            ),
+        ),
     ),
     sources={
         "camera.inclination_deg": "[inferred] a display choice: the Milky Way stands face-on [verified: BUILD_III.md section 2]",
@@ -549,6 +575,23 @@ NGC_4414 = Template(
                 f"[verified: {_READING}, row 16 and 'Structural mismatches': NGC 4414 has no bar - RC3 SA(rs)c? (the "
                 "family SA), S4G fits no bar component, Buta family index 0.00, V02 'no bar', W04 'little evidence "
                 "for a bar'] [verified: DECISIONS.md D217 item 2: ngc_4414 pins unbarred]"
+            ),
+        ),
+        # S59 (D218 item 6): the measured mean pitch replaces the draw. The law's own value at this template's
+        # seed, 14.33 degrees, is published beside it (pitch_angle_drawn): 2.4 sigma of the 6-degree draw under
+        # the measurement - a finding against the pitch law, recorded and not tuned. The five segments' rows
+        # overlap in radius (pieces of different arms), so nothing positional is pinned: they are a disclosed
+        # check of the drawn segments' spread, in tests/.
+        Pin(
+            name="pitch_angle",
+            value=28.9,
+            source=(
+                "[verified: Herrera-Endoqui, Diaz-Garcia, Laurikainen & Salo 2015, A&A 582, A86 = arXiv:1509.05328, "
+                "Table 3 at VizieR J/A+A/582/A86/table3, the five NGC 4414 rows: pitches -30.5, -34.2, -28.1, "
+                "-44.0, -7.6 deg] [verified: Diaz-Garcia, Salo, Knapen & Herrera-Endoqui 2019, A&A 631, A94 = "
+                "arXiv:1908.04246, table a1: mean 28.88 deg, error of the mean 5.97 deg (sd 13.35 deg)] "
+                "(docs/READING_ARM_SEGMENTS.md A1.4, HE15 and DG19) [verified: DECISIONS.md D218 item 6: "
+                "pitch_angle = 28.9 deg replaces the draw]"
             ),
         ),
     ),

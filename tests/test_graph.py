@@ -94,7 +94,8 @@ ORDER = {
 # numbers are constants of the model, not fields (gate G1, change 4: "a layer stage's fields are synthetic; a
 # constant it declares is a constant").
 CLOUD_TEXTURE = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
-ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)}
+# S59 (D218 items 1-2): was the five phases alone - the same layer stage lays the winding's segments, two columns.
+ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)} | {"arm_segment_extent", "arm_segment_pitch_residual"}
 SYNTHETIC = CLOUD_TEXTURE | ARM_PHASES
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
@@ -151,6 +152,9 @@ SEEDED_BASIC = {
     # presence, the formation time and the body's shape are the bar stage's and derived: the pin is an input,
     # not a seed.
     "bar_mass_share",
+    # S59 (D218 items 5-6): the pitch as the law draws it, beside a pinned one; the Sun's azimuth, which carries
+    # the bar's angle and so the drawn pitch.
+    "pitch_angle_drawn", "sun_azimuth",
     # S56 (D215): the law of several modes is the pattern stage's, which reads the pattern seed, so the five
     # amplitudes and the saturation are seeded (D55) - they carry the drawn arm and bar amplitudes; the split
     # among the modes has no draw in it.
@@ -223,11 +227,16 @@ def test_production_graphs_hold(prod):
             # stage, at the pattern's checkpoint, as its hypothesis says. halo_assembly_z gains that reader too
             # (the disc's age) and stays bound at its first, checkpoint 1.
             "bar_present": 3,
+            # S59 (D218 items 5-6): two more pins, read by the pattern stage at its checkpoint.
+            "pitch_angle": 3, "sun_bar_angle": 3,
         }
-        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index"):
+        # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's.
+        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_winding_anchor_radius"):
             assert g.provenance[name] == "derived" and g.producer[name] == "bar", name
         assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present") and g.stages["bar"].reads_seeds == ()
         assert g.stages["arm_phases"].requires == ("bar_present",)
+        assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
+        assert g.producer["arm_segment_extent"] == g.producer["arm_segment_pitch_residual"] == "arm_phases"
     assert "graph" in graph.report(models, impls_, table)
 
 

@@ -36,6 +36,7 @@ cannot be resumed under the other setting.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -98,9 +99,15 @@ def resolve_inputs(
             value = overrides.get(name)
             if value is None:
                 continue
-            if not isinstance(value, bool):
-                raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
-            out[name] = value
+            if inp.unit is None:
+                if not isinstance(value, bool):
+                    raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
+                out[name] = value
+                continue
+            # S59 (D218 items 5-6): a pin that carries a unit is a measured number, finite.
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise RunError(f"pin {name!r} is a finite number in {inp.unit} (or not given), got {value!r}")
+            out[name] = float(value)
             continue
         if name in overrides:
             out[name] = overrides[name]
