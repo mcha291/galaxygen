@@ -9323,3 +9323,17 @@ with that swap — one function, the same independent test, the pins re-read —
 **The close (2026-10-04).** The suite on the combined state: 1237 passed, 5 skipped, `EXIT=0` (55 min: the ranked
 ridge and two tests that each draw 240 galaxies); the specs OK, 12 / 20 / 5 of 37 for both models, the template
 checks 0 / 5 on their five recorded misses. The picture run: 8 passed.
+
+### D216. S57: the owner keeps the plan's arm-number law; then pattern speeds and the steady gas shock ring by ring (BUILD_III Phase P2; an Opus lead; gates G2 and G3)
+
+**The owner, in chat, on 2026-10-04**, asked at S56's close with the regenerated frames of both templates on
+screen (D215's last paragraph; the gate's wording): keep the plan's arm-number law, or S26's global window on
+every ring? **"Keep the plan's law."** The local swing window stays the law; the Milky Way template reads
+four-to-six-armed outside the bar until P3's bar exists; debt #138 is carried and re-read once at P3's close
+(S58), same statements, same table. No swap opens this session.
+
+**This session is Phase P2** (BUILD_III §5): a pattern speed per mode and the steady isothermal shock of the gas
+through the composed potential, ring by ring, replacing S56's ridge by rank (#140). The reading comes first, by
+two readers blind to the model; gate G2 rules the equations before anything is built; gate G3 reviews the solver
+before the merge. Carried into G2 from S56 (D215): the ranked ridge's published field passing its exact bound by
+2.5e-3; two expected totals one unit in the last place apart with the layer on and off; the fade's exponent.
