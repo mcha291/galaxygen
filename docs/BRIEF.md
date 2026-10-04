@@ -1,4 +1,4 @@
-# BRIEF — for S57: BUILD_III's Phase P2, pattern speeds and the gas shock ring by ring (an Opus lead; gates G2, G3)
+# BRIEF — S57 is OPEN and paused (C2d): BUILD_III's Phase P2, pattern speeds and the gas shock (gates G2, G3)
 
 **The state (2026-10-04).** S56 is merged (D215): the stellar pattern is several arm modes at once — the local swing
 window splits the power among m = 2–6 ring by ring, the modes saturate together, their phases are a draw on
@@ -8,21 +8,24 @@ P3's close). Rows are judged layer-off: 12 / 20 / 5, unmoved. Register 78 open =
 from D216, #141, row 38, board row 57. **The owner's standing order: run the sessions back to back, stop only for
 a ruling that is the owner's, spawn Fable at the plan's gates.**
 
-## Before anything: the owner's answer to S56's question (D215, the end)
-(a) keep the local arm-number law and carry #138 to P3 — **the default if unanswered**; or (b) S26's global window
-on every ring. **If (b): S57 opens with that swap** — `mode_law`'s weights from `swing_window` on the global f_d
-and Γ, constant in R; the hand-derived test re-pointed; every layer-on pin re-read; no gate turn (D215 ruling 11).
+## Where S57 stopped (2026-10-04; branch `session-57`, pushed, nothing merged; board row 57 ◐)
+The owner answered S56's question: **keep the plan's arm-number law** (D216). Reader 2's part of the reading is
+committed (`READING_GAS_SHOCK.md` Part B: pattern speeds, offsets, widths). **Reader 1's part (Part A: the shock's
+equations, the sonic point and jump, a published profile to check a solver against; also what the steady response
+is when the pattern corotates with the gas, Ω_p = Ω) was cut off by a usage limit: re-run it first** (§3e's brief).
 
 ## First
-`uv run python tools/bootstrap.py` (S56's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md`
+`uv run python tools/bootstrap.py` (S56's close ran the suite, `EXIT=0`; **its `verify_clone` on `main` was still running when S57 paused: run it again first**). **Read `BUILD_III.md`
 §1, "Phase P2" in §5, §3b–§3d, and D215's rulings 7–13: that text is the ruling so far.** The closing suite now
 takes about 55 minutes (the ranked ridge).
 
 ## The order (BUILD_III §5, Phase P2)
-1. **Two readers, blind to the model, in parallel**: the steady spiral shock (Roberts 1969; Shu, Milione & Roberts
-   1973) — its equations, the sonic point, the isothermal jump, a published profile with the parameters it was
-   computed at; and its width and offset (Gittins & Clarke 2004; Kim & Ostriker 2002) with pattern speeds of
-   transient modes. Assemble `docs/READING_GAS_SHOCK.md`.
+1. **Reader 1, blind to the model** (reader 2 is done): the steady spiral shock (Roberts 1969; Shu, Milione &
+   Roberts 1973) — its equations, the sonic point, the isothermal jump, a published profile with its parameters.
+   Enter it as Part A of `docs/READING_GAS_SHOCK.md`. **Part B already puts a question to G2 that the plan did not
+   foresee: for swing-amplified arms set ring by ring, simulations and half the observed galaxies say the arm
+   moves with the disc (Ω_p = Ω: no flow through the arm, no shock, the gas on the crest); "corotation at the
+   mode's radius" collapses into that; no source gives a rule for several modes on one ring.**
 2. **Gate G2 (Fable, one turn on `docs/HANDOFF_S57.md`), after the reading and before any build**: the equations
    to integrate, the treatment of the sonic point, the fallback where no shock forms (the plan declares the linear
    response), which pattern speed a ring uses when its modes differ. **Carried to G2 from S56**: the ranked
