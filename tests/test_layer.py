@@ -1433,17 +1433,47 @@ def model_sources() -> list[Path]:
 
 def test_compose_is_the_only_caller_of_from_fields():
     """A pattern object is obtained from ``compose`` or not at all: ``.from_fields(`` appears in the model only where
-    it is defined (the two pattern classes) and where compose calls it."""
+    it is defined (the two pattern classes) and where compose calls it.
+
+    **S59 (D218) - amended by the test builder, and the lead's to rule** (not a re-pin the ruling explains: reported).
+    The S59 build gave the winding a door of the same name: ``Winding.from_fields(fields)``, called once in each
+    pattern class's own ``from_fields`` - inside the door compose opens - so this test's text search found the name
+    in the two stage modules and failed. What the test is for still holds, and is held more closely than by a
+    search of the text: by the syntax tree, the only calls of a ``from_fields`` outside ``compose`` are those two,
+    each ``Winding.from_fields`` and each inside ``ArmPattern.from_fields`` or ``GasPattern.from_fields``; no module
+    but ``compose`` calls a pattern class's. (``Winding.from_fields`` gives None where the layer laid no row - it
+    reads the rows, not the setting; ``compose`` has already returned None with the layer off before it is
+    reached.) If the invariant is to be kept to its letter - "none calls ``.from_fields(``" - the model must hand
+    the winding in through ``compose``, and this amendment is to be reverted with that change."""
     calls: dict[str, int] = {}
     for path in model_sources():
         text = path.read_text(encoding="utf-8")
         found = len(re.findall(r"\.from_fields\(", text))
         if found:
             calls[path.relative_to(PACKAGE).as_posix()] = found
-    assert set(calls) == {"layer/compose.py"}, calls
-    assert calls["layer/compose.py"] == 3  # the stellar pattern, the gas pattern, and the docstring that says so
+    # S59 (D218): was `set(calls) == {"layer/compose.py"}` - the two pattern modules each name the winding's door once.
+    assert calls == {"layer/compose.py": 3, "stages/gas_pattern.py": 1, "stages/pattern.py": 1}, calls
+    # compose's three: the stellar pattern, the gas pattern, and the docstring that says so. The other two, by the tree:
+    outside: list[tuple[str, str, str, str]] = []  # (module, the class called on, the class it is called in, the function)
+    for path in model_sources():
+        name = path.relative_to(PACKAGE).as_posix()
+        if name == "layer/compose.py":
+            continue
+        for cls in (n for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))) if isinstance(n, ast.ClassDef)):
+            for fn in (n for n in cls.body if isinstance(n, ast.FunctionDef)):
+                for node in ast.walk(fn):
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "from_fields":
+                        outside.append((name, ast.unparse(node.func.value), cls.name, fn.name))
+    assert outside == [("stages/gas_pattern.py", "Winding", "GasPattern", "from_fields"), ("stages/pattern.py", "Winding", "ArmPattern", "from_fields")]
+    # ... and there is no call of one anywhere else in those modules (at module level, or in a plain function).
+    for name in ("stages/gas_pattern.py", "stages/pattern.py"):
+        tree = ast.parse((PACKAGE / name).read_text(encoding="utf-8"))
+        assert sum(1 for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "from_fields") == 1, name
     defined = [p.relative_to(PACKAGE).as_posix() for p in model_sources() if "def from_fields(" in p.read_text(encoding="utf-8")]
     assert defined == ["stages/gas_pattern.py", "stages/pattern.py"]
+    # Three doors by that name: the two pattern classes', which compose alone opens, and the winding's, which they open.
+    source = (PACKAGE / "stages" / "pattern.py").read_text(encoding="utf-8")
+    assert source.count("def from_fields(") == 2 and (PACKAGE / "stages" / "gas_pattern.py").read_text(encoding="utf-8").count("def from_fields(") == 1
 
 
 def test_no_module_of_the_model_constructs_a_pattern_object_by_its_class():
