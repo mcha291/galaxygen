@@ -68,6 +68,7 @@ import ast
 import collections
 import functools
 import math
+import re
 from pathlib import Path
 
 import numpy as np
@@ -1292,7 +1293,12 @@ def test_the_field_moves_with_the_pattern_seed_and_not_the_world_seed(model):
     assert np.array_equal(a["gas_density_contrast"], w["gas_density_contrast"])
     assert not np.array_equal(a["gas_density_contrast"], t["gas_density_contrast"])  # S56: the phases are the layer's
     assert GAS_PATTERN.reads_seeds == ()
-    assert [d.provenance for d in GAS_PATTERN.publishes] == ["seeded"]
+    # S58 (D217 follow-up): was ["seeded"] - the stage's second field, the contrast the star formation law reads.
+    assert [d.provenance for d in GAS_PATTERN.publishes] == ["seeded", "seeded"]
+    # It moves as the gas's own contrast does; at these defaults (a barred galaxy) the two are not one field.
+    name = "star_formation_gas_contrast"
+    assert np.array_equal(a[name], b[name]) and np.array_equal(a[name], w[name]) and not np.array_equal(a[name], c[name])
+    assert not np.array_equal(a[name], a["gas_density_contrast"])
 
 
 def test_the_ratio_is_the_derived_class_mean_and_no_draw(model):
@@ -1435,7 +1441,16 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert "arm_multiplicity" not in GAS_PATTERN.requires
     assert set(pt.AMPLITUDE_FIELDS) | set(pt.PHASE_FIELDS) <= set(GAS_PATTERN.requires)
     assert GAS_PATTERN.reads_seeds == ()
-    assert {d.name for d in GAS_PATTERN.publishes} == {"gas_density_contrast"}
+    # S58 (D217 follow-up): was {"gas_density_contrast"} - beside it the contrast as the star formation law reads
+    # it, the lanes' excess spread evenly over the bar's footprint ("the lanes' one unsourced number (the width)
+    # must not drive a census"). Its about says what it is and why, and names no constant (rule D5).
+    assert [d.name for d in GAS_PATTERN.publishes] == ["gas_density_contrast", "star_formation_gas_contrast"]
+    second = GAS_PATTERN.publishes[1]
+    assert second.composed and second.neutral == 1.0 and second.axes == ("R", "phi") and second.provenance == "seeded"
+    assert "Star formation therefore follows the bar's footprint, not the lanes" in second.about
+    assert "a declared placeholder that no source gave" in second.about and "The dust and the cloud census keep the lanes" in second.about
+    assert "A composed field: with the randomness layer off it is 1 everywhere" in second.about
+    assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", second.about + GAS_PATTERN.about)
     about = GAS_PATTERN.publishes[0].about
     assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
     assert "at the ring's own radius" in about and "within about a degree of each other over the mid disc, to either side" in about

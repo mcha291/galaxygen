@@ -217,7 +217,11 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # S58 (D217): the gas inside the bar's reach lies on the bar's lanes and the two-armed mode on the bar's axis, so
     # the modulation, the young stars' cell weights, the cells' Gamma draws and the 3162nd star move again; the
     # expected count is still the tables'.
-    assert F["bright_star_limit"] == pytest.approx(34617.696, rel=1e-6)  # S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S58 (D217 follow-up): star formation follows the bar's footprint, not the lanes (the gate: "the lanes' one
+    # unsourced number (the width) must not drive a census"), so the modulation inside the bar's reach, the young
+    # stars' cell weights there, the cells' Gamma draws and the 3162nd star move once more; the expected count
+    # is still the tables'.
+    assert F["bright_star_limit"] == pytest.approx(34697.372, rel=1e-6)  # S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -523,7 +527,9 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # again, inside the same gate.
 # S58 (D217): the young stars' cells follow the lanes inside the bar's reach and the bar-tied two-armed mode -
 # another realisation again, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00235, 1.00392, 1.00461)  # S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S58 (D217 follow-up): the young stars inside the bar's reach follow the bar's footprint and not its lanes -
+# another realisation, inside the same gate.
+BRIGHT_RGB_OVER_OWN = (1.00161, 1.00226, 1.00268)  # S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):

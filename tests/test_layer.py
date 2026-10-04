@@ -126,8 +126,13 @@ UNPLACED_OBJECTS = {"remnant"}
 # identically in the law, still; the layer-off value is S55's bits, unmoved. Not widened in silence: the unit count
 # is pinned below, and the invariant's text is the gate's to amend or the lanes' means the lead's to have summed
 # otherwise.
+# **As the gate answered (D217's follow-up): the expected totals are "equal within four units in the last place"**
+# (BUILD_III's wording is the lead's to amend). The bound the invariant states is four; what this test pins is the
+# measured two, so a third unit is seen here before it reaches the invariant's four.
 EXPECTED_TOTALS = {"cloud_count_total", "bright_star_count_1e3"}
-EXPECTED_TOTAL_UNITS = 2  # S58 (D217): was 1
+EXPECTED_TOTAL_UNITS = 2  # S58 (D217): was 1; the measured count, under the gate's bound of four
+EXPECTED_TOTAL_BOUND = 4  # the invariant's own, as the gate words it at S58
+assert EXPECTED_TOTAL_UNITS <= EXPECTED_TOTAL_BOUND
 
 
 def same_expected_total(a, b) -> bool:
@@ -209,6 +214,10 @@ ADDED_AT_S57 = {"arm_pattern_speed"}
 # And the six P3 adds (S58, D217): the bar's formation time and the verdict, the body's shape - derived, the `bar`
 # stage's - and the body's share of the disc's mass, the `pattern` stage's. Laws, the same on and off.
 ADDED_AT_S58 = {"bar_formation_time", "bar_present", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share"}
+# And one more at the gate's follow-up (S58, D217): the gas's contrast as the star formation law reads it - the
+# `gas_pattern` stage's second composed field, the lanes' excess spread over the bar's footprint. 1 everywhere with
+# the layer off, as the gas's own contrast is: its declared neutral.
+ADDED_AT_S58 |= {"star_formation_gas_contrast"}
 
 
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
@@ -231,7 +240,7 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         was, is_now = by_template[template]
         assert held[n] == layer_reference.value_digest(was) and same_number(float(out.fields[n]), is_now), (n, template)
     # S57 (D216): was `== ADDED_AT_S56` - the layer-off run gained one field, `arm_pattern_speed`, and lost or moved none.
-    # S58 (D217): was `== ADDED_AT_S56 | ADDED_AT_S57` - six more, and none lost.
+    # S58 (D217): was `== ADDED_AT_S56 | ADDED_AT_S57` - six more, and none lost; a seventh at the gate's follow-up.
     assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 and len(held) == (332 if name == "azimuthal" else 331)
     assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
     if template == "ngc_4414":
@@ -294,7 +303,8 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     on, off = runs[name, True], runs[name, False]
     assert set(on.fields) == set(off.fields) and on.order == off.order  # the same model ran, every stage of it
     composed = {n: d for n, d in on.decls.items() if d.composed}
-    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if name == "azimuthal" else set())
+    # S58 (D217 follow-up): was two (three for azimuthal) - the gas's contrast as the star formation law reads it.
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast"} | ({"sfr_modulation"} if name == "azimuthal" else set())
     for n, d in composed.items():
         # Exactly its declared neutral everywhere with the layer off - the number, not that number to rounding -
         # and not everywhere its neutral with the layer on: the layer does place.
@@ -352,6 +362,8 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
     # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
     # mean that is 1 identically in the law; exact sums are not required" - the rule's own wording now, and held.
+    # S58 (D217's follow-up at the gate): the expected totals are "equal within four units in the last place"; the
+    # test pins the measured two (EXPECTED_TOTAL_UNITS).
     assert not EXPECTED_TOTALS & set(CENSUS_STATISTICS)
     # S57 (D216): was 16693.43298750999 with the layer on (one unit lower than off, on S56's ranked ridge); the
     # layer-off value is S55's own bits, unmoved.
@@ -916,7 +928,7 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
             assert not set(SYNTHETIC_DECLARATIONS) & set(f), f["name"]
     # A composed field says so, with its neutral value; no other entry carries either key (G1, change 3).
     composed = {f["name"]: f for f in fields if "composed" in f or "neutral" in f}
-    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if model.name == "azimuthal" else set())
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast"} | ({"sfr_modulation"} if model.name == "azimuthal" else set())
     for name, f in composed.items():
         assert f["composed"] is True and f["neutral"] == 1.0 and f["provenance"] == "seeded", name
         assert "A composed field: with the randomness layer off it is 1 everywhere" in f["about"], name
@@ -949,7 +961,9 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S56's eleven (D215): five amplitudes, the saturation, five phases; and S57's one (D216): the arms' frame.
     # S57 (D216): was 342. S58 (D217): was 343 - the bar's formation time, its presence, the body's three shape
     # numbers and its share of the disc's mass.
-    assert len(columns) > 100 and len(b.fields) == 349
+    # S58 (D217 follow-up): was 349 - the gas's contrast as the star formation law reads it, a third composed field
+    # of `basic` (so what the oracle below holds, the fields not composed, is still 229).
+    assert len(columns) > 100 and len(b.fields) == 350
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1230,7 +1244,7 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     something for the first time at S56 (gate G1 noted that until P1 no field was on the layer's seed). Two runs of
     the whole model that differ in ``texture_seed`` alone:
 
-    - the five phases differ, and with them the three composed fields and where every placed census's objects are;
+    - the five phases differ, and with them the four composed fields and where every placed census's objects are;
     - **no law moves**: every radial field, every history and every scalar that is not a census statistic is the
       same bits - the amplitudes, the saturation, the pitch, the gas's ratio, every profile;
     - every census expects the same count in every ring, to 1e-12 (I2, between two realisations);
@@ -1277,7 +1291,7 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     # their mean); the published field is the law's exact mean over each cell's azimuth on its ring, and the three are at
     # 1e-12 again.
     for out in (a, b):
-        for n in ("pattern_density_contrast", "gas_density_contrast", "sfr_modulation"):
+        for n in ("pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast", "sfr_modulation"):
             assert float(np.abs(np.asarray(out.fields[n]).mean(axis=1) - 1.0).max()) < 1e-12, n
 
 

@@ -159,6 +159,9 @@ SEEDED_BASIC = {
     # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
     # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
     "gas_density_contrast",
+    # S58 (D217 follow-up): the same stage's second field - the gas's contrast as the star formation law reads
+    # it, the lanes' excess spread over the bar's footprint - seeded by the same reads.
+    "star_formation_gas_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.

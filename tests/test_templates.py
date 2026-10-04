@@ -2,7 +2,8 @@
 
 **The gates.** ``milky_way`` is the registry's defaults exactly, and a run of it is bit-identical to a run
 with no inputs given - asserted on every published array, not on a hash of a few. ``template=milky_way``
-and no template are one point in input space: one cache entry, the same bytes. An input in the query
+and no template (D213 ruling 2, as the gate rewords it at S58, D217): the same bytes on every field; the
+inputs carry the pin, so a second cache entry whose header differs by that word. An input in the query
 overrides the template's; an unknown template is a 404 that names the registered ones. ``/api/templates``
 is metadata and runs no stage (rule D4).
 
@@ -341,12 +342,12 @@ def test_every_route_that_takes_inputs_takes_a_template():
     ("/api/region", SECTOR),
 ])
 def test_naming_the_default_template_is_naming_none(route, query):
-    """Ruling 2 (D213): "one point in input space - one cache entry, the same bytes" - **as S58 leaves it (D217 item
-    2): the same galaxy, two points in input space.** The default template pins the Milky Way barred; a request
+    """Ruling 2 (D213) was "one point in input space - one cache entry, the same bytes". **As the gate rewords it at
+    S58 (D217 item 2 and its follow-up): "the same bytes on every field; the inputs carry the pin, so a second
+    cache entry whose header differs by that word".** The default template pins the Milky Way barred; a request
     that names no template pins nothing and the model derives - barred, at the defaults. So the two requests hold
     the same arrays and the same scalars, bit for bit, and their headers differ in one word: the template's request
-    carries the pin among its inputs. They are two cache entries, and naming the template runs the stages again.
-    Reported to the lead: D213's "one cache entry, the same bytes" does not survive a pin on the default template."""
+    carries the pin among its inputs. They are two cache entries, and naming the template runs the stages again."""
     api = Service(grid=SMALL)
     bare = api.handle(route, query)  # cold: it runs the closure
     named = api.handle(route, query + "&template=milky_way")
@@ -574,7 +575,11 @@ def test_the_objective_is_d213_s():
     # The free set is the template's, in the registry's order; the rest are held and are not the search's.
     assert [c.name for c in p.controls] == list(FREE) == [c.name for c in controls() if c.name in FREE]
     assert [c.name for c in p.held] == list(HELD) and p.weight == 1e-3
-    assert p.fixed == {**NGC_4414.seeds, "mergers": ()}  # the fit holds the template's seeds and its merger list
+    # The fit holds the template's seeds and its merger list.
+    # S58 (D217 follow-up): was {**NGC_4414.seeds, "mergers": ()} - and its pins: the tool ran a template without
+    # them. No target's field is downstream of the bar (the fields below), so no target's number and no fit moves.
+    assert p.fixed == {**NGC_4414.seeds, "mergers": (), "bar_present": False}
+    assert p.fixed == {k: v for k, v in templates.overrides(NGC_4414).items() if k not in NGC_4414.controls}
     assert p.fields == ("circular_velocity", "thin_disc_scale_length", "stellar_mass_total")
     # A departure is counted in the control's own linear range, whatever coordinate the search moves in.
     values = {c.name: c.default for c in controls()} | {"disc_spin": 0.0173 + 0.0045, "halo_mass": 1.1e12 + 9.9e11}
@@ -607,8 +612,8 @@ def test_the_objective_is_d213_s():
 
 
 def test_the_tool_moves_the_free_controls_and_never_passes_a_held_one():
-    """The model is handed the template's seeds, its merger list and the four free controls: a held control is
-    not among the inputs of any evaluation, so it is the registry's default by construction."""
+    """The model is handed the template's seeds, its merger list, its pins (S58, D217) and the four free controls:
+    a held control is not among the inputs of any evaluation, so it is the registry's default by construction."""
     from dataclasses import replace
 
     p = fit_template.Problem(NGC_4414, SMALL)
@@ -623,7 +628,8 @@ def test_the_tool_moves_the_free_controls_and_never_passes_a_held_one():
     J, probes = p.jacobian(p.s0.copy(), p.residuals_of(p.model_numbers(p.s0)), 0.02)
     assert J.shape == (3, 4) and len(probes) == 8 and len(seen) == 9
     for inputs in seen:
-        assert set(inputs) == set(FREE) | {s.name for s in seeds()} | {"mergers"}
+        # S58 (D217 follow-up): was without "bar_present" - a template's run carries its pin, the tool's too.
+        assert set(inputs) == set(FREE) | {s.name for s in seeds()} | {"mergers", "bar_present"} and inputs["bar_present"] is False
         assert not set(inputs) & set(HELD)
     # No argument of the tool admits a control: the free set is read from the template's data and nowhere else.
     assert set(inspect.signature(fit_template.fit).parameters) == {"template", "grid", "start", "iterations"}
