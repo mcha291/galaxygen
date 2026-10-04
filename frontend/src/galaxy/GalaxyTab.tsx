@@ -18,7 +18,7 @@ import { CellOutlines, CloudMarkers } from "./ComponentLayers";
 import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
-import { type Template, switcherItems, templateLabel } from "../workflow/templates";
+import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
 import { DEFAULT_FOV } from "./capture";
 import { type ComparePicture, ComparePane, ComparePicker, RenderCaption } from "./PictureBeside";
 import { compareCaption } from "./compare";
@@ -501,6 +501,14 @@ export function GalaxyTab({
                   </button>
                 ))}
               </div>
+              {/* The template's pins (S58, D217 item 2), in the field declarations' words: what it states of the
+                  galaxy's structure as observed, in place of the model's derivation. They ride with every request
+                  (`template=`), through an edit too; the source is the line's tooltip. */}
+              {template?.pins.map((p) => (
+                <p key={p.name} className={styles.muted} title={p.source}>
+                  {`${template.label} · ${pinWords(p, meta.fields)}`}
+                </p>
+              ))}
             </>
           )}
           <div className={styles.pair}>

@@ -6,6 +6,7 @@ import pytest
 
 from galaxy.core.registry import (
     INPUT_CEILING,
+    INPUT_KINDS,
     INPUTS,
     UNSET,
     Constant,
@@ -15,6 +16,7 @@ from galaxy.core.registry import (
     Registry,
     RegistryError,
     controls,
+    pins,
     production,
     seeds,
 )
@@ -38,6 +40,9 @@ PLAN_INPUTS = {
     # S55 (D214 section 3; BUILD_III section 1c): the randomness layer's own seed, the fifth. Seeds are exempt
     # from the ceiling, and no stage reads this one until phase P1.
     "texture_seed",
+    # S58 (D217 item 2): a template's pin, the fourth kind of input - the observed bar class in place of the
+    # derived presence. Not a control: no range, no default, exempt from the ceiling, offered by no request.
+    "bar_present",
 }
 
 
@@ -47,6 +52,25 @@ def test_input_vector_is_closed():
     assert len(seeds()) == 5  # S55 (D214): was 4; texture_seed joins, default 0, hypothesis checkpoint 3
     assert (INPUTS["texture_seed"].default, INPUTS["texture_seed"].checkpoint_hypothesis) == (0, 3)
     assert [i.name for i in INPUTS.values() if i.kind == "events"] == ["mergers"]
+    # S58 (D217): one pin, and it is none of the other kinds.
+    assert INPUT_KINDS == ("control", "seed", "events", "pin")
+    assert [i.name for i in pins()] == ["bar_present"] == [i.name for i in INPUTS.values() if i.kind == "pin"]
+    assert len(INPUTS) == 7 + 5 + 1 + 1
+
+
+def test_a_pin_has_no_default_no_range_and_no_unit_and_is_not_a_control():
+    """S58 (D217 item 2): "a template-only field ``bar_present`` (true/false, the observed class with its source)
+    that replaces the derived presence when given". As an input it is a kind of its own: where no template gives
+    it, it is not given - there is no default to fall back on, so the model derives - and it is no control."""
+    pin = INPUTS["bar_present"]
+    assert (pin.kind, pin.default, pin.unit, pin.lo, pin.hi, pin.unset) == ("pin", None, None, None, None, False)
+    assert pin.checkpoint_hypothesis == 3 and not pin.has_range and pin not in controls() and pin not in seeds()
+    assert "not a control" in pin.about and "template" in pin.about
+    for bad in (dict(default=True), dict(default=False), dict(default=UNSET, default_owner="S58"), dict(lo=0.0, hi=1.0)):
+        with pytest.raises(RegistryError, match="a pin has no default and no range"):
+            Input("some_pin", "A pin", "pin", "about", **{"default": None, **bad})
+    with pytest.raises(RegistryError, match="carry no unit"):
+        Input("some_pin", "A pin", "pin", "about", unit="dimensionless", default=None)
 
 
 def test_every_input_carries_a_checkpoint_hypothesis():

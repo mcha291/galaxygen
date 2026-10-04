@@ -8,6 +8,18 @@ import { type LensCamera, isLens } from "../galaxy/capture";
 import { FILTER_SET_NAMES, type FilterSetName } from "../galaxy/filters";
 import type { FlowState, MergerEvent } from "./logic";
 
+/**
+ * A template's pin (S58, D217 item 2): a measured fact of the named galaxy's structure, stated in place of the
+ * model's derivation - `name` is the published field it decides, `value` the observed class, `source` where it
+ * was read. **A pin is no input of the viewer's**: `/api/inputs` does not list it, the API refuses it as a query
+ * parameter, and it reaches a run only through `template=<name>` (templateQuery below).
+ */
+export interface Pin {
+  name: string;
+  value: boolean;
+  source: string;
+}
+
 /** One template, as `/api/templates` publishes it. `inputs` is fully resolved: every control, every seed, the event list. */
 export interface Template {
   name: string;
@@ -21,8 +33,9 @@ export interface Template {
   filters: FilterSetName;
   /** What the template states of the instrument; a number not read is null (rule B9). */
   instrument: { distance_mpc: number | null; pixel_scale_arcsec: number | null };
-  /** Carried as published and not read here: pins arrive at P3-P4, the fit and the checks are the model's records. */
-  pins: unknown[];
+  /** What the template states of the galaxy's structure in place of a derivation (S58, D217); none before S58. */
+  pins: Pin[];
+  /** Carried as published and not read here: the fit and the checks are the model's records. */
   fit: unknown;
   checks: unknown[];
 }
@@ -48,6 +61,21 @@ function numbers(value: unknown, what: string): Record<string, number> {
 }
 
 const numberOrNull = (v: unknown): number | null => (isNumber(v) ? v : null);
+
+/**
+ * A template's pins as published: `[{name, value, source}]`, the value the observed class, true or false. A pin
+ * the viewer cannot read is refused, not dropped: it would be shown as nothing while the API applies it.
+ */
+function parsePins(raw: unknown, at: string): Pin[] {
+  if (raw === undefined || raw === null) return []; // an API from before the pins (S54-S57)
+  if (!Array.isArray(raw)) throw new Error(`${at}: pins is not a list`);
+  return raw.map((pin: unknown) => {
+    if (!isRecord(pin) || typeof pin.name !== "string" || !pin.name || typeof pin.value !== "boolean") {
+      throw new Error(`${at}: a pin is {name, value: true or false, source}, got ${JSON.stringify(pin)}`);
+    }
+    return { name: pin.name, value: pin.value, source: typeof pin.source === "string" ? pin.source : "" };
+  });
+}
 
 function parseTemplate(raw: unknown): Template {
   if (!isRecord(raw) || typeof raw.name !== "string" || !NAME.test(raw.name)) {
@@ -83,7 +111,7 @@ function parseTemplate(raw: unknown): Template {
     camera: { inclination_deg, azimuth_deg, radius_kpc, fov_deg },
     filters: raw.filters as FilterSetName,
     instrument: { distance_mpc: numberOrNull(instrument.distance_mpc), pixel_scale_arcsec: numberOrNull(instrument.pixel_scale_arcsec) },
-    pins: Array.isArray(raw.pins) ? raw.pins : [],
+    pins: parsePins(raw.pins, at),
     fit: raw.fit ?? null,
     checks: Array.isArray(raw.checks) ? raw.checks : [],
   };
@@ -159,6 +187,40 @@ export function isEdited(state: FlowState, model: string, template: Template): b
   }
   const now = flow.query(state) as Record<string, unknown>;
   return Object.keys(base).some((name) => base[name] !== now[name]);
+}
+
+/** The query parameter that names the template a request starts from (`template=<name>`, S54; the pins since S58). */
+export const TEMPLATE_KEY = "template";
+
+/**
+ * The query every route is asked with for a galaxy that is a template or was started from one: the input vector
+ * as it stands and `template=<name>` beside it (S58, D217 item 2). The API lays the request's own inputs over the
+ * template's, so every control, seed and event list is still the query's - an edit is one changed value, as
+ * before - and **the template's pins are applied, which no input of the query can give or remove**. Without the
+ * parameter a template's galaxy is asked for unpinned and the model derives what the template states as observed
+ * (NGC 4414 was drawn barred that way until S58).
+ *
+ * **The one place the parameter is added** (useWorkflow's `query`, which every loader spreads and every cache key
+ * serialises), so a loader added later carries it without knowing of it (rule B13). A galaxy started from no
+ * template - an API from before S54 - gets its own object back untouched: nothing is sent that was not before.
+ */
+export function templateQuery<Q extends Record<string, unknown>>(query: Q, template: Pick<Template, "name"> | null): Q {
+  return template ? { ...query, [TEMPLATE_KEY]: template.name } : query;
+}
+
+/** What `/api/fields` declares of a field, as far as a pin's words need it: its label and its categories. */
+type Declared = { name: string; label: string; categories?: string[] };
+
+/**
+ * A pin in plain words: "<the field's label>: <the category it pins> (as observed)" - "Barred: no (as observed)".
+ * The label and the category are the field declaration's (rule A9: the viewer holds no name of its own for what
+ * the model publishes); a pinned class is the declaration's second category when true and its first when false,
+ * as the model publishes it. Without the declaration the pin's own name and yes or no.
+ */
+export function pinWords(pin: Pin, fields: readonly Declared[] = []): string {
+  const decl = fields.find((f) => f.name === pin.name);
+  const stated = decl?.categories?.length === 2 ? decl.categories[pin.value ? 1 : 0] : pin.value ? "yes" : "no";
+  return `${decl?.label || pin.name}: ${stated} (as observed)`;
 }
 
 /** The template's name as the viewer writes it: its label, with "edited" once the galaxy is no longer it. */

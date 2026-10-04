@@ -58,18 +58,20 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
     Endpoint("stages", "/api/stages", "", "29 stage declarations (S55: the layer's cloud_texture; S56: its arm_phases)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
-    Endpoint("inputs", "/api/inputs", "", "7 controls, 5 seeds (S55: texture_seed), 1 event list"),
-    Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54)"),
+    Endpoint("inputs", "/api/inputs", "", "7 controls, 5 seeds (S55: texture_seed), 1 event list; the pin (S58) is a template's, not offered"),
+    Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54); each with its pin, the observed bar class (S58)"),
     Endpoint("arrays: one profile", "/api/arrays", "fields=stellar_surface_density", "400 floats, checkpoint 1"),
     Endpoint("arrays: history", "/api/arrays", "fields=feh_history", "400 x 2000, checkpoint 4"),
     Endpoint("arrays: scalar", "/api/arrays", "fields=stellar_mass_total", "one number"),
     # The pattern stages alone (S56, D215): the law of five arm modes at every radius and the layer's phases, then
     # the gas's answer to them - since S57 (D216) its steady response, one periodic equation solved on each ring
     # that carries a mode and averaged over the grid's cells (S56 ranked each cell on its ring; S51 had a closed form).
+    # Since S58 (D217) the bar is a body laid on 1440 cells of each ring inside its reach, normalised on the grid's own
+    # cells and averaged over them, and the gas there lies on the bar's lanes (two arcs' distances on the same cells).
     Endpoint("arrays: arm pattern", "/api/arrays", "fields=pattern_density_contrast",
-             "400 x 360, checkpoint 3: five modes and their phases (S56)"),
+             "400 x 360, checkpoint 3: five modes and their phases (S56); the bar's body, cell means (S58)"),
     Endpoint("arrays: gas pattern", "/api/arrays", "fields=gas_density_contrast",
-             "400 x 360, checkpoint 3 (S51); the steady response solved ring by ring since S57"),
+             "400 x 360, checkpoint 3 (S51); the steady response solved ring by ring since S57; the bar's lanes (S58)"),
     Endpoint("region: one sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "9 of 1024 cells"),
     Endpoint("region: whole disc", "/api/region", "stars=20000", "every cell, the published sample"),
     Endpoint("system: one star", "/api/system", "cell=300&index=0", "one cell, one star's planets"),

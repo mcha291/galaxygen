@@ -92,6 +92,16 @@ def resolve_inputs(
     out: dict[str, Any] = {}
     for name in accepted:
         inp = table[name]
+        if inp.kind == "pin":
+            # S58 (D217 item 2): a pin is given by a template or not at all. Not given - absent, or None - it is
+            # not among the run's inputs, and the stage that reads it derives; given, it is True or False.
+            value = overrides.get(name)
+            if value is None:
+                continue
+            if not isinstance(value, bool):
+                raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
+            out[name] = value
+            continue
         if name in overrides:
             out[name] = overrides[name]
         elif not inp.unset:
@@ -146,7 +156,9 @@ def _check_value(decl: FieldDecl, value: Any, grid: Grid, stage: Stage, column_l
     return arr
 
 
-def _check_resumable(model: Model, g: Grid, resolved: Mapping[str, Any], resume: Outputs, layer: bool) -> None:
+def _check_resumable(
+    model: Model, g: Grid, resolved: Mapping[str, Any], resume: Outputs, layer: bool, table: Mapping[str, Input],
+) -> None:
     """``resume`` must describe the same galaxy, or its fields are someone else's.
 
     Checked rather than documented: a resumed run that silently mixes two input
@@ -168,6 +180,13 @@ def _check_resumable(model: Model, g: Grid, resolved: Mapping[str, Any], resume:
             raise RunError(
                 f"cannot resume: input {name!r} was {resume.inputs[name]!r} and is now {resolved[name]!r}"
             )
+    # A pin that is not given is not among a run's inputs (S58, D217), so the intersection above does not see a
+    # pinned run continued unpinned, or the reverse: a pin is compared by its presence too.
+    for name in (set(resolved) ^ set(resume.inputs)) & {n for n, inp in table.items() if inp.kind == "pin"}:
+        raise RunError(
+            f"cannot resume: pin {name!r} was {resume.inputs.get(name)!r} and is now {resolved.get(name)!r} "
+            "(None: not given)"
+        )
 
 
 def run(
@@ -207,7 +226,7 @@ def run(
     column_lengths: dict[str, int] = {}
     done: tuple[str, ...] = ()
     if resume is not None:
-        _check_resumable(model, g, resolved, resume, layer)
+        _check_resumable(model, g, resolved, resume, layer, table)
         fields.update(resume.fields)
         decls.update(resume.decls)
         for name, decl in decls.items():

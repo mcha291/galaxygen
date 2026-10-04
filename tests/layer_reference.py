@@ -122,15 +122,25 @@ def requests() -> list[tuple[str, str, dict[str, list[str]]]]:
 def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[str, Any]:
     from galaxy.api import wire
 
+    from galaxy.core.registry import pins
+
     got = service.handle(path, query)
     if not got.ok:
         return {"status": got.status, "error": got.json().get("error")}
     header, arrays = wire.decode(got.body)
-    return {
+    # S58 (D217 item 2): a template's pin rides among a request's inputs, and S55 knew none. The header is digested
+    # with the pins taken out of its inputs - so every other word of it is still held to S55's - and the pins it
+    # carried are returned beside the digest, for the test to read (none, but for a template that states one).
+    header = normalise(header)
+    pinned = {i.name: header["inputs"].pop(i.name) for i in pins() if i.name in header.get("inputs", {})}
+    out = {
         "status": got.status,
-        "header": _sha(json.dumps(normalise(header), sort_keys=True).encode("utf-8")),
+        "header": _sha(json.dumps(header, sort_keys=True).encode("utf-8")),
         "arrays": [[spec["name"], value_digest(arrays[spec["name"]])] for spec in header["arrays"]],
     }
+    if pinned:
+        out["pinned"] = pinned
+    return out
 
 
 def run_digest(model_name: str, inputs: dict[str, Any] | None = None, **run_kwargs: Any) -> dict[str, str]:
@@ -165,13 +175,22 @@ def routes_digest(labels: tuple[str, ...] | None = None) -> dict[str, dict[str, 
 
 def single_mode_scalars(template: str) -> dict[str, float]:
     """The scalars S55's two laws were built from, on the default model at a template's inputs. None of them is the
-    arm number: the pitch, the two amplitudes, the bar's length and the gas's ratio keep their streams in P1."""
+    arm number: the pitch, the two amplitudes, the bar's length and the gas's ratio keep their streams in P1.
+
+    **S58 (D217): read with the template's pins taken off.** S55 knew no pin and every galaxy had a bar; since S58
+    ``ngc_4414`` is pinned unbarred and publishes NaN for its bar's numbers. The numbers S55 drew are still the
+    model's - every draw keeps its stream and value - and are read where the model derives its presence (which bars
+    this disc, as it bars the Milky Way's): the template's controls, seeds and merger list, and no pin."""
+    from galaxy import templates
     from galaxy.core.registry import production
     from galaxy.run import run
 
     models, _, _ = production()
     names = ("arm_contrast", "bar_contrast", "pitch_angle", "bar_half_length", "gas_arm_contrast")
-    out = run(models.get(MODELS[0]), template_inputs(template), only=names, layer=False)
+    pinned = templates.pinned(templates.TEMPLATES[template])
+    inputs = {k: v for k, v in template_inputs(template).items() if k not in pinned}
+    out = run(models.get(MODELS[0]), inputs, only=(*names, "bar_present"), layer=False)
+    assert out.fields["bar_present"] == "yes", "S55's scalars are a barred galaxy's: the derivation must bar this disc"
     return {n: float(out.fields[n]) for n in names}
 
 
@@ -210,7 +229,8 @@ def load() -> dict[str, Any]:
 
 def differences(made: dict[str, Any], held: dict[str, Any]) -> list[str]:
     moved = [f"fields/{m}/{n}" for m, fs in held["fields"].items() for n, v in fs.items() if made["fields"].get(m, {}).get(n) != v]
-    moved += [f"routes/{k}" for k, v in held["routes"].items() if made["routes"].get(k) != v]
+    # (a route's digest is compared on what the reference holds of it: the pins a header carries since S58 are beside it)
+    moved += [f"routes/{k}" for k, v in held["routes"].items() if {n: made["routes"].get(k, {}).get(n) for n in v} != v]
     moved += [f"single_mode/{t}/{m}" for t, ms in held["single_mode"].items() for m, v in ms.items()
               if made["single_mode"].get(t, {}).get(m) != v]
     return moved

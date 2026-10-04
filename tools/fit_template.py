@@ -149,8 +149,11 @@ class Problem:
         self.targets = template.fit.targets
         self.weight = float(template.fit.tiebreak)
         self.fields = tuple(dict.fromkeys(t.field for t in self.targets))
-        # What else the fit does not move: the template's seeds and its merger list.
-        self.fixed = {**template.seeds, **({} if template.mergers is None else {"mergers": template.mergers})}
+        # What else the fit does not move: the template's seeds, its merger list and its pins (S58, D217: a
+        # template's run carries its pins) - ``templates.overrides`` less the controls, which are the fit's.
+        from galaxy.templates import overrides
+
+        self.fixed = {name: value for name, value in overrides(template).items() if name not in template.controls}
         self.grid = grid
         self.evaluations = 0
 

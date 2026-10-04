@@ -77,7 +77,9 @@ def test_sfh_azimuthal_extends_sfh_and_adds_one_optional_field():
     assert SFR_MODULATION.optional and SFR_MODULATION.provenance == "seeded"
     assert SFR_MODULATION.axes == ("R", "phi") and SFR_MODULATION.unit == "dimensionless"
     # S51 (D210): the gas's own contrast, not the stellar one (was pattern_density_contrast).
-    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == {"gas_density_contrast"}
+    # S58 (D217 follow-up): was {"gas_density_contrast"} - the gas's contrast as the star formation law reads it,
+    # the bar's lanes spread over the bar's footprint; the same numbers outside every bar's reach.
+    assert set(SFH_AZIMUTHAL.requires) - set(SFH.requires) == {"star_formation_gas_contrast"}
     # Rule D5: no constant's name in what the viewer reads.
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", SFR_MODULATION.about + SFH_AZIMUTHAL.about)
 
@@ -320,3 +322,77 @@ def test_the_api_publishes_the_modulation_for_the_azimuthal_model_only():
     f = fields["azimuthal"]["sfr_modulation"]
     assert f["provenance"] == "seeded" and f["axes"] == ["R", "phi"]
     assert set(fields["azimuthal"]) - set(fields["basic"]) == {"sfr_modulation"}
+
+
+# --- inside a bar's reach: the footprint, not the lanes (S58, D217's follow-up at the gate) ------------------------
+
+
+def _top_tenth(modulation: np.ndarray) -> np.ndarray:
+    """The share of each ring's star formation in the tenth of its cells that form the most."""
+    ranked = -np.sort(-modulation, axis=1)
+    return ranked[:, : modulation.shape[1] // 10].sum(axis=1) / ranked.sum(axis=1)
+
+
+def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
+    """The gate's ruling on the first build of S58 (D217's follow-up): "The lanes' one unsourced number (the width)
+    must not drive a census: ``sfr_modulation`` inside the bar's reach reads w_arm s + w_bar L_fp, L_fp the
+    footprint-uniform field (base outside the footprint, base + excess/share inside it: the 2.6 ratio kept, no
+    ridge), so star formation follows the bar's footprint and not the placeholder's ridge. Dust and the gas census
+    keep L."
+
+    **The alternative's prediction, as the gate words it**: the laned field "read 88-93 % of a ring's star
+    formation in its top tenth of cells at 2-3.3 kpc and a maximum modulation of 17.2". As this file reads the same
+    alternative on the Milky Way template - the star formation law run on the published ``gas_density_contrast``,
+    which still carries the lanes: **88.1-95.7 %** on the rings of 2-3.3 kpc, and a largest modulation of **17.62**
+    (3.49 kpc). A lane 0.10 a wide - a width nobody measured - raised to the law's exponent.
+
+    **As built**, on ``star_formation_gas_contrast``: the top tenth of cells holds **14.9-28.0 %** of a ring's star
+    formation at 2-3.3 kpc (a uniform ring would read 10 %; the arms' own crowding at 8 kpc reads 40 %), and the
+    largest modulation is **7.41**, at 4.31 kpc, where the arms and the footprint's end meet. Inside the
+    half-length the top tenth holds 10.0-52.0 %. At R₀ nothing moved: the largest modulation there is 5.4391, the
+    same bits as the laned alternative's.
+
+    The two published gas fields: the same bits on every ring at or past the half-length (331 of the 400) and on
+    every ring of an unbarred galaxy (``ngc_4414``: every cell); different on each of the 69 rings inside the
+    half-length. Both have a ring mean of 1 and neither is anywhere negative."""
+    from galaxy import templates
+
+    _, azimuthal = models
+    index = float(azimuthal.constants["KS_INDEX"].value)
+    only = ("gas_density_contrast", "star_formation_gas_contrast", "sfr_modulation", "gas_surface_density",
+            "sf_threshold_surface_density", "bar_half_length", "bar_present")
+    o = run(azimuthal, templates.overrides(templates.TEMPLATES["milky_way"]), only=only)
+    F, R = o.fields, o.grid.R
+    laned_gas, footprint_gas = np.asarray(F["gas_density_contrast"]), np.asarray(F["star_formation_gas_contrast"])
+    a = float(F["bar_half_length"])
+    past = R >= a
+    assert F["bar_present"] == "yes" and int(past.sum()) == 331 and int((~past).sum()) == 69
+    assert laned_gas[past].tobytes() == footprint_gas[past].tobytes()  # bit for bit: the templates are the same ones there
+    assert not np.any((laned_gas[~past] == footprint_gas[~past]).all(axis=1))
+    assert float(np.abs(footprint_gas.sum(axis=1) / footprint_gas.shape[1] - 1.0).max()) < 2e-13 and footprint_gas.min() > 0.0
+    # No ridge: the largest value of the field the law reads is the arms' own, in the mid disc; the lanes' is twice it.
+    assert (float(footprint_gas.max()), float(R[int(np.argmax(footprint_gas.max(axis=1)))])) == pytest.approx((3.1331, 6.3375), abs=2e-4)
+    assert float(laned_gas.max()) == pytest.approx(6.6640, abs=2e-4)
+    built = np.asarray(F["sfr_modulation"])
+    assert built.tobytes() == sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], footprint_gas, index).tobytes()
+    laned = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], laned_gas, index)
+    band = (R >= 2.0) & (R <= 3.3)
+    here = int(np.argmin(np.abs(R - 8.0)))
+    # The alternative, as read here (the gate's words: 88-93 % and 17.2).
+    top = _top_tenth(laned)
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.8812, 0.9567), abs=2e-4)
+    assert (float(laned.max()), float(R[int(np.argmax(laned.max(axis=1)))])) == pytest.approx((17.619, 3.4875), abs=2e-3)
+    # As built.
+    # S58 (D217 follow-up): was 17.619 at 3.4875 kpc (the largest modulation), 0.8812-0.9567 (the top tenth, 2-3.3 kpc)
+    top = _top_tenth(built)
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1490, 0.2804), abs=2e-4)
+    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5204), abs=2e-4)
+    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((7.4075, 4.3125), abs=2e-3)
+    assert float(top[here]) == float(_top_tenth(laned)[here]) == pytest.approx(0.4015, abs=2e-4)
+    assert built[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(5.4391, abs=2e-4)
+    assert float(np.abs(built.mean(axis=1) - 1.0).max()) < 1e-12 and built.min() >= 0.0
+    # An unbarred galaxy has no lanes and no footprint: one field, twice.
+    n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)
+    assert n.fields["bar_present"] == "no"
+    assert np.asarray(n.fields["gas_density_contrast"]).tobytes() == np.asarray(n.fields["star_formation_gas_contrast"]).tobytes()
+    assert n.fields["gas_density_contrast"] is not n.fields["star_formation_gas_contrast"]

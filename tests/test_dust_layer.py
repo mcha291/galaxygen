@@ -438,7 +438,18 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     and **falls 1.82 % at R₀**. D210's (i) fails as before, **and by more than D207's own −1.28 %**: with the dust
     on a broad crest that sits on the stellar arm, more of it lies where the light is than when it followed the
     stars' contrast itself. (ii) held, −1.82 % against +3.61 %; (iii) held, the crest lets through 0.605, a gap
-    0.994, the stellar flank 0.815. No lane crosses an arm on this field either: the arms dim by their own dust."""
+    0.994, the stellar flank 0.815. No lane crosses an arm on this field either: the arms dim by their own dust.
+
+    **Read again at S58 (D217), the gas inside the bar's reach on the bar's lanes and the two-armed mode on the
+    bar's axis** (g = w_arm s + w_bar L: at 4 kpc a base of two thirds of the ring's mean and two lanes of seven
+    times it, the bar carrying 0.70 of the weight; the stars with the bar's body in c): dust alone +7.14 %, +5.31 %,
+    +1.25 % at 4, 6 and 8.2 kpc, under the screen's +77.8 %, +21.0 %, +3.61 % (D207's prediction still holds); with
+    the stars on c the ring's light rises 6.51 % at 4 kpc and 1.23 % at 6 kpc and falls 1.82 % at R₀ as at S57 -
+    the solar ring is outside the bar's reach and is the ring it was. At 4 kpc the dust is gathered into lanes that
+    cover little of the ring, so far more of the ring's light gets out: these are the model's first dust lanes
+    across a bar, a synthetic template of a declared, unsourced width (D217 item 8). (i)-(iii) read at R₀ as at
+    S57; the stellar flank there lets through 0.863 where it read 0.815 - the cell where c is nearest 1 is another
+    cell with the two-armed mode's phase moved."""
     out = run(prod[0].get(DEFAULT_MODEL), only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
     c = np.maximum(np.asarray(f["pattern_density_contrast"], dtype=float), 0.0)
@@ -462,8 +473,10 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # four-armed mode (S51); S50: (0.0080, -0.0004, 0.0920), (0.0082, -0.0098, 0.0327), (0.0031, -0.0128, 0.0089).
     # S57 (D216): were (0.0233, 0.0092, 0.2639), (0.0449, 0.0164, 0.1754) and (0.0199, -0.0089, 0.0568) on S56's
     # ranked ridge.
-    assert read[4.0][:3] == pytest.approx((0.0274, 0.0127, 0.3110), abs=0.0005)
-    assert read[6.0][:3] == pytest.approx((0.0547, 0.0121, 0.2170), abs=0.0005)
+    # S58 (D217): were (0.0274, 0.0127, 0.3110) and (0.0547, 0.0121, 0.2170) on S57's field, the bar's part of the
+    # gas the stellar bar's cosine; R₀'s row below is unmoved.
+    assert read[4.0][:3] == pytest.approx((0.0714, 0.0651, 0.7778), abs=0.0005)
+    assert read[6.0][:3] == pytest.approx((0.0531, 0.0123, 0.2104), abs=0.0005)
     assert read[8.2][:3] == pytest.approx((0.0125, -0.0182, 0.0361), abs=0.0005)
     # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the gas's pattern (S51 read
     # -0.85 %, S56's ranked ridge on five modes -0.89 %). S57 (D216): was `and read[8.2][1] > -0.0128` - "less than
@@ -476,12 +489,16 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # D210 (iii), held: at R₀ the ridge's crest lets through less than D207's arm (0.747), a gap more than its 0.874.
     # S57 (D216): was (0.578, 0.887, 0.884); S56 (D215): was (0.579, 0.886, 0.883). The gaps are nearly empty of gas
     # now (the trough 0.025 of the ring's mean at R₀), so a gap lets through 0.994.
-    assert read[8.2][3:] == pytest.approx((0.605, 0.994, 0.815), abs=0.002)
+    # S58 (D217): was (0.605, 0.994, 0.815) - the crest and the gap are R₀'s as they were; the flank is the cell where
+    # the stellar contrast is nearest its ring mean, another cell with the two-armed phase moved.
+    assert read[8.2][3:] == pytest.approx((0.606, 0.994, 0.863), abs=0.002)
     assert read[8.2][3] < 0.747 and read[8.2][4] > 0.874
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
-    assert read[6.0][3:] == pytest.approx((0.454, 0.935, 0.706), abs=0.002)
+    # S58 (D217): was (0.454, 0.935, 0.706)
+    assert read[6.0][3:] == pytest.approx((0.450, 0.911, 0.676), abs=0.002)
     # S57 (D216): was (0.452, 0.577, 0.520); S56 (D215): was (0.451, 0.576, 0.531)
-    assert read[4.0][3:] == pytest.approx((0.441, 0.630, 0.519), abs=0.002)
+    # S58 (D217): was (0.441, 0.630, 0.519) - the crest at 4 kpc is a lane's
+    assert read[4.0][3:] == pytest.approx((0.404, 0.641, 0.503), abs=0.002)
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
@@ -521,7 +538,16 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     −0.02 %: the response's crest is as broad as the stellar arm and sits on it, so the dust and the light peak
     together over more of the ring. Still measured and not applied (#128's second half). The response is smooth,
     and a subsample of the ring carries its mean again (3.2e-6 on every fourth cell); the quadrature still reads
-    every cell."""
+    every cell.
+
+    **Read again at S58 (D217), the gas inside the bar's reach on the bar's lanes.** The mixed slab: **0.9499 over
+    the disc**, 1.052 at R₀ (the solar ring is the ring it was), 0.849 at 2 kpc. The layered geometry: **0.9652
+    over the disc, 1.044 at R₀, 0.904 at 2 kpc** (0.941 at 4 kpc). The placement's effect on the disc's absorbed
+    power is −3.5 % where S57 read +0.29 %: inside the bar most of each ring holds four tenths of its mean column
+    and two lanes hold seven times it, saturated - so the ring absorbs less than at its mean column. Still measured
+    and not applied; with lanes the gap between the ring's mean column and the placed one is no longer small, and
+    #128's second half is a larger debt than it was (reported). A subsample of a ring no longer carries its mean
+    inside the bar's reach (the lanes are a few cells wide: 7e-5 on every fourth cell)."""
     model = prod[0].get(DEFAULT_MODEL)
     out = run(model, only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
@@ -532,17 +558,28 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     mean = dust.slab_absorbed_fraction(tau)
     placed = np.array([np.mean(ci * dust.slab_absorbed_fraction(t * gi)) for t, ci, gi in zip(tau, c, g)])
     # S57 (D216): was 1.0042 (S56's ranked ridge); S56 (D215): was 1.0045 (S51, one mode's ridge); S50: 1.0126
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0069, abs=0.0005)
+    # S58 (D217): was 1.0069 over the disc and 1.001 at 2 kpc. Inside the bar's reach the dust lies on the bar's
+    # lanes: most of each ring is thinned to four tenths of its mean column and absorbs less, and the lanes, at seven
+    # times it, are saturated and absorb little more - the placement takes 15 % off what a ring at 2 kpc absorbs and
+    # 5.0 % off the disc's. The solar ring is the ring it was.
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9499, abs=0.0005)
     assert at(R, placed / mean, 8.2) == pytest.approx(1.052, abs=0.002)  # S57 (D216): was 1.024; S56 (D215): was 1.023; S50: 1.041
-    assert at(R, placed / mean, 2.0) == pytest.approx(1.001, abs=0.002)  # S50: 1.001
+    assert at(R, placed / mean, 2.0) == pytest.approx(0.8485, abs=0.002)  # S58 (D217): was 1.001; S50: 1.001
     # S56 (D215): was `every = 4` - every fourth azimuth carried the ring's mean of the placement to rounding on
     # one mode's analytic ridge. A ranked ridge's subsample did not (4.8e-3 on every fourth, 1.1e-3 on every second),
     # so the layered quadrature reads every cell.
     # S57 (D216): were 4.8e-3 and 1.1e-3 (rel 0.2). The gas's response is smooth again and a subsample carries the
     # ring's mean: 3.2e-6 on every fourth cell, 1.2e-10 on every second. The quadrature still reads every cell.
-    for step, off in ((4, 1e-5), (2, 1e-9)):
+    # S58 (D217): were `< 1e-5` and `< 1e-9`. A lane is a few cells wide inside the bar's reach, and a subsample of
+    # the ring does not carry its mean there: 7.0e-5 on every fourth cell, 5.1e-6 on every second (beyond the
+    # bar's reach the response is as smooth as it was). The quadrature reads every cell.
+    read_sub = {}
+    for step in (4, 2):
         sub = (c[:, ::step] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::step])).mean(axis=1)
-        assert float(np.max(np.abs(sub[placed > 0.0] / placed[placed > 0.0] - 1.0))) < off, step
+        read_sub[step] = float(np.max(np.abs(sub[placed > 0.0] / placed[placed > 0.0] - 1.0)))
+        beyond = (placed > 0.0) & (R > 7.0)
+        assert float(np.max(np.abs(sub[beyond] / placed[beyond] - 1.0))) < {4: 1e-5, 2: 1e-9}[step], step
+    assert read_sub[4] == pytest.approx(7.0e-5, rel=0.05) and read_sub[2] == pytest.approx(5.13e-6, rel=0.05)
     every = 1
     sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
     assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)
@@ -554,8 +591,13 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     assert np.array_equal(held, np.isfinite(ratio)) and np.all(placed[~held] == 0.0)
     q = np.where(held, placed / np.where(held, mean, 1.0), np.nan)
     # S57 (D216): was 0.9998 (S56's ranked ridge); S56 (D215): was 1.0007 (one mode's ridge); S52 (D211): was 1.0045 (mixed slab)
-    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(1.0029, abs=0.0005)
+    # S58 (D217): was 1.0029 - the placement takes 3.5 % off the disc's absorbed power in the layered geometry: inside
+    # the bar's reach the dust is on the lanes, and a ring thinned to four tenths of its mean column absorbs less
+    # than the lanes' few saturated cells add. **Still measured and not applied** (#128's second half): the dust
+    # stage heats at each ring's mean column, and with lanes that is no longer within a few parts in a thousand of
+    # the placed geometry - reported to the lead.
+    assert float(np.trapezoid(light * placed, R) / np.trapezoid(light * mean, R)) == pytest.approx(0.9652, abs=0.0005)
     # S57 (D216): was 1.014 (S55's, read again at S56); S52 (D211): was 1.023 (mixed slab)
     assert at(R, q, 8.2) == pytest.approx(1.044, abs=0.002)
-    assert at(R, q, 2.0) == pytest.approx(0.9995, abs=0.002)  # S52 (D211): was 1.001 (mixed slab)
-    assert at(R, q, 4.0) == pytest.approx(0.9950, abs=0.002)  # S57 (D216): was 0.9980; S56 (D215): was 0.9974
+    assert at(R, q, 2.0) == pytest.approx(0.9036, abs=0.002)  # S58 (D217): was 0.9995; S52 (D211): was 1.001 (mixed slab)
+    assert at(R, q, 4.0) == pytest.approx(0.9408, abs=0.002)  # S58 (D217): was 0.9950; S57 (D216): was 0.9980; S56 (D215): was 0.9974

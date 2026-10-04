@@ -37,7 +37,10 @@ class _Unset:
 
 UNSET = _Unset()
 
-INPUT_KINDS: tuple[str, ...] = ("control", "seed", "events")
+# A *pin* (S58, D217 item 2) is the fourth kind: a measured fact about one galaxy's structure that a template
+# states in place of what the model would derive. It is not a control - no request offers it, it has no range and
+# it does not count against the ceiling - and it has no default: where none is given the model derives.
+INPUT_KINDS: tuple[str, ...] = ("control", "seed", "events", "pin")
 
 # Ruling 6: ceiling 12 [verified: GALAXY_INPUTS.md §11]. Counts controls only;
 # seeds and event lists are exempt [verified: GALAXY_INPUTS.md §3 table foot].
@@ -56,10 +59,10 @@ class DuplicateRegistration(RegistryError):
 class Input:
     name: str
     label: str
-    kind: str  # control | seed | events
+    kind: str  # control | seed | events | pin
     about: str
-    unit: str | None = None  # required for controls; None for seeds and event lists
-    default: object = UNSET
+    unit: str | None = None  # required for controls; None for seeds, event lists and pins
+    default: object = UNSET  # a pin's is None: no pin is given, and the model derives
     lo: float | None = None  # control range for the viewer; None = not yet set
     hi: float | None = None
     checkpoint_hypothesis: int | None = None  # GALAXY_PLAN.md §3 grouping; graph.py checks it
@@ -90,6 +93,11 @@ class Input:
             self.default is UNSET or isinstance(self.default, bool) or not isinstance(self.default, int)
         ):
             raise RegistryError(f"input {self.name}: seeds need an int default")
+        if self.kind == "pin" and (self.default is not None or self.lo is not None or self.hi is not None):
+            raise RegistryError(
+                f"input {self.name}: a pin has no default and no range - where a template gives none the model "
+                "derives (default=None)"
+            )
         if (self.default is UNSET) != (self.default_owner is not None):
             raise RegistryError(
                 f"input {self.name}: default_owner is required exactly when the default is UNSET"
@@ -474,6 +482,21 @@ _INPUTS: tuple[Input, ...] = (
         default=0,
         checkpoint_hypothesis=3,
     ),
+    Input(
+        "bar_present",
+        "Bar present (a template's pin)",
+        "pin",
+        "A pin, not a control (S58, D217 item 2): the observed class of one named galaxy - barred or unbarred, "
+        "with its source - stated by a template in place of the presence the model derives. True or False "
+        "replaces the derived verdict in the published bar_present; given by no template, the model derives it "
+        "(the bar's formation time against the disc's age) and nothing is pinned. A measured fact entering as "
+        "template structure, not a fit: no parameter is set to a number, and the derived formation time is "
+        "still published beside it, so a disagreement between the criterion and the galaxy is visible. No "
+        "request offers it: the API takes it from template=<name> alone, it has no range and no default, and "
+        "it does not count against the ceiling. An input that is not given is not among a run's inputs.",
+        default=None,
+        checkpoint_hypothesis=3,
+    ),
 )
 
 INPUTS: Mapping[str, Input] = MappingProxyType({i.name: i for i in _INPUTS})
@@ -487,6 +510,11 @@ def controls(table: Mapping[str, Input] = INPUTS) -> tuple[Input, ...]:
 
 def seeds(table: Mapping[str, Input] = INPUTS) -> tuple[Input, ...]:
     return tuple(i for i in table.values() if i.kind == "seed")
+
+
+def pins(table: Mapping[str, Input] = INPUTS) -> tuple[Input, ...]:
+    """The pins (S58, D217): what a template may state of a galaxy's measured structure. No request offers one."""
+    return tuple(i for i in table.values() if i.kind == "pin")
 
 
 # --- registries ---------------------------------------------------------------

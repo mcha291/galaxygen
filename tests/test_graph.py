@@ -66,16 +66,23 @@ def chk(m, *stages):
 # Since S56 (D215) the layer's arm_phases stage requires no field (it reads texture_seed alone), so it is ready in
 # the first round, beside halo and behind it by the tie-break (checkpoint, then id); the pattern stage reads its
 # five phases and stays where it was. Until S56 both began "halo, disc, nucleus, ...".
+# Since S58 (D217 item 9) the layer's arm_phases stage requires the derived `bar_present` - in a barred galaxy the
+# two-armed mode's phase is the bar's, not a draw - so it runs the round after the bar's instead of the first, the
+# pattern a round after it and the gas pattern a round after that. In `basic` sfh no longer waits behind the
+# pattern's round (it reads nothing of it) and runs in arm_phases' round, the pattern beside chemistry_dtd and the
+# gas pattern beside light; in `azimuthal` sfh_azimuthal reads the gas pattern and follows it as before. Until S58
+# both began "halo, arm_phases, disc, nucleus, assembly, bar, pattern, ...". Recomputed from graph.analyse, not
+# edited by hand; no value moves with the order (the layer-off reference holds every field of both models).
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
-        "halo", "arm_phases", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "gas_pattern", "chemistry_dtd",
+        "halo", "disc", "nucleus", "assembly", "bar", "arm_phases", "sfh", "pattern", "chemistry_dtd",
         "stellar_halo",
-        "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
+        "supernovae", "gas_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "arm_phases", "disc", "nucleus", "assembly", "bar", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "halo", "disc", "nucleus", "assembly", "bar", "arm_phases", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
@@ -139,6 +146,11 @@ SEEDED_BASIC = {
     "bound_cluster_mass_total", "cluster_formation_efficiency",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
+    # S58 (D217 item 4): the bar's body's share of the disc's mass follows from the drawn bar amplitude (and the
+    # drawn pitch, through the bar's angle on the grid's cells), so it is the pattern stage's and seeded. The
+    # presence, the formation time and the body's shape are the bar stage's and derived: the pin is an input,
+    # not a seed.
+    "bar_mass_share",
     # S56 (D215): the law of several modes is the pattern stage's, which reads the pattern seed, so the five
     # amplitudes and the saturation are seeded (D55) - they carry the drawn arm and bar amplitudes; the split
     # among the modes has no draw in it.
@@ -147,6 +159,9 @@ SEEDED_BASIC = {
     # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
     # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
     "gas_density_contrast",
+    # S58 (D217 follow-up): the same stage's second field - the gas's contrast as the star formation law reads
+    # it, the lanes' excess spread over the bar's footprint - seeded by the same reads.
+    "star_formation_gas_contrast",
     "star_radius", "star_azimuth", "star_height", "star_age", "star_birth_radius",
     "star_metallicity", "star_alpha", "star_mass", "star_luminosity", "star_temperature", "star_population", "catalogue_size",
     # S28 (BUILD_II Phase 3): the rest of the table's point and what the massive stars do with it.
@@ -204,7 +219,15 @@ def test_production_graphs_hold(prod):
             "pattern_seed": 3, "systems_seed": 5, "planets_seed": 6,
             # S56 (D215): the layer's seed binds at its first reader, the arm modes' phases, as its hypothesis says.
             "texture_seed": 3,
+            # S58 (D217 item 2): the pin - an input that is neither a control nor a seed - is read by the bar
+            # stage, at the pattern's checkpoint, as its hypothesis says. halo_assembly_z gains that reader too
+            # (the disc's age) and stays bound at its first, checkpoint 1.
+            "bar_present": 3,
         }
+        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index"):
+            assert g.provenance[name] == "derived" and g.producer[name] == "bar", name
+        assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present") and g.stages["bar"].reads_seeds == ()
+        assert g.stages["arm_phases"].requires == ("bar_present",)
     assert "graph" in graph.report(models, impls_, table)
 
 

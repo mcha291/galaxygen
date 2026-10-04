@@ -173,8 +173,14 @@ def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
     _, _, halo = _power(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
     _, _, disc = _power(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
     assert default.tolist() == pytest.approx([0.014, 0.157, 0.231, 0.281, 0.316], abs=5e-3)
-    assert halo[3:].sum() == pytest.approx(0.980, abs=5e-3), "a halo-dominated disc is multi-armed"
-    assert halo[:2].sum() < 1e-3, "two and three arms cannot be amplified where the disc holds so little of the rotation"
+    # S58 (D217 items 1-3): were 0.980 in five and six arms and under 1e-3 in two and three. **This disc is unbarred
+    # by the criterion itself** - it holds 0.30 of its rotation, a bar would take 15 Gyr to form and the disc is 9.6
+    # Gyr old - so its published amplitudes carry no bar's taper and its inner rings, where the low arm numbers
+    # live, are in the sum: 0.819 in five and six arms, 0.017 in two and three (the two-armed mode still none). The
+    # split itself, ring by ring, is the one it was; the lever points the same way.
+    assert run(basic, {"disc_spin": 0.03, "baryon_retention": 0.15}, grid=COARSE, only=("bar_present",)).fields["bar_present"] == "no"
+    assert halo[3:].sum() == pytest.approx(0.819, abs=5e-3), "a halo-dominated disc is multi-armed"
+    assert halo[0] == 0.0 and halo[:2].sum() == pytest.approx(0.017, abs=2e-3), "two arms cannot be amplified where the disc holds so little of the rotation, and three barely"
     assert disc.tolist() == pytest.approx([0.130, 0.213, 0.237, 0.225, 0.195], abs=5e-3)
     assert halo[:2].sum() < default[:2].sum() < disc[:2].sum() == pytest.approx(0.343, abs=5e-3), "disc dominance moves the arm number"
     # The label follows: 6 at the defaults on every seed, 6 for the halo-dominated disc (not a number on the two
@@ -186,7 +192,10 @@ def test_the_arm_number_follows_the_discs_share_of_the_rotation(basic):
     label_halo, arms_halo, _ = _odds(basic, {"disc_spin": 0.03, "baryon_retention": 0.15})
     label_disc, arms_disc, _ = _odds(basic, {"disc_spin": 0.01, "baryon_retention": 0.5})
     assert set(label) == {6.0}
-    assert sorted(label_disc.tolist()).count(4.0) == 58 and sorted(label_disc.tolist()).count(5.0) == 2
+    # S58 (D217 item 5): was 58 fours and 2 fives - the saturation reads the bar's body's depth where it read the
+    # cosine bar's amplitude times its taper, and on those two seeds the saturated rings weigh the other way: 4 on
+    # every one of the sixty.
+    assert sorted(label_disc.tolist()).count(4.0) == 60
     assert set(label_halo[np.isfinite(label_halo)]) == {6.0} and int(np.isnan(label_halo).sum()) == 2
     assert np.all(arms_halo[np.isnan(label_halo)] == 0.0), "no arms, no arm number"
     assert arms_halo.mean() < arms_disc.mean(), "the flocculent regime's arms are weaker (Elmegreen et al. 2011 §4.2)"

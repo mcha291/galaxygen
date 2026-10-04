@@ -126,7 +126,8 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     young = age < first
     # S51 (D210): was 2568 (the clouds on the gas's ridge: another draw of the census)
     # S56 (D215): was 2583 (the ridge follows five arm modes: another draw again)
-    assert young.sum() == 2559  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
+    # S58 (D217): was 2559 (inside the bar's reach the clouds are placed by the bar's lanes: another draw)
+    assert young.sum() == 2591  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -162,12 +163,13 @@ def test_the_default_numbers(default):
     radius = np.asarray(F["bubble_radius"], dtype=float)
     # S51 (D210): was 12860 (one bubble per cluster; the clouds on the gas's ridge)
     # S56 (D215): was 12930 (the ridge follows five arm modes: another draw of the census)
-    assert radius.size == 12829  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    # S58 (D217): was 12829 (inside the bar's reach the clouds are placed by the bar's lanes: another draw of the census)
+    assert radius.size == 12826  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     assert float(np.median(radius)) == pytest.approx(8.963, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12503
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12499  # S58 (D217): was 12503 (another draw of the census)
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])

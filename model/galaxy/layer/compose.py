@@ -110,9 +110,14 @@ def stellar_pattern(source: Any, R: np.ndarray, law: Mapping[str, Any] | None = 
     fields - the modes' amplitudes on the run's grid radii ``R``, the pitch, the bar - applied to the layer's
     realisation, the modes' phases. None with the layer off, or where the fields hold no pattern.
 
-    ``law`` is for the composing stage itself: the ``pattern`` stage has just made the amplitudes, the pitch
-    and the bar's amplitude and has not published them yet, so it hands them here and the rest - the phases,
-    the bar's length - is read from its view of the fields. Everyone else reads everything from the run."""
+    Since S58 (D217) the bar is a body: its length and shape, its share of the disc's mass and the disc's
+    surface density that share is of are among the fields read, and every reader builds the same body from
+    them. An unbarred galaxy - the bar's numbers NaN - gives a pattern of arm modes alone, not None.
+
+    ``law`` is for the composing stage itself: the ``pattern`` stage has just made the amplitudes, the pitch,
+    the bar's amplitude and the body's share and has not published them yet, so it hands them here and the
+    rest - the phases, the bar's length and shape, the disc - is read from its view of the fields. Everyone
+    else reads everything from the run."""
     if not _on(source):
         return None
     from galaxy.stages.pattern import ArmPattern
@@ -123,9 +128,9 @@ def stellar_pattern(source: Any, R: np.ndarray, law: Mapping[str, Any] | None = 
 
 def gas_pattern(source: Any, R: np.ndarray, constants: Mapping[str, Any]) -> Any:
     """The gas's own arm pattern (``gas_pattern.GasPattern``) - the gas's steady response to the stellar arm
-    modes, solved ring by ring (S57, D216) - from the published fields on the run's grid radii ``R`` and the
-    two constants the law reads (the gas's sound speed and G), or None: with the layer off, or where the
-    fields hold no pattern."""
+    modes, solved ring by ring (S57, D216), blended inside a bar's reach with the bar's gas lanes (S58, D217) -
+    from the published fields on the run's grid radii ``R`` and the constants the law reads (the gas's sound
+    speed and G; the lanes' four numbers), or None: with the layer off, or where the fields hold no pattern."""
     if not _on(source):
         return None
     from galaxy.stages.gas_pattern import GasPattern

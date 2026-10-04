@@ -118,13 +118,28 @@ UNPLACED_OBJECTS = {"remnant"}
 # 16693.432987509994 off - until then the two happened to be the same bits, and I1's test held them to that).
 # The layer-off value is S55's own bits (the reference). Held to one unit in the last place here; reported to the
 # gate, since I1 says "bit for bit" and an expected total is no census statistic.
+# **S58 (D217): two units in the last place, and reported to the lead - I1's wording as amended at gate G2 is "equal
+# within one unit in the last place".** Inside a bar's reach a cloud cell's placement weight is now the sum of two
+# exact sector means - the response's and the lane field's, each 1 round the ring to its own rounding - where it
+# was one and a cosine's closed integral; at the default seeds `cloud_count_total` reads 16693.43298751 with the
+# layer on, two units above the layer-off 16693.432987509994 (one unit at S57). The rounding of a mean that is 1
+# identically in the law, still; the layer-off value is S55's bits, unmoved. Not widened in silence: the unit count
+# is pinned below, and the invariant's text is the gate's to amend or the lanes' means the lead's to have summed
+# otherwise.
+# **As the gate answered (D217's follow-up): the expected totals are "equal within four units in the last place"**
+# (BUILD_III's wording is the lead's to amend). The bound the invariant states is four; what this test pins is the
+# measured two, so a third unit is seen here before it reaches the invariant's four.
 EXPECTED_TOTALS = {"cloud_count_total", "bright_star_count_1e3"}
+EXPECTED_TOTAL_UNITS = 2  # S58 (D217): was 1; the measured count, under the gate's bound of four
+EXPECTED_TOTAL_BOUND = 4  # the invariant's own, as the gate words it at S58
+assert EXPECTED_TOTAL_UNITS <= EXPECTED_TOTAL_BOUND
 
 
 def same_expected_total(a, b) -> bool:
-    """Equal, or apart by one unit in the last place: what an expected total is held to (above)."""
+    """Equal, or apart by at most ``EXPECTED_TOTAL_UNITS`` units in the last place: what an expected total is held
+    to (above)."""
     a, b = float(a), float(b)
-    return abs(a - b) <= float(np.spacing(max(abs(a), abs(b))))
+    return abs(a - b) <= EXPECTED_TOTAL_UNITS * float(np.spacing(max(abs(a), abs(b))))
 
 
 def same(a, b) -> bool:
@@ -173,13 +188,36 @@ def small(prod):
 # carrying the most mass-weighted power: 6 for the Milky Way, and 4 for ngc_4414 - the number S55 drew, by another
 # road, so that template's field is S55's bits and only the Milky Way's differs. Nothing else of S55 moved.
 # (On the X / 2 window of S56's first two passes the labels were 3 and 2: D215 ruling 11.)
-LAYER_OFF_EXCEPTIONS = {"arm_multiplicity": {"milky_way": (4.0, 6.0), "ngc_4414": (4.0, 4.0)}}
+# S58 (D217 items 2-3): `ngc_4414` is pinned unbarred, as observed, and "an unbarred galaxy publishes NaN for the
+# bar's fields" (D164) - so the four bar scalars S55 published for it are NaN by ruling. Each is S55's bits on the
+# Milky Way template, and on `ngc_4414` itself with the pin taken off (the test below shows both, and that nothing
+# else under any digest moved).
+_NAN = float("nan")
+LAYER_OFF_EXCEPTIONS = {
+    "arm_multiplicity": {"milky_way": (4.0, 6.0), "ngc_4414": (4.0, 4.0)},
+    "bar_half_length": {"milky_way": (5.2097114005817895, 5.2097114005817895), "ngc_4414": (3.51010852350661, _NAN)},
+    "bar_contrast": {"milky_way": (0.28926359920045497, 0.28926359920045497), "ngc_4414": (0.32104666953110067, _NAN)},
+    "bar_corotation_radius": {"milky_way": (5.483712200859753, 5.483712200859753), "ngc_4414": (3.792933285043702, _NAN)},
+    "bar_pattern_speed": {"milky_way": (45.46362850463187, 45.46362850463187), "ngc_4414": (63.051302305629854, _NAN)},
+}
+UNBARRED_BY_RULING = {"bar_half_length", "bar_contrast", "bar_corotation_radius", "bar_pattern_speed"}
+
+
+def same_number(a: float, b: float) -> bool:
+    return a == b or (a != a and b != b)  # NaN is the value an unbarred galaxy's bar number has
 # And the fields P1 adds, which S55 did not publish: the law's five amplitudes and its saturation, radial and the
 # same on and off; the layer's five phases, not numbers with the layer off.
 ADDED_AT_S56 = {*pt.AMPLITUDE_FIELDS, "arm_saturation", *pt.PHASE_FIELDS}
 # And the one field P2 adds (S57, D216): the frame every arm mode is steady in, a derived radial field of the `bar`
 # stage - a statement, the same on and off, read by no stage. Nothing S55 published moved with it.
 ADDED_AT_S57 = {"arm_pattern_speed"}
+# And the six P3 adds (S58, D217): the bar's formation time and the verdict, the body's shape - derived, the `bar`
+# stage's - and the body's share of the disc's mass, the `pattern` stage's. Laws, the same on and off.
+ADDED_AT_S58 = {"bar_formation_time", "bar_present", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share"}
+# And one more at the gate's follow-up (S58, D217): the gas's contrast as the star formation law reads it - the
+# `gas_pattern` stage's second composed field, the lanes' excess spread over the bar's footprint. 1 everywhere with
+# the layer off, as the gas's own contrast is: its declared neutral.
+ADDED_AT_S58 |= {"star_formation_gas_contrast"}
 
 
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
@@ -194,14 +232,28 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     assert not set(held) - set(now), sorted(set(held) - set(now))  # no field was lost
     moved = {n for n in held if now[n] != held[n]}
     # The fields of the named list whose value on this template is not S55's (the label can land on S55's number).
-    named = {n for n, by_template in LAYER_OFF_EXCEPTIONS.items() if by_template[template][0] != by_template[template][1]}
+    named = {n for n, by_template in LAYER_OFF_EXCEPTIONS.items() if not same_number(*by_template[template])}
     assert moved == named, sorted(moved ^ named)
-    assert moved == ({"arm_multiplicity"} if template == "milky_way" else set())
+    # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
+    assert moved == ({"arm_multiplicity"} if template == "milky_way" else UNBARRED_BY_RULING)
     for n, by_template in LAYER_OFF_EXCEPTIONS.items():
         was, is_now = by_template[template]
-        assert held[n] == layer_reference.value_digest(was) and out.fields[n] == is_now, (n, template)
+        assert held[n] == layer_reference.value_digest(was) and same_number(float(out.fields[n]), is_now), (n, template)
     # S57 (D216): was `== ADDED_AT_S56` - the layer-off run gained one field, `arm_pattern_speed`, and lost or moved none.
-    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 and len(held) == (332 if name == "azimuthal" else 331)
+    # S58 (D217): was `== ADDED_AT_S56 | ADDED_AT_S57` - six more, and none lost; a seventh at the gate's follow-up.
+    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 and len(held) == (332 if name == "azimuthal" else 331)
+    assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
+    if template == "ngc_4414":
+        # "Show nothing else under each digest changed": the same inputs with the pin taken off - the criterion bars
+        # this disc - are S55's layer-off run on every field S55 published, the four bar scalars with them; and the
+        # pinned run differs from that one in the verdict, the bar's eight numbers and the five arm amplitudes (no
+        # taper: the modes run to the centre) - nothing else, on any of the model's fields.
+        unpinned = run(prod[0].get(name), {k: v for k, v in layer_reference.template_inputs(template).items() if k != "bar_present"}, layer=False)
+        assert unpinned.fields["bar_present"] == "yes" and "bar_present" not in unpinned.inputs and out.inputs["bar_present"] is False
+        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == set()
+        differ = {n for n in out.fields if not same(out.fields[n], unpinned.fields[n])}
+        assert differ == {"bar_present", *UNBARRED_BY_RULING, "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", *pt.AMPLITUDE_FIELDS}
+        assert np.all(np.asarray(out.fields["arm_saturation"]) == 1.0) and out.fields["bar_formation_time"] == unpinned.fields["bar_formation_time"]
     assert now["arm_pattern_speed"] == layer_reference.value_digest(np.asarray(out.fields["circular_velocity"]) / out.grid.R)
     for n in pt.PHASE_FIELDS:
         assert np.isnan(out.fields[n]), n
@@ -220,7 +272,12 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
         held = reference["routes"][label]
         assert got["status"] == held["status"] == 200, label
         assert got["arrays"] == held["arrays"], (label, [a[0] for a, b in zip(got["arrays"], held["arrays"]) if a != b])
+        # S58 (D217 item 2): a request for a template carries the template's pin among its inputs, which S55's
+        # header did not hold. The header is digested with the pin taken out of its inputs and the pin read beside
+        # it (``layer_reference.route_digest``): every other word of the four `ngc_4414` headers is S55's, and the
+        # requests that name no template are pinned nothing.
         assert got["header"] == held["header"], label
+        assert got.get("pinned", {}) == ({"bar_present": False} if label.startswith("ngc_4414/") else {}), label
 
 
 def test_the_cloud_route_sends_its_columns_in_the_order_it_always_did(prod):
@@ -246,7 +303,8 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     on, off = runs[name, True], runs[name, False]
     assert set(on.fields) == set(off.fields) and on.order == off.order  # the same model ran, every stage of it
     composed = {n: d for n, d in on.decls.items() if d.composed}
-    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if name == "azimuthal" else set())
+    # S58 (D217 follow-up): was two (three for azimuthal) - the gas's contrast as the star formation law reads it.
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast"} | ({"sfr_modulation"} if name == "azimuthal" else set())
     for n, d in composed.items():
         # Exactly its declared neutral everywhere with the layer off - the number, not that number to rounding -
         # and not everywhere its neutral with the layer on: the layer does place.
@@ -288,7 +346,12 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # Every other field - every radial field, every history, every scalar - is the bit it was, but for the list.
     assert moved_statistics <= set(CENSUS_STATISTICS), sorted(moved_statistics - set(CENSUS_STATISTICS))
     # And the list is not padded: each entry does move on the production grid at the default seeds.
-    assert moved_statistics == set(CENSUS_STATISTICS), sorted(set(CENSUS_STATISTICS) - moved_statistics)
+    # S58 (D217): was `moved_statistics == set(CENSUS_STATISTICS)`. One entry lands on the same bits by rounding at
+    # S58's census: `dig_halpha_fraction` is a ratio of two sums over the realised regions that is three tenths in
+    # any census, to rounding; the layer-on and the layer-off sums both round to 0.29999999999999993 now, where
+    # S57's differed in the last place. It is still a census statistic - a sum over realised objects - and stays listed.
+    assert set(CENSUS_STATISTICS) - moved_statistics == {"dig_halpha_fraction"}, sorted(set(CENSUS_STATISTICS) - moved_statistics)
+    assert float(on.fields["dig_halpha_fraction"]) == float(off.fields["dig_halpha_fraction"]) == 0.29999999999999993
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
@@ -299,11 +362,15 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
     # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
     # mean that is 1 identically in the law; exact sums are not required" - the rule's own wording now, and held.
+    # S58 (D217's follow-up at the gate): the expected totals are "equal within four units in the last place"; the
+    # test pins the measured two (EXPECTED_TOTAL_UNITS).
     assert not EXPECTED_TOTALS & set(CENSUS_STATISTICS)
     # S57 (D216): was 16693.43298750999 with the layer on (one unit lower than off, on S56's ranked ridge); the
     # layer-off value is S55's own bits, unmoved.
-    assert float(on.fields["cloud_count_total"]) == 16693.432987509997 and float(off.fields["cloud_count_total"]) == 16693.432987509994
-    assert float(on.fields["cloud_count_total"]) == np.nextafter(float(off.fields["cloud_count_total"]), np.inf)
+    # S58 (D217): was 16693.432987509997 with the layer on, one unit above the layer-off value; two units now
+    # (EXPECTED_TOTALS, above: reported). The layer-off value is S55's own bits, unmoved.
+    assert float(on.fields["cloud_count_total"]) == 16693.43298751 and float(off.fields["cloud_count_total"]) == 16693.432987509994
+    assert float(on.fields["cloud_count_total"]) == np.nextafter(np.nextafter(float(off.fields["cloud_count_total"]), np.inf), np.inf)
     assert same(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
 
 
@@ -344,8 +411,9 @@ def test_i1_every_scalar_of_the_pattern_stages_is_unchanged(runs, prod, name):
     on, off = runs[name, True], runs[name, False]
     _, impls_, _ = prod
     scalars = [d.name for sid in ("bar", "pattern", "gas_pattern") for d in impls_.get(sid).publishes if d.kind.domain == "galaxy"]
-    assert len(scalars) == 14 and {"arm_multiplicity", "pitch_angle", "arm_contrast", "bar_contrast", "gas_arm_contrast",
-                                   "bar_pattern_speed"} <= set(scalars)
+    # S58 (D217): was 14 - the bar's formation time, the verdict, the body's three shape numbers and its mass share.
+    assert len(scalars) == 20 and {"arm_multiplicity", "pitch_angle", "arm_contrast", "bar_contrast", "gas_arm_contrast",
+                                   "bar_pattern_speed", "bar_formation_time", "bar_present", "bar_mass_share"} <= set(scalars)
     for n in scalars:
         assert on.fields[n] == off.fields[n], n
     # S56 (D215, gate ruling 5): and the law of several modes - the five amplitudes and the saturation, radial
@@ -408,7 +476,9 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     # S56 (D215): was n_on == 16822 - S51's census, placed by one four-armed ridge; placed by five modes' ridge it
     # is another draw. The layer-off census is S55's own (16 754), and the two still differ by the draw alone.
     # S57 (D216): was n_on == 16660 - placed by the gas's steady response to the modes it is another draw again.
-    assert n_on == 16667 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    # S58 (D217): was n_on == 16667 - placed by the response and the bar's lanes, the two-armed mode on the bar's
+    # axis, it is another draw again. The layer-off census is S55's own still.
+    assert n_on == 16668 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -481,7 +551,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
         # draw (D216 predicted "rows 35 and 37 may move with placement, layer on"). Not judged: the rows above are.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.06976, abs=1e-5)
+        # S58 (D217): the first was -2.06976 on S57's census; with the lanes and the bar-tied phase it is another draw.
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.06378, abs=1e-5)
         assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.103890, abs=1e-6)
         # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
         assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
@@ -857,7 +928,7 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
             assert not set(SYNTHETIC_DECLARATIONS) & set(f), f["name"]
     # A composed field says so, with its neutral value; no other entry carries either key (G1, change 3).
     composed = {f["name"]: f for f in fields if "composed" in f or "neutral" in f}
-    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast"} | ({"sfr_modulation"} if model.name == "azimuthal" else set())
+    assert set(composed) == {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast"} | ({"sfr_modulation"} if model.name == "azimuthal" else set())
     for name, f in composed.items():
         assert f["composed"] is True and f["neutral"] == 1.0 and f["provenance"] == "seeded", name
         assert "A composed field: with the randomness layer off it is 1 everywhere" in f["about"], name
@@ -888,8 +959,11 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     columns = [n for n, d in b.decls.items() if d.kind.domain == "object"]
     # 343: S54's 331 fields, name for name (334 while the interior's three numbers were scalars, before gate G1),
     # S56's eleven (D215): five amplitudes, the saturation, five phases; and S57's one (D216): the arms' frame.
-    # S57 (D216): was 342
-    assert len(columns) > 100 and len(b.fields) == 343
+    # S57 (D216): was 342. S58 (D217): was 343 - the bar's formation time, its presence, the body's three shape
+    # numbers and its share of the disc's mass.
+    # S58 (D217 follow-up): was 349 - the gas's contrast as the star formation law reads it, a third composed field
+    # of `basic` (so what the oracle below holds, the fields not composed, is still 229).
+    assert len(columns) > 100 and len(b.fields) == 350
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -906,13 +980,15 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     phases = {n for n in differ if b.decls[n].provenance == "synthetic" and b.decls[n].kind.domain == "galaxy"}
     assert phases == set(pt.PHASE_FIELDS)
     statistics = {n for n in differ - phases if b.decls[n].kind.domain != "object"}
-    assert statistics == set(CENSUS_STATISTICS)
+    # S58 (D217): was `== set(CENSUS_STATISTICS)`; `dig_halpha_fraction` lands on the same bits at S58's census (test_i1).
+    assert statistics == set(CENSUS_STATISTICS) - {"dig_halpha_fraction"}
     assert {b.decls[n].of for n in differ - statistics - phases} == PLACED_OBJECTS
     held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
     # 222 = basic's 343 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
     # 5 phases (215 until S56, which added the law's five amplitudes and its saturation to what is held).
     # S57 (D216): was 221 - `arm_pattern_speed` joins what is held, the same bits on and off.
-    assert len(held) == 222 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
+    # S58 (D217): was 222 - the six bar fields P3 adds, laws all, and the one census statistic that rounds alike.
+    assert len(held) == 229 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
 
 
 def test_the_oracle_holds_layer_off_on_a_small_grid_and_another_seed(prod):
@@ -997,10 +1073,12 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # measured on S51's census at S55; the layer-on census is another draw since P1 and the declaration was re-read.
     # S57 (D216): were "at S56", "1 598 of 12 814 clusters (12.5 %, 43.8 % of the cluster mass)" and "137 in another
     # cell ring"; the census placed by the gas's steady response is another draw and the declaration was re-read.
-    for phrase in ("at S57 the offset moves a cluster",
+    # S58 (D217): were "at S57", "1 598 of 12 829 clusters (12.5 %, 43.7 % of the cluster mass)" and "139 in another
+    # cell ring"; the census placed by the response and the bar's lanes is another draw and the declaration was re-read.
+    for phrase in ("at S58 the offset moves a cluster",
                    "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 598 of 12 829 clusters (12.5 %, 43.7 % of the cluster mass)",
-                   "139 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+                   "1 600 of 12 826 clusters (12.5 %, 43.6 % of the cluster mass)",
+                   "137 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
@@ -1009,17 +1087,19 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12829  # S57 (D216): was 12814 (S56: 12930)
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12826  # S58 (D217): was 12829 (S57: 12814; S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
     # S57 (D216): was 1598 and 0.1247 of 12 814 (S56: 1610, 0.125) - the same count of another census, by chance.
-    assert int(moved.sum()) == 1598 and moved.mean() == pytest.approx(0.1246, abs=5e-4)
-    # The share of the cluster mass that crosses: 0.43734, printed as 43.7 %. S57 (D216): was 0.43796 (43.8 %).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4373, abs=5e-4)
+    # S58 (D217): was 1598 and 0.1246 of 12 829.
+    assert int(moved.sum()) == 1600 and moved.mean() == pytest.approx(0.1247, abs=5e-4)
+    # The share of the cluster mass that crosses: 0.43648, printed as 43.6 %. S57 (D216): was 0.43796 (43.8 %).
+    # S58 (D217): was 0.4373 (43.7 %).
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4365, abs=5e-4)
     edges, _ = sy.cell_edges(R)
-    # S57 (D216): was 137 (S56: 157)
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 139
+    # S57 (D216): was 137 (S56: 157). S58 (D217): was 139.
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 137
     # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1145,7 +1225,8 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_phases_read_it(prod):
     assert dict(graph.UNREAD_BY_RULING) == {}
     readers = sorted(st.id for st in impls_ if "texture_seed" in st.reads_seeds)
     assert readers == ["arm_phases"] and impls_.get("arm_phases").layer_stage and impls_.get("arm_phases").checkpoint == 3
-    assert impls_.get("arm_phases").requires == () and impls_.get("arm_phases").reads_constants == ()
+    # S58 (D217 item 9): was `requires == ()` - the stage asks whether there is a bar, whose two-armed mode it ties.
+    assert impls_.get("arm_phases").requires == ("bar_present",) and impls_.get("arm_phases").reads_constants == ()
     for m in models:
         g = graph.analyse(m, impls_, table)
         assert g.input_checkpoint["texture_seed"] == 3 == INPUTS["texture_seed"].checkpoint_hypothesis
@@ -1163,7 +1244,7 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     something for the first time at S56 (gate G1 noted that until P1 no field was on the layer's seed). Two runs of
     the whole model that differ in ``texture_seed`` alone:
 
-    - the five phases differ, and with them the three composed fields and where every placed census's objects are;
+    - the five phases differ, and with them the four composed fields and where every placed census's objects are;
     - **no law moves**: every radial field, every history and every scalar that is not a census statistic is the
       same bits - the amplitudes, the saturation, the pitch, the gas's ratio, every profile;
     - every census expects the same count in every ring, to 1e-12 (I2, between two realisations);
@@ -1184,7 +1265,10 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
         if n in expected_totals:
             assert float(a.fields[n]) == pytest.approx(float(b.fields[n]), rel=1e-12, abs=0.0), n
         elif n in pt.PHASE_FIELDS:
-            assert d.provenance == "synthetic" and not equal, n
+            # S58 (D217 item 9): was `not equal` for all five - the default galaxy is barred, so its two-armed mode
+            # is on the bar's axis under every texture seed (0, not a draw) and the other four turn.
+            assert d.provenance == "synthetic" and equal == (n == pt.phase_field(2)), n
+            assert n != pt.phase_field(2) or float(a.fields[n]) == 0.0
         elif d.composed:
             assert not equal, n
         elif d.kind.domain == "object":
@@ -1207,7 +1291,7 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     # their mean); the published field is the law's exact mean over each cell's azimuth on its ring, and the three are at
     # 1e-12 again.
     for out in (a, b):
-        for n in ("pattern_density_contrast", "gas_density_contrast", "sfr_modulation"):
+        for n in ("pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast", "sfr_modulation"):
             assert float(np.abs(np.asarray(out.fields[n]).mean(axis=1) - 1.0).max()) < 1e-12, n
 
 

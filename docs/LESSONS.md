@@ -1476,3 +1476,31 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   resuming, fetch and read the branch's log again after the first few minutes, and before repeating owed work.
 - [infra] `grep -r` from the repository's root walks `node_modules` and every agent worktree (two minutes): use
   the search tool with a glob, or name the directories.
+
+## From S58 (the bar; an Opus lead, two readers, a model builder in two passes, a viewer builder, a reviewer, Fable at a conditional gate)
+
+- [all] A phase's text can stop in three places at once, and an hour's probe finds them before any build: here
+  every stability criterion read on the two templates (both barred, one of them wrongly), candidate bodies set
+  beside the two sourced numbers they were to meet, and the plan's sentence about the gas set beside the last
+  gate's ruling. Put the stops to the gate together, with the numbers, not one at a time after a builder trips.
+- [field] When two sourced numbers describe one thing (a bar's light share and its m = 2 maximum), rule which is
+  the input and which the check before building; say what the identity is *of* (the bar part, not the composed
+  field), or the gate's own assertion fails on a correct build.
+- [audit] A prediction must be computed on the quantity the ruling uses. The lead's probe took the checkpoint-4
+  stellar surface density, the ruling the checkpoint-1 disc, and the predicted share failed by a twelfth. Anchor
+  the probe to the ruling's inputs the moment the ruling names them.
+- [field] When a field gains structure, list its readers in the handoff. The gas contrast gained lanes of an
+  unsourced width, and star formation, which reads it through unchanged code, rode them: 90 % of a ring's star
+  formation in a tenth of its cells. The reviewer found it; the builder's re-pins had called it "another draw".
+- [field] Removing a taper exposes what it hid. An unbarred galaxy's inner rings met the gas response's full
+  forcing for the first time: sweep the corners of the controls' ranges (three values each, both pins), not only
+  seeds, and count exact zeros as a finding.
+- [api] A measured class enters a template as a pin, an input that is neither a control nor a seed, refused as a
+  request's own parameter. Then check that the viewer names its template: it sent the template's inputs laid out
+  one by one, and the pin would never have reached a run.
+- [close] The next session's blind readers can run during the closing suite: they touch nothing. Have each save
+  its note to the scratchpad itself (a subagent's transcript file may be empty), under a name that is not
+  "report" (the harness refuses a subagent's report file).
+- [close] The same gate agent, resumed across two sessions, carried one ruling into the next: it applied its own
+  item on the bar's frame and found that the shocked branch the plan had deferred to the bar is not the bar's
+  instrument either. A fresh agent would have had to be told.

@@ -54,8 +54,11 @@ PACKAGE = ROOT / "model" / "galaxy"
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 TEMPLATES = ("milky_way", "ngc_4414")
 TEXTURE_SEEDS = (None, 1, 2, 77, 987654321)  # None: the template's own
+# S58 (D217): the bar's presence, its formation time, the body's shape and its share of the disc are laws too -
+# derived, or seeded through the drawn bar amplitude - and the same with the layer on or off.
+BAR_FIELDS = ("bar_present", "bar_formation_time", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share")
 LAW_FIELDS = (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_contrast", "bar_contrast", "pitch_angle",
-              "bar_half_length", "gas_arm_contrast")
+              "bar_half_length", "gas_arm_contrast", *BAR_FIELDS)
 PATTERN_FIELDS = ("pattern_density_contrast", "gas_density_contrast", *LAW_FIELDS, *pt.PHASE_FIELDS,
                   "circular_velocity", "epicyclic_frequency", "disc_surface_density")
 _RUNS: dict[tuple, object] = {}
@@ -86,6 +89,24 @@ def pattern_run(prod, template: str = "milky_way", grid: GridSpec = DEFAULT, lay
     return _RUNS[key]
 
 
+def body_of(out) -> pt.BarBody | None:
+    """The bar's body of a run's published fields, at unit normalisation; None for an unbarred galaxy (S58, D217)."""
+    F = out.fields
+    if math.isnan(float(F["bar_half_length"])):
+        return None
+    return pt.BarBody(out.grid.R, F["disc_surface_density"], float(F["bar_half_length"]), float(F["bar_axis_ratio"]),
+                      float(F["bar_boxiness"]), float(F["bar_profile_index"]))
+
+
+def depth_of(out) -> np.ndarray:
+    """b(R) = 1 - min over the ring of the bar's body's contrast, from the published share: what the saturation
+    reads since S58 (D217 item 5; until then B times the taper). 0 on every ring of an unbarred galaxy."""
+    body = body_of(out)
+    if body is None:
+        return np.zeros(out.grid.R.size)
+    return body.depth(body.normalisation(float(out.fields["bar_mass_share"])))
+
+
 def law_of(out, c) -> pt.ModeLaw:
     """The law recomputed from a run's published fields: the weights, the gain, the taper, the saturation."""
     F, R = out.fields, out.grid.R
@@ -93,7 +114,7 @@ def law_of(out, c) -> pt.ModeLaw:
         R, F["circular_velocity"], F["epicyclic_frequency"], F["disc_surface_density"], c["G"],
         c["SWING_X_LOW"], c["SWING_X_HIGH"], c["SWING_X_DEAD"], c["SWING_X_FLOOR"], c["ARM_MULTIPLICITY_MAX"],
     )
-    return pt.mode_law(R, weights, float(F["arm_contrast"]), float(F["bar_contrast"]), float(F["pitch_angle"]),
+    return pt.mode_law(R, weights, float(F["arm_contrast"]), depth_of(out), float(F["pitch_angle"]),
                        float(F["bar_half_length"]))
 
 
@@ -107,10 +128,14 @@ def single_mode(R, m: int, f: dict[str, float]) -> tuple[pt.ArmPattern, np.ndarr
     pattern takes the taper back out of them (1 on every ring)."""
     weights = np.zeros((len(pt.ARM_MODES), R.size))
     weights[pt.ARM_MODES.index(m)] = 1.0
-    law = pt.mode_law(R, weights, f["arm_contrast"], f["bar_contrast"], f["pitch_angle"], f["bar_half_length"])
-    assert np.all(law.saturation == 1.0)  # one mode cannot reach the mean: A < 1 and the bar's cap under its taper
+    # S58 (D217): the bar is a body, and S55's cosine is gone, so the single mode is composed with a bar that
+    # holds no mass - the taper of its half-length, and nothing of its own in the field (a share of 0).
+    law = pt.mode_law(R, weights, f["arm_contrast"], 0.0, f["pitch_angle"], f["bar_half_length"])
+    assert np.all(law.saturation == 1.0)  # one mode cannot reach the mean: A < 1
     zero = (0.0,) * len(pt.ARM_MODES)
-    stars = pt.ArmPattern(R, law.amplitudes, zero, f["bar_contrast"], f["pitch_angle"], f["bar_half_length"])
+    stars = pt.ArmPattern(R, law.amplitudes, zero, f["bar_contrast"], f["pitch_angle"], f["bar_half_length"],
+                          0.4, 3.0, 2.0, 0.0, np.exp(-R / 2.6))
+    assert stars.barred and not stars.flat and stars.body is not None and stars.normalisation == 0.0
     unit = gp.GasPattern.unit_amplitudes(R, law.amplitudes, f["arm_contrast"], f["pitch_angle"], f["bar_half_length"])
     return stars, unit
 
@@ -154,18 +179,26 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
     """"The m = 2-6 cosine amplitudes recovered from the composed field equal the published ones (the bar's m = 2
     term added at its taper) to 1e-9 on every ring, no exclusions." Phase-aware: the complex coefficient is recovered,
     the bar's own subtracted from the two-fold one, and what is left is the published amplitude at the published
-    phase - modulus and argument both. Every ring, every mode, several texture seeds."""
+    phase - modulus and argument both. Every ring, every mode, several texture seeds.
+
+    **S58 (D217 item 4): the bar is a body, not an m = 2 term**, so what is taken out of the field before the arm
+    modes are read is the body's part of it - its mean over each cell, as published (the body carries every even
+    harmonic, not the second alone) - and the arm modes are what is left, to rounding, on every ring. In a barred
+    galaxy the two-armed mode's published phase is 0 (item 9); an unbarred galaxy has no body to take out. The
+    body's own two-fold amplitude is held to the drawn bar amplitude in ``tests/test_bar.py``."""
     worst = 0.0
     for seed in TEXTURE_SEEDS:
         o = pattern_run(prod, template, grid, texture_seed=seed)
         F, R, phi = o.fields, o.grid.R, o.grid.phi
-        field = np.asarray(F["pattern_density_contrast"])
-        taper, phase, bar_angle = pt.bar_terms(R, float(F["pitch_angle"]), float(F["bar_half_length"]))
-        bar = float(F["bar_contrast"]) * taper * np.exp(-2j * bar_angle)
+        stars = compose.stellar_pattern(F, R)
+        # S58 (D217): was `bar = B * taper * exp(-2i * bar_angle)`, subtracted from the two-fold coefficient alone.
+        field = np.asarray(F["pattern_density_contrast"]) - stars.body_cell_means(R, o.grid["phi"].edges)
+        assert stars.barred == (template == "milky_way") and (float(F[pt.phase_field(2)]) == 0.0) == stars.barred
+        _, phase, _ = pt.bar_terms(R, float(F["pitch_angle"]), float(F["bar_half_length"]))
         for m in pt.ARM_MODES:
             published = np.asarray(F[pt.amplitude_field(m)])
             theta = float(F[pt.phase_field(m)])
-            got = fourier(field, phi, m) - (bar if m == 2 else 0.0)
+            got = fourier(field, phi, m)
             want = published * np.exp(-1j * (m * phase + theta))
             worst = max(worst, float(np.abs(np.abs(got) - published).max()), float(np.abs(got - want).max()))
             assert np.all(np.abs(np.abs(got) - published) < 1e-9), (template, seed, m)
@@ -185,7 +218,7 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     templates' own. Zero is the bound, not a tolerance: the saturation is a law of the radius, so the bound holds for
     every realisation of the phases. Before the saturation was ruled, 21 of 120 such galaxies had a negative cell."""
     c = constants(the_model(prod))
-    lowest, saturated, drawn = math.inf, dict.fromkeys(TEMPLATES, 0), 0
+    lowest, saturated, drawn, body_lowest = math.inf, dict.fromkeys(TEMPLATES, 0), 0, math.inf
     for template in TEMPLATES:
         for pattern_seed in range(60):
             for texture_seed in (0, 1):
@@ -200,21 +233,33 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
             s = np.asarray(pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=0).fields["arm_saturation"])
             assert np.array_equal(s, law.saturation) and np.all((s > 0.0) & (s <= 1.0))
             # What the saturation guarantees: the modes' amplitudes and the bar's add up to at most 1 on every ring.
+            # S58 (D217 item 5): "the bar's" is the body's depth under the ring's mean, 1 - min of its contrast.
             assert float((law.amplitudes.sum(axis=0) + law.bar).max()) <= 1.0 + 4e-16
+            # The gate (D217): the body alone leaves every ring positive on every suite seed - nothing clipped.
+            body_lowest = min(body_lowest, float((1.0 - law.bar).min()))
             saturated[template] += int((s < 1.0).any())
     assert drawn == 240
     # Measured: the lowest cell over the 240 galaxies, and how many of each template's 60 pattern seeds saturate
     # some ring: 26 and 34 on the window of D215 ruling 11, the lowest saturation 0.64 and 0.57. (The X / 2 window
     # of the first two passes read 35 and 35, and a lowest cell of 0.00259.)
-    assert lowest == pytest.approx(0.00249, abs=1e-5)
-    assert saturated == {"milky_way": 26, "ngc_4414": 34}
+    # S58 (D217): the lowest cell is the one it was, 0.0024886 (the Milky Way's inputs at pattern seed 28, texture
+    # seed 1: a ring outside the bar's reach). The second count was 34: `ngc_4414` is unbarred, its arm modes run to
+    # the centre untapered, and one more of its sixty pattern seeds saturates a ring there (35). The Milky Way's
+    # 26 stand with the body's depth in place of the cosine's amplitude. The lowest saturation reads 0.643 and 0.572.
+    assert lowest == pytest.approx(0.00249, abs=1e-5) and lowest > 0.0
+    assert saturated == {"milky_way": 26, "ngc_4414": 35}  # S58 (D217): was {"milky_way": 26, "ngc_4414": 34}
+    # The body before the arms, at its deepest over the suite: 0.266 of the ring's mean (the bar amplitude at its
+    # cap of 0.9; the depth is 0.816 of the amplitude at this shape). Positive on every seed: no seed to report.
+    assert body_lowest == pytest.approx(0.2661, abs=2e-4) and body_lowest > 0.0
     for template in TEMPLATES:
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
     c = constants(the_model(prod))
-    for template, worst in (("milky_way", 0.795), ("ngc_4414", 0.787)):
+    # S58 (D217): were 0.795 and 0.787, with the cosine bar's amplitude times its taper where the body's depth is
+    # (the Milky Way) and where there is now no bar at all (`ngc_4414`, pinned unbarred: its modes untapered).
+    for template, worst in (("milky_way", 0.7937), ("ngc_4414", 0.7903)):
         o = pattern_run(prod, template)
         assert np.all(np.asarray(o.fields["arm_saturation"]) == 1.0), template
         law = law_of(o, c)
@@ -225,10 +270,13 @@ def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
 
 def test_the_saturation_scales_the_modes_together_where_their_peak_would_reach_the_mean():
     """s(R) = min(1, (1 - b)/sum of the tapered amplitudes), and the amplitudes are the tapered ones times it: five
-    modes of equal power peak at root five times one, so a strong arm amplitude saturates."""
+    modes of equal power peak at root five times one, so a strong arm amplitude saturates. S58 (D217 item 5): b is
+    the bar's body's depth under the ring's mean, handed to the law (here one number, 0.5, on every ring); until
+    S58 the law made b itself, the cosine bar's amplitude times its taper."""
     R = DEFAULT.build().R
     weights = np.ones((5, R.size))
     law = pt.mode_law(R, weights, 0.7, 0.5, 14.0, 5.0)
+    assert np.all(law.bar == 0.5)
     assert np.allclose(law.gain, 0.2) and np.allclose(law.tapered.sum(axis=0), 0.7 * math.sqrt(5.0) * (1.0 - pt.bar_terms(R, 14.0, 5.0)[0]))
     over = law.tapered.sum(axis=0) > 1.0 - law.bar
     assert over.any() and (~over).any()
@@ -240,6 +288,14 @@ def test_the_saturation_scales_the_modes_together_where_their_peak_would_reach_t
     # No pattern at all: nothing to saturate, and the saturation is 1, not a division by zero.
     none = pt.mode_law(R, np.zeros((5, R.size)), 0.7, 0.5, 14.0, 5.0)
     assert np.all(none.saturation == 1.0) and not none.amplitudes.any()
+    # S58 (D217 item 3): an unbarred galaxy - a half-length that is not a number - has no taper and no depth: the
+    # modes run to the centre at A root gain, and the saturation is min(1, 1 / the sum of the amplitudes).
+    unbarred = pt.mode_law(R, weights, 0.7, 0.0, 14.0, float("nan"))
+    assert np.all(pt.bar_terms(R, 14.0, float("nan"))[0] == 0.0) and math.isnan(pt.bar_terms(R, 14.0, float("nan"))[2])
+    assert np.allclose(unbarred.tapered, 0.7 * math.sqrt(0.2)) and np.all(unbarred.bar == 0.0)
+    assert np.allclose(unbarred.saturation, 1.0 / (0.7 * math.sqrt(5.0))) and np.allclose(unbarred.amplitudes.sum(axis=0), 1.0)
+    mild = pt.mode_law(R, weights, 0.3, 0.0, 14.0, float("nan"))
+    assert np.all(mild.saturation == 1.0) and np.array_equal(mild.amplitudes, mild.tapered)
 
 
 # --- the law -------------------------------------------------------------------------------------------------------
@@ -345,6 +401,7 @@ def test_the_window_rederived_by_hand_on_three_rings_gives_the_published_amplitu
     F, R = o.fields, o.grid.R
     kappa, sigma, v = (np.asarray(F[k]) for k in ("epicyclic_frequency", "disc_surface_density", "circular_velocity"))
     A, B, a_bar = float(F["arm_contrast"]), float(F["bar_contrast"]), float(F["bar_half_length"])
+    depth = depth_of(o)
     largest_difference = 0.0
     for radius, x_want, gamma_want, w_want, w_half_want in (
         (1.9875, 3.0878, 0.6317, (0.5055, 1.0, 1.0, 0.9673, 0.7043), (1.0, 0.7043, 0.2893, 0.0, 0.0)),
@@ -363,7 +420,10 @@ def test_the_window_rederived_by_hand_on_three_rings_gives_the_published_amplitu
         gain = [w_m / max(1.0, sum(w)) for w_m in w]
         taper = math.exp(-((float(R[i]) / a_bar) ** 4))
         tapered = [A * math.sqrt(g) * (1.0 - taper) for g in gain]
-        saturation = min(1.0, (1.0 - B * taper) / sum(tapered))
+        # S58 (D217 item 5): was `(1.0 - B * taper)` - the saturation reads the body's depth under the ring's mean
+        # (re-derived by hand in tests/test_bar.py), which on these three rings leaves it at 1 as the cosine did.
+        saturation = min(1.0, (1.0 - float(depth[i])) / sum(tapered))
+        assert 0.0 <= float(depth[i]) < B
         published = [float(np.asarray(F[pt.amplitude_field(m)])[i]) for m in (2, 3, 4, 5, 6)]
         assert published == pytest.approx([saturation * t for t in tapered], rel=1e-9, abs=1e-15), radius
         assert float(np.asarray(F["arm_saturation"])[i]) == pytest.approx(saturation, rel=1e-12) and saturation == 1.0
@@ -441,8 +501,11 @@ def test_arm_multiplicity_is_the_mode_with_the_most_mass_weighted_power(prod):
     the **published** amplitudes - the bar's taper in, which takes most of the inner disc's two- and three-armed
     power out of the sum - so the Milky Way's label is 6 where the untapered gain's largest share is five arms'
     (tests above); ``ngc_4414``'s is 4 on either."""
+    # S58 (D217): `ngc_4414`'s shares were (0.1224, 0.2112, 0.2368, 0.2286, 0.2009) with a bar's taper in its
+    # amplitudes; pinned unbarred it has none, so its published amplitudes are the gain's and its shares the
+    # untapered ones the predictions' test pins (0.1935 ... 0.1401). Its label is still 4; the Milky Way's unmoved.
     for template, label, shares in (("milky_way", 6.0, (0.0144, 0.1565, 0.2312, 0.2814, 0.3165)),
-                                    ("ngc_4414", 4.0, (0.1224, 0.2112, 0.2368, 0.2286, 0.2009))):
+                                    ("ngc_4414", 4.0, (0.1935, 0.2363, 0.2390, 0.1912, 0.1401))):
         o = pattern_run(prod, template)
         F, R = o.fields, o.grid.R
         amplitudes = published_amplitudes(o)
@@ -543,15 +606,28 @@ def test_regression_one_mode_is_the_field_s55_published(prod, template, m):
 
     stars, unit = single_mode(R, m, f)
     new_stars = stars.contrast(R, phi)
-    # The stars: exactly - the same bytes.
-    assert new_stars.tobytes() == old_stars.tobytes()
+    # The stars: exactly - the same bytes. **S58 (D217 item 4): the arms' half of the regression.** S55's field was
+    # one arm mode and a cosine bar; the bar is a body since S58, so the field S55 published (still digested above,
+    # by the frozen copy) is no longer what the model makes inside the bar's reach. What the regression holds is
+    # what the ruling kept: the arm mode under the bar's unchanged taper is S55's, bit for bit - the frozen copy's
+    # field with its bar amplitude at 0 - and S55's own field differs from it by its cosine bar and nothing else.
+    import s55_patterns as s55
+
+    arms_only = s55.stellar_contrast(R, phi, f["arm_contrast"], 0.0, float(m), f["pitch_angle"], f["bar_half_length"])
+    assert new_stars.tobytes() == arms_only.tobytes()
+    taper, _, bar_angle = pt.bar_terms(R, f["pitch_angle"], f["bar_half_length"])
+    cosine = f["bar_contrast"] * taper[:, None] * np.cos(2.0 * (phi[None, :] - bar_angle))
+    assert float(np.abs(old_stars - (arms_only + cosine)).max()) < 1e-15 and float(np.abs(cosine).max()) == pytest.approx(f["bar_contrast"], rel=1e-3)
     # The unit amplitudes the gas pattern makes of one fully amplified mode are 1 on every ring: the taper and the
     # arm amplitude taken back out, to rounding.
     assert np.all(unit[pt.ARM_MODES.index(m)] == 1.0) and unit.sum() == R.size
     # The same pattern through the class's own door, from a mapping of fields at phase 0.
     fields = {**{n: stars.amplitudes[k] for k, n in enumerate(pt.AMPLITUDE_FIELDS)}, **dict.fromkeys(pt.PHASE_FIELDS, 0.0),
-              "bar_contrast": f["bar_contrast"], "pitch_angle": f["pitch_angle"], "bar_half_length": f["bar_half_length"]}
-    assert pt.ArmPattern.from_fields(fields, R).contrast(R, phi).tobytes() == old_stars.tobytes()
+              "bar_contrast": f["bar_contrast"], "pitch_angle": f["pitch_angle"], "bar_half_length": f["bar_half_length"],
+              "bar_axis_ratio": 0.4, "bar_boxiness": 3.0, "bar_profile_index": 2.0, "bar_mass_share": 0.0,
+              "disc_surface_density": np.exp(-R / 2.6)}
+    assert set(fields) == set(pt.PATTERN_READS)
+    assert pt.ArmPattern.from_fields(fields, R).contrast(R, phi).tobytes() == arms_only.tobytes()
 
 
 def test_regression_the_published_s55_fields_are_the_m_4_oracle(prod):
@@ -576,11 +652,23 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
     held = layer_reference.load()["fields"]
     names = ("pitch_angle", "arm_contrast", "bar_contrast", "bar_corotation_radius", "bar_pattern_speed",
              "bar_half_length", "gas_arm_contrast", "swing_x", "swing_arm_min", "swing_arm_max", "arm_contrast_mean")
+    bar_s = ("bar_contrast", "bar_corotation_radius", "bar_pattern_speed", "bar_half_length")
     for template in TEMPLATES:
         for layer in (True, False):
             o = run(the_model(prod), inputs_of(template), only=names, layer=layer)
             label = layer_reference.label(DEFAULT_MODEL, template)
-            assert [n for n in names if layer_reference.value_digest(o.fields[n]) != held[label][n]] == [], (template, layer)
+            moved = [n for n in names if layer_reference.value_digest(o.fields[n]) != held[label][n]]
+            # S58 (D217 item 3): `ngc_4414` is pinned unbarred, and an unbarred galaxy's bar numbers are NaN - by
+            # ruling, not by a moved stream. Every other number is S55's, and the Milky Way's all are.
+            assert moved == ([] if template == "milky_way" else list(bar_s)), (template, layer)
+            if moved:
+                assert all(math.isnan(o.fields[n]) for n in bar_s)
+                # "Every existing draw keeps its stream and value": the same inputs with the pin taken off - the
+                # derivation bars this disc - draw the bar's numbers S55 drew, bit for bit.
+                unpinned = {k: v for k, v in inputs_of(template).items() if k != "bar_present"}
+                derived = run(the_model(prod), unpinned, only=names + ("bar_present",), layer=layer)
+                assert derived.fields["bar_present"] == "yes"
+                assert [n for n in names if layer_reference.value_digest(derived.fields[n]) != held[label][n]] == []
     # And the retired stream is not read: the stage's source names no "arms" stream.
     source = (PACKAGE / "stages" / "pattern.py").read_text(encoding="utf-8")
     streams = [n.args[1].value for n in ast.walk(ast.parse(source))
@@ -592,15 +680,24 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
 
 
 def test_the_phases_are_uniform_draws_on_the_texture_seed_one_stream_per_mode(prod):
+    """S58 (D217 item 9): "θ₂ = 0 in a barred galaxy (the m = 2 crest at R = a on the bar's axis, S55's convention
+    ...: no draw); #139 re-ruled for m = 2 only, m ≥ 3 and an unbarred galaxy's m = 2 stay uniform". So the draws
+    are read on an unbarred galaxy - the default disc pinned unbarred - where all five are the streams' own; and on
+    the default, barred, the two-armed phase is 0 and the other four are the same streams at the same values."""
     m = the_model(prod)
     seen = []
     for seed in range(200):
-        F = run(m, {"texture_seed": seed}, SMALL, only=pt.PHASE_FIELDS).fields
+        F = run(m, {"texture_seed": seed, "bar_present": False}, SMALL, only=pt.PHASE_FIELDS).fields
         phases = [float(F[n]) for n in pt.PHASE_FIELDS]
         # The stream is named by the slot, "phase" and the mode: adding a mode later moves no other mode's phase.
         want = [2.0 * math.pi * float(_seeds.rng(seed, "arm_phases", "phase", mode).random()) for mode in pt.ARM_MODES]
         assert phases == want and all(0.0 <= p < 2.0 * math.pi for p in phases), seed
         seen.append(phases)
+        if seed < 40:  # a barred galaxy (the default; the pin says the same): the two-armed mode is the bar's
+            for given in ({}, {"bar_present": True}):
+                B = run(m, {"texture_seed": seed, **given}, SMALL, only=(*pt.PHASE_FIELDS, "bar_present")).fields
+                assert B["bar_present"] == "yes" and [float(B[n]) for n in pt.PHASE_FIELDS] == [0.0, *want[1:]], seed
+    assert (arm_phases.BAR_TIED_MODE, arm_phases.BAR_TIED_PHASE) == (2, 0.0)
     seen = np.array(seen)
     # Uniform on the circle: no preferred value (the mean direction of 200 draws is under 3/sqrt(200)), and the
     # modes are drawn apart (their phases are uncorrelated).
@@ -611,6 +708,10 @@ def test_the_phases_are_uniform_draws_on_the_texture_seed_one_stream_per_mode(pr
         assert d.provenance == "synthetic" and d.unit == "rad" and d.kind.value == "scalar"
         assert "Uniform on the circle" in d.statistic and "[inferred]" in d.statistic and "absence of a measured preference" in d.statistic
         assert "self-gravitating" in d.stands_in_for and "Every ring's mean and every amplitude" in d.conserves
+        # S58: the two-armed mode's declaration, and only its, says what a bar does to it, with the source read.
+        tied = d.name == pt.phase_field(2)
+        assert ("In a barred galaxy this mode is not drawn" in d.about) == tied
+        assert ("Block et al. 2004" in d.statistic and "within 20° of the bar axis" in d.statistic) == tied
     assert [d.name for d in arm_phases.ARM_MODE_PHASES] == list(pt.PHASE_FIELDS) == [f"arm_mode_phase_{k}" for k in range(2, 7)]
 
 
@@ -623,7 +724,9 @@ def test_rerolling_the_pattern_seed_leaves_the_phases_and_rerolling_the_texture_
         assert other["arm_contrast"] != base["arm_contrast"] and other["pitch_angle"] != base["pitch_angle"]
     for seed in (4, 5, 6):
         other = run(m, {"pattern_seed": 0, "texture_seed": seed}, only=PATTERN_FIELDS).fields
-        assert all(other[n] != base[n] for n in pt.PHASE_FIELDS)
+        # S58 (D217 item 9): was `all(... for n in pt.PHASE_FIELDS)` - the default galaxy is barred, so its
+        # two-armed mode is on the bar's axis under every texture seed, and the other four turn.
+        assert all(other[n] != base[n] for n in pt.PHASE_FIELDS[1:]) and other[pt.phase_field(2)] == base[pt.phase_field(2)] == 0.0
         for n in LAW_FIELDS:
             assert np.array_equal(np.asarray(other[n]), np.asarray(base[n])), n
         for n in ("pattern_density_contrast", "gas_density_contrast"):
@@ -655,6 +758,10 @@ def test_with_the_layer_off_the_phases_are_not_numbers_and_the_stream_is_never_d
     run(m, grid=SMALL, only=pt.PHASE_FIELDS, layer=False)
     assert calls == []
     run(m, grid=SMALL, only=pt.PHASE_FIELDS, layer=True)
+    # S58 (D217 item 9): was `for mode in pt.ARM_MODES` - in a barred galaxy the two-armed mode's stream is not drawn.
+    assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES[1:]]
+    calls.clear()
+    run(m, {"bar_present": False}, SMALL, only=pt.PHASE_FIELDS, layer=True)
     assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES]
     calls.clear()
     whole_off = run(m, grid=SMALL, only=PATTERN_FIELDS, layer=False)
@@ -676,7 +783,16 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     F, R, phi = o.fields, o.grid.R, o.grid.phi
     stars, gas = compose.stellar_pattern(F, R), compose.gas_pattern(F, R, c)
     assert not stars.flat and not gas.flat
-    assert stars.contrast(R, phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
+    # S58 (D217 item 4): was `stars.contrast(R, phi)` bit for bit - the point function at the cells' centres. The
+    # published field holds the arm modes at the centres, as before, and the bar's body as its exact mean over each
+    # cell, so a ring keeps its stars on any grid; the two differ only where there is a body, by the body's
+    # curvature across a cell: 1.9e-4 of the ring's mean at most on the Milky Way template, and not at all on
+    # `ngc_4414`, which has no bar.
+    edges_phi = o.grid["phi"].edges
+    assert stars.published(R, phi, edges_phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
+    apart = float(np.abs(stars.contrast(R, phi) - np.asarray(F["pattern_density_contrast"])).max())
+    assert apart == (pytest.approx(1.888e-4, rel=0.02) if template == "milky_way" else 0.0)
+    assert stars.barred == gas.barred == (template == "milky_way")
     # S57 (D216): was "the law at the cells' centres over each ring's sampled mean, where that has left 1" (a ranked
     # ridge's did: by 8.75e-4 and 1.25e-3). S57 (D216 G3 item 4): the gas's published field is the law's exact mean
     # over each grid cell's extent in azimuth at the ring's own radius, bit for bit - the first build published the law at the cells' centres - and its ring mean is
@@ -705,7 +821,10 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
         assert np.all(shape.sector_means(20.0, edges) == 1.0)
     worst = 0.0
     for radius in (1.0, 3.0, 6.0, 8.0, 9.5):  # ``ngc_4414``'s last ring with a mode is at 9.9 kpc
-        for shape, tolerance in ((stars, 1e-8), (gas, 1e-6)):
+        # S58 (D217): the stars' tolerance was 1e-8 - cosines' own integrals against a midpoint rule. With the
+        # body's interpolant in the field the dense average carries the midpoint rule's error on a piecewise-linear
+        # function, as the gas's always did.
+        for shape, tolerance in ((stars, 1e-6), (gas, 1e-6)):
             means = shape.sector_means(radius, edges)
             assert float(means.mean()) == pytest.approx(1.0, abs=1e-12), radius
             dense = []
@@ -722,26 +841,52 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
 def test_a_pattern_with_nothing_to_place_is_flat():
     R = DEFAULT.build().R
     zero, none = (0.0,) * 5, np.zeros((5, R.size))
-    assert pt.ArmPattern(R, none, zero, 0.0, 13.5, 5.2).flat
-    assert not pt.ArmPattern(R, none, zero, 0.3, 13.5, 5.2).flat  # the bar alone is a pattern
+    nan = float("nan")
+    sigma = 50.0 * np.exp(-(R - 8.0) / 2.6)
+    body = (0.4, 3.0, 2.0, 0.1, sigma)  # the body's shape, its share of the disc, the disc: what a bar needs (S58)
+    # S58 (D217 item 3): **a bar whose amplitude and half-length are both NaN is no bar - an unbarred galaxy - and
+    # not an unresolved pattern.** Until S58 "no bar" was an amplitude of 0, and a NaN among the bar's numbers made
+    # the pattern flat.
+    assert pt.ArmPattern(R, none, zero, nan, 13.5, nan).flat                      # no arms and no bar
+    assert not pt.ArmPattern(R, none, zero, 0.3, 13.5, 5.2, *body).flat           # the bar's body alone is a pattern
+    assert pt.ArmPattern(R, none, zero, 0.3, 13.5, 5.2, 0.4, 3.0, 2.0, 0.0, sigma).flat  # a body that holds no mass
     some = none.copy()
     some[2] = 0.3
-    assert not pt.ArmPattern(R, some, zero, 0.0, 13.5, 5.2).flat
-    # A pattern the grid could not resolve, or the layer did not realise, stays axisymmetric.
-    assert pt.ArmPattern(R, some, zero, float("nan"), float("nan"), 5.2).flat
-    assert pt.ArmPattern(R, some, (float("nan"),) * 5, 0.3, 13.5, 5.2).flat
+    unbarred = pt.ArmPattern(R, some, zero, nan, 13.5, nan)
+    assert not unbarred.flat and not unbarred.barred and unbarred.body is None and math.isnan(unbarred.bar_angle)
+    assert not unbarred.depth.any() and not unbarred.ring_share.any()
+    barred = pt.ArmPattern(R, some, zero, 0.3, 13.5, 5.2, *body)
+    assert not barred.flat and barred.barred and barred.depth.max() > 0.0 and barred.ring_share.max() > barred.depth.max()
+    # A pattern the grid could not resolve, or the layer did not realise, stays axisymmetric: a pitch that is not a
+    # number; phases that are not; one of the bar's two numbers without the other; a bar with no body to build.
+    assert pt.ArmPattern(R, some, zero, nan, nan, nan).flat
+    assert pt.ArmPattern(R, some, zero, 0.3, nan, 5.2, *body).flat
+    assert pt.ArmPattern(R, some, (nan,) * 5, 0.3, 13.5, 5.2, *body).flat
+    assert pt.ArmPattern(R, some, (nan,) * 5, nan, 13.5, nan).flat
+    assert pt.ArmPattern(R, some, zero, nan, 13.5, 5.2, *body).flat and pt.ArmPattern(R, some, zero, 0.3, 13.5, nan, *body).flat
+    assert pt.ArmPattern(R, some, zero, 0.3, 13.5, 5.2).flat  # barred, and nothing said of its body
+    assert pt.ArmPattern(R, some, zero, 0.3, 13.5, 5.2, 0.4, 3.0, 2.0, nan, sigma).flat
     with pytest.raises(ValueError, match="5 modes"):
-        pt.ArmPattern(R, some[:3], zero, 0.3, 13.5, 5.2)
+        pt.ArmPattern(R, some[:3], zero, 0.3, 13.5, 5.2, *body)
     # The gas pattern on a made-up disc (S57, D216: it holds the disc's κ and Σ, G and the gas's sound speed where
     # it held a ratio, a width and a mask; "a ratio of 1" is no longer a way to be flat - there is no ratio).
+    # S58 (D217): it holds no bar amplitude - the lanes need the bar's length, the body's footprint and the
+    # template's four numbers - and a half-length that is NaN is no bar.
     unit = np.where(some > 0, 1.0, 0.0)
     disc = (220.0 * math.sqrt(2.0) / R, 50.0 * np.exp(-(R - 8.0) / 2.6), 4.30091727e-6, 6.0)
-    assert gp.GasPattern(R, unit, zero, 0.4, float("nan"), float("nan"), 5.2, *disc).flat
-    assert gp.GasPattern(R, unit, (float("nan"),) * 5, 0.4, 0.3, 13.5, 5.2, *disc).flat  # the layer did not realise
-    assert gp.GasPattern(R, none, zero, 0.4, 0.0, 13.5, 5.2, *disc).flat         # no stellar mode and no bar
-    assert gp.GasPattern(R, unit, zero, 0.0, 0.0, 13.5, 5.2, *disc).flat         # no arm amplitude and no bar
-    assert not gp.GasPattern(R, unit, zero, 0.4, 0.0, 13.5, 5.2, *disc).flat
-    assert not gp.GasPattern(R, none, zero, 0.4, 0.3, 13.5, 5.2, *disc).flat     # the bar's term alone
+    lanes = (0.4, 3.0, 1.15, 0.10, 2.6, 0.10)
+    assert gp.GasPattern(R, unit, zero, 0.4, nan, 5.2, *disc, *lanes).flat            # the pitch is not a number
+    assert gp.GasPattern(R, unit, (nan,) * 5, 0.4, 13.5, 5.2, *disc, *lanes).flat     # the layer did not realise
+    assert gp.GasPattern(R, none, zero, 0.4, 13.5, nan, *disc).flat                   # no stellar mode and no bar
+    assert gp.GasPattern(R, unit, zero, 0.0, 13.5, nan, *disc).flat                   # no arm amplitude and no bar
+    assert gp.GasPattern(R, unit, zero, 0.4, 13.5, 5.2, *disc).flat                   # a bar with no lanes' numbers
+    free = gp.GasPattern(R, unit, zero, 0.4, 13.5, nan, *disc)
+    assert not free.flat and not free.barred                                          # an unbarred galaxy's arms
+    assert not gp.GasPattern(R, unit, zero, 0.4, 13.5, 5.2, *disc, *lanes).flat
+    alone = gp.GasPattern(R, none, zero, 0.4, 13.5, 5.2, *disc, *lanes)
+    assert not alone.flat and alone.barred                                            # the bar's lanes alone
+    with pytest.raises(ValueError, match="an unbarred pattern has no lanes"):
+        free.lanes
     # Fields that hold no pattern give none.
     assert pt.ArmPattern.from_fields({"bar_contrast": 0.3}, R) is None
     assert gp.GasPattern.from_fields({"bar_contrast": 0.3}, R, {"G": 4.30091727e-6, "GAS_DISPERSION": 6.0}) is None

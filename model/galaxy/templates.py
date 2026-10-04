@@ -6,10 +6,21 @@ fitted template the targets, the residuals and the checks ``[verified: DECISIONS
 Nothing here computes: the inputs are resolved against the registry by :func:`resolve`, the fit is
 ``tools/fit_template.py``'s, the checks are judged by ``galaxy/specs/templates.py``.
 
-**Two are registered.** ``milky_way`` is the default and overrides nothing, so it cannot drift from
-the registry's defaults (the gate: a run of it is bit-identical to a run with no inputs given).
-``ngc_4414`` sets the four controls its fit's targets measure and leaves the other three to the
-registry; its merger list is empty and every seed is 4414.
+**Two are registered.** ``milky_way`` is the default and overrides no control, no seed and no event
+list, so it cannot drift from the registry's defaults (the gate: a run of it is bit-identical to a
+run with no inputs given). ``ngc_4414`` sets the four controls its fit's targets measure and leaves
+the other three to the registry; its merger list is empty and every seed is 4414.
+
+**Pins** (S58, DECISIONS.md D217 item 2). A pin is a measured fact about the galaxy's structure that
+replaces what the model would derive: a :class:`Pin` names one of the registry's pin inputs, states
+True or False and carries its source. It is "a measured fact entering as template structure, not a
+fit: no parameter is set to a number". The one pin there is, ``bar_present``, is the observed class:
+``milky_way`` pins barred and ``ngc_4414`` unbarred. A pin travels with the template's inputs
+(:func:`overrides`, :func:`resolve`), so every run of a template is the pinned galaxy; no request
+gives one directly. **The default template's pin restates what the model derives at the registry's
+defaults** (the criterion says barred there), so pinning it changes no bit of any field - that is the
+gate above, still - but a run of the template and a run with no inputs are two points in input space:
+their ``inputs`` differ by the pin, and by nothing else.
 
 **A fit's free set is a rule, in data** ``[verified: DECISIONS.md D213, as amended at the gate, ruling 1]``:
 a control is free only if a fit target measures what it controls, and ``Fit.free`` names that target
@@ -117,6 +128,28 @@ class Instrument:
 
     distance_mpc: float | None
     pixel_scale_arcsec: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class Pin:
+    """One measured fact of the galaxy's structure, stated in place of what the model derives (D217 item 2).
+
+    ``name`` is a pin input of the registry (kind ``pin``); ``value`` is the observed class, True or False;
+    ``source`` carries its tag (rule B14). Nothing is fitted and no number is set: the model's derivation is
+    replaced, and what it would have said is still published beside the pinned verdict.
+    """
+
+    name: str
+    value: bool
+    source: str
+
+    def __post_init__(self) -> None:
+        if not IDENT.match(self.name):
+            raise TemplateError(f"pin name {self.name!r} must match {IDENT.pattern}")
+        if not isinstance(self.value, bool):
+            raise TemplateError(f"pin {self.name}: the observed class is True or False, got {self.value!r}")
+        if not any(tag in self.source for tag in TAGS):
+            raise TemplateError(f"pin {self.name}: the source carries no tag (rule B14)")
 
 
 @dataclass(frozen=True, slots=True)
@@ -278,7 +311,9 @@ class Template:
     controls: Mapping[str, float] = MappingProxyType({})  # overrides of the registry's defaults
     seeds: Mapping[str, int] = MappingProxyType({})
     mergers: tuple[MergerEvent, ...] | None = None  # None: the registry's list; (): no merger
-    pins: tuple[Any, ...] = ()  # measured structure that replaces the layer's draw: none until P3-P4
+    # Measured structure that replaces what the model derives or the layer draws. Since P3 (S58, D217): the
+    # observed bar class, ``bar_present``.
+    pins: tuple[Pin, ...] = ()
     fit: Fit | None = None
     checks: tuple[Check, ...] = ()
     sources: Mapping[str, str] = MappingProxyType({})  # dotted path of a number -> its tag
@@ -293,6 +328,10 @@ class Template:
         object.__setattr__(self, "sources", MappingProxyType(dict(self.sources)))
         if self.mergers is not None:
             object.__setattr__(self, "mergers", tuple(self.mergers))
+        object.__setattr__(self, "pins", tuple(self.pins))
+        pinned = [p.name for p in self.pins if isinstance(p, Pin)]
+        if len(pinned) != len(self.pins) or len(set(pinned)) != len(pinned):
+            raise TemplateError(f"template {self.name}: pins are Pin declarations, each input pinned once")
         names = [c.name for c in self.checks]
         if len(set(names)) != len(names):
             raise TemplateError(f"template {self.name}: a check is named twice")
@@ -311,7 +350,11 @@ class Template:
                 raise TemplateError(f"template {self.name}: {name!r} is not a registered seed")
         if self.mergers is not None and "mergers" not in table:
             raise TemplateError(f"template {self.name}: the registry has no merger list to override")
-        missing = [path for path in numbers(self) if path not in self.sources]
+        for pin in self.pins:
+            inp = table.get(pin.name)
+            if inp is None or inp.kind != "pin":
+                raise TemplateError(f"template {self.name}: {pin.name!r} is not a registered pin")
+        missing =[path for path in numbers(self) if path not in self.sources]
         if missing:
             raise TemplateError(f"template {self.name}: no source for {missing} (rule B14)")
         for path, source in self.sources.items():
@@ -349,11 +392,19 @@ def numbers(template: Template) -> tuple[str, ...]:
     return tuple(paths)
 
 
+def pinned(template: Template) -> dict[str, bool]:
+    """The template's pins as inputs: {pin input: the observed class} (S58, D217 item 2)."""
+    return {p.name: p.value for p in template.pins}
+
+
 def overrides(template: Template) -> dict[str, Any]:
-    """Only what the template sets: the base a request's own inputs are laid over. ``milky_way``'s is empty."""
+    """Only what the template sets: the base a request's own inputs are laid over - its controls, its seeds, its
+    merger list, and its pins. ``milky_way``'s holds its one pin and nothing else: no control, no seed and no
+    event list, so it is the registry's defaults, and its pin restates what the model derives there."""
     out: dict[str, Any] = {**template.controls, **template.seeds}
     if template.mergers is not None:
         out["mergers"] = template.mergers
+    out.update(pinned(template))
     return out
 
 
@@ -361,14 +412,15 @@ def resolve(template: Template, table: Mapping[str, Input] = INPUTS, accepted: t
     """The template's full input mapping: its overrides on the registry's defaults, in the registry's order.
 
     ``accepted`` restricts it to the inputs a model takes (``Model.input_names``). An input with no default
-    and no override is left out, as the runner leaves it (rule B9).
+    and no override is left out, as the runner leaves it (rule B9); so is a pin the template does not state
+    (S58, D217: a pin has no default - not given, the model derives).
     """
     given = overrides(template)
     out: dict[str, Any] = {}
     for name in tuple(table) if accepted is None else accepted:
         if name in given:
             out[name] = given[name]
-        elif not table[name].unset:
+        elif not table[name].unset and table[name].kind != "pin":
             out[name] = table[name].default
     return out
 
@@ -407,13 +459,30 @@ MILKY_WAY = Template(
     label="Milky Way",
     about=(
         "The default galaxy: the registry's defaults, every one a measured value of the Milky Way or derived "
-        "from one (rule A5). The template overrides no input, so it is the defaults by construction; its "
-        "merger list is the registry's two events and its seeds the registry's. Seen face-on."
+        "from one (rule A5). The template overrides no control, no seed and no event list, so it is the defaults "
+        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins one "
+        "measured fact of its structure: the Milky Way is barred. The model derives the same at these inputs, so "
+        "the pin changes no number. Seen face-on."
     ),
     model="azimuthal",
     camera=Camera(inclination_deg=0.0, azimuth_deg=270.0, radius_kpc=20.0, fov_deg=45.0),
     filters="rgb",
     instrument=Instrument(distance_mpc=None, pixel_scale_arcsec=None),
+    # S58 (D217 item 2): the observed class, barred. The derivation says the same at the defaults (the bar's
+    # formation time 1.5 Gyr against a disc 9.6 Gyr old), so no bit of any field moves with the pin
+    # (tests/test_templates.py::test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs).
+    pins=(
+        Pin(
+            name="bar_present",
+            value=True,
+            source=(
+                "[verified: GALAXY_INPUTS.md §7 rows 15-17, citing Bland-Hawthorn & Gerhard 2016 (BHG16) as the "
+                "acceptance rows do: the Milky Way's bar, half-length 5.0 +/- 0.2 kpc, pattern speed 43 +/- 9 km/s/kpc, "
+                "corotation 4.5-7.0 kpc; docs/READING_BAR.md A2, We15 and P17, read the same bar] "
+                "[verified: DECISIONS.md D217 item 2: milky_way pins barred]"
+            ),
+        ),
+    ),
     sources={
         "camera.inclination_deg": "[inferred] a display choice: the Milky Way stands face-on [verified: BUILD_III.md section 2]",
         "camera.azimuth_deg": "[inferred] a display choice: the viewer's face-on preset, a turn of the picture "
@@ -437,9 +506,13 @@ NGC_4414 = Template(
         "redshift ends on the lower bound of its range - a finding, not a fit. Five more measured properties the "
         "fit never saw are checks, judged by the specs; they were read once on an earlier fit, since withdrawn, so "
         "every verdict on this one is disclosed and none is blind. Nothing measures its mergers or its seeds, so the "
-        "merger list is empty and every seed is 4414. The model draws it with a bar and with regular arms: no source "
-        "finds a bar in NGC 4414 and its arms are flocculent, and a template takes its measured structure as pins "
-        "only from build phases P3 and P4 on. The position angle (159 degrees) is not applied: the camera has no roll."
+        "merger list is empty and every seed is 4414. It is pinned unbarred, as observed: no source finds a bar in "
+        "NGC 4414, while the model's own criterion - the time a disc this dominant takes to form a bar, under a "
+        "gigayear, against the disc's age - says it should have one; the disagreement is published, the formation "
+        "time beside the pinned verdict. So it has no bar's body and no bar's lanes, and its arm modes run to the "
+        "centre. The model still draws regular arms where its arms are flocculent: a template takes that measured "
+        "structure as pins only from build phase P4 on. The position angle (159 degrees) is not applied: the camera "
+        "has no roll."
     ),
     model="azimuthal",
     # The four free controls as the fit leaves them (tools/fit_template.py ngc_4414, 2026-10-04), copied by hand
@@ -465,7 +538,20 @@ NGC_4414 = Template(
     camera=Camera(inclination_deg=55.0, azimuth_deg=0.0, radius_kpc=15.0, fov_deg=5.0),
     filters="wfc3",
     instrument=Instrument(distance_mpc=17.7, pixel_scale_arcsec=None),
-    pins=(),
+    # S58 (D217 item 2): the observed class, unbarred, in place of the derived presence (which says barred: the
+    # criterion's recorded miss on this galaxy). Not a fit - no control moves and no number is set - and the five
+    # checks are judged on the pinned galaxy. A one-field flip restores the barred picture with nothing else changed.
+    pins=(
+        Pin(
+            name="bar_present",
+            value=False,
+            source=(
+                f"[verified: {_READING}, row 16 and 'Structural mismatches': NGC 4414 has no bar - RC3 SA(rs)c? (the "
+                "family SA), S4G fits no bar component, Buta family index 0.00, V02 'no bar', W04 'little evidence "
+                "for a bar'] [verified: DECISIONS.md D217 item 2: ngc_4414 pins unbarred]"
+            ),
+        ),
+    ),
     fit=Fit(
         targets=(
             Target(
@@ -684,8 +770,11 @@ NGC_4414 = Template(
 TEMPLATES: Mapping[str, Template] = MappingProxyType({t.name: t for t in (MILKY_WAY, NGC_4414)})
 if DEFAULT not in TEMPLATES or next(iter(TEMPLATES)) != DEFAULT:
     raise TemplateError(f"the default template {DEFAULT!r} leads the registry")
-if overrides(TEMPLATES[DEFAULT]):
-    raise TemplateError("the default template overrides nothing: it is the registry's defaults (D213, ruling 1)")
+if TEMPLATES[DEFAULT].controls or TEMPLATES[DEFAULT].seeds or TEMPLATES[DEFAULT].mergers is not None:
+    raise TemplateError(
+        "the default template overrides no control, no seed and no event list: it is the registry's defaults "
+        "(D213, ruling 1); what it pins, the model derives there (D217 item 2)"
+    )
 for _template in TEMPLATES.values():
     _template.validate()
 

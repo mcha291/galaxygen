@@ -694,9 +694,9 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144 | 70 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149 | 75 |
 
-So the board's **81 open** is 11 permanent and 70 carried, and no item is unruled. (S22
+So the board's **86 open** is 11 permanent and 75 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -728,7 +728,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -2863,6 +2863,10 @@ never been judged in twenty-three sessions.
    the 2.6 kpc of row 4: 1.92, which with the λ_d length 2.605 reads 5.01. That would make the row
    what #21 already says it is — a check on R_d against BHG16's 2.6 — and setting it is the
    owner's or Audit III's call (B5: not retuned here). Still carried.
+   **S58 (D217, a conflict recorded for its reopening):** the blind reading of bars (`READING_BAR.md` Part A) gives
+   1.3–1.5 scale lengths in S0–Sab and 0.6 in Sc–Sd (Erwin 2005), ∼1.25 (Díaz-García et al. 2016), and
+   log a = 0.04 + 0.76 log h (Erwin 2019), which is 2.27 kpc at the model's 2.6 — against the 2.0 scale lengths
+   and 5.21 kpc here. Left as it is at the gate; the bar's body, lanes and saturation now end at this length.
 81. **The catalogue's young-star cut has no source and no mechanism** (S27, BUILD_II Phase 2, D176).
    In the `azimuthal` model a star younger than 0.1 Gyr takes its azimuth from where stars form
    today (`sfr_modulation`) and an older one from where the mass is (the density contrast). The
@@ -3561,6 +3565,9 @@ never been judged in twenty-three sessions.
    record in `tests/test_render.py` (`face_on`) still composes the mixed slab. (c) The flare's pressure — the
    gas's own weight and the halo's — as above. (d) The dust past the stellar disc's edge, 1.5 × 10⁻⁵ of the dust
    mass, has no gas height and is no longer heated (it sat at 1.5–9 K in the slab): the render draws none there.
+   **S58 (D217): the placement half has grown.** With the gas's lanes inside the bar, placing the dust round each
+   ring would take 3.5 % off the disc's absorbed power in the layered geometry (0.965; +0.3 % at S57), 5 % in the
+   slab, and a tenth at 2 kpc — measured in `tests/test_dust_layer.py`, still not applied.
 129. **The gas ridge's width is one galaxy's number** (S51, D210). `GAS_ARM_WIDTH`, the ridge's FWHM as a fraction of
    the arm-to-arm period, is 0.17 from the only paper that fits gas and stellar arm widths the same way in the same
    galaxy — M51's inner arms, where the gas reads ≈ 30° against the stars' ≈ 60° `[verified: Egusa et al. 2017, MNRAS
@@ -3695,6 +3702,14 @@ never been judged in twenty-three sessions.
    outside the split). If statement 8 still fails after P3 it is a conflict of sources, local swing theory
    against the Fourier reading, to record and put to the owner — not to mend with a constant. The owner's
    alternative, asked at S56's close: S26's global window on every ring (D215).
+   **Re-read once at P3's close (S58, D217), on the composed field with the bar's body in.** The Milky Way
+   template's mode power is 0.262 / 0.109 / 0.204 / 0.197 / 0.228 and A3/A2 0.65: statement 1 no longer fails
+   disc-wide. The pattern is two-armed to 4.2 kpc, the bar's own m = 2 — statement 6 is met inside the bar and
+   not out to half the optical radius. **Outside the bar nothing changed** (0.007 / 0.147 / 0.230 / 0.286 / 0.330;
+   m = 5–6 dominant from 8.7 kpc): **statement 8 still fails, and by ruling 12 it is now a conflict of sources —
+   local swing amplification against the Fourier reading — recorded and put to the owner, not reopened with a
+   constant.** No bar-driven two-armed amplitude was built: none is sourced against radius (#149). `ngc_4414`,
+   unbarred: 0.193 / 0.236 / 0.239 / 0.191 / 0.140, A3/A2 1.11, m = 5–6 from 6.6 kpc. Still carried, with the owner.
 139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
    uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
    differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
@@ -3702,6 +3717,11 @@ never been judged in twenty-three sessions.
    started each arm at a tip of the bar; a drawn phase for m = 2 does not. **Carried.** What closes it: a reading
    on the phase of spiral arms relative to bar ends and between modes (P3's reading is the place), or P4's pins
    for a template whose arms are measured.
+   **Re-ruled at S58 for m = 2 only (D217 item 9).** In a barred galaxy the two-armed mode's phase is not drawn:
+   θ₂ = 0, its crest on the bar's axis at the bar's end (arms begin within 20° of the bar axis in 10 of 12
+   galaxies, by eye and unsigned `[verified: Block et al. 2004, AJ 128, 183, Table 3; docs/READING_BAR.md Part B]`
+   — "a detection window, not a scatter: no draw"). m ≥ 3, and an unbarred galaxy's m = 2, stay uniform and
+   independent `[inferred]`. Still carried for those.
 140. ~~**The gas ridge is placed by rank along each ring: a one-session instrument**~~ **DISCHARGED at S57** (S56, D215 rulings 7–10; retired D216). The
    exponential of a sum of modes made knots (a crest of 11 at R₀ where one mode's is 3.07), so on each ring the
    gas takes one mode's ridge values in the order of the stellar pattern. That keeps the sourced ratio of means
@@ -3738,6 +3758,11 @@ never been judged in twenty-three sessions.
    checkpoint may use; or, the owner's to order with a read source, a floor on the drawn pitch (the draw is the
    stellar pattern's law, and changing it moves layer-off fields on those seeds). What kills the reading: a
    thickness factor that leaves the interarm troughs under a tenth.
+   **S58 (D217): the regime now reaches the centre of an unbarred galaxy.** With no bar there is no taper, the
+   response is forced to the innermost ring (total forcing 4–6), and `ngc_4414`'s published gas is under 10⁻⁹ of
+   its ring's mean from 0.26 to 3 kpc; at one corner of the controls (the largest halo, the smallest spin, the
+   largest retention, pinned unbarred) 55 cells are exactly zero, where the solver's s underflows the doubles'
+   subnormals — published as the law gives it, counted in a test, nothing clipped.
 143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
    item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
    together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
@@ -3755,6 +3780,56 @@ never been judged in twenty-three sessions.
    model calls it). **Carried.** What closes it: with #141, a time-dependent response; or a sourced width for
    the gas ridge of a co-rotating arm used as a check with its own row. What kills the reading: a co-rotating
    arm's gas ridge measured as wide as the stellar arm.
+145. **The bar's presence is a criterion that bars nearly everything, and is wrong for the one unbarred galaxy the
+   build holds** (S58, D217 items 1–2). Barred where Fujii et al. 2018's formation time, 0.146 exp(1.38/f_d) Gyr
+   with f_d the disc's share of V² at 2.2 scale lengths, is under the disc's age `[verified: Fujii et al. 2018,
+   MNRAS 477, 1451, eq. 11; docs/READING_BAR.md Part A]`: no draw, because no source read gives a barred fraction
+   against a criterion's value or a galaxy-to-galaxy scatter about a threshold. Checkpoint 1 is scale-free, so the
+   verdict has no mass dependence; over the controls it is unbarred only at the largest spin and the smallest
+   retention, against measured fractions of 0.5–0.7 peaking at 10^9.7 M☉ (Erwin 2018); it bars NGC 4414 (0.91 Gyr),
+   which has no bar, so that template carries a pin, and a pin holds through edited controls. The fit's second
+   parameter (0.27 to 8.8 Gyr at one f_d, by the disc's Q) is unmodelled. **Carried.** What closes it: a source
+   giving the barred fraction against f_d or a second parameter with its scatter; or, the owner's to order,
+   Erwin's measured frequency in stellar mass as a draw at a checkpoint that holds a stellar mass. What kills the
+   reading: a volume-limited sample barred at nine in ten for f_d above 0.35.
+146. **The bar's body is normalised by its m = 2 maximum; its light share, its peak's place and its axis ratio are
+   unchecked or missed** (S58, D217 item 4). The body is a Ferrers component on generalised ellipses (b/a 0.4,
+   boxiness 3) whose strength is the drawn `bar_contrast`. The sourced light share, about a tenth of the whole
+   galaxy's light (Gadotti 2011), cannot be computed at checkpoint 3 (no bulge, no stellar surface density): the
+   body holds 0.1015 of the checkpoint-1 disc for the Milky Way template. **Its m = 2 amplitude peaks at 0.41 of
+   the half-length where the S⁴G stacks peak at 0.76–0.94** (Díaz-García et al. 2016b) — a recorded miss, the
+   bulge's dilution of the inner amplitude in the stacks the named suspect. The axis ratio is one number with no
+   draw (the one printed spread is for strong bars only), the profile one exponent where flat and exponential
+   bars are both observed, and the bar's torque parameter is not computed. **Carried.** What closes it: the share
+   and the amplitude's profile read at checkpoint 4 against the same sources; a read distribution of b/a.
+147. **The bar's gas lanes are a template with one number that has no source** (S58, D217 items 6–8 and the
+   follow-up). Two arcs on the leading side from the bar's end to a tenth of its length, curvature κ·a 1.15
+   (the median of ten galaxies; the strength law is an envelope with a wide spread, so no draw), the ring's gas
+   2.6 times denser inside the body's footprint than outside (PHANGS medians at 1.5 kpc, applied on every ring),
+   and **a Gaussian width of 0.10 a across the arc that no source gives: a declared placeholder.** The lanes stop
+   in a cliff at the bar's end; no nuclear ring is built (the excess inside a tenth of the length is laid by the
+   lanes' tails); the lane's peak reads 7 times its ring's mean against one simulation's ~10. Star formation in
+   the field and the star catalogues follows the footprint-uniform gas, not the ridge (the gate: `sfr_modulation`'s law must
+   not turn an unsourced ridge into a star-formation rate); the clouds are gas and stay on the lanes, and the
+   clusters, HII regions and bubbles born in them with them. **What the width carries, at FWHM 0.10 a:** 37 % of the
+   clusters at 0.3–0.9 a sit in the 9.4 % of cells with laned gas above twice the mean, leading the bar by 24°;
+   and the face-on frame is 1.5 % brighter through its dust with the layer on than physics-only, because a
+   conserving concentration of a ring's dust can only raise its transmission (the picture test pins it). **Carried.**
+   What closes it: a sub-kpc width statistic for bar dust lanes or molecular ridges; a read source on HII regions
+   along bar lanes; a run of lane strength along the arc. The owner may prefer the width as a live slider.
+148. **The model has two clocks** (S58, D217 follow-up item 5). The bar stage turns `halo_assembly_z` into the
+   disc's age by the flat-ΛCDM closed form on the model's own H₀ and Ω_M, in which the universe is 13.47 Gyr old;
+   the grid's time axis runs to 13.8 Gyr "from t = 0", and star formation starts at its zero whatever the
+   assembly redshift. The presence's threshold moves from f_d 0.3295 to 0.3276 between them; no template or
+   default changes. **Carried.** What closes it: one cosmology for the time axis and the redshifts.
+149. **No bar-driven two-armed arm is built, and an unbarred disc's arms run to its centre** (S58, D217 item 9 and
+   the follow-up). Bar forcing correlates with the local m = 2 amplitude out to 1.4–1.6 bar radii (Salo et al.
+   2010), but no source read prints the driven amplitude against radius, so none is invented: outside the bar the
+   arm-number law stands alone (#138). In an unbarred galaxy the modes carry their full amplitude to the centre:
+   the two-armed amplitude falls outward where the arm-mode reading says it rises (its statement 10: a disclosed
+   miss), and the six-armed mode's radial wavelength is 10–70 pc inside 0.3 kpc against a 75 pc ring step.
+   **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
+   sourced inner cut-off for arm modes in unbarred discs.
 
 
 ---
