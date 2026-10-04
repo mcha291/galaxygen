@@ -221,7 +221,10 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # unsourced number (the width) must not drive a census"), so the modulation inside the bar's reach, the young
     # stars' cell weights there, the cells' Gamma draws and the 3162nd star move once more; the expected count
     # is still the tables'.
-    assert F["bright_star_limit"] == pytest.approx(34697.372, rel=1e-6)  # S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S59 (D218): the arms' winding is laid in seeded segments, so on each ring the stellar pattern and the
+    # modulation are turned: the cells' weights, their Gamma draws and the 3162nd star move again (-1.0 %); the
+    # expected count is still the tables', to the bit.
+    assert F["bright_star_limit"] == pytest.approx(34348.365, rel=1e-6)  # S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -529,7 +532,9 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # another realisation again, inside the same gate.
 # S58 (D217 follow-up): the young stars inside the bar's reach follow the bar's footprint and not its lanes -
 # another realisation, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00161, 1.00226, 1.00268)  # S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S59 (D218): every cell's weight follows the arms on a winding laid in seeded segments - another realisation,
+# inside the same gate.
+BRIGHT_RGB_OVER_OWN = (0.99811, 0.99982, 1.00218)  # S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -621,8 +626,12 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # (whole-disc cluster light -1.0 %).
 # S58 (D217): the clouds inside the bar's reach are placed by the bar's lanes, and the two-armed mode sits on the
 # bar's axis - another Poisson realisation again (whole-disc cluster light +0.7 %).
-CLUSTERS_RGB_OVER_YOUNG = (0.96011, 0.96524, 0.97627)  # S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 0.98645  # S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
+# S59 (D218): the gas's response is turned round each ring by a winding laid in seeded segments, so the clouds fall
+# in other cells - another Poisson realisation again (whole-disc cluster light +5.0 %: three clusters of
+# 1.9-2.6e5 Msun under 4 Myr old are new to the census and are its three brightest; the clusters' light's own
+# noise, sqrt(sum L^2) / sum L, is 4.8 %, and the young population it is read against has not moved).
+CLUSTERS_RGB_OVER_YOUNG = (0.99372, 1.00109, 1.01543)  # S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
+CLUSTERS_LIGHT_OVER_YOUNG = 1.03547  # S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):
@@ -632,7 +641,8 @@ def test_the_cluster_census_carries_the_young_light(default, models, through_rgb
     clouds on the gas's ridge, another draw of the same census; the clusters' light moved +3.2 %, its seed-to-seed
     spread 4.4 %); 3.4 % and 1.1 % under at S56 (D215: the ridge on five arm modes, another draw again; the
     clusters' light moved -5.2 %); 4.0 % and 2.0 % under since S57 (D216: the clouds on the gas's steady response,
-    another draw again; the clusters' light moved -1.0 %): the clusters
+    another draw again; the clusters' light moved -1.0 %); from 0.6 % under to 1.5 % over and 3.5 % over since S59
+    (D218: the winding in seeded segments, another draw again; the clusters' light moved +5.0 %): the clusters
     carry the young light, so the remainder that leaves it out counts no star twice and drops none. A realisation (the
     census is a Poisson draw of clouds), seeded, so pinned tight."""
     _, (hc, ac) = through_rgb

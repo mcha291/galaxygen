@@ -127,7 +127,9 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     # S51 (D210): was 2568 (the clouds on the gas's ridge: another draw of the census)
     # S56 (D215): was 2583 (the ridge follows five arm modes: another draw again)
     # S58 (D217): was 2559 (inside the bar's reach the clouds are placed by the bar's lanes: another draw)
-    assert young.sum() == 2591  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
+    # S59 (D218): was 2591 (the winding in seeded segments turns each ring's gas, so the clouds fall in other cells:
+    # another draw of the census - 12 839 clusters, a fifth of them this young: 2556 expected, 45 its binomial spread)
+    assert young.sum() == 2648  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -164,12 +166,13 @@ def test_the_default_numbers(default):
     # S51 (D210): was 12860 (one bubble per cluster; the clouds on the gas's ridge)
     # S56 (D215): was 12930 (the ridge follows five arm modes: another draw of the census)
     # S58 (D217): was 12829 (inside the bar's reach the clouds are placed by the bar's lanes: another draw of the census)
-    assert radius.size == 12826  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    # S59 (D218): was 12826 (the winding in seeded segments turns each ring's gas: another draw of the census)
+    assert radius.size == 12839  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     assert float(np.median(radius)) == pytest.approx(8.963, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12499  # S58 (D217): was 12503 (another draw of the census)
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12496  # S59 (D218): was 12499 (another draw of the census); S58 (D217): was 12503 (another draw of the census)
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -191,7 +194,9 @@ def test_the_default_numbers(default):
     # the sixteen seeds' spread above
     # S57 (D216): was 0.0328 - the clouds placed by the gas's steady response, another draw of that ring's bubbles,
     # inside the same spread
-    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0344, abs=0.001)
+    # S59 (D218): was 0.0344 - the winding in seeded segments, another draw of that ring's bubbles, inside the same
+    # spread
+    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0296, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
     assert n_mid == pytest.approx(0.688, abs=0.002)
 

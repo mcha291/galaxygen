@@ -103,7 +103,9 @@ def test_union_prefix_and_determinism_at_every_level(fields, level):
     assert names(small) <= names(alone)
     # And the level-0 catalogue is untouched by the machinery: no name columns, the sample as always.
     # S56 (D215): was 22 - the cell's share of its ring is the stellar pattern's sector mean, and the pattern is five modes now.
-    assert "level" not in parent and parent.size == 14
+    # S59 (D218): was 14 - the winding is laid in seeded segments, so the pattern's sector mean in this cell fell from
+    # 0.693 of the ring's to 0.555 (expected 14.40 -> 11.53 stars; the ring's 665.03 is the same to the bit).
+    assert "level" not in parent and parent.size == 11
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields):
