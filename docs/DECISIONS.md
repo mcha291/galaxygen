@@ -10073,3 +10073,121 @@ check; fitting any NGC 4414 locus or phase; moving pinned contrasts by hand."
 arms in a sum of modes — a per-arm ridge representation for pinned templates is a plan change that is theirs
 (with #138); NGC 4414 now shows its measured pitch and its gas check turns to a miss — a one-field flip restores
 the draw; the gas law at the local pitch awaits the probe."
+
+**Built to the ruling (the model by the S58 builder, resumed; the existing tests re-read by two further Opus
+builders, the first having run out of room) and read.**
+- *How the winding is realised.* The pitch is drawn by `pattern`, which runs after the layer's stage, so the layer
+  cannot lay segments in radius: `arm_phases` publishes the raw draws only — columns `arm_segment_extent` and
+  `arm_segment_pitch_residual` of a new object class `arm_segment`, 64 rows outward from the anchor and 192 inward,
+  on streams `("segment", "out" | "in", j)`, empty with the layer off; `bar` publishes `arm_winding_anchor_radius`
+  (the bar's half-length, or twice the scale length where it would be); every reader builds `pattern.Winding` from
+  those and `pitch_angle`: p_seg = p + δ, ln R advancing Δβ|tan p_seg| and Φ advancing Δβ·sign(p_seg), no cotangent
+  taken, nothing floored or clipped, Φ linear in ln R between knots and so exact at any radius. `bar_terms` is the
+  one place Φ is evaluated. A redraw of the extent outside 20°–180° is allowed 16 times and then raises (39 redraws
+  in 25 600 rows, never more than two); a winding asked past its rows raises (11–45 of 256 used). The segments'
+  count, pitches and bounds are not fields: they follow from the rows (`Winding.segments`).
+- *The pins.* A pin with a unit is a measured number, without one a class. `sun_bar_angle` = 30° on `milky_way`
+  gives `sun_azimuth` = φ_bar + 30° (the disc turns towards decreasing φ, so the bar's near end is at β = +30°);
+  NaN where unpinned or unbarred. `pitch_angle` = 28.9° on `ngc_4414`, the law's 14.33° published beside it as
+  `pitch_angle_drawn` (2.43σ of the draw). `milky_way` against the bare default run now differs in that one field
+  (a number against NaN) and in no other bit.
+- *The predictions, read first.* Milky Way: 6.39 segments over 3–12 kpc on average over 100 texture seeds (5–6:
+  held; the default seed lays 12, four of them nearly circular); reversed 9.30 %, under 2.7° 8.76 % (≈ 9 %: held);
+  Φ(a) − φ_bar exactly 0 and the two-armed crest on the bar's axis on every barred seed (held); every layer-off
+  field bit-identical but the new ones (held). **The Reid check reads 1.92 widths — a miss, under the predicted
+  2–4**: Norma–Outer 1.15, Scutum–Centaurus 0.49, Sagittarius–Carina 2.58, Perseus 1.92, the Local arm 1.96; **the
+  same field with the unsegmented winding reads 0.65**, inside one width, so the statistic measures how densely
+  five modes' crests fill an azimuth more than where the measured arms are. `ngc_4414` at 28.9°: **ε and f are both
+  × 0.512** (the gate wrote "ε × 1.96", the inverse; ε = a/(κR sin p) falls as the pitch opens); the ratio of means
+  over 6–10 kpc 1.881 → 1.406 (1.4–1.5: held); 21 of its 53 rings under 1.37 (predicted "most": not held); the
+  width 0.512 → 0.550 of the dominant period.
+- *The gate.* Stellar ring means 1 to 1.6e-15 and gas to 1.0e-13 on the 240 suite galaxies; no bit of any mode
+  amplitude moves with the layer; the published field equals the point function to the bit. The segment
+  statistics: over 100 texture seeds the extent's median 59.8°, the reversed fraction 9.30 %, the median |Δψ| 9.6°,
+  20.2 % of segments holding no ring; **on the suite's 240 galaxies the reversed fraction reads 17.4 % (Milky Way)
+  and 0 % (`ngc_4414`), outside the gate's 5–12 %** — the suite holds two texture seeds, so two sequences of rows
+  read at sixty pitches (or one pinned pitch). 300 pattern seeds and 100 texture seeds per template, 70 corners of
+  the controls across five pin states (pitch pins of 1° and −5° among them) and the whole pipeline at 28 corners
+  raise nowhere and leak no NaN. Layer off against S58's close: the Milky Way template moves no field and gains
+  five; `ngc_4414` moves `pitch_angle` alone. The specs read 12 / 20 / 5 of 37 and the template's checks 0 / 5.
+- *Cold timings (S58's close → now):* the arm pattern 0.17 → 0.24 s, the gas pattern 0.53 → 0.67 s, a whole render
+  3.51 → 3.71 s.
+- *The existing tests, re-read (two builders, disjoint halves).* Layer off, all 351 earlier fields are bit-identical
+  on the default galaxy (the census-side builder's own dump against the S58 model) and nothing S55 published moved
+  but `ngc_4414`'s `pitch_angle`; layer on, 134 scalars, 68 radial fields and every (R, t), (R, z) and history field
+  are bit-identical, the four (R, φ) fields re-wound with every ring mean kept to 2e-15, the expected cloud count
+  the same to 2e-16. **I1's two expected totals are one unit and none apart** (two at S58). The realised censuses
+  are another draw: clouds 16 668 → 16 708, clusters 12 826 → 12 839, and **the heavy-tailed sums moved more than in
+  the last three sessions** (the census's Q over the field's 0.983 → 1.044, the clusters' light over the young
+  light 0.986 → 1.035, the wind sum +7.2 %) — three clusters of 1.9–2.6 × 10⁵ M☉ aged 0.9–3.9 Myr at 6.9–8.0 kpc
+  are new and are the census's three brightest; each sum moved by about one of its own noise, no expectation
+  moved. Rows 35 and 37 layer on, for the record: −1.979 and −0.1021 (judged layer off: −2.081, −0.1030,
+  unmoved). The hand reconstructions that wound at ln R cot p now build Φ by hand from the published rows and
+  match the model to the bit. `ngc_4414`'s disclosed gas check at the pinned pitch: median 1.406 (1.05–1.66), 21 of
+  53 rings under 1.37 — **by the check's own rule (the band's median inside 1.37–5.79) still a hit, by 0.036, not
+  the miss the gate predicted**; its width 0.550 (0.494–0.606) of the period, a miss by 2.9–3.6 times. With every
+  suite galaxy of that template now at 28.9°, the tightly wound unbarred regime left the suite; gate G3's three
+  record galaxies are kept by a test helper that takes the pitch pin off, their pins unchanged. One rounding bound
+  widened (the gas's margin over the lanes' base, −1e-14 → −2e-13: the lanes' own cell means sit up to 9e-14 under
+  their base, and a trough of the re-wound response now lies on such a cell).
+
+**The independent review (an Opus reviewer, read-only; its own winding, 4 × 10⁶ draws, a 540-galaxy sweep, the
+build against `main` field by field).** "The build does what D218 rules: the rows are the ruled draws, the winding
+is the ruled integral and exact at any radius, it is geometry only to the bit, layer off is main's, both pins
+behave as ruled, and nothing on the Forbidden list is there." What it found that no prediction held:
+- **A blocker: two readers disagree between rings.** The young stars are placed from the grid field
+  `sfr_modulation` by blending two neighbouring rings at fixed φ (S27's reader); every other reader takes each
+  ring's profile at the point's own χ. Across a nearly circular segment Φ turns tens of degrees per ring and the
+  blend is a double image: 25 % of the young stars' weight misplaced at 9.60 kpc, 33 % at 10.1 kpc (crest 2.37
+  where the law has 4.31) on the Milky Way template; 0.5 % at worst on `main` (9.8 % for `ngc_4414` at 2 kpc:
+  tightly wound discs always had it).
+- **The segmented winding does not wind at `pitch_angle`.** With independent segment pitches the mean rate per
+  unit ln R is E[sign]/E|tan(p + δ)|, not cot p: over 1000 texture seeds the arms' net turn from 3 to 12 kpc is a
+  median 264° at 13.5° where the law gives 330° (a 16.7° spiral), and at low pitch the windings come out **net
+  leading** — 2 % of seeds at 10°, 14 % at 5°, 34 % at 2° — in a disc whose rotation, lanes, ε and f are trailing.
+  **The Milky Way template's default seeds are the most extreme realisation of 1000** (695° of turn, 12 segments,
+  four under 2.7°): the Reid check, the census re-pins and the pictures were read on an outlier.
+- **The Reid check has no power.** With the Sun rotated through 360 azimuths on the same field the statistic's
+  median is 1.05 widths (5–95 %: 0.50–1.88) and 43 % of rotations pass at one width; the as-built 1.92 is the 97th
+  percentile of that null and the unsegmented 0.65 the 3rd of its own.
+- Over the pitch law's population the reversed fraction is 17–23 %, twice Honig & Reid's 3 of 38 (at one pitch of
+  13.5° the draw is right: 9.3 %). The suite lost its tightly wound unbarred galaxies to `ngc_4414`'s pin. A
+  numeric pin had no range. The three new massive clusters and the census sums' moves are confirmed as one unit of
+  their own noise; the widened rounding bound is rounding.
+
+**A follow-up to the gate (the same Fable agent; nothing read).**
+1. "Remedy A. Two readers of one field must agree, and the fixed-φ blend was already wrong on main for tightly
+   wound discs. The star sample and the bright catalogue read each ring's row at φ − (Φ(r) − Φ(R_ring)), the same
+   χ every other reader uses." The viewer's field mode interpolating the grid at fixed φ "is a display matter:
+   recorded as a viewer debt".
+2. "**The form changes, on a source, not on the look.** The absolute 10° residual was measured on arms of mean
+   pitch ~15° and, extrapolated to a 2–5° disc, makes a third of windings net-leading against a disc whose
+   rotation, lanes, ε and f are trailing: that contradicts the disc's own sense, so the absolute form cannot
+   stand. Rule: δ normal with sd 0.56·p (Savchenko et al. 2020's sd/mean = 0.56 ± 0.25: tighter arms vary less in
+   degrees): 7.6° at 13.5°, 16° at 28.9°; the reversed fraction is then 3.7 % at every pitch, 1σ under Honig &
+   Reid's 3 of 38, and net-leading windings vanish at any pitch above ~1°. The extent stays azimuthal; no enforced
+   mean rate (unsourced)." Predicted now: the median net turn over 3–12 kpc within about 10 % of the law's 330° at
+   13.5°; the median |Δψ| there ≈ 7° against Honig & Reid's 9.7°, "a predicted small miss, recorded". "The Milky
+   Way default seeds being the most extreme of 1000 is a fact about one realisation, not a model number:
+   re-seeding is forbidden to us; the owner is told plainly that their first look is on an outlier realisation
+   and that rerolling `texture_seed` is their own control in the viewer."
+3. The Reid check is kept, "judged only as a percentile of its null … The miss/hit verdict is dropped; 'the
+   representation cannot show the measured arms' stands on the probe (four arms are not one winding), not on this
+   statistic."
+4. The gate's 5–12 % reversed is recorded as missed, a finding joined to item 2; "with the relative residual the
+   gate range becomes 2–8 % reversed over the 240 and over the pitch law's population, re-measured and read".
+5. "ε ∝ 1/sin p, so ε × 0.512 as well; my '×1.96' was a slip." `ngc_4414`'s check at 28.9° "is a hit by 0.036 with
+   21 of 53 rings under 1.37: my 'most' was wrong".
+6. The drawn-pitch unbarred family (`ngc_4414`'s inputs with the pitch pin off, 60 × 2 seeds) becomes the third
+   leg of the gate sweeps.
+7. "A numeric pin is held to the range of the draw it replaces (pitch 1–60°, the Sun's angle 0–360°), refused
+   otherwise, at `run()` as at the API."
+8. "S59 may merge once 1–4, 6 and 7 are applied, the predictions of item 2 read before they are judged, the
+   reviewer has passed once over the changes, and the suite is green on the lead's run. Item 2 is a sourced
+   correction inside this gate's scope, not the owner's: no stop."
+
+**The lead's plumbing decision, the same day.** The two segment columns were first declared object columns of a
+new class, which by the viewer's declaration-only rule made the arm-phase stage a catalogue stage (its five phase
+scalars no longer asked for; a catalogue "present" from checkpoint 3). They are a small table read whole by the
+model's own stages, so they take a field kind of their own (domain `table`), same rows, same bits; the closed list
+of object classes returns to S58's.
