@@ -164,3 +164,156 @@ discriminator (B19).
   Gittins & Clarke say it needs the full calculation. The only closed forms read are the star-formation tracer's
   drift Δφ = (Ω − Ω_p)·t and the subsonic zone's bound R sin i (Ω − Ω_P) = ± a.
 - **No measured gas-ridge width against distance from CR** was found.
+
+---
+
+## Part A — the steady one-dimensional isothermal flow through a spiral potential (reader 1)
+
+*Entered by the lead from the reader's report as it arrived at the session's pause; the equations, the table and
+the statements are the reader's, the wording shortened in places.* Blind to the model. **How things were read:**
+Roberts 1969 and Shu, Milione & Roberts 1973 as page images in the ADS scan viewer, by eye; Gittins & Clarke 2004,
+Kim, Kim & Kim 2014, Sormani et al. 2017, Kim & Ostriker 2002 and Kim & Kim 2014 as arXiv/ar5iv HTML with each
+equation's LaTeX extracted. All treat a razor-thin isothermal gas forced by an imposed, rigidly rotating
+potential; the first five have no gas self-gravity and no magnetic field.
+
+Source keys: **R69** `[verified: Roberts 1969, ApJ 158, 123, https://ui.adsabs.harvard.edu/scan/manifest/1969ApJ...158..123R]`;
+**SMR** `[verified: Shu, Milione & Roberts 1973, ApJ 183, 819, https://ui.adsabs.harvard.edu/scan/manifest/1973ApJ...183..819S]`;
+**GC** `[verified: Gittins & Clarke 2004, MNRAS 349, 909, https://ar5iv.labs.arxiv.org/html/astro-ph/0312562]`;
+**KKK** `[verified: Kim, Kim & Kim 2014, ApJ 789, 68, https://arxiv.org/html/1405.5874v1]`;
+**S17** `[verified: Sormani et al. 2017, MNRAS, https://ar5iv.labs.arxiv.org/html/1707.00301]`;
+**KO02** `[verified: Kim & Ostriker 2002, ApJ 570, 132, https://ar5iv.labs.arxiv.org/html/astro-ph/0111398]`;
+**KK14** `[verified: Kim & Kim 2014, MNRAS 440, 208, https://arxiv.org/html/1402.2291]`.
+
+### A1. The equations
+
+**SMR's lowest-order form (SMR §II–III, eqs. 1–12, pp. 820–823)**, m arms, one sinusoidal forcing:
+- (S1–S3) 𝔙 = 𝔙₀(ϖ) + A(ϖ) cos χ, χ = Φ(ϖ) − mφ, φ = θ − Ω_p t; η = −χ + π; tan i = −m/(kϖ), k = Φ′ negative for
+  trailing arms. **η = 0 is the potential minimum**; one arm-to-arm passage is Δη = 2π for any m.
+- (S4) F = (k² + m²ϖ⁻²)^{1/2} A / (ϖΩ²): the maximum spiral force over ϖΩ².
+- (S7a) (σ₀+σ₁)(u_η0+u_η1) = σ₀ u_η0
+- (S7b) ∂u_η1/∂η = U (u_η0+u_η1)(2u_ξ1 − FϖΩ sin η) / [(u_η0+u_η1)² − a²]
+- (S7c) ∂u_ξ1/∂η = −V u_η1/(u_η0+u_η1)
+- (S8) u_η0 = ϖ(Ω−Ω_p) sin i; u_ξ0 = ϖ(Ω−Ω_p) cos i; U = (sin i/m) ϖΩ; V = (sin i/m) ϖκ²/2Ω
+- (S9) ν ≡ m(Ω_p−Ω)/κ = −u_η0/(2UV)^{1/2}; x ≡ a²/2UV
+- (S10) u ≡ u_η1/(2UV)^{1/2}; v ≡ u_ξ1/V
+- (S11) ∂u/∂η = (u−ν)(v − f sin η)/[(u−ν)² − x]; ∂v/∂η = u/(ν−u)
+- (S12) f ≡ FϖΩ/2V = (Ω/κ)²(mF/sin i)
+
+Three parameters (ν, x, f). Density from (S7a): σ/σ₀ = −ν/(u−ν). The constants may be held fixed along a
+streamline "as long as F is not large in comparison with sin i"; single-valuedness is periodicity in η with period
+2π. GC's Appendix A reproduces S7–S11 identically.
+
+**The local Cartesian form (KKK §II–III, eqs. 1, 4, 5, 8–13)**, the most convenient for a general periodic Φ: x the
+distance perpendicular to the arm, L = 2πR sin i/m, Φ_s = Φ₀ cos(2πx/L), the minimum at x = L/2.
+- (K1) u_c = R(Ω−Ω_p) sin i; q ≡ −dlnΩ/dlnR; (K5) ℱ ≡ (m/sin i)(Φ₀/R²Ω²); (K8) Σ₀ u_T0 = Σ_c u_c
+- (K10) u_T0 dv₀/dx = −(κ²/2Ω) u₀, u₀ = u_T0 − u_c, κ² = (4−2q)Ω²
+- (K11) (u_T0 − c_s²/u_T0) du_T0/dx = 2Ωv₀ + RΩ²ℱ sin(2πx/L); the last term is −dΦ_s/dx.
+Substituting η = 2πx/L − π maps K10–K11 onto S7b–c (the reader's check). S17's eqs. 13–14 are the same system
+with κ = 2Ω. **Roberts 1969's original form** (R69 §II c–d, eqs. 5–22) is the same physics with small curvature
+terms χ₁,₂,₃ kept in his numerics; F there is "the amplitude of the perturbation force as a fraction of the mean
+axisymmetric gravitational field".
+
+### A2. Constructing the periodic solution with a shock
+
+1. **Singular points:** u = ν, ν − √x, ν + √x are u_η = 0, −a, +a; the third is the sonic point where the gas goes
+   subsonic → supersonic after the shock (GC App. A).
+2. **Regularity there:** v(η_SP) = f sin η_SP with u = ν + √x. Series start with α ≡ √x: u = (α+ν) + A_SP(η−η_SP),
+   v = f sin η_SP − (1+ν/α)(η−η_SP), A_SP = (½)^{1/2}[−(1+ν/α) − f cos η_SP]^{1/2} (SMR App. eqs. A6–A7).
+3. **Existence at the sonic point:** −1 + |ν|/α − f cos η_SP > 0; cos η_SP > 0 for |ν| > α (an upper cutoff on f)
+   and < 0 for |ν| < α (a lower cutoff) (SMR eq. A10).
+4. **Regularised variables (no series needed):** u = ν + √x + ũ, v = f sin η + ṽ, w̃ = ũ²; then
+   ∂w̃/∂η = 2(√x ± √w̃)ṽ/(2√x ± √w̃), ∂ṽ/∂η = −1 − f cos η − ν/(√x ± √w̃), + on the supersonic branch, − on the
+   subsonic; start at w̃ = ṽ = 0 (GC App. A).
+5. **The jump:** isothermal, u_sup·u_post = a², v continuous; the density ratio is M₁² (SMR eq. A8; KKK eqs. 20–21).
+6. **Closure:** integrate from η_SP forward (supersonic) and backward (subsonic); the shock is where the
+   post-shock branch crosses the subsonic branch at equal v; η_SP is adjusted until the period is 2π (GC App. A;
+   SMR App. p. 840). KKK iterate the sonic point "until all the jump conditions are met within tolerance
+   (typically ∼10⁻⁵)".
+7. **Method:** no source gives a step count. SMR: "Four-place accuracy is easily achieved". GC: in the
+   base-subsonic region the window of η_SP that yields a shock "can have a width of less than π/1000".
+8. **No shock:** integrate from η = 0 to 180° with v(0) = 0 and choose u(0) so that v(180°) = 0 (this uses a
+   single cosine's symmetry). The linear limit: u_η1 = f(2UV)^{1/2} α₁₁ cos η, u_ξ1 = fVβ₁₁ sin η,
+   α₁₁ = ν(1−ν²+x)⁻¹, β₁₁ = (1−ν²+x)⁻¹ (SMR eqs. 16a, 18–19).
+9. **Threshold:** as f rises the smooth solution forms a cusp on the sonic line, at η = 0 (base-supersonic) or
+   ±180° (base-subsonic); F_cusp is the upper limit of smooth flow and the lower limit of shocked flow.
+10. **Ultraharmonic resonances:** the series diverges where ν² − x = n⁻²; n = ±1 are the pressure-shifted Lindblad
+    resonances. Near n = −2 there are two shocks and a two-parameter search; GC: single-shock solutions are
+    "difficult or impossible to find for F ≳ 0.1 and sin i ≳ 0.2".
+
+### A3. Checkable published cases
+
+| # | Source and case | Parameters | Numbers to reproduce | Precision |
+|---|---|---|---|---|
+| A | **KKK Table 1** (no self-gravity, no field, one cosine) | q = 1, m = 2, sin i = 0.1, Ω_p/Ω = 0.5, c_s/(RΩ) = 0.027; minimum at x/L = 0.5 | ℱ = 0.03: x_sp/L 0.458, x_sh/L 0.402, μ 5.67. ℱ = 0.05: 0.507, 0.431, 11.6. ℱ = 0.10: 0.615, 0.495, 34.5. ℱ = 0.20: 0.699, 0.560, 97.3. Σ₀(x_sp)/Σ_c = u_c/c_s = 1.86 | tabulated, 3 figures |
+| B | SMR Figs. 1, 2, 4, ϖ = 10 kpc | Ω 24.7, κ 31.0 km/s/kpc, i 6.7°, u_η0 13.0, u_ξ0 111.2, U 14.4, V 11.3 km/s; Ω_p 13.5; a = 8 km/s; m = 2 | F_cusp = 0.97 %, cusp at η = 0. F = 5 %: shock at η = 334° (−26°), "a factor 12:1" total density variation, peak "∼5 times" the average | labels exact; from the figures, pre-shock u_η ≈ 26.5 and post-shock ≈ 2.4 km/s (± 0.3), peak σ/σ₀ ≈ 5.2–5.3 |
+| C | SMR Figs. 5–6, ϖ = 14 kpc (base-subsonic) | Ω 15.5, κ 15.0, i 8.4°, u_η0 4.1, U 15.9, V 7.5; a = 8 | F_cusp = 3.7 %, cusp at η = ±180° (the potential maximum). F = 5 %: shock at −122°. F = 7 %: −86°. The density peaks near η ≈ 0, not at the shock | labels exact; peaks ≈ 1.25 (2 %), 1.45 (3.7 %), 1.6 (5 %), 1.9 (7 %), ± 0.05 |
+| D | SMR Figs. 7–8, ϖ = 11 kpc (the n = −2 resonance) | Ω 21.9, κ 25.6, i 7.0°, u_η0 11.2; a = 8 | F_cusp = 1.1 % with two cusps at η = ±54°. F = 3 %: one shock at −55°, peak σ/σ₀ ≈ 3.0 | labels exact |
+| E | R69 Figs. 3 and 5 | tan i = 1/7, Ω_p = 12.5, F = 5 %, ϖ = 10 kpc, a = 10 km/s | enters the shock at "about 31 km sec⁻¹", leaves at "about 3.2", "density contrast across the shock is about 9.6" | captions, 2 figures |
+| F | R69 Fig. 8 and Table 1 | tan i = 1/7, (K/2Ω)² = 0.4, w′⊥0 = 0.049, a′ = 0.034 | F (%) → σ(2)/σ(1), M₁: 7.5 → 9.2, 3.0; 5.0 → 6.2, 2.5; 2.0 → 2.4, 1.6; 1.04 → 1.4, 1.2. No solution below about 1.04 % | tabulated |
+| G | S17 Figs. 1–2 (κ = 2Ω) | L = 1, units F_y = Ω = 1 | c_s = 0.7: Φ_c = 0.07297 | stated in the text |
+| I | KO02 Table 1 (**with** self-gravity) | c_s = 7 km/s, Ω_p = Ω₀/2, sin i = 0.1 | F 1 / 2 / 3 %: Σ_max/Σ₀ = 2.36 / 3.91 / 6.49, width W/L_x = 0.16 / 0.06 / 0.05 | tabulated; not like for like with a pure hydrodynamic solver |
+
+Derived from row A by the reader: shock phase relative to the minimum −35.3°, −24.8°, −1.8°, +21.6°; peak Σ/Σ_c
+just behind the shock 4.4, 6.3, 10.9, 18.3. In SMR's variables row A is ν = −0.707, x = 0.146, f = 10ℱ, and row B
+ν = −0.721, x = 0.197, f = 0.546 at F = 5 %: near neighbours, and their shock phases (−24.8° and −26°) agree.
+Row B's width (read from Fig. 4, ± 5°): σ falls to half its peak about 26° after the shock, 0.07 of a period.
+
+### A4. Scalings
+
+- **With F:** the jump and the peak grow steeply (row A: μ rises 17-fold for a 6.7-fold rise in ℱ); the shock
+  and the sonic point move downstream as F grows; "weaker spirals will form shocks further upstream" (GC §5.1).
+- **With a:** at 10 kpc with a = 30 km/s the flow is entirely subsonic and at F = 5 % "differs little from the
+  behavior predicted by the linear theory" (SMR Fig. 3).
+- **Width:** "When u_η0 > a … the zone of high gas compression is very narrow. When u_η0 ≲ a … broad" (SMR §VII).
+- **Offset inside corotation:** upstream of the minimum (the inner side of a trailing arm) for moderate F, moving
+  toward the potential maximum (Θ → −π) as corotation is approached and the shock weakens (GC §3.1.2; SMR §IVb).
+- **Outside corotation:** not computed by SMR; solutions follow from u_η → −u_η, u_ξ → −u_ξ, η → −η (SMR fn. 4).
+- **Near corotation, and for a perpendicular Mach number under 1:** the base-subsonic band is bounded by
+  R sin i (Ω−Ω_p) = ± a (12.5–15.3 kpc in SMR's model). At small F the flow is entirely subsonic and smooth; the
+  cusp forms at the potential *maximum*; the peak density "is not reached immediately after the shock, but is
+  attained subsequently by a smooth compression occurring at subsonic speeds", the zone "fairly broad … not unlike
+  that produced by an extrapolation of the linear theory" (SMR §IVb, row C). These solutions "are not easy to
+  find". **Exactly at Ω_p = Ω no source read gives a nonlinear solution**: S7c is singular at u_η = 0. What the
+  sources give is the linear limit — *(reconstructed by the reader from S7a, S9, S16a)* σ₁/σ₀ ≈ f cos η/(1 − ν² + x),
+  which at ν = 0 is f cos η/(1 + x): finite, symmetric, centred on the potential minimum, with no flow across the
+  arm. KK14: the peak "is smaller near the respective CR"; "conventional wisdom is that spiral shocks are absent
+  in the CR region where M⊥ = 0".
+- **Lindblad resonances:** the linear response diverges at ν² − x = 1.
+
+### A5. A potential that is a sum of several modes
+
+**No source read integrates the 1-D steady equations with a multi-mode or non-sinusoidal forcing**: all impose
+one cosine; in SMR the second harmonic arises only in the response. Every formulation is written in a frame
+rotating at one Ω_p in which the potential is time-independent, so **a steady solution needs a common pattern
+speed for all modes** (the reader's inference; no source states it as a theorem). *What carries over
+(reconstructed, in no source):* K10–K11 hold for any periodic Φ_s(x) with −dΦ_s/dx in place of the sine; the
+fundamental period is that of the lowest common harmonic; the sonic-point condition becomes 2Ωv₀ = dΦ_s/dx. *What
+does not:* the even/odd shortcut for smooth solutions, and the guarantee of a single shock — each extra forcing
+harmonic adds its own resonances.
+
+### A6. Conflicts between sources
+
+1. R69 finds a finite lower limit of the shock (σ(2)/σ(1) = 1.4 at F ≈ 1.04 %); SMR a continuous family whose
+   critical solution is a cusp of zero strength. Different parameters; R69 keeps the curvature terms.
+2. GC's Appendix labels the forward branch "subsonic"; SMR, KKK and GC's own period say the reverse: a slip.
+3. The shock's offset: −30°, −72°, −26°, and from about 0 to −π with radius (GC); KKK's row A turns positive at
+   ℱ = 20 %. Not contradictory once F and the Mach number are stated, but "upstream of the minimum" is not general.
+4. "No shock compression at corotation" (GC §5) against weak shocks crossing corotation in KK14's 2-D runs.
+
+### A7. What could not be read
+
+R69 pp. 132–133 and 136–144; Shu et al. 1972; Woodward 1975; Wada & Koda 2004; Dobbs & Bonnell 2006; Kim &
+Ostriker 2006; Lee & Shu 2012 and Chakrabarti et al. 2003 (through a summariser only: kept out of the table);
+Binney & Tremaine and Shu's textbook (not online); GC's and KKK's figure curves.
+
+### A8. The reader's recommendation
+
+**Integrate** SMR's two-equation system (equivalently KKK's K10–K11) in GC's regularised variables, started at the
+sonic point, forward on the supersonic branch and backward on the subsonic; find the shock where the post-shock
+branch meets the subsonic branch at equal v; close the period by a bisection on the sonic point's phase alone —
+one fixed-step integration per trial and a fixed number of bisection steps. Below the cusp, the linear closed
+form or SMR's symmetric shooting. **Check first against row A (KKK Table 1)**, the only tabulated, pure
+hydrodynamic, dimensionless case; then row B, row C (base-subsonic: the regime the gate asks about) and row G.
+**Open for the gate:** the multi-mode extension has no published check (its only anchors are the single-mode
+limit and the per-mode linear response); exact corotation needs a ruling (the sources supply only the linear
+limit there); the base-subsonic search window can be narrower than π/1000.

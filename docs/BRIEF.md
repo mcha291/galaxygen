@@ -10,9 +10,9 @@ a ruling that is the owner's, spawn Fable at the plan's gates.**
 
 ## Where S57 stopped (2026-10-04; branch `session-57`, pushed, nothing merged; board row 57 ◐)
 The owner answered S56's question: **keep the plan's arm-number law** (D216). Reader 2's part of the reading is
-committed (`READING_GAS_SHOCK.md` Part B: pattern speeds, offsets, widths). **Reader 1's part (Part A: the shock's
-equations, the sonic point and jump, a published profile to check a solver against; also what the steady response
-is when the pattern corotates with the gas, Ω_p = Ω) was cut off by a usage limit: re-run it first** (§3e's brief).
+committed, **both parts** (`READING_GAS_SHOCK.md`: Part B pattern speeds, offsets, widths; Part A the shock's
+equations, the construction of the shocked solution, nine checkable published cases — KKK 2014's Table 1 first —
+and the linear limit at Ω_p = Ω). **Next: write `docs/HANDOFF_S57.md` and spawn Fable for gate G2.**
 
 ## First
 `uv run python tools/bootstrap.py` (S56's close ran the suite, `EXIT=0`; **its `verify_clone` on `main` was still running when S57 paused: run it again first**). **Read `BUILD_III.md`
@@ -20,9 +20,9 @@ is when the pattern corotates with the gas, Ω_p = Ω) was cut off by a usage li
 takes about 55 minutes (the ranked ridge).
 
 ## The order (BUILD_III §5, Phase P2)
-1. **Reader 1, blind to the model** (reader 2 is done): the steady spiral shock (Roberts 1969; Shu, Milione &
-   Roberts 1973) — its equations, the sonic point, the isothermal jump, a published profile with its parameters.
-   Enter it as Part A of `docs/READING_GAS_SHOCK.md`. **Part B already puts a question to G2 that the plan did not
+1. **The reading is done** (two blind readers; `docs/READING_GAS_SHOCK.md`). No source integrates the steady
+   equations for a sum of modes, a steady solution needs one frame for all modes, and exactly at corotation the
+   sources give only the linear limit. **Part B puts a question to G2 that the plan did not
    foresee: for swing-amplified arms set ring by ring, simulations and half the observed galaxies say the arm
    moves with the disc (Ω_p = Ω: no flow through the arm, no shock, the gas on the crest); "corotation at the
    mode's radius" collapses into that; no source gives a rule for several modes on one ring.**
