@@ -9673,3 +9673,7 @@ corotating response per ring: no arm shocks; the shocked branch is P3's bar's. (
 that draws a pitch under about 2.7° is forced enormously by the razor-thin law; a floor on the drawn pitch is
 theirs to order, with a read source. (3) `ngc_4414`'s seven outer rings read under PHANGS's band. (4) The width's
 miss at 2.5–3.1 times, with its two named suspects.
+
+**The close (2026-10-04).** The suite on the combined state: 1286 passed, 5 skipped, `EXIT=0`; the specs OK, 12 / 20 / 5
+of 37 for both models, the template checks 0 / 5 on their five recorded misses. The picture run: 8 passed. The
+handoff is deleted.
