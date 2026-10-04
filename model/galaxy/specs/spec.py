@@ -9,7 +9,9 @@ each value as written there and ``lo``/``hi`` are the arithmetic of ``±``.
 
 Three statuses, no more: ``pass``, ``fail``, ``not-yet-computable``. A quantity
 is not yet computable when no field is named for it, when the model does not
-publish that field, or when a statistical row lacks an ensemble. A quantity
+publish that field, when a statistical row lacks an ensemble, or when the row
+does not apply to the galaxy judged (``Quantity.only_if``, S58: rows 15-17 are
+of a barred galaxy; the default model's is barred, so they are judged). A quantity
 never passes by default and a missing number is never shown as a measured one
 (rule B9).
 
@@ -120,8 +122,16 @@ class Quantity:
     note: str = ""
     expect: str | None = None  # qualitative rows: the category that passes
     sweep: Sweep | None = None  # sweep rows: the input swept and how the abscissa is read
+    # S58 (D217 item 3): the row is of a galaxy that has the thing measured - (a published category_scalar, the
+    # label at which the row applies). Elsewhere the row does not apply and is not judged: rows 15-17 measure a
+    # bar, and an unbarred galaxy publishes no number for one (D164).
+    only_if: tuple[str, str] | None = None
 
     def __post_init__(self) -> None:
+        if self.only_if is not None and not (
+            len(self.only_if) == 2 and IDENT.match(self.only_if[0]) and isinstance(self.only_if[1], str) and self.only_if[1]
+        ):
+            raise SpecError(f"row {self.n}: only_if is (a category_scalar field, the label the row applies at)")
         try:
             _unit(self.unit)
         except UnknownUnit as e:
@@ -174,6 +184,8 @@ class Quantity:
 
 
 _BHG16 = "BHG16"
+# The rows of a barred galaxy (S58, D217 item 3): the published verdict and the label they apply at.
+_BARRED = ("bar_present", "yes")
 
 
 # BHG16 Table 2, read at S28 (ruling (b)): every value the table prints, and what it says about
@@ -329,9 +341,11 @@ QUANTITIES: tuple[Quantity, ...] = (
     Quantity(12, "Bulge stellar mass", "Msun", "bulge_stellar_mass", 1.4e10, 1.7e10, "pointwise", "1.4–1.7 × 10¹⁰ M☉", _BHG16),
     Quantity(13, "Bulge/total stellar fraction", "dimensionless", "bulge_stellar_fraction", 0.24, 0.36, "statistical", "0.30 ± 0.06", _BHG16, note="Statistical per debt #8 (GALAXY_INPUTS.md §4b)."),
     Quantity(14, "Bulge velocity dispersion (rms)", "km/s", "bulge_velocity_dispersion", 110.0, 116.0, "statistical", "113 ± 3 km/s", _BHG16, note="The source's own uncertainty, entered at S17 and not chosen here: BHG16 §4.3 gives the bulge's mass-weighted dispersion within its half-mass radius as \"the rms is σ_rms,b ≈ 113 km/s, to ≈3 km/s\", so the row has a testable target and leaves debt #17's list (rows 20 and 21 stay on it). The model's number was already known when the uncertainty was looked up, which is recorded in D122 so that a reader can judge; the width is the source's verbatim. Statistical per debt #8, against a field the model derives, so every seed reads the same number."),
-    Quantity(15, "Bar half-length", "kpc", "bar_half_length", 4.8, 5.2, "pointwise", "5.0 ± 0.2 kpc", _BHG16),
-    Quantity(16, "Bar pattern speed", "km/s/kpc", "bar_pattern_speed", 34.0, 52.0, "statistical", "43 ± 9 km/s/kpc", _BHG16, note="Statistical per debt #8."),
-    Quantity(17, "Bar corotation radius", "kpc", "bar_corotation_radius", 4.5, 7.0, "statistical", "4.5–7.0 kpc", _BHG16, note="Statistical per debt #8."),
+    # S58 (D217 item 3): rows 15-17 measure the Milky Way's bar. They apply to a barred galaxy and are not
+    # applicable to an unbarred one, whose bar fields are not numbers; for the default model nothing changes.
+    Quantity(15, "Bar half-length", "kpc", "bar_half_length", 4.8, 5.2, "pointwise", "5.0 ± 0.2 kpc", _BHG16, only_if=_BARRED),
+    Quantity(16, "Bar pattern speed", "km/s/kpc", "bar_pattern_speed", 34.0, 52.0, "statistical", "43 ± 9 km/s/kpc", _BHG16, note="Statistical per debt #8.", only_if=_BARRED),
+    Quantity(17, "Bar corotation radius", "kpc", "bar_corotation_radius", 4.5, 7.0, "statistical", "4.5–7.0 kpc", _BHG16, note="Statistical per debt #8.", only_if=_BARRED),
     Quantity(18, "Black hole mass", "Msun", "black_hole_mass", 4.0e6, 4.4e6, "statistical", "4.2 ± 0.2 × 10⁶ M☉", _BHG16, note="Debt #2: derived from M–σ plus a seeded residual (ruling 10); the Milky Way sits 5–6× below the relation, so this is expected to miss by ~0.75 dex and must not be re-scoped to include the miss (GALAXY_INPUTS.md §3, rule B5). Statistical per debt #8."),
     Quantity(19, "Halo virial mass", "Msun", "halo_virial_mass", 1.0e12, 1.3e12, "pointwise", "1.0–1.3 × 10¹² M☉", "McMillan"),
     Quantity(20, "Total gas mass (<30 kpc)", "Msun", "hydrogen_mass_30kpc", 8.0e9, 8.0e9, "pointwise", "8.0 × 10⁹ M☉", "Nakanishi & Sofue 15", note="HI + H₂ from 21 cm and CO: hydrogen, so the row reads the gas's hydrogen mass, (1 − Y) of gas_mass_30kpc (debt #41, S13). No uncertainty quoted: zero-width target (debt #17)."),
@@ -1029,6 +1043,14 @@ def evaluate(
     decl = decls[q.field]
     if decl.unit != q.unit:
         return Result(q.n, q.name, "fail", f"unit mismatch: field {q.field!r} is {decl.unit}, target is {q.unit}")
+    if q.only_if is not None:
+        # S58 (D217 item 3): a row of a galaxy that has what it measures. Where the galaxy does not, the row is not
+        # applicable - not judged, and never a pass by default (rule B9): the third status, with its reason.
+        gate, wanted = q.only_if
+        if gate not in fields:
+            return Result(q.n, q.name, nyc, f"field {gate!r}, which says whether the row applies, is not published by model {model!r}")
+        if fields[gate] != wanted:
+            return Result(q.n, q.name, nyc, f"not applicable: {gate} is {fields[gate]!r}, and the row is of a galaxy where it is {wanted!r}")
     if q.mode == "qualitative":
         if decl.kind is not Kind.CATEGORY_SCALAR:
             return Result(q.n, q.name, "fail", f"qualitative rows read a category_scalar, field is {decl.kind.value}")

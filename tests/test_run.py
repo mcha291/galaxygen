@@ -23,7 +23,38 @@ def test_production_runs(model):
     assert out.fields["halo_circular_velocity"].shape == (8,)
     assert out.order == ORDER[model.name]
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
-    assert set(out.inputs) == set(INPUTS)  # S3 set the last default, so every input resolves
+    # S3 set the last default, so every input resolves. S58 (D217): was `== set(INPUTS)` - a pin has no default,
+    # so one that is not given is not among a run's inputs, and the stage that reads it derives.
+    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present"}
+    assert out.fields["bar_present"] == "yes"  # derived, at the defaults
+
+
+def test_a_pin_reaches_its_stage_through_the_runner_or_is_not_among_the_inputs(model):
+    """S58 (D217 item 2): the pin is an input of a kind of its own. Given True or False it is among the run's
+    inputs and replaces the derived presence; not given - absent, or None - it is not there and the presence is
+    derived; anything else is refused. The derived formation time is published beside the verdict either way. A
+    run is not resumed under another pin."""
+    only = ("bar_present", "bar_formation_time", "bar_half_length", "disc_dominance")
+    derived = run(model, grid=TINY, only=only)
+    assert "bar_present" not in derived.inputs and derived.fields["bar_present"] == "yes"
+    assert run(model, {"bar_present": None}, TINY, only=only).inputs == derived.inputs
+    barred, unbarred = (run(model, {"bar_present": value}, TINY, only=only) for value in (True, False))
+    assert (barred.inputs["bar_present"], unbarred.inputs["bar_present"]) == (True, False)
+    assert (barred.fields["bar_present"], unbarred.fields["bar_present"]) == ("yes", "no")
+    assert barred.fields["bar_half_length"] == derived.fields["bar_half_length"] and np.isnan(unbarred.fields["bar_half_length"])
+    assert derived.fields["bar_formation_time"] == barred.fields["bar_formation_time"] == unbarred.fields["bar_formation_time"]
+    # Where the derivation itself says unbarred, the pin can say barred: it replaces the verdict either way.
+    thin = {"baryon_retention": 0.05}
+    assert run(model, thin, TINY, only=only).fields["bar_present"] == "no"
+    assert run(model, {**thin, "bar_present": True}, TINY, only=only).fields["bar_present"] == "yes"
+    for bad in (1, 0, "yes", 1.0):
+        with pytest.raises(RunError, match="is True or False"):
+            run(model, {"bar_present": bad}, TINY, only=only)
+    for first, then in ((derived, {"bar_present": False}), (derived, {"bar_present": True}), (unbarred, {}), (unbarred, {"bar_present": True})):
+        # (given against not given is the pin's own check; one value against the other is every input's)
+        with pytest.raises(RunError, match="cannot resume: (pin|input) 'bar_present'"):
+            run(model, then, TINY, resume=first)
+    assert run(model, {"bar_present": False}, TINY, resume=unbarred, only=only).ran == ()
 
 
 def chain():

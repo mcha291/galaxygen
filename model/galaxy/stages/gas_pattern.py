@@ -38,22 +38,33 @@ put in.
   That regime is published as the law gives it, nothing clipped: s from 1e-44 to 14, the arm-to-arm spacing
   then comparable to the disc's thickness and the razor-thin forcing overstated by about that factor (a
   finding under the razor-thin debt, below).
-- **The bar** (item 8). g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), w_bar the bar's taper, w_arm = 1 − w_bar
-  (their sum is checked), B the stellar ``bar_contrast``; the taper, the winding phase and the bar's angle are
-  the stellar pattern's own (``pattern.bar_terms``). The taper acts once, here, on the response to the
-  untapered forcing. So g ≥ w_bar (1 − B) > 0 and the ring's mean is 1. The bar inside the forcing turns at
-  its own speed and is Phase P3's.
+- **The bar** (item 8; since S58 its gas lanes, DECISIONS.md D217 items 6-8). g = w_arm s + w_bar L(R, φ),
+  w_bar the bar's taper, w_arm = 1 − w_bar (their sum is checked); the taper, the winding phase and the bar's
+  angle are the stellar pattern's own (``pattern.bar_terms``). The taper acts once, here, on the response to
+  the untapered forcing. **L is the lane field** (:func:`lane_profiles`), of ring mean 1 and positive: on each
+  ring inside the bar's half-length a uniform base and two lanes - point-symmetric arcs of constant curvature
+  on the bar's *leading* side (:func:`rotation_sense`: the arms trail, so the disc turns towards decreasing
+  φ), each from the bar's end on its major axis to its minor axis at the nuclear ring, concave towards the
+  major axis; the mean inside the stellar body's footprint is a measured ratio times the mean outside it, and
+  the excess lies on the lanes with a Gaussian profile across the arc. So g ≥ w_bar min L > 0 and the ring's
+  mean is 1. Nothing is drawn: the lanes are deterministic given the bar's length, shape and angle. They are
+  a **synthetic template** standing in for the two-dimensional gas flow in the bar's potential; the lane's
+  width is a declared placeholder with no source. The one-dimensional steady shocked branch is not the bar's
+  instrument - a bar is not a tightly wound forcing - and is not built (D217). Until S58 the bar's term was
+  the stellar bar's own cosine, 1 + B cos 2(φ − φ_bar). **An unbarred galaxy has no lanes and no taper**:
+  g = s on every ring.
 - **At a point** (item 9). The equation is solved once per grid ring on ``gas_response.CELLS`` cells. A point
   at (R, φ) reads the two neighbouring grid rings' profiles **at its own χ** (the winding at the point's own
   radius), linear in χ between the cells' centres and linear in R between the two rings, held at the end
-  rings beyond the grid; the taper and the bar's term are taken at the point's own radius. Both blends are
-  convex blends of positive profiles of mean 1, so the gas is positive and its mean round the ring is 1 at
-  every radius. :meth:`GasPattern.sector_means` is the exact mean of that same interpolant, so sectors that
-  tile a ring average to 1 to rounding.
+  rings beyond the grid; the taper is taken at the point's own radius, and the lanes are read the same way
+  as the response, in the bar's frame (the two rings' lane profiles at the point's own φ − φ_bar). All the
+  blends are convex blends of positive profiles of mean 1, so the gas is positive and its mean round the ring
+  is 1 at every radius. :meth:`GasPattern.sector_means` is the exact mean of that same interpolant, so
+  sectors that tile a ring average to 1 to rounding.
 - **The published field is the law's exact mean over each grid cell's extent in azimuth, at the ring's own
   radius** (gate G3 item 4, which rewords items 9 and 11 i): on each grid ring, the interpolant integrated
   exactly over each of the grid's φ cells (:meth:`GasPattern.cell_means`, the arithmetic of the sector means;
-  the bar's cosine by its own integral). It is not a mean over the cell's extent in R: a point between two
+  the lanes' interpolant the same way). It is not a mean over the cell's extent in R: a point between two
   rings is blended in R, as above. So a ring's cells average to 1 to rounding on every φ grid, with no
   division - a field of centre samples did only on grids whose cell count divides the solver's (7e-14 off at
   360 cells, 2e-3 at 36) - and each cell holds the gas the law puts on its ring there. ``contrast_at``,
@@ -123,21 +134,30 @@ from galaxy.stages import gas_response as _response
 from galaxy.stages.pattern import (
     AMPLITUDE_FIELDS,
     ARM_MODES,
-    PATTERN_READS,
     PHASE_FIELDS,
+    bar_radius,
     bar_terms,
     effective_arm_number,
     invert_azimuths,
     local_swing_x,
+    ring_bracket,
 )
 
 CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is held on their centres
 
 # What the gas's pattern is built from, and so what every stage that places by it requires (S57, D216): the
-# stellar pattern's own reads - the modes and their phases, never ``arm_multiplicity`` - the arm amplitude
-# the taper is taken back out with, and checkpoint 1's disc: its epicyclic frequency and total surface density.
-GAS_PATTERN_READS: tuple[str, ...] = ("arm_contrast", *PATTERN_READS, "epicyclic_frequency", "disc_surface_density")
-GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION")
+# stellar modes and their phases - never ``arm_multiplicity`` - the pitch, the arm amplitude the taper is taken
+# back out with, and checkpoint 1's disc: its epicyclic frequency and total surface density. Of the bar (S58,
+# D217 items 6-8) it reads the half-length and the body's footprint - its axis ratio and boxiness - and no
+# longer the bar's amplitude: the lanes are deterministic given the bar's length, shape and angle.
+GAS_PATTERN_READS: tuple[str, ...] = (
+    "arm_contrast", "pitch_angle", "bar_half_length", "bar_axis_ratio", "bar_boxiness",
+    *AMPLITUDE_FIELDS, *PHASE_FIELDS, "epicyclic_frequency", "disc_surface_density",
+)
+# The lanes' four numbers (S58): the arcs' curvature, where they end, the gas inside the footprint over the gas
+# outside it, and the lane's width - the last a declared placeholder (D217 item 8).
+LANE_CONSTANTS: tuple[str, ...] = ("BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
+GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION", *LANE_CONSTANTS)
 
 SOLUTIONS_KEPT = 4  # how many patterns' solved rings the content-keyed cache holds (about 4.6 MB each)
 
@@ -201,6 +221,101 @@ def blend_weights(taper: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return w_arm, w_bar
 
 
+# --------------------------------------------------------------------------------------------------------------
+# The gas inside the bar's reach: the lanes (S58, BUILD_III Phase P3; DECISIONS.md D217 items 6-8)
+# --------------------------------------------------------------------------------------------------------------
+
+
+def rotation_sense(pitch_deg: float) -> float:
+    """The sign of the disc's rotation in azimuth: −1, the disc turns towards decreasing φ.
+
+    Derived from the winding the model already uses, not chosen: an arm's crest lies at φ = ln R · cot(pitch) +
+    a constant (``pattern.bar_terms``' winding phase, the pitch held inside 1-89 degrees so cot > 0), so its
+    azimuth grows outwards. **The arms are trailing** - an arm's outer end lags the rotation - so the disc turns
+    the other way, towards decreasing φ. The bar turns with the disc's sense, and its *leading* side is the side
+    it is turning into: the smaller azimuths. Read off the winding itself, so a winding of the other hand would
+    carry its lanes to the other side.
+    """
+    _, phase, _ = bar_terms(np.array([1.0, math.e]), pitch_deg, float("nan"))
+    return -math.copysign(1.0, float(phase[1] - phase[0]))
+
+
+def ring_quadrature(values: np.ndarray) -> np.ndarray:
+    """The mean of a law's samples on a ring's fixed cells, per ring: the exact mean of its interpolant. The
+    lanes' template is normalised by it (:func:`lane_profiles`); no field is ever divided by one."""
+    return values.sum(axis=-1) / values.shape[-1]
+
+
+def lane_distance(x: np.ndarray, y: np.ndarray, half_length: float, curvature: float, ring: float, side: float) -> np.ndarray:
+    """The distance, kpc, from points (x along the bar's axis, y across it) to one gas lane: the arc of a circle
+    of radius a/(κa) from the bar's end on its major axis, (a, 0), to its minor axis at the nuclear ring,
+    (0, side · r_ring), concave towards the major axis - the circle's centre lies on the major axis' side of
+    the chord, so the arc bows out to the side ``side`` (±1) of the axis. Inside the arc's own angular span the
+    distance is across the arc; beyond its ends it is to the nearer end. The other lane is this one's point
+    reflection: its distance is this function at (−x, −y)."""
+    a = float(half_length)
+    radius = a / float(curvature)
+    end, foot = (a, 0.0), (0.0, side * float(ring) * a)
+    chord = math.hypot(foot[0] - end[0], foot[1] - end[1])
+    if not radius >= 0.5 * chord:
+        raise ValueError(f"a circle of radius {radius:g} kpc does not span the lane's ends, {chord:g} kpc apart")
+    height = math.sqrt(radius * radius - 0.25 * chord * chord)
+    # The chord's unit normal towards the major axis: the centre is the chord's midpoint moved along it.
+    normal = (-float(ring) * a / chord, -side * a / chord)
+    centre = (0.5 * (end[0] + foot[0]) + height * normal[0], 0.5 * (end[1] + foot[1]) + height * normal[1])
+    half_span = math.asin(min(1.0, 0.5 * chord / radius))
+    vx, vy = x - centre[0], y - centre[1]
+    # The angle of each point, seen from the centre, off the arc's middle (the direction opposite the normal).
+    off_middle = np.arctan2(-normal[0] * vy + normal[1] * vx, -normal[0] * vx - normal[1] * vy)
+    across = np.abs(np.hypot(vx, vy) - radius)
+    to_ends = np.minimum(np.hypot(x - end[0], y - end[1]), np.hypot(x - foot[0], y - foot[1]))
+    return np.where(np.abs(off_middle) <= half_span, across, to_ends)
+
+
+def lane_profiles(
+    R: np.ndarray, half_length: float, axis_ratio: float, boxiness: float,
+    curvature: float, ring: float, ratio: float, width: float, sense: float,
+) -> np.ndarray:
+    """L(R, ψ) on the fixed cells' centres of every grid ring, in the bar's frame ψ = φ − φ_bar; shaped (R, CELLS).
+
+    The gas inside the bar's reach as D217 items 7-8 rule it, a synthetic template standing in for the
+    two-dimensional flow in the bar's potential: on each ring inside the half-length a uniform base plus two
+    lanes. **The base**: the mean inside the body's footprint (m ≤ 1, ``pattern.bar_radius``) is ``ratio``
+    times the mean outside it on every ring, so with f the footprint's share of the ring the base is
+    1/(1 + (ratio − 1) f) - 1/ratio where the footprint fills the ring. **The lanes** hold the excess over the
+    base, inside the footprint: two point-symmetric arcs (:func:`lane_distance`) on the bar's leading side
+    (``sense``: :func:`rotation_sense`), each with a Gaussian profile across the arc of full width at half
+    maximum ``width`` · a. **Conserving by construction**: the Gaussian is weighed so that the ring's mean is
+    1 - its amplitude on a ring is the ring's excess over the quadrature of its own weight on the ring's cells
+    (:func:`ring_quadrature`), which is the template's normalisation, the one division here and not a field
+    divided by its mean. L is positive (never under the base) and nothing is drawn, clipped or floored. 1 on a
+    ring at or past the half-length, and on a ring whose footprint is narrower than a cell.
+    """
+    R = np.asarray(R, dtype=float)
+    a = float(half_length)
+    lanes = np.ones((R.size, CELLS))
+    inside = R < a
+    if not inside.any():
+        return lanes
+    psi = _response.cell_centres(CELLS)
+    radius = R[inside, None]
+    x, y = radius * np.cos(psi)[None, :], radius * np.sin(psi)[None, :]
+    footprint = bar_radius(x, y, a, axis_ratio, boxiness) <= 1.0
+    sigma = float(width) * a / (2.0 * math.sqrt(2.0 * math.log(2.0)))  # the Gaussian's dispersion from its FWHM
+    near = lane_distance(x, y, a, curvature, ring, sense)
+    far = lane_distance(-x, -y, a, curvature, ring, sense)
+    weight = np.where(footprint, np.exp(-0.5 * (near / sigma) ** 2) + np.exp(-0.5 * (far / sigma) ** 2), 0.0)
+    share = ring_quadrature(footprint.astype(float))
+    base = 1.0 / (1.0 + (float(ratio) - 1.0) * share)
+    total = ring_quadrature(weight)
+    holds = share > 0.0
+    if np.any(holds & ~(total > 0.0)):
+        raise ArithmeticError("a ring inside the bar's footprint carries no lane weight: the lane's width has underflowed")
+    amplitude = np.where(holds, (1.0 - base) / np.where(holds, total, 1.0), 0.0)
+    lanes[inside] = base[:, None] + amplitude[:, None] * weight
+    return lanes
+
+
 GAS_DENSITY_CONTRAST = FieldDecl(
     name="gas_density_contrast", label="Gas density contrast Σ_gas(R, φ)/Σ_gas(R)",
     unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"),
@@ -234,10 +349,19 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "steady, razor-thin response is an approximation and that is its recorded miss. A tightly wound "
         "galaxy - a drawn pitch of a few degrees - is forced far harder, and its inner rings swing from "
         "nearly empty to many times the mean: the law as it stands, nothing clipped, and a finding against "
-        "the razor-thin forcing. Inside the bar the response gives way "
-        "to the stellar bar's own two-fold term, "
-        "blended by the bar's taper, so the field is nowhere below the bar's own trough and nowhere "
-        "negative; nothing is clipped. It reads no gas column. A composed field: with the randomness layer "
+        "the razor-thin forcing. Inside a bar's reach the response gives way, by the bar's taper, to the bar's "
+        "gas lanes: on each ring inside the bar's half-length a uniform base and two narrow lanes on the "
+        "bar's leading side - the side the bar turns into, which the trailing arms give - each an arc of "
+        "constant curvature from the bar's end on its long axis to its short axis at the nuclear ring, bowed "
+        "away from the long axis. The gas inside the stellar bar's footprint averages a measured multiple of "
+        "the gas outside it on the same ring, and all of that excess lies on the lanes, so the lanes stand "
+        "several times the ring's mean and the bar off its lanes is thinned to about four tenths of it; the "
+        "ring's total is unchanged by construction. A template standing in for the gas flow in the bar's "
+        "potential, which the model does not compute: its curvature, its inner end and its excess are "
+        "measured typical values, the same for every bar, and its width is a declared placeholder that no "
+        "source gave. Nothing of it is drawn. So the field is nowhere below the taper times the lanes' base "
+        "and nowhere negative; nothing is clipped. An unbarred galaxy has no lanes and its gas answers the "
+        "arms to the centre. It reads no gas column. A composed field: with the randomness layer "
         "off it is 1 everywhere - the equation and its inputs are unchanged, and nothing says where the "
         "arms are."
     ),
@@ -265,14 +389,22 @@ class GasPattern:
     unit: np.ndarray             # (modes, R): u_m = A_m / (A (1 − bar taper)), the arm modes at unit amplitude
     phases: tuple[float, ...]    # θ_m, rad, one per mode of ARM_MODES
     arm: float                   # A, the published arm_contrast: A u_m is the mode's amplitude before the taper
-    bar: float                   # B, the stellar bar_contrast
     pitch_deg: float
-    bar_length: float            # kpc
+    bar_length: float            # a, kpc: NaN for an unbarred galaxy (no bar, the taper 0 on every ring)
     epicyclic: np.ndarray        # (R,): κ, km/s/kpc
     surface_density: np.ndarray  # (R,): checkpoint 1's total disc Σ, M☉/pc²
     gravity: float               # G, kpc (km/s)²/M☉
     sound_speed: float           # a, km/s
+    # The lanes (S58, D217 items 7-8): the body's footprint and the template's four numbers. Asked of a barred
+    # pattern only; until S58 the pattern held the stellar bar's amplitude here, for a cosine it no longer has.
+    axis_ratio: float = float("nan")      # q, the footprint's
+    boxiness: float = float("nan")        # c
+    lane_curvature: float = float("nan")  # κ·a
+    ring_ratio: float = float("nan")      # r_ring / a
+    gas_ratio: float = float("nan")       # the mean inside the footprint over the mean outside it
+    lane_width: float = float("nan")      # the lane's FWHM / a: a declared placeholder
     flat: bool = field(init=False)
+    barred: bool = field(init=False)
     _solved: dict = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -293,10 +425,17 @@ class GasPattern:
         # No perturbation to apply: a pattern the grid could not resolve or the layer did not realise (a NaN
         # among its own numbers), or no arm mode anywhere and no bar. (The disc's κ and Σ are not asked here:
         # a ring that carries a mode on a disc that is not a number is the solver's to refuse, loudly.)
-        scalars = (self.arm, self.bar, self.pitch_deg, self.bar_length, *self.phases)
+        # **A half-length that is NaN is no bar** (S58, D217 item 3) - an unbarred galaxy, the taper 0 on every
+        # ring - and not an unresolved pattern; a bar there is needs the lanes' numbers, all of them finite.
+        barred = not math.isnan(self.bar_length)
+        scalars = (self.arm, self.pitch_deg, *self.phases)
+        if barred:
+            scalars += (self.bar_length, self.axis_ratio, self.boxiness, self.lane_curvature, self.ring_ratio,
+                        self.gas_ratio, self.lane_width)
         finite = all(math.isfinite(v) for v in scalars) and bool(np.all(np.isfinite(self.unit)))
         no_arms = self.arm == 0.0 or not self.unit.any()
-        object.__setattr__(self, "flat", not finite or (no_arms and self.bar == 0.0))
+        object.__setattr__(self, "barred", barred and finite)
+        object.__setattr__(self, "flat", not finite or (no_arms and not barred))
         object.__setattr__(self, "_solved", {})
 
     @staticmethod
@@ -321,9 +460,11 @@ class GasPattern:
         return cls(
             R, cls.unit_amplitudes(R, amplitudes, arm, pitch, bar_length),
             tuple(float(fields[n]) for n in PHASE_FIELDS),
-            arm, float(fields["bar_contrast"]), pitch, bar_length,
+            arm, pitch, bar_length,
             fields["epicyclic_frequency"], fields["disc_surface_density"],
             float(constants["G"]), float(constants["GAS_DISPERSION"]),
+            float(fields["bar_axis_ratio"]), float(fields["bar_boxiness"]),
+            *(float(constants[k]) for k in LANE_CONSTANTS),
         )
 
     # --- the law's inputs on the grid rings ------------------------------------------------------------
@@ -352,7 +493,7 @@ class GasPattern:
         """The grid rings' solved profiles, made the first time they are asked for: ``profiles`` (R, CELLS),
         ``carries`` (R,) and the solver's ``diagnostics`` for the rings that carry a mode (None where none does)."""
         solved = self._solved
-        if not solved:
+        if "profiles" not in solved:  # (the lanes are kept in the same dictionary, under their own key: S58)
             f, eps = self.forcing_amplitudes(), self.epsilon()
             carries = (f != 0.0).any(axis=1)
             profiles = np.ones((self.R.size, CELLS))  # a ring with no mode: s = 1
@@ -383,23 +524,18 @@ class GasPattern:
 
     def _between(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """(lower ring, upper ring, share of the upper) for each radius: linear in R between two grid rings,
-        the end ring alone beyond the grid. At a grid radius the share is 0 or 1 and the ring is its own."""
-        grid = self.R
-        if grid.size < 2:
-            zero = np.zeros(np.shape(R), dtype=np.int64)
-            return zero, zero, np.zeros(np.shape(R))
-        lower = np.minimum(np.maximum(np.searchsorted(grid, R, side="right") - 1, 0), grid.size - 2)
-        share = (R - grid[lower]) / (grid[lower + 1] - grid[lower])
-        return lower, lower + 1, np.minimum(np.maximum(share, 0.0), 1.0)  # held at the end rings (item 9)
+        the end ring alone beyond the grid (item 9). At a grid radius the share is 0 or 1 and the ring is its
+        own. ``pattern.ring_bracket``: the bar's body reads its rings by the same bracket."""
+        return ring_bracket(self.R, R)
 
-    def response_at(self, R: np.ndarray, chi: np.ndarray) -> np.ndarray:
-        """s at points: ``R`` in kpc and ``chi`` in radians broadcast against each other. Each point reads its
-        two neighbouring grid rings at its own χ - ``gas_response.interpolate``'s own arithmetic on the two
-        cells χ lies between, the ring picked point by point - and blends them linearly in R."""
-        profiles = self.profiles
-        R, chi = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(chi, dtype=float))
+    def _read(self, profiles: np.ndarray, R: np.ndarray, angle: np.ndarray) -> np.ndarray:
+        """Profiles held on the cells of every grid ring, read at points: ``R`` in kpc and ``angle`` in radians
+        of the profiles' own coordinate, broadcast against each other. Each point reads its two neighbouring
+        grid rings at its own angle - ``gas_response.interpolate``'s own arithmetic on the two cells it lies
+        between, the ring picked point by point - and blends them linearly in R."""
+        R, angle = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(angle, dtype=float))
         lower, upper, share = self._between(R)
-        below, above, weight, _ = _response.bracket(chi, CELLS)
+        below, above, weight, _ = _response.bracket(angle, CELLS)
 
         def read(ring: np.ndarray) -> np.ndarray:
             first, second = profiles[ring, below], profiles[ring, above]
@@ -408,14 +544,47 @@ class GasPattern:
 
         return (1.0 - share) * read(lower) + share * read(upper)
 
+    def response_at(self, R: np.ndarray, chi: np.ndarray) -> np.ndarray:
+        """s at points: ``R`` in kpc and ``chi`` in radians broadcast against each other. Each point reads its
+        two neighbouring grid rings at its own χ and blends them linearly in R (:meth:`_read`)."""
+        return self._read(self.profiles, R, chi)
+
+    # --- the lanes (S58, D217 items 6-8) ---------------------------------------------------------------
+
+    @property
+    def sense(self) -> float:
+        """The disc's sense of rotation in φ, from the winding (:func:`rotation_sense`): the lanes' side."""
+        return rotation_sense(self.pitch_deg)
+
+    @property
+    def lanes(self) -> np.ndarray:
+        """L on the cells' centres of every grid ring in the bar's frame ψ = φ − φ_bar, shaped (R, CELLS);
+        read-only. Made the first time it is asked for. A barred pattern's only: an unbarred one has none."""
+        solved = self._solved
+        if "lanes" not in solved:
+            if not self.barred:
+                raise ValueError("an unbarred pattern has no lanes")
+            lanes = lane_profiles(self.R, self.bar_length, self.axis_ratio, self.boxiness, self.lane_curvature,
+                                  self.ring_ratio, self.gas_ratio, self.lane_width, self.sense)
+            lanes.setflags(write=False)
+            solved["lanes"] = lanes
+        return solved["lanes"]
+
+    def lanes_at(self, R: np.ndarray, psi: np.ndarray) -> np.ndarray:
+        """L at points, ``R`` in kpc and ``psi`` = φ − φ_bar in radians, broadcast against each other: the two
+        neighbouring grid rings' lane profiles read at the point's own ψ and blended linearly in R - a convex
+        blend of positive profiles of mean 1, so L is positive and its mean round a ring is 1 at every radius."""
+        return self._read(self.lanes, R, psi)
+
     def contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """The contrast at points: ``R`` and ``phi`` broadcast against each other, elementwise.
-        g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), the taper and the bar's term at the point's own radius."""
+        g = w_arm s + w_bar L, the taper at the point's own radius; an unbarred pattern is s (w_arm = 1)."""
         R = np.asarray(R, dtype=float)
         phi = np.asarray(phi, dtype=float)
         taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
         w_arm, w_bar = blend_weights(taper)
-        return w_arm * self.response_at(R, phi - phase) + w_bar * (1.0 + self.bar * np.cos(2.0 * (phi - bar_angle)))
+        arms = w_arm * self.response_at(R, phi - phase)
+        return arms + w_bar * self.lanes_at(R, phi - bar_angle) if self.barred else arms
 
     def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """Σ_gas(R, φ)/Σ_gas(R) at the points of an (R, φ) mesh: the point function at each (R_i, φ_j) - what a
@@ -428,9 +597,9 @@ class GasPattern:
         """The contrast's mean over each azimuthal cell between ``edges`` (radians, ascending) at each radius of
         ``R``, shaped (R, cells): what the stage publishes on the grid (gate G3 item 4). The exact mean of the
         point function over the cell - the two neighbouring rings' interpolants integrated piece by piece
-        (``gas_response.sector_mean``) and blended as a point blends them, the bar's cosine by its own
-        integral - so cells that tile the ring average to 1 to rounding on any grid, with no division, and a
-        cell's value is never under w_bar (1 − B). At one radius it is :meth:`sector_means`' arithmetic."""
+        (``gas_response.sector_mean``) and blended as a point blends them, the lanes' profiles the same way in
+        the bar's frame - so cells that tile the ring average to 1 to rounding on any grid, with no division,
+        and a cell's value is never under w_bar min L. At one radius it is :meth:`sector_means`' arithmetic."""
         solved = self._rings()
         profiles, carries = solved["profiles"], solved["carries"]
         R = np.asarray(R, dtype=float)
@@ -447,15 +616,21 @@ class GasPattern:
                 out[on] = _response.sector_mean(profiles[ring[on]], lo[None, :] - phase[on, None], hi[None, :] - phase[on, None])
             return out
 
-        arms = (1.0 - share)[:, None] * ring_means(lower) + share[:, None] * ring_means(upper)
-        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
-        return w_arm[:, None] * arms + w_bar[:, None] * (1.0 + self.bar * bar[None, :])
+        arms = w_arm[:, None] * ((1.0 - share)[:, None] * ring_means(lower) + share[:, None] * ring_means(upper))
+        if not self.barred:
+            return arms
+        lanes = self.lanes
+        low = np.broadcast_to(lo[None, :] - bar_angle, (R.size, lo.size))
+        high = np.broadcast_to(hi[None, :] - bar_angle, (R.size, lo.size))
+        bar = ((1.0 - share)[:, None] * _response.sector_mean(lanes[lower], low, high)
+               + share[:, None] * _response.sector_mean(lanes[upper], low, high))
+        return arms + w_bar[:, None] * bar
 
     def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """The contrast averaged over each sector between ``edges`` (radians, ascending) at one radius: the exact
         mean of the point function - the two neighbouring rings' interpolants integrated piece by piece
-        (``gas_response.sector_mean``) and blended as a point blends them, the bar's term by its own integral.
-        Sectors that tile the ring average to 1 to rounding."""
+        (``gas_response.sector_mean``) and blended as a point blends them, the lanes' the same way in the bar's
+        frame. Sectors that tile the ring average to 1 to rounding."""
         solved = self._rings()
         profiles, carries = solved["profiles"], solved["carries"]
         radius = np.array([float(R)])
@@ -470,9 +645,14 @@ class GasPattern:
                 return 1.0  # a ring with no mode is 1 on every cell: so is every sector of it
             return _response.sector_mean(profiles[ring], lo - phase[0], hi - phase[0])
 
-        arms = (1.0 - share[0]) * ring_mean(int(lower[0])) + share[0] * ring_mean(int(upper[0]))
-        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
-        return w_arm[0] * arms + w_bar[0] * (1.0 + self.bar * bar)
+        arms = w_arm[0] * ((1.0 - share[0]) * ring_mean(int(lower[0])) + share[0] * ring_mean(int(upper[0])))
+        if not self.barred:
+            # Between two rings that carry no mode the mean is one number: every sector holds it.
+            return np.full(lo.shape, arms) if np.ndim(arms) == 0 else arms
+        lanes = self.lanes
+        bar = ((1.0 - share[0]) * _response.sector_mean(lanes[int(lower[0])], lo - bar_angle, hi - bar_angle)
+               + share[0] * _response.sector_mean(lanes[int(upper[0])], lo - bar_angle, hi - bar_angle))
+        return arms + w_bar[0] * bar
 
     def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
         """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8)."""
@@ -599,8 +779,10 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
         about=(
             "The gas's own arm pattern: on every ring the steady response of isothermal gas to the stellar "
             "arm modes' potential in the frame that turns with the gas - no flow through the arms, no shock - "
-            "solved ring by ring under uniform potential vorticity, and blended with the stellar bar's own "
-            "term by the bar's taper (D216). Reads the stellar pattern's modes and phases and the disc's "
+            "solved ring by ring under uniform potential vorticity, and blended by the bar's taper with the "
+            "bar's gas lanes - a uniform base and two arcs on the bar's leading side holding the excess of gas "
+            "inside the bar's footprint, a conserving template with nothing drawn and one declared placeholder, "
+            "its width (D216, D217). Reads the stellar pattern's modes and phases and the disc's "
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
             "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
             "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "

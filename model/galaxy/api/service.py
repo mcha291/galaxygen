@@ -178,7 +178,10 @@ ROUTES: tuple[Route, ...] = (
         "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
         "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
-        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [], fit: null | {targets: "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, value, source}] - "
+        "measured facts of the galaxy's structure that replace what the model derives: value is true or false, "
+        "the observed class, and name is the published field it decides (bar_present: barred or not) - "
+        "fit: null | {targets: "
         "[{name, label, field, unit, value, half_window, window: [lo, hi], source, model, residual}], controls: "
         "[{name, default, fitted, lo, hi, free, measured_by, measures, bound, finding}] - a control is free only if "
         "a target measures it (measured_by names the target, measures says how) and is otherwise held at the "
@@ -191,7 +194,10 @@ ROUTES: tuple[Route, ...] = (
         "the record of the one reading spent on a fit since withdrawn - and sources: {<dotted path of a number>: "
         "its tag}}]}. "
         "template=<name> on a route that takes inputs makes that template's inputs the base, which an input in "
-        "the query still overrides; the default template is the registry's defaults, so naming it changes nothing. "
+        "the query still overrides, and applies its pins, which no query parameter can give or remove: a request "
+        "without template= is pinned nothing and the model derives. The default template is the registry's "
+        "defaults and pins what the model derives there, so naming it changes no array and no scalar - the "
+        "response's inputs then carry the pin, and nothing else differs. "
         "Runs no stage.",
         (),
         "templates",
@@ -651,8 +657,10 @@ def input_json(inp: Input) -> dict[str, Any]:
         }
     elif inp.kind == "seed":
         payload |= {"default": int(inp.default)}  # type: ignore[arg-type]
-    else:
+    elif inp.kind == "events":
         payload |= {"default": [_event_json(e) for e in inp.default]}  # type: ignore[union-attr]
+    else:  # a pin (S58, D217): no default - not given, the model derives. /api/inputs does not list it.
+        payload |= {"default": None}
     return payload
 
 
@@ -725,7 +733,8 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             "distance_mpc": template.instrument.distance_mpc,
             "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
         },
-        "pins": list(template.pins),
+        # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
+        "pins": [{"name": p.name, "value": p.value, "source": p.source} for p in template.pins],
         "fit": fit,
         "checks": [
             {
@@ -873,8 +882,14 @@ class Service:
 
     def _overrides(self, model: Model, q: Query) -> dict[str, Any]:
         """The inputs a request gives: its template's overrides as the base (S54, D213), then every input in the
-        query over them. The default template overrides nothing, so naming it and naming none are one point in
-        input space - one cache entry, the same bytes."""
+        query over them. The default template overrides no control, no seed and no event list, so naming it and
+        naming none ask for the same fields, bit for bit.
+
+        **A pin comes from the template alone** (S58, D217 item 2): it rides in the template's overrides, and a
+        query parameter naming one is refused - a pin is a measured fact of a named galaxy, not a control a
+        request may set. So a request without ``template=`` is pinned nothing and derives. Naming the default
+        template pins what the model derives at the defaults: another point in input space (another cache entry,
+        the pin among the response's inputs) holding the same galaxy."""
         accepted = set(model.input_names(self.table))
         template = self._template(q)
         out: dict[str, Any] = {}
@@ -884,6 +899,11 @@ class Service:
             if name not in accepted:
                 raise NotFound(f"model {model.name!r} has no input {name!r}")
             inp = self.table[name]
+            if inp.kind == "pin":
+                raise BadRequest(
+                    f"{name} is a template's pin, not an input a request may set: it is given by template=<name> "
+                    "(/api/templates lists each template's pins)"
+                )
             if inp.kind == "control":
                 try:
                     value = float(raw)

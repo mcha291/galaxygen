@@ -269,6 +269,116 @@ LEVEL0: dict[str, Constant] = {
         "inventing one would be rule A4's failure a level up. disc_dominance is published so the "
         "missing link can be checked rather than forgotten (debt #21).",
     ),
+    # --- the bar's presence, body and lanes (S58, BUILD_III Phase P3; DECISIONS.md D217) ----------------------
+    "BAR_FORMATION_TIME_SCALE": Constant(
+        0.146,
+        "Gyr",
+        "T0 in the bar's formation time t_b = T0 exp(S / f_d), f_d the disc's share of the squared circular "
+        "speed at 2.2 scale lengths (the published disc_dominance): the time an N-body disc takes to form a bar "
+        "(A_2,max > 0.2 and a bar longer than 1 kpc), fitted over live-halo models "
+        "[verified: Fujii et al. 2018, MNRAS 477, 1451, arXiv:1712.00058, eqs 6, 9, 11, §3.3, "
+        "https://ar5iv.labs.arxiv.org/html/1712.00058] (eq. 11; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
+        "errors are 0.146 +/- 0.079 Gyr and 1.38 +/- 0.17: fit errors, not a scatter between galaxies ('the "
+        "scatter is large'). **Its Q-dependence is unmodelled**: at one f_d the same paper's models form a bar "
+        "after 0.27 Gyr (Q_0 = 0.5) and after 8.8 Gyr (Q_0 = 2.0); the fit is at Q_0 = 1.2 and the model reads "
+        "no Q here (a debt, D217 item 1). A disc is barred where this time is shorter than its age since the "
+        "halo's assembly: derived, no draw - no source read gives a barred fraction against a criterion's value "
+        "or a galaxy-to-galaxy scatter about a threshold. The criterion bars nearly the whole input space with "
+        "no mass dependence, against measured bar fractions of 0.5-0.7, and is wrong for NGC 4414: recorded "
+        "before the build as a finding (D217). Efstathiou, Lake & Negroponte's criterion is the named "
+        "alternative, refused (rejected by two sources, wrong for 55 % of 91 galaxies in one test); Erwin "
+        "2018's measured frequency as a draw is the owner's to order.",
+    ),
+    "BAR_FORMATION_EXPONENT": Constant(
+        1.38,
+        "dimensionless",
+        "S in t_b = T0 exp(S / f_d) "
+        "[verified: Fujii et al. 2018, MNRAS 477, 1451, arXiv:1712.00058, eqs 6, 9, 11, §3.3, "
+        "https://ar5iv.labs.arxiv.org/html/1712.00058] (eq. 11; docs/READING_BAR.md A1.4 and A2, F18). The fit's "
+        "errors are 0.146 +/- 0.079 Gyr and 1.38 +/- 0.17. With BAR_FORMATION_TIME_SCALE it gives 1.5 Gyr at "
+        "f_d = 0.6, 7.5 Gyr at 0.35 and 14.5 Gyr at 0.30 (the paper's abstract: the epoch 'exceeds a Hubble time "
+        "when the disk-mass fraction is ~0.35'). **Its Q-dependence is unmodelled**: 0.27 to 8.8 Gyr at one f_d "
+        "between Q_0 = 0.5 and 2.0 (a debt, D217 item 1).",
+    ),
+    "BAR_AXIS_RATIO": Constant(
+        0.4,
+        "dimensionless",
+        "The bar body's axis ratio b/a in the disc's plane: bars fitted as a two-dimensional component have an "
+        "ellipticity peaking near 0.6, i.e. b/a about 0.4 (ellipse fits read 20 % lower; strong bars 0.31 +/- "
+        "0.12, Kruk et al. 2018) "
+        "[verified: Gadotti 2011, MNRAS 415, 3308, arXiv:1003.1719, §2–3.1, "
+        "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11; b/a = 1 - "
+        "ellipticity is the reader's derivation). The medians and scatters sit in a figure and were not "
+        "readable, so no draw of it is built: one value for every bar, a debt (D217 item 4).",
+    ),
+    "BAR_BOXINESS": Constant(
+        3.0,
+        "dimensionless",
+        "The exponent c of the bar body's generalised ellipse, (|x|/a)^c + (|y|/b)^c = m^c: 2 is an ellipse, "
+        "above 2 boxy. Fitted bars are boxy, c about 3 and always above 2 "
+        "[verified: Gadotti 2011, MNRAS 415, 3308, arXiv:1003.1719, §2–3.1, "
+        "https://ar5iv.labs.arxiv.org/html/1003.1719] (docs/READING_BAR.md A1.2 and A2, G11; Kim et al. 2015, "
+        "K15, carries the same boxiness).",
+    ),
+    "BAR_PROFILE_INDEX": Constant(
+        2.0,
+        "dimensionless",
+        "The exponent n of the bar body's surface density along the generalised radius m, (1 - m^2)^n inside "
+        "m = 1 and nothing outside: the Ferrers form with exponent 2, cut off at the bar's half-length, the "
+        "fitting function of the S4G decompositions the bar statistics come from, so no effective radius is "
+        "free [verified: Salo et al. 2015, ApJS 219, 4, arXiv:1503.06550, Table 2 and bar function, "
+        "https://ar5iv.labs.arxiv.org/html/1503.06550] (docs/READING_BAR.md A1.2 and A2, S15). The measured "
+        "profiles run from flat (early types, a bulge) to exponential (late types): one form is taken, chosen "
+        "before a number was read (D217 item 4).",
+    ),
+    "BAR_LANE_CURVATURE": Constant(
+        1.15,
+        "dimensionless",
+        "The curvature of the bar's gas lanes times the bar's half-length: each lane is an arc of a circle of "
+        "radius a / 1.15. The median of the 16 lane values of ten S4G galaxies' Table 1 (0.12 to 2.37), "
+        "derived by the reader and not printed by the paper "
+        "[verified: Sánchez-Menguiano et al. 2015, MNRAS 450, 2670, arXiv:1504.02232, abstract, method, Table 1, "
+        "https://ar5iv.labs.arxiv.org/html/1504.02232 and https://arxiv.org/abs/1504.02232] "
+        "(docs/READING_BAR.md B1.1 and B2, SM15: 'Median of the 16 lane values = 1.15 [derived by this reader; "
+        "not printed]'). Not drawn and not tied to the bar's strength: the measured relation is an upper "
+        "envelope with a wide spread and two lanes of one galaxy can differ tenfold (a debt, D217 item 7).",
+    ),
+    "NUCLEAR_RING_RATIO": Constant(
+        0.10,
+        "dimensionless",
+        "The radius at which the bar's gas lanes end on the bar's minor axis - the nuclear ring's - over the "
+        "bar's half-length. The simulations' law r_ring/a = 0.062 Q_b^-0.46 gives 0.085-0.11 at bar strengths "
+        "Q_b of 0.3-0.5 "
+        "[verified: Kim, Seo & Kim 2012, ApJ 758, 14, arXiv:1208.1821, model section, eq. 9–11, dust-lane "
+        "section, https://arxiv.org/html/1208.1821 and https://ar5iv.labs.arxiv.org/html/1208.1821] (eq. 11; "
+        "docs/READING_BAR.md B1.2 and B2, KSK12; the evaluation at those strengths is the ruling's, D217 item "
+        "7), inside the observed bound of a quarter of the bar's half-length "
+        "[verified: Comerón et al. 2010, MNRAS 402, 2462, arXiv:0908.0272, abstract, §4.3, §6, §7.1, Fig. 6, "
+        "https://ar5iv.labs.arxiv.org/html/0908.0272] (docs/READING_BAR.md B2, AINUR). The bar strength Q_b is "
+        "not computed for the model's body, so the ratio does not vary with it (a debt).",
+    ),
+    "BAR_GAS_RATIO": Constant(
+        2.6,
+        "dimensionless",
+        "The mean gas surface density inside the bar's footprint over the mean outside it on the same ring: "
+        "the medians of molecular gas surface density in PHANGS's bar and interarm environments, 11.51 against "
+        "4.492 Msun/pc2 in 1.5 kpc apertures (Table 3), a ratio of 2.56 entered as the ruling's 2.6 "
+        "[verified: Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Tables 2–3, §4.4, "
+        "https://ar5iv.labs.arxiv.org/html/2109.04491 and https://arxiv.org/html/2109.04491] "
+        "(docs/READING_BAR.md B1.2 and B2, Q21; D217 item 8). A ratio between environments of whole galaxies, "
+        "applied on every ring inside the bar (a debt); the sources dispute how empty a bar is off its lanes "
+        "('bars are not always deserts').",
+    ),
+    "BAR_LANE_WIDTH": Constant(
+        0.10,
+        "dimensionless",
+        "The full width at half maximum of a gas lane across its arc, over the bar's half-length. **An unsourced "
+        "placeholder**: no source read gives a lane width - a sub-kiloparsec width statistic of the molecular "
+        "gas or of the dust lanes is what would settle it - so this number is declared, not measured, and is "
+        "carried as a debt (D217 item 8; docs/READING_BAR.md B5: 'Not found in anything read: a lane width') "
+        "[inferred]. Nothing is tuned to it: the lane's peak over the ring's mean follows from it and is read "
+        "as a check against one simulation's factor of about ten (Kim, Seo & Kim 2012).",
+    ),
     "FAST_BAR_RATIO": Constant(
         1.2,
         "dimensionless",

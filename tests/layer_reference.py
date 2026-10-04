@@ -165,13 +165,22 @@ def routes_digest(labels: tuple[str, ...] | None = None) -> dict[str, dict[str, 
 
 def single_mode_scalars(template: str) -> dict[str, float]:
     """The scalars S55's two laws were built from, on the default model at a template's inputs. None of them is the
-    arm number: the pitch, the two amplitudes, the bar's length and the gas's ratio keep their streams in P1."""
+    arm number: the pitch, the two amplitudes, the bar's length and the gas's ratio keep their streams in P1.
+
+    **S58 (D217): read with the template's pins taken off.** S55 knew no pin and every galaxy had a bar; since S58
+    ``ngc_4414`` is pinned unbarred and publishes NaN for its bar's numbers. The numbers S55 drew are still the
+    model's - every draw keeps its stream and value - and are read where the model derives its presence (which bars
+    this disc, as it bars the Milky Way's): the template's controls, seeds and merger list, and no pin."""
+    from galaxy import templates
     from galaxy.core.registry import production
     from galaxy.run import run
 
     models, _, _ = production()
     names = ("arm_contrast", "bar_contrast", "pitch_angle", "bar_half_length", "gas_arm_contrast")
-    out = run(models.get(MODELS[0]), template_inputs(template), only=names, layer=False)
+    pinned = templates.pinned(templates.TEMPLATES[template])
+    inputs = {k: v for k, v in template_inputs(template).items() if k not in pinned}
+    out = run(models.get(MODELS[0]), inputs, only=(*names, "bar_present"), layer=False)
+    assert out.fields["bar_present"] == "yes", "S55's scalars are a barred galaxy's: the derivation must bar this disc"
     return {n: float(out.fields[n]) for n in names}
 
 
