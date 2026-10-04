@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type Query, loadArrays, loadBright, loadClouds, loadClusters, loadRegion, loadRemnants, loadRender, loadSample } from "./api";
 import { LayerMismatch, layerQuery, onLayerFault } from "./galaxy/layer";
+import { templateQuery } from "./workflow/templates";
 
 const QUERY: Query = { halo_mass: 1.1e12, world_seed: 0, texture_seed: 0, mergers: "[]", model: "azimuthal" };
 const WINDOW = { r_min: 7.5, r_max: 8.5, phi_min: 0.1, phi_max: 0.3 };
@@ -88,6 +89,56 @@ describe("layer=off on the wire, in every request shape", () => {
     expect(JSON.stringify(long).length).toBeGreaterThan(MAX_URL);
     expect(sent[0].method).toBe("POST");
     expect(sent[0].params.getAll("layer")).toEqual(["off"]);
+  });
+});
+
+// The template's name on the wire (S58, D217 item 2): a galaxy that is a template or was started from one is
+// asked for with `template=<name>` beside its inputs, on every route that takes an input vector - it is what
+// brings the template's pins, which no input can. The query is the workflow's (useWorkflow.ts queryOf, which adds
+// the parameter in one place through templateQuery); what is asserted is each loader carrying it to the request.
+describe("template=<name> on the wire, in every request shape", () => {
+  const NGC = { name: "ngc_4414" };
+
+  for (const [what, { route, ask }] of Object.entries(REQUESTS)) {
+    it(`${what}: ${route} names the template the galaxy was started from`, async () => {
+      await ask(templateQuery(QUERY, NGC));
+      expect(sent).toHaveLength(1);
+      expect(sent[0].route).toBe(route);
+      expect(sent[0].params.getAll("template")).toEqual(["ngc_4414"]);
+      // beside the inputs, not in place of them: the query's own values are what the API lays over the template's
+      expect(sent[0].params.get("halo_mass")).toBe("1100000000000");
+      expect(sent[0].params.get("mergers")).toBe("[]");
+      expect(sent[0].params.get("model")).toBe("azimuthal");
+      // and no pin is sent as an input: the API refuses one
+      expect(sent[0].params.has("bar_present")).toBe(false);
+
+      // A galaxy started from no template: no `template` parameter at all - the request as it was, to the letter.
+      await ask(templateQuery(QUERY, null));
+      expect(sent[1].params.has("template")).toBe(false);
+      const without = new URLSearchParams(sent[0].params);
+      without.delete("template");
+      expect(sent[1].params.toString()).toBe(without.toString());
+
+      // With the layer off as with it on: the two parameters ride together.
+      await ask(layerQuery(templateQuery(QUERY, NGC), true));
+      expect([sent[2].params.getAll("template"), sent[2].params.getAll("layer")]).toEqual([["ngc_4414"], ["off"]]);
+    });
+  }
+
+  it("rides in the body of a query too long for a URL (the POST path past 4 KB)", async () => {
+    const long = Array.from({ length: 200 }, (_, k) => ({ name: `f${k}`, shape: "sampled", wavelength: [400 + k, 500 + k], throughput: [0.5, 0.25] }));
+    expect(JSON.stringify(long).length).toBeGreaterThan(MAX_URL);
+    await loadRender(long as never, 5800, templateQuery(QUERY, NGC));
+    await loadBright(WINDOW, 1000, VIEW, long as never, 5800, templateQuery(QUERY, NGC));
+    await loadClusters({ ...WINDOW, level: 0 }, templateQuery(QUERY, NGC), undefined, { curves: long as never, white: 5800 });
+    expect(sent.map((s) => [s.route, s.method, s.params.getAll("template")])).toEqual([
+      ["/api/render", "POST", ["ngc_4414"]],
+      ["/api/bright", "POST", ["ngc_4414"]],
+      ["/api/clusters", "POST", ["ngc_4414"]],
+    ]);
+    // the same long query from a galaxy of no template: still a POST, and no template in its body
+    await loadRender(long as never, 5800, templateQuery(QUERY, null));
+    expect([sent[3].method, sent[3].params.has("template")]).toEqual(["POST", false]);
   });
 });
 

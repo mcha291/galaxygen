@@ -15,7 +15,7 @@ import { panelsAt } from "./preview/panels";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useLoad } from "./useLoad";
 import { runHash } from "./workflow/logic";
-import { templateLabel } from "./workflow/templates";
+import { pinWords, templateLabel } from "./workflow/templates";
 import { EDIT_VIEW, type View, isGenerated, settleView, useWorkflow } from "./workflow/useWorkflow";
 import { WorkflowPanel } from "./workflow/Workflow";
 import styles from "./App.module.css";
@@ -88,6 +88,8 @@ export function App() {
     return () => abort.abort();
   }, [wf.model]);
 
+  // The workflow's query: the input vector, the model and - for a galaxy started from a template - `template=`,
+  // which brings the template's pins (S58; useWorkflow.ts queryOf). Every tab asks with it.
   const query = wf.query;
   // What the Galaxy view asks the model with: the workflow's query and, under "physics only", `layer=off`. The
   // one place the parameter is added - the star sample below and every loader of the Galaxy tab take this query
@@ -122,11 +124,16 @@ export function App() {
   // The model is named only where there is a choice of one; there are two since S27 (D176) and the
   // selector shows them; the default is the azimuthal one since S46 (D197).
   // The hash is the input vector's, the workflow's query: the layer's switch is not an input and does not move
-  // it. While the Galaxy view is drawn physics only the line says so after the hash, in words.
+  // it. While the Galaxy view is drawn physics only the line says so after the hash, in words. Since S58 the
+  // query names the template the galaxy was started from, and the hash moves with it: the pins it brings are
+  // inputs of the run, so the same controls under another template are another galaxy.
   const layerMark = physicsOnly && tab === "galaxy" ? ` · ${PHYSICS_ONLY}` : "";
   const hash = query ? `${runHash(query)}${wf.models.length > 1 ? ` · ${wf.model}` : ""} · world_seed ${seed}${layerMark}` : "";
   // The template the galaxy is, in every tab: its label, and "edited" once an input or the model has changed.
   const galaxyName = wf.template && wf.state ? templateLabel(wf.template, wf.edited) : "";
+  // The template's pins, in the field declarations' words (S58, D217): they ride with every request the galaxy
+  // makes, edited or not, so an edited galaxy's name says they still hold.
+  const pinned = wf.template?.pins.map((p) => pinWords(p, meta?.fields)).join("; ") ?? "";
   const tabs: { key: Tab; label: string; disabled?: boolean; title?: string }[] = [
     { key: "preview", label: "Preview", title: generated ? "The staged generation: reopen a checkpoint to change the galaxy" : undefined },
     { key: "science", label: "Science" },
@@ -178,7 +185,11 @@ export function App() {
         {galaxyName && (
           <span
             className={styles.galaxyName}
-            title={wf.edited ? `Edited from the ${wf.template!.label} template: choose it again in the Galaxy view to restore it` : wf.template!.about}
+            title={
+              wf.edited
+                ? `Edited from the ${wf.template!.label} template: choose it again in the Galaxy view to restore it${pinned ? `. The template's pins still hold - ${pinned}` : ""}`
+                : wf.template!.about
+            }
           >
             {galaxyName}
           </span>

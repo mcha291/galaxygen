@@ -2,10 +2,23 @@ import * as flow from "@interface/flow.js";
 import { ApiError } from "@interface/transport.js";
 import { describe, expect, it } from "vitest";
 
-import { type FlowState, type InputDecl, reopen } from "./logic";
+import { type FlowState, type InputDecl, reopen, runHash } from "./logic";
 import fixture from "./templates.fixture.json";
-import { EVENTS_INPUT, applyTemplate, isEdited, parseTemplates, readTemplates, switcherItems, templateLabel, templateOf, thumbnailOf } from "./templates";
-import { generateDefault, isGenerated, landOn } from "./useWorkflow";
+import {
+  EVENTS_INPUT,
+  TEMPLATE_KEY,
+  applyTemplate,
+  isEdited,
+  parseTemplates,
+  pinWords,
+  readTemplates,
+  switcherItems,
+  templateLabel,
+  templateOf,
+  templateQuery,
+  thumbnailOf,
+} from "./templates";
+import { generateDefault, isGenerated, landOn, queryOf } from "./useWorkflow";
 
 const PAYLOAD: unknown = fixture.payload;
 const copy = () => JSON.parse(JSON.stringify(PAYLOAD)) as { default: string; templates: Record<string, unknown>[] };
@@ -83,7 +96,102 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
     expect(milkyWay.instrument).toEqual({ distance_mpc: null, pixel_scale_arcsec: null });
     expect(milkyWay.about).toBe("");
     expect(ngc.fit).toEqual({ targets: [], controls: [] });
-    expect(ngc.pins).toEqual([]);
+    expect(ngc.checks).toEqual([]);
+  });
+});
+
+describe("a template's pins (S58, D217 item 2)", () => {
+  // What /api/fields declares of the field the pin decides, as far as the words need it.
+  const FIELDS = [
+    { name: "bar_present", label: "Barred", categories: ["no", "yes"] },
+    { name: "stellar_mass_total", label: "Stellar mass" },
+  ];
+
+  it("reads each pin as published: the field it decides, the observed class and where it was read", () => {
+    const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
+    expect(milkyWay.pins).toEqual([{ name: "bar_present", value: true, source: "[illustrative] the Milky Way is barred" }]);
+    expect(ngc.pins).toEqual([{ name: "bar_present", value: false, source: "[illustrative] no source finds a bar in NGC 4414" }]);
+  });
+
+  it("takes a template without pins as pinned nothing: an API from before S58", () => {
+    const p = copy();
+    delete p.templates[0].pins;
+    p.templates[1].pins = [];
+    expect(parseTemplates(p).templates.map((t) => t.pins)).toEqual([[], []]);
+  });
+
+  it("refuses a pin it cannot read rather than dropping what the API would still apply", () => {
+    const broken = (pins: unknown) => {
+      const p = copy();
+      p.templates[1].pins = pins;
+      return () => parseTemplates(p);
+    };
+    expect(broken("bar_present")).toThrow(/template ngc_4414: pins is not a list/);
+    expect(broken([{ name: "bar_present", value: "no", source: "" }])).toThrow(/template ngc_4414: a pin is \{name, value: true or false, source\}/);
+    expect(broken([{ value: false }])).toThrow(/a pin is/);
+    // a pin without a source is still a pin: the words stand, the tooltip is empty
+    expect(broken([{ name: "bar_present", value: false }])()).toMatchObject({ templates: [{}, { pins: [{ name: "bar_present", value: false, source: "" }] }] });
+  });
+
+  it("says a pin in the field declaration's own words, with none of the viewer's", () => {
+    const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
+    expect(pinWords(ngc.pins[0], FIELDS)).toBe("Barred: no (as observed)");
+    expect(pinWords(milkyWay.pins[0], FIELDS)).toBe("Barred: yes (as observed)");
+    // No declaration (the fields not loaded yet, a model without the field): the pin's own name, yes or no.
+    expect(pinWords(ngc.pins[0])).toBe("bar_present: no (as observed)");
+    expect(pinWords(milkyWay.pins[0], [])).toBe("bar_present: yes (as observed)");
+    // A field that is not a two-class one does not lend its categories to a true-or-false pin.
+    expect(pinWords({ name: "stellar_mass_total", value: true, source: "" }, FIELDS)).toBe("Stellar mass: yes (as observed)");
+  });
+});
+
+describe("template= on every request of a galaxy started from a template (S58)", () => {
+  const { templates } = parseTemplates(PAYLOAD);
+  const [milkyWay, ngc] = templates;
+
+  it("a template's galaxy is asked for by its inputs and by its name: the name brings the pins", () => {
+    const landed = landOn(fresh(), ngc);
+    const q = queryOf(landed, "azimuthal", ngc);
+    expect(q[TEMPLATE_KEY]).toBe("ngc_4414");
+    // every input is still laid out, value by value, and the model named
+    expect(q).toEqual({ ...(flow.query(landed) as Record<string, unknown>), model: "azimuthal", template: "ngc_4414" });
+    expect(queryOf(landOn(fresh(), milkyWay), "azimuthal", milkyWay).template).toBe("milky_way");
+    // a pin is never an input of the query: the API refuses one, and the template's name is what gives it
+    expect(Object.keys(q)).not.toContain("bar_present");
+  });
+
+  it("stands through Edit galaxy: a reopened checkpoint, a moved control, a re-rolled seed, another event list, another model", () => {
+    const landed = landOn(fresh(), ngc);
+    const reopened = reopen(landed, 1).state;
+    expect(queryOf(reopened, "azimuthal", ngc).template).toBe("ngc_4414");
+    const moved = flow.setValue(reopened, "halo_mass", 2e12) as FlowState;
+    const rerolled = flow.reroll(moved, ["world_seed"], () => 7) as FlowState;
+    const merged = flow.setValue(rerolled, EVENTS_INPUT, [{ time: 5, mass_ratio: 0.1, gas_fraction: 0.2 }]) as FlowState;
+    expect(isEdited(merged, "azimuthal", ngc)).toBe(true);
+    const q = queryOf(merged, "azimuthal", ngc);
+    // the edits are the query's own inputs, which the API lays over the template's; the template is still named
+    expect([q.template, q.halo_mass, q.world_seed, q.mergers]).toEqual(["ngc_4414", 2e12, 7, '[{"time":5,"mass_ratio":0.1,"gas_fraction":0.2}]']);
+    expect(queryOf(merged, "basic", ngc)).toMatchObject({ model: "basic", template: "ngc_4414" });
+  });
+
+  it("a galaxy started from no template sends none: the query is the one sent before the templates, to the letter", () => {
+    const free = generateDefault(fresh());
+    const q = queryOf(free, "azimuthal", null);
+    expect(TEMPLATE_KEY in q).toBe(false);
+    expect(q).toEqual({ ...(flow.query(free) as Record<string, unknown>), model: "azimuthal" });
+    const bare = { halo_mass: 1.1e12, model: "azimuthal" };
+    expect(templateQuery(bare, null)).toBe(bare); // the very object, untouched
+    expect(templateQuery(bare, ngc)).toEqual({ halo_mass: 1.1e12, model: "azimuthal", template: "ngc_4414" });
+    expect(bare).toEqual({ halo_mass: 1.1e12, model: "azimuthal" });
+  });
+
+  it("is part of every cache key and of the run hash: the same inputs under another template are another galaxy", () => {
+    // NGC 4414's inputs reached by editing the Milky Way: one input vector, two pins.
+    const state = landOn(fresh(), ngc);
+    const [asNgc, asMilkyWay, asNone] = [ngc, milkyWay, null].map((t) => queryOf(state, "azimuthal", t));
+    const keys = [asNgc, asMilkyWay, asNone].map((q) => JSON.stringify([["bar_present"], q])); // a loader's key (Published.tsx)
+    expect(new Set(keys).size).toBe(3);
+    expect(new Set([asNgc, asMilkyWay, asNone].map(runHash)).size).toBe(3);
   });
 });
 

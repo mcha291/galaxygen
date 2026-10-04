@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { loadDeclarations, loadTemplates, type Query } from "../api";
 import { type Checkpoint, type FlowState, drawSeed, firstDifference, reopen } from "./logic";
-import { type Template, type Templates, applyTemplate, isEdited, templateOf } from "./templates";
+import { type Template, type Templates, applyTemplate, isEdited, templateOf, templateQuery } from "./templates";
 
 export interface Workflow {
   model: string;
@@ -55,6 +55,19 @@ export function generateDefault(s: FlowState): FlowState {
  */
 export function landOn(fresh: FlowState, template: Template): FlowState {
   return generateDefault(applyTemplate(fresh, template));
+}
+
+/**
+ * What every route is sent: the whole input vector, explicitly (flow.query), the model, and - for a galaxy that
+ * is a template or was started from one - `template=<name>` (S58, D217 item 2; templates.ts templateQuery). The
+ * template's inputs are still laid out value by value, so an edit is one changed value in the same query and the
+ * API lays the query's inputs over the template's; the parameter is what brings the template's **pins**, which
+ * are no input a request may set. A galaxy started from no template (`template` null: an API from before S54)
+ * is asked exactly as it was. The one source of what is asked of the API: every loader spreads this object and
+ * every cache key serialises it, so two galaxies that differ by a pin alone never share a response.
+ */
+export function queryOf(state: FlowState, model: string, template: Template | null): Query {
+  return templateQuery({ ...(flow.query(state) as Query), model }, template);
 }
 
 /** Generation is done when every checkpoint is confirmed; the Galaxy tab shows that result only. */
@@ -211,7 +224,7 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
 
   // Choosing a template goes through the flow's own state: a fresh flow over the same catalogue, the
   // template's inputs set, every checkpoint confirmed. A template of another model waits for that model's
-  // declarations. The query below stays the one source of what is asked of the API.
+  // declarations. The query below (queryOf) stays the one source of what is asked of the API.
   const selectTemplate = useCallback(
     (name: string) => {
       const template = templateOf(templates, name);
@@ -233,12 +246,12 @@ export function useWorkflow(initialModel = DEFAULT_MODEL): Workflow {
     [templates, model, land],
   );
 
-  // The whole input vector, explicitly, and the model: what every route is sent. A template is its inputs
-  // here, not a `template=` parameter, so an edit is one changed value in the same query, and an API from
-  // before the templates is asked exactly as it was.
-  const query = state ? { ...flow.query(state), model } : null;
+  // The template the galaxy is or was started from: set at every landing (the first load, the switcher) and by
+  // nothing else, so it stands through "Edit galaxy" - a reopened checkpoint, a moved control, a re-rolled seed,
+  // a changed event list, another model - until another template is landed on. Null only where the API has none.
   const template = templateOf(templates, chosen);
   const edited = !!state && !!template && isEdited(state, model, template);
+  const query = state ? queryOf(state, model, template) : null;
 
   return {
     model,

@@ -30,7 +30,8 @@ export function Published({ scalars, query }: { scalars: FieldDecl[]; query: Que
           <div key={f.name} className={styles.stat} title={String(f.about ?? "")}>
             <div className={styles.statKey}>{f.label}</div>
             <div className={styles.statValue}>
-              <span>{v === undefined || v === null ? "—" : categorical ? f.categories![v] : formatNumber(v, 4)}</span>
+              {/* A category scalar rides in the header as its label ("yes", "bimodal_narrow"), not as an index. */}
+              <span>{v === undefined || v === null ? "—" : categorical ? (f.categories![v] ?? String(v)) : formatNumber(v, 4)}</span>
               {unit && <span className={styles.statUnit}>{unit}</span>}
             </div>
           </div>
