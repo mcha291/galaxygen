@@ -9319,3 +9319,7 @@ replace the arm-number law with S26's global window on every ring — no change 
 the disc's edge — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and, for `ngc_4414`, 0.43 / 0.36 / 0.18 / 0.04 / 0,
 and in turn fails the reading on a coherent pattern reaching the edge of a flocculent disc. If (b), S57 opens
 with that swap — one function, the same independent test, the pins re-read — and no further gate turn.
+
+**The close (2026-10-04).** The suite on the combined state: 1237 passed, 5 skipped, `EXIT=0` (55 min: the ranked
+ridge and two tests that each draw 240 galaxies); the specs OK, 12 / 20 / 5 of 37 for both models, the template
+checks 0 / 5 on their five recorded misses. The picture run: 8 passed.

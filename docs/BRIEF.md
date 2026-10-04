@@ -16,7 +16,7 @@ and Γ, constant in R; the hand-derived test re-pointed; every layer-on pin re-r
 ## First
 `uv run python tools/bootstrap.py` (S56's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md`
 §1, "Phase P2" in §5, §3b–§3d, and D215's rulings 7–13: that text is the ruling so far.** The closing suite now
-takes about 45 minutes (the ranked ridge).
+takes about 55 minutes (the ranked ridge).
 
 ## The order (BUILD_III §5, Phase P2)
 1. **Two readers, blind to the model, in parallel**: the steady spiral shock (Roberts 1969; Shu, Milione & Roberts
