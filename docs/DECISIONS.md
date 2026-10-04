@@ -9998,3 +9998,78 @@ its bar's angle, and what is measured of NGC 4414's arms). Inherited from D217: 
 that reaches a run by the template's name; the bar's angle is a convention of the winding, not a field; debt
 #138's conflict of sources is with the owner, whose standing answer (D216) keeps the plan's arm-number law.
 
+
+**The probe before the build (hand arithmetic on the reading's tables; the repository unchanged).** The measured
+arms are not one winding: at β = 24° the four major arms of Reid et al. 2019 stand at 4.89, 6.04, 9.33 and 12.03 kpc,
+which a common four-armed winding would need pitches of 7.6°, 15.5° and 9.2° between neighbours to pass through,
+where the arms' own pitches there are 12.1°, 17.1°, 10.3° and 9.4°; arms that overlap in radius are 34°–60° apart
+(Norma and Scutum–Centaurus, the Local arm and Perseus), not a quarter turn. A sum of modes with drawn phases has
+no arm to pass through a locus. A 60° segment at 13.5° spans d ln R = 0.25, five or six between 3 and 12 kpc — as
+kinks of a common winding, on common rings for every arm, which no source describes. A segment's pitch drawn about
+13.5° with the measured 10° is reversed 9 % of the time and under 2.7° another 9 %, and the gas law's two numbers
+go as 1/sin p. NGC 4414 has no locus to pin: five segment pitches (mean 28.9° ± 6.0°) against the drawn 14.3°.
+A stop condition (§3d): the sources fit each arm on its own.
+
+**A conditional gate, 2026-10-05; ruling by Fable (the agent of D216–D217's gates, resumed; one turn on
+`docs/HANDOFF_S59.md` and its five ranges, nothing run).** Checked on paper: "a common winding Φ(R) with χ = φ −
+Φ(R) is a per-ring phase shift of every mode, so … every ring total and every amplitude is kept exactly, and the
+gas law's solution s(χ) on a ring is unchanged in χ"; across a kink "every mode's crest locus is continuous in R
+with a kink at the same radius for all modes and all arms — a feature of this representation that no source
+describes"; the m = 2 tie to the bar "holds only if φ_bar = Φ(a)"; the gas law at the mean pitch on a segment of
+pitch p_seg "answers the right potential shape with the wrong normal wavenumber: ε and f are off by sin p/sin
+p_seg, 0.26–1.7 at ±1σ"; with the local pitch in the law, f_m/ε² "is regular through sin p = 0 … but about a
+tenth of segments would sit in #142's blow-up regime"; the reader's log-normal gives quartiles 47°–76° against
+50°–80°; residuals of 10° reverse 9 % of segments and Honig & Reid's 3 of 38 is 8 %: "the tail is the measured one".
+1. *A segment* "is a radial piece of the common winding: Φ(R) = Φ(R_A) + ∫ cot p(R′) dR′/R′, p piecewise constant,
+   anchored at R_A = a (barred) or 2 R_d (unbarred, where a would be) with Φ(R_A) = ln R_A · cot p, so the bar's
+   angle is exactly today's and the m = 2 tie stands. Segments are laid from the anchor outward to the grid's edge
+   and inward to the centre, synthetic on `texture_seed`, standing in for per-arm kinks; the kinks' being on common
+   rings for every arm and mode is declared and a debt. Per-mode windings are refused (modes would shear against
+   each other and the composed crests would not be arms); 'nothing built' is refused. A per-arm ridge
+   representation is the owner's."
+2. *The distributions:* "a segment's azimuthal extent Δβ is log-normal with median 60° and σ_ln 0.35, redrawn
+   outside 20°–180° (the reader's fit to Honig & Reid's 38 rows, the bounds the sample's range); its pitch p_seg =
+   `pitch_angle` + δ, δ normal with sd 10°, independent per segment, untruncated (reversed and near-zero segments
+   are measured and allowed). The radial extent follows: d ln R = Δβ |tan p_seg|, the phase advancing
+   Δβ·sign(p_seg) across it. No AR structure; no arm-to-arm term (none in a common winding: debt)."
+3. *"Continuous in phase"* asserts "Φ continuous at every kink to 1e-12; each mode's crest locus continuous in R;
+   the slope dΦ/d ln R jumps there and nowhere else."
+4. *Geometry only, this session:* "ε and f keep `pitch_angle`; the bar's angle is Φ(a) = ln a·cot p by the anchor;
+   the lanes' side is the rotation's. Declared as an approximation with a debt: 'the gas answers each ring at the
+   disc's mean pitch; on a segment its normal wavenumber is off by sin p/sin p_seg'. What settles it: a probe of
+   the regular form on the 240 seeds with #142's regime counted — next session's instrument, not this one."
+5. *The Milky Way's pins:* "the Sun's azimuth, a template field `sun_azimuth` = φ_bar − 30° in the rotation's sense
+   (the bar's near end at β > 0; 28°–33°), published; nothing of the arms' loci (a sum of modes with drawn phases
+   holds no arm). Reid 2019 is not pinned; its Table 2 as read defines a disclosed check: for each of the four
+   major arms and the Local arm, over its β range, the radial distance from R(β) to the nearest crest of the
+   composed stellar field (layer on, the template's default seeds), in units of the measured width w(R) = 336 +
+   36(R − 8.15) pc; the statistic is the median over the five arms' loci, judged against 1 width. Predicted before
+   the build: a miss by 2–4 widths. Recorded under #138's conflict, the sentence 'this representation cannot show
+   the Milky Way's measured arms' first."
+6. *NGC 4414's pins:* "`pitch_angle` = 28.9° replaces the draw (a measured mean, as `bar_present` is); the law's
+   own value 14.3° is published beside it and its miss recorded (2.4σ of the 6° draw: a finding against the pitch
+   law)." Its five rows' radial ranges overlap (19.4″–87.4″; the lead's reading of the reading: pieces of
+   different arms), so by the ruling's own condition the mean alone is pinned and the five are "a disclosed check
+   of the drawn segments' spread". Nothing positional.
+7. *A galaxy without pins:* "layer off bit for bit (no segments are drawn; Φ = ln R·cot p); layer on, only the
+   segments' draw moves it, and no radial field, scalar, amplitude or expected count."
+
+**Its predictions (B4; read before they are judged).** Milky Way: about 5–6 segments over 3–12 kpc, ~9 % reversed
+and ~9 % under 2.7°; the bar's angle, the body, the lanes and every layer-off field bit-identical but for the new
+`sun_azimuth`; the Reid check a miss by 2–4 widths; the m = 2 crest at R = a on the bar's axis on every seed.
+`ngc_4414` at 28.9°: ε × 1.96 and f × 0.51 on every ring; the ratio of means over 6–10 kpc falls from 1.881 to about
+1.4–1.5 and most of its 53 rings fall under PHANGS's 1.37 — "the disclosed check becomes a miss there (recorded,
+not tuned)"; the width stays near 0.5 of the dominant period. The default galaxy: unchanged layer off.
+**The gate.** "Every ring mean 1 (stellar 1e-12 on cells, gas 1e-13) on the 240 seeds and both templates; every
+`arm_mode_amplitude_m` bit-identical layer on and off; Φ continuous to 1e-12 at each kink; φ_bar = Φ(a) to rounding
+on every barred seed; the point function and the grid agree; the segment statistics re-measured on the 240 seeds —
+extent median inside 50°–80°, reversed fraction 5–12 %, median |Δψ| 7°–13° — read as checks of the draw, with the
+sub-grid segments (d ln R under one ring step) counted; I1 within 4 ulp; the Reid statistic and NGC 4414's re-pins
+read first; cost recorded."
+**Forbidden (Fable):** "a floor on |p_seg| or a truncation of δ; segments entering ε, f, the bar's angle or the
+lanes; per-mode windings; a segment amplitude; tuning `sun_azimuth`, the anchor or the residual to land the Reid
+check; fitting any NGC 4414 locus or phase; moving pinned contrasts by hand."
+**The owner's part: nothing blocks.** "Told at the close, first: the Milky Way template cannot show its measured
+arms in a sum of modes — a per-arm ridge representation for pinned templates is a plan change that is theirs
+(with #138); NGC 4414 now shows its measured pitch and its gas check turns to a miss — a one-field flip restores
+the draw; the gas law at the local pitch awaits the probe."
