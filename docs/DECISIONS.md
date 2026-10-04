@@ -9448,3 +9448,19 @@ advance, and the plan's own frame gives ν = 0, so the build proceeds. The close
 item 3's 'steady 1-D gas shock per ring' has become the steady corotating response per ring; no arm shocks; the
 shocked branch is P3's bar's. Their open choices, not awaited: a sourced global Ω_p (none read) would reopen the
 shocked branch for the arms; the thickness and Σ-split readings discharge the debts."
+
+**A follow-up to the gate, the same day (the same Fable agent, resumed; nothing read, nothing run).** The lead put
+one conflict the handoff had not shown: row 38 as defined reads a composed field (the mask and the response's
+shape need the modes' phases), and invariant I3 with its test forbids a spec row or a template check to name a
+synthetic or a composed field; with the layer off the statistic does not exist. Fable: "**Row 38 is not an
+acceptance row; the number 38 is not taken. I3 stands as tested** … The disclosed check is a layer-on measurement
+pinned in the test suite for both templates at their default seeds (the ratio per ring over 6–10 kpc, its median,
+against PHANGS 2.73 within 1.37–5.79), recorded in D216 as 'disclosed check, not an acceptance row', marked
+disclosed for the reason given (D113). The width's miss is recorded the same way: layer-on, both templates,
+default seeds, against `GAS_ARM_WIDTH` = 0.17." Amending I3 to admit the check "is refused: amending an invariant
+at a gate to admit the check I defined is the wrong direction of fit"; a phase-free statistic as the row "is
+refused: … an invention … neither is 2.73's statistic; the composed ridge in the source's mask is." And the
+derived `bar` stage may publish a radial field `arm_pattern_speed` = circular_velocity/R (km/s/kpc), "the model's
+side of #81's first half", on two conditions: "the about line says it is a statement of the frame, not a
+measurement; and nothing computes ν from it (ν = 0 is by construction, and the bar's Ω_b is P3's, a separate
+field)."
