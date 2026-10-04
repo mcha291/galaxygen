@@ -12,15 +12,23 @@ run with no inputs given). ``ngc_4414`` sets the four controls its fit's targets
 the other three to the registry; its merger list is empty and every seed is 4414.
 
 **Pins** (S58, DECISIONS.md D217 item 2). A pin is a measured fact about the galaxy's structure that
-replaces what the model would derive: a :class:`Pin` names one of the registry's pin inputs, states
-True or False and carries its source. It is "a measured fact entering as template structure, not a
-fit: no parameter is set to a number". The one pin there is, ``bar_present``, is the observed class:
-``milky_way`` pins barred and ``ngc_4414`` unbarred. A pin travels with the template's inputs
-(:func:`overrides`, :func:`resolve`), so every run of a template is the pinned galaxy; no request
-gives one directly. **The default template's pin restates what the model derives at the registry's
-defaults** (the criterion says barred there), so pinning it changes no bit of any field - that is the
-gate above, still - but a run of the template and a run with no inputs are two points in input space:
-their ``inputs`` differ by the pin, and by nothing else.
+replaces what the model would derive or draw: a :class:`Pin` names one of the registry's pin inputs,
+states its value and carries its source. It is "a measured fact entering as template structure, not a
+fit". There are three (S59, D218 items 5-6), and each template holds two: ``bar_present``, the observed
+class, True or False - ``milky_way`` pins barred and ``ngc_4414`` unbarred; ``sun_bar_angle``, the
+angle of the bar to the Sun-centre line in degrees, which ``milky_way`` gives (30) and which places
+the published Sun's azimuth and moves no other field; and ``pitch_angle``, the measured mean pitch of
+the arms in degrees, which ``ngc_4414`` gives (28.9) in place of the pitch the model draws - the draw
+is still published beside it. **A pin that is a measured number is held to the range of what it
+replaces** (the gate's follow-up, item 7: the pitch 1-60 degrees, the Sun's angle 0 up to 360) and
+refused outside it, here (:meth:`Template.validate`) and at ``run()``. A pin travels with the
+template's inputs (:func:`overrides`, :func:`resolve`), so every run of a template is the pinned
+galaxy; no request gives one directly. **The default template's pins move no field the bare default
+run publishes as a number**: ``bar_present`` restates what the model derives at the registry's
+defaults (the criterion says barred there), and ``sun_bar_angle`` is read by ``sun_azimuth`` alone -
+a number in the template's run and not a number without the pin. Every other field is bit for bit the
+bare run's - that is the gate above, still - but a run of the template and a run with no inputs are
+two points in input space: their ``inputs`` differ by the pins, and by nothing else.
 
 **A fit's free set is a rule, in data** ``[verified: DECISIONS.md D213, as amended at the gate, ruling 1]``:
 a control is free only if a fit target measures what it controls, and ``Fit.free`` names that target
@@ -363,6 +371,12 @@ class Template:
                     + ("a class, True or False" if inp.unit is None else f"a measured number in {inp.unit}")
                     + f", got {pin.value!r}"
                 )
+            # S59 (D218, the gate's follow-up, item 7): a measured number is held to the range of what it replaces.
+            if inp.unit is not None and not inp.admits(float(pin.value)):
+                raise TemplateError(
+                    f"template {self.name}: pin {pin.name!r} is held to the range of what it replaces, "
+                    f"{inp.range_text} {inp.unit}; got {pin.value!r}"
+                )
         missing =[path for path in numbers(self) if path not in self.sources]
         if missing:
             raise TemplateError(f"template {self.name}: no source for {missing} (rule B14)")
@@ -402,14 +416,16 @@ def numbers(template: Template) -> tuple[str, ...]:
 
 
 def pinned(template: Template) -> dict[str, bool | float]:
-    """The template's pins as inputs: {pin input: the observed class} (S58, D217 item 2)."""
+    """The template's pins as inputs: {pin input: the observed class, or the measured number} (S58, D217 item
+    2; S59, D218 items 5-6)."""
     return {p.name: p.value for p in template.pins}
 
 
 def overrides(template: Template) -> dict[str, Any]:
     """Only what the template sets: the base a request's own inputs are laid over - its controls, its seeds, its
-    merger list, and its pins. ``milky_way``'s holds its one pin and nothing else: no control, no seed and no
-    event list, so it is the registry's defaults, and its pin restates what the model derives there."""
+    merger list, and its pins. ``milky_way``'s holds its two pins and nothing else: no control, no seed and no
+    event list, so it is the registry's defaults; its ``bar_present`` restates what the model derives there
+    and its ``sun_bar_angle`` places the Sun and moves no other field (S59, D218 item 5)."""
     out: dict[str, Any] = {**template.controls, **template.seeds}
     if template.mergers is not None:
         out["mergers"] = template.mergers
