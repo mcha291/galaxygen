@@ -9783,3 +9783,54 @@ lanes can be built now with the placeholder declared."
 one-field flip of the pin restores the picture with nothing else changed; the criterion bars nearly everything
 (Erwin's frequency as a draw is theirs to order); the lane width is a placeholder they may set live if they prefer
 a slider to a debt."
+
+**Built to the ruling (one Opus builder in a worktree; 28 files) and read.**
+- *Presence.* `bar_formation_time` (two constants, Fujii's fit with its errors and its unmodelled Q-dependence in
+  their about lines) and `bar_present` are published on every galaxy: 1.4565 Gyr for the Milky Way template,
+  0.9055 for `ngc_4414`. **No function from `halo_assembly_z` to a time existed** (the halo reads that redshift
+  for the concentration alone), so the builder added `pattern.lookback_time`, the flat ΛCDM closed form on the
+  model's own `H0` and `OMEGA_M`, t(z) = 2/(3H₀√Ω_Λ) asinh(√(Ω_Λ/Ω_M)(1+z)^{−3/2}): the disc's age reads 9.62 Gyr
+  at z 1.66 and 5.04 Gyr at z 0.5 (the universe 13.47). Over the controls, one at a time, the derivation is
+  unbarred at `disc_spin` 0.05 (t_b 11.4 Gyr against 9.6: the handoff had said "by ELN alone", judging against
+  the universe's age) and at `baryon_retention` 0.05; halo mass moves nothing.
+- *The pin.* A fourth kind of input, `pin`: no default, no range, absent from a run's inputs when not given,
+  carried by `templates.overrides`, listed by `/api/templates`, refused as a request's own parameter, kept apart
+  by `resume`. `milky_way` pinned barred is the bare default run on every field bit for bit, layer on and off —
+  but its inputs differ by the pin, so D213's "naming the default template: one cache entry" no longer holds
+  (two entries; tested as it is). `ngc_4414` pinned unbarred: NaN for eight numbers of the bar, the taper 0, the
+  arms to the centre, rows 15–17 "not applicable" (`Quantity.only_if`). **The viewer never sends `template=`**, so
+  a pin could not reach the API from it: a second builder changes the viewer's requests.
+- *The body* (`pattern.BarBody`; q 0.4, boxiness 3, Ferrers exponent 2, three constants) on 1440 fixed cells in
+  the bar's frame, the published field the arm modes at cell centres plus the body's exact cell means, normalised
+  so that the bar part's m = 2 maximum over the rings inside a equals the drawn amplitude (to 3e-16); a new
+  seeded scalar `bar_mass_share`. A defect its own hand test found and the builder fixed: a boxy body reaches
+  1.00068 a beside its axis, and cutting at R < a dropped a sliver.
+- *The phase.* θ₂ = 0 in a barred galaxy, its stream not drawn; the other modes' draws unchanged.
+- *The lanes* (four constants, the width's about saying "an unsourced placeholder"): g = w_arm s + w_bar L. The
+  sense of rotation is derived, not chosen: the crests' azimuth grows outwards and the arms trail, so the disc
+  turns towards decreasing φ and the leading side is the smaller azimuth. The Gaussian weight across the arc is
+  normalised by its own ring quadrature (the template's normalisation; no field is divided by a mean).
+- *The predictions, read first.* Milky Way: β_max 0.3903 (0.39: held); A₂ maximum equal to B = 0.28926 at 2.14 kpc
+  = 0.410 a (0.42 a: held); A₂(0.85 a) 0.044 (0.046: held); minimum body contrast 0.764 (0.77: held); lanes from
+  (5.21 kpc, φ_bar) to 0.521 kpc, radius of curvature 4.530 kpc, the base 0.3846 on the 28 footprint-filled
+  rings (held); rows 15–17 unchanged (5.20971; medians 41.10 / 6.08); `ngc_4414`'s two gas checks 1.8814 and 0.512
+  unchanged. **Failed: the body's share of the cp1 disc is 0.1015, not 0.110** — the gate's figure came from the
+  lead's probe on the checkpoint-4 stellar surface density, and the ruling takes the checkpoint-1 total. The A₂
+  peak at 0.41 a misses the stacks' 0.76–0.94 a, as predicted. The lane's peak is 7.1 times its ring's mean
+  (published g at most 6.66), under the one simulation's ~10.
+- *The gate.* Stellar ring means 1 to 1.6e-15 on any grid; the lowest stellar cell over the 240 suite galaxies
+  0.0025 (the same galaxy as before S58), the body alone ≥ 0.266; A₂ maximum equal to B within 2e-15 on every
+  barred seed; all 240 gas patterns converge (worst residual 0.49 of its bound); 300 pattern seeds per template
+  and the unbarred paths (the pin; a default disc pinned unbarred; `baryon_retention` 0.05) raise nowhere and
+  leak no NaN. *Layer off against `main`:* the Milky Way template moves no field and gains six; `ngc_4414` moves
+  only its bar's four scalars (to NaN) and its five mode amplitudes (no taper); the specs read 12 / 20 / 5 of 37
+  and the template's five checks are unchanged. *Not as ruled, for the record:* the two expected totals are now
+  two units in the last place apart with the layer on and off (I1 says one); the gas ring mean is 1 to 1.06e-13
+  at worst over the sweeps (the solver's own sum tolerance; S57's tests pin 2e-13).
+- *What moved, layer on.* Clouds 16 667 → 16 668, clusters 12 829 → 12 826; the published gas inside the bar's
+  reach now carries the lanes (the Milky Way's field 0.018–6.66 where it was 0.020–3.09); the gas's crest sits
+  within one solver cell of the stellar sum's on 103 of 165 rings (161 before the bar-tied phase and the body);
+  **the dust's placement now takes 3.5 % off the disc's absorbed power in the layered geometry** (0.965; +0.3 %
+  before; 0.90 at 2 kpc) — measured, not applied, #128's second half grown; an unbarred `ngc_4414`'s inner rings
+  meet the arms with no taper and its gas runs from 5e-18 to 4.7 there (#142's regime at the centre).
+- *Cold timings:* the arm pattern 0.032 → 0.17 s, the gas pattern 0.32 → 0.53 s; a whole render 3.37 → 3.51 s.
