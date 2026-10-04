@@ -154,7 +154,19 @@ _SEGMENT_STATISTIC = (
 )
 
 
+# D191's ruling for the two columns, which the viewer does not read (tests/test_v4.py holds the inventory and
+# asserts the sentence): a segment is drawn through the winding it sets.
+NOT_DRAWN_WHY: dict[str, str] = {
+    "arm_segment_extent": "it reaches the picture as the winding it sets - with the segment's pitch, where round "
+                          "each ring the arms' crests lie - and the viewer draws the arms, the gas and everything "
+                          "placed by them; a row of the table is not a look.",
+    "arm_segment_pitch_residual": "it reaches the picture as the winding it sets, as the extent does: across the "
+                                  "segment the arms turn at its own pitch.",
+}
+
+
 def _segment(name: str, label: str, unit: str, about: str) -> FieldDecl:
+    why = NOT_DRAWN_WHY.get(name)
     return FieldDecl(
         name=name, label=label, unit=unit, kind=Kind.COLUMN, of="arm_segment", ramp=Ramp("viridis"),
         meaningful_zero=True, provenance="synthetic",
@@ -164,7 +176,7 @@ def _segment(name: str, label: str, unit: str, about: str) -> FieldDecl:
             "reaches, each on its own stream of the texture seed, so a row is the same whatever the grid and "
             "however many are used. Empty with the randomness layer off: no segment is laid, and the arms wind "
             "at the disc's one pitch."
-        ),
+        ) + (f" **Not drawn by the viewer** (D191): {why}" if why else ""),
         stands_in_for=_SEGMENT_STANDS_IN_FOR, conserves=_SEGMENT_CONSERVES, statistic=_SEGMENT_STATISTIC,
     )
 
