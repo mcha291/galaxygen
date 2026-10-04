@@ -43,17 +43,33 @@ nothing clipped. A step solves the cyclic tridiagonal system A δ = −r, A_kk =
 A_k,k±1 = −H′_k±1/h², H′ = ε² − μ²/s², and moves φ ← φ + t δ, t = 1, ½, ¼, …: at μ = 0 the step is halved
 while J does not fall; at μ ≠ 0 while the residual's max norm does not fall. J's fall is summed term by term
 from the step (``_functional_fall``), because the difference of two rounded J's is noise on the last steps.
-At most ``MAX_NEWTON_STEPS`` steps and ``MAX_HALVINGS`` halvings of any one step. A ring has converged when
-max_k |r_k| < ``RESIDUAL_TOLERANCE`` and |Σ_k r_k| < ``SUM_TOLERANCE`` × cells - the second is the ring's mean,
-held ten times inside the gate's 1e-12. (At μ ≠ 0, once the max norm is inside its tolerance, where it sits
-on its rounding floor, a step is also taken if it keeps it there and the sum falls: the sum may still be
-owed a step.) **A ring that has not converged within the counts raises ``ConvergenceError``**: at μ = 0 the
-solution exists, so the failure is the solver's. There is no fallback and no linear substitute.
+At most ``MAX_NEWTON_STEPS`` steps and ``MAX_HALVINGS`` halvings of any one step.
 
-*The rounding floor.* φ is a double, and moving one cell's φ by its last bit moves that cell's residual by
-2 ε² ulp(φ)/h². At 1440 cells that is 5e-13 for ε = 0.072 and |φ| < 8, and 3e-11 for Sormani's case
-(ε² = 4.84, |φ| < 0.5): under the tolerance (measured residuals: 4e-13 and 8e-12). It scales with
-(ε × cells)², and a problem that puts it above 1e-10 cannot converge in doubles and raises.
+**When a ring has converged** (D216, gate G3 item 2). A cell is converged when
+
+    |r_k| ≤ max(``RESIDUAL_TOLERANCE``, F_k),   F_k = 2 (ε²/h²) (½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})),
+
+φ = ln s, the neighbours periodic, ulp(φ) the spacing of doubles at |φ|; a ring is converged when every cell
+is and |Σ_k r_k| < ``SUM_TOLERANCE`` × cells - the second is the ring's mean, held ten times inside the gate's
+1e-12. (At μ ≠ 0, once every cell is inside its bound, where the residual sits on its rounding floor, a step
+is also taken if it keeps it there and the sum falls: the sum may still be owed a step.) **A ring that has
+not converged within the counts raises ``ConvergenceError``**: at μ = 0 the solution exists, so the failure is
+the solver's. There is no fallback and no linear substitute.
+
+*Why F_k: a theorem about the rounded exact solution, not a loosened number.* The residual's terms are not of
+order 1: the flux's difference is (ε²/h²)(φ_{k+1} − 2φ_k + φ_{k−1}), three numbers each of size ε²|φ|/h² -
+5e4 |φ| at ε = 1 and 1440 cells - whose sum is of order 1. φ is a double. Take the discrete equation's exact
+solution and round each φ_k to the nearest double: each moves by at most ½ ulp(φ_k), and the residual of
+that best possible array, in exact arithmetic, is as large as (ε²/h²)(½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})).
+No array of doubles can be asked for less; the factor 2 covers the rounding of the residual's own arithmetic.
+At 1440 cells F is 1e-12 for ε = 0.072 and |φ| < 8, where the absolute tolerance governs as it always did;
+it passes 1e-10 where ε is of order 1 and the trough deep - at ε = 1, |φ| in [4, 8) gives 9.3e-11 and
+[8, 16) 1.9e-10 - which is a tightly wound galaxy's inner rings (a pitch under about 2.7 degrees). There an
+absolute 1e-10 lay under the rounding of doubles: Newton converged quadratically to within an ulp of the
+exact discrete solution, sat at 1.0-1.4e-10, and the ring was solved and still raised (S57's first build;
+5 and 15 of 300 pattern seeds for the two templates). ``Diagnostics.floor`` records each ring's max_k F_k,
+and :func:`rounding_floor` gives F_k for any profile, so that a caller can hold the profile it was returned,
+its logarithm taken again, to |r_k| ≤ max(1e-10, F_k + 4u ε²/h²), u = 2⁻⁵³ (the logarithm's own rounding).
 
 **The linear system** is solved for all rings together by cyclic reduction: the odd cells are eliminated
 from the even cells' equations, which leaves a cyclic tridiagonal system on half the cells; 1440 = 2⁵ · 45
@@ -124,7 +140,10 @@ CELLS = 1440  # the fixed periodic cells round a ring (D216 item 7, "1440, as pr
 MAX_NEWTON_STEPS = 120
 MAX_HALVINGS = 30
 
-RESIDUAL_TOLERANCE = 1e-10  # the discrete equation's residual on every cell (D216, the gate), terms of order 1
+# The discrete equation's residual on every cell (D216, the gate): held under this number, or under the cell's
+# rounding floor F_k where that is the larger (gate G3 item 2; the module's docstring). The residual's own terms
+# are of size ε²|φ|/h², not of order 1: only their sum is.
+RESIDUAL_TOLERANCE = 1e-10
 SUM_TOLERANCE = 1e-13  # |Σ_k r_k| / cells: the ring's mean of s against 1 + ḡ, ten times inside the gate's 1e-12
 
 INVERSE_STEPS = 8  # Newton steps of ``_branch_step`` (μ ≠ 0 only); measured: 4 reach rounding on both branches
@@ -168,8 +187,9 @@ class Diagnostics:
     steps: np.ndarray  # Newton steps taken
     halvings: np.ndarray  # halvings, summed over the ring's steps
     deepest: np.ndarray  # the most halvings any one of the ring's steps took
-    residual: np.ndarray  # max_k |r_k| of the returned profile (dimensionless; the equation's terms are of order 1)
+    residual: np.ndarray  # max_k |r_k| of the returned profile (dimensionless)
     residual_sum: np.ndarray  # Σ_k r_k of the returned profile: cells × (mean s − 1 − mean g), to rounding
+    floor: np.ndarray  # max_k F_k of the returned profile: the ring's rounding floor (gate G3 item 2), dimensionless
 
     @property
     def worst_steps(self) -> int:
@@ -366,11 +386,38 @@ def _rows(a: np.ndarray, index: np.ndarray) -> np.ndarray:
     return a if index.size == a.shape[0] else a[index]
 
 
-def _measure(r: np.ndarray):
-    """A residual's max norm, its sum, and whether both are inside their tolerances; each shaped (rings,)."""
-    norm = np.abs(r).max(axis=1)
+def _floor(phi: np.ndarray, eps2: np.ndarray) -> np.ndarray:
+    """F_k = 2 (ε²/h²)(½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})), cyclic in k: each cell's rounding floor.
+
+    ``phi`` (rings, cells), ``eps2`` (rings, 1). The residual of the exact discrete solution rounded to doubles
+    is this large without the 2; the 2 covers the residual's own arithmetic (gate G3 item 2)."""
+    inv_h2 = (phi.shape[1] / (2.0 * math.pi)) ** 2
+    ulp = np.spacing(np.abs(phi))
+    return (2.0 * inv_h2) * eps2 * (0.5 * np.roll(ulp, 1, axis=1) + ulp + 0.5 * np.roll(ulp, -1, axis=1))
+
+
+def _measure(r: np.ndarray, phi: np.ndarray, eps2: np.ndarray):
+    """A residual's max norm, its sum, whether the ring has converged, and whether every cell is inside its
+    bound; each shaped (rings,).
+
+    A cell is inside its bound when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k) (``_floor``); the ring has converged
+    when every cell is and |Σ_k r_k| < SUM_TOLERANCE × cells (gate G3 item 2).
+
+    The cells' floors are computed only for the rings they can decide. A ring whose largest residual is under
+    the absolute tolerance is inside whatever its floors are. One whose largest residual is over both the
+    tolerance and the ring's ceiling 2 (ε²/h²) · 2 ulp(max_k |φ_k|) - which no cell's F_k exceeds, the spacing
+    of doubles never falling as the magnitude grows - has a cell outside its bound. Only what lies between has
+    its F_k computed: the same answer for every ring as computing all of them, at a fraction of the cost."""
+    size = np.abs(r)
+    norm = size.max(axis=1)
     total = r.sum(axis=1)
-    return norm, total, (norm < RESIDUAL_TOLERANCE) & (np.abs(total) < SUM_TOLERANCE * r.shape[1])
+    inside = norm <= RESIDUAL_TOLERANCE
+    inv_h2 = (phi.shape[1] / (2.0 * math.pi)) ** 2
+    ceiling = (2.0 * inv_h2) * eps2[:, 0] * (2.0 * np.spacing(np.abs(phi).max(axis=1)))
+    near = np.flatnonzero(~inside & (norm <= ceiling))
+    if near.size:
+        inside[near] = (size[near] <= np.maximum(RESIDUAL_TOLERANCE, _floor(phi[near], eps2[near]))).all(axis=1)
+    return norm, total, inside & (np.abs(total) < SUM_TOLERANCE * r.shape[1]), inside
 
 
 def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
@@ -391,7 +438,7 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
         subsonic = eps2 > mu2
     s, r = _state(phi, g, eps2, mu2, moving)
     for step in range(max_steps + 1):
-        norm, total, converged = _measure(r)
+        norm, total, converged, _ = _measure(r, phi, eps2)
         active = np.flatnonzero(~converged & ~stuck)
         if active.size == 0 or step == max_steps:
             break
@@ -436,9 +483,10 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
                 trial = _rows(phi_a, rows) + t[rows, None] * _rows(delta, rows)
             trial_s, trial_r = _state(trial, _rows(g_a, rows), _rows(eps2_a, rows), _rows(mu2_a, rows), moving)
             if moving:
-                trial_norm, trial_total, _ = _measure(trial_r)
+                # "inside": every cell of the trial under max(RESIDUAL_TOLERANCE, F_k), the cell's own rule (G3 item 2)
+                trial_norm, trial_total, _, trial_inside = _measure(trial_r, trial, _rows(eps2_a, rows))
                 falls = (trial_norm < norm[active[rows]]) | (
-                    (trial_norm < RESIDUAL_TOLERANCE) & (np.abs(trial_total) < np.abs(total[active[rows]]))
+                    trial_inside & (np.abs(trial_total) < np.abs(total[active[rows]]))
                 )
             else:
                 falls = _functional_fall(_rows(phi_a, rows), _rows(s_a, rows), _rows(g_a, rows),
@@ -456,8 +504,8 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
             stuck[active[pending]] = True
             halvings[active[pending]] += max_halvings
             deepest[active[pending]] = max_halvings
-    norm, total, converged = _measure(r)
-    return s, Diagnostics(steps, halvings, deepest, norm, total), converged, refused
+    norm, total, converged, _ = _measure(r, phi, eps2)
+    return s, Diagnostics(steps, halvings, deepest, norm, total, _floor(phi, eps2).max(axis=1)), converged, refused
 
 
 def solve(
@@ -521,6 +569,7 @@ def solve(
     deepest = np.zeros(rings, dtype=int)
     norms = np.zeros(rings)
     sums = np.zeros(rings)
+    floors = np.zeros(rings)
     converged = np.zeros(rings, dtype=bool)
     refused = np.zeros((rings, n), dtype=bool)
     # the rings at rest in the frame (the functional's halving, the step in φ) and the rings moving through it
@@ -534,7 +583,7 @@ def solve(
         )
         s[rows] = s_c
         steps[rows], halvings[rows], deepest[rows] = diag_c.steps, diag_c.halvings, diag_c.deepest
-        norms[rows], sums[rows] = diag_c.residual, diag_c.residual_sum
+        norms[rows], sums[rows], floors[rows] = diag_c.residual, diag_c.residual_sum, diag_c.floor
         converged[rows], refused[rows] = converged_c, refused_c
 
     for ring in np.flatnonzero(~converged)[:1]:  # the first ring that failed, in the batch's order
@@ -546,19 +595,21 @@ def solve(
                 ring, norms[ring], steps[ring], off,
             )
         raise ConvergenceError(
-            f"ring {ring}: Newton did not converge - residual {norms[ring]:.3e} (sum {sums[ring]:.3e}) "
-            f"after {steps[ring]} steps (at most {max_steps}) and {deepest[ring]} halvings of one step "
-            f"(at most {max_halvings})",
+            f"ring {ring}: Newton did not converge - residual {norms[ring]:.3e} (sum {sums[ring]:.3e}; the ring's "
+            f"rounding floor {floors[ring]:.3e}) after {steps[ring]} steps (at most {max_steps}) and "
+            f"{deepest[ring]} halvings of one step (at most {max_halvings})",
             ring, norms[ring], steps[ring],
         )
-    return s, Diagnostics(steps, halvings, deepest, norms, sums)
+    return s, Diagnostics(steps, halvings, deepest, norms, sums, floors)
 
 
 def residual(density, forcing, eps, flow=0.0) -> np.ndarray:
     """The discrete equation's residual r_k = s_k − 1 − g_k − (Φ_{k+½} − Φ_{k−½}) of a profile; (rings, cells).
 
     ``density`` s > 0 and ``forcing`` g shaped (rings, cells); ``eps`` and ``flow`` scalars or (rings,).
-    Dimensionless, its terms of order 1. This is the number ``solve`` holds under ``RESIDUAL_TOLERANCE``.
+    Dimensionless. This is the number ``solve`` holds, cell by cell, under max(``RESIDUAL_TOLERANCE``, F_k)
+    (:func:`rounding_floor`) - with ln s as it iterated it; here the logarithm of ``density`` is taken again,
+    which can move a cell's residual by 4u ε²/h², u = 2⁻⁵³, on top.
     """
     s = np.asarray(density, dtype=float)
     g = np.asarray(forcing, dtype=float)
@@ -571,6 +622,18 @@ def residual(density, forcing, eps, flow=0.0) -> np.ndarray:
         if rows.size:
             r[rows] = _state(phi[rows], g[rows], eps2[rows], mu2[rows], moving)[1]
     return r
+
+
+def rounding_floor(density, eps) -> np.ndarray:
+    """F_k = 2 (ε²/h²)(½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})), φ = ln s: each cell's rounding floor; (rings, cells).
+
+    ``density`` s > 0 shaped (rings, cells); ``eps`` a scalar or (rings,). The bound ``solve`` holds a cell's
+    residual under where it exceeds ``RESIDUAL_TOLERANCE`` (gate G3 item 2; the module's docstring): the residual
+    of the exact discrete solution, rounded to doubles, is this large without the 2. Dimensionless.
+    """
+    s = np.asarray(density, dtype=float)
+    eps_r = np.broadcast_to(np.asarray(eps, dtype=float), (s.shape[0],))
+    return _floor(np.log(s), (eps_r * eps_r)[:, None])
 
 
 def functional(density, forcing, eps) -> np.ndarray:

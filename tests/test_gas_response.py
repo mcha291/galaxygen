@@ -25,6 +25,11 @@ residual 4e-13. Total forcing 2.1 (f = (0.706, 0.126, 0.366, 0.102, 0.800)): tro
 7 steps. The solver's discretisation error at 1440 cells 3.2e-5 and 2.7e-5 of the mean (falling 4.00-fold
 per doubling); linear interpolation between centres adds 1.96e-4 and 1.54e-4 at the midpoints, h²/8 · max|s″|
 to four figures - twice D216 item 9's expected 1e-4. 400 rings of 1440 cells: 0.5-0.7 s.
+
+**Since gate G3 (D216, item 2)** a cell is converged when |r_k| ≤ max(1e-10, F_k), F_k its rounding floor: on a
+tightly wound galaxy's rings (ε of order 1, a total forcing of 67-79) the floor passes 1e-10 and the ring
+converges on it (``test_a_tightly_wound_ring_converges_on_its_rounding_floor``); on every case above the floor is
+under 1e-10 and nothing moved - the 24 solutions these tests make and both thresholds are the bits they were.
 """
 
 from __future__ import annotations
@@ -459,6 +464,79 @@ def test_a_ring_that_does_not_converge_raises():
         gr.solve(g[1:2], EPS, start=far, max_halvings=0)  # a step that must be halved, and may not be
     with pytest.raises(gr.ConvergenceError):
         gr.solve(g[1:2], EPS, max_steps=0)
+
+
+# Rings as a tightly wound galaxy's inner disc poses them (S57, gate G3 item 2): ε of order 1 and a total forcing of
+# 67-79, both going as 1/sin p. The second and third are rings of ``ngc_4414`` at pattern seed 33 (pitch 1.78 degrees),
+# read off the model; under the absolute tolerance alone they sat at 1.40e-10 and 1.28e-10 for 120 steps and raised.
+TIGHT = {
+    "eps 1.03, total 77": ((11.0, 16.5, 19.3, 18.2, 12.0), 1.03, 7, 7.81e-11, 1.980e-10),
+    "eps 1.28, total 67": ((14.65, 20.38, 19.55, 12.85, 0.0), 1.2821, 7, 1.397e-10, 3.067e-10),
+    "eps 0.95, total 79": ((11.34, 17.01, 19.42, 18.18, 13.1), 0.9522, 8, 1.284e-10, 3.384e-10),
+}
+
+
+@pytest.mark.parametrize("name", list(TIGHT))
+def test_a_tightly_wound_ring_converges_on_its_rounding_floor(name):
+    """Gate G3 item 2: a cell is converged when |r_k| ≤ max(RESIDUAL_TOLERANCE, F_k),
+    F_k = 2 (ε²/h²)(½ ulp(φ_{k−1}) + ulp(φ_k) + ½ ulp(φ_{k+1})) - the residual of the exact discrete solution
+    rounded to doubles, with a factor 2 for the residual's own arithmetic. Where ε is of order 1 and the trough
+    deep, F passes 1e-10 and the ring converges on it, in the 7-8 steps Newton needs; under 1e-10 alone two of
+    these three raised after 120 (S57's first build). The numbers are pinned as measured: steps, residual, floor.
+
+    And the criterion is not a loosened number: the returned profile, its logarithm taken again, is inside
+    F_k + 4u ε²/h² on every cell (the gate's wording), while the same profile with one cell's ln s moved by eight
+    units in its last place is outside its bound there by a factor of three - the bound is the rounding's, no wider.
+    """
+    f, eps, steps, residual, floor = TIGHT[name]
+    g = gr.forcing(MODES, np.array([f]), FIVE[1])
+    s, d = gr.solve(g, eps)
+    print(f"{name}: {d.steps[0]} steps, residual {d.residual[0]:.4e}, floor {d.floor[0]:.4e}, s {s.min():.3e}..{s.max():.3f}")
+    assert (d.steps[0], d.worst_halvings) == (steps, 0)
+    assert d.residual[0] == pytest.approx(residual, rel=5e-3) and d.floor[0] == pytest.approx(floor, rel=5e-3)
+    assert d.floor[0] > gr.RESIDUAL_TOLERANCE == 1e-10 and d.residual[0] <= d.floor[0]
+    assert abs(s.mean() - 1.0) < 1e-12 and s.min() > 0.0 and abs(d.residual_sum[0]) < gr.SUM_TOLERANCE * gr.CELLS
+    # the returned profile, re-logged, on every cell: the gate's residual item as G3 words it
+    h = 2.0 * math.pi / gr.CELLS
+    u = 2.0**-53
+    r = np.abs(gr.residual(s, g, eps))[0]
+    cells = gr.rounding_floor(s, eps)[0]
+    assert cells.shape == (gr.CELLS,) and cells.max() == pytest.approx(d.floor[0], rel=1e-12)
+    assert np.all(r <= np.maximum(1e-10, cells + 4.0 * u * eps * eps / (h * h)))
+    # by hand, on the cell of the deepest trough: F_k = 2 (ε²/h²) (½ ulp + ulp + ½ ulp) of ln s there and beside it
+    k = int(np.argmin(s[0]))
+    phi = np.log(s[0])
+    by_hand = 2.0 * (eps / h) ** 2 * (0.5 * np.spacing(abs(phi[k - 1])) + np.spacing(abs(phi[k])) + 0.5 * np.spacing(abs(phi[(k + 1) % gr.CELLS])))
+    assert cells[k] == pytest.approx(by_hand, rel=1e-14)
+    # the bound is tight: eight units in the last place of one cell's ln s put that cell outside it
+    moved = phi.copy()
+    moved[k] += 8.0 * np.spacing(abs(phi[k]))
+    off = np.abs(gr.residual(np.exp(moved)[None, :], g, eps))[0]
+    assert off[k] > 3.0 * cells[k] > 1e-10
+    # the counts are untouched, and a ring that is refused its steps still raises (no fallback)
+    with pytest.raises(gr.ConvergenceError):
+        gr.solve(g, eps, max_steps=steps - 2)
+
+
+def test_the_absolute_tolerance_still_governs_an_ordinary_ring():
+    """The other side of gate G3 item 2: where ε is small the rounding floor is far under 1e-10 on every cell, and
+    the criterion is the absolute tolerance it always was. The two hard rings (ε = 0.072): a floor of 9.7e-13 on
+    both, a hundredth of the tolerance (residuals 3.7e-13 and 3.9e-13); fifty random rings of ε 0.05-0.2: 3.0e-12
+    at most. And Sormani's case (ε² = 4.84, |ln s| < 0.34), the nearest the instrument's cases come: 5.6e-11 from
+    3 % under the threshold to the threshold itself - under 1e-10, so the absolute tolerance governs there too
+    (residual 7.2e-12) and the threshold cannot move with the criterion. That every case's bits are the ones they
+    were was checked case by case across the change (24 solutions and both thresholds; D216, G3's merge)."""
+    for name in HARD:
+        g, s, d = hard(name)
+        assert d.floor[0] == pytest.approx(9.67e-13, rel=0.01) and d.residual[0] < 1e-12 < gr.RESIDUAL_TOLERANCE
+        assert gr.rounding_floor(s, EPS).max() == d.floor[0]
+        assert (gr.SUM_TOLERANCE, gr.MAX_NEWTON_STEPS, gr.MAX_HALVINGS) == (1e-13, 120, 30)
+    rng = np.random.default_rng(57)
+    g = gr.forcing(MODES, rng.uniform(0.0, 0.7, (50, 5)), rng.uniform(0.0, 2.0 * math.pi, (50, 5)))
+    s, d = gr.solve(g, rng.uniform(0.05, 0.2, 50))
+    assert d.floor.shape == (50,) and d.floor.max() < 5e-12
+    under, d = gr.solve(0.70 * np.cos(gr.cell_centres())[None, :], math.sqrt(SORMANI_X), SORMANI_NU)
+    assert d.floor[0] == pytest.approx(5.64e-11, rel=0.01) and d.floor[0] < gr.RESIDUAL_TOLERANCE and d.residual[0] < 2e-11
 
 
 def test_the_loss_of_the_smooth_branch_is_raised_not_returned():
