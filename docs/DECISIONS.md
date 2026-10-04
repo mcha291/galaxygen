@@ -9337,3 +9337,114 @@ through the composed potential, ring by ring, replacing S56's ridge by rank (#14
 two readers blind to the model; gate G2 rules the equations before anything is built; gate G3 reviews the solver
 before the merge. Carried into G2 from S56 (D215): the ranked ridge's published field passing its exact bound by
 2.5e-3; two expected totals one unit in the last place apart with the layer on and off; the fade's exponent.
+
+**The reading (`docs/READING_GAS_SHOCK.md`; three Opus readers, all blind to the repository).** Part B (pattern
+speeds, offsets, widths) and Part A (the shock's equations; Roberts 1969 and Shu, Milione & Roberts 1973 read as
+page images) were entered as the first sitting paused. The resuming sitting, told Part A's reader had been cut
+off, put the same question to a fresh reader before it saw that Part A had landed: Part C. The two agree on the
+system, the sonic point's regularity, the jump and Kim, Kim & Kim 2014's Table 1 to the digit. What the readings
+say that the plan did not foresee: for swing-amplified arms, simulations find Ω_p(R) ≈ Ω(R) — no flow through the
+arm, no galactic shock; exactly at corotation no source gives a nonlinear steady solution, only the linear limit;
+no source integrates a sum of modes, and a steady solution needs one frame for all of them.
+
+**The probe before the gate (the repository unchanged; checked against D215's hand anchor X(7.99 kpc) = 7.93,
+Γ = 1.10).** In Shu, Milione & Roberts's variables a ring's mode m has f_m = m A_m/(X sin p), with X the arm-number
+law's own variable, and x_m = m² ε², ε = a/(κR sin p). At ν = 0 under uniform potential vorticity the composed
+equation is ε² d²ln s/dχ² = s − 1 − Σ_m f_m cos(mχ − θ_m). The Milky Way template, crest / trough / ratio of means
+in S56's mask: 4 kpc 1.91 / 0.37 / 1.57; 6 kpc 3.02 / 0.007 / 2.69; R₀ 2.79 / 0.018 / 2.56; 10 kpc 2.09 / 0.18 /
+2.04; 11 kpc 1.77 / 0.38 / 1.89; 12 kpc 1.20 / 0.81 / 1.28. The response is linear in the forcing to the ring's
+full amplitude; one mode's response has a full width at half maximum of 0.46–0.50 of its period (several: 0.23–0.48
+of the dominant mode's), against the measured 0.17. In one rigid frame at 26 km/s/kpc the flow normal to the arm is
+subsonic only over 8.4–10.2 kpc, and m = 6 lies between its Lindblad resonances only within ±24 % of corotation.
+
+**Gate G2, 2026-10-04; ruling by Fable (a subagent, one turn on `docs/HANDOFF_S57.md` and its five ranges, nothing
+run).** Fable re-derived the lead's three derivations on paper from Gittins & Clarke's dimensional equations —
+the system, f_m = m A_m/(X sin p) "provided A_m is the cosine amplitude of mode m as a fraction of the SAME Σ that
+X uses", and the composed equation at ν = 0, "the Euler–Lagrange equation of J[φ] = ∫[ε²φ′²/2 + e^φ − (1+F)φ]dχ,
+strictly convex and coercive on periodic functions: existence, uniqueness, positivity and mean 1 all hold" — and
+the linear limit and Sormani's mapping: "All three claims stand."
+
+1. *Frame.* "Ω_p(R) = Ω(R) for every arm mode, so ν = 0 on every ring. The plan's 'corotation at the mode's
+   radius' with amplitudes set ring by ring is this frame; Part B's simulations measure it; it is the only frame in
+   which a ring's several modes are steady together; no global or per-mode Ω_p is sourced for this model, and the
+   m = 4–6 modes would sit outside their Lindblad resonances in any rigid frame. A small non-zero ν is refused: no
+   source gives its number."
+2. *Shock.* "There is no steady galactic shock in the arms (M⊥ = 0, no through-flow, no sonic point, no jump).
+   The converging infall's shocks (Mach ~2, time-dependent) are outside level A: a debt is opened for them, named
+   as the first suspect for the width's miss."
+3. *Closure (a), uniform potential vorticity.* "In 2-D inviscid barotropic flow PV is materially conserved, so a
+   disc that was axisymmetric with uniform PV and grew its arm without a shock keeps uniform PV [my derivation, no
+   source]. Closure (b) is refused: it drops the Coriolis term the flow carries."
+4. *Steadiness is declared an approximation with a debt:* "the response relaxes on the ridge's sound crossing
+   (~1e2 Myr at R₀) against an arm life of 100–160 Myr; the simulations reject steadiness; level A has no
+   time-dependent member. Not a reason to withhold the build."
+5. *The law, final wording.* "On each ring, ε²(R) d²ln s/dχ² = s − 1 − Σ_m f_m(R) cos(mχ − θ_m), χ = φ − ln R cot p,
+   periodic over the ring's pattern period; ε = a/(κR sin p), a = `GAS_DISPERSION` = 6 km/s, the one isothermal
+   sound speed; f_m = m A_m/(X sin p), X = κ²R/(2πGΣ) with checkpoint 1's total disc Σ, A_m the mode's cosine
+   amplitude as a fraction of that Σ, BEFORE the bar's taper (the taper enters once, item 8). Approximations
+   declared, each with a debt: razor-thin WKB potential; the stellar mode's fractional amplitude applied to the
+   total disc (no stellar/gas split exists). No thickness factor: none is read. No constant added, nothing
+   clipped, floored, capped or divided."
+6. *To be verified by the lead before the build:* that the pattern stage's A_m is the cosine amplitude and not a
+   peak-to-trough ratio. **Verified:** the composed stellar field is 1 + Σ_m A_m cos(mχ − θ_m) + bar
+   (`ArmPattern.contrast`), and `arm_contrast` is already (c − 1)/(c + 1) (`contrast_amplitude`).
+7. *Solver.* "Newton on fixed periodic cells (1440, as probed) on the convex functional, step halving where J does
+   not fall, fixed maximum counts (steps and halvings, A1); the discrete mean is 1 by the discrete equation's sum
+   with no division. A ring that fails to converge within the counts is a build failure (raise): the solution
+   exists, so the failure is the solver's. There is no fallback and no linear substitute."
+8. *Composition with the bar.* "g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), w_arm + w_bar = 1 asserted. Then
+   g ≥ w_bar(1 − B) > 0 and the ring mean is 1 in the integral. The taper acts once, here; s is the response to the
+   untapered forcing. The bar inside the forcing rotates at Ω_b and is P3's, which may replace the blend inside the
+   bar's reach."
+9. *Point evaluation.* "Solved once per grid ring per seed; a point reads the two neighbouring rings' profiles at
+   ITS OWN χ, linear in χ between cells and linear in R between rings. Both are convex blends of positive mean-1
+   periodic profiles, so positivity and the φ-mean 1 hold at every R. The interpolation error against the solution
+   is measured and pinned (expected ~1e-4 at 1440 cells; raise the cell count, not a tolerance, if it is worse)."
+10. *The instrument (departs from the lead's draft).* "S57 builds the periodic smooth-branch solver for general
+    (ν, x, f), one code path whose ν = 0 member the model uses: [(x − ν²/s²)(ln s)′]′ = s − 1 − f cos η. Certified
+    by: Sormani's threshold f_c = 0.7202 ± 0.0001 at (ν, x) = (−1.5708, 4.836) by continuation in f, first sonic
+    contact (s = |ν|/√x) at η = ±π; the hand-derived linear limit f/(1 − ν² + x) at ν = 0 and at Sormani's ν, with
+    the residual falling 100-fold from f = 1e-3 to 1e-4; the mean identity; J lower at the solution than at ten
+    fixed perturbations. The shocked branch (sonic-point shooting, regularised variables, bisection) is deferred to
+    P3, whose bar is its first user, with KKK Table 1 under both x (0.1450, 0.1458) and SMR rows B–D as its
+    certification, written into BUILD_III's P3 text now. Certifying a shooting code path the model never calls
+    would not certify the ν = 0 member."
+11. *Carried from S56.* "(i) The sampled-mean division retires with the ridge; the new field is never divided by a
+    sampled mean; the model grid's sampled mean is asserted against a pinned tolerance (measure it, expected far
+    under 1e-6; if not, report). (ii) Amend I1 to 'equal within one unit in the last place, the rounding of a mean
+    that is 1 identically in the law'; exact sums are not required. (iii) The fade's exponent closes as the law's
+    own: no exponent is a parameter; the probe's 0.084 → 1.79 over 0.05 → 1 is its record. (iv) Nothing replaces
+    the amplitude: s is the field; `gas_arm_contrast` and S56's mask survive only as row 38's target and
+    definition; `GAS_ARM_WIDTH` only as the width miss's target."
+12. *Consequences.* "Offset zero by symmetry, D210 ruling 3 stands derived; #140 discharged; #129, #131 re-ruled
+    as checks; #81's first half closed by 'the arms' pattern speed is Ω(R)', the 0.1 Gyr cut kept and re-sourced
+    as the arm's lifetime (100–160 Myr, Grand 2012, Baba 2013); the old 0.53–3.07 bound retires, the new bound is
+    [w_bar(1 − B), max s]."
+
+**Its predictions (B4; the default galaxy; read before they are judged).** The probe's table above, "outside the
+bar's reach these are the ruling's" (the probe used the tapered amplitudes). Row 38 (median over 6–10 kpc) ≈ 2.56
+against 2.73, inside 1.37–5.79: a hit. Width 0.23–0.48 of the dominant mode's period against 0.17: a miss by
+1.4–2.8×. Offset 0 on every ring. Interarm nearly empty where Σf > 1 (6–8 kpc). Ring means 1; expected totals
+unchanged. Newton at most 8 steps here, 34 on `ngc_4414`. Rows 35 and 37 may move with placement, layer on.
+**The gate (every ring, every seed, both templates):** discrete residual under 1e-10 on every cell; ring mean 1
+to 1e-12 on the cells with no division; min s > 0 and min g ≥ w_bar(1 − B) with nothing clipped; the sampled grid
+mean within its pinned tolerance; I1 within one ulp; Newton's counts under their recorded maxima; the
+interpolation error pinned; cost measured and reported.
+**Forbidden (Fable):** "clipping, flooring, capping, dividing by a sampled mean, adding a constant or scaling f;
+any thickness factor or other factor without a read source; a second sound speed; tuning a, Σ, p, A_m, the cell
+count, the mask or the phases to land row 38 or the width; closure (b); a per-mode or global Ω_p; a silent linear
+fallback on a non-converged ring; the exponential of a sum (D215); building the shocked branch this session;
+changing a prediction after it is read."
+**Honesty (for G3).** "Row 38 is defined now, before the build's number: the ratio of means of s inside S56's
+mask against outside it, per ring, the median over 6–10 kpc, judged against 2.73 within 1.37–5.79, marked
+disclosed (D113: 2.56 at R₀ and 2.0–2.8 over 6–10 kpc were printed by the probe). The width's miss is recorded
+against `GAS_ARM_WIDTH` = 0.17 with its two named suspects: the steady pressure-balanced response in place of the
+simulations' converging infall, and the razor-thin forcing of m = 5, 6 (kh ≈ 1 at h = 0.3 kpc, so up to 2×
+overstated). The interarm emptiness is recorded as a finding under the same debt, not softened. What would settle
+both: a read source for the finite-thickness reduction factor and a scale height, and a stellar/gas split of Σ at
+checkpoint 3."
+**The owner's part: none blocks.** "BUILD_III gives the frame to G2, the plan declared the no-shock fallback in
+advance, and the plan's own frame gives ν = 0, so the build proceeds. The close's first line to the owner: their
+item 3's 'steady 1-D gas shock per ring' has become the steady corotating response per ring; no arm shocks; the
+shocked branch is P3's bar's. Their open choices, not awaited: a sourced global Ω_p (none read) would reopen the
+shocked branch for the arms; the thickness and Σ-split readings discharge the debts."

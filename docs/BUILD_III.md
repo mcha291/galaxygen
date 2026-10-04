@@ -86,7 +86,9 @@ applied to a realisation.**
   every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
   run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
   which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
-  list is empty.
+  list is empty. An *expected* total that is a sum of placement weights is equal within one unit in the last
+  place — the rounding of a mean that is 1 identically in the law; exact sums are not required *(amended at
+  gate G2, S57, D216; ruling by Fable)*.
 - **I2.** A census's expected counts per ring — the numbers the draws are given, summed round the ring — are
   identical with the layer on or off to 1e-12. Until L1 the realised counts, and every total summed over realised
   objects, differ between the two runs by re-draw noise (measured S55: cloud mass −1.9 % galaxy-wide, up to 19 %
@@ -380,6 +382,14 @@ ruling 3 is superseded where the physics signs the offset. **Then G3.**
 
 **Agents:** two readers; builder A (solver and instrument); builder B (integration and re-pins); a reviewer.
 
+*(Ruled at gate G2, S57, D216; ruling by Fable. The frame is Ω_p(R) = Ω(R) for every arm mode — the plan's
+"corotation at the mode's radius" with amplitudes set ring by ring — so no gas flows through an arm and **no arm
+shocks**: no sonic point, no jump, no bisection, no fallback. `gas_shock` is the steady corotating response under
+uniform potential vorticity, ε² d²ln s/dχ² = s − 1 − Σ_m f_m cos(mχ − θ_m), the ν → 0 member of the shock's own
+equations; its offset is zero, so D210's ruling 3 stands, derived; the young-star cut is the arm's lifetime, not a
+crossing time. The instrument is the smooth-branch solver for general (ν, x, f), certified on Sormani et al.
+2017's no-shock threshold and the linear limit; the shocked branch is P3's.)*
+
 ### Phase P3 — the bar: a body, an absence, its lanes (S58) — list items 6, 9, 7
 
 **Reading:** bar light fractions, axis ratios and profiles from the S⁴G decompositions; the bar fraction against
@@ -395,6 +405,11 @@ disc properties and a disc stability criterion; the gas lanes' offset and curvat
   template pins it barred.
 - *The lanes:* a template curve with sourced parameters, **synthetic**, standing in for two-dimensional gas flow in
   the bar's potential (§8, level B).
+- *The shocked branch (deferred here from P2 at gate G2, D216):* the bar has a real pattern speed, so gas flows
+  through its potential and the steady flow can shock. If P3 uses the one-dimensional shocked solution — the
+  sonic point in Gittins & Clarke's regularised variables, the isothermal jump, a bisection on the sonic point's
+  phase alone — **it is certified before the model calls it** on Kim, Kim & Kim 2014's Table 1 under both
+  x = 0.1450 and 0.1458, and on Shu, Milione & Roberts 1973's rows B–D (`READING_GAS_SHOCK.md` Part A, A3).
 
 **Gate:** ring totals unchanged; rows 15–17 unchanged for the Milky Way; the m = 2 Fourier amplitude inside the
 bar against the sourced value. **Agents:** two readers; builders for the body, the presence and its rows, the lanes.
