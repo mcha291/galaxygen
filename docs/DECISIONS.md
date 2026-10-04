@@ -9464,3 +9464,28 @@ derived `bar` stage may publish a radial field `arm_pattern_speed` = circular_ve
 side of #81's first half", on two conditions: "the about line says it is a statement of the frame, not a
 measurement; and nothing computes ν from it (ν = 0 is by construction, and the bar's Ω_b is P3's, a separate
 field)."
+
+**The instrument, built first (builder A, an Opus agent in a worktree; `model/galaxy/stages/gas_response.py`,
+`tests/test_gas_response.py`, 34 tests).** One solver for d/dχ[(ε² − μ²/s²) d ln s/dχ] = s − 1 − g on 1440 fixed
+periodic cells, conservative (the ring mean is 1 by the discrete equation's sum, never by a division), Newton in
+ln s with step halving, at most 120 steps and 30 halvings, a batched cyclic tridiagonal solve across rings, a
+non-converged ring raised and never substituted. **Read against the gate's item 10:** Sormani et al. 2017's
+no-shock threshold f_c = 0.7202298 at 1440 cells (0.7203278 / 0.7202510 / 0.7202240 at 360 / 720 / 2880; Richardson
+0.7202228, Φ_c = 0.0729738 against the published 0.07297), first sonic contact on the two cells next to η = ±π;
+the hand-derived linear limit f/(1 − ν² + x) at four (ν, x), the departure falling 78–100-fold from f = 1e-3 to
+1e-4 against the continuous limit and 100.0–100.3-fold once the cells' own second-order share (f c²(x − ν²)h²/12,
+derived in the test) is removed — the ruling's "100-fold" holds in that sense and is asserted in both; the ring
+mean 1 to 8.5e-14 over 50 seeded rings; J higher at all ten perturbations; a ring's bits independent of its batch.
+On the two hardest rings (five modes, ε = 0.072, troughs 0.0073 and 0.0010): 7 Newton steps, no halving, residual
+4e-13, the differential equation checked by a spectral derivative the module does not use (1.18e-4, equal to
+h²/12·max|(s − g)″| with a remainder of 4e-8), uniform potential vorticity checked through the first integral
+(1e-5), a dense Newton written in the test agreeing to 2e-14. An extra case read before it was judged: Shu, Milione
+& Roberts's base-subsonic cusp at 14 kpc, 3.65 % against their 3.7 %. Not as briefed, for G3: at μ ≠ 0 the Newton
+step is applied to H = ε²φ + μ²e^{−2φ}/2 and φ read back on the base flow's branch (in φ itself the solver could
+not approach Sormani's threshold: φ grows a corner there); at μ = 0, the model's case, that is identically the
+plain step. The base-supersonic smooth branch runs through the same code and is not certified.
+**The cell count (a second follow-up to the gate; Fable):** linear interpolation between cell centres is off by
+1.96e-4 and 1.54e-4 at the midpoints on the two hardest rings (exactly h²/8·max|s″|; 1e-3 of the local s), the
+solver's own discretisation by 3.2e-5; at 2880 cells 4.9e-5 and 8e-6, at twice the cost (0.47–0.65 s per 400 rings
+at 1440). "1440 stands. 1.96e-4 is the expected order … 'worse' meant an order above, which this is not. Pin both
+numbers at 1440 … with the 2880-cell values recorded beside them as the convergence check, not as a target."
