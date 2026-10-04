@@ -15,7 +15,7 @@ equations, the construction of the shocked solution, nine checkable published ca
 and the linear limit at Ω_p = Ω). **Next: write `docs/HANDOFF_S57.md` and spawn Fable for gate G2.**
 
 ## First
-`uv run python tools/bootstrap.py` (S56's close ran the suite, `EXIT=0`; **its `verify_clone` on `main` was still running when S57 paused: run it again first**). **Read `BUILD_III.md`
+`uv run python tools/bootstrap.py` (S56's close ran the suite and `verify_clone` on `main` at 0787ea9: 1237 passed, 5 skipped, `EXIT=0`). **Read `BUILD_III.md`
 §1, "Phase P2" in §5, §3b–§3d, and D215's rulings 7–13: that text is the ruling so far.** The closing suite now
 takes about 55 minutes (the ranked ridge).
 
