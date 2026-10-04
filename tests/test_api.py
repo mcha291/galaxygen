@@ -486,8 +486,14 @@ def test_field_declarations_carry_the_one_rendering_opinion(api, model):
         decl = declared[entry["name"]]
         assert entry["label"] == decl.label and entry["unit"] == decl.unit
         assert entry["about"] == decl.about and entry["provenance"] == decl.provenance
+        assert entry["domain"] == decl.kind.domain and entry["kind"] == decl.kind.value and entry["of"] == decl.of
         if entry["domain"] in ("grid", "object"):
             assert entry["ramp"] is not None, f"{entry['name']} reaches the viewer without a ramp (rule A9)"
+        elif entry["domain"] == "table":
+            # S59 (D218): a table column is read by the model's stages and drawn by nothing - no rendering opinion.
+            assert entry["ramp"] is None and entry["kind"] == "table_column" and entry["axes"] == [], entry["name"]
+        else:
+            assert entry["domain"] == "galaxy", entry["name"]  # the listing knows four domains and no fifth
         if entry["categorical"] and entry["ramp"] is not None:  # a category *scalar* is a word, not a picture
             assert entry["ramp"]["kind"] == "palette"
             assert len(entry["ramp"]["colors"]) == len(entry["categories"])

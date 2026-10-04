@@ -157,6 +157,37 @@ def test_columns_share_a_length_per_object_class():
         go(model("m", s), s)
 
 
+def test_a_table_s_columns_share_its_rows_and_a_table_of_no_rows_is_a_table():
+    """S59 (D218): a table column (``Kind.TABLE_COLUMN``) is checked as what it is - one dimension, floating, every
+    column of one table the same number of rows. No rows at all is a table like any other (the winding's segments
+    with the layer off); a resumed run still holds a later stage to the rows already published."""
+    d1, d2 = decl("t1", Kind.TABLE_COLUMN), decl("t2", Kind.TABLE_COLUMN)
+    s = stage("s", (d1, d2), compute=lambda ctx: {"t1": np.ones(3), "t2": np.ones(4)})
+    with pytest.raises(PublishError, match="columns of table arm_segment must share one length; 4 != 3"):
+        go(model("m", s), s)
+    s = stage("s", (d1,), compute=lambda ctx: {"t1": np.ones((3, 2))})
+    with pytest.raises(PublishError, match="a table column is 1-D"):
+        go(model("m", s), s)
+    s = stage("s", (d1,), compute=lambda ctx: {"t1": np.arange(3)})
+    with pytest.raises(PublishError, match="a table column is a floating array"):
+        go(model("m", s), s)
+    s = stage("s", (d1, d2), compute=lambda ctx: {"t1": np.zeros(0), "t2": np.zeros(0)})
+    out = go(model("m", s), s)
+    assert out.fields["t1"].shape == out.fields["t2"].shape == (0,) and out.decls["t1"].kind.domain == "table"
+    # A table's rows and an object class's are counted apart: three stars beside five segments.
+    star = decl("m1", Kind.COLUMN)
+    s = stage("s", (d1, star), compute=lambda ctx: {"t1": np.ones(5), "m1": np.ones(3)})
+    assert go(model("m", s), s).fields["t1"].shape == (5,)
+    # Resumed, the table's length is the one already published.
+    first = stage("first", (d1,), compute=lambda ctx: {"t1": np.ones(5)})
+    later = stage("later", (d2,), requires=("t1",), compute=lambda ctx: {"t2": np.ones(4)})
+    m = model("m", first, later)
+    done = run(m, None, TINY, impls=impls(first, later), only=("t1",))
+    assert done.ran == ("first",)
+    with pytest.raises(PublishError, match="must share one length; 4 != 5"):
+        run(m, None, TINY, impls=impls(first, later), resume=done)
+
+
 def test_unset_input_is_an_error_only_when_read():
     """Rule B9: refuse to invent a number, but only when a stage actually wants one.
 

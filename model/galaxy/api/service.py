@@ -1127,6 +1127,11 @@ class Service:
                 scalars[name] = _number(value) if not decl.kind.categorical else value
                 continue
             arr = np.asarray(value)
+            # A table column (S59, D218) is served here and nowhere else: whole, as the run publishes it - one
+            # array of the table's rows, none with the layer off. It has no axes, so no stride touches it; no
+            # census or region route knows it (they pick `domain == "object"`).
+            if decl.kind.domain == "table" and arr.ndim != 1:
+                raise RuntimeError(f"table column {name!r} is not one-dimensional: shape {arr.shape}")
             if steps is not None and "t" in decl.axes:
                 arr = np.take(arr, steps, axis=decl.axes.index("t"))
             if precision == "f4" and arr.dtype == np.float64:

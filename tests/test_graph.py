@@ -237,6 +237,12 @@ def test_production_graphs_hold(prod):
         assert g.stages["arm_phases"].requires == ("bar_present",)
         assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
         assert g.producer["arm_segment_extent"] == g.producer["arm_segment_pitch_residual"] == "arm_phases"
+        # S59 (D218): the two are a table's columns (domain "table"), and the graph's provenance covers them as it
+        # covers any field: computed synthetic, the layer stage's, and declared so.
+        segments = [d for d in g.stages["arm_phases"].publishes if d.kind.domain == "table"]
+        assert [d.name for d in segments] == ["arm_segment_extent", "arm_segment_pitch_residual"]
+        assert all(g.provenance[d.name] == d.provenance == "synthetic" and d.of == "arm_segment" for d in segments)
+        assert not [d.name for st in g.stages.values() for d in st.publishes if d.kind.domain == "object" and d.of == "arm_segment"]
     assert "graph" in graph.report(models, impls_, table)
 
 

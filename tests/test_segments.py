@@ -15,8 +15,11 @@ Until S59 every arm mode wound at one pitch: χ = φ − ln R · cot p. A condit
   ``pitch_angle`` replaces the draw and the draw is published beside it.
 
 **How the winding is published** (the builder's design, stated): the layer stage ``arm_phases`` publishes the raw
-draws as two columns of a small object class, ``arm_segment`` - 64 rows outward from the anchor and 192 inward,
-each row on its own stream - and nothing of the law; the ``bar`` stage publishes the anchor's radius; and every
+draws as two columns of a small table, ``arm_segment`` - 64 rows outward from the anchor and 192 inward,
+each row on its own stream - and nothing of the law (a table column, ``Kind.TABLE_COLUMN``, domain ``table``: the
+rows are published whole and read whole, and are no catalogue - the lead's ruling on the contract, after the build
+had declared them an object class and the viewer's catalogue rule had taken the stage's five phases for a
+catalogue's scalars); the ``bar`` stage publishes the anchor's radius; and every
 reader builds ``pattern.Winding`` from those and the published ``pitch_angle``. Φ is linear in ln R between the
 knots, so a point reads it exactly at its own radius, and the grid plays no part in it.
 
@@ -36,8 +39,10 @@ import pytest
 
 import reid2019
 from galaxy import templates
+from galaxy.api import wire
 from galaxy.api.service import Service
 from galaxy.core import seeds as _seeds
+from galaxy.core.fielddoc import TABLES, FieldDecl, Kind
 from galaxy.core.grids import GridSpec
 from galaxy.layer import arm_phases as ap
 from galaxy.layer import compose
@@ -130,7 +135,10 @@ def test_the_constants_are_the_ruling_s_and_the_segments_declare_what_they_are(p
     assert "9.5 +/- 0.3 deg" in scatter and "Diaz-Garcia" in scatter and "untruncated" in scatter
     assert (pt.SEGMENTS_OUTWARD, pt.SEGMENTS_INWARD) == (OUT_ROWS, IN_ROWS) and ap.MAX_EXTENT_DRAWS == 16
     for decl in ap.ARM_SEGMENTS:
-        assert decl.provenance == "synthetic" and decl.of == "arm_segment" and decl.kind.domain == "object"
+        assert decl.provenance == "synthetic" and decl.of == "arm_segment"
+        # A table's column, not a catalogue's: read whole by the model's own stages, drawn by nothing.
+        assert decl.kind is Kind.TABLE_COLUMN and decl.kind.domain == "table" and decl.ramp is None
+        assert "not shown by the viewer" in decl.about and "Not drawn by the viewer" not in decl.about
         assert "kinks of real spiral arms" in decl.stands_in_for and "common rings for every arm" in decl.stands_in_for
         assert "Every ring's mean and every mode's amplitude" in decl.conserves and "the gas law's strength" in decl.conserves
         assert "untruncated" in decl.statistic and "38 printed rows" in decl.statistic and "9.5 +/- 0.3" in decl.statistic
@@ -447,3 +455,95 @@ def test_a_pin_may_be_a_measured_number_and_the_sun_moves_nothing_else(prod):
     assert head["inputs"]["sun_bar_angle"] == 30.0 and head["scalars"]["sun_azimuth"] is not None
     head = api.handle("/api/arrays", "fields=sun_azimuth,pitch_angle,pitch_angle_drawn&template=ngc_4414").frame()[0]
     assert head["inputs"]["pitch_angle"] == 28.9 and head["scalars"]["pitch_angle"] == 28.9 and head["scalars"]["sun_azimuth"] is None
+
+
+# --- the table: published whole, read whole, and no catalogue -------------------------------------------------------
+
+
+def _viewer_rules(fields):
+    """``interface/view.js``'s three declaration-only rules, as the viewer reads them off ``/api/fields``: the
+    stages that publish objects (``catalogueStages``), the scalars it asks for at a checkpoint (``scalarsAt``:
+    every galaxy scalar there but a catalogue stage's) and whether there is a sample to draw (``hasCatalogue``)."""
+    catalogue_stages = {f["stage"] for f in fields if f["domain"] == "object"}
+
+    def scalars_at(n: int) -> set[str]:
+        return {f["name"] for f in fields if f["checkpoint"] == n and f["domain"] == "galaxy" and f["stage"] not in catalogue_stages}
+
+    def has_catalogue(n: int) -> bool:
+        return any(f["domain"] == "object" and f["checkpoint"] <= n for f in fields)
+
+    return catalogue_stages, scalars_at, has_catalogue
+
+
+def test_the_segments_are_a_table_and_the_catalogue_rule_sees_no_catalogue_before_the_stars(model):
+    """The lead's ruling on the contract (S59, after the build): the segment rows are a small table published whole
+    with the run, not a catalogue, and their kind is one the viewer's catalogue rule does not see. While they were
+    declared an object class's columns, ``arm_phases`` read as a catalogue stage: the viewer stopped asking for its
+    five phases (rule D4's exclusion, meant for a stage whose scalar would materialise a galaxy's sample) and took
+    checkpoint 3 for one with a sample to draw. Read here from the API's own listing, as the viewer's rule reads
+    it, for every registered model: no catalogue at checkpoints 3 and 4, the first at 5 as before S59, and the
+    five phases among what a viewer asks for at checkpoint 3."""
+    fields = Service(grid=SMALL).handle("/api/fields", f"model={model.name}").json()["fields"]
+    by_name = {f["name"]: f for f in fields}
+    table = [f for f in fields if f["domain"] == "table"]
+    assert [f["name"] for f in table] == list(pt.SEGMENT_FIELDS) and {f["of"] for f in table} == set(TABLES) == {"arm_segment"}
+    for f in table:
+        assert (f["kind"], f["stage"], f["checkpoint"], f["axes"], f["ramp"], f["categorical"]) == ("table_column", "arm_phases", 3, [], None, False), f["name"]
+        assert "not shown by the viewer" in f["about"] and f["provenance"] == "synthetic", f["name"]
+    assert {f["domain"] for f in fields} == {"grid", "galaxy", "object", "table"}
+    assert not [f["name"] for f in fields if f["domain"] == "object" and f["of"] == "arm_segment"]
+    catalogue_stages, scalars_at, has_catalogue = _viewer_rules(fields)
+    assert "arm_phases" not in catalogue_stages
+    assert not has_catalogue(3) and not has_catalogue(4) and has_catalogue(5)
+    assert min(f["checkpoint"] for f in fields if f["domain"] == "object") == 5
+    phases = set(pt.PHASE_FIELDS)
+    assert phases == {f"arm_mode_phase_{m}" for m in (2, 3, 4, 5, 6)} and {by_name[n]["checkpoint"] for n in phases} == {3}
+    assert phases <= scalars_at(3)
+    # ... and they do not carry the sentence a catalogue stage's scalar carries: they are shown.
+    assert not [n for n in phases if "Not shown by the viewer" in by_name[n]["about"]]
+
+
+def test_the_api_serves_the_table_whole_and_no_census_route_carries_it(prod):
+    """What ``/api/arrays`` does with a table column, stated: **it serves it**, whole, as one array of the table's
+    rows - the published draws, to the bit - beside the scalars and grid fields asked with it; ``precision=f4``
+    narrows it as it narrows any array, ``t_samples`` does not touch it (it has no axes), and with the layer off
+    it is an array of no rows. No other route knows it: the census and region routes pick ``domain == "object"``
+    columns of their own stages."""
+    api = Service(grid=SMALL)
+    ask = "fields=arm_segment_extent,arm_segment_pitch_residual,arm_winding_anchor_radius,arm_mode_phase_3&texture_seed=3"
+    got = api.handle("/api/arrays", ask)
+    assert got.status == 200
+    head, arrays = got.frame()
+    o = run(the_model(prod), {"texture_seed": 3}, SMALL, only=(*pt.SEGMENT_FIELDS, "arm_winding_anchor_radius"))
+    assert set(arrays) == set(pt.SEGMENT_FIELDS) and set(head["scalars"]) == {"arm_winding_anchor_radius", "arm_mode_phase_3"}
+    for name in pt.SEGMENT_FIELDS:
+        assert arrays[name].dtype == np.float64 and arrays[name].shape == (OUT_ROWS + IN_ROWS,), name
+        assert arrays[name].tobytes() == np.asarray(o.fields[name]).tobytes(), name
+        assert o.decls[name].kind is Kind.TABLE_COLUMN
+    assert "arm_phases" in head["stages"] and not {"systems", "clouds", "clusters"} & set(head["stages"])
+    _, narrow = api.handle("/api/arrays", ask + "&precision=f4&t_samples=8").frame()
+    for name in pt.SEGMENT_FIELDS:
+        assert narrow[name].dtype == np.float32 and np.array_equal(narrow[name], arrays[name].astype(np.float32)), name
+    head_off, off = api.handle("/api/arrays", ask + "&layer=off").frame()
+    assert all(off[name].shape == (0,) for name in pt.SEGMENT_FIELDS) and head_off["scalars"]["arm_mode_phase_3"] is None
+    window = "r_min=7&r_max=9&phi_min=0&phi_max=0.4"
+    for path, query in (("/api/region", window), ("/api/clouds", window), ("/api/clusters", window), ("/api/remnants", window),
+                        ("/api/bright", window + "&n=50")):
+        r = api.handle(path, query)
+        assert r.status == 200, (path, r.body[:200])
+        header, rows = wire.decode(r.body)
+        assert header["columns"] and not [c for c in (*header["columns"], *rows) if c.startswith("arm_segment")], path
+
+
+def test_a_table_is_declared_from_a_closed_list_and_takes_no_ramp():
+    """The declaration's own refusals, on the segments' table: a name off the closed list, a ramp, an object
+    class's kind with the table's name (``tests/test_fielddoc.py`` holds the kind's rules in full)."""
+    from galaxy.core.fielddoc import OBJECTS, DeclarationError, Ramp
+
+    assert "arm_segment" not in OBJECTS and TABLES == ("arm_segment",)
+    base = dict(name="x", label="x", unit="rad", about="a probe")
+    assert FieldDecl(kind=Kind.TABLE_COLUMN, of="arm_segment", **base).kind.domain == "table"
+    for bad in (dict(kind=Kind.TABLE_COLUMN, of="star"), dict(kind=Kind.TABLE_COLUMN, of="arm_segment", ramp=Ramp("viridis")),
+                dict(kind=Kind.COLUMN, of="arm_segment", ramp=Ramp("viridis"))):
+        with pytest.raises(DeclarationError):
+            FieldDecl(**base, **bad)

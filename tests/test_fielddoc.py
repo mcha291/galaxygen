@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from galaxy.core import units
-from galaxy.core.fielddoc import AXES, CMAPS, OBJECTS, DeclarationError, FieldDecl, Kind, Palette, Ramp
+from galaxy.core.fielddoc import AXES, CMAPS, OBJECTS, TABLES, DeclarationError, FieldDecl, Kind, Palette, Ramp
 from helpers import decl
 
 
@@ -34,11 +34,14 @@ def test_every_kind_declares(kind):
 
 
 def test_kind_structure():
-    assert {k.domain for k in Kind} == {"grid", "galaxy", "object"}
+    # S59 (D218): was {"grid", "galaxy", "object"} and six kinds - a table column is a seventh, alone in its domain.
+    assert {k.domain for k in Kind} == {"grid", "galaxy", "object", "table"}
     assert Kind.FIELD.domain == "grid" and not Kind.FIELD.categorical
     assert Kind.CATEGORY_SCALAR.domain == "galaxy" and Kind.CATEGORY_SCALAR.categorical
     assert Kind.COLUMN.domain == "object"
-    assert len(Kind) == 6
+    assert Kind.TABLE_COLUMN.domain == "table" and not Kind.TABLE_COLUMN.categorical and Kind.TABLE_COLUMN.value == "table_column"
+    assert [k for k in Kind if k.domain == "table"] == [Kind.TABLE_COLUMN] and [k for k in Kind if k.domain == "object"] == [Kind.COLUMN, Kind.CATEGORY_COLUMN]
+    assert len(Kind) == 7
 
 
 def test_kind_accepts_string():
@@ -95,6 +98,36 @@ def test_object_kinds_need_an_object_class():
         decl("x", of="star")  # grid kind
     with pytest.raises(DeclarationError):
         decl("x", Kind.SCALAR, of="star")
+
+
+def test_a_table_column_names_its_table_and_is_not_a_catalogue_column():
+    """S59 (D218). A table column is a one-dimensional array whose rows are a small named table's - rows a later
+    stage reads whole (the winding's segments), never served by a census route, never materialised by a
+    catalogue. Its domain is ``table``: no rule that picks ``object`` sees it. The table's name is from its own
+    closed list, which shares no name with the object classes; it takes no axes, no categories, no composition,
+    and - drawn by nothing - no ramp."""
+    assert TABLES == ("arm_segment",) and not set(TABLES) & set(OBJECTS)
+    # The object classes are what they were at S58: the segments are not one of them.
+    assert OBJECTS == ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")
+    d = decl("x", Kind.TABLE_COLUMN)
+    assert (d.kind, d.kind.domain, d.of, d.ramp, d.axes) == (Kind.TABLE_COLUMN, "table", "arm_segment", None, ())
+    assert decl("x", "table_column").kind is Kind.TABLE_COLUMN
+    assert decl("x", Kind.TABLE_COLUMN, unit="rad").unit == "rad"
+    for bad in (None, "star", "rock"):
+        with pytest.raises(DeclarationError, match="a table column needs of= one of the tables"):
+            decl("x", Kind.TABLE_COLUMN, of=bad)
+    with pytest.raises(DeclarationError, match="object kinds need of="):
+        decl("x", Kind.COLUMN, of="arm_segment")  # a table is not an object class
+    with pytest.raises(DeclarationError, match="takes no axes"):
+        decl("x", Kind.TABLE_COLUMN, axes=("R",))
+    with pytest.raises(DeclarationError, match="not drawn and takes no ramp"):
+        decl("x", Kind.TABLE_COLUMN, ramp=Ramp("viridis"))
+    with pytest.raises(DeclarationError, match="only categorical kinds take categories"):
+        decl("x", Kind.TABLE_COLUMN, categories=("a", "b"))
+    with pytest.raises(DeclarationError, match="a composed field is a continuous grid field"):
+        decl("x", Kind.TABLE_COLUMN, composed=True, neutral=1.0)
+    # The table's name is part of the contract, as an object class is.
+    assert d.contract()[3] == "table_column" and d.contract()[5] == "arm_segment"
 
 
 def test_categorical_rules():

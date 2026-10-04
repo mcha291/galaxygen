@@ -38,6 +38,22 @@ def test_seeded_stage_passes_and_nan_is_equal_to_nan():
     assert determinism.check_reproducible(model("m", n), impls(n), INPUTS, TINY) == []
 
 
+def test_a_table_column_is_held_to_reproducibility_as_any_field_is():
+    """S59 (D218): the check walks every published field, whatever its kind - a table's rows drawn off the global
+    generator are caught, a table of no rows is the same table twice, and a seeded table passes."""
+    from galaxy.core.fielddoc import Kind
+
+    d = decl("rows", Kind.TABLE_COLUMN)
+    loose = stage("s", (d,), compute=lambda ctx: {"rows": np.random.random(5)})
+    probs = determinism.check_reproducible(model("m", loose), impls(loose), INPUTS, TINY)
+    assert [p.code for p in probs] == ["irreproducible"] and "'rows'" in probs[0].detail
+    empty = stage("s", (d,), compute=lambda ctx: {"rows": np.zeros(0)})
+    assert determinism.check_reproducible(model("m", empty), impls(empty), INPUTS, TINY) == []
+    seeded = stage("s", (decl("rows", Kind.TABLE_COLUMN, provenance="seeded"),), reads_seeds=("world_seed",),
+                   compute=lambda ctx: {"rows": ctx.rng("world_seed").random(5)})
+    assert determinism.check_reproducible(model("m", seeded), impls(seeded), INPUTS, TINY) == []
+
+
 # --- S10 run 2: the check runs twice in ONE process ---------------------------
 
 _ACROSS_PROCESSES = """
@@ -82,6 +98,8 @@ def test_the_model_is_reproducible_across_processes_too(model):
     differing = sorted({n for r in seen[1:] for n, v in r["fields"].items() if seen[0]["fields"].get(n) != v})
     assert differing == [], differing
     assert len(seen[0]["fields"]) >= 91
+    # S59 (D218): the winding's segment table is among what is hashed - a table column is a field like any other.
+    assert {"arm_segment_extent", "arm_segment_pitch_residual"} <= set(seen[0]["fields"])
 
 
 def test_the_spec_checks_reproducibility_across_processes_too(prod):

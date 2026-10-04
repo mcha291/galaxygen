@@ -8,8 +8,8 @@ P5: the #69 gate extended to the object classes. Every cloud, cluster and remnan
 and every not-drawn column's declaration carries the object-class twin of rule D4's sentence ("Not drawn by the
 viewer", D191) saying why - it reaches the picture through what it sets, nothing in a filter's image sees it, or
 it is owed (debts #115, #116). A new object column fails this test until it is placed in one list or the other, and
-a column moved to DRAWN must lose the sentence (its module's NOT_DRAWN_WHY entry). S59 (D218): the randomness
-layer's `arm_segment` class, the winding's seeded segments, joins the inventory - two columns, neither drawn.
+a column moved to DRAWN must lose the sentence (its module's NOT_DRAWN_WHY entry). S59 (D218): the winding's seeded
+segments are a table's columns (domain `table`), not an object class's, so this inventory does not hold them.
 
 D191's measurements, pinned: the ramp's painting (L_bol through a blackbody's share at the colour temperature) puts
 about twice the population's own light through the viewer's optical filters (#114), and the clusters carry a
@@ -108,7 +108,6 @@ DRAWN = {
                 "hii_balmer_decrement", "hii_oiii_5007_ratio", "hii_nii_6583_ratio", "hii_sii_6716_ratio", "hii_sii_6731_ratio"},
     "remnant": {"remnant_radius", "remnant_azimuth", "remnant_height", "remnant_size", "remnant_shell_thickness",
                 "remnant_shell_emissivity"},
-    "arm_segment": set(),  # S59 (D218): the winding's seeded segments, a new object class; the viewer reads neither column
 }
 # Published and not drawn (S41, ruled at D191): each carries the "Not drawn by the viewer" sentence.
 NOT_DRAWN = {
@@ -122,16 +121,13 @@ NOT_DRAWN = {
                 "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled"},
     "remnant": {"remnant_age", "remnant_shell_velocity", "remnant_ambient_density", "remnant_shell_density",
                 "remnant_phase", "remnant_kind"},
-    # S59 (D218): the two columns of the layer's `arm_segment` class. No route sends them to the viewer and nothing
-    # draws a row; they reach the picture as the winding they set (layer/arm_phases.py NOT_DRAWN_WHY).
-    "arm_segment": {"arm_segment_extent", "arm_segment_pitch_residual"},
 }
 
 
 def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it for every registered model
     fields = Service().handle("/api/fields", f"model={model.name}").json()["fields"]
     by_name = {f["name"]: f for f in fields}
-    for of in ("cloud", "cluster", "remnant", "arm_segment"):  # S59 (D218): was the first three
+    for of in ("cloud", "cluster", "remnant"):
         published = {f["name"] for f in fields if f["domain"] == "object" and f.get("of") == of}
         assert not DRAWN[of] & NOT_DRAWN[of], of
         assert published == DRAWN[of] | NOT_DRAWN[of], (of, sorted(published ^ (DRAWN[of] | NOT_DRAWN[of])))
@@ -141,5 +137,9 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
         for name in DRAWN[of]:
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
     # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
-    # S59 (D218): was 30 / 37 - the winding's two segment columns, not drawn.
-    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 39
+    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 37
+    # S59 (D218): the winding's two segment columns are a table's, not an object class's - D191's rule does not
+    # bind them, and they say in plain words that the viewer does not show them.
+    segments = [f for f in fields if f.get("of") == "arm_segment"]
+    assert sorted(f["name"] for f in segments) == ["arm_segment_extent", "arm_segment_pitch_residual"]
+    assert all(f["domain"] == "table" and "Not drawn by the viewer" not in f["about"] and "not shown by the viewer" in f["about"] for f in segments)

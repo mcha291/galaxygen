@@ -34,7 +34,8 @@ made, and none should be added** (gate G1, Q6): with different realised counts t
 correspond.
 
 **S59 (BUILD_III Phase P4; D218), re-read.** The layer lays the segments of the arms' common winding - two synthetic
-columns of an object class of its own (``arm_segment``: rows with the layer on, none with it off; no census) - and
+columns of a small table (``arm_segment``: 256 rows with the layer on, none with it off; a table column, domain
+``table``, not an object class's - no catalogue, no census, and the stage that lays them is no catalogue stage) - and
 two templates hold a measured pin. With the layer off nothing S55 published moved but ``ngc_4414``'s
 ``pitch_angle``, which is its pin (the draw is published beside it, S55's bits); five fields were added. I1 holds
 as now worded: the two expected totals are 1 and 0 units in the last place apart, under its four, and every
@@ -118,10 +119,11 @@ assert len(CENSUS_STATISTICS) == 14  # nine scalars, five radial fields: the fou
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
 # And the one census no pattern places (bubbles.remnant_expected shares a ring evenly among its sectors).
 UNPLACED_OBJECTS = {"remnant"}
-# S59 (D218 items 1-2): and one class that is no census at all - the rows of the arms' winding, a segment each: the
-# layer's own realisation (the `arm_phases` stage's two synthetic columns), 256 rows with the layer on and none
-# with it off ("layer off ... no segments are drawn"). Nothing is counted, expected or placed of them.
-LAYER_OBJECTS = {"arm_segment"}
+# S59 (D218 items 1-2): and one table that is no census and no object class at all - the rows of the arms' winding,
+# a segment each: the layer's own realisation (the `arm_phases` stage's two synthetic table columns), 256 rows with
+# the layer on and none with it off ("layer off ... no segments are drawn"). Nothing is counted, expected or placed
+# of them. The table's inventory (was LAYER_OBJECTS while the two were declared an object class's columns).
+LAYER_TABLES = {"arm_segment"}
 SEGMENT_ROWS = 256  # 64 outward from the anchor and 192 inward: fixed counts, whatever the grid
 # Two scalars are a census's *expected* total: the expected counts summed over every cell, each cell carrying its
 # sector's placement weight. The weights average to 1 round a ring to rounding and not to the bit, so the total is
@@ -378,13 +380,14 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
             # per ring) and the statistics computed from them, below.
             if d.of in UNPLACED_OBJECTS:
                 assert same(on.fields[n], off.fields[n]), n
-            elif d.of in LAYER_OBJECTS:
-                # S59 (D218 items 1-2, 7): the winding's segment rows - the layer's own realisation, not a census.
-                # Rows with the layer on, none with it off ("no segments are drawn"); synthetic, the layer stage's.
-                assert d.provenance == "synthetic" and n in pt.SEGMENT_FIELDS, n
-                assert np.asarray(on.fields[n]).shape == (SEGMENT_ROWS,) and np.asarray(off.fields[n]).shape == (0,), n
             else:
                 assert d.of in PLACED_OBJECTS, (n, d.of)
+            continue
+        if d.kind.domain == "table":
+            # S59 (D218 items 1-2, 7): the winding's segment rows - the layer's own realisation, a table and not a
+            # census. Rows with the layer on, none with it off ("no segments are drawn"); synthetic, the layer stage's.
+            assert d.of in LAYER_TABLES and d.provenance == "synthetic" and n in pt.SEGMENT_FIELDS, n
+            assert np.asarray(on.fields[n]).shape == (SEGMENT_ROWS,) and np.asarray(off.fields[n]).shape == (0,), n
             continue
         if d.provenance == "synthetic":
             # S56 (D215, gate ruling 5): a synthetic scalar is a realisation - a number with the layer on, and not
@@ -1007,7 +1010,10 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 # S59 (D218): the segments' draw. Its statistic names what it was read from and what it is not (the
                 # reader's arithmetic on one survey's printed rows, not statistics the paper prints); what it stands
                 # in for says the kinks fall on common rings for every arm, which no source describes.
-                assert f["stage"] == "arm_phases" and f["kind"] == "column" and f["of"] == "arm_segment", f["name"]
+                # A table's column, not a catalogue's (the gate's amendment): domain "table", no ramp, and it says
+                # in plain words that the viewer does not show it.
+                assert f["stage"] == "arm_phases" and f["kind"] == "table_column" and f["of"] == "arm_segment", f["name"]
+                assert f["domain"] == "table" and f["ramp"] is None and "not shown by the viewer" in f["about"], f["name"]
                 assert "texture seed" in f["about"] and "Empty with the randomness layer off" in f["about"], f["name"]
                 assert "38 printed rows" in f["statistic"] and "untruncated" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
                 assert "common rings for every arm" in f["stands_in_for"] and "Every ring's mean and every mode's amplitude" in f["conserves"], f["name"]
@@ -1080,15 +1086,16 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # S56 (D215): the layer's five phases are numbers in the layer-on run and not in the layer-off one.
     phases = {n for n in differ if b.decls[n].provenance == "synthetic" and b.decls[n].kind.domain == "galaxy"}
     assert phases == set(pt.PHASE_FIELDS)
-    statistics = {n for n in differ - phases if b.decls[n].kind.domain != "object"}
+    # S59 (D218): the winding's two segment columns are rows in the layer-on run and none in the layer-off one, as
+    # the phases are numbers in the one and not in the other: a table's columns, set apart as the phases are.
+    segments = {n for n in differ if b.decls[n].kind.domain == "table"}
+    assert segments == set(pt.SEGMENT_FIELDS) and {b.decls[n].of for n in segments} == LAYER_TABLES
+    statistics = {n for n in differ - phases - segments if b.decls[n].kind.domain != "object"}
     # S58 (D217): was `== set(CENSUS_STATISTICS)`; `dig_halpha_fraction` lands on the same bits at S58's census (test_i1).
     # S59 (D218): was `== set(CENSUS_STATISTICS) - {"dig_halpha_fraction"}`; on S59's layer-on census the two sums
     # round apart again (test_i1), and the list is whole.
     assert statistics == set(CENSUS_STATISTICS)
-    # S59 (D218): was `== PLACED_OBJECTS` - the winding's two segment columns are rows in the layer-on run and none
-    # in the layer-off one, as the phases are numbers in the one and not in the other.
-    assert {b.decls[n].of for n in differ - statistics - phases} == PLACED_OBJECTS | LAYER_OBJECTS
-    assert {n for n in differ if b.decls[n].of in LAYER_OBJECTS} == set(pt.SEGMENT_FIELDS)
+    assert {b.decls[n].of for n in differ - statistics - phases - segments} == PLACED_OBJECTS
     held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
     # 222 = basic's 343 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
     # 5 phases (215 until S56, which added the law's five amplitudes and its saturation to what is held).
@@ -1392,13 +1399,14 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
             assert n != pt.phase_field(2) or float(a.fields[n]) == 0.0
         elif d.composed:
             assert not equal, n
+        elif d.kind.domain == "table":
+            # S59 (D218 items 1-2): the winding's segments are on the layer's seed - re-laid, row for row, and
+            # the same count of rows (fixed: the grid and the seed do not enter it).
+            assert d.of in LAYER_TABLES and n in pt.SEGMENT_FIELDS, n
+            assert not equal and d.provenance == "synthetic" and np.asarray(a.fields[n]).shape == np.asarray(b.fields[n]).shape == (SEGMENT_ROWS,), n
         elif d.kind.domain == "object":
             if d.of in UNPLACED_OBJECTS:
                 assert equal, n
-            elif d.of in LAYER_OBJECTS:
-                # S59 (D218 items 1-2): the winding's segments are on the layer's seed - re-laid, row for row, and
-                # the same count of rows (fixed: the grid and the seed do not enter it).
-                assert not equal and d.provenance == "synthetic" and np.asarray(a.fields[n]).shape == np.asarray(b.fields[n]).shape == (SEGMENT_ROWS,), n
             elif not equal:
                 placed.add(d.of)
         elif not equal:
