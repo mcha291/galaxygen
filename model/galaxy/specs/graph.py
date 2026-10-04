@@ -55,12 +55,11 @@ LAYER_PACKAGE = "galaxy.layer"
 
 # The inputs a ruling leaves without a reader, each with the ruling. Every other seed binds at its earliest
 # reader's checkpoint, and one that no stage reads is reported unbound (``Graph.unbound_inputs``), which
-# ``tests/test_spec.py`` holds empty. **Exactly one exception, named**: ``texture_seed`` feeds only fields the
-# third build adds, and its first reader is P1's mode phases; no dummy reader is invented for it (rule A4).
-# ``tests/test_layer.py`` fails the day a stage reads it - this entry is removed then.
-UNREAD_BY_RULING: Mapping[str, str] = {
-    "texture_seed": "DECISIONS.md D214 section 3: no stage reads it until BUILD_III phase P1",
-}
+# ``tests/test_spec.py`` holds empty. **Empty since S56** (D215): its one entry was ``texture_seed``, which fed
+# only fields the third build adds and had no reader from S55 (D214 section 3: no dummy reader is invented, rule
+# A4) until P1's ``arm_phases`` stage read it - the seed now binds at that stage's checkpoint like every other.
+# An entry here is a ruling's, named with the ruling; nothing else may leave an input unread.
+UNREAD_BY_RULING: Mapping[str, str] = {}
 
 
 @dataclass

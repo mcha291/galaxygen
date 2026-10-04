@@ -9025,3 +9025,301 @@ discharged (#137). vitest 212 → 261. Next numbers: D215, #138, board row 56, a
 **The close (2026-10-04).** The suite on the combined state: 1194 passed, 5 skipped, `EXIT=0` (35 min, the machine
 quiet); the specs OK, 12 / 20 / 5 of 37 for both models, the template checks 0 / 5 on their five recorded misses.
 The picture run: 8 passed (seven captures to the byte, the wire test).
+
+### D215. S56: the owner's two answers after S55; then several arm modes at once and a gas ridge that follows any pattern (BUILD_III Phase P1; an Opus lead)
+
+**The owner, in chat, on 2026-10-04**, asked at S55's close the two questions the gates left for the owner alone:
+1. *Rule A10's last sentence* (gate G1, D214) — amended, or the ring-first draw brought ahead of P1? **"Amend A10,
+   keep the order."** A10 now ends: "the layer changes no ring total of any field and no expected ring total of
+   any census; realised census totals are conserved from L1 (D214 G1)", with what it read before. The sessions run
+   in the plan's order: P1 next, the ring-first draw at L1 (S60), #137 carried until then.
+2. *NGC 4414's fit* (the S54 gate, D213) — a second fit on the reader's own split as a probe, or the current one?
+   **"Keep the current fit."** Fit B is the second template for the rest of the build; no window of the reading is
+   spent; #134 stays carried and its closer is not ordered. D213's ban on a third fit stands as it is.
+
+S55's `verify_clone` on `main` at 9628f94: 1194 passed, 5 skipped, the specs OK, `EXIT=0`.
+
+**The probe before the build (BUILD_III §3g; the repo unchanged; both templates on the production grid).** The
+local swing window — X₂(R) = κ²R/(2πGΣ·2) from the checkpoint-1 disc, the local shear, the existing
+`swing_weight` — splits the power as the plan hoped: at the defaults m = 2 and 3 carry 0.85 of it at 2 kpc, the
+five modes 0.27 / 0.27 / 0.23 / 0.14 / 0.07 at 8 kpc, m = 4–6 nearly all of it at 12 kpc; 169 of 400 rings hold
+three or more modes above 5 %. `ngc_4414` has the same shape, more compact. **It contradicted the plan's text at
+two points.** (1) Past 14.9 kpc (11.6 for `ngc_4414`) no mode with m ≤ 6 survives — 202 and 246 of 400 rings,
+2.2 % and 1.0 % of the disc's mass — so "Σ_m A_m² = A²" has no solution there, and just inside, the per-ring
+normalisation hands the whole power to a ring whose total weight is 0.015. (2) Five modes of equal power peak at
+√5 A: the worst ring's Σ A_m is 0.89 at the default seed, 1.07 at the grand-design mean, and over 120 pattern
+seeds with random phases **21 galaxies had a cell of negative density** (worst −0.37; 1.6 % of the mass at most).
+
+**A conditional gate (BUILD_III §3d; §6 lists it for S56), 2026-10-04; ruling by Fable, one turn on
+`docs/HANDOFF_S56.md` (deleted at close), nothing run.**
+1. *The power follows the amplifier (the lead's N3, in a one-line form).* "At each radius the modes' power is the
+   sourced power times the disc's gain, the gain capped at one: A_m(R)² = A² · w_m(R) / max(1, Σ_k w_k(R)), w_m
+   the existing `swing_weight` at the local window, m = 2–6, A the published `arm_contrast`. Where Σ_k w_k ≥ 1 the
+   ring carries A² whole, split by the weights; where it is below 1 each mode carries A² w_m and the ring carries
+   Σw · A², falling continuously to zero where the amplifier is dead; no ring is normalised up. One fully
+   amplified mode (w_m = 1, the rest 0) carries A² alone and returns today's field exactly." Not the best mode's
+   weight: "it privileges one mode (two half-amplified modes would be weaker than one)". **Forbidden:** a step
+   where the last mode dies; the nearest-m fallback (it "retires with the draw it served"); a disc-wide
+   normalisation; any upward renormalisation; any change to the `SWING_X_*` constants to move the fade.
+2. *Saturation, a law of the pattern stage; no floor anywhere.* "The linear superposition holds while its peak
+   lies under the mean; where it would not, the arm modes saturate together: on each ring the arm amplitudes are
+   scaled by s(R) = min(1, (1 − b(R)) / Σ_m Ã_m(R)), Ã_m the amplitudes after the bar's taper, b(R) the bar's
+   tapered amplitude. s depends on R only, never on the phases; the field is ≥ 0 for every realisation; the
+   published `arm_mode_amplitude_m` are the saturated ones; s(R) is published as the derived radial field
+   `arm_saturation`." Not a floor: "a floor makes the published amplitudes false on floored rings and the gate
+   conditional on the realisation". **Forbidden:** max(c, 0), any renormalisation after composition, any exp map
+   on the stars in P1. "`compose` composes; it does not repair."
+3. *The local X's surface density.* "The local X_m(R) = κ²R/(2πGΣm) takes the disc's total surface density, stars
+   and gas together, as the spin's exponential publishes it at checkpoint 1 … Swing amplification is of the whole
+   self-gravitating disc, so this is the definition, not an approximation; the checkpoint-4 split does not feed
+   back (one-way, no iteration, D174)." The global window stays as the amplitude's coherence input; only the arm
+   number's draw retires, and D175's choice of the global form is superseded for the arm number.
+4. *What is published.* Five derived radial fields `arm_mode_amplitude_2 … _6`; five synthetic scalars
+   `arm_mode_phase_2 … _6`, uniform on [0, 2π) from `texture_seed` (its first reader), entering as
+   cos(m(φ − ln R · cot i) − θ_m), so θ = 0 is today's retired convention; `arm_multiplicity` kept as a derived
+   scalar, the m with the greatest mass-weighted power, ties to the lower m. **The fence:** nothing composes a
+   field from `arm_multiplicity`; every reader is listed at close and shown to read it as a label.
+5. *The layer off.* "A synthetic quantity is not realised, and an unrealised quantity is NaN (D164); the field
+   list is the same on and off; 0 would claim a draw that was not made." With the layer off the `texture_seed`
+   stream is never drawn, and the five amplitudes, `arm_multiplicity` and `arm_saturation` are bit-identical.
+6. *Two amendments to the plan's text.* The geometry is recorded: with one pitch the field is 1 + Σ_m A_m(R)
+   cos(mχ − θ_m) + bar, χ = φ − ln R · cot i — one rigid winding whose azimuthal profile changes with radius, never
+   two pitches, until P4. And the gas: ψ = (c − 1)/A as written — "the gas fades with the potential that drives
+   it; nothing shocks on nothing"; where a ring's contrast is 1 the ridge is 1 and no mask is formed.
+
+**The gate P1 must meet (Fable's, replacing §5's third item):** ring means 1 to 1e-12 on every ring; the m = 2–6
+cosine amplitudes recovered from the composed field equal the published ones (the bar's m = 2 term added at its
+taper) to 1e-9 on every ring, no exclusions; the minimum over cells ≥ 0 on every seed the suite draws.
+**For the owner at the close (nothing waits):** the arms and lanes fade past about 13 kpc in the Milky Way where
+today they run to the grid's edge; "the fade is the law's statement about 2.2 % / 1.0 % of the mass; arms to the
+edge would be a new ruling on the outer disc's Σ or gain, not a tweak of this one."
+
+**The gate's predictions, read on the probe re-run with its law (before any build).** *Held:* the last ring with
+any pattern is 14.81 kpc at 0.0153 A² (amplitude 0.124 A = 0.050), 11.51 kpc for `ngc_4414`; every Milky Way ring
+inside 12 kpc carries the whole A² (Σw ≥ 1 from the first ring to 13.76 kpc; half the power to 14.14 kpc; for
+`ngc_4414` 10.84 and 11.06 kpc); the saturation is 1 on every ring at the seed probed (worst Σ Ã_m + b = 0.893);
+no galaxy of 120 has a cell below zero (21 before); 67 of 120 seeds saturate some ring; at A = 0.48 the worst
+ring loses 12.7 % of its power ("≈ 10 %"). ***Failed:* "no ring-to-ring jump of A_tot larger than the largest in
+today's bar taper"** — the largest jump of A_tot / A between neighbouring rings is 0.143 (0.225 for `ngc_4414`):
+the fade from the whole power to none takes fourteen rings, about a kiloparsec, and its last steps are the square
+root's. The law is continuous in R and steep on a 75 pc grid; it is built as ruled and the jump is pinned as
+measured, not smoothed (B5).
+
+**What the plan's and the gate's text left to the lead (written before the build).**
+1. *The mask's share with several modes.* The plan's gas rule takes "the level that encloses the same share of
+   the ring the 1.5 kpc mask did". S51's share is m W / (2πR sin i), capped at a half: it needs an arm number,
+   and the fence forbids `arm_multiplicity`. **The share uses the ring's power-weighted arm number**,
+   m_eff(R) = Σ_m m A_m² / Σ_m A_m², a derived radial quantity of the law (it is m for one mode, so the regression
+   holds; it does not depend on the phases). The named alternative: count the realised crests of ψ on the ring,
+   which would make a law depend on a realisation.
+2. *One builder, not four.* The plan lists builders for the mode law, the realisation, the gas response and the
+   re-pins; they meet in three files (`pattern.py`, `gas_pattern.py`, `layer/compose.py`) and are built by one
+   agent in that order, each with its tests before the next.
+3. *The reference.* S55's bit-level reference was of S54 with the layer on; from this phase the layer-on galaxy
+   changes by design. **The reference becomes S55's layer-off run**: every field that exists in both is
+   bit-identical layer-off, except a closed, named list (`arm_multiplicity`, now derived), and the rows are judged
+   there. Layer-on, every moved pin is re-read with its old value in the comment.
+4. *The reading is a check, not an input* (the plan): one blind reader on the Fourier amplitudes of spirals by arm
+   number and radius, set beside the law's split at the close. The law is not adjusted to it.
+
+**Built to the first ruling (2026-10-04; one Opus 5.5 builder), and what the build exposed.** The stellar side met
+its gate: with one mode the field is byte-identical to S55's; the m = 2–6 amplitudes are recovered from the
+composed field to 4e-15 on every ring; no cell is below zero on 240 seeded galaxies (the lowest +0.0026); layer-off,
+331 of 332 fields are bit-identical to S55 (`arm_multiplicity` 4 → 3; `ngc_4414` 4 → 2), and the 37 rows and the
+five template checks did not move. **The gas, built as the plan and ruling 6 worded it, did two things neither
+foresaw.** It did not fade: the ratio-of-means rule set 2.73 on every ring that carried any mode, so the ridge's
+amplitude grew as the ridge flattened (at the last ring, stellar amplitude 0.05, the gas ran 0.34–1.90). And it
+spiked: ψ at unit power reaches 2.19 at R₀ where crests meet, and e^{κψ} is calibrated on a cosine of reach 1 —
+the crest at R₀ was 11.3 where S51's was 3.07, the field ran 0.34–15.5, 1 % of the cells held 9.3 % of the gas,
+and `sfr_modulation` peaked at 41.6. The lead measured two rescalings before asking (ψ over its peak bound: crest
+5.4 at R₀, 9.6 at 12 kpc; the ratio following the gain: the fade mended, the spike not): "the exponential of a sum
+of modes makes knots, not ridges, whatever the scaling".
+
+**A second gate turn (the gas ridge only), 2026-10-04; ruling by Fable on the second `docs/HANDOFF_S56.md`, nothing
+run. "It keeps ruling 6's intent ('nothing shocks on nothing') and replaces its mechanism."**
+
+7. *The ridge by rank.* "On each ring the gas takes S51's ridge values in the order of the stellar pattern:
+   v(R, φ) = V(q)/z(R), V(q) = e^{κ cos πq}/I₀(κ), κ as S51 has it (4.98 from the measured width), q(R, φ) the
+   fraction of the ring on which ψ exceeds ψ(R, φ), ψ = Σ_m u_m cos(mχ − θ_m) exactly as built (untapered unit
+   amplitudes, the layer's phases). q is the *measure of the superlevel set*, not a rank of cells: the crossings of
+   ψ − ψ(φ) are bracketed on the fixed PHASE_CELLS cells of one pattern period and each refined (Newton or
+   bisection) to 1e-12 in χ. The linearly interpolated rank of the cells is not it: its one-mode error is 1e-5 and
+   fails the regression. For one mode q = |θ|/π and v is S51's von Mises; the same code path, no special case.
+   z(R) is V's mean over the fixed cells of q. Every ring then carries S51's histogram, so z, v̄_in(s), v̄_out(s)
+   depend on the mask share s(R) alone: `_ring` runs unchanged on the one-mode sorted table with the ring's share;
+   the share keeps m_eff. A ring with no mode (ψ ≡ 0, q undefined) has v = 1, a = 0, no mask, as built." A rank
+   map is a law the model may publish for one session: "deterministic, point-evaluable from the ring's fixed
+   quadrature, its histogram independent of the phases, S51 exactly at one mode, honouring the sourced ratio on
+   every ring; it is P2's instrument and P2's shock retires it." **Forbidden:** e^{κψ} on several modes at any
+   scaling. **Named alternative, not adopted:** the power-weighted mixture of one-mode ridges,
+   v = Σ_m (u_m²/Σu²) e^{κ cos(mχ − θ_m)}/I₀(κ) — local, the same bound, "but it cannot reach the sourced ratio
+   where the power is split and so abandons the one number the gas has".
+8. *The fade follows the forcing amplitude.* "C(R) = 1 + (C − 1) ρ(R), ρ(R) = min(1, (Σ_m u_m(R)²)^{1/2}): the
+   ring's stellar arm amplitude in units of A, the taper excluded (w_arm already multiplies a(v − 1); counting it
+   twice is forbidden), the saturation included (a saturated ring forces less). a(R) = (C(R) − 1)/[(v̄_in − 1) −
+   C(R)(v̄_out − 1)], clipped as built. Linear in the potential: ruling 1 writes the power as A² with the gain on
+   it, so the amplitude is √gain, and a response to a potential is to its amplitude. One fully amplified mode has
+   ρ = 1 and C(R) = C." The ratio following the gain is the quadratic response, the named alternative; "P2's
+   solver run at several forcing amplitudes measures the exponent; P1 does not fit it". **Forbidden:** the ratio
+   fixed on every ring that carries any mode; any ratio law that steps.
+9. *Inside the bar's reach* nothing changes: ψ, ρ and q from the untapered unit amplitudes; the taper multiplies
+   a(v − 1) and the bar's term is added outside the ridge, as S51 and as built. The bar's term is not ranked.
+10. *The crest is guaranteed, not reported.* "Since v ∈ [e^{−κ}, e^{κ}]/I₀(κ) on every ring and
+    a(s, C(R)) ≤ a(½, C) … the gas outside the bar's reach lies in [1 − a(½, C), 1 + a(½, C)(e^κ/I₀ − 1)] =
+    **[0.53, 3.07]** at the defaults, on every ring and every seed." **Forbidden:** "any clip, cap or floor added
+    after composition to obtain this; the bound is the form's or the build has failed."
+
+**The gate the ridge must meet (Fable's):** one mode returns S51's field to 1e-9 through the general method; ring
+means 1 to 1e-12 on the quadrature cells; the ratio of means inside the ring's mask equals C(R) to 1e-9 on every
+ring that carries a mode; the gas's maximum ≤ 3.07 + B·taper and minimum ≥ 0.53 − B·taper on every seed the suite
+draws; finite everywhere; layer-off unchanged.
+**Its predictions (default galaxy, production grid; B4):** at R₀ crest 3.07 and trough 0.53 where the share sits
+at its cap, otherwise crest in [2.9, 3.07] and trough in [0.53, 0.58]; cells above 4 hold none of the gas;
+`sfr_modulation`'s peak falls from 41.6 to S51's order; the ratio of means 2.73 on every ring to 13.76 kpc; at the
+last ring (14.81 kpc) ρ = 0.124, C(R) = 1.21, the gas within 0.90–1.45, the next ring exactly 1; the censuses and
+their ratios move back toward S51's side (Q toward 1.038, not 0.969) — reported, not gated.
+**Forbidden, in sum:** a new constant; any change to κ, the width, C, the share's rule, `SWING_X_*` or the stellar
+side; a post-composition cap or floor; a one-mode special case; anything read from `arm_multiplicity`.
+**For the owner at the close, with the lanes on screen:** the rank map is a one-session instrument, not a local
+law — a point's gas depends on its whole ring's ψ — and P2's shock replaces it at S57; and on rings with several
+modes the ridge's width is not the measured one (a tall crest takes a wider ridge, a low one none). "If the owner
+dislikes the look, the named alternative in 7 is the fallback, a new ruling, not a tweak of this one."
+
+**The second pass, built; and the review (an Opus 5.5 reviewer, read-only, with probes of its own).** The ranked
+ridge was built as ruled: q, the measure of the superlevel set, from crossings bracketed on cells cut at ψ's
+extrema (an addition to the ruling's wording: on bare cells two crossings in one cell are missed) and refined by
+a bounded Newton step to 1e-12; one mode is S51's field to 1.4e-12 through the general path; against the
+reviewer's own polynomial-root oracle q agrees to 2.9e-9 on 12 618 points; the ratio of means equals C(R) on every
+ring; the fade ends on a ring of exactly 1; per-region determinism holds. **The census-against-field worry is
+closed by measurement**: over 44 `systems_seed`s the census's Q over the light stage's is 0.999 ± 0.009 with the
+layer on and 1.001 ± 0.009 off; the default seed's 0.966 is half a standard deviation of one draw, and the three
+ratios that "did not move back" are one draw, not three pieces of evidence. *One gate item is met by the law and
+not by the published field*: the stage divides each ring by its sampled mean (as it has since S51, so every ring
+keeps its gas to 1e-12), and a ranked ridge is not analytic, so its 360-cell mean is off 1 by up to 9.5e-4 — the
+published field passes the exact bound [0.533963, 3.067524] by up to 2.6e-3. Nothing was added after composition;
+the test asserts the law strictly and pins the published breach. It is carried to S57's gate G2 with the ridge it
+belongs to, which that phase retires.
+
+**The reviewer's blocker: the window was probed and built on X_m/2. The error is the lead's.** The probe, the
+first handoff and the builder's brief all wrote "X₂(R) = κ²R/(2πGΣ·2); m_lo = X₂/(Γ x_high)". S26's window
+formula takes x = 2/f_d, which is m·X_m — X at m = 1 — and not X₂; its own variable name and `swing_x`'s about call
+it "X at m = 2", which is where the slip came from. So the source's ranges were applied to half the source's
+variable. The reviewer re-derived three rings from the published κ, Σ and v: the module's weights equal "the
+window on X_m/2" to 9e-16 on all 400 rings, and on X_m they differ by up to 1.0. No test could find it — the tests
+recompute with the module's formula — and **every prediction the first gate turn made was read off the same wrong
+probe**. The law under four windows, re-probed (mass-weighted power, m = 2…6, Milky Way / `ngc_4414`): as built
+0.40 / 0.32 / 0.17 / 0.07 / 0.04 and 0.59 / 0.30 / 0.07 / 0.02 / 0.02; **on X_m, the plan's law, 0.08 / 0.21 /
+0.24 / 0.25 / 0.22 and 0.19 / 0.24 / 0.24 / 0.19 / 0.14**; S26's Mestel form ring by ring 0.20 / 0.25 / 0.24 /
+0.19 / 0.14; S26's global window on every ring 0.29 / 0.29 / 0.23 / 0.13 / 0.06.
+
+**A third gate turn, 2026-10-04; ruling by Fable on the third `docs/HANDOFF_S56.md`, nothing run.**
+11. *The law is the local swing window on the correct variable.* "At every ring the variable is
+    X(R) = κ²(R)·R / (2πG Σ(R)): Toomre's X at m = 1, equal to m·X_m. Σ is checkpoint 1's total disc surface
+    density … Γ(R) is `local_shear(R, v)` as built, read as 1 where not finite or not positive. The source's
+    ranges apply to X_m/Γ = X/(mΓ) unchanged: vigorous for x_low < X_m/Γ < x_high, hence m_lo = X/(Γ·x_high),
+    m_hi = X/(Γ·x_low) … the constants are S26's, no new one. … Where no mode survives on a ring the forcing
+    amplitude is 0 and the ring is axisymmetric — that *is* the fade of gate ruling 1; no floor, no fallback
+    mode, nothing added." `swing_window`'s `x2` and `swing_x`'s about are relabelled: 2/f_d is m·X_m, X at m = 1.
+    A new test re-derives w_m by hand on three rings, independent of the module, one where the two windows differ
+    by at least 0.5 in some weight. "It is the plan's law as the owner adopted it and as ruling 3 defined it, and
+    it is the only column that is a derivation." The Mestel form ring by ring "is forbidden as a law: … the Mestel
+    identity applied ring by ring to an exponential disc … a derivation in name only". The window as built is
+    forbidden. S26's global window "is a sourced law, but it is D175's choice that the owner's plan superseded;
+    returning to it is a plan change, which is the owner's, not a gate's".
+12. *The blind reading stays a check, not an input* — "it became neither by failing". **A debt is opened**: the law
+    fails the reading's statements 1 (A3/A2 ≈ 1.6 against 0.33 ± 0.19), 6 (dominant m ≥ 3 inside 0.5 R25, where
+    real discs are two-armed) and 8 (m = 5–6 dominant from 8 kpc), and statement 3 marginally for `ngc_4414`; it
+    meets statement 14. "What closes it: P3's bar-driven m = 2 is the stated physical answer to 6 and 1 — two
+    strong inner arms in real discs are driven patterns, not local swing — so the debt is re-read once at P3's
+    close. … An m = 1 term is *not* a closer." If statement 8 still fails after P3 it is a conflict of sources,
+    "recorded as a finding and put to the owner; it is not reopened with a constant".
+13. *The first turn's predictions* stand in the record as "read on a wrong probe (X/2)" and are superseded:
+    Milky Way whole power to 11.1 kpc, the last ring with any mode 12.3 kpc, the worst ring's Σ Ã_m + b 0.795 at
+    the default seed (saturation 1); at 2 / 6 / 8 / 10 kpc the shares .12 .24 .24 .23 .17, .03 .25 .25 .25 .23,
+    0 .15 .28 .28 .28, 0 0 .16 .40 .43. Nothing in rulings 1–10 changes in form.
+**Forbidden (Fable):** the window as built; the Mestel form as the law; "any blend of windows, scale factor,
+floor, cap, hand-chosen radius or added constant that moves W1 toward the reading; a viewer switch among windows;
+building P3's bar early, or an m = 1 term, in S56 to rescue the picture; reading the frames before the pins."
+**The owner's part — the build does not wait.** "Whether the plan's law is kept against the reading is the
+owner's … S56 builds W1, re-reads the pins, regenerates the frames, and at its close the owner is asked, with both
+templates' frames and the four-window table set beside the reading": (a) keep the law and carry the debt to P3's
+close; or (b) replace the arm-number law with S26's global window on every ring — no radial branching, the fade
+never triggering — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and 0.43 / 0.36 / 0.18 / 0.04 / 0 and in turn
+fails the reading's statements 4 and 15. "No third option is offered. (a) is the default if unanswered."
+
+**Built to ruling 11 (the builder's third pass, 2026-10-04) and read.** `local_swing_x` is X(R) = κ²R/(2πGΣ);
+`swing_window`'s variable is renamed and `swing_x`'s about says what 2/f_d is (m·X_m, X at m = 1), its value and
+the global window's unchanged to the bit. **A test now re-derives the weights by hand** on three rings from the
+published κ, Σ and v, with none of the module's functions: at 7.99 kpc X = 7.93, Γ = 1.10 and the weights are
+0, 0.548, 1, 1, 1, where the window as first built gave 1, 1, 0.849, 0.527, 0.264; the published amplitudes
+follow from the hand's weights to 1e-9. The lead's own probe, written before the builder's, gives the same shares.
+- *Ruling 13's predictions, all held:* Milky Way mass-weighted power m = 2…6 0.078 / 0.212 / 0.238 / 0.248 / 0.225
+  (on the gain; on the published amplitudes, which carry the bar's taper, 0.014 / 0.157 / 0.231 / 0.281 / 0.317);
+  the whole power to 11.14 kpc, the last ring with a mode 12.34 kpc at 0.032 A², the fade over seventeen rings;
+  the worst ring's Σ Ã_m + b 0.795, the saturation 1 on every ring at both templates' seeds; `ngc_4414` 0.194 /
+  0.236 / 0.239 / 0.191 / 0.140, whole to 9.19 kpc, gone at 9.94. No cell negative on 240 seeded galaxies (lowest
+  +0.0025); the one-mode stellar field byte-identical to S55's. The first turn's "no jump larger than the bar
+  taper's" still fails: 0.178 between the last two rings.
+- *`arm_multiplicity`:* **Milky Way 6, `ngc_4414` 4** (S55 drew 4 for both). It is a label: nothing reads it.
+- *The gas:* at R₀ a = 0.466, crest 3.059, trough 0.534 — S51's own, because the mask's share sits at its cap on
+  every full-power ring; at 6 kpc 2.67 / 0.57; the ratio of means 2.73 out to 11.14 kpc and fading to 1.31 at the
+  last ring; an independent measurement of the ratio (ψ written out on 72 000 points, ranked by a sort) agrees to
+  2e-6. `sfr_modulation` peaks at 6.1 (41.6 on the exponential ridge).
+- *Layer on, the default galaxy:* clouds 16 822 → 16 660, clusters 12 930 → 12 814; the census's Q over the
+  field's 1.038 → 0.987, the HII census over the field 1.014 → 0.965 (disc) and 0.994 → 1.042 (a sector) — one
+  draw each, inside their tolerances; a ring's light at R₀ still falls, −0.89 % (D210's prediction (i), failed at
+  S51, fails still). Rows 35 and 37 on the layer-on census, for the record: −2.061, −0.1026.
+- *Layer off, against S55:* every field S55 had is S55's bits except `arm_multiplicity` (4 → 6 for the Milky Way;
+  unchanged for `ngc_4414`); the 37 rows and the five template checks unmoved; `specs: OK`, 12 / 20 / 5.
+- *Cold timings (`tools/timings.py`; S55 → now):* the gas stage 0.024 → 0.32 s; `clouds: whole disc` 0.85 → 2.98 s;
+  `clusters: whole disc` 1.96 → 3.99 s; `render: whole, rgb` 2.47 → 4.42 s; `region: whole disc` 0.81 → 1.09 s;
+  layer-off rows unchanged. The ranked ridge is the cost: each cloud is ranked on the ring at its own radius.
+
+**The pictures, measured (`tools/goal_metrics.py`; display targets, never rows).** Six frames regenerated; the
+physics-only frame is S55's to the byte.
+
+| Picture | A1 | A2 | A3 | A4 | A5 | A6 | dominant m | arm / interarm, blue | dark fraction | slope |
+|---|---|---|---|---|---|---|---|---|---|---|
+| goal: Milky Way (a drawing) | 0.052 | 0.194 | 0.059 | 0.107 | 0.046 | 0.046 | 2 | 1.83 | 0.0066 | −1.99 |
+| `milky_way`, field — S54 | 0.002 | 0.026 | 0.002 | 0.091 | 0.002 | 0.002 | 4 | 1.58 | 0.0000 | −3.32 |
+| `milky_way`, field — now | 0.030 | 0.039 | 0.016 | 0.048 | 0.050 | 0.045 | 5 | 1.52 | 0.0245 | −4.21 |
+| `milky_way`, star-first — now | 0.017 | 0.030 | 0.042 | 0.061 | 0.088 | 0.074 | 5 | 1.98 | 0.0334 | −0.58 |
+| goal: NGC 4414 (Hubble) | 0.099 | 0.068 | 0.055 | 0.068 | 0.057 | 0.048 | 1 | 2.72 | 0.157 | −2.09 |
+| `ngc_4414`, field — S54 | 0.086 | 0.101 | 0.016 | 0.023 | 0.021 | 0.020 | 2 | 1.84 | 0.004 | −6.0 |
+| `ngc_4414`, field — now | 0.085 | 0.092 | 0.019 | 0.025 | 0.017 | 0.017 | 2 | 1.66 | 0.003 | −5.6 |
+| `ngc_4414`, star-first — now | 0.085 | 0.086 | 0.026 | 0.029 | 0.027 | 0.026 | 2 | 1.88 | 0.003 | −1.0 |
+
+The Milky Way's spectrum is broad where it was a single spike, with the weight on m = 4–6 where the drawing's is
+on m = 2 and 4; its lanes now register (0.025–0.033 of the disc under three quarters of its surroundings, against
+0.0000–0.0005 and the drawing's 0.0066). `ngc_4414` is still the bar's m = 2: its arm modes are weak under the
+taper, and the picture waits on P3.
+
+**The blind reading set beside the law (`READING_ARM_MODES.md`; ruling 12).** The law fails statement 1 (A3/A2:
+1.6 against 0.33 ± 0.19), statement 6 (two arms inside half the optical radius: the law has m ≥ 3 dominant
+there) and statement 8 (no m = 5–6 dominance observed: the law's from 8 kpc); it meets statement 7 (the dominant
+m rises outward) and statement 14 (arms end inside the optical disc). **Debt #138**, re-read at P3's close.
+
+**Carried to S57's gate G2 with the ridge it concerns (no turn spent here).** (i) The gas's published field passes
+the form's exact bound by up to 2.5e-3, because each ring is divided by its sampled mean (S51's conservation step)
+and a ranked ridge's 360-cell mean is off 1 by up to 1.05e-3; the law itself is inside the bound on all 240
+galaxies. (ii) I1 by one unit in the last place: `cloud_count_total` and `bright_star_count_1e3` are *expected*
+totals summed over cells whose placement weights average to 1 only to rounding; layer on and off they now differ
+by one ulp, are held to one ulp in the test by name, and are not census statistics. (iii) The fade's exponent,
+which ruling 8 leaves to P2's solver. **Debts opened: #138** (the law against the reading), **#139** (the
+phases' statistic — uniform and independent of one another and of the bar, `[inferred]`, no source read; the
+two-armed mode no longer starts at the bar's tips), **#140** (the ranked ridge: a one-session instrument, not a
+local law, its width the measured one only for a single mode, three times the census's cost). Register 78 open =
+11 + 67, 45 discharged.
+
+**For the owner, at the close (the third turn's ruling; (a) is the default if unanswered).** The plan's
+arm-number law, correctly built, makes the Milky Way template four-to-six-armed in starlight outside the bar
+until P3's bar exists, and the reading says real discs are two-armed inside half the optical radius with m = 3 or
+m = 1 taking over outside, never m = 5–6. **(a)** Keep the law and carry debt #138 to P3's close; or **(b)**
+replace the arm-number law with S26's global window on every ring — no change of arm number with radius, arms to
+the disc's edge — which gives 0.29 / 0.29 / 0.23 / 0.13 / 0.06 and, for `ngc_4414`, 0.43 / 0.36 / 0.18 / 0.04 / 0,
+and in turn fails the reading on a coherent pattern reaching the edge of a flocculent disc. If (b), S57 opens
+with that swap — one function, the same independent test, the pins re-read — and no further gate turn.
+
+**The close (2026-10-04).** The suite on the combined state: 1237 passed, 5 skipped, `EXIT=0` (55 min: the ranked
+ridge and two tests that each draw 240 galaxies); the specs OK, 12 / 20 / 5 of 37 for both models, the template
+checks 0 / 5 on their five recorded misses. The picture run: 8 passed.

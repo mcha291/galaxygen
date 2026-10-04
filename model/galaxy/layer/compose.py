@@ -6,24 +6,27 @@ ring holds); the layer holds the realisations (where the arms are, how a cloud l
 meet, and **the only place in the model that asks whether the layer is on** (DECISIONS.md D214 sections 1 and 4;
 rule B13: a switch read in one place cannot be forgotten in another). ``tests/test_layer.py`` holds that by reading
 the source: no other module under ``model/galaxy/`` branches on the setting, none calls ``.from_fields(``, and
-none but the two pattern stages' own modules constructs a pattern object.
+none constructs a pattern object by its class (since S56 the pattern stage itself asks here for the pattern of its
+own composed field, handing over the law it has just made).
 
 **What a caller gets.**
 
 - A *pattern object* (:func:`stellar_pattern`, :func:`gas_pattern`): the law's own class, built from the pattern
-  stages' published scalars - or ``None`` with the layer off, which is the "no pattern" every census already
-  handles for a model that publishes none (a uniform weight round the ring).
+  stage's published fields (the arm modes' amplitudes at every radius, the pitch, the bar) and the layer's
+  realisation (the modes' phases, S56) - or ``None`` with the layer off, which is the "no pattern" every census
+  already handles for a model that publishes none (a uniform weight round the ring).
 - A *placement weight* (:func:`placement_weight`): a published composed field as a census reads it - the array, or
   ``None`` with the layer off or where the model publishes none.
 - A *composed field* (:func:`field`): what a composing stage publishes - what its law makes, or with the layer off
   the neutral value **its declaration states** (``FieldDecl(composed=True, neutral=...)``; gate G1, change 3: a
   field is composed because it says so, never because of its axes). :func:`published` reads one back from a run's
   fields (it is its neutral there with the layer off).
-- A *realisation* (:func:`realise`, :func:`cloud_texture`): what a layer stage draws, or its neutral value.
+- A *realisation* (:func:`realise`, :func:`realise_scalars`, :func:`cloud_texture`): what a layer stage draws,
+  or - with the layer off - its neutral value, which for a scalar that was not realised is NaN (D215).
 
-With the layer off every scalar the physics stages publish is unchanged - the arm number, the pitch, the
-amplitudes, the gas's ratio of means are laws and measured scatters, and they are still drawn. What is switched off
-is where the arms *are* (D214 section 1). **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
+With the layer off every scalar and every radial field the physics stages publish is unchanged - the pitch, the
+amplitudes, the modes' split of the arms' power, the gas's ratio of means are laws and measured scatters, and they
+are still made. What is switched off is where the arms *are* (D214 section 1): the modes' phases are not drawn. **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
 amended at G1): every ring total of a field a composed field multiplies, and every *expected* count and expected
 total of a census it places. A census draws each cell's count on the cell's own stream at an expectation that
 carries the composed weight, so with the layer off its *realised* objects are another draw, and the statistics
@@ -47,6 +50,7 @@ pattern stages import this module to publish their composed fields.
 
 from __future__ import annotations
 
+from collections import ChainMap
 from collections.abc import Callable, Mapping, Sequence
 from types import MappingProxyType
 from typing import Any
@@ -101,24 +105,31 @@ def agree(fields: Any, layer: bool) -> None:
 # --- pattern objects -----------------------------------------------------------------------------------
 
 
-def stellar_pattern(source: Any) -> Any:
-    """The stellar arm and bar pattern (``pattern.ArmPattern``) from the published scalars, or None: with the
-    layer off, or where the fields hold no pattern."""
+def stellar_pattern(source: Any, R: np.ndarray, law: Mapping[str, Any] | None = None) -> Any:
+    """The stellar pattern of several arm modes and the bar (``pattern.ArmPattern``): the law's published
+    fields - the modes' amplitudes on the run's grid radii ``R``, the pitch, the bar - applied to the layer's
+    realisation, the modes' phases. None with the layer off, or where the fields hold no pattern.
+
+    ``law`` is for the composing stage itself: the ``pattern`` stage has just made the amplitudes, the pitch
+    and the bar's amplitude and has not published them yet, so it hands them here and the rest - the phases,
+    the bar's length - is read from its view of the fields. Everyone else reads everything from the run."""
     if not _on(source):
         return None
     from galaxy.stages.pattern import ArmPattern
 
-    return ArmPattern.from_fields(getattr(source, "fields", source))
+    fields = getattr(source, "fields", source)
+    return ArmPattern.from_fields(fields if law is None else ChainMap(dict(law), fields), R)
 
 
-def gas_pattern(source: Any, constants: Mapping[str, Any]) -> Any:
-    """The gas's own arm pattern (``gas_pattern.GasPattern``) from the published scalars and the ridge's two
-    constants, or None: with the layer off, or where the fields hold no pattern."""
+def gas_pattern(source: Any, R: np.ndarray, constants: Mapping[str, Any]) -> Any:
+    """The gas's own arm pattern (``gas_pattern.GasPattern``) - the ridge that follows the stellar pattern -
+    from the published fields on the run's grid radii ``R`` and the ridge's two constants, or None: with the
+    layer off, or where the fields hold no pattern."""
     if not _on(source):
         return None
     from galaxy.stages.gas_pattern import GasPattern
 
-    return GasPattern.from_fields(getattr(source, "fields", source), constants)
+    return GasPattern.from_fields(getattr(source, "fields", source), R, constants)
 
 
 # --- composed fields -----------------------------------------------------------------------------------
@@ -171,6 +182,14 @@ def placement_weight(source: Any, name: str) -> Any:
 def realise(source: Any, draw: Callable[[], Any], neutral: Callable[[], Any]) -> Any:
     """What a layer stage publishes: ``draw()``, or ``neutral()`` with the layer off."""
     return draw() if _on(source) else neutral()
+
+
+def realise_scalars(source: Any, names: Sequence[str], draw: Callable[[], Mapping[str, float]]) -> dict[str, float]:
+    """Synthetic scalars a layer stage publishes: ``draw()``, or - with the layer off - NaN for each. "A synthetic
+    quantity is not realised, and an unrealised quantity is NaN (D164); the field list is the same on and off; 0
+    would claim a draw that was not made" (D215, gate ruling 5). ``draw`` is not called with the layer off, so
+    the layer's stream is never drawn then."""
+    return realise(source, lambda: dict(draw()), lambda: {name: float("nan") for name in names})
 
 
 def cloud_texture(source: Any, seed: int, counts: Sequence[tuple[int, int]], size: np.ndarray) -> dict[str, np.ndarray]:

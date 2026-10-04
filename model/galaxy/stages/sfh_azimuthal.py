@@ -29,8 +29,8 @@ and an arm is exactly where both are high — and the gate is the physics: the t
 formation is the axisymmetric model's, only its place moves. The mean is taken over the
 grid's φ cells, which are uniform, so it is the φ-integral over 2π exactly.
 
-**Provenance.** ``gas_density_contrast`` is seeded (through the pattern's drawn pitch, arm
-number and bar), so the modulation is seeded. The
+**Provenance.** ``gas_density_contrast`` is seeded (through the pattern's drawn pitch, amplitudes
+and bar, and since S56 the layer's phases of the arm modes), so the modulation is seeded. The
 histories are not: ``sfh_azimuthal`` *extends* ``sfh`` (``Stage.extends``), so every field
 the two share is computed by ``sfh``'s own compute in ``sfh``'s own restricted view, which
 cannot reach the contrast, and ``graph`` labels them from ``sfh``'s reads. Declaring them

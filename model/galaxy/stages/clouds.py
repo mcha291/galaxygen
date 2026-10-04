@@ -66,6 +66,7 @@ from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
+from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_RINGS,
@@ -172,7 +173,7 @@ def expected_counts(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping
     # The gas's pattern, from compose (S55, D214): none with the layer off, and every sector of a ring then
     # expects the same number of clouds. The ring's *expected* total is the same either way (invariant I2); the
     # realised clouds are each cell's own Poisson draw at its own expectation, so they are another draw (until L1).
-    pattern = _compose.gas_pattern(fields, constants)
+    pattern = _compose.gas_pattern(fields, R, constants)
     weights = (
         np.ones((CELL_RINGS, CELL_SECTORS))
         if pattern is None or pattern.flat
@@ -267,7 +268,7 @@ def materialise_clouds(
     rings, sectors = cell_edges(R)
     expected = expected_counts(fields, R, c)
     counts = cloud_counts(expected, seed, cells)
-    pattern = _compose.gas_pattern(fields, c)  # the gas's own ridge places the clouds (S51, D210); none, layer off
+    pattern = _compose.gas_pattern(fields, R, c)  # the gas's own ridge places the clouds (S51, D210); none, layer off
     sigma = float(c["GMC_SURFACE_DENSITY"])
     c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
@@ -514,11 +515,11 @@ CLOUDS = IMPLEMENTATIONS.register(
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
-            "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",  # S51 (D210): the gas's own ridge places the clouds
+            *GAS_PATTERN_CONSTANTS,  # S51 (D210): the gas's own ridge places the clouds
         ),
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
-            "gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            *GAS_PATTERN_READS,  # S56 (D215): the ridge follows the stellar modes and their phases, not an arm number
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,

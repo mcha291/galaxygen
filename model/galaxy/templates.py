@@ -457,7 +457,9 @@ NGC_4414 = Template(
         "baryon_retention": 0.4918931810399049,
     },
     # texture_seed since S55 (D214 section 3): the randomness layer's seed, the catalogue number as the rest are.
-    # No stage reads it yet, so it moves no number of this template until BUILD_III's phase P1.
+    # No stage read it until BUILD_III's phase P1 (S56, D215): the arm modes' phases are drawn on it since, so it
+    # says where this template's arms lie with the layer on - and moves no number of the layer-off run, which is
+    # what the fit and the five checks are judged on.
     seeds={"world_seed": 4414, "pattern_seed": 4414, "systems_seed": 4414, "planets_seed": 4414, "texture_seed": 4414},
     mergers=(),
     camera=Camera(inclination_deg=55.0, azimuth_deg=0.0, radius_kpc=15.0, fov_deg=5.0),

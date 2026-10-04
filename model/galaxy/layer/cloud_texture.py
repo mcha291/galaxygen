@@ -49,6 +49,7 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.clouds import TEXTURE_COLUMNS, cloud_counts, expected_counts
+from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 
 # The cloud-interior noise's three parameters, by the name each has on the wire and the level-0 constant that holds
 # it (the viewer's own choices until S55, none read, #110: the constants' about lines carry the source).
@@ -116,12 +117,14 @@ _CONSERVES_GRADIENT = (
 )
 # What the source's offset and direction keep, and what they do not, with the measured numbers (gate G1, change 5;
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
-# Measured at S55 on the production grid at the default inputs, the layer on.
+# Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
+# and 43.7 % of the mass, 157 in another cell ring), and again at S56 when the census became another draw (D215: the
+# clouds follow five arm modes' ridge, not one's; read on the window of D215 ruling 11, the third gate turn).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S55 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 610 of 12 930 "
-    "clusters (12.5 %, 43.7 % of the cluster mass) in another radial ring and 157 in another cell ring than their "
+    "its cloud's ring: at S56 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
+    "against a 75 pc radial step and puts 1 598 of 12 814 "
+    "clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 137 in another cell ring than their "
     "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
     "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
 )
@@ -199,13 +202,13 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         reads_constants=(
             # The census's layout: the mass function's mean and the gas pattern's ridge, as the census reads them.
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
-            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH",
+            "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", *GAS_PATTERN_CONSTANTS,
             # The cloud-interior noise's parameters: constants this stage declares (gate G1, change 4).
             "CLOUD_INTERIOR_OCTAVES", "CLOUD_INTERIOR_LACUNARITY", "CLOUD_INTERIOR_GAIN",
         ),
         requires=(
             "cloud_size", "gas_molecular_surface_density",
-            "gas_arm_contrast", "bar_contrast", "arm_multiplicity", "pitch_angle", "bar_half_length",
+            *GAS_PATTERN_READS,  # S56 (D215): the layout's ridge follows the stellar modes and their phases
         ),
         publishes=(CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT, CLOUD_GRADIENT_ANGLE),
     )

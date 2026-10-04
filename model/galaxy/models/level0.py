@@ -579,19 +579,22 @@ LEVEL0: dict[str, Constant] = {
         2.0,
         "dimensionless",
         "Upper edge of the vigorous range, 'greater than 100 for 1 < X < 2' [verified: Sellwood & "
-        "Masters 2022 section 4.2.3.2]. Between here and SWING_X_DEAD the pattern stage's odds for an "
-        "arm number fall log-linearly to zero [inferred: the shape; the two edges are the source's].",
+        "Masters 2022 section 4.2.3.2]. Between here and SWING_X_DEAD the pattern stage's weight for an "
+        "arm number falls log-linearly to zero [inferred: the shape; the two edges are the source's]. "
+        "From S26 to S55 the weight was the odds of one drawn arm number, at one radius; since S56 it is "
+        "the arm number's share of the arms' power at each radius, with X evaluated locally (D215).",
     ),
     "SWING_X_DEAD": Constant(
         3.0,
         "dimensionless",
         "Where amplification has stopped: 'less than 2 for X > 3' [verified: Sellwood & Masters 2022 "
-        "section 4.2.3.2]. An arm number whose X sits here or beyond is not drawn.",
+        "section 4.2.3.2]. An arm number whose X sits here or beyond carries no power at that radius "
+        "(until S56: was not drawn).",
     ),
     "SWING_X_FLOOR": Constant(
         0.5,
         "dimensionless",
-        "Below SWING_X_LOW the odds fall log-linearly to zero here. 0.5 is the lower edge of the "
+        "Below SWING_X_LOW the weight falls log-linearly to zero here. 0.5 is the lower edge of the "
         "vigorous range the source quotes for Gamma = 0.5 [verified: Sellwood & Masters 2022 section "
         "4.2.3.2]; using it as the floor at Gamma = 1 is the inference, since the source gives no "
         "lower cut-off for a flat curve [inferred]. It bounds how many arms a halo-dominated disc can "
@@ -653,7 +656,10 @@ LEVEL0: dict[str, Constant] = {
         "the reader's arithmetic; the text says FWHM where Fig. 4's caption says sigma, and the text "
         "is taken). A fraction of the period, so the absolute width grows outward as every tracer's "
         "does. The gas pattern stage turns it into a von Mises concentration, kappa = ln 2 / (1 - "
-        "cos(pi W)) = 4.98, exact for that shape. Named alternatives: isothermal spiral shocks "
+        "cos(pi W)) = 4.98, exact for that shape - one arm number's ridge; since S56 a ring of several "
+        "stellar modes takes that ridge's values in the order of the modes' sum, so this fraction of "
+        "every ring stands above the ridge's half level, the tallest stellar crest carrying the "
+        "widest ridge and a low one little or none (D215). Named alternatives: isothermal spiral shocks "
         "0.05-0.16 of the spacing [verified: Kim & Ostriker 2002, ApJ 570, 132, Table 1]; the Milky "
         "Way's masers (young stars, not gas) 0.30 as an FWHM [verified: Reid et al. 2019, ApJ 885, "
         "131, Sect. 3; the fraction the reader's arithmetic]; M51's outer arms 0.03, at the beam. "
@@ -670,7 +676,10 @@ LEVEL0: dict[str, Constant] = {
         "docs/READING_GAS_PATTERN.md Readings A-B]. The gas pattern stage derives the ridge's "
         "amplitude from the measured ratio over this mask, in the ridge's phase m (W/2)/(R sin p), "
         "clamped at half the period - which a 1.5 kpc mask reaches on a four-armed disc inside 12 kpc "
-        "at the defaults, so the clamp is the source's geometry. Named alternative: the narrow masks "
+        "at the defaults, so the clamp is the source's geometry. Since S56 the stellar pattern is "
+        "several arm numbers at once, and the mask is the share of the ring this width covers - "
+        "m W / (2 pi R sin p) for the ring's power-weighted arm number, at most a half - taken where "
+        "the stellar modes' sum is highest (D215). Named alternative: the narrow masks "
         "cut round the CO or H-alpha ridge, 'typical widths between 500 and 1000 pc, so about half "
         "the width of the original masks' [verified: Querejeta et al. 2024, A&A 687, A293, Appendix E "
         "and Sect. 2.6.1], whose ratio is GAS_ARM_CONTRAST_GRAND_DESIGN's narrow-mask alternative. "

@@ -87,7 +87,7 @@ def test_union_prefix_and_determinism_at_every_level(fields, level):
         phi = np.mod(np.asarray(cat["star_azimuth"])[offset:offset + n], 2.0 * math.pi)
         assert np.all((r >= b["r_lo"] - 1e-9) & (r <= b["r_hi"] + 1e-9)) and np.all((phi >= b["phi_lo"] - 1e-9) & (phi <= b["phi_hi"] + 1e-9)), cid
         offset += n
-    expected = sy.cell_expected(F["stellar_surface_density"], R, 20000, PARENT, sy.ArmPattern.from_fields(F))
+    expected = sy.cell_expected(F["stellar_surface_density"], R, 20000, PARENT, sy.ArmPattern.from_fields(F, R))  # S56 (D215): the modes are published on the grid radii
     extras = int((~inherited).sum())
     assert extras == len(kids) * int(round(expected * (1.0 - 1.0 / len(kids))))
     # Determinism: a child alone is its slice of the whole set.
@@ -102,7 +102,8 @@ def test_union_prefix_and_determinism_at_every_level(fields, level):
     small = sy.materialise(F, R, t, 0, 10000, cells=[kids[q]], migration=3.6, level=level)
     assert names(small) <= names(alone)
     # And the level-0 catalogue is untouched by the machinery: no name columns, the sample as always.
-    assert "level" not in parent and parent.size == 22
+    # S56 (D215): was 22 - the cell's share of its ring is the stellar pattern's sector mean, and the pattern is five modes now.
+    assert "level" not in parent and parent.size == 14
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields):

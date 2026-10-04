@@ -1,60 +1,57 @@
-# BRIEF — for S56: BUILD_III's Phase P1, several arm modes at once; the gas follows any pattern (an Opus lead)
+# BRIEF — for S57: BUILD_III's Phase P2, pattern speeds and the gas shock ring by ring (an Opus lead; gates G2, G3)
 
-**The state (2026-10-04).** S55 is merged (D214): the physics model and the randomness layer are separate in the
-code. `run(layer=)` and `layer=off` on every route; `galaxy/layer/` holds `noise.py` (the primitives and 632
-committed vectors, read by nothing yet), `compose.py` (the one place that tests the switch) and the layer stage
-`cloud_texture`; the 37 rows and the template checks are judged layer-off; the viewer has "physics only". Gate G1
-ruled the invariants hold on **expected** totals until L1 (#137). Rows layer-off: 35 −2.081 (passes), 37 −0.1030
-(a miss); 12 / 20 / 5. Register 75 open = 11 + 64, 45 discharged. Numbers from D215, #138, row 38, board row 56.
-**The owner's standing order: run the sessions back to back, stop only for a ruling that is the owner's, spawn
-Fable at the plan's gates.**
+**The state (2026-10-04).** S56 is merged (D215): the stellar pattern is several arm modes at once — the local swing
+window splits the power among m = 2–6 ring by ring, the modes saturate together, their phases are a draw on
+`texture_seed` — and the gas ridge follows any pattern, **placed by rank along each ring, a one-session instrument
+(#140) that this phase retires**. The Milky Way template is four-to-six-armed outside the bar (#138, re-read at
+P3's close). Rows are judged layer-off: 12 / 20 / 5, unmoved. Register 78 open = 11 + 67, 45 discharged. Numbers
+from D216, #141, row 38, board row 57. **The owner's standing order: run the sessions back to back, stop only for
+a ruling that is the owner's, spawn Fable at the plan's gates.**
+
+## Before anything: the owner's answer to S56's question (D215, the end)
+(a) keep the local arm-number law and carry #138 to P3 — **the default if unanswered**; or (b) S26's global window
+on every ring. **If (b): S57 opens with that swap** — `mode_law`'s weights from `swing_window` on the global f_d
+and Γ, constant in R; the hand-derived test re-pointed; every layer-on pin re-read; no gate turn (D215 ruling 11).
 
 ## First
-`uv run python tools/bootstrap.py` (S55's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md` §1 (as amended at G1), "Phase P1" in §5 and Appendix B: that text is the ruling.** P1 has no
-planned gate; a conditional one opens only if the probe contradicts §5 (BUILD_III §3d).
+`uv run python tools/bootstrap.py` (S56's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md`
+§1, "Phase P2" in §5, §3b–§3d, and D215's rulings 7–13: that text is the ruling so far.** The closing suite now
+takes about 55 minutes (the ranked ridge).
 
-## Phase P1 in one paragraph (the plan's ruling; build to it)
-At each radius the weight of arm number m is the existing `swing_weight` at the *local* swing parameter X_m(R)
-(today's named alternative in `pattern.py` becomes the law; m = 2–6; no new constant). **Power is conserved, not
-the peak:** Σ_m A_m(R)² = A², A today's single-mode amplitude; one surviving mode returns today's field exactly.
-The realisation, *synthetic*: each mode's phase, a **new draw on `texture_seed`** — G1 found there is no phase
-draw today, only the convention ln R · cot(pitch), so nothing is "moved". The gas: with ψ = (c − 1)/A the stellar
-pattern scaled to unit amplitude, the ridge is exp(κψ) over its ring mean, S51's κ and amplitude rule, the mask
-the cells where ψ exceeds the level that encloses the share of the ring the 1.5 kpc mask did; **with one mode it
-is S51's field to 1e-9, the regression gate.** The arm-number draw retires (Appendix B); the pitch's, the
-amplitude's and the bar's scatter stay seeded.
+## The order (BUILD_III §5, Phase P2)
+1. **Two readers, blind to the model, in parallel**: the steady spiral shock (Roberts 1969; Shu, Milione & Roberts
+   1973) — its equations, the sonic point, the isothermal jump, a published profile with the parameters it was
+   computed at; and its width and offset (Gittins & Clarke 2004; Kim & Ostriker 2002) with pattern speeds of
+   transient modes. Assemble `docs/READING_GAS_SHOCK.md`.
+2. **Gate G2 (Fable, one turn on `docs/HANDOFF_S57.md`), after the reading and before any build**: the equations
+   to integrate, the treatment of the sonic point, the fallback where no shock forms (the plan declares the linear
+   response), which pattern speed a ring uses when its modes differ. **Carried to G2 from S56**: the ranked
+   ridge's published field passes its exact bound by 2.5e-3 (the ring-mean division; the law is inside); two
+   expected totals differ by one ulp layer on and off (I1 says bit for bit); the fade's exponent (ruling 8 took 1,
+   P2's solver measures it); and what replaces the ratio-of-means amplitude when the shock derives its own.
+3. **The instrument first (B1)**: the solver reproduces a published profile at the source's parameters before the
+   model uses it. Builder A (solver and instrument), builder B (integration, the pattern speeds, the re-pins).
+4. **An Opus reviewer on the diff, then gate G3**: does the solver reproduce the profile for the right reason; are
+   the retired constants' checks honest (`GAS_ARM_WIDTH`, the mask, the two contrast constants become checks, a
+   disclosed row for PHANGS's ratio of means — its numbers have been printed, D113).
 
-## The order
-1. **A probe, repo unchanged, before any build** (BUILD_III §3g): the split of power among m = 2–6 by radius at
-   the defaults and at `ngc_4414`'s inputs, and the single-mode limit. If it contradicts the plan's text — a
-   degenerate split, no single-mode limit for the field or the ridge — **stop and write the handoff.**
-2. **One reader (a check, not an input):** Fourier amplitude spectra of spirals by arm number and radius, set
-   beside the law's split in D215. Blind to the model's split.
-3. **D215's ruling committed first**, then builders (§3f): the mode law; the realisation (the phases, a layer
-   stage, the first reader of `texture_seed` — remove `graph.UNREAD_BY_RULING`'s one entry, the test that guards
-   it says so); the gas response; the catalogues' re-pins. Then an Opus reviewer on the diff.
-
-**Gate:** ring means 1; the single-mode regression (1e-9); a Fourier decomposition of the composed field returns
-the published amplitudes; I1–I3 (`tests/test_layer.py`; a new composed field declares itself and its neutral);
-the goals' azimuthal spectra beside the render's (`tools/goal_metrics.py`; S53's and S54's tables the baseline).
-
-## What changes for everything downstream (say so in D215)
-- **With the layer on, the default galaxy changes**: several modes replace one, the censuses are re-placed, the
-  six layered frames change (regenerate with `picture:update`, and say so). Layer-off nothing may move: the 37
-  rows, the template checks and every radial field are judged there and must be bit-identical to S55's.
-- The phases are the first field on `texture_seed`: rerolling it changes placements and nothing else (§1c rule 1).
-  `ngc_4414`'s picture changes with the modes; its fit and its checks may not (D213).
+**Consequences the plan names:** a pattern speed per mode (#81's first half; the young-star cut becomes a crossing
+time); #129, #131 and #140 re-ruled; D210's ruling 3 (no offset) superseded where the physics signs the offset.
 
 ## Traps
-- A composed field is a declaration (`composed`, `neutral`), not a φ axis (G1). A pattern object is built only
-  through `layer/compose.py`; a source test refuses `ArmPattern(` / `GasPattern(` / `.from_fields(` elsewhere.
-- `CENSUS_STATISTICS` (fourteen names) is closed: a fifteenth is a finding. Rows 35 and 37 must not move here.
-- No third fit of `ngc_4414`, no unspent NGC 4414 window read (D213). No ring-first draw here: it is L1's.
-- A builder's first step is `git merge --ff-only session-56`, then bootstrap (again before the closing suite).
-  A subagent cannot write a report file: ask a reviewer for its findings as its final message.
-- Scripts in the scratchpad, never `$TMP`; LF newlines; `tests/test_audit.py` pins the register's counts.
-
-## Owed by the owner — S56 does not build until the second is answered
-1. A second fit of `ngc_4414` on the reader's own split, as a probe — or fit B for the rest of the build?
-2. Rule A10's last sentence amended to "expected ring totals until L1" — or the ring-first draw brought forward,
-   before P1? **The answer orders the sessions: "bring it forward" puts L1's ring-first draw ahead of this phase.**
+- **Check a probe before it reaches a gate** (S56's lesson, the lead's own error): confirm what every reused
+  function's argument *is* from its docstring and call site, test the probe against one published anchor, and
+  have a builder write one test that re-derives the central quantity by hand, independent of the module.
+- **Always run the independent reviewer before a merge**: it found a blocker at S55 and at S56.
+- A fixed-step integration, a bisection, a declared fallback: no convergence loop (A1, BUILD_III §9).
+- The pattern stage's fields are the law (five `arm_mode_amplitude_m`, `arm_saturation`); `arm_multiplicity` is a
+  label nothing may compose from; a pattern object is built only through `layer/compose.py`.
+- Layer-off nothing may move: the rows, the template checks, every radial field outside `CENSUS_STATISTICS`.
+  Layer-on the galaxy changes again; regenerate the frames (`npm --prefix frontend run picture:update`) only
+  after the pins are read, and say so.
+- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no bar work and no m = 1 term (they are P3's and
+  the owner's); no ring-first draw (L1's).
+- A subagent cannot write report files: take findings from its final message. Resume a builder with SendMessage
+  for a second pass; hold a branch's merge until both halves of a contract change are ready.
+- Scripts in the scratchpad, never `$TMP`; LF newlines; a Bash command over 8 KB is cut (use the Write tool);
+  `tests/test_audit.py` pins the register's counts and its carried row.

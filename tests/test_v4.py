@@ -85,7 +85,9 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     # S51 (D210): was 0.2516 - the clouds on the gas's ridge, another draw of the coarse grid's census (-3.2 %, inside
     # the clusters' light's 4.4 % seed-to-seed spread); S49 (D204, #126): the light integrated along the isochrone's
     # points; was 0.2358
-    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2436, rel=2e-2)
+    # S56 (D215): was 0.2436 - the ridge follows five arm modes, another draw of the coarse grid's census again
+    # (+3.6 %, inside the same spread)
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2523, rel=2e-2)
     dissolved = state == 2
     assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
 

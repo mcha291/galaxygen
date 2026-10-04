@@ -63,26 +63,32 @@ def chk(m, *stages):
 # tie-break - and the clusters the round after it, behind planets. Until S55 both ended "..., dust, clouds,
 # systems, clusters, planets, nebular, bubbles". Recomputed from graph.analyse, not edited by hand; no value moves
 # with the order.
+# Since S56 (D215) the layer's arm_phases stage requires no field (it reads texture_seed alone), so it is ready in
+# the first round, beside halo and behind it by the tie-break (checkpoint, then id); the pattern stage reads its
+# five phases and stays where it was. Until S56 both began "halo, disc, nucleus, ...".
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "gas_pattern", "chemistry_dtd",
+        "halo", "arm_phases", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "gas_pattern", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "halo", "arm_phases", "disc", "nucleus", "assembly", "bar", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
 }
-# The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's one stage publishes, in both
-# models - the four cloud columns the clouds stage drew as seeded until then. The cloud-interior noise's three
+# The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's stages publish, in both
+# models - the four cloud columns the clouds stage drew as seeded until then, and since S56 (D215) the five arm
+# modes' phases, drawn on texture_seed. The cloud-interior noise's three
 # numbers are constants of the model, not fields (gate G1, change 4: "a layer stage's fields are synthetic; a
 # constant it declares is a constant").
-SYNTHETIC = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
+CLOUD_TEXTURE = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
+ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)}
+SYNTHETIC = CLOUD_TEXTURE | ARM_PHASES
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
@@ -133,6 +139,11 @@ SEEDED_BASIC = {
     "bound_cluster_mass_total", "cluster_formation_efficiency",
     "bar_corotation_radius", "bar_pattern_speed", "pitch_angle", "arm_multiplicity",
     "arm_contrast", "bar_contrast", "pattern_density_contrast",
+    # S56 (D215): the law of several modes is the pattern stage's, which reads the pattern seed, so the five
+    # amplitudes and the saturation are seeded (D55) - they carry the drawn arm and bar amplitudes; the split
+    # among the modes has no draw in it.
+    "arm_mode_amplitude_2", "arm_mode_amplitude_3", "arm_mode_amplitude_4", "arm_mode_amplitude_5", "arm_mode_amplitude_6",
+    "arm_saturation",
     # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
     # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
     "gas_density_contrast",
@@ -167,7 +178,10 @@ def test_production_graphs_hold(prod):
         # S55 (D214): the fourth kind, and only the layer's stage publishes it.
         synthetic = {n for n, p in g.provenance.items() if p == "synthetic"}
         assert synthetic == SYNTHETIC, sorted(synthetic ^ SYNTHETIC)
-        assert g.layer_stages == ("cloud_texture",) and {g.producer[n] for n in SYNTHETIC} == {"cloud_texture"}
+        assert g.layer_stages == ("arm_phases", "cloud_texture")
+        assert {g.producer[n] for n in CLOUD_TEXTURE} == {"cloud_texture"} and {g.producer[n] for n in ARM_PHASES} == {"arm_phases"}
+        # S56 (D215): texture_seed binds at its first reader's checkpoint, the pattern's; no input is unread.
+        assert g.input_checkpoint["texture_seed"] == 3 and g.unbound_inputs == () and g.unread_by_ruling == ()
         # S51 (D210 as amended): the gas ratio is the bar stage's derived class mean, beside the stellar one.
         assert g.provenance["gas_arm_contrast"] == g.provenance["arm_contrast_mean"] == "derived"
         assert g.provenance["giant_occurrence"] == "derived", (
@@ -188,6 +202,8 @@ def test_production_graphs_hold(prod):
             "infall_timescale": 4, "inside_out_index": 4, "migration_efficiency": 4,
             "mergers": 2,
             "pattern_seed": 3, "systems_seed": 5, "planets_seed": 6,
+            # S56 (D215): the layer's seed binds at its first reader, the arm modes' phases, as its hypothesis says.
+            "texture_seed": 3,
         }
     assert "graph" in graph.report(models, impls_, table)
 

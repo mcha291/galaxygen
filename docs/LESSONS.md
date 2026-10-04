@@ -1408,3 +1408,36 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   octaves normalises exactly; the price is a staircase spectrum (0.04–0.08 dex of ripple). 24 bits of position,
   not the construction, limit a float32 twin: keep lattice coordinates small (builder A, D214).
 
+## From S56 (several arm modes; an Opus lead, one builder in three passes, a reader, a reviewer, Fable at three gate turns)
+
+- [all] Before a probe's number enters a ruling, check the variable against the function's own definition and
+  against one published anchor: the lead fed X at m = 2 into a formula that takes m·X_m (the code called it `x2`),
+  the handoff and the builder's brief repeated it, and a gate ruled on numbers a factor of two off. D175 had
+  recorded the local form as "preferring three to four arms"; the probe preferred two, and that was the anchor (D215).
+- [audit] A test that recomputes with the module's formula cannot find an error in the formula: every test of the
+  window passed. One test must re-derive the central quantity by hand from the published fields, on a ring where
+  the candidate readings differ (D215; the reviewer found it by doing exactly that).
+- [audit] Run the independent reviewer before every merge: it found a blocker in two sessions of two (S55's
+  totals, S56's window), and closed a worry the builder could not (the census against the field is one draw:
+  0.999 ± 0.009 over 44 seeds).
+- [field] The exponential of a sum of modes makes knots, not ridges, at any scaling: a map calibrated on one
+  cosine of reach 1 meets a sum of reach 2.2, and even bounded to 1 the sum sits near 0 over most of a ring and
+  towers where the crests align. A ridge that must keep one mode's histogram is placed by rank (D215 ruling 7).
+- [field] A rule that fixes a ratio on every ring cannot fade: as the pattern weakens the amplitude grows to hold
+  the ratio. A response that should vanish with its forcing must take the forcing's amplitude as its argument
+  (D215 ruling 8).
+- [field] Power, not peak: five modes of equal power peak at √5 times one mode's amplitude, so a conserved-power
+  sum goes negative. Saturate the modes together by a law in R, never by a floor after composition — a floor
+  makes the published amplitudes false exactly where it acts (D215 ruling 2).
+- [field] A rank is the measure of a superlevel set, not an interpolated rank of cells: bracket the crossings on
+  cells cut at the function's extrema, refine each, and check against an oracle of another kind (the roots of the
+  trigonometric polynomial); a sampled ranked field's ring mean is off by 1e-3 where an analytic one's is exact.
+- [close] A reading ordered as "a check, not an input" stays one when the law fails it: the failure is a debt with
+  the phase that should close it, and the choice to keep the law against the reading goes to the owner with the
+  pictures (D215 ruling 12).
+- [close] Three gate turns in one session cost less than one wrong merge, but the third was avoidable: it paid
+  for the lead's own unchecked probe.
+- [catalogue] An expected total summed over cells with placement weights is exact only to rounding: two scalars
+  now differ by one ulp with the layer on and off. Sum the expectation before the placement, or hold it to one
+  ulp by name (carried to G2).
+
