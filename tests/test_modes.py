@@ -13,6 +13,13 @@ gate's predictions, **pinned as measured** (one of them failed, and is pinned as
 two passes built it on X / 2, the lead's error, and every number below moved when it was corrected. The test that
 would have found it re-derives the weights by hand from the published fields.
 
+**Since S57 (D216) the gas half of this file's title is retired**: the gas no longer takes a ridge laid by rank on
+the stellar modes' sum; it takes its own steady response to them, solved ring by ring, and
+``tests/test_gas_pattern.py`` holds it to that law. What stays here of the gas is what the modes' law promises it:
+ring means, the phases, the layer's switch. The one-mode regression of the gas against S51's field went with the
+ridge (one mode's response is not a von Mises); the frozen copy of S55's two classes and its digests stay as the
+stellar regression's oracle.
+
 The numbers, on the production grid (both templates at their own seeds; 2026-10-04, the third pass):
 
     milky_way   A 0.4013, bar 0.2893; the last ring with any pattern 12.34 kpc at 0.0316 A^2; the whole A^2 out to
@@ -32,7 +39,6 @@ import numpy as np
 import pytest
 
 import layer_reference
-import s55_patterns as s55
 from galaxy import templates
 from galaxy.core import seeds as _seeds
 from galaxy.core.grids import DEFAULT, GridSpec
@@ -95,9 +101,10 @@ def published_amplitudes(out) -> np.ndarray:
     return np.stack([np.asarray(out.fields[n]) for n in pt.AMPLITUDE_FIELDS])
 
 
-def single_mode(R, m: int, f: dict[str, float], c) -> tuple[pt.ArmPattern, gp.GasPattern]:
+def single_mode(R, m: int, f: dict[str, float]) -> tuple[pt.ArmPattern, np.ndarray]:
     """One arm number, phase 0, the amplifier's weight 1 on every ring - a composition, built directly: it does not
-    pass through the switch or the draw."""
+    pass through the switch or the draw. Returns the stellar pattern and the mode's unit amplitudes as the gas
+    pattern takes the taper back out of them (1 on every ring)."""
     weights = np.zeros((len(pt.ARM_MODES), R.size))
     weights[pt.ARM_MODES.index(m)] = 1.0
     law = pt.mode_law(R, weights, f["arm_contrast"], f["bar_contrast"], f["pitch_angle"], f["bar_half_length"])
@@ -105,9 +112,7 @@ def single_mode(R, m: int, f: dict[str, float], c) -> tuple[pt.ArmPattern, gp.Ga
     zero = (0.0,) * len(pt.ARM_MODES)
     stars = pt.ArmPattern(R, law.amplitudes, zero, f["bar_contrast"], f["pitch_angle"], f["bar_half_length"])
     unit = gp.GasPattern.unit_amplitudes(R, law.amplitudes, f["arm_contrast"], f["pitch_angle"], f["bar_half_length"])
-    gas = gp.GasPattern(R, unit, zero, f["gas_arm_contrast"], f["bar_contrast"], f["pitch_angle"], f["bar_half_length"],
-                        c["GAS_ARM_WIDTH"], c["GAS_ARM_MASK_WIDTH"])
-    return stars, gas
+    return stars, unit
 
 
 # --- the gate: ring means ------------------------------------------------------------------------------------------
@@ -117,15 +122,25 @@ def single_mode(R, m: int, f: dict[str, float], c) -> tuple[pt.ArmPattern, gp.Ga
 @pytest.mark.parametrize("grid", [DEFAULT, SMALL], ids=["production grid", "small grid"])
 def test_gate_every_ring_of_the_composed_fields_has_mean_one(prod, template, grid):
     """Ring means 1 to 1e-12 on every ring, both templates, several texture seeds: a phase moves a cosine round its
-    ring and no mode has a mean. The gas's ridge has mean 1 over the ring and is finite everywhere; on the grid's
-    cells the stage holds its sampled mean (a ranked ridge's is not 1 to rounding: tests/test_gas_pattern.py)."""
+    ring and no mode has a mean. The gas's response has mean 1 over the ring and is positive and finite everywhere.
+    **Its sampled mean on the grid's own cells is not divided out since S57** (D216 item 11 i): on the production
+    grid's 360 cells it is 1 to rounding (1e-13: the solver's 1440 cells are four to each); on the small grid's 36
+    it is the response's 36th harmonic aliased, up to 2.5e-3 for the Milky Way template and 1.4e-3 for
+    ``ngc_4414`` over these seeds - pinned as it is, where S56's stage divided the ring by it."""
+    small = grid is SMALL
+    worst = 0.0
     for seed in TEXTURE_SEEDS:
         o = pattern_run(prod, template, grid, texture_seed=seed)
         stars, gas = np.asarray(o.fields["pattern_density_contrast"]), np.asarray(o.fields["gas_density_contrast"])
         assert stars.shape == gas.shape == (o.grid.R.size, o.grid.phi.size)
         assert float(np.abs(stars.mean(axis=1) - 1.0).max()) < 1e-12, (template, seed)
-        assert np.all(np.isfinite(gas)) and float(np.abs(gas.mean(axis=1) - 1.0).max()) < 1e-12, (template, seed)
+        off = float(np.abs(gas.mean(axis=1) - 1.0).max())
+        worst = max(worst, off)
+        # S57 (D216): was `< 1e-12` on both grids - the stage's division by the sampled mean, retired.
+        assert np.all(np.isfinite(gas)) and np.all(gas > 0.0) and off < (3e-3 if small else 1e-12), (template, seed)
         assert not np.all(stars == 1.0) and not np.all(gas == 1.0)
+    if small:
+        assert worst == pytest.approx({"milky_way": 2.485e-3, "ngc_4414": 1.420e-3}[template], rel=0.02), worst
 
 
 # --- the gate: the Fourier amplitudes ------------------------------------------------------------------------------
@@ -178,8 +193,8 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     for template in TEMPLATES:
         for pattern_seed in range(60):
             for texture_seed in (0, 1):
-                # The stellar field alone: the gas's ridge on the same 240 galaxies is held to its own bound in
-                # tests/test_gas_pattern.py (the crest and the trough are the form's).
+                # The stellar field alone: the gas's response on the same 240 galaxies is held to its own gate in
+                # tests/test_gas_pattern.py (D216: the residual, the ring mean, positivity, the bar's bound).
                 o = pattern_run(prod, template, gas=False, pattern_seed=pattern_seed, texture_seed=texture_seed)
                 field = np.asarray(o.fields["pattern_density_contrast"])
                 lowest = min(lowest, float(field.min()))
@@ -462,8 +477,10 @@ def test_the_effective_arm_number_is_m_for_one_mode_and_does_not_know_the_phases
         R = o.grid.R
         got = [float(m_eff[int(np.argmin(np.abs(R - r)))]) for r in (2.0, 8.0, 12.0)]
         assert got == pytest.approx([4.087, 4.691, 6.0], abs=2e-3)
+        # The gas pattern's unit amplitudes - the taper and the arm amplitude taken back out - give the same arm
+        # number (both cancel in it): what the disclosed check's mask is sized by (tests/test_gas_pattern.py).
         gas = compose.gas_pattern(o.fields, R, constants(the_model(prod)))
-        assert np.allclose(gas.effective_arm_number(R)[np.isfinite(m_eff)], m_eff[np.isfinite(m_eff)], rtol=1e-12)
+        assert np.allclose(pt.effective_arm_number(gas.unit)[np.isfinite(m_eff)], m_eff[np.isfinite(m_eff)], rtol=1e-12)
 
 
 def model_sources() -> list[Path]:
@@ -509,12 +526,18 @@ def test_the_fence_nothing_composes_or_places_from_arm_multiplicity(prod):
 @pytest.mark.parametrize("m", [4, 2])
 def test_regression_one_mode_is_the_field_s55_published(prod, template, m):
     """"With one mode - one m, phase 0, the amplifier's weight 1 on every ring - the stellar field is S55's
-    ``pattern_density_contrast`` exactly and the gas field is S51's ``gas_density_contrast`` to 1e-9", on each
-    template's own scalars, for the arm number S55 drew (4) and for 2.
+    ``pattern_density_contrast`` exactly", on each template's own scalars, for the arm number S55 drew (4) and
+    for 2.
 
     The S55 fields are ``tests/s55_patterns.py``'s, a frozen copy of S55's two classes; the reference holds the
-    digests of what S55's own classes made (for m = 4, the published fields), and the copy is them bit for bit."""
-    c = constants(the_model(prod))
+    digests of what S55's own classes made (for m = 4, the published fields), and the copy is them bit for bit.
+
+    **S57 (D216): the gas half of this regression is retired with the ridge.** It read "and the gas field is S51's
+    ``gas_density_contrast`` to 1e-9" - one mode's ridge by rank is S51's von Mises (measured 1.4e-12). The gas is
+    now its steady response to the mode, which is no von Mises (its width is 0.46-0.50 of the period, not 0.17,
+    and its amplitude is the equation's), so there is no S51 field for it to equal; one mode's response is held to
+    the law in ``tests/test_gas_pattern.py``. The frozen copy's gas field is still digested here: it is what S55
+    published, and the oracle's own check."""
     grid = DEFAULT.build()
     R, phi = grid.R, grid.phi
     f = layer_reference.single_mode_scalars(template)
@@ -522,26 +545,17 @@ def test_regression_one_mode_is_the_field_s55_published(prod, template, m):
     held = layer_reference.load()["single_mode"][template][f"m{m}"]
     assert layer_reference.value_digest(old_stars) == held["stars"] and layer_reference.value_digest(old_gas) == held["gas"]
 
-    stars, gas = single_mode(R, m, f, c)
-    new_stars, new_gas = stars.contrast(R, phi), gas.contrast(R, phi)
+    stars, unit = single_mode(R, m, f)
+    new_stars = stars.contrast(R, phi)
     # The stars: exactly - the same bytes.
     assert new_stars.tobytes() == old_stars.tobytes()
-    # The gas: to 1e-9, **through the general method** - the ridge by rank, the rank the measure of psi's superlevel
-    # set from the refined crossings (D215, gate ruling 7), with no one-mode case in the code. Measured 1.4e-12 at
-    # worst: each crossing is bounded to 1e-12 in chi. (The first turn's exponential of the modes' sum read 3e-15
-    # here and spiked on several modes.)
-    assert float(np.abs(new_gas - old_gas).max()) < 1e-9
-    assert float(np.abs(new_gas - old_gas).max()) < 1e-11
-    # The ridge's amplitude is S51's at every radius, and the unit amplitudes are 1: psi is cos m chi.
-    a_old = s55.gas_amplitude(R, f["gas_arm_contrast"], float(m), f["pitch_angle"], c["GAS_ARM_WIDTH"], c["GAS_ARM_MASK_WIDTH"])
-    assert float(np.abs(gas.amplitude(R) - a_old).max()) < 1e-13
-    assert np.all(gas.unit[pt.ARM_MODES.index(m)] == 1.0) and gas.unit.sum() == R.size
-    # The same pattern through compose's own door, from a mapping of fields at phase 0.
+    # The unit amplitudes the gas pattern makes of one fully amplified mode are 1 on every ring: the taper and the
+    # arm amplitude taken back out, to rounding.
+    assert np.all(unit[pt.ARM_MODES.index(m)] == 1.0) and unit.sum() == R.size
+    # The same pattern through the class's own door, from a mapping of fields at phase 0.
     fields = {**{n: stars.amplitudes[k] for k, n in enumerate(pt.AMPLITUDE_FIELDS)}, **dict.fromkeys(pt.PHASE_FIELDS, 0.0),
-              "bar_contrast": f["bar_contrast"], "pitch_angle": f["pitch_angle"], "bar_half_length": f["bar_half_length"],
-              "arm_contrast": f["arm_contrast"], "gas_arm_contrast": f["gas_arm_contrast"]}
+              "bar_contrast": f["bar_contrast"], "pitch_angle": f["pitch_angle"], "bar_half_length": f["bar_half_length"]}
     assert pt.ArmPattern.from_fields(fields, R).contrast(R, phi).tobytes() == old_stars.tobytes()
-    assert float(np.abs(gp.GasPattern.from_fields(fields, R, c).contrast(R, phi) - old_gas).max()) < 1e-11
 
 
 def test_regression_the_published_s55_fields_are_the_m_4_oracle(prod):
@@ -667,12 +681,12 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     stars, gas = compose.stellar_pattern(F, R), compose.gas_pattern(F, R, c)
     assert not stars.flat and not gas.flat
     assert stars.contrast(R, phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
-    # The gas's published field is the law at the cells' centres over each ring's sampled mean, where that has left
-    # 1 (a ranked ridge's does: by 8.75e-4 at worst for the Milky Way and 1.25e-3 for ``ngc_4414`` at their own
-    # seeds; tests/test_gas_pattern.py).
+    # S57 (D216): was "the law at the cells' centres over each ring's sampled mean, where that has left 1" (a ranked
+    # ridge's did: by 8.75e-4 and 1.25e-3). The gas's published field is now the law at the cells' centres itself,
+    # bit for bit, and its sampled ring mean is 1 to rounding with nothing divided (tests/test_gas_pattern.py).
     law = gas.contrast(R, phi)
-    assert np.allclose(law / law.mean(axis=1, keepdims=True), np.asarray(F["gas_density_contrast"]), rtol=0.0, atol=1e-11)
-    assert float(np.abs(law.mean(axis=1) - 1.0).max()) == pytest.approx({"milky_way": 8.75e-4, "ngc_4414": 1.254e-3}[template], abs=2e-5)
+    assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
+    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 5e-13
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)
         assert np.allclose(shape.contrast_at(R[:, None], phi[None, :]), on_grid, rtol=0.0, atol=1e-12)
@@ -684,19 +698,17 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     amplitudes = published_amplitudes(o)
     assert np.allclose(stars.amplitudes_at(np.array([mid]))[:, 0], 0.25 * amplitudes[:, k] + 0.75 * amplitudes[:, k + 1], rtol=1e-12)
     assert np.array_equal(stars.amplitudes_at(R), amplitudes)
-    # Sector means: analytic for the stars (the modes' own integrals), by the ridge's series for the gas; they
-    # average to 1 round the ring and are the dense average of the point function over each sector - for the stars
-    # to the dense average's own error; for the gas to the series' accuracy on a ridge with corners, **pinned as
-    # measured: 1.1e-3 of the ring's mean at worst for the Milky Way and 1.9e-3 for ``ngc_4414``, over thirty-two
-    # sectors and five radii** with the 1024 samples the series is taken from (D215: the number of samples is not
-    # changed to hide it). On the X / 2 window of S56's first two passes it read 1.2e-3 at worst.
+    # Sector means: analytic for the stars (the modes' own integrals), and for the gas the exact integral of the
+    # point function - the two neighbouring rings' interpolants, piece by piece (S57, D216 item 9); they average to
+    # 1 round the ring and are the dense average of the point function over each sector to the dense average's own
+    # error. S57 (D216): was 1.1e-3 and 1.9e-3 of the ring's mean for the gas, the accuracy of the ranked ridge's
+    # 1024-sample series; measured 2e-7 at worst now, the midpoint rule's on a piecewise-linear function.
     edges = np.linspace(0.0, 2.0 * np.pi, 33)
     for shape in (stars, gas):  # past the last ring with a mode, and past the bar: every sector alike, exactly
         assert np.all(shape.sector_means(20.0, edges) == 1.0)
-    assert gp.HARMONIC_SAMPLES == 1024
     worst = 0.0
     for radius in (1.0, 3.0, 6.0, 8.0, 9.5):  # ``ngc_4414``'s last ring with a mode is at 9.9 kpc
-        for shape, tolerance in ((stars, 1e-8), (gas, 2.5e-3)):
+        for shape, tolerance in ((stars, 1e-8), (gas, 1e-6)):
             means = shape.sector_means(radius, edges)
             assert float(means.mean()) == pytest.approx(1.0, abs=1e-12), radius
             dense = []
@@ -707,7 +719,7 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
             assert error <= tolerance, (radius, error)
             assert means.max() > 1.0 > means.min()
             worst = max(worst, error) if shape is gas else worst
-    assert worst == pytest.approx({"milky_way": 1.12e-3, "ngc_4414": 1.88e-3}[template], rel=0.05), worst
+    assert worst < 1e-6, worst
 
 
 def test_a_pattern_with_nothing_to_place_is_flat():
@@ -723,12 +735,16 @@ def test_a_pattern_with_nothing_to_place_is_flat():
     assert pt.ArmPattern(R, some, (float("nan"),) * 5, 0.3, 13.5, 5.2).flat
     with pytest.raises(ValueError, match="5 modes"):
         pt.ArmPattern(R, some[:3], zero, 0.3, 13.5, 5.2)
+    # The gas pattern on a made-up disc (S57, D216: it holds the disc's κ and Σ, G and the gas's sound speed where
+    # it held a ratio, a width and a mask; "a ratio of 1" is no longer a way to be flat - there is no ratio).
     unit = np.where(some > 0, 1.0, 0.0)
-    assert gp.GasPattern(R, unit, zero, 2.73, float("nan"), float("nan"), 5.2, 0.17, 1.5).flat
-    assert gp.GasPattern(R, unit, zero, 1.0, 0.0, 13.5, 5.2, 0.17, 1.5).flat          # a ratio of 1 and no bar
-    assert gp.GasPattern(R, none, zero, 2.73, 0.0, 13.5, 5.2, 0.17, 1.5).flat         # no stellar mode and no bar
-    assert not gp.GasPattern(R, unit, zero, 2.73, 0.0, 13.5, 5.2, 0.17, 1.5).flat
-    assert not gp.GasPattern(R, none, zero, 2.73, 0.3, 13.5, 5.2, 0.17, 1.5).flat     # the bar's term alone
+    disc = (220.0 * math.sqrt(2.0) / R, 50.0 * np.exp(-(R - 8.0) / 2.6), 4.30091727e-6, 6.0)
+    assert gp.GasPattern(R, unit, zero, 0.4, float("nan"), float("nan"), 5.2, *disc).flat
+    assert gp.GasPattern(R, unit, (float("nan"),) * 5, 0.4, 0.3, 13.5, 5.2, *disc).flat  # the layer did not realise
+    assert gp.GasPattern(R, none, zero, 0.4, 0.0, 13.5, 5.2, *disc).flat         # no stellar mode and no bar
+    assert gp.GasPattern(R, unit, zero, 0.0, 0.0, 13.5, 5.2, *disc).flat         # no arm amplitude and no bar
+    assert not gp.GasPattern(R, unit, zero, 0.4, 0.0, 13.5, 5.2, *disc).flat
+    assert not gp.GasPattern(R, none, zero, 0.4, 0.3, 13.5, 5.2, *disc).flat     # the bar's term alone
     # Fields that hold no pattern give none.
     assert pt.ArmPattern.from_fields({"bar_contrast": 0.3}, R) is None
-    assert gp.GasPattern.from_fields({"bar_contrast": 0.3}, R, {"GAS_ARM_WIDTH": 0.17, "GAS_ARM_MASK_WIDTH": 1.5}) is None
+    assert gp.GasPattern.from_fields({"bar_contrast": 0.3}, R, {"G": 4.30091727e-6, "GAS_DISPERSION": 6.0}) is None

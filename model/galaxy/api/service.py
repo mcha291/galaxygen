@@ -285,7 +285,7 @@ ROUTES: tuple[Route, ...] = (
         "dust_thermal (a modified blackbody through each curve). The header names each component's fields and "
         "vertical layer - the dust's is the gas's published scale height ring by ring, the array dust_height in "
         "kpc (S50) - and the dust's placement around each ring, the array dust_placement (the gas's own density "
-        "contrast, a narrow ridge on the stellar arm's crest, S51, D210; the stellar contrast where a model publishes "
+        "contrast, its steady response to the stellar arms, S51, D210, D216; the stellar contrast where a model publishes "
         "no gas pattern, S50); the bulge's response rides in it; white=<K> adds a blackbody's response per unit light for "
         "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
@@ -1580,8 +1580,8 @@ class Service:
         stars = per_ring[:, None, :] * placed[..., None]
         halpha_share = _spectra.line_response(curves, _spectra.LINE_WAVELENGTHS["halpha"])
         contrast_fields = ["pattern_density_contrast"] if contrast is not None else []
-        # The gas round each ring (S51, D210): its own density contrast, a narrow ridge on the stellar arm's crest,
-        # clipped at zero as the stars' is. It places what sits in the gas - the dust, a share of it, and the HII
+        # The gas round each ring (S51, D210): its own density contrast - since S57 its steady response to the stellar
+        # arms (D216), positive by its law - through the same guard at zero as the stars' is. It places what sits in the gas - the dust, a share of it, and the HII
         # regions, which sit in the clouds. A model that publishes no gas pattern keeps D207's reading: the gas
         # taken to follow the stars' contrast.
         gas_contrast = _compose.published(f, "gas_density_contrast")
@@ -1693,9 +1693,10 @@ class Service:
                          "ring's mean column: around the ring the depth is this one times the dust's placement",
             }
         # The dust around each ring (S50, D207; S51, D210): its column over the ring's mean is the gas's own density
-        # contrast, the gas the dust is a share of (one dust-to-gas ratio per ring) - a narrow ridge on the stellar
-        # arm's crest, where D207 had the stellar contrast. An array beside the components, named in the header; it
-        # averages to 1 round every ring, so each ring keeps its published dust. Without a pattern of either kind,
+        # contrast, the gas the dust is a share of (one dust-to-gas ratio per ring) - the gas's steady response to
+        # the stellar arms (S57, D216), where D207 had the stellar contrast. An array beside the components, named in
+        # the header; it averages to 1 round every ring (to the grid's sampling: 1e-13), so each ring keeps its
+        # published dust. Without a pattern of either kind,
         # or without dust, there is none and the dust is even round the ring.
         placement: dict[str, Any] | None = None
         if gas_fields and "dust_extinction_v" in f:
@@ -1704,8 +1705,13 @@ class Service:
                 "arrays": {RENDER_DUST_PLACEMENT: {
                     "unit": "dimensionless", "fields": list(gas_fields),
                     "about": (
+                        # S57 (D216): the gas's pattern is its steady response to the stellar arms. With the layer off
+                        # the header is S55's byte for byte (tests/layer_reference_s55.json holds its digest), so the
+                        # layer-off wording is still S51's; re-reading it means rewriting that reference - a decision's.
                         "the dust's column at each (R, phi) cell over its ring's mean: the gas's own density contrast - "
-                        "a narrow ridge on the stellar arm's crest (S51, D210) - as the gas the dust is a share of. "
+                        + _compose.words(f, "its steady response to the stellar arms (S51, D210; S57, D216)",
+                                         "a narrow ridge on the stellar arm's crest (S51, D210)")
+                        + " - as the gas the dust is a share of. "
                         if gas_contrast is not None else
                         "the dust's column at each (R, phi) cell over its ring's mean: the stellar pattern's density "
                         "contrast, as the gas the dust is a share of is taken to follow it (this model publishes no "

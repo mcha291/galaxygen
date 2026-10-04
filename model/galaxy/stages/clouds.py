@@ -40,8 +40,8 @@ source in the about line; nothing here is recalled (rule B9).**
   layer at half the thin disc's scale height, stays this stage's seeded draw (debt #95).
 - *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
   cloud's azimuth inside its sector, from the gas's own density contrast (``gas_pattern``,
-  ``GasPattern``, S51, D210) — a narrow ridge on the stellar arm's crest, not the stars' broader
-  arm, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
+  ``GasPattern``; S51, D210; since S57 the gas's steady response to the stellar arms, D216), not
+  the stars' own contrast, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
   read off the gas at the cloud's radius. The contrast averages to 1 round every ring, so a ring's
   expected count is what it was: the clouds move round the ring, not in number.
 
@@ -268,7 +268,7 @@ def materialise_clouds(
     rings, sectors = cell_edges(R)
     expected = expected_counts(fields, R, c)
     counts = cloud_counts(expected, seed, cells)
-    pattern = _compose.gas_pattern(fields, R, c)  # the gas's own ridge places the clouds (S51, D210); none, layer off
+    pattern = _compose.gas_pattern(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
     sigma = float(c["GMC_SURFACE_DENSITY"])
     c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
@@ -369,8 +369,8 @@ CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
-                        "narrow ridge on the stellar arm's crest, and the stellar bar's term inside the bar — so "
-                        "clouds crowd onto the arms' spines as the gas does, and each sector's share of clouds "
+                        "steady response to the stellar arms, and the stellar bar's term inside the bar — so "
+                        "clouds crowd onto the arms as the gas does, and each sector's share of clouds "
                         "follows the same contrast; the same rule in both models.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
@@ -515,11 +515,11 @@ CLOUDS = IMPLEMENTATIONS.register(
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", "GMC_SURFACE_DENSITY", "MOLECULAR_GAS_TEMPERATURE",
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
-            *GAS_PATTERN_CONSTANTS,  # S51 (D210): the gas's own ridge places the clouds
+            *GAS_PATTERN_CONSTANTS,  # S57 (D216): the gas's own response places the clouds - its sound speed, and G
         ),
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
-            *GAS_PATTERN_READS,  # S56 (D215): the ridge follows the stellar modes and their phases, not an arm number
+            *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,

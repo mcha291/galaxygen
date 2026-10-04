@@ -19,7 +19,7 @@ from . import pattern  # noqa: F401  (checkpoint 3, seeded)
 # The randomness layer's realisation stages live under galaxy/layer/ and register here with the rest, so that
 # importing this package still registers every implementation a model maps a slot to (S55, D214).
 from galaxy.layer import arm_phases  # noqa: F401, E402  (checkpoint 3, synthetic: where each arm mode's crests lie, S56)
-from . import gas_pattern  # noqa: F401  (checkpoint 3, seeded: the gas's own arm ridge, S51, D210)
+from . import gas_pattern  # noqa: F401  (checkpoint 3, seeded: the gas's own arm pattern, S51, D210; its steady response since S57, D216)
 from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation: the azimuthal model, S27)
 from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
 from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and radiates, S31)

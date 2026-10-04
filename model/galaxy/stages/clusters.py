@@ -404,7 +404,7 @@ CLUSTERS = IMPLEMENTATIONS.register(
         ),
         requires=(
             *CLOUD_READS, "gas_molecular_surface_density",
-            *GAS_PATTERN_READS,  # S56 (D215): the layout's ridge follows the stellar modes and their phases
+            *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
             "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(

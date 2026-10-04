@@ -1,7 +1,7 @@
 """compose: a law applied to a realisation, and the one place the layer's switch is read.
 
 BUILD_III section 1a: "a composed field - a density contrast over (R, phi), a census placement - is a law applied
-to a realisation". The physics stages hold the laws (how strong an arm is, how wide the gas ridge, how many clouds a
+to a realisation". The physics stages hold the laws (how strong an arm is, how the gas answers it, how many clouds a
 ring holds); the layer holds the realisations (where the arms are, how a cloud leans). This module is where the two
 meet, and **the only place in the model that asks whether the layer is on** (DECISIONS.md D214 sections 1 and 4;
 rule B13: a switch read in one place cannot be forgotten in another). ``tests/test_layer.py`` holds that by reading
@@ -122,9 +122,10 @@ def stellar_pattern(source: Any, R: np.ndarray, law: Mapping[str, Any] | None = 
 
 
 def gas_pattern(source: Any, R: np.ndarray, constants: Mapping[str, Any]) -> Any:
-    """The gas's own arm pattern (``gas_pattern.GasPattern``) - the ridge that follows the stellar pattern -
-    from the published fields on the run's grid radii ``R`` and the ridge's two constants, or None: with the
-    layer off, or where the fields hold no pattern."""
+    """The gas's own arm pattern (``gas_pattern.GasPattern``) - the gas's steady response to the stellar arm
+    modes, solved ring by ring (S57, D216) - from the published fields on the run's grid radii ``R`` and the
+    two constants the law reads (the gas's sound speed and G), or None: with the layer off, or where the
+    fields hold no pattern."""
     if not _on(source):
         return None
     from galaxy.stages.gas_pattern import GasPattern

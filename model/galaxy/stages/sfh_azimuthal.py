@@ -14,10 +14,12 @@ there, not here:
   then Ψ ∝ Σ_gas^n s(Σ_gas) with the threshold's switch ``s`` applied *per cell* — an arm
   can carry gas over the threshold the ring mean sits under — and the result is divided by
   its own mean around the ring. Until S51 the gas was taken to follow the stellar contrast,
-  one cosine harmonic whose half-maximum is half the arm-to-arm period; the gas's own is a
-  narrow ridge on the stellar arm's crest, half the stellar arm's width, with an
-  arm-to-interarm ratio of means of two to three, so today's star formation crowds a
-  narrower stripe of each arm. So ``sfr_surface_density`` times the modulation integrates over φ back to
+  one cosine harmonic whose half-maximum is half the arm-to-arm period; from S51 to S56 it
+  was a narrow ridge of a measured width and contrast on the stellar crest; since S57 (D216)
+  it is the gas's steady response to the stellar arm modes, solved ring by ring - as broad
+  as the stellar arm, far deeper between the arms, with a ratio of means of two to three in
+  the mid disc that nothing put in - so today's star formation crowds the crests and all but
+  leaves the gaps. So ``sfr_surface_density`` times the modulation integrates over φ back to
   ``sfr_surface_density`` at every radius: a redistribution, not a new source
   (RENDER_PHYSICS.md §7). Where a ring forms nothing at all the modulation is 1.
 
@@ -74,8 +76,8 @@ SFR_MODULATION = FieldDecl(
     composed=True, neutral=1.0,
     about=(
         "Where around each ring today's stars form, relative to the ring's mean: the gas follows "
-        "its own contrast, a narrow ridge on the stellar arm's crest (the stellar bar's term inside "
-        "the bar), not the stars' broader arm; the star formation law's own exponent and its "
+        "its own contrast, its steady response to the stellar arms (the stellar bar's term inside "
+        "the bar), not the stars' own contrast; the star formation law's own exponent and its "
         "threshold switch are applied cell by cell, and the result is divided by its mean around "
         "the ring. So it averages to exactly 1 on every ring and the star formation rate times it "
         "integrates back to the axisymmetric rate: the arms move where stars form, not how many. "
