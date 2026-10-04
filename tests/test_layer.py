@@ -367,7 +367,7 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     n_on, n_off = len(runs[name, True].fields["cloud_radius"]), len(runs[name, False].fields["cloud_radius"])
     # S56 (D215): was n_on == 16822 - S51's census, placed by one four-armed ridge; placed by five modes' ridge it
     # is another draw. The layer-off census is S55's own (16 754), and the two still differ by the draw alone.
-    assert n_on == 16718 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    assert n_on == 16765 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -438,8 +438,8 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.102973, abs=1e-6)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.07495, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.106381, abs=1e-6)
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.07374, abs=1e-5)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.105544, abs=1e-6)
         # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
         assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
         for q in spec.QUANTITIES:
@@ -944,8 +944,8 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # measured on S51's census at S55; the layer-on census is another draw since P1 and the declaration was re-read.
     for phrase in ("at S56 the offset moves a cluster",
                    "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 585 of 12 863 clusters (12.3 %, 42.0 % of the cluster mass)",
-                   "141 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+                   "1 581 of 12 910 clusters (12.2 %, 41.9 % of the cluster mass)",
+                   "144 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
@@ -954,17 +954,17 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12863  # S56 (D215): was 12930
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12910  # S56 (D215): was 12930
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
-    assert int(moved.sum()) == 1585 and moved.mean() == pytest.approx(0.123, abs=5e-4)  # S56 (D215): was 1610, 0.125
-    # The share of the cluster mass that crosses: 0.42048, printed as 42.0 %. S56 (D215): was 0.43747 (43.7 %; the
+    assert int(moved.sum()) == 1581 and moved.mean() == pytest.approx(0.1225, abs=5e-4)  # S56 (D215): was 1610, 0.125
+    # The share of the cluster mass that crosses: 0.41915, printed as 41.9 %. S56 (D215): was 0.43747 (43.7 %; the
     # gate's text carried the review's 43.8).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4205, abs=5e-4)
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4192, abs=5e-4)
     edges, _ = sy.cell_edges(R)
     # S56 (D215): was 157
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 141
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 144
     # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
