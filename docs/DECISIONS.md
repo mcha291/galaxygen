@@ -9121,3 +9121,66 @@ measured, not smoothed (B5).
    there. Layer-on, every moved pin is re-read with its old value in the comment.
 4. *The reading is a check, not an input* (the plan): one blind reader on the Fourier amplitudes of spirals by arm
    number and radius, set beside the law's split at the close. The law is not adjusted to it.
+
+**Built to the first ruling (2026-10-04; one Opus 5.5 builder), and what the build exposed.** The stellar side met
+its gate: with one mode the field is byte-identical to S55's; the m = 2–6 amplitudes are recovered from the
+composed field to 4e-15 on every ring; no cell is below zero on 240 seeded galaxies (the lowest +0.0026); layer-off,
+331 of 332 fields are bit-identical to S55 (`arm_multiplicity` 4 → 3; `ngc_4414` 4 → 2), and the 37 rows and the
+five template checks did not move. **The gas, built as the plan and ruling 6 worded it, did two things neither
+foresaw.** It did not fade: the ratio-of-means rule set 2.73 on every ring that carried any mode, so the ridge's
+amplitude grew as the ridge flattened (at the last ring, stellar amplitude 0.05, the gas ran 0.34–1.90). And it
+spiked: ψ at unit power reaches 2.19 at R₀ where crests meet, and e^{κψ} is calibrated on a cosine of reach 1 —
+the crest at R₀ was 11.3 where S51's was 3.07, the field ran 0.34–15.5, 1 % of the cells held 9.3 % of the gas,
+and `sfr_modulation` peaked at 41.6. The lead measured two rescalings before asking (ψ over its peak bound: crest
+5.4 at R₀, 9.6 at 12 kpc; the ratio following the gain: the fade mended, the spike not): "the exponential of a sum
+of modes makes knots, not ridges, whatever the scaling".
+
+**A second gate turn (the gas ridge only), 2026-10-04; ruling by Fable on the second `docs/HANDOFF_S56.md`, nothing
+run. "It keeps ruling 6's intent ('nothing shocks on nothing') and replaces its mechanism."**
+
+7. *The ridge by rank.* "On each ring the gas takes S51's ridge values in the order of the stellar pattern:
+   v(R, φ) = V(q)/z(R), V(q) = e^{κ cos πq}/I₀(κ), κ as S51 has it (4.98 from the measured width), q(R, φ) the
+   fraction of the ring on which ψ exceeds ψ(R, φ), ψ = Σ_m u_m cos(mχ − θ_m) exactly as built (untapered unit
+   amplitudes, the layer's phases). q is the *measure of the superlevel set*, not a rank of cells: the crossings of
+   ψ − ψ(φ) are bracketed on the fixed PHASE_CELLS cells of one pattern period and each refined (Newton or
+   bisection) to 1e-12 in χ. The linearly interpolated rank of the cells is not it: its one-mode error is 1e-5 and
+   fails the regression. For one mode q = |θ|/π and v is S51's von Mises; the same code path, no special case.
+   z(R) is V's mean over the fixed cells of q. Every ring then carries S51's histogram, so z, v̄_in(s), v̄_out(s)
+   depend on the mask share s(R) alone: `_ring` runs unchanged on the one-mode sorted table with the ring's share;
+   the share keeps m_eff. A ring with no mode (ψ ≡ 0, q undefined) has v = 1, a = 0, no mask, as built." A rank
+   map is a law the model may publish for one session: "deterministic, point-evaluable from the ring's fixed
+   quadrature, its histogram independent of the phases, S51 exactly at one mode, honouring the sourced ratio on
+   every ring; it is P2's instrument and P2's shock retires it." **Forbidden:** e^{κψ} on several modes at any
+   scaling. **Named alternative, not adopted:** the power-weighted mixture of one-mode ridges,
+   v = Σ_m (u_m²/Σu²) e^{κ cos(mχ − θ_m)}/I₀(κ) — local, the same bound, "but it cannot reach the sourced ratio
+   where the power is split and so abandons the one number the gas has".
+8. *The fade follows the forcing amplitude.* "C(R) = 1 + (C − 1) ρ(R), ρ(R) = min(1, (Σ_m u_m(R)²)^{1/2}): the
+   ring's stellar arm amplitude in units of A, the taper excluded (w_arm already multiplies a(v − 1); counting it
+   twice is forbidden), the saturation included (a saturated ring forces less). a(R) = (C(R) − 1)/[(v̄_in − 1) −
+   C(R)(v̄_out − 1)], clipped as built. Linear in the potential: ruling 1 writes the power as A² with the gain on
+   it, so the amplitude is √gain, and a response to a potential is to its amplitude. One fully amplified mode has
+   ρ = 1 and C(R) = C." The ratio following the gain is the quadratic response, the named alternative; "P2's
+   solver run at several forcing amplitudes measures the exponent; P1 does not fit it". **Forbidden:** the ratio
+   fixed on every ring that carries any mode; any ratio law that steps.
+9. *Inside the bar's reach* nothing changes: ψ, ρ and q from the untapered unit amplitudes; the taper multiplies
+   a(v − 1) and the bar's term is added outside the ridge, as S51 and as built. The bar's term is not ranked.
+10. *The crest is guaranteed, not reported.* "Since v ∈ [e^{−κ}, e^{κ}]/I₀(κ) on every ring and
+    a(s, C(R)) ≤ a(½, C) … the gas outside the bar's reach lies in [1 − a(½, C), 1 + a(½, C)(e^κ/I₀ − 1)] =
+    **[0.53, 3.07]** at the defaults, on every ring and every seed." **Forbidden:** "any clip, cap or floor added
+    after composition to obtain this; the bound is the form's or the build has failed."
+
+**The gate the ridge must meet (Fable's):** one mode returns S51's field to 1e-9 through the general method; ring
+means 1 to 1e-12 on the quadrature cells; the ratio of means inside the ring's mask equals C(R) to 1e-9 on every
+ring that carries a mode; the gas's maximum ≤ 3.07 + B·taper and minimum ≥ 0.53 − B·taper on every seed the suite
+draws; finite everywhere; layer-off unchanged.
+**Its predictions (default galaxy, production grid; B4):** at R₀ crest 3.07 and trough 0.53 where the share sits
+at its cap, otherwise crest in [2.9, 3.07] and trough in [0.53, 0.58]; cells above 4 hold none of the gas;
+`sfr_modulation`'s peak falls from 41.6 to S51's order; the ratio of means 2.73 on every ring to 13.76 kpc; at the
+last ring (14.81 kpc) ρ = 0.124, C(R) = 1.21, the gas within 0.90–1.45, the next ring exactly 1; the censuses and
+their ratios move back toward S51's side (Q toward 1.038, not 0.969) — reported, not gated.
+**Forbidden, in sum:** a new constant; any change to κ, the width, C, the share's rule, `SWING_X_*` or the stellar
+side; a post-composition cap or floor; a one-mode special case; anything read from `arm_multiplicity`.
+**For the owner at the close, with the lanes on screen:** the rank map is a one-session instrument, not a local
+law — a point's gas depends on its whole ring's ψ — and P2's shock replaces it at S57; and on rings with several
+modes the ridge's width is not the measured one (a tall crest takes a wider ridge, a low one none). "If the owner
+dislikes the look, the named alternative in 7 is the fallback, a new ruling, not a tweak of this one."
