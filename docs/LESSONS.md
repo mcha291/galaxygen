@@ -1441,3 +1441,38 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   now differ by one ulp with the layer on and off. Sum the expectation before the placement, or hold it to one
   ulp by name (carried to G2).
 
+
+## From S57 (the gas's steady response; an Opus lead in two sittings, three readers, two builders, a reviewer, Fable at G2 and G3)
+
+- [all] The gate ruled the mechanism away: for arms whose power is set ring by ring the frame is the ring's own
+  rotation, so nothing flows through an arm and the plan's "steady shock" became the same equations' member at
+  zero flow. A plan's mechanism is a prediction about the reading; brief the reader on the case the plan did not
+  want (here: what the steady response is when the pattern moves with the gas) before the gate, not after.
+- [all] The probe before the gate was anchored and re-derived twice: the forcing written in the arm-number law's
+  own variable X against D215's hand value, the corotating equation derived by the lead and, unprompted, by a
+  blind reader, then again by Fable and by the reviewer. Four derivations cost little; S56's one wrong probe cost
+  three gate turns.
+- [field] An absolute residual tolerance is a statement about the size of the equation's terms. Where the terms
+  are ε²|φ|/h² and only their sum is of order one, the correctly rounded exact solution can fail it, and which
+  ring raises is chance. State a convergence criterion with its rounding floor, as a bound on the rounded exact
+  solution, and find the floor with a high-precision referee, not by iterating longer.
+- [field] Sweep a law's inputs to their tails before the gate. The forcing goes as 1/sin(pitch) and the pitch's
+  draw has a clip at 1°: two of the suite's 240 galaxies and twenty of 600 swept seeds sat there. A 300-seed
+  sweep per template is a minute's work and belongs in the builder's brief.
+- [field] A field sampled at cell centres keeps a ring's total only on grids commensurate with the solver's own
+  cells. Publish the exact mean of the interpolant over each cell: the total holds on every grid with no
+  division, and the point function stays for whoever reads a point.
+- [audit] "Bit-identical across the change" is the right assertion where the old criterion decided and too
+  strong where rounding did: four rings whose old acceptance was a chance landing inside the floor moved by
+  2e-15. Assert identity where it is owed and a bound where it is not, and say which is which before the run.
+- [audit] A check's definition with a tie in it will be read the kindest way by whoever builds it first (the
+  width against the "strongest mode", tied on 52 of 53 rings). Fix the definition before the number is read;
+  if it was read first, print every reading beside the one kept.
+- [audit] A gate cannot see an invariant its handoff does not show: G2 defined a row that reads a composed
+  field, which I3's test forbids. Before a builder is briefed, hold every new row, check and field against the
+  tested invariants, and put the conflict back to the same gate agent, resumed: a narrow follow-up took seconds.
+- [close] A paused sitting can still commit. The earlier sitting's reader and its clone check finished after its
+  BRIEF was written, and it committed both onto the branch while this sitting was already re-running them. On
+  resuming, fetch and read the branch's log again after the first few minutes, and before repeating owed work.
+- [infra] `grep -r` from the repository's root walks `node_modules` and every agent worktree (two minutes): use
+  the search tool with a glob, or name the directories.

@@ -14,8 +14,8 @@
 // height); the HII regions' Hα, placed round each ring by the gas's own contrast (D210), in the clouds' layer;
 // the diffuse gas's Hα in its own published 1.4 kpc layer, which a tilted view sees brighten toward
 // the limb. The dust dims each filter by its own depth from the grain model's curve, and since D207 its
-// column round each ring follows the model's placement (`dust_placement`): the gas's own contrast since D210, a
-// narrow ridge on each arm's crest, each ring's total unchanged.
+// column round each ring follows the model's placement (`dust_placement`): the gas's own contrast since D210 - since
+// D216 its steady response to the stellar arms - each ring's total unchanged.
 //
 // **What the field regime still invents at galaxy scale: nothing structural.** The seeded Hα knots,
 // the clump lattice, the dust's lead onto the arms' inner edge, the line's and the dust's crowding

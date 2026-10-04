@@ -339,19 +339,34 @@ ARM_CONTRAST_MEAN = _scalar(
 
 GAS_ARM_CONTRAST = _scalar(
     "gas_arm_contrast", "Gas arm–interarm contrast (ratio of means)", "dimensionless",
-    "The ratio the gas's arm pattern is set to where the arms are whole: mean gas surface density "
-    "inside an arm mask of the source's width over the mean outside it — a ratio of means, not a "
-    "peak-to-trough. Since S56 it is not the ratio on every ring: it fades with the stellar forcing, "
-    "C(R) = 1 + (C − 1)·ρ(R) with ρ the modes' root-sum-square amplitude over the arm amplitude, "
-    "capped at one - this number where the disc carries the arms' power whole, falling to 1 (no "
-    "pattern) where the disc amplifies no mode (D215 ruling 8). "
+    "The measured ratio the gas's arms are checked against, and no longer what they are set to: mean "
+    "gas surface density inside an arm mask of the source's width over the mean outside it — a ratio "
+    "of means, not a peak-to-trough. From S51 to S56 the gas pattern's amplitude was solved from this "
+    "number; since S57 the gas pattern is the gas's own steady response to the stellar arms, which "
+    "reads no contrast, and this number is the target of a disclosed check held in the tests: the "
+    "same ratio measured on the model's response, ring by ring, with the layer on (D216). No stage "
+    "reads it. "
     "Its mean is derived as the stellar amplitude's is: the non-grand-design spirals' molecular ratio "
     "plus the two-fold pattern's amplification weight times the way to the grand designs'. No "
     "residual is drawn: the source's spread is over arm segments and radial bins, not galaxies, so it "
     "is not a galaxy-to-galaxy scatter and the galaxy carries the class mean (D210 as amended, debt "
     "#131) [verified: Querejeta et al. 2024, A&A 687, A293, Table 1; docs/READING_GAS_PATTERN.md]. "
-    "2.73 at the defaults, where m = 2 sits inside the vigorous range. Where the ridge's amplitude is "
-    "clipped to keep its trough or crest above zero, the ring's ratio falls short of this number.",
+    "2.73 at the defaults, where m = 2 sits inside the vigorous range.",
+)
+
+ARM_PATTERN_SPEED = FieldDecl(
+    name="arm_pattern_speed", label="Arm pattern speed Ω_p(R)", unit="km/s/kpc",
+    kind=Kind.FIELD, axes=("R",), ramp=Ramp("viridis", scale="log"), meaningful_zero=True,
+    about=(
+        "A statement of the frame, not a measurement: the angular speed at which every arm mode is taken "
+        "to turn at each radius, which is the disc's own - the circular velocity over the radius. The arms "
+        "are material, swing-amplified patterns that turn with the gas at every radius, so there is no "
+        "one corotation radius, no gas flows through an arm, and each ring's several modes are steady "
+        "together in the one frame that turns with that ring (D216). It is the frame the gas's arm "
+        "pattern is solved in. Nothing computes anything from this field: the flow through the arms is "
+        "zero by construction, not by a subtraction of two speeds. The bar's pattern speed is another "
+        "quantity, a single number drawn through the fast-bar ratio."
+    ),
 )
 
 
@@ -381,6 +396,9 @@ def compute_bar(ctx: Context) -> Mapping[str, Any]:
         "swing_arm_max": m_hi,
         "arm_contrast_mean": contrast_amplitude(floc + (grand - floc) * coherence),
         "gas_arm_contrast": gas_other + (gas_grand - gas_other) * coherence,
+        # S57 (D216): the frame every arm mode is steady in, Ω_p(R) = Ω(R) = v_c/R. A statement, published so
+        # that the frame is on the record; no stage reads it and the flow through the arms is 0 by construction.
+        "arm_pattern_speed": total / R,
     }
 
 
@@ -392,7 +410,9 @@ BAR = IMPLEMENTATIONS.register(
             "pattern that has no draw in it. Split from the seeded half so that row 15 stays "
             "reproducible (D55). Since S26 it publishes the swing-amplification window and the mean "
             "arm amplitude, derived from disc_dominance and shear_rate (D175); since S51 the gas's "
-            "arm–interarm ratio of means, derived the same way with no draw (D210 as amended)."
+            "arm–interarm ratio of means, derived the same way with no draw (D210 as amended) - since S57 "
+            "the target of a disclosed check and no stage's input; and since S57 the frame the arm modes "
+            "are steady in, the disc's own angular speed at each radius (D216)."
         ),
         compute=compute_bar,
         reads_constants=(
@@ -402,7 +422,7 @@ BAR = IMPLEMENTATIONS.register(
         ),
         requires=("disc_scale_length_spin", "circular_velocity", "halo_circular_velocity"),
         publishes=(BAR_HALF_LENGTH, DISC_DOMINANCE, SHEAR, SWING_X, SWING_ARM_MIN, SWING_ARM_MAX, ARM_CONTRAST_MEAN,
-                   GAS_ARM_CONTRAST),
+                   GAS_ARM_CONTRAST, ARM_PATTERN_SPEED),
     )
 )
 

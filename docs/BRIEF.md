@@ -1,57 +1,60 @@
-# BRIEF — for S57: BUILD_III's Phase P2, pattern speeds and the gas shock ring by ring (an Opus lead; gates G2, G3)
+# BRIEF — S58: BUILD_III's Phase P3, the bar: a body, an absence, its lanes (an Opus lead; no scheduled gate)
 
-**The state (2026-10-04).** S56 is merged (D215): the stellar pattern is several arm modes at once — the local swing
-window splits the power among m = 2–6 ring by ring, the modes saturate together, their phases are a draw on
-`texture_seed` — and the gas ridge follows any pattern, **placed by rank along each ring, a one-session instrument
-(#140) that this phase retires**. The Milky Way template is four-to-six-armed outside the bar (#138, re-read at
-P3's close). Rows are judged layer-off: 12 / 20 / 5, unmoved. Register 78 open = 11 + 67, 45 discharged. Numbers
-from D216, #141, row 38, board row 57. **The owner's standing order: run the sessions back to back, stop only for
-a ruling that is the owner's, spawn Fable at the plan's gates.**
+**The state (2026-10-04).** S57 is merged (D216). Gate G2 ruled the plan's mechanism away: for arms whose power is
+set ring by ring the frame is the ring's own rotation, so **no arm shocks**, and the gas's arm pattern is its
+steady corotating response under uniform potential vorticity, solved ring by ring (`stages/gas_response.py` the
+solver, certified on Sormani et al. 2017's threshold; `stages/gas_pattern.py` the law). The ranked ridge is gone
+(#140 discharged). Rows are judged layer-off: 12 / 20 / 5 of 37, unmoved. Register 81 open = 11 + 70, 46
+discharged. Numbers from D217, #145, row 38, board row 58. **The owner's standing order: run the sessions back to
+back, stop only for a ruling that is the owner's, spawn Fable at the plan's gates and at a stop condition.**
 
-## Before anything: the owner's answer to S56's question (D215, the end)
-(a) keep the local arm-number law and carry #138 to P3 — **the default if unanswered**; or (b) S26's global window
-on every ring. **If (b): S57 opens with that swap** — `mode_law`'s weights from `swing_window` on the global f_d
-and Γ, constant in R; the hand-derived test re-pointed; every layer-on pin re-read; no gate turn (D215 ruling 11).
+## Told to the owner at S57's close (nothing here waits on an answer)
+- Their item 3's "steady 1-D gas shock per ring" became the steady corotating response; the shocked branch is P3's.
+- The derived gas ridge is as wide as the stellar arm, 2.5–3.1 times the one measured width (#129): a recorded miss.
+- A galaxy that draws a pitch under about 2.7° is forced enormously (#142); **a floor on the drawn pitch is the
+  owner's to order, with a read source** — do not add one.
+- `ngc_4414`'s seven outer rings read under PHANGS's band in the disclosed check.
 
 ## First
-`uv run python tools/bootstrap.py` (S56's close ran the suite and `verify_clone` on `main`). **Read `BUILD_III.md`
-§1, "Phase P2" in §5, §3b–§3d, and D215's rulings 7–13: that text is the ruling so far.** The closing suite now
-takes about 55 minutes (the ranked ridge).
+`uv run python tools/bootstrap.py`; confirm S57's `verify_clone` on `main` passed (the close ran it; RESUMING has
+the instruments). **Read `BUILD_III.md` §1, "Phase P3" in §5 (it now carries the shocked branch's certification),
+§3b–§3g, and D216 whole: its items 8 and 10 are P3's inheritance.**
 
-## The order (BUILD_III §5, Phase P2)
-1. **Two readers, blind to the model, in parallel**: the steady spiral shock (Roberts 1969; Shu, Milione & Roberts
-   1973) — its equations, the sonic point, the isothermal jump, a published profile with the parameters it was
-   computed at; and its width and offset (Gittins & Clarke 2004; Kim & Ostriker 2002) with pattern speeds of
-   transient modes. Assemble `docs/READING_GAS_SHOCK.md`.
-2. **Gate G2 (Fable, one turn on `docs/HANDOFF_S57.md`), after the reading and before any build**: the equations
-   to integrate, the treatment of the sonic point, the fallback where no shock forms (the plan declares the linear
-   response), which pattern speed a ring uses when its modes differ. **Carried to G2 from S56**: the ranked
-   ridge's published field passes its exact bound by 2.5e-3 (the ring-mean division; the law is inside); two
-   expected totals differ by one ulp layer on and off (I1 says bit for bit); the fade's exponent (ruling 8 took 1,
-   P2's solver measures it); and what replaces the ratio-of-means amplitude when the shock derives its own.
-3. **The instrument first (B1)**: the solver reproduces a published profile at the source's parameters before the
-   model uses it. Builder A (solver and instrument), builder B (integration, the pattern speeds, the re-pins).
-4. **An Opus reviewer on the diff, then gate G3**: does the solver reproduce the profile for the right reason; are
-   the retired constants' checks honest (`GAS_ARM_WIDTH`, the mask, the two contrast constants become checks, a
-   disclosed row for PHANGS's ratio of means — its numbers have been printed, D113).
+## The order (BUILD_III §5, Phase P3)
+1. **Reading, two blind readers (§3e):** bar light fractions, axis ratios and profiles from the S⁴G decompositions;
+   the bar fraction against disc properties and a disc stability criterion, with any galaxy-to-galaxy scatter; the
+   gas lanes' offset and curvature; **and, for #139, the phase of spiral arms against the bar's ends**.
+2. **Probe before build** (§3g): what the existing `bar` fields give against the reading; rows 15–17 as they stand.
+3. **Build to the phase's text:** the body (the ring's *old* stars along the bar's axis, a mean-one two-fold ridge,
+   sourced axis ratio and light share; young stars and gas follow the gas response, which now feels the bar); the
+   absence (presence derived from the sourced criterion; a seeded residual only if a galaxy-to-galaxy scatter is
+   read; an unbarred galaxy publishes NaN); the lanes (a synthetic template curve with sourced parameters).
+4. **An Opus reviewer on the diff before the merge** (it found a blocker at S55, S56 and S57).
+5. **At the close: re-read debt #138 once** (the arm-number law against `READING_ARM_MODES.md`, same statements,
+   same table), with the bar's m = 2 built; if statement 8 still fails it goes to the owner as a conflict of sources.
 
-**Consequences the plan names:** a pattern speed per mode (#81's first half; the young-star cut becomes a crossing
-time); #129, #131 and #140 re-ruled; D210's ruling 3 (no offset) superseded where the physics signs the offset.
+## What S57 leaves P3 (D216)
+- **The bar inside the gas's forcing.** Today the gas is g = (1 − taper)·s + taper·(1 + B cos 2(φ − φ_bar)): the
+  response to the *arms*, blended with the stellar bar's own cosine. The bar turns at Ω_b, not with the ring, so
+  gas flows through it: "P3 may replace the blend inside the bar's reach" (item 8). **How the bar's potential
+  enters — a second frame on the same ring — is a physics ruling: a conditional gate, not the lead's.**
+- **The shocked branch** (sonic point in Gittins & Clarke's regularised variables, the isothermal jump, a bisection
+  on the sonic point's phase) is unbuilt. If P3 uses it, it is certified first on Kim, Kim & Kim 2014's Table 1
+  under both x = 0.1450 and 0.1458 and on Shu, Milione & Roberts's rows B–D (`READING_GAS_SHOCK.md` A3). The
+  smooth branch at flow ≠ 0 exists in `gas_response.solve(flow=…)` and is certified only base-subsonic.
+- `arm_pattern_speed` is a statement of the arms' frame; nothing computes from it, and Ω_b is a separate field.
 
 ## Traps
-- **Check a probe before it reaches a gate** (S56's lesson, the lead's own error): confirm what every reused
-  function's argument *is* from its docstring and call site, test the probe against one published anchor, and
-  have a builder write one test that re-derives the central quantity by hand, independent of the module.
-- **Always run the independent reviewer before a merge**: it found a blocker at S55 and at S56.
-- A fixed-step integration, a bisection, a declared fallback: no convergence loop (A1, BUILD_III §9).
-- The pattern stage's fields are the law (five `arm_mode_amplitude_m`, `arm_saturation`); `arm_multiplicity` is a
-  label nothing may compose from; a pattern object is built only through `layer/compose.py`.
+- **Check a probe before it reaches a gate**; one hand-derived test independent of the modules; the reviewer always.
+- **Sweep a law's inputs to their tails before the gate** (S57: twenty of 600 seeds sat on the pitch's clip and
+  raised): 300 pattern seeds per template in the builder's brief.
+- A convergence criterion is stated with its rounding floor (`gas_response._floor`); never loosen its numbers.
+- Hold every new row or check against I1–I5 before briefing a builder: a row may not read a composed or a
+  synthetic field (I3); a layer-on measurement is a pinned, disclosed check in the tests.
 - Layer-off nothing may move: the rows, the template checks, every radial field outside `CENSUS_STATISTICS`.
-  Layer-on the galaxy changes again; regenerate the frames (`npm --prefix frontend run picture:update`) only
-  after the pins are read, and say so.
-- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no bar work and no m = 1 term (they are P3's and
-  the owner's); no ring-first draw (L1's).
-- A subagent cannot write report files: take findings from its final message. Resume a builder with SendMessage
-  for a second pass; hold a branch's merge until both halves of a contract change are ready.
-- Scripts in the scratchpad, never `$TMP`; LF newlines; a Bash command over 8 KB is cut (use the Write tool);
-  `tests/test_audit.py` pins the register's counts and its carried row.
+  Regenerate the frames (`npm --prefix frontend run picture:update`) only after the pins are read.
+- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no m = 1 term; no ring-first draw (L1's); no
+  change to the pitch's draw.
+- A paused sitting can still commit: fetch and read the branch's log again before repeating owed work.
+- A subagent cannot write report files; resume a builder or a gate agent with SendMessage; scripts in the
+  scratchpad, never `$TMP`; LF newlines; a Bash command over 8 KB is cut; never edit pinned docs while the suite runs.

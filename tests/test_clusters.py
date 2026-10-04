@@ -201,10 +201,13 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # whole-disc Q moved +2.9 %, inside its 5.8 % seed-to-seed spread, the tolerance above 0.16.
     # S56 (D215): the gas's ridge follows five arm modes at their own phases, so the clouds are another Poisson draw
     # again; the whole-disc Q moved -4.9 % and the clusters' mass -5.2 %, the tolerance above 0.16.
-    assert ratio == pytest.approx(0.9870, abs=0.0005)  # S56 (D215): was 1.0382; S51 (D210): was 1.0088
+    # S57 (D216): the clouds are placed by the gas's steady response to the arm modes, another Poisson draw of the
+    # same expected census; the whole-disc Q moved -1.7 % and the clusters' mass +0.3 %, the tolerance above 0.16.
+    assert ratio == pytest.approx(0.9701, abs=0.0005)  # S57 (D216): was 0.9870; S56 (D215): was 1.0382; S51 (D210): was 1.0088
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
-    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.007, abs=0.001)  # S56 (D215): was 1.063; S51 (D210): was 1.029
-    assert expected / light_young == pytest.approx(0.999, abs=0.001)  # S56 (D215): was 1.053; S51 (D210): was 1.022
+    # S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
+    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.010, abs=0.001)
+    assert expected / light_young == pytest.approx(1.002, abs=0.001)  # S57 (D216): was 0.999; S56 (D215): was 1.053; S51 (D210): was 1.022
     # The efficiency the census used, against the sources it was chosen against (its about line).
     assert F["cluster_formation_efficiency"] == pytest.approx(0.02058, abs=0.0001)
     assert 0.005 < F["cluster_formation_efficiency"] < 0.08
@@ -215,7 +218,8 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 5.466e6; S51 (D210): was 5.363e6 (the clouds on the gas's ridge, another draw of the census)
     # S56 (D215): was 5.505e6 (the ridge on five arm modes, another draw of the census)
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.241e6, rel=0.01)
+    # S57 (D216): was 5.241e6 (the clouds on the gas's steady response, another draw of the census)
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.132e6, rel=0.01)
 
 
 def test_the_census_on_the_default_grid(default):
@@ -224,16 +228,19 @@ def test_the_census_on_the_default_grid(default):
     F = o.fields
     mass = np.asarray(F["cluster_mass"])
     # S56 (D215): was 12930 (the gas's ridge follows five arm modes: another draw of the census); S51 (D210): was 12860
-    assert mass.size == 12814 == int(_hosts(F).sum())
+    # S57 (D216): was 12814 (the clouds placed by the gas's steady response to the arm modes: another draw of the census)
+    assert mass.size == 12829 == int(_hosts(F).sum())
     assert mass.min() == pytest.approx(9.289, rel=1e-3) and mass.max() == pytest.approx(2.652e5, rel=1e-3)
     # S51 (D210): median was 763.06 (763.42 then, inside the rel 1e-3), sum was 3.613e7
     # S56 (D215): median was 763.06 (763.42), sum was 3.733e7
-    assert np.median(mass) == pytest.approx(764.08, rel=1e-3) and mass.sum() == pytest.approx(3.537e7, rel=1e-3)
+    # S57 (D216): median was 764.08, sum was 3.537e7
+    assert np.median(mass) == pytest.approx(762.35, rel=1e-3) and mass.sum() == pytest.approx(3.547e7, rel=1e-3)
     bound = np.asarray(F["cluster_bound"])
-    # S56 (D215): was [890, 5982, 6058]; S51 (D210): was [901, 5951, 6008]
-    assert np.bincount(bound, minlength=3).tolist() == [906, 5947, 5961]
+    # S57 (D216): was [906, 5947, 5961]; S56 (D215): was [890, 5982, 6058]; S51 (D210): was [901, 5951, 6008]
+    assert np.bincount(bound, minlength=3).tolist() == [894, 5946, 5989]
     # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 3 clusters are above it,
-    # holding 2.0% of the mass (S56, D215: was 5 holding 3.1%; S51, D210: was 4 holding 2.7%).
+    # holding 2.0% of the mass (S56, D215: was 5 holding 3.1%; S51, D210: was 4 holding 2.7%; S57, D216: 3 and 2.0%
+    # still, on another draw).
     assert int((mass > 2.0e5).sum()) == 3  # S56 (D215): was 5; S51 (D210): was 4
     assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.450, abs=0.002)
 

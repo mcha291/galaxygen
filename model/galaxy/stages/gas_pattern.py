@@ -1,120 +1,114 @@
-"""The gas's own arm pattern (checkpoint 3; S51, D210 Phase 1; since S56 a response to any stellar pattern, D215).
+"""The gas's own arm pattern (checkpoint 3; S51, D210; since S57 the gas's steady response to the stellar arms, D216).
 
-The stellar pattern (``pattern``) is a sum of cosine modes: an arm whose half-maximum is half
-the arm-to-arm period, its amplitude Elmegreen et al. 2011's peak-to-trough contrast of the old
-stars. The gas is not that. Measured the same way in the same galaxy, the gas ridge is half the
-stellar arm's width (Egusa et al. 2017), and its arm-to-interarm contrast, measured as a ratio
-of means inside the arm mask, is two to three where the stars' is a few tens of percent
-(Querejeta et al. 2024). D210 rules a second pattern for the gas, read off the first; D215
-restates it so that it follows whatever the stellar pattern is.
+The stellar pattern (``pattern``) is a sum of cosine modes whose crests the randomness layer places. The gas
+is not that field: it answers the modes' potential. From S51 to S56 the answer was stated as a shape - a von
+Mises ridge of a measured width, its amplitude set from a measured ratio of means, since S56 laid round each
+ring in the order of the stellar modes' sum. Gate G2 of S57 (DECISIONS.md D216) retired the shape for a law:
+on every ring the gas takes **the steady response of isothermal gas that turns with the arms**, solved by
+``gas_response`` (the instrument, certified in ``tests/test_gas_response.py``), and nothing of the ridge is
+put in.
 
-- **The form** (D210 ruling 2). g(R, φ) = 1 + w_arm(R) a(R) (v(R, φ) − 1) + w_bar(R) B cos 2(φ − φ_bar).
-  The arm weight w_arm = 1 − the bar's taper, the bar weight, the winding phase and the bar's angle
-  are the stellar pattern's own (``pattern.bar_terms``, not re-derived); the bar term is the
-  stellar bar's, B its ``bar_contrast``. The taper multiplies a (v − 1) and the bar's term is added
-  outside the ridge: neither is ranked (D215, gate ruling 9).
-- **The stellar pattern the ridge follows.** ψ(R, φ) = Σ_m u_m(R) cos(m χ − θ_m), χ = φ − ln R · cot p:
-  the stellar arm modes at unit amplitude **before the bar's taper**, u_m = A_m(R) / (A w_arm(R)) with
-  A_m the published mode amplitudes, A the published ``arm_contrast`` and θ_m the layer's phases.
-  (The plan writes ψ = (c − 1)/A; outside the bar's reach that is this ψ, and inside it S51's form
-  keeps the taper and the bar outside the ridge, which is the only reading under which one mode is
-  S51's field.)
-- **The ridge by rank** (D215, gate ruling 7, the second turn). On each ring the gas takes S51's
-  ridge values in the order of the stellar pattern:
+- **The frame** (D216 items 1-2). Every arm mode turns with the gas, Ω_p(R) = Ω(R): the swing-amplified arms
+  of the reading (``docs/READING_GAS_SHOCK.md`` Part B) and the only frame in which a ring's several modes are
+  steady together. So nothing flows through an arm and nothing shocks in it: there is no sonic point and no
+  jump. The derived ``bar`` stage publishes that frame as ``arm_pattern_speed``; nothing here reads it, and
+  the flow handed to the solver is 0 by construction.
+- **The law** (item 5), on each grid ring, with χ = φ − ln R · cot p the pattern coordinate and s(χ) the gas's
+  surface density over its ring mean:
 
-      v(R, φ) = V(q) / z,    V(q) = e^{κ cos πq} / I₀(κ),
+      ε² d²ln s/dχ² = s − 1 − Σ_m f_m cos(m χ − θ_m)
 
-  q(R, φ) the **fraction of the ring on which ψ exceeds ψ(R, φ)** - the measure of the superlevel
-  set, 0 on ψ's highest crest and 1 in its deepest trough. For one mode ψ = cos θ, the set is
-  |θ′| < |θ|, q = |θ|/π and v is S51's von Mises e^{κ cos θ}/I₀(κ) - through the same code, with no
-  one-mode case. Every ring carries S51's histogram of ridge values whatever its modes and phases:
-  what the stellar pattern decides is where round the ring each value sits. So the crest is the
-  form's (gate ruling 10): v lies in [e^{−κ}, e^{κ}]/I₀(κ), and outside the bar's reach the gas lies
-  in [1 − a(½, C), 1 + a(½, C)(e^κ/I₀ − 1)], 0.53 to 3.07 at the defaults, on every ring and every
-  seed. Nothing is clipped, capped or floored after composition to obtain it.
+  ε = a/(κ R sin p), a the cold gas's velocity dispersion taken as its isothermal sound speed (the one the
+  star-formation threshold reads: there is no second); f_m = m A_m/(X sin p), X = κ²R/(2πGΣ) the arm-number
+  law's own variable with checkpoint 1's total disc Σ (``pattern.local_swing_x``); A_m the mode's cosine
+  amplitude **before the bar's taper** - the published amplitude over (1 − taper), which is the arm amplitude
+  times :meth:`GasPattern.unit_amplitudes`; θ_m the layer's phases. **The forcing's amplitude carries the
+  saturation** (gate G3 item 3): A_m is the stellar field's actual cosine amplitude on the ring with the
+  taper taken back out - the arm amplitude times the root of the mode's gain times the pattern stage's
+  saturation factor, which is under 1 where the modes' linear sum would reach the mean - "because the gas
+  answers the stars that exist". Uniform potential vorticity closes the equation (item 3). It is the
+  Euler-Lagrange equation of a strictly convex functional, so on every ring the solution exists, is unique,
+  is positive and has mean 1. A ring that carries no mode has s = 1.
+- **Nothing is put in and nothing is mended.** No amplitude, width, mask or contrast enters; no thickness
+  factor, no constant added, no f scaled; nothing clipped, floored, capped or divided by a sampled mean. A
+  ring the solver cannot converge raises (``gas_response.ConvergenceError``) and is not caught: there is no
+  fallback and no linear substitute (item 7). The solver holds a cell's residual under 1e-10 or under the
+  cell's rounding floor where that is larger (gate G3 item 2), so a tightly wound galaxy's rings - a drawn
+  pitch under about 2.7 degrees, ε of order 1, a total forcing of 60-80 - converge as every other ring does.
+  That regime is published as the law gives it, nothing clipped: s from 1e-44 to 14, the arm-to-arm spacing
+  then comparable to the disc's thickness and the razor-thin forcing overstated by about that factor (a
+  finding under the razor-thin debt, below).
+- **The bar** (item 8). g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), w_bar the bar's taper, w_arm = 1 − w_bar
+  (their sum is checked), B the stellar ``bar_contrast``; the taper, the winding phase and the bar's angle are
+  the stellar pattern's own (``pattern.bar_terms``). The taper acts once, here, on the response to the
+  untapered forcing. So g ≥ w_bar (1 − B) > 0 and the ring's mean is 1. The bar inside the forcing turns at
+  its own speed and is Phase P3's.
+- **At a point** (item 9). The equation is solved once per grid ring on ``gas_response.CELLS`` cells. A point
+  at (R, φ) reads the two neighbouring grid rings' profiles **at its own χ** (the winding at the point's own
+  radius), linear in χ between the cells' centres and linear in R between the two rings, held at the end
+  rings beyond the grid; the taper and the bar's term are taken at the point's own radius. Both blends are
+  convex blends of positive profiles of mean 1, so the gas is positive and its mean round the ring is 1 at
+  every radius. :meth:`GasPattern.sector_means` is the exact mean of that same interpolant, so sectors that
+  tile a ring average to 1 to rounding.
+- **The published field is the law's exact mean over each grid cell's extent in azimuth, at the ring's own
+  radius** (gate G3 item 4, which rewords items 9 and 11 i): on each grid ring, the interpolant integrated
+  exactly over each of the grid's φ cells (:meth:`GasPattern.cell_means`, the arithmetic of the sector means;
+  the bar's cosine by its own integral). It is not a mean over the cell's extent in R: a point between two
+  rings is blended in R, as above. So a ring's cells average to 1 to rounding on every φ grid, with no
+  division - a field of centre samples did only on grids whose cell count divides the solver's (7e-14 off at
+  360 cells, 2e-3 at 36) - and each cell holds the gas the law puts on its ring there. ``contrast_at``,
+  ``response_at``, ``azimuths`` and the censuses keep the point function: a cell's expected count is its area
+  times its mean, a placed object reads the law at its own point, and the two are the same measure.
+- **The offset** (D210 ruling 3, now derived; gate G3 item 7 and its follow-up): zero for a lone mode,
+  exactly, by the equation's symmetry about the mode's crest; with several modes, within one solver cell
+  (0.25 degrees) on the Milky Way template and up to about a degree on ``ngc_4414`` - the mode-by-mode
+  weighting (each mode is answered with its own weight, m/(1 + m²ε²) in the linear limit, against the stars'
+  1), measured, not ruled; no offset is put in and none is published. As read on the solver's cells, the
+  tallest crest of s against the tallest crest of the stellar modes' sum: the Milky Way template within one
+  cell on 53 of 53 rings over 6-10 kpc and on 161 of the 165 rings that carry a mode (two rings read two
+  cells; on two, where six nearly equal crests stand, the tallest is another arm's); ``ngc_4414`` up to 5
+  cells (1.25 degrees) over 6-10 kpc and 7 at most over the disc. **It has no one sign**: on the Milky Way
+  template the gas's crest sits one cell to the larger χ on 48 of the 53 mid-disc rings and to the smaller χ
+  on 41 of the rings inside 6 kpc; on ``ngc_4414`` to the smaller χ on 27 of the 53, the larger on 6, and
+  over its disc 95 rings to the smaller and 16 to the larger; over the suite's 240 seeded galaxies the two
+  sides are met about equally (11 697 rings to the smaller χ, 12 298 to the larger, 11 012 on the same cell,
+  of the rings whose two tallest crests are the same arm's). It is the modes' weighting, not a displacement
+  downstream or upstream of the arm.
+- **Declared approximations, each a debt** (items 4-5): steadiness (the response relaxes on the ridge's
+  sound crossing, about as long as an arm lives); the razor-thin WKB potential, which overstates the high
+  arm numbers; the stellar mode's fractional amplitude applied to the total disc.
 
-  *Retired at the second turn:* v = e^{κψ} over its ring mean, the first reading of "the gas follows
-  any pattern". ψ at unit power reaches 2.2 where five modes' crests meet, and e^{κψ} is calibrated
-  on a cosine of reach 1: the crest at R₀ was 11 times the ring's mean (S51's: 3.07) - knots, not
-  ridges, whatever the scaling. The exponential of a sum of modes is forbidden.
+**What became of the ridge's numbers** (item 11 iv; gate G3 items 6-7). The measured ratio of means, the mask
+it is measured in and the measured width build nothing. They survive as the target and the definition of a
+*disclosed check*, made by the measurement functions at the foot of this module and pinned in the tests,
+layer on: the ratio of the means of s inside the source's arm mask against outside it (:func:`mask_share`,
+:func:`ratio_of_means`), and the full width at half maximum of a ring's tallest crest (:func:`crest_width`)
+over the period of the mode the gas answers most strongly, the one of largest forcing m·A_m. As read over
+6-10 kpc: the ratio a hit on the Milky Way template (median 2.571, 53 of 53 rings inside the source's band) and
+on ``ngc_4414`` but for its seven outer rings (median 1.881); the width a miss on every ring, 2.49-2.83 times
+the measured 0.17 on the Milky Way template and 2.82-3.09 times on ``ngc_4414``. No stage
+computes with them, and the mask's width and the measured width are no constants of the model: they left its
+registry at gate G3 ("a stage may not declare reads it does not make") and live in ``tests/`` with their
+sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
+constants: the ``bar`` stage derives the check's target from them.
 
-  A rank map is not a local law: a point's gas depends on its whole ring's ψ, and on a ring with
-  several modes the ridge's width is not the measured one (a tall crest takes a wide ridge, a low
-  one none). It is P1's instrument, and P2's shock retires it.
-- **No offset** (D210 ruling 3): the ridge's crest is the stellar pattern's crest. The
-  density-wave law, Δφ = (Ω − Ω_p) t with the shock on the inner edge inside corotation, is the
-  named alternative; the model publishes no spiral pattern speed to sign it with.
-- **The width** (D210 ruling 4) is a fixed fraction of one mode's arm-to-arm period:
-  κ = ln 2 / (1 − cos πW) is the von Mises's exact half-maximum relation, so for one mode
-  v(±πW) = v(0)/2 and the full width at half maximum is W of the period.
-- **The amplitude** (D210 ruling 5) is derived from the measured ratio of means with the source's
-  own mask: g is affine in v, so C = [1 + a(v̄_in − 1)]/[1 + a(v̄_out − 1)] inverts to
-  a = (C − 1)/[(v̄_in − 1) − C (v̄_out − 1)], clipped so the ridge is nowhere negative.
-  **The mask** is the part of the ring where ψ is highest, as large a share of the ring as the
-  source's mask covers - q < s(R): a mask of full width W_m perpendicular to an arm covers the
-  share m W_m / (2π R sin p) of a ring with m arms, capped at a half, and with several modes m is
-  the ring's power-weighted arm number m_eff(R) = Σ_m m A_m² / Σ_m A_m² (the lead's reading, D215:
-  it is m for one mode and does not know the phases). Since every ring has S51's histogram, v̄_in
-  and v̄_out depend on the share alone: they are S51's own sums at the half-width πs.
-- **The fade follows the forcing amplitude** (D215, gate ruling 8). The ratio of means the ring is
-  set to is C(R) = 1 + (C − 1) ρ(R), ρ(R) = min(1, (Σ_m u_m(R)²)^{1/2}): the ring's stellar arm
-  amplitude in units of A, the taper excluded (it already multiplies a (v − 1)) and the saturation
-  included (a saturated ring forces less). One fully amplified mode has ρ = 1 and C(R) = C; where
-  the disc amplifies little the ratio falls to 1 with it, continuously - nothing shocks on nothing -
-  and a ring that carries no mode has v = 1, a = 0 and no mask. (The first turn's rule set C on
-  every ring that carried any mode, so the amplitude grew as the pattern faded.) The ratio
-  following the gain - the quadratic response - is the named alternative; P2's solver measures
-  the exponent.
-- **The contrast C** is ``gas_arm_contrast``, published by the derived ``bar`` stage: the
-  non-grand-design class's ratio to the grand designs' by the two-fold pattern's amplification
-  weight, as the stellar amplitude's mean is (D175). **No residual is drawn** (D210 as amended,
-  debt #131): the source's spread is over arm segments and radial bins, not galaxies.
-
-**How q is computed, each count known in advance (A1).** One period of the ring's pattern - 2π over
-the greatest common divisor of the arm numbers the ring carries - is cut into ``PHASE_CELLS`` cells.
-ψ, ψ′ and ψ″ are read at the cells' edges; ψ's inflections and then its extrema are bracketed on
-those cells (an extremum pair inside one cell is parted by the inflection between them) and refined;
-the extrema join the edges as nodes, so between two nodes ψ is monotone and a level crosses it at
-most once. For a point, the crossings of ψ − ψ(point) are bracketed by sign on the nodes and each
-is refined: Newton from an inverse-Hermite start, kept inside its bracket, at most ``NEWTON_STEPS``
-evaluations, a root accepted when the next iterate's error is bounded under ``CROSSING_TOLERANCE``
-(1e-12 in χ) by the step and the series' second derivative; what is not accepted by then is
-bisected ``BISECTION_STEPS`` times. The point's own crossing is the point. The measure of the
-superlevel set is the sum of the falling crossings less the rising ones (plus the period where the
-period's first node is inside), so q is the measure itself and no rank of cells: a linearly
-interpolated rank of the cells is 1e-5 off at one mode. A crossing within about 1e-5 of an extremum
-is determined only to ψ's own rounding over its slope there, which no step count mends.
-
-**The mask's means** are S51's: midpoint sums of V over the fixed cells of q, taken from the crest
-outward, the one the share cuts counted by the fraction of it inside; z is V's mean over the same
-cells (1 to rounding). Against the integral v̄_in is off by 2e-7 of itself at the cap and 7e-5 at a
-half-width of 0.5: S51's quadrature, reproduced and not refined.
-
-**The sector means** come from the ridge's Fourier series at the radius: V(q(χ)) sampled at
-``HARMONIC_SAMPLES`` points over one period, each harmonic's sector mean a sine or cosine
-difference. For one mode the ridge is analytic and the series' dropped tail is under 1e-15. With
-several modes V(q(χ)) is continuous but has corners where ψ passes a level at which the superlevel
-set gains or loses a piece, so the series falls off slowly and ``HARMONIC_SAMPLES`` = 1024 gives
-the sector means to one or two parts in 10³ of the ring's mean (1.1e-3 at worst over thirty-two
-sectors for the Milky Way template and 1.9e-3 for ``ngc_4414``; pinned in ``tests/test_modes.py``);
-they still average to 1 round the ring exactly, which is what keeps a ring's expected count.
-
-**The grid field** is the ridge sampled at the model's φ cells. One mode's ridge is analytic and its
-sampled ring mean is 1 to rounding on the default grid; several modes' is not smooth, and its
-sampled mean leaves 1 by up to about one part in 10³. The stage divides a ring by its sampled mean wherever
-that has left 1 by more than ``RING_MEAN_TOLERANCE`` (as it has since S51 for a coarse φ grid), so
-every ring keeps its gas; the sampled field can therefore pass the form's bound by that factor.
+**One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
+them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
+cluster census), so the last few solutions are also kept by content - a digest of the forcing amplitudes,
+the phases and ε - and handed back as they were made (:func:`respond`). The solver gives a ring the same bits
+alone as in any batch, so a pattern's profiles are the same bits with the cache or without it (tested).
 
 **Why its own stage, and why seeded.** It reads no seed of its own and draws nothing; it reads the
-pattern's amplitudes, pitch and bar, which carry seeded draws, and the layer's phases, so
-``graph`` labels its one field seeded through those requirements (D55: a stage that reads a
-seeded or a synthetic field publishes seeded fields).
+pattern's amplitudes, pitch and bar, which carry seeded draws, and the layer's phases, so ``graph`` labels
+its one field seeded through those requirements (D55: a stage that reads a seeded or a synthetic field
+publishes seeded fields).
 """
 
 from __future__ import annotations
 
-import functools
+import hashlib
 import math
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -125,6 +119,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.stages import gas_response as _response
 from galaxy.stages.pattern import (
     AMPLITUDE_FIELDS,
     ARM_MODES,
@@ -133,340 +128,118 @@ from galaxy.stages.pattern import (
     bar_terms,
     effective_arm_number,
     invert_azimuths,
+    local_swing_x,
 )
 
-PHASE_CELLS = 360  # the fixed cells over one period of the ring's pattern: the brackets, and the mask's sums (A1)
-NEWTON_STEPS = 6  # evaluations a crossing's refinement may take before it is bisected instead
-BISECTION_STEPS = 40  # a cell is at most 1 degree wide: 40 halvings leave 1.6e-14 rad
-CROSSING_TOLERANCE = 1e-12  # rad of χ: what a refined crossing is bounded to
-HARMONIC_SAMPLES = 1024  # the FFT that gives the ridge's Fourier coefficients for the sector means
-HARMONIC_FLOOR = 1e-15  # harmonics under this (of the ring's mean) are dropped (FFT rounding ~1e-16)
-WORK_CELLS = 1 << 22  # points × nodes per block of the crossing search: bounds the working arrays, no number
+CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is held on their centres
 
-RING_MEAN_TOLERANCE = 1e-12  # a sampled ring mean further from 1 than this is renormalised (the φ grid's sampling)
+# What the gas's pattern is built from, and so what every stage that places by it requires (S57, D216): the
+# stellar pattern's own reads - the modes and their phases, never ``arm_multiplicity`` - the arm amplitude
+# the taper is taken back out with, and checkpoint 1's disc: its epicyclic frequency and total surface density.
+GAS_PATTERN_READS: tuple[str, ...] = ("arm_contrast", *PATTERN_READS, "epicyclic_frequency", "disc_surface_density")
+GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION")
 
-# What the gas's pattern is built from, and so what every stage that places by it requires (S56, D215): the
-# ratio of means, the arm amplitude the modes are scaled by, and the stellar pattern's own reads - the modes
-# and their phases, never ``arm_multiplicity``.
-GAS_PATTERN_READS: tuple[str, ...] = ("gas_arm_contrast", "arm_contrast", *PATTERN_READS)
-GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH")
+SOLUTIONS_KEPT = 4  # how many patterns' solved rings the content-keyed cache holds (about 4.6 MB each)
 
-_CELLS = -math.pi + (np.arange(PHASE_CELLS) + 0.5) * (2.0 * math.pi / PHASE_CELLS)  # cell centres over (−π, π)
-_ORDER = np.argsort(np.abs(_CELLS), kind="stable")  # from the crest outward: the falling order of V
-_BITS = 1 << np.arange(len(ARM_MODES))
 _M = np.asarray(ARM_MODES, dtype=float)
+_SOLUTIONS: dict[bytes, tuple[np.ndarray, _response.Diagnostics]] = {}
+_SOLUTIONS_LOCK = threading.Lock()
 
 
-def kappa_for_width(width: float) -> float:
-    """The concentration whose one-mode ridge has a full width at half maximum of ``width`` of the period.
+def respond(forcing: np.ndarray, phases, eps: np.ndarray, *, cache: bool = True) -> tuple[np.ndarray, _response.Diagnostics]:
+    """The steady response of each ring given: ``(s, diagnostics)``, s shaped (rings, CELLS) on the cells' centres.
 
-    v(θ)/v(0) = e^{κ(cos θ − 1)} = 1/2 at θ = πW, so κ = ln 2 / (1 − cos πW): exact for a von
-    Mises, no Gaussian limit taken. 4.977 at W = 0.17.
+    ``forcing`` f_m, shaped (rings, modes), dimensionless; ``phases`` θ_m in radians, one per mode; ``eps`` ε,
+    shaped (rings,), dimensionless. The flow through the pattern is 0 (D216 item 1). Raises what the solver
+    raises - ``gas_response.ConvergenceError`` for a ring it could not converge - and catches nothing.
+
+    ``cache``: the last ``SOLUTIONS_KEPT`` solutions are kept under a digest of the three arguments' bytes and
+    returned as they were made (read-only arrays); ``cache=False`` solves afresh and keeps nothing. The bits
+    are the same either way.
     """
-    w = min(max(float(width), 1e-4), 1.0)
-    return math.log(2.0) / (1.0 - math.cos(math.pi * w))
+    f = np.ascontiguousarray(forcing, dtype=float)
+    theta = np.ascontiguousarray(phases, dtype=float)
+    e = np.ascontiguousarray(eps, dtype=float)
+    key = b""
+    if cache:
+        digest = hashlib.sha256()
+        for part in (np.asarray(f.shape, dtype=np.int64), f, theta, e):
+            digest.update(part.tobytes())
+        key = digest.digest()
+        with _SOLUTIONS_LOCK:
+            held = _SOLUTIONS.get(key)
+        if held is not None:
+            return held
+    s, diagnostics = _response.solve(_response.forcing(ARM_MODES, f, theta, CELLS), e, 0.0)
+    s.setflags(write=False)
+    for name in ("steps", "halvings", "deepest", "residual", "residual_sum", "floor"):
+        getattr(diagnostics, name).setflags(write=False)
+    if cache:
+        with _SOLUTIONS_LOCK:
+            _SOLUTIONS[key] = (s, diagnostics)
+            while len(_SOLUTIONS) > SOLUTIONS_KEPT:  # the oldest out: a dict keeps the order things went in
+                del _SOLUTIONS[next(iter(_SOLUTIONS))]
+    return s, diagnostics
 
 
-@functools.lru_cache(maxsize=16)
-def _bessel_i0(kappa: float) -> float:
-    return float(np.i0(kappa))
+def forget_solutions() -> None:
+    """Empty the content-keyed cache (the tests compare a pattern's bits with it and without)."""
+    with _SOLUTIONS_LOCK:
+        _SOLUTIONS.clear()
 
 
-def ridge_value(q: np.ndarray, kappa: float) -> np.ndarray:
-    """V(q) = e^{κ cos πq}/I₀(κ): S51's ridge value at rank q, e^κ/I₀ on the crest (q = 0) and e^{−κ}/I₀ in the
-    trough (q = 1). Its mean over q is 1."""
-    return np.exp(kappa * np.cos(math.pi * np.asarray(q, dtype=float))) / _bessel_i0(kappa)
+def blend_weights(taper: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(w_arm, w_bar) = (1 − taper, taper): the two weights of the composition (D216 item 8), their sum checked.
 
-
-def pattern_period(present: int) -> int:
-    """The greatest common divisor of the arm numbers a ring carries (``present``: bit k for mode k of
-    ARM_MODES): the ring's pattern repeats that many times round it. 1 for a ring that carries none."""
-    out = 0
-    for k, m in enumerate(ARM_MODES):
-        if present >> k & 1:
-            out = math.gcd(out, m)
-    return out or 1
-
-
-@functools.lru_cache(maxsize=16)
-def _mask_table(kappa: float) -> tuple[np.ndarray, float]:
-    """Sums of V over the fixed cells of q from the crest outward - S51's cells: q = |θ|/π at the centres of
-    PHASE_CELLS cells of θ - for every whole number of cells; and V's mean over them, z."""
-    v = ridge_value(np.abs(_CELLS) / math.pi, kappa)[_ORDER]
-    cum = np.concatenate([[0.0], np.cumsum(v)])
-    return cum, float(cum[-1]) / PHASE_CELLS
-
-
-def mask_means(share: np.ndarray, kappa: float) -> tuple[np.ndarray, np.ndarray]:
-    """(v̄_in, v̄_out): the ridge's mean over the share of the ring where q < ``share``, and over the rest - on
-    the fixed cells of q, the one the share cuts counted by the fraction of it inside, both over z. S51's sums:
-    the share is its mask's half-width over π."""
-    cum, z = _mask_table(kappa)
-    cells = np.asarray(share, dtype=float) * PHASE_CELLS
-    inside = np.interp(cells, np.arange(cum.size), cum)
-    return inside / cells / z, (cum[-1] - inside) / (PHASE_CELLS - cells) / z
-
-
-@functools.lru_cache(maxsize=8)
-def _edge_table(period: int) -> tuple[np.ndarray, np.ndarray]:
-    """cos(m x_k) and sin(m x_k) for every mode at the lower edges x_k of the PHASE_CELLS cells of one period of
-    a pattern that repeats ``period`` times round the ring: (modes, cells) each."""
-    x = (-math.pi + np.arange(PHASE_CELLS) * (2.0 * math.pi / PHASE_CELLS)) / period
-    return np.cos(_M[:, None] * x[None, :]), np.sin(_M[:, None] * x[None, :])
-
-
-def _harmonics(chi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """cos(m χ) and sin(m χ) for every mode, (modes, points) each, by the angle-addition recurrence from one
-    cosine and one sine."""
-    c1, s1 = np.cos(chi), np.sin(chi)
-    two = 2.0 * c1
-    cos_m, sin_m = np.empty((len(ARM_MODES), chi.size)), np.empty((len(ARM_MODES), chi.size))
-    c_before, s_before, c, s = np.ones_like(c1), np.zeros_like(s1), c1, s1
-    for m in range(2, ARM_MODES[-1] + 1):
-        c, c_before = two * c - c_before, c
-        s, s_before = two * s - s_before, s
-        if m in ARM_MODES:
-            cos_m[ARM_MODES.index(m)], sin_m[ARM_MODES.index(m)] = c, s
-    return cos_m, sin_m
-
-
-def _series(a: np.ndarray, b: np.ndarray, chi: np.ndarray, order: int) -> tuple[np.ndarray, np.ndarray]:
-    """(f, f′) at each point for f the ``order``-th derivative of ψ = Σ_m a_m cos mχ + b_m sin mχ; ``a`` and
-    ``b`` are (modes, points)."""
-    c, s = _harmonics(chi)
-    even, odd = a * c + b * s, b * c - a * s
-    if order == 0:
-        return even.sum(axis=0), _M @ odd
-    if order == 1:
-        return _M @ odd, -(_M**2) @ even
-    return -(_M**2) @ even, -(_M**3) @ odd
-
-
-def _start(lo, hi, f_lo, f_hi, s_lo, s_hi, rising) -> np.ndarray:
-    """Where to start a bracketed root from: the inverse cubic Hermite through both ends (their values and
-    slopes); where an end is too flat for it - an extremum of ψ is a node - the root of the parabola through
-    both ends with the flatter end's slope; failing those the secant point, and the middle."""
-    width, rise = hi - lo, f_hi - f_lo
-    with np.errstate(divide="ignore", invalid="ignore"):
-        chord = rise / width
-        t = -f_lo / rise
-        hermite = (lo * (2.0 * t**3 - 3.0 * t**2 + 1.0) + hi * (3.0 * t**2 - 2.0 * t**3)
-                   + rise * ((t**3 - 2.0 * t**2 + t) / s_lo + (t**3 - t**2) / s_hi))
-        steep = (s_lo * chord > 0.0) & (s_hi * chord > 0.0) & (np.abs(s_lo) >= 0.2 * np.abs(chord)) & (np.abs(s_hi) >= 0.2 * np.abs(chord))
-        sign = np.where(rising, 1.0, -1.0)
-        c_lo = (rise - s_lo * width) / width**2
-        from_lo = lo - 2.0 * f_lo / (s_lo + sign * np.sqrt(s_lo**2 - 4.0 * c_lo * f_lo))
-        c_hi = (s_hi * width - rise) / width**2
-        from_hi = hi - 2.0 * f_hi / (s_hi + sign * np.sqrt(s_hi**2 - 4.0 * c_hi * f_hi))
-        x = np.where(steep, hermite, np.where(np.abs(s_lo) <= np.abs(s_hi), from_lo, from_hi))
-        inside = np.isfinite(x) & (x > lo) & (x < hi)
-        x = np.where(inside, x, lo + t * width)
-    inside = np.isfinite(x) & (x >= lo) & (x <= hi)
-    return np.where(inside, x, 0.5 * (lo + hi))
-
-
-def _refine(a, b, lo, hi, x, target, order, bound, rising) -> np.ndarray:
-    """The root of ψ's ``order``-th derivative less ``target`` in each bracket [lo, hi], on which it is monotone
-    (``rising``: negative at lo), to CROSSING_TOLERANCE.
-
-    Newton from ``x``, kept inside the bracket (a step that leaves it is replaced by the bracket's middle), for
-    at most NEWTON_STEPS evaluations. A root is accepted when the *next* iterate's error is bounded: with
-    η = |f/f′| at the iterate and M ≥ |f″| on the bracket (``bound``: Σ_m m^(order+2) u_m), M η ≤ |f′|/4 puts the
-    root within 2η and the next iterate within 2 M η²/|f′| of it. What is not accepted by then is bisected
-    BISECTION_STEPS times, which leaves the bracket's width over 2^40. Every count is fixed in advance (A1).
+    The sum is 1 in the law; in doubles (1 − t) + t is 1 or one unit in the last place under it, and anything
+    else - a taper that is not a number, or outside [0, 1] - is refused here and not composed.
     """
-    out = np.empty(x.size)
-    idx = np.arange(x.size)
-    lo, hi, x = lo.copy(), hi.copy(), x.copy()
-    target = np.broadcast_to(np.asarray(target, dtype=float), x.shape).copy()
-    for _ in range(NEWTON_STEPS):
-        if not idx.size:
-            return out
-        f, slope = _series(a, b, x, order)
-        f = f - target
-        above = f > 0.0
-        upper = above == rising
-        hi, lo = np.where(upper, x, hi), np.where(upper, lo, x)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            step = f / slope
-            eta, steepness = np.abs(step), np.abs(slope)
-            new = x - step
-            inside = np.isfinite(new) & (new > lo) & (new < hi)
-            done = (inside & (bound * eta <= 0.25 * steepness) & (2.0 * bound * eta * eta <= CROSSING_TOLERANCE * steepness)) | (f == 0.0)
-        new = np.where(f == 0.0, x, np.where(inside, new, 0.5 * (lo + hi)))
-        out[idx[done]] = new[done]
-        keep = ~done
-        idx, a, b, lo, hi, x = idx[keep], a[:, keep], b[:, keep], lo[keep], hi[keep], new[keep]
-        target, bound, rising = target[keep], bound[keep], rising[keep]
-    for _ in range(BISECTION_STEPS if idx.size else 0):
-        x = 0.5 * (lo + hi)
-        f = _series(a, b, x, order)[0] - target
-        upper = (f > 0.0) == rising
-        hi, lo = np.where(upper, x, hi), np.where(upper, lo, x)
-    out[idx] = 0.5 * (lo + hi)
-    return out
-
-
-@dataclass(frozen=True, slots=True, eq=False)
-class _Rings:
-    """The nodes of a batch of rings that share one pattern period: per ring the cells' edges over one period
-    with ψ's extrema among them, in order, so that ψ is monotone between two nodes; ψ and ψ′ at each."""
-
-    period: int             # the pattern repeats this many times round the ring
-    a: np.ndarray           # (modes, rings): u_m cos θ_m
-    b: np.ndarray           # (modes, rings): u_m sin θ_m
-    bound: np.ndarray       # (rings,): Σ m² u_m ≥ |ψ″|
-    nodes: np.ndarray       # (rings, nodes): χ, ascending, the first at −π/period and the last one period on
-    values: np.ndarray      # (rings, nodes): ψ
-    slopes: np.ndarray      # (rings, nodes): ψ′ (0 at an extremum)
-
-    @property
-    def span(self) -> float:
-        return 2.0 * math.pi / self.period
-
-    @property
-    def origin(self) -> float:
-        return -math.pi / self.period
-
-    @classmethod
-    def of(cls, a: np.ndarray, b: np.ndarray, period: int) -> "_Rings":
-        n = a.shape[1]
-        cos_k, sin_k = _edge_table(period)
-        span, origin = 2.0 * math.pi / period, -math.pi / period
-        h = span / PHASE_CELLS
-        reach = np.abs(a) + np.abs(b)  # ≥ u_m
-        psi = a.T @ cos_k + b.T @ sin_k                                       # (rings, cells) at the lower edges
-        d1 = (a * _M[:, None]).T @ -sin_k + (b * _M[:, None]).T @ cos_k
-        d2 = -((a * _M[:, None] ** 2).T @ cos_k + (b * _M[:, None] ** 2).T @ sin_k)
-        after = lambda f: np.roll(f, -1, axis=1)  # noqa: E731  (the cell's upper edge: the period closes)
-
-        # ψ's inflections, bracketed by ψ″'s sign at the edges: at most one is kept per cell.
-        up2 = d2 > 0.0
-        r, k = np.nonzero(up2 != after(up2))
-        inflection = np.full((n, PHASE_CELLS), np.nan)
-        slope_there = np.zeros((n, PHASE_CELLS))
-        if r.size:
-            lo = origin + k * h
-            f_lo, f_hi = d2[r, k], after(d2)[r, k]
-            with np.errstate(divide="ignore", invalid="ignore"):
-                x = lo - f_lo / (f_hi - f_lo) * h
-            x = np.where(np.isfinite(x), x, lo + 0.5 * h)
-            t = _refine(a[:, r], b[:, r], lo, lo + h, x, 0.0, 2, (reach * _M[:, None] ** 4).sum(axis=0)[r], f_hi > f_lo)
-            inflection[r, k] = t
-            slope_there[r, k] = _series(a[:, r], b[:, r], t, 1)[0]
-
-        # ψ's extrema, bracketed by ψ′'s sign: on a cell, or on its two parts where an inflection cuts it.
-        cut = np.isfinite(inflection)
-        up1, up1_after, up_cut = d1 > 0.0, after(d1 > 0.0), slope_there > 0.0
-        edges = origin + np.arange(PHASE_CELLS) * h
-        parts = []
-        for where, x_lo, x_hi, f_lo, f_hi in (
-            (~cut & (up1 != up1_after), edges[None, :], edges[None, :] + h, d1, after(d1)),
-            (cut & (up1 != up_cut), edges[None, :], inflection, d1, slope_there),
-            (cut & (up_cut != up1_after), inflection, edges[None, :] + h, slope_there, after(d1)),
-        ):
-            r, k = np.nonzero(where)
-            pick = lambda f: np.broadcast_to(f, (n, PHASE_CELLS))[r, k]  # noqa: E731
-            parts.append((r, k, pick(x_lo), pick(x_hi), pick(f_lo), pick(f_hi)))
-        r, k, lo, hi, f_lo, f_hi = (np.concatenate(p) for p in zip(*parts))
-        with np.errstate(divide="ignore", invalid="ignore"):
-            x = lo - f_lo / (f_hi - f_lo) * (hi - lo)
-        x = np.where(np.isfinite(x) & (x >= lo) & (x <= hi), x, 0.5 * (lo + hi))
-        extremum = _refine(a[:, r], b[:, r], lo, hi, x, 0.0, 1, (reach * _M[:, None] ** 3).sum(axis=0)[r], f_hi > f_lo)
-        level = _series(a[:, r], b[:, r], extremum, 0)[0]
-
-        # The nodes: the cells' edges and the extrema, in order. An extremum in cell k comes after edge k and
-        # after the ring's earlier extrema; a ring with fewer extrema than the widest repeats its last edge.
-        count = np.bincount(r, minlength=n)
-        width = PHASE_CELLS + 1 + int(count.max(initial=0))
-        nodes = np.full((n, width), origin + span)
-        values = np.repeat(psi[:, :1], width, axis=1)
-        slopes = np.repeat(d1[:, :1], width, axis=1)
-        order = np.lexsort((extremum, r))
-        r, k, extremum, level = r[order], k[order], extremum[order], level[order]
-        rank = np.arange(r.size) - (np.cumsum(count) - count)[r]
-        earlier = np.zeros((n, PHASE_CELLS + 1), dtype=np.int64)
-        np.add.at(earlier, (r, k + 1), 1)
-        slot = np.arange(PHASE_CELLS + 1)[None, :] + np.cumsum(earlier, axis=1)
-        closed = lambda f: np.concatenate([f, f[:, :1]], axis=1)  # noqa: E731  (the last edge is the first, a period on)
-        np.put_along_axis(nodes, slot, np.broadcast_to(origin + np.arange(PHASE_CELLS + 1) * h, slot.shape), axis=1)
-        np.put_along_axis(values, slot, closed(psi), axis=1)
-        np.put_along_axis(slopes, slot, closed(d1), axis=1)
-        nodes[r, k + 1 + rank], values[r, k + 1 + rank], slopes[r, k + 1 + rank] = extremum, level, 0.0
-        return cls(period, a, b, (reach * _M[:, None] ** 2).sum(axis=0), nodes, values, slopes)
-
-    def fraction(self, ring: np.ndarray, chi: np.ndarray) -> np.ndarray:
-        """q at the points ``chi`` (rows, k), each row on the ring ``ring`` (rows,) names: the fraction of the
-        ring on which ψ exceeds its value at the point - the measure of the superlevel set over the period."""
-        ring = np.asarray(ring, dtype=np.int64)
-        rows, k = chi.shape
-        span, origin = self.span, self.origin
-        at = origin + np.mod(chi - origin, span)  # the point inside the period the nodes cover
-        level = _series(np.repeat(self.a[:, ring], k, axis=1), np.repeat(self.b[:, ring], k, axis=1), at.ravel(), 0)[0].reshape(rows, k)
-        out = np.empty((rows, k))
-        width = self.nodes.shape[1]
-        columns = max(1, min(k, WORK_CELLS // width))
-        block = max(1, WORK_CELLS // (width * columns))
-        for first in range(0, rows, block):
-            for left in range(0, k, columns):
-                rr = ring[first:first + block]
-                L, here = level[first:first + block, left:left + columns], at[first:first + block, left:left + columns]
-                above = self.values[rr][:, None, :] > L[:, :, None]            # (rows, points, nodes)
-                bi, ji, ki = np.nonzero(above[:, :, 1:] != above[:, :, :-1])   # one crossing per change of sign
-                r = rr[bi]
-                lo, hi = self.nodes[r, ki], self.nodes[r, ki + 1]
-                rising = above[bi, ji, ki + 1]
-                point, target = here[bi, ji], L[bi, ji]
-                own = (point >= lo) & (point <= hi)  # the point's own crossing is the point
-                root = point.copy()
-                solve = ~own
-                if solve.any():
-                    r, lo, hi, ki_, target, up = r[solve], lo[solve], hi[solve], ki[solve], target[solve], rising[solve]
-                    f_lo, f_hi = self.values[r, ki_] - target, self.values[r, ki_ + 1] - target
-                    x = _start(lo, hi, f_lo, f_hi, self.slopes[r, ki_], self.slopes[r, ki_ + 1], up)
-                    root[solve] = _refine(self.a[:, r], self.b[:, r], lo, hi, x, target, 0, self.bound[r], up)
-                shape = L.shape
-                # Falling crossings close a stretch of the superlevel set and rising ones open one; the period's
-                # first node is inside it where ψ there is above the level.
-                measure = np.bincount(bi * shape[1] + ji, weights=np.where(rising, -root, root), minlength=shape[0] * shape[1])
-                measure = measure.reshape(shape) + span * above[:, :, 0]
-                out[first:first + block, left:left + columns] = np.clip(measure / span, 0.0, 1.0)
-        return out
+    w_bar = np.asarray(taper, dtype=float)
+    w_arm = 1.0 - w_bar
+    if not np.all((w_bar >= 0.0) & (w_bar <= 1.0) & (np.abs((w_arm + w_bar) - 1.0) <= np.finfo(float).eps)):
+        raise ArithmeticError("the arm's and the bar's weights do not sum to 1: the bar's taper is not in [0, 1]")
+    return w_arm, w_bar
 
 
 GAS_DENSITY_CONTRAST = FieldDecl(
     name="gas_density_contrast", label="Gas density contrast Σ_gas(R, φ)/Σ_gas(R)",
     unit="dimensionless", kind=Kind.FIELD, axes=("R", "phi"),
     ramp=Ramp("magma", lo=0.0, hi=4.0), meaningful_zero=True, provenance="seeded",
-    # S55 (D214, gate G1 change 3): composed - the ridge's law applied to where the arms are - and 1 everywhere
+    # S55 (D214, gate G1 change 3): composed - the gas's response to where the arms are - and 1 everywhere
     # with the randomness layer off.
     composed=True, neutral=1.0,
     about=(
-        "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. "
-        "A narrow ridge on the crests of the stellar pattern, whatever that pattern is. On each ring the "
-        "gas takes one arm's ridge values - a von Mises profile whose full width at half maximum is a "
-        "fixed fraction of the arm-to-arm period, half the stellar arm's as in the one galaxy measured "
-        "both ways - in the order of the stellar arm modes' sum: the highest value where that sum is "
-        "highest on the ring, the lowest where it is lowest, each point ranked by the fraction of its "
-        "ring that stands higher. For one mode that is the von Mises ridge in that arm's phase; with "
-        "several, the tallest stellar crest carries the widest ridge and a low one little or none. So "
-        "every ring has the same spread of values, and outside the bar the gas stays between 0.53 and "
-        "3.07 of its ring's mean at the defaults whatever the modes and their phases. It sits on the "
-        "stellar crest with no offset. The density-wave offset "
-        "law, Δφ = (Ω − Ω_p)·t with the shock inside the arm inside corotation, is the named "
-        "alternative and is not adopted: the model publishes no spiral pattern speed to sign it "
-        "with, and the evidence for co-rotating arms reads zero mean offset with scatter; no "
-        "offset field is published for it. Inside the bar the term is the stellar bar's own. The "
-        "ridge's amplitude is derived from the measured ratio of means (gas_arm_contrast) over "
-        "the part of the ring where the stellar modes' sum is highest, as large a share of the ring "
-        "as the source's own arm mask covers - a fixed width perpendicular to an arm, for the ring's "
-        "power-weighted number of arms, at most half the ring. The ratio fades with the forcing: it is "
-        "the measured one where the stellar arms have their full amplitude, and falls to 1 in step with "
-        "that amplitude where the disc amplifies little, so where a ring carries no mode there is no "
-        "ridge. A rank on the ring, not a local law: a point's gas depends on its whole ring. The gas's "
-        "response to the stellar pattern: it reads no gas column. A composed "
-        "field: with the randomness layer off it is 1 everywhere - the ratio of means, the width "
-        "and the mask are unchanged, and nothing says where the ridge is."
+        "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. Each "
+        "value is the mean over its azimuthal cell on its ring - exact over the cell's extent in azimuth, at "
+        "the ring's own radius: the gas the cell holds on its ring, not a sample at its "
+        "centre - so a ring's cells average to 1 to rounding on any grid, with nothing divided; a census "
+        "placing an object reads the same law at the object's own point. "
+        "The steady response of isothermal gas to the stellar arm modes' potential, in the frame that turns "
+        "with the gas - the frame the arms themselves turn in, so no gas flows through an arm and nothing "
+        "shocks there. On each ring the logarithm of the gas's surface density is bent by the pressure of "
+        "its own velocity dispersion against the pull of the arm modes, each mode pulling in proportion to "
+        "its amplitude as the stars carry it - the saturation in it - and its arm number, and in inverse "
+        "proportion to the disc's stability parameter and "
+        "the sine of the pitch; the equation is solved on a fixed set of cells round the ring, and a point "
+        "between two rings reads both at its own winding phase. Nothing sets the contrast or the width: they "
+        "come out of the equation. The gas piles on the stellar crests: the offset is zero for a lone mode, "
+        "exactly, by the equation's symmetry; with several modes the gas's crest and the crest of the stellar "
+        "modes' sum are within about a degree of each other over the mid disc, to either side, because each "
+        "mode is answered with its own weight - measured, not ruled; no offset is put in and none is "
+        "published. "
+        "Where the modes' pull together exceeds the pressure's reach the gas between the arms is nearly "
+        "emptied, the crest standing two to three times the ring's mean in the mid disc and fading to "
+        "nothing where the disc amplifies no arm. The crest is two and a half to three times as broad as "
+        "the one measured gas arm, about half the period of the mode the gas answers most strongly: the "
+        "steady, razor-thin response is an approximation and that is its recorded miss. A tightly wound "
+        "galaxy - a drawn pitch of a few degrees - is forced far harder, and its inner rings swing from "
+        "nearly empty to many times the mean: the law as it stands, nothing clipped, and a finding against "
+        "the razor-thin forcing. Inside the bar the response gives way "
+        "to the stellar bar's own two-fold term, "
+        "blended by the bar's taper, so the field is nowhere below the bar's own trough and nowhere "
+        "negative; nothing is clipped. It reads no gas column. A composed field: with the randomness layer "
+        "off it is 1 everywhere - the equation and its inputs are unchanged, and nothing says where the "
+        "arms are."
     ),
 )
 
@@ -478,45 +251,60 @@ class GasPattern:
     The interface is ``ArmPattern``'s (``flat``, ``contrast``, ``contrast_at``, ``sector_means``,
     ``azimuths``), so a stage that places by the stellar pattern can place by this one instead.
 
-    **Evaluable at a point**: the unit amplitudes u_m at an arbitrary radius are their values at the grid
-    radii - the published amplitudes over the arm amplitude and the bar's taper there - interpolated
-    linearly in R (held at the end values beyond the grid). A point's rank is then the measure of ψ's
-    superlevel set on the ring at the point's own radius, from that ring's fixed cells and the refined
-    crossings; nothing is read off a stored (R, φ) table.
+    **Evaluable at a point** (D216 item 9): the response is solved once on each grid ring; a point reads the
+    two neighbouring rings' profiles at its own χ, linear in χ between the cells' centres and linear in R
+    between the rings (held at the end rings beyond the grid). At a grid radius that is the ring's own
+    profile, exactly. ``contrast``, ``contrast_at``, ``response_at`` and ``azimuths`` are that point function;
+    ``sector_means`` and ``cell_means`` are its exact means over sectors of a ring, and ``cell_means`` on the
+    grid's own φ cells is the field the stage publishes (gate G3 item 4).
+
+    Built through ``galaxy.layer.compose`` (the one reader of the layer's switch) and by tests.
     """
 
-    R: np.ndarray          # the grid radii the stellar amplitudes are published at
-    unit: np.ndarray       # (modes, R): u_m = A_m / (A (1 − bar taper)), the arm modes at unit amplitude
-    phases: tuple[float, ...]
-    ratio: float           # C, the published gas_arm_contrast
-    bar: float             # B, the stellar bar_contrast
+    R: np.ndarray                # the grid radii, kpc: one solved ring each
+    unit: np.ndarray             # (modes, R): u_m = A_m / (A (1 − bar taper)), the arm modes at unit amplitude
+    phases: tuple[float, ...]    # θ_m, rad, one per mode of ARM_MODES
+    arm: float                   # A, the published arm_contrast: A u_m is the mode's amplitude before the taper
+    bar: float                   # B, the stellar bar_contrast
     pitch_deg: float
-    bar_length: float
-    width: float           # W, FWHM of one mode's ridge over its arm-to-arm period
-    mask_width: float      # W_m, kpc, full width perpendicular to an arm
+    bar_length: float            # kpc
+    epicyclic: np.ndarray        # (R,): κ, km/s/kpc
+    surface_density: np.ndarray  # (R,): checkpoint 1's total disc Σ, M☉/pc²
+    gravity: float               # G, kpc (km/s)²/M☉
+    sound_speed: float           # a, km/s
     flat: bool = field(init=False)
+    _solved: dict = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "R", np.asarray(self.R, dtype=float))
-        object.__setattr__(self, "unit", np.asarray(self.unit, dtype=float))
+        for name in ("R", "unit", "epicyclic", "surface_density"):
+            object.__setattr__(self, name, np.asarray(getattr(self, name), dtype=float))
         object.__setattr__(self, "phases", tuple(float(p) for p in self.phases))
-        if self.unit.shape != (len(ARM_MODES), self.R.size) or len(self.phases) != len(ARM_MODES):
+        n = self.R.size
+        if self.unit.shape != (len(ARM_MODES), n) or len(self.phases) != len(ARM_MODES):
             raise ValueError(
-                f"a gas pattern holds {len(ARM_MODES)} modes on its {self.R.size} radii; got unit amplitudes "
+                f"a gas pattern holds {len(ARM_MODES)} modes on its {n} radii; got unit amplitudes "
                 f"{self.unit.shape} and {len(self.phases)} phases"
             )
+        if self.epicyclic.shape != (n,) or self.surface_density.shape != (n,):
+            raise ValueError(
+                f"a gas pattern holds the disc's epicyclic frequency and surface density on its {n} radii; got "
+                f"{self.epicyclic.shape} and {self.surface_density.shape}"
+            )
         # No perturbation to apply: a pattern the grid could not resolve or the layer did not realise (a NaN
-        # among its numbers), or no ridge (a ratio of 1, or no mode anywhere) and no bar.
-        scalars = (self.ratio, self.bar, self.pitch_deg, self.bar_length, self.width, self.mask_width, *self.phases)
+        # among its own numbers), or no arm mode anywhere and no bar. (The disc's κ and Σ are not asked here:
+        # a ring that carries a mode on a disc that is not a number is the solver's to refuse, loudly.)
+        scalars = (self.arm, self.bar, self.pitch_deg, self.bar_length, *self.phases)
         finite = all(math.isfinite(v) for v in scalars) and bool(np.all(np.isfinite(self.unit)))
-        no_ridge = self.ratio == 1.0 or not self.unit.any()
-        object.__setattr__(self, "flat", not finite or (no_ridge and self.bar == 0.0))
+        no_arms = self.arm == 0.0 or not self.unit.any()
+        object.__setattr__(self, "flat", not finite or (no_arms and self.bar == 0.0))
+        object.__setattr__(self, "_solved", {})
 
     @staticmethod
     def unit_amplitudes(R: np.ndarray, amplitudes: np.ndarray, arm: float, pitch_deg: float, bar_length: float) -> np.ndarray:
         """u_m(R) = A_m(R) / (A (1 − bar taper)) at the grid radii: the published amplitudes with the arm
-        amplitude and the bar's taper taken back out, so ψ = Σ u_m cos(…) is the arm modes at unit amplitude.
-        Zero where the denominator is (no arm amplitude at all, or a radius where the taper is whole)."""
+        amplitude and the bar's taper taken back out (the saturation stays in), so A u_m is the mode's cosine
+        amplitude before the taper. Zero where the denominator is (no arm amplitude at all, or a radius where
+        the taper is whole)."""
         taper, _, _ = bar_terms(R, pitch_deg, bar_length)
         scale = arm * (1.0 - taper)
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -528,215 +316,295 @@ class GasPattern:
         hold no pattern. It reads the modes; ``arm_multiplicity`` is not among what it reads (D215)."""
         if any(n not in fields for n in GAS_PATTERN_READS) or any(k not in constants for k in GAS_PATTERN_CONSTANTS):
             return None
-        pitch, bar_length = float(fields["pitch_angle"]), float(fields["bar_half_length"])
+        pitch, bar_length, arm = float(fields["pitch_angle"]), float(fields["bar_half_length"]), float(fields["arm_contrast"])
         amplitudes = np.stack([np.asarray(fields[n], dtype=float) for n in AMPLITUDE_FIELDS])
         return cls(
-            R, cls.unit_amplitudes(R, amplitudes, float(fields["arm_contrast"]), pitch, bar_length),
+            R, cls.unit_amplitudes(R, amplitudes, arm, pitch, bar_length),
             tuple(float(fields[n]) for n in PHASE_FIELDS),
-            float(fields["gas_arm_contrast"]), float(fields["bar_contrast"]), pitch, bar_length,
-            float(constants["GAS_ARM_WIDTH"]), float(constants["GAS_ARM_MASK_WIDTH"]),
+            arm, float(fields["bar_contrast"]), pitch, bar_length,
+            fields["epicyclic_frequency"], fields["disc_surface_density"],
+            float(constants["G"]), float(constants["GAS_DISPERSION"]),
         )
 
+    # --- the law's inputs on the grid rings ------------------------------------------------------------
+
     @property
-    def kappa(self) -> float:
-        return kappa_for_width(self.width)
+    def sin_pitch(self) -> float:
+        """sin p, of the pitch the winding is made with (``pattern.bar_terms`` keeps it inside 1-89 degrees)."""
+        return math.sin(math.radians(min(max(self.pitch_deg, 1.0), 89.0)))
 
-    def unit_at(self, R: np.ndarray) -> np.ndarray:
-        """(modes, …R's shape): each mode's unit amplitude at ``R``, linear in R between the grid radii."""
-        R = np.asarray(R, dtype=float)
-        return np.stack([np.interp(R, self.R, row) for row in self.unit])
+    def swing_x(self) -> np.ndarray:
+        """X(R) = κ²R/(2πGΣ) on the grid rings: the arm-number law's own variable, by its own function."""
+        return local_swing_x(self.R, self.epicyclic, self.surface_density, self.gravity)
 
-    def effective_arm_number(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """m_eff(R) = Σ_m m u_m² / Σ_m u_m² (the taper and the arm amplitude cancel): the ring's
-        power-weighted arm number; NaN on a ring with no mode. The pattern stage's one function
-        (:func:`galaxy.stages.pattern.effective_arm_number`), on the unit amplitudes at ``R``. (``unit``: the
-        amplitudes at ``R``, where the caller already holds them.)"""
-        return effective_arm_number(self.unit_at(R) if unit is None else unit)
+    def forcing_amplitudes(self) -> np.ndarray:
+        """f_m = m A u_m/(X sin p) on the grid rings, shaped (R, modes): each mode's forcing, the amplitude
+        the one before the bar's taper. No factor is added and nothing is scaled (D216 item 5)."""
+        return _response.forcing_amplitudes(ARM_MODES, (self.arm * self.unit).T, self.swing_x(), self.sin_pitch)
 
-    def mask_share(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """The share of the ring the source's arm mask covers: m_eff W_m / (2π R sin p), at most a half and
-        at least one quadrature cell; NaN on a ring with no mode (no mask is formed)."""
-        R = np.maximum(np.asarray(R, dtype=float), 1e-3)
-        sin_p = math.sin(math.radians(min(max(self.pitch_deg, 1.0), 89.0)))
-        # S51's half-width in the ridge's phase, θ_m = m (W_m/2)/(R sin p) clamped at π/2, over π.
-        theta_m = np.minimum(self.effective_arm_number(R, unit) * 0.5 * self.mask_width / (R * sin_p), 0.5 * math.pi)
-        return np.clip(theta_m, 0.5 * (2.0 * math.pi / PHASE_CELLS), 0.5 * math.pi) / math.pi
+    def epsilon(self) -> np.ndarray:
+        """ε = a/(κ R sin p) on the grid rings, shaped (R,)."""
+        return _response.epsilon(self.sound_speed, self.epicyclic, self.R, self.sin_pitch)
 
-    def forcing(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """ρ(R) = min(1, (Σ_m u_m²)^½): the ring's stellar arm amplitude in units of the arm amplitude A, the
-        bar's taper excluded and the saturation included (D215, gate ruling 8). 1 for one fully amplified mode."""
-        return np.minimum(1.0, np.sqrt(((self.unit_at(R) if unit is None else unit) ** 2).sum(axis=0)))
+    # --- the solved rings ------------------------------------------------------------------------------
 
-    def ratio_at(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """C(R) = 1 + (C − 1) ρ(R): the ratio of means the ring is set to - the published one where the stellar
-        arms have their full amplitude, 1 where the ring carries no mode."""
-        return 1.0 + (self.ratio - 1.0) * self.forcing(R, unit)
+    def _rings(self) -> dict:
+        """The grid rings' solved profiles, made the first time they are asked for: ``profiles`` (R, CELLS),
+        ``carries`` (R,) and the solver's ``diagnostics`` for the rings that carry a mode (None where none does)."""
+        solved = self._solved
+        if not solved:
+            f, eps = self.forcing_amplitudes(), self.epsilon()
+            carries = (f != 0.0).any(axis=1)
+            profiles = np.ones((self.R.size, CELLS))  # a ring with no mode: s = 1
+            diagnostics = None
+            if carries.any():
+                s, diagnostics = respond(f[carries], self.phases, eps[carries])
+                profiles[carries] = s
+            profiles.setflags(write=False)
+            solved.update(profiles=profiles, carries=carries, diagnostics=diagnostics)
+        return solved
 
-    def extremes(self) -> tuple[float, float]:
-        """(v at the crest, v in the trough): V(0)/z and V(1)/z, e^{±κ}/I₀(κ) to rounding."""
-        kappa = self.kappa
-        _, z = _mask_table(kappa)
-        return float(ridge_value(0.0, kappa)) / z, float(ridge_value(1.0, kappa)) / z
+    @property
+    def profiles(self) -> np.ndarray:
+        """s on the cells' centres of every grid ring, shaped (R, CELLS); read-only. 1 on a ring with no mode."""
+        return self._rings()["profiles"]
 
-    def amplitude(self, R: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """a(R) = (C(R) − 1)/[(v̄_in − 1) − C(R) (v̄_out − 1)] at the ring's mask share, clipped so the ridge is
-        nowhere negative; 0 on a ring that carries no mode."""
-        R = np.asarray(R, dtype=float)
-        unit = self.unit_at(R) if unit is None else unit
-        share = self.mask_share(R, unit)
-        carries = np.isfinite(share)
-        v_in, v_out = mask_means(np.where(carries, share, 0.5), self.kappa)
-        C = self.ratio_at(R, unit)
-        crest, trough = self.extremes()
-        a = (C - 1.0) / ((v_in - 1.0) - C * (v_out - 1.0))
-        return np.where(carries, np.clip(a, -1.0 / (crest - 1.0), 1.0 / (1.0 - trough)), 0.0)
+    @property
+    def carries(self) -> np.ndarray:
+        """(R,) bool: the grid rings that carry a mode - the ones the solver solved."""
+        return self._rings()["carries"]
 
-    def _rings(self, unit: np.ndarray) -> list[tuple[np.ndarray, _Rings]]:
-        """The rings that carry a mode, by the period of their pattern: (their indices among ``unit``'s columns,
-        their nodes)."""
-        present = (unit > 0.0).T.astype(np.int64) @ _BITS
-        periods = np.array([pattern_period(int(code)) for code in present])
-        cos_t, sin_t = (np.asarray([f(t) for t in self.phases])[:, None] for f in (math.cos, math.sin))
-        out = []
-        for period in np.unique(periods[present > 0]):
-            rows = np.nonzero((periods == period) & (present > 0))[0]
-            out.append((rows, _Rings.of(unit[:, rows] * cos_t, unit[:, rows] * sin_t, int(period))))
-        return out
+    @property
+    def diagnostics(self) -> "_response.Diagnostics | None":
+        """What Newton did on the rings that carry a mode, in their order (None where no ring does)."""
+        return self._rings()["diagnostics"]
 
-    def rank(self, R: np.ndarray, chi: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """q at the points χ (rows, k) of the rings at ``R`` (rows,): the fraction of each point's ring on which
-        ψ exceeds its value at the point. NaN on a ring that carries no mode (ψ is 0 there: no rank)."""
-        R, chi = np.asarray(R, dtype=float), np.asarray(chi, dtype=float)
-        q = np.full(chi.shape, np.nan)
-        for rows, rings in self._rings(self.unit_at(R) if unit is None else unit):
-            q[rows] = rings.fraction(np.arange(rows.size), chi[rows])
-        return q
+    # --- at a point ------------------------------------------------------------------------------------
 
-    def ridge(self, R: np.ndarray, chi: np.ndarray, unit: np.ndarray | None = None) -> np.ndarray:
-        """v = V(q)/z at the points χ (rows, k) of the rings at ``R`` (rows,); 1 on a ring with no mode."""
-        q = self.rank(R, chi, unit)
-        _, z = _mask_table(self.kappa)
-        return np.where(np.isfinite(q), ridge_value(np.where(np.isfinite(q), q, 0.0), self.kappa) / z, 1.0)
+    def _between(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(lower ring, upper ring, share of the upper) for each radius: linear in R between two grid rings,
+        the end ring alone beyond the grid. At a grid radius the share is 0 or 1 and the ring is its own."""
+        grid = self.R
+        if grid.size < 2:
+            zero = np.zeros(np.shape(R), dtype=np.int64)
+            return zero, zero, np.zeros(np.shape(R))
+        lower = np.minimum(np.maximum(np.searchsorted(grid, R, side="right") - 1, 0), grid.size - 2)
+        share = (R - grid[lower]) / (grid[lower + 1] - grid[lower])
+        return lower, lower + 1, np.minimum(np.maximum(share, 0.0), 1.0)  # held at the end rings (item 9)
 
-    def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """Σ_gas(R, φ)/Σ_gas(R) on the (R, φ) grid: the law at each cell's centre (mean 1 round the ring over
-        the ring itself; a grid's sampled mean is the stage's to hold)."""
-        R = np.asarray(R, dtype=float)
-        unit = self.unit_at(R)
-        a = self.amplitude(R, unit)
-        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
-        phi = np.asarray(phi, dtype=float)[None, :]
-        v = self.ridge(R, phi - phase[:, None], unit)
-        ridge_w, bar_w = (1.0 - taper) * a, self.bar * taper
-        return 1.0 + ridge_w[:, None] * (v - 1.0) + bar_w[:, None] * np.cos(2.0 * (phi - bar_angle))
+    def response_at(self, R: np.ndarray, chi: np.ndarray) -> np.ndarray:
+        """s at points: ``R`` in kpc and ``chi`` in radians broadcast against each other. Each point reads its
+        two neighbouring grid rings at its own χ - ``gas_response.interpolate``'s own arithmetic on the two
+        cells χ lies between, the ring picked point by point - and blends them linearly in R."""
+        profiles = self.profiles
+        R, chi = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(chi, dtype=float))
+        lower, upper, share = self._between(R)
+        below, above, weight, _ = _response.bracket(chi, CELLS)
+
+        def read(ring: np.ndarray) -> np.ndarray:
+            first, second = profiles[ring, below], profiles[ring, above]
+            rising = second >= first
+            return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
+
+        return (1.0 - share) * read(lower) + share * read(upper)
 
     def contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """The contrast at points: ``R`` and ``phi`` broadcast against each other, elementwise. Each distinct
-        radius is one ring: its nodes are found once, and each of its points is ranked on them."""
+        """The contrast at points: ``R`` and ``phi`` broadcast against each other, elementwise.
+        g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), the taper and the bar's term at the point's own radius."""
         R = np.asarray(R, dtype=float)
         phi = np.asarray(phi, dtype=float)
-        shape = np.broadcast_shapes(R.shape, phi.shape)
-        R_b, phi_b = np.broadcast_to(R, shape).ravel(), np.broadcast_to(phi, shape).ravel()
-        radii, back, counts = np.unique(R_b, return_inverse=True, return_counts=True)
-        taper, phase, bar_angle = bar_terms(R_b, self.pitch_deg, self.bar_length)
-        chi = phi_b - phase
-        v = np.empty(R_b.size)
-        if np.all(counts == counts[0]):  # the same number of points on every ring: one row a ring
-            order = np.argsort(back, kind="stable")
-            v[order] = self.ridge(radii, chi[order].reshape(radii.size, -1)).ravel()
-        else:  # a row a point; the rings are still found once
-            unit = self.unit_at(radii)
-            q = np.full(R_b.size, np.nan)
-            for rows, rings in self._rings(unit):
-                index = np.full(radii.size, -1)
-                index[rows] = np.arange(rows.size)
-                on = index[back] >= 0
-                q[on] = rings.fraction(index[back][on], chi[on, None])[:, 0]
-            _, z = _mask_table(self.kappa)
-            v = np.where(np.isfinite(q), ridge_value(np.where(np.isfinite(q), q, 0.0), self.kappa) / z, 1.0)
-        out = 1.0 + (1.0 - taper) * self.amplitude(R_b) * (v - 1.0) + self.bar * taper * np.cos(2.0 * (phi_b - bar_angle))
-        return out.reshape(shape)
+        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        return w_arm * self.response_at(R, phi - phase) + w_bar * (1.0 + self.bar * np.cos(2.0 * (phi - bar_angle)))
 
-    def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
-        """The contrast averaged over each sector between ``edges`` at one radius, by the ridge's Fourier series
-        at that radius: V(q(χ)) at HARMONIC_SAMPLES points of one period, each harmonic's sector mean a sine or
-        cosine difference. They average to 1 round the ring exactly. For one mode the series' dropped tail is
-        under 1e-15; with several the ridge has corners and the means are good to about 1e-3 of the ring's mean
-        (the module's docstring)."""
-        radius = np.array([float(R)])
-        unit = self.unit_at(radius)
-        a = float(self.amplitude(radius)[0])
-        taper, phase, bar_angle = bar_terms(radius, self.pitch_deg, self.bar_length)
+    def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """Σ_gas(R, φ)/Σ_gas(R) at the points of an (R, φ) mesh: the point function at each (R_i, φ_j) - what a
+        census inverts for an azimuth. Its mean round a ring is 1 over the ring itself; a mesh's samples
+        average to 1 only to their sampling, and nothing is divided. (The field the stage publishes is not
+        this: it is :meth:`cell_means`.)"""
+        return self.contrast_at(np.asarray(R, dtype=float)[:, None], np.asarray(phi, dtype=float)[None, :])
+
+    def cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+        """The contrast's mean over each azimuthal cell between ``edges`` (radians, ascending) at each radius of
+        ``R``, shaped (R, cells): what the stage publishes on the grid (gate G3 item 4). The exact mean of the
+        point function over the cell - the two neighbouring rings' interpolants integrated piece by piece
+        (``gas_response.sector_mean``) and blended as a point blends them, the bar's cosine by its own
+        integral - so cells that tile the ring average to 1 to rounding on any grid, with no division, and a
+        cell's value is never under w_bar (1 − B). At one radius it is :meth:`sector_means`' arithmetic."""
+        solved = self._rings()
+        profiles, carries = solved["profiles"], solved["carries"]
+        R = np.asarray(R, dtype=float)
         edges = np.asarray(edges, dtype=float)
         lo, hi = edges[:-1], edges[1:]
+        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        lower, upper, share = self._between(R)
 
-        def mean_cos(k: np.ndarray, shift: float) -> np.ndarray:  # k (H,) → (H, sectors)
-            k = np.asarray(k, dtype=float)[:, None]
-            return (np.sin(k * (hi - shift)) - np.sin(k * (lo - shift))) / (k * (hi - lo))
+        def ring_means(ring: np.ndarray) -> np.ndarray:
+            out = np.ones((R.size, lo.size))  # a ring with no mode is 1 on every cell: so is every sector of it
+            on = carries[ring]
+            if on.any():
+                out[on] = _response.sector_mean(profiles[ring[on]], lo[None, :] - phase[on, None], hi[None, :] - phase[on, None])
+            return out
 
-        def mean_sin(k: np.ndarray, shift: float) -> np.ndarray:
-            k = np.asarray(k, dtype=float)[:, None]
-            return -(np.cos(k * (hi - shift)) - np.cos(k * (lo - shift))) / (k * (hi - lo))
+        arms = (1.0 - share)[:, None] * ring_means(lower) + share[:, None] * ring_means(upper)
+        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
+        return w_arm[:, None] * arms + w_bar[:, None] * (1.0 + self.bar * bar[None, :])
 
-        ridge: np.ndarray | float = 0.0
-        present = int((unit[:, 0] > 0.0).astype(np.int64) @ _BITS)
-        if present and a != 0.0:
-            # v(χ) = c_0 + 2 Σ_n Re(c_n e^{i n period χ}) on one period of the ring's pattern, by FFT.
-            period = pattern_period(present)
-            chi = np.arange(HARMONIC_SAMPLES) * (2.0 * math.pi / period / HARMONIC_SAMPLES)
-            c = np.fft.rfft(self.ridge(radius, chi[None, :])[0]) / HARMONIC_SAMPLES
-            c = c[1:HARMONIC_SAMPLES // 2] / c[0].real
-            kept = np.nonzero(np.abs(c) >= HARMONIC_FLOOR)[0]
-            if kept.size:
-                c = c[: int(kept[-1]) + 1]
-                k = period * np.arange(1, c.size + 1, dtype=float)
-                shift = float(phase[0])
-                ridge = 2.0 * (c.real[:, None] * mean_cos(k, shift) - c.imag[:, None] * mean_sin(k, shift)).sum(axis=0)
-        bar = mean_cos(np.array([2.0]), bar_angle)[0]
-        return 1.0 + (1.0 - taper[0]) * a * ridge + self.bar * taper[0] * bar
+    def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
+        """The contrast averaged over each sector between ``edges`` (radians, ascending) at one radius: the exact
+        mean of the point function - the two neighbouring rings' interpolants integrated piece by piece
+        (``gas_response.sector_mean``) and blended as a point blends them, the bar's term by its own integral.
+        Sectors that tile the ring average to 1 to rounding."""
+        solved = self._rings()
+        profiles, carries = solved["profiles"], solved["carries"]
+        radius = np.array([float(R)])
+        taper, phase, bar_angle = bar_terms(radius, self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        edges = np.asarray(edges, dtype=float)
+        lo, hi = edges[:-1], edges[1:]
+        lower, upper, share = self._between(radius)
+
+        def ring_mean(ring: int) -> np.ndarray | float:
+            if not carries[ring]:
+                return 1.0  # a ring with no mode is 1 on every cell: so is every sector of it
+            return _response.sector_mean(profiles[ring], lo - phase[0], hi - phase[0])
+
+        arms = (1.0 - share[0]) * ring_mean(int(lower[0])) + share[0] * ring_mean(int(upper[0]))
+        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
+        return w_arm[0] * arms + w_bar[0] * (1.0 + self.bar * bar)
 
     def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
         """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8)."""
         grid = np.linspace(lo, hi, steps + 1)
         return invert_azimuths(u, grid, self.contrast(radius, grid))
 
+    # --- the disclosed check's measurements (D216 item 11 iv): they build nothing --------------------
+
+    def stellar_sum(self) -> np.ndarray:
+        """ψ = Σ_m u_m cos(m χ_k − θ_m) on the cells' centres of every grid ring, shaped (R, CELLS): the
+        stellar arm modes' sum at unit amplitude, whose highest part of a ring the source's mask is laid on."""
+        chi = _response.cell_centres(CELLS)
+        psi = np.zeros((self.R.size, CELLS))
+        for k, m in enumerate(ARM_MODES):
+            psi += self.unit[k][:, None] * np.cos(float(m) * chi[None, :] - self.phases[k])
+        return psi
+
+    def arm_ratio(self, mask_width: float) -> np.ndarray:
+        """The ratio of means on every grid ring, shaped (R,): the mean of s over the source's arm mask - the
+        share :func:`mask_share` of the ring, taken where the stellar modes' sum is highest - over its mean on
+        the rest of the ring. ``mask_width`` in kpc, the mask's full width perpendicular to an arm. NaN on a
+        ring that carries no mode. A measurement of the solved rings: nothing is built from it."""
+        profiles, carries = self.profiles, self.carries
+        share = mask_share(effective_arm_number(self.unit), self.R, self.sin_pitch, mask_width)
+        psi = self.stellar_sum()
+        out = np.full(self.R.size, np.nan)
+        for i in np.flatnonzero(carries & np.isfinite(share)):
+            out[i] = ratio_of_means(profiles[i], psi[i], float(share[i]))
+        return out
+
+    def strongest_forcing(self) -> np.ndarray:
+        """The arm number of the mode of largest forcing m·A_m on every grid ring, shaped (R,): the mode the gas
+        answers most strongly (f_m = m A_m/(X sin p), and X sin p is the ring's own). Gate G3 item 6."""
+        return _M[np.argmax(_M[:, None] * self.unit, axis=0)]
+
+    def arm_width(self, arm_number: np.ndarray | None = None) -> np.ndarray:
+        """The full width at half maximum of every grid ring's tallest crest of s (:func:`crest_width`) as a
+        fraction of the period 2π/m, shaped (R,); NaN on a ring that carries no mode. A measurement only.
+
+        m is the mode of largest forcing m·A_m (:meth:`strongest_forcing`): the check's definition, fixed at gate
+        G3 (item 6) - not the largest amplitude, which on most rings is a tie the first build broke towards the
+        lower arm number, the kindest reading. ``arm_number`` (R,) reads the same widths against another
+        mode's period, for the record the tests keep of the other readings."""
+        profiles, carries = self.profiles, self.carries
+        m = self.strongest_forcing() if arm_number is None else np.asarray(arm_number, dtype=float)
+        out = np.full(self.R.size, np.nan)
+        for i in np.flatnonzero(carries):
+            out[i] = crest_width(profiles[i]) / (2.0 * math.pi / m[i])
+        return out
+
+
+# --------------------------------------------------------------------------------------------------------------
+# The disclosed check's two measurements (D216 item 11 iv; the gate's follow-up). They read a solved ring and
+# build nothing: no stage calls them. Their definitions are fixed by the ruling, before the build's numbers.
+# --------------------------------------------------------------------------------------------------------------
+
+
+def mask_share(arm_number, radius, sin_pitch, mask_width) -> np.ndarray:
+    """The share of a ring the source's arm mask covers: m W/(2π R sin p), at most a half (S56's definition,
+    D215, unchanged): a mask of full width W perpendicular to an arm, for the ring's power-weighted arm number
+    m (``pattern.effective_arm_number``). ``radius`` and ``mask_width`` in kpc. NaN where the arm number is."""
+    m = np.asarray(arm_number, dtype=float)
+    return np.minimum(m * mask_width / (2.0 * math.pi * np.asarray(radius, dtype=float) * sin_pitch), 0.5)
+
+
+def ratio_of_means(profile: np.ndarray, order_by: np.ndarray, share: float) -> float:
+    """The mean of ``profile`` over the ``share`` of a ring's cells on which ``order_by`` is highest, over its
+    mean on the rest. Both arrays are on the ring's equal cells; the cell the share cuts is counted by the
+    fraction of it inside, and the order is stable (equal values keep the cells' own order)."""
+    profile = np.asarray(profile, dtype=float)
+    ranked = profile[np.argsort(-np.asarray(order_by, dtype=float), kind="stable")]
+    cells = float(share) * ranked.size
+    whole = min(int(math.floor(cells)), ranked.size)
+    inside = float(ranked[:whole].sum()) + ((cells - whole) * float(ranked[whole]) if whole < ranked.size else 0.0)
+    outside = float(ranked.sum()) - inside
+    return (inside / cells) / (outside / (ranked.size - cells))
+
+
+def crest_width(profile: np.ndarray) -> float:
+    """The full width at half maximum of a ring's tallest crest, in radians of the pattern coordinate.
+
+    The half level is midway between the ring's trough and its crest. From the tallest cell the profile is
+    followed each way to where it first falls to that level, the crossing placed linearly between the two
+    cells it lies between. NaN for a ring with no crest (a flat profile).
+    """
+    s = np.asarray(profile, dtype=float)
+    n = s.size
+    half = 0.5 * (float(s.max()) + float(s.min()))
+    if not s.max() > half:
+        return float("nan")
+    ahead = np.roll(s, -int(np.argmax(s)))  # the crest first; then the cells after it, round the ring
+
+    def reach(run: np.ndarray) -> float:
+        """Cells from the crest to the first crossing of the half level along ``run`` (run[0] is the crest)."""
+        k = int(np.argmax(run <= half))  # the first cell at or under the level: there is one, the trough
+        return (k - 1) + (run[k - 1] - half) / (run[k - 1] - run[k])
+
+    behind = np.concatenate([ahead[:1], ahead[:0:-1]])  # the crest, then the cells before it
+    return (reach(ahead) + reach(behind)) * (2.0 * math.pi / n)
+
 
 def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
-    # Everything is read, nothing drawn: the ratio is the bar stage's derived class mean (D210 as
-    # amended), the shape the stellar pattern's modes and the layer's phases.
+    # Everything is read, nothing drawn: the stellar pattern's modes, the layer's phases and checkpoint 1's disc.
     # A composed field (S55, D214): with the layer off compose gives the neutral value the declaration states,
-    # everywhere, and the ratio the bar stage derived is untouched. With it on, the pattern object comes from
-    # compose too, and a pattern with nothing to place (unresolved, or a ratio of 1 with no bar) is the neutral.
+    # everywhere. With it on, the pattern object comes from compose too, and a pattern with nothing to place
+    # (unresolved, or no arm mode and no bar) is the neutral.
     cells = (R.size, ctx.grid.phi.size)
 
-    def ridge() -> np.ndarray:
+    def response() -> np.ndarray:
         shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
         if shape is None or shape.flat:
             return _compose.neutral(GAS_DENSITY_CONTRAST, cells)
-        made = shape.contrast(R, ctx.grid.phi)
-        # Every ring keeps its gas on any grid. The ridge's mean is 1 over the ring; sampled at the grid's cell
-        # centres it is 1 to rounding only where the ridge is analytic and resolved (one mode on the default 360
-        # cells; 6e-4 off on 36 cells with one four-armed mode, its ninth harmonic). A ring of several modes is
-        # ranked, its ridge has corners, and its sampled mean leaves 1 by a few parts in 10^4. A ring whose
-        # sampled mean has left 1 is divided by it; one that has not is untouched.
-        mean = made.mean(axis=1, keepdims=True)
-        aliased = np.abs(mean - 1.0) > RING_MEAN_TOLERANCE
-        return np.where(aliased, made / np.where(aliased, mean, 1.0), made)
+        # The law's mean over each of the grid's φ cells, on each grid ring (gate G3 item 4): the interpolant
+        # integrated exactly, so a ring's cells average to 1 to rounding on any grid and nothing is divided.
+        return shape.cell_means(R, ctx.grid["phi"].edges)
 
-    return {"gas_density_contrast": _compose.field(ctx.fields, GAS_DENSITY_CONTRAST, cells, ridge)}
+    return {"gas_density_contrast": _compose.field(ctx.fields, GAS_DENSITY_CONTRAST, cells, response)}
 
 
 GAS_PATTERN = IMPLEMENTATIONS.register(
     Stage(
         id="gas_pattern", slot="gas_pattern", checkpoint=3,
         about=(
-            "The gas's own arm pattern: a narrow ridge on the crests of the stellar pattern, whatever its "
-            "modes - one arm's ridge values laid round each ring in the order of the stellar modes' sum - "
-            "its width a fixed fraction of one mode's arm-to-arm period and its amplitude set by the "
-            "derived ratio of means inside an arm mask, fading with the stellar arms' amplitude (D210 as "
-            "amended; D215). Reads the stellar pattern's modes and phases and "
-            "no gas column: the gas's response, stated as a shape. It draws nothing; "
+            "The gas's own arm pattern: on every ring the steady response of isothermal gas to the stellar "
+            "arm modes' potential in the frame that turns with the gas - no flow through the arms, no shock - "
+            "solved ring by ring under uniform potential vorticity, and blended with the stellar bar's own "
+            "term by the bar's taper (D216). Reads the stellar pattern's modes and phases and the disc's "
+            "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
+            "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
+            "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "
+            "radius, so every ring keeps its gas on any grid with nothing divided. It draws nothing; "
             "its field is seeded through the pattern's drawn pitch and amplitudes and the layer's phases."
         ),
         compute=compute_gas_pattern,
