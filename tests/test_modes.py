@@ -152,7 +152,7 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
         # And nothing else is in the field: no m = 1, no m = 7 or 8.
         for m in (1, 7, 8):
             assert float(np.abs(fourier(field, phi, m)).max()) < 1e-9, (template, seed, m)
-    assert worst < 1e-13  # measured 2e-16 to 6e-16: the gate's 1e-9 is met at rounding
+    assert worst < 1e-13  # measured 4.3e-15 at worst over both grids, templates and seeds: 1e-9 is met at rounding
 
 
 # --- the gate: nothing below zero ----------------------------------------------------------------------------------
