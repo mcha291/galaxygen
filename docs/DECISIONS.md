@@ -9988,3 +9988,13 @@ the lanes end in a cliff and make no nuclear ring; the same physics sits unplace
 **The close (2026-10-05).** The suite on the combined state: 1323 passed, 5 skipped, `EXIT=0`; the specs OK, 12 / 20 / 5
 of 37 for both models, the template checks 0 / 5 on their five recorded misses. The picture run: 8 passed. The
 handoff is deleted.
+
+### D218. S59: pitch along an arm, and the templates' pins (BUILD_III Phase P4; an Opus lead)
+
+**This session is Phase P4** (BUILD_III §5), opened on 2026-10-05 straight after S58's close on the owner's
+standing order. The reading came first, by one reader blind to the model (`docs/READING_ARM_SEGMENTS.md`: how
+the pitch varies along an arm and between the arms of one galaxy, the Milky Way's maser-fitted arm segments and
+its bar's angle, and what is measured of NGC 4414's arms). Inherited from D217: a pin is an input of kind `pin`
+that reaches a run by the template's name; the bar's angle is a convention of the winding, not a field; debt
+#138's conflict of sources is with the owner, whose standing answer (D216) keeps the plan's arm-number law.
+
