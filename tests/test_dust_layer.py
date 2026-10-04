@@ -345,7 +345,7 @@ def test_the_dust_is_placed_round_each_ring_by_the_gas_s_own_contrast(model):
     np.testing.assert_array_equal(np.asarray(arrays["dust_placement"]), np.maximum(gas, 0.0))
     # S57 (D216 G3 item 4): the first build had re-pinned this to 1.715e-6 - its field was the gas's response at the
     # cells' centres, whose sampled mean on this grid's 108 cells is off 1 by that. The published field is the
-    # law's mean over each grid cell: a ring's cells average to 1 to rounding on any grid, with nothing divided.
+    # law's exact mean over each grid cell's extent in azimuth, at the ring's own radius: a ring's cells average to 1 to rounding on any grid, with nothing divided.
     assert float(np.abs(np.asarray(arrays["dust_placement"]).mean(axis=1) - 1.0).max()) < 1e-12
     # The scattered light is the model's own share of the placed stars and is not a function of this array.
     assert np.asarray(arrays["dust_extinction"]).shape == (FINE_PHI.n_R, 3)  # still the ring's mean column

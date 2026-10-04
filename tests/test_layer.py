@@ -795,8 +795,8 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
     # S57 (D216 G3 item 4): every placed component keeps its ring to rounding on this small grid again. S57's first
     # build published the gas's response at the cells' centres, whose sampled mean on 36 cells left 1 by 1.257e-3,
     # and the two components the gas places (halpha_hii, dust_placement) had been re-pinned to that here, with the
-    # 1e-12 moved to the production grid. The published field is now the law's mean over each grid cell: a ring's
-    # cells average to 1 to rounding on any grid, with nothing divided, and the rule below is the one it was.
+    # 1e-12 moved to the production grid. The published field is now the law's exact mean over each grid cell's
+    # extent in azimuth, at the ring's own radius: a ring's cells average to 1 to rounding on any grid, with nothing divided, and the rule below is the one it was.
     for name in RENDER_PLACED:
         assert on_h["axes"][name][:2] == ["R", "phi"], name
         # Layer off: even round the ring - every cell holds its ring's own value. Layer on: it is placed.
@@ -1204,7 +1204,8 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
         assert np.allclose(expect_a[census], expect_b[census], rtol=1e-12, atol=0.0), census
     # Each composed field keeps every ring's mean under either realisation. S57 (D216 G3 item 4): the first build
     # had pinned the gas's at 1.257e-3 and 1.54e-4 on these 36 cells (its centre samples, no longer divided by
-    # their mean); the published field is the law's mean over each cell and the three are at 1e-12 again.
+    # their mean); the published field is the law's exact mean over each cell's azimuth on its ring, and the three are at
+    # 1e-12 again.
     for out in (a, b):
         for n in ("pattern_density_contrast", "gas_density_contrast", "sfr_modulation"):
             assert float(np.abs(np.asarray(out.fields[n]).mean(axis=1) - 1.0).max()) < 1e-12, n

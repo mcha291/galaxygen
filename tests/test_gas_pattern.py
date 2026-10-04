@@ -13,7 +13,8 @@ ridge. What is tested, in the gate's order:
 - **the law re-derived by hand** on three rings from the published fields, with a dense Newton and a spectral
   derivative written here, and the published cell means with the bar's composition; and again on the suite's most
   saturated seed (gate G3 item 3: the forcing's amplitude carries the saturation);
-- **the published field is the law's mean over each grid cell** (G3 item 4): ring means 1 to 1e-13 on any φ grid
+- **the published field is the law's exact mean over each grid cell's extent in azimuth, at the ring's own
+  radius** (G3 item 4; not over R: points between rings are blended in R): ring means 1 to 1e-13 on any φ grid
   with nothing divided, and its error against the exact solution's cell means with the h² law;
 - **the two interpolation errors** of the point function, in χ and in R, pinned as measured (G3 item 5);
 - **the predictions** of D216, read before they are judged (B4), with the as-built numbers;
@@ -36,17 +37,22 @@ of 300 pattern seeds a template - were solved and still raised. Since G3 a cell 
 under its rounding floor**; all 240 and all 600 converge, and the regime is published as the law gives it.
 **One of the 238 that converged before moved its bits** (``ngc_4414`` at pattern seed 1, texture seed 1: one ring
 at 0.49 kpc stops at 8 Newton steps where the absolute tolerance took 10; the profile moves by 1.8e-15 of itself
-and the published field not at all) and three of the sweep's 580: reported to the gate, which asked for none.
+and the published field not at all) and three of the sweep's 580: reported to the gate, which had asked for none
+and accepted the four at its follow-up - each by at most 2.0e-15 of the profile, the old acceptance having been
+a chance landing inside the floor (the bound is asserted on the suite's galaxy against the first build's rule).
 (ii) The interpolation in χ reads 3.5e-4 outside the bar's reach and 1.2e-3 inside it (3.0e-4 of the point
 field), not the 2.0e-4 of the instrument's two hard rings: 1440 cells stand, pinned per quantity. (iii) The
-offset is zero for a lone mode; with several modes the two crests are within one solver cell on the default
-galaxy's mid disc and up to five cells on ``ngc_4414``'s. (iv) The published field is cell means, not centre
-samples: ring totals hold on every grid.
+offset is zero for a lone mode, exactly; with several modes, within one solver cell (0.25 degrees) on the Milky
+Way template and up to about a degree on ``ngc_4414`` - the mode-by-mode weighting, measured, not ruled, and of
+no one sign; no offset is put in and none is published. (iv) The published field is cell means in azimuth, not
+centre samples: ring totals hold on every grid. (v) The solver's shortcut in evaluating the criterion (the
+cells' floors only where they can decide a ring) is held to the rule as written, bit for bit.
 """
 
 from __future__ import annotations
 
 import ast
+import collections
 import functools
 import math
 from pathlib import Path
@@ -192,7 +198,9 @@ def test_the_gas_contrast_averages_to_one_around_every_ring(model):
 def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divided(prod, template):
     """Gate G3 item 4 (it rewords D216 items 9 and 11 i): "the published (R, φ) field is the law's mean over each
     grid cell - the interpolant integrated exactly - so its ring mean is 1 to rounding on every grid with no
-    division (pin 1e-13) ... ``contrast_at``, ``response_at`` and the censuses keep the point function".
+    division (pin 1e-13) ... ``contrast_at``, ``response_at`` and the censuses keep the point function". As built
+    and as the gate's follow-up accepted it, the cell is the grid cell's extent in azimuth at the ring's own
+    radius: the exact mean over φ there, not a mean over R (a point between two rings is blended in R).
 
     The published field is ``GasPattern.cell_means`` on the grid's own φ edges, bit for bit, and each of its rows
     is ``sector_means`` at that ring's radius, bit for bit: no step stands between the law and the field, a
@@ -393,15 +401,23 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
     it is held under; 50 and 48 of their 133 rings have a floor above 1e-10. Seventeen of the 240 galaxies have
     such a ring (249 rings in all), every one at a drawn pitch under 7.7 degrees.
 
-    **One galaxy that converged before G3 is not the bits it was** (the forbidden "any change to a converged
-    solution's bits" could not be kept with the criterion as ruled, and is reported): ``ngc_4414`` at pattern seed
-    1, texture seed 1 (pitch 2.06 degrees). Its ring at 0.49 kpc (arm weight 3.7e-4) took 10 Newton steps under
-    the absolute tolerance - the last two wandering on the rounding floor until one landed at 9.5e-11 - and takes
-    8 now, stopping at 1.19e-10 under a floor of 2.5e-10. The two profiles differ by 1.8e-15 of themselves; the
+    **One galaxy that converged before G3 is not the bits it was**: ``ngc_4414`` at pattern seed 1, texture seed 1
+    (pitch 2.06 degrees). Its ring at 0.49 kpc (arm weight 3.7e-4) took 10 Newton steps under the absolute
+    tolerance - the last two wandering on the rounding floor until one landed at 9.5e-11 - and takes 8 now,
+    stopping at 1.19e-10 under a floor of 2.5e-10. The two profiles differ by 1.8e-15 of themselves; the
     published field, the point function and the sector means of that galaxy are bit for bit what they were.
-    (Outside this test, a sweep of 300 pattern seeds a template at the template's own texture seed: no galaxy
-    raises where 5 and 15 did; the worst floor 5.8e-10 and 9.7e-10, the worst residual over its bound 0.49; s from
-    3.9e-41 to 14.0 and from 2.7e-79 to 14.8; of the 580 that did not raise before, three more moved, as this one.)"""
+
+    **The record across the criterion change, accepted at gate G3's follow-up (D216)** - "my bit-identical
+    assertion was too strong where the old acceptance was itself a chance landing inside the floor". Over 842
+    galaxies - this suite's 240, the two templates, and a sweep of 300 pattern seeds a template at the template's
+    own texture seed (the sweep is outside this test): **816 bit-identical; 22 that raised now converge (2 of the
+    suite's, 5 and 15 of the sweep's); 4 moved** - this one and three of the sweep's (Milky Way pattern seeds 152
+    and 279, ``ngc_4414`` 227) - **each by at most 2.0e-15 of the profile, on inner rings (0.26-0.79 kpc) whose
+    arm weight is 5.2e-4 at most; one published cell moved, by 5.55e-17 (Milky Way pattern seed 279)**. The bound
+    is asserted for the suite's galaxy, against the first build's rule made again, in
+    ``test_the_suite_galaxy_whose_bits_moved_with_the_criterion_moved_by_rounding``. The sweep as it reads now: no
+    galaxy raises; the worst floor 5.8e-10 and 9.7e-10, the worst residual over its bound 0.49; s from 3.9e-41 to
+    14.0 and from 2.7e-79 to 14.8."""
     model = prod[0].get(DEFAULT_MODEL)
     c = constants(model)
     edges = np.linspace(0.0, 2.0 * np.pi, 33)
@@ -409,6 +425,7 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
     held: dict[tuple[str, int, int], dict[str, float]] = {}
     on_floor: dict[tuple[str, int, int], float] = {}
     saturated_most = 0.0
+    sides, mid_most = np.zeros(4, dtype=int), 0
     for template in TEMPLATES:
         for pattern_seed in range(60):
             for texture_seed in (0, 1):
@@ -434,6 +451,13 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
                 excess = float((total - (1.0 - float(o.fields["bar_contrast"]) * taper)).max())
                 assert excess <= 1e-12, label
                 saturated_most = max(saturated_most, excess)
+                # Where the gas's tallest crest sits against the stellar sum's, in solver cells, signed (the
+                # offset's test, below): counted where the two are the same arm's crest (within 20 cells).
+                apart = crest_separation(gp)[gp.carries]
+                same = np.abs(apart) <= 20
+                sides += np.array([(apart[same] < 0).sum(), (apart[same] == 0).sum(), (apart[same] > 0).sum(), (~same).sum()])
+                mid = same & (o.grid.R[gp.carries] >= 6.0) & (o.grid.R[gp.carries] <= 10.0)
+                mid_most = max(mid_most, int(np.abs(apart[mid]).max(initial=0)))
                 for key, value in got.items():
                     worst[key] = min(worst.get(key, value), value) if key in ("min_s", "margin", "min_g") else max(worst.get(key, value), value)
     assert len(held) == 240
@@ -444,7 +468,10 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
         assert got["steps"] == 10 and got["residual"] > 1e-10 and 0.3 < got["over"] < 0.5, label
         assert on_floor[label] == pytest.approx(1.780, abs=2e-3) and got["on_floor"] in (48, 50), label
     # The one whose bits moved with the criterion (the docstring): 9 steps at most over its rings now, its worst
-    # ring's residual 1.19e-10 under a floor of 2.5e-10 (the absolute tolerance had left it at 9.7e-11).
+    # ring's residual 1.19e-10 under a floor of 2.5e-10 (the absolute tolerance had left it at 9.5e-11). Of 842
+    # galaxies 816 are bit-identical across the change, 22 formerly raising converge and 4 moved, each by at most
+    # 2.0e-15 relative on inner rings of arm weight <= 5.2e-4, one published cell by 5.55e-17 (milky_way pattern
+    # seed 279): accepted at gate G3's follow-up (D216).
     moved = held[("ngc_4414", 1, 1)]
     assert moved["residual"] == pytest.approx(1.186e-10, rel=0.01) and moved["floor"] == pytest.approx(2.516e-10, rel=0.01) and moved["steps"] == 9
     # The worst seen over the 240, recorded: Newton's counts (the maxima are 120 and 30); the largest floor and the
@@ -465,6 +492,14 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
                                         ("ngc_4414", 28), ("ngc_4414", 33), ("ngc_4414", 40), ("ngc_4414", 52)}
     # The saturation's bound is met with equality on a saturated ring, to rounding (the excess is rounding's).
     assert -1e-15 < saturated_most <= 1e-12
+    # The offset's sign over the 240 (gate G3's follow-up): the gas's tallest crest against the stellar sum's is
+    # at the smaller χ on 11 697 rings, on the same cell on 11 012 and at the larger χ on 12 298 - both sides, about
+    # equally - and on 753 rings the tallest gas crest is another arm's. Over 6-10 kpc the two are never more than
+    # 4 solver cells (1 degree) apart on any of the 240: the field's about says "within about a degree ... over
+    # the mid disc, to either side".
+    print(f"crest separation over the 240: smaller chi {sides[0]}, same cell {sides[1]}, larger chi {sides[2]}, another arm's {sides[3]}; "
+          f"6-10 kpc at most {mid_most} cells")
+    assert sides.tolist() == [11697, 11012, 12298, 753] and mid_most == 4
 
 
 def test_a_ring_the_solver_cannot_converge_raises_and_nothing_catches_it(prod, monkeypatch):
@@ -524,7 +559,7 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
         10.0125   23.905  30.879  12.00573  0.082903  0       0       0.23099 0.45286 0.56434   1.00000
 
     X(7.99 kpc) = 7.93 is D215's hand anchor, and Ω and κ there are the probe's 30.9 and 41.4. At every ring the
-    **published field** is held to the composition written out here: the mean over each grid cell of
+    **published field** is held to the composition written out here: the mean over each grid cell's azimuth, on the ring, of
     g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)) - the hand's ring integrated over the cell by the trapezoid rule
     on its own breakpoints, the bar's cosine by its own integral (gate G3 item 4). At 4 kpc, inside the bar's
     reach, the bar's term carries 0.70 of the weight. The spectral residual of the differential equation reads
@@ -602,9 +637,10 @@ def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(p
     the saturation in it, because the gas answers the stars that exist" - the forcing is the saturated one, as
     built. The hand test it owes, on the suite's most saturated pattern seed and from the published fields alone.
 
-    Over the suite's seeds (sixty pattern seeds, each template's inputs) the smallest saturation is 0.574, on
-    ``ngc_4414`` at pattern seed 28 (0.642 on the Milky Way template, the same seed; the arm amplitude draws 0.786
-    and the bar's 0.410); 83 of its rings are saturated, from 3.1 to 9.3 kpc. Two of them are read: the most
+    **The most saturated suite seed is ``ngc_4414`` at pattern seed 28, its smallest saturation 0.574** (the gate
+    quoted 0.62, about the Milky Way template's 0.642 at the same seed). Over the suite's seeds (sixty pattern
+    seeds, each template's inputs) none is smaller. Its arm amplitude draws 0.786 and its bar's 0.410; 83 of its
+    rings are saturated, from 3.1 to 9.3 kpc. Two of them are read: the most
     saturated ring of all (5.36 kpc, the taper 4e-3) and the most saturated one outside the bar's reach (the taper
     under 1e-6). On each: the published amplitudes sum to 1 − B·taper to rounding - that is what saturated means;
     f_m = m A_m(published)/((1 − taper) X sin p), by this file's arithmetic, is the stage's forcing to 1e-15; and
@@ -695,41 +731,57 @@ def test_one_weak_mode_is_the_linear_response_and_a_lone_mode_has_no_offset():
     assert min(away, 2.0 * math.pi / m - away) <= 2.0 * math.pi / gr.CELLS
 
 
+def crest_separation(gp: GasPattern) -> np.ndarray:
+    """Per grid ring, in solver cells: the cell of the tallest crest of s minus the cell of the tallest crest of
+    the stellar modes' sum, wrapped to (−720, 720]. Positive: the gas's crest at the larger χ. 0 on a ring that
+    carries no mode (both are flat)."""
+    d = (gp.profiles.argmax(axis=1) - gp.stellar_sum().argmax(axis=1)) % gr.CELLS
+    return np.where(d > gr.CELLS // 2, d - gr.CELLS, d)
+
+
 @pytest.mark.parametrize("template", TEMPLATES)
 def test_with_several_modes_the_two_crests_are_cells_apart_as_read(prod, template):
-    """D216's prediction "offset 0 on every ring", as gate G3 words the record (item 7): "zero for a lone mode,
-    exactly, by the equation's symmetry; with several modes the gas crest and the stellar sum's crest are within
-    one solver cell (0.25°) on the default galaxy because each mode is answered with its own weight; no offset is
-    put in and none is published". Read here on the solver's own cells, the tallest crest of s against the tallest
-    crest of the stellar modes' sum, ring by ring.
+    """D216's prediction "offset 0 on every ring", as the record is worded since gate G3's follow-up: "zero for a
+    lone mode, exactly; with several modes, within one solver cell (0.25 deg) on the Milky Way template and up to
+    about a degree on ngc_4414 - the mode-by-mode weighting, measured, not ruled; no offset is put in and none is
+    published". Read here on the solver's own cells, ring by ring: the cell of the tallest crest of s minus the
+    cell of the tallest crest of the stellar modes' sum, **signed** - positive is the gas's crest at the larger χ.
 
-    **The Milky Way template: within one solver cell on every one of the 53 rings over 6-10 kpc (the same cell on
-    5, one apart on 48), and on 161 of the 165 rings that carry a mode; two rings read two cells, and on two (12.1
-    and 12.2 kpc, where the six-armed mode is all but alone and six nearly equal crests stand) the gas's tallest
-    crest is another arm's. ``ngc_4414`` is not within a cell: over 6-10 kpc the two are the same cell on 20 rings,
-    one apart on 12, two on 13, and three to five on 8 (five cells is 1.25 degrees); 7 at most over the disc.**
-    G3's wording is the default galaxy's, and holds on it over the band the check reads; the other template's
-    reading is recorded beside it."""
+    **The Milky Way template: within one solver cell on 53 of 53 rings over 6-10 kpc and on 161 of the 165 rings
+    that carry a mode; two rings read two cells, and on two (12.1 and 12.2 kpc, where the six-armed mode is all
+    but alone and six nearly equal crests stand) the gas's tallest crest is another arm's. ``ngc_4414``: up to 5
+    cells (1.25 degrees) over 6-10 kpc and 7 at most over the disc; within one cell on 37 of its 133 rings.**
+
+    **The sign: both sides of the stellar crest, in both templates.** Milky Way, 6-10 kpc: +1 cell on 48 rings and
+    the same cell on 5 - one side over that band - but over the disc −1 on 41 rings (every one inside 6 kpc), 0
+    on 59, +1 on 61, +2 on 2. ``ngc_4414``, 6-10 kpc: −5 to +1 (27 rings at the smaller χ, 20 on the same cell,
+    6 at the larger); over the disc −7 to +7, 95 rings at the smaller χ, 22 the same, 16 at the larger. So the
+    separation is no displacement to one side of the arm: its sign turns with radius and with the galaxy, as the
+    modes' weights do. (Over the suite's 240 seeded galaxies the two sides are met about equally: the gate's test
+    on every seed counts them.)"""
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
     R = o.grid.R
     gp = shape_of(model, o)
-    s, psi = gp.profiles, gp.stellar_sum()
-
-    def apart(i: int) -> int:
-        d = abs(int(s[i].argmax()) - int(psi[i].argmax()))
-        return min(d, gr.CELLS - d)
-
-    band = [apart(i) for i in np.flatnonzero(gp.carries & (R >= 6.0) & (R <= 10.0))]
-    every = [apart(i) for i in np.flatnonzero(gp.carries)]
-    same_arm = [d for d in every if d <= 10]
+    signed = crest_separation(gp)
+    carries = np.flatnonzero(gp.carries)
+    band = collections.Counter(int(signed[i]) for i in carries if 6.0 <= R[i] <= 10.0)
+    same_arm = collections.Counter(int(signed[i]) for i in carries if abs(signed[i]) <= 10)
     want = {
-        "milky_way": dict(band=[5, 48], most=2, other_arm=2, within_one=161),
-        "ngc_4414": dict(band=[20, 12, 13, 2, 4, 2], most=7, other_arm=0, within_one=37),
+        "milky_way": dict(band={0: 5, 1: 48}, disc={-1: 41, 0: 59, 1: 61, 2: 2}, other_arm=2, within_one=161, most=(1, 2)),
+        "ngc_4414": dict(band={-5: 2, -4: 4, -3: 2, -2: 13, -1: 6, 0: 20, 1: 6}, other_arm=0, within_one=37, most=(5, 7),
+                         disc={-7: 28, -6: 19, -5: 14, -4: 7, -3: 4, -2: 16, -1: 7, 0: 22, 1: 8, 2: 1, 3: 4, 4: 1, 5: 1, 7: 1}),
     }[template]
-    assert np.bincount(band).tolist() == want["band"] and len(band) == 53
-    assert max(same_arm) == want["most"] and len(every) - len(same_arm) == want["other_arm"]
-    assert sum(1 for d in every if d <= 1) == want["within_one"]
+    print(f"{template}: signed separation in solver cells, 6-10 kpc {dict(sorted(band.items()))}; the disc {dict(sorted(same_arm.items()))}")
+    assert dict(band) == want["band"] and sum(band.values()) == 53
+    assert dict(same_arm) == want["disc"] and carries.size - sum(same_arm.values()) == want["other_arm"]
+    assert sum(n for d, n in same_arm.items() if abs(d) <= 1) == want["within_one"]
+    assert (max(abs(d) for d in band), max(abs(d) for d in same_arm)) == want["most"]
+    # both sides of the stellar crest over the disc, in both templates
+    assert min(same_arm) < 0 < max(same_arm)
+    # the Milky Way's inner disc sits on the other side from its mid disc
+    if template == "milky_way":
+        assert all(R[i] < 6.0 for i in carries if signed[i] == -1) and min(band) == 0
 
 
 # --- the interpolation of the point function, in χ and in R (D216 item 9; gate G3 item 5) -----------------------
@@ -885,8 +937,8 @@ def test_disclosed_check_the_ratio_of_means_and_the_width(prod, template):
     of the period 2π/m of the mode of largest forcing m·A_m - the mode the gas answers most strongly - not a
     tie-break on amplitude", the half level midway between the ring's trough and crest, against the measured 0.17.
     **As read: the Milky Way template 0.466 at the median, 0.423 to 0.481; ``ngc_4414`` 0.512, 0.479 to 0.526 - a
-    miss on every ring, by 2.5 to 2.8 times and by 2.8 to 3.1 times** (G3 recorded "2.5-3.0× on every ring";
-    ``ngc_4414``'s widest ring reads 3.09). Its two named suspects (D216, "Honesty"): the steady pressure-balanced
+    miss on every ring, by 2.49 to 2.83 times and by 2.82 to 3.09 times** (G3 recorded "2.5-3.0× on every ring":
+    two and a half to three times, as rounded, on both). Its two named suspects (D216, "Honesty"): the steady pressure-balanced
     response in place of the simulations' converging infall, and the razor-thin forcing of the five- and six-armed
     modes.
 
@@ -1223,6 +1275,7 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert {d.name for d in GAS_PATTERN.publishes} == {"gas_density_contrast"}
     about = GAS_PATTERN.publishes[0].about
     assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
+    assert "at the ring's own radius" in about and "within about a degree of each other over the mid disc, to either side" in about
 
 
 def test_both_models_run_the_gas_pattern_after_the_pattern(model):
@@ -1311,3 +1364,73 @@ def test_one_solve_per_pattern_and_the_cache_changes_no_bit(prod):
     assert again.profiles.tobytes() == cold.tobytes()
     gm.forget_solutions()
     assert len(gm._SOLUTIONS) == 0
+
+
+DIAGNOSTICS = ("steps", "halvings", "deepest", "residual", "residual_sum", "floor")
+
+
+@pytest.mark.parametrize("which", ["milky_way", "ngc_4414", "ngc_4414 at pattern seed 33"])
+def test_the_criterion_s_shortcut_changes_no_bit_of_the_model_s_rings(prod, monkeypatch, which):
+    """Gate G3's follow-up (D216): the solver computes the cells' rounding floors only for the rings they can decide
+    (``gas_response._measure``); the rule is per cell on every ring. On the two templates' rings, and on the
+    tightly wound galaxy that raised before G3 (``ngc_4414`` at pattern seed 33 and the template's own texture
+    seed, where the floor and not the absolute tolerance is the bound on 52 of its 133 rings), the solver
+    with its shortcut and the solver made to compute every cell's floor at every step (its private keyword
+    ``_every_floor``, the tests' alone) return the same bytes: profiles, Newton's counts, residuals, sums, floors.
+    The instrument's own cases are held the same way in ``tests/test_gas_response.py``."""
+    model = prod[0].get(DEFAULT_MODEL)
+    if which in TEMPLATES:
+        o = template_run(prod, which)
+    else:
+        o = run(model, {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 33}, only=GAS_PATTERN_READS)
+    gp = shape_of(model, o)
+    f, eps, carries = gp.forcing_amplitudes(), gp.epsilon(), gp.carries
+    shortcut, d = gm.respond(f[carries], gp.phases, eps[carries], cache=False)
+    monkeypatch.setattr(gr, "solve", functools.partial(gr.solve, _every_floor=True))
+    written, e = gm.respond(f[carries], gp.phases, eps[carries], cache=False)
+    monkeypatch.undo()
+    assert written.tobytes() == shortcut.tobytes() == gp.profiles[carries].tobytes()
+    for name in DIAGNOSTICS:
+        assert getattr(e, name).tobytes() == getattr(d, name).tobytes(), name
+    on_floor = int((d.floor > gr.RESIDUAL_TOLERANCE).sum())
+    assert (int(carries.sum()), on_floor) == {"milky_way": (165, 0), "ngc_4414": (133, 0), "ngc_4414 at pattern seed 33": (133, 52)}[which]
+
+
+def test_the_suite_galaxy_whose_bits_moved_with_the_criterion_moved_by_rounding(prod, monkeypatch):
+    """The record of gate G3's follow-up (D216), with its bound asserted and no profile stored. Across the criterion
+    change 816 of 842 galaxies are bit-identical, 22 that raised converge and 4 moved (the gate test's docstring);
+    of the suite's 240 the one that moved is ``ngc_4414`` at pattern seed 1, texture seed 1. The first build's rule
+    is made again here - max_k |r_k| under the absolute 1e-10 and no rounding floor, by handing the criterion a
+    floor of zero (the rule then reads |r_k| ≤ 1e-10 where the first build read <: the same but at equality) - and
+    the galaxy solved both ways: **one ring differs, at 0.49 kpc, where the arm's weight is 3.7e-4; the first
+    build took 10 Newton steps there and stopped at 9.46e-11, the solver takes 8 and stops at 1.19e-10 under a
+    floor of 2.52e-10; the two profiles are within 1.8e-15 of each other, cell by cell** (asserted under
+    2.5e-15), and every other ring is the same bytes."""
+    model = prod[0].get(DEFAULT_MODEL)
+    given = {**templates.overrides(templates.TEMPLATES["ngc_4414"]), "pattern_seed": 1, "texture_seed": 1}
+    o = run(model, given, only=GAS_PATTERN_READS)
+    gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
+    f, eps, carries = gp.forcing_amplitudes(), gp.epsilon(), gp.carries
+    now, d = gm.respond(f[carries], gp.phases, eps[carries], cache=False)
+    assert now.tobytes() == gp.profiles[carries].tobytes()
+    monkeypatch.setattr(gr, "_floor", lambda phi, eps2: np.zeros_like(phi))  # no floor: the absolute tolerance alone
+    before, b = gm.respond(f[carries], gp.phases, eps[carries], cache=False)
+    monkeypatch.undo()
+    assert np.all(b.residual <= 1e-10) and np.all(b.floor == 0.0)  # the first build's acceptance, on every ring
+    differs = np.flatnonzero((before != now).any(axis=1))
+    assert differs.size == 1
+    k = int(differs[0])
+    ring = np.flatnonzero(carries)[k]
+    taper = pt.bar_terms(o.grid.R, gp.pitch_deg, gp.bar_length)[0]
+    apart = float(np.abs(now[k] / before[k] - 1.0).max())
+    print(f"ngc_4414 / 1 / 1: ring {ring} at {o.grid.R[ring]:.4f} kpc, eps {eps[ring]:.4f}, arm weight {1.0 - taper[ring]:.3e}; "
+          f"steps {b.steps[k]} -> {d.steps[k]}, residual {b.residual[k]:.4e} -> {d.residual[k]:.4e}, floor {d.floor[k]:.4e}; "
+          f"max |s_new/s_old - 1| = {apart:.3e}")
+    assert float(o.grid.R[ring]) == pytest.approx(0.4875, abs=1e-9) and float(eps[ring]) == pytest.approx(0.821, abs=1e-3)
+    assert 1.0 - float(taper[ring]) == pytest.approx(3.72e-4, rel=0.01)
+    assert (int(b.steps[k]), int(d.steps[k])) == (10, 8)
+    assert float(b.residual[k]) == pytest.approx(9.461e-11, rel=0.01) and float(d.residual[k]) == pytest.approx(1.186e-10, rel=0.01)
+    assert float(d.floor[k]) == pytest.approx(2.516e-10, rel=0.01)
+    assert 0.0 < apart <= 2.5e-15  # measured 1.78e-15
+    others = np.delete(np.arange(before.shape[0]), k)
+    assert before[others].tobytes() == now[others].tobytes() and np.array_equal(b.steps[others], d.steps[others])

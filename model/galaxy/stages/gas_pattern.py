@@ -50,21 +50,30 @@ put in.
   convex blends of positive profiles of mean 1, so the gas is positive and its mean round the ring is 1 at
   every radius. :meth:`GasPattern.sector_means` is the exact mean of that same interpolant, so sectors that
   tile a ring average to 1 to rounding.
-- **The published field is the law's mean over each grid cell** (gate G3 item 4, which rewords items 9 and
-  11 i): on each grid ring, the interpolant integrated exactly over each of the grid's φ cells
-  (:meth:`GasPattern.cell_means`, the arithmetic of the sector means; the bar's cosine by its own integral).
-  So a ring's cells average to 1 to rounding on every φ grid, with no division - a field of centre samples
-  did only on grids whose cell count divides the solver's (7e-14 off at 360 cells, 2e-3 at 36) - and each
-  cell holds the gas the law puts in it. ``contrast_at``, ``response_at``, ``azimuths`` and the censuses keep
-  the point function: a cell's expected count is its area times its mean, a placed object reads the law at
-  its own point, and the two are the same measure.
-- **The offset** (D210 ruling 3, now derived; gate G3 item 7): zero for a lone mode, exactly, by the
-  equation's symmetry about the mode's crest. With several modes the gas's crest and the crest of the stellar
-  modes' sum need not be one cell, because each mode is answered with its own weight (m/(1 + m²ε²) in the
-  linear limit, against the stars' 1): on the default galaxy they are within one solver cell (0.25 degrees)
-  on every ring over 6-10 kpc and on 161 of the 165 rings that carry a mode (two rings read two cells; on
-  two, where six equal crests stand, the tallest is another arm's); on ``ngc_4414`` they are up to five cells
-  (1.25 degrees) apart over 6-10 kpc. No offset is put in and none is published.
+- **The published field is the law's exact mean over each grid cell's extent in azimuth, at the ring's own
+  radius** (gate G3 item 4, which rewords items 9 and 11 i): on each grid ring, the interpolant integrated
+  exactly over each of the grid's φ cells (:meth:`GasPattern.cell_means`, the arithmetic of the sector means;
+  the bar's cosine by its own integral). It is not a mean over the cell's extent in R: a point between two
+  rings is blended in R, as above. So a ring's cells average to 1 to rounding on every φ grid, with no
+  division - a field of centre samples did only on grids whose cell count divides the solver's (7e-14 off at
+  360 cells, 2e-3 at 36) - and each cell holds the gas the law puts on its ring there. ``contrast_at``,
+  ``response_at``, ``azimuths`` and the censuses keep the point function: a cell's expected count is its area
+  times its mean, a placed object reads the law at its own point, and the two are the same measure.
+- **The offset** (D210 ruling 3, now derived; gate G3 item 7 and its follow-up): zero for a lone mode,
+  exactly, by the equation's symmetry about the mode's crest; with several modes, within one solver cell
+  (0.25 degrees) on the Milky Way template and up to about a degree on ``ngc_4414`` - the mode-by-mode
+  weighting (each mode is answered with its own weight, m/(1 + m²ε²) in the linear limit, against the stars'
+  1), measured, not ruled; no offset is put in and none is published. As read on the solver's cells, the
+  tallest crest of s against the tallest crest of the stellar modes' sum: the Milky Way template within one
+  cell on 53 of 53 rings over 6-10 kpc and on 161 of the 165 rings that carry a mode (two rings read two
+  cells; on two, where six nearly equal crests stand, the tallest is another arm's); ``ngc_4414`` up to 5
+  cells (1.25 degrees) over 6-10 kpc and 7 at most over the disc. **It has no one sign**: on the Milky Way
+  template the gas's crest sits one cell to the larger χ on 48 of the 53 mid-disc rings and to the smaller χ
+  on 41 of the rings inside 6 kpc; on ``ngc_4414`` to the smaller χ on 27 of the 53, the larger on 6, and
+  over its disc 95 rings to the smaller and 16 to the larger; over the suite's 240 seeded galaxies the two
+  sides are met about equally (11 697 rings to the smaller χ, 12 298 to the larger, 11 012 on the same cell,
+  of the rings whose two tallest crests are the same arm's). It is the modes' weighting, not a displacement
+  downstream or upstream of the arm.
 - **Declared approximations, each a debt** (items 4-5): steadiness (the response relaxes on the ridge's
   sound crossing, about as long as an arm lives); the razor-thin WKB potential, which overstates the high
   arm numbers; the stellar mode's fractional amplitude applied to the total disc.
@@ -74,7 +83,10 @@ it is measured in and the measured width build nothing. They survive as the targ
 *disclosed check*, made by the measurement functions at the foot of this module and pinned in the tests,
 layer on: the ratio of the means of s inside the source's arm mask against outside it (:func:`mask_share`,
 :func:`ratio_of_means`), and the full width at half maximum of a ring's tallest crest (:func:`crest_width`)
-over the period of the mode the gas answers most strongly, the one of largest forcing m·A_m. No stage
+over the period of the mode the gas answers most strongly, the one of largest forcing m·A_m. As read over
+6-10 kpc: the ratio a hit on the Milky Way template (median 2.571, 53 of 53 rings inside the source's band) and
+on ``ngc_4414`` but for its seven outer rings (median 1.881); the width a miss on every ring, 2.49-2.83 times
+the measured 0.17 on the Milky Way template and 2.82-3.09 times on ``ngc_4414``. No stage
 computes with them, and the mask's width and the measured width are no constants of the model: they left its
 registry at gate G3 ("a stage may not declare reads it does not make") and live in ``tests/`` with their
 sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
@@ -198,7 +210,8 @@ GAS_DENSITY_CONTRAST = FieldDecl(
     composed=True, neutral=1.0,
     about=(
         "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. Each "
-        "value is the mean over its azimuthal cell on its ring - the gas the cell holds, not a sample at its "
+        "value is the mean over its azimuthal cell on its ring - exact over the cell's extent in azimuth, at "
+        "the ring's own radius: the gas the cell holds on its ring, not a sample at its "
         "centre - so a ring's cells average to 1 to rounding on any grid, with nothing divided; a census "
         "placing an object reads the same law at the object's own point. "
         "The steady response of isothermal gas to the stellar arm modes' potential, in the frame that turns "
@@ -211,9 +224,9 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "between two rings reads both at its own winding phase. Nothing sets the contrast or the width: they "
         "come out of the equation. The gas piles on the stellar crests: the offset is zero for a lone mode, "
         "exactly, by the equation's symmetry; with several modes the gas's crest and the crest of the stellar "
-        "modes' sum are within a quarter of a degree over the mid disc at the defaults, and a degree or so "
-        "apart in other galaxies, because each mode is answered with its own weight; no offset is put in and "
-        "none is published. "
+        "modes' sum are within about a degree of each other over the mid disc, to either side, because each "
+        "mode is answered with its own weight - measured, not ruled; no offset is put in and none is "
+        "published. "
         "Where the modes' pull together exceeds the pressure's reach the gas between the arms is nearly "
         "emptied, the crest standing two to three times the ring's mean in the mid disc and fading to "
         "nothing where the disc amplifies no arm. The crest is two and a half to three times as broad as "
@@ -590,8 +603,8 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "term by the bar's taper (D216). Reads the stellar pattern's modes and phases and the disc's "
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
             "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
-            "publishes is the response's mean over each grid cell, so every ring keeps its gas on any grid "
-            "with nothing divided. It draws nothing; "
+            "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "
+            "radius, so every ring keeps its gas on any grid with nothing divided. It draws nothing; "
             "its field is seeded through the pattern's drawn pitch and amplitudes and the layer's phases."
         ),
         compute=compute_gas_pattern,

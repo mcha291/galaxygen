@@ -70,6 +70,9 @@ exact discrete solution, sat at 1.0-1.4e-10, and the ring was solved and still r
 5 and 15 of 300 pattern seeds for the two templates). ``Diagnostics.floor`` records each ring's max_k F_k,
 and :func:`rounding_floor` gives F_k for any profile, so that a caller can hold the profile it was returned,
 its logarithm taken again, to |r_k| ≤ max(1e-10, F_k + 4u ε²/h²), u = 2⁻⁵³ (the logarithm's own rounding).
+The rule is per cell on every ring; the solver computes the cells' floors only for the rings they can decide
+(``_measure``), which is the same decision at less cost, and ``solve``'s private ``_every_floor`` applies the
+rule as written so that the tests can hold the one to the other bit for bit.
 
 **The linear system** is solved for all rings together by cyclic reduction: the odd cells are eliminated
 from the even cells' equations, which leaves a cyclic tridiagonal system on half the cells; 1440 = 2⁵ · 45
@@ -396,7 +399,7 @@ def _floor(phi: np.ndarray, eps2: np.ndarray) -> np.ndarray:
     return (2.0 * inv_h2) * eps2 * (0.5 * np.roll(ulp, 1, axis=1) + ulp + 0.5 * np.roll(ulp, -1, axis=1))
 
 
-def _measure(r: np.ndarray, phi: np.ndarray, eps2: np.ndarray):
+def _measure(r: np.ndarray, phi: np.ndarray, eps2: np.ndarray, every_floor: bool = False):
     """A residual's max norm, its sum, whether the ring has converged, and whether every cell is inside its
     bound; each shaped (rings,).
 
@@ -407,24 +410,32 @@ def _measure(r: np.ndarray, phi: np.ndarray, eps2: np.ndarray):
     the absolute tolerance is inside whatever its floors are. One whose largest residual is over both the
     tolerance and the ring's ceiling 2 (ε²/h²) · 2 ulp(max_k |φ_k|) - which no cell's F_k exceeds, the spacing
     of doubles never falling as the magnitude grows - has a cell outside its bound. Only what lies between has
-    its F_k computed: the same answer for every ring as computing all of them, at a fraction of the cost."""
+    its F_k computed: the same answer for every ring as computing all of them, at a fraction of the cost.
+
+    ``every_floor`` computes every cell's F_k on every ring and applies the rule as it is written, with no
+    shortcut. It is the tests' (``solve``'s private ``_every_floor``): they hold the shortcut to it, bit for
+    bit. Nothing in the model sets it."""
     size = np.abs(r)
     norm = size.max(axis=1)
     total = r.sum(axis=1)
-    inside = norm <= RESIDUAL_TOLERANCE
-    inv_h2 = (phi.shape[1] / (2.0 * math.pi)) ** 2
-    ceiling = (2.0 * inv_h2) * eps2[:, 0] * (2.0 * np.spacing(np.abs(phi).max(axis=1)))
-    near = np.flatnonzero(~inside & (norm <= ceiling))
-    if near.size:
-        inside[near] = (size[near] <= np.maximum(RESIDUAL_TOLERANCE, _floor(phi[near], eps2[near]))).all(axis=1)
+    if every_floor:
+        inside = (size <= np.maximum(RESIDUAL_TOLERANCE, _floor(phi, eps2))).all(axis=1)
+    else:
+        inside = norm <= RESIDUAL_TOLERANCE
+        inv_h2 = (phi.shape[1] / (2.0 * math.pi)) ** 2
+        ceiling = (2.0 * inv_h2) * eps2[:, 0] * (2.0 * np.spacing(np.abs(phi).max(axis=1)))
+        near = np.flatnonzero(~inside & (norm <= ceiling))
+        if near.size:
+            inside[near] = (size[near] <= np.maximum(RESIDUAL_TOLERANCE, _floor(phi[near], eps2[near]))).all(axis=1)
     return norm, total, inside & (np.abs(total) < SUM_TOLERANCE * r.shape[1]), inside
 
 
-def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
+def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool, every_floor: bool = False):
     """Newton with step halving on one class of rings (all at rest in the frame, or all moving).
 
     Returns s, the diagnostics, which rings converged and, for the moving class, the cells at which each
-    ring's last step was refused at the sonic line (none where it was not).
+    ring's last step was refused at the sonic line (none where it was not). ``every_floor`` is ``_measure``'s:
+    the criterion without its shortcut, for the tests.
     """
     rings, n = g.shape
     inv_h2 = (n / (2.0 * math.pi)) ** 2
@@ -438,7 +449,7 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
         subsonic = eps2 > mu2
     s, r = _state(phi, g, eps2, mu2, moving)
     for step in range(max_steps + 1):
-        norm, total, converged, _ = _measure(r, phi, eps2)
+        norm, total, converged, _ = _measure(r, phi, eps2, every_floor)
         active = np.flatnonzero(~converged & ~stuck)
         if active.size == 0 or step == max_steps:
             break
@@ -484,7 +495,7 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
             trial_s, trial_r = _state(trial, _rows(g_a, rows), _rows(eps2_a, rows), _rows(mu2_a, rows), moving)
             if moving:
                 # "inside": every cell of the trial under max(RESIDUAL_TOLERANCE, F_k), the cell's own rule (G3 item 2)
-                trial_norm, trial_total, _, trial_inside = _measure(trial_r, trial, _rows(eps2_a, rows))
+                trial_norm, trial_total, _, trial_inside = _measure(trial_r, trial, _rows(eps2_a, rows), every_floor)
                 falls = (trial_norm < norm[active[rows]]) | (
                     trial_inside & (np.abs(trial_total) < np.abs(total[active[rows]]))
                 )
@@ -504,7 +515,7 @@ def _newton(g, eps2, mu2, phi, max_steps: int, max_halvings: int, moving: bool):
             stuck[active[pending]] = True
             halvings[active[pending]] += max_halvings
             deepest[active[pending]] = max_halvings
-    norm, total, converged, _ = _measure(r, phi, eps2)
+    norm, total, converged, _ = _measure(r, phi, eps2, every_floor)
     return s, Diagnostics(steps, halvings, deepest, norm, total, _floor(phi, eps2).max(axis=1)), converged, refused
 
 
@@ -516,6 +527,7 @@ def solve(
     start=None,
     max_steps: int = MAX_NEWTON_STEPS,
     max_halvings: int = MAX_HALVINGS,
+    _every_floor: bool = False,
 ) -> tuple[np.ndarray, Diagnostics]:
     """The smooth steady response s(χ_k) of every ring to its forcing; returns ``(s, diagnostics)``.
 
@@ -524,7 +536,11 @@ def solve(
     a scalar or (rings,), 0 in the model (for one mode m in Shu, Milione & Roberts's variables on the cells
     as η: eps = √x, flow = ν). ``start`` an optional first guess of s, positive, shaped (rings, cells) - a
     continuation in the forcing starts each solve from the last; without it Newton starts from s = 1.
-    ``max_steps`` and ``max_halvings`` are the fixed counts (A1); the model leaves them alone.
+    ``max_steps`` and ``max_halvings`` are the fixed counts (A1); the model leaves them alone. ``_every_floor``
+    is private and the tests': it applies the convergence criterion with every cell's rounding floor computed on
+    every ring at every step, where the solver otherwise computes them only for the rings they can decide
+    (``_measure``). The criterion is the same and so are the bits (tested on the instrument's cases and on the
+    model's rings); only the cost differs. Nothing in the model passes it.
 
     Returns s shaped (rings, cells), positive, with Σ_k (s_k − 1 − g_k) = Σ_k r_k (``Diagnostics.residual_sum``)
     by the discrete equation, and a ``Diagnostics``. The cell count is the forcing's own (the model's is
@@ -579,7 +595,7 @@ def solve(
         if rows.size == 0:
             continue
         s_c, diag_c, converged_c, refused_c = _newton(
-            g[rows], eps2[rows], mu2[rows], phi[rows], int(max_steps), int(max_halvings), moving
+            g[rows], eps2[rows], mu2[rows], phi[rows], int(max_steps), int(max_halvings), moving, bool(_every_floor)
         )
         s[rows] = s_c
         steps[rows], halvings[rows], deepest[rows] = diag_c.steps, diag_c.halvings, diag_c.deepest

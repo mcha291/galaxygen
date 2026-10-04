@@ -30,6 +30,10 @@ to four figures - twice D216 item 9's expected 1e-4. 400 rings of 1440 cells: 0.
 tightly wound galaxy's rings (ε of order 1, a total forcing of 67-79) the floor passes 1e-10 and the ring
 converges on it (``test_a_tightly_wound_ring_converges_on_its_rounding_floor``); on every case above the floor is
 under 1e-10 and nothing moved - the 24 solutions these tests make and both thresholds are the bits they were.
+The solver computes the cells' floors only for the rings they can decide; that shortcut is held to the rule as
+written, bit for bit, on these cases and on the tightly wound rings
+(``test_the_shortcut_in_the_convergence_criterion_is_only_a_shortcut``; the model's rings in
+``tests/test_gas_pattern.py``).
 """
 
 from __future__ import annotations
@@ -537,6 +541,99 @@ def test_the_absolute_tolerance_still_governs_an_ordinary_ring():
     assert d.floor.shape == (50,) and d.floor.max() < 5e-12
     under, d = gr.solve(0.70 * np.cos(gr.cell_centres())[None, :], math.sqrt(SORMANI_X), SORMANI_NU)
     assert d.floor[0] == pytest.approx(5.64e-11, rel=0.01) and d.floor[0] < gr.RESIDUAL_TOLERANCE and d.residual[0] < 2e-11
+
+
+def both_ways(g, eps, flow=0.0, **more):
+    """One solve as the solver decides convergence (the cells' floors computed only for the rings they can
+    decide) and one with every cell's floor computed on every ring at every step (``_every_floor``, the tests'
+    own keyword): what each returned or raised, as bytes, and the first one's profile."""
+    read, profile = [], None
+    for every in (False, True):
+        try:
+            s, d = gr.solve(g, eps, flow, _every_floor=every, **more)
+        except gr.GasResponseError as error:
+            read.append((type(error).__name__, error.ring, error.residual, error.steps, tuple(getattr(error, "cells", ()))))
+            continue
+        profile = s if profile is None else profile
+        read.append(("solved", s.tobytes(), *(getattr(d, name).tobytes() for name in ("steps", "halvings", "deepest", "residual", "residual_sum", "floor"))))
+    return read[0], read[1], profile
+
+
+def test_the_shortcut_in_the_convergence_criterion_is_only_a_shortcut(monkeypatch):
+    """Gate G3's follow-up (D216): the solver computes a ring's per-cell rounding floors only where they can
+    decide the ring (``gas_response._measure``); the rule itself is per cell on every ring. The two are held to
+    each other here, **bit for bit**, on the instrument's cases - the hard rings at three cell counts, Sormani's
+    case from 3 % under the threshold up to it by continuation and past it (where both must lose the branch at
+    the same step on the same cells), the linear-limit solves, fifty random rings, the lifted five, a batch of
+    rings at rest and moving, the far starts with their halvings - and on the tightly wound rings, where the
+    floor and not the absolute tolerance is what decides: alone, in one batch with ordinary rings, and refused
+    their steps. Profiles, Newton's counts, residuals, sums and floors: the same bytes.
+
+    That the keyword does something is shown too: on fifty ordinary rings the shortcut never computes a floor
+    until the report (one call), where the rule as written computes them at every look."""
+    cosine = np.cos(gr.cell_centres())[None, :]
+    cases = {}
+    for name in HARD:
+        for cells in (720, 1440, 2880):
+            f, theta = HARD[name]
+            cases[f"hard: {name} at {cells}"] = both_ways(gr.forcing(MODES, f, theta, cells), EPS)
+    start = None
+    for f in (0.70, 0.72, 0.7202, 0.72022, 0.720229):  # f_c = 0.7202298 at 1440 cells: each from the last, as the continuation
+        lazy, eager, start = both_ways(f * cosine, math.sqrt(SORMANI_X), SORMANI_NU, start=start)
+        assert lazy[0] == "solved", f
+        cases[f"Sormani at f = {f}"] = (lazy, eager, start)
+    for f in (0.7203, 0.75):  # past the threshold: the branch is lost, the same way
+        cases[f"Sormani past the threshold at f = {f}"] = both_ways(f * cosine, math.sqrt(SORMANI_X), SORMANI_NU, start=start)
+        assert cases[f"Sormani past the threshold at f = {f}"][0][0] == "SmoothBranchLost"
+    for nu, x in [(0.0, SORMANI_X), (SORMANI_NU, SORMANI_X), (0.0, 0.145), (-0.72, 0.197)]:
+        for f in (1e-3, 1e-4):
+            cases[f"linear limit at nu {nu:.3f}, x {x:.3f}, f {f}"] = both_ways(f * cosine, math.sqrt(x), nu)
+    rng = np.random.default_rng(57)
+    fifty = gr.forcing(MODES, rng.uniform(0.0, 0.7, (50, 5)), rng.uniform(0.0, 2.0 * math.pi, (50, 5)))
+    fifty_eps = rng.uniform(0.05, 0.2, 50)
+    cases["fifty rings"] = both_ways(fifty, fifty_eps)
+    cases["lifted"] = both_ways(fifty[:5] + 0.1, fifty_eps[:5])
+    rng = np.random.default_rng(1973)  # the batch of ``test_a_ring_does_not_know_its_batch``'s kind: three rings moving
+    amplitudes = rng.uniform(0.0, 0.7, (24, 5))
+    amplitudes[5] = HEAVY[0][0]
+    batch = gr.forcing(MODES, amplitudes, rng.uniform(0.0, 2.0 * math.pi, (24, 5)))
+    batch_eps, flow = rng.uniform(0.05, 0.2, 24), np.zeros(24)
+    flow[[3, 11, 20]] = (-0.02, 0.3, 0.03)
+    batch_eps[11] = 0.1
+    batch[[3, 11, 20]] *= 0.05
+    cases["a batch at rest and moving"] = both_ways(batch, batch_eps, flow)
+    heavy = gr.forcing(MODES, *HEAVY)
+    chi = gr.cell_centres()
+    for name, far in (("e^(8 cos 3χ)", np.exp(8.0 * np.cos(3.0 * chi))), ("e^(−30 (1 + cos 5χ))", np.exp(-30.0 * (1.0 + np.cos(5.0 * chi))))):
+        cases[f"far start {name}"] = both_ways(heavy, EPS, start=far[None, :])
+    tight_g, tight_eps = [], []
+    for name, (f, eps, steps, _, _) in TIGHT.items():
+        g = gr.forcing(MODES, np.array([f]), FIVE[1])
+        cases[f"tight: {name}"] = both_ways(g, eps)
+        cases[f"tight, refused its steps: {name}"] = both_ways(g, eps, max_steps=steps - 2)
+        assert cases[f"tight, refused its steps: {name}"][0][0] == "ConvergenceError"
+        tight_g.append(g)
+        tight_eps.append(eps)
+    mixed = both_ways(np.vstack([fifty[:3], *tight_g, fifty[3:6]]), np.concatenate([fifty_eps[:3], tight_eps, fifty_eps[3:6]]))
+    cases["tight and ordinary rings in one batch"] = mixed
+    for name, (lazy, eager, _) in cases.items():
+        assert lazy == eager, name
+    assert len(cases) == 33 and sum(1 for lazy, _, _ in cases.values() if lazy[0] == "solved") == 28
+    # ... and a ring in the mixed batch is the ring alone (the floor is a ring's own, as every other number is)
+    alone = np.vstack([np.frombuffer(cases[f"tight: {name}"][0][1]) for name in TIGHT])
+    assert np.frombuffer(mixed[0][1]).reshape(9, gr.CELLS)[3:6].tobytes() == alone.tobytes()
+
+    # The keyword is not idle: count the rings whose floors are computed.
+    counted = []
+    floor = gr._floor
+    monkeypatch.setattr(gr, "_floor", lambda phi, eps2: counted.append(phi.shape[0]) or floor(phi, eps2))
+    gr.solve(fifty, fifty_eps)
+    shortcut, counted[:] = list(counted), []
+    gr.solve(fifty, fifty_eps, _every_floor=True)
+    assert shortcut == [50] and len(counted) > 5 and sum(counted) > 150  # the report alone; against every look at the rings
+    counted[:] = []
+    gr.solve(tight_g[2], tight_eps[2])
+    assert len(counted) > 1  # on a tightly wound ring the shortcut does compute them: there they decide
 
 
 def test_the_loss_of_the_smooth_branch_is_raised_not_returned():

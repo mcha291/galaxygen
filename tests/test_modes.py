@@ -123,8 +123,8 @@ def single_mode(R, m: int, f: dict[str, float]) -> tuple[pt.ArmPattern, np.ndarr
 def test_gate_every_ring_of_the_composed_fields_has_mean_one(prod, template, grid):
     """Ring means 1 to 1e-12 on every ring, both templates, several texture seeds: a phase moves a cosine round its
     ring and no mode has a mean. The gas's response has mean 1 over the ring and is positive and finite everywhere.
-    **Nothing is divided since S57** (D216 item 11 i), **and the published field is the law's mean over each grid
-    cell** (gate G3 item 4), so a ring's cells average to 1 to rounding on any grid: 1e-13 on the production grid
+    **Nothing is divided since S57** (D216 item 11 i), **and the published field is the law's exact mean over each
+    grid cell's extent in azimuth, at the ring's own radius** (gate G3 item 4), so a ring's cells average to 1 to rounding on any grid: 1e-13 on the production grid
     and on the small grid's 36 cells alike. (S57's first build published the response at the cells' centres, whose
     sampled mean on 36 cells left 1 by up to 2.5e-3, and this test had been re-pinned to that; S56's stage divided
     a ring by its sampled mean.)"""
@@ -678,8 +678,8 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     assert not stars.flat and not gas.flat
     assert stars.contrast(R, phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
     # S57 (D216): was "the law at the cells' centres over each ring's sampled mean, where that has left 1" (a ranked
-    # ridge's did: by 8.75e-4 and 1.25e-3). S57 (D216 G3 item 4): the gas's published field is the law's mean over
-    # each grid cell, bit for bit - the first build published the law at the cells' centres - and its ring mean is
+    # ridge's did: by 8.75e-4 and 1.25e-3). S57 (D216 G3 item 4): the gas's published field is the law's exact mean
+    # over each grid cell's extent in azimuth at the ring's own radius, bit for bit - the first build published the law at the cells' centres - and its ring mean is
     # 1 to rounding with nothing divided (tests/test_gas_pattern.py).
     law = gas.cell_means(R, o.grid["phi"].edges)
     assert law.tobytes() == np.asarray(F["gas_density_contrast"]).tobytes()
