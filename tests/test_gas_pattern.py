@@ -76,6 +76,14 @@ where it was 4.73; the disclosed check's median ratio 1.406 where it was 1.881, 
 21 of its 53 rings under; the width 0.550), and **every pattern seed of that template's inputs is at that one
 pitch** - so the suite's 120 ``ngc_4414`` galaxies no longer reach the tightly wound regime, and the three of them
 that gate G3's record names are read as what they were, with the pitch's pin taken off (``drawn_pitch``).
+
+**The gate's follow-up to D218, the same day: a segment's pitch is relative to the disc's** - p + (s p) z, with s the
+published ``arm_segment_pitch_scatter`` and z the layer's unit-normal row (256 rows outward, 768 inward), where the
+first build added a residual in degrees. Geometry still, so **nothing in χ moved between the two passes** - every
+profile, residual, floor and step count, the crests' separation, the interpolation errors and the disclosed check
+read to the figure what the first pass read - and the cell-borne numbers moved once more, each marked ``# S59 (D218
+follow-up): was <old>`` (the largest published value 6.76 at 2.81 kpc, where the first build's winding read 6.68
+at 2.06 kpc; the margin over w_bar min L −3.3e-14).
 """
 
 from __future__ import annotations
@@ -158,26 +166,29 @@ def drawn_pitch(template: str, **more) -> dict:
     return {**{k: v for k, v in given.items() if k != "pitch_angle"}, **more}
 
 
-SEGMENTS_OUTWARD_HAND = 64  # S59 (D218): the winding's rows laid outward from the anchor, first; the rest run inward
+SEGMENTS_OUTWARD_HAND = 256  # S59 (D218 follow-up): was 64. S59 (D218): the winding's rows laid outward from the anchor, first; the rest run inward
 
 
 def hand_winding(F, R) -> np.ndarray:
     """Φ(R), the arms' common winding, from the **published** numbers with this file's arithmetic and no function of
-    the model's (S59, D218 items 1-2). Until S59 it was ln R · cot p. Since then the layer lays segments: a row's
-    pitch is ``pitch_angle`` plus its residual; across it ln R advances by its extent times |tan| of that pitch and
-    the phase by its extent times the pitch's sign; the first 64 rows run outward from the anchor, the rest inward;
-    at the anchor Φ = ln R_A · cot p - the bar's angle, where there is a bar; and Φ is the straight line in ln R
-    between the segments' ends. With the layer off there are no rows, and Φ is ln R · cot p as it always was.
-    **Geometry only** (item 4): the law's ε and f read ``pitch_angle`` itself, not a segment's pitch."""
+    the model's (S59, D218 items 1-2, and the gate's follow-up, item 2). Until S59 it was ln R · cot p. Since then
+    the layer lays segments: a row's pitch is p + (s p) z, with p the published ``pitch_angle``, s the published
+    ``arm_segment_pitch_scatter`` and z the row's unit-normal deviate (S59, D218 follow-up: was `p + residual`, a
+    residual in degrees whatever the pitch); across it ln R advances by its extent times |tan| of that pitch and
+    the phase by its extent times the pitch's sign; the first 256 rows run outward from the anchor, the rest
+    inward (S59, D218 follow-up: were 64 and the rest); at the anchor Φ = ln R_A · cot p - the bar's angle, where
+    there is a bar; and Φ is the straight line in ln R between the segments' ends. With the layer off there are
+    no rows, and Φ is ln R · cot p as it always was. **Geometry only** (item 4): the gas law's ε and f read
+    ``pitch_angle`` itself, not a segment's pitch."""
     R = np.asarray(R, dtype=float)
     pitch, anchor = float(F["pitch_angle"]), float(F["arm_winding_anchor_radius"])
-    extent, residual = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_residual"], dtype=float)
+    extent, deviate = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_deviate"], dtype=float)
     cot = 1.0 / math.tan(math.radians(pitch))
     if extent.size == 0:
         return np.log(R) * cot
     x0 = math.log(anchor)
     p0 = x0 * cot
-    tangent = np.tan(np.radians(pitch + residual))
+    tangent = np.tan(np.radians(pitch + (float(F["arm_segment_pitch_scatter"]) * pitch) * deviate))
     knots, phases = [x0], [p0]
     # Each side's spans are summed from the anchor and the sum laid from the anchor's own values - the order the
     # model sums them in, so this winding is the model's to the last bit and the tolerances below stay at rounding.
@@ -340,7 +351,9 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # the bar's reach (3.79 kpc); `ngc_4414`'s at its pinned pitch of 28.9 degrees, the law's ε and f both 0.51 of
     # what they were, so a gentler response (1.01 kpc).
     point = gp.contrast(R, phi)
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 1.217e-2, "ngc_4414": 4.803e-3}[template], rel=0.02)
+    # S59 (D218 follow-up): were 1.217e-2 and 4.803e-3 - the rings turned by segments whose pitch is relative to
+    # the disc's (3.94 kpc; 0.79 kpc).
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 1.222e-2, "ngc_4414": 5.023e-3}[template], rel=0.02)
     # 360 divides 1440, so the response's centre samples average to 1 to rounding - but the lanes are laid in the
     # bar's frame, whose angle is no multiple of a cell, and their centre samples do not (S58: was < 5e-13 for both).
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
@@ -357,7 +370,8 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     # inner rings untapered, 2.53e-2 and 7.26e-3 - the cells' means are 1 to 5e-14 as before.
     # S59 (D218): were 2.529e-2 and 7.263e-3 - the centre samples of rings the segments have turned (the Milky
     # Way), and of a gentler response at the pinned pitch (`ngc_4414`). The cells' means: 1 to 5e-14, as before.
-    for n_phi, sampled in ((36, {"milky_way": 3.018e-2, "ngc_4414": 1.931e-3}[template]), (108, None), (500, None)):
+    # S59 (D218 follow-up): were 3.018e-2 and 1.931e-3, the centre samples on the first build's winding.
+    for n_phi, sampled in ((36, {"milky_way": 2.960e-2, "ngc_4414": 4.913e-3}[template]), (108, None), (500, None)):
         coarse = run(model, given, GridSpec(n_R=48, n_t=64, n_z=8, n_phi=n_phi), only=GAS_PATTERN_READS + ("gas_density_contrast",))
         small = np.asarray(coarse.fields["gas_density_contrast"])
         assert small.shape[1] == n_phi and np.all(small > 0.0)
@@ -387,7 +401,9 @@ def test_the_cell_averaged_field_against_the_exact_solution_s_cell_means(prod, t
     itself 1.2e-3 (6.6e-4); 2.9e-4 (2.7e-5) beyond 6 kpc.** The Milky Way's rings are the profiles they were, each
     read over the grid's cells at another phase - the winding's segments' - so the errors of its cells' means move
     in the third figure. ``ngc_4414`` is at its pinned pitch, 28.9 degrees: ε and f are 0.51 of what they were, the
-    response gentler, its error smaller. The h² law reads 5.00 on both, as before."""
+    response gentler, its error smaller. The h² law reads 5.00 on both, as before. (The gate's follow-up, a
+    segment's pitch relative to the disc's: 2.7e-4 (6.6e-4) at 5.4 kpc (0.79 kpc), 1.2e-3 (6.6e-4), 2.9e-4
+    (2.7e-5) - the same profiles at another phase again.)"""
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
     R, edges = o.grid.R, o.grid["phi"].edges
@@ -414,7 +430,10 @@ def test_the_cell_averaged_field_against_the_exact_solution_s_cell_means(prod, t
     # S59 (D218): were (1.1786e-3, 2.760e-4, 2.950e-4) and (9.144e-4, 9.144e-4, 6.122e-5): the cells are read at the
     # segments' phase (the Milky Way: the same profiles, the third figure moves; read at one pitch's phase they are
     # 1.1786e-3, 2.760e-4, 2.950e-4 still), and `ngc_4414`'s response is the one of its pinned pitch (at 0.71 kpc).
-    want = {"milky_way": (1.1786e-3, 2.765e-4, 2.899e-4), "ngc_4414": (6.582e-4, 6.582e-4, 2.729e-5)}[template]
+    # S59 (D218 follow-up): were (1.1786e-3, 2.765e-4, 2.899e-4) and (6.582e-4, 6.582e-4, 2.729e-5) - the same
+    # profiles read over the cells at the phase of segments of relative pitch (the worst now at 1.69 and 5.36 kpc;
+    # 0.79 kpc).
+    want = {"milky_way": (1.1821e-3, 2.749e-4, 2.915e-4), "ngc_4414": (6.595e-4, 6.595e-4, 2.728e-5)}[template]
     assert got == pytest.approx(want, rel=0.01), got
     assert float(at_1440.max() / at_2880.max()) == pytest.approx(5.0, abs=0.03)
     assert float((at_1440 * weight).max() / (at_2880 * weight).max()) == pytest.approx(5.0, abs=0.03)
@@ -523,8 +542,11 @@ def test_gate_every_ring_of_both_templates(prod, template):
         # at its pinned pitch, 28.9 degrees, ε and f are both 0.5121 of what they were at the drawn 14.33, and the
         # response is another: its crest stands at 3.16 where it stood at 4.73, one Newton step fewer; unbarred,
         # its field is its response (the smallest cell 3.9e-16 at 0.71 kpc).
-        "milky_way": dict(rings=165, steps=8, halvings=1, min_s=6.157e-14, max_s=6.2295, min_g=0.018402, max_g=6.678598, floor=1.279e-11),
-        "ngc_4414": dict(rings=133, steps=8, halvings=0, min_s=1.556e-15, max_s=3.1580, min_g=3.946e-16, max_g=3.156717, floor=5.069e-12),
+        # S59 (D218 follow-up): were min_g=0.018402, max_g=6.678598 and min_g=3.946e-16, max_g=3.156717 - the published
+        # cells of rings turned by segments of relative pitch (the Milky Way's largest is now at 2.81 kpc). Everything
+        # of s - its extremes, the counts, the floors - is the number of the first pass, to every figure.
+        "milky_way": dict(rings=165, steps=8, halvings=1, min_s=6.157e-14, max_s=6.2295, min_g=0.018411, max_g=6.761358, floor=1.279e-11),
+        "ngc_4414": dict(rings=133, steps=8, halvings=0, min_s=1.556e-15, max_s=3.1580, min_g=4.012e-16, max_g=3.157115, floor=5.069e-12),
     }[template]
     assert int(gp.carries.sum()) == want["rings"]
     # The residual: at these pitches (13.5 and - pinned since S59 - 28.9 degrees) every ring's floor is far under
@@ -716,7 +738,10 @@ def test_gate_every_ring_on_every_seed_the_suite_draws(prod):
     # its 120 galaxies is as high as the Milky Way's inputs' highest: 8.582, at pattern seed 33 (a drawn pitch of
     # 2.02 degrees). The margin: −6.4e-14 (pattern seed 6, texture seed 1; was −6.2e-14 at seed 52) - the lanes' own
     # cell means, which the segments do not touch, under another trough of the response.
-    assert -2e-13 < worst["margin"] < 0.0 and worst["min_g"] == pytest.approx(2.639e-23, rel=0.02) and worst["max_g"] == pytest.approx(8.582, abs=2e-3)
+    # S59 (D218 follow-up): were min_g 2.639e-23 and max_g 8.582, and the margin −6.4e-14 at pattern seed 6 - the
+    # same two galaxies' extremes on the relative residual's winding, and the margin −7.0e-14 (pattern seed 13,
+    # texture seed 1). Nothing of the solver's moved: every number above this comment is the first pass's.
+    assert -2e-13 < worst["margin"] < 0.0 and worst["min_g"] == pytest.approx(2.624e-23, rel=0.02) and worst["max_g"] == pytest.approx(8.223, abs=2e-3)
     assert worst["min_g"] > 0.0
     # Which galaxies have a ring whose floor is the bound: seven, at the lowest drawn pitches.
     # S58 (D217): were seventeen under 7.7 degrees, at most 50 rings; `ngc_4414` at pattern seed 28 left the list
@@ -887,7 +912,8 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
     # S59 (D218): was (4.869, 0.4738) - the response on this ring is turned by the winding's segments, and its crest
     # meets the lane's at another angle: (4.990, 0.4738).
     i = row(o, 4.0125)
-    assert float(published[i].max()) == pytest.approx(4.990, abs=2e-3) and float(published[i].min()) == pytest.approx(0.4738, abs=1e-3)
+    # S59 (D218 follow-up): was (4.990, 0.4738) - turned otherwise by segments of relative pitch: (5.366, 0.4738).
+    assert float(published[i].max()) == pytest.approx(5.366, abs=2e-3) and float(published[i].min()) == pytest.approx(0.4738, abs=1e-3)
 
 
 def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(prod):
@@ -1179,12 +1205,12 @@ def test_the_gate_s_predictions_as_measured(prod):
     bar afterwards (item 8), so "outside the bar's reach these are the ruling's" (Fable).
 
         R kpc     predicted: crest / trough / ratio     as built, s: crest / trough / ratio     published g: crest / trough
-        4.0125    1.91 / 0.37  / 1.57                   4.346 / 6.2e-10 / 4.572                 4.990 / 0.474
+        4.0125    1.91 / 0.37  / 1.57                   4.346 / 6.2e-10 / 4.572                 5.366 / 0.474
         5.9625    3.02 / 0.007 / 2.69                   3.552 / 3.0e-5 / 3.384                  3.092 / 0.180
-        7.9875    2.79 / 0.018 / 2.56                   2.797 / 0.0171 / 2.571                  2.788 / 0.0211
-        10.0125   2.09 / 0.18  / 2.04                   2.090 / 0.1819 / 2.037                  2.089 / 0.1820
+        7.9875    2.79 / 0.018 / 2.56                   2.797 / 0.0171 / 2.571                  2.787 / 0.0211
+        10.0125   2.09 / 0.18  / 2.04                   2.090 / 0.1819 / 2.037                  2.089 / 0.1822
         10.9875   1.77 / 0.38  / 1.89                   1.765 / 0.3845 / 1.886                  1.764 / 0.3847
-        12.0375   1.20 / 0.81  / 1.28                   1.198 / 0.8114 / 1.281                  1.198 / 0.8117
+        12.0375   1.20 / 0.81  / 1.28                   1.198 / 0.8114 / 1.281                  1.198 / 0.8115
 
     (The published g is the cells' means since gate G3: its crest reads a few 1e-4 under the point function's and
     its trough as much over.) **Held** at 10, 11 and 12 kpc, to the figures given. **Held at R₀ to the taper's
@@ -1204,7 +1230,9 @@ def test_the_gate_s_predictions_as_measured(prod):
     stands to the figure. The published g is s's mean over the grid's cells, and the winding's segments turn each
     ring among them: its crest and trough move in the fourth figure where the ring is the response alone (until
     S59: 2.7870 / 0.0211 at R₀, 2.0888 / 0.1823 at 10 kpc), and at 4 kpc, inside the bar's reach, the response's
-    crest meets the lane's at another angle (4.869 until S59).
+    crest meets the lane's at another angle (4.869 until S59). The gate's follow-up (a segment's pitch relative to
+    the disc's) turned the rings once more: the first build's winding read 4.990 at 4 kpc, 2.7879 at R₀ and
+    2.0885 / 0.1820 at 10 kpc; s did not move either time.
 
     Also read: "interarm nearly empty where the forcing's sum exceeds 1 (6-8 kpc)" - held, the trough of s
     4.2e-5 to 0.017 there (2.9e-4 until S58); "Newton at most 8 steps here" - held, 8; "34 on ``ngc_4414``" - the probe's own Newton;
@@ -1224,12 +1252,14 @@ def test_the_gate_s_predictions_as_measured(prod):
         # 3.2080), (3.0088, 0.1282); the third's published g (2.7868, 0.0220).
         # S59 (D218): the published g were (4.8691, 0.4738), (3.0918, 0.1798), (2.7870, 0.0211), (2.0888, 0.1823),
         # (1.7642, 0.3847), (1.1981, 0.8117) - the cells' means of rings the segments have since turned; s is unmoved.
-        (4.0125, (1.91, 0.37, 1.57), (4.3456, 6.23e-10, 4.5718), (4.9899, 0.4738), False),
-        (5.9625, (3.02, 0.007, 2.69), (3.5520, 2.98e-5, 3.3837), (3.0919, 0.1798), False),
-        (7.9875, (2.79, 0.018, 2.56), (2.7967, 0.0171, 2.5705), (2.7879, 0.0211), True),
-        (10.0125, (2.09, 0.18, 2.04), (2.0896, 0.1819, 2.0375), (2.0885, 0.1820), True),
-        (10.9875, (1.77, 0.38, 1.89), (1.7648, 0.3845, 1.8857), (1.7643, 0.3847), True),
-        (12.0375, (1.20, 0.81, 1.28), (1.1984, 0.8114, 1.2812), (1.1981, 0.8117), True),
+        # S59 (D218 follow-up): the published g were (4.9899, 0.4738), (3.0919, 0.1798), (2.7879, 0.0211), (2.0885,
+        # 0.1820), (1.7643, 0.3847), (1.1981, 0.8117) on the first build's winding; s is unmoved again.
+        (4.0125, (1.91, 0.37, 1.57), (4.3456, 6.23e-10, 4.5718), (5.3660, 0.4738), False),
+        (5.9625, (3.02, 0.007, 2.69), (3.5520, 2.98e-5, 3.3837), (3.0922, 0.1798), False),
+        (7.9875, (2.79, 0.018, 2.56), (2.7967, 0.0171, 2.5705), (2.7874, 0.0211), True),
+        (10.0125, (2.09, 0.18, 2.04), (2.0896, 0.1819, 2.0375), (2.0891, 0.1822), True),
+        (10.9875, (1.77, 0.38, 1.89), (1.7648, 0.3845, 1.8857), (1.7641, 0.3847), True),
+        (12.0375, (1.20, 0.81, 1.28), (1.1984, 0.8114, 1.2812), (1.1983, 0.8115), True),
     )
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
@@ -1556,7 +1586,7 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     assert published.tobytes() == gp.cell_means(R, edges).tobytes() and published.tobytes() != on_mesh.tobytes()
     # S58 (D217): was 1.718e-3; the lanes are a few cells wide inside 3 kpc, and a cell's mean is 1.2e-2 from its centre.
     # S59 (D218): was 1.198e-2 - on a ring the winding's segments have turned, inside the bar's reach (3.79 kpc).
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(1.217e-2, rel=0.02)
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(1.222e-2, rel=0.02)  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
     assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_mesh[idx])
     assert np.array_equal(gp.contrast_at(R[:, None], phi[None, :]), on_mesh)
@@ -1650,12 +1680,15 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # (7.69 kpc), a little lower since the bar's last 0.3 % of weight there is the lanes' 1 and not the cosine's.
     # S59 (D218): was (0.018394, 6.664030). The same two places - the lowest cell at 7.69 kpc, the highest a lane's
     # at 2.06 kpc - on rings the winding's segments have turned among the grid's cells.
-    assert (float(g.min()), float(g.max())) == pytest.approx((0.018402, 6.678598), abs=2e-5)
+    # S59 (D218 follow-up): was (0.018402, 6.678598) - the lowest cell where it was (7.69 kpc), the highest a lane's
+    # and an arm's together at 2.81 kpc on the relative residual's winding.
+    assert (float(g.min()), float(g.max())) == pytest.approx((0.018411, 6.761358), abs=2e-5)
     i = row(o, R_SUN)
     # S57 (D216): was crest 3.0592, trough 0.5340 at R0. S57 (D216 G3): was (2.7403, 0.02534) on the centre samples.
     # S58 (D217): was (2.73964, 0.025373) - the cosine bar's 0.33 % of weight at R0 put 0.0007 into the trough.
     # S59 (D218): was (2.73970, 0.024689) - the ring at R0 is the curve it was, its cells' means read at another phase.
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.73884, 0.024605), abs=2e-5)
+    # S59 (D218 follow-up): was (2.73884, 0.024605) - the same curve's cell means at yet another phase.
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.73831, 0.024599), abs=2e-5)
     # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
     assert float((g[i] ** 2).mean()) == pytest.approx(1.34398, abs=2e-5)  # S59: 1.343975, to the pin's tolerance the number it was
     weight = np.asarray(F["gas_surface_density"]) * R
@@ -1663,7 +1696,8 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # narrow lanes at seven times it, so a process quadratic in the gas gains there - 1.312 over the disc by gas mass.
     # S59 (D218): was 1.31200. Inside the bar's reach the turned response meets the lanes at other angles, and the
     # mean square of their sum moves with it: 1.31031.
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.31031, abs=2e-5)
+    # S59 (D218 follow-up): was 1.31031.
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.31098, abs=2e-5)
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
@@ -1680,11 +1714,15 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     # the stellar bar's amplitude; of the stellar body's own numbers (its share, its profile's exponent) nothing.
     # S59 (D218 items 1, 4): the winding's three fields - the radius it is anchored at and the layer's two segment
     # columns: the geometry of χ, which the response is turned by, and nothing of ε or f.
-    assert pt.WINDING_FIELDS == ("arm_winding_anchor_radius", "arm_segment_extent", "arm_segment_pitch_residual")
+    # S59 (D218 follow-up): four - the relative spread of a segment's pitch joins them (the `bar` stage's scalar: a
+    # segment's pitch is p + (s p) z), and the second column is the unit-normal `arm_segment_pitch_deviate`; were
+    # ("arm_winding_anchor_radius", "arm_segment_extent", "arm_segment_pitch_residual"). Geometry still: ε and f
+    # read `pitch_angle` and neither the spread nor a row.
+    assert pt.WINDING_FIELDS == ("arm_winding_anchor_radius", "arm_segment_pitch_scatter", "arm_segment_extent", "arm_segment_pitch_deviate")
     assert GAS_PATTERN.requires == GAS_PATTERN_READS == (
         "arm_contrast", "pitch_angle", "bar_half_length", "bar_axis_ratio", "bar_boxiness",
         *pt.AMPLITUDE_FIELDS, *pt.PHASE_FIELDS, "epicyclic_frequency", "disc_surface_density",
-        "arm_winding_anchor_radius", "arm_segment_extent", "arm_segment_pitch_residual")  # S59 (D218)
+        "arm_winding_anchor_radius", "arm_segment_pitch_scatter", "arm_segment_extent", "arm_segment_pitch_deviate")  # S59 (D218; its follow-up)
     assert not {"bar_contrast", "bar_mass_share", "bar_profile_index"} & set(GAS_PATTERN_READS) and set(GAS_PATTERN_READS) - set(pt.PATTERN_READS) == {"arm_contrast", "epicyclic_frequency"}
     assert "arm_multiplicity" not in GAS_PATTERN.requires
     assert set(pt.AMPLITUDE_FIELDS) | set(pt.PHASE_FIELDS) <= set(GAS_PATTERN.requires)

@@ -59,12 +59,14 @@ TEXTURE_SEEDS = (None, 1, 2, 77, 987654321)  # None: the template's own
 BAR_FIELDS = ("bar_present", "bar_formation_time", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share")
 # S59 (D218): the radius the winding is anchored at and the pitch as the law draws it are laws' numbers too - the
 # same with the layer on or off, and under any texture seed.
+# S59 (D218 follow-up): and the spread of a segment's pitch relative to the disc's, the `bar` stage's.
 LAW_FIELDS = (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_contrast", "bar_contrast", "pitch_angle",
-              "bar_half_length", "gas_arm_contrast", *BAR_FIELDS, "arm_winding_anchor_radius", "pitch_angle_drawn")
+              "bar_half_length", "gas_arm_contrast", *BAR_FIELDS, "arm_winding_anchor_radius", "pitch_angle_drawn",
+              "arm_segment_pitch_scatter")
 # S59 (D218): the winding's segment rows are the layer's realisation, beside the phases.
 PATTERN_FIELDS = ("pattern_density_contrast", "gas_density_contrast", *LAW_FIELDS, *pt.PHASE_FIELDS, *pt.SEGMENT_FIELDS,
                   "circular_velocity", "epicyclic_frequency", "disc_surface_density")
-SEGMENTS_OUTWARD_HAND = 64  # S59 (D218): the rows laid outward from the anchor, first; the rest run inward
+SEGMENTS_OUTWARD_HAND = 256  # S59 (D218 follow-up): was 64. S59 (D218): the rows laid outward from the anchor, first; the rest run inward
 _RUNS: dict[tuple, object] = {}
 
 
@@ -128,20 +130,24 @@ def published_amplitudes(out) -> np.ndarray:
 
 def hand_winding(F, R: np.ndarray) -> np.ndarray:
     """Φ(R), the arms' common winding, from the **published** numbers with this file's arithmetic and no function of
-    the model's (S59, D218 items 1-2). Until S59 it was ln R · cot p. Since then the layer lays segments: a row's
-    pitch is ``pitch_angle`` plus its residual; across it ln R advances by its extent times |tan| of that pitch and
-    the phase by its extent times the pitch's sign; the first 64 rows run outward from the anchor, the rest inward;
-    at the anchor Φ = ln R_A · cot p; and Φ is the straight line in ln R between the segments' ends. With the layer
-    off there are no rows, and Φ is ln R · cot p as it always was."""
+    the model's (S59, D218 items 1-2, and the gate's follow-up, item 2). Until S59 it was ln R · cot p. Since then
+    the layer lays segments: a row's pitch is p + (s p) z, with p the published ``pitch_angle``, s the published
+    ``arm_segment_pitch_scatter`` and z the row's unit-normal deviate (S59, D218 follow-up: was `p + residual`, a
+    residual in degrees whatever the pitch); across it ln R advances by its extent times |tan| of that pitch and
+    the phase by its extent times the pitch's sign; the first 256 rows run outward from the anchor, the rest
+    inward (S59, D218 follow-up: were 64 and the rest); at the anchor Φ = ln R_A · cot p - the bar's angle, where
+    there is a bar; and Φ is the straight line in ln R between the segments' ends. With the layer off there are
+    no rows, and Φ is ln R · cot p as it always was. **Geometry only** (item 4): the gas law's ε and f read
+    ``pitch_angle`` itself, not a segment's pitch."""
     R = np.asarray(R, dtype=float)
     pitch, anchor = float(F["pitch_angle"]), float(F["arm_winding_anchor_radius"])
-    extent, residual = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_residual"], dtype=float)
+    extent, deviate = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_deviate"], dtype=float)
     cot = 1.0 / math.tan(math.radians(pitch))
     if extent.size == 0:
         return np.log(R) * cot
     x0 = math.log(anchor)
     p0 = x0 * cot
-    tangent = np.tan(np.radians(pitch + residual))
+    tangent = np.tan(np.radians(pitch + (float(F["arm_segment_pitch_scatter"]) * pitch) * deviate))
     knots, phases = [x0], [p0]
     # Each side's spans are summed from the anchor and the sum laid from the anchor's own values - the order the
     # model sums them in, so this winding is the model's to the last bit and the tolerances below stay at rounding.
@@ -256,10 +262,13 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
         # And nothing else is in the field: no m = 1, no m = 7 or 8.
         for m in (1, 7, 8):
             assert float(np.abs(fourier(field, phi, m)).max()) < 1e-9, (template, seed, m)
-    # Measured 3.7e-15 at worst over both grids, templates and seeds (4.3e-15 until S59, against one pitch's
-    # winding): 1e-9 is met at rounding.
+    # Measured 4.5e-15 at worst over both grids, templates and seeds (4.3e-15 until S59, against one pitch's
+    # winding; 3.7e-15 on the first build's absolute residual): 1e-9 is met at rounding.
     assert worst < 1e-13
-    assert turned > 2.0  # S59: the segments are in the field - its winding is 2.5-9.5 rad from one pitch's somewhere
+    # S59: the segments are in the field - its winding is radians from one pitch's somewhere (D218 follow-up: 3.5-4.5
+    # rad on these seeds with the relative residual and against it the coefficients sit up to 0.66 away; 2.5-9.5
+    # rad and 0.68 on the first build's).
+    assert turned > 2.0
 
 
 # --- the gate: nothing below zero ----------------------------------------------------------------------------------
@@ -303,7 +312,10 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     # the cells' centres of a ring the segments have turned: 0.0025575 at 11.14 kpc, where it was 0.0024886 at
     # 11.29 kpc - and the same field wound at the one pitch still reads 0.0024886 there. The bound is the law's
     # (the saturation: no amplitude moved), so it holds for every winding as for every realisation of the phases.
-    assert lowest == pytest.approx(0.00256, abs=1e-5) and lowest > 0.0
+    # S59 (D218 follow-up): was 0.00256. The segments' pitches are relative to the disc's since (p + 0.56 p z), so
+    # the rings are turned otherwise: the same galaxy again, 0.0024782, back on the ring at 11.29 kpc (one pitch's
+    # winding: 0.0024886, as ever).
+    assert lowest == pytest.approx(0.00248, abs=1e-5) and lowest > 0.0
     assert saturated == {"milky_way": 26, "ngc_4414": 35}  # S58 (D217): was {"milky_way": 26, "ngc_4414": 34}
     # The body before the arms, at its deepest over the suite: 0.266 of the ring's mean (the bar amplitude at its
     # cap of 0.9; the depth is 0.816 of the amplitude at this shape). Positive on every seed: no seed to report.
@@ -686,8 +698,10 @@ def test_regression_one_mode_is_the_field_s55_published(prod, template, m):
               # S59 (D218): the winding's three fields, as a run with the layer off publishes them - an anchor and
               # no segment row. S55's single mode wound at one pitch; with no row the class's door gives no
               # segmented winding (None: ln R · cot p), and the field is S55's arm mode to the bit, as before.
+              # S59 (D218 follow-up): four fields - the column is `arm_segment_pitch_deviate` (was
+              # `arm_segment_pitch_residual`), and the relative spread of a segment's pitch is published with them.
               "arm_winding_anchor_radius": f["bar_half_length"], "arm_segment_extent": np.zeros(0),
-              "arm_segment_pitch_residual": np.zeros(0)}
+              "arm_segment_pitch_deviate": np.zeros(0), "arm_segment_pitch_scatter": 0.56}
     assert set(fields) == set(pt.PATTERN_READS)
     assert stars.winding is None and pt.ArmPattern.from_fields(fields, R).winding is None
     assert pt.ArmPattern.from_fields(fields, R).contrast(R, phi).tobytes() == arms_only.tobytes()
@@ -795,7 +809,8 @@ def test_rerolling_the_pattern_seed_leaves_the_phases_and_rerolling_the_texture_
         other = run(m, {"pattern_seed": seed, "texture_seed": 3}, only=PATTERN_FIELDS).fields
         assert [other[n] for n in pt.PHASE_FIELDS] == [base[n] for n in pt.PHASE_FIELDS]
         # S59 (D218): nor the winding's segment rows - the layer's draws, with nothing of the law in them.
-        assert all(np.array_equal(other[n], base[n]) and np.asarray(base[n]).size == 256 for n in pt.SEGMENT_FIELDS)
+        # S59 (D218 follow-up): was `size == 256` - 256 rows outward and 768 inward since.
+        assert all(np.array_equal(other[n], base[n]) and np.asarray(base[n]).size == 1024 for n in pt.SEGMENT_FIELDS)
         assert other["arm_contrast"] != base["arm_contrast"] and other["pitch_angle"] != base["pitch_angle"]
     for seed in (4, 5, 6):
         other = run(m, {"pattern_seed": 0, "texture_seed": seed}, only=PATTERN_FIELDS).fields
@@ -819,7 +834,7 @@ def test_with_the_layer_off_the_phases_are_not_numbers_and_the_stream_is_never_d
     for n in pt.PHASE_FIELDS:
         assert math.isnan(off.fields[n]) and math.isfinite(on.fields[n]), n
     for n in pt.SEGMENT_FIELDS:  # S59 (D218 item 7): "layer off ... no segments are drawn": a column with no row
-        assert np.asarray(off.fields[n]).size == 0 and np.asarray(on.fields[n]).size == 256, n
+        assert np.asarray(off.fields[n]).size == 0 and np.asarray(on.fields[n]).size == 1024, n  # S59 (D218 follow-up): was 256
     for n in LAW_FIELDS:
         a, b = np.asarray(on.fields[n]), np.asarray(off.fields[n])
         assert a.dtype == b.dtype and a.tobytes() == b.tobytes(), n
@@ -838,10 +853,12 @@ def test_with_the_layer_off_the_phases_are_not_numbers_and_the_stream_is_never_d
     run(m, grid=SMALL, only=pt.PHASE_FIELDS, layer=True)
     # S58 (D217 item 9): was `for mode in pt.ARM_MODES` - in a barred galaxy the two-armed mode's stream is not drawn.
     # S59 (D218 items 1-2): the same stage lays the winding's segments after the phases - one stream a row,
-    # ("segment", "out", j) for the 64 rows outward from the anchor and ("segment", "in", j) for the 192 inward -
+    # ("segment", "out", j) for the rows outward from the anchor and ("segment", "in", j) for the rows inward -
     # and the phases' streams are the ones they were, at the same paths.
-    segments = [("arm_phases", "texture_seed", "segment", way, j) for way, n in (("out", 64), ("in", 192)) for j in range(n)]
-    assert len(segments) == 256 and [s[3:] for s in segments] == list(arm_phases.segment_streams())
+    # S59 (D218 follow-up): were 64 outward and 192 inward, 256 streams; 256 and 768 since ("the rows grew": a disc
+    # on the pitch's floor lays a segment every 0.02 e-fold), each row still its own stream at the path it had.
+    segments = [("arm_phases", "texture_seed", "segment", way, j) for way, n in (("out", 256), ("in", 768)) for j in range(n)]
+    assert len(segments) == 1024 and [s[3:] for s in segments] == list(arm_phases.segment_streams())
     assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES[1:]] + segments
     calls.clear()
     run(m, {"bar_present": False}, SMALL, only=pt.PHASE_FIELDS, layer=True)

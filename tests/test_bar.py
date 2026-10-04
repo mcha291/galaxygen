@@ -36,6 +36,12 @@ the lanes' field. What moved is where the arms and the gas's response lie agains
 file's arm modes are wound by hand on the published segment rows (``hand_winding``), and the numbers that hold a
 cell of the composed fields were re-read, each marked where it is pinned - the published gas now reaches 6.68 at
 2.06 kpc. ``ngc_4414`` holds a second pin since, its measured pitch; "its pins taken off" takes both.
+
+**Re-read again the same day (S59, D218's follow-up at the gate): a segment's pitch is relative to the disc's** -
+p + (s p) z, s the published ``arm_segment_pitch_scatter`` and z the layer's unit-normal row, 256 rows outward and
+768 inward - and ``hand_winding`` builds that. The same layer-on numbers moved once more (the published gas
+reaches 6.76 at 2.81 kpc), each marked ``# S59 (D218 follow-up): was``; the bar's own, the lanes' field, the
+saturation and every number of the solver's are the bits they were.
 """
 
 from __future__ import annotations
@@ -100,25 +106,29 @@ def template_run(prod, template: str, pinned: bool = True):
     return _RUNS[key]
 
 
-SEGMENTS_OUTWARD_HAND = 64  # S59 (D218): the winding's rows laid outward from the anchor, first; the rest run inward
+SEGMENTS_OUTWARD_HAND = 256  # S59 (D218 follow-up): was 64. S59 (D218): the winding's rows laid outward from the anchor, first; the rest run inward
 
 
 def hand_winding(F, R: np.ndarray) -> np.ndarray:
     """Φ(R), the arms' common winding, from the **published** numbers with this file's arithmetic and no function of
-    the model's (S59, D218 items 1-2). Until S59 it was ln R · cot p. Since then the layer lays segments: a row's
-    pitch is ``pitch_angle`` plus its residual; across it ln R advances by its extent times |tan| of that pitch and
-    the phase by its extent times the pitch's sign; the first 64 rows run outward from the anchor, the rest inward;
-    at the anchor Φ = ln R_A · cot p - the bar's angle, where there is a bar; and Φ is the straight line in ln R
-    between the segments' ends. With the layer off there are no rows, and Φ is ln R · cot p as it always was."""
+    the model's (S59, D218 items 1-2, and the gate's follow-up, item 2). Until S59 it was ln R · cot p. Since then
+    the layer lays segments: a row's pitch is p + (s p) z, with p the published ``pitch_angle``, s the published
+    ``arm_segment_pitch_scatter`` and z the row's unit-normal deviate (S59, D218 follow-up: was `p + residual`, a
+    residual in degrees whatever the pitch); across it ln R advances by its extent times |tan| of that pitch and
+    the phase by its extent times the pitch's sign; the first 256 rows run outward from the anchor, the rest
+    inward (S59, D218 follow-up: were 64 and the rest); at the anchor Φ = ln R_A · cot p - the bar's angle, where
+    there is a bar; and Φ is the straight line in ln R between the segments' ends. With the layer off there are
+    no rows, and Φ is ln R · cot p as it always was. **Geometry only** (item 4): the gas law's ε and f read
+    ``pitch_angle`` itself, not a segment's pitch."""
     R = np.asarray(R, dtype=float)
     pitch, anchor = float(F["pitch_angle"]), float(F["arm_winding_anchor_radius"])
-    extent, residual = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_residual"], dtype=float)
+    extent, deviate = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_deviate"], dtype=float)
     cot = 1.0 / math.tan(math.radians(pitch))
     if extent.size == 0:
         return np.log(R) * cot
     x0 = math.log(anchor)
     p0 = x0 * cot
-    tangent = np.tan(np.radians(pitch + residual))
+    tangent = np.tan(np.radians(pitch + (float(F["arm_segment_pitch_scatter"]) * pitch) * deviate))
     knots, phases = [x0], [p0]
     # Each side's spans are summed from the anchor and the sum laid from the anchor's own values - the order the
     # model sums them in, so this winding is the model's to the last bit and the tolerances below stay at rounding.
@@ -319,9 +329,12 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     **The check, as the gate reworded it after the build**: "the A₂ maximum inside a of the bar part of the
     published field (the field less the arm modes) equals B to 1e-6". The *whole* field's two-fold amplitude inside
     a is not B: the two-armed mode, tied to the bar's axis (item 9), adds to it or takes from it under the taper.
-    A consequence, not a check, recorded as read: the whole field's A₂ maximum inside a less B runs from −0.0057
-    (pattern seed 29) to +0.0073 (seed 28) over the Milky Way's 120 suite galaxies - −2.4 % to +3.7 % of B, the
-    maximum at 0.396-0.468 a - and from −0.0050 to +0.0084 on ``ngc_4414``'s disc unpinned (0.417-0.459 a).
+    A consequence, not a check, recorded as read: the whole field's A₂ maximum inside a less B runs from −0.0074
+    (pattern seed 28) to +0.0063 (seed 29) over the Milky Way's 120 suite galaxies - −3.3 % to +3.4 % of B, the
+    maximum at 0.396-0.453 a - and from −0.0110 to +0.0084 on ``ngc_4414``'s disc unpinned (0.395-0.459 a).
+    (S59, D218 follow-up - the segments' pitches relative to the disc's: on the first build's absolute residual
+    these read −0.0057 (seed 29) to +0.0073 (seed 28), −2.4 % to +3.7 %, 0.396-0.468 a; and −0.0050 to +0.0084,
+    0.417-0.459 a.)
 
     **S59 (D218): the bar part is the field less the arm modes on the winding's seeded segments**, built by this
     file's arithmetic from the published rows (``hand_winding``); taken off at one pitch's winding, as this test
@@ -334,8 +347,9 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     segments' winding no seed's is. ("Unpinned" takes off both of that template's pins since S59: the pitch is
     the draw, as it was.)
 
-    **As read**: ring means off 1 by 1.6e-15 at worst; the lowest cell 0.0025575 (the Milky Way's inputs, pattern
-    seed 28, texture seed 1 - the suite's lowest before S58 too; 0.0024886 until S59) - **no seed fails**; A₂^max −
+    **As read**: ring means off 1 by 1.6e-15 at worst; the lowest cell 0.0024782 (the Milky Way's inputs, pattern
+    seed 28, texture seed 1 - the suite's lowest before S58 too; 0.0024886 until S59, 0.0025575 on S59's first
+    build) - **no seed fails**; A₂^max −
     B under 2e-15 on each of the 120 barred suite galaxies and the sixty unpinned ones; the peak at 0.4103 a on
     every Milky Way seed and
     0.4167 a on ``ngc_4414``'s disc (the grid's ring nearest the continuous maximum: the shape is scale-free);
@@ -381,7 +395,8 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
     assert drawn == 240 and len(read["milky_way"]) == 120 and len(read["ngc_4414"]) == 60
     assert worst_mean < 1e-12 and worst_error < 1e-13
     # S59 (D218): was 0.0024886 - the same galaxy's lowest cell centre, on a ring the segments have turned.
-    assert lowest == pytest.approx(0.0025575, abs=1e-7) and where == ("milky_way", True, 28, 1)
+    # S59 (D218 follow-up): was 0.0025575 - the same galaxy again, its rings turned by segments of relative pitch.
+    assert lowest == pytest.approx(0.0024782, abs=1e-7) and where == ("milky_way", True, 28, 1)
     assert lowest_body == pytest.approx(0.2658, abs=2e-4) and lowest_body > 0.0
     for template, want in (("milky_way", (0.4103, 0.1536, 0.3508)), ("ngc_4414", (0.4167, 0.1538, 0.3506))):
         got = np.array(read[template])
@@ -389,8 +404,10 @@ def test_gate_the_stellar_field_on_every_suite_seed(prod):
         assert not np.any((got[:, 0] >= 0.76) & (got[:, 0] <= 0.94))  # the recorded miss, on every barred seed
     # The whole field's A₂ maximum inside a, less B: a consequence of the two-armed mode on the bar's axis, as read.
     # S59 (D218): were (-0.005854, 0.008093), (0.3959, 0.4391) and (-0.008212, 0.010120), (0.3953, 0.9936).
-    for template, (low, high), (near, far) in (("milky_way", (-0.005748, 0.007290), (0.3959, 0.4679)),
-                                                ("ngc_4414", (-0.004974, 0.008373), (0.4167, 0.4594))):
+    # S59 (D218 follow-up): were (-0.005748, 0.007290), (0.3959, 0.4679) and (-0.004974, 0.008373), (0.4167, 0.4594) -
+    # inside a the two-armed mode meets the bar at the phase of segments whose pitch is now p + 0.56 p z.
+    for template, (low, high), (near, far) in (("milky_way", (-0.007445, 0.006281), (0.3959, 0.4535)),
+                                                ("ngc_4414", (-0.011014, 0.008358), (0.3953, 0.4594))):
         got = np.array(whole[template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template
         assert (float(got[:, 1].min()), float(got[:, 1].max())) == pytest.approx((near, far), abs=1e-4), template
@@ -467,15 +484,20 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     lanes_rounding = float((taper[:, None] * (lane_means - L.min(axis=1)[:, None])).min())
     assert -1e-13 < lanes_rounding < -5e-14  # measured -6.96e-14: the lanes' own, with no winding in it
     assert float((g - taper[:, None] * lane_means).min()) > -1e-15  # w_arm s >= 0 on every cell (measured +8.9e-16)
-    assert lanes_rounding - 1e-15 < margin < 1e-4 and -1e-13 < margin, margin  # as read: -1.81e-14 (was -2.1e-15)
-    # The lane's peak over the ring's mean: 7.06 on the lane field (3.34 kpc), 6.68 on the published gas (2.06 kpc,
+    # As read: -3.3e-14 (S59, D218 follow-up - the rings turned by segments of relative pitch, another trough on
+    # another such cell; -1.81e-14 on the first build's winding, -2.1e-15 at one pitch). The lanes' own part is the
+    # number it was, -6.96e-14: the bounds stand.
+    assert lanes_rounding - 1e-15 < margin < 1e-4 and -1e-13 < margin, margin
+    # The lane's peak over the ring's mean: 7.06 on the lane field (3.34 kpc), 6.76 on the published gas (2.81 kpc,
     # the taper and the cell's mean in it). One simulation's Σ_peak ~ 10 x its initial 10 M☉/pc² (Kim, Seo & Kim
     # 2012) is the check: the same order, under it. Nothing is tuned to it - the width is a declared placeholder.
     peak = L.max(axis=1)
     assert (float(peak.max()), float(R[int(np.argmax(peak))])) == pytest.approx((7.058, 3.3375), abs=2e-3)
     inside = R < gas.bar_length
     # S59 (D218): was (6.664, 2.0625) - the lane's crest and an arm's response meet at another angle on that ring.
-    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.679, 2.0625), abs=2e-3)
+    # S59 (D218 follow-up): was (6.679, 2.0625) - on the relative residual's winding the largest cell is a lane's
+    # and an arm's together on another ring, 6.761 at 2.81 kpc (wound at one pitch: 6.664 at 2.06 kpc still).
+    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.761, 2.8125), abs=2e-3)
     assert 5.0 < float(peak.max()) < 10.0
 
 
@@ -487,16 +509,17 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
     0.73 Gyr; with its bar the same disc's lowest cell is 4.8e-11, the taper times the lanes' base, and none is
     0). With no bar there is no taper, the arms run to the centre, and between the arms of the inner rings the
     response falls under the smallest double: s is exactly 0.0 on 239 of the solver's cells and subnormal on 343
-    more. **As read: 54 cells of the published field are exactly 0.0, on 8 rings, 0.71-1.24 kpc** (2, 7, 8, 9, 9,
-    8, 6 and 5 cells, outwards) - cells whose whole extent in azimuth lies where s has underflowed. Nothing is
+    more. **As read: 53 cells of the published field are exactly 0.0, on 8 rings, 0.71-1.24 kpc** (2, 7, 8, 9, 8,
+    8, 7 and 4 cells, outwards) - cells whose whole extent in azimuth lies where s has underflowed. Nothing is
     negative, nothing is NaN, nothing is clipped or floored; the rings' means are still 1 (9.4e-14); the whole
     pipeline runs, and the only fields that hold a NaN the barred galaxy's do not are the bar's eight numbers. The
     field the star formation law reads is the same bits (no bar, no footprint).
 
     **S59 (D218): the count was 55** (2, 6, 9, 9, 9, 8, 7 and 5). The response on each ring is the curve it was -
     the same 239 cells of the solver's exactly 0 and the same 343 subnormal - and the segments turn it, so the
-    stretch where it has underflowed falls across another set of the grid's cells: one ring gains a cell, two lose
-    one. The same pattern wound at one pitch still reads 55."""
+    stretch where it has underflowed falls across another set of the grid's cells. The same pattern wound at one
+    pitch still reads 55. (On S59's first build, the segments' residual absolute: 54 - 2, 7, 8, 9, 9, 8, 6 and 5;
+    since the gate's follow-up, the residual relative to the disc's pitch: 53.)"""
     model = the_model(prod)
     corner = {"halo_mass": 1e13, "disc_spin": 0.005, "baryon_retention": 0.5}
     o = run(model, {**corner, "bar_present": False})
@@ -505,9 +528,10 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
     assert F["bar_present"] == "no" and np.all(np.isfinite(g)) and g.min() == 0.0 and not np.any(g < 0.0)
     zero = g == 0.0
     rings = np.flatnonzero(zero.any(axis=1))
-    assert int(zero.sum()) == 54 and rings.size == 8  # S59 (D218): was 55
+    assert int(zero.sum()) == 53 and rings.size == 8  # S59 (D218 follow-up): was 54. S59 (D218): was 55
     assert (float(R[rings[0]]), float(R[rings[-1]])) == pytest.approx((0.7125, 1.2375), abs=1e-9) and np.all(np.diff(rings) == 1)
-    assert zero[rings].sum(axis=1).tolist() == [2, 7, 8, 9, 9, 8, 6, 5]  # S59 (D218): was [2, 6, 9, 9, 9, 8, 7, 5]
+    # S59 (D218 follow-up): was [2, 7, 8, 9, 9, 8, 6, 5]. S59 (D218): was [2, 6, 9, 9, 9, 8, 7, 5]
+    assert zero[rings].sum(axis=1).tolist() == [2, 7, 8, 9, 8, 8, 7, 4]
     assert float(np.abs(g.sum(axis=1) / g.shape[1] - 1.0).max()) < 2e-13
     # Only where s underflows: every zero cell lies, whole, where the solver's own profile is under the smallest
     # normal double; and the profile is exactly 0 or subnormal on the counted cells.
@@ -530,7 +554,8 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
     low = np.asarray(barred.fields["gas_density_contrast"])
     # S59 (D218): was 4.768e-11 - the lowest cell of the barred disc, where the lanes' base under the taper meets
     # a trough of the response the segments have turned.
-    assert low.min() > 0.0 and float(low.min()) == pytest.approx(4.806e-11, rel=2e-3)
+    # S59 (D218 follow-up): was 4.806e-11 - turned otherwise by segments of relative pitch.
+    assert low.min() > 0.0 and float(low.min()) == pytest.approx(4.829e-11, rel=2e-3)
     assert (float(barred.fields["disc_dominance"]), float(barred.fields["bar_formation_time"])) == pytest.approx((0.8606, 0.7257), abs=2e-4)
 
     def holds_nan(fields) -> set[str]:
@@ -730,7 +755,8 @@ def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod
     # S59 (D218): was 0.03145 (at 11.29 kpc; 0.032045 at 11.21 kpc since) - the lowest cell centre of a field whose
     # rings the segments have turned; the same field wound at one pitch reads 0.03145 still. The bound is the
     # saturation's, and no amplitude moved: every number above is the one it was.
-    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.03205, abs=2e-5)
+    # S59 (D218 follow-up): was 0.03205 - on the relative residual's winding 0.031237, at 11.29 kpc again.
+    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.03124, abs=2e-5)
 
 
 def test_the_saturation_ends_with_the_body_so_a_saturated_galaxy_s_arms_are_stronger_at_the_bar_s_end(prod):
@@ -963,8 +989,9 @@ def test_the_lanes_end_in_a_cliff_and_build_no_nuclear_ring(prod):
     it, with nothing between: on the last three rings inside a (4.99, 5.06, 5.14 kpc) the lane's peak stands 5.23,
     4.89 and 4.45 times the ring's mean, and on the next ring (5.2125 kpc) the field is 1 everywhere. The
     published gas does not show the whole of it - the taper there is 0.4 and the arms' response carries the rest
-    (peaks of 3.91, 2.93, 2.69, then 2.80; S59, D218: 2.87, 2.63, 2.69, then 2.80 before the winding's segments
-    turned those rings' response against the lanes) - but the lanes' own term stops in one ring.
+    (peaks of 3.54, 2.65, 2.69, then 2.80; S59, D218: 2.87, 2.63, 2.69, then 2.80 before the winding's segments
+    turned those rings' response against the lanes, and 3.91, 2.93, 2.69, then 2.80 on the first build's segments,
+    before the gate's follow-up made their pitch relative) - but the lanes' own term stops in one ring.
 
     **Debt: no nuclear ring is built.** The ruling ends each lane on the minor axis "at the nuclear ring",
     r_ring = 0.10 a = 0.52 kpc, and nothing is put there: every ring's mean is 1, so no ring stands over its
@@ -981,9 +1008,11 @@ def test_the_lanes_end_in_a_cliff_and_build_no_nuclear_ring(prod):
     assert L[last].max(axis=1).tolist() == pytest.approx([5.226, 4.886, 4.448], abs=2e-3)
     assert np.all(L[after:] == 1.0)  # the cliff: nothing of the lanes on the first ring past the half-length
     # S59 (D218): was [2.868, 2.634, 2.694] and 2.796 - inside the half-length the response's crest and the lane's
-    # meet at another angle (on the first of the three a crest now falls by the lane); past it the ring is the response alone,
-    # the same curve turned, and its largest cell mean moves in the fourth figure.
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.910, 2.931, 2.693], abs=2e-3) and float(g[after].max()) == pytest.approx(2.795, abs=2e-3)
+    # meet at another angle; past it the ring is the response alone, the same curve turned, and its largest cell
+    # mean moves in the fourth figure.
+    # S59 (D218 follow-up): was [3.910, 2.931, 2.693] and 2.795 - the first build's segments; with their pitch
+    # relative to the disc's the three rings are turned otherwise.
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.544, 2.646, 2.692], abs=2e-3) and float(g[after].max()) == pytest.approx(2.795, abs=2e-3)
     assert float(pt.bar_terms(R, gas.pitch_deg, a)[0][after]) == pytest.approx(0.367, abs=2e-3)
     # No nuclear ring: every ring's mean is 1; inside r_ring the field is the base and the two lanes' tails.
     ring = gas.ring_ratio * a
