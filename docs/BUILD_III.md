@@ -86,9 +86,10 @@ applied to a realisation.**
   every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
   run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
   which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
-  list is empty. An *expected* total that is a sum of placement weights is equal within one unit in the last
-  place — the rounding of a mean that is 1 identically in the law; exact sums are not required *(amended at
-  gate G2, S57, D216; ruling by Fable)*.
+  list is empty. An *expected* total that is a sum of placement weights is equal within four units in the
+  last place — the rounding of sums over the cells of weights that average to 1 to 1e-13; exact sums are not
+  required *(amended at gate G2, S57, D216, as "one unit"; re-worded at S58 when the measured difference became
+  two, D217; rulings by Fable)*.
 - **I2.** A census's expected counts per ring — the numbers the draws are given, summed round the ring — are
   identical with the layer on or off to 1e-12. Until L1 the realised counts, and every total summed over realised
   objects, differ between the two runs by re-draw noise (measured S55: cloud mass −1.9 % galaxy-wide, up to 19 %

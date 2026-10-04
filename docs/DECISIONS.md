@@ -9834,3 +9834,73 @@ a slider to a debt."
   before; 0.90 at 2 kpc) — measured, not applied, #128's second half grown; an unbarred `ngc_4414`'s inner rings
   meet the arms with no taper and its gas runs from 5e-18 to 4.7 there (#142's regime at the centre).
 - *Cold timings:* the arm pattern 0.032 → 0.17 s, the gas pattern 0.32 → 0.53 s; a whole render 3.37 → 3.51 s.
+
+**The viewer.** A second builder made every model-data request name its template (`template=<name>`, in the one
+place the query is built; cache keys and the run hash follow), so a template's pins reach the run: NGC 4414 is
+drawn unbarred, its arms to the centre. Compared bitwise on the production grid: for `milky_way` the viewer's
+explicit inputs with and without the name give the same bytes on every array and scalar; for `ngc_4414` explicit
+inputs with the name equal the name alone. The switcher shows each pin in the field's own words ("Barred: no (as
+observed)", the source as its tooltip); a category scalar now renders (`Published.tsx` indexed by value where the
+API sends the label — `alpha_sequence` had the same fault). A pin holds through "Edit galaxy" and every edit.
+
+**The independent review (an Opus reviewer, read-only; its own body quadrature, arc, age integral, 600 runs, a
+layer-off comparison against `main`).** "BLOCKER: none found. The build does what D217's items 1–10 rule … no
+arithmetic, sign, factor or stream error in the presence, pin, body, saturation, lanes or phase." What it found
+beside the builder's own list: (S1) the gate's A₂ identity holds for the bar part and not for the whole field
+(θ₂ = 0 puts the two-armed crest on the bar's axis at R = a: the whole field's maximum is off B by −0.007 to
++0.008 over 100 Milky Way seeds); (S2) layer off, the arm law moved on every saturated seed — 26 of 60 pattern
+seeds of the default disc, `arm_saturation` 0.687 → 1.000 at R = a at worst — because the body's depth ends at a
+where the cosine's reached to 2a; (S3) **star formation rode the lanes**: `sfr_modulation` reads the gas
+contrast, so 88–93 % of a ring's star formation at 2–3.3 kpc sat in its top tenth of cells (31–36 % before),
+the modulation's maximum 17.2 (4.2), young stars and clusters in two lanes leading the bar by about 28°; (S4)
+an unbarred galaxy's inner gas is emptied by the untapered response (`ngc_4414`: under 1e-9 from 0.26 to 3 kpc)
+and at one corner of the controls 55 cells are exactly zero (the solver's s underflows); (N1) two clocks —
+the new closed form's universe is 13.467 Gyr old, the grid's `t_max` 13.8; (N2) the lanes end in a cliff at
+R = a; (N3) inside the nuclear ring the excess is laid by the lanes' tails: no hole, no ring; the crest
+separation's change (161 → 103 of 165 rings within a cell) is the bar-tied phase alone.
+
+**A follow-up to the gate (the same Fable agent; nothing read).**
+1. "The bar part is what I meant: the identity is the body's normalisation. Gate wording: 'the A₂ maximum inside
+   a of the bar part of the published field (the field less the arm modes) equals B to 1e-6'." The whole field's
+   maximum is "a consequence, not a check".
+2. "Item 5 stands. The cosine's reach to 2a was the cosine's shape, not the bar's; the body ends at a by its
+   definition, so the saturation ends with it. Record as a consequence … 'arms at a saturated galaxy's bar end
+   are up to 45 % stronger than under the cosine'."
+3. "**Not as built.** The lanes' one unsourced number (the width) must not drive a census: `sfr_modulation`
+   inside the bar's reach reads w_arm s + w_bar L_fp, L_fp the footprint-uniform field (base outside the
+   footprint, base + excess/share inside it: the 2.6 ratio kept, no ridge), so star formation follows the bar's
+   footprint (Díaz-García et al. 2020's 'along the bar') and not the placeholder's ridge. Dust and the gas census
+   keep L. Debt opened: star formation on the lanes themselves." *(The lead's reading of "the gas census keeps
+   L": the clouds stay on the laned field, and the clusters and their HII regions, born one to a cloud, with
+   them; the field's star formation and the star catalogues' young stars follow the footprint.)*
+4. "Published as the law gives it, nothing clipped; the corner recorded under #142. Gate reworded: 'g ≥ 0, equal
+   to 0 only where s underflows the doubles' subnormals, every such cell counted and recorded'." The m = 6
+   aliasing inside 0.3 kpc of an unbarred disc "is a finding under the arm law"; its two-armed amplitude not
+   rising outward "is the arm-mode reading's statement 10 missed — a disclosed miss, recorded, not tuned."
+5. "Accept with a debt. The flat-ΛCDM closed form on the model's own H0 and Ω_M is the right derivation; the debt
+   is the model's two clocks", the threshold's move 0.3295 → 0.3276 printed beside it.
+6. The lanes' ends "both stand as the template taken literally, the owner told": the cliff at a (a debt, "the
+   body's own Ferrers profile named as the candidate end if the owner wants one") and "no nuclear ring is built:
+   the ring is a structure the template ends at, not one it makes" (a debt).
+7. The lane field's normalisation is "part of the template's definition (a shape defined to have mean 1 on the
+   cells it is defined on), not a published field divided by its sampled mean after composition".
+8. I1 reworded: "equal within four units in the last place — the rounding of sums over the cells of weights that
+   average to 1 to 1e-13"; the test pins the measured 2.
+9. "Keep the Milky Way's pin: it is a measured fact and holds the picture if the criterion is ever replaced.
+   Amend D213's sentence to 'the same bytes on every field; the inputs carry the pin, so a second cache entry
+   whose header differs by that word'."
+10. A pin under edited controls is "as meant: a template names its measured structure and keeps it … Tell the
+    owner that in the viewer the derived criterion never decides; a 'no template' or 'derived presence' switch is
+    a viewer choice that is theirs."
+11. "S58 may merge once 1–10 are applied, the stale texts corrected, item 3's diff and its re-pins checked by the
+    reviewer (one pass on that change alone), and the suite is green on the lead's run. No further Fable turn."
+
+**Debt #138, re-read once at this phase's close (D215 ruling 12; same statements, on the composed field).** With
+the bar's body in, the Milky Way template's mass-weighted mode power m = 2…6 is 0.262 / 0.109 / 0.204 / 0.197 /
+0.228, A3/A2 0.65 (1.6 at S56; observed 0.33 ± 0.19 to 0.58 ± 0.11): statement 1 no longer fails disc-wide. The
+pattern is two-armed to 4.24 kpc, the bar's own m = 2 (statement 6 met inside the bar, not out to half the
+optical radius). **Outside the bar nothing changed**: 0.007 / 0.147 / 0.230 / 0.286 / 0.330, m = 4 dominant from
+4.3 kpc and **m = 5–6 from 8.7 kpc — statement 8 still fails.** As ruling 12 ordered, that is now "a conflict of
+sources, local swing theory against the Fourier reading … recorded as a finding and put to the owner; it is not
+reopened with a constant". `ngc_4414`, unbarred: 0.193 / 0.236 / 0.239 / 0.191 / 0.140, A3/A2 1.11, m = 5–6 from
+6.6 kpc, and its two-armed amplitude now falls outward (0.167 at 2 kpc, 0.099 at 6: statement 10 missed).
