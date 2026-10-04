@@ -76,11 +76,17 @@ def test_a_pin_has_no_default_no_range_and_no_unit_and_is_not_a_control():
     # S59 (D218 items 5-6): was `raises(RegistryError, match="carry no unit")` for a pin with a unit. A pin is a
     # class (no unit: True or False) or a measured number, which carries its unit; an unknown unit is refused, and
     # a seed still carries none.
-    number = Input("some_pin", "A pin", "pin", "about", unit="deg", default=None)
-    assert (number.kind, number.unit, number.default) == ("pin", "deg", None)
-    for name in ("pitch_angle", "sun_bar_angle"):
+    # S59 (D218, the gate's follow-up, item 7): was a numeric pin with no range (lo, hi None). "A numeric pin is held
+    # to the range of the draw it replaces": a pin that carries a unit declares lo and hi, and is refused without
+    # them; a class pin still declares none (the loop above).
+    with pytest.raises(RegistryError, match="lo and hi are required"):
+        Input("some_pin", "A pin", "pin", "about", unit="deg", default=None)
+    number = Input("some_pin", "A pin", "pin", "about", unit="deg", default=None, lo=0.0, hi=1.0)
+    assert (number.kind, number.unit, number.default, number.has_range) == ("pin", "deg", None, True)
+    for name, held in (("pitch_angle", (1.0, 60.0, False)), ("sun_bar_angle", (0.0, 360.0, True))):
         measured = INPUTS[name]
-        assert (measured.kind, measured.default, measured.unit, measured.lo, measured.hi, measured.checkpoint_hypothesis) == ("pin", None, "deg", None, None, 3)
+        assert (measured.kind, measured.default, measured.unit, measured.checkpoint_hypothesis) == ("pin", None, "deg", 3)
+        assert (measured.lo, measured.hi, measured.hi_open) == held and measured not in controls()
         assert "not a control" in measured.about and "template" in measured.about and "No request offers it" in measured.about
     with pytest.raises(RegistryError):
         Input("some_pin", "A pin", "pin", "about", unit="furlongs", default=None)

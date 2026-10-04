@@ -95,7 +95,7 @@ ORDER = {
 # constant it declares is a constant").
 CLOUD_TEXTURE = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
 # S59 (D218 items 1-2): was the five phases alone - the same layer stage lays the winding's segments, two columns.
-ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)} | {"arm_segment_extent", "arm_segment_pitch_residual"}
+ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)} | {"arm_segment_extent", "arm_segment_pitch_deviate"}
 SYNTHETIC = CLOUD_TEXTURE | ARM_PHASES
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
@@ -230,17 +230,19 @@ def test_production_graphs_hold(prod):
             # S59 (D218 items 5-6): two more pins, read by the pattern stage at its checkpoint.
             "pitch_angle": 3, "sun_bar_angle": 3,
         }
-        # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's.
-        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_winding_anchor_radius"):
+        # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
+        # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.
+        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_winding_anchor_radius",
+                     "arm_segment_pitch_scatter"):
             assert g.provenance[name] == "derived" and g.producer[name] == "bar", name
         assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present") and g.stages["bar"].reads_seeds == ()
         assert g.stages["arm_phases"].requires == ("bar_present",)
         assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
-        assert g.producer["arm_segment_extent"] == g.producer["arm_segment_pitch_residual"] == "arm_phases"
+        assert g.producer["arm_segment_extent"] == g.producer["arm_segment_pitch_deviate"] == "arm_phases"
         # S59 (D218): the two are a table's columns (domain "table"), and the graph's provenance covers them as it
         # covers any field: computed synthetic, the layer stage's, and declared so.
         segments = [d for d in g.stages["arm_phases"].publishes if d.kind.domain == "table"]
-        assert [d.name for d in segments] == ["arm_segment_extent", "arm_segment_pitch_residual"]
+        assert [d.name for d in segments] == ["arm_segment_extent", "arm_segment_pitch_deviate"]
         assert all(g.provenance[d.name] == d.provenance == "synthetic" and d.of == "arm_segment" for d in segments)
         assert not [d.name for st in g.stages.values() for d in st.publishes if d.kind.domain == "object" and d.of == "arm_segment"]
     assert "graph" in graph.report(models, impls_, table)

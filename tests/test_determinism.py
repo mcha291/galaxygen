@@ -99,7 +99,7 @@ def test_the_model_is_reproducible_across_processes_too(model):
     assert differing == [], differing
     assert len(seen[0]["fields"]) >= 91
     # S59 (D218): the winding's segment table is among what is hashed - a table column is a field like any other.
-    assert {"arm_segment_extent", "arm_segment_pitch_residual"} <= set(seen[0]["fields"])
+    assert {"arm_segment_extent", "arm_segment_pitch_deviate"} <= set(seen[0]["fields"])
 
 
 def test_the_spec_checks_reproducibility_across_processes_too(prod):

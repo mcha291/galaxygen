@@ -24,6 +24,16 @@ contrast along the point's own azimuth - a crest being a local maximum in R of t
 found on radial samples 0.005 kpc apart - over the measured width at the point's radius. Per arm, the median over
 its points; the statistic is the median of the five arms' medians. (The median over all the points pooled is
 returned beside it.) Nothing here places an arm, and nothing is tuned to it.
+
+**The verdict is withdrawn; the statistic is read against its nulls** (D218, the follow-up to the gate, item 3:
+"judged only as a percentile of its null ... The miss/hit verdict is dropped"). The independent review rotated the
+Sun through 360 azimuths on the same field and found the statistic at or under one width in a large share of
+the rotations: a sum of five modes lays a crest every kiloparsec or so along any azimuth, so a locus is seldom
+far from one wherever the Sun stands. :func:`rotation_null` is that null - the same field, the Sun placed at each
+of 360 azimuths a degree apart - and the test beside this file holds a second, the texture seed's (other
+realisations of the arms, the Sun where the model puts it). At 1 width the check passes by chance in a large
+share of cases: it has no power to tell this representation from the Milky Way's arms; that the representation
+cannot show the measured arms stands on the probe (four arms are not one winding), not on this statistic.
 """
 
 from __future__ import annotations
@@ -93,3 +103,39 @@ def check(pattern, sun_azimuth: float, sense: float) -> tuple[dict[str, float], 
         per_arm[arm] = float(np.median(distances))
         pooled.append(distances)
     return per_arm, float(np.median(list(per_arm.values()))), float(np.median(np.concatenate(pooled)))
+
+
+ROTATIONS = 360  # the Sun-rotation null's azimuths, a degree apart: the loci are sampled every degree, so every
+# rotation reads the same 360 azimuths of the field
+
+
+def crests(pattern, phi: np.ndarray) -> list[np.ndarray]:
+    """The radii, kpc, of the crests of ``pattern``'s contrast along each azimuth of ``phi``: :func:`nearest_crest`'s
+    own definition and samples (local maxima in R, :data:`RADIAL_STEP` apart), every azimuth at once."""
+    r = np.arange(RADIAL_RANGE[0], RADIAL_RANGE[1] + 0.5 * RADIAL_STEP, RADIAL_STEP)
+    v = np.asarray(pattern.contrast_at(r[:, None], np.asarray(phi, dtype=float)[None, :]))
+    peak = (v[1:-1] > v[:-2]) & (v[1:-1] >= v[2:])
+    return [r[1:-1][peak[:, j]] for j in range(v.shape[1])]
+
+
+def rotation_null(pattern, sun_azimuth: float, sense: float) -> np.ndarray:
+    """The statistic of :func:`check` with the Sun placed at each of :data:`ROTATIONS` azimuths round the same
+    field: entry k is the median over the five arms with the Sun at φ_sun + sense · k°, so entry 0 is the Sun
+    where the model puts it (:func:`check`'s own median, to the rounding of an azimuth). The field is not
+    touched: only where the measured loci are laid on it. A locus point at β then stands at
+    φ_sun + sense · (β + k)°, one of the 360 azimuths whose crests are found once."""
+    rows = {row[0]: row for row in TABLE2}
+    lines = crests(pattern, sun_azimuth + sense * np.radians(np.arange(ROTATIONS)))
+    loci = {arm: [locus(rows[name]) for name in names] for arm, names in ARMS.items()}
+    out = np.empty(ROTATIONS)
+    for k in range(ROTATIONS):
+        medians = []
+        for parts in loci.values():
+            distances = []
+            for beta, R in parts:
+                at = np.mod(np.rint(beta).astype(np.int64) + k, ROTATIONS)
+                near = np.array([np.abs(lines[j] - radius).min() if lines[j].size else math.inf for j, radius in zip(at, R)])
+                distances.append(near / width_kpc(R))
+            medians.append(float(np.median(np.concatenate(distances))))
+        out[k] = float(np.median(medians))
+    return out
