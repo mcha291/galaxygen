@@ -1705,13 +1705,12 @@ class Service:
                 "arrays": {RENDER_DUST_PLACEMENT: {
                     "unit": "dimensionless", "fields": list(gas_fields),
                     "about": (
-                        # S57 (D216): the gas's pattern is its steady response to the stellar arms. With the layer off
-                        # the header is S55's byte for byte (tests/layer_reference_s55.json holds its digest), so the
-                        # layer-off wording is still S51's; re-reading it means rewriting that reference - a decision's.
+                        # S57 (D216; gate G3 item 7): the gas's pattern is its steady response to the stellar arms, and
+                        # the header says so with the layer on or off - until G3 the layer-off header kept S51's "a
+                        # narrow ridge on the stellar arm's crest (S51, D210)", frozen by the S55 reference's digest,
+                        # which was re-pinned for this wording alone (tests/layer_reference_s55.json).
                         "the dust's column at each (R, phi) cell over its ring's mean: the gas's own density contrast - "
-                        + _compose.words(f, "its steady response to the stellar arms (S51, D210; S57, D216)",
-                                         "a narrow ridge on the stellar arm's crest (S51, D210)")
-                        + " - as the gas the dust is a share of. "
+                        "its steady response to the stellar arms (S51, D210; S57, D216) - as the gas the dust is a share of. "
                         if gas_contrast is not None else
                         "the dust's column at each (R, phi) cell over its ring's mean: the stellar pattern's density "
                         "contrast, as the gas the dust is a share of is taken to follow it (this model publishes no "

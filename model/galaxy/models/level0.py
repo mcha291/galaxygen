@@ -643,57 +643,12 @@ LEVEL0: dict[str, Constant] = {
         "(GALAXY_INPUTS.md 4b, verdict C).",
     ),
     # --- the gas's own arm pattern (S51, D210; the reading is docs/READING_GAS_PATTERN.md) ---
-    "GAS_ARM_WIDTH": Constant(
-        0.17,
-        "dimensionless",
-        "Full width at half maximum of the gas's arm ridge as a fraction of the arm-to-arm period, "
-        "constant with radius. M51's gas (CO 1-0 plus HI, total hydrogen surface density) has arms "
-        "'~30 degree (FWHM) for inner arms and ~5 degree for outer arms' against the stellar mass "
-        "map's ~60 and ~30, Gaussian fits to azimuthal profiles at 240 pc [verified: Egusa et al. "
-        "2017, MNRAS 465, 460, arXiv:1610.06642, Sects. 3.1-3.2; docs/READING_GAS_PATTERN.md "
-        "Reading B]; with two arms the period is 180 degrees, so 0.17 for the gas's inner arms "
-        "against 0.33 for the stars' - the gas ridge half the stellar arm's width (the fractions are "
-        "the reader's arithmetic; the text says FWHM where Fig. 4's caption says sigma, and the text "
-        "is taken). A fraction of the period, so the absolute width grows outward as every tracer's "
-        "does. **Since S57 a check's target, not an input (D216):** from S51 to S56 the gas pattern "
-        "stage turned it into a von Mises ridge of this width; the gas pattern is now the gas's own "
-        "steady response to the stellar arms, which reads no width, and this number is what the "
-        "response's width is measured against in the tests - the full width at half maximum of a "
-        "ring's tallest crest, the half level midway between the ring's trough and crest, as a "
-        "fraction of the period of the ring's strongest mode. The response is wider (0.21-0.48 over "
-        "6-10 kpc at the defaults): a recorded miss, its named suspects the steady pressure-balanced "
-        "response standing in for a converging infall, and the razor-thin forcing of the high arm "
-        "numbers. No computation of the model reads it; the gas pattern stage declares it so that "
-        "the check's target has a stage. Named alternatives: isothermal spiral shocks "
-        "0.05-0.16 of the spacing [verified: Kim & Ostriker 2002, ApJ 570, 132, Table 1]; the Milky "
-        "Way's masers (young stars, not gas) 0.30 as an FWHM [verified: Reid et al. 2019, ApJ 885, "
-        "131, Sect. 3; the fraction the reader's arithmetic]; M51's outer arms 0.03, at the beam. "
-        "Coverage: one galaxy, its inner arms (debt #129).",
-    ),
-    "GAS_ARM_MASK_WIDTH": Constant(
-        1.5,
-        "kpc",
-        "Full width, perpendicular to the arm, of the arm mask inside which the gas's ratio of means "
-        "is measured: PHANGS's masks are log-spirals traced at 3.6 micron and widened in 500 pc steps "
-        "until the CO flux gain falls below 1.25, 'typically 1-2 kpc wide', and the default where "
-        "coverage is poor is 'the median (1.5 kpc) width across the whole PHANGS sample' [verified: "
-        "Querejeta et al. 2021, A&A 656, A133, arXiv:2109.04491, Sect. 3.2; "
-        "docs/READING_GAS_PATTERN.md Readings A-B]. **Since S57 a check's definition, not an input "
-        "(D216):** from S51 to S56 the gas pattern stage derived a ridge's amplitude from the "
-        "measured ratio over this mask; the gas pattern is now the gas's own steady response to the "
-        "stellar arms, which reads no mask, and this width defines the mask of a disclosed check "
-        "held in the tests - the ratio of the response's mean inside the mask to its mean outside, "
-        "ring by ring. The mask is the share of the ring this width covers - m W / (2 pi R sin p) "
-        "for the ring's power-weighted arm number, at most a half (which a 1.5 kpc mask reaches "
-        "inside 12 kpc at the defaults: the source's geometry) - taken where the stellar modes' sum "
-        "is highest (D215's definition, unchanged). No computation of the model reads it; the gas "
-        "pattern stage declares it so that the check's definition has a stage. Named alternative: "
-        "the narrow masks "
-        "cut round the CO or H-alpha ridge, 'typical widths between 500 and 1000 pc, so about half "
-        "the width of the original masks' [verified: Querejeta et al. 2024, A&A 687, A293, Appendix E "
-        "and Sect. 2.6.1], whose ratio is GAS_ARM_CONTRAST_GRAND_DESIGN's narrow-mask alternative. "
-        "Coverage: the PHANGS-ALMA spirals given masks (28 of 74).",
-    ),
+    # S57 (D216, gate G3 item 7): the measured width of the gas's arm and the width of the source's arm mask
+    # stood here as constants from S51 to S56, when the gas's pattern was a ridge shaped by them. The pattern is
+    # now the gas's steady response to the stellar arms and reads neither; "a stage may not declare reads it
+    # does not make", so they left the registry and live in tests/gas_check.py with their values and sources:
+    # the target of the width's recorded miss and the definition of the disclosed check's mask. The two class
+    # means of the measured ratio stay (below): the bar stage derives the check's target from them.
     # The cloud interior's noise (S55, DECISIONS.md D214 as ruled at gate G1, change 4): the three parameters of the
     # function a renderer synthesises a cloud's interior with. **Constants of the model, not fields of any stage**:
     # the same with the randomness layer on or off, so not "a realisation from the layer's seed". The layer's

@@ -22,14 +22,22 @@ put in.
   star-formation threshold reads: there is no second); f_m = m A_m/(X sin p), X = κ²R/(2πGΣ) the arm-number
   law's own variable with checkpoint 1's total disc Σ (``pattern.local_swing_x``); A_m the mode's cosine
   amplitude **before the bar's taper** - the published amplitude over (1 − taper), which is the arm amplitude
-  times :meth:`GasPattern.unit_amplitudes`, the saturation still in it; θ_m the layer's phases. Uniform
-  potential vorticity closes it (item 3). It is the Euler-Lagrange equation of a strictly convex functional,
-  so on every ring the solution exists, is unique, is positive and has mean 1. A ring that carries no mode
-  has s = 1.
+  times :meth:`GasPattern.unit_amplitudes`; θ_m the layer's phases. **The forcing's amplitude carries the
+  saturation** (gate G3 item 3): A_m is the stellar field's actual cosine amplitude on the ring with the
+  taper taken back out - the arm amplitude times the root of the mode's gain times the pattern stage's
+  saturation factor, which is under 1 where the modes' linear sum would reach the mean - "because the gas
+  answers the stars that exist". Uniform potential vorticity closes the equation (item 3). It is the
+  Euler-Lagrange equation of a strictly convex functional, so on every ring the solution exists, is unique,
+  is positive and has mean 1. A ring that carries no mode has s = 1.
 - **Nothing is put in and nothing is mended.** No amplitude, width, mask or contrast enters; no thickness
   factor, no constant added, no f scaled; nothing clipped, floored, capped or divided by a sampled mean. A
   ring the solver cannot converge raises (``gas_response.ConvergenceError``) and is not caught: there is no
-  fallback and no linear substitute (item 7).
+  fallback and no linear substitute (item 7). The solver holds a cell's residual under 1e-10 or under the
+  cell's rounding floor where that is larger (gate G3 item 2), so a tightly wound galaxy's rings - a drawn
+  pitch under about 2.7 degrees, ε of order 1, a total forcing of 60-80 - converge as every other ring does.
+  That regime is published as the law gives it, nothing clipped: s from 1e-44 to 14, the arm-to-arm spacing
+  then comparable to the disc's thickness and the razor-thin forcing overstated by about that factor (a
+  finding under the razor-thin debt, below).
 - **The bar** (item 8). g = w_arm s + w_bar (1 + B cos 2(φ − φ_bar)), w_bar the bar's taper, w_arm = 1 − w_bar
   (their sum is checked), B the stellar ``bar_contrast``; the taper, the winding phase and the bar's angle are
   the stellar pattern's own (``pattern.bar_terms``). The taper acts once, here, on the response to the
@@ -41,24 +49,36 @@ put in.
   rings beyond the grid; the taper and the bar's term are taken at the point's own radius. Both blends are
   convex blends of positive profiles of mean 1, so the gas is positive and its mean round the ring is 1 at
   every radius. :meth:`GasPattern.sector_means` is the exact mean of that same interpolant, so sectors that
-  tile a ring average to 1 to rounding. The published (R, φ) field is the same function at the grid's cells'
-  centres, as it comes: its sampled ring mean is not 1 to the bit and is not made so
-  (``tests/test_gas_pattern.py`` pins how far it is).
-- **No offset** (D210 ruling 3, now derived): the equation is even about a lone mode's crest, so that mode's
-  gas crest is its stellar crest. A ring of several modes is answered mode by mode, each with its own weight
-  (m/(1 + m²ε²) in the linear limit, against the stars' 1), so the two sums need not peak in one cell: on the
-  default galaxy they are within a degree (pinned in the tests). No offset is put in and none is published.
+  tile a ring average to 1 to rounding.
+- **The published field is the law's mean over each grid cell** (gate G3 item 4, which rewords items 9 and
+  11 i): on each grid ring, the interpolant integrated exactly over each of the grid's φ cells
+  (:meth:`GasPattern.cell_means`, the arithmetic of the sector means; the bar's cosine by its own integral).
+  So a ring's cells average to 1 to rounding on every φ grid, with no division - a field of centre samples
+  did only on grids whose cell count divides the solver's (7e-14 off at 360 cells, 2e-3 at 36) - and each
+  cell holds the gas the law puts in it. ``contrast_at``, ``response_at``, ``azimuths`` and the censuses keep
+  the point function: a cell's expected count is its area times its mean, a placed object reads the law at
+  its own point, and the two are the same measure.
+- **The offset** (D210 ruling 3, now derived; gate G3 item 7): zero for a lone mode, exactly, by the
+  equation's symmetry about the mode's crest. With several modes the gas's crest and the crest of the stellar
+  modes' sum need not be one cell, because each mode is answered with its own weight (m/(1 + m²ε²) in the
+  linear limit, against the stars' 1): on the default galaxy they are within one solver cell (0.25 degrees)
+  on every ring over 6-10 kpc and on 161 of the 165 rings that carry a mode (two rings read two cells; on
+  two, where six equal crests stand, the tallest is another arm's); on ``ngc_4414`` they are up to five cells
+  (1.25 degrees) apart over 6-10 kpc. No offset is put in and none is published.
 - **Declared approximations, each a debt** (items 4-5): steadiness (the response relaxes on the ridge's
   sound crossing, about as long as an arm lives); the razor-thin WKB potential, which overstates the high
   arm numbers; the stellar mode's fractional amplitude applied to the total disc.
 
-**What the ridge's constants are now** (item 11 iv). The measured ratio of means, the mask it is measured in
-and the measured width build nothing. They survive as the target and the definition of a *disclosed check*,
-made by the two measurement functions at the foot of this module and pinned in the tests, layer on: the ratio
-of the means of s inside the source's arm mask against outside it (:func:`mask_share`,
-:func:`ratio_of_means`), and the full width at half maximum of a ring's tallest crest (:func:`crest_width`).
-No stage computes with them; the ``gas_pattern`` stage declares the two constants (``GAS_CHECK_CONSTANTS``)
-only so that the model that carries them names the stage they belong to.
+**What became of the ridge's numbers** (item 11 iv; gate G3 items 6-7). The measured ratio of means, the mask
+it is measured in and the measured width build nothing. They survive as the target and the definition of a
+*disclosed check*, made by the measurement functions at the foot of this module and pinned in the tests,
+layer on: the ratio of the means of s inside the source's arm mask against outside it (:func:`mask_share`,
+:func:`ratio_of_means`), and the full width at half maximum of a ring's tallest crest (:func:`crest_width`)
+over the period of the mode the gas answers most strongly, the one of largest forcing m·A_m. No stage
+computes with them, and the mask's width and the measured width are no constants of the model: they left its
+registry at gate G3 ("a stage may not declare reads it does not make") and live in ``tests/`` with their
+sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
+constants: the ``bar`` stage derives the check's target from them.
 
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
@@ -106,9 +126,6 @@ CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is h
 # the taper is taken back out with, and checkpoint 1's disc: its epicyclic frequency and total surface density.
 GAS_PATTERN_READS: tuple[str, ...] = ("arm_contrast", *PATTERN_READS, "epicyclic_frequency", "disc_surface_density")
 GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION")
-# The disclosed check's definition and the width's target (D216 item 11 iv): read by no computation of the
-# model. The stage declares them and its compute does not touch them; the tests' check does.
-GAS_CHECK_CONSTANTS: tuple[str, ...] = ("GAS_ARM_WIDTH", "GAS_ARM_MASK_WIDTH")
 
 SOLUTIONS_KEPT = 4  # how many patterns' solved rings the content-keyed cache holds (about 4.6 MB each)
 
@@ -143,7 +160,7 @@ def respond(forcing: np.ndarray, phases, eps: np.ndarray, *, cache: bool = True)
             return held
     s, diagnostics = _response.solve(_response.forcing(ARM_MODES, f, theta, CELLS), e, 0.0)
     s.setflags(write=False)
-    for name in ("steps", "halvings", "deepest", "residual", "residual_sum"):
+    for name in ("steps", "halvings", "deepest", "residual", "residual_sum", "floor"):
         getattr(diagnostics, name).setflags(write=False)
     if cache:
         with _SOLUTIONS_LOCK:
@@ -180,21 +197,31 @@ GAS_DENSITY_CONTRAST = FieldDecl(
     # with the randomness layer off.
     composed=True, neutral=1.0,
     about=(
-        "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. "
+        "Σ_gas(R, φ)/Σ_gas(R): mean 1 round every ring, so every radial gas profile is unchanged. Each "
+        "value is the mean over its azimuthal cell on its ring - the gas the cell holds, not a sample at its "
+        "centre - so a ring's cells average to 1 to rounding on any grid, with nothing divided; a census "
+        "placing an object reads the same law at the object's own point. "
         "The steady response of isothermal gas to the stellar arm modes' potential, in the frame that turns "
         "with the gas - the frame the arms themselves turn in, so no gas flows through an arm and nothing "
         "shocks there. On each ring the logarithm of the gas's surface density is bent by the pressure of "
         "its own velocity dispersion against the pull of the arm modes, each mode pulling in proportion to "
-        "its amplitude and its arm number and in inverse proportion to the disc's stability parameter and "
+        "its amplitude as the stars carry it - the saturation in it - and its arm number, and in inverse "
+        "proportion to the disc's stability parameter and "
         "the sine of the pitch; the equation is solved on a fixed set of cells round the ring, and a point "
         "between two rings reads both at its own winding phase. Nothing sets the contrast or the width: they "
-        "come out of the equation. The gas piles on the stellar crests - one mode's response is even about "
-        "its crest, so no offset is put in; with several modes the two crests can stand a degree apart - and "
-        "where the modes' pull together exceeds the pressure's reach the gas between the arms is nearly "
+        "come out of the equation. The gas piles on the stellar crests: the offset is zero for a lone mode, "
+        "exactly, by the equation's symmetry; with several modes the gas's crest and the crest of the stellar "
+        "modes' sum are within a quarter of a degree over the mid disc at the defaults, and a degree or so "
+        "apart in other galaxies, because each mode is answered with its own weight; no offset is put in and "
+        "none is published. "
+        "Where the modes' pull together exceeds the pressure's reach the gas between the arms is nearly "
         "emptied, the crest standing two to three times the ring's mean in the mid disc and fading to "
-        "nothing where the disc amplifies no arm. The crest is broader than the one measured gas arm, by up "
-        "to three times, and as broad as a stellar arm where one arm number is alone: the steady, razor-thin "
-        "response is an approximation and that is its recorded miss. Inside the bar the response gives way "
+        "nothing where the disc amplifies no arm. The crest is two and a half to three times as broad as "
+        "the one measured gas arm, about half the period of the mode the gas answers most strongly: the "
+        "steady, razor-thin response is an approximation and that is its recorded miss. A tightly wound "
+        "galaxy - a drawn pitch of a few degrees - is forced far harder, and its inner rings swing from "
+        "nearly empty to many times the mean: the law as it stands, nothing clipped, and a finding against "
+        "the razor-thin forcing. Inside the bar the response gives way "
         "to the stellar bar's own two-fold term, "
         "blended by the bar's taper, so the field is nowhere below the bar's own trough and nowhere "
         "negative; nothing is clipped. It reads no gas column. A composed field: with the randomness layer "
@@ -214,7 +241,9 @@ class GasPattern:
     **Evaluable at a point** (D216 item 9): the response is solved once on each grid ring; a point reads the
     two neighbouring rings' profiles at its own χ, linear in χ between the cells' centres and linear in R
     between the rings (held at the end rings beyond the grid). At a grid radius that is the ring's own
-    profile, exactly.
+    profile, exactly. ``contrast``, ``contrast_at``, ``response_at`` and ``azimuths`` are that point function;
+    ``sector_means`` and ``cell_means`` are its exact means over sectors of a ring, and ``cell_means`` on the
+    grid's own φ cells is the field the stage publishes (gate G3 item 4).
 
     Built through ``galaxy.layer.compose`` (the one reader of the layer's switch) and by tests.
     """
@@ -376,9 +405,38 @@ class GasPattern:
         return w_arm * self.response_at(R, phi - phase) + w_bar * (1.0 + self.bar * np.cos(2.0 * (phi - bar_angle)))
 
     def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """Σ_gas(R, φ)/Σ_gas(R) on the (R, φ) grid: the same function at each cell's centre, as it comes (mean 1
-        round the ring over the ring itself; the cells' sampled mean is what it is and is not divided out)."""
+        """Σ_gas(R, φ)/Σ_gas(R) at the points of an (R, φ) mesh: the point function at each (R_i, φ_j) - what a
+        census inverts for an azimuth. Its mean round a ring is 1 over the ring itself; a mesh's samples
+        average to 1 only to their sampling, and nothing is divided. (The field the stage publishes is not
+        this: it is :meth:`cell_means`.)"""
         return self.contrast_at(np.asarray(R, dtype=float)[:, None], np.asarray(phi, dtype=float)[None, :])
+
+    def cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+        """The contrast's mean over each azimuthal cell between ``edges`` (radians, ascending) at each radius of
+        ``R``, shaped (R, cells): what the stage publishes on the grid (gate G3 item 4). The exact mean of the
+        point function over the cell - the two neighbouring rings' interpolants integrated piece by piece
+        (``gas_response.sector_mean``) and blended as a point blends them, the bar's cosine by its own
+        integral - so cells that tile the ring average to 1 to rounding on any grid, with no division, and a
+        cell's value is never under w_bar (1 − B). At one radius it is :meth:`sector_means`' arithmetic."""
+        solved = self._rings()
+        profiles, carries = solved["profiles"], solved["carries"]
+        R = np.asarray(R, dtype=float)
+        edges = np.asarray(edges, dtype=float)
+        lo, hi = edges[:-1], edges[1:]
+        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        lower, upper, share = self._between(R)
+
+        def ring_means(ring: np.ndarray) -> np.ndarray:
+            out = np.ones((R.size, lo.size))  # a ring with no mode is 1 on every cell: so is every sector of it
+            on = carries[ring]
+            if on.any():
+                out[on] = _response.sector_mean(profiles[ring[on]], lo[None, :] - phase[on, None], hi[None, :] - phase[on, None])
+            return out
+
+        arms = (1.0 - share)[:, None] * ring_means(lower) + share[:, None] * ring_means(upper)
+        bar = (np.sin(2.0 * (hi - bar_angle)) - np.sin(2.0 * (lo - bar_angle))) / (2.0 * (hi - lo))
+        return w_arm[:, None] * arms + w_bar[:, None] * (1.0 + self.bar * bar[None, :])
 
     def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """The contrast averaged over each sector between ``edges`` (radians, ascending) at one radius: the exact
@@ -432,15 +490,24 @@ class GasPattern:
             out[i] = ratio_of_means(profiles[i], psi[i], float(share[i]))
         return out
 
-    def arm_width(self) -> np.ndarray:
-        """The full width at half maximum of every grid ring's tallest crest (:func:`crest_width`) as a
-        fraction of the period 2π/m of the ring's strongest mode - the one of the largest amplitude, the lower
-        arm number on a tie - shaped (R,). NaN on a ring that carries no mode. A measurement only."""
+    def strongest_forcing(self) -> np.ndarray:
+        """The arm number of the mode of largest forcing m·A_m on every grid ring, shaped (R,): the mode the gas
+        answers most strongly (f_m = m A_m/(X sin p), and X sin p is the ring's own). Gate G3 item 6."""
+        return _M[np.argmax(_M[:, None] * self.unit, axis=0)]
+
+    def arm_width(self, arm_number: np.ndarray | None = None) -> np.ndarray:
+        """The full width at half maximum of every grid ring's tallest crest of s (:func:`crest_width`) as a
+        fraction of the period 2π/m, shaped (R,); NaN on a ring that carries no mode. A measurement only.
+
+        m is the mode of largest forcing m·A_m (:meth:`strongest_forcing`): the check's definition, fixed at gate
+        G3 (item 6) - not the largest amplitude, which on most rings is a tie the first build broke towards the
+        lower arm number, the kindest reading. ``arm_number`` (R,) reads the same widths against another
+        mode's period, for the record the tests keep of the other readings."""
         profiles, carries = self.profiles, self.carries
-        strongest = _M[np.argmax(self.unit, axis=0)]
+        m = self.strongest_forcing() if arm_number is None else np.asarray(arm_number, dtype=float)
         out = np.full(self.R.size, np.nan)
         for i in np.flatnonzero(carries):
-            out[i] = crest_width(profiles[i]) / (2.0 * math.pi / strongest[i])
+            out[i] = crest_width(profiles[i]) / (2.0 * math.pi / m[i])
         return out
 
 
@@ -506,9 +573,9 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
         shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
         if shape is None or shape.flat:
             return _compose.neutral(GAS_DENSITY_CONTRAST, cells)
-        # The law at the grid's cell centres, as it comes (D216 item 11 i): the ring's mean is 1 in the law and
-        # on the solver's cells; on the grid's own cells it is 1 to the sampling, and it is not divided out.
-        return shape.contrast(R, ctx.grid.phi)
+        # The law's mean over each of the grid's φ cells, on each grid ring (gate G3 item 4): the interpolant
+        # integrated exactly, so a ring's cells average to 1 to rounding on any grid and nothing is divided.
+        return shape.cell_means(R, ctx.grid["phi"].edges)
 
     return {"gas_density_contrast": _compose.field(ctx.fields, GAS_DENSITY_CONTRAST, cells, response)}
 
@@ -522,12 +589,13 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "solved ring by ring under uniform potential vorticity, and blended with the stellar bar's own "
             "term by the bar's taper (D216). Reads the stellar pattern's modes and phases and the disc's "
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
-            "put in: the measured ones are a disclosed check's target, held in the tests. It draws nothing; "
+            "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
+            "publishes is the response's mean over each grid cell, so every ring keeps its gas on any grid "
+            "with nothing divided. It draws nothing; "
             "its field is seeded through the pattern's drawn pitch and amplitudes and the layer's phases."
         ),
         compute=compute_gas_pattern,
-        # The two the law reads, and the disclosed check's two, which the compute does not touch (D216 item 11 iv).
-        reads_constants=(*GAS_PATTERN_CONSTANTS, *GAS_CHECK_CONSTANTS),
+        reads_constants=GAS_PATTERN_CONSTANTS,
         requires=GAS_PATTERN_READS,
         publishes=(GAS_DENSITY_CONTRAST,),
     )

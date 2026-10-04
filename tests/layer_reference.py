@@ -177,17 +177,17 @@ def single_mode_scalars(template: str) -> dict[str, float]:
 
 def single_mode_fields(template: str, m: float) -> tuple[np.ndarray, np.ndarray]:
     """(stars, gas): S55's two composed fields on the production grid for one arm number, by the frozen copy."""
+    import gas_check
     import s55_patterns as s55
     from galaxy.core.grids import DEFAULT
-    from galaxy.core.registry import production
 
-    models, _, _ = production()
-    c = models.get(MODELS[0]).constants
     f = single_mode_scalars(template)
     grid = DEFAULT.build()
     stars = s55.stellar_contrast(grid.R, grid.phi, f["arm_contrast"], f["bar_contrast"], m, f["pitch_angle"], f["bar_half_length"])
+    # S57 (D216, gate G3 item 7): the ridge's width and the mask's were constants of the model until S57 and are
+    # read from tests/gas_check.py since - the same two numbers S55 used (0.17, 1.5 kpc), so the same bits.
     gas = s55.gas_contrast(grid.R, grid.phi, f["gas_arm_contrast"], f["bar_contrast"], m, f["pitch_angle"], f["bar_half_length"],
-                           float(c["GAS_ARM_WIDTH"].value), float(c["GAS_ARM_MASK_WIDTH"].value))
+                           gas_check.GAS_ARM_WIDTH, gas_check.GAS_ARM_MASK_WIDTH)
     return stars, gas
 
 
