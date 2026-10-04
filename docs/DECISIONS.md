@@ -10191,3 +10191,46 @@ new class, which by the viewer's declaration-only rule made the arm-phase stage 
 scalars no longer asked for; a catalogue "present" from checkpoint 3). They are a small table read whole by the
 model's own stages, so they take a field kind of their own (domain `table`), same rows, same bits; the closed list
 of object classes returns to S58's.
+
+**The follow-up applied (a second model pass, a fresh Opus builder) and read against its predictions.** The
+residual is relative: the layer's column is a unit normal (`arm_segment_pitch_deviate`; the same draws, ten times
+the new row is the old row bit for bit), scaled where the winding is built by 0.56 × the pitch, the 0.56 a
+constant published by `bar` as `arm_segment_pitch_scatter`. The rows grew from 64 + 192 to 256 + 768: a disc on
+the pitch's floor of 1° lays a segment every 0.02 e-fold, and the suite draws such a disc. A numeric pin is held to
+the range of what it replaces and refused otherwise at `run()` and at a template's validation.
+- *Read first (1000 texture seeds at the Milky Way's anchor):* reversed segments 3.4–3.7 % at 1°, 2°, 5°, 10°,
+  13.5° and 28.9° (3.7 %: held); **not held above about 35°**, where p + δ wraps past 90° — 7.3 % at 45°, 23 % at
+  60°. Net-leading windings: none of 1000 at 1°, 2°, 5°, 10°, 13.5° (held); **7 of 1000 at 28.9°** (`ngc_4414`'s
+  pin), 38 at 45°, 149 at 60° (not held at the open end: "the relative form's own tail, recorded with those
+  numbers, nothing truncated" — Fable). The median net turn from 3 to 12 kpc at 13.5°: 311.8° against the law's
+  329.9°, 5.5 % under (within 10 %: held; 0.91–0.96 of the law at the other pitches). The median |Δψ| at 13.5°:
+  7.22° (≈ 7°, the predicted small miss of Honig & Reid's 9.7°). Reversed over the suite's 240 galaxies 2.80 %,
+  over the three legs 3.03 %, over the pitch law's population 3.81 % (2–8 %: held). **The Milky Way template's
+  default seeds: 511.7° of turn, the 987th of 1000, eight segments** (999th and twelve on the absolute form);
+  nothing was re-seeded.
+- *The Reid statistic, no verdict:* 1.535 widths as built (Norma–Outer 0.42, Scutum–Centaurus 0.87,
+  Sagittarius–Carina 2.27, Perseus 1.61, the Local arm 1.54); in the null of the Sun rotated through 360 azimuths
+  the median is 1.011 (5–95 %: 0.578–1.900) and 49 % of rotations read one width or less — the as-built value is its
+  81st percentile; over 60 texture seeds the median is 1.591 and 13 % read one width or less. "At 1 width the check
+  passes by chance in a large share of cases: it has no power to tell this representation from the Milky Way's
+  arms."
+- *The third leg* (`ngc_4414`'s inputs with the pitch pin off, 60 × 2 seeds; pitch 1.0°–24.1°): no raise on any of
+  the 360 gate galaxies, ring means 1.6e-15 (stars) and 1.0e-13 (gas), no exact zero, nine galaxies with a ring on
+  its convergence floor, gas from 2.3e-21 to 10.9.
+- *The young stars' reader, as first ruled (each ring's row read at φ − (Φ(r) − Φ(R_ring))):* past the bar's
+  half-length the misplaced weight is 0.29 % at worst on every star-forming gap (the fixed-φ blend: 16–91 % across
+  nearly circular segments, crest 2.82 where the law has 5.64). **Inside the bar's reach it is not the law, and the
+  old reader was not either**: `sfr_modulation` there blends the arms with the bar's footprint, which lies in the
+  bar's frame and does not wind; worst gap inside the half-length, fixed-φ against wound: 8.3 % / 15.0 % on the
+  default seeds, 24.8 % / 17.5 % on a 9° disc, 38 % / 71 % on a disc at the pitch's floor.
+
+**A second follow-up to the gate (Fable; nothing read).** "(b), the exact point reader, this session. The reason
+is the layer's rule 5: a stored grid is not a field's definition; a reader that interpolates a table between rings
+is reading the grid, and no interpolation of one row can serve two frames at once … the young stars' placement
+weight at a point is that law applied to that point function, and the grid table of `sfr_modulation` becomes what
+it should be, the same function at the cells (published, read by the viewer, read by no census). (a) [a debt] is
+refused because the numbers are not small; (c) [a switch at the bar's edge] is refused because a switch radius has
+no source and the step at it is a seam." Its gate: the point reader equal to the published table at every grid
+cell; past the bar's reach agreeing with the wound read to the 0.29 % measured; the superseded readers' numbers
+kept in the record; I1 within four units; "if `sfh_azimuthal`'s law cannot be evaluated at a point without a
+quantity that exists only on rings, the lead says which quantity and the build falls back to (a) with the debt".
