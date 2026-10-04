@@ -57,10 +57,14 @@ TEXTURE_SEEDS = (None, 1, 2, 77, 987654321)  # None: the template's own
 # S58 (D217): the bar's presence, its formation time, the body's shape and its share of the disc are laws too -
 # derived, or seeded through the drawn bar amplitude - and the same with the layer on or off.
 BAR_FIELDS = ("bar_present", "bar_formation_time", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share")
+# S59 (D218): the radius the winding is anchored at and the pitch as the law draws it are laws' numbers too - the
+# same with the layer on or off, and under any texture seed.
 LAW_FIELDS = (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_contrast", "bar_contrast", "pitch_angle",
-              "bar_half_length", "gas_arm_contrast", *BAR_FIELDS)
-PATTERN_FIELDS = ("pattern_density_contrast", "gas_density_contrast", *LAW_FIELDS, *pt.PHASE_FIELDS,
+              "bar_half_length", "gas_arm_contrast", *BAR_FIELDS, "arm_winding_anchor_radius", "pitch_angle_drawn")
+# S59 (D218): the winding's segment rows are the layer's realisation, beside the phases.
+PATTERN_FIELDS = ("pattern_density_contrast", "gas_density_contrast", *LAW_FIELDS, *pt.PHASE_FIELDS, *pt.SEGMENT_FIELDS,
                   "circular_velocity", "epicyclic_frequency", "disc_surface_density")
+SEGMENTS_OUTWARD_HAND = 64  # S59 (D218): the rows laid outward from the anchor, first; the rest run inward
 _RUNS: dict[tuple, object] = {}
 
 
@@ -120,6 +124,43 @@ def law_of(out, c) -> pt.ModeLaw:
 
 def published_amplitudes(out) -> np.ndarray:
     return np.stack([np.asarray(out.fields[n]) for n in pt.AMPLITUDE_FIELDS])
+
+
+def hand_winding(F, R: np.ndarray) -> np.ndarray:
+    """Φ(R), the arms' common winding, from the **published** numbers with this file's arithmetic and no function of
+    the model's (S59, D218 items 1-2). Until S59 it was ln R · cot p. Since then the layer lays segments: a row's
+    pitch is ``pitch_angle`` plus its residual; across it ln R advances by its extent times |tan| of that pitch and
+    the phase by its extent times the pitch's sign; the first 64 rows run outward from the anchor, the rest inward;
+    at the anchor Φ = ln R_A · cot p; and Φ is the straight line in ln R between the segments' ends. With the layer
+    off there are no rows, and Φ is ln R · cot p as it always was."""
+    R = np.asarray(R, dtype=float)
+    pitch, anchor = float(F["pitch_angle"]), float(F["arm_winding_anchor_radius"])
+    extent, residual = np.asarray(F["arm_segment_extent"], dtype=float), np.asarray(F["arm_segment_pitch_residual"], dtype=float)
+    cot = 1.0 / math.tan(math.radians(pitch))
+    if extent.size == 0:
+        return np.log(R) * cot
+    x0 = math.log(anchor)
+    p0 = x0 * cot
+    tangent = np.tan(np.radians(pitch + residual))
+    knots, phases = [x0], [p0]
+    # Each side's spans are summed from the anchor and the sum laid from the anchor's own values - the order the
+    # model sums them in, so this winding is the model's to the last bit and the tolerances below stay at rounding.
+    # (tests/test_segments.py holds the model's winding to a loop of another order, to 1e-12.)
+    span = turn = 0.0
+    for j in range(SEGMENTS_OUTWARD_HAND):  # outward from the anchor
+        span += extent[j] * abs(tangent[j])
+        turn += extent[j] * (1.0 if tangent[j] > 0.0 else -1.0 if tangent[j] < 0.0 else 0.0)
+        knots.append(x0 + span)
+        phases.append(p0 + turn)
+    span = turn = 0.0
+    for j in range(SEGMENTS_OUTWARD_HAND, extent.size):  # inward from the anchor
+        span += extent[j] * abs(tangent[j])
+        turn += extent[j] * (1.0 if tangent[j] > 0.0 else -1.0 if tangent[j] < 0.0 else 0.0)
+        knots.insert(0, x0 - span)
+        phases.insert(0, p0 - turn)
+    x = np.log(R)
+    assert knots[0] < x.min() and x.max() < knots[-1] and np.all(np.diff(knots) >= 0.0)
+    return np.interp(x, knots, phases)  # the straight line in ln R between the segments' ends
 
 
 def single_mode(R, m: int, f: dict[str, float]) -> tuple[pt.ArmPattern, np.ndarray]:
@@ -185,8 +226,15 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
     modes are read is the body's part of it - its mean over each cell, as published (the body carries every even
     harmonic, not the second alone) - and the arm modes are what is left, to rounding, on every ring. In a barred
     galaxy the two-armed mode's published phase is 0 (item 9); an unbarred galaxy has no body to take out. The
-    body's own two-fold amplitude is held to the drawn bar amplitude in ``tests/test_bar.py``."""
-    worst = 0.0
+    body's own two-fold amplitude is held to the drawn bar amplitude in ``tests/test_bar.py``.
+
+    **S59 (D218 items 1-3): "the published phase" of a mode on a ring is m Φ(R) + θ_m with Φ the winding in seeded
+    segments**, built here by hand from the published rows (:func:`hand_winding`) - until S59 this test took
+    ``pattern.bar_terms``' ln R · cot p, which the composed field no longer winds at (against it the recovered
+    coefficients sit up to 0.68 away, the moduli still to rounding; the two windings are up to 9.5 rad apart on
+    these seeds). The moduli were never in question: "a common winding ... is a per-ring phase shift of every
+    mode, so ... every amplitude is kept exactly"."""
+    worst, turned = 0.0, 0.0
     for seed in TEXTURE_SEEDS:
         o = pattern_run(prod, template, grid, texture_seed=seed)
         F, R, phi = o.fields, o.grid.R, o.grid.phi
@@ -194,7 +242,9 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
         # S58 (D217): was `bar = B * taper * exp(-2i * bar_angle)`, subtracted from the two-fold coefficient alone.
         field = np.asarray(F["pattern_density_contrast"]) - stars.body_cell_means(R, o.grid["phi"].edges)
         assert stars.barred == (template == "milky_way") and (float(F[pt.phase_field(2)]) == 0.0) == stars.barred
-        _, phase, _ = pt.bar_terms(R, float(F["pitch_angle"]), float(F["bar_half_length"]))
+        # S59 (D218): was `_, phase, _ = pt.bar_terms(R, pitch_angle, bar_half_length)` - one pitch's winding.
+        phase = hand_winding(F, R)
+        turned = max(turned, float(np.abs(phase - np.log(R) / math.tan(math.radians(float(F["pitch_angle"])))).max()))
         for m in pt.ARM_MODES:
             published = np.asarray(F[pt.amplitude_field(m)])
             theta = float(F[pt.phase_field(m)])
@@ -206,7 +256,10 @@ def test_gate_the_amplitudes_recovered_from_the_field_are_the_published_ones(pro
         # And nothing else is in the field: no m = 1, no m = 7 or 8.
         for m in (1, 7, 8):
             assert float(np.abs(fourier(field, phi, m)).max()) < 1e-9, (template, seed, m)
-    assert worst < 1e-13  # measured 4.3e-15 at worst over both grids, templates and seeds: 1e-9 is met at rounding
+    # Measured 3.7e-15 at worst over both grids, templates and seeds (4.3e-15 until S59, against one pitch's
+    # winding): 1e-9 is met at rounding.
+    assert worst < 1e-13
+    assert turned > 2.0  # S59: the segments are in the field - its winding is 2.5-9.5 rad from one pitch's somewhere
 
 
 # --- the gate: nothing below zero ----------------------------------------------------------------------------------
@@ -246,7 +299,11 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
     # seed 1: a ring outside the bar's reach). The second count was 34: `ngc_4414` is unbarred, its arm modes run to
     # the centre untapered, and one more of its sixty pattern seeds saturates a ring there (35). The Milky Way's
     # 26 stand with the body's depth in place of the cosine's amplitude. The lowest saturation reads 0.643 and 0.572.
-    assert lowest == pytest.approx(0.00249, abs=1e-5) and lowest > 0.0
+    # S59 (D218): was 0.00249. The same galaxy (the Milky Way's inputs, pattern seed 28, texture seed 1), read at
+    # the cells' centres of a ring the segments have turned: 0.0025575 at 11.14 kpc, where it was 0.0024886 at
+    # 11.29 kpc - and the same field wound at the one pitch still reads 0.0024886 there. The bound is the law's
+    # (the saturation: no amplitude moved), so it holds for every winding as for every realisation of the phases.
+    assert lowest == pytest.approx(0.00256, abs=1e-5) and lowest > 0.0
     assert saturated == {"milky_way": 26, "ngc_4414": 35}  # S58 (D217): was {"milky_way": 26, "ngc_4414": 34}
     # The body before the arms, at its deepest over the suite: 0.266 of the ring's mean (the bar amplitude at its
     # cap of 0.9; the depth is 0.816 of the amplitude at this shape). Positive on every seed: no seed to report.
@@ -625,8 +682,14 @@ def test_regression_one_mode_is_the_field_s55_published(prod, template, m):
     fields = {**{n: stars.amplitudes[k] for k, n in enumerate(pt.AMPLITUDE_FIELDS)}, **dict.fromkeys(pt.PHASE_FIELDS, 0.0),
               "bar_contrast": f["bar_contrast"], "pitch_angle": f["pitch_angle"], "bar_half_length": f["bar_half_length"],
               "bar_axis_ratio": 0.4, "bar_boxiness": 3.0, "bar_profile_index": 2.0, "bar_mass_share": 0.0,
-              "disc_surface_density": np.exp(-R / 2.6)}
+              "disc_surface_density": np.exp(-R / 2.6),
+              # S59 (D218): the winding's three fields, as a run with the layer off publishes them - an anchor and
+              # no segment row. S55's single mode wound at one pitch; with no row the class's door gives no
+              # segmented winding (None: ln R · cot p), and the field is S55's arm mode to the bit, as before.
+              "arm_winding_anchor_radius": f["bar_half_length"], "arm_segment_extent": np.zeros(0),
+              "arm_segment_pitch_residual": np.zeros(0)}
     assert set(fields) == set(pt.PATTERN_READS)
+    assert stars.winding is None and pt.ArmPattern.from_fields(fields, R).winding is None
     assert pt.ArmPattern.from_fields(fields, R).contrast(R, phi).tobytes() == arms_only.tobytes()
 
 
@@ -660,15 +723,25 @@ def test_the_streams_that_stay_are_the_numbers_s55_drew(prod):
             moved = [n for n in names if layer_reference.value_digest(o.fields[n]) != held[label][n]]
             # S58 (D217 item 3): `ngc_4414` is pinned unbarred, and an unbarred galaxy's bar numbers are NaN - by
             # ruling, not by a moved stream. Every other number is S55's, and the Milky Way's all are.
-            assert moved == ([] if template == "milky_way" else list(bar_s)), (template, layer)
+            # S59 (D218 item 6): was `list(bar_s)` for `ngc_4414` - its `pitch_angle` is pinned at the measured
+            # 28.9 degrees, layer on and off alike, so it is no longer S55's draw - by ruling again, and not by a
+            # moved stream: "the law's own value 14.3° is published beside it", and that is S55's pitch to the bit.
+            assert moved == ([] if template == "milky_way" else ["pitch_angle", *bar_s]), (template, layer)
+            drawn = run(the_model(prod), inputs_of(template), only=("pitch_angle_drawn",), layer=layer).fields["pitch_angle_drawn"]
+            assert layer_reference.value_digest(drawn) == held[label]["pitch_angle"], (template, layer)
             if moved:
-                assert all(math.isnan(o.fields[n]) for n in bar_s)
-                # "Every existing draw keeps its stream and value": the same inputs with the pin taken off - the
-                # derivation bars this disc - draw the bar's numbers S55 drew, bit for bit.
-                unpinned = {k: v for k, v in inputs_of(template).items() if k != "bar_present"}
+                assert all(math.isnan(o.fields[n]) for n in bar_s) and float(o.fields["pitch_angle"]) == 28.9
+                # "Every existing draw keeps its stream and value": the same inputs with the pins taken off - the
+                # derivation bars this disc, the pitch is the draw - give every number S55 drew, bit for bit.
+                # S59 (D218): was `if k != "bar_present"` - the template holds two pins since S59.
+                assert set(templates.pinned(templates.TEMPLATES[template])) == {"bar_present", "pitch_angle"}
+                unpinned = {k: v for k, v in inputs_of(template).items() if k not in ("bar_present", "pitch_angle")}
                 derived = run(the_model(prod), unpinned, only=names + ("bar_present",), layer=layer)
                 assert derived.fields["bar_present"] == "yes"
                 assert [n for n in names if layer_reference.value_digest(derived.fields[n]) != held[label][n]] == []
+                # ... and with the pitch's pin alone left on, the pitch alone is not S55's.
+                barred = run(the_model(prod), {k: v for k, v in inputs_of(template).items() if k != "bar_present"}, only=names, layer=layer)
+                assert [n for n in names if layer_reference.value_digest(barred.fields[n]) != held[label][n]] == ["pitch_angle"]
     # And the retired stream is not read: the stage's source names no "arms" stream.
     source = (PACKAGE / "stages" / "pattern.py").read_text(encoding="utf-8")
     streams = [n.args[1].value for n in ast.walk(ast.parse(source))
@@ -721,12 +794,15 @@ def test_rerolling_the_pattern_seed_leaves_the_phases_and_rerolling_the_texture_
     for seed in range(1, 6):
         other = run(m, {"pattern_seed": seed, "texture_seed": 3}, only=PATTERN_FIELDS).fields
         assert [other[n] for n in pt.PHASE_FIELDS] == [base[n] for n in pt.PHASE_FIELDS]
+        # S59 (D218): nor the winding's segment rows - the layer's draws, with nothing of the law in them.
+        assert all(np.array_equal(other[n], base[n]) and np.asarray(base[n]).size == 256 for n in pt.SEGMENT_FIELDS)
         assert other["arm_contrast"] != base["arm_contrast"] and other["pitch_angle"] != base["pitch_angle"]
     for seed in (4, 5, 6):
         other = run(m, {"pattern_seed": 0, "texture_seed": seed}, only=PATTERN_FIELDS).fields
         # S58 (D217 item 9): was `all(... for n in pt.PHASE_FIELDS)` - the default galaxy is barred, so its
         # two-armed mode is on the bar's axis under every texture seed, and the other four turn.
         assert all(other[n] != base[n] for n in pt.PHASE_FIELDS[1:]) and other[pt.phase_field(2)] == base[pt.phase_field(2)] == 0.0
+        assert all(not np.array_equal(other[n], base[n]) for n in pt.SEGMENT_FIELDS)  # S59 (D218): the segments are re-laid
         for n in LAW_FIELDS:
             assert np.array_equal(np.asarray(other[n]), np.asarray(base[n])), n
         for n in ("pattern_density_contrast", "gas_density_contrast"):
@@ -742,6 +818,8 @@ def test_with_the_layer_off_the_phases_are_not_numbers_and_the_stream_is_never_d
     assert set(on.fields) == set(off.fields)
     for n in pt.PHASE_FIELDS:
         assert math.isnan(off.fields[n]) and math.isfinite(on.fields[n]), n
+    for n in pt.SEGMENT_FIELDS:  # S59 (D218 item 7): "layer off ... no segments are drawn": a column with no row
+        assert np.asarray(off.fields[n]).size == 0 and np.asarray(on.fields[n]).size == 256, n
     for n in LAW_FIELDS:
         a, b = np.asarray(on.fields[n]), np.asarray(off.fields[n])
         assert a.dtype == b.dtype and a.tobytes() == b.tobytes(), n
@@ -759,10 +837,15 @@ def test_with_the_layer_off_the_phases_are_not_numbers_and_the_stream_is_never_d
     assert calls == []
     run(m, grid=SMALL, only=pt.PHASE_FIELDS, layer=True)
     # S58 (D217 item 9): was `for mode in pt.ARM_MODES` - in a barred galaxy the two-armed mode's stream is not drawn.
-    assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES[1:]]
+    # S59 (D218 items 1-2): the same stage lays the winding's segments after the phases - one stream a row,
+    # ("segment", "out", j) for the 64 rows outward from the anchor and ("segment", "in", j) for the 192 inward -
+    # and the phases' streams are the ones they were, at the same paths.
+    segments = [("arm_phases", "texture_seed", "segment", way, j) for way, n in (("out", 64), ("in", 192)) for j in range(n)]
+    assert len(segments) == 256 and [s[3:] for s in segments] == list(arm_phases.segment_streams())
+    assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES[1:]] + segments
     calls.clear()
     run(m, {"bar_present": False}, SMALL, only=pt.PHASE_FIELDS, layer=True)
-    assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES]
+    assert calls == [("arm_phases", "texture_seed", "phase", mode) for mode in pt.ARM_MODES] + segments
     calls.clear()
     whole_off = run(m, grid=SMALL, only=PATTERN_FIELDS, layer=False)
     assert not [c for c in calls if c[1] == "texture_seed"] and {c[0] for c in calls} == {"pattern"}
