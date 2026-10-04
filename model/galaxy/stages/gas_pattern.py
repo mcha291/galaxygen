@@ -176,7 +176,8 @@ CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is h
 GAS_PATTERN_READS: tuple[str, ...] = (
     "arm_contrast", "pitch_angle", "bar_half_length", "bar_axis_ratio", "bar_boxiness",
     *AMPLITUDE_FIELDS, *PHASE_FIELDS, "epicyclic_frequency", "disc_surface_density",
-    # S59 (D218): the winding's anchor and the layer's segment rows - the geometry of χ, and nothing of ε or f.
+    # S59 (D218): the winding's anchor, the relative spread of a segment's pitch and the layer's segment rows -
+    # the geometry of χ, and nothing of ε or f.
     *WINDING_FIELDS,
 )
 # The lanes' four numbers (S58): the arcs' curvature, where they end, the gas inside the footprint over the gas

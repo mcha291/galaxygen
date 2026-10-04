@@ -97,35 +97,41 @@ ARM_MODE_PHASES: tuple[FieldDecl, ...] = tuple(_phase(m) for m in ARM_MODES)
 # --- the winding's segments (S59, BUILD_III Phase P4; DECISIONS.md D218 items 1-2) -------------------------------
 #
 # The arms' common winding is cut into radial segments, each with its own pitch. What is drawn here is the
-# realisation and nothing of the law: for each segment an azimuthal extent Δβ and a pitch residual δ. The law -
-# the disc's pitch p, which the ``pattern`` stage draws after this stage runs, and the anchor - is applied to
-# these rows by ``pattern.Winding``, which every reader builds from the published numbers: p_seg = p + δ, the
-# segment spans d ln R = Δβ |tan p_seg| and the phase advances Δβ sign(p_seg) across it. So rerolling the
-# texture seed re-lays the segments and moves no pitch, and pinning a pitch re-lays nothing.
+# realisation and nothing of the law: for each segment an azimuthal extent Δβ and a unit normal deviate z. The
+# law - the disc's pitch p, which the ``pattern`` stage draws after this stage runs, the relative spread of a
+# segment's pitch about it, and the anchor - is applied to these rows by ``pattern.Winding``, which every reader
+# builds from the published numbers: p_seg = p (1 + s z), s the published relative spread, the segment spans
+# d ln R = Δβ |tan p_seg| and the phase advances Δβ sign(p_seg) across it. So rerolling the texture seed re-lays
+# the segments and moves no pitch, and pinning a pitch re-draws nothing: **the rows hold no pitch, no spread, no
+# pattern seed and no grid**.
 #
 # - **The rows.** :data:`~galaxy.stages.pattern.SEGMENTS_OUTWARD` rows outward from the anchor, in order, then
-#   :data:`~galaxy.stages.pattern.SEGMENTS_INWARD` inward, in order. Fixed counts (rule A1): about six outward
-#   and thirty inward are ever reached (a segment spans about a quarter of an e-fold in radius), and a winding
-#   asked past the last row raises.
+#   :data:`~galaxy.stages.pattern.SEGMENTS_INWARD` inward, in order. Fixed counts (rule A1), sized for the
+#   tightest disc the pitch's range allows: a segment spans Δβ tan p in the logarithm of the radius, a quarter
+#   of an e-fold at 13.5 degrees (six rows outward and thirty inward reached) and a fiftieth at 1 degree (ninety
+#   outward of the Milky Way's anchor, and four hundred inward). A winding asked past the last row raises.
 # - **The streams.** ``("segment", "out", j)`` and ``("segment", "in", j)``, j = 0 at the anchor: a segment's
 #   draw is its own stream's and no other's, so it does not depend on how many are laid, on the grid, or on
 #   the region asked for.
-# - **The draw, on one stream, in this order:** δ first - one normal - then the extent, log-normal about the
-#   median, **drawn again while outside the sample's range** (about one draw in six hundred), at most
+# - **The draw, on one stream, in this order:** z first - one standard normal - then the extent, log-normal
+#   about the median, **drawn again while outside the sample's range** (about one draw in six hundred), at most
 #   :data:`MAX_EXTENT_DRAWS` times; exhausted, the stage raises - it does not clip the last draw (the chance is
-#   1e-45 a segment). The residual is not truncated: reversed and nearly flat segments are measured.
+#   1e-45 a segment). The deviate is not truncated: reversed and nearly flat segments are measured.
+#   (Until the gate's follow-up the first draw was the residual itself, a normal of 10 degrees: the same
+#   deviate of the same stream times ten, so the extents that follow it are the bits they were. D218.)
 # - **The layer off:** no segment is drawn and the columns are empty; the winding is ln R · cot p.
 
 MAX_EXTENT_DRAWS = 16  # the redraw's fixed count (rule A1); exhausted, the stage raises
 
 
-def draw_segment(generator: Any, median_deg: float, log_scatter: float, lo_deg: float, hi_deg: float, scatter_deg: float) -> tuple[float, float, int]:
-    """(Δβ in radians, δ in degrees, how many extents were drawn) for one segment, on its own stream."""
-    residual = float(generator.normal(0.0, scatter_deg))
+def draw_segment(generator: Any, median_deg: float, log_scatter: float, lo_deg: float, hi_deg: float) -> tuple[float, float, int]:
+    """(Δβ in radians, the pitch's unit normal deviate, how many extents were drawn) for one segment, on its
+    own stream."""
+    deviate = float(generator.normal())
     for attempt in range(1, MAX_EXTENT_DRAWS + 1):
         extent = median_deg * math.exp(log_scatter * float(generator.normal()))
         if lo_deg <= extent <= hi_deg:
-            return math.radians(extent), residual, attempt
+            return math.radians(extent), deviate, attempt
     raise ArithmeticError(f"a segment's extent fell outside {lo_deg:g}-{hi_deg:g} degrees {MAX_EXTENT_DRAWS} times running")
 
 
@@ -144,13 +150,17 @@ _SEGMENT_CONSERVES = (
 )
 _SEGMENT_STATISTIC = (
     "Azimuthal extent log-normal, median 60 degrees and log-width 0.35, drawn again outside 20-180 degrees; "
-    "pitch residual normal, 10 degrees, independent from segment to segment and untruncated. The extent's "
+    "pitch residual normal, its width 0.56 of the disc's own pitch, independent from segment to segment and "
+    "untruncated - drawn here as a unit normal and scaled where the winding is built. The extent's "
     "numbers are the reader's arithmetic on the 38 printed rows of one survey of four galaxies (median 60, "
-    "quartiles 50-80, range 20-180), not statistics the paper prints; the residual's width sits between that "
-    "sample's pooled 9.9 degrees and a 391-galaxy survey's 9.5 +/- 0.3 within a galaxy [verified: Honig & Reid "
-    "2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5; Diaz-Garcia et al. 2019, A&A 631, A94 = arXiv:1908.04246; "
-    "docs/READING_ARM_SEGMENTS.md A1.1; DECISIONS.md D218 item 2]. No correlation between neighbours and no "
-    "arm-to-arm term: none is measured for a common winding [inferred]."
+    "quartiles 50-80, range 20-180), not statistics the paper prints [verified: Honig & Reid 2015, ApJ 800, 53 "
+    "= arXiv:1412.1012, Tables 2-5; docs/READING_ARM_SEGMENTS.md A1.1; DECISIONS.md D218 item 2]; the "
+    "residual's relative width is the measured variation of the pitch along an arm, the standard deviation "
+    "of the local pitch over its mean, 0.56 +- 0.25 over 155 galaxies [verified: Savchenko, Marchuk, Mosenkov "
+    "& Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; docs/READING_ARM_SEGMENTS.md A1.1; DECISIONS.md "
+    "D218, the follow-up to the gate, item 2]. An absolute width of 10 degrees at every pitch was built first "
+    "and withdrawn: at low pitch it wound a third of discs net leading. No correlation between neighbours and "
+    "no arm-to-arm term: none is measured for a common winding [inferred]."
 )
 
 
@@ -181,16 +191,21 @@ ARM_SEGMENT_EXTENT = _segment(
     "of the radius - so a segment of nearly no pitch is a short radial step that still carries the arms "
     "round by its whole extent.",
 )
-ARM_SEGMENT_RESIDUAL = _segment(
-    "arm_segment_pitch_residual", "Pitch residual of a winding segment", "deg",
-    "What is added to the disc's pitch to give this segment's own. About a tenth of segments come out "
-    "reversed - leading, the arms turning back - and about as many nearly circular, as measured arms do; "
-    "nothing is floored.",
+ARM_SEGMENT_DEVIATE = _segment(
+    "arm_segment_pitch_deviate", "Pitch deviate of a winding segment (unit normal)", "dimensionless",
+    "How far this segment's pitch lies from the disc's own, in units of the spread of a segment's pitch: a "
+    "standard normal number, with no pitch in it. The segment's pitch is the disc's pitch times one plus the "
+    "relative spread times this number, so the same row is a small change of pitch in a tightly wound disc "
+    "and a large one in an open disc, and pinning or redrawing the disc's pitch moves no row. A segment whose "
+    "number lies under minus one over the relative spread - about one in twenty-seven - comes out reversed, "
+    "leading, the arms turning back, and a few nearly circular, as measured arms do; nothing is floored and "
+    "nothing truncated.",
 )
-ARM_SEGMENTS: tuple[FieldDecl, ...] = (ARM_SEGMENT_EXTENT, ARM_SEGMENT_RESIDUAL)
+ARM_SEGMENTS: tuple[FieldDecl, ...] = (ARM_SEGMENT_EXTENT, ARM_SEGMENT_DEVIATE)
+# What the draw reads: the extent's four numbers. The spread of a segment's pitch is not among them - the rows
+# are unit normals, and the spread is applied where the winding is built (``pattern.Winding``).
 SEGMENT_CONSTANTS: tuple[str, ...] = (
     "ARM_SEGMENT_EXTENT_MEDIAN", "ARM_SEGMENT_EXTENT_LOG_SCATTER", "ARM_SEGMENT_EXTENT_MIN", "ARM_SEGMENT_EXTENT_MAX",
-    "ARM_SEGMENT_PITCH_SCATTER",
 )
 
 
@@ -208,7 +223,7 @@ def _segments(ctx: Context) -> Mapping[str, Any]:
 
     def draw() -> dict[str, np.ndarray]:
         rows = [draw_segment(ctx.rng("texture_seed", "segment", way, j), *numbers) for way, j in segment_streams()]
-        return {"arm_segment_extent": np.array([r[0] for r in rows]), "arm_segment_pitch_residual": np.array([r[1] for r in rows])}
+        return {"arm_segment_extent": np.array([r[0] for r in rows]), "arm_segment_pitch_deviate": np.array([r[1] for r in rows])}
 
     # compose decides: the draw, or - with the layer off - no rows at all, the streams untouched.
     return _compose.realise(ctx.fields, draw, lambda: {d.name: np.zeros(0) for d in ARM_SEGMENTS})
@@ -239,7 +254,8 @@ ARM_PHASES = IMPLEMENTATIONS.register(
             "mode's crests lie, moves no amplitude and no ring's mean, and is not a number with the layer off. In "
             "a barred galaxy the two-armed mode is not drawn: its crest is put on the bar's axis at the bar's end. "
             "Since S59 it also lays the segments of the arms' common winding - for each a run round the disc and "
-            "a residual about the disc's pitch - standing in for the kinks of real arms; they change where the "
+            "a unit normal number that the winding turns into a residual about the disc's pitch - standing in "
+            "for the kinks of real arms; they change where the "
             "arms bend and no amplitude, no ring's mean and nothing the gas law or the bar reads."
         ),
         compute=compute_arm_phases,

@@ -865,20 +865,25 @@ LEVEL0: dict[str, Constant] = {
         "azimuth ranges): a drawn extent over it is drawn again, not clipped [verified: "
         "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2].",
     ),
-    "ARM_SEGMENT_PITCH_SCATTER": Constant(
-        10.0,
-        "deg",
-        "Standard deviation of a segment's pitch about the galaxy's own: each segment's pitch is the galaxy's "
-        "pitch plus an independent normal residual of this width, untruncated - a reversed segment and one of "
-        "nearly no pitch are measured (3 of the 38 rows are reversed) and are allowed. The pooled sd of the 38 "
-        "rows' pitches is 9.9 deg (mean 15.0; four galaxies) - **the reader's arithmetic on Honig & Reid 2015's "
-        "38 printed rows** [verified: Honig & Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5; "
-        "docs/READING_ARM_SEGMENTS.md A1.1]; beside it, S4G's measured spread among one galaxy's logarithmic "
-        "segments, mean sigma = 9.5 +/- 0.3 deg over 391 galaxies - about 10 deg between segments on "
-        "average [verified: Diaz-Garcia, Salo, Knapen & Herrera-Endoqui 2019, A&A 631, A94 = arXiv:1908.04246, "
-        "§3, §6, Table 2, https://ar5iv.labs.arxiv.org/html/1908.04246; docs/READING_ARM_SEGMENTS.md A1.1, "
-        "DG19]. 10 is the ruling's value between the two (D218 item 2). No correlation between consecutive "
-        "segments and no arm-to-arm term is put in: a common winding has neither (a debt).",
+    "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
+        0.56,
+        "dimensionless",
+        "Standard deviation of a segment's pitch about the galaxy's own, as a fraction of the galaxy's pitch: "
+        "each segment's pitch is the galaxy's pitch plus an independent normal residual of this fraction of "
+        "it, untruncated - 7.6 deg in a disc of pitch 13.5 deg, 16 deg at 28.9 - so tighter arms vary less in "
+        "degrees. The measured variation of the pitch along an arm: sd of local pitch over mean 0.56 +- 0.25, "
+        "155 galaxies (0.47 for grand designs, 0.65 for multi-armed spirals; in degrees 7.2 +- 3.3) [verified: "
+        "Savchenko, Marchuk, Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; "
+        "docs/READING_ARM_SEGMENTS.md A1.1: \"sd of local pitch over mean 0.56 +- 0.25\", 155 galaxies]. A "
+        "reversed segment is one drawn more than 1/0.56 of the spread below the mean: 3.7 % of segments at "
+        "every pitch the tangent does not wrap (beside 3 reversed of the 38 printed rows of Honig & Reid 2015, "
+        "8 %). **The absolute form was built first and withdrawn at the gate's follow-up**: a residual of "
+        "10 deg whatever the pitch (the pooled sd of those 38 rows, 9.9 deg about a mean of 15.0; S4G's "
+        "9.5 +/- 0.3 deg within a galaxy, Diaz-Garcia et al. 2019) was measured on arms of mean pitch near "
+        "15 deg, and at low pitch it wound a third of discs net leading (34 % at 2 deg, 14 % at 5 deg) "
+        "against a disc whose rotation, lanes and gas response are trailing (DECISIONS.md D218, the follow-up "
+        "to the gate, item 2). No correlation between consecutive segments and no arm-to-arm term is put in: "
+        "a common winding has neither (a debt). No mean winding rate is enforced: none is sourced.",
     ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
