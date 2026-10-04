@@ -18,12 +18,18 @@ withdrew.)
 **Since S56 the default galaxy carries five modes, and the ridge is S51's by rank** (D215, the
 second gate turn; both models; run on 2026-10-04): on each ring the gas takes one arm's ridge
 values in the order of the stellar modes' sum, so every ring has S51's histogram and the crest is
-the form's - at R0 **a = 0.437, crest 2.93, trough 0.564** (S51: 0.466, 3.07, 0.53; the share is
-0.439 there, under its cap, by the ring's power-weighted arm number 3.5); at 12 kpc a = 0.424,
-crest 2.88, trough 0.576. The published field runs 0.557-2.940 over the whole grid and no cell lies
-above 4. The ratio of means is 2.73 on every ring out to 13.76 kpc and fades with the stellar
-arms' amplitude beyond: at the last ring that carries a mode (14.81 kpc; amplitude 0.124 of the
-arm amplitude) it is 1.21 and the gas runs 0.917-1.366; the next ring is exactly 1.
+the form's. **On the corrected window** (D215 ruling 11, the third gate turn: X at m = 1, not half
+of it) the disc carries more arms at each radius - the ring's power-weighted arm number is 4.4 at
+6 kpc, 4.7 at R0, 5.3 at 10 kpc - so the mask's share is at its cap of a half on every ring that
+carries the whole power, and there the amplitude is S51's at the cap: at R0 **a = 0.466, crest
+3.06, trough 0.534** (S51: 0.466, 3.07, 0.53); at 6 kpc, inside the bar's taper, crest 2.67 and
+trough 0.566. The published field runs 0.534-3.069 over the whole grid and no cell lies above 4.
+The ratio of means is 2.73 on every ring out to 11.14 kpc and fades with the stellar arms'
+amplitude beyond: at 12 kpc, where the six-armed mode alone survives at 0.47 of the arm amplitude,
+a = 0.291, crest 2.29, trough 0.709; at the last ring that carries a mode (12.34 kpc; amplitude
+0.178 of the arm amplitude) the ratio is 1.31 and the gas runs 0.867-1.589; the next ring carries
+no ridge (it is the bar's own term, 4e-15 off 1 there). (On the X / 2 window of the first two passes: a 0.437, crest 2.93, trough 0.564 at R0,
+the share 0.439 by an arm number of 3.5; the fade from 13.76 to 14.81 kpc.)
 
 (The first reading of "the gas follows any pattern", the exponential of the modes' sum, was built
 and retired within S56: crest 11.3 at R0, the field 0.34-15.5, the ratio 2.73 held even on the
@@ -117,7 +123,7 @@ def test_every_ring_keeps_its_gas_on_the_grid_s_own_cells(model):
     ridge is analytic and resolved: one mode on the default 360 cells (S51: nothing aliases there), not on 36 (a
     four-armed ridge's ninth harmonic: 6e-4, found by Phase 2's builder at S51). **A ring of several modes is
     ranked, its ridge has corners where the superlevel set gains or loses a piece, and its sampled mean leaves 1 by
-    up to 8.6e-4 on the default grid** (S56, D215). The stage divides a ring by its sampled mean wherever that has
+    up to 8.75e-4 on the default grid** (S56, D215). The stage divides a ring by its sampled mean wherever that has
     left 1 by more than 1e-12, as it has since S51 for a coarse grid, and leaves the others the law's own bits."""
     coarse = run(model, grid=GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36), only=("gas_density_contrast",))
     g = np.asarray(coarse.fields["gas_density_contrast"])
@@ -128,7 +134,8 @@ def test_every_ring_keeps_its_gas_on_the_grid_s_own_cells(model):
     left = np.abs(mean - 1.0) > gm.RING_MEAN_TOLERANCE
     # S56 (D215): was `assert_array_equal(field, closed)` - one mode's ridge, whose sampled mean is 1 to rounding.
     np.testing.assert_array_equal(np.asarray(o.fields["gas_density_contrast"]), np.where(left, law / np.where(left, mean, 1.0), law))
-    assert 150 < int(left.sum()) < 198 and float(np.abs(mean - 1.0).max()) == pytest.approx(8.64e-4, abs=2e-5)
+    # Of the 165 rings that carry a mode, 155 are divided (the rest sample to 1 within the tolerance: one mode alone).
+    assert 140 < int(left.sum()) < 165 and float(np.abs(mean - 1.0).max()) == pytest.approx(8.75e-4, abs=2e-5)
     # One mode, the default grid: analytic, and untouched by the stage's division.
     single = one_mode(model, 2.73, bar=0.289, pitch=13.5378)
     assert float(np.abs(single.contrast(o.grid.R, o.grid.phi).mean(axis=1) - 1.0).max()) < 1e-12
@@ -143,7 +150,7 @@ def test_the_sector_means_average_to_one_and_are_the_series_s(model):
     gp = shape_of(model, out(model))
     edges = np.linspace(0.0, 2.0 * np.pi, 13)
     worst = 0.0
-    for R in (1.0, 3.0, 6.0, 12.0):
+    for R in (1.0, 3.0, 6.0, 10.0):  # S56 (D215): was 12 kpc, a ring that now carries the six-armed mode alone
         means = gp.sector_means(R, edges)
         assert float(means.mean()) == pytest.approx(1.0, abs=1e-12)
         dense = []
@@ -170,9 +177,9 @@ def test_the_sector_means_average_to_one_and_are_the_series_s(model):
 def test_the_ratio_of_means_over_the_mask_is_the_ring_s_ratio(model):
     """The gate (D215, second turn): "the ratio of means inside the ring's mask equals C(R) to 1e-9 on every ring
     that carries a mode", C(R) = 1 + (C − 1) ρ(R) - the published 2.73 where the stellar arms have their full
-    amplitude, less where they do not. On the quadrature's own cells it is the algebra (1e-15); recomputed from the
-    law on a dense ring, independently - the mask the share of the ring where the rank is lowest - it is the
-    quadrature's accuracy, 3.4e-5 at worst (S51's midpoint sums of the ridge, off the integral by up to 7e-5)."""
+    amplitude, less where they do not. On the quadrature's own cells that is the algebra the amplitude was solved
+    from (1e-15) - **an identity, and no evidence** - so the ratio is measured below by another road, which uses
+    neither the module's rank nor its share nor its C(R)."""
     o = out(model)
     F, R = o.fields, o.grid.R
     C = float(F["gas_arm_contrast"])
@@ -180,64 +187,106 @@ def test_the_ratio_of_means_over_the_mask_is_the_ring_s_ratio(model):
     share, a, ratio = gp.mask_share(R), gp.amplitude(R), gp.ratio_at(R)
     carries = np.isfinite(share)
     amplitudes = np.stack([np.asarray(F[n]) for n in pt.AMPLITUDE_FIELDS])
-    assert np.array_equal(carries, amplitudes.sum(axis=0) > 0.0) and int(carries.sum()) == 198
+    # S56 (D215 ruling 11): 165 rings carry a mode on the corrected window (198 on the X / 2 one of the first passes).
+    assert np.array_equal(carries, amplitudes.sum(axis=0) > 0.0) and int(carries.sum()) == 165
     v_in, v_out = mask_means(share[carries], gp.kappa)
     got = (1.0 + a[carries] * (v_in - 1.0)) / (1.0 + a[carries] * (v_out - 1.0))
     assert float(np.abs(got - ratio[carries]).max()) < 1e-9
     # The quadrature cells hold the ring's mean: the mask's share at its mean and the rest at theirs is 1.
     assert float(np.abs(share[carries] * v_in + (1.0 - share[carries]) * v_out - 1.0).max()) < 1e-12
-    # The ratio is the published one on every ring out to 13.76 kpc, where the disc's gain is whole.
-    full = carries & (R < 13.8)
-    assert R[full].max() == pytest.approx(13.76, abs=0.005) and np.allclose(ratio[full], C, rtol=0.0, atol=1e-12)
+    # The ratio is the published one on every ring out to 11.14 kpc, where the disc's gain is whole.
+    full = carries & (R < 11.2)
+    assert R[full].max() == pytest.approx(11.137, abs=0.005) and np.allclose(ratio[full], C, rtol=0.0, atol=1e-12)
     assert np.all(ratio[carries & ~full] < C) and np.all(ratio[~carries] == 1.0) and np.all(a[~carries] == 0.0)
 
-    dense = np.linspace(0.0, 2.0 * np.pi, 72000, endpoint=False)
-    for i in np.nonzero(carries)[0][::16]:
+    # **The independent measurement** (the review's finding: the lines above are the algebra). On a dense ring of
+    # 72 000 points the stellar modes' sum is written out here from the *published* amplitudes and phases, the points
+    # are ranked by a sort of it, the mask is the top share of them - the share from the source's width, this
+    # file's arithmetic - and the ratio of the gas ridge's mean inside to its mean outside is set beside
+    # 1 + (C - 1) rho with rho from the published amplitudes. The module's ``rank``, ``mask_share``, ``ratio_at`` and
+    # ``forcing`` are not called; ``contrast_at`` is, since the gas at a point is what is being measured.
+    # **Tolerance 1e-5 (relative); measured 2.0e-6 at worst** - S51's midpoint sums of the ridge over 360 cells
+    # against the integral, at the share's cap.
+    c = constants(model)
+    modes = np.arange(2.0, 7.0)
+    phases = np.array([float(F[n]) for n in pt.PHASE_FIELDS])
+    pitch, a_bar = math.radians(float(F["pitch_angle"])), float(F["bar_half_length"])
+    arm, bar = float(F["arm_contrast"]), float(F["bar_contrast"])
+    dense = (np.arange(72000) + 0.5) * (2.0 * math.pi / 72000)
+    worst, shares = 0.0, []
+    for i in np.nonzero(carries)[0][::8]:
         Ri = float(R[i])
-        taper, phase, bar_angle = pt.bar_terms(np.array([Ri]), gp.pitch_deg, gp.bar_length)
+        taper = math.exp(-((Ri / a_bar) ** 4))
+        winding, bar_angle = math.log(Ri) / math.tan(pitch), math.log(a_bar) / math.tan(pitch)
+        psi = (amplitudes[:, i][:, None] * np.cos(modes[:, None] * (dense - winding)[None, :] - phases[:, None])).sum(axis=0)
+        power = amplitudes[:, i] ** 2
+        m_eff = float((modes * power).sum() / power.sum())
+        own_share = min(m_eff * 0.5 * c["GAS_ARM_MASK_WIDTH"] / (Ri * math.sin(pitch)), 0.5 * math.pi) / math.pi
+        order = np.argsort(-psi, kind="stable")
+        inside = int(round(own_share * dense.size))
         values = gp.contrast_at(np.full_like(dense, Ri), dense)
-        ridge = 1.0 + (values - 1.0 - gp.bar * taper[0] * np.cos(2.0 * (dense - bar_angle))) / (1.0 - taper[0])
-        inside = gp.rank(np.array([Ri]), (dense - phase[0])[None, :])[0] < share[i]
-        assert float(ridge[inside].mean() / ridge[~inside].mean()) == pytest.approx(float(ratio[i]), rel=1e-4), Ri
-        assert float(inside.mean()) == pytest.approx(float(share[i]), abs=1e-4)  # the rank is uniform on the ring
+        ridge = 1.0 + (values - 1.0 - bar * taper * np.cos(2.0 * (dense - bar_angle))) / (1.0 - taper)
+        measured = float(ridge[order[:inside]].mean() / ridge[order[inside:]].mean())
+        rho = min(1.0, math.sqrt(float(power.sum())) / (arm * (1.0 - taper)))
+        want = 1.0 + (C - 1.0) * rho
+        assert measured == pytest.approx(want, rel=1e-5), Ri
+        worst = max(worst, abs(measured / want - 1.0))
+        shares.append(own_share)
+        # And the module's own share and ratio are these.
+        assert (float(share[i]), float(ratio[i])) == pytest.approx((own_share, want), rel=1e-12), Ri
+    assert 5e-7 < worst < 1e-5 and len(shares) == 21
     # The share of the ring the mask covers, and the arm number it is computed with (the lead's reading, D215).
-    for radius, m_eff, s in ((6.0, 2.972, 0.5), (R_SUN, 3.505, 0.4393), (12.0, 4.881, 0.4135)):
+    # S56 (D215 ruling 11): on the corrected window the arm number is 4.4 / 4.7 / 5.3 at 6 kpc, R0 and 10 kpc and
+    # the share is at its cap on all three (on the X / 2 window: 2.97 / 3.51 and the share 0.5 / 0.439).
+    for radius, m_eff, s in ((6.0, 4.411, 0.5), (R_SUN, 4.717, 0.5), (10.0, 5.270, 0.5)):
         Ri = np.array([float(R[row(o, radius)])])
         assert float(gp.effective_arm_number(Ri)[0]) == pytest.approx(m_eff, abs=2e-3), radius
         assert float(gp.mask_share(Ri)[0]) == pytest.approx(s, abs=2e-4), radius
+    # Under the cap only on the last ring, where six arms' mask of the source's width is just short of half a period.
+    # Under the cap only on the last two rings, where six arms' mask of the source's width is just short of half a
+    # period.
+    assert float(share[carries][-1]) == pytest.approx(0.496, abs=2e-3) and np.all(share[carries][:-2] == 0.5)
 
 
 def test_the_ridge_fades_with_the_forcing_amplitude(model):
     """Gate ruling 8: C(R) = 1 + (C − 1) ρ(R), ρ = min(1, (Σ u_m²)^½) - "nothing shocks on nothing". The first
-    turn's rule set the published ratio on every ring that carried any mode, so on the last one (stellar amplitude
-    0.05) the gas still ran 0.34-1.90; it now runs 0.92-1.37 there, and the ridge's amplitude falls to nothing with
-    the stellar arms'. No step: a(R) is continuous in ρ, and the ring after the last mode is exactly 1."""
+    turn's rule set the published ratio on every ring that carried any mode, so on its last one (stellar amplitude
+    0.05) the gas still ran 0.34-1.90; on the last ring now (12.34 kpc, stellar amplitude 0.07) it runs 0.87-1.59,
+    and the ridge's amplitude falls to nothing with the stellar arms'. No step: a(R) is continuous in ρ, and the
+    ring after the last mode carries no ridge at all."""
     o = out(model)
     F, R = o.fields, o.grid.R
     gp = shape_of(model, o)
     g = np.asarray(F["gas_density_contrast"])
     amplitudes = np.stack([np.asarray(F[n]) for n in pt.AMPLITUDE_FIELDS])
     last = int(np.nonzero(amplitudes.sum(axis=0) > 0.0)[0].max())
-    assert R[last] == pytest.approx(14.81, abs=0.005)
+    # S56 (D215 ruling 11): the last ring with a mode is at 12.34 kpc on the corrected window (the third gate turn
+    # predicted 12.3; on the X / 2 window of the first passes it was 14.81).
+    assert R[last] == pytest.approx(12.337, abs=0.005)
     rho = gp.forcing(R)
     # ρ is the ring's stellar arm amplitude in units of A, before the taper: recomputed from the published fields.
     taper = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[0]
     want = np.sqrt((amplitudes**2).sum(axis=0)) / (float(F["arm_contrast"]) * (1.0 - taper))
     assert np.allclose(rho, np.minimum(1.0, want), rtol=1e-12, atol=0.0)
-    assert np.all(rho[R < 13.8] == pytest.approx(1.0, abs=1e-15)) and np.all(rho[last + 1:] == 0.0)
+    assert np.all(rho[R < 11.2] == pytest.approx(1.0, abs=1e-15)) and np.all(rho[last + 1:] == 0.0)
     assert np.allclose(gp.ratio_at(R), 1.0 + (gp.ratio - 1.0) * rho, rtol=0.0, atol=1e-15)
-    # The gate's prediction for the last ring, as measured: ρ 0.124, C(R) 1.21, the gas within 0.90-1.45.
-    assert (float(rho[last]), float(gp.ratio_at(R)[last])) == pytest.approx((0.1239, 1.2143), abs=2e-4)
-    assert float(gp.amplitude(R)[last]) == pytest.approx(0.0827, abs=2e-4)
-    assert (float(g[last].min()), float(g[last].max())) == pytest.approx((0.9174, 1.3658), abs=2e-3)
-    assert 0.90 < g[last].min() and g[last].max() < 1.45
-    assert np.all(g[last + 1:] == 1.0)  # past it there is no mode, no mask and no ridge
+    # The last ring, as measured: ρ 0.178, C(R) 1.31, a 0.133, the gas 0.867-1.589. (The second gate turn predicted
+    # "the gas within 0.90-1.45" for the last ring of the X / 2 window, whose ρ was 0.124; this ring's ρ is larger.)
+    assert (float(rho[last]), float(gp.ratio_at(R)[last])) == pytest.approx((0.1778, 1.3076), abs=2e-4)
+    assert float(gp.amplitude(R)[last]) == pytest.approx(0.1331, abs=2e-4)
+    assert (float(g[last].min()), float(g[last].max())) == pytest.approx((0.8670, 1.5891), abs=2e-3)
+    # Past it there is no mode, no mask and no ridge: the ring is the bar's own term alone, whose taper is
+    # e^-32 = 1e-14 at 12.4 kpc (so the ring is 1 to 4e-15 there, and exactly 1 from 13.2 kpc out).
+    beyond = np.asarray(g[last + 1:])
+    bar_alone = 1.0 + gp.bar * taper[last + 1:, None] * np.cos(2.0 * (o.grid.phi[None, :] - pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[2]))
+    assert np.all(gp.amplitude(R)[last + 1:] == 0.0) and np.array_equal(beyond, bar_alone)
+    assert float(np.abs(beyond - 1.0).max()) < 1e-14 and np.all(beyond[R[last + 1:] > 13.2] == 1.0)
     # The fade is monotone and without a step: from the last full ring outward ρ, the ratio and the amplitude fall
     # together, ring by ring.
     fading = np.arange(int(np.nonzero(rho > 1.0 - 1e-12)[0].max()), last + 1)
-    assert fading.size == 15 and np.all(np.diff(rho[fading]) < 0.0) and np.all(np.diff(gp.amplitude(R)[fading]) < 0.0)
+    assert fading.size == 17 and np.all(np.diff(rho[fading]) < 0.0) and np.all(np.diff(gp.amplitude(R)[fading]) < 0.0)
     a = gp.amplitude(R)
-    assert np.all(a[fading] <= a[fading[0]]) and a[last] < 0.2 * a[fading[0]]
+    assert np.all(a[fading] <= a[fading[0]]) and a[last] < 0.3 * a[fading[0]]
     # One fully amplified mode has ρ = 1 and the published ratio; a half-amplified one fades half-way.
     single = one_mode(model, 2.73)
     assert np.all(single.forcing(R) == 1.0) and np.all(single.ratio_at(R) == 2.73)
@@ -255,10 +304,10 @@ def test_the_crest_and_the_trough_are_the_form_s_on_every_seed(prod):
     1 + a(½, C)(v_crest − 1)] = [0.534, 3.068] (the exact bounds, not the rounded ones), and inside it within the
     bar's own term B·taper of them; finite everywhere.
 
-    **The law meets it on every ring and every seed, to rounding. The published field does not, by up to 2.6e-3**
+    **The law meets it on every ring and every seed, to rounding. The published field does not, by up to 2.5e-3**
     (0.08 % of the crest), and that is recorded here, not mended (B5): the published field is the law at the grid's
     cell centres divided by the ring's sampled mean wherever that has left 1 (the stage's division, there since
-    S51 so that every ring keeps its gas on any grid), and a ranked ridge's sampled mean is off 1 by up to 9.5e-4.
+    S51 so that every ring keeps its gas on any grid), and a ranked ridge's sampled mean is off 1 by up to 1.05e-3.
     Ruling 10 forbids a clip, cap or floor after composition to obtain the bound; none was added, and the one
     after-composition step that exists is the one that passes it. For the gate to rule."""
     model = prod[0].get(DEFAULT_MODEL)
@@ -293,8 +342,10 @@ def test_the_crest_and_the_trough_are_the_form_s_on_every_seed(prod):
     # The law: inside the exact bound on all 240 (the margins are rounding's).
     assert law_over <= 1e-10 and law_under <= 1e-10
     # The published field: the gate as worded fails by this much, measured.
-    assert over == pytest.approx(2.56e-3, abs=1e-4) and under == pytest.approx(5.1e-4, abs=1e-4)
-    assert mean_off == pytest.approx(9.5e-4, abs=5e-5)
+    # (On the X / 2 window of S56's first two passes: 2.56e-3, 5.1e-4 and 9.5e-4. The breach is carried to S57's
+    # gate G2 with the ridge it belongs to.)
+    assert over == pytest.approx(2.49e-3, abs=5e-5) and under == pytest.approx(5.6e-4, abs=5e-5)
+    assert mean_off == pytest.approx(1.05e-3, abs=3e-5)
 
 
 def test_the_default_field_s_range_and_what_the_spike_was(model):
@@ -307,15 +358,21 @@ def test_the_default_field_s_range_and_what_the_spike_was(model):
     lo, hi = bounds(gp)
     assert not np.any(g > 4.0)
     far = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[0] < 1e-6
-    # Outside the bar's reach: inside the form's bound (the sampled mean's factor is under the margin here).
-    assert lo < g[far].min() and g[far].max() < hi
-    assert (float(g[far].min()), float(g[far].max())) == pytest.approx((0.5689, 2.9114), abs=2e-3)
-    # Each ring's mean square is 1 + a²·Var(V): 1.53 at R0, under S51's 1.606 at the cap; 1.23 by gas mass over
-    # the whole disc (the exponential's ring at 12 kpc read 5.10).
+    # Outside the bar's reach the share is at its cap, so the law reaches the form's bound itself - and the
+    # published field, the law over its sampled ring mean, passes it by the sampled mean's error (the breach the
+    # test above records over 240 galaxies): 1e-3 above the crest's bound and 3e-4 below the trough's here.
+    # (On the X / 2 window the share was under its cap out here and the field lay inside, 0.5689-2.9114.)
+    assert (float(g[far].min()), float(g[far].max())) == pytest.approx((0.5337, 3.0685), abs=2e-3)
+    assert lo - 1e-3 < g[far].min() < lo + 1e-3 and hi - 2e-3 < g[far].max() < hi + 2e-3
+    law = gp.contrast(R, o.grid.phi)
+    assert lo - 1e-10 <= law[far].min() and law[far].max() <= hi + 1e-10  # the law itself: inside, to rounding
+    # Each ring's mean square is 1 + a²·Var(V): 1.603 at R0 on the grid's cells, S51's 1.606 at the cap; 1.19 by
+    # gas mass over the whole disc, whose rings past 12.3 kpc carry no pattern (the exponential's ring at 12 kpc
+    # read 5.10). (On the X / 2 window: 1.529 and 1.226.)
     i = row(o, R_SUN)
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.529, abs=3e-3)
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.603, abs=3e-3)
     weight = np.asarray(F["gas_surface_density"]) * R
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.226, abs=3e-3)
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.194, abs=3e-3)
 
 
 # --- (d): the ratio derived, the field seeded through the pattern ----------------
@@ -356,12 +413,14 @@ def test_the_ridge_sits_on_the_stellar_crest(model):
     g = np.asarray(o.fields["gas_density_contrast"])
     s = np.asarray(o.fields["pattern_density_contrast"])
     n = o.grid.phi.size
-    for R in (8.0, 12.0, 14.0):
+    # S56 (D215 ruling 11): was 8, 12 and 14 kpc - the modes end at 12.3 kpc on the corrected window, and at 12 kpc
+    # the six-armed mode is alone, with six equal crests and no one cell to compare.
+    for R in (8.0, 10.0, 11.0):
         i = row(o, R)
         d = abs(int(g[i].argmax()) - int(s[i].argmax()))
         assert min(d, n - d) <= 1, R
     # And the whole order is the stellar one: at a ring outside the bar the gas ranks its cells as the stars do.
-    i = row(o, 12.0)
+    i = row(o, 10.0)
     assert np.array_equal(np.argsort(-g[i], kind="stable"), np.argsort(-s[i], kind="stable"))
 
 
@@ -386,12 +445,16 @@ def test_the_ridge_is_narrower_than_the_stellar_arm(model):
     assert width_gas == pytest.approx(0.17 * cells_per_period, abs=1.0)
     assert width_stars == pytest.approx(0.5 * cells_per_period, abs=1.0)
     assert width_gas < 0.5 * width_stars
-    # S56 (D215): the default galaxy was that one mode (m = 4); it is five modes now, ranked.
+    # S56 (D215): the default galaxy was that one mode (m = 4); it is five modes now, ranked. Read at 10 kpc, where
+    # three of them (four, five and six arms) share the ring: the gas's share above its half level is the form's
+    # 0.17, the stars' is 0.51 there. (At 12 kpc the six-armed mode is alone, and the two are 0.17 and 0.50 as for
+    # any one mode.)
     o = out(model)
-    i = row(o, 12.0)
     n = o.grid.phi.size
-    assert full_width_cells(np.asarray(o.fields["gas_density_contrast"])[i]) / n == pytest.approx(0.17, abs=0.006)
-    assert full_width_cells(np.asarray(o.fields["pattern_density_contrast"])[i]) / n == pytest.approx(0.436, abs=0.01)
+    for radius, stars_above in ((10.0, 0.506), (12.0, 0.5)):
+        i = row(o, radius)
+        assert full_width_cells(np.asarray(o.fields["gas_density_contrast"])[i]) / n == pytest.approx(0.17, abs=0.006)
+        assert full_width_cells(np.asarray(o.fields["pattern_density_contrast"])[i]) / n == pytest.approx(stars_above, abs=0.01)
 
 
 # --- (g): the worked numbers ------------------------------------------------------
@@ -438,17 +501,22 @@ def test_the_worked_numbers_at_the_defaults(model):
     assert float(o.fields["gas_arm_contrast"]) == pytest.approx(2.73, abs=1e-12)
     g = np.asarray(o.fields["gas_density_contrast"])
     # S56 (D215): was a 0.466, crest 3.068, trough 0.534 at R0 and 0.387, 2.715, 0.613 at 12 kpc - one four-armed
-    # mode, whose mask is at its cap at R0. Five modes ranked: the mask's share follows the ring's power-weighted
-    # arm number (3.5 at R0, 4.9 at 12 kpc), under the cap at both, and the crest is the form's at that share.
-    # (The gate predicted "crest in [2.9, 3.07], trough in [0.53, 0.58]" off the cap: held at R0, and 2.88 at 12 kpc.)
-    for R, (a_want, crest_want, trough_want) in ((R_SUN, (0.4367, 2.9317, 0.5637)), (12.0, (0.4238, 2.8795, 0.5763))):
+    # mode, whose mask is at its cap at R0. Five modes ranked, on the corrected window (ruling 11): the mask's share
+    # follows the ring's power-weighted arm number (4.7 at R0, 6 at 12 kpc) and is at its cap at both, so at R0 the
+    # amplitude is S51's again and the crest is the form's at the cap; at 12 kpc the six-armed mode is alone at
+    # 0.47 of the arm amplitude and the ridge has faded with it (ruling 8).
+    # (The second gate turn predicted "crest in [2.9, 3.07], trough in [0.53, 0.58]" off the cap: held at R0.)
+    for R, (a_want, crest_want, trough_want) in ((R_SUN, (0.4662, 3.0592, 0.5340)), (12.0, (0.2912, 2.2851, 0.7089))):
         i = row(o, R)
         a = float(gp.amplitude(np.array([float(o.grid.R[i])]))[0])
         assert (a, float(g[i].max()), float(g[i].min())) == pytest.approx((a_want, crest_want, trough_want), abs=2e-3), R
         # The crest and the trough the form allows on this ring; the grid's cells sample just inside them.
         assert g[i].max() <= (1.0 + a * (v0 - 1.0)) * (1.0 + 1e-3) and g[i].min() >= (1.0 + a * (vpi - 1.0)) * (1.0 - 1e-3)
+    # At 6 kpc, inside the bar's taper (0.18 there): the ridge at 0.82 of its amplitude and the bar's own term.
+    i = row(o, 6.0)
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((2.6714, 0.5657), abs=2e-3)
     # S56 (D215): was (0.535, 3.061)
-    assert (float(g.min()), float(g.max())) == pytest.approx((0.5572, 2.9403), abs=2e-3)
+    assert (float(g.min()), float(g.max())) == pytest.approx((0.5336, 3.0688), abs=2e-3)
 
 
 def test_the_mask_s_sums_are_s51_s_and_the_rank_is_the_measure(model):
@@ -518,7 +586,7 @@ def test_the_rank_is_the_measure_of_the_superlevel_set(model):
     gp = shape_of(model, out(model))
     rng = np.random.default_rng(3)  # the test's own points, not the model's
     worst = 0.0
-    for radius in (1.0, 3.3, 6.1, R_SUN, 10.4, 12.2, 13.9, 14.5):
+    for radius in (1.0, 3.3, 6.1, R_SUN, 9.3, 10.4, 11.5, 12.2):  # the modes end at 12.3 kpc (D215 ruling 11)
         unit = gp.unit_at(np.array([radius]))[:, 0]
         assert unit.any()
         chi = rng.uniform(-math.pi, math.pi, 40)
@@ -569,8 +637,9 @@ def test_azimuths_fall_inside_the_sector_and_follow_the_ridge(model):
     # mean square, well above 1 — to sampling noise, about 0.5 %.
     ring = np.linspace(0.0, 2.0 * np.pi, 36000, endpoint=False)
     mean_square = float((gp.contrast_at(np.full_like(ring, 12.0), ring) ** 2).mean())
-    # S56 (D215): was 1.42 for one four-armed mode's ridge at 12 kpc (a 0.387); 1.50 by rank (a 0.424).
-    assert mean_square == pytest.approx(1.500, abs=0.005)
+    # S56 (D215): was 1.42 for one four-armed mode's ridge at 12 kpc (a 0.387); 1.25 now, where the six-armed mode
+    # is alone at half the arm amplitude and the ridge has faded with it (a 0.30 between the two rings).
+    assert mean_square == pytest.approx(1.253, abs=0.005)
     assert float(gp.contrast_at(radius, phi).mean()) == pytest.approx(mean_square, rel=0.02)
 
 
@@ -589,11 +658,30 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert set(pt.AMPLITUDE_FIELDS) | set(pt.PHASE_FIELDS) <= set(GAS_PATTERN.requires)
     assert GAS_PATTERN.reads_seeds == ()
     assert {d.name for d in GAS_PATTERN.publishes} == {"gas_density_contrast"}
-    # The retired form is gone from the source: nothing takes the exponential of a sum of modes (D215: forbidden).
-    import inspect
 
-    source = inspect.getsource(gm)
-    assert "np.exp(kappa * (unit" not in source and "np.exp(self.kappa * psi" not in source
+
+def test_the_ridge_is_not_the_exponential_of_the_modes_sum(model):
+    """The retired form (D215: forbidden), held by what the field does and not by what the source spells: the
+    first reading of "the gas follows any pattern" was e^{κψ}, ψ the stellar modes' sum, normalised round the ring.
+    Written out here from the published amplitudes and phases on the solar ring, that form's crest stands far above
+    the bound of one arm's ridge; the published ring is inside the bound and is not that form."""
+    o = out(model)
+    F, R, phi = o.fields, o.grid.R, o.grid.phi
+    gp = shape_of(model, o)
+    i = row(o, R_SUN)
+    amplitudes = np.array([float(np.asarray(F[n])[i]) for n in pt.AMPLITUDE_FIELDS])
+    phases = np.array([float(F[n]) for n in pt.PHASE_FIELDS])
+    winding = math.log(float(R[i])) / math.tan(math.radians(float(F["pitch_angle"])))
+    unit = amplitudes / math.sqrt(float((amplitudes**2).sum()))  # the ring's modes, scaled to unit root-sum-square
+    psi = (unit[:, None] * np.cos(np.arange(2.0, 7.0)[:, None] * (phi - winding)[None, :] - phases[:, None])).sum(axis=0)
+    retired = np.exp(gp.kappa * psi)
+    retired /= retired.mean()
+    g = np.asarray(F["gas_density_contrast"])[i]
+    lo, hi = bounds(gp)
+    assert retired.max() > 2.0 * hi > 2.0 * g.max()  # the spike the second gate turn ruled out
+    assert float(np.abs(g - (1.0 + (retired - 1.0) * (g.max() - 1.0) / (retired.max() - 1.0))).max()) > 0.1
+    # The same order, though: both rise with the stellar modes' sum, and peak in the same cell.
+    assert int(g.argmax()) == int(retired.argmax()) == int(psi.argmax())
 
 
 def test_both_models_run_the_gas_pattern_after_the_pattern(model):

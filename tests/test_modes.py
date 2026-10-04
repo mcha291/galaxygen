@@ -9,13 +9,17 @@ Then what the law is, read back from the model: the gain capped at one, the satu
 label nothing composes from, the phases a draw on ``texture_seed`` that is not made with the layer off - and the
 gate's predictions, **pinned as measured** (one of them failed, and is pinned as it failed: B5).
 
-The numbers, on the production grid (both templates at their own seeds; 2026-10-04):
+**The window is on X = kappa^2 R / (2 pi G Sigma), X at m = 1** (D215 ruling 11, the third gate turn): S56's first
+two passes built it on X / 2, the lead's error, and every number below moved when it was corrected. The test that
+would have found it re-derives the weights by hand from the published fields.
 
-    milky_way   A 0.4013, bar 0.2893; the last ring with any pattern 14.81 kpc at 0.0153 A^2; the whole A^2 out to
-                13.76 kpc; half of it to 14.14 kpc; saturation 1 on every ring (worst sum of amplitudes 0.893);
-                the largest ring-to-ring jump of A_tot/A 0.143; the label 3 (it was the drawn 4)
-    ngc_4414    A 0.3552, bar 0.3210; 11.51 kpc at 0.0508 A^2; 10.84; 11.06; saturation 1 (0.790); jump 0.225;
-                the label 2 (it was the drawn 4)
+The numbers, on the production grid (both templates at their own seeds; 2026-10-04, the third pass):
+
+    milky_way   A 0.4013, bar 0.2893; the last ring with any pattern 12.34 kpc at 0.0316 A^2; the whole A^2 out to
+                11.14 kpc; half of it to 11.59 kpc; saturation 1 on every ring (worst sum of amplitudes 0.795);
+                the largest ring-to-ring jump of A_tot/A 0.178; the label 6 (it was the drawn 4)
+    ngc_4414    A 0.3552, bar 0.3210; 9.94 kpc at 0.0491 A^2; 9.19; 9.49; saturation 1 (0.787); jump 0.222;
+                the label 4 (S55 drew 4: the same number, by another road)
 """
 
 from __future__ import annotations
@@ -189,20 +193,22 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
             saturated[template] += int((s < 1.0).any())
     assert drawn == 240
     # Measured: the lowest cell over the 240 galaxies, and how many of each template's 60 pattern seeds saturate
-    # some ring (the probe read 67 of 120 at the Milky Way's inputs: more than half, as here).
-    assert lowest == pytest.approx(0.00259, abs=1e-5)
-    assert saturated == {"milky_way": 35, "ngc_4414": 35}
+    # some ring: 26 and 34 on the window of D215 ruling 11, the lowest saturation 0.64 and 0.57. (The X / 2 window
+    # of the first two passes read 35 and 35, and a lowest cell of 0.00259.)
+    assert lowest == pytest.approx(0.00249, abs=1e-5)
+    assert saturated == {"milky_way": 26, "ngc_4414": 34}
     for template in TEMPLATES:
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
     c = constants(the_model(prod))
-    for template, worst in (("milky_way", 0.893), ("ngc_4414", 0.790)):
+    for template, worst in (("milky_way", 0.795), ("ngc_4414", 0.787)):
         o = pattern_run(prod, template)
         assert np.all(np.asarray(o.fields["arm_saturation"]) == 1.0), template
         law = law_of(o, c)
-        # The gate's prediction, held: "worst sum of the tapered amplitudes and the bar 0.893" at the default seed.
+        # The third gate turn's prediction (ruling 13), held: "the worst ring's sum of the tapered amplitudes and the
+        # bar 0.795 at the default seed (saturation 1)". (On the X / 2 window the first two passes built: 0.893.)
         assert float((law.tapered.sum(axis=0) + law.bar).max()) == pytest.approx(worst, abs=1e-3), template
 
 
@@ -254,27 +260,30 @@ def test_the_power_is_the_sourced_power_times_the_gain_capped_at_one(prod, templ
 
 
 def test_the_local_window_is_the_existing_weight_at_the_local_x(prod):
-    """X_2(R) = kappa^2 R / (2 pi G Sigma 2) with the disc's surface density per square parsec turned into per square
-    kiloparsec; the shear in shear_rate's own convention; and swing_weight itself, unchanged, at that window."""
+    """X(R) = kappa^2 R / (2 pi G Sigma) - X at m = 1, equal to m X_m (D215 ruling 11: no further 2) - with the disc's
+    surface density per square parsec turned into per square kiloparsec; the shear in shear_rate's own convention;
+    and swing_weight itself, unchanged, at that window. The module's parts against one another: the test that does
+    not use them is the next one."""
     m = the_model(prod)
     c = constants(m)
     o = pattern_run(prod)
     F, R = o.fields, o.grid.R
     kappa, sigma, v = (np.asarray(F[k]) for k in ("epicyclic_frequency", "disc_surface_density", "circular_velocity"))
     assert o.decls["disc_surface_density"].unit == "Msun/pc2" and o.decls["epicyclic_frequency"].unit == "km/s/kpc"
-    x2 = pt.local_swing_x(R, kappa, sigma, c["G"])
+    x = pt.local_swing_x(R, kappa, sigma, c["G"])
     i = int(np.argmin(np.abs(R - 8.0)))
-    assert x2[i] == pytest.approx(kappa[i] ** 2 * R[i] / (2.0 * math.pi * c["G"] * sigma[i] * 1.0e6 * 2.0), rel=1e-12)
+    assert x[i] == pytest.approx(kappa[i] ** 2 * R[i] / (2.0 * math.pi * c["G"] * sigma[i] * 1.0e6), rel=1e-12)
     gamma = pt.local_shear(R, v)
     assert gamma[i] == pytest.approx(pt.shear_rate(R, v, float(R[i])), rel=1e-12)
-    # The probe's table (D215's handoff): X_2 1.54 / 3.96 / 9.82 and the shear 0.63 / 1.10 / 1.19 at 2, 8 and 12 kpc.
-    for r, x_want, g_want in ((2.0, 1.54, 0.63), (8.0, 3.96, 1.10), (12.0, 9.82, 1.19)):
+    # X 3.09 / 7.93 / 19.64 and the shear 0.63 / 1.10 / 1.19 at 2, 8 and 12 kpc (S56's first two passes read half
+    # of each X: 1.54 / 3.96 / 9.82, the probe's table, on the wrong variable).
+    for r, x_want, g_want in ((2.0, 3.09, 0.63), (8.0, 7.93, 1.10), (12.0, 19.64, 1.19)):
         k = int(np.argmin(np.abs(R - r)))
-        assert (x2[k], gamma[k]) == pytest.approx((x_want, g_want), abs=0.01), r
+        assert (x[k], gamma[k]) == pytest.approx((x_want, g_want), abs=0.01), r
     w = pt.local_swing_weights(R, v, kappa, sigma, c["G"], c["SWING_X_LOW"], c["SWING_X_HIGH"], c["SWING_X_DEAD"],
                                c["SWING_X_FLOOR"], c["ARM_MULTIPLICITY_MAX"])
     for k in (5, i, 150):
-        lo, hi = x2[k] / (gamma[k] * c["SWING_X_HIGH"]), x2[k] / (gamma[k] * c["SWING_X_LOW"])
+        lo, hi = x[k] / (gamma[k] * c["SWING_X_HIGH"]), x[k] / (gamma[k] * c["SWING_X_LOW"])
         want = [pt.swing_weight(float(mode), lo, hi, c["SWING_X_HIGH"], c["SWING_X_DEAD"], c["SWING_X_LOW"], c["SWING_X_FLOOR"])
                 for mode in pt.ARM_MODES]
         assert w[:, k].tolist() == want
@@ -290,14 +299,93 @@ def test_the_local_window_is_the_existing_weight_at_the_local_x(prod):
     assert not pt.local_swing_weights(R, v, np.full_like(R, np.nan), sigma, c["G"], 1.0, 2.0, 3.0, 0.5, 6.0).any()
 
 
+def hand_weight(x: float, x_low: float, x_high: float, x_dead: float, x_floor: float) -> float:
+    """The source's window on x = X_m / Gamma, written out here and not taken from the model: whole for
+    x_low <= x <= x_high, falling linearly in ln x to nothing at x_dead above and at x_floor below."""
+    if x_low <= x <= x_high:
+        return 1.0
+    if x > x_high:
+        return max(0.0, math.log(x_dead / x) / math.log(x_dead / x_high))
+    return max(0.0, math.log(x / x_floor) / math.log(x_low / x_floor))
+
+
+def test_the_window_rederived_by_hand_on_three_rings_gives_the_published_amplitudes(prod):
+    """D215 ruling 11's test, independent of the module: on three rings the weights are re-derived from the
+    **published** ``epicyclic_frequency``, ``disc_surface_density`` and ``circular_velocity`` and the level-0 ranges
+    with this file's own arithmetic - not ``local_swing_x``, ``swing_window`` or ``swing_weight`` - and the published
+    amplitudes follow from them through the gain and the taper.
+
+    X = kappa^2 R / (2 pi G Sigma): Toomre's X at m = 1. Mode m is amplified by the window at X_m / Gamma =
+    X / (m Gamma). S56's first two passes built the window on X / 2 (the lead's error; no test could find it,
+    because each recomputed with the module's formula): at 8 kpc the two windows differ by 1.0 in the two-armed
+    weight, and the published amplitudes are the ones of X.
+
+        R kpc     X        Gamma    w_2     w_3     w_4     w_5     w_6     (on X / 2: w_2 … w_6)
+        1.9875    3.0878   0.6317   0.5055  1       1       0.9673  0.7043  (1  0.704  0.289  0  0)
+        7.9875    7.9286   1.1003   0       0.5484  1       1       1       (1  1  0.849  0.527  0.264)
+        12.0375   19.6358  1.1938   0       0       0       0       0.2223  (0  0.223  0.932  1  1)
+    """
+    G = 4.30091727e-6  # kpc (km/s)^2 / Msun: written here, and the model's constant is held to it
+    c = constants(the_model(prod))
+    assert c["G"] == pytest.approx(G, rel=1e-9)
+    x_low, x_high, x_dead, x_floor = 1.0, 2.0, 3.0, 0.5  # the level-0 ranges, S26's
+    assert (c["SWING_X_LOW"], c["SWING_X_HIGH"], c["SWING_X_DEAD"], c["SWING_X_FLOOR"]) == (x_low, x_high, x_dead, x_floor)
+    o = pattern_run(prod)
+    F, R = o.fields, o.grid.R
+    kappa, sigma, v = (np.asarray(F[k]) for k in ("epicyclic_frequency", "disc_surface_density", "circular_velocity"))
+    A, B, a_bar = float(F["arm_contrast"]), float(F["bar_contrast"]), float(F["bar_half_length"])
+    largest_difference = 0.0
+    for radius, x_want, gamma_want, w_want, w_half_want in (
+        (1.9875, 3.0878, 0.6317, (0.5055, 1.0, 1.0, 0.9673, 0.7043), (1.0, 0.7043, 0.2893, 0.0, 0.0)),
+        (7.9875, 7.9286, 1.1003, (0.0, 0.5484, 1.0, 1.0, 1.0), (1.0, 1.0, 0.8494, 0.5273, 0.2643)),
+        (12.0375, 19.6358, 1.1938, (0.0, 0.0, 0.0, 0.0, 0.2223), (0.0, 0.2227, 0.9320, 1.0, 1.0)),
+    ):
+        i = int(np.argmin(np.abs(R - radius)))
+        assert R[i] == pytest.approx(radius, abs=1e-9)
+        x = float(kappa[i]) ** 2 * float(R[i]) / (2.0 * math.pi * G * float(sigma[i]) * 1.0e6)  # Sigma per pc^2 -> kpc^2
+        slope = (float(v[i + 1]) - float(v[i - 1])) / (float(R[i + 1]) - float(R[i - 1]))  # the centred difference
+        gamma = 1.0 - float(R[i]) / float(v[i]) * slope
+        assert (x, gamma) == pytest.approx((x_want, gamma_want), abs=5e-4), radius
+        w = [hand_weight(x / (m * gamma), x_low, x_high, x_dead, x_floor) for m in (2, 3, 4, 5, 6)]
+        assert w == pytest.approx(w_want, abs=5e-4), radius
+        # The published amplitudes follow: the gain capped at one, the bar's taper, the saturation.
+        gain = [w_m / max(1.0, sum(w)) for w_m in w]
+        taper = math.exp(-((float(R[i]) / a_bar) ** 4))
+        tapered = [A * math.sqrt(g) * (1.0 - taper) for g in gain]
+        saturation = min(1.0, (1.0 - B * taper) / sum(tapered))
+        published = [float(np.asarray(F[pt.amplitude_field(m)])[i]) for m in (2, 3, 4, 5, 6)]
+        assert published == pytest.approx([saturation * t for t in tapered], rel=1e-9, abs=1e-15), radius
+        assert float(np.asarray(F["arm_saturation"])[i]) == pytest.approx(saturation, rel=1e-12) and saturation == 1.0
+        # The window the first two passes built, on X / 2: other weights, and not the published amplitudes.
+        w_half = [hand_weight(0.5 * x / (m * gamma), x_low, x_high, x_dead, x_floor) for m in (2, 3, 4, 5, 6)]
+        assert w_half == pytest.approx(w_half_want, abs=5e-4), radius
+        gain_half = [w_m / max(1.0, sum(w_half)) for w_m in w_half]
+        wrong = [A * math.sqrt(g) * (1.0 - taper) for g in gain_half]
+        assert max(abs(p - q) for p, q in zip(published, wrong)) > 1e-3, radius
+        largest_difference = max(largest_difference, max(abs(p - q) for p, q in zip(w, w_half)))
+        if radius == 7.9875:
+            assert max(abs(p - q) for p, q in zip(w, w_half)) >= 0.5 and (w[0], w_half[0]) == (0.0, 1.0)
+    assert largest_difference == 1.0  # a mode whole on one window and dead on the other
+    # The module's weights are the hand's on every ring of the grid (interior rings: the centred difference).
+    module = law_of(o, c).weights
+    for i in range(1, R.size - 1):
+        x = float(kappa[i]) ** 2 * float(R[i]) / (2.0 * math.pi * G * float(sigma[i]) * 1.0e6)
+        gamma = 1.0 - float(R[i]) / float(v[i]) * (float(v[i + 1]) - float(v[i - 1])) / (float(R[i + 1]) - float(R[i - 1]))
+        gamma = gamma if math.isfinite(gamma) and gamma > 0.0 else 1.0
+        hand = [hand_weight(x / (m * gamma), x_low, x_high, x_dead, x_floor) for m in (2, 3, 4, 5, 6)]
+        assert module[:, i].tolist() == pytest.approx(hand, abs=1e-9), float(R[i])
+
+
 def test_the_gates_predictions_as_measured(prod):
-    """D215's predictions, read on the built model (B4). Held: where the pattern ends, where the whole power ends,
-    where half of it ends. **Failed, and pinned as it failed** (B5): "no ring-to-ring jump of A_tot larger than the
-    largest in today's bar taper" - the fade from the whole power to none takes fourteen rings and its last steps
+    """D215's predictions, read on the built model (B4) - the third gate turn's (ruling 13), which supersede the
+    first's (those were read on a probe of the X / 2 window: 14.8 and 13.8 kpc). Held: the Milky Way's whole power
+    to 11.1 kpc and its last ring with any mode at 12.3 kpc; ``ngc_4414``'s to 9.2 and 9.9. **Failed at the first
+    turn, and pinned as it fails still** (B5): "no ring-to-ring jump of A_tot larger than the largest in today's bar
+    taper" - the fade from the whole power to none takes sixteen rings (ten for ``ngc_4414``) and its last steps
     are the square root's; it is built as ruled and not smoothed."""
     c = constants(the_model(prod))
     for template, last, power, full_to, half_to, jump, rings_dead in (
-        ("milky_way", 14.81, 0.0153, 13.76, 14.14, 0.1426, 202), ("ngc_4414", 11.51, 0.0508, 10.84, 11.06, 0.2253, 246),
+        ("milky_way", 12.337, 0.0316, 11.137, 11.587, 0.1778, 235), ("ngc_4414", 9.938, 0.0491, 9.188, 9.488, 0.2215, 267),
     ):
         o = pattern_run(prod, template)
         R = o.grid.R
@@ -313,9 +401,24 @@ def test_the_gates_predictions_as_measured(prod):
         # The bar's taper, for the comparison the prediction made: its largest ring-to-ring step is far smaller.
         taper = pt.bar_terms(R, float(o.fields["pitch_angle"]), float(o.fields["bar_half_length"]))[0]
         assert float(np.abs(np.diff(taper)).max()) < 0.04 < jump  # 0.022 and 0.033: the bar's taper per ring
-    # Every Milky Way ring inside 12 kpc carries the whole A^2.
+    # Every Milky Way ring inside 11.1 kpc carries the whole A^2: the solar ring does, with three and a half modes.
     mw = law_of(pattern_run(prod, "milky_way"), c)
-    assert np.all(mw.weights.sum(axis=0)[pattern_run(prod).grid.R < 12.0] >= 1.0)
+    assert np.all(mw.weights.sum(axis=0)[pattern_run(prod).grid.R < 11.1] >= 1.0)
+    # Ruling 13's shares of the ring's power, m = 2 … 6, at 2 / 6 / 8 / 10 kpc: held to the two figures it gave.
+    R = pattern_run(prod).grid.R
+    for radius, shares in ((2.0, (0.12, 0.24, 0.24, 0.23, 0.17)), (6.0, (0.03, 0.25, 0.25, 0.25, 0.23)),
+                           (8.0, (0.0, 0.15, 0.28, 0.28, 0.28)), (10.0, (0.0, 0.0, 0.16, 0.40, 0.43))):
+        i = int(np.argmin(np.abs(R - radius)))
+        assert (mw.gain[:, i] / mw.gain[:, i].sum()).tolist() == pytest.approx(shares, abs=5.5e-3), radius
+    # And its mass-weighted power by mode, 0.08 / 0.21 / 0.24 / 0.25 / 0.22 and 0.19 / 0.24 / 0.24 / 0.19 / 0.14:
+    # held **on the gain** - the sum over rings of Sigma R dR w_m / max(1, sum w), the split before the bar's taper.
+    # (The label weighs the published amplitudes, taper in: its shares are pinned in the label's test, and differ.)
+    for template, shares in (("milky_way", (0.0784, 0.2119, 0.2375, 0.2477, 0.2245)),
+                             ("ngc_4414", (0.1935, 0.2363, 0.2390, 0.1912, 0.1401))):
+        o = pattern_run(prod, template)
+        mass = np.asarray(o.fields["disc_surface_density"]) * o.grid.R * np.gradient(o.grid.R)
+        power = (mass[None, :] * law_of(o, c).gain).sum(axis=1)
+        assert (power / power.sum()).tolist() == pytest.approx(shares, abs=5e-4), template
 
 
 # --- the label -----------------------------------------------------------------------------------------------------
@@ -323,9 +426,12 @@ def test_the_gates_predictions_as_measured(prod):
 
 def test_arm_multiplicity_is_the_mode_with_the_most_mass_weighted_power(prod):
     """Kept under its name, as a label: the m whose sum over rings of Sigma R dR A_m^2 is greatest, a tie to the
-    lower m; not a number for a disc with no arms. It was the drawn 4 for both templates at S55."""
-    for template, label, shares in (("milky_way", 3.0, (0.2500, 0.2718, 0.2146, 0.1526, 0.1110)),
-                                    ("ngc_4414", 2.0, (0.4591, 0.3054, 0.1326, 0.0585, 0.0445))):
+    lower m; not a number for a disc with no arms. It was the drawn 4 for both templates at S55. The weighting is of
+    the **published** amplitudes - the bar's taper in, which takes most of the inner disc's two- and three-armed
+    power out of the sum - so the Milky Way's label is 6 where the untapered gain's largest share is five arms'
+    (tests above); ``ngc_4414``'s is 4 on either."""
+    for template, label, shares in (("milky_way", 6.0, (0.0144, 0.1565, 0.2312, 0.2814, 0.3165)),
+                                    ("ngc_4414", 4.0, (0.1224, 0.2112, 0.2368, 0.2286, 0.2009))):
         o = pattern_run(prod, template)
         F, R = o.fields, o.grid.R
         amplitudes = published_amplitudes(o)
@@ -348,13 +454,14 @@ def test_the_effective_arm_number_is_m_for_one_mode_and_does_not_know_the_phases
     amplitudes[2] = 0.3
     assert pt.effective_arm_number(amplitudes).tolist() == [4.0, 4.0, 4.0]
     assert np.all(np.isnan(pt.effective_arm_number(np.zeros((5, 3)))))
-    # At the defaults: 2.64 at 2 kpc, 3.47 at 8, 4.88 at 12 - and the same under another texture seed.
+    # At the defaults: 4.09 at 2 kpc, 4.69 at 8, 6 at 12 (the six-armed mode alone) - and the same under another
+    # texture seed. (On the X / 2 window of the first two passes: 2.64, 3.47, 4.88.)
     for seed in (None, 5):
         o = pattern_run(prod, texture_seed=seed)
         m_eff = pt.effective_arm_number(published_amplitudes(o))
         R = o.grid.R
         got = [float(m_eff[int(np.argmin(np.abs(R - r)))]) for r in (2.0, 8.0, 12.0)]
-        assert got == pytest.approx([2.643, 3.466, 4.881], abs=2e-3)
+        assert got == pytest.approx([4.087, 4.691, 6.0], abs=2e-3)
         gas = compose.gas_pattern(o.fields, R, constants(the_model(prod)))
         assert np.allclose(gas.effective_arm_number(R)[np.isfinite(m_eff)], m_eff[np.isfinite(m_eff)], rtol=1e-12)
 
@@ -561,10 +668,11 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     assert not stars.flat and not gas.flat
     assert stars.contrast(R, phi).tobytes() == np.asarray(F["pattern_density_contrast"]).tobytes()
     # The gas's published field is the law at the cells' centres over each ring's sampled mean, where that has left
-    # 1 (a ranked ridge's does, by under 1e-3: tests/test_gas_pattern.py).
+    # 1 (a ranked ridge's does: by 8.75e-4 at worst for the Milky Way and 1.25e-3 for ``ngc_4414`` at their own
+    # seeds; tests/test_gas_pattern.py).
     law = gas.contrast(R, phi)
     assert np.allclose(law / law.mean(axis=1, keepdims=True), np.asarray(F["gas_density_contrast"]), rtol=0.0, atol=1e-11)
-    assert float(np.abs(law.mean(axis=1) - 1.0).max()) < 1e-3
+    assert float(np.abs(law.mean(axis=1) - 1.0).max()) == pytest.approx({"milky_way": 8.75e-4, "ngc_4414": 1.254e-3}[template], abs=2e-5)
     for shape in (stars, gas):
         on_grid = shape.contrast(R, phi)
         assert np.allclose(shape.contrast_at(R[:, None], phi[None, :]), on_grid, rtol=0.0, atol=1e-12)
@@ -579,15 +687,16 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     # Sector means: analytic for the stars (the modes' own integrals), by the ridge's series for the gas; they
     # average to 1 round the ring and are the dense average of the point function over each sector - for the stars
     # to the dense average's own error; for the gas to the series' accuracy on a ridge with corners, **pinned as
-    # measured: 1.2e-3 of the ring's mean at worst over thirty-two sectors, five radii and both templates** with
-    # the 1024 samples the series is taken from (D215: the number of samples is not changed to hide it).
+    # measured: 1.1e-3 of the ring's mean at worst for the Milky Way and 1.9e-3 for ``ngc_4414``, over thirty-two
+    # sectors and five radii** with the 1024 samples the series is taken from (D215: the number of samples is not
+    # changed to hide it). On the X / 2 window of S56's first two passes it read 1.2e-3 at worst.
     edges = np.linspace(0.0, 2.0 * np.pi, 33)
     for shape in (stars, gas):  # past the last ring with a mode, and past the bar: every sector alike, exactly
         assert np.all(shape.sector_means(20.0, edges) == 1.0)
     assert gp.HARMONIC_SAMPLES == 1024
     worst = 0.0
-    for radius in (1.0, 3.0, 6.0, 9.0, 11.0):
-        for shape, tolerance in ((stars, 1e-8), (gas, 2e-3)):
+    for radius in (1.0, 3.0, 6.0, 8.0, 9.5):  # ``ngc_4414``'s last ring with a mode is at 9.9 kpc
+        for shape, tolerance in ((stars, 1e-8), (gas, 2.5e-3)):
             means = shape.sector_means(radius, edges)
             assert float(means.mean()) == pytest.approx(1.0, abs=1e-12), radius
             dense = []
@@ -598,7 +707,7 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
             assert error <= tolerance, (radius, error)
             assert means.max() > 1.0 > means.min()
             worst = max(worst, error) if shape is gas else worst
-    assert 3e-4 < worst < 1.5e-3
+    assert worst == pytest.approx({"milky_way": 1.12e-3, "ngc_4414": 1.88e-3}[template], rel=0.05), worst
 
 
 def test_a_pattern_with_nothing_to_place_is_flat():
