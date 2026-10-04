@@ -149,12 +149,14 @@ def test_the_default_census_numbers(default, default_layer_off):
     judged = default_layer_off.fields  # the two acceptance rows below read the layer-off census (S55, D214)
     L = np.asarray(F["hii_halpha_luminosity"], dtype=float)
     # one region per cluster (S33); S51 (D210): was 12860 (the clouds on the gas's ridge)
-    assert L.size == 12814  # S56 (D215): was 12930 (the ridge follows five arm modes: another draw of the census)
+    # S56 (D215): was 12930 (the ridge follows five arm modes: another draw of the census)
+    assert L.size == 12829  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.720, abs=0.01)
     assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(193.7, rel=0.01)
     assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.826, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7775  # S56 (D215): was 7792 (another draw)
+    # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7780
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
     assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
@@ -173,8 +175,10 @@ def test_the_default_census_numbers(default, default_layer_off):
     # The layer-on census, which the viewer draws: not judged, read for the record. S56 (D215): were -1.9893 and
     # -0.105511 ("keeps the numbers it had", held bit for bit to S54's reference until then); the census placed by
     # five arm modes is another draw.
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.0608, abs=1e-3)
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.102613, abs=1e-5)
+    # S57 (D216): were -2.0608 and -0.102613; the census placed by the gas's steady response is another draw again
+    # (D216 predicted "rows 35 and 37 may move with placement, layer on"; the judged, layer-off rows above did not).
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.0698, abs=1e-3)
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.103890, abs=1e-5)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):

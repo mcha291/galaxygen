@@ -118,13 +118,14 @@ _CONSERVES_GRADIENT = (
 # What the source's offset and direction keep, and what they do not, with the measured numbers (gate G1, change 5;
 # BUILD_III section 1c rule 2 as amended: "a declaration states what it does not keep, with the measured number").
 # Measured on the production grid at the default inputs, the layer on: first at S55 (1 610 of 12 930 clusters, 12.5 %
-# and 43.7 % of the mass, 157 in another cell ring), and again at S56 when the census became another draw (D215: the
-# clouds follow five arm modes' ridge, not one's; read on the window of D215 ruling 11, the third gate turn).
+# and 43.7 % of the mass, 157 in another cell ring), again at S56 when the census became another draw (D215: the
+# clouds follow five arm modes' ridge, not one's: 1 598 of 12 814, 12.5 % and 43.8 %, 137), and again at S57 when
+# the clouds came to follow the gas's steady response to those modes (D216).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S56 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 598 of 12 814 "
-    "clusters (12.5 %, 43.8 % of the cluster mass) in another radial ring and 137 in another cell ring than their "
+    "its cloud's ring: at S57 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
+    "against a 75 pc radial step and puts 1 598 of 12 829 "
+    "clusters (12.5 %, 43.7 % of the cluster mass) in another radial ring and 139 in another cell ring than their "
     "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
     "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
 )
@@ -200,7 +201,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         layer_stage=True,
         reads_seeds=("systems_seed",),
         reads_constants=(
-            # The census's layout: the mass function's mean and the gas pattern's ridge, as the census reads them.
+            # The census's layout: the mass function's mean and the gas pattern's two constants, as the census reads them.
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",
             "GMC_MASS_TRUNCATION_OUTER", "GMC_MASS_MIN", *GAS_PATTERN_CONSTANTS,
             # The cloud-interior noise's parameters: constants this stage declares (gate G1, change 4).
@@ -208,7 +209,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         ),
         requires=(
             "cloud_size", "gas_molecular_surface_density",
-            *GAS_PATTERN_READS,  # S56 (D215): the layout's ridge follows the stellar modes and their phases
+            *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
         ),
         publishes=(CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT, CLOUD_GRADIENT_ANGLE),
     )

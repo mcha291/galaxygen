@@ -177,6 +177,9 @@ LAYER_OFF_EXCEPTIONS = {"arm_multiplicity": {"milky_way": (4.0, 6.0), "ngc_4414"
 # And the fields P1 adds, which S55 did not publish: the law's five amplitudes and its saturation, radial and the
 # same on and off; the layer's five phases, not numbers with the layer off.
 ADDED_AT_S56 = {*pt.AMPLITUDE_FIELDS, "arm_saturation", *pt.PHASE_FIELDS}
+# And the one field P2 adds (S57, D216): the frame every arm mode is steady in, a derived radial field of the `bar`
+# stage - a statement, the same on and off, read by no stage. Nothing S55 published moved with it.
+ADDED_AT_S57 = {"arm_pattern_speed"}
 
 
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
@@ -197,7 +200,9 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     for n, by_template in LAYER_OFF_EXCEPTIONS.items():
         was, is_now = by_template[template]
         assert held[n] == layer_reference.value_digest(was) and out.fields[n] == is_now, (n, template)
-    assert set(now) - set(held) == ADDED_AT_S56 and len(held) == (332 if name == "azimuthal" else 331)
+    # S57 (D216): was `== ADDED_AT_S56` - the layer-off run gained one field, `arm_pattern_speed`, and lost or moved none.
+    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 and len(held) == (332 if name == "azimuthal" else 331)
+    assert now["arm_pattern_speed"] == layer_reference.value_digest(np.asarray(out.fields["circular_velocity"]) / out.grid.R)
     for n in pt.PHASE_FIELDS:
         assert np.isnan(out.fields[n]), n
     if template == "ngc_4414":
@@ -290,10 +295,15 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
         assert producer[n] == stage_id and census and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
         assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
     assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 9
-    # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place lower with
+    # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place higher with
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
+    # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
+    # mean that is 1 identically in the law; exact sums are not required" - the rule's own wording now, and held.
     assert not EXPECTED_TOTALS & set(CENSUS_STATISTICS)
-    assert float(on.fields["cloud_count_total"]) == 16693.43298750999 and float(off.fields["cloud_count_total"]) == 16693.432987509994
+    # S57 (D216): was 16693.43298750999 with the layer on (one unit lower than off, on S56's ranked ridge); the
+    # layer-off value is S55's own bits, unmoved.
+    assert float(on.fields["cloud_count_total"]) == 16693.432987509997 and float(off.fields["cloud_count_total"]) == 16693.432987509994
+    assert float(on.fields["cloud_count_total"]) == np.nextafter(float(off.fields["cloud_count_total"]), np.inf)
     assert same(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
 
 
@@ -397,7 +407,8 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     n_on, n_off = len(runs[name, True].fields["cloud_radius"]), len(runs[name, False].fields["cloud_radius"])
     # S56 (D215): was n_on == 16822 - S51's census, placed by one four-armed ridge; placed by five modes' ridge it
     # is another draw. The layer-off census is S55's own (16 754), and the two still differ by the draw alone.
-    assert n_on == 16660 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    # S57 (D216): was n_on == 16660 - placed by the gas's steady response to the modes it is another draw again.
+    assert n_on == 16667 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -468,8 +479,10 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.102973, abs=1e-6)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.06083, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.102613, abs=1e-6)
+        # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
+        # draw (D216 predicted "rows 35 and 37 may move with placement, layer on"). Not judged: the rows above are.
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.06976, abs=1e-5)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.103890, abs=1e-6)
         # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
         assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
         for q in spec.QUANTITIES:
@@ -779,14 +792,36 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
     def rings(arrays, name):
         return np.asarray(arrays[name], dtype=float).sum(axis=1)
 
+    def apart(a, b) -> float:
+        return float((np.abs(a - b) / np.where(b != 0.0, np.abs(b), 1.0)).max())
+
+    # S57 (D216 item 11 i): was rtol 1e-12 for every placed component on this small grid. The two the gas's
+    # pattern places are held to that **on the production grid** (below), where the grid's 360 cells sample the
+    # response's ring mean to rounding. On this grid's 36 cells the sampled mean leaves 1 by 1.257e-3 (the 36th
+    # harmonic, aliased), the stage no longer divides a ring by it, and a ring's line light and dust column leave
+    # their layer-off totals by that much: pinned as it is, and reported to the gate.
+    GAS_PLACED = ("halpha_hii", "dust_placement")
     for name in RENDER_PLACED:
         assert on_h["axes"][name][:2] == ["R", "phi"], name
         # Layer off: even round the ring - every cell holds its ring's own value. Layer on: it is placed.
         cell = off[name][:, :1]
         assert np.all(off[name] == cell) and not np.all(on[name] == on[name][:, :1]), name
-        # And each ring keeps its total, to rounding: the placement averages to 1 round every ring.
-        assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
+        # And each ring keeps its total: the placement averages to 1 round every ring - to rounding for what the
+        # stellar pattern places, to the grid's sampling for what the gas's does.
+        if name in GAS_PLACED:
+            assert apart(rings(on, name), rings(off, name)) == pytest.approx(1.257e-3, rel=0.02), name
+        else:
+            assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
     assert np.all(off["dust_placement"] == 1.0)
+    production_grid = Service()
+    full_h, full = production_grid.handle("/api/render", q).frame()
+    full_off_h, full_off = production_grid.handle("/api/render", {**q, "layer": ["off"]}).frame()
+    for name in RENDER_PLACED:
+        # Measured 8e-14 at worst (halpha_hii and dust_placement; 1e-14 for the three the stellar pattern places).
+        assert apart(rings(full, name), rings(full_off, name)) < 1e-12, name
+    for name in ("stars", "stars_unresolved", "halpha_hii", "dust_scattered"):
+        assert np.allclose(checks.frame_total(full_h, {**full, "stars": full[name]}),
+                           checks.frame_total(full_off_h, {**full_off, "stars": full_off[name]}), rtol=1e-12, atol=0.0), name
     for name in RENDER_PER_RING:
         assert on_h["axes"][name][0] == "R" and "phi" not in on_h["axes"][name], name
         assert same(on[name], off[name]), name  # a ring's own value, the same bits either way
@@ -799,11 +834,12 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
         assert on_h["components"][name]["fields"][:4] == [f"{line}_surface_brightness_hii" for line in ("hbeta", "oiii_5007", "nii_6583", "sii_6716")]
         assert {f for f in on_h["components"][name]["fields"] if f in CENSUS_STATISTICS} == {
             f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")}
-    # The frame: every conserving component's light, summed over the disc with the bulge, is the same to rounding.
+    # The frame: every conserving component's light, summed over the disc with the bulge, is the same to rounding -
+    # and on this small grid the HII line's to the gas pattern's sampling (S57: was 1e-12; measured 4e-7 and 5e-6).
     for name in ("stars", "stars_unresolved", "halpha_hii", "dust_scattered"):
         total_on = checks.frame_total(on_h, {**on, "stars": on[name]})
         total_off = checks.frame_total(off_h, {**off, "stars": off[name]})
-        assert np.allclose(total_on, total_off, rtol=1e-12, atol=0.0), name
+        assert np.allclose(total_on, total_off, rtol=1e-5 if name in GAS_PLACED else 1e-12, atol=0.0), name
     # What the header says of a placement is true of this response (gate G1, change 11).
     for name in ("stars", "stars_unresolved", "halpha_hii", "lines_hii"):
         assert "layer is off" in off_h["components"][name]["about"] and "neutral value, 1" in off_h["components"][name]["about"], name
@@ -867,9 +903,10 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     differ = [n for n in b.fields if not same(a.fields[n], b.fields[n])]
     assert differ == [], differ
     columns = [n for n, d in b.decls.items() if d.kind.domain == "object"]
-    # 342: S54's 331 fields, name for name (334 while the interior's three numbers were scalars, before gate G1),
-    # and S56's eleven (D215): five amplitudes, the saturation, five phases.
-    assert len(columns) > 100 and len(b.fields) == 342
+    # 343: S54's 331 fields, name for name (334 while the interior's three numbers were scalars, before gate G1),
+    # S56's eleven (D215): five amplitudes, the saturation, five phases; and S57's one (D216): the arms' frame.
+    # S57 (D216): was 342
+    assert len(columns) > 100 and len(b.fields) == 343
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -889,9 +926,10 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     assert statistics == set(CENSUS_STATISTICS)
     assert {b.decls[n].of for n in differ - statistics - phases} == PLACED_OBJECTS
     held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
-    # 221 = basic's 342 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
+    # 222 = basic's 343 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
     # 5 phases (215 until S56, which added the law's five amplitudes and its saturation to what is held).
-    assert len(held) == 221 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
+    # S57 (D216): was 221 - `arm_pattern_speed` joins what is held, the same bits on and off.
+    assert len(held) == 222 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
 
 
 def test_the_oracle_holds_layer_off_on_a_small_grid_and_another_seed(prod):
@@ -974,10 +1012,12 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     assert text == angle_decl.conserves and text.startswith("The cloud's mass and the cluster's mass: the column places, it does not weigh.")
     # S56 (D215): were "1 610 of 12 930 clusters (12.5 %, 43.7 % of the cluster mass)" and "157 in another cell ring",
     # measured on S51's census at S55; the layer-on census is another draw since P1 and the declaration was re-read.
-    for phrase in ("at S56 the offset moves a cluster",
+    # S57 (D216): were "at S56", "1 598 of 12 814 clusters (12.5 %, 43.8 % of the cluster mass)" and "137 in another
+    # cell ring"; the census placed by the gas's steady response is another draw and the declaration was re-read.
+    for phrase in ("at S57 the offset moves a cluster",
                    "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 598 of 12 814 clusters (12.5 %, 43.8 % of the cluster mass)",
-                   "137 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+                   "1 598 of 12 829 clusters (12.5 %, 43.7 % of the cluster mass)",
+                   "139 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
@@ -986,17 +1026,17 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12814  # S56 (D215): was 12930
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12829  # S57 (D216): was 12814 (S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
-    assert int(moved.sum()) == 1598 and moved.mean() == pytest.approx(0.1247, abs=5e-4)  # S56 (D215): was 1610, 0.125
-    # The share of the cluster mass that crosses: 0.43796, printed as 43.8 %. S56 (D215): was 0.43747 (43.7 %; the
-    # gate's text carried the review's 43.8).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4380, abs=5e-4)
+    # S57 (D216): was 1598 and 0.1247 of 12 814 (S56: 1610, 0.125) - the same count of another census, by chance.
+    assert int(moved.sum()) == 1598 and moved.mean() == pytest.approx(0.1246, abs=5e-4)
+    # The share of the cluster mass that crosses: 0.43734, printed as 43.7 %. S57 (D216): was 0.43796 (43.8 %).
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4373, abs=5e-4)
     edges, _ = sy.cell_edges(R)
-    # S56 (D215): was 157
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 137
+    # S57 (D216): was 137 (S56: 157)
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 139
     # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1179,10 +1219,14 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     expect_a, expect_b = ring_expectations(a, m), ring_expectations(b, m)
     for census in expect_a:
         assert np.allclose(expect_a[census], expect_b[census], rtol=1e-12, atol=0.0), census
-    # Each composed field keeps every ring's mean under either realisation.
-    for out in (a, b):
-        for n in ("pattern_density_contrast", "gas_density_contrast", "sfr_modulation"):
+    # Each composed field keeps every ring's mean under either realisation - the stellar contrast and the
+    # modulation to rounding; the gas's to this small grid's sampling. S57 (D216 item 11 i): was `< 1e-12` for all
+    # three - the gas pattern stage divided a ring by its sampled mean and no longer does; on these 36 cells the
+    # response's ring mean samples 1.26e-3 and 1.5e-4 off 1 under the two seeds (1e-13 on the production grid's 360).
+    for out, off_one in ((a, 1.257e-3), (b, 1.54e-4)):
+        for n in ("pattern_density_contrast", "sfr_modulation"):
             assert float(np.abs(np.asarray(out.fields[n]).mean(axis=1) - 1.0).max()) < 1e-12, n
+        assert float(np.abs(np.asarray(out.fields["gas_density_contrast"]).mean(axis=1) - 1.0).max()) == pytest.approx(off_one, rel=0.02)
 
 
 # --- one reader of the switch (rule B13) ---------------------------------------------------------------------------
