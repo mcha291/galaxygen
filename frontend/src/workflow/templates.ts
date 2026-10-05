@@ -6,17 +6,19 @@ import * as flow from "@interface/flow.js";
 
 import { type LensCamera, isLens } from "../galaxy/capture";
 import { FILTER_SET_NAMES, type FilterSetName } from "../galaxy/filters";
-import type { FlowState, MergerEvent } from "./logic";
+import { type FlowState, type MergerEvent, formatNumber } from "./logic";
 
 /**
  * A template's pin (S58, D217 item 2): a measured fact of the named galaxy's structure, stated in place of the
- * model's derivation - `name` is the published field it decides, `value` the observed class, `source` where it
- * was read. **A pin is no input of the viewer's**: `/api/inputs` does not list it, the API refuses it as a query
- * parameter, and it reaches a run only through `template=<name>` (templateQuery below).
+ * model's derivation or draw - `name` is the pin's input, which is the published field it decides where there is
+ * one of that name; `value` the observed class, true or false, or - since S59 (D218 items 5-6) - a measured number
+ * in the pin's own unit; `source` where it was read. **A pin is no input of the viewer's**: `/api/inputs` does not
+ * list it, the API refuses it as a query parameter, and it reaches a run only through `template=<name>`
+ * (templateQuery below).
  */
 export interface Pin {
   name: string;
-  value: boolean;
+  value: boolean | number;
   source: string;
 }
 
@@ -63,15 +65,16 @@ function numbers(value: unknown, what: string): Record<string, number> {
 const numberOrNull = (v: unknown): number | null => (isNumber(v) ? v : null);
 
 /**
- * A template's pins as published: `[{name, value, source}]`, the value the observed class, true or false. A pin
- * the viewer cannot read is refused, not dropped: it would be shown as nothing while the API applies it.
+ * A template's pins as published: `[{name, value, source}]`, the value the observed class, true or false, or a
+ * measured number (S59: the Milky Way's bar angle, NGC 4414's pitch). A pin the viewer cannot read is refused, not
+ * dropped: it would be shown as nothing while the API applies it.
  */
 function parsePins(raw: unknown, at: string): Pin[] {
   if (raw === undefined || raw === null) return []; // an API from before the pins (S54-S57)
   if (!Array.isArray(raw)) throw new Error(`${at}: pins is not a list`);
   return raw.map((pin: unknown) => {
-    if (!isRecord(pin) || typeof pin.name !== "string" || !pin.name || typeof pin.value !== "boolean") {
-      throw new Error(`${at}: a pin is {name, value: true or false, source}, got ${JSON.stringify(pin)}`);
+    if (!isRecord(pin) || typeof pin.name !== "string" || !pin.name || !(typeof pin.value === "boolean" || isNumber(pin.value))) {
+      throw new Error(`${at}: a pin is {name, value: true or false or a number, source}, got ${JSON.stringify(pin)}`);
     }
     return { name: pin.name, value: pin.value, source: typeof pin.source === "string" ? pin.source : "" };
   });
@@ -208,18 +211,30 @@ export function templateQuery<Q extends Record<string, unknown>>(query: Q, templ
   return template ? { ...query, [TEMPLATE_KEY]: template.name } : query;
 }
 
-/** What `/api/fields` declares of a field, as far as a pin's words need it: its label and its categories. */
-type Declared = { name: string; label: string; categories?: string[] };
+/** What `/api/fields` declares of a field, as far as a pin's words need it: its label, its categories and its unit. */
+type Declared = { name: string; label: string; categories?: string[]; unit?: string; unit_display?: unknown };
 
 /**
- * A pin in plain words: "<the field's label>: <the category it pins> (as observed)" - "Barred: no (as observed)".
- * The label and the category are the field declaration's (rule A9: the viewer holds no name of its own for what
- * the model publishes); a pinned class is the declaration's second category when true and its first when false,
- * as the model publishes it. Without the declaration the pin's own name and yes or no.
+ * A pin in plain words: "<the field's label>: <what it pins> (as observed)" - "Barred: no (as observed)",
+ * "Spiral arm pitch angle: 28.9° (as observed)". The label, the category and the unit are the declaration's of
+ * the published field of the pin's name (rule A9: the viewer holds no name of its own for what the model
+ * publishes). A pinned class is the declaration's second category when true and its first when false, as the
+ * model publishes it; a pinned number is written with the declaration's unit (a unit that is a word after a
+ * space, a sign such as ° against the number).
+ *
+ * **Without a declaration of that name** - the fields not loaded yet, or a pin that decides a field of another
+ * name (S59's `sun_bar_angle` publishes `sun_azimuth`) - the pin's own name, and yes or no or the bare number:
+ * `/api/templates` gives a pin no label and no unit, so the viewer states none (rule B9).
  */
 export function pinWords(pin: Pin, fields: readonly Declared[] = []): string {
   const decl = fields.find((f) => f.name === pin.name);
-  const stated = decl?.categories?.length === 2 ? decl.categories[pin.value ? 1 : 0] : pin.value ? "yes" : "no";
+  let stated: string;
+  if (typeof pin.value === "number") {
+    const unit = decl && decl.unit !== "dimensionless" ? String(decl.unit_display ?? decl.unit ?? "") : "";
+    stated = `${formatNumber(pin.value, 4)}${/^[A-Za-zµμ]/.test(unit) ? " " : ""}${unit}`;
+  } else {
+    stated = decl?.categories?.length === 2 ? decl.categories[pin.value ? 1 : 0] : pin.value ? "yes" : "no";
+  }
   return `${decl?.label || pin.name}: ${stated} (as observed)`;
 }
 
