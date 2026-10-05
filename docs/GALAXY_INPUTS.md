@@ -694,9 +694,9 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149 | 75 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154 | 80 |
 
-So the board's **86 open** is 11 permanent and 75 carried, and no item is unruled. (S22
+So the board's **91 open** is 11 permanent and 80 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3710,6 +3710,9 @@ never been judged in twenty-three sessions.
    local swing amplification against the Fourier reading — recorded and put to the owner, not reopened with a
    constant.** No bar-driven two-armed amplitude was built: none is sourced against radius (#149). `ngc_4414`,
    unbarred: 0.193 / 0.236 / 0.239 / 0.191 / 0.140, A3/A2 1.11, m = 5–6 from 6.6 kpc. Still carried, with the owner.
+   **S59 (D218): the same conflict now stands against the Milky Way's measured arms** — four major arms and a
+   spur, each fitted on its own (Reid et al. 2019), where the template outside its bar is a sum of m = 3–6 with
+   drawn phases (#152). Segments of the common winding change where the crests lie and no mode's power.
 139. **The modes' phases are uniform and independent by assumption** (S56, D215). Each mode's phase is drawn
    uniformly on [0, 2π) from `texture_seed`, independently of the others and of the bar `[inferred: a mode in a
    differentially rotating disc has no preferred phase]`; no source was read for it, and BUILD_III §9 asks a
@@ -3763,6 +3766,10 @@ never been judged in twenty-three sessions.
    its ring's mean from 0.26 to 3 kpc; at one corner of the controls (the largest halo, the smallest spin, the
    largest retention, pinned unbarred) 55 cells are exactly zero, where the solver's s underflows the doubles'
    subnormals — published as the law gives it, counted in a test, nothing clipped.
+   **S59 (D218): a segment's pitch does not enter the forcing** (ε and f keep the disc's `pitch_angle`, #151), so
+   the reversed and nearly circular segments add nothing to this regime; `ngc_4414`'s pinned 28.9° halves both
+   numbers on every ring (× 0.512), and a numeric pitch pin is held to the draw's own 1°–60°. The drawn pitch
+   still has no sourced floor: the owner's, with a read source.
 143. **The stellar mode's fractional amplitude is applied to the whole disc's surface density** (S57, D216 gate G2
    item 5). The potential that forces the gas is that of Σ₁ = A_m Σ with Σ checkpoint 1's total disc — stars and gas
    together, the Σ of the arm-number law's X — because checkpoint 3 has no stellar/gas split (star formation
@@ -3830,6 +3837,69 @@ never been judged in twenty-three sessions.
    miss), and the six-armed mode's radial wavelength is 10–70 pc inside 0.3 kpc against a 75 pc ring step.
    **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
    sourced inner cut-off for arm modes in unbarred discs.
+150. **An arm's segments are kinks of one winding, on common rings for every arm and every mode** (S59, D218
+   items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
+   share a radius `[verified: Honig & Reid 2015; Díaz-García et al. 2019; docs/READING_ARM_SEGMENTS.md]`; the
+   model's modes share one winding Φ(R), so a segment is a radial piece of it: synthetic on `texture_seed`,
+   standing in for per-arm kinks. Its extent is log-normal, median 60°, σ_ln 0.35, redrawn outside 20°–180° (the
+   reader's arithmetic on Honig & Reid's 38 printed rows: `[inferred]` from a `[verified]` table); its pitch is
+   the disc's plus a normal residual of 0.56 × the pitch `[verified: Savchenko et al. 2020, MNRAS 493, 390,
+   sd/mean = 0.56 ± 0.25]`, independent from segment to segment, untruncated. **Not modelled:** a term from arm
+   to arm (0.6°–5.1° between two arms' whole fits; none exists in a common winding); the alternation of successive
+   changes (12 of 15 reverse sign in Honig & Reid); a trend with radius (the pitch falls outward in 64 % of S⁴G's
+   galaxies; Honig & Reid find none). **Read, and recorded:** the median change at a join 7.2° at a pitch of 13.5°
+   against the measured 9.7°; reversed segments 3–4 % up to 30° (3 of 38 measured, 8 %) and 7 % / 23 % at 45° /
+   60°, where pitch plus residual passes 90°; a winding that is leading on net in 7 / 38 / 149 of 1000 draws at
+   28.9° / 45° / 60° and in none at 13.5° or below; **the Milky Way template's default texture seed is the 987th
+   of 1000 in net turn** (511.7° from 3 to 12 kpc against the law's 329.9°, eight segments) and was not re-seeded.
+   **Carried.** What closes it: a representation with a ridge per arm (#152), or a source for kinks' radii across
+   a galaxy's arms.
+151. **The gas answers each ring at the disc's mean pitch, not the segment's** (S59, D218 item 4). The gas law's
+   two numbers go as 1/sin p (ε = a/(κR sin p), f_m = m A_m/(X sin p)); on a segment of pitch p_seg the potential
+   is the right shape with the wrong normal wavenumber, ε and f off by sin p/sin p_seg `[inferred]`. Geometry
+   only was ruled because the local pitch crosses zero on a reversed segment and a tenth of segments would sit in
+   #142's regime; the bar's angle and the lanes' side keep the disc's pitch too. **Carried.** What settles it: a
+   probe of the form that is regular through sin p = 0 (f_m/ε² is) on the suite's 240 galaxies, with #142's regime
+   counted — owed as an instrument, not yet run.
+152. **The representation cannot show the Milky Way's measured arms, and the check against them has no power**
+   (S59, D218 item 5 and the follow-up). At β = 24° the four major arms of Reid et al. 2019 stand at 4.89, 6.04,
+   9.33 and 12.03 kpc, which one four-armed winding would need pitches of 7.6°, 15.5° and 9.2° between neighbours
+   to pass through, where the arms' own are 12.1°, 17.1°, 10.3° and 9.4°; arms that overlap in radius are 34°–60°
+   apart, not a quarter turn `[verified: Reid et al. 2019, ApJ 885, 131, Table 2; docs/READING_ARM_SEGMENTS.md]`.
+   A sum of modes with drawn phases holds no arm to pin, so the template pins the one thing a common winding can
+   hold: the bar's angle to the Sun–centre line, `sun_bar_angle` = 30° (28°–33° as read), which gives the
+   published `sun_azimuth`. The plan's gate — "the pinned arms pass through the measured loci" — became a
+   disclosed check with no verdict: the median over five arms of the distance from the measured locus to the
+   nearest crest, in measured widths, reads **1.535** (Norma–Outer 0.42, Scutum–Centaurus 0.87, Sagittarius–Carina
+   2.27, Perseus 1.61, the Local arm 1.54); with the Sun rotated through 360 azimuths the median is 1.011 and 49 %
+   of rotations read one width or less, so the value is the null's 81st percentile (`tests/reid2019.py`). The
+   fits themselves are disputed since (Perseus 0.2–0.4 kpc further out; two bifurcating inner arms, Xu et al.
+   2023, ApJ 947, 54). **Carried, with the owner** (with #138): a ridge per arm for a pinned template is a change of plan.
+153. **NGC 4414's measured pitch is 2.4σ from the pitch law's draw** (S59, D218 item 6). Five 3.6 µm segments
+   average 28.9° ± 6.0° `[verified: Herrera-Endoqui et al. 2015, A&A 582, A86, Table 3; docs/READING_ARM_SEGMENTS.md]`;
+   the law's mean from the shear plus its 6° draw gives 14.33° on the template's seed. The template pins `pitch_angle` = 28.9° (the law's
+   value is published beside it as `pitch_angle_drawn`): a finding against the pitch law on the one galaxy whose
+   pitch the build has read, recorded and not tuned. With the pin the disclosed gas check reads a median ratio of
+   means of 1.406 over 6–10 kpc (1.881 at the drawn pitch), inside PHANGS's 1.37–5.79 by 0.036 with 21 of 53
+   rings under its floor, and a width of 0.550 of the dominant period (a miss, as before). Every suite galaxy of
+   that template now sits at 28.9°, so the tightly wound unbarred regime is kept in the tests by a third leg
+   that takes the pin off. The five segments' radial ranges overlap, so nothing positional is pinned. **Carried.**
+   What closes it: the pitch law (§5's shear form with its 6° draw) re-read against galaxies whose shear and
+   pitch are both measured.
+154. **The grid's table of star formation is the law at a cell's mean contrast, and the viewer reads grid fields
+   at a fixed azimuth between rings** (S59, D218's second and third follow-ups). The censuses now read the star
+   formation law at a point (`systems.Modulation`: the law on each ring's own contrast as the point sees it, the
+   arms turning with the winding and the bar's footprint staying in the bar's frame). The published
+   `sfr_modulation` is the same law at each cell's *mean* contrast, and the law is not linear: at cells the
+   footprint's edge crosses the two differ — 1.20 in the modulation at one cell at 2.51 kpc, 0.59 % of the worst
+   ring's young weight (1.08 % on another seed), 0.03 % on average, 0.015 % at worst on the 359 of 400 rings
+   whose footprint is uniform (pinned in `tests/test_segments.py`). The render places the 20–100 Myr light from
+   that table and interpolates every (R, φ) field between rings at fixed φ, which across a nearly circular
+   segment misplaces a ring gap's young light by 16–91 % (the readers this session replaced in the censuses:
+   7.7–37 % at fixed φ and 13–71 % wound, inside the bar). **Carried.** The remedy is named (Fable): "the
+   table's correct form is the cell mean of the law of the point function", built with a wound read in the
+   render when its young light is next touched. The point reader's cost is recorded with no bound, none being
+   sourced: the bright catalogue's stage 2.19 → 3.10 s, a star-sample region 6–15 % slower.
 
 
 ---
