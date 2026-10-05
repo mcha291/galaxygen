@@ -27,7 +27,21 @@ round the whole ring and adds no contrast). Its mean round the ring is σ_φ/√
 amplitudes are c_m = (2σ_φ/√(2π)) e^{−m²σ_φ²/2}, so every statement below is exact. Along it the piece is
 flat, **tapered linearly to zero over one width at each end** - a declared placeholder, no taper length being
 measured (a debt): τ = min(1, s/w(R_s), (L − s)/w(R_e)), s the arc length from the start, read where the locus
-crosses the ring. The taper is each piece's own, as ruled: where two pieces of a chain join, both are at zero.
+crosses the ring. **The taper is a chain's two ends'** (the gate's follow-up to D219, item 1: "a chain is
+continuous through its kinks ... the source's 'ends are tapered' is of whole arms"): an end of a piece at which
+another piece of its chain starts or ends has none. (The first build tapered every piece at both ends, which put
+a chain at zero at every kink and halved the realised power.)
+
+**The gate's follow-up** (D219, after the first build's predictions failed: five pieces 1.95 kpc wide 2.4 kpc
+apart overlap into the cosine the modes were). Beside the taper: *the count* the budget is divided among on a
+ring is the chains actually crossing it, pinned and drawn, in every galaxy (item 2); and *the width* of a piece
+on a ring is the width law's **bounded by half the ring's crossing spacing**, π R sin p / N, p the disc's pitch
+and N the chains crossing (item 3; :meth:`ArmPattern.width_at` has the reasoning: a bound, not a target, never
+raised). Under the bound a designed piece's dispersion is at most π/(2.355 N), under √π for any N, so the
+"no ridge on its ring" rule below should never fire; the guard is kept and what fires is counted. A piece's
+*own* pitch still lays it on its ring by 1/|sin p_j|: a nearly circular piece, narrowed like any other, still
+spreads round its ring in this ring-by-ring form and adds little contrast - it is not drawn as an arc of its
+drawn extent (item 4's wording; said plainly, not built).
 
 **The field** (item 4). c(R, φ) = 1 + [bar's body] + a(R) Σ_j τ_j(R) (W(φ − φ_j(R); σ_φ,j(R)) − σ_φ,j/√(2π)):
 the pieces crossing the radius, each less its own mean round the ring, so **the ring's mean is 1 exactly** at
@@ -115,6 +129,7 @@ WIDE_TERMS = 6
 # σ/(2√π) − σ²/(2π), reaches 0 (``budget_amplitude``). A piece of that dispersion is 239 degrees wide at half
 # maximum on its ring.
 WIDEST = math.sqrt(math.pi)
+JOINED = 1e-9  # two ends of pieces of one chain closer than this in ln R and in azimuth (rad) are one point: a kink
 MODE_POWER_FIELDS: tuple[str, ...] = tuple(f"arm_mode_power_{m}" for m in ARM_MODES)
 
 
@@ -274,6 +289,8 @@ class Pieces:
     phi_start: np.ndarray = field(init=False, repr=False)
     phi_end: np.ndarray = field(init=False, repr=False)
     sin_abs: np.ndarray = field(init=False, repr=False)   # |sin p|
+    joined_start: np.ndarray = field(init=False, repr=False)  # the inner end meets another piece of the chain
+    joined_end: np.ndarray = field(init=False, repr=False)    # the outer end does
     breaks: np.ndarray = field(init=False, repr=False)    # the ln R at which the set of crossing pieces changes
     table: np.ndarray = field(init=False, repr=False)     # (len(breaks) + 1, most): piece indices, the pad's = n
     most: int = field(init=False)
@@ -304,10 +321,21 @@ class Pieces:
         table = np.full((len(rows), max(most, 1)), n, dtype=np.int64)
         for i, r in enumerate(rows):
             table[i, : r.size] = r
+        # Which of a piece's two ends is joined to another piece of its chain (the gate's follow-up, item 1: "a chain
+        # is continuous through its kinks"): an end at which another piece of the same chain starts or ends. An end
+        # that is not joined is one of the chain's own, and the chain is tapered there.
+        joined_start, joined_end = np.zeros(n + 1, dtype=bool), np.zeros(n + 1, dtype=bool)
+        for chain in np.unique(self.chain):
+            members = np.flatnonzero(self.chain == chain)
+            ends = [(i, False, x_start[i], self.start_azimuth[i]) for i in members] + [(i, True, x_end[i], phi_end[i]) for i in members]
+            for i, outer, x, phi in ends:
+                met = any(j != i and abs(y - x) < JOINED and abs(math.remainder(psi - phi, TWO_PI)) < JOINED for j, _, y, psi in ends)
+                (joined_end if outer else joined_start)[i] = met
         # The pad: an entry no ring is crossed by, with numbers that keep every expression finite.
         pad = lambda a, value: np.concatenate([a, [value]])  # noqa: E731
         for name, value in (("x_start", pad(x_start, 0.0)), ("x_end", pad(x_end, 1.0)), ("phi_start", pad(self.start_azimuth, 0.0)),
-                            ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("breaks", breaks), ("table", table)):
+                            ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("breaks", breaks), ("table", table),
+                            ("joined_start", joined_start), ("joined_end", joined_end)):
             value.setflags(write=False)
             object.__setattr__(self, name, value)
         object.__setattr__(self, "most", int(most))
@@ -537,16 +565,20 @@ class ArmPattern:
         object.__setattr__(self, "body", body)
         object.__setattr__(self, "normalisation", normalisation)
         object.__setattr__(self, "_deviation", deviation_)
-        # A piece's taper, as a length in radius: one width of arc at each end is |sin p| widths of radius, the
-        # width the law's at that end (D219 item 1).
+        # A chain's taper, as a length in radius: one width of arc at each of the chain's two ends is |sin p| widths
+        # of radius, the width that of the end's own radius (D219 item 1 as the gate's follow-up words it: "the
+        # taper is a chain's two ends, over one width each; a chain is continuous through its kinks"). An end of a
+        # piece that is joined to another piece of its chain has no taper: its length is 0 and reads as none.
         p = self.pieces
         with np.errstate(over="ignore"):
             r_start, r_end = np.exp(p.x_start), np.exp(p.x_end)
-        widths = self.width if self.width.size else np.zeros(1)
-        radii = self.R if self.R.size else np.zeros(1)
+        known = math.isfinite(self.pitch_deg) and bool(self.R.size)
+        with np.errstate(invalid="ignore"):
+            w_start = self.width_at(np.where(np.isfinite(r_start), r_start, 0.0)) if known else np.zeros(r_start.shape)
+            w_end = self.width_at(np.where(np.isfinite(r_end), r_end, self.R[-1] if self.R.size else 0.0)) if known else np.zeros(r_end.shape)
         for name, value in (("_r_start", r_start), ("_r_end", r_end),
-                            ("_taper_start", p.sin_abs * np.interp(r_start, radii, widths)),
-                            ("_taper_end", p.sin_abs * np.interp(r_end, radii, widths))):
+                            ("_taper_start", np.where(p.joined_start, 0.0, p.sin_abs * w_start)),
+                            ("_taper_end", np.where(p.joined_end, 0.0, p.sin_abs * w_end))):
             value.setflags(write=False)
             object.__setattr__(self, name, value)
         # No perturbation to apply: no arm amplitude or no piece, and no body; or a pattern the grid could not
@@ -556,9 +588,10 @@ class ArmPattern:
                   and bool(np.all(np.isfinite(self.design))) and bool(np.all(np.isfinite(self.width))))
         if finite and deviation_ is not None and not math.isfinite(bar_terms(self.R, self.pitch_deg, self.bar_length)[2]):
             finite = False  # a body with no angle to lie along
-        # The count the budget is divided among (the lead's reading (b) of D219): the law's arm number - or, in a
-        # galaxy with pinned pieces, the number of chains that cross the ring. Never a realised power.
-        count = p.chains_crossing(self.R).astype(float) if p.pinned.any() else self.design
+        # The count the budget is divided among (the gate's follow-up, item 2): "the chains actually crossing it,
+        # pinned and drawn" - in every galaxy. A count, never a realised power. Held here on the grid's rings for
+        # what reports it; a point takes the count of its own radius (``amplitude_at``).
+        count = p.chains_crossing(self.R).astype(float)
         # The budget with the bar's taper taken back out: what is read between two rings, so that the taper - the
         # one steep factor in it - is the point's own (the gas pattern has always taken it so). 0 where the taper
         # is whole.
@@ -651,17 +684,36 @@ class ArmPattern:
 
     # --- the pieces on a ring ---------------------------------------------------------------------------
 
-    def width_at(self, R: np.ndarray) -> np.ndarray:
-        """FWHM across a piece at ``R``, kpc: the published width law, linear between the grid radii."""
+    def law_width_at(self, R: np.ndarray) -> np.ndarray:
+        """The width law's FWHM across a piece at ``R``, kpc: the published field, linear between the grid radii
+        (which is the law itself)."""
         return np.interp(np.asarray(R, dtype=float), self.R, self.width)
+
+    def spacing_at(self, R: np.ndarray) -> np.ndarray:
+        """The crossing spacing of the chains on the ring at ``R``, kpc, measured across the arms at the disc's
+        pitch: 2π R sin p / N, N the chains crossing the ring. Infinite where none crosses."""
+        R = np.asarray(R, dtype=float)
+        count = self.pieces.chains_crossing(R).astype(float)
+        sin_pitch = math.sin(math.radians(min(max(self.pitch_deg, 1.0), 89.0)))
+        with np.errstate(divide="ignore"):
+            return np.where(count > 0.0, TWO_PI * R * sin_pitch / np.where(count > 0.0, count, 1.0), np.inf)
+
+    def width_at(self, R: np.ndarray) -> np.ndarray:
+        """FWHM across a piece on the ring at ``R``, kpc: **the width law's, bounded by half the ring's crossing
+        spacing**, min(law, π R sin p / N(R)) (the gate's follow-up, item 3). A bound, not a target, and never
+        raised: the width law was measured on two-to-four-armed galaxies, where the spacing far exceeds the
+        width, and width over arm spacing is measured nowhere; a ridge wider than half its spacing is not a
+        crest of the law's arm number but the sum the modes already were - which the split of the first build's
+        power by arm number showed (five pieces 1.95 kpc wide 2.4 kpc apart made a one- and two-armed field).
+        The count is the point's own ring's, so the width steps where a chain starts or ends."""
+        return np.minimum(self.law_width_at(R), 0.5 * self.spacing_at(R))
 
     def amplitude_at(self, R: np.ndarray) -> np.ndarray:
         """B at ``R``: the budget's amplitude, **made at the point's own radius** - √(budget / (N v(σ_d))) with the
-        untapered budget and the count N read linearly between the grid radii (held at the end values beyond
-        them), the bar's taper put back at the radius itself, and σ_d = σ(R)/(R sin p) the designed dispersion
-        there. (B itself is not read between rings: toward the centre it grows as e^{σ_d²/2}, and a line between
-        two rings' values would be neither ring's law.) At a grid radius it is the published
-        ``arm_piece_amplitude``."""
+        untapered budget read linearly between the grid radii (held at the end values beyond them) and the bar's
+        taper put back at the radius itself, N the chains crossing the ring at that radius (the gate's follow-up,
+        item 2), and σ_d = σ(R)/(R sin p) the designed dispersion there, of the bounded width. At a grid radius it
+        is the published ``arm_piece_amplitude``."""
         R = np.asarray(R, dtype=float)
         if not self.R.size:
             return np.zeros(R.shape)
@@ -669,7 +721,8 @@ class ArmPattern:
         budget = np.interp(R, self.R, self._untapered) * (1.0 - taper) ** 2
         with np.errstate(divide="ignore", invalid="ignore"):
             sigma = design_dispersion(R, self.width_at(R), self.pitch_deg)
-        return budget_amplitude(budget, np.interp(R, self.R, self.count), np.nan_to_num(sigma, nan=np.inf, posinf=np.inf))
+        count = self.pieces.chains_crossing(R).astype(float)
+        return budget_amplitude(budget, count, np.nan_to_num(sigma, nan=np.inf, posinf=np.inf))
 
     def ring_pieces(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """The pieces crossing each radius of ``R`` (any shape S), each array shaped (S, slots):
@@ -682,8 +735,10 @@ class ArmPattern:
         live, azimuth, sin_abs = p.geometry(R, slots)
         radius = R[..., None]
         with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-            rise = (radius - self._r_start[slots]) / self._taper_start[slots]
-            fall = (self._r_end[slots] - radius) / self._taper_end[slots]
+            # (An end joined to another piece of the chain has no taper: the chain runs through its kink.)
+            length_in, length_out = self._taper_start[slots], self._taper_end[slots]
+            rise = np.where(length_in > 0.0, (radius - self._r_start[slots]) / length_in, np.inf)
+            fall = np.where(length_out > 0.0, (self._r_end[slots] - radius) / length_out, np.inf)
             taper = np.where(live, np.minimum(1.0, np.maximum(0.0, np.minimum(rise, fall))), 0.0)
             sigma = np.where(live, (self.width_at(R) / FWHM_PER_SIGMA)[..., None] / (radius * sin_abs), 1.0)
         return slots, np.nan_to_num(taper, nan=0.0), azimuth, sigma, sin_abs

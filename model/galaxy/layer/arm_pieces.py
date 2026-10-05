@@ -31,7 +31,8 @@ draw - barred: a grand design; unbarred: multi-armed - or pinned by a template:
   axis, and then the births below;
 - *births, in every class*: the grid's rings are swept inside out, and while the chains crossing a ring are fewer
   than the law's arm number there, a chain starts on that ring at a uniform azimuth. (The law's number is not an
-  integer: 4.8 gives five.) A ring with no arm power starts none;
+  integer: 4.8 gives five.) A ring with no arm power starts none; **and none is born inside a bar's
+  half-length** - the sweep starts at R = a in a barred disc (the gate's follow-up, item 2);
 - *flocculent*, by a template's pin only: a birth is a single piece, of extent uniform on 37°-105° (the one
   flocculent galaxy's measured five); no chain length is drawn;
 - *pinned pieces* (item 8): a template's measured arms, each row of the pin a chain of one or two pieces exactly
@@ -293,11 +294,14 @@ def census(
             close(outward(chain, math.log(bar_length), bar_angle + end, length_of(chain)))
     # The births (item 3; the lead's reading (a)): rings swept inside out.
     design_count = np.asarray(design_count, dtype=float)
+    # The gate's follow-up, item 2: "No chain is born inside a bar's half-length; the birth sweep starts at R = a in
+    # a barred disc."
+    x_first = math.log(bar_length) if math.isfinite(bar_length) else -math.inf
     for i in range(R.size):
         wanted = float(design_count[i])
-        if not wanted > 0.0:
-            continue
         x = float(x_ring[i])
+        if not wanted > 0.0 or x < x_first:
+            continue
         crossing = sum(1 for lo, hi in spans if lo <= x < hi)
         for _ in range(int(math.ceil(wanted))):  # at most the law's count of births on one ring (rule A1)
             if not crossing < wanted:
