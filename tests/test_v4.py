@@ -141,5 +141,8 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
     # S59 (D218): the winding's two segment columns are a table's, not an object class's - D191's rule does not
     # bind them, and they say in plain words that the viewer does not show them.
     segments = [f for f in fields if f.get("of") == "arm_segment"]
-    assert sorted(f["name"] for f in segments) == ["arm_segment_extent", "arm_segment_pitch_residual"]
+    # S59 (D218 follow-up): was ["arm_segment_extent", "arm_segment_pitch_residual"] - the second column is the
+    # unit-normal deviate since the gate's follow-up (a segment's pitch is relative to the disc's): a rename, the
+    # same table.
+    assert sorted(f["name"] for f in segments) == ["arm_segment_extent", "arm_segment_pitch_deviate"]
     assert all(f["domain"] == "table" and "Not drawn by the viewer" not in f["about"] and "not shown by the viewer" in f["about"] for f in segments)
