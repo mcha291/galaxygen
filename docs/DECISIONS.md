@@ -10588,3 +10588,98 @@ is the rule's design count — n(R), at least two outside a bar's end in a barre
 number of its chains crossing the ring; never a realised power. (c) *A pinned chain's continuation:* its drawn
 length less its measured range is split between its two ends, the inward part stopping at the bar's half-length. (d)
 *Rings with a budget and no chain* carry no arm; they are counted.
+
+**The first build (one Opus builder in a worktree; the model and its own tests only) and how it read.** Stages at
+checkpoint 3: `bar` → `pattern` → `arm_pieces` (the layer's) → `stellar_pattern`, `gas_pattern`. `bar` publishes
+`arm_class` and `arm_piece_width`; `pattern` the law alone, with `arm_power_budget` (½ Σ A_m²) and
+`arm_design_count` (n(R), from the published amplitudes: the same number as the weights' form); the layer's stage
+the table `arm_piece` (chain, order, start radius, start azimuth, pitch, extent, pinned); the composing stage the
+stellar field with `arm_piece_amplitude`, `arm_piece_saturation`, `arm_chain_count`, `arm_ring_power` and
+`arm_mode_power_2…6`. The modes' phases, the common winding and `arm_segment` are gone. Two new shapes of pin: a
+named class (`arm_class` = flocculent on `ngc_4414`) and a table (`arm_pieces` on `milky_way`: six rows of Reid et
+al. 2019's Table 2 — Norma and Outer two chains, nothing measured joining them; the 3 kpc arm out), both by D217's
+mechanism.
+- *What held.* Layer off, 348 common fields bit-identical to `main` in nine runs; ring means 1 to 1.6e-15 (stars)
+  and 1.0e-13 (gas) on 360 suite galaxies; the expected power equal to the budget to 1.6e-15; the gas converged
+  everywhere in at most seven steps; 1 600 seed runs and 336 corners of controls and pins with no raise, NaN,
+  negative or exact zero; one ridge on one ring by hand to 1e-11; T = ½ at k h = 1; the forcing's bound on every
+  ring.
+- *The gate's predictions, read first: eight of nine on the Milky Way template did not hold.* Chains crossing R₀
+  **8** (5); FWHM 1.947 kpc (1.9: held); spacing 1.50 kpc (2.4); B **0.329** (0.45–0.55); stellar crest over trough
+  2.26 (1.6–1.8); Σf at 8 kpc **0.563** (≈ 1.0); the gas minimum 0.788 (0.3–0.5); the top tenth over the lower half
+  **1.48** (≈ 2); the PHANGS ratio of means **1.275**, 51 of 53 rings under 1.37 (1.8–2.2). `ngc_4414`: 36 single
+  pieces of 37.7°–103.6° (held); inner gas minimum 0.688, ratio 1.26; the check's median 1.258, a miss as predicted.
+- *Why, as read.* Chains were born on every ring short of n(R), inside the bar's half-length too, and a 244° chain
+  born at 3 kpc reaches 8 kpc: three such chains joined the five pinned ones. The taper was laid at each piece's
+  ends, as the ruling's item 1 words it, so every chain fell to zero at every kink: the realised ring power's median
+  was 0.44 of the budget on the Milky Way leg (0.86–0.89 in a probe without it). And **the composed field's power by
+  arm number over 6–10 kpc sat at m = 2 (1.54, 0.48, 0.18, 0.11, 0.04 for m = 2…6 against the law's 0.009, 1.06,
+  2.13, 2.44, 2.44)**: five arms 1.95 kpc wide at a spacing of 2.4 kpc nearly fill the ring, and what is left is
+  lopsided.
+- *The lead looked at the three fields face-on* (stars, gas, star formation; grey-scale maps of the published cell
+  means; no goal picture opened). **The Milky Way template shows no arm that can be picked out** — nested, nearly
+  circular bands, the gas faint outside the bar's lanes; `ngc_4414` shows broad broken patches with a spiral sense
+  out to 9 kpc, which is its class. Told to the owner as read, the same hour.
+- *Found besides.* The gate's sentence "the composed crest lies within 0.1 width of each pinned locus" does not hold
+  by construction (78 / 72 / 60 / 55 / 48 / 28 % of locus points, Scutum–Centaurus to Outer): the pinned ridges are
+  on Reid's formula to 1e-12 kpc and their neighbours move the crest. The masers' check passes without power (gas
+  0.39σ against a null median of 0.50; 98 % of rotations of the Sun within 1σ). The carried gas profile misplaces a
+  median 0.06 % and 0.03 % at mid-gap against a direct solve, but over 1 % on 4 of 321 and 8 of 247 star-forming
+  gaps (worst 2.2 % and 2.8 %), where a crossing piece's pitch is under half the disc's. A piece as wide as its ring
+  was given no amplitude: 2 080 of 19 800 rings on the Milky Way leg, and six galaxies of each drawn-pitch leg
+  (pitch under about 3°) with no arm at all. **Cost:** the star catalogue 2 173 µs a cell (S59 883–983; layer off
+  365–416), `region: whole disc` 1.95 → 4.28 s cold, `bright: whole disc` 6.2 → 9.2 s — the carried map is not
+  rigid, so every young star pays the ring quadrature at two rings. With the layer on `template=milky_way` is no
+  longer the bare default galaxy; layer off it still is. The viewer's parser accepts neither new pin shape.
+
+**A follow-up to the gate (Fable; nothing read, nothing run).** "Eight of nine predictions failed and the record
+says so; nothing was moved to mend them, which is right. What follows is read off the m-split check, which did its
+job … That is a geometric inconsistency between the width law and the budget's arm count, not a tuning question."
+1. "The taper is a chain's two ends, over one width each; a chain is continuous through its kinks; a flocculent
+   disc's single pieces are chains of one and taper at their own ends. The source's 'ends are tapered' is of whole
+   arms."
+2. "No chain is born inside a bar's half-length; the birth sweep starts at R = a in a barred disc. The budget's
+   count on a ring is the chains actually crossing it, pinned and drawn; the expectation in item 4 of D219 is over
+   the drawn part only."
+3. **"The width is bounded by the spacing: a piece's FWHM on a ring is min(the width law's, half the ring's crossing
+   spacing πR sin p/N(R)), N the chains crossing.** Source and reason: the width law (0.53 h) was measured on
+   two-to-four-armed galaxies where spacing far exceeds width, and 'width over arm spacing' is unmeasured; the law's
+   own crest is half its period (D210's cosine, the mode's definition), so a ridge wider than half its spacing is
+   not a crest of the law's arm number but the sum the modes already were — which the m-split check showed. Declared
+   as a bound with this reasoning; it is not a target and is never raised."
+4. "Pitch: p(1 + 0.56 z) with no floor stands; Reid's own rows hold −1.0°, 1.0° and 3.0°. A near-circular piece is a
+   ring arc of its drawn extent, narrowed by item 3 like any other."
+5. The pinned loci: "each pinned piece's own ridge lies on Reid's locus to 1e-12 kpc, by construction; the composed
+   crest's distance from each locus is read and disclosed … and re-read after items 1–3". The masers' and young
+   stars' checks are recorded with their nulls: "no power, stated".
+6. The carried map: "where the mid-gap misplaced weight passes 1 %, solve a ring at the mid-gap and carry from it,
+   recursing at most twice (quartering), then record what remains; the check is that solve. Dividing the carried
+   profile by its own exact mean at the point's radius is part of the map's definition (a non-rigid map keeps no
+   mean; I2 needs it) … it is not the forbidden division of a published field."
+7. "The cost is recorded as read with no bound; #154's text is amended: the alignment-angle table does not apply to
+   a non-rigid map … Nothing owed before the merge."
+8. "Under item 3, σ_φ ≤ π/(2.355 N) < √π for any N ≥ 1, so no piece is as wide as its ring and B = 0 by that cause
+   should vanish; re-read and count what remains; a galaxy with no arm at all is counted and recorded, not mended."
+
+*Its predictions for the second pass (Milky Way template):* 5 chains cross R₀; spacing ≈ 2.4 kpc; FWHM ≤ 1.2 kpc
+there; B ≈ 0.5; stellar crest over trough 2.5–3; the m-split over 6–10 kpc peaked at m = 5 ± 1; Σf at 8 kpc 0.5–0.7
+("the power now sits at kh ≈ 1 where T ≈ 0.5"); the gas minimum 0.7–0.8; the PHANGS ratio of means 1.3–1.5 — "a miss
+again"; the realised ring power's median 0.8–0.9 of the budget. `ngc_4414`: pieces narrowed, ratio 1.3–1.4, the
+check still a miss. *The gate as amended:* D219's, plus no chain born inside a; the taper at chain ends only; FWHM ≤
+half the crossing spacing on every ring and seed; the pinned ridges on their loci to 1e-12 kpc; the mid-gap error ≤
+1 % or the gap recorded after two recursions; B = 0 rings counted. *Forbidden:* "raising the width bound or lowering
+it below the rule to make a look; a pitch floor; a class or count draw; tuning B, h, the taper or the factor to the
+PHANGS ratio or the goal pictures; dividing a published field by a sampled mean; a fallback where the gas or the map
+fails."
+
+**The owner's, told before the second pass (Fable).** "(a) The arm number: the law they kept gives 4.7 at R₀ and
+Reid gives five, and both are what this build shows; near-infrared counts of the Milky Way's old stars read as two
+arms are a reading not yet done — theirs to order, under #138; the second pass proceeds on the law as kept. (b) The
+gas contrast: under the material frame (no shocks, D216 item 1) with the thickness factor, the steady response gives
+1.3–1.5 where PHANGS reads 2.73 — this is now a predicted, repeated miss of that frame's own physics, not of a
+parameter; the alternative is a pattern speed with flow through the arms, which is a plan question for them, not a
+knob for us; nothing here changes it this session. (c) The width is not theirs: item 3 is a consistency bound … The
+build does not wait."
+
+*(The lead's note on (b): 2.73 is the model's own published `gas_arm_contrast`; the PHANGS window of the disclosed
+check is 1.37–5.79.)*
