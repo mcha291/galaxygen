@@ -713,16 +713,20 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     the price of a cell (was 1500 µs for the one run; the reader's cost has no sourced bound, #154). The
     ordering is not asserted layer on: the layered reader prices young stars inside the bar's footprint by a
     quadrature each (#154), so it is not a property of the layered catalogue.
+
+    **S60 (debt #68): each size is timed three times and the least kept.** S59's clone check failed here once,
+    on the layer-off run: one stall made 500 stars cost more than 2 000 and the first marginal cost negative
+    (0 of 15 on an idle machine). No bound moved.
     """
     from galaxy.specs import performance
 
-    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), repeats=3)
     on_stars, on_secs = [s[1] for s in on["samples"]], [s[2] for s in on["samples"]]
     on_marginal = [(on_secs[i + 1] - on_secs[i]) / (on_stars[i + 1] - on_stars[i]) for i in range(len(on_secs) - 1)]
     assert on_marginal[0] > 3.0 * on_marginal[-1], on_marginal  # 5.5-8.0 here
     assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
 
-    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False)
+    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False, repeats=3)
     cells = cost["cells per sample"]
     stars = [s[1] for s in cost["samples"]]
     secs = [s[2] for s in cost["samples"]]
