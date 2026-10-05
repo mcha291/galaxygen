@@ -136,7 +136,7 @@ def harmonics_summed(real: np.ndarray, imaginary: np.ndarray) -> np.ndarray:
     :data:`HARMONIC_FLOOR` of the ring's largest (0 for a ring that holds none). ``real`` and ``imaginary`` are
     (rings, HARMONICS). A ring's count is its own, so a ring's sum is the same bits alone as in any batch, and
     no ring pays for harmonics only another needs."""
-    size = np.sqrt(real**2 + imaginary**2)
+    size = np.hypot(real, imaginary)
     matters = size > HARMONIC_FLOOR * size.max(axis=1, keepdims=True)
     return np.where(matters.any(axis=1), HARMONICS - np.argmax(matters[:, ::-1], axis=1), 0)
 
@@ -149,12 +149,13 @@ def ring_variance(sigma: np.ndarray) -> np.ndarray:
     Evaluated element by element, by σ alone: up to :data:`WIDE` by the sum's other form,
     σ/(2√π) (1 + 2 Σ_{k=1..3} e^{−(πk/σ)²}) − σ²/(2π) (Poisson's summation: the Gaussian's value and the images'
     corrections, to e^-70); past it by the first six terms of the sum itself (to e^-81)."""
-    sigma = np.asarray(sigma, dtype=float)
+    shape = np.shape(sigma)
+    sigma = np.atleast_1d(np.asarray(sigma, dtype=float))
     with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
         images = np.zeros(sigma.shape)
         for k in (1, 2, 3):
             images += np.exp(-((math.pi * k / sigma) ** 2))
-        out = np.asarray(sigma / (2.0 * math.sqrt(math.pi)) * (1.0 + 2.0 * images) - sigma * sigma / TWO_PI)
+        out = sigma / (2.0 * math.sqrt(math.pi)) * (1.0 + 2.0 * images) - sigma * sigma / TWO_PI
         wide = sigma > WIDE
         if wide.any():
             sw = sigma[wide]
@@ -162,7 +163,7 @@ def ring_variance(sigma: np.ndarray) -> np.ndarray:
             for m in range(1, WIDE_TERMS + 1):
                 series += np.exp(-((m * sw) ** 2))
             out[wide] = np.where(np.isfinite(sw), sw * sw / math.pi * series, 0.0)
-    return out
+    return out.reshape(shape)
 
 
 def deviation(delta: np.ndarray, sigma: np.ndarray) -> np.ndarray:
@@ -173,6 +174,8 @@ def deviation(delta: np.ndarray, sigma: np.ndarray) -> np.ndarray:
     σ/√(2π) exactly, so this function's is 0. Evaluated by the images nearest δ where σ ≤ :data:`WIDE` and by its
     Fourier series past it (the module's constants say to what)."""
     delta, sigma = np.broadcast_arrays(np.asarray(delta, dtype=float), np.asarray(sigma, dtype=float))
+    shape = delta.shape
+    delta, sigma = np.atleast_1d(delta), np.atleast_1d(sigma)
     d = np.abs(delta - TWO_PI * np.rint(delta / TWO_PI))  # |δ| brought into [0, π]
     inv = 0.5 / (sigma * sigma)
     out = np.exp(-(d * d) * inv) + np.exp(-((TWO_PI - d) ** 2) * inv)
@@ -188,7 +191,7 @@ def deviation(delta: np.ndarray, sigma: np.ndarray) -> np.ndarray:
         for m in range(1, WIDE_TERMS + 1):
             series += np.exp(-0.5 * (m * sw) ** 2) * np.cos(m * dw)
         out[wide] = (2.0 / SQRT_TWO_PI) * sw * series
-    return out
+    return out.reshape(shape)
 
 
 def depth(sigma: np.ndarray) -> np.ndarray:

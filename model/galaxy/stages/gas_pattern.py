@@ -652,7 +652,7 @@ class GasPattern:
         analogue of the modes' f_m. Its sum along a ring is the most the forcing could reach were every
         harmonic's crest at one azimuth."""
         real, imaginary = self.forcing_harmonics()
-        return np.sqrt(real**2 + imaginary**2)
+        return np.hypot(real, imaginary)
 
     # --- the solved rings ------------------------------------------------------------------------------
 
