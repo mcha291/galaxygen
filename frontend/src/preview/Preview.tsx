@@ -149,7 +149,8 @@ function Scalars({ fields, values }: { fields: FieldDecl[]; values: Record<strin
           <div key={f.name} className={styles.scalar} title={`${f.label} (${f.name})\n\n${String(f.about ?? "")}`}>
             <dt>{f.label}</dt>
             <dd>
-              {v === undefined || v === null ? "not computed" : categorical ? f.categories![v] : formatNumber(v, 4)}
+              {/* A category scalar rides in the header as its label ("yes", "flocculent"), not as an index (Published.tsx reads it so too). */}
+              {v === undefined || v === null ? "not computed" : categorical ? (f.categories![v] ?? String(v)) : formatNumber(v, 4)}
               {unit && <span className={styles.scalarUnit}> {unit}</span>}
             </dd>
           </div>
