@@ -456,7 +456,13 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     8.2 kpc below are S58's rows to the fourth figure. Inside it the arm modes turn against the bar's body and
     lanes, which stay on the bar's axis, so c and g are other sums of the same parts: at 4 kpc dust alone +8.12 %
     under the screen's +88.8 %, and +6.91 % with the stars on c. The flank - the one cell where c is nearest 1 - is
-    another cell on all three rings (0.831 at R₀, 0.626 at 6 kpc, 0.526 at 4 kpc)."""
+    another cell on all three rings (0.831 at R₀, 0.626 at 6 kpc, 0.526 at 4 kpc).
+
+    **And once more the same session (D218's follow-up at the gate: a segment's pitch is relative to the disc's).**
+    The winding is another, so the rings are turned otherwise. Beyond the bar's half-length a ring's sums are again
+    the ones they were (6 and 8.2 kpc: S58's rows still); at R₀ the flank is another cell again, 0.811. At 4 kpc the
+    arms meet the lanes at other angles: dust alone +8.66 % under the screen's +94.4 %, +7.36 % with the stars on
+    c, the lane's crest letting through 0.400."""
     out = run(prod[0].get(DEFAULT_MODEL), only=FIELDS + ("pattern_density_contrast", "gas_density_contrast"))
     f, R = out.fields, np.asarray(out.grid.R)
     c = np.maximum(np.asarray(f["pattern_density_contrast"], dtype=float), 0.0)
@@ -484,7 +490,10 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # gas the stellar bar's cosine; R₀'s row below is unmoved.
     # S59 (D218): was (0.0714, 0.0651, 0.7778) at 4 kpc - inside the bar's half-length the arm modes, on the winding
     # laid in seeded segments, turn against the bar's body and lanes; the rows at 6 kpc and R₀, beyond it, are unmoved.
-    assert read[4.0][:3] == pytest.approx((0.0812, 0.0691, 0.8885), abs=0.0005)
+    # S59 (D218 follow-up): was (0.0714, 0.0651, 0.7778); first pass (0.0812, 0.0691, 0.8885) - a segment's pitch
+    # relative to the disc's, so inside the bar's half-length the arms meet the body and the lanes at other angles
+    # again; the rows at 6 kpc and R₀ are S58's still.
+    assert read[4.0][:3] == pytest.approx((0.0866, 0.0736, 0.9439), abs=0.0005)
     assert read[6.0][:3] == pytest.approx((0.0531, 0.0123, 0.2104), abs=0.0005)
     assert read[8.2][:3] == pytest.approx((0.0125, -0.0182, 0.0361), abs=0.0005)
     # D210 (i), read and failed: the ring's light at R₀ still falls with the dust on the gas's pattern (S51 read
@@ -503,7 +512,9 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # S59 (D218): was (0.606, 0.994, 0.863) - the crest and the gap are R₀'s as they were; the flank is another cell
     # again, the ring turned by the segments' winding (cell 239, where the gas stands at 0.84 of its mean; S58's was
     # cell 147, at 0.66).
-    assert read[8.2][3:] == pytest.approx((0.606, 0.994, 0.831), abs=0.002)
+    # S59 (D218 follow-up): was (0.606, 0.994, 0.863); first pass (0.606, 0.994, 0.831) - the flank is another cell
+    # once more (cell 314, where the gas stands at 0.97 of its mean); the crest and the gap are R₀'s as they were.
+    assert read[8.2][3:] == pytest.approx((0.606, 0.994, 0.811), abs=0.002)
     assert read[8.2][3] < 0.747 and read[8.2][4] > 0.874
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
@@ -512,7 +523,9 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # S57 (D216): was (0.452, 0.577, 0.520); S56 (D215): was (0.451, 0.576, 0.531)
     # S58 (D217): was (0.441, 0.630, 0.519) - the crest at 4 kpc is a lane's
     # S59 (D218): was (0.404, 0.641, 0.503) - inside the bar's half-length the arms turn against the lanes
-    assert read[4.0][3:] == pytest.approx((0.403, 0.641, 0.526), abs=0.002)
+    # S59 (D218 follow-up): was (0.404, 0.641, 0.503); first pass (0.403, 0.641, 0.526) - the crest is a lane's with
+    # an arm's response on it at another angle (the ring's largest gas contrast 5.37 where the first pass read 4.99)
+    assert read[4.0][3:] == pytest.approx((0.400, 0.641, 0.526), abs=0.002)
 
 
 def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
@@ -626,4 +639,7 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
     # S57 (D216): was 1.014 (S55's, read again at S56); S52 (D211): was 1.023 (mixed slab)
     assert at(R, q, 8.2) == pytest.approx(1.044, abs=0.002)
     assert at(R, q, 2.0) == pytest.approx(0.9067, abs=0.002)  # S59 (D218): was 0.9036; S58 (D217): was 0.9995; S52 (D211): was 1.001 (mixed slab)
-    assert at(R, q, 4.0) == pytest.approx(0.9387, abs=0.002)  # S59 (D218): was 0.9408; S58 (D217): was 0.9950; S57 (D216): was 0.9980; S56 (D215): was 0.9974
+    # S59 (D218 follow-up): was 0.9408; first pass 0.9387 - at 4 kpc the arms turn against the lanes at other angles
+    # on the relative residual's winding. (The other four layered and slab readings here still read inside the first
+    # pass's pins: 0.9502 and 0.9654 over the disc, 0.8522 and 0.9065 at 2 kpc; R₀'s are the ring's as they were.)
+    assert at(R, q, 4.0) == pytest.approx(0.9346, abs=0.002)  # S58 (D217): was 0.9950; S57 (D216): was 0.9980; S56 (D215): was 0.9974
