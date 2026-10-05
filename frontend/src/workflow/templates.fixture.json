@@ -1,5 +1,5 @@
 {
-  "about": "A fixture for vitest (templates.test.ts): the shape `/api/templates` answers with, as S54's contract states it (D213 rulings 1, 2, 5 and 7), with each template's pins as S58 added them (D217 item 2: {name, value, source}, the value a class) and S59 (D218 items 5-6: a measured number). Not data the viewer runs on - the viewer's templates come from the route alone (rule D5) and nothing in src/ but the tests imports this file. The cameras, the lenses, the filter sets and the distance are D213's; every other number is illustrative.",
+  "about": "A fixture for vitest (templates.test.ts): the shape `/api/templates` answers with, as S54's contract states it (D213 rulings 1, 2, 5 and 7), with each template's pins as S58 added them (D217 item 2: {name, value, source}, the value a class) and S59 (D218 items 5-6: a measured number; then each pin's own label and unit, as the route serves them - the names, labels, units and values are the route's, the sources illustrative). Not data the viewer runs on - the viewer's templates come from the route alone (rule D5) and nothing in src/ but the tests imports this file. The cameras, the lenses, the filter sets and the distance are D213's; every other number is illustrative.",
   "payload": {
     "default": "milky_way",
     "templates": [
@@ -28,8 +28,14 @@
         "filters": "rgb",
         "instrument": { "distance_mpc": null, "pixel_scale_arcsec": null },
         "pins": [
-          { "name": "bar_present", "value": true, "source": "[illustrative] the Milky Way is barred" },
-          { "name": "sun_bar_angle", "value": 30.0, "source": "[illustrative] the bar's angle to the Sun-centre line" }
+          { "name": "bar_present", "label": "Bar present (a template's pin)", "unit": null, "value": true, "source": "[illustrative] the Milky Way is barred" },
+          {
+            "name": "sun_bar_angle",
+            "label": "Angle of the bar to the Sun-centre line (a template's pin)",
+            "unit": "deg",
+            "value": 30.0,
+            "source": "[illustrative] the bar's angle to the Sun-centre line"
+          }
         ],
         "fit": null,
         "checks": []
@@ -56,8 +62,14 @@
         "filters": "wfc3",
         "instrument": { "distance_mpc": 17.7, "pixel_scale_arcsec": null },
         "pins": [
-          { "name": "bar_present", "value": false, "source": "[illustrative] no source finds a bar in NGC 4414" },
-          { "name": "pitch_angle", "value": 28.9, "source": "[illustrative] the measured mean pitch of its arm segments" }
+          { "name": "bar_present", "label": "Bar present (a template's pin)", "unit": null, "value": false, "source": "[illustrative] no source finds a bar in NGC 4414" },
+          {
+            "name": "pitch_angle",
+            "label": "Arm pitch angle (a template's pin)",
+            "unit": "deg",
+            "value": 28.9,
+            "source": "[illustrative] the measured mean pitch of its arm segments"
+          }
         ],
         "fit": { "targets": [], "controls": [] },
         "checks": []
