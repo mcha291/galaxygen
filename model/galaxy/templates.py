@@ -485,9 +485,11 @@ MILKY_WAY = Template(
     about=(
         "The default galaxy: the registry's defaults, every one a measured value of the Milky Way or derived "
         "from one (rule A5). The template overrides no control, no seed and no event list, so it is the defaults "
-        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins one "
-        "measured fact of its structure: the Milky Way is barred. The model derives the same at these inputs, so "
-        "the pin changes no number. Seen face-on."
+        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins two "
+        "measured facts of its structure: the Milky Way is barred, which the model derives too at these inputs, "
+        "so that pin changes no number; and its bar stands 30 degrees from the line from the Sun to the centre, "
+        "the near end ahead of the Sun in the direction the disc turns, which places the Sun's azimuth and moves "
+        "nothing else of the galaxy. Seen face-on."
     ),
     model="azimuthal",
     camera=Camera(inclination_deg=0.0, azimuth_deg=270.0, radius_kpc=20.0, fov_deg=45.0),
