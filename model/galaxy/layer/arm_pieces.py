@@ -371,7 +371,8 @@ def _column(name: str, label: str, unit: str, about: str) -> FieldDecl:
         about=about + (
             " One row an arm piece of the realised census, the rows by chain and inside out along each chain. No "
             "row with the randomness layer off: no arm is placed. A column of a small table, not of a catalogue: "
-            "the model's own stages read the table whole to lay the stars' arms and the gas's answer to them."
+            "the model's own stages read the table whole to lay the stars' arms and the gas's answer to them, and "
+            "it is not shown by the viewer, which draws the arms it sets."
         ),
         stands_in_for=_STANDS_IN_FOR, conserves=_CONSERVES, statistic=_STATISTIC,
     )
