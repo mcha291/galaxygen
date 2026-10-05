@@ -1,60 +1,53 @@
-# BRIEF — S60: BUILD_III's Phase L1, clustered censuses and the ring-first draw (an Opus lead; no scheduled gate)
+# BRIEF — S60: BUILD_III's Phase P5, the arms as a census of pieces (an Opus lead; a conditional gate expected)
 
-**The state (2026-10-05).** S59 is merged (D218). With the layer on the arms' common winding is laid in seeded
-segments (a table `arm_segment`, the pitch of each the disc's plus a residual of 0.56 × the pitch; geometry only:
-the gas law, the bar's angle and the lanes keep the disc's pitch); two measured numbers are template pins
-(`sun_bar_angle` 30° on `milky_way`, `pitch_angle` 28.9° on `ngc_4414`); the young stars are placed by the star
-formation law at a point (`systems.Modulation`), not a table between rings. Rows are judged layer-off: 12 / 20 / 5
-of 37, unmoved. Register 91 open = 11 + 80, 46 discharged. Numbers from D219, #155, row 38, board row 60. **The
-owner's standing order: run the sessions back to back, stop only for a ruling that is the owner's, spawn Fable at
-the plan's gates and at a stop condition** (the gate agent of S57–S59 can be resumed if it still exists).
+**The state (2026-10-05).** S59 is merged (D218). The owner saw the frames beside the goals — far from both — and
+ruled on the arms: **"Take C, don't reorder the sessions"** (D219). C: the stellar arms are built from **arm
+pieces**, ridges on their own loci, a few long chains for a grand design and many short ones for a flocculent
+disc; **the arm-number law stays as each ring's budget of arm power**; the pieces are the layer's. Phase P5 is
+inserted at S60 and every later phase runs one session on (L1 S61 … Audit V S67); `BUILD_III.md` is amended.
+Rows are judged layer-off: 12 / 20 / 5 of 37. Register 91 open = 11 + 80, 46 discharged. Numbers from D219 (open),
+#155, row 38, board row 60. **The owner's standing order: run the sessions back to back, stop only for a ruling
+that is the owner's, spawn Fable at the plan's gates and at a stop condition** (the gate agent of S57–S59 can be
+resumed if it still exists).
 
-## Told to the owner at S59's close (none awaited; if they answer, their word comes first)
-- **The Milky Way template cannot show its measured arms** (#152, with #138): a sum of modes holds no arm to pin;
-  a ridge per arm for a pinned template is a change of plan, theirs. The check against Reid et al. 2019 has no power.
-- **Its default texture seed is an outlier winding** (987th of 1000 in net turn): the outer disc reads as nested
-  ripples. Rerolling `texture_seed` in the viewer is their control; we do not re-seed.
-- `ngc_4414` shows its measured pitch (28.9°; one template field restores the draw, 14.3°) and its seed lays a
-  reversed segment at 1.35–1.60 kpc that shows as a streak beside the nucleus (#150, #154).
-- Still theirs from S57–S58: a floor on the drawn pitch (#142); Erwin 2018's bar frequency as a draw (#145); the
-  lanes' placeholder width (#147).
+## Told to the owner (none awaited; if they answer, their word comes first)
+- How the NGC 4414 proposals fit: four sentences added to later phases (D219's table). The thickness correction
+  of the gas's forcing (#142) and an arm class per galaxy are in this phase.
+- Still theirs from S57–S59: a floor on the drawn pitch (#142), Erwin 2018's bar frequency as a draw (#145), the
+  lanes' placeholder width (#147). The catalogue costs 2.3× with the layer on (#154).
 
-## First
-`uv run python tools/bootstrap.py`; confirm S59's `verify_clone` on `main` passed. **Read `BUILD_III.md` §1,
-"Phase L1" in §5 (both its ruled paragraphs), §3d–§3g; D214 (the separation, #137) and D218's reader.**
+## Where this session stands (update this list as it moves)
+1. Done: `session-60` cut; the flaky timing test hardened (#68); `READING_CLUSTERING.md` entered (L1's, for S61);
+   D219 opened; the plan amended.
+2. **Readings, two blind readers (§3e):** (a) an arm as measured — width across it and its profile, amplitude
+   along it, number and length of arms and of pieces by arm class, where arms start, how they join, arm–interarm
+   contrast in old stars; (b) the reduction of a spiral perturbation's force by the disc's thickness, and the
+   gas's response to a narrow ridge. Enter as `docs/READING_ARM_PIECES.md`.
+3. **Probe before build, on the quantities the ruling will use:** a ridge field's Fourier terms per ring (how many
+   the solver needs; does it converge; the forcing with and without the thickness factor on both templates and
+   the suite's seeds); the budget (a ring's arm power under P1's law against what pieces of a sourced width can
+   carry without going negative); the Milky Way's measured loci as pieces (Reid et al. 2019, `tests/reid2019.py`).
+4. **`docs/HANDOFF_S60.md` and a conditional gate (Fable):** Phase P5's "to be ruled" list, with the numbers.
+5. **Build to the ruling;** re-pin builders of their own once the model is final; the viewer's frames; **an Opus
+   reviewer on the diff before the merge.** Then the close (the suite ≈ 63 min; `verify_clone`).
 
-## The order (BUILD_III §5, Phase L1)
-1. **Reading, one blind reader (§3e):** two-point correlation functions of young clusters and of molecular
-   clouds, and how they flatten with age; association sizes against age. Slope, amplitude, range, with sources.
-2. **Probe before build, on the quantities the ruling will use:** what `census_clustering` (unit mean in every
-   level-0 cell, multiplying the clouds' expected counts) does to I1–I2 and D60; what the ring-first draw needs —
-   a ring's count and every per-object draw on a ring stream, the layer assigning cell and azimuth, **a cell's
-   objects from the ring's draw and a fixed allocation without materialising the ring's other cells** (D60); the
-   cost. Expect stop conditions (the allocation; the cloud's offset bounded to its cell, or the cluster binned by
-   its cloud's ring, #95; `cloud_height`: a placement or a sample): put them to a conditional gate together.
-3. **Build:** the field and the clouds; the bright stars' 20–100 Myr following the field with its finest octaves
-   dropped by age; the ring-first draw; `cloud_texture` to `texture_seed`. **Re-pin builders of their own, with
-   disjoint file lists, after the model is final** (S59's lesson). After it `CENSUS_STATISTICS` is empty and the
-   realised ring totals are identical layer on and off.
-4. **An Opus reviewer on the diff before the merge.**
-
-## What S59 leaves (D218)
-- **Owed as an instrument (#151):** a probe of the gas law at the local pitch in its regular form on the suite's
-  240 galaxies, #142's regime counted. Not L1's; run it when a session has room, before anything reads it.
-- The censuses read the gas pattern through `pattern.Winding`; the young stars through `systems.young_reader`
-  (needs the model's constants: `materialise(constants=)`). The table `sfr_modulation` is the law at a cell's mean
-  contrast and the render reads grid fields at fixed φ between rings (#154; the remedy is named there). **The
-  star catalogue costs 2.2–2.4× with the layer on** (the bright stage 3.1 s, was 2.2): no bound is sourced.
+## What S59 leaves that this phase touches (D218)
+- `pattern.Winding` (the common winding in segments; table `arm_segment`), the modes' phases (`arm_phases`),
+  `ArmPattern` / `GasPattern` (the solver takes Σ_m f_m cos(mχ − θ_m) per ring; 1440 cells), the bar's tie of θ₂,
+  the young stars' point reader (`systems.Modulation` reads `GasPattern.ring_star_formation_contrast_at`).
+- Layer off the arms are not placed at all (composed fields at their neutral value): the pieces change nothing there.
+- #151 (the gas law at the mean pitch) and #152 (the measured arms) may be discharged here; #138 re-read.
 
 ## Traps
-- **Ask of a gate whether the model's variables can hold what it asserts** before building (S59: the loci).
-- **A check gets its null before its verdict**; a draw is tested at the ends of its range and the default seed's
-  place in its own distribution is read.
-- **Check a probe before it reaches a gate, on the quantity the ruling will use**; one hand-derived test
-  independent of the modules; the reviewer always; when a field gains structure, list its readers.
-- Hold every new row or check against I1–I5 (a row reads no composed or synthetic field); layer-off nothing may
-  move but what the ruling names; frames only after the pins are read; **read the viewer's parser when the wire grows**.
-- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no m = 1 term; no re-seeding of a template; no
-  change to the pitch's draw or the bar's length without the owner.
+- **Ask of a gate whether the model's variables can hold what it asserts**; a check gets its null before its
+  verdict; a draw is tested at the ends of its range and the default seed's place in its distribution is read.
+- **Check a probe before it reaches a gate, on the quantity the ruling will use; a cost put to a gate is read on
+  the model's own instrument against the session's start, by the lead.**
+- When a field gains structure, list its readers; when the wire grows, read the viewer's parser; **look at the
+  frames beside the goals before the close and say plainly what they show.**
+- Re-pins by builders of their own, disjoint files, after the model is final; every moved pin keeps its old value.
+- Hold every new row or check against I1–I5; layer-off nothing may move; nothing is tuned to a goal picture.
+- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no m = 1 term; no re-seeding of a template.
+- L1's brief as it stood is `git show s59:docs/BRIEF.md`; its reading is `docs/READING_CLUSTERING.md`.
 - Resume a builder or the gate agent with SendMessage; cherry-pick a builder's commits when the session's branch
   has moved; scripts in the scratchpad; LF newlines; 8 KB per Bash command; no pinned-doc edits under a suite.

@@ -10405,3 +10405,57 @@ as a streak beside the nucleus. (4) The young stars are placed by the law at a p
 little over twice what it did and the bright catalogue about a third more (cold; a warm request is a cache hit). (5) Still theirs from S57–S58: a floor on the drawn pitch (#142), Erwin 2018's bar frequency
 as a draw (#145), the lanes' placeholder width (#147). (6) Owed by us: the probe of the gas law at the local
 pitch (#151).
+
+### D219. S60: the arms become a census of pieces (the owner's ruling; BUILD_III Phase P5, inserted; an Opus lead)
+
+**Session S60, opened 2026-10-05 on `session-60`; an Opus lead under the owner's standing order.**
+
+**How S59 ended.** The first `verify_clone` on `main` failed on one test, `tests/test_audit.py`'s S21b timing test,
+in its layer-off part: one stall made 500 stars cost more than 2 000 and the first marginal cost negative (1 342
+passed; 0 failures in 15 runs of its assertions on an idle machine); the re-run passed (1 343 passed, 5 skipped,
+the specs OK, at `9322c6e`). *Hardened as this session's first commit:* `specs.performance.catalogue_cost` times
+each size as the least of a few repeats, and the test asks for three; no bound moved (#68).
+
+**The owner asked how the pictures stand against the goals (2026-10-05), and the lead set the frames beside
+them.** Far. *The Milky Way:* the goal has a few bright, narrow, unequal blue-white arms, pink knots along dust
+lanes, a long yellow bar; the frame has the bar and its two hooked lanes, and otherwise a dim beige disc with
+thin, nearly circular dark ripples (S59's segments on the default seed's outlier winding), no colour difference
+between arm and disc, no knots, and bright stars scattered evenly to the frame's edge; arm over interarm in blue
+1.41–1.66 against the goal's 1.83. *NGC 4414:* the goal is a flocculent disc under a brown filamentary web with
+patchy blue-white complexes; the frame has the unbarred, inclined disc and its yellow core, two or three broad
+smooth sweeps, a dark fraction of 0.000 against 0.157, and a sparse ring of isolated points; 1.88 against 2.72.
+**S53–S59 moved the pictures little**: they built the model's structure and its honesty, and the phases that face
+the picture (the light by age, the censuses at galaxy scale, structure between the clouds) are all still ahead.
+The arms themselves are the first obstacle — #138 and #152 as recorded.
+
+**The options put to the owner for the arms.** (A) Fewer and stronger modes: one dominant arm number, sharpened
+by its phase-locked harmonics — a small change, and the symmetric repeated spiral this build set out to leave.
+(B) A ridge per arm: each arm its own kinked locus with a width and a brightness — unequal, pinnable arms; a
+change of plan. (C) Arm pieces as a census: many separate pieces, a few long chains for a grand design and many
+short ones for a flocculent disc, **the arm-number law kept as each ring's budget of arm power** and the geometry
+moved to the layer — both goals from one mechanism, on S59's segment statistics used per arm as the sources
+report them. The lead recommended C, and offered to put the picture-facing phases first.
+
+**The owner's ruling (2026-10-05): "Take C, don't reorder the sessions."** Read together by the lead and told to
+the owner before any work: C is new work and goes in as its own phase, **P5 at S60, ahead of L1**, and every
+later phase keeps its order one session on (L1 S61, L2 S62, V5 S63, V6 S64, V7 S65, V8 S66, Audit V S67).
+`BUILD_III.md` is amended: its header, Phase P5's text, §6's table, §7's rulings 11 and 12; the board has a
+fifteenth row.
+
+**The owner's second question: how the proposals for NGC 4414 fit the plan.** Most already have a home; four are
+a sentence added to a phase's text, none a session.
+
+| Proposal | Where | The plan's text |
+|---|---|---|
+| The inner gas restored: the forcing corrected for the disc's thickness (#142) | P5 (S60) | added: narrow pieces need more Fourier terms, which the razor-thin forcing overstates |
+| Flocculent arms: an arm class per galaxy, pinned on this template | P5 (S60) | added; how an unpinned galaxy gets its class is the gate's |
+| Clustered censuses | L1 (S61) | unchanged: its gate already measures the finished census |
+| One field for the dust and the stars, the stars displaced by age | L1 (S61), then L2 (S62) | added as a question for L1's gate |
+| Filaments: a ridged form of the fluctuation | L2 (S62) | added as a question for L2's gate (a choice of look with no measured statistic) |
+| Feathers off the arms | L2 (S62) | unchanged ("spurs"); they attach to P5's pieces |
+| Patchy young light: the clustering field on the unresolved young starlight | V5 (S63), drawn at V7 (S65) | added to V7 |
+| The cloud census at whole-galaxy scale | V6 (S64) | unchanged |
+| The bright stars' display | V8 (S66) | unchanged |
+
+The plan's rule stands for each: a synthetic field's statistics are sourced, and nothing is tuned to a goal.
+`READING_CLUSTERING.md`, taken for L1 during S59's closing suite, is entered on this branch so it is not lost.
