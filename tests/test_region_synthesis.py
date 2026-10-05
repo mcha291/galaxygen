@@ -71,8 +71,12 @@ def _clusters_against_field(svc, window, level):
         # are turned round each ring and the clouds fall in other cells - another draw of the same census again. The
         # disc's field is the same (3.92444e7 Lsun, to 5e-8); the clusters' sum moved +7.0 %, 1.1 of its own noise:
         # three regions brighter than any the census held before, at 6.9-8.0 kpc, on clusters under 4 Myr old.
-        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 1.0283),  # the disc: 12 582 clusters, noise 0.066; S59 (D218): was 0.9607 (12 569, 0.058); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
-        (_window(4.0, 12.0, 0.0, 2.0), 1, 1.0452),  # a quarter-disc sector at level 1: 2 480 clusters, noise 0.168; S59 (D218): was 0.9675 (2 534, 0.145); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
+        # S59 (D218 follow-up): a segment's pitch is relative to the disc's since the gate's follow-up, so the winding
+        # is another and the census another draw once more. The disc's field is the same again (3.92444e7 Lsun); the
+        # clusters' sum reads 0.982 of it, +2.2 % on S58's close and -4.5 % on the first pass's reading (its noise
+        # 6.2 %). The brightest region reads 1.01e6 Lsun, as on the first pass; that pass's next two are not here.
+        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9819),  # the disc: 12 583 clusters, noise 0.062; S59 (D218 follow-up): was 0.9607 (12 569, 0.058); first pass 1.0283 (12 582, 0.066); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
+        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9451),  # a quarter-disc sector at level 1: 2 493 clusters, noise 0.147; S59 (D218 follow-up): was 0.9675 (2 534, 0.145); first pass 1.0452 (2 480, 0.168); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
     ],
 )
 def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, measured):
@@ -93,10 +97,12 @@ def test_small_windows_are_recorded_not_gated(svc):
     # S57 (D216): the gas's steady response, another draw; was 0.6865 / 697, 0.5534 / 230, z -1.31 / -1.07
     # S58 (D217): the lanes and the bar-tied phase, another draw; was 0.6427 / 844, 0.4462 / 271, z -1.59 / -1.40
     # S59 (D218): the winding in seeded segments, another draw; was 0.6377 / 847, 0.4384 / 270, z -1.63 / -1.43
-    assert r1 == pytest.approx(0.7367, abs=1e-3) and k1 == 791
-    assert r2 == pytest.approx(0.4935, abs=1e-3) and k2 == 264
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-0.99, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.10, abs=0.02)
+    # S59 (D218 follow-up): a segment's pitch relative to the disc's, another draw again; was 0.6377 / 847, 0.4384 /
+    # 270, z -1.63 / -1.43; first pass 0.7367 / 791, 0.4935 / 264, z -0.99 / -1.10
+    assert r1 == pytest.approx(0.7578, abs=1e-3) and k1 == 832
+    assert r2 == pytest.approx(0.4885, abs=1e-3) and k2 == 256
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.00, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.18, abs=0.02)
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
@@ -108,7 +114,10 @@ def test_small_windows_are_recorded_not_gated(svc):
 # S59 (D218): was 6.465 - 12 582 regions, another draw again (the winding in seeded segments). The largest move of
 # this moment so far, and it is the tail's: the three brightest regions are new to the census (1.01e6, 8.7e5 and
 # 7.7e5 Lsun where the brightest was 7.1e5), and the second moment is the brightest few's.
-C_POP = 7.450
+# S59 (D218 follow-up): was 6.465; first pass 7.450 - 12 583 regions, another draw again (a segment's pitch relative to
+# the disc's). The brightest region reads 1.01e6 Lsun as on the first pass; the next are 7.1e5 and 6.2e5, where that
+# pass's were 8.7e5 and 7.7e5.
+C_POP = 6.953
 
 
 def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
@@ -151,9 +160,12 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     # S59 (D218): z mean 0.093 -> 0.198 (sd 1.29 -> 1.07, 93 % inside 2 and 98 % inside 3), median 0.8787 -> 0.9163,
     # mean 1.0519 -> 1.1107 - the clouds and the field's HII Halpha both on the response turned by the segments'
     # winding, another draw; the windows run from 77 to 339 clusters (median 154)
-    assert float(z.mean()) == pytest.approx(0.198, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.9163, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(1.1107, abs=1e-3)
+    # S59 (D218 follow-up): z mean was 0.093, first pass 0.198 -> 0.104 (sd 1.10, 93 % inside 2 and 97 % inside 3);
+    # median was 0.8787, first pass 0.9163 -> 0.7809; mean was 1.0519, first pass 1.1107 -> 1.0508 - a segment's
+    # pitch relative to the disc's, another draw; the windows run from 88 to 356 clusters (median 162)
+    assert float(z.mean()) == pytest.approx(0.104, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.7809, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(1.0508, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])
@@ -173,6 +185,7 @@ def test_a_census_is_the_same_at_every_level(svc, path, key):
     # S59 (D218): was `> 10` - on the winding laid in seeded segments cell 300 lies between the gas's arms (the gas's
     # sector mean there is 0.387 of its ring's, 0.598 at S58): 10 clouds and 8 clusters, 25 and 16 at S58. The bound
     # only keeps the comparison below from being empty; the cell is the one it was.
+    # (S59, D218 follow-up: 17 clouds and 11 clusters on the relative residual's winding; the bound stands.)
     assert len(rows_at[0]) > 7  # 58 clouds and 42 clusters at S40
     for level in (1, 2, 3):
         assert rows_at[level] == rows_at[0], (path, level)
