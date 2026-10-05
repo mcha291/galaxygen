@@ -10683,3 +10683,78 @@ build does not wait."
 
 *(The lead's note on (b): 2.73 is the model's own published `gas_arm_contrast`; the PHANGS window of the disclosed
 check is 1.37–5.79.)*
+
+**The second pass (the same builder, resumed; a partial hand-back at a clean commit) and how it read.** Built and
+asserted: the taper at a chain's two ends only; no chain born inside a bar's half-length; the count the chains
+crossing; a piece's FWHM min(the law's, π R sin p / N) on every ring and seed. Not built: the mid-gap rings of the
+carried map and the per-region determinism test — the builder ran out of room. Layer off still bit-identical (nine
+runs, 348 fields); 360 suite galaxies, 1 600 seed runs, 336 corners of the pattern stages and 28 whole-pipeline
+corners with no raise, NaN, negative or exact zero; no ring cut, none without amplitude, no galaxy without arms; the
+specs 12 / 20 / 5.
+- *The follow-up's predictions, read first (Milky Way template).* Chains at R₀ **6** (5); spacing 1.99 kpc (2.4);
+  FWHM 0.997 kpc (≤ 1.2: held); B 0.493 (≈ 0.5: held); crest over trough 2.45 (2.5–3: just under); **the power by
+  arm number over 6–10 kpc still peaks at m = 2** (2.82 / 0.22 / 0.45 / 0.26 / 0.31 against the law's 0.009 / 1.06 /
+  2.13 / 2.44 / 2.44; predicted at 5 ± 1); Σf at 8 kpc 1.18 (0.5–0.7); the gas minimum 0.69 (0.7–0.8); the PHANGS
+  ratio of means 1.474 with 11 of 53 rings under 1.37 (1.3–1.5: in range, and by the check's own rule a hit, not the
+  predicted miss); the realised power's median 0.80 of the budget (0.8–0.9). `ngc_4414`: not narrowed at R₀ (the
+  law's 1.83 kpc is under the half-spacing 2.06), ratio 1.24 (1.3–1.4), the check still a miss (held).
+- **The masers' check now has power:** the gas's crest lies 0.22σ from the maser loci, the 1st percentile of its
+  null (the Sun rotated; median 0.58), and the young stars' 0.22σ likewise. The composed stellar crest within 0.1
+  width of the pinned loci on 52 / 51 / 91 / 100 / 79 / 89 % of points (Norma, Scutum–Centaurus, Sagittarius–Carina,
+  Local, Perseus, Outer). The census on the template: 49 pieces in 11 chains, 11 pieces pinned; chains crossing 2 /
+  2 / 5 / 5 / 6 / 7 / 6 / 6 / 6 at 4 … 14 kpc; the budget itself ends at 12.3 kpc.
+- *The carried map, with the narrower pieces and no mid-gap rings:* over 1 % on 14 of 321 and 15 of 247 star-forming
+  gaps, worst 4.8 % (7.575 kpc) and 4.7 %.
+- *Cost, cold (main → built, the same sitting):* the arm pattern 0.16 → 0.25 s, the gas pattern 0.56 → 0.50 s,
+  `region: whole disc` 1.57 → 2.33 s, `bright: whole disc` 5.09 → 6.39 s, `render: whole, rgb` 3.00 → 3.40 s; the
+  star catalogue 1 929 µs a cell.
+- *The lead looked again* (face-on, and unwrapped in azimuth against ln R, where a logarithmic arm is a straight
+  line; no goal picture opened). Distinct narrow streaks now exist, clearest in the star formation field. **Three
+  defects remain, each seen and each traced:** (D1) a nearly circular piece is smeared round its whole ring — laid
+  on each ring as a wrapped normal of dispersion σ/(R |sin p_j|), 3 rad at 1° — and the census holds many (Reid's
+  own −1.0°, 1.0°, 3.0°; drawn ones from −4.8° to 4.2°): the largest ring-to-ring change of the stellar profile,
+  0.16 against a median of 0.028, is at 7.31 kpc where a chain starts with a 3.0° piece; (D2) chains cross, a 30°
+  piece of one cutting the 10° pieces of its neighbours; (D3) births at uniform azimuths put the power at m = 2 as
+  shot noise. Besides: the count steps where a chain starts (B 0.390 → 0.318 across one ring at the bar's end).
+
+**A second follow-up to the gate (Fable; nothing read, nothing run).**
+1. *D1, the piece as the ruling's own item 1 words it:* "A piece is a Gaussian in the perpendicular distance to its
+   locus, within its extent … in log-polar coordinates x = ln(R/R₀), y = φ − φ₀ the locus is the line through the
+   origin along (sin p_j, cos p_j); the perpendicular distance is d = R |x cos p_j − y sin p_j| and the position
+   along it s = R (x sin p_j + y cos p_j), both regular at p_j = 0 where the piece is an arc of its drawn extent at
+   its radius; the width σ is the bounded law's at the point's R; a ring's profile of a piece is the Gaussian in d
+   times the window in s on the solver's cells, its ring mean and variance by the same quadrature, the forcing term
+   by term as now. The wrapped normal in azimuth was an approximation that holds only at moderate pitch and is
+   retired; the near-circular pieces are arcs, not rings."
+2. *D2 and D3* "are consistent rules of a census, not shaping: each removes an arbitrary or unphysical configuration
+   and adds no number and no draw." D2: "A drawn piece that meets another chain ends there, joined, without taper; a
+   pinned piece is never cut; a drawn piece meeting a pinned one ends. Pieces are straight in the log-polar plane,
+   so the meeting point is exact … crossing arms are described by no source; branches and joins are observed
+   (unmeasured in frequency) … The realised number of joins per galaxy is published and recorded as a prediction
+   with nothing to judge it by." D3: "A chain is born at the midpoint of the widest azimuthal gap between the chains
+   crossing its birth ring; the first chain of an unbarred disc at a uniform azimuth; a barred disc's first two at
+   the bar's ends … the law's arm number m is m crests evenly spaced — that is what an m-fold mode is — and births
+   at uniform azimuths spend the law's m-power at m = 1–2 as shot noise, which the m-split check showed twice; the
+   rule is the law's own meaning, declared as such."
+3. *The count:* "the sum over crossing chains of their taper weights, so B and the bounded width are continuous in R
+   and a lone tapering chain's amplitude goes to zero as the square root of its weight; the realised variance inside
+   tapers falls a little under the budget and is recorded." *The young stars' reader:* "applies each bracketing grid
+   ring's law to the gas pattern's point function at the point, M(r,φ) = (1 − a) Ψ_i(g(r,φ))/⟨Ψ_i(g(r,·))⟩ + a
+   Ψ_j(g(r,φ))/⟨Ψ_j(g(r,·))⟩, the point function using the mid-gap rings of item 6; nothing ring-only is
+   interpolated."
+4. *The gate, amended:* "a one-ridge hand test in log-polar coordinates to 1e-11 at pitches 0°, 1°, 13.5° and 45°;
+   no two chains cross on any seed, asserted; every birth at the widest gap's midpoint, asserted; the count
+   continuous (no ring-to-ring step in B above the taper's own rate); the mid-gap rings solved where the error
+   passes 1 %, recursing twice, the rest recorded; the determinism test per region; the m-split, the PHANGS ratio,
+   the maser and young-star checks with their nulls, the joins per galaxy and the composed crest's distance all read
+   before judged." *Its predictions for the third pass (Milky Way):* chains at R₀ 5 (the drawn chain born at the
+   bar's end meets a pinned chain inside 8 kpc under D2), or 6; the m-split over 6–10 kpc peaks at m = 5 or 6 with m
+   = 2 under 0.5; crest over trough 2.5–3; Σf at 8 kpc 0.6–0.9, the gas minimum 0.65–0.75, the PHANGS ratio 1.4–1.6;
+   the largest ring-to-ring change of the stellar profile under 0.05; joins 2–4 on the default seeds; the maser and
+   young-star checks keep their 1st-percentile power. `ngc_4414`: D2 shortens many of its 36 pieces, ratio 1.2–1.3,
+   still a miss.
+5. *Scope:* "a third model pass by a fresh builder …; then the reviewer on the model; then the re-pins; then the
+   viewer's parser and frames. Cut nothing yet. If the budget ends after the re-pins, the model merges with them and
+   the viewer's frames follow in S60's own continuation before L1 … If the budget ends before the re-pins, nothing
+   merges and S60 continues as one session." *Forbidden, added:* "a taper at a join; a pitch floor to avoid arcs;
+   cutting a pinned piece; any birth rule with a parameter. Nothing new is the owner's."
