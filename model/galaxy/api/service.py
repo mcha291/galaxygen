@@ -178,7 +178,7 @@ ROUTES: tuple[Route, ...] = (
         "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
         "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
-        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, value, source}] - "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, label, unit, value, source}] - "
         "measured facts of the galaxy's structure that replace what the model derives: value is true or false, "
         "the observed class, and name is the published field it decides (bar_present: barred or not) - "
         "fit: null | {targets: "
@@ -734,7 +734,8 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
         },
         # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
-        "pins": [{"name": p.name, "value": p.value, "source": p.source} for p in template.pins],
+        # S59 (D218): a pin carries its input's label and unit, so a client can state a measured number in words.
+        "pins": [{"name": p.name, "label": table[p.name].label, "unit": table[p.name].unit, "value": p.value, "source": p.source} for p in template.pins],
         "fit": fit,
         "checks": [
             {

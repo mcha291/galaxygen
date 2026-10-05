@@ -522,7 +522,9 @@ def test_the_templates_route_has_the_stated_shape():
         # S58 (D217 item 2): was `t["pins"] == []`.
         assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"]
         # S59 (D218 items 5-6): was one pin each; the second is a measured number.
-        assert [set(p) for p in t["pins"]] == [{"name", "value", "source"}] * 2 and t["pins"][0]["name"] == "bar_present"
+        # S59 (D218): was {"name", "value", "source"} - a pin carries its input's label and unit (null for a class).
+        assert [set(p) for p in t["pins"]] == [{"name", "label", "unit", "value", "source"}] * 2 and t["pins"][0]["name"] == "bar_present"
+        assert t["pins"][0]["unit"] is None and t["pins"][1]["unit"] == "deg" and all(p["label"] == INPUTS[p["name"]].label for p in t["pins"])
         assert (t["pins"][1]["name"], t["pins"][1]["value"]) == (("sun_bar_angle", 30.0) if t["name"] == "milky_way" else ("pitch_angle", 28.9))
         assert "[verified:" in t["pins"][1]["source"] and "D218" in t["pins"][1]["source"]
         assert t["pins"][0]["value"] is (t["name"] == "milky_way") and "[verified:" in t["pins"][0]["source"]
