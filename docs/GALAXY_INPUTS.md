@@ -3898,8 +3898,18 @@ never been judged in twenty-three sessions.
    segment misplaces a ring gap's young light by 16–91 % (the readers this session replaced in the censuses:
    7.7–37 % at fixed φ and 13–71 % wound, inside the bar). **Carried.** The remedy is named (Fable): "the
    table's correct form is the cell mean of the law of the point function", built with a wound read in the
-   render when its young light is next touched. The point reader's cost is recorded with no bound, none being
-   sourced: the bright catalogue's stage 2.19 → 3.10 s, a star-sample region 6–15 % slower.
+   render when its young light is next touched. By the reviewer's consistent statistic (the reader's exact
+   cell means against the table) the gap is 0.50 / 0.63 / 0.49 % of the worst ring on three galaxies. An azimuth
+   is still drawn from the function's 25 samples across a sector, 1.5e-2 from the function's own CDF at worst
+   in a footprint-edge sector. **The point reader's cost is recorded with no bound, none being sourced:** the
+   star catalogue 2.2–2.4 times (0.31 → 0.68 s at 20 000 stars; 365–416 → 883–983 µs a cell, and a cost by the
+   star inside a bar's footprint: the law's mean round the ring is a quadrature for each young star there),
+   the bright catalogue's stage 2.19 → 3.10 s. **The cheaper form, named so it is built once** (Fable): a
+   footprint ring's normaliser depends on the radius only through Φ(r) mod 2π, "one periodic function per
+   footprint ring (41 of them), which may be tabulated on the solver's cells and read as the gas profiles are
+   (linear in the angle), the error measured and pinned against the 2880-sample quadrature before the table
+   replaces it"; to assert then: a ring's expected young count unchanged to 1e-12, `bright_star_count_1e3` the
+   same bits, the quadrature's 3e-4 not worsened.
 
 
 ---

@@ -10284,3 +10284,124 @@ expected counts with the winding, which rule 2 forbids." The keyword and its ref
 built raises, it never falls back to another." The cost is recorded as read "with no bound, since none is
 sourced". Forbidden: "a fallback reader; a per-ring normaliser; rebuilding the table this session; smoothing or
 clipping the footprint's edge to close the gap."
+
+**The older tests on the final model (two builders, disjoint files; no real break found).** Every failure was an
+interface change (`materialise` takes the model's constants; the column's name), another draw of a census, or a
+layer-on field re-wound. S58's close → the first pass → now: clouds 16 668 → 16 708 → **16 713** (expected
+16 693.43), clusters 12 826 → 12 839 → **12 840**; the census's Q over the young light 0.983 → 1.044 → **1.002**,
+the clusters' formation rate over the star formation rate 1.010 → 1.035 → **1.008**, the wind sum 5.246 → 5.622 →
+**5.341** × 10⁶ — the first pass's three heavy young clusters were a draw, and this draw has one of 2.57 × 10⁵ M☉
+at 1.4 Myr and 8.0 kpc (2.3 % of the Q, 3.0 % of the wind) against a census noise of 5.9 % and 6.9 %. Rows 35 and
+37 with the layer on, for the record: −2.036 and −0.1022 (judged layer off: −2.081 and −0.1030, unmoved). The
+bubbles' median radius 8.863 pc left S36's 1 % pin for the first time (8.963) and was re-pinned at its tolerance;
+the Hα-weighted [O III]/Hα 0.743 → 0.749. The cloud offset's declaration quotes the model again: 1 576 of 12 840
+clusters in another ring than their cloud (12.3 %, 42.9 % of the mass), 142 in another cell ring, 223 pc and
+255 pc (#95). Dust inside the bar's half-length moved with the re-wound arms (at 4 kpc the layered placed-over-
+mean 0.9408 → 0.9346); past it nothing. **I1's two expected totals are two units and none apart**
+(`cloud_count_total` 16 693.43298751 against …509994; `bright_star_count_1e3` the same bits). The bright
+catalogue is another realisation of the same budget (`bright_star_limit` 34 348 → 34 581 L☉; the clusters' light
+over the young light 1.035 → 1.001). Two bounds moved, each said where it stands: the audit mesh's non-empty
+guard on one cell (`> 10` → `> 7`, the gas's sector mean there fell to 0.37 of its ring's) and the test's own pin
+of I1's measured units (1 → 2, under the invariant's 4). Layer off, all 355 fields common to both passes are
+bit-identical.
+
+**The viewer.** It could not have read S59's `/api/templates`: its parser took a pin's value as true or false
+only and refused the payload (found by the viewer builder on reading, before any picture). A pin is now a class
+or a number, and `/api/templates` gives each pin its input's label and unit, so "the angle of the bar to the
+Sun–centre line: 30°" is the model's words. Nothing else needed a change: no panel lists a table's columns.
+The picture test's dusty pair re-pinned: physics-only over layered 0.98241 / 0.98513 / 0.98771 (S58: 0.98487 /
+0.98688 / 0.98845 — the re-wound lanes and arms; all under 1, the transfer bound held); the dust-free pair
+1.00000 / 1.00004 / 1.00003; the physics-only Milky Way frame the committed one byte for byte.
+
+**The pictures, measured (`tools/goal_metrics.py`; display targets, never rows).**
+
+| Picture | A1 | A2 | A3 | A4 | A5 | A6 | dominant m | arm / interarm, blue | dark fraction | slope |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `milky_way`, field — S58 | 0.008 | 0.018 | 0.026 | 0.051 | 0.046 | 0.047 | 4 | 1.40 | 0.0198 | −3.63 |
+| `milky_way`, field — now | 0.010 | 0.020 | 0.028 | 0.048 | 0.039 | 0.036 | 4 | 1.41 | 0.0396 | −4.44 |
+| `milky_way`, star-first — S58 | 0.014 | 0.021 | 0.037 | 0.055 | 0.076 | 0.078 | 6 | 1.73 | 0.0290 | −0.59 |
+| `milky_way`, star-first — now | 0.012 | 0.022 | 0.035 | 0.054 | 0.055 | 0.049 | 5 | 1.66 | 0.0585 | −1.04 |
+| `ngc_4414`, field — S58 | 0.071 | 0.103 | 0.031 | 0.038 | 0.025 | 0.023 | 2 | 1.72 | 0.0023 | −5.6 |
+| `ngc_4414`, field — now | 0.084 | 0.102 | 0.027 | 0.031 | 0.018 | 0.034 | 2 | 1.89 | 0.0000 | −3.7 |
+| `ngc_4414`, star-first — S58 | 0.073 | 0.093 | 0.037 | 0.039 | 0.032 | 0.025 | 2 | 1.77 | 0.0029 | −1.1 |
+| `ngc_4414`, star-first — now | 0.085 | 0.088 | 0.034 | 0.040 | 0.025 | 0.042 | 2 | 1.88 | 0.0000 | −0.9 |
+
+To the eye, and why. **The Milky Way template's outer disc reads as nested, nearly circular ripples more than as
+arms**: its default texture seed lays segments of 4.3°, 4.0° and 7.2° from 9.4 to 12.8 kpc (one of them 152° long)
+and 3.8° and 4.0° at 2.5–2.9 kpc — the 987th winding of 1000 in net turn, not re-seeded; its dark fraction
+doubled as the lanes bunch. No corner shows at a kink and no seam was found in enlarged crops. **`ngc_4414` is
+open-armed** — 41°–44° from 1.6 to 16.9 kpc on its seed, about the pinned 28.9° — and shows **a short sharp-edged
+streak beside its nucleus where the bright arm stops**: its seed lays a reversed segment (−5.1°, 106° of turn) on
+the three rings from 1.35 to 1.60 kpc, which the render's fixed-φ read between rings cannot follow (#154; the lead's
+reading of the winding's rows, not probed in the renderer), on arms that run to the centre at full amplitude
+(#149); the faint streaks above the nucleus are S58's.
+
+**The reviewer's second pass (the same Opus reviewer, on everything since its first; its own arithmetic).**
+"BLOCKER: none … merge: yes — with S1's one-line raise applied first." *S1, applied:* with one of the gas
+pattern's constants missing the reader was built on no pattern and read 1 everywhere, silently — unreachable
+from the repository's callers, and against the third follow-up's "a reader that cannot be built raises";
+`young_reader` now raises and names what is missing. *Verified, not taken from the builders:* its own M(r, φ)
+against the reader at 24 000 random points a zone on three galaxies (2.8e-4 at worst where a footprint is in the
+contrast, the normaliser's quadrature; 7e-6 elsewhere); each ring's term a redistribution to 2.8e-4; the sector
+means to 1.6e-5 against 737 280 midpoints; per-region determinism intact (a 400 000-star sample in five windows
+against a sweep, no column differs; levels 1–3; the bright catalogue's finest cells alone and in a set); the
+relative residual by its own draw of 1000 seeds — reversed rows 3.73 % up to 28.9°, net-leading windings 0 / 0 /
+0 / 0 / 0 / 7 / 38 / 149 of 1000 at 1° … 60°, "D218's numbers exactly"; the numeric pins' refusals at and just past
+both ends; layer off against main, 354 fields identical on the Milky Way template and `pitch_angle` alone moved
+on `ngc_4414`; every moved tolerance one of the three declared; seventeen pins recomputed as pinned; 52 full runs
+with censuses raise nowhere. *Its notes, recorded:* **#154's gap by the consistent statistic** — the reader's
+exact cell means against the table, the cell mean of the law against the law of the cell mean — is 0.50 / 0.63 /
+0.49 % of the worst ring (the 0.59 % above compares a cell's centre with a cell's mean); **an azimuth is drawn
+from the function's 25 samples across a sector**, as every reader's has been, 1.5e-2 from the function's own
+CDF at worst in a footprint-edge sector (the sector's total is exact; the test compares the draw with the same
+25 samples and cannot see it); the third leg is in one gate sweep only (`tests/test_gas_pattern.py` and
+`tests/test_modes.py` still loop two); `Winding` freezes the arrays it is given, so a run's `arm_segment_*`
+arrays are read-only; `dig_halpha_fraction` layer on is four units from layer off, a census statistic outside
+I1's two totals; at the pitch's floor 44 % of on-grid segments hold no ring and the grid's fields alias between
+rings (#154), where the reader does not.
+
+**Cold timings (`tools/timings.py`; S58 → now):** the arm pattern 0.17 → 0.20 s; the gas pattern 0.61 → 0.69 s;
+`region: whole disc` 1.65 → 1.92 s; `clouds: whole disc` 1.57 → 1.85 s; `clusters: whole disc` 2.88 → 3.42 s;
+`render: whole, rgb` 3.45 → 3.91 s; `bright: whole disc` 6.48 s (the stage alone 2.19 → 3.10 s, the point
+reader's sector integrals).
+
+**The reader's cost, re-read by the lead at the close — the figure put to the gate was low.** The builder's
+"+6–15 %" for the star sample was read at the API against the pass before, which already carried a reader. On
+the model's own instrument (`specs.performance.catalogue_cost`, the catalogue's `materialise` alone, an idle
+machine) the star catalogue with the layer on costs **2.2–2.4 times** what it does with it off: 0.30 / 0.39 /
+0.49 / 0.58 / 0.68 / 0.79 s at 500 … 40 000 stars against 0.13 / 0.18 / 0.23 / 0.27 / 0.31 / 0.33 s; 883–983 µs a cell
+against 365–416 (a cell's sector means are integrals of the law at two rings); and a cost by the star where
+there was none (inside a bar's footprint the law's mean round the ring is taken where each young star is):
+R² 0.89–0.94 by the cell and 0.84–0.89 by the star, against 0.96–0.99 and 0.69–0.77. **Two older timing tests
+had become coin-flips** — "the catalogue is priced per cell, not per star" (`tests/test_audit.py`, S21b;
+`tests/test_performance.py`) — and were re-read: the ordering of the two fits and "the stars are the smaller
+part" are asserted with the layer off, where they are the catalogue's own structure; the layer-on run keeps
+what is not a ratio of two timings, and one bound on the price of a cell moved 1500 → 3000 µs.
+`catalogue_cost` takes the layer's switch. *Put to the gate as a correction (Fable, a fourth follow-up, nothing
+read):* "The ruling stands: 2.2–2.4× on the star catalogue is recorded as read, with no bound … Nothing before
+the merge: the cost buys an exact reader where the old one misplaced 15–71 % of young stars inside a bar, and a
+warm request is a cache hit." The cheaper exact-to-a-pinned-error form goes into #154 with what it must assert.
+On the tests: "that structure is the layer-off one, unchanged; with the layer on a second cost by the star
+exists, by design, inside 41 rings, so the per-cell ordering is not a property of the layered catalogue and must
+not be asserted of it … Forbidden: widening a layer-off bound to make a layer-on run pass; asserting the
+coin-flip ordering layer on. Merge: yes, as before."
+
+**Debts.** Opened: **#150** (segments as kinks of one winding, on common rings for every arm and mode; what the
+draw leaves out and its open-pitch tail; the default seed an outlier), **#151** (the gas law at the mean pitch,
+a probe owed), **#152** (the Milky Way's measured arms, which the modes cannot show; the Reid check has no
+power), **#153** (NGC 4414's pitch 2.4σ from the law's draw), **#154** (the table of star formation at a cell's
+mean; the render's fixed-φ read between rings; the reader's cost). Amended: #138 (the same conflict against the
+measured arms), #142 (a segment's pitch does not enter the forcing; the pin's range). Register 91 open = 11 + 80,
+46 discharged. The plan's gate for P4 — "the pinned arms pass through the measured loci" — was not met and
+cannot be in this representation: recorded as #152, not as a pass.
+
+**For the owner, at the close (none awaited).** (1) The Milky Way template cannot show its measured arms: a sum
+of modes with drawn phases holds no arm, the check against Reid et al. 2019 has no power, and a ridge per arm for
+a pinned template is a change of plan that is theirs (with #138: outside the bar m = 5–6 still dominate). (2) Its
+default texture seed is an outlier winding — the 987th of 1000 — and the outer disc reads as nested ripples;
+rerolling `texture_seed` in the viewer is their control, and no template was re-seeded. (3) `ngc_4414` shows its
+measured pitch, 28.9°; one template field restores the law's 14.3°; its seed lays a reversed segment that shows
+as a streak beside the nucleus. (4) The young stars are placed by the law at a point; the star catalogue costs a
+little over twice what it did and the bright catalogue about a third more (cold; a warm request is a cache hit). (5) Still theirs from S57–S58: a floor on the drawn pitch (#142), Erwin 2018's bar frequency
+as a draw (#145), the lanes' placeholder width (#147). (6) Owed by us: the probe of the gas law at the local
+pitch (#151).
