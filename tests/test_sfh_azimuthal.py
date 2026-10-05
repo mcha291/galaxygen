@@ -259,8 +259,16 @@ def test_every_acceptance_row_reads_the_same_in_both_models(judged):
 # --- the catalogue ----------------------------------------------------------------------
 
 
-def _catalogue(out, n=100_000):
-    return systems.materialise(out.fields, out.grid.R, out.grid.t, 0, n, migration=float(out.inputs["migration_efficiency"]))
+def _constants() -> dict:
+    """The model's constants, as its stage passes them (the two models hold the same ones, asserted above).
+    S59 (D218 follow-up): the young stars' reader is the star formation law at a point, which reads the gas
+    pattern's constants and the law's index; ``materialise`` refuses ``azimuthal``'s fields without them."""
+    return {k: c.value for k, c in production()[0].get("azimuthal").constants.items()}
+
+
+def _catalogue(out, n=100_000, **more):
+    return systems.materialise(out.fields, out.grid.R, out.grid.t, 0, n, migration=float(out.inputs["migration_efficiency"]),
+                               constants=_constants(), **more)
 
 
 def test_the_young_stars_follow_the_modulation_and_the_old_ones_the_contrast(coarse):
@@ -270,7 +278,10 @@ def test_the_young_stars_follow_the_modulation_and_the_old_ones_the_contrast(coa
     assert ca.counts == cb.counts
     for name in ("star_radius", "star_height", "star_mass", "star_population"):
         assert np.array_equal(ca[name], cb[name]), name
-    mod = systems.Modulation(a.fields["sfr_modulation"], a.grid.R)
+    # S59 (D218 follow-up): was `systems.Modulation(a.fields["sfr_modulation"], a.grid.R)`, the grid table read
+    # between rings. The reader is the catalogue's own now - the law at a point, built as the stage builds it.
+    mod = systems.young_reader(a.fields, a.grid.R, _constants())
+    assert isinstance(mod, systems.Modulation) and systems.young_reader(b.fields, b.grid.R, _constants()) is None
     pattern = ArmPattern.from_fields(a.fields, a.grid.R)  # S56 (D215): the modes are published on the grid radii
 
     def mean_at(table, cat, pick):
@@ -295,8 +306,7 @@ def test_the_azimuthal_catalogue_is_the_same_by_region_as_in_a_sweep(coarse):
     _, a = coarse
     whole = _catalogue(a)
     cells = systems.cells_in(a.grid.R, 7.0, 9.0, 0.0, 0.8)
-    part = systems.materialise(a.fields, a.grid.R, a.grid.t, 0, 100_000, cells=cells,
-                               migration=float(a.inputs["migration_efficiency"]))
+    part = _catalogue(a, cells=cells)  # S59 (D218 follow-up): the same call, with the model's constants
     start = {}
     offset = 0
     for cell, count in whole.counts:
@@ -306,8 +316,7 @@ def test_the_azimuthal_catalogue_is_the_same_by_region_as_in_a_sweep(coarse):
     for name in part:
         assert identical(part[name], whole[name][rows]), name
     # A smaller sample is a prefix of a larger one, cell by cell.
-    small = systems.materialise(a.fields, a.grid.R, a.grid.t, 0, 100_000, cells=cells[:2],
-                                migration=float(a.inputs["migration_efficiency"]))
+    small = _catalogue(a, cells=cells[:2])
     assert np.array_equal(small["star_azimuth"], part["star_azimuth"][: small.size])
 
 
@@ -343,13 +352,13 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     **The alternative's prediction, as the gate words it**: the laned field "read 88-93 % of a ring's star
     formation in its top tenth of cells at 2-3.3 kpc and a maximum modulation of 17.2". As this file reads the same
     alternative on the Milky Way template - the star formation law run on the published ``gas_density_contrast``,
-    which still carries the lanes: **88.4-95.8 %** on the rings of 2-3.3 kpc, and a largest modulation of **17.53**
-    (3.49 kpc). A lane 0.10 a wide - a width nobody measured - raised to the law's exponent.
+    which still carries the lanes: **88.4-95.9 %** on the rings of 2-3.3 kpc, and a largest modulation of **17.35**
+    (3.26 kpc). A lane 0.10 a wide - a width nobody measured - raised to the law's exponent.
 
-    **As built**, on ``star_formation_gas_contrast``: the top tenth of cells holds **14.9-34.3 %** of a ring's star
+    **As built**, on ``star_formation_gas_contrast``: the top tenth of cells holds **14.9-31.9 %** of a ring's star
     formation at 2-3.3 kpc (a uniform ring would read 10 %; the arms' own crowding at 8 kpc reads 40 %), and the
-    largest modulation is **7.93**, at 4.69 kpc, where the arms and the footprint's end meet. Inside the
-    half-length the top tenth holds 10.0-49.9 %. At R₀ nothing moved: the largest modulation there is 5.4414, the
+    largest modulation is **7.83**, at 4.61 kpc, where the arms and the footprint's end meet. Inside the
+    half-length the top tenth holds 10.0-50.5 %. At R₀ nothing moved: the largest modulation there is 5.4401, the
     same bits as the laned alternative's.
 
     **S59 (D218): every number above was re-read.** The template is read with the layer on, and since S59 the
@@ -361,6 +370,12 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     footprint's, and the footprint's field carries no ridge - its largest value is the arms' own size (3.135,
     now on a ring 0.15 kpc inside the half-length, where an arm's crest crosses the footprint; 3.134 at 6.34 kpc
     past it), half the lanes'.
+
+    **S59 (D218 follow-up): re-read once more.** A segment's pitch is relative to the disc's and the rows are other
+    rows, so each ring is turned by another phase again. On the first build's winding the numbers above read
+    88.4-95.8 %, 17.53 (3.49 kpc), 14.9-34.3 %, 7.93 at 4.69 kpc, 10.0-49.9 % and 5.4414, and the footprint field's
+    largest cell was the 3.135 just inside the half-length; it is 3.134 at 6.34 kpc now, the arms' own, past the
+    half-length. What the test asserts did not move.
 
     The two published gas fields: the same bits on every ring at or past the half-length (331 of the 400) and on
     every ring of an unbarred galaxy (``ngc_4414``: every cell); different on each of the 69 rings inside the
@@ -383,9 +398,11 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # No ridge: the largest value of the field the law reads is the arms' own, in the mid disc; the lanes' is twice it.
     # S59 (D218): was (3.1331, 6.3375) - the segments turn each ring, and the largest cell is now where an arm's
     # crest crosses the footprint just inside the half-length; the arms' own largest past it is read beside it.
-    assert (float(footprint_gas.max()), float(R[int(np.argmax(footprint_gas.max(axis=1)))])) == pytest.approx((3.1350, 5.0625), abs=2e-4)
-    assert (float(footprint_gas[past].max()), float(R[past][int(np.argmax(footprint_gas[past].max(axis=1)))])) == pytest.approx((3.1342, 6.3375), abs=2e-4)
-    assert float(laned_gas.max()) == pytest.approx(6.6786, abs=2e-4)  # S59 (D218): was 6.6640
+    # S59 (D218 follow-up): was (3.1350, 5.0625) - on the follow-up's winding no crest crosses the footprint that
+    # high, and the largest cell is the arms' own past the half-length again, the one read beside it (was 3.1342).
+    assert (float(footprint_gas.max()), float(R[int(np.argmax(footprint_gas.max(axis=1)))])) == pytest.approx((3.1341, 6.3375), abs=2e-4)
+    assert (float(footprint_gas[past].max()), float(R[past][int(np.argmax(footprint_gas[past].max(axis=1)))])) == pytest.approx((3.1341, 6.3375), abs=2e-4)
+    assert float(laned_gas.max()) == pytest.approx(6.7614, abs=2e-4)  # S59 (D218 follow-up): was 6.6786; S59 (D218): was 6.6640
     built = np.asarray(F["sfr_modulation"])
     assert built.tobytes() == sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], footprint_gas, index).tobytes()
     laned = sfr_modulation(F["gas_surface_density"], F["sf_threshold_surface_density"], laned_gas, index)
@@ -394,17 +411,19 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     # The alternative, as read here (the gate's words: 88-93 % and 17.2).
     top = _top_tenth(laned)
     # S59 (D218): was (0.8812, 0.9567) and (17.619, 3.4875)
-    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.8835, 0.9583), abs=2e-4)
-    assert (float(laned.max()), float(R[int(np.argmax(laned.max(axis=1)))])) == pytest.approx((17.530, 3.4875), abs=2e-3)
+    # S59 (D218 follow-up): was (0.8835, 0.9583) and (17.530, 3.4875)
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.8839, 0.9586), abs=2e-4)
+    assert (float(laned.max()), float(R[int(np.argmax(laned.max(axis=1)))])) == pytest.approx((17.348, 3.2625), abs=2e-3)
     # As built.
     # S58 (D217 follow-up): was 17.619 at 3.4875 kpc (the largest modulation), 0.8812-0.9567 (the top tenth, 2-3.3 kpc)
     top = _top_tenth(built)
     # S59 (D218): was (0.1490, 0.2804), (0.1000, 0.5204), (7.4075, 4.3125), 0.4015 and 5.4391
-    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1490, 0.3429), abs=2e-4)
-    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.4992), abs=2e-4)
-    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((7.9268, 4.6875), abs=2e-3)
+    # S59 (D218 follow-up): was (0.1490, 0.3429), (0.1000, 0.4992), (7.9268, 4.6875) and 5.4414; 0.4014 as it was
+    assert (float(top[band].min()), float(top[band].max())) == pytest.approx((0.1490, 0.3189), abs=2e-4)
+    assert (float(top[~past].min()), float(top[~past].max())) == pytest.approx((0.1000, 0.5055), abs=2e-4)
+    assert (float(built.max()), float(R[int(np.argmax(built.max(axis=1)))])) == pytest.approx((7.8290, 4.6125), abs=2e-3)
     assert float(top[here]) == float(_top_tenth(laned)[here]) == pytest.approx(0.4014, abs=2e-4)
-    assert built[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(5.4414, abs=2e-4)
+    assert built[past].tobytes() == laned[past].tobytes() and float(built[here].max()) == pytest.approx(5.4401, abs=2e-4)
     assert float(np.abs(built.mean(axis=1) - 1.0).max()) < 1e-12 and built.min() >= 0.0
     # An unbarred galaxy has no lanes and no footprint: one field, twice.
     n = run(azimuthal, templates.overrides(templates.TEMPLATES["ngc_4414"]), only=only)
