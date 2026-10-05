@@ -34,13 +34,20 @@ made, and none should be added** (gate G1, Q6): with different realised counts t
 correspond.
 
 **S59 (BUILD_III Phase P4; D218), re-read.** The layer lays the segments of the arms' common winding - two synthetic
-columns of a small table (``arm_segment``: 256 rows with the layer on, none with it off; a table column, domain
+columns of a small table (``arm_segment``: 1024 rows with the layer on, none with it off; a table column, domain
 ``table``, not an object class's - no catalogue, no census, and the stage that lays them is no catalogue stage) - and
 two templates hold a measured pin. With the layer off nothing S55 published moved but ``ngc_4414``'s
 ``pitch_angle``, which is its pin (the draw is published beside it, S55's bits); five fields were added. I1 holds
 as now worded: the two expected totals are 1 and 0 units in the last place apart, under its four, and every
 ``arm_mode_amplitude_m`` is the same bits on and off. The layer-on census is another draw, and its numbers here
 were re-read, each marked.
+
+**S59 (D218 follow-up), re-read on the final model.** A segment's pitch is relative to the disc's: the table's
+second column is a unit normal row (``arm_segment_pitch_deviate``), the spread it is scaled by is a sixth added
+field, the ``bar`` stage's ``arm_segment_pitch_scatter``, and the table holds 1024 rows. With the layer off every
+field the first build published is the bits it was. With it on every ring is turned by another phase, so the
+census is another draw again, and the two expected totals are 2 and 0 units in the last place apart, under I1's
+four. Each number re-read is marked ``S59 (D218 follow-up)``.
 """
 
 from __future__ import annotations
@@ -120,11 +127,14 @@ PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
 # And the one census no pattern places (bubbles.remnant_expected shares a ring evenly among its sectors).
 UNPLACED_OBJECTS = {"remnant"}
 # S59 (D218 items 1-2): and one table that is no census and no object class at all - the rows of the arms' winding,
-# a segment each: the layer's own realisation (the `arm_phases` stage's two synthetic table columns), 256 rows with
+# a segment each: the layer's own realisation (the `arm_phases` stage's two synthetic table columns), 1024 rows with
 # the layer on and none with it off ("layer off ... no segments are drawn"). Nothing is counted, expected or placed
 # of them. The table's inventory (was LAYER_OBJECTS while the two were declared an object class's columns).
 LAYER_TABLES = {"arm_segment"}
-SEGMENT_ROWS = 256  # 64 outward from the anchor and 192 inward: fixed counts, whatever the grid
+# S59 (D218 follow-up): was 256, 64 outward and 192 inward - the rows are sized for the pitch's floor since a
+# segment's pitch became relative to the disc's (item 2 of the follow-up).
+SEGMENT_ROWS = 1024  # 256 outward from the anchor and 768 inward: fixed counts, whatever the grid
+assert SEGMENT_ROWS == pt.SEGMENTS_OUTWARD + pt.SEGMENTS_INWARD and (pt.SEGMENTS_OUTWARD, pt.SEGMENTS_INWARD) == (256, 768)
 # Two scalars are a census's *expected* total: the expected counts summed over every cell, each cell carrying its
 # sector's placement weight. The weights average to 1 round a ring to rounding and not to the bit, so the total is
 # the same number with the layer on or off, and between two realisations, **to its last bit or the one beside it**:
@@ -149,8 +159,13 @@ SEGMENT_ROWS = 256  # 64 outward from the anchor and 192 inward: fixed counts, w
 # layer on, one unit above the layer-off 16693.432987509994 (S55's bits, unmoved); `bright_star_count_1e3` is the
 # same bits on and off (0 units). I1 as now worded - "equal within four units in the last place" - holds with three
 # to spare; the pin below is the measured one, so a second unit is seen here before it reaches the invariant's four.
+# **S59 (D218 follow-up): two units again, as measured.** A segment's pitch is relative to the disc's and the rows
+# are other rows, so each ring's response is turned by another phase and the cloud cells' exact means sum to another
+# rounding: `cloud_count_total` reads 16693.43298751 with the layer on, two units above the layer-off
+# 16693.432987509994 (S55's bits, unmoved) - S58's reading, by another road; `bright_star_count_1e3` is the same
+# bits on and off (0 units). I1's "equal within four units in the last place" holds with two to spare.
 EXPECTED_TOTALS = {"cloud_count_total", "bright_star_count_1e3"}
-EXPECTED_TOTAL_UNITS = 1  # S59 (D218): was 2 (S58, D217: was 1); the measured count, under the gate's bound of four
+EXPECTED_TOTAL_UNITS = 2  # S59 (D218 follow-up): was 1 (S59, D218: was 2; S58, D217: was 1); the measured count, under the gate's bound of four
 EXPECTED_TOTAL_BOUND = 4  # the invariant's own, as the gate words it at S58
 assert EXPECTED_TOTAL_UNITS <= EXPECTED_TOTAL_BOUND
 
@@ -247,7 +262,11 @@ ADDED_AT_S58 |= {"star_formation_gas_contrast"}
 # there is a bar or not); the pitch as the law draws it and the Sun's azimuth (the `pattern` stage's: the first is
 # `pitch_angle` wherever no template pins one, the second NaN unless a template gives the bar's angle to the Sun);
 # and the layer's two segment columns (the `arm_phases` stage's, synthetic: no row with the layer off).
-ADDED_AT_S59 = {"arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth", "arm_segment_extent", "arm_segment_pitch_residual"}
+# S59 (D218 follow-up): six - `arm_segment_pitch_residual` (degrees) is `arm_segment_pitch_deviate`, a unit normal
+# row, and the spread it is scaled by is published by the `bar` stage as `arm_segment_pitch_scatter`: a law's
+# number, 0.56 of the disc's pitch, the same on and off.
+ADDED_AT_S59 = {"arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth", "arm_segment_extent", "arm_segment_pitch_deviate",
+                "arm_segment_pitch_scatter"}
 
 
 @pytest.mark.parametrize("template", layer_reference.TEMPLATES)
@@ -274,7 +293,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         assert held[n] == layer_reference.value_digest(was) and same_number(float(out.fields[n]), is_now), (n, template)
     # S57 (D216): was `== ADDED_AT_S56` - the layer-off run gained one field, `arm_pattern_speed`, and lost or moved none.
     # S58 (D217): was `== ADDED_AT_S56 | ADDED_AT_S57` - six more, and none lost; a seventh at the gate's follow-up.
-    # S59 (D218): was `== ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58` - five more, and none lost.
+    # S59 (D218): was `== ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58` - five more, and none lost (six since the
+    # gate's follow-up: ADDED_AT_S59, above).
     assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 and len(held) == (332 if name == "azimuthal" else 331)
     assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
     # S59 (D218): what the five are with the layer off. The anchor is the bar's half-length, or where the bar would
@@ -284,6 +304,9 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     assert layer_reference.value_digest(out.fields["pitch_angle_drawn"]) == held["pitch_angle"]
     assert float(out.fields["arm_winding_anchor_radius"]) == LAYER_OFF_EXCEPTIONS["bar_half_length"][template][0]
     assert all(np.asarray(out.fields[n]).shape == (0,) for n in pt.SEGMENT_FIELDS) and np.isnan(out.fields["sun_azimuth"])
+    # S59 (D218 follow-up): the spread of a segment's pitch over the disc's - the constant, published; a number
+    # with the layer off as with it on, on both templates.
+    assert float(out.fields["arm_segment_pitch_scatter"]) == float(prod[0].get(name).constants["ARM_SEGMENT_PITCH_RELATIVE_SCATTER"].value) == 0.56
     if template == "ngc_4414":
         # "Show nothing else under each digest changed": the same inputs with the pins taken off - the criterion bars
         # this disc, the pitch is the draw - are S55's layer-off run on every field S55 published, the four bar
@@ -414,7 +437,9 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # draw (the clouds follow a response the winding's segments have turned), its sum rounds to 0.30000000000000004,
     # and the entry moves again as it did until S58: all fourteen do.
     assert set(CENSUS_STATISTICS) - moved_statistics == set(), sorted(set(CENSUS_STATISTICS) - moved_statistics)
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000004, 0.29999999999999993)
+    # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
+    # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.30000000000000016, 0.29999999999999993)
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
@@ -436,12 +461,18 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # (EXPECTED_TOTALS, above), on rings the winding's segments have turned. The layer-off value is S55's own bits,
     # unmoved; the bright stars' expected total is the same bits on and off (0 units), as before. I1 as now worded,
     # "equal within four units in the last place", holds for both: measured 1 and 0.
-    assert float(on.fields["cloud_count_total"]) == 16693.432987509997 and float(off.fields["cloud_count_total"]) == 16693.432987509994
-    assert float(on.fields["cloud_count_total"]) == np.nextafter(float(off.fields["cloud_count_total"]), np.inf)
+    # S59 (D218 follow-up): was 16693.432987509997 with the layer on, one unit above the layer-off value; two units
+    # now, 16693.43298751 - the reading S58 had - on rings turned by segments whose pitch is relative to the disc's.
+    # The layer-off value is S55's own bits, unmoved; the bright stars' total is the same bits on and off (0 units).
+    # I1's "within four units" holds for both: measured 2 and 0.
+    assert float(on.fields["cloud_count_total"]) == 16693.43298751 and float(off.fields["cloud_count_total"]) == 16693.432987509994
+    # S59 (D218 follow-up): was `== np.nextafter(off, inf)`, one step; two steps now.
+    assert float(on.fields["cloud_count_total"]) == np.nextafter(np.nextafter(float(off.fields["cloud_count_total"]), np.inf), np.inf)
     assert same(on.fields["bright_star_count_1e3"], off.fields["bright_star_count_1e3"])
     for n in EXPECTED_TOTALS:
         apart = abs(float(on.fields[n]) - float(off.fields[n])) / float(np.spacing(max(abs(float(on.fields[n])), abs(float(off.fields[n])))))
-        assert apart == {"cloud_count_total": 1.0, "bright_star_count_1e3": 0.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
+        # S59 (D218 follow-up): the clouds' was 1.0
+        assert apart == {"cloud_count_total": 2.0, "bright_star_count_1e3": 0.0}[n] and apart <= EXPECTED_TOTAL_BOUND, (n, apart)
     # S59 (D218, the gate): "every `arm_mode_amplitude_m` bit-identical layer on and off" - radial fields of the
     # pattern stage, held by the walk above with every other field; named here because the gate names them.
     for n in pt.AMPLITUDE_FIELDS:
@@ -487,9 +518,11 @@ def test_i1_every_scalar_of_the_pattern_stages_is_unchanged(runs, prod, name):
     scalars = [d.name for sid in ("bar", "pattern", "gas_pattern") for d in impls_.get(sid).publishes if d.kind.domain == "galaxy"]
     # S58 (D217): was 14 - the bar's formation time, the verdict, the body's three shape numbers and its mass share.
     # S59 (D218): was 20 - the radius the winding is anchored at, the pitch as the law draws it, the Sun's azimuth.
-    assert len(scalars) == 23 and {"arm_multiplicity", "pitch_angle", "arm_contrast", "bar_contrast", "gas_arm_contrast",
+    # S59 (D218 follow-up): was 23 - the spread of a segment's pitch over the disc's, the `bar` stage's: a law's number.
+    assert len(scalars) == 24 and {"arm_multiplicity", "pitch_angle", "arm_contrast", "bar_contrast", "gas_arm_contrast",
                                    "bar_pattern_speed", "bar_formation_time", "bar_present", "bar_mass_share",
-                                   "arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth"} <= set(scalars)
+                                   "arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth",
+                                   "arm_segment_pitch_scatter"} <= set(scalars)
     for n in scalars:
         # S59 (D218 item 5): was `on.fields[n] == off.fields[n]` for all - the Sun's azimuth is not a number in a
         # galaxy no template places an observer in (the default), and NaN is not equal to itself: the same on and
@@ -563,7 +596,9 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     # axis, it is another draw again. The layer-off census is S55's own still.
     # S59 (D218): was n_on == 16668 - placed by a response the winding's segments have turned ring by ring, it is
     # another draw again (each cell another expectation, each ring the same one: the loop above). Layer off: S55's.
-    assert n_on == 16708 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    # S59 (D218 follow-up): was n_on == 16708 - a segment's pitch is relative to the disc's and the rows are other
+    # rows, so the rings are turned by other phases: another draw again. Layer off: S55's, unmoved.
+    assert n_on == 16713 and n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -640,8 +675,12 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # S59 (D218): were -2.06378 and -0.103890 on S58's census; placed by a response the winding's segments have
         # turned it is another draw. Not judged, as before: the two rows above read the layer-off census and are the
         # numbers they were, to every figure pinned.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-1.97863, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.102083, abs=1e-6)
+        # S59 (D218 follow-up): were -1.97863 and -0.102083 on the first build's census; with a segment's pitch
+        # relative to the disc's the rings are turned by other phases and the census is another draw (two of the
+        # three brightest regions of that census are gone, and the slope is steeper again). Not judged; the two
+        # layer-off rows above did not move.
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.03559, abs=1e-5)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.102201, abs=1e-6)
         # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
         assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
         for q in spec.QUANTITIES:
@@ -1070,7 +1109,8 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # of `basic` (so what the oracle below holds, the fields not composed, is still 229).
     # S59 (D218): was 350 - the winding's anchor, the pitch as drawn, the Sun's azimuth, and the layer's two segment
     # columns (empty with the layer off, in both models alike).
-    assert len(columns) > 100 and len(b.fields) == 355
+    # S59 (D218 follow-up): was 355 - the spread of a segment's pitch over the disc's, the `bar` stage's scalar.
+    assert len(columns) > 100 and len(b.fields) == 356
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1104,8 +1144,10 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # S59 (D218): was 229 - the three scalars P4 adds (the anchor, the drawn pitch, the Sun's azimuth: NaN in both
     # runs, the same bits), less the census statistic that no longer rounds alike. 231 = basic's 355 fields less
     # its 3 composed ones, the 100 placed columns, the 2 segment columns, the 14 census statistics and the 5 phases.
-    assert len(held) == 231 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
-    assert {"arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth", *pt.AMPLITUDE_FIELDS} <= set(held)
+    # S59 (D218 follow-up): was 231 - the spread of a segment's pitch over the disc's, the `bar` stage's scalar, is
+    # held with the laws: the same bits on and off. 232 of basic's 356 fields.
+    assert len(held) == 232 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
+    assert {"arm_winding_anchor_radius", "pitch_angle_drawn", "sun_azimuth", "arm_segment_pitch_scatter", *pt.AMPLITUDE_FIELDS} <= set(held)
 
 
 def test_the_oracle_holds_layer_off_on_a_small_grid_and_another_seed(prod):
@@ -1197,37 +1239,47 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # below are the model's as measured at S59; the declaration's text in `galaxy/layer/cloud_texture.py` is to be
     # re-read to them** - the test builder may not edit the model, and this test stands failing on these phrases
     # until the three strings there say what the model does (reported to the lead, with the strings).
+    # S59 (D218 follow-up): were "by up to 249 pc in radius (its own length reaches 265 pc)", "1 581 of 12 839
+    # clusters (12.3 %, 44.3 % of the cluster mass)" and "140 in another cell ring", the first build's census, which
+    # the declaration was re-read to. With a segment's pitch relative to the disc's the census is another draw
+    # again; the declaration's text in `galaxy/layer/cloud_texture.py` was re-read by the lead to the final model
+    # (two readings of the model, the lead's builder's and this test's, the same numbers), and the phrases below
+    # and the measurements under them are pinned together.
     for phrase in ("at S59 the offset moves a cluster",
-                   "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 581 of 12 839 clusters (12.3 %, 44.3 % of the cluster mass)",
-                   "140 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+                   "by up to 223 pc in radius (its own length reaches 255 pc) against a 75 pc radial step",
+                   "1 576 of 12 840 clusters (12.3 %, 42.9 % of the cluster mass)",
+                   "142 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
-        assert on.decls[name].conserves.startswith("The cloud's mass and the census's count") and "249 pc" not in on.decls[name].conserves
+        assert on.decls[name].conserves.startswith("The cloud's mass and the census's count") and "223 pc" not in on.decls[name].conserves
     hosts = np.asarray(F["cloud_cluster_index"]) >= 0
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12839  # S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12840  # S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
     # S57 (D216): was 1598 and 0.1247 of 12 814 (S56: 1610, 0.125) - the same count of another census, by chance.
     # S58 (D217): was 1598 and 0.1246 of 12 829.
     # S59 (D218): was 1600 and 0.1247 of 12 826.
-    assert int(moved.sum()) == 1581 and moved.mean() == pytest.approx(0.1231, abs=5e-4)
-    # The share of the cluster mass that crosses: 0.44329, printed as 44.3 %. S57 (D216): was 0.43796 (43.8 %).
-    # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4433, abs=5e-4)
+    # S59 (D218 follow-up): was 1581 and 0.1231 of 12 839.
+    assert int(moved.sum()) == 1576 and moved.mean() == pytest.approx(0.1227, abs=5e-4)
+    # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
+    # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4294, abs=5e-4)
     edges, _ = sy.cell_edges(R)
-    # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137.
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 140
-    # 249 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 265 pc
+    # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 142
+    # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
-    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(248.5, abs=0.1)
-    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(265.2, abs=0.1)
+    # S59 (D218 follow-up): were 248.5 and 265.2 pc - both one cloud's, the census's most massive (9.98e6 Msun, at
+    # 3.0 kpc), which the first build's census held and this draw does not; the two largest now are clouds both
+    # censuses hold (at 2.5 and 3.5 kpc).
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(223.3, abs=0.1)
+    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(255.5, abs=0.1)
 
 
 def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):
@@ -1351,9 +1403,13 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_phases_read_it(prod):
     # S58 (D217 item 9): was `requires == ()` - the stage asks whether there is a bar, whose two-armed mode it ties.
     # S59 (D218 item 2): was `reads_constants == ()` - the stage lays the winding's segments too, and reads the five
     # numbers of their draw: the extent's median, log-width and two bounds, and the pitch residual's width.
+    # S59 (D218 follow-up): was five, `ARM_SEGMENT_PITCH_SCATTER` the fifth - the stage draws a unit normal row and
+    # no width; the spread is the law's (`ARM_SEGMENT_PITCH_RELATIVE_SCATTER`, read and published by the `bar` stage).
     assert impls_.get("arm_phases").requires == ("bar_present",)
     assert impls_.get("arm_phases").reads_constants == (
-        "ARM_SEGMENT_EXTENT_MEDIAN", "ARM_SEGMENT_EXTENT_LOG_SCATTER", "ARM_SEGMENT_EXTENT_MIN", "ARM_SEGMENT_EXTENT_MAX", "ARM_SEGMENT_PITCH_SCATTER")
+        "ARM_SEGMENT_EXTENT_MEDIAN", "ARM_SEGMENT_EXTENT_LOG_SCATTER", "ARM_SEGMENT_EXTENT_MIN", "ARM_SEGMENT_EXTENT_MAX")
+    assert "ARM_SEGMENT_PITCH_RELATIVE_SCATTER" in impls_.get("bar").reads_constants
+    assert "ARM_SEGMENT_PITCH_SCATTER" not in models.get(DEFAULT_MODEL).constants
     assert [d.name for d in impls_.get("arm_phases").publishes] == [*pt.PHASE_FIELDS, *pt.SEGMENT_FIELDS]
     for m in models:
         g = graph.analyse(m, impls_, table)
