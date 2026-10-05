@@ -38,8 +38,11 @@ class _Unset:
 UNSET = _Unset()
 
 # A *pin* (S58, D217 item 2) is the fourth kind: a measured fact about one galaxy's structure that a template
-# states in place of what the model would derive. It is not a control - no request offers it, it has no range and
-# it does not count against the ceiling - and it has no default: where none is given the model derives.
+# states in place of what the model would derive. It is not a control - no request offers it and it does not
+# count against the ceiling - and it has no default: where none is given the model derives. A pin that is a class
+# (True or False) has no range. A pin that is a measured number is **held to the range of what it replaces**
+# (S59, D218, the gate's follow-up, item 7): it declares lo and hi, and a value outside them is refused where a
+# template is validated and where a run resolves its inputs - not a viewer's range, which a pin has none of.
 INPUT_KINDS: tuple[str, ...] = ("control", "seed", "events", "pin")
 
 # Ruling 6: ceiling 12 [verified: GALAXY_INPUTS.md §11]. Counts controls only;
@@ -61,12 +64,13 @@ class Input:
     label: str
     kind: str  # control | seed | events | pin
     about: str
-    unit: str | None = None  # required for controls; None for seeds, event lists and pins
+    unit: str | None = None  # required for controls; None for seeds, event lists and a pin that is a class (True or False); a pin that is a measured number carries its unit (S59, D218)
     default: object = UNSET  # a pin's is None: no pin is given, and the model derives
-    lo: float | None = None  # control range for the viewer; None = not yet set
+    lo: float | None = None  # control range for the viewer; None = not yet set. A numeric pin's: the range it is held to
     hi: float | None = None
     checkpoint_hypothesis: int | None = None  # GALAXY_PLAN.md §3 grouping; graph.py checks it
     default_owner: str | None = None  # session that owes the default, when UNSET
+    hi_open: bool = False  # a numeric pin whose range does not include hi itself (an angle of one turn: 0 <= x < 360)
 
     def __post_init__(self) -> None:
         if not IDENT.match(self.name):
@@ -86,6 +90,13 @@ class Input:
                 isinstance(self.default, bool) or not isinstance(self.default, (int, float))
             ):
                 raise RegistryError(f"input {self.name}: control default must be a number or UNSET")
+        elif self.kind == "pin":
+            # S59 (D218 items 5-6): a pin is a class (no unit: True or False) or a measured number (its unit).
+            if self.unit is not None:
+                try:
+                    _unit(self.unit)
+                except UnknownUnit as e:
+                    raise RegistryError(f"input {self.name}: {e}") from None
         else:
             if self.unit is not None:
                 raise RegistryError(f"input {self.name}: {self.kind} inputs carry no unit")
@@ -93,11 +104,19 @@ class Input:
             self.default is UNSET or isinstance(self.default, bool) or not isinstance(self.default, int)
         ):
             raise RegistryError(f"input {self.name}: seeds need an int default")
-        if self.kind == "pin" and (self.default is not None or self.lo is not None or self.hi is not None):
+        if self.kind == "pin" and (self.default is not None or (self.unit is None and (self.lo is not None or self.hi is not None))):
             raise RegistryError(
                 f"input {self.name}: a pin has no default and no range - where a template gives none the model "
-                "derives (default=None)"
+                "derives (default=None); only a pin that is a measured number, with its unit, is held to a range"
             )
+        if self.kind == "pin" and self.unit is not None and (self.lo is None or self.hi is None):
+            # S59 (D218, the gate's follow-up, item 7): "a numeric pin is held to the range of the draw it replaces".
+            raise RegistryError(
+                f"input {self.name}: a pin that is a measured number is held to the range of what it replaces - "
+                "lo and hi are required"
+            )
+        if self.hi_open and not (self.kind == "pin" and self.unit is not None):
+            raise RegistryError(f"input {self.name}: only a numeric pin's range may leave its upper end out")
         if (self.default is UNSET) != (self.default_owner is not None):
             raise RegistryError(
                 f"input {self.name}: default_owner is required exactly when the default is UNSET"
@@ -116,6 +135,18 @@ class Input:
     @property
     def has_range(self) -> bool:
         return self.lo is not None and self.hi is not None
+
+    @property
+    def range_text(self) -> str:
+        """The range in words, for a refusal: "1 to 60", or "0 up to, not including, 360"."""
+        return f"{self.lo:g} up to, not including, {self.hi:g}" if self.hi_open else f"{self.lo:g} to {self.hi:g}"
+
+    def admits(self, value: float) -> bool:
+        """Whether ``value`` lies in the declared range (both ends included, but ``hi`` where ``hi_open``).
+        True where no range is declared."""
+        if not self.has_range:
+            return True
+        return bool(self.lo <= value < self.hi) if self.hi_open else bool(self.lo <= value <= self.hi)  # type: ignore[operator]
 
 
 @dataclass(frozen=True, slots=True)
@@ -495,6 +526,45 @@ _INPUTS: tuple[Input, ...] = (
         "request offers it: the API takes it from template=<name> alone, it has no range and no default, and "
         "it does not count against the ceiling. An input that is not given is not among a run's inputs.",
         default=None,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "pitch_angle",
+        "Arm pitch angle (a template's pin)",
+        "pin",
+        "A pin, not a control (S59, D218 item 6): the measured mean pitch of one named galaxy's arm segments, "
+        "with its source, stated by a template in place of the pitch the model draws about its shear law. A "
+        "number in degrees: it replaces the drawn value in the published pitch_angle - the winding, the bar's "
+        "angle and the gas's response all read it - and the law's own draw is still made on its stream and "
+        "published beside it as pitch_angle_drawn, so a disagreement between the law and the galaxy is visible. "
+        "A measured mean entering as template structure, as the bar's presence does: nothing is fitted. Given "
+        "by no template, nothing is pinned. It is held to the range of the draw it replaces, 1 to 60 degrees - "
+        "the range the drawn pitch is kept inside - and refused outside it, by a template and by a run, so the "
+        "pitch law's own bounds and the winding read one pitch. No request offers it: the API takes it from "
+        "template=<name> alone, it has no default, and it does not count against the ceiling.",
+        unit="deg",
+        default=None,
+        lo=1.0,
+        hi=60.0,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "sun_bar_angle",
+        "Angle of the bar to the Sun-centre line (a template's pin)",
+        "pin",
+        "A pin, not a control (S59, D218 item 5): for the one galaxy that has an observer inside it, the angle "
+        "between the bar's long axis and the line from the Sun to the centre, in degrees, with the bar's near "
+        "end ahead of that line in the direction the disc turns. It places the Sun: the published sun_azimuth "
+        "is the bar's angle taken back by this much against the rotation. It moves nothing else - no field of "
+        "the galaxy reads where the Sun is - and where no template gives it, or the galaxy has no bar, the "
+        "Sun's azimuth is not a number. An angle of one turn: 0 up to, not including, 360 degrees, and refused "
+        "outside that, by a template and by a run. No request offers it: the API takes it from template=<name> "
+        "alone, it has no default, and it does not count against the ceiling.",
+        unit="deg",
+        default=None,
+        lo=0.0,
+        hi=360.0,
+        hi_open=True,
         checkpoint_hypothesis=3,
     ),
 )

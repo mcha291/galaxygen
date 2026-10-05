@@ -36,6 +36,17 @@ def fields():
     return o.fields, o.grid.R, o.grid.t
 
 
+@pytest.fixture(scope="module")
+def constants():
+    """The model's constants, as ``systems.materialise`` takes them. S59 (D218 follow-up): the young stars are placed
+    by the star formation law at a point (``systems.young_reader``), which reads the gas pattern's constants and the
+    law's index - so a catalogue materialised with the layer on from a model that publishes ``sfr_modulation`` is
+    handed them, and raises a TypeError without. An interface change: until then the calls below took no constants."""
+    models, _, _ = production()
+    default_model = next(m for m in models if m.name == DEFAULT_MODEL)
+    return {k: c.value for k, c in default_model.constants.items()}
+
+
 def names(cat, mask=None):
     cols = [np.asarray(cat[n]) if mask is None else np.asarray(cat[n])[mask] for n in NAME]
     return set(zip(*(c.tolist() for c in cols)))
@@ -66,11 +77,12 @@ def test_ids_bounds_and_windows():
 
 
 @pytest.mark.parametrize("level", [1, 2, 3])
-def test_union_prefix_and_determinism_at_every_level(fields, level):
+def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     F, R, t = fields
-    parent = sy.materialise(F, R, t, 0, 20000, cells=[PARENT], migration=3.6)
+    # S59 (D218 follow-up): `constants=constants` on every call of this file - the young stars' point reader's.
+    parent = sy.materialise(F, R, t, 0, 20000, cells=[PARENT], migration=3.6, constants=constants)
     kids = [sy.child_id(PARENT, level, q) for q in range(sy.children_per_cell(level))]
-    cat = sy.materialise(F, R, t, 0, 20000, cells=kids, migration=3.6, level=level)
+    cat = sy.materialise(F, R, t, 0, 20000, cells=kids, migration=3.6, level=level, constants=constants)
     inherited = np.asarray(cat["level"]) == 0
     # Union: the parent's rows are exactly the children's inherited rows, column for column.
     assert names(cat, inherited) == {(0, PARENT, i) for i in range(parent.size)}
@@ -92,27 +104,32 @@ def test_union_prefix_and_determinism_at_every_level(fields, level):
     assert extras == len(kids) * int(round(expected * (1.0 - 1.0 / len(kids))))
     # Determinism: a child alone is its slice of the whole set.
     q = 1
-    alone = sy.materialise(F, R, t, 0, 20000, cells=[kids[q]], migration=3.6, level=level)
+    alone = sy.materialise(F, R, t, 0, 20000, cells=[kids[q]], migration=3.6, level=level, constants=constants)
     off = sum(n for c, n in cat.counts if c < kids[q])
     n_alone = dict(cat.counts).get(kids[q], 0)
     assert alone.size == n_alone
     for n in STAR_COLS + NAME:
         assert np.array_equal(np.asarray(alone[n]), np.asarray(cat[n])[off:off + n_alone], equal_nan=True), n
     # Prefix: the child's rows at a smaller sample are a subset of its rows at a larger one, by name.
-    small = sy.materialise(F, R, t, 0, 10000, cells=[kids[q]], migration=3.6, level=level)
+    small = sy.materialise(F, R, t, 0, 10000, cells=[kids[q]], migration=3.6, level=level, constants=constants)
     assert names(small) <= names(alone)
     # And the level-0 catalogue is untouched by the machinery: no name columns, the sample as always.
     # S56 (D215): was 22 - the cell's share of its ring is the stellar pattern's sector mean, and the pattern is five modes now.
-    assert "level" not in parent and parent.size == 14
+    # S59 (D218): was 14 - the winding is laid in seeded segments, so the pattern's sector mean in this cell fell from
+    # 0.693 of the ring's to 0.555 (expected 14.40 -> 11.53 stars; the ring's 665.03 is the same to the bit).
+    # S59 (D218 follow-up): was 14; first pass 11 - a segment's pitch is relative to the disc's since the gate's
+    # follow-up, so the winding in this ring is another and the pattern's sector mean here reads 0.505 of the
+    # ring's (expected 10.50 stars; the ring's 665.03 still to the bit, layer on and off).
+    assert "level" not in parent and parent.size == 10
 
 
-def test_a_deeper_level_contains_its_parents_rows(fields):
+def test_a_deeper_level_contains_its_parents_rows(fields, constants):
     """Union across two steps: a level-1 child's rows are among its level-3 descendants' rows."""
     F, R, t = fields
     child1 = sy.child_id(PARENT, 1, 2)
-    one = sy.materialise(F, R, t, 0, 20000, cells=[child1], migration=3.6, level=1)
+    one = sy.materialise(F, R, t, 0, 20000, cells=[child1], migration=3.6, level=1, constants=constants)
     grand = [sy.child_id(PARENT, 3, q) for q in range(64)]
-    three = sy.materialise(F, R, t, 0, 20000, cells=grand, migration=3.6, level=3)
+    three = sy.materialise(F, R, t, 0, 20000, cells=grand, migration=3.6, level=3, constants=constants)
     # The inherited rows of level 1 are the parent's rows in the child; at level 3 they are still there.
     inherited1 = names(one, np.asarray(one["level"]) == 0)
     assert inherited1 <= names(three, np.asarray(three["level"]) == 0)

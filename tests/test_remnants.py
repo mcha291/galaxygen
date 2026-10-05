@@ -30,6 +30,15 @@ def runs():
     return {m.name: run(m, None, COARSE, impls=impls, table=table, only=WANTED) for m in models}
 
 
+def _own(name: str) -> dict:
+    """The named model's constants, as its stage passes them. S59 (D218 follow-up): the young stars' reader is
+    the star formation law at a point (``systems.young_reader``), which reads the gas pattern's constants and the
+    law's index; ``materialise`` refuses a model that publishes ``sfr_modulation`` without them."""
+    from galaxy.core.registry import production
+
+    return {k: c.value for k, c in production()[0].get(name).constants.items()}
+
+
 def _budget(o, bulge: bool = True) -> rm.MassBudget:
     from galaxy.stages.light import bulge_abundance
 
@@ -163,7 +172,7 @@ def test_a_region_carries_the_whole_discs_remnants(runs):
 
     for name, o in runs.items():
         R, t = o.grid.R, o.grid.t
-        kw = dict(migration=float(o.inputs["migration_efficiency"]))
+        kw = dict(migration=float(o.inputs["migration_efficiency"]), constants=_own(name))
         whole = materialise(o.fields, R, t, 0, 200_000, None, **kw)
         region = materialise(o.fields, R, t, 0, 200_000, [17, 400, 900], **kw)
         start, at = {}, 0
@@ -252,7 +261,8 @@ def test_the_sample_agrees_with_the_integral(runs):
 
     for name, o in runs.items():
         integral = _budget(o, bulge=False).remnant_fraction
-        cat = materialise(o.fields, o.grid.R, o.grid.t, 7, 200_000, None, migration=float(o.inputs["migration_efficiency"]))
+        cat = materialise(o.fields, o.grid.R, o.grid.t, 7, 200_000, None, migration=float(o.inputs["migration_efficiency"]),
+                          constants=_own(name))
         c = {k: np.asarray(v) for k, v in cat.items()}
         now = lookup_columns(c["star_mass"], c["star_age"], c["star_metallicity"], ("mass_now",))["mass_now"]
         alive = np.isfinite(c["star_luminosity"])

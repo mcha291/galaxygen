@@ -43,9 +43,14 @@ def out(model):
 def stars(model, n, **kw):
     """The catalogue of one model. ``migration`` comes from the run's own inputs, never a
     literal: the whole point of debt #31's fix is that the catalogue churns by the same
-    number the chemistry does, and a test that passed its own would not be checking that."""
+    number the chemistry does, and a test that passed its own would not be checking that.
+
+    S59 (D218 follow-up): ``constants`` are the model's own, as the stage passes them - the young stars' reader is
+    the star formation law at a point (``systems.young_reader``), which reads the gas pattern's constants and the
+    law's index; ``materialise`` refuses a model that publishes ``sfr_modulation`` without them."""
     o = out(model)
     kw.setdefault("migration", float(o.inputs["migration_efficiency"]))
+    kw.setdefault("constants", {k: c.value for k, c in model.constants.items()})
     return materialise(o.fields, o.grid.R, o.grid.t, kw.pop("seed", 0), n, **kw)
 
 

@@ -221,7 +221,14 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # unsourced number (the width) must not drive a census"), so the modulation inside the bar's reach, the young
     # stars' cell weights there, the cells' Gamma draws and the 3162nd star move once more; the expected count
     # is still the tables'.
-    assert F["bright_star_limit"] == pytest.approx(34697.372, rel=1e-6)  # S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S59 (D218): the arms' winding is laid in seeded segments, so on each ring the stellar pattern and the
+    # modulation are turned: the cells' weights, their Gamma draws and the 3162nd star move again (-1.0 %); the
+    # expected count is still the tables', to the bit.
+    # S59 (D218 follow-up): a segment's pitch is relative to the disc's (other rows, other turns), and the 20-100 Myr
+    # stars' cell weights are the star formation law at a point - the exact reader, not the grid table between
+    # rings: the cells' weights, their Gamma draws and the 3162nd star move again (+0.7 %); the expected count is
+    # still the tables', to the bit.
+    assert F["bright_star_limit"] == pytest.approx(34580.531, rel=1e-6)  # S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -276,17 +283,24 @@ def test_the_light_above_a_thousand_suns_is_what_the_luminosity_function_carries
     assert abs(L.sum() - budget) < 4.0 * np.sqrt((L**2).sum())
 
 
-def test_young_bright_stars_follow_where_stars_form_today(galaxy, seed, default):
-    """In the azimuthal default the stars between the cluster window and 100 Myr are placed by sfr_modulation:
-    the modulation at their positions sits far above the older stars' (S48: mean ln 0.50 against -0.46, the
-    basic model's two parts both at -0.46)."""
-    from galaxy.stages.systems import Modulation
+def test_young_bright_stars_follow_where_stars_form_today(galaxy, seed, default, models):
+    """In the azimuthal default the stars between the cluster window and 100 Myr are placed by where stars form
+    today: the modulation at their positions sits far above the older stars' (S48: mean ln 0.50 against -0.46, the
+    basic model's two parts both at -0.46).
+
+    S59 (D218 follow-up): the modulation is read by the young stars' own reader - the star formation law at a
+    point (``systems.young_reader``: the law on the gas pattern's point function, with the ring's gas column and
+    threshold and the law's index). Until then this test built ``Modulation`` on the grid table ``sfr_modulation``
+    and read it between rings, which the gate ruled out as a reader. What is asserted is what it was."""
+    from galaxy.stages.systems import Modulation, young_reader
 
     assert "sfr_modulation" in default.fields  # the default model publishes it (D197)
     cells = _window(default.grid.R, 6.0, 10.0, 0.0, 2.0 * np.pi)
     cat = br.materialise_bright(galaxy, seed, cells, 5.0e3)
     age = np.asarray(cat["bright_star_age"])
-    m = Modulation(default.fields["sfr_modulation"], default.grid.R).at_points(cat["bright_star_radius"], np.asarray(cat["bright_star_azimuth"])[:, None])[:, 0]
+    reader = young_reader(default.fields, default.grid.R, {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+    assert isinstance(reader, Modulation) and reader.pattern is not None  # a pattern, not the flat ring's 1
+    m = reader.at_points(cat["bright_star_radius"], np.asarray(cat["bright_star_azimuth"])[:, None])[:, 0]
     ln = np.log(np.maximum(m, 1e-12))
     young, old = age < 0.1, age >= 0.1
     assert young.sum() > 1000 and old.sum() > 1000
@@ -529,7 +543,11 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # another realisation again, inside the same gate.
 # S58 (D217 follow-up): the young stars inside the bar's reach follow the bar's footprint and not its lanes -
 # another realisation, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00161, 1.00226, 1.00268)  # S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S59 (D218): every cell's weight follows the arms on a winding laid in seeded segments - another realisation,
+# inside the same gate.
+# S59 (D218 follow-up): the segments re-laid with a pitch relative to the disc's, and the young stars' cells weighted
+# by the law at a point - another realisation, inside the same gate.
+BRIGHT_RGB_OVER_OWN = (0.99832, 1.00222, 1.00792)  # S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -621,8 +639,16 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # (whole-disc cluster light -1.0 %).
 # S58 (D217): the clouds inside the bar's reach are placed by the bar's lanes, and the two-armed mode sits on the
 # bar's axis - another Poisson realisation again (whole-disc cluster light +0.7 %).
-CLUSTERS_RGB_OVER_YOUNG = (0.96011, 0.96524, 0.97627)  # S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 0.98645  # S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
+# S59 (D218): the gas's response is turned round each ring by a winding laid in seeded segments, so the clouds fall
+# in other cells - another Poisson realisation again (whole-disc cluster light +5.0 %: three clusters of
+# 1.9-2.6e5 Msun under 4 Myr old are new to the census and are its three brightest; the clusters' light's own
+# noise, sqrt(sum L^2) / sum L, is 4.8 %, and the young population it is read against has not moved).
+# S59 (D218 follow-up): a segment's pitch is relative to the disc's and the rows are other rows, so the gas's
+# response is turned by other phases and the clouds fall in other cells - another Poisson realisation again
+# (whole-disc cluster light -3.4 %: of the three clusters that were new to the first build's census and its
+# brightest, one is left; the clusters' light's own noise is 4.5 %, and the young population has not moved).
+CLUSTERS_RGB_OVER_YOUNG = (0.97428, 0.97826, 0.98757)  # S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
+CLUSTERS_LIGHT_OVER_YOUNG = 1.00064  # S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):
@@ -632,7 +658,10 @@ def test_the_cluster_census_carries_the_young_light(default, models, through_rgb
     clouds on the gas's ridge, another draw of the same census; the clusters' light moved +3.2 %, its seed-to-seed
     spread 4.4 %); 3.4 % and 1.1 % under at S56 (D215: the ridge on five arm modes, another draw again; the
     clusters' light moved -5.2 %); 4.0 % and 2.0 % under since S57 (D216: the clouds on the gas's steady response,
-    another draw again; the clusters' light moved -1.0 %): the clusters
+    another draw again; the clusters' light moved -1.0 %); from 0.6 % under to 1.5 % over and 3.5 % over since S59
+    (D218: the winding in seeded segments, another draw again; the clusters' light moved +5.0 %); 2.6 % to 1.2 %
+    under and 0.1 % over at the gate's follow-up (a segment's pitch relative to the disc's, another draw again;
+    the clusters' light moved -3.4 %): the clusters
     carry the young light, so the remainder that leaves it out counts no star twice and drops none. A realisation (the
     census is a Poisson draw of clouds), seeded, so pinned tight."""
     _, (hc, ac) = through_rgb

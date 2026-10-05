@@ -25,7 +25,7 @@ def test_production_runs(model):
     assert {"halo_mass", "world_seed"} <= set(out.inputs)
     # S3 set the last default, so every input resolves. S58 (D217): was `== set(INPUTS)` - a pin has no default,
     # so one that is not given is not among a run's inputs, and the stage that reads it derives.
-    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present"}
+    assert set(out.inputs) == {n for n, i in INPUTS.items() if i.kind != "pin"} == set(INPUTS) - {"bar_present", "pitch_angle", "sun_bar_angle"}  # S59 (D218): was - {"bar_present"}; two more pins
     assert out.fields["bar_present"] == "yes"  # derived, at the defaults
 
 
@@ -155,6 +155,37 @@ def test_columns_share_a_length_per_object_class():
     s = stage("s", (dc,), compute=lambda ctx: {"c1": np.array([0, 1, 7])})
     with pytest.raises(PublishError, match="codes"):
         go(model("m", s), s)
+
+
+def test_a_table_s_columns_share_its_rows_and_a_table_of_no_rows_is_a_table():
+    """S59 (D218): a table column (``Kind.TABLE_COLUMN``) is checked as what it is - one dimension, floating, every
+    column of one table the same number of rows. No rows at all is a table like any other (the winding's segments
+    with the layer off); a resumed run still holds a later stage to the rows already published."""
+    d1, d2 = decl("t1", Kind.TABLE_COLUMN), decl("t2", Kind.TABLE_COLUMN)
+    s = stage("s", (d1, d2), compute=lambda ctx: {"t1": np.ones(3), "t2": np.ones(4)})
+    with pytest.raises(PublishError, match="columns of table arm_segment must share one length; 4 != 3"):
+        go(model("m", s), s)
+    s = stage("s", (d1,), compute=lambda ctx: {"t1": np.ones((3, 2))})
+    with pytest.raises(PublishError, match="a table column is 1-D"):
+        go(model("m", s), s)
+    s = stage("s", (d1,), compute=lambda ctx: {"t1": np.arange(3)})
+    with pytest.raises(PublishError, match="a table column is a floating array"):
+        go(model("m", s), s)
+    s = stage("s", (d1, d2), compute=lambda ctx: {"t1": np.zeros(0), "t2": np.zeros(0)})
+    out = go(model("m", s), s)
+    assert out.fields["t1"].shape == out.fields["t2"].shape == (0,) and out.decls["t1"].kind.domain == "table"
+    # A table's rows and an object class's are counted apart: three stars beside five segments.
+    star = decl("m1", Kind.COLUMN)
+    s = stage("s", (d1, star), compute=lambda ctx: {"t1": np.ones(5), "m1": np.ones(3)})
+    assert go(model("m", s), s).fields["t1"].shape == (5,)
+    # Resumed, the table's length is the one already published.
+    first = stage("first", (d1,), compute=lambda ctx: {"t1": np.ones(5)})
+    later = stage("later", (d2,), requires=("t1",), compute=lambda ctx: {"t2": np.ones(4)})
+    m = model("m", first, later)
+    done = run(m, None, TINY, impls=impls(first, later), only=("t1",))
+    assert done.ran == ("first",)
+    with pytest.raises(PublishError, match="must share one length; 4 != 5"):
+        run(m, None, TINY, impls=impls(first, later), resume=done)
 
 
 def test_unset_input_is_an_error_only_when_read():

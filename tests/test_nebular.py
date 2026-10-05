@@ -151,14 +151,18 @@ def test_the_default_census_numbers(default, default_layer_off):
     # one region per cluster (S33); S51 (D210): was 12860 (the clouds on the gas's ridge)
     # S56 (D215): was 12930 (the ridge follows five arm modes: another draw of the census)
     # S58 (D217): was 12829 (inside the bar's reach the clouds are placed by the bar's lanes: another draw of the census)
-    assert L.size == 12826  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    # S59 (D218): was 12826 (the winding in seeded segments turns each ring's gas: another draw of the census)
+    # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's since the gate's
+    # follow-up: the winding is another, and the census another draw again)
+    assert L.size == 12840  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S58 (D217): was 0.720 (0.7304 now, a hair past the tolerance: another draw of the census)
     assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.730, abs=0.01)
     assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(193.7, rel=0.01)
     assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.826, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
     # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7777  # S58 (D217): was 7780 (another draw)
+    # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7734
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
     assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
@@ -181,8 +185,15 @@ def test_the_default_census_numbers(default, default_layer_off):
     # (D216 predicted "rows 35 and 37 may move with placement, layer on"; the judged, layer-off rows above did not).
     # S58 (D217): the first was -2.0698; the census placed by the response and the bar's lanes is another draw again
     # (the judged, layer-off rows above did not move).
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.0638, abs=1e-3)
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.103890, abs=1e-5)
+    # S59 (D218): were -2.0638 and -0.103890; the census placed by the response on a winding laid in seeded segments
+    # is another draw again - three regions brighter than any the census held before flatten the bright end's slope
+    # (the judged, layer-off rows above did not move: with the layer off no field moved, bit for bit).
+    # S59 (D218 follow-up): were -2.0638 and -0.103890; first pass -1.9786 and -0.102083. A segment's pitch is
+    # relative to the disc's since the gate's follow-up, so the census is another draw once more: the slope reads
+    # -2.0356, back toward S58's (this draw's brightest region holds 2.4 % of the census's Halpha), the gradient
+    # -0.102201. Not judged; the judged, layer-off rows above are the numbers they were.
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.0356, abs=1e-3)
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.102201, abs=1e-5)
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -294,7 +305,11 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # S51 (D210): [O III] 0.752 -> 0.756, the Halpha weights another draw of the census (the clouds on the gas's ridge)
     # S56 (D215): [O III] 0.756 -> 0.749, another draw again (the gas's ridge follows five arm modes)
     # S58 (D217): [O III] 0.749 -> 0.743, another draw again (inside the bar's reach the clouds are on the bar's lanes)
-    assert weighted == pytest.approx({"oiii_5007": 0.743, "nii_6583": 0.083, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
+    # S59 (D218 follow-up): [O III] 0.743 -> 0.749 (S58's pin, which the first pass's draw still read inside its
+    # tolerance), the Halpha weights another draw of the census again - its brightest and third brightest regions,
+    # 1.4 and 1.0 Myr old at 8.0 and 6.2 kpc, read [O III]/Halpha of 1.04 and 1.06 and hold 3.9 % of the weight. The
+    # other three lines are the figures they were.
+    assert weighted == pytest.approx({"oiii_5007": 0.749, "nii_6583": 0.083, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])

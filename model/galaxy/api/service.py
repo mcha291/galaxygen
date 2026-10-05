@@ -178,7 +178,7 @@ ROUTES: tuple[Route, ...] = (
         "inputs: {controls: {name: value}, seeds: {name: value}, mergers: [event]} - every input resolved, the "
         "template's overrides on the registry's defaults, in the shapes /api/inputs uses - camera: {inclination_deg, "
         "azimuth_deg, radius_kpc (half the picture's height at the centre), fov_deg}, filters: <the viewer's set, by "
-        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, value, source}] - "
+        "name>, instrument: {distance_mpc, pixel_scale_arcsec} (null: not read), pins: [{name, label, unit, value, source}] - "
         "measured facts of the galaxy's structure that replace what the model derives: value is true or false, "
         "the observed class, and name is the published field it decides (bar_present: barred or not) - "
         "fit: null | {targets: "
@@ -734,7 +734,8 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
             "pixel_scale_arcsec": template.instrument.pixel_scale_arcsec,
         },
         # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
-        "pins": [{"name": p.name, "value": p.value, "source": p.source} for p in template.pins],
+        # S59 (D218): a pin carries its input's label and unit, so a client can state a measured number in words.
+        "pins": [{"name": p.name, "label": table[p.name].label, "unit": table[p.name].unit, "value": p.value, "source": p.source} for p in template.pins],
         "fit": fit,
         "checks": [
             {
@@ -1127,6 +1128,11 @@ class Service:
                 scalars[name] = _number(value) if not decl.kind.categorical else value
                 continue
             arr = np.asarray(value)
+            # A table column (S59, D218) is served here and nowhere else: whole, as the run publishes it - one
+            # array of the table's rows, none with the layer off. It has no axes, so no stride touches it; no
+            # census or region route knows it (they pick `domain == "object"`).
+            if decl.kind.domain == "table" and arr.ndim != 1:
+                raise RuntimeError(f"table column {name!r} is not one-dimensional: shape {arr.shape}")
             if steps is not None and "t" in decl.axes:
                 arr = np.take(arr, steps, axis=decl.axes.index("t"))
             if precision == "f4" and arr.dtype == np.float64:
@@ -1178,12 +1184,14 @@ class Service:
         if level and len(cells) > MAX_CHILD_CELLS:
             raise BadRequest(f"level={level} over this window names {len(cells)} cells, more than {MAX_CHILD_CELLS}: narrow the window")
         migration = float(out.inputs["migration_efficiency"])
+        # S59 (D218): the model's constants, which the young stars' reader applies the star formation law with.
+        constants = {k: c.value for k, c in model.constants.items()}
         key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed, level, _compose.setting(out.fields)))
         catalogue = self.cells.catalogue(
             key, cells,
             # level= only below level 0, so the level-0 call keeps its signature for the instruments
             # that wrap materialise (test_api's cache count).
-            lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration, **({"level": level} if level else {})),
+            lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration, constants=constants, **({"level": level} if level else {})),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in catalogue]
         selection = None
@@ -1969,9 +1977,10 @@ class Service:
         layer = self._layer(q)
         out, ran = self.compute(model, inputs, self._reads(model, catalogue), layer)
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
+        constants = {k: c.value for k, c in model.constants.items()}
         here = _catalogue.materialise(
             out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
-            migration=float(out.inputs["migration_efficiency"]), level=level,
+            migration=float(out.inputs["migration_efficiency"]), level=level, constants=constants,
         )
         if level:
             # A level-k name addresses the child's own stars: its inherited rows are opened by their
@@ -1981,7 +1990,6 @@ class Service:
         if index >= here.size:
             raise NotFound(f"cell {cell} has {here.size} stars of its own at this sample size and level, so no index {index}")
 
-        constants = {k: c.value for k, c in model.constants.items()}
         system, found = _planets.one_system(here, index, _catalogue.canonical_cell(level, cell), seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
         star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}

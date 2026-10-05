@@ -36,6 +36,7 @@ cannot be resumed under the other setting.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -98,9 +99,21 @@ def resolve_inputs(
             value = overrides.get(name)
             if value is None:
                 continue
-            if not isinstance(value, bool):
-                raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
-            out[name] = value
+            if inp.unit is None:
+                if not isinstance(value, bool):
+                    raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
+                out[name] = value
+                continue
+            # S59 (D218 items 5-6): a pin that carries a unit is a measured number, finite.
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise RunError(f"pin {name!r} is a finite number in {inp.unit} (or not given), got {value!r}")
+            # ... held to the range of what it replaces (the gate's follow-up, item 7): refused outside it, here
+            # as where a template is validated, so no stage ever reads a pin its own law's bounds would not hold.
+            if not inp.admits(float(value)):
+                raise RunError(
+                    f"pin {name!r} is held to the range of what it replaces, {inp.range_text} {inp.unit}; got {value!r}"
+                )
+            out[name] = float(value)
             continue
         if name in overrides:
             out[name] = overrides[name]
@@ -138,7 +151,21 @@ def _check_value(decl: FieldDecl, value: Any, grid: Grid, stage: Stage, column_l
         if isinstance(value, bool) or np.ndim(value) != 0 or not isinstance(value, (int, float, np.number)):
             raise PublishError(f"{where}: a scalar must be a single number, got {type(value).__name__}")
         return float(value)
-    # object domain
+    if kind.domain == "table":
+        # S59 (D218): a table column - rows a later stage reads whole. One dimension, floating, and every column
+        # of one table the same number of rows; a table of no rows (the layer off) is a table like any other.
+        arr = np.asarray(value)
+        if arr.ndim != 1:
+            raise PublishError(f"{where}: a table column is 1-D, got shape {arr.shape}")
+        assert decl.of is not None
+        n = column_lengths.setdefault(decl.of, arr.shape[0])  # table names and object classes share no name
+        if arr.shape[0] != n:
+            raise PublishError(f"{where}: the columns of table {decl.of} must share one length; {arr.shape[0]} != {n}")
+        if not np.issubdtype(arr.dtype, np.floating):
+            raise PublishError(f"{where}: a table column is a floating array, got {arr.dtype}")
+        return arr
+    if kind.domain != "object":
+        raise PublishError(f"{where}: no rule for a field of domain {kind.domain!r}")
     arr = np.asarray(value)
     if arr.ndim != 1:
         raise PublishError(f"{where}: columns are 1-D, got shape {arr.shape}")
@@ -230,7 +257,7 @@ def run(
         fields.update(resume.fields)
         decls.update(resume.decls)
         for name, decl in decls.items():
-            if decl.kind.domain == "object":
+            if decl.kind.domain in ("object", "table"):  # S59 (D218): a table's columns share its rows too
                 assert decl.of is not None
                 column_lengths[decl.of] = len(fields[name])
         done = resume.order

@@ -374,7 +374,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (86, 46)  # S58 opened #145-#149, the bar's presence criterion, its body's unchecked share, the lanes' placeholder width, the two clocks and the undriven arms (D217); 81 / 46 at S57; S57 discharged #140 (the ranked ridge) and opened #141-#144, the steady response's declared approximations (D216); 78 / 45 at S56; S56 opened #138-#140, the arm-number law against the observed spectra, the phases' assumed statistic and the gas ridge by rank (D215); 75 / 45 at S55; S55 opened #137, the layer's totals conserved in expectation only until L1's ring-first draw (D214, gate G1); 74 / 45 at S54; S54 opened #132-#136 on NGC 4414's fit and its five disclosed checks (D213); 69 / 45 at S51-S53; S51 opened #129-#131, the gas ridge's width from one galaxy, the HI's contrast unmodelled and the gas contrast's unread galaxy-level scatter (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
+    assert progress.debt_counts(text) == (91, 46)  # S59 opened #150-#154, the segments as kinks of one winding, the gas law at the mean pitch, the Milky Way's arms that the modes cannot show, NGC 4414's pitch against the law, and the table of star formation at a cell's mean; S58 opened #145-#149, the bar's presence criterion, its body's unchecked share, the lanes' placeholder width, the two clocks and the undriven arms (D217); 81 / 46 at S57; S57 discharged #140 (the ranked ridge) and opened #141-#144, the steady response's declared approximations (D216); 78 / 45 at S56; S56 opened #138-#140, the arm-number law against the observed spectra, the phases' assumed statistic and the gas ridge by rank (D215); 75 / 45 at S55; S55 opened #137, the layer's totals conserved in expectation only until L1's ring-first draw (D214, gate G1); 74 / 45 at S54; S54 opened #132-#136 on NGC 4414's fit and its five disclosed checks (D213); 69 / 45 at S51-S53; S51 opened #129-#131, the gas ridge's width from one galaxy, the HI's contrast unmodelled and the gas contrast's unread galaxy-level scatter (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -403,7 +403,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149 | 75 |",  # S50: #128 opened (D206); S49: #126 discharged, #127 opened (D204); S48: #125 (D201) and #126 (D202) opened; S45: #124 (D196); S44: #121-#123 discharged (D195)
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154 | 80 |",  # S50: #128 opened (D206); S49: #126 discharged, #127 opened (D204); S48: #125 (D201) and #126 (D202) opened; S45: #124 (D196); S44: #121-#123 discharged (D195)
         # S42 (D192): rows 32 and 34 re-set on Audit III's blind windows; #100 re-scoped to the 0.71; #108 discharged.
         "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex",
         "100. **The model's ionizing photons per unit star formation are 0.71 of Starburst99's; row 34 passes since S42",
@@ -701,10 +701,28 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     and a curve in stars. Pinned as the two R² values and the collapse of the
     marginal per-star cost across the range, both far outside any tolerance the
     machine's noise needs — debt #68 is the same fact seen from the flaky test.
+
+    **S59 (D218): read with the layer off, and the layer-on cost read beside it.** The statement is of the
+    catalogue's own structure. With the layer on the young stars are placed by the star formation law at a
+    point, which inside a bar's footprint takes the law's mean round the ring where each star is: a cost by the
+    star. On the default model that about doubles the catalogue at these sizes (0.13 → 0.28 s at 500 stars,
+    0.32 → 0.71 s at 32 000; 370–410 → 800–1 230 µs a cell) and draws the two fits together (R² 0.92–0.98 by the
+    cell against 0.82–0.92 by the star; with the layer off 0.94–0.99 against 0.79–0.90) - the ordering held in
+    ten runs of ten on an idle machine by as little as 0.003 and failed twice under load, so it is asserted
+    where it is the catalogue's, and the layer-on run keeps the collapse of the marginal cost and a bound on
+    the price of a cell (was 1500 µs for the one run; the reader's cost has no sourced bound, #154). The
+    ordering is not asserted layer on: the layered reader prices young stars inside the bar's footprint by a
+    quadrature each (#154), so it is not a property of the layered catalogue.
     """
     from galaxy.specs import performance
 
-    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on_stars, on_secs = [s[1] for s in on["samples"]], [s[2] for s in on["samples"]]
+    on_marginal = [(on_secs[i + 1] - on_secs[i]) / (on_stars[i + 1] - on_stars[i]) for i in range(len(on_secs) - 1)]
+    assert on_marginal[0] > 3.0 * on_marginal[-1], on_marginal  # 5.5-8.0 here
+    assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
+
+    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False)
     cells = cost["cells per sample"]
     stars = [s[1] for s in cost["samples"]]
     secs = [s[2] for s in cost["samples"]]
@@ -720,7 +738,7 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     # And the fit that is conditioned. R² ~0.94-0.99 against ~0.4-0.7 in this repo;
     # the gate is the ordering, which cannot survive the saturation going away.
     assert cost["per_cell_us"] > 0.0 and cost["per_cell_r2"] > cost["per_star_r2"]
-    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here
+    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here; S59, layer off: 370-410
 
 
 def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():

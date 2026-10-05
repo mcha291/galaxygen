@@ -60,7 +60,9 @@ export const INPUT_ROUTES = ["/api/arrays", "/api/region", "/api/system", "/api/
  * march's quadrature and what the frame's edge cuts off (the disc runs past a 20 kpc frame, and how much of a
  * ring's light lies outside depends on where round the ring it is placed; S55's pattern read 1.0008 to 1.0013
  * here, and 1.00003 with the whole disc in the frame). A layer that changed a ring's total would move the sum by
- * far more than the bound.
+ * far more than the bound. Read again at S59, with the arms' winding in segments (D218): **1.00000, 1.00004,
+ * 1.00003** (0.9999954, 1.0000382, 1.0000320) - the re-wound pattern moves the dusty frame's ratio by up to
+ * 0.0025 (below) and this one by 0.000015 at most: the rings' totals are where they were.
  */
 export const LAYER_SUM_TOLERANCE = 0.01;
 
@@ -89,13 +91,19 @@ export const DUST_FREE = { released: ["stars", "dust"], kept: ["starlight", "ion
 export const TRANSFER_SLACK = 1e-3;
 
 /**
- * Physics only over layered on the dusty frame, per channel (R, G, B), as measured at S58 (0.9848697, 0.9868845,
- * 0.9884525): with the layer the frame is 1.2 to 1.5 % brighter. **The lanes' dust, D217; moves with the lane
+ * Physics only over layered on the dusty frame, per channel (R, G, B), as measured at S59 (0.9824103, 0.9851266,
+ * 0.9877067): with the layer the frame is 1.2 to 1.8 % brighter. **The lanes' dust, D217; moves with the lane
  * width**: the bar's gas lanes gather a ring's dust into a narrow range of azimuth, and by (ii) that lets more of
  * the ring's light through. Pinned to DUSTY_RATIO_PIN, so that a change to the lanes (or to anything else that
  * places the dust) is seen here and the numbers re-read, not absorbed by a bound wide enough to hold any of them.
+ *
+ * Re-pinned at S59 from S58's 0.98487, 0.98688, 0.98845 (0.9848697, 0.9868845, 0.9884525): **the segments'
+ * re-wound lanes and arms, D218**. The arms' winding is in segments with the layer on, so every layer-on (R, phi)
+ * field is wound again and the dust lies elsewhere round each ring; the physics-only frame is the same file, byte
+ * for byte, and the layered one is brighter by 0.25, 0.18 and 0.08 % (the ratio moved by -0.00246, -0.00176 and
+ * -0.00075: past the pin in R and G, inside it in B).
  */
-export const DUSTY_LAYER_RATIO = [0.98487, 0.98688, 0.98845] as const;
+export const DUSTY_LAYER_RATIO = [0.98241, 0.98513, 0.98771] as const;
 export const DUSTY_RATIO_PIN = 1e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */

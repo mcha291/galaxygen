@@ -829,6 +829,62 @@ LEVEL0: dict[str, Constant] = {
         "input (D216; see GAS_ARM_CONTRAST_GRAND_DESIGN). Coverage: the spirals of the 28 with masks that are not among the 17 grand "
         "designs (27 galaxies, 59 arm segments carry molecular contrasts).",
     ),
+    # --- the winding's segments (S59, BUILD_III Phase P4; DECISIONS.md D218 items 1-2) ---------------------
+    "ARM_SEGMENT_EXTENT_MEDIAN": Constant(
+        60.0,
+        "deg",
+        "Median azimuthal extent of one segment of a spiral arm - a stretch between breaks in the HII regions' "
+        "density or scatter or an apparent change of pitch, fitted as one logarithmic spiral: median 60 deg, "
+        "quartiles 50-80, range 20-180, mean 67.8 over 38 segments of four galaxies. **The reader's arithmetic "
+        "on Honig & Reid 2015's 38 printed rows**, from the printed azimuth ranges: no such statistic is printed "
+        "in the paper [verified: Honig & Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5, "
+        "https://arxiv.org/pdf/1412.1012; docs/READING_ARM_SEGMENTS.md A1.1 and A2, HR15, where the rows are "
+        "printed so the arithmetic can be re-run]. The median of the log-normal a segment's extent is drawn "
+        "from (D218 item 2).",
+    ),
+    "ARM_SEGMENT_EXTENT_LOG_SCATTER": Constant(
+        0.35,
+        "dimensionless",
+        "The natural-log width of the segment extent's log-normal: with the median of 60 deg it gives quartiles "
+        "47-76 deg against the 50-80 of the 38 rows - the reader's fit to its own arithmetic on Honig & Reid "
+        "2015's 38 printed rows, not a number the paper prints [verified: docs/READING_ARM_SEGMENTS.md A3, a "
+        "lognormal of median 60 deg and a log-width of about 0.35; DECISIONS.md D218 item 2].",
+    ),
+    "ARM_SEGMENT_EXTENT_MIN": Constant(
+        20.0,
+        "deg",
+        "The shortest segment among Honig & Reid 2015's 38 printed rows (the reader's arithmetic on the printed "
+        "azimuth ranges): a drawn extent under it is drawn again, not clipped [verified: "
+        "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2: redrawn outside "
+        "20-180 deg, the bounds being the sample's range].",
+    ),
+    "ARM_SEGMENT_EXTENT_MAX": Constant(
+        180.0,
+        "deg",
+        "The longest segment among Honig & Reid 2015's 38 printed rows (the reader's arithmetic on the printed "
+        "azimuth ranges): a drawn extent over it is drawn again, not clipped [verified: "
+        "docs/READING_ARM_SEGMENTS.md A1.1, range 20-180 deg; DECISIONS.md D218 item 2].",
+    ),
+    "ARM_SEGMENT_PITCH_RELATIVE_SCATTER": Constant(
+        0.56,
+        "dimensionless",
+        "Standard deviation of a segment's pitch about the galaxy's own, as a fraction of the galaxy's pitch: "
+        "each segment's pitch is the galaxy's pitch plus an independent normal residual of this fraction of "
+        "it, untruncated - 7.6 deg in a disc of pitch 13.5 deg, 16 deg at 28.9 - so tighter arms vary less in "
+        "degrees. The measured variation of the pitch along an arm: sd of local pitch over mean 0.56 +- 0.25, "
+        "155 galaxies (0.47 for grand designs, 0.65 for multi-armed spirals; in degrees 7.2 +- 3.3) [verified: "
+        "Savchenko, Marchuk, Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; "
+        "docs/READING_ARM_SEGMENTS.md A1.1: \"sd of local pitch over mean 0.56 +- 0.25\", 155 galaxies]. A "
+        "reversed segment is one drawn more than 1/0.56 of the spread below the mean: 3.7 % of segments at "
+        "every pitch the tangent does not wrap (beside 3 reversed of the 38 printed rows of Honig & Reid 2015, "
+        "8 %). **The absolute form was built first and withdrawn at the gate's follow-up**: a residual of "
+        "10 deg whatever the pitch (the pooled sd of those 38 rows, 9.9 deg about a mean of 15.0; S4G's "
+        "9.5 +/- 0.3 deg within a galaxy, Diaz-Garcia et al. 2019) was measured on arms of mean pitch near "
+        "15 deg, and at low pitch it wound a third of discs net leading (34 % at 2 deg, 14 % at 5 deg) "
+        "against a disc whose rotation, lanes and gas response are trailing (DECISIONS.md D218, the follow-up "
+        "to the gate, item 2). No correlation between consecutive segments and no arm-to-arm term is put in: "
+        "a common winding has neither (a debt). No mean winding rate is enforced: none is sourced.",
+    ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
         "dimensionless",

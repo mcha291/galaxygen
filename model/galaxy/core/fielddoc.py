@@ -10,7 +10,12 @@ contract (:meth:`FieldDecl.contract`).
 The ``kind`` vocabulary is closed and two-dimensional: a *domain* (grid,
 galaxy, object) crossed with a *value class* (continuous, categorical). The
 domain decides storage and shape; the value class decides rendering (ramp vs
-palette) and comparison. Six kinds result; nothing else is a kind.
+palette) and comparison. Six kinds result. Since S59 (D218) there is a seventh,
+alone in a fourth domain: a **table column** (domain ``table``, continuous) - a
+column of a small named table that a run publishes whole and a later stage
+reads whole. It is not a catalogue: nothing materialises it by region, no census
+route serves it, and nothing draws it, so it carries no ramp. Nothing else is
+a kind.
 
 Axes are named from a closed set and declared in canonical order ``(R, t, z,
 phi)`` so that ``(t, R)`` can never be confused with ``(R, t)``.
@@ -34,6 +39,10 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 # Closed vocabularies. Extend by editing here, with a DECISIONS.md entry.
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
 OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census); bright_star: S48 (D200, the bright-end-complete catalogue)
+# The small tables a run publishes whole (S59, D218): a table's columns share its rows, as an object class's share
+# its objects, and the two vocabularies share no name. arm_segment: the winding's seeded segments, the layer's.
+TABLES: tuple[str, ...] = ("arm_segment",)
+assert not set(TABLES) & set(OBJECTS), "a table is not an object class: the two closed lists share no name"
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other
 # What only a synthetic field declares, and must (BUILD_III section 1c, rules 2-4; DECISIONS.md D214 section 2).
@@ -55,6 +64,12 @@ class Kind(str, Enum):
     CATEGORY_SCALAR = "category_scalar"  # one categorical label for the whole galaxy
     COLUMN = "column"  # continuous per-object value (catalogue column)
     CATEGORY_COLUMN = "category_column"  # categorical per-object value
+    # S59 (D218): one column of a small named table - a one-dimensional array in a declared unit, whose rows are
+    # the table's rows (``of`` names the table, one of TABLES; the columns of one table share one length). For
+    # rows that a later stage reads whole, as the winding reads its segments: published with the run like any
+    # field, never served by a census route and never materialised by a catalogue. Its domain is "table", not
+    # "object", so no rule about catalogues - the API's, the viewer's - sees it.
+    TABLE_COLUMN = "table_column"
 
     @property
     def domain(self) -> str:
@@ -65,6 +80,7 @@ class Kind(str, Enum):
             Kind.CATEGORY_SCALAR: "galaxy",
             Kind.COLUMN: "object",
             Kind.CATEGORY_COLUMN: "object",
+            Kind.TABLE_COLUMN: "table",
         }[self]
 
     @property
@@ -116,7 +132,7 @@ class FieldDecl:
     kind: Kind
     about: str
     axes: tuple[str, ...] = ()
-    of: str | None = None  # object class for object-domain kinds
+    of: str | None = None  # object class for object-domain kinds; the table's name for a table column
     categories: tuple[str, ...] = ()
     ramp: Ramp | Palette | None = None
     meaningful_zero: bool = False
@@ -224,6 +240,11 @@ class FieldDecl:
                     raise DeclarationError(
                         f"field {self.name}: object kinds need of= one of {OBJECTS}, got {self.of!r}"
                     )
+            elif kind.domain == "table":
+                if self.of not in TABLES:
+                    raise DeclarationError(
+                        f"field {self.name}: a table column needs of= one of the tables {TABLES}, got {self.of!r}"
+                    )
             elif self.of is not None:
                 raise DeclarationError(f"field {self.name}: {kind.value} takes no object class")
 
@@ -252,9 +273,13 @@ class FieldDecl:
                 raise DeclarationError(f"field {self.name}: continuous kinds take a Ramp")
         # A ramp is the one rendering opinion (A9). Grid and object fields are
         # drawn, so they must carry one. A galaxy-level scalar is a number, not
-        # a picture; its ramp is optional.
+        # a picture; its ramp is optional. A table column is read by a stage and
+        # drawn by nothing (S59, D218): a rendering opinion there would be one no
+        # reader has, so it is refused.
         if kind.domain in ("grid", "object") and self.ramp is None:
             raise DeclarationError(f"field {self.name}: {kind.value} fields must declare a ramp")
+        if kind.domain == "table" and self.ramp is not None:
+            raise DeclarationError(f"field {self.name}: a table column is not drawn and takes no ramp")
 
     def contract(self) -> tuple:
         """Everything but ``about``. Two models publishing the same name must agree on this."""

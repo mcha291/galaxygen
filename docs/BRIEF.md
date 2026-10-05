@@ -1,60 +1,60 @@
-# BRIEF — S59: BUILD_III's Phase P4, pitch along an arm and the templates' pins (an Opus lead; no scheduled gate)
+# BRIEF — S60: BUILD_III's Phase L1, clustered censuses and the ring-first draw (an Opus lead; no scheduled gate)
 
-**The state (2026-10-05).** S58 is merged (D217). The bar has a presence (Fujii et al. 2018's formation time
-against the disc's age, derived, no draw), **a template pin** (`bar_present`: `milky_way` barred, `ngc_4414`
-unbarred as observed — an input of kind `pin`, reaching a run only through `template=`, which the viewer now
-sends), a body (a Ferrers component on generalised ellipses, normalised by the drawn `bar_contrast`), gas lanes
-(a synthetic template in `gas_density_contrast`; star formation follows the footprint-uniform field instead), and
-the two-armed mode's phase tied to the bar. Rows are judged layer-off: 12 / 20 / 5 of 37, unmoved. Register 86
-open = 11 + 75, 46 discharged. Numbers from D218, #150, row 38, board row 59. **The owner's standing order: run
-the sessions back to back, stop only for a ruling that is the owner's, spawn Fable at the plan's gates and at a
-stop condition** (the gate agent of S57–S58 can be resumed if it still exists; else a fresh one reads D216–D217).
+**The state (2026-10-05).** S59 is merged (D218). With the layer on the arms' common winding is laid in seeded
+segments (a table `arm_segment`, the pitch of each the disc's plus a residual of 0.56 × the pitch; geometry only:
+the gas law, the bar's angle and the lanes keep the disc's pitch); two measured numbers are template pins
+(`sun_bar_angle` 30° on `milky_way`, `pitch_angle` 28.9° on `ngc_4414`); the young stars are placed by the star
+formation law at a point (`systems.Modulation`), not a table between rings. Rows are judged layer-off: 12 / 20 / 5
+of 37, unmoved. Register 91 open = 11 + 80, 46 discharged. Numbers from D219, #155, row 38, board row 60. **The
+owner's standing order: run the sessions back to back, stop only for a ruling that is the owner's, spawn Fable at
+the plan's gates and at a stop condition** (the gate agent of S57–S59 can be resumed if it still exists).
 
-## Told to the owner at S58's close (none awaited; if they answer, their word comes first)
-- `ngc_4414` is shown unbarred, as observed; one template field restores the old picture. A pin holds through
-  edited controls, so in the viewer the derived criterion never decides: a "derived presence" switch is theirs.
-- The presence criterion bars nearly every input (#145); Erwin 2018's measured frequency as a draw is theirs to order.
-- The lanes' width is an unsourced placeholder (#147): a slider if they prefer; the lanes end in a cliff at the
-  bar's end and make no nuclear ring.
-- **#138's re-read:** with the bar's body the disc-wide A3/A2 is 0.65 and the inner 4 kpc are two-armed, but
-  outside the bar m = 5–6 still dominate from 8.7 kpc — by D215's ruling 12 a conflict of sources, put to them. (Open since S57: a floor on the drawn pitch, #142, theirs to order with a read source.)
+## Told to the owner at S59's close (none awaited; if they answer, their word comes first)
+- **The Milky Way template cannot show its measured arms** (#152, with #138): a sum of modes holds no arm to pin;
+  a ridge per arm for a pinned template is a change of plan, theirs. The check against Reid et al. 2019 has no power.
+- **Its default texture seed is an outlier winding** (987th of 1000 in net turn): the outer disc reads as nested
+  ripples. Rerolling `texture_seed` in the viewer is their control; we do not re-seed.
+- `ngc_4414` shows its measured pitch (28.9°; one template field restores the draw, 14.3°) and its seed lays a
+  reversed segment at 1.35–1.60 kpc that shows as a streak beside the nucleus (#150, #154).
+- Still theirs from S57–S58: a floor on the drawn pitch (#142); Erwin 2018's bar frequency as a draw (#145); the
+  lanes' placeholder width (#147).
 
 ## First
-`uv run python tools/bootstrap.py`; confirm S58's `verify_clone` on `main` passed. **Read `BUILD_III.md` §1,
-"Phase P4" in §5, §3d–§3g, and D217 whole** (the pin's mechanism is P4's too).
+`uv run python tools/bootstrap.py`; confirm S59's `verify_clone` on `main` passed. **Read `BUILD_III.md` §1,
+"Phase L1" in §5 (both its ruled paragraphs), §3d–§3g; D214 (the separation, #137) and D218's reader.**
 
-## The order (BUILD_III §5, Phase P4)
-1. **Reading, one blind reader (§3e):** the distributions of arm-segment length and of the pitch's change between
-   segments (Honig & Reid 2015 was read at S51: `READING_GAS_PATTERN.md`; Díaz-García et al. 2019); the Milky Way's
-   arm segments and kinks from the maser fits (Reid et al. 2019: each arm's reference radius and azimuth, pitch
-   inside and outside the kink, width), the bar's angle; NGC 4414's measured structure (flocculent: what can be
-   pinned at all?).
-2. **Probe before build:** what a segmented pitch does to the modes' common winding χ = φ − ln R cot p (today one
-   pitch for all modes; the gas response, the bar's angle, the lanes' leading side and the two-armed phase all
-   read it), and whether "the pinned arms pass through the measured loci" can be met by a sum of modes m = 2–6 at
-   all (the Milky Way template is four-to-six-armed outside the bar, #138). **Expect a stop condition here: put it
-   to a conditional gate with the numbers, as S58 did.**
-3. **Build to the phase's text:** segments of seeded length and pitch change, continuous in phase, synthetic (on
-   `texture_seed`, declared with what they stand in for and their statistic); the templates' pins by D217's
-   mechanism (an input of kind `pin`; a galaxy without pins unchanged, bit for bit).
-4. **An Opus reviewer on the diff before the merge** (it found what the builders could not at S55–S58).
+## The order (BUILD_III §5, Phase L1)
+1. **Reading, one blind reader (§3e):** two-point correlation functions of young clusters and of molecular
+   clouds, and how they flatten with age; association sizes against age. Slope, amplitude, range, with sources.
+2. **Probe before build, on the quantities the ruling will use:** what `census_clustering` (unit mean in every
+   level-0 cell, multiplying the clouds' expected counts) does to I1–I2 and D60; what the ring-first draw needs —
+   a ring's count and every per-object draw on a ring stream, the layer assigning cell and azimuth, **a cell's
+   objects from the ring's draw and a fixed allocation without materialising the ring's other cells** (D60); the
+   cost. Expect stop conditions (the allocation; the cloud's offset bounded to its cell, or the cluster binned by
+   its cloud's ring, #95; `cloud_height`: a placement or a sample): put them to a conditional gate together.
+3. **Build:** the field and the clouds; the bright stars' 20–100 Myr following the field with its finest octaves
+   dropped by age; the ring-first draw; `cloud_texture` to `texture_seed`. **Re-pin builders of their own, with
+   disjoint file lists, after the model is final** (S59's lesson). After it `CENSUS_STATISTICS` is empty and the
+   realised ring totals are identical layer on and off.
+4. **An Opus reviewer on the diff before the merge.**
 
-## What S58 leaves (D217)
-- The bar's angle is a convention, ln(a) cot p, not a field; the Milky Way's measured bar angle is P4's pin.
-  `pattern.lookback_time` and the grid's `t_max` are two clocks (#148). The shocked branch has no user.
-- An unbarred galaxy's arms run to the centre at full amplitude (#149); its inner gas is nearly emptied (#142).
+## What S59 leaves (D218)
+- **Owed as an instrument (#151):** a probe of the gas law at the local pitch in its regular form on the suite's
+  240 galaxies, #142's regime counted. Not L1's; run it when a session has room, before anything reads it.
+- The censuses read the gas pattern through `pattern.Winding`; the young stars through `systems.young_reader`
+  (needs the model's constants: `materialise(constants=)`). The table `sfr_modulation` is the law at a cell's mean
+  contrast and the render reads grid fields at fixed φ between rings (#154; the remedy is named there). **The
+  star catalogue costs 2.2–2.4× with the layer on** (the bright stage 3.1 s, was 2.2): no bound is sourced.
 
 ## Traps
-- **Check a probe before it reaches a gate, on the quantity the ruling will use** (S58: the lead's share was on
-  the wrong surface density); one hand-derived test independent of the modules; the reviewer always.
-- **When a field gains structure, list its readers** (S58: star formation rode the lanes through unchanged code).
-- **Sweep seeds and the corners of the controls' ranges** (300 pattern seeds per template; three values per
-  control, both pins) before the gate; count exact zeros and NaN.
-- Hold every new row or check against I1–I5: a row may not read a composed or a synthetic field (I3); a layer-on
-  measurement is a pinned, disclosed check in the tests. Layer-off nothing may move but what the ruling names;
-  frames and thumbnails (`npm --prefix frontend run picture:update`) only after the pins are read.
-- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no m = 1 term; no ring-first draw (L1's); no change
-  to the pitch's draw or the bar's length without the owner.
-- A paused sitting can still commit: re-read the branch's log. Readers for the next session may run during the
-  closing suite (notes saved to the scratchpad, not named a report); resume a builder or a gate agent with
-  SendMessage; scripts in the scratchpad; LF newlines; 8 KB per Bash command; no pinned-doc edits under a suite.
+- **Ask of a gate whether the model's variables can hold what it asserts** before building (S59: the loci).
+- **A check gets its null before its verdict**; a draw is tested at the ends of its range and the default seed's
+  place in its own distribution is read.
+- **Check a probe before it reaches a gate, on the quantity the ruling will use**; one hand-derived test
+  independent of the modules; the reviewer always; when a field gains structure, list its readers.
+- Hold every new row or check against I1–I5 (a row reads no composed or synthetic field); layer-off nothing may
+  move but what the ruling names; frames only after the pins are read; **read the viewer's parser when the wire grows**.
+- No third fit of `ngc_4414`; no unspent NGC 4414 window read; no m = 1 term; no re-seeding of a template; no
+  change to the pitch's draw or the bar's length without the owner.
+- Resume a builder or the gate agent with SendMessage; cherry-pick a builder's commits when the session's branch
+  has moved; scripts in the scratchpad; LF newlines; 8 KB per Bash command; no pinned-doc edits under a suite.

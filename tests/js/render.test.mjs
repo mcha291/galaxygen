@@ -255,6 +255,33 @@ test("the catalogue appears at the checkpoint that publishes it, and not before"
   assert.equal(view.hasCatalogue(all, n), true);
 });
 
+test("a table is not a catalogue: it hides no scalar and promises no sample", () => {
+  // S59 (D218). The winding's segments are a small table the run publishes whole (domain
+  // "table"). While they were declared object columns their stage read as a catalogue stage:
+  // its five phases were no longer asked for, and checkpoint 3 claimed a sample to draw.
+  for (const [name, payload] of Object.entries(fixture.models)) {
+    const all = payload.fields;
+    const tables = all.filter((f) => f.domain === "table");
+    assert.ok(tables.length > 0, `${name}: no table column is published; this test is out of date`);
+    const materialisers = view.catalogueStages(all);
+    const first = Math.min(...all.filter((f) => f.domain === "object").map((f) => f.checkpoint));
+    for (const t of tables) {
+      assert.ok(!materialisers.has(t.stage), `${name}: ${t.stage} publishes a table and reads as a catalogue stage`);
+      assert.ok(t.checkpoint < first, `${name}: the table is published before the first catalogue, or this proves nothing`);
+      assert.equal(view.hasCatalogue(all, t.checkpoint), false, `${name}: a table at checkpoint ${t.checkpoint} is taken for a sample`);
+      const asked = view.scalarsAt(all, t.checkpoint).map((f) => f.name);
+      const own = all.filter((f) => f.domain === "galaxy" && f.stage === t.stage);
+      assert.ok(own.length > 0, `${name}: ${t.stage} publishes no scalar; this would be vacuous`);
+      for (const scalar of own) assert.ok(asked.includes(scalar.name), `${name}: ${scalar.name} is hidden by its stage's table`);
+    }
+    const at3 = view.scalarsAt(all, 3).map((f) => f.name);
+    for (const m of [2, 3, 4, 5, 6]) assert.ok(at3.includes(`arm_mode_phase_${m}`), `${name}: arm_mode_phase_${m} is not asked for at checkpoint 3`);
+    assert.equal(view.hasCatalogue(all, 3), false);
+    assert.equal(view.hasCatalogue(all, 4), false);
+    assert.equal(view.hasCatalogue(all, 5), true);
+  }
+});
+
 test("every published field reaches the viewer, in every model", () => {
   // S19's gate. The viewer is written from the declarations, so a field that nothing draws
   // is not a missing view — it is a field the model computes and no one ever looks at. Read
@@ -278,6 +305,20 @@ test("every published field reaches the viewer, in every model", () => {
         if (materialisers.has(f.stage)) continue;
         const shown = view.scalarsAt(all, f.checkpoint).some((d) => d.name === f.name);
         assert.ok(shown, `${name}: scalar ${f.name} is published and never shown`);
+      } else if (f.domain === "table") {
+        // S59 (D218): a table column is rows the model's own stages read whole (the winding's
+        // segments). The one kind this gate lets through unshown, and only on its own word: it
+        // declares no ramp, says the viewer does not show it, and no rule of the viewer picks
+        // it up - not as a picture, not as a number, not as a catalogue's column.
+        assert.equal(f.ramp, null, `${name}: table column ${f.name} declares a ramp nothing draws with`);
+        assert.match(f.about, /not shown by the viewer/, `${name}: table column ${f.name} does not say it is not shown`);
+        assert.ok(!view.drawableAt(all, f.checkpoint).some((d) => d.name === f.name), `${name}: ${f.name} is drawn`);
+        assert.ok(!view.scalarsAt(all, f.checkpoint).some((d) => d.name === f.name), `${name}: ${f.name} is printed`);
+        assert.ok(!view.wanted(all, f.checkpoint, f.name).includes(f.name), `${name}: ${f.name} is asked for`);
+        checked += 1;
+        continue;
+      } else {
+        assert.equal(f.domain, "object", `${name}: ${f.name} has a domain this gate does not know: ${f.domain}`);
       }
       // Anything painted rather than printed must yield its colour from its own
       // declaration: a scalar is a number in a table and declares no ramp at all.

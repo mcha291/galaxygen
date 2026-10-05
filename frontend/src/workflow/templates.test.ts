@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { type FlowState, type InputDecl, reopen, runHash } from "./logic";
 import fixture from "./templates.fixture.json";
 import {
+  type Pin,
   EVENTS_INPUT,
   TEMPLATE_KEY,
   applyTemplate,
@@ -103,14 +104,48 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
 describe("a template's pins (S58, D217 item 2)", () => {
   // What /api/fields declares of the field the pin decides, as far as the words need it.
   const FIELDS = [
-    { name: "bar_present", label: "Barred", categories: ["no", "yes"] },
-    { name: "stellar_mass_total", label: "Stellar mass" },
+    { name: "bar_present", label: "Barred", categories: ["no", "yes"], unit: "dimensionless", unit_display: "" },
+    { name: "stellar_mass_total", label: "Stellar mass", categories: [], unit: "Msun", unit_display: "M☉" },
+    { name: "pitch_angle", label: "Spiral arm pitch angle", categories: [], unit: "deg", unit_display: "°" },
+    { name: "sun_azimuth", label: "Azimuth of the Sun", categories: [], unit: "rad", unit_display: "rad" },
+    { name: "arm_segment_pitch_scatter", label: "Spread of a segment's pitch", categories: [], unit: "dimensionless", unit_display: "" },
   ];
 
-  it("reads each pin as published: the field it decides, the observed class and where it was read", () => {
+  // A pin as the tests write one by hand: no label and no unit served unless given (an API from before S59's follow-up).
+  const pin = (name: string, value: boolean | number, served: { label?: string; unit?: string } = {}): Pin => ({ name, value, source: "", label: served.label ?? null, unit: served.unit ?? null });
+
+  it("reads each pin as published: its input's name, label and unit, the observed class or the measured number, and where it was read", () => {
     const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
-    expect(milkyWay.pins).toEqual([{ name: "bar_present", value: true, source: "[illustrative] the Milky Way is barred" }]);
-    expect(ngc.pins).toEqual([{ name: "bar_present", value: false, source: "[illustrative] no source finds a bar in NGC 4414" }]);
+    expect(milkyWay.pins).toEqual([
+      { name: "bar_present", label: "Bar present (a template's pin)", unit: null, value: true, source: "[illustrative] the Milky Way is barred" },
+      { name: "sun_bar_angle", label: "Angle of the bar to the Sun-centre line (a template's pin)", unit: "deg", value: 30, source: "[illustrative] the bar's angle to the Sun-centre line" },
+    ]);
+    expect(ngc.pins).toEqual([
+      { name: "bar_present", label: "Bar present (a template's pin)", unit: null, value: false, source: "[illustrative] no source finds a bar in NGC 4414" },
+      { name: "pitch_angle", label: "Arm pitch angle (a template's pin)", unit: "deg", value: 28.9, source: "[illustrative] the measured mean pitch of its arm segments" },
+    ]);
+  });
+
+  it("reads /api/templates as S59 answers it: a numeric pin does not stop the viewer from landing (D218 items 5-6)", () => {
+    // Until S59 a pin's value was a class and anything else was refused; a template with a measured number among
+    // its pins then failed to parse, and the viewer showed "Loading the model failed" in place of the galaxy.
+    const p = copy();
+    p.templates[1].pins = [{ name: "pitch_angle", value: 28.9, source: "[verified: ...]" }, { name: "sun_bar_angle", value: 0, source: "" }];
+    expect(parseTemplates(p).templates[1].pins.map((pin) => pin.value)).toEqual([28.9, 0]);
+  });
+
+  it("takes a pin's label and unit as served, and a pin without them as it was: an API from before they were", () => {
+    const p = copy();
+    p.templates[1].pins = [
+      { name: "bar_present", value: false, source: "" }, // neither key: S58, and S59 before the follow-up
+      { name: "pitch_angle", label: null, unit: null, value: 28.9, source: "" },
+      { name: "sun_bar_angle", label: "Angle of the bar to the Sun-centre line (a template's pin)", unit: "deg", value: 30, source: "" },
+    ];
+    expect(parseTemplates(p).templates[1].pins.map(({ label, unit }) => [label, unit])).toEqual([
+      [null, null],
+      [null, null],
+      ["Angle of the bar to the Sun-centre line (a template's pin)", "deg"], // as served: nothing stripped, nothing rewritten
+    ]);
   });
 
   it("takes a template without pins as pinned nothing: an API from before S58", () => {
@@ -127,21 +162,62 @@ describe("a template's pins (S58, D217 item 2)", () => {
       return () => parseTemplates(p);
     };
     expect(broken("bar_present")).toThrow(/template ngc_4414: pins is not a list/);
-    expect(broken([{ name: "bar_present", value: "no", source: "" }])).toThrow(/template ngc_4414: a pin is \{name, value: true or false, source\}/);
+    expect(broken([{ name: "bar_present", value: "no", source: "" }])).toThrow(/template ngc_4414: a pin is \{name, value: true or false or a number, source\}/);
     expect(broken([{ value: false }])).toThrow(/a pin is/);
+    // a number that is none (JSON's null for a NaN, a string of digits) is no measured value
+    expect(broken([{ name: "pitch_angle", value: null, source: "" }])).toThrow(/a pin is/);
+    expect(broken([{ name: "pitch_angle", value: "28.9", source: "" }])).toThrow(/a pin is/);
     // a pin without a source is still a pin: the words stand, the tooltip is empty
     expect(broken([{ name: "bar_present", value: false }])()).toMatchObject({ templates: [{}, { pins: [{ name: "bar_present", value: false, source: "" }] }] });
+    // a label or a unit that is no text is not guessed at
+    expect(broken([{ name: "pitch_angle", label: 7, unit: "deg", value: 28.9, source: "" }])).toThrow(/template ngc_4414: pin pitch_angle's label and unit are texts or absent/);
+    expect(broken([{ name: "pitch_angle", label: "Arm pitch angle", unit: { name: "deg" }, value: 28.9, source: "" }])).toThrow(/label and unit are texts or absent/);
   });
 
   it("says a pin in the field declaration's own words, with none of the viewer's", () => {
     const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
+    // The published field of the pin's name comes first: its label and its categories, not the pin input's label.
     expect(pinWords(ngc.pins[0], FIELDS)).toBe("Barred: no (as observed)");
     expect(pinWords(milkyWay.pins[0], FIELDS)).toBe("Barred: yes (as observed)");
-    // No declaration (the fields not loaded yet, a model without the field): the pin's own name, yes or no.
-    expect(pinWords(ngc.pins[0])).toBe("bar_present: no (as observed)");
-    expect(pinWords(milkyWay.pins[0], [])).toBe("bar_present: yes (as observed)");
+    // No declaration of that name (the fields not loaded yet, a model without the field): the pin's own label, as
+    // served - nothing stripped from it - and yes or no.
+    expect(pinWords(ngc.pins[0])).toBe("Bar present (a template's pin): no (as observed)");
+    expect(pinWords(milkyWay.pins[0], [])).toBe("Bar present (a template's pin): yes (as observed)");
+    // Neither a declaration nor a served label (an API from before S59's follow-up): the pin's name.
+    expect(pinWords(pin("bar_present", false))).toBe("bar_present: no (as observed)");
     // A field that is not a two-class one does not lend its categories to a true-or-false pin.
-    expect(pinWords({ name: "stellar_mass_total", value: true, source: "" }, FIELDS)).toBe("Stellar mass: yes (as observed)");
+    expect(pinWords(pin("stellar_mass_total", true), FIELDS)).toBe("Stellar mass: yes (as observed)");
+  });
+
+  it("says a measured number with the declaration's label and unit where a field has the pin's name", () => {
+    const [, ngc] = parseTemplates(PAYLOAD).templates;
+    // NGC 4414's pitch: the pin decides the published field of its own name, whose label and unit these are - not
+    // the pin input's own "Arm pitch angle (a template's pin)".
+    expect(pinWords(ngc.pins[1], FIELDS)).toBe("Spiral arm pitch angle: 28.9° (as observed)");
+    // A unit that is a word stands after a space; a dimensionless number has none.
+    expect(pinWords(pin("sun_azimuth", 1.1497328186297713), FIELDS)).toBe("Azimuth of the Sun: 1.15 rad (as observed)");
+    expect(pinWords(pin("stellar_mass_total", 4.75e10), FIELDS)).toBe("Stellar mass: 4.750 × 10¹⁰ M☉ (as observed)");
+    expect(pinWords(pin("arm_segment_pitch_scatter", 0.56), FIELDS)).toBe("Spread of a segment's pitch: 0.56 (as observed)");
+    // Zero is a number, not a "no".
+    expect(pinWords(pin("pitch_angle", 0), FIELDS)).toBe("Spiral arm pitch angle: 0° (as observed)");
+    // The declaration's unit wins over a served one that differs from it.
+    expect(pinWords(pin("pitch_angle", 28.9, { label: "Arm pitch angle (a template's pin)", unit: "rad" }), FIELDS)).toBe("Spiral arm pitch angle: 28.9° (as observed)");
+  });
+
+  it("says a pin that decides a field of another name with its own served label and unit (S59's follow-up)", () => {
+    const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
+    // The Milky Way's bar angle publishes sun_azimuth: no field is named sun_bar_angle. The label is the pin
+    // input's as served; the unit "deg" is shown as the field declarations show that unit ("°", from any of them).
+    expect(pinWords(milkyWay.pins[1], FIELDS)).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30° (as observed)");
+    // The fields not loaded yet: the same label, and the unit as served.
+    expect(pinWords(milkyWay.pins[1])).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30 deg (as observed)");
+    expect(pinWords(ngc.pins[1])).toBe("Arm pitch angle (a template's pin): 28.9 deg (as observed)");
+    // A unit no declared field has is written as served; a dimensionless number has none.
+    expect(pinWords(pin("bar_age", 5, { label: "Age of the bar (a template's pin)", unit: "Gyr" }), FIELDS)).toBe("Age of the bar (a template's pin): 5 Gyr (as observed)");
+    expect(pinWords(pin("bar_strength", 0.3, { label: "Bar strength (a template's pin)", unit: "dimensionless" }), FIELDS)).toBe("Bar strength (a template's pin): 0.3 (as observed)");
+    // An API from before the follow-up serves neither: the pin's name and the bare number, no unit guessed (rule B9).
+    expect(pinWords(pin("sun_bar_angle", 30), FIELDS)).toBe("sun_bar_angle: 30 (as observed)");
+    expect(pinWords(pin("pitch_angle", 28.9))).toBe("pitch_angle: 28.9 (as observed)");
   });
 });
 

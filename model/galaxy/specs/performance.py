@@ -81,7 +81,7 @@ def profile(model: Model, **run_kwargs: Any) -> dict[str, float]:
     return out
 
 
-def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES) -> dict[str, Any]:
+def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES, layer: bool = True) -> dict[str, Any]:
     """Seconds to materialise 1, 9 and every cell, the layout alone, and the fit against the sample size.
 
     ``samples`` (plus ``n_stars``) are the sizes the whole catalogue is timed at. Two
@@ -93,6 +93,11 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     in cells (R² ≈ 0.97) and a curve in stars (R² ≈ 0.67); the per-star line is fitted
     through that curve, its residuals keep their sign, and its "fixed" part is not
     fixed — it is the price of however many cells the sample lights up.
+
+    ``layer`` is the run's switch (S59, D218). With it on, a model that publishes a modulation places its young
+    stars by the star formation law at a point, which costs by the star inside a bar's footprint (the law's
+    mean round the ring is taken where each star is), so the two fits draw together; with it off the catalogue
+    is the cells' alone.
     """
     import numpy as np
 
@@ -100,24 +105,25 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     from galaxy.stages import systems
 
     stage = next(st for st in production()[1] if st.slot == "systems")
-    out = run(model, only=stage.requires)
+    out = run(model, only=stage.requires, layer=layer)
     R, t = out.grid.R, out.grid.t
     seed = int(out.inputs["systems_seed"])
     churn = float(out.inputs["migration_efficiency"])
+    constants = {k: c.value for k, c in model.constants.items()}  # S59 (D218): the young stars' reader's
     timings: dict[str, float] = {}
     start = time.perf_counter()
     systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n_stars, None)
     timings["layout"] = time.perf_counter() - start
     for label, cells in (("one cell", [300]), ("nine cells", list(range(300, 309))), ("every cell", None)):
         start = time.perf_counter()
-        cat = systems.materialise(out.fields, R, t, seed, n_stars, cells, migration=churn)
+        cat = systems.materialise(out.fields, R, t, seed, n_stars, cells, migration=churn, constants=constants)
         timings[label] = time.perf_counter() - start
         timings[label + " (stars)"] = float(cat.size)
     sweep: list[list[float]] = []
     realised_cells: list[float] = []
     for n in sorted({*samples, n_stars}):
         start = time.perf_counter()
-        cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn)
+        cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn, constants=constants)
         sweep.append([float(n), float(cat.size), time.perf_counter() - start])
         realised_cells.append(float(len(systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n, None))))
     stars = np.array([s[1] for s in sweep])

@@ -26,11 +26,13 @@ def decl(name: str, kind: Kind | str = Kind.FIELD, **kw: Any) -> FieldDecl:
         base["axes"] = ("R",)
     if kind.domain == "object":
         base["of"] = "star"
+    if kind.domain == "table":  # S59 (D218): a table column names its table and, drawn by nothing, takes no ramp
+        base["of"] = "arm_segment"
     if kind.categorical:
         base["categories"] = ("a", "b")
         if kind.domain != "galaxy":
             base["ramp"] = Palette(("#000000", "#ffffff"))
-    elif kind.domain != "galaxy":
+    elif kind.domain in ("grid", "object"):  # S59 (D218): was `!= "galaxy"`, when those two were the rest
         base["ramp"] = Ramp("greys")
     base.update(kw)
     return FieldDecl(name=name, **base)
@@ -43,7 +45,7 @@ def default_value(d: FieldDecl, ctx: Context) -> Any:
         return np.zeros(shape, dtype=int) if k.categorical else np.ones(shape)
     if k.domain == "galaxy":
         return d.categories[0] if k.categorical else 1.0
-    return np.zeros(3, dtype=int) if k.categorical else np.ones(3)
+    return np.zeros(3, dtype=int) if k.categorical else np.ones(3)  # an object column, or a table's (S59, D218): three rows
 
 
 def stage(

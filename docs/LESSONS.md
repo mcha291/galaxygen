@@ -1504,3 +1504,38 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] The same gate agent, resumed across two sessions, carried one ruling into the next: it applied its own
   item on the bar's frame and found that the shocked branch the plan had deferred to the bar is not the bar's
   instrument either. A fresh agent would have had to be told.
+
+## From S59 (pitch along an arm, the templates' pins; an Opus lead, one reader, a model builder in three passes, three re-pin builders, a viewer builder, a reviewer in two passes, Fable at a conditional gate and three follow-ups)
+
+- [all] A phase's gate can be unmeetable by the representation, and hand arithmetic on the reading's own table
+  shows it before any build: four measured arms at one azimuth need three different pitches of a common winding.
+  Ask of every gate "can the model's variables hold what this asserts?" before asking how to build it.
+- [audit] A check needs its null before it gets a verdict. The distance of five measured arms from the nearest
+  crest read 1.5 widths; with the Sun rotated through every azimuth half the rotations read one width or less.
+  Compute what the statistic reads on a galaxy that is not the target the day the statistic is defined.
+- [field] A spread measured as an angle is not an absolute spread at every angle. Ten degrees about a 13° pitch
+  reverses one segment in eleven and made the default template the 999th winding of 1000; the same source's
+  relative form does neither. Read a scatter's own scaling, and test a draw at the floor and the ceiling of what
+  it is added to, and where the default seed falls in its own distribution.
+- [catalogue] A reader that interpolates a table between rings reads the grid, not the law. Where a field holds
+  two frames (arms that wind, a bar's footprint that does not) no interpolation of one row serves both: evaluate
+  the law at the point from each ring's own inputs, and normalise where the point is.
+- [field] The law of a mean is not the mean of the law. "Equal at every grid cell to rounding" failed at the
+  cells an edge crosses; say of two objects that must agree which argument each is the law of, before the gate
+  is written.
+- [infra] A change of interface in a late pass costs every older test file: give the re-pins to builders of
+  their own from the start, with disjoint file lists, the model final before they begin, and the old value in
+  every moved pin's comment. A builder who also re-pins runs out of room.
+- [api] A new kind of published thing needs its own kind. The winding's rows went in as object columns and the
+  viewer saw a catalogue before the stars; a table is a closed list of its own that no catalogue rule sees.
+- [viewer] When the model's wire format grows a case (a pin that is a number), read the client's parser before
+  taking pictures: it refused the whole payload, and its unit tests passed on a fixture from the session before.
+- [close] Look at the frames and explain each new thing from the model's own numbers (which segment, which rings)
+  before calling it an artefact or a feature; a streak beside a nucleus was a reversed segment three rings wide.
+- [close] The gate agent resumed four times in one session answered each follow-up in under a minute with nothing
+  re-read. Record its slips as read (a factor inverted, "most rings" that was 21 of 53): the record is what was
+  measured, not what was predicted.
+- [audit] A cost put to a gate is read on the model's own instrument against the session's start, by the lead.
+  The builder's "+6–15 %" was an API reading against the pass before; the catalogue cost 2.3 times, and two
+  timing tests that state its structure had become coin-flips. Run the cost instrument and the timing tests
+  whenever a reader changes, before the reviewer and before the gate hears a number.

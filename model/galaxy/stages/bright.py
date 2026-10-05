@@ -25,7 +25,8 @@ D202, debt #126); the field now integrates along the points, and the renormalisa
 cell of the hierarchy (level ``MAX_LEVEL``, 65 536 of them). In a cell the expected number of stars above
 L is Λ(L): the cell's area times the mass formed on each isochrone, averaged over the cell's radial span,
 times ``count_above``, times the cell's azimuthal weight — the pattern's density contrast for stars older
-than ``systems.YOUNG_STAR_AGE`` and, where the model publishes it, ``sfr_modulation`` for the younger ones.
+than ``systems.YOUNG_STAR_AGE`` and, where the model publishes ``sfr_modulation``, the star formation law that
+field tabulates for the younger ones, applied at a point (``systems.Modulation``; S59, D218).
 The cell's stars are a Poisson process in luminosity, ordered: star i has Γ_i = E_0 + … + E_i (unit
 exponentials by inverse CDF from the cell's own stream), and Γ_i fixes its **threshold interval** - the pair
 of grid thresholds its luminosity lies between, from Λ at the thresholds - so the stars above any grid
@@ -78,17 +79,20 @@ from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.disc import PC_PER_KPC
+from galaxy.stages.gas_pattern import GAS_PATTERN_READS
 from galaxy.stages.pattern import PATTERN_READS, invert_azimuths
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_SECTORS,
     MAX_LEVEL,
+    YOUNG_CONSTANTS,
+    YOUNG_READS,
     YOUNG_STAR_AGE,
     Catalogue,
-    Modulation,
     cell_edges,
     children_per_cell,
     sech2_height,
+    young_reader,
 )
 from galaxy.stages.vertical import POPULATIONS
 from galaxy.stages.photometry import (
@@ -426,7 +430,8 @@ class BrightGalaxy:
     depends on which cells a request names).
 
     Two age parts, each with its own azimuthal weight: ``0`` from the cluster window to
-    ``YOUNG_STAR_AGE`` (placed by ``sfr_modulation`` where the model publishes it, by the contrast where it
+    ``YOUNG_STAR_AGE`` (placed by the star formation law at a point where the model publishes
+    ``sfr_modulation`` - the star sample's own reader, ``systems.Modulation`` - and by the contrast where it
     does not) and ``1`` older (by the contrast). A finest cell is one of 256 rings by 256 sectors.
     """
 
@@ -477,9 +482,10 @@ class BrightGalaxy:
         self.pattern = _compose.stellar_pattern(fields, self.R)
         flat = self.pattern is None or self.pattern.flat
         contrast = np.ones((middle.size, edges.size - 1)) if flat else np.array([self.pattern.sector_means(float(r), edges) for r in middle])
-        table = _compose.placement_weight(fields, "sfr_modulation")
-        self.modulation = None if table is None else Modulation(table, self.R)
-        young = None if self.modulation is None else np.array([self.modulation.sector_means(float(r), edges) for r in middle])
+        # S59 (D218, the gate's ruling): the young part's reader is the star sample's - the star formation law
+        # applied to the gas pattern's point function, ring by ring (``systems.Modulation``), not the grid table.
+        self.modulation = young_reader(fields, self.R, constants)
+        young = None if self.modulation is None else self.modulation.sector_means_at(middle, edges)
         self.weights = part_weights(contrast, young)  # (2, 256, 256)
         # What the height reads: the thin/thick criterion over (radius, birth time), the two scale heights.
         self.thick = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
@@ -944,10 +950,12 @@ BRIGHT_COUNT_1E3 = FieldDecl(
     ),
 )
 
-READS = (
+READS = tuple(dict.fromkeys((
     "stars_formed_history", "feh_history", "birth_population", "thin_disc_scale_height", "thick_disc_scale_height",
     *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
-)
+    # S59 (D218): the young part's reader - the gas pattern's reads and the ring's gas column and threshold.
+    *GAS_PATTERN_READS, *YOUNG_READS,
+)))
 
 
 def all_cells() -> np.ndarray:
@@ -984,7 +992,8 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
         compute=compute_bright,
         placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
-        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING"),
+        # S59 (D218): and what the young part's reader applies the star formation law with.
+        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS),
         requires=READS,
         requires_optional=("sfr_modulation",),
         publishes=(*COLUMNS, BRIGHT_LIMIT, BRIGHT_COUNT_1E3),

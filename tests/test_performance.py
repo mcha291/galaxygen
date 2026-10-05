@@ -34,8 +34,22 @@ def test_the_catalogue_is_priced_per_cell(model):
     the assertion reads the conditioned one, which is a stronger check and not a
     looser one: if the per-star line ever explained more than the per-cell line, the
     saturation would have gone and this fails.
+
+    **S59 (D218): the two timing statements are read with the layer off.** With it on, a model that publishes a
+    modulation places its young stars by the star formation law at a point - a sector's mean is an integral of
+    the law over the sector, and inside a bar's footprint the law's mean round the ring is taken where each
+    star is - and the catalogue costs more than twice as much, part of it by the star: on the default model
+    0.32 → 0.76-0.83 s at 40 000 stars, 365-416 → 883-983 µs a cell, R² 0.89-0.94 by the cell against 0.84-0.89
+    by the star (layer off 0.96-0.99 against 0.69-0.77), the top doubling adding 0.24-0.37 of the total (0.04-0.16).
+    The saturation is the catalogue's own structure and is asserted where nothing else is in the timing; the
+    layer-on run keeps every statement that is not a ratio of two timings. The ordering is not asserted
+    layer on: the layered reader prices young stars inside the bar's footprint by a quadrature each (#154).
+    The reader's cost is recorded with no bound, none being sourced.
     """
-    cost = performance.catalogue_cost(model, n_stars=2000)
+    on = performance.catalogue_cost(model, n_stars=2000)
+    assert on["per_cell_us"] > 0.0 and on["every cell (stars)"] > 0.9 * 2000 and 0 < on["cells realised"] <= on["cells"] == 1024
+    cost = performance.catalogue_cost(model, n_stars=2000, layer=False)
+    assert cost["cells per sample"] == on["cells per sample"]  # the layer lights the same cells (a cell's realised stars are its own draw, #137)
     assert {"layout", "one cell", "nine cells", "every cell"} <= set(cost)
     assert cost["one cell (stars)"] <= cost["nine cells (stars)"] <= cost["every cell (stars)"]
     assert cost["every cell (stars)"] > 0.9 * 2000

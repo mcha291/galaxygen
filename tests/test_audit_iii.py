@@ -88,13 +88,15 @@ def test_the_censuses_redistribute_within_their_own_noise_at_the_audit_mesh(audi
 
 
 def test_the_hierarchy_union_holds_at_the_audit_mesh(audit):
-    o, _ = audit
+    # S59 (D218 follow-up): was `o, _ = audit` and no `constants=` - the young stars' reader is the star formation
+    # law at a point, which reads the model's constants; `materialise` refuses the default model's fields without.
+    o, c = audit
     F, R, t = o.fields, o.grid.R, o.grid.t
     seed = int(o.inputs["systems_seed"])
-    parent = sy.materialise(F, R, t, seed, 20000, cells=[PARENT], migration=3.6)
+    parent = sy.materialise(F, R, t, seed, 20000, cells=[PARENT], migration=3.6, constants=c)
     for level in (1, 2, 3):
         kids = [sy.child_id(PARENT, level, q) for q in range(sy.children_per_cell(level))]
-        cat = sy.materialise(F, R, t, seed, 20000, cells=kids, migration=3.6, level=level)
+        cat = sy.materialise(F, R, t, seed, 20000, cells=kids, migration=3.6, level=level, constants=c)
         inherited = np.asarray(cat["level"]) == 0
         assert int(inherited.sum()) == parent.size
         order = np.argsort(np.asarray(cat["index"])[inherited])

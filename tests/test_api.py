@@ -254,8 +254,10 @@ def test_a_region_is_exactly_what_the_full_sweep_puts_there(api):
     models, impls, table = production()
     out = run(models.get(DEFAULT_MODEL), None, SMALL, only=systems.SYSTEMS.requires)
     R, t = out.grid.R, out.grid.t
+    # S59 (D218): the model's constants - the young stars' reader applies the star formation law at a point.
+    constants = {k: c.value for k, c in models.get(DEFAULT_MODEL).constants.items()}
     whole = systems.materialise(
-        out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"])
+        out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"]), constants=constants
     )
 
     header, arrays = api.handle("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&stars=5000").frame()
@@ -399,9 +401,9 @@ def test_cached_cells_are_the_sweep_s_rows_and_are_not_made_twice(api):
     made: list[list[int]] = []
     original = _systems.materialise
 
-    def counting(fields, R, t, seed, n, cells=None, *, migration):
+    def counting(fields, R, t, seed, n, cells=None, *, migration, constants):  # S59 (D218): the reader's constants
         made.append(list(cells) if cells is not None else [])
-        return original(fields, R, t, seed, n, cells, migration=migration)
+        return original(fields, R, t, seed, n, cells, migration=migration, constants=constants)
 
     _systems.materialise = counting
     try:
@@ -486,8 +488,14 @@ def test_field_declarations_carry_the_one_rendering_opinion(api, model):
         decl = declared[entry["name"]]
         assert entry["label"] == decl.label and entry["unit"] == decl.unit
         assert entry["about"] == decl.about and entry["provenance"] == decl.provenance
+        assert entry["domain"] == decl.kind.domain and entry["kind"] == decl.kind.value and entry["of"] == decl.of
         if entry["domain"] in ("grid", "object"):
             assert entry["ramp"] is not None, f"{entry['name']} reaches the viewer without a ramp (rule A9)"
+        elif entry["domain"] == "table":
+            # S59 (D218): a table column is read by the model's stages and drawn by nothing - no rendering opinion.
+            assert entry["ramp"] is None and entry["kind"] == "table_column" and entry["axes"] == [], entry["name"]
+        else:
+            assert entry["domain"] == "galaxy", entry["name"]  # the listing knows four domains and no fifth
         if entry["categorical"] and entry["ramp"] is not None:  # a category *scalar* is a word, not a picture
             assert entry["ramp"]["kind"] == "palette"
             assert len(entry["ramp"]["colors"]) == len(entry["categories"])
