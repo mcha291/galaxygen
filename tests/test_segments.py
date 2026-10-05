@@ -13,8 +13,9 @@ Until S59 every arm mode wound at one pitch: χ = φ − ln R · cot p. A condit
 - **the predictions** of the gate (B4) and of its follow-up (item 2), read before they were judged and recorded
   with the as-built numbers;
 - **the gate** on the 360 galaxies of its three legs (the suite's 240 and the drawn-pitch unbarred family);
-- **the young stars' reader** (the follow-up, item 1; the review's blocker): ``sfr_modulation`` read between two
-  grid rings at the point's own χ, held against the law;
+- **the young stars' reader** (the review's blocker; the follow-up's item 1, and the gate's ruling on what that
+  remedy left inside a bar): the star formation law applied at a point to the gas pattern's point function, ring
+  by ring, held against the law by hand, the published table at the cells, and the two readers it replaced;
 - **the two disclosed checks**: Reid et al. 2019's arms against the composed field (``tests/reid2019.py``), read
   against its two nulls and judged by no verdict, and NGC 4414's five measured segments against the drawn spread;
 - **the pins**: a pin may be a measured number, held to the range of what it replaces; ``sun_bar_angle`` places
@@ -59,13 +60,13 @@ from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import RunError, run
 from galaxy.stages import gas_pattern as gm
 from galaxy.stages import pattern as pt
-from galaxy.stages import sfh_azimuthal, systems
+from galaxy.stages import sfh, systems
 
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
 PATTERN = ("pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast", *pt.PATTERN_READS, *gm.GAS_PATTERN_READS,
            "bar_present", "pitch_angle_drawn", "sun_azimuth", "arm_saturation", "arm_contrast")
 # What the young stars' reader and the law it is held against read.
-READER = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", *pt.PATTERN_READS, *gm.GAS_PATTERN_READS)
+READER = ("sfr_modulation", "star_formation_gas_contrast", "gas_surface_density", "sf_threshold_surface_density", *pt.PATTERN_READS, *gm.GAS_PATTERN_READS)
 # The ruling's numbers, written here; the model's constants are held to them.
 MEDIAN_HAND, LOG_SCATTER_HAND, LOW_HAND, HIGH_HAND, RELATIVE_HAND = 60.0, 0.35, 20.0, 180.0, 0.56
 OUT_ROWS, IN_ROWS = 256, 768
@@ -640,16 +641,19 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     assert 2.0 <= record["milky_way"][2] <= 8.0 and 2.0 <= record["ngc_4414 drawn"][2] <= 8.0 and record["ngc_4414"][2] == 0.0
 
 
-# --- the young stars' reader (the follow-up's item 1; the review's blocker) ----------------------------------------
+# --- the young stars' reader (the gate's ruling on the review's blocker: the law at a point) -----------------------
 
 FINE = (np.arange(2880) + 0.5) * (2.0 * math.pi / 2880)  # the azimuths a ring's profile is read on, an eighth of a degree apart
+ROUND = (np.arange(46080) + 0.5) * (2.0 * math.pi / 46080)  # the azimuths this file takes a ring's mean over: sixteen times the reader's
+CELL_CENTRES = -math.pi + (np.arange(gm.CELLS) + 0.5) * (2.0 * math.pi / gm.CELLS)  # where the pattern holds a ring's profile
 
 
 def hand_read(table: np.ndarray, R: np.ndarray, phase, r: float, phi: np.ndarray) -> np.ndarray:
-    """The modulation at radius ``r`` and azimuths ``phi``, by this file's arithmetic: the two grid rings the
-    radius lies between, each ring's row read at φ − (Φ(r) − Φ(R_ring)) - linearly and periodically between the
-    cells' centres - and the two blended linearly in R. ``phase`` is Φ, a function of one radius; a Φ that is 0
-    everywhere is the read at fixed φ, S27's."""
+    """**A superseded reader**, kept to say what was replaced: the grid table ``sfr_modulation`` at radius ``r``
+    and azimuths ``phi`` - the two grid rings the radius lies between, each ring's row read at
+    φ − (Φ(r) − Φ(R_ring)), linearly and periodically between the cells' centres, and the two blended linearly
+    in R. ``phase`` is Φ, a function of one radius: the winding's gives the wound table read (the first follow-up
+    to the gate), and a Φ that is 0 everywhere the read at fixed φ (S27's)."""
     i = max(0, min(int(np.searchsorted(R, r, side="right")) - 1, R.size - 2))
     share = min(max((r - R[i]) / (R[i + 1] - R[i]), 0.0), 1.0)
     centres = (np.arange(table.shape[1]) + 0.5) * (2.0 * math.pi / table.shape[1])
@@ -661,152 +665,243 @@ def hand_read(table: np.ndarray, R: np.ndarray, phase, r: float, phi: np.ndarray
 
 
 def misplaced(reader: np.ndarray, law: np.ndarray) -> np.ndarray:
-    """The reviewer's statistic, per radius: half the integrated absolute difference between the reader's
-    azimuthal profile and the law's, each normalised to a mean of 1 - the share of the ring's young stars the
-    reader puts at azimuths where the law does not."""
+    """The reviewer's statistic, per radius: half the integrated absolute difference between two azimuthal
+    profiles, each normalised to a mean of 1 - the share of the ring's young stars the one puts at azimuths
+    where the other does not."""
     a, b = reader / reader.mean(axis=1, keepdims=True), law / law.mean(axis=1, keepdims=True)
     return 0.5 * np.abs(a - b).mean(axis=1)
 
 
-def reader_and_law(prod, **more):
-    """A Milky Way template's run and, at every mid-gap radius: the law's profile - the star formation contrast at
-    the point's own χ (the gas pattern's point function), through the law ``sfh_azimuthal`` applies, the ring's
-    gas and threshold read linearly between the rings - the model's reader, and the fixed-φ blend by hand."""
+class HandLaw:
+    """The star formation law at a point, by this file's arithmetic, from published numbers and the gas
+    pattern's solved rings: for a point at radius r between the grid rings i and j,
+
+        M(r, φ) = (1 − a) m_i + a m_j,   m_k = Ψ_k(g_k(r, φ)) / ⟨Ψ_k(g_k(r, ·))⟩,
+        g_k(r, φ) = (1 − τ_k) s_k(φ − Φ(r)) + τ_k L_k(φ − φ_bar),   τ_k = exp(−(R_k/a_bar)⁴),
+        Ψ_k(g) = (Σ_k g)ⁿ · ½ (1 + tanh((Σ_k g − Σ_crit,k) / (w Σ_crit,k))).
+
+    Φ is the winding laid by hand from the published rows (``hand_knots``); φ_bar = ln a_bar · cot p; s_k is the
+    gas response's solved profile on ring k (the solver's output, which the pattern holds on its cells' centres
+    in χ - not a published field) and L_k the footprint-uniform profile on the same cells in the bar's frame
+    (``gas_pattern.footprint_profiles``, the template's own function), each read linearly and periodically
+    between the cells' centres; Σ_k and Σ_crit,k are ring k's published gas column and threshold, n the law's
+    index and w the switch's width; ⟨·⟩ is the mean over 46 080 azimuths round the ring, the arms where the
+    winding puts them at r. An unbarred galaxy has no τ and no L."""
+
+    def __init__(self, F, R, gp, c):
+        self.R, self.gp = R, gp
+        self.knots, self.phases, _ = hand_knots(F)
+        self.gas, self.threshold = np.asarray(F["gas_surface_density"]), np.asarray(F["sf_threshold_surface_density"])
+        self.index = float(c["KS_INDEX"])
+        self.a, pitch = float(F["bar_half_length"]), float(F["pitch_angle"])
+        self.barred = math.isfinite(self.a)
+        if self.barred:
+            self.bar_angle = math.log(self.a) / math.tan(math.radians(pitch))
+            self.footprint = gm.footprint_profiles(R, self.a, float(F["bar_axis_ratio"]), float(F["bar_boxiness"]), float(c["BAR_GAS_RATIO"]))
+
+    def ring(self, k: int, r: float, phi: np.ndarray) -> np.ndarray:
+        """Ψ_k(g_k(r, φ)): ring k's law at the point's coordinates, not yet over its mean."""
+        chi = phi - hand_phase(self.knots, self.phases, r)
+        g = np.interp(chi, CELL_CENTRES, self.gp.profiles[k], period=2.0 * math.pi)
+        if self.barred:
+            taper = math.exp(-((self.R[k] / self.a) ** 4))
+            g = (1.0 - taper) * g + taper * np.interp(phi - self.bar_angle, CELL_CENTRES, self.footprint[k], period=2.0 * math.pi)
+        column = self.gas[k] * np.maximum(g, 0.0)
+        return column**self.index * 0.5 * (1.0 + np.tanh((column - self.threshold[k]) / (sfh.THRESHOLD_WIDTH * self.threshold[k])))
+
+    def at(self, r: float, phi: np.ndarray) -> np.ndarray:
+        R = self.R
+        i = max(0, min(int(np.searchsorted(R, r, side="right")) - 1, R.size - 2))
+        share = min(max((r - R[i]) / (R[i + 1] - R[i]), 0.0), 1.0)
+        out = np.zeros(phi.shape)
+        for k, weight in ((i, 1.0 - share), (i + 1, share)):
+            mean = float(self.ring(k, r, ROUND).mean())
+            out += weight * (self.ring(k, r, phi) / mean if mean > 0.0 else 1.0)
+        return out
+
+
+def reader_run(prod, **more):
+    """A Milky Way template's run with what the reader reads, the two pattern objects, and the model's reader."""
     model = the_model(prod)
     c = constants(model)
     o = run(model, inputs_of("milky_way", **more), only=READER)
     F, R = o.fields, o.grid.R
-    sp, gp = compose.stellar_pattern(F, R), compose.gas_pattern(F, R, c)
-    table = np.asarray(F["sfr_modulation"])
-    mids = 0.5 * (R[:-1] + R[1:])
-    gas = np.interp(mids, R, np.asarray(F["gas_surface_density"]))
-    threshold = np.interp(mids, R, np.asarray(F["sf_threshold_surface_density"]))
-    law = sfh_azimuthal.sfr_modulation(gas, threshold, gp.star_formation_contrast_at(mids[:, None], FINE[None, :]), float(c["KS_INDEX"]))
-    reader = systems.Modulation(table, R, sp)
-    fixed = np.array([hand_read(table, R, lambda x: 0.0, float(r), FINE) for r in mids])
-    return o, sp, reader, mids, law, reader.at(mids, FINE), fixed
+    return o, compose.stellar_pattern(F, R), compose.gas_pattern(F, R, c), systems.young_reader(F, R, c), c
 
 
-def test_the_young_stars_reader_follows_the_winding(prod):
-    """The follow-up to the gate, item 1 (the review's blocker): "two readers of one field must agree ... The star
-    sample and the bright catalogue read each ring's row at φ − (Φ(r) − Φ(R_ring)), the same χ every other reader
-    uses." Until then ``systems.Modulation`` blended two neighbouring rings' rows at fixed φ: a double image of
-    the arm between two rings, by what the winding turns across the gap.
+def test_the_young_stars_reader_is_the_star_formation_law_at_a_point(prod):
+    """The gate's ruling on the review's blocker (D218): "(b), the exact point reader ... a stored grid is not a
+    field's definition; a reader that interpolates a table between rings is reading the grid, and no
+    interpolation of one row can serve two frames at once — the arms turn with the winding, the footprint stays
+    in the bar's ... the young stars' placement weight at a point is that law applied to that point function,
+    and the grid table of ``sfr_modulation`` becomes ... the same function at the cells (published, read by the
+    viewer, read by no census)."
 
-    **Where the winding turns more than 10° across a ring gap** (found by measurement, as the brief asks: the
-    Milky Way template at texture seed 3, the first seed with such gaps past the bar; the default seeds have
-    none - the steepest gap past the bar there turns 6°): at 5.250, 5.325, 6.150 and 6.225 kpc the winding turns
-    34.4°, 10.2°, 60.0° and 11.5°. **The share of a ring's young stars misplaced** (the reviewer's statistic)
-    by the old blend: 61.5 %, 16.4 %, 90.7 % and 29.4 %; **by the wound read: 0.11 % at each** - under 1 %. At
-    5.25 kpc the law's crest is 5.64, the old blend's 2.82 (the double image) and the wound read's 5.63. The
-    wound read is the law to 0.09 in the modulation at worst (1.6 % of the crest): what is left is the grid's -
-    a cell's value is a mean over a degree, and the law of a blend of two rings is not the blend of their laws.
-    The model's reader is this file's ring-by-ring wound interpolation to 1e-12.
+    **The reader** (``systems.Modulation``, built by ``systems.young_reader`` for the star sample and the bright
+    catalogue alike) applies the law ring by ring, where its inputs exist - a ring's gas column and threshold
+    are on the rings only, and nothing of them is interpolated - to each ring's own contrast as the point sees
+    it (the ring's arm profile at the point's χ, its footprint in the bar's frame), each over its own mean round
+    the ring there, and blends the two rings linearly in R as the pattern does. ``HandLaw`` above is the same
+    law by this file's arithmetic.
 
-    **Past the bar's half-length, on every gap that forms stars**, default seeds and seed 3 alike: the wound
-    read misplaces 0.3 % at worst, the fixed blend 3.6 % (default) and 90.7 % (seed 3).
+    **The gate's three statements, as read.**
 
-    **Inside the bar's reach the wound read is not the law, and neither was the blend** - recorded, a declared
-    approximation of this reader and a debt. The field there holds the bar's footprint, which stands in the
-    bar's frame and is not wound, blended with the arms through the law; a ring's row cannot be turned for the
-    one and held for the other. As read, the worst gap inside the half-length: default seeds 14.96 % (2.70 kpc)
-    wound against 8.25 % fixed; pattern seed 3 (pitch 9.1°) 17.46 % against 24.78 %; pattern seed 22 (pitch
-    1.0°) 71.2 % against 37.9 %. The ruling's "the same χ every other reader uses" holds of the arms; the bar's
-    part the other readers take at the point's own φ − φ_bar.
+    1. *"At every grid cell the point reader equals the published ``sfr_modulation`` to rounding."* **Not to
+       rounding, and it cannot be while the table is what it is.** The table is the law at each cell's *mean*
+       contrast (``star_formation_gas_contrast`` is a cell mean of the gas's point function, so that a ring keeps
+       its gas on any grid), over the mean of the cells; the reader at a cell's centre is the law at the
+       *centre's* contrast, over the ring's mean of the law; and the law is not linear. What does hold to
+       rounding: the reader's law is the stage's own arithmetic (the reader's law on the published cell-mean
+       contrast, over its mean, is the table bit for bit), and the reader at a grid ring is the law of the
+       pattern's own point function there. What is left is the cell mean: on the Milky Way template the largest
+       difference at a cell's centre is 1.20 (a cell the footprint's edge crosses, at 2.5 kpc, where the table
+       reads the law at the cell's mean of two levels), and as a ring's misplaced weight 0.59 % at worst, 0.03 %
+       on average; on the rings whose contrast only turns with the winding (past the bar's body, or filled by it)
+       0.015 % at worst (0.005 in the modulation). To meet "to rounding" the table would have to be made
+       from the reader's function - ``sfh_azimuthal`` evaluating the law on the gas pattern's point function
+       (and reading the pattern object and its constants) in place of the published cell-mean field. Not done:
+       reported.
+    2. *"Past the bar's reach it agrees with the wound table read to the 0.29 % already measured."* **Held**:
+       the wound table read misplaces 0.10 % against the reader at worst on the default seeds, 0.18 % at pattern
+       seed 3, 0.02 % at pattern seed 22 (the fixed-φ read: 3.6 %, 14.3 %, 45.1 %).
+    3. *"Inside, the misplaced weight against the law is recorded as 0 by construction and the two superseded
+       readers' numbers ... are kept in the record as what was replaced."* The reader against ``HandLaw`` on
+       every ring gap inside the bar's half-length: under 0.01 % (the two quadratures' difference). **The
+       superseded readers there**, worst gap, fixed-φ table / wound table: default seeds **7.7 % / 13.4 %**,
+       pattern seed 3 (pitch 9.1°) **24.4 % / 17.2 %**, pattern seed 22 (pitch 1.0°) **37.2 % / 70.6 %**. (As
+       first measured, against the law of the blended contrast with the column and threshold interpolated
+       between rings - the reference this ruling replaced: 8.3 / 15.0 %, 24.8 / 17.5 %, 38 / 71 %.)
 
-    **One measure.** A sector's mean is the exact integral of the point function over the sector (against a
-    midpoint rule of 4096 samples: 2e-8), sectors that tile a ring average to 1 to 1e-13, and azimuths drawn
-    by the inverse CDF follow the point function (100 000 draws in one sector: the empirical distribution within
-    0.006 of the point function's own). ``at`` is ``at_points`` on a mesh, bit for bit.
+    **One measure.** The reader's mean round a ring is 1 at every radius, to its normaliser's quadrature (two
+    equal steps to each of the pattern's cells: under 5e-4 against this file's rule sixteen times finer on gaps
+    inside the bar, under 5e-5 past it). A sector's mean is the point function's integral over the sector - a
+    Gauss rule on every piece between the contrast's kinks, two points where the contrast is the arm profile's
+    alone and six where a bar's footprint is in it - and against a midpoint rule of a million samples round
+    the ring it is right to 3e-6 of the sector's mean at worst, for the star sample's 32 sectors and the bright
+    catalogue's 256 alike, inside the bar and out (a midpoint rule of two samples a cell, tried first, left
+    2 % of a finest sector's mean at the footprint's edge); the sectors that tile a ring average to 1 to the
+    normaliser's 7e-5. Azimuths drawn by the inverse CDF follow the point function. **The expected
+    young count of every ring is the arrival law's, unchanged**: the census spreads a ring's young share over
+    its sectors by the sector means over their mean, so the ring's total is the share times 1.
 
-    **With the layer on and one pitch** - no segments - the wound read still applies: the rows are turned by
-    ln(r/R_ring) · cot p, 2.2° across a ring gap at 8 kpc at the default pitch, where the old blend read them at
-    fixed φ. **With the layer off** the censuses take no modulation at all, so no number can move: the field is 1
-    everywhere and ``compose.placement_weight`` gives none. A model with no pattern, or a pattern whose pitch is
-    not a number, has no winding: the rows are read at the point's own φ."""
-    o, sp, reader, mids, law, wound, fixed = reader_and_law(prod, texture_seed=3)
+    **With the layer off** no reader is built and no number moves. A model that publishes a modulation cannot
+    be placed without the model's constants, and says so; a flat gas pattern is the law of a uniform ring."""
+    model = the_model(prod)
+    superseded = {}
+    for label, more, pins in (("default seeds", {}, ((0.10, 3.59), (7.73, 13.40))), ("pattern seed 3", {"pattern_seed": 3}, ((0.18, 14.29), (24.42, 17.24))),
+                              ("pattern seed 22", {"pattern_seed": 22}, ((0.02, 45.12), (37.21, 70.64)))):
+        o, sp, gp, reader, c = reader_run(prod, **more)
+        F, R, phi, edges = o.fields, o.grid.R, o.grid.phi, o.grid["phi"].edges
+        table = np.asarray(F["sfr_modulation"])
+        a = float(F["bar_half_length"])
+        law = HandLaw(F, R, gp, c)
+        # The reader reads the model's own law: its arithmetic on the published cell-mean contrast is the table's.
+        rings = np.arange(R.size)
+        cells = reader._law(rings, np.asarray(F["star_formation_gas_contrast"]))
+        assert np.array_equal(cells / cells.mean(axis=1, keepdims=True), table), label
+        # ... and at a grid ring it is the law of the pattern's own point function there, over its mean round the ring.
+        at_centres = reader.at(R, phi)
+        point = reader._law(rings, gp.star_formation_contrast_at(R[:, None], phi[None, :]))
+        assert np.array_equal(gp.ring_star_formation_contrast_at(rings, R, np.broadcast_to(phi[None, :], (R.size, phi.size))), gp.star_formation_contrast_at(R[:, None], phi[None, :])), label
+        ratio = point / at_centres  # the ring's mean, one number round the ring
+        assert float(np.abs(ratio / ratio[:, :1] - 1.0).max()) < 1e-12, label
+        # 1. At the grid cells against the published table: the cell mean's difference, as read.
+        body = gp.ring_turns_with_the_winding(rings)  # the rings past the bar's body, or filled by it: a contrast that only turns
+        apart = np.abs(at_centres - table)
+        weight = 100.0 * misplaced(at_centres, table)
+        k, j = np.unravel_index(int(np.argmax(apart)), apart.shape)
+        got = (float(apart.max()), float(R[k]), float(weight.max()), float(weight.mean()), float(weight[body].max()), float(apart[body].max()))
+        if label == "default seeds":
+            assert got == pytest.approx((1.201, 2.5125, 0.586, 0.029, 0.015, 0.0045), abs=2e-3), got
+            assert not body[k] and int(body.sum()) == 359  # 41 rings hold a footprint that does not fill them
+        assert weight.max() < 1.2 and weight[body].max() < 0.05, (label, got)
+        # 2 and 3. Between the rings: the reader against the law by hand, and the two superseded readers against it.
+        knots, phases = law.knots, law.phases
+        mids = 0.5 * (R[:-1] + R[1:])
+        now = reader.at(mids, FINE)
+        live = now.max(axis=1) > 1.0 + 1e-9  # the gaps that form stars unevenly
+        inside, past = np.flatnonzero(live & (mids < a)), np.flatnonzero(live & (mids > a))
+        by_hand = np.array([law.at(float(mids[i]), FINE) for i in inside])
+        assert 100.0 * float(misplaced(now[inside], by_hand).max()) < 0.01, label
+        some = past[:: max(1, past.size // 12)]
+        assert 100.0 * float(misplaced(now[some], np.array([law.at(float(mids[i]), FINE) for i in some])).max()) < 0.01, label
+        wound = np.array([hand_read(table, R, lambda x: hand_phase(knots, phases, x), float(r), FINE) for r in mids])
+        fixed = np.array([hand_read(table, R, lambda x: 0.0, float(r), FINE) for r in mids])
+        old_wound, old_fixed = 100.0 * misplaced(wound, now), 100.0 * misplaced(fixed, now)
+        superseded[label] = ((float(old_wound[past].max()), float(old_fixed[past].max())), (float(old_fixed[inside].max()), float(old_wound[inside].max())))
+        assert superseded[label][0] == pytest.approx(pins[0], abs=0.02) and superseded[label][1] == pytest.approx(pins[1], abs=0.02), (label, superseded[label])
+        assert superseded[label][0][0] < 0.29, label  # the gate's second statement
+        # The reader's mean round a ring is 1 at every radius: against this file's finer rule.
+        means = np.array([float(reader.at(np.array([r]), ROUND).mean()) for r in mids[inside[::6]]])
+        outer = np.array([float(reader.at(np.array([r]), ROUND).mean()) for r in mids[past[::20]]])
+        assert float(np.abs(means - 1.0).max()) < 5e-4 and float(np.abs(outer - 1.0).max()) < 5e-5, (label, float(np.abs(means - 1.0).max()), float(np.abs(outer - 1.0).max()))
+    # One measure, on the default seeds' reader (the loop's last is pattern seed 22: take the default again).
+    o, sp, gp, reader, c = reader_run(prod)
     F, R = o.fields, o.grid.R
-    table = np.asarray(F["sfr_modulation"])
     a = float(F["bar_half_length"])
-    knots, phases, _ = hand_knots(F)
-
-    def phase(x: float) -> float:
-        return hand_phase(knots, phases, x)
-
-    turn = np.degrees(np.abs(np.diff([phase(float(r)) for r in R])))
-    live = law.max(axis=1) > 1.0 + 1e-9  # the rings that form stars unevenly: a ring of no star formation reads 1
-    steep = np.flatnonzero((turn > 10.0) & (mids > a) & live)
-    assert [(round(float(mids[i]), 3), round(float(turn[i]), 1)) for i in steep] == [(5.25, 34.4), (5.325, 10.2), (6.15, 60.0), (6.225, 11.5)]
-    # The model's reader is the ring-by-ring wound interpolation, computed by hand.
-    by_hand = np.array([hand_read(table, R, phase, float(mids[i]), FINE) for i in steep])
-    assert float(np.abs(wound[steep] - by_hand).max()) < 1e-12
-    # ... and agrees with the law where the fixed blend did not.
-    new, old = 100.0 * misplaced(wound, law), 100.0 * misplaced(fixed, law)
-    assert new[steep].tolist() == pytest.approx([0.111, 0.111, 0.106, 0.106], abs=2e-3) and float(new[steep].max()) < 1.0
-    assert old[steep].tolist() == pytest.approx([61.48, 16.41, 90.66, 29.40], abs=0.02)
-    i = int(steep[0])
-    assert (float(law[i].max()), float(fixed[i].max()), float(wound[i].max())) == pytest.approx((5.638, 2.820, 5.633), abs=2e-3)
-    departure = float(np.abs(wound[steep] - law[steep]).max())
-    assert departure == pytest.approx(0.088, abs=2e-3) and departure < 0.02 * float(law[steep].max())
-    # Past the bar's half-length, every gap that forms stars; inside it, the declared approximation, as read.
-    past, within = live & (mids > a), live & (mids < a)
-    assert (float(new[past].max()), float(old[past].max())) == pytest.approx((0.29, 90.66), abs=0.02) and float(new[past].max()) < 1.0
-    for more, beyond, inside in (({}, (0.29, 3.59), (14.96, 8.25)), ({"pattern_seed": 3}, (1.47, 14.30), (17.46, 24.78)), ({"pattern_seed": 22}, (0.03, 45.13), (71.20, 37.88))):
-        _, _, _, radii, law_, wound_, fixed_ = reader_and_law(prod, **more)
-        alive = law_.max(axis=1) > 1.0 + 1e-9
-        got_new, got_old = 100.0 * misplaced(wound_, law_), 100.0 * misplaced(fixed_, law_)
-        got = ((float(got_new[alive & (radii > a)].max()), float(got_old[alive & (radii > a)].max())), (float(got_new[alive & (radii < a)].max()), float(got_old[alive & (radii < a)].max())))
-        assert got[0] == pytest.approx(beyond, abs=0.02) and got[1] == pytest.approx(inside, abs=0.02), (more, got)
-    assert float(new[within].max()) > 1.0  # the same holds at this seed: inside the bar the reader is not the law
-    # One measure: the sector means are the point function's exact integrals, and they tile the ring.
-    r = float(mids[steep[2]])
-    edges = np.linspace(0.0, 2.0 * math.pi, 65)
-    means = reader.sector_means(r, edges)
-    samples = edges[:-1, None] + (edges[1:] - edges[:-1])[:, None] * ((np.arange(4096) + 0.5) / 4096.0)[None, :]
-    quadrature = reader.at(np.array([r]), samples.ravel()).reshape(samples.shape).mean(axis=1)
-    assert float(np.abs(means - quadrature).max()) < 1e-7 and abs(float(means.mean()) - 1.0) < 1e-13  # the rule's own error: 2e-8
-    uneven = np.array([0.0, 0.3, 0.31, 2.0, 4.5, 2.0 * math.pi])  # sectors of any widths tile it too
-    assert abs(float((reader.sector_means(r, uneven) * np.diff(uneven)).sum()) / (2.0 * math.pi) - 1.0) < 1e-13
-    # ... the azimuth draws follow the point function: the inverse CDF on the sector's 25 samples.
-    lo, hi = float(edges[10]), float(edges[11])
-    u = np.random.default_rng(59).random(100000)
-    drawn = reader.azimuths(u, np.full(u.size, r), lo, hi)
-    assert drawn.min() >= lo and drawn.max() <= hi
-    grid = np.linspace(lo, hi, 25)
-    density = reader.at(np.array([r]), grid)[0]
-    cdf = np.concatenate([[0.0], np.cumsum(0.5 * (density[1:] + density[:-1]))])
-    empirical = np.array([(drawn <= g).mean() for g in grid])
-    assert float(np.abs(empirical - cdf / cdf[-1]).max()) < 0.006
-    halves = reader.sector_means(r, np.array([lo, 0.5 * (lo + hi), hi]))
-    assert abs(float((drawn <= 0.5 * (lo + hi)).mean()) - float(halves[0] / halves.sum())) < 0.006
-    # ``at`` is ``at_points`` on the mesh; a row of azimuths of the wrong shape is refused.
-    some = mids[steep]
+    rings32, sectors32 = systems.cell_edges(R)
+    finest = np.linspace(0.0, 2.0 * math.pi, 257)
+    assert systems.RING_SAMPLES_PER_CELL == 2 and sectors32.size == 33
+    assert {bar: nodes.size for bar, (nodes, _) in systems.GAUSS.items()} == {False: 2, True: 6}
+    worst = {}
+    for name, edges, count in (("level-0", sectors32, 32768), ("finest", finest, 4096)):
+        for where, radii in (("bar", (1.5, 2.7, 3.6, 4.4)), ("disc", (6.0, 8.0, 12.0))):
+            read = []
+            for r in radii:
+                means = reader.sector_means(r, edges)
+                # ... against a midpoint rule of 2^20 samples round the ring (2e-5 of a pattern cell apart).
+                samples = edges[:-1, None] + (edges[1:] - edges[:-1])[:, None] * ((np.arange(count) + 0.5) / count)[None, :]
+                finer = np.concatenate([reader.at(np.array([r]), part.ravel()).reshape(part.shape).mean(axis=1) for part in np.array_split(samples, 16)])
+                read.append((float(np.abs(means - finer).max()), float(np.abs(means / finer - 1.0).max()), abs(float(means.mean()) - 1.0)))
+                assert np.array_equal(means, reader.sector_means_at(np.array([1.0, r, 9.9]), edges)[1])  # a row is the same in any company
+            worst[(name, where)] = tuple(max(x[k] for x in read) for k in range(3))
+    # (the largest error of a sector's mean, the largest relative one, the tiling's mean less 1): as read, and bounded.
+    read = {k: tuple(float(f"{x:.1e}") for x in v) for k, v in worst.items()}
+    assert read == {("level-0", "bar"): (7.7e-08, 7.7e-07, 6.7e-05), ("level-0", "disc"): (3.2e-08, 5.9e-07, 4.2e-06),
+                    ("finest", "bar"): (3.1e-07, 1.5e-06, 6.7e-05), ("finest", "disc"): (4.4e-07, 2.7e-06, 4.2e-06)}, read
+    assert all(v[0] < 1e-5 and v[1] < 1e-5 and v[2] < 5e-4 for v in worst.values()), worst
+    # The azimuth draws follow the point function: the inverse CDF on a sector's 25 samples.
+    for r in (2.7, 8.0):
+        lo, hi = float(sectors32[10]), float(sectors32[11])
+        u = np.random.default_rng(59).random(100000)
+        drawn = reader.azimuths(u, np.full(u.size, r), lo, hi)
+        assert drawn.min() >= lo and drawn.max() <= hi
+        grid = np.linspace(lo, hi, 25)
+        density = reader.at(np.array([r]), grid)[0]
+        cdf = np.concatenate([[0.0], np.cumsum(0.5 * (density[1:] + density[:-1]))])
+        assert float(np.abs(np.array([(drawn <= g).mean() for g in grid]) - cdf / cdf[-1]).max()) < 0.006, r
+    some = np.array([2.7, 5.25, 8.0])
     assert np.array_equal(reader.at(some, grid), reader.at_points(some, np.broadcast_to(grid[None, :], (some.size, grid.size))))
     with pytest.raises(ValueError, match="its own row of azimuths"):
         reader.at_points(some, grid)
-    # One pitch, the layer on: the rows are turned by the plain winding, ln(r/R_ring) cot p.
-    plain = pt.ArmPattern(sp.R, sp.amplitudes, sp.phases, sp.bar, sp.pitch_deg, sp.bar_length, sp.axis_ratio, sp.boxiness, sp.index, sp.share, sp.surface_density)
-    cot = 1.0 / math.tan(math.radians(sp.pitch_deg))
-    assert plain.winding is None and math.degrees(math.log(8.025 / 7.95) * cot) == pytest.approx(2.23, abs=5e-3)
-    one_pitch = systems.Modulation(table, R, plain)
-    for radius in (8.0, 2.0, 11.111):  # between rings: the grid's are at 0.0375 + 0.075 k
-        want = hand_read(table, R, lambda x: math.log(x) * cot, radius, FINE)
-        assert float(np.abs(one_pitch.at(np.array([radius]), FINE)[0] - want).max()) < 1e-12, radius
-        assert float(np.abs(one_pitch.at(np.array([radius]), FINE)[0] - hand_read(table, R, lambda x: 0.0, radius, FINE)).max()) > 1e-3, radius
-    # At a grid radius the turn is zero and the read is the ring's own row, whatever the winding.
-    centres = (np.arange(table.shape[1]) + 0.5) * (2.0 * math.pi / table.shape[1])
-    for wound_or_plain in (reader, one_pitch):  # (to the rounding of a cell centre's place: 1e-14 of a cell)
-        assert float(np.abs(wound_or_plain.at(R[[70, 110]], centres) - table[[70, 110]]).max()) < 1e-12
-    # No pattern, or a pitch that is not a number: no winding, and the rows are read at the point's own φ.
-    for none in (None, dataclasses.replace(plain, pitch_deg=float("nan"))):
-        unwound = systems.Modulation(table, R, none)
-        assert float(np.abs(unwound.at(mids[steep], FINE) - fixed[steep]).max()) < 1e-12
-    # The layer off: no modulation is handed to a census, and the field is 1 everywhere.
-    off = run(the_model(prod), inputs_of("milky_way", texture_seed=3), only=("sfr_modulation",), layer=False)
-    assert compose.placement_weight(off.fields, "sfr_modulation") is None and np.all(np.asarray(off.fields["sfr_modulation"]) == 1.0)
-    # The third argument is required: no caller reads the field unwound by forgetting it.
-    with pytest.raises(TypeError):
-        systems.Modulation(table, R)
+    # The expected young count of every ring is the arrival law's: the census's young share of a sector, weighted by
+    # the sector's stars, sums to the ring's share. (A synthetic arrival law: every step alike.)
+    t = o.grid.t
+    arrive = np.ones((t.size, systems.CELL_RINGS))
+    young = systems.YoungStars(reader, sp, arrive, t, rings32, sectors32)
+    stars = np.array([sp.sector_means(float(r), sectors32) for r in 0.5 * (rings32[:-1] + rings32[1:])])
+    assert young.p.shape == (32, 32) and young.p.max() < 1.0 and float(np.abs((young.p * stars).mean(axis=1) / young.share - 1.0).max()) < 1e-12
+    # ... and the bright catalogue's expected total is the same with the layer on and off: I1, within four units.
+    on = run(model, inputs_of("milky_way"), only=("bright_star_count_1e3",))
+    off = run(model, inputs_of("milky_way"), only=("bright_star_count_1e3",), layer=False)
+    total_on, total_off = float(on.fields["bright_star_count_1e3"]), float(off.fields["bright_star_count_1e3"])
+    units = abs(total_on - total_off) / float(np.spacing(max(total_on, total_off)))
+    assert units <= 4.0 and units == 0.0, (total_on, total_off, units)
+    # With the layer off no reader is built; with it on the model's constants are required; a flat pattern reads 1.
+    dark = run(model, inputs_of("milky_way"), only=READER, layer=False)
+    assert systems.young_reader(dark.fields, R, c) is None and systems.young_reader(dark.fields, R, None) is None
+    with pytest.raises(TypeError, match="pass constants="):
+        systems.young_reader(F, R, None)
+    with pytest.raises(TypeError, match="pass constants="):
+        systems.materialise(run(model, inputs_of("milky_way"), SMALL, only=systems.SYSTEMS.requires + systems.SYSTEMS.requires_optional).fields,
+                            SMALL.build().R, SMALL.build().t, 0, 500, migration=3.6)
+    flat = systems.Modulation(None, R, F["gas_surface_density"], F["sf_threshold_surface_density"], float(c["KS_INDEX"]))
+    assert np.all(flat.at(some, grid) == 1.0) and np.all(flat.sector_means(8.0, sectors32) == 1.0)
+    # The stages that build the reader declare what it reads; the table is asked for by name only.
+    for stage in ("systems", "bright_stars"):
+        st = prod[1].get(stage)
+        assert {*gm.GAS_PATTERN_READS, "gas_surface_density", "sf_threshold_surface_density"} <= set(st.requires), stage
+        assert {*gm.GAS_PATTERN_CONSTANTS, "KS_INDEX"} <= set(st.reads_constants) and st.requires_optional == ("sfr_modulation",), stage
 
 
 # --- the two disclosed checks ---------------------------------------------------------------------------------------

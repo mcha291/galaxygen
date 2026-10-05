@@ -254,8 +254,10 @@ def test_a_region_is_exactly_what_the_full_sweep_puts_there(api):
     models, impls, table = production()
     out = run(models.get(DEFAULT_MODEL), None, SMALL, only=systems.SYSTEMS.requires)
     R, t = out.grid.R, out.grid.t
+    # S59 (D218): the model's constants - the young stars' reader applies the star formation law at a point.
+    constants = {k: c.value for k, c in models.get(DEFAULT_MODEL).constants.items()}
     whole = systems.materialise(
-        out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"])
+        out.fields, R, t, 0, 5000, migration=float(out.inputs["migration_efficiency"]), constants=constants
     )
 
     header, arrays = api.handle("/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&stars=5000").frame()
@@ -399,9 +401,9 @@ def test_cached_cells_are_the_sweep_s_rows_and_are_not_made_twice(api):
     made: list[list[int]] = []
     original = _systems.materialise
 
-    def counting(fields, R, t, seed, n, cells=None, *, migration):
+    def counting(fields, R, t, seed, n, cells=None, *, migration, constants):  # S59 (D218): the reader's constants
         made.append(list(cells) if cells is not None else [])
-        return original(fields, R, t, seed, n, cells, migration=migration)
+        return original(fields, R, t, seed, n, cells, migration=migration, constants=constants)
 
     _systems.materialise = counting
     try:
