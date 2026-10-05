@@ -695,6 +695,112 @@ class GasPattern:
         with the footprint-uniform field in the lanes' place. An unbarred pattern's is :meth:`contrast_at`'s."""
         return self._contrast_at(R, phi, lambda: self.footprint)
 
+    # --- one grid ring's own contrast, read at a point (S59, D218: the gate's ruling on the young stars' reader) ---
+    #
+    # The star formation law is not linear and its inputs - the gas column, the threshold - exist on the grid
+    # rings only, so a reader of the law between two rings applies it ring by ring and blends the two results
+    # (``systems.Modulation``). For that it needs each ring's own contrast as a function of azimuth, placed where
+    # a point at another radius sees it: the ring's arm profile at the point's own χ = φ − Φ(R_point) - the arms
+    # turn with the winding - and the ring's footprint in the bar's frame, ψ = φ − φ_bar, which does not turn;
+    # the two weighted by the ring's own taper. At the ring's own radius that is the pattern's point function
+    # there, bit for bit. Nothing is blended in R here: that is the caller's.
+
+    def _ring_read(self, profiles: np.ndarray, ring: np.ndarray, angle: np.ndarray) -> np.ndarray:
+        """``profiles[ring]`` read at ``angle`` (radians of the profiles' own coordinate), the two broadcast
+        against each other: ``gas_response.interpolate``'s own arithmetic on the two cells an angle lies between,
+        the ring picked point by point - :meth:`_read`'s read of one ring, with no blend in R."""
+        ring, angle = np.broadcast_arrays(np.asarray(ring, dtype=np.int64), np.asarray(angle, dtype=float))
+        below, above, weight, _ = _response.bracket(angle, CELLS)
+        first, second = profiles[ring, below], profiles[ring, above]
+        rising = second >= first
+        return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
+
+    def _ring_footprint(self, ring: np.ndarray, psi: np.ndarray) -> np.ndarray:
+        """The footprint-uniform profile of each grid ring of ``ring`` (rings,) at its own row of angles ``psi``
+        (rings, k) in the bar's frame: :meth:`_ring_read`'s numbers. A ring whose footprint row is one number on
+        every cell is that number at any angle - what the interpolation gives, exactly - and is not read cell by
+        cell (most rings of a barred disc lie past the bar)."""
+        rows = self.footprint[ring]
+        level = rows[:, 0]
+        uniform = rows.min(axis=1) == rows.max(axis=1)
+        out = np.empty(np.broadcast_shapes(psi.shape, (ring.size, 1)))
+        out[uniform] = level[uniform, None]
+        if not uniform.all():
+            held = ~uniform
+            out[held] = self._ring_read(self.footprint, ring[held, None], np.broadcast_to(psi, out.shape)[held])
+        return out
+
+    def ring_star_formation_contrast_at(self, ring: np.ndarray, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """Grid ring ``ring``'s own star-formation contrast at points: for each ring of ``ring`` (rings,), read
+        by a point at radius ``R`` (rings,), at that row's azimuths ``phi`` (rings, k):
+        w_arm(R_ring) s_ring(φ − Φ(R)) + w_bar(R_ring) L_fp,ring(φ − φ_bar) - the ring's arm profile at the
+        point's own χ, its footprint-uniform profile in the bar's frame, the ring's own weights. An unbarred
+        pattern's is the arm profile alone. At ``R`` = the ring's own radius it is
+        :meth:`star_formation_contrast_at` there, to the bit."""
+        ring = np.asarray(ring, dtype=np.int64)
+        phi = np.asarray(phi, dtype=float)
+        taper, _, _ = bar_terms(self.R[ring], self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
+        arms = w_arm[:, None] * self._ring_read(self.profiles, ring[:, None], phi - phase[:, None])
+        return arms + w_bar[:, None] * self._ring_footprint(ring, phi - bar_angle) if self.barred else arms
+
+    def ring_star_formation_contrast_round(self, ring: np.ndarray, R: np.ndarray, per_cell: int) -> np.ndarray:
+        """Grid ring ``ring``'s own star-formation contrast round the whole ring as a point at radius ``R`` sees
+        it, shaped (rings, ``per_cell`` · CELLS): :meth:`ring_star_formation_contrast_at`'s function on
+        ``per_cell`` equal steps to each of the profile's cells - **taken in the arms' own frame**, at
+        χ_q = −π + (q + ½) 2π/(per_cell · CELLS), with the footprint read at ψ_q = χ_q + Φ(R) − φ_bar. What a
+        mean round the ring is taken over. The arm profile is read between its own cells' centres by the
+        interpolant's arithmetic at the steps' fixed places in a cell (no cell is looked up). Sampled in that
+        frame, a ring whose contrast only turns with the winding (:meth:`ring_turns_with_the_winding`) gives the
+        same numbers whatever ``R``, bit for bit. ``ring`` and ``R`` are one-dimensional and of one length."""
+        ring = np.asarray(ring, dtype=np.int64)
+        m = int(per_cell)
+        if m < 1:
+            raise ValueError("a ring is sampled at one step to a cell or more")
+        taper, _, _ = bar_terms(self.R[ring], self.pitch_deg, self.bar_length)
+        w_arm, w_bar = blend_weights(taper)
+        here = self.profiles[ring]  # (rings, CELLS)
+        before, after = np.roll(here, 1, axis=1), np.roll(here, -1, axis=1)
+        arms = np.empty((ring.size, CELLS, m))
+        for j in range(m):
+            offset = (j + 0.5) / m - 0.5  # the step's place in its cell, from the cell's centre, in cells
+            first, second, weight = (before, here, 1.0 + offset) if offset < 0.0 else (here, after, offset)
+            rising = second >= first
+            arms[:, :, j] = np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
+        arms = w_arm[:, None] * arms.reshape(ring.size, CELLS * m)
+        if not self.barred:
+            return arms
+        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
+        chi = -math.pi + (np.arange(CELLS * m) + 0.5) * (2.0 * math.pi / (CELLS * m))
+        return arms + w_bar[:, None] * self._ring_footprint(ring, chi[None, :] + (phase - bar_angle)[:, None])
+
+    def star_formation_kinks(self, R: np.ndarray, bar: bool) -> np.ndarray:
+        """The azimuths at which a grid ring's star-formation contrast, read by a point at radius ``R``
+        (:meth:`ring_star_formation_contrast_at`), changes slope: the arm profile's cells' centres carried to
+        φ = Φ(R) + χ_c, shaped (radii, CELLS) - and, with ``bar``, the footprint's beside them, φ_bar + ψ_c,
+        shaped (radii, 2 CELLS). Between two neighbouring ones the contrast is linear in φ, on any ring: what a
+        quadrature of a function of the contrast is cut at. One turn's worth each, not wrapped into any range.
+        ``bar`` is the caller's to drop where no ring it reads holds a footprint that is not uniform
+        (:meth:`ring_turns_with_the_winding`); an unbarred pattern has none."""
+        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
+        centres = _response.cell_centres(CELLS)
+        arms = phase[:, None] + centres[None, :]
+        if not (bar and self.barred):
+            return arms
+        return np.concatenate([arms, np.broadcast_to(bar_angle + centres[None, :], arms.shape)], axis=1)
+
+    def ring_turns_with_the_winding(self, ring: np.ndarray) -> np.ndarray:
+        """(rings,) bool: the grid rings whose star-formation contrast, round the ring, is one function of χ at
+        whatever radius it is read - no bar, or a footprint row that is one number on every cell (a ring at or
+        past the bar's half-length, or one the footprint fills). Such a ring's contrast only turns with the
+        winding; the others hold a footprint that stays in the bar's frame while the arms turn past it."""
+        ring = np.asarray(ring, dtype=np.int64)
+        if not self.barred:
+            return np.ones(ring.shape, dtype=bool)
+        rows = self.footprint[ring]
+        return rows.min(axis=-1) == rows.max(axis=-1)
+
     def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """Σ_gas(R, φ)/Σ_gas(R) at the points of an (R, φ) mesh: the point function at each (R_i, φ_j) - what a
         census inverts for an azimuth. Its mean round a ring is 1 over the ring itself; a mesh's samples
