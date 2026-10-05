@@ -895,6 +895,13 @@ def test_the_young_stars_reader_is_the_star_formation_law_at_a_point(prod):
     with pytest.raises(TypeError, match="pass constants="):
         systems.materialise(run(model, inputs_of("milky_way"), SMALL, only=systems.SYSTEMS.requires + systems.SYSTEMS.requires_optional).fields,
                             SMALL.build().R, SMALL.build().t, 0, 500, migration=3.6)
+    # The reviewer's second pass (D218): a gas pattern that cannot be built - one of its constants or fields missing -
+    # raised nothing and read 1 everywhere. It raises, naming what is missing; the law's index missing raises too.
+    for lost in ("G", "GAS_DISPERSION"):
+        with pytest.raises(KeyError, match=f"cannot be built here: missing {lost}"):
+            systems.young_reader(F, R, {k: v for k, v in c.items() if k != lost})
+    with pytest.raises(KeyError, match="KS_INDEX"):
+        systems.young_reader(F, R, {k: v for k, v in c.items() if k != "KS_INDEX"})
     flat = systems.Modulation(None, R, F["gas_surface_density"], F["sf_threshold_surface_density"], float(c["KS_INDEX"]))
     assert np.all(flat.at(some, grid) == 1.0) and np.all(flat.sector_means(8.0, sectors32) == 1.0)
     # The stages that build the reader declare what it reads; the table is asked for by name only.

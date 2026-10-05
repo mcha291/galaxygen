@@ -639,7 +639,9 @@ def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[st
     table holds at the cells, applied to the gas pattern compose gives (S59, D218).
 
     ``constants`` are the model's: the gas pattern's (its sound speed, G, the lanes' numbers) and the law's
-    index. A catalogue of a model that publishes a modulation cannot be placed without them, and says so."""
+    index. A catalogue of a model that publishes a modulation cannot be placed without them, and says so - with
+    none given, and with one of the gas pattern's missing (a pattern that is there and flat is the law of a
+    uniform ring, 1 everywhere; a pattern that cannot be built is an error, never 1)."""
     if _compose.placement_weight(fields, "sfr_modulation") is None:
         return None
     if constants is None:
@@ -647,10 +649,15 @@ def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[st
             "this model publishes sfr_modulation: its young stars are placed by the star formation law at a point, "
             "which reads the model's constants (the gas pattern's and KS_INDEX) - pass constants="
         )
-    return Modulation(
-        _compose.gas_pattern(fields, R, constants), R, fields["gas_surface_density"],
-        fields["sf_threshold_surface_density"], float(constants["KS_INDEX"]),
-    )
+    pattern = _compose.gas_pattern(fields, R, constants)
+    if pattern is None:
+        # A reader that cannot be built raises; it never falls back to another, or to 1 (D218, the third follow-up).
+        missing = [n for n in GAS_PATTERN_READS if n not in fields] + [k for k in GAS_PATTERN_CONSTANTS if k not in constants]
+        raise KeyError(
+            "this model publishes sfr_modulation, and its young stars are placed by the star formation law on the gas "
+            f"pattern, which cannot be built here: missing {', '.join(missing) or 'nothing it names'}"
+        )
+    return Modulation(pattern, R, fields["gas_surface_density"], fields["sf_threshold_surface_density"], float(constants["KS_INDEX"]))
 
 
 class YoungStars:

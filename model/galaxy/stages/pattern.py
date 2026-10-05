@@ -1296,9 +1296,9 @@ class ArmPattern:
 
     def winding_phase(self, R: np.ndarray) -> np.ndarray:
         """Φ at ``R`` (kpc, any shape): the winding every arm mode is laid on - the segments' where the layer
-        laid them, ln R · cot(pitch) where it laid none. What a reader of a grid field that is wound with the
-        arms turns each ring's row by (``systems.Modulation``: the young stars' reader; S59, D218, the gate's
-        follow-up, item 1), so that it reads the row at the point's own χ = φ − Φ(R) as the pattern does."""
+        laid them, ln R · cot(pitch) where it laid none. A point's own χ is φ − Φ(R): what a reader of a field
+        that is wound with the arms turns by (S59, D218; the young stars' reader no longer reads a table - it
+        asks the gas pattern for each ring's contrast at the point)."""
         return bar_terms(R, self.pitch_deg, self.bar_length, self.winding)[1]
 
     def _terms(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
