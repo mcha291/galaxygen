@@ -10459,3 +10459,132 @@ a sentence added to a phase's text, none a session.
 
 The plan's rule stands for each: a synthetic field's statistics are sourced, and nothing is tuned to a goal.
 `READING_CLUSTERING.md`, taken for L1 during S59's closing suite, is entered on this branch so it is not lost.
+
+**The readings (two blind readers, `docs/READING_ARM_PIECES.md`).** An arm in old starlight is broad — FWHM 0.53 ±
+0.04 scale lengths at mid-arm, growing with radius — and the young tracers are half that or less; grand designs
+carry 2.8 arms of 90° or more and multi-armed discs 3.5, plus 1.4 shorter features, 273° ± 143° and 244° ± 131°
+long; **no source gives the number or the lengths of a flocculent disc's pieces**; classes are 50 / 32 / 18 % with
+no deterministic predictor; branch radii, the share of arms from a bar's end, amplitude ratios and a taper length
+are measured nowhere read. The midplane force of a wave from an exponential stellar layer is reduced by exactly 1/(1
++ k h) (Kim & Ostriker 2007), the factor the gas feels from the stars; h_R/h_z = 7.3 ± 2.2 (Kregel et al. 2002); no
+source converts a stellar arm's amplitude to a forcing with thickness or gives the gas's response to a narrow
+corotating arm.
+
+**The probe before the build (the lead's; the model's own rings and solver, the repository unchanged).** Ridges in
+place of the five modes at each ring's budget (variance ½ Σ A_m²: rms 0.284 on the Milky Way template, 0.251 on
+`ngc_4414`), two or four equal Gaussian ridges of perpendicular FWHM 0.4 / 0.8 / 1.5 kpc, the forcing by the model's
+own rule Fourier term by term, without and with × 1/(1 + m h/(R sin p)). The solver takes ridges as it is (every
+case converged in 4–8 Newton steps, 0.5–12 kpc). The budget is spendable: at 1.5 kpc two ridges of amplitude
+0.80–0.87 leave the stellar minimum at 0.67–0.81 over 5–10 kpc, crest over trough about 2.1. With the factor on
+today's modes and the model's own `thin_disc_scale_height`: Milky Way (356 pc) Σf at 8 kpc 1.98 → 1.04, the gas
+minimum 0.017 → 0.32, the top tenth over the lower half 4.1 → 2.2; `ngc_4414` (954 pc) the inner minimum 1e-14 →
+0.83 and the ratio 3.5–8 → 1.2–1.4. Two findings: that height is checkpoint 4's and the gas pattern checkpoint 3's
+(A1); and **`ngc_4414`'s is 954 pc on a scale length of 1.68 kpc, a ratio of 1.8 against the measured 7.3 ± 2.2**
+(the Milky Way template: 6.9). A side effect: the factor makes the forcing regular through sin p = 0.
+
+**A conditional gate, 2026-10-05; ruling by Fable (the agent of D216–D218's gates, resumed; one turn on
+`docs/HANDOFF_S60.md` and its five ranges, nothing run).** Checked on paper: "Different arm numbers are orthogonal
+on a ring, so the modes' ring variance is ½ΣA_m² for any phases: that is the budget's number. A Gaussian ridge of
+amplitude B and perpendicular σ crossing a ring at pitch p has azimuthal σ_φ = σ/(R sin p) and ring variance
+B²σ_φ/(2√π) − (Bσ_φ)²/(2π) … So B ∝ 1/√(N σ_φ): exact-per-ring normalisation would spike where one piece crosses and
+be undefined where none does"; the thickness factor per harmonic turns f_m into |m| ĉ_m/(X(|sin p| + |m| h/R)),
+"bounded by ĉ_m R/(X h) for every m and pitch, regular at sin p = 0: #142's blow-up cannot occur under it, and a
+piece's own pitch may enter"; the ring's mean-1 form c = 1 − ⟨E⟩(R) + E(R, φ), E the pieces' excess, has trough 1 −
+⟨E⟩, "so positivity is 'the arms' mean excess ≤ 1 − b(R)': P1's saturation keeps its form"; "with n(R) ≈ 4.8 at R₀
+on the Milky Way's law, a census by n(R) crosses R₀ with about five pieces — the same count Reid's four arms plus
+the Local arm give; the plan's arm law (kept by the owner, D216) is what makes the disc five-armed there."
+
+1. *A piece:* "a ridge on its own logarithmic locus — start (R₀, φ₀), pitch p_j, azimuthal extent Δβ_j, end at R₀
+   exp(Δβ_j |tan p_j|) in the trailing sense. Across it a Gaussian in the perpendicular distance (Sérsic 0.6–0.7 is
+   near-Gaussian; Sérsic 0.65 the named alternative); FWHM(R) = 0.53 h·(0.27 + 0.73 R/(2h)), h the checkpoint-1
+   scale length (Chugunov 2024's 0.53 ± 0.04 h at mid-arm, the sample measured in the model's own unit; the linear
+   growth with zero point 27 %, the middle of 19–34 %; Savchenko's 0.12 r25 and Seigar & James's 20°–40° recorded as
+   the alternatives that disagree by two). Along it flat, tapered to zero over one width at each end — a declared
+   placeholder (no taper length is measured), a debt. No per-galaxy or per-piece width draw (0.24–1.18 h and 10–37 %
+   are ranges, not distributions): debt."
+2. *A chain:* "pieces joined end to start, each piece's Δβ log-normal (median 60°, σ_ln 0.35, redrawn outside
+   20°–180°) and pitch p(1 + 0.56 z), S59's draws now per arm as Honig & Reid measured them; the chain's total
+   length drawn normal, 273° ± 143° (grand design) or 244° ± 131° (multi-armed), redrawn under 90° (the sources'
+   definition of an arm), the last piece cut to it. Kinks are each arm's own; #150 discharged. All on
+   `texture_seed`, streams named by chain and order."
+3. *Class, unpinned, derived, no draw:* "barred → two chains starting at the bar's ends (R = a, φ_bar and φ_bar + π;
+   D217's θ₂ tie becomes these two pieces; #149's bar-driven arms as geometry), plus a chain started at a uniform
+   azimuth on each ring where the law's power-weighted arm number n(R) = Σ m w_m/Σ w_m exceeds the chains crossing
+   it; unbarred → chains by n(R) alone. 'n(R) pieces cross each ring' is a fair reading of the law and is declared
+   as one: a mode m is m crests, and the power-weighted mean is the law's own count. Flocculent by pin only
+   (`arm_class` on `ngc_4414`): single pieces of extent uniform on 37°–105° (its measured five), as many as n(R)
+   crossing each ring; the local swing law is a flocculent disc's physics and no count is sourced. The model makes
+   no unpinned flocculent disc: a predicted miss of the measured 50 % (18/32/50), recorded; a class draw from the
+   measured frequencies is the owner's, as Erwin's was (D217)."
+4. *The budget, in expectation:* "B(R) is the one amplitude of the pieces crossing ring R, set so that the expected
+   ring variance over the census's draws equals ½ΣA_m(R)² (taper and saturation in), the expectation taken
+   analytically from the census's statistics (expected count, widths); the realised power per ring is published and
+   its scatter read. Exact per ring is refused (it undoes the taper and spikes). Positivity by P1's saturation on
+   the ring: B cut so that ⟨E⟩ ≤ 1 − b(R), the cut counted. The split by m survives as a disclosed check: the
+   composed field's realised Fourier power by m against the law's A_m², published, read, not tuned."
+5. *The forcing:* "per ring, F(χ) composed piece by piece, each piece's excess profile on the solver's cells
+   transformed, term m multiplied by |m|/(X (|sin p_j| + |m| h/R)) — the piece's own pitch in the force (#151
+   closed: yes, now that the form is regular), the thickness factor the exponential layer's exact 1/(1 + k h) (Kim &
+   Ostriker 2007 eqs. 4 and 8: the factor the gas feels from the stars; the sech² fit the named alternative, up to
+   13.7 % higher; the profile mapping's 0.39–0.57 at kh = 1 the debt's size). h = the checkpoint-1 scale length /
+   7.3 (Kregel 2002), so A1 holds and nothing of checkpoint 4 enters; the model's own `thin_disc_scale_height` is
+   not used — and `ngc_4414`'s 954 pc on 1.68 kpc (ratio 1.8 against 7.3 ± 2.2) is recorded as a finding about that
+   template's fit, for the owner, no third fit. ε keeps the disc's pitch (one pressure scale per ring; declared,
+   debt). #142's floor question retires as physics: the forcing is bounded by ĉ_m R/(X h) at any pitch; the 1° clip
+   stays only as the draw's range."
+6. *The gas between rings:* "a ring's solved profile is carried to a point along the pieces' loci (a periodic
+   piecewise-linear map of azimuth anchored where each crossing piece stands on the ring and at the point's radius),
+   a function of position; its misplaced weight against a direct solve at mid-gap radii is measured on both
+   templates and pinned; if it exceeds 1 % on any star-forming gap, the ring step is halved there, not the tolerance
+   raised."
+7. *Retired:* "the modes' five drawn phases and the `arm_phases` stage; the common winding and `arm_segment`. Kept:
+   `arm_mode_amplitude_m` (the budget, physics, on and off), `pitch_angle` (the pieces' mean and ε), the body,
+   lanes, angle, `sun_bar_angle`. The table `arm_piece` (chain, order, start, pitch, extent, pinned) is the layer's.
+   Layer off: no arm placed, every field bit-identical to main. The stars at a point are the pieces' sum, exact; the
+   young stars, clouds and dust read the gas pattern's point function as S59 built it and follow by construction;
+   the viewer's grid fields are cell means of the same functions (D216)."
+8. *The Milky Way's pins:* "Reid 2019 Table 2's four major arms and the Local arm as chains of their fitted pieces
+   over their measured β ranges (R = R_kink exp(−(β − β_kink) tan ψ), the Sun at β = 0 by `sun_bar_angle`), each
+   continued beyond its range by drawn pieces flagged unpinned to the chain's drawn length; equal weights (no ratio
+   measured: debt); the 3 kpc arm out; no chain tied to the bar in a pinned galaxy (which arms start at the bar is
+   not measured). Their widths are the law's; Reid's 0.14–0.65 kpc are maser widths and belong to the young tracers'
+   check. P4's gate sentence becomes: 'the composed stellar crest lies within 0.1 width of each pinned locus over
+   its β range — by construction, asserted, not a test of the model; the model is tested by the gas and young stars'
+   crest against the maser loci within the masers' σ (0.34 kpc at R₀), a disclosed check with its null stated'. The
+   disputes are recorded beside the pin."
+9. *Scope:* "one session for the model and its published products; the re-pins once the model is final; the viewer's
+   own code (its fixed-φ interpolation) stays the debt it is. If the budget runs short, the model merges first and
+   the re-pins follow in S60's own continuation, not in L1."
+
+**Its predictions (B4; read before they are judged).** Milky Way: five chains cross R₀ (pinned: Reid's four and the
+Local arm; unpinned: n ≈ 4.8), FWHM 1.9 kpc there against a spacing of about 2.4 kpc, B ≈ 0.45–0.55, crest over
+trough 1.6–1.8 (0.5–0.6 mag) against the multi-armed 0.81 ± 0.28 mag and the goal's 1.83 in blue: "under both"; with
+the thickness factor Σf at 8 kpc ≈ 1.0, the gas minimum 0.3–0.5, the top tenth over the lower half ≈ 2, the PHANGS
+ratio of means 1.8–2.2. `ngc_4414` flocculent: many pieces of 37°–105°; the inner gas restored (minimum 1e-14 → ≈
+0.8, ratio 1.2–1.4 inside 3 kpc); over 6–10 kpc the factor is 0.8 at m ≈ 4, "so the check's median falls from 1.406
+to ≈ 1.3, under 1.37: a miss". Layer off: nothing moves.
+
+**The gate.** "Ring means 1 to 1e-12 on cells; expected ring power = budget to 1e-10 by the analytic expectation,
+the realised power per ring published and its scatter pinned; min ≥ 0 on every suite seed by the saturation only,
+the cut counted; layer off bit-identical; I1–I5; the gas converges under D216's criterion or raises; the gas map's
+mid-gap error pinned (item 6); the pinned loci within 0.1 width by construction; the thickness factor's hand test (T
+= ½ at kh = 1; f_m ≤ ĉ_m R/(X h) on every ring and seed; the instrument's 24 cases bit-identical); the m-split check
+published; the goal metrics read beside the render's, first." **Forbidden (Fable):** "tuning B, the width law, chain
+lengths, starts, the taper, h or the factor's form to a goal picture; a class or count draw; exact-per-ring
+renormalisation or any division by realised power; a clip beyond the saturation; checkpoint 4's height; the sech²
+form without saying so; a fallback where the gas fails; keeping the phases or the common winding in parallel; tying
+a pinned chain to the bar."
+
+**The owner's part: nothing blocks.** "Told at the close: the model makes no flocculent disc unpinned (a class draw
+is theirs); the Milky Way is five-armed at R₀ by the arm law they kept and by Reid alike; `ngc_4414`'s scale height
+is 1.8 scale lengths to one against 7.3 measured (a finding about the fit); the predicted misses above are read, not
+mended."
+
+**The lead's readings of the ruling where it leaves a choice (told to the builder; the reviewer and the gate may
+overrule).** (a) *Births:* rings are swept inside out, and while the chains crossing a ring are fewer than n(R) a
+chain starts there at a uniform azimuth — in every galaxy, a pinned one's chains counted as crossing, so the Milky
+Way's unmeasured radii are filled by the census's own draw, flagged unpinned. (b) *The expected count in the budget*
+is the rule's design count — n(R), at least two outside a bar's end in a barred disc — and for a pinned template the
+number of its chains crossing the ring; never a realised power. (c) *A pinned chain's continuation:* its drawn
+length less its measured range is split between its two ends, the inward part stopping at the bar's half-length. (d)
+*Rings with a budget and no chain* carry no arm; they are counted.

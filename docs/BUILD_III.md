@@ -443,25 +443,33 @@ and pitch, as the sources measure them — per arm; this phase's reading for wid
 may pin its pieces and its arm class: the Milky Way's from the maser fits where they are measured, NGC 4414
 flocculent.
 
-**To be ruled at a conditional gate before the build, on the lead's probe** (the phase's text from here is the
-gate's):
-- *The budget:* what a ring's arm power is when pieces replace modes, and whether the split by arm number
-  survives as a check of the composed field or retires.
-- *A piece:* its profile across the arm and its width, its amplitude along its length and at its ends; how many,
-  how long, how they chain and where they start, by arm class; how a galaxy without a pin gets its class.
-- *The gas:* the response's solver takes a ring's forcing as Fourier terms; a ridge needs more of them than five,
-  and the razor-thin forcing overstates exactly those (#142). **The forcing is corrected for the disc's
-  thickness**, by a factor read from a source — which is also what the emptied inner gas of an unbarred disc has
-  been waiting for. Whether a piece's own pitch enters the forcing (#151).
-- *What retires:* the modes' drawn phases, S59's segments of the common winding and their table, or what of them
-  the pieces keep; the bar's tie of the two-armed phase becomes two pieces that start at the bar's ends.
-- *The Milky Way's pins:* which measured segments, and what fills the two thirds of the disc no maser covers.
-- *Layer off:* unchanged bit for bit — the pieces are the layer's.
+**Ruled at S60's conditional gate (D219; ruling by Fable — the decision holds it whole, this is its outline).**
+- *A piece:* a ridge on its own logarithmic locus (start, pitch, azimuthal extent), a Gaussian across it of
+  FWHM(R) = 0.53 h (0.27 + 0.73 R/(2h)), h the checkpoint-1 scale length; flat along it and tapered over one
+  width at each end (a declared placeholder). *A chain:* pieces joined end to start on S59's draws, per arm; its
+  length normal, 273° ± 143° or 244° ± 131°, never under 90°.
+- *Class, derived, no draw:* barred, two chains from the bar's ends and more wherever the law's power-weighted arm
+  number n(R) exceeds the chains crossing a ring; unbarred, chains by n(R) alone; **flocculent by pin only**
+  (`arm_class`): single pieces of 37°–105°, n(R) of them crossing each ring.
+- *The budget, in expectation:* one amplitude B(R) for the pieces crossing a ring, set so that the expected ring
+  variance equals ½ Σ A_m(R)², analytically, from the census's statistics; never a division by a realised power;
+  positivity by P1's saturation. The split by arm number is a disclosed check of the composed field.
+- *The forcing:* piece by piece and Fourier term by term, × |m|/(X (|sin p_j| + |m| h_z/R)): each piece's own pitch
+  and the exponential layer's exact thickness factor, h_z the checkpoint-1 scale length over 7.3. ε keeps the
+  disc's pitch.
+- *The gas between rings:* a ring's profile carried to a point along the pieces' loci, its error against a direct
+  solve measured and pinned; over 1 % on a star-forming gap, the ring step is halved there.
+- *Retired:* the modes' phases and `arm_phases`, the common winding and `arm_segment`. *Kept:* the amplitudes (the
+  budget), the pitch, the bar. A table `arm_piece`. Layer off bit for bit.
+- *The Milky Way's pins:* Reid et al. 2019's four major arms and the Local arm as chains over their measured
+  ranges, continued by drawn pieces; no pinned chain tied to the bar.
 
-**Gate:** every ring mean 1; each ring's arm power equal to the budget; the minimum over cells ≥ 0 on every seed
-the suite draws; layer off bit-identical; I1–I5; **the pinned Milky Way pieces pass through the measured loci
-within the measured widths, with the statistic's null read beside it** (P4's gate, meetable now); the gas
-converges on the suite's galaxies or raises; the goal metrics beside the render's, read and not tuned.
+**Gate (as ruled):** ring means 1 to 1e-12; the expected ring power equal to the budget to 1e-10 and the realised
+power published, its scatter pinned; the minimum ≥ 0 on every suite seed by the saturation only; layer off
+bit-identical; I1–I5; the gas converges under D216's criterion or raises; the gas map's mid-gap error pinned; the
+pinned loci within 0.1 width by construction, **and the gas's and young stars' crest against the maser loci
+within the masers' σ as a disclosed check with its null**; the thickness factor's hand test; the m-split check;
+the goal metrics read beside the render's.
 
 **Agents:** two readers; a model builder; re-pin builders of their own once the model is final; a viewer builder;
 a reviewer.
