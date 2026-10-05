@@ -701,10 +701,28 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     and a curve in stars. Pinned as the two R² values and the collapse of the
     marginal per-star cost across the range, both far outside any tolerance the
     machine's noise needs — debt #68 is the same fact seen from the flaky test.
+
+    **S59 (D218): read with the layer off, and the layer-on cost read beside it.** The statement is of the
+    catalogue's own structure. With the layer on the young stars are placed by the star formation law at a
+    point, which inside a bar's footprint takes the law's mean round the ring where each star is: a cost by the
+    star. On the default model that about doubles the catalogue at these sizes (0.13 → 0.28 s at 500 stars,
+    0.32 → 0.71 s at 32 000; 370–410 → 800–1 230 µs a cell) and draws the two fits together (R² 0.92–0.98 by the
+    cell against 0.82–0.92 by the star; with the layer off 0.94–0.99 against 0.79–0.90) - the ordering held in
+    ten runs of ten on an idle machine by as little as 0.003 and failed twice under load, so it is asserted
+    where it is the catalogue's, and the layer-on run keeps the collapse of the marginal cost and a bound on
+    the price of a cell (was 1500 µs for the one run; the reader's cost has no sourced bound, #154). The
+    ordering is not asserted layer on: the layered reader prices young stars inside the bar's footprint by a
+    quadrature each (#154), so it is not a property of the layered catalogue.
     """
     from galaxy.specs import performance
 
-    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on_stars, on_secs = [s[1] for s in on["samples"]], [s[2] for s in on["samples"]]
+    on_marginal = [(on_secs[i + 1] - on_secs[i]) / (on_stars[i + 1] - on_stars[i]) for i in range(len(on_secs) - 1)]
+    assert on_marginal[0] > 3.0 * on_marginal[-1], on_marginal  # 5.5-8.0 here
+    assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
+
+    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False)
     cells = cost["cells per sample"]
     stars = [s[1] for s in cost["samples"]]
     secs = [s[2] for s in cost["samples"]]
@@ -720,7 +738,7 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     # And the fit that is conditioned. R² ~0.94-0.99 against ~0.4-0.7 in this repo;
     # the gate is the ordering, which cannot survive the saturation going away.
     assert cost["per_cell_us"] > 0.0 and cost["per_cell_r2"] > cost["per_star_r2"]
-    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here
+    assert 150.0 < cost["per_cell_us"] < 1500.0, cost["per_cell_us"]  # 420-535 us here; S59, layer off: 370-410
 
 
 def test_s21b_the_detector_cannot_see_a_thick_mode_at_row_9s_share():

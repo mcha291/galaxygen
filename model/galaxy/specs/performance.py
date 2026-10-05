@@ -81,7 +81,7 @@ def profile(model: Model, **run_kwargs: Any) -> dict[str, float]:
     return out
 
 
-def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES) -> dict[str, Any]:
+def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES, layer: bool = True) -> dict[str, Any]:
     """Seconds to materialise 1, 9 and every cell, the layout alone, and the fit against the sample size.
 
     ``samples`` (plus ``n_stars``) are the sizes the whole catalogue is timed at. Two
@@ -93,6 +93,11 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     in cells (R² ≈ 0.97) and a curve in stars (R² ≈ 0.67); the per-star line is fitted
     through that curve, its residuals keep their sign, and its "fixed" part is not
     fixed — it is the price of however many cells the sample lights up.
+
+    ``layer`` is the run's switch (S59, D218). With it on, a model that publishes a modulation places its young
+    stars by the star formation law at a point, which costs by the star inside a bar's footprint (the law's
+    mean round the ring is taken where each star is), so the two fits draw together; with it off the catalogue
+    is the cells' alone.
     """
     import numpy as np
 
@@ -100,7 +105,7 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     from galaxy.stages import systems
 
     stage = next(st for st in production()[1] if st.slot == "systems")
-    out = run(model, only=stage.requires)
+    out = run(model, only=stage.requires, layer=layer)
     R, t = out.grid.R, out.grid.t
     seed = int(out.inputs["systems_seed"])
     churn = float(out.inputs["migration_efficiency"])
