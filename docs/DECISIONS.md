@@ -10234,3 +10234,53 @@ no source and the step at it is a seam." Its gate: the point reader equal to the
 cell; past the bar's reach agreeing with the wound read to the 0.29 % measured; the superseded readers' numbers
 kept in the record; I1 within four units; "if `sfh_azimuthal`'s law cannot be evaluated at a point without a
 quantity that exists only on rings, the lead says which quantity and the build falls back to (a) with the debt".
+
+**The point reader, built (the model builder's third pass) and read.** `systems.Modulation(gas_pattern, R, gas,
+threshold, index)`, built by `systems.young_reader` for the star sample and the bright catalogue alike. For a point
+at r between the grid rings i and j (share a): M(r, φ) = (1 − a) m_i + a m_j, m_k = Ψ_k(g_k(r, φ)) / ⟨Ψ_k(g_k(r, ·))⟩,
+where g_k is ring k's own star-formation contrast as the point sees it — its solved arm profile at the point's χ,
+its footprint-uniform profile in the bar's frame, the ring's own taper (`GasPattern.ring_star_formation_contrast_at`;
+at r = R_k the published point function bit for bit) — and Ψ_k is `sfh_azimuthal`'s own arithmetic on the ring's
+column and threshold. Nothing that exists only on rings is interpolated, so the fallback was not needed. A sector's
+mean is the function's integral (Gauss between the contrast's kinks, two points where the arm profile is alone and
+six where a footprint is in it: 3e-6 of a sector's mean at worst against a million midpoints; a midpoint rule of
+two samples a cell, tried first, left 2 % at the footprint's edge); an azimuth is drawn by the inverse CDF of the
+same function. `sfr_modulation` is asked for its presence and read by no census. `systems.materialise` takes the
+model's constants and, layer on with a model that publishes a modulation, raises without them.
+- *The gate's three statements.* Past the bar the wound table read misplaces 0.10 % / 0.18 % / 0.02 % against the
+  reader (the default seeds / pattern seed 3 at 9.1° / pattern seed 22 at 1.0°; all under 0.29 %: held). Inside,
+  the reader against a law laid by hand in the test from published numbers and the solver's rings: under 0.01 %
+  on every gap; the superseded readers there, fixed-φ / wound: 7.7 / 13.4 %, 24.4 / 17.2 %, 37.2 / 70.6 % (against
+  the earlier reference, the law of the blended contrast: 8.3 / 15.0, 24.8 / 17.5, 38 / 71). **"Equal to the
+  published table at every grid cell" does not hold as worded**: the table is the law at a cell's *mean* contrast
+  (`star_formation_gas_contrast` is an exact cell mean, D216), the reader at a cell's centre the law at the
+  centre's, and the law is not linear — 1.20 apart in the modulation at one cell the footprint's edge crosses at
+  2.51 kpc, 0.59 % of the worst ring's weight (1.08 % on pattern seed 3), 0.03 % on average, 0.015 % at worst on
+  the 359 of 400 rings whose footprint is uniform.
+- *The normaliser* is taken where the point is: a ring's law read off its own radius has a mean that depends on
+  where the arms sit against the footprint (up to 5.6 % / 4.6 % / 9.9 % off 1 with one number per ring), so each
+  ring's term is divided by its mean round the ring at r (a quadrature of two steps to a pattern cell, 3e-4 of
+  the mean at worst). The reader's raw ring mean is within 5e-4 of 1 inside the bar and 5e-5 past it; a ring's
+  young share in the star sample is the arrival law's to 1e-12; `bright_star_count_1e3` is the same bits layer
+  on and off. Layer off against main: nothing new moves.
+- *Cost (the Milky Way template, before → after):* the bright catalogue's stage 2.19 → 3.10 s, a bright window
+  request 3.14 → 4.13 s, a star-sample region of the whole disc 0.875 → 0.934 s, of the bar 0.397 → 0.455 s.
+
+**A third follow-up to the gate (Fable; nothing read).** "(i), accepted as built, with the debt. The two objects
+are each the law applied consistently to its own argument: the table is the law at a cell's mean contrast … the
+reader is the law at a point; for a law that is a power 1.4 times a switch the two differ by a Jensen gap wherever
+a cell straddles two levels, which is the footprint's edge and nowhere else that matters … Rebuilding the table
+this session would move the render's young light and every pin on the field for a 0.59 % worst-ring effect, and I
+will not order that at a third follow-up. **The table's correct form is the cell mean of the law of the point
+function** (∫Ψ(g(φ))dφ over the cell, over the ring's mean of the same), not the law at the cell's mean contrast;
+it belongs with the viewer's fixed-φ interpolation of young light between rings, the same debt, to be built when
+the render's young light is next touched." Statement 1 in its final wording: "At every grid cell the reader's law
+arithmetic applied to the published cell-mean contrast, over its ring mean, is the published `sfr_modulation` bit
+for bit; at every grid ring the reader is the law of the gas pattern's own point function, the ratio constant
+round the ring to 1e-12. The table and the reader at the cell's centre differ by the law's Jensen gap at
+footprint-edge cells only … disclosed, pinned, a debt with its remedy named." The normaliser at the point's
+alignment: "Yes … a per-ring constant would give an off-grid ring law whose mean is off 1 by up to 9.9 % and move
+expected counts with the winding, which rule 2 forbids." The keyword and its refusal: "a reader that cannot be
+built raises, it never falls back to another." The cost is recorded as read "with no bound, since none is
+sourced". Forbidden: "a fallback reader; a per-ring normaliser; rebuilding the table this session; smoothing or
+clipping the footprint's edge to close the gap."
