@@ -226,7 +226,11 @@ def test_a_census_is_the_same_at_every_level_at_the_audit_mesh(svc, path, key):
         _, a = _get(svc, path, f"{window}&level={level}")
         names = sorted(n for n in a if np.asarray(a[n]).ndim == 1)
         rows_at.append({(float(a[key[0]][i]), float(a[key[1]][i])): tuple(float(a[n][i]) for n in names) for i in range(len(a[key[0]]))})
-    assert len(rows_at[0]) > 10
+    # S59 (D218 follow-up): was `> 10` - with a segment's pitch relative to the disc's the rings are turned by other
+    # phases, and at this mesh cell 300 lies between the gas's arms (the gas's sector mean there is 0.366 of its
+    # ring's, 0.475 on the first build's winding): 10 clouds and 8 clusters, 21 and 13 then. The bound only keeps
+    # the comparison below from being empty (tests/test_region_synthesis.py holds the same cell to the same bound).
+    assert len(rows_at[0]) > 7
     for level in (1, 2, 3):
         assert rows_at[level] == rows_at[0], (path, level)
 
