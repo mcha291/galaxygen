@@ -256,26 +256,47 @@ test("the catalogue appears at the checkpoint that publishes it, and not before"
 });
 
 test("a table is not a catalogue: it hides no scalar and promises no sample", () => {
-  // S59 (D218). The winding's segments are a small table the run publishes whole (domain
-  // "table"). While they were declared object columns their stage read as a catalogue stage:
-  // its five phases were no longer asked for, and checkpoint 3 claimed a sample to draw.
+  // S59 (D218), re-read at S60 (D219). A small table the run publishes whole (domain "table":
+  // the winding's segments at S59, the arm pieces since S60). While such columns were declared
+  // object columns their stage read as a catalogue stage: its scalars were no longer asked for
+  // (S59's stage published the five phases beside its table), and checkpoint 3 claimed a
+  // sample to draw.
+  //
+  // The rule is read on the declarations, whatever the stage is called and whatever else it
+  // publishes: S60's table stage publishes no scalar of its own, so one is declared beside the
+  // table here - a real scalar of that checkpoint, re-declared as that stage's - and a control
+  // re-declares the table's columns as object columns, where the same scalar must vanish.
   for (const [name, payload] of Object.entries(fixture.models)) {
     const all = payload.fields;
     const tables = all.filter((f) => f.domain === "table");
     assert.ok(tables.length > 0, `${name}: no table column is published; this test is out of date`);
     const materialisers = view.catalogueStages(all);
     const first = Math.min(...all.filter((f) => f.domain === "object").map((f) => f.checkpoint));
+    const asObjects = all.map((f) => (f.domain === "table" ? { ...f, domain: "object" } : f));
     for (const t of tables) {
       assert.ok(!materialisers.has(t.stage), `${name}: ${t.stage} publishes a table and reads as a catalogue stage`);
       assert.ok(t.checkpoint < first, `${name}: the table is published before the first catalogue, or this proves nothing`);
       assert.equal(view.hasCatalogue(all, t.checkpoint), false, `${name}: a table at checkpoint ${t.checkpoint} is taken for a sample`);
       const asked = view.scalarsAt(all, t.checkpoint).map((f) => f.name);
-      const own = all.filter((f) => f.domain === "galaxy" && f.stage === t.stage);
-      assert.ok(own.length > 0, `${name}: ${t.stage} publishes no scalar; this would be vacuous`);
-      for (const scalar of own) assert.ok(asked.includes(scalar.name), `${name}: ${scalar.name} is hidden by its stage's table`);
+      // Whatever scalars the table's own stage publishes are still asked for,
+      for (const scalar of all.filter((f) => f.domain === "galaxy" && f.stage === t.stage)) {
+        assert.ok(asked.includes(scalar.name), `${name}: ${scalar.name} is hidden by its stage's table`);
+      }
+      // and one declared beside the table is, so this holds something whether or not the stage has any:
+      const model = all.find((f) => f.domain === "galaxy" && f.checkpoint === t.checkpoint && asked.includes(f.name));
+      assert.ok(model, `${name}: no scalar is asked for at checkpoint ${t.checkpoint}; this would be vacuous`);
+      const beside = { ...model, name: "a_scalar_beside_the_table", stage: t.stage };
+      const shown = (fields) => view.scalarsAt([...fields, beside], t.checkpoint).some((f) => f.name === beside.name);
+      assert.ok(shown(all), `${name}: a scalar of ${t.stage} is hidden by the stage's table`);
+      // the control: as object columns the same table would hide it and promise a sample.
+      assert.ok(!shown(asObjects), `${name}: the control does not bite - a catalogue stage's scalar is asked for`);
+      assert.equal(view.hasCatalogue(asObjects, t.checkpoint), true, `${name}: the control does not bite - no sample is promised`);
     }
-    const at3 = view.scalarsAt(all, 3).map((f) => f.name);
-    for (const m of [2, 3, 4, 5, 6]) assert.ok(at3.includes(`arm_mode_phase_${m}`), `${name}: arm_mode_phase_${m} is not asked for at checkpoint 3`);
+    // Checkpoint 3 has the tables and no catalogue: every scalar it publishes is asked for, none hidden.
+    const at3 = view.scalarsAt(all, 3).map((f) => f.name).sort();
+    const published3 = all.filter((f) => f.domain === "galaxy" && f.checkpoint === 3).map((f) => f.name).sort();
+    assert.ok(published3.length > 0 && tables.some((t) => t.checkpoint === 3), `${name}: checkpoint 3 no longer holds the tables; this test is out of date`);
+    assert.deepEqual(at3, published3, `${name}: a scalar of checkpoint 3 is not asked for`);
     assert.equal(view.hasCatalogue(all, 3), false);
     assert.equal(view.hasCatalogue(all, 4), false);
     assert.equal(view.hasCatalogue(all, 5), true);
@@ -307,7 +328,7 @@ test("every published field reaches the viewer, in every model", () => {
         assert.ok(shown, `${name}: scalar ${f.name} is published and never shown`);
       } else if (f.domain === "table") {
         // S59 (D218): a table column is rows the model's own stages read whole (the winding's
-        // segments). The one kind this gate lets through unshown, and only on its own word: it
+        // segments then, the arm pieces since S60). The one kind this gate lets through unshown, and only on its own word: it
         // declares no ramp, says the viewer does not show it, and no rule of the viewer picks
         // it up - not as a picture, not as a number, not as a catalogue's column.
         assert.equal(f.ramp, null, `${name}: table column ${f.name} declares a ramp nothing draws with`);
