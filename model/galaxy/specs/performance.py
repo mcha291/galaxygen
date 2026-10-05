@@ -104,20 +104,21 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     R, t = out.grid.R, out.grid.t
     seed = int(out.inputs["systems_seed"])
     churn = float(out.inputs["migration_efficiency"])
+    constants = {k: c.value for k, c in model.constants.items()}  # S59 (D218): the young stars' reader's
     timings: dict[str, float] = {}
     start = time.perf_counter()
     systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n_stars, None)
     timings["layout"] = time.perf_counter() - start
     for label, cells in (("one cell", [300]), ("nine cells", list(range(300, 309))), ("every cell", None)):
         start = time.perf_counter()
-        cat = systems.materialise(out.fields, R, t, seed, n_stars, cells, migration=churn)
+        cat = systems.materialise(out.fields, R, t, seed, n_stars, cells, migration=churn, constants=constants)
         timings[label] = time.perf_counter() - start
         timings[label + " (stars)"] = float(cat.size)
     sweep: list[list[float]] = []
     realised_cells: list[float] = []
     for n in sorted({*samples, n_stars}):
         start = time.perf_counter()
-        cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn)
+        cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn, constants=constants)
         sweep.append([float(n), float(cat.size), time.perf_counter() - start])
         realised_cells.append(float(len(systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n, None))))
     stars = np.array([s[1] for s in sweep])

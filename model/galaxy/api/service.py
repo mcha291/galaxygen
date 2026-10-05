@@ -1183,12 +1183,14 @@ class Service:
         if level and len(cells) > MAX_CHILD_CELLS:
             raise BadRequest(f"level={level} over this window names {len(cells)} cells, more than {MAX_CHILD_CELLS}: narrow the window")
         migration = float(out.inputs["migration_efficiency"])
+        # S59 (D218): the model's constants, which the young stars' reader applies the star formation law with.
+        constants = {k: c.value for k, c in model.constants.items()}
         key = repr((model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), stars, seed, level, _compose.setting(out.fields)))
         catalogue = self.cells.catalogue(
             key, cells,
             # level= only below level 0, so the level-0 call keeps its signature for the instruments
             # that wrap materialise (test_api's cache count).
-            lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration, **({"level": level} if level else {})),
+            lambda wanted: _catalogue.materialise(out.fields, R, t, seed, stars, wanted, migration=migration, constants=constants, **({"level": level} if level else {})),
         )
         columns = [d.name for d in stage.publishes if d.kind.domain == "object" and d.name in catalogue]
         selection = None
@@ -1974,9 +1976,10 @@ class Service:
         layer = self._layer(q)
         out, ran = self.compute(model, inputs, self._reads(model, catalogue), layer)
         seeds = {name: int(out.inputs[name]) for name in catalogue.reads_seeds + planets.reads_seeds}
+        constants = {k: c.value for k, c in model.constants.items()}
         here = _catalogue.materialise(
             out.fields, self.grid.R, self.grid.t, seeds["systems_seed"], stars, cells=[cell],
-            migration=float(out.inputs["migration_efficiency"]), level=level,
+            migration=float(out.inputs["migration_efficiency"]), level=level, constants=constants,
         )
         if level:
             # A level-k name addresses the child's own stars: its inherited rows are opened by their
@@ -1986,7 +1989,6 @@ class Service:
         if index >= here.size:
             raise NotFound(f"cell {cell} has {here.size} stars of its own at this sample size and level, so no index {index}")
 
-        constants = {k: c.value for k, c in model.constants.items()}
         system, found = _planets.one_system(here, index, _catalogue.canonical_cell(level, cell), seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
         star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}
