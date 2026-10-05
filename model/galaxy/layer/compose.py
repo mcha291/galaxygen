@@ -12,8 +12,9 @@ own composed field, handing over the law it has just made).
 **What a caller gets.**
 
 - A *pattern object* (:func:`stellar_pattern`, :func:`gas_pattern`): the law's own class, built from the pattern
-  stage's published fields (the arm modes' amplitudes at every radius, the pitch, the bar) and the layer's
-  realisation (the modes' phases, S56) - or ``None`` with the layer off, which is the "no pattern" every census
+  stages' published fields (each ring's budget of arm power, the law's arm number, an arm's width, the pitch, the
+  bar) and the layer's realisation (the census of arm pieces, S60, D219; the modes' phases from S56 to S59) - or
+  ``None`` with the layer off, which is the "no pattern" every census
   already handles for a model that publishes none (a uniform weight round the ring).
 - A *placement weight* (:func:`placement_weight`): a published composed field as a census reads it - the array, or
   ``None`` with the layer off or where the model publishes none.
@@ -26,7 +27,7 @@ own composed field, handing over the law it has just made).
 
 With the layer off every scalar and every radial field the physics stages publish is unchanged - the pitch, the
 amplitudes, the modes' split of the arms' power, the gas's ratio of means are laws and measured scatters, and they
-are still made. What is switched off is where the arms *are* (D214 section 1): the modes' phases are not drawn. **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
+are still made. What is switched off is where the arms *are* (D214 section 1): no arm piece is laid. **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
 amended at G1): every ring total of a field a composed field multiplies, and every *expected* count and expected
 total of a census it places. A census draws each cell's count on the cell's own stream at an expectation that
 carries the composed weight, so with the layer off its *realised* objects are another draw, and the statistics

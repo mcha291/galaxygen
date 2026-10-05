@@ -14,7 +14,12 @@ the other three to the registry; its merger list is empty and every seed is 4414
 **Pins** (S58, DECISIONS.md D217 item 2). A pin is a measured fact about the galaxy's structure that
 replaces what the model would derive or draw: a :class:`Pin` names one of the registry's pin inputs,
 states its value and carries its source. It is "a measured fact entering as template structure, not a
-fit". There are three (S59, D218 items 5-6), and each template holds two: ``bar_present``, the observed
+fit". Since S60 (D219 items 3 and 8) there are five, and each template holds three: ``arm_class``, the observed
+arm class, one of three names - ``ngc_4414`` pins flocculent, which the model derives of no disc - and
+``arm_pieces``, a table: the measured arms of the one galaxy with an observer inside it, each row a kinked
+logarithmic spiral over a range of azimuth from the Sun, which ``milky_way`` gives (Reid et al. 2019's four
+major arms and the Local arm) and which places pinned arm pieces with the randomness layer on and nothing with
+it off. The three of S58-S59 (D218 items 5-6): ``bar_present``, the observed
 class, True or False - ``milky_way`` pins barred and ``ngc_4414`` unbarred; ``sun_bar_angle``, the
 angle of the bar to the Sun-centre line in degrees, which ``milky_way`` gives (30) and which places
 the published Sun's azimuth and moves no other field; and ``pitch_angle``, the measured mean pitch of

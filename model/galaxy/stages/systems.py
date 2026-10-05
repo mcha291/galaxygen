@@ -502,6 +502,17 @@ class Modulation:
     weight misplaced by the first and 13.4 % by the second at the default seeds, 24.4 % and 17.2 % at a pitch of
     9 degrees, 37.2 % and 70.6 % at a pitch of 1 degree.
 
+    **Since S60 (D219 items 6-7) the arms are a census of pieces with each its own pitch**, and where the text
+    above says a ring's arm profile is read "at the point's own χ = φ − Φ(r)" or "turns with the winding", read:
+    the ring's profile is *carried* to the point's radius along the pieces' loci (``GasPattern.carried``), a map
+    of azimuth and not one turn. Nothing else of the reader changed - it follows by construction - but two
+    things it leans on: every ring an arm piece forces now has a mean round the ring that depends on the radius
+    it is read at (only an unforced ring's is taken once), and that mean is the pattern's
+    (``GasPattern.ring_mean``: a ring with no footprint in it is sampled once, in its own azimuth, and its mean
+    at another radius taken through the map; a ring with a footprint is sampled round the ring at the point's
+    radius, as before); and between two rings the breaks a sector's integral is cut at are the cells' centres
+    and the map's anchors, not the carried profile's own kinks (``GasPattern.star_formation_kinks``).
+
     ``pattern`` is the gas pattern of the same run, from ``compose.gas_pattern``; None, or a flat one (a pitch
     the mesh could not resolve), is no pattern at all: the law of a uniform ring, 1 everywhere. ``gas`` and
     ``threshold`` are the published ``gas_surface_density`` and ``sf_threshold_surface_density`` on the grid
