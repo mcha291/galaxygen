@@ -40,8 +40,9 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 AXES: tuple[str, ...] = ("R", "t", "z", "phi")
 OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")  # cloud: S32 (D181); cluster: S33, BUILD_II Phase 11; remnant: S36, BUILD_II Phase 10 (the supernova-remnant census); bright_star: S48 (D200, the bright-end-complete catalogue)
 # The small tables a run publishes whole (S59, D218): a table's columns share its rows, as an object class's share
-# its objects, and the two vocabularies share no name. arm_segment: the winding's seeded segments, the layer's.
-TABLES: tuple[str, ...] = ("arm_segment",)
+# its objects, and the two vocabularies share no name. arm_piece: the realised census of arm pieces, the layer's
+# (S60, D219; it took the place of S59's arm_segment, the common winding's seeded segments, retired with it).
+TABLES: tuple[str, ...] = ("arm_piece",)
 assert not set(TABLES) & set(OBJECTS), "a table is not an object class: the two closed lists share no name"
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other

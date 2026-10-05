@@ -60,7 +60,8 @@ from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.feedback import star_bubble_radius
 from galaxy.stages import gas_response as _cells  # the pattern's fixed cells round a ring: what the quadratures are counted in
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
-from galaxy.stages.pattern import PATTERN_READS, ArmPattern, invert_azimuths, ring_bracket
+from galaxy.stages.pattern import PATTERN_READS, invert_azimuths, ring_bracket
+from galaxy.stages.pieces import ArmPattern
 from galaxy.stages.sfh import star_formation_rate
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
@@ -532,7 +533,10 @@ class Modulation:
         out = np.empty(ring.shape)
         for start in range(0, ring.size, MEAN_CHUNK):
             part = slice(start, start + MEAN_CHUNK)
-            out[part] = self._law(ring[part], self.pattern.ring_star_formation_contrast_round(ring[part], r[part], RING_SAMPLES_PER_CELL)).mean(axis=1)
+            # S60 (D219 item 6): the pattern takes the mean, since a ring's arm profile is carried to the point's
+            # radius by a map and no longer only turned - a ring with no footprint in it is sampled once, in
+            # its own azimuth, and its mean at another radius taken through the map (``GasPattern.ring_mean``).
+            out[part] = self.pattern.ring_mean(ring[part], r[part], RING_SAMPLES_PER_CELL, self._law)
         return out
 
     def _means(self, ring: np.ndarray, r: np.ndarray) -> np.ndarray:

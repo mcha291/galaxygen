@@ -145,20 +145,30 @@ class Pin:
 
     ``name`` is a pin input of the registry (kind ``pin``); ``value`` is the observed class, True or False,
     or - since S59 (D218 items 5-6), for a pin the registry gives a unit - a measured number in that unit;
+    or - since S60 (D219 items 3 and 8) - the name of a class of more than two, or the rows of a measured table
+    (a tuple of tuples: the source's own columns, as the registry's pin declares them).
     ``source`` carries its tag (rule B14). Nothing is fitted: the model's derivation or draw is replaced, and
-    what it would have said is still published beside the pinned value. Which of the two a pin is, is the
-    registry's (the pin's unit), and a template is held to it when it is built.
+    what it would have said is still published beside the pinned value. Which of the four a pin is, is the
+    registry's (``Input.shape``), and a template is held to it when it is built.
     """
 
     name: str
-    value: bool | float
+    value: bool | float | str | tuple
     source: str
 
     def __post_init__(self) -> None:
         if not IDENT.match(self.name):
             raise TemplateError(f"pin name {self.name!r} must match {IDENT.pattern}")
-        if not isinstance(self.value, bool) and not (isinstance(self.value, (int, float)) and math.isfinite(self.value)):
-            raise TemplateError(f"pin {self.name}: the observed class is True or False, or a measured finite number; got {self.value!r}")
+        if isinstance(self.value, list):
+            object.__setattr__(self, "value", tuple(tuple(row) if isinstance(row, list) else row for row in self.value))
+        number = isinstance(self.value, (int, float)) and not isinstance(self.value, bool) and math.isfinite(self.value)
+        named = isinstance(self.value, str) and bool(self.value.strip())
+        table = isinstance(self.value, tuple) and bool(self.value) and all(isinstance(row, tuple) for row in self.value)
+        if not (isinstance(self.value, bool) or number or named or table):
+            raise TemplateError(
+                f"pin {self.name}: the observed class is True or False or a class's name, or a measured finite number, "
+                f"or the rows of a measured table; got {self.value!r}"
+            )
         if not any(tag in self.source for tag in TAGS):
             raise TemplateError(f"pin {self.name}: the source carries no tag (rule B14)")
 
@@ -365,7 +375,16 @@ class Template:
             inp = table.get(pin.name)
             if inp is None or inp.kind != "pin":
                 raise TemplateError(f"template {self.name}: {pin.name!r} is not a registered pin")
-            if (inp.unit is None) != isinstance(pin.value, bool):
+            shape = inp.shape
+            if shape in ("named", "table"):
+                # S60 (D219 items 3 and 8): one of the pin's named classes, or the rows of its table - held to the
+                # registry's declaration by the registry's own check, which a run applies too.
+                try:
+                    inp.pinned(pin.value)
+                except RegistryError as e:
+                    raise TemplateError(f"template {self.name}: {e}") from None
+                continue
+            if (shape == "class") != isinstance(pin.value, bool) or isinstance(pin.value, (str, tuple)):
                 raise TemplateError(
                     f"template {self.name}: pin {pin.name!r} is "
                     + ("a class, True or False" if inp.unit is None else f"a measured number in {inp.unit}")
@@ -377,6 +396,14 @@ class Template:
                     f"template {self.name}: pin {pin.name!r} is held to the range of what it replaces, "
                     f"{inp.range_text} {inp.unit}; got {pin.value!r}"
                 )
+        # S60 (D219 item 8): measured arms are given in azimuth from the Sun, so a template that pins them pins
+        # where the Sun is - the bar's angle to the Sun-centre line - and a bar for that angle to be measured from.
+        stated = {p.name: p.value for p in self.pins}
+        if "arm_pieces" in stated and not (stated.get("bar_present") is True and "sun_bar_angle" in stated):
+            raise TemplateError(
+                f"template {self.name}: pinned arm pieces are placed by the Sun's azimuth: the template pins "
+                "bar_present True and sun_bar_angle with them"
+            )
         missing =[path for path in numbers(self) if path not in self.sources]
         if missing:
             raise TemplateError(f"template {self.name}: no source for {missing} (rule B14)")
@@ -479,17 +506,50 @@ _SEED = (
     "catalogue number, 4414 [verified: DECISIONS.md D213, ruling 4]"
 )
 
+# --- the Milky Way's measured arms (S60, DECISIONS.md D219 item 8) -------------------------------------------------
+#
+# Reid et al. 2019's maser-fitted spiral arms, Table 2 as printed, the uncertainties left out: each row an arm as
+# one logarithmic spiral with a kink, ln(R/R_kink) = −(β − β_kink) tan ψ, ψ = ψ_< for β ≤ β_kink and ψ_> for
+# β > β_kink; β the Galactocentric azimuth, 0 towards the Sun and increasing in the direction of Galactic rotation;
+# R0 = 8.15 kpc [verified: Reid et al. 2019, ApJ 885, 131 = arXiv:1910.03357, Table 2 and note,
+# https://arxiv.org/pdf/1910.03357; all seven rows, two reads of the PDF text agree digit for digit;
+# docs/READING_ARM_SEGMENTS.md A1.3]. Columns: (arm, β from, β to, β_kink in degrees, R_kink in kpc, ψ_<, ψ_> in
+# degrees) - the registry's ``ARM_PIECE_COLUMNS``. Until S60 the table lived in ``tests/reid2019.py`` as the
+# definition of a disclosed check; it is the template's own data since the arms are pinned, and the test module
+# reads it from here.
+REID_2019_R0 = 8.15  # kpc: the table's own distance of the Sun from the centre
+REID_2019_TABLE2: tuple[tuple[str, float, float, float, float, float, float], ...] = (
+    ("3-kpc(N)", 15.0, 18.0, 15.0, 3.52, -4.2, -4.2),
+    ("Norma", 5.0, 54.0, 18.0, 4.46, -1.0, 19.5),
+    ("Sct-Cen", 0.0, 104.0, 23.0, 4.91, 14.1, 12.1),
+    ("Sgr-Car", 2.0, 97.0, 24.0, 6.04, 17.1, 1.0),
+    ("Local", -8.0, 34.0, 9.0, 8.26, 11.4, 11.4),
+    ("Perseus", -23.0, 115.0, 40.0, 8.87, 10.3, 8.7),
+    ("Outer", -16.0, 71.0, 18.0, 12.24, 3.0, 9.4),
+)
+# The rows the template pins: the four major arms - Norma-Outer, Scutum-Centaurus, Sagittarius-Carina, Perseus -
+# and the Local arm (D219 item 8). The source reads Norma and the Outer arm as one arm and fits it in two
+# stretches with nothing measured between them (Table 2 has no row for the Outer-Scutum-Centaurus arm either):
+# **each of the two rows is entered as its own chain**, so the four major arms are five pinned chains and the
+# Local arm a sixth. The 3-kpc arm's row is left out ("associated with the Galactic bar and may not be true
+# spiral arms").
+MILKY_WAY_PINNED_ARMS: tuple[str, ...] = ("Norma", "Sct-Cen", "Sgr-Car", "Local", "Perseus", "Outer")
+
 MILKY_WAY = Template(
     name="milky_way",
     label="Milky Way",
     about=(
         "The default galaxy: the registry's defaults, every one a measured value of the Milky Way or derived "
         "from one (rule A5). The template overrides no control, no seed and no event list, so it is the defaults "
-        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins two "
+        "by construction; its merger list is the registry's two events and its seeds the registry's. It pins three "
         "measured facts of its structure: the Milky Way is barred, which the model derives too at these inputs, "
-        "so that pin changes no number; and its bar stands 30 degrees from the line from the Sun to the centre, "
+        "so that pin changes no number; its bar stands 30 degrees from the line from the Sun to the centre, "
         "the near end ahead of the Sun in the direction the disc turns, which places the Sun's azimuth and moves "
-        "nothing else of the galaxy. Seen face-on."
+        "nothing else of the galaxy; and its mapped arms - the four major arms and the Local arm, as fitted to "
+        "the masers' parallaxes over the third of the disc on the Sun's side - lie where they were measured, "
+        "each continued past its measured range by drawn pieces, with the randomness layer's own arm pieces "
+        "filling the radii no measured arm crosses. With the layer off no arm is placed and the galaxy is the "
+        "bare default one, number for number. Seen face-on."
     ),
     model="azimuthal",
     camera=Camera(inclination_deg=0.0, azimuth_deg=270.0, radius_kpc=20.0, fov_deg=45.0),
@@ -526,6 +586,31 @@ MILKY_WAY = Template(
                 "bar's near end at beta > 0]"
             ),
         ),
+        # S60 (D219 item 8): where the Milky Way's mapped arms are. Reid et al. 2019's four major arms and the
+        # Local arm, each row of the table a chain of its fitted pieces over its measured range of azimuth, placed
+        # by the Sun's azimuth. With the randomness layer off nothing is placed and no field moves.
+        Pin(
+            name="arm_pieces",
+            value=tuple(row for row in REID_2019_TABLE2 if row[0] in MILKY_WAY_PINNED_ARMS),
+            source=(
+                "[verified: Reid et al. 2019, ApJ 885, 131 = arXiv:1910.03357, Table 2 and note, "
+                "https://arxiv.org/pdf/1910.03357: the fitted arms' beta ranges, kinks and pitches, R0 = 8.15 kpc; "
+                "all seven rows, two reads of the PDF text agree digit for digit] (docs/READING_ARM_SEGMENTS.md "
+                "A1.3 and 'Milky Way pins') [verified: DECISIONS.md D219 item 8: the four major arms and the "
+                "Local arm as chains of their fitted pieces over their measured beta ranges, the 3 kpc arm out, "
+                "no chain tied to the bar, equal weights]. The source's uncertainties are not entered. Disputed, "
+                "and recorded here beside the pin: four arms (this source) against two inner arms that "
+                "bifurcate at 5.0-6.5 kpc plus outer segments (Xu et al. 2023), Scutum a separate arm (here) "
+                "or part of Norma (Xu et al. 2023); the Sagittarius arm's pitch 1.0/17.1 deg about a kink "
+                "(here), 6.9 deg (Reid et al. 2014) or 1.3 deg with Carina a separate arm of 21.4 deg (Xu et "
+                "al. 2023); Perseus at beta = 40 deg at 8.87 kpc (here) against 9.08-9.29 kpc (the 2026 "
+                "re-fit the reading calls Hy26); the Outer arm's pitch 3.0/9.4 deg (here), 13.8 (Reid et al. "
+                "2014) or 3.6 (Xu et al. 2023); the Sun's distance 8.15 kpc here against 7.92-8.34 elsewhere "
+                "[verified: docs/READING_ARM_SEGMENTS.md A4 items 5-6]. The Norma and Outer rows are one arm "
+                "in the source, fitted in two stretches with nothing measured between them: entered as two "
+                "chains [inferred]."
+            ),
+        ),
     ),
     sources={
         "camera.inclination_deg": "[inferred] a display choice: the Milky Way stands face-on [verified: BUILD_III.md section 2]",
@@ -553,9 +638,10 @@ NGC_4414 = Template(
         "merger list is empty and every seed is 4414. It is pinned unbarred, as observed: no source finds a bar in "
         "NGC 4414, while the model's own criterion - the time a disc this dominant takes to form a bar, under a "
         "gigayear, against the disc's age - says it should have one; the disagreement is published, the formation "
-        "time beside the pinned verdict. So it has no bar's body and no bar's lanes, and its arm modes run to the "
-        "centre. The model still draws regular arms where its arms are flocculent: a template takes that measured "
-        "structure as pins only from build phase P4 on. The position angle (159 degrees) is not applied: the camera "
+        "time beside the pinned verdict. So it has no bar's body and no bar's lanes, and its arms run to the "
+        "centre. Its arm class is pinned flocculent, as observed: its arms are single short pieces, not long "
+        "chains, where the model's own rule would make an unbarred disc multi-armed. Nothing positional is pinned "
+        "of them: no source gives where its pieces lie. The position angle (159 degrees) is not applied: the camera "
         "has no roll."
     ),
     model="azimuthal",
@@ -610,6 +696,20 @@ NGC_4414 = Template(
                 "arXiv:1908.04246, table a1: mean 28.88 deg, error of the mean 5.97 deg (sd 13.35 deg)] "
                 "(docs/READING_ARM_SEGMENTS.md A1.4, HE15 and DG19) [verified: DECISIONS.md D218 item 6: "
                 "pitch_angle = 28.9 deg replaces the draw]"
+            ),
+        ),
+        # S60 (D219 item 3): the observed arm class, flocculent, in place of the class the model derives from the
+        # bar (an unbarred disc: multi-armed). The layer then lays single pieces, not chains. The model makes no
+        # flocculent disc without this pin: a recorded miss of the measured half of spirals.
+        Pin(
+            name="arm_class",
+            value="flocculent",
+            source=(
+                "[verified: docs/READING_ARM_SEGMENTS.md 'NGC 4414' and A4 item 3: arm class F in Buta et al. "
+                "2015 and in Herrera-Endoqui et al. 2015's Table 3; M in Diaz-Garcia et al. 2019's table a1, "
+                "read twice - the conflict recorded; Thornley 1996: 'the most flocculent of the sample', no "
+                "regular two-arm pattern in K'] [verified: DECISIONS.md D219 item 3: flocculent by pin only, "
+                "arm_class on ngc_4414]"
             ),
         ),
     ),

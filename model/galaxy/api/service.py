@@ -673,6 +673,31 @@ def _event_json(event: MergerEvent) -> dict[str, Any]:
     }
 
 
+def pin_json(pin: _tpl.Pin, inp: Input) -> dict[str, Any]:
+    """A template's pin on the wire: ``{name, label, unit, value, source}``, the label and the unit the pin
+    input's own. What ``value`` is follows the pin's shape (``Input.shape``; S58, S59, and S60's two, D219):
+
+    - a class of two: ``true`` or ``false`` (``unit`` null);
+    - a measured number: the number, in ``unit``;
+    - **a named class** (S60): the class's name, a text, and beside it ``classes``, the closed list of names the
+      pin may take, in the order the published field of the pin's name holds them (``unit`` null);
+    - **a table** (S60): ``{"columns": [{"name", "unit"}, ...], "rows": [[...], ...]}`` - the source's own columns
+      in order, a column of names having a null unit, and one row a list of cells in the columns' order, a text
+      where the column is a name and a number where it has a unit (``unit`` null).
+
+    ``classes`` is present for a named class alone; no other key is added for the other shapes."""
+    out: dict[str, Any] = {"name": pin.name, "label": inp.label, "unit": inp.unit, "value": pin.value, "source": pin.source}
+    shape = inp.shape
+    if shape == "named":
+        out["classes"] = list(inp.classes)
+    elif shape == "table":
+        out["value"] = {
+            "columns": [{"name": name, "unit": unit} for name, unit in inp.columns],
+            "rows": [list(row) for row in pin.value],  # type: ignore[union-attr]
+        }
+    return out
+
+
 def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[str, Any]:
     """A template on the wire (S54, D213): its inputs fully resolved against ``table``, in /api/inputs' shapes.
 
@@ -735,7 +760,7 @@ def template_json(template: _tpl.Template, table: Mapping[str, Input]) -> dict[s
         },
         # S58 (D217 item 2): the measured structure the template states in place of a derivation, with its source.
         # S59 (D218): a pin carries its input's label and unit, so a client can state a measured number in words.
-        "pins": [{"name": p.name, "label": table[p.name].label, "unit": table[p.name].unit, "value": p.value, "source": p.source} for p in template.pins],
+        "pins": [pin_json(p, table[p.name]) for p in template.pins],
         "fit": fit,
         "checks": [
             {

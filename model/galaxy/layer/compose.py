@@ -106,36 +106,40 @@ def agree(fields: Any, layer: bool) -> None:
 
 
 def stellar_pattern(source: Any, R: np.ndarray, law: Mapping[str, Any] | None = None) -> Any:
-    """The stellar pattern of several arm modes and the bar (``pattern.ArmPattern``): the law's published
-    fields - the modes' amplitudes on the run's grid radii ``R``, the pitch, the bar - applied to the layer's
-    realisation, the modes' phases. None with the layer off, or where the fields hold no pattern.
+    """The stellar pattern of arm pieces and the bar (``pieces.ArmPattern``): the law's published fields - the
+    pieces' amplitude and width on the run's grid radii ``R``, the pitch, the bar - applied to the layer's
+    realisation, the census of arm pieces (S60, D219; from S56 to S59 it was five modes' amplitudes applied to
+    five drawn phases). None with the layer off, or where the fields hold no pattern.
 
     Since S58 (D217) the bar is a body: its length and shape, its share of the disc's mass and the disc's
     surface density that share is of are among the fields read, and every reader builds the same body from
-    them. An unbarred galaxy - the bar's numbers NaN - gives a pattern of arm modes alone, not None.
+    them. An unbarred galaxy - the bar's numbers NaN - gives a pattern of arm pieces alone, not None.
 
-    ``law`` is for the composing stage itself: the ``pattern`` stage has just made the amplitudes, the pitch,
-    the bar's amplitude and the body's share and has not published them yet, so it hands them here and the
-    rest - the phases, the bar's length and shape, the disc - is read from its view of the fields. Everyone
-    else reads everything from the run."""
+    ``law`` is for the composing stage itself: the ``stellar_pattern`` stage has just made the pieces'
+    amplitude and has not published it yet, so it hands it here and the rest - the pieces, the width, the pitch,
+    the bar, the disc - is read from its view of the fields. Everyone else reads everything from the run."""
     if not _on(source):
         return None
-    from galaxy.stages.pattern import ArmPattern
+    from galaxy.stages.pieces import ArmPattern
 
     fields = getattr(source, "fields", source)
     return ArmPattern.from_fields(fields if law is None else ChainMap(dict(law), fields), R)
 
 
 def gas_pattern(source: Any, R: np.ndarray, constants: Mapping[str, Any]) -> Any:
-    """The gas's own arm pattern (``gas_pattern.GasPattern``) - the gas's steady response to the stellar arm
-    modes, solved ring by ring (S57, D216), blended inside a bar's reach with the bar's gas lanes (S58, D217) -
+    """The gas's own arm pattern (``gas_pattern.GasPattern``) - the gas's steady response to the stellar arms,
+    solved ring by ring (S57, D216), blended inside a bar's reach with the bar's gas lanes (S58, D217) -
     from the published fields on the run's grid radii ``R`` and the constants the law reads (the gas's sound
-    speed and G; the lanes' four numbers), or None: with the layer off, or where the fields hold no pattern."""
+    speed and G; the stellar layer's flattening; the lanes' four numbers), or None: with the layer off, or
+    where the fields hold no pattern.
+
+    Since S60 (D219) the gas answers the stellar pattern's arm pieces: the stellar pattern of the same fields is
+    built here and handed to it, so the two are one census read once and no stage builds a pattern itself."""
     if not _on(source):
         return None
     from galaxy.stages.gas_pattern import GasPattern
 
-    return GasPattern.from_fields(getattr(source, "fields", source), R, constants)
+    return GasPattern.from_fields(getattr(source, "fields", source), R, constants, stellar_pattern(source, R))
 
 
 # --- composed fields -----------------------------------------------------------------------------------

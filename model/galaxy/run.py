@@ -36,7 +36,6 @@ cannot be resumed under the other setting.
 
 from __future__ import annotations
 
-import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -45,7 +44,7 @@ import numpy as np
 
 from galaxy.core.fielddoc import FieldDecl, Kind
 from galaxy.core.grids import DEFAULT, Grid, GridSpec
-from galaxy.core.registry import Input, Model, Registry, production
+from galaxy.core.registry import Input, Model, Registry, RegistryError, production
 from galaxy.core.stage import Context, Fields, LayerError, Stage
 from galaxy.layer import compose as _compose
 from galaxy.specs import graph as _graph
@@ -99,21 +98,15 @@ def resolve_inputs(
             value = overrides.get(name)
             if value is None:
                 continue
-            if inp.unit is None:
-                if not isinstance(value, bool):
-                    raise RunError(f"pin {name!r} is True or False (or not given), got {value!r}")
-                out[name] = value
-                continue
-            # S59 (D218 items 5-6): a pin that carries a unit is a measured number, finite.
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-                raise RunError(f"pin {name!r} is a finite number in {inp.unit} (or not given), got {value!r}")
-            # ... held to the range of what it replaces (the gate's follow-up, item 7): refused outside it, here
-            # as where a template is validated, so no stage ever reads a pin its own law's bounds would not hold.
-            if not inp.admits(float(value)):
-                raise RunError(
-                    f"pin {name!r} is held to the range of what it replaces, {inp.range_text} {inp.unit}; got {value!r}"
-                )
-            out[name] = float(value)
+            # S59 (D218 items 5-6): a pin that carries a unit is a measured number, finite, held to the range of what
+            # it replaces (the gate's follow-up, item 7) - refused outside it, here as where a template is
+            # validated, so no stage ever reads a pin its own law's bounds would not hold. S60 (D219): a class of
+            # more than two values is one of its names, and a table its rows, each held to its columns. The
+            # registry's declaration says which (``Input.pinned``), and what it refuses is refused here.
+            try:
+                out[name] = inp.pinned(value)
+            except RegistryError as e:
+                raise RunError(str(e)) from None
             continue
         if name in overrides:
             out[name] = overrides[name]
