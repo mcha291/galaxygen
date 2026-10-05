@@ -3,10 +3,13 @@ import { ApiError } from "@interface/transport.js";
 import { describe, expect, it } from "vitest";
 
 import { type FlowState, type InputDecl, reopen, runHash } from "./logic";
+import live from "./pins.live.json";
 import fixture from "./templates.fixture.json";
 import {
   type Pin,
+  type PinTable,
   EVENTS_INPUT,
+  TABLE_LISTED,
   TEMPLATE_KEY,
   applyTemplate,
   isEdited,
@@ -21,7 +24,11 @@ import {
 } from "./templates";
 import { generateDefault, isGenerated, landOn, queryOf } from "./useWorkflow";
 
-const PAYLOAD: unknown = fixture.payload;
+// The route's own pins, by template, as it serves them today: pins.live.json, written from /api/templates and held
+// to it by tests/test_viewer.py. The fixture states none; each template's are laid in here, so every test below
+// reads what the viewer will be served, and a shape the wire grows is in front of the parser the day it is served.
+const LIVE = live.pins as unknown as Record<string, Record<string, unknown>[]>;
+const PAYLOAD: unknown = { ...fixture.payload, templates: fixture.payload.templates.map((t) => ({ ...t, pins: LIVE[t.name] })) };
 const copy = () => JSON.parse(JSON.stringify(PAYLOAD)) as { default: string; templates: Record<string, unknown>[] };
 
 // A flow over the API's own input names, built by flow.js itself: the defaults are the fixture's `milky_way`.
@@ -102,28 +109,91 @@ describe("/api/templates, as the viewer reads it (S54, D213)", () => {
 });
 
 describe("a template's pins (S58, D217 item 2)", () => {
-  // What /api/fields declares of the field the pin decides, as far as the words need it.
+  // What /api/fields declares of the fields the pins decide, as far as the words need it (as the route declares them
+  // at S60; `stellar_mass_total` and `ring_spacing` stand for a field with a unit that is a word and one with none).
   const FIELDS = [
     { name: "bar_present", label: "Barred", categories: ["no", "yes"], unit: "dimensionless", unit_display: "" },
+    { name: "arm_class", label: "Arm class", categories: ["grand_design", "multi_armed", "flocculent"], unit: "dimensionless", unit_display: "" },
     { name: "stellar_mass_total", label: "Stellar mass", categories: [], unit: "Msun", unit_display: "M☉" },
     { name: "pitch_angle", label: "Spiral arm pitch angle", categories: [], unit: "deg", unit_display: "°" },
     { name: "sun_azimuth", label: "Azimuth of the Sun", categories: [], unit: "rad", unit_display: "rad" },
-    { name: "arm_segment_pitch_scatter", label: "Spread of a segment's pitch", categories: [], unit: "dimensionless", unit_display: "" },
+    { name: "ring_spacing", label: "Spacing of the rings", categories: [], unit: "dimensionless", unit_display: "" },
   ];
 
   // A pin as the tests write one by hand: no label and no unit served unless given (an API from before S59's follow-up).
-  const pin = (name: string, value: boolean | number, served: { label?: string; unit?: string } = {}): Pin => ({ name, value, source: "", label: served.label ?? null, unit: served.unit ?? null });
+  const pin = (name: string, value: Pin["value"], served: { label?: string; unit?: string; classes?: string[] } = {}): Pin => ({
+    name, value, source: "", label: served.label ?? null, unit: served.unit ?? null, classes: served.classes ?? null,
+  });
+  // A template's pin by its name, from the route's own (pins.live.json): the order they are served in is not the tests'.
+  const pinOf = (template: { name: string; pins: Pin[] }, name: string): Pin => {
+    const found = template.pins.find((p) => p.name === name);
+    if (!found) throw new Error(`${template.name} serves no pin ${name}: pins.live.json has moved and this test with it`);
+    return found;
+  };
 
-  it("reads each pin as published: its input's name, label and unit, the observed class or the measured number, and where it was read", () => {
+  it("reads every pin /api/templates serves today, for both templates, and says each in one line", () => {
+    // The gate the wire's growth runs into (S60, D219). The pins are the route's, laid in from pins.live.json; a
+    // shape the parser does not know throws here, as it would in the browser, where it stops the viewer landing.
+    expect(Object.keys(LIVE).sort()).toEqual(fixture.payload.templates.map((t) => t.name).sort());
+    const parsed = parseTemplates(PAYLOAD);
+    for (const template of parsed.templates) {
+      const served = LIVE[template.name];
+      expect(served.length).toBeGreaterThan(0);
+      expect(template.pins.map((p) => p.name)).toEqual(served.map((p) => p.name));
+      for (const [k, read] of template.pins.entries()) {
+        // nothing of what was served is lost or changed in the reading
+        expect(read.label).toBe(served[k].label);
+        expect(read.unit).toBe(served[k].unit);
+        expect(read.source).toBe(served[k].source);
+        expect(read.value).toEqual(served[k].value);
+        expect(read.classes).toEqual(served[k].classes ?? null);
+        for (const fields of [FIELDS, []]) {
+          const words = pinWords(read, fields);
+          expect(words, `${template.name}.${read.name}`).toMatch(/^\S.*: \S.* \(as observed\)$/);
+          expect(words).not.toMatch(/\n|\[object|undefined|NaN|null/);
+          expect(words.length).toBeLessThan(160); // a line of the panel, never a dump
+        }
+      }
+    }
+  });
+
+  it("writes the lines the panel shows for the two templates as they are served today", () => {
     const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
-    expect(milkyWay.pins).toEqual([
-      { name: "bar_present", label: "Bar present (a template's pin)", unit: null, value: true, source: "[illustrative] the Milky Way is barred" },
-      { name: "sun_bar_angle", label: "Angle of the bar to the Sun-centre line (a template's pin)", unit: "deg", value: 30, source: "[illustrative] the bar's angle to the Sun-centre line" },
+    expect(milkyWay.pins.map((p) => pinWords(p, FIELDS))).toEqual([
+      "Barred: yes (as observed)",
+      "Angle of the bar to the Sun-centre line (a template's pin): 30° (as observed)",
+      "Measured arm pieces (a template's pin): 6 rows by arm: Norma, Sct-Cen, Sgr-Car, Local, Perseus, Outer (as observed)",
     ]);
-    expect(ngc.pins).toEqual([
-      { name: "bar_present", label: "Bar present (a template's pin)", unit: null, value: false, source: "[illustrative] no source finds a bar in NGC 4414" },
-      { name: "pitch_angle", label: "Arm pitch angle (a template's pin)", unit: "deg", value: 28.9, source: "[illustrative] the measured mean pitch of its arm segments" },
+    expect(ngc.pins.map((p) => pinWords(p, FIELDS))).toEqual([
+      "Barred: no (as observed)",
+      "Spiral arm pitch angle: 28.9° (as observed)",
+      "Arm class: flocculent (as observed)",
     ]);
+  });
+
+  it("reads each of the four shapes a pin's value has: a class, a number, a named class, a table", () => {
+    const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
+    expect(pinOf(milkyWay, "bar_present")).toMatchObject({ label: "Bar present (a template's pin)", unit: null, value: true, classes: null });
+    expect(pinOf(ngc, "bar_present").value).toBe(false);
+    expect(pinOf(milkyWay, "sun_bar_angle")).toMatchObject({ label: "Angle of the bar to the Sun-centre line (a template's pin)", unit: "deg", value: 30, classes: null });
+    expect(pinOf(ngc, "pitch_angle")).toMatchObject({ label: "Arm pitch angle (a template's pin)", unit: "deg", value: 28.9 });
+    // S60 (D219): a named class with its own list of classes,
+    expect(pinOf(ngc, "arm_class")).toMatchObject({ label: "Arm class (a template's pin)", unit: null, value: "flocculent", classes: ["grand_design", "multi_armed", "flocculent"] });
+    // and a table: the columns with their units, the rows as served.
+    const table = pinOf(milkyWay, "arm_pieces").value as PinTable;
+    expect(table.columns).toEqual([
+      { name: "arm", unit: null },
+      { name: "beta_from", unit: "deg" },
+      { name: "beta_to", unit: "deg" },
+      { name: "beta_kink", unit: "deg" },
+      { name: "radius_kink", unit: "kpc" },
+      { name: "pitch_below", unit: "deg" },
+      { name: "pitch_above", unit: "deg" },
+    ]);
+    expect(table.rows).toHaveLength(6);
+    expect(table.rows[0]).toEqual(["Norma", 5, 54, 18, 4.46, -1, 19.5]);
+    expect(table.rows.every((row) => row.length === table.columns.length)).toBe(true);
+    for (const p of [...milkyWay.pins, ...ngc.pins]) expect(p.source).toMatch(/^\[verified: /); // the route's own source, not a stand-in
   });
 
   it("reads /api/templates as S59 answers it: a numeric pin does not stop the viewer from landing (D218 items 5-6)", () => {
@@ -131,7 +201,7 @@ describe("a template's pins (S58, D217 item 2)", () => {
     // its pins then failed to parse, and the viewer showed "Loading the model failed" in place of the galaxy.
     const p = copy();
     p.templates[1].pins = [{ name: "pitch_angle", value: 28.9, source: "[verified: ...]" }, { name: "sun_bar_angle", value: 0, source: "" }];
-    expect(parseTemplates(p).templates[1].pins.map((pin) => pin.value)).toEqual([28.9, 0]);
+    expect(parseTemplates(p).templates[1].pins.map((read) => read.value)).toEqual([28.9, 0]);
   });
 
   it("takes a pin's label and unit as served, and a pin without them as it was: an API from before they were", () => {
@@ -161,12 +231,12 @@ describe("a template's pins (S58, D217 item 2)", () => {
       p.templates[1].pins = pins;
       return () => parseTemplates(p);
     };
+    const SHAPE = /template ngc_4414: a pin is \{name, value: true or false, a number, one of its classes or a table of columns and rows, source\}/;
     expect(broken("bar_present")).toThrow(/template ngc_4414: pins is not a list/);
-    expect(broken([{ name: "bar_present", value: "no", source: "" }])).toThrow(/template ngc_4414: a pin is \{name, value: true or false or a number, source\}/);
-    expect(broken([{ value: false }])).toThrow(/a pin is/);
-    // a number that is none (JSON's null for a NaN, a string of digits) is no measured value
-    expect(broken([{ name: "pitch_angle", value: null, source: "" }])).toThrow(/a pin is/);
-    expect(broken([{ name: "pitch_angle", value: "28.9", source: "" }])).toThrow(/a pin is/);
+    expect(broken([{ value: false }])).toThrow(SHAPE);
+    // a number that is none (JSON's null for a NaN) is no measured value, and a list is no value at all
+    expect(broken([{ name: "pitch_angle", value: null, source: "" }])).toThrow(SHAPE);
+    expect(broken([{ name: "pitch_angle", value: [28.9], source: "" }])).toThrow(SHAPE);
     // a pin without a source is still a pin: the words stand, the tooltip is empty
     expect(broken([{ name: "bar_present", value: false }])()).toMatchObject({ templates: [{}, { pins: [{ name: "bar_present", value: false, source: "" }] }] });
     // a label or a unit that is no text is not guessed at
@@ -174,15 +244,59 @@ describe("a template's pins (S58, D217 item 2)", () => {
     expect(broken([{ name: "pitch_angle", label: "Arm pitch angle", unit: { name: "deg" }, value: 28.9, source: "" }])).toThrow(/label and unit are texts or absent/);
   });
 
+  it("refuses a text that is not one of the pin's own classes: a string alone is no class (S60)", () => {
+    const broken = (pinned: Record<string, unknown>) => {
+      const p = copy();
+      p.templates[1].pins = [{ name: "arm_class", label: "Arm class (a template's pin)", unit: null, source: "", ...pinned }];
+      return () => parseTemplates(p);
+    };
+    const CLASSES = ["grand_design", "multi_armed", "flocculent"];
+    expect(broken({ value: "flocculent", classes: CLASSES })().templates[1].pins[0]).toMatchObject({ value: "flocculent", classes: CLASSES });
+    // no list of classes beside it: a digit string, a "no", any text
+    expect(broken({ value: "flocculent" })).toThrow(/pin arm_class names the class "flocculent", which is not one of its classes null/);
+    expect(broken({ value: "28.9" })).toThrow(/names the class "28.9"/);
+    // a class the list does not hold, and a list that is no list of texts
+    expect(broken({ value: "barred", classes: CLASSES })).toThrow(/names the class "barred", which is not one of its classes \["grand_design","multi_armed","flocculent"\]/);
+    expect(broken({ value: "flocculent", classes: [] })).toThrow(/not one of its classes/);
+    expect(broken({ value: "flocculent", classes: ["flocculent", 3] })).toThrow(/not one of its classes/);
+    expect(broken({ value: "flocculent", classes: "flocculent" })).toThrow(/not one of its classes/);
+    // a list of classes beside a pin that is none is not the pin's: carried nowhere
+    expect(broken({ value: true, classes: CLASSES })().templates[1].pins[0].classes).toBeNull();
+  });
+
+  it("refuses a table that is not columns and whole rows (S60)", () => {
+    const broken = (value: unknown) => {
+      const p = copy();
+      p.templates[0].pins = [{ name: "arm_pieces", label: "Measured arm pieces (a template's pin)", unit: null, value, source: "" }];
+      return () => parseTemplates(p);
+    };
+    const columns = [{ name: "arm", unit: null }, { name: "pitch", unit: "deg" }];
+    const SHAPE = /template milky_way: a pin is \{name, value: true or false, a number, one of its classes or a table of columns and rows, source\}/;
+    expect((broken({ columns, rows: [["Norma", 19.5], ["Local", null]] })().templates[0].pins[0].value as PinTable).rows).toEqual([["Norma", 19.5], ["Local", null]]);
+    expect((broken({ columns, rows: [] })().templates[0].pins[0].value as PinTable).rows).toEqual([]); // a table of no rows pins none
+    expect(broken({ columns })).toThrow(SHAPE); // no rows
+    expect(broken({ rows: [["Norma", 19.5]] })).toThrow(SHAPE); // no columns
+    expect(broken({ columns, rows: [["Norma"]] })).toThrow(SHAPE); // a row shorter than the columns
+    expect(broken({ columns, rows: [["Norma", 19.5, 3]] })).toThrow(SHAPE); // and one longer
+    expect(broken({ columns, rows: [["Norma", [19.5]]] })).toThrow(SHAPE); // a cell that is no text and no number
+    expect(broken({ columns, rows: [{ arm: "Norma", pitch: 19.5 }] })).toThrow(SHAPE); // a row that is no list
+    expect(broken({ columns: ["arm", "pitch"], rows: [["Norma", 19.5]] })).toThrow(SHAPE); // columns without their units
+    expect(broken({ columns: [{ name: "arm", unit: 3 }], rows: [["Norma"]] })).toThrow(SHAPE);
+    expect(broken({})).toThrow(SHAPE);
+    // the message quotes the pin, cut short: a table is long
+    const long = { columns, rows: Array.from({ length: 200 }, (_, k) => [`arm ${k}`, k, k]) };
+    expect(() => broken(long)()).toThrow(/got \{"name":"arm_pieces".{0,240}\.\.\.$/);
+  });
+
   it("says a pin in the field declaration's own words, with none of the viewer's", () => {
     const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
     // The published field of the pin's name comes first: its label and its categories, not the pin input's label.
-    expect(pinWords(ngc.pins[0], FIELDS)).toBe("Barred: no (as observed)");
-    expect(pinWords(milkyWay.pins[0], FIELDS)).toBe("Barred: yes (as observed)");
+    expect(pinWords(pinOf(ngc, "bar_present"), FIELDS)).toBe("Barred: no (as observed)");
+    expect(pinWords(pinOf(milkyWay, "bar_present"), FIELDS)).toBe("Barred: yes (as observed)");
     // No declaration of that name (the fields not loaded yet, a model without the field): the pin's own label, as
     // served - nothing stripped from it - and yes or no.
-    expect(pinWords(ngc.pins[0])).toBe("Bar present (a template's pin): no (as observed)");
-    expect(pinWords(milkyWay.pins[0], [])).toBe("Bar present (a template's pin): yes (as observed)");
+    expect(pinWords(pinOf(ngc, "bar_present"))).toBe("Bar present (a template's pin): no (as observed)");
+    expect(pinWords(pinOf(milkyWay, "bar_present"), [])).toBe("Bar present (a template's pin): yes (as observed)");
     // Neither a declaration nor a served label (an API from before S59's follow-up): the pin's name.
     expect(pinWords(pin("bar_present", false))).toBe("bar_present: no (as observed)");
     // A field that is not a two-class one does not lend its categories to a true-or-false pin.
@@ -193,11 +307,11 @@ describe("a template's pins (S58, D217 item 2)", () => {
     const [, ngc] = parseTemplates(PAYLOAD).templates;
     // NGC 4414's pitch: the pin decides the published field of its own name, whose label and unit these are - not
     // the pin input's own "Arm pitch angle (a template's pin)".
-    expect(pinWords(ngc.pins[1], FIELDS)).toBe("Spiral arm pitch angle: 28.9° (as observed)");
+    expect(pinWords(pinOf(ngc, "pitch_angle"), FIELDS)).toBe("Spiral arm pitch angle: 28.9° (as observed)");
     // A unit that is a word stands after a space; a dimensionless number has none.
     expect(pinWords(pin("sun_azimuth", 1.1497328186297713), FIELDS)).toBe("Azimuth of the Sun: 1.15 rad (as observed)");
     expect(pinWords(pin("stellar_mass_total", 4.75e10), FIELDS)).toBe("Stellar mass: 4.750 × 10¹⁰ M☉ (as observed)");
-    expect(pinWords(pin("arm_segment_pitch_scatter", 0.56), FIELDS)).toBe("Spread of a segment's pitch: 0.56 (as observed)");
+    expect(pinWords(pin("ring_spacing", 0.56), FIELDS)).toBe("Spacing of the rings: 0.56 (as observed)");
     // Zero is a number, not a "no".
     expect(pinWords(pin("pitch_angle", 0), FIELDS)).toBe("Spiral arm pitch angle: 0° (as observed)");
     // The declaration's unit wins over a served one that differs from it.
@@ -208,16 +322,46 @@ describe("a template's pins (S58, D217 item 2)", () => {
     const [milkyWay, ngc] = parseTemplates(PAYLOAD).templates;
     // The Milky Way's bar angle publishes sun_azimuth: no field is named sun_bar_angle. The label is the pin
     // input's as served; the unit "deg" is shown as the field declarations show that unit ("°", from any of them).
-    expect(pinWords(milkyWay.pins[1], FIELDS)).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30° (as observed)");
+    expect(pinWords(pinOf(milkyWay, "sun_bar_angle"), FIELDS)).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30° (as observed)");
     // The fields not loaded yet: the same label, and the unit as served.
-    expect(pinWords(milkyWay.pins[1])).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30 deg (as observed)");
-    expect(pinWords(ngc.pins[1])).toBe("Arm pitch angle (a template's pin): 28.9 deg (as observed)");
+    expect(pinWords(pinOf(milkyWay, "sun_bar_angle"))).toBe("Angle of the bar to the Sun-centre line (a template's pin): 30 deg (as observed)");
+    expect(pinWords(pinOf(ngc, "pitch_angle"))).toBe("Arm pitch angle (a template's pin): 28.9 deg (as observed)");
     // A unit no declared field has is written as served; a dimensionless number has none.
     expect(pinWords(pin("bar_age", 5, { label: "Age of the bar (a template's pin)", unit: "Gyr" }), FIELDS)).toBe("Age of the bar (a template's pin): 5 Gyr (as observed)");
     expect(pinWords(pin("bar_strength", 0.3, { label: "Bar strength (a template's pin)", unit: "dimensionless" }), FIELDS)).toBe("Bar strength (a template's pin): 0.3 (as observed)");
     // An API from before the follow-up serves neither: the pin's name and the bare number, no unit guessed (rule B9).
     expect(pinWords(pin("sun_bar_angle", 30), FIELDS)).toBe("sun_bar_angle: 30 (as observed)");
     expect(pinWords(pin("pitch_angle", 28.9))).toBe("pitch_angle: 28.9 (as observed)");
+  });
+
+  it("says a named class as served, under the published field's label where there is one (S60, D219)", () => {
+    const [, ngc] = parseTemplates(PAYLOAD).templates;
+    // `arm_class` is a published field too: its label, and the class as the route serves it - the viewer has no
+    // word of its own for a class (rule A9), and the declaration's categories are the same texts.
+    expect(pinWords(pinOf(ngc, "arm_class"), FIELDS)).toBe("Arm class: flocculent (as observed)");
+    // The fields not loaded yet: the pin's own label, as served.
+    expect(pinWords(pinOf(ngc, "arm_class"))).toBe("Arm class (a template's pin): flocculent (as observed)");
+    // Never rewritten: an underscore stays one.
+    expect(pinWords(pin("arm_class", "grand_design", { classes: ["grand_design", "flocculent"] }), FIELDS)).toBe("Arm class: grand_design (as observed)");
+  });
+
+  it("says a table in one line: how many rows it pins and their first column, never its numbers (S60, D219)", () => {
+    const [milkyWay] = parseTemplates(PAYLOAD).templates;
+    const line = pinWords(pinOf(milkyWay, "arm_pieces"), FIELDS);
+    expect(line).toBe("Measured arm pieces (a template's pin): 6 rows by arm: Norma, Sct-Cen, Sgr-Car, Local, Perseus, Outer (as observed)");
+    expect(line).not.toMatch(/\d\.\d/); // no pitch, no radius, no angle: the rows' numbers are the model's to use
+    const columns = [{ name: "arm", unit: null }, { name: "pitch", unit: "deg" }];
+    const table = (rows: PinTable["rows"], cols = columns) => pin("arm_pieces", { columns: cols, rows }, { label: "Measured arm pieces" });
+    expect(pinWords(table([["Norma", 19.5]]))).toBe("Measured arm pieces: 1 row by arm: Norma (as observed)");
+    expect(pinWords(table([]))).toBe("Measured arm pieces: 0 rows (as observed)");
+    expect(pinWords(table([[], []], []))).toBe("Measured arm pieces: 2 rows (as observed)"); // no column to list them by
+    // A first column of numbers is listed as numbers; one not read as a dash.
+    expect(pinWords(table([[3, 19.5], [null, 12.1], [4.4999, 1]], [{ name: "order", unit: null }, { name: "pitch", unit: "deg" }]))).toBe(
+      "Measured arm pieces: 3 rows by order: 3, —, 4.5 (as observed)",
+    );
+    // Past TABLE_LISTED rows the rest are counted, not listed: a line, whatever the table's length.
+    const many = Array.from({ length: TABLE_LISTED + 5 }, (_, k) => [`a${k}`, k] as (string | number)[]);
+    expect(pinWords(table(many))).toBe(`Measured arm pieces: ${TABLE_LISTED + 5} rows by arm: ${many.slice(0, TABLE_LISTED).map((r) => r[0]).join(", ")} and 5 more (as observed)`);
   });
 });
 

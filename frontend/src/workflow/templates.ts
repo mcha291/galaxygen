@@ -17,13 +17,29 @@ import { type FlowState, type MergerEvent, formatNumber } from "./logic";
  * class has no unit); null from an API that does not serve them. **A pin is no input of the viewer's**:
  * `/api/inputs` does not list it, the API refuses it as a query parameter, and it reaches a run only through
  * `template=<name>` (templateQuery below).
+ *
+ * Since S60 (D219) a value has two more shapes, as the route serves them: a **named class** - a string, one of
+ * the pin's own `classes` (NGC 4414's `arm_class` is "flocculent" of grand_design, multi_armed, flocculent) -
+ * and a **table** of measured rows (PinTable: the Milky Way's `arm_pieces`, six arms of a published table).
  */
 export interface Pin {
   name: string;
   label: string | null;
   unit: string | null;
-  value: boolean | number;
+  value: boolean | number | string | PinTable;
+  /** A named class's own list of classes, as served beside it; null on every other pin. */
+  classes: string[] | null;
   source: string;
+}
+
+/**
+ * A pin that is a table (S60, D219): the columns' names and units as served, and the rows, each as long as the
+ * columns - a text, a number, or null for a number not read (rule B9). The viewer reads none of the numbers: it
+ * says how many rows are pinned and lists their first column (pinWords).
+ */
+export interface PinTable {
+  columns: { name: string; unit: string | null }[];
+  rows: (string | number | null)[][];
 }
 
 /** One template, as `/api/templates` publishes it. `inputs` is fully resolved: every control, every seed, the event list. */
@@ -71,23 +87,68 @@ const numberOrNull = (v: unknown): number | null => (isNumber(v) ? v : null);
 /** A served text that may be absent: a string as it came, null where the key is missing or null; anything else is no text. */
 const textOrNull = (v: unknown): string | null | undefined => (v === undefined || v === null ? null : typeof v === "string" ? v : undefined);
 
+/** A pin as it came, for an error's message: cut short, since a table is long. */
+const quoted = (pin: unknown): string => {
+  const text = JSON.stringify(pin) ?? String(pin);
+  return text.length > 240 ? `${text.slice(0, 240)}...` : text;
+};
+
+/** A non-empty list of non-empty texts (a named class's `classes`), or null where it is anything else. */
+const textsOrNull = (v: unknown): string[] | null =>
+  Array.isArray(v) && v.length > 0 && v.every((c) => typeof c === "string" && c) ? (v as string[]) : null;
+
 /**
- * A template's pins as published: `[{name, label, unit, value, source}]`, the value the observed class, true or
- * false, or a measured number (S59: the Milky Way's bar angle, NGC 4414's pitch); `label` and `unit` are the pin
- * input's own, served since S59's follow-up, and an API from before it has neither key - both are then null. A
- * pin the viewer cannot read is refused, not dropped: it would be shown as nothing while the API applies it.
+ * A table pin's value as served: `{columns: [{name, unit}], rows: [[...]]}`, every row as long as the columns and
+ * every cell a text, a finite number or null. Null where it is anything else.
+ */
+function tableOrNull(v: unknown): PinTable | null {
+  if (!isRecord(v) || !Array.isArray(v.columns) || !Array.isArray(v.rows)) return null;
+  const columns: PinTable["columns"] = [];
+  for (const column of v.columns as unknown[]) {
+    const unit = isRecord(column) ? textOrNull(column.unit) : undefined;
+    if (!isRecord(column) || typeof column.name !== "string" || !column.name || unit === undefined) return null;
+    columns.push({ name: column.name, unit });
+  }
+  const cell = (c: unknown) => c === null || typeof c === "string" || isNumber(c);
+  const whole = (v.rows as unknown[]).every((row) => Array.isArray(row) && row.length === columns.length && row.every(cell));
+  return whole ? { columns, rows: (v.rows as (string | number | null)[][]).map((row) => [...row]) } : null;
+}
+
+/**
+ * A template's pins as published: `[{name, label, unit, value, source}]`. The value is one of four shapes, and
+ * the parser is built from what the route serves:
+ * - the observed class, true or false (S58: `bar_present`);
+ * - a measured number (S59: the Milky Way's bar angle, NGC 4414's pitch);
+ * - a named class, a text that is one of the pin's own `classes`, a key the entry then carries (S60, D219:
+ *   `arm_class`) - a text with no such list, or one that is not in it, is no class the viewer can stand behind;
+ * - a table, `{columns, rows}` (S60: `arm_pieces`; tableOrNull above).
+ * `label` and `unit` are the pin input's own, served since S59's follow-up, and an API from before it has neither
+ * key - both are then null. **A pin the viewer cannot read is refused, not dropped**: it would be shown as nothing
+ * while the API applies it. That refusal has stopped the viewer landing each time the wire grew (S59's numbers,
+ * S60's two shapes): templates.test.ts holds this parser to the route's pins as they are served today
+ * (pins.live.json), so the next growth fails there.
  */
 function parsePins(raw: unknown, at: string): Pin[] {
   if (raw === undefined || raw === null) return []; // an API from before the pins (S54-S57)
   if (!Array.isArray(raw)) throw new Error(`${at}: pins is not a list`);
   return raw.map((pin: unknown) => {
-    if (!isRecord(pin) || typeof pin.name !== "string" || !pin.name || !(typeof pin.value === "boolean" || isNumber(pin.value))) {
-      throw new Error(`${at}: a pin is {name, value: true or false or a number, source}, got ${JSON.stringify(pin)}`);
+    const shape = `${at}: a pin is {name, value: true or false, a number, one of its classes or a table of columns and rows, source}`;
+    if (!isRecord(pin) || typeof pin.name !== "string" || !pin.name) throw new Error(`${shape}, got ${quoted(pin)}`);
+    const classes = textsOrNull(pin.classes);
+    let value: Pin["value"];
+    if (typeof pin.value === "boolean" || isNumber(pin.value)) value = pin.value;
+    else if (typeof pin.value === "string") {
+      if (!classes || !classes.includes(pin.value)) throw new Error(`${at}: pin ${pin.name} names the class ${JSON.stringify(pin.value)}, which is not one of its classes ${JSON.stringify(pin.classes ?? null)}`);
+      value = pin.value;
+    } else {
+      const table = tableOrNull(pin.value);
+      if (!table) throw new Error(`${shape}, got ${quoted(pin)}`);
+      value = table;
     }
     const label = textOrNull(pin.label);
     const unit = textOrNull(pin.unit);
-    if (label === undefined || unit === undefined) throw new Error(`${at}: pin ${pin.name}'s label and unit are texts or absent, got ${JSON.stringify(pin)}`);
-    return { name: pin.name, label, unit, value: pin.value, source: typeof pin.source === "string" ? pin.source : "" };
+    if (label === undefined || unit === undefined) throw new Error(`${at}: pin ${pin.name}'s label and unit are texts or absent, got ${quoted(pin)}`);
+    return { name: pin.name, label, unit, value, classes: typeof value === "string" ? classes : null, source: typeof pin.source === "string" ? pin.source : "" };
   });
 }
 
@@ -239,18 +300,44 @@ type Declared = { name: string; label: string; categories?: string[]; unit?: str
  * label is written as served, nothing stripped from it (rule A9), and the unit is shown as the field declarations
  * show it - the `unit_display` of any declared field of that unit ("deg" is "°" there), else the unit as served.
  * From an API that serves neither, the pin's name, and yes or no or the bare number: no unit is guessed (rule B9).
+ *
+ * **A named class** (S60, D219) is written as served - "Arm class: flocculent (as observed)" - under the label of
+ * the published field of the pin's name where there is one (`arm_class`, whose categories are the same texts),
+ * else under the pin's own. **A table** is one line, never its numbers: how many rows it pins, and their first
+ * column under that column's own name - "Measured arm pieces (a template's pin): 6 rows by arm: Norma, Sct-Cen,
+ * Sgr-Car, Local, Perseus, Outer (as observed)". Past TABLE_LISTED rows the rest are counted, not listed.
  */
 export function pinWords(pin: Pin, fields: readonly Declared[] = []): string {
   const decl = fields.find((f) => f.name === pin.name);
+  const value = pin.value;
   let stated: string;
-  if (typeof pin.value === "number") {
+  if (typeof value === "number") {
     const served = pin.unit ?? "";
     const unit = decl ? shown(decl) : served === "dimensionless" ? "" : shown(fields.find((f) => f.unit === served)) || served;
-    stated = `${formatNumber(pin.value, 4)}${/^[A-Za-zµμ]/.test(unit) ? " " : ""}${unit}`;
+    stated = `${formatNumber(value, 4)}${/^[A-Za-zµμ]/.test(unit) ? " " : ""}${unit}`;
+  } else if (typeof value === "boolean") {
+    stated = decl?.categories?.length === 2 ? decl.categories[value ? 1 : 0] : value ? "yes" : "no";
+  } else if (typeof value === "string") {
+    stated = value;
   } else {
-    stated = decl?.categories?.length === 2 ? decl.categories[pin.value ? 1 : 0] : pin.value ? "yes" : "no";
+    stated = tableWords(value);
   }
   return `${decl?.label || pin.label || pin.name}: ${stated} (as observed)`;
+}
+
+/** How many of a table pin's rows are listed by their first column before the rest are only counted. */
+export const TABLE_LISTED = 8;
+
+/** A table pin's value in words: its rows counted, and their first column listed under the column's served name. */
+function tableWords(table: PinTable): string {
+  const n = table.rows.length;
+  const count = `${n} ${n === 1 ? "row" : "rows"}`;
+  const first = table.columns[0];
+  if (!first || n === 0) return count;
+  const cell = (c: string | number | null) => (c === null ? "—" : typeof c === "number" ? formatNumber(c, 4) : c);
+  const listed = table.rows.slice(0, TABLE_LISTED).map((row) => cell(row[0]));
+  const rest = n > TABLE_LISTED ? ` and ${n - TABLE_LISTED} more` : "";
+  return `${count} by ${first.name}: ${listed.join(", ")}${rest}`;
 }
 
 /** A declared field's unit as the viewer writes it beside a number: its `unit_display`, none for a dimensionless one. */
