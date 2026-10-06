@@ -652,20 +652,24 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     moves with the layer; no field holds a NaN but the ruled ones; N v(σ_d) B² is the budget wherever a ring
     has an amplitude; and every harmonic of the forcing is under the bound.
 
-    **As read** (the record below). Ring means: stars 1.6e-15, gas 1.0e-13 at worst; N v B² against the budget
-    1.6e-15. **The realised power is about half the budget in the median ring**: over the rings that have an
-    amplitude its 16th / 50th / 84th percentiles are 0.20 / 0.44 / 0.87 of the budget on the Milky Way's leg,
-    0.40 / 0.55 / 1.08 on ``ngc_4414``'s and 0.27 / 0.52 / 0.98 on the drawn-pitch leg - the scatter the gate asks
-    to be pinned, and a shortfall the expectation does not have: the expectation is of the law's count of pieces
-    at the disc's pitch and at full height, and a realised piece is faded over one width at each of its ends
-    (each piece's own taper, as ruled: a chain's pieces are both at zero where they join), lies wider or
-    narrower on its ring by its own pitch, and overlaps its neighbours. Read, not mended: nothing is divided by a
-    realised power. **Rings cut**: 6, 0 and 11 of 19 800, 15 960 and 15 960 with a budget. **Rings with a budget
-    and no amplitude** - the designed piece wider than its ring, no arm, counted: 2 080, 240 and 1 584; **six
-    galaxies of each drawn-pitch leg hold no arm at all** (a pitch under about 3 degrees: an arm as wide as the
-    width law makes it is then wider than every ring that has a budget). **None with a budget and no chain** (the lead's reading
-    (d): counted, 0). The stellar field is nowhere under 0.11 and has no exact zero; the gas runs from 0.022 to
-    6.68; no ring took more than 7 Newton steps."""
+    **As read on the third pass** (the record below; the first two builds' are in D219's record). **The realised
+    power over the budget**, over the rings that have an amplitude, 16th / 50th / 84th percentile: 0.47 / 0.72 /
+    1.18 on the Milky Way's leg, 0.45 / 0.52 / 0.73 on ``ngc_4414``'s and 0.42 / 0.54 / 0.91 on the drawn-pitch
+    leg - the scatter the gate asks to be pinned. The expectation is of the count's worth of full ridges at the
+    disc's pitch and at independent azimuths; a realised ring holds chains in their tapers, pieces of other
+    pitches, ridges that stand evenly apart (births in the widest gap: less variance than independent ones) and
+    the flanks of pieces whose locus does not cross it. Read, not mended: nothing is divided by a realised power.
+    **Rings cut**: 4, 0 and 152 of 19 800, 15 960 and 15 960 with a budget - every one a ring whose count is
+    far under 1, the only chains crossing it just begun, where the budget's amplitude grows as the root of one
+    over the count and the saturation takes it (the second follow-up's item 3 and item 1 together; said plainly in
+    the builder's hand-back). **Rings with a budget and no amplitude**: 5 764 (5 760 of them inside the bar, where
+    no chain is born), 240 and 737 - a ring on which every crossing chain's weight is still nothing, or whose
+    designed ridge would be no ridge (4, 120 and 98 rings: the count under 1 close to the centre). No galaxy
+    without arms. **Joins of a galaxy**, least / median / most: 3 / 8 / 50, 0 / 1.5 / 3 and 0 / 3 / 19. No two
+    chains cross on any of the 360, two measured pieces included; every birth stands at the middle of the widest
+    gap, or - 0, 120 and 639 chains - on a ring no chain crossed. The rings kept between the grid's, summed over a
+    leg's 120 galaxies: 1 660 at a gap's middle and 1 260 at a quarter, 1 817 and 1 032, 5 539 and 5 755. No ring
+    took more than 9 Newton steps."""
     model = the_model(prod)
     c = constants(model)
     worst = {"stars": 0.0, "gas": 0.0, "expected": 0.0, "bound": 0.0}
@@ -767,10 +771,10 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
 
 # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains)
 EXPECTED_PINNED: tuple = (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
-EXPECTED_GATE: dict = {'milky_way': (19800, 14040, (0.479, 0.759, 1.139), 0, 5760, 5760, 0, 1.0, 24.333, 7, 0, 0), 'ngc_4414': (15960, 15960, (0.344, 0.508, 0.973), 0, 0, 0, 0, 28.9, 28.9, 6, 0, 0), 'ngc_4414 drawn': (15960, 15960, (0.345, 0.571, 0.922), 0, 0, 0, 0, 1.0, 24.096, 6, 0, 0)}
+EXPECTED_GATE: dict = {'milky_way': (19800, 14036, (0.474, 0.72, 1.184), 4, 5764, 5760, 0, 1.0, 24.333, 9, 0, 4, (3, 8.0, 50), 0, 0, (1660, 1260)), 'ngc_4414': (15960, 15720, (0.452, 0.524, 0.728), 0, 240, 0, 0, 28.9, 28.9, 7, 0, 120, (0, 1.5, 3), 120, 0, (1817, 1032)), 'ngc_4414 drawn': (15960, 15223, (0.415, 0.541, 0.906), 152, 737, 0, 0, 1.0, 24.096, 9, 0, 98, (0, 3.0, 19), 639, 0, (5539, 5755))}
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
-EXPECTED_LEAST: dict = {'milky_way': (0.2661, 0.0418, 6.673), 'ngc_4414': (0.5527, 0.3507, 2.662), 'ngc_4414 drawn': (0.439, 0.1092, 3.453)}
+EXPECTED_LEAST: dict = {'milky_way': (0.0542, 0.1138, 6.673), 'ngc_4414': (0.0909, 0.0809, 3.317), 'ngc_4414 drawn': (0.0007, 0.0, 6.794)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):
