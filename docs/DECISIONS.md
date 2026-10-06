@@ -10822,3 +10822,71 @@ Science tab.
    2; joins 7 ± 1. *For the owner at the close, first:* "the arms read as arms for the first time, `ngc_4414`
    flocculent and the Milky Way multi-armed; the law's split by m is not realised and why; the budget's hard outer
    edge."
+
+**The owner's word on who builds (2026-10-06).** "My all models limit is mostly 70 % gone but Fable still has 80 %
+to go … prioritise spawning Fable subagents." From here the builders, the reviewer and the re-pins are Fable agents;
+the lead stays on Opus. The first three model passes are Opus-built, so the review below is by another model than
+their builders'; the fourth pass is Fable-built and its review will be the same model's — said here so it is not
+hidden. Both Fable agents then at work were cut off once by the usage limit and resumed from their uncommitted
+diffs.
+
+**The independent review (a fresh Fable agent; the model as it stood after the third pass; its own arithmetic,
+nothing written to the repository).**
+- *The gate's two hand checks both hold.* The forcing of the Milky Way template's ring at 7.99 kpc, rebuilt from the
+  published table alone (each piece's profile on the 1 440 cells, its transform, term m × m/(X(|sin p_j| + m h/R)),
+  h = 2.6049/7.3 = 0.357 kpc, X = 7.93), matches what the gas pattern hands the solver on all 720 harmonics to
+  6e-15; T = ½ at k h = 1; every factor under R/(X h) = 2.82. Every birth is at the midpoint of the widest gap among
+  all chains of lower number crossing its ring, the pinned and the bar's included, to 9e-16 on 300 draws a template
+  (ties between equal gaps, which the rule itself makes, fall by rounding).
+- **The record misjudged a prediction.** The "Σf at 8 kpc 2.07" set against the gate's 0.6–0.9 was the sum of the
+  first 128 harmonics; as `main` defined the sum, m = 2…6, it is **0.588** (3.27 over all 720): like for like the
+  prediction all but held. 82 % of the forcing sits beyond m = 6 — narrow pieces, windows cut square, and the
+  factor's asymptote R/(X h) on every high harmonic, where the razor-thin form would give 118. The bound f_m ≤ ĉ_m
+  R/(X h) holds with ĉ_m the pieces' summed |ĉ_m(j)| and fails by up to 6 % on the composed field's own, through
+  cancellation.
+- *Verified besides:* layer off bit-identical on 3 132 fields in nine runs; ring means 1 to 3e-16 and 1e-13 on 100
+  galaxies; no crossing between chains on 900 draws; the pinned pieces on Reid's formula to 5e-15 kpc and digit for
+  digit against the reading; B divides by nothing realised; the reader is the law on the gas pattern's point
+  function to 2e-4, each term's mean 1 to 5e-5 at a join, two kinks, a mid-gap ring and inside the bar; per-region
+  determinism at levels 0–3 on cells of its own choosing (one holding a join, two on a mid-gap ring); every
+  malformed pin tried refused; I3; one reader of the switch; nothing of checkpoint 4.
+- **Blocker, as expected:** the suite does not collect (six modules import what was retired) — the re-pins' work, in
+  hand.
+- **Found: a chain can cross itself.** The census checks a new piece against other chains only; Norma's low-β end is
+  an inner end, and in 6 of 300 texture seeds its continuation draws a small negative pitch and crosses Norma's own
+  19.5° stretch. And a continuation can start inside the bar's half-length (Norma's and Scutum–Centaurus's inner
+  ends, 3.57 and 3.63 kpc).
+- **Found: the amplitude where only newborn chains cross a ring.** With the count a sum of taper weights, a ring
+  crossed only by chains that have just begun has N far under one: on the bare default galaxy just past the bar's
+  end N = 0.015 and B = 4.73, the arms' excess 1.64 against 0.50 at 8 kpc — **a knot three times the arms at each
+  end of the bar**; over 50 seeds the per-galaxy maximum of realised over budgeted ring power has a median of 3.15
+  (Milky Way template), at most 9.0, which the pinned percentiles hid.
+- *Cost, idle (main → the third pass):* the arm pattern 0.16 → 0.71 s (0.6 s of it the disclosed ring-power check),
+  the gas pattern 0.56 → 0.92 s, `region: whole disc` 1.57 → 3.57 s, `clouds: whole disc` 1.45 → 2.97 s, `bright:
+  whole disc` 5.09 → 10.44 s, `render: whole, rgb` 3.00 → 5.53 s. After two recursions 7 and 11 gaps of the carried
+  map still misplace over 1 %, where continued loci cross between rings and the map folds.
+
+**A fourth follow-up to the gate (Fable; nothing read, nothing run).** "The record is corrected first: like for like
+(m = 2..6, as `main` defines the sum) Σf at 8 kpc is 0.588 and my 0.6–0.9 all but held; the 2.07 and 3.27 are sums
+over 128 and 720 harmonics and are recorded as what they are." The bound's sentence: "f_m ≤ ĉ_m R/(X h) with ĉ_m the
+pieces' summed |ĉ_m(j)|, the composition's own, not the composed field's |ĉ_m|, which cancellation between pieces
+makes smaller".
+1. *No chain crosses any chain:* "A drawn piece ends where it meets any chain's locus, its own chain's non-adjacent
+   pieces included; the chain ends there, joined, as D2. A pinned chain is continued only from an end that lies at
+   or outside the bar's half-length, in the sense that leaves the measured range — outward from its outer end,
+   inward from its inner end and no further than a; an end inside the bar's half-length is not continued … a chain
+   that crosses itself is a crossing, and the budget's taper says no arm lives inside a, for continuations as for
+   births."
+2. *The count's floor:* "On a ring crossed by any chain the count is N = max(1, Σ taper weights of the crossing
+   chains), so B ≤ √(budget/v) on every ring; a lone newborn or ending chain's excess goes to zero linearly in its
+   weight; N is continuous through 1. On rings where Σw < 1 the realised power falls under the budget by
+   construction, declared, and is recorded." The integer count "is refused: it steps at every birth and end, which
+   S1 was ruled to remove … Nothing is clipped; the saturation stays as it is." Its gate: each chain's amplitude
+   B·w_c ≤ √(budget/v) on every ring and seed; the per-galaxy maximum of realised over budgeted ring power published
+   beside the percentiles. Its predictions: that maximum under 1.5 on both templates; the end-of-bar excess at most
+   the arms' own at 8 kpc; `ngc_4414`'s B at 0.11 kpc under √(budget/v) there.
+3. *The rest:* the disclosed ring-power check to a stage of its own (no number changes), the corrected about text,
+   the recorded gaps and the cost as read "are all right". "Because the fourth and fifth passes change the published
+   field after the reviewer's pass, the reviewer takes one more pass over that diff … before the re-pins; then the
+   frames; then the close. Told to the owner with the rest: the end-of-bar knots were the count's, found by the
+   reviewer, and are gone by a floor of one arm, not a number."
