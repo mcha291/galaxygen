@@ -43,23 +43,28 @@ middle, the piece is under e^{−π²/8ς²} of its height wherever its window i
 :meth:`Pieces.unwrapped`'s docstring). A piece of pitch exactly 0 is an arc of its extent at its start's radius,
 running in the trailing sense.
 
-**The window along it, W** (D219 item 1; the first follow-up's item 1; the second's items 2 and 3). 1 within the
-extent 0 ≤ t ≤ T and 0 outside it, **and tapered linearly to zero over one width at a chain's two free ends** -
-"the taper is a chain's two ends, over one width each; a chain is continuous through its kinks". So the taper is
-the chain's, not the piece's: a point's distance to a free end is taken *along the chain*, through its kinks -
-R (t + T_before) to the chain's start and R (T − t + T_after) to its end, T_before and T_after the lengths of the
-chain's pieces before and after this one - and W = min(1, that distance over the width at the point's radius),
-the lesser of the two ends'. An end of a piece at which another piece of its chain stands has no taper (the
-window there is cut square across the piece, at t = 0 or T); **nor has an end joined to another chain** (the
-second follow-up, item 2: "a drawn piece that meets another chain ends there, joined, without taper"; the table's
-``arm_piece_join`` says which). The taper is a declared placeholder: no taper length is measured (a debt).
+**The chain's locus** (the gate's third follow-up to D219, item 1, quoted whole in :meth:`ArmPattern._chains`).
+Since the fourth pass a piece is not read alone: **a chain's excess at a point is the Gaussian of the point's
+distance to the chain's polyline** in the log-polar plane - the perpendicular distance to the nearest piece where
+the point's foot falls inside that piece, the distance to the nearest piece end otherwise - times the taper along
+the chain at its free ends, read at the arc length to the point's foot. So a kink is rounded on the outside and
+counted once on the inside, a joined end is a round cap of the piece's own width that sinks into the ridge it
+meets, a free end tapers to nothing over one width (the taper is a declared placeholder: no taper length is
+measured, a debt), and far from any kink it is the third pass's d exactly. The window W of the third pass - the
+piece cut square across at a kink and at a join - is gone with the square edges it made. A point's distance to a
+piece is taken with the piece at the image within half a turn of its middle and each end at its nearest image
+(:meth:`ArmPattern._candidate`); a chain is its pieces' least.
 
-**The field** (D219 item 4). c(R, φ) = 1 + [bar's body] + a(R) Σ_j (E_j(R, φ) − ⟨E_j⟩(R)): every piece within
-reach of the radius, each less its own mean round the ring there, so **the ring's mean is 1 exactly** at every
-radius and nothing is divided. ⟨E_j⟩(R) is the exact integral round the ring (:func:`gauss_linear`: on each
-stretch of the window that is linear in the azimuth, a Gaussian times a line - by the error function, or by an
-eight-point Gauss rule where the stretch is under half a dispersion's worth of argument, each exact to rounding).
-a(R) is the pieces' one amplitude on the ring:
+**The field** (D219 item 4). c(R, φ) = 1 + [bar's body] + a(R) Σ_c (E_c(R, φ) − ⟨E_c⟩(R)): every chain with a
+piece within reach of the radius, each less its own mean round the ring there, so **the ring's mean is 1
+exactly** at every radius and nothing is divided. Where two chains meet they add: "a branch is two arms' material
+in one place" (the third follow-up); the join's excess is bounded by nothing but the saturation. ⟨E_c⟩(R) is the
+exact integral round the ring (:class:`Stretches`): the ring is cut into stretches of azimuth on each of which one
+feature of the polyline - a piece's perpendicular or a piece's end - is the nearest, found by every azimuth at
+which two features within reach are equidistant, and on each stretch the excess is a line (the taper) times a
+Gaussian in the azimuth, :func:`gauss_linear`'s integrand - by the error function, or by an eight-point Gauss
+rule where the stretch is under half a dispersion's worth of argument, each exact to rounding. a(R) is the
+chains' one amplitude on the ring:
 
 - *The count, continuous* (the second follow-up, item 3): "The count on a ring is the sum over crossing chains of
   their taper weights, so B and the bounded width are continuous in R and a lone tapering chain's amplitude goes
@@ -90,21 +95,24 @@ Between the grid's rings the budget (with the bar's taper taken back out, and pu
 radius) and the width law are read linearly - the width law is linear in R, so that is the law itself - and the
 count, the bounded width and B are made at the point's own radius.
 
-**Which pieces a radius reads.** A piece's Gaussian is not cut off: a ring a few widths inside or outside a
-nearly circular piece's radius holds its flank. A radius reads every piece whose window comes within
-:data:`REACH` dispersions of it - |d'| ≥ (distance in ln R past the piece's nearer end)/c_p wherever the window is
-open, so the test is exact - and a piece further off, under e^{−40.5} of its height, is not summed. The pieces
-are summed in the table's order, one after another, so a point reads the same bits in any batch.
+**Which pieces a radius reads.** A chain's Gaussian is not cut off: a ring a few widths inside or outside a
+nearly circular piece's radius holds its flank. A radius reads every piece whose nearest point comes within
+:data:`REACH` dispersions of it - a piece's nearest point to a ring it does not cross is its nearer end, at the
+distance in ln R past that end, so the test is exact - and a piece further off, under e^{−40.5} of its height, is
+not read. The chains are summed in the table's order, one after another, so a point reads the same bits in any
+batch.
 
 **On the grid as exact cell means** (rule 5; D216). :meth:`ArmPattern.contrast_at` is the point function. The
 published field holds the mean of the same function over each of the grid's φ cells on each ring - each
 piece's integral over the cell by the same closed forms as its ring mean, so a ring's cells average to 1 to
 rounding on any grid - with the body's exact cell means as before.
 
-**On the solver's cells** (the second follow-up, item 1): a ring's profile of the pieces on the gas solver's
-cells' centres is what the gas's forcing is transformed from (``gas_pattern``), and the realised ring variance
-and its split by arm number - the **disclosed check** of D219 item 4, published for m = 2 … 6 beside the law's
-A_m², read, never tuned - are that profile's, by the same quadrature.
+**On the solver's cells** (the second follow-up, item 1): a ring's profile of the chains on the gas solver's
+cells' centres is what the gas's forcing is transformed from (``gas_pattern``) - each chain's ridge with the
+pitch of its piece nearest the ring, "the forcing's pitch for a ring's term is the nearest piece's" - and the
+realised ring variance and its split by arm number - the **disclosed check** of D219 item 4, published for m =
+2 … 6 beside the law's A_m² by the ``arm_ring_power`` stage, read, never tuned - are that profile's, by the same
+quadrature.
 
 **What is not here.** The bar's body is ``pattern.BarBody``, unchanged. The gas's answer to the pieces is
 ``gas_pattern``'s, which asks this pattern for each ring's pieces. Nothing here draws: the census is the layer's.
@@ -740,15 +748,6 @@ class Pieces:
         return middle + np.mod(self.sense[slots] * (phi - self.phi_start[slots]) - middle + math.pi, TWO_PI) - math.pi
 
 
-def window(t: np.ndarray, length: np.ndarray, before: np.ndarray, after: np.ndarray, taper: np.ndarray) -> np.ndarray:
-    """W(t): a piece's window along itself (the module's docstring) - 1 within 0 ≤ t ≤ T and 0 outside, tapered
-    linearly over ``taper`` (one width, in the plane's unit: w/R) from the chain's free ends, which lie ``before``
-    the piece's start and ``after`` its end along the chain (infinite: no free end that side, no taper)."""
-    with np.errstate(invalid="ignore", over="ignore"):
-        inside = np.minimum(1.0, np.minimum((t + before) / taper, (length - t + after) / taper))
-        return np.where((t >= 0.0) & (t <= length), np.maximum(inside, 0.0), 0.0)
-
-
 # --------------------------------------------------------------------------------------------------------------
 # The declarations of the composing stage
 # --------------------------------------------------------------------------------------------------------------
@@ -1277,8 +1276,23 @@ class ArmPattern:
         """For each run of ``laid`` (one chain within reach of a radius), the chain's excess E at the azimuths
         ``phi`` (n, m) of each radius: yields ``(k, E)`` with ``k`` the run's last slot, E (n, m) 0 on the rows the
         run is not live on. E = the taper at the foot times the Gaussian of the least squared distance over the
-        chain's pieces within reach (a kink rounded on the outside, counted once on the inside; a joined end a
-        round cap; a free end tapered to nothing)."""
+        chain's pieces within reach (:meth:`_candidate`).
+
+        **The gate's third follow-up to D219, item 1, which this defines:** "A chain's excess at a point is the
+        Gaussian of the point's distance to the chain's locus - the polyline of its pieces in the log-polar plane:
+        the perpendicular distance to the nearest piece where the point's foot falls inside that piece, the
+        distance to the nearest piece end otherwise - times the taper along the chain at its free ends; the width
+        the bounded law's at the point's R. A kink is rounded on the outside and counted once on the inside; a
+        joined end is a round cap of the piece's own width that sinks into the ridge it meets; far from any kink
+        it is the third pass's d exactly. A ring's profile, mean, variance and forcing are the same quadrature as
+        now; the forcing's pitch for a ring's term is the nearest piece's." Where two chains meet "they add: a
+        branch is two arms' material in one place ... the join's local excess is read and recorded, bounded by
+        nothing but the ring's saturation. Nothing physical is discontinuous there, so no square edge may remain
+        anywhere: asserted by a continuity test across every kink and join on both templates."
+
+        The arc length the taper reads is the arc length to the point's foot on the polyline (the lead's note);
+        on the inside of a kink within one width of a free end the foot's arc length differs by piece and so the
+        taper may - the continuity test across every kink of both templates found no such jump."""
         best = weight = None
         inv2 = (laid.inv * laid.inv)[:, None]
         for k in range(laid.slots.shape[1]):
