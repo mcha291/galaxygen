@@ -98,8 +98,10 @@ def test_the_model_is_reproducible_across_processes_too(model):
     differing = sorted({n for r in seen[1:] for n, v in r["fields"].items() if seen[0]["fields"].get(n) != v})
     assert differing == [], differing
     assert len(seen[0]["fields"]) >= 91
-    # S59 (D218): the winding's segment table is among what is hashed - a table column is a field like any other.
-    assert {"arm_segment_extent", "arm_segment_pitch_deviate"} <= set(seen[0]["fields"])
+    # S59 (D218): the layer's table is among what is hashed - a table column is a field like any other.
+    # S60 (D219 item 7): was the winding's two segment columns - the table is the census of arm pieces.
+    assert {"arm_piece_chain", "arm_piece_order", "arm_piece_start_radius", "arm_piece_start_azimuth", "arm_piece_pitch",
+            "arm_piece_extent", "arm_piece_pinned", "arm_piece_join"} <= set(seen[0]["fields"])
 
 
 def test_the_spec_checks_reproducibility_across_processes_too(prod):
