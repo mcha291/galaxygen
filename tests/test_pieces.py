@@ -320,35 +320,116 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         assert np.ptp(arc) < 1e-15 and float(arc[0]) == pytest.approx(math.exp(-0.5 * (5.25 * math.log(5.25 / 5.0) / (HAND_FWHM / FWHM)) ** 2), rel=1e-14)
 
 
-def test_a_joined_end_is_cut_square_and_a_chain_tapers_along_itself():
-    """The window along a piece (the gate's first follow-up, item 1, and its second, item 2): "the taper is a
-    chain's two ends, over one width each; a chain is continuous through its kinks"; "a drawn piece that meets
-    another chain ends there, joined, without taper". Two pieces of one chain joined at a kink, the outer one
-    ending at a join: by hand, the first piece's window rises from the chain's free start over one width and is
-    1 at the kink; the second's is 1 from the kink to its joined end and 0 past it; and the distance to the free
-    end runs along the chain through the kink."""
-    first = (0.0, 0.0, 5.0, 0.3, 20.0, 0.05, 0.0, 0.0)   # short: 0.27 kpc long at 5 kpc, under one width
-    r_kink = 5.0 * math.exp(0.05 * math.tan(math.radians(20.0)))
-    second = (0.0, 1.0, r_kink, 0.35, 10.0, 0.8, 0.0, 2.0)  # ... its outer end meets another chain
-    columns = [np.array(c) for c in zip(first, second)]
+def hand_segment(r: float, phi: np.ndarray, start_radius: float, start_azimuth: float, pitch_deg: float, extent: float, before: float, after: float):
+    """**This file's own arithmetic of the gate's third follow-up**: (the squared distance in the plane's unit from
+    the points (r, phi) to one piece as a segment of its chain's polyline, the arc length along the chain at the
+    nearest point) - "the perpendicular distance to the nearest piece where the point's foot falls inside that
+    piece, the distance to the nearest piece end otherwise" - the piece seen at the image within half a turn of its
+    middle, each end at its nearest image; ``before``/``after`` the chain's length before the piece's start and after
+    its end (infinite: that side joined)."""
+    p = math.radians(pitch_deg)
+    way = 1.0 if math.tan(p) >= 0.0 else -1.0
+    s, c = abs(math.sin(p)), abs(math.cos(p))
+    length = extent / c
+    x = math.log(r / start_radius)
+    y = way * (np.asarray(phi, dtype=float) - start_azimuth)
+    y = 0.5 * extent + np.remainder(y - 0.5 * extent + math.pi, 2.0 * math.pi) - math.pi
+    t, d = x * s + y * c, x * c - y * s
+    inside = (t >= 0.0) & (t <= length)
+    best, arc = np.where(inside, d * d, np.inf), np.where(inside, before + t, 0.0)
+    for at_y, at_t in ((0.0, 0.0), (extent, length)):
+        dy = y - at_y
+        dy = dy - 2.0 * math.pi * np.round(dy / (2.0 * math.pi))
+        dx = x - at_t * s
+        dd = dx * dx + dy * dy
+        nearer = dd < best
+        best, arc = np.where(nearer, dd, best), np.where(nearer, before + at_t, arc)
+    return best, arc
+
+
+def hand_polyline(r: float, phi: np.ndarray, rows: list, fwhm: float, joined_outer: bool = False) -> np.ndarray:
+    """E of a chain by hand: the Gaussian of the least distance over its pieces (``rows``: start radius, start
+    azimuth, pitch, extent, joined end to start) times the taper - over one width from each free end, read at the
+    arc length of the nearest point; the outer end joined where ``joined_outer``."""
+    lengths = [row[3] / abs(math.cos(math.radians(row[2]))) for row in rows]
+    total = sum(lengths)
+    best, arc = np.full(np.shape(phi), np.inf), np.zeros(np.shape(phi))
+    for k, row in enumerate(rows):
+        d2, a = hand_segment(r, phi, *row, sum(lengths[:k]), math.inf if joined_outer else sum(lengths[k + 1:]))
+        nearer = d2 < best
+        best, arc = np.where(nearer, d2, best), np.where(nearer, a, arc)
+    w = fwhm / r
+    taper = np.minimum(1.0, np.minimum(arc / w, (math.inf if joined_outer else (total - arc)) / w))
+    return taper * np.exp(-best / (2.0 * (fwhm / FWHM / r) ** 2))
+
+
+def test_two_pieces_at_a_kink_and_a_joined_end_by_hand():
+    """The gate's third follow-up, item 1, **derived here independently of the module** (:func:`hand_segment`,
+    :func:`hand_polyline`): a chain of two pieces - 20 degrees over 0.5 rad from (5 kpc, 0.3 rad), then a kink to
+    5 degrees over 0.6 rad, the outer end joined to another chain. At a point in the kink's outside wedge the
+    distance is to the corner, inside it to the nearer piece; the joined end is a round cap of the piece's own
+    width at full height; the taper rises from the chain's free start along the chain, through the kink. The
+    chain's value at points, its mean round the ring (against this file's rule of four million midpoints) and the
+    exact means over cells, on rings below the kink, through it and above it; and the ring's count is the chain's
+    taper weight where its locus crosses, from either side of the kink."""
+    x1 = math.log(5.0) + 0.5 * math.tan(math.radians(20.0))
+    r_kink = math.exp(x1)
+    rows = [(5.0, 0.3, 20.0, 0.5), (r_kink, 0.8, 5.0, 0.6)]
+    table = [(0.0, 0.0, 5.0, 0.3, 20.0, 0.5, 0.0, 0.0), (0.0, 1.0, r_kink, 0.8, 5.0, 0.6, 0.0, 2.0), (1.0, 0.0, *HAND_CARRIER, 0.0, 0.0)]
+    columns = [np.array(c) for c in zip(*table)]
     p = pc.Pieces(*columns[:7], turn=1.0, join=columns[7])
-    assert p.joins == 1 and p.before[0] == 0.0 and math.isinf(p.after[0]) and math.isinf(p.after[1])
-    assert p.before[1] == pytest.approx(0.05 / math.cos(math.radians(20.0)), rel=1e-15) and p.after[0] == p.after[1]
+    assert p.joins == 1 and p.before[0] == 0.0 and math.isinf(p.after[1]) and p.after[0] == p.after[1] and p.link_end[0] == 1 and p.link_start[1] == 0
     stars = pc.ArmPattern(HAND_R, np.full(HAND_R.size, HAND_BUDGET), np.full(HAND_R.size, 2.0), np.full(HAND_R.size, HAND_FWHM), p, float("nan"), HAND_DISC_PITCH, float("nan"))
-    r = 0.5 * (r_kink + r_kink * math.exp(0.8 * math.tan(math.radians(10.0))))
+    fine = -math.pi + (np.arange(4_000_000) + 0.5) * (2.0 * math.pi / 4_000_000)
+    carrier = [HAND_CARRIER]
+    worst = {"point": 0.0, "mean": 0.0, "cells": 0.0}
+    for r in (4.9, 5.1, r_kink * 0.999, r_kink, r_kink * 1.001, 5.3, 5.5, 5.6):
+        laid = stars.laid(np.array([r]))
+        k = int(np.flatnonzero(laid.last[0] & np.isin(laid.slots[0], (0, 1)))[0])
+        phi = np.concatenate([np.linspace(0.0, 1.8, 181), [0.8 + 0.2 * math.pi, 0.5, 2.9, -2.0]])
+        want = hand_polyline(r, phi, rows, HAND_FWHM, joined_outer=True)
+        worst["point"] = max(worst["point"], float(np.abs(chain_at(stars, laid, k, phi) - want).max()))
+        on_ring = hand_polyline(r, fine, rows, HAND_FWHM, joined_outer=True)
+        worst["mean"] = max(worst["mean"], abs(float(laid.mean[0, k]) - float(on_ring.mean())))
+        edges = np.linspace(-math.pi, math.pi, 41)
+        other = hand_polyline(r, fine, carrier, HAND_FWHM)
+        by_rule = (laid.effective[0] * ((on_ring - on_ring.mean()) + (other - other.mean()))).reshape(40, -1).mean(axis=1)
+        cells = stars.arm_cell_means(np.array([r]), edges)[0]
+        worst["cells"] = max(worst["cells"], float(np.abs(cells - by_rule).max()))
+        assert abs(cells.sum()) < 1e-14
+    assert worst["point"] < 1e-13 and worst["mean"] < 1e-11 and worst["cells"] < 1e-11, worst
+    # The kink by hand, on the ring a little above it: outside the kink (the side the chain turns away from) the
+    # distance is to the corner, inside it to the nearer piece - and the module reads the same.
+    r = r_kink * math.exp(0.0005)
+    x = math.log(r / r_kink)
+    for dphi, outside in ((-0.0001, True), (0.001, False)):  # (the wedge is as narrow as the turn, 15 degrees: at dx = 5e-4 it spans dphi -1.8e-4 to -4.4e-5)
+        phi = np.array([0.8 + dphi])
+        d_first, _ = hand_segment(r, phi, *rows[0], 0.0, math.inf)
+        d_second, _ = hand_segment(r, phi, *rows[1], 0.0, math.inf)
+        corner = x * x + dphi * dphi
+        if outside:
+            assert float(min(d_first[0], d_second[0])) == pytest.approx(corner, rel=1e-12)
+        else:
+            assert float(min(d_first[0], d_second[0])) < corner * (1.0 - 1e-6)
+        laid = stars.laid(np.array([r]))
+        k = int(np.flatnonzero(laid.last[0] & np.isin(laid.slots[0], (0, 1)))[0])
+        assert float(chain_at(stars, laid, k, phi)[0]) == pytest.approx(math.exp(-min(d_first[0], d_second[0]) / (2.0 * (HAND_FWHM / FWHM / r) ** 2)), rel=1e-12)
+    # The joined end: a round cap at full height - at a point past the end along the piece's line, the value is the
+    # Gaussian of the distance to the end, not 0 as a square window gave.
+    r_end = r_kink * math.exp(0.6 * math.tan(math.radians(5.0)))
+    r = r_end * math.exp(-0.002)  # (the carrier chain reaches 6.17 kpc; this ring, 6.31 kpc, is still crossed by it and lies in the cap region, t > T, ahead of the end in azimuth)
+    phi = np.array([0.8 + 0.6 + 0.01])
     laid = stars.laid(np.array([r]))
-    k = int(np.flatnonzero(laid.slots[0] == 1)[0])
-    phi = 0.35 + np.array([0.02, 0.1, 0.4, 0.79, 0.83, 1.0])
-    # By hand: the second piece's own window is square at both its ends (a kink, a join) ...
-    square = hand_piece(r, phi, r_kink, 0.35, 10.0, 0.8, HAND_FWHM, free=(False, False))
-    # ... times the chain's rise from its free start, which lies the first piece's length before the kink.
-    p10 = math.radians(10.0)
-    s = r * (math.log(r / r_kink) * math.sin(p10) + (phi - 0.35) * math.cos(p10)) + r * 0.05 / math.cos(math.radians(20.0))
-    want = square * np.minimum(1.0, s / HAND_FWHM)
-    assert np.abs(stars._piece(laid, k, phi[None, :])[0] - want).max() < 1e-14 and want[4] == 0.0 and want[3] > 0.0
+    k = int(np.flatnonzero(laid.last[0] & np.isin(laid.slots[0], (0, 1)))[0])
+    d_end = math.log(r / r_end) ** 2 + 0.01 ** 2
+    _, arc = hand_segment(r, phi, *rows[1], 0.0, math.inf)
+    assert float(chain_at(stars, laid, k, phi)[0]) == pytest.approx(math.exp(-d_end / (2.0 * (HAND_FWHM / FWHM / r) ** 2)), rel=1e-12) and arc[0] == pytest.approx(0.6 / math.cos(math.radians(5.0)))
     # The count: the chain's taper weight at the kink is the first piece's length over the width, from either side.
-    below, above = stars.count_at(np.array([r_kink * (1.0 - 1e-12), r_kink * (1.0 + 1e-12)]))
-    assert below == pytest.approx(r_kink * 0.05 / math.cos(math.radians(20.0)) / HAND_FWHM, rel=1e-9) and above == pytest.approx(below, rel=1e-9)
+    # (The carrier is inside its own end taper here: its free end at 6.17 kpc is 0.49 kpc along it from this ring.)
+    carrier_end = HAND_CARRIER[0] * math.exp(HAND_CARRIER[3] * math.tan(math.radians(HAND_CARRIER[2])))
+    carrier_weight = min(1.0, math.log(carrier_end / r_kink) / math.sin(math.radians(HAND_CARRIER[2])) * r_kink / HAND_FWHM)
+    below, above = stars.count_at(np.array([r_kink * (1.0 - 1e-12), r_kink * (1.0 + 1e-12)])) - carrier_weight
+    assert below == pytest.approx(min(1.0, r_kink * 0.5 / math.cos(math.radians(20.0)) / HAND_FWHM), rel=1e-9) and above == pytest.approx(below, rel=1e-9)
 
 
 def test_the_thickness_factor_by_hand():
@@ -1366,6 +1447,92 @@ def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template
 
 
 EXPECTED_STEPS: dict = {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+
+
+# --- no square edge anywhere: continuity across every kink and join (the gate's third follow-up) ---------------------
+
+
+def vertices_of(p: pc.Pieces) -> list:
+    """Every kink and join of the census as (ln R, azimuth, the piece whose end it is, the piece whose start, kind):
+    a kink is an end at which a piece of the same chain stands (``link_end``); a join is an end of a drawn piece
+    that meets another chain (``join``)."""
+    out = []
+    for j in range(p.count):
+        if p.link_end[j] >= 0:
+            out.append((float(p.x_end[j]), float(p.phi_end[j]), j, int(p.link_end[j]), "kink"))
+        if p.join[j] == pc.JOIN_OUTER:
+            out.append((float(p.x_end[j]), float(p.phi_end[j]), j, -1, "join"))
+        if p.join[j] == pc.JOIN_INNER:
+            out.append((float(p.x_start[j]), float(p.start_azimuth[j]), -1, j, "join"))
+    return out
+
+
+@pytest.mark.parametrize("template", ("milky_way", "ngc_4414"))
+def test_no_square_edge_across_any_kink_or_join(prod, template):
+    """The gate's third follow-up, item 1: "Nothing physical is discontinuous there, so no square edge may remain
+    anywhere: asserted by a continuity test across every kink and join on both templates." Around every kink and
+    join of the census (:func:`vertices_of`), on rings 0.3 width below, through and above the vertex, the pieces'
+    field (``arms_at``, the body left out: its interpolant is its own) is sampled along the ring across the
+    vertex, across the kink's bisector and across the lines the third pass's windows were cut square on (each
+    piece's perpendicular at its end), at a spacing of a ten-thousandth of the width; the largest change between
+    neighbouring samples must be under **the Lipschitz bound derived from the amplitude and the width**, not one
+    fitted: a chain's excess is a taper of slope 1/w in the arc length times a Gaussian of dispersion σ whose
+    slope is at most 1/(σ√e), so along the ring |ΔE_c| ≤ (1/w + 1/(σ√e)) R Δφ and the field changes by at most the
+    amplitude times the chains in reach times that; and the change must shrink with the spacing (the largest
+    change at half the spacing under three quarters of it - a jump would not shrink). **The ring-to-ring change**
+    of the stellar profile over 5-13 kpc is read in the predictions (``largest ring-to-ring change 5-13``).
+
+    As read on the fourth pass: the largest change over a spacing is a small fraction of the bound on both
+    templates (the record below), and halves with the spacing."""
+    o = template_run(prod, template)
+    F, R = o.fields, o.grid.R
+    sp = compose.stellar_pattern(F, R)
+    p = sp.pieces
+    vertices = vertices_of(p)
+    assert vertices, "a template with no kink and no join tests nothing"
+    worst = {"share of bound": 0.0, "ratio at half spacing": 0.0, "kinks": 0, "joins": 0}
+    for x_v, phi_v, ended, started, kind in vertices:
+        worst[kind + "s"] += 1
+        r_v = math.exp(x_v)
+        w_v = float(sp.width_at(np.array([r_v]))[0])
+        for dx in (-0.3, 0.0, 0.3):
+            r = r_v * math.exp(dx * w_v / r_v)
+            x = math.log(r)
+            laid = sp.laid(np.array([r]))
+            if not laid.live.any() or laid.effective[0] <= 0.0:
+                continue
+            w, a = float(laid.width[0]), float(laid.effective[0])
+            sigma = w / FWHM
+            chains = int(laid.last[0].sum())
+            bound = a * chains * (1.0 / w + 1.0 / (sigma * math.sqrt(math.e)))  # per kpc along the ring
+            # The azimuths to centre on: the vertex, and each piece's old square edge (its perpendicular at the
+            # end or start) where it crosses this ring.
+            centres = [phi_v]
+            for j, at_end in ((ended, True), (started, False)):
+                if j < 0:
+                    continue
+                xj = x - p.x_start[j]
+                t = p.length[j] if at_end else 0.0
+                centres.append(float(p.phi_start[j] + p.sense[j] * (t - xj * p.sin_abs[j]) / p.cos_abs[j]))
+            for centre in centres:
+                for spacing, key in ((1e-4, "full"), (5e-5, "half")):
+                    dphi = spacing * w / r
+                    phi = centre + dphi * np.arange(-int(0.5 * w / r / dphi), int(0.5 * w / r / dphi) + 1)
+                    v = sp.arms_at(np.array([r]), phi)
+                    change = float(np.abs(np.diff(v)).max())
+                    if key == "full":
+                        full = change
+                        worst["share of bound"] = max(worst["share of bound"], change / (bound * r * dphi))
+                    else:
+                        worst["ratio at half spacing"] = max(worst["ratio at half spacing"], change / full if full > 1e-13 else 0.0)
+    assert worst["share of bound"] <= 1.0 and worst["ratio at half spacing"] <= 0.75, worst
+    record = (worst["kinks"], worst["joins"], round(worst["share of bound"], 3), round(worst["ratio at half spacing"], 3))
+    # (kinks, joins, the largest change over a spacing as a share of the Lipschitz bound, the largest ratio of the
+    #  change at half the spacing to that at the full spacing)
+    assert record == EXPECTED_CONTINUITY[template], repr(record)
+
+
+EXPECTED_CONTINUITY: dict = {"milky_way": (38, 7, 0.072, 0.5), "ngc_4414": (0, 2, 0.049, 0.5)}
 
 
 # --- per-region determinism (D60) on the pattern of pieces ---------------------------------------------------------------

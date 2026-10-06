@@ -702,6 +702,31 @@ class Pieces:
         azimuth = self.phi_start[slots] + share * (self.phi_end[slots] - self.phi_start[slots])
         return live, azimuth, self.sin_abs[slots]
 
+    def along(self, slots: np.ndarray, x_to: np.ndarray) -> np.ndarray:
+        """The azimuth at ln R = ``x_to`` of **the chain** of each slot's piece, followed along its polyline from
+        that piece: outward through the pieces joined end to start while the target lies past a piece's end,
+        inward through those joined start to end while it lies before a piece's start; where the chain ends, or
+        turns back in radius (a measured arm that kinks back), the last piece's own line continued (the gas's
+        carried map, D219 item 6: "along the pieces' loci" - since the fourth pass the chains'). ``x_to``
+        broadcasts against ``slots``; an empty slot reads azimuth 0."""
+        slots, x_to = np.broadcast_arrays(np.asarray(slots), np.asarray(x_to, dtype=float))
+        at = slots.copy()
+        for _ in range(self.count):
+            x0, x1 = self.x_start[at], self.x_end[at]
+            live = at < self.count
+            out_next = self.link_end[at]
+            outward = live & (x_to > x1) & (out_next >= 0) & ~self.link_end_is_end[at] & (self.x_end[np.maximum(out_next, 0)] > x1)
+            in_next = self.link_start[at]
+            inward = live & (x_to < x0) & (in_next >= 0) & self.link_start_is_end[at] & (self.x_start[np.maximum(in_next, 0)] < x0)
+            step = np.where(outward, out_next, np.where(inward, in_next, at))
+            if np.array_equal(step, at):
+                break
+            at = step
+        x0, x1 = self.x_start[at], self.x_end[at]
+        with np.errstate(invalid="ignore", divide="ignore"):
+            share = np.where((at < self.count) & np.isfinite(x1) & np.isfinite(x_to) & (x1 > x0), (x_to - x0) / np.where(x1 > x0, x1 - x0, 1.0), 0.0)
+        return self.phi_start[at] + share * (self.phi_end[at] - self.phi_start[at])
+
     def unwrapped(self, slots: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """ψ of each slot's piece at azimuths ``phi`` (broadcast against ``slots``): the azimuth from the piece's
         start in the piece's own sense, **within half a turn of the piece's middle**, ψ ∈ [Δβ/2 − π, Δβ/2 + π) -
