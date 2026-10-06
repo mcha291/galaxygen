@@ -13,7 +13,7 @@ import time
 import numpy as np
 import pytest
 
-from galaxy.stages.pattern import ArmPattern
+from galaxy.stages.pieces import ArmPattern  # S60 (D219): was galaxy.stages.pattern
 from galaxy.run import run
 from galaxy.stages.systems import (
     CATALOGUE_SAMPLE,
