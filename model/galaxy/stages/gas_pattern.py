@@ -133,8 +133,18 @@ equation, the frame, the solver, the bar's lanes and the composition with them a
   ring and at the point's radius - in place of the common winding's one shift. The carried profile is taken
   over its own mean round the ring at the point's radius (exact, and 1 at the ring's own radius), so each
   ring's term is a redistribution at every radius: the builder's choice where the ruling is silent. A point
-  blends its two rings' carried profiles linearly in R, as before. What that misplaces against the law solved
-  directly between two rings is measured and pinned in ``tests/test_pieces.py``.
+  blends its two rings' carried profiles linearly in R, as before. **Dividing the carried profile by its own
+  exact mean at the point's radius is part of the map's definition** (the gate's first follow-up, item 6: "a
+  non-rigid map keeps no mean; I2 needs it ... it is not the forbidden division of a published field"): the mean
+  is the exact integral of the carried interpolant - on each stretch between two anchors the map is linear -
+  and sectors that tile a ring average to 1 to 5e-14 at any radius (pinned in ``tests/test_pieces.py``).
+- *The rings solved between the grid's* (the same item, built at the second follow-up's order): "where the
+  mid-gap misplaced weight passes 1 %, solve a ring at the mid-gap and carry from it, recursing at most twice
+  (quartering), then record what remains; the check is that solve". The pattern's store of solved rings holds
+  the grid's and, in the gaps that need them, one at the middle and ones at the quarters; a point reads the two
+  solved rings it lies between. They are looked for the first time a radius off the grid's own rings is read.
+  What remains over 1 % is recorded in the tests: the gaps that hold a radius at which the stellar field itself
+  steps or turns over within the gap - a join, a lone chain's free end, a nearly circular piece.
 - *The disclosed check's measurements* read the same solved rings: the mask is laid where the stellar pieces'
   sum is highest, for the law's own arm number on the ring; the "mode the gas answers most strongly" is the
   harmonic of largest forcing.
@@ -224,7 +234,7 @@ _HARMONIC = np.arange(HARMONICS + 1, dtype=float)  # 0 … CELLS/2: the arm numb
 # passes 1 %, solve a ring at the mid-gap and carry from it, recursing at most twice (quartering)").
 MISPLACED_LIMIT = 0.01
 MID_GAP_DEPTH = 2
-STORE_KEYS = ("radii", "profiles", "carries", "level", "running", "turn", "grid", "grid_profiles", "grid_carries", "diagnostics", "checked")
+STORE_KEYS = ("radii", "profiles", "carries", "level", "running", "turn", "grid", "grid_profiles", "grid_carries", "diagnostics", "checked", "complete")
 _SOLUTIONS: dict[bytes, tuple[np.ndarray, _response.Diagnostics]] = {}
 _STORES: dict[bytes, dict] = {}  # the last few patterns' solved rings - the grid's and the mid-gap ones - by content
 _FORCINGS: dict[bytes, np.ndarray] = {}  # the last few patterns' forcings on their rings, by what the pattern is made of
@@ -696,7 +706,10 @@ class GasPattern:
         and the mid-gap rings'; ``profiles`` (M, CELLS); ``carries`` (M,), the rings a piece forces; ``level`` (M,),
         0 a grid ring, 1 one at a gap's middle, 2 one at a quarter; ``grid`` (R,), where each grid ring stands
         in it; ``diagnostics``, the solver's for the grid rings that carry a forcing (None where none does);
-        ``checked``, per level the radii solved for the check and what each misplaced."""
+        ``checked``, per level the radii solved for the check and what each misplaced; ``complete``, whether the
+        mid-gap rings have been looked for yet. **They are looked for the first time a radius off the grid's
+        rings is read** (:meth:`_complete`): what is read on the grid's own rings - the published fields - is the
+        same numbers with them or without, and a run that places no object does not pay for them."""
         solved = self._solved
         if "radii" in solved:
             return solved
@@ -716,38 +729,51 @@ class GasPattern:
             s, diagnostics = respond(g[carries], eps[carries])
             profiles[carries] = s
         self._store(self.R, profiles, carries, np.zeros(self.R.size, dtype=np.int64))
-        solved["diagnostics"] = diagnostics
-        checked: list[tuple[np.ndarray, np.ndarray]] = []
-        if key is not None and self.R.size > 1:
-            centres = _response.cell_centres(CELLS)
-            lower, upper = self.R[:-1], self.R[1:]
-            for depth in range(1, MID_GAP_DEPTH + 1):
-                asked = np.sort(0.5 * (lower + upper))
-                if not asked.size:
-                    break
-                direct, forced = self._solve(asked)
-                carried = self.response_at(asked[:, None], centres[None, :])
-                miss = misplaced_weight(carried, direct)
-                checked.append((asked, miss))
-                keep = miss > MISPLACED_LIMIT
-                if not keep.any():
-                    break
-                # The gaps the kept rings open: each kept middle halves its gap, and each half is checked next.
-                order = np.argsort(0.5 * (lower + upper), kind="stable")
-                low, high, middle = lower[order][keep], upper[order][keep], asked[keep]
-                store = self._solved
-                radii = np.concatenate([store["radii"], middle])
-                rank = np.argsort(radii, kind="stable")
-                self._store(radii[rank], np.concatenate([store["profiles"], direct[keep]])[rank],
-                            np.concatenate([store["carries"], forced[keep]])[rank],
-                            np.concatenate([store["level"], np.full(middle.size, depth, dtype=np.int64)])[rank])
-                lower, upper = np.concatenate([low, middle]), np.concatenate([middle, high])
-        solved["checked"] = tuple(checked)
+        solved.update(diagnostics=diagnostics, checked=(), complete=key is None or self.R.size < 2)
+        self._keep(key)
+        return solved
+
+    def _keep(self, key: bytes | None) -> None:
+        """Hold the store under its digest, the last few patterns' (:data:`SOLUTIONS_KEPT`)."""
         if key is not None:
             with _SOLUTIONS_LOCK:
-                _STORES[key] = {name: solved[name] for name in STORE_KEYS}
+                _STORES.pop(key, None)
+                _STORES[key] = {name: self._solved[name] for name in STORE_KEYS}
                 while len(_STORES) > SOLUTIONS_KEPT:
                     del _STORES[next(iter(_STORES))]
+
+    def _complete(self) -> dict:
+        """The store with its mid-gap rings: looked for once, level by level (the comment above)."""
+        solved = self._rings()
+        if solved["complete"] is not False:  # done, or being done by this very call
+            return solved
+        solved["complete"] = None
+        checked: list[tuple[np.ndarray, np.ndarray]] = []
+        centres = _response.cell_centres(CELLS)
+        lower, upper = self.R[:-1], self.R[1:]
+        for depth in range(1, MID_GAP_DEPTH + 1):
+            asked = np.sort(0.5 * (lower + upper))
+            if not asked.size:
+                break
+            direct, forced = self._solve(asked)
+            carried = self.response_at(asked[:, None], centres[None, :])
+            miss = misplaced_weight(carried, direct)
+            checked.append((asked, miss))
+            keep = miss > MISPLACED_LIMIT
+            if not keep.any():
+                break
+            # The gaps the kept rings open: each kept middle halves its gap, and each half is checked next.
+            order = np.argsort(0.5 * (lower + upper), kind="stable")
+            low, high, middle = lower[order][keep], upper[order][keep], asked[keep]
+            store = self._solved
+            radii = np.concatenate([store["radii"], middle])
+            rank = np.argsort(radii, kind="stable")
+            self._store(radii[rank], np.concatenate([store["profiles"], direct[keep]])[rank],
+                        np.concatenate([store["carries"], forced[keep]])[rank],
+                        np.concatenate([store["level"], np.full(middle.size, depth, dtype=np.int64)])[rank])
+            lower, upper = np.concatenate([low, middle]), np.concatenate([middle, high])
+        solved.update(checked=tuple(checked), complete=True)
+        self._keep(self._digest())
         return solved
 
     def _store(self, radii: np.ndarray, profiles: np.ndarray, carries: np.ndarray, level: np.ndarray) -> None:
@@ -796,7 +822,7 @@ class GasPattern:
     @property
     def mid_gap(self) -> tuple[np.ndarray, np.ndarray]:
         """(the radii of the rings kept between the grid's, their levels - 1 a gap's middle, 2 a quarter)."""
-        store = self._rings()
+        store = self._complete()
         extra = store["level"] > 0
         return store["radii"][extra], store["level"][extra]
 
@@ -979,8 +1005,12 @@ class GasPattern:
         """(lower ring, upper ring, share of the upper) for each radius, **in the store**: linear in R between the
         two solved rings a radius lies between - the grid's, or a mid-gap one where the gap holds one - the end
         ring alone beyond the grid (item 9). At a solved ring's radius the share is 0 or 1 and the ring is its
-        own."""
-        return ring_bracket(self._rings()["radii"], R)
+        own. A radius that is not one of the grid's own has the mid-gap rings looked for first."""
+        R = np.asarray(R, dtype=float)
+        store = self._rings()
+        if store["complete"] is False and not np.isin(R, self.R).all():
+            store = self._complete()
+        return ring_bracket(store["radii"], R)
 
     def _read(self, profiles: np.ndarray, R: np.ndarray, angle: np.ndarray) -> np.ndarray:
         """Profiles held on the cells of every grid ring, read at points: ``R`` in kpc and ``angle`` in radians
