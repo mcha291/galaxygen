@@ -230,7 +230,9 @@ class Laying:
 
     def widest_gap(self, x: float) -> float | None:
         """The midpoint of the widest azimuthal gap between the chains crossing the ring at ln R = ``x``, within
-        one turn; None where none crosses. Of two gaps of one width, the one that starts at the lesser azimuth.
+        one turn; None where none crosses. Of two gaps of one width to the last bit, the one that starts at the
+        lesser azimuth - and two gaps that are equal but for rounding are told apart by that rounding (the four
+        quarter-turns a barred disc's fourth chain finds, for one).
         One chain crossing leaves one gap, the whole turn: the midpoint is opposite it."""
         at = sorted(self.crossings(x))
         if not at:

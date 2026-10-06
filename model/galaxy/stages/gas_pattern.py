@@ -14,7 +14,7 @@ put in.
   jump. The derived ``bar`` stage publishes that frame as ``arm_pattern_speed``; nothing here reads it, and
   the flow handed to the solver is 0 by construction.
 - **The law** (item 5), on each grid ring, with χ = φ − Φ(R) the pattern coordinate (Φ = ln R · cot p until S59; since
-  then the winding in seeded segments, ``pattern.Winding`` - geometry only: ε and f below keep the disc's own
+  then, at S59, the winding in seeded segments, retired with S60's pieces - geometry only: ε and f below keep the disc's own
   pitch p, a declared approximation, D218 item 4: "the gas answers each ring at the disc's mean pitch; on a
   segment its normal wavenumber is off by sin p/sin p_seg") and s(χ) the gas's
   surface density over its ring mean:
@@ -1188,7 +1188,7 @@ class GasPattern:
 
     def star_formation_kinks(self, R: np.ndarray, bar: bool) -> np.ndarray:
         """Azimuths a quadrature of a function of a grid ring's star-formation contrast, read by a point at radius
-        ``R`` (:meth:`ring_star_formation_contrast_at`), is cut at, one row a radius: the profile's cells'
+        ``R`` (:meth:`star_formation_contrast_at`), is cut at, one row a radius: the profile's cells'
         centres; the anchors of the two solved rings the radius reads, where the map that carries a ring's profile
         changes slope; and, with ``bar``, the footprint's cells' centres in the bar's frame, φ_bar + ψ_c.
 
