@@ -628,6 +628,7 @@ class ArmPattern:
     normalisation: float = field(init=False)  # N, M☉/pc²: the body's surface density is N · body.unit
     _deviation: np.ndarray | None = field(init=False, repr=False)  # (R, CELLS): the body's contrast less 1
     _untapered: np.ndarray = field(init=False, repr=False)  # (R,): the budget with the bar's taper taken back out
+    _depth: np.ndarray = field(init=False, repr=False)      # (R,): the body's depth under each grid ring's mean, made once
 
     def __post_init__(self) -> None:
         for name in ("R", "budget", "design", "width"):
@@ -658,6 +659,9 @@ class ArmPattern:
         object.__setattr__(self, "body", body)
         object.__setattr__(self, "normalisation", normalisation)
         object.__setattr__(self, "_deviation", deviation_)
+        depth_ = np.zeros(self.R.size) if body is None else np.array(body.depth(normalisation), dtype=float)
+        depth_.setflags(write=False)
+        object.__setattr__(self, "_depth", depth_)
         # No perturbation to apply: no arm amplitude or no piece, and no body; or a pattern the grid could not
         # resolve (a mesh too coarse for the shear gives a NaN pitch), which stays axisymmetric. Decided once: the
         # censuses ask per cell.
@@ -706,8 +710,9 @@ class ArmPattern:
 
     @property
     def depth(self) -> np.ndarray:
-        """b on the grid rings: 1 − min_φ of the body's contrast, what the saturation reads; 0 with no body."""
-        return np.zeros(self.R.size) if self.body is None else self.body.depth(self.normalisation)
+        """b on the grid rings: 1 − min_φ of the body's contrast, what the saturation reads; 0 with no body.
+        (Made once with the pattern: every point's cut reads it.)"""
+        return self._depth
 
     def depth_at(self, R: np.ndarray) -> np.ndarray:
         """b at any radius: the two neighbouring grid rings' depths blended as :meth:`body_at` blends the rings'
