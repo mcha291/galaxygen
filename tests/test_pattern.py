@@ -14,7 +14,8 @@ from galaxy.core.grids import GridSpec
 from galaxy.layer import compose
 from galaxy.run import run
 from galaxy.specs import spec
-from galaxy.stages.pattern import AMPLITUDE_FIELDS, ARM_MULTIPLICITIES, ArmPattern, shear_rate
+from galaxy.stages.pattern import AMPLITUDE_FIELDS, ARM_MULTIPLICITIES, shear_rate
+from galaxy.stages.pieces import ArmPattern  # S60 (D219): the pattern object lives with the pieces
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 
