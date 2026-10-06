@@ -873,7 +873,8 @@ class ArmPattern:
             # wherever the piece's window is open.
             from_start = x[:, None] - p.x_start[None, :census]
             past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, :census], -from_start), 0.0)
-            reach = (past <= REACH * sigma[:, None] * p.cos_abs[None, :census]) & (R > 0.0)[:, None] & (p.extent > 0.0)[None, :]
+            # (A ring with no amplitude - no budget, no count - holds no arm whatever is near it: nothing is read.)
+            reach = (past <= REACH * sigma[:, None] * p.cos_abs[None, :census]) & ((R > 0.0) & (amplitude > 0.0))[:, None] & (p.extent > 0.0)[None, :]
         rows, columns = np.nonzero(reach)
         held = reach.sum(axis=1)
         slots = np.full((n, max(int(held.max(initial=0)), 1)), census, dtype=np.int64)
@@ -883,7 +884,9 @@ class ArmPattern:
         inv = np.where(ok, 1.0 / (math.sqrt(2.0) * np.where(ok, sigma, 1.0)), 1.0)
         taper = np.where(ok, width / np.where(ok, R, 1.0), 1.0)
         relative = np.where(live, np.where(ok, x, 0.0)[:, None] - p.x_start[slots], 0.0)
-        mean = np.where(live, self._integral(slots, relative, inv, taper, None) / TWO_PI, 0.0)
+        mean = np.zeros(slots.shape)
+        at = np.nonzero(live)
+        mean[at] = self._integral(slots[at], relative[at], inv[at[0]], taper[at[0]], None) / TWO_PI
         room = 1.0 - self.depth_at(R)
         deep = sum_slots(mean)
         with np.errstate(over="ignore", invalid="ignore"):
@@ -892,48 +895,51 @@ class ArmPattern:
         return Laid(R, width, count, amplitude, effective, inv, taper, slots, live, relative, mean)
 
     def _integral(self, slots: np.ndarray, x: np.ndarray, inv: np.ndarray, taper: np.ndarray, upto: np.ndarray | None) -> np.ndarray:
-        """∫ E_j dψ from the piece's image's lower end, ψ = Δβ/2 − π, up to ψ = ``upto`` (n, S, k) - or, with
-        None, over the whole turn, shaped (n, S). Exact: W is linear in ψ on three stretches - up to where the
-        rise from the chain's start is over (or meets the fall), the flat part, the fall to the chain's end -
-        and each is :func:`gauss_linear`'s."""
+        """∫ E_j dψ from the piece's image's lower end, ψ = Δβ/2 − π, up to ψ = ``upto`` (m, k) - or, with None,
+        over the whole turn, shaped (m,) - for each of m (radius, piece) pairs: ``slots`` the pieces, ``x``
+        ln(R/R_s), ``inv`` and ``taper`` the radius' 1/(√2 ς) and w/R. Exact: W is linear in ψ on three stretches
+        - up to where the rise from the chain's start is over (or meets the fall), the flat part, the fall to the
+        chain's end - and each is :func:`gauss_linear`'s."""
         p = self.pieces
         whole = upto is None
-        shape = (*slots.shape, 1)
-        sin_abs, cos_abs = p.sin_abs[slots].reshape(shape), p.cos_abs[slots].reshape(shape)
-        length, before, after = p.length[slots].reshape(shape), p.before[slots].reshape(shape), p.after[slots].reshape(shape)
-        low = (p.middle[slots] - math.pi).reshape(shape)
+        sin_abs, cos_abs = p.sin_abs[slots][:, None], p.cos_abs[slots][:, None]
+        length, before, after = p.length[slots][:, None], p.before[slots][:, None], p.after[slots][:, None]
+        low = (p.middle[slots] - math.pi)[:, None]
         high = low + TWO_PI
-        x = x.reshape(shape)
-        width, inverse = taper[:, None, None], inv[:, None, None]
+        x, width, inverse = x[:, None], taper[:, None], inv[:, None]
         top = high if whole else np.minimum(upto, high)
         with np.errstate(invalid="ignore", over="ignore", divide="ignore"):
             rise_ends, fall_starts = width - before, length + after - width
             meet = 0.5 * (length + after - before)
             flat = rise_ends <= fall_starts
-            knots = (np.zeros(shape), np.clip(np.where(flat, rise_ends, meet), 0.0, length),
+            knots = (np.zeros(length.shape), np.clip(np.where(flat, rise_ends, meet), 0.0, length),
                      np.clip(np.where(flat, fall_starts, meet), 0.0, length), length)
             heights = [window(t, length, before, after, width) for t in knots]
             angles = [(t - x * sin_abs) / cos_abs for t in knots]
-            total = np.zeros(np.broadcast_shapes(shape, top.shape))
+            total = np.zeros(top.shape)
             for k in range(3):
                 span = angles[k + 1] - angles[k]
                 has = span > 0.0
                 slope = np.where(has, (heights[k + 1] - heights[k]) / np.where(has, span, 1.0), 0.0)
                 lo, hi = np.clip(angles[k], low, top), np.clip(angles[k + 1], low, top)
                 total = total + gauss_linear(lo, hi, heights[k] + slope * (lo - angles[k]), slope, x * cos_abs, sin_abs, inverse)
-        return total[..., 0] if whole else total
+        return total[:, 0] if whole else total
 
     def _piece(self, laid: Laid, k: int, phi: np.ndarray) -> np.ndarray:
         """E of the pieces in slot ``k`` of each radius of ``laid`` at that row's azimuths ``phi`` (n, m): the
-        window along times the Gaussian across; 0 in an empty slot."""
+        window along times the Gaussian across; 0 in an empty slot (whose row is not computed)."""
         p = self.pieces
-        slot = laid.slots[:, k, None]
-        psi = p.unwrapped(slot, phi)
-        x = laid.x[:, k, None]
-        sin_abs, cos_abs = p.sin_abs[slot], p.cos_abs[slot]
-        across = (x * cos_abs - psi * sin_abs) * laid.inv[:, None]
-        along = window(x * sin_abs + psi * cos_abs, p.length[slot], p.before[slot], p.after[slot], laid.taper[:, None])
-        return np.where(laid.live[:, k, None], along * np.exp(-across * across), 0.0)
+        out = np.zeros(phi.shape)
+        rows = np.flatnonzero(laid.live[:, k])
+        if rows.size:
+            slot = laid.slots[rows, k, None]
+            psi = p.unwrapped(slot, phi[rows])
+            x = laid.x[rows, k, None]
+            sin_abs, cos_abs = p.sin_abs[slot], p.cos_abs[slot]
+            across = (x * cos_abs - psi * sin_abs) * laid.inv[rows, None]
+            along = window(x * sin_abs + psi * cos_abs, p.length[slot], p.before[slot], p.after[slot], laid.taper[rows, None])
+            out[rows] = along * np.exp(-across * across)
+        return out
 
     def _batches(self, n: int, per_radius: int) -> Iterator[slice]:
         step = max(1, _BATCH // max(per_radius, 4 * max(self.pieces.count, 1)))
@@ -1010,12 +1016,13 @@ class ArmPattern:
         span = (edges[1:] - edges[:-1])[None, :]
         for part in self._batches(R.size, 32 * edges.size):
             laid = self.laid(R[part])
-            slot = laid.slots[:, :, None]
-            middle = p.middle[slot]
-            turns, within = np.divmod(p.sense[slot] * (edges[None, None, :] - p.phi_start[slot]) - middle + math.pi, TWO_PI)
-            upto = turns * (TWO_PI * laid.mean[:, :, None]) + self._integral(laid.slots, laid.x, laid.inv, laid.taper, middle - math.pi + within)
-            cells = p.sense[slot] * (upto[:, :, 1:] - upto[:, :, :-1]) / span[:, None, :] - laid.mean[:, :, None]
-            cells = np.where(laid.live[:, :, None], cells, 0.0)
+            at = np.nonzero(laid.live)
+            slot = laid.slots[at]
+            middle, mean, sense = p.middle[slot][:, None], laid.mean[at][:, None], p.sense[slot][:, None]
+            turns, within = np.divmod(sense * (edges[None, :] - p.phi_start[slot][:, None]) - middle + math.pi, TWO_PI)
+            upto = turns * (TWO_PI * mean) + self._integral(slot, laid.x[at], laid.inv[at[0]], laid.taper[at[0]], middle - math.pi + within)
+            cells = np.zeros((*laid.slots.shape, edges.size - 1))
+            cells[at] = sense * (upto[:, 1:] - upto[:, :-1]) / span - mean
             total = np.zeros((laid.R.size, edges.size - 1))
             for k in range(cells.shape[1]):
                 total = total + cells[:, k, :]
