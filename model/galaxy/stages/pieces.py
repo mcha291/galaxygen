@@ -857,7 +857,10 @@ def _mode_power(m: int) -> FieldDecl:
 
 
 ARM_MODE_POWERS: tuple[FieldDecl, ...] = tuple(_mode_power(m) for m in ARM_MODES)
-COMPOSED: tuple[FieldDecl, ...] = (DENSITY_CONTRAST, ARM_PIECE_AMPLITUDE, ARM_PIECE_SATURATION, ARM_CHAIN_COUNT, ARM_RING_POWER, *ARM_MODE_POWERS)
+# The composing stage's fields, and - since the fourth pass (the gate's fourth follow-up, C) - the disclosed
+# check's, published by a stage of their own so that a run that does not ask for them does not pay for them.
+COMPOSED: tuple[FieldDecl, ...] = (DENSITY_CONTRAST, ARM_PIECE_AMPLITUDE, ARM_PIECE_SATURATION, ARM_CHAIN_COUNT)
+RING_POWER: tuple[FieldDecl, ...] = (ARM_RING_POWER, *ARM_MODE_POWERS)
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -1517,14 +1520,11 @@ def compute_stellar_pattern(ctx: Context) -> Mapping[str, Any]:
             if shape is None or shape.flat:
                 made.update({d.name: _compose.neutral(d, cells if d is DENSITY_CONTRAST else (R.size,)) for d in COMPOSED})
             else:
-                power, by_mode = shape.ring_power(R)
                 made.update({
                     DENSITY_CONTRAST.name: shape.published(R, ctx.grid.phi, ctx.grid["phi"].edges),
                     ARM_PIECE_AMPLITUDE.name: shape.amplitude_at(R),
                     ARM_PIECE_SATURATION.name: shape.saturation(R),
                     ARM_CHAIN_COUNT.name: shape.pieces.chains_crossing(R).astype(float),
-                    ARM_RING_POWER.name: power,
-                    **{name: by_mode[k] for k, name in enumerate(MODE_POWER_FIELDS)},
                 })
         return made[decl.name]
 
@@ -1532,6 +1532,25 @@ def compute_stellar_pattern(ctx: Context) -> Mapping[str, Any]:
         decl.name: _compose.field(ctx.fields, decl, cells if decl is DENSITY_CONTRAST else (R.size,), lambda decl=decl: compose(decl))
         for decl in COMPOSED
     }
+
+
+def compute_arm_ring_power(ctx: Context) -> Mapping[str, Any]:
+    """The disclosed check (D219 item 4): the realised arm power per ring and its split by arm number, from the
+    same pattern the composing stage built - the ring's profile on the solver's cells transformed."""
+    R = ctx.grid.R
+    made: dict[str, np.ndarray] = {}
+
+    def compose(decl: FieldDecl) -> np.ndarray:
+        if not made:
+            shape = _compose.stellar_pattern(ctx.fields, R)
+            if shape is None or shape.flat:
+                made.update({d.name: _compose.neutral(d, (R.size,)) for d in RING_POWER})
+            else:
+                power, by_mode = shape.ring_power(R)
+                made.update({ARM_RING_POWER.name: power, **{name: by_mode[k] for k, name in enumerate(MODE_POWER_FIELDS)}})
+        return made[decl.name]
+
+    return {decl.name: _compose.field(ctx.fields, decl, (R.size,), lambda decl=decl: compose(decl)) for decl in RING_POWER}
 
 
 STELLAR_PATTERN = IMPLEMENTATIONS.register(
@@ -1544,14 +1563,31 @@ STELLAR_PATTERN = IMPLEMENTATIONS.register(
             "would make the ring's budget of arm power on average - cut where their troughs would reach under "
             "what the bar's body leaves of the mean; so every ring keeps its stars, the field is nowhere "
             "negative and nothing is clipped or rescaled by what was realised. It publishes the field as exact "
-            "means over the grid's cells, the amplitude and its cut on each ring, how many chains cross each "
-            "ring, and - to be read beside the law - the arm power each ring actually carries and its split "
-            "among two to six arms. It draws nothing: its fields are seeded through the pattern's drawn pitch "
+            "means over the grid's cells, the amplitude and its cut on each ring, and how many chains cross each "
+            "ring. It draws nothing: its fields are seeded through the pattern's drawn pitch "
             "and amplitudes and the layer's pieces, and with the layer off they are their neutral values and "
             "no arm is placed (D219)."
         ),
         compute=compute_stellar_pattern,
         requires=PATTERN_READS,
         publishes=COMPOSED,
+    )
+)
+
+ARM_RING_POWER_STAGE = IMPLEMENTATIONS.register(
+    Stage(
+        id="arm_ring_power", slot="arm_ring_power", checkpoint=3,
+        about=(
+            "The disclosed check of the stellar arms, read beside the arm-number law and never used by any "
+            "stage: the arm power each ring actually carries - the variance round the ring of the arm pieces' "
+            "part of the density contrast, as composed - and its split among two to six arms, the square of "
+            "each arm number's Fourier amplitude, to be set beside the law's budget and the square of the "
+            "law's amplitude for that arm number. Made from the same composed pattern the stellar pattern "
+            "stage built, on the gas solver's cells; a stage of its own so that a run that does not ask for "
+            "the check does not pay for it. 0 with the randomness layer off (D219)."
+        ),
+        compute=compute_arm_ring_power,
+        requires=(*PATTERN_READS, DENSITY_CONTRAST.name),
+        publishes=RING_POWER,
     )
 )

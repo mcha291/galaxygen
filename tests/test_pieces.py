@@ -71,7 +71,7 @@ from galaxy.stages import pieces as pc
 from galaxy.stages import systems
 
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
-COMPOSED = tuple(d.name for d in pc.COMPOSED)
+COMPOSED = tuple(d.name for d in (*pc.COMPOSED, *pc.RING_POWER))
 PATTERN = (*COMPOSED, "gas_density_contrast", "star_formation_gas_contrast", *gm.GAS_PATTERN_READS, *pt.AMPLITUDE_FIELDS,
            "arm_class", "bar_present", "pitch_angle_drawn", "sun_azimuth", "arm_saturation", "arm_contrast")
 READER = ("sfr_modulation", "gas_surface_density", "sf_threshold_surface_density", "sfr_surface_density", *PATTERN)
@@ -142,7 +142,8 @@ def test_the_constants_are_the_ruling_s_and_the_stages_are_declared_as_ruled(pro
     assert g.ok, g.problems
     order = [s.id for s in g.order]
     assert "arm_phases" not in order and order.index("pattern") < order.index("arm_pieces") < min(order.index("stellar_pattern"), order.index("gas_pattern"))
-    assert g.layer_stages == ("arm_pieces", "cloud_texture") and {"stellar_pattern", "gas_pattern"} <= set(g.composing_stages)
+    assert order.index("stellar_pattern") < order.index("arm_ring_power")  # the disclosed check in its own stage (the fourth follow-up, C)
+    assert g.layer_stages == ("arm_pieces", "cloud_texture") and {"stellar_pattern", "gas_pattern", "arm_ring_power"} <= set(g.composing_stages)
     assert "pattern" not in g.composing_stages  # the law's stage composes nothing since S60
     assert TABLES == ("arm_piece",)
     decls = {d.name: d for s in g.order for d in s.publishes}
@@ -917,7 +918,7 @@ def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(pro
     drawn (the run is the same whatever the texture seed). The comparison of every field of both templates and
     the default run with ``main`` is the builder's, made from a second checkout, and is recorded in D219."""
     model = the_model(prod)
-    decls = {d.name: d for d in (*pc.COMPOSED, gm.GAS_DENSITY_CONTRAST, gm.STAR_FORMATION_GAS_CONTRAST)}
+    decls = {d.name: d for d in (*pc.COMPOSED, *pc.RING_POWER, gm.GAS_DENSITY_CONTRAST, gm.STAR_FORMATION_GAS_CONTRAST)}
     for template in ("milky_way", "ngc_4414"):
         on = template_run(prod, template)
         off = run(model, inputs_of(template), only=PATTERN, layer=False)
