@@ -10758,3 +10758,67 @@ specs 12 / 20 / 5.
    the viewer's frames follow in S60's own continuation before L1 … If the budget ends before the re-pins, nothing
    merges and S60 continues as one session." *Forbidden, added:* "a taper at a join; a pitch floor to avoid arcs;
    cutting a pinned piece; any birth rule with a parameter. Nothing new is the owner's."
+
+**The third pass (a fresh Opus builder; eight commits; its process died of an API error before its hand-back, so
+this is the lead's reading of its pinned records and logs) and how it read.** Built: a piece by d and s in the
+log-polar plane, the wrapped normal retired; a drawn piece ends where it meets another chain; births at the widest
+gap's midpoint; the count a sum of taper weights; the mid-gap rings of the carried map; the young stars' reader on
+the gas pattern's point function; the per-region determinism test; the one-ridge hand test at pitches of 0°, 1°,
+13.5° and 45°. The viewer's parser was brought up in parallel (four commits): it reads a named class and a table as
+pins, holds a copy of the route's pins that a test compares with the route, and shows a category scalar in the
+Science tab.
+- *The second follow-up's predictions, read first (Milky Way template).* Held: chains at R₀ 6 (5 or 6); crest over
+  trough 2.51 (2.5–3); the gas minimum 0.654 (0.65–0.75); the PHANGS ratio of means 1.482 with no ring under 1.37
+  (1.4–1.6: the disclosed check a hit); the masers' and the young stars' checks 0.08σ and 0.11σ, under the 1st
+  percentile of their nulls (medians 0.57 and 0.50). Not held: **Σf at 8 kpc 2.07** (0.6–0.9; 3.27 over every
+  harmonic); **the split by arm number still peaks at m = 2** — 1.29 / 0.60 / 0.75 / 0.35 / 0.46 against the law's
+  0.009 / 1.06 / 2.13 / 2.44 / 2.44 (2.82 on the second pass; predicted under 0.5 and a peak at 5 or 6); the largest
+  ring-to-ring change of the stellar profile 0.074 at 7.31 kpc (0.16 before; under 0.05); joins 7 (2–4). The
+  realised ring variance is 0.875 of the budget over 6–10 kpc. `ngc_4414`: 37 pieces and 2 joins (few shortened: not
+  held), ratio 1.299 with 39 of 53 rings under 1.37 (held, a miss), crest over trough 2.01. The composed crest
+  within a tenth of a width of the pinned loci on 95 / 100 / 83 / 76 % of Sagittarius–Carina, the Local arm, Perseus
+  and the Outer arm, and on 22 / 12 % of Norma and Scutum–Centaurus, inside the bar's reach.
+- *The lead looked a third time* (face-on; no goal picture opened). **For the first time the arms read as arms**:
+  `ngc_4414` as a flocculent spiral of many short open pieces, the Milky Way template as distinct trailing arcs — a
+  multi-armed spiral in the star formation field — with the nested rings gone. **One defect: a piece ends in a hard
+  square edge wherever it is joined**, at a join with another chain and at every kink inside a chain, where two
+  straight windows butt at an angle (a wedge empty outside the kink and counted twice inside it): the stellar field
+  jumps by of order B across a line, and face-on the template is a patchwork of blocks. And `ngc_4414`'s arms stop
+  on a sharp circle near 9.5 kpc, where the arm-number law's budget falls from 0.063 to nothing in one ring.
+- *Cost, cold, as the builder's sitting timed it (a loaded machine; to be re-read at the close):* the arm pattern
+  0.88 s, the gas pattern 1.14 s, `region: whole disc` 3.85 s, `bright: whole disc` 10.6 s, `render: whole, rgb`
+  5.38 s.
+
+**A third follow-up to the gate (Fable; nothing read, nothing run).**
+1. *The locus is the chain's:* "A chain's excess at a point is the Gaussian of the point's distance to the chain's
+   locus — the polyline of its pieces in the log-polar plane: the perpendicular distance to the nearest piece where
+   the point's foot falls inside that piece, the distance to the nearest piece end otherwise — times the taper along
+   the chain at its free ends; the width the bounded law's at the point's R. A kink is rounded on the outside and
+   counted once on the inside; a joined end is a round cap of the piece's own width that sinks into the ridge it
+   meets; far from any kink it is the third pass's d exactly. A ring's profile, mean, variance and forcing are the
+   same quadrature as now; the forcing's pitch for a ring's term is the nearest piece's." Where two chains meet
+   "they add: a branch is two arms' material in one place, and a max rule would break the budget's expected variance
+   and make the field non-additive; the join's local excess is read and recorded, bounded by nothing but the ring's
+   saturation. Nothing physical is discontinuous there, so no square edge may remain anywhere: asserted by a
+   continuity test across every kink and join on both templates."
+2. *The failed predictions:* "None is a sign the ruling was built wrong, but the builder died before its hand-back,
+   so the reviewer's pass on the model must verify two things by hand before anything else: (a) the thickness factor
+   applied to every harmonic of a ring's forcing with k_m = |m|/(R |sin p_nearest|) and the bound f_m ≤ ĉ_m R/(X h)
+   holding on the harmonics beyond 6 (the 3.27 over every harmonic is where a slip would hide); (b) D3's gap rule
+   counting the pinned and the bar's chains among those crossing the birth ring. If both hold, the three are the
+   census's own and recorded: Σf at 8 kpc 2.07 because narrow pieces carry broad spectra and the power stayed at m =
+   2 where T ≈ 0.8, my prediction having assumed it would move to m = 5–6; the m-split's peak at m = 2 because six
+   chains born evenly diverge under independent piece pitches — a repeated, recorded miss of the law's split by m,
+   with its cause named and no sourced remedy (the between-arm pitch scatter, 16–27 %, is smaller than the along-arm
+   one and would not re-even them); seven joins because D3 and independent pitches make more meetings, a prediction
+   with nothing to judge it. The m-split check stands as a miss in D219's record; the owner is told it plainly."
+3. *The budget's outer edge:* "A debt against P1's law, not this session's: the window's edge drops the budget from
+   0.063 to 0 in one ring, and the reading says arms end tapered, not sharp, usually at 0.5–0.7 r25; the chain's own
+   end taper cannot act where the budget is cut square. Record it with that source line; nothing is owed here now."
+4. *What follows:* "the fourth pass (the polyline, the continuity test), the reviewer on the model with item 2's two
+   hand checks first, the re-pins, the viewer's frames; the scope ruling of the second follow-up holds." *Its
+   predictions for the fourth pass:* the largest ring-to-ring change under 0.05; the count, crest over trough,
+   PHANGS ratio and the maser checks moving by less than their last pins' second digit; the m-split staying at m =
+   2; joins 7 ± 1. *For the owner at the close, first:* "the arms read as arms for the first time, `ngc_4414`
+   flocculent and the Milky Way multi-armed; the law's split by m is not realised and why; the budget's hard outer
+   edge."
