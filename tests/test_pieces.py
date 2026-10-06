@@ -191,6 +191,14 @@ def hand_piece(r: float, phi: np.ndarray, start_radius: float, start_azimuth: fl
     return w * np.exp(-0.5 * (d / (fwhm / FWHM)) ** 2)
 
 
+def chain_at(stars, laid, k: int, phi: np.ndarray) -> np.ndarray:
+    """The excess E of the chain whose run ends in slot ``k`` of ``laid``'s one radius, at the azimuths ``phi``."""
+    for last, value in stars._chains(laid, phi[None, :]):
+        if last == k:
+            return value[0]
+    raise AssertionError(f"no chain's run ends in slot {k}")
+
+
 def hand_variance(sigma: float) -> float:
     """The variance round a ring of a full-height Gaussian ridge of azimuthal dispersion σ seen within half a turn
     of its crest: ⟨E²⟩ − ⟨E⟩² = (σ/2√π) erf(π/σ) − (σ²/2π) erf(π/√2σ)², by hand."""
@@ -271,7 +279,7 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         phi = np.array([crest, crest + 0.07, crest - 0.2, 0.3, 0.3 + 0.05, 0.3 + 0.6, 0.3 + 1.2, 0.3 + 1.25, 0.3 - 0.1, 0.3 + 0.6 + math.pi - 1e-9, -2.0, 2.9])
         want = amplitude * ((piece(phi) - means[0]) + (carrier(phi) - means[1]))
         worst["field"] = max(worst["field"], float(np.abs(stars.arms_at(np.array([r]), phi) - want).max()))
-        worst["point"] = max(worst["point"], float(np.abs(stars._piece(laid, k, phi[None, :])[0] - piece(phi)).max()))
+        worst["point"] = max(worst["point"], float(np.abs(chain_at(stars, laid, k, phi) - piece(phi)).max()))
         assert np.array_equal(stars.contrast_at(np.array([r]), phi), 1.0 + stars.arms_at(np.array([r]), phi))
         # Exact means over cells: they tile the ring to nothing, and each is the fine rule's mean over the cell.
         edges = np.linspace(-math.pi, math.pi, 41)

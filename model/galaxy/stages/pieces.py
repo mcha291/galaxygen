@@ -273,6 +273,257 @@ def sum_slots(values: np.ndarray) -> np.ndarray:
     return total
 
 
+def run_argmin(key: np.ndarray, first: np.ndarray, last: np.ndarray) -> np.ndarray:
+    """Per run - the contiguous slots along the last axis from a ``first`` to a ``last`` - True at the slot of the
+    least ``key``, the earliest of equals; False elsewhere."""
+    n, size = key.shape
+    out = np.zeros(key.shape, dtype=bool)
+    best, where = np.full(n, np.inf), np.zeros(n, dtype=np.int64)
+    for k in range(size):
+        better = first[:, k] | (key[:, k] < best)
+        best, where = np.where(better, key[:, k], best), np.where(better, k, where)
+        done = last[:, k]
+        out[np.flatnonzero(done), where[done]] = True
+    return out
+
+
+def _roots(kind_i, al_i, be_i, kind_j, al_j, be_j) -> tuple[np.ndarray, np.ndarray]:
+    """Where two features' squared distances are equal, as two roots in φ (NaN where there is none or only one):
+    a perp's is (α + β φ)², a vertex's (φ − φ_v)² + Δx² (``al``, ``be`` are (α, β) or (φ_v, Δx) by ``kind``)."""
+    nan = np.full(np.broadcast(al_i, al_j).shape, np.nan)
+    both_perp, both_vertex = (kind_i == 0) & (kind_j == 0), (kind_i == 1) & (kind_j == 1)
+    mixed = ~(both_perp | both_vertex)
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        # Two perps: α_i + β_i φ = ±(α_j + β_j φ).
+        diff, total = be_i - be_j, be_i + be_j
+        r1 = np.where(both_perp & (diff != 0.0), (al_j - al_i) / np.where(diff != 0.0, diff, 1.0), nan)
+        r2 = np.where(both_perp & (total != 0.0), -(al_i + al_j) / np.where(total != 0.0, total, 1.0), nan)
+        # Two vertices: the bisector, (φ_i² + Δx_i²) − (φ_j² + Δx_j²) = 2 (φ_i − φ_j) φ.
+        gap = al_i - al_j
+        r1 = np.where(both_vertex & (gap != 0.0), (al_i * al_i + be_i * be_i - al_j * al_j - be_j * be_j) / np.where(gap != 0.0, 2.0 * gap, 1.0), r1)
+        # A perp and a vertex: (α + β φ)² = (φ − φ_v)² + Δx², a quadratic in φ.
+        perp_first = mixed & (kind_i == 0)
+        al_p, be_p = np.where(perp_first, al_i, al_j), np.where(perp_first, be_i, be_j)
+        al_v, be_v = np.where(perp_first, al_j, al_i), np.where(perp_first, be_j, be_i)
+        a, b, c = be_p * be_p - 1.0, 2.0 * (al_p * be_p + al_v), al_p * al_p - al_v * al_v - be_v * be_v
+        linear = mixed & (a == 0.0)
+        disc = b * b - 4.0 * a * c
+        has = mixed & (a != 0.0) & (disc >= 0.0)
+        q = -0.5 * (b + np.copysign(np.sqrt(np.where(has, disc, 0.0)), b))
+        q1 = np.where(has, q / np.where(a != 0.0, a, 1.0), nan)
+        q2 = np.where(has & (q != 0.0), c / np.where(q != 0.0, q, 1.0), nan)
+        r1 = np.where(mixed, np.where(linear & (b != 0.0), -c / np.where(b != 0.0, b, 1.0), q1), r1)
+        r2 = np.where(mixed, q2, r2)
+    return r1, r2
+
+
+@dataclass(frozen=True, slots=True, eq=False)
+class Stretches:
+    """A batch of runs' rings cut into stretches of azimuth (M, K): on each stretch one feature of the chain's
+    polyline - a piece's perpendicular (where the foot falls inside it) or a piece's end - is the nearest, and the
+    chain's excess there is a line (the taper) times a Gaussian in the azimuth, :func:`gauss_linear`'s integrand.
+    ``lo``, ``hi`` bound each stretch (NaN past the last); ``value`` is its integral (0 where the nearest feature
+    is beyond :data:`REACH` dispersions on the whole stretch); ``w_lo``, ``slope``, ``d0``, ``scale`` the
+    integrand's parameters on it and ``on`` whether it is integrated; ``w0`` each run's window start and ``inv``
+    its 1/(√2 ς)."""
+
+    w0: np.ndarray
+    inv: np.ndarray
+    groups: tuple  # per group of rows of one feature count: (rows, lo, hi, value, w_lo, slope, d0, scale, on)
+
+    def whole(self) -> np.ndarray:
+        """The integral over the turn, per run (M,): the stretches summed in their order."""
+        out = np.zeros(self.w0.size)
+        for rows, _, _, value, *_ in self.groups:
+            out[rows] = sum_slots(value)
+        return out
+
+    def integral_to(self, upto: np.ndarray) -> np.ndarray:
+        """The integral from each run's W0 up to the azimuths ``upto`` (M, k): whole turns counted."""
+        out = np.zeros(upto.shape)
+        turns, within = np.divmod(upto - self.w0[:, None], TWO_PI)
+        phi = self.w0[:, None] + within
+        whole = self.whole()
+        for rows, lo, hi, value, w_lo, slope, d0, scale, on in self.groups:
+            at = np.clip((lo[:, None, :] <= phi[rows][:, :, None]).sum(axis=2) - 1, 0, lo.shape[1] - 1)
+            prefix = np.concatenate([np.zeros((rows.size, 1)), np.cumsum(value, axis=1)], axis=1)
+            pick = lambda a: np.take_along_axis(a, at, axis=1)  # noqa: E731
+            low = pick(lo)
+            partial = np.where(pick(on), gauss_linear(low, np.maximum(phi[rows], low), pick(w_lo), pick(slope), pick(d0), pick(scale), self.inv[rows][:, None]), 0.0)
+            out[rows] = turns[rows] * whole[rows][:, None] + np.take_along_axis(prefix, at, axis=1) + partial
+        return out
+
+    @classmethod
+    def build(cls, p: "Pieces", pieces: np.ndarray, held: np.ndarray, x: np.ndarray, inv: np.ndarray, w: np.ndarray, w0: np.ndarray, rho: np.ndarray) -> "Stretches":
+        """The decomposition for M runs: ``pieces`` (M, P) the run's pieces (``held`` where the slot holds one),
+        ``x`` ln R, ``inv``, ``w`` one width in the plane's unit, ``w0`` the window start and ``rho`` the reach in
+        the plane's unit, all (M,).
+
+        **The features**, in the window [W0, W0 + 2π) of azimuth φ: for each piece its perpendicular on the
+        stretch of φ where the foot falls inside it, at the image within half a turn of the piece's middle - d' =
+        α + β φ, the arc length to the foot t = t_a + t_b φ - and its two ends, each at its nearest image - the
+        distance² Δx² + (φ − φ_v)², the arc length the end's. A feature whose stretch wraps past the window's end
+        is two images. Each has a **reach**, the part of its stretch where it is within ``rho``: beyond it the
+        feature is under e^{−REACH²/2} wherever it is nearest and the stretch is not integrated.
+
+        **The breakpoints**: the window's ends, every feature's stretch and reach ends, the taper's knots on each
+        perpendicular (where the rise to full height ends, where the fall begins, where they meet), and every
+        azimuth at which two features that are both within reach are equidistant (:func:`_roots`). Between two
+        neighbouring breakpoints no two features cross, so the nearest at the middle is the nearest throughout;
+        its taper's branch at the middle is its branch throughout."""
+        M, P = pieces.shape
+        W0 = w0[:, None]
+        W1 = W0 + TWO_PI
+        xj = x[:, None] - p.x_start[pieces]
+        s, c, T = p.sin_abs[pieces], p.cos_abs[pieces], p.length[pieces]
+        mid, phi0, sense = p.middle[pieces], p.phi_start[pieces], p.sense[pieces]
+        before, after = p.before[pieces], p.after[pieces]
+        x_end, phi_end = p.x_end[pieces], p.phi_end[pieces]
+        rho2 = (rho * rho)[:, None]
+        kinds, los, his, rlos, rhis, alives, als, bes, gss, gds, gcs, tas, tbs, befores, afters, lengths = ([] for _ in range(16))
+
+        def add(kind, lo, hi, rlo, rhi, alive, al, be, gs, gd, gc, ta, tb):
+            kinds.append(np.broadcast_to(kind, lo.shape)); los.append(lo); his.append(hi); rlos.append(rlo); rhis.append(rhi)
+            alives.append(alive & (rhi >= rlo) & (hi > lo)); als.append(al); bes.append(be); gss.append(np.broadcast_to(gs, lo.shape))
+            gds.append(gd); gcs.append(np.broadcast_to(gc, lo.shape)); tas.append(ta); tbs.append(tb)
+            befores.append(before); afters.append(after); lengths.append(T)
+
+        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+            # The perpendicular: the foot inside, 0 ≤ t ≤ T, is a stretch of ψ (the piece's own frame).
+            a = np.where(c > 0.0, -s * xj / np.where(c > 0.0, c, 1.0), np.where(xj >= 0.0, -np.inf, np.inf))
+            b = np.where(c > 0.0, (T - s * xj) / np.where(c > 0.0, c, 1.0), np.where(xj >= 0.0, np.inf, -np.inf))
+            lo_psi, hi_psi = np.maximum(a, mid - math.pi), np.minimum(b, mid + math.pi)
+            opened = held & (hi_psi > lo_psi)
+            e1, e2 = phi0 + sense * lo_psi, phi0 + sense * hi_psi
+            lo_phi, hi_phi = np.minimum(e1, e2), np.maximum(e1, e2)
+            n0 = np.where(opened, np.floor((lo_phi - W0) / TWO_PI), 0.0)
+            lo_a, hi_raw = lo_phi - TWO_PI * n0, hi_phi - TWO_PI * n0
+            for image, lo, hi, n in ((0, lo_a, np.minimum(hi_raw, W1), n0), (1, np.broadcast_to(W0, lo_a.shape), hi_raw - TWO_PI, n0 + 1.0)):
+                alive = opened & ((hi_raw > W1) if image else np.ones(lo.shape, dtype=bool))
+                beta = -s * sense
+                alpha = xj * c + s * sense * (phi0 - TWO_PI * n)
+                tb = c * sense
+                ta = xj * s + c * sense * (TWO_PI * n - phi0)
+                # Reach: |α + β φ| ≤ ρ.
+                r_a, r_b = (-rho[:, None] - alpha) / np.where(beta != 0.0, beta, 1.0), (rho[:, None] - alpha) / np.where(beta != 0.0, beta, 1.0)
+                r_lo = np.where(beta != 0.0, np.minimum(r_a, r_b), np.where(np.abs(alpha) <= rho[:, None], -np.inf, np.inf))
+                r_hi = np.where(beta != 0.0, np.maximum(r_a, r_b), np.where(np.abs(alpha) <= rho[:, None], np.inf, -np.inf))
+                add(0, lo, hi, np.maximum(r_lo, lo), np.minimum(r_hi, hi), alive, alpha, beta, np.abs(beta), -alpha * np.where(beta < 0.0, -1.0, 1.0), 1.0, ta, tb)
+            # The two ends, each at its nearest image. **An end is nearest only beyond its own piece's foot** - a
+            # point whose foot falls inside the piece is nearer the perpendicular - and beyond the foot of the
+            # piece of its chain standing at it, so a kink's end lives in the kink's outside wedge alone: the
+            # end's stretch is cut to those two half-lines (a pruning that changes nothing). A lone piece with
+            # both ends free needs no end at all: its caps weigh nothing and no other feature of the run could
+            # be taken for nearest there.
+            lone = (held.sum(axis=1, keepdims=True) == 1) & (before == 0.0) & (after == 0.0)
+            extent = 2.0 * mid
+
+            def half_line(piece, psi_at, phi_img, over, bound):
+                """The φ on which t of ``piece`` (ψ = ``psi_at`` + sense (φ − ``phi_img``)) is over or under
+                ``bound``: (lo, hi) of a half-line."""
+                live_l = piece >= 0
+                l = np.where(live_l, piece, 0)
+                x_l, s_l, c_l, sense_l = x[:, None] - p.x_start[l], p.sin_abs[l], p.cos_abs[l], p.sense[l]
+                slope_l = c_l * sense_l
+                offset = x_l * s_l + c_l * psi_at - slope_l * phi_img
+                edge = (bound - offset) / np.where(slope_l != 0.0, slope_l, 1.0)
+                rising = slope_l > 0.0
+                flat_ok = np.where(over, offset > bound, offset < bound)
+                lo_h = np.where(slope_l != 0.0, np.where(rising == over, edge, -np.inf), np.where(flat_ok, -np.inf, np.inf))
+                hi_h = np.where(slope_l != 0.0, np.where(rising == over, np.inf, edge), np.where(flat_ok, np.inf, -np.inf))
+                return np.where(live_l, lo_h, -np.inf), np.where(live_l, hi_h, np.inf)
+
+            for which, dx, phi_v, arc in ((0, xj, phi0, np.zeros(T.shape)), (1, x[:, None] - x_end, phi_end, T)):
+                placed = phi_v - TWO_PI * np.floor((phi_v - W0) / TWO_PI)
+                half = np.sqrt(np.maximum(rho2 - dx * dx, 0.0))
+                within = held & ~lone & (dx * dx <= rho2)
+                gc = np.exp(-(dx * inv[:, None]) ** 2)
+                link = (p.link_start if which == 0 else p.link_end)[pieces]
+                link_at_end = (p.link_start_is_end if which == 0 else p.link_end_is_end)[pieces]
+                for image in (0, 1):
+                    if image == 0:
+                        img, lo, hi, alive = placed, np.maximum(W0, placed - math.pi), np.minimum(W1, placed + math.pi), held
+                    else:
+                        low_side = placed - math.pi < W0
+                        img = np.where(low_side, placed + TWO_PI, placed - TWO_PI)
+                        lo = np.where(low_side, placed + math.pi, W0)
+                        hi = np.where(low_side, W1, placed - math.pi)
+                        alive = held & (low_side | (placed + math.pi > W1))
+                    # Beyond its own piece's foot: t < 0 at a start, t > T at an end ...
+                    own_lo, own_hi = half_line(pieces, (np.zeros(T.shape) if which == 0 else extent), img, which == 1, (np.zeros(T.shape) if which == 0 else T))
+                    # ... and beyond the linked piece's: its end there (t > T) or its start (t < 0).
+                    link_l = np.where(link >= 0, link, 0)
+                    lnk_lo, lnk_hi = half_line(link, np.where(link_at_end, 2.0 * p.middle[link_l], 0.0), img, link_at_end, np.where(link_at_end, p.length[link_l], 0.0))
+                    lo, hi = np.maximum(lo, np.maximum(own_lo, lnk_lo)), np.minimum(hi, np.minimum(own_hi, lnk_hi))
+                    add(1, lo, hi, np.maximum(img - half, lo), np.minimum(img + half, hi), alive & within, img, dx, 1.0, img, gc, arc, np.zeros(T.shape))
+        alive = np.concatenate(alives, axis=1)
+        features = dict(kind=kinds, lo=los, hi=his, rlo=rlos, rhi=rhis, al=als, be=bes, gs=gss, gd=gds, gc=gcs, ta=tas, tb=tbs, bef=befores, aft=afters, length=lengths)
+        features = {name: np.concatenate(parts, axis=1) for name, parts in features.items()}
+        # The rows cut in groups of one count of live features, the live ones first in each row and the axis cut
+        # to that count (a compaction: the same features, the same numbers, and no row pays for a fuller row's
+        # pairs or stretches).
+        count = alive.sum(axis=1)
+        groups = []
+        for size in np.unique(count):
+            rows = np.flatnonzero(count == size)
+            order = np.argsort(~alive[rows], axis=1, kind="stable")[:, : max(int(size), 1)]
+            picked = {name: np.take_along_axis(v[rows], order, axis=1) for name, v in features.items()}
+            groups.append((rows, *cls._cut(np.take_along_axis(alive[rows], order, axis=1), picked, W0[rows], W1[rows], w[rows], inv[rows], rho2[rows])))
+        return cls(w0, inv, tuple(groups))
+
+    @staticmethod
+    def _cut(alive, f: dict, W0, W1, w, inv, rho2) -> tuple:
+        """The stretches of a group of rows of one feature count: ``(lo, hi, value, w_lo, slope, d0, scale, on)``,
+        each (rows, K)."""
+        kind, lo, hi, rlo, rhi = f["kind"], f["lo"], f["hi"], f["rlo"], f["rhi"]
+        al, be, gs, gd, gc, ta, tb, bef, aft, length = (f[n] for n in ("al", "be", "gs", "gd", "gc", "ta", "tb", "bef", "aft", "length"))
+        F = kind.shape[1]
+        # Breakpoints: the window's ends, the features' reach ends (a stretch's own end beyond every reach only
+        # splits a stretch that is not integrated), the taper's knots, and the roots.
+        parts = [W0, W1, np.where(alive, rlo, np.nan), np.where(alive, rhi, np.nan)]
+        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+            wv = w[:, None]
+            for knot in (wv - bef, length + aft - wv, 0.5 * (length + aft - bef)):
+                phi_k = (knot - ta) / np.where(tb != 0.0, tb, 1.0)
+                parts.append(np.where(alive & (kind == 0) & (tb != 0.0) & (phi_k >= rlo) & (phi_k <= rhi), phi_k, np.nan))
+            ii, jj = np.triu_indices(F, 1)
+            o_lo, o_hi = np.maximum(rlo[:, ii], rlo[:, jj]), np.minimum(rhi[:, ii], rhi[:, jj])
+            pair = alive[:, ii] & alive[:, jj] & (o_hi >= o_lo)
+            for r in _roots(kind[:, ii], al[:, ii], be[:, ii], kind[:, jj], al[:, jj], be[:, jj]):
+                parts.append(np.where(pair & (r >= o_lo) & (r <= o_hi), r, np.nan))
+        breaks = np.sort(np.concatenate(parts, axis=1), axis=1)
+        breaks = breaks[:, : max(int(np.isfinite(breaks).sum(axis=1).max(initial=0)), 2)]  # (the finite ones sort first)
+        b_lo, b_hi = breaks[:, :-1], breaks[:, 1:]
+        valid = np.isfinite(b_hi) & (b_hi > b_lo)
+        middle = 0.5 * (b_lo + b_hi)
+        # The nearest feature at each stretch's middle.
+        with np.errstate(invalid="ignore", over="ignore"):
+            phi_c = middle[:, :, None]
+            d2 = np.where(kind[:, None, :] == 0, (al[:, None, :] + be[:, None, :] * phi_c) ** 2, (phi_c - al[:, None, :]) ** 2 + be[:, None, :] ** 2)
+            d2 = np.where(alive[:, None, :] & (phi_c >= lo[:, None, :]) & (phi_c <= hi[:, None, :]), d2, np.inf)
+        nearest = d2.argmin(axis=2)
+        least = np.take_along_axis(d2, nearest[:, :, None], axis=2)[:, :, 0]
+        on = valid & (least <= rho2)
+        pick = lambda v: np.take_along_axis(v, nearest, axis=1)  # noqa: E731
+        with np.errstate(invalid="ignore", over="ignore"):
+            t_c = pick(ta) + pick(tb) * middle
+            rise, fall = (pick(bef) + t_c) / w[:, None], (pick(aft) + pick(length) - t_c) / w[:, None]
+            branch = np.argmin(np.stack([np.ones(rise.shape), rise, fall], axis=2), axis=2)
+            height = np.minimum(1.0, np.minimum(rise, fall))
+            slope = np.where(branch == 0, 0.0, np.where(branch == 1, pick(tb), -pick(tb)) / w[:, None])
+            w_lo = pick(gc) * (height + slope * (b_lo - middle))
+            slope = pick(gc) * slope
+            d0, scale = pick(gd), pick(gs)
+            value = np.where(on, gauss_linear(np.where(on, b_lo, 0.0), np.where(on, b_hi, 0.0), np.where(on, w_lo, 0.0), np.where(on, slope, 0.0),
+                                              np.where(on, d0, 0.0), np.where(on, scale, 0.0), inv[:, None]), 0.0)
+        held_stretch = np.isfinite(b_hi)  # (a stretch of no length keeps its place: ``integral_to`` counts by ``lo``)
+        return np.where(held_stretch, b_lo, np.nan), np.where(held_stretch, b_hi, np.nan), value, w_lo, slope, d0, scale, on
+
+
+# How many (radius, chain) rows one decomposition holds at once: a bound on memory, never on a value.
+_ROWS = 2048
+
+
 # --------------------------------------------------------------------------------------------------------------
 # The census as read: the table's rows, their chains, and which of them cross a radius
 # --------------------------------------------------------------------------------------------------------------
@@ -323,6 +574,10 @@ class Pieces:
     middle: np.ndarray = field(init=False, repr=False)    # Δβ/2: the piece's own middle, in ψ
     before: np.ndarray = field(init=False, repr=False)    # the chain's length before the piece's start (inf: no free end)
     after: np.ndarray = field(init=False, repr=False)     # ... and after its end
+    link_start: np.ndarray = field(init=False, repr=False)        # the piece of the chain standing at this one's start (−1 none)
+    link_end: np.ndarray = field(init=False, repr=False)          # ... at its end
+    link_start_is_end: np.ndarray = field(init=False, repr=False)  # whether it is that piece's end that stands there
+    link_end_is_end: np.ndarray = field(init=False, repr=False)
     chain_of: np.ndarray = field(init=False, repr=False)  # the chain's number, NaN for the pad
     breaks: np.ndarray = field(init=False, repr=False)    # the ln R at which the set of crossing pieces changes
     table: np.ndarray = field(init=False, repr=False)     # (len(breaks) + 1, most): piece indices, the pad's = n
@@ -373,6 +628,10 @@ class Pieces:
                         partner[e] = f
                         break
         closed = np.concatenate([self.join == JOIN_INNER, self.join == JOIN_OUTER])  # an end that meets another chain
+        # The links: at each piece's start and end, the piece of its own chain that stands there (−1 none) and
+        # whether it is that piece's end that does (else its start) - what a kink's rounding reads.
+        link = np.where(partner >= 0, partner % n, -1)
+        link_is_end = partner >= n
         beyond = np.zeros(2 * n)
         for e in range(2 * n):
             total, at = 0.0, e
@@ -391,6 +650,8 @@ class Pieces:
                             ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("cos_abs", pad(cos_abs, 1.0)),
                             ("sense", pad(sense, 1.0)), ("length", pad(length, 1.0)), ("middle", pad(0.5 * self.extent, 0.0)),
                             ("before", pad(beyond[:n], math.inf)), ("after", pad(beyond[n:], math.inf)),
+                            ("link_start", np.concatenate([link[:n], [-1]])), ("link_end", np.concatenate([link[n:], [-1]])),
+                            ("link_start_is_end", np.concatenate([link_is_end[:n], [False]])), ("link_end_is_end", np.concatenate([link_is_end[n:], [False]])),
                             ("chain_of", pad(self.chain, math.nan)), ("breaks", breaks), ("table", table)):
             value.setflags(write=False)
             object.__setattr__(self, name, value)
@@ -580,8 +841,11 @@ COMPOSED: tuple[FieldDecl, ...] = (DENSITY_CONTRAST, ARM_PIECE_AMPLITUDE, ARM_PI
 class Laid:
     """What the arms are made of at each of a batch of radii (n,): the ring's numbers and the pieces within reach.
     ``slots`` (n, S) are indices into the census's padded arrays (the pad's where fewer are in reach), in the
-    table's order; ``x`` (n, S) is ln(R/R_s) per slot; ``mean`` (n, S) each piece's exact mean round the ring
-    (0 in an empty slot)."""
+    table's order - so the slots of one chain's pieces are contiguous, **a run**; ``x`` (n, S) is ln(R/R_s) per
+    slot. ``first`` and ``last`` (n, S) mark a run's first and last slot; ``lead`` marks the slot of the run's
+    piece nearest the ring (the one whose locus crosses it, else the one whose end is nearest in ln R), whose
+    pitch the chain's forcing takes on the ring; ``mean`` (n, S) holds **the chain's** exact mean round the ring
+    at the run's last slot and 0 elsewhere."""
 
     R: np.ndarray
     width: np.ndarray      # FWHM across a piece, kpc: the bounded law's
@@ -594,6 +858,9 @@ class Laid:
     live: np.ndarray
     x: np.ndarray
     mean: np.ndarray
+    first: np.ndarray
+    last: np.ndarray
+    lead: np.ndarray
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -867,26 +1134,27 @@ class ArmPattern:
 
     def laid(self, R: np.ndarray) -> Laid:
         """Everything the arms' sum reads at each radius of ``R`` (n,): the ring's numbers, the pieces within
-        reach, and each one's exact mean round the ring (the module's docstring)."""
+        reach, their runs by chain, and each chain's exact mean round the ring (the module's docstring)."""
         R = np.asarray(R, dtype=float)
         p = self.pieces
         n, census = R.size, p.count
         if not self.R.size or not census:
             none = np.zeros(n)
+            empty = np.zeros((n, 1), dtype=bool)
             return Laid(R, self.law_width_at(R) if self.R.size else none, none, none, none, np.ones(n), np.ones(n),
-                        np.full((n, 1), census, dtype=np.int64), np.zeros((n, 1), dtype=bool), np.zeros((n, 1)), np.zeros((n, 1)))
+                        np.full((n, 1), census, dtype=np.int64), empty, np.zeros((n, 1)), np.zeros((n, 1)), empty, empty, empty)
         width, count = self.ring_state(R)
         with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
             sigma_design = design_dispersion(R, width, self.pitch_deg)
             amplitude = budget_amplitude(self._budget_at(R), count, np.nan_to_num(sigma_design, nan=np.inf, posinf=np.inf))
             x = np.log(R)
             sigma = width / FWHM_PER_SIGMA / R  # ς: the dispersion across, in the plane's unit
-            # Which pieces are within reach: |d'| >= (the distance in ln R past the piece's nearer end)/|cos p|
-            # wherever the piece's window is open.
+            # Which pieces are within reach: a piece's nearest point to a ring it does not cross is its nearer
+            # end, at the distance in ln R past that end (the module's docstring).
             from_start = x[:, None] - p.x_start[None, :census]
             past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, :census], -from_start), 0.0)
             # (A ring with no amplitude - no budget, no count - holds no arm whatever is near it: nothing is read.)
-            reach = (past <= REACH * sigma[:, None] * p.cos_abs[None, :census]) & ((R > 0.0) & (amplitude > 0.0))[:, None] & (p.extent > 0.0)[None, :]
+            reach = (past <= REACH * sigma[:, None]) & ((R > 0.0) & (amplitude > 0.0))[:, None] & (p.extent > 0.0)[None, :]
         rows, columns = np.nonzero(reach)
         held = reach.sum(axis=1)
         slots = np.full((n, max(int(held.max(initial=0)), 1)), census, dtype=np.int64)
@@ -896,62 +1164,129 @@ class ArmPattern:
         inv = np.where(ok, 1.0 / (math.sqrt(2.0) * np.where(ok, sigma, 1.0)), 1.0)
         taper = np.where(ok, width / np.where(ok, R, 1.0), 1.0)
         relative = np.where(live, np.where(ok, x, 0.0)[:, None] - p.x_start[slots], 0.0)
+        # The runs: the slots of one chain are contiguous (the table's order is by chain). The run's lead is the
+        # piece whose locus crosses the ring, else the one whose end is nearest in ln R, the earlier of equals.
+        chain = p.chain_of[slots]
+        same = np.zeros(slots.shape, dtype=bool)
+        same[:, 1:] = live[:, 1:] & live[:, :-1] & (chain[:, 1:] == chain[:, :-1])
+        first = live & ~same
+        last = np.zeros(slots.shape, dtype=bool)
+        last[:, :-1] = live[:, :-1] & ~same[:, 1:]
+        last[:, -1] = live[:, -1]
+        crossing = live & (relative >= 0.0) & (relative < (p.x_end - p.x_start)[slots])
+        nearness = np.full(slots.shape, np.inf)
+        nearness[live] = np.where(crossing[live], -1.0, past[np.nonzero(live)[0], slots[live]])
+        lead = run_argmin(nearness, first, last)
         mean = np.zeros(slots.shape)
-        at = np.nonzero(live)
-        mean[at] = self._integral(slots[at], relative[at], inv[at[0]], taper[at[0]], None) / TWO_PI
+        if live.any():
+            mean[last] = self._chain_means(Laid(R, width, count, amplitude, amplitude, inv, taper, slots, live, relative, mean, first, last, lead))
         room = 1.0 - self.depth_at(R)
         deep = sum_slots(mean)
         with np.errstate(over="ignore", invalid="ignore"):
             cut = amplitude * deep > room
             effective = np.where(cut, room / np.where(cut, deep, 1.0) * CUT_IN_DOUBLES, amplitude)
-        return Laid(R, width, count, amplitude, effective, inv, taper, slots, live, relative, mean)
+        return Laid(R, width, count, amplitude, effective, inv, taper, slots, live, relative, mean, first, last, lead)
 
-    def _integral(self, slots: np.ndarray, x: np.ndarray, inv: np.ndarray, taper: np.ndarray, upto: np.ndarray | None) -> np.ndarray:
-        """∫ E_j dψ from the piece's image's lower end, ψ = Δβ/2 − π, up to ψ = ``upto`` (m, k) - or, with None,
-        over the whole turn, shaped (m,) - for each of m (radius, piece) pairs: ``slots`` the pieces, ``x``
-        ln(R/R_s), ``inv`` and ``taper`` the radius' 1/(√2 ς) and w/R. Exact: W is linear in ψ on three stretches
-        - up to where the rise from the chain's start is over (or meets the fall), the flat part, the fall to the
-        chain's end - and each is :func:`gauss_linear`'s."""
-        p = self.pieces
-        whole = upto is None
-        sin_abs, cos_abs = p.sin_abs[slots][:, None], p.cos_abs[slots][:, None]
-        length, before, after = p.length[slots][:, None], p.before[slots][:, None], p.after[slots][:, None]
-        low = (p.middle[slots] - math.pi)[:, None]
-        high = low + TWO_PI
-        x, width, inverse = x[:, None], taper[:, None], inv[:, None]
-        top = high if whole else np.minimum(upto, high)
-        with np.errstate(invalid="ignore", over="ignore", divide="ignore"):
-            rise_ends, fall_starts = width - before, length + after - width
-            meet = 0.5 * (length + after - before)
-            flat = rise_ends <= fall_starts
-            knots = (np.zeros(length.shape), np.clip(np.where(flat, rise_ends, meet), 0.0, length),
-                     np.clip(np.where(flat, fall_starts, meet), 0.0, length), length)
-            heights = [window(t, length, before, after, width) for t in knots]
-            angles = [(t - x * sin_abs) / cos_abs for t in knots]
-            total = np.zeros(top.shape)
-            for k in range(3):
-                span = angles[k + 1] - angles[k]
-                has = span > 0.0
-                slope = np.where(has, (heights[k + 1] - heights[k]) / np.where(has, span, 1.0), 0.0)
-                lo, hi = np.clip(angles[k], low, top), np.clip(angles[k + 1], low, top)
-                total = total + gauss_linear(lo, hi, heights[k] + slope * (lo - angles[k]), slope, x * cos_abs, sin_abs, inverse)
-        return total[:, 0] if whole else total
+    # --- a chain at a point: the Gaussian of the distance to its polyline -------------------------------
 
-    def _piece(self, laid: Laid, k: int, phi: np.ndarray) -> np.ndarray:
-        """E of the pieces in slot ``k`` of each radius of ``laid`` at that row's azimuths ``phi`` (n, m): the
-        window along times the Gaussian across; 0 in an empty slot (whose row is not computed)."""
+    def _candidate(self, laid: Laid, k: int, phi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """(the squared distance in the plane's unit, the chain's taper there) from the points ``phi`` (n, m) of each
+        radius to **the piece** in slot ``k``, as a segment of its chain's polyline: the perpendicular distance
+        where the point's foot falls inside the piece, the distance to the nearer end otherwise - each end seen
+        at its nearest image, the piece at the image within half a turn of its middle - and the taper read at
+        the arc length along the chain to that nearest point. Infinite in an empty slot."""
         p = self.pieces
-        out = np.zeros(phi.shape)
+        n, m = phi.shape
+        d2 = np.full((n, m), np.inf)
+        weight = np.zeros((n, m))
         rows = np.flatnonzero(laid.live[:, k])
-        if rows.size:
-            slot = laid.slots[rows, k, None]
-            psi = p.unwrapped(slot, phi[rows])
-            x = laid.x[rows, k, None]
-            sin_abs, cos_abs = p.sin_abs[slot], p.cos_abs[slot]
-            across = (x * cos_abs - psi * sin_abs) * laid.inv[rows, None]
-            along = window(x * sin_abs + psi * cos_abs, p.length[slot], p.before[slot], p.after[slot], laid.taper[rows, None])
-            out[rows] = along * np.exp(-across * across)
+        if not rows.size:
+            return d2, weight
+        slot = laid.slots[rows, k, None]
+        psi = p.unwrapped(slot, phi[rows])
+        x = laid.x[rows, k, None]
+        sin_abs, cos_abs, length = p.sin_abs[slot], p.cos_abs[slot], p.length[slot]
+        before, after, extent = p.before[slot], p.after[slot], (2.0 * p.middle[slot])
+        w = laid.taper[rows, None]
+        with np.errstate(invalid="ignore", over="ignore"):
+            t = x * sin_abs + psi * cos_abs
+            across = x * cos_abs - psi * sin_abs
+            inside = (t >= 0.0) & (t <= length)
+            best = np.where(inside, across * across, np.inf)
+            arc = np.where(inside, t, 0.0)
+            # The two ends, each at its nearest image: the start at ψ = 0, the end at ψ = Δβ.
+            for at_psi, at_t in ((0.0, 0.0), (extent, length)):
+                dpsi = psi - at_psi
+                dpsi = dpsi - TWO_PI * np.round(dpsi / TWO_PI)
+                dx = x - at_t * sin_abs
+                d = dx * dx + dpsi * dpsi
+                nearer = d < best
+                best = np.where(nearer, d, best)
+                arc = np.where(nearer, at_t, arc)
+            taper = np.minimum(1.0, np.minimum((before + arc) / w, (after + length - arc) / w))
+        d2[rows] = best
+        weight[rows] = np.maximum(np.nan_to_num(taper, nan=0.0), 0.0)
+        return d2, weight
+
+    def _chains(self, laid: Laid, phi: np.ndarray) -> Iterator[tuple[int, np.ndarray]]:
+        """For each run of ``laid`` (one chain within reach of a radius), the chain's excess E at the azimuths
+        ``phi`` (n, m) of each radius: yields ``(k, E)`` with ``k`` the run's last slot, E (n, m) 0 on the rows the
+        run is not live on. E = the taper at the foot times the Gaussian of the least squared distance over the
+        chain's pieces within reach (a kink rounded on the outside, counted once on the inside; a joined end a
+        round cap; a free end tapered to nothing)."""
+        best = weight = None
+        inv2 = (laid.inv * laid.inv)[:, None]
+        for k in range(laid.slots.shape[1]):
+            d2, w = self._candidate(laid, k, phi)
+            if best is None or laid.first[:, k].all():
+                best, weight = d2, w
+            else:
+                fresh = laid.first[:, k][:, None]
+                nearer = fresh | (d2 < best)
+                best, weight = np.where(nearer, d2, best), np.where(nearer, w, weight)
+            if laid.last[:, k].any():
+                with np.errstate(over="ignore", invalid="ignore"):
+                    value = np.where(laid.last[:, k][:, None], weight * np.exp(-best * inv2), 0.0)
+                yield k, np.nan_to_num(value, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # --- a chain's exact mean round a ring: the ring cut into stretches on each of which one feature is nearest -----
+
+    def _chain_means(self, laid: Laid, upto: np.ndarray | None = None) -> np.ndarray:
+        """The exact integral round the ring of each chain's excess, over 2π - the mean - for every run of ``laid``,
+        in the runs' order (row-major over ``laid.last``), shaped (M,); or, with ``upto`` (M, k) azimuths, the
+        integral from each run's window start W0 up to each of them, shaped (M, k) (:class:`Stretches`)."""
+        rows, ends = np.nonzero(laid.last)
+        if upto is None:
+            out = np.empty(rows.size)
+        else:
+            out = np.empty((rows.size, upto.shape[1]))
+        for part in range(0, rows.size, _ROWS):
+            stretches = self._stretches(laid, rows[part : part + _ROWS], ends[part : part + _ROWS])
+            out[part : part + _ROWS] = stretches.whole() / TWO_PI if upto is None else stretches.integral_to(upto[part : part + _ROWS])
         return out
+
+    def _stretches(self, laid: Laid, rows: np.ndarray, ends: np.ndarray) -> "Stretches":
+        """The decomposition of each run's ring (``rows`` the radii, ``ends`` the runs' last slots) into stretches
+        of azimuth on each of which one feature of the chain's polyline is nearest (the module's docstring)."""
+        p = self.pieces
+        size = laid.slots.shape[1]
+        # The run's pieces, padded: slots from the run's first to its last.
+        starts = np.maximum.accumulate(np.where(laid.first, np.arange(size)[None, :], 0), axis=1)[rows, ends]
+        P = int((ends - starts).max(initial=-1)) + 1
+        at = starts[:, None] + np.arange(P)[None, :]
+        held = at <= ends[:, None]
+        at = np.minimum(at, size - 1)
+        pieces = np.where(held, laid.slots[rows[:, None], at], p.count)
+        x = np.log(laid.R[rows])
+        inv, w = laid.inv[rows], laid.taper[rows]
+        # The window: a turn centred on the run's lead piece's locus at the ring (any centre would do).
+        lead = pieces[np.arange(rows.size), (laid.lead[rows[:, None], at] & held).argmax(axis=1)]
+        x0, x1 = p.x_start[lead], p.x_end[lead]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            share = np.where(x1 > x0, np.clip((x - x0) / np.where(x1 > x0, x1 - x0, 1.0), 0.0, 1.0), 0.5)
+        centre = p.phi_start[lead] + share * (p.phi_end[lead] - p.phi_start[lead])
+        w0 = centre - math.pi
+        return Stretches.build(p, pieces, held, x, inv, w, w0, REACH / (math.sqrt(2.0) * inv))
 
     def _batches(self, n: int, per_radius: int) -> Iterator[slice]:
         step = max(1, _BATCH // max(per_radius, 4 * max(self.pieces.count, 1)))
@@ -996,8 +1331,8 @@ class ArmPattern:
             laid = self.laid(radii[part])
             angles = phi[part]
             total = np.zeros(angles.shape)
-            for k in range(laid.slots.shape[1]):
-                total = total + (self._piece(laid, k, angles) - laid.mean[:, k, None])
+            for k, value in self._chains(laid, angles):
+                total = total + (value - laid.mean[:, k, None])
             out[part] = laid.effective[:, None] * total
         return out
 
@@ -1024,17 +1359,14 @@ class ArmPattern:
         out = np.zeros((R.size, edges.size - 1))
         if self.flat or not self.pieces.count or not self.budget.any():
             return out
-        p = self.pieces
         span = (edges[1:] - edges[:-1])[None, :]
         for part in self._batches(R.size, 32 * edges.size):
             laid = self.laid(R[part])
-            at = np.nonzero(laid.live)
-            slot = laid.slots[at]
-            middle, mean, sense = p.middle[slot][:, None], laid.mean[at][:, None], p.sense[slot][:, None]
-            turns, within = np.divmod(sense * (edges[None, :] - p.phi_start[slot][:, None]) - middle + math.pi, TWO_PI)
-            upto = turns * (TWO_PI * mean) + self._integral(slot, laid.x[at], laid.inv[at[0]], laid.taper[at[0]], middle - math.pi + within)
+            at = np.nonzero(laid.last)
             cells = np.zeros((*laid.slots.shape, edges.size - 1))
-            cells[at] = sense * (upto[:, 1:] - upto[:, :-1]) / span - mean
+            if at[0].size:
+                upto = self._chain_means(laid, np.broadcast_to(edges[None, :], (at[0].size, edges.size)))
+                cells[at] = (upto[:, 1:] - upto[:, :-1]) / span - laid.mean[at][:, None]
             total = np.zeros((laid.R.size, edges.size - 1))
             for k in range(cells.shape[1]):
                 total = total + cells[:, k, :]
@@ -1048,21 +1380,31 @@ class ArmPattern:
         return self.arms_at(R[:, None], _cells.cell_centres(cells)[None, :])
 
     def piece_profiles(self, R: np.ndarray) -> Iterator[tuple[slice, np.ndarray, np.ndarray]]:
-        """Each piece's own ridge on the solver's cells' centres, ring by ring, for the gas's forcing: yields
-        ``(rows, |sin p_j| (n, S), a E_j (n, S, CELLS))`` for stretches ``rows`` of ``R`` - the ridge at the
-        stars' own amplitude on the ring, the cut in it, its mean not taken out (the forcing's transform drops
-        it); 0 in an empty slot."""
+        """Each chain's own ridge on the solver's cells' centres, ring by ring, for the gas's forcing: yields
+        ``(rows, |sin p| (n, S), a E_c (n, S, CELLS))`` for stretches ``rows`` of ``R`` - the ridge at the stars'
+        own amplitude on the ring, the cut in it, its mean not taken out (the forcing's transform drops it), held
+        in the last slot of the chain's run with **the pitch of the run's lead piece** - the one whose locus
+        crosses the ring, else the one whose end is nearest it - "the forcing's pitch for a ring's term is the
+        nearest piece's" (the gate's third follow-up); 0 in every other slot."""
         R = np.asarray(R, dtype=float)
         centres = _cells.cell_centres(CELLS)
         if self.flat or not self.pieces.count or not self.budget.any():
             return
+        p = self.pieces
         step = max(1, _BATCH // (4 * CELLS))
         for start in range(0, R.size, step):
             rows = slice(start, start + step)
             laid = self.laid(R[rows])
             angles = np.broadcast_to(centres[None, :], (laid.R.size, CELLS))
-            ridges = np.stack([self._piece(laid, k, angles) for k in range(laid.slots.shape[1])], axis=1)
-            yield rows, self.pieces.sin_abs[laid.slots], laid.effective[:, None, None] * ridges
+            ridges = np.zeros((*laid.slots.shape, CELLS))
+            for k, value in self._chains(laid, angles):
+                ridges[:, k, :] = value
+            sines = np.zeros(laid.slots.shape)
+            carried = np.zeros(laid.R.size)
+            for k in range(laid.slots.shape[1]):
+                carried = np.where(laid.lead[:, k], p.sin_abs[laid.slots[:, k]], carried)
+                sines[:, k] = np.where(laid.last[:, k], carried, 0.0)
+            yield rows, sines, laid.effective[:, None, None] * ridges
 
     def ring_power(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """(the variance round each ring of the pieces' sum, the squared m-fold cosine amplitude for each of
