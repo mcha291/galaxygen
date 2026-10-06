@@ -797,7 +797,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     c = constants(model)
     worst = {"stars": 0.0, "gas": 0.0, "expected": 0.0, "bound": 0.0}
     read = {leg: {"ratio": [], "cut": 0, "no_arm": 0, "no_chain": 0, "least": math.inf, "least_gas": math.inf, "most_gas": 0.0, "zeros": 0,
-                  "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0, "joins": [], "alone": 0, "pinned": 0, "kept": [0, 0]} for leg in LEGS}
+                  "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0, "joins": [], "alone": 0, "pinned": 0, "kept": [0, 0], "ratio_max": []} for leg in LEGS}
     for leg in LEGS:
         got = read[leg]
         for pattern_seed in range(60):
@@ -851,14 +851,21 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                     first = (np.asarray(F["arm_piece_order"]) == 0.0) & (np.asarray(F["arm_piece_start_radius"]) < a_bar * (1.0 - 1e-12))
                     assert np.all(np.asarray(F["arm_piece_pinned"])[first] == 1.0), label
                 assert np.all((cut > 0.0) & (cut <= 1.0)), label
-                got["ratio"].extend((np.asarray(F["arm_ring_power"])[live] / budget[live]).tolist())
+                realised_over_budget = np.asarray(F["arm_ring_power"])[live] / budget[live]
+                got["ratio"].extend(realised_over_budget.tolist())
+                got["ratio_max"].append(float(realised_over_budget.max(initial=0.0)))
+                # The fourth follow-up, B: on a ring any chain crosses the count is at least 1, so B - and each
+                # chain's B times its weight, the weight at most 1 - is at most sqrt(budget / v).
+                assert np.all(count[chains > 0.0] >= 1.0) and np.all(amplitude[live] <= np.sqrt(budget[live] / v[live]) * (1.0 + 1e-12)), label
                 got["cut"] += int((cut < 1.0).sum())
                 got["no_arm"] += int((has & ~live).sum())
                 got["no_chain"] += int((has & (chains == 0.0)).sum())
                 got["budget"] += int(has.sum())
                 got["pitch"].append(pitch)
-                # The forcing's bound: each piece's m-th harmonic is under its stellar amplitude times R/(X h) whatever
-                # its pitch, so a ring's m-th forcing amplitude is under the pieces' summed amplitudes times that.
+                # The forcing's bound, f_m <= c_m R/(X h) with c_m the pieces' summed |c_m(j)| - the composition's own,
+                # not the composed field's |c_m|, which cancellation between pieces makes smaller (the fourth
+                # follow-up, D): each chain's m-th harmonic is under its stellar amplitude times R/(X h) whatever its
+                # pitch, so a ring's m-th forcing amplitude is under the chains' summed amplitudes times that.
                 gp = compose.gas_pattern(F, R, c)
                 stellar = np.zeros((R.size, gr.CELLS // 2))
                 for part, _, ridges in sp.piece_profiles(R):
@@ -881,13 +888,16 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
         low, mid, high = (round(float(q), 3) for q in np.percentile(ratio, (16.0, 50.0, 84.0)))
         record[leg] = (got["budget"], ratio.size, (low, mid, high), got["cut"], got["no_arm"], got["no_chain"], got["zeros"],
                        round(min(got["pitch"]), 3), round(max(got["pitch"]), 3), got["steps"], got["armless"], got["wide"],
-                       (min(got["joins"]), float(np.median(got["joins"])), max(got["joins"])), got["alone"], got["pinned"], tuple(got["kept"]))
+                       (min(got["joins"]), float(np.median(got["joins"])), max(got["joins"])), got["alone"], got["pinned"], tuple(got["kept"]),
+                       tuple(round(float(q), 3) for q in (min(got["ratio_max"]), np.median(got["ratio_max"]), max(got["ratio_max"]))))
     # (rings with a budget, rings with an amplitude, the realised power over the budget: 16th / 50th / 84th
     #  percentile, rings cut, rings with a budget and no amplitude, rings with a budget and no chain, exact zeros
     #  of the stellar field, the lowest and highest pitch, the most Newton steps a ring took, the galaxies in which
     #  no ring holds an amplitude at all, the rings whose designed ridge is no ridge on its ring; the joins of a
     #  galaxy: least, median, most; the chains born on a ring no chain crossed; the most crossings of two measured
-    #  pieces in a galaxy; the rings kept at a gap's middle and at a quarter, summed over the leg)
+    #  pieces in a galaxy; the rings kept at a gap's middle and at a quarter, summed over the leg; the per-galaxy
+    #  maximum of the realised over the budgeted ring power: least, median, most over the leg - the fourth
+    #  follow-up, B, predicted it under 1.5 on both templates)
     assert record == EXPECTED_GATE, repr(record)
     least = {leg: (round(read[leg]["least"], 4), round(read[leg]["least_gas"], 4), round(read[leg]["most_gas"], 3)) for leg in LEGS}
     assert least == EXPECTED_LEAST, repr(least)
@@ -1096,6 +1106,46 @@ def held_of(got: dict) -> dict:
         "ngc_4414 ratio 1.2-1.3": 1.2 <= n4["ratio of means 6-10"] <= 1.3,
         "ngc_4414 still a miss": n4["ratio of means 6-10"] < 1.37,
     }
+
+
+def test_the_fourth_follow_up_s_predictions_as_measured(prod):
+    """The gate's fourth follow-up, B, its predictions read before judged: "that maximum [of the realised over the
+    budgeted ring power per galaxy] under 1.5 on both templates; the end-of-bar excess on the bare default galaxy
+    at most the arms' own at 8 kpc; ``ngc_4414``'s B at 0.11 kpc under sqrt(budget/v) there". Read on the templates
+    at their default seeds and on the bare default galaxy; the third item holds by construction since B and is
+    read as a number. Recorded held or not held in ``EXPECTED_FOURTH_HELD``; nothing is changed to make one hold."""
+    got = {}
+    for name in ("milky_way", "ngc_4414", "default"):
+        o = template_run(prod, name) if name != "default" else run(the_model(prod), None, only=PATTERN)
+        F, R = o.fields, o.grid.R
+        sp = compose.stellar_pattern(F, R)
+        budget, power, amplitude = np.asarray(F["arm_power_budget"]), np.asarray(F["arm_ring_power"]), np.asarray(F["arm_piece_amplitude"])
+        live = amplitude > 0.0
+        entry = {"max realised over budget": (round(float((power[live] / budget[live]).max()), 3), round(float(R[live][int(np.argmax(power[live] / budget[live]))]), 3))}
+        ring = np.linspace(0.0, 2.0 * math.pi, 7200, endpoint=False)
+        if name == "default":
+            a = float(F["bar_half_length"])
+            past = R[(R >= a) & live][:3]
+            entry["arms' excess past the bar's end"] = round(float(max(np.abs(sp.arms_at(np.array([r]), ring)).max() for r in past)), 3)
+            entry["arms' excess at 8 kpc"] = round(float(np.abs(sp.arms_at(R[int(np.argmin(np.abs(R - 8.0))) : int(np.argmin(np.abs(R - 8.0))) + 1], ring)).max()), 3)
+        if name == "ngc_4414":
+            i = int(np.argmin(np.abs(R - 0.11)))
+            sigma_d = float(sp.design_dispersion_at(R[i : i + 1])[0])
+            entry["B at 0.11 kpc"] = round(float(amplitude[i]), 3)
+            entry["sqrt(budget / v) at 0.11 kpc"] = round(math.sqrt(budget[i] / hand_variance(sigma_d)), 3) if budget[i] > 0.0 and sigma_d < math.sqrt(math.pi) else None
+            entry["count at 0.11 kpc"] = round(float(sp.count_at(R[i : i + 1])[0]), 3)
+        got[name] = entry
+    assert got == EXPECTED_FOURTH, repr(got)
+    held = {
+        "max realised over budget under 1.5 on both templates": got["milky_way"]["max realised over budget"][0] < 1.5 and got["ngc_4414"]["max realised over budget"][0] < 1.5,
+        "end-of-bar excess at most the arms' own at 8 kpc": got["default"]["arms' excess past the bar's end"] <= got["default"]["arms' excess at 8 kpc"],
+        "ngc_4414's B at 0.11 kpc under sqrt(budget/v)": got["ngc_4414"]["sqrt(budget / v) at 0.11 kpc"] is None or got["ngc_4414"]["B at 0.11 kpc"] <= got["ngc_4414"]["sqrt(budget / v) at 0.11 kpc"],
+    }
+    assert held == EXPECTED_FOURTH_HELD, repr(held)
+
+
+EXPECTED_FOURTH: dict = {"milky_way": {"max realised over budget": (2.343, 4.463)}, "ngc_4414": {"max realised over budget": (2.935, 3.263), "B at 0.11 kpc": 0.782, "sqrt(budget / v) at 0.11 kpc": 0.782, "count at 0.11 kpc": 1.0}, "default": {"max realised over budget": (0.759, 5.213), "arms' excess past the bar's end": 0.329, "arms' excess at 8 kpc": 0.312}}
+EXPECTED_FOURTH_HELD: dict = {"max realised over budget under 1.5 on both templates": False, "end-of-bar excess at most the arms' own at 8 kpc": False, "ngc_4414's B at 0.11 kpc under sqrt(budget/v)": True}
 
 
 def test_disclosed_check_the_split_of_a_ring_s_power_by_arm_number(prod):
@@ -1450,7 +1500,8 @@ def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template
     weights, so B and the bounded width are continuous in R"; its gate: "the count continuous (no ring-to-ring step
     in B above the taper's own rate)". Read at every radius where the set of crossing pieces changes - a start,
     a kink, an end - a part in 1e10 inside and outside it: **the count does not step at a chain's free start or
-    end (its weight is 0 there) nor at a kink (the taper runs along the chain)**, and so neither do the width and
+    end (its weight is 0 there) nor at a kink (the taper runs along the chain)** - but where the crossing set becomes
+    empty or stops being so, where since the fourth follow-up N steps between 0 and 1 and the field does not - and so neither do the width and
     B, which are continuous functions of it and of the law wherever the count is not 0.
 
     **It does step where a chain ends with no taper, as ruled**: at a join ("joined, without taper") the chain's
@@ -1468,6 +1519,11 @@ def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template
     step = sp.count_at(edges * (1.0 + 1e-10)) - sp.count_at(edges * (1.0 - 1e-10))
     hard = untapered_ends(table)
     at_hard = np.array([hard.size > 0 and float(np.abs(hard / r - 1.0).min()) < 1e-8 for r in edges])
+    # ... and, since the fourth follow-up (B: the count is at least 1 on a ring any chain crosses), the radii at which the
+    # crossing set becomes empty or stops being so: there N steps between 0 and 1, and B between 0 and sqrt(budget/v),
+    # while the field does not (the chain's weight is 0 there).
+    crossing_below, crossing_above = sp.pieces.chains_crossing(edges * (1.0 - 1e-10)), sp.pieces.chains_crossing(edges * (1.0 + 1e-10))
+    at_hard |= (crossing_below == 0) | (crossing_above == 0)
     assert np.abs(step[~at_hard]).max(initial=0.0) < 1e-6
     # ... and between two such radii the count is continuous: a part in 1e9 of radius moves it by a part in 1e6 at most.
     between = 0.5 * (edges[1:] + edges[:-1])
@@ -1482,7 +1538,7 @@ def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template
     assert record == EXPECTED_STEPS.get(template), repr(record)
 
 
-EXPECTED_STEPS: dict = {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+EXPECTED_STEPS: dict = {"milky_way": (64, 6, 4, 0.349), "ngc_4414": (63, 4, 2, 0.155), "default": (31, 2, 1, 0.015)}  # S60 fourth pass: was {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
 
 
 # --- no square edge anywhere: continuity across every kink and join (the gate's third follow-up) ---------------------

@@ -802,7 +802,9 @@ ARM_PIECE_AMPLITUDE = _radial(
     "round the ring at the disc's own pitch - so that as many pieces as the count, at independent places "
     "round the ring, make the budget's variance on average. The count is the chains that cross the ring, "
     "each weighed by how far along it the ring stands from its faded end - a chain just begun counts for "
-    "little - so the amplitude changes smoothly with radius but where two chains join. Shown here on "
+    "little, and never under one in all on a ring any chain crosses, so a lone chain just born or just ending "
+    "spends no more than one piece's share of the budget and its excess fades with its own weight - so the "
+    "amplitude changes smoothly with radius but where two chains join. Shown here on "
     "the grid's rings; a reader of the arms makes it at its own radius from the budget, the count and the "
     "width, each taken linearly between the grid's radii. It grows without bound toward the centre, where a "
     "piece is wider than its ring and makes almost no variance at any height - a ridge that fills its ring "
@@ -827,7 +829,8 @@ ARM_CHAIN_COUNT = FieldDecl(
     ramp=Ramp("viridis", lo=0.0), meaningful_zero=True, provenance="seeded", composed=True, neutral=0.0,
     about=(
         "How many chains of arm pieces cross each ring in this realisation: the whole number the layer's census "
-        "laid there, at least the arm number the law counts wherever the ring has a budget. A ring with a "
+        "laid there: at least the arm number the law counts wherever the ring has a budget and lies at or "
+        "outside a bar's half-length, inside which no chain is born and only a measured arm reaches. A ring with a "
         "budget and no chain carries no arm, and is counted. 0 with the randomness layer off: no arm is placed."
     ),
 )
@@ -1118,7 +1121,21 @@ class ArmPattern:
         width = np.minimum(law, bound)
         with np.errstate(divide="ignore", invalid="ignore"):
             weight = np.where(live & first, np.minimum(1.0, s / width[:, None]), 0.0)
-        return width, sum_slots(np.nan_to_num(weight, nan=0.0))
+        count = sum_slots(np.nan_to_num(weight, nan=0.0))
+        # The gate's fourth follow-up, B: "On a ring crossed by any chain the count is N = max(1, sum of the taper
+        # weights of the crossing chains), so B <= sqrt(budget/v) on every ring; a lone newborn or ending chain's
+        # excess goes to zero linearly in its weight; N is continuous through 1." Where the weights sum under 1
+        # the bound is then half the spacing of one piece, pi R sin p, and the weights are read at that width (their
+        # sum is no larger there: the width grew); where they sum to 1 or more nothing changes, so N and the width
+        # are continuous through 1.
+        crossed = (live & first).any(axis=1)
+        under = crossed & (count < 1.0)
+        if under.any():
+            width = np.where(under, np.minimum(law, target), width)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                weight = np.where(live & first, np.minimum(1.0, s / width[:, None]), 0.0)
+            count = np.where(under, np.maximum(1.0, sum_slots(np.nan_to_num(weight, nan=0.0))), count)
+        return width, count
 
     def width_at(self, R: np.ndarray) -> np.ndarray:
         """FWHM across a piece on the ring at ``R``, kpc: **the width law's, bounded by half the ring's crossing
