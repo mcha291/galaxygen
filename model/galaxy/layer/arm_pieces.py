@@ -30,9 +30,18 @@ draw - barred: a grand design; unbarred: multi-armed - or pinned by a template:
 - *a grand design in a barred disc*: two chains from the bar's two ends, at the bar's half-length on the bar's
   axis, and then the births below;
 - *births, in every class*: the grid's rings are swept inside out, and while the chains crossing a ring are fewer
-  than the law's arm number there, a chain starts on that ring at a uniform azimuth. (The law's number is not an
-  integer: 4.8 gives five.) A ring with no arm power starts none; **and none is born inside a bar's
-  half-length** - the sweep starts at R = a in a barred disc (the gate's follow-up, item 2);
+  than the law's arm number there, a chain starts on that ring - **at the midpoint of the widest azimuthal gap
+  between the chains crossing it** (the gate's second follow-up, item 3: "the law's arm number m is m crests
+  evenly spaced - that is what an m-fold mode is - and births at uniform azimuths spend the law's m-power at
+  m = 1-2 as shot noise"); at a uniform azimuth where no chain crosses the ring - the first chain of an
+  unbarred disc. No number enters the rule. (The law's number is not an integer: 4.8 gives five.) A ring with
+  no arm power starts none; **and none is born inside a bar's half-length** - the sweep starts at R = a in a
+  barred disc (the gate's first follow-up, item 2);
+- *no crossing* (the second follow-up, item 2): "a drawn piece that meets another chain ends there, joined,
+  without taper; a pinned piece is never cut; a drawn piece meeting a pinned one ends" - and its chain ends with
+  it, not continued past the join. Pieces are straight lines in the plane of ln R and azimuth, so the meeting
+  point is exact. The column ``arm_piece_join`` says which end of a piece meets another chain; the realised
+  number of joins of a galaxy is the number of rows where it is not 0;
 - *flocculent*, by a template's pin only: a birth is a single piece, of extent uniform on 37°-105° (the one
   flocculent galaxy's measured five); no chain length is drawn;
 - *pinned pieces* (item 8): a template's measured arms, each row of the pin a chain of one or two pieces exactly
@@ -43,7 +52,7 @@ draw - barred: a grand design; unbarred: multi-armed - or pinned by a template:
   the births fill the rings the measured arms leave short, pinned chains counted as crossing.
 
 **The seed** is ``texture_seed``; **the streams** are named by chain and order: ``("chain", c, "length")``,
-``("chain", c, "start")`` for a birth's azimuth, ``("chain", c, "out", k)`` for the k-th piece laid outward and
+``("chain", c, "start")`` for the azimuth of a birth on a ring no chain crosses (drawn only then), ``("chain", c, "out", k)`` for the k-th piece laid outward and
 ``("chain", c, "in", k)`` for the k-th laid inward - each stream z first, then the extent, as S59's segments drew.
 Chains are numbered as they are made: the pinned ones in the pin's order, the two of the bar, then the births in
 the sweep's order. The census reads the grid (the rings births are counted on), as the ruling's rule does.
@@ -68,11 +77,15 @@ from galaxy.core.fielddoc import FieldDecl, Kind
 from galaxy.core.registry import ARM_CLASSES, IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
-from galaxy.stages.pattern import PIECE_FIELDS, bar_terms, rotation_sense
+from galaxy.stages.pattern import PIECE_FIELDS, PIECE_JOINS, bar_terms, rotation_sense
 
 MAX_DRAWS = 16  # how often an extent or a chain's length is drawn again before the stage raises (rule A1)
 MAX_CHAIN_PIECES = 64  # the most pieces one laying holds: a length of 1280 degrees at the shortest extent
 GRAND_DESIGN, MULTI_ARMED, FLOCCULENT = ARM_CLASSES
+JOIN_NONE, JOIN_INNER, JOIN_OUTER = PIECE_JOINS
+# A new piece's meeting with another chain is looked for past this share of its way: its own first point - where
+# it leaves the piece before it, or is born - is no meeting.
+MEETING_FROM = 1e-12
 
 # What the draws read: a piece's extent (S59's four numbers), the spread of its pitch, a chain's length by class,
 # and a flocculent piece's range.
@@ -122,7 +135,8 @@ class Law:
 
 @dataclass(frozen=True, slots=True)
 class Piece:
-    """One row of the census: its inner end (ln R and azimuth), its pitch in degrees, its extent in radians."""
+    """One row of the census: its inner end (ln R and azimuth), its pitch in degrees, its extent in radians, and
+    which of its ends meets another chain (0 none, 1 its inner end, 2 its outer end)."""
 
     chain: int
     x: float          # ln of the start radius, kpc
@@ -130,16 +144,103 @@ class Piece:
     pitch_deg: float
     extent: float
     pinned: bool
+    join: float = JOIN_NONE
 
     def reach(self) -> float:
         """How far the piece runs in ln R: Δβ |tan p|."""
         return self.extent * abs(math.tan(math.radians(self.pitch_deg)))
 
     def advance(self, turn: float) -> float:
-        """How far its azimuth moves from its inner end to its outer: Δβ in the trailing sense for a positive
-        pitch, the other way for a negative one, nothing for a pitch of exactly 0."""
-        tangent = math.tan(math.radians(self.pitch_deg))
-        return turn * self.extent * (1.0 if tangent > 0.0 else -1.0 if tangent < 0.0 else 0.0)
+        """How far its azimuth moves from its inner end to its outer: Δβ in the trailing sense for a pitch that is
+        positive - or exactly 0, an arc at its radius - and the other way for a negative one."""
+        return turn * self.extent * (1.0 if math.tan(math.radians(self.pitch_deg)) >= 0.0 else -1.0)
+
+    def ends(self, turn: float) -> tuple[tuple[float, float], tuple[float, float]]:
+        """((ln R, azimuth) of the inner end, of the outer end): the piece is the straight line between them in
+        the log-polar plane, its azimuth not wrapped."""
+        return (self.x, self.azimuth), (self.x + self.reach(), self.azimuth + self.advance(turn))
+
+
+def meeting(start: tuple[float, float], end: tuple[float, float], others: Sequence[tuple[tuple[float, float], tuple[float, float]]]) -> float | None:
+    """Where the straight line from ``start`` to ``end`` in the log-polar plane (ln R, azimuth) first meets one of
+    ``others`` - lines each given by its two ends - as the share of the way from ``start`` to ``end``, in
+    (:data:`MEETING_FROM`, 1]; None where it meets none. The azimuth is a circle's: each of the others is tried a
+    turn either side of where its start lies nearest ``start`` (a piece runs half a turn at most, so no other
+    image can reach). "Pieces are straight in the log-polar plane, so the meeting point is exact" (D219, the
+    gate's second follow-up, item 2). Parallel lines do not meet."""
+    ax, ay = end[0] - start[0], end[1] - start[1]
+    first: float | None = None
+    for (bx0, by0), (bx1, by1) in others:
+        bx, by = bx1 - bx0, by1 - by0
+        det = ax * by - ay * bx
+        if det == 0.0:
+            continue
+        nearest = 2.0 * math.pi * round((start[1] - by0) / (2.0 * math.pi))
+        for turns in (-1.0, 0.0, 1.0):
+            ox, oy = bx0 - start[0], by0 + nearest + 2.0 * math.pi * turns - start[1]
+            s = (ox * by - oy * bx) / det   # along the new line
+            t = (ox * ay - oy * ax) / det   # along the other
+            if MEETING_FROM < s <= 1.0 and 0.0 <= t <= 1.0 and (first is None or s < first):
+                first = s
+    return first
+
+
+class Laying:
+    """The pieces laid so far, and the two rules a new one is laid by (D219, the gate's second follow-up, items 2
+    and 3): **no crossing** - "a drawn piece that meets another chain ends there, joined, without taper; a pinned
+    piece is never cut; a drawn piece meeting a pinned one ends" - and **births in the widest gap** - "a chain is
+    born at the midpoint of the widest azimuthal gap between the chains crossing its birth ring"."""
+
+    def __init__(self, turn: float) -> None:
+        self.turn = turn
+        self.pieces: list[Piece] = []
+
+    def add(self, piece: Piece) -> None:
+        self.pieces.append(piece)
+
+    def cut(self, piece: Piece, inward: bool) -> Piece:
+        """``piece`` as it is laid: whole, or - where it meets a piece of another chain on its way - ended there
+        and flagged joined at that end. A piece laid outward runs from its inner end and is cut at its outer; one
+        laid ``inward`` runs from its outer end and is cut at its inner."""
+        inner, outer = piece.ends(self.turn)
+        others = [p.ends(self.turn) for p in self.pieces if p.chain != piece.chain]
+        share = meeting(outer, inner, others) if inward else meeting(inner, outer, others)
+        if share is None:
+            return piece
+        kept = Piece(piece.chain, piece.x, piece.azimuth, piece.pitch_deg, share * piece.extent, piece.pinned, JOIN_INNER if inward else JOIN_OUTER)
+        if not inward:
+            return kept
+        # Laid inward, the piece keeps its outer end: its inner end is the meeting point.
+        return Piece(piece.chain, outer[0] - kept.reach(), outer[1] - kept.advance(self.turn), piece.pitch_deg, kept.extent, piece.pinned, JOIN_INNER)
+
+    def span(self, chain: int) -> tuple[float, float] | None:
+        """The chain's reach in ln R: what "crosses a ring" is counted on. None for a chain with no piece."""
+        own = [p for p in self.pieces if p.chain == chain]
+        return (min(p.x for p in own), max(p.x + p.reach() for p in own)) if own else None
+
+    def crossings(self, x: float) -> list[float]:
+        """The azimuths, within one turn, at which the chains laid so far cross the ring at ln R = ``x``: where
+        each piece whose locus crosses it stands on it."""
+        out = []
+        for p in self.pieces:
+            reach = p.reach()
+            if p.x <= x < p.x + reach:
+                out.append((p.azimuth + (x - p.x) / reach * p.advance(self.turn)) % (2.0 * math.pi))
+        return out
+
+    def widest_gap(self, x: float) -> float | None:
+        """The midpoint of the widest azimuthal gap between the chains crossing the ring at ln R = ``x``, within
+        one turn; None where none crosses. Of two gaps of one width, the one that starts at the lesser azimuth.
+        One chain crossing leaves one gap, the whole turn: the midpoint is opposite it."""
+        at = sorted(self.crossings(x))
+        if not at:
+            return None
+        best, start = -1.0, 0.0
+        for k, azimuth in enumerate(at):
+            gap = (at[k + 1] - azimuth) if k + 1 < len(at) else (at[0] + 2.0 * math.pi - azimuth)
+            if gap > best:
+                best, start = gap, azimuth
+        return (start + 0.5 * best) % (2.0 * math.pi)
 
 
 def draw_piece(generator: Any, law: Law) -> tuple[float, float]:
@@ -166,50 +267,51 @@ def draw_length(generator: Any, law: Law) -> float:
     raise ArithmeticError(f"a chain's length fell under {law.length_min:g} degrees {MAX_DRAWS} times running")
 
 
-def lay_outward(chain: int, x: float, azimuth: float, length: float, law: Law, stream: Callable[[int], Any], x_edge: float) -> list[Piece]:
+def lay_outward(laying: Laying, chain: int, x: float, azimuth: float, length: float, law: Law, stream: Callable[[int], Any], x_edge: float) -> None:
     """Pieces joined end to start from (``x`` = ln R, ``azimuth``) outward, to a total extent of ``length``
-    radians, the last piece cut to it. No piece is started past ``x_edge``, the grid's last ring."""
-    pieces: list[Piece] = []
+    radians, the last piece cut to it. No piece is started past ``x_edge``, the grid's last ring. **A piece that
+    meets another chain ends there, and the chain with it**: it is not continued past the join."""
     left = float(length)
     for k in range(MAX_CHAIN_PIECES + 1):
         if not left > 0.0 or not x <= x_edge:
-            return pieces
+            return
         if k == MAX_CHAIN_PIECES:
             break
         extent, deviate = draw_piece(stream(k), law)
-        piece = Piece(chain, x, azimuth, law.pitch_deg * (1.0 + law.scatter * deviate), min(extent, left), False)
-        pieces.append(piece)
+        piece = laying.cut(Piece(chain, x, azimuth, law.pitch_deg * (1.0 + law.scatter * deviate), min(extent, left), False), inward=False)
+        laying.add(piece)
+        if piece.join != JOIN_NONE:
+            return
         left -= piece.extent
         x, azimuth = x + piece.reach(), azimuth + piece.advance(law.turn)
     raise ArithmeticError(f"chain {chain} holds more than {MAX_CHAIN_PIECES} pieces")
 
 
-def lay_inward(chain: int, x: float, azimuth: float, length: float, law: Law, stream: Callable[[int], Any], x_floor: float) -> list[Piece]:
+def lay_inward(laying: Laying, chain: int, x: float, azimuth: float, length: float, law: Law, stream: Callable[[int], Any], x_floor: float) -> None:
     """Pieces joined end to start from (``x``, ``azimuth``) inward, to a total extent of ``length`` radians or to
     ``x_floor`` (ln of the bar's half-length), whichever comes first: each piece's outer end is the last one's
     inner end, and the piece that would pass the floor is cut where it reaches it. None where the start is at or
-    inside the floor."""
-    pieces: list[Piece] = []
+    inside the floor. **A piece that meets another chain on its way in ends there, and the chain with it.**"""
     left = float(length)
     for k in range(MAX_CHAIN_PIECES + 1):
         if not left > 0.0 or not x > x_floor:
-            return pieces
+            return
         if k == MAX_CHAIN_PIECES:
             break
         extent, deviate = draw_piece(stream(k), law)
         pitch = law.pitch_deg * (1.0 + law.scatter * deviate)
         extent = min(extent, left)
         slope = abs(math.tan(math.radians(pitch)))
-        cut = slope > 0.0 and x - extent * slope < x_floor
-        if cut:
+        floored = slope > 0.0 and x - extent * slope < x_floor
+        if floored:
             extent = (x - x_floor) / slope  # where the piece reaches the bar's half-length
         probe = Piece(chain, x, azimuth, pitch, extent, False)
-        piece = Piece(chain, x - probe.reach(), azimuth - probe.advance(law.turn), pitch, extent, False)
-        pieces.append(piece)
+        piece = laying.cut(Piece(chain, x - probe.reach(), azimuth - probe.advance(law.turn), pitch, extent, False), inward=True)
+        laying.add(piece)
+        if piece.join != JOIN_NONE or floored:
+            return
         left -= extent
         x, azimuth = piece.x, piece.azimuth
-        if cut:
-            return pieces
     raise ArithmeticError(f"chain {chain} holds more than {MAX_CHAIN_PIECES} pieces")
 
 
@@ -251,22 +353,17 @@ def census(
     x_ring = np.log(R)
     x_edge = float(x_ring[-1])
     sense = -law.turn
-    pieces: list[Piece] = []
-    spans: list[tuple[float, float]] = []  # each chain's reach in ln R: what "crosses a ring" is counted on
+    laying = Laying(law.turn)
 
-    def close(chain_pieces: list[Piece]) -> None:
-        pieces.extend(chain_pieces)
-        if chain_pieces:
-            spans.append((min(p.x for p in chain_pieces), max(p.x + p.reach() for p in chain_pieces)))
-
-    def outward(chain: int, x: float, azimuth: float, length: float) -> list[Piece]:
-        return lay_outward(chain, x, azimuth, length, law, lambda k: stream("chain", chain, "out", k), x_edge)
+    def outward(chain: int, x: float, azimuth: float, length: float) -> None:
+        lay_outward(laying, chain, x, azimuth, length, law, lambda k: stream("chain", chain, "out", k), x_edge)
 
     def length_of(chain: int) -> float:
         return draw_length(stream("chain", chain, "length"), law)
 
     made = 0
-    # The pinned chains (D219 item 8; the lead's reading (c)).
+    # The pinned chains (D219 item 8; the lead's reading (c)). Every measured piece is laid first - "a pinned piece
+    # is never cut" - and then each arm's drawn continuation, which ends where it meets another chain.
     if len(pinned_rows):
         if not (math.isfinite(sun_azimuth) and math.isfinite(bar_length)):
             raise ValueError(
@@ -274,26 +371,31 @@ def census(
                 "bar's half-length: the galaxy has no bar or no pinned angle of the bar to the Sun-centre line"
             )
         x_bar = math.log(bar_length)
+        measured = []
         for row in pinned_rows:
             chain = made
             made += 1
-            measured, low, high = pinned_pieces(chain, row, sun_azimuth, sense)
-            grown: list[Piece] = list(measured)
-            if not law.flocculent:
-                spare = length_of(chain) - math.radians(float(row[2]) - float(row[1]))
-                if spare > 0.0:
-                    # Past the range's low-β end the arm runs on outward; past its high-β end, inward to the bar.
-                    grown += outward(chain, low[0], low[1], 0.5 * spare)
-                    grown += lay_inward(chain, high[0], high[1], 0.5 * spare, law, lambda k, c=chain: stream("chain", c, "in", k), x_bar)
-            close(grown)
+            pieces, low, high = pinned_pieces(chain, row, sun_azimuth, sense)
+            for piece in pieces:
+                laying.add(piece)
+            measured.append((chain, row, low, high))
+        for chain, row, low, high in measured:
+            if law.flocculent:
+                continue
+            spare = length_of(chain) - math.radians(float(row[2]) - float(row[1]))
+            if spare > 0.0:
+                # Past the range's low-β end the arm runs on outward; past its high-β end, inward to the bar.
+                outward(chain, low[0], low[1], 0.5 * spare)
+                lay_inward(laying, chain, high[0], high[1], 0.5 * spare, law, lambda k, c=chain: stream("chain", c, "in", k), x_bar)
     # The two chains of a bar (item 3): none in a galaxy with pinned pieces, and none in a class without them.
     elif arm_class == GRAND_DESIGN and math.isfinite(bar_length) and math.isfinite(bar_angle):
         for end in (0.0, math.pi):
             chain = made
             made += 1
-            close(outward(chain, math.log(bar_length), bar_angle + end, length_of(chain)))
+            outward(chain, math.log(bar_length), bar_angle + end, length_of(chain))
     # The births (item 3; the lead's reading (a)): rings swept inside out.
     design_count = np.asarray(design_count, dtype=float)
+    spans = [span for span in (laying.span(chain) for chain in range(made)) if span is not None]
     # The gate's follow-up, item 2: "No chain is born inside a bar's half-length; the birth sweep starts at R = a in
     # a barred disc."
     x_first = math.log(bar_length) if math.isfinite(bar_length) else -math.inf
@@ -308,14 +410,23 @@ def census(
                 break
             chain = made
             made += 1
-            start = 2.0 * math.pi * float(stream("chain", chain, "start").random())
+            # The second follow-up, item 3: "A chain is born at the midpoint of the widest azimuthal gap between the
+            # chains crossing its birth ring; the first chain of an unbarred disc at a uniform azimuth" - and so any
+            # chain born on a ring that no chain crosses, where there is no gap to halve (the builder's reading of
+            # a case the rule does not name). The uniform draw is made only then.
+            start = laying.widest_gap(x)
+            if start is None:
+                start = 2.0 * math.pi * float(stream("chain", chain, "start").random())
             if law.flocculent:  # a single piece, and no chain length drawn
                 extent, deviate = draw_piece(stream("chain", chain, "out", 0), law)
-                close([Piece(chain, x, start, law.pitch_deg * (1.0 + law.scatter * deviate), extent, False)])
+                laying.add(laying.cut(Piece(chain, x, start, law.pitch_deg * (1.0 + law.scatter * deviate), extent, False), inward=False))
             else:
-                close(outward(chain, x, start, length_of(chain)))
+                outward(chain, x, start, length_of(chain))
+            span = laying.span(chain)
+            if span is not None:
+                spans.append(span)
             crossing += 1
-    return pieces
+    return laying.pieces
 
 
 def columns(pieces: Sequence[Piece]) -> dict[str, np.ndarray]:
@@ -327,7 +438,7 @@ def columns(pieces: Sequence[Piece]) -> dict[str, np.ndarray]:
     for chain in sorted(order):
         for place, i in enumerate(sorted(order[chain], key=lambda i: (pieces[i].x, i))):
             p = pieces[i]
-            rows.append((float(chain), float(place), math.exp(p.x), p.azimuth % (2.0 * math.pi), p.pitch_deg, p.extent, 1.0 if p.pinned else 0.0))
+            rows.append((float(chain), float(place), math.exp(p.x), p.azimuth % (2.0 * math.pi), p.pitch_deg, p.extent, 1.0 if p.pinned else 0.0, float(p.join)))
     table = np.array(rows, dtype=float).reshape(len(rows), len(PIECE_FIELDS))
     return {name: np.ascontiguousarray(table[:, k]) for k, name in enumerate(PIECE_FIELDS)}
 
@@ -356,8 +467,11 @@ _STATISTIC = (
     "whole length normal, 273 +- 143 degrees in a grand design and 244 +- 131 in a multi-armed disc, drawn again "
     "under 90 [verified: Chugunov, Marchuk & Savchenko 2025, arXiv:2504.11642, Sect. 3; "
     "docs/READING_ARM_PIECES.md Part A 3]. How many chains cross a ring: the arm-number law's own count there, "
-    "a chain started at a uniform azimuth wherever fewer cross - a reading of the law, declared as one, and no "
-    "measured statistic; two chains from a bar's ends, where Block et al. 2004 find the arms of barred "
+    "a chain started wherever fewer cross, at the middle of the widest gap between those that do - a reading of "
+    "the law, declared as one (a law of m arms is m crests evenly spaced), and no measured statistic; a drawn "
+    "piece ends where it meets another chain, joined to it - crossing arms are described by no source, "
+    "branches and joins are observed and their frequency is measured nowhere, so the number of joins is a "
+    "prediction with nothing to judge it by; two chains from a bar's ends, where Block et al. 2004 find the arms of barred "
     "galaxies starting within 20 degrees of the bar's axis (a detection window; docs/READING_BAR.md). A "
     "flocculent disc's pieces: single, uniform on 37-105 degrees, the five measured segments of one galaxy "
     "[inferred from: Herrera-Endoqui et al. 2015, A&A 582, A86, Table 3; docs/READING_ARM_PIECES.md Part A 5] - "
@@ -424,8 +538,19 @@ ARM_PIECE_PINNED = _column(
     "1 for a piece a template states from a measurement - it lies exactly on the fitted locus - and 0 for one "
     "the layer drew, the drawn pieces that continue a measured arm beyond its measured range among them.",
 )
+ARM_PIECE_JOIN = _column(
+    "arm_piece_join", "Which end of an arm piece meets another chain", "dimensionless",
+    "0 for a piece neither of whose ends meets another chain, 1 for one whose inner end does and 2 for one whose "
+    "outer end does. A drawn piece that would cross another chain ends where it meets it, and its chain ends "
+    "there too: the two arms join, as arms are seen to branch and join, and no two chains cross. A joined end "
+    "is not faded - the piece runs at full height into the arm it meets. A measured piece is never cut, so it "
+    "is always 0 for one; a drawn piece that meets a measured one ends. The number of rows where this is not "
+    "0 is the galaxy's number of joins - a prediction with nothing to judge it by, since how often arms join "
+    "is measured nowhere.",
+)
 ARM_PIECES: tuple[FieldDecl, ...] = (
     ARM_PIECE_CHAIN, ARM_PIECE_ORDER, ARM_PIECE_START_RADIUS, ARM_PIECE_START_AZIMUTH, ARM_PIECE_PITCH, ARM_PIECE_EXTENT, ARM_PIECE_PINNED,
+    ARM_PIECE_JOIN,
 )
 assert tuple(d.name for d in ARM_PIECES) == PIECE_FIELDS
 
@@ -457,8 +582,9 @@ ARM_PIECES_STAGE = IMPLEMENTATIONS.register(
             "The randomness layer's realisation of the arms: a census of arm pieces, drawn on the texture seed. "
             "Each piece is a stretch of arm on its own logarithmic spiral - a start, a pitch, a run round the "
             "disc; pieces joined end to start make a chain, an arm with kinks. A barred disc gets two chains "
-            "from the bar's ends; every disc gets a chain started at a random azimuth on each ring that fewer "
-            "chains cross than the arm-number law counts there; a disc a template states to be flocculent gets "
+            "from the bar's ends; every disc gets a chain started on each ring that fewer chains cross than the "
+            "arm-number law counts there, in the middle of the widest gap between those that do; a drawn piece "
+            "that meets another chain ends there, joined to it, so no two chains cross; a disc a template states to be flocculent gets "
             "single short pieces instead of chains; and a template's measured arms are entered where they were "
             "measured and continued by drawn pieces. Synthetic: it stands in for the dynamics that set where "
             "arms form and join, moves no amplitude, no budget and no ring's mean, and lays nothing with the "

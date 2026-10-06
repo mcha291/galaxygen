@@ -127,6 +127,7 @@ from galaxy.stages.pattern import (
     CELLS,
     PATTERN_READS,
     PIECE_FIELDS,
+    PIECE_JOINS,
     BarBody,
     bar_terms,
     invert_azimuths,
@@ -151,7 +152,7 @@ _GAUSS_NODES, _GAUSS_WEIGHTS = np.polynomial.legendre.leggauss(8)
 WIDEST = math.sqrt(math.pi)
 JOINED = 1e-9  # two ends of pieces of one chain closer than this in ln R and in azimuth (rad) are one point: a kink
 # ``arm_piece_join``'s values: which of a piece's ends meets another chain (the second follow-up, item 2).
-JOIN_NONE, JOIN_INNER, JOIN_OUTER = 0.0, 1.0, 2.0
+JOIN_NONE, JOIN_INNER, JOIN_OUTER = PIECE_JOINS
 MODE_POWER_FIELDS: tuple[str, ...] = tuple(f"arm_mode_power_{m}" for m in ARM_MODES)
 # How many (radius, piece, azimuth) values one pass of a sum holds at once: a bound on memory, never on a value.
 _BATCH = 2_000_000

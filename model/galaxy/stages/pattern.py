@@ -156,11 +156,14 @@ AMPLITUDE_FIELDS: tuple[str, ...] = tuple(amplitude_field(m) for m in ARM_MODES)
 BODY_FIELDS: tuple[str, ...] = ("bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", "disc_surface_density")
 # The realised census of arm pieces (S60, D219 item 7): the layer's table ``arm_piece``, one row a piece - the chain
 # it belongs to and its place in it, where its inner end stands, its pitch, how far round the disc it runs, and
-# whether a template pinned it. No row with the layer off. (Declared in ``galaxy/layer/arm_pieces.py``.)
+# whether a template pinned it - and, since the gate's second follow-up to D219 (item 2: no two chains cross),
+# which of its ends meets another chain. No row with the layer off. (Declared in ``galaxy/layer/arm_pieces.py``.)
 PIECE_FIELDS: tuple[str, ...] = (
     "arm_piece_chain", "arm_piece_order", "arm_piece_start_radius", "arm_piece_start_azimuth", "arm_piece_pitch",
-    "arm_piece_extent", "arm_piece_pinned",
+    "arm_piece_extent", "arm_piece_pinned", "arm_piece_join",
 )
+# ``arm_piece_join``'s three values: no end of the piece meets another chain; its inner end does; its outer end.
+PIECE_JOINS: tuple[float, float, float] = (0.0, 1.0, 2.0)
 # What the stellar pattern is built from, and so what every stage that places by it requires (S58, D217: the
 # bar's body, and the disc's surface density with it; S60, D219: the census of arm pieces, the width of a piece
 # across itself at every radius, and the law the pieces' one amplitude on a ring is made from - the ring's budget
