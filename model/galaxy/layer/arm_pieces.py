@@ -37,18 +37,20 @@ draw - barred: a grand design; unbarred: multi-armed - or pinned by a template:
   unbarred disc. No number enters the rule. (The law's number is not an integer: 4.8 gives five.) A ring with
   no arm power starts none; **and none is born inside a bar's half-length** - the sweep starts at R = a in a
   barred disc (the gate's first follow-up, item 2);
-- *no crossing* (the second follow-up, item 2): "a drawn piece that meets another chain ends there, joined,
-  without taper; a pinned piece is never cut; a drawn piece meeting a pinned one ends" - and its chain ends with
-  it, not continued past the join. Pieces are straight lines in the plane of ln R and azimuth, so the meeting
-  point is exact. The column ``arm_piece_join`` says which end of a piece meets another chain; the realised
-  number of joins of a galaxy is the number of rows where it is not 0;
+- *no crossing* (the second follow-up, item 2; the fourth, A): "a drawn piece that meets another chain ends there,
+  joined, without taper; a pinned piece is never cut; a drawn piece meeting a pinned one ends" - and its chain
+  ends with it, not continued past the join; **and no chain crosses itself**: a drawn piece ends where it meets
+  any chain's locus, its own chain's pieces included but for the one it is laid from. Pieces are straight lines
+  in the plane of ln R and azimuth, so the meeting point is exact. The column ``arm_piece_join`` says which end
+  of a piece meets a chain; the realised number of joins of a galaxy is the number of rows where it is not 0;
 - *flocculent*, by a template's pin only: a birth is a single piece, of extent uniform on 37°-105° (the one
   flocculent galaxy's measured five); no chain length is drawn;
 - *pinned pieces* (item 8): a template's measured arms, each row of the pin a chain of one or two pieces exactly
   on the fitted locus, placed by the Sun's azimuth; each continued beyond its measured range by drawn pieces,
   flagged unpinned, to the chain's drawn length - the drawn length less the measured range split evenly
-  between its two ends, the inward part stopping at the bar's half-length (laid from the measured end inward;
-  none where that end is already inside the bar). No chain is tied to the bar in a galaxy with pinned pieces;
+  between its two ends, outward from the end of greater radius and inward from the other, no further than the
+  bar's half-length; **an end inside the bar's half-length is not continued** (the fourth follow-up, A). No
+  chain is tied to the bar in a galaxy with pinned pieces;
   the births fill the rings the measured arms leave short, pinned chains counted as crossing.
 
 **The seed** is ``texture_seed``; **the streams** are named by chain and order: ``("chain", c, "length")``,
@@ -86,6 +88,9 @@ JOIN_NONE, JOIN_INNER, JOIN_OUTER = PIECE_JOINS
 # A new piece's meeting with another chain is looked for past this share of its way: its own first point - where
 # it leaves the piece before it, or is born - is no meeting.
 MEETING_FROM = 1e-12
+# Two ends closer than this in ln R and in azimuth (rad) are one point: the piece a new one is laid from stands at
+# its origin and is not among those it may meet (the same tolerance as ``pieces.JOINED``).
+ADJACENT = 1e-9
 
 # What the draws read: a piece's extent (S59's four numbers), the spread of its pitch, a chain's length by class,
 # and a flocculent piece's range.
@@ -203,7 +208,11 @@ class Laying:
         and flagged joined at that end. A piece laid outward runs from its inner end and is cut at its outer; one
         laid ``inward`` runs from its outer end and is cut at its inner."""
         inner, outer = piece.ends(self.turn)
-        others = [p.ends(self.turn) for p in self.pieces if p.chain != piece.chain]
+        origin = outer if inward else inner
+        # Every chain's pieces, its own chain's included but for the piece it is laid from - the one standing at
+        # its origin (the gate's fourth follow-up, A: "a drawn piece ends where it meets any chain's locus, its own
+        # chain's non-adjacent pieces included").
+        others = [q.ends(self.turn) for q in self.pieces if q.chain != piece.chain or not self.stands_at(q, origin)]
         share = meeting(outer, inner, others) if inward else meeting(inner, outer, others)
         if share is None:
             return piece
@@ -212,6 +221,11 @@ class Laying:
             return kept
         # Laid inward, the piece keeps its outer end: its inner end is the meeting point.
         return Piece(piece.chain, outer[0] - kept.reach(), outer[1] - kept.advance(self.turn), piece.pitch_deg, kept.extent, piece.pinned, JOIN_INNER)
+
+    def stands_at(self, piece: Piece, point: tuple[float, float]) -> bool:
+        """Whether either end of ``piece`` is the ``point`` (ln R, azimuth), to :data:`ADJACENT` in ln R and in
+        azimuth within a turn: the piece a new one is laid from."""
+        return any(abs(ex - point[0]) < ADJACENT and abs(math.remainder(ey - point[1], 2.0 * math.pi)) < ADJACENT for ex, ey in piece.ends(self.turn))
 
     def span(self, chain: int) -> tuple[float, float] | None:
         """The chain's reach in ln R: what "crosses a ring" is counted on. None for a chain with no piece."""
@@ -386,9 +400,17 @@ def census(
                 continue
             spare = length_of(chain) - math.radians(float(row[2]) - float(row[1]))
             if spare > 0.0:
-                # Past the range's low-β end the arm runs on outward; past its high-β end, inward to the bar.
-                outward(chain, low[0], low[1], 0.5 * spare)
-                lay_inward(laying, chain, high[0], high[1], 0.5 * spare, law, lambda k, c=chain: stream("chain", c, "in", k), x_bar)
+                # The gate's fourth follow-up, A: "A pinned chain is continued only from an end that lies at or
+                # outside the bar's half-length, in the sense that leaves the measured range - outward from its outer
+                # end, inward from its inner end and no further than a; an end inside the bar's half-length is not
+                # continued." The outer end is the end of greater radius, whichever end of the measured β range it
+                # is; the spare length is halved between the two ends (the lead's reading (c)), and an end that is
+                # not continued leaves its half unlaid.
+                outer_end, inner_end = (high, low) if high[0] > low[0] else (low, high)
+                if outer_end[0] >= x_bar:
+                    outward(chain, outer_end[0], outer_end[1], 0.5 * spare)
+                if inner_end[0] >= x_bar:
+                    lay_inward(laying, chain, inner_end[0], inner_end[1], 0.5 * spare, law, lambda k, c=chain: stream("chain", c, "in", k), x_bar)
     # The two chains of a bar (item 3): none in a galaxy with pinned pieces, and none in a class without them.
     elif arm_class == GRAND_DESIGN and math.isfinite(bar_length) and math.isfinite(bar_angle):
         for end in (0.0, math.pi):

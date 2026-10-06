@@ -505,7 +505,8 @@ def cut_at_meeting(rows: list, others: list) -> tuple[list, bool]:
     one shortened to the meeting; whether it was cut)."""
     kept = []
     for row in rows:
-        shares = [s for other in others for s, _ in meets(line_of(row), other) if s > 1e-12]
+        # ... any chain's lines, its own earlier pieces included but for the one it is laid from (the fourth follow-up, A).
+        shares = [s for other in others + [line_of(r) for r in kept[:-1]] for s, _ in meets(line_of(row), other) if s > 1e-12]
         if shares:
             return kept + [(row[0], row[1], row[2], min(shares) * row[3])], True
         kept.append(row)
@@ -513,16 +514,25 @@ def cut_at_meeting(rows: list, others: list) -> tuple[list, bool]:
 
 
 def crossings(table: np.ndarray) -> tuple[int, int]:
-    """(proper crossings between two pieces of different chains at least one of which is drawn; between two pinned
-    ones): two lines that meet inside both - not at an end of either, which is a join or a touch."""
+    """(proper crossings between two pieces at least one of which is drawn - of different chains, **or of one
+    chain** (the fourth follow-up, A: "no chain crosses any chain, itself included"); between two pinned ones): two
+    lines that meet inside both - not at an end of either, which is a join, a kink or a touch."""
     lines = [line_of(row[2:6]) for row in table]
     drawn = pinned = 0
     for i in range(len(lines)):
         for j in range(i + 1, len(lines)):
-            if table[i, 0] != table[j, 0] and any(1e-9 < s < 1.0 - 1e-9 and 1e-9 < t < 1.0 - 1e-9 for s, t in meets(lines[i], lines[j])):
+            if any(1e-9 < s < 1.0 - 1e-9 and 1e-9 < t < 1.0 - 1e-9 for s, t in meets(lines[i], lines[j])):
                 both = table[i, 6] == 1.0 and table[j, 6] == 1.0
                 pinned, drawn = pinned + both, drawn + (not both)
     return drawn, pinned
+
+
+def continued_inside_the_bar(table: np.ndarray, a: float) -> int:
+    """How many drawn pieces continuing a pinned chain lie, in any part, inside the bar's half-length ``a`` (the
+    fourth follow-up, A: an end inside it is not continued, and an inward continuation stops at it)."""
+    pinned_chains = set(table[table[:, 6] == 1.0][:, 0].tolist())
+    rows = table[(table[:, 6] == 0.0) & np.isin(table[:, 0], list(pinned_chains))]
+    return int((rows[:, 2] < a * (1.0 - 1e-12)).sum())
 
 
 def births_off_the_widest_gap(table: np.ndarray, R: np.ndarray, first_free: int) -> tuple[int, int, float]:
@@ -694,12 +704,15 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
             assert -1e-9 <= share <= 1.0 + 1e-9
             worst = max(worst, abs(math.remainder(on_piece - f, 2.0 * math.pi)) * r)
         drawn = part[part[:, 6] == 0.0]
-        inner_end = r_kink * math.exp(-math.radians(hi - kink) * math.tan(math.radians(above)))
-        inward = drawn[drawn[:, 2] < min(pinned[:, 2].min(), inner_end) - 1e-9]
-        if inner_end <= a:
-            assert inward.shape[0] == 0, name  # the measured end is inside the bar: nothing is laid inward
-        else:
-            assert inward.shape[0] == 0 or float(inward[:, 2].min()) >= a * (1.0 - 1e-12), name
+        # The fourth follow-up, A: continued outward from the end of greater radius and inward from the other, each
+        # only if at or outside the bar's half-length; the inward part no further than a.
+        ends = (reid2019.locus(table[name])[1][0], reid2019.locus(table[name])[1][-1])
+        outer_end, inner_end = max(ends), min(ends)
+        assert drawn.shape[0] == 0 or float(drawn[:, 2].min()) >= a * (1.0 - 1e-12), name
+        if outer_end < a:
+            assert drawn.shape[0] == 0, name
+        elif inner_end < a:
+            assert np.all(drawn[:, 2] >= outer_end * (1.0 - 1e-9)), name  # only the outward continuation
     assert worst < 1e-12  # kpc: the pinned pieces are the fitted loci
     # No chain is tied to the bar: none starts at (a, the bar's angle) or its opposite.
     bar_angle = sp.bar_angle
@@ -708,7 +721,7 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
     # No pinned piece is cut, and no drawn piece crosses another chain; the births stand in the widest gaps.
     assert np.all(rows[rows[:, 6] == 1.0][:, 7] == 0.0)
     drawn_crossings, pinned_crossings = crossings(rows)
-    assert drawn_crossings == 0 and births_off_the_widest_gap(rows, R, 6)[2] < 1e-12
+    assert drawn_crossings == 0 and births_off_the_widest_gap(rows, R, 6)[2] < 1e-12 and continued_inside_the_bar(rows, a) == 0
     record = (rows.shape[0], len(np.unique(rows[:, 0])), int(rows[:, 6].sum()),
               [int((rows[(rows[:, 0] == c)][:, 6] == 0.0).sum()) for c in range(6)], int((rows[:, 7] != 0.0).sum()), pinned_crossings)
     # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains, the joins,
@@ -723,6 +736,27 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
 
 
 EXPECTED_FLOCCULENT: tuple = (37, 2, 37.7, 103.6)
+
+
+def test_no_chain_crosses_any_chain_on_300_texture_seeds_of_the_milky_way(prod):
+    """The gate's fourth follow-up, A, on 300 texture seeds of the Milky Way template (the reviewer of the third
+    pass found Norma's continuation crossing Norma's own 19.5-degree stretch on 6 of 300): no chain crosses any
+    chain, itself included; no continuation of a pinned chain starts inside the bar's half-length or runs inside
+    it; every birth in the widest gap. The joins over the 300 seeds are recorded."""
+    model = the_model(prod)
+    joins = []
+    for seed in range(300):
+        o = run(model, inputs_of("milky_way", texture_seed=seed), only=(*pt.PIECE_FIELDS, "bar_half_length"))
+        table = table_of(o.fields)
+        drawn, pinned = crossings(table)
+        assert drawn == 0 and pinned == 0 and continued_inside_the_bar(table, float(o.fields["bar_half_length"])) == 0, seed
+        assert births_off_the_widest_gap(table, o.grid.R, 6)[2] < 1e-9, seed
+        joins.append(int((table[:, 7] != 0.0).sum()))
+    record = (min(joins), float(np.median(joins)), max(joins))
+    assert record == EXPECTED_JOINS_300, repr(record)
+
+
+EXPECTED_JOINS_300: tuple = (0, 5.0, 13)
 
 
 # --- the gate ------------------------------------------------------------------------------------------------------
@@ -812,6 +846,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 got["joins"].append(int((table[:, 7] != 0.0).sum()))
                 got["alone"], got["pinned"] = got["alone"] + alone, max(got["pinned"], pinned_crossings)
                 a_bar = float(F["bar_half_length"])
+                assert not math.isfinite(a_bar) or continued_inside_the_bar(table, a_bar) == 0, label
                 if math.isfinite(a_bar):  # no chain is born inside the bar's half-length: a first piece inside it is pinned
                     first = (np.asarray(F["arm_piece_order"]) == 0.0) & (np.asarray(F["arm_piece_start_radius"]) < a_bar * (1.0 - 1e-12))
                     assert np.all(np.asarray(F["arm_piece_pinned"])[first] == 1.0), label
@@ -859,7 +894,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
 
 
 # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains)
-EXPECTED_PINNED: tuple = (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
+EXPECTED_PINNED: tuple = (53, 14, 11, [0, 1, 3, 2, 4, 4], 4, 0)  # S60 fourth pass: was (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
 EXPECTED_GATE: dict = {'milky_way': (19800, 14036, (0.474, 0.72, 1.184), 4, 5764, 5760, 0, 1.0, 24.333, 9, 0, 4, (3, 8.0, 50), 0, 0, (1660, 1260)), 'ngc_4414': (15960, 15720, (0.452, 0.524, 0.728), 0, 240, 0, 0, 28.9, 28.9, 7, 0, 120, (0, 1.5, 3), 120, 0, (1817, 1032)), 'ngc_4414 drawn': (15960, 15223, (0.415, 0.541, 0.906), 152, 737, 0, 0, 1.0, 24.096, 9, 0, 98, (0, 3.0, 19), 639, 0, (5539, 5755))}
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
@@ -1004,9 +1039,10 @@ def measured(prod, template: str) -> dict:
         "count at R0": round(float(sp.count_at(R[i0:i0 + 1])[0]), 3),
         "FWHM at R0": round(float(sp.width_at(R[i0:i0 + 1])[0]), 3), "spacing at R0": round(float(sp.spacing_at(R[i0:i0 + 1])[0]), 2), "B at R0": round(float(F["arm_piece_amplitude"][i0]), 3),
         "crest over trough at R0": round(float(stars.max() / stars.min()), 2),
-        # (the forcing's harmonics' summed amplitudes: over the first 128, the number the first two passes read, and
+        # (the forcing's harmonics' summed amplitudes: over m = 2..6 - the sum as `main` defined it, which the gate's 0.6-0.9 was a
+        #  prediction for and which is judged - over the first 128, the number the first two passes read, and
         #  over every harmonic the solver's cells hold - a window cut square at a join has a long tail)
-        "sum f at 8": round(float(f[i8, :128].sum()), 3), "sum f at 8, every harmonic": round(float(f[i8].sum()), 3),
+        "sum f at 8, m = 2..6": round(float(f[i8, 1:6].sum()), 3), "sum f at 8, first 128": round(float(f[i8, :128].sum()), 3), "sum f at 8, every harmonic": round(float(f[i8].sum()), 3),
         "gas min at 8": round(float(s[i8].min()), 3), "top tenth over lower half at 8": round(tenth_over_half(s[i8]), 2),
         "ratio of means 6-10": round(float(np.nanmedian(ratio[band])), 3), "rings under 1.37": int((ratio[band] < 1.37).sum()),
         # (None where no ring inside 3 kpc is forced: a barred disc's bar, inside which no chain is born)
@@ -1049,7 +1085,7 @@ def held_of(got: dict) -> dict:
         "m-split over 6-10 kpc peaks at m = 5 or 6": pt.ARM_MODES[int(np.argmax(split))] in (5, 6),
         "m = 2 under 0.5": split[0] < 0.5,
         "crest over trough 2.5-3": 2.5 <= mw["crest over trough at R0"] <= 3.0,
-        "sum f at 8 kpc 0.6-0.9": 0.6 <= mw["sum f at 8"] <= 0.9,
+        "sum f at 8 kpc 0.6-0.9": 0.6 <= mw["sum f at 8, m = 2..6"] <= 0.9,  # judged on m = 2..6, the sum as main defined it (the reviewer of the third pass)
         "gas minimum 0.65-0.75": 0.65 <= mw["gas min at 8"] <= 0.75,
         "PHANGS ratio 1.4-1.6": 1.4 <= mw["ratio of means 6-10"] <= 1.6,
         "largest ring-to-ring change under 0.05": mw["largest ring-to-ring change 5-13"][0] < 0.05,
