@@ -5,8 +5,10 @@ S59). The owner ruled them a census of arm pieces, and a conditional gate ruled 
 predictions, its gate, what is forbidden; the lead's readings (a)-(d) where the ruling leaves a choice). This
 file holds the build to it:
 
-- **a piece on a ring, by hand** - one Gaussian ridge: its mean, its ring variance, its Fourier terms and its
-  forcing, derived here and held against the modules;
+- **a piece in log-polar coordinates, by hand** - one Gaussian ridge in the perpendicular distance to its locus, at
+  pitches 0, 1, 13.5 and 45 degrees: its value at points, its mean, its ring's count and amplitude, its cell means,
+  its profile on the solver's cells and its forcing, derived here and held against the modules; and a chain's
+  window along itself, square at a join;
 - **the thickness factor** - ½ at k h = 1, and the forcing bounded by ĉ_m R/(X h) on every ring of the gate's
   galaxies;
 - **the census** - a chain laid by this file's own loop from the texture seed's streams, the births' count, a
@@ -23,29 +25,18 @@ file holds the build to it:
 - **the pins** - a class of three and a table, by D217's mechanism - and what S59's file held that still applies:
   the numeric pins, the table kind, the young stars' reader.
 
-**The gate's follow-up (second pass), and how to read this file after it.** Eight of the first build's nine Milky
-Way predictions failed, and the gate ruled a follow-up: the taper at a chain's two ends only (item 1); no chain
-born inside a bar's half-length and the budget's count the chains actually crossing a ring, in every galaxy (item
-2); a piece's width bounded by half the ring's crossing spacing (item 3). Those three are built and asserted here
-(the census test, the gate on the 360), and **every pinned record below is the second build's**. The "as read"
-paragraphs of the tests' docstrings were written on the first build and still give its numbers; the second
-build's, read before they were judged, are:
-*Milky Way template* - "5 chains cross R0": **6, not held**; "spacing about 2.4 kpc": 1.99, not held; "FWHM <=
-1.2 kpc": **0.997, held**; "B about 0.5": **0.493, held**; "crest over trough 2.5-3": 2.45, not held; "the m-split
-over 6-10 kpc peaked at m = 5 +/- 1": **not held - it peaks at m = 2** (realised 2.816 / 0.220 / 0.450 / 0.255 /
-0.309 for m = 2 ... 6 against the law's 0.009 / 1.064 / 2.126 / 2.440 / 2.437); "sum f at 8 kpc 0.5-0.7": 1.183,
-not held; "gas minimum 0.7-0.8": 0.691, not held; "ratio of means 1.3-1.5": **1.474, held** (11 of 53 rings under
-1.37: by the check's own rule a hit, not the miss foreseen); "the realised power's median 0.8-0.9 of the budget":
-0.796 on the template, 0.759 over its leg's 120 galaxies. *``ngc_4414``* - "ratio 1.3-1.4": 1.242, not held; the
-check still a miss (50 of 53 rings under 1.37); at R0 its pieces are not narrowed (the law's 1.825 kpc against half a spacing of 2.06 kpc).
-The pinned crests, re-read: within 0.1 width of the locus on 52 / 51 / 91 / 100 / 79 / 89 % of the points of
-Norma / Scutum-Centaurus / Sagittarius-Carina / Local / Perseus / Outer. The masers' check: the gas's and the
-young stars' crests 0.22 sigma from the loci, each the **1st percentile** of its Sun-rotation null (medians 0.58
-and 0.55): the check now tells the pinned Milky Way from a rotated one. B = 0 because a designed piece is wider
-than its ring: none, on any of the 360 (it cannot be, under the bound); rings with a budget and no chain: 5 760 on
-the Milky Way's leg, all inside the bar. **Item 6 (a ring solved at the mid-gap where the carried profile
-misplaces over 1 %) is not built**: the gaps are recorded as the two grid rings leave them (worst 4.78 % and
-4.65 %; 14 and 15 gaps over 1 %).
+**The gate's two follow-ups, and how to read this file after the third pass.** The first follow-up (after eight of
+the first build's nine Milky Way predictions failed): the taper at a chain's two ends only; no chain born inside a
+bar's half-length and the budget's count the chains crossing; a piece's width bounded by half the ring's crossing
+spacing. The second (after the lead read the second pass: nearly circular pieces smeared round their rings, chains
+crossing, births at random azimuths, the count stepping where a chain starts): **a piece is a Gaussian in the
+perpendicular distance to its locus within its extent** (the wrapped normal in azimuth retired: a nearly circular
+piece is an arc); **no crossing** - a drawn piece that meets another chain ends there, joined and not tapered;
+**births at the midpoint of the widest gap**; **the count a sum of taper weights**; the gas's mid-gap rings; the
+young stars' reader on the gas pattern's one point function; the per-region determinism test. All of it is built
+and asserted here, **every pinned record below is the third pass's**, and the tests' docstrings say what each
+holds now; the first two builds' numbers are in D219's record. The third pass's predictions, read before they
+were judged, are recorded held or not held in ``EXPECTED_HELD``.
 
 **What of ``tests/test_segments.py`` came here and what went** is at the foot of this docstring's list in D219's
 record; in short: the pins' tests, the table kind's and the reader's are ported onto the new pattern; the winding's
@@ -175,89 +166,181 @@ def test_the_constants_are_the_ruling_s_and_the_stages_are_declared_as_ruled(pro
 # --- a piece on a ring, by hand ------------------------------------------------------------------------------------
 
 
-def test_the_wrapped_normal_its_mean_its_variance_and_its_depth():
-    """A piece's profile round its ring: W(δ; σ) = Σ_k exp(−(δ + 2πk)²/2σ²), less its mean σ/√(2π). Held to this
-    file's own sums: its three evaluations (two images, five images, six Fourier terms) are one function across
-    the changes; its mean round the ring is 0; its variance is Σ c_m²/2 by both closed forms, and the ruling's
-    σ/(2√π) − σ²/(2π) while the piece is narrower than its ring; its trough is at the antipode."""
-    delta = np.linspace(-math.pi, math.pi, 2001)
-    for sigma in (0.0822, 0.3, pc.NARROW, pc.NARROW + 1e-9, 1.0, pc.WIDE, pc.WIDE + 1e-9, 1.7724, 3.0, 6.0):
-        by_images = sum(np.exp(-0.5 * ((delta + 2.0 * math.pi * k) / sigma) ** 2) for k in range(-40, 41)) - sigma / math.sqrt(2.0 * math.pi)
-        got = pc.deviation(delta, np.full(delta.shape, sigma))
-        assert np.abs(got - by_images).max() < 4e-15, sigma
-        fine = pc.deviation((np.arange(20000) + 0.5) * (2.0 * math.pi / 20000), np.full(20000, sigma))
-        assert abs(fine.mean()) < 1e-15 and float(pc.depth(np.array(sigma))) == pytest.approx(-fine.min(), abs=1e-7)
-        c = (2.0 * sigma / math.sqrt(2.0 * math.pi)) * np.exp(-0.5 * (np.arange(1, 400) * sigma) ** 2)
-        assert np.allclose(pc.harmonic_amplitudes(np.array(sigma)), c[: pc.HARMONICS], rtol=1e-13, atol=1e-300)
-        assert float(pc.ring_variance(np.array(sigma))) == pytest.approx(0.5 * float((c**2).sum()), rel=2e-13)
-        assert float((fine**2).mean()) == pytest.approx(0.5 * float((c**2).sum()), rel=1e-9)
-    for sigma in (0.1, 0.3, 0.6):  # the ruling's expression, where the piece is narrow (the images' terms e^-27 and less)
-        assert float(pc.ring_variance(np.array(sigma))) == pytest.approx(sigma / (2.0 * math.sqrt(math.pi)) - sigma**2 / (2.0 * math.pi), rel=1e-11)
-    # ... which is no longer positive at sqrt(pi): the dispersion past which a ring carries no arm.
-    assert pc.WIDEST == math.sqrt(math.pi) and pc.WIDEST / (2.0 * math.sqrt(math.pi)) - pc.WIDEST**2 / (2.0 * math.pi) == pytest.approx(0.0, abs=1e-16)
-    assert np.array_equal(pc.budget_amplitude(np.full(3, 0.1), np.full(3, 4.0), np.array([1.0, pc.WIDEST, 5.0])) > 0.0, [True, False, False])
-    # The narrowest piece the width law allows keeps harmonic 128 far under the first.
-    assert float(pc.harmonic_amplitudes(np.array(0.0822))[-1] / pc.harmonic_amplitudes(np.array(0.0822))[0]) < 1e-23
+def hand_piece(r: float, phi: np.ndarray, start_radius: float, start_azimuth: float, pitch_deg: float, extent: float, fwhm: float, free=(True, True)) -> np.ndarray:
+    """**The ruling's own formulas, by this file's own arithmetic** (the gate's second follow-up, item 1): "in
+    log-polar coordinates x = ln(R/R0), y = phi − phi0 the locus is the line through the origin along (sin p_j,
+    cos p_j); the perpendicular distance is d = R |x cos p_j − y sin p_j| and the position along it s = R (x sin
+    p_j + y cos p_j)". A lone piece (its chain's two ends its own): a Gaussian in d of dispersion
+    FWHM/2.3548, times the window in s - 1 from 0 to the piece's length R Δβ/cos p, tapered linearly over one
+    FWHM from each end that is ``free``, cut square at one that is not. y is the azimuth within half a turn of the
+    piece's middle; a positive pitch (and 0) runs to growing azimuth (turn = +1), a negative one the other way."""
+    p = math.radians(pitch_deg)
+    way = 1.0 if math.tan(p) >= 0.0 else -1.0
+    x = math.log(r / start_radius)
+    y = way * (np.asarray(phi, dtype=float) - start_azimuth)
+    y = 0.5 * extent + np.remainder(y - 0.5 * extent + math.pi, 2.0 * math.pi) - math.pi
+    d = r * np.abs(x * abs(math.cos(p)) - y * abs(math.sin(p)))
+    s = r * (x * abs(math.sin(p)) + y * abs(math.cos(p)))
+    length = r * extent / abs(math.cos(p))
+    w = np.ones(s.shape)
+    if free[0]:
+        w = np.minimum(w, s / fwhm)
+    if free[1]:
+        w = np.minimum(w, (length - s) / fwhm)
+    w = np.where((s >= 0.0) & (s <= length), np.maximum(w, 0.0), 0.0)
+    return w * np.exp(-0.5 * (d / (fwhm / FWHM)) ** 2)
 
 
-def hand_pattern(sigma: float = 0.3, budget: float = 0.02, count: float = 1.0):
-    """One arm piece on a disc of this file's making: pitch 20 degrees, from 2 kpc round 4 radians, its width
-    such that it lies with dispersion ``sigma`` on the ring at 5 kpc. No bar. Returns the patterns and the ring."""
-    R = np.linspace(1.0, 20.0, 77)
-    i = 16
-    assert R[i] == 5.0
-    pitch = 20.0
-    width = np.full(R.size, sigma * FWHM * 5.0 * math.sin(math.radians(pitch)))
-    pieces = pc.Pieces(np.array([0.0]), np.array([0.0]), np.array([2.0]), np.array([0.3]), np.array([pitch]), np.array([4.0]), np.array([0.0]), turn=1.0)
-    stars = pc.ArmPattern(R, np.full(R.size, budget), np.full(R.size, count), width, pieces, float("nan"), pitch, float("nan"))
-    kappa, density = 60.0 / np.sqrt(R), 80.0 * np.exp(-R / 3.0)
-    gas = gm.GasPattern(R, stars, pitch, float("nan"), kappa, density, 4.3e-6, 8.0, 0.4)
-    return R, i, stars, gas, kappa, density
+def hand_variance(sigma: float) -> float:
+    """The variance round a ring of a full-height Gaussian ridge of azimuthal dispersion σ seen within half a turn
+    of its crest: ⟨E²⟩ − ⟨E⟩² = (σ/2√π) erf(π/σ) − (σ²/2π) erf(π/√2σ)², by hand."""
+    return sigma / (2.0 * math.sqrt(math.pi)) * math.erf(math.pi / sigma) - sigma**2 / (2.0 * math.pi) * math.erf(math.pi / (math.sqrt(2.0) * sigma)) ** 2
 
 
-def test_one_ridge_on_one_ring_by_hand():
-    """**Derived here, independently of the modules.** One Gaussian ridge of height B and azimuthal dispersion σ
-    on a ring, narrow against the ring: its mean round the ring is Bσ/√(2π), so the field is
-    1 + B(e^{−δ²/2σ²} − σ/√(2π)); its ring variance is B²σ/(2√π) − (Bσ)²/(2π) (the ruling's own arithmetic);
-    its m-th Fourier amplitude is (2Bσ/√(2π)) e^{−m²σ²/2}; the budget's amplitude for one piece is
-    B = √(budget/(σ/(2√π) − σ²/(2π))); and the gas's forcing has the m-th amplitude
-    c_m · m/(X (sin p + m h/R)), X = κ²R/(2πGΣ), all crests on the ridge. σ = 0.3 on the ring at 5 kpc."""
-    sigma, budget = 0.3, 0.02
-    R, i, stars, gas, kappa, density = hand_pattern(sigma, budget)
-    r = 5.0
-    v = sigma / (2.0 * math.sqrt(math.pi)) - sigma**2 / (2.0 * math.pi)
-    B = math.sqrt(budget / v)
-    crest = 0.3 + math.log(r / 2.0) / math.tan(math.radians(20.0))  # where the locus crosses the ring
-    assert float(stars.amplitude_at(np.array([r]))[0]) == pytest.approx(B, rel=1e-12)
-    assert float(stars.saturation(np.array([r]))[0]) == 1.0  # B sigma / sqrt(2 pi) = 0.059: far from the mean
-    mean = B * sigma / math.sqrt(2.0 * math.pi)
-    for delta in (0.0, 0.2, -0.5, 1.3, math.pi):
-        want = 1.0 + B * math.exp(-0.5 * (delta / sigma) ** 2) - mean
-        assert float(stars.contrast_at(np.array([r]), np.array([crest + delta]))[0]) == pytest.approx(want, abs=1e-14)
-    power, by_mode = stars.ring_power(np.array([r]))
-    assert float(power[0]) == pytest.approx(B * B * v, rel=1e-12) and float(power[0]) == pytest.approx(budget, rel=1e-12)
-    c = [(2.0 * B * sigma / math.sqrt(2.0 * math.pi)) * math.exp(-0.5 * (m * sigma) ** 2) for m in range(1, 129)]
-    assert by_mode[:, 0] == pytest.approx([c[m - 1] ** 2 for m in pt.ARM_MODES], rel=1e-12)
-    edges = np.linspace(0.0, 2.0 * math.pi, 361)
-    cells = stars.sector_means(r, edges)
-    assert abs(cells.mean() - 1.0) < 1e-15 and np.array_equal(cells, stars.published(np.array([r]), None, edges)[0])
-    samples = (edges[:-1, None] + (edges[1] - edges[0]) * ((np.arange(200) + 0.5) / 200.0)[None, :])
-    assert np.abs(cells - stars.contrast_at(np.array([[r]]), samples).mean(axis=1)).max() < 2e-7  # the midpoint rule's own error
-    # The forcing: X by hand, the piece's own pitch, the layer's thickness.
-    x = float(kappa[i]) ** 2 * r / (2.0 * math.pi * 4.3e-6 * float(density[i]) * 1.0e6)
-    sin_p, h = math.sin(math.radians(20.0)), 0.4
-    f = [c[m - 1] * m / (x * (sin_p + m * h / r)) for m in range(1, 129)]
-    assert np.allclose(gas.forcing_amplitudes()[i], f, rtol=1e-11, atol=1e-300)
-    on_cells = gas.forcing()[i]
-    chi = gr.cell_centres(gr.CELLS)
-    by_hand = sum(f[m - 1] * np.cos(m * (chi - crest)) for m in range(1, 129))
-    assert np.abs(on_cells - by_hand).max() < 1e-13 and abs(on_cells.mean()) < 1e-15
-    # ... each term the razor-thin m c_m/(X sin p) times 1/(1 + k h), k = m/(R sin p).
-    for m in (1, 2, 6, 40):
-        assert f[m - 1] == pytest.approx(c[m - 1] * m / (x * sin_p) / (1.0 + m * h / (r * sin_p)), rel=1e-13)
-    # The gas answers it: mean 1, a crest on the ridge, by the solver.
-    s = gas.profiles[i]
-    assert abs(s.mean() - 1.0) < 1e-12 and abs(float(chi[int(np.argmax(s))]) - (crest - 2.0 * math.pi * round(crest / (2.0 * math.pi)))) < 2.0 * math.pi / gr.CELLS
+HAND_R = np.linspace(1.0, 20.0, 77)
+HAND_DISC_PITCH, HAND_FWHM, HAND_BUDGET = 20.0, 0.9, 0.02
+# The carrier: a second chain, one long piece of the disc's own pitch whose two ends are far from the rings read,
+# so that a ring the piece under test only brushes still has a count (a ring no chain's locus crosses has none,
+# and so no amplitude: a lone arc of no pitch would show nothing at all).
+HAND_CARRIER = (2.0, 2.6, 20.0, 3.1)
+
+
+def hand_pattern(pitch_deg: float, start_radius: float = 5.0, start_azimuth: float = 0.3, extent: float = 1.2, carrier: bool = True):
+    """One arm piece of the given pitch from (5 kpc, 0.3 rad) round 1.2 radians, on a disc of this file's making:
+    no bar, the disc's pitch 20 degrees, every piece 0.9 kpc wide, a budget of 0.02 on every ring - and the
+    carrier chain. Returns the stellar pattern, the gas pattern and the disc's κ and Σ."""
+    rows = [(0.0, 0.0, start_radius, start_azimuth, pitch_deg, extent, 0.0)] + ([(1.0, 0.0, *HAND_CARRIER, 0.0)] if carrier else [])
+    columns = [np.array(c) for c in zip(*rows)]
+    stars = pc.ArmPattern(HAND_R, np.full(HAND_R.size, HAND_BUDGET), np.full(HAND_R.size, 2.0), np.full(HAND_R.size, HAND_FWHM),
+                          pc.Pieces(*columns, turn=1.0), float("nan"), HAND_DISC_PITCH, float("nan"))
+    kappa, density = 60.0 / np.sqrt(HAND_R), 80.0 * np.exp(-HAND_R / 3.0)
+    gas = gm.GasPattern(HAND_R, stars, HAND_DISC_PITCH, float("nan"), kappa, density, 4.3e-6, 8.0, 0.4)
+    return stars, gas, kappa, density
+
+
+@pytest.mark.parametrize("pitch", (0.0, 1.0, 13.5, 45.0))
+def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
+    """The gate's second follow-up, item 4: "a one-ridge hand test in log-polar coordinates to 1e-11 at pitches 0°,
+    1°, 13.5° and 45°". **Derived here, independently of the modules** (:func:`hand_piece`: the ruling's formulas):
+    the piece at points, on its locus and off it, inside its taper and past its ends; its mean round the ring
+    (the module's closed form against this file's rule of four million midpoints); the ring's count, bounded
+    width and amplitude by hand - the taper weight min(1, s/w) of each chain where its locus crosses, w = min(the
+    law's, π R sin p / N), B = √(budget / (N v)) - and so the field; the exact means over cells; the ring's
+    profile on the solver's cells, its variance and its m-fold powers by this file's transform; and the gas's
+    forcing, each term the ridge's own times m / (X (|sin p_j| + m h/R)).
+
+    At a pitch of 0 the piece is **an arc of its drawn extent at its radius** - regular, and seen from the rings
+    beside it as a Gaussian in the radial distance R |ln(R/R_s)| - and its locus crosses no ring, so it counts on
+    none: the ring's count is the carrier's alone."""
+    stars, gas, kappa, density = hand_pattern(pitch)
+    lone = hand_pattern(pitch, carrier=False)[0]
+    fine = -math.pi + (np.arange(4_000_000) + 0.5) * (2.0 * math.pi / 4_000_000)
+    sin_d = math.sin(math.radians(HAND_DISC_PITCH))
+    tangent = math.tan(math.radians(pitch))
+    # Radii on the piece's own reach (where it has one), just outside its start, and a width off it.
+    reach = 5.0 * math.exp(1.2 * abs(tangent))
+    top = min(reach, 5.9)  # (the carrier's own reach ends at 6.2 kpc)
+    radii = [5.0 + 0.3 * (top - 5.0), 5.0 + 0.9 * (top - 5.0), 4.9, 5.25] if pitch else [5.0, 4.9, 5.25, 5.6]
+    worst = {"point": 0.0, "mean": 0.0, "field": 0.0, "cells": 0.0}
+    for r in radii:
+        piece = lambda phi: hand_piece(r, phi, 5.0, 0.3, pitch, 1.2, HAND_FWHM)  # noqa: E731
+        carrier = lambda phi: hand_piece(r, phi, *HAND_CARRIER, HAND_FWHM)  # noqa: E731
+        means = (float(piece(fine).mean()), float(carrier(fine).mean()))
+        # The count by hand: the carrier is deep inside its own length (weight 1); the piece counts where its locus
+        # crosses the ring, by its distance along itself to its nearer end over the width.
+        along = r * math.log(r / 5.0) / abs(math.sin(math.radians(pitch))) if pitch and 5.0 <= r < reach else None
+        length = r * 1.2 / abs(math.cos(math.radians(pitch)))
+        distance = None if along is None else min(along, length - along)
+        # w = min(law, w_g), Σ_c min(w_g, s_c) = π R sin p: the carrier's s is far over any width.
+        half_spacing = math.pi * r * sin_d
+        bound = half_spacing if distance is None else (half_spacing - distance if distance < 0.5 * half_spacing else 0.5 * half_spacing)
+        width = min(HAND_FWHM, bound)
+        assert width == HAND_FWHM  # the law's: these rings are wide (π R sin p = 5.4 kpc at 5 kpc)
+        count = 1.0 + (0.0 if distance is None else min(1.0, distance / width))
+        sigma_d = (width / FWHM) / (r * sin_d)
+        amplitude = math.sqrt(HAND_BUDGET / (count * hand_variance(sigma_d)))
+        laid = stars.laid(np.array([r]))
+        assert float(laid.count[0]) == pytest.approx(count, rel=1e-13) and float(laid.width[0]) == width
+        assert float(laid.amplitude[0]) == pytest.approx(amplitude, rel=1e-12) and float(laid.effective[0]) == float(laid.amplitude[0])
+        assert float(stars.amplitude_at(np.array([r]))[0]) == float(laid.amplitude[0]) and float(stars.saturation(np.array([r]))[0]) == 1.0
+        # The piece's own mean round the ring: the closed form against the fine rule.
+        k = int(np.flatnonzero(laid.slots[0] == 0)[0])
+        worst["mean"] = max(worst["mean"], abs(float(laid.mean[0, k]) - means[0]))
+        # Points: on the locus and off it, in the taper, past the ends, opposite the piece.
+        crest = 0.3 + (math.log(r / 5.0) / tangent if pitch else 0.0)
+        phi = np.array([crest, crest + 0.07, crest - 0.2, 0.3, 0.3 + 0.05, 0.3 + 0.6, 0.3 + 1.2, 0.3 + 1.25, 0.3 - 0.1, 0.3 + 0.6 + math.pi - 1e-9, -2.0, 2.9])
+        want = amplitude * ((piece(phi) - means[0]) + (carrier(phi) - means[1]))
+        worst["field"] = max(worst["field"], float(np.abs(stars.arms_at(np.array([r]), phi) - want).max()))
+        worst["point"] = max(worst["point"], float(np.abs(stars._piece(laid, k, phi[None, :])[0] - piece(phi)).max()))
+        assert np.array_equal(stars.contrast_at(np.array([r]), phi), 1.0 + stars.arms_at(np.array([r]), phi))
+        # Exact means over cells: they tile the ring to nothing, and each is the fine rule's mean over the cell.
+        edges = np.linspace(-math.pi, math.pi, 41)
+        cells = stars.arm_cell_means(np.array([r]), edges)[0]
+        by_rule = (amplitude * ((piece(fine) - means[0]) + (carrier(fine) - means[1]))).reshape(40, -1).mean(axis=1)
+        worst["cells"] = max(worst["cells"], float(np.abs(cells - by_rule).max()))
+        assert abs(cells.sum()) < 1e-14 and np.array_equal(stars.sector_means(r, edges), 1.0 + cells)
+        # On the solver's cells: the profile, its variance and its m-fold powers "by the same quadrature".
+        centres = gr.cell_centres(gr.CELLS)
+        profile = amplitude * ((piece(centres) - means[0]) + (carrier(centres) - means[1]))
+        assert np.abs(stars.ring_profile(np.array([r]))[0] - profile).max() < 1e-10
+        spectrum = np.fft.rfft(profile) / gr.CELLS
+        power, by_mode = stars.ring_power(np.array([r]))
+        assert float(power[0]) == pytest.approx(float(((profile - profile.mean()) ** 2).mean()), rel=1e-10)
+        assert by_mode[:, 0] == pytest.approx([(2.0 * abs(spectrum[m])) ** 2 for m in pt.ARM_MODES], rel=1e-9, abs=1e-18)
+        # The forcing: each piece's ridge on the cells transformed, term m times m / (X (|sin p_j| + m h/R)).
+        kap, dens = float(np.interp(r, HAND_R, kappa)), float(np.interp(r, HAND_R, density))
+        x = kap**2 * r / (2.0 * math.pi * 4.3e-6 * dens * 1.0e6)
+        m = np.arange(gr.CELLS // 2 + 1, dtype=float)
+        by_hand = np.zeros(gr.CELLS)
+        for ridge, own in ((piece(centres), pitch), (carrier(centres), 20.0)):
+            with np.errstate(invalid="ignore"):  # (term 0, the mean, at a pitch of 0: nothing over nothing, and not used)
+                factor = np.where(m > 0.0, m / (x * (abs(math.sin(math.radians(own))) + m * 0.4 / r)), 0.0)
+            by_hand += np.fft.irfft(np.fft.rfft(amplitude * ridge) * factor, n=gr.CELLS)
+        on_cells = gas.forcing(np.array([r]))[0]
+        assert np.abs(on_cells - by_hand).max() < 1e-11 and abs(on_cells.mean()) < 1e-15
+        assert np.all(factor <= r / (x * 0.4) * (1.0 + 1e-15))  # bounded by R/(X h) whatever the pitch
+        # The gas answers it: mean 1, positive, by the solver.
+        s = gas.solve_at(np.array([r]))[0]
+        assert abs(s.mean() - 1.0) < 1e-12 and s.min() > 0.0
+        # Without the carrier, a ring the lone piece's locus does not cross has no count and no arm.
+        if distance is None:
+            assert float(lone.count_at(np.array([r]))[0]) == 0.0 and np.all(lone.arms_at(np.array([r]), phi) == 0.0)
+    assert worst["point"] < 1e-13 and worst["mean"] < 1e-11 and worst["field"] < 1e-11 and worst["cells"] < 1e-11, worst
+    # The arc of no pitch: its ridge on a ring beside it is one height along its whole drawn extent.
+    if not pitch:
+        arc = hand_piece(5.25, np.array([0.3 + 0.4, 0.3 + 0.6, 0.3 + 0.8]), 5.0, 0.3, 0.0, 1.2, HAND_FWHM)
+        assert np.ptp(arc) < 1e-15 and float(arc[0]) == pytest.approx(math.exp(-0.5 * (5.25 * math.log(5.25 / 5.0) / (HAND_FWHM / FWHM)) ** 2), rel=1e-14)
+
+
+def test_a_joined_end_is_cut_square_and_a_chain_tapers_along_itself():
+    """The window along a piece (the gate's first follow-up, item 1, and its second, item 2): "the taper is a
+    chain's two ends, over one width each; a chain is continuous through its kinks"; "a drawn piece that meets
+    another chain ends there, joined, without taper". Two pieces of one chain joined at a kink, the outer one
+    ending at a join: by hand, the first piece's window rises from the chain's free start over one width and is
+    1 at the kink; the second's is 1 from the kink to its joined end and 0 past it; and the distance to the free
+    end runs along the chain through the kink."""
+    first = (0.0, 0.0, 5.0, 0.3, 20.0, 0.05, 0.0, 0.0)   # short: 0.27 kpc long at 5 kpc, under one width
+    r_kink = 5.0 * math.exp(0.05 * math.tan(math.radians(20.0)))
+    second = (0.0, 1.0, r_kink, 0.35, 10.0, 0.8, 0.0, 2.0)  # ... its outer end meets another chain
+    columns = [np.array(c) for c in zip(first, second)]
+    p = pc.Pieces(*columns[:7], turn=1.0, join=columns[7])
+    assert p.joins == 1 and p.before[0] == 0.0 and math.isinf(p.after[0]) and math.isinf(p.after[1])
+    assert p.before[1] == pytest.approx(0.05 / math.cos(math.radians(20.0)), rel=1e-15) and p.after[0] == p.after[1]
+    stars = pc.ArmPattern(HAND_R, np.full(HAND_R.size, HAND_BUDGET), np.full(HAND_R.size, 2.0), np.full(HAND_R.size, HAND_FWHM), p, float("nan"), HAND_DISC_PITCH, float("nan"))
+    r = 0.5 * (r_kink + r_kink * math.exp(0.8 * math.tan(math.radians(10.0))))
+    laid = stars.laid(np.array([r]))
+    k = int(np.flatnonzero(laid.slots[0] == 1)[0])
+    phi = 0.35 + np.array([0.02, 0.1, 0.4, 0.79, 0.83, 1.0])
+    # By hand: the second piece's own window is square at both its ends (a kink, a join) ...
+    square = hand_piece(r, phi, r_kink, 0.35, 10.0, 0.8, HAND_FWHM, free=(False, False))
+    # ... times the chain's rise from its free start, which lies the first piece's length before the kink.
+    p10 = math.radians(10.0)
+    s = r * (math.log(r / r_kink) * math.sin(p10) + (phi - 0.35) * math.cos(p10)) + r * 0.05 / math.cos(math.radians(20.0))
+    want = square * np.minimum(1.0, s / HAND_FWHM)
+    assert np.abs(stars._piece(laid, k, phi[None, :])[0] - want).max() < 1e-14 and want[4] == 0.0 and want[3] > 0.0
+    # The count: the chain's taper weight at the kink is the first piece's length over the width, from either side.
+    below, above = stars.count_at(np.array([r_kink * (1.0 - 1e-12), r_kink * (1.0 + 1e-12)]))
+    assert below == pytest.approx(r_kink * 0.05 / math.cos(math.radians(20.0)) / HAND_FWHM, rel=1e-9) and above == pytest.approx(below, rel=1e-9)
 
 
 def test_the_thickness_factor_by_hand():
@@ -280,7 +363,7 @@ def test_the_thickness_factor_by_hand():
 
 def hand_chain(seed: int, chain: int, x: float, azimuth: float, pitch: float, mean: float, sd: float, x_edge: float):
     """A chain laid by this file's own loop from the texture seed's streams: (start radius, start azimuth, pitch,
-    extent) per piece, and the drawn length in radians."""
+    extent) per piece, and the drawn length in radians. Not cut where it meets another chain: :func:`cut_at_meeting`."""
     def stream(*path):
         return _seeds.rng(seed, "arm_pieces", "chain", chain, *path)
 
@@ -297,10 +380,87 @@ def hand_chain(seed: int, chain: int, x: float, azimuth: float, pitch: float, me
             extent = 60.0 * math.exp(0.35 * float(g.normal()))
         extent = min(math.radians(extent), left)
         p = pitch * (1.0 + 0.56 * z)
-        rows.append((math.exp(x), azimuth % (2.0 * math.pi), p, extent))
+        rows.append((math.exp(x), azimuth, p, extent))
         t = math.tan(math.radians(p))
-        x, azimuth, left, k = x + extent * abs(t), azimuth + extent * (1.0 if t > 0.0 else -1.0), left - extent, k + 1
+        x, azimuth, left, k = x + extent * abs(t), azimuth + extent * (1.0 if t >= 0.0 else -1.0), left - extent, k + 1
     return rows, math.radians(length)
+
+
+def line_of(row) -> tuple[float, float, float, float]:
+    """A piece (start radius, start azimuth, pitch in degrees, extent) as its straight line in the plane of ln R
+    and azimuth: (x0, y0, x1, y1), the azimuth not wrapped (turn = +1: the model's discs all turn one way)."""
+    r, azimuth, pitch, extent = (float(v) for v in row)
+    t = math.tan(math.radians(pitch))
+    return math.log(r), azimuth, math.log(r) + extent * abs(t), azimuth + extent * (1.0 if t >= 0.0 else -1.0)
+
+
+def meets(a, b) -> list[tuple[float, float]]:
+    """Where the line ``a`` meets the line ``b`` or one of its images a turn either way: (share along a, share
+    along b) for each meeting, by Cramer's rule - this file's own, not the model's."""
+    out = []
+    ax, ay, bx, by = a[2] - a[0], a[3] - a[1], b[2] - b[0], b[3] - b[1]
+    det = ax * by - ay * bx
+    if det == 0.0:
+        return out
+    base = 2.0 * math.pi * round((a[1] - b[1]) / (2.0 * math.pi))
+    for turns in (-1, 0, 1):
+        ox, oy = b[0] - a[0], b[1] + base + 2.0 * math.pi * turns - a[1]
+        s, t = (ox * by - oy * bx) / det, (ox * ay - oy * ax) / det
+        if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+            out.append((s, t))
+    return out
+
+
+def cut_at_meeting(rows: list, others: list) -> tuple[list, bool]:
+    """A hand-laid chain ended where one of its pieces first meets a line of ``others``: (the rows kept, the last
+    one shortened to the meeting; whether it was cut)."""
+    kept = []
+    for row in rows:
+        shares = [s for other in others for s, _ in meets(line_of(row), other) if s > 1e-12]
+        if shares:
+            return kept + [(row[0], row[1], row[2], min(shares) * row[3])], True
+        kept.append(row)
+    return kept, False
+
+
+def crossings(table: np.ndarray) -> tuple[int, int]:
+    """(proper crossings between two pieces of different chains at least one of which is drawn; between two pinned
+    ones): two lines that meet inside both - not at an end of either, which is a join or a touch."""
+    lines = [line_of(row[2:6]) for row in table]
+    drawn = pinned = 0
+    for i in range(len(lines)):
+        for j in range(i + 1, len(lines)):
+            if table[i, 0] != table[j, 0] and any(1e-9 < s < 1.0 - 1e-9 and 1e-9 < t < 1.0 - 1e-9 for s, t in meets(lines[i], lines[j])):
+                both = table[i, 6] == 1.0 and table[j, 6] == 1.0
+                pinned, drawn = pinned + both, drawn + (not both)
+    return drawn, pinned
+
+
+def births_off_the_widest_gap(table: np.ndarray, R: np.ndarray, first_free: int) -> tuple[int, int, float]:
+    """(chains born in a gap, chains born on a ring no chain crossed, the worst distance in radians of a birth
+    from the midpoint of the widest gap) - the gate's second follow-up, item 3, by this file's own arithmetic.
+    Chains are made in the order of their numbers, so the chains crossing a birth ring when chain c is born are
+    those of a lower number (and every pinned piece). ``first_free`` is the first chain that is a birth."""
+    lines = {int(c): [line_of(row[2:6]) for row in table[table[:, 0] == c]] for c in np.unique(table[:, 0])}
+    in_gap, alone, worst = 0, 0, 0.0
+    for chain in sorted(lines):
+        if chain < first_free:
+            continue
+        own = table[table[:, 0] == chain]
+        born = own[own[:, 1] == 0.0][0]
+        x = math.log(float(born[2]))
+        at = sorted((y0 + (x - x0) / (x1 - x0) * (y1 - y0)) % (2.0 * math.pi)
+                    for c, parts in lines.items() if c < chain for x0, y0, x1, y1 in parts if x0 <= x < x1)
+        if not at:
+            alone += 1
+            continue
+        gaps = [(at[k + 1] - a) if k + 1 < len(at) else (at[0] + 2.0 * math.pi - a) for k, a in enumerate(at)]
+        # (Two gaps of one width - the two halves a second chain leaves, opposite the first - differ here and in the
+        #  model by rounding alone: a birth at the middle of either is at the widest gap's.)
+        widest = [k for k, gap in enumerate(gaps) if gap >= max(gaps) - 1e-9]
+        worst = max(worst, min(abs(math.remainder(float(born[3]) - (at[k] + 0.5 * gaps[k]), 2.0 * math.pi)) for k in widest))
+        in_gap += 1
+    return in_gap, alone, worst
 
 
 def table_of(F) -> np.ndarray:
@@ -308,12 +468,15 @@ def table_of(F) -> np.ndarray:
 
 
 def test_the_census_by_hand_a_barred_disc_s_chains(prod):
-    """D219 items 2-3 on the bare default galaxy (barred, no pin: a grand design). Chains 0 and 1 start at the
-    bar's two ends - R = a, φ_bar and φ_bar + π - and are this file's own laying of the streams' draws, to the
-    bit of every row: a piece's deviate first, then its extent (drawn again outside 20°-180°), its pitch
-    p(1 + 0.56 z), the chain's length a normal of 273° ± 143° drawn again under 90°, the last piece cut to it.
-    Then the births: every ring with a budget is crossed by at least the law's arm number of chains, and no
-    chain was started where enough already crossed."""
+    """D219 items 2-3 and the gate's second follow-up, items 2-3, on the bare default galaxy (barred, no pin: a
+    grand design). Chains 0 and 1 start at the bar's two ends - R = a, φ_bar and φ_bar + π - and are this file's
+    own laying of the streams' draws, to the bit of every row: a piece's deviate first, then its extent (drawn
+    again outside 20°-180°), its pitch p(1 + 0.56 z), the chain's length a normal of 273° ± 143° drawn again under
+    90°, the last piece cut to it - **and the second chain ended where it first meets the first**, by this file's
+    own intersection of two straight lines in the plane of ln R and azimuth, if it meets it. Then the births:
+    every ring with a budget past the bar is crossed by at least the law's arm number of chains, no chain was
+    started where enough already crossed, **every birth stands at the midpoint of the widest gap between the
+    chains crossing its ring**, and **no two chains cross**."""
     model = the_model(prod)
     o = run(model, {"texture_seed": 7}, only=PATTERN)
     F, R = o.fields, o.grid.R
@@ -321,24 +484,28 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
     a, pitch = float(F["bar_half_length"]), float(F["pitch_angle"])
     bar_angle = math.log(a) / math.tan(math.radians(pitch))
     rows = table_of(F)
-    assert rows.shape[1] == 7 and np.all(rows[:, 6] == 0.0)
+    assert rows.shape[1] == 8 and np.all(rows[:, 6] == 0.0) and set(rows[:, 7].tolist()) <= {0.0, 1.0, 2.0}
+    laid: list = []
     for chain, end in ((0, 0.0), (1, math.pi)):
         mine, length = hand_chain(7, chain, math.log(a), bar_angle + end, pitch, 273.0, 143.0, math.log(R[-1]))
+        mine, cut = cut_at_meeting(mine, laid)
         theirs = rows[rows[:, 0] == chain]
         assert np.array_equal(theirs[:, 1], np.arange(len(mine)))
-        assert np.allclose(theirs[:, 2:6], np.array(mine), rtol=1e-13, atol=1e-13), chain
-        assert float(theirs[0, 2]) == pytest.approx(a, rel=1e-15)
-        # The last piece is cut to the chain's drawn length - unless the chain left the grid first.
+        want = np.array([(r, azimuth % (2.0 * math.pi), p, extent) for r, azimuth, p, extent in mine])
+        assert np.allclose(theirs[:, 2:6], want, rtol=1e-12, atol=1e-12), chain
+        assert float(theirs[0, 2]) == pytest.approx(a, rel=1e-15) and bool(theirs[-1, 7] == 2.0) == cut and np.all(theirs[:-1, 7] == 0.0)
+        # The last piece is cut to the chain's drawn length - unless the chain left the grid, or met another, first.
         left_the_grid = mine[-1][0] * math.exp(mine[-1][3] * abs(math.tan(math.radians(mine[-1][2])))) > R[-1]
-        assert left_the_grid or float(theirs[:, 5].sum()) == pytest.approx(length, rel=1e-13)
+        assert cut or left_the_grid or float(theirs[:, 5].sum()) == pytest.approx(length, rel=1e-13)
+        laid += [line_of(row) for row in mine]
     sp = compose.stellar_pattern(F, R)
     count, design, budget = np.asarray(F["arm_chain_count"]), np.asarray(F["arm_design_count"]), np.asarray(F["arm_power_budget"])
     has = budget > 0.0
-    past = has & (R >= a)  # the follow-up, item 2: no chain is born inside the bar's half-length
+    past = has & (R >= a)  # the first follow-up, item 2: no chain is born inside the bar's half-length
     assert np.all(count[past] >= design[past]) and np.all(design[has] >= 2.0) and np.all(design[~has] == 0.0)
     firsts = rows[rows[:, 1] == 0.0]
     assert np.all(firsts[:, 2] >= a * (1.0 - 1e-12)) and np.all(count[R < a] == 0.0)
-    assert np.array_equal(count, sp.pieces.chains_crossing(R))
+    assert np.array_equal(count, sp.pieces.chains_crossing(R)) and sp.pieces.joins == int((rows[:, 7] != 0.0).sum())
     # A birth happens only where fewer chains cross than the law counts: each born chain's first ring held, without
     # it and the later-born, fewer than the law's number.
     starts = {int(ch): float(r) for ch, order, r in zip(rows[:, 0], rows[:, 1], rows[:, 2]) if order == 0.0}
@@ -352,22 +519,32 @@ def test_the_census_by_hand_a_barred_disc_s_chains(prod):
         assert R[i] == pytest.approx(r, rel=1e-14)
         earlier = sum(1 for ch, (lo, hi) in spans.items() if ch < chain and lo <= R[i] < hi)
         assert earlier < design[i], (chain, r)
+    # Every birth at the widest gap's midpoint; no two chains cross; a joined end is a chain's last.
+    in_gap, alone, worst = births_off_the_widest_gap(rows, R, 2)
+    assert in_gap == len(starts) - 2 and alone == 0 and worst < 1e-12
+    assert crossings(rows) == (0, 0)
     # The table is what the stage says it is: by chain, inside out along each.
     assert np.all(np.diff(rows[:, 0]) >= 0.0)
     for chain in np.unique(rows[:, 0]):
         part = rows[rows[:, 0] == chain]
         assert np.array_equal(part[:, 1], np.arange(part.shape[0])) and np.all(np.diff(part[:, 2]) >= 0.0)
-    # Pieces of a drawn chain are joined end to start.
-    for chain in (0, 1, 5):
-        part = rows[rows[:, 0] == chain]
+        # Pieces of a drawn chain are joined end to start, and only its last piece's outer end meets another chain.
         t = np.tan(np.radians(part[:, 4]))
-        end_r, end_phi = part[:, 2] * np.exp(part[:, 5] * np.abs(t)), part[:, 3] + part[:, 5] * np.sign(t)
+        end_r, end_phi = part[:, 2] * np.exp(part[:, 5] * np.abs(t)), part[:, 3] + part[:, 5] * np.where(t >= 0.0, 1.0, -1.0)
         assert np.allclose(end_r[:-1], part[1:, 2], rtol=1e-12) and np.allclose(np.mod(end_phi[:-1] - part[1:, 3] + math.pi, 2.0 * math.pi), math.pi, atol=1e-12)
+        assert np.all(part[:-1, 7] == 0.0) and part[-1, 7] in (0.0, 2.0)
+    record = (rows.shape[0], len(starts), sp.pieces.joins)
+    # (pieces, chains, joins)
+    assert record == EXPECTED_DEFAULT_CENSUS, repr(record)
+
+
+EXPECTED_DEFAULT_CENSUS: tuple = (32, 6, 1)
 
 
 def test_a_flocculent_disc_is_single_pieces_and_an_unbarred_one_has_no_chain_from_a_bar(prod):
-    """D219 item 3. ``ngc_4414`` is pinned flocculent: every chain is one piece, its extent inside 37°-105°, and
-    at least the law's number cross every ring with a budget. With the class pin taken off the same unbarred
+    """D219 item 3. ``ngc_4414`` is pinned flocculent: every chain is one piece, its extent inside 37°-105° as
+    drawn - a piece that meets another chain ends there, and is then shorter (the second follow-up, item 2) - and
+    at least the law's number cross every ring with a budget where it was laid. With the class pin taken off the same unbarred
     galaxy is multi-armed: chains of several pieces, their length drawn about 244°, and no chain starts at a
     bar's end (there is none). The pin moves no law."""
     model = the_model(prod)
@@ -375,11 +552,16 @@ def test_a_flocculent_disc_is_single_pieces_and_an_unbarred_one_has_no_chain_fro
     multi = run(model, {k: v for k, v in inputs_of("ngc_4414").items() if k != "arm_class"}, only=PATTERN)
     assert floc.fields["arm_class"] == "flocculent" and multi.fields["arm_class"] == "multi_armed" and floc.fields["bar_present"] == "no"
     rows = table_of(floc.fields)
-    assert np.all(rows[:, 1] == 0.0) and len(np.unique(rows[:, 0])) == rows.shape[0] == 36
-    extent = np.degrees(rows[:, 5])
-    assert 37.0 <= extent.min() and extent.max() <= 105.0 and (round(float(extent.min()), 1), round(float(extent.max()), 1)) == (37.7, 103.6)
+    assert np.all(rows[:, 1] == 0.0) and len(np.unique(rows[:, 0])) == rows.shape[0]
+    whole = rows[rows[:, 7] == 0.0]
+    extent = np.degrees(whole[:, 5])
+    assert 37.0 <= extent.min() and extent.max() <= 105.0 and np.all(np.degrees(rows[:, 5]) <= 105.0)
+    record = (rows.shape[0], int((rows[:, 7] != 0.0).sum()), round(float(extent.min()), 1), round(float(extent.max()), 1))
+    # (pieces, those ended at a join, the least and the greatest extent of the others in degrees)
+    assert record == EXPECTED_FLOCCULENT, repr(record)
     has = np.asarray(floc.fields["arm_power_budget"]) > 0.0
     assert np.all(np.asarray(floc.fields["arm_chain_count"])[has] >= np.asarray(floc.fields["arm_design_count"])[has])
+    assert crossings(rows) == (0, 0) and births_off_the_widest_gap(rows, floc.grid.R, 0)[2] < 1e-12
     other = table_of(multi.fields)
     pieces_per_chain = np.bincount(other[:, 0].astype(int))
     assert pieces_per_chain.max() > 3 and other.shape[0] > rows.shape[0]
@@ -434,9 +616,14 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
     bar_angle = sp.bar_angle
     at_bar = [r for r in rows if abs(r[2] - a) < 1e-9 and min(abs(math.remainder(r[3] - bar_angle, math.pi)), 1.0) < 1e-9 and r[1] == 0.0]
     assert not at_bar
+    # No pinned piece is cut, and no drawn piece crosses another chain; the births stand in the widest gaps.
+    assert np.all(rows[rows[:, 6] == 1.0][:, 7] == 0.0)
+    drawn_crossings, pinned_crossings = crossings(rows)
+    assert drawn_crossings == 0 and births_off_the_widest_gap(rows, R, 6)[2] < 1e-12
     record = (rows.shape[0], len(np.unique(rows[:, 0])), int(rows[:, 6].sum()),
-              [int((rows[(rows[:, 0] == c)][:, 6] == 0.0).sum()) for c in range(6)])
-    # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains)
+              [int((rows[(rows[:, 0] == c)][:, 6] == 0.0).sum()) for c in range(6)], int((rows[:, 7] != 0.0).sum()), pinned_crossings)
+    # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains, the joins,
+    #  the crossings of two measured pieces - which are never cut)
     assert record == EXPECTED_PINNED, repr(record)
     # A galaxy whose arms are pinned needs the Sun: without the bar's angle to it, or without a bar, it is refused.
     pins = templates.pinned(templates.TEMPLATES["milky_way"])
@@ -444,6 +631,9 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
         given = {k: v for k, v in pins.items() if k != missing} | ({"bar_present": False} if missing == "bar_present" else {})
         with pytest.raises(ValueError, match="placed by the Sun's azimuth"):
             run(the_model(prod), given, SMALL, only=("arm_piece_chain",))
+
+
+EXPECTED_FLOCCULENT: tuple = (37, 2, 37.7, 103.6)
 
 
 # --- the gate ------------------------------------------------------------------------------------------------------
@@ -480,7 +670,7 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
     c = constants(model)
     worst = {"stars": 0.0, "gas": 0.0, "expected": 0.0, "bound": 0.0}
     read = {leg: {"ratio": [], "cut": 0, "no_arm": 0, "no_chain": 0, "least": math.inf, "least_gas": math.inf, "most_gas": 0.0, "zeros": 0,
-                  "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0} for leg in LEGS}
+                  "budget": 0, "pitch": [], "steps": 0, "armless": 0, "wide": 0, "joins": [], "alone": 0, "pinned": 0, "kept": [0, 0]} for leg in LEGS}
     for leg in LEGS:
         got = read[leg]
         for pattern_seed in range(60):
@@ -507,22 +697,32 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 # galaxy's chains - with v by this file's own sum of the piece's harmonics.
                 pitch = float(F["pitch_angle"])
                 sin_p = math.sin(math.radians(pitch))
-                with np.errstate(divide="ignore"):
-                    half_spacing = np.where(chains > 0.0, math.pi * R * sin_p / np.where(chains > 0.0, chains, 1.0), np.inf)
-                fwhm = np.minimum(np.asarray(F["arm_piece_width"]), half_spacing)  # the follow-up, item 3, by hand
-                sigma_d = (fwhm / FWHM) / (R * sin_p)
-                m = np.arange(1, 400)[None, :]
-                v = (sigma_d[:, None] ** 2 / math.pi * np.exp(-((m * sigma_d[:, None]) ** 2))).sum(axis=1)
-                count = chains  # the follow-up, item 2: the chains actually crossing, in every galaxy
-                worst["expected"] = max(worst["expected"], float(np.abs(count[live] * v[live] * amplitude[live] ** 2 / budget[live] - 1.0).max(initial=0.0)))
                 sp = compose.stellar_pattern(F, R)
-                assert np.array_equal(sp.width_at(R), fwhm) and np.all(sp.width_at(R) <= 0.5 * sp.spacing_at(R)), label
-                got["wide"] += int((has & (chains > 0.0) & ~(sigma_d < math.sqrt(math.pi))).sum())
+                count, width = sp.count_at(R), sp.width_at(R)
+                with np.errstate(divide="ignore"):
+                    half_spacing = np.where(count > 0.0, math.pi * R * sin_p / np.where(count > 0.0, count, 1.0), np.inf)
+                # The first follow-up's item 3 with the second's item 3: the width is the law's or half the crossing
+                # spacing of the count - the sum of the crossing chains' taper weights - whichever is less.
+                assert np.allclose(width, np.minimum(np.asarray(F["arm_piece_width"]), half_spacing), rtol=1e-12, atol=0.0), label
+                assert np.all(count <= chains + 1e-12) and np.all(count >= 0.0), label
+                sigma_d = (width / FWHM) / (R * sin_p)
+                v = np.array([hand_variance(float(sd)) for sd in sigma_d])
+                wide = has & (count > 0.0) & ~(sigma_d < math.sqrt(math.pi))  # the designed ridge no ridge on its ring
+                assert np.array_equal(live, has & (count > 0.0) & ~wide), label
+                worst["expected"] = max(worst["expected"], float(np.abs(count[live] * v[live] * amplitude[live] ** 2 / budget[live] - 1.0).max(initial=0.0)))
+                got["wide"] += int(wide.sum())
+                # The census's two rules: no two chains cross, and every birth stands in the widest gap.
+                table = table_of(F)
+                drawn_crossings, pinned_crossings = crossings(table)
+                in_gap, alone, off = births_off_the_widest_gap(table, R, len(given.get("arm_pieces") or ()))
+                assert drawn_crossings == 0 and off < 1e-9 and np.all(table[table[:, 6] == 1.0][:, 7] == 0.0), label
+                got["joins"].append(int((table[:, 7] != 0.0).sum()))
+                got["alone"], got["pinned"] = got["alone"] + alone, max(got["pinned"], pinned_crossings)
                 a_bar = float(F["bar_half_length"])
                 if math.isfinite(a_bar):  # no chain is born inside the bar's half-length: a first piece inside it is pinned
                     first = (np.asarray(F["arm_piece_order"]) == 0.0) & (np.asarray(F["arm_piece_start_radius"]) < a_bar * (1.0 - 1e-12))
                     assert np.all(np.asarray(F["arm_piece_pinned"])[first] == 1.0), label
-                assert np.array_equal(live, has & (chains > 0.0)) and np.all((cut > 0.0) & (cut <= 1.0)), label
+                assert np.all((cut > 0.0) & (cut <= 1.0)), label
                 got["ratio"].extend((np.asarray(F["arm_ring_power"])[live] / budget[live]).tolist())
                 got["cut"] += int((cut < 1.0).sum())
                 got["no_arm"] += int((has & ~live).sum())
@@ -532,14 +732,17 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 # The forcing's bound: each piece's m-th harmonic is under its stellar amplitude times R/(X h) whatever
                 # its pitch, so a ring's m-th forcing amplitude is under the pieces' summed amplitudes times that.
                 gp = compose.gas_pattern(F, R, c)
-                _, tau, _, sigma, _ = sp.ring_pieces(R)
-                stellar = ((sp.effective_amplitude(R, tau, sigma)[:, None] * tau)[:, :, None] * pc.harmonic_amplitudes(sigma)).sum(axis=1)
+                stellar = np.zeros((R.size, gr.CELLS // 2))
+                for part, _, ridges in sp.piece_profiles(R):
+                    stellar[part] = (2.0 * np.abs(np.fft.rfft(ridges, axis=2))[:, :, 1:] / gr.CELLS).sum(axis=1)
                 taper = pt.bar_terms(R, pitch, float(F["bar_half_length"]))[0]
                 bound = stellar / (1.0 - taper)[:, None] * (R / (gp.swing_x() * gp.layer_height))[:, None]
                 f = gp.forcing_amplitudes()
                 on = stellar > 1e-12 * stellar.max()
                 worst["bound"] = max(worst["bound"], float((f[on] / bound[on]).max(initial=0.0)))
                 got["armless"] += int(not live.any())  # a disc wound so tightly that no ring holds a ridge
+                kept = gp.mid_gap[1]
+                got["kept"] = [got["kept"][0] + int((kept == 1).sum()), got["kept"][1] + int((kept == 2).sum())]
                 d = gp.diagnostics
                 got["steps"] = max(got["steps"], d.worst_steps if d is not None else 0)
     assert worst["stars"] < 1e-12 and worst["gas"] < 2e-13 and worst["expected"] < 1e-10 and worst["bound"] <= 1.0, worst
@@ -549,18 +752,21 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
         ratio = np.array(got["ratio"])
         low, mid, high = (round(float(q), 3) for q in np.percentile(ratio, (16.0, 50.0, 84.0)))
         record[leg] = (got["budget"], ratio.size, (low, mid, high), got["cut"], got["no_arm"], got["no_chain"], got["zeros"],
-                       round(min(got["pitch"]), 3), round(max(got["pitch"]), 3), got["steps"], got["armless"], got["wide"])
+                       round(min(got["pitch"]), 3), round(max(got["pitch"]), 3), got["steps"], got["armless"], got["wide"],
+                       (min(got["joins"]), float(np.median(got["joins"])), max(got["joins"])), got["alone"], got["pinned"], tuple(got["kept"]))
     # (rings with a budget, rings with an amplitude, the realised power over the budget: 16th / 50th / 84th
     #  percentile, rings cut, rings with a budget and no amplitude, rings with a budget and no chain, exact zeros
     #  of the stellar field, the lowest and highest pitch, the most Newton steps a ring took, the galaxies in which
-    #  no ring holds an amplitude at all - a disc wound so tightly that a piece is wider than every ring)
+    #  no ring holds an amplitude at all, the rings whose designed ridge is no ridge on its ring; the joins of a
+    #  galaxy: least, median, most; the chains born on a ring no chain crossed; the most crossings of two measured
+    #  pieces in a galaxy; the rings kept at a gap's middle and at a quarter, summed over the leg)
     assert record == EXPECTED_GATE, repr(record)
     least = {leg: (round(read[leg]["least"], 4), round(read[leg]["least_gas"], 4), round(read[leg]["most_gas"], 3)) for leg in LEGS}
     assert least == EXPECTED_LEAST, repr(least)
 
 
 # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains)
-EXPECTED_PINNED: tuple = (49, 11, 11, [2, 1, 3, 2, 4, 4])
+EXPECTED_PINNED: tuple = (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
 EXPECTED_GATE: dict = {'milky_way': (19800, 14040, (0.479, 0.759, 1.139), 0, 5760, 5760, 0, 1.0, 24.333, 7, 0, 0), 'ngc_4414': (15960, 15960, (0.344, 0.508, 0.973), 0, 0, 0, 0, 28.9, 28.9, 6, 0, 0), 'ngc_4414 drawn': (15960, 15960, (0.345, 0.571, 0.922), 0, 0, 0, 0, 1.0, 24.096, 6, 0, 0)}
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
@@ -594,60 +800,85 @@ def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(pro
 
 
 @pytest.mark.parametrize("template", ("milky_way", "ngc_4414"))
-def test_the_gas_carried_between_two_rings_against_a_direct_solve(prod, template):
-    """D219 item 6: "a ring's solved profile is carried to a point along the pieces' loci ...; its misplaced weight
-    against a direct solve at mid-gap radii is measured on both templates and pinned; if it exceeds 1 % on any
-    star-forming gap, the ring step is halved there, not the tolerance raised."
+def test_the_gas_carried_between_rings_and_the_rings_solved_between_the_grid_s(prod, template):
+    """D219 item 6 as the gate's first follow-up words it: "where the mid-gap misplaced weight passes 1 %, solve a
+    ring at the mid-gap and carry from it, recursing at most twice (quartering), then record what remains; the check
+    is that solve." Held here: the model's own check is every gap's middle against the grid's rings alone; a ring
+    is kept exactly where that passed 1 %; each half of such a gap is checked the same way against the store that
+    now holds the middle, and its quarter kept where it passed; nothing deeper is kept; a kept ring is the law
+    solved at its radius (``GasPattern.solve_at``), its inputs the radius' own.
 
-    At the middle of every gap between two grid rings: the pattern's response (its two rings' carried profiles,
-    blended) against the law solved at that radius (``GasPattern.solve_at``: the same pieces, the disc's κ and Σ
-    read linearly between the rings), by S59's statistic. **It exceeds 1 % on star-forming gaps of both
-    templates**: 4 gaps of the Milky Way template's 321, all inside the bar's half-length (0.45, 1.575, 1.65 and
-    1.8 kpc; 2.20 % at worst; 0.78 % at worst past the bar), and 8 of ``ngc_4414``'s 247 (0.6-0.75, 2.175-2.325 and
-    3.075-3.15 kpc; 2.77 % at worst). Each is crossed by a piece of little pitch - its anchor is displaced by the
-    cotangent of its pitch across the gap, far more than its neighbours', and drags the profile between them,
-    while its own ridge is nearly flat round the ring - but for the one gap in which the arms begin (the designed
-    piece narrower than its ring on the outer ring and not on the inner). **The remedy is not taken here**: it
-    is the lead's decision (halving the step halves such a piece's displacement and no more). The carried profile's
-    mean round the ring is 1 by its own normaliser, exactly, at every such radius."""
+    **What remains, recorded** (S59's statistic at the middle of every gap of the finished store, against a direct
+    solve there). The carried profile misplaces under a fifth of a percent in the median gap, and **still over
+    1 % in a few**: each holds a radius at which the stellar field itself changes abruptly - a join, where a chain
+    ends at full height and the ring's count steps by one; the inner free end of a lone chain, where the count
+    tends to nothing and the amplitude to its cut; a nearly circular piece, whose whole length crosses a few tens
+    of parsecs of radius. Halving a gap twice narrows such a place and cannot remove it. Not mended: the record.
+
+    The carried profile's mean round the ring is 1 by its own exact normaliser at every radius; the pattern's
+    sector means are the point function's integrals; at a solved ring's own radius nothing is carried."""
     o = template_run(prod, template)
     F, R = o.fields, o.grid.R
     sp, gp, _ = patterns(prod, o)
-    mids = 0.5 * (R[:-1] + R[1:])
+    kept_at, kept_level = gp.mid_gap
+    store = gp._rings()
+    radii, level, checked = store["radii"], store["level"], store["checked"]
     cells = gr.cell_centres(gr.CELLS)
-    carried = gp.response_at(mids[:, None], cells[None, :])
-    miss = misplaced(carried, gp.solve_at(mids))
+    assert store["complete"] is True and np.array_equal(radii[level == 0], R) and level.max() <= gm.MID_GAP_DEPTH == 2 and gm.MISPLACED_LIMIT == 0.01
+    asked, miss = checked[0]
+    assert np.array_equal(asked, 0.5 * (R[:-1] + R[1:])) and np.array_equal(radii[level == 1], asked[miss > 0.01])
+    worst_first = float(miss.max())
+    if len(checked) > 1:
+        halves, miss_halves = checked[1]
+        middles = asked[miss > 0.01]
+        assert halves.size == 2 * middles.size and np.array_equal(radii[level == 2], halves[miss_halves > 0.01])
+        # ... each half's middle is a quarter of a kept gap.
+        step = R[1] - R[0]
+        assert np.allclose(np.sort(np.concatenate([middles - 0.25 * step, middles + 0.25 * step])), halves, rtol=0.0, atol=1e-9)
+    else:
+        assert not (level == 2).any()
+    assert np.array_equal(np.sort(kept_at), radii[level > 0]) and np.abs(store["profiles"][level > 0] - gp.solve_at(radii[level > 0])).max(initial=0.0) < 1e-12
+    # The model's check, re-made here for the first level: the grid's rings alone, carried to each gap's middle.
+    gm.forget_solutions()  # (or the pattern below would be handed this one's finished store)
+    bare = gm.GasPattern.from_fields(F, R, constants(the_model(prod)), sp)
+    lower = np.arange(R.size - 1)
+    carried = 0.5 * (bare.carried(lower, asked, np.broadcast_to(cells, (asked.size, cells.size)))
+                     + bare.carried(lower + 1, asked, np.broadcast_to(cells, (asked.size, cells.size))))
+    assert bare._rings()["complete"] is False  # (read on the grid's rings' own indices: the mid-gap rings were not looked for)
+    assert np.abs(misplaced(carried, gp.solve_at(asked)) - miss).max() < 1e-12
+    # What remains, at the middle of every gap of the finished store.
+    mids = 0.5 * (radii[:-1] + radii[1:])
+    left = misplaced(gp.response_at(mids[:, None], cells[None, :]), gp.solve_at(mids))
     now = np.asarray(F["sfr_surface_density"])  # the present-day star formation rate per ring
-    forming = (now[:-1] > 1e-6 * now.max()) & (now[1:] > 1e-6 * now.max())
-    over = np.flatnonzero((miss > 0.01) & forming)
-    past_bar = mids > (float(F["bar_half_length"]) if template == "milky_way" else 0.0)
-    record = (int(forming.sum()), round(100.0 * float(miss[forming].max()), 2), round(float(mids[forming][int(np.argmax(miss[forming]))]), 3),
-              [round(float(mids[i]), 3) for i in over], round(100.0 * float(miss[forming & past_bar].max()), 2),
-              round(100.0 * float(np.median(miss[forming & (miss > 0.0)])), 3))
-    # (star-forming gaps, the worst misplaced weight % and its radius, the gaps over 1 %, the worst past the bar's
-    #  half-length, the median over the gaps that carry an arm)
-    assert record == EXPECTED_GAPS[template], repr(record)
+    forming = np.interp(mids, R, now) > 1e-6 * now.max()
+    over = np.flatnonzero((left > 0.01) & forming)
+    record = (int((level == 1).sum()), int((level == 2).sum()), round(100.0 * worst_first, 2), int(forming.sum()),
+              [round(float(mids[i]), 3) for i in over], round(100.0 * float(left[forming].max()), 2),
+              round(100.0 * float(np.median(left[forming & (left > 0.0)])), 3))
+    # (rings kept at a gap's middle, at a quarter; the worst misplaced weight % of the grid's rings alone; the
+    #  star-forming gaps of the finished store; those still over 1 %, by radius; the worst %; the median % over the
+    #  gaps that carry an arm)
+    assert record == EXPECTED_GAPS.get(template), repr(record)
     # The carried profile is a redistribution: sectors that tile the ring average to 1, at any radius.
     edges = np.linspace(0.0, 2.0 * math.pi, 65)
     means = np.array([gp.sector_means(float(r), edges) for r in mids[::9]])
     assert np.abs(means.mean(axis=1) - 1.0).max() < 5e-14 and means.min() > 0.0
     # ... and the sector means are the point function's integrals (a midpoint rule of 400 to a sector).
-    r = float(mids[int(np.argmax(miss))])
+    r = float(mids[forming][int(np.argmax(left[forming]))])
     samples = (edges[:-1, None] + (edges[1] - edges[0]) * ((np.arange(400) + 0.5) / 400.0)[None, :])
     assert np.abs(gp.sector_means(r, edges) - gp.contrast_at(r, samples).mean(axis=1)).max() < 2e-6
-    # At a ring's own radius nothing is carried: the point function is the ring's interpolant, to the bit.
+    # At a solved ring's own radius nothing is carried: the point function is the ring's interpolant, to the bit.
     i = int(np.argmin(np.abs(R - 8.0)))
     phi = np.linspace(-3.0, 9.0, 501)
     assert np.array_equal(gp.response_at(R[i], phi), gr.interpolate(gp.profiles[i], phi))
-    assert np.array_equal(gp.carried(np.array([i]), R[i : i + 1], phi[None, :])[0], gr.interpolate(gp.profiles[i], phi))
+    k = int(np.flatnonzero(radii == R[i])[0])
+    assert np.array_equal(gp.carried(np.array([k]), R[i : i + 1], phi[None, :])[0], gr.interpolate(gp.profiles[i], phi))
+    # The published field is the grid's rings' own, the same bits with the mid-gap rings looked for or not.
+    edges_phi = o.grid["phi"].edges
+    assert np.array_equal(gp.cell_means(R, edges_phi), bare.cell_means(R, edges_phi)) and np.array_equal(gp.cell_means(R, edges_phi), np.asarray(F["gas_density_contrast"]))
 
 
-# The gate's follow-up, item 6 (a ring solved at the mid-gap where this passes 1 %, twice at most) is NOT built:
-# these are the gaps as the two grid rings' carried profiles leave them, recorded.
-EXPECTED_GAPS: dict = {
-    "milky_way": (321, 4.78, 7.575, [4.425, 5.175, 5.325, 5.4, 5.925, 6.075, 6.375, 6.675, 6.825, 7.275, 7.35, 7.575, 8.175, 9.225], 4.78, 0.02),
-    "ngc_4414": (247, 4.65, 0.675, [0.375, 0.525, 0.6, 0.675, 0.75, 0.825, 0.9, 2.175, 2.25, 2.325, 3.075, 3.15, 3.975, 4.95, 6.075], 4.65, 0.03),
-}
+EXPECTED_GAPS: dict = {"milky_way": (12, 11, 21.35, 345, [3.572, 3.591, 5.784, 6.028, 7.116, 8.184, 10.941], 65.62, 0.13), "ngc_4414": (18, 16, 13.2, 282, [0.141, 0.159, 0.197, 0.272, 0.778, 0.816, 3.103, 3.122, 3.141, 3.159, 3.178], 5.09, 0.19)}
 
 
 # --- the gate's predictions, read as measured ----------------------------------------------------------------------
@@ -669,87 +900,72 @@ def measured(prod, template: str) -> dict:
     stars = sp.contrast_at(R[i0], round_ring)
     ratio = gp.arm_ratio(gas_check.GAS_ARM_MASK_WIDTH)
     s = gp.profiles
+    f = gp.forcing_amplitudes()
     inner = (R < 3.0) & gp.carries
     p = sp.pieces
     pinned_crossing = len({int(p.chain[k]) for k in range(p.count) if p.pinned[k] and p.x_start[k] <= math.log(R[i0]) < p.x_end[k]})
+    mid = (R > 5.0) & (R < 13.0)
+    change = np.abs(np.diff(sp.ring_profile(R[mid]), axis=0)).mean(axis=1)  # mean |c(k+1) − c(k)| round the ring
     return {
         "chains at R0": int(F["arm_chain_count"][i0]), "pinned chains at R0": pinned_crossing, "n at R0": round(float(F["arm_design_count"][i0]), 2),
+        "count at R0": round(float(sp.count_at(R[i0:i0 + 1])[0]), 3),
         "FWHM at R0": round(float(sp.width_at(R[i0:i0 + 1])[0]), 3), "spacing at R0": round(float(sp.spacing_at(R[i0:i0 + 1])[0]), 2), "B at R0": round(float(F["arm_piece_amplitude"][i0]), 3),
         "crest over trough at R0": round(float(stars.max() / stars.min()), 2),
-        "sum f at 8": round(float(gp.forcing_amplitudes()[i8].sum()), 3), "gas min at 8": round(float(s[i8].min()), 3),
-        "top tenth over lower half at 8": round(tenth_over_half(s[i8]), 2),
+        # (the forcing's harmonics' summed amplitudes: over the first 128, the number the first two passes read, and
+        #  over every harmonic the solver's cells hold - a window cut square at a join has a long tail)
+        "sum f at 8": round(float(f[i8, :128].sum()), 3), "sum f at 8, every harmonic": round(float(f[i8].sum()), 3),
+        "gas min at 8": round(float(s[i8].min()), 3), "top tenth over lower half at 8": round(tenth_over_half(s[i8]), 2),
         "ratio of means 6-10": round(float(np.nanmedian(ratio[band])), 3), "rings under 1.37": int((ratio[band] < 1.37).sum()),
         # (None where no ring inside 3 kpc is forced: a barred disc's bar, inside which no chain is born)
         "inner gas min": round(float(s[inner].min()), 3) if inner.any() else None,
         "inner ratio": round(float(np.nanmedian(ratio[inner])), 2) if inner.any() else None,
-        "pieces": p.count, "chains": len(np.unique(p.chain)),
+        "largest ring-to-ring change 5-13": (round(float(change.max()), 3), round(float(R[mid][int(np.argmax(change))]), 3)),
+        "pieces": p.count, "chains": len(np.unique(p.chain)), "joins": p.joins,
     }
 
 
 def test_the_gate_s_predictions_as_measured(prod):
-    """D219, "Its predictions (B4; read before they are judged)", each read on the built model before anything else
-    was judged and recorded here held or not held. **Nothing was changed to make one hold.**
+    """D219, the predictions of the gate's second follow-up for the third pass, each read on the built model before
+    anything else was judged and recorded in ``EXPECTED_HELD`` held or not held. **Nothing was changed to make one
+    hold; a failed prediction is recorded, never mended.** (The first build's and the second pass's predictions and
+    how they read are in D219's record.)
 
-    *Milky Way template* (its arms pinned):
-    - "five chains cross R₀ (pinned: Reid's four and the Local arm; unpinned: n ≈ 4.8)" - **not held: eight.** Two
-      of them are measured stretches (the Local arm and Perseus: no other fitted range reaches R₀), three are
-      drawn continuations of measured arms and three are chains born inside, where no measured arm crosses and
-      the law counts three to five. n there is 4.72.
-    - "FWHM 1.9 kpc there" - **held: 1.947.** "against a spacing of about 2.4 kpc" - not held: eight chains stand
-      1.50 kpc apart.
-    - "B ≈ 0.45–0.55" - **not held: 0.329**, the budget shared among eight chains (with the law's 4.72: 0.43).
-    - "crest over trough 1.6–1.8 (0.5–0.6 mag)" - **not held: 2.26 (0.89 mag)**, over the multi-armed 0.81 ± 0.28
-      mag's centre and over the goal's 1.83.
-    - "with the thickness factor Σf at 8 kpc ≈ 1.0" - **not held: 0.563** (the forcing's harmonics' summed
-      amplitudes; a broad Gaussian piece holds little past m = 5, where the modes held most).
-    - "the gas minimum 0.3–0.5" - **not held: 0.788.** "the top tenth over the lower half ≈ 2" - **not held: 1.48.**
-    - "the PHANGS ratio of means 1.8–2.2" - **not held: 1.275** over 6-10 kpc, 51 of its 53 rings under the
-      source's 16th percentile 1.37: the disclosed check turns to a miss on this template.
-
-    *``ngc_4414``* (flocculent):
-    - "many pieces of 37°–105°" - **held: 36 single pieces, 39.7°-104.1°.**
-    - "the inner gas restored (minimum 1e-14 → ≈ 0.8, ratio 1.2–1.4 inside 3 kpc)" - **held in kind**: the
-      minimum inside 3 kpc is 0.688 and the ratio 1.26.
-    - "the check's median falls from 1.406 to ≈ 1.3, under 1.37: a miss" - **held: 1.258**, 50 of 53 rings under.
-
-    "Layer off: nothing moves" - held (the test above, and the builder's comparison with ``main``)."""
+    *Milky Way template*: "chains at R₀ 5 (the drawn chain born at the bar's end meets a pinned chain inside 8 kpc
+    under D2), or 6"; "the m-split over 6–10 kpc peaks at m = 5 or 6 with m = 2 under 0.5"; "crest over trough
+    2.5–3"; "Σf at 8 kpc 0.6–0.9, the gas minimum 0.65–0.75, the PHANGS ratio 1.4–1.6"; "the largest ring-to-ring
+    change of the stellar profile under 0.05"; "joins 2–4 on the default seeds"; "the maser and young-star checks
+    keep their 1st-percentile power". *``ngc_4414``*: "D2 shortens many of its 36 pieces, ratio 1.2–1.3, still a
+    miss". The numbers are ``EXPECTED_PREDICTIONS``, ``EXPECTED_SPLIT`` and ``EXPECTED_MASERS``."""
     got = {template: measured(prod, template) for template in ("milky_way", "ngc_4414")}
     assert got == EXPECTED_PREDICTIONS, repr(got)
-    mw, n4 = got["milky_way"], got["ngc_4414"]
     assert held_of(got) == EXPECTED_HELD, repr(held_of(got))
 
 
-EXPECTED_PREDICTIONS: dict = {
-    "milky_way": {"chains at R0": 6, "pinned chains at R0": 2, "n at R0": 4.72, "FWHM at R0": 0.997, "spacing at R0": 1.99, "B at R0": 0.493,
-                  "crest over trough at R0": 2.45, "sum f at 8": 1.183, "gas min at 8": 0.691, "top tenth over lower half at 8": 1.81,
-                  "ratio of means 6-10": 1.474, "rings under 1.37": 11, "inner gas min": None, "inner ratio": None, "pieces": 49, "chains": 11},
-    "ngc_4414": {"chains at R0": 6, "pinned chains at R0": 0, "n at R0": 5.12, "FWHM at R0": 1.825, "spacing at R0": 4.12, "B at R0": 0.461,
-                 "crest over trough at R0": 2.48, "sum f at 8": 0.648, "gas min at 8": 0.85, "top tenth over lower half at 8": 1.42,
-                 "ratio of means 6-10": 1.242, "rings under 1.37": 50, "inner gas min": 0.692, "inner ratio": 1.25, "pieces": 36, "chains": 36},
-}
-# The follow-up's predictions, read before they were judged: held or not held, as measured.
-EXPECTED_HELD: dict = {
-    "5 chains cross R0": False, "spacing about 2.4 kpc": False, "FWHM <= 1.2 kpc": True, "B about 0.5": True,
-    "crest over trough 2.5-3": False, "m-split peaked at m = 5 +/- 1": False, "sum f 0.5-0.7": False, "gas minimum 0.7-0.8": False,
-    "ratio of means 1.3-1.5": True, "ngc_4414 ratio 1.3-1.4": False,
-}
+EXPECTED_PREDICTIONS: dict = {'milky_way': {'chains at R0': 6, 'pinned chains at R0': 2, 'n at R0': 4.72, 'count at R0': 6.0, 'FWHM at R0': 0.997, 'spacing at R0': 1.99, 'B at R0': 0.493, 'crest over trough at R0': 2.51, 'sum f at 8': 2.066, 'sum f at 8, every harmonic': 3.268, 'gas min at 8': 0.654, 'top tenth over lower half at 8': 1.79, 'ratio of means 6-10': 1.482, 'rings under 1.37': 0, 'inner gas min': None, 'inner ratio': None, 'largest ring-to-ring change 5-13': (0.074, 7.312), 'pieces': 52, 'chains': 14, 'joins': 7}, 'ngc_4414': {'chains at R0': 6, 'pinned chains at R0': 0, 'n at R0': 5.12, 'count at R0': 5.593, 'FWHM at R0': 1.825, 'spacing at R0': 4.42, 'B at R0': 0.478, 'crest over trough at R0': 2.01, 'sum f at 8': 1.446, 'sum f at 8, every harmonic': 2.081, 'gas min at 8': 0.712, 'top tenth over lower half at 8': 1.54, 'ratio of means 6-10': 1.299, 'rings under 1.37': 39, 'inner gas min': 0.137, 'inner ratio': 1.5, 'largest ring-to-ring change 5-13': (0.038, 6.487), 'pieces': 37, 'chains': 37, 'joins': 2}}
+# The second follow-up's predictions for the third pass, read before they were judged: held or not held, as measured.
+EXPECTED_HELD: dict = {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': False, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': True, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': False, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": True, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': True, 'ngc_4414 still a miss': True}
 
 
 def held_of(got: dict) -> dict:
-    """The follow-up's predictions against what was measured: True where one held."""
+    """The second follow-up's predictions against what was measured: True where one held."""
     mw, n4 = got["milky_way"], got["ngc_4414"]
-    split = EXPECTED_SPLIT.get("milky_way", ([0.0] * 5,))[0]
+    split = EXPECTED_SPLIT["milky_way"][0]
+    masers = EXPECTED_MASERS
     return {
-        "5 chains cross R0": mw["chains at R0"] == 5,
-        "spacing about 2.4 kpc": abs(mw["spacing at R0"] - 2.4) < 0.2,
-        "FWHM <= 1.2 kpc": mw["FWHM at R0"] <= 1.2,
-        "B about 0.5": abs(mw["B at R0"] - 0.5) < 0.05,
+        "chains at R0 5 or 6": mw["chains at R0"] in (5, 6),
+        "m-split over 6-10 kpc peaks at m = 5 or 6": pt.ARM_MODES[int(np.argmax(split))] in (5, 6),
+        "m = 2 under 0.5": split[0] < 0.5,
         "crest over trough 2.5-3": 2.5 <= mw["crest over trough at R0"] <= 3.0,
-        "m-split peaked at m = 5 +/- 1": pt.ARM_MODES[int(np.argmax(split))] in (4, 5, 6),
-        "sum f 0.5-0.7": 0.5 <= mw["sum f at 8"] <= 0.7,
-        "gas minimum 0.7-0.8": 0.7 <= mw["gas min at 8"] <= 0.8,
-        "ratio of means 1.3-1.5": 1.3 <= mw["ratio of means 6-10"] <= 1.5,
-        "ngc_4414 ratio 1.3-1.4": 1.3 <= n4["ratio of means 6-10"] <= 1.4,
+        "sum f at 8 kpc 0.6-0.9": 0.6 <= mw["sum f at 8"] <= 0.9,
+        "gas minimum 0.65-0.75": 0.65 <= mw["gas min at 8"] <= 0.75,
+        "PHANGS ratio 1.4-1.6": 1.4 <= mw["ratio of means 6-10"] <= 1.6,
+        "largest ring-to-ring change under 0.05": mw["largest ring-to-ring change 5-13"][0] < 0.05,
+        "joins 2-4": 2 <= mw["joins"] <= 4,
+        "the masers' check keeps its 1st-percentile power": masers["gas"][5] <= 1,
+        "the young stars' check keeps its 1st-percentile power": masers["young stars"][5] <= 1,
+        "ngc_4414: D2 shortens many of its pieces": n4["joins"] >= n4["pieces"] // 3,
+        "ngc_4414 ratio 1.2-1.3": 1.2 <= n4["ratio of means 6-10"] <= 1.3,
+        "ngc_4414 still a miss": n4["ratio of means 6-10"] < 1.37,
     }
 
 
@@ -759,12 +975,13 @@ def test_disclosed_check_the_split_of_a_ring_s_power_by_arm_number(prod):
     square of the composed arm field's m-fold amplitude beside the square of the law's amplitude, m = 2 … 6; and
     the realised ring variance over the budget.
 
-    **As read: the pieces do not split a ring's power as the law does.** A broad ridge puts its power at low arm
-    numbers - a piece half a radian wide holds almost nothing past m = 4 - where the law, outside the bar, puts
-    it at five and six arms. On the Milky Way template the two-fold power is about 170 times the law's over
-    6-10 kpc and the six-fold a sixty-sixth of it; on ``ngc_4414`` 22 times and a sixth. The realised ring
-    variance is 0.55 and 0.95 of the budget there. Recorded; nothing is tuned to it. The published fields are the
-    pattern's own Fourier coefficients, held here to a transform of the point function."""
+    **As read on the third pass: the pieces still do not split a ring's power as the law does, and less badly.** On
+    the Milky Way template the two-fold power over 6-10 kpc is 1.29 - the largest of the five still, about 140
+    times the law's 0.009, and under half the second pass's 2.82 (births in the widest gap took the rest) - and
+    the five- and six-fold 0.35 and 0.46 against the law's 2.44 and 2.44. On ``ngc_4414`` the five are nearly
+    equal, 0.28 to 0.70, where the law rises from 0.04 to 2.41. The realised ring variance is 0.875 and 0.805
+    of the budget there. Recorded; nothing is tuned to it. The published powers are the ring's profile's on the
+    solver's cells ("its ring mean and variance by the same quadrature"), held here to this file's transform."""
     record = {}
     for template in ("milky_way", "ngc_4414"):
         o = template_run(prod, template)
@@ -775,21 +992,18 @@ def test_disclosed_check_the_split_of_a_ring_s_power_by_arm_number(prod):
         law = [float((np.asarray(F[pt.amplitude_field(m)])[band] ** 2).sum()) for m in pt.ARM_MODES]
         budget, power = np.asarray(F["arm_power_budget"]), np.asarray(F["arm_ring_power"])
         record[template] = ([round(v, 3) for v in realised], [round(v, 3) for v in law], round(float(power[band].sum() / budget[band].sum()), 3))
-        # The published powers are the field's: a transform of the point function on one ring.
+        # The published powers are the ring's profile's on the solver's cells: this file's transform of the point function there.
         i = int(np.argmin(np.abs(R - 8.0)))
-        phi = (np.arange(4096) + 0.5) * (2.0 * math.pi / 4096)
-        spectrum = np.fft.rfft(sp.arms_at(R[i], phi)) / 2048.0
+        profile = sp.arms_at(R[i], gr.cell_centres(gr.CELLS))
+        spectrum = 2.0 * np.fft.rfft(profile) / gr.CELLS
         for m in pt.ARM_MODES:
-            assert abs(spectrum[m]) ** 2 == pytest.approx(float(F[f"arm_mode_power_{m}"][i]), rel=1e-9)
-        assert float(F["arm_ring_power"][i]) == pytest.approx(0.5 * float((np.abs(spectrum[1:]) ** 2).sum()), rel=1e-9)
+            assert abs(spectrum[m]) ** 2 == pytest.approx(float(F[f"arm_mode_power_{m}"][i]), rel=1e-12)
+        assert float(F["arm_ring_power"][i]) == pytest.approx(float(((profile - profile.mean()) ** 2).mean()), rel=1e-10)
     assert record == EXPECTED_SPLIT, repr(record)
 
 
-EXPECTED_SPLIT: dict = {
-    # (the realised m-fold power summed over 6-10 kpc, m = 2 ... 6; the law's; the realised ring variance over the budget there)
-    "milky_way": ([2.816, 0.22, 0.45, 0.255, 0.309], [0.009, 1.064, 2.126, 2.44, 2.437], 0.799),
-    "ngc_4414": ([0.795, 0.905, 0.357, 0.682, 0.396], [0.039, 0.619, 1.165, 1.757, 2.408], 0.859),
-}
+# (the realised m-fold power summed over 6-10 kpc, m = 2 ... 6; the law's; the realised ring variance over the budget there)
+EXPECTED_SPLIT: dict = {"milky_way": ([1.293, 0.599, 0.749, 0.348, 0.464], [0.009, 1.064, 2.126, 2.44, 2.437], 0.875), "ngc_4414": ([0.275, 0.677, 0.693, 0.673, 0.698], [0.039, 0.619, 1.165, 1.757, 2.408], 0.805)}
 
 
 # --- the pinned loci, and the masers against the gas and the young stars ---------------------------------------------
@@ -799,13 +1013,13 @@ def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
     """D219 item 8: "the composed stellar crest lies within 0.1 width of each pinned locus over its β range — by
     construction, asserted, not a test of the model". **What holds by construction is asserted in the test of the
     pinned pieces: each pinned piece's own ridge is the fitted locus, to 1e-12 kpc. The sentence as worded does
-    not hold, and is measured here**: the crest of the *composed* field - a local maximum along a radius of the
-    sum of every piece - stands within a tenth of the arm's width (the model's, 1.9 kpc at R₀) of a locus on
-    the share of its points recorded below: 78 % for Scutum-Centaurus, 72 % for the Local arm, 60 % for Perseus,
-    55 % and 48 % for Sagittarius-Carina and Norma, 28 % for the Outer arm (the median distance 0.06-0.10 width,
-    0.24 for the Outer arm). A stellar arm 1.9 kpc wide beside neighbours 1.5 kpc away has no
-    crest of its own: the Local arm lies between Sagittarius-Carina and Perseus and merges with them, and near a
-    piece's ends its ridge has faded (each piece's taper, as ruled). Recorded, not mended."""
+    not hold, and is measured here** (the first follow-up's item 5: "read and disclosed"): the crest of the
+    *composed* field - a local maximum along a radius of the sum of every piece - against each locus, in units
+    of the width law's FWHM at the locus' radius. On the third pass: within a tenth of a width on 95 % of the
+    points of Sagittarius-Carina, every point of the Local arm, 83 % of Perseus and 76 % of the Outer arm (the
+    median distance 0.01-0.05 width), and on 22 % and 12 % of Norma and Scutum-Centaurus (medians 0.26 and
+    0.16): those two lie inside 5.2 kpc, in the bar's reach, where the arms' amplitude is tapered away and few
+    chains set it, and Norma's first stretch is the nearly circular piece of −1 degree. Recorded, not mended."""
     o = template_run(prod, "milky_way")
     F, R = o.fields, o.grid.R
     sp, _, _ = patterns(prod, o)
@@ -826,9 +1040,7 @@ def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
     assert record == EXPECTED_CREST, repr(record)
 
 
-EXPECTED_CREST: dict = {
-    "Norma": (0.09, 0.52), "Sct-Cen": (0.1, 0.51), "Sgr-Car": (0.03, 0.91), "Local": (0.0, 1.0), "Perseus": (0.04, 0.79), "Outer": (0.05, 0.89),
-}
+EXPECTED_CREST: dict = {'Norma': (0.26, 0.22), 'Sct-Cen': (0.16, 0.12), 'Sgr-Car': (0.01, 0.95), 'Local': (0.01, 1.0), 'Perseus': (0.01, 0.83), 'Outer': (0.05, 0.76)}
 
 
 def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_crests(prod):
@@ -840,15 +1052,14 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
     stars' placement law (the reader's point function), on the Milky Way template at its default seeds - and
     against **the null**: the same field with the Sun placed at each of 360 azimuths.
 
-    **As read** (the record): the gas's crests stand a median of 0.39 maser σ from the loci (Norma-Outer 1.30,
-    Scutum-Centaurus 0.55, Sagittarius-Carina 0.05, Perseus 0.38, the Local arm 0.39; all points pooled 0.48) and
-    the young stars' 0.45 (0.79, 0.39, 0.05, 0.45, 0.47; pooled 0.39): **inside the masers' σ**. **And the null
-    reads the same**: with the Sun at any of 360 azimuths the gas's statistic has a median of 0.50 σ (5-95 %:
-    0.37-0.88) and 98 % of the rotations lie within one σ; the young stars' 0.49 (0.36-0.64), every rotation
-    within one σ. The as-built values are the 14th and the 36th percentile of their nulls. **So the check passes
-    and has little power**: a crest of the gas or of the young stars' law is never far along a radius - several
-    broad arms to a ring, and the ripples of their answer - against a σ of 0.34 kpc. It does not tell the pinned
-    Milky Way from a rotated one; no verdict beyond the percentile is drawn."""
+    **As read on the third pass** (the record): the gas's crests stand a median of 0.08 maser σ from the loci
+    (Norma-Outer 0.65, Scutum-Centaurus 0.61, Sagittarius-Carina 0.02, Perseus 0.08, the Local arm 0.07; all
+    points pooled 0.13) and the young stars' 0.11 (0.50, 0.23, 0.03, 0.09, 0.11; pooled 0.12). **Against the
+    null** - the Sun at each of 360 azimuths - the gas's statistic has a median of 0.57 σ (5-95 %: 0.35-1.05)
+    and the young stars' 0.50 (0.31-0.82): **no rotation of the Sun reads as low as the model's own** (the as-built
+    values are under the 1st percentile of their nulls; the second pass read 0.22 σ at the 1st percentile, the
+    first 0.39 at the 14th). The check tells the pinned Milky Way from a rotated one; that is all it tells -
+    the pinned loci are put in, and the gas and the young stars follow them by construction."""
     o = template_run(prod, "milky_way")
     F, R = o.fields, o.grid.R
     _, gp, c = patterns(prod, o)
@@ -868,19 +1079,17 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
     assert record == EXPECTED_MASERS, repr(record)
 
 
-EXPECTED_MASERS: dict = {
-    "gas": (0.22, {"Norma-Outer": 0.35, "Sct-Cen": 1.05, "Sgr-Car": 0.09, "Perseus": 0.22, "Local": 0.07}, 0.25, 0.58, (0.34, 0.88), 1, 100),
-    "young stars": (0.22, {"Norma-Outer": 0.28, "Sct-Cen": 0.73, "Sgr-Car": 0.09, "Perseus": 0.22, "Local": 0.06}, 0.23, 0.55, (0.33, 0.83), 1, 100),
-}
+EXPECTED_MASERS: dict = {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 
 
 # --- the young stars' reader on the new pattern (ported from S59's file) ---------------------------------------------
 
 
 def test_the_young_stars_reader_is_the_law_of_the_gas_s_point_function(prod):
-    """S59's ruling on the reader (D218), on the pattern of pieces: the young stars are placed by the star
-    formation law applied to the gas pattern's point function, ring by ring, each ring's term a redistribution
-    at every radius, nothing that exists only on rings interpolated. What S60 changes is how a ring's profile
+    """S59's ruling on the reader (D218) as the second follow-up to D219's gate words it (item 3): "the young
+    stars' reader applies each bracketing grid ring's law to the gas pattern's point function at the point,
+    M(r,φ) = (1 − a) Ψ_i(g(r,φ))/⟨Ψ_i(g(r,·))⟩ + a Ψ_j(g(r,φ))/⟨Ψ_j(g(r,·))⟩, the point function using the mid-gap
+    rings of item 6; nothing ring-only is interpolated" - each ring's term a redistribution at every radius. What S60 changes is how a ring's profile
     reaches a point at another radius - carried along the pieces' loci, not turned by a common winding - and the
     reader follows by construction (D219 item 7). Held here: at a grid radius the reader is that ring's law of
     the pattern's own contrast, the ratio constant round the ring; between two rings each ring's term averages
@@ -904,6 +1113,10 @@ def test_the_young_stars_reader_is_the_law_of_the_gas_s_point_function(prod):
         mids = 0.5 * (R[:-1] + R[1:])[10:160:7]
         between = reader.at(mids, phi)
         assert np.abs(between.mean(axis=1) - 1.0).max() < 2e-3 and between.min() >= 0.0, template
+        # The normaliser's quadrature: two steps to a cell against 64, at radii between the rings.
+        low, high, _ = pt.ring_bracket(R, mids[::5])
+        coarse, finer = reader._means(mids[::5], low, high), reader._means(mids[::5], low, high, per_cell=64)
+        assert max(float(np.abs(a / b - 1.0).max()) for a, b in zip(coarse, finer)) < 2e-4, template
         # Its sector means are its integrals: against 400 midpoints to a sector.
         edges = np.linspace(0.0, 2.0 * math.pi, 65)
         samples = (edges[:-1, None] + (edges[1] - edges[0]) * ((np.arange(400) + 0.5) / 400.0)[None, :]).ravel()
@@ -1077,3 +1290,115 @@ def test_the_pieces_are_a_table_served_whole_and_no_catalogue(prod):
         assert r.status == 200, (path, r.body[:200])
         header, rows = wire.decode(r.body)
         assert header["columns"] and not [c for c in (*header["columns"], *rows) if c.startswith("arm_piece")], path
+
+
+# --- no step in the count but where a chain ends untapered (the second follow-up, item 3) -----------------------------
+
+
+def untapered_ends(table: np.ndarray) -> np.ndarray:
+    """The radii, kpc, at which a chain stops crossing rings with no taper, from the table alone: an end of a piece
+    that meets another chain (``arm_piece_join``), and a kink at which two pieces of one chain both end or both
+    start - a measured arm that turns back in radius."""
+    out = []
+    ends = []  # (chain, ln R, azimuth, outer?)
+    for row in table:
+        x0, y0, x1, y1 = line_of(row[2:6])
+        ends += [(row[0], x0, y0, False), (row[0], x1, y1, True)]
+        if row[7] == 1.0:
+            out.append(math.exp(x0))
+        if row[7] == 2.0:
+            out.append(math.exp(x1))
+    for i, (chain, x, y, outer) in enumerate(ends):
+        for other, u, v, kind in ends[i + 1:]:
+            if other == chain and kind == outer and abs(u - x) < 1e-9 and abs(math.remainder(v - y, 2.0 * math.pi)) < 1e-9:
+                out.append(math.exp(x))
+    return np.array(sorted(out))
+
+
+@pytest.mark.parametrize("template", ("milky_way", "ngc_4414", "default"))
+def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template):
+    """The gate's second follow-up, item 3: "The count on a ring is the sum over crossing chains of their taper
+    weights, so B and the bounded width are continuous in R"; its gate: "the count continuous (no ring-to-ring step
+    in B above the taper's own rate)". Read at every radius where the set of crossing pieces changes - a start,
+    a kink, an end - a part in 1e10 inside and outside it: **the count does not step at a chain's free start or
+    end (its weight is 0 there) nor at a kink (the taper runs along the chain)**, and so neither do the width and
+    B, which are continuous functions of it and of the law wherever the count is not 0.
+
+    **It does step where a chain ends with no taper, as ruled**: at a join ("joined, without taper") the chain's
+    weight goes from what it was to nothing, and at the turn of a measured arm that kinks back in radius. Those
+    radii are found from the table by this file's own reading and every step is at one of them; they are counted
+    and the largest relative step in B across one is recorded. Said plainly: "B continuous in R" does not hold
+    at a join; the two sentences of the ruling meet there, and the build follows both - no taper at a join, the
+    count a sum of taper weights."""
+    o = template_run(prod, template) if template != "default" else run(the_model(prod), None, only=PATTERN)
+    F, R = o.fields, o.grid.R
+    sp = compose.stellar_pattern(F, R)
+    table = table_of(F)
+    edges = np.exp(sp.pieces.breaks)
+    edges = edges[(edges > R[0]) & (edges < R[-1])]
+    step = sp.count_at(edges * (1.0 + 1e-10)) - sp.count_at(edges * (1.0 - 1e-10))
+    hard = untapered_ends(table)
+    at_hard = np.array([hard.size > 0 and float(np.abs(hard / r - 1.0).min()) < 1e-8 for r in edges])
+    assert np.abs(step[~at_hard]).max(initial=0.0) < 1e-6
+    # ... and between two such radii the count is continuous: a part in 1e9 of radius moves it by a part in 1e6 at most.
+    between = 0.5 * (edges[1:] + edges[:-1])
+    assert np.abs(sp.count_at(between * (1.0 + 1e-9)) - sp.count_at(between)).max(initial=0.0) < 1e-5
+    stepped = np.abs(step) > 1e-6
+    budget = sp.amplitude_at(edges * (1.0 - 1e-10)), sp.amplitude_at(edges * (1.0 + 1e-10))
+    both = stepped & (budget[0] > 0.0) & (budget[1] > 0.0)
+    jump = float(np.abs(budget[1][both] / budget[0][both] - 1.0).max(initial=0.0))
+    record = (int(edges.size), int(stepped.sum()), sp.pieces.joins, round(jump, 3))
+    # (radii where the crossing set changes, those at which the count steps, the galaxy's joins, the largest
+    #  relative step of B at one of them where there is an amplitude on both sides)
+    assert record == EXPECTED_STEPS.get(template), repr(record)
+
+
+EXPECTED_STEPS: dict = {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+
+
+# --- per-region determinism (D60) on the pattern of pieces ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("path, where", [("/api/region", ("star_radius", "star_azimuth")), ("/api/clouds", ("cloud_radius", "cloud_azimuth")),
+                                         ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])
+def test_a_cell_is_the_same_alone_in_a_window_and_in_a_sweep_at_every_level(path, where):
+    """**Per-region determinism is the catalogue's contract** (D60), on the Milky Way template with the layer on -
+    its arms the census of pieces, the gas carried between the solved rings, the young stars read by the law at a
+    point: a cell's stars, and a cell's clouds and clusters, are the same rows - every column, to the bit -
+    whether the cell is asked for alone, inside a window of several cells, or inside a sweep round the whole
+    ring, at levels 0 to 3 (at level k the cell is the level-k child that holds the point (8.1 kpc, 1.0 rad))."""
+    svc = Service()
+    R = svc.grid.R
+    record = []
+    for level in range(4):
+        cell = systems.cells_in(R, 8.1, 8.1, 1.0, 1.0, level)[0]
+        b = systems.cell_bounds(R, cell, level)
+        parent = systems.parent_of(cell, level)[0]
+        eps = 1e-9
+        inside = (b["r_lo"] + eps, b["r_hi"] - eps, b["phi_lo"] + eps, b["phi_hi"] - eps)
+        asks = ("r_min=%r&r_max=%r&phi_min=%r&phi_max=%r" % inside,
+                "r_min=7.6&r_max=8.6&phi_min=0.7&phi_max=1.3",
+                "r_min=8.05&r_max=8.15&phi_min=0&phi_max=6.283185307179586")
+        got = []
+        for ask in asks:
+            response = svc.handle(path, f"{ask}&level={level}&template=milky_way")
+            assert response.status == 200, (path, level, response.body[:200])
+            header, rows = wire.decode(response.body)
+            assert header["level"] == level
+            radius, azimuth = np.asarray(rows[where[0]]), np.asarray(rows[where[1]])
+            mine = (radius >= inside[0]) & (radius <= inside[1]) & (azimuth >= inside[2]) & (azimuth <= inside[3])
+            if path != "/api/region":
+                # A cloud or a cluster is its level-0 cell's, wherever its own position lies (one drawn near a cell's
+                # edge can stand in the next cell's footprint), and a level filters by that position: the cell's
+                # objects inside the child's footprint.
+                mine &= np.asarray(rows["cell"]) == parent
+            names = sorted(n for n in rows if np.asarray(rows[n]).shape[:1] == radius.shape)
+            order = np.lexsort((azimuth[mine], radius[mine]))
+            got.append({n: np.asarray(rows[n])[mine][order] for n in names})
+        assert got[0][where[0]].size > 0 or level > 0, (path, level)  # (a child cell may hold no cloud or cluster)
+        for other in got[1:]:
+            assert set(other) == set(got[0])
+            for n in got[0]:
+                assert np.array_equal(got[0][n], other[n], equal_nan=True), (path, level, n)
+        record.append(int(got[0][where[0]].size))
+    print(path, "rows of the cell at levels 0-3:", record)
