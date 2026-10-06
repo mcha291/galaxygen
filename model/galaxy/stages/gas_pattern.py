@@ -112,16 +112,22 @@ put in.
 where the text above speaks of modes, phases, a pattern coordinate χ and a common winding it is history.** The
 equation, the frame, the solver, the bar's lanes and the composition with them are unchanged. What changed:
 
-- *The forcing* is composed piece by piece. On a ring every stellar arm piece that crosses it is a wrapped
-  Gaussian in azimuth (``pieces.py``); the m-th harmonic of its excess - its amplitude the stars' own on the
+- *The forcing* is composed piece by piece. On a ring every stellar arm piece within reach of it is a ridge on
+  the solver's cells - a Gaussian in the perpendicular distance to its locus times its window along it
+  (``pieces.py``; the gate's second follow-up, item 1: "a ring's profile of a piece is the Gaussian in d times the
+  window in s on the solver's cells ... the forcing term by term as now"; from the first build to the second a
+  piece on a ring was a wrapped Gaussian in azimuth, which smeared a nearly circular piece round its whole
+  ring). The ridge is transformed on those cells, and its m-th term - its amplitude the stars' own on the
   ring, the cut in it, the bar's taper taken back out - is multiplied by m / (X (|sin p_j| + m h_z/R)): **the
   piece's own pitch p_j**, and the thickness of the stellar layer, whose force on the gas at the midplane is
   the razor-thin one times 1/(1 + k h_z) for stars in an exponential layer (the exact form; the sech² layer's
   is the named alternative). h_z is the checkpoint-1 scale length over a measured flattening, so nothing of a
   later checkpoint enters. The factor is bounded by R/(X h_z) for every m and pitch and regular at sin p = 0:
   the blow-up of a tightly wound disc's razor-thin forcing cannot occur. ε keeps the disc's own pitch (one
-  pressure scale per ring: declared, a debt). The sum of the pieces' harmonics is the forcing on the solver's
-  cells, in the galaxy's own azimuth: a profile is held at φ, and there is no χ.
+  pressure scale per ring: declared, a debt). Every term the cells hold is kept, 1 to half their number: a
+  window that ends square at a join is no smooth function, and its high terms are bounded by the same factor.
+  The sum of the pieces' terms, taken back to the cells, is the forcing, in the galaxy's own azimuth: a
+  profile is held at φ, and there is no χ.
 - *Between two rings* a ring's solved profile is **carried along the pieces' loci** (:meth:`GasPattern.carried`):
   a periodic piecewise-linear map of azimuth, anchored where each piece that crosses the ring stands on the
   ring and at the point's radius - in place of the common winding's one shift. The carried profile is taken
@@ -185,7 +191,7 @@ from galaxy.stages.pattern import (
     ring_bracket,
     rotation_sense,
 )
-from galaxy.stages.pieces import HARMONICS, forcing_factor, harmonics_summed
+from galaxy.stages.pieces import forcing_factor
 
 CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is held on their centres
 
@@ -209,10 +215,11 @@ TWO_PI = 2.0 * math.pi
 NARROW_IMAGE = 1e-9
 MANY_AZIMUTHS = 256  # past this many azimuths a row, the stretch each lies in is found by bisection (``_stretch``)
 
-_HARMONIC = np.arange(1, HARMONICS + 1, dtype=float)
-# cos(m χ_k) and sin(m χ_k) on the solver's cells' centres, m = 1 … HARMONICS: (HARMONICS, CELLS) each, made once.
-_COS = np.cos(_HARMONIC[:, None] * _response.cell_centres(CELLS)[None, :])
-_SIN = np.sin(_HARMONIC[:, None] * _response.cell_centres(CELLS)[None, :])
+# The harmonics of a ring's profile on the solver's cells: every one the cells hold, 1 … CELLS/2 (the second
+# follow-up to D219's gate, item 1: "a ring's profile of a piece is the Gaussian in d times the window in s on the
+# solver's cells ... the forcing term by term as now").
+HARMONICS = CELLS // 2
+_HARMONIC = np.arange(HARMONICS + 1, dtype=float)  # 0 … CELLS/2: the arm numbers of a real transform's terms
 _SOLUTIONS: dict[bytes, tuple[np.ndarray, _response.Diagnostics]] = {}
 _FORCINGS: dict[bytes, np.ndarray] = {}  # the last few patterns' forcings on their rings, by what the pattern is made of
 _SOLUTIONS_LOCK = threading.Lock()
@@ -581,42 +588,40 @@ class GasPattern:
         solve off the grid, :meth:`solve_at`)."""
         return np.interp(radii, self.R, self.epicyclic), np.interp(radii, self.R, self.surface_density)
 
-    def forcing_harmonics(self, radii: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
-        """The forcing's Fourier coefficients on each ring: ``(real, imaginary)``, each (rings, HARMONICS), with
-        F(φ) = Σ_m (real_m cos mφ − imaginary_m sin mφ) (D219 item 5).
+    def forcing_spectrum(self, radii: np.ndarray | None = None) -> np.ndarray:
+        """The forcing's transform on the solver's cells, ring by ring: complex, shaped (rings, CELLS/2 + 1) -
+        ``numpy.fft.rfft``'s terms of F on the cells' centres, term 0 (the mean) nothing (D219 item 5; the second
+        follow-up's item 1).
 
-        Composed piece by piece: the m-th harmonic of each piece's excess - its amplitude the stars' own on the
-        ring, the cut in it and the bar's taper taken back out - times m / (X (|sin p_j| + m h_z/R)), the
-        piece's own pitch and the stellar layer's thickness (``pieces.forcing_factor``). A piece's harmonics are
-        its exact Fourier coefficients - what a transform of its profile on the solver's cells returns, to
-        rounding. ``radii`` None: the grid rings."""
+        Composed piece by piece: each piece's ridge on the ring's cells - a Gaussian in the perpendicular distance
+        to its locus times its window along it, at the stars' own amplitude on the ring, the cut in it and the
+        bar's taper taken back out - is transformed, and its m-th term multiplied by m / (X (|sin p_j| + m h_z/R)),
+        the piece's own pitch and the stellar layer's thickness (``pieces.forcing_factor``). The pieces' terms are
+        added in the table's order. ``radii`` None: the grid rings."""
         on_grid = radii is None
         R = self.R if on_grid else np.asarray(radii, dtype=float)
-        zeros = np.zeros((R.size, HARMONICS))
+        out = np.zeros((R.size, HARMONICS + 1), dtype=complex)
         stars = self.stars
         if stars is None or self.flat:
-            return zeros, zeros.copy()
+            return out
         kappa, sigma = (self.epicyclic, self.surface_density) if on_grid else self._disc_at(R)
         x = local_swing_x(R, kappa, sigma, self.gravity)
         taper, _, _ = bar_terms(R, self.pitch_deg, self.bar_length)
         with np.errstate(divide="ignore"):
             untapered = np.where(taper < 1.0, 1.0 / np.where(taper < 1.0, 1.0 - taper, 1.0), 0.0)
-        _, _, _, _, sin_abs = stars.ring_pieces(R)
-        factor = forcing_factor(_HARMONIC[None, None, :], x[:, None, None], sin_abs[:, :, None], (self.layer_height / R)[:, None, None])
-        return stars.ring_harmonics(R, scale=factor * untapered[:, None, None])
+        for rows, sin_abs, ridges in stars.piece_profiles(R):
+            spectrum = np.fft.rfft(ridges, axis=2)
+            factor = forcing_factor(_HARMONIC[None, None, :], x[rows, None, None], sin_abs[:, :, None], (self.layer_height / R[rows])[:, None, None])
+            total = np.zeros(spectrum.shape[::2], dtype=complex)
+            for k in range(spectrum.shape[1]):
+                total = total + spectrum[:, k, :] * factor[:, k, :]
+            out[rows] = total * untapered[rows, None]
+        return out
 
     def forcing(self, radii: np.ndarray | None = None) -> np.ndarray:
-        """F on the solver's cells' centres of each ring, shaped (rings, CELLS): the series summed harmonic by
-        harmonic, each operation along the ring's own cells. **A ring's series is summed to its own last
-        harmonic that matters** (``pieces.harmonics_summed``), so a ring is the same bits alone as in any batch,
-        and no ring pays for harmonics only another needs."""
-        real, imaginary = self.forcing_harmonics(radii)
-        last = harmonics_summed(real, imaginary)
-        g = np.zeros((real.shape[0], CELLS))
-        for k in range(int(last.max()) if last.size else 0):
-            rows = np.flatnonzero(last > k)
-            g[rows] += real[rows, k, None] * _COS[k][None, :] - imaginary[rows, k, None] * _SIN[k][None, :]
-        return g
+        """F on the solver's cells' centres of each ring, shaped (rings, CELLS): :meth:`forcing_spectrum` taken
+        back to the cells. Its mean round a ring is 0."""
+        return np.fft.irfft(self.forcing_spectrum(radii), n=CELLS, axis=1)
 
     def _ring_forcing(self) -> np.ndarray:
         """:meth:`forcing` on the grid rings, kept by content: several stages of one run build the same pattern,
@@ -632,7 +637,7 @@ class GasPattern:
                             stars.boxiness, stars.index, stars.share, pieces.turn], dtype=float)
         for part in (self.R, self.epicyclic, self.surface_density, scalars, stars.budget, stars.design, stars.width,
                      pieces.chain, pieces.order, pieces.start_radius, pieces.start_azimuth, pieces.pitch_deg, pieces.extent,
-                     pieces.pinned, np.zeros(0) if stars.surface_density is None else stars.surface_density):
+                     pieces.pinned, pieces.join, np.zeros(0) if stars.surface_density is None else stars.surface_density):
             digest.update(np.asarray(part.shape, dtype=np.int64).tobytes())
             digest.update(np.ascontiguousarray(part, dtype=float).tobytes())
         key = digest.digest()
@@ -648,11 +653,12 @@ class GasPattern:
         return held
 
     def forcing_amplitudes(self) -> np.ndarray:
-        """The cosine amplitude of each harmonic of the forcing on the grid rings, shaped (R, HARMONICS): the
-        analogue of the modes' f_m. Its sum along a ring is the most the forcing could reach were every
-        harmonic's crest at one azimuth."""
-        real, imaginary = self.forcing_harmonics()
-        return np.hypot(real, imaginary)
+        """The cosine amplitude of each harmonic of the forcing on the grid rings, m = 1 … CELLS/2, shaped
+        (R, HARMONICS): the analogue of the modes' f_m. Its sum along a ring is the most the forcing could reach
+        were every harmonic's crest at one azimuth."""
+        amplitude = 2.0 * np.abs(self.forcing_spectrum()[:, 1:]) / CELLS
+        amplitude[:, -1] *= 0.5  # the last harmonic the cells hold is a cosine alone
+        return amplitude
 
     # --- the solved rings ------------------------------------------------------------------------------
 
@@ -1290,7 +1296,7 @@ class GasPattern:
     def strongest_forcing(self) -> np.ndarray:
         """The harmonic of largest forcing amplitude on every grid ring, shaped (R,): the arm number the gas is
         pulled at most strongly (gate G3 item 6, read on the pieces' forcing since S60)."""
-        return _HARMONIC[np.argmax(self.forcing_amplitudes(), axis=1)]
+        return _HARMONIC[1:][np.argmax(self.forcing_amplitudes(), axis=1)]
 
     def arm_width(self, arm_number: np.ndarray | None = None) -> np.ndarray:
         """The full width at half maximum of every grid ring's tallest crest of s (:func:`crest_width`) as a
