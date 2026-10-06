@@ -73,16 +73,20 @@ def chk(m, *stages):
 # gas pattern beside light; in `azimuthal` sfh_azimuthal reads the gas pattern and follows it as before. Until S58
 # both began "halo, arm_phases, disc, nucleus, assembly, bar, pattern, ...". Recomputed from graph.analyse, not
 # edited by hand; no value moves with the order (the layer-off reference holds every field of both models).
+# Since S60 (D219) the layer's stage is `arm_pieces`, and it requires the pattern's `arm_design_count` (the law's arm
+# number sets how many chains are born) and the `sun_azimuth`, so it runs the round after the pattern's - behind sfh
+# in `basic` by the tie-break - and the two composing stages, `gas_pattern` and `stellar_pattern`, the round after it
+# (the gas first by the tie-break). Until S60 both began "halo, disc, nucleus, assembly, bar, arm_phases, ...".
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "arm_phases", "sfh", "pattern", "chemistry_dtd",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
-        "supernovae", "gas_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
+        "supernovae", "gas_pattern", "stellar_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "arm_phases", "pattern", "gas_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
@@ -95,8 +99,11 @@ ORDER = {
 # constant it declares is a constant").
 CLOUD_TEXTURE = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle"}
 # S59 (D218 items 1-2): was the five phases alone - the same layer stage lays the winding's segments, two columns.
-ARM_PHASES = {f"arm_mode_phase_{m}" for m in range(2, 7)} | {"arm_segment_extent", "arm_segment_pitch_deviate"}
-SYNTHETIC = CLOUD_TEXTURE | ARM_PHASES
+# S60 (D219 item 7): was the five phases and the two segment columns - the layer's stage is `arm_pieces` and what it
+# publishes is the table `arm_piece`, eight columns: the census of arm pieces, drawn on texture_seed.
+ARM_PIECES = {"arm_piece_chain", "arm_piece_order", "arm_piece_start_radius", "arm_piece_start_azimuth", "arm_piece_pitch",
+              "arm_piece_extent", "arm_piece_pinned", "arm_piece_join"}
+SYNTHETIC = CLOUD_TEXTURE | ARM_PIECES
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
@@ -160,6 +167,13 @@ SEEDED_BASIC = {
     # among the modes has no draw in it.
     "arm_mode_amplitude_2", "arm_mode_amplitude_3", "arm_mode_amplitude_4", "arm_mode_amplitude_5", "arm_mode_amplitude_6",
     "arm_saturation",
+    # S60 (D219 items 1 and 4): the law's arm number and the ring's budget of arm power are the pattern stage's
+    # (seeded with it); the composing stage `stellar_pattern` reads them and the layer's table, so its field and
+    # the pieces' amplitude, saturation, chain count, realised ring power and the split of it by arm number are
+    # seeded by the same reads. (The width of a piece and the arm class are the `bar` stage's and derived.)
+    "arm_design_count", "arm_power_budget",
+    "arm_piece_amplitude", "arm_piece_saturation", "arm_chain_count", "arm_ring_power",
+    "arm_mode_power_2", "arm_mode_power_3", "arm_mode_power_4", "arm_mode_power_5", "arm_mode_power_6",
     # S51 (D210 as amended): the gas's own arm pattern draws nothing, but reads the pattern's drawn
     # numbers, so its field is seeded; its ratio, gas_arm_contrast, is the bar stage's and derived.
     "gas_density_contrast",
@@ -197,8 +211,8 @@ def test_production_graphs_hold(prod):
         # S55 (D214): the fourth kind, and only the layer's stage publishes it.
         synthetic = {n for n, p in g.provenance.items() if p == "synthetic"}
         assert synthetic == SYNTHETIC, sorted(synthetic ^ SYNTHETIC)
-        assert g.layer_stages == ("arm_phases", "cloud_texture")
-        assert {g.producer[n] for n in CLOUD_TEXTURE} == {"cloud_texture"} and {g.producer[n] for n in ARM_PHASES} == {"arm_phases"}
+        assert g.layer_stages == ("arm_pieces", "cloud_texture")  # S60 (D219): was ("arm_phases", "cloud_texture")
+        assert {g.producer[n] for n in CLOUD_TEXTURE} == {"cloud_texture"} and {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
         # S56 (D215): texture_seed binds at its first reader's checkpoint, the pattern's; no input is unread.
         assert g.input_checkpoint["texture_seed"] == 3 and g.unbound_inputs == () and g.unread_by_ruling == ()
         # S51 (D210 as amended): the gas ratio is the bar stage's derived class mean, beside the stellar one.
@@ -229,22 +243,37 @@ def test_production_graphs_hold(prod):
             "bar_present": 3,
             # S59 (D218 items 5-6): two more pins, read by the pattern stage at its checkpoint.
             "pitch_angle": 3, "sun_bar_angle": 3,
+            # S60 (D219 items 3 and 8): two more - the arm class, read by the bar stage, and the table of measured
+            # arms, read by the layer's stage - both at the pattern's checkpoint.
+            "arm_class": 3, "arm_pieces": 3,
         }
         # S59 (D218 item 1): and the radius the winding is anchored at, the bar stage's - and (the gate's follow-up,
         # item 2) the spread of a segment's pitch relative to the disc's, a law's number the winding's readers take.
-        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_winding_anchor_radius",
-                     "arm_segment_pitch_scatter"):
+        # S60 (D219 items 1 and 3): were `arm_winding_anchor_radius` and `arm_segment_pitch_scatter` - the common
+        # winding is retired; the bar stage publishes the arm class and the width of a piece across itself instead.
+        for name in ("bar_formation_time", "bar_present", "bar_half_length", "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "arm_class",
+                     "arm_piece_width"):
             assert g.provenance[name] == "derived" and g.producer[name] == "bar", name
-        assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present") and g.stages["bar"].reads_seeds == ()
-        assert g.stages["arm_phases"].requires == ("bar_present",)
+        assert g.stages["bar"].reads_inputs == ("halo_assembly_z", "bar_present", "arm_class") and g.stages["bar"].reads_seeds == ()
+        # S60 (D219): was `g.stages["arm_phases"].requires == ("bar_present",)` - the layer's stage lays chains by the
+        # law's arm number, from the bar's end, placed by the Sun where a template pins arms.
+        assert g.stages["arm_pieces"].requires == ("pitch_angle", "arm_class", "bar_half_length", "arm_design_count", "sun_azimuth")
+        assert g.stages["arm_pieces"].reads_inputs == ("arm_pieces",) and g.stages["arm_pieces"].reads_seeds == ("texture_seed",)
         assert g.stages["pattern"].reads_inputs == ("pitch_angle", "sun_bar_angle") and g.stages["pattern"].reads_seeds == ("pattern_seed",)
-        assert g.producer["arm_segment_extent"] == g.producer["arm_segment_pitch_deviate"] == "arm_phases"
-        # S59 (D218): the two are a table's columns (domain "table"), and the graph's provenance covers them as it
+        assert {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
+        # S59 (D218): the columns are a table's (domain "table"), and the graph's provenance covers them as it
         # covers any field: computed synthetic, the layer stage's, and declared so.
-        segments = [d for d in g.stages["arm_phases"].publishes if d.kind.domain == "table"]
-        assert [d.name for d in segments] == ["arm_segment_extent", "arm_segment_pitch_deviate"]
-        assert all(g.provenance[d.name] == d.provenance == "synthetic" and d.of == "arm_segment" for d in segments)
-        assert not [d.name for st in g.stages.values() for d in st.publishes if d.kind.domain == "object" and d.of == "arm_segment"]
+        # S60 (D219 item 7): eight columns of the table `arm_piece` (were two of `arm_segment`).
+        pieces = [d for d in g.stages["arm_pieces"].publishes if d.kind.domain == "table"]
+        assert [d.name for d in pieces] == ["arm_piece_chain", "arm_piece_order", "arm_piece_start_radius", "arm_piece_start_azimuth",
+                                            "arm_piece_pitch", "arm_piece_extent", "arm_piece_pinned", "arm_piece_join"]
+        assert all(g.provenance[d.name] == d.provenance == "synthetic" and d.of == "arm_piece" for d in pieces)
+        assert not [d.name for st in g.stages.values() for d in st.publishes if d.kind.domain == "object" and d.of == "arm_piece"]
+        # S60 (D219): the composing stages read the table whole and draw nothing; the stellar one's fields are the
+        # law applied to the census, seeded through the pattern's reads.
+        assert g.stages["stellar_pattern"].reads_seeds == () == g.stages["gas_pattern"].reads_seeds
+        assert set(ARM_PIECES) <= set(g.stages["stellar_pattern"].requires) <= set(g.stages["gas_pattern"].requires)
+        assert g.producer["pattern_density_contrast"] == g.producer["arm_piece_amplitude"] == "stellar_pattern"
     assert "graph" in graph.report(models, impls_, table)
 
 
