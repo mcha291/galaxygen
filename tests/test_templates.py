@@ -60,6 +60,13 @@ INPUT_ROUTES = ("/api/arrays", "/api/region", "/api/system", "/api/clouds", "/ap
                 "/api/bright", "/api/render")
 SECTOR = "r_min=7&r_max=9&phi_min=0&phi_max=0.4"
 B_V = json.dumps([{"name": b, "shape": "gaussian", "centre": c, "fwhm": 900.0} for b, c in (("B", 4400.0), ("V", 5500.0))])
+# S60 (D219 items 3 and 8): each template holds three pins. The Milky Way's third is its measured arms - the rows of
+# Reid et al. 2019's Table 2 the template pins, the four major arms (Norma and the Outer arm as two chains) and the
+# Local arm - and NGC 4414's its observed arm class, a name.
+MW_ARMS = tuple(row for row in templates.REID_2019_TABLE2 if row[0] in templates.MILKY_WAY_PINNED_ARMS)
+MW_PINS = {"bar_present": True, "sun_bar_angle": 30.0, "arm_pieces": MW_ARMS}
+NGC_PINS = {"bar_present": False, "pitch_angle": 28.9, "arm_class": "flocculent"}
+assert len(MW_ARMS) == 6 and [row[0] for row in MW_ARMS] == ["Norma", "Sct-Cen", "Sgr-Car", "Local", "Perseus", "Outer"]
 
 
 def text(name: str) -> str:
@@ -92,7 +99,11 @@ def test_two_templates_are_registered_and_the_default_leads():
         # is a pin for, the observed bar class (the tests of the pin are below).
         # S59 (D218 items 5-6): was ["bar_present"] for both - the Milky Way also pins where the Sun is (the bar's angle
         # to the Sun-centre line), NGC 4414 its measured mean pitch: each a number with its source.
-        assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == ["bar_present", "sun_bar_angle" if t.name == "milky_way" else "pitch_angle"]
+        # S60 (D219 items 3 and 8): was two each - the Milky Way also pins its measured arms (a table), NGC 4414 its
+        # observed arm class (a name).
+        assert t.model == DEFAULT_MODEL and [p.name for p in t.pins] == (
+            ["bar_present", "sun_bar_angle", "arm_pieces"] if t.name == "milky_way" else ["bar_present", "pitch_angle", "arm_class"]
+        )
     assert (MILKY_WAY.filters, NGC_4414.filters) == ("rgb", "wfc3")
 
 
@@ -103,18 +114,20 @@ def test_milky_way_overrides_nothing_and_resolves_to_the_registry_s_defaults():
     nothing else: no control, no seed, no event list. Until S58 its overrides were empty and its resolved inputs
     the registry's whole table; they are the pin, and the table's controls, seeds and event list with the pin."""
     # S59 (D218 item 5): was {"bar_present": True}; S58 (D217): was {}
-    assert templates.overrides(MILKY_WAY) == {"bar_present": True, "sun_bar_angle": 30.0} == templates.pinned(MILKY_WAY)
+    # S60 (D219 item 8): was {"bar_present": True, "sun_bar_angle": 30.0} - the measured arms join them (MW_PINS).
+    assert templates.overrides(MILKY_WAY) == MW_PINS == templates.pinned(MILKY_WAY)
     assert not MILKY_WAY.controls and not MILKY_WAY.seeds and MILKY_WAY.mergers is None
     assert MILKY_WAY.fit is None and MILKY_WAY.checks == ()
     resolved = templates.resolve(MILKY_WAY)
     # S59 (D218): was `== list(INPUTS)` - a pin the template does not state (the pitch) is not among its inputs.
-    assert list(resolved) == [n for n in INPUTS if n != "pitch_angle"]
+    # S60 (D219): nor the arm class, which the Milky Way does not state either (the model derives it from the bar).
+    assert list(resolved) == [n for n in INPUTS if n not in ("pitch_angle", "arm_class")]
     for name, inp in INPUTS.items():
-        if name == "pitch_angle":
+        if name in ("pitch_angle", "arm_class"):
             continue
         if inp.kind == "pin":
             # a pin has no default: the template's is the only one (S59: was `is True` - one of the two is a number)
-            assert resolved[name] == {"bar_present": True, "sun_bar_angle": 30.0}[name] and inp.default is None, name
+            assert resolved[name] == MW_PINS[name] and inp.default is None, name
         else:
             assert resolved[name] is inp.default, name  # the registry's own object, not a copy of its value
 
@@ -133,7 +146,8 @@ def test_a_pin_is_a_measured_fact_with_its_source_and_replaces_nothing_but_the_v
     reading = " ".join(text("READING_NGC_4414.md").split())
     assert "NGC 4414 has no bar" in reading and "S4G fits none" in reading and "SA(rs)c? (RC3)" in reading
     # S59 (D218 item 6): was {"bar_present": False} alone - the measured mean pitch joins it.
-    assert templates.pinned(NGC_4414) == {"bar_present": False, "pitch_angle": 28.9} and templates.overrides(NGC_4414)["bar_present"] is False
+    # S60 (D219 item 3): and the observed arm class, flocculent - a name, which the model derives of no disc.
+    assert templates.pinned(NGC_4414) == NGC_PINS and templates.overrides(NGC_4414)["bar_present"] is False
     # It is an input of its own kind: no control, no seed; not a number of the template (it carries its own source),
     # so it is no path of `numbers` and no free control of a fit.
     assert INPUTS["bar_present"].kind == "pin" and "bar_present" not in {c.name for c in controls()} | {x.name for x in seeds()}
@@ -141,8 +155,13 @@ def test_a_pin_is_a_measured_fact_with_its_source_and_replaces_nothing_but_the_v
     assert "pinned unbarred, as observed" in NGC_4414.about and "the Milky Way is barred" in MILKY_WAY.about
     # Refused: a value that is not a class, a pin without a tagged source, a name the registry does not hold as a
     # pin, the same input pinned twice.
+    # S60 (D219 items 3 and 8): was `Pin("bar_present", "yes", ...)` refused when built - a text is a named class's
+    # value now, so a value of no shape at all is what the builder refuses, and "yes" for a class of two is the
+    # template's to refuse (below).
     with pytest.raises(templates.TemplateError, match="True or False"):
-        templates.Pin("bar_present", "yes", "[inferred] x")  # type: ignore[arg-type]
+        templates.Pin("bar_present", None, "[inferred] x")  # type: ignore[arg-type]
+    with pytest.raises(templates.TemplateError, match="a class, True or False"):
+        replace(NGC_4414, pins=(templates.Pin("bar_present", "yes", "[inferred] x"),)).validate()
     # S59 (D218 items 5-6): was `Pin("bar_present", 1, ...)` refused when built - a pin may now be a measured number,
     # and which it is, is the registry's: a class given a number, or a number given a class, is refused by the
     # template that states it.
@@ -152,6 +171,26 @@ def test_a_pin_is_a_measured_fact_with_its_source_and_replaces_nothing_but_the_v
         replace(NGC_4414, pins=(templates.Pin("pitch_angle", True, "[inferred] x"),)).validate()
     with pytest.raises(templates.TemplateError, match="finite number"):
         templates.Pin("pitch_angle", float("nan"), "[inferred] x")
+    # S60 (D219 items 3 and 8): the two new shapes are held to the registry's declaration by the template that
+    # states them - a name outside the closed list of classes, a row of the wrong length, a cell of the wrong
+    # type, a table whose rows the declaration's own check faults - and a table of measured arms is placed by the
+    # Sun, so a template that pins one without the Sun's angle and a bar is refused.
+    with pytest.raises(templates.TemplateError, match="is one of \\['grand_design', 'multi_armed', 'flocculent'\\]"):
+        replace(NGC_4414, pins=(*NGC_4414.pins[:2], templates.Pin("arm_class", "ringed", "[inferred] x"))).validate()
+    with pytest.raises(templates.TemplateError, match="a row holds"):
+        replace(MILKY_WAY, pins=(*MILKY_WAY.pins[:2], templates.Pin("arm_pieces", (("Local", 1.0),), "[inferred] x"))).validate()
+    with pytest.raises(templates.TemplateError, match="column arm is a name"):
+        replace(MILKY_WAY, pins=(*MILKY_WAY.pins[:2], templates.Pin("arm_pieces", ((4.0, -8.0, 34.0, 9.0, 8.26, 11.4, 11.4),), "[inferred] x"))).validate()
+    with pytest.raises(templates.TemplateError, match="named twice"):
+        replace(MILKY_WAY, pins=(*MILKY_WAY.pins[:2], templates.Pin("arm_pieces", (MW_ARMS[0], MW_ARMS[0]), "[inferred] x"))).validate()
+    with pytest.raises(templates.TemplateError, match="placed by the Sun's azimuth"):
+        replace(MILKY_WAY, pins=(MILKY_WAY.pins[0], MILKY_WAY.pins[2])).validate()
+    with pytest.raises(templates.TemplateError, match="placed by the Sun's azimuth"):
+        replace(MILKY_WAY, pins=(replace(MILKY_WAY.pins[0], value=False), *MILKY_WAY.pins[1:])).validate()
+    # A list of lists given to the builder is the same table, as tuples.
+    assert templates.Pin("arm_pieces", [list(row) for row in MW_ARMS], "[inferred] x").value == MW_ARMS  # type: ignore[arg-type]
+    with pytest.raises(templates.TemplateError, match="rows of a measured table"):
+        templates.Pin("arm_pieces", (), "[inferred] x")
     with pytest.raises(templates.TemplateError, match="carries no tag"):
         templates.Pin("bar_present", True, "the galaxy's bar")
     with pytest.raises(templates.TemplateError, match="not a registered pin"):
@@ -177,20 +216,64 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # **by no bit of any field**, which is the gate, below.
     # S59 (D218 item 5): was {**bare.inputs, "bar_present": True} - and where the Sun is, which moves one field:
     # ``sun_azimuth``, a number for the template and not one for the bare run. Every other field: no bit.
-    assert named.inputs == {**bare.inputs, "bar_present": True, "sun_bar_angle": 30.0} and "bar_present" not in bare.inputs and named.order == bare.order
+    # S60 (D219 item 8): and the measured arms. **With the layer on the template is no longer the bare default
+    # galaxy**: its arms are pinned where Reid et al. 2019 measured them, so the layer's census of pieces, the
+    # fields composed from it (the stellar pattern's, the gas's answer, the azimuthal modulation) and every census
+    # a pattern places - its columns and the statistics computed from the realised objects - are another
+    # realisation. **Every law is the same bits**: nothing the bar and the pattern stages publish, nothing of
+    # checkpoints 1 and 2, nothing downstream that reads no pattern (the remnants, the dust, the light) moves. With
+    # the layer off the two are still bit-identical but for the Sun's azimuth, and that is the run the acceptance
+    # table is judged on (below).
+    assert named.inputs == {**bare.inputs, **MW_PINS} and "bar_present" not in bare.inputs and named.order == bare.order
     assert math.isnan(float(bare.fields["sun_azimuth"])) and float(named.fields["sun_azimuth"]) == pytest.approx(1.09539, abs=2e-5)
     assert bare.fields["bar_present"] == named.fields["bar_present"] == "yes"
     assert set(named.fields) == set(bare.fields) and len(bare.fields) > 300
-    arrays = 0
-    for name, value in bare.fields.items():
-        assert name == "sun_azimuth" or same(value, named.fields[name]), f"{name} differs between the template and the bare run"
-        arrays += isinstance(value, np.ndarray)
+    differ = {name for name, value in bare.fields.items() if not same(value, named.fields[name])}
+    assert "sun_azimuth" in differ
+    producer = {d.name: sid for sid in named.order for d in prod[1].get(sid).publishes}
+    placed = {"star", "planet", "bright_star", "cloud", "cluster"}  # the object classes a pattern places (tests/test_layer.py)
+    censuses = {"systems", "planets", "bright_stars", "clouds", "nebular", "bubbles"}  # the stages that count them
+    moved_laws, moved_statistics = set(), set()
+    for name in differ - {"sun_azimuth"}:
+        d = named.decls[name]
+        if d.kind.domain == "table":
+            assert d.of == "arm_piece" and producer[name] == "arm_pieces", name  # the layer's census of pieces
+        elif d.composed:
+            assert producer[name] in ("stellar_pattern", "gas_pattern", "sfh_azimuthal"), name  # what reads the pieces
+        elif d.kind.domain == "object":
+            assert d.of in placed, name  # a placed census is another draw; the remnants (unplaced) are the same bits
+        elif producer[name] in censuses and d.axes in ((), ("R",)):
+            moved_statistics.add(name)  # a statistic of a placed census's realised objects
+        else:
+            moved_laws.add(name)
+    assert moved_laws == set(), sorted(moved_laws)  # no law, no checkpoint-1 or -2 field, nothing that reads no pattern
+    # The whole table and every composed field moved - the pinned arms are placed - and every column of every
+    # placed census; the statistics that moved are a subset of the fourteen tests/test_layer.py lists (the rest
+    # land on the same bits by rounding, as a census statistic may).
+    assert {n for n, d in named.decls.items() if d.kind.domain == "table" or d.composed} <= differ
+    assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed} <= differ
+    assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of not in placed}.isdisjoint(differ)
+    assert moved_statistics <= {
+        "catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample", "bright_star_limit",
+        "cloud_mass_total", "dig_halpha_fraction", "hii_luminosity_function_slope", "nii_halpha_gradient_hii",
+        "oiii_5007_surface_brightness_hii", "nii_6583_surface_brightness_hii", "sii_6716_surface_brightness_hii",
+        "sii_6731_surface_brightness_hii", "hot_phase_porosity",
+        # the two expected totals, which the layer moves by rounding alone (I1: within four units in the last place)
+        "cloud_count_total", "bright_star_count_1e3",
+    }, sorted(moved_statistics)
+    for name in ("cloud_count_total", "bright_star_count_1e3"):
+        a, b = float(bare.fields[name]), float(named.fields[name])
+        assert abs(a - b) <= 4.0 * float(np.spacing(max(abs(a), abs(b)))), (name, a, b)
+    arrays = sum(isinstance(v, np.ndarray) for v in bare.fields.values())
     assert arrays > 150  # the comparison is on arrays, not on a handful of scalars
-    # ... and with the layer off, the run the acceptance table is judged on.
+    # ... and with the layer off, the run the acceptance table is judged on: bit-identical but for the Sun.
     off, named_off = run(model, layer=False), run(model, templates.resolve(MILKY_WAY), layer=False)
     for name, value in off.fields.items():
         assert name == "sun_azimuth" or same(value, named_off.fields[name]), f"{name} differs between the template and the bare run, layer off"
     assert float(named_off.fields["sun_azimuth"]) == float(named.fields["sun_azimuth"])  # a law's number: the layer does not move it
+    # The pinned arms are in the layer-on census and nowhere with the layer off: six rows of the table say so.
+    assert int(np.asarray(named.fields["arm_piece_pinned"]).sum()) >= len(MW_ARMS) and not np.asarray(bare.fields["arm_piece_pinned"]).any()
+    assert np.asarray(named_off.fields["arm_piece_pinned"]).shape == (0,)
 
 
 FREE = {"halo_mass": "curve_peak", "disc_spin": "disc_scale_length", "halo_assembly_z": "curve_peak",
@@ -221,10 +304,11 @@ def test_ngc_4414_states_the_controls_its_targets_measure_and_invents_nothing():
     assert (resolved["infall_timescale"], resolved["inside_out_index"], resolved["migration_efficiency"]) == (7.0, 1.0, 3.6)
     assert dict(NGC_4414.seeds) == {s.name: 4414 for s in seeds()}  # a new seed in the registry fails here
     assert NGC_4414.mergers == ()
-    assert set(resolved) == set(INPUTS) - {"sun_bar_angle"} and resolved["mergers"] == ()  # S59 (D218): the Sun is the Milky Way's
+    # S59 (D218): the Sun is the Milky Way's. S60 (D219 item 8): and so are the measured arms.
+    assert set(resolved) == set(INPUTS) - {"sun_bar_angle", "arm_pieces"} and resolved["mergers"] == ()
     # S58 (D217 item 2): the pin joins what the template states - a measured class, not a control.
-    # S59 (D218 item 6): and the measured mean pitch.
-    assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers", "bar_present", "pitch_angle"} and given["bar_present"] is False and given["pitch_angle"] == 28.9
+    # S59 (D218 item 6): and the measured mean pitch. S60 (D219 item 3): and the observed arm class.
+    assert set(given) == set(FREE) | {s.name for s in seeds()} | {"mergers", *NGC_PINS} and {n: given[n] for n in NGC_PINS} == NGC_PINS
     assert (NGC_4414.camera.inclination_deg, NGC_4414.camera.azimuth_deg, NGC_4414.camera.fov_deg) == (55.0, 0.0, 5.0)
     assert (MILKY_WAY.camera.inclination_deg, MILKY_WAY.camera.azimuth_deg, MILKY_WAY.camera.radius_kpc,
             MILKY_WAY.camera.fov_deg) == (0.0, 270.0, 20.0, 45.0)
@@ -363,33 +447,58 @@ def test_every_route_that_takes_inputs_takes_a_template():
     ("/api/clouds", SECTOR),
     ("/api/region", SECTOR),
 ])
-def test_naming_the_default_template_is_naming_none(route, query):
+@pytest.mark.parametrize("layer", ["", "&layer=off"], ids=["layer on", "layer off"])
+def test_naming_the_default_template_is_naming_none(route, query, layer):
     """Ruling 2 (D213) was "one point in input space - one cache entry, the same bytes". **As the gate rewords it at
     S58 (D217 item 2 and its follow-up): "the same bytes on every field; the inputs carry the pin, so a second
     cache entry whose header differs by that word".** The default template pins the Milky Way barred; a request
     that names no template pins nothing and the model derives - barred, at the defaults. So the two requests hold
     the same arrays and the same scalars, bit for bit, and their headers differ in one word: the template's request
-    carries the pin among its inputs. They are two cache entries, and naming the template runs the stages again."""
+    carries the pin among its inputs. They are two cache entries, and naming the template runs the stages again.
+
+    **S60 (D219 item 8): that holds with the layer off, and with the layer on for what reads no pattern.** The
+    template pins the Milky Way's measured arms, which the layer places; so with the layer on a census route's
+    window holds other objects - other counts per cell, other rows - and its header's counts differ with them, while
+    a field no pattern composes or places (the disc's surface density, its stellar mass) is the same bytes either
+    way. The inputs carry the three pins; the arms' rows are JSON like any input."""
     api = Service(grid=SMALL)
-    bare = api.handle(route, query)  # cold: it runs the closure
-    named = api.handle(route, query + "&template=milky_way")
-    again = api.handle(route, query)
+    bare = api.handle(route, query + layer)  # cold: it runs the closure
+    named = api.handle(route, query + layer + "&template=milky_way")
+    again = api.handle(route, query + layer)
     assert bare.status == named.status == again.status == 200
     # S58 (D217): was `named.stages == ()` and one cache entry.
     assert bare.stages and named.stages == bare.stages and again.stages == ()
     assert len(api._cache) == 2
-    warm = api.handle(route, query + "&template=milky_way")
-    assert warm.stages == () and len(api._cache) == 2 and again.body == api.handle(route, query).body  # warm against warm
+    warm = api.handle(route, query + layer + "&template=milky_way")
+    assert warm.stages == () and len(api._cache) == 2 and again.body == api.handle(route, query + layer).body  # warm against warm
     bare_head, bare_arrays = bare.frame()
     named_head, named_arrays = named.frame()
     # S58 (D217): was `bare inputs == named inputs` and `named.body == bare.body`.
-    assert named_head["inputs"] == {**bare_head["inputs"], "bar_present": True, "sun_bar_angle": 30.0} and "bar_present" not in bare_head["inputs"]  # S59 (D218): the second pin
-    assert {k: v for k, v in named_head.items() if k != "inputs"} == {k: v for k, v in bare_head.items() if k != "inputs"}
+    # S59 (D218): the second pin. S60 (D219 item 8): the third, the measured arms, whose rows come back as lists.
+    assert named_head["inputs"] == {**bare_head["inputs"], **MW_PINS, "arm_pieces": [list(row) for row in MW_ARMS]}
+    assert "bar_present" not in bare_head["inputs"]
     assert list(named_arrays) == list(bare_arrays)
-    for name, array in bare_arrays.items():
-        assert same(array, named_arrays[name]), name
+    differing = {k for k in set(bare_head) | set(named_head) if bare_head.get(k) != named_head.get(k)}
+    if layer or route == "/api/arrays":
+        # The same bytes on every field, the header the same but for the inputs.
+        assert differing == {"inputs"}
+        for name, array in bare_arrays.items():
+            assert same(array, named_arrays[name]), name
+    else:
+        # The pinned arms are placed: the window's objects are another draw, every column of them, and the header
+        # counts them - the cells' counts, the arrays' shapes, the census's materialised number. A scalar that
+        # rides in the header is an expected total, which the layer moves by rounding alone (within four units in
+        # the last place, as tests/test_layer.py holds it).
+        assert {"inputs", "arrays", "cells"} <= differing <= {"inputs", "arrays", "cells", "clouds", "stars", "scalars"}, differing
+        assert bare_head["cells"]["ids"] == named_head["cells"]["ids"] and bare_head["cells"]["counts"] != named_head["cells"]["counts"]
+        for name, array in bare_arrays.items():
+            assert not same(array, named_arrays[name]), name
+        for name, value in bare_head.get("scalars", {}).items():
+            other = named_head["scalars"][name]
+            if value != other:
+                assert name == "cloud_count_total" and abs(value - other) <= 4.0 * float(np.spacing(max(abs(value), abs(other)))), name
     # ... and cold against cold, on a second service: the same bytes as the first named request's.
-    cold = Service(grid=SMALL).handle(route, "template=milky_way&" + query)
+    cold = Service(grid=SMALL).handle(route, "template=milky_way&" + query + layer)
     assert cold.stages == bare.stages and cold.body == named.body
 
 
@@ -523,11 +632,26 @@ def test_the_templates_route_has_the_stated_shape():
         assert list(t["instrument"]) == ["distance_mpc", "pixel_scale_arcsec"]
         # S59 (D218 items 5-6): was one pin each; the second is a measured number.
         # S59 (D218): was {"name", "value", "source"} - a pin carries its input's label and unit (null for a class).
-        assert [set(p) for p in t["pins"]] == [{"name", "label", "unit", "value", "source"}] * 2 and t["pins"][0]["name"] == "bar_present"
+        # S60 (D219 items 3 and 8): was two pins each - a third: a named class carries ``classes``, the closed list
+        # it is one of; a table's value is its columns, each a name and a unit, and its rows.
+        assert [set(p) for p in t["pins"][:2]] == [{"name", "label", "unit", "value", "source"}] * 2 and t["pins"][0]["name"] == "bar_present"
         assert t["pins"][0]["unit"] is None and t["pins"][1]["unit"] == "deg" and all(p["label"] == INPUTS[p["name"]].label for p in t["pins"])
         assert (t["pins"][1]["name"], t["pins"][1]["value"]) == (("sun_bar_angle", 30.0) if t["name"] == "milky_way" else ("pitch_angle", 28.9))
         assert "[verified:" in t["pins"][1]["source"] and "D218" in t["pins"][1]["source"]
         assert t["pins"][0]["value"] is (t["name"] == "milky_way") and "[verified:" in t["pins"][0]["source"]
+        third = t["pins"][2]
+        assert third["unit"] is None and "[verified:" in third["source"] and "D219" in third["source"]
+        if t["name"] == "milky_way":
+            assert set(third) == {"name", "label", "unit", "value", "source"} and third["name"] == "arm_pieces"
+            assert third["value"] == {
+                "columns": [{"name": n, "unit": u} for n, u in INPUTS["arm_pieces"].columns],
+                "rows": [list(row) for row in MW_ARMS],
+            }
+            assert [c["name"] for c in third["value"]["columns"]] == ["arm", "beta_from", "beta_to", "beta_kink", "radius_kink", "pitch_below", "pitch_above"]
+            assert [c["unit"] for c in third["value"]["columns"]] == [None, "deg", "deg", "deg", "kpc", "deg", "deg"]
+        else:
+            assert set(third) == {"name", "label", "unit", "value", "source", "classes"} and (third["name"], third["value"]) == ("arm_class", "flocculent")
+            assert third["classes"] == ["grand_design", "multi_armed", "flocculent"] == list(INPUTS["arm_class"].classes)
     mw, ngc = payload["templates"]
     assert mw["inputs"]["controls"] == {c["name"]: c["default"] for c in registry["controls"]}
     assert mw["inputs"]["seeds"] == {s["name"]: s["default"] for s in registry["seeds"]}
@@ -605,7 +729,8 @@ def test_the_objective_is_d213_s():
     # The fit holds the template's seeds and its merger list.
     # S58 (D217 follow-up): was {**NGC_4414.seeds, "mergers": ()} - and its pins: the tool ran a template without
     # them. No target's field is downstream of the bar (the fields below), so no target's number and no fit moves.
-    assert p.fixed == {**NGC_4414.seeds, "mergers": (), "bar_present": False, "pitch_angle": 28.9}  # S59 (D218 item 6): was without the pitch
+    # S59 (D218 item 6): was without the pitch. S60 (D219 item 3): and without the arm class.
+    assert p.fixed == {**NGC_4414.seeds, "mergers": (), **NGC_PINS}
     assert p.fixed == {k: v for k, v in templates.overrides(NGC_4414).items() if k not in NGC_4414.controls}
     assert p.fields == ("circular_velocity", "thin_disc_scale_length", "stellar_mass_total")
     # A departure is counted in the control's own linear range, whatever coordinate the search moves in.
@@ -656,8 +781,8 @@ def test_the_tool_moves_the_free_controls_and_never_passes_a_held_one():
     assert J.shape == (3, 4) and len(probes) == 8 and len(seen) == 9
     for inputs in seen:
         # S58 (D217 follow-up): was without "bar_present" - a template's run carries its pin, the tool's too.
-        # S59 (D218 item 6): was without "pitch_angle".
-        assert set(inputs) == set(FREE) | {s.name for s in seeds()} | {"mergers", "bar_present", "pitch_angle"} and inputs["bar_present"] is False
+        # S59 (D218 item 6): was without "pitch_angle". S60 (D219 item 3): was without "arm_class".
+        assert set(inputs) == set(FREE) | {s.name for s in seeds()} | {"mergers", *NGC_PINS} and inputs["bar_present"] is False
         assert not set(inputs) & set(HELD)
     # No argument of the tool admits a control: the free set is read from the template's data and nowhere else.
     assert set(inspect.signature(fit_template.fit).parameters) == {"template", "grid", "start", "iterations"}
