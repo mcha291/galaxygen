@@ -82,7 +82,9 @@ a(R) is the pieces' one amplitude on the ring:
 - *Positivity by the saturation alone.* E_j ≥ 0, so the pieces' sum is nowhere under −a Σ_j ⟨E_j⟩: D219's "the
   arms' mean excess ≤ 1 − b(R)". a = min(B, (1 − b(R)) / Σ_j ⟨E_j⟩), b the depth of the bar's body under the
   ring's mean: the field is non-negative at every point, **the cut is taken at the point's own radius**, nothing
-  is clipped, floored or renormalised, and the cut is published on the grid's rings and counted.
+  is clipped, floored or renormalised, and the cut is published on the grid's rings and counted. (In doubles the
+  cut is taken four units in the last place under that ratio, :data:`CUT_IN_DOUBLES`, so that the rounded sum of
+  the field's terms cannot land under nothing.)
 
 Between the grid's rings the budget (with the bar's taper taken back out, and put back at the point's own
 radius) and the width law are read linearly - the width law is linear in R, so that is the law itself - and the
@@ -150,6 +152,11 @@ _GAUSS_NODES, _GAUSS_WEIGHTS = np.polynomial.legendre.leggauss(8)
 # σ/(2√π) − σ²/(2π), reaches 0 (``budget_amplitude``). A piece of that dispersion is 239 degrees wide at half
 # maximum on its ring.
 WIDEST = math.sqrt(math.pi)
+# Where the amplitude is cut, the cut is taken four units in the last place under (1 − b)/Σ⟨E_j⟩: at exactly that
+# amplitude the field's least value is 0, and the doubles' own sum of 1, the body and the pieces - each rounded -
+# could land a unit in the last place under it. The saturation, in the arithmetic it is made in; nothing of the
+# field is clipped.
+CUT_IN_DOUBLES = 1.0 - 4.0 * np.finfo(float).eps
 JOINED = 1e-9  # two ends of pieces of one chain closer than this in ln R and in azimuth (rad) are one point: a kink
 # ``arm_piece_join``'s values: which of a piece's ends meets another chain (the second follow-up, item 2).
 JOIN_NONE, JOIN_INNER, JOIN_OUTER = PIECE_JOINS
@@ -896,7 +903,7 @@ class ArmPattern:
         deep = sum_slots(mean)
         with np.errstate(over="ignore", invalid="ignore"):
             cut = amplitude * deep > room
-            effective = np.where(cut, room / np.where(cut, deep, 1.0), amplitude)
+            effective = np.where(cut, room / np.where(cut, deep, 1.0) * CUT_IN_DOUBLES, amplitude)
         return Laid(R, width, count, amplitude, effective, inv, taper, slots, live, relative, mean)
 
     def _integral(self, slots: np.ndarray, x: np.ndarray, inv: np.ndarray, taper: np.ndarray, upto: np.ndarray | None) -> np.ndarray:
