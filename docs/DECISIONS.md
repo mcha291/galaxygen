@@ -10941,3 +10941,15 @@ power's maxima (2.3–12 where it predicted under 1.5) and the remaining gaps; (
 fourth pass's diff; (5) the numeric re-pins (the strict expected failures listed by the two interface agents, the
 nine files of layer-on numbers, the new stage's name where a list is pinned); (6) the viewer's frames beside the
 goals; (7) the records and the close.
+
+**Added at the pause: the last interface re-pins (`tests/test_bar.py`, `tests/test_gas_pattern.py`; a Fable agent)
+and one more question for the gate.** Both files are repaired to the pieces' interface, their layer-on numbers under
+strict expected failures with old and present values in the agent's hand-back (neither file was re-run whole after
+its last two small fixes). Live and holding on the final model: ring means, the bit-identities of the cell means and
+the caches, the bar's physics on 300 galaxies, the saturation law, the lanes, and the solver's h-squared law (5.00
+on both templates). **For the gate: the response is no longer resolved as gate G3 pinned it** - the spectrum above
+two thirds of the Nyquist number reads 1.6e-7 and 2.9e-7 on the two templates where G3 held "under 1e-13" (8e-6 on
+the third pass's square windows), and the equation's spectral residual at 4 kpc 0.029 where it read 6.8e-4: the
+pieces' forcing holds harmonics up to the cells' own 720, so "1 440 cells stand" (D216, G3 item 5) is a question
+again. Also read: `ngc_4414`'s inner rings are no longer emptied (least gas 0.137 of the ring's mean) and no cell of
+the corner galaxy underflows.
