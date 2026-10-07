@@ -10890,3 +10890,54 @@ makes smaller".
    field after the reviewer's pass, the reviewer takes one more pass over that diff … before the re-pins; then the
    frames; then the close. Told to the owner with the rest: the end-of-bar knots were the count's, found by the
    reviewer, and are gone by a floor of one arm, not a number."
+
+**The fourth pass (a Fable builder, cut off three times by usage limits and resumed; eight commits) — the third and
+fourth follow-ups built, and how they read.** Built: a chain's excess as the Gaussian of the distance to the chain's
+own polyline times the taper at the foot's arc length, the ring's and the cells' means exact by cutting the ring
+into stretches on which one feature is nearest; the gas carried along the polyline; no chain crossing any chain,
+itself included, and no pinned chain continued from an end inside the bar; the count never under one on a crossed
+ring; **the disclosed ring-power check in a stage of its own, `arm_ring_power`** (it publishes `arm_ring_power` and
+`arm_mode_power_2…6`; every published field bit-identical across the split). The interface of fifteen older test
+files was brought up beside it by two further Fable agents (their numbers left under strict expected failures,
+listed in the hand-backs).
+- *Held on the final model:* layer off, 3 132 fields bit-identical to `main` in nine runs; 1 600 seed runs, 336
+  corners and 28 whole-pipeline corners with no raise, NaN, negative or exact zero; ring means 1 to 1e-12 and 2e-13;
+  no crossing on any seed, no continuation inside the bar, every birth in the widest gap; each chain's amplitude
+  within √(budget/v); the specs 12 / 20 / 5; per-region determinism; the two-piece kink and the joined cap by hand
+  to 2e-16; the stars' sector means against a dense average to 3.6e-8 (1e-4 at the square edges before).
+- *The lead looked a fourth time:* the Milky Way template's blocks and notches are gone — smooth trailing arcs, a
+  tightly wound multi-armed spiral, five chains at R₀; `ngc_4414` a flocculent spiral with one bright knot where
+  three pieces end together at a join (continuous: the largest step of the point function across 0.005° is 0.0005).
+- *The predictions, read first.* The third follow-up's, judged against the third pass's pins: the largest
+  ring-to-ring change 0.055 (under 0.05: not held); the count at R₀ 6 → 5, crest over trough 2.51 → 2.63, the
+  masers' checks 0.08 → 0.18σ and 0.11 → 0.15σ, joins 7 → 4 (each "moves by less than its second digit": not held —
+  the two census rules of the fourth follow-up moved them, the polyline alone had not); the PHANGS ratio 1.482 →
+  1.454 (held); **the split by arm number now peaks at m = 4 (0.93) with m = 2 at 0.46** ("stays at m = 2": not
+  held, in the law's direction). The fourth follow-up's: the per-galaxy maximum of realised over budgeted ring power
+  **2.34 and 2.94** on the two templates (under 1.5: not held; 7.8 and 12.1 at most over the suite's legs); the
+  end-of-bar excess on the bare default 0.329 against the arms' 0.312 at 8 kpc (not held, barely); `ngc_4414`'s B at
+  0.11 kpc equal to √(budget/v) (held). Σf at 8 kpc on the final model: 1.047 over m = 2…6, 2.36 over the first 128
+  harmonics, 2.39 over all 720; the gas minimum there 0.493.
+- **The cost is the pass's wrong number.** The exact mean along the polyline makes the star catalogue about six
+  times dearer than the third pass and ten times `main`: 8 248 µs a cell (main 1 272), **the million-star call 55.8
+  s against the test's bound of 10 s** (14.2 s on the third pass), `region: whole disc` 12.1 s cold (main 1.95),
+  `bright: whole disc` 20.0 s (6.2), `render: whole, rgb` 9.6 s (4.1), the gas pattern 2.26 s (0.81). The profile
+  puts 40 of 59 s in the stretches' cutting (the exact ring mean made per star's radius) and 9 s in the point
+  function. Three exact compactions are in; no further saving was tried. **Not mergeable as it stands.**
+- **One jump that is the rule's own:** at Norma's kink at 4.46 kpc the measured arm turns back in radius and its
+  19.5° stretch is shorter than a width; across the bisector the foot's arc length jumps and the taper with it — the
+  field steps by 0.017 there, 24.5 times the continuity test's bound. Recorded in the test, asserted continuous at
+  every other kink and join. For the gate.
+- *Also open:* the mid-gap rings leave 14 of 354 and 8 star-forming gaps over 1 % (worst 8.0 % and 5.2 %); the
+  forcing's pitch steps between rings at a kink's radius and its effect is unmeasured; `tests/test_pieces.py` was
+  not run whole after its last two pins.
+
+**S60 paused here (2026-10-08) on the owner's word — "stop after these finish" — and on the week's usage limits;
+nothing is merged.** What the next sitting does, in order: (1) `tests/test_pieces.py` whole to its EXIT; (2) **the
+cost** — exact savings in the stretches' cutting (group rows across the whole request; evaluate the nearest feature
+only inside a feature's reach; make a ring's mean once per distinct radius), proven bit-identical, until the
+million-star test is inside its bound or the gate rules on it; (3) the gate on Norma's turn-back kink, the realised
+power's maxima (2.3–12 where it predicted under 1.5) and the remaining gaps; (4) the reviewer's second pass over the
+fourth pass's diff; (5) the numeric re-pins (the strict expected failures listed by the two interface agents, the
+nine files of layer-on numbers, the new stage's name where a list is pinned); (6) the viewer's frames beside the
+goals; (7) the records and the close.
