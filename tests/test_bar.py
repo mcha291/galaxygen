@@ -911,16 +911,15 @@ def test_a_point_reads_the_body_between_its_two_rings_in_the_bar_s_frame(prod):
     # S60 (D219): the sector means against the dense average of the point function are in the test after this one.
 
 
-@XFAIL_REPIN
 def test_the_sector_means_are_the_dense_average_of_the_point_function(prod):
     """Twelve sectors at six radii: each is the dense average of the point function to the dense average's own
-    error - a midpoint rule of 4000 points on a function that is smooth, under 1e-6. **S60 (D219): read on the
-    third model pass, 7.2e-5 at 4.9 kpc and 1.4e-5 at 5.3 kpc** - a piece's window is cut square at a join and at
-    a kink there ("a piece ends in a hard square edge wherever it is joined": the lead's third reading), and a jump
-    of order the pieces' amplitude inside a sector costs the midpoint rule about its height times a step over the
-    sector. The gate's third follow-up orders every square edge rounded ("no square edge may remain anywhere ...
-    asserted by a continuity test"), so this is the model's last pass's to restore, with the bound as it stands;
-    0.5, 2.0 and 2.16 kpc read under 1e-9 on the third pass."""
+    error - a midpoint rule of 4000 points on a function that is smooth, under 1e-6. **S60 (D219): on the third
+    model pass this read 7.2e-5 at 4.9 kpc and 1.4e-5 at 5.3 kpc** - a piece's window was cut square at a join and
+    at a kink there ("a piece ends in a hard square edge wherever it is joined": the lead's third reading), and a
+    jump of order the pieces' amplitude inside a sector costs the midpoint rule about its height times a step over
+    the sector. The gate's third follow-up ordered every square edge rounded ("no square edge may remain anywhere
+    ... asserted by a continuity test"); on the fourth pass - a chain's excess the Gaussian of the distance to its
+    polyline - the bound holds again at every radius, as it stands."""
     o = template_run(prod, "milky_way")
     F, R = o.fields, o.grid.R
     stars = compose.stellar_pattern(F, R)
