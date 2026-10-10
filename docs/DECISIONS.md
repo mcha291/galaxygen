@@ -10953,3 +10953,64 @@ the third pass's square windows), and the equation's spectral residual at 4 kpc 
 pieces' forcing holds harmonics up to the cells' own 720, so "1 440 cells stand" (D216, G3 item 5) is a question
 again. Also read: `ngc_4414`'s inner rings are no longer emptied (least gas 0.137 of the ring's mean) and no cell of
 the corner galaxy underflows.
+
+**The gate's fifth follow-up (Fable, the lead of the resumed sitting, 2026-10-11; on the four questions D219's
+pause left and the probe `probe_power.py` run on the final model of the fourth pass).**
+
+1. *Norma's turn-back kink (4.46 kpc, the field steps by 0.017, 24.5 times the continuity bound).* The jump is the
+   rule's own and not a defect of the build: "the arc length to the point's foot" is discontinuous wherever the
+   foot jumps between two pieces whose arc lengths to the vertex differ, and that happens only at a kink sharp
+   enough that both feet lie far from the vertex while the point is near both - a turn-back - and only within one
+   width of a free end, where the taper is still rising. **Recorded, not mended; carried as debt #156** with the
+   continuous alternative named: a chain's excess as the LARGEST over its pieces of (that piece's taper at its own
+   foot) x (the Gaussian of the distance to that piece) - equal to the present rule wherever every taper is at full
+   height (then the largest Gaussian is the nearest piece's), continuous everywhere (a maximum of continuous
+   functions), counted once at a kink as now. Its cost: the exact ring mean's breakpoints become the roots of
+   w_i G_i = w_j G_j, transcendental where a taper is linear, so the stretch decomposition needs a Newton root per
+   pair there - a build, not a patch. Not confined to the pins: a drawn piece's pitch p(1 + 0.56 z) is untruncated
+   (`arm_pieces.py`), so z < -1.79 (3.7 % of pieces) turns a drawn chain back, and such a kink within a width of a
+   chain's start or end jumps the same way; the continuity test reads the templates' default seeds only. The
+   viewer's frames at the close say whether a 0.017 step in a contrast of order 0.2-0.3 shows at all; if the owner's
+   look finds it, the alternative is built, with #142's pitch floor (theirs) the other way to remove the drawn case.
+2. *The realised ring power against the budget: the maxima 2.3-12 where the fourth follow-up predicted under
+   1.5, and the medians.* Probed on the final model (both templates and the bare default galaxy at their default
+   seeds, ring by ring): realised over budget 16/50/84 %: 0.49/0.61/0.90 (Milky Way), 0.56/0.81/1.17 (`ngc_4414`),
+   0.39/0.45/0.61 (default). **Not the count's:** the sum of squared taper weights over the count is 1.00 at the
+   median on every leg (0.83-0.99 at the 16th percentile on `ngc_4414`), so chains in their tapers explain almost
+   nothing; the chains' own pitches move the expectation by 0.9-1.14 at the median and the saturation not at all
+   on these rings; no weight is negative; no chain crosses any ring twice. **The shortfall is the design's
+   ensemble.** D219 item 4 sets B so that N full ridges at INDEPENDENT uniform azimuths make the budget's variance in
+   expectation, which needs the ridges to overlap on average; the census places births at the middle of the widest
+   gap, so its ridges do not overlap, and for non-overlapping ridges the ring variance of a Sum_j (E_j - <E_j>) is
+   exactly N<E^2> - N^2<E>^2, less than N v = N(<E^2> - <E>^2) by N(N-1)<E>^2: 0.28-0.29 of N v at the median on
+   the Milky Way's and the default's rings, 0.59 on `ngc_4414`'s (its ridges are wider in azimuth at its pinned
+   pitch). The realised power lies between the two forms - 0.54 of the independent form and 1.7 of the
+   non-overlapping one at the median - the rest being the flanks of pieces within reach whose locus does not cross
+   the ring (not in N, in the profile), the pieces ahead of a crossing where the taper is up, and the joins.
+   **The maxima are the pins' and the ruling's own:** the Milky Way's 2.34 at 4.46 kpc is Norma's -1 degree arc -
+   nearly circular, so its ridge lies along the rings it nears and its flank is a broad bump over the one chain
+   that crosses (N = 1); `ngc_4414`'s 2.9 at 3.1-3.4 kpc is its join of three pieces, which add by the third
+   follow-up's words ("a branch is two arms' material in one place ... bounded by nothing but the ring's
+   saturation"). **Ruled: the design keeps the independent form - it is D219 item 4's own text, and the
+   non-overlapping form would overshoot by 1.3-2.1 at the median; the percentiles of realised over budget are pinned
+   as measured on both templates; the ensemble question is carried as debt #155** naming both closed forms and the
+   measured place of the realised power between them, for the owner: **with the layer on the arms carry about 45-80 %
+   of the arm-number law's power on the median ring** (the law is honoured layer-off, where no arm is placed; the
+   acceptance rows are judged there, I1-I5 hold). A different ensemble is a model change of the budget's one formula
+   (`budget_amplitude`), no realised power read either way; the owner says whether the pictures want it.
+3. *The 14 + 8 star-forming gaps over 1 % (worst 8.0 % and 5.2 %, medians 0.11 % and 0.20 %).* The first follow-up's
+   item 6 ordered the mid-gap rings "recursing at most twice ... then record what remains": recorded. What remains is
+   at joins, free ends and the nearly circular pieces, where the carried map has kinks no piecewise-linear map in
+   azimuth smooths. Stands as recorded; the readers (young stars, clouds, dust) read the carried point function,
+   so the error is a bounded misplacement of gas round those rings, declared in the test's record.
+4. *1440 cells under the pieces' forcing.* G3's "under 1e-13 above two thirds of the Nyquist number" was the
+   smooth forcing's: five cosines. The pieces' forcing has the tapers' linear ramps and the joins' caps, whose
+   spectra fall algebraically (as m^-2), so 1.6e-7 and 2.9e-7 there are the forcing's own and no sign of an
+   unresolved response. **Ruled as G3 ruled: the cells stand or fall on the measured error of the published cell
+   means, not on a spectral floor.** The re-pin of `tests/test_gas_pattern.py` measures the 1440-cell cell-mean field
+   against the same forcing solved on 2880 and 5760 cells on both templates (the instrument G3 used: 2.1e-4 then;
+   the h^2 law holds at 5.00 on both templates already); under 1e-3 of the field, 1440 stands and the spectral
+   assertion is re-pinned at its measured level with this reason beside it; over, the cell count is raised and no
+   tolerance (D216's words). The spectral residual at 4 kpc (0.029 against 6.8e-4) is read the same way: against
+   the finer solve, not against its old value.
+5. *The cost* - ruled when the exact savings are read (below).

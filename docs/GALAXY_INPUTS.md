@@ -694,9 +694,9 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154 | 80 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156 | 82 |
 
-So the board's **91 open** is 11 permanent and 80 carried, and no item is unruled. (S22
+So the board's **93 open** is 11 permanent and 82 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3911,6 +3911,30 @@ never been judged in twenty-three sessions.
    replaces it"; to assert then: a ring's expected young count unchanged to 1e-12, `bright_star_count_1e3` the
    same bits, the quadrature's 3e-4 not worsened.
 
+155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
+   census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
+   full ridges at independent uniform azimuths make the budget's variance in expectation (D219 item 4); births at
+   the middle of the widest gap place ridges that do not overlap, for which the ring variance of the pieces' sum
+   is N<E^2> - N^2<E>^2, under N v by N(N-1)<E>^2 - 0.28-0.29 of N v at the median on the Milky Way's and the
+   default galaxy's rings, 0.59 on `ngc_4414`'s. Measured on the final model, realised over budgeted ring power
+   16/50/84 %: 0.49/0.61/0.90, 0.56/0.81/1.17 and 0.39/0.45/0.61 on the three - 0.54 of the independent form
+   and 1.7 of the non-overlapping one at the median, the rest the flanks of pieces within reach that do not
+   cross the ring, pieces ahead of a crossing in their taper, and joins (not the count's: the squared taper
+   weights over the count are 1.00 at the median). **Carried.** The design keeps D219's independent form; the
+   other closed form is named and either is a change of the budget's one formula with no realised power read.
+   For the owner: with the layer on the arms carry about 45-80 % of the arm-number law's power on the median
+   ring; the law is honoured layer-off, where the acceptance rows are judged.
+156. **A chain's excess jumps at a turn-back kink within one width of a free end** (S60, D219, the gate's fifth
+   follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
+   enough that the two feet lie far from the vertex the arc length jumps and the taper with it: Norma's kink at
+   4.46 kpc steps the field by 0.017 (the chain's excess by 0.083, B 0.20), 24.5 times the continuity test's
+   bound, recorded in `tests/test_pieces.py`; every other kink and join of both templates is continuous. Not
+   confined to the pins: a drawn pitch p(1 + 0.56 z) is untruncated, so 3.7 % of drawn pieces turn back.
+   **Carried.** The continuous rule is named: the chain's excess as the largest over its pieces of (the piece's
+   taper at its own foot) x (the Gaussian of the distance to that piece) - the present rule wherever every taper
+   is at full height, continuous everywhere; its exact ring mean needs a Newton root per pair of features where
+   a taper is linear (the breakpoints are then roots of w_i G_i = w_j G_j). #142's pitch floor removes the drawn
+   case the other way. Built if the owner's look at the frames finds the step.
 
 ---
 
