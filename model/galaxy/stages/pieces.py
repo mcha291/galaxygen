@@ -474,9 +474,16 @@ class Stretches:
         groups = []
         for size in np.unique(count):
             rows = np.flatnonzero(count == size)
-            order = np.argsort(~alive[rows], axis=1, kind="stable")[:, : max(int(size), 1)]
-            picked = {name: np.take_along_axis(v[rows], order, axis=1) for name, v in features.items()}
-            groups.append((rows, *cls._cut(np.take_along_axis(alive[rows], order, axis=1), picked, W0[rows], W1[rows], w[rows], inv[rows], rho2[rows])))
+            width = max(int(size), 1)
+            # A group is cut so many rows at a time that its (rows, stretches, features) temporary stays inside
+            # :data:`_ELEMENTS` - the stretches are at most the breakpoint columns, 4 + 3F + F(F − 1). A bound on
+            # memory, never on a value: every number in a row is the row's own (S60, the cost).
+            step = max(1, _ELEMENTS // ((4 + 3 * width + width * (width - 1)) * width))
+            for start in range(0, rows.size, step):
+                part = rows[start : start + step]
+                order = np.argsort(~alive[part], axis=1, kind="stable")[:, :width]
+                picked = {name: np.take_along_axis(v[part], order, axis=1) for name, v in features.items()}
+                groups.append((part, *cls._cut(np.take_along_axis(alive[part], order, axis=1), picked, W0[part], W1[part], w[part], inv[part], rho2[part])))
         return cls(w0, inv, tuple(groups))
 
     @staticmethod
@@ -510,9 +517,10 @@ class Stretches:
             d2 = np.where(kind[:, None, :] == 0, (al[:, None, :] + be[:, None, :] * phi_c) ** 2, (phi_c - al[:, None, :]) ** 2 + be[:, None, :] ** 2)
             d2 = np.where(alive[:, None, :] & (phi_c >= lo[:, None, :]) & (phi_c <= hi[:, None, :]), d2, np.inf)
         nearest = d2.argmin(axis=2)
-        least = np.take_along_axis(d2, nearest[:, :, None], axis=2)[:, :, 0]
+        at_row = np.arange(nearest.shape[0])[:, None]
+        least = d2[at_row, np.arange(nearest.shape[1])[None, :], nearest]
         on = valid & (least <= rho2)
-        pick = lambda v: np.take_along_axis(v, nearest, axis=1)  # noqa: E731
+        pick = lambda v: v[at_row, nearest]  # noqa: E731  (``take_along_axis`` by plain indexing: the same elements)
         with np.errstate(invalid="ignore", over="ignore"):
             t_c = pick(ta) + pick(tb) * middle
             rise, fall = (pick(bef) + t_c) / w[:, None], (pick(aft) + pick(length) - t_c) / w[:, None]
@@ -528,8 +536,12 @@ class Stretches:
         return np.where(held_stretch, b_lo, np.nan), np.where(held_stretch, b_hi, np.nan), value, w_lo, slope, d0, scale, on
 
 
-# How many (radius, chain) rows one decomposition holds at once: a bound on memory, never on a value.
-_ROWS = 2048
+# How many (radius, chain) rows one decomposition holds at once, and how many (row, stretch, feature) elements one
+# group's cutting holds at once: bounds on memory, never on a value (S60: a row's numbers are the row's own, so
+# the rows are grouped as large as the memory allows - the cost of the exact mean is in the count of small array
+# operations, not in the arithmetic).
+_ROWS = 8192  # (2048 until S60's cost pass: 1.7 s -> 1.1 s on 36 584 rows, 46 MB -> 109 MB at the peak)
+_ELEMENTS = 2_000_000
 
 
 # --------------------------------------------------------------------------------------------------------------
