@@ -61,7 +61,7 @@ from galaxy.stages.feedback import star_bubble_radius
 from galaxy.stages import gas_response as _cells  # the pattern's fixed cells round a ring: what the quadratures are counted in
 from galaxy.stages.gas_pattern import CELLS as GAS_CELLS
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
-from galaxy.stages.pattern import PATTERN_READS, invert_azimuths, ring_bracket
+from galaxy.stages.pattern import PATTERN_READS, invert_azimuths, ring_bracket, sector_grid
 from galaxy.stages.pieces import ArmPattern
 from galaxy.stages.sfh import star_formation_rate
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
@@ -133,6 +133,9 @@ RING_SAMPLES_PER_CELL = 2
 # two points leave 1e-2 of a finest sector's mean there, three 1e-3, four 2e-4, six 2e-6 (the reference's own).
 GAUSS = {False: np.polynomial.legendre.leggauss(2), True: np.polynomial.legendre.leggauss(6)}  # (nodes, weights) on [-1, 1]
 MEAN_CHUNK = 128  # rings whose mean is taken at once: a bound on memory (128 x 2880 doubles a temporary), not a count of work
+# How many stars one placing call takes at once (S60, the cost): a bound on memory - the inversion's (stars, 25)
+# temporaries, the pattern's own batches inside it - never on a value, which is the star's own.
+PLACE_CHUNK = 65536
 # What the young stars' reader reads beside the stellar pattern (S59, D218): the gas pattern's own reads, and the
 # two ring fields and the index the star formation law is applied with.
 YOUNG_READS: tuple[str, ...] = ("gas_surface_density", "sf_threshold_surface_density")
@@ -614,10 +617,14 @@ class Modulation:
         """The modulation averaged over each sector between ``edges`` at one radius: :meth:`sector_means_at`'s row."""
         return self.sector_means_at(np.array([float(r)]), edges)[0]
 
-    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
-        """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8)."""
-        grid = np.linspace(lo, hi, steps + 1)
-        return invert_azimuths(u, grid, self.at(radius, grid))
+    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: np.ndarray | float, hi: np.ndarray | float, steps: int = 24) -> np.ndarray:
+        """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8). ``lo`` and
+        ``hi`` are one sector's, or since S60 one sector a star (stars,) - :func:`sector_grid` - the stars of
+        many cells placed in one call, each as its own cell's call placed it."""
+        grid = sector_grid(lo, hi, steps)
+        if grid.ndim == 1:
+            return invert_azimuths(u, grid, self.at(radius, grid))
+        return invert_azimuths(u, grid, self.at_points(radius, grid))
 
 
 def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, Any] | None) -> Modulation | None:
@@ -829,15 +836,15 @@ def materialise(
         # sector; in the azimuthal model a star younger than an arm crossing follows where
         # stars form today instead. Every property has its own stream, so drawing the age
         # first changes no number. A child below level 0 is uniform over its footprint.
+        # S60 (D219, the cost): the stars of every cell of the request are placed in one call after the loop
+        # (``place``), each star by its own radius and sector exactly as its cell's own call placed it - the
+        # pattern's arithmetic is the point's own - so the exact ring means are made in a few large groups
+        # rather than once a cell. ``pending`` carries what the placement reads.
         u_azimuth = draw("azimuth")
-        if footprint is not None or pattern is None or pattern.flat:
-            azimuth = phi_lo + u_azimuth * (phi_hi - phi_lo)
-        else:
-            azimuth = pattern.azimuths(u_azimuth, radius, phi_lo, phi_hi)
-        if young is not None and footprint is None:
-            fresh = young.is_young(born)
-            if fresh.any():
-                azimuth[fresh] = young.modulation.azimuths(u_azimuth[fresh], radius[fresh], phi_lo, phi_hi)
+        uniform = footprint is not None or pattern is None or pattern.flat
+        azimuth = phi_lo + u_azimuth * (phi_hi - phi_lo) if uniform else np.empty(count)
+        fresh = young.is_young(born) if young is not None and footprint is None else None
+        pending = None if uniform and fresh is None else (u_azimuth, radius, phi_lo, phi_hi, uniform, fresh)
 
         cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
         birth_radius = churn.birth_radius(draw("birth_radius"), ring, cols)
@@ -859,22 +866,54 @@ def materialise(
             "star_alpha": alpha[rows, cols],
             "star_mass": imf_sample(draw("mass")),
             "star_population": is_thick.astype(np.int64),
-        }
+        }, pending
+
+    def place(made: Sequence[tuple[dict[str, np.ndarray], tuple | None]]) -> None:
+        """Fill ``star_azimuth`` of every cell's rows ``made`` whose placement is pending: the old stars by the
+        pattern's contrast at each star's own radius inside its own sector, the young ones (born after an arm
+        crossing) by the star formation law at the point (:class:`Modulation`) - every cell's stars in one
+        call, :data:`PLACE_CHUNK` stars at a time, the rows a cell's own call would have placed in one
+        group skipped where another places them."""
+        pending = [(rows["star_azimuth"], *p) for rows, p in made if p is not None]
+        if not pending:
+            return
+        counts_ = [a.size for a, *_ in pending]
+        u = np.concatenate([p[1] for p in pending])
+        radius = np.concatenate([p[2] for p in pending])
+        lo = np.concatenate([np.full(n, p[3]) for n, p in zip(counts_, pending)])
+        hi = np.concatenate([np.full(n, p[4]) for n, p in zip(counts_, pending)])
+        by_pattern = np.concatenate([np.full(n, not p[5], dtype=bool) for n, p in zip(counts_, pending)])
+        fresh = np.concatenate([np.zeros(n, dtype=bool) if p[6] is None else p[6] for n, p in zip(counts_, pending)])
+        azimuth = np.concatenate([p[0] for p in pending])
+        for who, placer in ((by_pattern & ~fresh, pattern.azimuths if pattern is not None else None),
+                            (fresh, young.modulation.azimuths if young is not None else None)):
+            rows = np.flatnonzero(who)
+            for start in range(0, rows.size, PLACE_CHUNK):
+                at = rows[start : start + PLACE_CHUNK]
+                azimuth[at] = placer(u[at], radius[at], lo[at], hi[at])
+        offset = 0
+        for target, n in zip((p[0] for p in pending), counts_):
+            target[:] = azimuth[offset : offset + n]
+            offset += n
 
     def cell_stream(cell: int, count: int) -> Callable[[str], np.ndarray]:
         return lambda name: _seeds.rng(seed, "cell", int(cell), name).random(count)
 
     columns: dict[str, list[np.ndarray]] = {}
     if level == 0:
-        for cell, count in counts:
-            for name, values in rows_for(cell, count, cell_stream(cell, count), None).items():
+        made = [rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts]
+        place(made)
+        for rows, _ in made:
+            for name, values in rows.items():
                 columns.setdefault(name, []).append(values)
         out_counts: tuple[tuple[int, int], ...] = counts
     else:
         # Below level 0: each requested child inherits its parent's stars that fall inside it,
         # then adds its own — the parent's expected count times (1 − 4^−k), the share of a
         # 4^k-times-denser sample the inherited stars do not supply — from its own stream.
-        parent_rows = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
+        made = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
+        place(list(made.values()))
+        parent_rows = {cell: rows for cell, (rows, _) in made.items()}
         parent_counts = dict(counts)
         realised: list[tuple[int, int]] = []
         for child in (cells if cells is not None else range(CELL_COUNT * children_per_cell(level))):
@@ -894,7 +933,7 @@ def materialise(
                 inherited["index"] = np.flatnonzero(inside).astype(np.int64)
             expected = cell_expected(fields["stellar_surface_density"], R, n_stars, parent, pattern)
             n_extra = int(round(expected * (1.0 - 1.0 / children_per_cell(level))))
-            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds) if n_extra else {}
+            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds)[0] if n_extra else {}
             if n_extra:
                 extra["level"] = np.full(n_extra, level, dtype=np.int64)
                 extra["cell"] = np.full(n_extra, child, dtype=np.int64)

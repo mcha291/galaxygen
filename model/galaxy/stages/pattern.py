@@ -1049,14 +1049,31 @@ BAR_MASS_SHARE = _scalar(
     provenance="seeded",
 )
 
+def sector_grid(lo: np.ndarray | float, hi: np.ndarray | float, steps: int) -> np.ndarray:
+    """The ``steps + 1`` evenly spaced azimuths of a sector [lo, hi]: ``np.linspace``'s for one sector, and for
+    arrays ``lo``, ``hi`` (stars,) one row a star, shaped (stars, steps + 1), **each row the bits
+    ``np.linspace(lo_i, hi_i, steps + 1)`` would give** - arange × step + lo, the last point set to hi, the
+    arithmetic ``linspace`` does - so that the stars of many sectors can be placed in one call and placed as
+    they were one sector at a time (S60, the cost)."""
+    lo, hi = np.asarray(lo, dtype=float), np.asarray(hi, dtype=float)
+    if lo.ndim == 0 and hi.ndim == 0:
+        return np.linspace(float(lo), float(hi), steps + 1)
+    lo, hi = np.broadcast_arrays(lo, hi)
+    step = (hi - lo) / steps
+    grid = np.arange(0, steps + 1, dtype=float)[None, :] * step[:, None] + lo[:, None]
+    grid[:, -1] = hi
+    return grid
+
+
 def invert_azimuths(u: np.ndarray, grid: np.ndarray, density: np.ndarray) -> np.ndarray:
     """Azimuths on ``grid`` (one sector, evenly spaced) by inverting each star's own row of ``density``.
 
     ``density`` is (stars, len(grid)): the contrast, or since S27 the star-formation modulation,
     evaluated at each star's radius. Trapezoids between the grid points, linear inside one —
-    an inverse CDF, never a rejection (rule B8).
-    """
-    steps = grid.size - 1
+    an inverse CDF, never a rejection (rule B8). ``grid`` is one sector's points (steps + 1,), or since S60 one
+    row a star (stars, steps + 1) - :func:`sector_grid` - each star inverted on its own row's sector, the same
+    arithmetic either way."""
+    steps = grid.shape[-1] - 1
     f = np.maximum(density, 0.0)  # (stars, steps + 1)
     stars = f.shape[0]
     seg = 0.5 * (f[:, 1:] + f[:, :-1])
@@ -1067,7 +1084,9 @@ def invert_azimuths(u: np.ndarray, grid: np.ndarray, density: np.ndarray) -> np.
     rows = np.arange(stars)
     c0, c1 = cdf[rows, k], cdf[rows, k + 1]
     frac = np.where(c1 > c0, (target - c0) / np.where(c1 > c0, c1 - c0, 1.0), 0.0)
-    return grid[k] + np.clip(frac, 0.0, 1.0) * (grid[1] - grid[0])
+    if grid.ndim == 1:
+        return grid[k] + np.clip(frac, 0.0, 1.0) * (grid[1] - grid[0])
+    return grid[rows, k] + np.clip(frac, 0.0, 1.0) * (grid[:, 1] - grid[:, 0])
 
 
 def compute_pattern(ctx: Context) -> Mapping[str, Any]:

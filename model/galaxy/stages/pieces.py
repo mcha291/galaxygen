@@ -143,6 +143,7 @@ from galaxy.stages.pattern import (
     invert_azimuths,
     ring_bracket,
     rotation_sense,
+    sector_grid,
 )
 
 TWO_PI = 2.0 * math.pi
@@ -1519,10 +1520,15 @@ class ArmPattern:
         body = self.body_cell_means(radius, edges)
         return 1.0 + self.arm_cell_means(radius, edges)[0] + (body if isinstance(body, float) else body[0])
 
-    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
-        """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8)."""
-        grid = np.linspace(lo, hi, steps + 1)
-        return invert_azimuths(u, grid, self.contrast(radius, grid))
+    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: np.ndarray | float, hi: np.ndarray | float, steps: int = 24) -> np.ndarray:
+        """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8).
+        ``lo`` and ``hi`` are one sector's, or since S60 one sector a star (stars,) - :func:`sector_grid` - the
+        stars of many cells placed in one call, each as its own cell's call placed it (the contrast at a point is
+        the point's own)."""
+        grid = sector_grid(lo, hi, steps)
+        if grid.ndim == 1:
+            return invert_azimuths(u, grid, self.contrast(radius, grid))
+        return invert_azimuths(u, grid, self.contrast_at(np.asarray(radius, dtype=float)[:, None], grid))
 
 
 def design_dispersion(R: np.ndarray, width: np.ndarray, pitch_deg: float) -> np.ndarray:
