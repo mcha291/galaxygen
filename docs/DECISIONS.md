@@ -11014,3 +11014,69 @@ pause left and the probe `probe_power.py` run on the final model of the fourth p
    tolerance (D216's words). The spectral residual at 4 kpc (0.029 against 6.8e-4) is read the same way: against
    the finer solve, not against its old value.
 5. *The cost* - ruled when the exact savings are read (below).
+
+**The gate's sixth follow-up (Fable, 2026-10-11): the reviewer's second pass over the fourth pass's diff
+(an Opus reviewer, probes only; the hand-back in the transcript), and what it orders - a fifth model pass.** What
+holds, by the reviewer's own arithmetic: every stretch's closed form against a composite 16-point Gauss rule of the
+point function over the same stretch, 6.7e-15 at worst over about 400 000 stretches on 2 520 radii of 19 seeds of
+the two chained legs (every piece end, +-1e-9 and +-0.05/0.3/1 width of it, the bar's edge +-1e-9 and +-1e-3
+included); the stretches tile [W0, W0 + 2pi) with no gap and no overlap on every run; `integral_to` 3.6e-15 at worst
+with the upper limit at W0, W0 +- 2pi, +-1 ulp, at stretch boundaries and turns out; the degenerate hand cases
+(pitch 0 lone and chained, zero extent, 89.9 degrees, extents pi and 4, a 170-degree kink, both ends joined) to
+3e-11 with no NaN; R = 0, 1e-9, -1, NaN and beyond the grid give contrast 1 with no raise; layer off 1 044 shared
+fields bit-identical to `main` by sha256 on three legs; points alone against batched, cells alone against batched
+and the gas's `contrast_at`: 0 differing bits. **Six findings, ruled:**
+1. *HIGH, confirmed - a second and larger class of steps than Norma's.* A drawn pitch p(1 + 0.56 z) is negative for
+   z < -1.79, and `Piece.advance` lays a negative pitch the other way round in azimuth, so a small pitch change
+   becomes a 165-178 degree hairpin; a free chain end (taper 0) then lies within a few dispersions of a later piece of
+   its own chain and the point function steps across their bisector from a full Gaussian to nothing. On the Milky
+   Way template's own default seeds the contrast steps by 0.19 at 7.09 kpc; on other seeds 0.40-0.58; a pinned arm's
+   inward continuation drawn at -0.03 degrees folds back over the measured 8.7-degree arm and its free start blanks the
+   measured ridge. Steps over 0.01 on 9 of 9 Milky Way galaxies and 3 of 10 default ones (0 of 4 `ngc_4414`: single
+   pieces); 3.05 fold-back kinks a galaxy on the template, 1.70 on the default. The continuity test missed it: it
+   samples +-0.5 width round each vertex on three rings of one seed, and this step lies 0.55 width below its vertex.
+   **Ruled: an arm's winding sense never reverses - the sources measure the pitch's variation along an arm
+   (Savchenko+2020's 0.56 +- 0.25), not a reversal of its sense, and a trailing arm stays trailing. The drawn pitch
+   is cut at zero as the extent's draw is cut at its range: z is drawn again while p(1 + 0.56 z) is not positive
+   (`draw_piece`'s idiom, "drawn again outside 20-180 degrees"); `Piece.advance`'s other-way branch then serves the
+   pins alone.** A measured piece keeps its measured sign (Norma's -1 degree arc: #156's class, carried). This is
+   not #142's floor - how far above zero a drawn pitch may fall, and the gas law's regularity through sin p = 0,
+   stay the owner's - it is the sign. The continuity test is widened as the reviewer probed: whole rings (every grid
+   ring and midpoint, 8 192 azimuths) on at least five seeds of each leg, every step over the Lipschitz bound named
+   by (seed, R, phi), the one exemption the pinned end-to-end turn-back within a width of a free end (#156). The
+   drawn census changes, so every layer-on pin is re-read after this pass, not before.
+2. *MEDIUM, confirmed - the gas's carried map folds.* `Pieces.along` continues a chain's end piece on its own line
+   past the chain's end; at a join that line crosses the chain it met, so beyond the join two anchors swap order and
+   the azimuth map M(phi) is not monotone (31 of 1 192 (ring, radius) pairs on the Milky Way's default seeds, least
+   slope -22; 88 of 1 736 and 27 of 1 144 on two more; every swap at a join end or at Norma's turn-back). The mean
+   stays exact (`_carried_mean` integrates signed image means) and values stay in the profile's range, but a reversed
+   sliver of the profile is read three times - likely the residue behind `EXPECTED_GAPS`' 14 Milky Way radii.
+   **Ruled: past its join a joined chain's anchor follows the chain it met** (the chain's material is there, by the
+   third follow-up's own words); the map is then asserted monotone on every (ring, radius) pair of the gate's legs,
+   and the gaps are re-read (the fifth follow-up's item 3 stands for what then remains).
+3. *LOW-MEDIUM, confirmed - the `lone` shortcut is not exact near the centre of an unbarred disc.* The point function
+   takes a piece's perpendicular at the image within pi of its middle but each end at its own nearest image; where
+   the dispersion is large (0.58 in the plane at 0.21 kpc on `ngc_4414`) an end at another image is nearer than the
+   in-image perpendicular and reads taper 0, while `Stretches`, having dropped a lone piece's ends, integrates the
+   perpendicular: 1.9e-7 in a chain mean at worst, at R < 0.24 kpc on every `ngc_4414` seed, 7e-15 on barred discs.
+   **Ruled: the shortcut goes - a lone piece's ends are features like any other** (the pruning that "changes
+   nothing" changes 1.9e-7); proven by the reviewer's Gauss rule to the rounding floor again. The seam of the
+   perpendicular's image (psi = half the extent +- pi) is bounded by exp(-pi^2 / 8 sigma^2) and is recorded, not
+   measured further.
+4. *LOW, run - `tests/test_modes.py`'s sector-means test passes under a strict expected failure* (XPASS strict, the
+   suite fails): on the re-pin list, as the pause's addendum already said.
+5. *LOW, plausible - three ends at one point would mistype a kink* (`partner` takes the first match within JOINED;
+   a cut piece shorter than about 1e-9 is possible with MEETING_FROM at 1e-12). **Ruled: a guard - the laying raises
+   where three ends of one chain stand within JOINED of one point** (an honest stop, D164's spirit), asserted by a
+   hand-built case.
+6. *LOW - `arm_ring_power` requires `pattern_density_contrast` and never reads it* (it rebuilds the pattern from
+   PATTERN_READS), so asking for the check pays for the cell means too, and its about text says "the same composed
+   pattern the stellar pattern stage built". **Ruled: the requirement goes and the about text says what the stage
+   does** - made again from the same census and laws, on the solver's cells; no number changes.
+*What the tests do not cover, as the reviewer read it, becomes the fifth pass's test work:* the exact mean on a real
+galaxy against an independent rule (the Gauss rule of the point function over each stretch, not a telescoping
+identity); hand checks that do not copy `_candidate`'s image rule; whole-ring continuity on several seeds; the
+carried map's monotonicity; the centre of an unbarred disc. The snapshot pins (EXPECTED_*) stay what they are -
+records, judged beside the rules above, not in their place. **Order of the sitting:** the cost's exact savings land
+first (bit-identical to the fourth pass, proven), then this fifth pass on top of them, then the reviewer's third
+pass over the fifth pass's diff, then the re-pins, the frames and the close.
