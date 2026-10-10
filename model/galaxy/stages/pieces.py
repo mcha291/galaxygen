@@ -1246,19 +1246,19 @@ class ArmPattern:
 
     # --- a chain at a point: the Gaussian of the distance to its polyline -------------------------------
 
-    def _candidate(self, laid: Laid, k: int, phi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """(the squared distance in the plane's unit, the chain's taper there) from the points ``phi`` (n, m) of each
-        radius to **the piece** in slot ``k``, as a segment of its chain's polyline: the perpendicular distance
-        where the point's foot falls inside the piece, the distance to the nearer end otherwise - each end seen
-        at its nearest image, the piece at the image within half a turn of its middle - and the taper read at
-        the arc length along the chain to that nearest point. Infinite in an empty slot."""
+    def _candidate(self, laid: Laid, k: int, phi: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(the rows live in slot ``k``, the squared distance in the plane's unit, the chain's taper there) from
+        the points ``phi`` (n, m) of each of those radii to **the piece** in slot ``k``, as a segment of its
+        chain's polyline: the perpendicular distance where the point's foot falls inside the piece, the distance
+        to the nearer end otherwise - each end seen at its nearest image, the piece at the image within half a
+        turn of its middle - and the taper read at the arc length along the chain to that nearest point. The two
+        arrays are (rows, m): only the live rows are made (S60, the cost; an empty slot is infinitely far and
+        weighs nothing, which :meth:`_chains` holds without computing it)."""
         p = self.pieces
-        n, m = phi.shape
-        d2 = np.full((n, m), np.inf)
-        weight = np.zeros((n, m))
+        m = phi.shape[1]
         rows = np.flatnonzero(laid.live[:, k])
         if not rows.size:
-            return d2, weight
+            return rows, np.zeros((0, m)), np.zeros((0, m))
         slot = laid.slots[rows, k, None]
         psi = p.unwrapped(slot, phi[rows])
         x = laid.x[rows, k, None]
@@ -1281,9 +1281,7 @@ class ArmPattern:
                 best = np.where(nearer, d, best)
                 arc = np.where(nearer, at_t, arc)
             taper = np.minimum(1.0, np.minimum((before + arc) / w, (after + length - arc) / w))
-        d2[rows] = best
-        weight[rows] = np.maximum(np.nan_to_num(taper, nan=0.0), 0.0)
-        return d2, weight
+        return rows, best, np.maximum(np.nan_to_num(taper, nan=0.0), 0.0)
 
     def _chains(self, laid: Laid, phi: np.ndarray) -> Iterator[tuple[int, np.ndarray]]:
         """For each run of ``laid`` (one chain within reach of a radius), the chain's excess E at the azimuths
@@ -1306,20 +1304,24 @@ class ArmPattern:
         The arc length the taper reads is the arc length to the point's foot on the polyline (the lead's note);
         on the inside of a kink within one width of a free end the foot's arc length differs by piece and so the
         taper may - the continuity test across every kink of both templates found no such jump."""
-        best = weight = None
-        inv2 = (laid.inv * laid.inv)[:, None]
+        # Only the rows live in a slot are compared there, and only the rows whose run ends in a slot take the
+        # exponential there (S60, the cost): a row's least distance, its weight and its excess are the row's own,
+        # and an empty slot is infinitely far and weighs nothing - the same numbers as comparing every row.
+        n, m = phi.shape
+        best, weight = np.full((n, m), np.inf), np.zeros((n, m))
+        inv2 = laid.inv * laid.inv
         for k in range(laid.slots.shape[1]):
-            d2, w = self._candidate(laid, k, phi)
-            if best is None or laid.first[:, k].all():
-                best, weight = d2, w
-            else:
-                fresh = laid.first[:, k][:, None]
-                nearer = fresh | (d2 < best)
-                best, weight = np.where(nearer, d2, best), np.where(nearer, w, weight)
-            if laid.last[:, k].any():
+            rows, d2, w = self._candidate(laid, k, phi)
+            if rows.size:
+                nearer = laid.first[rows, k][:, None] | (d2 < best[rows])
+                best[rows] = np.where(nearer, d2, best[rows])
+                weight[rows] = np.where(nearer, w, weight[rows])
+            ends = np.flatnonzero(laid.last[:, k])
+            if ends.size:
+                value = np.zeros((n, m))
                 with np.errstate(over="ignore", invalid="ignore"):
-                    value = np.where(laid.last[:, k][:, None], weight * np.exp(-best * inv2), 0.0)
-                yield k, np.nan_to_num(value, nan=0.0, posinf=0.0, neginf=0.0)
+                    value[ends] = np.nan_to_num(weight[ends] * np.exp(-best[ends] * inv2[ends, None]), nan=0.0, posinf=0.0, neginf=0.0)
+                yield k, value
 
     # --- a chain's exact mean round a ring: the ring cut into stretches on each of which one feature is nearest -----
 
@@ -1332,9 +1334,17 @@ class ArmPattern:
             out = np.empty(rows.size)
         else:
             out = np.empty((rows.size, upto.shape[1]))
-        for part in range(0, rows.size, _ROWS):
-            stretches = self._stretches(laid, rows[part : part + _ROWS], ends[part : part + _ROWS])
-            out[part : part + _ROWS] = stretches.whole() / TWO_PI if upto is None else stretches.integral_to(upto[part : part + _ROWS])
+        # The runs decomposed in groups of one piece count, :data:`_ROWS` at a time (S60, the cost): a run's
+        # features are its own pieces', so a group carries no padding for a longer run's slots - the same numbers.
+        size = laid.slots.shape[1]
+        starts = np.maximum.accumulate(np.where(laid.first, np.arange(size)[None, :], 0), axis=1)[rows, ends]
+        length = ends - starts
+        for count in np.unique(length):
+            of = np.flatnonzero(length == count)
+            for part in range(0, of.size, _ROWS):
+                pick = of[part : part + _ROWS]
+                stretches = self._stretches(laid, rows[pick], ends[pick])
+                out[pick] = stretches.whole() / TWO_PI if upto is None else stretches.integral_to(upto[pick])
         return out
 
     def _stretches(self, laid: Laid, rows: np.ndarray, ends: np.ndarray) -> "Stretches":
@@ -1404,7 +1414,10 @@ class ArmPattern:
             angles = phi[part]
             total = np.zeros(angles.shape)
             for k, value in self._chains(laid, angles):
-                total = total + (value - laid.mean[:, k, None])
+                # (The rows whose run ends in slot k alone: elsewhere the term is 0 − 0, and a sum that began at
+                # +0 is unchanged by adding +0 - the same bits as adding the whole column.)
+                ends = np.flatnonzero(laid.last[:, k])
+                total[ends] = total[ends] + (value[ends] - laid.mean[ends, k, None])
             out[part] = laid.effective[:, None] * total
         return out
 
