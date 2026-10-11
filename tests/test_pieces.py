@@ -1124,6 +1124,43 @@ def carried_map_folds(gp, per_gap: int = 5) -> tuple[int, int, list[tuple[int, f
     return int(rings.size), continued, folds
 
 
+def clipped_anchor_steps(gp, per_gap: int = 5) -> tuple[int, float, float, float]:
+    """The carried gas's φ-step at every anchor ``_hold_at_neighbours`` moved onto another (#157; the gate's twelfth
+    follow-up, item 2): on the pairs of :func:`carried_map_folds`, the anchors the hold changed that then share their
+    azimuth with another live anchor of the row - a continued anchor clipped onto a held one, or two continued ones
+    met at their mean - where the stretch between the two has no width at the radius but its image on the solved
+    ring has. At each such (radius, azimuth) the gas's ``contrast_at`` is read 1e-9 rad either side. Returns (the
+    clipped anchors, the largest step, its radius kpc, its azimuth rad)."""
+    store = gp._complete()
+    radii, carries = store["radii"], store["carries"]
+    rings, rs = [], []
+    for k in range(radii.size - 1):
+        for t in (np.arange(per_gap) + 0.5) / per_gap:
+            for ring in (k, k + 1):
+                if carries[ring]:
+                    rings.append(ring)
+                    rs.append(radii[k] + t * (radii[k + 1] - radii[k]))
+    rings, rs = np.array(rings, dtype=np.int64), np.array(rs)
+    p = gp.stars.pieces
+    radius = radii[rings]
+    slots = p.slots(radius)
+    live, on_ring, _ = p.geometry(radius, slots)
+    on_line, turns, past = p.along_parts(slots, np.log(rs)[:, None], overshoot=True)
+    key = np.where(live, np.mod(on_line, 2.0 * math.pi), np.inf)
+    moved = np.where(live, on_ring - (on_line + turns), 0.0)
+    held, _ = gm._hold_at_neighbours(key, moved, live, past)  # (the hold copies the rows it changes)
+    shared = (held[:, :, None] == held[:, None, :]).sum(axis=2) >= 2
+    clipped = live & (held != key) & shared
+    i, j = np.nonzero(clipped)
+    if not i.size:
+        return 0, 0.0, 0.0, 0.0
+    at = np.unique(np.stack([rs[i], held[i, j]], axis=1), axis=0)
+    r, a = at[:, 0], at[:, 1]
+    step = np.abs(gp.contrast_at(r, a + 1e-9) - gp.contrast_at(r, a - 1e-9))
+    worst = int(np.argmax(step))
+    return int(at.shape[0]), float(step[worst]), float(r[worst]), float(a[worst])
+
+
 def test_an_anchor_past_a_free_end_is_held_between_its_neighbours_by_hand():
     """The gate's eighth follow-up, item 2, on one row by hand: three anchors round a ring at 1, 2 and 3 rad, the
     middle one continued past its chain's free end. Continued no further than either neighbour: at 2.5 rad it
@@ -1162,8 +1199,14 @@ def test_the_carried_map_never_folds(prod, leg):
     image runs backwards. (Until the eighth follow-up the continued anchors folded on 1-15 pairs a seed of every
     leg but the default galaxy - ``ngc_4414``'s near its centre and its drawn leg's out to 8 kpc, the Milky
     Way's at Norma's turn-back; that record, ``EXPECTED_FOLDS``, is retired with it and kept in D219.) The number
-    of pairs on which an anchor is continued is recorded beside the pairs."""
-    record = []
+    of pairs on which an anchor is continued is recorded beside the pairs.
+
+    **A record, not a bound (#157; the gate's twelfth follow-up, item 2):** where an anchor is clipped onto another
+    the stretch between them has no width at the radius but its image on the solved ring has, so the carried gas
+    steps in phi there - a declared approximation of the carry between solved rings. Per seed, the clipped anchors
+    and the largest step of ``contrast_at`` 1e-9 rad either side of one (:func:`clipped_anchor_steps`), with its
+    radius, are recorded in ``EXPECTED_CARRIED_PHI_STEPS``."""
+    record, steps = [], []
     for seed in (None, 1, 2):
         gm.forget_solutions()
         inputs = {} if leg == "default" else leg_inputs(leg)
@@ -1182,12 +1225,26 @@ def test_the_carried_map_never_folds(prod, leg):
         pairs, continued, folds = carried_map_folds(gp)
         assert not folds, (seed, folds[:6])
         record.append((pairs, continued))
+        clipped, step, at_r, _ = clipped_anchor_steps(gp)
+        steps.append((clipped, round(step, 4), round(at_r, 2)))
     # per seed (pairs, those on which an anchor is continued past its chain's material)
     assert record == EXPECTED_CONTINUED.get(leg), repr(record)
+    # per seed (the clipped anchors, the largest phi-step of the carried gas at one, its radius kpc)
+    assert steps == EXPECTED_CARRIED_PHI_STEPS.get(leg), repr(steps)
 
 
 EXPECTED_CONTINUED: dict = {"milky_way": [(1750, 37), (1830, 44), (1880, 59)], "ngc_4414": [(1575, 195), (1475, 171), (1425, 168)],
                             "ngc_4414 drawn": [(1775, 284), (1885, 289), (1785, 248)], "default": [(1620, 20), (1700, 38), (1770, 28)]}
+EXPECTED_CARRIED_PHI_STEPS: dict = {
+    "milky_way": [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)],
+    "ngc_4414": [(4, 0.0012, 0.06), (9, 0.0057, 0.04), (7, 0.0131, 0.07)],
+    "ngc_4414 drawn": [(13, 0.089, 0.7), (14, 0.0502, 0.68), (18, 0.0506, 2.12)],
+    "default": [(0, 0.0, 0.0), (0, 0.0, 0.0), (0, 0.0, 0.0)],
+}
+# (#157's first record, the twelfth follow-up's reviewer on other seeds and rings: ngc_4414 0.039 at 1.85 kpc seed 6,
+#  the drawn leg 0.0094 at 8.1 kpc, Norma 0.0021, ngc_4414's central rings 0.007. On this test's seeds and pairs the
+#  largest is the drawn leg's 0.089 at 0.70 kpc - a jump, the same at 1e-6 and 1e-12 rad either side - and the
+#  Milky Way's one clipped anchor at Norma's turn-back, 4.46 kpc, steps 0.037 on every seed.)
 # (The eleventh follow-up - the count's floor where a chain reaches, the weights at the law's width - moves the
 # forcing, and so the solved mid-gap rings, again: was milky_way (1330, 39), (1400, 46), (1480, 61); ngc_4414 (1615,
 # 194), (1535, 174), (1445, 168); its drawn leg (1875, 288), (1975, 298), (1845, 251); default (960, 20), (1040, 38),
