@@ -6,11 +6,15 @@ read linearly between knots by the point function, the exact mean kept for the k
 - the interpolant's error |a Σ_j (table − exact)| - the error in the ring's mean contrast - over the three legs
   (``milky_way``, ``ngc_4414``, the default inputs) and five seeds each, at every interval's midpoint and at five
   random points an interval: under 1e-6 at the median and 1e-5 at worst (the ruling's bounds, never raised; the
-  knots are doubled where an interval fails). The build's own rule holds every midpoint under 1e-6, so the median
-  is far under it; the worst is at a random point of a narrow central interval. Measured: medians 0 to 3.6e-7,
-  worst 1.2e-6 (milky_way, default) to 5.7e-6 (ngc_4414 at R ~ 0.045 kpc).
-- the knot count a leg: thousands on a 400-ring grid (milky_way 3 156, ngc_4414 3 829, default 2 250 at seed 0;
-  the grid's rings, the gaps' middles and quarters, the pieces' ends and reach boundaries, then the halvings).
+  knots are doubled where an interval fails). The build's own rule holds every interval's quarters and middle under
+  1e-6, so the median is far under it and the worst, at a random point, barely over it. Measured (seeds 0-4):
+  medians 0 to 2.8e-7; worst 9.97e-7 to 1.22e-6 (milky_way seed 1 at R 6.79, a random point); ngc_4414's worst
+  1.00e-6 to 1.01e-6, the default leg's 9.98e-7 to 1.19e-6.
+- the knot count a leg: thousands on a 400-ring grid - milky_way 3 159 / 10 208 / 3 375 / 4 096 / 3 502, ngc_4414
+  3 847 / 4 578 / 3 768 / 3 906 / 4 999, default 2 256 / 9 862 / 3 117 / 3 180 / 2 874 at seeds 0-4 (the grid's
+  rings, the gaps' middles and quarters, the pieces' ends and reach boundaries, then the halvings; a seed with a
+  joined end that steps the ring's count costs the halvings down to that jump). The intervals at the floor
+  (39-472 a seed; the reach boundaries' adjacent-float pairs and the jumps' last intervals) total under 1e-6 kpc.
 - at a knot the table's bits are the exact mean's bits, so every published field is unchanged by the table.
 - **the one property the table touches**: the point function's mean round a ring at a non-knot radius is 1 to
   the pinned error, not to rounding (I2 holds: the realised totals are conserved from L1 by construction); at a
