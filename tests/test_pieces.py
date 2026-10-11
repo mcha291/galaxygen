@@ -1938,6 +1938,113 @@ EXPECTED_WHOLE_RINGS: dict = {
 #  is a step beside those 13, under the bound.)
 
 
+def ring_numbers(sp, R: np.ndarray) -> np.ndarray:
+    """(N, the bounded width, a Σ_j <E_j>) at each radius, from the exact ``laid``: shaped (3, R)."""
+    laid = sp.laid(R)
+    return np.stack([laid.count, laid.width, laid.effective * laid.mean.sum(axis=1)])
+
+
+def step_class(sp, lo: float, hi: float) -> str:
+    """What stands between two radii a hair apart where a ring's number steps: "first crossing" where no chain
+    crosses the ring on one side (N is 0 there and max(1, Σ w) on the other, the fourth follow-up's B); "same
+    chains" where the same chains cross on both sides (the width bound's branches: the solve of
+    Σ min(w, s_c) = π R sin p has no solution on one side, or the weights sum under 1); else the kind of end each
+    chain that starts or stops crossing has there - "turn-back" (a measured arm's two stretches both ending
+    there), "join", "free end", "birth" (a chain's first piece's free start), or "kink" (a kink of a chain that
+    runs on outward: it does not stop crossing, so this is not expected)."""
+    p = sp.pieces
+
+    def chains(r: float) -> set:
+        return {int(p.chain_of[s]) for s in p.slots(np.array([r]))[0] if s < p.count}
+
+    below, above = chains(lo), chains(hi)
+    if not below or not above:
+        return "first crossing"
+    if below == above:
+        return "same chains"
+    x, kinds = math.log(0.5 * (lo + hi)), set()
+    for c in below ^ above:
+        for i in np.flatnonzero(p.chain == c):
+            for at_start, xe in ((True, p.x_start[i]), (False, p.x_end[i])):
+                if abs(xe - x) > 1e-6:
+                    continue
+                link = p.link_start[i] if at_start else p.link_end[i]
+                if link >= 0:
+                    kinds.add("turn-back" if (not p.link_start_is_end[i] if at_start else p.link_end_is_end[i]) else "kink")
+                elif p.join[i] == (pc.JOIN_INNER if at_start else pc.JOIN_OUTER):
+                    kinds.add("join")
+                else:
+                    kinds.add("birth" if at_start and p.order[i] == 0 else "free end")
+    return "+".join(sorted(kinds)) or "unexplained"
+
+
+@pytest.mark.parametrize("leg", (*LEGS, "default"))
+def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
+    """The gate's ninth follow-up: "the count's weight at a JOINED end falls to zero over one width before the
+    join, as a free end's does ... N, the bounded width, B and the means are then continuous in R everywhere a
+    chain is not born", with "a test that reads N(R), the width and a Σ_j <E_j> on 10 000 radii of each leg and
+    asserts no step over a Lipschitz bound in R".
+
+    On 10 000 radii across the grid, three seeds of each leg and the bare default galaxy, the three numbers from
+    the exact ``laid``; every change between neighbouring radii that stands out of its neighbours' (over four
+    times the larger of the two beside it, and over 1e-9) is halved thirty times along its larger half. **The
+    largest change shrinks when the spacing halves** wherever the number is Lipschitz: a taper's slope is 1/w per
+    kpc along the chain, 1/(w sin p) per kpc of radius, times the amplitude - under 1e4 per kpc for widths over
+    0.05 kpc and pitches over a degree - so across 2^-30 of the spacing (2e-12 kpc on the Milky Way's grid) it
+    moves a number by under 1e-7; **a change over 1e-7 there is a step**, and each is named by (seed, R, its
+    class: :func:`step_class`) with its size in each number.
+
+    **No step at a join** (before the ruling, 30 and more on these runs: N by 1, the width by 0.07-0.68 kpc, a Σ
+    <E> by up to 0.12), at a free end, at a birth on a crossed ring or unexplained. **What remains is recorded, for
+    the lead, not mended** (the ruling's own words leave births; these are three rules this follow-up does not
+    touch): "first crossing" - where a ring is first crossed (the bar's half-length on the barred discs, near the
+    unbarred one's centre) N goes from 0 to max(1, Σ w) and B with it from 0, so a Σ <E> steps by the chains'
+    flanks that reach the ring; "turn-back" - the Milky Way's Norma (#156's class); "same chains" - the width
+    bound's branches, where Σ_c s_c passes π R sin p (no solution on one side: the law's width, or π R sin p under
+    the fourth follow-up's B) and the width jumps to the solution under max s_c."""
+    record = {}
+    for seed in (None, 1, 2):
+        inputs = {} if leg == "default" else leg_inputs(leg)
+        o = run(the_model(prod), inputs if seed is None else {**inputs, "texture_seed": seed}, only=PATTERN)
+        sp = compose.stellar_pattern(o.fields, o.grid.R)
+        R = np.linspace(o.grid.R[0], o.grid.R[-1], 10_000)
+        q = ring_numbers(sp, R)
+        change = np.abs(np.diff(q, axis=1))
+        steps = {}
+        for k in range(3):
+            beside = np.concatenate([[0.0], change[k], [0.0]])
+            idx = np.flatnonzero((change[k] > 1e-9) & (change[k] > 4.0 * np.maximum(beside[:-2], beside[2:])))
+            if not idx.size:
+                continue
+            lo, hi, q_lo, q_hi = R[idx].copy(), R[idx + 1].copy(), q[k, idx].copy(), q[k, idx + 1].copy()
+            for _ in range(30):
+                mid = 0.5 * (lo + hi)
+                q_mid = ring_numbers(sp, mid)[k]
+                left = np.abs(q_mid - q_lo) >= np.abs(q_hi - q_mid)
+                hi, q_hi = np.where(left, mid, hi), np.where(left, q_mid, q_hi)
+                lo, q_lo = np.where(left, lo, mid), np.where(left, q_lo, q_mid)
+            for i in np.flatnonzero(np.abs(q_hi - q_lo) > 1e-7):
+                at = (round(float(lo[i]), 4), step_class(sp, float(lo[i]), float(hi[i])))
+                steps.setdefault(at, [0.0, 0.0, 0.0])[k] = float(abs(q_hi[i] - q_lo[i]))
+        unexpected = [(seed, *at, size) for at, size in steps.items() if at[1] not in ("first crossing", "turn-back", "same chains")]
+        assert not unexpected, unexpected
+        for (_, kind), size in steps.items():
+            n, largest = record.get(kind, (0, 0.0))
+            record[kind] = (n + 1, round(max(largest, size[2]), 3))
+    # by class: (the steps over three seeds, the largest step of a Σ <E> among them)
+    assert record == EXPECTED_R_STEPS.get(leg), repr(record)
+
+
+EXPECTED_R_STEPS: dict = {
+    "milky_way": {"first crossing": (3, 0.023), "turn-back": (3, 0.04)},
+    "ngc_4414": {"same chains": (8, 0.083), "first crossing": (7, 0.243)},
+    "ngc_4414 drawn": {"same chains": (24, 0.325), "first crossing": (19, 0.852)},
+    "default": {"first crossing": (3, 0.335), "same chains": (1, 0.025)},
+}
+# Before the ninth follow-up (the count's weight 1 up to a joined end), the same runs held 30 and more steps at joins
+# besides these, on every leg: N by 1-1.2, the width by 0.07-0.68 kpc, a Σ <E> by up to 0.12.
+
+
 # --- per-region determinism (D60) on the pattern of pieces ---------------------------------------------------------------
 
 
