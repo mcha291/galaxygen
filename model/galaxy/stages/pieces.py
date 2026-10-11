@@ -421,10 +421,11 @@ class Stretches:
             # The two ends, each at its nearest image. **An end is nearest only beyond its own piece's foot** - a
             # point whose foot falls inside the piece is nearer the perpendicular - and beyond the foot of the
             # piece of its chain standing at it, so a kink's end lives in the kink's outside wedge alone: the
-            # end's stretch is cut to those two half-lines (a pruning that changes nothing). A lone piece with
-            # both ends free needs no end at all: its caps weigh nothing and no other feature of the run could
-            # be taken for nearest there.
-            lone = (held.sum(axis=1, keepdims=True) == 1) & (before == 0.0) & (after == 0.0)
+            # end's stretch is cut to those two half-lines (a pruning that changes nothing). A lone piece's two
+            # ends are features like any other (the gate's sixth follow-up, item 3): until S60's fifth pass they
+            # were dropped as weighing nothing, but where the dispersion is large an end at another image is
+            # nearer than the in-image perpendicular and the point function reads taper 0 there - 1.9e-7 in a
+            # chain mean at worst, at R < 0.24 kpc on ngc_4414.
             extent = 2.0 * mid
 
             def half_line(piece, psi_at, phi_img, over, bound):
@@ -445,7 +446,7 @@ class Stretches:
             for which, dx, phi_v, arc in ((0, xj, phi0, np.zeros(T.shape)), (1, x[:, None] - x_end, phi_end, T)):
                 placed = phi_v - TWO_PI * np.floor((phi_v - W0) / TWO_PI)
                 half = np.sqrt(np.maximum(rho2 - dx * dx, 0.0))
-                within = held & ~lone & (dx * dx <= rho2)
+                within = held & (dx * dx <= rho2)
                 gc = np.exp(-(dx * inv[:, None]) ** 2)
                 link = (p.link_start if which == 0 else p.link_end)[pieces]
                 link_at_end = (p.link_start_is_end if which == 0 else p.link_end_is_end)[pieces]
