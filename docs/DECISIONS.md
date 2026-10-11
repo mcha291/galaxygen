@@ -11304,3 +11304,35 @@ legs bit-identical to 391af07 after every change. Every moved pin is listed in t
 3. **"Turn-back" - Norma, 3 steps, largest 0.04:** #156's class seen in R; recorded, carried.
 After these two the arm-pieces model is final for this session: the reviewer's third pass runs over 391af07..head,
 then every layer-on pin is re-read once.
+
+**The gate's eleventh follow-up (Fable, 2026-10-11): the tenth's two diagnoses were wrong, the builder stopped
+before building them, and the mechanisms it measured are ruled instead.** The builder's reading, which stands: (1) an
+end at the floor already IS a free end - the default galaxy's bar-end chain has `before` = `before_end` = 0 and its
+arms field reads -0.200, -0.178, -0.088, +0.127, +0.209 at 0, 0.1, 0.3, 0.6 and 1.0 kpc along the chain (the trough
+-a<E> at the start, the height rising over one width); the Milky Way's "first crossing" at 3.5703 kpc is Norma's
+measured inner end. **What steps is `ArmPattern._reach`'s rule "a ring with no amplitude holds no arm whatever is
+near it": on a ring no chain crosses N = 0, so B = 0 and nothing is read, although the starting chains' ridges (a
+dispersion of about 0.6 kpc in the plane) reach that ring - and the ring cuts the inclined piece obliquely, so along
+the ring the foot runs up the piece and the ridge stands near full height a little way from the start; one part in
+1e9 outside, N = max(1, Sum w) = 1 and B and every chain's mean jump** (default: B 0 -> 0.570, Sum <E> 0 -> 0.352,
+the field by 0.33; the Milky Way 0 -> 0.173, 0 -> 0.133, 0.12). Tapering the ends cannot remove it. (2) The tenth's
+condition for the width bound gives the same width as the present code on every ring (built, run on the twelve
+runs, identical, reverted): the jump is where every crossing chain is inside its taper - as Sum_c s_c passes
+pi R sin p the largest admissible width with N read at the width itself goes from unbounded to max s_c (default
+seed 0 at 5.3988 kpc: s_c = 0.39, 1.16, 1.06, 0.73, 0.62 kpc, the law 1.417, pi R sin p 3.970; the width 1.417 ->
+1.162). Any rule w <= pi R sin p / N(w) with N read at w is discontinuous there.
+
+**Ruled, the builder's two candidates:**
+1. **The count's floor applies on every ring any chain is within reach of, not only on rings a chain crosses:** N =
+   max(1, Sum w) wherever `_reach` finds a piece within REACH dispersions, so B is continuous at a first crossing and
+   the switch moves to the reach boundary, where a ridge is under e^{-81/2} - rounding. The fourth follow-up B's
+   words "on a ring crossed by any chain" become "on a ring any chain reaches". Inside the bar's half-length the
+   bar-end chains' inner flanks are then read with the budget's own bar taper, continuously.
+2. **The taper length is the law's width, and the count's weights are read there:** N = Sum_c min(1, s_c / law),
+   the bounded width w = min(law, pi R sin p / N) - no fixed point - and the height's taper over the same law's
+   width; the bounded width governs the ridge's cross-section alone (sigma_d and the Gaussian), as the first
+   follow-up's item 3 meant it ("a bound, not a target"). This supersedes the second follow-up's item 3 "one equation
+   for the two" (the self-consistent solve was the jump). N and w are continuous in R wherever a chain is in reach.
+Both asserted by the R test on all four legs, the "first crossing" and "same chains" classes gone from its
+exemptions; the turn-back class recorded. The phi whole-ring test and the table's record are re-read. Then the model
+is final.
