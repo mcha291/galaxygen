@@ -59,7 +59,6 @@ def test_a_clusters_light_is_its_mass_times_the_tables_at_its_age(coarse):
     assert np.median(T[age < 4]) > np.median(T[age > 15])
 
 
-@pytest.mark.xfail(strict=True, reason="S60 (D219): layer-on numbers await the re-pin after the fourth model pass")
 def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_light(coarse):
     """D191 (#114, #115). A point's channel is L_bol x a blackbody's share at T_cct (P1, the stars' convention; P6
     makes the share explicit); the population's own eight-band SED through the same curve is what V1 draws the field
@@ -93,7 +92,9 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     # S59 (D218): was 0.2523 - the arms' winding is laid in seeded segments, so the gas is turned round each ring and
     # the clouds fall in other cells: another draw of the coarse grid's census again (+4.8 % on S58's reading,
     # 0.2489, which sat inside this pin's 2 %; 1.1 of the same spread). disc_luminosity has not moved, to the bit.
-    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2608, rel=2e-2)
+    # S60 (D219): the arms are a census of arm pieces, so the clouds fall in other cells again: 0.2531 on the final
+    # model (S60 fourth pass: was 0.2608; -3.0 %, inside the same spread).
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2531, rel=2e-2)
     dissolved = state == 2
     assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
 
