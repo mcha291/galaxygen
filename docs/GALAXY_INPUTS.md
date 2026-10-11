@@ -3953,8 +3953,9 @@ never been judged in twenty-three sessions.
    follow-up). Past a free end a chain's anchor is held between its neighbours' so the carried azimuth map is
    monotone (the eighth follow-up); where it is clipped onto a neighbour the two anchors share an azimuth but their
    images on the solved ring differ, so the stretch between the images has no width there and the carried profile
-   steps: `contrast_at` by 0.039 at worst (`ngc_4414` seed 6 at 1.85 kpc), 0.0094 on its drawn leg at 8.1 kpc,
-   0.0021 at Norma; the star formation contrast the same; continuous in r, the ring mean exact. **Carried.** Inside
+   steps: `contrast_at` by 0.089 at worst as the test records it (`ngc_4414`'s drawn leg at 0.7 kpc; 0.05 on its
+   other seeds; 0.0377 at Norma's turn-back; 0.001-0.013 on `ngc_4414`'s central rings; none on the default galaxy -
+   `EXPECTED_CARRIED_PHI_STEPS`; the reviewer read 0.039 at 1.85 kpc on seed 6); the star formation contrast the same; continuous in r, the ring mean exact. **Carried.** Inside
    the carry's own declaration (its misplaced weight is pinned up to 8 %; the mid-gap rings exist because the carry
    is approximate); the stellar field is untouched. The mend is named: the two anchors never closer than a fraction
    of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
