@@ -120,7 +120,9 @@ quadrature.
 
 from __future__ import annotations
 
+import hashlib
 import math
+import threading
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field, fields
 from typing import Any
@@ -549,6 +551,16 @@ _ELEMENTS = 500_000
 # :meth:`ArmPattern.laid` keeps its answer for a request of at most this many radii, the last this many requests.
 _MEMO_RADII = 4096
 _MEMO_KEPT = 8
+# The normaliser table (the gate's seventh follow-up to D219): a chain's ring mean <E_j>(R) tabulated in R and read
+# linearly between knots by the point function. The knots are refined by halving until the interpolant's error at an
+# interval's midpoint - |a Σ_j (table − exact)|, the error in the ring's mean contrast - is under TABLE_TOLERANCE on
+# every interval that can still be halved; the tolerance is never raised, the knots are doubled (D216's words).
+TABLE_TOLERANCE = 1e-6
+TABLE_ROUNDS = 24       # halvings at most: an interval of the grid's spacing halved 24 times is under its rounding
+_TABLE_DENSE = 4096     # radii at which a piece's reach is probed for its boundaries before they are bisected
+_TABLES_KEPT = 8        # how many patterns' tables the content-keyed store holds
+_TABLES: dict[bytes, tuple[np.ndarray, np.ndarray]] = {}
+_TABLES_LOCK = threading.Lock()
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -1020,6 +1032,7 @@ class ArmPattern:
     _untapered: np.ndarray = field(init=False, repr=False)  # (R,): the budget with the bar's taper taken back out
     _depth: np.ndarray = field(init=False, repr=False)      # (R,): the body's depth under each grid ring's mean, made once
     _laid: dict = field(default_factory=dict, init=False, repr=False)  # :meth:`laid` by the radii asked (S60, the cost)
+    _table: tuple | None = field(default=None, init=False, repr=False)  # the normaliser table (knots, means), made once
 
     def __post_init__(self) -> None:
         for name in ("R", "budget", "design", "width"):
@@ -1263,9 +1276,17 @@ class ArmPattern:
         with np.errstate(divide="ignore", invalid="ignore"):
             return design_dispersion(R, self.width_at(R), self.pitch_deg)
 
-    def laid(self, R: np.ndarray) -> Laid:
+    def laid(self, R: np.ndarray, exact: bool = True) -> Laid:
         """Everything the arms' sum reads at each radius of ``R`` (n,): the ring's numbers, the pieces within
-        reach, their runs by chain, and each chain's exact mean round the ring (the module's docstring).
+        reach, their runs by chain, and each chain's mean round the ring (the module's docstring) - **the exact
+        mean** (:class:`Stretches`) with ``exact``, as every published field, the gas's forcing and the saturation
+        read it; **the normaliser table's** (:meth:`ring_mean_table`, the gate's seventh follow-up to D219) with
+        ``exact=False``, as the point function reads it at a star's radius. At a knot of the table the two are the
+        same bits; between knots the table is linear in R, its error pinned in ``tests/test_ring_mean_table.py``.
+        The effective amplitude a(R) - the saturation's cut, which reads Σ_j <E_j> - follows the same source as the
+        means it is cut against: the table in a table-read ``Laid`` (so the point function's normaliser and its
+        amplitude are one consistent pair), the exact means everywhere else; the cut does not fire on the
+        templates' default seeds, so the two agree there.
 
         **A radius' row is the radius' own** (S60, the cost): a radius asked twice in one call is made once and
         its row copied (:func:`numpy.unique`), and a small request - at most :data:`_MEMO_RADII` radii, the grid's
@@ -1273,7 +1294,7 @@ class ArmPattern:
         field, the ring power, the gas's forcing and the saturation read one decomposition of the grid, not four.
         The arrays of a kept ``Laid`` are shared between callers and are read, never written."""
         R = np.asarray(R, dtype=float)
-        key = R.tobytes() if R.ndim == 1 and R.size <= _MEMO_RADII else None
+        key = (bool(exact), R.tobytes()) if R.ndim == 1 and R.size <= _MEMO_RADII else None
         if key is not None:
             held = self._laid.get(key)
             if held is not None:
@@ -1281,27 +1302,25 @@ class ArmPattern:
         if R.ndim == 1 and R.size > 1 and not np.isnan(R).any():
             distinct, inverse = np.unique(R, return_inverse=True)
             if distinct.size < R.size:
-                made = self._laid_distinct(distinct)
+                made = self._laid_distinct(distinct, exact)
                 out = Laid(*(getattr(made, f.name)[inverse] for f in fields(Laid)))
             else:
-                out = self._laid_distinct(R)
+                out = self._laid_distinct(R, exact)
         else:
-            out = self._laid_distinct(R)
+            out = self._laid_distinct(R, exact)
         if key is not None:
             while len(self._laid) >= _MEMO_KEPT:
                 del self._laid[next(iter(self._laid))]
             self._laid[key] = out
         return out
 
-    def _laid_distinct(self, R: np.ndarray) -> Laid:
-        """:meth:`laid` made: every row computed, nothing looked up."""
+    def _reach(self, R: np.ndarray) -> tuple[np.ndarray, ...]:
+        """The ring's numbers at each radius of ``R`` (n,) and which pieces are within reach of it:
+        ``(width, count, amplitude, x, sigma, past, reach)`` - ``past`` (n, census) the distance in ln R past a
+        piece's nearer end (0 where the ring crosses it), ``reach`` (n, census) whether the piece is within
+        :data:`REACH` dispersions. The one arithmetic :meth:`laid` and the table's knot finder share."""
         p = self.pieces
-        n, census = R.size, p.count
-        if not self.R.size or not census:
-            none = np.zeros(n)
-            empty = np.zeros((n, 1), dtype=bool)
-            return Laid(R, self.law_width_at(R) if self.R.size else none, none, none, none, np.ones(n), np.ones(n),
-                        np.full((n, 1), census, dtype=np.int64), empty, np.zeros((n, 1)), np.zeros((n, 1)), empty, empty, empty)
+        census = p.count
         width, count = self.ring_state(R)
         with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
             sigma_design = design_dispersion(R, width, self.pitch_deg)
@@ -1314,6 +1333,18 @@ class ArmPattern:
             past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, :census], -from_start), 0.0)
             # (A ring with no amplitude - no budget, no count - holds no arm whatever is near it: nothing is read.)
             reach = (past <= REACH * sigma[:, None]) & ((R > 0.0) & (amplitude > 0.0))[:, None] & (p.extent > 0.0)[None, :]
+        return width, count, amplitude, x, sigma, past, reach
+
+    def _laid_distinct(self, R: np.ndarray, exact: bool = True) -> Laid:
+        """:meth:`laid` made: every row computed (the means exact, or read from the table with ``exact`` False)."""
+        p = self.pieces
+        n, census = R.size, p.count
+        if not self.R.size or not census:
+            none = np.zeros(n)
+            empty = np.zeros((n, 1), dtype=bool)
+            return Laid(R, self.law_width_at(R) if self.R.size else none, none, none, none, np.ones(n), np.ones(n),
+                        np.full((n, 1), census, dtype=np.int64), empty, np.zeros((n, 1)), np.zeros((n, 1)), empty, empty, empty)
+        width, count, amplitude, x, sigma, past, reach = self._reach(R)
         rows, columns = np.nonzero(reach)
         held = reach.sum(axis=1)
         slots = np.full((n, max(int(held.max(initial=0)), 1)), census, dtype=np.int64)
@@ -1338,13 +1369,141 @@ class ArmPattern:
         lead = run_argmin(nearness, first, last)
         mean = np.zeros(slots.shape)
         if live.any():
-            mean[last] = self._chain_means(Laid(R, width, count, amplitude, amplitude, inv, taper, slots, live, relative, mean, first, last, lead))
+            if exact:
+                mean[last] = self._chain_means(Laid(R, width, count, amplitude, amplitude, inv, taper, slots, live, relative, mean, first, last, lead))
+            else:
+                at_rows = np.nonzero(last)[0]
+                mean[last] = self._table_means(R[at_rows], p.chain_of[slots[last]].astype(np.int64))
         room = 1.0 - self.depth_at(R)
         deep = sum_slots(mean)
         with np.errstate(over="ignore", invalid="ignore"):
             cut = amplitude * deep > room
             effective = np.where(cut, room / np.where(cut, deep, 1.0) * CUT_IN_DOUBLES, amplitude)
         return Laid(R, width, count, amplitude, effective, inv, taper, slots, live, relative, mean, first, last, lead)
+
+    # --- the normaliser table: each chain's ring mean tabulated in R (the gate's seventh follow-up) -----------
+
+    def _digest(self) -> bytes:
+        """The pattern by content: what the table is a function of."""
+        p = self.pieces
+        h = hashlib.sha256()
+        for a in (self.R, self.budget, self.design, self.width, p.chain, p.order, p.start_radius, p.start_azimuth,
+                  p.pitch_deg, p.extent, p.pinned, p.join, p.sense, self.surface_density if self.surface_density is not None else np.zeros(0)):
+            h.update(np.ascontiguousarray(a, dtype=float).tobytes())
+            h.update(b"|")
+        h.update(repr((self.bar, self.pitch_deg, self.bar_length, self.axis_ratio, self.boxiness, self.index, self.share, p.turn, REACH, TABLE_TOLERANCE)).encode())
+        return h.digest()
+
+    def ring_mean_table(self) -> tuple[np.ndarray, np.ndarray]:
+        """The normaliser table ``(knots, means)``: ``knots`` (K,) ascending radii, ``means`` (K, chains) each
+        chain's **exact** ring mean <E_j> at each knot (0 where the chain has no piece within reach), read linearly
+        between knots by :meth:`laid` with ``exact=False`` and held at the end values beyond them.
+
+        **The knots** (the ruling): every grid radius; every mid-gap ring the gas may solve (the gaps' middles and
+        quarters, by the gas pattern's own arithmetic); every radius at which a piece ends (its two ends in R) or
+        a chain's set of pieces within reach changes (the reach's boundaries, found by bisection of
+        :meth:`_reach`); then refined by halving every interval whose midpoint error |a Σ_j (table − exact)| is
+        over :data:`TABLE_TOLERANCE`, the midpoints' exact means joining the table, until none is. Made once per
+        pattern and kept by content (:data:`_TABLES`); read-only arrays."""
+        if self._table is None:
+            key = self._digest()
+            with _TABLES_LOCK:
+                held = _TABLES.get(key)
+            if held is None:
+                held = self._build_table()
+                for a in held:
+                    a.setflags(write=False)
+                with _TABLES_LOCK:
+                    _TABLES.pop(key, None)
+                    _TABLES[key] = held
+                    while len(_TABLES) > _TABLES_KEPT:
+                        del _TABLES[next(iter(_TABLES))]
+            object.__setattr__(self, "_table", held)
+        return self._table
+
+    def _chains_count(self) -> int:
+        p = self.pieces
+        return int(np.nanmax(p.chain_of[: p.count])) + 1 if p.count else 0
+
+    def _means_matrix(self, laid: Laid, chains: int) -> np.ndarray:
+        """``laid``'s means as (radii, chains): each run's mean in its chain's column, 0 where a chain has no run."""
+        out = np.zeros((laid.R.size, chains))
+        rows, k = np.nonzero(laid.last)
+        out[rows, self.pieces.chain_of[laid.slots[rows, k]].astype(np.int64)] = laid.mean[rows, k]
+        return out
+
+    def _reach_boundaries(self) -> np.ndarray:
+        """The radii at which some piece comes within reach or leaves it: :meth:`_reach` probed on
+        :data:`_TABLE_DENSE` radii between the grid's ends, each change of state bisected to adjacent floats."""
+        R = self.R
+        top = float(R[-1])
+        dense = np.geomspace(max(float(R[0]), top * 1e-4), top, _TABLE_DENSE)
+        reach = self._reach(dense)[-1]
+        i, j = np.nonzero(reach[1:] != reach[:-1])
+        if not i.size:
+            return np.zeros(0)
+        lo, hi, state = dense[i], dense[i + 1], reach[i, j]
+        for _ in range(64):
+            mid = 0.5 * (lo + hi)
+            same = self._reach(mid)[-1][np.arange(mid.size), j] == state
+            lo, hi = np.where(same, mid, lo), np.where(same, hi, mid)
+        return np.unique(np.concatenate([lo, hi]))
+
+    def _build_table(self) -> tuple[np.ndarray, np.ndarray]:
+        p = self.pieces
+        census, chains = p.count, self._chains_count()
+        R = self.R
+        if not R.size or not census or not chains:
+            return np.zeros(0), np.zeros((0, max(chains, 1)))
+        mids = 0.5 * (R[:-1] + R[1:])
+        ends = np.concatenate([p.x_start[:census], p.x_end[:census]])
+        parts = [R, mids, 0.5 * (R[:-1] + mids), 0.5 * (mids + R[1:]), np.exp(ends[np.isfinite(ends)]), self._reach_boundaries()]
+        knots = np.unique(np.concatenate(parts))
+        knots = knots[np.isfinite(knots) & (knots > 0.0) & (knots <= R[-1])]
+        means = self._means_matrix(self._laid_distinct(knots), chains)
+        # Every interval is checked at its midpoint once; an interval that passes keeps its two knots and is not
+        # checked again, the two halves of one that fails are checked in the next round.
+        fresh = np.ones(knots.size - 1, dtype=bool)
+        for _ in range(TABLE_ROUNDS):
+            at = np.flatnonzero(fresh & ((knots[1:] - knots[:-1]) > 4.0 * np.spacing(knots[1:])))
+            if not at.size:
+                break
+            mid = 0.5 * (knots[at] + knots[at + 1])
+            at_mid = self._laid_distinct(mid)
+            exact = self._means_matrix(at_mid, chains)
+            table = means[at] + 0.5 * (means[at + 1] - means[at])
+            with np.errstate(invalid="ignore", over="ignore"):
+                error = np.abs(at_mid.effective * (table - exact).sum(axis=1))
+            bad = error > TABLE_TOLERANCE
+            if not bad.any():
+                break
+            split = at[bad]
+            knots = np.concatenate([knots, mid[bad]])
+            means = np.concatenate([means, exact[bad]])
+            # The intervals after the split: the two halves of each split one are fresh, every other one is not.
+            # An interval is named by the knot that begins it: the old knot that began a split interval begins its
+            # left half, the new midpoint its right half, the last old knot begins none.
+            was_split = np.zeros(fresh.size, dtype=bool)
+            was_split[split] = True
+            begins = np.concatenate([was_split, [False], np.ones(split.size, dtype=bool)])
+            order = np.argsort(knots, kind="stable")
+            knots, means = knots[order], means[order]
+            fresh = begins[order][:-1]
+        return knots, means
+
+    def _table_means(self, R: np.ndarray, chains: np.ndarray) -> np.ndarray:
+        """The table read at each radius of ``R`` (m,) for the chain in ``chains`` (m,): linear between the two
+        knots the radius lies between, the knot's own bits at a knot, the end value held beyond the ends."""
+        knots, means = self.ring_mean_table()
+        if knots.size == 0:
+            return np.zeros(R.shape)
+        if knots.size == 1:
+            return means[0, chains]
+        i = np.clip(np.searchsorted(knots, R, side="right") - 1, 0, knots.size - 2)
+        with np.errstate(invalid="ignore"):
+            t = np.clip((R - knots[i]) / (knots[i + 1] - knots[i]), 0.0, 1.0)
+        m0, m1 = means[i, chains], means[i + 1, chains]
+        return np.where(t == 1.0, m1, m0 + t * (m1 - m0))
 
     # --- a chain at a point: the Gaussian of the distance to its polyline -------------------------------
 
@@ -1512,7 +1671,7 @@ class ArmPattern:
         if self.flat or not self.pieces.count or not self.budget.any():
             return out
         for part in self._batches(radii.size, phi.shape[1]):
-            laid = self.laid(radii[part])
+            laid = self.laid(radii[part], exact=False)  # the point function reads the normaliser table
             angles = phi[part]
             total = np.zeros(angles.shape)
             for k, value in self._chains(laid, angles):
