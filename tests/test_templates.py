@@ -44,12 +44,13 @@ from galaxy.api import wire
 from galaxy.api.service import RESERVED, Service, routes
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import INPUTS, MergerEvent, controls, seeds
+from galaxy.layer import compose
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.models.level0 import LEVEL0
 from galaxy.run import run
 from galaxy.specs import Problem
 from galaxy.specs import templates as checks
-from galaxy.stages import spectra
+from galaxy.stages import clouds, gas_pattern, spectra, systems
 
 ROOT = Path(__file__).resolve().parents[1]
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
@@ -450,6 +451,29 @@ def test_every_route_that_takes_inputs_takes_a_template():
     assert source.count("self._overrides(model, q)") == len(INPUT_ROUTES)
 
 
+_TILING: dict = {}
+
+
+def tiling_error(inputs: dict) -> tuple[float, float]:
+    """(eps, the total) on the SMALL grid with the layer on, for the request whose inputs are ``inputs``: eps the
+    largest |mean over a ring's sectors of the gas's sector means - 1| over the cell rings (the tiling error of
+    ``clouds.expected_counts``' weights, read as that function reads them), the total ``cloud_count_total``."""
+    key = repr(sorted(inputs.items()))
+    if key not in _TILING:
+        api = Service(grid=SMALL)
+        model = api.models.get(DEFAULT_MODEL)
+        constants = {k: c.value for k, c in model.constants.items()}
+        accepted = set(model.input_names(api.table))
+        o = run(model, {k: v for k, v in inputs.items() if k in accepted}, SMALL,
+                only=("gas_molecular_surface_density", *gas_pattern.GAS_PATTERN_READS))
+        R = o.grid.R
+        rings, sectors = clouds.cell_edges(R)
+        gp = compose.gas_pattern(o.fields, R, constants)
+        w = np.array([gp.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(systems.CELL_RINGS)])
+        _TILING[key] = (float(np.abs(w.mean(axis=1) - 1.0).max()), float(clouds.expected_counts(o.fields, R, constants).sum()))
+    return _TILING[key]
+
+
 @pytest.mark.parametrize("route, query", [
     ("/api/arrays", "fields=stellar_surface_density,stellar_mass_total"),
     ("/api/clouds", SECTOR),
@@ -504,7 +528,24 @@ def test_naming_the_default_template_is_naming_none(route, query, layer):
         for name, value in bare_head.get("scalars", {}).items():
             other = named_head["scalars"][name]
             if value != other:
-                assert name == "cloud_count_total" and abs(value - other) <= 4.0 * float(np.spacing(max(abs(value), abs(other)))), name
+                # S60 (the gate's twelfth follow-up, item 5): was `<= 4 ulp`, which held by luck - each pattern has
+                # its own deterministic residue (bare +1 ulp, named -5 against layer off). Now DERIVED:
+                # cloud_count_total = sum_r (C_r / S) sum_s w_rs (clouds.expected_counts), C_r the ring's expected
+                # count - the same for both requests, the layer moves no ring total - and w_rs the gas's sector
+                # means, which tile each ring to 1 within eps: |mean_s w_rs - 1| <= eps (``_carried_mean``'s
+                # rounding). So each total is sum_r C_r (1 + delta_r), |delta_r| <= eps, and the two differ by at
+                # most (eps_bare + eps_named) * total from the tiling; plus each total's own rounding - three
+                # roundings a cell term and a sum of K = CELL_COUNT terms, under (K + 2) u * total a run (the
+                # recursive summation's bound, which numpy's pairwise sum never exceeds), u = 2^-53. eps is
+                # measured here on each request's own pattern; nothing is widened by hand. (Measured on the
+                # Milky Way at SMALL: eps 4.4e-15 / 4.0e-15, the totals 1.09e-11 apart, the bound 3.8e-9.)
+                assert name == "cloud_count_total", name
+                eps = {k: tiling_error(inputs) for k, inputs in (("bare", {}), ("named", templates.overrides(templates.TEMPLATES["milky_way"])))}
+                assert eps["bare"][1] == value and eps["named"][1] == other  # the header's totals, reproduced to the bit
+                total = max(abs(value), abs(other))
+                u = 2.0 ** -53
+                bound = (eps["bare"][0] + eps["named"][0]) * total + 2.0 * (systems.CELL_COUNT + 2) * u * total
+                assert abs(value - other) <= bound, (value, other, eps, bound)
     # ... and cold against cold, on a second service: the same bytes as the first named request's.
     cold = Service(grid=SMALL).handle(route, "template=milky_way&" + query + layer)
     assert cold.stages == bare.stages and cold.body == named.body
