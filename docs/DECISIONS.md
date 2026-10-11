@@ -11493,8 +11493,9 @@ bar's half-length is unread.
 **#155** (the budget's ensemble: realised power 45–80 % of the law's on the median ring, the maxima at the pins and
 joins and at the bar's ends), **#156** (a chain's excess jumps at a kink within one law width of a free end),
 **#157** (the carried gas steps in φ where a clipped anchor meets a held one). Next number **#158**. The gate's words
-on #150 ("discharged"), #151 ("closed"), #142 (the floor "retires as physics") and #154 (its text amended) are not
-yet entered in the register, which carries all four as it did at S59; the count above is the register's.
+on #150 ("discharged") and #151 ("closed") are entered at the close (struck through at S60; the register's
+count is then 92 open = 11 permanent + 81 carried, 48 discharged); #142's floor and #154's text stay as they were (the
+floor is the owner's; #154's cheaper normaliser form is now the table, which its entry may say at S61).
 
 **The acceptance rows** are judged layer-off and did not move: 12 pass / 20 fail / 5 not-yet-computable of 37, row
 35 −2.08124, row 37 −0.102973 (a miss, #117). With the layer on, for the record and not judged (I3), `tests/

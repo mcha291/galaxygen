@@ -693,10 +693,11 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
+| **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157 | 83 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157 | 81 |
 
-So the board's **94 open** is 11 permanent and 83 carried, and no item is unruled. (S22
+So the board's **92 open** is 11 permanent and 81 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3837,7 +3838,8 @@ never been judged in twenty-three sessions.
    miss), and the six-armed mode's radial wavelength is 10–70 pc inside 0.3 kpc against a 75 pc ring step.
    **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
    sourced inner cut-off for arm modes in unbarred discs.
-150. **An arm's segments are kinks of one winding, on common rings for every arm and every mode** (S59, D218
+150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
+   S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
    share a radius `[verified: Honig & Reid 2015; Díaz-García et al. 2019; docs/READING_ARM_SEGMENTS.md]`; the
    model's modes share one winding Φ(R), so a segment is a radial piece of it: synthetic on `texture_seed`,
@@ -3854,7 +3856,9 @@ never been judged in twenty-three sessions.
    of 1000 in net turn** (511.7° from 3 to 12 kpc against the law's 329.9°, eight segments) and was not re-seeded.
    **Carried.** What closes it: a representation with a ridge per arm (#152), or a source for kinks' radii across
    a galaxy's arms.
-151. **The gas answers each ring at the disc's mean pitch, not the segment's** (S59, D218 item 4). The gas law's
+151. ~~**The gas answers each ring at the disc's mean pitch, not the segment's**~~ **DISCHARGED at S60** (D219 item 5
+   and the third follow-up: each piece's term carries its own |sin p_j| with the thickness factor, the form regular
+   through sin p = 0; the disc's pitch stays in epsilon alone). Was: (S59, D218 item 4). The gas law's
    two numbers go as 1/sin p (ε = a/(κR sin p), f_m = m A_m/(X sin p)); on a segment of pitch p_seg the potential
    is the right shape with the wrong normal wavenumber, ε and f off by sin p/sin p_seg `[inferred]`. Geometry
    only was ruled because the local pitch crosses zero on a reversed segment and a tenth of segments would sit in
