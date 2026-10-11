@@ -1831,19 +1831,42 @@ EXPECTED_CONTINUITY: dict = {"milky_way": (40, 4, 0.05, 0.5, {(0, 4.46): (24.5, 
 # was not within a width of a free end; A took that continuation away (the end lies inside the bar's half-length)
 
 
-def turn_backs_near_a_free_end(sp, p: pc.Pieces) -> list[tuple[float, float, float]]:
-    """The kinks of #156's class, as :func:`test_no_square_edge_across_any_kink_or_join` finds them: a measured
-    arm's two stretches both ending at the kink (the chain turns back in radius) within one width of the chain's
-    free end - (radius, azimuth, width there) of each."""
+def kink_wedges_near_a_free_end(sp, p: pc.Pieces) -> list[tuple[float, float, tuple[float, float], tuple[float, float], float, float]]:
+    """The kinks of #156's class as the gate's eighth follow-up words it - "every kink within one width of a free
+    end, forward or turned back, drawn or pinned" - each as (ln R, azimuth of the kink, the unit direction from it
+    back along the piece that ends there, the unit direction from it along the other piece, the kink's radius
+    kpc, the width there kpc), in the plane of ln R and azimuth in which the pieces are straight. "Within one
+    width of a free end": the chain's length from the kink to its nearer free end, times the radius, under the
+    width (an end joined to another chain is not free)."""
     out = []
-    for x_v, phi_v, ended, _, kind in vertices_of(p):
-        if kind != "kink" or ended < 0 or not bool(p.link_end_is_end[ended]) or not bool(p.pinned[ended]):
+    for x_v, phi_v, ended, started, kind in vertices_of(p):
+        if kind != "kink":
             continue
         r_v = math.exp(x_v)
         w_v = float(sp.width_at(np.array([r_v]))[0])
-        if min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < w_v:
-            out.append((r_v, phi_v, w_v))
+        if not min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < w_v:
+            continue
+        back = (float(p.x_start[ended] - p.x_end[ended]), float(p.phi_start[ended] - p.phi_end[ended]))
+        if p.link_end_is_end[ended]:  # a turn back in radius: the other piece's end stands at the kink too
+            on = (float(p.x_start[started] - p.x_end[started]), float(p.phi_start[started] - p.phi_end[started]))
+        else:
+            on = (float(p.x_end[started] - p.x_start[started]), float(p.phi_end[started] - p.phi_start[started]))
+        if math.hypot(*back) == 0.0 or math.hypot(*on) == 0.0:
+            continue
+        out.append((x_v, phi_v, tuple(np.divide(back, math.hypot(*back))), tuple(np.divide(on, math.hypot(*on))), r_v, w_v))
     return out
+
+
+def inside_a_kink_wedge(wedge, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+    """Whether each point (R kpc, φ rad; broadcast) lies inside the kink's wedge - between the two pieces' directions
+    from the kink, on the side of the smaller angle - and within one width of the kink, in the plane of ln R and
+    azimuth (the distance times the kink's radius)."""
+    x_v, phi_v, (ax, ay), (bx, by), r_v, w_v = wedge
+    vx, vy = np.log(R) - x_v, np.remainder(phi - phi_v + math.pi, 2.0 * math.pi) - math.pi
+    turn = ax * by - ay * bx
+    if turn == 0.0:
+        return np.zeros(np.broadcast_shapes(np.shape(vx), np.shape(vy)), dtype=bool)
+    return ((ax * vy - ay * vx) * turn >= 0.0) & ((vx * by - vy * bx) * turn >= 0.0) & (np.hypot(vx, vy) * r_v < w_v)
 
 
 WHOLE_RING_AZIMUTHS = 8192
@@ -1853,29 +1876,26 @@ WHOLE_RING_AZIMUTHS = 8192
 def test_no_step_round_any_whole_ring(prod, leg):
     """The gate's sixth follow-up, item 1: "The continuity test is widened as the reviewer probed: whole rings
     (every grid ring and midpoint, 8 192 azimuths) on at least five seeds of each leg, every step over the
-    Lipschitz bound named by (seed, R, phi), the one exemption the pinned end-to-end turn-back within a width of a
-    free end (#156)." On every grid ring and every midpoint between two, at 8 192 azimuths round the whole turn
-    (the last sample the first a turn on), the pieces' field ``arms_at`` changes between neighbours by no more
-    than the bound of :func:`test_no_square_edge_across_any_kink_or_join` - amplitude times the chains crossing
-    times (1/w + 1/(σ√e)), per kpc along the ring - times the step R Δφ; on five seeds of the three legs and the
-    bare default galaxy. **A step over it is exempt only within one width (in the plane) of a measured turn-back
-    kink within a width of a free end** (:func:`turn_backs_near_a_free_end`: the Milky Way's Norma, at 4.46 kpc);
-    each exempt step is named by (seed, R, φ, size) in the record, and the drawn pitch's hairpins the reviewer
-    found (steps of 0.19-0.58 on the Milky Way's seeds, and on 3 of 10 default galaxies) are gone with the drawn
-    pitch's cut at zero.
+    Lipschitz bound named by (seed, R, phi)"; and its eighth, item 1: "#156's class is every kink within one width
+    of a free end, forward or turned back, drawn or pinned ... The whole-ring test exempts a step only where its
+    azimuth lies inside a kink's wedge within one width of that chain's free end (checked geometrically, not by
+    size), records each exempted step by (leg, seed, R, phi, size), and asserts every other step under the bound."
 
-    As read on the fifth pass: Norma's steps are 7-18 a seed, at most 0.018, on the rings 3.6-4.24 kpc below the
-    kink - the bisector's jump of the fourth pass's record (at this spacing about the bound, where the fourth
-    pass's ten-thousandth of a width read it as 24.5 times). Away from it every step is under 0.11 of the bound on
-    every seed of ``ngc_4414``, its drawn leg and the default galaxy. **It FAILS on the Milky Way's seed 1, by the
-    ruling's words, and is left failing for the lead**: 13 steps of 0.039-0.055 (1.0-1.22 of the bound) on the
-    rings 4.65-5.1 kpc at azimuth -1.33 to -1.36 rad, 0.4-0.87 kpc from a forward kink of two drawn pieces at
-    5.48 kpc - chain 2's first piece (29.3 degrees, 0.56 kpc long, its start the chain's free end) into its second
-    (5.5 degrees): the same mechanism as Norma's (inside the kink's wedge the foot's arc length, and so the taper,
-    jumps across the bisector where the chain's free end is within a width), on a kink that is not a pinned
-    turn-back. Seeds 2 and 3 show it under the bound (0.25 and 0.59 of it), and at this spacing a jump of under
-    about the bound is not seen."""
-    record = []
+    On every grid ring and every midpoint between two, at 8 192 azimuths round the whole turn (the last sample the
+    first a turn on), the pieces' field ``arms_at`` changes between neighbours by no more than the bound of
+    :func:`test_no_square_edge_across_any_kink_or_join` - amplitude times the chains crossing times
+    (1/w + 1/(σ√e)), per kpc along the ring - times the step R Δφ, on five seeds of the three legs and the bare
+    default galaxy, **but where the step's middle lies inside the wedge of a kink within one width of its chain's
+    free end** (:func:`kink_wedges_near_a_free_end`, :func:`inside_a_kink_wedge`: between the two pieces at the
+    kink, within one width of it). No drawn piece is reversed (the drawn pitch's cut at zero), and the
+    hairpins' steps of 0.19-0.58 the reviewer found are gone with it. The record per leg: the exempted steps'
+    number and largest size, the kinks they lie at by (seed, radius), and the largest step elsewhere as a share
+    of the bound; each exempted step, (leg, seed, R, φ, size), is in ``exempted``.
+
+    As read on the fifth pass: the Milky Way's exempted steps lie at Norma's turn-back (4.46 kpc, every seed) and,
+    on seed 1, at a forward kink of two drawn pieces at 5.48 kpc (chain 2's first piece, 0.56 kpc long from the
+    chain's free start, into its second: up to 0.055 a step); the other legs have none."""
+    worst, kinks, exempted = 0.0, set(), []
     for seed in (None, 1, 2, 3, 4):
         inputs = {} if leg == "default" else leg_inputs(leg)
         o = run(the_model(prod), inputs if seed is None else {**inputs, "texture_seed": seed}, only=PATTERN)
@@ -1891,33 +1911,31 @@ def test_no_step_round_any_whole_ring(prod, leg):
         bound = np.where(live, a * chains * (1.0 / np.where(live, w, 1.0) + FWHM * np.exp(-0.5) / np.where(live, w, 1.0)), 0.0) * rings * (2.0 * math.pi / WHOLE_RING_AZIMUTHS)
         assert np.all(step[~live] == 0.0)
         share = np.where(live[:, None], step / np.where(live, bound, 1.0)[:, None], 0.0)
-        # Within one width, in the plane, of a kink of #156's class: the one place a step may pass the bound.
         middle = phi[:-1] + math.pi / WHOLE_RING_AZIMUTHS
+        over = share > 1.0
         near = np.zeros(share.shape, dtype=bool)
-        for r_v, phi_v, w_v in turn_backs_near_a_free_end(sp, sp.pieces):
-            near |= np.hypot(rings[:, None] * np.cos(middle)[None, :] - r_v * math.cos(phi_v), rings[:, None] * np.sin(middle)[None, :] - r_v * math.sin(phi_v)) < w_v
-        named = lambda mask: [(seed, round(float(rings[i]), 4), round(float(middle[j]), 4), round(float(step[i, j]), 4)) for i, j in np.argwhere(mask)]  # noqa: E731
-        assert not (share > 1.0)[~near].any(), named((share > 1.0) & ~near)
-        exempt = named((share > 1.0) & near)
-        record.append((round(float(share[~near].max()), 2), len(exempt), round(max((e[3] for e in exempt), default=0.0), 3),
-                       sorted({e[1] for e in exempt})))
-    # per seed: (the largest step away from a kink of #156's class, as a share of the bound; the steps over the
-    #  bound near one - their number, their largest size, the rings they lie on, kpc)
-    assert record == EXPECTED_WHOLE_RINGS.get(leg), repr(record)
+        for wedge in kink_wedges_near_a_free_end(sp, sp.pieces):
+            inside = inside_a_kink_wedge(wedge, rings[:, None], middle[None, :])
+            if (inside & over).any():
+                kinks.add((seed, round(wedge[4], 2)))
+            near |= inside
+        named = lambda mask: [(leg, seed, round(float(rings[i]), 4), round(float(middle[j]), 4), round(float(step[i, j]), 4)) for i, j in np.argwhere(mask)]  # noqa: E731
+        assert not (over & ~near).any(), named(over & ~near)  # a step over the bound outside every such wedge: stop
+        exempted += named(over & near)
+        worst = max(worst, float(share[~(over & near)].max()))
+    record = (len(exempted), round(max((e[4] for e in exempted), default=0.0), 4), sorted(kinks, key=repr), round(worst, 2))
+    # (the exempted steps, the largest of them, the kinks they lie at by (seed, kink's radius kpc), the largest step
+    #  that is not exempt as a share of the bound)
+    assert record == EXPECTED_WHOLE_RINGS.get(leg), (repr(record), exempted)
 
 
 EXPECTED_WHOLE_RINGS: dict = {
-    "milky_way": [(0.06, 12, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875, 4.125]),
-                  (0.99, 11, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875]),
-                  (0.25, 7, 0.018, [3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05]),
-                  (0.59, 18, 0.018, [3.6, 3.6375, 3.675, 3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875, 4.125, 4.1625, 4.2, 4.2375]),
-                  (0.07, 11, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875])],
-    "ngc_4414": [(0.06, 0, 0.0, []), (0.05, 0, 0.0, []), (0.07, 0, 0.0, []), (0.07, 0, 0.0, []), (0.05, 0, 0.0, [])],
-    "ngc_4414 drawn": [(0.04, 0, 0.0, []), (0.06, 0, 0.0, []), (0.05, 0, 0.0, []), (0.04, 0, 0.0, []), (0.05, 0, 0.0, [])],
-    "default": [(0.1, 0, 0.0, []), (0.08, 0, 0.0, []), (0.08, 0, 0.0, []), (0.11, 0, 0.0, []), (0.08, 0, 0.0, [])],
+    "milky_way": (72, 0.055, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.99),
+    "ngc_4414": (0, 0.0, [], 0.07), "ngc_4414 drawn": (0, 0.0, [], 0.06), "default": (0, 0.0, [], 0.11),
 }
-# The Milky Way's record as measured with seed 1's 13 steps set aside (the second entry's 0.99 is theirs, read
-# under the bound beside them); the test stops before it, at those steps, until the lead rules on their class.
+# (The Milky Way's 72: Norma's 12, 11, 7, 18 and 11 on the five seeds, each at most 0.018, on the rings 3.6-4.24 kpc;
+#  and seed 1's 13 at the forward kink, 0.039-0.055 on the rings 4.65-5.1 kpc at azimuth -1.33 to -1.36 rad. Its 0.99
+#  is a step beside those 13, under the bound.)
 
 
 # --- per-region determinism (D60) on the pattern of pieces ---------------------------------------------------------------
