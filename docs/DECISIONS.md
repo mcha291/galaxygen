@@ -11080,3 +11080,44 @@ carried map's monotonicity; the centre of an unbarred disc. The snapshot pins (E
 records, judged beside the rules above, not in their place. **Order of the sitting:** the cost's exact savings land
 first (bit-identical to the fourth pass, proven), then this fifth pass on top of them, then the reviewer's third
 pass over the fifth pass's diff, then the re-pins, the frames and the close.
+
+**The gate's seventh follow-up (Fable, 2026-10-11): the cost.** The exact savings were tried first, as the pause
+ordered, by a Fable builder with every step proven bit-identical (1 842 arrays on four legs - every published field
+and table layer on and off, the million-star catalogue at seed 0, the 20 000-star catalogue whole and by cell, the
+clouds and clusters, the pattern's cell means, ring profiles, ring power, contrasts, effective amplitudes and
+saturations on 2 000 fixed points, the young reader's points, rows and sector means, the gas pattern's contrasts; 0
+differ). Five savings landed: the exact ring means cut in 8 192-row memory-bounded groups; the catalogue placing
+every cell's stars in one call after the cells' loop; the point function on the live rows alone with the runs grouped
+by piece count; one decomposition per distinct radius with a memo of `laid()` for grid-sized requests (the `ngc_4414`
+run 25.7 -> 15.1 s; nothing for the catalogue, whose radii are all distinct); the bar's footprint read as one number
+where its ring is even. The brief's "nearest feature only inside its reach" was refused as not provably exact (a reach
+end is made by a division, a distance by a square; a stretch's middle can lie within rounding of a reach end) and
+worth under a tenth of the row cost. What they buy: the catalogue's contrast rows 1.168 -> 0.787 s, the young reader
+0.397 -> 0.307 s, one `laid()` on 36 584 rows 1.71 -> 1.12 s - about a third; the million-star call stays far over
+its 10 s bound (the final table in the records). **The exact route is exhausted where the bound is concerned:** the
+line profile puts the remaining cost in arithmetic volume on rows of about a hundred elements (five live features,
+twenty-one stretches, twelve pairs; 3.2 (star, chain) rows a star), not in calls, and the floor of an exact ring mean
+per star is tens of microseconds a star - 20-30 s a million against a budget of 5.
+
+**Ruled, two parts.** (i) *The normaliser is tabulated.* A chain's ring mean <E_j>(R) is a function of the radius
+alone and is the one thing the point function needs that costs more than the point: it is tabulated in R and read
+linearly between knots, as #154 already named for the footprint's normaliser ("tabulated ... read as the gas profiles
+are, the error measured and pinned") - a normaliser is not the field, so D218's "a reader that interpolates a table
+between rings is reading the grid" does not reach it. The knots: every grid radius and every mid-gap ring the gas
+solves (so every PUBLISHED field - the cell means, the ring profiles, the ring power - is made from the exact mean at
+a knot and stays bit-identical), and every radius at which a chain's set of pieces within reach changes or a piece
+ends (the mean's derivative kinks there), with the knot set refined by halving until the interpolant's error against
+the exact mean is under 1e-6 of the ring's mean contrast at the median and 1e-5 at worst over the gate's three legs
+and the suite's seeds - the knots are doubled, never the tolerance (D216's words). Beyond the last knot the end value
+holds (as `_budget_at` does). The error is pinned as measured, and so is what it does to the one property it touches:
+a ring's mean contrast is 1 to the pinned error instead of to rounding (I2 holds: the realised totals are conserved
+from L1 by construction, not by this mean). The exact `Stretches` machinery stays for the knots and the cell means.
+(ii) *The bound.* `test_the_catalogue_generates_a_million_stars_in_time`'s 10 s (D59; 1.47 s published then) is a
+bound on the catalogue the model has always had; it is read with the layer off, as the two per-cell timing
+statements are since D218, and holds there (nothing layer-off changed). With the layer on the catalogue's cost is
+recorded with no bound beside #154's, against the session's start on the model's own instrument (`main` ~5 s; the
+fourth pass 55.8 s; after the exact savings and the table as measured), and **the viewer's whole-disc calls are the
+owner's to bound** (`region: whole disc`, `bright: whole disc`, `render: whole, rgb` in `tools/timings.py`): they are
+what is felt at :5173, and whether the arms are worth their price there is not a number any source gives. Told to
+the owner in plain words at the close. The third pass of the exact mean's reviewer covers the table as part of the
+fifth pass's diff.
