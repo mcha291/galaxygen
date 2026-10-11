@@ -717,13 +717,21 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     **S60 (debt #68): each size is timed three times and the least kept.** S59's clone check failed here once,
     on the layer-off run: one stall made 500 stars cost more than 2 000 and the first marginal cost negative
     (0 of 15 on an idle machine). No bound moved.
+
+    **S60 (D219's seventh follow-up):** the layer-on run no longer keeps the collapse of the marginal cost - the
+    catalogue's layer-on cost is the point function's, by the star - so its marginal costs are recorded, not
+    ordered; its bound on the price of a cell stands.
     """
     from galaxy.specs import performance
 
     on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), repeats=3)
     on_stars, on_secs = [s[1] for s in on["samples"]], [s[2] for s in on["samples"]]
     on_marginal = [(on_secs[i + 1] - on_secs[i]) / (on_stars[i + 1] - on_stars[i]) for i in range(len(on_secs) - 1)]
-    assert on_marginal[0] > 3.0 * on_marginal[-1], on_marginal  # 5.5-8.0 here
+    # S60 (D219's seventh follow-up, the normaliser table): the layer-on catalogue's cost is now the point function
+    # itself, ~25 us a star, so the marginal cost per star no longer collapses with the sample size layer on (the
+    # ratio first/last read 1.7-2.7 against S59's 5.5-8.0). Recorded, the ordering not asserted layer on - as #154
+    # and D218 did for the two per-cell timing statements; the layer-off part below keeps its assertion.
+    print("layer on, marginal cost per star (s):", on_marginal)  # a record: no ordering asserted
     assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
 
     cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False, repeats=3)
