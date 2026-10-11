@@ -78,7 +78,9 @@ LAW_FIELDS = (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_c
 # S60 (D219): the layer's realisation is the census of arm pieces (a table), and the composing stage publishes nine
 # radial fields beside the contrast - the pieces' amplitude and its cut, the chains crossing, the realised ring
 # power and its split by arm number.
-COMPOSED_RADIAL = tuple(d.name for d in pc.COMPOSED if d.name != "pattern_density_contrast")
+# Since the fourth pass (the gate's fourth follow-up, C) the ring power and its split by arm number are published by
+# a stage of their own, `arm_ring_power` (pc.RING_POWER), so the list names them apart: until then COMPOSED held them.
+COMPOSED_RADIAL = tuple(d.name for d in (*pc.COMPOSED, *pc.RING_POWER) if d.name != "pattern_density_contrast")
 PATTERN_FIELDS = ("pattern_density_contrast", "gas_density_contrast", *LAW_FIELDS, *pt.PIECE_FIELDS, *COMPOSED_RADIAL,
                   "circular_velocity", "epicyclic_frequency", "disc_surface_density")
 _RUNS: dict[tuple, object] = {}
@@ -232,13 +234,13 @@ def test_gate_no_cell_is_below_zero_on_any_seed(prod):
         assert np.asarray(pattern_run(prod, template).fields["pattern_density_contrast"]).min() > 0.3
 
 
-@pytest.mark.xfail(strict=True, reason="S60 (D219): layer-on numbers await the re-pin after the fourth model pass")
 def test_the_lowest_cell_over_the_suite_s_seeds_as_measured(prod):
-    """The lowest cell of the stellar field over the 240 galaxies, as last measured on the modes' field (the gate's
-    test above keeps the bound); a layer-on number - the pieces' field since S60 (D219) - pinned here apart."""
+    """The lowest cell of the stellar field over the 240 galaxies, as measured on the pieces' field (S60, D219; the
+    gate's test above keeps the bound); a layer-on number, pinned here apart."""
     lowest, drawn = lowest_cell(prod)
     assert drawn == 240
-    assert lowest == pytest.approx(0.00248, abs=1e-5) and lowest > 0.0
+    # S60 fourth pass: was 0.00248, on the modes' field.
+    assert lowest == pytest.approx(0.008506, abs=1e-5) and lowest > 0.0
 
 
 def test_the_saturation_is_one_on_every_ring_at_both_templates_own_seeds(prod):
@@ -761,7 +763,6 @@ def test_the_pattern_objects_are_the_published_fields_and_evaluable_at_a_point(p
     assert worst < 1e-6, worst
 
 
-@pytest.mark.xfail(strict=True, reason="S60 (D219): layer-on numbers await the re-pin after the fourth model pass")
 @pytest.mark.parametrize("template", TEMPLATES)
 def test_the_stars_sector_means_are_the_dense_average_of_the_point_function(prod, template):
     """The stars' half of the sector-means check above, as it stood on the modes (S58, D217: the body's interpolant
@@ -769,7 +770,9 @@ def test_the_stars_sector_means_are_the_dense_average_of_the_point_function(prod
     sector means (closed forms, exact) and the dense average of the point function part by up to 1.0e-4 on the
     rings pieces cross (6 kpc on the Milky Way template, 3 kpc on `ngc_4414`) and agree to 1e-9 elsewhere: the
     point function steps where a piece's window ends square, and a midpoint rule's error at a step is of order its
-    step. Reported to the lead with the re-pin list; the fourth pass asserts continuity across every kink and join."""
+    step. Reported to the lead with the re-pin list; the fourth pass asserts continuity across every kink and join.
+    S60 (D219): on the final model the point function is continuous and the check holds at its 1e-6 again on both
+    templates - the strict xfail it waited under passed, and is lifted."""
     c = constants(the_model(prod))
     o = pattern_run(prod, template)
     stars = compose.stellar_pattern(o.fields, o.grid.R)
@@ -784,7 +787,6 @@ def test_the_stars_sector_means_are_the_dense_average_of_the_point_function(prod
         assert error <= 1e-6, (radius, error)
 
 
-@pytest.mark.xfail(strict=True, reason="S60 (D219): layer-on numbers await the re-pin after the fourth model pass")
 @pytest.mark.parametrize("template", TEMPLATES)
 def test_the_point_function_at_the_cells_centres_against_the_published_cell_means_as_measured(prod, template):
     """S58 (D217 item 4): the published field held the arm modes at the centres and the bar's body as its exact mean
@@ -795,7 +797,10 @@ def test_the_point_function_at_the_cells_centres_against_the_published_cell_mean
     F, R, phi = o.fields, o.grid.R, o.grid.phi
     stars = compose.stellar_pattern(F, R)
     apart = float(np.abs(stars.contrast(R, phi) - np.asarray(F["pattern_density_contrast"])).max())
-    assert apart == (pytest.approx(1.888e-4, rel=0.02) if template == "milky_way" else 0.0)
+    # S60 (D219), as measured on the final model: the pieces' ridges are averaged over the cells too, so the two
+    # differ by the ridges' curvature across a cell on both templates (until S60 by the body's alone, and `ngc_4414`
+    # has none). S60 fourth pass: was 1.888e-4 (milky_way) and 0.0 (ngc_4414).
+    assert apart == pytest.approx(7.634e-3 if template == "milky_way" else 5.329e-3, rel=0.02)
 
 
 def test_a_pattern_with_nothing_to_place_is_flat():
