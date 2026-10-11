@@ -133,9 +133,12 @@ RING_SAMPLES_PER_CELL = 2
 # two points leave 1e-2 of a finest sector's mean there, three 1e-3, four 2e-4, six 2e-6 (the reference's own).
 GAUSS = {False: np.polynomial.legendre.leggauss(2), True: np.polynomial.legendre.leggauss(6)}  # (nodes, weights) on [-1, 1]
 MEAN_CHUNK = 128  # rings whose mean is taken at once: a bound on memory (128 x 2880 doubles a temporary), not a count of work
-# How many stars one placing call takes at once (S60, the cost): a bound on memory - the inversion's (stars, 25)
-# temporaries, the pattern's own batches inside it - never on a value, which is the star's own.
-PLACE_CHUNK = 65536
+# How many stars one placing call takes at once (S60, the cost): never a value's concern - a star's azimuth is the
+# star's own - but the cost's: the pattern's exact ring means are made on arrays of (stars x chains) rows, and past a
+# few thousand radii they leave the processor's cache and run at memory speed. Measured on 100 000 radii x 25
+# azimuths: 17 241 radii a batch 6.9 s, 2 758 a batch 5.5 s, 1 379 a batch 6.1 s (the per-cell regime before S60,
+# ~1 000 radii a call, 5.5 s). One cell's stars used to be one call; this is a few cells' worth.
+PLACE_CHUNK = 4096
 # What the young stars' reader reads beside the stellar pattern (S59, D218): the gas pattern's own reads, and the
 # two ring fields and the index the star formation law is applied with.
 YOUNG_READS: tuple[str, ...] = ("gas_surface_density", "sf_threshold_surface_density")

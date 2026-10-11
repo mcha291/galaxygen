@@ -538,11 +538,13 @@ class Stretches:
 
 
 # How many (radius, chain) rows one decomposition holds at once, and how many (row, stretch, feature) elements one
-# group's cutting holds at once: bounds on memory, never on a value (S60: a row's numbers are the row's own, so
-# the rows are grouped as large as the memory allows - the cost of the exact mean is in the count of small array
-# operations, not in the arithmetic).
-_ROWS = 8192  # (2048 until S60's cost pass: 1.7 s -> 1.1 s on 36 584 rows, 46 MB -> 109 MB at the peak)
-_ELEMENTS = 2_000_000
+# group's cutting holds at once: bounds on memory, never on a value (S60: a row's numbers are the row's own). The
+# cost of the exact mean is arithmetic volume on rows of ~100 elements, and it is paid at memory speed once the
+# arrays leave the cache: on 36 584 rows at once 8192-row groups ran 1.7 s -> 1.1 s (46 MB -> 109 MB at the peak),
+# but a catalogue placed a few thousand radii a call (systems.PLACE_CHUNK) is as fast with 2048-row groups and
+# the smaller peak, so the bounds are kept small.
+_ROWS = 2048
+_ELEMENTS = 500_000
 # :meth:`ArmPattern.laid` keeps its answer for a request of at most this many radii, the last this many requests.
 _MEMO_RADII = 4096
 _MEMO_KEPT = 8
