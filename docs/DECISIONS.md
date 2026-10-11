@@ -11356,3 +11356,64 @@ boundary; for the next sitting); `ngc_4414`'s is a dim diffuse ellipse with a da
 pattern a viewer would call flocculent. In one sentence each: the Milky Way is a recognisable barred spiral with
 too many, too faint arms; `ngc_4414` is a smooth disc with a bulge and no visible flocculence. S60 moved the Milky
 Way frame from "ripples" to "arms"; it did not move `ngc_4414`'s look.
+
+**The gate's twelfth follow-up (Fable, 2026-10-11): the reviewer's third pass over 391af07..8d8182e (an Opus
+reviewer, probes only; "merge yes, with fixes"), ruled.** What holds by its probes: every grid radius is a knot and
+`laid` exact against the table read is bit-identical there; 10 000 uniform radii a leg on seeds outside the test's
+read the table under 1e-6 (worst 9.99e-7, within 1e-6 kpc of a knot 7.0e-7, within 1e-9..1e-6 of a reach boundary
+1.5e-8); |a_table - a_exact| = 0; N, w, a Sum<E> and B have no step in R on 20 000 log-spaced radii of the default
+and the drawn leg and only Norma's turn-back on the Milky Way; the Milky Way's seed-1 kink at 32 768 azimuths: eight
+over-bound steps, all inside exempted wedges; `_carried_mean` exact where clipping is active (cell means tile to 1
+within 4.4e-15); a held anchor is never moved; `draw_piece` raises on a seventeenth redraw (Phi(-1.786)^16 ~ 1e-23)
+and other pieces' deviates are untouched; `arm_ring_power` declared as ruled. **Eight findings:**
+1. *MEDIUM, confirmed - the table is wrong below its first knot.* The knots start at the grid's first radius
+   (0.0375 kpc) and the read clamps, so for R under it the point function reads knot 0's chain means: on `ngc_4414`
+   (unbarred, a = 1.10 at the centre) the point function's ring mean is 1.036-1.043 for R from 2e-4 to 0.03 kpc and
+   still off by 1e-4 at 0.999 R[0] - 4 000 times the ruling's worst bound for every object in the central 37.5 pc
+   (the barred legs read 0 there: the bar's taper). The ruling said only what happens beyond the LAST knot. **Ruled:
+   below the first knot the point function reads the exact mean** (few objects, no cost that matters; a knot set
+   extended towards 0 is the alternative and is not needed); the table's test samples R under knots[0] too.
+2. *MEDIUM, confirmed - the hold-at-neighbours rule puts a square edge in the carried gas in phi.* When a continued
+   anchor is clipped onto a held one the two share an azimuth but their images on the solved ring differ, so the
+   stretch between the images has no width at that radius and the carried profile steps there: `contrast_at` by
+   0.039 at worst (`ngc_4414` seed 6, 1.85 kpc), 0.0094 on the drawn leg at 8.1 kpc, 0.0021 at Norma, 0.007 on
+   `ngc_4414`'s central rings; the star formation contrast the same; continuous in r (the meeting point halves to
+   3e-11), the ring mean exact. Before this pass the fold was continuous and the map was not monotone; now the
+   map is monotone and the profile steps. **Ruled: recorded and carried as debt #157 - the carry between solved
+   rings is a declared approximation (the mid-gap rings exist because it is; its misplaced weight is pinned up to
+   8 %), and a step of 0.04 in the gas contrast at one azimuth of a few rings is inside that declaration; the
+   stellar field, which the third follow-up's "no square edge" governs, is untouched.** A test records the largest
+   phi-step of the carried gas per leg beside the folds (0 everywhere); the mend is named in #157: the two anchors
+   never closer than a fraction of their images' separation (a short ramp), or the ended chain's sliver faded
+   rather than compressed - either needs a length no source gives, so the owner's look decides.
+3. *MEDIUM, confirmed - the 0.38 is a discontinuity under the bound, and the test's geometry reads the wrong
+   width.* Default galaxy, seed 4, 12.375 kpc: the field steps by 0.0019 across 4e-16 rad and does not shrink with
+   finer azimuths (0.38 of the bound at 8 192, 12.8 at 262 144); it is #156's mechanism at a kink 1.96 kpc from a
+   free end - inside one LAW width (2.65 kpc) but outside the bounded width (1.51), and since the eleventh
+   follow-up the height tapers over the law's width, so #156's class is "within one law width of a free end" while
+   the test's `kink_wedges_near_a_free_end` reads the bounded width. **Ruled: the wedge geometry reads
+   `law_width_at`; #156 is amended to one law width; the owner is told the class grew with the eleventh
+   follow-up's taper (the law's width is up to 1.8 times the bounded one on the default galaxy's outer disc).**
+4. *LOW-MEDIUM, confirmed - the arms inside the bar, for the owner's look.* The field is continuous and the arms
+   enter only the last tenth of the bar on the default galaxy (the arm field against the body's largest deviation:
+   0.04 against 0.13 at 0.9a, 0.77 against 0.003 at 0.99a; the Milky Way's pinned pieces cross inside a, 0.15
+   against 0.28 at 0.7a); but near R = a the floor of one piece's share against several full-height caps spends up
+   to 2.9 times the budget (default seed 1 at a: realised over budget 2.92, the least contrast 0.106; seed 0 0.76;
+   the Milky Way 1.17). B is published nonzero where no piece is in the field's reach (0.009 at 0.3a; the field 0):
+   harmless. **Recorded under #155's entry (the realised power's maxima); the owner's look at the bar's ends.**
+5. *LOW, confirmed - the six ulp are not non-determinism.* With the layer on `template=milky_way` pins measured
+   arms, so the "bare" and "named" runs are different patterns; `cloud_count_total` sums expected counts that
+   multiply the gas's sector means, which tile each ring to 1 within 1.4e-13 (`_carried_mean`'s rounding), so each
+   pattern has its own deterministic residue: bare +1 ulp, named -5, seed 7 +6, seed 9 -3 against layer off; the
+   named run is the same bits cold and after three other patterns (the memo, the table store and the summation
+   order excluded by probe). The 4-ulp bound held before by luck. **Ruled: the bound is derived - the tiling
+   error times the count, written in the test - not widened by hand.**
+6. *LOW, confirmed - `dig_halpha_fraction`'s equal bits are a coincidence and the statistic is degenerate:* no HII
+   region is density-bounded in either run, so the leaked fraction is f_esc to rounding (0.29999999999999993 both
+   ways); the reader does read the layer (12 916 against 12 923 clusters). **Ruled: the I1 and oracle lists do not
+   pin that statistic's bits either way** (D217's form), with the degeneracy named beside it.
+7. *LOW - `draw_piece`'s redraw:* as designed; recorded.
+8. *LOW, plausible - `_build_table` ends silently if its 64 rounds run out with intervals still failing.* **Ruled:
+   it raises** (an honest stop, D164's spirit); the FIFO store of eight is recorded.
+Fixes 1, 3 (the test's geometry), 8 and the two records (2's phi-step, 5's derived bound) are one small pass after
+the re-pins land; the reviewer's verdict stands on them.

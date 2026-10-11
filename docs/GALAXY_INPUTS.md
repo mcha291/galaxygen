@@ -694,9 +694,9 @@ defined here once and used in every entry below:
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156 | 82 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157 | 83 |
 
-So the board's **93 open** is 11 permanent and 82 carried, and no item is unruled. (S22
+So the board's **94 open** is 11 permanent and 83 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3924,7 +3924,7 @@ never been judged in twenty-three sessions.
    other closed form is named and either is a change of the budget's one formula with no realised power read.
    For the owner: with the layer on the arms carry about 45-80 % of the arm-number law's power on the median
    ring; the law is honoured layer-off, where the acceptance rows are judged.
-156. **A chain's excess jumps at a turn-back kink within one width of a free end** (S60, D219, the gate's fifth
+156. **A chain's excess jumps at a kink within one LAW width of a free end** (S60, D219, the gate's fifth
    follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
    enough that the two feet lie far from the vertex the arc length jumps and the taper with it: Norma's kink at
    4.46 kpc steps the field by 0.017 (the chain's excess by 0.083, B 0.20), 24.5 times the continuity test's
@@ -3940,6 +3940,21 @@ never been judged in twenty-three sessions.
    is at full height, continuous everywhere; its exact ring mean needs a Newton root per pair of features where
    a taper is linear (the breakpoints are then roots of w_i G_i = w_j G_j). #142's pitch floor removes the drawn
    case the other way. Built if the owner's look at the frames finds the step.
+   *Amended by the twelfth follow-up:* since the eleventh follow-up the height tapers over the LAW's width, so the
+   class is a kink within one law width of a free end - up to 1.8 times the bounded width on the default galaxy's
+   outer disc; the default's seed 4 steps by 0.0019 at 12.375 kpc that way (0.38 of the continuity bound at 8 192
+   azimuths, a true step). The test's wedge geometry reads `law_width_at`.
+
+157. **The carried gas steps in azimuth where a clipped anchor meets a held one** (S60, D219, the gate's twelfth
+   follow-up). Past a free end a chain's anchor is held between its neighbours' so the carried azimuth map is
+   monotone (the eighth follow-up); where it is clipped onto a neighbour the two anchors share an azimuth but their
+   images on the solved ring differ, so the stretch between the images has no width there and the carried profile
+   steps: `contrast_at` by 0.039 at worst (`ngc_4414` seed 6 at 1.85 kpc), 0.0094 on its drawn leg at 8.1 kpc,
+   0.0021 at Norma; the star formation contrast the same; continuous in r, the ring mean exact. **Carried.** Inside
+   the carry's own declaration (its misplaced weight is pinned up to 8 %; the mid-gap rings exist because the carry
+   is approximate); the stellar field is untouched. The mend is named: the two anchors never closer than a fraction
+   of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
+   needs a length no source gives. A test records the largest phi-step per leg beside the fold count.
 
 ---
 
