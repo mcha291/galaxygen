@@ -142,7 +142,11 @@ def test_the_constants_are_the_ruling_s_and_the_stages_are_declared_as_ruled(pro
     assert g.ok, g.problems
     order = [s.id for s in g.order]
     assert "arm_phases" not in order and order.index("pattern") < order.index("arm_pieces") < min(order.index("stellar_pattern"), order.index("gas_pattern"))
-    assert order.index("stellar_pattern") < order.index("arm_ring_power")  # the disclosed check in its own stage (the fourth follow-up, C)
+    # The disclosed check in its own stage (the fourth follow-up, C), made again from the census and the laws: since
+    # the sixth follow-up (item 6) it requires none of the stellar stage's fields, so it runs the round after the
+    # census, beside the composing stages (was: stellar_pattern < arm_ring_power, by a requirement it never read).
+    assert order.index("arm_pieces") < order.index("arm_ring_power") and pc.DENSITY_CONTRAST.name not in pc.ARM_RING_POWER_STAGE.requires
+    assert set(pc.ARM_RING_POWER_STAGE.requires) == set(pc.PATTERN_READS)
     assert g.layer_stages == ("arm_pieces", "cloud_texture") and {"stellar_pattern", "gas_pattern", "arm_ring_power"} <= set(g.composing_stages)
     assert "pattern" not in g.composing_stages  # the law's stage composes nothing since S60
     assert TABLES == ("arm_piece",)
