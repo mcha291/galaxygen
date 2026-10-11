@@ -1,29 +1,35 @@
 """The normaliser table (D219, the gate's seventh follow-up, part i): a chain's ring mean <E_j>(R) tabulated in R and
 read linearly between knots by the point function, the exact mean kept for the knots and for every published field.
 
-**What is pinned here, as measured on 2026-10-11 after the gate's ninth follow-up (the count's weight falls to
-zero before a joined end; re-read with the layer-on pins). The cost builder's record before it is kept at the
-foot of this docstring.**
+**What is pinned here, as measured on 2026-10-11 after the gate's eleventh follow-up (the count's floor on every
+ring a chain reaches, the weights and the height's taper at the law's width; re-read with the layer-on pins). The
+earlier records are kept at the foot of this docstring.**
 
 - the interpolant's error |a Σ_j (table − exact)| - the error in the ring's mean contrast - over the three legs
   (``milky_way``, ``ngc_4414``, the default inputs) and five seeds each, at every interval's midpoint and at five
   random points an interval: under 1e-6 at the median and 1e-5 at worst (the ruling's bounds, never raised; the
   knots are doubled where an interval fails). The build's own rule holds every interval's quarters and middle under
   1e-6, so the median is far under it and the worst, at a random point, barely over it. Measured (seeds 0-4):
-  medians 0 to 2.7e-7; worst 9.98e-7 to 1.23e-6 (milky_way seed 1 at R 7.67, a random point); ngc_4414's worst
-  9.98e-7 to 1.06e-6, the default leg's 9.98e-7 to 1.08e-6.
-- the knot count a leg: thousands on a 400-ring grid - milky_way 2 888 / 10 507 / 3 299 / 3 893 / 3 303, ngc_4414
-  3 847 / 4 578 / 3 987 / 4 053 / 4 075, default 2 276 / 9 833 / 2 801 / 3 113 / 2 844 at seeds 0-4 (the grid's
+  medians 5.3e-8 to 2.8e-7; worst 9.97e-7 to 1.25e-6 (milky_way seed 1 at R 5.82, a random point); ngc_4414's
+  worst 9.97e-7 to 1.14e-6, the default leg's 9.99e-7 to 1.15e-6.
+- the knot count a leg: thousands on a 400-ring grid - milky_way 3 456 / 11 648 / 3 737 / 4 439 / 3 640, ngc_4414
+  3 383 / 3 987 / 3 757 / 3 524 / 4 000, default 2 780 / 11 660 / 3 350 / 4 064 / 3 292 at seeds 0-4 (the grid's
   rings, the gaps' middles and quarters, the pieces' ends and reach boundaries, then the halvings). The intervals
-  at the floor: 40-493 a seed, the reach boundaries' adjacent-float pairs, totalling 2e-14 to 7e-13 kpc a seed -
-  **the jumps at joined ends are gone** (milky_way seeds 1 and 4 held 1.1e-8 and 6.2e-9 kpc of them, default seed
-  4 1.2e-8); default seed 1 keeps 8.4e-9 kpc, a step of the ring's numbers of another class (the width bound's
-  branches or a ring's first crossing: ``tests/test_pieces.py::test_the_ring_s_numbers_do_not_step_in_r_at_a_join``).
+  at the floor: 32-482 a seed, the reach boundaries' adjacent-float pairs, totalling 2e-14 to 6e-13 kpc a seed, but
+  for milky_way seed 3's 5.9e-9 kpc: Norma's turn-back, the one step of the ring's numbers in R that remains
+  (#156; ``tests/test_pieces.py::test_the_ring_s_numbers_do_not_step_in_r_at_a_join``). The first crossings' and
+  the width bound's jumps are gone with the eleventh follow-up.
 - at a knot the table's bits are the exact mean's bits, so every published field is unchanged by the table.
 - **the one property the table touches**: the point function's mean round a ring at a non-knot radius is 1 to
   the pinned error, not to rounding (I2 holds: the realised totals are conserved from L1 by construction); at a
   knot it is 1 to the quadrature's own error. The exact sector means (``sector_means``) tile a ring to 1 at any
   radius to rounding, as before.
+
+*After the ninth follow-up (kept):* medians 0 to 2.7e-7; worst 9.98e-7 to 1.23e-6 (milky_way seed 1 at R 7.67);
+ngc_4414's worst 9.98e-7 to 1.06e-6, the default leg's 9.98e-7 to 1.08e-6; knots milky_way 2 888 / 10 507 / 3 299 /
+3 893 / 3 303, ngc_4414 3 847 / 4 578 / 3 987 / 4 053 / 4 075, default 2 276 / 9 833 / 2 801 / 3 113 / 2 844; the
+floor's intervals 40-493 a seed, 2e-14 to 7e-13 kpc but default seed 1's 8.4e-9 (a first crossing or the width
+bound's branch).
 
 *The cost builder's record (before the ninth follow-up; kept):* medians 0 to 2.8e-7; worst 9.97e-7 to 1.22e-6
 (milky_way seed 1 at R 6.79); ngc_4414's worst 1.00e-6 to 1.01e-6, the default leg's 9.98e-7 to 1.19e-6; knots
