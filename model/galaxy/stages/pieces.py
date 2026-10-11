@@ -645,6 +645,8 @@ class Pieces:
     middle: np.ndarray = field(init=False, repr=False)    # Δβ/2: the piece's own middle, in ψ
     before: np.ndarray = field(init=False, repr=False)    # the chain's length before the piece's start (inf: no free end)
     after: np.ndarray = field(init=False, repr=False)     # ... and after its end
+    before_end: np.ndarray = field(init=False, repr=False)  # the chain's length before the piece's start to its end of either kind
+    after_end: np.ndarray = field(init=False, repr=False)   # ... after its end (a joined end counted: the count's taper)
     link_start: np.ndarray = field(init=False, repr=False)        # the piece of the chain standing at this one's start (−1 none)
     link_end: np.ndarray = field(init=False, repr=False)          # ... at its end
     link_start_is_end: np.ndarray = field(init=False, repr=False)  # whether it is that piece's end that stands there
@@ -722,24 +724,29 @@ class Pieces:
         # whether it is that piece's end that does (else its start) - what a kink's rounding reads.
         link = np.where(partner >= 0, partner % n, -1)
         link_is_end = partner >= n
-        beyond = np.zeros(2 * n)
+        # The chain's length on from each end of each piece to the chain's end that way: to a FREE end (``beyond``:
+        # infinite where that end is joined - the height's taper, the point function's and the decomposition's) and
+        # to an end of either kind (``reach``: a joined end counted - the count's taper, the gate's ninth follow-up).
+        beyond, reach = np.zeros(2 * n), np.zeros(2 * n)
         for e in range(2 * n):
             total, at = 0.0, e
             for _ in range(n + 1):  # a chain holds at most all the pieces (rule A1)
                 if partner[at] < 0:
+                    reach[e] = total
                     total = math.inf if closed[at] else total
                     break
                 other = int(partner[at])
                 total += float(length[other % n])
                 at = other + n if other < n else other - n  # that piece's other end
             else:
-                total = math.inf  # a chain that closes on itself has no free end
+                total = reach[e] = math.inf  # a chain that closes on itself has no end
             beyond[e] = total
         pad = lambda a, value: np.concatenate([a, [value]])  # noqa: E731
         for name, value in (("x_start", pad(x_start, 0.0)), ("x_end", pad(x_end, 1.0)), ("phi_start", pad(self.start_azimuth, 0.0)),
                             ("phi_end", pad(phi_end, 0.0)), ("sin_abs", pad(sin_abs, 1.0)), ("cos_abs", pad(cos_abs, 1.0)),
                             ("sense", pad(sense, 1.0)), ("length", pad(length, 1.0)), ("middle", pad(0.5 * self.extent, 0.0)),
                             ("before", pad(beyond[:n], math.inf)), ("after", pad(beyond[n:], math.inf)),
+                            ("before_end", pad(reach[:n], math.inf)), ("after_end", pad(reach[n:], math.inf)),
                             ("link_start", np.concatenate([link[:n], [-1]])), ("link_end", np.concatenate([link[n:], [-1]])),
                             ("link_start_is_end", np.concatenate([link_is_end[:n], [False]])), ("link_end_is_end", np.concatenate([link_is_end[n:], [False]])),
                             ("met_start", np.concatenate([met[:n], [-1]])), ("met_end", np.concatenate([met[n:], [-1]])),
@@ -1196,8 +1203,13 @@ class ArmPattern:
 
         **One equation for the two** (the first follow-up's item 3 and the second's item 3 together). A chain's
         taper weight on a ring is min(1, s_c/w): s_c the distance along the chain, in kpc at the ring's radius,
-        from where it crosses the ring to its nearer free end (:attr:`Pieces.before`, :attr:`Pieces.after`;
-        infinite where it has none: weight 1), w the width - "free chain ends taper over one width". And
+        from where it crosses the ring to its nearer end (:attr:`Pieces.before_end`, :attr:`Pieces.after_end`;
+        infinite where it has none: weight 1), w the width - "free chain ends taper over one width", and since
+        the gate's ninth follow-up **a joined end as a free one**: "the count's weight at a JOINED end falls to
+        zero over one width before the join, as a free end's does - the chain's share of the ring's budget passes
+        to the chain it meets as its material does - while the ridge's HEIGHT at a joined end keeps the third
+        follow-up's rule" (the height reads :attr:`Pieces.before` and :attr:`Pieces.after`, which a joined end
+        leaves infinite). And
         w = min(the law's, π R sin p / N). So w = min(law, w_g) with w_g the one solution of
 
             Σ_c min(w_g, s_c) = π R sin p
@@ -1205,7 +1217,8 @@ class ArmPattern:
         (the left side grows with w_g from 0, piece by piece linear, so it is solved exactly on the sorted s_c;
         where the chains' tapers together are shorter than π R sin p there is none and the law's width stands).
         With every crossing chain past its taper it is the first follow-up's π R sin p / n. Both are continuous
-        in R wherever the chains crossing are the same chains. A chain that crosses a ring twice - a measured
+        in R wherever the chains crossing are the same chains, and where a chain stops crossing at either end of it
+        (its weight is 0 there); a chain born on a ring enters at weight 0. A chain that crosses a ring twice - a measured
         arm that kinks back - counts once, at its greater weight."""
         R = np.asarray(R, dtype=float)
         p = self.pieces
@@ -1218,7 +1231,7 @@ class ArmPattern:
             x0, x1 = p.x_start[slots], p.x_end[slots]
             length = p.length[slots]
             t = np.where(live, (x - x0) / (x1 - x0) * length, 0.0)
-            along = np.where(live, np.minimum(t + p.before[slots], length - t + p.after[slots]) * R[:, None], 0.0)
+            along = np.where(live, np.minimum(t + p.before_end[slots], length - t + p.after_end[slots]) * R[:, None], 0.0)
         chain = p.chain_of[slots]
         same = chain[:, :, None] == chain[:, None, :]  # (the pad's NaN is its own chain's to nobody)
         best = np.where(same, along[:, None, :], -np.inf).max(axis=2)
