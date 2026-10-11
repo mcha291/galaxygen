@@ -1819,6 +1819,95 @@ EXPECTED_CONTINUITY: dict = {"milky_way": (40, 4, 0.05, 0.5, {(0, 4.46): (24.5, 
 # was not within a width of a free end; A took that continuation away (the end lies inside the bar's half-length)
 
 
+def turn_backs_near_a_free_end(sp, p: pc.Pieces) -> list[tuple[float, float, float]]:
+    """The kinks of #156's class, as :func:`test_no_square_edge_across_any_kink_or_join` finds them: a measured
+    arm's two stretches both ending at the kink (the chain turns back in radius) within one width of the chain's
+    free end - (radius, azimuth, width there) of each."""
+    out = []
+    for x_v, phi_v, ended, _, kind in vertices_of(p):
+        if kind != "kink" or ended < 0 or not bool(p.link_end_is_end[ended]) or not bool(p.pinned[ended]):
+            continue
+        r_v = math.exp(x_v)
+        w_v = float(sp.width_at(np.array([r_v]))[0])
+        if min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < w_v:
+            out.append((r_v, phi_v, w_v))
+    return out
+
+
+WHOLE_RING_AZIMUTHS = 8192
+
+
+@pytest.mark.parametrize("leg", (*LEGS, "default"))
+def test_no_step_round_any_whole_ring(prod, leg):
+    """The gate's sixth follow-up, item 1: "The continuity test is widened as the reviewer probed: whole rings
+    (every grid ring and midpoint, 8 192 azimuths) on at least five seeds of each leg, every step over the
+    Lipschitz bound named by (seed, R, phi), the one exemption the pinned end-to-end turn-back within a width of a
+    free end (#156)." On every grid ring and every midpoint between two, at 8 192 azimuths round the whole turn
+    (the last sample the first a turn on), the pieces' field ``arms_at`` changes between neighbours by no more
+    than the bound of :func:`test_no_square_edge_across_any_kink_or_join` - amplitude times the chains crossing
+    times (1/w + 1/(σ√e)), per kpc along the ring - times the step R Δφ; on five seeds of the three legs and the
+    bare default galaxy. **A step over it is exempt only within one width (in the plane) of a measured turn-back
+    kink within a width of a free end** (:func:`turn_backs_near_a_free_end`: the Milky Way's Norma, at 4.46 kpc);
+    each exempt step is named by (seed, R, φ, size) in the record, and the drawn pitch's hairpins the reviewer
+    found (steps of 0.19-0.58 on the Milky Way's seeds, and on 3 of 10 default galaxies) are gone with the drawn
+    pitch's cut at zero.
+
+    As read on the fifth pass: Norma's steps are 7-18 a seed, at most 0.018, on the rings 3.6-4.24 kpc below the
+    kink - the bisector's jump of the fourth pass's record (at this spacing about the bound, where the fourth
+    pass's ten-thousandth of a width read it as 24.5 times). Away from it every step is under 0.11 of the bound on
+    every seed of ``ngc_4414``, its drawn leg and the default galaxy. **It FAILS on the Milky Way's seed 1, by the
+    ruling's words, and is left failing for the lead**: 13 steps of 0.039-0.055 (1.0-1.22 of the bound) on the
+    rings 4.65-5.1 kpc at azimuth -1.33 to -1.36 rad, 0.4-0.87 kpc from a forward kink of two drawn pieces at
+    5.48 kpc - chain 2's first piece (29.3 degrees, 0.56 kpc long, its start the chain's free end) into its second
+    (5.5 degrees): the same mechanism as Norma's (inside the kink's wedge the foot's arc length, and so the taper,
+    jumps across the bisector where the chain's free end is within a width), on a kink that is not a pinned
+    turn-back. Seeds 2 and 3 show it under the bound (0.25 and 0.59 of it), and at this spacing a jump of under
+    about the bound is not seen."""
+    record = []
+    for seed in (None, 1, 2, 3, 4):
+        inputs = {} if leg == "default" else leg_inputs(leg)
+        o = run(the_model(prod), inputs if seed is None else {**inputs, "texture_seed": seed}, only=PATTERN)
+        F, R = o.fields, o.grid.R
+        sp = compose.stellar_pattern(F, R)
+        assert np.all(np.asarray(F["arm_piece_pitch"])[np.asarray(F["arm_piece_pinned"]) == 0.0] > 0.0)  # no drawn piece reversed
+        rings = np.sort(np.concatenate([R, 0.5 * (R[1:] + R[:-1])]))
+        laid = sp.laid(rings)
+        phi = -math.pi + 2.0 * math.pi * np.arange(WHOLE_RING_AZIMUTHS + 1) / WHOLE_RING_AZIMUTHS
+        step = np.abs(np.diff(sp.arms_at(rings[:, None], phi[None, :]), axis=1))
+        w, a, chains = laid.width, laid.effective, laid.last.sum(axis=1)
+        live = (chains > 0) & (w > 0.0)
+        bound = np.where(live, a * chains * (1.0 / np.where(live, w, 1.0) + FWHM * np.exp(-0.5) / np.where(live, w, 1.0)), 0.0) * rings * (2.0 * math.pi / WHOLE_RING_AZIMUTHS)
+        assert np.all(step[~live] == 0.0)
+        share = np.where(live[:, None], step / np.where(live, bound, 1.0)[:, None], 0.0)
+        # Within one width, in the plane, of a kink of #156's class: the one place a step may pass the bound.
+        middle = phi[:-1] + math.pi / WHOLE_RING_AZIMUTHS
+        near = np.zeros(share.shape, dtype=bool)
+        for r_v, phi_v, w_v in turn_backs_near_a_free_end(sp, sp.pieces):
+            near |= np.hypot(rings[:, None] * np.cos(middle)[None, :] - r_v * math.cos(phi_v), rings[:, None] * np.sin(middle)[None, :] - r_v * math.sin(phi_v)) < w_v
+        named = lambda mask: [(seed, round(float(rings[i]), 4), round(float(middle[j]), 4), round(float(step[i, j]), 4)) for i, j in np.argwhere(mask)]  # noqa: E731
+        assert not (share > 1.0)[~near].any(), named((share > 1.0) & ~near)
+        exempt = named((share > 1.0) & near)
+        record.append((round(float(share[~near].max()), 2), len(exempt), round(max((e[3] for e in exempt), default=0.0), 3),
+                       sorted({e[1] for e in exempt})))
+    # per seed: (the largest step away from a kink of #156's class, as a share of the bound; the steps over the
+    #  bound near one - their number, their largest size, the rings they lie on, kpc)
+    assert record == EXPECTED_WHOLE_RINGS.get(leg), repr(record)
+
+
+EXPECTED_WHOLE_RINGS: dict = {
+    "milky_way": [(0.06, 12, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875, 4.125]),
+                  (0.99, 11, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875]),
+                  (0.25, 7, 0.018, [3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05]),
+                  (0.59, 18, 0.018, [3.6, 3.6375, 3.675, 3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875, 4.125, 4.1625, 4.2, 4.2375]),
+                  (0.07, 11, 0.018, [3.7125, 3.75, 3.7875, 3.825, 3.8625, 3.9, 3.9375, 3.975, 4.0125, 4.05, 4.0875])],
+    "ngc_4414": [(0.06, 0, 0.0, []), (0.05, 0, 0.0, []), (0.07, 0, 0.0, []), (0.07, 0, 0.0, []), (0.05, 0, 0.0, [])],
+    "ngc_4414 drawn": [(0.04, 0, 0.0, []), (0.06, 0, 0.0, []), (0.05, 0, 0.0, []), (0.04, 0, 0.0, []), (0.05, 0, 0.0, [])],
+    "default": [(0.1, 0, 0.0, []), (0.08, 0, 0.0, []), (0.08, 0, 0.0, []), (0.11, 0, 0.0, []), (0.08, 0, 0.0, [])],
+}
+# The Milky Way's record as measured with seed 1's 13 steps set aside (the second entry's 0.99 is theirs, read
+# under the bound beside them); the test stops before it, at those steps, until the lead rules on their class.
+
+
 # --- per-region determinism (D60) on the pattern of pieces ---------------------------------------------------------------
 
 
