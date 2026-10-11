@@ -806,11 +806,16 @@ class Pieces:
         base, turns = self.along_parts(slots, x_to)
         return base + turns
 
-    def along_parts(self, slots: np.ndarray, x_to: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def along_parts(self, slots: np.ndarray, x_to: np.ndarray, overshoot: bool = False) -> tuple[np.ndarray, ...]:
         """:meth:`along` as (the azimuth on the line of the piece it ends on, the whole turns from that line to the
         slot's own chain's unwrapping): two chains that read one piece read the first to the bit, whichever of
         them it is followed from - so the anchors of a chain and of the chain it joined coincide exactly past
-        the join, and the turns are added only to a displacement."""
+        the join, and the turns are added only to a displacement.
+
+        With ``overshoot``, a third array: how far in ln R the target lies past the piece it ends on - 0 where
+        the chain followed (through its kinks and its joins) reaches ``x_to``, it has material there; where it
+        does not, the distance beyond the end piece's reach along which its line is continued (a free end, or a
+        measured arm that turns back in radius). An empty slot reads 0."""
         slots, x_to = np.broadcast_arrays(np.asarray(slots), np.asarray(x_to, dtype=float))
         at = slots.copy()
         turns = np.zeros(at.shape)
@@ -837,7 +842,12 @@ class Pieces:
         x0, x1 = self.x_start[at], self.x_end[at]
         with np.errstate(invalid="ignore", divide="ignore"):
             share = np.where((at < self.count) & np.isfinite(x1) & np.isfinite(x_to) & (x1 > x0), (x_to - x0) / np.where(x1 > x0, x1 - x0, 1.0), 0.0)
-        return self.phi_start[at] + share * (self.phi_end[at] - self.phi_start[at]), turns
+        azimuth = self.phi_start[at] + share * (self.phi_end[at] - self.phi_start[at])
+        if not overshoot:
+            return azimuth, turns
+        with np.errstate(invalid="ignore"):
+            past = np.where(at < self.count, np.maximum(np.maximum(x0 - x_to, x_to - x1), 0.0), 0.0)
+        return azimuth, turns, past
 
     def unwrapped(self, slots: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """ψ of each slot's piece at azimuths ``phi`` (broadcast against ``slots``): the azimuth from the piece's

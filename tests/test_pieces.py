@@ -1063,12 +1063,12 @@ EXPECTED_GAPS: dict = {"milky_way": (18, 14, 8.74, 354, [3.572, 4.453, 5.916, 6.
 #  9 % - and what remains is at joins, free ends and the nearly circular pieces, as before)
 
 
-def carried_map_folds(gp, per_gap: int = 5) -> tuple[int, list[tuple[int, float, float, float, bool]]]:
+def carried_map_folds(gp, per_gap: int = 5) -> tuple[int, int, list[tuple[int, float, float, float]]]:
     """Every (solved ring, radius) pair a point reads - each ring of the finished store with ``per_gap`` radii
     strictly inside each gap beside it - and the carried map M(φ) = φ + D(φ) on it, from ``_anchors``: (the
-    pairs, the folds). A fold is a stretch between two neighbouring anchors whose image on the ring runs backwards
-    (its width after the shift under −1e-12 rad): (ring, ring's radius, r, the image's width, whether a chain of
-    the two anchors does not reach r - its anchor the end piece's line continued past a free end)."""
+    pairs, the pairs on which an anchor is continued past its chain's material, the folds). A fold is a stretch
+    between two neighbouring anchors whose image on the ring runs backwards (its width after the shift under
+    −1e-12 rad): (ring, ring's radius, r, the image's width)."""
     store = gp._complete()
     radii, carries = store["radii"], store["carries"]
     rings, rs = [], []
@@ -1083,41 +1083,55 @@ def carried_map_folds(gp, per_gap: int = 5) -> tuple[int, list[tuple[int, float,
     image = anchors + shifts
     width = image[:, 1:] - image[:, :-1]
     real = np.arange(width.shape[1])[None, :] < count[:, None]
-    # Which piece each sorted anchor is: the same sort as ``_anchors``' own, made again here.
+    # The images of a pair's anchors span one turn: the map is of degree one.
+    assert np.all(np.abs((width * real).sum(axis=1)[count > 0] - 2.0 * math.pi) < 1e-9)
     p = gp.stars.pieces
     slots = p.slots(radii[rings])
-    live, on_ring, _ = p.geometry(radii[rings], slots)
-    on_line, turns = p.along_parts(slots, np.log(rs)[:, None])
-    key = np.where(live, np.mod(on_line, 2.0 * math.pi), np.inf)
-    moved = np.where(live, on_ring - (on_line + turns), 0.0)
-    which = np.take_along_axis(slots, np.lexsort((key + moved, key), axis=1), axis=1)
-    assert np.array_equal(np.take_along_axis(key, np.lexsort((key + moved, key), axis=1), axis=1)[real], anchors[:, :-1][real])
-    folds = []
-    for i, j in zip(*np.nonzero(real & (width < -1e-12))):
-        x = math.log(rs[i])
-        free = False
-        for s in (which[i, j], which[i, (j + 1) % count[i]]):
-            own = p.chain == p.chain[s]
-            free |= not bool(((p.x_start[:-1][own] <= x) & (x <= p.x_end[:-1][own])).any())
-        folds.append((int(rings[i]), float(radii[rings[i]]), float(rs[i]), float(width[i, j]), free))
-    return int(rings.size), folds
+    live = p.geometry(radii[rings], slots)[0]
+    continued = int((live & (p.along_parts(slots, np.log(rs)[:, None], overshoot=True)[2] > 0.0)).any(axis=1).sum())
+    folds = [(int(rings[i]), float(radii[rings[i]]), float(rs[i]), float(width[i, j])) for i, j in zip(*np.nonzero(real & (width < -1e-12)))]
+    return int(rings.size), continued, folds
+
+
+def test_an_anchor_past_a_free_end_is_held_between_its_neighbours_by_hand():
+    """The gate's eighth follow-up, item 2, on one row by hand: three anchors round a ring at 1, 2 and 3 rad, the
+    middle one continued past its chain's free end. Continued no further than either neighbour: at 2.5 rad it
+    stays; carried to 3.4 rad it stops at its neighbour's 3 rad - that neighbour's azimuth to the bit, its own
+    place on the ring kept; a row whose every chain reaches the radius is returned as it came; two continued
+    anchors that cross each other between two held ones meet at the mean of the two; with no chain reaching the
+    radius the one that ended nearest it holds."""
+    on_ring = np.array([[1.0, 2.0, 3.0]])
+    live = np.ones((1, 3), dtype=bool)
+
+    def held(anchor, past):
+        key = np.mod(np.asarray(anchor, dtype=float)[None, :], 2.0 * math.pi)
+        return gm._hold_at_neighbours(key, on_ring - key, live, np.asarray(past, dtype=float)[None, :])
+
+    key, moved = held([1.0, 2.5, 3.0], [0.0, 0.2, 0.0])
+    assert np.array_equal(key, [[1.0, 2.5, 3.0]]) and np.array_equal(key + moved, on_ring)
+    key, moved = held([1.0, 3.4, 3.0], [0.0, 0.2, 0.0])
+    assert key[0, 1] == key[0, 2] == 3.0 and np.allclose(key + moved, on_ring, rtol=0.0, atol=1e-15)
+    k0 = np.array([[1.0, 2.5, 3.0]])
+    assert gm._hold_at_neighbours(k0, on_ring - k0, live, np.zeros((1, 3)))[0] is k0
+    four, key4 = np.array([[1.0, 2.0, 2.5, 3.0]]), np.array([[1.0, 2.7, 2.3, 3.0]])
+    k, d = gm._hold_at_neighbours(key4, four - key4, np.ones((1, 4), dtype=bool), np.array([[0.0, 0.1, 0.1, 0.0]]))
+    assert k[0, 1] == pytest.approx(2.5, abs=1e-15) and k[0, 2] == pytest.approx(2.5, abs=1e-15) and np.allclose(k + d, four, rtol=0.0, atol=1e-15)
+    key, moved = held([1.5, 2.5, 2.2], [0.3, 0.1, 0.2])  # none reaches the radius: the middle one, nearest, holds
+    assert key[0, 1] == 2.5 and key[0, 2] == 2.5 and key[0, 0] == 1.5
 
 
 @pytest.mark.parametrize("leg", (*LEGS, "default"))
-def test_the_carried_map_never_folds_where_the_chains_reach(prod, leg):
-    """The gate's sixth follow-up, item 2: "past its join a joined chain's anchor follows the chain it met; the map
-    is then asserted monotone on every (ring, radius) pair of the gate's legs". Held on three seeds of each leg
-    and the bare default galaxy: every joined end of the census stands on a piece of the chain it met (to
-    ``pieces.JOINED``), a joined chain's anchor past its join is the anchor of the chain it met to the bit, and
-    **the map runs forwards on every stretch whose two anchors' chains reach the radius** - at joins, at kinks,
-    across the stored start azimuths' whole turns.
-
-    **What remains, recorded and not mended:** folds where an anchor's chain has ended free short of the radius
-    and its end piece's line is continued (the fourth pass's rule, which the ruling does not touch) - mostly
-    near the centre of the unbarred ``ngc_4414``, where a short piece's continued line sweeps radians in a few
-    tens of parsecs, out to 8 kpc on one seed of its drawn leg, and at the Milky Way's Norma turn-back (#156's
-    class). Their number is the record ``EXPECTED_FOLDS``, for the lead to rule on; nothing was changed to make
-    it hold. The bare default galaxy folds nowhere."""
+def test_the_carried_map_never_folds(prod, leg):
+    """The gate's sixth follow-up, item 2, and its eighth, item 2: past its join a joined chain's anchor follows
+    the chain it met, and past a free end (or a measured arm's turn back in radius) an anchor is continued no
+    further than its neighbours - **so the carried map runs forwards on every (ring, radius) pair**, by
+    construction. Held on three seeds of each leg and the bare default galaxy: every joined end of the census
+    stands on a piece of the chain it met (to ``pieces.JOINED``), a joined chain's anchor past its join is the
+    anchor of the chain it met to the bit, the images of every pair's anchors span one turn, and no stretch's
+    image runs backwards. (Until the eighth follow-up the continued anchors folded on 1-15 pairs a seed of every
+    leg but the default galaxy - ``ngc_4414``'s near its centre and its drawn leg's out to 8 kpc, the Milky
+    Way's at Norma's turn-back; that record, ``EXPECTED_FOLDS``, is retired with it and kept in D219.) The number
+    of pairs on which an anchor is continued is recorded beside the pairs."""
     record = []
     for seed in (None, 1, 2):
         gm.forget_solutions()
@@ -1134,21 +1148,15 @@ def test_the_carried_map_never_folds_where_the_chains_reach(prod, leg):
             a, _ = p.along_parts(np.array([i]), np.array([x]))
             b, _ = p.along_parts(np.array([met]), np.array([x]))
             assert a[0] == b[0], (seed, int(i))
-        pairs, folds = carried_map_folds(gp)
-        assert all(free for *_, free in folds), (seed, [f for f in folds if not f[4]])
-        record.append((pairs, len(folds), round(max((f[2] for f in folds), default=0.0), 3)))
-    # per seed (pairs, folds where a chain ends free short of the radius, the largest radius of one, kpc)
-    assert record == EXPECTED_FOLDS.get(leg), repr(record)
+        pairs, continued, folds = carried_map_folds(gp)
+        assert not folds, (seed, folds[:6])
+        record.append((pairs, continued))
+    # per seed (pairs, those on which an anchor is continued past its chain's material)
+    assert record == EXPECTED_CONTINUED.get(leg), repr(record)
 
 
-EXPECTED_FOLDS: dict = {"milky_way": [(1350, 1, 4.461), (1400, 1, 4.461), (1490, 1, 4.461)],
-                         "ngc_4414": [(1615, 4, 0.071), (1555, 7, 0.105), (1445, 7, 0.105)],
-                         "ngc_4414 drawn": [(1875, 12, 0.703), (1995, 13, 7.982), (1845, 15, 2.154)],
-                         "default": [(960, 0, 0.0), (1080, 0, 0.0), (1120, 0, 0.0)]}
-# Before the fifth pass's item 2 (the census of its item 1), the same pairs folded on (stretches, pairs) - Milky Way
-# (27, 27), (33, 31), (40, 40); ngc_4414 (7, 7), (9, 7), (9, 9); its drawn leg (15, 13), (20, 18), (17, 14); the
-# default galaxy (18, 18), (7, 7), (15, 15): at joins, and at every kink where the table's start azimuths step a
-# whole turn (``Pieces.along`` kept no turn across a kink, so a displacement read 2 pi off).
+EXPECTED_CONTINUED: dict = {"milky_way": [(1350, 39), (1400, 46), (1490, 61)], "ngc_4414": [(1615, 194), (1555, 174), (1445, 168)],
+                            "ngc_4414 drawn": [(1875, 288), (1995, 298), (1845, 251)], "default": [(960, 20), (1080, 38), (1120, 28)]}
 
 
 # --- the gate's predictions, read as measured ----------------------------------------------------------------------

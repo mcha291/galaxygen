@@ -504,6 +504,84 @@ STAR_FORMATION_GAS_CONTRAST = FieldDecl(
 )
 
 
+def _hold_at_neighbours(key: np.ndarray, moved: np.ndarray, live: np.ndarray, past: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The anchors of a ring's carried map with every anchor continued past its chain's material held between its
+    neighbours (the gate's eighth follow-up, item 2): "a chain's anchor is continued past a free end no further
+    than the nearest neighbouring anchor on either side - where the continued line would cross a neighbour's
+    anchor the two meet and go no further (the ended chain's sliver of the ring's profile is carried to where the
+    neighbour stands and no further; the meeting point moves continuously in r)".
+
+    ``key`` (n, K) each anchor's azimuth at the radius within one turn (inf in an empty slot), ``moved`` its
+    displacement (the ring's position less the anchor, unwrapped: ``key + moved`` is where it stands on the ring),
+    ``live`` the slots that hold a piece and ``past`` how far its chain's end lies short of the radius (0 where the
+    chain reaches it: :meth:`Pieces.along_parts`). Returns (key, moved) with the anchors of the held chains -
+    those that reach the radius; in a row where none does, the one whose end lies nearest it - unmoved, and every
+    other anchor, taken round the ring in the order the chains stand on it, put between the held anchors on either
+    side of it: clipped to them, and where two continued anchors cross each other, each set to the mean of the
+    running greatest from one side and the running least from the other (equal to the anchor wherever nothing
+    crosses, non-decreasing, continuous in the radius). An anchor clipped to a held one takes that one's azimuth to
+    the bit, so the two stand at one anchor and are ordered by their places on the ring. A row with nothing to
+    hold is returned bit for bit."""
+    count = live.sum(axis=1)
+    held = live & (past == 0.0)
+    rows = np.flatnonzero((live & ~held).any(axis=1) & (count >= 2))
+    if rows.size == 0:
+        return key, moved
+    k, d, lv, fixed, c = key[rows], moved[rows], live[rows], held[rows].copy(), count[rows]
+    n, slots = k.shape
+    none = ~fixed.any(axis=1)  # no chain reaches the radius: the one that ended nearest it holds
+    if none.any():
+        nearest = np.argmin(np.where(lv, past[rows], np.inf), axis=1)
+        fixed[none, nearest[none]] = True
+    image = k + d
+    with np.errstate(invalid="ignore"):  # (an empty slot's key is inf)
+        ring = np.where(lv, np.mod(image, TWO_PI), np.inf)
+    order = np.argsort(ring, axis=1, kind="stable")  # the live slots in their order round the ring, the empty ones last
+    start = np.argmax(np.take_along_axis(fixed, order, axis=1), axis=1)  # each row's walk starts at a held anchor
+    t = np.arange(slots)[None, :]
+    inside = t < c[:, None]
+    walk = np.take_along_axis(order, np.where(inside, (start[:, None] + t) % c[:, None], t), axis=1)
+    wrapped = inside & (start[:, None] + t >= c[:, None])
+
+    def walked(a: np.ndarray) -> np.ndarray:
+        return np.take_along_axis(a, walk, axis=1)
+
+    kw, dw, iw, rw, fw = walked(k), walked(d), walked(image), walked(ring), walked(fixed)
+    on_ring = np.where(inside, rw + TWO_PI * wrapped, 0.0)  # the ring's positions, one turn from the first held anchor
+    whole = np.where(inside, np.round((on_ring - iw) / TWO_PI), 0.0)
+    A = np.where(inside, kw + TWO_PI * whole, np.inf)  # the anchors unwrapped alike
+    end = A[:, :1] + TWO_PI  # the first held anchor, a turn on
+    A_end = np.concatenate([A, end], axis=1)
+    held_end = np.concatenate([fw & inside, np.ones((n, 1), dtype=bool)], axis=1)
+    index = np.broadcast_to(np.arange(slots + 1)[None, :], A_end.shape)
+    low = np.maximum.accumulate(np.where(held_end, A_end, -np.inf), axis=1)[:, :slots]
+    high = np.minimum.accumulate(np.where(held_end, A_end, np.inf)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+    before = np.maximum.accumulate(np.where(held_end, index, -1), axis=1)[:, :slots]
+    after = np.minimum.accumulate(np.where(held_end, index, slots + 1)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+    free = inside & ~fw
+    with np.errstate(invalid="ignore"):
+        clipped = np.where(free, np.minimum(np.maximum(A, low), high), A)
+        rising = np.maximum.accumulate(np.where(inside, clipped, -np.inf), axis=1)
+        falling = np.minimum.accumulate(np.concatenate([np.where(inside, clipped, np.inf), end], axis=1)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+        placed = np.where(free, 0.5 * (rising + falling), A)
+    changed = free & (placed != A)
+    if not changed.any():
+        return key, moved
+    keys_end = np.concatenate([kw, kw[:, :1]], axis=1)
+    key_after = np.take_along_axis(keys_end, np.clip(after, 0, slots), axis=1)
+    key_before = np.take_along_axis(keys_end, np.clip(before, 0, slots), axis=1)
+    with np.errstate(invalid="ignore"):
+        new_key = np.where(placed == high, key_after, np.where(placed == low, key_before, np.mod(placed, TWO_PI)))
+    kw_new = np.where(changed, new_key, kw)
+    dw_new = np.where(changed, on_ring - placed, dw)
+    key, moved = key.copy(), moved.copy()
+    k_rows, d_rows = k.copy(), d.copy()
+    np.put_along_axis(k_rows, walk, kw_new, axis=1)
+    np.put_along_axis(d_rows, walk, dw_new, axis=1)
+    key[rows], moved[rows] = k_rows, d_rows
+    return key, moved
+
+
 @dataclass(frozen=True, slots=True, eq=False)
 class GasPattern:
     """Everything the gas contrast needs, read from published fields in one place (rule A9).
@@ -889,9 +967,12 @@ class GasPattern:
         # sixth follow-up, item 2): two chains that meet then stand at one anchor to the bit, and of two anchors at
         # one azimuth the one whose image on the ring is the lesser comes first - the map steps there, and never
         # back.
-        on_line, turns = pieces.along_parts(slots, np.log(np.asarray(r, dtype=float))[:, None])
+        on_line, turns, past = pieces.along_parts(slots, np.log(np.asarray(r, dtype=float))[:, None], overshoot=True)
         key = np.where(live, np.mod(on_line, TWO_PI), np.inf)
         moved = np.where(live, on_ring - (on_line + turns), 0.0)
+        # Past a free end (or a turn back in radius) an anchor is continued no further than its neighbours (the gate's
+        # eighth follow-up, item 2): the map is monotone on every pair by construction.
+        key, moved = _hold_at_neighbours(key, moved, live, past)
         order = np.lexsort((key + moved, key), axis=1)
         ordered = np.take_along_axis(key, order, axis=1)
         shift = np.take_along_axis(moved, order, axis=1)
