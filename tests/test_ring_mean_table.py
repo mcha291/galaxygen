@@ -163,3 +163,17 @@ def test_below_the_first_knot_the_point_function_reads_the_exact_mean(patterns):
         off = np.abs(stars.contrast_at(r[:, None], phi[None, :]).mean(axis=1) - 1.0)
         worst[seed] = float(off.max())
     assert worst and max(worst.values()) < 1e-7, worst  # the rule's error, as at the grid radii; WORST_BOUND a fortiori
+
+
+def test_the_table_s_build_raises_when_its_rounds_run_out(prod, monkeypatch):
+    """``_build_table`` stops honestly (the gate's twelfth follow-up to D219, item 8): forced with a tolerance no
+    interval can meet (1e-30, which also keys the pattern apart in the table store) and one halving round, it raises
+    ArithmeticError naming the pattern, the rounds and the worst remaining interval - never a silent table."""
+    import dataclasses
+
+    o = run(prod[0].get(DEFAULT_MODEL), inputs_of("ngc_4414", 0), only=tuple(pt.PATTERN_READS))
+    stars = dataclasses.replace(compose.stellar_pattern(o.fields, o.grid.R))  # a fresh instance: no table held
+    monkeypatch.setattr(pc, "TABLE_TOLERANCE", 1e-30)
+    monkeypatch.setattr(pc, "TABLE_ROUNDS", 1)
+    with pytest.raises(ArithmeticError, match=r"normaliser table of pattern [0-9a-f]{16} .* after 1 halving rounds; the worst \["):
+        stars.ring_mean_table()

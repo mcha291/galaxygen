@@ -564,7 +564,8 @@ TABLE_TOLERANCE = 1e-6
 # because the ring's count and so its bounded width jump there (ring_state: "continuous in R wherever the chains
 # crossing are the same chains"); such a jump ends in an interval at the rounding floor, which no knot can mend and
 # no star's radius falls in (tests/test_ring_mean_table.py counts them and their total width); the halving stops at
-# 1e-12 of the radius.
+# 1e-12 of the radius. If the rounds run out with an interval still over the tolerance the build raises
+# ArithmeticError naming the pattern, the rounds and the worst interval (the gate's twelfth follow-up, item 8).
 TABLE_ROUNDS = 64
 _TABLE_DENSE = 4096     # radii at which a piece's reach is probed for its boundaries before they are bisected
 _TABLES_KEPT = 8        # how many patterns' tables the content-keyed store holds
@@ -1492,7 +1493,7 @@ class ArmPattern:
         # Every interval is checked at its midpoint once; an interval that passes keeps its two knots and is not
         # checked again, the two halves of one that fails are checked in the next round.
         fresh = np.ones(knots.size - 1, dtype=bool)
-        for _ in range(TABLE_ROUNDS):
+        for rounds in range(TABLE_ROUNDS):
             # (An interval under 1e-12 of its radius is not halved further: it holds a jump of the exact mean.)
             at = np.flatnonzero(fresh & ((knots[1:] - knots[:-1]) > 1e-12 * knots[1:]))
             if not at.size:
@@ -1502,6 +1503,7 @@ class ArmPattern:
             # halved at its middle, whose exact means join the table.
             lo, hi = knots[at], knots[at + 1]
             bad = np.zeros(at.size, dtype=bool)
+            error = np.zeros(at.size)
             exact_mid = None
             for share in (0.25, 0.5, 0.75):
                 probe = lo + share * (hi - lo)
@@ -1509,11 +1511,22 @@ class ArmPattern:
                 exact = self._means_matrix(at_probe, chains)
                 table = means[at] + share * (means[at + 1] - means[at])
                 with np.errstate(invalid="ignore", over="ignore"):
-                    bad |= np.abs(at_probe.effective * (table - exact).sum(axis=1)) > TABLE_TOLERANCE
+                    gap = np.abs(at_probe.effective * (table - exact).sum(axis=1))
+                bad |= gap > TABLE_TOLERANCE
+                error = np.fmax(error, gap)
                 if share == 0.5:
                     mid, exact_mid = probe, exact
             if not bad.any():
                 break
+            if rounds == TABLE_ROUNDS - 1:
+                # The rounds ran out with intervals still over the bound: an honest stop, not a silent table (the
+                # gate's twelfth follow-up, item 8; D164's spirit).
+                worst = int(np.nanargmax(np.where(bad, error, -np.inf)))
+                raise ArithmeticError(
+                    f"the normaliser table of pattern {self._digest().hex()[:16]} (bar {self.bar!r}, pitch "
+                    f"{self.pitch_deg!r} deg, {census} pieces in {chains} chains) has {int(bad.sum())} intervals over "
+                    f"TABLE_TOLERANCE {TABLE_TOLERANCE:g} after {TABLE_ROUNDS} halving rounds; the worst "
+                    f"[{lo[worst]!r}, {hi[worst]!r}] kpc reads |a sum_j (table - exact)| = {error[worst]:.3e}")
             split = at[bad]
             knots = np.concatenate([knots, mid[bad]])
             means = np.concatenate([means, exact_mid[bad]])
