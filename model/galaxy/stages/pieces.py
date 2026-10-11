@@ -70,20 +70,22 @@ chains' one amplitude on the ring:
   their taper weights, so B and the bounded width are continuous in R and a lone tapering chain's amplitude goes
   to zero as the square root of its weight; the realised variance inside tapers falls a little under the budget
   and is recorded." N(R) = Σ_c min(1, s_c/w), s_c the distance along chain c from where its locus crosses the
-  ring to its nearer end (no end: 1), w the width; **at least 1 on a ring any chain reaches** (the fourth
+  ring to its nearer end (no end: 1), w the law's width; **at least 1 on a ring any chain reaches** (the fourth
   follow-up's B as the eleventh amends it: "on a ring any chain reaches", not only one a chain crosses).
 - *The width, bounded* (the first follow-up, item 3): "a piece's FWHM on a ring is min(the width law's, half the
-  ring's crossing spacing π R sin p / N(R)), N the chains crossing" - a bound, not a target, never raised. With
-  the count a sum of taper weights that themselves read the width, the two are one equation,
-  w = min(law, π R sin p / N(w)); it has one solution, found in closed form (:meth:`ArmPattern.ring_state`):
-  Σ_c min(w, s_c) = π R sin p, or the law's width where the chains' tapers together are shorter than that.
+  ring's crossing spacing π R sin p / N(R)), N the chains crossing" - a bound, not a target, never raised. **The
+  taper length is the law's width and the count's weights are read there** (the gate's eleventh follow-up, item 2,
+  superseding the second follow-up's "one equation for the two", whose self-consistent solve jumped where every
+  crossing chain lay inside its taper): N = max(1, Σ_c min(1, s_c/w_law)) and w = min(w_law, π R sin p / N), no
+  fixed point (:meth:`ArmPattern.ring_state`); the bounded width governs the ridge's cross-section alone, the
+  height tapers over the law's width.
 - *The budget, in expectation.* B(R) = √(budget / (N v)), v the variance round the ring of one designed piece of
   unit height: a full-height ridge at the disc's own pitch, a Gaussian in azimuth of dispersion σ_d = σ/(R sin p)
   seen within half a turn of its crest, v = (σ_d/2√π) erf(π/σ_d) − (σ_d²/2π) erf(π/√2σ_d)² (:func:`ring_variance`;
   the ruling's σ_d/(2√π) − σ_d²/(2π) while the ridge is narrower than its ring). For N such ridges at independent
   azimuths the expected variance is N v B²: the budget, by construction. The realised variance is published
   beside it and is never divided by. Where the designed ridge is no ridge on its ring, σ_d ≥ √π, no amplitude
-  spends the budget (B = 0, counted): under the bound that takes a count under 1 - a lone chain inside its taper
+  spends the budget (B = 0, counted): under the bound at the count's floor of 1 - a lone chain inside its taper
   - close to the centre.
 - *Positivity by the saturation alone.* E_j ≥ 0, so the pieces' sum is nowhere under −a Σ_j ⟨E_j⟩: D219's "the
   arms' mean excess ≤ 1 − b(R)". a = min(B, (1 − b(R)) / Σ_j ⟨E_j⟩), b the depth of the bar's body under the
@@ -248,7 +250,7 @@ def budget_amplitude(budget: np.ndarray, count: np.ndarray, sigma_design: np.nda
     σ_d ≥ :data:`WIDEST` = √π: there the ruling's own expression for a piece's ring variance, σ_d/(2√π) − σ_d²/(2π),
     is no longer positive - a height that made the budget's variance there would grow without bound toward the
     centre. Such a ring carries no arm, and is counted (the first builder's reading of a case D219 does not
-    cover; under the width's bound it takes a count under 1). Never a function of a realised power."""
+    cover; under the width's bound it takes the count's floor of 1). Never a function of a realised power."""
     budget = np.asarray(budget, dtype=float)
     count = np.asarray(count, dtype=float)
     sigma_design = np.asarray(sigma_design, dtype=float)
@@ -1005,7 +1007,7 @@ class Laid:
     amplitude: np.ndarray  # B: the budget's amplitude
     effective: np.ndarray  # a: B, cut where the pieces' means would leave less than nothing of the ring's mean
     inv: np.ndarray        # 1/(√2 ς), ς = σ/R
-    taper: np.ndarray      # one width in the plane's unit, w/R
+    taper: np.ndarray      # the taper length in the plane's unit: the law's width over R (the eleventh follow-up)
     slots: np.ndarray
     live: np.ndarray
     x: np.ndarray
@@ -1200,78 +1202,59 @@ class ArmPattern:
 
     def ring_state(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """(the width, the count) at each radius of ``R`` (n,): the bounded FWHM across a piece, kpc, and N, the
-        sum over the chains whose locus crosses the ring of their taper weights.
+        sum over the chains whose locus crosses the ring of their taper weights, at least 1 on a ring any chain
+        reaches.
 
-        **One equation for the two** (the first follow-up's item 3 and the second's item 3 together). A chain's
-        taper weight on a ring is min(1, s_c/w): s_c the distance along the chain, in kpc at the ring's radius,
-        from where it crosses the ring to its nearer end (:attr:`Pieces.before_end`, :attr:`Pieces.after_end`;
-        infinite where it has none: weight 1), w the width - "free chain ends taper over one width", and since
-        the gate's ninth follow-up **a joined end as a free one**: "the count's weight at a JOINED end falls to
-        zero over one width before the join, as a free end's does - the chain's share of the ring's budget passes
-        to the chain it meets as its material does - while the ridge's HEIGHT at a joined end keeps the third
-        follow-up's rule" (the height reads :attr:`Pieces.before` and :attr:`Pieces.after`, which a joined end
-        leaves infinite). And
-        w = min(the law's, π R sin p / N). So w = min(law, w_g) with w_g the one solution of
+        **The taper length is the law's width, and the count's weights are read there** (the gate's eleventh
+        follow-up, item 2, superseding the second follow-up's "one equation for the two": the self-consistent
+        solve was a jump). A chain's taper weight on a ring is min(1, s_c/w_law): s_c the distance along the chain,
+        in kpc at the ring's radius, from where it crosses the ring to its nearer end (:attr:`Pieces.before_end`,
+        :attr:`Pieces.after_end`; infinite where it has none: weight 1), w_law the width law's FWHM - "free chain
+        ends taper over one width" - and since the gate's ninth follow-up **a joined end as a free one**: "the
+        count's weight at a JOINED end falls to zero over one width before the join, as a free end's does - the
+        chain's share of the ring's budget passes to the chain it meets as its material does - while the ridge's
+        HEIGHT at a joined end keeps the third follow-up's rule" (the height reads :attr:`Pieces.before` and
+        :attr:`Pieces.after`, which a joined end leaves infinite; its taper length is the law's width too:
+        :meth:`laid`). Then
 
-            Σ_c min(w_g, s_c) = π R sin p
+            N = max(1, Σ_c min(1, s_c / w_law))  on a ring any chain reaches, 0 on one no chain reaches,
+            w = min(w_law, π R sin p / N),
 
-        (the left side grows with w_g from 0, piece by piece linear, so it is solved exactly on the sorted s_c;
-        where the chains' tapers together are shorter than π R sin p there is none and the law's width stands).
-        With every crossing chain past its taper it is the first follow-up's π R sin p / n. Both are continuous
-        in R wherever the chains crossing are the same chains, and where a chain stops crossing at either end of it
-        (its weight is 0 there); a chain born on a ring enters at weight 0. A chain that crosses a ring twice - a measured
-        arm that kinks back - counts once, at its greater weight."""
+        the bounded width governing the ridge's cross-section alone (the first follow-up's item 3: "a bound, not a
+        target"). **The count's floor is on every ring any chain reaches** (the eleventh follow-up, item 1; the
+        fourth follow-up B's "on a ring crossed by any chain" becomes "on a ring any chain reaches"): a ring some
+        piece lies within :data:`REACH` dispersions of, at the law's width - so B does not jump at a ring's first
+        crossing; the switch is at the reach boundary, where a ridge is under e^(-81/2). N and w are continuous in R
+        wherever a chain is in reach: a chain starts and stops crossing at weight 0, and a chain born on a ring
+        enters at weight 0. A chain that crosses a ring twice - a measured arm that kinks back - counts once, at its
+        greater weight (a turn back in radius steps N there: #156's class)."""
         R = np.asarray(R, dtype=float)
         p = self.pieces
         law = self.law_width_at(R)
         slots = p.slots(R)
         live = slots < p.count
-        size = slots.shape[1]
+        census = p.count
         with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
             x = np.log(R)[:, None]
             x0, x1 = p.x_start[slots], p.x_end[slots]
             length = p.length[slots]
             t = np.where(live, (x - x0) / (x1 - x0) * length, 0.0)
             along = np.where(live, np.minimum(t + p.before_end[slots], length - t + p.after_end[slots]) * R[:, None], 0.0)
+            # Which rings a chain reaches: a piece within REACH dispersions, at the law's width, of the ring (its
+            # nearer end's distance in ln R past it, 0 where it crosses) - `_reach`'s arithmetic.
+            from_start = x - p.x_start[None, :census]
+            past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, :census], -from_start), 0.0)
+            sigma_law = law / FWHM_PER_SIGMA / R
+            reached = ((past <= REACH * sigma_law[:, None]) & (p.extent > 0.0)[None, :]).any(axis=1) & (R > 0.0)
         chain = p.chain_of[slots]
         same = chain[:, :, None] == chain[:, None, :]  # (the pad's NaN is its own chain's to nobody)
         best = np.where(same, along[:, None, :], -np.inf).max(axis=2)
-        first = same.argmax(axis=2) == np.arange(size)[None, :]
-        s = np.where(live & first, best, 0.0)
-        target = math.pi * R * self.sin_pitch
-        ordered = np.sort(s, axis=1)
-        finite = np.isfinite(ordered)
-        running = np.cumsum(np.where(finite, ordered, 0.0), axis=1)
-        zero = np.zeros((R.size, 1))
-        under = np.concatenate([zero, running[:, :-1]], axis=1)   # the sum of the k least
-        least = np.concatenate([zero, ordered[:, :-1]], axis=1)   # the k-th least (0 for k = 0)
-        with np.errstate(invalid="ignore", over="ignore"):
-            candidate = (target[:, None] - under) / (size - np.arange(size))[None, :]
-            holds = np.isfinite(least) & (least <= candidate) & (candidate <= ordered)
-        solved = holds.any(axis=1)
-        bound = np.where(solved, np.take_along_axis(candidate, holds.argmax(axis=1)[:, None], axis=1)[:, 0], np.inf)
-        width = np.minimum(law, bound)
+        first = same.argmax(axis=2) == np.arange(slots.shape[1])[None, :]
         with np.errstate(divide="ignore", invalid="ignore"):
-            weight = np.where(live & first, np.minimum(1.0, s / width[:, None]), 0.0)
-        count = sum_slots(np.nan_to_num(weight, nan=0.0))
-        # The gate's fourth follow-up, B: "On a ring crossed by any chain the count is N = max(1, sum of the taper
-        # weights of the crossing chains), so B <= sqrt(budget/v) on every ring; a lone newborn or ending chain's
-        # excess goes to zero linearly in its weight; N is continuous through 1." Where the weights sum under 1
-        # the bound is then half the spacing of one piece, pi R sin p, and the weights are read at that width (their
-        # sum is no larger there: the width grew); where they sum to 1 or more nothing changes, so N and the width
-        # are continuous through 1. Since the eleventh follow-up, item 1, **on a ring any chain reaches** - a piece
-        # within REACH dispersions of it at the law's width (`_reach`'s arithmetic) - not only on one a chain
-        # crosses: B does not jump at a ring's first crossing; the switch is at the reach boundary, e^(-81/2).
-        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-            from_start = x - p.x_start[None, : p.count]
-            past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, : p.count], -from_start), 0.0)
-            reached = ((past <= REACH * (law / FWHM_PER_SIGMA / R)[:, None]) & (p.extent > 0.0)[None, :]).any(axis=1) & (R > 0.0)
-        under = reached & (count < 1.0)
-        if under.any():
-            width = np.where(under, np.minimum(law, target), width)
-            with np.errstate(divide="ignore", invalid="ignore"):
-                weight = np.where(live & first, np.minimum(1.0, s / width[:, None]), 0.0)
-            count = np.where(under, np.maximum(1.0, sum_slots(np.nan_to_num(weight, nan=0.0))), count)
+            weight = np.where(live & first, np.minimum(1.0, best / law[:, None]), 0.0)
+        count = np.where(reached, np.maximum(1.0, sum_slots(np.nan_to_num(weight, nan=0.0))), 0.0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            width = np.where(count > 0.0, np.minimum(law, math.pi * R * self.sin_pitch / np.where(count > 0.0, count, 1.0)), law)
         return width, count
 
     def width_at(self, R: np.ndarray) -> np.ndarray:
@@ -1387,7 +1370,9 @@ class ArmPattern:
         live = slots < census
         ok = (R > 0.0) & np.isfinite(sigma) & (sigma > 0.0)
         inv = np.where(ok, 1.0 / (math.sqrt(2.0) * np.where(ok, sigma, 1.0)), 1.0)
-        taper = np.where(ok, width / np.where(ok, R, 1.0), 1.0)
+        # The height's taper length is the law's width (the gate's eleventh follow-up, item 2); the bounded width
+        # governs the ridge's cross-section alone (sigma, inv).
+        taper = np.where(ok, self.law_width_at(R) / np.where(ok, R, 1.0), 1.0)
         relative = np.where(live, np.where(ok, x, 0.0)[:, None] - p.x_start[slots], 0.0)
         # The runs: the slots of one chain are contiguous (the table's order is by chain). The run's lead is the
         # piece whose locus crosses the ring, else the one whose end is nearest in ln R, the earlier of equals.

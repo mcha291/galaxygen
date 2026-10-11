@@ -1155,8 +1155,12 @@ def test_the_carried_map_never_folds(prod, leg):
     assert record == EXPECTED_CONTINUED.get(leg), repr(record)
 
 
-EXPECTED_CONTINUED: dict = {"milky_way": [(1330, 39), (1400, 46), (1480, 61)], "ngc_4414": [(1615, 194), (1535, 174), (1445, 168)],
-                            "ngc_4414 drawn": [(1875, 288), (1975, 298), (1845, 251)], "default": [(960, 20), (1040, 38), (1120, 28)]}
+EXPECTED_CONTINUED: dict = {"milky_way": [(1750, 37), (1830, 44), (1880, 59)], "ngc_4414": [(1575, 195), (1475, 171), (1425, 168)],
+                            "ngc_4414 drawn": [(1775, 284), (1885, 289), (1785, 248)], "default": [(1620, 20), (1700, 38), (1770, 28)]}
+# (The eleventh follow-up - the count's floor where a chain reaches, the weights at the law's width - moves the
+# forcing, and so the solved mid-gap rings, again: was milky_way (1330, 39), (1400, 46), (1480, 61); ngc_4414 (1615,
+# 194), (1535, 174), (1445, 168); its drawn leg (1875, 288), (1975, 298), (1845, 251); default (960, 20), (1040, 38),
+# (1120, 28).)
 # (The ninth follow-up's count at joined ends moves the gas's forcing and so which mid-gap rings are solved: was
 # milky_way 1350 / 1400 / 1490 pairs, ngc_4414 1615 / 1555 / 1445, its drawn leg 1875 / 1995 / 1845, default 960 / 1080 /
 # 1120; the continued anchors' pairs the same.)
@@ -1933,9 +1937,10 @@ def test_no_step_round_any_whole_ring(prod, leg):
 
 
 EXPECTED_WHOLE_RINGS: dict = {
-    "milky_way": (72, 0.055, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.99),
-    "ngc_4414": (0, 0.0, [], 0.07), "ngc_4414 drawn": (0, 0.0, [], 0.06), "default": (0, 0.0, [], 0.11),
+    "milky_way": (73, 0.055, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.99),
+    "ngc_4414": (0, 0.0, [], 0.07), "ngc_4414 drawn": (0, 0.0, [], 0.05), "default": (0, 0.0, [], 0.38),
 }
+# (Before the eleventh follow-up: milky_way 72 exempted, the drawn leg's worst 0.06, the default galaxy's 0.11.)
 # (The Milky Way's 72: Norma's 12, 11, 7, 18 and 11 on the five seeds, each at most 0.018, on the rings 3.6-4.24 kpc;
 #  and seed 1's 13 at the forward kink, 0.039-0.055 on the rings 4.65-5.1 kpc at azimuth -1.33 to -1.36 rad. Its 0.99
 #  is a step beside those 13, under the bound.)
@@ -1998,13 +2003,15 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
     class: :func:`step_class`) with its size in each number.
 
     **No step at a join** (before the ruling, 30 and more on these runs: N by 1, the width by 0.07-0.68 kpc, a Σ
-    <E> by up to 0.12), at a free end, at a birth on a crossed ring or unexplained. **What remains is recorded, for
-    the lead, not mended** (the ruling's own words leave births; these are three rules this follow-up does not
-    touch): "first crossing" - where a ring is first crossed (the bar's half-length on the barred discs, near the
-    unbarred one's centre) N goes from 0 to max(1, Σ w) and B with it from 0, so a Σ <E> steps by the chains'
-    flanks that reach the ring; "turn-back" - the Milky Way's Norma (#156's class); "same chains" - the width
-    bound's branches, where Σ_c s_c passes π R sin p (no solution on one side: the law's width, or π R sin p under
-    the fourth follow-up's B) and the width jumps to the solution under max s_c."""
+    <E> by up to 0.12), at a free end, at a birth, at a ring's first crossing, between two rings the same chains
+    cross, or unexplained. **One class remains, recorded**: "turn-back" - the Milky Way's Norma (#156's class).
+    (The gate's eleventh follow-up removed two: "first crossing" - N went from 0 to max(1, Σ w) where a ring was
+    first crossed, and B with it from 0, while the starting chains' flanks already reached the ring: the count's
+    floor now stands on every ring a chain reaches; and "same chains" - the self-consistent width solve jumped
+    from the law's width to max s_c where every crossing chain lay inside its taper: the weights are now read at
+    the law's width and the bound is π R sin p / N, no fixed point. Before it: Milky Way first crossing 3 (largest
+    a Σ <E> 0.023); ngc_4414 same chains 8 (0.083), first crossing 7 (0.243); its drawn leg 24 (0.325) and 19
+    (0.852); default first crossing 3 (0.335), same chains 1 (0.025).)"""
     record = {}
     for seed in (None, 1, 2):
         inputs = {} if leg == "default" else leg_inputs(leg)
@@ -2029,7 +2036,7 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
             for i in np.flatnonzero(np.abs(q_hi - q_lo) > 1e-7):
                 at = (round(float(lo[i]), 4), step_class(sp, float(lo[i]), float(hi[i])))
                 steps.setdefault(at, [0.0, 0.0, 0.0])[k] = float(abs(q_hi[i] - q_lo[i]))
-        unexpected = [(seed, *at, size) for at, size in steps.items() if at[1] not in ("first crossing", "turn-back", "same chains")]
+        unexpected = [(seed, *at, size) for at, size in steps.items() if at[1] != "turn-back"]
         assert not unexpected, unexpected
         for (_, kind), size in steps.items():
             n, largest = record.get(kind, (0, 0.0))
@@ -2038,12 +2045,7 @@ def test_the_ring_s_numbers_do_not_step_in_r_at_a_join(prod, leg):
     assert record == EXPECTED_R_STEPS.get(leg), repr(record)
 
 
-EXPECTED_R_STEPS: dict = {
-    "milky_way": {"first crossing": (3, 0.023), "turn-back": (3, 0.04)},
-    "ngc_4414": {"same chains": (8, 0.083), "first crossing": (7, 0.243)},
-    "ngc_4414 drawn": {"same chains": (24, 0.325), "first crossing": (19, 0.852)},
-    "default": {"first crossing": (3, 0.335), "same chains": (1, 0.025)},
-}
+EXPECTED_R_STEPS: dict = {"milky_way": {"turn-back": (3, 0.04)}, "ngc_4414": {}, "ngc_4414 drawn": {}, "default": {}}
 # Before the ninth follow-up (the count's weight 1 up to a joined end), the same runs held 30 and more steps at joins
 # besides these, on every leg: N by 1-1.2, the width by 0.07-0.68 kpc, a Σ <E> by up to 0.12.
 
