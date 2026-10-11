@@ -1827,9 +1827,12 @@ def test_no_square_edge_across_any_kink_or_join(prod, template):
         # A kink at which the chain turns back in radius (a measured arm's two stretches both ending there) within one
         # width of a free end: there the foot's arc length - and so the taper - jumps across the bisector between the
         # two stretches, by the rule's own words (the lead's reading: "the arc length to the point's foot"). Recorded,
-        # with its jump, for the gate; not asserted continuous.
+        # with its jump, for the gate; not asserted continuous. "One width" is the LAW's width (the gate's twelfth
+        # follow-up, item 3): the height tapers over it since the eleventh follow-up; the bounded width ``w_v``
+        # governs the ridge's cross-section alone, and so the rings and spacings sampled here.
+        law_v = float(sp.law_width_at(np.array([r_v]))[0])
         turn_back = kind == "kink" and ended >= 0 and bool(p.link_end_is_end[ended])
-        near_free = turn_back and min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < w_v
+        near_free = turn_back and min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < law_v
         own = {"share of bound": 0.0, "ratio at half spacing": 0.0} if near_free else worst
         for dx in (-0.3, 0.0, 0.3):
             r = r_v * math.exp(dx * w_v / r_v)
@@ -1884,13 +1887,15 @@ def kink_wedges_near_a_free_end(sp, p: pc.Pieces) -> list[tuple[float, float, tu
     back along the piece that ends there, the unit direction from it along the other piece, the kink's radius
     kpc, the width there kpc), in the plane of ln R and azimuth in which the pieces are straight. "Within one
     width of a free end": the chain's length from the kink to its nearer free end, times the radius, under the
-    width (an end joined to another chain is not free)."""
+    width (an end joined to another chain is not free). **The width is the law's** (``law_width_at``; the gate's
+    twelfth follow-up, item 3, #156 amended to one law width): the height tapers over the law's width since the
+    eleventh follow-up, up to 1.8 times the bounded width on the default galaxy's outer disc."""
     out = []
     for x_v, phi_v, ended, started, kind in vertices_of(p):
         if kind != "kink":
             continue
         r_v = math.exp(x_v)
-        w_v = float(sp.width_at(np.array([r_v]))[0])
+        w_v = float(sp.law_width_at(np.array([r_v]))[0])
         if not min(float(p.after[ended]), float(p.before[ended] + p.length[ended])) * r_v < w_v:
             continue
         back = (float(p.x_start[ended] - p.x_end[ended]), float(p.phi_start[ended] - p.phi_end[ended]))
@@ -1941,8 +1946,14 @@ def test_no_step_round_any_whole_ring(prod, leg):
 
     As read on the fifth pass: the Milky Way's exempted steps lie at Norma's turn-back (4.46 kpc, every seed) and,
     on seed 1, at a forward kink of two drawn pieces at 5.48 kpc (chain 2's first piece, 0.56 kpc long from the
-    chain's free start, into its second: up to 0.055 a step); the other legs have none."""
-    worst, kinks, exempted = 0.0, set(), []
+    chain's free start, into its second: up to 0.055 a step); the other legs have none.
+
+    **"One width" is the law's** (the gate's twelfth follow-up, item 3; #156 amended to one law width): since the
+    eleventh follow-up the height tapers over the law's width, so a kink 1.96 kpc from a free end - the default
+    galaxy's seed 4 at 11.79 kpc, the law's width 2.65 kpc and the bounded 1.51 - is of #156's class: its step of
+    0.0019 at 12.375 kpc, phi -2.94088 (0.38 of the bound at 8 192 azimuths, 12.8 at 262 144) is exempted by
+    geometry, and the largest step outside every wedge is recorded apart from the largest inside one."""
+    worst, in_wedge, kinks, exempted = 0.0, 0.0, set(), []
     for seed in (None, 1, 2, 3, 4):
         inputs = {} if leg == "default" else leg_inputs(leg)
         o = run(the_model(prod), inputs if seed is None else {**inputs, "texture_seed": seed}, only=PATTERN)
@@ -1969,17 +1980,25 @@ def test_no_step_round_any_whole_ring(prod, leg):
         named = lambda mask: [(leg, seed, round(float(rings[i]), 4), round(float(middle[j]), 4), round(float(step[i, j]), 4)) for i, j in np.argwhere(mask)]  # noqa: E731
         assert not (over & ~near).any(), named(over & ~near)  # a step over the bound outside every such wedge: stop
         exempted += named(over & near)
-        worst = max(worst, float(share[~(over & near)].max()))
-    record = (len(exempted), round(max((e[4] for e in exempted), default=0.0), 4), sorted(kinks, key=repr), round(worst, 2))
+        worst = max(worst, float(share[~near].max(initial=0.0)))
+        in_wedge = max(in_wedge, float(share[near].max(initial=0.0)))
+    record = (len(exempted), round(max((e[4] for e in exempted), default=0.0), 4), sorted(kinks, key=repr), round(worst, 2), round(in_wedge, 2))
     # (the exempted steps, the largest of them, the kinks they lie at by (seed, kink's radius kpc), the largest step
-    #  that is not exempt as a share of the bound)
+    #  outside every such wedge as a share of the bound, the largest inside one - exempted by geometry whatever its
+    #  size: a jump there does not shrink with the azimuths, the twelfth follow-up's item 3)
     assert record == EXPECTED_WHOLE_RINGS.get(leg), (repr(record), exempted)
 
 
 EXPECTED_WHOLE_RINGS: dict = {
-    "milky_way": (73, 0.055, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.99),
-    "ngc_4414": (0, 0.0, [], 0.07), "ngc_4414 drawn": (0, 0.0, [], 0.05), "default": (0, 0.0, [], 0.38),
+    "milky_way": (73, 0.055, [(1, 4.46), (1, 5.48), (2, 4.46), (3, 4.46), (4, 4.46), (None, 4.46)], 0.6, 1.64),
+    "ngc_4414": (0, 0.0, [], 0.07, 0.0), "ngc_4414 drawn": (0, 0.0, [], 0.05, 0.0), "default": (0, 0.0, [], 0.11, 0.38),
 }
+# (The twelfth follow-up, item 3: the wedges read the law's width and the largest step is recorded outside every
+#  wedge and inside one apart. Was milky_way (73, 0.055, [...the same kinks...], 0.99), ngc_4414 (0, 0.0, [], 0.07),
+#  its drawn leg (0, 0.0, [], 0.05), default (0, 0.0, [], 0.38) - the default's 0.38 the seed-4 step of 0.0019 at
+#  12.375 kpc, now inside the law-width wedge of the kink at 11.79 kpc (law 2.65 kpc, bounded 1.51) and exempted by
+#  geometry: the default's largest step outside every wedge is 0.11 again, the Milky Way's 0.6 - its 0.99 lay inside
+#  a wedge; the Milky Way's 1.64 inside one is one of its 73 exempted steps.)
 # (Before the eleventh follow-up: milky_way 72 exempted, the drawn leg's worst 0.06, the default galaxy's 0.11.)
 # (The Milky Way's 72: Norma's 12, 11, 7, 18 and 11 on the five seeds, each at most 0.018, on the rings 3.6-4.24 kpc;
 #  and seed 1's 13 at the forward kink, 0.039-0.055 on the rings 4.65-5.1 kpc at azimuth -1.33 to -1.36 rad. Its 0.99
