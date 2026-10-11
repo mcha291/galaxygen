@@ -70,7 +70,8 @@ chains' one amplitude on the ring:
   their taper weights, so B and the bounded width are continuous in R and a lone tapering chain's amplitude goes
   to zero as the square root of its weight; the realised variance inside tapers falls a little under the budget
   and is recorded." N(R) = Σ_c min(1, s_c/w), s_c the distance along chain c from where its locus crosses the
-  ring to its nearer free end (no free end: 1), w the width.
+  ring to its nearer end (no end: 1), w the width; **at least 1 on a ring any chain reaches** (the fourth
+  follow-up's B as the eleventh amends it: "on a ring any chain reaches", not only one a chain crosses).
 - *The width, bounded* (the first follow-up, item 3): "a piece's FWHM on a ring is min(the width law's, half the
   ring's crossing spacing π R sin p / N(R)), N the chains crossing" - a bound, not a target, never raised. With
   the count a sum of taper weights that themselves read the width, the two are one equation,
@@ -922,9 +923,9 @@ ARM_PIECE_AMPLITUDE = _radial(
     "round the ring at the disc's own pitch - so that as many pieces as the count, at independent places "
     "round the ring, make the budget's variance on average. The count is the chains that cross the ring, "
     "each weighed by how far along it the ring stands from its faded end - a chain just begun counts for "
-    "little, and never under one in all on a ring any chain crosses, so a lone chain just born or just ending "
+    "little, and never under one in all on a ring any chain reaches, so a lone chain just born or just ending "
     "spends no more than one piece's share of the budget and its excess fades with its own weight - so the "
-    "amplitude changes smoothly with radius but where two chains join. Shown here on "
+    "amplitude changes smoothly with radius. Shown here on "
     "the grid's rings; a reader of the arms makes it at its own radius from the budget, the count and the "
     "width, each taken linearly between the grid's radii. It grows without bound toward the centre, where a "
     "piece is wider than its ring and makes almost no variance at any height - a ridge that fills its ring "
@@ -1258,9 +1259,14 @@ class ArmPattern:
         # excess goes to zero linearly in its weight; N is continuous through 1." Where the weights sum under 1
         # the bound is then half the spacing of one piece, pi R sin p, and the weights are read at that width (their
         # sum is no larger there: the width grew); where they sum to 1 or more nothing changes, so N and the width
-        # are continuous through 1.
-        crossed = (live & first).any(axis=1)
-        under = crossed & (count < 1.0)
+        # are continuous through 1. Since the eleventh follow-up, item 1, **on a ring any chain reaches** - a piece
+        # within REACH dispersions of it at the law's width (`_reach`'s arithmetic) - not only on one a chain
+        # crosses: B does not jump at a ring's first crossing; the switch is at the reach boundary, e^(-81/2).
+        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+            from_start = x - p.x_start[None, : p.count]
+            past = np.maximum(np.maximum(from_start - (p.x_end - p.x_start)[None, : p.count], -from_start), 0.0)
+            reached = ((past <= REACH * (law / FWHM_PER_SIGMA / R)[:, None]) & (p.extent > 0.0)[None, :]).any(axis=1) & (R > 0.0)
+        under = reached & (count < 1.0)
         if under.any():
             width = np.where(under, np.minimum(law, target), width)
             with np.errstate(divide="ignore", invalid="ignore"):
