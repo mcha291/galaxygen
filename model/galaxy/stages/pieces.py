@@ -122,7 +122,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Any
 
 import numpy as np
@@ -543,6 +543,9 @@ class Stretches:
 # operations, not in the arithmetic).
 _ROWS = 8192  # (2048 until S60's cost pass: 1.7 s -> 1.1 s on 36 584 rows, 46 MB -> 109 MB at the peak)
 _ELEMENTS = 2_000_000
+# :meth:`ArmPattern.laid` keeps its answer for a request of at most this many radii, the last this many requests.
+_MEMO_RADII = 4096
+_MEMO_KEPT = 8
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -946,6 +949,7 @@ class ArmPattern:
     _deviation: np.ndarray | None = field(init=False, repr=False)  # (R, CELLS): the body's contrast less 1
     _untapered: np.ndarray = field(init=False, repr=False)  # (R,): the budget with the bar's taper taken back out
     _depth: np.ndarray = field(init=False, repr=False)      # (R,): the body's depth under each grid ring's mean, made once
+    _laid: dict = field(default_factory=dict, init=False, repr=False)  # :meth:`laid` by the radii asked (S60, the cost)
 
     def __post_init__(self) -> None:
         for name in ("R", "budget", "design", "width"):
@@ -1191,8 +1195,36 @@ class ArmPattern:
 
     def laid(self, R: np.ndarray) -> Laid:
         """Everything the arms' sum reads at each radius of ``R`` (n,): the ring's numbers, the pieces within
-        reach, their runs by chain, and each chain's exact mean round the ring (the module's docstring)."""
+        reach, their runs by chain, and each chain's exact mean round the ring (the module's docstring).
+
+        **A radius' row is the radius' own** (S60, the cost): a radius asked twice in one call is made once and
+        its row copied (:func:`numpy.unique`), and a small request - at most :data:`_MEMO_RADII` radii, the grid's
+        and the viewer's - is kept by its radii's bytes, the last :data:`_MEMO_KEPT` of them, so that the published
+        field, the ring power, the gas's forcing and the saturation read one decomposition of the grid, not four.
+        The arrays of a kept ``Laid`` are shared between callers and are read, never written."""
         R = np.asarray(R, dtype=float)
+        key = R.tobytes() if R.ndim == 1 and R.size <= _MEMO_RADII else None
+        if key is not None:
+            held = self._laid.get(key)
+            if held is not None:
+                return held
+        if R.ndim == 1 and R.size > 1 and not np.isnan(R).any():
+            distinct, inverse = np.unique(R, return_inverse=True)
+            if distinct.size < R.size:
+                made = self._laid_distinct(distinct)
+                out = Laid(*(getattr(made, f.name)[inverse] for f in fields(Laid)))
+            else:
+                out = self._laid_distinct(R)
+        else:
+            out = self._laid_distinct(R)
+        if key is not None:
+            while len(self._laid) >= _MEMO_KEPT:
+                del self._laid[next(iter(self._laid))]
+            self._laid[key] = out
+        return out
+
+    def _laid_distinct(self, R: np.ndarray) -> Laid:
+        """:meth:`laid` made: every row computed, nothing looked up."""
         p = self.pieces
         n, census = R.size, p.count
         if not self.R.size or not census:
