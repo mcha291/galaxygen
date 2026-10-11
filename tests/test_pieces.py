@@ -433,6 +433,31 @@ def test_two_pieces_at_a_kink_and_a_joined_end_by_hand():
     assert below == pytest.approx(min(1.0, r_kink * 0.5 / math.cos(math.radians(20.0)) / HAND_FWHM), rel=1e-9) and above == pytest.approx(below, rel=1e-9)
 
 
+def test_three_ends_of_one_chain_at_one_point_stop_the_laying_and_a_kink_does_not():
+    """The gate's sixth follow-up, item 5: "a guard - the laying raises where three ends of one chain stand within
+    JOINED of one point" (a kink is two ends; with three, which two are joined would be the order they are listed
+    in). By hand: a piece from (5 kpc, 0.3 rad) at 20 degrees over 0.5 rad, and from its end a second piece -
+    a kink, read as one; with a third piece from the same end - a branch of one chain - the table is refused,
+    naming the chain and the point; and so is a piece of no extent between two others (its own two ends and its
+    neighbours' at one point)."""
+    x1 = math.log(5.0) + 0.5 * math.tan(math.radians(20.0))
+    r_kink = math.exp(x1)
+
+    def pieces(rows):
+        columns = [np.array(c, dtype=float) for c in zip(*rows)]
+        return pc.Pieces(*columns, turn=1.0)
+
+    first, second = (0.0, 0.0, 5.0, 0.3, 20.0, 0.5, 0.0), (0.0, 1.0, r_kink, 0.8, 5.0, 0.6, 0.0)
+    kink = pieces([first, second, (1.0, 0.0, *HAND_CARRIER, 0.0)])
+    assert kink.link_end[0] == 1 and kink.link_start[1] == 0 and not kink.link_end_is_end[0] and kink.link_start_is_end[1]
+    with pytest.raises(ArithmeticError, match=r"3 ends of chain 0 stand within 1e-09 of one point \(ln R 1\.79142"):
+        pieces([first, second, (0.0, 2.0, r_kink, 0.8, 30.0, 0.4, 0.0)])
+    with pytest.raises(ArithmeticError, match=r"4 ends of chain 0 "):
+        pieces([first, (0.0, 1.0, r_kink, 0.8, 10.0, 0.0, 0.0), (0.0, 2.0, r_kink, 0.8, 5.0, 0.6, 0.0)])
+    # Two ends of two chains at one point are no kink and no guard's business: a join.
+    assert pieces([first, (1.0, 0.0, r_kink, 0.8, 5.0, 0.6, 0.0)]).link_end[0] == -1
+
+
 def test_the_thickness_factor_by_hand():
     """D219 item 5: "the thickness factor per harmonic turns f_m into |m| ĉ_m/(X(|sin p| + |m| h/R)), bounded by
     ĉ_m R/(X h) for every m and pitch, regular at sin p = 0"; the gate: "T = ½ at kh = 1"."""

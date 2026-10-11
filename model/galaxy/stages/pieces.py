@@ -679,6 +679,15 @@ class Pieces:
             members = np.flatnonzero(self.chain == chain)
             own = [int(i) for i in members] + [n + int(i) for i in members]
             for e in own:
+                # A kink is two ends at one point. Three or more - a piece shorter than JOINED between two others, a
+                # table built so - would leave which two make the kink to the order the ends are listed in: the
+                # laying stops there (the gate's sixth follow-up, item 5), a piece's own two ends counted.
+                together = [f for f in own if abs(ends[f][0] - ends[e][0]) < JOINED and abs(math.remainder(ends[f][1] - ends[e][1], TWO_PI)) < JOINED]
+                if len(together) >= 3:
+                    raise ArithmeticError(
+                        f"{len(together)} ends of chain {chain:g} stand within {JOINED:g} of one point (ln R {ends[e][0]:.12g}, "
+                        f"azimuth {ends[e][1]:.12g} rad): a kink is two ends, and which two are joined cannot be told"
+                    )
                 for f in own:
                     if f % n != e % n and abs(ends[f][0] - ends[e][0]) < JOINED and abs(math.remainder(ends[f][1] - ends[e][1], TWO_PI)) < JOINED:
                         partner[e] = f
