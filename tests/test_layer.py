@@ -1140,7 +1140,7 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 assert f["stage"] == "arm_pieces" and f["kind"] == "table_column" and f["of"] == "arm_piece", f["name"]
                 assert f["domain"] == "table" and f["ramp"] is None and "not shown by the viewer" in f["about"], f["name"]
                 assert "No row with the randomness layer off" in f["about"], f["name"]
-                assert "38 printed rows" in f["statistic"] and "untruncated" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
+                assert "38 printed rows" in f["statistic"] and "while the pitch it makes is not positive" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
                 assert "measured nowhere" in f["statistic"] and "not drawn" in f["statistic"], f["name"]
                 assert "self-gravitating disc" in f["stands_in_for"] and "Every ring's mean density and every law" in f["conserves"], f["name"]
                 assert not re.search(r"none read", f["statistic"], re.IGNORECASE), f["name"]
