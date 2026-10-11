@@ -568,8 +568,9 @@ def _hold_at_neighbours(key: np.ndarray, moved: np.ndarray, live: np.ndarray, pa
     if not changed.any():
         return key, moved
     keys_end = np.concatenate([kw, kw[:, :1]], axis=1)
-    key_after = np.take_along_axis(keys_end, np.clip(after, 0, slots), axis=1)
-    key_before = np.take_along_axis(keys_end, np.clip(before, 0, slots), axis=1)
+    # (Every walk starts at a held anchor and ends at its copy a turn on, so 0 <= before and after <= slots.)
+    key_after = np.take_along_axis(keys_end, after, axis=1)
+    key_before = np.take_along_axis(keys_end, before, axis=1)
     with np.errstate(invalid="ignore"):
         new_key = np.where(placed == high, key_after, np.where(placed == low, key_before, np.mod(placed, TWO_PI)))
     kw_new = np.where(changed, new_key, kw)
