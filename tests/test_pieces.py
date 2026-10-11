@@ -204,6 +204,18 @@ def chain_at(stars, laid, k: int, phi: np.ndarray) -> np.ndarray:
     raise AssertionError(f"no chain's run ends in slot {k}")
 
 
+def exact_arms_at(stars, r: float, phi: np.ndarray) -> np.ndarray:
+    """a Σ_j (E_j − ⟨E_j⟩) at one radius on **the exact path**: ``laid`` with the exact ring means (the path every
+    published field takes), summed as ``ArmPattern._rows`` sums - which since the seventh follow-up reads the
+    normaliser table (``laid(R, exact=False)``) at a point instead."""
+    laid = stars.laid(np.array([r]))
+    total = np.zeros(np.shape(phi))
+    for k, value in stars._chains(laid, np.asarray(phi, dtype=float)[None, :]):
+        if laid.last[0, k]:
+            total = total + (value[0] - laid.mean[0, k])
+    return float(laid.effective[0]) * total
+
+
 def hand_variance(sigma: float) -> float:
     """The variance round a ring of a full-height Gaussian ridge of azimuthal dispersion σ seen within half a turn
     of its crest: ⟨E²⟩ − ⟨E⟩² = (σ/2√π) erf(π/σ) − (σ²/2π) erf(π/√2σ)², by hand."""
@@ -283,7 +295,12 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         crest = 0.3 + (math.log(r / 5.0) / tangent if pitch else 0.0)
         phi = np.array([crest, crest + 0.07, crest - 0.2, 0.3, 0.3 + 0.05, 0.3 + 0.6, 0.3 + 1.2, 0.3 + 1.25, 0.3 - 0.1, 0.3 + 0.6 + math.pi - 1e-9, -2.0, 2.9])
         want = amplitude * ((piece(phi) - means[0]) + (carrier(phi) - means[1]))
-        worst["field"] = max(worst["field"], float(np.abs(stars.arms_at(np.array([r]), phi) - want).max()))
+        # S60 (D219, the seventh follow-up): the point function reads the chain's ring mean from the normaliser
+        # table, whose error is pinned under 1.25e-6 (tests/test_ring_mean_table.py); the hand check is of the
+        # exact path, at its own 1e-11, and the table path is held within the pinned error's bound of it.
+        exact = exact_arms_at(stars, r, phi)
+        worst["field"] = max(worst["field"], float(np.abs(exact - want).max()))
+        worst["table"] = max(worst.get("table", 0.0), float(np.abs(stars.arms_at(np.array([r]), phi) - exact).max()))
         worst["point"] = max(worst["point"], float(np.abs(chain_at(stars, laid, k, phi) - piece(phi)).max()))
         assert np.array_equal(stars.contrast_at(np.array([r]), phi), 1.0 + stars.arms_at(np.array([r]), phi))
         # Exact means over cells: they tile the ring to nothing, and each is the fine rule's mean over the cell.
@@ -295,7 +312,12 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         # On the solver's cells: the profile, its variance and its m-fold powers "by the same quadrature".
         centres = gr.cell_centres(gr.CELLS)
         profile = amplitude * ((piece(centres) - means[0]) + (carrier(centres) - means[1]))
-        assert np.abs(stars.ring_profile(np.array([r]))[0] - profile).max() < 1e-10
+        # S60 (D219, the seventh follow-up): `ring_profile` is the point function, which reads the table's ring mean -
+        # off the exact one by a constant on the ring (so the variance and the m-fold powers below do not see it).
+        # The hand check is of the exact path at its 1e-10; the table path within the pinned error's bound of it.
+        exact_profile = exact_arms_at(stars, r, centres)
+        assert np.abs(exact_profile - profile).max() < 1e-10
+        assert np.abs(stars.ring_profile(np.array([r]))[0] - exact_profile).max() <= 1.5e-6
         spectrum = np.fft.rfft(profile) / gr.CELLS
         power, by_mode = stars.ring_power(np.array([r]))
         assert float(power[0]) == pytest.approx(float(((profile - profile.mean()) ** 2).mean()), rel=1e-10)
@@ -319,6 +341,7 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         if distance is None:
             assert float(lone.count_at(np.array([r]))[0]) == 0.0 and np.all(lone.arms_at(np.array([r]), phi) == 0.0)
     assert worst["point"] < 1e-13 and worst["mean"] < 1e-11 and worst["field"] < 1e-11 and worst["cells"] < 1e-11, worst
+    assert worst["table"] <= 1.5e-6, worst
     # The arc of no pitch: its ridge on a ring beside it is one height along its whole drawn extent.
     if not pitch:
         arc = hand_piece(5.25, np.array([0.3 + 0.4, 0.3 + 0.6, 0.3 + 0.8]), 5.0, 0.3, 0.0, 1.2, HAND_FWHM)
@@ -767,7 +790,8 @@ def test_the_milky_way_s_pinned_pieces_lie_on_the_measured_loci_and_are_continue
             run(the_model(prod), given, SMALL, only=("arm_piece_chain",))
 
 
-EXPECTED_FLOCCULENT: tuple = (37, 2, 37.7, 103.6)
+# S60 fourth pass (re-pinned on the final model): EXPECTED_FLOCCULENT was (37, 2, 37.7, 103.6)
+EXPECTED_FLOCCULENT: tuple = (35, 1, 43.8, 103.6)
 
 
 def test_no_chain_crosses_any_chain_on_300_texture_seeds_of_the_milky_way(prod):
@@ -788,7 +812,8 @@ def test_no_chain_crosses_any_chain_on_300_texture_seeds_of_the_milky_way(prod):
     assert record == EXPECTED_JOINS_300, repr(record)
 
 
-EXPECTED_JOINS_300: tuple = (0, 5.0, 13)
+# S60 fourth pass (re-pinned on the final model): EXPECTED_JOINS_300 was (0, 5.0, 13)
+EXPECTED_JOINS_300: tuple = (0, 4.0, 10)
 
 
 # --- the gate ------------------------------------------------------------------------------------------------------
@@ -944,13 +969,16 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
 
 
 # (pieces, chains, pinned pieces, the drawn pieces that continue each of the six pinned chains)
-EXPECTED_PINNED: tuple = (53, 14, 11, [0, 1, 3, 2, 4, 4], 4, 0)  # S60 fourth pass: was (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
-EXPECTED_GATE: dict = {'milky_way': (19800, 14040, (0.415, 0.634, 1.086), 7, 5760, 5760, 0, 1.0, 24.333, 8, 0, 0, (3, 7.0, 50), 0, 0, (2241, 2157), (1.693, 2.581, 7.796)), 'ngc_4414': (15960, 15960, (0.442, 0.521, 0.721), 0, 0, 0, 0, 28.9, 28.9, 7, 0, 0, (0, 1.5, 3), 120, 0, (1833, 923), (0.887, 1.799, 2.711)), 'ngc_4414 drawn': (15960, 15960, (0.417, 0.557, 0.983), 228, 0, 0, 0, 1.0, 24.096, 10, 0, 0, (0, 3.0, 19), 639, 0, (5763, 6158), (0.947, 2.37, 12.106))}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_PINNED was (53, 14, 11, [0, 1, 3, 2, 4, 4], 4, 0)  # S60 fourth pass: was (52, 14, 11, [2, 1, 3, 2, 4, 4], 7, 0)
+EXPECTED_PINNED: tuple = (46, 12, 11, [0, 1, 3, 2, 4, 4], 3, 0)
+# S60 fourth pass (re-pinned on the final model): EXPECTED_GATE was {'milky_way': (19800, 14040, (0.415, 0.634, 1.086), 7, 5760, 5760, 0, 1.0, 24.333, 8, 0, 0, (3, 7.0, 50), 0, 0, (2241, 2157), (1.693, 2.581, 7.796)), 'ngc_4414': (15960, 15960, (0.442, 0.521, 0.721), 0, 0, 0, 0, 28.9, 28.9, 7, 0, 0, (0, 1.5, 3), 120, 0, (1833, 923), (0.887, 1.799, 2.711)), 'ngc_4414 drawn': (15960, 15960, (0.417, 0.557, 0.983), 228, 0, 0, 0, 1.0, 24.096, 10, 0, 0, (0, 3.0, 19), 639, 0, (5763, 6158), (0.947, 2.37, 12.106))}
+EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.513, 0.977), 6, 0, 5760, 0, 1.0, 24.333, 8, 0, 0, (1, 7.0, 50), 0, 0, (1427, 1280), (1.695, 2.549, 6.647)), 'ngc_4414': (15960, 15960, (0.442, 0.521, 0.721), 0, 0, 0, 0, 28.9, 28.9, 7, 0, 0, (0, 1.5, 3), 120, 0, (1604, 631), (0.887, 1.799, 2.711)), 'ngc_4414 drawn': (15960, 15960, (0.392, 0.512, 0.896), 143, 0, 0, 0, 1.0, 24.096, 10, 0, 0, (0, 2.0, 9), 634, 0, (4699, 4491), (1.051, 2.287, 9.293))}
 # S60 fourth pass: was {'milky_way': (19800, 14036, (0.474, 0.72, 1.184), 4, 5764, 5760, 0, 1.0, 24.333, 9, 0, 4, (3, 8.0, 50), 0, 0, (1660, 1260)), 'ngc_4414': (15960, 15720, (0.452, 0.524, 0.728), 0, 240, 0, 0, 28.9, 28.9, 7, 0, 120, (0, 1.5, 3), 120, 0, (1817, 1032)), 'ngc_4414 drawn': (15960, 15223, (0.415, 0.541, 0.906), 152, 737, 0, 0, 1.0, 24.096, 9, 0, 98, (0, 3.0, 19), 639, 0, (5539, 5755))}
 # (the last entry, the per-galaxy maximum of realised over budgeted ring power, is the fourth follow-up's record)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
-EXPECTED_LEAST: dict = {'milky_way': (0.0081, 0.1042, 6.673), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0002, 0.0, 6.658)}  # S60 fourth pass: was {'milky_way': (0.0542, 0.1138, 6.673), 'ngc_4414': (0.0909, 0.0809, 3.317), 'ngc_4414 drawn': (0.0007, 0.0, 6.794)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_LEAST was {'milky_way': (0.0081, 0.1042, 6.673), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0002, 0.0, 6.658)}  # S60 fourth pass: was {'milky_way': (0.0542, 0.1138, 6.673), 'ngc_4414': (0.0909, 0.0809, 3.317), 'ngc_4414 drawn': (0.0007, 0.0, 6.794)}
+EXPECTED_LEAST: dict = {'milky_way': (0.0085, 0.147, 6.673), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0, 0.0, 5.454)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):
@@ -1058,7 +1086,8 @@ def test_the_gas_carried_between_rings_and_the_rings_solved_between_the_grid_s(p
     assert np.array_equal(gp.cell_means(R, edges_phi), bare.cell_means(R, edges_phi)) and np.array_equal(gp.cell_means(R, edges_phi), np.asarray(F["gas_density_contrast"]))
 
 
-EXPECTED_GAPS: dict = {"milky_way": (18, 14, 8.74, 354, [3.572, 4.453, 5.916, 6.047, 6.366, 7.266, 7.416, 7.566, 7.622, 7.809, 8.878, 11.803, 11.841, 11.897], 8.0, 0.109), "ngc_4414": (17, 12, 13.79, 277, [0.272, 0.778, 0.816, 3.103, 3.122, 3.141, 3.159, 3.178], 5.2, 0.203)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_GAPS was {"milky_way": (18, 14, 8.74, 354, [3.572, 4.453, 5.916, 6.047, 6.366, 7.266, 7.416, 7.566, 7.622, 7.809, 8.878, 11.803, 11.841, 11.897], 8.0, 0.109), "ngc_4414": (17, 12, 13.79, 277, [0.272, 0.778, 0.816, 3.103, 3.122, 3.141, 3.159, 3.178], 5.2, 0.203)}
+EXPECTED_GAPS: dict = {"milky_way": (7, 6, 8.8, 335, [4.453, 5.916, 6.047, 6.366, 7.266, 7.566], 7.96, 0.031), "ngc_4414": (15, 10, 12.17, 273, [3.403, 3.422, 3.441, 3.459, 3.478], 4.16, 0.206)}
 # S60 fourth pass: was {"milky_way": (12, 11, 21.35, 345, [3.572, 3.591, 5.784, 6.028, 7.116, 8.184, 10.941], 65.62, 0.13), "ngc_4414": (18, 16, 13.2, 282, [0.141, 0.159, 0.197, 0.272, 0.778, 0.816, 3.103, 3.122, 3.141, 3.159, 3.178], 5.09, 0.19)}
 # (the fourth pass: the map's anchors follow the chains' polylines, so a kink in a gap no longer misplaces by its
 #  pieces' divergence - the Milky Way template's worst gap fell from 66 % to 8 %, the grid's rings alone from 21 % to
@@ -1239,21 +1268,24 @@ def test_the_gate_s_predictions_as_measured(prod):
     assert held_third_of(got) == EXPECTED_THIRD_HELD, repr(held_third_of(got))
 
 
-EXPECTED_PREDICTIONS: dict = {'milky_way': {'chains at R0': 5, 'pinned chains at R0': 2, 'n at R0': 4.72, 'count at R0': 5.0, 'FWHM at R0': 1.197, 'spacing at R0': 2.39, 'B at R0': 0.501, 'crest over trough at R0': 2.63, 'sum f at 8, m = 2..6': 1.047, 'sum f at 8, first 128': 2.361, 'sum f at 8, every harmonic': 2.39, 'gas min at 8': 0.493, 'top tenth over lower half at 8': 2.57, 'ratio of means 6-10': 1.454, 'rings under 1.37': 8, 'inner gas min': None, 'inner ratio': None, 'largest ring-to-ring change 5-13': (0.055, 10.312), 'pieces': 53, 'chains': 14, 'joins': 4}, 'ngc_4414': {'chains at R0': 6, 'pinned chains at R0': 0, 'n at R0': 5.12, 'count at R0': 5.593, 'FWHM at R0': 1.825, 'spacing at R0': 4.42, 'B at R0': 0.478, 'crest over trough at R0': 2.03, 'sum f at 8, m = 2..6': 0.509, 'sum f at 8, first 128': 0.999, 'sum f at 8, every harmonic': 1.018, 'gas min at 8': 0.701, 'top tenth over lower half at 8': 1.57, 'ratio of means 6-10': 1.318, 'rings under 1.37': 39, 'inner gas min': 0.11, 'inner ratio': 1.48, 'largest ring-to-ring change 5-13': (0.038, 6.487), 'pieces': 37, 'chains': 37, 'joins': 2}}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_PREDICTIONS was {'milky_way': {'chains at R0': 5, 'pinned chains at R0': 2, 'n at R0': 4.72, 'count at R0': 5.0, 'FWHM at R0': 1.197, 'spacing at R0': 2.39, 'B at R0': 0.501, 'crest over trough at R0': 2.63, 'sum f at 8, m = 2..6': 1.047, 'sum f at 8, first 128': 2.361, 'sum f at 8, every harmonic': 2.39, 'gas min at 8': 0.493, 'top tenth over lower half at 8': 2.57, 'ratio of means 6-10': 1.454, 'rings under 1.37': 8, 'inner gas min': None, 'inner ratio': None, 'largest ring-to-ring change 5-13': (0.055, 10.312), 'pieces': 53, 'chains': 14, 'joins': 4}, 'ngc_4414': {'chains at R0': 6, 'pinned chains at R0': 0, 'n at R0': 5.12, 'count at R0': 5.593, 'FWHM at R0': 1.825, 'spacing at R0': 4.42, 'B at R0': 0.478, 'crest over trough at R0': 2.03, 'sum f at 8, m = 2..6': 0.509, 'sum f at 8, first 128': 0.999, 'sum f at 8, every harmonic': 1.018, 'gas min at 8': 0.701, 'top tenth over lower half at 8': 1.57, 'ratio of means 6-10': 1.318, 'rings under 1.37': 39, 'inner gas min': 0.11, 'inner ratio': 1.48, 'largest ring-to-ring change 5-13': (0.038, 6.487), 'pieces': 37, 'chains': 37, 'joins': 2}}
+EXPECTED_PREDICTIONS: dict = {'milky_way': {'chains at R0': 5, 'pinned chains at R0': 2, 'n at R0': 4.72, 'count at R0': 5.0, 'FWHM at R0': 1.197, 'spacing at R0': 2.39, 'B at R0': 0.501, 'crest over trough at R0': 2.3, 'sum f at 8, m = 2..6': 0.578, 'sum f at 8, first 128': 1.21, 'sum f at 8, every harmonic': 1.224, 'gas min at 8': 0.643, 'top tenth over lower half at 8': 1.66, 'ratio of means 6-10': 1.431, 'rings under 1.37': 7, 'inner gas min': 0.968, 'inner ratio': 1.0, 'largest ring-to-ring change 5-13': (0.044, 5.213), 'pieces': 46, 'chains': 12, 'joins': 3}, 'ngc_4414': {'chains at R0': 6, 'pinned chains at R0': 0, 'n at R0': 5.12, 'count at R0': 4.821, 'FWHM at R0': 1.825, 'spacing at R0': 5.13, 'B at R0': 0.515, 'crest over trough at R0': 1.64, 'sum f at 8, m = 2..6': 0.306, 'sum f at 8, first 128': 0.686, 'sum f at 8, every harmonic': 0.704, 'gas min at 8': 0.817, 'top tenth over lower half at 8': 1.37, 'ratio of means 6-10': 1.252, 'rings under 1.37': 36, 'inner gas min': 0.339, 'inner ratio': 1.5, 'largest ring-to-ring change 5-13': (0.034, 9.938), 'pieces': 35, 'chains': 35, 'joins': 1}}
 # S60 fourth pass: was {'milky_way': {'chains at R0': 6, 'pinned chains at R0': 2, 'n at R0': 4.72, 'count at R0': 6.0, 'FWHM at R0': 0.997, 'spacing at R0': 1.99, 'B at R0': 0.493, 'crest over trough at R0': 2.51, 'sum f at 8': 2.066 (the first 128; m = 2..6 read 0.588), 'sum f at 8, every harmonic': 3.268, 'gas min at 8': 0.654, 'top tenth over lower half at 8': 1.79, 'ratio of means 6-10': 1.482, 'rings under 1.37': 0, 'inner gas min': None, 'inner ratio': None, 'largest ring-to-ring change 5-13': (0.074, 7.312), 'pieces': 52, 'chains': 14, 'joins': 7}, 'ngc_4414': {'chains at R0': 6, 'pinned chains at R0': 0, 'n at R0': 5.12, 'count at R0': 5.593, 'FWHM at R0': 1.825, 'spacing at R0': 4.42, 'B at R0': 0.478, 'crest over trough at R0': 2.01, 'sum f at 8': 1.446, 'sum f at 8, every harmonic': 2.081, 'gas min at 8': 0.712, 'top tenth over lower half at 8': 1.54, 'ratio of means 6-10': 1.299, 'rings under 1.37': 39, 'inner gas min': 0.137, 'inner ratio': 1.5, 'largest ring-to-ring change 5-13': (0.038, 6.487), 'pieces': 37, 'chains': 37, 'joins': 2}}
 # (the polyline alone, before the fourth follow-up's A and B, read on the Milky Way template: chains at R0 6, count 6.0,
 #  FWHM 0.997, B 0.493, crest over trough 2.45, sum f m = 2..6 / 128 / 720 0.672 / 1.686 / 1.709, gas min 0.653, ratio
 #  1.481, the largest ring-to-ring change 0.068 at 7.312 kpc, joins 7; ngc_4414 crest over trough 2.03, sum f 0.509 /
 #  0.999 / 1.018, gas min 0.701, ratio 1.318)
 # The second follow-up's predictions for the third pass, read before they were judged: held or not held, as measured.
-EXPECTED_HELD: dict = {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": False, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': False, 'ngc_4414 still a miss': True}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_HELD was {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": False, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': False, 'ngc_4414 still a miss': True}
+EXPECTED_HELD: dict = {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': True, 'crest over trough 2.5-3': False, 'sum f at 8 kpc 0.6-0.9': False, 'gas minimum 0.65-0.75': False, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': True, 'joins 2-4': True, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": False, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': True, 'ngc_4414 still a miss': True}
 # S60 fourth pass: was {'chains at R0 5 or 6': True, 'm-split over 6-10 kpc peaks at m = 5 or 6': False, 'm = 2 under 0.5': False, 'crest over trough 2.5-3': True, 'sum f at 8 kpc 0.6-0.9': False (judged then on the first 128; on m = 2..6, 0.588, it would have read False too), 'gas minimum 0.65-0.75': True, 'PHANGS ratio 1.4-1.6': True, 'largest ring-to-ring change under 0.05': False, 'joins 2-4': False, "the masers' check keeps its 1st-percentile power": True, "the young stars' check keeps its 1st-percentile power": True, 'ngc_4414: D2 shortens many of its pieces': False, 'ngc_4414 ratio 1.2-1.3': True, 'ngc_4414 still a miss': True}
 
 # The third follow-up's predictions for the fourth pass, read on the final model (the polyline with the fourth
 # follow-up's A and B in it) before judged: "the largest ring-to-ring change falls under 0.05; the count, crest over
 # trough, PHANGS ratio and the maser checks move by less than their last pins' second digit; the m-split stays at
 # m = 2; joins 7 +/- 1". The third pass's pins they are judged against are the comments above.
-EXPECTED_THIRD_HELD: dict = {'largest ring-to-ring change under 0.05': False, 'count at R0 moves under 0.1': False, 'crest over trough moves under 0.1': False, 'PHANGS ratio moves under 0.1': True, "the masers' check moves under 0.01": False, "the young stars' check moves under 0.01": False, 'm-split peaks at m = 2': False, 'joins 6-8': False}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_THIRD_HELD was {'largest ring-to-ring change under 0.05': False, 'count at R0 moves under 0.1': False, 'crest over trough moves under 0.1': False, 'PHANGS ratio moves under 0.1': True, "the masers' check moves under 0.01": False, "the young stars' check moves under 0.01": False, 'm-split peaks at m = 2': False, 'joins 6-8': False}
+EXPECTED_THIRD_HELD: dict = {'largest ring-to-ring change under 0.05': True, 'count at R0 moves under 0.1': False, 'crest over trough moves under 0.1': False, 'PHANGS ratio moves under 0.1': True, "the masers' check moves under 0.01": False, "the young stars' check moves under 0.01": False, 'm-split peaks at m = 2': False, 'joins 6-8': False}
 
 
 def held_third_of(got: dict) -> dict:
@@ -1330,7 +1362,8 @@ def test_the_fourth_follow_up_s_predictions_as_measured(prod):
     assert held == EXPECTED_FOURTH_HELD, repr(held)
 
 
-EXPECTED_FOURTH: dict = {"milky_way": {"max realised over budget": (2.343, 4.463)}, "ngc_4414": {"max realised over budget": (2.935, 3.263), "B at 0.11 kpc": 0.782, "sqrt(budget / v) at 0.11 kpc": 0.782, "count at 0.11 kpc": 1.0}, "default": {"max realised over budget": (0.759, 5.213), "arms' excess past the bar's end": 0.329, "arms' excess at 8 kpc": 0.312}}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_FOURTH was {"milky_way": {"max realised over budget": (2.343, 4.463)}, "ngc_4414": {"max realised over budget": (2.935, 3.263), "B at 0.11 kpc": 0.782, "sqrt(budget / v) at 0.11 kpc": 0.782, "count at 0.11 kpc": 1.0}, "default": {"max realised over budget": (0.759, 5.213), "arms' excess past the bar's end": 0.329, "arms' excess at 8 kpc": 0.312}}
+EXPECTED_FOURTH: dict = {'milky_way': {'max realised over budget': (2.343, 4.463)}, 'ngc_4414': {'max realised over budget': (2.521, 3.562), 'B at 0.11 kpc': 0.782, 'sqrt(budget / v) at 0.11 kpc': 0.782, 'count at 0.11 kpc': 1.0}, 'default': {'max realised over budget': (0.759, 5.213), "arms' excess past the bar's end": 0.329, "arms' excess at 8 kpc": 0.314}}
 EXPECTED_FOURTH_HELD: dict = {"max realised over budget under 1.5 on both templates": False, "end-of-bar excess at most the arms' own at 8 kpc": False, "ngc_4414's B at 0.11 kpc under sqrt(budget/v)": True}
 
 
@@ -1368,7 +1401,8 @@ def test_disclosed_check_the_split_of_a_ring_s_power_by_arm_number(prod):
 
 
 # (the realised m-fold power summed over 6-10 kpc, m = 2 ... 6; the law's; the realised ring variance over the budget there)
-EXPECTED_SPLIT: dict = {"milky_way": ([0.462, 0.744, 0.93, 0.547, 0.199], [0.009, 1.064, 2.126, 2.44, 2.437], 0.593), "ngc_4414": ([0.346, 0.734, 0.806, 0.74, 0.632], [0.039, 0.619, 1.165, 1.757, 2.408], 0.85)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_SPLIT was {"milky_way": ([0.462, 0.744, 0.93, 0.547, 0.199], [0.009, 1.064, 2.126, 2.44, 2.437], 0.593), "ngc_4414": ([0.346, 0.734, 0.806, 0.74, 0.632], [0.039, 0.619, 1.165, 1.757, 2.408], 0.85)}
+EXPECTED_SPLIT: dict = {'milky_way': ([0.249, 1.215, 1.015, 0.237, 0.36], [0.009, 1.064, 2.126, 2.44, 2.437], 0.618), 'ngc_4414': ([0.248, 0.313, 0.642, 0.971, 0.195], [0.039, 0.619, 1.165, 1.757, 2.408], 0.643)}
 # S60 fourth pass: was {"milky_way": ([1.293, 0.599, 0.749, 0.348, 0.464], [0.009, 1.064, 2.126, 2.44, 2.437], 0.875), "ngc_4414": ([0.275, 0.677, 0.693, 0.673, 0.698], [0.039, 0.619, 1.165, 1.757, 2.408], 0.805)}
 # (the polyline alone, before A and B, read [1.461, 0.488, 0.741, 0.263, 0.445] and 0.825 on the Milky Way template)
 
@@ -1407,7 +1441,8 @@ def test_the_composed_stellar_crest_against_the_pinned_loci(prod):
     assert record == EXPECTED_CREST, repr(record)
 
 
-EXPECTED_CREST: dict = {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.41), 'Sgr-Car': (0.01, 0.88), 'Local': (0.03, 1.0), 'Perseus': (0.03, 0.9), 'Outer': (0.05, 0.82)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_CREST was {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.41), 'Sgr-Car': (0.01, 0.88), 'Local': (0.03, 1.0), 'Perseus': (0.03, 0.9), 'Outer': (0.05, 0.82)}
+EXPECTED_CREST: dict = {'Norma': (0.31, 0.22), 'Sct-Cen': (0.13, 0.38), 'Sgr-Car': (0.01, 0.88), 'Local': (0.04, 1.0), 'Perseus': (0.03, 0.82), 'Outer': (0.04, 0.88)}
 # S60 fourth pass: was {'Norma': (0.26, 0.22), 'Sct-Cen': (0.16, 0.12), 'Sgr-Car': (0.01, 0.95), 'Local': (0.01, 1.0), 'Perseus': (0.01, 0.83), 'Outer': (0.05, 0.76)}
 
 
@@ -1449,7 +1484,8 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
     assert record == EXPECTED_MASERS, repr(record)
 
 
-EXPECTED_MASERS: dict = {'gas': (0.18, {'Norma-Outer': 0.32, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.1, 'Local': 0.18}, 0.13, 0.38, (0.19, 0.62), 4, 100), 'young stars': (0.15, {'Norma-Outer': 0.4, 'Sct-Cen': 0.18, 'Sgr-Car': 0.05, 'Perseus': 0.08, 'Local': 0.15}, 0.12, 0.33, (0.18, 0.52), 2, 100)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_MASERS was {'gas': (0.18, {'Norma-Outer': 0.32, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.1, 'Local': 0.18}, 0.13, 0.38, (0.19, 0.62), 4, 100), 'young stars': (0.15, {'Norma-Outer': 0.4, 'Sct-Cen': 0.18, 'Sgr-Car': 0.05, 'Perseus': 0.08, 'Local': 0.15}, 0.12, 0.33, (0.18, 0.52), 2, 100)}
+EXPECTED_MASERS: dict = {'gas': (0.19, {'Norma-Outer': 0.25, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.15, 0.59, (0.33, 1.16), 1, 86), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.52, (0.23, 1.05), 2, 94)}
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 
@@ -1731,7 +1767,8 @@ def test_the_count_is_continuous_but_where_a_chain_ends_untapered(prod, template
     assert record == EXPECTED_STEPS.get(template), repr(record)
 
 
-EXPECTED_STEPS: dict = {"milky_way": (64, 6, 4, 0.349), "ngc_4414": (63, 4, 2, 0.155), "default": (31, 2, 1, 0.015)}  # S60 fourth pass: was {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_STEPS was {"milky_way": (64, 6, 4, 0.349), "ngc_4414": (63, 4, 2, 0.155), "default": (31, 2, 1, 0.015)}  # S60 fourth pass: was {"milky_way": (65, 7, 7, 0.031), "ngc_4414": (63, 2, 2, 0.155), "default": (31, 1, 1, 0.015)}
+EXPECTED_STEPS: dict = {"milky_way": (55, 1, 3, 0.349), "ngc_4414": (61, 0, 1, 0.0), "default": (31, 0, 1, 0.0)}
 
 
 # --- no square edge anywhere: continuity across every kink and join (the gate's third follow-up) ---------------------
@@ -1834,7 +1871,8 @@ def test_no_square_edge_across_any_kink_or_join(prod, template):
     assert record == EXPECTED_CONTINUITY[template], repr(record)
 
 
-EXPECTED_CONTINUITY: dict = {"milky_way": (40, 4, 0.05, 0.5, {(0, 4.46): (24.5, 0.999)}), "ngc_4414": (0, 2, 0.049, 0.5, {})}
+# S60 fourth pass (re-pinned on the final model): EXPECTED_CONTINUITY was {"milky_way": (40, 4, 0.05, 0.5, {(0, 4.46): (24.5, 0.999)}), "ngc_4414": (0, 2, 0.049, 0.5, {})}
+EXPECTED_CONTINUITY: dict = {"milky_way": (35, 3, 0.056, 0.5, {(0, 4.46): (28.6, 0.999)}), "ngc_4414": (0, 1, 0.061, 0.5, {})}
 # S60 fourth pass, the polyline alone before A: {"milky_way": (38, 7, 0.072, 0.5), "ngc_4414": (0, 2, 0.049, 0.5)}; Norma's
 # kink at 4.46 kpc was continuous then because its 19.5-degree stretch had a drawn continuation inward, so the kink
 # was not within a width of a free end; A took that continuation away (the end lies inside the bar's half-length)
