@@ -60,22 +60,34 @@ def errors(stars: pc.ArmPattern, R: np.ndarray) -> np.ndarray:
     return np.abs(exact.effective * gap.sum(axis=1))
 
 
+FLOOR = 1e-9  # an interval narrower than this share of its radius holds a jump of the exact mean itself (pieces.TABLE_ROUNDS)
+
+
 def test_the_table_s_error_is_under_the_ruling_s_bounds_on_three_legs_and_five_seeds(patterns):
-    """Midpoints and five random points an interval, every leg and seed: median under 1e-6, worst under 1e-5."""
+    """Midpoints and five random points an interval, every leg and seed: median under 1e-6, worst under 1e-5.
+
+    The intervals at the rounding floor are counted apart: each holds a jump of the exact mean in R (the ring's
+    count, and so its bounded width, steps where a chain's crossing set changes at a joined end), which halving
+    cannot mend and which no star's radius falls in - their total width is under a micro-kpc a leg."""
     rng = np.random.default_rng(2026)
-    worst, medians, knots_of = {}, {}, {}
+    worst, medians, knots_of, jumps = {}, {}, {}, {}
     for (leg, seed), (stars, _) in patterns.items():
         knots, means = stars.ring_mean_table()
         assert knots.size > 100 and np.all(np.diff(knots) > 0.0), (leg, seed, knots.size)
         lo, hi = knots[:-1], knots[1:]
+        wide = (hi - lo) > FLOOR * hi
+        jumps[leg, seed] = (int((~wide).sum()), float((hi - lo)[~wide].sum()))
+        lo, hi = lo[wide], hi[wide]
         mid = 0.5 * (lo + hi)
         rand = (lo[:, None] + rng.random((lo.size, 5)) * (hi - lo)[:, None]).reshape(-1)
-        err = np.concatenate([errors(stars, mid), errors(stars, rand)])
+        at_mid = errors(stars, mid)
+        err = np.concatenate([at_mid, errors(stars, rand)])
         assert np.isfinite(err).all(), (leg, seed)
         medians[leg, seed], worst[leg, seed], knots_of[leg, seed] = float(np.median(err)), float(err.max()), int(knots.size)
-        assert errors(stars, mid).max() <= MEDIAN_BOUND, (leg, seed, "the build's own rule: every midpoint under 1e-6")
+        assert at_mid.max() <= MEDIAN_BOUND, (leg, seed, "the build's own rule: every midpoint under 1e-6")
     assert max(medians.values()) < MEDIAN_BOUND, medians
     assert max(worst.values()) < WORST_BOUND, worst
+    assert max(width for _, width in jumps.values()) < 1e-6, jumps
     # The knots a leg: the grid's 400 rings, the gaps' middles and quarters, the pieces' ends and reach boundaries,
     # then the halvings - thousands, never a handful (a table of a few knots would mean the check did not run).
     assert min(knots_of.values()) > 1000 and max(knots_of.values()) < 50_000, knots_of

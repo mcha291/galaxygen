@@ -556,7 +556,13 @@ _MEMO_KEPT = 8
 # interval's midpoint - |a Σ_j (table − exact)|, the error in the ring's mean contrast - is under TABLE_TOLERANCE on
 # every interval that can still be halved; the tolerance is never raised, the knots are doubled (D216's words).
 TABLE_TOLERANCE = 1e-6
-TABLE_ROUNDS = 24       # halvings at most: an interval of the grid's spacing halved 24 times is under its rounding
+# Halvings at most: an interval is halved until its midpoint passes or it is a few ulps wide. The exact mean itself
+# jumps in R where a chain's crossing set changes at a weight that is not 0 - a joined end, which does not taper -
+# because the ring's count and so its bounded width jump there (ring_state: "continuous in R wherever the chains
+# crossing are the same chains"); such a jump ends in an interval at the rounding floor, which no knot can mend and
+# no star's radius falls in (tests/test_ring_mean_table.py counts them and their total width); the halving stops at
+# 1e-12 of the radius.
+TABLE_ROUNDS = 64
 _TABLE_DENSE = 4096     # radii at which a piece's reach is probed for its boundaries before they are bisected
 _TABLES_KEPT = 8        # how many patterns' tables the content-keyed store holds
 _TABLES: dict[bytes, tuple[np.ndarray, np.ndarray]] = {}
@@ -1465,21 +1471,30 @@ class ArmPattern:
         # checked again, the two halves of one that fails are checked in the next round.
         fresh = np.ones(knots.size - 1, dtype=bool)
         for _ in range(TABLE_ROUNDS):
-            at = np.flatnonzero(fresh & ((knots[1:] - knots[:-1]) > 4.0 * np.spacing(knots[1:])))
+            # (An interval under 1e-12 of its radius is not halved further: it holds a jump of the exact mean.)
+            at = np.flatnonzero(fresh & ((knots[1:] - knots[:-1]) > 1e-12 * knots[1:]))
             if not at.size:
                 break
-            mid = 0.5 * (knots[at] + knots[at + 1])
-            at_mid = self._laid_distinct(mid)
-            exact = self._means_matrix(at_mid, chains)
-            table = means[at] + 0.5 * (means[at + 1] - means[at])
-            with np.errstate(invalid="ignore", over="ignore"):
-                error = np.abs(at_mid.effective * (table - exact).sum(axis=1))
-            bad = error > TABLE_TOLERANCE
+            # The interpolant is checked at the interval's quarters and its middle (the middle alone bounds a
+            # quadratic's error, not a steep feature's off-centre one); an interval any of the three fails is
+            # halved at its middle, whose exact means join the table.
+            lo, hi = knots[at], knots[at + 1]
+            bad = np.zeros(at.size, dtype=bool)
+            exact_mid = None
+            for share in (0.25, 0.5, 0.75):
+                probe = lo + share * (hi - lo)
+                at_probe = self._laid_distinct(probe)
+                exact = self._means_matrix(at_probe, chains)
+                table = means[at] + share * (means[at + 1] - means[at])
+                with np.errstate(invalid="ignore", over="ignore"):
+                    bad |= np.abs(at_probe.effective * (table - exact).sum(axis=1)) > TABLE_TOLERANCE
+                if share == 0.5:
+                    mid, exact_mid = probe, exact
             if not bad.any():
                 break
             split = at[bad]
             knots = np.concatenate([knots, mid[bad]])
-            means = np.concatenate([means, exact[bad]])
+            means = np.concatenate([means, exact_mid[bad]])
             # The intervals after the split: the two halves of each split one are fresh, every other one is not.
             # An interval is named by the knot that begins it: the old knot that began a split interval begins its
             # left half, the new midpoint its right half, the last old knot begins none.
