@@ -77,16 +77,20 @@ def chk(m, *stages):
 # number sets how many chains are born) and the `sun_azimuth`, so it runs the round after the pattern's - behind sfh
 # in `basic` by the tie-break - and the two composing stages, `gas_pattern` and `stellar_pattern`, the round after it
 # (the gas first by the tie-break). Until S60 both began "halo, disc, nucleus, assembly, bar, arm_phases, ...".
+# S60 (D219, the gate's sixth follow-up, item 6): the ring-power check `arm_ring_power` reads the layer's table and
+# the laws, not stellar_pattern, so it runs the round after arm_pieces - in `azimuthal` right behind it, in `basic`
+# after supernovae by the tie-break - with each model's two composing stages behind it. S60 fourth pass: was the
+# same two orders without `arm_ring_power` (the fourth pass's C added the stage). Pinned as graph.analyse prints.
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
 ORDER = {
     "basic": (
         "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
-        "supernovae", "gas_pattern", "stellar_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
+        "supernovae", "arm_ring_power", "gas_pattern", "stellar_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
