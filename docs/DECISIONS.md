@@ -11417,3 +11417,112 @@ and other pieces' deviates are untouched; `arm_ring_power` declared as ruled. **
    it raises** (an honest stop, D164's spirit); the FIFO store of eight is recorded.
 Fixes 1, 3 (the test's geometry), 8 and the two records (2's phi-step, 5's derived bound) are one small pass after
 the re-pins land; the reviewer's verdict stands on them.
+
+**S60 CLOSED 2026-10-12** (merge: see the tag record). Phase P5 is done: the stellar arms are a census of pieces.
+
+**What P5 built, as the final model stands.** The stellar arms are **chains of pieces on their own loci**, laid by
+the layer's `arm_pieces` stage on `texture_seed` into the table `arm_piece`: a piece's extent log-normal about 60°,
+its pitch p(1 + 0.56 z) **cut at zero** (z drawn again while the pitch is not positive; a measured piece keeps its
+sign), a chain's length 273° ± 143° or 244° ± 131°, births at the midpoint of the widest gap among the chains
+crossing the birth ring (a barred disc's first two at the bar's ends, none inside its half-length), a drawn piece
+ending where it meets any chain, its own included; a flocculent disc single pieces of 37°–105°. A chain's excess at
+a point is **the Gaussian of the point's distance to the chain's polyline** in the log-polar plane, times **a taper
+over the law's width at its free ends** (a joined end is a round cap with no taper in height, and its count weight
+falls over one width as a free end's). **A ring's mean is exact** — the ring cut into stretches on which one feature
+is nearest (`Stretches`), at every grid ring, mid-gap ring and cell mean, so every published field is exact — and
+**the point function reads a tabulated normaliser**, each chain's ring mean in R between knots (under 1e-6 at the
+median and 1e-5 at worst, pinned; the exact mean below the first knot). **The count** is N = max(1, Σ_c min(1, s_c /
+w_law)) on every ring a chain reaches, the width min(w_law, π R sin p / N), **the weights read at the law's width**,
+B from the budget ½ Σ A_m² by the independent-azimuth expectation, positivity by P1's saturation alone. **The gas**
+is solved per ring under the pieces' forcing term by term with **the thickness factor** |m| / (X (|sin p_j| + |m|
+h/R)), h = R_d / 7.3, and **carried between solved rings along the loci with monotone anchors** (past a join the
+anchor follows the chain met; past a free end it is held between its neighbours; mid-gap rings solved where the
+carry misplaces over 1 %, twice). **The young stars' reader** applies each bracketing ring's law to the gas
+pattern's point function. Retired: the modes' phases, `arm_phases`, the common winding and `arm_segment`; the
+disclosed m-split check is a stage of its own, `arm_ring_power`. **Two new pin shapes:** `arm_class` (flocculent on
+`ngc_4414`) and the table `arm_pieces` (`milky_way`: six rows of Reid et al. 2019's Table 2). Layer off, every field
+is bit-identical to `main`.
+
+**The gate's twelve follow-ups, one line each.** (1) The taper at a chain's two ends only; no birth inside the bar's
+half-length; a piece's FWHM at most half the crossing spacing, a bound and never a target. (2) A piece by its
+perpendicular distance in the log-polar plane (a pitch-0 piece an arc); a drawn piece ends at the chain it meets;
+births at the widest gap; the count a sum of taper weights; the young reader at the point. (3) The locus is the
+chain's polyline; chains add at a join; no square edge anywhere; the budget's hard outer edge recorded. (4) The
+record corrected (Σf like for like 0.588); no chain crosses any chain, itself included; no continuation inside the
+bar; the count's floor of one; `arm_ring_power` to a stage of its own. (5) Norma's turn-back step recorded (#156);
+the realised power below the budget is the design's ensemble (#155); the gaps recorded; 1 440 cells stand on the
+cell means' measured error. (6) The reviewer's second pass: the drawn pitch cut at zero; a joined chain's anchor
+follows the chain it met; the lone shortcut goes; a guard on three ends at a point; `arm_ring_power`'s dead
+requirement goes; the whole-ring continuity test. (7) The cost: the exact savings first, then the normaliser
+tabulated; the million-star bound read layer off; the layer-on cost recorded with no bound; the whole-disc calls the
+owner's. (8) #156 is every kink within a width of a free end; past a free end an anchor is held between its
+neighbours; the whole-turn bug in `along` fixed. (9) The table as built and its error pinned; the count's weight at a
+joined end tapers over one width. (10) Three classes of step in R ruled — two of them on diagnoses the builder then
+measured wrong. (11) The tenth's diagnoses withdrawn on the builder's measurement: the count's floor on every ring a
+chain reaches, the taper's length the law's width, no fixed point. (12) The reviewer's third pass, "merge yes, with
+fixes": the exact mean below the first knot; the wedges read the law's width (#156 amended to one law width); the
+carried gas's φ-step recorded as #157; the six ulp a deterministic residue with a derived bound; the degenerate DIG
+statistic unpinned; the table's build raises.
+
+**The cost** (this machine, cold or least of two; `main` / the fourth pass / after the exact savings / with the
+table):
+
+| call | `main` | fourth pass | exact savings | table (final) |
+|---|---|---|---|---|
+| million-star catalogue, layer on | ~5 s | 55.8 s | 48.3 s | 25 s |
+| `catalogue_cost` per cell | 1 272 µs | 8 248 µs | 3 279 µs | 2 457 µs |
+| `region: whole disc`, cold | 1.95 s | 12.1 s | 3.92 s | 5.7 s (the table built on the cold path) |
+
+The million-star test's 10 s bound is read with the layer off, where nothing changed, and holds; the layer-on time
+is recorded beside it with no bound (the seventh follow-up, part ii).
+
+**The final model's readings** (`tests/test_pieces.py`'s `EXPECTED_PREDICTIONS`, `EXPECTED_SPLIT`; for the record,
+not judged). The Milky Way template: five chains at R₀ (two pinned), B 0.501, FWHM 1.197 kpc against a spacing of
+2.39, stellar crest over trough 2.3, Σf at 8 kpc 0.578 (m = 2…6), the gas minimum there 0.643, the PHANGS ratio of
+means 1.431 with 7 rings under 1.37, 46 pieces in 12 chains, 3 joins; the split by arm number over 6–10 kpc 0.249 /
+1.215 / 1.015 / 0.237 / 0.36 for m = 2…6 against the law's 0.009 / 1.064 / 2.126 / 2.44 / 2.437 — the peak at m = 3,
+still not the law's. `ngc_4414`: 35 single pieces, one join, crest over trough 1.64, the ratio 1.252 with 36 rings
+under 1.37 — a miss, as predicted.
+
+**The frames beside the goals** (the lead's look above, quoted): "the Milky Way is a recognisable barred spiral with
+too many, too faint arms; `ngc_4414` is a smooth disc with a bulge and no visible flocculence. S60 moved the Milky Way
+frame from 'ripples' to 'arms'; it did not move `ngc_4414`'s look." The field frame's faint circular edge near the
+bar's half-length is unread.
+
+**The register.** 94 open = 11 permanent + 83 carried, 46 discharged (`GALAXY_INPUTS.md` §11's table). Opened:
+**#155** (the budget's ensemble: realised power 45–80 % of the law's on the median ring, the maxima at the pins and
+joins and at the bar's ends), **#156** (a chain's excess jumps at a kink within one law width of a free end),
+**#157** (the carried gas steps in φ where a clipped anchor meets a held one). Next number **#158**. The gate's words
+on #150 ("discharged"), #151 ("closed"), #142 (the floor "retires as physics") and #154 (its text amended) are not
+yet entered in the register, which carries all four as it did at S59; the count above is the register's.
+
+**The acceptance rows** are judged layer-off and did not move: 12 pass / 20 fail / 5 not-yet-computable of 37, row
+35 −2.08124, row 37 −0.102973 (a miss, #117). With the layer on, for the record and not judged (I3), `tests/
+test_layer.py` pins rows 35 / 37 at −2.03381 / −0.101488 (were −2.03559 / −0.102201), clouds 16 753, clusters 12 916.
+
+**For the owner, plainly (none awaited; each is theirs).**
+- (a) With the layer on the arms carry about 45–80 % of the arm-number law's power on the median ring (#155); a
+  different ensemble is a change of one formula, `budget_amplitude`.
+- (b) The stellar contrast steps by up to 0.055 at kinks within one law width of a chain's free end (#156; the
+  default galaxy's seed 4 and the Milky Way's seed 1); the continuous rule is one pass if the frames show it.
+- (c) With the layer on the viewer's whole-disc calls cost two to three times `main` (`region: whole disc` 5.7 s cold
+  against 1.95 s); a bound on them is theirs.
+- (d) The arms enter only the last tenth of the bar, and at the bar's end the count's floor spends up to 2.9 times
+  the budget on one seed; the bar's ends want their look.
+- (e) The Milky Way frame reads as a barred spiral with too many, too faint arms; `ngc_4414` is a smooth disc with a
+  bulge and no visible flocculence — P5 moved the Milky Way from ripples to arms and `ngc_4414` not at all.
+- (f) Still theirs from before: a floor on the drawn pitch (#142), Erwin 2018's bar frequency as a draw (#145), the
+  lanes' placeholder width (#147).
+- (g) The gate test in `tests/test_pieces.py` takes about 88 minutes alone and the suite is longer by that — the
+  cost of the exact census checks, to be cut or kept at their word.
+
+**What S61 does.** BUILD_III Phase L1, the clustered censuses: `census_clustering`, a synthetic field of unit mean
+per level-0 cell on the clouds' expected counts, clusters through their clouds, the 20–100 Myr bright stars near
+where they formed; the ring-first draw ordered at G1 (D214); and the question D219 added, whether the field is its
+own or the coarse scales of L2's `gas_fluctuation`. `READING_CLUSTERING.md` (taken at S59's close) finds **no single
+slope and no single fading age for young clusters** (−0.39 to −1.1 in one galaxy by fit range; randomisation 40 to
+~100 Myr by source), every amplitude measured against uniform randoms in a footprint and none against an
+arm-modulated disc: L1's gate ("the sourced slope over the sourced range") is met only on the finished census
+measured as the sources measure it, and **a stop condition (BUILD_III §3d) is to be expected at the gate**. The
+lead stays on Opus; **Fable is spawned at the plan's gates and at a stop condition** (builders, reviewers and re-pins
+on Fable while the owner's limits say so).
