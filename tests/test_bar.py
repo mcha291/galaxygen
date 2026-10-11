@@ -421,7 +421,6 @@ def suite_sweep(prod) -> dict:
     return _RUNS["sweep"]
 
 
-@XFAIL_REPIN
 def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measured(prod):
     """The layer-on readings of the gate's sweep, as last pinned on the modes' field (S59, D218 follow-up): the
     lowest cell of the composed field over the 240 galaxies, and the whole field's A₂ maximum inside a less B -
@@ -430,13 +429,18 @@ def test_the_suite_s_lowest_cell_and_the_whole_field_s_a2_consequence_as_measure
     sweep = suite_sweep(prod)
     # S59 (D218): was 0.0024886 - the same galaxy's lowest cell centre, on a ring the segments have turned.
     # S59 (D218 follow-up): was 0.0025575 - the same galaxy again, its rings turned by segments of relative pitch.
-    assert sweep["lowest"] == pytest.approx(0.0024782, abs=1e-7) and sweep["where"] == ("milky_way", True, 28, 1)
+    # S60 (D219), on the pieces' field: another galaxy's lowest cell. S60 fourth pass: was 0.0024782 at
+    # ("milky_way", True, 28, 1).
+    assert sweep["lowest"] == pytest.approx(0.0085059, abs=1e-7) and sweep["where"] == ("milky_way", True, 33, 0)
     # The whole field's A₂ maximum inside a, less B: a consequence of the two-armed mode on the bar's axis, as read.
     # S59 (D218): were (-0.005854, 0.008093), (0.3959, 0.4391) and (-0.008212, 0.010120), (0.3953, 0.9936).
     # S59 (D218 follow-up): were (-0.005748, 0.007290), (0.3959, 0.4679) and (-0.004974, 0.008373), (0.4167, 0.4594) -
     # inside a the two-armed mode meets the bar at the phase of segments whose pitch is now p + 0.56 p z.
-    for template, (low, high), (near, far) in (("milky_way", (-0.007445, 0.006281), (0.3959, 0.4535)),
-                                                ("ngc_4414", (-0.011014, 0.008358), (0.3953, 0.4594))):
+    # S60 (D219), as read on the pieces' field: A₂ inside a less B is under 1e-9 on `ngc_4414`'s galaxies and
+    # reaches 0.142 on the Milky Way's. S60 fourth pass: were (-0.007445, 0.006281),
+    # (0.3959, 0.4535) and (-0.011014, 0.008358), (0.3953, 0.4594).
+    for template, (low, high), (near, far) in (("milky_way", (-3.2153e-10, 0.141850), (0.4103, 0.9861)),
+                                                ("ngc_4414", (-4.4e-16, 5.99e-11), (0.4167, 0.4167))):
         got = np.array(sweep["whole"][template])
         assert (float(got[:, 0].min()), float(got[:, 0].max())) == pytest.approx((low, high), abs=2e-6), template
         assert (float(got[:, 1].min()), float(got[:, 1].max())) == pytest.approx((near, far), abs=1e-4), template
@@ -529,7 +533,6 @@ def test_gate_the_gas_with_its_lanes(prod, template):
     assert 1.0 < float(g[R < gas.bar_length].max()) <= max(float(peak.max()), float(gas.profiles.max()))
 
 
-@XFAIL_REPIN
 def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
     """Where the lane's crest and an arm's response meet, as last pinned (S59, D218 follow-up); the pieces'
     response moves it (S60, D219). The lane field's own peak, 7.06 at 3.34 kpc, stays in the gate's test."""
@@ -540,7 +543,8 @@ def test_the_published_gas_s_largest_cell_inside_the_bar_as_measured(prod):
     # S59 (D218): was (6.664, 2.0625) - the lane's crest and an arm's response meet at another angle on that ring.
     # S59 (D218 follow-up): was (6.679, 2.0625) - on the relative residual's winding the largest cell is a lane's
     # and an arm's together on another ring, 6.761 at 2.81 kpc (wound at one pitch: 6.664 at 2.06 kpc still).
-    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.761, 2.8125), abs=2e-3)
+    # S60 fourth pass: was (6.761, 2.8125); on the pieces' response 6.657 at 2.06 kpc, S59's ring again.
+    assert (float(g[inside].max()), float(R[int(np.argmax(g.max(axis=1)))])) == pytest.approx((6.657, 2.0625), abs=2e-3)
 
 
 def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
@@ -609,7 +613,6 @@ def corner_runs(prod):
     return _RUNS["corner"]
 
 
-@XFAIL_REPIN
 def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     """The corner's count of underflowed cells as last pinned (S59, D218 follow-up) - 53 cells of the published
     field exactly 0 on 8 rings, 0.71-1.24 kpc; 239 solver cells exactly 0 and 343 subnormal - and the barred
@@ -618,22 +621,23 @@ def test_the_underflowed_cells_of_the_corner_as_counted(prod):
     o, barred = corner_runs(prod)
     F, R = o.fields, o.grid.R
     g = np.asarray(F["gas_density_contrast"])
-    assert g.min() == 0.0
-    zero = g == 0.0
-    rings = np.flatnonzero(zero.any(axis=1))
-    assert int(zero.sum()) == 53 and rings.size == 8  # S59 (D218 follow-up): was 54. S59 (D218): was 55
-    assert (float(R[rings[0]]), float(R[rings[-1]])) == pytest.approx((0.7125, 1.2375), abs=1e-9) and np.all(np.diff(rings) == 1)
-    # S59 (D218 follow-up): was [2, 7, 8, 9, 9, 8, 6, 5]. S59 (D218): was [2, 6, 9, 9, 9, 8, 7, 5]
-    assert zero[rings].sum(axis=1).tolist() == [2, 7, 8, 9, 8, 8, 7, 4]
-    s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
     tiny = float(np.finfo(float).tiny)
-    assert float(s.min()) == 0.0
-    assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (239, 343)
+    # S60 (D219), on the final model: **the corner underflows nowhere** - no cell of the published field is 0 and
+    # none subnormal, nor any solver cell; the lowest published cell is 8.56e-65, at 4.54 kpc. The gate's clause (0
+    # only where s underflows) holds vacuously, in the test before this one. S60 fourth pass: were g.min() == 0,
+    # 53 cells exactly 0 on 8 rings, 0.71-1.24 kpc ([2, 7, 8, 9, 8, 8, 7, 4] a ring), and 239 solver cells exactly 0
+    # and 343 subnormal.
+    assert int((g == 0.0).sum()) == 0 and int((g < tiny).sum()) == 0
+    assert float(g.min()) == pytest.approx(8.564e-65, rel=2e-3) and float(R[int(np.argmin(g.min(axis=1)))]) == pytest.approx(4.5375, abs=1e-9)
+    s = compose.gas_pattern(F, R, constants(the_model(prod))).profiles
+    assert (int((s == 0.0).sum()), int(((s > 0.0) & (s < tiny)).sum())) == (0, 0)
+    assert float(s.min()) == pytest.approx(3.3725e-64, rel=2e-3)
     low = np.asarray(barred.fields["gas_density_contrast"])
     # S59 (D218): was 4.768e-11 - the lowest cell of the barred disc, where the lanes' base under the taper meets
     # a trough of the response the segments have turned.
     # S59 (D218 follow-up): was 4.806e-11 - turned otherwise by segments of relative pitch.
-    assert float(low.min()) == pytest.approx(4.829e-11, rel=2e-3)
+    # S60 fourth pass: was 4.829e-11; the barred disc's lowest cell is 0.3854 on the pieces' response.
+    assert float(low.min()) == pytest.approx(0.3854, rel=2e-3)
 
 
 # --- by hand -------------------------------------------------------------------------------------------------------
@@ -828,7 +832,6 @@ def test_the_saturation_reads_the_body_s_depth_on_a_saturated_barred_galaxy(prod
     assert field.min() >= 0.0
 
 
-@XFAIL_REPIN
 def test_the_most_saturated_barred_galaxy_s_lowest_cell_as_measured(prod):
     """The composed field's lowest cell on the suite's most saturated barred galaxy, as last pinned (S59, D218
     follow-up); the pieces' field moves it (S60, D219). The saturation's law stays in the test before this one."""
@@ -838,7 +841,8 @@ def test_the_most_saturated_barred_galaxy_s_lowest_cell_as_measured(prod):
     # rings the segments have turned; the same field wound at one pitch reads 0.03145 still. The bound is the
     # saturation's, and no amplitude moved: every number above is the one it was.
     # S59 (D218 follow-up): was 0.03205 - on the relative residual's winding 0.031237, at 11.29 kpc again.
-    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.03124, abs=2e-5)
+    # S60 fourth pass: was 0.03124, on the modes' field.
+    assert field.min() >= 0.0 and float(field.min()) == pytest.approx(0.05950, abs=2e-5)
 
 
 def test_the_saturation_ends_with_the_body_so_a_saturated_galaxy_s_arms_are_stronger_at_the_bar_s_end(prod):
@@ -1124,7 +1128,6 @@ def test_the_lanes_end_in_a_cliff_and_build_no_nuclear_ring(prod):
     assert (float(peaks.max()), float(R[int(np.argmax(peaks))])) == pytest.approx((7.058, 3.3375), abs=2e-3)
 
 
-@XFAIL_REPIN
 def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     """The published gas on the last three rings inside a and the first past it, as last pinned (S59, D218
     follow-up): the taper there is 0.4 and the arms' response carries the rest. The pieces' response moves these
@@ -1139,7 +1142,9 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # mean moves in the fourth figure.
     # S59 (D218 follow-up): was [3.910, 2.931, 2.693] and 2.795 - the first build's segments; with their pitch
     # relative to the disc's the three rings are turned otherwise.
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.544, 2.646, 2.692], abs=2e-3) and float(g[after].max()) == pytest.approx(2.795, abs=2e-3)
+    # S60 fourth pass: were [3.544, 2.646, 2.692] and 2.795 - past the half-length the ring is the pieces' response
+    # alone, gentler than the modes' there.
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.974, 2.689], abs=2e-3) and float(g[after].max()) == pytest.approx(1.535, abs=2e-3)
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):
