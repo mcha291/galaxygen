@@ -243,6 +243,13 @@ def hand_pattern(pitch_deg: float, start_radius: float = 5.0, start_azimuth: flo
     return stars, gas, kappa, density
 
 
+def lone_past(r: float, pitch_deg: float) -> float:
+    """How far in ln R the ring at ``r`` lies past the nearer end of :func:`hand_pattern`'s piece (from 5 kpc round
+    1.2 rad at ``pitch_deg``, so out to 5 exp(1.2 |tan p|)): 0 where its locus crosses the ring."""
+    x0, x1 = math.log(5.0), math.log(5.0) + 1.2 * abs(math.tan(math.radians(pitch_deg)))
+    return max(math.log(r) - x1, x0 - math.log(r), 0.0)
+
+
 @pytest.mark.parametrize("pitch", (0.0, 1.0, 13.5, 45.0))
 def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
     """The gate's second follow-up, item 4: "a one-ridge hand test in log-polar coordinates to 1e-11 at pitches 0°,
@@ -337,9 +344,25 @@ def test_one_ridge_in_log_polar_coordinates_by_hand(pitch):
         # The gas answers it: mean 1, positive, by the solver.
         s = gas.solve_at(np.array([r]))[0]
         assert abs(s.mean() - 1.0) < 1e-12 and s.min() > 0.0
-        # Without the carrier, a ring the lone piece's locus does not cross has no count and no arm.
+        # Without the carrier, a ring the lone piece's locus does not cross but which it reaches - within REACH
+        # dispersions at the law's width of its nearer end - counts 1 (the eleventh follow-up's floor: N = max(1,
+        # sum w) on every ring a chain reaches); was `count_at == 0` here, the old law's "a ring no locus crosses".
         if distance is None:
-            assert float(lone.count_at(np.array([r]))[0]) == 0.0 and np.all(lone.arms_at(np.array([r]), phi) == 0.0)
+            assert lone_past(r, pitch) <= pc.REACH * HAND_FWHM / FWHM / r  # (each such ring of this test is reached)
+            assert float(lone.count_at(np.array([r]))[0]) == 1.0
+    # Beyond the reach no chain reaches the ring: no count, and - the field's reach at the bounded width, here the
+    # law's (one piece on rings this wide) - no arm, the Gaussian cut at e^(-REACH^2/2) to exactly 0. The reach ends
+    # outward where r ln(r / R_end) = REACH w_law / FWHM_PER_SIGMA (R_end the piece's outer end); inward it never
+    # does on this disc (r ln(5/r) is at most 5/e under REACH w_law / FWHM), so the edge is found by bisection outward.
+    end = 5.0 * math.exp(1.2 * abs(tangent))
+    lo, hi = end, 10.0 * end
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if lone_past(mid, pitch) <= pc.REACH * HAND_FWHM / FWHM / mid else (lo, mid)
+    inside, outside = np.array([lo * (1.0 - 1e-9)]), np.array([hi * (1.0 + 1e-9)])
+    assert float(lone.count_at(inside)[0]) == 1.0 and float(lone.width_at(inside)[0]) == HAND_FWHM
+    assert float(lone.count_at(outside)[0]) == 0.0 and np.all(lone.arms_at(outside, phi) == 0.0)
+    assert np.all(lone.arms_at(np.array([1.5 * hi]), phi) == 0.0)
     assert worst["point"] < 1e-13 and worst["mean"] < 1e-11 and worst["field"] < 1e-11 and worst["cells"] < 1e-11, worst
     assert worst["table"] <= 1.5e-6, worst
     # The arc of no pitch: its ridge on a ring beside it is one height along its whole drawn extent.
