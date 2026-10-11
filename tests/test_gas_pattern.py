@@ -935,8 +935,9 @@ def test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured(prod):
           f"6-10 kpc at most {mid_most} cells")
     # S60 (D219), on the final model: 9 485 / 1 740 / 9 197 / 14 552 - both sides still, but on 14 552 rings the
     # gas's tallest crest is another piece's, and over 6-10 kpc the two are up to 20 cells (5 degrees) apart: **the
-    # field's about's "within about a degree ... over the mid disc" no longer reads the model** (reported to the
-    # lead; the re-pin may not edit the model). S60 fourth pass: was [12218, 7510, 15270, 762] and 4.
+    # field's about's "within about a degree ... over the mid disc" no longer read the model**, and the lead's fix pass
+    # re-read it to these counts (test_the_stage_reads_no_gas_and_sits_at_checkpoint_three holds the phrases). S60
+    # fourth pass: was [12218, 7510, 15270, 762] and 4. (20 cells is this count's own line for one arm's crest.)
     assert sides.tolist() == [9485, 1740, 9197, 14552] and mid_most == 20
 
 
@@ -2117,7 +2118,11 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", second.about + GAS_PATTERN.about)
     about = GAS_PATTERN.publishes[0].about
     assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
-    assert "at the ring's own radius" in about and "within about a degree of each other over the mid disc, to either side" in about
+    # S60 (D219): was "within about a degree of each other over the mid disc, to either side" - re-read to the 240-galaxy
+    # sweep's counts (test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured: 9 485 / 1 740 / 9 197 / 14 552, 20 cells).
+    assert "at the ring's own radius" in about and "the gas's tallest crest stands to either side" in about
+    assert "on 9 485, on the same cell on 1 740 and at the larger on 9 197, up to five degrees apart over the mid disc" in about
+    assert "on 14 552 more rings - two in five - the gas's tallest crest is on another arm piece" in about
     # S58 (D217): what the bar's reach holds, and what of it is not sourced.
     assert "two narrow lanes on the bar's leading side" in about and "its width is a declared placeholder that no source gave" in about
     assert "An unbarred galaxy has no lanes" in about and "the stellar bar's own two-fold term" not in about
