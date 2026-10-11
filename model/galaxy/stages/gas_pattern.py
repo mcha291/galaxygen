@@ -840,8 +840,8 @@ class GasPattern:
     # map of azimuth anchored where each crossing piece stands on the ring and at the point's radius)".
     #
     # For grid ring k and a radius r: every piece that crosses the ring stands at φ_j(R_k) on it and - on its own
-    # chain's polyline followed from it, the end piece's line continued where the chain ends (``Pieces.along``) -
-    # at φ_j(r). Its displacement is d_j = φ_j(R_k) − φ_j(r).
+    # chain's polyline followed from it, the end piece's line continued where the chain ends free and the chain it
+    # met followed past a join (``Pieces.along``; the gate's sixth follow-up, item 2) - at φ_j(r). Its displacement is d_j = φ_j(R_k) − φ_j(r).
     # The map is M(φ) = φ + D(φ), D periodic and linear between neighbouring anchors φ_j(r) round the circle,
     # D(φ_j(r)) = d_j: each arm is read where it is on the ring, and the gas between two arms in proportion.
     # One crossing piece: a turn by its own d, the old shift. None: nothing to carry (s = 1). At r = R_k: the
@@ -885,11 +885,16 @@ class GasPattern:
         radius = self._rings()["radii"][ring]
         slots = pieces.slots(radius)
         live, on_ring, _ = pieces.geometry(radius, slots)
-        at_point = pieces.along(slots, np.log(np.asarray(r, dtype=float))[:, None])  # the chain followed along its polyline (the fourth pass)
-        key = np.where(live, np.mod(at_point, TWO_PI), np.inf)
-        order = np.argsort(key, axis=1, kind="stable")
+        # The chain followed along its polyline (the fourth pass), and past a join along the chain it met (the gate's
+        # sixth follow-up, item 2): two chains that meet then stand at one anchor to the bit, and of two anchors at
+        # one azimuth the one whose image on the ring is the lesser comes first - the map steps there, and never
+        # back.
+        on_line, turns = pieces.along_parts(slots, np.log(np.asarray(r, dtype=float))[:, None])
+        key = np.where(live, np.mod(on_line, TWO_PI), np.inf)
+        moved = np.where(live, on_ring - (on_line + turns), 0.0)
+        order = np.lexsort((key + moved, key), axis=1)
         ordered = np.take_along_axis(key, order, axis=1)
-        shift = np.take_along_axis(np.where(live, on_ring - at_point, 0.0), order, axis=1)
+        shift = np.take_along_axis(moved, order, axis=1)
         count = live.sum(axis=1)
         held = np.isfinite(ordered)
         first = np.where(count > 0, np.where(held[:, 0], ordered[:, 0], 0.0), 0.0)

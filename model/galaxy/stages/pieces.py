@@ -555,6 +555,32 @@ _MEMO_KEPT = 8
 # --------------------------------------------------------------------------------------------------------------
 
 
+def _met_at(point: tuple[float, float], own: int, x_start: np.ndarray, x_end: np.ndarray, phi_start: np.ndarray, phi_end: np.ndarray) -> tuple[int, float]:
+    """(the piece whose locus a joined end stands on, the whole turns from that piece's line to the end's
+    azimuth): the piece nearest the point (ln R, azimuth) in the log-polar plane, each tried at the image of its
+    middle nearest the point and a turn either way, among those within :data:`JOINED` of it; (−1, 0) where none
+    is - a table whose join flag names no meeting (a hand-built one), read as the chain's end before the sixth
+    follow-up: its own line continued. ``own`` is the joined piece itself, never its own meeting."""
+    px, py = point
+    best, best_distance, turns = -1, JOINED, 0.0
+    for q in range(x_start.size):
+        if q == own:
+            continue
+        ax, ay, vx, vy = x_start[q], phi_start[q], x_end[q] - x_start[q], phi_end[q] - phi_start[q]
+        if not (math.isfinite(vx) and math.isfinite(vy)):
+            continue
+        squared = vx * vx + vy * vy
+        nearest = TWO_PI * round((py - (ay + 0.5 * vy)) / TWO_PI)
+        for k in (-1.0, 0.0, 1.0):
+            image = nearest + k * TWO_PI
+            ox, oy = px - ax, py - image - ay
+            t = min(max((ox * vx + oy * vy) / squared, 0.0), 1.0) if squared > 0.0 else 0.0
+            distance = math.hypot(ox - t * vx, oy - t * vy)
+            if distance < best_distance:
+                best, best_distance, turns = q, distance, image
+    return best, turns
+
+
 @dataclass(frozen=True, slots=True, eq=False)
 class Pieces:
     """The realised census of arm pieces, as every reader builds it from the published table (rule A9).
@@ -604,6 +630,10 @@ class Pieces:
     link_end: np.ndarray = field(init=False, repr=False)          # ... at its end
     link_start_is_end: np.ndarray = field(init=False, repr=False)  # whether it is that piece's end that stands there
     link_end_is_end: np.ndarray = field(init=False, repr=False)
+    met_start: np.ndarray = field(init=False, repr=False)         # the piece a joined start met (−1 none)
+    met_end: np.ndarray = field(init=False, repr=False)           # ... a joined end
+    met_start_turns: np.ndarray = field(init=False, repr=False)   # whole turns (rad) from that piece's line to the end
+    met_end_turns: np.ndarray = field(init=False, repr=False)
     chain_of: np.ndarray = field(init=False, repr=False)  # the chain's number, NaN for the pad
     breaks: np.ndarray = field(init=False, repr=False)    # the ln R at which the set of crossing pieces changes
     table: np.ndarray = field(init=False, repr=False)     # (len(breaks) + 1, most): piece indices, the pad's = n
@@ -654,6 +684,12 @@ class Pieces:
                         partner[e] = f
                         break
         closed = np.concatenate([self.join == JOIN_INNER, self.join == JOIN_OUTER])  # an end that meets another chain
+        # The piece each joined end met, and the whole turns between the end's azimuth and that piece's own line
+        # there (the gate's sixth follow-up, item 2: past its join a chain's anchor follows the chain it met).
+        met = np.full(2 * n, -1, dtype=np.int64)
+        met_turns = np.zeros(2 * n)
+        for e in np.flatnonzero(closed):
+            met[e], met_turns[e] = _met_at(ends[e], int(e % n), x_start, x_end, self.start_azimuth, phi_end)
         # The links: at each piece's start and end, the piece of its own chain that stands there (−1 none) and
         # whether it is that piece's end that does (else its start) - what a kink's rounding reads.
         link = np.where(partner >= 0, partner % n, -1)
@@ -678,6 +714,8 @@ class Pieces:
                             ("before", pad(beyond[:n], math.inf)), ("after", pad(beyond[n:], math.inf)),
                             ("link_start", np.concatenate([link[:n], [-1]])), ("link_end", np.concatenate([link[n:], [-1]])),
                             ("link_start_is_end", np.concatenate([link_is_end[:n], [False]])), ("link_end_is_end", np.concatenate([link_is_end[n:], [False]])),
+                            ("met_start", np.concatenate([met[:n], [-1]])), ("met_end", np.concatenate([met[n:], [-1]])),
+                            ("met_start_turns", pad(met_turns[:n], 0.0)), ("met_end_turns", pad(met_turns[n:], 0.0)),
                             ("chain_of", pad(self.chain, math.nan)), ("breaks", breaks), ("table", table)):
             value.setflags(write=False)
             object.__setattr__(self, name, value)
@@ -733,25 +771,45 @@ class Pieces:
         that piece: outward through the pieces joined end to start while the target lies past a piece's end,
         inward through those joined start to end while it lies before a piece's start; where the chain ends, or
         turns back in radius (a measured arm that kinks back), the last piece's own line continued (the gas's
-        carried map, D219 item 6: "along the pieces' loci" - since the fourth pass the chains'). ``x_to``
-        broadcasts against ``slots``; an empty slot reads azimuth 0."""
+        carried map, D219 item 6: "along the pieces' loci" - since the fourth pass the chains'). **Past a join -
+        a chain's end that met another chain - it follows the chain it met** (the gate's sixth follow-up, item 2:
+        "the chain's material is there"), on that chain's polyline by the same rules. ``x_to`` broadcasts against
+        ``slots``; an empty slot reads azimuth 0."""
+        base, turns = self.along_parts(slots, x_to)
+        return base + turns
+
+    def along_parts(self, slots: np.ndarray, x_to: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """:meth:`along` as (the azimuth on the line of the piece it ends on, the whole turns from that line to the
+        slot's own chain's unwrapping): two chains that read one piece read the first to the bit, whichever of
+        them it is followed from - so the anchors of a chain and of the chain it joined coincide exactly past
+        the join, and the turns are added only to a displacement."""
         slots, x_to = np.broadcast_arrays(np.asarray(slots), np.asarray(x_to, dtype=float))
         at = slots.copy()
-        for _ in range(self.count):
+        turns = np.zeros(at.shape)
+        for _ in range(self.count + 1):
             x0, x1 = self.x_start[at], self.x_end[at]
             live = at < self.count
             out_next = self.link_end[at]
             outward = live & (x_to > x1) & (out_next >= 0) & ~self.link_end_is_end[at] & (self.x_end[np.maximum(out_next, 0)] > x1)
             in_next = self.link_start[at]
             inward = live & (x_to < x0) & (in_next >= 0) & self.link_start_is_end[at] & (self.x_start[np.maximum(in_next, 0)] < x0)
-            step = np.where(outward, out_next, np.where(inward, in_next, at))
+            # A joined end, where the target lies past it: onto the piece it met.
+            met_out = live & ~outward & ~inward & (x_to > x1) & (self.met_end[at] >= 0)
+            met_in = live & ~outward & ~inward & ~met_out & (x_to < x0) & (self.met_start[at] >= 0)
+            step = np.where(outward, out_next, np.where(inward, in_next, np.where(met_out, self.met_end[at], np.where(met_in, self.met_start[at], at))))
             if np.array_equal(step, at):
                 break
+            # The table holds each start azimuth within one turn, so the piece stepped onto may be a whole turn off
+            # the one stepped from at the point they share: the turns keep the chain's azimuth continuous.
+            to_next = np.maximum(step, 0)
+            turns = (turns + np.where(outward, TWO_PI * np.round((self.phi_end[at] - self.phi_start[to_next]) / TWO_PI), 0.0)
+                     + np.where(inward, TWO_PI * np.round((self.phi_start[at] - self.phi_end[to_next]) / TWO_PI), 0.0)
+                     + np.where(met_out, self.met_end_turns[at], 0.0) + np.where(met_in, self.met_start_turns[at], 0.0))
             at = step
         x0, x1 = self.x_start[at], self.x_end[at]
         with np.errstate(invalid="ignore", divide="ignore"):
             share = np.where((at < self.count) & np.isfinite(x1) & np.isfinite(x_to) & (x1 > x0), (x_to - x0) / np.where(x1 > x0, x1 - x0, 1.0), 0.0)
-        return self.phi_start[at] + share * (self.phi_end[at] - self.phi_start[at])
+        return self.phi_start[at] + share * (self.phi_end[at] - self.phi_start[at]), turns
 
     def unwrapped(self, slots: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """ψ of each slot's piece at azimuths ``phi`` (broadcast against ``slots``): the azimuth from the piece's

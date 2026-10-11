@@ -1034,6 +1034,94 @@ EXPECTED_GAPS: dict = {"milky_way": (18, 14, 8.74, 354, [3.572, 4.453, 5.916, 6.
 #  9 % - and what remains is at joins, free ends and the nearly circular pieces, as before)
 
 
+def carried_map_folds(gp, per_gap: int = 5) -> tuple[int, list[tuple[int, float, float, float, bool]]]:
+    """Every (solved ring, radius) pair a point reads - each ring of the finished store with ``per_gap`` radii
+    strictly inside each gap beside it - and the carried map M(φ) = φ + D(φ) on it, from ``_anchors``: (the
+    pairs, the folds). A fold is a stretch between two neighbouring anchors whose image on the ring runs backwards
+    (its width after the shift under −1e-12 rad): (ring, ring's radius, r, the image's width, whether a chain of
+    the two anchors does not reach r - its anchor the end piece's line continued past a free end)."""
+    store = gp._complete()
+    radii, carries = store["radii"], store["carries"]
+    rings, rs = [], []
+    for k in range(radii.size - 1):
+        for t in (np.arange(per_gap) + 0.5) / per_gap:
+            for ring in (k, k + 1):
+                if carries[ring]:
+                    rings.append(ring)
+                    rs.append(radii[k] + t * (radii[k + 1] - radii[k]))
+    rings, rs = np.array(rings, dtype=np.int64), np.array(rs)
+    anchors, shifts, _, _, count = gp._anchors(rings, rs)
+    image = anchors + shifts
+    width = image[:, 1:] - image[:, :-1]
+    real = np.arange(width.shape[1])[None, :] < count[:, None]
+    # Which piece each sorted anchor is: the same sort as ``_anchors``' own, made again here.
+    p = gp.stars.pieces
+    slots = p.slots(radii[rings])
+    live, on_ring, _ = p.geometry(radii[rings], slots)
+    on_line, turns = p.along_parts(slots, np.log(rs)[:, None])
+    key = np.where(live, np.mod(on_line, 2.0 * math.pi), np.inf)
+    moved = np.where(live, on_ring - (on_line + turns), 0.0)
+    which = np.take_along_axis(slots, np.lexsort((key + moved, key), axis=1), axis=1)
+    assert np.array_equal(np.take_along_axis(key, np.lexsort((key + moved, key), axis=1), axis=1)[real], anchors[:, :-1][real])
+    folds = []
+    for i, j in zip(*np.nonzero(real & (width < -1e-12))):
+        x = math.log(rs[i])
+        free = False
+        for s in (which[i, j], which[i, (j + 1) % count[i]]):
+            own = p.chain == p.chain[s]
+            free |= not bool(((p.x_start[:-1][own] <= x) & (x <= p.x_end[:-1][own])).any())
+        folds.append((int(rings[i]), float(radii[rings[i]]), float(rs[i]), float(width[i, j]), free))
+    return int(rings.size), folds
+
+
+@pytest.mark.parametrize("leg", (*LEGS, "default"))
+def test_the_carried_map_never_folds_where_the_chains_reach(prod, leg):
+    """The gate's sixth follow-up, item 2: "past its join a joined chain's anchor follows the chain it met; the map
+    is then asserted monotone on every (ring, radius) pair of the gate's legs". Held on three seeds of each leg
+    and the bare default galaxy: every joined end of the census stands on a piece of the chain it met (to
+    ``pieces.JOINED``), a joined chain's anchor past its join is the anchor of the chain it met to the bit, and
+    **the map runs forwards on every stretch whose two anchors' chains reach the radius** - at joins, at kinks,
+    across the stored start azimuths' whole turns.
+
+    **What remains, recorded and not mended:** folds where an anchor's chain has ended free short of the radius
+    and its end piece's line is continued (the fourth pass's rule, which the ruling does not touch) - mostly
+    near the centre of the unbarred ``ngc_4414``, where a short piece's continued line sweeps radians in a few
+    tens of parsecs, out to 8 kpc on one seed of its drawn leg, and at the Milky Way's Norma turn-back (#156's
+    class). Their number is the record ``EXPECTED_FOLDS``, for the lead to rule on; nothing was changed to make
+    it hold. The bare default galaxy folds nowhere."""
+    record = []
+    for seed in (None, 1, 2):
+        gm.forget_solutions()
+        inputs = {} if leg == "default" else leg_inputs(leg)
+        o = run(the_model(prod), inputs if seed is None else {**inputs, "texture_seed": seed}, only=READER)
+        sp, gp, _ = patterns(prod, o)
+        p = sp.pieces
+        joined = np.flatnonzero(p.join != 0.0)
+        for i in joined:
+            met = int(p.met_end[i] if p.join[i] == 2.0 else p.met_start[i])
+            assert met >= 0 and p.chain[met] != p.chain[i], (seed, int(i))
+            # Past the join the joined piece's anchor and the met piece's coincide to the bit.
+            x = (p.x_end[i] if p.join[i] == 2.0 else p.x_start[i]) + (0.05 if p.join[i] == 2.0 else -0.05)
+            a, _ = p.along_parts(np.array([i]), np.array([x]))
+            b, _ = p.along_parts(np.array([met]), np.array([x]))
+            assert a[0] == b[0], (seed, int(i))
+        pairs, folds = carried_map_folds(gp)
+        assert all(free for *_, free in folds), (seed, [f for f in folds if not f[4]])
+        record.append((pairs, len(folds), round(max((f[2] for f in folds), default=0.0), 3)))
+    # per seed (pairs, folds where a chain ends free short of the radius, the largest radius of one, kpc)
+    assert record == EXPECTED_FOLDS.get(leg), repr(record)
+
+
+EXPECTED_FOLDS: dict = {"milky_way": [(1350, 1, 4.461), (1400, 1, 4.461), (1490, 1, 4.461)],
+                         "ngc_4414": [(1615, 4, 0.071), (1555, 7, 0.105), (1445, 7, 0.105)],
+                         "ngc_4414 drawn": [(1875, 12, 0.703), (1995, 13, 7.982), (1845, 15, 2.154)],
+                         "default": [(960, 0, 0.0), (1080, 0, 0.0), (1120, 0, 0.0)]}
+# Before the fifth pass's item 2 (the census of its item 1), the same pairs folded on (stretches, pairs) - Milky Way
+# (27, 27), (33, 31), (40, 40); ngc_4414 (7, 7), (9, 7), (9, 9); its drawn leg (15, 13), (20, 18), (17, 14); the
+# default galaxy (18, 18), (7, 7), (15, 15): at joins, and at every kink where the table's start azimuths step a
+# whole turn (``Pieces.along`` kept no turn across a kink, so a displacement read 2 pi off).
+
+
 # --- the gate's predictions, read as measured ----------------------------------------------------------------------
 
 
