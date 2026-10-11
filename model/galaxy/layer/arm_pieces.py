@@ -16,11 +16,13 @@ rule). The stage that needs the pieces to compose a field is therefore no longer
 **A piece** (D219 item 1) is a row: the chain it belongs to and its place in it; its inner end (a radius and an
 azimuth); its pitch; its azimuthal extent Δβ; whether a template pinned it. From its start it runs outward to
 R exp(Δβ |tan p|), its azimuth advancing by Δβ in the trailing sense where the pitch is positive and the other
-way where it is negative (a reversed piece, as measured arms have; nothing is floored or truncated).
+way where it is negative - a measured piece only: a drawn pitch is never negative (the gate's sixth follow-up,
+item 1, below).
 
 **A chain** (item 2) is pieces joined end to start, laid outward from its start: each piece's Δβ log-normal
-(median 60°, log-width 0.35, drawn again outside 20°-180°) and its pitch p(1 + 0.56 z), z a unit normal - S59's
-draws, now per arm as the sources measure them - and the chain's total length a normal, 273° ± 143° in a grand
+(median 60°, log-width 0.35, drawn again outside 20°-180°) and its pitch p(1 + 0.56 z), z a unit normal drawn
+again while the pitch is not positive (the gate's sixth follow-up, item 1: an arm's winding sense never reverses)
+- S59's draws, now per arm as the sources measure them - and the chain's total length a normal, 273° ± 143° in a grand
 design and 244° ± 131° in a multi-armed disc, drawn again under 90° (the sources' definition of an arm), the last
 piece cut to it. A chain that has left the grid is not continued (no ring would cross the rest).
 
@@ -262,8 +264,19 @@ class Laying:
 def draw_piece(generator: Any, law: Law) -> tuple[float, float]:
     """(Δβ in radians, the pitch's unit normal deviate) of one drawn piece, on its own stream: the deviate first,
     then the extent - log-normal about the median, drawn again while outside the sample's range, never clipped
-    (S59's draw, D218 item 2); a flocculent disc's is uniform on its measured range instead."""
-    deviate = float(generator.normal())
+    (S59's draw, D218 item 2); a flocculent disc's is uniform on its measured range instead.
+
+    **The deviate is drawn again while the pitch it makes, p(1 + 0.56 z), is not positive** (D219, the gate's
+    sixth follow-up, item 1: "an arm's winding sense never reverses - the sources measure the pitch's variation
+    along an arm, not a reversal of its sense, and a trailing arm stays trailing"), as the extent is drawn again
+    outside its range: the deviate's draws come first on the stream, then the extent's. A pinned piece keeps its
+    measured pitch and sign; it is not drawn here."""
+    for _ in range(MAX_DRAWS):
+        deviate = float(generator.normal())
+        if law.pitch_deg * (1.0 + law.scatter * deviate) > 0.0:
+            break
+    else:
+        raise ArithmeticError(f"a piece's pitch {law.pitch_deg:g} * (1 + {law.scatter:g} z) fell at or under zero {MAX_DRAWS} times running")
     if law.flocculent:
         return math.radians(law.flocculent_min + (law.flocculent_max - law.flocculent_min) * float(generator.random())), deviate
     for _ in range(MAX_DRAWS):
@@ -485,8 +498,10 @@ _STATISTIC = (
     "A piece's azimuthal extent log-normal, median 60 degrees and log-width 0.35, drawn again outside 20-180 "
     "degrees - the reader's arithmetic on the 38 printed rows of one survey of four galaxies [verified: Honig & "
     "Reid 2015, ApJ 800, 53 = arXiv:1412.1012, Tables 2-5; docs/READING_ARM_SEGMENTS.md A1.1]; its pitch the "
-    "disc's times one plus 0.56 times a unit normal, independent from piece to piece and untruncated - the "
-    "measured variation of the pitch along an arm, 0.56 +- 0.25 over 155 galaxies [verified: Savchenko, Marchuk, "
+    "disc's times one plus 0.56 times a unit normal, independent from piece to piece, the normal drawn again "
+    "while the pitch it makes is not positive (an arm's winding sense never reverses: the sources measure how "
+    "the pitch varies along an arm, not a reversal of its sense; DECISIONS.md D219, the gate's sixth "
+    "follow-up) - the measured variation of the pitch along an arm, 0.56 +- 0.25 over 155 galaxies [verified: Savchenko, Marchuk, "
     "Mosenkov & Grishunin 2020, MNRAS 493, 390, arXiv:2001.09110; docs/READING_ARM_SEGMENTS.md A1.1]. A chain's "
     "whole length normal, 273 +- 143 degrees in a grand design and 244 +- 131 in a multi-armed disc, drawn again "
     "under 90 [verified: Chugunov, Marchuk & Savchenko 2025, arXiv:2504.11642, Sect. 3; "
@@ -547,9 +562,9 @@ ARM_PIECE_START_AZIMUTH = _column(
 ARM_PIECE_PITCH = _column(
     "arm_piece_pitch", "Pitch of an arm piece", "deg",
     "The piece's own pitch angle: the disc's pitch times one plus the measured relative spread times a unit "
-    "normal draw, so a piece in twenty-seven comes out reversed - leading - and a few nearly circular, as "
-    "measured arms' stretches do; nothing is floored and nothing truncated. A template's measured piece holds "
-    "its fitted pitch. The pitch sets how wide the piece lies on a ring and how hard it pulls the gas.",
+    "normal draw, drawn again while the pitch it makes is not positive - an arm's winding sense never "
+    "reverses, so a drawn piece is always trailing, and a few come out nearly circular, as measured arms' "
+    "stretches do. A template's measured piece holds its fitted pitch, of either sign. The pitch sets how wide the piece lies on a ring and how hard it pulls the gas.",
 )
 ARM_PIECE_EXTENT = _column(
     "arm_piece_extent", "Azimuthal extent of an arm piece", "rad",

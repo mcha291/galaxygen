@@ -465,6 +465,8 @@ def hand_chain(seed: int, chain: int, x: float, azimuth: float, pitch: float, me
     while left > 0.0 and x <= x_edge:
         g = stream("out", k)
         z = float(g.normal())
+        while not pitch * (1.0 + 0.56 * z) > 0.0:  # the sixth follow-up, item 1: a drawn pitch never reverses
+            z = float(g.normal())
         extent = 60.0 * math.exp(0.35 * float(g.normal()))
         while not 20.0 <= extent <= 180.0:
             extent = 60.0 * math.exp(0.35 * float(g.normal()))
