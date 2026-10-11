@@ -143,3 +143,23 @@ def test_the_ring_mean_property_holds_to_the_pinned_error_between_knots_and_to_r
         assert on.max() < 1e-7, (leg, on)  # the rule's error on the kinked integrand, not the table's
         for r in (*between[:3], *at_knots[:2]):
             assert abs(float(stars.sector_means(float(r), edges).mean()) - 1.0) < 1e-12, (leg, r)
+
+
+def test_below_the_first_knot_the_point_function_reads_the_exact_mean(patterns):
+    """Under the table's first knot (the grid's first radius, 37.5 pc) the point function reads the exact mean,
+    not knot 0's clamped one (the gate's twelfth follow-up to D219, item 1). Before the fix ``ngc_4414`` (unbarred,
+    a = 1.10 at the centre) read a ring mean of 1.036-1.043 at R 2e-4..0.03 kpc on seeds 0/1/7, still 1e-4 off at
+    0.999 R[0]; the barred legs read 0 arms there (the bar's taper). Now the table-read Laid's means are the exact
+    ones bit for bit there, and the ring mean by the 11 520-point rule is 1 to the rule's own error (measured
+    1.1e-9 to 2.4e-9 on ngc_4414 seeds 0/1/7), the bound the grid radii are held to above."""
+    phi = -math.pi + (np.arange(11520) + 0.5) * (2.0 * math.pi / 11520)
+    worst = {}
+    for (leg, seed), (stars, _) in patterns.items():
+        knots, _ = stars.ring_mean_table()
+        r = np.geomspace(1e-4, 0.999 * knots[0], 200)
+        assert np.array_equal(stars.laid(r).mean, stars.laid(r, exact=False).mean), (leg, seed)
+        if leg != "ngc_4414":
+            continue
+        off = np.abs(stars.contrast_at(r[:, None], phi[None, :]).mean(axis=1) - 1.0)
+        worst[seed] = float(off.max())
+    assert worst and max(worst.values()) < 1e-7, worst  # the rule's error, as at the grid radii; WORST_BOUND a fortiori

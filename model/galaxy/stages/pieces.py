@@ -1394,6 +1394,13 @@ class ArmPattern:
             else:
                 at_rows = np.nonzero(last)[0]
                 mean[last] = self._table_means(R[at_rows], p.chain_of[slots[last]].astype(np.int64))
+                # Below the table's first knot the point function reads the exact mean (the gate's twelfth
+                # follow-up, item 1): the table holds no knot towards 0 and its clamped first row is not the mean
+                # there (ngc_4414 read 1.036-1.043 within 37.5 pc of the centre). Few objects lie there.
+                knots = self.ring_mean_table()[0]
+                below = last & (R < knots[0])[:, None] if knots.size else np.zeros(last.shape, dtype=bool)
+                if below.any():
+                    mean[below] = self._chain_means(Laid(R, width, count, amplitude, amplitude, inv, taper, slots, live, relative, mean, first, below, lead))
         room = 1.0 - self.depth_at(R)
         deep = sum_slots(mean)
         with np.errstate(over="ignore", invalid="ignore"):
@@ -1417,7 +1424,8 @@ class ArmPattern:
     def ring_mean_table(self) -> tuple[np.ndarray, np.ndarray]:
         """The normaliser table ``(knots, means)``: ``knots`` (K,) ascending radii, ``means`` (K, chains) each
         chain's **exact** ring mean <E_j> at each knot (0 where the chain has no piece within reach), read linearly
-        between knots by :meth:`laid` with ``exact=False`` and held at the end values beyond them.
+        between knots by :meth:`laid` with ``exact=False`` and held at the last knot's values beyond it; below the
+        first knot :meth:`laid` reads the exact mean instead (the gate's twelfth follow-up, item 1).
 
         **The knots** (the ruling): every grid radius; every mid-gap ring the gas may solve (the gaps' middles and
         quarters, by the gas pattern's own arithmetic); every radius at which a piece ends (its two ends in R) or
