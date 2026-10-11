@@ -869,7 +869,9 @@ def test_gate_on_the_three_legs_of_the_suite_s_galaxies(prod):
                 # The first follow-up's item 3 with the second's item 3: the width is the law's or half the crossing
                 # spacing of the count - the sum of the crossing chains' taper weights - whichever is less.
                 assert np.allclose(width, np.minimum(np.asarray(F["arm_piece_width"]), half_spacing), rtol=1e-12, atol=0.0), label
-                assert np.all(count <= chains + 1e-12) and np.all(count >= 0.0), label
+                # The count is at most the chains crossing - or 1, the floor, on a ring a chain reaches without
+                # crossing it (the gate's eleventh follow-up, item 1).
+                assert np.all(count <= np.maximum(chains, 1.0) + 1e-12) and np.all(count >= 0.0) and np.all(count[chains > 0] >= 1.0), label
                 sigma_d = (width / FWHM) / (R * sin_p)
                 v = np.array([hand_variance(float(sd)) for sd in sigma_d])
                 wide = has & (count > 0.0) & ~(sigma_d < math.sqrt(math.pi))  # the designed ridge no ridge on its ring
