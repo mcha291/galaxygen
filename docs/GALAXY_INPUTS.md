@@ -3928,8 +3928,13 @@ never been judged in twenty-three sessions.
    follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
    enough that the two feet lie far from the vertex the arc length jumps and the taper with it: Norma's kink at
    4.46 kpc steps the field by 0.017 (the chain's excess by 0.083, B 0.20), 24.5 times the continuity test's
-   bound, recorded in `tests/test_pieces.py`; every other kink and join of both templates is continuous. Not
-   confined to the pins: a drawn pitch p(1 + 0.56 z) is untruncated, so 3.7 % of drawn pieces turn back.
+   bound, recorded in `tests/test_pieces.py`. **The class is every kink within one width of a free end, forward or
+   turned back, drawn or pinned** (the eighth follow-up): wherever a chain's end piece is shorter than a width and
+   kinks, the foot's arc length jumps across the kink's bisector while the taper is still rising - on the Milky
+   Way's seed 1 thirteen steps of 0.039-0.055 along 0.45 kpc of one ring band at a forward kink between drawn
+   pieces (1.0-1.22 of the continuity bound); the whole-ring test exempts a step only inside such a wedge, by
+   geometry, and pins the exempted steps' count and size. (The drawn pitch's sign was cut at zero by the sixth
+   follow-up; hairpins no longer occur.)
    **Carried.** The continuous rule is named: the chain's excess as the largest over its pieces of (the piece's
    taper at its own foot) x (the Gaussian of the distance to that piece) - the present rule wherever every taper
    is at full height, continuous everywhere; its exact ring mean needs a Newton root per pair of features where

@@ -11153,3 +11153,61 @@ read on the new stage), to be re-pinned or re-read, not mended in the model. Int
 array bounds; `pattern.invert_azimuths` takes a 2-D grid; `systems.materialise` places every cell's stars after the
 cells' loop (`rows_for` returns `(rows, pending)`, `place` fills `star_azimuth`); a memoised `Laid` is shared between
 callers, read and never written.
+
+**The gate's eighth follow-up (Fable, 2026-10-11): the fifth pass as built (an Opus builder; seven commits
+cherry-picked), and its four questions ruled.** Built as the sixth follow-up ordered: (1) the drawn pitch cut at
+zero - `draw_piece` is the one place a drawn deviate is formed; z drawn again (at most sixteen times) while p(1 +
+0.56 z) is not positive; on the Milky Way template's default seed four drawn pieces were negative and 21 of 42 drawn
+rows changed (35 drawn rows now, chains 14 -> 12, joins 4 -> 3); the default galaxy's census bit-identical (no
+negative draw there); over seeds 1-5 the negative pieces were 1-7 a run on every leg and are 0 after. (2) Past its
+join a chain's anchor follows the chain it met (`Pieces` records the piece each joined end met; `along_parts`
+follows it; `_anchors` orders two anchors at one azimuth by their place on the ring) - **and a bug found on the
+way: `Pieces.along` crossed a kink without the whole turn by which the table's start azimuths differ, so a chain
+whose kink crossed azimuth 0 read a displacement about 2pi off; that was most of the folds on every leg.** Folds
+before (stretches, pairs) on three seeds: Milky Way (27, 27), (33, 31), (40, 40); default (18, 18), (7, 7), (15, 15);
+`ngc_4414` (7, 7), (9, 7), (9, 9); its drawn leg (15, 13), (20, 18), (17, 14). After: Milky Way 1 a seed (Norma's
+turn-back), default 0, `ngc_4414` 4, 7, 7, its drawn leg 12, 13, 15 (reaching 8 kpc on seed 1) - **every remaining
+fold at a free end**: a chain ended free short of the radius and its end piece's line is continued (the fourth pass's
+rule). `EXPECTED_GAPS`: Milky Way 14 gaps over 1 % -> 8 (worst 8.0 % as before, median 0.109 -> 0.087 %); `ngc_4414`
+8 -> 6 (worst 5.2 -> 4.16 %). (4) The guard: `Pieces` raises `ArithmeticError` naming the chain and the point where
+three or more ends of one chain stand within JOINED of one point (a third piece from a kink's point raises, a
+zero-extent piece between two others raises, a two-piece kink and a join between chains pass). (5)
+`arm_ring_power` requires PATTERN_READS alone; its six fields the same sha256 before and after on three legs; the
+stage order is now `arm_pieces, arm_ring_power, gas_pattern, stellar_pattern`. (6) The whole-ring continuity test,
+`test_no_step_round_any_whole_ring`: every grid ring and mid-gap at 8 192 azimuths, five seeds of each of four legs.
+No drawn piece is reversed on any run and the hairpins' steps of 0.19-0.58 are gone; the worst step as a share of the
+bound: `ngc_4414` 0.07, its drawn leg 0.06, default 0.11, the Milky Way away from Norma 0.06 / 0.99 / 0.25 / 0.59 /
+0.07; Norma's exempt steps 7-18 a seed, each under 0.018, on rings 3.6-4.24 kpc. Layer off: 1 107 fields of a full run
+on three legs bit-identical to 391af07 by sha256 (I1's own test still fails on `arm_piece_saturation`, the pre-existing
+ground). Every moved pin is listed old -> new in the builder's hand-back for the re-pin.
+
+*Ruled:*
+1. **A second class of steps, the same mechanism (the builder stopped on it as ordered):** on the Milky Way's seed 1,
+   at 4.65-5.10 kpc, thirteen steps of 0.039-0.055 (1.0-1.22 of the bound) 0.4-0.87 kpc from a FORWARD kink at 5.48 kpc
+   between two drawn pieces (29.3 and 5.5 degrees), the first 0.56 kpc long with the chain's free start, the width
+   1.0 kpc there: inside the kink's wedge the foot's arc length jumps across the bisector while the taper is still
+   rising - Norma's mechanism (#156) at a forward kink. Seeds 2 and 3 show the class under the bound (0.25, 0.59).
+   **Ruled: #156's class is every kink within one width of a free end, forward or turned back, drawn or pinned**; its
+   text is amended so. The rule as the third follow-up worded it ("the taper along the chain at its free ends", read
+   at the foot's arc length) has this discontinuity intrinsically wherever a chain's end piece is shorter than a width
+   and kinks; the continuous rule and its cost are named in #156 and are not built in this session. The whole-ring
+   test exempts a step only where its azimuth lies inside a kink's wedge within one width of that chain's free end
+   (checked geometrically, not by size), records each exempted step by (leg, seed, R, phi, size), and asserts every
+   other step under the bound; the exempted steps' count and largest size per leg are pinned beside Norma's.
+   **For the owner, plainly:** on one of five Milky Way seeds the stellar contrast steps by up to 0.055 (about 4 %
+   of the local value) at thirteen points along 0.45 kpc of one ring band; whether the frames show it is their look,
+   and the continuous rule (#156) is one pass if they want it gone.
+2. **The free-end continuation folds (the fourth pass's rule, untouched by the sixth follow-up).** A chain that ended
+   free short of the radius has no material there, and its end piece's line, continued, crosses its neighbours'
+   anchors - on `ngc_4414`'s drawn leg out to 8 kpc. **Ruled: a chain's anchor is continued past a free end no
+   further than the nearest neighbouring anchor on either side - where the continued line would cross a neighbour's
+   anchor the two meet and go no further (the ended chain's sliver of the ring's profile is carried to where the
+   neighbour stands and no further; the meeting point moves continuously in r).** The map is then monotone on every
+   (ring, radius) pair by construction and the test asserts it so, `EXPECTED_FOLDS` retired. One commit, the
+   fifth-pass builder's.
+3. **The whole-turn fix in `along`: accepted.** It is a bug, not a rule change - a displacement read 2pi off is not
+   "the chain followed along its polyline". It moves layer-on gas bits beyond the ruling's list; they are all re-read
+   at the re-pin, which has not begun.
+4. **The graph's ORDER and the other stage-list pins (`PATTERN_FIELDS` lacking `arm_ring_power`, test_templates'
+   producer, test_layer's I4 and I5): re-pins**, with the new orders as the builder's commit records them; the
+   re-pin builder's list, not the model's.
