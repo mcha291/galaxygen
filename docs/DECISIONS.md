@@ -11259,3 +11259,48 @@ born (a birth enters at weight 0 already). Built as the fifth-pass builder's thi
 N(R), the width and a Sum_j <E_j> on 10 000 radii of each leg and asserts no step over a Lipschitz bound in R, the
 table rebuilt and its record re-read (the 1e-12 intervals should be gone). Every layer-on pin moves once more; the
 re-pin waits for it.
+
+**The gate's tenth follow-up (Fable, 2026-10-11): the three follow-ons as built (seven commits cherry-picked,
+through b0f7855), and the three remaining classes of step in R ruled.** Built: (a) past a free end a chain's anchor
+is held between its neighbours' (`gas_pattern._hold_at_neighbours` from `_anchors`; `Pieces.along_parts(...,
+overshoot=True)` says how far a radius lies past the chain's material; anchors of chains that reach the radius stay,
+every continued anchor is clipped between the held ones on either side, two continued anchors that cross meet at the
+mean of the running extremes - continuous in r, bit-identical where nothing is clipped): **0 folds on every (ring,
+radius) pair** of twelve runs, Norma's turn-back fold gone under the same rule, `EXPECTED_FOLDS` retired, the ring
+mean exact as before (sector means tile to 1 under 5e-14). (b) The whole-ring test's exemption by geometry
+(`kink_wedges_near_a_free_end`, `inside_a_kink_wedge`): every over-bound step on twenty runs falls under the one
+rule; pinned per leg - the Milky Way 72 steps exempted, largest 0.055 (Norma on every seed, 7-18 steps each under
+0.018; seed 1's forward kink 13 steps of 0.039-0.055; the largest step not exempt 0.99 of the bound); `ngc_4414`,
+its drawn leg and the default none exempted, worst 0.07 / 0.06 / 0.11 of the bound. (c) The joined end's count
+weight (`Pieces.before_end` / `after_end`, the chain's length to its nearer end of either kind, read by `ring_state`
+alone; `before` / `after` for the height untouched): the new test reads N, the bounded width and a Sum_j <E_j> on
+10 000 radii of each of four legs, three seeds each, halving every standing-out change thirty times - **no step at a
+join, a free end, a birth on a crossed ring, or unexplained** (the old count had thirty-odd join steps: N by 1-1.2,
+the width by 0.07-0.68 kpc, a Sum <E> by up to 0.12); the table's 1e-12-R intervals at joins are gone (its record
+re-read: knots 2 276-10 507 a seed, medians 0 to 2.7e-7, worst 9.98e-7 to 1.23e-6). Layer off: 1 107 fields on three
+legs bit-identical to 391af07 after every change. Every moved pin is listed in the builder's two hand-backs.
+
+*Three classes of step in R remain, recorded in `EXPECTED_R_STEPS` and now ruled:*
+1. **"First crossing" - at the bar's half-length on barred discs and at the centre of `ngc_4414`** (the Milky Way 3
+   steps, largest 0.023 in a Sum <E>; default 3, 0.335; `ngc_4414` 7, 0.243; its drawn leg 19, 0.852). Where no chain
+   crosses on one side, N goes 0 -> max(1, Sum w) and B from 0 - but a birth's HEIGHT enters at 0 (its taper), so the
+   field is continuous there; these steps are where the chain's end at the floor is NOT tapered: a chain from the
+   bar's end, and a piece cut at the floor (`lay_inward`'s "the piece that would pass the floor is cut where it reaches
+   it"), begin at full height, and the budget there is not nothing (the bar's taper is e^{-(R/a)^4}, 0.37 at the
+   half-length, so the arms' budget is 0.40 of its untapered value at the bar's end). **Ruled: an end at the floor is a
+   free end - it tapers over one width in height and in count like any free end.** D219 item 3 places the two chains
+   at the bar's ends as geometry and takes their amplitude from the budget; it does not say they start at full
+   height, and the third follow-up's taper is "at its free ends" - an end that meets no chain is free. The bar's own
+   body carries the light at the bar's ends; the arms grow out of them over one width. Continuous in R at the floor
+   by construction, asserted by the R test on all four legs.
+2. **"Same chains" - the width bound's branch** (`ngc_4414` 8 steps, largest 0.083; its drawn leg 24, 0.325; default
+   1, 0.025). `ring_state` solves Sum_c min(w_g, s_c) = pi R sin p and lets the law's width stand where there is no
+   solution (Sum_c s_c under pi R sin p); but the solution, as Sum_c s_c falls to pi R sin p from above, tends to the
+   largest s_c, not to the law's width, so the bounded width jumps from max s_c to the law at the switch. **Ruled:
+   the bound binds only where it is a bound - where Sum_c min(law, s_c) exceeds pi R sin p; there the solution lies
+   under the law's width and equals it at the switch, so the width is continuous.** (Under the count's floor the width
+   is min(law, pi R sin p), which the fourth follow-up B already made continuous through N = 1.) Asserted by the R
+   test.
+3. **"Turn-back" - Norma, 3 steps, largest 0.04:** #156's class seen in R; recorded, carried.
+After these two the arm-pieces model is final for this session: the reviewer's third pass runs over 391af07..head,
+then every layer-on pin is re-read once.
