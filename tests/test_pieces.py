@@ -1155,8 +1155,11 @@ def test_the_carried_map_never_folds(prod, leg):
     assert record == EXPECTED_CONTINUED.get(leg), repr(record)
 
 
-EXPECTED_CONTINUED: dict = {"milky_way": [(1350, 39), (1400, 46), (1490, 61)], "ngc_4414": [(1615, 194), (1555, 174), (1445, 168)],
-                            "ngc_4414 drawn": [(1875, 288), (1995, 298), (1845, 251)], "default": [(960, 20), (1080, 38), (1120, 28)]}
+EXPECTED_CONTINUED: dict = {"milky_way": [(1330, 39), (1400, 46), (1480, 61)], "ngc_4414": [(1615, 194), (1535, 174), (1445, 168)],
+                            "ngc_4414 drawn": [(1875, 288), (1975, 298), (1845, 251)], "default": [(960, 20), (1040, 38), (1120, 28)]}
+# (The ninth follow-up's count at joined ends moves the gas's forcing and so which mid-gap rings are solved: was
+# milky_way 1350 / 1400 / 1490 pairs, ngc_4414 1615 / 1555 / 1445, its drawn leg 1875 / 1995 / 1845, default 960 / 1080 /
+# 1120; the continued anchors' pairs the same.)
 
 
 # --- the gate's predictions, read as measured ----------------------------------------------------------------------
