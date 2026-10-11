@@ -1682,7 +1682,8 @@ def compute_stellar_pattern(ctx: Context) -> Mapping[str, Any]:
 
 def compute_arm_ring_power(ctx: Context) -> Mapping[str, Any]:
     """The disclosed check (D219 item 4): the realised arm power per ring and its split by arm number, from the
-    same pattern the composing stage built - the ring's profile on the solver's cells transformed."""
+    pattern made again from the census and the laws the composing stage reads - the ring's profile on the
+    solver's cells transformed."""
     R = ctx.grid.R
     made: dict[str, np.ndarray] = {}
 
@@ -1728,12 +1729,12 @@ ARM_RING_POWER_STAGE = IMPLEMENTATIONS.register(
             "stage: the arm power each ring actually carries - the variance round the ring of the arm pieces' "
             "part of the density contrast, as composed - and its split among two to six arms, the square of "
             "each arm number's Fourier amplitude, to be set beside the law's budget and the square of the "
-            "law's amplitude for that arm number. Made from the same composed pattern the stellar pattern "
-            "stage built, on the gas solver's cells; a stage of its own so that a run that does not ask for "
-            "the check does not pay for it. 0 with the randomness layer off (D219)."
+            "law's amplitude for that arm number. Made again from the same census and laws the stellar "
+            "pattern stage composes, on the gas solver's cells; a stage of its own so that a run that does not "
+            "ask for the check does not pay for it. 0 with the randomness layer off (D219)."
         ),
         compute=compute_arm_ring_power,
-        requires=(*PATTERN_READS, DENSITY_CONTRAST.name),
+        requires=PATTERN_READS,  # the gate's sixth follow-up, item 6: it rebuilds the pattern and reads none of the stellar stage's fields
         publishes=RING_POWER,
     )
 )
