@@ -11211,3 +11211,51 @@ ground). Every moved pin is listed old -> new in the builder's hand-back for the
 4. **The graph's ORDER and the other stage-list pins (`PATTERN_FIELDS` lacking `arm_ring_power`, test_templates'
    producer, test_layer's I4 and I5): re-pins**, with the new orders as the builder's commit records them; the
    re-pin builder's list, not the model's.
+
+**The gate's ninth follow-up (Fable, 2026-10-11): the normaliser table as built (the cost builder's follow-on; five
+commits cherry-picked, 0486176..604617b), and one finding ruled.** *The lone shortcut* (sixth follow-up item 3) is
+gone: by the reviewer's Gauss rule the base tree read 8.1e-7 per stretch (1.3e-7 of a chain mean) at 0.189 kpc on
+`ngc_4414`; after, 9.7e-16 / 5.8e-16 / 4.3e-16 on three seeds and 1.4e-15 on the Milky Way - the rounding floor. It
+moves `ngc_4414` alone: `pattern_density_contrast` by 5.3e-6 at most over 6 130 cells on rows out to about 10 kpc (a
+central lone piece's reach in ln R is wide where the dispersion is large), the arm cell means 2.4e-6, the ring
+profile 1.0e-7, 295 of 20 000 star azimuths by 2.6e-10; the Milky Way's arrays 0. *The table* (seventh follow-up
+part i): `ArmPattern.ring_mean_table()`, `laid(R, exact=...)`, kept by content (eight patterns). Knots: every grid
+radius; the gaps' middles and quarters in the gas's own arithmetic (so every mid-gap ring it may solve to depth 2);
+every piece's two end radii; the reach boundaries (bisected to adjacent floats); then every interval halved while
+|a Sum_j (table - exact)| at its quarters or middle exceeds 1e-6 (the middle alone had let 1.8e-5 through at an
+off-centre point of a steep feature), down to 1e-12 of the radius. Knots per seed 2 256-10 208; built once per
+pattern (1.3-4.5 s). The error at midpoints and five random points an interval over three legs x five seeds: medians
+0 to 2.8e-7, worst 9.97e-7 to 1.22e-6 (the Milky Way's seed 1 at 6.79 kpc); the bounds 1e-6 median / 1e-5 worst
+hold on all fifteen, never raised, pinned in `tests/test_ring_mean_table.py`. At every knot the table's bits are the
+exact mean's (asserted); every published field, the forcing, the saturation and the effective amplitude read the
+exact mean; the point function reads the table, and a table-read `Laid` cuts against the table's means (one
+consistent pair) - |a_table - a_exact| = 0 at every probe, the cut never firing there. The point function's ring
+mean is 1 - 7e-7 at worst between knots and 1 to 6e-9 at grid radii; exact sector means tile a ring to 1e-12
+anywhere. *The bound* (part ii): `stars()` and `out()` take `layer=` (default unchanged); the million-star test reads
+the layer-off catalogue against its 10 s and passes; a second statement records the layer-on time with no bound.
+*Strict compare, 1 842 arrays against the pre-change reference:* 26 differ, every one of the allowed kinds (the point
+function at non-knot radii under 9.9e-7; star azimuths by at most 2.8e-8 - 517 175 of the Milky Way's million moved,
+945 736 of `ngc_4414`'s; the bright table 2.8e-11; Part B's `ngc_4414` fields); the other 1 816 - every other
+published field and table, the censuses, the gas's contrasts, the young reader's samples, everything layer-off - 0
+differ. *The cost, this machine, 391af07 against the head back to back:* the million-star call layer on 46.20 ->
+25.13 s (18.6 / 16.1 s under pytest); a cell 3 340 -> 2 457 us; every cell at 20 000 stars 1.79 -> 1.00 s; `region:
+whole disc` cold 5.21 -> 5.70 s (the table is built on the cold path, repaid after); `bright: whole disc` 13.19 ->
+13.25; `render: whole, rgb` 7.12 -> 5.84; the gas pattern 1.36 -> 1.43. The point function is now the cost itself
+(~25 us a star). Four hand-ridge tests in `tests/test_pieces.py` read `arms_at` at non-knot radii against 1e-10 and
+now read 1.7e-7..7.7e-7: the re-pin reads the exact path or the pinned 1e-6.
+
+**The finding, ruled: the ring's count steps in R at a joined end.** `ring_state` sums the crossing chains' taper
+weights, and a weight is 1 wherever the chain has no free end within a width - so at the radius where a chain that
+ends in a JOIN stops crossing, N steps (5 -> 4 on the Milky Way's seed 1 at 7.2348 kpc, piece 50's joined outer
+end), the bounded width with it (0.1826 -> 0.2282), and every chain's mean (0.054 -> 0.071) and B: a step of the
+model's own field in R, two a seed on two legs, which the table ends in intervals of 1e-12 R that no star falls in
+(their total width under 1e-6 kpc) and the whole-ring test, which scans in phi, cannot see. `ring_state`'s own
+docstring said it ("continuous in R wherever the chains crossing are the same chains"); the third follow-up said
+nothing physical is discontinuous. **Ruled: the count's weight at a JOINED end falls to zero over one width before the
+join, as a free end's does - the chain's share of the ring's budget passes to the chain it meets as its material
+does - while the ridge's HEIGHT at a joined end keeps the third follow-up's rule (a round cap that sinks into the
+ridge it meets, no taper).** N, the bounded width, B and the means are then continuous in R everywhere a chain is not
+born (a birth enters at weight 0 already). Built as the fifth-pass builder's third follow-on, with a test that reads
+N(R), the width and a Sum_j <E_j> on 10 000 radii of each leg and asserts no step over a Lipschitz bound in R, the
+table rebuilt and its record re-read (the 1e-12 intervals should be gone). Every layer-on pin moves once more; the
+re-pin waits for it.
