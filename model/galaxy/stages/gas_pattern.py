@@ -1021,14 +1021,26 @@ class GasPattern:
         footprint are read so, in the bar's frame; the response is not (it is carried: :meth:`response_at`)."""
         R, angle = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(angle, dtype=float))
         lower, upper, share = ring_bracket(self.R, R)  # the bar's templates are the grid rings'
-        below, above, weight, _ = _response.bracket(angle, CELLS)
 
-        def read(ring: np.ndarray) -> np.ndarray:
+        def read(ring: np.ndarray, angle: np.ndarray) -> np.ndarray:
+            below, above, weight, _ = _response.bracket(angle, CELLS)
             first, second = profiles[ring, below], profiles[ring, above]
             rising = second >= first
             return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
 
-        return (1.0 - share) * read(lower) + share * read(upper)
+        # A ring whose row is one number on every cell (the footprint at and past the half-length, S60) reads
+        # that number at every angle: ``first + weight·|second − first|`` with second = first is ``first + 0.0``,
+        # so the points reading two such rings are given it without the bracket's arithmetic - the same bits.
+        even = profiles.min(axis=1) == profiles.max(axis=1)
+        flat = even[lower] & even[upper]
+        if not flat.any():
+            return (1.0 - share) * read(lower, angle) + share * read(upper, angle)
+        out = np.empty(R.shape)
+        out[flat] = (1.0 - share[flat]) * (profiles[lower[flat], 0] + 0.0) + share[flat] * (profiles[upper[flat], 0] + 0.0)
+        rest = ~flat
+        if rest.any():
+            out[rest] = (1.0 - share[rest]) * read(lower[rest], angle[rest]) + share[rest] * read(upper[rest], angle[rest])
+        return out
 
     def _rows(self, R: np.ndarray, phi: np.ndarray) -> tuple[np.ndarray, np.ndarray, tuple[int, ...]]:
         """``R`` and ``phi``, broadcast against each other, as rows: (radii (n,), azimuths (n, k), the broadcast
