@@ -103,7 +103,10 @@ export const TRANSFER_SLACK = 1e-3;
  * for byte, and the layered one is brighter by 0.25, 0.18 and 0.08 % (the ratio moved by -0.00246, -0.00176 and
  * -0.00075: past the pin in R and G, inside it in B).
  */
-export const DUSTY_LAYER_RATIO = [0.98241, 0.98513, 0.98771] as const;
+export const DUSTY_LAYER_RATIO = [0.98618, 0.98950, 0.99265] as const;
+// S60 (D219): was [0.98241, 0.98513, 0.98771] at S59 - the arms as a census of pieces re-lay every layer-on (R, phi)
+// field, the lanes' gas among them, so the dust lies elsewhere round each ring again; the layered frame is now
+// brighter than physics only by 1.4, 1.1 and 0.7 % (the ratio moved by +0.00377, +0.00437, +0.00494: past the pin).
 export const DUSTY_RATIO_PIN = 1e-3;
 
 /** The star-first mode's own sentence once its selection has arrived (GalaxyTab's regime text). */
