@@ -11121,3 +11121,35 @@ owner's to bound** (`region: whole disc`, `bright: whole disc`, `render: whole, 
 what is felt at :5173, and whether the arms are worth their price there is not a number any source gives. Told to
 the owner in plain words at the close. The third pass of the exact mean's reviewer covers the table as part of the
 fifth pass's diff.
+
+*The exact savings as measured (the cost builder's hand-back; six commits cherry-picked, 2e1c2e7..98e3239; this
+machine, base c4e2b68 against head, the same session, least of two or cold):*
+
+| call | base | after the exact savings | `main` |
+|---|---|---|---|
+| million-star catalogue, layer on, default, seed 0 | 54.93 s | 48.26 s | ~5 s (bound 10) |
+| `catalogue_cost` per cell (repeats 2) | 6 082 us | 3 279 us | 1 272 us |
+| every cell at 20 000 / 40 000 stars | 3.46 / 4.62 s | 1.62 / 2.42 s | |
+| `region: whole disc`, cold | 6.36 s | 3.92 s | 1.95 s |
+| `bright: whole disc`, cold | 10.59 s | 10.07 s | 6.2 s |
+| `render: whole, rgb`, cold | 5.58 s | 5.33 s | 4.1 s |
+| the gas pattern's arrays, cold | 1.23 s | 1.01 s | 0.81 s |
+| `ngc_4414` layer-on pipeline run | 25.7 s | 15.1 s | |
+
+Small catalogues halve (the per-call fixed costs); the million-star call moves by 12 % because its cost is volume:
+the builder's finding is that the brief's premise - many small numpy calls, so bigger groups - was wrong for the
+catalogue; collapsing 832 placing calls into 4 made the million-star call slower back to back (the old
+one-call-a-cell path was already cache-friendly), and the batch sizes were set where the arrays stay in cache (4 096
+stars a placing call, 2 048 rows a decomposition, 500 000 elements a group). The line profile after: of a contrast
+row's cost, the decomposition is 0.70 of 0.99 (the cut 0.41: the distances 0.14, the closed form 0.11, the roots
+0.05, the sort 0.02), the point function 0.27. The two million-star tests fail on the head under contention (58.2 s
+and 55.3 s) until part (ii) above is built. Two findings for the re-pin: `tests/test_layer.py` fails five tests on
+the base tree too (I1 twice: **`arm_piece_saturation` is 1 on every ring of both templates with the layer on - the
+cut never fires on the templates' default seeds** (it fires on 7, 0 and 228 rings of the suite's three legs, the
+gate test's record), so I1's "the layer moves every composed field" reads a field the layer does not move on these
+seeds; I4 the production graphs' declared readers; I5 the metadata's fourth kind, twice - the layer tests not yet
+read on the new stage), to be re-pinned or re-read, not mended in the model. Interface changes for the record:
+`ArmPattern._candidate` returns `(rows, d2, weight)` compact; `ArmPattern.azimuths` and `Modulation.azimuths` take
+array bounds; `pattern.invert_azimuths` takes a 2-D grid; `systems.materialise` places every cell's stars after the
+cells' loop (`rows_for` returns `(rows, pending)`, `place` fills `star_azimuth`); a memoised `Laid` is shared between
+callers, read and never written.
