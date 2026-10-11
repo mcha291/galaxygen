@@ -239,7 +239,9 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
         if d.kind.domain == "table":
             assert d.of == "arm_piece" and producer[name] == "arm_pieces", name  # the layer's census of pieces
         elif d.composed:
-            assert producer[name] in ("stellar_pattern", "gas_pattern", "sfh_azimuthal"), name  # what reads the pieces
+            # S60 (D219, the fourth follow-up's C): the ring power and its split are `arm_ring_power`'s.
+            # S60 fourth pass: was ("stellar_pattern", "gas_pattern", "sfh_azimuthal").
+            assert producer[name] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal"), name  # what reads the pieces
         elif d.kind.domain == "object":
             assert d.of in placed, name  # a placed census is another draw; the remnants (unplaced) are the same bits
         elif producer[name] in censuses and d.axes in ((), ("R",)):
@@ -250,7 +252,13 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # The whole table and every composed field moved - the pinned arms are placed - and every column of every
     # placed census; the statistics that moved are a subset of the fourteen tests/test_layer.py lists (the rest
     # land on the same bits by rounding, as a census statistic may).
-    assert {n for n, d in named.decls.items() if d.kind.domain == "table" or d.composed} <= differ
+    # S60 (D219), the one exception, stated (as in tests/test_layer.py's I1): `arm_piece_saturation`, the cut of the
+    # pieces' amplitude, is composed and is its neutral 1 wherever the cut does not fire - and it fires on no ring of
+    # either run here, so it is the same bits in both. It fires on some seeds of the suite's legs and stays a
+    # composed field. S60 fourth pass: was every composed field, with no exception.
+    unmoved = {"arm_piece_saturation"}
+    assert all(np.all(np.asarray(named.fields[n]) == 1.0) and same(bare.fields[n], named.fields[n]) for n in unmoved)
+    assert {n for n, d in named.decls.items() if d.kind.domain == "table" or d.composed} - unmoved <= differ
     assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed} <= differ
     assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of not in placed}.isdisjoint(differ)
     assert moved_statistics <= {
