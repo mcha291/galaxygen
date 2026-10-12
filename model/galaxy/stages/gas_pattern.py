@@ -14,7 +14,7 @@ put in.
   jump. The derived ``bar`` stage publishes that frame as ``arm_pattern_speed``; nothing here reads it, and
   the flow handed to the solver is 0 by construction.
 - **The law** (item 5), on each grid ring, with χ = φ − Φ(R) the pattern coordinate (Φ = ln R · cot p until S59; since
-  then the winding in seeded segments, ``pattern.Winding`` - geometry only: ε and f below keep the disc's own
+  then, at S59, the winding in seeded segments, retired with S60's pieces - geometry only: ε and f below keep the disc's own
   pitch p, a declared approximation, D218 item 4: "the gas answers each ring at the disc's mean pitch; on a
   segment its normal wavenumber is off by sin p/sin p_seg") and s(χ) the gas's
   surface density over its ring mean:
@@ -108,6 +108,47 @@ put in.
   sound crossing, about as long as an arm lives); the razor-thin WKB potential, which overstates the high
   arm numbers; the stellar mode's fractional amplitude applied to the total disc.
 
+**Since S60 the gas answers a census of arm pieces (BUILD_III Phase P5; DECISIONS.md D219 items 5-6), and
+where the text above speaks of modes, phases, a pattern coordinate χ and a common winding it is history.** The
+equation, the frame, the solver, the bar's lanes and the composition with them are unchanged. What changed:
+
+- *The forcing* is composed piece by piece. On a ring every stellar arm piece within reach of it is a ridge on
+  the solver's cells - a Gaussian in the perpendicular distance to its locus times its window along it
+  (``pieces.py``; the gate's second follow-up, item 1: "a ring's profile of a piece is the Gaussian in d times the
+  window in s on the solver's cells ... the forcing term by term as now"; from the first build to the second a
+  piece on a ring was a wrapped Gaussian in azimuth, which smeared a nearly circular piece round its whole
+  ring). The ridge is transformed on those cells, and its m-th term - its amplitude the stars' own on the
+  ring, the cut in it, the bar's taper taken back out - is multiplied by m / (X (|sin p_j| + m h_z/R)): **the
+  piece's own pitch p_j**, and the thickness of the stellar layer, whose force on the gas at the midplane is
+  the razor-thin one times 1/(1 + k h_z) for stars in an exponential layer (the exact form; the sech² layer's
+  is the named alternative). h_z is the checkpoint-1 scale length over a measured flattening, so nothing of a
+  later checkpoint enters. The factor is bounded by R/(X h_z) for every m and pitch and regular at sin p = 0:
+  the blow-up of a tightly wound disc's razor-thin forcing cannot occur. ε keeps the disc's own pitch (one
+  pressure scale per ring: declared, a debt). Every term the cells hold is kept, 1 to half their number: a
+  window that ends square at a join is no smooth function, and its high terms are bounded by the same factor.
+  The sum of the pieces' terms, taken back to the cells, is the forcing, in the galaxy's own azimuth: a
+  profile is held at φ, and there is no χ.
+- *Between two rings* a ring's solved profile is **carried along the pieces' loci** (:meth:`GasPattern.carried`):
+  a periodic piecewise-linear map of azimuth, anchored where each piece that crosses the ring stands on the
+  ring and at the point's radius - in place of the common winding's one shift. The carried profile is taken
+  over its own mean round the ring at the point's radius (exact, and 1 at the ring's own radius), so each
+  ring's term is a redistribution at every radius: the builder's choice where the ruling is silent. A point
+  blends its two rings' carried profiles linearly in R, as before. **Dividing the carried profile by its own
+  exact mean at the point's radius is part of the map's definition** (the gate's first follow-up, item 6: "a
+  non-rigid map keeps no mean; I2 needs it ... it is not the forbidden division of a published field"): the mean
+  is the exact integral of the carried interpolant - on each stretch between two anchors the map is linear -
+  and sectors that tile a ring average to 1 to 5e-14 at any radius (pinned in ``tests/test_pieces.py``).
+- *The rings solved between the grid's* (the same item, built at the second follow-up's order): "where the
+  mid-gap misplaced weight passes 1 %, solve a ring at the mid-gap and carry from it, recursing at most twice
+  (quartering), then record what remains; the check is that solve". The pattern's store of solved rings holds
+  the grid's and, in the gaps that need them, one at the middle and ones at the quarters; a point reads the two
+  solved rings it lies between. They are looked for the first time a radius off the grid's own rings is read.
+  What remains over 1 % is recorded in the tests: the gaps that hold a radius at which the stellar field itself
+  steps or turns over within the gap - a join, a lone chain's free end, a nearly circular piece.
+- *The disclosed check's measurements* read the same solved rings: the mask is laid where the stellar pieces'
+  sum is highest, for the law's own arm number on the ring; the "mode the gas answers most strongly" is the
+  harmonic of largest forcing.
+
 **What became of the ridge's numbers** (item 11 iv; gate G3 items 6-7). The measured ratio of means, the mask
 it is measured in and the measured width build nothing. They survive as the target and the definition of a
 *disclosed check*, made by the measurement functions at the foot of this module and pinned in the tests,
@@ -152,71 +193,79 @@ from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages import gas_response as _response
 from galaxy.stages.pattern import (
-    AMPLITUDE_FIELDS,
-    ARM_MODES,
-    PHASE_FIELDS,
+    PATTERN_READS,
     bar_radius,
     bar_terms,
-    effective_arm_number,
     invert_azimuths,
     local_swing_x,
     ring_bracket,
     rotation_sense,
-    WINDING_FIELDS,
-    Winding,
 )
+from galaxy.stages.pieces import forcing_factor
 
 CELLS = _response.CELLS  # the solver's fixed cells round a ring; a profile is held on their centres
 
-# What the gas's pattern is built from, and so what every stage that places by it requires (S57, D216): the
-# stellar modes and their phases - never ``arm_multiplicity`` - the pitch, the arm amplitude the taper is taken
-# back out with, and checkpoint 1's disc: its epicyclic frequency and total surface density. Of the bar (S58,
-# D217 items 6-8) it reads the half-length and the body's footprint - its axis ratio and boxiness - and no
-# longer the bar's amplitude: the lanes are deterministic given the bar's length, shape and angle.
-GAS_PATTERN_READS: tuple[str, ...] = (
-    "arm_contrast", "pitch_angle", "bar_half_length", "bar_axis_ratio", "bar_boxiness",
-    *AMPLITUDE_FIELDS, *PHASE_FIELDS, "epicyclic_frequency", "disc_surface_density",
-    # S59 (D218): the winding's anchor, the relative spread of a segment's pitch and the layer's segment rows -
-    # the geometry of χ, and nothing of ε or f.
-    *WINDING_FIELDS,
-)
+# What the gas's pattern is built from, and so what every stage that places by it requires. Since S60 (D219) the
+# gas answers the stellar pattern's arm pieces, so it reads everything the stellar pattern reads - the census of
+# pieces, their width, the ring's budget and the law's arm number, the pitch, the bar's body (whose depth cuts
+# the pieces' amplitude: "the gas answers the stars that exist") and checkpoint 1's disc - and beside it the
+# disc's epicyclic frequency and the scale length the stellar layer's height is a measured fraction of. Never
+# ``arm_multiplicity``, and no longer a mode's amplitude or a phase.
+GAS_PATTERN_READS: tuple[str, ...] = (*PATTERN_READS, "epicyclic_frequency", "disc_scale_length_spin")
 # The lanes' four numbers (S58): the arcs' curvature, where they end, the gas inside the footprint over the gas
 # outside it, and the lane's width - the last a declared placeholder (D217 item 8).
 LANE_CONSTANTS: tuple[str, ...] = ("BAR_LANE_CURVATURE", "NUCLEAR_RING_RATIO", "BAR_GAS_RATIO", "BAR_LANE_WIDTH")
-GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION", *LANE_CONSTANTS)
+# ... the gas's sound speed and G, and since S60 the stellar layer's flattening (D219 item 5).
+GAS_PATTERN_CONSTANTS: tuple[str, ...] = ("G", "GAS_DISPERSION", "ARM_LAYER_FLATTENING", *LANE_CONSTANTS)
 
 SOLUTIONS_KEPT = 4  # how many patterns' solved rings the content-keyed cache holds (about 4.6 MB each)
+TWO_PI = 2.0 * math.pi
+# An image interval narrower than this (rad) is read at its middle: the mean of a profile over it is that value
+# to the square of the width, and the difference of two integrals would be rounding.
+NARROW_IMAGE = 1e-9
+MANY_AZIMUTHS = 256  # past this many azimuths a row, the stretch each lies in is found by bisection (``_stretch``)
 
-_M = np.asarray(ARM_MODES, dtype=float)
+# The harmonics of a ring's profile on the solver's cells: every one the cells hold, 1 … CELLS/2 (the second
+# follow-up to D219's gate, item 1: "a ring's profile of a piece is the Gaussian in d times the window in s on the
+# solver's cells ... the forcing term by term as now").
+HARMONICS = CELLS // 2
+_HARMONIC = np.arange(HARMONICS + 1, dtype=float)  # 0 … CELLS/2: the arm numbers of a real transform's terms
+# The carried map's check (D219 item 6, as the gate's first follow-up words it: "where the mid-gap misplaced weight
+# passes 1 %, solve a ring at the mid-gap and carry from it, recursing at most twice (quartering)").
+MISPLACED_LIMIT = 0.01
+MID_GAP_DEPTH = 2
+STORE_KEYS = ("radii", "profiles", "carries", "level", "running", "turn", "grid", "grid_profiles", "grid_carries", "diagnostics", "checked", "complete")
 _SOLUTIONS: dict[bytes, tuple[np.ndarray, _response.Diagnostics]] = {}
+_STORES: dict[bytes, dict] = {}  # the last few patterns' solved rings - the grid's and the mid-gap ones - by content
+_FORCINGS: dict[bytes, np.ndarray] = {}  # the last few patterns' forcings on their rings, by what the pattern is made of
 _SOLUTIONS_LOCK = threading.Lock()
 
 
-def respond(forcing: np.ndarray, phases, eps: np.ndarray, *, cache: bool = True) -> tuple[np.ndarray, _response.Diagnostics]:
+def respond(forcing: np.ndarray, eps: np.ndarray, *, cache: bool = True) -> tuple[np.ndarray, _response.Diagnostics]:
     """The steady response of each ring given: ``(s, diagnostics)``, s shaped (rings, CELLS) on the cells' centres.
 
-    ``forcing`` f_m, shaped (rings, modes), dimensionless; ``phases`` θ_m in radians, one per mode; ``eps`` ε,
-    shaped (rings,), dimensionless. The flow through the pattern is 0 (D216 item 1). Raises what the solver
-    raises - ``gas_response.ConvergenceError`` for a ring it could not converge - and catches nothing.
+    ``forcing`` g on the cells' centres, shaped (rings, CELLS), dimensionless, of zero mean round each ring;
+    ``eps`` ε, shaped (rings,), dimensionless. The flow through the pattern is 0 (D216 item 1). Raises what the
+    solver raises - ``gas_response.ConvergenceError`` for a ring it could not converge - and catches nothing.
+    (Until S60 the forcing was handed over as five modes' amplitudes and phases.)
 
-    ``cache``: the last ``SOLUTIONS_KEPT`` solutions are kept under a digest of the three arguments' bytes and
+    ``cache``: the last ``SOLUTIONS_KEPT`` solutions are kept under a digest of the two arguments' bytes and
     returned as they were made (read-only arrays); ``cache=False`` solves afresh and keeps nothing. The bits
     are the same either way.
     """
     f = np.ascontiguousarray(forcing, dtype=float)
-    theta = np.ascontiguousarray(phases, dtype=float)
     e = np.ascontiguousarray(eps, dtype=float)
     key = b""
     if cache:
         digest = hashlib.sha256()
-        for part in (np.asarray(f.shape, dtype=np.int64), f, theta, e):
+        for part in (np.asarray(f.shape, dtype=np.int64), f, e):
             digest.update(part.tobytes())
         key = digest.digest()
         with _SOLUTIONS_LOCK:
             held = _SOLUTIONS.get(key)
         if held is not None:
             return held
-    s, diagnostics = _response.solve(_response.forcing(ARM_MODES, f, theta, CELLS), e, 0.0)
+    s, diagnostics = _response.solve(f, e, 0.0)
     s.setflags(write=False)
     for name in ("steps", "halvings", "deepest", "residual", "residual_sum", "floor"):
         getattr(diagnostics, name).setflags(write=False)
@@ -229,9 +278,18 @@ def respond(forcing: np.ndarray, phases, eps: np.ndarray, *, cache: bool = True)
 
 
 def forget_solutions() -> None:
-    """Empty the content-keyed cache (the tests compare a pattern's bits with it and without)."""
+    """Empty the content-keyed caches (the tests compare a pattern's bits with them and without)."""
     with _SOLUTIONS_LOCK:
         _SOLUTIONS.clear()
+        _FORCINGS.clear()
+        _STORES.clear()
+
+
+def misplaced_weight(one: np.ndarray, other: np.ndarray) -> np.ndarray:
+    """Half the mean absolute difference of two azimuthal profiles on one set of cells, each over its own mean, per
+    ring: the share of the ring's weight the one puts where the other does not (S59's statistic; D219 item 6)."""
+    a, b = one / one.mean(axis=1, keepdims=True), other / other.mean(axis=1, keepdims=True)
+    return 0.5 * np.abs(a - b).mean(axis=1)
 
 
 def blend_weights(taper: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -389,9 +447,12 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "the sine of the pitch; the equation is solved on a fixed set of cells round the ring, and a point "
         "between two rings reads both at its own winding phase. Nothing sets the contrast or the width: they "
         "come out of the equation. The gas piles on the stellar crests: the offset is zero for a lone mode, "
-        "exactly, by the equation's symmetry; with several modes the gas's crest and the crest of the stellar "
-        "modes' sum are within about a degree of each other over the mid disc, to either side, because each "
-        "mode is answered with its own weight - measured, not ruled; no offset is put in and none is "
+        "exactly, by the equation's symmetry; with several modes the gas's tallest crest stands to either side "
+        "of the stellar pattern's, because each mode is answered with its own weight - measured, not ruled: "
+        "over 240 seeded galaxies, on the rings where the two are one arm's crest (within five degrees) the "
+        "gas's is at the smaller winding phase on 9 485, on the same cell on 1 740 and at the larger on "
+        "9 197, up to five degrees apart over the mid disc, and on 14 552 more rings - two in five - the "
+        "gas's tallest crest is on another arm piece than the stars'; no offset is put in and none is "
         "published. "
         "Where the modes' pull together exceeds the pressure's reach the gas between the arms is nearly "
         "emptied, the crest standing two to three times the ring's mean in the mid disc and fading to "
@@ -446,6 +507,85 @@ STAR_FORMATION_GAS_CONTRAST = FieldDecl(
 )
 
 
+def _hold_at_neighbours(key: np.ndarray, moved: np.ndarray, live: np.ndarray, past: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The anchors of a ring's carried map with every anchor continued past its chain's material held between its
+    neighbours (the gate's eighth follow-up, item 2): "a chain's anchor is continued past a free end no further
+    than the nearest neighbouring anchor on either side - where the continued line would cross a neighbour's
+    anchor the two meet and go no further (the ended chain's sliver of the ring's profile is carried to where the
+    neighbour stands and no further; the meeting point moves continuously in r)".
+
+    ``key`` (n, K) each anchor's azimuth at the radius within one turn (inf in an empty slot), ``moved`` its
+    displacement (the ring's position less the anchor, unwrapped: ``key + moved`` is where it stands on the ring),
+    ``live`` the slots that hold a piece and ``past`` how far its chain's end lies short of the radius (0 where the
+    chain reaches it: :meth:`Pieces.along_parts`). Returns (key, moved) with the anchors of the held chains -
+    those that reach the radius; in a row where none does, the one whose end lies nearest it - unmoved, and every
+    other anchor, taken round the ring in the order the chains stand on it, put between the held anchors on either
+    side of it: clipped to them, and where two continued anchors cross each other, each set to the mean of the
+    running greatest from one side and the running least from the other (equal to the anchor wherever nothing
+    crosses, non-decreasing, continuous in the radius). An anchor clipped to a held one takes that one's azimuth to
+    the bit, so the two stand at one anchor and are ordered by their places on the ring. A row with nothing to
+    hold is returned bit for bit."""
+    count = live.sum(axis=1)
+    held = live & (past == 0.0)
+    rows = np.flatnonzero((live & ~held).any(axis=1) & (count >= 2))
+    if rows.size == 0:
+        return key, moved
+    k, d, lv, fixed, c = key[rows], moved[rows], live[rows], held[rows].copy(), count[rows]
+    n, slots = k.shape
+    none = ~fixed.any(axis=1)  # no chain reaches the radius: the one that ended nearest it holds
+    if none.any():
+        nearest = np.argmin(np.where(lv, past[rows], np.inf), axis=1)
+        fixed[none, nearest[none]] = True
+    image = k + d
+    with np.errstate(invalid="ignore"):  # (an empty slot's key is inf)
+        ring = np.where(lv, np.mod(image, TWO_PI), np.inf)
+    order = np.argsort(ring, axis=1, kind="stable")  # the live slots in their order round the ring, the empty ones last
+    start = np.argmax(np.take_along_axis(fixed, order, axis=1), axis=1)  # each row's walk starts at a held anchor
+    t = np.arange(slots)[None, :]
+    inside = t < c[:, None]
+    walk = np.take_along_axis(order, np.where(inside, (start[:, None] + t) % c[:, None], t), axis=1)
+    wrapped = inside & (start[:, None] + t >= c[:, None])
+
+    def walked(a: np.ndarray) -> np.ndarray:
+        return np.take_along_axis(a, walk, axis=1)
+
+    kw, dw, iw, rw, fw = walked(k), walked(d), walked(image), walked(ring), walked(fixed)
+    on_ring = np.where(inside, rw + TWO_PI * wrapped, 0.0)  # the ring's positions, one turn from the first held anchor
+    whole = np.where(inside, np.round((on_ring - iw) / TWO_PI), 0.0)
+    A = np.where(inside, kw + TWO_PI * whole, np.inf)  # the anchors unwrapped alike
+    end = A[:, :1] + TWO_PI  # the first held anchor, a turn on
+    A_end = np.concatenate([A, end], axis=1)
+    held_end = np.concatenate([fw & inside, np.ones((n, 1), dtype=bool)], axis=1)
+    index = np.broadcast_to(np.arange(slots + 1)[None, :], A_end.shape)
+    low = np.maximum.accumulate(np.where(held_end, A_end, -np.inf), axis=1)[:, :slots]
+    high = np.minimum.accumulate(np.where(held_end, A_end, np.inf)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+    before = np.maximum.accumulate(np.where(held_end, index, -1), axis=1)[:, :slots]
+    after = np.minimum.accumulate(np.where(held_end, index, slots + 1)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+    free = inside & ~fw
+    with np.errstate(invalid="ignore"):
+        clipped = np.where(free, np.minimum(np.maximum(A, low), high), A)
+        rising = np.maximum.accumulate(np.where(inside, clipped, -np.inf), axis=1)
+        falling = np.minimum.accumulate(np.concatenate([np.where(inside, clipped, np.inf), end], axis=1)[:, ::-1], axis=1)[:, ::-1][:, :slots]
+        placed = np.where(free, 0.5 * (rising + falling), A)
+    changed = free & (placed != A)
+    if not changed.any():
+        return key, moved
+    keys_end = np.concatenate([kw, kw[:, :1]], axis=1)
+    # (Every walk starts at a held anchor and ends at its copy a turn on, so 0 <= before and after <= slots.)
+    key_after = np.take_along_axis(keys_end, after, axis=1)
+    key_before = np.take_along_axis(keys_end, before, axis=1)
+    with np.errstate(invalid="ignore"):
+        new_key = np.where(placed == high, key_after, np.where(placed == low, key_before, np.mod(placed, TWO_PI)))
+    kw_new = np.where(changed, new_key, kw)
+    dw_new = np.where(changed, on_ring - placed, dw)
+    key, moved = key.copy(), moved.copy()
+    k_rows, d_rows = k.copy(), d.copy()
+    np.put_along_axis(k_rows, walk, kw_new, axis=1)
+    np.put_along_axis(d_rows, walk, dw_new, axis=1)
+    key[rows], moved[rows] = k_rows, d_rows
+    return key, moved
+
+
 @dataclass(frozen=True, slots=True, eq=False)
 class GasPattern:
     """Everything the gas contrast needs, read from published fields in one place (rule A9).
@@ -453,183 +593,597 @@ class GasPattern:
     The interface is ``ArmPattern``'s (``flat``, ``contrast``, ``contrast_at``, ``sector_means``,
     ``azimuths``), so a stage that places by the stellar pattern can place by this one instead.
 
-    **Evaluable at a point** (D216 item 9): the response is solved once on each grid ring; a point reads the
-    two neighbouring rings' profiles at its own χ, linear in χ between the cells' centres and linear in R
-    between the rings (held at the end rings beyond the grid). At a grid radius that is the ring's own
-    profile, exactly. ``contrast``, ``contrast_at``, ``response_at`` and ``azimuths`` are that point function;
-    ``sector_means`` and ``cell_means`` are its exact means over sectors of a ring, and ``cell_means`` on the
-    grid's own φ cells is the field the stage publishes (gate G3 item 4).
+    **Evaluable at a point** (D216 item 9; D219 item 6): the response is solved once on each grid ring, in the
+    galaxy's own azimuth; a point reads its two neighbouring rings' profiles, **each carried to the point's
+    radius along the arm pieces' loci** (:meth:`carried`), and blends them linearly in R (held at the end rings
+    beyond the grid). At a grid radius that is the ring's own profile, exactly. ``contrast``, ``contrast_at``,
+    ``response_at`` and ``azimuths`` are that point function; ``sector_means`` and ``cell_means`` are its exact
+    means over sectors of a ring, and ``cell_means`` on the grid's own φ cells is the field the stage publishes
+    (gate G3 item 4).
 
     Built through ``galaxy.layer.compose`` (the one reader of the layer's switch) and by tests.
     """
 
     R: np.ndarray                # the grid radii, kpc: one solved ring each
-    unit: np.ndarray             # (modes, R): u_m = A_m / (A (1 − bar taper)), the arm modes at unit amplitude
-    phases: tuple[float, ...]    # θ_m, rad, one per mode of ARM_MODES
-    arm: float                   # A, the published arm_contrast: A u_m is the mode's amplitude before the taper
+    stars: Any                   # the stellar pattern (``pieces.ArmPattern``) the gas answers, or None: no pieces
     pitch_deg: float
     bar_length: float            # a, kpc: NaN for an unbarred galaxy (no bar, the taper 0 on every ring)
     epicyclic: np.ndarray        # (R,): κ, km/s/kpc
     surface_density: np.ndarray  # (R,): checkpoint 1's total disc Σ, M☉/pc²
     gravity: float               # G, kpc (km/s)²/M☉
     sound_speed: float           # a, km/s
+    layer_height: float          # h_z, kpc: the stellar layer's exponential scale height (D219 item 5)
     # The lanes (S58, D217 items 7-8): the body's footprint and the template's four numbers. Asked of a barred
-    # pattern only; until S58 the pattern held the stellar bar's amplitude here, for a cosine it no longer has.
+    # pattern only.
     axis_ratio: float = float("nan")      # q, the footprint's
     boxiness: float = float("nan")        # c
     lane_curvature: float = float("nan")  # κ·a
     ring_ratio: float = float("nan")      # r_ring / a
     gas_ratio: float = float("nan")       # the mean inside the footprint over the mean outside it
     lane_width: float = float("nan")      # the lane's FWHM / a: a declared placeholder
-    # S59 (D218 items 1, 4): the segmented winding χ is taken in - geometry only. ε and f keep ``pitch_deg``, the
-    # disc's own pitch; so do the bar's angle and the lanes' side. None is ln R · cot(pitch).
-    winding: Winding | None = None
+    design_count: np.ndarray | None = None  # (R,): the law's arm number - read by the disclosed check's mask alone
     flat: bool = field(init=False)
     barred: bool = field(init=False)
     _solved: dict = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        for name in ("R", "unit", "epicyclic", "surface_density"):
+        for name in ("R", "epicyclic", "surface_density"):
             object.__setattr__(self, name, np.asarray(getattr(self, name), dtype=float))
-        object.__setattr__(self, "phases", tuple(float(p) for p in self.phases))
         n = self.R.size
-        if self.unit.shape != (len(ARM_MODES), n) or len(self.phases) != len(ARM_MODES):
-            raise ValueError(
-                f"a gas pattern holds {len(ARM_MODES)} modes on its {n} radii; got unit amplitudes "
-                f"{self.unit.shape} and {len(self.phases)} phases"
-            )
         if self.epicyclic.shape != (n,) or self.surface_density.shape != (n,):
             raise ValueError(
                 f"a gas pattern holds the disc's epicyclic frequency and surface density on its {n} radii; got "
                 f"{self.epicyclic.shape} and {self.surface_density.shape}"
             )
-        # No perturbation to apply: a pattern the grid could not resolve or the layer did not realise (a NaN
-        # among its own numbers), or no arm mode anywhere and no bar. (The disc's κ and Σ are not asked here:
-        # a ring that carries a mode on a disc that is not a number is the solver's to refuse, loudly.)
+        if self.stars is not None and (self.stars.R.shape != (n,) or not np.array_equal(self.stars.R, self.R)):
+            raise ValueError("a gas pattern and the stellar pattern it answers hold the same grid radii")
+        # No perturbation to apply: a pattern the grid could not resolve (a NaN among its own numbers), or no arm
+        # piece anywhere and no bar. (The disc's κ and Σ are not asked here: a ring that carries a piece on a
+        # disc that is not a number is the solver's to refuse, loudly.)
         # **A half-length that is NaN is no bar** (S58, D217 item 3) - an unbarred galaxy, the taper 0 on every
         # ring - and not an unresolved pattern; a bar there is needs the lanes' numbers, all of them finite.
         barred = not math.isnan(self.bar_length)
-        scalars = (self.arm, self.pitch_deg, *self.phases)
+        scalars: tuple[float, ...] = (self.pitch_deg, self.layer_height)
         if barred:
             scalars += (self.bar_length, self.axis_ratio, self.boxiness, self.lane_curvature, self.ring_ratio,
                         self.gas_ratio, self.lane_width)
-        finite = all(math.isfinite(v) for v in scalars) and bool(np.all(np.isfinite(self.unit)))
-        no_arms = self.arm == 0.0 or not self.unit.any()
+        stars = self.stars
+        finite = all(math.isfinite(v) for v in scalars) and (
+            stars is None or bool(np.all(np.isfinite(stars.budget)) and np.all(np.isfinite(stars.width)))
+        )
+        no_arms = stars is None or not (stars.budget.any() and stars.pieces.most)
         object.__setattr__(self, "barred", barred and finite)
         object.__setattr__(self, "flat", not finite or (no_arms and not barred))
         object.__setattr__(self, "_solved", {})
 
-    @staticmethod
-    def unit_amplitudes(R: np.ndarray, amplitudes: np.ndarray, arm: float, pitch_deg: float, bar_length: float) -> np.ndarray:
-        """u_m(R) = A_m(R) / (A (1 − bar taper)) at the grid radii: the published amplitudes with the arm
-        amplitude and the bar's taper taken back out (the saturation stays in), so A u_m is the mode's cosine
-        amplitude before the taper. Zero where the denominator is (no arm amplitude at all, or a radius where
-        the taper is whole)."""
-        taper, _, _ = bar_terms(R, pitch_deg, bar_length)
-        scale = arm * (1.0 - taper)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            return np.where(scale > 0.0, np.asarray(amplitudes, dtype=float) / np.where(scale > 0.0, scale, 1.0), 0.0)
-
     @classmethod
-    def from_fields(cls, fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, Any]) -> "GasPattern | None":
+    def from_fields(cls, fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, Any], stars: Any = None) -> "GasPattern | None":
         """The gas pattern of a run's published fields on the run's grid radii ``R``, or None where the fields
-        hold no pattern. It reads the modes; ``arm_multiplicity`` is not among what it reads (D215)."""
+        hold no pattern. ``stars`` is the stellar pattern of the same fields - ``compose`` builds it and hands it
+        over; the gas answers its arm pieces. ``arm_multiplicity`` is not among what it reads (D215)."""
         if any(n not in fields for n in GAS_PATTERN_READS) or any(k not in constants for k in GAS_PATTERN_CONSTANTS):
             return None
-        pitch, bar_length, arm = float(fields["pitch_angle"]), float(fields["bar_half_length"]), float(fields["arm_contrast"])
-        amplitudes = np.stack([np.asarray(fields[n], dtype=float) for n in AMPLITUDE_FIELDS])
         return cls(
-            R, cls.unit_amplitudes(R, amplitudes, arm, pitch, bar_length),
-            tuple(float(fields[n]) for n in PHASE_FIELDS),
-            arm, pitch, bar_length,
+            R, stars, float(fields["pitch_angle"]), float(fields["bar_half_length"]),
             fields["epicyclic_frequency"], fields["disc_surface_density"],
             float(constants["G"]), float(constants["GAS_DISPERSION"]),
+            float(fields["disc_scale_length_spin"]) / float(constants["ARM_LAYER_FLATTENING"]),
             float(fields["bar_axis_ratio"]), float(fields["bar_boxiness"]),
             *(float(constants[k]) for k in LANE_CONSTANTS),
-            Winding.from_fields(fields),
+            np.asarray(fields["arm_design_count"], dtype=float),
         )
 
-    # --- the law's inputs on the grid rings ------------------------------------------------------------
+    # --- the law's inputs ------------------------------------------------------------------------------
 
     @property
     def sin_pitch(self) -> float:
-        """sin p, of the pitch the winding is made with (``pattern.bar_terms`` keeps it inside 1-89 degrees)."""
+        """sin p, of the disc's pitch (held inside 1-89 degrees, as ``pattern.bar_terms`` holds it): what ε reads
+        (D219 item 5: "ε keeps the disc's pitch")."""
         return math.sin(math.radians(min(max(self.pitch_deg, 1.0), 89.0)))
 
     def swing_x(self) -> np.ndarray:
         """X(R) = κ²R/(2πGΣ) on the grid rings: the arm-number law's own variable, by its own function."""
         return local_swing_x(self.R, self.epicyclic, self.surface_density, self.gravity)
 
-    def forcing_amplitudes(self) -> np.ndarray:
-        """f_m = m A u_m/(X sin p) on the grid rings, shaped (R, modes): each mode's forcing, the amplitude
-        the one before the bar's taper. No factor is added and nothing is scaled (D216 item 5)."""
-        return _response.forcing_amplitudes(ARM_MODES, (self.arm * self.unit).T, self.swing_x(), self.sin_pitch)
-
     def epsilon(self) -> np.ndarray:
         """ε = a/(κ R sin p) on the grid rings, shaped (R,)."""
         return _response.epsilon(self.sound_speed, self.epicyclic, self.R, self.sin_pitch)
 
+    def _disc_at(self, radii: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """(κ, Σ) at radii: the grid's own on a grid radius, linear between two (for the instrument's direct
+        solve off the grid, :meth:`solve_at`)."""
+        return np.interp(radii, self.R, self.epicyclic), np.interp(radii, self.R, self.surface_density)
+
+    def forcing_spectrum(self, radii: np.ndarray | None = None) -> np.ndarray:
+        """The forcing's transform on the solver's cells, ring by ring: complex, shaped (rings, CELLS/2 + 1) -
+        ``numpy.fft.rfft``'s terms of F on the cells' centres, term 0 (the mean) nothing (D219 item 5; the second
+        follow-up's item 1).
+
+        Composed piece by piece: each piece's ridge on the ring's cells - a Gaussian in the perpendicular distance
+        to its locus times its window along it, at the stars' own amplitude on the ring, the cut in it and the
+        bar's taper taken back out - is transformed, and its m-th term multiplied by m / (X (|sin p_j| + m h_z/R)),
+        the piece's own pitch and the stellar layer's thickness (``pieces.forcing_factor``). The pieces' terms are
+        added in the table's order. ``radii`` None: the grid rings."""
+        on_grid = radii is None
+        R = self.R if on_grid else np.asarray(radii, dtype=float)
+        out = np.zeros((R.size, HARMONICS + 1), dtype=complex)
+        stars = self.stars
+        if stars is None or self.flat:
+            return out
+        kappa, sigma = (self.epicyclic, self.surface_density) if on_grid else self._disc_at(R)
+        x = local_swing_x(R, kappa, sigma, self.gravity)
+        taper, _, _ = bar_terms(R, self.pitch_deg, self.bar_length)
+        with np.errstate(divide="ignore"):
+            untapered = np.where(taper < 1.0, 1.0 / np.where(taper < 1.0, 1.0 - taper, 1.0), 0.0)
+        for rows, sin_abs, ridges in stars.piece_profiles(R):
+            spectrum = np.fft.rfft(ridges, axis=2)
+            factor = forcing_factor(_HARMONIC[None, None, :], x[rows, None, None], sin_abs[:, :, None], (self.layer_height / R[rows])[:, None, None])
+            total = np.zeros(spectrum.shape[::2], dtype=complex)
+            for k in range(spectrum.shape[1]):
+                total = total + spectrum[:, k, :] * factor[:, k, :]
+            out[rows] = total * untapered[rows, None]
+        return out
+
+    def forcing(self, radii: np.ndarray | None = None) -> np.ndarray:
+        """F on the solver's cells' centres of each ring, shaped (rings, CELLS): :meth:`forcing_spectrum` taken
+        back to the cells. Its mean round a ring is 0."""
+        return np.fft.irfft(self.forcing_spectrum(radii), n=CELLS, axis=1)
+
+    def _digest(self) -> bytes:
+        """A digest of everything the solved rings are made of - the census, the law's fields, the disc and the
+        constants: what the content-keyed caches are held under."""
+        stars = self.stars
+        digest = hashlib.sha256()
+        pieces = stars.pieces
+        scalars = np.array([self.pitch_deg, self.bar_length, self.gravity, self.layer_height, self.sound_speed, stars.bar, stars.axis_ratio,
+                            stars.boxiness, stars.index, stars.share, pieces.turn], dtype=float)
+        for part in (self.R, self.epicyclic, self.surface_density, scalars, stars.budget, stars.design, stars.width,
+                     pieces.chain, pieces.order, pieces.start_radius, pieces.start_azimuth, pieces.pitch_deg, pieces.extent,
+                     pieces.pinned, pieces.join, np.zeros(0) if stars.surface_density is None else stars.surface_density):
+            digest.update(np.asarray(part.shape, dtype=np.int64).tobytes())
+            digest.update(np.ascontiguousarray(part, dtype=float).tobytes())
+        return digest.digest()
+
+    def _ring_forcing(self) -> np.ndarray:
+        """:meth:`forcing` on the grid rings, kept by content: several stages of one run build the same pattern,
+        and the last few patterns' forcings are held under a digest of everything the forcing is made of
+        (:meth:`_digest`) and handed back as made (read-only). The bits are :meth:`forcing`'s."""
+        stars = self.stars
+        if stars is None or self.flat:
+            return np.zeros((self.R.size, CELLS))
+        key = self._digest()
+        with _SOLUTIONS_LOCK:
+            held = _FORCINGS.get(key)
+        if held is None:
+            held = self.forcing()
+            held.setflags(write=False)
+            with _SOLUTIONS_LOCK:
+                _FORCINGS[key] = held
+                while len(_FORCINGS) > SOLUTIONS_KEPT:
+                    del _FORCINGS[next(iter(_FORCINGS))]
+        return held
+
+    def forcing_amplitudes(self) -> np.ndarray:
+        """The cosine amplitude of each harmonic of the forcing on the grid rings, m = 1 … CELLS/2, shaped
+        (R, HARMONICS): the analogue of the modes' f_m. Its sum along a ring is the most the forcing could reach
+        were every harmonic's crest at one azimuth."""
+        amplitude = 2.0 * np.abs(self.forcing_spectrum()[:, 1:]) / CELLS
+        amplitude[:, -1] *= 0.5  # the last harmonic the cells hold is a cosine alone
+        return amplitude
+
     # --- the solved rings ------------------------------------------------------------------------------
 
+    # **The store** (D219 item 6 as the gate's first follow-up words it, built at the second's order). The response is
+    # solved on every grid ring; a point between two rings reads the two rings' profiles carried to its radius
+    # (below). Where that misplaces more than a hundredth of a ring's gas against the law solved at the gap's
+    # middle, the ring solved there is kept and carried from - "where the mid-gap misplaced weight passes 1 %,
+    # solve a ring at the mid-gap and carry from it, recursing at most twice (quartering), then record what
+    # remains; the check is that solve". So the store holds the grid's rings and, in the gaps that need them, a
+    # ring at the middle and rings at the quarters. A mid-gap ring's own inputs - X, ε, the budget, the count,
+    # the widths - are read at its radius as the point functions give them (:meth:`solve_at`). A ring index in
+    # the carrying methods below is the store's; the grid's own rings are ``store["grid"]``.
+
     def _rings(self) -> dict:
-        """The grid rings' solved profiles, made the first time they are asked for: ``profiles`` (R, CELLS),
-        ``carries`` (R,) and the solver's ``diagnostics`` for the rings that carry a mode (None where none does)."""
+        """The store of solved rings, made the first time it is asked for: ``radii`` (M,) ascending - the grid's
+        and the mid-gap rings'; ``profiles`` (M, CELLS); ``carries`` (M,), the rings a piece forces; ``level`` (M,),
+        0 a grid ring, 1 one at a gap's middle, 2 one at a quarter; ``grid`` (R,), where each grid ring stands
+        in it; ``diagnostics``, the solver's for the grid rings that carry a forcing (None where none does);
+        ``checked``, per level the radii solved for the check and what each misplaced; ``complete``, whether the
+        mid-gap rings have been looked for yet. **They are looked for the first time a radius off the grid's
+        rings is read** (:meth:`_complete`): what is read on the grid's own rings - the published fields - is the
+        same numbers with them or without, and a run that places no object does not pay for them."""
         solved = self._solved
-        if "profiles" not in solved:  # (the lanes are kept in the same dictionary, under their own key: S58)
-            f, eps = self.forcing_amplitudes(), self.epsilon()
-            carries = (f != 0.0).any(axis=1)
-            profiles = np.ones((self.R.size, CELLS))  # a ring with no mode: s = 1
-            diagnostics = None
-            if carries.any():
-                s, diagnostics = respond(f[carries], self.phases, eps[carries])
-                profiles[carries] = s
-            profiles.setflags(write=False)
-            solved.update(profiles=profiles, carries=carries, diagnostics=diagnostics)
+        if "radii" in solved:
+            return solved
+        stars = self.stars
+        key = None if stars is None or self.flat else self._digest()
+        if key is not None:
+            with _SOLUTIONS_LOCK:
+                held = _STORES.get(key)
+            if held is not None:
+                solved.update(held)
+                return solved
+        g, eps = self._ring_forcing(), self.epsilon()
+        carries = (g != 0.0).any(axis=1)
+        profiles = np.ones((self.R.size, CELLS))  # a ring no piece forces: s = 1
+        diagnostics = None
+        if carries.any():
+            s, diagnostics = respond(g[carries], eps[carries])
+            profiles[carries] = s
+        self._store(self.R, profiles, carries, np.zeros(self.R.size, dtype=np.int64))
+        solved.update(diagnostics=diagnostics, checked=(), complete=key is None or self.R.size < 2)
+        self._keep(key)
         return solved
+
+    def _keep(self, key: bytes | None) -> None:
+        """Hold the store under its digest, the last few patterns' (:data:`SOLUTIONS_KEPT`)."""
+        if key is not None:
+            with _SOLUTIONS_LOCK:
+                _STORES.pop(key, None)
+                _STORES[key] = {name: self._solved[name] for name in STORE_KEYS}
+                while len(_STORES) > SOLUTIONS_KEPT:
+                    del _STORES[next(iter(_STORES))]
+
+    def _complete(self) -> dict:
+        """The store with its mid-gap rings: looked for once, level by level (the comment above)."""
+        solved = self._rings()
+        if solved["complete"] is not False:  # done, or being done by this very call
+            return solved
+        solved["complete"] = None
+        checked: list[tuple[np.ndarray, np.ndarray]] = []
+        centres = _response.cell_centres(CELLS)
+        lower, upper = self.R[:-1], self.R[1:]
+        for depth in range(1, MID_GAP_DEPTH + 1):
+            asked = np.sort(0.5 * (lower + upper))
+            if not asked.size:
+                break
+            direct, forced = self._solve(asked)
+            carried = self.response_at(asked[:, None], centres[None, :])
+            miss = misplaced_weight(carried, direct)
+            checked.append((asked, miss))
+            keep = miss > MISPLACED_LIMIT
+            if not keep.any():
+                break
+            # The gaps the kept rings open: each kept middle halves its gap, and each half is checked next.
+            order = np.argsort(0.5 * (lower + upper), kind="stable")
+            low, high, middle = lower[order][keep], upper[order][keep], asked[keep]
+            store = self._solved
+            radii = np.concatenate([store["radii"], middle])
+            rank = np.argsort(radii, kind="stable")
+            self._store(radii[rank], np.concatenate([store["profiles"], direct[keep]])[rank],
+                        np.concatenate([store["carries"], forced[keep]])[rank],
+                        np.concatenate([store["level"], np.full(middle.size, depth, dtype=np.int64)])[rank])
+            lower, upper = np.concatenate([low, middle]), np.concatenate([middle, high])
+        solved.update(checked=tuple(checked), complete=True)
+        self._keep(self._digest())
+        return solved
+
+    def _store(self, radii: np.ndarray, profiles: np.ndarray, carries: np.ndarray, level: np.ndarray) -> None:
+        """Set the store to these rings (ascending radii), with what a mean over an interval of a ring is read
+        from: the integral of each ring's interpolant from its first cell's centre to each centre, in cells, and
+        over the whole turn."""
+        segments = 0.5 * (profiles + np.roll(profiles, -1, axis=1))
+        running = np.cumsum(segments, axis=1) - segments
+        turn = running[:, -1] + segments[:, -1]
+        grid = np.flatnonzero(level == 0)
+        own = profiles[grid]
+        for array in (radii, profiles, carries, level, running, turn, grid, own):
+            array.setflags(write=False)
+        self._solved.update(radii=radii, profiles=profiles, carries=carries, level=level, running=running, turn=turn, grid=grid,
+                            grid_profiles=own, grid_carries=carries[grid])
+
+    def _solve(self, radii: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """(the response solved directly at ``radii``, shaped (radii, CELLS); which of them a piece forces): the law
+        at those radii, with the disc's κ and Σ read linearly between the grid rings and everything of the arms
+        the radius' own. Kept by content as the grid's rings are (:func:`respond`)."""
+        g = self.forcing(radii)
+        kappa, _ = self._disc_at(radii)
+        eps = _response.epsilon(self.sound_speed, kappa, radii, self.sin_pitch)
+        out = np.ones((radii.size, CELLS))
+        on = (g != 0.0).any(axis=1)
+        if on.any():
+            out[on] = respond(g[on], eps[on])[0]
+        return out, on
 
     @property
     def profiles(self) -> np.ndarray:
-        """s on the cells' centres of every grid ring, shaped (R, CELLS); read-only. 1 on a ring with no mode."""
-        return self._rings()["profiles"]
+        """s on the cells' centres of every grid ring, in the galaxy's azimuth (a cell's centre is φ = −π +
+        (k + ½) 2π/CELLS), shaped (R, CELLS); read-only. 1 on a ring no piece forces."""
+        return self._rings()["grid_profiles"]
 
     @property
     def carries(self) -> np.ndarray:
-        """(R,) bool: the grid rings that carry a mode - the ones the solver solved."""
-        return self._rings()["carries"]
+        """(R,) bool: the grid rings a piece forces - the ones the solver solved."""
+        return self._rings()["grid_carries"]
 
     @property
     def diagnostics(self) -> "_response.Diagnostics | None":
-        """What Newton did on the rings that carry a mode, in their order (None where no ring does)."""
+        """What Newton did on the grid rings that carry a forcing, in their order (None where no ring does)."""
         return self._rings()["diagnostics"]
+
+    @property
+    def mid_gap(self) -> tuple[np.ndarray, np.ndarray]:
+        """(the radii of the rings kept between the grid's, their levels - 1 a gap's middle, 2 a quarter)."""
+        store = self._complete()
+        extra = store["level"] > 0
+        return store["radii"][extra], store["level"][extra]
+
+    def solve_at(self, radii: np.ndarray) -> np.ndarray:
+        """The response solved directly at ``radii`` (kpc, any), shaped (radii, CELLS): the law at those radii,
+        with the disc's κ and Σ read linearly between the grid rings. **The instrument's**: what the carried
+        profiles are measured against between two rings (D219 item 6). No reader of the model calls it."""
+        return self._solve(np.asarray(radii, dtype=float))[0]
+
+    # --- a ring's profile, carried to another radius (S60, D219 item 6) --------------------------------
+    #
+    # The arms of S57-S59 shared one winding, so a ring's profile was read at another radius by turning it: one
+    # shift. Arm pieces have each their own pitch, so between two rings they move by different angles. The
+    # ruling: "a ring's solved profile is carried to a point along the pieces' loci (a periodic piecewise-linear
+    # map of azimuth anchored where each crossing piece stands on the ring and at the point's radius)".
+    #
+    # For grid ring k and a radius r: every piece that crosses the ring stands at φ_j(R_k) on it and - on its own
+    # chain's polyline followed from it, the end piece's line continued where the chain ends free and the chain it
+    # met followed past a join (``Pieces.along``; the gate's sixth follow-up, item 2) - at φ_j(r). Its displacement is d_j = φ_j(R_k) − φ_j(r).
+    # The map is M(φ) = φ + D(φ), D periodic and linear between neighbouring anchors φ_j(r) round the circle,
+    # D(φ_j(r)) = d_j: each arm is read where it is on the ring, and the gas between two arms in proportion.
+    # One crossing piece: a turn by its own d, the old shift. None: nothing to carry (s = 1). At r = R_k: the
+    # identity.
+    #
+    # **The carried profile is s_k(M(φ)) over its own mean round the ring at r.** A map that stretches one
+    # stretch between arms and squeezes the next does not keep the profile's mean, and every reader needs each
+    # ring's term to be a redistribution at every radius (a census's expected count in a cell ring is the ring's
+    # count times a mean of this function: I2). The mean is the exact integral of the carried interpolant - on
+    # each stretch between two anchors M is linear, so the integral there is the stretch's width times the
+    # interpolant's own mean between the two images - not a sampled one, and at the ring's own radius nothing is
+    # divided. The ruling does not say how the mean is kept: this is the builder's choice, declared.
+
+    def _integral(self, ring: np.ndarray, psi: np.ndarray) -> np.ndarray:
+        """∫ of ring ``ring``'s interpolant from its first cell's centre to ``psi``, in cells: exact (the
+        interpolant is linear between centres). ``ring`` broadcasts against ``psi``."""
+        solved = self._rings()
+        profiles, running, turn = solved["profiles"], solved["running"], solved["turn"]
+        ring, psi = np.broadcast_arrays(np.asarray(ring, dtype=np.int64), np.asarray(psi, dtype=float))
+        below, above, weight, wraps = _response.bracket(psi, CELLS)
+        first = profiles[ring, below]
+        return wraps * turn[ring] + running[ring, below] + weight * (first + 0.5 * weight * (profiles[ring, above] - first))
+
+    def _image_mean(self, ring: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
+        """The mean of ring ``ring``'s interpolant between the azimuths ``lo`` and ``hi`` (either order): the
+        difference of two integrals over the interval's width, or - for an interval under :data:`NARROW_IMAGE` -
+        the interpolant at its middle."""
+        width = hi - lo
+        wide = np.abs(width) > NARROW_IMAGE
+        mean = (self._integral(ring, hi) - self._integral(ring, lo)) / np.where(wide, width * (CELLS / TWO_PI), 1.0)
+        return np.where(wide, mean, self._ring_read(self._rings()["profiles"], ring, 0.5 * (lo + hi)))
+
+    def _anchors(self, ring: np.ndarray, r: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """The map of each (grid ring, radius) pair: ``(anchors, shifts, first, sorted, count)``.
+
+        ``sorted`` (n, K): the anchors φ_j(r) of the pieces crossing the ring, in [0, 2π) and ascending, +inf in
+        the slots that hold none; ``count`` (n,) how many there are; ``first`` (n,) the first anchor (0 where
+        there is none); ``anchors`` and ``shifts`` (n, K + 1): the anchors with the first one a turn on after the
+        last (and in every slot past it), and each one's displacement d_j - the knots D is linear between."""
+        pieces = self.stars.pieces
+        radius = self._rings()["radii"][ring]
+        slots = pieces.slots(radius)
+        live, on_ring, _ = pieces.geometry(radius, slots)
+        # The chain followed along its polyline (the fourth pass), and past a join along the chain it met (the gate's
+        # sixth follow-up, item 2): two chains that meet then stand at one anchor to the bit, and of two anchors at
+        # one azimuth the one whose image on the ring is the lesser comes first - the map steps there, and never
+        # back.
+        on_line, turns, past = pieces.along_parts(slots, np.log(np.asarray(r, dtype=float))[:, None], overshoot=True)
+        key = np.where(live, np.mod(on_line, TWO_PI), np.inf)
+        moved = np.where(live, on_ring - (on_line + turns), 0.0)
+        # Past a free end (or a turn back in radius) an anchor is continued no further than its neighbours (the gate's
+        # eighth follow-up, item 2): the map is monotone on every pair by construction.
+        key, moved = _hold_at_neighbours(key, moved, live, past)
+        order = np.lexsort((key + moved, key), axis=1)
+        ordered = np.take_along_axis(key, order, axis=1)
+        shift = np.take_along_axis(moved, order, axis=1)
+        count = live.sum(axis=1)
+        held = np.isfinite(ordered)
+        first = np.where(count > 0, np.where(held[:, 0], ordered[:, 0], 0.0), 0.0)
+        first_shift = np.where(count > 0, shift[:, 0], 0.0)
+        wrap = first + TWO_PI
+        anchors = np.concatenate([np.where(held, ordered, wrap[:, None]), wrap[:, None]], axis=1)
+        shifts = np.concatenate([np.where(held, shift, first_shift[:, None]), first_shift[:, None]], axis=1)
+        return anchors, shifts, first, ordered, count
+
+    @staticmethod
+    def _stretch(q: np.ndarray, ordered: np.ndarray) -> np.ndarray:
+        """Which stretch between anchors each azimuth of ``q`` (n, k) lies in: the index of the last anchor at or
+        under it in its row of ``ordered`` (n, K), 0 where the row holds none. Counted directly for a few
+        azimuths a row, and found by bisection row by row for many: the same indices either way."""
+        if q.shape[1] <= MANY_AZIMUTHS:
+            return np.maximum((ordered[:, None, :] <= q[:, :, None]).sum(axis=2) - 1, 0)
+        at = np.empty(q.shape, dtype=np.int64)
+        for i in range(q.shape[0]):
+            at[i] = np.searchsorted(ordered[i], q[i], side="right")
+        return np.maximum(at - 1, 0)
+
+    @staticmethod
+    def _displacement(phi: np.ndarray, anchors: np.ndarray, shifts: np.ndarray, first: np.ndarray, ordered: np.ndarray) -> np.ndarray:
+        """D at each azimuth of ``phi`` (n, k): linear between the two anchors the azimuth lies between."""
+        q = first[:, None] + np.mod(phi - first[:, None], TWO_PI)
+        at = GasPattern._stretch(q, ordered)
+        lo, hi = np.take_along_axis(anchors, at, axis=1), np.take_along_axis(anchors, at + 1, axis=1)
+        d_lo, d_hi = np.take_along_axis(shifts, at, axis=1), np.take_along_axis(shifts, at + 1, axis=1)
+        span = hi - lo
+        share = np.where(span > 0.0, (q - lo) / np.where(span > 0.0, span, 1.0), 0.0)
+        return d_lo + share * (d_hi - d_lo)
+
+    def _carried_mean(self, ring: np.ndarray, anchors: np.ndarray, shifts: np.ndarray, count: np.ndarray) -> np.ndarray:
+        """The mean round the ring of s_k(M(φ)), per (ring, radius) pair: Σ over the stretches between anchors of
+        the stretch's width times the interpolant's mean between its two images, over 2π. 1 where nothing moves
+        (the ring's own radius, or no anchor): the profile is then not divided at all."""
+        width = anchors[:, 1:] - anchors[:, :-1]
+        image = anchors + shifts
+        total = (width * self._image_mean(ring[:, None], image[:, :-1], image[:, 1:])).sum(axis=1) / TWO_PI
+        moved = (count > 0) & (shifts != 0.0).any(axis=1)
+        return np.where(moved, total, 1.0)
+
+    def carried(self, ring: np.ndarray, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """Grid ring ``ring``'s solved profile as a point at radius ``r`` sees it, at that row's azimuths ``phi``:
+        s_ring(M(φ)) over its mean round the ring at r (the comment above). ``ring`` and ``r`` are (n,) and
+        ``phi`` (n, k); returns (n, k). At ``r`` = the ring's own radius it is the ring's interpolant at φ, to
+        the bit; a ring no piece forces is 1."""
+        ring = np.asarray(ring, dtype=np.int64)
+        r = np.asarray(r, dtype=float)
+        phi = np.asarray(phi, dtype=float)
+        out = np.ones(np.broadcast_shapes(phi.shape, (ring.size, 1)))
+        store = self._rings()
+        on = store["carries"][ring]
+        if on.any():
+            k, radius, angle = ring[on], r[on], np.broadcast_to(phi, out.shape)[on]
+            anchors, shifts, first, ordered, count = self._anchors(k, radius)
+            image = angle + self._displacement(angle, anchors, shifts, first, ordered)
+            out[on] = self._ring_read(store["profiles"], k[:, None], image) / self._carried_mean(k, anchors, shifts, count)[:, None]
+        return out
+
+    def carried_cell_means(self, ring: np.ndarray, r: np.ndarray, edges: np.ndarray) -> np.ndarray:
+        """The mean of :meth:`carried` over each azimuthal cell between ``edges`` (ascending, spanning a turn at
+        most), per (ring, radius) pair, shaped (n, cells): exact - between two neighbouring breaks (an edge or
+        an anchor) the map is linear, and the integral there is the stretch's width times the interpolant's own
+        mean between the two images. At the ring's own radius it is the ring's interpolant integrated over each
+        cell (``gas_response.sector_mean``), with nothing divided."""
+        ring = np.asarray(ring, dtype=np.int64)
+        r = np.asarray(r, dtype=float)
+        edges = np.asarray(edges, dtype=float)
+        lo, hi = edges[:-1], edges[1:]
+        if edges[-1] - edges[0] > TWO_PI * (1.0 + 1e-12):
+            raise ValueError("the cells a ring's carried profile is averaged over span a turn at most")
+        out = np.ones((ring.size, lo.size))
+        store = self._rings()
+        on = store["carries"][ring]
+        own = on & (r == store["radii"][ring])
+        if own.any():
+            out[own] = _response.sector_mean(store["profiles"][ring[own]], np.broadcast_to(lo, (int(own.sum()), lo.size)), np.broadcast_to(hi, (int(own.sum()), lo.size)))
+        moved = on & ~own
+        if moved.any():
+            k, radius = ring[moved], r[moved]
+            anchors, shifts, first, ordered, count = self._anchors(k, radius)
+            n, slots = ordered.shape
+            # The breaks: the cells' edges and every anchor inside their span, in order.
+            held = np.isfinite(ordered)
+            inside = edges[0] + np.mod(np.where(held, ordered, 0.0) - edges[0], TWO_PI)
+            inside = np.where(held, np.minimum(inside, edges[-1]), edges[-1])
+            breaks = np.concatenate([np.broadcast_to(edges[None, :], (n, edges.size)), inside], axis=1)
+            order = np.argsort(breaks, axis=1, kind="stable")  # an edge before an anchor that falls on it
+            breaks = np.take_along_axis(breaks, order, axis=1)
+            place = np.empty_like(order)
+            np.put_along_axis(place, order, np.broadcast_to(np.arange(order.shape[1])[None, :], order.shape), axis=1)
+            # The map is read at each end of a stretch from inside the stretch: at its middle, by the stretch's
+            # own slope - an anchor is a kink of the map, and its two sides differ.
+            middle = 0.5 * (breaks[:, 1:] + breaks[:, :-1])
+            half = 0.5 * (breaks[:, 1:] - breaks[:, :-1])
+            centre = middle + self._displacement(middle, anchors, shifts, first, ordered)
+            q = first[:, None] + np.mod(middle - first[:, None], TWO_PI)
+            at = self._stretch(q, ordered)
+            a_lo, a_hi = np.take_along_axis(anchors, at, axis=1), np.take_along_axis(anchors, at + 1, axis=1)
+            d_lo, d_hi = np.take_along_axis(shifts, at, axis=1), np.take_along_axis(shifts, at + 1, axis=1)
+            span = a_hi - a_lo
+            slope = 1.0 + np.where(span > 0.0, (d_hi - d_lo) / np.where(span > 0.0, span, 1.0), 0.0)
+            pieces = 2.0 * half * self._image_mean(k[:, None], centre - slope * half, centre + slope * half)
+            running = np.concatenate([np.zeros((n, 1)), np.cumsum(pieces, axis=1)], axis=1)
+            at_edges = place[:, : edges.size]
+            integral = np.take_along_axis(running, at_edges[:, 1:], axis=1) - np.take_along_axis(running, at_edges[:, :-1], axis=1)
+            out[moved] = integral / (hi - lo)[None, :] / self._carried_mean(k, anchors, shifts, count)[:, None]
+        return out
 
     # --- at a point ------------------------------------------------------------------------------------
 
     def _between(self, R: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """(lower ring, upper ring, share of the upper) for each radius: linear in R between two grid rings,
-        the end ring alone beyond the grid (item 9). At a grid radius the share is 0 or 1 and the ring is its
-        own. ``pattern.ring_bracket``: the bar's body reads its rings by the same bracket."""
-        return ring_bracket(self.R, R)
+        """(lower ring, upper ring, share of the upper) for each radius, **in the store**: linear in R between the
+        two solved rings a radius lies between - the grid's, or a mid-gap one where the gap holds one - the end
+        ring alone beyond the grid (item 9). At a solved ring's radius the share is 0 or 1 and the ring is its
+        own. A radius that is not one of the grid's own has the mid-gap rings looked for first."""
+        R = np.asarray(R, dtype=float)
+        store = self._rings()
+        if store["complete"] is False and not np.isin(R, self.R).all():
+            store = self._complete()
+        return ring_bracket(store["radii"], R)
 
     def _read(self, profiles: np.ndarray, R: np.ndarray, angle: np.ndarray) -> np.ndarray:
         """Profiles held on the cells of every grid ring, read at points: ``R`` in kpc and ``angle`` in radians
         of the profiles' own coordinate, broadcast against each other. Each point reads its two neighbouring
         grid rings at its own angle - ``gas_response.interpolate``'s own arithmetic on the two cells it lies
-        between, the ring picked point by point - and blends them linearly in R."""
+        between, the ring picked point by point - and blends them linearly in R. The bar's lanes and its
+        footprint are read so, in the bar's frame; the response is not (it is carried: :meth:`response_at`)."""
         R, angle = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(angle, dtype=float))
-        lower, upper, share = self._between(R)
-        below, above, weight, _ = _response.bracket(angle, CELLS)
+        lower, upper, share = ring_bracket(self.R, R)  # the bar's templates are the grid rings'
 
-        def read(ring: np.ndarray) -> np.ndarray:
+        def read(ring: np.ndarray, angle: np.ndarray) -> np.ndarray:
+            below, above, weight, _ = _response.bracket(angle, CELLS)
             first, second = profiles[ring, below], profiles[ring, above]
             rising = second >= first
             return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
 
-        return (1.0 - share) * read(lower) + share * read(upper)
+        # A ring whose row is one number on every cell (the footprint at and past the half-length, S60) reads
+        # that number at every angle: ``first + weight·|second − first|`` with second = first is ``first + 0.0``,
+        # so the points reading two such rings are given it without the bracket's arithmetic - the same bits.
+        even = profiles.min(axis=1) == profiles.max(axis=1)
+        flat = even[lower] & even[upper]
+        if not flat.any():
+            return (1.0 - share) * read(lower, angle) + share * read(upper, angle)
+        out = np.empty(R.shape)
+        out[flat] = (1.0 - share[flat]) * (profiles[lower[flat], 0] + 0.0) + share[flat] * (profiles[upper[flat], 0] + 0.0)
+        rest = ~flat
+        if rest.any():
+            out[rest] = (1.0 - share[rest]) * read(lower[rest], angle[rest]) + share[rest] * read(upper[rest], angle[rest])
+        return out
 
-    def response_at(self, R: np.ndarray, chi: np.ndarray) -> np.ndarray:
-        """s at points: ``R`` in kpc and ``chi`` in radians broadcast against each other. Each point reads its
-        two neighbouring grid rings at its own χ and blends them linearly in R (:meth:`_read`)."""
-        return self._read(self.profiles, R, chi)
+    def _rows(self, R: np.ndarray, phi: np.ndarray) -> tuple[np.ndarray, np.ndarray, tuple[int, ...]]:
+        """``R`` and ``phi``, broadcast against each other, as rows: (radii (n,), azimuths (n, k), the broadcast
+        shape). A column of radii against rows of azimuths keeps one row a radius, so a radius' map is made
+        once; anything else is one row a point."""
+        R, phi = np.asarray(R, dtype=float), np.asarray(phi, dtype=float)
+        shape = np.broadcast_shapes(R.shape, phi.shape)
+        rank = len(shape)
+        aligned = R.reshape((1,) * (rank - R.ndim) + R.shape)
+        if rank >= 1 and aligned.shape[-1] == 1 and shape[-1] > 1:
+            radii = np.broadcast_to(aligned, shape[:-1] + (1,)).reshape(-1)
+            return radii, np.broadcast_to(phi, shape).reshape(radii.size, shape[-1]), shape
+        return np.broadcast_to(R, shape).reshape(-1), np.broadcast_to(phi, shape).reshape(-1, 1), shape
+
+    def response_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """s at points: ``R`` in kpc and ``phi`` in radians broadcast against each other. Each point reads its
+        two neighbouring grid rings, each carried to the point's radius along the pieces' loci
+        (:meth:`carried`), and blends them linearly in R. (Until S60 the second argument was the pattern
+        coordinate χ of a common winding; there is none now, and a profile is held in the galaxy's azimuth.)"""
+        radii, azimuths, shape = self._rows(R, phi)
+        lower, upper, share = self._between(radii)
+        out = np.empty(azimuths.shape)
+        whole = share == 0.0
+        if whole.any():
+            out[whole] = self.carried(lower[whole], radii[whole], azimuths[whole])
+        top = share == 1.0
+        if top.any():
+            out[top] = self.carried(upper[top], radii[top], azimuths[top])
+        mixed = ~(whole | top)
+        if mixed.any():
+            a = share[mixed][:, None]
+            out[mixed] = ((1.0 - a) * self.carried(lower[mixed], radii[mixed], azimuths[mixed])
+                          + a * self.carried(upper[mixed], radii[mixed], azimuths[mixed]))
+        return out.reshape(shape)
+
+    def response_cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
+        """The mean of :meth:`response_at` over each azimuthal cell between ``edges`` at each radius of ``R``,
+        shaped (R, cells): the two neighbouring rings' carried profiles, each integrated exactly
+        (:meth:`carried_cell_means`), blended as a point blends them."""
+        R = np.asarray(R, dtype=float)
+        lower, upper, share = self._between(R)
+        out = np.empty((R.size, np.size(edges) - 1))
+        whole, top = share == 0.0, share == 1.0
+        if whole.any():
+            out[whole] = self.carried_cell_means(lower[whole], R[whole], edges)
+        if top.any():
+            out[top] = self.carried_cell_means(upper[top], R[top], edges)
+        mixed = ~(whole | top)
+        if mixed.any():
+            a = share[mixed][:, None]
+            out[mixed] = ((1.0 - a) * self.carried_cell_means(lower[mixed], R[mixed], edges)
+                          + a * self.carried_cell_means(upper[mixed], R[mixed], edges))
+        return out
 
     # --- the lanes (S58, D217 items 6-8) ---------------------------------------------------------------
 
@@ -680,9 +1234,9 @@ class GasPattern:
         """w_arm s + w_bar (the bar's profiles) at points; ``bar`` gives the profiles, asked of a barred pattern only."""
         R = np.asarray(R, dtype=float)
         phi = np.asarray(phi, dtype=float)
-        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length, self.winding)
+        taper, _, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
         w_arm, w_bar = blend_weights(taper)
-        arms = w_arm * self.response_at(R, phi - phase)
+        arms = w_arm * self.response_at(R, phi)
         return arms + w_bar * self._read(bar(), R, phi - bar_angle) if self.barred else arms
 
     def contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
@@ -695,15 +1249,13 @@ class GasPattern:
         with the footprint-uniform field in the lanes' place. An unbarred pattern's is :meth:`contrast_at`'s."""
         return self._contrast_at(R, phi, lambda: self.footprint)
 
-    # --- one grid ring's own contrast, read at a point (S59, D218: the gate's ruling on the young stars' reader) ---
+    # --- what the young stars' reader asks (S59, D218; S60, the second follow-up to D219's gate, item 3) ---------
     #
-    # The star formation law is not linear and its inputs - the gas column, the threshold - exist on the grid
-    # rings only, so a reader of the law between two rings applies it ring by ring and blends the two results
-    # (``systems.Modulation``). For that it needs each ring's own contrast as a function of azimuth, placed where
-    # a point at another radius sees it: the ring's arm profile at the point's own χ = φ − Φ(R_point) - the arms
-    # turn with the winding - and the ring's footprint in the bar's frame, ψ = φ − φ_bar, which does not turn;
-    # the two weighted by the ring's own taper. At the ring's own radius that is the pattern's point function
-    # there, bit for bit. Nothing is blended in R here: that is the caller's.
+    # "The young stars' reader applies each bracketing grid ring's law to the gas pattern's point function at the
+    # point ... the point function using the mid-gap rings of item 6; nothing ring-only is interpolated." So the
+    # reader asks this pattern for one thing, :meth:`star_formation_contrast_at`, and beside it only where that
+    # function's kinks lie (for its quadrature) and where it is one number round the ring (so that a mean is not
+    # sampled). The ring-by-ring contrasts S59 and the first two passes of S60 served are gone with their reader.
 
     def _ring_read(self, profiles: np.ndarray, ring: np.ndarray, angle: np.ndarray) -> np.ndarray:
         """``profiles[ring]`` read at ``angle`` (radians of the profiles' own coordinate), the two broadcast
@@ -715,91 +1267,51 @@ class GasPattern:
         rising = second >= first
         return np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
 
-    def _ring_footprint(self, ring: np.ndarray, psi: np.ndarray) -> np.ndarray:
-        """The footprint-uniform profile of each grid ring of ``ring`` (rings,) at its own row of angles ``psi``
-        (rings, k) in the bar's frame: :meth:`_ring_read`'s numbers. A ring whose footprint row is one number on
-        every cell is that number at any angle - what the interpolation gives, exactly - and is not read cell by
-        cell (most rings of a barred disc lie past the bar)."""
-        rows = self.footprint[ring]
-        level = rows[:, 0]
-        uniform = rows.min(axis=1) == rows.max(axis=1)
-        out = np.empty(np.broadcast_shapes(psi.shape, (ring.size, 1)))
-        out[uniform] = level[uniform, None]
-        if not uniform.all():
-            held = ~uniform
-            out[held] = self._ring_read(self.footprint, ring[held, None], np.broadcast_to(psi, out.shape)[held])
-        return out
-
-    def ring_star_formation_contrast_at(self, ring: np.ndarray, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """Grid ring ``ring``'s own star-formation contrast at points: for each ring of ``ring`` (rings,), read
-        by a point at radius ``R`` (rings,), at that row's azimuths ``phi`` (rings, k):
-        w_arm(R_ring) s_ring(φ − Φ(R)) + w_bar(R_ring) L_fp,ring(φ − φ_bar) - the ring's arm profile at the
-        point's own χ, its footprint-uniform profile in the bar's frame, the ring's own weights. An unbarred
-        pattern's is the arm profile alone. At ``R`` = the ring's own radius it is
-        :meth:`star_formation_contrast_at` there, to the bit."""
-        ring = np.asarray(ring, dtype=np.int64)
-        phi = np.asarray(phi, dtype=float)
-        taper, _, _ = bar_terms(self.R[ring], self.pitch_deg, self.bar_length)
-        w_arm, w_bar = blend_weights(taper)
-        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
-        arms = w_arm[:, None] * self._ring_read(self.profiles, ring[:, None], phi - phase[:, None])
-        return arms + w_bar[:, None] * self._ring_footprint(ring, phi - bar_angle) if self.barred else arms
-
-    def ring_star_formation_contrast_round(self, ring: np.ndarray, R: np.ndarray, per_cell: int) -> np.ndarray:
-        """Grid ring ``ring``'s own star-formation contrast round the whole ring as a point at radius ``R`` sees
-        it, shaped (rings, ``per_cell`` · CELLS): :meth:`ring_star_formation_contrast_at`'s function on
-        ``per_cell`` equal steps to each of the profile's cells - **taken in the arms' own frame**, at
-        χ_q = −π + (q + ½) 2π/(per_cell · CELLS), with the footprint read at ψ_q = χ_q + Φ(R) − φ_bar. What a
-        mean round the ring is taken over. The arm profile is read between its own cells' centres by the
-        interpolant's arithmetic at the steps' fixed places in a cell (no cell is looked up). Sampled in that
-        frame, a ring whose contrast only turns with the winding (:meth:`ring_turns_with_the_winding`) gives the
-        same numbers whatever ``R``, bit for bit. ``ring`` and ``R`` are one-dimensional and of one length."""
-        ring = np.asarray(ring, dtype=np.int64)
-        m = int(per_cell)
-        if m < 1:
-            raise ValueError("a ring is sampled at one step to a cell or more")
-        taper, _, _ = bar_terms(self.R[ring], self.pitch_deg, self.bar_length)
-        w_arm, w_bar = blend_weights(taper)
-        here = self.profiles[ring]  # (rings, CELLS)
-        before, after = np.roll(here, 1, axis=1), np.roll(here, -1, axis=1)
-        arms = np.empty((ring.size, CELLS, m))
-        for j in range(m):
-            offset = (j + 0.5) / m - 0.5  # the step's place in its cell, from the cell's centre, in cells
-            first, second, weight = (before, here, 1.0 + offset) if offset < 0.0 else (here, after, offset)
-            rising = second >= first
-            arms[:, :, j] = np.where(rising, first, second) + np.where(rising, weight, 1.0 - weight) * np.abs(second - first)
-        arms = w_arm[:, None] * arms.reshape(ring.size, CELLS * m)
+    def footprint_uniform_at(self, R: np.ndarray) -> np.ndarray:
+        """(radii,) bool: the radii at which the bar's footprint adds one number round the ring to the
+        star-formation contrast - no bar, or both grid rings the radius reads hold a footprint row that is one
+        number on every cell (every ring at or past the half-length, and those the footprint fills)."""
+        R = np.asarray(R, dtype=float)
         if not self.barred:
-            return arms
-        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
-        chi = -math.pi + (np.arange(CELLS * m) + 0.5) * (2.0 * math.pi / (CELLS * m))
-        return arms + w_bar[:, None] * self._ring_footprint(ring, chi[None, :] + (phase - bar_angle)[:, None])
+            return np.ones(R.shape, dtype=bool)
+        rows = self.footprint
+        even = rows.min(axis=1) == rows.max(axis=1)
+        lower, upper, _ = ring_bracket(self.R, R)
+        return even[lower] & even[upper]
+
+    def uniform_at(self, R: np.ndarray) -> np.ndarray:
+        """(radii,) bool: the radii at which the star-formation contrast is one number round the ring - neither
+        solved ring the radius reads is forced by a piece (the response is 1 there), and the footprint is uniform
+        (:meth:`footprint_uniform_at`)."""
+        R = np.asarray(R, dtype=float)
+        lower, upper, _ = self._between(R)
+        carries = self._rings()["carries"]
+        return ~carries[lower] & ~carries[upper] & self.footprint_uniform_at(R)
 
     def star_formation_kinks(self, R: np.ndarray, bar: bool) -> np.ndarray:
-        """The azimuths at which a grid ring's star-formation contrast, read by a point at radius ``R``
-        (:meth:`ring_star_formation_contrast_at`), changes slope: the arm profile's cells' centres carried to
-        φ = Φ(R) + χ_c, shaped (radii, CELLS) - and, with ``bar``, the footprint's beside them, φ_bar + ψ_c,
-        shaped (radii, 2 CELLS). Between two neighbouring ones the contrast is linear in φ, on any ring: what a
-        quadrature of a function of the contrast is cut at. One turn's worth each, not wrapped into any range.
-        ``bar`` is the caller's to drop where no ring it reads holds a footprint that is not uniform
-        (:meth:`ring_turns_with_the_winding`); an unbarred pattern has none."""
-        _, phase, bar_angle = bar_terms(np.asarray(R, dtype=float), self.pitch_deg, self.bar_length, self.winding)
-        centres = _response.cell_centres(CELLS)
-        arms = phase[:, None] + centres[None, :]
-        if not (bar and self.barred):
-            return arms
-        return np.concatenate([arms, np.broadcast_to(bar_angle + centres[None, :], arms.shape)], axis=1)
+        """Azimuths a quadrature of a function of a grid ring's star-formation contrast, read by a point at radius
+        ``R`` (:meth:`star_formation_contrast_at`), is cut at, one row a radius: the profile's cells'
+        centres; the anchors of the two solved rings the radius reads, where the map that carries a ring's profile
+        changes slope; and, with ``bar``, the footprint's cells' centres in the bar's frame, φ_bar + ψ_c.
 
-    def ring_turns_with_the_winding(self, ring: np.ndarray) -> np.ndarray:
-        """(rings,) bool: the grid rings whose star-formation contrast, round the ring, is one function of χ at
-        whatever radius it is read - no bar, or a footprint row that is one number on every cell (a ring at or
-        past the bar's half-length, or one the footprint fills). Such a ring's contrast only turns with the
-        winding; the others hold a footprint that stays in the bar's frame while the arms turn past it."""
-        ring = np.asarray(ring, dtype=np.int64)
-        if not self.barred:
-            return np.ones(ring.shape, dtype=bool)
-        rows = self.footprint[ring]
-        return rows.min(axis=-1) == rows.max(axis=-1)
+        At a grid radius these are the contrast's kinks exactly, as they were under the common winding. Between
+        two rings the carried arm profile's own kinks stand where the map sends the cells' centres - by up to
+        the pieces' differing turns from where this method puts them - so a piece between two breaks holds at
+        most a kink or two of a profile that bends little there: what that leaves is measured in the tests.
+        One turn's worth each, not wrapped into any range. ``bar`` is the caller's to drop where no ring it
+        reads holds a footprint that is not uniform; an unbarred pattern has none."""
+        R = np.asarray(R, dtype=float)
+        centres = _response.cell_centres(CELLS)
+        parts = [np.broadcast_to(centres[None, :], (R.size, CELLS))]
+        if self.stars is not None and self.stars.pieces.most:
+            lower, upper, _ = self._between(R)
+            for ring in (lower, upper):
+                anchors, _, first, _, _ = self._anchors(ring, R)
+                parts.append(np.where(np.isfinite(anchors), anchors, first[:, None])[:, :-1])
+        if bar and self.barred:
+            bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)[2]
+            parts.append(np.broadcast_to(bar_angle + centres[None, :], (R.size, CELLS)))
+        return np.concatenate(parts, axis=1)
 
     def contrast(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """Σ_gas(R, φ)/Σ_gas(R) at the points of an (R, φ) mesh: the point function at each (R_i, φ_j) - what a
@@ -811,10 +1323,10 @@ class GasPattern:
     def cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
         """The contrast's mean over each azimuthal cell between ``edges`` (radians, ascending) at each radius of
         ``R``, shaped (R, cells): what the stage publishes on the grid (gate G3 item 4). The exact mean of the
-        point function over the cell - the two neighbouring rings' interpolants integrated piece by piece
-        (``gas_response.sector_mean``) and blended as a point blends them, the lanes' profiles the same way in
-        the bar's frame - so cells that tile the ring average to 1 to rounding on any grid, with no division,
-        and a cell's value is never under w_bar min L. At one radius it is :meth:`sector_means`' arithmetic."""
+        point function over the cell - the two neighbouring rings' carried profiles integrated exactly and
+        blended as a point blends them, the lanes' interpolants piece by piece in the bar's frame - so cells
+        that tile the ring average to 1 to rounding on any grid, and a cell's value is never under
+        w_bar min L. At one radius it is :meth:`sector_means`' arithmetic."""
         return self._cell_means(R, edges, (lambda: self.lanes,))[0]
 
     def star_formation_cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
@@ -832,23 +1344,13 @@ class GasPattern:
     def _cell_means(self, R: np.ndarray, edges: np.ndarray, bars: "tuple[Callable[[], np.ndarray], ...]") -> tuple[np.ndarray, ...]:
         """The exact cell means of w_arm s + w_bar (a bar's profiles), one array per entry of ``bars`` (each
         gives its profiles; asked of a barred pattern only). An unbarred pattern's are the response's alone."""
-        solved = self._rings()
-        profiles, carries = solved["profiles"], solved["carries"]
         R = np.asarray(R, dtype=float)
         edges = np.asarray(edges, dtype=float)
         lo, hi = edges[:-1], edges[1:]
-        taper, phase, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length, self.winding)
+        taper, _, bar_angle = bar_terms(R, self.pitch_deg, self.bar_length)
         w_arm, w_bar = blend_weights(taper)
-        lower, upper, share = self._between(R)
-
-        def ring_means(ring: np.ndarray) -> np.ndarray:
-            out = np.ones((R.size, lo.size))  # a ring with no mode is 1 on every cell: so is every sector of it
-            on = carries[ring]
-            if on.any():
-                out[on] = _response.sector_mean(profiles[ring[on]], lo[None, :] - phase[on, None], hi[None, :] - phase[on, None])
-            return out
-
-        arms = w_arm[:, None] * ((1.0 - share)[:, None] * ring_means(lower) + share[:, None] * ring_means(upper))
+        lower, upper, share = ring_bracket(self.R, R)  # the bar's templates are the grid rings'
+        arms = w_arm[:, None] * self.response_cell_means(R, edges)
         if not self.barred:
             return tuple(arms if k == 0 else arms.copy() for k in range(len(bars)))  # the same bits, not one array
         low = np.broadcast_to(lo[None, :] - bar_angle, (R.size, lo.size))
@@ -863,39 +1365,14 @@ class GasPattern:
 
     def sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """The contrast averaged over each sector between ``edges`` (radians, ascending) at one radius: the exact
-        mean of the point function - the two neighbouring rings' interpolants integrated piece by piece
-        (``gas_response.sector_mean``) and blended as a point blends them, the lanes' the same way in the bar's
-        frame. Sectors that tile the ring average to 1 to rounding."""
-        return self._sector_means(R, edges, lambda: self.lanes)
+        mean of the point function (:meth:`cell_means`' arithmetic at one radius). Sectors that tile the ring
+        average to 1 to rounding."""
+        return self._cell_means(np.array([float(R)]), edges, (lambda: self.lanes,))[0][0]
 
     def star_formation_sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """:meth:`sector_means` of the contrast the star formation law reads: the footprint-uniform field in
         the lanes' place. An unbarred pattern's is :meth:`sector_means`'."""
-        return self._sector_means(R, edges, lambda: self.footprint)
-
-    def _sector_means(self, R: float, edges: np.ndarray, bar_profiles: "Callable[[], np.ndarray]") -> np.ndarray:
-        solved = self._rings()
-        profiles, carries = solved["profiles"], solved["carries"]
-        radius = np.array([float(R)])
-        taper, phase, bar_angle = bar_terms(radius, self.pitch_deg, self.bar_length, self.winding)
-        w_arm, w_bar = blend_weights(taper)
-        edges = np.asarray(edges, dtype=float)
-        lo, hi = edges[:-1], edges[1:]
-        lower, upper, share = self._between(radius)
-
-        def ring_mean(ring: int) -> np.ndarray | float:
-            if not carries[ring]:
-                return 1.0  # a ring with no mode is 1 on every cell: so is every sector of it
-            return _response.sector_mean(profiles[ring], lo - phase[0], hi - phase[0])
-
-        arms = w_arm[0] * ((1.0 - share[0]) * ring_mean(int(lower[0])) + share[0] * ring_mean(int(upper[0])))
-        if not self.barred:
-            # Between two rings that carry no mode the mean is one number: every sector holds it.
-            return np.full(lo.shape, arms) if np.ndim(arms) == 0 else arms
-        lanes = bar_profiles()
-        bar = ((1.0 - share[0]) * _response.sector_mean(lanes[int(lower[0])], lo - bar_angle, hi - bar_angle)
-               + share[0] * _response.sector_mean(lanes[int(upper[0])], lo - bar_angle, hi - bar_angle))
-        return arms + w_bar[0] * bar
+        return self._cell_means(np.array([float(R)]), edges, (lambda: self.footprint,))[0][0]
 
     def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
         """Azimuths within [lo, hi] drawn from the contrast at each star's own radius — by inverse CDF (rule B8)."""
@@ -905,21 +1382,22 @@ class GasPattern:
     # --- the disclosed check's measurements (D216 item 11 iv): they build nothing --------------------
 
     def stellar_sum(self) -> np.ndarray:
-        """ψ = Σ_m u_m cos(m χ_k − θ_m) on the cells' centres of every grid ring, shaped (R, CELLS): the
-        stellar arm modes' sum at unit amplitude, whose highest part of a ring the source's mask is laid on."""
-        chi = _response.cell_centres(CELLS)
-        psi = np.zeros((self.R.size, CELLS))
-        for k, m in enumerate(ARM_MODES):
-            psi += self.unit[k][:, None] * np.cos(float(m) * chi[None, :] - self.phases[k])
-        return psi
+        """The stellar arm pieces' sum on the cells' centres of every grid ring, shaped (R, CELLS): the stars'
+        own arm field there (``ArmPattern.ring_profile``), whose highest part of a ring the source's mask is
+        laid on. 0 where there are no pieces."""
+        if self.stars is None or self.flat:
+            return np.zeros((self.R.size, CELLS))
+        return self.stars.ring_profile(self.R, CELLS)
 
     def arm_ratio(self, mask_width: float) -> np.ndarray:
         """The ratio of means on every grid ring, shaped (R,): the mean of s over the source's arm mask - the
-        share :func:`mask_share` of the ring, taken where the stellar modes' sum is highest - over its mean on
-        the rest of the ring. ``mask_width`` in kpc, the mask's full width perpendicular to an arm. NaN on a
-        ring that carries no mode. A measurement of the solved rings: nothing is built from it."""
+        share :func:`mask_share` of the ring, taken where the stellar pieces' sum is highest - over its mean on
+        the rest of the ring. ``mask_width`` in kpc, the mask's full width perpendicular to an arm; the arm
+        number the share is laid for is the law's own count on the ring. NaN on a ring no piece forces. A
+        measurement of the solved rings: nothing is built from it."""
         profiles, carries = self.profiles, self.carries
-        share = mask_share(effective_arm_number(self.unit), self.R, self.sin_pitch, mask_width)
+        count = np.zeros(self.R.size) if self.design_count is None else np.asarray(self.design_count, dtype=float)
+        share = mask_share(np.where(count > 0.0, count, np.nan), self.R, self.sin_pitch, mask_width)
         psi = self.stellar_sum()
         out = np.full(self.R.size, np.nan)
         for i in np.flatnonzero(carries & np.isfinite(share)):
@@ -927,23 +1405,21 @@ class GasPattern:
         return out
 
     def strongest_forcing(self) -> np.ndarray:
-        """The arm number of the mode of largest forcing m·A_m on every grid ring, shaped (R,): the mode the gas
-        answers most strongly (f_m = m A_m/(X sin p), and X sin p is the ring's own). Gate G3 item 6."""
-        return _M[np.argmax(_M[:, None] * self.unit, axis=0)]
+        """The harmonic of largest forcing amplitude on every grid ring, shaped (R,): the arm number the gas is
+        pulled at most strongly (gate G3 item 6, read on the pieces' forcing since S60)."""
+        return _HARMONIC[1:][np.argmax(self.forcing_amplitudes(), axis=1)]
 
     def arm_width(self, arm_number: np.ndarray | None = None) -> np.ndarray:
         """The full width at half maximum of every grid ring's tallest crest of s (:func:`crest_width`) as a
-        fraction of the period 2π/m, shaped (R,); NaN on a ring that carries no mode. A measurement only.
+        fraction of the period 2π/m, shaped (R,); NaN on a ring no piece forces. A measurement only.
 
-        m is the mode of largest forcing m·A_m (:meth:`strongest_forcing`): the check's definition, fixed at gate
-        G3 (item 6) - not the largest amplitude, which on most rings is a tie the first build broke towards the
-        lower arm number, the kindest reading. ``arm_number`` (R,) reads the same widths against another
-        mode's period, for the record the tests keep of the other readings."""
+        m is the harmonic of largest forcing (:meth:`strongest_forcing`): the check's definition, fixed at gate
+        G3 (item 6). ``arm_number`` (R,) reads the same widths against another period."""
         profiles, carries = self.profiles, self.carries
         m = self.strongest_forcing() if arm_number is None else np.asarray(arm_number, dtype=float)
         out = np.full(self.R.size, np.nan)
         for i in np.flatnonzero(carries):
-            out[i] = crest_width(profiles[i]) / (2.0 * math.pi / m[i])
+            out[i] = crest_width(profiles[i]) / (TWO_PI / m[i])
         return out
 
 
@@ -999,7 +1475,7 @@ def crest_width(profile: np.ndarray) -> float:
 
 def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     R = ctx.grid.R
-    # Everything is read, nothing drawn: the stellar pattern's modes, the layer's phases and checkpoint 1's disc.
+    # Everything is read, nothing drawn: the stellar pattern's arm pieces (the layer's) and checkpoint 1's disc.
     # A composed field (S55, D214): with the layer off compose gives the neutral value the declaration states,
     # everywhere. With it on, the pattern object comes from compose too, and a pattern with nothing to place
     # (unresolved, or no arm mode and no bar) is the neutral.
@@ -1031,11 +1507,15 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
         id="gas_pattern", slot="gas_pattern", checkpoint=3,
         about=(
             "The gas's own arm pattern: on every ring the steady response of isothermal gas to the stellar "
-            "arm modes' potential in the frame that turns with the gas - no flow through the arms, no shock - "
+            "arms' potential in the frame that turns with the gas - no flow through the arms, no shock - "
             "solved ring by ring under uniform potential vorticity, and blended by the bar's taper with the "
             "bar's gas lanes - a uniform base and two arcs on the bar's leading side holding the excess of gas "
             "inside the bar's footprint, a conserving template with nothing drawn and one declared placeholder, "
-            "its width (D216, D217). Reads the stellar pattern's modes and phases and the disc's "
+            "its width (D216, D217). Since the stellar arms are a census of arm pieces the pull on a ring is "
+            "put together piece by piece - each piece pulling by its own pitch, and each of its harmonics "
+            "weakened by the thickness of the stellar layer, a measured fraction of the disc's scale length - "
+            "and between two rings a ring's answer is carried along the pieces' own loci (D219). Reads the "
+            "stellar pattern's pieces, their width and amplitude, and the disc's "
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
             "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
             "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "
@@ -1043,7 +1523,7 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "contrast as the star formation law reads it: inside a bar's reach the lanes' excess spread "
             "evenly over the bar's footprint, because the lanes' width is a placeholder and star formation "
             "must not ride it; elsewhere the same numbers. It draws nothing; "
-            "its fields are seeded through the pattern's drawn pitch and amplitudes and the layer's phases."
+            "its fields are seeded through the pattern's drawn pitch and amplitudes and the layer's pieces."
         ),
         compute=compute_gas_pattern,
         reads_constants=GAS_PATTERN_CONSTANTS,

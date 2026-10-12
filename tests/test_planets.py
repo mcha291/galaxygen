@@ -19,7 +19,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from galaxy.stages.pattern import ArmPattern
+from galaxy.stages.pieces import ArmPattern  # S60 (D219): was galaxy.stages.pattern
 from galaxy.core.units import UNITS
 from galaxy.models.level0 import LEVEL0
 from galaxy.run import run

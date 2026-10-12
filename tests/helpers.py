@@ -27,7 +27,7 @@ def decl(name: str, kind: Kind | str = Kind.FIELD, **kw: Any) -> FieldDecl:
     if kind.domain == "object":
         base["of"] = "star"
     if kind.domain == "table":  # S59 (D218): a table column names its table and, drawn by nothing, takes no ramp
-        base["of"] = "arm_segment"
+        base["of"] = "arm_piece"  # S60 (D219): was "arm_segment" - the one table is the census of arm pieces
     if kind.categorical:
         base["categories"] = ("a", "b")
         if kind.domain != "galaxy":

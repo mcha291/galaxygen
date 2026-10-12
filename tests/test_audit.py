@@ -374,7 +374,7 @@ def test_the_register_carries_the_s10_findings():
     # leaving 27 open: 15 ruled permanent and 12 carried, none unruled. The map at the head of
     # the register is the one place that split is written down. S24 revisited #79 and discharged
     # it (D163): the ism stage computes row 21, which now fails under #17 like row 20.
-    assert progress.debt_counts(text) == (91, 46)  # S59 opened #150-#154, the segments as kinks of one winding, the gas law at the mean pitch, the Milky Way's arms that the modes cannot show, NGC 4414's pitch against the law, and the table of star formation at a cell's mean; S58 opened #145-#149, the bar's presence criterion, its body's unchecked share, the lanes' placeholder width, the two clocks and the undriven arms (D217); 81 / 46 at S57; S57 discharged #140 (the ranked ridge) and opened #141-#144, the steady response's declared approximations (D216); 78 / 45 at S56; S56 opened #138-#140, the arm-number law against the observed spectra, the phases' assumed statistic and the gas ridge by rank (D215); 75 / 45 at S55; S55 opened #137, the layer's totals conserved in expectation only until L1's ring-first draw (D214, gate G1); 74 / 45 at S54; S54 opened #132-#136 on NGC 4414's fit and its five disclosed checks (D213); 69 / 45 at S51-S53; S51 opened #129-#131, the gas ridge's width from one galaxy, the HI's contrast unmodelled and the gas contrast's unread galaxy-level scatter (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
+    assert progress.debt_counts(text) == (92, 48)  # S60 closed: #150-#151 discharged (each arm its own chain, the gas at each piece's pitch) and #155-#157 opened (D219); at the re-pin (93, 46); S60 opened #155-#156, the budget's ensemble and a chain's jump at a turn-back kink within a width of a free end (D219); S60 fourth pass: was (91, 46); S59 opened #150-#154, the segments as kinks of one winding, the gas law at the mean pitch, the Milky Way's arms that the modes cannot show, NGC 4414's pitch against the law, and the table of star formation at a cell's mean; S58 opened #145-#149, the bar's presence criterion, its body's unchecked share, the lanes' placeholder width, the two clocks and the undriven arms (D217); 81 / 46 at S57; S57 discharged #140 (the ranked ridge) and opened #141-#144, the steady response's declared approximations (D216); 78 / 45 at S56; S56 opened #138-#140, the arm-number law against the observed spectra, the phases' assumed statistic and the gas ridge by rank (D215); 75 / 45 at S55; S55 opened #137, the layer's totals conserved in expectation only until L1's ring-first draw (D214, gate G1); 74 / 45 at S54; S54 opened #132-#136 on NGC 4414's fit and its five disclosed checks (D213); 69 / 45 at S51-S53; S51 opened #129-#131, the gas ridge's width from one galaxy, the HI's contrast unmodelled and the gas contrast's unread galaxy-level scatter (D210); 66 / 45 at S50; S50 opened #128, the heating still a mixed slab (D206); 65 / 45 at S49; S49 discharged #126 and opened #127 (D204); S48 opened #125 (D201) and #126 (D202); 63 / 44 at S45 (#124, D196); 62 / 44 at S44; 65 / 41 at S43 (#121-#123 opened, D194); S44 discharged them (D195); 62 / 41 at S42 (#117-#120, D192); S43, Audit IV, opened #121-#123 (D194); 59 / 40 at S41 (#114-#116, D191); 56 / 40 at S40; 27 / 35 at S22; S42 discharged #108 and opened #117-#120 (D192)
     for item in (
         "6. ~~Adiabatic contraction",
         "31. ~~**The catalogue does not migrate.**~~ **DISCHARGED by S19**",
@@ -403,7 +403,7 @@ def test_the_register_carries_the_s10_findings():
         "| **discharged** at S26 | **23** (the arms are a pattern with derived and seeded amplitudes, D175) | 1 |",
         "| **discharged** at S24 | **79** (revisited: the ism stage, D163) | 1 |",
         "79. ~~**No model computes the molecular fraction, so acceptance row 21 has never been judged**",
-        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154 | 80 |",  # S50: #128 opened (D206); S49: #126 discharged, #127 opened (D204); S48: #125 (D201) and #126 (D202) opened; S45: #124 (D196); S44: #121-#123 discharged (D195)
+        "| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157 | 81 |",  # S60 (D219): was "..., 149, 150, 151, 152, 153, 154, 155, 156 | 82 |" (#150 and #151 discharged at S60, #157 opened)  # S60 fourth pass: was "..., 154 | 80 |" (S60 carries #155-#156)  # S50: #128 opened (D206); S49: #126 discharged, #127 opened (D204); S48: #125 (D201) and #126 (D202) opened; S45: #124 (D196); S44: #121-#123 discharged (D195)
         # S42 (D192): rows 32 and 34 re-set on Audit III's blind windows; #100 re-scoped to the 0.71; #108 discharged.
         "98. **Row 32, the globular-cluster system mass, misses the Harris catalogue by 0.34 dex",
         "100. **The model's ionizing photons per unit star formation are 0.71 of Starburst99's; row 34 passes since S42",
@@ -713,16 +713,28 @@ def test_s21b_the_catalogue_is_priced_per_cell_not_per_star(default_model):
     the price of a cell (was 1500 µs for the one run; the reader's cost has no sourced bound, #154). The
     ordering is not asserted layer on: the layered reader prices young stars inside the bar's footprint by a
     quadrature each (#154), so it is not a property of the layered catalogue.
+
+    **S60 (debt #68): each size is timed three times and the least kept.** S59's clone check failed here once,
+    on the layer-off run: one stall made 500 stars cost more than 2 000 and the first marginal cost negative
+    (0 of 15 on an idle machine). No bound moved.
+
+    **S60 (D219's seventh follow-up):** the layer-on run no longer keeps the collapse of the marginal cost - the
+    catalogue's layer-on cost is the point function's, by the star - so its marginal costs are recorded, not
+    ordered; its bound on the price of a cell stands.
     """
     from galaxy.specs import performance
 
-    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000))
+    on = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), repeats=3)
     on_stars, on_secs = [s[1] for s in on["samples"]], [s[2] for s in on["samples"]]
     on_marginal = [(on_secs[i + 1] - on_secs[i]) / (on_stars[i + 1] - on_stars[i]) for i in range(len(on_secs) - 1)]
-    assert on_marginal[0] > 3.0 * on_marginal[-1], on_marginal  # 5.5-8.0 here
+    # S60 (D219's seventh follow-up, the normaliser table): the layer-on catalogue's cost is now the point function
+    # itself, ~25 us a star, so the marginal cost per star no longer collapses with the sample size layer on (the
+    # ratio first/last read 1.7-2.7 against S59's 5.5-8.0). Recorded, the ordering not asserted layer on - as #154
+    # and D218 did for the two per-cell timing statements; the layer-off part below keeps its assertion.
+    print("layer on, marginal cost per star (s):", on_marginal)  # a record: no ordering asserted
     assert 150.0 < on["per_cell_us"] < 3000.0, on["per_cell_us"]  # 800-1230 us here
 
-    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False)
+    cost = performance.catalogue_cost(default_model, n_stars=500, samples=(2_000, 8_000, 32_000), layer=False, repeats=3)
     cells = cost["cells per sample"]
     stars = [s[1] for s in cost["samples"]]
     secs = [s[2] for s in cost["samples"]]

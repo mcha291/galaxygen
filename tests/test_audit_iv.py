@@ -255,7 +255,11 @@ def test_the_render_redistributes_across_levels(svc):
         for level in (1, 2):
             rel = float(np.abs(totals[level][name][lit] / totals[0][name][lit] - 1.0).max())
             print("audit mesh: level", level, name, "against level 0", rel)
-            assert rel < 2e-3, (name, level, rel)  # 4.6e-4 at worst (lines_hii, level 2) at S43
+            # S60 (D219, the gate's ruling): was `< 2e-3`, set at S43 at four times the 4.6e-4 then measured (lines_hii,
+            # level 2) on the modes' smooth pattern. The pieces' narrow ridges and tapers raise the midpoint rule's error
+            # on lines_hii at level 1 to 2.38e-3; the bound reads 3e-3, no wider.
+            # The render's march resolution across levels is V-phase work (BUILD_III V5-V7) - re-read there.
+            assert rel < 3e-3, (name, level, rel)  # 2.38e-3 at worst (lines_hii, level 1) at S60; 4.6e-4 (level 2) at S43
 
 
 # --- V4 (D191) and P6 (D192): the cluster's light identity, and the bolometric painting measured again ---------

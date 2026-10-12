@@ -59,8 +59,10 @@ from galaxy.stages.chemistry import age_bin_edges, migration_width, transport_co
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.feedback import star_bubble_radius
 from galaxy.stages import gas_response as _cells  # the pattern's fixed cells round a ring: what the quadratures are counted in
+from galaxy.stages.gas_pattern import CELLS as GAS_CELLS
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
-from galaxy.stages.pattern import PATTERN_READS, ArmPattern, invert_azimuths, ring_bracket
+from galaxy.stages.pattern import PATTERN_READS, invert_azimuths, ring_bracket, sector_grid
+from galaxy.stages.pieces import ArmPattern
 from galaxy.stages.sfh import star_formation_rate
 from galaxy.stages.massive_stars import WR_CATEGORIES, ionizing_photons, wind_luminosity, wolf_rayet
 from galaxy.stages.photometry import lookup as photometry
@@ -131,6 +133,12 @@ RING_SAMPLES_PER_CELL = 2
 # two points leave 1e-2 of a finest sector's mean there, three 1e-3, four 2e-4, six 2e-6 (the reference's own).
 GAUSS = {False: np.polynomial.legendre.leggauss(2), True: np.polynomial.legendre.leggauss(6)}  # (nodes, weights) on [-1, 1]
 MEAN_CHUNK = 128  # rings whose mean is taken at once: a bound on memory (128 x 2880 doubles a temporary), not a count of work
+# How many stars one placing call takes at once (S60, the cost): never a value's concern - a star's azimuth is the
+# star's own - but the cost's: the pattern's exact ring means are made on arrays of (stars x chains) rows, and past a
+# few thousand radii they leave the processor's cache and run at memory speed. Measured on 100 000 radii x 25
+# azimuths: 17 241 radii a batch 6.9 s, 2 758 a batch 5.5 s, 1 379 a batch 6.1 s (the per-cell regime before S60,
+# ~1 000 radii a call, 5.5 s). One cell's stars used to be one call; this is a few cells' worth.
+PLACE_CHUNK = 4096
 # What the young stars' reader reads beside the stellar pattern (S59, D218): the gas pattern's own reads, and the
 # two ring fields and the index the star formation law is applied with.
 YOUNG_READS: tuple[str, ...] = ("gas_surface_density", "sf_threshold_surface_density")
@@ -456,50 +464,49 @@ class Churn:
 
 
 class Modulation:
-    """Where stars form today around a ring, at a point: the young stars' reader (S27; exact since S59).
+    """Where stars form today around a ring, at a point: the young stars' reader (S27; exact since S59; on the gas
+    pattern's one point function since S60).
 
     **The star formation law applied to the gas pattern's point function** (S59, D218, the gate's ruling on the
     reader: "a stored grid is not a field's definition; a reader that interpolates a table between rings is
-    reading the grid, and no interpolation of one row can serve two frames at once - the arms turn with the
-    winding, the footprint stays in the bar's"). The published ``sfr_modulation`` is the same law at the grid's
-    cells: the viewer reads it, and no census does.
+    reading the grid"). The published ``sfr_modulation`` is the same law at the grid's cells: the viewer reads it,
+    and no census does.
 
     The law is not linear, and what it reads beside the contrast - the ring's gas column and its threshold -
-    exists on the grid rings and nowhere between them. So it is **applied ring by ring, where its inputs exist,
-    and blended in R as the pattern blends**: for a point at radius r between the grid rings i and j,
+    exists on the grid rings and nowhere between them. So it is **applied with each bracketing grid ring's
+    inputs to the one contrast the point has, and blended in R** (the second follow-up to D219's gate, item 3, in
+    its own words): "The young stars' reader applies each bracketing grid ring's law to the gas pattern's point
+    function at the point,
 
-        M(r, φ) = (1 − a) m_i(r, φ) + a m_j(r, φ),     m_k(r, φ) = Ψ_k(g_k(r, φ)) / ⟨Ψ_k(g_k(r, ·))⟩,
+        M(r, φ) = (1 − a) Ψ_i(g(r, φ)) / ⟨Ψ_i(g(r, ·))⟩ + a Ψ_j(g(r, φ)) / ⟨Ψ_j(g(r, ·))⟩,
 
-    with a the point's place between the rings (``pattern.ring_bracket``, the pattern's own), g_k ring k's own
-    star-formation contrast as the point sees it (``GasPattern.ring_star_formation_contrast_at``: the ring's arm
-    profile at the point's own χ = φ − Φ(r), its footprint-uniform profile in the bar's frame, the ring's own
-    weights), Ψ_k the law ``sfh_azimuthal`` applies - ``sfh.star_formation_rate`` on Σ_gas,k · g with ring k's
-    threshold and the law's index, the switch per point - and ⟨·⟩ its mean round the ring **with the arms where
-    the winding puts them at r**. Each ring's law is so a redistribution at every radius: its mean round the
-    ring is 1 wherever it is read, and M's is 1. No quantity that exists only on rings is interpolated: not the
-    column, not the threshold, not the normaliser. A ring that forms nothing anywhere reads 1, as the published
-    field does. At a grid radius M is that ring's own law.
+    the point function using the mid-gap rings of item 6; nothing ring-only is interpolated." Here i and j are the
+    grid rings the radius r lies between and a its place between them (``pattern.ring_bracket``); g is the gas
+    pattern's star-formation contrast at the point (``GasPattern.star_formation_contrast_at``: the response
+    carried from the two *solved* rings the radius lies between - a mid-gap ring where the gap holds one - and
+    the bar's footprint in the bar's frame); Ψ_k is the law ``sfh_azimuthal`` applies -
+    ``sfh.star_formation_rate`` on Σ_gas,k · g with ring k's threshold and the law's index, the switch per point;
+    and ⟨·⟩ is the mean round the ring at the point's own radius. Each ring's term is so a redistribution at
+    every radius - its mean round the ring is 1 wherever it is read - and M's is 1. Not the column, not the
+    threshold, not the normaliser is interpolated. A ring that forms nothing anywhere reads 1, as the published
+    field does. At a grid radius M is that ring's own law of the pattern's contrast there.
+
+    (From S59 to the second pass of S60 the reader applied each grid ring's law to *that ring's own* contrast as
+    the point saw it, so its two terms were laws of two different contrasts and the pattern's own blend - and,
+    since S60's third pass, its mid-gap rings - never reached the young stars.)
 
     **The mean round the ring is a quadrature** (the law's switch is a hyperbolic tangent; there is no closed
-    form): :data:`RING_SAMPLES_PER_CELL` equal steps to each of the pattern's cells round the ring, taken in the
-    arms' frame - 3e-4 of the mean at worst against a rule 32 times finer. It is the reader's normaliser by
-    definition, one number wherever the function is read. Past the bar's body, and where the footprint fills
-    its ring, a ring's contrast only turns with the winding, so its mean does not depend on the radius it is
-    read at - the same samples, bit for bit - and is taken once; where the footprint stays while the arms turn
-    past it, the mean is taken at each point's own alignment.
+    form): :data:`RING_SAMPLES_PER_CELL` equal steps to each of the pattern's cells round the ring, of the point
+    function at the point's own radius. It is the reader's normaliser by definition, one number per ring's law
+    wherever the function is read; its accuracy against a rule 32 times finer is pinned in
+    ``tests/test_pieces.py``. Where the contrast is one number round the ring (``GasPattern.uniform_at``: no
+    solved ring the radius reads is forced, the footprint uniform) the mean is the law of that number, and is not
+    sampled.
 
     **One point function behind every entry point.** :meth:`at` and :meth:`at_points` are it; :meth:`azimuths`
-    is its inverse CDF; :meth:`sector_means_at` is its integral over a sector: between two neighbouring kinks
-    of the contrast the law is smooth, and each such piece takes a Gauss rule (3e-6 of a sector's mean at
-    worst, measured in ``tests/test_segments.py``). Sectors that tile a ring average to the ring's mean of the
-    function: 1 to the normaliser's 3e-4.
-
-    **What it replaced.** Until S59 the grid table ``sfr_modulation`` blended between two rings at fixed φ
-    (S27): a double image of the arms, by what the winding turns across a ring gap. The first follow-up to
-    D218's gate turned each ring's row by the winding: right for the arms, and it turned the bar's footprint
-    with them. Against this reader, the worst ring inside the Milky Way template's bar: 7.7 % of a ring's young
-    weight misplaced by the first and 13.4 % by the second at the default seeds, 24.4 % and 17.2 % at a pitch of
-    9 degrees, 37.2 % and 70.6 % at a pitch of 1 degree.
+    is its inverse CDF; :meth:`sector_means_at` is its integral over a sector: between two neighbouring breaks
+    (``GasPattern.star_formation_kinks``) each piece takes a Gauss rule. Sectors that tile a ring average to the
+    ring's mean of the function: 1 to the normaliser's accuracy.
 
     ``pattern`` is the gas pattern of the same run, from ``compose.gas_pattern``; None, or a flat one (a pitch
     the mesh could not resolve), is no pattern at all: the law of a uniform ring, 1 everywhere. ``gas`` and
@@ -507,7 +514,7 @@ class Modulation:
     radii ``R``, and ``index`` the law's.
     """
 
-    __slots__ = ("pattern", "R", "gas", "threshold", "index", "_turns", "_own")
+    __slots__ = ("pattern", "R", "gas", "threshold", "index")
 
     def __init__(self, pattern: Any, R: np.ndarray, gas: np.ndarray, threshold: np.ndarray, index: float) -> None:
         self.pattern = None if pattern is None or pattern.flat else pattern
@@ -517,47 +524,29 @@ class Modulation:
         self.index = float(index)
         if self.gas.shape != self.R.shape or self.threshold.shape != self.R.shape:
             raise ValueError(f"the law reads the gas column and the threshold on the {self.R.size} grid radii; got {self.gas.shape} and {self.threshold.shape}")
-        # The rings whose mean round the ring is the same at whatever radius it is read (a contrast that only
-        # turns with the winding), and those means, each made the first time its ring is asked for.
-        self._turns = None if self.pattern is None else self.pattern.ring_turns_with_the_winding(np.arange(self.R.size))
-        self._own = np.full(self.R.size, np.nan)
 
     def _law(self, ring: np.ndarray, contrast: np.ndarray) -> np.ndarray:
         """Ψ_ring on a contrast shaped (rings, k): ``sfh_azimuthal``'s own arithmetic, the law's normalisation
         left at 1 (it divides out)."""
         return star_formation_rate(self.gas[ring][:, None] * np.maximum(contrast, 0.0), 1.0, self.index, self.threshold[ring][:, None])
 
-    def _round(self, ring: np.ndarray, r: np.ndarray) -> np.ndarray:
-        """⟨Ψ_ring(g_ring(r, ·))⟩ for each (ring, r): the quadrature round the ring, a fixed number of rings at a time."""
-        out = np.empty(ring.shape)
-        for start in range(0, ring.size, MEAN_CHUNK):
-            part = slice(start, start + MEAN_CHUNK)
-            out[part] = self._law(ring[part], self.pattern.ring_star_formation_contrast_round(ring[part], r[part], RING_SAMPLES_PER_CELL)).mean(axis=1)
-        return out
-
-    def _means(self, ring: np.ndarray, r: np.ndarray) -> np.ndarray:
-        """Each ring's law's mean round the ring as a point at radius ``r`` sees the ring."""
-        out = np.empty(ring.shape)
-        turns = self._turns[ring]
-        if turns.any():
-            # A contrast that only turns with the winding: the mean is the ring's own, taken once.
-            asked = np.unique(ring[turns])
-            new = asked[np.isnan(self._own[asked])]
-            if new.size:
-                self._own[new] = self._round(new, self.R[new])
-            out[turns] = self._own[ring[turns]]
-        if not turns.all():
-            held = ~turns
-            out[held] = self._round(ring[held], r[held])
-        return out
-
-    def _ring(self, ring: np.ndarray, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        """m_ring(r, φ), shaped (n, k): the ring's law at the points over its mean round the ring there; 1 for a
-        ring that forms nothing."""
-        law = self._law(ring, self.pattern.ring_star_formation_contrast_at(ring, r, phi))
-        mean = self._means(ring, r)
-        forms = mean > 0.0
-        return np.where(forms[:, None], law / np.where(forms, mean, 1.0)[:, None], 1.0)
+    def _means(self, r: np.ndarray, lower: np.ndarray, upper: np.ndarray, per_cell: int = RING_SAMPLES_PER_CELL) -> tuple[np.ndarray, np.ndarray]:
+        """(⟨Ψ_lower(g(r, ·))⟩, ⟨Ψ_upper(g(r, ·))⟩) for each radius: the two grid rings' laws of the pattern's
+        point function round the ring at the radius itself - ``per_cell`` equal steps to each of the pattern's
+        cells, a fixed number of radii at a time; one sample where the contrast is one number round the ring."""
+        low, high = np.empty(r.shape), np.empty(r.shape)
+        even = self.pattern.uniform_at(r)
+        if even.any():
+            level = self.pattern.star_formation_contrast_at(r[even, None], np.zeros((1, 1)))
+            low[even], high[even] = self._law(lower[even], level)[:, 0], self._law(upper[even], level)[:, 0]
+        rows = np.flatnonzero(~even)
+        steps = GAS_CELLS * int(per_cell)
+        phi = -math.pi + (np.arange(steps) + 0.5) * (2.0 * math.pi / steps)
+        for start in range(0, rows.size, MEAN_CHUNK):
+            part = rows[start:start + MEAN_CHUNK]
+            contrast = self.pattern.star_formation_contrast_at(r[part, None], phi[None, :])
+            low[part], high[part] = self._law(lower[part], contrast).mean(axis=1), self._law(upper[part], contrast).mean(axis=1)
+        return low, high
 
     def at_points(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """The modulation at each radius ``r`` (n,) and that row's own azimuths ``phi`` (n, k): the point
@@ -569,7 +558,14 @@ class Modulation:
         if self.pattern is None:
             return np.ones(phi.shape)
         lower, upper, share = ring_bracket(self.R, r)
-        return self._ring(lower, r, phi) * (1.0 - share)[:, None] + self._ring(upper, r, phi) * share[:, None]
+        contrast = self.pattern.star_formation_contrast_at(r[:, None], phi)
+        mean_low, mean_high = self._means(r, lower, upper)
+
+        def term(ring: np.ndarray, mean: np.ndarray) -> np.ndarray:
+            forms = mean > 0.0
+            return np.where(forms[:, None], self._law(ring, contrast) / np.where(forms, mean, 1.0)[:, None], 1.0)
+
+        return term(lower, mean_low) * (1.0 - share)[:, None] + term(upper, mean_high) * share[:, None]
 
     def at(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """The modulation at each radius ``r`` (one row each) and every azimuth ``phi``: :meth:`at_points` on
@@ -581,20 +577,18 @@ class Modulation:
     def sector_means_at(self, r: np.ndarray, edges: np.ndarray) -> np.ndarray:
         """The modulation averaged over each sector between ``edges`` (ascending, spanning a turn at most) at
         each radius of ``r``, shaped (radii, sectors): the point function's integral over the sector, over the
-        sector's width. Between two neighbouring kinks of the gas's contrast (``GasPattern.star_formation_kinks``:
-        the cells' centres of the arm profile where the winding carries them at this radius, and inside a bar's
-        body the footprint's) the contrast is linear in φ and the law of it is smooth, so the integral is taken
-        piece by piece between the kinks and the sectors' edges with a Gauss rule on each piece (:data:`GAUSS`:
-        two points, and six where a bar's footprint is in the contrast) - the count is the geometry's (rule A1),
-        1440 pieces a turn and as many again inside a bar's body. Measured in ``tests/test_segments.py`` against
-        a million points round the ring. A row is the same numbers whichever radii are asked with it."""
+        sector's width. The integral is taken piece by piece between the sectors' edges and the breaks
+        ``GasPattern.star_formation_kinks`` gives - the cells' centres of the arm profile, the anchors of the map
+        that carries it, and inside a bar's body the footprint's cells - with a Gauss rule on each piece
+        (:data:`GAUSS`: two points, and six where a bar's footprint is in the contrast); the count is the
+        geometry's (rule A1). Measured in ``tests/test_pieces.py`` against a fine rule round the ring. A row is
+        the same numbers whichever radii are asked with it."""
         r = np.atleast_1d(np.asarray(r, dtype=float))
         edges = np.asarray(edges, dtype=float)
         width = np.diff(edges)
         if self.pattern is None:
             return np.ones((r.size, width.size))
-        lower, upper, _ = ring_bracket(self.R, r)
-        plain = self._turns[lower] & self._turns[upper]  # no ring read here holds a footprint that stays while the arms turn
+        plain = self.pattern.footprint_uniform_at(r)  # no ring read here holds a footprint that is not uniform
         out = np.empty((r.size, width.size))
         for rows, bar in ((np.flatnonzero(plain), False), (np.flatnonzero(~plain), True)):
             if rows.size:
@@ -626,10 +620,14 @@ class Modulation:
         """The modulation averaged over each sector between ``edges`` at one radius: :meth:`sector_means_at`'s row."""
         return self.sector_means_at(np.array([float(r)]), edges)[0]
 
-    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, steps: int = 24) -> np.ndarray:
-        """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8)."""
-        grid = np.linspace(lo, hi, steps + 1)
-        return invert_azimuths(u, grid, self.at(radius, grid))
+    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: np.ndarray | float, hi: np.ndarray | float, steps: int = 24) -> np.ndarray:
+        """Azimuths within [lo, hi] drawn from the modulation at each star's own radius (rule B8). ``lo`` and
+        ``hi`` are one sector's, or since S60 one sector a star (stars,) - :func:`sector_grid` - the stars of
+        many cells placed in one call, each as its own cell's call placed it."""
+        grid = sector_grid(lo, hi, steps)
+        if grid.ndim == 1:
+            return invert_azimuths(u, grid, self.at(radius, grid))
+        return invert_azimuths(u, grid, self.at_points(radius, grid))
 
 
 def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, Any] | None) -> Modulation | None:
@@ -841,15 +839,15 @@ def materialise(
         # sector; in the azimuthal model a star younger than an arm crossing follows where
         # stars form today instead. Every property has its own stream, so drawing the age
         # first changes no number. A child below level 0 is uniform over its footprint.
+        # S60 (D219, the cost): the stars of every cell of the request are placed in one call after the loop
+        # (``place``), each star by its own radius and sector exactly as its cell's own call placed it - the
+        # pattern's arithmetic is the point's own - so the exact ring means are made in a few large groups
+        # rather than once a cell. ``pending`` carries what the placement reads.
         u_azimuth = draw("azimuth")
-        if footprint is not None or pattern is None or pattern.flat:
-            azimuth = phi_lo + u_azimuth * (phi_hi - phi_lo)
-        else:
-            azimuth = pattern.azimuths(u_azimuth, radius, phi_lo, phi_hi)
-        if young is not None and footprint is None:
-            fresh = young.is_young(born)
-            if fresh.any():
-                azimuth[fresh] = young.modulation.azimuths(u_azimuth[fresh], radius[fresh], phi_lo, phi_hi)
+        uniform = footprint is not None or pattern is None or pattern.flat
+        azimuth = phi_lo + u_azimuth * (phi_hi - phi_lo) if uniform else np.empty(count)
+        fresh = young.is_young(born) if young is not None and footprint is None else None
+        pending = None if uniform and fresh is None else (u_azimuth, radius, phi_lo, phi_hi, uniform, fresh)
 
         cols = np.clip(np.searchsorted(t, born), 0, len(t) - 1)
         birth_radius = churn.birth_radius(draw("birth_radius"), ring, cols)
@@ -871,22 +869,54 @@ def materialise(
             "star_alpha": alpha[rows, cols],
             "star_mass": imf_sample(draw("mass")),
             "star_population": is_thick.astype(np.int64),
-        }
+        }, pending
+
+    def place(made: Sequence[tuple[dict[str, np.ndarray], tuple | None]]) -> None:
+        """Fill ``star_azimuth`` of every cell's rows ``made`` whose placement is pending: the old stars by the
+        pattern's contrast at each star's own radius inside its own sector, the young ones (born after an arm
+        crossing) by the star formation law at the point (:class:`Modulation`) - every cell's stars in one
+        call, :data:`PLACE_CHUNK` stars at a time, the rows a cell's own call would have placed in one
+        group skipped where another places them."""
+        pending = [(rows["star_azimuth"], *p) for rows, p in made if p is not None]
+        if not pending:
+            return
+        counts_ = [a.size for a, *_ in pending]
+        u = np.concatenate([p[1] for p in pending])
+        radius = np.concatenate([p[2] for p in pending])
+        lo = np.concatenate([np.full(n, p[3]) for n, p in zip(counts_, pending)])
+        hi = np.concatenate([np.full(n, p[4]) for n, p in zip(counts_, pending)])
+        by_pattern = np.concatenate([np.full(n, not p[5], dtype=bool) for n, p in zip(counts_, pending)])
+        fresh = np.concatenate([np.zeros(n, dtype=bool) if p[6] is None else p[6] for n, p in zip(counts_, pending)])
+        azimuth = np.concatenate([p[0] for p in pending])
+        for who, placer in ((by_pattern & ~fresh, pattern.azimuths if pattern is not None else None),
+                            (fresh, young.modulation.azimuths if young is not None else None)):
+            rows = np.flatnonzero(who)
+            for start in range(0, rows.size, PLACE_CHUNK):
+                at = rows[start : start + PLACE_CHUNK]
+                azimuth[at] = placer(u[at], radius[at], lo[at], hi[at])
+        offset = 0
+        for target, n in zip((p[0] for p in pending), counts_):
+            target[:] = azimuth[offset : offset + n]
+            offset += n
 
     def cell_stream(cell: int, count: int) -> Callable[[str], np.ndarray]:
         return lambda name: _seeds.rng(seed, "cell", int(cell), name).random(count)
 
     columns: dict[str, list[np.ndarray]] = {}
     if level == 0:
-        for cell, count in counts:
-            for name, values in rows_for(cell, count, cell_stream(cell, count), None).items():
+        made = [rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts]
+        place(made)
+        for rows, _ in made:
+            for name, values in rows.items():
                 columns.setdefault(name, []).append(values)
         out_counts: tuple[tuple[int, int], ...] = counts
     else:
         # Below level 0: each requested child inherits its parent's stars that fall inside it,
         # then adds its own — the parent's expected count times (1 − 4^−k), the share of a
         # 4^k-times-denser sample the inherited stars do not supply — from its own stream.
-        parent_rows = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
+        made = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
+        place(list(made.values()))
+        parent_rows = {cell: rows for cell, (rows, _) in made.items()}
         parent_counts = dict(counts)
         realised: list[tuple[int, int]] = []
         for child in (cells if cells is not None else range(CELL_COUNT * children_per_cell(level))):
@@ -906,7 +936,7 @@ def materialise(
                 inherited["index"] = np.flatnonzero(inside).astype(np.int64)
             expected = cell_expected(fields["stellar_surface_density"], R, n_stars, parent, pattern)
             n_extra = int(round(expected * (1.0 - 1.0 / children_per_cell(level))))
-            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds) if n_extra else {}
+            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds)[0] if n_extra else {}
             if n_extra:
                 extra["level"] = np.full(n_extra, level, dtype=np.int64)
                 extra["cell"] = np.full(n_extra, child, dtype=np.int64)

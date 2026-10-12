@@ -693,10 +693,11 @@ defined here once and used in every entry below:
 | **discharged** at S44 | **121, 122, 123** (Audit IV's findings applied: the grid's axis on its own oxygen, the record's nine sentences, the grain row, D195) | 3 |
 | **discharged** at S49 | **126** (the field's light integrated along each isochrone's own points, on the owner's word, D204) | 1 |
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
+| **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154 | 80 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157 | 81 |
 
-So the board's **91 open** is 11 permanent and 80 carried, and no item is unruled. (S22
+So the board's **92 open** is 11 permanent and 81 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -3837,7 +3838,8 @@ never been judged in twenty-three sessions.
    miss), and the six-armed mode's radial wavelength is 10–70 pc inside 0.3 kpc against a 75 pc ring step.
    **Carried.** What closes it: a measured A₂ against radius in bar lengths for barred two-armed spirals; a
    sourced inner cut-off for arm modes in unbarred discs.
-150. **An arm's segments are kinks of one winding, on common rings for every arm and every mode** (S59, D218
+150. ~~**An arm's segments are kinks of one winding, on common rings for every arm and every mode**~~ **DISCHARGED at
+   S60** (D219: each arm is its own chain of pieces, its kinks its own; the common winding and `arm_segment` are retired). Was: (S59, D218
    items 1–3 and the follow-up). The sources fit each arm on its own, and none says that kinks of different arms
    share a radius `[verified: Honig & Reid 2015; Díaz-García et al. 2019; docs/READING_ARM_SEGMENTS.md]`; the
    model's modes share one winding Φ(R), so a segment is a radial piece of it: synthetic on `texture_seed`,
@@ -3854,7 +3856,9 @@ never been judged in twenty-three sessions.
    of 1000 in net turn** (511.7° from 3 to 12 kpc against the law's 329.9°, eight segments) and was not re-seeded.
    **Carried.** What closes it: a representation with a ridge per arm (#152), or a source for kinks' radii across
    a galaxy's arms.
-151. **The gas answers each ring at the disc's mean pitch, not the segment's** (S59, D218 item 4). The gas law's
+151. ~~**The gas answers each ring at the disc's mean pitch, not the segment's**~~ **DISCHARGED at S60** (D219 item 5
+   and the third follow-up: each piece's term carries its own |sin p_j| with the thickness factor, the form regular
+   through sin p = 0; the disc's pitch stays in epsilon alone). Was: (S59, D218 item 4). The gas law's
    two numbers go as 1/sin p (ε = a/(κR sin p), f_m = m A_m/(X sin p)); on a segment of pitch p_seg the potential
    is the right shape with the wrong normal wavenumber, ε and f off by sin p/sin p_seg `[inferred]`. Geometry
    only was ruled because the local pitch crosses zero on a reversed segment and a tenth of segments would sit in
@@ -3911,6 +3915,51 @@ never been judged in twenty-three sessions.
    replaces it"; to assert then: a ring's expected young count unchanged to 1e-12, `bright_star_count_1e3` the
    same bits, the quadrature's 3e-4 not worsened.
 
+155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
+   census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
+   full ridges at independent uniform azimuths make the budget's variance in expectation (D219 item 4); births at
+   the middle of the widest gap place ridges that do not overlap, for which the ring variance of the pieces' sum
+   is N<E^2> - N^2<E>^2, under N v by N(N-1)<E>^2 - 0.28-0.29 of N v at the median on the Milky Way's and the
+   default galaxy's rings, 0.59 on `ngc_4414`'s. Measured on the final model, realised over budgeted ring power
+   16/50/84 %: 0.49/0.61/0.90, 0.56/0.81/1.17 and 0.39/0.45/0.61 on the three - 0.54 of the independent form
+   and 1.7 of the non-overlapping one at the median, the rest the flanks of pieces within reach that do not
+   cross the ring, pieces ahead of a crossing in their taper, and joins (not the count's: the squared taper
+   weights over the count are 1.00 at the median). **Carried.** The design keeps D219's independent form; the
+   other closed form is named and either is a change of the budget's one formula with no realised power read.
+   For the owner: with the layer on the arms carry about 45-80 % of the arm-number law's power on the median
+   ring; the law is honoured layer-off, where the acceptance rows are judged.
+156. **A chain's excess jumps at a kink within one LAW width of a free end** (S60, D219, the gate's fifth
+   follow-up). The taper is read at the arc length to the point's foot; across the bisector of a kink sharp
+   enough that the two feet lie far from the vertex the arc length jumps and the taper with it: Norma's kink at
+   4.46 kpc steps the field by 0.017 (the chain's excess by 0.083, B 0.20), 24.5 times the continuity test's
+   bound, recorded in `tests/test_pieces.py`. **The class is every kink within one width of a free end, forward or
+   turned back, drawn or pinned** (the eighth follow-up): wherever a chain's end piece is shorter than a width and
+   kinks, the foot's arc length jumps across the kink's bisector while the taper is still rising - on the Milky
+   Way's seed 1 thirteen steps of 0.039-0.055 along 0.45 kpc of one ring band at a forward kink between drawn
+   pieces (1.0-1.22 of the continuity bound); the whole-ring test exempts a step only inside such a wedge, by
+   geometry, and pins the exempted steps' count and size. (The drawn pitch's sign was cut at zero by the sixth
+   follow-up; hairpins no longer occur.)
+   **Carried.** The continuous rule is named: the chain's excess as the largest over its pieces of (the piece's
+   taper at its own foot) x (the Gaussian of the distance to that piece) - the present rule wherever every taper
+   is at full height, continuous everywhere; its exact ring mean needs a Newton root per pair of features where
+   a taper is linear (the breakpoints are then roots of w_i G_i = w_j G_j). #142's pitch floor removes the drawn
+   case the other way. Built if the owner's look at the frames finds the step.
+   *Amended by the twelfth follow-up:* since the eleventh follow-up the height tapers over the LAW's width, so the
+   class is a kink within one law width of a free end - up to 1.8 times the bounded width on the default galaxy's
+   outer disc; the default's seed 4 steps by 0.0019 at 12.375 kpc that way (0.38 of the continuity bound at 8 192
+   azimuths, a true step). The test's wedge geometry reads `law_width_at`.
+
+157. **The carried gas steps in azimuth where a clipped anchor meets a held one** (S60, D219, the gate's twelfth
+   follow-up). Past a free end a chain's anchor is held between its neighbours' so the carried azimuth map is
+   monotone (the eighth follow-up); where it is clipped onto a neighbour the two anchors share an azimuth but their
+   images on the solved ring differ, so the stretch between the images has no width there and the carried profile
+   steps: `contrast_at` by 0.089 at worst as the test records it (`ngc_4414`'s drawn leg at 0.7 kpc; 0.05 on its
+   other seeds; 0.0377 at Norma's turn-back; 0.001-0.013 on `ngc_4414`'s central rings; none on the default galaxy -
+   `EXPECTED_CARRIED_PHI_STEPS`; the reviewer read 0.039 at 1.85 kpc on seed 6); the star formation contrast the same; continuous in r, the ring mean exact. **Carried.** Inside
+   the carry's own declaration (its misplaced weight is pinned up to 8 %; the mid-gap rings exist because the carry
+   is approximate); the stellar field is untouched. The mend is named: the two anchors never closer than a fraction
+   of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
+   needs a length no source gives. A test records the largest phi-step per leg beside the fold count.
 
 ---
 

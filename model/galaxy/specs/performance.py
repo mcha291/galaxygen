@@ -37,6 +37,7 @@ evidence (rule B6). ``tools/timings.py`` carries the same term, unlabelled (debt
 from __future__ import annotations
 
 import json
+import math
 import subprocess
 import sys
 import time
@@ -81,7 +82,7 @@ def profile(model: Model, **run_kwargs: Any) -> dict[str, float]:
     return out
 
 
-def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES, layer: bool = True) -> dict[str, Any]:
+def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...] = SAMPLES, layer: bool = True, repeats: int = 1) -> dict[str, Any]:
     """Seconds to materialise 1, 9 and every cell, the layout alone, and the fit against the sample size.
 
     ``samples`` (plus ``n_stars``) are the sizes the whole catalogue is timed at. Two
@@ -98,6 +99,10 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     stars by the star formation law at a point, which costs by the star inside a bar's footprint (the law's
     mean round the ring is taken where each star is), so the two fits draw together; with it off the catalogue
     is the cells' alone.
+
+    ``repeats`` times each size of the sweep that many times and keeps the least (S60, debt #68): a stall of the
+    machine can only lengthen a timing, so the least of a few is the cost and one alone is the cost plus
+    whatever else ran. The catalogue is the same rows every time.
     """
     import numpy as np
 
@@ -122,9 +127,12 @@ def catalogue_cost(model: Model, n_stars: int = SAMPLE, samples: tuple[int, ...]
     sweep: list[list[float]] = []
     realised_cells: list[float] = []
     for n in sorted({*samples, n_stars}):
-        start = time.perf_counter()
-        cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn, constants=constants)
-        sweep.append([float(n), float(cat.size), time.perf_counter() - start])
+        least = math.inf
+        for _ in range(max(1, int(repeats))):
+            start = time.perf_counter()
+            cat = systems.materialise(out.fields, R, t, seed, n, None, migration=churn, constants=constants)
+            least = min(least, time.perf_counter() - start)
+        sweep.append([float(n), float(cat.size), least])
         realised_cells.append(float(len(systems.cell_counts(out.fields["stellar_surface_density"], R, seed, n, None))))
     stars = np.array([s[1] for s in sweep])
     secs = np.array([s[2] for s in sweep])

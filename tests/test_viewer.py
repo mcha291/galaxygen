@@ -369,6 +369,52 @@ def test_the_viewer_logic_holds(tmp_path):
     assert "# fail 0" in proc.stdout and "# pass 0\n" not in proc.stdout, proc.stdout[-2000:]
 
 
+# --- the pins the React viewer's parser is tested on --------------------------
+
+VIEWER_PINS = ROOT / "frontend" / "src" / "workflow" / "pins.live.json"
+VIEWER_PINS_ABOUT = (
+    "The pins of /api/templates, by template, exactly as the route serves them - written by "
+    "`GALAXYGEN_UPDATE_PINS=1 uv run pytest tests/test_viewer.py -k pins`, never by hand, and held to the route by "
+    "that test without the variable. frontend/src/workflow/templates.test.ts reads every one of them through the "
+    "viewer's own parser: a pin the viewer cannot read stops it landing (S59's numbers, S60's named class and "
+    "table did), so a new shape on the wire fails here and then there, not in a picture."
+)
+
+
+def test_the_viewers_copy_of_the_pins_is_what_the_route_serves():
+    """S60 (D219). The React viewer refuses a pin it cannot read, and with it the whole of /api/templates: twice
+    the wire grew a shape (a measured number at S59, a named class and a table at S60) and the viewer stopped
+    landing, seen only when a picture was taken. Its unit tests could not see it: their fixture was written by
+    hand, of the shapes the parser already knew.
+
+    So the viewer's tests read the route's own pins - a copy, ``pins.live.json``, since vitest has no model to
+    ask - and this test holds the copy to the route, as text (JSON, so that ``true`` is not ``1`` and ``30.0``
+    is itself). A pin added, moved or reshaped fails here by name; rewriting the copy with the variable set then
+    puts the new pin in front of the viewer's parser, where a shape it cannot read fails ``npm test``."""
+    served = {t["name"]: t["pins"] for t in service().handle("/api/templates").json()["templates"]}
+    assert served and all(served.values()), "no template serves a pin: this copy would guard nothing"
+    if os.environ.get("GALAXYGEN_UPDATE_PINS") == "1":
+        text = json.dumps({"about": VIEWER_PINS_ABOUT, "pins": served}, ensure_ascii=False, indent=2) + "\n"
+        VIEWER_PINS.write_text(text, encoding="utf-8", newline="\n")
+    copy = json.loads(VIEWER_PINS.read_text(encoding="utf-8"))
+    assert set(copy) == {"about", "pins"} and copy["about"] == VIEWER_PINS_ABOUT
+    text_of = lambda pins: json.dumps(pins, ensure_ascii=False, sort_keys=True)  # noqa: E731
+    moved = sorted(
+        f"{template}.{pin['name']}"
+        for template in served
+        for pin in served[template]
+        if text_of(pin) not in {text_of(p) for p in copy["pins"].get(template, [])}
+    )
+    assert not moved, (
+        f"/api/templates serves pins the viewer's tests have not read: {moved}. Rewrite the copy with "
+        "GALAXYGEN_UPDATE_PINS=1 uv run pytest tests/test_viewer.py -k pins, then run npm --prefix frontend test"
+    )
+    assert text_of(copy["pins"]) == text_of(served), "the viewer's copy holds pins the route no longer serves, or in another order"
+    # And the viewer's test does read the copy: the guard would be idle otherwise.
+    reader = (ROOT / "frontend" / "src" / "workflow" / "templates.test.ts").read_text(encoding="utf-8")
+    assert 'from "./pins.live.json"' in reader, "templates.test.ts no longer reads pins.live.json"
+
+
 def test_the_screenshot_tool_can_find_a_browser_or_says_which_it_wanted():
     """A development instrument, not a gate: CI has no browser and does not need one."""
     import shot

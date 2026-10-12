@@ -38,8 +38,12 @@ BASIC = MODELS.register(
             ("supernovae", "supernovae"),
             ("dust", "dust"),
             ("bar", "bar"),
-            ("arm_phases", "arm_phases"),  # S56 (D215): the layer's stage, the arm modes' phases on texture_seed
             ("pattern", "pattern"),
+            # S60 (D219): the layer's census of arm pieces on texture_seed, laid after the pattern has drawn the
+            # pitch, and the stage that composes the stellar field from it (S56-S59: arm_phases, ahead of pattern).
+            ("arm_pieces", "arm_pieces"),
+            ("stellar_pattern", "stellar_pattern"),
+            ("arm_ring_power", "arm_ring_power"),  # S60 (D219, the gate's fourth follow-up, C): the disclosed check, in its own stage
             ("gas_pattern", "gas_pattern"),
             ("population", "population"),
             ("systems", "systems"),

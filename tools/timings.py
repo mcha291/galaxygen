@@ -56,7 +56,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "29 stage declarations (S55: the layer's cloud_texture; S56: its arm_phases)"),
+    Endpoint("stages", "/api/stages", "", "30 stage declarations (S55: the layer's cloud_texture; S60: its arm_pieces and the stellar_pattern that composes them)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 5 seeds (S55: texture_seed), 1 event list; the pin (S58) is a template's, not offered"),
     Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54); each with its pin, the observed bar class (S58)"),
@@ -69,9 +69,9 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # Since S58 (D217) the bar is a body laid on 1440 cells of each ring inside its reach, normalised on the grid's own
     # cells and averaged over them, and the gas there lies on the bar's lanes (two arcs' distances on the same cells).
     Endpoint("arrays: arm pattern", "/api/arrays", "fields=pattern_density_contrast",
-             "400 x 360, checkpoint 3: five modes and their phases (S56); the bar's body, cell means (S58)"),
+             "400 x 360, checkpoint 3: a census of arm pieces as exact cell means (S60); the bar's body (S58)"),
     Endpoint("arrays: gas pattern", "/api/arrays", "fields=gas_density_contrast",
-             "400 x 360, checkpoint 3 (S51); the steady response solved ring by ring since S57; the bar's lanes (S58)"),
+             "400 x 360, checkpoint 3 (S51); the steady response solved ring by ring since S57, to the pieces since S60; the bar's lanes (S58)"),
     Endpoint("region: one sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "9 of 1024 cells"),
     Endpoint("region: whole disc", "/api/region", "stars=20000", "every cell, the published sample"),
     Endpoint("system: one star", "/api/system", "cell=300&index=0", "one cell, one star's planets"),

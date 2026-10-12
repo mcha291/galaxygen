@@ -106,18 +106,18 @@ def test_a_table_column_names_its_table_and_is_not_a_catalogue_column():
     catalogue. Its domain is ``table``: no rule that picks ``object`` sees it. The table's name is from its own
     closed list, which shares no name with the object classes; it takes no axes, no categories, no composition,
     and - drawn by nothing - no ramp."""
-    assert TABLES == ("arm_segment",) and not set(TABLES) & set(OBJECTS)
-    # The object classes are what they were at S58: the segments are not one of them.
+    assert TABLES == ("arm_piece",) and not set(TABLES) & set(OBJECTS)  # S60 (D219): was ("arm_segment",)
+    # The object classes are what they were at S58: the pieces are not one of them.
     assert OBJECTS == ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")
     d = decl("x", Kind.TABLE_COLUMN)
-    assert (d.kind, d.kind.domain, d.of, d.ramp, d.axes) == (Kind.TABLE_COLUMN, "table", "arm_segment", None, ())
+    assert (d.kind, d.kind.domain, d.of, d.ramp, d.axes) == (Kind.TABLE_COLUMN, "table", "arm_piece", None, ())
     assert decl("x", "table_column").kind is Kind.TABLE_COLUMN
     assert decl("x", Kind.TABLE_COLUMN, unit="rad").unit == "rad"
     for bad in (None, "star", "rock"):
         with pytest.raises(DeclarationError, match="a table column needs of= one of the tables"):
             decl("x", Kind.TABLE_COLUMN, of=bad)
     with pytest.raises(DeclarationError, match="object kinds need of="):
-        decl("x", Kind.COLUMN, of="arm_segment")  # a table is not an object class
+        decl("x", Kind.COLUMN, of="arm_piece")  # a table is not an object class
     with pytest.raises(DeclarationError, match="takes no axes"):
         decl("x", Kind.TABLE_COLUMN, axes=("R",))
     with pytest.raises(DeclarationError, match="not drawn and takes no ramp"):
@@ -127,7 +127,7 @@ def test_a_table_column_names_its_table_and_is_not_a_catalogue_column():
     with pytest.raises(DeclarationError, match="a composed field is a continuous grid field"):
         decl("x", Kind.TABLE_COLUMN, composed=True, neutral=1.0)
     # The table's name is part of the contract, as an object class is.
-    assert d.contract()[3] == "table_column" and d.contract()[5] == "arm_segment"
+    assert d.contract()[3] == "table_column" and d.contract()[5] == "arm_piece"
 
 
 def test_categorical_rules():

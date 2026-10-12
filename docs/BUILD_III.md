@@ -4,7 +4,7 @@
 that day on the owner's word ("please create a plan …") and revised the same
 day on the owner's word — "Fable usage is limited … make sure only work that really benefits from using Fable uses
 that, and push the rest to Opus": every row is now Opus-led, and Fable is called at four named gates (§3).**
-Fourteen board rows, S53–S66. S53 records the owner's answers (§7) in `DECISIONS.md` as D212. Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
+Fourteen board rows, S53–S66, **and a fifteenth since 2026-10-05: Phase P5, the arms as a census of pieces, inserted at S60 on the owner's ruling (D219, §7 rulings 11–12); every later phase runs one session on, to S67.** S53 records the owner's answers (§7) in `DECISIONS.md` as D212. Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
 of `GALAXY_INPUTS.md` its phase names.
 
 Everything here is `[inferred]` design unless tagged. Every source named is `[recall]` and **NEEDS SOURCING**: it is
@@ -108,7 +108,7 @@ applied to a realisation.**
 axis and every scalar that is not a census statistic is bit-identical"; "expected counts per ring are identical
 with the layer on or off; only placements differ"; "no physics stage requires a synthetic field, except the census
 stages". The first two promised a conservation of realised totals that a census drawn cell by cell at a weighted
-expectation does not deliver; the ring-first draw that delivers it is L1's (S60).*
+expectation does not deliver; the ring-first draw that delivers it is L1's (S61).*
 
 ### 1e. Where things live
 
@@ -163,7 +163,7 @@ phase's ruling written out in §5 — **and what cannot be made until something 
 | **G1** | End of Phase R, before its merge | Do the invariants I1–I5, as tested, mean what §1d says? Is anything labelled synthetic that is physics, or the reverse? | Every later phase stands on this interface; a wrong invariant is silent |
 | **G2** | Phase P2, after the reading, before the build | The equations of the steady shock to integrate, the treatment of the sonic point, the fallback where no shock forms, which pattern speed a ring uses when modes differ | The one place the build derives new physics from papers |
 | **G3** | Phase P2, after the build, before its merge | Does the solver reproduce the published profile for the right reason? Are the retired constants' checks honest? | A solver can match one curve and be wrong |
-| **G4** | The audit (S66) | The verdict on the findings list an Opus audit assembles | An audit by the builder's own model is rule B3's "check that takes your own path" |
+| **G4** | The audit (S67) | The verdict on the findings list an Opus audit assembles | An audit by the builder's own model is rule B3's "check that takes your own path" |
 
 **A conditional gate** opens only when an Opus lead hits a stop condition (§3d).
 
@@ -304,7 +304,7 @@ recorded (rows 35 and 37 move to their uniform-placement values and then stay). 
 **Agents:** builder A (primitives, tests, vectors); builder B (provenance, `FieldDecl`, graph, switch); builder C
 (Appendix B's relabels); a reviewer whose findings go into the handoff.
 
-### Phase V5 — light by age in the field (S62) — the owner's item 4, first part
+### Phase V5 — light by age in the field (S63) — the owner's item 4, first part
 
 `/api/render` returns `stars_young`, `stars_middle`, `stars_old`, each through the curves on its own and placed by
 its own weight (the gas contrast, `sfr_modulation`, the stellar contrast), summing to `stars` per ring and filter
@@ -313,7 +313,7 @@ to rounding; the field mode draws the three. No stage changes.
 **Gate:** the closure; the arm–interarm colour difference measured before and after (goal metric); payload and
 timings. **Agents:** builder A (render route and its tests), builder B (viewer).
 
-### Phase V6 — the censuses at whole-galaxy scale (S63)
+### Phase V6 — the censuses at whole-galaxy scale (S64)
 
 - **Clouds as extinction:** the census rasterised by window and level into an opacity the march composites at the
   clouds' height; the ring's diffuse dust reduced by the clouds' share so each ring's dust mass is unchanged.
@@ -427,7 +427,54 @@ Díaz-García et al. 2019), continuous in phase: synthetic. The Milky Way's pins
 maser fits (Reid et al. 2019), the bar's angle — and NGC 4414's (unbarred, flocculent). **Gate:** the pinned arms
 pass through the measured loci; a galaxy without pins is unchanged. **Agents:** one reader, two builders.
 
-### Phase L1 — clustered censuses; young stars near where they formed (S60) — list items 3 and 5
+### Phase P5 — the arms as a census of pieces (S60) — the owner's ruling of 2026-10-05 (D219)
+
+*Inserted after S59.* The frames set beside the goals showed what #138 and #152 had recorded as conflicts: a sum
+of cosine modes on one winding makes many broad, equal, faint arms, holds no arm that could be pinned, and with
+S59's kinks on common rings reads as ripples. The owner was given three ways out — fewer and stronger modes; a
+ridge per arm; arm pieces as a census — and ruled: **"Take C, don't reorder the sessions."**
+
+**Ordered here (the owner).** The stellar arm pattern is built from **arm pieces**: each a ridge along its own
+logarithmic locus, with a start, an extent, a pitch, a width across it and an amplitude along it. A few long
+chains of connected pieces make a grand design; many short ones make a flocculent disc. **The arm-number law keeps
+its place as the budget**: how much arm power a ring carries is P1's law; where on the ring it lies is the
+pieces'. The pieces are the layer's (synthetic on `texture_seed`, each statistic sourced: S59's reading for length
+and pitch, as the sources measure them — per arm; this phase's reading for width, number and class). A template
+may pin its pieces and its arm class: the Milky Way's from the maser fits where they are measured, NGC 4414
+flocculent.
+
+**Ruled at S60's conditional gate (D219; ruling by Fable — the decision holds it whole, this is its outline).**
+- *A piece:* a ridge on its own logarithmic locus (start, pitch, azimuthal extent), a Gaussian across it of
+  FWHM(R) = 0.53 h (0.27 + 0.73 R/(2h)), h the checkpoint-1 scale length; flat along it and tapered over one
+  width at each end (a declared placeholder). *A chain:* pieces joined end to start on S59's draws, per arm; its
+  length normal, 273° ± 143° or 244° ± 131°, never under 90°.
+- *Class, derived, no draw:* barred, two chains from the bar's ends and more wherever the law's power-weighted arm
+  number n(R) exceeds the chains crossing a ring; unbarred, chains by n(R) alone; **flocculent by pin only**
+  (`arm_class`): single pieces of 37°–105°, n(R) of them crossing each ring.
+- *The budget, in expectation:* one amplitude B(R) for the pieces crossing a ring, set so that the expected ring
+  variance equals ½ Σ A_m(R)², analytically, from the census's statistics; never a division by a realised power;
+  positivity by P1's saturation. The split by arm number is a disclosed check of the composed field.
+- *The forcing:* piece by piece and Fourier term by term, × |m|/(X (|sin p_j| + |m| h_z/R)): each piece's own pitch
+  and the exponential layer's exact thickness factor, h_z the checkpoint-1 scale length over 7.3. ε keeps the
+  disc's pitch.
+- *The gas between rings:* a ring's profile carried to a point along the pieces' loci, its error against a direct
+  solve measured and pinned; over 1 % on a star-forming gap, the ring step is halved there.
+- *Retired:* the modes' phases and `arm_phases`, the common winding and `arm_segment`. *Kept:* the amplitudes (the
+  budget), the pitch, the bar. A table `arm_piece`. Layer off bit for bit.
+- *The Milky Way's pins:* Reid et al. 2019's four major arms and the Local arm as chains over their measured
+  ranges, continued by drawn pieces; no pinned chain tied to the bar.
+
+**Gate (as ruled):** ring means 1 to 1e-12; the expected ring power equal to the budget to 1e-10 and the realised
+power published, its scatter pinned; the minimum ≥ 0 on every suite seed by the saturation only; layer off
+bit-identical; I1–I5; the gas converges under D216's criterion or raises; the gas map's mid-gap error pinned; the
+pinned loci within 0.1 width by construction, **and the gas's and young stars' crest against the maser loci
+within the masers' σ as a disclosed check with its null**; the thickness factor's hand test; the m-split check;
+the goal metrics read beside the render's.
+
+**Agents:** two readers; a model builder; re-pin builders of their own once the model is final; a viewer builder;
+a reviewer.
+
+### Phase L1 — clustered censuses; young stars near where they formed (S61) — list items 3 and 5
 
 **Reading:** two-point correlation functions of young clusters and molecular clouds, and how they flatten with
 age; association sizes against age.
@@ -448,9 +495,16 @@ fixed allocation, without materialising the ring's other cells' objects.
 **Gate:** the census's measured correlation function returns the sourced slope over the sourced range; I2; D60's
 per-region tests; the layer-off acceptance table bit-identical. After the ring-first draw: the realised ring totals identical on and off.
 
+**Added 2026-10-05 (D219; the reading is `READING_CLUSTERING.md`, taken at S59's close).** Put to L1's gate: whether
+`census_clustering` is a field of its own or the coarse scales of L2's `gas_fluctuation` — one field, so that
+clouds stand where the gas is dense and young stars are displaced from it by their age (clusters leave their
+clouds in 2–6 Myr and about 200 pc as read), and the dust and the star complexes of a flocculent disc alternate
+instead of ignoring each other. The census's correlation is measured as the sources measure it — uniform randoms
+in a footprint — on the finished census, arms included: no source measures it against an arm-modulated disc.
+
 **Agents:** one reader; builders for the field and clouds, the bright stars, the re-pins.
 
-### Phase L2 — structure between the clouds; spurs (S61) — list items 4 and 8, second half
+### Phase L2 — structure between the clouds; spurs (S62) — list items 4 and 8, second half
 
 **Reading:** column-density power spectra of atomic gas and dust in nearby discs and their break at the disc's
 thickness; log-normal column widths against Mach number; feather spacing.
@@ -464,21 +518,27 @@ derived from the ridge's Jeans length, phases synthetic.
 
 **Gate:** unit mean per cell; the evaluator's measured spectrum; the vectors; I1–I3.
 
+**Added 2026-10-05 (D219).** Put to L2's gate: whether the fluctuation may take a ridged, filamentary form beyond
+its sourced spectrum and shear — a choice of look with no measured statistic, declared as one if it goes in.
+The spurs attach to P5's pieces.
+
 **Agents:** two readers; builder A (evaluator, vectors); builder B (spurs).
 
-### Phase V7 — the layer in the viewer (S64)
+### Phase V7 — the layer in the viewer (S65)
 
 The GLSL twin of the noise (matching the vectors to 1e-5); the diffuse dust modulated per pixel in the march; the
-spurs; the bar's body and lanes; the "physics only" switch. **Gate:** the vectors; the frame-time readout; each
+spurs; the bar's body and lanes; the "physics only" switch. **Added 2026-10-05 (D219):** the young starlight of
+V5 — unresolved, and most of what a blue-white complex is — modulated per pixel by the clustering field, its
+finest scales dropped with age as L1 rules for the bright catalogue; unit mean per cell keeps each ring's light. **Gate:** the vectors; the frame-time readout; each
 ring's dust on screen unchanged by the layer (`__galaxygenFrameSum` on a dust-only frame). **Agents:** two builders.
 
-### Phase V8 — the display defaults, the instrument, the goal captures (S65)
+### Phase V8 — the display defaults, the instrument, the goal captures (S66)
 
 T1 per template, from the owner's tuning. *Ruled here (T9):* a point's sprite is scaled by the template's distance
 and the instrument's pixel scale, both carried by the template. NGC 4414's instrument look; committed captures of
 both templates beside their goals; the goal metrics' final table against Phase 0's baseline. **Agents:** one builder.
 
-### Audit V (S66) — **gate G4**
+### Audit V (S67) — **gate G4**
 
 Opus agents, blind to the builders' reports: every citation entered since S51 read again; every synthetic field's
 conservation and statistic re-measured; I1–I5 re-derived, not re-run; a picture traced feature by feature to a
@@ -498,15 +558,16 @@ The lead assembles the findings. **Then G4:** Fable's verdict on each, and the f
 | **57** | P2 | Pattern speeds; the shock per ring; #81, #129, #131 re-ruled | 56 | Opus | **G2, G3** |
 | **58** | P3 | The bar's body, its absence, its lanes | 56 | Opus | — |
 | **59** | P4 | Pitch segments; the templates' pins | 56, 58 | Opus | — |
-| **60** | L1 | Clustered censuses; young stars near birth | 55 | Opus | — |
-| **61** | L2 | The gas fluctuation field and its twin's vectors; spurs | 55, 57 | Opus | — |
-| **62** | V5 | The field's light by age | the model phases (the owner's order) | Opus | — |
-| **63** | V6 | Clouds, HII knots, clusters and bright stars at whole-galaxy scale | 62 | Opus | — |
-| **64** | V7 | The layer in the shader; the physics-only switch | 61, 63 | Opus | — |
-| **65** | V8 | Display defaults, instrument look, goal captures | 64, the owner's tuning | Opus | — |
-| **66** | — | Audit V | 53–65 | Opus | **G4** |
+| **60** | P5 | The arms as a census of pieces; the forcing corrected for the disc's thickness (inserted 2026-10-05, D219) | 59 | Opus | a conditional gate |
+| **61** | L1 | Clustered censuses; young stars near birth | 55, 60 | Opus | — |
+| **62** | L2 | The gas fluctuation field and its twin's vectors; spurs | 55, 57, 60 | Opus | — |
+| **63** | V5 | The field's light by age | the model phases (the owner's order) | Opus | — |
+| **64** | V6 | Clouds, HII knots, clusters and bright stars at whole-galaxy scale | 63 | Opus | — |
+| **65** | V7 | The layer in the shader; the physics-only switch; the young light by the clustering field | 62, 64 | Opus | — |
+| **66** | V8 | Display defaults, instrument look, goal captures | 65, the owner's tuning | Opus | — |
+| **67** | — | Audit V | 53–66 | Opus | **G4** |
 
-55 → 56 → {57, 58} → 59 is the hard chain on the model side; 60 and 61 stand on 55's primitives. **The model's
+55 → 56 → {57, 58} → 59 → 60 is the hard chain on the model side; 61 and 62 stand on 55's primitives and on 60's arms. **The model's
 phases come first and the viewer's follow, on the owner's word (§7, ruling 9)**; §5 keeps the phases in the order
 they were written, and this table is the order they run. **Fable's whole share is four short turns** (G1–G4), plus
 any conditional gate a stop condition opens.
@@ -525,6 +586,8 @@ any conditional gate a stop condition opens.
 | 8 | NGC 4414's checks: a small table of blind windows, or display only | **"yes, do 5"**: five checks, fitted apart (Phase T) |
 | 9 | Pictures first (V5, V6 before Phase R)? | **"no, lets finish model part first"**: §6 reordered |
 | 10 | The dependency rule stays numpy-only | **"ok"**: the runtime stays numpy-only; two development-only tools are allowed — Pillow, to read pictures in `goal_metrics`, and Playwright, for the picture test |
+| 11 | *(2026-10-05, after S59; D219)* The arms: fewer and stronger modes (A), a ridge per arm (B), or arm pieces as a census with the arm-number law as each ring's budget (C) | **"Take C"**: Phase P5, inserted at S60 |
+| 12 | *(2026-10-05; D219)* The picture-facing phases ahead of L1 and L2? | **"don't reorder the sessions"**: the order stands; P5 goes in ahead of L1 (the lead's reading of the two rulings together, told to the owner) and every later phase runs one session on |
 
 ---
 

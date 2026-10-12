@@ -14,6 +14,7 @@ input vector in GALAXY_PLAN.md §8 ``[verified: those sections]``. The plan's
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -43,6 +44,10 @@ UNSET = _Unset()
 # (True or False) has no range. A pin that is a measured number is **held to the range of what it replaces**
 # (S59, D218, the gate's follow-up, item 7): it declares lo and hi, and a value outside them is refused where a
 # template is validated and where a run resolves its inputs - not a viewer's range, which a pin has none of.
+# Since S60 (D219) a class may have more than two values - the pin then names its closed list (``classes``) and is
+# one of them, a text - and a pin may be a **table**: rows of a measured structure in the source's own columns
+# (``columns``: each a name and a unit, or a name alone for a column of names). Four shapes, told apart by the
+# declaration (``Input.shape``): True or False; one of ``classes``; a number in ``unit``; rows of ``columns``.
 INPUT_KINDS: tuple[str, ...] = ("control", "seed", "events", "pin")
 
 # Ruling 6: ceiling 12 [verified: GALAXY_INPUTS.md §11]. Counts controls only;
@@ -71,6 +76,12 @@ class Input:
     checkpoint_hypothesis: int | None = None  # GALAXY_PLAN.md §3 grouping; graph.py checks it
     default_owner: str | None = None  # session that owes the default, when UNSET
     hi_open: bool = False  # a numeric pin whose range does not include hi itself (an angle of one turn: 0 <= x < 360)
+    # S60 (D219): a pin that is a named class - its closed list of values - and a pin that is a table - its columns,
+    # each (name, unit) with the unit None for a column of names - with what its rows must satisfy beyond their
+    # types (``defect`` returns the rows' first defect in words, or None).
+    classes: tuple[str, ...] = ()
+    columns: tuple[tuple[str, str | None], ...] = ()
+    defect: Callable[[tuple], str | None] | None = None
 
     def __post_init__(self) -> None:
         if not IDENT.match(self.name):
@@ -117,6 +128,28 @@ class Input:
             )
         if self.hi_open and not (self.kind == "pin" and self.unit is not None):
             raise RegistryError(f"input {self.name}: only a numeric pin's range may leave its upper end out")
+        object.__setattr__(self, "classes", tuple(self.classes))
+        object.__setattr__(self, "columns", tuple((str(n), u) for n, u in self.columns))
+        if (self.classes or self.columns or self.defect is not None) and self.kind != "pin":
+            raise RegistryError(f"input {self.name}: only a pin names classes or columns")
+        if self.classes and (
+            self.unit is not None or self.columns or len(set(self.classes)) != len(self.classes)
+            or len(self.classes) < 2 or not all(isinstance(c, str) and IDENT.match(c) for c in self.classes)
+        ):
+            raise RegistryError(f"input {self.name}: a named class pin has two or more distinct class names and no unit")
+        if self.columns:
+            if self.unit is not None or len({n for n, _ in self.columns}) != len(self.columns):
+                raise RegistryError(f"input {self.name}: a table pin has distinctly named columns and no unit of its own")
+            for column, unit in self.columns:
+                if not IDENT.match(column):
+                    raise RegistryError(f"input {self.name}: column name {column!r} must match {IDENT.pattern}")
+                if unit is not None:
+                    try:
+                        _unit(unit)
+                    except UnknownUnit as e:
+                        raise RegistryError(f"input {self.name}: column {column}: {e}") from None
+        if self.defect is not None and not self.columns:
+            raise RegistryError(f"input {self.name}: only a table pin states what its rows must satisfy")
         if (self.default is UNSET) != (self.default_owner is not None):
             raise RegistryError(
                 f"input {self.name}: default_owner is required exactly when the default is UNSET"
@@ -140,6 +173,60 @@ class Input:
     def range_text(self) -> str:
         """The range in words, for a refusal: "1 to 60", or "0 up to, not including, 360"."""
         return f"{self.lo:g} up to, not including, {self.hi:g}" if self.hi_open else f"{self.lo:g} to {self.hi:g}"
+
+    @property
+    def shape(self) -> str:
+        """What a pin's value is (S60, D219): ``class`` (True or False), ``named`` (one of ``classes``), ``number``
+        (in ``unit``) or ``table`` (rows of ``columns``). Not asked of an input that is no pin."""
+        if self.kind != "pin":
+            raise RegistryError(f"input {self.name} is no pin")
+        return "table" if self.columns else "named" if self.classes else "class" if self.unit is None else "number"
+
+    def pinned(self, value: object) -> object:
+        """A pin's value as a run holds it, or a ``RegistryError`` saying what the pin is: True or False; one of
+        the named classes; a finite number inside the range of what it replaces; or the rows of a table - a tuple
+        of tuples, each cell a name where its column has no unit and a finite number where it has one, the rows
+        satisfying what the declaration asks of them (``defect``)."""
+        shape = self.shape
+        if shape == "class":
+            if not isinstance(value, bool):
+                raise RegistryError(f"pin {self.name!r} is True or False (or not given), got {value!r}")
+            return value
+        if shape == "named":
+            if not isinstance(value, str) or value not in self.classes:
+                raise RegistryError(f"pin {self.name!r} is one of {list(self.classes)} (or not given), got {value!r}")
+            return value
+        if shape == "number":
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise RegistryError(f"pin {self.name!r} is a finite number in {self.unit} (or not given), got {value!r}")
+            if not self.admits(float(value)):
+                raise RegistryError(
+                    f"pin {self.name!r} is held to the range of what it replaces, {self.range_text} {self.unit}; got {value!r}"
+                )
+            return float(value)
+        names = [n for n, _ in self.columns]
+        if not isinstance(value, (tuple, list)) or not value:
+            raise RegistryError(f"pin {self.name!r} is a table, one or more rows of {names} (or not given), got {value!r}")
+        rows = []
+        for row in value:
+            if not isinstance(row, (tuple, list)) or len(row) != len(self.columns):
+                raise RegistryError(f"pin {self.name!r}: a row holds {names}, got {row!r}")
+            cells: list[object] = []
+            for cell, (column, unit) in zip(row, self.columns):
+                if unit is None:
+                    if not isinstance(cell, str) or not cell.strip():
+                        raise RegistryError(f"pin {self.name!r}: column {column} is a name, got {cell!r}")
+                    cells.append(cell)
+                else:
+                    if isinstance(cell, bool) or not isinstance(cell, (int, float)) or not math.isfinite(cell):
+                        raise RegistryError(f"pin {self.name!r}: column {column} is a finite number in {unit}, got {cell!r}")
+                    cells.append(float(cell))
+            rows.append(tuple(cells))
+        table = tuple(rows)
+        fault = None if self.defect is None else self.defect(table)
+        if fault:
+            raise RegistryError(f"pin {self.name!r}: {fault}")
+        return table
 
     def admits(self, value: float) -> bool:
         """Whether ``value`` lies in the declared range (both ends included, but ``hi`` where ``hi_open``).
@@ -280,6 +367,40 @@ class Registry(Generic[T]):
 
     def __contains__(self, name: object) -> bool:
         return name in self._items
+
+
+# --- the two pins of the arms' pieces (S60, D219 items 3 and 8) ---------------
+
+# The arm classes, in the order the published ``arm_class`` holds them: the two the model derives - a barred disc
+# is a grand design, an unbarred one multi-armed - and the one a template alone can state.
+ARM_CLASSES: tuple[str, ...] = ("grand_design", "multi_armed", "flocculent")
+# A measured arm as its source fits it: a logarithmic spiral with one kink over a range of azimuth β from the
+# centre, β = 0 towards the Sun and increasing with the disc's rotation: ln(R / radius_kink) =
+# −(β − beta_kink) tan ψ, ψ = pitch_below for β ≤ beta_kink and pitch_above past it.
+ARM_PIECE_COLUMNS: tuple[tuple[str, str | None], ...] = (
+    ("arm", None), ("beta_from", "deg"), ("beta_to", "deg"), ("beta_kink", "deg"), ("radius_kink", "kpc"),
+    ("pitch_below", "deg"), ("pitch_above", "deg"),
+)
+
+
+def arm_rows_defect(rows: tuple) -> str | None:
+    """The first defect of a table of measured arms (``ARM_PIECE_COLUMNS``), in words, or None: every arm named
+    once; a range of azimuth that runs forward, within a turn of the Sun either way, its kink inside it; a
+    positive kink radius; two pitches that are not zero and under 90 degrees either way."""
+    names = [row[0] for row in rows]
+    if len(set(names)) != len(names):
+        return f"an arm is named twice among {names}"
+    for arm, lo, hi, kink, radius, below, above in rows:
+        if not (-360.0 <= lo < hi <= 360.0):
+            return f"{arm}: the azimuths run from beta_from to a larger beta_to, within a turn of the Sun; got {lo!r} to {hi!r}"
+        if not lo <= kink <= hi:
+            return f"{arm}: the kink lies inside the range of azimuth; got {kink!r} outside {lo!r} to {hi!r}"
+        if not radius > 0.0:
+            return f"{arm}: the kink's radius is positive; got {radius!r}"
+        for pitch in (below, above):
+            if not 0.0 < abs(pitch) < 90.0:
+                return f"{arm}: a pitch is not zero and under 90 degrees either way; got {pitch!r}"
+    return None
 
 
 # --- the closed input vector -------------------------------------------------
@@ -565,6 +686,48 @@ _INPUTS: tuple[Input, ...] = (
         lo=0.0,
         hi=360.0,
         hi_open=True,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "arm_class",
+        "Arm class (a template's pin)",
+        "pin",
+        "A pin, not a control (S60, D219 item 3): the observed arm class of one named galaxy, with its source, "
+        "stated by a template in place of the class the model derives from the bar - a barred disc is a grand "
+        "design, an unbarred one multi-armed, with no draw. One of three names. The class decides how the "
+        "randomness layer lays the arms' pieces: long chains of pieces in a grand design (and two of them from "
+        "the bar's ends) or a multi-armed disc, and single short pieces in a flocculent one. **A flocculent disc "
+        "comes from this pin alone**: the model derives none, though half of observed spirals are - a recorded "
+        "miss; a draw of the class from the measured frequencies is not made. The pinned class replaces the "
+        "derived one in the published arm_class and touches nothing else of the galaxy: no amplitude, no pitch, "
+        "no budget of arm power. No request offers it: the API takes it from template=<name> alone, it has no "
+        "default, and it does not count against the ceiling.",
+        default=None,
+        classes=ARM_CLASSES,
+        checkpoint_hypothesis=3,
+    ),
+    Input(
+        "arm_pieces",
+        "Measured arm pieces (a template's pin)",
+        "pin",
+        "A pin, not a control (S60, D219 item 8): the mapped arms of one named galaxy that has an observer inside "
+        "it, as a table in the source's own form - one row an arm, a logarithmic spiral with one kink, fitted "
+        "over a range of azimuth from the galaxy's centre measured from the Sun in the direction the disc "
+        "turns: the radius falls with that azimuth as the exponential of minus the azimuth from the kink times "
+        "the tangent of the pitch, the pitch one value up to the kink and another past it. Each row becomes a "
+        "chain of one or two pinned arm pieces exactly on that locus - two where the two pitches differ - in "
+        "place of chains the randomness layer would draw there; beyond its measured range a pinned chain is "
+        "continued by drawn pieces to a drawn length, and where no measured arm crosses a ring the layer's own "
+        "chains fill it. The rows are placed by the Sun's azimuth, so the pin needs the pinned angle of the bar "
+        "to the Sun-centre line and a bar, and is refused without them. Only where the arms are is pinned: their "
+        "widths are the model's width law and their amplitude the budget's, every pinned arm alike. A row's "
+        "azimuths lie within a turn of the Sun, its kink inside its range, its kink radius is positive and its "
+        "pitches are not zero and under 90 degrees either way; a row that is not so is refused, by a template "
+        "and by a run. No request offers it: the API takes it from template=<name> alone, it has no default, and "
+        "it does not count against the ceiling.",
+        default=None,
+        columns=ARM_PIECE_COLUMNS,
+        defect=arm_rows_defect,
         checkpoint_hypothesis=3,
     ),
 )

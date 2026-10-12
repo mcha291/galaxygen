@@ -8,8 +8,9 @@ P5: the #69 gate extended to the object classes. Every cloud, cluster and remnan
 and every not-drawn column's declaration carries the object-class twin of rule D4's sentence ("Not drawn by the
 viewer", D191) saying why - it reaches the picture through what it sets, nothing in a filter's image sees it, or
 it is owed (debts #115, #116). A new object column fails this test until it is placed in one list or the other, and
-a column moved to DRAWN must lose the sentence (its module's NOT_DRAWN_WHY entry). S59 (D218): the winding's seeded
-segments are a table's columns (domain `table`), not an object class's, so this inventory does not hold them.
+a column moved to DRAWN must lose the sentence (its module's NOT_DRAWN_WHY entry). S59 (D218): the layer's seeded
+table (the winding's segments then; the census of arm pieces since S60, D219) is a table's columns (domain `table`),
+not an object class's, so this inventory does not hold them.
 
 D191's measurements, pinned: the ramp's painting (L_bol through a blackbody's share at the colour temperature) puts
 about twice the population's own light through the viewer's optical filters (#114), and the clusters carry a
@@ -91,7 +92,9 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     # S59 (D218): was 0.2523 - the arms' winding is laid in seeded segments, so the gas is turned round each ring and
     # the clouds fall in other cells: another draw of the coarse grid's census again (+4.8 % on S58's reading,
     # 0.2489, which sat inside this pin's 2 %; 1.1 of the same spread). disc_luminosity has not moved, to the bit.
-    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2608, rel=2e-2)
+    # S60 (D219): the arms are a census of arm pieces, so the clouds fall in other cells again: 0.2531 on the final
+    # model (S60 fourth pass: was 0.2608; -3.0 %, inside the same spread).
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2531, rel=2e-2)
     dissolved = state == 2
     assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
 
@@ -138,11 +141,14 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
     # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
     assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 37
-    # S59 (D218): the winding's two segment columns are a table's, not an object class's - D191's rule does not
-    # bind them, and they say in plain words that the viewer does not show them.
-    segments = [f for f in fields if f.get("of") == "arm_segment"]
+    # S59 (D218): the layer's table's columns are a table's, not an object class's - D191's rule does not bind
+    # them, and they say in plain words that the viewer does not show them.
     # S59 (D218 follow-up): was ["arm_segment_extent", "arm_segment_pitch_residual"] - the second column is the
     # unit-normal deviate since the gate's follow-up (a segment's pitch is relative to the disc's): a rename, the
     # same table.
-    assert sorted(f["name"] for f in segments) == ["arm_segment_extent", "arm_segment_pitch_deviate"]
-    assert all(f["domain"] == "table" and "Not drawn by the viewer" not in f["about"] and "not shown by the viewer" in f["about"] for f in segments)
+    # S60 (D219 item 7): was the winding's two columns of `arm_segment` - the table is the census of arm pieces,
+    # `arm_piece`, eight columns.
+    pieces = [f for f in fields if f.get("of") == "arm_piece"]
+    assert sorted(f["name"] for f in pieces) == ["arm_piece_chain", "arm_piece_extent", "arm_piece_join", "arm_piece_order", "arm_piece_pinned",
+                                                 "arm_piece_pitch", "arm_piece_start_azimuth", "arm_piece_start_radius"]
+    assert all(f["domain"] == "table" and "Not drawn by the viewer" not in f["about"] and "not shown by the viewer" in f["about"] for f in pieces)

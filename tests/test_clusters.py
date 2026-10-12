@@ -218,13 +218,18 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # ionizing clusters are of 2.6e5, 1.8e5 and 1.6e5 Msun, 1.0-1.9 Myr old, at 8.0, 5.5 and 6.2 kpc (2.3, 1.7 and
     # 1.4 % of the census's Q; the first pass's three were of 1.9-2.6e5 Msun). Q's own noise is 5.9 %, the tolerance
     # 0.16.
-    # S59 (D218 follow-up): was 0.9825; first pass 1.0442. S58 (D217): was 0.9701; S57 (D216): was 0.9870; S56 (D215): was 1.0382; S51 (D210): was 1.0088
-    assert ratio == pytest.approx(1.0021, abs=0.0005)
+    # S60 (D219): the arms are a census of pieces, so the gas's response and the clouds are another pattern's - another
+    # Poisson draw of the census (12 916 clusters where S59 drew 12 840): the whole-disc Q reads 0.9939 of the young
+    # light, -0.8 % on S59's close, and the clusters' mass +0.7 %. The three most ionizing clusters are S59's three
+    # (2.6e5, 1.8e5 and 1.6e5 Msun, 1.0-1.9 Myr old; 2.4, 1.7 and 1.4 % of the census's Q). Q's own noise is 5.7 %,
+    # the tolerance 0.16.
+    # S60 (D219): was 1.0021. S59 (D218 follow-up): was 0.9825; first pass 1.0442. S58 (D217): was 0.9701; S57 (D216): was 0.9870; S56 (D215): was 1.0382; S51 (D210): was 1.0088
+    assert ratio == pytest.approx(0.9939, abs=0.0005)
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
-    # S59 (D218 follow-up): was 1.010; first pass 1.035. S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
-    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.008, abs=0.001)
-    # S59 (D218 follow-up): was 1.000; first pass 1.023. S58 (D217): was 1.002; S57 (D216): was 0.999; S56 (D215): was 1.053; S51 (D210): was 1.022
-    assert expected / light_young == pytest.approx(1.001, abs=0.001)
+    # S60 (D219): was 1.008. S59 (D218 follow-up): was 1.010; first pass 1.035. S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
+    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.015, abs=0.001)
+    # S60 (D219): was 1.001. S59 (D218 follow-up): was 1.000; first pass 1.023. S58 (D217): was 1.002; S57 (D216): was 0.999; S56 (D215): was 1.053; S51 (D210): was 1.022
+    assert expected / light_young == pytest.approx(1.005, abs=0.001)
     # The efficiency the census used, against the sources it was chosen against (its about line).
     assert F["cluster_formation_efficiency"] == pytest.approx(0.02058, abs=0.0001)
     assert 0.005 < F["cluster_formation_efficiency"] < 0.08
@@ -240,7 +245,9 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # massive clusters; the wind's own noise, sqrt(sum W^2) / sum W, is 7.4 %)
     # S59 (D218 follow-up): was 5.246e6; first pass 5.622e6 (a segment's pitch relative to the disc's: another draw
     # of the census again, +1.8 % on S58's close and -5.0 % on the first pass's; the wind's own noise is 6.9 %)
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.341e6, rel=0.01)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)
+    # S60 (D219): was 5.341e6 (the arms a census of pieces: another draw of the census, -1.0 %; the wind's own noise
+    # is 6.7 %)
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.286e6, rel=0.01)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)
 
 
 def test_the_census_on_the_default_grid(default):
@@ -255,7 +262,9 @@ def test_the_census_on_the_default_grid(default):
     # other cells: another draw of the census; the expected count, cloud_count_total, is the same to rounding)
     # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's: the winding is
     # another, and the census another draw again)
-    assert mass.size == 12840 == int(_hosts(F).sum())
+    # S60 (D219): was 12840 (the arms a census of pieces: the gas's response is another pattern's, and the census
+    # another draw)
+    assert mass.size == 12916 == int(_hosts(F).sum())
     assert mass.min() == pytest.approx(9.289, rel=1e-3) and mass.max() == pytest.approx(2.652e5, rel=1e-3)
     # S51 (D210): median was 763.06 (763.42 then, inside the rel 1e-3), sum was 3.613e7
     # S56 (D215): median was 763.06 (763.42), sum was 3.733e7
@@ -263,11 +272,13 @@ def test_the_census_on_the_default_grid(default):
     # S58 (D217): median was 762.35 (the sum 3.547e7 still, inside the rel 1e-3)
     # S59 (D218): median was 764.61, sum was 3.547e7 (the winding in seeded segments: another draw of the census)
     # S59 (D218 follow-up): median was 764.61, sum was 3.547e7; first pass 761.14 and 3.633e7
-    assert np.median(mass) == pytest.approx(760.29, rel=1e-3) and mass.sum() == pytest.approx(3.537e7, rel=1e-3)
+    # S60 (D219): median was 760.29 (760.25 now, inside the rel 1e-3), sum was 3.537e7 (the arms a census of pieces)
+    assert np.median(mass) == pytest.approx(760.29, rel=1e-3) and mass.sum() == pytest.approx(3.563e7, rel=1e-3)
     bound = np.asarray(F["cluster_bound"])
     # S57 (D216): was [906, 5947, 5961]; S56 (D215): was [890, 5982, 6058]; S51 (D210): was [901, 5951, 6008]
     # S59 (D218 follow-up): was [891, 5960, 5975]; first pass [922, 5980, 5937]. S58 (D217): was [894, 5946, 5989]
-    assert np.bincount(bound, minlength=3).tolist() == [906, 5992, 5942]
+    # S60 (D219): was [906, 5992, 5942] (the arms a census of pieces, another draw)
+    assert np.bincount(bound, minlength=3).tolist() == [944, 5970, 6002]
     # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 4 clusters are above it,
     # holding 2.7% of the mass (S59, D218 follow-up: was 3 holding 2.0% at S58's close and 5 holding 3.3% on the
     # first pass's draw; S56, D215: was 5 holding 3.1%; S51, D210: was 4 holding 2.7%; S57, D216: 3 and 2.0%

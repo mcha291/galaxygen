@@ -13,8 +13,8 @@ stand in for, and evaluable at a point.
                                     layer's switch is read (``run(..., layer=False)``: the neutral values)
     galaxy/layer/cloud_texture.py   the first realisation stage (S55, D214): the four cloud columns and the shape
                                     of the cloud-interior noise, synthetic
-    galaxy/layer/arm_phases.py      the arm modes' phases (S56, D215): five synthetic scalars on ``texture_seed``,
-                                    its first reader; NaN and undrawn with the layer off
+    galaxy/layer/arm_pieces.py      the census of arm pieces (S60, D219): the table ``arm_piece`` on ``texture_seed``,
+                                    no row with the layer off (it replaced S56's ``arm_phases``, the modes' phases)
 
 A realisation stage registers with the rest when ``galaxy.stages`` is imported. Nothing is imported here: a reader
 imports ``galaxy.layer.noise`` or ``galaxy.layer.compose`` by name.

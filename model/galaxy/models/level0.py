@@ -883,7 +883,119 @@ LEVEL0: dict[str, Constant] = {
         "15 deg, and at low pitch it wound a third of discs net leading (34 % at 2 deg, 14 % at 5 deg) "
         "against a disc whose rotation, lanes and gas response are trailing (DECISIONS.md D218, the follow-up "
         "to the gate, item 2). No correlation between consecutive segments and no arm-to-arm term is put in: "
-        "a common winding has neither (a debt). No mean winding rate is enforced: none is sourced.",
+        "a common winding has neither (a debt). No mean winding rate is enforced: none is sourced. **Since S60 "
+        "(D219) the five numbers above are drawn per arm, as the sources measure them**: each piece of a chain "
+        "of arm pieces takes its extent and its pitch from them; the common winding they were first built for "
+        "is retired.",
+    ),
+    # --- the arms as a census of pieces (S60, BUILD_III Phase P5; DECISIONS.md D219) ------------------------
+    "ARM_PIECE_WIDTH": Constant(
+        0.53,
+        "dimensionless",
+        "Full width at half maximum of an arm across itself, in disc scale lengths, at mid-arm: (0.53 +/- 0.04) "
+        "h = (0.12 +/- 0.01) r25 on average over 29 S4G grand-design and multi-armed galaxies at 3.6 micron, each "
+        "arm its own component of a 2-D decomposition, the width that of a radial slice at mid-arm; per galaxy "
+        "0.24 to 1.18 h [verified: Chugunov et al. 2024, arXiv:2311.01848, Sect. 6.3, Fig. 12, abstract and "
+        "Table 4; docs/READING_ARM_PIECES.md Part A 1a; DECISIONS.md D219 item 1: 'the sample measured in the "
+        "model's own unit']. The old stars' width: the young tracers' is half of it or less. Named alternatives "
+        "that disagree by up to two: the optical 0.12 r25 of Savchenko et al. 2020 and the 20-40 degrees in "
+        "azimuth of Seigar & James 1998. No per-galaxy and no per-piece draw of it: the 0.24-1.18 h and the "
+        "10-37 % inside a galaxy are ranges, not distributions (a debt). Coverage: no flocculent galaxy.",
+    ),
+    "ARM_PIECE_WIDTH_ZERO_POINT": Constant(
+        0.27,
+        "dimensionless",
+        "The share of an arm's mid-arm width that does not grow with radius: the width is linear in radius, "
+        "w = w1 r + w0, and the zero point's share |w0|/w(r_avg) has a median of 19 % (long arms, the disc "
+        "removed as the 0.1 quantile), 34 % (the decomposition's disc removed) and 35 % (short arms "
+        "included) [verified: Chugunov, Marchuk & Savchenko 2025, arXiv:2504.11642, Sect. 3.3; "
+        "docs/READING_ARM_PIECES.md Part A 1a]. 0.27 is the middle of 19-34 % (DECISIONS.md D219 item 1). "
+        "So the width at a radius is the mid-arm width times this number plus one minus it times the radius "
+        "over the mid-arm radius. Coverage: 19 S4G galaxies, none flocculent.",
+    ),
+    "ARM_PIECE_WIDTH_RADIUS": Constant(
+        2.0,
+        "dimensionless",
+        "The radius, in disc scale lengths, at which an arm's width is its mid-arm width: the ruling's "
+        "FWHM(R) = 0.53 h (0.27 + 0.73 R/(2 h)) puts mid-arm at two scale lengths [verified: DECISIONS.md D219 "
+        "item 1] - where the arms' share of the disc's light peaks, at 1-2 h [verified: Chugunov et al. 2024, "
+        "Sect. 6.5; docs/READING_ARM_PIECES.md Part A, 'What a model could adopt', WHERE THEY START]. The "
+        "sources print no mid-arm radius in scale lengths: this is the ruling's [inferred].",
+    ),
+    "ARM_CHAIN_LENGTH_GRAND_DESIGN": Constant(
+        273.0,
+        "deg",
+        "Mean azimuthal length of a whole arm in a grand-design galaxy, counting the arms of 90 degrees or "
+        "more: 273 deg (sd 143), 17 arms in 6 galaxies at 3.6 micron [verified: Chugunov, Marchuk & Savchenko "
+        "2025, arXiv:2504.11642, Sect. 3; docs/READING_ARM_PIECES.md Part A 3, Length]. The mean of the normal "
+        "a chain's total length is drawn from in a barred disc (DECISIONS.md D219 items 2-3: the class is "
+        "derived with no draw, barred the grand design). Named alternative: the m = 2 pattern's median 257 deg, "
+        "89-477, of Kendall et al. 2015.",
+    ),
+    "ARM_CHAIN_LENGTH_GRAND_DESIGN_SCATTER": Constant(
+        143.0,
+        "deg",
+        "Standard deviation of a whole arm's azimuthal length in grand designs [verified: Chugunov, Marchuk & "
+        "Savchenko 2025, Sect. 3: mean 273 deg (sd 143); docs/READING_ARM_PIECES.md Part A 3]. A normal is the "
+        "ruling's form (D219 item 2); the source prints a mean and a standard deviation, not a distribution.",
+    ),
+    "ARM_CHAIN_LENGTH_MULTI_ARMED": Constant(
+        244.0,
+        "deg",
+        "Mean azimuthal length of a whole arm in a multi-armed galaxy, counting the arms of 90 degrees or "
+        "more: 244 deg (sd 131), 45 arms in 13 galaxies, 'not significantly different' from the grand designs' "
+        "[verified: Chugunov, Marchuk & Savchenko 2025, arXiv:2504.11642, Sect. 3; docs/READING_ARM_PIECES.md "
+        "Part A 3, Length]. The mean of the normal a chain's length is drawn from in an unbarred disc (D219 "
+        "items 2-3).",
+    ),
+    "ARM_CHAIN_LENGTH_MULTI_ARMED_SCATTER": Constant(
+        131.0,
+        "deg",
+        "Standard deviation of a whole arm's azimuthal length in multi-armed galaxies [verified: Chugunov, "
+        "Marchuk & Savchenko 2025, Sect. 3: mean 244 deg (sd 131); docs/READING_ARM_PIECES.md Part A 3].",
+    ),
+    "ARM_CHAIN_LENGTH_MIN": Constant(
+        90.0,
+        "deg",
+        "The shortest azimuthal length the sources call an arm: a feature under 90 degrees is a spur and is not "
+        "in the lengths' statistics [verified: Chugunov, Marchuk & Savchenko 2025, Sect. 3: 88 features = 26 "
+        "spurs under 90 deg + 62 arms; docs/READING_ARM_PIECES.md Part A 3]. A chain's drawn length under it is "
+        "drawn again, not clipped (D219 item 2: 'redrawn under 90 deg (the sources' definition of an arm)').",
+    ),
+    "ARM_PIECE_FLOCCULENT_EXTENT_MIN": Constant(
+        37.0,
+        "deg",
+        "The shortest of NGC 4414's five measured arm segments in azimuth - 77, 91, 105, 37 and 58 degrees, "
+        "ln(r_o/r_i)/tan(pitch) of the five rows [inferred from: Herrera-Endoqui et al. 2015, A&A 582, A86, "
+        "Table 3 at VizieR J/A+A/582/A86/table3; docs/READING_ARM_PIECES.md Part A 5, NGC 4414]. The lower end "
+        "of the uniform range a flocculent disc's single pieces take their extent from (D219 item 3: 'single "
+        "pieces of extent uniform on 37-105 deg (its measured five)'). **No source gives the lengths or the "
+        "number of a flocculent disc's pieces**: one galaxy's five rows, a range and not a distribution (a "
+        "debt).",
+    ),
+    "ARM_PIECE_FLOCCULENT_EXTENT_MAX": Constant(
+        105.0,
+        "deg",
+        "The longest of NGC 4414's five measured arm segments in azimuth [inferred from: Herrera-Endoqui et al. "
+        "2015, A&A 582, A86, Table 3; docs/READING_ARM_PIECES.md Part A 5]: the upper end of the uniform range "
+        "of a flocculent disc's single pieces (D219 item 3).",
+    ),
+    "ARM_LAYER_FLATTENING": Constant(
+        7.3,
+        "dimensionless",
+        "A stellar disc's radial scale length over its exponential scale height: h_R/h_z = 7.3 +/- 2.2 for 34 "
+        "edge-on spirals in the I band, L ~ exp(-R/h_R) exp(-z/h_z), volume-corrected [verified: Kregel, van der "
+        "Kruit & de Grijs 2002, arXiv:astro-ph/0204154; docs/READING_ARM_PIECES.md Part B 2 "
+        "and 'What a model could adopt', Thickness]. The gas's response reads the stellar layer's height as the "
+        "checkpoint-1 scale length over this number, so nothing of a later checkpoint enters the pattern "
+        "(D219 item 5): the force of an arm's m-th harmonic on the gas at the midplane is reduced by "
+        "1/(1 + k h_z), k the harmonic's wavenumber across the arm - exact for stars in an exponential layer "
+        "[verified: Kim & Ostriker 2007, arXiv:astro-ph/0701755, eqs. 4 and 8; docs/READING_ARM_PIECES.md "
+        "Part B 1.2 and 1.8]. Named "
+        "alternatives: the sech^2 layer's factor, up to 13.7 % higher at the same height; by type the ratio "
+        "is 4, 5 and 9 (de Grijs 1998). Which profile an observed height stands for moves the factor between "
+        "0.39 and 0.57 at k h = 1 (a debt). The model's own thin-disc scale height is not used: it is a later "
+        "checkpoint's.",
     ),
     "BAR_CONTRAST_MEDIAN": Constant(
         0.374,
