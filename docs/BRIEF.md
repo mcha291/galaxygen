@@ -50,3 +50,5 @@ owner's limits say so.
 - Layer off nothing may move; nothing is tuned to a goal picture; no third fit of `ngc_4414`; no unspent NGC 4414
   window read; re-pins by builders of their own after the model is final, old values beside the new.
 - Look at the frames beside the goals before the close and say plainly what they show.
+- (h) The bar's gas lanes at R0 are fainter than at S51 (the gas contrast there runs 0.81-1.37 of its mean; #155's shortfall): D210's placement rules are records now.
+- Trap: capture pytest's own exit code (`${PIPESTATUS[0]}`), never a pipe's; the first closing suite's EXIT=0 was `tr`'s and hid twenty failures.

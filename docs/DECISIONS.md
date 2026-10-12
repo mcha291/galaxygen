@@ -11527,3 +11527,19 @@ arm-modulated disc: L1's gate ("the sourced slope over the sourced range") is me
 measured as the sources measure it, and **a stop condition (BUILD_III §3d) is to be expected at the gate**. The
 lead stays on Opus; **Fable is spawned at the plan's gates and at a stop condition** (builders, reviewers and re-pins
 on Fable while the owner's limits say so).
+
+**The closing suite's twenty, ruled (Fable, 2026-10-12).** The first closing suite failed twenty tests: seventeen
+layer-on census pins in files the re-pin pass had not covered (the bright catalogue, bubbles, clusters, the nebular
+census - 12 840 -> 12 916 regions -, the dust layer's placement and heating, the region synthesis, the register's
+carried row, a cell's expected count 10 -> 16 in the hierarchy test, which pytest printed beside a clause that held),
+re-read on the final model with the old values beside them; and three rules, ruled: (1) D210 (i) and (iii) compared
+the gas pattern's dust placement at 8.2 kpc against D207's baseline, which the pieces have removed - the gas contrast
+at R0 now runs 0.81-1.37 of its mean - so (i) keeps the sign alone (the placement darkens the gap: -0.0043 against
+S51's -0.0128) and (iii) is a pinned record (crest 0.750, gap 0.838 against S51's 0.747 / 0.874), **the lanes at R0
+fainter than at S51 by #155's shortfall - told to the owner**; (2) the heating test's subsample bounds beyond 7 kpc
+(every fourth cell within 1e-5 of the ring's mean, every second within 1e-9) were the smooth modes' and read 3.3e-4
+and 2.8e-5 on the pieces' forcing, which holds every harmonic the cells do: pinned as measured (5e-4, 5e-5); (3)
+Audit IV's bound on the render's midpoint rule across levels (2e-3, four times S43's 4.6e-4) reads 2.38e-3 on
+`lines_hii` at level 1 under the pieces' narrow ridges: 3e-3 with the reason, the render's march resolution across
+levels V5-V7's to re-read. The second suite gates the merge on pytest's own exit code (the first log's EXIT line was
+the pipe's, a trap now in the brief).
