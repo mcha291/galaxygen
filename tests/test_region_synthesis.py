@@ -75,8 +75,11 @@ def _clusters_against_field(svc, window, level):
         # is another and the census another draw once more. The disc's field is the same again (3.92444e7 Lsun); the
         # clusters' sum reads 0.982 of it, +2.2 % on S58's close and -4.5 % on the first pass's reading (its noise
         # 6.2 %). The brightest region reads 1.01e6 Lsun, as on the first pass; that pass's next two are not here.
-        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9819),  # the disc: 12 583 clusters, noise 0.062; S59 (D218 follow-up): was 0.9607 (12 569, 0.058); first pass 1.0283 (12 582, 0.066); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
-        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.9451),  # a quarter-disc sector at level 1: 2 493 clusters, noise 0.147; S59 (D218 follow-up): was 0.9675 (2 534, 0.145); first pass 1.0452 (2 480, 0.168); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
+        # S60 (D219): the arms are a census of pieces, so the gas's response, the field's HII Halpha and the clouds
+        # are another pattern's - another draw of the census again. The clusters' sum reads 0.973 of the disc's
+        # field (noise 6.0 %, 12 659 clusters), 0.900 of the sector's (noise 13.1 %, 2 479): both inside the bound.
+        (_window(0.5, 20.0, 0.0, 2.0 * math.pi), 0, 0.9730),  # the disc: 12 659 clusters, noise 0.060; S60 (D219): was 0.9819 (12 583, 0.062); S59 (D218 follow-up): was 0.9607 (12 569, 0.058); first pass 1.0283 (12 582, 0.066); S58 (D217): was 0.9470 (12 572, 0.058); S57 (D216): was 0.9654 (12 557, 0.056); S56 (D215): was 1.0140 (12 670, 0.060); S51 (D210): was 0.9801 (12 597, 0.061)
+        (_window(4.0, 12.0, 0.0, 2.0), 1, 0.8997),  # a quarter-disc sector at level 1: 2 479 clusters, noise 0.131; S60 (D219): was 0.9451 (2 493, 0.147); S59 (D218 follow-up): was 0.9675 (2 534, 0.145); first pass 1.0452 (2 480, 0.168); S58 (D217): was 0.9738 (2 513, 0.145); S57 (D216): was 1.0420 (2 310, 0.150); S56 (D215): was 0.9942 (2 476, 0.161); S51 (D210): was 0.9744 (2 499, 0.138)
     ],
 )
 def test_the_clusters_halpha_integrates_back_to_the_field(svc, window, level, measured):
@@ -99,10 +102,12 @@ def test_small_windows_are_recorded_not_gated(svc):
     # S59 (D218): the winding in seeded segments, another draw; was 0.6377 / 847, 0.4384 / 270, z -1.63 / -1.43
     # S59 (D218 follow-up): a segment's pitch relative to the disc's, another draw again; was 0.6377 / 847, 0.4384 /
     # 270, z -1.63 / -1.43; first pass 0.7367 / 791, 0.4935 / 264, z -0.99 / -1.10
-    assert r1 == pytest.approx(0.7578, abs=1e-3) and k1 == 832
-    assert r2 == pytest.approx(0.4885, abs=1e-3) and k2 == 256
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.00, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.18, abs=0.02)
+    # S60 (D219): the arms a census of pieces, another draw; was 0.7578 / 832, 0.4885 / 256, z -1.00 / -1.18 (z read
+    # with S60's C_POP below)
+    assert r1 == pytest.approx(0.7023, abs=1e-3) and k1 == 851
+    assert r2 == pytest.approx(0.5068, abs=1e-3) and k2 == 268
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-1.29, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-1.20, abs=0.02)
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
@@ -117,7 +122,9 @@ def test_small_windows_are_recorded_not_gated(svc):
 # S59 (D218 follow-up): was 6.465; first pass 7.450 - 12 583 regions, another draw again (a segment's pitch relative to
 # the disc's). The brightest region reads 1.01e6 Lsun as on the first pass; the next are 7.1e5 and 6.2e5, where that
 # pass's were 8.7e5 and 7.7e5.
-C_POP = 6.953
+# S60 (D219): was 6.953 - 12 659 regions, another draw again (the arms a census of pieces); the three brightest read
+# 1.01e6, 7.1e5 and 6.2e5 Lsun as at S59's close, and the moment falls with the larger census.
+C_POP = 6.747
 
 
 def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
@@ -163,9 +170,12 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     # S59 (D218 follow-up): z mean was 0.093, first pass 0.198 -> 0.104 (sd 1.10, 93 % inside 2 and 97 % inside 3);
     # median was 0.8787, first pass 0.9163 -> 0.7809; mean was 1.0519, first pass 1.1107 -> 1.0508 - a segment's
     # pitch relative to the disc's, another draw; the windows run from 88 to 356 clusters (median 162)
-    assert float(z.mean()) == pytest.approx(0.104, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.7809, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(1.0508, abs=1e-3)
+    # S60 (D219): z mean 0.104 -> 0.141 (sd 1.10 -> 1.16, 95 % inside 2 and 97 % inside 3), median 0.7809 -> 0.8861,
+    # mean 1.0508 -> 1.0685 - the arms a census of pieces, another draw; the windows run from 90 to 329 clusters
+    # (median 158)
+    assert float(z.mean()) == pytest.approx(0.141, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.8861, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(1.0685, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])
