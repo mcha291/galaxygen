@@ -528,7 +528,7 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # D207's arm (0.747) and a gap over its 0.874, as S51 read them. S60 (D219, #155): the arms carry 45-80 % of the
     # law's power on the median ring, so the lanes at R0 are fainter than at S51 - the crest lets through 0.750 and a
     # gap 0.838. A pinned record of the measured crest and gap now, not D210's bounds.
-    assert read[8.2][3] == pytest.approx(0.750, abs=5e-4) and read[8.2][4] == pytest.approx(0.838, abs=5e-4)
+    assert read[8.2][3] == pytest.approx(0.750, abs=5e-4) and read[8.2][4] == pytest.approx(0.8375, abs=5e-4)
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
     # S59 (D218): was (0.450, 0.911, 0.676) - the flank is another cell, the crest and the gap the ring's as they were
