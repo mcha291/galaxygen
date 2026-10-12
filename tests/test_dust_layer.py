@@ -504,7 +504,11 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # D207's -1.28 %", which held on the narrow ridge and **does not hold on the gas's steady response: -1.82 %**.
     # The response's crest is as broad as the stellar arm and sits on it, so more of the dust lies where the light
     # is than when the dust followed the stars' own contrast (D207). Recorded as read, nothing changed to mend it.
-    assert read[8.2][1] < 0.0 and read[8.2][1] < -0.0128
+    # S60 (D219, the gate's ruling): was `and read[8.2][1] < -0.0128` - D210 (i) compared the placement against D207's
+    # -1.28 % on a gas pattern without pieces; with the arms a census of pieces the gas contrast at R0 runs 0.81-1.37
+    # of its mean and the baseline D207 measured against is gone. (i) is the sign alone now: the placement still
+    # darkens the ring. S51 read -0.0128's side of it (-0.0085, then -0.0182 at S57-S59); S60 reads -0.00432.
+    assert read[8.2][1] < 0.0
     # D210 (ii), held: under the screen's gain.
     assert read[8.2][1] < read[8.2][2]
     # D210 (iii), held: at R₀ the ridge's crest lets through less than D207's arm (0.747), a gap more than its 0.874.
@@ -520,7 +524,11 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # S60 (D219): was (0.606, 0.994, 0.811) - the gas at R0 is the pieces' response, its crest 1.37 and its trough
     # 0.81 of the ring's mean where S59's gaps were nearly empty, so the crest lets through more and a gap less.
     assert read[8.2][3:] == pytest.approx((0.750, 0.838, 0.807), abs=0.002)
-    assert read[8.2][3] < 0.747 and read[8.2][4] > 0.874
+    # S60 (D219, the gate's ruling): was `read[8.2][3] < 0.747 and read[8.2][4] > 0.874` - D210 (iii), the crest under
+    # D207's arm (0.747) and a gap over its 0.874, as S51 read them. S60 (D219, #155): the arms carry 45-80 % of the
+    # law's power on the median ring, so the lanes at R0 are fainter than at S51 - the crest lets through 0.750 and a
+    # gap 0.838. A pinned record of the measured crest and gap now, not D210's bounds.
+    assert read[8.2][3] == pytest.approx(0.750, abs=5e-4) and read[8.2][4] == pytest.approx(0.838, abs=5e-4)
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
     # S59 (D218): was (0.450, 0.911, 0.676) - the flank is another cell, the crest and the gap the ring's as they were
