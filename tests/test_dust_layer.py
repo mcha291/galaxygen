@@ -631,7 +631,11 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
         sub = (c[:, ::step] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::step])).mean(axis=1)
         read_sub[step] = float(np.max(np.abs(sub[placed > 0.0] / placed[placed > 0.0] - 1.0)))
         beyond = (placed > 0.0) & (R > 7.0)
-        assert float(np.max(np.abs(sub[beyond] / placed[beyond] - 1.0))) < {4: 1e-5, 2: 1e-9}[step], step
+        # S60 (D219, the gate's ruling): were `< 1e-5` (every fourth cell) and `< 1e-9` (every second) beyond 7 kpc, a
+        # convenience measurement of the modes' smooth pattern. S60 (D219): the pieces' forcing holds every harmonic the
+        # cells do - the gate's fifth follow-up item 4: beyond 7 kpc 3.27e-4 and 2.75e-5, bounded at 5e-4 and 5e-5. The
+        # heating's own statement - the quadrature reads every cell - is the allclose below, unchanged.
+        assert float(np.max(np.abs(sub[beyond] / placed[beyond] - 1.0))) < {4: 5e-4, 2: 5e-5}[step], step
     # S59 (D218): were 7.0e-5 and 5.13e-6 - the rings are turned by the segments' winding, so a subsample reads
     # other cells of them; beyond 7 kpc the two bounds above hold as they did (1.9e-8 and 2.1e-14).
     # S60 (D219): were 7.2e-5 and 5.65e-6 - the pieces' pattern has steps beyond 7 kpc too (the worst ring is beyond it)
