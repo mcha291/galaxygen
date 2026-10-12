@@ -120,7 +120,10 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     # S59 (D218 follow-up): was 14; first pass 11 - a segment's pitch is relative to the disc's since the gate's
     # follow-up, so the winding in this ring is another and the pattern's sector mean here reads 0.505 of the
     # ring's (expected 10.50 stars; the ring's 665.03 still to the bit, layer on and off).
-    assert "level" not in parent and parent.size == 10
+    # S60 (D219): was 10 - the stellar pattern is the census of arm pieces, and its sector weight in this cell reads
+    # 0.766 of the ring's (expected 15.92 stars; the ring's 665.03 the same). No name columns: the level-0 catalogue's
+    # 18 columns are 391af07's, and layer off every array is 391af07's bit for bit at 20 000 stars, seed 0.
+    assert "level" not in parent and parent.size == 16
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields, constants):
