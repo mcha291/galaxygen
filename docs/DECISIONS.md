@@ -11418,7 +11418,7 @@ and other pieces' deviates are untouched; `arm_ring_power` declared as ruled. **
 Fixes 1, 3 (the test's geometry), 8 and the two records (2's phi-step, 5's derived bound) are one small pass after
 the re-pins land; the reviewer's verdict stands on them.
 
-**S60 CLOSED 2026-10-12** (merge: see the tag record). Phase P5 is done: the stellar arms are a census of pieces.
+**S60 CLOSED 2026-10-12** (merge 13217d285750, tag s60; the second closing suite green on pytest's own exit code, 1 417 progress marks). Phase P5 is done: the stellar arms are a census of pieces.
 
 **What P5 built, as the final model stands.** The stellar arms are **chains of pieces on their own loci**, laid by
 the layer's `arm_pieces` stage on `texture_seed` into the table `arm_piece`: a piece's extent log-normal about 60°,
