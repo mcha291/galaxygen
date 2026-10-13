@@ -1530,7 +1530,7 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # are the same bits in both runs (RING_FIRST_STATISTICS, held above), and four of its columns are the same bytes
     # though the rows are in other cells: star_population and star_wolf_rayet are 0 for every star of this sample,
     # and star_wind_luminosity and star_bubble_radius are NaN but for one star, which stands at the same row in both
-    # (measured; its ring's earlier cells realise the same counts in both runs).
+    # (measured).
     same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
     assert len(held) == 269 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
