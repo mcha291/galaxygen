@@ -114,6 +114,20 @@ CENSUS_STATISTICS = {
     "bright_star_limit": ("bright_stars", "the bright catalogue",
                           "bright.select_brightest, through bright.scalars: the luminosity the default selection's "
                           "brightest few thousand realised stars are complete above"),
+    # S61 (D220 item 4): cloud_mass_total, dig_halpha_fraction, hii_luminosity_function_slope,
+    # nii_halpha_gradient_hii, the four *_surface_brightness_hii and hot_phase_porosity left this list - identical on
+    # and off since the ring-first draw (RING_FIRST_STATISTICS, below).
+}
+# S61 (D220 item 4): was 14 - nine scalars, five radial fields, the fourteen measured at S55. The cloud census, its
+# clusters, their HII regions and bubbles are drawn ring-first since S61: their nine statistics are the same on and off
+# (RING_FIRST_STATISTICS). The five left are the star sample's and the bright catalogue's, until their own builds.
+assert len(CENSUS_STATISTICS) == 5
+# S61 (D220 item 4): the statistics of the censuses drawn ring-first - a ring's count and every per-object draw on the
+# ring's stream before the layer places them, so the same objects on and off and only their sector and azimuth differ.
+# Each is identical on and off to 1e-12 relative (bit for bit where nothing is summed in another order: the objects
+# are concatenated cell by cell, so a sum over them may differ in its last bits). Each entry: (its stage, the census,
+# where it is computed).
+RING_FIRST_STATISTICS = {
     "cloud_mass_total": ("clouds", "the cloud census",
                          "clouds.compute_clouds: the realised clouds' cloud_mass, summed"),
     "dig_halpha_fraction": ("nebular", "the HII-region census",
@@ -125,12 +139,13 @@ CENSUS_STATISTICS = {
                                 "nebular.nii_halpha_gradient, over the [N II] ring light below (acceptance row 37)"),
     **{f"{line}_surface_brightness_hii": ("nebular", "the HII-region census",
                                           "nebular.compute_nebular: the ring's Halpha times nebular.ring_ratios - the "
-                                          "regions' line ratio weighted by their Halpha, binned by cluster_radius")
+                                          "regions' line ratio weighted by their Halpha, binned by cluster_birth_radius")
        for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")},
     "hot_phase_porosity": ("bubbles", "the clusters' bubbles (with the remnants, which no placement moves)",
-                           "bubbles.hot_phase_porosity: the realised bubbles' volumes, binned by cluster_radius"),
+                           "bubbles.hot_phase_porosity: the realised bubbles' volumes, binned by cluster_birth_radius"),
 }
-assert len(CENSUS_STATISTICS) == 14  # nine scalars, five radial fields: the fourteen measured at S55, minus nothing
+assert len(RING_FIRST_STATISTICS) == 9 and not set(RING_FIRST_STATISTICS) & set(CENSUS_STATISTICS)
+RING_FIRST_RTOL = 1e-12  # D220 item 4: "to 1e-12 relative for sums"
 # The object classes a placement moves: every column of these is a catalogue's, not a statistic.
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
 # And the one census no pattern places (bubbles.remnant_expected shares a ring evenly among its sectors).
@@ -183,6 +198,13 @@ def same_expected_total(a, b) -> bool:
     to (above)."""
     a, b = float(a), float(b)
     return abs(a - b) <= EXPECTED_TOTAL_UNITS * float(np.spacing(max(abs(a), abs(b))))
+
+
+def same_ring_first(a, b) -> bool:
+    """Equal to ``RING_FIRST_RTOL`` relative, element by element (NaN equal to NaN, zero to zero): a statistic of a
+    census drawn ring-first, the same objects summed in another order (D220 item 4)."""
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    return a.shape == b.shape and bool(np.allclose(a, b, rtol=RING_FIRST_RTOL, atol=0.0, equal_nan=True))
 
 
 def same(a, b) -> bool:
@@ -286,6 +308,19 @@ ADDED_AT_S60 = {"arm_class", "arm_piece_width", "arm_design_count", "arm_power_b
                 "arm_piece_amplitude", "arm_piece_saturation", "arm_chain_count", "arm_ring_power",
                 *(f"arm_mode_power_{m}" for m in range(2, 7))}
 assert len(ADDED_AT_S60) == 21 and len(pt.PIECE_FIELDS) == 8
+# And L1's (S61, D220 item 6): the radius the binning stages read, the cluster's cloud's.
+ADDED_AT_S61 = {"cluster_birth_radius"}
+# S61 (D220 items 1 and 10): "everything that moves, moves once". With the layer off the cloud census is a new draw -
+# each ring's count and arrays on the ring's stream - and with it every column of the clouds and of the clusters (with
+# their HII regions and bubbles, which are columns of the cluster class) and the nine statistics computed from them.
+# Nothing else of S55's layer-off run moves: no law, no radial field that is not those statistics, no remnant.
+REDRAWN_OBJECTS_AT_S61 = {"cloud", "cluster"}
+
+
+def redrawn_at_s61(out, held) -> set[str]:
+    """The fields of S55's reference the ring-first redraw moves (D220 item 10), read from the declarations."""
+    return {n for n in held if out.decls[n].kind.domain == "object" and out.decls[n].of in REDRAWN_OBJECTS_AT_S61} | (
+        set(RING_FIRST_STATISTICS) & set(held))
 # The composed fields of both models (sfr_modulation is the azimuthal model's own) and the neutral each declares:
 # a contrast and the cut are 1 with the layer off, a power, a count and an amplitude 0.
 COMPOSED_FIELDS = {"pattern_density_contrast", "gas_density_contrast", "star_formation_gas_contrast",
@@ -307,7 +342,12 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     moved = {n for n in held if now[n] != held[n]}
     # The fields of the named list whose value on this template is not S55's (the label can land on S55's number).
     named = {n for n, by_template in LAYER_OFF_EXCEPTIONS.items() if not same_number(*by_template[template])}
-    assert moved == named, sorted(moved ^ named)
+    # S61 (D220 item 10): was `moved == named` - the ring-first redraw moves the cloud and cluster censuses and their
+    # nine statistics, every one of them (measured: 17 cloud columns, 38 cluster columns, 9 statistics), and nothing else.
+    redrawn = redrawn_at_s61(out, held)
+    assert len(redrawn) == 17 + 38 + 9 and not redrawn & named
+    assert moved == named | redrawn, sorted(moved ^ (named | redrawn))
+    moved -= redrawn
     # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
     # S59 (D218 item 6): was `else UNBARRED_BY_RULING` - and its pitch is the measured one by ruling. Nothing else of
     # either template's layer-off run moved at S59: "a galaxy without pins: layer off bit for bit" (item 7), and the
@@ -322,7 +362,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # gate's follow-up: ADDED_AT_S59, above).
     # S60 (D219): was `... | ADDED_AT_S59` with the phases, the anchor, the segment columns and the spread among the
     # earlier sets - 21 more and seven retired; the reference's count is S55's and does not move.
-    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 | ADDED_AT_S60 and len(held) == (332 if name == "azimuthal" else 331)
+    # S61 (D220 item 6): was `... | ADDED_AT_S60` - and the binners' radius, `cluster_birth_radius`.
+    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 | ADDED_AT_S60 | ADDED_AT_S61 and len(held) == (332 if name == "azimuthal" else 331)
     assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
     # S59 (D218): what the five are with the layer off. The anchor is the bar's half-length, or where the bar would
     # be; the drawn pitch is S55's `pitch_angle`, to the bit, on both templates; no segment is laid; and the Sun's
@@ -352,7 +393,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
         assert unpinned.fields["bar_present"] == "yes" and "bar_present" not in unpinned.inputs and out.inputs["bar_present"] is False
         assert "pitch_angle" not in unpinned.inputs and out.inputs["pitch_angle"] == 28.9
         assert "arm_class" not in unpinned.inputs and out.inputs["arm_class"] == "flocculent" and unpinned.fields["arm_class"] == "grand_design"
-        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == set()
+        # S61 (D220 item 10): was `== set()` - the unpinned run's census is the ring-first redraw too.
+        assert {n for n in held if layer_reference.value_digest(unpinned.fields[n]) != held[n]} == redrawn_at_s61(unpinned, held)
         differ = {n for n in out.fields if not same(out.fields[n], unpinned.fields[n])}
         assert differ == {"bar_present", *UNBARRED_BY_RULING, "bar_axis_ratio", "bar_boxiness", "bar_profile_index", "bar_mass_share", *pt.AMPLITUDE_FIELDS,
                           *PITCH_PINNED_BY_RULING, "arm_class", "arm_design_count", "arm_power_budget"}
@@ -380,9 +422,27 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
     census S55 placed by no pattern, object for object."""
     made = layer_reference.routes_digest()
     assert set(made) == set(reference["routes"]) and len(made) == 42
+    redrawn_routes = {label for label in made if "/clouds/" in label or "/clusters/" in label}
+    assert len(redrawn_routes) == 14
     for label, got in made.items():
         held = reference["routes"][label]
         assert got["status"] == held["status"] == 200, label
+        if label in redrawn_routes:
+            # S61 (D220 item 10): the cloud and cluster routes serve the ring-first census, a new draw - every array and
+            # the header's cells - in the columns they always sent, the clusters' with the binners' radius after their
+            # light temperature (ADDED_AT_S61).
+            names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
+            assert [n for n in names if n not in ADDED_AT_S61] == was, label
+            assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
+            assert got["header"] != held["header"], label
+            continue
+        if "/render/" in label:
+            # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first
+            # census's, binned by the clouds' radii - and is a new draw; every other array and the header are S55's.
+            assert [a[0] for a, b in zip(got["arrays"], held["arrays"]) if a != b] == ["lines_hii"], label
+            assert [a[0] for a in got["arrays"]] == [b[0] for b in held["arrays"]], label
+            assert got["header"] == held["header"], label
+            continue
         assert got["arrays"] == held["arrays"], (label, [a[0] for a, b in zip(got["arrays"], held["arrays"]) if a != b])
         # S58 (D217 item 2): a request for a template carries the template's pin among its inputs, which S55's
         # header did not hold. The header is digested with the pin taken out of its inputs and the pin read beside
@@ -439,7 +499,7 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
             continue
         assert not np.all(np.asarray(on.fields[n]) == d.neutral), n
 
-    moved_statistics = set()
+    moved_statistics, rounded = set(), set()
     for n, d in on.decls.items():
         if d.composed:
             continue
@@ -473,6 +533,13 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
             # window was corrected. An expected total is the same to its last place (EXPECTED_TOTALS, above).
             assert same_expected_total(on.fields[n], off.fields[n]), (n, float(on.fields[n]), float(off.fields[n]))
             continue
+        if n in RING_FIRST_STATISTICS:
+            # S61 (D220 item 4): a statistic of a census drawn ring-first - the same objects on and off, summed in
+            # another order - is held to 1e-12, and the ones whose bits differ are named below as measured.
+            assert same_ring_first(on.fields[n], off.fields[n]), n
+            if not same(on.fields[n], off.fields[n]):
+                rounded.add(n)
+            continue
         if not same(on.fields[n], off.fields[n]):
             moved_statistics.add(n)
     # Every other field - every radial field, every history, every scalar - is the bit it was, but for the list.
@@ -488,17 +555,29 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # S60 (D219), as at S58 (D217): the pieces' layer-on census rounds its sum to 0.29999999999999993, the layer-off
     # bits, so the entry lands on the same bits again - still a census statistic, still listed, and named here.
     # S60 fourth pass: was `== set()`, all fourteen moving.
-    assert set(CENSUS_STATISTICS) - moved_statistics == {"dig_halpha_fraction"}, sorted(set(CENSUS_STATISTICS) - moved_statistics)
+    # S61 (D220 item 4): was `== {"dig_halpha_fraction"}` - the cloud census's nine statistics left the list (they are
+    # RING_FIRST_STATISTICS); the five left, the star sample's and the bright catalogue's, all move.
+    assert set(CENSUS_STATISTICS) - moved_statistics == set(), sorted(set(CENSUS_STATISTICS) - moved_statistics)
+    # S61 (D220 item 4): of the nine, these differ in their last bits (sums over the same objects in another order),
+    # as measured; the cloud mass, the luminosity function's slope and the [N II] gradient are the same bits.
+    assert rounded == {"dig_halpha_fraction", "hot_phase_porosity",
+                       *(f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731"))}, sorted(rounded)
     # S59 (D218 follow-up): the layer-on sum was 0.30000000000000004 - another draw of the census (a segment's pitch
     # relative to the disc's: other rows, other turns), another rounding of three tenths. Layer off: unmoved.
     # S60 fourth pass: was (0.30000000000000016, 0.29999999999999993) - the layer-on value now the layer-off bits.
-    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.29999999999999993, 0.29999999999999993)
+    # S61 (D220): was (0.29999999999999993, 0.29999999999999993) - the ring-first census, the same regions on and off
+    # summed in another order: one rounding of three tenths each.
+    assert (float(on.fields["dig_halpha_fraction"]), float(off.fields["dig_halpha_fraction"])) == (0.29999999999999993, 0.30000000000000016)
     # Each entry says which stage publishes it, and that stage is where the model publishes it.
     producer = {d.name: sid for sid in on.order for d in production()[1].get(sid).publishes}
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
         assert producer[n] == stage_id and census and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
         assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
-    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 9
+    # S61 (D220 item 4): was 9 - the five left are scalars; the nine that left were four scalars and five radial fields.
+    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 5
+    assert sum(1 for n in RING_FIRST_STATISTICS if on.decls[n].kind.domain == "galaxy") == 4
+    for n, (stage_id, census, where) in RING_FIRST_STATISTICS.items():
+        assert producer[n] == stage_id and where.startswith(("clouds.", "nebular.", "bubbles.")), n
     # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place higher with
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
     # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
@@ -674,14 +753,56 @@ def test_i2_each_census_expects_the_same_count_in_every_ring(runs, prod, name):
     # rows, so the rings are turned by other phases: another draw again. Layer off: S55's, unmoved.
     # S60 (D219): the layer-on count is the pieces' census's and is pinned apart (the test after this one, awaiting
     # the re-pin); the layer-off census is S55's own, unmoved, and the two differ by the draw alone.
-    assert n_off == 16754 and abs(n_off / 16822 - 1.0) < 0.03 and abs(n_on / n_off - 1.0) < 0.03, (n_on, n_off)
+    # S61 (D220 items 1 and 10): was n_off == 16754 and the two differing by the draw alone. Drawn ring-first, each
+    # ring's count is one draw at the ring's expected total, which no placement enters: the same count on and off.
+    assert n_off == 16577 and abs(n_off / 16822 - 1.0) < 0.03 and n_on == n_off, (n_on, n_off)
 
 
 @pytest.mark.parametrize("name", MODELS)
 def test_the_layer_on_cloud_count_as_measured(runs, name):
     """The realised layer-on cloud count as measured on the final model (S60, D219): placed by the arms' census it
     is another draw each time the pattern moves; the invariant is test_i2's."""
-    assert len(runs[name, True].fields["cloud_radius"]) == 16753  # S60 fourth pass: was 16713
+    # S61 (D220): was 16753 (S60 fourth pass: was 16713) - drawn ring-first, the layer-off count.
+    assert len(runs[name, True].fields["cloud_radius"]) == 16577 == len(runs[name, False].fields["cloud_radius"])
+
+
+@pytest.mark.parametrize("name", MODELS)
+def test_i2_the_realised_ring_totals_are_the_same_on_and_off(runs, prod, name):
+    """S61 (D220 item 4; I2's second half, BUILD_III section 1d): drawn ring-first, a ring's clouds are the same
+    clouds with the layer on or off, and only their sector and azimuth differ. So every realised ring total is the
+    same: the clouds' count and mass, the clusters' count and mass, the HII regions' Halpha and the bubbles' volumes -
+    bit for bit for the counts, to 1e-12 relative for the sums (the objects are concatenated cell by cell, so a sum's
+    order differs). A cluster's ring is its cloud's, the ring of its draw."""
+    m = prod[0].get(name)
+    c = constants(m)
+    totals = {}
+    for layer in (True, False):
+        out = runs[name, layer]
+        F = out.fields
+        layout = cl.cloud_layout(F, out.grid.R, int(out.inputs["systems_seed"]), c)
+        ring = layout.ring
+        hosts = ring[np.asarray(F["cloud_cluster_index"]) >= 0]
+        assert ring.size == len(F["cloud_mass"]) and hosts.size == len(F["cluster_mass"])
+
+        def per(where, weight=None):
+            return np.bincount(where, weights=None if weight is None else np.asarray(weight, dtype=float), minlength=cl.CELL_RINGS)
+
+        totals[layer] = {
+            "cloud count": per(ring), "cloud mass": per(ring, F["cloud_mass"]),
+            "cluster count": per(hosts), "cluster mass": per(hosts, F["cluster_mass"]),
+            "HII Halpha": per(hosts, F["hii_halpha_luminosity"]),
+            "bubble volume": per(hosts, 4.0 / 3.0 * np.pi * np.nan_to_num(np.asarray(F["bubble_radius"], dtype=float)) ** 3),
+        }
+    for k, a in totals[True].items():
+        b = totals[False][k]
+        assert a.sum() > 0 and np.count_nonzero(a) > 20, k
+        if k.endswith("count"):
+            assert np.array_equal(a, b), k
+        else:
+            assert np.allclose(a, b, rtol=1e-12, atol=0.0), (k, float(np.max(np.abs(a - b) / np.where(b > 0, b, 1.0))))
+    # And the placement does differ: the clouds stand in other cells.
+    on, off = runs[name, True].fields, runs[name, False].fields
+    assert not same(on["cloud_azimuth"], off["cloud_azimuth"])
 
 
 def test_i2_holds_on_another_galaxy(prod):
@@ -747,9 +868,11 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
     for name in MODELS:
         on, off = runs[name, True].fields, runs[name, False].fields
         # S55 (D214): was -1.98926 (the layer-on census), read layer-off
-        assert float(off["hii_luminosity_function_slope"]) == pytest.approx(-2.08124, abs=1e-5)
+        # S61 (D220 item 10): was -2.08124 - the layer-off census redrawn ring-first, the one move D220 allows the row
+        assert float(off["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
         # S55 (D214): was -0.105511 (the layer-on census), read layer-off
-        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.102973, abs=1e-6)
+        # S61 (D220 item 10): was -0.102973 - the layer-off census redrawn ring-first
+        assert float(off["nii_halpha_gradient_hii"]) == pytest.approx(-0.097717, abs=1e-6)
         # The layer-on census's readings, for the record and not judged (I3). S56 (D215): were -1.98926 and
         # -0.105511 on S51's census; the census placed by five modes is another draw.
         # S57 (D216): were -2.06083 and -0.102613 on S56's census; placed by the gas's steady response it is another
@@ -764,14 +887,17 @@ def test_i3_rows_35_and_37_read_the_layer_off_census(runs):
         # layer-off rows above did not move.
         # S60 (D219): the layer-on readings are the pieces' census's and are pinned apart (the test after this one,
         # awaiting the re-pin); the two layer-off rows above are the numbers they were, to every figure pinned.
-        # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005].
-        assert abs(float(off["nii_halpha_gradient_hii"]) + 0.1055) < 0.005
+        # D214's prediction (b): row 37 within 0.005 dex/kpc of -0.1055, and still outside [-0.045, -0.005]. Held at
+        # S55 (-0.102973, 0.0025 from it). S61 (D220 item 10): was asserted of each run - the ring-first redraw reads
+        # -0.097717, 0.0078 from -0.1055: the prediction was of S55's census, which no longer exists, and is not
+        # re-judged here (reported to the lead); "still outside the window" is asserted below.
+        assert not -0.045 <= float(off["nii_halpha_gradient_hii"]) <= -0.005
         for q in spec.QUANTITIES:
             if q.field in on and q.n not in (spec.ROW_HII_LF_SLOPE, spec.ROW_NII_HALPHA_GRADIENT):
                 assert same(on[q.field], off[q.field]), (q.n, q.field)
     q35 = next(q for q in spec.QUANTITIES if q.n == spec.ROW_HII_LF_SLOPE)
     q37 = next(q for q in spec.QUANTITIES if q.n == spec.ROW_NII_HALPHA_GRADIENT)
-    assert q35.lo <= -2.08124 <= q35.hi and not q37.lo <= -0.102973 <= q37.hi
+    assert q35.lo <= -2.05555 <= q35.hi and not q37.lo <= -0.097717 <= q37.hi  # S61 (D220): were -2.08124 and -0.102973
     assert spec.ROW_NII_HALPHA_GRADIENT in spec.MISSES and spec.ROW_HII_LF_SLOPE not in spec.MISSES
 
 
@@ -782,8 +908,13 @@ def test_rows_35_and_37_on_the_layer_on_census_as_measured(runs):
     for name in MODELS:
         on = runs[name, True].fields
         # S60 fourth pass: were -2.03559 and -0.102201.
-        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.03381, abs=1e-5)
-        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.101488, abs=1e-6)
+        # S61 (D220 item 4): were -2.03381 and -0.101488 - drawn ring-first, the layer-on census is the layer-off
+        # census's regions, placed: the two rows read the layer-off numbers (here the same bits).
+        assert float(on["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
+        assert float(on["nii_halpha_gradient_hii"]) == pytest.approx(-0.097717, abs=1e-6)
+        off = runs[name, False].fields
+        for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii"):
+            assert same(on[n], off[n]), n
 
 
 # --- I4: no physics stage reads the layer --------------------------------------------------------------------------
@@ -837,11 +968,12 @@ def binning_stages(g) -> set[str]:
     return found
 
 
-# The physics stages that bin realised objects (I4 as amended at gate G1, change 7): **a closed list**. Each reads
-# `cluster_radius`, which carries the layer's synthetic source offset, and bins by it - `nebular` the regions' line
-# ratios per ring (nebular.ring_ratios), `bubbles` the bubbles' volumes per ring (bubbles.hot_phase_porosity). What
-# they publish from that is in CENSUS_STATISTICS. A third stage appearing here fails the test below: from L1 what
-# they bin per ring does not depend on placement, and until then no new physics may be built on a placed catalogue.
+# The physics stages that bin realised objects (I4 as amended at gate G1, change 7): **a closed list**. Until S61 each
+# read `cluster_radius`, which carries the layer's synthetic source offset, and binned by it - `nebular` the regions'
+# line ratios per ring (nebular.ring_ratios), `bubbles` the bubbles' volumes per ring (bubbles.hot_phase_porosity).
+# S61 (D220 item 6): they bin by `cluster_birth_radius`, the cloud's radius - a draw on the ring's stream that no
+# placement moves - so what they bin per ring does not depend on placement (I4's second half), and what they publish
+# from it is in RING_FIRST_STATISTICS, the same on and off. A third stage appearing here fails the test below.
 BINNING_STAGES = {"nebular", "bubbles"}
 
 
@@ -859,8 +991,12 @@ def test_i4_the_stages_that_bin_realised_objects_are_a_closed_list(prod):
         assert clusters.placement_reader and "cluster_radius" in clusters.published_names
         assert {"cloud_source_offset", "cloud_source_angle"} <= set(clusters.requires)
         assert g.provenance["cloud_source_offset"] == "synthetic" and g.provenance["cluster_radius"] == "seeded"
-        readers = {st.id for st in g.order if "cluster_radius" in st.requires + st.requires_optional}
-        assert readers == BINNING_STAGES
+        # S61 (D220 item 6): was `readers of cluster_radius == BINNING_STAGES` - they read the cloud's radius now,
+        # and no stage reads the placement.
+        readers = {st.id for st in g.order if "cluster_birth_radius" in st.requires + st.requires_optional}
+        assert readers == BINNING_STAGES and "cluster_birth_radius" in clusters.published_names
+        assert not {st.id for st in g.order if "cluster_radius" in st.requires + st.requires_optional}
+        assert g.provenance["cluster_birth_radius"] == "seeded"
         for sid in BINNING_STAGES:
             st = stages[sid]
             assert not st.placement_reader and not st.composes and not st.layer_stage and not st.may_place, sid
@@ -869,7 +1005,8 @@ def test_i4_the_stages_that_bin_realised_objects_are_a_closed_list(prod):
                 d = next(d for s in g.order for d in s.publishes if d.name == n)
                 assert not d.composed and d.provenance != "synthetic", (sid, n)
         # And what they publish from the binned objects is what the closed list of census statistics names.
-        binned = {n for n, (sid, _, _) in CENSUS_STATISTICS.items() if sid in BINNING_STAGES}
+        # S61 (D220 item 4): was CENSUS_STATISTICS - the eight are the same on and off since the ring-first draw.
+        binned = {n for n, (sid, _, _) in RING_FIRST_STATISTICS.items() if sid in BINNING_STAGES}
         assert len(binned) == 8 and all(g.producer[n] in BINNING_STAGES for n in binned)
     # The derivation sees a third one: a physics stage that reads a cluster column is found.
     m = models.get(DEFAULT_MODEL)
@@ -1077,7 +1214,10 @@ def test_i5_what_layer_off_serves():
 # too: up to a factor of six in a thinly populated ring on the production grid.
 RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement")  # (R, phi, ...)
 RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height")  # (R, ...)
-RENDER_CENSUS_STATISTICS = ("lines_hii",)
+# S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
+# clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
+RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()
+RENDER_RING_FIRST = ("lines_hii",)
 WIDE = json.dumps([{"name": "optical", "shape": "box", "centre": 5500.0, "width": 4000.0},
                    {"name": "far_infrared", "shape": "box", "centre": 1.0e6, "width": 1.0e6}])
 
@@ -1090,7 +1230,7 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
     off_h, off = svc.handle("/api/render", {**q, "layer": ["off"]}).frame()
     assert (on_h["layer"], off_h["layer"]) == ("on", "off") and list(on) == list(off)
     # Every array of the response is in exactly one of the three groups: a new component must be placed in one.
-    assert set(on) == {*RENDER_PLACED, *RENDER_PER_RING, *RENDER_CENSUS_STATISTICS}
+    assert set(on) == {*RENDER_PLACED, *RENDER_PER_RING, *RENDER_CENSUS_STATISTICS, *RENDER_RING_FIRST}
 
     def rings(arrays, name):
         return np.asarray(arrays[name], dtype=float).sum(axis=1)
@@ -1111,6 +1251,13 @@ def test_i5_every_component_of_the_render_keeps_its_ring_or_is_a_named_census_st
     for name in RENDER_PER_RING:
         assert on_h["axes"][name][0] == "R" and "phi" not in on_h["axes"][name], name
         assert same(on[name], off[name]), name  # a ring's own value, the same bits either way
+    for name in RENDER_RING_FIRST:
+        # S61 (D220 items 4 and 6): even round the ring with the layer off; with it on placed by the gas's contrast,
+        # and each ring's line light the same to 1e-12 - the same regions, binned by their clouds' radii.
+        assert np.all(off[name] == off[name][:, :1]) and not np.all(on[name] == on[name][:, :1]), name
+        assert np.allclose(rings(on, name), rings(off, name), rtol=1e-12, atol=0.0), name
+        assert {f for f in on_h["components"][name]["fields"] if f in RING_FIRST_STATISTICS} == {
+            f"{line}_surface_brightness_hii" for line in ("oiii_5007", "nii_6583", "sii_6716", "sii_6731")}
     for name in RENDER_CENSUS_STATISTICS:
         # Not conserved ring by ring, and said so: the regions the ring's line light is summed over are another
         # draw. Even round the ring all the same, and the Halpha it is built on (halpha_hii, above) is conserved.
@@ -1164,7 +1311,8 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 continue
             assert f["stage"] == "cloud_texture" and re.search(r"none read \(#95\)", f["statistic"]), f["name"]
             # Which seed, in each of the four (G1, change 6).
-            assert "Drawn on `systems_seed`, the stream Phase R keeps; on `texture_seed` from L1." in f["about"], f["name"]
+            # S61 (D220 item 5): was "Drawn on `systems_seed`, the stream Phase R keeps; on `texture_seed` from L1."
+            assert "Drawn on `texture_seed`, the layer's own seed" in f["about"] and "resolved at S61 (D220 item 5)" in f["about"], f["name"]
         else:
             assert not set(SYNTHETIC_DECLARATIONS) & set(f), f["name"]
     # A composed field says so, with its neutral value; no other entry carries either key (G1, change 3).
@@ -1216,7 +1364,8 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S59 (D218 follow-up): was 355 - the spread of a segment's pitch over the disc's, the `bar` stage's scalar.
     # S60 (D219): was 356 - twenty-one added (ADDED_AT_S60) and nine retired: the five phases, the anchor, the two
     # segment columns and the spread.
-    assert len(columns) > 100 and len(b.fields) == 368
+    # S61 (D220 item 6): was 368 - the binners' radius, `cluster_birth_radius`.
+    assert len(columns) > 100 and len(b.fields) == 369
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1227,8 +1376,10 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     I1's list again, and not an independent check (D214, the predictions as read)."""
     a, b = runs["azimuthal", False], runs["basic", True]
     # S56 (D215 ruling 11): an expected total is held to its last place, not its last bit (EXPECTED_TOTALS, above).
+    # S61 (D220 item 4): and a statistic of a census drawn ring-first to 1e-12 (RING_FIRST_STATISTICS).
     differ = {n for n, d in b.decls.items() if not d.composed and not same(a.fields[n], b.fields[n])
-              and not (n in EXPECTED_TOTALS and same_expected_total(a.fields[n], b.fields[n]))}
+              and not (n in EXPECTED_TOTALS and same_expected_total(a.fields[n], b.fields[n]))
+              and not (n in RING_FIRST_STATISTICS and same_ring_first(a.fields[n], b.fields[n]))}
     # S56 (D215): the layer's five phases were numbers in the layer-on run and not in the layer-off one. S60 (D219):
     # retired - no synthetic scalar remains.
     phases = {n for n in differ if b.decls[n].provenance == "synthetic" and b.decls[n].kind.domain == "galaxy"}
@@ -1245,7 +1396,9 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # layer-on `basic` - a ratio of two sums over the realised regions that is three tenths in any census, to
     # rounding, and these two censuses round alike. It is still a census statistic and stays listed; the one
     # entry that does not move here is named. S60 fourth pass: was `== set(CENSUS_STATISTICS)`.
-    assert statistics == set(CENSUS_STATISTICS) - {"dig_halpha_fraction"}
+    # S61 (D220 item 4): was `== set(CENSUS_STATISTICS) - {"dig_halpha_fraction"}` - the nine that left the list are
+    # held to 1e-12 above; the five left all differ.
+    assert statistics == set(CENSUS_STATISTICS)
     assert {b.decls[n].of for n in differ - statistics - phases - segments} == PLACED_OBJECTS
     held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
     # 222 = basic's 343 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
@@ -1278,37 +1431,44 @@ def test_the_oracle_holds_layer_off_on_a_small_grid_and_another_seed(prod):
 
 
 @pytest.mark.parametrize("name", MODELS)
-def test_the_cloud_texture_columns_are_drawn_on_the_streams_they_always_were(runs, prod, name):
-    """Layer on: the stage's four columns are what a census materialised whole carries, and the draws keep their
-    seed, their stream paths and their arithmetic - each cell's own stream ``(systems_seed, "cloud", cell, name)``.
-
-    S56 (D215): until S56 this test held the four columns to S54's reference digest, bit for bit (Phase R moved the
-    draws' publisher and no value). The layer-on census is another draw since P1 - the clouds follow five arm
-    modes, so each cell holds another count - and a digest of it is no longer a statement; what Phase R promised
-    of these columns is their streams, and that is read here directly."""
+def test_the_cloud_texture_columns_are_drawn_on_the_layer_s_seed_at_each_cloud_s_ring_identity(runs, prod, name):
+    """Layer on: the stage's four columns are what a census materialised whole carries. S61 (D220 item 5): was "drawn
+    on the streams they always were" - each cell's own stream ``(systems_seed, "cloud", cell, name)``. Since the
+    ring-first draw they are the layer's own: each ring's arrays on ``(texture_seed, "cloud", ring, name)``, drawn
+    whole and read at each cloud's place ``i`` in its ring's draw - so they do not depend on where the layer put the
+    cloud, and rerolling ``texture_seed`` rerolls them (rule A10, BUILD_III section 1c rule 1)."""
     on = runs[name, True]
     for column in cl.TEXTURE_COLUMNS:
         assert on.decls[column].provenance == "synthetic" and on.decls[column].of == "cloud"
     m = prod[0].get(name)
-    seed = int(on.inputs["systems_seed"])
-    counts = cl.cloud_counts(cl.expected_counts(on.fields, on.grid.R, constants(m)), seed)
-    assert sum(k for _, k in counts) == len(on.fields["cloud_size"])
-    start = 0
-    for cell, k in counts[:40]:
-        size = np.asarray(on.fields["cloud_size"])[start:start + k]
+    seed, texture = int(on.inputs["systems_seed"]), int(on.inputs["texture_seed"])
+    layout = cl.cloud_layout(on.fields, on.grid.R, seed, constants(m))
+    assert sum(k for _, k in layout.counts) == len(on.fields["cloud_size"]) == layout.ring.size
+    size = np.asarray(on.fields["cloud_size"])
+    for r in sorted(layout.sizes)[:12]:
+        here = layout.ring == r
+        n, i = layout.sizes[r], layout.index[here]
+
+        def u(column: str) -> np.ndarray:
+            return _seeds.rng(texture, "cloud", r, column).random(n)[i]
+
         want = {
-            "cloud_source_offset": size * np.cbrt(_seeds.rng(seed, "cloud", cell, "source_offset").random(k)),
-            "cloud_source_angle": 2.0 * np.pi * _seeds.rng(seed, "cloud", cell, "source_angle").random(k),
-            "cloud_density_gradient": _seeds.rng(seed, "cloud", cell, "gradient").random(k),
-            "cloud_gradient_angle": 2.0 * np.pi * _seeds.rng(seed, "cloud", cell, "gradient_angle").random(k),
+            "cloud_source_offset": size[here] * np.cbrt(u("source_offset")),
+            "cloud_source_angle": 2.0 * np.pi * u("source_angle"),
+            "cloud_density_gradient": u("gradient"),
+            "cloud_gradient_angle": 2.0 * np.pi * u("gradient_angle"),
         }
         for column, values in want.items():
-            assert same(np.asarray(on.fields[column])[start:start + k], values), (cell, column)
-        start += k
-    census = cl.materialise_clouds(on.fields, on.grid.R, int(on.inputs["systems_seed"]), constants(m))
+            assert same(np.asarray(on.fields[column])[here], values), (r, column)
+    # Not on the census's seed: the systems seed's streams give other numbers.
+    r0 = int(layout.ring[0])
+    assert not same(np.asarray(on.fields["cloud_density_gradient"])[layout.ring == r0],
+                    _seeds.rng(seed, "cloud", r0, "gradient").random(layout.sizes[r0])[layout.index[layout.ring == r0]])
+    # S61 (D220 item 5): a layer-on census with its texture is given the run's texture_seed.
+    census = cl.materialise_clouds(on.fields, on.grid.R, seed, constants(m), texture_seed=texture)
     for column in cl.WIRE_COLUMNS:
         assert same(census[column], on.fields[column]), column
-    own = cl.materialise_clouds(on.fields, on.grid.R, int(on.inputs["systems_seed"]), constants(m), texture=False)
+    own = cl.materialise_clouds(on.fields, on.grid.R, seed, constants(m), texture=False)
     assert not set(cl.TEXTURE_COLUMNS) & set(own) and census.counts == own.counts
     # The offset lies inside its cloud, the gradient in [0, 1], the angles on the circle: the draws' own laws.
     offset, size = np.asarray(on.fields["cloud_source_offset"]), np.asarray(on.fields["cloud_size"])
@@ -1366,10 +1526,15 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # draw; the numbers below are the final model's as measured, and - as at S59 - **the declaration's text in
     # `galaxy/layer/cloud_texture.py` is to be re-read to them** (the re-pin may not edit the model): this test stands
     # failing on these phrases until the strings there say what the model does (reported to the lead).
-    for phrase in ("at S60 the offset moves a cluster",
-                   "by up to 249 pc in radius (its own length reaches 265 pc) against a 75 pc radial step",
-                   "1 605 of 12 916 clusters (12.4 %, 42.9 % of the cluster mass)",
-                   "140 in another cell ring", "`nebular` and `bubbles` bin from it", "#95; L1 decides"):
+    # S61 (D220 items 1 and 6): were "at S60", "by up to 249 pc in radius (its own length reaches 265 pc)", "1 605 of
+    # 12 916 clusters (12.4 %, 42.9 % of the cluster mass)", "140 in another cell ring", "`nebular` and `bubbles` bin
+    # from it" and "#95; L1 decides". The census drawn ring-first is a new draw, re-read; and the binners read the
+    # cloud's radius since, which the declaration now says.
+    for phrase in ("at S61 the offset moves a cluster",
+                   "by up to 229 pc in radius (its own length reaches 248 pc) against a 75 pc radial step",
+                   "1 629 of 12 710 clusters (12.8 %, 37.4 % of the cluster mass)",
+                   "161 in another cell ring", "`nebular` and `bubbles` bin a cluster by its cloud's radius",
+                   "`cluster_birth_radius`", "No clamp"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
     for name in ("cloud_density_gradient", "cloud_gradient_angle"):
@@ -1378,7 +1543,9 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12916  # S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
+    # S61 (D220): was 12916 (the ring-first census, a new draw). And the binners' radius is the cloud's.
+    assert np.array_equal(np.asarray(F["cluster_birth_radius"]), cloud_r)
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12710  # S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
@@ -1387,14 +1554,16 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S59 (D218): was 1600 and 0.1247 of 12 826.
     # S59 (D218 follow-up): was 1581 and 0.1231 of 12 839.
     # S60 fourth pass: was 1576 and 0.1227 of 12 840.
-    assert int(moved.sum()) == 1605 and moved.mean() == pytest.approx(0.1243, abs=5e-4)
+    # S61 (D220): was 1605 and 0.1243 of 12 916 (the ring-first census, a new draw).
+    assert int(moved.sum()) == 1629 and moved.mean() == pytest.approx(0.1282, abs=5e-4)
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.4292, abs=5e-4)
+    # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3741, abs=5e-4)
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 140  # S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 161  # S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1403,8 +1572,10 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # censuses hold (at 2.5 and 3.5 kpc).
     # S60 fourth pass: were 223.3 and 255.5 pc; on the pieces' census they read 248.5 and 265.2 pc, the numbers of
     # S59's first build again.
-    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(248.5, abs=0.1)
-    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(265.2, abs=0.1)
+    # S61 (D220): were 248.5 and 265.2 pc - the ring-first census is a new draw and its texture is drawn on
+    # texture_seed (D220 item 5), so the offsets are other numbers: 229.5 and 248.4 pc.
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(229.5, abs=0.1)
+    assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(248.4, abs=0.1)
 
 
 def test_the_cloud_interior_s_noise_is_three_constants_of_the_model(runs, prod):
@@ -1526,7 +1697,10 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_pieces_read_it(prod):
     assert dict(graph.UNREAD_BY_RULING) == {}
     readers = sorted(st.id for st in impls_ if "texture_seed" in st.reads_seeds)
     # S60 (D219): was ["arm_phases"] - the layer's stage is the census of arm pieces, at the same checkpoint.
-    assert readers == ["arm_pieces"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
+    # S61 (D220 item 5): was ["arm_pieces"] - the cloud texture is drawn on the layer's seed; its stage reads the
+    # systems seed beside it for the census's layout alone (which ring and place each published cloud is).
+    assert readers == ["arm_pieces", "cloud_texture"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
+    assert impls_.get("cloud_texture").layer_stage and impls_.get("cloud_texture").reads_seeds == ("systems_seed", "texture_seed")
     # S58 (D217 item 9): was `requires == ()` - the stage asks whether there is a bar, whose two-armed mode it ties.
     # S59 (D218 item 2): was `reads_constants == ()` - the stage lays the winding's segments too, and reads the five
     # numbers of their draw: the extent's median, log-width and two bounds, and the pitch residual's width.
@@ -1606,10 +1780,15 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
                 assert equal, n
             elif not equal:
                 placed.add(d.of)
+        elif n in RING_FIRST_STATISTICS:
+            # S61 (D220 item 4): the same objects under either realisation, summed in another order.
+            assert same_ring_first(a.fields[n], b.fields[n]), n
         elif not equal:
             moved_statistics.add(n)
     assert moved_statistics <= set(CENSUS_STATISTICS), sorted(moved_statistics - set(CENSUS_STATISTICS))
     assert placed == PLACED_OBJECTS
+    # S61 (D220 item 5): rerolling texture_seed rerolls the clouds' interiors - all four texture columns.
+    assert all(not same(a.fields[n], b.fields[n]) for n in cl.TEXTURE_COLUMNS)
     # S59 (D218): the winding's anchor and the pitch as the law draws it join the laws named here.
     # S60 (D219): the anchor is retired; the class, the width of a piece, the law's arm number and the budget join.
     for n in (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_contrast", "bar_contrast", "pitch_angle",
@@ -1774,7 +1953,8 @@ def test_fields_carry_the_setting_and_compose_refuses_a_mapping_that_does_not(sm
     # A census drawn from each run's fields is that run's census, with no word from the caller.
     seed = int(on.inputs["systems_seed"])
     for out in (on, off):
-        census = cl.materialise_clouds(out.fields, out.grid.R, seed, c)
+        # S61 (D220 item 5): the texture on the run's texture_seed (unread with the layer off).
+        census = cl.materialise_clouds(out.fields, out.grid.R, seed, c, texture_seed=int(out.inputs["texture_seed"]))
         for column in cl.WIRE_COLUMNS:
             assert same(census[column], out.fields[column]), (out.layer, column)
     # A plain dict of the same fields says nothing, and is refused rather than assumed.
