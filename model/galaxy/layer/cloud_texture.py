@@ -127,12 +127,12 @@ _CONSERVES_GRADIENT = (
 # ring-first and the binners came to read the cloud's radius (D220 items 1 and 6).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S61 the offset moves a cluster by up to 229 pc in radius (its own length reaches 248 pc) "
-    "against a 75 pc radial step and puts 1 629 of 12 710 "
-    "clusters (12.8 %, 37.4 % of the cluster mass) in another radial ring and 161 in another cell ring than their "
+    "its cloud's ring: at S61 the offset moves a cluster by up to 230 pc in radius (its own length reaches 248 pc) "
+    "against a 75 pc radial step and puts 1 582 of 12 710 "
+    "clusters (12.4 %, 36.1 % of the cluster mass) in another radial ring and 133 in another cell ring than their "
     "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
-    "`bubbles` bin a cluster by its cloud's radius, `cluster_birth_radius`, a draw on the ring's stream (D220 item "
-    "6; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
+    "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
+    "stream (D220 item 6 and part II; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
 )
 _STATISTIC = (
     "none read (#95): no source gives the distribution, so the draw's own - {law} - is a stated guess and the "

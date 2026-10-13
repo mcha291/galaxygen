@@ -356,6 +356,7 @@ WIRE_COLUMNS: tuple[str, ...] = (
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
     "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
     "cloud_cluster_index",
+    "cloud_birth_radius",  # S61 (D220 part II as amended): the radius the ring drew, after every column the route always sent
 )
 
 # The dust's V-band extinction cross-section per hydrogen atom, cm^2/H: the grain table's own V row
@@ -704,11 +705,12 @@ CLOUDS = IMPLEMENTATIONS.register(
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
-            "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud's azimuth is drawn by in its sector
+            "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud is placed by in its cell
         ),
         publishes=(
-            CLOUD_RADIUS, CLOUD_BIRTH_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
+            CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
             CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
+            CLOUD_BIRTH_RADIUS,  # S61 (D220 part II as amended): last, so the wire's order before it stands
             CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME, CLOUD_EXTINCTION_V,
         ),
     )

@@ -316,7 +316,10 @@ ADDED_AT_S60 = {"arm_class", "arm_piece_width", "arm_design_count", "arm_power_b
                 *(f"arm_mode_power_{m}" for m in range(2, 7))}
 assert len(ADDED_AT_S60) == 21 and len(pt.PIECE_FIELDS) == 8
 # And L1's (S61, D220 item 6): the radius the binning stages read, the cluster's cloud's.
-ADDED_AT_S61 = {"cluster_birth_radius"}
+# S61 (D220 part II, as the lead amended item 4): the radius the cloud's ring drew, which the cloud now carries beside
+# its placed radius, and the layer's clustering field - its seed and its mean in each level-0 cell (NaN with the
+# layer off).
+ADDED_AT_S61 = {"cluster_birth_radius", "cloud_birth_radius", "census_clustering_seed", "census_clustering_cell_mean"}
 # S61 (D220 items 1 and 10): "everything that moves, moves once". With the layer off the cloud census is a new draw -
 # each ring's count and arrays on the ring's stream - and with it every column of the clouds and of the clusters (with
 # their HII regions and bubbles, which are columns of the cluster class) and the nine statistics computed from them.
@@ -950,7 +953,8 @@ def test_i4_the_production_graphs_declare_their_readers(prod):
         g = graph.analyse(m, impls_, table)
         assert set(g.placement_readers) == {"systems", "bright_stars", "clouds", "clusters", "planets"}
         # S56 (D215): was the cloud texture alone. S60 (D219): was ("arm_phases", "cloud_texture").
-        assert g.layer_stages == ("arm_pieces", "cloud_texture")
+        # S61 (D220 part II): was ("arm_pieces", "cloud_texture") - the clustering field runs in the first wave.
+        assert g.layer_stages == ("census_clustering", "arm_pieces", "cloud_texture")
         # S60 (D219): was {"pattern", "gas_pattern"} - the law's stage composes nothing; the composing stage is
         # `stellar_pattern`, beside the gas's.
         # S60 (D219, the gate's fourth follow-up, C): the disclosed check `arm_ring_power` publishes the realised ring
@@ -968,7 +972,8 @@ def test_i4_the_production_graphs_declare_their_readers(prod):
         report = graph.report([m], impls_, table)
         assert "placement readers: bright_stars, clouds, systems, planets, clusters" in report
         # S56 (D215): was "layer stages: cloud_texture" and a line "input unread by ruling: texture_seed".
-        assert "layer stages: arm_pieces, cloud_texture" in report and "unread by ruling" not in report  # S60 (D219): was arm_phases
+        # S61 (D220 part II): was "layer stages: arm_pieces, cloud_texture" - the clustering field's stage leads.
+        assert "layer stages: census_clustering, arm_pieces, cloud_texture" in report and "unread by ruling" not in report  # S60 (D219): was arm_phases
         assert "texture_seed@3" in report and "inputs unbound: 0" in report
 
 
@@ -1131,8 +1136,9 @@ def test_i4_compose_refuses_a_stage_that_is_not_a_reader_at_run_time(prod):
         # columns too, synthetic like the phases, and the graph refuses each of the seven by name.
         # S60 (D219 item 7): was the five phases and the two segment columns - a pattern is built from the eight
         # columns of the census of arm pieces, and the graph refuses each of the eight by name.
-        synthetic_reads = pt.PIECE_FIELDS
-        assert {p.code for p in problems} == {"layer-reader"} and len(problems) == len(synthetic_reads) == 8
+        # S61 (D220 part II): and the clouds read the clustering field's seed, a ninth synthetic field.
+        synthetic_reads = pt.PIECE_FIELDS + (("census_clustering_seed",) if stage_id == "clouds" else ())
+        assert {p.code for p in problems} == {"layer-reader"} and len(problems) == len(synthetic_reads) == (9 if stage_id == "clouds" else 8)
         assert all(f"'{stage_id}'" in p.detail and "synthetic" in p.detail for p in problems)
         assert {n for n in synthetic_reads if any(f"'{n}'" in p.detail for p in problems)} == set(synthetic_reads)
         with pytest.raises(UndeclaredAccess, match="placement reader"):
@@ -1308,7 +1314,8 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
     # numbers are constants, not fields (G1, change 4).
     # S59 (D218 items 1-2): and the two columns of the winding's segments - the same stage's, on the same seed.
     # S60 (D219 item 7): was the phases and the segments - the census of arm pieces, eight columns of one table.
-    assert {f["name"] for f in synthetic} == set(cl.TEXTURE_COLUMNS) | set(pt.PIECE_FIELDS)
+    # S61 (D220 part II): and the clustering field's seed and cell means.
+    assert {f["name"] for f in synthetic} == set(cl.TEXTURE_COLUMNS) | set(pt.PIECE_FIELDS) | CLUSTERING_FIELDS
     assert not [f["name"] for f in fields if "cloud_interior" in f["name"]]
     for f in fields:
         if f["provenance"] == "synthetic":
@@ -1326,6 +1333,12 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 assert "measured nowhere" in f["statistic"] and "not drawn" in f["statistic"], f["name"]
                 assert "self-gravitating disc" in f["stands_in_for"] and "Every ring's mean density and every law" in f["conserves"], f["name"]
                 assert not re.search(r"none read", f["statistic"], re.IGNORECASE), f["name"]
+                continue
+            if f["name"] in CLUSTERING_FIELDS:
+                # S61 (D220 part II): the hierarchy's statistic, read (Grasha et al. 2017a Table 4), and NaN layer off.
+                assert f["stage"] == "census_clustering" and "Grasha et al. 2017a" in f["statistic"] and "[verified:" in f["statistic"], f["name"]
+                assert "hierarchical fragmentation" in f["stands_in_for"] and "It does not keep" in f["conserves"], f["name"]
+                assert "NaN with the randomness layer off" in f["about"], f["name"]
                 continue
             assert f["stage"] == "cloud_texture" and re.search(r"none read \(#95\)", f["statistic"]), f["name"]
             # Which seed, in each of the four (G1, change 6).
@@ -1383,7 +1396,8 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # S60 (D219): was 356 - twenty-one added (ADDED_AT_S60) and nine retired: the five phases, the anchor, the two
     # segment columns and the spread.
     # S61 (D220 item 6): was 368 - the binners' radius, `cluster_birth_radius`.
-    assert len(columns) > 100 and len(b.fields) == 369
+    # S61 (D220 part II): was 369 - the cloud's ring-drawn radius and the clustering field's seed and cell means.
+    assert len(columns) > 100 and len(b.fields) == 372
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1400,6 +1414,11 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
               and not (n in RING_FIRST_STATISTICS and same_ring_first(a.fields[n], b.fields[n]))}
     # S56 (D215): the layer's five phases were numbers in the layer-on run and not in the layer-off one. S60 (D219):
     # retired - no synthetic scalar remains.
+    # S61 (D220 part II): the clustering field's seed and cell means are numbers in the layer-on run and NaN in the
+    # layer-off one - set apart by name.
+    clustering = differ & CLUSTERING_FIELDS
+    assert clustering == CLUSTERING_FIELDS
+    differ -= clustering
     phases = {n for n in differ if b.decls[n].provenance == "synthetic" and b.decls[n].kind.domain == "galaxy"}
     assert phases == set()
     # S59 (D218): the layer's table's columns are rows in the layer-on run and none in the layer-off one: a table's
@@ -1418,7 +1437,7 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # held to 1e-12 above; the five left all differ.
     assert statistics == set(CENSUS_STATISTICS)
     assert {b.decls[n].of for n in differ - statistics - phases - segments} == PLACED_OBJECTS
-    held = [n for n, d in b.decls.items() if not d.composed and n not in differ]
+    held = [n for n, d in b.decls.items() if not d.composed and n not in differ and n not in clustering]
     # 222 = basic's 343 fields less its 2 composed ones, the 100 placed columns, the 14 census statistics and the
     # 5 phases (215 until S56, which added the law's five amplitudes and its saturation to what is held).
     # S57 (D216): was 221 - `arm_pattern_speed` joins what is held, the same bits on and off.
@@ -1557,10 +1576,13 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # 12 916 clusters (12.4 %, 42.9 % of the cluster mass)", "140 in another cell ring", "`nebular` and `bubbles` bin
     # from it" and "#95; L1 decides". The census drawn ring-first is a new draw, re-read; and the binners read the
     # cloud's radius since, which the declaration now says.
+    # S61 (D220 part II as amended): were "by up to 229 pc", "1 629 of 12 710 clusters (12.8 %, 37.4 % ...)", "161 in
+    # another cell ring" and "bin a cluster by its cloud's radius" - the clouds are placed within their cells by the
+    # clustering field, so the offsets start from other centres; the binners read the radius the cloud's ring drew.
     for phrase in ("at S61 the offset moves a cluster",
-                   "by up to 229 pc in radius (its own length reaches 248 pc) against a 75 pc radial step",
-                   "1 629 of 12 710 clusters (12.8 %, 37.4 % of the cluster mass)",
-                   "161 in another cell ring", "`nebular` and `bubbles` bin a cluster by its cloud's radius",
+                   "by up to 230 pc in radius (its own length reaches 248 pc) against a 75 pc radial step",
+                   "1 582 of 12 710 clusters (12.4 %, 36.1 % of the cluster mass)",
+                   "133 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
                    "`cluster_birth_radius`", "No clamp"):
         assert phrase in text, phrase
     # The two gradient columns lean a cloud's density and place nothing outside it: they keep their declaration.
@@ -1571,7 +1593,9 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
     # S61 (D220): was 12916 (the ring-first census, a new draw). And the binners' radius is the cloud's.
-    assert np.array_equal(np.asarray(F["cluster_birth_radius"]), cloud_r)
+    # S61 (D220 part II as amended): was `cloud_r`, the cloud's radius - since the clouds are placed within their cells,
+    # the binners' radius is the one the cloud's ring drew.
+    assert np.array_equal(np.asarray(F["cluster_birth_radius"]), np.asarray(F["cloud_birth_radius"])[hosts])
     assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12710  # S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
@@ -1582,15 +1606,16 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S59 (D218 follow-up): was 1581 and 0.1231 of 12 839.
     # S60 fourth pass: was 1576 and 0.1227 of 12 840.
     # S61 (D220): was 1605 and 0.1243 of 12 916 (the ring-first census, a new draw).
-    assert int(moved.sum()) == 1629 and moved.mean() == pytest.approx(0.1282, abs=5e-4)
+    # S61 (D220 part II as amended): was 1629 and 0.1282 - the clouds placed within their cells.
+    assert int(moved.sum()) == 1582 and moved.mean() == pytest.approx(0.1245, abs=5e-4)
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
     # S61 (D220): was 0.4292 (42.9 %); 0.37412 now, printed as 37.4 % (the ring-first census, a new draw).
-    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3741, abs=5e-4)
+    assert mass[moved].sum() / mass.sum() == pytest.approx(0.3614, abs=5e-4)  # S61 (D220 part II as amended): was 0.3741
     edges, _ = sy.cell_edges(R)
     # S57 (D216): was 137 (S56: 157). S58 (D217): was 139. S59 (D218): was 137. S59 (D218 follow-up): was 140.
-    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 161  # S61 (D220): was 140. S60 fourth pass: was 142
+    assert int((np.searchsorted(edges, cloud_r, side="right") != np.searchsorted(edges, cluster_r, side="right")).sum()) == 133  # S61 (D220 part II as amended): was 161. S61 (D220): was 140. S60 fourth pass: was 142
     # 223 pc is the largest radial displacement of a cluster from its cloud; the offset's own length reaches 255 pc
     # (it is not all radial), and it is the radial part that crosses rings. The gate's text said "the offset reaches
     # 249 pc"; the declaration says which of the two each number is (D214, the close).
@@ -1601,7 +1626,7 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S59's first build again.
     # S61 (D220): were 248.5 and 265.2 pc - the ring-first census is a new draw and its texture is drawn on
     # texture_seed (D220 item 5), so the offsets are other numbers: 229.5 and 248.4 pc.
-    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(229.5, abs=0.1)
+    assert np.abs(cluster_r - cloud_r).max() * 1000.0 == pytest.approx(229.9, abs=0.1)  # S61 (D220 part II as amended): was 229.5
     assert np.asarray(F["cloud_source_offset"]).max() == pytest.approx(248.4, abs=0.1)
 
 
