@@ -863,3 +863,13 @@ def test_the_noise_is_a_leaf_and_only_the_layer_s_listed_stages_read_it():
             if "noise" in parts:
                 readers.add(path.relative_to(ROOT).as_posix())
     assert readers == NOISE_READERS, sorted(readers)
+
+
+def test_cell_quadrature_takes_a_pair_and_an_int_is_the_square_pair():
+    """S61 (D220 part II): a cell much longer round the ring than across it takes (n_u, n_v); an int n is (n, n) to the bit."""
+    assert np.array_equal(noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, 4), noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, (4, 4)))
+    q = noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, (2, 3))
+    assert q.shape == (6, 2) and np.allclose(q[:, 0], [0.25, 0.75] * 3) and np.allclose(q[:, 1], [2.5, 2.5, 3.5, 3.5, 4.5, 4.5])
+    for bad in ((0, 3), (2,), (2.0, 3), (True, 3)):
+        with pytest.raises(noise.NoiseError):
+            noise.cell_quadrature(0.0, 1.0, 0.0, 1.0, bad)
