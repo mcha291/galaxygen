@@ -37,6 +37,7 @@ import numpy as np
 import pytest
 
 from galaxy.core.registry import production
+from galaxy.layer import census_clustering as CC
 from galaxy.layer.census_clustering import ClusteringField, field_seed
 from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
@@ -130,6 +131,29 @@ def test_the_literal_control_shares_the_clumps_and_reads_one(census):
     ctl = np.concatenate([C.positions_pc(x["cloud_radius"], x["cloud_azimuth"]) for x in same])
     slope, at_finest, _ = _judged(C.against_control(census["data"]["clouds"], ctl, census["annulus"]))
     assert abs(slope) < 0.1 and abs(at_finest - 1.0) < 0.1, (slope, at_finest)
+
+
+def test_the_spill_s_cost_to_the_abundances_is_the_declared_one(census):
+    """S61 (D220; the review's finding 1): ``conserves`` once said the abundances read at the ring's radius sat "up to
+    about 0.06 dex of [Fe/H]" from the placed radius's - the 90th percentile, not the maximum. The declaration now
+    carries the measured distribution, from the module's own numbers (``SPILL_FEH_DEX`` and the rest), and this holds
+    the measurement to them: the median, the 90th and 99th percentiles and the maximum within 1e-3 dex (the declared
+    digits; the default run is deterministic), the maximum's ring radius within 0.05 kpc, the count beyond 0.06 dex
+    exactly, the [alpha/Fe] maximum within 1e-3. Costs nothing beyond the census's run."""
+    F, R = census["out"].fields, census["out"].grid.R
+    placed, born = np.asarray(F["cloud_radius"], dtype=float), np.asarray(F["cloud_birth_radius"], dtype=float)
+    feh, alpha = np.asarray(F["feh_gas"], dtype=float), np.asarray(F["alpha_fe_gas"], dtype=float)
+    d = np.abs(np.interp(placed, R, feh) - np.interp(born, R, feh))
+    got = {"median": np.median(d), "p90": np.percentile(d, 90), "p99": np.percentile(d, 99), "max": d.max()}
+    assert got == pytest.approx(CC.SPILL_FEH_DEX, abs=1e-3), got
+    assert born[np.argmax(d)] == pytest.approx(CC.SPILL_FEH_MAX_AT_KPC, abs=0.05)
+    at, beyond, total = CC.SPILL_FEH_BEYOND
+    assert (int(np.sum(d > at)), d.size) == (beyond, total)
+    assert np.abs(np.interp(placed, R, alpha) - np.interp(born, R, alpha)).max() == pytest.approx(CC.SPILL_ALPHA_MAX_DEX, abs=1e-3)
+    text = CC.CENSUS_CLUSTERING_SEED.conserves  # the declaration is built from the same numbers
+    for v in (*CC.SPILL_FEH_DEX.values(), CC.SPILL_FEH_MAX_AT_KPC, CC.SPILL_ALPHA_MAX_DEX):
+        assert f"{v}" in text, v
+    assert "about 0.06 dex" not in text
 
 
 def test_the_disclosed_square_at_r_sun_as_measured(census):

@@ -349,6 +349,15 @@ _STANDS_IN_FOR = (
     "(a level-C simulation would: RESEARCH_AREAS section 1). Nothing the arms, the bar or the disc's profile "
     "already give: the field's own correlation is the hierarchy's excess over that structure."
 )
+# The spill's cost to the abundances, as measured at S61 on the default galaxy, layer on (the review's finding 1;
+# ``tests/test_clustering_gate.py`` holds the measurement to these numbers): |[Fe/H]_gas at the placed radius minus
+# at the radius the ring drew|, dex, over the 16 577 clouds - its median, 90th and 99th percentiles and maximum; the
+# ring's radius of the maximum (kpc); the clouds beyond 0.06 dex; and the [alpha/Fe] maximum, likewise.
+SPILL_FEH_DEX = {"median": 0.022, "p90": 0.063, "p99": 0.123, "max": 1.258}
+SPILL_FEH_MAX_AT_KPC = 23.6
+SPILL_FEH_BEYOND = (0.06, 1862, 16577)
+SPILL_ALPHA_MAX_DEX = 0.232
+
 _CONSERVES = (
     "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "
     "inside the cloud's own cell after the ring's count, the sector allocation and every other draw are made, so "
@@ -357,8 +366,14 @@ _CONSERVES = (
     "moves either. It does not keep where a cloud sits in its cell: a cloud's placed radius lies anywhere in its "
     "level-0 ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew - measured "
     "at S61 on the default galaxy, a median 275 pc and at most 976 pc - while the cloud's abundances and its "
-    "cluster's efficiency are read at the radius the ring drew (up to about 0.06 dex of [Fe/H] apart); and its "
-    "placed azimuth anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
+    "cluster's efficiency are read at the radius the ring drew. Measured at S61 (the default galaxy, layer on): "
+    f"the gas's [Fe/H] at the placed radius differs from that at the ring's by a median {SPILL_FEH_DEX['median']} "
+    f"dex, {SPILL_FEH_DEX['p90']} at the 90th percentile and {SPILL_FEH_DEX['p99']} at the 99th, at most "
+    f"{SPILL_FEH_DEX['max']} dex - a cloud the ring drew at {SPILL_FEH_MAX_AT_KPC} kpc, where the gas's [Fe/H] falls "
+    "from -1.23 to -2.92 dex between 23 and 24 kpc (6.4 dex/kpc, against a ring 0.94 kpc wide); at most 0.335 dex "
+    f"inside 5 kpc and 0.149 in 10-15 kpc; {SPILL_FEH_BEYOND[1]} of {SPILL_FEH_BEYOND[2]} clouds (11 %) more than "
+    f"{SPILL_FEH_BEYOND[0]} dex apart; [alpha/Fe] at most {SPILL_ALPHA_MAX_DEX} apart. And its "
+    "placed azimuth lies anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
     "of the map ran from 0.44 to 1.93 over 40 cells measured at S61 - the published cell mean is what divides it out."
 )
 _STATISTIC = (
