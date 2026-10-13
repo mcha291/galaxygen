@@ -229,9 +229,9 @@ class Comparison:
         return cls(pts[footprint.contains(pts)], footprint, np.asarray(edges, dtype=float), split)
 
     def auto(self) -> np.ndarray:
-        """RR: the auto pair counts, summed over disjoint consecutive slices of at most ``split`` points (all of them
-        at once when ``split`` is None), with :attr:`rr_pairs` the pairs counted over. Each slice of an iid catalogue
-        is itself a draw from the same law, so the normalised count has the full catalogue's expectation; the cost
+        """RR: the auto pair counts, summed over disjoint slices of at most ``split`` points of the catalogue in a
+        fixed random order (all of them at once when ``split`` is None), with :attr:`rr_pairs` the pairs counted
+        over. Each slice of a randomly ordered catalogue is itself a draw from the same law, so the normalised count has the full catalogue's expectation; the cost
         falls by the number of slices, and its noise stays below DD's while a slice holds more points than the
         data (the probe reports the slice size beside every number)."""
         if self.rr is None:
@@ -240,10 +240,14 @@ class Comparison:
             t0 = time.perf_counter()
             n = self.points.shape[0]
             step = n if not self.split else int(self.split)
+            # Sliced in a fixed random order: a control arrives in its catalogue's order (cell by cell, so ring by
+            # ring), and a consecutive slice of it would hold one radial range only - its pairs not the whole
+            # catalogue's (found by the S61 probe: a flat 1.05-1.16 against a control of the census's own law).
+            points = self.points if step >= n else self.points[np.random.default_rng(0).permutation(n)]
             rr = np.zeros(self.edges.size - 1, dtype=np.int64)
             pairs = 0.0
             for s in range(0, n, max(step, 1)):
-                part = self.points[s:s + step]
+                part = points[s:s + step]
                 rr += pair_counts(part, None, self.edges)
                 pairs += part.shape[0] * (part.shape[0] - 1) / 2.0
             self.rr, self.rr_pairs = rr, pairs

@@ -130,6 +130,24 @@ def test_the_control_divides_out_the_law_the_data_were_drawn_from():
     assert np.all(np.abs(uniform.one_plus_omega[small] - plateau) < 4.0 * error[small]), (uniform.one_plus_omega, plateau)
 
 
+def test_a_control_sorted_by_radius_and_counted_in_slices_still_divides_out_its_law():
+    """A control arrives in its catalogue's order - cell by cell, ring by ring - and RR is summed over slices: the
+    slices must be random subsets, not radial ranges. The control of the test above sorted by radius and counted
+    in slices of 4 000 (seven slices) returns 1 within four Poisson errors in every bin. (Before the fix the S61
+    probe read a flat 1.05-1.16 at every scale against controls of 51 000-67 000 points in 50 000-point slices.)"""
+    fp = C.Annulus(1000.0, 15000.0)
+    rng = np.random.default_rng(21)
+    data = _exponential_disc(5000, 3000.0, fp, rng)
+    control = _exponential_disc(25000, 3000.0, fp, rng)
+    control = control[np.argsort(np.hypot(*control.T))]
+    corr = C.landy_szalay(data, C.Comparison.control(control, fp, split=4000))
+    assert corr.rr_split == 4000
+    comparison_pairs = sum(k * (k - 1) / 2.0 for k in np.diff(np.r_[np.arange(0, 25000, 4000), 25000]))
+    dd_expected = corr.rr / comparison_pairs * (corr.n_data * (corr.n_data - 1) / 2.0)
+    sigma = np.sqrt(1.0 / dd_expected + 1.0 / corr.rr)
+    assert np.all(np.abs(corr.one_plus_omega - 1.0) < 4.0 * sigma), (corr.one_plus_omega - 1.0) / sigma
+
+
 def _synthetic(values: np.ndarray) -> C.Correlation:
     n = values.size
     ones = np.ones(n, dtype=np.int64)
