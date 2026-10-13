@@ -1692,11 +1692,11 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     cloud_r, cluster_r = np.asarray(F["cloud_radius"])[hosts], np.asarray(F["cluster_radius"])
     mass = np.asarray(F["cluster_mass"])
     step = float(R[1] - R[0])
-    # S61 (D220): was 12916 (the ring-first census, a new draw). And the binners' radius is the cloud's.
+    # S61 (D220): the ring-first census, a new draw (the count on the assertion below). And the binners' radius is the cloud's.
     # S61 (D220 part II as amended): was `cloud_r`, the cloud's radius - since the clouds are placed within their cells,
     # the binners' radius is the one the cloud's ring drew.
     assert np.array_equal(np.asarray(F["cluster_birth_radius"]), np.asarray(F["cloud_birth_radius"])[hosts])
-    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12710  # S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
+    assert step * 1000.0 == pytest.approx(75.0) and cluster_r.size == 12710  # S61 (D220): was 12916; S60 fourth pass: was 12840; S59 (D218 follow-up): was 12839; S59 (D218): was 12826 (S58: 12829; S57: 12814; S56: 12930)
     # "another radial ring": the grid ring whose centre is nearest, the cluster's against its cloud's.
     ring = lambda r: np.floor((r - R[0]) / step + 0.5).astype(int)  # noqa: E731
     moved = ring(cloud_r) != ring(cluster_r)
