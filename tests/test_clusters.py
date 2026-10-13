@@ -236,7 +236,7 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # S60 (D219): was 1.0021. S59 (D218 follow-up): was 0.9825; first pass 1.0442. S58 (D217): was 0.9701; S57 (D216): was 0.9870; S56 (D215): was 1.0382; S51 (D210): was 1.0088
     # S61 (D220): was 0.9939 - the clouds drawn ring-first (each ring's count and arrays on the ring's stream), a new
     # draw of the census: Q reads 0.9397 of the young light, -5.5 %; the realised cloud mass is 0.904 of the molecular
-    # gas at the default seed (2.7 times its 3.5 % noise low; over 60 systems seeds 0.993 +- 0.035, no bias), and
+    # gas at the default seed (2.7 times its 3.5 % noise low; over 300 systems seeds 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias), and
     # the clusters' mass follows it. Q's own noise is 4.6 %, the tolerance 0.16.
     assert ratio == pytest.approx(0.9397, abs=0.0005)
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))

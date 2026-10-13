@@ -652,7 +652,7 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # S61 (D220): the clouds are drawn ring-first - each ring's count and arrays on the ring's stream before the layer
 # places them - a new draw of the census, the same on and off since: 5.6 % to 6.5 % under through rgb and 6.9 %
 # bolometric (the clusters' light moved -6.6 %), the default
-# seed's clouds holding 0.904 of the molecular gas (60 seeds: 0.993 +- 0.035).
+# seed's clouds holding 0.904 of the molecular gas (300 systems seeds: 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias).
 CLUSTERS_RGB_OVER_YOUNG = (0.94372, 0.94097, 0.93468)  # S61 (D220): was (0.97512, 0.97813, 0.98674). S60 (D219): was (0.97428, 0.97826, 0.98757); S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
 CLUSTERS_LIGHT_OVER_YOUNG = 0.93132  # S61 (D220): was 0.99711. S60 (D219): was 1.00064; S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
 
