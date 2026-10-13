@@ -381,6 +381,7 @@ uses it. **Declared in advance:** where the forcing is too weak for a shock the 
 means becomes a check, a disclosed row (its numbers have been printed, D113). #129 and #131 are re-ruled. D210's
 ruling 3 is superseded where the physics signs the offset. **Then G3.**
 
+
 **Agents:** two readers; builder A (solver and instrument); builder B (integration and re-pins); a reviewer.
 
 *(Ruled at gate G2, S57, D216; ruling by Fable. The frame is Ω_p(R) = Ω(R) for every arm mode — the plan's
@@ -522,12 +523,12 @@ derived from the ridge's Jeans length, phases synthetic.
 its sourced spectrum and shear — a choice of look with no measured statistic, declared as one if it goes in.
 The spurs attach to P5's pieces.
 
-
 **Added 2026-10-13 (D220 part II, item 6; the lead's ruling at L1).** One noise: `census_clustering` is the coarse
 end of one lattice noise on one seed path — three octaves from ℓ = 190 pc down — and `gas_fluctuation` is the same
 function on the same path, its octaves continuing finer with the slope and width L2 sources. L2 may not change the
 clouds' map: ℓ, the three octaves and the clouds' σ are L1's, and the test that pins the field's own correlation
 against a control stays green.
+
 **Agents:** two readers; builder A (evaluator, vectors); builder B (spurs).
 
 ### Phase V7 — the layer in the viewer (S65)
