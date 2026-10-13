@@ -11949,3 +11949,96 @@ region: whole, layer off*   0.6745   0.0073  92.05  2,890,328  halo,disc
 render: whole, layer off*   2.2232   0.3011   7.38  7,520,504  halo,cens
 ```
 (cold s, warm s, ratio, bytes; S60 for comparison: `region: whole disc` 5.7, `clouds: whole disc` 4.0, `clusters: whole disc` 5.3, `bright: whole disc` 14.1, `render: whole, rgb` 8.9 - the clouds and clusters routes 2.0 and 1.7 times, #159; the bright rows faster.)
+
+### D221. S62: the gas fluctuation field and the spurs — one noise with L1's, the break at the disc's thickness, the shear's stretch, feathers off the chains (BUILD_III Phase L2; a Fable lead on the owner's word, Opus readers and builders)
+
+**Session S62, opened 2026-10-14 on `session-62` from S61's merge.** The owner's word of 2026-10-13: "continue to S62
+when S61 closes" and "if S62 finishes, continue with S63 too" — the Fable lead with Opus builders carries on. The
+plan's text is `BUILD_III.md` §5 Phase L2 with D219's and D220's added paragraphs; the readings are
+`READING_GAS_SPECTRA.md` (23 preprints) and `READING_SPURS.md` (24 sources), both taken during S61's closing suite
+by Opus readers under §3e's rules and entered as returned.
+
+**Two stop conditions, resolved in place (§3d: "a source contradicts what this plan assumed"; Fable leads).**
+1. *The plan called the gas's height the field's outer scale.* Every source read puts the disc's thickness at the
+   spectrum's **break**, not its end: the 2-D column spectrum is a power law from the kpc scales down to the
+   thickness and steeper by about one below it (Elmegreen, Kim & Staveley-Smith 2001 §3.3; Block et al. 2010;
+   Zhang, Hunter & Elmegreen 2012; Elmegreen & Scalo 2004 §2.1 — a slab thinner than 1/k projects "shallower
+   than the 3D density spectrum by one"), and no turnover is seen inside any disc (THINGS to 16 kpc, Dutta et al.
+   2013; NGC 5236 and 6946's column-density spectra single power laws to the field, Nandakumar & Dutta 2020,
+   2023). **Ruled:** the field has no outer scale of its own — its coarsest scale is L1's ℓ = 190 pc, the one
+   noise (D220 II.6), and the cell's unit mean cuts the larger scales as it cuts L1's (#161); **the gas's published
+   scale height is the break**, where the octaves' gain steepens.
+2. *The break's existence is contested.* With the beam forward-modelled Koch et al. 2020 find single power laws in
+   M31, M33 and the Clouds, and Grisdale et al. 2017 find THINGS' breaks at the beam; against them stand the LMC's
+   HI (80–100 pc rising to ~150 pc outward, EKS01), the LMC's dust (Block 2010), M33's HI at 110 pc (Combes 2012)
+   and the simulations with feedback (Grisdale 2017: 100–200 pc, the HI layer's thickness). **Ruled:** the break
+   is built, because the model publishes the height and a field that ignored it would claim the gas is a thin
+   sheet at every scale; the sources that see none are recorded beside it, and the slope change is **one**
+   (EKS01's and E&S 2004's rule; measured 0.8 in M33's HI to 1.5 in NGC 1058), the factor between the break's
+   length and the height **π** (Dutta et al. 2009: 1.5 kpc ↔ z_h 490 ± 90 pc; EKS01's "about the thickness" and
+   Combes' simulations' 0.5–3 bracket it).
+
+**Part I — the field, ruled.**
+
+1. *One noise, two maps* (D220 II.6, kept): `gas_fluctuation`'s Gaussian sum is L1's three octaves — the same
+   lattice, the same seed path, the same values — **continued finer** on the same path: octaves at 23.75, 11.9 and
+   5.9 pc (three more; the finest is the field's resolution and is declared; a shader may stop earlier and say
+   so). L1's map (`census_clustering`, σ 1.75, three octaves, its `top` factor) is untouched and its gate test
+   stays green; the gas field is its own log-normal map of the six-octave sum with its own width.
+2. *The slope.* Above the break the octaves' gain is **L1's s = 1.53** (P(k) ∝ k^−1.53, which the sources'
+   −1.6 — THINGS' median, Dutta et al. 2013 Table 2, half the sample within −1.9 to −1.5; the whole sample −0.3 to
+   −2.2, mean −1.3, s.d. 0.5 — covers; the Local Group's resolved HI reads −2.2 to −2.7, M33's −2.4, Combes 2012
+   Table 3: the range goes in the about). **Below the break the gain is s + 1 = 2.53** for every octave finer than
+   π·h(R), h the ring's published gas scale height — a per-ring amplitude ladder on one lattice (rule 5: a point
+   function of position, the ring's h and the seed; no stored grid is its definition).
+3. *The width.* **σ²_lnΣ = A ln(1 + b² M²), A = 0.11, b = 1/3** (Burkhart & Lazarian 2012 eq. 3 and Table 1,
+   solenoidal MHD over M_s 0.4–8.8; their Taurus and IC 5146 fits A = 0.16 and 0.12 with b = 0.5 beside it;
+   Federrath et al. 2010's compressive forcing three times wider at M 5.5) at the ring's Mach number — the gas
+   velocity dispersion the model publishes over the sound speed of the phase the field stands for (the builder
+   reads what the `ism` stage publishes; the clouds' median 6.5 is the molecular census's and is not this). σ_ln
+   runs about 0.11 at M 1, 0.28 at M 3, 0.52 at M 10 (derived). The measured galaxy widths — HI 0.19–0.51 dex,
+   molecular 0.21–0.64 dex, PHANGS' 0.52–1.18 dex (beam-smoothed, masked, with their gradients) — are a disclosed
+   check against the map's width per ring, not a target.
+4. *The shear's stretch.* An isotropic field a time t old is read at sheared coordinates (`noise.shear`): strain
+   = (dΩ/dlnR)·t with **t = min(1/A, 30 Myr)**, A the ring's Oort constant (Jeffreson & Kruijssen 2018 eq. 23,
+   τ = 1/A = 2/[Ω(1 − β)]; M51's interarm clouds live 20–30 Myr and track 1/A inside 70″, Meidt et al. 2015; the
+   cap where feedback ends a cloud first: Meidt 2015, PHANGS' 10–30 Myr, Chevance et al. 2020; Koda 2021's
+   60–500 Myr beside them). Where t = 1/A the strain is **−2 exactly** (dΩ/dlnR = −2A), so the anisotropy is one
+   number for most of the disc and the angle comes out of the shear, not in (the plan's "the disc's own shear and a
+   sourced lifetime"; Puerari 2014's trailing interarm filaments and La Vigne's sheared flocculent feathers are
+   the check). The shear is applied to **the whole sum**, L1's three octaves included: the clouds' map is L1's
+   own evaluation and is not sheared; the gas map is. The two maps therefore differ at the
+   coarse scales by the shear alone — declared.
+5. *What it multiplies.* The diffuse gas and the diffuse dust the render and the viewer draw per ring (the dust's
+   own layer, D206; the gas layer), **not the clouds, the clusters or the HII regions** (the census's). Unit mean
+   per level-0 cell by the normaliser on the cell's lattice (`noise.lognormal_normaliser`, S55's instrument), the
+   ring's totals exact (rule 2). Layer off: 1.
+6. *The reference evaluator and the vectors.* A Python evaluator of the map at any (x, y) and the committed test
+   vectors (`layer/vectors.json`, S55's convention) a GLSL twin must match in V7; the per-ring ladder (gains, the
+   break's octave index, σ, the strain) published as the field's parameters — synthetic scalars per ring, NaN
+   layer off (D215 ruling 5) — and carried on the render's header.
+7. *The spurs (feathers).* Built as a composed field on the gas ridge's downstream side, **only off chains**: La
+   Vigne, Vogel & Ostriker 2006 see feathers in 45 of 223 spirals, 83 % of those with a well-defined dust lane and
+   **none of 52 Scd–Sd** — a flocculent disc (`ngc_4414`'s pin) gets none. Spacing along the arm **10 λ_J,sp**
+   with λ_J,sp = c_s² / (G Σ_ridge,peak) (Kim & Ostriker 2006 abstract and §6, the thick-disc value; LVO06's M51
+   mean 10.4; KO02's 2.5 and SO06's 5 λ_J,arm in the about; Σ at the ridge's peak from the gas pattern's contrast,
+   c_s the model's sound speed — LVO06 assumed 7 km/s). Measured spacings to check against, disclosed: M51 ~200 pc
+   inner rising to 500–1000 pc; PAWS' nine gas spurs 276 pc mean; 80–2000 pc over twenty galaxies growing with
+   radius (Mandowara 2022 Table 4). Pitch **63° ± 12° from the circle** (Elmegreen 1980, 28 spurs; KO02's
+   kinematic wavefront — leading at the ridge, trailing downstream — is the alternative, carried as the look's
+   debt); length **240 pc** (Schinnerer 2017's mean; 155–475 pc, Corder 2008); width **60 pc** (the thin parts'
+   40–80 pc); the contrast falling along the spur **by ×5–10 from the ridge** (LVO06) — the profile across is a
+   declared look (D219's paragraph). The phases — where along each chain the first spur stands — are synthetic,
+   on `texture_seed`, per chain. The field multiplies the diffuse gas and dust as the lanes do (the pieces'
+   `Stretches` normaliser keeps the ring mean exact). Stellar spurs (Elmegreen 1980's 0.5–10.5 kpc apart, 0.6–4.8
+   kpc long) are not built: they are the young stars' light, V5's.
+8. *The gate* (judged in place): the evaluator's measured 2-D spectrum on flat patches reads s = 1.53 ± 0.15 above
+   π·h and 2.53 ± 0.15 below, with the break within an octave of π·h on three rings; the map's width per ring is
+   the relation's at that ring's Mach number (measured on the map); the strain as declared (the anisotropy of the
+   map's autocorrelation measured); unit mean per cell to 1e-12 on the lattice; L1's gate test and the clouds'
+   map bit-identical; I1–I3; the vectors committed and matched by the evaluator; the spurs' spacing on the Milky
+   Way template at R₀ against the disclosed 200–1000 pc; no acceptance row moves; the layer-off run bit-identical.
+9. *Order of work.* The reading documents entered; the evaluator and its spectrum probe first (the instrument
+   before the thing it certifies: an FFT spectrum tool in `specs/`); the field and its parameters; the render's
+   and the viewer's dust and gas layers reading it (a placement reader); the spurs; the reviewer; the re-pins
+   (layer-on numbers only: the render's frames, the dusty ratio pin); the frames beside the goals.
