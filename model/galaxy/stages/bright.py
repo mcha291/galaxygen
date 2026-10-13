@@ -32,7 +32,19 @@ exponentials by inverse CDF from the cell's own stream), and Γ_i fixes its **th
 of grid thresholds its luminosity lies between, from Λ at the thresholds - so the stars above any grid
 threshold are exactly those with Γ_i < Λ(threshold): a higher grid threshold is a prefix in Γ order, the
 count above it is Poisson with mean Λ, and a cell's stars do not depend on which other cells were asked for
-(D60). **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
+(D60).
+
+**Ring-first** (S61, D220 part I; :func:`draw_ring`). Since S61 the ordered process is drawn per *level-0 ring*
+(32 of them), not per finest cell: the ring's Λ is its cells' expectations summed (``ring_curve`` - I2's
+expectation, the same bits with the layer on or off, item 1), its Γ on the ring's stream ``(seed, "bright", ring,
+"gamma")``, and every per-star draw an array on ``(seed, "bright", ring, name)`` - a star's identity in the draw is
+(ring, i). Within its interval a star's part and finest sub-ring are drawn by their exact counts (layer-free), and
+its **sector** is the inverse of its part's cumulative placement weights round the sub-ring at its own ``sector``
+uniform (item 2); its place inside the cell is :func:`place_in_cell`. A cell keeps its (cell, index) naming, index
+the star's rank among the ring's stars allocated there in ring order. A cell asked alone draws its ring's count and
+uniforms whole and derives the columns of its own rows only (item 3), so it is the same alone and in a sweep; and
+every realised ring total - count, light, band light - is the same on and off, only the sector and the azimuth
+differing (item 4). Until S61 each finest cell drew its own Γ and streams. **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
 counts in the interval, and its luminosity uniformly in log L across the segment's overlap with the
 interval, so every linear quantity of the realised stars - count, bolometric light, each band - has the
 budget's expectation; until D203 the luminosity was Λ⁻¹(Γ_i) read log-linearly across the interval and the
@@ -1027,7 +1039,7 @@ BRIGHT_MASS = _column(
     "star's luminosity interval, the point by the star's luminosity on it.", Ramp("inferno", scale="log"))
 BRIGHT_LUMINOSITY = _column(
     "bright_star_luminosity", "Luminosity", "Lsun",
-    "Bolometric, from the luminosity function: the star's place in its cell's ordered Poisson process fixes the "
+    "Bolometric, from the luminosity function: the star's place in its ring's ordered Poisson process fixes the "
     "0.05-dex interval of luminosity it lies in, and within it the luminosity is uniform in log L across the "
     "isochrone segment its exact count there chose, so every disc star brighter than any threshold is in the "
     "catalogue and a higher grid threshold keeps a prefix of it. A point painted by this through a "
@@ -1120,9 +1132,9 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
     Stage(
         id="bright_stars", slot="bright_stars", checkpoint=5,
         about=(
-            "Every disc star above a luminosity, complete: per finest cell an ordered Poisson process in "
+            "Every disc star above a luminosity, complete: per ring an ordered Poisson process in "
             "luminosity on the population's luminosity function, so a higher threshold keeps a prefix and a "
-            "region's stars are a sweep's. Publishes the disc's brightest few thousand; /api/bright serves any "
+            "region's stars are a sweep's; each star's cell is allocated by the arms' weights round its ring. Publishes the disc's brightest few thousand; /api/bright serves any "
             "threshold or count. Stars younger than the cluster census's window are the census's, and the bulge "
             "is not covered: it stays in the field."
         ),
