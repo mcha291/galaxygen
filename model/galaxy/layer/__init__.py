@@ -15,6 +15,9 @@ stand in for, and evaluable at a point.
                                     of the cloud-interior noise, synthetic; on ``texture_seed`` since S61 (D220)
     galaxy/layer/arm_pieces.py      the census of arm pieces (S60, D219): the table ``arm_piece`` on ``texture_seed``,
                                     no row with the layer off (it replaced S56's ``arm_phases``, the modes' phases)
+    galaxy/layer/census_clustering.py  the censuses' clustering field (S61, D220 part II): a log-normal lattice noise
+                                    on ``texture_seed`` that draws a cloud's azimuth within its sector; its seed and
+                                    each cell's mean, NaN with the layer off
 
 A realisation stage registers with the rest when ``galaxy.stages`` is imported. Nothing is imported here: a reader
 imports ``galaxy.layer.noise`` or ``galaxy.layer.compose`` by name.

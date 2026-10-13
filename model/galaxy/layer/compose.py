@@ -24,6 +24,8 @@ own composed field, handing over the law it has just made).
   fields (it is its neutral there with the layer off).
 - A *realisation* (:func:`realise`, :func:`realise_scalars`, :func:`cloud_texture`): what a layer stage draws,
   or - with the layer off - its neutral value, which for a scalar that was not realised is NaN (D215).
+- A *synthetic field's evaluator* (:func:`census_clustering`, S61, D220 part II): the clustering field a census
+  places within a sector by, or None with the layer off.
 
 With the layer off every scalar and every radial field the physics stages publish is unchanged - the pitch, the
 amplitudes, the modes' split of the arms' power, the gas's ratio of means are laws and measured scatters, and they
@@ -202,6 +204,19 @@ def realise_scalars(source: Any, names: Sequence[str], draw: Callable[[], Mappin
     would claim a draw that was not made" (D215, gate ruling 5). ``draw`` is not called with the layer off, so
     the layer's stream is never drawn then."""
     return realise(source, lambda: dict(draw()), lambda: {name: float("nan") for name in names})
+
+
+def census_clustering(source: Any, constants: Mapping[str, Any]) -> Any:
+    """The clustering field of the censuses (``layer/census_clustering.py``, S61, D220 part II items 4 and 8): the
+    evaluator built from the seed the layer's stage published and the model's constants for the field - or None
+    with the layer off, when a census places each object uniformly within its sector as before. A placement
+    reader asks here and nowhere else; the seed is never read with the layer off."""
+    if not _on(source):
+        return None
+    from galaxy.layer.census_clustering import CENSUS_CLUSTERING_SEED, ClusteringField
+
+    fields = getattr(source, "fields", source)
+    return ClusteringField.of(fields[CENSUS_CLUSTERING_SEED.name], constants)
 
 
 def cloud_texture(source: Any, seed: int | None, layout: Any, size: np.ndarray) -> dict[str, np.ndarray]:

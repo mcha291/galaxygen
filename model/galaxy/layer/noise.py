@@ -525,24 +525,30 @@ def shear_anisotropy(strain: float) -> tuple[float, float]:
 # --- the unit-mean log-normal map, normalised per cell ------------------------------------------------------------
 
 
-def cell_quadrature(u0: float, u1: float, v0: float, v1: float, n: int = DEFAULT_QUADRATURE) -> np.ndarray:
+def cell_quadrature(u0: float, u1: float, v0: float, v1: float, n: int | tuple[int, int] = DEFAULT_QUADRATURE) -> np.ndarray:
     """The n x n midpoint lattice of the rectangle [u0, u1] x [v0, v1]: an (n*n, 2) float64 array.
 
     Point ``j * n + i`` is ``(u0 + (i + 1/2)(u1 - u0)/n, v0 + (j + 1/2)(v1 - v0)/n)``. The two coordinates are
     the caller's (x and y, or R and phi); the caller maps them to the positions the noise is evaluated at, and
     weights the points if the cell's measure is not uniform in them (see :func:`lognormal_normaliser`).
 
+    ``n`` may be a pair ``(n_u, n_v)`` (S61, D220 part II item 4): the same midpoint rule with ``n_u`` points along
+    u and ``n_v`` along v, point ``j * n_u + i``, an (n_u*n_v, 2) array - for a cell much longer on one axis than
+    the other (a level-0 cell of the disc is up to six times longer round the ring than across it). An int n is
+    the pair (n, n), to the bit.
+
     **Choosing n**: at least four points per cell of the finest octave's lattice along each axis,
     ``n >= 4 * extent * finest_frequency``. The default 16 serves a cell that holds up to 4 finest lattice
     cells across; what that buys, and what half of it costs, is measured in :func:`lognormal_map`. n is fixed
     per field by the model and published with it: the normaliser is defined on these points and no others.
     """
-    if isinstance(n, bool) or not isinstance(n, (int, np.integer)) or n < 1:
-        raise NoiseError(f"n must be a positive int, got {n!r}")
-    mid = (np.arange(int(n), dtype=np.float64) + 0.5) / int(n)
-    u = float(u0) + mid * (float(u1) - float(u0))
-    v = float(v0) + mid * (float(v1) - float(v0))
-    return np.stack([np.tile(u, int(n)), np.repeat(v, int(n))], axis=-1)
+    pair = tuple(n) if isinstance(n, (tuple, list)) else (n, n)
+    if len(pair) != 2 or any(isinstance(k, bool) or not isinstance(k, (int, np.integer)) or k < 1 for k in pair):
+        raise NoiseError(f"n must be a positive int or a pair of them, got {n!r}")
+    nu, nv = int(pair[0]), int(pair[1])
+    u = float(u0) + (np.arange(nu, dtype=np.float64) + 0.5) / nu * (float(u1) - float(u0))
+    v = float(v0) + (np.arange(nv, dtype=np.float64) + 0.5) / nv * (float(v1) - float(v0))
+    return np.stack([np.tile(u, nv), np.repeat(v, nu)], axis=-1)
 
 
 def lognormal_normaliser(g_quadrature, sigma: float, weights=None) -> np.ndarray:

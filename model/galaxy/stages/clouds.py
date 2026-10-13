@@ -45,7 +45,11 @@ source in the about line; nothing here is recalled (rule B9).**
   ``GasPattern``; S51, D210; since S57 the gas's steady response to the stellar arms, D216), not
   the stars' own contrast, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
   read off the gas at the cloud's radius. The contrast averages to 1 round every ring, so a ring's
-  expected count is what it was: the clouds move round the ring, not in number.
+  expected count is what it was: the clouds move round the ring, not in number. **Since S61 (D220 part II
+  item 4)** the azimuth inside the sector is drawn on a lattice along the sector's arc at the cloud's radius,
+  weighted by that contrast times the randomness layer's clustering field (``layer/census_clustering.py``,
+  read through ``compose``): the clouds gather into complexes below a cell's scale; their radii, their
+  sectors and every other draw are untouched, and with the layer off the azimuth is uniform in the sector.
 
 **The ring-first draw (S61, D220 part I).** A ring's clouds are drawn before the layer places them. The
 ring's count is one Poisson draw on the ring's stream ``(systems_seed, "cloud", ring, "count")`` at the
@@ -82,6 +86,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
@@ -109,6 +114,8 @@ G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) time
 # The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
 # source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
 CLOUD_LAYER_SHARE = 0.5
+# The clustering field's constants, which the census reads to place a cloud within its sector (S61, D220 part II).
+CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
 
 
 def cloud_layer_height(thin_disc_scale_height_pc: float) -> float:
@@ -400,6 +407,7 @@ def materialise_clouds(
     rings, sectors = cell_edges(R)
     placement = sector_placement(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
     pattern = placement[0]
+    clustering = _compose.census_clustering(fields, c)  # S61 (D220 part II): the field within a sector; none, layer off
     layout = cloud_layout(fields, R, seed, c, cells, placement=placement)
     counts = layout.counts
     u_all = ring_draws(seed, "cloud", layout, ("radius", "azimuth", "mass", "age", "height"))
@@ -432,10 +440,15 @@ def materialise_clouds(
         lo, hi = rings[ring], rings[ring + 1]
         weight = ring_weight[ring]
         radius = invert_cdf(draw("radius"), R, weight) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
-        if pattern is None or pattern.flat:
+        if clustering is None:
+            # The layer off: no field and no pattern - uniform in the sector, the arithmetic of every census before S61.
             azimuth = (sector + draw("azimuth")) * width
         else:
-            azimuth = pattern.azimuths(draw("azimuth"), radius, sector * width, (sector + 1) * width)
+            # S61 (D220 part II item 4): the gas pattern's point function times the clustering field, on a lattice
+            # along the sector's arc at the cloud's own radius; the radius, the ring's count and the sector stand.
+            azimuth = clustering.azimuths(
+                draw("azimuth"), radius, sector * width, (sector + 1) * width, clustering.arc_points(hi, width), pattern
+            )
         slope, m_min, m_max = law_for(0.5 * (lo + hi), c)
         mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
         size = cloud_radius_pc(mass, sigma)
@@ -515,7 +528,10 @@ CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "follows the same contrast; the same rule in both models. Since S61 a ring's clouds are "
                         "drawn before they are placed: the contrast picks each cloud's sector and its azimuth in "
                         "it and nothing else, so the ring's clouds are the same clouds with the layer off, placed "
-                        "uniformly round the ring (D220 item 2).")
+                        "uniformly round the ring (D220 item 2). Since S61 the azimuth within the sector is drawn "
+                        "by the contrast times the randomness layer's clustering field along the sector's arc at "
+                        "the cloud's radius, so the clouds gather into complexes below a cell's scale (D220 part "
+                        "II item 4); the radius and the sector are not moved by it.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
                        "molecular layer's thickness was read (debt #95). A sample of the layer's vertical "
@@ -662,10 +678,12 @@ CLOUDS = IMPLEMENTATIONS.register(
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
             *GAS_PATTERN_CONSTANTS,  # S57 (D216): the gas's own response places the clouds - its sound speed, and G
+            *CLUSTERING_CONSTANTS,  # S61 (D220 part II): the clustering field's five numbers
         ),
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
+            "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud's azimuth is drawn by in its sector
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,

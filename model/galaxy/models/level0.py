@@ -789,6 +789,69 @@ LEVEL0: dict[str, Constant] = {
         "octaves weigh one, a half, a quarter and an eighth. The viewer's own choice, none read, #110 [verified: "
         "frontend/src/galaxy/region.ts at tag s54, 'weights 1, 1/2, 1/4, 1/8'].",
     ),
+    # The clustering field of the censuses (S61, DECISIONS.md D220 part II): the randomness layer's stand-in for the
+    # gas's hierarchical fragmentation below a cell, a log-normal map of an octave sum of lattice noise. Its scale
+    # and octaves are the ruling's; its spectral slope and width are derived from its statistic, measured once
+    # (each about says how); the lattice density is the noise module's own rule. Constants of the model (G1's
+    # ruling 2b): the same with the layer on or off; the layer's census_clustering stage realises the field.
+    "CENSUS_CLUSTERING_SCALE": Constant(
+        0.19,
+        "kpc",
+        "The clustering field's coarsest lattice scale, the largest scale of the young clusters' hierarchy: 190 pc, "
+        "the median of the five largest hierarchical scales measured in nearby discs (101, 110, 190, 450 and 845 "
+        "pc; four more galaxies give only limits, where one power law runs to the edge of the footprint) "
+        "[verified: Menon et al. 2021, MNRAS, arXiv:2108.04387, Table 3; docs/READING_CLUSTERING.md 1.3]. Five of the "
+        "twelve galaxies that table covers; bracketed by the 112 pc break of the six-galaxy average [verified: "
+        "Grasha et al. 2017a, ApJ 840, 113, Table 4; READING_CLUSTERING.md 1.2] and the 210-300 pc of NGC 628 "
+        "[verified: Lapeer et al. 2026, arXiv:2601.11434, sect. 4.4.2; READING_CLUSTERING.md 1.5]. Beyond it the "
+        "field is flat: 1 + omega is 1 (DECISIONS.md D220 part II item 2).",
+    ),
+    "CENSUS_CLUSTERING_OCTAVES": Constant(
+        3,
+        "count",
+        "How many octaves of lattice noise the clustering field sums, each at twice the last one's frequency: "
+        "three, at 190, 95 and 47.5 pc, the finest the field's resolution - as far down as the cost allows "
+        "(DECISIONS.md D220 part II item 3). Below 47.5 pc the field has no structure of its own; the census's "
+        "1 + omega there is the finest octave's, flattening.",
+    ),
+    "CENSUS_CLUSTERING_SPECTRAL_SLOPE": Constant(
+        1.53,
+        "dimensionless",
+        "The power-spectrum slope the clustering field's octaves are weighted to, P(k) ~ k^-1.53 in two dimensions. "
+        "Derived, not chosen (DECISIONS.md D220 part II item 3): with the width beside it, the one pair for "
+        "which the field's own two-point function - points drawn by the field alone in a flat footprint, measured "
+        "as the sources measure (Landy-Szalay, 20 log bins 30 pc-5 kpc) - has slope -0.64 over 47.5-190 pc, 2.43 "
+        "at 47.5 pc on its fitted law and 1 within 0.05 beyond 380 pc. Measured at S61 as the exact expectation "
+        "of such points (the field's autocorrelation over the square of its mean, by FFT on a 5.9 pc grid, binned "
+        "as the instrument bins): 48 noise seeds in 6.08 kpc squares give slope -0.646 +- 0.010 and 2.45 at "
+        "47.5 pc, 12 seeds in 12.16 kpc squares -0.638 +- 0.008 and 2.42; 0.990-0.998 beyond 380 pc. One 6 kpc "
+        "square alone scatters by 0.068 in slope. Points drawn by rejection, 10 000 in each of eight 6.08 kpc "
+        "squares and measured by the instrument against ten times as many uniform randoms, read each square's "
+        "exact expectation to within their Poisson noise. A Gaussian field's power law P ~ k^-(2 + alpha) for "
+        "1 + omega ~ r^alpha does not carry over: the map is log-normal and three octaves are no power law, so "
+        "the pair is measured.",
+    ),
+    "CENSUS_CLUSTERING_WIDTH": Constant(
+        1.75,
+        "dimensionless",
+        "The log-normal width of the clustering field, the sigma of exp(sigma g - sigma^2/2) over a unit-variance "
+        "octave sum g. Derived with the spectral slope beside it, from the same measurement (DECISIONS.md D220 "
+        "part II item 3): the amplitude 1 + omega = 2.43 at 47.5 pc, (190/47.5)^0.64, fixes it once the slope "
+        "fixes the shape. The statistic is the ratio of the two branches of the six-galaxy correlation of "
+        "clusters up to 40 Myr, inner -0.85 +- 0.03 over outer -0.21 +- 0.02, meeting at 112 pc [verified: "
+        "Grasha et al. 2017a, ApJ 840, 113, Table 4, classes 1-3; docs/READING_CLUSTERING.md 1.2]: the six "
+        "galaxies' pair-weighted average, their inner slopes running -0.4 to -1.7 one by one.",
+    ),
+    "CENSUS_CLUSTERING_POINTS": Constant(
+        4,
+        "count",
+        "Points per cell of the clustering field's finest lattice, along each axis, of every lattice the field is "
+        "summed or drawn on: a cloud's azimuth is drawn on the arc of its sector at its radius with this many "
+        "points per 47.5 pc of the sector's outer arc, and a cell's mean of the field is taken on a midpoint "
+        "lattice this dense in radius and azimuth. The lattice noise's own rule, at least four per finest cell "
+        "(galaxy/layer/noise.py, cell_quadrature). Measured at S61 on 40 level-0 cells: a cell's mean at four "
+        "points is within 6e-4 rms (3e-3 at worst) of its mean at eight; at two, 7e-3 (4e-2).",
+    ),
     "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
         2.73,
         "dimensionless",
