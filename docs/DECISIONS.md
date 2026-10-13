@@ -11755,3 +11755,174 @@ reads both seeds — the layout is `systems_seed`'s draw, nothing is drawn on it
 says so. (4) At the default inputs `systems_seed` equals `texture_seed`, so the stream test cannot tell them apart
 there and the rerolling test does: accepted. (5) The ring paths coincide with the retired cells' paths for
 cells 0–31: harmless and recorded; not renamed (a rename is a second redraw and every re-pin again). (6) Item 6 above.
+
+**Part I built for the bright catalogue (an Opus builder; rebased, fast-forwarded).** The ordered Poisson process
+kept, its Γ one draw per level-0 ring on `(seed, "bright", ring, "gamma")` against `ring_curve` (32 × K, the same
+bits on and off); `STREAMS` gains `sector`; a star's part and finest sub-ring drawn jointly at its `population`
+uniform by their exact counts (`split_cdf`), its sector the inverse CDF of the part's weights; `draw_ring` draws the
+ring whole and computes the remainder, the sector and the cell for the asked sub-rings only; `place_in_cell` left
+as the field's hook. Measured: the weights sum to 256 round a sub-ring to 8.5e-14; per finest ring the cells' sum
+differs on and off by 6.4e-15 (unchanged from S60); at 10⁴ L☉ (63 883 stars) the per-ring counts and the sorted
+luminosities are the same bits, the sums to 1e-16; **`bright_star_limit` 34 423.216 → 33 875.549, identical on
+and off**; the default selection's 3 162 stars identical in every column but the azimuth. No acceptance row moved.
+*One stop condition fired and was accepted:* a single cell at 10³ L☉ costs 49 / 58 ms (was 6.6 / 17.5; a ring of
+~192 000 stars' uniforms and their part assignment) — at the default limit a cell is under 1 ms, the 306-cell window
++10–15 % (17.8 → 19.7 s on), the whole disc at 10⁴ 48.9 → 47.5 s on and 8.28 → 2.39 off, the default selection
+7.13 → 5.64 on and 2.14 → 0.20 off, the timings rows 14.1 → 13.2, 15.0 → 12.6, 15.3 → 13.2 s; the oracle's held
+count 235 → 252 (item 4's prediction). Re-pins: `BRIGHT_RGB_OVER_OWN` (1.00069, 1.00322, 1.00670) → (0.99996,
+1.00104, 0.99994).
+
+**Part I built for the star sample, its planets and the hierarchy (an Opus builder; two hand-backs).** Level 0:
+`ring_star_expected` n·share[ring], the count its whole part plus one Bernoulli on `(systems_seed, "star", ring,
+"count")`, every per-star stream a ring array (the prefix property used: only max(i)+1 values drawn), `sector`
+new; `Placement` over every ring and sector; **the young/old split the cells made by tilting their age law is now
+made by the allocation** — age from the ring's untilted law, a young star weighted c̄p and an old one c̄(1 − p),
+every cell's expectation the contrast's to 4e-16 (χ² 0.93–1.02 per cell on three seeds); `Catalogue.ring_layout` a
+real attribute (`StarLayout`: counts, level, ring, index, sizes; the clouds' `with_layout` kept); the planets on
+`(planets_seed, "planet", ring, name)` at the star's row, `/api/system` resolving a name through `select()` and
+`planets.one_system`. I2: n·share against the cells' sum bit-identical off, ≤ 2 ulp on. **The levels, measured
+first then ruled** (item 8): a level-3 child at the route's maximum sample (5M stars, layer off) would cost 2.2× —
+the lead ruled **(a), the whole sub-ring as the unit** — the count the seeded rounding of 2^k(1 − 4^−k)·n·share on
+`(seed, "star", "level", k, sub_ring, "count")`, arrays on the sub-ring's stream, allocation among the 32·2^k
+children by level 0's rule at the sub-ring's middle radius, the ages never tilted (`YoungStars.age_weights`
+removed), a child's own planets on the sub-ring's stream (S32's cell stream retired). A zero-weight sub-ring is
+allocated by the floor (the search path cost 65 ms per 1.3M-star sub-ring: a 5M level-3 child read 4.3× before
+that, 2.2× after). Costs, child in ms (off, n = 20 000 / 1e6 / 5M at levels 0–3): 14–16 / 21–28 / **33–68**; on
+450–490 / 501–558 / 719–881 (were 444–631 / 501–660 / 707–888). The window 7–9 kpc × 0–0.4 rad at levels 0–3: off
+0.021 / 0.042 / 0.087 / 0.252 → 0.019 / 0.030 / 0.048 / 0.120 s; **on 0.46 / 5.4 / 15.4 / 51.7 → 0.45 / 0.58 / 0.67 /
+0.91 s** (`cell_expected` was rebuilt for every child). The million-star catalogue: off 2.50 s (bound 10), on 39.1 s
+`azimuthal` / 34.4 `basic` (recorded, not bounded, #154; 38–41 before S61). Identity on and off: per-ring star
+counts, planet counts and giants bit-identical, masses and ages to 1e-12, at level 0 and at a level-1 and a level-3
+sub-ring; **`CENSUS_STATISTICS` is empty** — `catalogue_size` 20 001 (19 994 on) → 20 003, `planet_count_sample`
+106 725 → 107 138, `mean_planets_per_star` 5.33598 → 5.356096585512173, `giant_fraction_sample` 0.016899 → 0.014448
+(48 seeds: old 0.01608 sd 0.00084, new 0.01598 sd 0.00093, binomial 0.00089). No acceptance row moved. *The
+lead's rulings on the builder's points:* the sample keeps today's per-cell expectations (the ring-first draw changes
+streams, not laws) and the difference from `bright.part_weights` was measured — the young parts agree to 4.4e-16,
+**the old parts differ by 3.9e-3 per sector**, #160; S27's "a star's name is the same in both models" is **given
+up** (`basic` frozen allocates uniformly; the stars are the same by ring identity, which `test_sfh_azimuthal` now
+compares); the inward radial spill (712 clouds and 955 stars of 20 003, 4–5 %, up to 71 pc, the inverse CDF's last
+zero-weight node) is **#158**; `test_hierarchy` holds a parent's children to (4^k − 1)·E within 5σ instead of the
+old exact rounding. Re-pins: cell 300 holds 9 stars (was 16) at an expectation of 15.92; the API test reads the
+children's edges from the service's grid (a stand-in `linspace` misplaced a star at 9.170 kpc); the oracle 269.
+
+**Part II built — the field (an Opus builder; two hand-backs, one a stop at the gate).** Built first as part II
+item 4 was written — the field moving a cloud's azimuth only, at its ring-stream radius — **the finished census
+read −0.18 against −0.64 ± 0.15** (default −0.181 ± 0.034 clouds, −0.194 clusters; `milky_way` −0.169 / −0.176;
+`ngc_4414` −0.186 / −0.245) while the field alone read −0.646 ± 0.010 and 2.45 at 47.5 pc: measured in a flat
+annulus, a placement along the arc at an independent radius carries −0.425 of the field's slope (each arc
+normalised on its own, dominated by its brightest spot at σ 1.75), the joint (R, φ) placement all of it (−0.648).
+**The lead's amendment of item 4, on the numbers:** joint placement on the cell's two-dimensional lattice, the
+window probed first — ±190 pc about the ring-stream radius read **−0.410 ± 0.038 (misses)**, the whole cell
+**−0.631 ± 0.051 (passes)** — so the whole cell is built: 4 lattice points per 47.5 pc along the ring's radial width
+and the sector's outer arc, weights Σ_H₂(R)·R × the gas pattern read on a 16 × 24 mesh per cell, bilinear
+(reading the point function at every one of the 2.35 million lattice points would cost 15 s) × the field; the point
+by inverse CDF at the `azimuth` uniform, the azimuth within the point by the leftover fraction, the radius within
+the point by a new ring-stream array `position`. **The ring-stream radius is kept as `cloud_birth_radius`** (not
+drawn; last on the wire), where the cloud's metallicity and α and its cluster's efficiency are read, and
+`cluster_birth_radius` is it — so every per-fine-ring statistic stays identical on and off. The placed radius lies a
+median 275 pc and at most 976 pc from the ring's (declared in `conserves`). Layer off: the ring's radius, uniform
+in the sector, every cloud and cluster column the same bits as before the field. *The derived constants* (item 3):
+**s = 1.53, σ = 1.75** — the exact expectation of the field's two-point function by FFT on a 5.9 pc grid over 48
+seeds in 6.08 kpc squares (slope −0.646 ± 0.010, 2.45 at 47.5 pc, 0.990–0.997 beyond 380 pc; 12 seeds at 12.16
+kpc −0.638 ± 0.008; 8 squares of 10 000 rejection-sampled points −0.674 ± 0.020 against their own exact
+−0.674 ± 0.013); in `level0.py` as `CENSUS_CLUSTERING_SCALE` 0.19, `_OCTAVES` 3, `_SPECTRAL_SLOPE`, `_WIDTH`,
+`_POINTS` 4, `_TABLE_POINTS` 2. *What the stage publishes:* `census_clustering_seed` (the fold of
+`child(texture_seed, "census_clustering")`, which the clouds stage requires and `compose.census_clustering` turns
+into the evaluator, None layer off) and `census_clustering_cell_mean`, a synthetic column of a new table `cell`
+(1 024 rows; `fielddoc.TABLES` gains it; NaN with the rows kept layer off, D215 ruling 5), carried on `/api/clouds`'
+header for V7's shader; at 2 points per finest cell it costs 1.24 s a run and lies within 5.7e-3 rms (3.6e-2 worst)
+of the 4-point means, which cost 6.0 s. *The control* (item 7): the literal one — the same census under other seeds
+with the field kept — reads 1 (data and control share the clumps); the gate's control is the census's own law
+with the field's width 0, four other systems seeds pooled, layer on; the test says why. **The gate** (the fit over
+47.5–190 pc against the control / 1 + ω at 47.5 pc / the worst |1 + ω − 1| beyond 380 pc): default clouds
+**−0.636 ± 0.046 / 1.98 / 0.022**, clusters **−0.670 ± 0.057 / 2.10 / 0.021**; `milky_way` −0.619 ± 0.048 / 1.96 /
+0.028 and −0.639 ± 0.059 / 2.06 / 0.030; `ngc_4414` −0.524 ± 0.087 / 1.79 / 0.028 (6 530 clouds, inside the −0.49
+edge) and −0.594 ± 0.092 / 1.96 / 0.031 — **passes on the three galaxies.** *The disclosed check*, the 6 kpc square
+at R_SUN against uniform randoms, before → after (slope over 100–2 000 pc / 1 + ω at 300 pc / at 100 pc): default
+clouds −0.10 / 1.17 / 1.18 → −0.163 / 1.24 / 2.01; clusters ≤ 10 Myr −0.11 / 1.18 / 1.46 → −0.141 / 1.30 / 1.60;
+`milky_way` −0.187 / 1.25 / 1.83 and −0.161 / 1.27 / 2.32; `ngc_4414` 173 clouds and 62 clusters in the square,
+noise. The sources' 3.4 at 300 pc is their footprint's structure, as part II item 1 says; **item 4's "barely move
+at 300 pc" missed** (1.10 → 1.24). *Cost, cold:* `run()` layer on 18.2–19.7 → 23.1–23.6 s; `region: whole disc`
+unchanged (6.5 → 5.7–6.4); **`clouds: whole disc` 4.0 → 9.6–10.3 s and `clusters: whole disc` 5.3 → 11.9 s** —
+accepted and **#159**; `materialise_clouds` for every cell 1.0–1.1 → 3.8–4.5 s (the field on the lattices 2.0 s,
+the pattern's meshes 1.1 s), one cell unchanged. Re-pins (layer on only): the region synthesis's small windows
+0.9321 / 889 → 0.8424 / 881 and 0.7282 / 253 → 0.7507 / 265, its sixty windows' z mean −0.155 → −0.004; the
+offset's declaration 1 582 of 12 710 clusters (12.4 %, 36.1 % of the mass) in another radial ring, 133 in another
+cell ring, 229.9 pc at most. Task 0: `tests/test_audit_iii.py`'s cloud-mass gate is the ensemble test ruled above
+(24 seeds; the default seed pinned at 0.8972526124767065; a 20-seed check 0.99917, sd 0.0332 against σ 0.0344).
+
+**Part II item 5 built — the young stars near where they formed (an Opus builder).** `AGE_SEPARATION_AMPLITUDE`
+5.4 Myr and `AGE_SEPARATION_INDEX` 0.385 in `level0.py`; `bright.octave_survival` computes **190 pc dropped past
+40.711 Myr, 95 pc past 31.176, 47.5 pc past 23.874**; `noise.fractal_coarsest` sums the coarsest n octaves at the
+whole sum's amplitudes (`fractal` calls it; n = octaves bit-identical, tested); `ClusteringField.maps(x, y, kept)`
+and `cell_lattices(cell, law, kept, mesh)` — one `CellLattice` per octave count present, the field evaluated once
+on the clouds' lattice, the young law read on the clouds' 16 × 24 mesh, `CellLattice.place(radial, u, v)` the
+clouds' row-major inverse of the full product (tested point by point), the radius within the point from the star's
+own `radius` uniform; the young reader's mesh cached per level-0 ring. A part-0 star that keeps an octave is placed
+in the whole level-0 cell; every other star by today's placement in its finest cell (the same bits). Nothing bins
+bright stars per fine ring, so no birth radius is kept. Measured: layer off identical; layer on the clouds' and
+clusters' columns the same bits, and of the bright catalogue **only the radius and the azimuth of exactly the
+33 996 rows aged 20–40.71 Myr** (of 63 883 at 10⁴ L☉; 2 707 of the default selection's 3 162). **The gate (item
+7c)**, the 20 000-star selection (log L_min 4.220; 4.040 on `ngc_4414`) against the width-0 control, bins 20–23.9 /
+23.9–31.2 / 31.2–40.7 / 40.7–100 Myr (slope / 1 + ω at 47.5 pc / worst beyond 380 pc): default **−0.570 / 2.154 /
+0.0506**, −0.599 / 2.100 / 0.012, −0.007 / 1.234 / 0.032, **−0.046 / 1.039 / 0.021 (merged 0.999)**; `milky_way`
+−0.588 / 1.985 / 0.049, −0.553 / 2.065 / 0.038, −0.224 / 1.492 / 0.029, +0.011 / 0.967 / 0.019 (merged 0.976);
+`ngc_4414` −0.703 / 2.329 / 0.057, −0.519 / 2.024 / 0.037, −0.140 / 1.450 / 0.026, +0.088 / 0.934 / 0.025 (merged
+0.999); before the field (default) +0.033 / 0.953, −0.138 / 1.105, +0.211 / 0.787, −0.046 / 1.039. **The youngest
+bin's slope meets −0.64 ± 0.15 on the three galaxies and the oldest bin is 1 within 0.05; the youngest bin's dip to
+about 0.95 at 340–570 pc misses the 0.05 bound beyond 380 pc by up to 0.0066 — #161's trough, carried under it;
+and the middle bins' prediction failed in kind** — a log-normal map of the coarser octaves alone plateaus at its
+own level below its finest kept scale (two octaves 2.10 at 47.5 pc against the full field's 2.15; one octave
+1.23–1.49), so the bins barely differ until the last octave drops at 40.7 Myr: **#162**. The disclosed square
+(default, 20–40 Myr: slope / A at 300 pc / 1 + ω at 100 pc / at 300 pc): the probe's −0.33 / 1.77; the branch
+before the field −0.285 / 1.74 / 1.90 / 1.88; after **−0.302 / 1.75 / 2.39 / 1.72**; 40–100 Myr −0.36 / 2.02 →
+−0.441 / 2.20 / 3.42 / 1.93 → −0.415 / 2.14 / 3.31 / 1.79. Cost, cold: the bright timings rows 11.1 → 11.8, 11.0 →
+11.4, 10.9 → 12.0 s; the stage 3.35 + 4.59 → 3.26 + 4.38 s; one cell at 10³ 0.051 → 0.044; **the whole disc above
+10⁴ L☉ 38.3 → 11.1 s** (a field-placed star skips the pattern placement and the young law is read once per ring).
+The oracle holds 268 (the selection's 15 of 17 columns the same on and off; radius and azimuth move).
+
+**The independent review (an Opus reviewer, read-only, its own scripts; the note in the lead's scratchpad).**
+*Holds, re-derived:* I2 (`ring_expected` the same bits, the cells' sums ≤ 32 ulp); the realised totals per ring
+(16 577 clouds and 12 710 clusters on and off, masses, light, Q, Hα and volumes ≤ 3.4e-16; 20 003 stars and their
+planets the same bits; the bright catalogue's 3 162 and its limit the same bits, 19 732 stars at log L_min 4.22 to
+1.95e-16); every non-placement column of matched rows the same bits; D60 (cells 300 and 520, every census, levels
+1–3); layer off against `main`: 114 fields differ (the census columns and the fourteen statistics), 255 the same
+bits; only rows 35 and 37 move; the field alone on 24 squares −0.639 ± 0.015 by the instrument and −0.642 ± 0.014
+by the reviewer's own estimator, 2.43 at 47.5 pc; the gate's control reproduced to the digits and the reviewer's
+own control −0.639 / 1.973 (clusters −0.677 / 2.096); 4 999 stream paths logged in full runs — no `"cell"` tag
+drawn, no path drawn by two functions, no overlap across the five seeds even all at 0. *Findings, ruled:* (1)
+**a declared number was false** — `conserves` said a placed cloud's [Fe/H], read at the ring's radius, is "up to
+about 0.06 dex" from its placed radius's: measured median 0.022, p90 0.063, p99 0.123, **maximum 1.258 dex at
+23.6 kpc** (feh_gas falls from −1.23 to −2.92 between 23 and 24 kpc), 1 862 of 16 577 beyond 0.06, [α/Fe] up to
+0.232 — the declaration carries the distribution and a test pins it; (2) **the census meets the gate's wording but
+not the field's statistic** — 2.95, 2.35, 1.81, 1.47, 1.24, 1.05, 0.94, 0.96, 0.95, 0.97 at 34–341 pc: the
+amplitude cut to 1.97 at 47.5 pc, 1 crossed near 120 pc, a 3–6 % trough from 140 to 500 pc — **item 4's amplitude
+prediction (2.4 / 1.5 / 1) failed**, the per-cell conservation the mechanism, **#161**; (3) the pattern mesh's error
+was undeclared — the worst lattice point 32 % off at the bar's end (ring 5, sector 18), a cell's normalised weights
+at most 3.4e-3 in total variation (median 0), the ridge cell 1.2 %, exact from ring 14 (13.1 kpc) out — declared, and bounded
+by a test at 5e-3 on four cells (the worst, 3.39e-3, is the bar's other end, ring 5 sector 2); (4) the statistic's text says the slope is Grasha's and the scale Menon's (2.43 at 47.5 pc
+where Grasha's own break gives 1.73); (5) stale "azimuth within its sector" wording in five places corrected; (6)
+the cell means run 0.264–2.402 over the 1 024 cells (was quoted over 40); (7) I1's text in `BUILD_III.md` amended
+— the list is empty; (8) the costs it read under load were re-measured by the fix builder on `main` and the branch under the same load, least of five: a level-0 star cell layer on 0.437 → 0.442 s (item 3's prediction holds), the 20 000-star layout 0.179 → 0.441 s (`Placement`, built once per run; `main`'s 0.016 timed a layout without the pattern), the clouds stage alone cold 2.44 → 6.82 s (#159); (9) the default seed's 0.9041 is **the
+minimum of 300** (mean 1.0028, sd 0.0336); (10) one re-pin lacked its old value; (11) item 4's "barely move"
+recorded as missed; (12) #158 confirmed.
+
+**The frames beside the goals (the lead's look; `tools/goal_metrics.py` at its default geometry, `ngc_4414` at
+q = cos 55°).** `milky_way` field: dominant m 3, arm over interarm in blue 1.410, dark fraction 0.000, slope −2.86;
+star-first 3, 1.743, 0.000, −0.61; `ngc_4414` field 2, 2.064, 0.000, −4.11; star-first 2, 2.216, 0.000, −1.93.
+**L1 moved the pictures not at all at galaxy scale, and could not:** the field, the gas and the dust the frames
+draw read no census, and the clouds, clusters and young stars the layer now clusters are drawn only in the region
+regime below 4 kpc (V6 draws the censuses at whole-galaxy scale, S64). The Milky Way frame is the barred disc with
+too many, too faint arms of S60; `ngc_4414` a smooth disc with a bulge and no flocculence. One capture's pin moved:
+the physics-only over layered ratio (0.98618, 0.98950, 0.99265) → (0.98675, 0.99042, 0.99454), past the 1e-3 pin
+in blue, the HII knots and the clusters' light lying elsewhere.
+
+**Closing.** <SUITE>. The register: 97 open = 11 permanent + 86 carried, 46 discharged — #158–#162 opened above.
+Rows: 12 / 20 / 5 of 37, row 35 −2.05555, row 37 −0.097717 (a miss, #117), both moved by the redraw alone and the
+rest bit-identical. **For the owner, plainly (none awaited):** (a) the default seed's cloud draw is the lowest of
+300 — 6.6 % less cluster light than S60; a reroll of the default seed is theirs, not the model's; (b) the
+whole-disc census routes cost 2.5× cold (clouds ~10 s) — the lattice is #159, their bound on the viewer's calls
+still theirs (D219 (c)); (c) what the field adds is seen only below 4 kpc in the viewer until V6; (d) the young
+stars' clustering fades in a step at 40.7 Myr (#162); (e) the 88-minute gate test and the suite's length (g)
+still theirs; (f) the per-cell conservation cuts the hierarchy's amplitude by a fifth at 47.5 pc (#161).
+**S62 is L2**, the gas fluctuation field — one noise with this field (part II item 6) — and the spurs.
