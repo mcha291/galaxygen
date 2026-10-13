@@ -365,8 +365,10 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # S61 (D220 item 10): was `moved == named` - the ring-first redraw moves the cloud and cluster censuses and their
     # nine statistics, every one of them (measured: 17 cloud columns, 38 cluster columns, 9 statistics), and nothing else.
     redrawn = redrawn_at_s61(out, held)
-    # S61 (D220): 17 + 38 + 9 at the clouds' build; the bright catalogue's 17 columns and its limit join.
-    assert len(redrawn) == 17 + 38 + 17 + 10 and not redrawn & named
+    # S61 (D220): 17 + 38 + 9 at the clouds' build; the bright catalogue's 17 columns and its limit join; and the star
+    # sample's build: the star's 19 columns (the catalogue's 18 and the planets stage's star_planet_count), the
+    # planet's 9 and the four statistics.
+    assert len(redrawn) == 17 + 38 + 17 + 19 + 9 + 14 and not redrawn & named
     assert moved == named | redrawn, sorted(moved ^ (named | redrawn))
     moved -= redrawn
     # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
@@ -446,13 +448,18 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
     # S61 (D220 item 10): and the bright catalogue's two routes per model, its ring-first redraw (was 14).
     redrawn_routes = {label for label in made if "/clouds/" in label or "/clusters/" in label or "/bright/" in label}
     assert len(redrawn_routes) == 18
+    # S61 (D220 items 1-4 and 10): and the star sample's routes - each model's region window, whole disc, level-2
+    # window and brightest selection, its system, and the template's window: the ring-first sample, a new draw.
+    sample_routes = {label for label in made if "/region/" in label or label.endswith("/system")}
+    assert len(sample_routes) == 11
+    redrawn_routes |= sample_routes
     for label, got in made.items():
         held = reference["routes"][label]
         assert got["status"] == held["status"] == 200, label
         if label in redrawn_routes:
             # S61 (D220 item 10): the cloud and cluster routes serve the ring-first census, a new draw - every array and
             # the header's cells - in the columns they always sent, the clusters' with the binners' radius after their
-            # light temperature (ADDED_AT_S61).
+            # light temperature (ADDED_AT_S61). The star sample's routes likewise (its star, its planets, its cells).
             names, was = [a[0] for a in got["arrays"]], [a[0] for a in held["arrays"]]
             assert [n for n in names if n not in ADDED_AT_S61] == was, label
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
@@ -867,7 +874,8 @@ def test_i2_the_star_sample_s_ring_totals_and_its_planets_are_the_same_on_and_of
         }
     for k, a in totals[True].items():
         b = totals[False][k]
-        assert a.sum() > 0 and np.count_nonzero(a) > 20, k
+        # (the giants stand in the inner rings, where the metals are: 15 rings hold one)
+        assert a.sum() > 0 and np.count_nonzero(a) > (10 if k.endswith("giant") else 20), k
         if k.endswith(("count", "giant")):
             assert np.array_equal(a, b), k
         else:
@@ -1190,8 +1198,13 @@ def test_i4_compose_refuses_a_stage_that_is_not_a_reader_at_run_time(prod):
         # columns of the census of arm pieces, and the graph refuses each of the eight by name.
         # S61 (D220 part II): and the clouds read the clustering field's seed, a ninth synthetic field.
         synthetic_reads = pt.PIECE_FIELDS + (("census_clustering_seed",) if stage_id == "clouds" else ())
-        assert {p.code for p in problems} == {"layer-reader"} and len(problems) == len(synthetic_reads) == (9 if stage_id == "clouds" else 8)
-        assert all(f"'{stage_id}'" in p.detail and "synthetic" in p.detail for p in problems)
+        # S61 (D220): the planets lay out their stars by the catalogue's own allocation (systems.star_layout), so they
+        # read what it reads - the composed `sfr_modulation` too, which the graph refuses by name beside the eight.
+        composed_reads = ("sfr_modulation",) if stage_id == "planets" else ()
+        assert {p.code for p in problems} == {"layer-reader"} and len(problems) == len(synthetic_reads) + len(composed_reads)
+        assert len(synthetic_reads) == (9 if stage_id == "clouds" else 8)
+        assert all(f"'{stage_id}'" in p.detail and ("synthetic" in p.detail or "composed" in p.detail) for p in problems)
+        assert {n for n in composed_reads if any(f"'{n}'" in p.detail for p in problems)} == set(composed_reads)
         assert {n for n in synthetic_reads if any(f"'{n}'" in p.detail for p in problems)} == set(synthetic_reads)
         with pytest.raises(UndeclaredAccess, match="placement reader"):
             run(m, grid=SMALL, impls=undeclared, only=[d.name for d in impls_.get(stage_id).publishes][:1])
@@ -1513,8 +1526,14 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # luminosity order) is the same stars on and off but for the azimuth: sixteen of its seventeen columns are the
     # same bits, and `bright_star_limit` with them (a ring-first statistic now, held above).
     same_stars = [d.name for d in br.COLUMNS if d.name != "bright_star_azimuth"]
-    assert len(held) == 261 and "bright_star_limit" in held
-    assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars])
+    # S61 (D220 items 1-4, the star sample's build): was 261 - the sample is drawn ring-first too, so its four statistics
+    # are the same bits in both runs (RING_FIRST_STATISTICS, held above), and four of its columns are the same bytes
+    # though the rows are in other cells: star_population and star_wolf_rayet are 0 for every star of this sample,
+    # and star_wind_luminosity and star_bubble_radius are NaN but for one star, which stands at the same row in both
+    # (measured; its ring's earlier cells realise the same counts in both runs).
+    same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
+    assert len(held) == 269 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
 
