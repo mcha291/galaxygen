@@ -11926,3 +11926,26 @@ still theirs (D219 (c)); (c) what the field adds is seen only below 4 kpc in the
 stars' clustering fades in a step at 40.7 Myr (#162); (e) the 88-minute gate test and the suite's length (g)
 still theirs; (f) the per-cell conservation cuts the hierarchy's amplitude by a fifth at 47.5 pc (#161).
 **S62 is L2**, the gas fluctuation field — one noise with this field (part II item 6) — and the spurs.
+
+**Cold timings at the close (`tools/timings.py` as it prints them, the machine quiet; rule B2 - the clouds, clusters and bright stages' costs changed):**
+
+```
+arrays: gas pattern*     1.0923   0.0011 1002.46  1,153,912  halo,disc,b
+region: one sector*      4.0925   0.0011 3741.22     44,024  halo,disc,a
+region: whole disc*      4.8674   0.0054 909.17  2,890,344  halo,disc,as
+az: one sector*          4.0083   0.0011 3722.08     44,024  halo,disc,a
+clouds: one sector*      3.7315   0.0473  78.84     48,504  halo,census_
+clouds: whole disc*      7.9830   0.0527 151.39  2,688,992  halo,census_
+clusters: one sector*    4.7807   0.0019 2528.41     74,112  halo,census
+clusters: whole disc*    8.8781   0.0120 737.92  4,182,392  halo,census_
+bright: whole disc*     10.8020   0.6745  16.01    484,920  halo,census_
+bright: one sector*     10.2849   0.0083 1242.32    156,240  halo,census
+bright: whole, rgb*     11.0701   0.7322  15.12    562,072  halo,census_
+render: whole, rgb*      8.9475   0.3056  29.28  7,519,752  halo,census_
+render: one region*      8.7004   0.2708  32.12     30,208  halo,census_
+render: ngc_4414*        7.0872   0.3878  18.28  7,531,728  halo,census_
+clouds: whole, layer off*   0.5344   0.0076  70.27  2,668,648  halo,cens
+region: whole, layer off*   0.6745   0.0073  92.05  2,890,328  halo,disc
+render: whole, layer off*   2.2232   0.3011   7.38  7,520,504  halo,cens
+```
+(cold s, warm s, ratio, bytes; S60 for comparison: `region: whole disc` 5.7, `clouds: whole disc` 4.0, `clusters: whole disc` 5.3, `bright: whole disc` 14.1, `render: whole, rgb` 8.9 - the clouds and clusters routes 2.0 and 1.7 times, #159; the bright rows faster.)
