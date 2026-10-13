@@ -951,7 +951,18 @@ def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, pa
     column are part I's (the ring's count, the allocation, the luminosity), and it stays in its level-0 ring, so
     every ring total is what it was. **No birth radius is kept** (the clouds keep one): nothing reads a bright
     star's radius per finest ring - the field's remainder (:func:`resolve`) is per level-0 ring, and the height's
-    thin/thick criterion is read at the placed radius, as before. Layer off: no field, the arithmetic before S61."""
+    thin/thick criterion is read at the placed radius, as before. Layer off: no field, the arithmetic before S61.
+
+    *The gate* (D220 part II item 7c, ``tests/test_clustering_gate.py``; the default galaxy against its own law with
+    the field's width 0): the youngest bin (20-23.87 Myr) reads the hierarchy's slope, -0.570 over 47.5-190 pc, and
+    the oldest (40.71-100 Myr) 1 within 0.05 - both judged and met. Beyond 380 pc the youngest bin dips to about 0.95
+    across 340-570 pc: worst 0.0506 (milky_way 0.0494, ngc_4414 0.0566), **a miss of the 0.05 bound by up to 0.0066,
+    carried under #161** - the per-cell conservation's trough, the same mechanism that cuts the clouds' amplitude to
+    1.97 at 47.5 pc and gives their 0.94 at 158 pc. And **item 5's prediction for the middle bins failed in kind**
+    (#162): a log-normal map of the coarser octaves alone plateaus at its own level below its finest kept scale
+    (two octaves 2.10 at 47.5 pc against the full field's 2.15, one octave 1.23-1.49) instead of returning to 1, so
+    the bins barely differ until the last octave drops at 40.71 Myr; a gradual fading needs the log-normal width to
+    fall with age (Grasha et al. 2019's amplitudes 23 / 13 / 2.7 / 2.1 for <= 10, 10-50, 50-100, > 100 Myr)."""
     if galaxy.clustering is not None and age is not None:
         # S61 (D220 part II item 5): the young stars that keep an octave of the field, placed in their level-0 cell;
         # every other star by the pattern alone, as before (each row's placement is its own: the subset changes none).

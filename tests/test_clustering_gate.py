@@ -293,13 +293,20 @@ def test_the_young_bright_stars_lose_the_field_s_octaves_as_they_age(bright, cen
     [47.5, 190] pc and every bin beyond 380 pc (its single bins below 190 pc carry Poisson errors of 0.05-0.22 on
     1 957 stars, so "at every scale" is read on the merged bins).
 
-    **Not met, recorded for the lead**: the youngest bin's "1 +- 0.05 beyond 380 pc" reads 0.0506 here (0.954 and
-    0.949 at 341 and 440 pc, about 4 sigma below 1), 0.0494 on milky_way and 0.0566 on ngc_4414 - the clouds read
-    0.0216. A deficit just past the field's scale, where a level-0 cell's fixed count pays for the excess it holds
-    below it (the integral constraint of a placement inside the cell) [inferred]. And the middle bins do not return
-    to 1 below their finest kept octave, as item 5 predicted: a log-normal map of the coarser octaves alone is flat
-    below them at its own plateau, not at 1 - two octaves read 2.10 at 47.5 pc (the full field 2.15), one octave
-    1.23 - so the bins differ little until the last octave goes. Pinned as measured.
+    **A miss of the 0.05 bound by up to 0.0066, carried under #161**: the youngest bin's "1 +- 0.05 beyond 380 pc"
+    reads 0.0506 here (a dip to about 0.95 across 340-570 pc: 0.954 and 0.949 at 341 and 440 pc, about 4 sigma below
+    1), 0.0494 on milky_way (inside) and 0.0566 on ngc_4414 - the clouds read 0.0216. It is the per-cell
+    conservation's trough, register #161: a level-0 cell keeps its count, so the excess the field puts below its
+    scale is paid for just past it - the same mechanism that cuts the clouds' amplitude to 1.97 at 47.5 pc (the field
+    alone 2.43) and gives their 0.94 at 158 pc, which the clouds' flatness window, starting at 380 pc, skips.
+
+    **A failed prediction, in kind** (D220 part II item 5; register #162, which the lead opens): the middle bins were
+    to return to 1 below their finest kept octave's scale - 1 + omega -> 1 below 95 pc for two octaves, below 190 pc
+    for one. They do not: a log-normal map of the coarser octaves alone plateaus at its own level below its finest
+    kept scale, it does not fall to 1 - two octaves read 2.10 at 47.5 pc against the full field's 2.15, one octave
+    1.23 (milky_way 1.49, ngc_4414 1.45) - so the age bins barely differ until the last octave drops at 40.71 Myr, a
+    step, not a fading. A gradual fading needs the log-normal width to fall with age, as the sources' amplitudes do:
+    Grasha et al. 2019's series 23 / 13 / 2.7 / 2.1 for <= 10, 10-50, 50-100 and > 100 Myr. Pinned as measured.
 
     Cost: about 40 s on the census's run (the catalogue 14 s, the four controls 24 s)."""
     galaxy = bright["galaxy"]
