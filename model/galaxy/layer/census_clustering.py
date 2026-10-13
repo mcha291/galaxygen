@@ -46,6 +46,13 @@ every cell's lattice and the pattern on a 16 x 24 mesh per cell: materialising e
 ``clusters`` 5.3 -> 11.9 s cold, ``run()`` layer on 18.2-19.7 -> 23.1-23.6 s; one cell 0.05-0.07 s, unchanged. A
 cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell.
 
+**The young bright stars** (item 5). The bright catalogue places its stars of 20 to 40.71 Myr by the same field with
+its octaves finer than a star's age allows dropped (:meth:`ClusteringField.maps`, ``noise.fractal_coarsest``: the
+coarser octaves at the whole field's amplitudes), jointly in the star's level-0 cell on the same lattice: the lattice
+is built once per cell and octave count (:meth:`ClusteringField.cell_lattices`, :class:`CellLattice`) and each star's
+radial law multiplies its rows at the star's own draw. The clouds' placement is the same arithmetic it was
+(:func:`mesh_factor` is its pattern reading, factored out unchanged).
+
 **One noise** (item 6). This is the coarse end of one lattice noise on one seed path,
 ``(texture_seed, "census_clustering")``: L2's gas fluctuation is the same function on the same path, its octaves
 continuing finer; the three octaves, the scale and the width here are L1's.
@@ -377,7 +384,8 @@ CENSUS_CLUSTERING_SEED = _decl(
     "The 32-bit seed of the clustering field, folded once from the layer's seed on the noise's own path: with "
     "the model's five numbers for the field it makes the field evaluable at any point, by the model or a "
     "shader, as the lattice noise's committed vectors define it. The cloud census reads it to place each "
-    "cloud's azimuth within its sector by the field. **Not shown by the viewer** (rule D4): a galaxy scalar of "
+    "cloud in its cell by the field, and the bright catalogue its stars of 20 to 40.7 Myr, with the octaves "
+    "finer than a star's age allows dropped (D220 part II item 5). **Not shown by the viewer** (rule D4): a galaxy scalar of "
     "a layer stage, a key and no quantity; `/api/clouds`' header carries it with the field's numbers.",
 )
 CENSUS_CLUSTERING_CELL_MEAN = _decl(
@@ -434,7 +442,9 @@ CENSUS_CLUSTERING = IMPLEMENTATIONS.register(
             "The randomness layer's clustering of the censuses: a log-normal field of lattice noise in the plane, "
             "on the layer's own seed, coarsest at the hierarchy's largest measured scale and halving twice, by "
             "which each cloud's azimuth is drawn within its sector at its radius - so the clouds, and the clusters "
-            "in them, gather into complexes below a cell's scale as the sources measure. Synthetic: it stands in "
+            "in them, gather into complexes below a cell's scale as the sources measure; and by which the bright "
+            "catalogue's young stars stand near where they formed, losing its finer octaves as they age. "
+            "Synthetic: it stands in "
             "for the gas's fragmentation, moves no cloud between sectors or rings and no total, and with the "
             "layer off realises nothing."
         ),

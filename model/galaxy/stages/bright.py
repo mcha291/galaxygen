@@ -44,7 +44,10 @@ uniform (item 2); its place inside the cell is :func:`place_in_cell`. A cell kee
 the star's rank among the ring's stars allocated there in ring order. A cell asked alone draws its ring's count and
 uniforms whole and derives the columns of its own rows only (item 3), so it is the same alone and in a sweep; and
 every realised ring total - count, light, band light - is the same on and off, only the sector and the azimuth
-differing (item 4). Until S61 each finest cell drew its own Γ and streams. **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
+differing (item 4). Until S61 each finest cell drew its own Γ and streams. **The young stars near where they formed**
+(S61, D220 part II item 5; :func:`place_in_cell`): with the layer on, a star of 20 to 40.71 Myr is placed anywhere in
+its level-0 cell by the clustering field ``census_clustering``, its octaves finer than the star's age allows dropped
+(dt = A1 lambda^a, Grasha et al. 2017b) - its radius moves with the layer too, its ring does not. **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
 counts in the interval, and its luminosity uniformly in log L across the segment's overlap with the
 interval, so every linear quantity of the realised stars - count, bolometric light, each band - has the
 budget's expectation; until D203 the luminosity was Λ⁻¹(Γ_i) read log-linearly across the interval and the
@@ -774,7 +777,15 @@ def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -
     1.16 / 19.7 s. The whole disc above 10^4 L☉: 8.28 / 48.9 s -> 2.39 / 47.5 s; the default selection 2.14 / 7.13 s
     -> 0.20 / 5.64 s; ``tools/timings.py``'s bright rows cold 14.1 / 15.0 / 15.3 s -> 13.2 / 12.6 / 13.2 s (whole
     disc, one sector, whole with rgb). The single cell's rise at a low threshold is the ring's inherent cost, accepted
-    by the lead (D220); item 1's level-0 ring stands."""
+    by the lead (D220); item 1's level-0 ring stands.
+
+    S61 (D220 part II item 5), the young stars placed by the clustering field, measured cold before -> after on the
+    default galaxy (layer on): the stage's default selection 4.59 -> 4.38 s (the galaxy's tables 3.35 -> 3.26 s); one
+    cell at 8 kpc above 10^3 L☉ 0.051 -> 0.044 s; the whole disc above 10^4 L☉ 38.3 -> 11.1 s - a field-placed star
+    is not placed by the pattern first, and the young reader's ring mean at each such star's radius was most of the
+    cost; ``tools/timings.py``'s bright rows cold 11.14 / 11.04 / 10.89 -> 11.84 / 11.37 / 11.96 s. The field's
+    lattice is built once per (level-0 cell, octave count) a call needs and the young reader's mesh once per level-0
+    ring (kept): a first build that read the reader per cell took the default selection to 29 s."""
     cells = np.asarray([int(c) for c in cells], dtype=np.int64)
     if not cells.size:
         return Catalogue.of(_empty(), ())
@@ -1147,12 +1158,16 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp, zero: bool
 BRIGHT_RADIUS = _column(
     "bright_star_radius", "Galactocentric radius", "kpc",
     "Inside the star's finest cell, by inverting the surface density of stars of its own luminosity and age "
-    "part across the cell's radial span, times R.", Ramp("viridis"))
+    "part across the cell's radial span, times R. With the randomness layer on, a star of 20 to 40.7 Myr stands "
+    "anywhere in its level-0 cell instead, drawn jointly with its azimuth by the clustering field with the octaves "
+    "finer than its age allows dropped (D220 part II item 5): near where it formed.", Ramp("viridis"))
 BRIGHT_AZIMUTH = _column(
     "bright_star_azimuth", "Azimuth", "rad",
     "Inside the star's finest cell, by inverting the arm and bar density contrast at its radius; where the "
     "model publishes where stars form today, a star younger than about one arm crossing follows that instead, "
-    "as the sampled catalogue's young stars do.", Ramp("viridis"))
+    "as the sampled catalogue's young stars do. With the randomness layer on, a star of 20 to 40.7 Myr is drawn "
+    "jointly with its radius in its level-0 cell, by that law times the clustering field with the octaves finer "
+    "than its age allows dropped (D220 part II item 5).", Ramp("viridis"))
 BRIGHT_HEIGHT = _column(
     "bright_star_height", "Height above the plane", "kpc",
     "Inverted from the sech² profile at the scale height of the population (thin or thick) born at the "
