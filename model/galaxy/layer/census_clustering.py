@@ -387,7 +387,10 @@ _CONSERVES = (
     f"inside 5 kpc and 0.149 in 10-15 kpc; {SPILL_FEH_BEYOND[1]} of {SPILL_FEH_BEYOND[2]} clouds (11 %) more than "
     f"{SPILL_FEH_BEYOND[0]} dex apart; [alpha/Fe] at most {SPILL_ALPHA_MAX_DEX} apart. And its "
     "placed azimuth lies anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
-    "of the map ran from 0.44 to 1.93 over 40 cells measured at S61 - the published cell mean is what divides it out."
+    "of the map runs from 0.264 to 2.402 over all 1 024 cells (measured at S61 on the default galaxy; the review's "
+    "finding 6 - 0.44-1.93 was a 40-cell sample) - the published cell mean is what divides it out, taken on the "
+    "table's 2-point lattice: on the 4-point placement lattice the map divided by it has a mean off from 1 by 5.70e-3 rms "
+    "and 3.43e-2 at worst."
 )
 _STATISTIC = (
     "1 + omega_f(r) = (r / 190 pc)^-0.64 for r < 190 pc and 1 beyond: the inner branch -0.85 +- 0.03 over the "
