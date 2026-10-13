@@ -21,7 +21,10 @@ two-point expectation by FFT (what the constants were derived from, with 48 seed
 by the instrument against uniform randoms. One square's slope scatters by 0.068 between seeds, so the square's own
 number is pinned as measured and held to the gate's window.
 
-The templates are measured by hand (each about a minute and a half more) and recorded below as measured.
+The templates are measured by hand (each about a minute and a half more) and recorded below as measured: against the
+same control, slope over [47.5, 190] pc, the default galaxy's clouds -0.636 +- 0.046 and clusters -0.670 +- 0.057;
+milky_way's -0.619 +- 0.048 and -0.639 +- 0.059; ngc_4414's -0.524 +- 0.087 and -0.594 +- 0.092 - the clouds of
+ngc_4414 nearest the window's edge (-0.49), within it, on a third of the default's clouds (6 530).
 """
 
 from __future__ import annotations

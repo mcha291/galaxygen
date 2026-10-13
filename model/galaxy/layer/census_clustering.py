@@ -40,6 +40,12 @@ to give the cell unit mean, carried by ``/api/clouds``' header for the viewer (r
 off both are NaN - an unrealised number is NaN (D164; D215's ruling 5 for a synthetic scalar), and the cell table
 keeps its rows, which are the cells and are not drawn.
 
+**Cost** (measured cold at S61, accepted for the session by the lead; debt #159). The placement evaluates the field on
+every cell's lattice and the pattern on a 16 x 24 mesh per cell: materialising every cloud costs 3.8-4.5 s (the field
+2.0 s, the pattern's meshes 1.1 s) against 1.0-1.1 s before; the whole-disc routes ``clouds`` 4.0 -> 9.6-10.3 s and
+``clusters`` 5.3 -> 11.9 s cold, ``run()`` layer on 18.2-19.7 -> 23.1-23.6 s; one cell 0.05-0.07 s, unchanged. A
+cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell.
+
 **One noise** (item 6). This is the coarse end of one lattice noise on one seed path,
 ``(texture_seed, "census_clustering")``: L2's gas fluctuation is the same function on the same path, its octaves
 continuing finer; the three octaves, the scale and the width here are L1's.
@@ -218,7 +224,9 @@ _CONSERVES = (
     "no count, mass or light moves between cells or rings; every per-cloud law and every binner reads the radius "
     "the ring drew (`cloud_birth_radius`, `cluster_birth_radius`), so nothing published per ring or per radius "
     "moves either. It does not keep where a cloud sits in its cell: a cloud's placed radius lies anywhere in its "
-    "level-0 ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew, and its "
+    "level-0 ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew - measured "
+    "at S61 on the default galaxy, a median 275 pc and at most 976 pc - while the cloud's abundances and its "
+    "cluster's efficiency are read at the radius the ring drew (up to about 0.06 dex of [Fe/H] apart); and its "
     "placed azimuth anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
     "of the map ran from 0.44 to 1.93 over 40 cells measured at S61 - the published cell mean is what divides it out."
 )
