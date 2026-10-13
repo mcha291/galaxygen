@@ -941,6 +941,25 @@ def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, pa
     every ring total is what it was. **No birth radius is kept** (the clouds keep one): nothing reads a bright
     star's radius per finest ring - the field's remainder (:func:`resolve`) is per level-0 ring, and the height's
     thin/thick criterion is read at the placed radius, as before. Layer off: no field, the arithmetic before S61."""
+    if galaxy.clustering is not None and age is not None:
+        # S61 (D220 part II item 5): the young stars that keep an octave of the field, placed in their level-0 cell;
+        # every other star by the pattern alone, as before (each row's placement is its own: the subset changes none).
+        kept = octaves_kept(age, galaxy.octave_ages)
+        by_field = (part == 0) & (kept > 0)
+        if by_field.any():
+            radius, azimuth = np.empty(part.size), np.empty(part.size)
+            f, rest = np.flatnonzero(by_field), np.flatnonzero(~by_field)
+            radius[f], azimuth[f] = _place_by_field(galaxy, ring[f], sector[f], k[f], kept[f], u_radius[f], u_azimuth[f])
+            radius[rest], azimuth[rest] = _place_by_pattern(galaxy, ring[rest], sector[rest], part[rest], k[rest],
+                                                            u_radius[rest], u_azimuth[rest])
+            return radius, azimuth
+    return _place_by_pattern(galaxy, ring, sector, part, k, u_radius, u_azimuth)
+
+
+def _place_by_pattern(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part: np.ndarray, k: np.ndarray,
+                      u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(radius, azimuth) inside each star's finest cell by its part's laws (:func:`place_in_cell`): the placement
+    before S61, and with the layer on still every star's but the young ones the field places."""
     # Radius: the cell's span, by inverting the surface density of the star's own part and threshold interval
     # (linear between grid radii) times R. Azimuth: the cell's span, by the part's azimuthal law at that radius.
     R = galaxy.R
@@ -965,13 +984,6 @@ def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, pa
         law[young] = galaxy.modulation.at_points(radius[young], phis[young])
     azimuth = lo_p + invert_azimuths(u_azimuth, agrid, law) * (hi_p - lo_p)
 
-    if galaxy.clustering is not None and age is not None:
-        # S61 (D220 part II item 5): the young stars that keep an octave of the field, placed in their level-0 cell.
-        kept = octaves_kept(age, galaxy.octave_ages)
-        by_field = np.flatnonzero((part == 0) & (kept > 0))
-        if by_field.size:
-            radius[by_field], azimuth[by_field] = _place_by_field(
-                galaxy, ring[by_field], sector[by_field], k[by_field], kept[by_field], u_radius[by_field], u_azimuth[by_field])
     return radius, azimuth
 
 
