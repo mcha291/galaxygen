@@ -11726,3 +11726,32 @@ plan expected, on the owner's word that Fable leads this session).**
    synthetic field it publishes (the per-cell normalisers at least — the realised numbers a shader will read in
    V7); its parameters are constants of the model (G1's ruling 2b); `compose` hands the field, or None layer off,
    to the clouds and bright stages, which are placement readers already. No module but `compose` reads the switch.
+
+**Part I built for the clouds, the clusters and the texture (an Opus builder, twelve commits, cherry-picked; no
+stop condition).** `python -m galaxy.specs` before and after differs in rows 35 and 37 alone: **row 35 −2.08124 →
+−2.05555 (passes), row 37 −0.102973 → −0.097717 (a miss still, 5.9σ)**; 12 / 20 / 5 unchanged. Layer off against
+the S55 reference only the 17 cloud columns, the 38 cluster, HII and bubble columns and nine census statistics
+move; every law, history and radial field is bit-identical; on the routes only `/api/clouds`, `/api/clusters` and
+the render's `lines_hii` array. The construction: `ring_expected`, `sector_placement`, `allocate`, `RingLayout`
+(an internal attribute `catalogue.ring_layout` — counts, ring, index, sizes — not a column), `ring_draws`;
+N_r ~ Poisson(ring mass / mean cloud mass) on `(systems_seed, "cloud", ring, "count")`, which the layer-on sum of
+cell expectations matches to at most 32 units in the last place (5.8e-15; the inner rings) and the layer-off sum to
+the bit. Cost: a cell 0.112 → 0.060 s layer on, all cells 1.68 → 1.27 s (the ring's uniforms are cheaper than a
+Generator per cell). Realised totals: per-ring counts bit-identical on and off, masses, Hα and volumes to 1e-12;
+**16 577 clouds and 12 710 clusters on and off** (were 16 822 / 16 753 and 12 930 / 12 916). No bias: over 300
+systems seeds the clouds hold 1.003 ± 0.034 of the molecular gas (the cell-by-cell draw 1.002 ± 0.036); **the
+default seed is a low draw, 0.904** (−2.8σ), so the default census has 6.6 % less cluster light (Q closure 0.94,
+clusters' ΣL 0.2531 → 0.2340 of the disc's) — a realisation, told to the owner. Nine statistics leave
+`CENSUS_STATISTICS` for `RING_FIRST_STATISTICS` (held to 1e-12 on/off); five remain for the star sample's and the
+bright catalogue's builders.
+
+*The lead's rulings on the builder's six points.* (1) `tests/test_audit_iii.py`'s 3σ gate on the default seed's
+cloud mass (0.897 at the audit mesh, −3.06σ) **is re-read as an ensemble test**: a one-seed draw is a realisation,
+not a bias; the test holds the mean over K ≥ 20 systems seeds at the audit mesh within 3σ/√K of 1 and records the
+default seed's own ratio as measured, with no bound tighter than 4σ on one seed (the field builder makes the
+change, before the field). (2) D214's prediction (b) for row 37 (within 0.005 of −0.1055) **failed by the redraw**
+(−0.0977, 0.0078 away) and is recorded as failed; the test says "still outside the window". (3) `cloud_texture`
+reads both seeds — the layout is `systems_seed`'s draw, nothing is drawn on it there: accepted, the declaration
+says so. (4) At the default inputs `systems_seed` equals `texture_seed`, so the stream test cannot tell them apart
+there and the rerolling test does: accepted. (5) The ring paths coincide with the retired cells' paths for
+cells 0–31: harmless and recorded; not renamed (a rename is a second redraw and every re-pin again). (6) Item 6 above.
