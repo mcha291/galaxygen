@@ -8,7 +8,7 @@ rows 35 / 37 moved by the redraw alone (−2.05555, −0.097717) — and **`cens
 and the 20–40.7 Myr bright stars with their finest octaves dropped by age. Its gate is judged **against a control**
 (the census's own law with the field's width 0): clouds −0.636 / clusters −0.670 on the default galaxy against the
 sourced −0.64 ± 0.15; the uniform-random numbers are a disclosed check, not a target. Register 97 open = 11 + 86,
-46 discharged; next number **#163**, decisions from **D221**, board row 62, acceptance rows from 38. **The owner's
+48 discharged; next number **#163**, decisions from **D221**, board row 62, acceptance rows from 38. **The owner's
 standing order: run the sessions back to back, stop only for a ruling that is theirs.** S61 was led by Fable with
 Opus builders on the owner's word for that session; re-read their latest word on models before spawning.
 

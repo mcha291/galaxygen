@@ -435,7 +435,8 @@ CENSUS_CLUSTERING_CELL_MEAN = _decl(
     "weighted, one row a cell in the cells' order (ring by ring, sector by sector): what a renderer divides "
     "the field by to give the cell unit mean, so that the map it draws redistributes the cell's clouds and "
     "weighs nothing. Not near 1 - a cell spans a few dozen of the field's coarsest lattice cells. `/api/clouds`' "
-    "header carries the window's cells' values for the viewer.",
+    "header carries the window's cells' values for the viewer. It is not shown by the viewer, which will divide "
+    "its own evaluation of the same noise by it when V7 draws the field (S61, D220).",
     of="cell",
 )
 PUBLISHES = (CENSUS_CLUSTERING_SEED, CENSUS_CLUSTERING_CELL_MEAN)

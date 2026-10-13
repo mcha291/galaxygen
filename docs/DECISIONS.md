@@ -11917,7 +11917,7 @@ too many, too faint arms of S60; `ngc_4414` a smooth disc with a bulge and no fl
 the physics-only over layered ratio (0.98618, 0.98950, 0.99265) → (0.98675, 0.99042, 0.99454), past the 1e-3 pin
 in blue, the HII knots and the clusters' light lying elsewhere.
 
-**Closing.** <SUITE>. The register: 97 open = 11 permanent + 86 carried, 46 discharged — #158–#162 opened above.
+**Closing.** <SUITE>. The register: 97 open = 11 permanent + 86 carried, 48 discharged — #158–#162 opened above.
 Rows: 12 / 20 / 5 of 37, row 35 −2.05555, row 37 −0.097717 (a miss, #117), both moved by the redraw alone and the
 rest bit-identical. **For the owner, plainly (none awaited):** (a) the default seed's cloud draw is the lowest of
 300 — 6.6 % less cluster light than S60; a reroll of the default seed is theirs, not the model's; (b) the

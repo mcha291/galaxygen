@@ -273,9 +273,13 @@ test("a table is not a catalogue: it hides no scalar and promises no sample", ()
     const materialisers = view.catalogueStages(all);
     const first = Math.min(...all.filter((f) => f.domain === "object").map((f) => f.checkpoint));
     const asObjects = all.map((f) => (f.domain === "table" ? { ...f, domain: "object" } : f));
-    for (const t of tables) {
-      assert.ok(!materialisers.has(t.stage), `${name}: ${t.stage} publishes a table and reads as a catalogue stage`);
-      assert.ok(t.checkpoint < first, `${name}: the table is published before the first catalogue, or this proves nothing`);
+    // S61 (D220): a second table, `cell`, is published at checkpoint 5 beside the catalogues (the clustering
+    // field's mean per level-0 cell), so the checkpoint checks are read on the tables that stand before the first
+    // catalogue - the arm pieces - and every table's stage must still read as no catalogue stage.
+    for (const t of tables) assert.ok(!materialisers.has(t.stage), `${name}: ${t.stage} publishes a table and reads as a catalogue stage`);
+    const early = tables.filter((t) => t.checkpoint < first);
+    assert.ok(early.length > 0, `${name}: no table is published before the first catalogue, or this proves nothing`);
+    for (const t of early) {
       assert.equal(view.hasCatalogue(all, t.checkpoint), false, `${name}: a table at checkpoint ${t.checkpoint} is taken for a sample`);
       const asked = view.scalarsAt(all, t.checkpoint).map((f) => f.name);
       // Whatever scalars the table's own stage publishes are still asked for,
