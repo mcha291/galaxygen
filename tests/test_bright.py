@@ -230,7 +230,10 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # still the tables', to the bit.
     # S60 (D219): the arms are a census of pieces, so the young stars' cell weights are another pattern's: the
     # 3162nd star moves again (-0.45 %); the expected count is still the tables', to the bit.
-    assert F["bright_star_limit"] == pytest.approx(34423.216, rel=1e-6)  # S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S61 (D220 items 1-4): the catalogue is drawn ring-first - each level-0 ring's count and every per-star draw on
+    # the ring's stream, the star's cell allocated by its sector uniform - so every star is a new draw once, and the
+    # 3162nd moves (-1.59 %); the same number with the layer on or off from now on (test_the_ring_first_draw_...).
+    assert F["bright_star_limit"] == pytest.approx(33875.549, rel=1e-6)  # S61 (D220): was 34423.216; S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -328,6 +331,77 @@ def test_a_window_alone_is_the_same_cells_inside_a_whole_disc_call():
         i = name_w[(int(c), int(r))]
         for col in ha["columns"]:
             assert a[col][j] == w[col][i], col
+
+
+def test_a_cell_alone_is_the_cell_in_a_sweep_of_its_ring_and_of_the_disc(galaxy, seed, default):
+    """S61 (D220 item 3): a finest cell drawn alone draws its level-0 ring's count and uniform arrays whole and keeps
+    the rows allocated to it - so a cell alone, a few cells across two rings and the whole disc hold the same stars
+    in it, named by (cell, rank), every column equal; and the cell's index is its rank among the ring's stars
+    allocated there, in ring order (rank 0, 1, ... in Gamma order)."""
+    cells = br.all_cells()
+    whole = br.materialise_bright(galaxy, seed, cells, 10.0 ** 3.5)
+    name = {(int(c), int(r)): i for i, (c, r) in enumerate(zip(whole["cell"], whole["rank"]))}
+    held = dict(whole.counts)
+    busy = sorted(held, key=lambda c: -held[c])
+    ring = galaxy.ring_of(busy)
+    same_ring = next(c for c, r in zip(busy[1:], ring[1:]) if r == ring[0])
+    picked = [busy[0], same_ring, next(c for c, r in zip(busy, ring) if r != ring[0])]
+    assert len(set(galaxy.ring_of(picked).tolist())) == 2
+    for asked in ([picked[0]], picked):
+        part = br.materialise_bright(galaxy, seed, asked, 10.0 ** 3.5)
+        assert [c for c, _ in part.counts] == [c for c in asked if c in held]
+        assert part.size == sum(held[c] for c in asked) > 0
+        for j, (c, r) in enumerate(zip(part["cell"], part["rank"])):
+            i = name[(int(c), int(r))]
+            for col in whole:
+                assert np.asarray(part[col])[j] == np.asarray(whole[col])[i], col
+    # The index: in each cell the drawn rows (before the cut) are ranks 0..n-1 in increasing Gamma.
+    drawn = br.draw_bright(galaxy, seed, picked, br.interval_of(10.0 ** 3.5))
+    start = 0
+    for c, n in drawn.counts:
+        assert list(drawn["rank"][start:start + n]) == list(range(n)) and np.all(np.diff(drawn["gamma"][start:start + n]) > 0.0)
+        start += n
+
+
+@pytest.fixture(scope="module")
+def default_off(models):
+    return run(models[DEFAULT_MODEL], only=WANTED, layer=False)
+
+
+def test_the_ring_first_draw_holds_every_ring_s_totals_with_the_layer_on_or_off(galaxy, seed, default, default_off, models):
+    """S61 (D220 item 4): the same count per level-0 ring and the same per-star arrays on and off - only the sector
+    and the azimuth differ - so every realised ring total is the same: the count bit for bit, the summed luminosity
+    and each band's summed light to 1e-12 relative (the rows are concatenated by cell, so a sum's order differs);
+    each ring's luminosities, sorted, are the same bits; and the stage's ``bright_star_limit`` is the same number.
+    I2 for this census: each ring's expected count (``ring_curve``) is the same bits on and off, and the sum of its
+    cells' expectations meets it to 1e-13 (measured 6.4e-15 / 6.8e-15 at 10^3 / 10^4.5 Lsun per finest ring)."""
+    spec = default_off.grid.spec
+    off = br.BrightGalaxy(default_off.fields, default_off.grid.R, default_off.grid.t, spec.t_max, spec.n_t,
+                          {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+    assert galaxy.ring_curve.tobytes() == off.ring_curve.tobytes()
+    assert not np.array_equal(galaxy.weights, off.weights)  # the layer does place this census
+    cells = br.all_cells()
+    for g in (galaxy, off):
+        ring = g.ring_of(cells)
+        for x in (3.0, 4.5):
+            summed = np.bincount(ring, weights=g.expected(cells, x), minlength=32)
+            k = int(round((x - br.LOG_L_GRID[0]) / 0.05))
+            assert np.allclose(summed, g.ring_curve[:, k], rtol=1e-13, atol=0.0)
+    cats = [br.materialise_bright(g, seed, cells, 1.0e4) for g in (galaxy, off)]
+    assert not np.array_equal(cats[0]["bright_star_azimuth"], cats[1]["bright_star_azimuth"])
+    rings = [galaxy.ring_of(c["cell"]) for c in cats]
+    counts = [np.bincount(r, minlength=32) for r in rings]
+    assert np.array_equal(counts[0], counts[1]) and counts[0].sum() > 10_000
+    for name in ("bright_star_luminosity", *(f"bright_star_magnitude_{b.lower()}" for b in BANDS)):
+        q = [np.asarray(c[name], dtype=float) for c in cats]
+        if name != "bright_star_luminosity":
+            q = [10.0 ** (-0.4 * v) for v in q]  # a band's light
+        sums = [np.bincount(r, weights=v, minlength=32) for r, v in zip(rings, q)]
+        assert np.allclose(sums[0], sums[1], rtol=1e-12, atol=0.0), name
+    for r in range(32):
+        a, b = (np.sort(np.asarray(c["bright_star_luminosity"])[ri == r]) for c, ri in zip(cats, rings))
+        assert a.tobytes() == b.tobytes(), r
+    assert default.fields["bright_star_limit"] == default_off.fields["bright_star_limit"]
 
 
 def test_the_n_brightest_are_complete_above_the_header_s_threshold(api, default, models):
@@ -549,7 +623,8 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # inside the same gate.
 # S59 (D218 follow-up): the segments re-laid with a pitch relative to the disc's, and the young stars' cells weighted
 # by the law at a point - another realisation, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00069, 1.00322, 1.00670)  # S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S61 (D220 items 1-4): the ring-first draw - every star a new draw once, another realisation inside the same gate.
+BRIGHT_RGB_OVER_OWN = (0.99996, 1.00104, 0.99994)  # S61 (D220): was (1.00069, 1.00322, 1.00670); S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):

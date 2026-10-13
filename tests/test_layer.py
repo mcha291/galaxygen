@@ -111,23 +111,26 @@ CENSUS_STATISTICS = {
                               "planets.compute_planets: the planets per star, averaged over the sample's stars"),
     "giant_fraction_sample": ("planets", "the star sample's planets",
                               "planets.compute_planets: the share of the sample's stars with a giant"),
-    "bright_star_limit": ("bright_stars", "the bright catalogue",
-                          "bright.select_brightest, through bright.scalars: the luminosity the default selection's "
-                          "brightest few thousand realised stars are complete above"),
-    # S61 (D220 item 4): cloud_mass_total, dig_halpha_fraction, hii_luminosity_function_slope,
+    # S61 (D220 item 4): bright_star_limit (the bright catalogue's own ring-first build), cloud_mass_total, dig_halpha_fraction, hii_luminosity_function_slope,
     # nii_halpha_gradient_hii, the four *_surface_brightness_hii and hot_phase_porosity left this list - identical on
     # and off since the ring-first draw (RING_FIRST_STATISTICS, below).
 }
 # S61 (D220 item 4): was 14 - nine scalars, five radial fields, the fourteen measured at S55. The cloud census, its
 # clusters, their HII regions and bubbles are drawn ring-first since S61: their nine statistics are the same on and off
-# (RING_FIRST_STATISTICS). The five left are the star sample's and the bright catalogue's, until their own builds.
-assert len(CENSUS_STATISTICS) == 5
+# (RING_FIRST_STATISTICS); and the bright catalogue's limit since its own (S61, D220 item 4: was 5 entries). The four
+# left are the star sample's, until its own build.
+assert len(CENSUS_STATISTICS) == 4
 # S61 (D220 item 4): the statistics of the censuses drawn ring-first - a ring's count and every per-object draw on the
 # ring's stream before the layer places them, so the same objects on and off and only their sector and azimuth differ.
 # Each is identical on and off to 1e-12 relative (bit for bit where nothing is summed in another order: the objects
 # are concatenated cell by cell, so a sum over them may differ in its last bits). Each entry: (its stage, the census,
 # where it is computed).
 RING_FIRST_STATISTICS = {
+    # S61 (D220 item 4): the bright catalogue drawn ring-first - each ring's stars the same draws on and off, only their
+    # cell and azimuth placed - so the default selection's limit is the same number (bit for bit, measured).
+    "bright_star_limit": ("bright_stars", "the bright catalogue",
+                          "bright.select_brightest, through bright.scalars: the luminosity the default selection's "
+                          "brightest few thousand realised stars are complete above"),
     "cloud_mass_total": ("clouds", "the cloud census",
                          "clouds.compute_clouds: the realised clouds' cloud_mass, summed"),
     "dig_halpha_fraction": ("nebular", "the HII-region census",
@@ -144,7 +147,7 @@ RING_FIRST_STATISTICS = {
     "hot_phase_porosity": ("bubbles", "the clusters' bubbles (with the remnants, which no placement moves)",
                            "bubbles.hot_phase_porosity: the realised bubbles' volumes, binned by cluster_birth_radius"),
 }
-assert len(RING_FIRST_STATISTICS) == 9 and not set(RING_FIRST_STATISTICS) & set(CENSUS_STATISTICS)
+assert len(RING_FIRST_STATISTICS) == 10 and not set(RING_FIRST_STATISTICS) & set(CENSUS_STATISTICS)  # S61 (D220 item 4): was 9 - with bright_star_limit
 RING_FIRST_RTOL = 1e-12  # D220 item 4: "to 1e-12 relative for sums"
 # The object classes a placement moves: every column of these is a catalogue's, not a statistic.
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
@@ -314,7 +317,9 @@ ADDED_AT_S61 = {"cluster_birth_radius"}
 # each ring's count and arrays on the ring's stream - and with it every column of the clouds and of the clusters (with
 # their HII regions and bubbles, which are columns of the cluster class) and the nine statistics computed from them.
 # Nothing else of S55's layer-off run moves: no law, no radial field that is not those statistics, no remnant.
-REDRAWN_OBJECTS_AT_S61 = {"cloud", "cluster"}
+# S61 (D220 items 1-4 and 10): and the bright catalogue, drawn ring-first in its own build - its 17 columns and its
+# limit (RING_FIRST_STATISTICS).
+REDRAWN_OBJECTS_AT_S61 = {"cloud", "cluster", "bright_star"}
 
 
 def redrawn_at_s61(out, held) -> set[str]:
@@ -345,7 +350,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # S61 (D220 item 10): was `moved == named` - the ring-first redraw moves the cloud and cluster censuses and their
     # nine statistics, every one of them (measured: 17 cloud columns, 38 cluster columns, 9 statistics), and nothing else.
     redrawn = redrawn_at_s61(out, held)
-    assert len(redrawn) == 17 + 38 + 9 and not redrawn & named
+    # S61 (D220): 17 + 38 + 9 at the clouds' build; the bright catalogue's 17 columns and its limit join.
+    assert len(redrawn) == 17 + 38 + 17 + 10 and not redrawn & named
     assert moved == named | redrawn, sorted(moved ^ (named | redrawn))
     moved -= redrawn
     # S58 (D217): was `else set()` - `ngc_4414`'s four bar scalars are NaN by ruling (unbarred, as observed).
@@ -422,8 +428,9 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
     census S55 placed by no pattern, object for object."""
     made = layer_reference.routes_digest()
     assert set(made) == set(reference["routes"]) and len(made) == 42
-    redrawn_routes = {label for label in made if "/clouds/" in label or "/clusters/" in label}
-    assert len(redrawn_routes) == 14
+    # S61 (D220 item 10): and the bright catalogue's two routes per model, its ring-first redraw (was 14).
+    redrawn_routes = {label for label in made if "/clouds/" in label or "/clusters/" in label or "/bright/" in label}
+    assert len(redrawn_routes) == 18
     for label, got in made.items():
         held = reference["routes"][label]
         assert got["status"] == held["status"] == 200, label
@@ -556,7 +563,7 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     # bits, so the entry lands on the same bits again - still a census statistic, still listed, and named here.
     # S60 fourth pass: was `== set()`, all fourteen moving.
     # S61 (D220 item 4): was `== {"dig_halpha_fraction"}` - the cloud census's nine statistics left the list (they are
-    # RING_FIRST_STATISTICS); the five left, the star sample's and the bright catalogue's, all move.
+    # RING_FIRST_STATISTICS); the four left, the star sample's, all move (the bright limit left too, its own build).
     assert set(CENSUS_STATISTICS) - moved_statistics == set(), sorted(set(CENSUS_STATISTICS) - moved_statistics)
     # S61 (D220 item 4): of the nine, these differ in their last bits (sums over the same objects in another order),
     # as measured; the cloud mass, the luminosity function's slope and the [N II] gradient are the same bits.
@@ -573,11 +580,12 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
     for n, (stage_id, census, where) in CENSUS_STATISTICS.items():
         assert producer[n] == stage_id and census and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
         assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
-    # S61 (D220 item 4): was 9 - the five left are scalars; the nine that left were four scalars and five radial fields.
-    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 5
-    assert sum(1 for n in RING_FIRST_STATISTICS if on.decls[n].kind.domain == "galaxy") == 4
+    # S61 (D220 item 4): was 9 - the four left are scalars; the ten that left were five scalars (the bright limit with
+    # the clouds' four) and five radial fields.
+    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 4
+    assert sum(1 for n in RING_FIRST_STATISTICS if on.decls[n].kind.domain == "galaxy") == 5
     for n, (stage_id, census, where) in RING_FIRST_STATISTICS.items():
-        assert producer[n] == stage_id and where.startswith(("clouds.", "nebular.", "bubbles.")), n
+        assert producer[n] == stage_id and where.startswith(("bright.", "clouds.", "nebular.", "bubbles.")), n
     # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place higher with
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
     # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
