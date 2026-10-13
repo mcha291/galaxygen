@@ -260,7 +260,11 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     unmoved = {"arm_piece_saturation"}
     assert all(np.all(np.asarray(named.fields[n]) == 1.0) and same(bare.fields[n], named.fields[n]) for n in unmoved)
     assert {n for n, d in named.decls.items() if d.kind.domain == "table" or d.composed} - unmoved <= differ
-    assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed} <= differ
+    # S61 (D220 item 4): but a column that is one value for every object - `hii_density_bounded`, 0 for every region -
+    # is the same bytes in both runs, since the ring-first draw gives both the same count.
+    constant = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed and n not in differ}
+    assert constant == {"hii_density_bounded"} and not np.asarray(named.fields["hii_density_bounded"]).any(), sorted(constant)
+    assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed} - constant <= differ
     assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of not in placed}.isdisjoint(differ)
     assert moved_statistics <= {
         "catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample", "bright_star_limit",
