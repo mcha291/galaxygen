@@ -860,6 +860,33 @@ LEVEL0: dict[str, Constant] = {
         "the mean at two is within 5.7e-3 rms (3.6e-2 at worst) of the mean at four. The number a renderer "
         "divides the field by is defined on this lattice and no other.",
     ),
+    # How long the clustering field's structure at a scale survives in the stars born in it (S61, DECISIONS.md D220
+    # part II item 5): the bright catalogue's young stars keep the field's octaves no finer than their age allows.
+    "AGE_SEPARATION_AMPLITUDE": Constant(
+        5.4,
+        "Myr",
+        "The amplitude A1 of the age difference against separation of young star clusters, dt = A1 R^alpha with R "
+        "in pc: 5.4 Myr, the median of the eight galaxies of Grasha et al. 2017b Table 2 (NGC 7793 4.0, NGC 1313 "
+        "16, NGC 3738 9.0, NGC 6503 1.7, NGC 3344 1.0, NGC 5194 6.8, NGC 628 7.4, NGC 1566 2.3 - the range 1.0-16) "
+        "[verified: Grasha et al. 2017b, ApJ 842, 25, arXiv:1705.06281, Table 2; docs/READING_CLUSTERING.md section 2, "
+        "'Age difference against separation'; the median inferred]. Beside it the LMC's 3.3 S^0.33 over 15-780 pc "
+        "[verified: Efremov & Elmegreen 1998, MNRAS 299, 588, sect. 2]. Read as how long structure at a scale "
+        "survives (DECISIONS.md D220 part II item 5): a bright star older than dt(lambda) keeps no clustering at "
+        "the scale lambda - with the octaves 190, 95 and 47.5 pc, past 40.8, 31.2 and 23.9 Myr. The sources' own "
+        "times for the young stars' structure to fade run from 'in place by 40 Myr' (NGC 628) and 40-60 Myr (six "
+        "galaxies) to 50-100 Myr in M 51 and about 100 Myr (READING_CLUSTERING.md sections 2 and 5): this median "
+        "sits at the short end.",
+    ),
+    "AGE_SEPARATION_INDEX": Constant(
+        0.385,
+        "dimensionless",
+        "The power alpha of the age difference against separation of young star clusters, dt = A1 R^alpha: 0.385, "
+        "the median of the eight galaxies of Grasha et al. 2017b Table 2 (0.24-0.6 one by one; the paper states "
+        "0.25-0.6) [verified: Grasha et al. 2017b, ApJ 842, 25, Table 2; docs/READING_CLUSTERING.md section 2; the "
+        "median inferred]. The LMC's is 0.33 (Efremov & Elmegreen 1998), the Milky Way's pairs 0.40 +- 0.08 "
+        "(Grasha 2017b sect. 1). With the amplitude beside it, how long the clustering field's octaves survive in "
+        "the bright catalogue's young stars (DECISIONS.md D220 part II item 5).",
+    ),
     "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
         2.73,
         "dimensionless",

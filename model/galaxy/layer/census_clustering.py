@@ -168,17 +168,9 @@ class ClusteringField:
         r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
         rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
         w = self.map(rr * np.cos(pp), rr * np.sin(pp)) * (np.interp(r_mid, R, sigma_h2) * r_mid)[:, None]
-        if pattern is not None and not pattern.flat:
-            mesh = np.maximum(pattern.contrast(np.linspace(lo, hi, PATTERN_RADIAL_STEPS + 1),
-                                               np.linspace(p_lo, p_hi, PATTERN_STEPS + 1)), 0.0)
-            ti = (r_mid - lo) / (hi - lo) * PATTERN_RADIAL_STEPS
-            i = np.minimum(ti.astype(np.int64), PATTERN_RADIAL_STEPS - 1)
-            a = ti - i
-            tj = (phi_mid - p_lo) / (p_hi - p_lo) * PATTERN_STEPS
-            j = np.minimum(tj.astype(np.int64), PATTERN_STEPS - 1)
-            b = tj - j
-            along_r = mesh[i] * (1.0 - a)[:, None] + mesh[i + 1] * a[:, None]
-            w = w * (along_r[:, j] * (1.0 - b)[None, :] + along_r[:, j + 1] * b[None, :])
+        law = mesh_factor(pattern, (lo, hi, p_lo, p_hi), r_mid, phi_mid)
+        if law is not None:
+            w = w * law
         flat = np.maximum(w, 0.0).ravel()
         if not float(flat.sum()) > 0.0:
             flat = np.ones_like(flat)
@@ -190,6 +182,42 @@ class ClusteringField:
         row, col = np.divmod(k, phi_mid.size)
         d_r, d_phi = (hi - lo) / r_mid.size, (p_hi - p_lo) / phi_mid.size
         return lo + (row + v) * d_r, p_lo + (col + within) * d_phi
+
+    def maps(self, x: np.ndarray, y: np.ndarray, kept: tuple[int, ...]) -> tuple[np.ndarray, ...]:
+        """The field with only its ``n`` coarsest octaves, for each ``n`` of ``kept``, at face-on positions (kpc): the
+        log-normal map of ``noise.fractal_coarsest``'s truncated sum - the finer octaves dropped, the kept ones at
+        the whole field's amplitudes and the same sigma (S61, D220 part II item 5: a young star's finest structure has
+        dispersed; the structure it was born in at the coarser scales stands as it was). ``n = octaves`` is
+        :meth:`map`, bit for bit. A truncated map does not have the whole map's mean (its exponent's variance is the
+        kept octaves' share): **a placement renormalises it on the lattice it draws on** - the inversion scales each
+        object's uniform by the object's own total of the lattice's weights (:meth:`CellLattice.place`) - so no mean
+        is ever read from it."""
+        x, y = np.broadcast_arrays(np.asarray(x, dtype=float), np.asarray(y, dtype=float))
+        sums = _noise.fractal_coarsest(self.seed, np.stack([x, y], axis=-1), self.slope, self.octaves, kept,
+                                       base_frequency=1.0 / self.scale, lacunarity=LACUNARITY)
+        return tuple(_noise.lognormal_map(g, self.sigma) for g in sums)
+
+    def octave_scales_pc(self) -> np.ndarray:
+        """Each octave's lattice scale in pc, coarsest first: 190, 95 and 47.5 at the model's numbers."""
+        return self.scale * 1000.0 / LACUNARITY ** np.arange(self.octaves)
+
+    def cell_lattices(self, cell: tuple[float, float, float, float], law: Any, kept: tuple[int, ...]) -> dict[int, "CellLattice"]:
+        """One level-0 cell's lattice weights for each octave count of ``kept``, **without a radial law** (S61, D220
+        part II item 5): each point weighs the field's ``n`` coarsest octaves (:meth:`maps`) times ``law`` - an
+        azimuthal law read on the cell's 16 x 24 mesh and bilinear between, as :meth:`place` reads the gas pattern
+        (:func:`mesh_factor`; None or flat is 1) - clipped at 0. The field is evaluated once for every ``n``. An
+        object's radial law multiplies each lattice row's weight at the object's own draw
+        (:meth:`CellLattice.place`): it is constant along a row, so the lattice is shared by every object of the
+        cell and octave count whatever its radial law."""
+        lo, hi, p_lo, p_hi = (float(x) for x in cell)
+        r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
+        rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
+        factor = mesh_factor(law, (lo, hi, p_lo, p_hi), r_mid, phi_mid)
+        out = {}
+        for n, f in zip(kept, self.maps(rr * np.cos(pp), rr * np.sin(pp), kept)):
+            w = f if factor is None else f * factor
+            out[int(n)] = CellLattice.of((lo, hi, p_lo, p_hi), r_mid, phi_mid, np.maximum(w, 0.0))
+        return out
 
     def cell_means(self, R: np.ndarray, points: int | None = None) -> np.ndarray:
         """Each level-0 cell's mean of :meth:`map` over its quadrature lattice, (rings * sectors,) ring-major as the
@@ -208,6 +236,84 @@ class ClusteringField:
                 e = self.map(q[:, 0] * np.cos(q[:, 1]), q[:, 0] * np.sin(q[:, 1]))
                 out[r * CELL_SECTORS + s] = float(np.sum(q[:, 0] * e) / np.sum(q[:, 0]))
         return out
+
+
+def mesh_factor(law: Any, cell: tuple[float, float, float, float], r_mid: np.ndarray, phi_mid: np.ndarray) -> np.ndarray | None:
+    """An azimuthal law at a cell's lattice points, ``(r_mid.size, phi_mid.size)``, or None where there is none (None,
+    or a flat pattern): ``law.contrast(radii, azimuths)`` read on a mesh of ``PATTERN_RADIAL_STEPS`` by
+    ``PATTERN_STEPS`` steps across the cell, clipped at 0, and bilinear between - the clouds' reading of the gas
+    pattern (:meth:`ClusteringField.place`), shared with the bright catalogue's young stars (S61, D220 part II
+    item 5)."""
+    if law is None or law.flat:
+        return None
+    lo, hi, p_lo, p_hi = (float(x) for x in cell)
+    mesh = np.maximum(law.contrast(np.linspace(lo, hi, PATTERN_RADIAL_STEPS + 1),
+                                   np.linspace(p_lo, p_hi, PATTERN_STEPS + 1)), 0.0)
+    ti = (r_mid - lo) / (hi - lo) * PATTERN_RADIAL_STEPS
+    i = np.minimum(ti.astype(np.int64), PATTERN_RADIAL_STEPS - 1)
+    a = ti - i
+    tj = (phi_mid - p_lo) / (p_hi - p_lo) * PATTERN_STEPS
+    j = np.minimum(tj.astype(np.int64), PATTERN_STEPS - 1)
+    b = tj - j
+    along_r = mesh[i] * (1.0 - a)[:, None] + mesh[i + 1] * a[:, None]
+    return along_r[:, j] * (1.0 - b)[None, :] + along_r[:, j + 1] * b[None, :]
+
+
+@dataclass(frozen=True)
+class CellLattice:
+    """One cell's lattice weights, shared by every object placed on it (S61, D220 part II item 5): the points'
+    weights row-major, their running total, and each row's sum. Built once per (cell, octave count) and read by
+    each object with its own radial law (:meth:`place`)."""
+
+    cell: tuple[float, float, float, float]
+    r_mid: np.ndarray
+    phi_mid: np.ndarray
+    weights: np.ndarray  # (n_r * n_phi,) row-major, >= 0
+    cdf: np.ndarray  # their running total
+    rows: np.ndarray  # (n_r,) each row's sum
+
+    @classmethod
+    def of(cls, cell: tuple[float, float, float, float], r_mid: np.ndarray, phi_mid: np.ndarray, w: np.ndarray) -> "CellLattice":
+        flat = np.ascontiguousarray(w, dtype=float).ravel()
+        return cls(cell, r_mid, phi_mid, flat, np.cumsum(flat), flat.reshape(r_mid.size, phi_mid.size).sum(axis=1))
+
+    def place(self, radial: np.ndarray, u: np.ndarray, v: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """``(radius, azimuth)`` of objects whose weight at a lattice point is ``radial[object, row]`` times the
+        lattice's weight there: the joint inverse CDF of :meth:`ClusteringField.place`, taken in two steps - the
+        row by the rows' cumulative weights (``radial`` times each row's sum) at ``u``, then the point within the
+        row by the row's own cumulative weights at what of ``u`` is left - which is the row-major inverse of the
+        product exactly, the radial factor being constant along a row. **The renormalisation is the inversion's**:
+        ``u`` is scaled by each object's own total, so the weights' mean - the field's, the law's - never enters.
+        The object lies uniformly within its point: in azimuth by what of ``u`` is left inside the point, in radius
+        at ``v``. Counted, never rejected (rule B8); an object whose weights are all zero is drawn uniformly in
+        the cell."""
+        u, v = np.asarray(u, dtype=float), np.asarray(v, dtype=float)
+        lo, hi, p_lo, p_hi = self.cell
+        n_r, n_phi = self.r_mid.size, self.phi_mid.size
+        if u.size == 0:
+            return np.zeros(0), np.zeros(0)
+        per_row = np.maximum(np.broadcast_to(np.asarray(radial, dtype=float), (u.size, n_r)), 0.0) * self.rows[None, :]
+        running = np.cumsum(per_row, axis=1)
+        total = running[:, -1]
+        target = u * total
+        row = np.minimum((running <= target[:, None]).sum(axis=1), n_r - 1)
+        idx = np.arange(u.size)
+        below = np.where(row > 0, running[idx, np.maximum(row - 1, 0)], 0.0)
+        width = per_row[idx, row]
+        left = np.clip((target - below) / np.where(width > 0.0, width, 1.0), 0.0, 1.0)
+        start = row * n_phi
+        base = np.where(start > 0, self.cdf[np.maximum(start - 1, 0)], 0.0)
+        aim = base + left * self.rows[row]
+        k = np.clip(np.searchsorted(self.cdf, aim, side="right"), start, start + n_phi - 1)
+        under = np.where(k > start, self.cdf[np.maximum(k - 1, 0)], base)
+        within = np.clip((aim - under) / np.where(self.weights[k] > 0.0, self.weights[k], 1.0), 0.0, 1.0)
+        col = k - start
+        d_r, d_phi = (hi - lo) / n_r, (p_hi - p_lo) / n_phi
+        radius, azimuth = lo + (row + v) * d_r, p_lo + (col + within) * d_phi
+        empty = ~(total > 0.0)
+        if empty.any():
+            radius[empty], azimuth[empty] = lo + v[empty] * (hi - lo), p_lo + u[empty] * (p_hi - p_lo)
+        return radius, azimuth
 
 
 # --- declarations ----------------------------------------------------------------------------------

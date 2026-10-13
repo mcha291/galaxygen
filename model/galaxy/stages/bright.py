@@ -90,6 +90,7 @@ from galaxy.core.grids import Axis
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_READS
 from galaxy.stages.pattern import PATTERN_READS, invert_azimuths
@@ -413,6 +414,26 @@ PHASES: tuple[str, ...] = (
 # S61 (D220 item 1): every per-star draw an array on its level-0 ring's stream, (seed, "bright", ring, name); `sector`
 # is the allocation's own (item 2).
 STREAMS: tuple[str, ...] = ("population", "sector", "age", "segment", "luminosity", "radius", "azimuth", "height")
+# S61 (D220 part II item 5): how long the clustering field's structure at a scale survives in the stars born in it,
+# dt = A1 lambda^a (galaxy/models/level0.py), and the field's own five numbers the young stars are placed by.
+AGE_AMPLITUDE, AGE_INDEX = "AGE_SEPARATION_AMPLITUDE", "AGE_SEPARATION_INDEX"
+CLUSTERING_CONSTANTS: tuple[str, ...] = (*_CLUSTERING_CONSTANTS.values(), AGE_AMPLITUDE, AGE_INDEX)
+
+
+def octave_survival(scales_pc: np.ndarray, amplitude_myr: float, index: float) -> np.ndarray:
+    """Myr: the age past which each of the clustering field's octaves (``scales_pc``, coarsest first) is dropped from
+    a young star's placement - the age difference against separation, dt(lambda) = A1 lambda^a with lambda in pc,
+    read as how long structure at the scale lambda survives (S61, D220 part II item 5; Grasha et al. 2017b Table 2's
+    medians, A1 5.4 Myr and a 0.385): 40.8, 31.2 and 23.9 Myr for 190, 95 and 47.5 pc. Decreasing, so the octaves a
+    star keeps are always the coarsest (:func:`octaves_kept`)."""
+    return float(amplitude_myr) * np.asarray(scales_pc, dtype=float) ** float(index)
+
+
+def octaves_kept(age_gyr: np.ndarray, survival_myr: np.ndarray) -> np.ndarray:
+    """How many of the field's coarsest octaves a star of each age keeps: those whose survival age it has not passed
+    (an age equal to it keeps the octave). 0 past the coarsest's - the pattern alone places the star."""
+    t = np.asarray(age_gyr, dtype=float) * 1000.0
+    return (t[:, None] <= np.asarray(survival_myr, dtype=float)[None, :]).sum(axis=1).astype(np.int64)
 
 
 def cluster_window(constants: Mapping[str, Any]) -> float:
@@ -518,6 +539,13 @@ class BrightGalaxy:
         # And its finest sector by its part's placement weights round its sub-ring: uniform with the layer off.
         self.sector_cdf = np.cumsum(self.weights, axis=2)  # (2, 256, 256)
         # What the height reads: the thin/thick criterion over (radius, birth time), the two scale heights.
+        # S61 (D220 part II item 5): the clustering field the young stars are placed by in their level-0 cell, with its
+        # octaves finer than a star's age allows dropped - None with the layer off - and the ages (Myr) past which
+        # each octave, coarsest first, is dropped: dt(lambda) = A1 lambda^a, lambda in pc (Grasha et al. 2017b).
+        self.clustering = _compose.census_clustering(fields, constants)
+        self.cell_rings, self.cell_sectors = rings32, sectors32
+        self.octave_ages = None if self.clustering is None else octave_survival(
+            self.clustering.octave_scales_pc(), float(constants[AGE_AMPLITUDE]), float(constants[AGE_INDEX]))
         self.thick = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
         self.h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
         self.h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or self.h_thin
@@ -820,22 +848,87 @@ def on_isochrone(iso: int, k: np.ndarray, u_segment: np.ndarray, u_luminosity: n
     }
 
 
+class _YoungLaw:
+    """The middle part's azimuthal law as a mesh reader for the field's lattice (``census_clustering.mesh_factor``):
+    the young reader (``systems.Modulation``) where the model publishes ``sfr_modulation``, else the stellar
+    pattern's contrast - what :func:`place_in_cell` inverts for the middle part's azimuth."""
+
+    flat = False
+
+    def __init__(self, galaxy: BrightGalaxy) -> None:
+        self.galaxy = galaxy
+
+    def contrast(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        r, phi = np.asarray(r, dtype=float), np.asarray(phi, dtype=float)
+        if self.galaxy.modulation is not None:
+            return self.galaxy.modulation.at_points(r, np.broadcast_to(phi[None, :], (r.size, phi.size)))
+        return self.galaxy.pattern.contrast_at(r[:, None], phi[None, :])
+
+
+def _place_by_field(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, k: np.ndarray, kept: np.ndarray,
+                    u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(radius, azimuth) of middle-part stars that keep ``kept`` (>= 1) of the clustering field's coarsest octaves,
+    placed jointly in their **level-0 cell** on the field's lattice (S61, D220 part II items 4-5): each lattice point
+    weighs the star's radial law - the surface density of its part and threshold interval, times R, as
+    :func:`place_in_cell` reads it - times the middle part's azimuthal law at the point (:class:`_YoungLaw`, on the
+    clouds' 16 x 24 mesh) times the field's ``kept`` coarsest octaves. The lattice is built once per (level-0 cell,
+    octave count) and shared by the cell's stars of that count (``ClusteringField.cell_lattices``); the radial law,
+    which differs by star, multiplies each lattice row at the star's own draw (``CellLattice.place``). The star's
+    point is the inverse CDF at its ``azimuth`` uniform, its place within the point by what is left of it and its
+    ``radius`` uniform."""
+    field = galaxy.clustering
+    n_sub = galaxy.n_sub
+    ring32, sector32 = ring // n_sub, sector // n_sub
+    law = None if galaxy.modulation is None and (galaxy.pattern is None or galaxy.pattern.flat) else _YoungLaw(galaxy)
+    radius, azimuth = np.empty(ring.size), np.empty(ring.size)
+    R, count_R = galaxy.R, galaxy.count_R[0]
+    cell = ring32 * CELL_SECTORS + sector32
+    for c in np.unique(cell):
+        here = np.flatnonzero(cell == c)
+        r32, s32 = divmod(int(c), CELL_SECTORS)
+        bounds = (float(galaxy.cell_rings[r32]), float(galaxy.cell_rings[r32 + 1]),
+                  float(galaxy.cell_sectors[s32]), float(galaxy.cell_sectors[s32 + 1]))
+        sets = tuple(int(n) for n in np.unique(kept[here]))
+        lattices = field.cell_lattices(bounds, law, sets)
+        r_mid = next(iter(lattices.values())).r_mid
+        i0 = np.clip(np.searchsorted(R, r_mid) - 1, 0, R.size - 2)
+        w1 = np.clip((r_mid - R[i0]) / (R[i0 + 1] - R[i0]), 0.0, 1.0)
+        for n in sets:
+            sel = here[kept[here] == n]
+            kk = k[sel][:, None]
+            dens = (count_R[i0[None, :], kk] - count_R[i0[None, :], kk + 1]) * (1.0 - w1)[None, :] + (
+                count_R[i0[None, :] + 1, kk] - count_R[i0[None, :] + 1, kk + 1]) * w1[None, :]
+            radial = np.maximum(dens, 0.0) * r_mid[None, :]
+            radius[sel], azimuth[sel] = lattices[n].place(radial, u_azimuth[sel], u_radius[sel])
+    return radius, azimuth
+
+
 def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part: np.ndarray, k: np.ndarray,
-                  u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """(radius kpc, azimuth rad): where each star stands inside its finest cell (``ring``, ``sector`` among the
-    256 x 256), at its own ``radius`` and ``azimuth`` uniforms - the one place the catalogue's within-cell placement
-    is made (S61, D220 item 2: the cell is the allocation's, the place within it the stage's laws as before).
+                  u_radius: np.ndarray, u_azimuth: np.ndarray, age: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """(radius kpc, azimuth rad): where each star stands - inside its finest cell (``ring``, ``sector`` among the
+    256 x 256), or, for a young star the clustering field places, inside that cell's level-0 cell - at its own
+    ``radius`` and ``azimuth`` uniforms: the one place the catalogue's placement is made (S61, D220 item 2: the cell
+    is the allocation's, the place within it the stage's laws as before).
 
     The radius inverts the surface density of stars of the star's own part and threshold interval across the
     cell's radial span, times R (the radial physics: the same with the layer on or off); the azimuth inverts the
     part's azimuthal law at that radius across the cell's span - the pattern's contrast for the old part and, where
     the model publishes ``sfr_modulation``, the young reader (``systems.Modulation``) for the middle part: 1 with
-    the layer off. **D220 part II items 4-5 extend this function:** the clustering field ``census_clustering``
-    will multiply these weights on the cell's quadrature lattice (``noise.cell_quadrature``) and the star's lattice
-    point will be the inverse CDF of the product at a ``position`` uniform of the ring's stream - for the middle
-    part the field with its octaves finer than the star's age allows dropped (Grasha et al. 2017b), for the old part
-    none past 41 Myr. Nothing else of the draw changes there: the ring's count, the allocation and every other
-    column are part I's."""
+    the layer off.
+
+    **The young stars near where they formed** (S61, D220 part II item 5). With the layer on, a middle-part star of
+    ``age`` (Gyr) is placed by the clustering field ``census_clustering`` with **its octaves finer than the star's
+    age allows dropped**: structure at the scale lambda survives dt(lambda) = A1 lambda^a (Grasha et al. 2017b
+    Table 2's medians, ``AGE_SEPARATION_AMPLITUDE`` and ``_INDEX``), so the 47.5 pc octave is dropped past 23.9 Myr,
+    the 95 pc past 31.2 and the 190 pc past 40.8 (``BrightGalaxy.octave_ages``, computed from the constants); a
+    star that keeps at least one is placed **jointly in radius and azimuth in its level-0 cell** on the field's
+    lattice, as the clouds are (the whole cell, the lead's amendment of item 4 on the measurement:
+    :func:`_place_by_field`). Past 40.8 Myr, and for the old part, the pattern alone places the star, as before.
+    Such a star may stand anywhere in its level-0 cell, outside its finest cell: its name, its cell and every other
+    column are part I's (the ring's count, the allocation, the luminosity), and it stays in its level-0 ring, so
+    every ring total is what it was. **No birth radius is kept** (the clouds keep one): nothing reads a bright
+    star's radius per finest ring - the field's remainder (:func:`resolve`) is per level-0 ring, and the height's
+    thin/thick criterion is read at the placed radius, as before. Layer off: no field, the arithmetic before S61."""
     # Radius: the cell's span, by inverting the surface density of the star's own part and threshold interval
     # (linear between grid radii) times R. Azimuth: the cell's span, by the part's azimuthal law at that radius.
     R = galaxy.R
@@ -860,6 +953,13 @@ def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, pa
         law[young] = galaxy.modulation.at_points(radius[young], phis[young])
     azimuth = lo_p + invert_azimuths(u_azimuth, agrid, law) * (hi_p - lo_p)
 
+    if galaxy.clustering is not None and age is not None:
+        # S61 (D220 part II item 5): the young stars that keep an octave of the field, placed in their level-0 cell.
+        kept = octaves_kept(age, galaxy.octave_ages)
+        by_field = np.flatnonzero((part == 0) & (kept > 0))
+        if by_field.size:
+            radius[by_field], azimuth[by_field] = _place_by_field(
+                galaxy, ring[by_field], sector[by_field], k[by_field], kept[by_field], u_radius[by_field], u_azimuth[by_field])
     return radius, azimuth
 
 
@@ -907,7 +1007,7 @@ def _properties(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part
         log_l[sel], mass[sel], log_teff[sel] = placed["log_l"], placed["mass"], placed["log_teff"]
         mags[sel], label[sel] = placed["mags"], placed["label"]
 
-    radius, azimuth = place_in_cell(galaxy, ring, sector, part, k, u["radius"], u["azimuth"])
+    radius, azimuth = place_in_cell(galaxy, ring, sector, part, k, u["radius"], u["azimuth"], age)
 
     # Height: the sech² profile at the scale height of the population born at this radius and birth time
     # (birth_population read where the star is now: the bright catalogue draws no birth radius).
@@ -1113,6 +1213,7 @@ READS = tuple(dict.fromkeys((
     *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
     # S59 (D218): the young part's reader - the gas pattern's reads and the ring's gas column and threshold.
     *GAS_PATTERN_READS, *YOUNG_READS,
+    "census_clustering_seed",  # S61 (D220 part II item 5): the field the young stars are placed by in their cell
 )))
 
 
@@ -1151,7 +1252,8 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
         placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
         # S59 (D218): and what the young part's reader applies the star formation law with.
-        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS),
+        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS,
+                         *CLUSTERING_CONSTANTS),  # S61 (D220 part II item 5): the field's numbers and its survival
         requires=READS,
         requires_optional=("sfr_modulation",),
         publishes=(*COLUMNS, BRIGHT_LIMIT, BRIGHT_COUNT_1E3),
