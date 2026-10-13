@@ -82,15 +82,16 @@ def chk(m, *stages):
 # after supernovae by the tie-break - with each model's two composing stages behind it. S60 fourth pass: was the
 # same two orders without `arm_ring_power` (the fourth pass's C added the stage). Pinned as graph.analyse prints.
 # Keyed per model, "basic" deliberately (S46, D197): each model's own order and provenance.
+# S61 (D220 part II): the layer's census_clustering stage joins the first wave, after the halo (it needs no field).
 ORDER = {
     "basic": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
+        "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "arm_ring_power", "gas_pattern", "stellar_pattern", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
-        "halo", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
+        "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "light", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
         "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
@@ -107,7 +108,9 @@ CLOUD_TEXTURE = {"cloud_source_offset", "cloud_source_angle", "cloud_density_gra
 # publishes is the table `arm_piece`, eight columns: the census of arm pieces, drawn on texture_seed.
 ARM_PIECES = {"arm_piece_chain", "arm_piece_order", "arm_piece_start_radius", "arm_piece_start_azimuth", "arm_piece_pitch",
               "arm_piece_extent", "arm_piece_pinned", "arm_piece_join"}
-SYNTHETIC = CLOUD_TEXTURE | ARM_PIECES
+# S61 (D220 part II): and the clustering field of the censuses - its seed and its mean in each level-0 cell.
+CENSUS_CLUSTERING = {"census_clustering_seed", "census_clustering_cell_mean"}
+SYNTHETIC = CLOUD_TEXTURE | ARM_PIECES | CENSUS_CLUSTERING
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
@@ -216,7 +219,10 @@ def test_production_graphs_hold(prod):
         # S55 (D214): the fourth kind, and only the layer's stage publishes it.
         synthetic = {n for n, p in g.provenance.items() if p == "synthetic"}
         assert synthetic == SYNTHETIC, sorted(synthetic ^ SYNTHETIC)
-        assert g.layer_stages == ("arm_pieces", "cloud_texture")  # S60 (D219): was ("arm_phases", "cloud_texture")
+        # S61 (D220 part II): was ("arm_pieces", "cloud_texture") - the clustering field reads only the layer's seed and
+        # the constants, so it runs in the first wave, beside the halo.
+        assert g.layer_stages == ("census_clustering", "arm_pieces", "cloud_texture")  # S60 (D219): was ("arm_phases", "cloud_texture")
+        assert {g.producer[n] for n in CENSUS_CLUSTERING} == {"census_clustering"}
         assert {g.producer[n] for n in CLOUD_TEXTURE} == {"cloud_texture"} and {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
         # S56 (D215): texture_seed binds at its first reader's checkpoint, the pattern's; no input is unread.
         assert g.input_checkpoint["texture_seed"] == 3 and g.unbound_inputs == () and g.unread_by_ruling == ()

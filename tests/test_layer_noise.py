@@ -835,7 +835,12 @@ def test_the_noise_imports_only_numpy_and_the_standard_library():
     assert imported_modules(ROOT / "model" / "galaxy" / "layer" / "__init__.py") <= {"__future__", "__future__.annotations"}
 
 
-def test_the_noise_is_a_leaf_and_nothing_in_the_model_reads_it_yet():
+# The modules of the model that read the noise primitives, a closed list (S61, D220 part II): the first reader is
+# the censuses' clustering field, a layer stage. A new reader adds itself here in the decision that adds it.
+NOISE_READERS = {"model/galaxy/layer/census_clustering.py"}
+
+
+def test_the_noise_is_a_leaf_and_only_the_layer_s_listed_stages_read_it():
     """Phase R, item 2: the primitives have no reader in this branch. The first reader removes its package
     from this list in the decision that adds it.
 
@@ -843,12 +848,18 @@ def test_the_noise_is_a_leaf_and_nothing_in_the_model_reads_it_yet():
     layer's other modules are read since Phase R's own builder B - ``compose`` by the runner, the pattern and
     census stages and the API, ``cloud_texture`` by the stage registry - so what is held here is the noise
     alone. It imports nothing of the project (the test above) and no module of the model imports it: the
-    switch, the fourth kind and the relabelled cloud columns were built without touching a primitive."""
+    switch, the fourth kind and the relabelled cloud columns were built without touching a primitive.
+
+    S61 (D220 part II): was "nothing in the model reads it yet" - the clustering field of the censuses
+    (``layer/census_clustering.py``) is the first reader, a layer stage; no other module imports it."""
     package = ROOT / "model" / "galaxy"
     noise_file = package / "layer" / "noise.py"
     files = [p for p in sorted(package.rglob("*.py")) if p != noise_file]
     assert len(files) > 40
+    readers = set()
     for path in files:
         for name in imported_modules(path):
             parts = name.lstrip(".").split(".")
-            assert "noise" not in parts, f"{path.relative_to(ROOT)} imports {name}"
+            if "noise" in parts:
+                readers.add(path.relative_to(ROOT).as_posix())
+    assert readers == NOISE_READERS, sorted(readers)

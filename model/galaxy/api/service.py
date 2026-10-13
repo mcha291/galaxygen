@@ -64,6 +64,7 @@ from galaxy.core.registry import (
 )
 from galaxy.core.stage import CHECKPOINTS, Stage
 from galaxy.core.units import unit as _unit
+from galaxy.layer import census_clustering as _census_clustering  # the clustering field /api/clouds carries (S61, D220)
 from galaxy.layer import cloud_texture as _cloud_texture  # the cloud-interior noise's parameters /api/clouds carries (S55)
 from galaxy.layer import compose as _compose  # the one reader of the layer's switch (S55, D214)
 from galaxy.run import Outputs, RunError
@@ -1322,6 +1323,11 @@ class Service:
             # amended, D212) - the viewer may hold no parameter of its own, so the model's must reach it. By the
             # wire's own names, never the constants'; not among the scalars, which are a stage's fields.
             "cloud_interior": _cloud_texture.interior(constants),
+            # S61 (D220 part II items 5 and 8): the clustering field the clouds' azimuths are drawn by - its seed, its
+            # form and the octave sum's three weights (the constants' exception above, for the same reason: a
+            # function the viewer may evaluate), and the realised mean of its map in each level-0 cell the window
+            # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.
+            "census_clustering": _census_clustering.header(out.fields, constants, parents),
             "columns": columns,
             "stages": list(ran),
         }
