@@ -1427,8 +1427,13 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # ninth, dig_halpha_fraction, was held already), and one cluster column: `hii_density_bounded` is 0 for every
     # region on and off, and since the ring-first draw the two censuses have the same count, so the column is the same
     # bytes - a placed census's column that does not depend on where its objects stand.
-    assert len(held) == 244
-    assert [n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)] == ["hii_density_bounded"]
+    # S61 (D220 items 1-4, the bright catalogue's build): was 244 - its stars are drawn ring-first too, the same draws
+    # in both runs with only their cells and azimuths placed, so the stage's default selection (the 3162 brightest, in
+    # luminosity order) is the same stars on and off but for the azimuth: sixteen of its seventeen columns are the
+    # same bits, and `bright_star_limit` with them (a ring-first statistic now, held above).
+    same_stars = [d.name for d in br.COLUMNS if d.name != "bright_star_azimuth"]
+    assert len(held) == 261 and "bright_star_limit" in held
+    assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
 
