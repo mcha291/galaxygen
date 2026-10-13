@@ -122,15 +122,17 @@ _CONSERVES_GRADIENT = (
 # the clouds came to follow the gas's steady response to those modes (D216: 1 598 of 12 829, 12.5 % and 43.7 %,
 # 139), again at S58 when the bar's reach came to hold its lanes and the two-armed mode the bar's phase (D217:
 # 1 600 of 12 826, 12.5 % and 43.6 %, 137), again at S59 when the winding came in seeded segments (D218: up to 223
-# pc, 255 pc, 1 576 of 12 840, 12.3 % and 42.9 %, 142), and again at S60 when the arms became a census of pieces
-# (D219).
+# pc, 255 pc, 1 576 of 12 840, 12.3 % and 42.9 %, 142), again at S60 when the arms became a census of pieces
+# (D219: up to 249 pc, 265 pc, 1 605 of 12 916, 12.4 % and 42.9 %, 140), and again at S61 when the census was drawn
+# ring-first and the binners came to read the cloud's radius (D220 items 1 and 6).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S60 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 605 of 12 916 "
-    "clusters (12.4 %, 42.9 % of the cluster mass) in another radial ring and 140 in another cell ring than their "
-    "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
-    "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
+    "its cloud's ring: at S61 the offset moves a cluster by up to 229 pc in radius (its own length reaches 248 pc) "
+    "against a 75 pc radial step and puts 1 629 of 12 710 "
+    "clusters (12.8 %, 37.4 % of the cluster mass) in another radial ring and 161 in another cell ring than their "
+    "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
+    "`bubbles` bin a cluster by its cloud's radius, `cluster_birth_radius`, a draw on the ring's stream (D220 item "
+    "6; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
 )
 _STATISTIC = (
     "none read (#95): no source gives the distribution, so the draw's own - {law} - is a stated guess and the "
