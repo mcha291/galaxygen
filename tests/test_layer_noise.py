@@ -769,6 +769,25 @@ def test_each_lognormal_vector_cell_has_quadrature_mean_one_under_its_stored_nor
         assert case["normaliser"] == pytest.approx(float(noise.lognormal_normaliser(g, case["sigma"])), rel=1e-13)
 
 
+def test_the_coarsest_octaves_are_the_whole_sum_truncated_at_its_own_amplitudes():
+    """S61 (D220 part II item 5): ``fractal_coarsest`` keeps the coarsest n octaves at the whole sum's amplitudes and
+    normaliser - the finer dropped, nothing re-weighted - and its n = octaves is ``fractal`` bit for bit."""
+    rng = np.random.default_rng(5)
+    p = rng.uniform(-3.0, 3.0, (2000, 2))
+    slope, octaves, base = 1.53, 3, 1.0 / 0.19
+    whole = noise.fractal(77, p, slope, octaves, base_frequency=base)
+    one, two, three = noise.fractal_coarsest(77, p, slope, octaves, (1, 2, 3), base_frequency=base)
+    assert three.tobytes() == whole.tobytes()
+    gain, top, norm = noise.octave_weights(slope, octaves, 2.0, 2)
+    n0 = noise.noise2(77, p[:, 0] * base, p[:, 1] * base, octave=0)
+    n1 = noise.noise2(77, p[:, 0] * base * 2.0, p[:, 1] * base * 2.0, octave=1)
+    assert np.allclose(one, norm * n0, rtol=1e-14, atol=1e-15)
+    assert np.allclose(two, norm * (n0 + gain * n1), rtol=1e-14, atol=1e-15)
+    assert noise.fractal_coarsest(77, p, slope, octaves, (2,), base_frequency=base)[0].tobytes() == two.tobytes()
+    with pytest.raises(noise.NoiseError):
+        noise.fractal_coarsest(77, p, slope, octaves, (4,), base_frequency=base)
+
+
 # --- arguments ----------------------------------------------------------------------------------------------------
 
 

@@ -368,9 +368,67 @@ def default_off(models):
     return run(models[DEFAULT_MODEL], only=WANTED, layer=False)
 
 
+def test_the_field_s_octaves_survive_as_the_age_separation_relation_says(galaxy, models):
+    """S61 (D220 part II item 5): dt(lambda) = A1 lambda^a, Grasha et al. 2017b Table 2's medians (5.4 Myr, 0.385),
+    read as how long structure at the scale lambda survives: the 190, 95 and 47.5 pc octaves are dropped past 40.71,
+    31.18 and 23.87 Myr (the ruling wrote 40.8, 31.2 and 23.9), computed from the constants."""
+    c = {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
+    assert (c[br.AGE_AMPLITUDE], c[br.AGE_INDEX]) == (5.4, 0.385)
+    assert galaxy.octave_ages == pytest.approx([40.7112, 31.1758, 23.8738], abs=1e-4)
+    assert np.all(np.diff(galaxy.octave_ages) < 0.0)
+    ages = np.array([20.0, 23.87, 23.88, 31.17, 31.18, 40.71, 40.72, 99.0]) / 1000.0
+    assert list(br.octaves_kept(ages, galaxy.octave_ages)) == [3, 3, 2, 2, 1, 1, 0, 0]
+
+
+def test_a_lattice_s_two_step_inverse_is_the_row_major_inverse_of_the_product():
+    """S61 (D220 part II item 5): ``CellLattice.place`` - each object's radial law times the shared lattice, the row
+    first and then the point within it - lands each object on the point the clouds' one-step inverse of the whole
+    product (``ClusteringField.place``'s arithmetic) gives it, at the same place within it."""
+    from galaxy.layer.census_clustering import CellLattice
+
+    rng = np.random.default_rng(3)
+    n_r, n_phi, n = 7, 11, 400
+    w = rng.random((n_r, n_phi)) ** 3
+    w[2] = 0.0  # a row with no weight is never chosen
+    cell = (5.0, 6.0, 0.1, 0.3)
+    r_mid = 5.0 + (np.arange(n_r) + 0.5) / n_r
+    phi_mid = 0.1 + (np.arange(n_phi) + 0.5) * 0.2 / n_phi
+    lattice = CellLattice.of(cell, r_mid, phi_mid, w)
+    radial, u, v = rng.random((n, n_r)), rng.random(n), rng.random(n)
+    radius, azimuth = lattice.place(radial, u, v)
+    for i in range(n):
+        flat = (radial[i][:, None] * w).ravel()
+        cdf = np.cumsum(flat)
+        k = min(int(np.searchsorted(cdf, u[i] * cdf[-1], side="right")), flat.size - 1)
+        row, col = divmod(k, n_phi)
+        within = (u[i] * cdf[-1] - (cdf[k - 1] if k else 0.0)) / flat[k]
+        assert radius[i] == pytest.approx(5.0 + (row + v[i]) / n_r, abs=1e-12)
+        assert azimuth[i] == pytest.approx(0.1 + (col + within) * 0.2 / n_phi, abs=1e-9)
+    assert not np.any((radius >= 5.0 + 2 / n_r) & (radius < 5.0 + 3 / n_r))
+
+
+def test_the_young_stars_the_field_places_stand_in_their_level_0_cell(galaxy, seed, default):
+    """S61 (D220 part II item 5): a star of 20 to 40.71 Myr stands anywhere in its level-0 cell, placed there by the
+    field; every other star inside its finest cell, as before - and the field moves the young ones out of it."""
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.0)
+    cat = br.materialise_bright(galaxy, seed, cells, 1.0e4)
+    radius, azimuth = np.asarray(cat["bright_star_radius"]), np.asarray(cat["bright_star_azimuth"])
+    field = np.asarray(cat["bright_star_age"]) * 1000.0 <= galaxy.octave_ages[0]
+    ring, sector = galaxy.locate(cat["cell"])
+    r32, s32 = ring // galaxy.n_sub, sector // galaxy.n_sub
+    inside = (radius >= galaxy.cell_rings[r32]) & (radius <= galaxy.cell_rings[r32 + 1]) & (
+        azimuth >= galaxy.cell_sectors[s32]) & (azimuth <= galaxy.cell_sectors[s32 + 1])
+    finest = (radius >= galaxy.ring_lo[ring]) & (radius <= galaxy.ring_hi[ring]) & (
+        azimuth >= galaxy.sector_lo[sector]) & (azimuth <= galaxy.sector_hi[sector])
+    assert field.sum() > 1000 and (~field).sum() > 1000
+    assert inside.all() and finest[~field].all()
+    assert (~finest[field]).mean() > 0.9  # a finest cell is 1/64 of its level-0 cell
+
+
 def test_the_ring_first_draw_holds_every_ring_s_totals_with_the_layer_on_or_off(galaxy, seed, default, default_off, models):
     """S61 (D220 item 4): the same count per level-0 ring and the same per-star arrays on and off - only the sector
-    and the azimuth differ - so every realised ring total is the same: the count bit for bit, the summed luminosity
+    and the azimuth differ, and since D220 II.5 the radius of the young stars the clustering field places inside their
+    level-0 cell (their ring stands) - so every realised ring total is the same: the count bit for bit, the summed luminosity
     and each band's summed light to 1e-12 relative (the rows are concatenated by cell, so a sum's order differs);
     each ring's luminosities, sorted, are the same bits; and the stage's ``bright_star_limit`` is the same number.
     I2 for this census: each ring's expected count (``ring_curve``) is the same bits on and off, and the sum of its

@@ -1549,14 +1549,19 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # in both runs with only their cells and azimuths placed, so the stage's default selection (the 3162 brightest, in
     # luminosity order) is the same stars on and off but for the azimuth: sixteen of its seventeen columns are the
     # same bits, and `bright_star_limit` with them (a ring-first statistic now, held above).
-    same_stars = [d.name for d in br.COLUMNS if d.name != "bright_star_azimuth"]
+    # S61 (D220 II.5): was every column but the azimuth (sixteen) - the young stars the clustering field places (20 to
+    # 40.71 Myr: 2707 of the selection's 3162, measured) stand anywhere in their level-0 cell, so their radius moves
+    # with the layer too; their height does not (its thin/thick criterion reads the same at the placed radius, measured:
+    # the column is the same bits). Fifteen of the seventeen.
+    same_stars = [d.name for d in br.COLUMNS if d.name not in ("bright_star_azimuth", "bright_star_radius")]
     # S61 (D220 items 1-4, the star sample's build): was 261 - the sample is drawn ring-first too, so its four statistics
     # are the same bits in both runs (RING_FIRST_STATISTICS, held above), and four of its columns are the same bytes
     # though the rows are in other cells: star_population and star_wolf_rayet are 0 for every star of this sample,
     # and star_wind_luminosity and star_bubble_radius are NaN but for one star, which stands at the same row in both
     # (measured).
     same_sample = ["star_bubble_radius", "star_population", "star_wind_luminosity", "star_wolf_rayet"]
-    assert len(held) == 269 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
+    # S61 (D220 II.5): was 269 - bright_star_radius leaves what is held (above).
+    assert len(held) == 268 and "bright_star_limit" in held and {"catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"} <= set(held)
     assert sorted(n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)) == sorted(["hii_density_bounded", *same_stars, *same_sample])
     assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
