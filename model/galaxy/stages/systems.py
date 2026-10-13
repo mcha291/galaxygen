@@ -948,6 +948,22 @@ def materialise(
     asserted in ``tests/test_hierarchy.py``. Below level 0 the catalogue carries three more
     columns, ``level``, ``cell`` and ``index`` — each row's canonical name, which is what a
     system is opened by: an inherited star's is its parent's, an extra star's is its child's.
+
+    **Ring first** (S61, D220 part I). At level 0 a cell's stars are its ring's draw: the ring's
+    count one seeded rounding of its expectation (:func:`ring_star_count`), every per-star uniform
+    an array on the ring's stream (:func:`star_stream`), each star's sector the inverse of its
+    part's sector weights at its own ``sector`` uniform (:class:`Placement`), its radius, age and
+    the rest as before at its own uniforms, its azimuth in the sector by the pattern's point
+    function (the young stars' by the star formation law at the point). A cell drawn alone draws
+    its ring's count and uniforms whole, keeps the rows allocated to it, and derives every column
+    for those rows alone. The catalogue carries its :class:`StarLayout` (``ring_layout``).
+
+    *The levels below 0 keep their children's draws* (S61, the builder's measurement before
+    building D220 item 8, for the lead's ruling): a level-k sub-ring drawn whole at the route's
+    largest sample (5 000 000 stars, a level-3 sub-ring at R0 about 1.3 million stars) would cost
+    a level-3 child query about 2.2 times today's with the layer off. So a child's extra stars are
+    drawn as since S32 - the parent's expectation times (1 − 4^−k), rounded, on the child's own
+    stream, their age law tilted by the parent's young share - and are not the same on and off.
     """
     if not 0 <= level <= MAX_LEVEL:
         raise ValueError(f"level={level} is outside 0..{MAX_LEVEL}")
@@ -1451,8 +1467,9 @@ CATALOGUE_SIZE = FieldDecl(
     meaningful_zero=True, provenance="seeded",
     about=(
         "How many of GALAXY_PLAN.md §4's clickable sample were actually materialised. It differs "
-        "from the requested size by the per-cell rounding, which is a seeded Bernoulli on the "
-        "fractional part rather than a rounding rule that would bias the disc's outskirts away. "
+        "from the requested size by the per-ring rounding (per cell until S61), which is a seeded Bernoulli on the "
+        "fractional part rather than a rounding rule that would bias the disc's outskirts away - the same "
+        "number with the layer on or off, since the layer places a ring's stars and never draws them (D220). "
         "**Not shown by the viewer** (debt #69, ruled at S22): it is a galaxy scalar of the stage "
         "that publishes the object columns, which `scalarsAt` excludes so the client cannot "
         "materialise a galaxy to print one number (rule D4). Nothing is lost — the region "
