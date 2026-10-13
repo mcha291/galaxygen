@@ -49,7 +49,7 @@ from galaxy.core.stage import Context, Stage
 from galaxy.stages.pattern import PATTERN_READS
 from galaxy.stages.gas_pattern import GAS_PATTERN_READS
 from galaxy.stages.systems import (
-    CATALOGUE_SAMPLE, YOUNG_CONSTANTS, YOUNG_READS, Catalogue, StarLayout, canonical_cell, star_layout, star_layout_of,
+    CATALOGUE_SAMPLE, YOUNG_CONSTANTS, YOUNG_READS, Catalogue, StarLayout, star_layout, star_layout_of,
 )
 
 # Conversions. A factor is a factual claim and carries a citation (units.py holds
@@ -554,11 +554,12 @@ def planet_stream(seed: int, level: int, ring: int, name: str) -> np.random.Gene
     """The stream ``name`` of the planets of one ring's stars (S61, D220 items 1 and 8): a level-0 star is element
     ``i`` of its ring's draw, and its planets are row ``i`` of every array on ``(seed, "planet", ring, name)`` - keyed
     on the star's identity in the ring's draw, not on the cell the layer put it in, so a star has the same planets
-    with the layer on or off. A child's own star below level 0 is ``(level, child, i)`` and keeps its child's stream
-    ``(seed, "cell", canonical_cell(level, child), name)``, as since S32 (the levels keep their children's draws)."""
+    with the layer on or off. A child's own star below level 0 is ``(level, sub-ring, i)`` in its sub-ring's draw and
+    its planets are row ``i`` on ``(seed, "planet", "level", k, sub_ring, name)`` (S61, D220 item 8; the child's
+    stream ``(seed, "cell", canonical_cell(level, child), name)`` of S32 is retired)."""
     if not level:
         return _seeds.rng(seed, "planet", int(ring), name)
-    return _seeds.rng(seed, "cell", canonical_cell(int(level), int(ring)), name)
+    return _seeds.rng(seed, "planet", "level", int(level), int(ring), name)
 
 
 def draw_block(seed: int, level: int, ring: int, count: int) -> dict[str, np.ndarray]:
