@@ -615,7 +615,9 @@ class RingDraw:
     """One level-0 ring's stars above a grid threshold, allocated to their finest cells and not materialised
     (D220 items 1-3): only the ring's uniforms and what places a star in a cell exist for every star; every derived
     column is computed later for the rows a request keeps. Star ``i`` of the ring (its identity in the draw) is
-    row ``i`` of every array, in Γ order."""
+    row ``i`` of every array, in Γ order. ``rest``, ``sector`` and ``cell`` are filled for the stars of the sub-rings
+    asked for (NaN or -1 elsewhere): each is a function of the star's own uniforms alone, so asking for fewer
+    sub-rings changes no star's."""
 
     ring: int
     gamma: np.ndarray  # (N,) the ring's ordered process
@@ -623,13 +625,13 @@ class RingDraw:
     interval: np.ndarray  # (N,) the threshold interval each star's luminosity lies in
     part: np.ndarray  # (N,) 0 the middle part (the cluster window to YOUNG_STAR_AGE), 1 the old
     sub_ring: np.ndarray  # (N,) the finest ring (0-255) inside the level-0 ring
-    sector: np.ndarray  # (N,) the finest sector (0-255)
-    rest: np.ndarray  # (N,) what is left of the population uniform once the part and sub-ring are chosen
-    cell: np.ndarray  # (N,) the finest cell's id
-    rank: np.ndarray  # (N,) the star's index in its cell: its rank among the ring's stars allocated there
+    rest: np.ndarray  # (N,) what is left of the population uniform once the part and sub-ring are chosen (NaN
+    # outside the sub-rings asked for)
+    sector: np.ndarray  # (N,) the finest sector (0-255), -1 outside the sub-rings asked for
+    cell: np.ndarray  # (N,) the finest cell's id, -1 outside the sub-rings asked for
 
 
-def draw_ring(galaxy: BrightGalaxy, seed: int, ring: int, k: int) -> RingDraw:
+def draw_ring(galaxy: BrightGalaxy, seed: int, ring: int, k: int, sub_rings: np.ndarray | None = None) -> RingDraw:
     """The level-0 ``ring``'s stars above the grid threshold ``LOG_L_GRID[k]``, allocated (D220 items 1-2).
 
     The ring's count is one ordered process on the ring's stream against the ring's expectation
@@ -638,8 +640,8 @@ def draw_ring(galaxy: BrightGalaxy, seed: int, ring: int, k: int) -> RingDraw:
     there - the radial physics, the same on and off - and the uniform's remainder later chooses its isochrone, as
     the part's did; its **sector** is the inverse of its part's cumulative placement weights round its sub-ring at
     its own ``sector`` uniform (item 2: the composed weights the catalogue read per cell until S61, uniform with
-    the layer off). Its name stays (cell, index): index is its rank among the ring's stars allocated to that cell,
-    in ring order. The layer assigns the sector and the azimuth and nothing else (item 4)."""
+    the layer off), found for the stars of ``sub_rings`` (every one when None). The layer assigns the sector and
+    the azimuth and nothing else (item 4)."""
     ring, k = int(ring), int(k)
     ceiling = float(galaxy.ring_curve[ring, k])
     gamma = _gammas(seed, ring, ceiling) if ceiling > 0.0 else np.zeros(0)
@@ -652,28 +654,38 @@ def draw_ring(galaxy: BrightGalaxy, seed: int, ring: int, k: int) -> RingDraw:
     cdf = galaxy.split_cdf[ring, interval]  # (N, 2 * n_sub)
     target = u["population"] * cdf[:, -1]
     j = np.clip((cdf < target[:, None]).sum(axis=1), 0, cdf.shape[1] - 1)
-    rows = np.arange(n)
-    lower = np.where(j > 0, cdf[rows, np.maximum(j - 1, 0)], 0.0)
-    width = cdf[rows, j] - lower
-    rest = np.clip((target - lower) / np.where(width > 0.0, width, 1.0), 0.0, 1.0)
     part, sub = np.divmod(j, galaxy.n_sub)
     sub_ring = ring * galaxy.n_sub + sub
+    rows = np.arange(n)
+    asked = rows if sub_rings is None else np.flatnonzero(np.isin(sub_ring, sub_rings))
+    # What is left of the population uniform, for the stars asked for (NaN elsewhere: no derived column is made).
+    rest = np.full(n, np.nan)
+    ja = j[asked]
+    lower = np.where(ja > 0, cdf[asked, np.maximum(ja - 1, 0)], 0.0)
+    width = cdf[asked, ja] - lower
+    rest[asked] = np.clip((target[asked] - lower) / np.where(width > 0.0, width, 1.0), 0.0, 1.0)
     # The sector: the inverse of the part's cumulative weights round the sub-ring, one group a (part, sub-ring).
-    sector = np.zeros(n, dtype=np.int64)
-    for key in np.unique(j):
-        sel = np.flatnonzero(j == key)
+    sector = np.full(n, -1, dtype=np.int64)
+    cell = np.full(n, -1, dtype=np.int64)
+    for key in np.unique(j[asked]):
+        sel = asked[j[asked] == key]
         c = galaxy.sector_cdf[int(part[sel[0]]), int(sub_ring[sel[0]])]
         sector[sel] = np.clip(np.searchsorted(c, u["sector"][sel] * c[-1], side="left"), 0, c.size - 1)
-    cell = galaxy.cell_at(sub_ring, sector)
-    # The index: each star's rank among the ring's stars allocated to its cell, in ring order.
+    cell[asked] = galaxy.cell_at(sub_ring[asked], sector[asked])
+    return RingDraw(ring, gamma, u, interval.astype(np.int64), part.astype(np.int64), sub_ring.astype(np.int64),
+                    rest, sector, cell)
+
+
+def _ranks(cell: np.ndarray) -> np.ndarray:
+    """Each row's rank among the rows of its cell, in row order: a star's index in its cell (D220 item 2) when the
+    rows are every star of the ring allocated to that cell, in ring order."""
+    n = cell.size
     order = np.argsort(cell, kind="stable")
     ordered = cell[order]
     starts = np.flatnonzero(np.r_[True, ordered[1:] != ordered[:-1]]) if n else np.zeros(0, dtype=np.int64)
-    lengths = np.diff(np.r_[starts, n])
     rank = np.empty(n, dtype=np.int64)
-    rank[order] = np.arange(n) - np.repeat(starts, lengths)
-    return RingDraw(ring, gamma, u, interval.astype(np.int64), part.astype(np.int64), sub_ring.astype(np.int64),
-                    sector, rest, cell, rank)
+    rank[order] = np.arange(n) - np.repeat(starts, np.diff(np.r_[starts, n]))
+    return rank
 
 
 def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -> Catalogue:
@@ -690,27 +702,27 @@ def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -
     if not cells.size:
         return Catalogue.of(_empty(), ())
     wanted, first = np.unique(cells, return_index=True)  # a cell asked twice is served once, where first asked
-    keep: list[tuple[RingDraw, np.ndarray, np.ndarray]] = []
+    sub_rings = np.unique(galaxy.locate(wanted)[0])
+    keep: list[tuple[RingDraw, np.ndarray, np.ndarray, np.ndarray]] = []
     for ring in dict.fromkeys(galaxy.ring_of(cells).tolist()):
-        drawn = draw_ring(galaxy, seed, ring, k)
+        drawn = draw_ring(galaxy, seed, ring, k, sub_rings)
         at = np.clip(np.searchsorted(wanted, drawn.cell), 0, wanted.size - 1)
-        hit = np.flatnonzero(wanted[at] == drawn.cell)
+        hit = np.flatnonzero(wanted[at] == drawn.cell)  # in ring order: every star of the ring in an asked cell
         if hit.size:
-            keep.append((drawn, hit, first[at[hit]]))
+            keep.append((drawn, hit, first[at[hit]], _ranks(drawn.cell[hit])))
     if not keep:
         return Catalogue.of(_empty(), ())
-    position = np.concatenate([p for _, _, p in keep])
-    rank = np.concatenate([d.rank[h] for d, h, _ in keep])
+    position = np.concatenate([p for _, _, p, _ in keep])
+    rank = np.concatenate([r for _, _, _, r in keep])
     order = np.lexsort((rank, position))
 
     def rows(get: Callable[[RingDraw], np.ndarray]) -> np.ndarray:
-        return np.concatenate([get(d)[h] for d, h, _ in keep])[order]
+        return np.concatenate([get(d)[h] for d, h, _, _ in keep])[order]
 
     u = {name: rows(lambda d, name=name: d.u[name]) for name in STREAMS}
     out = _properties(galaxy, rows(lambda d: d.sub_ring), rows(lambda d: d.sector), rows(lambda d: d.part),
                       rows(lambda d: d.interval), rows(lambda d: d.rest), u)
-    cell = rows(lambda d: d.cell)
-    out.update({"cell": cell, "rank": rank[order], "gamma": rows(lambda d: d.gamma)})
+    out.update({"cell": rows(lambda d: d.cell), "rank": rank[order], "gamma": rows(lambda d: d.gamma)})
     held = np.bincount(position, minlength=cells.size)
     return Catalogue.of(out, tuple((int(cells[i]), int(held[i])) for i in range(cells.size) if held[i]))
 
