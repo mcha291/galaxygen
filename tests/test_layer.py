@@ -88,6 +88,7 @@ from galaxy.stages import bright as br
 from galaxy.stages import bubbles as bb
 from galaxy.stages import clouds as cl
 from galaxy.stages import pattern as pt
+from galaxy.stages import planets as pl
 from galaxy.stages import systems as sy
 from helpers import decl, impls, model, stage
 
@@ -102,30 +103,35 @@ MODELS = ("azimuthal", "basic")
 # declared composed fields, differ between the layer-on and the layer-off run; a field outside this list that moves
 # fails test_i1. Each entry names (the stage that publishes it, the census whose realised objects it is computed
 # from, and where: the function that computes it). After L1's ring-first draw the list is empty.
-CENSUS_STATISTICS = {
-    "catalogue_size": ("systems", "the star sample",
-                       "systems.compute_systems: the rows that systems.cell_counts' seeded rounding realised"),
-    "planet_count_sample": ("planets", "the star sample's planets",
-                            "planets.compute_planets: the planets drawn for the sample's stars, counted"),
-    "mean_planets_per_star": ("planets", "the star sample's planets",
-                              "planets.compute_planets: the planets per star, averaged over the sample's stars"),
-    "giant_fraction_sample": ("planets", "the star sample's planets",
-                              "planets.compute_planets: the share of the sample's stars with a giant"),
-    # S61 (D220 item 4): bright_star_limit (the bright catalogue's own ring-first build), cloud_mass_total, dig_halpha_fraction, hii_luminosity_function_slope,
-    # nii_halpha_gradient_hii, the four *_surface_brightness_hii and hot_phase_porosity left this list - identical on
-    # and off since the ring-first draw (RING_FIRST_STATISTICS, below).
-}
-# S61 (D220 item 4): was 14 - nine scalars, five radial fields, the fourteen measured at S55. The cloud census, its
-# clusters, their HII regions and bubbles are drawn ring-first since S61: their nine statistics are the same on and off
-# (RING_FIRST_STATISTICS); and the bright catalogue's limit since its own (S61, D220 item 4: was 5 entries). The four
-# left are the star sample's, until its own build.
-assert len(CENSUS_STATISTICS) == 4
+# S61 (D220 item 4): "After L1 the list is empty." It held fourteen at S55 (nine scalars and five radial fields:
+# the star sample's catalogue_size; its planets' planet_count_sample, mean_planets_per_star, giant_fraction_sample;
+# cloud_mass_total; dig_halpha_fraction, hii_luminosity_function_slope, nii_halpha_gradient_hii and the four
+# *_surface_brightness_hii; hot_phase_porosity; bright_star_limit) - each a statistic of a census whose realised
+# objects differed with the layer on and off, because each cell drew its own count at its own placed expectation.
+# Drawn ring-first, every census draws the same objects on and off and the layer only places them: the fourteen are
+# RING_FIRST_STATISTICS (below), held on and off to 1e-12. The mechanism stays - an entry here is a statistic I1 lets
+# move - and the list holds nothing.
+CENSUS_STATISTICS: dict[str, tuple[str, str, str]] = {}
+# S61 (D220 item 4): was 4 - the star sample's four, until its own build (14 at S55; the clouds' nine and the bright
+# limit left first).
+assert CENSUS_STATISTICS == {}
 # S61 (D220 item 4): the statistics of the censuses drawn ring-first - a ring's count and every per-object draw on the
 # ring's stream before the layer places them, so the same objects on and off and only their sector and azimuth differ.
 # Each is identical on and off to 1e-12 relative (bit for bit where nothing is summed in another order: the objects
 # are concatenated cell by cell, so a sum over them may differ in its last bits). Each entry: (its stage, the census,
 # where it is computed).
 RING_FIRST_STATISTICS = {
+    # S61 (D220 items 1-4): the star sample drawn ring-first - each ring's count one seeded rounding of its expectation,
+    # every star's draws arrays on the ring's streams, only its sector and azimuth placed; its planets keyed on the
+    # star's place in its ring's draw. So the sample's size and its planets' numbers are the same on and off.
+    "catalogue_size": ("systems", "the star sample",
+                       "systems.compute_systems: the rows the rings' seeded rounding realised (systems.ring_star_count)"),
+    "planet_count_sample": ("planets", "the star sample's planets",
+                            "planets.compute_planets: the planets drawn for the sample's stars, counted"),
+    "mean_planets_per_star": ("planets", "the star sample's planets",
+                              "planets.compute_planets: the planets per star, averaged over the sample's stars"),
+    "giant_fraction_sample": ("planets", "the star sample's planets",
+                              "planets.compute_planets: the share of the sample's stars with a giant"),
     # S61 (D220 item 4): the bright catalogue drawn ring-first - each ring's stars the same draws on and off, only their
     # cell and azimuth placed - so the default selection's limit is the same number (bit for bit, measured).
     "bright_star_limit": ("bright_stars", "the bright catalogue",
@@ -147,7 +153,7 @@ RING_FIRST_STATISTICS = {
     "hot_phase_porosity": ("bubbles", "the clusters' bubbles (with the remnants, which no placement moves)",
                            "bubbles.hot_phase_porosity: the realised bubbles' volumes, binned by cluster_birth_radius"),
 }
-assert len(RING_FIRST_STATISTICS) == 10 and not set(RING_FIRST_STATISTICS) & set(CENSUS_STATISTICS)  # S61 (D220 item 4): was 9 - with bright_star_limit
+assert len(RING_FIRST_STATISTICS) == 14 and not set(RING_FIRST_STATISTICS) & set(CENSUS_STATISTICS)  # S61 (D220 item 4): was 9 - with bright_star_limit; 10 - with the star sample's four
 RING_FIRST_RTOL = 1e-12  # D220 item 4: "to 1e-12 relative for sums"
 # The object classes a placement moves: every column of these is a catalogue's, not a statistic.
 PLACED_OBJECTS = {"star", "planet", "bright_star", "cloud", "cluster"}
@@ -326,7 +332,9 @@ ADDED_AT_S61 = {"cluster_birth_radius", "cloud_birth_radius", "census_clustering
 # Nothing else of S55's layer-off run moves: no law, no radial field that is not those statistics, no remnant.
 # S61 (D220 items 1-4 and 10): and the bright catalogue, drawn ring-first in its own build - its 17 columns and its
 # limit (RING_FIRST_STATISTICS).
-REDRAWN_OBJECTS_AT_S61 = {"cloud", "cluster", "bright_star"}
+# S61 (D220 items 1-4 and 10): and the star sample and its planets, drawn ring-first in their own build - every column
+# of both and the four statistics (RING_FIRST_STATISTICS).
+REDRAWN_OBJECTS_AT_S61 = {"cloud", "cluster", "bright_star", "star", "planet"}
 
 
 def redrawn_at_s61(out, held) -> set[str]:
@@ -595,10 +603,11 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
         assert on.decls[n].kind.domain in ("galaxy", "grid") and on.decls[n].axes in ((), ("R",)), n
     # S61 (D220 item 4): was 9 - the four left are scalars; the ten that left were five scalars (the bright limit with
     # the clouds' four) and five radial fields.
-    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 4
-    assert sum(1 for n in RING_FIRST_STATISTICS if on.decls[n].kind.domain == "galaxy") == 5
+    # S61 (D220 item 4): was 4 (the star sample's) - the list is empty; the ring-first list holds nine scalars (was 5).
+    assert sum(1 for n in CENSUS_STATISTICS if on.decls[n].kind.domain == "galaxy") == 0
+    assert sum(1 for n in RING_FIRST_STATISTICS if on.decls[n].kind.domain == "galaxy") == 9
     for n, (stage_id, census, where) in RING_FIRST_STATISTICS.items():
-        assert producer[n] == stage_id and where.startswith(("bright.", "clouds.", "nebular.", "bubbles.")), n
+        assert producer[n] == stage_id and where.startswith(("systems.", "planets.", "bright.", "clouds.", "nebular.", "bubbles.")), n
     # The expected totals, as measured at the default seeds: the clouds' is one unit in the last place higher with
     # the layer on, the bright stars' the same bits. Neither is a census statistic, and the list is not widened.
     # I1 as amended at gate G2 (S57, D216 item 11 ii): "equal within one unit in the last place, the rounding of a
@@ -824,6 +833,49 @@ def test_i2_the_realised_ring_totals_are_the_same_on_and_off(runs, prod, name):
     # And the placement does differ: the clouds stand in other cells.
     on, off = runs[name, True].fields, runs[name, False].fields
     assert not same(on["cloud_azimuth"], off["cloud_azimuth"])
+
+
+@pytest.mark.parametrize("name", MODELS)
+def test_i2_the_star_sample_s_ring_totals_and_its_planets_are_the_same_on_and_off(runs, prod, name):
+    """S61 (D220 items 1-4, the star sample's build): drawn ring-first, a ring's stars are the same stars with the
+    layer on or off - its count one seeded rounding of the ring's expectation, every per-star draw an array on the
+    ring's stream - and only their sector and azimuth differ; a star's planets are keyed on its place in its ring's
+    draw. So the realised per-ring totals are the same: the stars' count and mass, the planets' count and mass, the
+    stars with a giant - bit for bit for the counts, to 1e-12 for the sums (the rows are concatenated cell by cell).
+    And the stage's four statistics are the same bits."""
+    m = prod[0].get(name)
+    totals = {}
+    for layer in (True, False):
+        out = runs[name, layer]
+        F = out.fields
+        layout = sy.star_layout(F, out.grid.R, out.grid.t, int(out.inputs["systems_seed"]), sy.CATALOGUE_SAMPLE,
+                                migration=float(out.inputs["migration_efficiency"]), constants=constants(m))
+        ring = layout.ring
+        per_star = np.asarray(F["star_planet_count"]).astype(np.int64)
+        assert ring.size == len(F["star_mass"]) == per_star.size and np.all(layout.level == 0)
+        host = np.repeat(ring, per_star)
+        giant = np.zeros(per_star.size, dtype=bool)
+        hydrogen = np.flatnonzero(np.asarray(F["planet_atmosphere"]) == pl.ATMOSPHERES.index("hydrogen"))
+        giant[np.unique(np.repeat(np.arange(per_star.size), per_star)[hydrogen])] = True
+
+        def per(where, weight=None):
+            return np.bincount(where, weights=None if weight is None else np.asarray(weight, dtype=float), minlength=sy.CELL_RINGS)
+
+        totals[layer] = {
+            "star count": per(ring), "star mass": per(ring, F["star_mass"]), "star age": per(ring, F["star_age"]),
+            "planet count": per(host), "planet mass": per(host, F["planet_mass"]), "stars with a giant": per(ring[giant]),
+        }
+    for k, a in totals[True].items():
+        b = totals[False][k]
+        assert a.sum() > 0 and np.count_nonzero(a) > 20, k
+        if k.endswith(("count", "giant")):
+            assert np.array_equal(a, b), k
+        else:
+            assert np.allclose(a, b, rtol=1e-12, atol=0.0), (k, float(np.max(np.abs(a - b) / np.where(b > 0, b, 1.0))))
+    for n in ("catalogue_size", "planet_count_sample", "mean_planets_per_star", "giant_fraction_sample"):
+        assert same(runs[name, True].fields[n], runs[name, False].fields[n]), n
+    # And the placement does differ: the stars stand in other cells.
+    assert not same(runs[name, True].fields["star_azimuth"], runs[name, False].fields["star_azimuth"])
 
 
 def test_i2_holds_on_another_galaxy(prod):
