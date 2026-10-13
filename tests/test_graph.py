@@ -147,7 +147,7 @@ SEEDED_BASIC = {
     # metal-poor share are a separate stage and stay derived (D55), as the stellar halo does.
     "gc_system_mass", "gc_count_estimate",
     # The molecular-cloud census (S32): every column and scalar of a stage that reads systems_seed.
-    "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
+    "cloud_radius", "cloud_birth_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size", "cloud_velocity_dispersion",
     # S55 (D214): the source's offset and direction and the gradient's steepness and direction left this set -
     # they are the layer's, synthetic (SYNTHETIC above), drawn on the same streams by the cloud_texture stage.
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_metallicity", "cloud_alpha",

@@ -165,10 +165,14 @@ def test_the_ring_first_draw_places_the_same_clouds(models):
     assert lay_on.sizes == lay_off.sizes and sum(lay_on.sizes.values()) == len(on.fields["cloud_radius"]) == len(off.fields["cloud_radius"])
     for r in lay_on.sizes:
         here_on, here_off = lay_on.ring == r, lay_off.ring == r
-        for name in ("cloud_radius", "cloud_mass", "cloud_age", "cloud_height", "cloud_size", "cloud_metallicity"):
+        # S61 (D220 part II as amended): was "cloud_radius" - the layer places a cloud's radius within its cell too;
+        # the radius the ring drew is `cloud_birth_radius`, and it is the same on and off.
+        for name in ("cloud_birth_radius", "cloud_mass", "cloud_age", "cloud_height", "cloud_size", "cloud_metallicity"):
             a = np.sort(np.asarray(on.fields[name])[here_on])
             b = np.sort(np.asarray(off.fields[name])[here_off])
             assert np.array_equal(a, b), (r, name)
+        # With the layer off the cloud stands at the radius its ring drew.
+        assert np.array_equal(np.asarray(off.fields["cloud_radius"])[here_off], np.asarray(off.fields["cloud_birth_radius"])[here_off])
         # The same objects by identity: (ring, i) carries each cloud's draws, wherever it was allocated.
         order_on, order_off = np.argsort(lay_on.index[here_on]), np.argsort(lay_off.index[here_off])
         assert np.array_equal(np.asarray(on.fields["cloud_mass"])[here_on][order_on], np.asarray(off.fields["cloud_mass"])[here_off][order_off])
@@ -189,8 +193,16 @@ def test_positions_and_abundances(default):
     F, R = o.fields, o.grid.R
     r, phi = np.asarray(F["cloud_radius"]), np.asarray(F["cloud_azimuth"])
     assert r.min() >= R[0] and r.max() <= R[-1] and phi.min() >= 0.0 and phi.max() <= 2.0 * math.pi
-    assert np.allclose(F["cloud_metallicity"], np.interp(r, R, F["feh_gas"]))
-    assert np.allclose(F["cloud_alpha"], np.interp(r, R, F["alpha_fe_gas"]))
+    # S61 (D220 part II as amended): the abundances are read at the radius the ring drew (was `r`, the same number
+    # until the layer placed a cloud within its cell); the placed radius stays in the cloud's level-0 ring.
+    born = np.asarray(F["cloud_birth_radius"])
+    assert np.allclose(F["cloud_metallicity"], np.interp(born, R, F["feh_gas"]))
+    assert np.allclose(F["cloud_alpha"], np.interp(born, R, F["alpha_fe_gas"]))
+    # Both lie in the cloud's cell's ring - the ring's radius to within one grid step (the inverse CDF is linear
+    # between grid radii, and the step that holds the ring's edge carries half its weight) - so no farther apart
+    # than a ring's width and a step.
+    rings, _ = cl.cell_edges(R)
+    assert np.all(np.abs(r - born) < (rings[1] - rings[0]) + (R[1] - R[0])) and not np.array_equal(r, born)
     # Half the thin disc's scale height, stated as a guess (debt #95).
     h = 0.5 * F["thin_disc_scale_height"] / 1000.0
     assert np.median(np.abs(F["cloud_height"])) == pytest.approx(2.0 * h * math.atanh(0.5), rel=0.15)

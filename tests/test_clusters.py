@@ -96,7 +96,8 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
     # Every index resolves to a cluster of the same cell, and every cluster is named by exactly one cloud.
     per_cell = dict(clusters.counts)
     offset, row = 0, 0
-    eps_all = cu.efficiency(np.asarray(F["cloud_radius"]), F["sfr_surface_density"], F["gas_molecular_surface_density"], R, 26.0)
+    # S61 (D220 part II as amended): was F["cloud_radius"] - the efficiency is read at the radius the ring drew.
+    eps_all = cu.efficiency(np.asarray(F["cloud_birth_radius"]), F["sfr_surface_density"], F["gas_molecular_surface_density"], R, 26.0)
     assert 0.0 < eps_all[_hosts(F)].min() and eps_all.max() < 1.0  # no cloud reaches the cap at S33
     for cell, count in clouds.counts:
         idx = index[offset:offset + count]
@@ -111,7 +112,9 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
             assert np.array_equal(F["cluster_height"][got], F["cloud_height"][hosts])
             assert np.array_equal(F["cluster_metallicity"][got], F["cloud_metallicity"][hosts])
             # S61 (D220 item 6): the radius the binning stages read is its cloud's, the ring-stream draw.
-            assert np.array_equal(F["cluster_birth_radius"][got], F["cloud_radius"][hosts])
+            # S61 (D220 part II as amended): was F["cloud_radius"] - the radius the cloud's ring drew, which the
+            # cloud carries beside its placed radius.
+            assert np.array_equal(F["cluster_birth_radius"][got], F["cloud_birth_radius"][hosts])
             # Inside its cloud: no farther from the cloud's centre than the cloud's radius.
             x0 = F["cloud_radius"][hosts] * np.cos(F["cloud_azimuth"][hosts])
             y0 = F["cloud_radius"][hosts] * np.sin(F["cloud_azimuth"][hosts])
