@@ -88,8 +88,10 @@ SEED_PATH = "census_clustering"
 # the field's lattice reads the pattern between them linearly, as the census's inverse CDF always did.
 PATTERN_STEPS = 24
 # And the radial steps the cell's mesh of the pattern has (S61, D220 part II as amended): the pattern is read on a
-# 17 x 25 mesh per cell, 59 pc apart in radius on the production grid, and bilinearly between - the point function
-# at every lattice point would cost about 15 s a run (6.6 s per million points, measured at S61). What it does not
+# mesh of 16 x 24 steps per cell - 16 radial by 24 azimuthal intervals, so 17 x 25 nodes edge to edge, where the
+# point function is evaluated (:func:`mesh_points`); every "16 x 24" in this package counts the steps - the nodes
+# 59 pc apart in radius on the production grid, and bilinearly between them; the point function at every lattice
+# point would cost about 15 s a run (6.6 s per million points, measured at S61). What it does not
 # keep (measured at S61 on the default galaxy, layer on, against the point function at every placement lattice point
 # of all 1 024 cells; the review's finding 3): the pattern factor is up to 32 % off at a point (ring 5, sector 18,
 # 4.71-5.65 kpc, where the bar's end at 5.21 kpc kinks the blend), the worst cell's rms 3.2e-2 and the cells' mean
@@ -415,7 +417,8 @@ CENSUS_CLUSTERING_SEED = _decl(
     "The 32-bit seed of the clustering field, folded once from the layer's seed on the noise's own path: with "
     "the model's five numbers for the field it makes the field evaluable at any point, by the model or a "
     "shader, as the lattice noise's committed vectors define it. The cloud census reads it to place each "
-    "cloud in its cell by the field, and the bright catalogue its stars of 20 to 40.7 Myr, with the octaves "
+    "cloud jointly in radius and azimuth on its level-0 cell's lattice by the field (D220 part II item 4 as "
+    "amended; the radius the ring drew is kept as `cloud_birth_radius`), and the bright catalogue its stars of 20 to 40.7 Myr, with the octaves "
     "finer than a star's age allows dropped (D220 part II item 5). **Not shown by the viewer** (rule D4): a galaxy scalar of "
     "a layer stage, a key and no quantity; `/api/clouds`' header carries it with the field's numbers.",
 )
@@ -472,8 +475,9 @@ CENSUS_CLUSTERING = IMPLEMENTATIONS.register(
         about=(
             "The randomness layer's clustering of the censuses: a log-normal field of lattice noise in the plane, "
             "on the layer's own seed, coarsest at the hierarchy's largest measured scale and halving twice, by "
-            "which each cloud's azimuth is drawn within its sector at its radius - so the clouds, and the clusters "
-            "in them, gather into complexes below a cell's scale as the sources measure; and by which the bright "
+            "which each cloud is placed jointly in radius and azimuth on its level-0 cell's lattice (with the "
+            "molecular law and the gas pattern), its ring's radius kept for every law that reads one - so the "
+            "clouds, and the clusters in them, gather into complexes below a cell's scale as the sources measure; and by which the bright "
             "catalogue's young stars stand near where they formed, losing its finer octaves as they age. "
             "Synthetic: it stands in "
             "for the gas's fragmentation, moves no cloud between sectors or rings and no total, and with the "

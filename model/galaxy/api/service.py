@@ -1323,7 +1323,8 @@ class Service:
             # amended, D212) - the viewer may hold no parameter of its own, so the model's must reach it. By the
             # wire's own names, never the constants'; not among the scalars, which are a stage's fields.
             "cloud_interior": _cloud_texture.interior(constants),
-            # S61 (D220 part II items 5 and 8): the clustering field the clouds' azimuths are drawn by - its seed, its
+            # S61 (D220 part II items 5 and 8): the clustering field the clouds are placed by, jointly in
+            # radius and azimuth on each level-0 cell's lattice - its seed, its
             # form and the octave sum's three weights (the constants' exception above, for the same reason: a
             # function the viewer may evaluate), and the realised mean of its map in each level-0 cell the window
             # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.

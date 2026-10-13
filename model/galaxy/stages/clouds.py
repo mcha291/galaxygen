@@ -61,9 +61,12 @@ touches, so the count is the same with the layer on or off (D220 item 1; the sum
 expectations is that number to the bit with the layer off, and to 32 units in the last place with it on,
 measured at S61). Every per-object draw is an array of the ring's count on
 ``(systems_seed, "cloud", ring, name)``: a cloud's identity in the draw is ``(ring, i)``. The layer
-assigns the cell and the azimuth and nothing else (D220 item 2): cloud i's sector is the inverse of the
-ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off - and its
-azimuth inside the sector the pattern's point function at its own ``azimuth`` uniform. So every realised
+assigns the cell and the place in it and nothing else (D220 item 2): cloud i's sector is the inverse of the
+ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off - and its place
+in the cell, with the layer on, is drawn jointly in radius and azimuth on the cell's lattice - the molecular
+law, the pattern's point function (read on the cell's 16 x 24 mesh) and the clustering field - at its own
+``azimuth`` and ``position`` uniforms (D220 part II item 4 as amended), the radius the ring drew kept as
+``cloud_birth_radius``; with the layer off it stands at that radius, uniform in its sector. So every realised
 ring total - the count, the mass, and what the clusters, their HII regions and bubbles make of them - is
 the same on and off (D220 item 4).
 
@@ -117,7 +120,7 @@ G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) time
 # The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
 # source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
 CLOUD_LAYER_SHARE = 0.5
-# The clustering field's constants, which the census reads to place a cloud within its sector (S61, D220 part II).
+# The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended).
 CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
 
 
