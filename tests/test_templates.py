@@ -274,7 +274,9 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # star of this sample - star_population and star_wolf_rayet, 0 for each - or NaN but for one star that stands at the
     # same row in both - star_wind_luminosity and star_bubble_radius - is the same bytes (measured; as in
     # tests/test_layer.py's oracle).
-    bright_same = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of == "bright_star" and n != "bright_star_azimuth"}
+    # S61 (D220 part II item 5): and not the radius either - the field places the 20-40.7 Myr stars jointly in R and
+    # phi by the young law, which the template's pins change; was every bright column but the azimuth.
+    bright_same = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of == "bright_star" and n not in ("bright_star_azimuth", "bright_star_radius")}
     star_same = {"star_population", "star_wolf_rayet", "star_wind_luminosity", "star_bubble_radius"}
     assert constant == {"hii_density_bounded"} | bright_same | star_same, " ".join(sorted(constant))
     assert not np.asarray(named.fields["hii_density_bounded"]).any()
