@@ -11952,7 +11952,7 @@ render: whole, layer off*   2.2232   0.3011   7.38  7,520,504  halo,cens
 
 ### D221. S62: the gas fluctuation field and the spurs — one noise with L1's, the break at the disc's thickness, the shear's stretch, feathers off the chains (BUILD_III Phase L2; a Fable lead on the owner's word, Opus readers and builders)
 
-**Session S62, opened 2026-10-14 on `session-62` from S61's merge.** The owner's word of 2026-10-13: "continue to S62
+**Session S62, opened 2026-10-14 on `session-62` from S61's merge.** *How S61 ended:* `verify_clone --ref main` on the tag record 1c05b80 - a fresh clone, the whole suite: **1 439 passed, 5 skipped in 4 h 02 min, specs OK** - the clean full-suite line on the merged state, after the second pass's two record fixes. The owner's word of 2026-10-13: "continue to S62
 when S61 closes" and "if S62 finishes, continue with S63 too" — the Fable lead with Opus builders carries on. The
 plan's text is `BUILD_III.md` §5 Phase L2 with D219's and D220's added paragraphs; the readings are
 `READING_GAS_SPECTRA.md` (23 preprints) and `READING_SPURS.md` (24 sources), both taken during S61's closing suite
