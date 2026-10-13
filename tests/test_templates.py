@@ -259,7 +259,11 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # composed field. S60 fourth pass: was every composed field, with no exception.
     unmoved = {"arm_piece_saturation"}
     assert all(np.all(np.asarray(named.fields[n]) == 1.0) and same(bare.fields[n], named.fields[n]) for n in unmoved)
-    assert {n for n, d in named.decls.items() if d.kind.domain == "table" or d.composed} - unmoved <= differ
+    # S61 (D220 part II): and the `cell` table - `census_clustering_cell_mean`, the clustering field's mean per
+    # level-0 cell - is a realisation on texture_seed alone that reads no pattern and no pin, so the two runs hold
+    # the same bits; the arm_piece table is the one that moves with the pinned arms.
+    assert {n for n, d in named.decls.items() if (d.kind.domain == "table" and d.of != "cell") or d.composed} - unmoved <= differ
+    assert all(same(bare.fields[n], named.fields[n]) for n, d in named.decls.items() if d.kind.domain == "table" and d.of == "cell")
     # S61 (D220 item 4): but a column that is one value for every object - `hii_density_bounded`, 0 for every region -
     # is the same bytes in both runs, since the ring-first draw gives both the same count.
     constant = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed and n not in differ}
