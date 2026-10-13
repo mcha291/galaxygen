@@ -80,7 +80,8 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     population = spectra.stellar_response(sed, T, rgb)
     ramp = L[:, None] * spectra.blackbody_response(rgb, T)
     summed = ramp.sum(axis=0) / population.sum(axis=0)
-    assert summed == pytest.approx([1.889, 2.118, 2.434], rel=2e-2), summed
+    # S61 (D220): was [1.889, 2.118, 2.434] - the coarse grid's census drawn ring-first, another draw (R 2.2 % under)
+    assert summed == pytest.approx([1.847, 2.085, 2.436], rel=2e-2), summed
     error = 2.5 * np.log10(ramp[:, 1] / population[:, 1])
     assert np.median(error[age < 0.004]) == pytest.approx(0.182, abs=0.03)
     assert np.median(error[age > 0.015]) == pytest.approx(1.309, abs=0.03)
@@ -94,7 +95,10 @@ def test_the_ramps_painting_is_bolometric_and_the_clusters_are_a_quarter_of_the_
     # 0.2489, which sat inside this pin's 2 %; 1.1 of the same spread). disc_luminosity has not moved, to the bit.
     # S60 (D219): the arms are a census of arm pieces, so the clouds fall in other cells again: 0.2531 on the final
     # model (S60 fourth pass: was 0.2608; -3.0 %, inside the same spread).
-    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2531, rel=2e-2)
+    # S61 (D220): was 0.2531 - the clouds drawn ring-first, another draw of the coarse grid's census (-7.5 %, 1.7 of the
+    # clusters' light's 4.4 % seed-to-seed spread: this seed's clouds hold less of the molecular gas, 0.904 at the
+    # default grid). disc_luminosity has not moved.
+    assert L.sum() / float(F["disc_luminosity"]) == pytest.approx(0.2340, rel=2e-2)
     dissolved = state == 2
     assert dissolved.mean() == pytest.approx(0.470, abs=0.02) and L[dissolved].sum() / L.sum() == pytest.approx(0.165, abs=0.02)
 
@@ -121,7 +125,8 @@ NOT_DRAWN = {
                 "hii_ionization_parameter", "hii_clumping", "hii_halpha_luminosity",
                 "hii_oxygen_abundance", "hii_nitrogen_abundance", "hii_sulphur_abundance", "hii_density_bounded",
                 "bubble_shell_velocity", "bubble_shell_density", "bubble_interior_pressure", "bubble_interior_temperature",
-                "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled"},
+                "bubble_mechanical_luminosity", "bubble_phase", "bubble_stalled",
+                "cluster_birth_radius"},  # S61 (D220 item 6): the binners' radius; the viewer draws cluster_radius
     "remnant": {"remnant_age", "remnant_shell_velocity", "remnant_ambient_density", "remnant_shell_density",
                 "remnant_phase", "remnant_kind"},
 }
@@ -140,7 +145,8 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
         for name in DRAWN[of]:
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
     # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
-    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 37
+    # S61 (D220 item 6): NOT_DRAWN was 37 - the binners' radius, cluster_birth_radius, joins it.
+    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 38
     # S59 (D218): the layer's table's columns are a table's, not an object class's - D191's rule does not bind
     # them, and they say in plain words that the viewer does not show them.
     # S59 (D218 follow-up): was ["arm_segment_extent", "arm_segment_pitch_residual"] - the second column is the
