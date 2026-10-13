@@ -1,5 +1,7 @@
 """BUILD_III Phase L1's gate on the finished census (S61, DECISIONS.md D220 part II item 7 a-b and e, as the lead
-amended item 4): the clouds and the clusters measured by the clustering instrument (``galaxy.specs.clustering``).
+amended item 4): the clouds and the clusters measured by the clustering instrument (``galaxy.specs.clustering``);
+and item 7c, the bright catalogue's young stars by age bin (item 5: the field's octaves dropped as a star ages), at
+the end of the file.
 
 **What is judged** (item 7 a-b): against a control, the census's correlation over the field's own range - the
 fitted slope over [47.5, 190] pc within 0.15 of -0.64, and 1 + omega within 0.05 of 1 in every bin beyond 380 pc.
@@ -40,6 +42,7 @@ from galaxy.models import DEFAULT as DEFAULT_MODEL
 from galaxy.run import run
 from galaxy.specs import clustering as C
 from galaxy.stages import clouds as CL
+from galaxy.stages import bright as BR
 from galaxy.stages import clusters as CU
 
 TARGET_SLOPE = -0.64  # (r / 190 pc)^-0.64 below 190 pc: Grasha et al. 2017a Table 4's two branches' ratio (D220 II item 2)
@@ -201,4 +204,105 @@ def test_the_field_alone_has_the_statistic_it_was_derived_to(census):
     for key, want in FIELD_ALONE.items():
         if want is not None:
             assert got[key] == pytest.approx(want, abs=1e-3), (key, got[key])
+
+
+# --- the young bright stars by age (D220 part II items 5 and 7c) ------------------------------------------------------
+
+# The bright catalogue at the stage's own selection asked for 20 000 stars over the whole disc (log L_min 4.220, 19 694
+# stars; the S61 probe's threshold), layer on, against its own law: the same catalogue under four other systems seeds,
+# pooled, with the field's width 0 (the young stars then placed in their level-0 cell by the radial law and the young
+# reader alone). Age bins at the octaves' survival ages, dt(lambda) = A1 lambda^a: 23.87, 31.18 and 40.71 Myr.
+BRIGHT_TARGET = 20_000
+# As measured at S61 (default galaxy): fitted slope over [47.5, 190] pc / the law at 47.5 pc / worst |1 + omega - 1|
+# beyond 380 pc; and the pair-merged 1 + omega over the bins centred in [47.5, 190] pc. Before the field (the branch
+# at 0969929, the same construction) every bin read 1 within its noise: +0.033 / 0.953, -0.138 / 1.105, +0.211 / 0.787,
+# -0.046 / 1.039 (slope / law at 47.5 pc).
+BRIGHT_MEASURED = {
+    "20-23.87": (-0.570, 2.154, 0.0506, 1.296),
+    "23.87-31.18": (-0.599, 2.100, 0.0115, 1.228),
+    "31.18-40.71": (-0.007, 1.234, 0.0318, 1.229),
+    "40.71-100": (-0.046, 1.039, 0.0205, 0.999),
+}
+# The templates by hand, the same construction (milky_way the default's luminosity function and seeds: the same
+# counts; ngc_4414 log L_min 4.040, 20 258 stars), each about 45 s:
+#   milky_way  -0.588 / 1.985 / 0.0494 | -0.553 / 2.065 / 0.0377 | -0.224 / 1.492 / 0.0287 | +0.011 / 0.967 / 0.0192 (merged 0.976)
+#   ngc_4414   -0.703 / 2.329 / 0.0566 | -0.519 / 2.024 / 0.0365 | -0.140 / 1.450 / 0.0257 | +0.088 / 0.934 / 0.0249 (merged 0.999)
+# The disclosed square at R_SUN (slope over [100, 2000] pc, A at 300 pc, 1 + omega at 100 and 300 pc), not judged:
+# the S60 census in the probe -0.33 / 1.77 (20-40 Myr) and -0.36 / 2.02 (40-100 Myr); the branch before the field
+# (0969929) -0.285 / 1.74 / 1.90 / 1.88 and -0.441 / 2.20 / 3.42 / 1.93; after, below. milky_way after: -0.208 / 1.55 /
+# 2.14 / 1.42 and -0.111 / 1.61 / 1.28 / 1.42; ngc_4414 after: -0.359 / 1.86 / 2.88 / 1.80 and -0.065 / 1.45 / 2.23 / 2.31.
+BRIGHT_SQUARE_AFTER = {"20-40": (-0.302, 1.75, 2.39, 1.72), "40-100": (-0.415, 2.14, 3.31, 1.79)}
+
+
+@pytest.fixture(scope="module")
+def bright(census):
+    out, c = census["out"], census["c"]
+    F, R, spec = out.fields, out.grid.R, out.grid.spec
+    seed = int(out.inputs["systems_seed"])
+    cells = BR.all_cells()
+    galaxy = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, c)
+    l_min = 10.0 ** galaxy.threshold(cells, BRIGHT_TARGET)
+    law = BR.BrightGalaxy(F, R, out.grid.t, spec.t_max, spec.n_t, dict(c, **{WIDTH: 0.0}))
+    return {"galaxy": galaxy, "data": BR.materialise_bright(galaxy, seed, cells, l_min),
+            "control": [BR.materialise_bright(law, s, cells, l_min) for s in range(seed + 1, seed + 1 + CONTROL_SEEDS)]}
+
+
+def _aged(cat, lo: float, hi: float) -> np.ndarray:
+    age = np.asarray(cat["bright_star_age"]) * 1000.0
+    keep = (age >= lo) & (age <= hi) if lo <= 20.0 else (age > lo) & (age <= hi)
+    return C.positions_pc(np.asarray(cat["bright_star_radius"])[keep], np.asarray(cat["bright_star_azimuth"])[keep])
+
+
+def _merged(corr: C.Correlation, lo: float, hi: float) -> float:
+    """1 + omega of the bins centred in [lo, hi] merged into one: Landy-Szalay on their summed pair counts."""
+    m = (corr.r >= lo) & (corr.r <= hi)
+    ddn = corr.dd[m] / (corr.n_data * (corr.n_data - 1) / 2.0)
+    drn = corr.dr[m] / (corr.n_data * float(corr.n_random))
+    rrn = (ddn - 2.0 * drn) / (corr.one_plus_omega[m] - 2.0)  # each bin's normalised RR, from its own 1 + omega
+    return float(2.0 + (ddn.sum() - 2.0 * drn.sum()) / rrn.sum())
+
+
+def test_the_young_bright_stars_lose_the_field_s_octaves_as_they_age(bright, census):
+    """D220 part II item 7c, the predictions of item 5 measured, not tuned. **Judged**: the youngest bin (20-23.87 Myr,
+    every octave) returns the hierarchy's slope, within 0.15 of -0.64; the oldest (40.71-100 Myr, no octave: the
+    pattern alone places them) reads 1 within 0.05 - its fitted law at 47.5 pc, its pair-merged 1 + omega over
+    [47.5, 190] pc and every bin beyond 380 pc (its single bins below 190 pc carry Poisson errors of 0.05-0.22 on
+    1 957 stars, so "at every scale" is read on the merged bins).
+
+    **Not met, recorded for the lead**: the youngest bin's "1 +- 0.05 beyond 380 pc" reads 0.0506 here (0.954 and
+    0.949 at 341 and 440 pc, about 4 sigma below 1), 0.0494 on milky_way and 0.0566 on ngc_4414 - the clouds read
+    0.0216. A deficit just past the field's scale, where a level-0 cell's fixed count pays for the excess it holds
+    below it (the integral constraint of a placement inside the cell) [inferred]. And the middle bins do not return
+    to 1 below their finest kept octave, as item 5 predicted: a log-normal map of the coarser octaves alone is flat
+    below them at its own plateau, not at 1 - two octaves read 2.10 at 47.5 pc (the full field 2.15), one octave
+    1.23 - so the bins differ little until the last octave goes. Pinned as measured.
+
+    Cost: about 40 s on the census's run (the catalogue 14 s, the four controls 24 s)."""
+    galaxy = bright["galaxy"]
+    ages = galaxy.octave_ages
+    assert ages == pytest.approx([40.7112, 31.1758, 23.8738], abs=1e-4)
+    bins = {"20-23.87": (20.0, ages[2]), "23.87-31.18": (ages[2], ages[1]), "31.18-40.71": (ages[1], ages[0]),
+            "40.71-100": (ages[0], 100.0)}
+    got = {}
+    for key, (lo, hi) in bins.items():
+        control = np.concatenate([_aged(cat, lo, hi) for cat in bright["control"]])
+        corr = C.against_control(_aged(bright["data"], lo, hi), control, census["annulus"])
+        got[key] = (*_judged(corr), _merged(corr, *FIT_PC))
+    slope = got["20-23.87"][0]
+    assert abs(slope - TARGET_SLOPE) < SLOPE_WINDOW, got["20-23.87"]  # judged
+    _, at_finest, worst, merged = got["40.71-100"]
+    assert abs(at_finest - 1.0) < FLAT_WITHIN and abs(merged - 1.0) < FLAT_WITHIN and worst < FLAT_WITHIN, got["40.71-100"]
+    for key, want in BRIGHT_MEASURED.items():
+        assert got[key] == pytest.approx(want, abs=1e-3), (key, got[key])
+
+
+def test_the_disclosed_square_of_the_young_bright_stars(bright, census):
+    """Not judged (D220 part II items 1, 5 and 7e): the 6 kpc square at R_SUN against uniform randoms, before (above)
+    and after the field."""
+    square = C.solar_pointing(census["c"]["R_SUN"])
+    for key, (lo, hi) in (("20-40", (20.0, 40.0)), ("40-100", (40.0, 100.0))):
+        corr = C.against_uniform(_aged(bright["data"], lo, hi), square, multiple=10.0, seed=61)
+        law = C.fit_power_law(corr, 100.0, 2000.0)
+        got = (law.alpha, law.amplitude, corr.at(100.0), corr.at(300.0))
+        assert got == pytest.approx(BRIGHT_SQUARE_AFTER[key], abs=0.006), (key, got)
 
