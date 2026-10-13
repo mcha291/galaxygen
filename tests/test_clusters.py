@@ -16,6 +16,7 @@ import pytest
 
 from galaxy.api import wire
 from galaxy.api.service import Service
+from galaxy.core import seeds as _seeds
 from galaxy.core.grids import GridSpec
 from galaxy.core.registry import production
 from galaxy.models import DEFAULT as DEFAULT_MODEL
@@ -109,6 +110,8 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
             assert np.allclose(F["cluster_age"][got], F["cloud_age"][hosts] - c["GMC_PHASE_EMBEDDED"])
             assert np.array_equal(F["cluster_height"][got], F["cloud_height"][hosts])
             assert np.array_equal(F["cluster_metallicity"][got], F["cloud_metallicity"][hosts])
+            # S61 (D220 item 6): the radius the binning stages read is its cloud's, the ring-stream draw.
+            assert np.array_equal(F["cluster_birth_radius"][got], F["cloud_radius"][hosts])
             # Inside its cloud: no farther from the cloud's centre than the cloud's radius.
             x0 = F["cloud_radius"][hosts] * np.cos(F["cloud_azimuth"][hosts])
             y0 = F["cloud_radius"][hosts] * np.sin(F["cloud_azimuth"][hosts])
@@ -119,6 +122,13 @@ def test_one_cluster_per_cloud_past_its_embedded_phase_in_the_same_cell(coarse):
         offset += count
         row += k
     assert row == len(F["cluster_mass"]) and offset == len(F["cloud_mass"])
+    # S61 (D220 items 1 and 5): a cluster's own draw ("bound") is its cloud's ring's array on the ring's stream,
+    # read at the cloud's place in it - whatever cell the layer allocated the cloud to.
+    layout = cl.layout_of(clouds)
+    hosting = np.flatnonzero(index >= 0.0)
+    u = np.array([_seeds.rng(seed, "cluster", int(r), "bound").random(layout.sizes[int(r)])[i]
+                  for r, i in zip(layout.ring[hosting], layout.index[hosting])])
+    assert np.array_equal(np.asarray(F["cluster_bound"]) == 0, u < c["CLUSTER_BOUND_FRACTION"])
     ages = np.asarray(F["cluster_age"])
     assert ages.min() >= 0.0 and ages.max() <= c["GMC_PHASE_BLOWN_OPEN"] + c["GMC_PHASE_DISPERSING"]
     assert np.allclose(F["cluster_half_mass_radius"], cu.half_mass_radius(F["cluster_mass"], c["CLUSTER_HALF_MASS_DENSITY"]))
@@ -142,9 +152,9 @@ def test_per_region_determinism_and_both_models_agree(models, coarse):
     a new systems seed rerolls clusters with clouds, and the cloud columns never move with the cluster stream."""
     o, c = coarse
     F, R = o.fields, o.grid.R
-    sweep = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c), F, R, 0, c)
+    sweep = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c, texture_seed=0), F, R, 0, c)  # S61 (D220 item 5): the texture on texture_seed
     cells = [300, 301, 517, 640]
-    part = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c, cells=cells), F, R, 0, c)
+    part = cu.materialise_clusters(cl.materialise_clouds(F, R, 0, c, cells=cells, texture_seed=0), F, R, 0, c)
     assert [cell for cell, _ in part.counts] == [cell for cell in cells if cell in dict(sweep.counts)]
     off_part = 0
     for cell, count in part.counts:
@@ -224,12 +234,18 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # (2.6e5, 1.8e5 and 1.6e5 Msun, 1.0-1.9 Myr old; 2.4, 1.7 and 1.4 % of the census's Q). Q's own noise is 5.7 %,
     # the tolerance 0.16.
     # S60 (D219): was 1.0021. S59 (D218 follow-up): was 0.9825; first pass 1.0442. S58 (D217): was 0.9701; S57 (D216): was 0.9870; S56 (D215): was 1.0382; S51 (D210): was 1.0088
-    assert ratio == pytest.approx(0.9939, abs=0.0005)
+    # S61 (D220): was 0.9939 - the clouds drawn ring-first (each ring's count and arrays on the ring's stream), a new
+    # draw of the census: Q reads 0.9397 of the young light, -5.5 %; the realised cloud mass is 0.904 of the molecular
+    # gas at the default seed (2.7 times its 3.5 % noise low; over 60 systems seeds 0.993 +- 0.035, no bias), and
+    # the clusters' mass follows it. Q's own noise is 4.6 %, the tolerance 0.16.
+    assert ratio == pytest.approx(0.9397, abs=0.0005)
     sfr_total = float(np.trapezoid(sfr * 2.0 * math.pi * R, R))
     # S60 (D219): was 1.008. S59 (D218 follow-up): was 1.010; first pass 1.035. S57 (D216): was 1.007; S56 (D215): was 1.063; S51 (D210): was 1.029
-    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(1.015, abs=0.001)
+    # S61 (D220): was 1.015 (the clouds drawn ring-first, a new draw: the cloud mass 0.904 of the molecular gas)
+    assert mass.sum() / (span * 1e6) / sfr_total == pytest.approx(0.933, abs=0.001)
     # S60 (D219): was 1.001. S59 (D218 follow-up): was 1.000; first pass 1.023. S58 (D217): was 1.002; S57 (D216): was 0.999; S56 (D215): was 1.053; S51 (D210): was 1.022
-    assert expected / light_young == pytest.approx(1.005, abs=0.001)
+    # S61 (D220): was 1.005 (the clouds drawn ring-first, a new draw)
+    assert expected / light_young == pytest.approx(0.946, abs=0.001)
     # The efficiency the census used, against the sources it was chosen against (its about line).
     assert F["cluster_formation_efficiency"] == pytest.approx(0.02058, abs=0.0001)
     assert 0.005 < F["cluster_formation_efficiency"] < 0.08
@@ -247,7 +263,7 @@ def test_the_sums_over_the_imf_are_the_light_stages_integral(default):
     # of the census again, +1.8 % on S58's close and -5.0 % on the first pass's; the wind's own noise is 6.9 %)
     # S60 (D219): was 5.341e6 (the arms a census of pieces: another draw of the census, -1.0 %; the wind's own noise
     # is 6.7 %)
-    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(5.286e6, rel=0.01)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)
+    assert np.all(np.isfinite(W)) and np.all(W >= 0.0) and W.sum() == pytest.approx(4.813e6, rel=0.01)  # S61 (D220): was 5.286e6 (ring-first, a new draw; the wind's own noise 5.0 %)  # S58 (D217): was 5.132e6 (the clouds on the bar's lanes inside its reach, another draw of the census)
 
 
 def test_the_census_on_the_default_grid(default):
@@ -264,8 +280,10 @@ def test_the_census_on_the_default_grid(default):
     # another, and the census another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: the gas's response is another pattern's, and the census
     # another draw)
-    assert mass.size == 12916 == int(_hosts(F).sum())
-    assert mass.min() == pytest.approx(9.289, rel=1e-3) and mass.max() == pytest.approx(2.652e5, rel=1e-3)
+    # S61 (D220): was 12916 (the clouds drawn ring-first: each ring's count one Poisson draw on the ring's stream)
+    assert mass.size == 12710 == int(_hosts(F).sum())
+    # S61 (D220): were 9.289 and 2.652e5 (ring-first, a new draw)
+    assert mass.min() == pytest.approx(9.614, rel=1e-3) and mass.max() == pytest.approx(2.258e5, rel=1e-3)
     # S51 (D210): median was 763.06 (763.42 then, inside the rel 1e-3), sum was 3.613e7
     # S56 (D215): median was 763.06 (763.42), sum was 3.733e7
     # S57 (D216): median was 764.08, sum was 3.537e7
@@ -273,18 +291,22 @@ def test_the_census_on_the_default_grid(default):
     # S59 (D218): median was 764.61, sum was 3.547e7 (the winding in seeded segments: another draw of the census)
     # S59 (D218 follow-up): median was 764.61, sum was 3.547e7; first pass 761.14 and 3.633e7
     # S60 (D219): median was 760.29 (760.25 now, inside the rel 1e-3), sum was 3.537e7 (the arms a census of pieces)
-    assert np.median(mass) == pytest.approx(760.29, rel=1e-3) and mass.sum() == pytest.approx(3.563e7, rel=1e-3)
+    # S61 (D220): median was 760.29, sum was 3.563e7 (ring-first, a new draw)
+    assert np.median(mass) == pytest.approx(739.33, rel=1e-3) and mass.sum() == pytest.approx(3.274e7, rel=1e-3)
     bound = np.asarray(F["cluster_bound"])
     # S57 (D216): was [906, 5947, 5961]; S56 (D215): was [890, 5982, 6058]; S51 (D210): was [901, 5951, 6008]
     # S59 (D218 follow-up): was [891, 5960, 5975]; first pass [922, 5980, 5937]. S58 (D217): was [894, 5946, 5989]
     # S60 (D219): was [906, 5992, 5942] (the arms a census of pieces, another draw)
-    assert np.bincount(bound, minlength=3).tolist() == [944, 5970, 6002]
+    # S61 (D220): was [944, 5970, 6002] (ring-first: "bound" an array on the cloud's ring stream, a new draw)
+    assert np.bincount(bound, minlength=3).tolist() == [846, 5951, 5913]
     # Portegies Zwart et al.'s Schechter mass for Milky Way-type spirals, 2e5: 4 clusters are above it,
     # holding 2.7% of the mass (S59, D218 follow-up: was 3 holding 2.0% at S58's close and 5 holding 3.3% on the
     # first pass's draw; S56, D215: was 5 holding 3.1%; S51, D210: was 4 holding 2.7%; S57, D216: 3 and 2.0%
     # still, on another draw).
-    assert int((mass > 2.0e5).sum()) == 4  # S59 (D218 follow-up): was 3; first pass 5. S56 (D215): was 5; S51 (D210): was 4
-    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.450, abs=0.002)
+    # S61 (D220): was 4 (ring-first, a new draw: 2 above it, holding 1.3 % of the mass)
+    assert int((mass > 2.0e5).sum()) == 2  # S59 (D218 follow-up): was 3; first pass 5. S56 (D215): was 5; S51 (D210): was 4
+    # S61 (D220): was 0.450 (ring-first, a new draw: the median mass 739 where it was 760)
+    assert np.median(F["cluster_half_mass_radius"]) == pytest.approx(0.445, abs=0.002)
 
 
 def test_the_phase_5_hook(default):
