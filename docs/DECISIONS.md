@@ -11616,3 +11616,113 @@ census measured again; the gate judged on the finished census. (5) Re-pins, the 
     bit-identical to S60's (I1's test).
 
 **Part II — the field** is written below after the probe (its numbers are the ruling's premise).
+
+**The instrument and the probe (steps 1–2, an Opus builder; `model/galaxy/specs/clustering.py`, `tests/test_clustering.py`,
+the report `docs/S61_PROBE.md`, deleted at close once this entry holds its tables).** Landy–Szalay against uniform
+randoms in a footprint — an annulus, or a 6 kpc square at R_SUN, a LEGUS/PHANGS-like pointing — or against a
+control; 20 log bins 30 pc–5 kpc; a power law 1 + ω = A (r/300 pc)^α over three ranges. Held first (B1): brute-force
+pair counts, a Poisson annulus, a Thomas-process anchor derived in the test (1 + ω = 1 + e^{−r²/4σ²}/(4πσ²n_c), held
+to |z| < 2.2 on three seeds), a control from the data's own law reads 1, the fits recover exact laws. Two corrections
+on the way, both recorded there: an exponential disc against uniform randoms is a *plateau* A∫S²/(∫S)², not a slope
+(3.18 by quadrature, 3.1 measured); and RR summed over consecutive slices of a ring-ordered control counted only
+pairs within radial ranges (a flat 1.05–1.16 at every scale) — the slices are now drawn in a fixed random order,
+with the test that bites (1.83 without the fix).
+
+**What the S60 census measures** (the default galaxy, layer on; α over [100, 2000] pc / 1 + ω at 300 pc; the
+tables for both templates, the layer off and three texture seeds are in the report):
+
+| census | reading (uniform randoms, HST footprints) | annulus 0.04–30 kpc, uniform | 6 kpc square at R_SUN, uniform | annulus, the census's own law as control |
+|---|---|---|---|---|
+| clusters ≤ 10 Myr | −0.5; 3.4 | −0.27 / 11.4 | −0.11 / 1.18 | +0.00 / 1.00 |
+| clusters > 10 Myr | −0.28; 2.3 | −0.26 / 10.5 | −0.01 / 1.09 | −0.01 / 1.01 |
+| clouds | about −0.2; 2.2 (vs a CO control 1.3, ~0 [FQ]) | −0.27 / 11.0 | −0.10 / 1.17 | −0.00 / 1.00 |
+| clouds ≥ 1e5 M☉ | −0.44 | −0.33 / 25.5 | +0.27 / 1.04 (N = 106) | −0.01 / 1.01 |
+| bright 20–40 Myr | −0.69 (≤ 32 Myr), −0.47 (40) | −0.23 / 5.1 | −0.33 / 1.77 | +0.00 / 1.00 |
+| bright 40–100 Myr | −0.32 … −0.22 | −0.27 / 11.5 | −0.36 / 2.02 | −0.03 / 1.03 |
+| bright > 100 Myr | −0.05 (old stars) | −0.00 / 5.2 | +0.00 / 1.12 | +0.03 / 0.97 |
+
+Layer off the annulus reads −0.05 / 7.6 (the disc's profile alone) and the square 1.15–1.20, flat; `ngc_4414`
+reads 24–27 in the annulus (its steeper profile) and 1.1–1.5 in the square. Three texture seeds move the annulus
+by 0.01 and the square within its noise. **Every census, every galaxy, on or off, reads 1.00 ± 0.03 against its
+own law: the S60 censuses have nothing beyond their expected placement**, as a Poisson draw per cell must. The
+amplitude against uniform randoms is the footprint's: the disc's profile gives 7–26, the arms add a slope of
+−0.2 to −0.3 to it, and a 6 kpc pointing at R_SUN sees 1.1–1.5 where the sources' pointings — centred on their
+galaxies, holding the bulge, the bar and the inner arms — see 2.2–3.4. Other facts read: 133 of 12 916 clusters
+stand in another level-0 ring than their cloud (the offset's median 9.9 pc, maximum 265 pc; 0 layer off); the
+bright catalogue holds no star under 20 Myr (the cluster census's window), so the youngest field bin does not
+exist; the catalogue at log L_min 4.22 holds 13 138 stars of 20–40 Myr and 2 109 of 40–100.
+
+**Part II — the field (the lead's ruling, 2026-10-13, on the probe's numbers; the stop condition BUILD_III §3d
+names — "a gate cannot be met without changing what is measured" — resolved here, in place of the handoff the
+plan expected, on the owner's word that Fable leads this session).**
+
+1. *The gate is re-read.* "The census's measured correlation function returns the sourced slope over the sourced
+   range" cannot be judged against uniform randoms: the number is the footprint's (7–26 or 1.1–1.5 for one census),
+   and the reading found no source that measures a spiral against its own structure but He et al. 2026's control
+   [FQ]. **The gate is judged against the control** — the census's own law realised again, the probe's "A
+   control" — which measures exactly what the field adds; the uniform-random numbers in the 6 kpc square are
+   **a disclosed check, recorded before and after beside the sources and not judged** (as the gas pattern's PHANGS
+   ratio is, D210; no row is made of them: #117, D192).
+2. *What the field is.* `census_clustering` is a synthetic field on `texture_seed` standing in for **the
+   hierarchical fragmentation of the gas below the cell scale** — the physics a level-C simulation would compute
+   (RESEARCH_AREAS §1) — and for nothing the arms, the bar or the profile already give. Its own correlation is
+   therefore the hierarchy's excess *over* the structure, and the one source that measures both branches in one
+   table gives it: **Grasha et al. 2017a Table 4, clusters ≤ 40 Myr, classes 1–3, six galaxies — the inner branch
+   −0.85 ± 0.03 below the break, the outer −0.21 ± 0.02 above, meeting at 112 pc** (as read in
+   `READING_CLUSTERING.md` §1.2). The outer branch is the structure, which continues under the inner one; so the
+   hierarchy's own excess is their ratio: **1 + ω_f(r) = (r / ℓ)^(α₁ − α₂) = (r / ℓ)^−0.64 for r < ℓ, and 1 for
+   r ≥ ℓ.** ℓ is the largest hierarchical scale: **190 pc**, the median of the five measured in Menon et al. 2021
+   Table 3 (101, 110, 190, 450, 845 pc; four more are lower limits where a single law runs to the footprint),
+   bracketed by Grasha's 112 pc break and Lapeer et al. 2026's 210–300 pc for NGC 628 — the range goes in the
+   about. By galaxy the inner slope runs −0.4 to −1.7 (six galaxies): the about says so. These are the field's
+   `statistic`; the LMC's and the dwarfs' numbers are not used (a disc's hierarchy is wanted).
+3. *Its form.* A log-normal map (`noise.lognormal_map`) of a two-dimensional sum of value-noise octaves
+   (`noise.fractal`) in the plane, (x, y) in kpc, isotropic — the sources measure an isotropic function; the
+   shear's anisotropy is L2's, for the spurs — with the coarsest octave's lattice scale ℓ = 0.19 kpc and octaves
+   halving downward as far as the cost allows (three: 190, 95, 47.5 pc; the finest is the field's resolution and
+   is declared). **The spectral slope and σ are derived, not chosen**: they are the two numbers for which the
+   field's own two-point function — points drawn by the field in a flat footprint, measured by
+   `specs/clustering.py` against uniform randoms — has slope −0.64 over [the finest scale, ℓ] and 1 ± 0.05 beyond
+   2ℓ; the builder measures them once and declares them as constants with the measurement (a default "measured or
+   derived", D30, D117; the field is derived from its statistic and from no census and no picture). The field
+   has **unit mean in every level-0 cell by construction**: it never changes a cell's expectation (I2 holds as it
+   does today); it redistributes *within* the cell.
+4. *How it places.* A cloud's position within its cell is drawn **jointly on the cell's quadrature lattice**
+   (`noise.cell_quadrature`, n per axis by the rule n ≥ 4 × extent × finest frequency, bounded by the measured cost
+   and declared): each lattice point's weight is Σ_H₂(R) R (the radial law as today) × the gas pattern's point
+   function at (R, φ) (as today) × the field at (x, y); the object's lattice point is the inverse CDF of those
+   weights at its `position` uniform (a ring-stream array, part I), and it lies uniformly within the point's
+   sub-cell. The ring's count, the sector allocation and every other draw are part I's and unchanged. **Layer off
+   the field is 1 and the pattern none: the arithmetic is today's.** The clusters inherit: one per cloud, at its
+   cloud's place plus the offset. Prediction: against the control the finished clouds and clusters read
+   (r/190 pc)^−0.64 below 190 pc — 2.4 at 47 pc, 1.5 at 100 pc — and 1 beyond 300 pc; in the 6 kpc square against
+   uniform randoms the clusters ≤ 10 Myr rise at 100 pc from 1.46 and barely move at 300 pc (1.10) — the sources'
+   3.4 there is their footprint's structure, and the gap is recorded, not closed.
+5. *The young stars near where they formed* (the bright catalogue, 20–100 Myr). The same field, with **its octaves
+   finer than λ_min(t) dropped for a star of age t**, where the age-difference–separation relation of Grasha et
+   al. 2017b Table 2 says how long structure at a scale survives: **Δt(λ) = A₁ λ^a, A₁ = 5.4 Myr, a = 0.385, the
+   medians of eight galaxies** (ranges 1.0–16 and 0.24–0.6; the LMC's 3.3 S^0.33 beside it; λ in pc). So the
+   47.5 pc octave is dropped past 23.9 Myr, the 95 pc past 31.2, the 190 pc past 40.8 Myr: **past 41 Myr the
+   pattern alone places the star** — the sources' "in place by 40 Myr" (NGC 628) to "40–60 Myr" (six galaxies),
+   and shorter than M 51's 50–100 and Menon's ~100, which the about records as the range. The remaining octaves
+   are renormalised to unit mean on the same lattice. The young part's placement is the lattice draw of item 4
+   with the young reader's law in place of the gas pattern's. Prediction: against the control, 20–24 Myr stars
+   read the full excess, 24–31 two octaves', 31–41 one octave's (1 + ω → 1 below 95 pc and below 190 pc
+   respectively), > 41 Myr 1 ± 0.05; the 6 kpc square's uniform-random numbers before and after are recorded.
+   Clusters (0–20 Myr) and clouds take every octave: no cluster is older than the finest octave's 23.9 Myr.
+6. *D219's question — one field or two.* **One noise.** `census_clustering` is the coarse end of one lattice
+   noise on one seed path; L2's `gas_fluctuation` is ruled now to be the same function on the same path, its
+   octaves continuing finer with the slope and σ L2 sources, so that the clouds stand where the gas is dense and
+   the dust and the complexes alternate. L2 may not change the clouds' map: the three octaves, ℓ and the clouds'
+   σ are L1's, and the test that pins the field's own correlation stays. `BUILD_III.md` Phase L2 gains the
+   sentence.
+7. *The gate, as judged* (the finished census, `specs/clustering.py`): (a) clouds and (b) clusters against the
+   control: slope over [the finest scale, ℓ] within 0.15 of −0.64 and 1 + ω within 0.05 of 1 beyond 2ℓ, on the
+   default galaxy and both templates; (c) the bright stars by age bin as item 5 predicts; (d) part I's: I2, the
+   realised ring totals identical on and off, D60 at every level, `CENSUS_STATISTICS` empty, the layer-off
+   acceptance table S60's but rows 35 and 37 by the redraw; (e) the disclosed check recorded. The cost: the
+   layer-on run and `region: whole disc` cold before and after, and a stop if a run more than doubles.
+8. *Where it lives.* `model/galaxy/layer/census_clustering.py`, a layer stage; the three declarations on every
+   synthetic field it publishes (the per-cell normalisers at least — the realised numbers a shader will read in
+   V7); its parameters are constants of the model (G1's ruling 2b); `compose` hands the field, or None layer off,
+   to the clouds and bright stages, which are placement readers already. No module but `compose` reads the switch.
