@@ -2220,7 +2220,18 @@ def test_a_cell_is_the_same_alone_in_a_window_and_in_a_sweep_at_every_level(path
             assert header["level"] == level
             radius, azimuth = np.asarray(rows[where[0]]), np.asarray(rows[where[1]])
             mine = (radius >= inside[0]) & (radius <= inside[1]) & (azimuth >= inside[2]) & (azimuth <= inside[3])
-            if path != "/api/region":
+            if path == "/api/region":
+                # S61 (D220): and a star is its cell's by name, wherever its own position lies. A star's radius is the
+                # inverse of its ring's density on the grid's nodes, which can put it up to one node (75 pc) inside the
+                # next ring's footprint; the ring-first redraw put one of cell 293's at 8.440 kpc, inside cell 261's at
+                # level 0, where a window holding both served it (measured; the spill is the inversion's, not new).
+                # Level 0: the header's runs name the rows; below it an inherited row is its parent's, an extra its child's.
+                if level == 0:
+                    mine &= np.repeat(np.asarray(header["cells"]["ids"]), header["cells"]["counts"]) == cell
+                else:
+                    lv, cl = np.asarray(rows["level"]), np.asarray(rows["cell"])
+                    mine &= ((lv == 0) & (cl == parent)) | ((lv == level) & (cl == cell))
+            else:
                 # A cloud or a cluster is its level-0 cell's, wherever its own position lies (one drawn near a cell's
                 # edge can stand in the next cell's footprint), and a level filters by that position: the cell's
                 # objects inside the child's footprint.
