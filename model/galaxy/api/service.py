@@ -1354,6 +1354,9 @@ class Service:
         layer = self._layer(q)
         # What the stage reads other than the cloud columns, which the census here draws for itself.
         reads = tuple(n for n in self._reads(model, stage) if n not in _clusters.CLOUD_READS)
+        # S61 (D220 part II): and the clustering field's seed, which the clouds stage reads and the clusters stage
+        # does not - the cells' clouds drawn here are placed by it, as the clouds stage places them.
+        reads += tuple(n for n in ("census_clustering_seed",) if n in _stage_for(model, CLOUDS_SLOT, self.impls).requires)
         out, ran = self.compute(model, inputs, reads, layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
