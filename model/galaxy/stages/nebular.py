@@ -96,7 +96,8 @@ SPEED_OF_LIGHT = 2.99792458e10  # cm/s, exact
 PROTON_MASS = 1.67262192e-24  # g (the census's K_OVER_MH uses the same value)
 CM_PER_KPC = CM_PER_PC * PC_PER_KPC
 
-CLUSTER_READS: tuple[str, ...] = ("cluster_ionizing_photons", "cluster_metallicity", "cluster_age", "cluster_radius")
+CLUSTER_READS: tuple[str, ...] = ("cluster_ionizing_photons", "cluster_metallicity", "cluster_age", "cluster_birth_radius")
+# S61 (D220 item 6): was "cluster_radius" - the regions are binned by their cloud's radius, a draw the layer does not move.
 CLOUD_READS: tuple[str, ...] = ("cloud_mass", "cloud_size", "cloud_density_pdf_width", "cloud_alpha", "cloud_cluster_index")
 HII_STATES: tuple[str, ...] = ("bounded", "leaking")
 HII_COLUMNS: tuple[str, ...] = (
@@ -557,7 +558,7 @@ def compute_nebular(ctx: Context) -> Mapping[str, Any]:
     dig = escape * sigma_q * float(halpha_per_recombination(np.array([float(c["DIG_TEMPERATURE"])]))[0]) * per_pc2
     total = hii + dig
     weight = np.asarray(regions["hii_halpha_luminosity"], dtype=float)
-    radius = np.asarray(clusters["cluster_radius"], dtype=float)
+    radius = np.asarray(clusters["cluster_birth_radius"], dtype=float)  # S61 (D220 item 6): the cloud's radius, not the placement
     lines = {f"{n}_surface_brightness_hii": hii * ring_ratios(radius, weight, regions[f"hii_{n}_ratio"], R) for n in FORBIDDEN}
     decrement_dig = float((case_b_halpha(np.array([float(c["DIG_TEMPERATURE"])])) / case_b_hbeta(np.array([float(c["DIG_TEMPERATURE"])])))[0])
     l_nebular = float(np.trapezoid(total * 2.0 * math.pi * R, R)) * PC_PER_KPC**2  # Lsun

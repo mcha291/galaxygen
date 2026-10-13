@@ -29,9 +29,10 @@ With the layer off every scalar and every radial field the physics stages publis
 amplitudes, the modes' split of the arms' power, the gas's ratio of means are laws and measured scatters, and they
 are still made. What is switched off is where the arms *are* (D214 section 1): no arm piece is laid. **What the switch keeps, exactly** (BUILD_III section 1c rule 2 and 1d as
 amended at G1): every ring total of a field a composed field multiplies, and every *expected* count and expected
-total of a census it places. A census draws each cell's count on the cell's own stream at an expectation that
-carries the composed weight, so with the layer off its *realised* objects are another draw, and the statistics
-computed from them move by that re-draw noise until L1's ring-first draw.
+total of a census it places. Since S61 (D220 part I) a census made ring-first (the clouds, and the clusters
+through them, first) draws each ring's
+count and every per-object draw on the ring's own streams before the layer places them, so its *realised* ring
+totals are the same with the layer on or off too; only where each object stands differs.
 
 **How the setting reaches here.** ``run(model, inputs, grid, layer=...)`` gives it to every stage's
 :class:`~galaxy.core.stage.Context` and records it on the run's fields (:class:`~galaxy.core.stage.Fields`, and the
@@ -203,9 +204,18 @@ def realise_scalars(source: Any, names: Sequence[str], draw: Callable[[], Mappin
     return realise(source, lambda: dict(draw()), lambda: {name: float("nan") for name in names})
 
 
-def cloud_texture(source: Any, seed: int, counts: Sequence[tuple[int, int]], size: np.ndarray) -> dict[str, np.ndarray]:
-    """The four cloud texture columns for a census's cells (``layer/cloud_texture.py``): drawn on the cells' own
-    streams, or zero with the layer off - no offset, no gradient, angles 0."""
+def cloud_texture(source: Any, seed: int | None, layout: Any, size: np.ndarray) -> dict[str, np.ndarray]:
+    """The four cloud texture columns for a census's clouds (``layer/cloud_texture.py``): drawn on the layer's own
+    seed ``seed`` (``texture_seed``) at each cloud's ring identity - ``layout`` is the census's
+    ``clouds.RingLayout`` - or zero with the layer off - no offset, no gradient, angles 0 (S61, D220 item 5)."""
     from galaxy.layer import cloud_texture as _texture
 
-    return realise(source, lambda: _texture.draw(seed, counts, size), lambda: _texture.neutral(len(size)))
+    def draw() -> dict[str, np.ndarray]:
+        if seed is None:
+            raise LayerError(
+                "the cloud texture is drawn on texture_seed (D220 item 5): a layer-on census that carries it must be "
+                "given the run's texture_seed"
+            )
+        return _texture.draw(seed, layout, size)
+
+    return realise(source, draw, lambda: _texture.neutral(len(size)))
