@@ -119,7 +119,8 @@ DRAWN = {
 # Published and not drawn (S41, ruled at D191): each carries the "Not drawn by the viewer" sentence.
 NOT_DRAWN = {
     "cloud": {"cloud_velocity_dispersion", "cloud_mach_number", "cloud_age", "cloud_state", "cloud_source_offset",
-              "cloud_source_angle", "cloud_metallicity", "cloud_alpha"},
+              "cloud_source_angle", "cloud_metallicity", "cloud_alpha",
+              "cloud_birth_radius"},  # S61 (D220 part II as amended): the radius the ring drew; the viewer draws cloud_radius
     "cluster": {"cluster_mass", "cluster_half_mass_radius", "cluster_age", "cluster_bound", "cluster_metallicity",
                 "cluster_ionizing_photons", "cluster_wind_luminosity", "hii_electron_density", "hii_temperature",
                 "hii_ionization_parameter", "hii_clumping", "hii_halpha_luminosity",
@@ -146,7 +147,8 @@ def test_every_object_column_is_drawn_or_listed(model):  # the conftest runs it 
             assert "Not drawn by the viewer" not in by_name[name]["about"], name
     # 25 / 38 at S41 (D191); S42 drew the Balmer decrement and the four forbidden-line ratios (D192).
     # S61 (D220 item 6): NOT_DRAWN was 37 - the binners' radius, cluster_birth_radius, joins it.
-    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 38
+    # S61 (D220 part II as amended): NOT_DRAWN was 38 - the radius a cloud's ring drew, cloud_birth_radius, joins it.
+    assert sum(len(v) for v in DRAWN.values()) == 30 and sum(len(v) for v in NOT_DRAWN.values()) == 39
     # S59 (D218): the layer's table's columns are a table's, not an object class's - D191's rule does not bind
     # them, and they say in plain words that the viewer does not show them.
     # S59 (D218 follow-up): was ["arm_segment_extent", "arm_segment_pitch_residual"] - the second column is the

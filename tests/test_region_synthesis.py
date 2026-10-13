@@ -109,10 +109,12 @@ def test_small_windows_are_recorded_not_gated(svc):
     # S60 (D219): the arms a census of pieces, another draw; was 0.7578 / 832, 0.4885 / 256, z -1.00 / -1.18 (z read
     # with S60's C_POP below)
     # S61 (D220): the clouds drawn ring-first, another draw; was 0.7023 / 851, 0.5068 / 268, z -1.29 / -1.20
-    assert r1 == pytest.approx(0.9321, abs=1e-3) and k1 == 889
-    assert r2 == pytest.approx(0.7282, abs=1e-3) and k2 == 253
-    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-0.40, abs=0.02)
-    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-0.84, abs=0.02)
+    # S61 (D220 part II): the clouds placed within their cells by the clustering field (layer on), another placement;
+    # was 0.9321 / 889, 0.7282 / 253, z -0.40 / -0.84
+    assert r1 == pytest.approx(0.8424, abs=1e-3) and k1 == 881
+    assert r2 == pytest.approx(0.7507, abs=1e-3) and k2 == 265
+    assert (r1 - 1.0) / (C_POP / math.sqrt(k1)) == pytest.approx(-0.91, abs=0.02)
+    assert (r2 - 1.0) / (C_POP / math.sqrt(k2)) == pytest.approx(-0.79, abs=0.02)
 
 
 # sqrt(<L^2>) / <L> over the disc's 12 597 HII regions (S40 review): the census's own second moment, so that a window
@@ -183,9 +185,12 @@ def test_many_windows_scatter_as_the_census_does_not_as_any_one_reads(svc):
     # S61 (D220): z mean 0.141 -> -0.155 (sd 1.16 -> 0.85, 98 % inside 2 and 100 % inside 3), median 0.8861 ->
     # 0.9236, mean 1.0685 -> 0.9259 - the clouds drawn ring-first, another draw; the windows run from 102 to 309
     # clusters (median 148)
-    assert float(z.mean()) == pytest.approx(-0.155, abs=0.01)
-    assert float(np.median(q)) == pytest.approx(0.9236, abs=1e-3)
-    assert float(q.mean()) == pytest.approx(0.9259, abs=1e-3)
+    # S61 (D220 part II): z mean -0.155 -> -0.004 (sd 0.85 -> 0.99, 95 % inside 2 and 100 % inside 3), median 0.9236
+    # -> 0.9665, mean 0.9259 -> 0.9824 - the clouds placed within their cells by the clustering field (layer on); the
+    # windows run from 99 to 297 clusters (median 159.5)
+    assert float(z.mean()) == pytest.approx(-0.004, abs=0.01)
+    assert float(np.median(q)) == pytest.approx(0.9665, abs=1e-3)
+    assert float(q.mean()) == pytest.approx(0.9824, abs=1e-3)
 
 
 @pytest.mark.parametrize("path, key", [("/api/clouds", ("cloud_radius", "cloud_azimuth")), ("/api/clusters", ("cluster_radius", "cluster_azimuth"))])
