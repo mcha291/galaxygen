@@ -11543,3 +11543,76 @@ Audit IV's bound on the render's midpoint rule across levels (2e-3, four times S
 `lines_hii` at level 1 under the pieces' narrow ridges: 3e-3 with the reason, the render's march resolution across
 levels V5-V7's to re-read. The second suite gates the merge on pytest's own exit code (the first log's EXIT line was
 the pipe's, a trap now in the brief).
+
+### D220. S61: the clustered censuses — the ring-first draw, `census_clustering`, the young stars near their birth (BUILD_III Phase L1; a Fable lead on the owner's word, Opus builders)
+
+**Session S61, opened 2026-10-13 on `session-61` at `77ec01c` (S60's tag record).** The owner's instruction for this
+session: a Fable lead orchestrating, Opus subagents for the work that does not need Fable (reading code, building,
+measuring, re-pinning, reviewing). So the gate L1's text expected ("put it to Fable with the numbers") is run in
+place by the lead, on measurements the builders make first — never on a reading of the code (S60's lesson, the
+tenth follow-up). The plan's text is `BUILD_III.md` §5 Phase L1 with D214's orders and D219's added question; the
+reading is `READING_CLUSTERING.md`.
+
+**The order of work.** (1) The instrument before the thing it certifies (B1): a two-point correlation measurer that
+measures a census as the sources measure it — Landy–Szalay against uniform randoms in a footprint — and, beside it,
+against randoms that follow the census's own expected counts (He et al. 2026's control, the one source that divides
+the large-scale structure out). (2) The probe: the S60 census measured by it, layer on and off, before any field is
+built — what the arms, the bar and the disc's profile already give the clouds, the clusters and the young stars.
+(3) The ring-first draw, census by census (clouds and clusters; the bright catalogue; the star sample and its
+planets, with the hierarchy): mechanics ordered at G1 (D214), independent of the field's ruling, built in parallel
+with (1)–(2). (4) The field's ruling on the probe's numbers, written here as part II; the field built; the
+census measured again; the gate judged on the finished census. (5) Re-pins, the review, the records.
+
+**Part I — the ring-first draw as construction (the lead's ruling; D214 G1's order made precise).**
+
+1. *The ring stream.* For every census the layer places, and for every level-0 ring, **the ring's count is one draw
+   on the ring's stream** from the ring's expected total — the sum of its cells' expectations, which invariant I2
+   already holds identical with the layer on or off: Poisson for a census with a physical number (clouds), the
+   seeded rounding (base plus one Bernoulli) for the star sample's share. **Every per-object draw is an array on the
+   ring's stream**, `(seed, census, ring, name).random(N)`: an object's identity in the draw is `(ring, i)`. The
+   stream paths are new; S55–S60's cell streams are retired for these censuses (the values move once, here).
+2. *The allocation.* Object i's **sector** is the inverse of the ring's cumulative sector weights — the composed
+   placement weights the census reads today (the pattern's exact sector means; from part II, times the clustering
+   field's cell means), uniform with the layer off — at the object's own `sector` uniform, drawn on the ring
+   stream. Its **azimuth within the sector** is the pattern's point function at its radius, as now, at its own
+   `azimuth` uniform (and from part II the field's within-cell density). Its catalogue name stays `(cell, index)`:
+   index is its rank among the ring's objects allocated to that cell, in ring order. The layer assigns the cell and
+   the azimuth and nothing else.
+3. *D60 survives.* A cell drawn alone draws **the ring's count and the ring's uniform arrays whole** — N doubles per
+   stream, arithmetic that costs nothing beside a catalogue — selects the rows allocated to it, and computes
+   **every derived column for those rows alone** (the inverse CDFs, the mass function, the interpolations, the
+   isochrone lookups). The ring's other cells' objects are not materialised: only their uniforms exist. A cell is
+   the same alone, in a window and in a sweep, at every level, as `tests/test_hierarchy.py` and the per-region tests
+   already hold. *Prediction:* a cell's cost rises by the ring's uniforms and no more — measured before and after
+   (`tools/timings.py`, `specs.performance.catalogue_cost`); the catalogue's bounds hold (10 s layer off, #154's
+   25 s on) or the new number is pinned with its reason.
+4. *What is now identical on and off.* The same N per ring and the same per-object arrays: only the sector and the
+   azimuth differ. So every realised ring total — counts, masses, light, the HII regions' Hα, the bubbles' volumes,
+   the planets' counts — is the same on and off: **bit for bit for integer counts, to 1e-12 relative for sums**
+   (the objects are concatenated by cell, so a sum's order differs and its last bits may). `tests/test_layer.py::
+   CENSUS_STATISTICS` empties: each of its fourteen is identical on and off to that tolerance, and the test holds
+   the empty list. Rows 35 and 37 layer on become the layer-off numbers (−2.08124, −0.102973). I2's second half and
+   I4's "what they bin per ring does not depend on placement" are then true and tested.
+5. *`cloud_texture` to `texture_seed`* (D214 2c): the four columns are arrays on `(texture_seed, "cloud", ring,
+   name)`, a layer realisation of the ring's objects; neutral with the layer off, as now. Rule 1's "rerolling
+   `texture_seed` changes placements" becomes true of the clouds' interiors.
+6. *The offset's ring crossing* (D214 5): a cluster's published radius and azimuth — its cloud's centre plus the
+   offset — stay its **placement**, what the viewer draws. **The stages that bin realised clusters by radius
+   (`nebular`, `bubbles`, the closed list) bin by the cloud's radius**, the ring-stream draw, carried on the
+   cluster as `cluster_birth_radius` (an object column, "Not drawn by the viewer: the binners' radius", D191). No
+   clamp: the offset keeps its measured range; what a binner publishes per ring no longer depends on it.
+7. *`cloud_height` is seeded* (D214 2d, #95): a sample of the cloud layer's vertical profile, drawn on the ring
+   stream, the same on and off; not a placement. The layer places in the plane only.
+8. *The hierarchy* (levels 1–3): the same construction per level, the sub-ring the ring — a level-k child's extra
+   sample is drawn on its sub-ring's stream and allocated among the sub-sectors by the same weights evaluated on
+   the children; the planets key on the star's ring identity. The builder reads `systems.py` and reports where the
+   construction meets the hierarchy before building it, and stops if a level cannot be made to satisfy item 3.
+9. *Remnants* are not placed by any pattern (an even share per sector) and are unchanged.
+10. *Everything that moves, moves once.* Layer off, the realised censuses are new draws: every layer-off census pin
+    moves (clouds 16 822, clusters 12 930, the HII regions, the bubbles, the bright catalogue's limit, the sample's
+    planets) and is re-read, old beside new, `# S61 (D220): was <old>`. **Nothing in the acceptance table may
+    move but the two rows that read a census (35 and 37)**, and those move by the redraw alone — a stop condition
+    if any other row moves (BUILD_III §3d). Every scalar, history and radial field that is no census statistic is
+    bit-identical to S60's (I1's test).
+
+**Part II — the field** is written below after the probe (its numbers are the ruling's premise).
