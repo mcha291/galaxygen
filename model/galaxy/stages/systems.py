@@ -1021,7 +1021,7 @@ def materialise(
     footprint as since S32. So the sub-ring's realised totals are the same on and off. *The cost,
     accepted as measured:* a child query draws its sub-ring whole - about 1.3 million stars at
     level 3 near R0 at the route's largest sample (5 000 000) - which prices a level-3 child there
-    at about 2.2 times the cell draws' (~69 ms against 32, layer off); at n ≤ 10^6 every level
+    at about 2.2 times the cell draws' (68 ms against 31, layer off, measured; level 2 52 against 32); at n ≤ 10^6 every level
     stays under 2 times, and with the layer on far under (the run's placement tables dominate).
     """
     if not 0 <= level <= MAX_LEVEL:
