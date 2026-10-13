@@ -201,18 +201,21 @@ class ClusteringField:
         """Each octave's lattice scale in pc, coarsest first: 190, 95 and 47.5 at the model's numbers."""
         return self.scale * 1000.0 / LACUNARITY ** np.arange(self.octaves)
 
-    def cell_lattices(self, cell: tuple[float, float, float, float], law: Any, kept: tuple[int, ...]) -> dict[int, "CellLattice"]:
+    def cell_lattices(self, cell: tuple[float, float, float, float], law: Any, kept: tuple[int, ...],
+                      mesh: np.ndarray | None = None) -> dict[int, "CellLattice"]:
         """One level-0 cell's lattice weights for each octave count of ``kept``, **without a radial law** (S61, D220
         part II item 5): each point weighs the field's ``n`` coarsest octaves (:meth:`maps`) times ``law`` - an
         azimuthal law read on the cell's 16 x 24 mesh and bilinear between, as :meth:`place` reads the gas pattern
-        (:func:`mesh_factor`; None or flat is 1) - clipped at 0. The field is evaluated once for every ``n``. An
+        (:func:`mesh_factor`; None or flat is 1; or the law's ``mesh`` values given, :func:`bilinear`) - clipped at 0.
+        The field is evaluated once for every ``n``. An
         object's radial law multiplies each lattice row's weight at the object's own draw
         (:meth:`CellLattice.place`): it is constant along a row, so the lattice is shared by every object of the
         cell and octave count whatever its radial law."""
         lo, hi, p_lo, p_hi = (float(x) for x in cell)
         r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
         rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
-        factor = mesh_factor(law, (lo, hi, p_lo, p_hi), r_mid, phi_mid)
+        bounds = (lo, hi, p_lo, p_hi)
+        factor = mesh_factor(law, bounds, r_mid, phi_mid) if mesh is None else bilinear(mesh, bounds, r_mid, phi_mid)
         out = {}
         for n, f in zip(kept, self.maps(rr * np.cos(pp), rr * np.sin(pp), kept)):
             w = f if factor is None else f * factor
@@ -246,9 +249,22 @@ def mesh_factor(law: Any, cell: tuple[float, float, float, float], r_mid: np.nda
     item 5)."""
     if law is None or law.flat:
         return None
+    return bilinear(law.contrast(*mesh_points(cell)), cell, r_mid, phi_mid)
+
+
+def mesh_points(cell: tuple[float, float, float, float]) -> tuple[np.ndarray, np.ndarray]:
+    """The radii and azimuths of a cell's mesh, ``PATTERN_RADIAL_STEPS + 1`` by ``PATTERN_STEPS + 1``, edge to edge:
+    where :func:`mesh_factor` reads a law."""
     lo, hi, p_lo, p_hi = (float(x) for x in cell)
-    mesh = np.maximum(law.contrast(np.linspace(lo, hi, PATTERN_RADIAL_STEPS + 1),
-                                   np.linspace(p_lo, p_hi, PATTERN_STEPS + 1)), 0.0)
+    return np.linspace(lo, hi, PATTERN_RADIAL_STEPS + 1), np.linspace(p_lo, p_hi, PATTERN_STEPS + 1)
+
+
+def bilinear(values: np.ndarray, cell: tuple[float, float, float, float], r_mid: np.ndarray, phi_mid: np.ndarray) -> np.ndarray:
+    """A law's ``values`` on a cell's mesh (:func:`mesh_points`), clipped at 0 and read bilinearly at the cell's
+    lattice points: :func:`mesh_factor`'s reading, for a caller that has the mesh's values already (the bright
+    catalogue reads a level-0 ring's meshes in one call: S61, D220 part II item 5)."""
+    lo, hi, p_lo, p_hi = (float(x) for x in cell)
+    mesh = np.maximum(values, 0.0)
     ti = (r_mid - lo) / (hi - lo) * PATTERN_RADIAL_STEPS
     i = np.minimum(ti.astype(np.int64), PATTERN_RADIAL_STEPS - 1)
     a = ti - i

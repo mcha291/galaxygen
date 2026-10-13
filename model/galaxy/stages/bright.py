@@ -546,9 +546,37 @@ class BrightGalaxy:
         self.cell_rings, self.cell_sectors = rings32, sectors32
         self.octave_ages = None if self.clustering is None else octave_survival(
             self.clustering.octave_scales_pc(), float(constants[AGE_AMPLITUDE]), float(constants[AGE_INDEX]))
+        self._young_meshes: dict[int, np.ndarray] = {}
         self.thick = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
         self.h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
         self.h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or self.h_thin
+
+    def young_mesh(self, ring32: int) -> np.ndarray | None:
+        """The middle part's azimuthal law on every level-0 cell's mesh of a level-0 ring, ``(17, 32, 25)``
+        (``census_clustering.mesh_points``: radii by sector by azimuth), or None where it is 1 (no modulation and no
+        pattern, or a flat one): the young reader (``systems.Modulation.at_points``) where the model publishes
+        ``sfr_modulation``, else the stellar pattern's contrast - the law :func:`place_in_cell` inverts for the
+        middle part, read here for the field's placement (S61, D220 part II item 5). The ring's 32 meshes share
+        their 17 radii, and the reader's cost is its ring mean at each radius, so they are read in one call and kept
+        (a function of the ring alone: D60)."""
+        if self.modulation is None and (self.pattern is None or self.pattern.flat):
+            return None
+        ring32 = int(ring32)
+        found = self._young_meshes.get(ring32)
+        if found is None:
+            from galaxy.layer.census_clustering import mesh_points
+
+            lo, hi = float(self.cell_rings[ring32]), float(self.cell_rings[ring32 + 1])
+            radii = mesh_points((lo, hi, 0.0, 1.0))[0]
+            phis = np.stack([mesh_points((lo, hi, float(self.cell_sectors[s]), float(self.cell_sectors[s + 1])))[1]
+                             for s in range(CELL_SECTORS)]).ravel()
+            if self.modulation is not None:
+                values = self.modulation.at_points(radii, np.broadcast_to(phis[None, :], (radii.size, phis.size)))
+            else:
+                values = self.pattern.contrast_at(radii[:, None], phis[None, :])
+            found = np.asarray(values, dtype=float).reshape(radii.size, CELL_SECTORS, -1)
+            self._young_meshes[ring32] = found
+        return found
 
     # --- where a finest cell is ---
 
@@ -848,30 +876,14 @@ def on_isochrone(iso: int, k: np.ndarray, u_segment: np.ndarray, u_luminosity: n
     }
 
 
-class _YoungLaw:
-    """The middle part's azimuthal law as a mesh reader for the field's lattice (``census_clustering.mesh_factor``):
-    the young reader (``systems.Modulation``) where the model publishes ``sfr_modulation``, else the stellar
-    pattern's contrast - what :func:`place_in_cell` inverts for the middle part's azimuth."""
-
-    flat = False
-
-    def __init__(self, galaxy: BrightGalaxy) -> None:
-        self.galaxy = galaxy
-
-    def contrast(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        r, phi = np.asarray(r, dtype=float), np.asarray(phi, dtype=float)
-        if self.galaxy.modulation is not None:
-            return self.galaxy.modulation.at_points(r, np.broadcast_to(phi[None, :], (r.size, phi.size)))
-        return self.galaxy.pattern.contrast_at(r[:, None], phi[None, :])
-
-
 def _place_by_field(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, k: np.ndarray, kept: np.ndarray,
                     u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """(radius, azimuth) of middle-part stars that keep ``kept`` (>= 1) of the clustering field's coarsest octaves,
     placed jointly in their **level-0 cell** on the field's lattice (S61, D220 part II items 4-5): each lattice point
     weighs the star's radial law - the surface density of its part and threshold interval, times R, as
-    :func:`place_in_cell` reads it - times the middle part's azimuthal law at the point (:class:`_YoungLaw`, on the
-    clouds' 16 x 24 mesh) times the field's ``kept`` coarsest octaves. The lattice is built once per (level-0 cell,
+    :func:`place_in_cell` reads it - times the middle part's azimuthal law at the point (read on the clouds' 16 x 24
+    mesh across the cell and bilinear between: ``BrightGalaxy.young_mesh``) times the field's ``kept`` coarsest
+    octaves. The lattice is built once per (level-0 cell,
     octave count) and shared by the cell's stars of that count (``ClusteringField.cell_lattices``); the radial law,
     which differs by star, multiplies each lattice row at the star's own draw (``CellLattice.place``). The star's
     point is the inverse CDF at its ``azimuth`` uniform, its place within the point by what is left of it and its
@@ -879,7 +891,6 @@ def _place_by_field(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, 
     field = galaxy.clustering
     n_sub = galaxy.n_sub
     ring32, sector32 = ring // n_sub, sector // n_sub
-    law = None if galaxy.modulation is None and (galaxy.pattern is None or galaxy.pattern.flat) else _YoungLaw(galaxy)
     radius, azimuth = np.empty(ring.size), np.empty(ring.size)
     R, count_R = galaxy.R, galaxy.count_R[0]
     cell = ring32 * CELL_SECTORS + sector32
@@ -889,7 +900,8 @@ def _place_by_field(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, 
         bounds = (float(galaxy.cell_rings[r32]), float(galaxy.cell_rings[r32 + 1]),
                   float(galaxy.cell_sectors[s32]), float(galaxy.cell_sectors[s32 + 1]))
         sets = tuple(int(n) for n in np.unique(kept[here]))
-        lattices = field.cell_lattices(bounds, law, sets)
+        young = galaxy.young_mesh(r32)
+        lattices = field.cell_lattices(bounds, None, sets, mesh=None if young is None else young[:, s32, :])
         r_mid = next(iter(lattices.values())).r_mid
         i0 = np.clip(np.searchsorted(R, r_mid) - 1, 0, R.size - 2)
         w1 = np.clip((r_mid - R[i0]) / (R[i0 + 1] - R[i0]), 0.0, 1.0)
