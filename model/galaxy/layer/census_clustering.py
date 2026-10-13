@@ -46,7 +46,11 @@ keeps its rows, which are the cells and are not drawn.
 every cell's lattice and the pattern on a 16 x 24 mesh per cell: materialising every cloud costs 3.8-4.5 s (the field
 2.0 s, the pattern's meshes 1.1 s) against 1.0-1.1 s before; the whole-disc routes ``clouds`` 4.0 -> 9.6-10.3 s and
 ``clusters`` 5.3 -> 11.9 s cold, ``run()`` layer on 18.2-19.7 -> 23.1-23.6 s; one cell 0.05-0.07 s, unchanged. A
-cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell.
+cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell. **The
+mesh's error** beside its cost (S61, the review's finding 3; :data:`PATTERN_RADIAL_STEPS`' about has the whole
+measurement): the pattern factor up to 32 % off at a lattice point (the bar's end, ring 5), but at most 3.4e-3 of a
+cell's probability misplaced (the total-variation distance of its normalised weights; median 0), and none from
+13.1 kpc outward.
 
 **The young bright stars** (item 5). The bright catalogue places its stars of 20 to 40.71 Myr by the same field with
 its octaves finer than a star's age allows dropped (:meth:`ClusteringField.maps`, ``noise.fractal_coarsest``: the
@@ -85,7 +89,14 @@ SEED_PATH = "census_clustering"
 PATTERN_STEPS = 24
 # And the radial steps the cell's mesh of the pattern has (S61, D220 part II as amended): the pattern is read on a
 # 17 x 25 mesh per cell, 59 pc apart in radius on the production grid, and bilinearly between - the point function
-# at every lattice point would cost about 15 s a run (6.6 s per million points, measured at S61).
+# at every lattice point would cost about 15 s a run (6.6 s per million points, measured at S61). What it does not
+# keep (measured at S61 on the default galaxy, layer on, against the point function at every placement lattice point
+# of all 1 024 cells; the review's finding 3): the pattern factor is up to 32 % off at a point (ring 5, sector 18,
+# 4.71-5.65 kpc, where the bar's end at 5.21 kpc kinks the blend), the worst cell's rms 3.2e-2 and the cells' mean
+# rms 5.5e-4; what a draw sees, the total-variation distance of a cell's normalised weights, is at most 3.4e-3
+# (ring 5, sector 2, the bar's other end; median 0) - the highest-contrast ridge cell (ring 2, sector 0, contrast
+# 6.7) 1.2 % at most, TV 8e-4; the bar's reach (rings 0-4) 1.3-2.0 %, TV at most 1.2e-3; exact (0) in every cell
+# from ring 14 (13.1 kpc) outward. ``tests/test_clouds.py`` holds the distance below 5e-3 on four of those cells.
 PATTERN_RADIAL_STEPS = 16
 # The constants of the model the field is made of, by role (G1's ruling 2b; galaxy/models/level0.py).
 CONSTANTS: Mapping[str, str] = {
