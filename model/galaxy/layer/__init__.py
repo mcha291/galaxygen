@@ -12,7 +12,7 @@ stand in for, and evaluable at a point.
                                     API obtains a pattern object or a composed (R, phi) field, and the one place the
                                     layer's switch is read (``run(..., layer=False)``: the neutral values)
     galaxy/layer/cloud_texture.py   the first realisation stage (S55, D214): the four cloud columns and the shape
-                                    of the cloud-interior noise, synthetic
+                                    of the cloud-interior noise, synthetic; on ``texture_seed`` since S61 (D220)
     galaxy/layer/arm_pieces.py      the census of arm pieces (S60, D219): the table ``arm_piece`` on ``texture_seed``,
                                     no row with the layer off (it replaced S56's ``arm_phases``, the modes' phases)
 
