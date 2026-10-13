@@ -2020,11 +2020,12 @@ class Service:
             # A level-k name addresses the child's own stars: its inherited rows are opened by their
             # parent's level-0 name, so the same star has the same planets by either route (S32).
             own = np.asarray(here["level"]) == level
-            here = _catalogue.Catalogue.of({n: np.asarray(v)[own] for n, v in here.items() if n not in ("level", "cell", "index")}, ((cell, int(own.sum())),))
+            here = _catalogue.select(here, own, ((cell, int(own.sum())),), drop=("level", "cell", "index"))
         if index >= here.size:
             raise NotFound(f"cell {cell} has {here.size} stars of its own at this sample size and level, so no index {index}")
 
-        system, found = _planets.one_system(here, index, _catalogue.canonical_cell(level, cell), seeds["planets_seed"], constants)
+        # S61 (D220): the star's planets are keyed on its identity in its ring's draw, which the catalogue carries.
+        system, found = _planets.one_system(here, index, seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
         star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}
         header = {

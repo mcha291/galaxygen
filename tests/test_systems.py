@@ -314,7 +314,9 @@ def test_a_row_of_the_catalogue_knows_which_star_it_is(model):
     o = out(model)
     R, t = o.grid.R, o.grid.t
     whole = stars(model, 5000)
-    counts = cell_counts(o.fields["stellar_surface_density"], R, 0, 5000, pattern=ArmPattern.from_fields(o.fields, o.grid.R))  # S56 (D215)
+    # S61 (D220): was cell_counts(sigma, R, 0, 5000, pattern=...) - the layout is the ring-first draw's allocation, which
+    # reads what the catalogue's does (the arrival law, the young stars' reader).
+    counts = cell_counts(o.fields, R, t, 0, 5000, migration=float(o.inputs["migration_efficiency"]), constants={k: c.value for k, c in model.constants.items()})
     assert whole.counts == counts, "the layout must be the one the stars were built from"
     assert sum(n for _, n in counts) == whole.size
     assert all(n > 0 for _, n in counts), "a cell with no star is not part of the layout"
@@ -333,7 +335,8 @@ def test_the_layout_costs_a_fraction_of_the_stars(model):
     """Knowing which star is which must not mean drawing every star (rule D4)."""
     o = out(model)
     start = time.perf_counter()
-    counts = cell_counts(o.fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(o.fields, o.grid.R))  # S56 (D215)
+    # S61 (D220): was cell_counts(sigma, R, 0, 20000, pattern=...) - the ring-first layout.
+    counts = cell_counts(o.fields, o.grid.R, o.grid.t, 0, 20000, migration=float(o.inputs["migration_efficiency"]), constants={k: c.value for k, c in model.constants.items()})
     layout = time.perf_counter() - start
     start = time.perf_counter()
     stars(model, 20000)

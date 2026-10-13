@@ -8,17 +8,27 @@ write and would have thrown away most of its draws, and its cost would have
 depended on how peaked the galaxy happened to be.
 
 **Per-region determinism, and how it is obtained.** The galaxy is divided into a
-fixed grid of cells in (R, φ). A star's identity is ``(cell, index)``, and every
-one of its properties comes from ``rng(systems_seed, "cell", cell, property)``
-drawn at position ``index`` in that stream. Two consequences fall out, and they
-are what the gate is about:
+fixed grid of cells in (R, φ). A star's name is ``(cell, index)``. Since S61 (D220
+part I) the sample is drawn **ring first**: a level-0 ring's count is one seeded
+rounding of the ring's expectation on ``rng(systems_seed, "star", ring, "count")``,
+every property of its stars is one array on ``rng(systems_seed, "star", ring,
+property)`` - a star is element ``i`` of its ring's draw - and the layer only
+allocates each star to a sector (at its own ``sector`` uniform) and an azimuth in
+it; ``index`` is its rank among its ring's stars in that cell, in ring order. A
+cell drawn alone draws its ring's count and uniforms whole and derives every
+column for its own rows only. (Until S61 every cell drew its own count and its
+own streams ``rng(systems_seed, "cell", cell, property)``, so the layer's
+weights changed which stars existed.) Two consequences fall out, and they are
+what the gate is about:
 
 - **Order independence.** Nothing is drawn from a shared stream, so generating a
   region alone gives exactly what generating it inside a full sweep gives.
 - **A smaller sample is a *prefix* of a larger one.** Each property has its own
-  stream, so asking for 10 stars from a cell gives the first 10 of the 1000 that
-  a full materialisation would give — which is what makes the clickable sample of
-  GALAXY_PLAN.md §4 stable while the LOD ladder materialises more underneath it.
+  stream, so a ring's first stars at a smaller sample are its first stars at a
+  larger one and land in the same cells, and a cell's rows at the smaller sample
+  are the first of its rows at the larger — which is what makes the clickable
+  sample of GALAXY_PLAN.md §4 stable while the LOD ladder materialises more
+  underneath it.
 
 That second property is the reason each property gets its own stream rather than
 one stream per star. With a single stream, drawing radius-then-age for 10 stars
@@ -358,8 +368,8 @@ def cell_expected(
 ) -> float:
     """The expected number of stars in a level-0 cell at sample size ``n_stars``: the ring's share of
     the stellar mass, over the sectors, times the sector's contrast weight. A float; the realised
-    count is its seeded rounding (:func:`cell_counts`), and a child below level 0 draws its extra
-    stars against this expectation (S32)."""
+    count is how many of its ring's stars the allocation gives it (:func:`cell_counts`; S61, D220), and
+    a child below level 0 draws its extra stars against this expectation (S32)."""
     share = cell_shares(sigma_star, R)
     weights = _sector_weights(R, pattern)
     ring, sector = divmod(int(cell), CELL_SECTORS)
@@ -632,7 +642,9 @@ def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[st
 
 
 class YoungStars:
-    """The azimuthal model's split of each cell into young stars and the rest (S27).
+    """The azimuthal model's split of each cell into young stars and the rest (S27). Since S61 the split is the
+    allocation's (:class:`Placement`): a level-0 star's age is its ring's draw and its sector follows from it;
+    ``age_weights`` tilts the age law of a child's extra stars below level 0 alone.
 
     A cell's star count stays the density contrast's — the stellar mass is where the contrast
     puts it, and a star's name ``(cell, index)`` must not depend on which model drew the
@@ -750,6 +762,15 @@ def star_layout_of(catalogue: Catalogue) -> StarLayout:
     if not isinstance(layout, StarLayout):
         raise ValueError("this catalogue carries no star layout: materialise it with systems.materialise")
     return layout
+
+
+def select(catalogue: Catalogue, keep: np.ndarray, counts: Sequence[tuple[int, int]], drop: Sequence[str] = ()) -> Catalogue:
+    """The rows ``keep`` of a star catalogue, laid out as ``counts``, its columns but ``drop``, and its
+    :class:`StarLayout` taken with them - what a caller that narrows a catalogue (``/api/system`` below level 0)
+    hands on, so the rows it keeps are still named in their draw."""
+    layout = getattr(catalogue, "ring_layout", None)
+    columns = {n: np.asarray(v)[keep] for n, v in catalogue.items() if n not in drop}
+    return Catalogue.of(columns, counts, layout.take(keep, counts) if isinstance(layout, StarLayout) else None)
 
 
 class Placement:
