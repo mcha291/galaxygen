@@ -86,7 +86,9 @@ applied to a realisation.**
   every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
   run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
   which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
-  list is empty. An *expected* total that is a sum of placement weights is equal within four units in the
+  list is empty *(S61, D220: it is - its fourteen former entries are `RING_FIRST_STATISTICS`, each identical on
+  and off to 1e-12 relative, six of them a few units in the last place apart because the objects are summed in
+  another order; the realised per-ring totals of every placed census are the same, counts bit for bit)*. An *expected* total that is a sum of placement weights is equal within four units in the
   last place — the rounding of sums over the cells of weights that average to 1 to 1e-13; exact sums are not
   required *(amended at gate G2, S57, D216, as "one unit"; re-worded at S58 when the measured difference became
   two, D217; rulings by Fable)*.

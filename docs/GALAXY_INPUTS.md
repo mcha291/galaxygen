@@ -695,9 +695,9 @@ defined here once and used in every entry below:
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160 | 84 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161 | 85 |
 
-So the board's **95 open** is 11 permanent and 84 carried, and no item is unruled. (S22
+So the board's **96 open** is 11 permanent and 85 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -729,7 +729,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#160 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, D220.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#161 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, D220.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3991,6 +3991,19 @@ never been judged in twenty-three sessions.
    catalogue keeps the old part's contrast. **Carried.** One rule for both is V5/V6's (the field's light by age, the
    censuses at whole-galaxy scale), where the two catalogues are drawn beside each other; the test that compares
    them per sector is the star sample's.
+161. **The per-cell conservation removes the hierarchy's power at scales near the cell's short side** (S61, D220
+   part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
+   2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the
+   cell's count kept (rule 2 as adopted for L1: unit mean per level-0 cell), so the finished census carries the
+   excess below about 120 pc with its amplitude cut - 1.97 at 47.5 pc (clusters 2.10), 1.24 at 95 pc - crosses 1
+   near 120 pc, not 190, and runs 3-6 % below 1 from 140 to 500 pc (0.94 at 158 pc), the local slope over 57-95 pc
+   -0.74. The gate's wording is met (the fit over 47.5-190 pc reads -0.636 / -0.670; beyond 380 pc 0.98-1.02) and
+   D220 II.4's amplitude prediction failed, recorded there. A flat-square model with 0.94 x 1.5 kpc cells gives part
+   of the drop (2.84 against 3.05 at 44 pc and a 0.97-0.98 trough); the rest is not isolated. **Carried.** Rule 2
+   allows a ring as the unit: the mend is the field's cell means entering the clouds' sector weights, so the cells'
+   expectations carry the hierarchy's coarse end and the ring keeps its total - a change to the sector allocation
+   that moves every layer-on pin; L2's gas fluctuation (one noise, D220 II.6) or V6 (the censuses at whole-galaxy
+   scale) is where it is drawn beside the finer octaves.
 
 ---
 
