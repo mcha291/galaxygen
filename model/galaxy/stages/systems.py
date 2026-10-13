@@ -892,12 +892,14 @@ class Placement:
         return c * (1.0 - p), c * p
 
 
-def _allocate_among(u: np.ndarray, weights: np.ndarray) -> np.ndarray:
+def _allocate_among(u: np.ndarray, weights: np.ndarray | None, k: int | None = None) -> np.ndarray:
     """``clouds.allocate``'s law over ``len(weights)`` sectors (it is fixed at a level-0 ring's 32): the inverse of the
-    cumulative weights at each uniform, uniform where they sum to nothing."""
+    cumulative weights at each uniform, ``floor(u k)`` where ``weights`` is None (every sector alike: the layer off)
+    or sums to nothing. The floor is not only the same law: at a level-3 sub-ring of 1.3 million stars a search
+    cost 65 ms a call against a few for the floor (measured, S61)."""
     u = np.asarray(u, dtype=float)
-    k = int(np.asarray(weights).size)
-    if not float(np.sum(weights)) > 0.0:
+    k = int(np.asarray(weights).size) if weights is not None else int(k)
+    if weights is None or not float(np.sum(weights)) > 0.0:
         return np.minimum((u * k).astype(np.int64), k - 1)
     cdf = np.cumsum(np.asarray(weights, dtype=float))
     return np.minimum(np.searchsorted(cdf / cdf[-1], u, side="right"), k - 1).astype(np.int64)
@@ -1204,10 +1206,8 @@ def materialise(
                 here["age"] = star_stream(seed, sr, "age", level).random(n_sub)
                 born_sub = placement.born(here["age"], ring_)
             old_w, fresh_w = placement.sub_ring_weights(level, sr)
-            alloc_sub[sr] = placement.allocate(here["sector"], born_sub,
-                                               np.ones(CELL_SECTORS * side) if old_w is None else old_w,
-                                               np.ones(CELL_SECTORS * side) if fresh_w is None else fresh_w) \
-                if young is not None else _allocate_among(here["sector"], np.ones(CELL_SECTORS * side) if old_w is None else old_w)
+            alloc_sub[sr] = (placement.allocate(here["sector"], born_sub, old_w, fresh_w) if young is not None
+                             else _allocate_among(here["sector"], old_w, CELL_SECTORS * side))
             drawn_sub[sr] = here
         own_rows = {c: np.flatnonzero(alloc_sub[place_of(c)[2]] == place_of(c)[3]) for c in dict.fromkeys(asked)}
         # The children's own stars' uniforms: each sub-ring's arrays, up to its last asked row (a Generator's draws are
