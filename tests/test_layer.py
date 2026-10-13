@@ -1415,7 +1415,13 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # columns, the 8 columns of the pieces' table and the 14 census statistics.
     # S60 (D219), as at S58 (D217): 235 - the census statistic that rounds alike (above) is held with them.
     # S60 fourth pass: was 234.
-    assert len(held) == 235 and all(b.decls[n].of in (None, *UNPLACED_OBJECTS) for n in held)
+    # S61 (D220 item 4): was 235 - the eight ring-first statistics that differed join what is held, to 1e-12 (the
+    # ninth, dig_halpha_fraction, was held already), and one cluster column: `hii_density_bounded` is 0 for every
+    # region on and off, and since the ring-first draw the two censuses have the same count, so the column is the same
+    # bytes - a placed census's column that does not depend on where its objects stand.
+    assert len(held) == 244
+    assert [n for n in held if b.decls[n].of not in (None, *UNPLACED_OBJECTS)] == ["hii_density_bounded"]
+    assert not np.asarray(b.fields["hii_density_bounded"]).any()
     assert {"pitch_angle_drawn", "sun_azimuth", "arm_class", "arm_piece_width", "arm_design_count", "arm_power_budget", *pt.AMPLITUDE_FIELDS} <= set(held)
 
 
@@ -1460,10 +1466,8 @@ def test_the_cloud_texture_columns_are_drawn_on_the_layer_s_seed_at_each_cloud_s
         }
         for column, values in want.items():
             assert same(np.asarray(on.fields[column])[here], values), (r, column)
-    # Not on the census's seed: the systems seed's streams give other numbers.
-    r0 = int(layout.ring[0])
-    assert not same(np.asarray(on.fields["cloud_density_gradient"])[layout.ring == r0],
-                    _seeds.rng(seed, "cloud", r0, "gradient").random(layout.sizes[r0])[layout.index[layout.ring == r0]])
+    # On the layer's seed, not the census's: at the default inputs the two seeds are the same number, so the streams
+    # agree here; rerolling texture_seed alone rerolls the four (test_rerolling_texture_seed_moves_the_placements...).
     # S61 (D220 item 5): a layer-on census with its texture is given the run's texture_seed.
     census = cl.materialise_clouds(on.fields, on.grid.R, seed, constants(m), texture_seed=texture)
     for column in cl.WIRE_COLUMNS:
