@@ -101,7 +101,15 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
         offset += n
     expected = sy.cell_expected(F["stellar_surface_density"], R, 20000, PARENT, sy.ArmPattern.from_fields(F, R))  # S56 (D215): the modes are published on the grid radii
     extras = int((~inherited).sum())
-    assert extras == len(kids) * int(round(expected * (1.0 - 1.0 / len(kids))))
+    # S61 (D220 item 8): was `extras == len(kids) * round(expected * (1 - 1/len(kids)))` - each child drew its parent's
+    # expectation times (1 - 4^-k), rounded. Drawn ring-first, the children's own stars are their sub-rings' draws
+    # allocated among the sub-rings' children, so the parent's children hold (4^k - 1) times its expectation in
+    # expectation (a sector's mean is the mean of its sub-sectors' means), and a multinomial draw about it.
+    want = (len(kids) - 1) * expected
+    assert abs(extras - want) < 5.0 * math.sqrt(want), (extras, want)
+    # The children's own stars carry their identity in their sub-rings' draws, at this level.
+    lay = sy.star_layout_of(cat)
+    assert np.all(lay.level[~inherited] == level) and np.all(lay.ring[~inherited] // (1 << level) == PARENT // sy.CELL_SECTORS)
     # Determinism: a child alone is its slice of the whole set.
     q = 1
     alone = sy.materialise(F, R, t, 0, 20000, cells=[kids[q]], migration=3.6, level=level, constants=constants)

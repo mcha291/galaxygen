@@ -884,6 +884,30 @@ def test_i2_the_star_sample_s_ring_totals_and_its_planets_are_the_same_on_and_of
         assert same(runs[name, True].fields[n], runs[name, False].fields[n]), n
     # And the placement does differ: the stars stand in other cells.
     assert not same(runs[name, True].fields["star_azimuth"], runs[name, False].fields["star_azimuth"])
+    # S61 (D220 item 8, the lead's ruling (a)): below level 0 the unit is the whole sub-ring, so a sub-ring's own stars
+    # and their planets are the same on and off too - one level-1 and one level-3 sub-ring of ring 8 (R_SUN), every
+    # child of each asked: the count bit for bit, the sums to 1e-12.
+    for level, a in ((1, 1), (3, 5)):
+        side = 1 << level
+        kids = [sy.child_id(8 * sy.CELL_SECTORS + s_, level, a * side + b_) for s_ in range(sy.CELL_SECTORS) for b_ in range(side)]
+        got = {}
+        for layer in (True, False):
+            out = runs[name, layer]
+            cat = sy.materialise(out.fields, out.grid.R, out.grid.t, int(out.inputs["systems_seed"]), sy.CATALOGUE_SAMPLE,
+                                 kids, migration=float(out.inputs["migration_efficiency"]), level=level, constants=constants(m))
+            lay = sy.star_layout_of(cat)
+            own = lay.level == level
+            assert np.all(lay.ring[own] == 8 * side + a)
+            mine = sy.select(cat, own, ((0, int(own.sum())),))
+            cols, per = pl.materialise(mine, sy.star_layout_of(mine), int(out.inputs["planets_seed"]),
+                                       {k: constants(m)[k] for k in pl.PLANETS_CONSTANTS})
+            got[layer] = {"stars": int(own.sum()), "planets": int(per.sum()), "star mass": float(np.sum(mine["star_mass"])),
+                          "star age": float(np.sum(mine["star_age"])), "planet mass": float(np.sum(cols["planet_mass"])),
+                          "names": sorted(lay.index[own].tolist())}
+        on, off = got[True], got[False]
+        assert on["stars"] > 100 and on["stars"] == off["stars"] and on["planets"] == off["planets"] and on["names"] == off["names"], level
+        for k in ("star mass", "star age", "planet mass"):
+            assert on[k] == pytest.approx(off[k], rel=1e-12, abs=0.0), (level, k)
 
 
 def test_i2_holds_on_another_galaxy(prod):
