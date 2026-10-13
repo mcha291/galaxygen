@@ -111,14 +111,32 @@ def test_per_region_determinism_and_both_models_agree(models, default):
     """D60 for clouds: cells drawn alone are the sweep's cells; the azimuthal model draws the same census."""
     o, c = default
     F, R = o.fields, o.grid.R
-    sweep = cl.materialise_clouds(F, R, 0, c)
-    part = cl.materialise_clouds(F, R, 0, c, cells=[300, 301, 517])
-    off_part = 0
-    for cell, count in part.counts:
-        off = sum(n for cc, n in sweep.counts if cc < cell)
-        for name in cl.CLOUD_COLUMNS + ("cloud_state",):
-            assert np.array_equal(part[name][off_part:off_part + count], sweep[name][off:off + count]), (cell, name)
-        off_part += count
+    # S61 (D220 item 5): was materialise_clouds(F, R, 0, c) - a layer-on census's texture is drawn on texture_seed.
+    sweep = cl.materialise_clouds(F, R, 0, c, texture_seed=0)
+    sweep_layout = cl.layout_of(sweep)
+    # S61 (D220 item 3): a cell alone draws its ring's count and uniform arrays whole and derives its own rows only;
+    # it is the sweep's cell, column for column and identity for identity, alone, beside its ring's neighbour, and
+    # beside a cell of another ring.
+    for cells in ([300, 301, 517], [301], [517], [301, 300]):
+        part = cl.materialise_clouds(F, R, 0, c, cells=cells, texture_seed=0)
+        layout = cl.layout_of(part)
+        assert [cc for cc, _ in part.counts] == [cc for cc in cells if cc in dict(sweep.counts)]
+        off_part = 0
+        for cell, count in part.counts:
+            off = sum(n for cc, n in sweep.counts if cc < cell)
+            for name in cl.CLOUD_COLUMNS + ("cloud_state", "cloud_cluster_index"):
+                assert np.array_equal(part[name][off_part:off_part + count], sweep[name][off:off + count]), (cells, cell, name)
+            assert np.array_equal(layout.ring[off_part:off_part + count], sweep_layout.ring[off:off + count])
+            assert np.array_equal(layout.index[off_part:off_part + count], sweep_layout.index[off:off + count])
+            assert dict(sweep.counts)[cell] == count
+            off_part += count
+    # The ring's objects: each ring's count is its rows in the sweep, and within a cell they are in ring order.
+    for r, n in sweep_layout.sizes.items():
+        assert int((sweep_layout.ring == r).sum()) == n
+    start = 0
+    for cell, count in sweep.counts:
+        assert np.all(np.diff(sweep_layout.index[start:start + count]) > 0) and np.all(sweep_layout.ring[start:start + count] == cell // cl.CELL_SECTORS)
+        start += count
     a = run(models["azimuthal"], grid=COARSE).fields
     b = run(models[DEFAULT_MODEL], grid=COARSE).fields
     for name in cl.CLOUD_COLUMNS + ("cloud_state",):
@@ -127,6 +145,43 @@ def test_per_region_determinism_and_both_models_agree(models, default):
     other = run(models[DEFAULT_MODEL], {"systems_seed": 3}, grid=COARSE).fields
     assert other["cloud_count_total"] == b["cloud_count_total"]
     assert not np.array_equal(other["cloud_mass"], b["cloud_mass"])
+
+
+def test_the_ring_first_draw_places_the_same_clouds(models):
+    """S61 (D220 items 1-2, 4): a ring's count is one Poisson draw at the ring's expected total, which no placement
+    enters, and every per-object draw an array on the ring's stream; the layer assigns the sector and the azimuth
+    and nothing else. So the layer-on and layer-off censuses are the same clouds ring by ring - the same count, and
+    the same radii, masses, ages and heights as multisets - and only the sector and the azimuth differ."""
+    m = models[DEFAULT_MODEL]
+    c = {k: v.value for k, v in m.constants.items()}
+    on, off = run(m, grid=COARSE, layer=True), run(m, grid=COARSE, layer=False)
+    R = on.grid.R
+    assert np.array_equal(cl.ring_expected(on.fields, R, c), cl.ring_expected(off.fields, R, c))
+    # The ring's expected total is the sum of its cells' expectations: to the bit off, to rounding on (I2).
+    assert np.array_equal(cl.ring_expected(off.fields, R, c), cl.expected_counts(off.fields, R, c).sum(axis=1))
+    assert np.allclose(cl.ring_expected(on.fields, R, c), cl.expected_counts(on.fields, R, c).sum(axis=1), rtol=1e-12, atol=0)
+    seed = int(on.inputs["systems_seed"])
+    lay_on, lay_off = cl.cloud_layout(on.fields, R, seed, c), cl.cloud_layout(off.fields, R, seed, c)
+    assert lay_on.sizes == lay_off.sizes and sum(lay_on.sizes.values()) == len(on.fields["cloud_radius"]) == len(off.fields["cloud_radius"])
+    for r in lay_on.sizes:
+        here_on, here_off = lay_on.ring == r, lay_off.ring == r
+        for name in ("cloud_radius", "cloud_mass", "cloud_age", "cloud_height", "cloud_size", "cloud_metallicity"):
+            a = np.sort(np.asarray(on.fields[name])[here_on])
+            b = np.sort(np.asarray(off.fields[name])[here_off])
+            assert np.array_equal(a, b), (r, name)
+        # The same objects by identity: (ring, i) carries each cloud's draws, wherever it was allocated.
+        order_on, order_off = np.argsort(lay_on.index[here_on]), np.argsort(lay_off.index[here_off])
+        assert np.array_equal(np.asarray(on.fields["cloud_mass"])[here_on][order_on], np.asarray(off.fields["cloud_mass"])[here_off][order_off])
+    # Layer off the sectors are uniform round the ring; layer on they follow the gas's weights.
+    _, weights = cl.sector_placement(on.fields, R, c)
+    assert cl.sector_placement(off.fields, R, c)[1] is None and weights is not None
+    u = np.linspace(0.0, 1.0, 64, endpoint=False) + 1.0 / 128.0
+    assert np.array_equal(np.bincount(cl.allocate(u, None), minlength=cl.CELL_SECTORS), np.full(cl.CELL_SECTORS, 2))
+    w = np.zeros(cl.CELL_SECTORS)
+    w[[3, 7]] = (1.0, 3.0)
+    assert np.array_equal(np.bincount(cl.allocate(u, w), minlength=cl.CELL_SECTORS)[[3, 7]], [16, 48])
+    sectors_on = np.array([cell % cl.CELL_SECTORS for cell, n in lay_on.counts for _ in range(n)])
+    assert not np.array_equal(sectors_on, np.array([cell % cl.CELL_SECTORS for cell, n in lay_off.counts for _ in range(n)]))
 
 
 def test_positions_and_abundances(default):
