@@ -709,7 +709,16 @@ def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -
     the age, the segment, the luminosity, the magnitudes, the place) is computed for those rows alone
     (:func:`_properties`). A cell is the same alone, in a window and in a sweep (D60). Until S61 each finest cell
     drew its own count and its own streams. Besides the declared columns each row carries ``cell``, ``rank`` and
-    ``gamma`` (the ring's Γ: what a cache cuts a prefix by)."""
+    ``gamma`` (the ring's Γ: what a cache cuts a prefix by).
+
+    *The cost* - S61 (D220): measured on the default galaxy, cold in one process, before -> after the ring-first draw
+    (layer off / on). One cell at 8 kpc above 10^3 L☉, its ring ~192 000 stars: 6.6 / 17.5 ms -> 49 / 58 ms, the
+    ring's uniforms and allocation (its Γ and eight streams about 10 ms, the part and sub-ring of every star about
+    20 ms); above 10^4.5 L☉ 0.28 / 0.14 ms -> 0.64 / 0.66 ms. A 306-cell window above 10^3 L☉: 1.01 / 17.8 s ->
+    1.16 / 19.7 s. The whole disc above 10^4 L☉: 8.28 / 48.9 s -> 2.39 / 47.5 s; the default selection 2.14 / 7.13 s
+    -> 0.20 / 5.64 s; ``tools/timings.py``'s bright rows cold 14.1 / 15.0 / 15.3 s -> 13.2 / 12.6 / 13.2 s (whole
+    disc, one sector, whole with rgb). The single cell's rise at a low threshold is the ring's inherent cost, accepted
+    by the lead (D220); item 1's level-0 ring stands."""
     cells = np.asarray([int(c) for c in cells], dtype=np.int64)
     if not cells.size:
         return Catalogue.of(_empty(), ())
