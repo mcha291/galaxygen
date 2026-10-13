@@ -695,9 +695,9 @@ defined here once and used in every entry below:
 | **discharged** at S57 | **140** (the ranked ridge retired by the gas's steady response, D216) | 1 |
 | **discharged** at S60 | **150, 151** (each arm its own chain of pieces; the gas forced at each piece's own pitch, D219) | 2 |
 | **permanent** | 2, 15, 17, 21, 22, 25, 34, 45, 46, 48, 65 | 11 |
-| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157 | 81 |
+| **carried** | 3, 11, 19, 26, 27, 28, 33, 39, 42, 43, 47, 49, 52, 70, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 107, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162 | 86 |
 
-So the board's **92 open** is 11 permanent and 81 carried, and no item is unruled. (S22
+So the board's **97 open** is 11 permanent and 86 carried, and no item is unruled. (S22
 counted 27 open as 15 and 12; #79 was discharged at S24 by the ism stage, D163; S25 re-ruled
 #3 and #26 from permanent to carried under the rewritten rule A1, D173, and opened #80 when
 the pattern moved ahead of star formation and row 15 left its window by 0.01, D174; S26
@@ -729,7 +729,7 @@ on the owner's word, which closed #109's first part, and opened #128, the heatin
 #132–#136 on NGC 4414's fit and its five disclosed checks — the halo that cannot be made weak enough, the stepped
 targets, the template's gas, the K light per unit mass and the frame's colour, D213; S55, the separation, opened #137,
 the layer's totals conserved in expectation only until the ring-first draw, D214; S56, the arm modes, opened
-#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217.) The eleven
+#138–#140, the law against the observed spectra, the phases' assumed statistic and the gas ridge by rank, D215; S57, the gas's steady response, discharged #140 and opened #141–#144 — the steady state, the razor-thin forcing, the stellar amplitude on the whole disc and the infall's shocks — and re-ruled #81, #129 and #131, D216; S58, the bar, opened #145–#149 — the presence's criterion, the body's unchecked share and missed peak, the lanes' placeholder, the two clocks and the undriven arms — re-read #138 and re-ruled #139 for the two-armed mode, D217; S59, pitch along an arm, opened #150–#154, D218; S60, the arms as a census of pieces, discharged #150 and #151 and opened #155–#157, D219; S61, the clustered censuses, opened #158–#162 — the inward radial spill, the lattice placement's cost on the whole-disc routes, the two rules for old stars, the per-cell conservation's cut of the hierarchy's power, the young stars' fading as a step, D220.) The eleven
 permanent ones are the shape of the build: seven are the sources' (2, 17, 25, 34, 45, 46,
 48 — a number the project does not hold, or a target with no width), three are the model's
 declared scope (15, 21, 22), and one is rule A9's one-opinion-per-thing (65). **#79 was
@@ -3913,7 +3913,9 @@ never been judged in twenty-three sessions.
    footprint ring (41 of them), which may be tabulated on the solver's cells and read as the gas profiles are
    (linear in the angle), the error measured and pinned against the 2880-sample quadrature before the table
    replaces it"; to assert then: a ring's expected young count unchanged to 1e-12, `bright_star_count_1e3` the
-   same bits, the quadrature's 3e-4 not worsened.
+   same bits, the quadrature's 3e-4 not worsened. **S60 (D219) built the cheaper form as the point function's normaliser
+   tabulated in R (`pieces.ring_mean_table`), the gate's words entered at S61 (D220): the quadrature's part of this entry is
+   met; the render's wound read and the table of the law's cell mean are still carried.**
 
 155. **The budget's ensemble: the design's expectation of a ring's arm power is over independent azimuths, and the
    census's ridges do not overlap** (S60, D219, the gate's fifth follow-up). `budget_amplitude` sets B so that N
@@ -3960,6 +3962,66 @@ never been judged in twenty-three sessions.
    is approximate); the stellar field is untouched. The mend is named: the two anchors never closer than a fraction
    of their images' separation (a short ramp), or the ended chain's sliver faded rather than compressed - either
    needs a length no source gives. A test records the largest phi-step per leg beside the fold count.
+
+158. **An object's radius can spill inward past its ring's edge by up to one grid node** (S61, D220; found by the
+   star sample's builder, measured on the default galaxy). The radial inverse CDF that places a cloud or a star in its
+   level-0 ring interpolates from the last zero-weight grid node, so a draw near the ring's inner edge lands up to a
+   node (75 pc) inside the ring below: 712 of 16 577 clouds (4.3 %) by up to 70.8 pc and 955 of 20 003 stars (4.8 %)
+   by up to 70 pc, layer on and off alike; none past the outer edge. A window served by footprint held a star of cell
+   293 standing at 8.440 kpc inside cell 261; the region route now selects rows by name, so a cell is the same
+   alone, in a window and in a sweep (D60), and the spill is only a misplacement, not a double count. Pre-existing
+   (the inversion is S5's). **Carried.** The mend is one line: invert on the ring's own edges rather than the grid's
+   nodes - a redraw of every census and every pin again, which is why it waits for a phase that redraws anyway.
+   *Added at S61's close (D220 part II item 5):* a bright star of 20-40.7 Myr placed by the clustering field stands
+   anywhere in its level-0 cell (up to about 1 kpc from its finest cell), its name, cell and rank part I's; so a
+   `/api/bright` window of finest cells can serve a young star standing outside the window and miss a neighbour's
+   standing inside it - the frustum cut applies to positions, so what is drawn is right, and a window by name is
+   what the route serves. The same mend serves both: a window answered by the placed position.
+159. **The lattice placement's cost on the whole-disc census routes** (S61, D220 part II). Placing every cloud jointly
+   in radius and azimuth on its cell's quadrature lattice - the field on 2.35 million lattice points (2.0 s) and
+   the gas pattern's 16 x 24 mesh per cell (1.1 s) - takes `materialise_clouds` from 1.0-1.1 s to 3.8-4.5 s for every
+   cell, cold, and the routes with it: `clouds: whole disc` 4.0 -> 9.6-10.3 s, `clusters: whole disc` 5.3 -> 11.9 s;
+   `run()` with the layer on 18.2-19.7 -> 23.1-23.6 s; one cell unchanged; `region: whole disc` unchanged. Accepted
+   by the lead as measured and told to the owner, whose bound on the viewer's whole-disc calls is still theirs
+   (D219 (c)). **Carried.** Closable in V7 (S65) by a per-cell lattice computed once per run and shared by the
+   placement, the cell-mean table and the shader, or by a coarser lattice whose error is declared as the table's is
+   (2 points per finest cell: 5.7e-3 rms against 4).
+160. **The star sample and the bright catalogue place old stars by two rules that differ by 3.9e-3 per sector**
+   (S61, D220; measured by the star sample's builder on ring 8, 7.52-8.45 kpc, young share 0.00367, no sector
+   clipped). The sample allocates a young star by c-bar p and an old one by c-bar (1 - p) - the stellar contrast's
+   sector mean times the young reader's share - so that every cell's expectation is the contrast's to 4e-16, as it
+   was before the ring-first draw; `bright.part_weights` places the old part by c-bar alone and the young by the
+   normalised modulation. The young parts agree to 4.4e-16 wherever nothing is clipped (c-bar p = y m-bar); the old
+   parts differ by 3.9e-3 at most per sector. Neither is wrong by a source: the sample keeps the cell's total, the
+   catalogue keeps the old part's contrast. **Carried.** One rule for both is V5/V6's (the field's light by age, the
+   censuses at whole-galaxy scale), where the two catalogues are drawn beside each other; the test that compares
+   them per sector is the star sample's.
+161. **The per-cell conservation removes the hierarchy's power at scales near the cell's short side** (S61, D220
+   part II; the reviewer's finding 2). The field's own two-point excess is its statistic to the digits - (r/190 pc)^-0.64,
+   2.43 at 47.5 pc, 1 beyond 340 pc on 24 squares - but a cloud is placed by the field *within its cell* with the
+   cell's count kept (rule 2 as adopted for L1: unit mean per level-0 cell), so the finished census carries the
+   excess below about 120 pc with its amplitude cut - 1.97 at 47.5 pc (clusters 2.10), 1.24 at 95 pc - crosses 1
+   near 120 pc, not 190, and runs 3-6 % below 1 from 140 to 500 pc (0.94 at 158 pc), the local slope over 57-95 pc
+   -0.74. The gate's wording is met (the fit over 47.5-190 pc reads -0.636 / -0.670; beyond 380 pc 0.98-1.02) and
+   D220 II.4's amplitude prediction failed, recorded there. A flat-square model with 0.94 x 1.5 kpc cells gives part
+   of the drop (2.84 against 3.05 at 44 pc and a 0.97-0.98 trough); the rest is not isolated. **Carried.** Rule 2
+   allows a ring as the unit: the mend is the field's cell means entering the clouds' sector weights, so the cells'
+   expectations carry the hierarchy's coarse end and the ring keeps its total - a change to the sector allocation
+   that moves every layer-on pin; L2's gas fluctuation (one noise, D220 II.6) or V6 (the censuses at whole-galaxy
+   scale) is where it is drawn beside the finer octaves.
+162. **The young stars' clustering fades in one step at 40.7 Myr, not by the sources' gradual decline** (S61, D220
+   part II item 5, the bright catalogue's builder). A star of age t is placed by the field with the octaves finer
+   than the scale structure survives for t dropped (Δt(λ) = 5.4 Myr λ^0.385, Grasha et al. 2017b Table 2's medians:
+   47.5 pc past 23.9 Myr, 95 pc past 31.2, 190 pc past 40.7). The prediction that each dropped octave returns
+   1 + ω to 1 below its scale failed in kind: a log-normal map of the coarser octaves alone plateaus at its own
+   level below its finest kept scale - two octaves read 2.10 at 47.5 pc against the full field's 2.15, one octave
+   1.23-1.49 - so the 20-23.9, 23.9-31.2 and 31.2-40.7 Myr bins barely differ (default: slopes -0.570, -0.599,
+   -0.007; 2.15, 2.10, 1.23 at 47.5 pc) and the fading is a step when the last octave drops. The sources read a
+   decline: slopes -0.69 (≤ 32 Myr), -0.47 (40), -0.32 (50), -0.29 (63), about -0.22 from 71 to 112 Myr in NGC 6503's
+   field stars; amplitudes 23 / 13 / 2.7 / 2.1 for ≤ 10, 10-50, 50-100, > 100 Myr in M 51's clusters (Grasha et al.
+   2019 Table 2). **Carried.** The mend is named: the log-normal width falling with age on that amplitude series,
+   beside the octaves' dropping - one function of age, sourced, in V5 (the field's light by age) where the young
+   light is next drawn.
 
 ---
 

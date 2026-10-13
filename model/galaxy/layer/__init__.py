@@ -12,9 +12,13 @@ stand in for, and evaluable at a point.
                                     API obtains a pattern object or a composed (R, phi) field, and the one place the
                                     layer's switch is read (``run(..., layer=False)``: the neutral values)
     galaxy/layer/cloud_texture.py   the first realisation stage (S55, D214): the four cloud columns and the shape
-                                    of the cloud-interior noise, synthetic
+                                    of the cloud-interior noise, synthetic; on ``texture_seed`` since S61 (D220)
     galaxy/layer/arm_pieces.py      the census of arm pieces (S60, D219): the table ``arm_piece`` on ``texture_seed``,
                                     no row with the layer off (it replaced S56's ``arm_phases``, the modes' phases)
+    galaxy/layer/census_clustering.py  the censuses' clustering field (S61, D220 part II): a log-normal lattice noise
+                                    on ``texture_seed`` that places a cloud jointly in radius and azimuth on its
+                                    level-0 cell's lattice (and the bright catalogue's young stars); its seed and
+                                    each cell's mean, NaN with the layer off
 
 A realisation stage registers with the rest when ``galaxy.stages`` is imported. Nothing is imported here: a reader
 imports ``galaxy.layer.noise`` or ``galaxy.layer.compose`` by name.

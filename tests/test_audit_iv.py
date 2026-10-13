@@ -182,7 +182,7 @@ def test_the_line_layers_and_the_s42_lines_sum_to_their_fields_at_the_audit_mesh
     _, c = _get(svc, "/api/clusters", {"model": [model.name], "r_min": ["0"], "r_max": [str(svc.grid.spec.R_max)], "phi_min": ["0"], "phi_max": [str(2 * math.pi)]})
     R = svc.grid.R
     w = np.asarray(c["hii_halpha_luminosity"], dtype=float)
-    expected = nb.ring_ratios(np.asarray(c["cluster_radius"], dtype=float), w, np.asarray(c["hii_nii_6583_ratio"], dtype=float), R)
+    expected = nb.ring_ratios(np.asarray(c["cluster_birth_radius"], dtype=float), w, np.asarray(c["hii_nii_6583_ratio"], dtype=float), R)  # S61 (D220 item 6): was cluster_radius - the regions binned by their cloud's radius
     ha = f["halpha_surface_brightness_hii"]
     lit = ha > 0
     assert f["nii_6583_surface_brightness_hii"][lit] / ha[lit] == pytest.approx(expected[lit], rel=1e-9)

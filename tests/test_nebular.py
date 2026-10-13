@@ -155,16 +155,19 @@ def test_the_default_census_numbers(default, default_layer_off):
     # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's since the gate's
     # follow-up: the winding is another, and the census another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
-    assert L.size == 12916  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    # S61 (D220): was 12916 - the clouds drawn ring-first, a new draw of the census (the same on and off since)
+    assert L.size == 12710  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S58 (D217): was 0.720 (0.7304 now, a hair past the tolerance: another draw of the census)
-    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.730, abs=0.01)
+    # S61 (D220): was 0.730 (0.7157 on the ring-first census, a new draw)
+    assert float(np.median(np.asarray(F["hii_stromgren_radius"]))) == pytest.approx(0.716, abs=0.01)
     assert float(np.median(np.asarray(F["hii_electron_density"]))) == pytest.approx(193.7, rel=0.01)
     assert float(np.median(np.asarray(F["hii_ionization_parameter"]))) == pytest.approx(-2.826, abs=0.01)
     # the metal-rich inner disc sits on the floor; S51 (D210): was 7779 (the clouds on the gas's ridge)
     # S57 (D216): was 7775 (another draw); S56 (D215): was 7792 (another draw)
     # S59 (D218 follow-up): was 7777; first pass 7744 (another draw). S58 (D217): was 7780 (another draw)
     # S60 (D219): was 7734 (another draw, 76 more regions)
-    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7799
+    # S61 (D220): was 7799 (the ring-first census, a new draw: 206 fewer regions)
+    assert int((np.asarray(F["hii_temperature"]) <= 6000.0).sum()) == 7694
     assert int(np.asarray(F["hii_density_bounded"]).sum()) == 0  # no region outgrows its cloud
     assert float(F["dig_halpha_fraction"]) == pytest.approx(0.30)
     assert float(F["halpha_luminosity_nebular"]) == pytest.approx(6.0770e7, rel=1e-3)  # S49 (D204, #126): the light integrated along the isochrone's points; was 6.0523e7
@@ -173,13 +176,17 @@ def test_the_default_census_numbers(default, default_layer_off):
     # under Bennett et al. 1994's window (debt #100). A consistency check, not a validation.
     assert float(F["halpha_sfr_ratio"]) == pytest.approx(0.7124, abs=0.002)  # S49 (D204, #126): the light integrated along the isochrone's points; was 0.7095
     # Row 35 (KEH89 -2.0 +/- 0.5). S55 (D214): was -2.008 (abs 0.02; the layer-on census reads -1.9893), read layer-off
-    assert float(judged["hii_luminosity_function_slope"]) == pytest.approx(-2.0812, abs=0.02)
+    # S61 (D220 item 10): was -2.0812 - the layer-off census redrawn ring-first (-2.08124 -> -2.05555), the one move
+    # D220 allows the row; still inside KEH89's [-2.5, -1.5].
+    assert float(judged["hii_luminosity_function_slope"]) == pytest.approx(-2.0556, abs=0.02)
     # Row 37, a recorded miss under #117 (D195): the blind window is [-0.045, -0.005] dex/kpc (Zhao et al. 2026);
     # the model's ratio falls outward at its N/H gradient's pace.
     # S51 (D210): was -0.1035 - the row reads the HII-region census, redrawn with the clouds on the gas's ridge
     # (-0.103687 -> -0.105511); the miss stands, 0.002 further out.
     # S55 (D214): was -0.1055, read layer-off (-0.105511 -> -0.102973: the census placed by no pattern); still a miss
-    assert float(judged["nii_halpha_gradient_hii"]) == pytest.approx(-0.1030, abs=0.002)
+    # S61 (D220 item 10): was -0.1030 - the layer-off census redrawn ring-first (-0.102973 -> -0.097717), the one
+    # move D220 allows the row; still a miss, 0.0053 nearer the window.
+    assert float(judged["nii_halpha_gradient_hii"]) == pytest.approx(-0.0977, abs=0.002)
     # The layer-on census, which the viewer draws: not judged, read for the record. S56 (D215): were -1.9893 and
     # -0.105511 ("keeps the numbers it had", held bit for bit to S54's reference until then); the census placed by
     # five arm modes is another draw.
@@ -196,8 +203,12 @@ def test_the_default_census_numbers(default, default_layer_off):
     # -0.102201. Not judged; the judged, layer-off rows above are the numbers they were.
     # S60 (D219): were -2.0356 and -0.102201; the arms a census of pieces, so the census is another draw again: the
     # slope reads -2.0338, the gradient -0.101488. Not judged; the judged, layer-off rows above did not move.
-    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.0338, abs=1e-3)
-    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.101488, abs=1e-5)
+    # S61 (D220 item 4): were -2.0338 and -0.101488. The census is drawn ring-first: the same regions on and off, so
+    # the layer-on readings are the layer-off ones, to rounding (the regions are summed in another order).
+    assert float(F["hii_luminosity_function_slope"]) == pytest.approx(-2.05555, abs=1e-5)
+    assert float(F["nii_halpha_gradient_hii"]) == pytest.approx(-0.097717, abs=1e-6)
+    for n in ("hii_luminosity_function_slope", "nii_halpha_gradient_hii", "dig_halpha_fraction"):
+        assert float(F[n]) == pytest.approx(float(judged[n]), rel=1e-12, abs=0.0), n
 
 
 def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
@@ -216,7 +227,8 @@ def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
     clusters, clouds = _catalogues(F)
     whole = nb.materialise_nebular(clusters, clouds, c)
     # rebuild the census cell by cell for a few cells and compare with the whole's slices
-    all_clouds = cl.materialise_clouds(F, R, seed, c)
+    texture = int(coarse.inputs["texture_seed"])  # S61 (D220 item 5): the clouds' texture is drawn on texture_seed
+    all_clouds = cl.materialise_clouds(F, R, seed, c, texture_seed=texture)
     all_clusters = cs.materialise_clusters(all_clouds, F, R, seed, c)
     offset = 0
     checked = 0
@@ -224,7 +236,7 @@ def test_both_models_agree_and_a_region_alone_is_its_slice(models, coarse):
         if checked >= 5 and cell % 97:
             offset += count
             continue
-        one_clouds = cl.materialise_clouds(F, R, seed, c, (cell,))
+        one_clouds = cl.materialise_clouds(F, R, seed, c, (cell,), texture_seed=texture)
         one_clusters = cs.materialise_clusters(one_clouds, F, R, seed, c)
         one = nb.materialise_nebular(one_clusters, one_clouds, c)
         for name in nb.HII_COLUMNS:
@@ -299,7 +311,8 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     age = np.log10(np.asarray(F["cluster_age"]) * 1e6)
     log_u = np.asarray(F["hii_ionization_parameter"])
     # S44: was 0.2641 on the 8.69 scale; the grid's log Z = 0 is Anders & Grevesse's 8.93 (D195, #121)
-    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0302, abs=1e-3) and not (log_z < g["log_z"][0]).any()
+    # S61 (D220): was 0.0302 (the ring-first census, a new draw: 3.30 %)
+    assert (log_z > g["log_z"][-1]).mean() == pytest.approx(0.0330, abs=1e-3) and not (log_z < g["log_z"][0]).any()
     assert (age < g["log_age_yr"][0]).mean() == pytest.approx(0.0257, abs=1e-3) and not (age > g["log_age_yr"][-1]).any()
     assert np.all((log_u >= g["log_u"][0]) & (log_u <= g["log_u"][-1]))
     w = np.asarray(F["hii_halpha_luminosity"])
@@ -315,7 +328,9 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # other three lines are the figures they were.
     # S60 (D219): [O III] 0.749 -> 0.759 and [N II] 0.083 -> 0.082 (0.0824, inside the tolerance), the Halpha weights
     # another draw of the census (the arms a census of pieces); the [S II] pair the figures they were.
-    assert weighted == pytest.approx({"oiii_5007": 0.759, "nii_6583": 0.082, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
+    # S61 (D220): [O III] 0.759 -> 0.781, the Halpha weights the ring-first census's, a new draw (and the same on and
+    # off since); [N II] 0.0818, [S II] 0.0553 and 0.0429, inside the tolerance.
+    assert weighted == pytest.approx({"oiii_5007": 0.781, "nii_6583": 0.082, "sii_6716": 0.054, "sii_6731": 0.042}, abs=2e-3)
     # The gradient the metallicity sets: [O III] rises outward, [N II] falls.
     R = default.grid.R
     ha = np.asarray(F["halpha_surface_brightness_hii"])
@@ -326,7 +341,10 @@ def test_the_default_regions_on_the_grid_and_their_lines(models, default):
     # 0.359 (1.087 at 12 kpc): that 75 pc ring's ~80 regions are a new draw when the clouds moved onto the gas's ridge,
     # and a handful of bright ones carry its Halpha; the regions' own Halpha-weighted mean over 3.5-4.5 kpc was 0.335
     # and is 0.361, the neighbouring rings 0.17-0.60 before and after. One ring of a heavy-tailed census is a realisation; the gradient is what is asserted.
-    assert ratio["oiii_5007"][4.0] < 0.4 < 0.5 < ratio["oiii_5007"][12.0]
+    # S61 (D220): the 4 kpc bound was 0.4; on the ring-first census - binned by the regions' clouds' radii since
+    # (D220 item 6), a new draw - the 4 kpc grid ring reads 0.570 and 12 kpc 1.202, inside the 0.17-0.60 the
+    # neighbouring rings read at S51. The gradient is what is asserted.
+    assert ratio["oiii_5007"][4.0] < 0.6 < 1.0 < ratio["oiii_5007"][12.0]
     assert ratio["nii_6583"][4.0] > ratio["nii_6583"][12.0]
     # Hbeta is Halpha over the Case B decrement in both layers.
     t_dig = float(models[DEFAULT_MODEL].constants["DIG_TEMPERATURE"].value)

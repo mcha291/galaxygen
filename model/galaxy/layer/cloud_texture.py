@@ -7,9 +7,10 @@ behind it - and both are a molecular cloud's interior:
   how steeply and in which direction its density leans. Until S55 the ``clouds`` stage drew and published them as
   seeded. No source gives their distributions (debt #95) and the model computes nothing that would: they stand in
   for the turbulent fragmentation of a cloud. They are published here, synthetic, each with its three declarations.
-  **The draws are unchanged**: the same seed (``systems_seed``), the same stream paths
-  (``(seed, "cloud", cell, name)``), the same arithmetic, so every value is the bit it was. With the layer off
-  they are their neutral values - no offset, no gradient, angles 0 - and a cluster stands at its cloud's centre.
+  From S55 to S60 the draws were the census's own, on ``systems_seed`` and each cell's streams; **since S61 they are
+  drawn on the layer's own seed** (D220 item 5): each ring's arrays on ``(texture_seed, "cloud", ring, name)``, read
+  at each cloud's identity in the ring-first draw, ``(ring, i)``. With the layer off they are their neutral values -
+  no offset, no gradient, angles 0 - and a cluster stands at its cloud's centre.
 - **the viewer's cloud-interior noise** - the log-normal interior a renderer synthesises from a cloud's vector
   (``frontend/src/galaxy/region.ts``). Rule D5 as amended (D212) lets the viewer evaluate a function the model
   publishes and forbids it a parameter of its own, so the function's three parameters are the model's.
@@ -19,36 +20,39 @@ behind it - and both are a molecular cloud's interior:
   read and checked here (:func:`interior`) and carried by ``/api/clouds``' header as ``cloud_interior``. With the
   layer off the viewer draws the interior smooth.
 
-**The seed, and what it contradicts** (gate G1, change 2c). The four columns are drawn on ``systems_seed``, which
-is what Phase R's "existing draw streams keep their seeds and their values" requires and what rule A10's "drawn ...
-on the randomness layer's own seed" forbids. The contradiction stands until L1 moves them to ``texture_seed``; each
-of the four declarations says so. ``texture_seed`` is not read here.
+**The seed** (gate G1, change 2c). From S55 to S60 the four columns were drawn on ``systems_seed``, which was what
+Phase R's "existing draw streams keep their seeds and their values" required and what rule A10's "drawn ... on the
+randomness layer's own seed" forbade. **Resolved at S61 (D220 item 5)**: they are drawn on ``texture_seed``, so
+rerolling it changes the clouds' interiors and nothing else (BUILD_III section 1c, rule 1). ``systems_seed`` is
+still read, for the census's layout alone - which ring and which place in it each published cloud is - and no
+value here is drawn on it.
 
 **What the offset does not keep** (gate G1, change 5). The source's offset and direction place the cluster; the
-offset moves a cluster by up to 249 pc in radius (S60) against a 75 pc radial step, so it can stand in another ring than its cloud, and what
-the stages that bin clusters by radius publish moves with it. The two declarations say so with the numbers; there
-is no clamp in Phase R, because no value moves in Phase R.
+offset moves a cluster by a few hundred parsecs at most in radius against a 75 pc radial step, so it can stand in
+another ring than its cloud. Since S61 (D220 item 6) the stages that bin clusters by radius bin by the cloud's
+radius, carried on the cluster as ``cluster_birth_radius``, so what they publish no longer moves with it. No clamp:
+the offset keeps its measured range. The two declarations say so with the numbers.
 
-**The layout.** A cloud is named ``(cell, index)`` and its streams are its cell's, so the stage needs the census's
-``(cell, count)`` layout. The published cloud columns do not carry it; the counts are the census's own Poisson
-draws, redrawn here exactly as the cluster census redraws them (``clusters.census_of_clouds``). That reads the
-gas's pattern through ``compose``, as the ``clouds`` stage does: a layer stage may.
+**The layout.** A cloud is named ``(cell, index)``, and its texture is read at its ring identity ``(ring, i)``, so
+the stage needs the census's ring layout (``clouds.cloud_layout``). The published cloud columns do not carry it; it
+is the census's own ring counts and sector allocation, redrawn here exactly as the cluster census redraws them
+(``clusters.census_of_clouds``). That reads the gas's pattern through ``compose``, as the ``clouds`` stage does: a
+layer stage may.
 """
 
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
 
-from galaxy.core import seeds as _seeds
 from galaxy.core.fielddoc import FieldDecl, Kind, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
-from galaxy.stages.clouds import TEXTURE_COLUMNS, cloud_counts, expected_counts
+from galaxy.stages.clouds import TEXTURE_COLUMNS, RingLayout, cloud_layout, ring_draws
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 
 # The cloud-interior noise's three parameters, by the name each has on the wire and the level-0 constant that holds
@@ -72,24 +76,19 @@ def interior(constants: Mapping[str, Any]) -> dict[str, float | int]:
     return {"octaves": int(octaves), "lacunarity": lacunarity, "gain": gain}
 
 
-def draw(seed: int, counts: Sequence[tuple[int, int]], size: np.ndarray) -> dict[str, np.ndarray]:
-    """The four columns for the clouds of ``counts``' cells, in the census's order: each cell's own streams, as
-    the cloud census drew them until S55 - the offset uniform over the cloud's volume (its size times the cube
-    root of a uniform), the two angles uniform over the circle, the gradient uniform on [0, 1]."""
+def draw(seed: int, layout: RingLayout, size: np.ndarray) -> dict[str, np.ndarray]:
+    """The four columns for the clouds of ``layout`` (a ``clouds.RingLayout``), in the census's order: each ring's
+    arrays on the layer's seed, ``(texture_seed, "cloud", ring, name)``, drawn whole and read at each cloud's
+    ``(ring, i)`` (D220 items 1 and 5) - the offset uniform over the cloud's volume (its size times the cube root
+    of a uniform), the two angles uniform over the circle, the gradient uniform on [0, 1]."""
     size = np.asarray(size, dtype=float)
-    parts: dict[str, list[np.ndarray]] = {name: [] for name in TEXTURE_COLUMNS}
-    offset = 0
-    for cell, count in counts:
-
-        def u(name: str, k: int = count, cell: int = cell) -> np.ndarray:
-            return _seeds.rng(seed, "cloud", int(cell), name).random(k)
-
-        parts["cloud_source_offset"].append(size[offset:offset + count] * np.cbrt(u("source_offset")))
-        parts["cloud_source_angle"].append(2.0 * math.pi * u("source_angle"))
-        parts["cloud_density_gradient"].append(u("gradient"))
-        parts["cloud_gradient_angle"].append(2.0 * math.pi * u("gradient_angle"))
-        offset += count
-    return {name: np.concatenate(p) if p else np.zeros(0) for name, p in parts.items()}
+    u = ring_draws(seed, "cloud", layout, ("source_offset", "source_angle", "gradient", "gradient_angle"))
+    return {
+        "cloud_source_offset": size * np.cbrt(u["source_offset"]),
+        "cloud_source_angle": 2.0 * math.pi * u["source_angle"],
+        "cloud_density_gradient": u["gradient"],
+        "cloud_gradient_angle": 2.0 * math.pi * u["gradient_angle"],
+    }
 
 
 def neutral(n: int) -> dict[str, np.ndarray]:
@@ -123,15 +122,17 @@ _CONSERVES_GRADIENT = (
 # the clouds came to follow the gas's steady response to those modes (D216: 1 598 of 12 829, 12.5 % and 43.7 %,
 # 139), again at S58 when the bar's reach came to hold its lanes and the two-armed mode the bar's phase (D217:
 # 1 600 of 12 826, 12.5 % and 43.6 %, 137), again at S59 when the winding came in seeded segments (D218: up to 223
-# pc, 255 pc, 1 576 of 12 840, 12.3 % and 42.9 %, 142), and again at S60 when the arms became a census of pieces
-# (D219).
+# pc, 255 pc, 1 576 of 12 840, 12.3 % and 42.9 %, 142), again at S60 when the arms became a census of pieces
+# (D219: up to 249 pc, 265 pc, 1 605 of 12 916, 12.4 % and 42.9 %, 140), and again at S61 when the census was drawn
+# ring-first and the binners came to read the cloud's radius (D220 items 1 and 6).
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
-    "its cloud's ring: at S60 the offset moves a cluster by up to 249 pc in radius (its own length reaches 265 pc) "
-    "against a 75 pc radial step and puts 1 605 of 12 916 "
-    "clusters (12.4 %, 42.9 % of the cluster mass) in another radial ring and 140 in another cell ring than their "
-    "cloud, so a ring's realised cluster mass, and what `nebular` and `bubbles` bin from it, move with it (#95; L1 "
-    "decides whether the offset is bounded to the cell or the cluster binned by its cloud's ring)."
+    "its cloud's ring: at S61 the offset moves a cluster by up to 230 pc in radius (its own length reaches 248 pc) "
+    "against a 75 pc radial step and puts 1 582 of 12 710 "
+    "clusters (12.4 %, 36.1 % of the cluster mass) in another radial ring and 133 in another cell ring than their "
+    "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
+    "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
+    "stream (D220 item 6 and part II; #95). No clamp: the offset keeps its measured range, and the cluster stands where the offset puts it."
 )
 _STATISTIC = (
     "none read (#95): no source gives the distribution, so the draw's own - {law} - is a stated guess and the "
@@ -140,7 +141,8 @@ _STATISTIC = (
 _PER_CLOUD = " Zero for every cloud with the randomness layer off."
 # Which seed, said in each declaration (gate G1, change 6): the layer's own seed is texture_seed (rule A10), and
 # these four are not on it yet.
-_SEED = " Drawn on `systems_seed`, the stream Phase R keeps; on `texture_seed` from L1."
+_SEED = (" Drawn on `texture_seed`, the layer's own seed, at the cloud's place in its ring's draw: the contradiction "
+         "with rule A10 that stood from S55 is resolved at S61 (D220 item 5).")
 
 
 def _column(name: str, label: str, unit: str, about: str, law: str, conserves: str) -> FieldDecl:
@@ -182,13 +184,13 @@ CLOUD_GRADIENT_ANGLE = _column(
 def compute_cloud_texture(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
     R = ctx.grid.R
-    seed = int(ctx.seeds["systems_seed"])
     # The interior's three constants are this stage's to declare: read here, so a parameter set that is not a
     # noise stops the run rather than reaching a renderer (the API serves the same function's answer).
     interior(c)
-    # The census's own layout, redrawn: the counts are its Poisson draws on the cells' own streams (cheap).
-    counts = cloud_counts(expected_counts(ctx.fields, R, c), seed)
-    return _compose.cloud_texture(ctx.fields, seed, counts, ctx.fields["cloud_size"])
+    # The census's own ring layout, redrawn on its seed (cheap: each ring's count and sector uniforms); the four
+    # columns are drawn on the layer's (D220 item 5).
+    layout = cloud_layout(ctx.fields, R, int(ctx.seeds["systems_seed"]), c)
+    return _compose.cloud_texture(ctx.fields, int(ctx.seeds["texture_seed"]), layout, ctx.fields["cloud_size"])
 
 
 CLOUD_TEXTURE = IMPLEMENTATIONS.register(
@@ -196,14 +198,15 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         id="cloud_texture", slot="cloud_texture", checkpoint=5,
         about=(
             "The randomness layer's realisation of a molecular cloud's interior: where each cloud's embedded "
-            "source sits and how its density leans, drawn per cloud on the census's own streams. Synthetic: it "
+            "source sits and how its density leans, drawn per cloud on the layer's own seed. Synthetic: it "
             "stands in for turbulent fragmentation the model does not compute, weighs nothing, and is zero with "
             "the layer off. It also holds the shape of the noise a renderer synthesises the interior from - an "
             "octave count, a lacunarity and a gain, constants and not fields."
         ),
         compute=compute_cloud_texture,
         layer_stage=True,
-        reads_seeds=("systems_seed",),
+        # S61 (D220 item 5): the four columns are drawn on texture_seed; systems_seed gives the census's layout only.
+        reads_seeds=("systems_seed", "texture_seed"),
         reads_constants=(
             # The census's layout: the mass function's mean and the gas pattern's two constants, as the census reads them.
             "R_SUN", "GMC_MASS_SLOPE_INNER", "GMC_MASS_TRUNCATION_INNER", "GMC_MASS_SLOPE_OUTER",

@@ -132,7 +132,8 @@ def test_a_clusters_bubble_is_a_function_of_its_cluster_and_region(default, cons
     # S59 (D218 follow-up): was 2591; first pass 2648 (a segment's pitch relative to the disc's: the winding is
     # another and the census another draw again - 12 840 clusters, 2556 this young expected, 45 the spread)
     # S60 (D219): was 2643 (the arms a census of pieces: another draw of the census - 12 916 clusters)
-    assert young.sum() == 2614  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
+    # S61 (D220): was 2614 (the clouds drawn ring-first, a new draw of the census)
+    assert young.sum() == 2572  # S57 (D216): was 2566 (the clouds placed by the gas's steady response: another draw)
     assert power[young] == pytest.approx(wind[young], rel=1e-9)
     assert np.all(power[~young] > wind[~young])
     phase = np.asarray(F["bubble_phase"])
@@ -172,16 +173,19 @@ def test_the_default_numbers(default):
     # S59 (D218): was 12826 (the winding in seeded segments turns each ring's gas: another draw of the census)
     # S59 (D218 follow-up): was 12826; first pass 12839 (a segment's pitch relative to the disc's: another draw again)
     # S60 (D219): was 12840 (the arms a census of pieces: another draw of the census)
-    assert radius.size == 12916  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
+    # S61 (D220): was 12916 (the clouds drawn ring-first, a new draw of the census)
+    assert radius.size == 12710  # S57 (D216): was 12814 (the clouds placed by the gas's steady response: another draw)
     # S59 (D218 follow-up): was 8.963 (S36's pin, which every draw since had read inside its 1 %: 8.912 at S57); this
     # draw's median bubble reads 8.863 pc, 1.1 % under it - re-read, the tolerance kept.
-    assert float(np.median(radius)) == pytest.approx(8.863, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
+    # S61 (D220): was 8.863 (the ring-first census, a new draw: 8.766 pc, 1.1 % under)
+    assert float(np.median(radius)) == pytest.approx(8.766, rel=0.01)  # S57 (D216): reads 8.912, inside the tolerance
     # S49 (D204): the wind's power integrated on the isochrone's segments (photometry.nodes), not the fixed mass grid;
     # was 12521; S51 (D210): was 12524 (the clouds on the gas's ridge, another draw of the census)
     # S57 (D216): was 12477 (another draw of the census); S56 (D215): was 12582 (another draw of the census)
     # S59 (D218 follow-up): was 12499; first pass 12496 (another draw of the census). S58 (D217): was 12503 (another draw of the census)
     # S60 (D219): was 12502 (another draw of the census, 76 more clusters)
-    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12575
+    # S61 (D220): was 12575 (the ring-first census, a new draw: 206 fewer clusters)
+    assert int(np.asarray(F["bubble_stalled"]).sum()) == 12373
     # a stalled bubble's interior sits at the region's thermal pressure, 2 n T: the stall rule, read from the
     # velocity, finds the pressure balance it stands for
     p_region = 2.0 * np.asarray(F["hii_electron_density"]) * np.asarray(F["hii_temperature"])
@@ -208,7 +212,10 @@ def test_the_default_numbers(default):
     # S59 (D218 follow-up): was 0.0344; first pass 0.0296 - this draw reads 0.0291, inside the first pass's pin.
     # S60 (D219): was 0.0291 - the arms a census of pieces, another draw of that ring's bubbles, inside the sixteen
     # seeds' spread above
-    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0344, abs=0.001)
+    # S61 (D220): was 0.0344 - the clusters drawn ring-first, a new draw of that ring's bubbles, and binned by their
+    # clouds' radii since (D220 item 6), the offset no longer carrying a bubble across the ring's edge: 0.0104, 1.5
+    # times the sixteen seeds' spread under their mean (0.022 +/- 0.008, S51). The same on and off since.
+    assert float(F["hot_phase_porosity"][i]) == pytest.approx(0.0104, abs=0.001)
     n_mid = float(F["gas_midplane_density"][i]) * fb.MSUN_PER_PC3_IN_G_PER_CM3 / RHO_1
     assert n_mid == pytest.approx(0.688, abs=0.002)
 
@@ -309,7 +316,8 @@ def test_the_hot_phase_is_the_volumes_over_the_layer(default):
     sigma, rho = np.asarray(F["gas_surface_density"]), np.asarray(F["gas_midplane_density"])
     layer = float(np.trapezoid(np.where(inside, sigma / rho * 2.0 * math.pi * R, 0.0), R)) * 1.0e6  # pc3
     vol = 0.0
-    for where, size in ((F["cluster_radius"], F["bubble_radius"]), (F["remnant_radius"], F["remnant_size"])):
+    # S61 (D220 item 6): was F["cluster_radius"] - the bubbles binned by their cloud's radius, the ring-stream draw
+    for where, size in ((F["cluster_birth_radius"], F["bubble_radius"]), (F["remnant_radius"], F["remnant_size"])):
         where, size = np.asarray(where), np.asarray(size)
         sel = (where >= edges[ring]) & (where < edges[ring + 1])
         vol += float(np.sum(4.0 / 3.0 * math.pi * size[sel] ** 3))

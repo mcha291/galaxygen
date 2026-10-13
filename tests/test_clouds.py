@@ -111,14 +111,32 @@ def test_per_region_determinism_and_both_models_agree(models, default):
     """D60 for clouds: cells drawn alone are the sweep's cells; the azimuthal model draws the same census."""
     o, c = default
     F, R = o.fields, o.grid.R
-    sweep = cl.materialise_clouds(F, R, 0, c)
-    part = cl.materialise_clouds(F, R, 0, c, cells=[300, 301, 517])
-    off_part = 0
-    for cell, count in part.counts:
-        off = sum(n for cc, n in sweep.counts if cc < cell)
-        for name in cl.CLOUD_COLUMNS + ("cloud_state",):
-            assert np.array_equal(part[name][off_part:off_part + count], sweep[name][off:off + count]), (cell, name)
-        off_part += count
+    # S61 (D220 item 5): was materialise_clouds(F, R, 0, c) - a layer-on census's texture is drawn on texture_seed.
+    sweep = cl.materialise_clouds(F, R, 0, c, texture_seed=0)
+    sweep_layout = cl.layout_of(sweep)
+    # S61 (D220 item 3): a cell alone draws its ring's count and uniform arrays whole and derives its own rows only;
+    # it is the sweep's cell, column for column and identity for identity, alone, beside its ring's neighbour, and
+    # beside a cell of another ring.
+    for cells in ([300, 301, 517], [301], [517], [301, 300]):
+        part = cl.materialise_clouds(F, R, 0, c, cells=cells, texture_seed=0)
+        layout = cl.layout_of(part)
+        assert [cc for cc, _ in part.counts] == [cc for cc in cells if cc in dict(sweep.counts)]
+        off_part = 0
+        for cell, count in part.counts:
+            off = sum(n for cc, n in sweep.counts if cc < cell)
+            for name in cl.CLOUD_COLUMNS + ("cloud_state", "cloud_cluster_index"):
+                assert np.array_equal(part[name][off_part:off_part + count], sweep[name][off:off + count]), (cells, cell, name)
+            assert np.array_equal(layout.ring[off_part:off_part + count], sweep_layout.ring[off:off + count])
+            assert np.array_equal(layout.index[off_part:off_part + count], sweep_layout.index[off:off + count])
+            assert dict(sweep.counts)[cell] == count
+            off_part += count
+    # The ring's objects: each ring's count is its rows in the sweep, and within a cell they are in ring order.
+    for r, n in sweep_layout.sizes.items():
+        assert int((sweep_layout.ring == r).sum()) == n
+    start = 0
+    for cell, count in sweep.counts:
+        assert np.all(np.diff(sweep_layout.index[start:start + count]) > 0) and np.all(sweep_layout.ring[start:start + count] == cell // cl.CELL_SECTORS)
+        start += count
     a = run(models["azimuthal"], grid=COARSE).fields
     b = run(models[DEFAULT_MODEL], grid=COARSE).fields
     for name in cl.CLOUD_COLUMNS + ("cloud_state",):
@@ -129,13 +147,62 @@ def test_per_region_determinism_and_both_models_agree(models, default):
     assert not np.array_equal(other["cloud_mass"], b["cloud_mass"])
 
 
+def test_the_ring_first_draw_places_the_same_clouds(models):
+    """S61 (D220 items 1-2, 4): a ring's count is one Poisson draw at the ring's expected total, which no placement
+    enters, and every per-object draw an array on the ring's stream; the layer assigns the sector and the azimuth
+    and nothing else. So the layer-on and layer-off censuses are the same clouds ring by ring - the same count, and
+    the same radii, masses, ages and heights as multisets - and only the sector and the azimuth differ."""
+    m = models[DEFAULT_MODEL]
+    c = {k: v.value for k, v in m.constants.items()}
+    on, off = run(m, grid=COARSE, layer=True), run(m, grid=COARSE, layer=False)
+    R = on.grid.R
+    assert np.array_equal(cl.ring_expected(on.fields, R, c), cl.ring_expected(off.fields, R, c))
+    # The ring's expected total is the sum of its cells' expectations: to the bit off, to rounding on (I2).
+    assert np.array_equal(cl.ring_expected(off.fields, R, c), cl.expected_counts(off.fields, R, c).sum(axis=1))
+    assert np.allclose(cl.ring_expected(on.fields, R, c), cl.expected_counts(on.fields, R, c).sum(axis=1), rtol=1e-12, atol=0)
+    seed = int(on.inputs["systems_seed"])
+    lay_on, lay_off = cl.cloud_layout(on.fields, R, seed, c), cl.cloud_layout(off.fields, R, seed, c)
+    assert lay_on.sizes == lay_off.sizes and sum(lay_on.sizes.values()) == len(on.fields["cloud_radius"]) == len(off.fields["cloud_radius"])
+    for r in lay_on.sizes:
+        here_on, here_off = lay_on.ring == r, lay_off.ring == r
+        # S61 (D220 part II as amended): was "cloud_radius" - the layer places a cloud's radius within its cell too;
+        # the radius the ring drew is `cloud_birth_radius`, and it is the same on and off.
+        for name in ("cloud_birth_radius", "cloud_mass", "cloud_age", "cloud_height", "cloud_size", "cloud_metallicity"):
+            a = np.sort(np.asarray(on.fields[name])[here_on])
+            b = np.sort(np.asarray(off.fields[name])[here_off])
+            assert np.array_equal(a, b), (r, name)
+        # With the layer off the cloud stands at the radius its ring drew.
+        assert np.array_equal(np.asarray(off.fields["cloud_radius"])[here_off], np.asarray(off.fields["cloud_birth_radius"])[here_off])
+        # The same objects by identity: (ring, i) carries each cloud's draws, wherever it was allocated.
+        order_on, order_off = np.argsort(lay_on.index[here_on]), np.argsort(lay_off.index[here_off])
+        assert np.array_equal(np.asarray(on.fields["cloud_mass"])[here_on][order_on], np.asarray(off.fields["cloud_mass"])[here_off][order_off])
+    # Layer off the sectors are uniform round the ring; layer on they follow the gas's weights.
+    _, weights = cl.sector_placement(on.fields, R, c)
+    assert cl.sector_placement(off.fields, R, c)[1] is None and weights is not None
+    u = np.linspace(0.0, 1.0, 64, endpoint=False) + 1.0 / 128.0
+    assert np.array_equal(np.bincount(cl.allocate(u, None), minlength=cl.CELL_SECTORS), np.full(cl.CELL_SECTORS, 2))
+    w = np.zeros(cl.CELL_SECTORS)
+    w[[3, 7]] = (1.0, 3.0)
+    assert np.array_equal(np.bincount(cl.allocate(u, w), minlength=cl.CELL_SECTORS)[[3, 7]], [16, 48])
+    sectors_on = np.array([cell % cl.CELL_SECTORS for cell, n in lay_on.counts for _ in range(n)])
+    assert not np.array_equal(sectors_on, np.array([cell % cl.CELL_SECTORS for cell, n in lay_off.counts for _ in range(n)]))
+
+
 def test_positions_and_abundances(default):
     o, c = default
     F, R = o.fields, o.grid.R
     r, phi = np.asarray(F["cloud_radius"]), np.asarray(F["cloud_azimuth"])
     assert r.min() >= R[0] and r.max() <= R[-1] and phi.min() >= 0.0 and phi.max() <= 2.0 * math.pi
-    assert np.allclose(F["cloud_metallicity"], np.interp(r, R, F["feh_gas"]))
-    assert np.allclose(F["cloud_alpha"], np.interp(r, R, F["alpha_fe_gas"]))
+    # S61 (D220 part II as amended): the abundances are read at the radius the ring drew (was `r`, the same number
+    # until the layer placed a cloud within its cell); the placed radius stays in the cloud's level-0 ring.
+    born = np.asarray(F["cloud_birth_radius"])
+    assert np.allclose(F["cloud_metallicity"], np.interp(born, R, F["feh_gas"]))
+    assert np.allclose(F["cloud_alpha"], np.interp(born, R, F["alpha_fe_gas"]))
+    # Both lie in the cloud's cell's ring - the ring's radius to within one grid step (the inverse CDF is linear
+    # between grid radii, and the step that holds the ring's edge carries half its weight) - so no farther apart
+    # than a ring's width and a step.
+    rings, _ = cl.cell_edges(R)
+    assert np.all(np.abs(r - born) < (rings[1] - rings[0]) + (R[1] - R[0])) and not np.array_equal(r, born)
     # Half the thin disc's scale height, stated as a guess (debt #95).
     h = 0.5 * F["thin_disc_scale_height"] / 1000.0
     assert np.median(np.abs(F["cloud_height"])) == pytest.approx(2.0 * h * math.atanh(0.5), rel=0.15)
@@ -173,3 +240,41 @@ def test_the_clouds_header_carries_the_stage_scalars(model):
         if f["name"].startswith("cloud_") and f["domain"] == "galaxy":
             assert "Not shown by the viewer" in f["about"] and "rule D4" in f["about"], f["name"]
 
+
+
+# The cells the pattern mesh is held on (ring, sector), with their total-variation distance as measured at S61: the
+# worst pointwise error of all 1 024 (32 %; the bar's end, 5.21 kpc, inside ring 5's 4.71-5.65 kpc), the largest
+# distance of all 1 024 (the bar's other end), the highest-contrast ridge cell (contrast 6.7), and an outer cell,
+# where the mesh is exact (every cell from ring 14, 13.1 kpc, outward).
+MESH_TV = {(5, 18): 2.853e-3, (5, 2): 3.394e-3, (2, 0): 8.25e-4, (20, 5): 0.0}
+MESH_TV_BOUND = 5e-3
+
+
+def test_the_pattern_mesh_misplaces_little_of_a_cell_s_weight(default):
+    """S61 (D220; the review's finding 3): the clouds read the gas pattern on a mesh of 16 x 24 steps per level-0 cell,
+    bilinear between (``census_clustering.mesh_factor``); against the point function at every lattice point of all
+    1 024 cells (measured at S61) the worst point is 32 % off - ring 5, sector 18, the bar's end - but what a draw sees,
+    the total-variation distance of the cell's normalised weights, is at most 3.4e-3. Held here on four cells: each
+    below 5e-3, as measured to 1e-6, the outer one exact. 0.07 s beyond the module's run (measured under the suite's
+    load)."""
+    from galaxy.layer import compose
+    from galaxy.layer import census_clustering as CC
+    from galaxy.stages.systems import cell_edges
+
+    o, c = default
+    F, R = o.fields, o.grid.R
+    pattern, field = compose.gas_pattern(F, R, c), compose.census_clustering(F, c)
+    rings, sectors = cell_edges(R)
+    sigma_h2 = np.asarray(F["gas_molecular_surface_density"], dtype=float)
+    got = {}
+    for ring, sector in MESH_TV:
+        cell = (float(rings[ring]), float(rings[ring + 1]), float(sectors[sector]), float(sectors[sector + 1]))
+        r_mid, phi_mid = field.lattice(*cell)
+        rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
+        base = field.map(rr * np.cos(pp), rr * np.sin(pp)) * (np.interp(r_mid, R, sigma_h2) * r_mid)[:, None]
+        mesh = base * CC.mesh_factor(pattern, cell, r_mid, phi_mid)
+        point = base * np.maximum(pattern.contrast(r_mid, phi_mid), 0.0)
+        got[(ring, sector)] = 0.5 * float(np.sum(np.abs(mesh / mesh.sum() - point / point.sum())))
+    assert all(tv < MESH_TV_BOUND for tv in got.values()), got
+    assert got == pytest.approx(MESH_TV, abs=1e-6), got
+    assert got[(20, 5)] == 0.0, got

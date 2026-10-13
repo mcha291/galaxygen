@@ -85,6 +85,8 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     # The cell hierarchy and the cloud census (S32, BUILD_II Phase 8).
     Endpoint("region: level 2 sector", "/api/region", "r_min=7&r_max=9&phi_min=0&phi_max=0.4&level=2", "90 children, 16x the density"),
     Endpoint("clouds: one sector", "/api/clouds", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the census of 9 cells"),
+    # S61 (D220 part II; debt #159): the clouds placed on their cells' lattices by the clustering field - cold 4.0 s
+    # before, 9.6-10.3 s after (the field on the lattices 2.0 s, the pattern's meshes 1.1 s); clusters 5.3 -> 11.9 s.
     Endpoint("clouds: whole disc", "/api/clouds", "", "every cloud, about 1.7e4"),
     # The cluster census (S33, BUILD_II Phase 11): the cells' clouds drawn, then one cluster per cloud past its embedded phase.
     Endpoint("clusters: one sector", "/api/clusters", "r_min=7&r_max=9&phi_min=0&phi_max=0.4", "the clusters of 9 cells"),

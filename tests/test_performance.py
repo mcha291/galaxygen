@@ -49,7 +49,11 @@ def test_the_catalogue_is_priced_per_cell(model):
     on = performance.catalogue_cost(model, n_stars=2000)
     assert on["per_cell_us"] > 0.0 and on["every cell (stars)"] > 0.9 * 2000 and 0 < on["cells realised"] <= on["cells"] == 1024
     cost = performance.catalogue_cost(model, n_stars=2000, layer=False)
-    assert cost["cells per sample"] == on["cells per sample"]  # the layer lights the same cells (a cell's realised stars are its own draw, #137)
+    # S61 (D220 items 1-4): was `cost["cells per sample"] == on["cells per sample"]` - the layer lit the same cells while
+    # a cell's realised stars were its own draw (#137). Drawn ring-first, the same stars are drawn on and off and the
+    # layer allocates them among the ring's cells, so the stars realised at every size are the same and the cells that
+    # receive one are the allocation's (measured on the default model: 272-789 on, 274-789 off, over the sizes).
+    assert [s[1] for s in cost["samples"]] == [s[1] for s in on["samples"]]
     assert {"layout", "one cell", "nine cells", "every cell"} <= set(cost)
     assert cost["one cell (stars)"] <= cost["nine cells (stars)"] <= cost["every cell (stars)"]
     assert cost["every cell (stars)"] > 0.9 * 2000

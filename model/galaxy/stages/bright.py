@@ -32,7 +32,22 @@ exponentials by inverse CDF from the cell's own stream), and Γ_i fixes its **th
 of grid thresholds its luminosity lies between, from Λ at the thresholds - so the stars above any grid
 threshold are exactly those with Γ_i < Λ(threshold): a higher grid threshold is a prefix in Γ order, the
 count above it is Poisson with mean Λ, and a cell's stars do not depend on which other cells were asked for
-(D60). **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
+(D60).
+
+**Ring-first** (S61, D220 part I; :func:`draw_ring`). Since S61 the ordered process is drawn per *level-0 ring*
+(32 of them), not per finest cell: the ring's Λ is its cells' expectations summed (``ring_curve`` - I2's
+expectation, the same bits with the layer on or off, item 1), its Γ on the ring's stream ``(seed, "bright", ring,
+"gamma")``, and every per-star draw an array on ``(seed, "bright", ring, name)`` - a star's identity in the draw is
+(ring, i). Within its interval a star's part and finest sub-ring are drawn by their exact counts (layer-free), and
+its **sector** is the inverse of its part's cumulative placement weights round the sub-ring at its own ``sector``
+uniform (item 2); its place inside the cell is :func:`place_in_cell`. A cell keeps its (cell, index) naming, index
+the star's rank among the ring's stars allocated there in ring order. A cell asked alone draws its ring's count and
+uniforms whole and derives the columns of its own rows only (item 3), so it is the same alone and in a sweep; and
+every realised ring total - count, light, band light - is the same on and off, only the sector and the azimuth
+differing (item 4). Until S61 each finest cell drew its own Γ and streams. **The young stars near where they formed**
+(S61, D220 part II item 5; :func:`place_in_cell`): with the layer on, a star of 20 to 40.71 Myr is placed anywhere in
+its level-0 cell by the clustering field ``census_clustering``, its octaves finer than the star's age allows dropped
+(dt = A1 lambda^a, Grasha et al. 2017b) - its radius moves with the layer too, its ring does not. **Within its interval** (D203) the star's age part, isochrone and segment are drawn by their exact star
 counts in the interval, and its luminosity uniformly in log L across the segment's overlap with the
 interval, so every linear quantity of the realised stars - count, bolometric light, each band - has the
 budget's expectation; until D203 the luminosity was Λ⁻¹(Γ_i) read log-linearly across the interval and the
@@ -78,11 +93,13 @@ from galaxy.core.grids import Axis
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_READS
 from galaxy.stages.pattern import PATTERN_READS, invert_azimuths
 from galaxy.stages.systems import (
     CELL_COUNT,
+    CELL_RINGS,
     CELL_SECTORS,
     MAX_LEVEL,
     YOUNG_CONSTANTS,
@@ -397,7 +414,29 @@ PHASES: tuple[str, ...] = (
     "pre_main_sequence", "main_sequence", "subgiant", "red_giant", "core_helium_burning",
     "blue_loop", "red_loop", "early_agb", "thermally_pulsing_agb",
 )
-STREAMS: tuple[str, ...] = ("population", "age", "segment", "luminosity", "radius", "azimuth", "height")
+# S61 (D220 item 1): every per-star draw an array on its level-0 ring's stream, (seed, "bright", ring, name); `sector`
+# is the allocation's own (item 2).
+STREAMS: tuple[str, ...] = ("population", "sector", "age", "segment", "luminosity", "radius", "azimuth", "height")
+# S61 (D220 part II item 5): how long the clustering field's structure at a scale survives in the stars born in it,
+# dt = A1 lambda^a (galaxy/models/level0.py), and the field's own five numbers the young stars are placed by.
+AGE_AMPLITUDE, AGE_INDEX = "AGE_SEPARATION_AMPLITUDE", "AGE_SEPARATION_INDEX"
+CLUSTERING_CONSTANTS: tuple[str, ...] = (*_CLUSTERING_CONSTANTS.values(), AGE_AMPLITUDE, AGE_INDEX)
+
+
+def octave_survival(scales_pc: np.ndarray, amplitude_myr: float, index: float) -> np.ndarray:
+    """Myr: the age past which each of the clustering field's octaves (``scales_pc``, coarsest first) is dropped from
+    a young star's placement - the age difference against separation, dt(lambda) = A1 lambda^a with lambda in pc,
+    read as how long structure at the scale lambda survives (S61, D220 part II item 5; Grasha et al. 2017b Table 2's
+    medians, A1 5.4 Myr and a 0.385): 40.8, 31.2 and 23.9 Myr for 190, 95 and 47.5 pc. Decreasing, so the octaves a
+    star keeps are always the coarsest (:func:`octaves_kept`)."""
+    return float(amplitude_myr) * np.asarray(scales_pc, dtype=float) ** float(index)
+
+
+def octaves_kept(age_gyr: np.ndarray, survival_myr: np.ndarray) -> np.ndarray:
+    """How many of the field's coarsest octaves a star of each age keeps: those whose survival age it has not passed
+    (an age equal to it keeps the octave). 0 past the coarsest's - the pattern alone places the star."""
+    t = np.asarray(age_gyr, dtype=float) * 1000.0
+    return (t[:, None] <= np.asarray(survival_myr, dtype=float)[None, :]).sum(axis=1).astype(np.int64)
 
 
 def cluster_window(constants: Mapping[str, Any]) -> float:
@@ -487,10 +526,60 @@ class BrightGalaxy:
         self.modulation = young_reader(fields, self.R, constants)
         young = None if self.modulation is None else self.modulation.sector_means_at(middle, edges)
         self.weights = part_weights(contrast, young)  # (2, 256, 256)
+        # S61 (D220 items 1-2): the ring-first draw's tables. A level-0 ring's expected count above each threshold
+        # is its eight sub-rings' areas times their stars per pc² above it times the finest sectors round a ring:
+        # each part's weights sum to that sector count round a sub-ring to rounding (3e-16 of it at the default
+        # seeds), so this is I2's expectation, and it is the same bits with the layer on or off by construction.
+        n_sub = 1 << MAX_LEVEL
+        self.n_sub, self.n_sectors = n_sub, CELL_SECTORS * n_sub
+        per_ring = self.area[:, None] * (self.count_cell[0] + self.count_cell[1]) * float(self.n_sectors)  # (256, K)
+        self.ring_curve = per_ring.reshape(CELL_RINGS, n_sub, K).sum(axis=1)  # (32, K): stars above each threshold
+        # Within a threshold interval a star's (part, sub-ring) by their exact counts there, layer-free: (32, K-1, 16),
+        # cumulative over part-major (part, sub-ring) pairs.
+        split = np.maximum(self.count_cell[:, :, :-1] - self.count_cell[:, :, 1:], 0.0) * self.area[None, :, None]
+        split = split.reshape(2, CELL_RINGS, n_sub, K - 1).transpose(1, 3, 0, 2).reshape(CELL_RINGS, K - 1, 2 * n_sub)
+        self.split_cdf = np.cumsum(split, axis=2)
+        # And its finest sector by its part's placement weights round its sub-ring: uniform with the layer off.
+        self.sector_cdf = np.cumsum(self.weights, axis=2)  # (2, 256, 256)
         # What the height reads: the thin/thick criterion over (radius, birth time), the two scale heights.
+        # S61 (D220 part II item 5): the clustering field the young stars are placed by in their level-0 cell, with its
+        # octaves finer than a star's age allows dropped - None with the layer off - and the ages (Myr) past which
+        # each octave, coarsest first, is dropped: dt(lambda) = A1 lambda^a, lambda in pc (Grasha et al. 2017b).
+        self.clustering = _compose.census_clustering(fields, constants)
+        self.cell_rings, self.cell_sectors = rings32, sectors32
+        self.octave_ages = None if self.clustering is None else octave_survival(
+            self.clustering.octave_scales_pc(), float(constants[AGE_AMPLITUDE]), float(constants[AGE_INDEX]))
+        self._young_meshes: dict[int, np.ndarray] = {}
         self.thick = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
         self.h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
         self.h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or self.h_thin
+
+    def young_mesh(self, ring32: int) -> np.ndarray | None:
+        """The middle part's azimuthal law on every level-0 cell's mesh of a level-0 ring, ``(17, 32, 25)``
+        (``census_clustering.mesh_points``: radii by sector by azimuth), or None where it is 1 (no modulation and no
+        pattern, or a flat one): the young reader (``systems.Modulation.at_points``) where the model publishes
+        ``sfr_modulation``, else the stellar pattern's contrast - the law :func:`place_in_cell` inverts for the
+        middle part, read here for the field's placement (S61, D220 part II item 5). The ring's 32 meshes share
+        their 17 radii, and the reader's cost is its ring mean at each radius, so they are read in one call and kept
+        (a function of the ring alone: D60)."""
+        if self.modulation is None and (self.pattern is None or self.pattern.flat):
+            return None
+        ring32 = int(ring32)
+        found = self._young_meshes.get(ring32)
+        if found is None:
+            from galaxy.layer.census_clustering import mesh_points
+
+            lo, hi = float(self.cell_rings[ring32]), float(self.cell_rings[ring32 + 1])
+            radii = mesh_points((lo, hi, 0.0, 1.0))[0]
+            phis = np.stack([mesh_points((lo, hi, float(self.cell_sectors[s]), float(self.cell_sectors[s + 1])))[1]
+                             for s in range(CELL_SECTORS)]).ravel()
+            if self.modulation is not None:
+                values = self.modulation.at_points(radii, np.broadcast_to(phis[None, :], (radii.size, phis.size)))
+            else:
+                values = self.pattern.contrast_at(radii[:, None], phis[None, :])
+            found = np.asarray(values, dtype=float).reshape(radii.size, CELL_SECTORS, -1)
+            self._young_meshes[ring32] = found
+        return found
 
     # --- where a finest cell is ---
 
@@ -503,6 +592,19 @@ class BrightGalaxy:
         ring32, sector32 = np.divmod(parent, CELL_SECTORS)
         a, b = np.divmod(q, n)
         return ring32 * n + a, sector32 * n + b
+
+    @staticmethod
+    def cell_at(sub_ring: np.ndarray, sector: np.ndarray) -> np.ndarray:
+        """The level-MAX_LEVEL id of the finest cell at (sub-ring, sector) among the 256 x 256: :meth:`locate`'s
+        inverse."""
+        n = 1 << MAX_LEVEL
+        ring32, a = np.divmod(np.asarray(sub_ring, dtype=np.int64), n)
+        sector32, b = np.divmod(np.asarray(sector, dtype=np.int64), n)
+        return (ring32 * CELL_SECTORS + sector32) * children_per_cell(MAX_LEVEL) + a * n + b
+
+    def ring_of(self, cells: Sequence[int] | np.ndarray) -> np.ndarray:
+        """The level-0 ring (0-31) each finest cell stands in: whose stream draws its stars (D220 item 1)."""
+        return self.locate(cells)[0] // self.n_sub
 
     # --- the expected counts and light ---
 
@@ -557,13 +659,15 @@ class BrightGalaxy:
         return float(x[k] + lo * (x[k + 1] - x[k]))
 
 
-def _gammas(seed: int, cell: int, ceiling: float) -> np.ndarray:
+def _gammas(seed: int, ring: int, ceiling: float) -> np.ndarray:
     """Γ_0 < Γ_1 < … below ``ceiling``: the running sum of unit exponentials, each the inverse CDF of one
-    uniform of the cell's own stream (rule B8). Drawn in a block sized to hold them with room; a block that
-    does not reach the ceiling is drawn again twice as long from the same stream, whose prefix is the same."""
+    uniform of the level-0 ring's stream ``(seed, "bright", ring, "gamma")`` (rule B8; D220 item 1: the ring's
+    count is this one draw - the ordered Poisson process the census has used since S48, its count above any grid
+    threshold Poisson about the ring's expectation there). Drawn in a block sized to hold them with room; a block
+    that does not reach the ceiling is drawn again twice as long from the same stream, whose prefix is the same."""
     size = int(ceiling + 5.0 * math.sqrt(ceiling) + 8.0)
     while True:
-        u = _seeds.rng(seed, "bright", int(cell), "gamma").random(size)
+        u = _seeds.rng(seed, "bright", int(ring), "gamma").random(size)
         gamma = np.cumsum(-np.log1p(-u))
         if gamma[-1] >= ceiling:
             return gamma[gamma < ceiling]
@@ -577,45 +681,150 @@ def interval_of(l_min: float) -> int:
     return int(k)
 
 
+@dataclass(frozen=True)
+class RingDraw:
+    """One level-0 ring's stars above a grid threshold, allocated to their finest cells and not materialised
+    (D220 items 1-3): only the ring's uniforms and what places a star in a cell exist for every star; every derived
+    column is computed later for the rows a request keeps. Star ``i`` of the ring (its identity in the draw) is
+    row ``i`` of every array, in Γ order. ``rest``, ``sector`` and ``cell`` are filled for the stars of the sub-rings
+    asked for (NaN or -1 elsewhere): each is a function of the star's own uniforms alone, so asking for fewer
+    sub-rings changes no star's."""
+
+    ring: int
+    gamma: np.ndarray  # (N,) the ring's ordered process
+    u: dict[str, np.ndarray]  # each of STREAMS: (N,) uniforms on (seed, "bright", ring, name)
+    interval: np.ndarray  # (N,) the threshold interval each star's luminosity lies in
+    part: np.ndarray  # (N,) 0 the middle part (the cluster window to YOUNG_STAR_AGE), 1 the old
+    sub_ring: np.ndarray  # (N,) the finest ring (0-255) inside the level-0 ring
+    rest: np.ndarray  # (N,) what is left of the population uniform once the part and sub-ring are chosen (NaN
+    # outside the sub-rings asked for)
+    sector: np.ndarray  # (N,) the finest sector (0-255), -1 outside the sub-rings asked for
+    cell: np.ndarray  # (N,) the finest cell's id, -1 outside the sub-rings asked for
+
+
+def draw_ring(galaxy: BrightGalaxy, seed: int, ring: int, k: int, sub_rings: np.ndarray | None = None) -> RingDraw:
+    """The level-0 ``ring``'s stars above the grid threshold ``LOG_L_GRID[k]``, allocated (D220 items 1-2).
+
+    The ring's count is one ordered process on the ring's stream against the ring's expectation
+    (``ring_curve``, the same on and off); Γ_i fixes star i's threshold interval as the cell's did until S61.
+    Within the interval its part and sub-ring are drawn at its own ``population`` uniform by their exact counts
+    there - the radial physics, the same on and off - and the uniform's remainder later chooses its isochrone, as
+    the part's did; its **sector** is the inverse of its part's cumulative placement weights round its sub-ring at
+    its own ``sector`` uniform (item 2: the composed weights the catalogue read per cell until S61, uniform with
+    the layer off), found for the stars of ``sub_rings`` (every one when None). The layer assigns the sector and
+    the azimuth and nothing else (item 4)."""
+    ring, k = int(ring), int(k)
+    ceiling = float(galaxy.ring_curve[ring, k])
+    gamma = _gammas(seed, ring, ceiling) if ceiling > 0.0 else np.zeros(0)
+    n = gamma.size
+    u = {name: _seeds.rng(seed, "bright", ring, name).random(n) for name in STREAMS}
+    # The interval: the last threshold whose expected count is at least Γ (the curve is non-increasing).
+    curve = np.minimum.accumulate(galaxy.ring_curve[ring])
+    interval = np.clip(np.searchsorted(-curve, -gamma, side="right") - 1, 0, LOG_L_GRID.size - 2)
+    # The part and the sub-ring, by their exact counts in the interval (part-major pairs).
+    cdf = galaxy.split_cdf[ring, interval]  # (N, 2 * n_sub)
+    target = u["population"] * cdf[:, -1]
+    j = np.clip((cdf < target[:, None]).sum(axis=1), 0, cdf.shape[1] - 1)
+    part, sub = np.divmod(j, galaxy.n_sub)
+    sub_ring = ring * galaxy.n_sub + sub
+    rows = np.arange(n)
+    asked = rows if sub_rings is None else np.flatnonzero(np.isin(sub_ring, sub_rings))
+    # What is left of the population uniform, for the stars asked for (NaN elsewhere: no derived column is made).
+    rest = np.full(n, np.nan)
+    ja = j[asked]
+    lower = np.where(ja > 0, cdf[asked, np.maximum(ja - 1, 0)], 0.0)
+    width = cdf[asked, ja] - lower
+    rest[asked] = np.clip((target[asked] - lower) / np.where(width > 0.0, width, 1.0), 0.0, 1.0)
+    # The sector: the inverse of the part's cumulative weights round the sub-ring, one group a (part, sub-ring).
+    sector = np.full(n, -1, dtype=np.int64)
+    cell = np.full(n, -1, dtype=np.int64)
+    for key in np.unique(j[asked]):
+        sel = asked[j[asked] == key]
+        c = galaxy.sector_cdf[int(part[sel[0]]), int(sub_ring[sel[0]])]
+        sector[sel] = np.clip(np.searchsorted(c, u["sector"][sel] * c[-1], side="left"), 0, c.size - 1)
+    cell[asked] = galaxy.cell_at(sub_ring[asked], sector[asked])
+    return RingDraw(ring, gamma, u, interval.astype(np.int64), part.astype(np.int64), sub_ring.astype(np.int64),
+                    rest, sector, cell)
+
+
+def _ranks(cell: np.ndarray) -> np.ndarray:
+    """Each row's rank among the rows of its cell, in row order: a star's index in its cell (D220 item 2) when the
+    rows are every star of the ring allocated to that cell, in ring order."""
+    n = cell.size
+    order = np.argsort(cell, kind="stable")
+    ordered = cell[order]
+    starts = np.flatnonzero(np.r_[True, ordered[1:] != ordered[:-1]]) if n else np.zeros(0, dtype=np.int64)
+    rank = np.empty(n, dtype=np.int64)
+    rank[order] = np.arange(n) - np.repeat(starts, np.diff(np.r_[starts, n]))
+    return rank
+
+
 def draw_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], k: int) -> Catalogue:
     """Every disc star older than the cluster window above the grid threshold ``LOG_L_GRID[k]`` in the finest
-    ``cells``, in each cell's Γ order (``rank`` 0, 1, …): the stars with Γ_i below the cell's expected count at
-    that threshold, exactly. Γ_i fixes the star's interval — the pair of grid thresholds its luminosity lies
-    between, by the cell's expected count at the thresholds — and the order between intervals; within its
-    interval the star's part, isochrone and segment are drawn by their exact counts in the interval and its
-    luminosity uniformly in log L across the segment's overlap with it (D203). Besides the declared columns each
-    row carries ``cell``, ``rank`` and ``gamma`` (what a cache cuts a prefix by)."""
-    cells = [int(c) for c in cells]
-    ceilings = galaxy.at_threshold(cells, int(k)) if cells else np.zeros(0)
-    drawn = [(c, _gammas(seed, c, float(lam))) if lam > 0.0 else (c, np.zeros(0)) for c, lam in zip(cells, ceilings)]
-    drawn = [(c, g) for c, g in drawn if g.size]
-    counts = tuple((c, int(g.size)) for c, g in drawn)
-    if not drawn:
+    ``cells``, grouped by cell in the order asked and in each cell's ring order (``rank`` 0, 1, …).
+
+    S61 (D220 items 1-3): each level-0 ring a cell stands in is drawn whole - its count and its uniform arrays,
+    :func:`draw_ring` - and the rows allocated to the asked cells are kept; every derived column (the isochrone,
+    the age, the segment, the luminosity, the magnitudes, the place) is computed for those rows alone
+    (:func:`_properties`). A cell is the same alone, in a window and in a sweep (D60). Until S61 each finest cell
+    drew its own count and its own streams. Besides the declared columns each row carries ``cell``, ``rank`` and
+    ``gamma`` (the ring's Γ: what a cache cuts a prefix by).
+
+    *The cost* - S61 (D220): measured on the default galaxy, cold in one process, before -> after the ring-first draw
+    (layer off / on). One cell at 8 kpc above 10^3 L☉, its ring ~192 000 stars: 6.6 / 17.5 ms -> 49 / 58 ms, the
+    ring's uniforms and allocation (its Γ and eight streams about 10 ms, the part and sub-ring of every star about
+    20 ms); above 10^4.5 L☉ 0.28 / 0.14 ms -> 0.64 / 0.66 ms. A 306-cell window above 10^3 L☉: 1.01 / 17.8 s ->
+    1.16 / 19.7 s. The whole disc above 10^4 L☉: 8.28 / 48.9 s -> 2.39 / 47.5 s; the default selection 2.14 / 7.13 s
+    -> 0.20 / 5.64 s; ``tools/timings.py``'s bright rows cold 14.1 / 15.0 / 15.3 s -> 13.2 / 12.6 / 13.2 s (whole
+    disc, one sector, whole with rgb). The single cell's rise at a low threshold is the ring's inherent cost, accepted
+    by the lead (D220); item 1's level-0 ring stands.
+
+    S61 (D220 part II item 5), the young stars placed by the clustering field, measured cold before -> after on the
+    default galaxy (layer on): the stage's default selection 4.59 -> 4.38 s (the galaxy's tables 3.35 -> 3.26 s); one
+    cell at 8 kpc above 10^3 L☉ 0.051 -> 0.044 s; the whole disc above 10^4 L☉ 38.3 -> 11.1 s - a field-placed star
+    is not placed by the pattern first, and the young reader's ring mean at each such star's radius was most of the
+    cost; ``tools/timings.py``'s bright rows cold 11.14 / 11.04 / 10.89 -> 11.84 / 11.37 / 11.96 s. The field's
+    lattice is built once per (level-0 cell, octave count) a call needs and the young reader's mesh once per level-0
+    ring (kept): a first build that read the reader per cell took the default selection to 29 s."""
+    cells = np.asarray([int(c) for c in cells], dtype=np.int64)
+    if not cells.size:
         return Catalogue.of(_empty(), ())
-    cell = np.concatenate([np.full(g.size, c, dtype=np.int64) for c, g in drawn])
-    rank = np.concatenate([np.arange(g.size, dtype=np.int64) for _, g in drawn])
-    gamma = np.concatenate([g for _, g in drawn])
-    curves = galaxy.curves([c for c, _ in drawn])
-    # The interval: the last threshold whose expected count is at least Γ (the curve is non-increasing).
-    interval = np.concatenate([
-        np.clip((curves[j][None, :] >= g[:, None]).sum(axis=1) - 1, 0, LOG_L_GRID.size - 2) for j, (_, g) in enumerate(drawn)
-    ])
-    u = {name: np.concatenate([_seeds.rng(seed, "bright", c, name).random(g.size) for c, g in drawn]) for name in STREAMS}
-    out = _properties(galaxy, cell, interval, u)
-    out.update({"cell": cell, "rank": rank, "gamma": gamma})
-    return Catalogue.of(out, counts)
+    wanted, first = np.unique(cells, return_index=True)  # a cell asked twice is served once, where first asked
+    sub_rings = np.unique(galaxy.locate(wanted)[0])
+    keep: list[tuple[RingDraw, np.ndarray, np.ndarray, np.ndarray]] = []
+    for ring in dict.fromkeys(galaxy.ring_of(cells).tolist()):
+        drawn = draw_ring(galaxy, seed, ring, k, sub_rings)
+        at = np.clip(np.searchsorted(wanted, drawn.cell), 0, wanted.size - 1)
+        hit = np.flatnonzero(wanted[at] == drawn.cell)  # in ring order: every star of the ring in an asked cell
+        if hit.size:
+            keep.append((drawn, hit, first[at[hit]], _ranks(drawn.cell[hit])))
+    if not keep:
+        return Catalogue.of(_empty(), ())
+    position = np.concatenate([p for _, _, p, _ in keep])
+    rank = np.concatenate([r for _, _, _, r in keep])
+    order = np.lexsort((rank, position))
+
+    def rows(get: Callable[[RingDraw], np.ndarray]) -> np.ndarray:
+        return np.concatenate([get(d)[h] for d, h, _, _ in keep])[order]
+
+    u = {name: rows(lambda d, name=name: d.u[name]) for name in STREAMS}
+    out = _properties(galaxy, rows(lambda d: d.sub_ring), rows(lambda d: d.sector), rows(lambda d: d.part),
+                      rows(lambda d: d.interval), rows(lambda d: d.rest), u)
+    out.update({"cell": rows(lambda d: d.cell), "rank": rank[order], "gamma": rows(lambda d: d.gamma)})
+    held = np.bincount(position, minlength=cells.size)
+    return Catalogue.of(out, tuple((int(cells[i]), int(held[i])) for i in range(cells.size) if held[i]))
 
 
 def cut_bright(drawn: Catalogue, galaxy: BrightGalaxy, l_min: float) -> Catalogue:
-    """The stars of a :func:`draw_bright` catalogue (each cell's rows in Γ order, drawn to a grid threshold at or
-    below ``l_min``'s interval) brighter than ``l_min``: in each cell the Γ prefix of ``l_min``'s interval, then
-    those of its stars above ``l_min`` itself, brightest first within each cell. Every disc star above ``l_min``
-    in the cells is in it."""
+    """The stars of a :func:`draw_bright` catalogue (each cell's rows in ring order, drawn to a grid threshold at
+    or below ``l_min``'s interval) brighter than ``l_min``: in each cell the stars of its ring's Γ prefix at
+    ``l_min``'s interval, then those of them above ``l_min`` itself, brightest first within each cell. Every disc
+    star above ``l_min`` in the cells is in it."""
     if not drawn.counts:
         return Catalogue.of(_empty(), ())
     k = interval_of(l_min)
     cell_ids = [c for c, _ in drawn.counts]
-    ceiling = np.repeat(galaxy.at_threshold(cell_ids, k), [n for _, n in drawn.counts])
+    ceiling = galaxy.ring_curve[galaxy.ring_of(np.asarray(drawn["cell"], dtype=np.int64)), k]  # S61 (D220): the ring's
     position = np.repeat(np.arange(len(cell_ids)), [n for _, n in drawn.counts])
     lum = np.asarray(drawn["bright_star_luminosity"], dtype=float)
     keep = np.flatnonzero((np.asarray(drawn["gamma"]) < ceiling) & (lum > float(l_min)))
@@ -628,8 +837,9 @@ def cut_bright(drawn: Catalogue, galaxy: BrightGalaxy, l_min: float) -> Catalogu
 def materialise_bright(galaxy: BrightGalaxy, seed: int, cells: Sequence[int], l_min: float) -> Catalogue:
     """Every disc star above ``l_min`` (L☉) older than the cluster window, in the finest ``cells``: drawn to the
     grid threshold of ``l_min``'s interval and cut at ``l_min`` (:func:`draw_bright`, :func:`cut_bright`). Rows are
-    grouped by cell in the order asked, brightest first within each; ``rank`` is the star's place in its cell's Γ
-    order, which a lower threshold does not change."""
+    grouped by cell in the order asked, brightest first within each; ``rank`` is the star's index in its cell -
+    its rank among its ring's stars allocated there, in ring order (S61, D220 item 2) - which a lower threshold
+    does not change."""
     return cut_bright(draw_bright(galaxy, seed, cells, interval_of(l_min)), galaxy, l_min)
 
 
@@ -677,22 +887,138 @@ def on_isochrone(iso: int, k: np.ndarray, u_segment: np.ndarray, u_luminosity: n
     }
 
 
-def _properties(galaxy: BrightGalaxy, cell: np.ndarray, k: np.ndarray, u: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
-    """Each star's isochrone, age, luminosity, place on the isochrone and place in its cell, given its interval."""
+def _place_by_field(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, k: np.ndarray, kept: np.ndarray,
+                    u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(radius, azimuth) of middle-part stars that keep ``kept`` (>= 1) of the clustering field's coarsest octaves,
+    placed jointly in their **level-0 cell** on the field's lattice (S61, D220 part II items 4-5): each lattice point
+    weighs the star's radial law - the surface density of its part and threshold interval, times R, as
+    :func:`place_in_cell` reads it - times the middle part's azimuthal law at the point (read on the clouds' 16 x 24
+    mesh across the cell and bilinear between: ``BrightGalaxy.young_mesh``) times the field's ``kept`` coarsest
+    octaves. The lattice is built once per (level-0 cell,
+    octave count) and shared by the cell's stars of that count (``ClusteringField.cell_lattices``); the radial law,
+    which differs by star, multiplies each lattice row at the star's own draw (``CellLattice.place``). The star's
+    point is the inverse CDF at its ``azimuth`` uniform, its place within the point by what is left of it and its
+    ``radius`` uniform."""
+    field = galaxy.clustering
+    n_sub = galaxy.n_sub
+    ring32, sector32 = ring // n_sub, sector // n_sub
+    radius, azimuth = np.empty(ring.size), np.empty(ring.size)
+    R, count_R = galaxy.R, galaxy.count_R[0]
+    cell = ring32 * CELL_SECTORS + sector32
+    for c in np.unique(cell):
+        here = np.flatnonzero(cell == c)
+        r32, s32 = divmod(int(c), CELL_SECTORS)
+        bounds = (float(galaxy.cell_rings[r32]), float(galaxy.cell_rings[r32 + 1]),
+                  float(galaxy.cell_sectors[s32]), float(galaxy.cell_sectors[s32 + 1]))
+        sets = tuple(int(n) for n in np.unique(kept[here]))
+        young = galaxy.young_mesh(r32)
+        lattices = field.cell_lattices(bounds, None, sets, mesh=None if young is None else young[:, s32, :])
+        r_mid = next(iter(lattices.values())).r_mid
+        i0 = np.clip(np.searchsorted(R, r_mid) - 1, 0, R.size - 2)
+        w1 = np.clip((r_mid - R[i0]) / (R[i0 + 1] - R[i0]), 0.0, 1.0)
+        for n in sets:
+            sel = here[kept[here] == n]
+            kk = k[sel][:, None]
+            dens = (count_R[i0[None, :], kk] - count_R[i0[None, :], kk + 1]) * (1.0 - w1)[None, :] + (
+                count_R[i0[None, :] + 1, kk] - count_R[i0[None, :] + 1, kk + 1]) * w1[None, :]
+            radial = np.maximum(dens, 0.0) * r_mid[None, :]
+            radius[sel], azimuth[sel] = lattices[n].place(radial, u_azimuth[sel], u_radius[sel])
+    return radius, azimuth
+
+
+def place_in_cell(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part: np.ndarray, k: np.ndarray,
+                  u_radius: np.ndarray, u_azimuth: np.ndarray, age: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """(radius kpc, azimuth rad): where each star stands - inside its finest cell (``ring``, ``sector`` among the
+    256 x 256), or, for a young star the clustering field places, inside that cell's level-0 cell - at its own
+    ``radius`` and ``azimuth`` uniforms: the one place the catalogue's placement is made (S61, D220 item 2: the cell
+    is the allocation's, the place within it the stage's laws as before).
+
+    The radius inverts the surface density of stars of the star's own part and threshold interval across the
+    cell's radial span, times R (the radial physics: the same with the layer on or off); the azimuth inverts the
+    part's azimuthal law at that radius across the cell's span - the pattern's contrast for the old part and, where
+    the model publishes ``sfr_modulation``, the young reader (``systems.Modulation``) for the middle part: 1 with
+    the layer off.
+
+    **The young stars near where they formed** (S61, D220 part II item 5). With the layer on, a middle-part star of
+    ``age`` (Gyr) is placed by the clustering field ``census_clustering`` with **its octaves finer than the star's
+    age allows dropped**: structure at the scale lambda survives dt(lambda) = A1 lambda^a (Grasha et al. 2017b
+    Table 2's medians, ``AGE_SEPARATION_AMPLITUDE`` and ``_INDEX``), so the 47.5 pc octave is dropped past 23.9 Myr,
+    the 95 pc past 31.2 and the 190 pc past 40.8 (``BrightGalaxy.octave_ages``, computed from the constants); a
+    star that keeps at least one is placed **jointly in radius and azimuth in its level-0 cell** on the field's
+    lattice, as the clouds are (the whole cell, the lead's amendment of item 4 on the measurement:
+    :func:`_place_by_field`). Past 40.8 Myr, and for the old part, the pattern alone places the star, as before.
+    Such a star may stand anywhere in its level-0 cell, outside its finest cell: its name, its cell and every other
+    column are part I's (the ring's count, the allocation, the luminosity), and it stays in its level-0 ring, so
+    every ring total is what it was. **No birth radius is kept** (the clouds keep one): nothing reads a bright
+    star's radius per finest ring - the field's remainder (:func:`resolve`) is per level-0 ring, and the height's
+    thin/thick criterion is read at the placed radius, as before. Layer off: no field, the arithmetic before S61.
+
+    *The gate* (D220 part II item 7c, ``tests/test_clustering_gate.py``; the default galaxy against its own law with
+    the field's width 0): the youngest bin (20-23.87 Myr) reads the hierarchy's slope, -0.570 over 47.5-190 pc, and
+    the oldest (40.71-100 Myr) 1 within 0.05 - both judged and met. Beyond 380 pc the youngest bin dips to about 0.95
+    across 340-570 pc: worst 0.0506 (milky_way 0.0494, ngc_4414 0.0566), **a miss of the 0.05 bound by up to 0.0066,
+    carried under #161** - the per-cell conservation's trough, the same mechanism that cuts the clouds' amplitude to
+    1.97 at 47.5 pc and gives their 0.94 at 158 pc. And **item 5's prediction for the middle bins failed in kind**
+    (#162): a log-normal map of the coarser octaves alone plateaus at its own level below its finest kept scale
+    (two octaves 2.10 at 47.5 pc against the full field's 2.15, one octave 1.23-1.49) instead of returning to 1, so
+    the bins barely differ until the last octave drops at 40.71 Myr; a gradual fading needs the log-normal width to
+    fall with age (Grasha et al. 2019's amplitudes 23 / 13 / 2.7 / 2.1 for <= 10, 10-50, 50-100, > 100 Myr)."""
+    if galaxy.clustering is not None and age is not None:
+        # S61 (D220 part II item 5): the young stars that keep an octave of the field, placed in their level-0 cell;
+        # every other star by the pattern alone, as before (each row's placement is its own: the subset changes none).
+        kept = octaves_kept(age, galaxy.octave_ages)
+        by_field = (part == 0) & (kept > 0)
+        if by_field.any():
+            radius, azimuth = np.empty(part.size), np.empty(part.size)
+            f, rest = np.flatnonzero(by_field), np.flatnonzero(~by_field)
+            radius[f], azimuth[f] = _place_by_field(galaxy, ring[f], sector[f], k[f], kept[f], u_radius[f], u_azimuth[f])
+            radius[rest], azimuth[rest] = _place_by_pattern(galaxy, ring[rest], sector[rest], part[rest], k[rest],
+                                                            u_radius[rest], u_azimuth[rest])
+            return radius, azimuth
+    return _place_by_pattern(galaxy, ring, sector, part, k, u_radius, u_azimuth)
+
+
+def _place_by_pattern(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part: np.ndarray, k: np.ndarray,
+                      u_radius: np.ndarray, u_azimuth: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(radius, azimuth) inside each star's finest cell by its part's laws (:func:`place_in_cell`): the placement
+    before S61, and with the layer on still every star's but the young ones the field places."""
+    # Radius: the cell's span, by inverting the surface density of the star's own part and threshold interval
+    # (linear between grid radii) times R. Azimuth: the cell's span, by the part's azimuthal law at that radius.
+    R = galaxy.R
+    lo_r, hi_r = galaxy.ring_lo[ring], galaxy.ring_hi[ring]
+    grid = np.linspace(0.0, 1.0, RADIUS_STEPS + 1)
+    rr = lo_r[:, None] + (hi_r - lo_r)[:, None] * grid[None, :]
+    i0 = np.clip(np.searchsorted(R, rr) - 1, 0, R.size - 2)
+    w1 = np.clip((rr - R[i0]) / (R[i0 + 1] - R[i0]), 0.0, 1.0)
+    p, kk = part[:, None], k[:, None]
+    dens = galaxy.count_R[p, i0, kk] - galaxy.count_R[p, i0, kk + 1]
+    dens1 = galaxy.count_R[p, i0 + 1, kk] - galaxy.count_R[p, i0 + 1, kk + 1]
+    radial = np.maximum(dens * (1.0 - w1) + dens1 * w1, 0.0) * rr
+    radius = lo_r + invert_azimuths(u_radius, grid, radial) * (hi_r - lo_r)
+
+    lo_p, hi_p = galaxy.sector_lo[sector], galaxy.sector_hi[sector]
+    agrid = np.linspace(0.0, 1.0, AZIMUTH_STEPS + 1)
+    phis = lo_p[:, None] + (hi_p - lo_p)[:, None] * agrid[None, :]
+    pattern = galaxy.pattern
+    law = np.ones_like(phis) if pattern is None or pattern.flat else pattern.contrast_at(radius[:, None], phis)
+    if galaxy.modulation is not None and (part == 0).any():
+        young = part == 0
+        law[young] = galaxy.modulation.at_points(radius[young], phis[young])
+    azimuth = lo_p + invert_azimuths(u_azimuth, agrid, law) * (hi_p - lo_p)
+
+    return radius, azimuth
+
+
+def _properties(galaxy: BrightGalaxy, ring: np.ndarray, sector: np.ndarray, part: np.ndarray, k: np.ndarray,
+                rest: np.ndarray, u: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """Each star's isochrone, age, luminosity, place on the isochrone and place in its cell, given its finest ring and
+    sector, its part, its interval and what is left of its population uniform (:func:`draw_ring`'s allocation, S61
+    D220 item 2: until S61 the part was drawn here, by the cell's weights)."""
     tab = isochrones()
-    ring, sector = galaxy.locate(cell)
     n_star = k.size
 
-    # Which part and which isochrone: ∝ the part's azimuthal weight times the mass on each isochrone times the
-    # stars it puts in this threshold interval - exact counts, the same partition the interval's count is.
-    in_bin = galaxy.count_cell[:, ring, k] - galaxy.count_cell[:, ring, k + 1]  # (2, n)
-    w = galaxy.weights[:, ring, sector] * np.maximum(in_bin, 0.0)
-    total = w.sum(axis=0)
-    p_young = np.where(total > 0.0, w[0] / np.where(total > 0.0, total, 1.0), 0.0)
-    up = u["population"]
-    part = (up >= p_young).astype(np.int64)
-    rest = np.where(part == 0, up / np.where(p_young > 0.0, p_young, 1.0), (up - p_young) / np.where(p_young < 1.0, 1.0 - p_young, 1.0))
-    rest = np.clip(rest, 0.0, 1.0)
+    # Which isochrone: ∝ the mass on each isochrone of the star's part and finest ring times the stars it puts in
+    # this threshold interval - exact counts, the same partition the interval's count is.
     iso = np.zeros(n_star, dtype=np.int64)
     for s in range(0, n_star, 8192):
         sl = slice(s, s + 8192)
@@ -727,33 +1053,11 @@ def _properties(galaxy: BrightGalaxy, cell: np.ndarray, k: np.ndarray, u: Mappin
         log_l[sel], mass[sel], log_teff[sel] = placed["log_l"], placed["mass"], placed["log_teff"]
         mags[sel], label[sel] = placed["mags"], placed["label"]
 
-    # Radius: the cell's span, by inverting the surface density of the star's own part and threshold interval
-    # (linear between grid radii) times R. Azimuth: the cell's span, by the part's azimuthal law at that radius.
-    R = galaxy.R
-    lo_r, hi_r = galaxy.ring_lo[ring], galaxy.ring_hi[ring]
-    grid = np.linspace(0.0, 1.0, RADIUS_STEPS + 1)
-    rr = lo_r[:, None] + (hi_r - lo_r)[:, None] * grid[None, :]
-    i0 = np.clip(np.searchsorted(R, rr) - 1, 0, R.size - 2)
-    w1 = np.clip((rr - R[i0]) / (R[i0 + 1] - R[i0]), 0.0, 1.0)
-    p, kk = part[:, None], k[:, None]
-    dens = galaxy.count_R[p, i0, kk] - galaxy.count_R[p, i0, kk + 1]
-    dens1 = galaxy.count_R[p, i0 + 1, kk] - galaxy.count_R[p, i0 + 1, kk + 1]
-    radial = np.maximum(dens * (1.0 - w1) + dens1 * w1, 0.0) * rr
-    radius = lo_r + invert_azimuths(u["radius"], grid, radial) * (hi_r - lo_r)
-
-    lo_p, hi_p = galaxy.sector_lo[sector], galaxy.sector_hi[sector]
-    agrid = np.linspace(0.0, 1.0, AZIMUTH_STEPS + 1)
-    phis = lo_p[:, None] + (hi_p - lo_p)[:, None] * agrid[None, :]
-    pattern = galaxy.pattern
-    law = np.ones_like(phis) if pattern is None or pattern.flat else pattern.contrast_at(radius[:, None], phis)
-    if galaxy.modulation is not None and (part == 0).any():
-        young = part == 0
-        law[young] = galaxy.modulation.at_points(radius[young], phis[young])
-    azimuth = lo_p + invert_azimuths(u["azimuth"], agrid, law) * (hi_p - lo_p)
+    radius, azimuth = place_in_cell(galaxy, ring, sector, part, k, u["radius"], u["azimuth"], age)
 
     # Height: the sech² profile at the scale height of the population born at this radius and birth time
     # (birth_population read where the star is now: the bright catalogue draws no birth radius).
-    t = galaxy.t
+    t, R = galaxy.t, galaxy.R
     col = np.clip(np.searchsorted(t, galaxy.t_max - age), 0, t.size - 1)
     row = np.clip(np.searchsorted(R, radius), 0, R.size - 1)
     thick = galaxy.thick[row, col]
@@ -865,12 +1169,16 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp, zero: bool
 BRIGHT_RADIUS = _column(
     "bright_star_radius", "Galactocentric radius", "kpc",
     "Inside the star's finest cell, by inverting the surface density of stars of its own luminosity and age "
-    "part across the cell's radial span, times R.", Ramp("viridis"))
+    "part across the cell's radial span, times R. With the randomness layer on, a star of 20 to 40.7 Myr stands "
+    "anywhere in its level-0 cell instead, drawn jointly with its azimuth by the clustering field with the octaves "
+    "finer than its age allows dropped (D220 part II item 5): near where it formed.", Ramp("viridis"))
 BRIGHT_AZIMUTH = _column(
     "bright_star_azimuth", "Azimuth", "rad",
     "Inside the star's finest cell, by inverting the arm and bar density contrast at its radius; where the "
     "model publishes where stars form today, a star younger than about one arm crossing follows that instead, "
-    "as the sampled catalogue's young stars do.", Ramp("viridis"))
+    "as the sampled catalogue's young stars do. With the randomness layer on, a star of 20 to 40.7 Myr is drawn "
+    "jointly with its radius in its level-0 cell, by that law times the clustering field with the octaves finer "
+    "than its age allows dropped (D220 part II item 5).", Ramp("viridis"))
 BRIGHT_HEIGHT = _column(
     "bright_star_height", "Height above the plane", "kpc",
     "Inverted from the sech² profile at the scale height of the population (thin or thick) born at the "
@@ -890,7 +1198,7 @@ BRIGHT_MASS = _column(
     "star's luminosity interval, the point by the star's luminosity on it.", Ramp("inferno", scale="log"))
 BRIGHT_LUMINOSITY = _column(
     "bright_star_luminosity", "Luminosity", "Lsun",
-    "Bolometric, from the luminosity function: the star's place in its cell's ordered Poisson process fixes the "
+    "Bolometric, from the luminosity function: the star's place in its ring's ordered Poisson process fixes the "
     "0.05-dex interval of luminosity it lies in, and within it the luminosity is uniform in log L across the "
     "isochrone segment its exact count there chose, so every disc star brighter than any threshold is in the "
     "catalogue and a higher grid threshold keeps a prefix of it. A point painted by this through a "
@@ -955,6 +1263,7 @@ READS = tuple(dict.fromkeys((
     *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
     # S59 (D218): the young part's reader - the gas pattern's reads and the ring's gas column and threshold.
     *GAS_PATTERN_READS, *YOUNG_READS,
+    "census_clustering_seed",  # S61 (D220 part II item 5): the field the young stars are placed by in their cell
 )))
 
 
@@ -983,9 +1292,9 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
     Stage(
         id="bright_stars", slot="bright_stars", checkpoint=5,
         about=(
-            "Every disc star above a luminosity, complete: per finest cell an ordered Poisson process in "
+            "Every disc star above a luminosity, complete: per ring an ordered Poisson process in "
             "luminosity on the population's luminosity function, so a higher threshold keeps a prefix and a "
-            "region's stars are a sweep's. Publishes the disc's brightest few thousand; /api/bright serves any "
+            "region's stars are a sweep's; each star's cell is allocated by the arms' weights round its ring. Publishes the disc's brightest few thousand; /api/bright serves any "
             "threshold or count. Stars younger than the cluster census's window are the census's, and the bulge "
             "is not covered: it stays in the field."
         ),
@@ -993,7 +1302,8 @@ BRIGHT_STARS = IMPLEMENTATIONS.register(
         placement_reader=True,  # S55 (D214, I4): a census, placed by the stellar pattern and the modulation
         reads_seeds=("systems_seed",),
         # S59 (D218): and what the young part's reader applies the star formation law with.
-        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS),
+        reads_constants=("RETURN_FRACTION", "GMC_PHASE_BLOWN_OPEN", "GMC_PHASE_DISPERSING", *YOUNG_CONSTANTS,
+                         *CLUSTERING_CONSTANTS),  # S61 (D220 part II item 5): the field's numbers and its survival
         requires=READS,
         requires_optional=("sfr_modulation",),
         publishes=(*COLUMNS, BRIGHT_LIMIT, BRIGHT_COUNT_1E3),

@@ -42,7 +42,9 @@ OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud",
 # The small tables a run publishes whole (S59, D218): a table's columns share its rows, as an object class's share
 # its objects, and the two vocabularies share no name. arm_piece: the realised census of arm pieces, the layer's
 # (S60, D219; it took the place of S59's arm_segment, the common winding's seeded segments, retired with it).
-TABLES: tuple[str, ...] = ("arm_piece",)
+# cell: one row a level-0 cell of the catalogue grid, ring by ring (S61, D220 part II item 8) - the clustering field's
+# mean in each cell, a number a renderer divides by; the rows are the cells, which are not drawn.
+TABLES: tuple[str, ...] = ("arm_piece", "cell")
 assert not set(TABLES) & set(OBJECTS), "a table is not an object class: the two closed lists share no name"
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other

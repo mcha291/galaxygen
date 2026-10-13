@@ -789,6 +789,104 @@ LEVEL0: dict[str, Constant] = {
         "octaves weigh one, a half, a quarter and an eighth. The viewer's own choice, none read, #110 [verified: "
         "frontend/src/galaxy/region.ts at tag s54, 'weights 1, 1/2, 1/4, 1/8'].",
     ),
+    # The clustering field of the censuses (S61, DECISIONS.md D220 part II): the randomness layer's stand-in for the
+    # gas's hierarchical fragmentation below a cell, a log-normal map of an octave sum of lattice noise. Its scale
+    # and octaves are the ruling's; its spectral slope and width are derived from its statistic, measured once
+    # (each about says how); the lattice density is the noise module's own rule. Constants of the model (G1's
+    # ruling 2b): the same with the layer on or off; the layer's census_clustering stage realises the field.
+    "CENSUS_CLUSTERING_SCALE": Constant(
+        0.19,
+        "kpc",
+        "The clustering field's coarsest lattice scale, the largest scale of the young clusters' hierarchy: 190 pc, "
+        "the median of the five largest hierarchical scales measured in nearby discs (101, 110, 190, 450 and 845 "
+        "pc; four more galaxies give only limits, where one power law runs to the edge of the footprint) "
+        "[verified: Menon et al. 2021, MNRAS, arXiv:2108.04387, Table 3; docs/READING_CLUSTERING.md 1.3]. Five of the "
+        "twelve galaxies that table covers; bracketed by the 112 pc break of the six-galaxy average [verified: "
+        "Grasha et al. 2017a, ApJ 840, 113, Table 4; READING_CLUSTERING.md 1.2] and the 210-300 pc of NGC 628 "
+        "[verified: Lapeer et al. 2026, arXiv:2601.11434, sect. 4.4.2; READING_CLUSTERING.md 1.5]. Beyond it the "
+        "field is flat: 1 + omega is 1 (DECISIONS.md D220 part II item 2).",
+    ),
+    "CENSUS_CLUSTERING_OCTAVES": Constant(
+        3,
+        "count",
+        "How many octaves of lattice noise the clustering field sums, each at twice the last one's frequency: "
+        "three, at 190, 95 and 47.5 pc, the finest the field's resolution - as far down as the cost allows "
+        "(DECISIONS.md D220 part II item 3). Below 47.5 pc the field has no structure of its own; the census's "
+        "1 + omega there is the finest octave's, flattening.",
+    ),
+    "CENSUS_CLUSTERING_SPECTRAL_SLOPE": Constant(
+        1.53,
+        "dimensionless",
+        "The power-spectrum slope the clustering field's octaves are weighted to, P(k) ~ k^-1.53 in two dimensions. "
+        "Derived, not chosen (DECISIONS.md D220 part II item 3): with the width beside it, the one pair for "
+        "which the field's own two-point function - points drawn by the field alone in a flat footprint, measured "
+        "as the sources measure (Landy-Szalay, 20 log bins 30 pc-5 kpc) - has slope -0.64 over 47.5-190 pc, 2.43 "
+        "at 47.5 pc on its fitted law and 1 within 0.05 beyond 380 pc. Measured at S61 as the exact expectation "
+        "of such points (the field's autocorrelation over the square of its mean, by FFT on a 5.9 pc grid, binned "
+        "as the instrument bins): 48 noise seeds in 6.08 kpc squares give slope -0.646 +- 0.010 and 2.45 at "
+        "47.5 pc, 12 seeds in 12.16 kpc squares -0.638 +- 0.008 and 2.42; 0.990-0.998 beyond 380 pc. One 6 kpc "
+        "square alone scatters by 0.068 in slope. Points drawn by rejection, 10 000 in each of eight 6.08 kpc "
+        "squares and measured by the instrument against ten times as many uniform randoms, read each square's "
+        "exact expectation to within their Poisson noise. A Gaussian field's power law P ~ k^-(2 + alpha) for "
+        "1 + omega ~ r^alpha does not carry over: the map is log-normal and three octaves are no power law, so "
+        "the pair is measured.",
+    ),
+    "CENSUS_CLUSTERING_WIDTH": Constant(
+        1.75,
+        "dimensionless",
+        "The log-normal width of the clustering field, the sigma of exp(sigma g - sigma^2/2) over a unit-variance "
+        "octave sum g. Derived with the spectral slope beside it, from the same measurement (DECISIONS.md D220 "
+        "part II item 3): the amplitude 1 + omega = 2.43 at 47.5 pc, (190/47.5)^0.64, fixes it once the slope "
+        "fixes the shape. The statistic is the ratio of the two branches of the six-galaxy correlation of "
+        "clusters up to 40 Myr, inner -0.85 +- 0.03 over outer -0.21 +- 0.02, meeting at 112 pc [verified: "
+        "Grasha et al. 2017a, ApJ 840, 113, Table 4, classes 1-3; docs/READING_CLUSTERING.md 1.2]: the six "
+        "galaxies' pair-weighted average, their inner slopes running -0.4 to -1.7 one by one.",
+    ),
+    "CENSUS_CLUSTERING_POINTS": Constant(
+        4,
+        "count",
+        "Points per cell of the clustering field's finest lattice, along each axis, of the lattice a cloud is "
+        "placed on in its level-0 cell: this many per 47.5 pc across the ring's radial extent and along the "
+        "sector's outer arc. The lattice noise's own rule, at least four per finest cell (galaxy/layer/noise.py, "
+        "cell_quadrature). Measured at S61 on 40 level-0 cells: a cell's mean of the field at four points is "
+        "within 6e-4 rms (3e-3 at worst) of its mean at eight; at two, 7e-3 (4e-2).",
+    ),
+    "CENSUS_CLUSTERING_TABLE_POINTS": Constant(
+        2,
+        "count",
+        "Points per cell of the clustering field's finest lattice, along each axis, of the lattice each level-0 "
+        "cell's published mean of the field is taken on - half the placement lattice's density, for its cost: "
+        "measured at S61 the whole table took 6.0 s at four points and 1.2 s at two, and over all 1024 cells "
+        "the mean at two is within 5.7e-3 rms (3.6e-2 at worst) of the mean at four. The number a renderer "
+        "divides the field by is defined on this lattice and no other.",
+    ),
+    # How long the clustering field's structure at a scale survives in the stars born in it (S61, DECISIONS.md D220
+    # part II item 5): the bright catalogue's young stars keep the field's octaves no finer than their age allows.
+    "AGE_SEPARATION_AMPLITUDE": Constant(
+        5.4,
+        "Myr",
+        "The amplitude A1 of the age difference against separation of young star clusters, dt = A1 R^alpha with R "
+        "in pc: 5.4 Myr, the median of the eight galaxies of Grasha et al. 2017b Table 2 (NGC 7793 4.0, NGC 1313 "
+        "16, NGC 3738 9.0, NGC 6503 1.7, NGC 3344 1.0, NGC 5194 6.8, NGC 628 7.4, NGC 1566 2.3 - the range 1.0-16) "
+        "[verified: Grasha et al. 2017b, ApJ 842, 25, arXiv:1705.06281, Table 2; docs/READING_CLUSTERING.md section 2, "
+        "'Age difference against separation'; the median inferred]. Beside it the LMC's 3.3 S^0.33 over 15-780 pc "
+        "[verified: Efremov & Elmegreen 1998, MNRAS 299, 588, sect. 2]. Read as how long structure at a scale "
+        "survives (DECISIONS.md D220 part II item 5): a bright star older than dt(lambda) keeps no clustering at "
+        "the scale lambda - with the octaves 190, 95 and 47.5 pc, past 40.8, 31.2 and 23.9 Myr. The sources' own "
+        "times for the young stars' structure to fade run from 'in place by 40 Myr' (NGC 628) and 40-60 Myr (six "
+        "galaxies) to 50-100 Myr in M 51 and about 100 Myr (READING_CLUSTERING.md sections 2 and 5): this median "
+        "sits at the short end.",
+    ),
+    "AGE_SEPARATION_INDEX": Constant(
+        0.385,
+        "dimensionless",
+        "The power alpha of the age difference against separation of young star clusters, dt = A1 R^alpha: 0.385, "
+        "the median of the eight galaxies of Grasha et al. 2017b Table 2 (0.24-0.6 one by one; the paper states "
+        "0.25-0.6) [verified: Grasha et al. 2017b, ApJ 842, 25, Table 2; docs/READING_CLUSTERING.md section 2; the "
+        "median inferred]. The LMC's is 0.33 (Efremov & Elmegreen 1998), the Milky Way's pairs 0.40 +- 0.08 "
+        "(Grasha 2017b sect. 1). With the amplitude beside it, how long the clustering field's octaves survive in "
+        "the bright catalogue's young stars (DECISIONS.md D220 part II item 5).",
+    ),
     "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
         2.73,
         "dimensionless",

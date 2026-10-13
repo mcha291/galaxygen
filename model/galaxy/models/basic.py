@@ -48,6 +48,7 @@ BASIC = MODELS.register(
             ("population", "population"),
             ("systems", "systems"),
             ("bright_stars", "bright_stars"),
+            ("census_clustering", "census_clustering"),  # S61 (D220 part II): the layer's clustering field, placing the clouds
             ("clouds", "clouds"),
             ("cloud_texture", "cloud_texture"),  # S55 (D214): the layer's stage, the four cloud columns `clouds` drew
             ("clusters", "clusters"),

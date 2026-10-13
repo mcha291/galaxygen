@@ -1539,3 +1539,29 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   The builder's "+6–15 %" was an API reading against the pass before; the catalogue cost 2.3 times, and two
   timing tests that state its structure had become coin-flips. Run the cost instrument and the timing tests
   whenever a reader changes, before the reviewer and before the gate hears a number.
+
+## From S61 (the clustered censuses; a Fable lead on the owner's word, five Opus builders, a probe, a reviewer)
+
+- [field] A placement rule bounds the correlation a field can carry. The field alone met its statistic to the
+  digits; placed along an arc at a fixed radius the census read −0.18 of a −0.64 slope, in a ±190 pc window −0.41,
+  in the whole cell −0.63. Probe the placement variants on the finished census before a ruling names one, and
+  rule on the probe (the first ruling here named the arc, and was amended on the builder's numbers).
+- [field] The only honest control is the census's own law realised again with the field off. The literal
+  control - the same census under other seeds with the field kept - reads 1 at every scale because data and
+  control share the clumps; a probe against it would have passed any field.
+- [audit] A declared bound is measured over the whole disc, not a sample, and declared as a distribution: "up to
+  about 0.06 dex" was the 90th percentile and the maximum was 1.26 dex at the disc's edge, where the gas
+  metallicity falls 1.7 dex in a kilopc; the reviewer found it with one histogram.
+- [field] Conserving a count per cell cuts a field's power at the cell's scale and digs a trough beyond it: the
+  census reads 1.97 where the field reads 2.43 at 47.5 pc and 0.94 at 158 pc. Predict a placed field's
+  correlation from the placement, not from the field; a prediction read before it is judged is still the record.
+- [catalogue] A ring-first draw that keeps the ring's objects the same on and off makes every "census statistic"
+  exception disappear at once (fourteen entries, six of them a few units in the last place apart by the order of
+  summation) - and moves every layer-off pin once. Do all the censuses in one session, each builder its own
+  files, and re-pin old beside new; the review's one missing "was" was found by sampling.
+- [infra] Rebase a builder onto the session branch and fast-forward; cherry-pick only when the branch has not
+  moved under it. Two builders editing one test file's bookkeeping block is one conflict per builder, resolved
+  by the later one. Builders share the session scratchpad: give each a sub-folder (two collided on `cost.py`).
+- [close] At most two agents at once, one heavy, none started past 50 % of the 5-hour window, the meter read
+  before every spawn; a first full suite in the background during a dead window costs no agent tokens and
+  shows the failures early.

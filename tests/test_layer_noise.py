@@ -769,6 +769,25 @@ def test_each_lognormal_vector_cell_has_quadrature_mean_one_under_its_stored_nor
         assert case["normaliser"] == pytest.approx(float(noise.lognormal_normaliser(g, case["sigma"])), rel=1e-13)
 
 
+def test_the_coarsest_octaves_are_the_whole_sum_truncated_at_its_own_amplitudes():
+    """S61 (D220 part II item 5): ``fractal_coarsest`` keeps the coarsest n octaves at the whole sum's amplitudes and
+    normaliser - the finer dropped, nothing re-weighted - and its n = octaves is ``fractal`` bit for bit."""
+    rng = np.random.default_rng(5)
+    p = rng.uniform(-3.0, 3.0, (2000, 2))
+    slope, octaves, base = 1.53, 3, 1.0 / 0.19
+    whole = noise.fractal(77, p, slope, octaves, base_frequency=base)
+    one, two, three = noise.fractal_coarsest(77, p, slope, octaves, (1, 2, 3), base_frequency=base)
+    assert three.tobytes() == whole.tobytes()
+    gain, top, norm = noise.octave_weights(slope, octaves, 2.0, 2)
+    n0 = noise.noise2(77, p[:, 0] * base, p[:, 1] * base, octave=0)
+    n1 = noise.noise2(77, p[:, 0] * base * 2.0, p[:, 1] * base * 2.0, octave=1)
+    assert np.allclose(one, norm * n0, rtol=1e-14, atol=1e-15)
+    assert np.allclose(two, norm * (n0 + gain * n1), rtol=1e-14, atol=1e-15)
+    assert noise.fractal_coarsest(77, p, slope, octaves, (2,), base_frequency=base)[0].tobytes() == two.tobytes()
+    with pytest.raises(noise.NoiseError):
+        noise.fractal_coarsest(77, p, slope, octaves, (4,), base_frequency=base)
+
+
 # --- arguments ----------------------------------------------------------------------------------------------------
 
 
@@ -835,7 +854,12 @@ def test_the_noise_imports_only_numpy_and_the_standard_library():
     assert imported_modules(ROOT / "model" / "galaxy" / "layer" / "__init__.py") <= {"__future__", "__future__.annotations"}
 
 
-def test_the_noise_is_a_leaf_and_nothing_in_the_model_reads_it_yet():
+# The modules of the model that read the noise primitives, a closed list (S61, D220 part II): the first reader is
+# the censuses' clustering field, a layer stage. A new reader adds itself here in the decision that adds it.
+NOISE_READERS = {"model/galaxy/layer/census_clustering.py"}
+
+
+def test_the_noise_is_a_leaf_and_only_the_layer_s_listed_stages_read_it():
     """Phase R, item 2: the primitives have no reader in this branch. The first reader removes its package
     from this list in the decision that adds it.
 
@@ -843,12 +867,28 @@ def test_the_noise_is_a_leaf_and_nothing_in_the_model_reads_it_yet():
     layer's other modules are read since Phase R's own builder B - ``compose`` by the runner, the pattern and
     census stages and the API, ``cloud_texture`` by the stage registry - so what is held here is the noise
     alone. It imports nothing of the project (the test above) and no module of the model imports it: the
-    switch, the fourth kind and the relabelled cloud columns were built without touching a primitive."""
+    switch, the fourth kind and the relabelled cloud columns were built without touching a primitive.
+
+    S61 (D220 part II): was "nothing in the model reads it yet" - the clustering field of the censuses
+    (``layer/census_clustering.py``) is the first reader, a layer stage; no other module imports it."""
     package = ROOT / "model" / "galaxy"
     noise_file = package / "layer" / "noise.py"
     files = [p for p in sorted(package.rglob("*.py")) if p != noise_file]
     assert len(files) > 40
+    readers = set()
     for path in files:
         for name in imported_modules(path):
             parts = name.lstrip(".").split(".")
-            assert "noise" not in parts, f"{path.relative_to(ROOT)} imports {name}"
+            if "noise" in parts:
+                readers.add(path.relative_to(ROOT).as_posix())
+    assert readers == NOISE_READERS, sorted(readers)
+
+
+def test_cell_quadrature_takes_a_pair_and_an_int_is_the_square_pair():
+    """S61 (D220 part II): a cell much longer round the ring than across it takes (n_u, n_v); an int n is (n, n) to the bit."""
+    assert np.array_equal(noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, 4), noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, (4, 4)))
+    q = noise.cell_quadrature(0.0, 1.0, 2.0, 5.0, (2, 3))
+    assert q.shape == (6, 2) and np.allclose(q[:, 0], [0.25, 0.75] * 3) and np.allclose(q[:, 1], [2.5, 2.5, 3.5, 3.5, 4.5, 4.5])
+    for bad in ((0, 3), (2,), (2.0, 3), (True, 3)):
+        with pytest.raises(noise.NoiseError):
+            noise.cell_quadrature(0.0, 1.0, 0.0, 1.0, bad)

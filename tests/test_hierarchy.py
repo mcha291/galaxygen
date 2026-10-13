@@ -101,7 +101,15 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
         offset += n
     expected = sy.cell_expected(F["stellar_surface_density"], R, 20000, PARENT, sy.ArmPattern.from_fields(F, R))  # S56 (D215): the modes are published on the grid radii
     extras = int((~inherited).sum())
-    assert extras == len(kids) * int(round(expected * (1.0 - 1.0 / len(kids))))
+    # S61 (D220 item 8): was `extras == len(kids) * round(expected * (1 - 1/len(kids)))` - each child drew its parent's
+    # expectation times (1 - 4^-k), rounded. Drawn ring-first, the children's own stars are their sub-rings' draws
+    # allocated among the sub-rings' children, so the parent's children hold (4^k - 1) times its expectation in
+    # expectation (a sector's mean is the mean of its sub-sectors' means), and a multinomial draw about it.
+    want = (len(kids) - 1) * expected
+    assert abs(extras - want) < 5.0 * math.sqrt(want), (extras, want)
+    # The children's own stars carry their identity in their sub-rings' draws, at this level.
+    lay = sy.star_layout_of(cat)
+    assert np.all(lay.level[~inherited] == level) and np.all(lay.ring[~inherited] // (1 << level) == PARENT // sy.CELL_SECTORS)
     # Determinism: a child alone is its slice of the whole set.
     q = 1
     alone = sy.materialise(F, R, t, 0, 20000, cells=[kids[q]], migration=3.6, level=level, constants=constants)
@@ -123,7 +131,11 @@ def test_union_prefix_and_determinism_at_every_level(fields, constants, level):
     # S60 (D219): was 10 - the stellar pattern is the census of arm pieces, and its sector weight in this cell reads
     # 0.766 of the ring's (expected 15.92 stars; the ring's 665.03 the same). No name columns: the level-0 catalogue's
     # 18 columns are 391af07's, and layer off every array is 391af07's bit for bit at 20 000 stars, seed 0.
-    assert "level" not in parent and parent.size == 16
+    # S61 (D220): was 16 - the sample is drawn ring-first: the ring's 665 stars (its expectation 665.03, one seeded
+    # rounding on the ring's stream) are allocated among its sectors by the parts' weights, and 9 land here against
+    # the same expectation of 15.92 (measured: every cell's expectation under the allocation is the contrast's to
+    # 4e-16, and the counts of a 200 000-star sample scatter about it at chi2 0.93-1.02 a cell on three seeds).
+    assert "level" not in parent and parent.size == 9
 
 
 def test_a_deeper_level_contains_its_parents_rows(fields, constants):
@@ -153,7 +165,10 @@ def test_the_api_serves_levels_and_opens_a_child_star():
     # Every level-0 star of the window that lies in a child the window meets is among the level-2 rows
     # by name (the union property over the API; a level-0 cell's stars outside the window's children
     # belong to children the window did not ask for).
-    R = np.linspace(0.05, 30.0, 400)
+    # S61 (D220): was np.linspace(0.05, 30.0, 400) - a stand-in for the service's grid, whose cell edges are not
+    # its edges; the ring-first redraw put a star of cell 288 at 9.170 kpc, beyond the service's sub-ring edge
+    # (9.155) and inside the stand-in's (9.175), so the test put it in a child the response had not served.
+    R = svc.grid.R
     wanted = set(h2["cells"]["ids"])
     theirs = set(zip(a2["level"].tolist(), a2["cell"].tolist(), a2["index"].tolist()))
     row = 0

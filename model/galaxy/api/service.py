@@ -64,6 +64,7 @@ from galaxy.core.registry import (
 )
 from galaxy.core.stage import CHECKPOINTS, Stage
 from galaxy.core.units import unit as _unit
+from galaxy.layer import census_clustering as _census_clustering  # the clustering field /api/clouds carries (S61, D220)
 from galaxy.layer import cloud_texture as _cloud_texture  # the cloud-interior noise's parameters /api/clouds carries (S55)
 from galaxy.layer import compose as _compose  # the one reader of the layer's switch (S55, D214)
 from galaxy.run import Outputs, RunError
@@ -1277,7 +1278,7 @@ class Service:
         parents = _catalogue.cells_in(R, r_min, r_max, phi_min, phi_max)
         key = repr(("clouds", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
         census = self.cells.catalogue(
-            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted),
+            key, parents, lambda wanted: _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"])),
         )
         # A whole cloud: the census's own columns and the randomness layer's four (the embedded source's offset
         # and direction, the density gradient's steepness and direction - published by the layer's cloud_texture
@@ -1322,6 +1323,12 @@ class Service:
             # amended, D212) - the viewer may hold no parameter of its own, so the model's must reach it. By the
             # wire's own names, never the constants'; not among the scalars, which are a stage's fields.
             "cloud_interior": _cloud_texture.interior(constants),
+            # S61 (D220 part II items 5 and 8): the clustering field the clouds are placed by, jointly in
+            # radius and azimuth on each level-0 cell's lattice - its seed, its
+            # form and the octave sum's three weights (the constants' exception above, for the same reason: a
+            # function the viewer may evaluate), and the realised mean of its map in each level-0 cell the window
+            # asked for, the number a renderer divides the field by. With layer=off the seed and the means are null.
+            "census_clustering": _census_clustering.header(out.fields, constants, parents),
             "columns": columns,
             "stages": list(ran),
         }
@@ -1348,6 +1355,9 @@ class Service:
         layer = self._layer(q)
         # What the stage reads other than the cloud columns, which the census here draws for itself.
         reads = tuple(n for n in self._reads(model, stage) if n not in _clusters.CLOUD_READS)
+        # S61 (D220 part II): and the clustering field's seed, which the clouds stage reads and the clusters stage
+        # does not - the cells' clouds drawn here are placed by it, as the clouds stage places them.
+        reads += tuple(n for n in ("census_clustering_seed",) if n in _stage_for(model, CLOUDS_SLOT, self.impls).requires)
         out, ran = self.compute(model, inputs, reads, layer)
         seed = int(out.inputs[stage.reads_seeds[0]])
         constants = {k: c.value for k, c in model.constants.items()}
@@ -1355,7 +1365,7 @@ class Service:
         key = repr(("clusters", model.name, self.grid.spec, sorted(_inputs_json(out.inputs).items()), seed, _compose.setting(out.fields)))
 
         def draw(wanted: Sequence[int]) -> Any:
-            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted)
+            clouds = _clouds.materialise_clouds(out.fields, R, seed, constants, wanted, texture_seed=int(out.inputs["texture_seed"]))
             clusters = _clusters.materialise_clusters(clouds, out.fields, R, seed, constants)
             regions = _nebular.materialise_nebular(clusters, clouds, constants)  # S35: the region is the cluster's
             blown = _bubbles.materialise_bubbles(clusters, regions, constants)  # S36: and so is the bubble
@@ -2011,11 +2021,12 @@ class Service:
             # A level-k name addresses the child's own stars: its inherited rows are opened by their
             # parent's level-0 name, so the same star has the same planets by either route (S32).
             own = np.asarray(here["level"]) == level
-            here = _catalogue.Catalogue.of({n: np.asarray(v)[own] for n, v in here.items() if n not in ("level", "cell", "index")}, ((cell, int(own.sum())),))
+            here = _catalogue.select(here, own, ((cell, int(own.sum())),), drop=("level", "cell", "index"))
         if index >= here.size:
             raise NotFound(f"cell {cell} has {here.size} stars of its own at this sample size and level, so no index {index}")
 
-        system, found = _planets.one_system(here, index, _catalogue.canonical_cell(level, cell), seeds["planets_seed"], constants)
+        # S61 (D220): the star's planets are keyed on its identity in its ring's draw, which the catalogue carries.
+        system, found = _planets.one_system(here, index, seeds["planets_seed"], constants)
         columns = [d.name for d in planets.publishes if d.of == "planet" and d.name in system]
         star = {d.name: _number(here[d.name][index]) for d in catalogue.publishes if d.of == "star" and d.name in here}
         header = {

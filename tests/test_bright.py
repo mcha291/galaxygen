@@ -230,7 +230,10 @@ def test_the_stage_publishes_the_default_selection_and_its_two_scalars(default, 
     # still the tables', to the bit.
     # S60 (D219): the arms are a census of pieces, so the young stars' cell weights are another pattern's: the
     # 3162nd star moves again (-0.45 %); the expected count is still the tables', to the bit.
-    assert F["bright_star_limit"] == pytest.approx(34423.216, rel=1e-6)  # S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
+    # S61 (D220 items 1-4): the catalogue is drawn ring-first - each level-0 ring's count and every per-star draw on
+    # the ring's stream, the star's cell allocated by its sector uniform - so every star is a new draw once, and the
+    # 3162nd moves (-1.59 %); the same number with the layer on or off from now on (test_the_ring_first_draw_...).
+    assert F["bright_star_limit"] == pytest.approx(33875.549, rel=1e-6)  # S61 (D220): was 34423.216; S60 (D219): was 34580.531; S59 (D218 follow-up): was 34348.365; S59 (D218): was 34697.372; S58 (D217 follow-up): was 34617.696; S58 (D217): was 34635.740; S57 (D216): was 34549.483; S56 (D215): was 33787.518; S51 (D210): was 33960.12
     assert F["bright_star_count_1e3"] == pytest.approx(3.348738e6, rel=1e-6)
     assert np.all(np.asarray(F["bright_star_age"]) >= _cluster_window(models) * (1.0 - 1e-12))
     for d in br.COLUMNS:
@@ -328,6 +331,135 @@ def test_a_window_alone_is_the_same_cells_inside_a_whole_disc_call():
         i = name_w[(int(c), int(r))]
         for col in ha["columns"]:
             assert a[col][j] == w[col][i], col
+
+
+def test_a_cell_alone_is_the_cell_in_a_sweep_of_its_ring_and_of_the_disc(galaxy, seed, default):
+    """S61 (D220 item 3): a finest cell drawn alone draws its level-0 ring's count and uniform arrays whole and keeps
+    the rows allocated to it - so a cell alone, a few cells across two rings and the whole disc hold the same stars
+    in it, named by (cell, rank), every column equal; and the cell's index is its rank among the ring's stars
+    allocated there, in ring order (rank 0, 1, ... in Gamma order)."""
+    cells = br.all_cells()
+    whole = br.materialise_bright(galaxy, seed, cells, 10.0 ** 3.5)
+    name = {(int(c), int(r)): i for i, (c, r) in enumerate(zip(whole["cell"], whole["rank"]))}
+    held = dict(whole.counts)
+    busy = sorted(held, key=lambda c: -held[c])
+    ring = galaxy.ring_of(busy)
+    same_ring = next(c for c, r in zip(busy[1:], ring[1:]) if r == ring[0])
+    picked = [busy[0], same_ring, next(c for c, r in zip(busy, ring) if r != ring[0])]
+    assert len(set(galaxy.ring_of(picked).tolist())) == 2
+    for asked in ([picked[0]], picked):
+        part = br.materialise_bright(galaxy, seed, asked, 10.0 ** 3.5)
+        assert [c for c, _ in part.counts] == [c for c in asked if c in held]
+        assert part.size == sum(held[c] for c in asked) > 0
+        for j, (c, r) in enumerate(zip(part["cell"], part["rank"])):
+            i = name[(int(c), int(r))]
+            for col in whole:
+                assert np.asarray(part[col])[j] == np.asarray(whole[col])[i], col
+    # The index: in each cell the drawn rows (before the cut) are ranks 0..n-1 in increasing Gamma.
+    drawn = br.draw_bright(galaxy, seed, picked, br.interval_of(10.0 ** 3.5))
+    start = 0
+    for c, n in drawn.counts:
+        assert list(drawn["rank"][start:start + n]) == list(range(n)) and np.all(np.diff(drawn["gamma"][start:start + n]) > 0.0)
+        start += n
+
+
+@pytest.fixture(scope="module")
+def default_off(models):
+    return run(models[DEFAULT_MODEL], only=WANTED, layer=False)
+
+
+def test_the_field_s_octaves_survive_as_the_age_separation_relation_says(galaxy, models):
+    """S61 (D220 part II item 5): dt(lambda) = A1 lambda^a, Grasha et al. 2017b Table 2's medians (5.4 Myr, 0.385),
+    read as how long structure at the scale lambda survives: the 190, 95 and 47.5 pc octaves are dropped past 40.71,
+    31.18 and 23.87 Myr (the ruling wrote 40.8, 31.2 and 23.9), computed from the constants."""
+    c = {k: v.value for k, v in models[DEFAULT_MODEL].constants.items()}
+    assert (c[br.AGE_AMPLITUDE], c[br.AGE_INDEX]) == (5.4, 0.385)
+    assert galaxy.octave_ages == pytest.approx([40.7112, 31.1758, 23.8738], abs=1e-4)
+    assert np.all(np.diff(galaxy.octave_ages) < 0.0)
+    ages = np.array([20.0, 23.87, 23.88, 31.17, 31.18, 40.71, 40.72, 99.0]) / 1000.0
+    assert list(br.octaves_kept(ages, galaxy.octave_ages)) == [3, 3, 2, 2, 1, 1, 0, 0]
+
+
+def test_a_lattice_s_two_step_inverse_is_the_row_major_inverse_of_the_product():
+    """S61 (D220 part II item 5): ``CellLattice.place`` - each object's radial law times the shared lattice, the row
+    first and then the point within it - lands each object on the point the clouds' one-step inverse of the whole
+    product (``ClusteringField.place``'s arithmetic) gives it, at the same place within it."""
+    from galaxy.layer.census_clustering import CellLattice
+
+    rng = np.random.default_rng(3)
+    n_r, n_phi, n = 7, 11, 400
+    w = rng.random((n_r, n_phi)) ** 3
+    w[2] = 0.0  # a row with no weight is never chosen
+    cell = (5.0, 6.0, 0.1, 0.3)
+    r_mid = 5.0 + (np.arange(n_r) + 0.5) / n_r
+    phi_mid = 0.1 + (np.arange(n_phi) + 0.5) * 0.2 / n_phi
+    lattice = CellLattice.of(cell, r_mid, phi_mid, w)
+    radial, u, v = rng.random((n, n_r)), rng.random(n), rng.random(n)
+    radius, azimuth = lattice.place(radial, u, v)
+    for i in range(n):
+        flat = (radial[i][:, None] * w).ravel()
+        cdf = np.cumsum(flat)
+        k = min(int(np.searchsorted(cdf, u[i] * cdf[-1], side="right")), flat.size - 1)
+        row, col = divmod(k, n_phi)
+        within = (u[i] * cdf[-1] - (cdf[k - 1] if k else 0.0)) / flat[k]
+        assert radius[i] == pytest.approx(5.0 + (row + v[i]) / n_r, abs=1e-12)
+        assert azimuth[i] == pytest.approx(0.1 + (col + within) * 0.2 / n_phi, abs=1e-9)
+    assert not np.any((radius >= 5.0 + 2 / n_r) & (radius < 5.0 + 3 / n_r))
+
+
+def test_the_young_stars_the_field_places_stand_in_their_level_0_cell(galaxy, seed, default):
+    """S61 (D220 part II item 5): a star of 20 to 40.71 Myr stands anywhere in its level-0 cell, placed there by the
+    field; every other star inside its finest cell, as before - and the field moves the young ones out of it."""
+    cells = _window(default.grid.R, 6.0, 10.0, 0.0, 1.0)
+    cat = br.materialise_bright(galaxy, seed, cells, 1.0e4)
+    radius, azimuth = np.asarray(cat["bright_star_radius"]), np.asarray(cat["bright_star_azimuth"])
+    field = np.asarray(cat["bright_star_age"]) * 1000.0 <= galaxy.octave_ages[0]
+    ring, sector = galaxy.locate(cat["cell"])
+    r32, s32 = ring // galaxy.n_sub, sector // galaxy.n_sub
+    inside = (radius >= galaxy.cell_rings[r32]) & (radius <= galaxy.cell_rings[r32 + 1]) & (
+        azimuth >= galaxy.cell_sectors[s32]) & (azimuth <= galaxy.cell_sectors[s32 + 1])
+    finest = (radius >= galaxy.ring_lo[ring]) & (radius <= galaxy.ring_hi[ring]) & (
+        azimuth >= galaxy.sector_lo[sector]) & (azimuth <= galaxy.sector_hi[sector])
+    assert field.sum() > 1000 and (~field).sum() > 1000
+    assert inside.all() and finest[~field].all()
+    assert (~finest[field]).mean() > 0.9  # a finest cell is 1/64 of its level-0 cell
+
+
+def test_the_ring_first_draw_holds_every_ring_s_totals_with_the_layer_on_or_off(galaxy, seed, default, default_off, models):
+    """S61 (D220 item 4): the same count per level-0 ring and the same per-star arrays on and off - only the sector
+    and the azimuth differ, and since D220 II.5 the radius of the young stars the clustering field places inside their
+    level-0 cell (their ring stands) - so every realised ring total is the same: the count bit for bit, the summed luminosity
+    and each band's summed light to 1e-12 relative (the rows are concatenated by cell, so a sum's order differs);
+    each ring's luminosities, sorted, are the same bits; and the stage's ``bright_star_limit`` is the same number.
+    I2 for this census: each ring's expected count (``ring_curve``) is the same bits on and off, and the sum of its
+    cells' expectations meets it to 1e-13 (measured 6.4e-15 / 6.8e-15 at 10^3 / 10^4.5 Lsun per finest ring)."""
+    spec = default_off.grid.spec
+    off = br.BrightGalaxy(default_off.fields, default_off.grid.R, default_off.grid.t, spec.t_max, spec.n_t,
+                          {k: c.value for k, c in models[DEFAULT_MODEL].constants.items()})
+    assert galaxy.ring_curve.tobytes() == off.ring_curve.tobytes()
+    assert not np.array_equal(galaxy.weights, off.weights)  # the layer does place this census
+    cells = br.all_cells()
+    for g in (galaxy, off):
+        ring = g.ring_of(cells)
+        for x in (3.0, 4.5):
+            summed = np.bincount(ring, weights=g.expected(cells, x), minlength=32)
+            k = int(round((x - br.LOG_L_GRID[0]) / 0.05))
+            assert np.allclose(summed, g.ring_curve[:, k], rtol=1e-13, atol=0.0)
+    cats = [br.materialise_bright(g, seed, cells, 1.0e4) for g in (galaxy, off)]
+    assert not np.array_equal(cats[0]["bright_star_azimuth"], cats[1]["bright_star_azimuth"])
+    rings = [galaxy.ring_of(c["cell"]) for c in cats]
+    counts = [np.bincount(r, minlength=32) for r in rings]
+    assert np.array_equal(counts[0], counts[1]) and counts[0].sum() > 10_000
+    for name in ("bright_star_luminosity", *(f"bright_star_magnitude_{b.lower()}" for b in BANDS)):
+        q = [np.asarray(c[name], dtype=float) for c in cats]
+        if name != "bright_star_luminosity":
+            q = [10.0 ** (-0.4 * v) for v in q]  # a band's light
+        sums = [np.bincount(r, weights=v, minlength=32) for r, v in zip(rings, q)]
+        assert np.allclose(sums[0], sums[1], rtol=1e-12, atol=0.0), name
+    for r in range(32):
+        a, b = (np.sort(np.asarray(c["bright_star_luminosity"])[ri == r]) for c, ri in zip(cats, rings))
+        assert a.tobytes() == b.tobytes(), r
+    assert default.fields["bright_star_limit"] == default_off.fields["bright_star_limit"]
 
 
 def test_the_n_brightest_are_complete_above_the_header_s_threshold(api, default, models):
@@ -549,7 +681,8 @@ def _expected_bright(galaxy, table: np.ndarray, log_l: float) -> np.ndarray:
 # inside the same gate.
 # S59 (D218 follow-up): the segments re-laid with a pitch relative to the disc's, and the young stars' cells weighted
 # by the law at a point - another realisation, inside the same gate.
-BRIGHT_RGB_OVER_OWN = (1.00069, 1.00322, 1.00670)  # S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
+# S61 (D220 items 1-4): the ring-first draw - every star a new draw once, another realisation inside the same gate.
+BRIGHT_RGB_OVER_OWN = (0.99996, 1.00104, 0.99994)  # S61 (D220): was (1.00069, 1.00322, 1.00670); S60 (D219): was (0.99832, 1.00222, 1.00792); S59 (D218 follow-up): was (0.99811, 0.99982, 1.00218); S59 (D218): was (1.00161, 1.00226, 1.00268); S58 (D217 follow-up): was (1.00235, 1.00392, 1.00461); S58 (D217): was (1.00198, 1.00322, 1.00488); S57 (D216): was (1.00149, 1.00552, 1.01059); S56 (D215): was (1.00065, 1.00380, 1.00503); S51 (D210): was (1.00325, 1.00435, 1.00412)
 
 
 def test_the_bright_stars_light_is_their_budget_and_their_band_light_is_pinned(galaxy, through_rgb):
@@ -649,8 +782,12 @@ def test_one_isochrone_drawn_alone_carries_its_band_budget():
 # response is turned by other phases and the clouds fall in other cells - another Poisson realisation again
 # (whole-disc cluster light -3.4 %: of the three clusters that were new to the first build's census and its
 # brightest, one is left; the clusters' light's own noise is 4.5 %, and the young population has not moved).
-CLUSTERS_RGB_OVER_YOUNG = (0.97512, 0.97813, 0.98674)  # S60 (D219): was (0.97428, 0.97826, 0.98757); S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
-CLUSTERS_LIGHT_OVER_YOUNG = 0.99711  # S60 (D219): was 1.00064; S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
+# S61 (D220): the clouds are drawn ring-first - each ring's count and arrays on the ring's stream before the layer
+# places them - a new draw of the census, the same on and off since: 5.6 % to 6.5 % under through rgb and 6.9 %
+# bolometric (the clusters' light moved -6.6 %), the default
+# seed's clouds holding 0.904 of the molecular gas (300 systems seeds: 1.003 +- 0.034, as 1.002 +- 0.036 drawn cell by cell: no bias).
+CLUSTERS_RGB_OVER_YOUNG = (0.94372, 0.94097, 0.93468)  # S61 (D220): was (0.97512, 0.97813, 0.98674). S60 (D219): was (0.97428, 0.97826, 0.98757); S59 (D218 follow-up): was (0.99372, 1.00109, 1.01543); S59 (D218): was (0.96011, 0.96524, 0.97627); S58 (D217): was (0.96043, 0.96399, 0.97313); S57 (D216): was (0.96603, 0.96950, 0.97826); S56 (D215): was (1.02504, 1.02748, 1.03528); S51 (D210): was (0.98508, 0.99003, 1.00087); S49 (D204, #126): the light integrated along the isochrone's points; was (0.98482, 0.98957, 1.00026)
+CLUSTERS_LIGHT_OVER_YOUNG = 0.93132  # S61 (D220): was 0.99711. S60 (D219): was 1.00064; S59 (D218 follow-up): was 1.03547; S59 (D218): was 0.98645; S58 (D217): was 0.97957; S57 (D216): was 0.98920; S56 (D215): was 1.04343; S51 (D210): was 1.01128
 
 
 def test_the_cluster_census_carries_the_young_light(default, models, through_rgb):

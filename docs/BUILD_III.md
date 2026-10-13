@@ -86,7 +86,9 @@ applied to a realisation.**
   every radial field, every φ-axis field tabulated in a pattern's own frame — is bit-identical to the layer-on
   run, except the census statistics named in `tests/test_layer.py::CENSUS_STATISTICS`, a closed list each entry of
   which names the census it is computed from. Every composed field is its declared neutral value. After L1 the
-  list is empty. An *expected* total that is a sum of placement weights is equal within four units in the
+  list is empty *(S61, D220: it is - its fourteen former entries are `RING_FIRST_STATISTICS`, each identical on
+  and off to 1e-12 relative, six of them a few units in the last place apart because the objects are summed in
+  another order; the realised per-ring totals of every placed census are the same, counts bit for bit)*. An *expected* total that is a sum of placement weights is equal within four units in the
   last place — the rounding of sums over the cells of weights that average to 1 to 1e-13; exact sums are not
   required *(amended at gate G2, S57, D216, as "one unit"; re-worded at S58 when the measured difference became
   two, D217; rulings by Fable)*.
@@ -381,6 +383,7 @@ uses it. **Declared in advance:** where the forcing is too weak for a shock the 
 means becomes a check, a disclosed row (its numbers have been printed, D113). #129 and #131 are re-ruled. D210's
 ruling 3 is superseded where the physics signs the offset. **Then G3.**
 
+
 **Agents:** two readers; builder A (solver and instrument); builder B (integration and re-pins); a reviewer.
 
 *(Ruled at gate G2, S57, D216; ruling by Fable. The frame is Ω_p(R) = Ω(R) for every arm mode — the plan's
@@ -521,6 +524,12 @@ derived from the ridge's Jeans length, phases synthetic.
 **Added 2026-10-05 (D219).** Put to L2's gate: whether the fluctuation may take a ridged, filamentary form beyond
 its sourced spectrum and shear — a choice of look with no measured statistic, declared as one if it goes in.
 The spurs attach to P5's pieces.
+
+**Added 2026-10-13 (D220 part II, item 6; the lead's ruling at L1).** One noise: `census_clustering` is the coarse
+end of one lattice noise on one seed path — three octaves from ℓ = 190 pc down — and `gas_fluctuation` is the same
+function on the same path, its octaves continuing finer with the slope and width L2 sources. L2 may not change the
+clouds' map: ℓ, the three octaves and the clouds' σ are L1's, and the test that pins the field's own correlation
+against a control stays green.
 
 **Agents:** two readers; builder A (evaluator, vectors); builder B (spurs).
 

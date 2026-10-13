@@ -46,9 +46,11 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.special import normal_cdf
 from galaxy.core.stage import Context, Stage
-from galaxy.layer import compose as _compose
 from galaxy.stages.pattern import PATTERN_READS
-from galaxy.stages.systems import CATALOGUE_SAMPLE, CELL_SECTORS, cell_counts
+from galaxy.stages.gas_pattern import GAS_PATTERN_READS
+from galaxy.stages.systems import (
+    CATALOGUE_SAMPLE, YOUNG_CONSTANTS, YOUNG_READS, Catalogue, StarLayout, star_layout, star_layout_of,
+)
 
 # Conversions. A factor is a factual claim and carries a citation (units.py holds
 # none for exactly that reason).
@@ -548,17 +550,29 @@ def system_columns(
     return columns, built["count"].astype(np.int64)
 
 
-def draw_block(seed: int, cell: int, count: int) -> dict[str, np.ndarray]:
-    """The seeded draws for one cell's stars: one stream per property, as S5 established.
+def planet_stream(seed: int, level: int, ring: int, name: str) -> np.random.Generator:
+    """The stream ``name`` of the planets of one ring's stars (S61, D220 items 1 and 8): a level-0 star is element
+    ``i`` of its ring's draw, and its planets are row ``i`` of every array on ``(seed, "planet", ring, name)`` - keyed
+    on the star's identity in the ring's draw, not on the cell the layer put it in, so a star has the same planets
+    with the layer on or off. A child's own star below level 0 is ``(level, sub-ring, i)`` in its sub-ring's draw and
+    its planets are row ``i`` on ``(seed, "planet", "level", k, sub_ring, name)`` (S61, D220 item 8; the child's
+    stream ``(seed, "cell", canonical_cell(level, child), name)`` of S32 is retired)."""
+    if not level:
+        return _seeds.rng(seed, "planet", int(ring), name)
+    return _seeds.rng(seed, "planet", "level", int(level), int(ring), name)
 
-    A star is ``(cell, index)`` (D60) and its planets are at ``index`` in every one
-    of these streams, so a system is the same whether the cell was materialised
-    alone or inside a sweep, and a smaller sample is a prefix of a larger one. The
-    slot block is fixed width for the same reason: star *i* owns
-    ``[i·SLOTS, (i+1)·SLOTS)`` whatever its neighbours turned out to be.
+
+def draw_block(seed: int, level: int, ring: int, count: int) -> dict[str, np.ndarray]:
+    """The seeded draws for the first ``count`` stars of one ring's draw: one stream per property, as S5 established.
+
+    A star is ``(ring, i)`` in its draw (S61; a cell's ``index`` until then) and its planets are at ``i`` in every
+    one of these streams, so a system is the same whether its cell was materialised alone or inside a sweep, with the
+    layer on or off, and a smaller sample is a prefix of a larger one. The slot block is fixed width for the same
+    reason: star *i* owns ``[i·SLOTS, (i+1)·SLOTS)`` whatever its neighbours turned out to be. A Generator's draws are
+    a sequence, so the first ``count`` rows are the ring's whole arrays' first rows.
     """
     def stream(name: str) -> np.random.Generator:
-        return _seeds.rng(seed, "cell", int(cell), name)
+        return planet_stream(seed, level, ring, name)
 
     return {
         "disc": stream("disc").standard_normal(count),
@@ -570,21 +584,20 @@ def draw_block(seed: int, cell: int, count: int) -> dict[str, np.ndarray]:
 
 def materialise(
     stars: Mapping[str, np.ndarray],
-    counts: Sequence[tuple[int, int]],
+    layout: StarLayout,
     seed: int,
     constants: Mapping[str, float],
 ) -> tuple[dict[str, np.ndarray], np.ndarray]:
-    """Planets for a catalogue laid out as ``counts``, in the same row order as its stars.
+    """Planets for a catalogue whose rows ``layout`` names (``systems.StarLayout``), in the same row order as its stars.
 
-    The *draws* are per cell, because that is what makes a star's system its own
-    (D60). The *physics* is not: it runs once over every star in the sample. Doing
-    it per cell instead cost 1.6 s of a 2.5 s model run — five hundred cells each
-    paying numpy's per-call overhead on eight-star arrays — for arithmetic that
-    vectorises perfectly across the whole sample. §12 says as much in its cost
-    table: vectorise *across* systems, since a planets stage is many objects with
-    few cells each.
+    The *draws* are per ring, at each star's place in its ring's draw (S61, D220), because that is what makes a
+    star's system its own (D60) and the same on and off. The *physics* is not: it runs once over every star in the
+    sample. Doing it per cell instead cost 1.6 s of a 2.5 s model run — five hundred cells each paying numpy's
+    per-call overhead on eight-star arrays — for arithmetic that vectorises perfectly across the whole sample. §12
+    says as much in its cost table: vectorise *across* systems, since a planets stage is many objects with few cells
+    each.
     """
-    total = sum(n for _, n in counts)
+    total = int(layout.index.size)
     if not total:
         empty = np.zeros(0)
         return (
@@ -597,34 +610,34 @@ def materialise(
         "rotation": np.empty((total, SLOTS)),
         "obliquity": np.empty((total, SLOTS)),
     }
-    at = 0
-    for cell, count in counts:
-        block = draw_block(seed, cell, count)
+    for level, ring in sorted(set(zip(layout.level.tolist(), layout.ring.tolist()))):
+        here = np.flatnonzero((layout.level == level) & (layout.ring == ring))
+        at = layout.index[here]
+        block = draw_block(seed, level, ring, int(at.max()) + 1)
         for name, values in block.items():
-            draws[name][at : at + count] = values
-        at += count
+            draws[name][here] = values[at]
     return system_columns(
         stars["star_mass"], stars["star_metallicity"], stars["star_age"], draws, constants
     )
 
 
 def one_system(
-    stars: Mapping[str, np.ndarray],
+    stars: Catalogue,
     index: int,
-    cell: int,
     seed: int,
     constants: Mapping[str, float],
 ) -> tuple[dict[str, np.ndarray], tuple[dict[str, float], ...]]:
     """One star's planets and its belts — what opening a system costs, and no more.
 
-    ``stars`` is that cell's catalogue; the draws are the cell's own streams, so the
-    system is identical to the one a whole-galaxy materialisation would give it.
+    ``stars`` is a catalogue that carries its ``StarLayout`` (``systems.materialise``'s, or a selection of its rows
+    with ``systems.select``) and ``index`` the star's row in it; the draws are the star's ring's own streams at its
+    place in the ring's draw, so the system is identical to the one a whole-galaxy materialisation gives it.
     """
-    count = len(stars["star_mass"])
-    columns, per_star = materialise(stars, ((cell, count),), seed, constants)
-    start = int(np.sum(per_star[:index]))
-    end = start + int(per_star[index])
-    mine = {name: values[start:end] for name, values in columns.items()}
+    layout = star_layout_of(stars)
+    row = np.array([int(index)])
+    one = layout.take(row, ((0, 1),))
+    columns, per_star = materialise({n: np.asarray(stars[n])[row] for n in ("star_mass", "star_metallicity", "star_age")}, one, seed, constants)
+    mine = {name: values[: int(per_star[0])] for name, values in columns.items()}
     giants = mine["planet_semi_major_axis"][mine["planet_atmosphere"] == ATMOSPHERES.index("hydrogen")]
     return mine, belts(giants, constants["DISC_OUTER_EDGE"])
 
@@ -753,14 +766,13 @@ GIANT_FRACTION_SAMPLE = FieldDecl(
 
 def compute_planets(ctx: Context) -> Mapping[str, Any]:
     constants = {k: ctx.constants[k] for k in PLANETS_CONSTANTS}
-    counts = cell_counts(
-        ctx.fields["stellar_surface_density"], ctx.grid.R,
-        int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE,
-        # The same layout the catalogue drew, or stars get renamed: the catalogue's own pattern, from compose
-        # (S55, D214) - none with the layer off, as the catalogue itself was then laid out.
-        pattern=_compose.stellar_pattern(ctx.fields, ctx.grid.R),
+    # The layout the catalogue drew, or stars get renamed and get another star's planets: the same ring-first draw,
+    # placed by the same pattern and young stars' split from compose (S55, D214; S61, D220) - none with the layer off.
+    layout = star_layout(
+        ctx.fields, ctx.grid.R, ctx.grid.t, int(ctx.seeds["systems_seed"]), CATALOGUE_SAMPLE,
+        migration=float(ctx.inputs["migration_efficiency"]), constants=ctx.constants,
     )
-    columns, per_star = materialise(ctx.fields, counts, int(ctx.seeds["planets_seed"]), constants)
+    columns, per_star = materialise(ctx.fields, layout, int(ctx.seeds["planets_seed"]), constants)
     giants = np.zeros(len(per_star), dtype=bool)
     if len(columns["planet_mass"]):
         hydrogen = columns["planet_atmosphere"] == ATMOSPHERES.index("hydrogen")
@@ -787,13 +799,19 @@ PLANETS = IMPLEMENTATIONS.register(
         compute=compute_planets,
         # S55 (D214, I4): it inherits the star catalogue's objects, and names each by the layout the catalogue
         # was placed in - the stellar pattern's sector weights - so it reads the same composed weight.
+        # S61 (D220): the layout is the ring-first draw's (systems.star_layout), whose allocation reads what the
+        # catalogue's does - the arrival law (the history and migration_efficiency) and, where the model publishes a
+        # modulation, the young stars' reader (the gas pattern's reads and constants, the law's index).
         placement_reader=True,
         reads_seeds=("planets_seed", "systems_seed"),
-        reads_constants=PLANETS_CONSTANTS,
-        requires=(
+        reads_inputs=("migration_efficiency",),
+        reads_constants=tuple(dict.fromkeys((*PLANETS_CONSTANTS, *YOUNG_CONSTANTS))),
+        requires=tuple(dict.fromkeys((
             "stellar_surface_density", "star_mass", "star_metallicity", "star_age",
             *PATTERN_READS,  # S56 (D215): the stellar pattern's modes and their phases, not an arm number
-        ),
+            "sfr_surface_density_history", *GAS_PATTERN_READS, *YOUNG_READS,
+        ))),
+        requires_optional=("sfr_modulation",),
         publishes=(
             PLANET_SEMI_MAJOR_AXIS, PLANET_MASS, PLANET_RADIUS, PLANET_INSOLATION,
             PLANET_ORBITAL_PERIOD, PLANET_ROTATION_PERIOD, PLANET_OBLIQUITY,

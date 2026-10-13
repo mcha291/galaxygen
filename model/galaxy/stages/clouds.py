@@ -35,26 +35,54 @@ source in the about line; nothing here is recalled (rule B9).**
   stated and tagged ``[inferred]``: the source uniformly inside the cloud's volume, the gradient's
   direction uniform and its steepness uniform on [0, 1]. **Since S55 (D214, BUILD_III Appendix B) these
   four are the randomness layer's**: synthetic, published by its stage ``cloud_texture``
-  (``galaxy/layer/cloud_texture.py``), drawn on the same streams as before and zero with the layer off;
-  a census materialised here carries them through ``galaxy.layer.compose``. The cloud's height, a sech²
-  layer at half the thin disc's scale height, stays this stage's seeded draw (debt #95).
+  (``galaxy/layer/cloud_texture.py``), drawn since S61 on the layer's own seed (``texture_seed``, D220
+  item 5) and zero with the layer off; a census materialised here carries them through
+  ``galaxy.layer.compose``. The cloud's height, a sech² layer at half the thin disc's scale height, stays
+  this stage's seeded draw (debt #95): a sample of the cloud layer's vertical profile, drawn on the
+  ring's stream and the same with the layer on or off - not a placement (D220 item 7).
 - *Where* — radius inverted from Σ_H₂ within the cell's ring; each cell's expected count, and each
-  cloud's azimuth inside its sector, from the gas's own density contrast (``gas_pattern``,
+  cloud's sector and azimuth inside it, from the gas's own density contrast (``gas_pattern``,
   ``GasPattern``; S51, D210; since S57 the gas's steady response to the stellar arms, D216), not
   the stars' own contrast, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
   read off the gas at the cloud's radius. The contrast averages to 1 round every ring, so a ring's
-  expected count is what it was: the clouds move round the ring, not in number.
+  expected count is what it was: the clouds move round the ring, not in number. **Since S61 (D220 part II
+  item 4, as the lead amended it)** a cloud is placed jointly in radius and azimuth on its cell's lattice,
+  weighted by the molecular law, that contrast and the randomness layer's clustering field
+  (``layer/census_clustering.py``, read through ``compose``): the clouds gather into complexes below a cell's
+  scale. The radius the ring drew is kept as ``cloud_birth_radius``: the cloud's abundances are read there
+  and its cluster is binned by it, so nothing per ring or per radius moves with the placement. The ring's
+  count, the sector and every other draw are untouched; with the layer off the cloud stands at the radius
+  its ring drew, uniform in its sector.
 
-**Which cloud is which.** A cloud is named ``(cell, index)`` as a star is, on the same cell grid;
-its stream is ``(systems_seed, "cloud", cell, …)``, so rerolling the systems seed rerolls the clouds
-with the stars (one checkpoint, one seed) and nothing earlier. Every table this stage builds covers
-every ring and sector whatever a request asked for (D60).
+**The ring-first draw (S61, D220 part I).** A ring's clouds are drawn before the layer places them. The
+ring's count is one Poisson draw on the ring's stream ``(systems_seed, "cloud", ring, "count")`` at the
+ring's expected total, its molecular mass over the law's mean cloud mass - a number the layer never
+touches, so the count is the same with the layer on or off (D220 item 1; the sum of the ring's cell
+expectations is that number to the bit with the layer off, and to 32 units in the last place with it on,
+measured at S61). Every per-object draw is an array of the ring's count on
+``(systems_seed, "cloud", ring, name)``: a cloud's identity in the draw is ``(ring, i)``. The layer
+assigns the cell and the place in it and nothing else (D220 item 2): cloud i's sector is the inverse of the
+ring's cumulative sector weights at its own ``sector`` uniform - uniform with the layer off - and its place
+in the cell, with the layer on, is drawn jointly in radius and azimuth on the cell's lattice - the molecular
+law, the pattern's point function (read on the cell's 16 x 24 mesh) and the clustering field - at its own
+``azimuth`` and ``position`` uniforms (D220 part II item 4 as amended), the radius the ring drew kept as
+``cloud_birth_radius``; with the layer off it stands at that radius, uniform in its sector. So every realised
+ring total - the count, the mass, and what the clusters, their HII regions and bubbles make of them - is
+the same on and off (D220 item 4).
+
+**Which cloud is which.** A cloud is named ``(cell, index)`` as a star is, on the same cell grid:
+``index`` is its rank among the ring's clouds allocated to that cell, in ring order (D220 item 2).
+Rerolling the systems seed rerolls the clouds with the stars (one checkpoint, one seed) and nothing
+earlier. A cell drawn alone draws its ring's count and uniform arrays whole, selects the rows allocated
+to it and derives every column for those rows only, so a cell alone is the cell in any set (D60, D220
+item 3). Every table this stage builds covers every ring and sector whatever a request asked for.
 """
 
 from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -64,6 +92,7 @@ from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
+from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
@@ -91,6 +120,8 @@ G_PC = 4.300917270e-3  # G in pc (km/s)^2 / Msun: the model's G (kpc units) time
 # The clouds' layer: a sech² at this share of the thin disc's scale height, a stated guess with no
 # source (debt #95) [inferred]. Named at S39 so the render's HII layer reads this one number (A9).
 CLOUD_LAYER_SHARE = 0.5
+# The clustering field's constants, which the census reads to place a cloud in its cell (S61, D220 part II as amended).
+CLUSTERING_CONSTANTS: tuple[str, ...] = tuple(_CLUSTERING_CONSTANTS.values())
 
 
 def cloud_layer_height(thin_disc_scale_height_pc: float) -> float:
@@ -164,44 +195,151 @@ def law_for(radius_kpc: float, c: Mapping[str, float]) -> tuple[float, float, fl
     return float(c["GMC_MASS_SLOPE_OUTER"]), float(c["GMC_MASS_MIN"]), float(c["GMC_MASS_TRUNCATION_OUTER"])
 
 
-def expected_counts(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> np.ndarray:
+def ring_expected(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> np.ndarray:
+    """The expected number of clouds in every level-0 ring, (rings,): the ring's molecular mass over the law's
+    mean cloud mass at the ring's radius. No placement enters it, so it is the same number with the layer on or
+    off - the ring's count is drawn at it (D220 item 1). It is the sum of the ring's cell expectations
+    (:func:`expected_counts`) to the bit with the layer off; with the layer on that sum is the same number to
+    rounding (invariant I2: up to 32 units in the last place, 5.8e-15 of itself, on the inner rings, measured S61)."""
+    rings, _ = cell_edges(R)
+    ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
+    mean = np.array([mass_function_mean(*law_for(0.5 * (rings[i] + rings[i + 1]), constants)) for i in range(CELL_RINGS)])
+    return ring_mass / mean
+
+
+def sector_placement(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float]) -> tuple[Any, np.ndarray | None]:
+    """``(pattern, weights)``: the gas's pattern from compose (S55, D214) and its exact sector means per ring,
+    ``(rings, sectors)`` and clipped at 0 - or ``(pattern, None)`` where nothing places the clouds (the layer off,
+    or a flat pattern), and every sector of a ring then weighs the same. What a census's cells expect and where a
+    ring's clouds are allocated (D220 item 2), read once."""
+    pattern = _compose.gas_pattern(fields, R, constants)
+    if pattern is None or pattern.flat:
+        return pattern, None
+    rings, sectors = cell_edges(R)
+    return pattern, np.maximum(
+        np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)]), 0.0
+    )
+
+
+def expected_counts(
+    fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[str, float], *, placement: tuple[Any, np.ndarray | None] | None = None
+) -> np.ndarray:
     """The expected number of clouds in every cell, (rings, sectors): the cell's molecular mass over
     the law's mean cloud mass at the ring's radius, shared among the ring's sectors by the gas's own
-    contrast averaged over each (S51, D210). A population integral, whatever a request asked for."""
-    rings, sectors = cell_edges(R)
-    ring_mass = ring_molecular_mass(fields["gas_molecular_surface_density"], R)
-    # The gas's pattern, from compose (S55, D214): none with the layer off, and every sector of a ring then
-    # expects the same number of clouds. The ring's *expected* total is the same either way (invariant I2); the
-    # realised clouds are each cell's own Poisson draw at its own expectation, so they are another draw (until L1).
-    pattern = _compose.gas_pattern(fields, R, constants)
-    weights = (
-        np.ones((CELL_RINGS, CELL_SECTORS))
-        if pattern is None or pattern.flat
-        else np.array([pattern.sector_means(0.5 * (rings[i] + rings[i + 1]), sectors) for i in range(CELL_RINGS)])
+    contrast averaged over each (S51, D210). A population integral, whatever a request asked for.
+    Since S61 no draw is made at a cell's expectation: a ring's count is drawn at its ring's
+    (:func:`ring_expected`) and its clouds allocated among the sectors in these proportions (D220 items 1-2)."""
+    _, weights = sector_placement(fields, R, constants) if placement is None else placement
+    return ring_expected(fields, R, constants)[:, None] / CELL_SECTORS * (
+        np.ones((CELL_RINGS, CELL_SECTORS)) if weights is None else weights
     )
-    mean = np.array([mass_function_mean(*law_for(0.5 * (rings[i] + rings[i + 1]), constants)) for i in range(CELL_RINGS)])
-    return ring_mass[:, None] / mean[:, None] / CELL_SECTORS * np.maximum(weights, 0.0)
 
 
-def cloud_counts(expected: np.ndarray, seed: int, cells: Sequence[int] | None = None) -> tuple[tuple[int, int], ...]:
-    """``(cell, count)`` for every cell that realises a cloud: a Poisson draw on the cell's own stream.
+def allocate(u: np.ndarray, weights: np.ndarray | None) -> np.ndarray:
+    """Each object's sector in its ring (D220 item 2): the inverse of the ring's cumulative sector weights at the
+    object's own ``sector`` uniform - ``floor(u * sectors)`` where the ring is uniform (``weights`` None: the
+    layer off). A sector of zero weight is never chosen. Counted, never rejected (rule B8)."""
+    u = np.asarray(u, dtype=float)
+    if weights is None or not float(np.sum(weights)) > 0.0:
+        return np.minimum((u * CELL_SECTORS).astype(np.int64), CELL_SECTORS - 1)
+    cdf = np.cumsum(np.asarray(weights, dtype=float))
+    return np.minimum(np.searchsorted(cdf / cdf[-1], u, side="right"), CELL_SECTORS - 1).astype(np.int64)
 
-    A census has a physical number, so the count is Poisson in the expectation rather than a share of a
-    requested sample; one stream per cell, so a cell drawn alone is the cell drawn in any set (D60).
-    """
-    wanted = range(CELL_COUNT) if cells is None else cells
-    out: list[tuple[int, int]] = []
+
+@dataclass(frozen=True)
+class RingLayout:
+    """Where a census's ring-first draw put its objects (D220 items 1-2), for the cells a request asked for.
+
+    ``counts`` is the ``(cell, count)`` layout a :class:`~galaxy.stages.systems.Catalogue` carries, in the order
+    the cells were asked for, cells that realise nothing left out. Row by row, ``ring`` and ``index`` are the
+    object's identity in the draw - its level-0 ring and its place ``i`` in the ring's arrays - and ``sizes`` is
+    each drawn ring's count, the length of every array drawn on the ring's stream. A row's ``(cell, index in the
+    cell)`` is its name; ``(ring, i)`` is what any later draw on a ring's stream (the clusters', the layer's
+    texture) is indexed by, so those draws do not depend on where the layer put the object."""
+
+    counts: tuple[tuple[int, int], ...]
+    ring: np.ndarray
+    index: np.ndarray
+    sizes: Mapping[int, int]
+
+
+def ring_counts(lam: np.ndarray, seed: int, rings: Sequence[int]) -> dict[int, int]:
+    """Each asked ring's cloud count: one Poisson draw at the ring's expected total on the ring's stream
+    ``(seed, "cloud", ring, "count")`` (D220 item 1). A census has a physical number, so the count is Poisson in
+    the expectation rather than a share of a requested sample."""
+    return {
+        int(r): int(_seeds.rng(seed, "cloud", int(r), "count").poisson(float(lam[r]))) if float(lam[r]) > 0.0 else 0
+        for r in rings
+    }
+
+
+def cloud_layout(
+    fields: Mapping[str, Any], R: np.ndarray, seed: int, constants: Mapping[str, float], cells: Sequence[int] | None = None,
+    *, placement: tuple[Any, np.ndarray | None] | None = None,
+) -> RingLayout:
+    """The census's layout for ``cells`` (every cell when None): each ring the cells lie in drawn whole - its count
+    and its ``sector`` uniforms - and each cell's rows the ring's objects allocated to it, in ring order (D220
+    items 1-3). Only the uniforms of the ring's other cells' objects exist; nothing of them is derived."""
+    _, weights = sector_placement(fields, R, constants) if placement is None else placement
+    wanted = [int(c) for c in (range(CELL_COUNT) if cells is None else cells)]
+    lam = ring_expected(fields, R, constants)
+    touched = list(dict.fromkeys(c // CELL_SECTORS for c in wanted))
+    sizes = ring_counts(lam, seed, touched)
+    sector = {
+        r: allocate(_seeds.rng(seed, "cloud", r, "sector").random(sizes[r]), None if weights is None else weights[r])
+        for r in touched
+    }
+    counts: list[tuple[int, int]] = []
+    ring: list[np.ndarray] = []
+    index: list[np.ndarray] = []
     for cell in wanted:
-        ring, sector = divmod(int(cell), CELL_SECTORS)
-        lam = float(expected[ring, sector])
-        count = int(_seeds.rng(seed, "cloud", int(cell), "count").poisson(lam)) if lam > 0.0 else 0
-        if count:
-            out.append((int(cell), count))
-    return tuple(out)
+        r, s = divmod(cell, CELL_SECTORS)
+        rows = np.flatnonzero(sector[r] == s)
+        if rows.size:
+            counts.append((cell, int(rows.size)))
+            ring.append(np.full(rows.size, r, dtype=np.int64))
+            index.append(rows.astype(np.int64))
+    join = lambda parts: np.concatenate(parts) if parts else np.zeros(0, dtype=np.int64)  # noqa: E731
+    return RingLayout(tuple(counts), join(ring), join(index), sizes)
+
+
+def ring_draws(seed: int, census: str, layout: RingLayout, names: Sequence[str]) -> dict[str, np.ndarray]:
+    """Per-object uniforms on the rings' streams (D220 item 1): for each name, every drawn ring's array of its
+    count on ``(seed, census, ring, name)``, read at each row's ``(ring, i)``. Every array is drawn whole, so a
+    row's uniform does not depend on which other rows were asked for (D60, item 3)."""
+    out: dict[str, np.ndarray] = {}
+    for name in names:
+        values = np.zeros(layout.index.size)
+        for r in np.unique(layout.ring):
+            here = layout.ring == r
+            values[here] = _seeds.rng(seed, census, int(r), name).random(layout.sizes[int(r)])[layout.index[here]]
+        out[name] = values
+    return out
+
+
+def layout_of(catalogue: Catalogue) -> RingLayout:
+    """The ring layout a census materialised by this module carries beside its ``(cell, count)`` layout (S61,
+    D220): which ring and which place in the ring's draw each row is. Not a column: an identity has no unit and
+    nothing to draw, as a row's ``(cell, index)`` has none (``Catalogue``)."""
+    layout = getattr(catalogue, "ring_layout", None)
+    if layout is None:
+        raise ValueError(
+            "this catalogue carries no ring layout: materialise it with clouds.materialise_clouds, or attach "
+            "clouds.cloud_layout's with clouds.with_layout"
+        )
+    return layout
+
+
+def with_layout(catalogue: Catalogue, layout: RingLayout) -> Catalogue:
+    """``catalogue`` with ``layout`` carried beside its columns (:func:`layout_of`); its counts are the layout's."""
+    if tuple(catalogue.counts) != layout.counts:
+        raise ValueError("the catalogue's (cell, count) layout is not the ring layout's")
+    catalogue.ring_layout = layout  # type: ignore[attr-defined]
+    return catalogue
 
 
 CLOUD_COLUMNS: tuple[str, ...] = (
-    "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size",
+    "cloud_radius", "cloud_birth_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size",
     "cloud_velocity_dispersion", "cloud_mach_number", "cloud_density_pdf_width",
     "cloud_age", "cloud_source_offset", "cloud_source_angle", "cloud_density_gradient",
     "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
@@ -221,6 +359,7 @@ WIRE_COLUMNS: tuple[str, ...] = (
     "cloud_mach_number", "cloud_density_pdf_width", "cloud_age", "cloud_state", "cloud_source_offset",
     "cloud_source_angle", "cloud_density_gradient", "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
     "cloud_cluster_index",
+    "cloud_birth_radius",  # S61 (D220 part II as amended): the radius the ring drew, after every column the route always sent
 )
 
 # The dust's V-band extinction cross-section per hydrogen atom, cm^2/H: the grain table's own V row
@@ -258,43 +397,69 @@ def materialise_clouds(
     cells: Sequence[int] | None = None,
     *,
     texture: bool = True,
+    texture_seed: int | None = None,
 ) -> Catalogue:
     """The clouds of ``cells`` (every cell when None), exactly the clouds a full sweep would give (D60).
 
+    The ring-first draw (D220 items 1-3): each ring the cells lie in has its count and every per-object uniform
+    drawn whole on the ring's streams; the rows allocated to the asked cells are selected, and every derived
+    column - the radius's inverse CDF, the mass function, the interpolations, the state, the cluster index - is
+    computed for those rows alone. The catalogue carries its :class:`RingLayout` (:func:`layout_of`).
+
     ``texture`` says whether the census carries the randomness layer's four columns (``TEXTURE_COLUMNS``): a
     whole cloud does, which is what the cluster census and the API read; the ``clouds`` stage publishes its own
-    columns only and passes False, the layer's stage publishing the four (S55, D214 section 5)."""
+    columns only and passes False, the layer's stage publishing the four (S55, D214 section 5). They are drawn on
+    ``texture_seed`` (D220 item 5), which a layer-on census with its texture must be given."""
     c = constants
     rings, sectors = cell_edges(R)
-    expected = expected_counts(fields, R, c)
-    counts = cloud_counts(expected, seed, cells)
-    pattern = _compose.gas_pattern(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
+    placement = sector_placement(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
+    pattern = placement[0]
+    clustering = _compose.census_clustering(fields, c)  # S61 (D220 part II): the field within a cell; none, layer off
+    layout = cloud_layout(fields, R, seed, c, cells, placement=placement)
+    counts = layout.counts
+    u_all = ring_draws(seed, "cloud", layout, ("radius", "azimuth", "mass", "age", "height", "position"))
+    sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
+    ring_weight = {
+        int(r): np.where((R >= rings[r]) & (R <= rings[r + 1]), sigma_h2 * R, 0.0)
+        for r in np.unique(layout.ring)
+    }
     sigma = float(c["GMC_SURFACE_DENSITY"])
     c_s = sound_speed(float(c["MOLECULAR_GAS_TEMPERATURE"]), float(c["MOLECULAR_MEAN_WEIGHT"]))
     b = float(c["TURBULENCE_FORCING_B"])
     phases = (float(c["GMC_PHASE_EMBEDDED"]), float(c["GMC_PHASE_BLOWN_OPEN"]), float(c["GMC_PHASE_DISPERSING"]))
     lifetime = sum(phases)
     h_cloud = cloud_layer_height(fields["thin_disc_scale_height"])  # kpc, half the thin disc's [inferred]
-    sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
     feh_gas = np.asarray(fields["feh_gas"], dtype=float)
     alpha_gas = np.asarray(fields["alpha_fe_gas"], dtype=float)
     width = 2.0 * math.pi / CELL_SECTORS
 
     columns: dict[str, list[np.ndarray]] = {}
     states: list[np.ndarray] = []
+    start = 0
     for cell, count in counts:
         ring, sector = divmod(int(cell), CELL_SECTORS)
+        rows = slice(start, start + count)
+        start += count
 
-        def draw(name: str, k: int = count) -> np.ndarray:
-            return _seeds.rng(seed, "cloud", int(cell), name).random(k)
+        def draw(name: str, rows: slice = rows) -> np.ndarray:
+            return u_all[name][rows]  # the ring's arrays at this cell's (ring, i): D220 item 1
 
         lo, hi = rings[ring], rings[ring + 1]
-        weight = np.where((R >= lo) & (R <= hi), sigma_h2 * R, 0.0)
+        weight = ring_weight[ring]
         radius = invert_cdf(draw("radius"), R, weight) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
-        if pattern is None or pattern.flat:
+        # The radius the ring drew: what every per-object law below reads, and what the binners bin by (S61, D220
+        # part II as amended) - so every per-ring and per-radius total is the same with the layer on or off.
+        birth = radius
+        if clustering is None:
+            # The layer off: no field and no pattern - the ring's radius, uniform in the sector: the arithmetic of
+            # every census before S61, bit for bit.
             azimuth = (sector + draw("azimuth")) * width
         else:
-            azimuth = pattern.azimuths(draw("azimuth"), radius, sector * width, (sector + 1) * width)
+            # S61 (D220 part II item 4, as amended): placed jointly in the cell by the radial law, the gas pattern
+            # and the clustering field; the ring's count, the sector and every other draw stand.
+            radius, azimuth = clustering.place(
+                draw("azimuth"), draw("position"), (lo, hi, sector * width, (sector + 1) * width), R, sigma_h2, pattern
+            )
         slope, m_min, m_max = law_for(0.5 * (lo + hi), c)
         mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
         size = cloud_radius_pc(mass, sigma)
@@ -302,6 +467,7 @@ def materialise_clouds(
         mach = disp / c_s
         age = draw("age") * lifetime
         columns.setdefault("cloud_radius", []).append(radius)
+        columns.setdefault("cloud_birth_radius", []).append(birth)  # S61 (D220 part II as amended): the ring's radius
         columns.setdefault("cloud_azimuth", []).append(azimuth)
         columns.setdefault("cloud_height", []).append(sech2_height(draw("height"), h_cloud))
         columns.setdefault("cloud_mass", []).append(mass)
@@ -310,8 +476,8 @@ def materialise_clouds(
         columns.setdefault("cloud_mach_number", []).append(mach)
         columns.setdefault("cloud_density_pdf_width", []).append(np.sqrt(np.log1p(b * b * mach * mach)))
         columns.setdefault("cloud_age", []).append(age)
-        columns.setdefault("cloud_metallicity", []).append(np.interp(radius, R, feh_gas))
-        columns.setdefault("cloud_alpha", []).append(np.interp(radius, R, alpha_gas))
+        columns.setdefault("cloud_metallicity", []).append(np.interp(birth, R, feh_gas))
+        columns.setdefault("cloud_alpha", []).append(np.interp(birth, R, alpha_gas))
         states.append(state_of(age, phases))
         columns.setdefault("cloud_cluster_index", []).append(cluster_indices(states[-1]))
 
@@ -323,10 +489,10 @@ def materialise_clouds(
         out = {name: np.concatenate(parts) for name, parts in columns.items()}
         out["cloud_state"] = np.concatenate(states)
     if texture:
-        # The layer's four columns for these cells (S55): the same streams as ever with the layer on, zero with
-        # it off. compose decides which, from the run the fields belong to.
-        out.update(_compose.cloud_texture(fields, seed, counts, out["cloud_size"]))
-    return Catalogue.of(out, counts)
+        # The layer's four columns for these clouds: drawn on texture_seed at each cloud's (ring, i) with the layer
+        # on (D220 item 5), zero with it off. compose decides which, from the run the fields belong to.
+        out.update(_compose.cloud_texture(fields, texture_seed, layout, out["cloud_size"]))
+    return with_layout(Catalogue.of(out, counts), layout)
 
 
 # --- declarations ----------------------------------------------------------------------------------
@@ -346,6 +512,10 @@ NOT_DRAWN_WHY: dict[str, str] = {
                    "(`cloud_cluster_index`), whose cavity, HII sphere and point of light the viewer draws; the "
                    "category itself is not a look.",
     # cloud_source_offset and cloud_source_angle: with their declarations, galaxy/layer/cloud_texture.py (S55).
+    # S61 (D220 part II as amended): the binners' radius. The viewer draws the cloud where it stands, `cloud_radius`.
+    "cloud_birth_radius": "the radius the ring drew; the binners' radius - every per-cloud law and every stage that "
+                          "bins clouds or their clusters by radius reads it, so nothing they publish moves with "
+                          "the placement; the viewer draws the cloud where it stands (`cloud_radius`).",
     "cloud_metallicity": "no line comes from molecular gas in the render; the abundance reaches the picture through "
                          "the cluster's light (the isochrones at its [Fe/H]) and its HII region's emissivity at the "
                          "temperature the oxygen sets.",
@@ -366,15 +536,32 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("vir
 
 CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "Drawn by inverting the molecular surface density within the cloud's cell ring, as a "
-                       "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly.")
+                       "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly. "
+                       "Since S61, with the randomness layer on, where the cloud stands: placed with its azimuth "
+                       "jointly in its cell by the molecular law, the gas's contrast and the layer's clustering "
+                       "field (D220 part II); the radius the ring drew is `cloud_birth_radius`, which it equals "
+                       "with the layer off.")
+CLOUD_BIRTH_RADIUS = _column("cloud_birth_radius", "Radius its ring drew", "kpc",
+                             "The radius drawn for the cloud on its ring's stream by inverting the molecular "
+                             "surface density within the ring: the radius the cloud's abundances are read at and "
+                             "its cluster is binned by, the same with the randomness layer on or off (S61, D220 "
+                             "part II as amended). The placed radius lies anywhere in the cloud's cell.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
                         "steady response to the stellar arms, and the bar's two gas lanes inside the bar — so "
                         "clouds crowd onto the arms as the gas does, and each sector's share of clouds "
-                        "follows the same contrast; the same rule in both models.")
+                        "follows the same contrast; the same rule in both models. Since S61 a ring's clouds are "
+                        "drawn before they are placed: the contrast picks each cloud's sector and its azimuth in "
+                        "it and nothing else, so the ring's clouds are the same clouds with the layer off, placed "
+                        "uniformly round the ring (D220 item 2). Since S61, with the layer on, the azimuth and "
+                        "the radius are placed together within the cell by the molecular law, the contrast and "
+                        "the randomness layer's clustering field, so the clouds gather into complexes below a "
+                        "cell's scale (D220 part II); the sector is not moved by it.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
-                       "molecular layer's thickness was read (debt #95).")
+                       "molecular layer's thickness was read (debt #95). A sample of the layer's vertical "
+                       "profile drawn on the ring's stream, the same with the layer on or off: not a placement "
+                       "(D220 item 7).")
 CLOUD_MASS = _column("cloud_mass", "Cloud mass", "Msun",
                      "Inverse of the truncated power-law mass function that applies at the cloud's radius: the "
                      "inner Galaxy's slope and truncation inside the solar radius, the outer's beyond it (Rice et "
@@ -410,10 +597,10 @@ CLOUD_STATE = FieldDecl(
 # here until S55; they are the randomness layer's (BUILD_III Appendix B) and are declared, drawn and published in
 # galaxy/layer/cloud_texture.py, synthetic, each with what it stands in for, what it conserves and its statistic.
 CLOUD_METALLICITY = _column("cloud_metallicity", "[Fe/H]", "dex",
-                            "The present-day gas iron abundance at the cloud's radius: what the stars it makes "
+                            "The present-day gas iron abundance at the radius its ring drew: what the stars it makes "
                             "are born with, and what sets its dust.", ramp=Ramp("plasma"))
 CLOUD_ALPHA = _column("cloud_alpha", "[α/Fe]", "dex",
-                      "The present-day gas α-to-iron ratio at the cloud's radius, for the oxygen its lines need.",
+                      "The present-day gas α-to-iron ratio at the radius its ring drew, for the oxygen its lines need.",
                       ramp=Ramp("plasma"))
 
 CLOUD_EXTINCTION_V = FieldDecl(
@@ -516,14 +703,17 @@ CLOUDS = IMPLEMENTATIONS.register(
             "MOLECULAR_MEAN_WEIGHT", "TURBULENCE_FORCING_B", "GMC_PHASE_EMBEDDED", "GMC_PHASE_BLOWN_OPEN",
             "GMC_PHASE_DISPERSING",
             *GAS_PATTERN_CONSTANTS,  # S57 (D216): the gas's own response places the clouds - its sound speed, and G
+            *CLUSTERING_CONSTANTS,  # S61 (D220 part II): the clustering field's five numbers
         ),
         requires=(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
+            "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud is placed by in its cell
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
             CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
+            CLOUD_BIRTH_RADIUS,  # S61 (D220 part II as amended): last, so the wire's order before it stands
             CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME, CLOUD_EXTINCTION_V,
         ),
     )

@@ -1,54 +1,52 @@
-# BRIEF — S61: BUILD_III's Phase L1, the clustered censuses (an Opus lead; a stop condition expected at the gate)
+# BRIEF — S62: BUILD_III's Phase L2, the gas fluctuation field and the spurs (an Opus lead; Fable at a stop condition)
 
-**The state (2026-10-12).** S60 is merged (D219): Phase P5 built the stellar arms as **a census of pieces** —
-chains on their own loci in the layer's table `arm_piece`, a ridge the Gaussian of the distance to a chain's
-polyline, tapered over the law's width at free ends, the ring mean exact by stretches and the point function's
-normaliser tabulated; the gas forced with the thickness factor and carried along the loci; pins `arm_class`
-(`ngc_4414` flocculent) and `arm_pieces` (`milky_way`, Reid et al. 2019). Layer off nothing moved: rows 12 / 20 / 5
-of 37, row 35 −2.08124, row 37 −0.102973. Register 94 open = 11 + 83, 46 discharged. Numbers from D220, #158,
-row 38, board row 61. **The owner's standing order: run the sessions back to back, stop only for a ruling that is
-theirs; Fable at the plan's gates and at a stop condition; builders, reviewers and re-pins on Fable** while the
-owner's limits say so.
+**The state (2026-10-13).** S61 is merged (D220): Phase L1 built **the ring-first draw** for every placed census —
+a ring's count and every per-object draw on a ring stream, the layer assigning only the sector and the place
+within it, so the realised ring totals are identical with the layer on or off, `CENSUS_STATISTICS` is empty and
+rows 35 / 37 moved by the redraw alone (−2.05555, −0.097717) — and **`census_clustering`**, a synthetic field on
+`texture_seed` placing the clouds (and so the clusters) jointly in radius and azimuth on each level-0 cell's lattice
+and the 20–40.7 Myr bright stars with their finest octaves dropped by age. Its gate is judged **against a control**
+(the census's own law with the field's width 0): clouds −0.636 / clusters −0.670 on the default galaxy against the
+sourced −0.64 ± 0.15; the uniform-random numbers are a disclosed check, not a target. Register 97 open = 11 + 86,
+48 discharged; next number **#163**, decisions from **D221**, board row 62, acceptance rows from 38. **The owner's
+standing order: run the sessions back to back, stop only for a ruling that is theirs.** S61 was led by Fable with
+Opus builders on the owner's word for that session; re-read their latest word on models before spawning.
 
 ## Read
-- `BUILD_III.md` §5 **Phase L1** (with its G1 order, the ring-first draw, and D219's added question: is
-  `census_clustering` its own field or the coarse scales of L2's `gas_fluctuation`), §3d (stop conditions), §6.
-- `docs/READING_CLUSTERING.md` (taken at S59's close): **no single slope and no single fading age** for young
-  clusters (−0.39 to −1.1 in one galaxy by fit range; randomisation 40 to ~100 Myr by source); every amplitude is
-  against uniform randoms in a footprint, none against an arm-modulated disc; clouds less clustered than clusters
-  (about −0.2 against −0.5); clusters leave their clouds in 2–6 Myr. L1's gate — "the sourced slope over the sourced
-  range" — can be met only on the finished census measured as the sources measure it: **expect a stop condition at
-  the gate and put it to Fable with the numbers**.
-- D219's closing paragraph (the final model, the cost, the debts #155–#157, the owner's list).
+- `BUILD_III.md` §5 **Phase L2** with its two added paragraphs: D219's (a ridged, filamentary form is a declared
+  choice of look) and **D220's "one noise"** — `gas_fluctuation` is the same lattice noise on the same seed path as
+  `census_clustering`, its octaves continuing finer than 47.5 pc with the slope and width L2 sources; **L2 may not
+  change the clouds' map** (ℓ = 190 pc, three octaves, σ = 1.75; `tests/test_clustering_gate.py` stays green).
+- `model/galaxy/layer/census_clustering.py` (the field, its constants in `level0.py`, the cell lattice and the
+  `cell` table), `noise.py` (`fractal`, `fractal_coarsest`, `lognormal_map`, `cell_quadrature`'s pair form).
+- D220 part II (the gate re-read: a control, not uniform randoms; why) and the register's **#161** — the per-cell
+  conservation cuts the hierarchy's power at the cell scale; rule 2 allows a ring as the unit, and the field's cell
+  means entering the clouds' sector weights is the named mend, which L2's drawing beside the finer octaves may be
+  the place for. **#159** (the lattice placement's cost: `clouds: whole disc` ~10 s cold) wants a shared per-cell
+  lattice when the shader reads the same noise (V7).
+- `docs/S61_PROBE.md` is deleted at S61's close; its tables are in D220. The instrument is
+  `model/galaxy/specs/clustering.py` (Landy–Szalay, footprints, a control, the fits).
 
 ## Told to the owner (none awaited; if they answer, their word comes first)
-- (a) Layer on, the arms carry about 45–80 % of the arm-number law's power on the median ring (#155); another
-  ensemble is one formula (`budget_amplitude`).
-- (b) The contrast steps by up to 0.055 at kinks within one law width of a free end (#156; default seed 4, Milky
-  Way seed 1); the continuous rule is one pass if the frames show it.
-- (c) The viewer's whole-disc calls cost 2–3× `main` layer on (`region: whole disc` 5.7 s cold against 1.95); theirs
-  to bound.
-- (d) The arms enter the last tenth of the bar; at the bar's end the count's floor spends up to 2.9× the budget on
-  one seed — their look at the bar's ends.
-- (e) Milky Way frame: a barred spiral with too many, too faint arms; `ngc_4414`: a smooth disc with a bulge, no
-  visible flocculence.
-- (f) Still theirs: the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147).
-- (g) `tests/test_pieces.py`'s gate test takes about 88 minutes alone; cut or kept at their word.
+- (a) The default seed's cloud draw is the lowest of 300 (0.904 of the molecular gas): 6.6 % less cluster light
+  than S60; a reroll of the default seed is theirs.
+- (b) The whole-disc census routes cost 2.5× cold (#159); their bound on the viewer's calls is still theirs.
+- (c) What the field adds is seen only in the region regime below 4 kpc until V6 draws the censuses at galaxy scale.
+- (d) The young stars' clustering fades in one step at 40.7 Myr, not the sources' decline (#162).
+- (e) The 88-minute gate test in `tests/test_pieces.py` (g) and the closing suite's length, theirs to cut or keep.
+- (f) Still theirs from before: the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147).
 
-## Traps learned at S60
-- **A builder measures before the gate rules a mechanism**: the tenth follow-up ruled two diagnoses that the
-  builder's measurement then showed wrong (an end at the floor already was a free end; the width bound's condition
-  changed nothing) — ask for the measured cause first, then the ruling.
-- **Keep every Bash command under 8 KB**; scripts in the scratchpad, never `$TMP`; LF newlines.
-- **A worktree can start at `main`**: reset it to the session branch before a builder works in it.
-- **The gate test runs ~88 minutes**: background the suite with its exit line appended; gate the merge on that line.
-- **Commit at every step** — agents die on usage limits mid-diff; a resumed agent starts from its uncommitted diff.
-- **Cherry-pick builders' commits** onto the session branch; **two agents at once, one heavy, none past 50 % of the
-  5-hour window**; check usage before every spawn or resume.
-- A prediction is read before it is judged; a sum is compared like for like (S60's Σf over 128 harmonics against
-  `main`'s m = 2…6 cost a follow-up).
-- Layer off nothing may move; nothing is tuned to a goal picture; no third fit of `ngc_4414`; no unspent NGC 4414
-  window read; re-pins by builders of their own after the model is final, old values beside the new.
+## Traps learned at S61
+- **A placement rule bounds the correlation it can carry**: azimuth-only placement read −0.18 of a −0.64 field,
+  a ±190 pc window −0.41, the whole cell −0.63 — probe the placement variants before the ruling names one.
+- **The census's own law realised again is the only honest control**; the literal "other seeds, field kept"
+  reads 1 because data and control share the clumps.
+- **A declared bound is measured over the whole disc, not a sample**: "0.06 dex" was the 90th percentile; the
+  maximum was 1.26 dex at the disc's edge. The reviewer found it; declare distributions, not a number.
+- **Rebase builders onto the branch, never merge**; cherry-pick only when the branch has not moved under them.
+- **Two agents at once, one heavy, none past 50 % of the 5-hour window; read the meter before every spawn.**
+- Keep every Bash command under 8 KB; scripts in the scratchpad (sub-folders per agent: builders collided on a
+  shared `cost.py`); capture pytest's own exit code, never a pipe's; background the suite with its EXIT line.
+- Layer off nothing may move; nothing is tuned to a goal picture; a prediction is read before it is judged and a
+  failed one is recorded with its mechanism (D220 records four).
 - Look at the frames beside the goals before the close and say plainly what they show.
-- (h) The bar's gas lanes at R0 are fainter than at S51 (the gas contrast there runs 0.81-1.37 of its mean; #155's shortfall): D210's placement rules are records now.
-- Trap: capture pytest's own exit code (`${PIPESTATUS[0]}`), never a pipe's; the first closing suite's EXIT=0 was `tr`'s and hid twenty failures.

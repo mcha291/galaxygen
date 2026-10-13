@@ -104,8 +104,9 @@ BUBBLE_STATES: tuple[str, ...] = ("expanding", "stalled")
 REMNANT_PHASES: tuple[str, ...] = ("sedov", "radiative")
 REMNANT_KINDS: tuple[str, ...] = ("core_collapse", "type_ia")
 
+# S61 (D220 item 6): the bubbles are binned by their cloud's radius ("cluster_birth_radius"; was "cluster_radius").
 CLUSTER_READS: tuple[str, ...] = (
-    "cluster_radius", "cluster_mass", "cluster_age", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
+    "cluster_birth_radius", "cluster_mass", "cluster_age", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
 )
 REGION_READS: tuple[str, ...] = ("hii_electron_density", "hii_temperature")
 # What the remnant census reads: the rates, the gas it expands into, the metallicity factor.
@@ -370,7 +371,7 @@ def blast_wave(age_yr: np.ndarray, n0: np.ndarray, zeta: np.ndarray, e51: float,
 
 
 def hot_phase_porosity(
-    fields: Mapping[str, Any], R: np.ndarray, cluster_radius: np.ndarray, bubble_radius: np.ndarray,
+    fields: Mapping[str, Any], R: np.ndarray, birth_radius: np.ndarray, bubble_radius: np.ndarray,
     remnant_radius: np.ndarray, remnant_size: np.ndarray,
 ) -> np.ndarray:
     """Per cell ring, on the radial grid: the clusters' bubbles' and the remnants' summed volume over the gas
@@ -385,7 +386,7 @@ def hot_phase_porosity(
         float(np.trapezoid(np.where((R >= edges[i]) & (R <= edges[i + 1]), layer, 0.0), R)) for i in range(CELL_RINGS)
     ])
     held = np.zeros(CELL_RINGS)
-    for where, size in ((cluster_radius, bubble_radius), (remnant_radius, remnant_size)):
+    for where, size in ((birth_radius, bubble_radius), (remnant_radius, remnant_size)):
         where = np.asarray(where, dtype=float)
         vol = 4.0 / 3.0 * math.pi * np.nan_to_num(np.asarray(size, dtype=float)) ** 3
         ring = np.clip(np.searchsorted(edges, where, side="right") - 1, 0, CELL_RINGS - 1)
@@ -594,7 +595,7 @@ def compute_bubbles(ctx: Context) -> Mapping[str, Any]:
         **bubbles,
         **remnants,
         "hot_phase_porosity": hot_phase_porosity(
-            f, R, clusters["cluster_radius"], bubbles["bubble_radius"], remnants["remnant_radius"], remnants["remnant_size"],
+            f, R, clusters["cluster_birth_radius"], bubbles["bubble_radius"], remnants["remnant_radius"], remnants["remnant_size"],
         ),
         "remnant_count_total": float(remnant_expected(f, R, c).sum()),
     }

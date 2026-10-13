@@ -48,8 +48,16 @@ the stars formed, net of what they return, times the bound fraction — every st
 cluster ``[inferred]``: Lada & Lada 2003 put 70-90% of the stars formed in GMCs in embedded clusters.
 No dissolution after emergence is applied; that is S34's, where Boylan-Kolchin 2018's η checks it.
 
-**Which cluster is which.** Its stream is ``(systems_seed, "cluster", cell, …)``, so rerolling the
-systems seed rerolls it with the stars and clouds, and no cloud number moves with it.
+**Which cluster is which.** A cluster is its cloud's: named ``(cell, index)`` by its rank among the cell's
+clusters, and drawn - since S61, the ring-first draw (D220 items 1 and 5) - on its cloud's ring stream
+``(systems_seed, "cluster", ring, …)``, an array of the ring's cloud count read at the cloud's place ``i`` in
+it. So a cluster's own draws do not depend on where the layer put its cloud, rerolling the systems seed rerolls
+it with the stars and clouds, and no cloud number moves with it.
+
+**Where it is, and where it is binned** (D220 item 6). Its published ``cluster_radius`` and ``cluster_azimuth``
+are its placement - the cloud's centre plus the layer's source offset, what the viewer draws. The stages that
+bin realised clusters by radius (``nebular``, ``bubbles``) bin by ``cluster_birth_radius``, its cloud's radius:
+a ring-stream draw the layer does not move, so what they publish per ring is the same with the layer on or off.
 """
 
 from __future__ import annotations
@@ -60,12 +68,11 @@ from typing import Any
 
 import numpy as np
 
-from galaxy.core import seeds as _seeds
 from galaxy.core.cmaps import BLACKBODY_KELVIN
 from galaxy.core.fielddoc import FieldDecl, Kind, Palette, Ramp
 from galaxy.core.registry import IMPLEMENTATIONS
 from galaxy.core.stage import Context, Stage
-from galaxy.stages.clouds import cloud_counts, expected_counts
+from galaxy.stages.clouds import RingLayout, cloud_layout, layout_of, ring_draws, with_layout
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
 from galaxy.stages.photometry import (
@@ -85,12 +92,13 @@ CLUSTER_BOUND_STATES: tuple[str, ...] = ("bound", "unbound", "dissolved")
 CLUSTER_COLUMNS: tuple[str, ...] = (
     "cluster_radius", "cluster_azimuth", "cluster_height", "cluster_mass", "cluster_half_mass_radius",
     "cluster_age", "cluster_metallicity", "cluster_ionizing_photons", "cluster_wind_luminosity",
-    "cluster_luminosity", "cluster_light_temperature",
+    "cluster_luminosity", "cluster_light_temperature", "cluster_birth_radius",
 )
 # What the census reads of each cloud: its place, mass, age, abundance, source and which cluster it holds.
 CLOUD_READS: tuple[str, ...] = (
     "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_age", "cloud_source_offset",
     "cloud_source_angle", "cloud_metallicity", "cloud_cluster_index",
+    "cloud_birth_radius",  # S61 (D220 part II as amended): the radius the ring drew - the efficiency's and the binners'
 )
 
 
@@ -155,7 +163,9 @@ def materialise_clusters(
     """The clusters of a cloud census's cells: one per cloud whose ``cloud_cluster_index`` names one, in
     the cells' order and the clouds' order within each, so a cell drawn alone is the cell in any set (D60).
     ``counts`` lists the cells that hold a cluster, in the order the census listed them. ``fields`` gives
-    the star formation rate and molecular surface densities the efficiency is read from."""
+    the star formation rate and molecular surface densities the efficiency is read from. ``clouds`` carries
+    its ring layout (``clouds.layout_of``): a cluster's own draws are its cloud's ring's arrays read at the
+    cloud's ``(ring, i)`` (D220 items 1 and 5)."""
     c = constants
     lifetime = cloud_lifetime(c)
     embedded = float(c["GMC_PHASE_EMBEDDED"])
@@ -163,9 +173,9 @@ def materialise_clusters(
     dissolution = float(c["CLUSTER_DISSOLUTION_AGE"])
     density = float(c["CLUSTER_HALF_MASS_DENSITY"])
     index = np.asarray(clouds["cloud_cluster_index"], dtype=float)
+    layout = layout_of(clouds)
     pick: list[np.ndarray] = []
     counts: list[tuple[int, int]] = []
-    bound: list[np.ndarray] = []
     offset = 0
     for cell, count in clouds.counts:
         rows = offset + np.flatnonzero(index[offset:offset + count] >= 0.0)
@@ -174,23 +184,26 @@ def materialise_clusters(
             continue
         pick.append(rows)
         counts.append((int(cell), int(rows.size)))
-        bound.append(_seeds.rng(seed, "cluster", int(cell), "bound").random(rows.size) < bound_fraction)
     if not pick:
         empty = np.zeros(0)
         return Catalogue.of({n: empty for n in CLUSTER_COLUMNS} | {"cluster_bound": empty.astype(np.int64)}, ())
     rows = np.concatenate(pick)
+    # The hosting clouds' identities in their rings' draws: each cluster's own draws are read there (D220 item 1).
+    hosts = RingLayout(tuple(counts), layout.ring[rows], layout.index[rows], layout.sizes)
 
     def cloud(name: str) -> np.ndarray:
         return np.asarray(clouds[name], dtype=float)[rows]
 
-    eps = efficiency(cloud("cloud_radius"), fields["sfr_surface_density"], fields["gas_molecular_surface_density"], R, lifetime)
+    # S61 (D220 part II as amended): the efficiency is read at the radius the cloud's ring drew, not where the layer
+    # placed it, so a cluster's mass - and every ring total of it - is the same with the layer on or off.
+    eps = efficiency(cloud("cloud_birth_radius"), fields["sfr_surface_density"], fields["gas_molecular_surface_density"], R, lifetime)
     mass = eps * cloud("cloud_mass")
     age = np.maximum(cloud("cloud_age") - embedded, 0.0)
     feh = cloud("cloud_metallicity")
     radius, azimuth = offset_position(cloud("cloud_radius"), cloud("cloud_azimuth"), cloud("cloud_source_offset"), cloud("cloud_source_angle"))
     q, wind = per_mass(age, feh)
     light, colour = population_at(age / 1000.0, feh)
-    is_bound = np.concatenate(bound)
+    is_bound = ring_draws(seed, "cluster", hosts, ("bound",))["bound"] < bound_fraction
     state = np.where(is_bound, 0, np.where(age < dissolution, 1, 2)).astype(np.int64)
     out = {
         "cluster_radius": radius,
@@ -207,15 +220,18 @@ def materialise_clusters(
         "cluster_luminosity": mass * light,
         "cluster_light_temperature": correlated_temperature(colour),
         "cluster_bound": state,
+        # S61 (D220 item 6): the radius the binning stages read - the cloud's, a ring-stream draw; not the placement.
+        # S61 (D220 part II as amended): was cloud("cloud_radius") - the same number until the layer placed the cloud.
+        "cluster_birth_radius": cloud("cloud_birth_radius"),
     }
     return Catalogue.of(out, counts)
 
 
 def census_of_clouds(fields: Mapping[str, Any], R: np.ndarray, seed: int, constants: Mapping[str, float]) -> Catalogue:
-    """The published cloud columns with the ``(cell, count)`` layout they were drawn in: the counts are
-    the census's own Poisson draws, redrawn (they are cheap), so the stage need not draw a cloud twice."""
-    counts = cloud_counts(expected_counts(fields, R, constants), seed)
-    return Catalogue.of({name: fields[name] for name in CLOUD_READS}, counts)
+    """The published cloud columns with the ring layout they were drawn in: each ring's count and sector
+    allocation, redrawn (they are cheap: D220 item 3), so the stage need not draw a cloud twice."""
+    layout = cloud_layout(fields, R, seed, constants)
+    return with_layout(Catalogue.of({name: fields[name] for name in CLOUD_READS}, layout.counts), layout)
 
 
 def bound_mass(stars_formed_history: np.ndarray, R: np.ndarray, bound_fraction: float) -> float:
@@ -247,6 +263,10 @@ NOT_DRAWN_WHY: dict[str, str] = {
                                 "this rate in the cloud's clumped gas.",
     "cluster_wind_luminosity": "drawn through its bubble: `bubble_radius` and the shell's thickness and emissivity are "
                                "this power, with the supernovae's, over the age.",
+    # S61 (D220 item 6): the binners' radius. The viewer draws the cluster where it stands, `cluster_radius`.
+    "cluster_birth_radius": "the radius the binning stages read: `nebular` and `bubbles` bin a cluster by the radius "
+                            "its cloud's ring drew, a draw the layer does not move; the viewer draws the cluster where it stands "
+                            "(`cluster_radius`, the cloud's centre plus the source's offset).",
 }
 
 
@@ -266,6 +286,12 @@ CLUSTER_RADIUS = _column("cluster_radius", "Galactocentric radius", "kpc",
 CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
                           "The embedded source's azimuth. The source's direction is read from the outward radial "
                           "direction toward increasing azimuth, a convention the cloud census does not state.")
+CLUSTER_BIRTH_RADIUS = _column("cluster_birth_radius", "Its cloud's galactocentric radius", "kpc",
+                               "The radius the ring of the cloud that made it drew for that cloud (S61, D220 "
+                               "part II as amended: until the layer placed clouds in their cells, the cloud's "
+                               "radius). The stages that bin realised clusters by radius bin by this (D220 item "
+                               "6), so what they publish per ring does not move with the cloud's placement or the "
+                               "source's offset, which the randomness layer draws.")
 CLUSTER_HEIGHT = _column("cluster_height", "Height above the plane", "kpc",
                          "Its cloud's height: the offset is taken in the plane.")
 CLUSTER_MASS = _column("cluster_mass", "Cluster mass", "Msun",
@@ -410,7 +436,7 @@ CLUSTERS = IMPLEMENTATIONS.register(
         publishes=(
             CLUSTER_RADIUS, CLUSTER_AZIMUTH, CLUSTER_HEIGHT, CLUSTER_MASS, CLUSTER_HALF_MASS_RADIUS, CLUSTER_AGE,
             CLUSTER_BOUND, CLUSTER_METALLICITY, CLUSTER_IONIZING, CLUSTER_WIND, CLUSTER_LUMINOSITY,
-            CLUSTER_LIGHT_TEMPERATURE, BOUND_CLUSTER_MASS_TOTAL,
+            CLUSTER_LIGHT_TEMPERATURE, CLUSTER_BIRTH_RADIUS, BOUND_CLUSTER_MASS_TOTAL,
             CLUSTER_FORMATION_EFFICIENCY_DECL,
         ),
     )

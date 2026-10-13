@@ -8,17 +8,27 @@ write and would have thrown away most of its draws, and its cost would have
 depended on how peaked the galaxy happened to be.
 
 **Per-region determinism, and how it is obtained.** The galaxy is divided into a
-fixed grid of cells in (R, φ). A star's identity is ``(cell, index)``, and every
-one of its properties comes from ``rng(systems_seed, "cell", cell, property)``
-drawn at position ``index`` in that stream. Two consequences fall out, and they
-are what the gate is about:
+fixed grid of cells in (R, φ). A star's name is ``(cell, index)``. Since S61 (D220
+part I) the sample is drawn **ring first**: a level-0 ring's count is one seeded
+rounding of the ring's expectation on ``rng(systems_seed, "star", ring, "count")``,
+every property of its stars is one array on ``rng(systems_seed, "star", ring,
+property)`` - a star is element ``i`` of its ring's draw - and the layer only
+allocates each star to a sector (at its own ``sector`` uniform) and an azimuth in
+it; ``index`` is its rank among its ring's stars in that cell, in ring order. A
+cell drawn alone draws its ring's count and uniforms whole and derives every
+column for its own rows only. (Until S61 every cell drew its own count and its
+own streams ``rng(systems_seed, "cell", cell, property)``, so the layer's
+weights changed which stars existed.) Two consequences fall out, and they are
+what the gate is about:
 
 - **Order independence.** Nothing is drawn from a shared stream, so generating a
   region alone gives exactly what generating it inside a full sweep gives.
 - **A smaller sample is a *prefix* of a larger one.** Each property has its own
-  stream, so asking for 10 stars from a cell gives the first 10 of the 1000 that
-  a full materialisation would give — which is what makes the clickable sample of
-  GALAXY_PLAN.md §4 stable while the LOD ladder materialises more underneath it.
+  stream, so a ring's first stars at a smaller sample are its first stars at a
+  larger one and land in the same cells, and a cell's rows at the smaller sample
+  are the first of its rows at the larger — which is what makes the clickable
+  sample of GALAXY_PLAN.md §4 stable while the LOD ladder materialises more
+  underneath it.
 
 That second property is the reason each property gets its own stream rather than
 one stream per star. With a single stream, drawing radius-then-age for 10 stars
@@ -44,6 +54,7 @@ a table between two rings cannot serve the arms' frame and the bar's at once.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
@@ -231,14 +242,22 @@ class Catalogue(dict):
     is how a row is named: row *r* is star ``index`` of ``cell``. Identity is not a
     column — it has no unit, no ramp and nothing to draw — so it travels beside the
     columns rather than inside them.
+
+    ``ring_layout`` (S61, D220 part I) is where a census drawn ring-first put each row in its draw: the
+    star sample's :class:`StarLayout`, the cloud census's ``clouds.RingLayout`` - each row's ring (or a
+    level's sub-ring) and its place ``i`` in the ring's arrays, which a later draw keyed on the object
+    (the planets, the clusters, the layer's texture) is indexed by. None on a catalogue assembled from
+    pieces (the service's cell cache) or drawn otherwise. Not a column, for the same reason as ``counts``.
     """
 
     counts: tuple[tuple[int, int], ...] = ()
+    ring_layout: Any = None
 
     @classmethod
-    def of(cls, columns: Mapping[str, Any], counts: Sequence[tuple[int, int]] = ()) -> "Catalogue":
+    def of(cls, columns: Mapping[str, Any], counts: Sequence[tuple[int, int]] = (), ring_layout: Any = None) -> "Catalogue":
         made = cls(columns)
         made.counts = tuple((int(c), int(n)) for c, n in counts)
+        made.ring_layout = ring_layout
         return made
 
     @property
@@ -349,48 +368,12 @@ def cell_expected(
 ) -> float:
     """The expected number of stars in a level-0 cell at sample size ``n_stars``: the ring's share of
     the stellar mass, over the sectors, times the sector's contrast weight. A float; the realised
-    count is its seeded rounding (:func:`cell_counts`), and a child below level 0 draws its extra
-    stars against this expectation (S32)."""
+    count is how many of its ring's stars the allocation gives it (:func:`cell_counts`; S61, D220), and
+    a child below level 0 draws its extra stars against this expectation (S32)."""
     share = cell_shares(sigma_star, R)
     weights = _sector_weights(R, pattern)
     ring, sector = divmod(int(cell), CELL_SECTORS)
     return float(n_stars * share[ring] / CELL_SECTORS * max(float(weights[ring, sector]), 0.0))
-
-
-def cell_counts(
-    sigma_star: np.ndarray,
-    R: np.ndarray,
-    seed: int,
-    n_stars: int,
-    cells: Sequence[int] | None = None,
-    pattern: ArmPattern | None = None,
-) -> tuple[tuple[int, int], ...]:
-    """``(cell, count)`` for every cell that realises a star, in cell order.
-
-    Split out of :func:`materialise` because a star's *identity* is ``(cell,
-    index)`` (D60) and more than one caller needs it: a later stage keying its own
-    draws on a star, and an API mapping a row of a region query back to the star it
-    came from. Recomputing the layout somewhere else would be a second definition
-    of which star is which, and the two would diverge silently.
-
-    It is cheap - one ``Generator`` per cell for the rounding, no property streams -
-    so knowing the layout costs a fraction of drawing the stars themselves.
-    """
-    share = cell_shares(sigma_star, R)
-    wanted = range(CELL_COUNT) if cells is None else cells
-    weights = _sector_weights(R, pattern)
-    out: list[tuple[int, int]] = []
-    for cell in wanted:
-        ring, sector = divmod(int(cell), CELL_SECTORS)
-        expected = n_stars * share[ring] / CELL_SECTORS * max(float(weights[ring, sector]), 0.0)
-        base = int(expected)
-        frac = expected - base
-        # The fractional part is a seeded Bernoulli rather than a rounding rule,
-        # which would bias the disc's outskirts away entirely.
-        count = base + int(_seeds.rng(seed, "cell", int(cell), "count").random() < frac)
-        if count:
-            out.append((int(cell), count))
-    return tuple(out)
 
 
 def star_at(counts: Sequence[tuple[int, int]], row: int) -> tuple[int, int]:
@@ -659,12 +642,16 @@ def young_reader(fields: Mapping[str, Any], R: np.ndarray, constants: Mapping[st
 
 
 class YoungStars:
-    """The azimuthal model's split of each cell into young stars and the rest (S27).
+    """The azimuthal model's split of each cell into young stars and the rest (S27). Since S61 the split is the
+    allocation's (:class:`Placement`): a star's age is its ring's (or sub-ring's) draw and its sector follows from
+    it; until S61 ``age_weights`` tilted each cell's age law toward its young share instead.
 
-    A cell's star count stays the density contrast's — the stellar mass is where the contrast
-    puts it, and a star's name ``(cell, index)`` must not depend on which model drew the
-    catalogue's layout (the planets stage and the API recompute it with the contrast alone).
-    What moves is *which* of a cell's stars are young. A ring whose arrival law holds a share
+    A cell's expected star count stays the density contrast's — the stellar mass is where the
+    contrast puts it. (Until S61 its realised count was too, and a star's name ``(cell, index)``
+    did not depend on which model drew the layout; drawn ring-first, a ring's stars are the same
+    in both models and the young ones are allocated by the modulation, so a star keeps its
+    identity in the ring's draw and may stand in another cell.) What moves is *which* of a
+    cell's stars are young. A ring whose arrival law holds a share
     ``y`` of stars younger than :data:`YOUNG_STAR_AGE` gives each of its sectors a young share
     ``y · m̄ / c̄`` — the sector's mean modulation over its mean contrast — so the ring's young
     stars are spread over its sectors as the modulation is, the ring's total young share is
@@ -672,7 +659,7 @@ class YoungStars:
     Every table here covers every ring and sector, whatever a request asked for (D60).
     """
 
-    __slots__ = ("modulation", "young_step", "born_after", "share", "p")
+    __slots__ = ("modulation", "young_step", "born_after", "share", "p")  # S61: young_step is read by nothing but the split
 
     def __init__(
         self,
@@ -704,15 +691,279 @@ class YoungStars:
         ratio = np.where(con > 0.0, mod / np.where(con > 0.0, con, 1.0), 1.0)
         self.p = np.clip(self.share[:, None] * ratio, 0.0, 1.0)
 
-    def age_weights(self, arrive: np.ndarray, ring: int, sector: int) -> np.ndarray:
-        """The ring's arrival law, its young steps weighted to this sector's young share."""
-        y, p = float(self.share[ring]), float(self.p[ring, sector])
-        if not 0.0 < y < 1.0:
-            return arrive
-        return arrive * np.where(self.young_step, p / y, (1.0 - p) / (1.0 - y))
-
     def is_young(self, born: np.ndarray) -> np.ndarray:
         return born > self.born_after
+
+
+# --- the ring-first draw (S61, D220 part I) ----------------------------------
+
+# The per-star streams of a ring's draw, each an array of the ring's count (D220 item 1). The names are the ones the
+# cells' streams had until S61; ``sector`` (the allocation's uniform) and ``count`` (the ring's seeded rounding) are
+# the ring's own.
+STAR_STREAMS: tuple[str, ...] = ("radius", "age", "azimuth", "birth_radius", "height", "mass")
+
+
+def star_stream(seed: int, ring: int, name: str, level: int = 0) -> np.random.Generator:
+    """The stream ``name`` of one level-0 ring's draw of the star sample, ``(seed, "star", ring, name)`` (S61, D220
+    item 1). A star's identity in the draw is ``(ring, i)``: it is element ``i`` of every array drawn on these
+    streams. ``level`` k names the hierarchy's sub-ring streams, ``(seed, "star", "level", k, sub_ring, name)``: a
+    level-k child's own stars are its sub-ring's draw, allocated among the sub-ring's children (S61, D220 item 8)."""
+    if not level:
+        return _seeds.rng(seed, "star", int(ring), name)
+    return _seeds.rng(seed, "star", "level", int(level), int(ring), name)
+
+
+def ring_star_expected(sigma_star: np.ndarray, R: np.ndarray, n_stars: int) -> np.ndarray:
+    """The expected number of the sample's stars in every level-0 ring, (rings,): ``n_stars`` times the ring's share of
+    the stellar mass. No placement enters it, so it is the same number with the layer on or off; it is the sum of the
+    ring's cell expectations (:func:`cell_expected`) to rounding (invariant I2; measured at S61, see
+    ``tests/test_layer.py``). A ring's count is its seeded rounding (:func:`ring_star_count`)."""
+    return float(n_stars) * cell_shares(sigma_star, R)
+
+
+def ring_star_count(seed: int, ring: int, expected: float, level: int = 0) -> int:
+    """A ring's star count: the expectation's whole part plus one seeded Bernoulli on its fractional part, drawn on
+    the ring's stream ``(seed, "star", ring, "count")`` - the census's own rule (rather than a rounding rule, which
+    would bias the disc's outskirts away), applied once per ring since S61 (D220 item 1) and once per cell before.
+    At ``level`` k, ``ring`` is a sub-ring and the stream its own, ``(seed, "star", "level", k, sub_ring, "count")``."""
+    base = int(expected)
+    return base + int(star_stream(seed, ring, "count", level).random() < expected - base)
+
+
+def sub_ring_expected(sigma_star: np.ndarray, R: np.ndarray, n_stars: int, level: int) -> np.ndarray:
+    """The expected number of a level-k sub-ring's own stars, per level-0 ring (rings,) - the same for each of the
+    ring's 2^k sub-rings: ``2^k (1 − 4^−k) n_stars share`` (S61, D220 item 8). Each of the sub-ring's 32·2^k children
+    holds a level-k sample 4^k times as dense as level 0's, of which its parent's stars supply 4^−k: summed round the
+    sub-ring that is ``2^k (1 − 4^−k)`` times the ring's level-0 expectation. No placement enters it."""
+    k = int(level)
+    return float(1 << k) * (1.0 - 4.0 ** -k) * ring_star_expected(sigma_star, R, n_stars)
+
+
+@dataclass(frozen=True)
+class StarLayout:
+    """Where the ring-first draw put the rows of a star catalogue (S61, D220 items 1-2).
+
+    ``counts`` is the catalogue's ``(cell, count)`` layout - the cells in the order asked, those that realise no star
+    left out - and row by row ``level``, ``ring`` and ``index`` are the star's identity in its draw: a level-0 star is
+    element ``index`` of its ``ring``'s arrays (:func:`star_stream`); below level 0 a child's own star is ``(level,
+    sub-ring, index in the sub-ring's draw)``. ``sizes`` holds each drawn ring's count, the length of its arrays -
+    keyed by the level-0 ring, and by ``(level, sub-ring)`` below. A row's name stays ``(cell, index in the cell)``
+    (D190); this is what a draw keyed on the star - its planets - is indexed by, so that draw does not depend on where
+    the layer put it."""
+
+    counts: tuple[tuple[int, int], ...]
+    level: np.ndarray
+    ring: np.ndarray
+    index: np.ndarray
+    sizes: Mapping[Any, int]
+
+    def take(self, keep: np.ndarray, counts: Sequence[tuple[int, int]]) -> "StarLayout":
+        """The layout of the rows ``keep`` selects, laid out as ``counts``."""
+        return StarLayout(tuple((int(c), int(n)) for c, n in counts), self.level[keep], self.ring[keep], self.index[keep], self.sizes)
+
+
+def star_layout_of(catalogue: Catalogue) -> StarLayout:
+    """The :class:`StarLayout` a star catalogue drawn by :func:`materialise` carries (``Catalogue.ring_layout``)."""
+    layout = getattr(catalogue, "ring_layout", None)
+    if not isinstance(layout, StarLayout):
+        raise ValueError("this catalogue carries no star layout: materialise it with systems.materialise")
+    return layout
+
+
+def select(catalogue: Catalogue, keep: np.ndarray, counts: Sequence[tuple[int, int]], drop: Sequence[str] = ()) -> Catalogue:
+    """The rows ``keep`` of a star catalogue, laid out as ``counts``, its columns but ``drop``, and its
+    :class:`StarLayout` taken with them - what a caller that narrows a catalogue (``/api/system`` below level 0)
+    hands on, so the rows it keeps are still named in their draw."""
+    layout = getattr(catalogue, "ring_layout", None)
+    columns = {n: np.asarray(v)[keep] for n, v in catalogue.items() if n not in drop}
+    return Catalogue.of(columns, counts, layout.take(keep, counts) if isinstance(layout, StarLayout) else None)
+
+
+class Placement:
+    """What places a run's stars round their rings, made once a materialisation and over every ring and sector
+    whatever a request asked for (D60): the stellar pattern from compose, the churn's arrival law, the young stars'
+    split and the sector weights each part is allocated by (S61, D220 item 2).
+
+    *The allocation.* A star's sector is the inverse of its ring's cumulative sector weights at its own ``sector``
+    uniform (``clouds.allocate``). With no modulation the weights are the pattern's sector means (``_sector_weights``,
+    clipped at 0), or none - every sector alike - with the layer off. Where the model publishes ``sfr_modulation``
+    and the layer is on, the weights are the two the catalogue has read per cell since S27 (:class:`YoungStars`),
+    taken apart: a star younger than :data:`YOUNG_STAR_AGE` by its age - drawn from the ring's arrival law, the same
+    on and off - is allocated by the sector's contrast times its young share, ``c̄ p``, and an older one by
+    ``c̄ (1 − p)``. A sector so expects the young and the old stars it expected when each cell tilted its own age law
+    (until S61): ``p`` is the young share ``y m̄ / c̄``, so the young weights are ``y m̄`` and sum round the ring to the
+    ring's young share wherever no sector's share is clipped at 0 or 1, and the cell's total is the contrast's. The
+    layer assigns the sector - and the azimuth within it - and nothing else (item 4)."""
+
+    __slots__ = ("pattern", "churn", "young", "edges", "ring_index", "contrast", "old", "fresh", "t")
+
+    def __init__(self, fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, *, migration: float,
+                 constants: Mapping[str, Any] | None) -> None:
+        _, edges = cell_masses(fields["stellar_surface_density"], R)
+        self.edges, self.t = edges, t
+        # The radius that stands for a ring, computed from the density field rather than
+        # from the stars a cell happens to realise. Using the realised mean would make a
+        # cell's ages depend on how many stars were asked for, which silently broke the
+        # prefix property until a test caught it.
+        weights = fields["stellar_surface_density"] * R
+        ring_radius = np.array([
+            float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
+            if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
+            else 0.5 * (edges[i] + edges[i + 1])
+            for i in range(CELL_RINGS)
+        ])
+        self.ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
+        # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
+        # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
+        self.pattern = _compose.stellar_pattern(fields, R)
+        # Every cell ring, whichever cells were asked for. Narrowing it to the rings a region
+        # query touches was tried and reverted: the arrival law is a matrix product over the
+        # rings, and BLAS sums a 1-column product in a different order than a 32-column one, so
+        # a region came back with a star one bit from the sweep's. Per-region determinism is
+        # this stage's whole contract (D60), and arithmetic that depends on what was asked for
+        # is the one thing it cannot have. Affordable because the kernel is read by column now.
+        self.churn = Churn(R, t, fields["sfr_surface_density_history"], self.ring_index, migration)
+        # Where stars form today, when the model publishes it (the azimuthal model, S27): read
+        # optionally, so the same stage draws both models' catalogues, and tabulated over every
+        # ring and sector for the same reason the arrival law is (D60). A composed weight, so it comes from
+        # compose (S55): none with the layer off, and the catalogue is drawn as a model without the field draws it.
+        # Since S59 (D218, the gate's ruling) the young stars' reader is not the table: it is the star formation law
+        # applied to the gas pattern's point function, ring by ring (:class:`Modulation`). The table says only that
+        # the model has such a law.
+        reader = young_reader(fields, R, constants)
+        self.young = None if reader is None else YoungStars(reader, self.pattern, self.churn.arrive, t, edges, cell_edges(R)[1])
+        flat = self.pattern is None or self.pattern.flat
+        self.contrast = None if flat else np.maximum(_sector_weights(R, self.pattern), 0.0)
+        if self.young is None:
+            self.old = self.fresh = self.contrast
+        else:
+            c = np.ones((CELL_RINGS, CELL_SECTORS)) if self.contrast is None else self.contrast
+            self.fresh, self.old = c * self.young.p, c * (1.0 - self.young.p)
+
+    def born(self, u_age: np.ndarray, ring: int) -> np.ndarray:
+        """Birth times at ``u_age`` from the ring's arrival law: of the stars *here now*, the migration kernel's law
+        rather than the local birth rate. The same law on and off since S61 (the layer no longer tilts a cell's)."""
+        return invert_cdf(u_age, self.t, self.churn.arrive[:, int(ring)])
+
+    def sectors(self, ring: int, u_sector: np.ndarray, born: np.ndarray | None) -> np.ndarray:
+        """Each of a ring's stars' sector (D220 item 2). ``born`` (every star of the ring's) is read only where the
+        young stars are allocated apart."""
+        if self.young is None:
+            return self.allocate(u_sector, born, None if self.old is None else self.old[ring], None)
+        return self.allocate(u_sector, born, self.old[ring], self.fresh[ring])
+
+    def allocate(self, u_sector: np.ndarray, born: np.ndarray | None, old: np.ndarray | None,
+                 fresh: np.ndarray | None) -> np.ndarray:
+        """Each star's place among ``len(old)`` sectors (``CELL_SECTORS`` when the weights are None): the old stars by
+        ``old``, the young ones (born after :data:`YOUNG_STAR_AGE` ago, read where the model publishes a modulation) by
+        ``fresh``."""
+        from galaxy.stages.clouds import allocate  # one allocation law for every census; clouds imports this module
+
+        if self.young is None:
+            return allocate(u_sector, old)
+        assert born is not None and old is not None and fresh is not None
+        young = self.young.is_young(born)
+        out = np.empty(u_sector.size, dtype=np.int64)
+        out[young] = _allocate_among(u_sector[young], fresh)
+        out[~young] = _allocate_among(u_sector[~young], old)
+        return out
+
+    def sub_ring_weights(self, level: int, sub_ring: int) -> tuple[np.ndarray | None, np.ndarray | None]:
+        """``(old, fresh)``: the parts' weights on a level-k sub-ring's 32·2^k children (D220 item 8) - the rule of
+        level 0 evaluated on the children at the sub-ring's middle radius: the pattern's exact sector means ``c̄`` over
+        the children's sub-sectors and, where the model publishes a modulation, the modulation's ``m̄`` normalised to
+        its mean round the sub-ring and the ring's young share ``y``: ``c̄ (1 − p)`` and ``c̄ p`` with ``p = clip(y m̄ /
+        c̄)``. ``(None, None)`` where every child of the sub-ring weighs the same (the layer off)."""
+        n = 1 << int(level)
+        r, a = divmod(int(sub_ring), n)
+        lo, hi = float(self.edges[r]), float(self.edges[r + 1])
+        mid = lo + (hi - lo) * (a + 0.5) / n
+        edges = np.linspace(0.0, 2.0 * math.pi, CELL_SECTORS * n + 1)
+        con = None if self.pattern is None or self.pattern.flat else np.asarray(self.pattern.sector_means(mid, edges), dtype=float)
+        if self.young is None:
+            return (None if con is None else np.maximum(con, 0.0)), None
+        mod = np.asarray(self.young.modulation.sector_means_at(np.array([mid]), edges)[0], dtype=float)
+        mean = float(mod.mean())
+        mod = mod / mean if mean > 0.0 else np.ones_like(mod)
+        c = np.ones_like(mod) if con is None else con
+        ratio = np.where(c > 0.0, mod / np.where(c > 0.0, c, 1.0), 1.0)
+        p = np.clip(float(self.young.share[r]) * ratio, 0.0, 1.0)
+        c = np.maximum(c, 0.0)
+        return c * (1.0 - p), c * p
+
+
+def _allocate_among(u: np.ndarray, weights: np.ndarray | None, k: int | None = None) -> np.ndarray:
+    """``clouds.allocate``'s law over ``len(weights)`` sectors (it is fixed at a level-0 ring's 32): the inverse of the
+    cumulative weights at each uniform, ``floor(u k)`` where ``weights`` is None (every sector alike: the layer off)
+    or sums to nothing. The floor is not only the same law: at a level-3 sub-ring of 1.3 million stars a search
+    cost 65 ms a call against a few for the floor (measured, S61)."""
+    u = np.asarray(u, dtype=float)
+    k = int(np.asarray(weights).size) if weights is not None else int(k)
+    if weights is None or not float(np.sum(weights)) > 0.0:
+        return np.minimum((u * k).astype(np.int64), k - 1)
+    cdf = np.cumsum(np.asarray(weights, dtype=float))
+    return np.minimum(np.searchsorted(cdf / cdf[-1], u, side="right"), k - 1).astype(np.int64)
+
+
+def _layout(place: Placement, sigma_star: np.ndarray, R: np.ndarray, seed: int, n_stars: int,
+            cells: Sequence[int]) -> tuple[StarLayout, dict[int, dict[str, np.ndarray]]]:
+    """The level-0 layout of ``cells`` and the uniforms drawn to make it, per touched ring (D220 items 1-3): each ring
+    the cells lie in has its count and its ``sector`` uniforms drawn whole (and its ``age`` uniforms, where the young
+    stars are allocated apart), and each cell's rows are the ring's stars allocated to it, in ring order."""
+    expected = ring_star_expected(sigma_star, R, n_stars)
+    wanted = [int(c) for c in cells]
+    drawn: dict[int, dict[str, np.ndarray]] = {}
+    sector: dict[int, np.ndarray] = {}
+    for r in dict.fromkeys(c // CELL_SECTORS for c in wanted):
+        n = ring_star_count(seed, r, float(expected[r]))
+        here = {"sector": star_stream(seed, r, "sector").random(n)}
+        born = None
+        if place.young is not None:
+            here["age"] = star_stream(seed, r, "age").random(n)
+            born = place.born(here["age"], r)
+        drawn[r] = here
+        sector[r] = place.sectors(r, here["sector"], born)
+    counts: list[tuple[int, int]] = []
+    ring: list[np.ndarray] = []
+    index: list[np.ndarray] = []
+    for cell in wanted:
+        r, s = divmod(cell, CELL_SECTORS)
+        rows = np.flatnonzero(sector[r] == s)
+        if rows.size:
+            counts.append((cell, int(rows.size)))
+            ring.append(np.full(rows.size, r, dtype=np.int64))
+            index.append(rows.astype(np.int64))
+    join = lambda parts: np.concatenate(parts) if parts else np.zeros(0, dtype=np.int64)  # noqa: E731
+    ring_ = join(ring)
+    return StarLayout(tuple(counts), np.zeros(ring_.size, dtype=np.int64), ring_, join(index),
+                      {r: v["sector"].size for r, v in drawn.items()}), drawn
+
+
+def star_layout(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, seed: int, n_stars: int,
+                cells: Sequence[int] | None = None, *, migration: float, constants: Mapping[str, Any] | None = None) -> StarLayout:
+    """The level-0 :class:`StarLayout` of ``cells`` (every cell when None) - which star of which ring each row is,
+    and the ``(cell, count)`` layout that names the rows - without materialising a star (S61, D220).
+
+    Split out of :func:`materialise` because a star's *identity* is ``(cell, index)`` (D60) and more than one caller
+    needs it: a later stage keying its own draws on a star (the planets), and an API mapping a row back to the star it
+    came from. Recomputing the layout somewhere else would be a second definition of which star is which. It reads
+    what the allocation reads: the arrival law and the young stars' reader where the model publishes a modulation.
+
+    *The cost* - S61 (D220; the review's finding 8): measured under the suite's load, least of five, the default
+    galaxy's 20 000-star sample over every cell: 0.441 s layer on, 0.020 s off. Before (``main`` at S60, the same
+    conditions) ``specs.performance.catalogue_cost``'s "layout" was ``cell_counts`` without a pattern, 0.016 s on and
+    off; with the stellar pattern ``materialise`` laid out by, 0.179 s on, 0.016 s off. The rise layer on is
+    :class:`Placement` - the pattern, the churn's arrival law and the young reader, built here once - which a
+    ``materialise`` call builds anyway: a cell's cost does not carry it twice (below)."""
+    place = Placement(fields, R, t, migration=migration, constants=constants)
+    return _layout(place, fields["stellar_surface_density"], R, seed, n_stars, range(CELL_COUNT) if cells is None else cells)[0]
+
+
+def cell_counts(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, seed: int, n_stars: int,
+                cells: Sequence[int] | None = None, *, migration: float, constants: Mapping[str, Any] | None = None) -> tuple[tuple[int, int], ...]:
+    """``(cell, count)`` for every cell that realises a star, in the order asked: :func:`star_layout`'s counts. Since
+    S61 (D220) a cell's count is how many of its ring's stars the allocation gives it, no longer a draw of its own."""
+    return star_layout(fields, R, t, seed, n_stars, cells, migration=migration, constants=constants).counts
 
 
 def materialise(
@@ -755,29 +1006,51 @@ def materialise(
     asserted in ``tests/test_hierarchy.py``. Below level 0 the catalogue carries three more
     columns, ``level``, ``cell`` and ``index`` — each row's canonical name, which is what a
     system is opened by: an inherited star's is its parent's, an extra star's is its child's.
+
+    **Ring first** (S61, D220 part I). At level 0 a cell's stars are its ring's draw: the ring's
+    count one seeded rounding of its expectation (:func:`ring_star_count`), every per-star uniform
+    an array on the ring's stream (:func:`star_stream`), each star's sector the inverse of its
+    part's sector weights at its own ``sector`` uniform (:class:`Placement`), its radius, age and
+    the rest as before at its own uniforms, its azimuth in the sector by the pattern's point
+    function (the young stars' by the star formation law at the point). A cell drawn alone draws
+    its ring's count and uniforms whole, keeps the rows allocated to it, and derives every column
+    for those rows alone. The catalogue carries its :class:`StarLayout` (``ring_layout``).
+    A star's radius inverts its ring's density on the grid's nodes, and the inversion can put it
+    up to one node (75 pc on the production grid) past the ring's inner edge, in the next ring's
+    footprint while its name is its own cell's (pre-existing; debt #158, measured at S61).
+
+    *Below level 0 the unit is the whole sub-ring* (D220 item 8; the lead's ruling (a) at S61). A
+    level-k child's own stars are its sub-ring's draw: the sub-ring's count the seeded rounding of
+    2^k (1 − 4^−k) n share (:func:`sub_ring_expected`) on ``(seed, "star", "level", k, sub_ring,
+    "count")``, every per-star uniform an array on the sub-ring's stream, each star's child the
+    inverse of its part's weights on the sub-ring's 32·2^k children (``Placement.sub_ring_weights``:
+    level 0's rule evaluated on the children), its radius and azimuth uniform over the child's
+    footprint as since S32. So the sub-ring's realised totals are the same on and off. *The cost,
+    accepted as measured:* a child query draws its sub-ring whole - about 1.3 million stars at
+    level 3 near R0 at the route's largest sample (5 000 000) - which prices a level-3 child there
+    at about 2.2 times the cell draws' (68 ms against 31, layer off, measured; level 2 52 against 32); at n ≤ 10^6 every level
+    stays under 2 times, and with the layer on far under (the run's placement tables dominate).
+
+    *One level-0 cell* - S61 (D220; the review's finding 8): measured under the suite's load, least of five, cell 300
+    of the default galaxy at n = 20 000: 0.442 s layer on (9 stars), 0.017 s off (18), against ``main`` at S60 under
+    the same conditions 0.437 s on (16 stars) and 0.017 s off (20) - unchanged, as D220 item 3 predicted (the ring's
+    uniforms and no more). The reviewer's 0.45 -> 0.85 s was two loaded single readings. Layer on, the cell costs what
+    :func:`star_layout` does (0.441 s): ``Placement``'s tables over every ring and sector are nearly all of it.
     """
     if not 0 <= level <= MAX_LEVEL:
         raise ValueError(f"level={level} is outside 0..{MAX_LEVEL}")
-    _, edges = cell_masses(fields["stellar_surface_density"], R)
-
-    # The radius that stands for a ring, computed from the density field rather than
-    # from the stars a cell happens to realise. Using the realised mean would make a
-    # cell's ages depend on how many stars were asked for, which silently broke the
-    # prefix property until a test caught it.
-    weights = fields["stellar_surface_density"] * R
-    ring_radius = np.array([
-        float(np.average(R, weights=np.where((R >= edges[i]) & (R <= edges[i + 1]), weights, 0.0)))
-        if np.any((R >= edges[i]) & (R <= edges[i + 1]) & (weights > 0.0))
-        else 0.5 * (edges[i] + edges[i + 1])
-        for i in range(CELL_RINGS)
-    ])
-    ring_index = np.array([int(np.argmin(np.abs(R - r))) for r in ring_radius])
-
-    # The pattern the catalogue places by, from compose (S55, D214): none with the layer off, and then every
-    # sector of a ring is alike and a star's azimuth is uniform in its sector - the arithmetic of no pattern.
-    pattern = _compose.stellar_pattern(fields, R)
-    parents = None if cells is None else sorted({parent_of(int(c), level)[0] for c in cells}) if level else cells
-    counts = cell_counts(fields["stellar_surface_density"], R, seed, n_stars, parents, pattern)
+    # What places the stars round their rings, over every ring and sector (D60): the pattern, the churn's arrival
+    # law, the young stars' split and each part's sector weights (S61, D220 item 2).
+    placement = Placement(fields, R, t, migration=migration, constants=constants)
+    edges, pattern, churn, young = placement.edges, placement.pattern, placement.churn, placement.young
+    sigma_star = fields["stellar_surface_density"]
+    parents = list(range(CELL_COUNT)) if cells is None or level else [int(c) for c in cells]
+    if cells is not None and level:
+        parents = sorted({parent_of(int(c), level)[0] for c in cells})
+    # S61 (D220 items 1-3): the level-0 stars of the asked cells, drawn ring-first - each ring's count and its
+    # uniform arrays whole, the rows allocated to the asked cells kept, every derived column for those rows alone.
+    layout, drawn = _layout(placement, sigma_star, R, seed, n_stars, parents)
+    counts = layout.counts
 
     h_thin = float(fields["thin_disc_scale_height"]) / PC_PER_KPC
     h_thick = float(fields["thick_disc_scale_height"]) / PC_PER_KPC or h_thin
@@ -789,22 +1062,6 @@ def materialise(
     thick_at_birth = np.asarray(fields["birth_population"], dtype=np.int64) == POPULATIONS.index("thick")
     # [α/Fe] at birth, read at the same place as [Fe/H].
     alpha = np.asarray(fields["alpha_fe_history"], dtype=float)
-    # Every cell ring, whichever cells were asked for. Narrowing it to the rings a region
-    # query touches was tried and reverted: the arrival law is a matrix product over the
-    # rings, and BLAS sums a 1-column product in a different order than a 32-column one, so
-    # a region came back with a star one bit from the sweep's. Per-region determinism is
-    # this stage's whole contract (D60), and arithmetic that depends on what was asked for
-    # is the one thing it cannot have. Affordable because the kernel is read by column now.
-    churn = Churn(R, t, fields["sfr_surface_density_history"], ring_index, migration)
-    # Where stars form today, when the model publishes it (the azimuthal model, S27): read
-    # optionally, so the same stage draws both models' catalogues, and tabulated over every
-    # ring and sector for the same reason the arrival law is (D60). A composed weight, so it comes from
-    # compose (S55): none with the layer off, and the catalogue is drawn as a model without the field draws it.
-    # Since S59 (D218, the gate's ruling) the young stars' reader is not the table: it is the star formation law
-    # applied to the gas pattern's point function, ring by ring (:class:`Modulation`). The table says only that
-    # the model has such a law.
-    reader = young_reader(fields, R, constants)
-    young = None if reader is None else YoungStars(reader, pattern, churn.arrive, t, edges, cell_edges(R)[1])
     width = 2.0 * math.pi / CELL_SECTORS
 
     def rows_for(cell: int, count: int, draw: Callable[[str], np.ndarray], footprint: dict[str, float] | None) -> dict[str, np.ndarray]:
@@ -830,9 +1087,10 @@ def materialise(
         # arrival law rather than the local birth rate, which would be the answer for a
         # disc whose stars never moved. Taken once per ring, as the birth-time CDF always
         # was — building one per star would cost 10^6 cumulative sums for a resolution
-        # finer than a ring is wide. In the azimuthal model the ring's law is tilted per
-        # sector toward or away from its young steps (YoungStars), the ring's total unchanged.
-        arrival = churn.arrive[:, ring] if young is None else young.age_weights(churn.arrive[:, ring], ring, sector)
+        # finer than a ring is wide. Since S61 (D220 items 2 and 8) a star's age - a child's own star's too - is drawn
+        # from its ring's law, the same on and off, and the young stars' share of a sector is the allocation's
+        # (Placement); until S61 each cell tilted the law toward or away from its young steps (YoungStars).
+        arrival = churn.arrive[:, ring]
         born = invert_cdf(draw("age"), t, arrival)
 
         # Where around the ring: the density contrast at the star's own radius, inside its
@@ -899,29 +1157,88 @@ def materialise(
             target[:] = azimuth[offset : offset + n]
             offset += n
 
-    def cell_stream(cell: int, count: int) -> Callable[[str], np.ndarray]:
-        return lambda name: _seeds.rng(seed, "cell", int(cell), name).random(count)
+    # The rows' uniforms (D220 items 1 and 3): each touched ring's arrays on its streams, read at each row's place
+    # ``i`` in the ring. A Generator's draws are a sequence, so the first ``max(i) + 1`` of a ring's array are the
+    # whole array's: the values are the ring's whatever else was asked, and nothing past the last asked row is drawn.
+    u_rows: dict[str, np.ndarray] = {}
+    for name in STAR_STREAMS:
+        values = np.zeros(layout.index.size)
+        for r, already in drawn.items():
+            here = layout.ring == r
+            if not here.any():
+                continue
+            arr = already.get(name)
+            if arr is None:
+                arr = star_stream(seed, r, name).random(int(layout.index[here].max()) + 1)
+            values[here] = arr[layout.index[here]]
+        u_rows[name] = values
+    starts = np.cumsum([0] + [n for _, n in counts])
+
+    def cell_rows(k: int) -> Callable[[str], np.ndarray]:
+        rows = slice(int(starts[k]), int(starts[k + 1]))
+        return lambda name: u_rows[name][rows]
 
     columns: dict[str, list[np.ndarray]] = {}
+    made = [rows_for(cell, count, cell_rows(k), None) for k, (cell, count) in enumerate(counts)]
+    place(made)
     if level == 0:
-        made = [rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts]
-        place(made)
         for rows, _ in made:
             for name, values in rows.items():
                 columns.setdefault(name, []).append(values)
         out_counts: tuple[tuple[int, int], ...] = counts
+        out_layout = layout
     else:
-        # Below level 0: each requested child inherits its parent's stars that fall inside it,
-        # then adds its own — the parent's expected count times (1 − 4^−k), the share of a
-        # 4^k-times-denser sample the inherited stars do not supply — from its own stream.
-        made = {cell: rows_for(cell, count, cell_stream(cell, count), None) for cell, count in counts}
-        place(list(made.values()))
-        parent_rows = {cell: rows for cell, (rows, _) in made.items()}
-        parent_counts = dict(counts)
-        realised: list[tuple[int, int]] = []
-        for child in (cells if cells is not None else range(CELL_COUNT * children_per_cell(level))):
-            child = int(child)
+        # Below level 0: each requested child inherits its parent's stars that fall inside it, then adds its own -
+        # its sub-ring's stars allocated to it (S61, D220 item 8, the lead's ruling (a)). A level-k sub-ring is drawn
+        # whole, as a level-0 ring is: its count the seeded rounding of 2^k (1 − 4^−k) n share on its stream, every
+        # per-star uniform an array on it, each star's child the inverse of its part's weights on the sub-ring's
+        # 32·2^k children at its own ``sector`` uniform; within the child its radius and azimuth are uniform over the
+        # footprint, as since S32. A child's own star is named (level, child, rank in the child) on the wire and is
+        # (level, sub-ring, i) in its draw.
+        made = {cell: m for (cell, _), m in zip(counts, made)}
+        parent_slice = {cell: slice(int(starts[k]), int(starts[k + 1])) for k, (cell, _) in enumerate(counts)}
+        side = 1 << level
+        expected_sub = sub_ring_expected(sigma_star, R, n_stars, level)
+        asked = [int(c) for c in (cells if cells is not None else range(CELL_COUNT * children_per_cell(level)))]
+
+        def place_of(child: int) -> tuple[int, int, int, int]:
+            """(parent, q, sub-ring, child's place among the sub-ring's children)."""
             parent, q = parent_of(child, level)
+            ring_, sector_ = divmod(parent, CELL_SECTORS)
+            a_, b_ = divmod(q, side)
+            return parent, q, ring_ * side + a_, sector_ * side + b_
+
+        drawn_sub: dict[int, dict[str, np.ndarray]] = {}
+        alloc_sub: dict[int, np.ndarray] = {}
+        for sr in dict.fromkeys(place_of(c)[2] for c in asked):
+            ring_ = sr // side
+            n_sub = ring_star_count(seed, sr, float(expected_sub[ring_]), level)
+            here = {"sector": star_stream(seed, sr, "sector", level).random(n_sub)}
+            born_sub = None
+            if young is not None:
+                here["age"] = star_stream(seed, sr, "age", level).random(n_sub)
+                born_sub = placement.born(here["age"], ring_)
+            old_w, fresh_w = placement.sub_ring_weights(level, sr)
+            alloc_sub[sr] = (placement.allocate(here["sector"], born_sub, old_w, fresh_w) if young is not None
+                             else _allocate_among(here["sector"], old_w, CELL_SECTORS * side))
+            drawn_sub[sr] = here
+        own_rows = {c: np.flatnonzero(alloc_sub[place_of(c)[2]] == place_of(c)[3]) for c in dict.fromkeys(asked)}
+        # The children's own stars' uniforms: each sub-ring's arrays, up to its last asked row (a Generator's draws are
+        # a sequence), read at each row's place.
+        need = {}
+        for c, rows_ in own_rows.items():
+            if rows_.size:
+                sr = place_of(c)[2]
+                need[sr] = max(need.get(sr, 0), int(rows_.max()) + 1)
+        u_sub = {sr: {name: drawn_sub[sr][name] if name in drawn_sub[sr] else star_stream(seed, sr, name, level).random(m)
+                      for name in STAR_STREAMS} for sr, m in need.items()}
+        lv: list[np.ndarray] = []
+        rg: list[np.ndarray] = []
+        ix: list[np.ndarray] = []
+        parent_rows = {cell: rows for cell, (rows, _) in made.items()}
+        realised: list[tuple[int, int]] = []
+        for child in asked:
+            parent, q, sr, _ = place_of(child)
             bounds = cell_bounds(R, child, level)
             rows = parent_rows.get(parent)
             if rows is None:
@@ -934,13 +1251,19 @@ def materialise(
                 inherited["level"] = np.zeros(n_in, dtype=np.int64)
                 inherited["cell"] = np.full(n_in, parent, dtype=np.int64)
                 inherited["index"] = np.flatnonzero(inside).astype(np.int64)
-            expected = cell_expected(fields["stellar_surface_density"], R, n_stars, parent, pattern)
-            n_extra = int(round(expected * (1.0 - 1.0 / children_per_cell(level))))
-            extra = rows_for(parent, n_extra, lambda name, k=n_extra, p=parent, qq=q: _seeds.rng(seed, "cell", int(p), "level", int(level), int(qq), name).random(k), bounds)[0] if n_extra else {}
+                lv.append(np.zeros(n_in, dtype=np.int64))
+                rg.append(layout.ring[parent_slice[parent]][inside])
+                ix.append(layout.index[parent_slice[parent]][inside])
+            mine_ = own_rows[child]
+            n_extra = int(mine_.size)
+            extra = rows_for(parent, n_extra, lambda name, sr_=sr, at=mine_: u_sub[sr_][name][at], bounds)[0] if n_extra else {}
             if n_extra:
                 extra["level"] = np.full(n_extra, level, dtype=np.int64)
                 extra["cell"] = np.full(n_extra, child, dtype=np.int64)
                 extra["index"] = np.arange(n_extra, dtype=np.int64)
+                lv.append(np.full(n_extra, level, dtype=np.int64))
+                rg.append(np.full(n_extra, sr, dtype=np.int64))
+                ix.append(mine_.astype(np.int64))
             total = n_in + n_extra
             if not total:
                 continue
@@ -949,6 +1272,9 @@ def materialise(
                 columns.setdefault(name, []).append(np.concatenate(parts) if parts else np.zeros(0))
             realised.append((child, total))
         out_counts = tuple(realised)
+        join = lambda parts: np.concatenate(parts) if parts else np.zeros(0, dtype=np.int64)  # noqa: E731
+        out_layout = StarLayout(out_counts, join(lv), join(rg), join(ix),
+                                {**layout.sizes, **{(level, sr): v["sector"].size for sr, v in drawn_sub.items()}})
 
     if not columns:
         empty = np.zeros(0)
@@ -961,7 +1287,7 @@ def materialise(
         } | {"star_wolf_rayet": empty.astype(np.int64), "star_remnant": empty.astype(np.int64)}
         if level:
             blank |= {n: empty.astype(np.int64) for n in ("level", "cell", "index")}
-        return Catalogue.of(blank, out_counts)
+        return Catalogue.of(blank, out_counts, out_layout)
     out = {name: np.concatenate(parts) for name, parts in columns.items()}
     # What each star emits, looked up rather than drawn: given its mass, age and abundance
     # the isochrones have already decided (rule B8). Per star, so a region's rows are the
@@ -985,7 +1311,7 @@ def materialise(
     out["star_bubble_radius"] = star_bubble_radius(
         out["star_wind_luminosity"], out["star_age"], np.interp(out["star_radius"], R, np.asarray(fields["gas_midplane_density"], dtype=float))
     )
-    return Catalogue.of(out, out_counts)
+    return Catalogue.of(out, out_counts, out_layout)
 
 
 def _within(radius: np.ndarray, azimuth: np.ndarray, bounds: Mapping[str, float], R: np.ndarray, parent: int, level: int, q: int) -> np.ndarray:
@@ -1243,8 +1569,9 @@ CATALOGUE_SIZE = FieldDecl(
     meaningful_zero=True, provenance="seeded",
     about=(
         "How many of GALAXY_PLAN.md §4's clickable sample were actually materialised. It differs "
-        "from the requested size by the per-cell rounding, which is a seeded Bernoulli on the "
-        "fractional part rather than a rounding rule that would bias the disc's outskirts away. "
+        "from the requested size by the per-ring rounding (per cell until S61), which is a seeded Bernoulli on the "
+        "fractional part rather than a rounding rule that would bias the disc's outskirts away - the same "
+        "number with the layer on or off, since the layer places a ring's stars and never draws them (D220). "
         "**Not shown by the viewer** (debt #69, ruled at S22): it is a galaxy scalar of the stage "
         "that publishes the object columns, which `scalarsAt` excludes so the client cannot "
         "materialise a galaxy to print one number (rule D4). Nothing is lost — the region "

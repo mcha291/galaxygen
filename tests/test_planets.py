@@ -244,7 +244,8 @@ def test_a_system_is_the_same_alone_as_in_the_sample(model):
     """D60 one level down: (cell, index) names a system, and naming it is enough."""
     o = out(model)
     fields = o.fields
-    counts = cell_counts(fields["stellar_surface_density"], o.grid.R, 0, 20000, pattern=ArmPattern.from_fields(fields, o.grid.R))  # S56 (D215): on the grid radii
+    # S61 (D220): was cell_counts(sigma, R, 0, 20000, pattern=...) - the ring-first layout.
+    counts = cell_counts(fields, o.grid.R, o.grid.t, 0, 20000, migration=churn(o), constants=own(model))
     offsets = np.cumsum([0] + [n for _, n in counts])
     planets_before = np.cumsum(np.concatenate([[0], fields["star_planet_count"]])).astype(int)
 
@@ -252,7 +253,7 @@ def test_a_system_is_the_same_alone_as_in_the_sample(model):
         cell, index = counts[np.searchsorted(offsets, row, side="right") - 1][0], None
         index = row - offsets[np.searchsorted(offsets, row, side="right") - 1]
         stars = materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell], migration=churn(o), constants=own(model))
-        mine, belts = pl.one_system(stars, index, cell, 0, CONSTANTS)
+        mine, belts = pl.one_system(stars, index, 0, CONSTANTS)  # S61 (D220): the star's ring identity is the catalogue's, no cell argument
         start, end = planets_before[row], planets_before[row + 1]
         assert len(mine["planet_mass"]) == end - start
         assert np.array_equal(mine["planet_mass"], fields["planet_mass"][start:end])
@@ -271,11 +272,11 @@ def test_a_smaller_sample_gives_a_star_the_same_planets(model):
     index = 0
     little, _ = pl.one_system(
         materialise(fields, o.grid.R, o.grid.t, 0, 4000, cells=[cell], migration=churn(o), constants=own(model)),
-        index, cell, 0, CONSTANTS,
+        index, 0, CONSTANTS,
     )
     lots, _ = pl.one_system(
         materialise(fields, o.grid.R, o.grid.t, 0, 20000, cells=[cell], migration=churn(o), constants=own(model)),
-        index, cell, 0, CONSTANTS,
+        index, 0, CONSTANTS,
     )
     assert len(little["planet_mass"]) == len(lots["planet_mass"])
     assert np.array_equal(little["planet_mass"], lots["planet_mass"])
