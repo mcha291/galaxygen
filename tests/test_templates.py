@@ -263,7 +263,17 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # S61 (D220 item 4): but a column that is one value for every object - `hii_density_bounded`, 0 for every region -
     # is the same bytes in both runs, since the ring-first draw gives both the same count.
     constant = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed and n not in differ}
-    assert constant == {"hii_density_bounded"} and not np.asarray(named.fields["hii_density_bounded"]).any(), sorted(constant)
+    # S61 (D220 items 1-4): was {"hii_density_bounded"} alone. The bright catalogue is drawn ring-first (its own build):
+    # the same stars in both runs, only their cells and azimuths placed, and the default selection - the brightest, in
+    # luminosity order - is the same stars, so its columns but the azimuth are the same bits. And the star sample is
+    # drawn ring-first (its build): the same stars in both runs in other cells, so a column that is one value for every
+    # star of this sample - star_population and star_wolf_rayet, 0 for each - or NaN but for one star that stands at the
+    # same row in both - star_wind_luminosity and star_bubble_radius - is the same bytes (measured; as in
+    # tests/test_layer.py's oracle).
+    bright_same = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of == "bright_star" and n != "bright_star_azimuth"}
+    star_same = {"star_population", "star_wolf_rayet", "star_wind_luminosity", "star_bubble_radius"}
+    assert constant == {"hii_density_bounded"} | bright_same | star_same, " ".join(sorted(constant))
+    assert not np.asarray(named.fields["hii_density_bounded"]).any()
     assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed} - constant <= differ
     assert {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of not in placed}.isdisjoint(differ)
     assert moved_statistics <= {

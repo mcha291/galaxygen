@@ -283,6 +283,9 @@ def test_the_young_stars_follow_the_modulation_and_the_old_ones_the_contrast(coa
     # contrast's in both, the young stars' share of a cell tilted by the modulation through their ages. Drawn ring-first,
     # each ring draws the same stars in both models, ages and all, and the young ones are allocated by the modulation:
     # the same stars (by their identity in the ring's draw) with every column but the azimuth the same, in other cells.
+    # S27's property - a star's name (cell, index) the same whichever model drew it - is given up (the lead's ruling at
+    # S61): `basic` is frozen and allocates by the contrast alone (uniform with the layer off), `azimuthal` allocates
+    # its young stars by its modulation; the stars are the same by ring identity, which is what is compared here.
     la, lb = systems.star_layout_of(ca), systems.star_layout_of(cb)
     oa, ob = np.lexsort((la.index, la.ring)), np.lexsort((lb.index, lb.ring))
     assert ca.size == cb.size and np.array_equal(la.ring[oa], lb.ring[ob]) and np.array_equal(la.index[oa], lb.index[ob])

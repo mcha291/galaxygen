@@ -959,6 +959,9 @@ def materialise(
     function (the young stars' by the star formation law at the point). A cell drawn alone draws
     its ring's count and uniforms whole, keeps the rows allocated to it, and derives every column
     for those rows alone. The catalogue carries its :class:`StarLayout` (``ring_layout``).
+    A star's radius inverts its ring's density on the grid's nodes, and the inversion can put it
+    up to one node (75 pc on the production grid) past the ring's inner edge, in the next ring's
+    footprint while its name is its own cell's (pre-existing; debt #158, measured at S61).
 
     *The levels below 0 keep their children's draws* (S61, the builder's measurement before
     building D220 item 8, for the lead's ruling): a level-k sub-ring drawn whole at the route's
