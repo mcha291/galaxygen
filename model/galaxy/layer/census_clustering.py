@@ -11,8 +11,10 @@ that hierarchy - a level-C simulation would (RESEARCH_AREAS section 1). This sta
 
 a log-normal map of an isotropic octave sum of lattice noise in the plane: its coarsest lattice cell is the
 hierarchy's largest scale, 190 pc, and its octaves halve to 95 and 47.5 pc, the finest its resolution. Its
-statistic is the hierarchy's own excess over the structure - the ratio of the two branches of Grasha et al.
-2017a's correlation function (item 2) - and its spectral slope and width are the two numbers measured to give it
+statistic is the hierarchy's own excess over the structure - the slope of the ratio of the two branches of Grasha
+et al. 2017a's correlation function (-0.64) at Menon et al. 2021's median largest hierarchical scale (190 pc), two
+sources and not Grasha's ratio alone, which meets 1 at its own 112 pc break (item 2; ``_STATISTIC`` says what that
+changes: 2.43 at 47.5 pc, not 1.73) - and its spectral slope and width are the two numbers measured to give it
 (the constants' about lines say how). With the layer off there is no field: each cloud's azimuth is drawn
 uniformly in its sector, as before S61.
 
@@ -366,8 +368,11 @@ _STATISTIC = (
     "docs/READING_CLUSTERING.md 1.2] - the six galaxies' inner slopes run -0.4 to -1.7 one by one; the scale "
     "190 pc is the median of the five largest hierarchical scales measured in Menon et al. 2021 Table 3 "
     "(101-845 pc; READING_CLUSTERING.md 1.3), bracketed by that 112 pc break and NGC 628's 210-300 pc (Lapeer "
-    "et al. 2026; 1.5). As realised by the field alone in a flat footprint (S61): slope -0.646 +- 0.010 over "
-    "47.5-190 pc, 2.45 at 47.5 pc, 0.99-1.00 beyond 380 pc (48 noise seeds). (DECISIONS.md D220 part II item 2.)"
+    "et al. 2026; 1.5). **Two sources, not one ratio**: the slope -0.64 is Grasha et al. 2017a's two branches' "
+    "ratio, the scale 190 pc Menon et al. 2021's median largest hierarchical scale - so the excess at 47.5 pc is "
+    "(47.5/190)^-0.64 = 2.43, where Grasha's ratio alone, meeting at its own 112 pc break, would give "
+    "(47.5/112)^-0.64 = 1.73 (29 % lower; 2.43 is 40 % above it); the lead's choice (D220 part II item 2). "
+    "As realised by the field alone in a flat footprint (S61): slope -0.646 +- 0.010 over 47.5-190 pc, 2.45 at 47.5 pc, 0.99-1.00 beyond 380 pc (48 noise seeds). (DECISIONS.md D220 part II item 2.)"
 )
 
 
