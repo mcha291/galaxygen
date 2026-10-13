@@ -947,7 +947,14 @@ def star_layout(fields: Mapping[str, Any], R: np.ndarray, t: np.ndarray, seed: i
     Split out of :func:`materialise` because a star's *identity* is ``(cell, index)`` (D60) and more than one caller
     needs it: a later stage keying its own draws on a star (the planets), and an API mapping a row back to the star it
     came from. Recomputing the layout somewhere else would be a second definition of which star is which. It reads
-    what the allocation reads: the arrival law and the young stars' reader where the model publishes a modulation."""
+    what the allocation reads: the arrival law and the young stars' reader where the model publishes a modulation.
+
+    *The cost* - S61 (D220; the review's finding 8): measured under the suite's load, least of five, the default
+    galaxy's 20 000-star sample over every cell: 0.441 s layer on, 0.020 s off. Before (``main`` at S60, the same
+    conditions) ``specs.performance.catalogue_cost``'s "layout" was ``cell_counts`` without a pattern, 0.016 s on and
+    off; with the stellar pattern ``materialise`` laid out by, 0.179 s on, 0.016 s off. The rise layer on is
+    :class:`Placement` - the pattern, the churn's arrival law and the young reader, built here once - which a
+    ``materialise`` call builds anyway: a cell's cost does not carry it twice (below)."""
     place = Placement(fields, R, t, migration=migration, constants=constants)
     return _layout(place, fields["stellar_surface_density"], R, seed, n_stars, range(CELL_COUNT) if cells is None else cells)[0]
 
@@ -1023,6 +1030,12 @@ def materialise(
     level 3 near R0 at the route's largest sample (5 000 000) - which prices a level-3 child there
     at about 2.2 times the cell draws' (68 ms against 31, layer off, measured; level 2 52 against 32); at n ≤ 10^6 every level
     stays under 2 times, and with the layer on far under (the run's placement tables dominate).
+
+    *One level-0 cell* - S61 (D220; the review's finding 8): measured under the suite's load, least of five, cell 300
+    of the default galaxy at n = 20 000: 0.442 s layer on (9 stars), 0.017 s off (18), against ``main`` at S60 under
+    the same conditions 0.437 s on (16 stars) and 0.017 s off (20) - unchanged, as D220 item 3 predicted (the ring's
+    uniforms and no more). The reviewer's 0.45 -> 0.85 s was two loaded single readings. Layer on, the cell costs what
+    :func:`star_layout` does (0.441 s): ``Placement``'s tables over every ring and sector are nearly all of it.
     """
     if not 0 <= level <= MAX_LEVEL:
         raise ValueError(f"level={level} is outside 0..{MAX_LEVEL}")

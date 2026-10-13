@@ -46,7 +46,11 @@ keeps its rows, which are the cells and are not drawn.
 every cell's lattice and the pattern on a 16 x 24 mesh per cell: materialising every cloud costs 3.8-4.5 s (the field
 2.0 s, the pattern's meshes 1.1 s) against 1.0-1.1 s before; the whole-disc routes ``clouds`` 4.0 -> 9.6-10.3 s and
 ``clusters`` 5.3 -> 11.9 s cold, ``run()`` layer on 18.2-19.7 -> 23.1-23.6 s; one cell 0.05-0.07 s, unchanged. A
-cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell. **The
+cached per-cell lattice or a coarser one is V7's. The cell-mean table: 1.2 s at two points per finest cell. The
+``clouds`` stage alone, cold (the first time it runs in a fresh process, its upstream run first) - S61 (D220; the
+review's finding 8): measured under the suite's load, least of five, 6.82 s layer on and 0.12 s off, against
+``main`` at S60 under the same conditions 2.44 s and 0.17 s (2.8x layer on; the reviewer's loaded specs table read
+1.93 -> 9.07 s). **The
 mesh's error** beside its cost (S61, the review's finding 3; :data:`PATTERN_RADIAL_STEPS`' about has the whole
 measurement): the pattern factor up to 32 % off at a lattice point (the bar's end, ring 5), but at most 3.4e-3 of a
 cell's probability misplaced (the total-variation distance of its normalised weights; median 0), and none from
