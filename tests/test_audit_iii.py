@@ -63,14 +63,57 @@ def test_the_exact_identities_hold_at_the_audit_mesh(audit):
     assert _integral(F["halpha_surface_brightness_nebular"], R) * PC_PER_KPC**2 == pytest.approx(float(F["halpha_luminosity_nebular"]), rel=1e-12)
 
 
+# S61 (D220, the lead's ruling 1 on part I): the clouds' mass gate is an ensemble test. One systems seed is one
+# realisation of the census, not a bias: the default seed's census holds 0.897 of the molecular gas at this mesh, a
+# -3.06 sigma draw of the ring-first census, which a 3 sigma bound on that one seed failed. The bias is judged on the
+# mean over K seeds, within 3 sigma / sqrt(K) of 1; each seed is held only to 4 sigma; the default seed's own ratio
+# is recorded as measured.
+ENSEMBLE_SEEDS = tuple(range(1, 25))  # K = 24 systems seeds beside the default's (0)
+DEFAULT_SEED_CLOUD_MASS_RATIO = 0.8972526124767065  # S61 (D220 part I, ruling 1): as measured at this mesh, -3.06 sigma
+ONE_SEED_BOUND_SIGMA = 4.0  # "no bound tighter than 4 sigma on any one seed"
+
+
+def _ring_first_cloud_masses(F, R, c, seed: int) -> np.ndarray:
+    """Every cloud's mass in the census the ring-first draw makes on ``seed`` (D220 part I items 1 and 4): each
+    ring's Poisson count on its stream and its ``mass`` uniforms, through the census's own mass function. The masses
+    do not depend on where the layer places a cloud, so this is the census's mass column for any placement, at the
+    cost of the uniforms alone (the test holds it to the materialised census on the default seed)."""
+    from galaxy.core import seeds as _seeds
+    from galaxy.stages import clouds as cl
+
+    rings, _ = sy.cell_edges(R)
+    sizes = cl.ring_counts(cl.ring_expected(F, R, c), seed, range(sy.CELL_RINGS))
+    parts = []
+    for r, n in sizes.items():
+        if n:
+            slope, m_min, m_max = cl.law_for(0.5 * (rings[r] + rings[r + 1]), c)
+            parts.append(cl.mass_function_sample(_seeds.rng(seed, "cloud", r, "mass").random(n), slope, m_min, m_max))
+    return np.concatenate(parts)
+
+
 def test_the_censuses_redistribute_within_their_own_noise_at_the_audit_mesh(audit):
     o, c = audit
     F, R = o.fields, o.grid.R
-    # D181: the clouds hold the molecular mass, to the heavy tail's noise
+    # D181: the clouds hold the molecular mass, to the heavy tail's noise - over an ensemble of systems seeds (S61,
+    # D220 part I, the lead's ruling 1; above).
     m_h2 = _integral(F["gas_molecular_surface_density"], R) * PC_PER_KPC**2
     m = np.asarray(F["cloud_mass"], dtype=float)
     noise = math.sqrt(float((m**2).sum())) / float(m.sum())
-    assert float(F["cloud_mass_total"]) / m_h2 == pytest.approx(1.0, abs=3.0 * noise)
+    assert int(o.inputs["systems_seed"]) == 0 and 0 not in ENSEMBLE_SEEDS
+    own = _ring_first_cloud_masses(F, R, c, 0)
+    assert own.size == m.size and float(own.sum()) == pytest.approx(float(F["cloud_mass_total"]), rel=1e-12)
+    ratio = float(F["cloud_mass_total"]) / m_h2
+    assert ratio == pytest.approx(DEFAULT_SEED_CLOUD_MASS_RATIO, rel=1e-9)  # as measured: a realisation, recorded
+    assert abs(ratio - 1.0) < ONE_SEED_BOUND_SIGMA * noise
+    ratios, noises = [], []
+    for seed in ENSEMBLE_SEEDS:
+        x = _ring_first_cloud_masses(F, R, c, seed)
+        ratios.append(float(x.sum()) / m_h2)
+        noises.append(math.sqrt(float((x**2).sum())) / float(x.sum()))
+    ratios, noises = np.array(ratios), np.array(noises)
+    assert np.all(np.abs(ratios - 1.0) < ONE_SEED_BOUND_SIGMA * noises), (ratios - 1.0) / noises
+    sigma = float(np.sqrt(np.mean(noises**2)))  # one seed's noise, the heavy tail's (0.034 at this mesh)
+    assert float(ratios.mean()) == pytest.approx(1.0, abs=3.0 * sigma / math.sqrt(len(ENSEMBLE_SEEDS)))
     # D182: the clusters' photons close on the light stage's, to the census's noise
     q = np.asarray(F["cluster_ionizing_photons"], dtype=float)
     q_noise = math.sqrt(float((q**2).sum())) / float(q.sum())
