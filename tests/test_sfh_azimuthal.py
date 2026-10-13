@@ -215,6 +215,11 @@ def test_every_shared_field_is_sfhs_own(coarse, models):
              "star_remnant", "star_remnant_mass",
              # S36: a star's wind bubble, from the same moved ages and winds
              "star_bubble_radius",
+             # S61 (D220 items 1-2): the sample is drawn ring-first - the same stars in both models, each with the same
+             # draws, its age among them, and the young ones allocated among the ring's sectors by the modulation in
+             # azimuthal - so the rows stand in other cells, in another order: every column of the catalogue differs as
+             # an array though no star's radius, height, mass or population does (the next test, by ring identity).
+             "star_radius", "star_height", "star_mass", "star_population",
              } | {n for n in b.fields if n.startswith("planet_")} | {
         "star_planet_count", "mean_planets_per_star", "giant_fraction_sample"}  # the planets' sample statistics
     # S48 (D200, D203): the bright catalogue's cells carry the azimuthal weight - the contrast for the old stars, the
@@ -274,10 +279,16 @@ def _catalogue(out, n=100_000, **more):
 def test_the_young_stars_follow_the_modulation_and_the_old_ones_the_contrast(coarse):
     b, a = coarse
     cb, ca = _catalogue(b), _catalogue(a)
-    # The layout is the contrast's in both, so a star's (cell, index) names the same place.
-    assert ca.counts == cb.counts
-    for name in ("star_radius", "star_height", "star_mass", "star_population"):
-        assert np.array_equal(ca[name], cb[name]), name
+    # S61 (D220 items 1-2): was `ca.counts == cb.counts` and these columns equal row for row - the layout was the
+    # contrast's in both, the young stars' share of a cell tilted by the modulation through their ages. Drawn ring-first,
+    # each ring draws the same stars in both models, ages and all, and the young ones are allocated by the modulation:
+    # the same stars (by their identity in the ring's draw) with every column but the azimuth the same, in other cells.
+    la, lb = systems.star_layout_of(ca), systems.star_layout_of(cb)
+    oa, ob = np.lexsort((la.index, la.ring)), np.lexsort((lb.index, lb.ring))
+    assert ca.size == cb.size and np.array_equal(la.ring[oa], lb.ring[ob]) and np.array_equal(la.index[oa], lb.index[ob])
+    for name in ("star_radius", "star_height", "star_mass", "star_population", "star_age", "star_metallicity"):
+        assert np.array_equal(np.asarray(ca[name])[oa], np.asarray(cb[name])[ob], equal_nan=True), name
+    assert ca.counts != cb.counts
     # S59 (D218 follow-up): was `systems.Modulation(a.fields["sfr_modulation"], a.grid.R)`, the grid table read
     # between rings. The reader is the catalogue's own now - the law at a point, built as the stage builds it.
     mod = systems.young_reader(a.fields, a.grid.R, _constants())

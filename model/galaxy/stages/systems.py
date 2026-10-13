@@ -646,10 +646,12 @@ class YoungStars:
     allocation's (:class:`Placement`): a level-0 star's age is its ring's draw and its sector follows from it;
     ``age_weights`` tilts the age law of a child's extra stars below level 0 alone.
 
-    A cell's star count stays the density contrast's — the stellar mass is where the contrast
-    puts it, and a star's name ``(cell, index)`` must not depend on which model drew the
-    catalogue's layout (the planets stage and the API recompute it with the contrast alone).
-    What moves is *which* of a cell's stars are young. A ring whose arrival law holds a share
+    A cell's expected star count stays the density contrast's — the stellar mass is where the
+    contrast puts it. (Until S61 its realised count was too, and a star's name ``(cell, index)``
+    did not depend on which model drew the layout; drawn ring-first, a ring's stars are the same
+    in both models and the young ones are allocated by the modulation, so a star keeps its
+    identity in the ring's draw and may stand in another cell.) What moves is *which* of a
+    cell's stars are young. A ring whose arrival law holds a share
     ``y`` of stars younger than :data:`YOUNG_STAR_AGE` gives each of its sectors a young share
     ``y · m̄ / c̄`` — the sector's mean modulation over its mean contrast — so the ring's young
     stars are spread over its sectors as the modulation is, the ring's total young share is
