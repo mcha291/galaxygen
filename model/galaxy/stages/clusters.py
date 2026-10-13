@@ -98,6 +98,7 @@ CLUSTER_COLUMNS: tuple[str, ...] = (
 CLOUD_READS: tuple[str, ...] = (
     "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_age", "cloud_source_offset",
     "cloud_source_angle", "cloud_metallicity", "cloud_cluster_index",
+    "cloud_birth_radius",  # S61 (D220 part II as amended): the radius the ring drew - the efficiency's and the binners'
 )
 
 
@@ -193,7 +194,9 @@ def materialise_clusters(
     def cloud(name: str) -> np.ndarray:
         return np.asarray(clouds[name], dtype=float)[rows]
 
-    eps = efficiency(cloud("cloud_radius"), fields["sfr_surface_density"], fields["gas_molecular_surface_density"], R, lifetime)
+    # S61 (D220 part II as amended): the efficiency is read at the radius the cloud's ring drew, not where the layer
+    # placed it, so a cluster's mass - and every ring total of it - is the same with the layer on or off.
+    eps = efficiency(cloud("cloud_birth_radius"), fields["sfr_surface_density"], fields["gas_molecular_surface_density"], R, lifetime)
     mass = eps * cloud("cloud_mass")
     age = np.maximum(cloud("cloud_age") - embedded, 0.0)
     feh = cloud("cloud_metallicity")
@@ -218,7 +221,8 @@ def materialise_clusters(
         "cluster_light_temperature": correlated_temperature(colour),
         "cluster_bound": state,
         # S61 (D220 item 6): the radius the binning stages read - the cloud's, a ring-stream draw; not the placement.
-        "cluster_birth_radius": cloud("cloud_radius"),
+        # S61 (D220 part II as amended): was cloud("cloud_radius") - the same number until the layer placed the cloud.
+        "cluster_birth_radius": cloud("cloud_birth_radius"),
     }
     return Catalogue.of(out, counts)
 
@@ -260,8 +264,8 @@ NOT_DRAWN_WHY: dict[str, str] = {
     "cluster_wind_luminosity": "drawn through its bubble: `bubble_radius` and the shell's thickness and emissivity are "
                                "this power, with the supernovae's, over the age.",
     # S61 (D220 item 6): the binners' radius. The viewer draws the cluster where it stands, `cluster_radius`.
-    "cluster_birth_radius": "the radius the binning stages read: `nebular` and `bubbles` bin a cluster by its cloud's "
-                            "radius, a draw the layer does not move; the viewer draws the cluster where it stands "
+    "cluster_birth_radius": "the radius the binning stages read: `nebular` and `bubbles` bin a cluster by the radius "
+                            "its cloud's ring drew, a draw the layer does not move; the viewer draws the cluster where it stands "
                             "(`cluster_radius`, the cloud's centre plus the source's offset).",
 }
 
@@ -283,10 +287,11 @@ CLUSTER_AZIMUTH = _column("cluster_azimuth", "Azimuth", "rad",
                           "The embedded source's azimuth. The source's direction is read from the outward radial "
                           "direction toward increasing azimuth, a convention the cloud census does not state.")
 CLUSTER_BIRTH_RADIUS = _column("cluster_birth_radius", "Its cloud's galactocentric radius", "kpc",
-                               "The radius of the cloud that made it: the centre the source's offset is taken "
-                               "from. The stages that bin realised clusters by radius bin by this (S61, D220 item "
-                               "6), so what they publish per ring does not move with the offset, which the "
-                               "randomness layer draws.")
+                               "The radius the ring of the cloud that made it drew for that cloud (S61, D220 "
+                               "part II as amended: until the layer placed clouds in their cells, the cloud's "
+                               "radius). The stages that bin realised clusters by radius bin by this (D220 item "
+                               "6), so what they publish per ring does not move with the cloud's placement or the "
+                               "source's offset, which the randomness layer draws.")
 CLUSTER_HEIGHT = _column("cluster_height", "Height above the plane", "kpc",
                          "Its cloud's height: the offset is taken in the plane.")
 CLUSTER_MASS = _column("cluster_mass", "Cluster mass", "Msun",

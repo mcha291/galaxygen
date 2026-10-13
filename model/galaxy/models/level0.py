@@ -845,12 +845,20 @@ LEVEL0: dict[str, Constant] = {
     "CENSUS_CLUSTERING_POINTS": Constant(
         4,
         "count",
-        "Points per cell of the clustering field's finest lattice, along each axis, of every lattice the field is "
-        "summed or drawn on: a cloud's azimuth is drawn on the arc of its sector at its radius with this many "
-        "points per 47.5 pc of the sector's outer arc, and a cell's mean of the field is taken on a midpoint "
-        "lattice this dense in radius and azimuth. The lattice noise's own rule, at least four per finest cell "
-        "(galaxy/layer/noise.py, cell_quadrature). Measured at S61 on 40 level-0 cells: a cell's mean at four "
-        "points is within 6e-4 rms (3e-3 at worst) of its mean at eight; at two, 7e-3 (4e-2).",
+        "Points per cell of the clustering field's finest lattice, along each axis, of the lattice a cloud is "
+        "placed on in its level-0 cell: this many per 47.5 pc across the ring's radial extent and along the "
+        "sector's outer arc. The lattice noise's own rule, at least four per finest cell (galaxy/layer/noise.py, "
+        "cell_quadrature). Measured at S61 on 40 level-0 cells: a cell's mean of the field at four points is "
+        "within 6e-4 rms (3e-3 at worst) of its mean at eight; at two, 7e-3 (4e-2).",
+    ),
+    "CENSUS_CLUSTERING_TABLE_POINTS": Constant(
+        2,
+        "count",
+        "Points per cell of the clustering field's finest lattice, along each axis, of the lattice each level-0 "
+        "cell's published mean of the field is taken on - half the placement lattice's density, for its cost: "
+        "measured at S61 the whole table took 6.0 s at four points and 1.2 s at two, and over all 1024 cells "
+        "the mean at two is within 5.7e-3 rms (3.6e-2 at worst) of the mean at four. The number a renderer "
+        "divides the field by is defined on this lattice and no other.",
     ),
     "GAS_ARM_CONTRAST_GRAND_DESIGN": Constant(
         2.73,

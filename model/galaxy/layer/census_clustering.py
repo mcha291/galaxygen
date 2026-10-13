@@ -16,16 +16,21 @@ statistic is the hierarchy's own excess over the structure - the ratio of the tw
 (the constants' about lines say how). With the layer off there is no field: each cloud's azimuth is drawn
 uniformly in its sector, as before S61.
 
-**How it places** (item 4, under part I item 4's constraint). A cloud's radius is its ring-stream draw, which the
-stages that bin clouds and clusters per ring read, so the field never moves it: it reweights the **azimuth within
-the sector at the cloud's own radius**. Along the sector's arc at that radius a lattice of n midpoints (n per ring,
-:meth:`ClusteringField.arc_points`) is weighted by the gas pattern's point function, sampled as the census always
-sampled it (the 24 steps of ``pattern.azimuths``, linear between), times f there; the cloud's azimuth is the
-inverse of those weights' cumulative sum at its ``azimuth`` uniform, uniform within the span of the lattice point
-it falls in (:meth:`ClusteringField.azimuths`). The ring's count, the sector allocation and every other draw are
-part I's and untouched, so **every cell's expected count and every ring's realised total is what it was**: the
-field redistributes inside a sector only (rule 2). The clusters inherit it: one per cloud, at its cloud's place
-plus the offset.
+**How it places** (item 4, as the lead amended it at S61 on the measurement). A cloud is placed **jointly in
+radius and azimuth on its level-0 cell's lattice** (:meth:`ClusteringField.place`): each lattice point weighs the
+census's radial law Sigma_H2(R) R times the gas pattern's point function (read on a 16 x 24 mesh across the cell,
+bilinear between) times f; the cloud's point is the inverse of the cell's cumulative weights at its ``azimuth``
+uniform, and it lies uniformly within the point - in radius at a ``position`` uniform, the ring stream's own array.
+Placing the azimuth alone at the radius the ring drew was built first and measured: against the field-off control
+the census read a slope of -0.18 (clouds, default galaxy) against the field's own -0.65, because each arc is
+normalised alone and a radius through a clump gains no clouds; joint placement in a window of 190 pc about that
+radius read -0.41, in the whole cell -0.63. **The radius the ring drew is kept** (``cloud_birth_radius``): every
+per-cloud law reads it (the abundances, the clusters' efficiency) and every stage that bins clouds or clusters by
+radius bins by it, so no per-ring or per-radius total moves with the placement. The ring's count, the sector
+allocation and every other draw are part I's and untouched: **every cell's expected count and every ring's
+realised total is what it was** - the field redistributes inside a cell only (rule 2). The clusters inherit it: one
+per cloud, at its cloud's place plus the offset. With the layer off a cloud stands at the radius its ring drew,
+uniform in its sector: the arithmetic before S61, bit for bit.
 
 **What is published** (rule 5: evaluable at a point; no stored grid is the field). Two synthetic fields, each with
 its three declarations: the field's 32-bit seed, the one number beside the model's constants that makes f
@@ -63,6 +68,10 @@ SEED_PATH = "census_clustering"
 # The steps the census has always sampled the gas pattern's point function at across a sector (pattern.azimuths):
 # the field's lattice reads the pattern between them linearly, as the census's inverse CDF always did.
 PATTERN_STEPS = 24
+# And the radial steps the cell's mesh of the pattern has (S61, D220 part II as amended): the pattern is read on a
+# 17 x 25 mesh per cell, 59 pc apart in radius on the production grid, and bilinearly between - the point function
+# at every lattice point would cost about 15 s a run (6.6 s per million points, measured at S61).
+PATTERN_RADIAL_STEPS = 16
 # The constants of the model the field is made of, by role (G1's ruling 2b; galaxy/models/level0.py).
 CONSTANTS: Mapping[str, str] = {
     "scale": "CENSUS_CLUSTERING_SCALE",
@@ -71,6 +80,8 @@ CONSTANTS: Mapping[str, str] = {
     "sigma": "CENSUS_CLUSTERING_WIDTH",
     "points": "CENSUS_CLUSTERING_POINTS",
 }
+# The lattice density of the published cell means (S61, the lead's ruling 5 on cost): read by this stage alone.
+TABLE_POINTS = "CENSUS_CLUSTERING_TABLE_POINTS"
 
 
 def field_seed(texture_seed: int) -> int:
@@ -118,61 +129,76 @@ class ClusteringField:
                            base_frequency=1.0 / self.scale, lacunarity=LACUNARITY)
         return _noise.lognormal_map(g, self.sigma)
 
-    def arc_points(self, outer_radius: float, width: float) -> int:
-        """The lattice points across a sector of angular ``width`` (rad) in a ring whose outer edge is
-        ``outer_radius`` (kpc): ``points`` per finest lattice cell along the sector's outer arc, at least one. The
-        same n for every cloud of the ring, so a cell's clouds are drawn alike alone or in any set (D60)."""
-        return max(1, math.ceil(self.points * float(outer_radius) * float(width) * self.finest_frequency))
+    def lattice(self, lo: float, hi: float, phi_lo: float, phi_hi: float, points: int | None = None) -> tuple[np.ndarray, np.ndarray]:
+        """A level-0 cell's lattice, ``(R midpoints, phi midpoints)``: ``points`` (default the field's own) per finest
+        lattice cell along the ring's radial extent and along the sector's outer arc, at least one each - the
+        midpoint rule of ``noise.cell_quadrature``. The same lattice for a cell alone or in any set (D60)."""
+        q = self.points if points is None else int(points)
+        n_r = max(1, math.ceil(q * (float(hi) - float(lo)) * self.finest_frequency))
+        n_phi = max(1, math.ceil(q * float(hi) * (float(phi_hi) - float(phi_lo)) * self.finest_frequency))
+        r_mid = float(lo) + (np.arange(n_r) + 0.5) * (float(hi) - float(lo)) / n_r
+        phi_mid = float(phi_lo) + (np.arange(n_phi) + 0.5) * (float(phi_hi) - float(phi_lo)) / n_phi
+        return r_mid, phi_mid
 
-    def azimuths(self, u: np.ndarray, radius: np.ndarray, lo: float, hi: float, n: int, pattern: Any) -> np.ndarray:
-        """Azimuths in [lo, hi] for clouds at ``radius`` (kpc) with ``azimuth`` uniforms ``u`` (D220 part II item 4).
+    def place(
+        self, u: np.ndarray, v: np.ndarray, cell: tuple[float, float, float, float], R: np.ndarray,
+        sigma_h2: np.ndarray, pattern: Any,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """``(radius, azimuth)`` of a cell's objects, drawn jointly on the cell's lattice (D220 part II item 4, as
+        the lead amended it: the whole cell, measured at S61 against a window of one hierarchical scale about the
+        ring's radius - -0.63 against -0.41).
 
-        The n midpoints of [lo, hi] at each cloud's radius are weighted by the pattern's point function - read at
-        the census's 24 steps across the sector and linearly between them, as ``pattern.azimuths`` reads it, and
-        clipped at 0 - times the field there (none: 1, a pattern that places nothing). Each cloud's azimuth is
-        the inverse of its row's cumulative weights at its uniform, uniform within the span of the point it falls
-        in: counted, never rejected (rule B8). A row whose weights are all zero is drawn uniformly."""
-        u = np.asarray(u, dtype=float)
-        radius = np.asarray(radius, dtype=float)
+        ``cell`` is ``(R_lo, R_hi, phi_lo, phi_hi)``. Each lattice point weighs Sigma_H2(R) R - the census's radial
+        law, ``sigma_h2`` on the run's grid ``R``, linear between - times the pattern's point function, read on a
+        mesh of 16 radial by 24 azimuthal steps across the cell and bilinear between (the census's own 24 steps
+        across a sector, as ``pattern.azimuths`` reads it; a flat or absent pattern is 1), clipped at 0, times the
+        field. The object's point is the inverse of the cell's cumulative weights, row by row, at its ``u``; it
+        lies uniformly within the point's span - in azimuth by what of ``u`` is left inside the point, in radius
+        at ``v``. Counted, never rejected (rule B8); a cell whose weights are all zero is drawn uniformly."""
+        u, v = np.asarray(u, dtype=float), np.asarray(v, dtype=float)
         if u.size == 0:
-            return np.zeros(0)
-        n = int(n)
-        step = (float(hi) - float(lo)) / n
-        phi = float(lo) + (np.arange(n) + 0.5) * step  # (n,)
-        w = self.map(radius[:, None] * np.cos(phi)[None, :], radius[:, None] * np.sin(phi)[None, :])
+            return np.zeros(0), np.zeros(0)
+        lo, hi, p_lo, p_hi = (float(x) for x in cell)
+        r_mid, phi_mid = self.lattice(lo, hi, p_lo, p_hi)
+        rr, pp = np.meshgrid(r_mid, phi_mid, indexing="ij")
+        w = self.map(rr * np.cos(pp), rr * np.sin(pp)) * (np.interp(r_mid, R, sigma_h2) * r_mid)[:, None]
         if pattern is not None and not pattern.flat:
-            grid = np.linspace(float(lo), float(hi), PATTERN_STEPS + 1)
-            g = np.maximum(pattern.contrast(radius, grid), 0.0)  # (clouds, 25), the census's own sampling
-            t = (phi - float(lo)) / (float(hi) - float(lo)) * PATTERN_STEPS
-            k = np.minimum(t.astype(np.int64), PATTERN_STEPS - 1)
-            a = t - k
-            w = w * (g[:, k] * (1.0 - a) + g[:, k + 1] * a)
-        total = w.sum(axis=1)
-        w = np.where(total[:, None] > 0.0, w, 1.0)
-        cdf = np.cumsum(w, axis=1)
-        target = u * cdf[:, -1]
-        j = np.minimum((cdf <= target[:, None]).sum(axis=1), n - 1)
-        rows = np.arange(u.size)
-        below = np.where(j > 0, cdf[rows, np.maximum(j - 1, 0)], 0.0)
-        within = np.clip((target - below) / w[rows, j], 0.0, 1.0)
-        return float(lo) + (j + within) * step
+            mesh = np.maximum(pattern.contrast(np.linspace(lo, hi, PATTERN_RADIAL_STEPS + 1),
+                                               np.linspace(p_lo, p_hi, PATTERN_STEPS + 1)), 0.0)
+            ti = (r_mid - lo) / (hi - lo) * PATTERN_RADIAL_STEPS
+            i = np.minimum(ti.astype(np.int64), PATTERN_RADIAL_STEPS - 1)
+            a = ti - i
+            tj = (phi_mid - p_lo) / (p_hi - p_lo) * PATTERN_STEPS
+            j = np.minimum(tj.astype(np.int64), PATTERN_STEPS - 1)
+            b = tj - j
+            along_r = mesh[i] * (1.0 - a)[:, None] + mesh[i + 1] * a[:, None]
+            w = w * (along_r[:, j] * (1.0 - b)[None, :] + along_r[:, j + 1] * b[None, :])
+        flat = np.maximum(w, 0.0).ravel()
+        if not float(flat.sum()) > 0.0:
+            flat = np.ones_like(flat)
+        cdf = np.cumsum(flat)
+        target = u * cdf[-1]
+        k = np.minimum(np.searchsorted(cdf, target, side="right"), flat.size - 1)
+        below = np.where(k > 0, cdf[np.maximum(k - 1, 0)], 0.0)
+        within = np.clip((target - below) / np.where(flat[k] > 0.0, flat[k], 1.0), 0.0, 1.0)
+        row, col = np.divmod(k, phi_mid.size)
+        d_r, d_phi = (hi - lo) / r_mid.size, (p_hi - p_lo) / phi_mid.size
+        return lo + (row + v) * d_r, p_lo + (col + within) * d_phi
 
-    def cell_means(self, R: np.ndarray) -> np.ndarray:
+    def cell_means(self, R: np.ndarray, points: int | None = None) -> np.ndarray:
         """Each level-0 cell's mean of :meth:`map` over its quadrature lattice, (rings * sectors,) ring-major as the
         cells are numbered: ``noise.cell_quadrature`` in (R, phi) with ``points`` per finest lattice cell along
-        each axis - the radial extent of the ring and the sector's outer arc - each point weighted by R (the
-        cell's area is R dR dphi). One over it is the cell's ``noise.lognormal_normaliser``."""
+        each axis (:meth:`lattice`; the table's own density, see the stage), each point weighted by R (the cell's
+        area is R dR dphi). One over it is the cell's ``noise.lognormal_normaliser``."""
         from galaxy.stages.systems import CELL_RINGS, CELL_SECTORS, cell_edges
 
         rings, sectors = cell_edges(np.asarray(R, dtype=float))
-        width = float(sectors[1] - sectors[0])
         out = np.empty(CELL_RINGS * CELL_SECTORS)
         for r in range(CELL_RINGS):
             lo, hi = float(rings[r]), float(rings[r + 1])
-            n_r = max(1, math.ceil(self.points * (hi - lo) * self.finest_frequency))
-            n_phi = self.arc_points(hi, width)
             for s in range(CELL_SECTORS):
-                q = _noise.cell_quadrature(lo, hi, float(sectors[s]), float(sectors[s + 1]), (n_r, n_phi))
+                r_mid, phi_mid = self.lattice(lo, hi, float(sectors[s]), float(sectors[s + 1]), points)
+                q = _noise.cell_quadrature(lo, hi, float(sectors[s]), float(sectors[s + 1]), (r_mid.size, phi_mid.size))
                 e = self.map(q[:, 0] * np.cos(q[:, 1]), q[:, 0] * np.sin(q[:, 1]))
                 out[r * CELL_SECTORS + s] = float(np.sum(q[:, 0] * e) / np.sum(q[:, 0]))
         return out
@@ -187,12 +213,13 @@ _STANDS_IN_FOR = (
     "already give: the field's own correlation is the hierarchy's excess over that structure."
 )
 _CONSERVES = (
-    "Every cell's expected count of every census it places and every ring's realised total: it reweights a "
-    "cloud's azimuth inside the cloud's own sector at the cloud's own radius, after the ring's count, the "
-    "sector allocation and every other draw are made, so no count, mass or light moves between sectors or "
-    "rings, and a cluster binned by its cloud's radius is binned where it was. It does not keep where a cloud "
-    "sits within its sector: with the layer on a cloud's azimuth is the pattern's and the field's draw together, "
-    "and with it off uniform in the sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
+    "Every cell's expected count of every census it places and every ring's realised total: it places a cloud "
+    "inside the cloud's own cell after the ring's count, the sector allocation and every other draw are made, so "
+    "no count, mass or light moves between cells or rings; every per-cloud law and every binner reads the radius "
+    "the ring drew (`cloud_birth_radius`, `cluster_birth_radius`), so nothing published per ring or per radius "
+    "moves either. It does not keep where a cloud sits in its cell: a cloud's placed radius lies anywhere in its "
+    "level-0 ring (0.94 kpc wide on the production grid) and up to that from the radius its ring drew, and its "
+    "placed azimuth anywhere in its sector. Nor does it keep the field's own mean in a cell at 1: a cell's mean "
     "of the map ran from 0.44 to 1.93 over 40 cells measured at S61 - the published cell mean is what divides it out."
 )
 _STATISTIC = (
@@ -249,7 +276,7 @@ def header(source: Any, constants: Mapping[str, Any], cells: Any) -> dict[str, A
     return {
         "seed": None if field is None else field.seed,
         "scale": shape.scale, "octaves": shape.octaves, "lacunarity": LACUNARITY, "slope": shape.slope,
-        "sigma": shape.sigma, "gain": gain, "top": top, "norm": norm,
+        "sigma": shape.sigma, "gain": gain, "top": top, "norm": norm, "table_points": int(constants[TABLE_POINTS]),
         "cells": [int(c) for c in cells],
         "cell_mean": None if field is None else [float(means[int(c)]) for c in cells],
     }
@@ -260,7 +287,7 @@ def compute_census_clustering(ctx: Context) -> Mapping[str, Any]:
 
     def draw() -> dict[str, Any]:
         field = ClusteringField.of(field_seed(int(ctx.seeds["texture_seed"])), c)
-        return {"census_clustering_seed": float(field.seed), "census_clustering_cell_mean": field.cell_means(ctx.grid.R)}
+        return {"census_clustering_seed": float(field.seed), "census_clustering_cell_mean": field.cell_means(ctx.grid.R, int(c[TABLE_POINTS]))}
 
     def neutral() -> dict[str, Any]:
         from galaxy.stages.systems import CELL_COUNT
@@ -284,7 +311,7 @@ CENSUS_CLUSTERING = IMPLEMENTATIONS.register(
         compute=compute_census_clustering,
         layer_stage=True,
         reads_seeds=("texture_seed",),
-        reads_constants=tuple(CONSTANTS.values()),
+        reads_constants=(*CONSTANTS.values(), TABLE_POINTS),
         publishes=PUBLISHES,
     )
 )

@@ -46,10 +46,13 @@ source in the about line; nothing here is recalled (rule B9).**
   the stars' own contrast, in both models — by the same sector means and inverse CDF a star's azimuth uses; abundances
   read off the gas at the cloud's radius. The contrast averages to 1 round every ring, so a ring's
   expected count is what it was: the clouds move round the ring, not in number. **Since S61 (D220 part II
-  item 4)** the azimuth inside the sector is drawn on a lattice along the sector's arc at the cloud's radius,
-  weighted by that contrast times the randomness layer's clustering field (``layer/census_clustering.py``,
-  read through ``compose``): the clouds gather into complexes below a cell's scale; their radii, their
-  sectors and every other draw are untouched, and with the layer off the azimuth is uniform in the sector.
+  item 4, as the lead amended it)** a cloud is placed jointly in radius and azimuth on its cell's lattice,
+  weighted by the molecular law, that contrast and the randomness layer's clustering field
+  (``layer/census_clustering.py``, read through ``compose``): the clouds gather into complexes below a cell's
+  scale. The radius the ring drew is kept as ``cloud_birth_radius``: the cloud's abundances are read there
+  and its cluster is binned by it, so nothing per ring or per radius moves with the placement. The ring's
+  count, the sector and every other draw are untouched; with the layer off the cloud stands at the radius
+  its ring drew, uniform in its sector.
 
 **The ring-first draw (S61, D220 part I).** A ring's clouds are drawn before the layer places them. The
 ring's count is one Poisson draw on the ring's stream ``(systems_seed, "cloud", ring, "count")`` at the
@@ -333,7 +336,7 @@ def with_layout(catalogue: Catalogue, layout: RingLayout) -> Catalogue:
 
 
 CLOUD_COLUMNS: tuple[str, ...] = (
-    "cloud_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size",
+    "cloud_radius", "cloud_birth_radius", "cloud_azimuth", "cloud_height", "cloud_mass", "cloud_size",
     "cloud_velocity_dispersion", "cloud_mach_number", "cloud_density_pdf_width",
     "cloud_age", "cloud_source_offset", "cloud_source_angle", "cloud_density_gradient",
     "cloud_gradient_angle", "cloud_metallicity", "cloud_alpha",
@@ -407,10 +410,10 @@ def materialise_clouds(
     rings, sectors = cell_edges(R)
     placement = sector_placement(fields, R, c)  # the gas's own pattern places the clouds (S51, D210); none, layer off
     pattern = placement[0]
-    clustering = _compose.census_clustering(fields, c)  # S61 (D220 part II): the field within a sector; none, layer off
+    clustering = _compose.census_clustering(fields, c)  # S61 (D220 part II): the field within a cell; none, layer off
     layout = cloud_layout(fields, R, seed, c, cells, placement=placement)
     counts = layout.counts
-    u_all = ring_draws(seed, "cloud", layout, ("radius", "azimuth", "mass", "age", "height"))
+    u_all = ring_draws(seed, "cloud", layout, ("radius", "azimuth", "mass", "age", "height", "position"))
     sigma_h2 = np.asarray(fields["gas_molecular_surface_density"], dtype=float)
     ring_weight = {
         int(r): np.where((R >= rings[r]) & (R <= rings[r + 1]), sigma_h2 * R, 0.0)
@@ -440,14 +443,18 @@ def materialise_clouds(
         lo, hi = rings[ring], rings[ring + 1]
         weight = ring_weight[ring]
         radius = invert_cdf(draw("radius"), R, weight) if weight.sum() > 0.0 else np.full(count, 0.5 * (lo + hi))
+        # The radius the ring drew: what every per-object law below reads, and what the binners bin by (S61, D220
+        # part II as amended) - so every per-ring and per-radius total is the same with the layer on or off.
+        birth = radius
         if clustering is None:
-            # The layer off: no field and no pattern - uniform in the sector, the arithmetic of every census before S61.
+            # The layer off: no field and no pattern - the ring's radius, uniform in the sector: the arithmetic of
+            # every census before S61, bit for bit.
             azimuth = (sector + draw("azimuth")) * width
         else:
-            # S61 (D220 part II item 4): the gas pattern's point function times the clustering field, on a lattice
-            # along the sector's arc at the cloud's own radius; the radius, the ring's count and the sector stand.
-            azimuth = clustering.azimuths(
-                draw("azimuth"), radius, sector * width, (sector + 1) * width, clustering.arc_points(hi, width), pattern
+            # S61 (D220 part II item 4, as amended): placed jointly in the cell by the radial law, the gas pattern
+            # and the clustering field; the ring's count, the sector and every other draw stand.
+            radius, azimuth = clustering.place(
+                draw("azimuth"), draw("position"), (lo, hi, sector * width, (sector + 1) * width), R, sigma_h2, pattern
             )
         slope, m_min, m_max = law_for(0.5 * (lo + hi), c)
         mass = mass_function_sample(draw("mass"), slope, m_min, m_max)
@@ -456,6 +463,7 @@ def materialise_clouds(
         mach = disp / c_s
         age = draw("age") * lifetime
         columns.setdefault("cloud_radius", []).append(radius)
+        columns.setdefault("cloud_birth_radius", []).append(birth)  # S61 (D220 part II as amended): the ring's radius
         columns.setdefault("cloud_azimuth", []).append(azimuth)
         columns.setdefault("cloud_height", []).append(sech2_height(draw("height"), h_cloud))
         columns.setdefault("cloud_mass", []).append(mass)
@@ -464,8 +472,8 @@ def materialise_clouds(
         columns.setdefault("cloud_mach_number", []).append(mach)
         columns.setdefault("cloud_density_pdf_width", []).append(np.sqrt(np.log1p(b * b * mach * mach)))
         columns.setdefault("cloud_age", []).append(age)
-        columns.setdefault("cloud_metallicity", []).append(np.interp(radius, R, feh_gas))
-        columns.setdefault("cloud_alpha", []).append(np.interp(radius, R, alpha_gas))
+        columns.setdefault("cloud_metallicity", []).append(np.interp(birth, R, feh_gas))
+        columns.setdefault("cloud_alpha", []).append(np.interp(birth, R, alpha_gas))
         states.append(state_of(age, phases))
         columns.setdefault("cloud_cluster_index", []).append(cluster_indices(states[-1]))
 
@@ -500,6 +508,10 @@ NOT_DRAWN_WHY: dict[str, str] = {
                    "(`cloud_cluster_index`), whose cavity, HII sphere and point of light the viewer draws; the "
                    "category itself is not a look.",
     # cloud_source_offset and cloud_source_angle: with their declarations, galaxy/layer/cloud_texture.py (S55).
+    # S61 (D220 part II as amended): the binners' radius. The viewer draws the cloud where it stands, `cloud_radius`.
+    "cloud_birth_radius": "the radius the ring drew; the binners' radius - every per-cloud law and every stage that "
+                          "bins clouds or their clusters by radius reads it, so nothing they publish moves with "
+                          "the placement; the viewer draws the cloud where it stands (`cloud_radius`).",
     "cloud_metallicity": "no line comes from molecular gas in the render; the abundance reaches the picture through "
                          "the cluster's light (the isochrones at its [Fe/H]) and its HII region's emissivity at the "
                          "temperature the oxygen sets.",
@@ -520,7 +532,16 @@ def _column(name: str, label: str, unit: str, about: str, ramp: Ramp = Ramp("vir
 
 CLOUD_RADIUS = _column("cloud_radius", "Galactocentric radius", "kpc",
                        "Drawn by inverting the molecular surface density within the cloud's cell ring, as a "
-                       "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly.")
+                       "star's radius inverts the stellar one: the census traces the ISM's molecular gas exactly. "
+                       "Since S61, with the randomness layer on, where the cloud stands: placed with its azimuth "
+                       "jointly in its cell by the molecular law, the gas's contrast and the layer's clustering "
+                       "field (D220 part II); the radius the ring drew is `cloud_birth_radius`, which it equals "
+                       "with the layer off.")
+CLOUD_BIRTH_RADIUS = _column("cloud_birth_radius", "Radius its ring drew", "kpc",
+                             "The radius drawn for the cloud on its ring's stream by inverting the molecular "
+                             "surface density within the ring: the radius the cloud's abundances are read at and "
+                             "its cluster is binned by, the same with the randomness layer on or off (S61, D220 "
+                             "part II as amended). The placed radius lies anywhere in the cloud's cell.")
 CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "Drawn from the gas's own density contrast at the cloud's radius, inside its sector — a "
                         "steady response to the stellar arms, and the bar's two gas lanes inside the bar — so "
@@ -528,10 +549,10 @@ CLOUD_AZIMUTH = _column("cloud_azimuth", "Azimuth", "rad",
                         "follows the same contrast; the same rule in both models. Since S61 a ring's clouds are "
                         "drawn before they are placed: the contrast picks each cloud's sector and its azimuth in "
                         "it and nothing else, so the ring's clouds are the same clouds with the layer off, placed "
-                        "uniformly round the ring (D220 item 2). Since S61 the azimuth within the sector is drawn "
-                        "by the contrast times the randomness layer's clustering field along the sector's arc at "
-                        "the cloud's radius, so the clouds gather into complexes below a cell's scale (D220 part "
-                        "II item 4); the radius and the sector are not moved by it.")
+                        "uniformly round the ring (D220 item 2). Since S61, with the layer on, the azimuth and "
+                        "the radius are placed together within the cell by the molecular law, the contrast and "
+                        "the randomness layer's clustering field, so the clouds gather into complexes below a "
+                        "cell's scale (D220 part II); the sector is not moved by it.")
 CLOUD_HEIGHT = _column("cloud_height", "Height above the plane", "kpc",
                        "A sech² layer at half the thin disc's scale height, a stated guess: no source for the "
                        "molecular layer's thickness was read (debt #95). A sample of the layer's vertical "
@@ -572,10 +593,10 @@ CLOUD_STATE = FieldDecl(
 # here until S55; they are the randomness layer's (BUILD_III Appendix B) and are declared, drawn and published in
 # galaxy/layer/cloud_texture.py, synthetic, each with what it stands in for, what it conserves and its statistic.
 CLOUD_METALLICITY = _column("cloud_metallicity", "[Fe/H]", "dex",
-                            "The present-day gas iron abundance at the cloud's radius: what the stars it makes "
+                            "The present-day gas iron abundance at the radius its ring drew: what the stars it makes "
                             "are born with, and what sets its dust.", ramp=Ramp("plasma"))
 CLOUD_ALPHA = _column("cloud_alpha", "[α/Fe]", "dex",
-                      "The present-day gas α-to-iron ratio at the cloud's radius, for the oxygen its lines need.",
+                      "The present-day gas α-to-iron ratio at the radius its ring drew, for the oxygen its lines need.",
                       ramp=Ramp("plasma"))
 
 CLOUD_EXTINCTION_V = FieldDecl(
@@ -686,7 +707,7 @@ CLOUDS = IMPLEMENTATIONS.register(
             "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud's azimuth is drawn by in its sector
         ),
         publishes=(
-            CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
+            CLOUD_RADIUS, CLOUD_BIRTH_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,
             CLOUD_PDF_WIDTH, CLOUD_AGE, CLOUD_STATE, CLOUD_METALLICITY, CLOUD_ALPHA, CLOUD_CLUSTER_INDEX,
             CLOUD_COUNT_TOTAL, CLOUD_MASS_TOTAL, CLOUD_FORCING, CLOUD_LIFETIME, CLOUD_EXTINCTION_V,
         ),
