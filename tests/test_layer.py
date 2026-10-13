@@ -161,6 +161,10 @@ UNPLACED_OBJECTS = {"remnant"}
 # the `arm_pieces` stage's eight synthetic columns, one row a piece: as many rows as the census lays (the arm-number
 # law and the draws decide it), none with the layer off ("no arm placed").
 LAYER_TABLES = {"arm_piece"}
+# S61 (D220 part II): the clustering field of the censuses - the layer stage `census_clustering`'s two synthetic
+# fields, its 32-bit seed (a scalar) and its mean in each level-0 cell (the table `cell`, one row a cell, the rows
+# not drawn). A realisation with the layer on; NaN with it off (D164; D215's ruling 5), the cell rows kept.
+CLUSTERING_FIELDS = {"census_clustering_seed", "census_clustering_cell_mean"}
 # Two scalars are a census's *expected* total: the expected counts summed over every cell, each cell carrying its
 # sector's placement weight. The weights average to 1 round a ring to rounding and not to the bit, so the total is
 # the same number with the layer on or off, and between two realisations, **to its last bit or the one beside it**:
@@ -522,6 +526,12 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
                 assert same(on.fields[n], off.fields[n]), n
             else:
                 assert d.of in PLACED_OBJECTS, (n, d.of)
+            continue
+        if n in CLUSTERING_FIELDS:
+            # S61 (D220 part II): the clustering field's seed and cell means - numbers with the layer on, NaN off.
+            assert d.provenance == "synthetic", n
+            assert np.all(np.isfinite(np.asarray(on.fields[n]))) and np.all(np.isnan(np.asarray(off.fields[n]))), n
+            assert np.asarray(on.fields[n]).shape == np.asarray(off.fields[n]).shape, n
             continue
         if d.kind.domain == "table":
             # S59 (D218 items 1-2, 7): the layer's table - the layer's own realisation, a table and not a census.
@@ -1716,7 +1726,9 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_pieces_read_it(prod):
     # S60 (D219): was ["arm_phases"] - the layer's stage is the census of arm pieces, at the same checkpoint.
     # S61 (D220 item 5): was ["arm_pieces"] - the cloud texture is drawn on the layer's seed; its stage reads the
     # systems seed beside it for the census's layout alone (which ring and place each published cloud is).
-    assert readers == ["arm_pieces", "cloud_texture"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
+    # S61 (D220 part II): was ["arm_pieces", "cloud_texture"] - the censuses' clustering field is on the layer's seed.
+    assert readers == ["arm_pieces", "census_clustering", "cloud_texture"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
+    assert impls_.get("census_clustering").layer_stage and impls_.get("census_clustering").reads_seeds == ("texture_seed",)
     assert impls_.get("cloud_texture").layer_stage and impls_.get("cloud_texture").reads_seeds == ("systems_seed", "texture_seed")
     # S58 (D217 item 9): was `requires == ()` - the stage asks whether there is a bar, whose two-armed mode it ties.
     # S59 (D218 item 2): was `reads_constants == ()` - the stage lays the winding's segments too, and reads the five
@@ -1784,6 +1796,9 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
             assert not equal or n == "arm_piece_saturation", n
             if n == "arm_piece_saturation":
                 assert np.all((np.asarray(a.fields[n]) > 0.0) & (np.asarray(a.fields[n]) <= 1.0)), n
+        elif n in CLUSTERING_FIELDS:
+            # S61 (D220 part II): another seed, another field - and so other means in the cells.
+            assert d.provenance == "synthetic" and not equal, n
         elif d.kind.domain == "table":
             # S59 (D218 items 1-2): the layer's table is on the layer's seed - re-laid, row for row.
             # S60 (D219 item 7): the census of arm pieces - other pieces, and as many rows as the laying makes (the
@@ -1806,6 +1821,9 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
     assert placed == PLACED_OBJECTS
     # S61 (D220 item 5): rerolling texture_seed rerolls the clouds' interiors - all four texture columns.
     assert all(not same(a.fields[n], b.fields[n]) for n in cl.TEXTURE_COLUMNS)
+    # S61 (D220 part II item 4): and the clouds' azimuths within their sectors, by the clustering field (and the
+    # clusters' with them); the clouds' radii are the ring stream's and do not move.
+    assert not same(a.fields["cloud_azimuth"], b.fields["cloud_azimuth"]) and not same(a.fields["cluster_azimuth"], b.fields["cluster_azimuth"])
     # S59 (D218): the winding's anchor and the pitch as the law draws it join the laws named here.
     # S60 (D219): the anchor is retired; the class, the width of a piece, the law's arm number and the budget join.
     for n in (*pt.AMPLITUDE_FIELDS, "arm_saturation", "arm_multiplicity", "arm_contrast", "bar_contrast", "pitch_angle",
