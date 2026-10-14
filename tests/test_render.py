@@ -1254,3 +1254,166 @@ def render_q(api: Service, query: dict):
     got = api.handle("/api/render", query)
     assert got.status == 200, got.body[:300]
     return wire.decode(got.body)
+
+
+# --- S63 (D223, BUILD_III Phase V5): the stars split by age, each placed by its own weight ----------------------------
+
+AGES = ("young", "middle", "old")
+AGE_ARRAYS = {"young": "stars_young", "middle": "stars_middle", "old": "stars_old"}
+# The closure factor's largest |factor - 1| over the rings, per filter, as measured at S63 (old beside new: none yet).
+# Each part is its own spectrum's response; the join is not linear (band_consistent's twelve passes), so the three
+# miss the stars' by these, and each is scaled by its ring's factor (D223's ruling). The same departure l_min='s
+# closure.response states (CLOSURE_RGB). The default galaxy and the Milky Way template give the same numbers.
+AGE_FACTORS = {
+    None: {
+        "rgb": [4.9015e-06, 2.9040e-06, 1.5652e-06], "sho": [9.5342e-04, 1.2172e-03, 2.4408e-03],
+        "hoo": [1.2172e-03, 2.4408e-03, 2.4408e-03], "wfc3": [5.4691e-05, 2.0088e-03, 8.4443e-04],
+        "wfc3n": [8.9339e-04, 1.2194e-03, 2.4162e-03],
+    },
+    "ngc_4414": {
+        "rgb": [3.9761e-06, 2.2993e-06, 1.1309e-06], "sho": [9.0774e-04, 1.1695e-03, 2.2633e-03],
+        "hoo": [1.1695e-03, 2.2633e-03, 2.2633e-03], "wfc3": [4.4760e-05, 1.7858e-03, 7.3626e-04],
+        "wfc3n": [8.4821e-04, 1.1717e-03, 2.2405e-03],
+    },
+}
+AGE_FACTORS["milky_way"] = AGE_FACTORS[None]
+# Each part's share of the disc's stellar light per filter (the rings' values weighted by their radius: the disc's
+# area), measured at S63 on the default galaxy - rgb's R, G, B and the table's B and V. The bright catalogue's
+# "26.3 % young / 18.8 % bright / 54.9 % unresolved" at 10^3 Lsun is another cut (bolometric, by luminosity).
+AGE_SHARES = {
+    "rgb": {"young": [0.066242, 0.085078, 0.133017], "middle": [0.050839, 0.063355, 0.095066], "old": [0.882919, 0.851568, 0.771917]},
+    "BV": {"young": [0.133017, 0.085078], "middle": [0.095066, 0.063355], "old": [0.771917, 0.851568]},
+}
+
+
+def _ages_query(name: str, template: str | None = None, **extra: object) -> dict:
+    filters = table_bands("B", "V") if name == "BV" else curves(name)
+    query = {"filters": [filters], **{k: [str(v)] for k, v in extra.items()}}
+    if template is not None:
+        query["template"] = [template]
+    return query
+
+
+def _placed(header: dict, arrays: dict) -> np.ndarray:
+    """The three parts as the viewer places them: each ring value times its weight at (R, phi), summed."""
+    return sum(arrays[e["array"]][:, None, :] * arrays[e["weight"]][..., None] for e in header["ages"]["parts"].values())
+
+
+@pytest.mark.parametrize("template", [None, "milky_way", "ngc_4414"], ids=["default", "milky_way", "ngc_4414"])
+def test_the_three_ages_sum_to_the_stars_per_ring_and_filter(full, template):
+    """The gate's closure (D223): through every set the viewer holds, stars_young + stars_middle + stars_old is the
+    stars component's ring value per ring and filter to 1e-12, and so placed by their own weights they keep every
+    ring's light to 1e-12; each part is non-negative; the closure factor each is scaled by departs from 1 by the
+    pinned amounts. With the layer off the parts are the same numbers and every weight is 1."""
+    for name in SETS:
+        header, arrays = render_q(full, _ages_query(name, template))
+        ring = arrays["stars"].mean(axis=1)
+        lit = ring > 0.0
+        assert lit.sum() > 300
+        parts = [arrays[AGE_ARRAYS[p]] for p in AGES]
+        assert all(np.all(p >= 0.0) for p in parts) and all(header["axes"][AGE_ARRAYS[p]] == ["R", "filter"] for p in AGES)
+        assert np.max(np.abs(sum(parts)[lit] / ring[lit] - 1.0)) < 1e-12, name
+        assert np.max(np.abs(_placed(header, arrays).mean(axis=1)[lit] / ring[lit] - 1.0)) < 1e-12, name
+        assert np.all(sum(parts)[~lit] == 0.0)
+        assert header["ages"]["closure"]["factor"] == pytest.approx(AGE_FACTORS[template][name], rel=1e-3), name
+        if name == "rgb":
+            on = arrays
+    header, off = render_q(full, _ages_query("rgb", template, layer="off"))
+    for p in AGES:
+        assert np.allclose(off[AGE_ARRAYS[p]], on[AGE_ARRAYS[p]], rtol=1e-12, atol=0.0)
+        assert np.all(off[header["ages"]["parts"][p]["weight"]] == 1.0)
+    lit = off["stars"] > 0.0
+    assert np.max(np.abs(_placed(header, off)[lit] / off["stars"][lit] - 1.0)) < 1e-12  # even round the ring
+    assert "layer: off" in header["ages"]["about"]
+
+
+def test_each_part_is_its_own_spectrum_scaled_by_the_ring_s_closure_factor(full, model):
+    """A part is bright.part_anchors' part through the curves on its own at the ring's colour temperature, times the
+    ring's factor stars / (the three summed) - the decomposition the bright catalogue reads, whose anchors sum to the
+    stars' to rounding. The basic model too: it publishes the history the decomposition reads."""
+    from galaxy.stages import bright as br
+
+    header, arrays = render_q(full, {"model": [model.name], "filters": [curves("rgb")]})
+    names = ("stars_formed_history", "feh_history", "disc_light_temperature", *(f"disc_sed_{b.lower()}" for b in spectra.SED_BANDS))
+    f = scalars(full, model.name, *names)
+    spec = full.grid.spec
+    anchors = br.part_anchors(f, spec.t_max, spec.n_t, {k: c.value for k, c in model.constants.items()})
+    sed = np.stack([f[f"disc_sed_{b.lower()}"] for b in spectra.SED_BANDS], axis=-1)
+    lit = sed > 0.0
+    assert np.max(np.abs(anchors.sum(axis=0)[lit] / sed[lit] - 1.0)) < 1e-12
+    parsed = spectra.parse_curves(SETS["rgb"]["curves"])
+    raw = np.stack([spectra.stellar_response(a, f["disc_light_temperature"], parsed) for a in anchors])
+    total = spectra.stellar_response(sed, f["disc_light_temperature"], parsed)
+    summed = raw.sum(axis=0)
+    factor = np.where(summed > 0.0, total / np.where(summed > 0.0, summed, 1.0), 1.0)
+    for k, p in enumerate(AGES):
+        assert np.allclose(arrays[AGE_ARRAYS[p]], raw[k] * factor, rtol=1e-12, atol=0.0), p
+    assert header["ages"]["closure"]["factor"] == pytest.approx(np.max(np.abs(factor - 1.0), axis=0).tolist(), rel=1e-9)
+    assert "its own spectrum's response, scaled by the ring's closure factor" in header["ages"]["about"]
+    assert "[inferred]" in header["ages"]["temperature"]
+
+
+def test_the_header_names_each_part_s_weight_and_the_run_publishes_its_fields(full, model):
+    """Rule D5 as amended: the viewer places a part by the array the header names and computes no physics. The old
+    part by the stellar contrast (stars_placement, what stars is placed by), the middle by sfr_modulation over its
+    ring mean (bright.part_weights; the contrast in a model that publishes none), the young by the gas's own contrast
+    (the dust's placement). Every weight's fields are the run's; each averages to 1 round every ring; the age
+    bounds are the bright catalogue's (bright.AGE_PARTS)."""
+    from galaxy.stages import bright as br
+
+    header, arrays = render_q(full, {"model": [model.name], "filters": [curves("rgb")]})
+    ages = header["ages"]
+    assert list(ages["parts"]) == list(br.AGE_PARTS) == list(AGES)
+    assert ages["rule"] == "part(R, phi, filter) = part(R, filter) * weight(R, phi)"
+    assert [ages["parts"][p]["ages_gyr"] for p in AGES] == [[0.0, 0.02], [0.02, 0.1], [0.1, None]]
+    azimuthal = model.name != "basic"
+    want = {"young": "dust_placement", "middle": "stars_middle_placement" if azimuthal else "stars_placement", "old": "stars_placement"}
+    assert {p: ages["parts"][p]["weight"] for p in AGES} == want
+    assert set(ages["weights"]) == {"stars_placement", *(["stars_middle_placement"] if azimuthal else [])}
+    published = {"stars_placement": ["pattern_density_contrast"], "stars_middle_placement": ["sfr_modulation"], "dust_placement": ["gas_density_contrast"]}
+    f = scalars(full, model.name, "pattern_density_contrast", "gas_density_contrast", *(["sfr_modulation"] if azimuthal else []))
+    for p in AGES:
+        entry = ages["parts"][p]
+        assert entry["array"] == AGE_ARRAYS[p] and entry["weight"] in arrays and header["axes"][entry["weight"]] == ["R", "phi"]
+        assert entry["weight_fields"] == published[entry["weight"]] and all(n in f for n in entry["weight_fields"])
+        assert ages["ring_means"]["departure"][entry["weight"]] < 1e-12
+    assert np.array_equal(arrays["stars_placement"], np.maximum(f["pattern_density_contrast"], 0.0))
+    assert np.array_equal(arrays["dust_placement"], np.maximum(f["gas_density_contrast"], 0.0))
+    if azimuthal:
+        assert np.array_equal(arrays["stars_middle_placement"], br.part_weights(arrays["stars_placement"], f["sfr_modulation"])[0])
+        spread = np.ptp(arrays["stars_middle_placement"] - arrays["stars_placement"], axis=1)
+        assert np.max(spread) > 0.05  # the middle part does not follow the stars
+    assert "the viewer multiplies the part's ring value by the weight at (R, phi)" in ages["about"]
+
+
+def test_the_parts_shares_of_the_disc_s_light_are_pinned_as_measured(full):
+    """Each part's share of the disc's stellar light per filter, the rings weighted by their radius (the disc's area),
+    on the default galaxy: measured pins (S63), the young bluest - 13 % of B, 6.6 % of rgb's R."""
+    for name, pinned in AGE_SHARES.items():
+        header, arrays = render_q(full, _ages_query(name))
+        w = header["window"]["R"]
+        R = w["lo"] + (np.arange(w["n"]) + 0.5) * w["width"]
+        total = (arrays["stars"].mean(axis=1) * R[:, None]).sum(axis=0)
+        got = {p: ((arrays[AGE_ARRAYS[p]] * R[:, None]).sum(axis=0) / total).tolist() for p in AGES}
+        for p in AGES:
+            assert got[p] == pytest.approx(pinned[p], abs=2e-6), (name, p)
+        assert np.allclose(sum(np.array(got[p]) for p in AGES), 1.0, rtol=1e-12)
+
+
+def test_the_parts_ride_on_windows_and_region_cells(small):
+    """A window's rows are the parts' rows of the whole grid and its weights the whole grid's cells; on level-k region
+    cells a part is its cell mean (per_ring) and its weight the weight's cell mean, as the dust's placement is."""
+    _, whole = render_q(small, _ages_query("rgb"))
+    header, part = render_q(small, _ages_query("rgb", r_min=7, r_max=9, phi_min=0.5, phi_max=1.5))
+    i0, n = header["window"]["R"]["first"], header["window"]["R"]["n"]
+    j0, m = header["window"]["phi"]["first"], header["window"]["phi"]["n"]
+    for p in AGES:
+        assert np.array_equal(part[AGE_ARRAYS[p]], whole[AGE_ARRAYS[p]][i0:i0 + n])
+    for name in ("stars_placement", "stars_middle_placement"):
+        assert np.array_equal(part[name], whole[name][i0:i0 + n, j0:j0 + m])
+    header, cells = render_q(small, _ages_query("rgb", level=2, r_min=7, r_max=9, phi_min=0, phi_max=0.4))
+    count = header["window"]["cells"]["count"]
+    for p in AGES:
+        assert cells[AGE_ARRAYS[p]].shape == (count, 3) and header["axes"][AGE_ARRAYS[p]] == ["cell", "filter"]
+    for name in ("stars_placement", "stars_middle_placement"):
+        assert cells[name].shape == (count,) and header["axes"][name] == ["cell"]

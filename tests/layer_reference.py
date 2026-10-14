@@ -48,6 +48,8 @@ WINDOW = "r_min=7.5&r_max=9&phi_min=0.2&phi_max=0.9"
 NARROW = "r_min=8&r_max=8.4&phi_min=0.3&phi_max=0.4"
 # What a header is compared without: only what a request ran, which depends on what the service already held.
 DROPPED_KEYS = ("stages",)
+# What the render sends since S63 (D223) that S55 did not: the stars split by age and their placing weights.
+ADDED_AT_S63 = ("stars_young", "stars_middle", "stars_old", "stars_placement", "stars_middle_placement", "stars_young_placement")
 
 
 def _sha(raw: bytes) -> str:
@@ -133,11 +135,21 @@ def route_digest(service: Any, path: str, query: dict[str, list[str]]) -> dict[s
     # carried are returned beside the digest, for the test to read (none, but for a template that states one).
     header = normalise(header)
     pinned = {i.name: header["inputs"].pop(i.name) for i in pins() if i.name in header.get("inputs", {})}
+    # S63 (D223): the render's light by age - its header's `ages`, three per-ring arrays and the weights that place
+    # them - which S55 did not send. Digested with them taken out, so every other word and array is still S55's; the
+    # arrays are returned beside the digest, for the test to read.
+    added = [spec["name"] for spec in header.get("arrays", []) if spec["name"] in ADDED_AT_S63]
+    if added:
+        header.pop("ages", None)
+        header["arrays"] = [spec for spec in header["arrays"] if spec["name"] not in ADDED_AT_S63]
+        header["axes"] = {k: v for k, v in header["axes"].items() if k not in ADDED_AT_S63}
     out = {
         "status": got.status,
         "header": _sha(json.dumps(header, sort_keys=True).encode("utf-8")),
         "arrays": [[spec["name"], value_digest(arrays[spec["name"]])] for spec in header["arrays"]],
     }
+    if added:
+        out["added"] = added
     if pinned:
         out["pinned"] = pinned
     return out

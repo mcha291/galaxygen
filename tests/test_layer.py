@@ -484,6 +484,11 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
+        # S63 (D223): the render adds the stars split by age and the weights that place them (the old part's, and the
+        # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
+        assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
+                                         + (["stars_middle_placement"] if not label.startswith("basic/") else []))
+                                        if "/render/" in label else []), label
         if "/render/" in label:
             # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first
             # census's, binned by the clouds' radii - and is a new draw; every other array and the header are S55's.
