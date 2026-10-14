@@ -282,8 +282,8 @@ def test_the_field_s_structures_trail_as_the_arms_do(default_run, field, ring):
     assert abs(major[0]) > 0.2  # an axis well off the radial, so the sign is the shear's and not the noise's
 
 
-def patch_spectrum(ring_break: int, R: float, seeds: int = 3):
-    """The ring's unsheared octave sum on a flat 4 x 4 kpc patch at 2.9 pc (1376^2), ``seeds`` stacked."""
+def patch_spectra(ring_break: int, R: float, seeds: int = 3) -> list:
+    """The ring's unsheared octave sum on a flat 4 x 4 kpc patch at 2.9 pc (1376^2), one spectrum per seed (100 on)."""
     from galaxy.specs import spectrum as sp
 
     n, side = 1376, 4.0
@@ -291,7 +291,14 @@ def patch_spectrum(ring_break: int, R: float, seeds: int = 3):
     x = (np.arange(n) + 0.5) * d
     pts = np.stack(np.meshgrid(x, x, indexing="xy"), axis=-1) + [R, 0.0]
     amps, norm = gf.ladder_weights(L1_SLOPE, 1.0, OCTAVES, ring_break)
-    return sp.stack([sp.measure(gf.gaussian_sum(100 + s, pts, SCALE, amps, norm), d * 1000.0) for s in range(seeds)])
+    return [sp.measure(gf.gaussian_sum(100 + s, pts, SCALE, amps, norm), d * 1000.0) for s in range(seeds)]
+
+
+def patch_spectrum(ring_break: int, R: float, seeds: int = 3):
+    """:func:`patch_spectra` stacked."""
+    from galaxy.specs import spectrum as sp
+
+    return sp.stack(patch_spectra(ring_break, R, seeds))
 
 
 def k_of(wavelength_pc: float) -> float:
@@ -332,19 +339,50 @@ def test_a_below_the_break_the_slope_is_the_steep_one(ring):
     assert fit.alpha == pytest.approx(-L1_SLOPE - 1.0, abs=0.15)
 
 
+# Ring 8's seeds (S62's review, finding 2): the band above its break, 600-338 pc, holds three log bins and one seed's
+# slope there scatters by 0.97 (100 seeds: mean -1.226, s.e. 0.097); stacks of ten seeds read -0.84 to -1.79 (sd
+# 0.27; the first ten, 100-109, -1.548, inside the band), stacks of thirty -1.05 to -1.47 (sd 0.17), all hundred
+# -1.259 +- 0.112. The miss is about two standard deviations of a thirty-seed stack, not more: of the three disjoint
+# thirty-seed stacks one (seeds 160-189, -1.472) would read inside -1.53 +- 0.15, of the ten ten-seed stacks one
+# (100-109). The seeds here are the reviewer's thirty, 100-129 (-1.234), fixed, so the strict xfail is deterministic;
+# each seed costs 2.3-2.6 s (under another session's suite), 67 s for the two tests below, computed once.
+RING_8_SEEDS = 30
+
+
+@pytest.fixture(scope="module")
+def ring_8_spectra():
+    R, h, b = SPECTRUM_RINGS[8]
+    return patch_spectra(b, R, RING_8_SEEDS)
+
+
 @pytest.mark.xfail(strict=True, reason=(
-    "a disclosed miss, D221: -1.76 to -1.97 against -1.53 +- 0.15 over 600-338 pc; the sources' shallow slope at R_SUN "
-    "lives at scales the field does not own (the band above pi h = 338 pc runs only to the coarsest octave's plateau at "
-    "4 x 190 = 760 pc, and by D221 item 1 the field's coarse end is L1's 190 pc; the cell's unit mean removes the larger "
-    "scales anyway, #161). Measured -1.76 (4 kpc patch, four seeds), -1.86 (8 kpc, six seeds), -1.97 +- 0.47 here "
-    "(three seeds, three bins). Ring 8 is judged on its steep slope (-2.451) and its break."))
-def test_a_ring_8_reads_the_shallow_slope_above_the_break():
+    "a disclosed miss, D221: -1.23 +- 0.06 over 600-338 pc against -1.53 +- 0.15, too shallow by 0.3 - the coarsest "
+    "octave's plateau at 760 pc (the band above pi h = 338 pc runs only to 4 x 190 pc, and by D221 item 1 the field's "
+    "coarse end is L1's 190 pc; the cell's unit mean removes the larger scales anyway, #161); the test's three seeds "
+    "read -1.97 by noise. Thirty seeds (100-129) here: -1.234 +- 0.059; a hundred -1.259 +- 0.112, one seed's mean "
+    "-1.226 +- 0.097 (S62's review, finding 2, re-measured)."))
+def test_a_ring_8_reads_the_shallow_slope_above_the_break(ring_8_spectra):
     from galaxy.specs import spectrum as sp
 
     R, h, b = SPECTRUM_RINGS[8]
-    fit = sp.fit_power_law(patch_spectrum(b, R), k_of(600.0), 2.0 / h)
-    print(f"ring 8 above the break: {fit.alpha:.3f} +- {fit.stderr:.3f}")
+    fit = sp.fit_power_law(sp.stack(ring_8_spectra), k_of(600.0), 2.0 / h)
+    print(f"ring 8 above the break, {RING_8_SEEDS} seeds: {fit.alpha:.3f} +- {fit.stderr:.3f}")
     assert fit.alpha == pytest.approx(-L1_SLOPE, abs=0.15)
+
+
+def test_a_ring_8_s_break_is_within_an_octave_of_pi_h(ring_8_spectra):
+    """Gate (a), ring 8 judged on its break (D221's ruling; S62's review, finding 2): a continuous broken law over
+    760-23.75 pc (the coarsest octave's plateau down to the finest octave) on thirty seeds puts the break within an
+    octave of pi h = 338 pc. Measured: 341 pc (-0.930 / -2.451) on seeds 100-129; every ten-seed stack of seeds 100-199
+    reads 212-353 pc, every thirty 286-341, all hundred 295. (Over 600-23.75 pc, as ring 1 is fitted, the band above
+    holds too few bins and three seeds put it at 147 pc: the review's reading.)"""
+    from galaxy.specs import spectrum as sp
+
+    R, h, b = SPECTRUM_RINGS[8]
+    fit = sp.fit_broken(sp.stack(ring_8_spectra), k_of(760.0), k_of(23.75))
+    print(f"ring 8, {RING_8_SEEDS} seeds: {fit.alpha_low:.3f} / {fit.alpha_high:.3f}, break {fit.wavelength_break:.0f} pc "
+          f"against {math.pi * h:.0f}")
+    assert 0.5 < fit.wavelength_break / (math.pi * h) < 2.0
 
 
 def test_a_ring_11_has_no_band_above_its_break():
