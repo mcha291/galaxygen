@@ -147,10 +147,11 @@ def test_the_constants_are_the_ruling_s_and_the_stages_are_declared_as_ruled(pro
     # census, beside the composing stages (was: stellar_pattern < arm_ring_power, by a requirement it never read).
     assert order.index("arm_pieces") < order.index("arm_ring_power") and pc.DENSITY_CONTRAST.name not in pc.ARM_RING_POWER_STAGE.requires
     assert set(pc.ARM_RING_POWER_STAGE.requires) == set(pc.PATTERN_READS)
-    assert g.layer_stages == ("census_clustering", "arm_pieces", "cloud_texture")  # S61 (D220): was ("arm_pieces", "cloud_texture")
+    # S62 (D221): was ("census_clustering", "arm_pieces", "cloud_texture") - the gas fluctuation field.
+    assert g.layer_stages == ("census_clustering", "arm_pieces", "gas_fluctuation", "cloud_texture")  # S61 (D220): was ("arm_pieces", "cloud_texture")
     assert {"stellar_pattern", "gas_pattern", "arm_ring_power"} <= set(g.composing_stages)
     assert "pattern" not in g.composing_stages  # the law's stage composes nothing since S60
-    assert TABLES == ("arm_piece", "cell")  # S61 (D220): was ("arm_piece",) - the clustering field's cell table
+    assert TABLES == ("arm_piece", "cell", "ring")  # S62 (D221): was ("arm_piece", "cell") - the gas field's ring table. S61 (D220): was ("arm_piece",) - the clustering field's cell table
     decls = {d.name: d for s in g.order for d in s.publishes}
     for name in pt.PIECE_FIELDS:
         d = decls[name]
@@ -1749,7 +1750,7 @@ def test_the_pieces_are_a_table_served_whole_and_no_catalogue(prod):
     """S59's plumbing decision (D218), kept for the table that replaced ``arm_segment``: the census's columns are
     a table's - domain ``table``, read whole by the model's own stages, no object class, no census route, no ramp -
     and the API serves them whole with the run's other arrays."""
-    assert TABLES == ("arm_piece", "cell") and Kind.TABLE_COLUMN.domain == "table"  # S61 (D220): was ("arm_piece",) and not Kind.TABLE_COLUMN.categorical
+    assert TABLES == ("arm_piece", "cell", "ring") and Kind.TABLE_COLUMN.domain == "table"  # S61 (D220): was ("arm_piece",) and not Kind.TABLE_COLUMN.categorical  # S62 (D221): was ("arm_piece", "cell")
     for d in ap.ARM_PIECES:
         assert d.kind is Kind.TABLE_COLUMN and d.of == "arm_piece" and d.ramp is None and not d.axes
     base = dict(name="x", label="x", unit="rad", about="x", kind=Kind.TABLE_COLUMN)
