@@ -85,19 +85,21 @@ def chk(m, *stages):
 # S61 (D220 part II): the layer's census_clustering stage joins the first wave, after the halo (it needs no field).
 # S62 (D221 item 7 as amended): the layer's census of gas spurs (`gas_spurs`) and the stage that composes them into the
 # gas's contrast (`spurs`), both after the star formation history whose gas column the spacing reads.
+# S62 (D221): and the layer's gas_fluctuation stage (it reads the gas's height and the rotation curve), after the
+# clouds by the tie-break.
 ORDER = {
     "basic": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "sfh", "arm_pieces", "chemistry_dtd",
         "stellar_halo",
         "supernovae", "arm_ring_power", "gas_pattern", "stellar_pattern", "gas_spurs", "light", "vertical_alpha", "cluster_survival", "population", "ism",
         "spurs", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
     "azimuthal": (
         "halo", "census_clustering", "disc", "nucleus", "assembly", "bar", "pattern", "arm_pieces", "arm_ring_power", "gas_pattern", "stellar_pattern", "sfh_azimuthal", "chemistry_dtd",
         "gas_spurs", "stellar_halo",
         "supernovae", "light", "spurs", "vertical_alpha", "cluster_survival", "population", "ism", "bright_stars", "globular_clusters",
-        "formation", "habitable_zone", "dust", "clouds", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
+        "formation", "habitable_zone", "dust", "clouds", "gas_fluctuation", "systems", "cloud_texture", "planets", "clusters", "nebular", "bubbles",
     ),
 }
 # The synthetic fields (S55, D214; rule A10's fourth kind): everything the layer's stages publish, in both
@@ -117,7 +119,10 @@ CENSUS_CLUSTERING = {"census_clustering_seed", "census_clustering_cell_mean"}
 GAS_SPURS = {"gas_spur_chain", "gas_spur_arc", "gas_spur_radius", "gas_spur_azimuth", "gas_spur_spacing",
              "gas_spur_jeans_length", "gas_spur_peak_surface_density", "gas_spur_contrast", "gas_spur_pitch",
              "gas_spur_length", "gas_spur_width", "gas_spur_fall"}
-SYNTHETIC = CLOUD_TEXTURE | ARM_PIECES | CENSUS_CLUSTERING | GAS_SPURS  # S62: was without GAS_SPURS
+# S62 (D221): and the gas fluctuation field's seed, its ring table's six columns and its cell normalisers.
+GAS_FLUCTUATION = {"gas_fluctuation_seed", "gas_fluctuation_break_octave", "gas_fluctuation_mach", "gas_fluctuation_sigma",
+                   "gas_fluctuation_strain", "gas_fluctuation_twist", "gas_fluctuation_norm", "gas_fluctuation_cell_normaliser"}
+SYNTHETIC = CLOUD_TEXTURE | ARM_PIECES | CENSUS_CLUSTERING | GAS_SPURS | GAS_FLUCTUATION  # S62: was without GAS_SPURS and GAS_FLUCTUATION
 # The seeded fields per model. The azimuthal model adds exactly one: its star-formation modulation
 # reads the seeded contrast, and every field sfh_azimuthal shares with sfh stays derived because
 # sfh computes it, in sfh's own view (Stage.extends, S27) -- so nothing downstream turns seeded.
@@ -228,9 +233,11 @@ def test_production_graphs_hold(prod):
         assert synthetic == SYNTHETIC, sorted(synthetic ^ SYNTHETIC)
         # S61 (D220 part II): was ("arm_pieces", "cloud_texture") - the clustering field reads only the layer's seed and
         # the constants, so it runs in the first wave, beside the halo.
-        # S62 (D221 item 7 as amended): was ("census_clustering", "arm_pieces", "cloud_texture") - the census of gas spurs.
-        assert g.layer_stages == ("census_clustering", "arm_pieces", "gas_spurs", "cloud_texture")  # S60 (D219): was ("arm_phases", "cloud_texture")
+        # S62 (D221 item 7 as amended): was ("census_clustering", "arm_pieces", "cloud_texture") - the census of gas spurs;
+        # S62 (D221): and the gas fluctuation field, after the clouds.
+        assert g.layer_stages == ("census_clustering", "arm_pieces", "gas_spurs", "gas_fluctuation", "cloud_texture")  # S60 (D219): was ("arm_phases", "cloud_texture")
         assert {g.producer[n] for n in GAS_SPURS} == {"gas_spurs"}
+        assert {g.producer[n] for n in GAS_FLUCTUATION} == {"gas_fluctuation"}
         assert {g.producer[n] for n in CENSUS_CLUSTERING} == {"census_clustering"}
         assert {g.producer[n] for n in CLOUD_TEXTURE} == {"cloud_texture"} and {g.producer[n] for n in ARM_PIECES} == {"arm_pieces"}
         # S56 (D215): texture_seed binds at its first reader's checkpoint, the pattern's; no input is unread.

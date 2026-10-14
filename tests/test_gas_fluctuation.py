@@ -377,3 +377,17 @@ def test_the_vectors_cover_what_a_twin_must_match():
     assert np.max(np.abs(sums[:, 3] - sums[:, 4])) < 2e-3
     assert np.max(np.abs(sums[radius < 3.0, 3] - sums[radius < 3.0, 4])) < 5e-4
     assert np.max(np.abs(maps[:, 5] / maps[:, 4] - 1.0)) < 5e-4
+
+
+def test_e_nothing_reads_the_field_yet_so_l1_and_the_censuses_are_untouched():
+    """Gate (e): the field multiplies nothing in this pass (V7 reads it), so no stage requires any of its fields and the
+    clustering field's stage reads nothing of it: L1's map and every census are the branch's before the stage, by
+    construction. Measured at S62 against the branch before the stage (18a6520): every field of the default galaxy's
+    layer-on and layer-off runs but the eight new ones (777 digests) and the layer-on clouds' and clusters' 31
+    materialised columns, bit for bit; tests/test_clustering_gate.py green."""
+    _, impls_, _ = production()
+    ours = set(FIELD_NAMES)
+    for stage in impls_:
+        assert not ours & set(stage.requires + stage.requires_optional), stage.id
+    assert {d.name for d in impls_.get("gas_fluctuation").publishes} == ours
+    assert impls_.get("gas_fluctuation").requires == ("gas_scale_height", "circular_velocity")

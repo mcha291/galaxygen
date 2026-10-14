@@ -106,7 +106,8 @@ def test_a_table_column_names_its_table_and_is_not_a_catalogue_column():
     catalogue. Its domain is ``table``: no rule that picks ``object`` sees it. The table's name is from its own
     closed list, which shares no name with the object classes; it takes no axes, no categories, no composition,
     and - drawn by nothing - no ramp."""
-    assert TABLES == ("arm_piece", "cell", "gas_spur") and not set(TABLES) & set(OBJECTS)  # S62 (D221 item 7): was ("arm_piece", "cell") - the gas spurs' census; S61 (D220): was ("arm_piece",) - the cell table, the clustering field's mean per level-0 cell; S60 (D219): was ("arm_segment",)
+    # S62 (D221): and the ring table, the gas fluctuation field's parameters per level-0 ring.
+    assert TABLES == ("arm_piece", "cell", "gas_spur", "ring") and not set(TABLES) & set(OBJECTS)  # S62 (D221 item 7): was ("arm_piece", "cell") - the gas spurs' census; S61 (D220): was ("arm_piece",) - the cell table, the clustering field's mean per level-0 cell; S60 (D219): was ("arm_segment",)
     # The object classes are what they were at S58: the pieces are not one of them.
     assert OBJECTS == ("system", "star", "planet", "belt", "moon", "cloud", "cluster", "remnant", "bright_star")
     d = decl("x", Kind.TABLE_COLUMN)
