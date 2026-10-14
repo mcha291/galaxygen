@@ -238,11 +238,14 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     for name in differ - {"sun_azimuth"}:
         d = named.decls[name]
         if d.kind.domain == "table":
-            assert d.of == "arm_piece" and producer[name] == "arm_pieces", name  # the layer's census of pieces
+            # S62 (D221): was `d.of == "arm_piece" and producer[name] == "arm_pieces"` - and the gas spurs' table, laid
+            # off the template's chains (their feet walk the pieces' ridges).
+            assert (d.of, producer[name]) in {("arm_piece", "arm_pieces"), ("gas_spur", "gas_spurs")}, name  # the layer's census of pieces
         elif d.composed:
             # S60 (D219, the fourth follow-up's C): the ring power and its split are `arm_ring_power`'s.
             # S60 fourth pass: was ("stellar_pattern", "gas_pattern", "sfh_azimuthal").
-            assert producer[name] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal"), name  # what reads the pieces
+            # S62 (D221): and "spurs", which publishes the gas's contrast with its spurs since S62.
+            assert producer[name] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal", "spurs"), name  # what reads the pieces
         elif d.kind.domain == "object":
             assert d.of in placed, name  # a placed census is another draw; the remnants (unplaced) are the same bits
         elif producer[name] in censuses and d.axes in ((), ("R",)):
