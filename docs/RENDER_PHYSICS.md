@@ -179,6 +179,23 @@ on screen; frontend/src/galaxy/flux.test.ts for the scale and the dust's
 segment]`. #114 (points painted as blackbodies) and #115 (the young population
 drawn twice) no longer apply in this mode; they remain the field mode's.
 
+**Since S63 (D223) the stars are split by age.** `/api/render` returns
+`stars_young`, `stars_middle` and `stars_old` per ring and filter — the bright
+catalogue's three age parts (`bright.AGE_PARTS`: younger than the cluster
+window, 0.02 Gyr; to `YOUNG_STAR_AGE`, 0.1 Gyr; older), each its own spectrum's
+response through the curves (`bright.part_anchors`, the decomposition `l_min=`
+reads) scaled by its ring's closure factor `stars / Σ parts`, so the three sum
+to the stars' ring value per ring and filter to rounding `[verified:
+tests/test_render.py]`. The factor's largest departure from 1 is stated per
+filter (the join is not linear: 4.9 × 10⁻⁶ through rgb, to 2.4 × 10⁻³ through
+the narrowband sets). The header's `ages` names, per part, the (R, φ) array the
+viewer multiplies its ring value by: the old by `stars_placement` (the stellar
+contrast, as `stars` is placed), the middle by `stars_middle_placement`
+(`sfr_modulation` over its ring mean), the young by `dust_placement` (the gas's
+own contrast — the clusters sit in the clouds). Each weight averages to 1 round
+every ring, so the placed parts keep each ring's light; they are `stars` split,
+never light beside it.
+
 **The ruling V1 made (S38): option (a).** The paragraph below is the question as
 it stood; the answer is `/api/render` (`model/galaxy/stages/spectra.py`,
 `api/service.py`): the viewer sends its curves as numbers (the sets are
