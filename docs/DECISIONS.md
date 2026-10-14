@@ -12342,3 +12342,21 @@ a 2σ miss of the one-noise construction, recorded; (e) still theirs: the defaul
 routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147), the 88-minute
 gate test (g). **S63 is V5**, the field's light by age — and the owner's D222 reshaped the board after it (V6b and
 V9 inserted, BUILD_IV's W2–W5 appended): the next lead reads `BUILD_III.md` and `BUILD_IV.md` as the owner left them.
+
+### D223. S63: light by age in the field — `/api/render` returns the starlight young, middle and old, each placed by its own weight; the field mode draws the three (BUILD_III Phase V5; a Fable lead on the owner's word, Opus builders)
+
+**Session S63, opened 2026-10-14 on `session-63` from S62's merge (da1da078ffa7; `verify_clone` of that main running
+at the open, its line entered below).** The owner's word: "if S62 finishes, continue with S63 too." The ruling is
+BUILD_III §5 Phase V5 as written, with no reading (none is listed) and **no stage changes**: `/api/render` returns
+`stars_young`, `stars_middle` and `stars_old` — each the field's light of that age part through the curves on its
+own, placed round each ring by its own weight (the young by the gas contrast's law as the censuses read it, the
+middle by `sfr_modulation`, the old by the stellar contrast — the three parts and their weights the bright
+catalogue's decomposition already holds, D200–D203, S59's point reader) — **summing to `stars` per ring and filter
+to rounding**; the field mode draws the three as layers. **The gate:** the closure (the three sum to `stars` to
+1e-12 relative per ring and filter, layer on and off); the arm–interarm colour difference measured before and
+after with `tools/goal_metrics.py` on the regenerated frames (recorded, not a target); the payload and the timings
+rows (`render: whole, rgb` 9.158 s at S62; the route's bytes). Two builders: A the route and its tests, B the viewer
+(three layers in the field regime from the route's arrays, the switcher's thumbnails and the picture test);
+an Opus reviewer before the merge; the age bounds of the three parts are the catalogue's (the cluster window's
+end to 100 Myr, 100 Myr to the middle part's end as `bright.py` declares, the rest old) and are **read from the
+code, not chosen**.
