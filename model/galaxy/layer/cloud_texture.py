@@ -129,7 +129,7 @@ _CONSERVES_GRADIENT = (
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
     "its cloud's ring: at S61 the offset moves a cluster by up to 230 pc in radius (its own length reaches 248 pc) "
-    "against a 75 pc radial step and puts 1 582 of 12 710 "
+    "against a 75 pc radial step and puts 1 581 of 12 710 "
     "clusters (12.4 %, 36.1 % of the cluster mass) in another radial ring and 133 in another cell ring than their "
     "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
     "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "

@@ -166,7 +166,7 @@ UNPLACED_OBJECTS = {"remnant"}
 # S60 (D219 item 7): was {"arm_segment"} with 1024 rows, fixed - the table is the census of arm pieces, `arm_piece`,
 # the `arm_pieces` stage's eight synthetic columns, one row a piece: as many rows as the census lays (the arm-number
 # law and the draws decide it), none with the layer off ("no arm placed").
-LAYER_TABLES = {"arm_piece"}
+LAYER_TABLES = {"arm_piece", "gas_spur"}  # S62 (D221 item 7 as amended): was {"arm_piece"} - and the gas spurs' census
 # S61 (D220 part II): the clustering field of the censuses - the layer stage `census_clustering`'s two synthetic
 # fields, its 32-bit seed (a scalar) and its mean in each level-0 cell (the table `cell`, one row a cell, the rows
 # not drawn). A realisation with the layer on; NaN with it off (D164; D215's ruling 5), the cell rows kept.
@@ -562,8 +562,10 @@ def test_i1_layer_off_moves_only_placements_and_the_listed_census_statistics(run
             # Rows with the layer on, none with it off; synthetic, the layer stage's.
             # S60 (D219 item 7): the census of arm pieces (was the winding's 1024 segment rows): as many rows as it
             # lays, every column the same count, none with the layer off ("no arm placed").
-            assert d.of in LAYER_TABLES and d.provenance == "synthetic" and n in pt.PIECE_FIELDS, n
-            assert np.asarray(on.fields[n]).shape == (np.asarray(on.fields[pt.PIECE_FIELDS[0]]).size,) != (0,) and np.asarray(off.fields[n]).shape == (0,), n
+            # S62 (D221 item 7 as amended): and the census of gas spurs, its own table and its own row count.
+            assert d.of in LAYER_TABLES and d.provenance == "synthetic" and n in pt.PIECE_FIELDS + _SPUR_FIELDS, n
+            first = pt.PIECE_FIELDS[0] if d.of == "arm_piece" else _SPUR_FIELDS[0]
+            assert np.asarray(on.fields[n]).shape == (np.asarray(on.fields[first]).size,) != (0,) and np.asarray(off.fields[n]).shape == (0,), n
             continue
         # S56 (D215, gate ruling 5): a synthetic scalar was a realisation - a number with the layer on, and not one
         # with it off. S60 (D219): the five arm modes' phases, the only ones, are retired; every synthetic field is
@@ -1044,13 +1046,15 @@ def test_i4_the_production_graphs_declare_their_readers(prod):
         assert set(g.placement_readers) == {"systems", "bright_stars", "clouds", "clusters", "planets"}
         # S56 (D215): was the cloud texture alone. S60 (D219): was ("arm_phases", "cloud_texture").
         # S61 (D220 part II): was ("arm_pieces", "cloud_texture") - the clustering field runs in the first wave.
-        assert g.layer_stages == ("census_clustering", "arm_pieces", "cloud_texture")
+        # S62 (D221 item 7 as amended): was ("census_clustering", "arm_pieces", "cloud_texture") - the gas spurs' census.
+        assert g.layer_stages == ("census_clustering", "arm_pieces", "gas_spurs", "cloud_texture")
         # S60 (D219): was {"pattern", "gas_pattern"} - the law's stage composes nothing; the composing stage is
         # `stellar_pattern`, beside the gas's.
         # S60 (D219, the gate's fourth follow-up, C): the disclosed check `arm_ring_power` publishes the realised ring
         # power and its split, composed fields, from a stage of its own - a composing stage beside the two.
         # S60 fourth pass: was {"stellar_pattern", "gas_pattern"} (+ sfh_azimuthal).
-        expected = {"stellar_pattern", "arm_ring_power", "gas_pattern"} | ({"sfh_azimuthal"} if m.name == "azimuthal" else set())
+        # S62 (D221 item 7 as amended): and `spurs`, which composes the gas spurs into the gas's contrast.
+        expected = {"stellar_pattern", "arm_ring_power", "gas_pattern", "spurs"} | ({"sfh_azimuthal"} if m.name == "azimuthal" else set())
         assert set(g.composing_stages) == expected
         # What the declarations are for: every stage that requires a composed or a synthetic field is one of them.
         decl_of = {d.name: d for st in g.order for d in st.publishes}
@@ -1063,7 +1067,8 @@ def test_i4_the_production_graphs_declare_their_readers(prod):
         assert "placement readers: bright_stars, clouds, systems, planets, clusters" in report
         # S56 (D215): was "layer stages: cloud_texture" and a line "input unread by ruling: texture_seed".
         # S61 (D220 part II): was "layer stages: arm_pieces, cloud_texture" - the clustering field's stage leads.
-        assert "layer stages: census_clustering, arm_pieces, cloud_texture" in report and "unread by ruling" not in report  # S60 (D219): was arm_phases
+        # S62 (D221 item 7 as amended): was "layer stages: census_clustering, arm_pieces, cloud_texture" - the gas spurs' census.
+        assert "layer stages: census_clustering, arm_pieces, gas_spurs, cloud_texture" in report and "unread by ruling" not in report  # S60 (D219): was arm_phases
         assert "texture_seed@3" in report and "inputs unbound: 0" in report
 
 
@@ -1227,12 +1232,13 @@ def test_i4_compose_refuses_a_stage_that_is_not_a_reader_at_run_time(prod):
         # S60 (D219 item 7): was the five phases and the two segment columns - a pattern is built from the eight
         # columns of the census of arm pieces, and the graph refuses each of the eight by name.
         # S61 (D220 part II): and the clouds read the clustering field's seed, a ninth synthetic field.
-        synthetic_reads = pt.PIECE_FIELDS + (("census_clustering_seed",) if stage_id == "clouds" else ())
+        # S62 (D221 item 7 as amended): and the clouds read the gas spurs' twelve columns, composed into their gas pattern.
+        synthetic_reads = pt.PIECE_FIELDS + (("census_clustering_seed", *_SPUR_FIELDS) if stage_id == "clouds" else ())
         # S61 (D220): the planets lay out their stars by the catalogue's own allocation (systems.star_layout), so they
         # read what it reads - the composed `sfr_modulation` too, which the graph refuses by name beside the eight.
         composed_reads = ("sfr_modulation",) if stage_id == "planets" else ()
         assert {p.code for p in problems} == {"layer-reader"} and len(problems) == len(synthetic_reads) + len(composed_reads)
-        assert len(synthetic_reads) == (9 if stage_id == "clouds" else 8)
+        assert len(synthetic_reads) == (21 if stage_id == "clouds" else 8)  # S62: was 9 for the clouds
         assert all(f"'{stage_id}'" in p.detail and ("synthetic" in p.detail or "composed" in p.detail) for p in problems)
         assert {n for n in composed_reads if any(f"'{n}'" in p.detail for p in problems)} == set(composed_reads)
         assert {n for n in synthetic_reads if any(f"'{n}'" in p.detail for p in problems)} == set(synthetic_reads)
@@ -1410,7 +1416,8 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
     # S59 (D218 items 1-2): and the two columns of the winding's segments - the same stage's, on the same seed.
     # S60 (D219 item 7): was the phases and the segments - the census of arm pieces, eight columns of one table.
     # S61 (D220 part II): and the clustering field's seed and cell means.
-    assert {f["name"] for f in synthetic} == set(cl.TEXTURE_COLUMNS) | set(pt.PIECE_FIELDS) | CLUSTERING_FIELDS
+    # S62 (D221 item 7 as amended): and the gas spurs' census.
+    assert {f["name"] for f in synthetic} == set(cl.TEXTURE_COLUMNS) | set(pt.PIECE_FIELDS) | CLUSTERING_FIELDS | ADDED_AT_S62_SPURS
     assert not [f["name"] for f in fields if "cloud_interior" in f["name"]]
     for f in fields:
         if f["provenance"] == "synthetic":
@@ -1428,6 +1435,14 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
                 assert "measured nowhere" in f["statistic"] and "not drawn" in f["statistic"], f["name"]
                 assert "self-gravitating disc" in f["stands_in_for"] and "Every ring's mean density and every law" in f["conserves"], f["name"]
                 assert not re.search(r"none read", f["statistic"], re.IGNORECASE), f["name"]
+                continue
+            if f["name"] in ADDED_AT_S62_SPURS:
+                # S62 (D221 item 7 as amended): the gas spurs' census - a table the viewer does not show, its draw the
+                # first foot's place on each chain and every other number a sourced law.
+                assert f["stage"] == "gas_spurs" and f["kind"] == "table_column" and f["of"] == "gas_spur", f["name"]
+                assert f["domain"] == "table" and f["ramp"] is None and "not shown by the viewer" in f["about"], f["name"]
+                assert "No row with the randomness layer off" in f["about"] and "[verified:" in f["statistic"], f["name"]
+                assert "magneto-Jeans instability" in f["stands_in_for"] and "Every ring's gas and every law" in f["conserves"], f["name"]
                 continue
             if f["name"] in CLUSTERING_FIELDS:
                 # S61 (D220 part II): the hierarchy's statistic, read (Grasha et al. 2017a Table 4), and NaN layer off.
@@ -1453,7 +1468,8 @@ def test_i5_the_metadata_names_the_fourth_kind_and_the_fifth_seed(model):
             assert "with the randomness layer off" in f["about"], name  # "0 with the randomness layer off", "1 with ..."
         # S60 (D219, the fourth follow-up's C): the ring power and its split are published by `arm_ring_power`.
         # S60 fourth pass: was ("stellar_pattern", "gas_pattern", "sfh_azimuthal").
-        assert f["stage"] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal")  # a composing stage lives in stages/, not layer/
+        # S62 (D221 item 7 as amended): and `spurs`, which publishes the gas's contrast with the gas spurs composed on it.
+        assert f["stage"] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal", "spurs")  # a composing stage lives in stages/, not layer/
     seeds_ = svc.handle("/api/inputs", f"model={model.name}").json()["seeds"]
     assert [s["name"] for s in seeds_] == [s.name for s in seeds()] and len(seeds_) == 5
     texture = next(s for s in seeds_ if s["name"] == "texture_seed")
@@ -1492,7 +1508,8 @@ def test_the_oracle_layer_off_azimuthal_is_layer_off_basic(runs):
     # segment columns and the spread.
     # S61 (D220 item 6): was 368 - the binners' radius, `cluster_birth_radius`.
     # S61 (D220 part II): was 369 - the cloud's ring-drawn radius and the clustering field's seed and cell means.
-    assert len(columns) > 100 and len(b.fields) == 372
+    # S62 (D221 item 7 as amended): was 372 - the gas spurs' twelve columns.
+    assert len(columns) > 100 and len(b.fields) == 384
 
 
 def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
@@ -1519,7 +1536,8 @@ def test_the_oracle_against_layer_on_basic_holds_outside_the_censuses(runs):
     # S59 (D218): the layer's table's columns are rows in the layer-on run and none in the layer-off one: a table's
     # columns, set apart as the phases were. S60 (D219 item 7): the census of arm pieces, eight columns.
     segments = {n for n in differ if b.decls[n].kind.domain == "table"}
-    assert segments == set(pt.PIECE_FIELDS) and {b.decls[n].of for n in segments} == LAYER_TABLES
+    # S62 (D221 item 7 as amended): and the gas spurs' census, a second table.
+    assert segments == set(pt.PIECE_FIELDS) | ADDED_AT_S62_SPURS and {b.decls[n].of for n in segments} == LAYER_TABLES
     statistics = {n for n in differ - phases - segments if b.decls[n].kind.domain != "object"}
     # S58 (D217): was `== set(CENSUS_STATISTICS)`; `dig_halpha_fraction` lands on the same bits at S58's census (test_i1).
     # S59 (D218): was `== set(CENSUS_STATISTICS) - {"dig_halpha_fraction"}`; on S59's layer-on census the two sums
@@ -1687,7 +1705,7 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # clustering field, so the offsets start from other centres; the binners read the radius the cloud's ring drew.
     for phrase in ("at S61 the offset moves a cluster",
                    "by up to 230 pc in radius (its own length reaches 248 pc) against a 75 pc radial step",
-                   "1 582 of 12 710 clusters (12.4 %, 36.1 % of the cluster mass)",
+                   "1 581 of 12 710 clusters (12.4 %, 36.1 % of the cluster mass)",  # S62 (D221 item 7 as amended): was 1 582 - the spurs move the clouds' sector shares
                    "133 in another cell ring", "`nebular` and `bubbles` bin a cluster by the radius its cloud's ring drew",
                    "`cluster_birth_radius`", "No clamp"):
         assert phrase in text, phrase
@@ -1713,7 +1731,8 @@ def test_the_offset_s_declaration_states_what_it_does_not_keep_and_the_numbers_a
     # S60 fourth pass: was 1576 and 0.1227 of 12 840.
     # S61 (D220): was 1605 and 0.1243 of 12 916 (the ring-first census, a new draw).
     # S61 (D220 part II as amended): was 1629 and 0.1282 - the clouds placed within their cells.
-    assert int(moved.sum()) == 1582 and moved.mean() == pytest.approx(0.1245, abs=5e-4)
+    # S62 (D221 item 7 as amended): was 1582 - the gas spurs move the clouds' sector shares, and one cluster's cloud with them.
+    assert int(moved.sum()) == 1581 and moved.mean() == pytest.approx(0.1244, abs=5e-4)
     # The share of the cluster mass that crosses: 0.42939, printed as 42.9 %. S57 (D216): was 0.43796 (43.8 %).
     # S58 (D217): was 0.4373 (43.7 %). S59 (D218): was 0.43648 (43.6 %). S59 (D218 follow-up): was 0.44329 (44.3 %).
     # S60 fourth pass: was 0.42939 (42.9 %); 0.42923 now, printed as 42.9 % still.
@@ -1858,7 +1877,8 @@ def test_texture_seed_is_the_fifth_seed_and_the_arm_pieces_read_it(prod):
     # S61 (D220 item 5): was ["arm_pieces"] - the cloud texture is drawn on the layer's seed; its stage reads the
     # systems seed beside it for the census's layout alone (which ring and place each published cloud is).
     # S61 (D220 part II): was ["arm_pieces", "cloud_texture"] - the censuses' clustering field is on the layer's seed.
-    assert readers == ["arm_pieces", "census_clustering", "cloud_texture"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
+    # S62 (D221 item 7 as amended): was ["arm_pieces", "census_clustering", "cloud_texture"] - the gas spurs' first feet.
+    assert readers == ["arm_pieces", "census_clustering", "cloud_texture", "gas_spurs"] and impls_.get("arm_pieces").layer_stage and impls_.get("arm_pieces").checkpoint == 3
     assert impls_.get("census_clustering").layer_stage and impls_.get("census_clustering").reads_seeds == ("texture_seed",)
     assert impls_.get("cloud_texture").layer_stage and impls_.get("cloud_texture").reads_seeds == ("systems_seed", "texture_seed")
     # S58 (D217 item 9): was `requires == ()` - the stage asks whether there is a bar, whose two-armed mode it ties.
@@ -1934,8 +1954,11 @@ def test_rerolling_texture_seed_moves_the_placements_and_no_law(prod):
             # S59 (D218 items 1-2): the layer's table is on the layer's seed - re-laid, row for row.
             # S60 (D219 item 7): the census of arm pieces - other pieces, and as many rows as the laying makes (the
             # count is the draws' own, not fixed); the pinned rows are the template's, and the default has none.
-            assert d.of in LAYER_TABLES and n in pt.PIECE_FIELDS, n
+            # S62 (D221 item 7 as amended): and the gas spurs' census, laid on the re-laid chains with other first feet.
+            assert d.of in LAYER_TABLES and n in pt.PIECE_FIELDS + _SPUR_FIELDS, n
             assert d.provenance == "synthetic" and np.asarray(a.fields[n]).size > 0 and np.asarray(b.fields[n]).size > 0, n
+            if n in ("gas_spur_arc", "gas_spur_radius", "gas_spur_azimuth"):
+                assert not equal, n
             if n in ("arm_piece_start_radius", "arm_piece_start_azimuth", "arm_piece_pitch", "arm_piece_extent"):
                 assert not equal, n  # the drawn numbers of the pieces; the integer columns may land alike
         elif d.kind.domain == "object":
