@@ -180,9 +180,13 @@ _STANDS_IN_FOR = (
 )
 _CONSERVES = (
     "Every ring's gas and every law: the spurs' excess is taken from the whole ring in proportion to its gas, so "
-    "the composed gas contrast averages to 1 on every ring exactly, and no radial field, no scalar and no expected "
-    "count of any census moves - the clouds' and the clusters' sector shares on a ring do. It does not keep the "
-    "interarm gas's share of a ring, which falls by the spurs' mean there."
+    "the composed gas contrast averages to 1 on every ring (to 1e-13), and no radial field, no scalar and no "
+    "expected count of any census moves - to 4.4e-16 (last-bit differences in 4-13 cells of hot_phase_porosity and "
+    "three HII surface brightnesses on milky_way, the moved census summed in another order) - the clouds' and the "
+    "clusters' sector shares on a ring do. It does not keep the interarm gas's share of a ring, which falls by the "
+    "spurs' mean there: <S> at most 0.0092 of a ring. The walk reads the gas contrast at each foot on the two grid "
+    "rings either side, at the chain's polyline: within 0.052 of the point function's value there, relative (measured on the Milky "
+    "Way template's feet)."
 )
 _STATISTIC = (
     "One uniform draw per chain, where the first spur stands within one spacing of the chain's start - no source "
