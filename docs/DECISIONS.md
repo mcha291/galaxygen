@@ -12385,3 +12385,41 @@ placement already shipped — about 1.2 MB over the 7.52 MB, where placed volume
 multiplies a part's ring value by its weight at (R, φ). Measured before: `render: whole, rgb` 11.558 s cold on a busy
 machine (9.158 at S62), 7 519 776 bytes; the frame's arm over interarm in blue 1.410; the disc-integrated shares,
 each part on its own: young 0.1330 B / 0.0851 V, middle 0.0951 / 0.0634, old 0.7719 / 0.8516.
+
+**Built (builder A, the route, four commits; builder B, the viewer, three; both cherry-picked).** *The route:*
+`/api/render` returns `stars_young`, `stars_middle`, `stars_old` per ring and filter — `bright.part_anchors`, a
+reader of the field's own tables by the same decomposition `resolve` uses (`part_masses` on `AGE_PARTS`: 0–0.02,
+0.02–0.1, ≥ 0.1 Gyr), each part's own spectrum's response at the ring's colour temperature times the ring's closure
+factor `stars / Σ parts` (1 where a ring has no light) — **summing to `stars` to about 1e-14 per ring and filter on
+the three galaxies and every filter set**, placed by their weights keeping each ring's light to 1.6e-15, the same
+numbers layer off (rtol 1e-12) with every weight exactly 1, every part non-negative. The factors, pinned per filter
+at 1e-3 relative: rgb 4.9015e-6 / 2.904e-6 / 1.5652e-6, sho 9.534e-4 / 1.2172e-3 / 2.4408e-3, hoo 1.2172e-3 /
+2.4408e-3 / 2.4408e-3, wfc3 5.469e-5 / 2.0088e-3 / 8.444e-4, wfc3n 8.934e-4 / 1.2194e-3 / 2.4162e-3 (default and
+Milky Way identical; `ngc_4414` 3.9761e-6 … 2.2633e-3). The shares of the disc's light, pinned at 2e-6 (default,
+rgb R / G / B): young 0.066242 / 0.085078 / 0.133017, middle 0.050839 / 0.063355 / 0.095066, old 0.882919 /
+0.851568 / 0.771917 (`ngc_4414` young 0.046 / 0.060 / 0.098, measured). The header's `ages` entry names, per part,
+its array, its placing weight's array (young `dust_placement` — the gas density contrast floored at 0, ring-mean
+departure 5e-14, 1e-13 on the Milky Way; middle `stars_middle_placement`, `sfr_modulation` over its ring mean,
+3e-16 — in `basic`, which publishes no modulation, `stars_placement`; old `stars_placement`,
+`pattern_density_contrast`, 3e-16), `weight_fields`, `ages_gyr`, the rule "part(R, φ, filter) = part(R, filter) ×
+weight(R, φ)", `closure.factor` per filter and the colour temperature marked `[inferred]`, and an about saying a
+part is "its own spectrum's response, scaled by the ring's closure factor" and that a viewer draws the parts or
+`stars`, never both; a window slices the parts by rows and the weights by (rows, cols); at `level=k` both are cell
+means. `tests/layer_reference.py` digests the route without the S63 key and arrays and reports them `added`.
+*Bytes and cost:* 7 519 776 → 8 690 264 (+1 170 488: three per-ring arrays and two (R, φ) weights, the young
+reusing the gas's); `render: whole, rgb` cold 13.03 → 13.96 s interleaved on a busy machine (+7 %; S62's 9.158 on a
+quiet one), **warm 0.388 → 0.90 s** (`part_anchors` 0.13 s, the three per-ring responses 0.35 s; one call for the
+three was slower) — accepted and recorded; an anchors cache per galaxy would save 0.13 s and is not added (the
+Galaxy cache is a cache of work). `RENDER_PHYSICS.md` §0 states the split. *The viewer:* `interface/ages.js` (a
+plain shared module: `ageParts` reads the header's parts, `agedLight` multiplies each ring value by its (R, φ)
+weight and sums the switched-on parts, `ringClosure` checks the closure), `FieldVolume` fills the one stellar
+texture from the three — each part coloured by its own three filter responses over the white point, the same path
+as `stars` — the march shader and textures unchanged; a "Starlight by age" section in the rail with young,
+middle-aged and old switches (tuning values, all on), each tooltip naming its placing field; the star-first mode's
+remainder is not split. Measured in the built viewer: placed by one weight the parts reproduce `stars` to 1.6e-7
+in the worst cell (the baseline run matched all eight captures byte for byte); with their own weights the worst
+cell moves 43 % and 2.9 % of the light moves; the frame sums R / G / B 20 810 / 18 240 / 16 936 all on, 19 344 /
+16 586 / 14 618 young off, 4 869 / 4 575 / 5 252 old off, back to the bit when switched on; the ring closure on
+the wire 9.5e-8 (float32); the CPU sum 3.8 ms per build or switch; the payload the viewer parses 8 690 608 B
+(+15.5 %); the ready time 28.1 → 29.6 s with the route's own compute. Typecheck, vitest (297 tests) and the viewer
+logic tests green.
