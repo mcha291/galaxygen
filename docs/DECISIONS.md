@@ -12457,7 +12457,7 @@ bulge. The physics-only over layered ratio moved past its pin in every channel (
 dust-free check 1.00000 / 0.99999 / 1.00001.
 
 **Closing.** <SUITE63>. The register: 101 open = 11 permanent + 90 carried, 48 discharged (#166 opened above).
-Rows: 12 / 20 / 5 of 37, unmoved (no stage changed). *How S62 ended:* <CLONE62>. **For the owner, plainly (none
+Rows: 12 / 20 / 5 of 37, unmoved (no stage changed). *How S62 ended:* `verify_clone --ref main` on the tag record f2d896f - a fresh clone, the whole suite, under the load of S63's builders and suites (5 h 44 min) - read **1 failed, 1 504 passed, 5 skipped, 1 xfailed**: the one failure `test_performance.py::test_the_catalogue_is_priced_per_cell[azimuthal]`, the wall-clock ordering test that flakes under load (S45, S60), re-run alone in the same clone EXIT=0; every other test green on the merged state, the specs OK. **For the owner, plainly (none
 awaited):** (a) the arms now carry the young light's colour in the field mode — 2.9 % of the light moved, the
 arm-over-interarm blue 1.41 → 1.62 against the goal's 1.83; the three layers switch in the rail; (b) the warm render
 request doubled (0.39 → 0.90 s) and the age split runs on requests that discard it (#166: skip it under `l_min`,
