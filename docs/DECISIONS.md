@@ -12423,3 +12423,26 @@ cell moves 43 % and 2.9 % of the light moves; the frame sums R / G / B 20 810 / 
 the wire 9.5e-8 (float32); the CPU sum 3.8 ms per build or switch; the payload the viewer parses 8 690 608 B
 (+15.5 %); the ready time 28.1 → 29.6 s with the route's own compute. Typecheck, vitest (297 tests) and the viewer
 logic tests green.
+
+**The independent review (an Opus reviewer at f2c1340, read-only, its own numpy and node; the note in the lead's
+scratchpad): no blocker, no must-fix; all ten checks hold.** Re-derived: Σ parts over `stars` per ring 9.8e-15 (rgb)
+and 1.0e-14 (sho); the factors identical to five figures on every set and galaxy; each part its own response times
+the ring's factor to 1.0e-13 (the reviewer's own anchors by `population_over` on clipped windows agree with
+`part_anchors` to 1.9e-13, by `isochrone_weights` to 1e-15); the age bounds the code's and the parts' masses the
+field's to 1.3e-14; the three weights `array_equal` to the reviewer's own, ring means 5.0e-14 / 3.3e-16 / 3.3e-16;
+the shares identical to six decimals; **every other array of twelve requests (layer off, f4, window, level,
+`l_min`, `basic`) byte-identical to `main`'s**, the headers equal but for `ages` and the added arrays; `agedLight`
+with one shared weight 2.2e-16 from `stars` × weight and exact on the real render; the bytes +1 170 480; the warm
+request 0.385 → 0.984 s (default), 0.348 → 0.837 (Milky Way); the cold row +3.7–3.9 % on a busy machine; D5: the
+viewer only multiplies, sums and guards; no test weakened, the 1e-3 relative pin on the factors honest (±4.9e-9 on
+4.9e-6). *The seven notes, ruled:* (1) the placed-closure number above (1.6e-15, carried from S60's record) is
+**about 2e-14** — 1.72e-14 default rgb, 1.93e-14 sho, 1.78e-14 / 1.69e-14 Milky Way — corrected here; (2) the viewer
+logic test's real-render branch never runs (the fixture holds no render): a note, the reviewer closed the real
+route's arrays through `agedLight` itself; (3) `_ages` runs on window, level and star-first requests that discard it
+— **#166**; (4) with the three switches on the field is `stars` per ring, not per cell (a cell differs by up to
+42.9 %, the ruling's intent): the rail's wording to say "per ring" when next touched; (5) two fallbacks hold only
+because today's weights are positive (the smallest 0.385 young, 0.005 middle, 0.54 old): noted; (6) the tests check
+the wiring more than the decomposition (swapped windows would pass but for the share pins): noted; (7)
+`RENDER_PHYSICS.md` says the young part is placed by `dust_placement` without the condition the code has (the gas's
+placement when shipped, else `stars_young_placement`, else `stars_placement`): the header names the right array in
+every case; the sentence qualified.
