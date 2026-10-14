@@ -108,7 +108,7 @@ def along_spur(spurs: sp.Spurs, t: np.ndarray, d: float) -> tuple[np.ndarray, np
 
 
 def test_the_table_the_stages_and_the_graph_s_order(default_model, prod):
-    assert TABLES == ("arm_piece", "cell", "gas_spur")
+    assert TABLES == ("arm_piece", "cell", "gas_spur", "ring")  # S62 (D221): and the gas fluctuation field's ring table
     assert [d.name for d in ls.GAS_SPUR_COLUMNS] == list(sp.SPUR_FIELDS) and sp.SPUR_READS == sp.SPUR_FIELDS
     for d in ls.GAS_SPUR_COLUMNS:
         assert d.kind is Kind.TABLE_COLUMN and d.of == "gas_spur" and d.provenance == "synthetic"
