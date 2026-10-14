@@ -563,7 +563,10 @@ def test_the_render_runs_the_closure_of_what_it_reads_and_names_it(small, model)
     assert arrays["dust_height"].shape == (48,) and header["axes"]["dust_height"] == ["R"]
     # And the dust's placement round each ring (D207): one factor per (R, phi) cell, no filter axis.
     assert arrays["dust_placement"].shape == (48, 36) and header["axes"]["dust_placement"] == ["R", "phi"]
-    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement"}
+    # And the stars split by age with the weights that place them (S63, D223): the middle part's own weight where the
+    # model publishes sfr_modulation.
+    by_age = {"stars_young", "stars_middle", "stars_old", "stars_placement", *(["stars_middle_placement"] if model.name != "basic" else [])}
+    assert set(arrays) == {"stars", "halpha_hii", "lines_hii", "halpha_dig", "lines_dig", "dust_extinction", "dust_scattered", "dust_thermal", "dust_height", "dust_placement", *by_age}
 
 
 def test_the_stars_are_the_published_spectrum_placed_by_the_contrast(small):
