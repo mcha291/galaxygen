@@ -12322,3 +12322,23 @@ texts carry the lattice error, ⟨S⟩ ≤ 0.0092, the walk's 0.052 (relative), 
 half-maximum ratios (4.91 / 2.36 / 1.91, measured before the mend) and the scalloped steep slope noted in the
 docstring. EXIT=0 on test_gas_fluctuation, test_layer_noise, test_spurs, test_graph, test_clustering_gate,
 test_clouds and test_layer in full; the graph's order unchanged.
+
+**The frames beside the goals (the lead's look).** Unchanged to the eye at galaxy scale: the Milky Way's star-first
+frame moved by 3 % of its pixels where the bright points the gas places shifted with the spurs' contrast; the gas
+field is drawn by nothing until V7 and 240 pc spurs at kiloparsec spacing are not visible at 20 kpc. The goal
+metrics at the instrument's default geometry: `milky_way` field 1.410 arm over interarm in blue, star-first 1.743;
+`ngc_4414` 2.064 / 2.216 (as at S61). The Milky Way frame is the barred disc with too many, too faint arms;
+`ngc_4414` a smooth disc with a bulge. L2 built what V7 will draw.
+
+**Closing.** The full suite ran twice, backgrounded with pytest's own exit code appended: the first pass on the branch before the review's fixes read EXIT=1 on five tests - the register's counts (97 -> 100 and its carried row), the timing flake under load, the pieces gate test's Milky Way cell (6.673 -> 7.269, a spur's foot, #164), the bar's footprint test (re-pointed to the unspurred law as the gas pattern's tests were) and the viewer's "not shown" rule on the gas field's table columns - each fixed; **the second pass on the final state, with the review's fixes and the owner's BUILD_IV commits, read EXIT=0** (the pieces gate test included). `python -m galaxy.specs` OK. The register: 100 open = 11 permanent + 89 carried, 48 discharged (#163–#165 opened above;
+BUILD_IV's adoption, D222, is the owner's other session of 2026-10-14 on this branch, merged with it at the owner's
+word). Rows: 12 / 20 / 5 of 37, unmoved. **For the owner, plainly (none awaited):** (a) the spurs' spacing law — ten
+Jeans lengths (Kim & Ostriker 2006; M51's 10.4) gives 5–7 kpc at the solar circle on the Milky Way template because
+the gas crest is weak (#155); 2002's thin-disc 2.5 gives 1.2–1.7 kpc; both sourced, theirs; (b) a spur's foot
+doubles the ridge (#164), merged knowingly, the mend one pass; (c) the gas field reads its Mach number against the
+cold neutral medium's sound speed read from Heiles & Troland, σ 0.50 on every ring; its normaliser table costs
+~5 s a run for a field nothing reads yet (#163); (d) the shallow slope above the thickness at the solar circle is
+a 2σ miss of the one-noise construction, recorded; (e) still theirs: the default seed's cloud draw, the whole-disc
+routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147), the 88-minute
+gate test (g). **S63 is V5**, the field's light by age — and the owner's D222 reshaped the board after it (V6b and
+V9 inserted, BUILD_IV's W2–W5 appended): the next lead reads `BUILD_III.md` and `BUILD_IV.md` as the owner left them.
