@@ -1003,7 +1003,9 @@ EXPECTED_GATE: dict = {'milky_way': (19800, 19800, (0.0, 0.513, 0.977), 6, 0, 57
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # (the least value of the stellar field, the least and the largest of the gas's, over each leg's 120 galaxies)
 # S60 fourth pass (re-pinned on the final model): EXPECTED_LEAST was {'milky_way': (0.0081, 0.1042, 6.673), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0002, 0.0, 6.658)}  # S60 fourth pass: was {'milky_way': (0.0542, 0.1138, 6.673), 'ngc_4414': (0.0909, 0.0809, 3.317), 'ngc_4414 drawn': (0.0007, 0.0, 6.794)}
-EXPECTED_LEAST: dict = {'milky_way': (0.0085, 0.147, 6.673), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0, 0.0, 5.454)}
+# S62 (D221): the Milky Way's largest cell was 6.673 (the lane+arm cell at 2.06 kpc); a spur's foot now stands on the
+# ridge there (#164) and the published gas contrast reads 7.269 in that cell; the least cell and ngc_4414 unchanged.
+EXPECTED_LEAST: dict = {'milky_way': (0.0085, 0.1466, 7.269), 'ngc_4414': (0.4632, 0.0645, 3.319), 'ngc_4414 drawn': (0.0, 0.0, 5.454)}
 
 
 def test_the_layer_off_lays_no_piece_and_every_composed_field_is_its_neutral(prod):

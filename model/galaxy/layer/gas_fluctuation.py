@@ -453,7 +453,7 @@ def _decl(name: str, label: str, unit: str, kind: Kind, about: str, **extra: Any
     )
 
 
-_RING = " One row a level-0 ring, innermost first; read by a shader with the seed (S62, D221 item 6)."
+_RING = " One row a level-0 ring, innermost first; read by a shader with the seed (S62, D221 item 6). Not shown by the viewer, which evaluates the field from it in V7."
 GAS_FLUCTUATION_SEED = _decl(
     "gas_fluctuation_seed", "Gas fluctuation field's seed", "dimensionless", Kind.SCALAR,
     "The 32-bit seed of the gas fluctuation field: the clustering field's own, folded once from the layer's seed on "
