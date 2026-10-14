@@ -124,6 +124,7 @@ from galaxy.stages import pattern as pt
 from galaxy.stages import pieces as pc  # S60 (D219): the stellar pattern of arm pieces the gas answers
 from galaxy.stages.gas_pattern import GAS_PATTERN, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, GasPattern
 from galaxy.stages.pattern import BAR, PATTERN
+from galaxy.stages.spurs import SPURS  # S62 (D221 item 7 as amended): publishes gas_density_contrast
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
@@ -2109,14 +2110,17 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     # S58 (D217 follow-up): was {"gas_density_contrast"} - beside it the contrast as the star formation law reads
     # it, the lanes' excess spread evenly over the bar's footprint ("the lanes' one unsourced number (the width)
     # must not drive a census"). Its about says what it is and why, and names no constant (rule D5).
-    assert [d.name for d in GAS_PATTERN.publishes] == ["gas_density_contrast", "star_formation_gas_contrast"]
-    second = GAS_PATTERN.publishes[1]
+    # S62 (D221 item 7 as amended): was ["gas_density_contrast", "star_formation_gas_contrast"] - the gas's own
+    # contrast is published by the `spurs` stage after the gas column the spurs' spacing reads; its declaration stays here.
+    assert [d.name for d in GAS_PATTERN.publishes] == ["star_formation_gas_contrast"]
+    assert [d.name for d in SPURS.publishes] == ["gas_density_contrast"] and SPURS.publishes[0] is gm.GAS_DENSITY_CONTRAST
+    second = GAS_PATTERN.publishes[0]
     assert second.composed and second.neutral == 1.0 and second.axes == ("R", "phi") and second.provenance == "seeded"
     assert "Star formation therefore follows the bar's footprint, not the lanes" in second.about
     assert "a declared placeholder that no source gave" in second.about and "The dust and the cloud census keep the lanes" in second.about
     assert "A composed field: with the randomness layer off it is 1 everywhere" in second.about
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", second.about + GAS_PATTERN.about)
-    about = GAS_PATTERN.publishes[0].about
+    about = gm.GAS_DENSITY_CONTRAST.about  # S62: was GAS_PATTERN.publishes[0].about
     assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
     # S60 (D219): was "within about a degree of each other over the mid disc, to either side" - re-read to the 240-galaxy
     # sweep's counts (test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured: 9 485 / 1 740 / 9 197 / 14 552, 20 cells).
