@@ -442,16 +442,18 @@ function syntheticRender(nR, nPhi, nF) {
     const i = Math.floor(c / (nPhi * nF));
     return [30, 20, 10][c % nF] * (1 + i) * contrast[Math.floor(c / nF)];
   });
+  // The route's header shape (S63): `ages.parts` by part - its array, its (R, phi) weight, the weight's fields.
+  const weights = { stars_young: "dust_placement", stars_middle: "stars_middle_placement", stars_old: "stars_placement" };
   const header = {
     axes: { stars: ["R", "phi", "filter"], stars_young: ["R", "filter"], stars_middle: ["R", "filter"], stars_old: ["R", "filter"],
-            dust_placement: ["R", "phi"], sfr_weight: ["R", "phi"], stellar_weight: ["R", "phi"] },
-    components: Object.fromEntries(Object.entries(AGE_PLACING).map(([name, placing]) =>
-      [name, { unit: "Lsun/pc2", fields: ["disc_light_temperature", placing], layer: "stars" }])),
-    placement: { dust: "dust_placement", stars_young: "dust_placement", stars_middle: "sfr_weight", stars_old: "stellar_weight" },
+            dust_placement: ["R", "phi"], stars_middle_placement: ["R", "phi"], stars_placement: ["R", "phi"] },
+    components: { stars: { unit: "Lsun/pc2" } },
+    ages: { parts: Object.fromEntries(AGE_PARTS.map((p) =>
+      [p.key, { array: p.name, weight: weights[p.name], weight_fields: [AGE_PLACING[p.name]] }])) },
   };
   const arrays = {
     stars, stars_young: perRing([6, 3, 1]), stars_middle: perRing([8, 5, 2]), stars_old: perRing([16, 12, 7]),
-    dust_placement: weight(0.6, 0.4), sfr_weight: weight(0.2, 0.9), stellar_weight: contrast,
+    dust_placement: weight(0.6, 0.4), stars_middle_placement: weight(0.2, 0.9), stars_placement: contrast,
   };
   return { header, arrays };
 }
@@ -475,7 +477,8 @@ test("the field draws three age parts, each with its placing field, and the fiel
   // Missing one part, or one with no weight among the arrays: stars is drawn whole, nothing is placed by the viewer.
   const { stars_middle: _, ...two } = arrays;
   assert.equal(ageParts(header, two), null);
-  assert.equal(ageParts({ ...header, placement: { dust: "dust_placement" } }, arrays), null);
+  const { stars_placement: __, ...unweighted } = arrays;
+  assert.equal(ageParts(header, unweighted), null);
 });
 
 test("the three parts close on stars round every ring, and all on is their sum", () => {

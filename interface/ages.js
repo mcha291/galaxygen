@@ -23,7 +23,7 @@ export const AGE_PARTS = Object.freeze([
 
 /**
  * The published fields that place light round a ring (D210, D218, D223): the gas's own contrast, where stars form
- * today, the stellar pattern's contrast. Read from a part's `fields` when its entry carries no `placed_by`.
+ * today, the stellar pattern's contrast. Read from a part's `weight_fields` in the header's `ages`.
  */
 export const PLACING_FIELDS = Object.freeze(["gas_density_contrast", "sfr_modulation", "pattern_density_contrast"]);
 
@@ -36,53 +36,45 @@ export const ALL_AGES = Object.freeze({ young: 1, middle: 1, old: 1 });
 const same = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
 
 /**
- * The field a part's header entry names as its placement: its `placed_by` (or `placement`) where the route says so
- * in one word, else the first of its `fields` that is a placing field; null when it names none (an even ring).
- */
-export function placingField(entry) {
-  if (!entry || typeof entry !== "object") return null;
-  if (typeof entry.placed_by === "string" && entry.placed_by) return entry.placed_by;
-  const fields = Array.isArray(entry.fields) ? entry.fields : [];
-  return fields.find((f) => PLACING_FIELDS.includes(f)) ?? null;
-}
-
-/**
- * The (R, phi) array among the render's that places a per-ring part: named in the header's `placement` under the
- * part's name (as `placement.dust` names the dust's), or in the part's own entry (`placement`, `weight`). Null when
- * none is named, or the name is not among the arrays.
- */
-function weightOf(header, entry, name, arrays) {
-  const candidates = [header.placement?.[name], entry.placement, entry.weight];
-  for (const c of candidates) if (typeof c === "string" && c in arrays) return c;
-  return null;
-}
-
-/**
  * The parts a render carries and how each is drawn, youngest first; null unless all three are there and drawable
- * (the viewer then draws `stars`, the whole). Each: its name, switch key and label, its unit, the field that places
- * it, and `weight` - null when the route has placed it on (R, phi, filter), else the name of the (R, phi) array that
- * places its per-ring light. `arrays` is the render's arrays (only the names are read).
+ * (the viewer then draws `stars`, the whole). The route's header says it under `ages.parts`, by part: `array` (the
+ * part's per-ring (R, filter) array), `weight` (the (R, phi) array that places it), `weight_fields` (the published
+ * fields that weight is made from) and `ages_gyr`. Each part returned: its name, switch key and label, its unit (the
+ * stars component's, which it is a share of), the field that places it (the first placing field among the weight's
+ * fields, else the weight's name: an even ring when the model publishes no pattern), `weight` - the (R, phi) array,
+ * or null where the route has placed the part itself on (R, phi, filter) - and its ages, Gyr. `arrays` is the
+ * render's arrays (only the names are read).
  */
 export function ageParts(header, arrays) {
-  if (!header || !arrays) return null;
-  const components = header.components ?? {};
+  const declared = header?.ages?.parts;
+  if (!declared || !arrays) return null;
   const axes = header.axes ?? {};
   const out = [];
   for (const part of AGE_PARTS) {
-    const entry = components[part.name];
-    if (!entry || !(part.name in arrays)) return null;
+    const entry = declared[part.key];
+    if (!entry || typeof entry !== "object") return null;
+    const name = typeof entry.array === "string" ? entry.array : part.name;
+    if (!(name in arrays)) return null;
+    const ax = axes[name];
     let weight = null;
-    const ax = axes[part.name];
-    if (ax === undefined || same(ax, ["R", "phi", "filter"])) {
+    if (same(ax, ["R", "phi", "filter"])) {
       weight = null;
-    } else if (same(ax, ["R", "filter"])) {
-      const named = weightOf(header, entry, part.name, arrays);
-      if (named === null || (axes[named] !== undefined && !same(axes[named], ["R", "phi"]))) return null;
-      weight = named;
+    } else if (ax === undefined || same(ax, ["R", "filter"])) {
+      const w = entry.weight;
+      if (typeof w !== "string" || !(w in arrays) || (axes[w] !== undefined && !same(axes[w], ["R", "phi"]))) return null;
+      weight = w;
     } else {
       return null;
     }
-    out.push({ ...part, unit: entry.unit ?? null, placedBy: placingField(entry) ?? weight, weight });
+    const fields = Array.isArray(entry.weight_fields) ? entry.weight_fields : [];
+    out.push({
+      ...part,
+      name,
+      unit: header.components?.stars?.unit ?? null,
+      placedBy: fields.find((f) => PLACING_FIELDS.includes(f)) ?? fields[0] ?? weight,
+      weight,
+      ages: Array.isArray(entry.ages_gyr) ? entry.ages_gyr : null,
+    });
   }
   return out;
 }

@@ -385,18 +385,22 @@ describe("the starlight by age", () => {
   const young = [6, 3, 1];
   const middle = [8, 5, 2];
   const old = [16, 12, 7]; // the three sum to stars' [30, 20, 10] in every ring
-  const entry = (placing: string) => ({ unit: "Lsun/pc2", fields: ["disc_sed_v", "disc_light_temperature", placing], layer: "stars" });
+  // The route's header (builder A's /api/render): `ages.parts` by part - its array, the (R, phi) weight that places
+  // it and the published fields that weight is made from.
+  const part = (array: string, weight: string, fields: string[], ages: (number | null)[]) => ({ array, weight, weight_fields: fields, ages_gyr: ages });
   const header = {
     axes: {
       stars: ["R", "phi", "filter"], stars_young: ["R", "filter"], stars_middle: ["R", "filter"], stars_old: ["R", "filter"],
-      dust_placement: ["R", "phi"], sfr_weight: ["R", "phi"], pattern_density_contrast: ["R", "phi"],
+      dust_placement: ["R", "phi"], stars_middle_placement: ["R", "phi"], stars_placement: ["R", "phi"],
     },
-    components: {
-      stars_young: entry("gas_density_contrast"),
-      stars_middle: entry("sfr_modulation"),
-      stars_old: entry("pattern_density_contrast"),
+    components: { stars: { unit: "Lsun/pc2" } },
+    ages: {
+      parts: {
+        young: part("stars_young", "dust_placement", ["gas_density_contrast"], [0, 0.02]),
+        middle: part("stars_middle", "stars_middle_placement", ["sfr_modulation"], [0.02, 0.1]),
+        old: part("stars_old", "stars_placement", ["pattern_density_contrast"], [0.1, null]),
+      },
     },
-    placement: { dust: "dust_placement", stars_young: "dust_placement", stars_middle: "sfr_weight", stars_old: "pattern_density_contrast" },
   };
   const arrays = {
     stars,
@@ -404,8 +408,8 @@ describe("the starlight by age", () => {
     stars_middle: perRing(() => middle),
     stars_old: perRing(() => old),
     dust_placement: gas,
-    sfr_weight: sfr,
-    pattern_density_contrast: contrast,
+    stars_middle_placement: sfr,
+    stars_placement: contrast,
   };
   const n = { R: R.n, phi: phi.n, filter: 3 };
   const partsOf = (h: unknown, a: Record<string, ArrayLike<number>>) => ageParts(h, a) as { name: string; placedBy: string | null; weight: string | null; unit: string | null }[] | null;
@@ -414,16 +418,17 @@ describe("the starlight by age", () => {
     const parts = partsOf(header, arrays)!;
     expect(parts.map((p) => p.name)).toEqual(["stars_young", "stars_middle", "stars_old"]);
     expect(parts.map((p) => p.placedBy)).toEqual(["gas_density_contrast", "sfr_modulation", "pattern_density_contrast"]);
-    expect(parts.map((p) => p.weight)).toEqual(["dust_placement", "sfr_weight", "pattern_density_contrast"]);
+    expect(parts.map((p) => p.weight)).toEqual(["dust_placement", "stars_middle_placement", "stars_placement"]);
     expect(parts.every((p) => p.unit === "Lsun/pc2")).toBe(true);
     // A render from before the parts, or with one missing, draws `stars` whole.
     expect(partsOf({ axes: header.axes, components: {} }, { stars })).toBeNull();
     const { stars_old: _old, ...two } = arrays;
     expect(partsOf(header, two)).toBeNull();
-    // A per-ring part with no weight named among the arrays: the viewer would have to place it itself, so it does not.
-    expect(partsOf({ ...header, placement: { dust: "dust_placement" } }, arrays)).toBeNull();
-    const { sfr_weight: _w, ...unweighted } = arrays;
+    // A per-ring part with no weight among the arrays: the viewer would have to place it itself, so it does not.
+    const { stars_middle_placement: _w, ...unweighted } = arrays;
     expect(partsOf(header, unweighted)).toBeNull();
+    const unnamed = { ...header, ages: { parts: { ...header.ages.parts, old: { array: "stars_old" } } } };
+    expect(partsOf(unnamed, arrays)).toBeNull();
   });
 
   it("closes on stars ring by ring, each part placed by its own weight", () => {
@@ -437,7 +442,7 @@ describe("the starlight by age", () => {
   });
 
   it("draws today's stellar layer when the three are placed by one weight", () => {
-    const one = { ...arrays, dust_placement: contrast, sfr_weight: contrast };
+    const one = { ...arrays, dust_placement: contrast, stars_middle_placement: contrast };
     const drawn = starTexels(R.n, phi.n, agedLight(one, partsOf(header, one)!, ALL_AGES, n), white);
     const today = planeTexture({ R, phi, stars, white }).data;
     expect(drawn.length).toBe(today.length);
