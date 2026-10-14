@@ -1358,8 +1358,11 @@ def test_i5_what_layer_off_serves():
 # ones to the bit. The one is `lines_hii`, summed from the HII regions' four forbidden lines' ring light - the four
 # radial fields CENSUS_STATISTICS names, a sum over realised regions - and it is a census statistic in the render
 # too: up to a factor of six in a thinly populated ring on the production grid.
-RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement")  # (R, phi, ...)
-RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height")  # (R, ...)
+# S63 (D223): the two placing weights the starlight by age ships beside dust_placement - sfr_modulation over its ring
+# mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
+RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement")  # (R, phi, ...)
+# S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
+RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old")  # (R, ...)
 # S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
 # clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
 RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()
