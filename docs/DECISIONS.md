@@ -12095,3 +12095,20 @@ last published height (rings 25–31, h NaN) the ladder holds the last finite ri
 stage's budget 3 s. (5) The strain per ring as measured: −2 on rings 0–1 only (1/A 14.7 and 27.5 Myr), the 30 Myr cap
 binding beyond 1.9 kpc (−1.81 at 2.4 kpc, −1.04 at 8.0, −0.73 at 11.7, −0.23 at 29.5); the anisotropy gate reads
 each ring's own strain. The Oort constant is derived from the published circular velocity (none is published).
+
+**The field built (the field builder's second and third passes).** *The constant read:* `CNM_TEMPERATURE` 70 K —
+Heiles & Troland 2003's column-weighted median spin temperature of the cold neutral medium at |b| > 10° (ApJ 586,
+1067, astro-ph/0207105, §2.1–2.2 and Table 2, fetched and read at S62; 48 K by Gaussian component, 63 K at low
+latitude, 77 % of the column below 100 K, the Millennium survey's local Milky Way) — with μ 1.27 gives c_s 0.675 km/s
+(Heiles & Troland's own 1.4 m_H, 5 % slower, in the about), **M = 8.90 and σ_ln = 0.501 on every ring** (the
+dispersion and the temperature are both constants; the measured HI widths 0.44–1.17 in ln are the disclosed check).
+The other constants, each from the readings: six octaves, a slope change of 1.0, the break factor π, the width's A
+0.11 and b 1/3, the shear cap 30 Myr. *The stage* at checkpoint 5 publishes `gas_fluctuation_seed`, a new table
+`ring` (32 rows: the break octave, the Mach number, σ, the strain, the twist, the normaliser) and the `cell`
+column `gas_fluctuation_cell_normaliser`, NaN with the rows kept layer off. *The shear is applied in polar form*
+(the lead's confirmation): the field is read at (R, φ − Θ(R)) with dΘ/dlnR the ring's strain — `noise.shear` in each
+point's own frame — the twist accumulated ring by ring and published so the read positions stay continuous across
+ring edges; L1's map is unsheared. *The cost, measured and accepted:* the normaliser table on L1's lattice (2 points
+per 47.5 pc, 5.26 million points, six octaves, float64) 4.6–5.1 s cold — a sparser lattice breaks the declared error
+(1.5 points 3e-2, 1 point 7.8e-2 against the 2e-2 limit; 2 points 9.7e-3 rms, 1.83e-2 worst) — **#163**; the lead's
+3 s budget was an estimate.
