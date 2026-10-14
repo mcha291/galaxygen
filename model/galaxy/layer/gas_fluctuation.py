@@ -77,7 +77,10 @@ multiply is kept. Its error at other points, measured against a lattice four tim
 **Cost** - S62 (D221): measured 4.6-5.1 s cold for the cell table (5 258 240 lattice points times six octaves of
 float64 value noise; the noise alone 5.5 s in float64, 3.4 s in float32); the budget of 3 s was the lead's
 estimate, and the lead accepted the measured cost for this lattice (register debt #163: a shared or float32
-lattice is V7's, where the shader evaluates the same noise).
+lattice is V7's, where the shader evaluates the same noise). The whole run, cold, the default galaxy, layer on, on a
+machine running another session's tests: 43.8 and 45.6 s before the stage, 52.6 and 57.4 s with it; layer off 3.3
+and 3.7 s (the stage realises nothing then); ``python -m galaxy.specs``' performance table, as loaded, the stage
+6.7 s cold in ``azimuthal`` and 7.1 s in ``basic``. ``region: whole disc`` does not run it (5.3 s before, 6.0 after).
 
 **What a shader reads** (D221 item 6): the seed; per ring (the table ``ring``, the 32 level-0 rings) the break index,
 the Mach number, sigma, the strain, the twist and the sum's normaliser; per cell the normaliser; and the model's
