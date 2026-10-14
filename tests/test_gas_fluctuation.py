@@ -303,10 +303,11 @@ def test_a_below_the_break_the_slope_is_the_steep_one(ring):
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "S62 (D221 item 8a, recorded for the lead): at the R_SUN ring the band above pi h (338 pc) runs only to the "
-    "coarsest octave's plateau (4 x 190 = 760 pc), where the coarse octaves roll off; measured -1.76 (4 kpc patch, "
-    "four seeds, 600-338 pc), -1.86 (8 kpc, six seeds) and -1.97 +- 0.47 here (three seeds, three bins), not -1.53 +- 0.15. A slope of s above 338 pc needs octaves coarser than L1's "
-    "190 pc, which D221 item 1 rules out."))
+    "a disclosed miss, D221: -1.76 to -1.97 against -1.53 +- 0.15 over 600-338 pc; the sources' shallow slope at R_SUN "
+    "lives at scales the field does not own (the band above pi h = 338 pc runs only to the coarsest octave's plateau at "
+    "4 x 190 = 760 pc, and by D221 item 1 the field's coarse end is L1's 190 pc; the cell's unit mean removes the larger "
+    "scales anyway, #161). Measured -1.76 (4 kpc patch, four seeds), -1.86 (8 kpc, six seeds), -1.97 +- 0.47 here "
+    "(three seeds, three bins). Ring 8 is judged on its steep slope (-2.451) and its break."))
 def test_a_ring_8_reads_the_shallow_slope_above_the_break():
     from galaxy.specs import spectrum as sp
 
