@@ -856,7 +856,7 @@ def test_the_noise_imports_only_numpy_and_the_standard_library():
 
 # The modules of the model that read the noise primitives, a closed list (S61, D220 part II): the first reader is
 # the censuses' clustering field, a layer stage. A new reader adds itself here in the decision that adds it.
-NOISE_READERS = {"model/galaxy/layer/census_clustering.py"}
+NOISE_READERS = {"model/galaxy/layer/census_clustering.py", "model/galaxy/layer/gas_fluctuation.py"}  # S62 (D221): the gas field, L1's noise continued
 
 
 def test_the_noise_is_a_leaf_and_only_the_layer_s_listed_stages_read_it():
