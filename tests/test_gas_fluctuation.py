@@ -87,13 +87,19 @@ def test_the_ladder_s_sum_has_unit_variance_measured(break_index):
     assert abs(g.mean()) < 0.015
 
 
-def test_the_break_octave_counts_the_octaves_not_below_pi_h():
-    """Scales 190, 95, 47.5, 23.75, 11.875, 5.9375 pc against pi h: the index is how many are not below it."""
+def test_the_break_octave_counts_the_octaves_whose_wavelength_is_not_below_pi_h():
+    """Scales 190, 95, 47.5, 23.75, 11.875, 5.9375 pc; each carries the wavelength 4 l_j (the lead's ruling 2) and the
+    index is how many of those are not below pi h. The literal mapping (``wavelength=1``) is kept as the comparison
+    the module docstring measures."""
     scales = gf.octave_scales_pc(SCALE, OCTAVES)
     assert np.allclose(scales, [190.0, 95.0, 47.5, 23.75, 11.875, 5.9375])
-    assert gf.break_octave(355.0 / math.pi, SCALE, OCTAVES) == 0  # R_SUN on the default galaxy: pi h 355 pc
-    assert gf.break_octave(81.0 / math.pi, SCALE, OCTAVES) == 2  # R = 1 kpc: pi h 81 pc
-    assert gf.break_octave(95.0 / math.pi, SCALE, OCTAVES) == 2  # a scale equal to pi h is not below it
+    assert gf.OCTAVE_WAVELENGTH == 4.0
+    assert gf.break_octave(355.0 / math.pi, SCALE, OCTAVES) == 2  # R_SUN on the default galaxy: pi h 355 pc
+    assert gf.break_octave(81.0 / math.pi, SCALE, OCTAVES) == 4  # R = 1 kpc: pi h 81 pc
+    assert gf.break_octave(990.0 / math.pi, SCALE, OCTAVES) == 0  # R = 12 kpc: the whole band below pi h
+    assert gf.break_octave(380.0 / math.pi, SCALE, OCTAVES) == 2  # a wavelength equal to pi h is not below it
+    assert gf.break_octave(355.0 / math.pi, SCALE, OCTAVES, wavelength=1.0) == 0  # the literal mapping
+    assert gf.break_octave(81.0 / math.pi, SCALE, OCTAVES, wavelength=1.0) == 2
     assert gf.break_octave(1.0, SCALE, OCTAVES) == 6
     with pytest.raises(ValueError):
         gf.break_octave(float("nan"), SCALE, OCTAVES)

@@ -29,6 +29,7 @@ from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and r
 from . import systems  # noqa: F401  (checkpoint 5)
 from . import bright  # noqa: F401  (checkpoint 5: every disc star above a luminosity, S48)
 from galaxy.layer import census_clustering  # noqa: F401, E402  (checkpoint 5, synthetic: the censuses' clustering field, S61, D220)
+from galaxy.layer import gas_fluctuation  # noqa: F401, E402  (checkpoint 5, synthetic: the diffuse gas's fluctuation field, S62, D221)
 from . import clouds  # noqa: F401  (checkpoint 5: the molecular-cloud census, an object class beside stars, S32)
 from galaxy.layer import cloud_texture  # noqa: F401, E402  (checkpoint 5, synthetic: a cloud's interior)
 from . import clusters  # noqa: F401  (checkpoint 5: the young star clusters the clouds make, S33)

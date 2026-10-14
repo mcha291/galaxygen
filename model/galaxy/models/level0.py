@@ -860,6 +860,85 @@ LEVEL0: dict[str, Constant] = {
         "the mean at two is within 5.7e-3 rms (3.6e-2 at worst) of the mean at four. The number a renderer "
         "divides the field by is defined on this lattice and no other.",
     ),
+    # The gas fluctuation field (S62, DECISIONS.md D221 part I as the lead amended it): the randomness layer's stand-in
+    # for the turbulent structure of the diffuse ISM between the clouds - L1's noise continued finer, its gain
+    # steepening by one below the gas layer's thickness, a log-normal map whose width is the Mach number's, read
+    # sheared by the disc's rotation. Constants of the model (G1's ruling 2b); the layer's gas_fluctuation stage
+    # realises the field. Its coarsest scale, its first three octaves and its slope above the break are L1's
+    # (CENSUS_CLUSTERING_SCALE, CENSUS_CLUSTERING_SPECTRAL_SLOPE).
+    "GAS_FLUCTUATION_OCTAVES": Constant(
+        6,
+        "count",
+        "How many octaves of lattice noise the gas fluctuation field sums: L1's three (190, 95, 47.5 pc) continued "
+        "by three finer on the same path (23.75, 11.875, 5.9375 pc), the finest the field's resolution (DECISIONS.md "
+        "D221 part I item 1; a shader may stop earlier and say so). Below 5.9 pc the field has no structure of its own.",
+    ),
+    "GAS_FLUCTUATION_SLOPE_CHANGE": Constant(
+        1.0,
+        "dimensionless",
+        "How much steeper the gas's two-dimensional column spectrum is below the gas layer's thickness than above "
+        "it: one power of k - a slab thinner than 1/k projects 'shallower than the 3D density spectrum by one' "
+        "[verified: Elmegreen & Scalo 2004, ARA&A 42, 211, arXiv:astro-ph/0404451, sect. 2.1; docs/READING_GAS_SPECTRA.md "
+        "2.14] and the LMC's HI steepens by about one at its 80-100 pc break [verified: Elmegreen, Kim & "
+        "Staveley-Smith 2001, ApJ 548, 749, arXiv:astro-ph/0010578, sect. 3.3; READING_GAS_SPECTRA.md 2.1]. The "
+        "rule of the 2-D/3-D projection, which covers every disc thicker than a few octaves; measured changes run "
+        "0.8 (M33's HI) to 1.5 (NGC 1058's -1.0 to -2.5, Dutta et al. 2009). Koch et al. 2020 and Grisdale et al. "
+        "2017 see no break once the beam is modelled (READING_GAS_SPECTRA.md 2.7-2.8): built anyway, DECISIONS.md "
+        "D221 stop condition 2.",
+    ),
+    "GAS_FLUCTUATION_BREAK_FACTOR": Constant(
+        3.141592653589793,
+        "dimensionless",
+        "The break's wavelength over the gas's published scale height: pi, the factor of U = D / (pi z_h) by which "
+        "NGC 1058's 1.5 kpc break reads a scale height of 490 +- 90 pc [verified: Dutta, Begum, Bharadwaj & "
+        "Chengalur 2009, MNRAS 397, L60, arXiv:0905.1450, abstract and sect. 3; READING_GAS_SPECTRA.md 2.4] - one "
+        "galaxy; the LMC's 'about the thickness' (EKS01, 80-100 pc against a height of 95-180 pc) and simulations' "
+        "0.5-3 bracket it (DECISIONS.md D221 stop condition 2).",
+    ),
+    "GAS_FLUCTUATION_WIDTH_A": Constant(
+        0.11,
+        "dimensionless",
+        "A of the column density's log-normal width against the sonic Mach number, sigma^2_ln = A ln(1 + b^2 M^2): "
+        "0.11, the best fit with b fixed at 1/3 to isothermal ideal-MHD simulations driven solenoidally, M 0.4-8.8 "
+        "[verified: Burkhart & Lazarian 2012, ApJL 755, L19, arXiv:1205.3792, eq. 3 and Table 1; "
+        "READING_GAS_SPECTRA.md 2.10] - simulated boxes, no disc geometry. Their fits to Milky Way clouds give "
+        "A = 0.16 (Taurus) and 0.12 (IC 5146) with b = 0.5; Federrath et al. 2010's compressive forcing is three "
+        "times wider at M 5.5 (READING_GAS_SPECTRA.md 2.11). The measured galaxy widths (HI 0.19-0.51 dex, "
+        "Berkhuijsen & Fletcher 2015) are a disclosed check, not a target.",
+    ),
+    "GAS_FLUCTUATION_WIDTH_B": Constant(
+        0.3333333333333333,
+        "dimensionless",
+        "b of the same relation: 1/3, the solenoidal forcing parameter Burkhart & Lazarian 2012 fix it at (eq. 3; "
+        "Federrath, Klessen & Schmidt 2008 measure 0.36 for solenoidal and 1.05 for compressive forcing, eq. 5; "
+        "READING_GAS_SPECTRA.md 2.10-2.11). A matched pair with the relation's A, which was fitted given this b.",
+    ),
+    "CNM_TEMPERATURE": Constant(
+        70.0,
+        "K",
+        "The kinetic temperature of the cold neutral medium, for the sound speed the diffuse gas's Mach number is "
+        "measured against: 70 K, the median CNM spin temperature weighted by column density ('half the column "
+        "density lies above, and half below') at |b| > 10 deg; 48 K by Gaussian components, the histogram's peak "
+        "near 40 K, 63 K by column density at |b| < 10 deg, 77 % of the CNM column below 100 K [verified: Heiles & "
+        "Troland 2003, ApJ 586, 1067, arXiv:astro-ph/0207105, sect. 2.1-2.2 and Table 2, read at S62, "
+        "https://arxiv.org/abs/astro-ph/0207105]. The Millennium Arecibo survey's CNM, the Milky Way's local "
+        "absorption components; the column-weighted median because the field stands for column density. The "
+        "sound speed is sqrt(k T / mu m_H) with mu = 1.27 (neutral atomic gas, He/H = 0.1 by number: "
+        "(1 + 4 x 0.1) / (1 + 0.1) [inferred]): 0.675 km/s; Heiles & Troland adopt 1.4 m_H (sect. 6.2), which "
+        "reads 5 % slower. The WNM, 60 % of the HI by their abstract, is near-sonic and not this phase.",
+    ),
+    "GAS_FLUCTUATION_SHEAR_CAP": Constant(
+        30.0,
+        "Myr",
+        "The longest time the field's structure is sheared for: an isotropic pattern t old is read at the strain "
+        "(dOmega/dlnR) t with t = min(1/A, 30 Myr), 1/A the shear time [verified: Jeffreson & Kruijssen 2018, "
+        "MNRAS 476, 3688, arXiv:1803.01850, sect. 2.6 eq. 23; docs/READING_SPURS.md 4a]; the cap where feedback "
+        "ends a cloud before shear does - M51's interarm clouds live 20-30 Myr and track 1/A inside 70 arcsec "
+        "[verified: Meidt et al. 2015, arXiv:1504.04528, abstract, sect. 6.2; READING_SPURS.md 4b], nine PHANGS "
+        "galaxies' clouds 10-30 Myr [verified: Chevance et al. 2020, arXiv:1911.03479, abstract, sect. 5.2; "
+        "READING_SPURS.md 4c]. Koda 2021's 60-500 Myr for M51 with the pattern speed included is the named "
+        "alternative (READING_SPURS.md 4b). On the default galaxy the cap binds outside 1.9 kpc.",
+    ),
     # How long the clustering field's structure at a scale survives in the stars born in it (S61, DECISIONS.md D220
     # part II item 5): the bright catalogue's young stars keep the field's octaves no finer than their age allows.
     "AGE_SEPARATION_AMPLITUDE": Constant(
