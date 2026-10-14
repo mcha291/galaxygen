@@ -10,6 +10,7 @@ catalogue's young stars follow the modulation in ``azimuthal`` and the contrast 
 
 from __future__ import annotations
 
+import dataclasses
 import math
 import re
 
@@ -400,16 +401,32 @@ def test_star_formation_follows_the_bar_s_footprint_and_not_the_lanes(models):
     inside the half-length, 6.06 at 4.84 kpc, and at R₀ a top tenth of 27.8 % and a largest modulation of 3.173
     (the pieces' ring is less crowded there than the five modes' was). The footprint field's largest cell is 2.193
     just inside the half-length (4.84 kpc), where a piece's crest crosses the footprint; the arms' own largest past
-    it is 2.073 at 7.46 kpc - a third of the lanes' 6.657. What the test asserts as a rule did not move."""
+    it is 2.073 at 7.46 kpc - a third of the lanes' 6.657. What the test asserts as a rule did not move.
+
+    **S62 (D221): what moved is where the laned field is read, not a number.** Since S62 the published
+    ``gas_density_contrast`` carries the spurs everywhere - the ``spurs`` stage composes them on the gas pattern's
+    law, g' = (1 - <S>) g + S - while ``star_formation_gas_contrast`` carries neither lanes nor spurs, so the two
+    published fields are no longer the same bits past the half-length. The laned alternative is read on the law's own
+    cell means without the spurs (``dataclasses.replace(gp, spurs=None)``, as tests/test_gas_pattern.py's
+    ``unspurred``): those are the same bits as ``star_formation_gas_contrast`` past the half-length (the two templates
+    are the same ones there), and the published field is the spurs composed on them, to the bit (identity 0.0). Every
+    number above - the alternative's and the footprint field's - reads as it did at S60's close."""
     from galaxy import templates
+    from galaxy.layer import compose
 
     _, azimuthal = models
     index = float(azimuthal.constants["KS_INDEX"].value)
     only = ("gas_density_contrast", "star_formation_gas_contrast", "sfr_modulation", "gas_surface_density",
             "sf_threshold_surface_density", "bar_half_length", "bar_present")
     o = run(azimuthal, templates.overrides(templates.TEMPLATES["milky_way"]), only=only)
-    F, R = o.fields, o.grid.R
-    laned_gas, footprint_gas = np.asarray(F["gas_density_contrast"]), np.asarray(F["star_formation_gas_contrast"])
+    F, R, edges = o.fields, o.grid.R, o.grid["phi"].edges
+    # S62 (D221): `laned_gas` was the published `gas_density_contrast`, which carries the spurs since S62 (composed on
+    # the law by the `spurs` stage); the laned alternative is the law's own cell means without them, and the
+    # published field is the spurs composed on those, to the bit.
+    gp = compose.gas_pattern(F, R, {k: c.value for k, c in azimuthal.constants.items()})
+    assert gp is not None and gp.spurs is not None
+    laned_gas, footprint_gas = dataclasses.replace(gp, spurs=None).cell_means(R, edges), np.asarray(F["star_formation_gas_contrast"])
+    assert np.asarray(F["gas_density_contrast"]).tobytes() == gp.spurs.compose_cells(R, edges, laned_gas).tobytes()
     a = float(F["bar_half_length"])
     past = R >= a
     assert F["bar_present"] == "yes" and int(past.sum()) == 331 and int((~past).sum()) == 69
