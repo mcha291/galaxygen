@@ -12446,3 +12446,24 @@ the wiring more than the decomposition (swapped windows would pass but for the s
 `RENDER_PHYSICS.md` says the young part is placed by `dust_placement` without the condition the code has (the gas's
 placement when shipped, else `stars_young_placement`, else `stars_placement`): the header names the right array in
 every case; the sentence qualified.
+
+**The frames beside the goals (the lead's look).** **The picture moved, for the first time in the third build:**
+the Milky Way's field frame reads **1.623 arm over interarm in blue (was 1.410; the goal 1.83)** — the young light,
+placed by the gas contrast's law, tints the arms blue against the beige disc; Δ(B − R) −0.376, m = 3; `ngc_4414`'s
+field 2.119 (was 2.064); the star-first frames unchanged (byte for byte). To the eye the Milky Way is still the
+barred disc with too many, too faint arms, now with a bluish cast along them; `ngc_4414` a smooth disc with a
+bulge. The physics-only over layered ratio moved past its pin in every channel (0.98675 / 0.99042 / 0.99454 →
+0.98805 / 0.99210 / 0.99716: more of the young light stands in the gas arms behind the dust), re-pinned; the
+dust-free check 1.00000 / 0.99999 / 1.00001.
+
+**Closing.** <SUITE63>. The register: 101 open = 11 permanent + 90 carried, 48 discharged (#166 opened above).
+Rows: 12 / 20 / 5 of 37, unmoved (no stage changed). *How S62 ended:* <CLONE62>. **For the owner, plainly (none
+awaited):** (a) the arms now carry the young light's colour in the field mode — 2.9 % of the light moved, the
+arm-over-interarm blue 1.41 → 1.62 against the goal's 1.83; the three layers switch in the rail; (b) the warm render
+request doubled (0.39 → 0.90 s) and the age split runs on requests that discard it (#166: skip it under `l_min`,
+cache the anchors — one pass); (c) a part's spectrum departs from its own by the closure factor, ≤ 2.4e-3 in the
+narrow bands, recorded; (d) still theirs: the spurs' factor (10 or 2.5), #164's mend, the default seed's cloud
+draw, the whole-disc routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width
+(#147), the 88-minute gate test. **S64 is V6**, the censuses at whole-galaxy scale, on the board the owner's D222
+reshaped (V6b after it, then V7–V9, Audit V, BUILD_IV's W3, W2, W4, W5); this lead's session closes at S63 on its
+context, and the next session resumes from `BRIEF.md`.

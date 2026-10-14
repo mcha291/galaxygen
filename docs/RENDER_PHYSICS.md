@@ -192,7 +192,8 @@ the narrowband sets). The header's `ages` names, per part, the (R, φ) array the
 viewer multiplies its ring value by: the old by `stars_placement` (the stellar
 contrast, as `stars` is placed), the middle by `stars_middle_placement`
 (`sfr_modulation` over its ring mean), the young by `dust_placement` (the gas's
-own contrast — the clusters sit in the clouds). Each weight averages to 1 round
+own contrast — the clusters sit in the clouds; where no dust placement is shipped the header names
+`stars_young_placement`, and `stars_placement` for a model with no gas pattern: the header's name rules, S63). Each weight averages to 1 round
 every ring, so the placed parts keep each ring's light; they are `stars` split,
 never light beside it.
 
