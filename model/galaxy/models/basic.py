@@ -45,6 +45,10 @@ BASIC = MODELS.register(
             ("stellar_pattern", "stellar_pattern"),
             ("arm_ring_power", "arm_ring_power"),  # S60 (D219, the gate's fourth follow-up, C): the disclosed check, in its own stage
             ("gas_pattern", "gas_pattern"),
+            # S62 (D221 item 7 as amended): the layer's census of gas spurs on texture_seed, and the stage that composes
+            # them into the gas's contrast - both after the star formation history, whose gas column the spacing reads.
+            ("gas_spurs", "gas_spurs"),
+            ("spurs", "spurs"),
             ("population", "population"),
             ("systems", "systems"),
             ("bright_stars", "bright_stars"),

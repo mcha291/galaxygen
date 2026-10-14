@@ -1765,4 +1765,57 @@ LEVEL0: dict[str, Constant] = {
         "arXiv:0812.4604, section 2.3, read at S36] - that paper's model assumption, not a measurement; Kim & "
         "Ostriker 2015 define shell gas as below 2 x 10^4 K [verified: arXiv:1410.1537, section 3].",
     ),
+    # S62 (BUILD_III Phase L2; DECISIONS.md D221 item 7, as the lead amended it): the gas spurs (feathers) off the
+    # gas ridge of the arm chains - their spacing, pitch, length, width and fall (docs/READING_SPURS.md).
+    "SPUR_SPACING_JEANS": Constant(
+        10.0,
+        "dimensionless",
+        "The spacing of gas spurs along an arm in local Jeans lengths of the arm's peak, lambda_J,sp = c_s^2 / (G "
+        "Sigma_peak): 'the spur spacing is ~10 lambda_J,sp', 'three to five times larger' than in a thin disc, "
+        "from two-dimensional thick-disc and three-dimensional stratified MHD models [verified: Kim & Ostriker "
+        "2006, ApJ 646, 213 = arXiv:astro-ph/0603751, abstract and section 6 item 1; docs/READING_SPURS.md "
+        "table rows 1g-1i]; M51's measured mean is 10.4 lambda_J along its primary dust lane with c_s = 7 km/s "
+        "adopted [verified: La Vigne, Vogel & Ostriker 2006, ApJ 650, 818 = arXiv:astro-ph/0606761, sections 4.7 "
+        "and 5] - 2 of the 45 feathered galaxies carry a Jeans ratio, and NGC 628's 1.7 is flagged an "
+        "underestimate. Named alternatives: 2.5 lambda_J,sp in the razor-thin magnetised models [verified: Kim & "
+        "Ostriker 2002, ApJ 570, 132 = arXiv:astro-ph/0111398, section 5.1], about 5 lambda_J of the arm in "
+        "global models [verified: Shetty & Ostriker 2006, arXiv:astro-ph/0605142, sections 5.1-5.2], 7.9 for "
+        "the fastest-growing feathering mode in M51 [verified: Lee 2014, arXiv:1407.5215, eq. 34]. The choice "
+        "between 10 and 2.5 is the owner's (D221 as amended).",
+    ),
+    "SPUR_PITCH": Constant(
+        63.0,
+        "deg",
+        "The angle a spur makes with the circle at its starting radius: 63 +- 12 degrees over 28 spurs of seven "
+        "galaxies, about 50 degrees more than the arms, always on the arms' outer edge [verified: Elmegreen 1980, "
+        "ApJ 242, 528, Table 1 and section IV, read from the ADS scan's OCR; docs/READING_SPURS.md row 2a]. "
+        "Measured on stellar spurs; a gas spur is laid at it, trailing, on the ridge's outer side. The named "
+        "alternative, carried as the look's debt, is the kinematic wavefront of the thin-disc theory - leading at "
+        "the ridge and trailing downstream [verified: Kim & Ostriker 2002 eq. 12 after Balbus 1988; La Vigne et "
+        "al. 2006 sections 4.1 and 4.4.5].",
+    ),
+    "SPUR_LENGTH": Constant(
+        0.24,
+        "kpc",
+        "The length of a gas spur from the ridge: M51's nine PAWS gas spurs, mean 6.5 arcsec at 7.6 Mpc, about "
+        "240 pc [verified: Schinnerer et al. 2017, ApJ 836, 62 = arXiv:1701.02184, section 3.1.1; the parsecs "
+        "are the reader's arithmetic, docs/READING_SPURS.md row 2d]; CO over 155, 420 and 475 pc in three spurs "
+        "of another M51 field [verified: Corder et al. 2008, arXiv:0811.2903]. Stellar spurs run 0.6-4.8 kpc "
+        "(Elmegreen 1980) and are not these.",
+    ),
+    "SPUR_WIDTH": Constant(
+        0.06,
+        "kpc",
+        "The full width at half maximum of a gas spur across itself: the thin parts of M51's PAWS gas spurs are "
+        "1-2 arcsec, 40-80 pc [verified: Schinnerer et al. 2017, arXiv:1701.02184, section 3.1.1]; the middle "
+        "taken. A Gaussian profile across is the declared look (no source gives the profile).",
+    ),
+    "SPUR_FALL": Constant(
+        7.0,
+        "dimensionless",
+        "By how much a spur's contrast falls from its foot on the ridge to its tip: the CO column along a "
+        "feather 'drops by at least a factor of 5-10' with distance from the primary dust lane [verified: La "
+        "Vigne, Vogel & Ostriker 2006, arXiv:astro-ph/0606761, section 4.6]; the geometric middle of 5-10, about "
+        "7, taken, the fall exponential along the spur - a declared look.",
+    ),
 }

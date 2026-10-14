@@ -96,6 +96,7 @@ from galaxy.layer.census_clustering import CONSTANTS as _CLUSTERING_CONSTANTS
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.dust import SOLAR_MASS_G
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
+from galaxy.stages.spurs import SPUR_READS
 from galaxy.stages.systems import (
     CELL_COUNT,
     CELL_RINGS,
@@ -709,6 +710,7 @@ CLOUDS = IMPLEMENTATIONS.register(
             "gas_molecular_surface_density", "thin_disc_scale_height", "feh_gas", "alpha_fe_gas",
             *GAS_PATTERN_READS,  # S57 (D216): the response reads the stellar modes, their phases and checkpoint 1's disc
             "census_clustering_seed",  # S61 (D220 part II item 4): the field a cloud is placed by in its cell
+            *SPUR_READS,  # S62 (D221 item 7 as amended): the gas spurs, composed into the gas pattern the clouds are placed by
         ),
         publishes=(
             CLOUD_RADIUS, CLOUD_AZIMUTH, CLOUD_HEIGHT, CLOUD_MASS, CLOUD_SIZE, CLOUD_DISPERSION, CLOUD_MACH,

@@ -75,6 +75,7 @@ from galaxy.core.stage import Context, Stage
 from galaxy.stages.clouds import RingLayout, cloud_layout, layout_of, ring_draws, with_layout
 from galaxy.stages.disc import PC_PER_KPC
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
+from galaxy.stages.spurs import SPUR_READS
 from galaxy.stages.photometry import (
     BANDS,
     band_flux_at,
@@ -431,6 +432,7 @@ CLUSTERS = IMPLEMENTATIONS.register(
         requires=(
             *CLOUD_READS, "gas_molecular_surface_density",
             *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
+            *SPUR_READS,  # S62 (D221 item 7 as amended): the cloud census's layout is the spurred gas pattern's
             "stars_formed_history", "sfr_surface_density",
         ),
         publishes=(

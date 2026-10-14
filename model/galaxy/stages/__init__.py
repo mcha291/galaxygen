@@ -22,6 +22,8 @@ from galaxy.layer import arm_pieces  # noqa: F401, E402  (checkpoint 3, syntheti
 from . import pieces  # noqa: F401  (checkpoint 3, seeded: the stellar arms and bar composed from the census, S60, D219)
 from . import gas_pattern  # noqa: F401  (checkpoint 3, seeded: the gas's own arm pattern, S51, D210; its steady response since S57, D216)
 from . import sfh_azimuthal  # noqa: F401  (the sfh slot's second implementation: the azimuthal model, S27)
+from . import spurs  # noqa: F401  (checkpoint 4, seeded: the gas's contrast with its spurs, S62, D221 item 7)
+from galaxy.layer import spurs as _layer_spurs  # noqa: F401, E402  (checkpoint 4, synthetic: the census of gas spurs, S62)
 from . import supernovae  # noqa: F401  (checkpoint 4: supernova rates, S30)
 from . import dust  # noqa: F401  (checkpoint 4: dust that scatters, heats and radiates, S31)
 from . import systems  # noqa: F401  (checkpoint 5)

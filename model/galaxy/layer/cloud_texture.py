@@ -54,6 +54,7 @@ from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.clouds import TEXTURE_COLUMNS, RingLayout, cloud_layout, ring_draws
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
+from galaxy.stages.spurs import SPUR_READS
 
 # The cloud-interior noise's three parameters, by the name each has on the wire and the level-0 constant that holds
 # it (the viewer's own choices until S55, none read, #110: the constants' about lines carry the source).
@@ -217,6 +218,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         requires=(
             "cloud_size", "gas_molecular_surface_density",
             *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
+            *SPUR_READS,  # S62 (D221 item 7 as amended): the census's layout is the spurred gas pattern's
         ),
         publishes=(CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT, CLOUD_GRADIENT_ANGLE),
     )
