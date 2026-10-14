@@ -683,7 +683,8 @@ def test_the_vectors_file_is_what_the_generator_writes_today():
     assert "\r" not in text and text.endswith("}\n")
     stored = json.loads(text)
     assert noise.render_vectors(stored) == text, "the file is in the generator's own layout"
-    found = differences(stored, noise.build_vectors(), exact=True)
+    # S62 (D221): was the whole document - the gas fluctuation field's section is its own module's (test_gas_fluctuation).
+    found = differences({k: v for k, v in stored.items() if k not in noise.OTHER_SECTIONS}, noise.build_vectors(), exact=True)
     assert not found, found[:10]
 
 

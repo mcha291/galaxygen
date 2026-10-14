@@ -91,6 +91,9 @@ DEFAULT_QUADRATURE = 16  # points per axis of a cell's midpoint lattice (see cel
 FLOAT32_TOLERANCE = 1.0e-6  # the float32 path against float64 over the vectors (measured: module docstring)
 VECTORS_VERSION = 1
 VECTORS = Path(__file__).resolve().parent / "vectors.json"
+# The sections of the vectors file other modules write (S62, D221: the gas fluctuation field's, by
+# galaxy.layer.gas_fluctuation.write_vectors); this module keeps them and does not build them.
+OTHER_SECTIONS = ("gas_fluctuation",)
 
 _FLOAT_TYPES = (np.float64, np.float32)
 
@@ -764,9 +767,14 @@ def render_vectors(document: dict) -> str:
 
 
 def write_vectors(path: Path = VECTORS) -> Path:
-    """Write the vectors file. A deliberate act: the decision that changes the noise records the regeneration."""
+    """Write the vectors file. A deliberate act: the decision that changes the noise records the regeneration. The
+    sections other modules write into the file (:data:`OTHER_SECTIONS`) are kept as they stand, after the noise's."""
+    document = build_vectors()
+    if path.exists():
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        document.update({name: stored[name] for name in OTHER_SECTIONS if name in stored})
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(render_vectors(build_vectors()))
+        handle.write(render_vectors(document))
     return path
 
 
