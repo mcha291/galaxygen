@@ -56,7 +56,7 @@ ENDPOINTS: tuple[Endpoint, ...] = (
     Endpoint("viewer: a module", "/app.js", "", "one file beside it"),
     Endpoint("index", "/api", "", "the route table"),
     Endpoint("version", "/api/version", "", "hashes the client bytes on every request (D3)"),
-    Endpoint("stages", "/api/stages", "", "30 stage declarations (S55: the layer's cloud_texture; S60: its arm_pieces and the stellar_pattern that composes them)"),
+    Endpoint("stages", "/api/stages", "", "35 stage declarations (S55: the layer's cloud_texture; S60: its arm_pieces and the stellar_pattern that composes them; S61: census_clustering; S62: gas_spurs, spurs and gas_fluctuation)"),
     Endpoint("fields", "/api/fields", "", "every field declaration, with its ramp"),
     Endpoint("inputs", "/api/inputs", "", "7 controls, 5 seeds (S55: texture_seed), 1 event list; the pin (S58) is a template's, not offered"),
     Endpoint("templates", "/api/templates", "", "two named galaxies as data, no stage (S54); each with its pin, the observed bar class (S58)"),

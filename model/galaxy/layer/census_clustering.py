@@ -372,7 +372,7 @@ _STANDS_IN_FOR = (
 # ring's radius of the maximum (kpc); the clouds beyond 0.06 dex; and the [alpha/Fe] maximum, likewise.
 SPILL_FEH_DEX = {"median": 0.022, "p90": 0.063, "p99": 0.123, "max": 1.258}
 SPILL_FEH_MAX_AT_KPC = 23.6
-SPILL_FEH_BEYOND = (0.06, 1862, 16577)
+SPILL_FEH_BEYOND = (0.06, 1863, 16577)  # S62 (D221): was 1862 - the gas spurs move the clouds' placement
 SPILL_ALPHA_MAX_DEX = 0.232
 
 _CONSERVES = (

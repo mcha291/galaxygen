@@ -54,6 +54,7 @@ from galaxy.core.stage import Context, Stage
 from galaxy.layer import compose as _compose
 from galaxy.stages.clouds import TEXTURE_COLUMNS, RingLayout, cloud_layout, ring_draws
 from galaxy.stages.gas_pattern import GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS
+from galaxy.stages.spurs import SPUR_READS
 
 # The cloud-interior noise's three parameters, by the name each has on the wire and the level-0 constant that holds
 # it (the viewer's own choices until S55, none read, #110: the constants' about lines carry the source).
@@ -128,7 +129,7 @@ _CONSERVES_GRADIENT = (
 _CONSERVES_PLACEMENT = (
     "The cloud's mass and the cluster's mass: the column places, it does not weigh. It does not keep the cluster in "
     "its cloud's ring: at S61 the offset moves a cluster by up to 230 pc in radius (its own length reaches 248 pc) "
-    "against a 75 pc radial step and puts 1 582 of 12 710 "
+    "against a 75 pc radial step and puts 1 581 of 12 710 "
     "clusters (12.4 %, 36.1 % of the cluster mass) in another radial ring and 133 in another cell ring than their "
     "cloud. What the stages that bin clusters by radius publish does not move with it: since S61 `nebular` and "
     "`bubbles` bin a cluster by the radius its cloud's ring drew, `cluster_birth_radius`, a draw on the ring's "
@@ -217,6 +218,7 @@ CLOUD_TEXTURE = IMPLEMENTATIONS.register(
         requires=(
             "cloud_size", "gas_molecular_surface_density",
             *GAS_PATTERN_READS,  # S57 (D216): the layout's gas response reads the stellar modes, their phases and the disc
+            *SPUR_READS,  # S62 (D221 item 7 as amended): the census's layout is the spurred gas pattern's
         ),
         publishes=(CLOUD_SOURCE_OFFSET, CLOUD_SOURCE_ANGLE, CLOUD_GRADIENT, CLOUD_GRADIENT_ANGLE),
     )

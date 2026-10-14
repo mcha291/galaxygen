@@ -523,17 +523,20 @@ def test_what_the_placement_does_to_a_ring_as_read_at_s50(prod):
     # once more (cell 314, where the gas stands at 0.97 of its mean); the crest and the gap are R₀'s as they were.
     # S60 (D219): was (0.606, 0.994, 0.811) - the gas at R0 is the pieces' response, its crest 1.37 and its trough
     # 0.81 of the ring's mean where S59's gaps were nearly empty, so the crest lets through more and a gap less.
-    assert read[8.2][3:] == pytest.approx((0.750, 0.838, 0.807), abs=0.002)
+    # S62 (D221): was (0.750, 0.838, 0.807) - the ring's largest gas contrast at R0 is a spur's foot on the ridge
+    # now (1.62 of the ring's mean), so the crest lets through less; the gap and the flank are the cells they were.
+    assert read[8.2][3:] == pytest.approx((0.718, 0.838, 0.807), abs=0.002)
     # S60 (D219, the gate's ruling): was `read[8.2][3] < 0.747 and read[8.2][4] > 0.874` - D210 (iii), the crest under
     # D207's arm (0.747) and a gap over its 0.874, as S51 read them. S60 (D219, #155): the arms carry 45-80 % of the
     # law's power on the median ring, so the lanes at R0 are fainter than at S51 - the crest lets through 0.750 and a
     # gap 0.838. A pinned record of the measured crest and gap now, not D210's bounds.
-    assert read[8.2][3] == pytest.approx(0.750, abs=5e-4) and read[8.2][4] == pytest.approx(0.8375, abs=5e-4)
+    assert read[8.2][3] == pytest.approx(0.7178, abs=5e-4) and read[8.2][4] == pytest.approx(0.8375, abs=5e-4)  # S62 (D221): was 0.750, a spur's foot
     # S57 (D216): was (0.469, 0.765, 0.738); S56 (D215): was (0.467, 0.765, 0.754); S50 crest and gap: (0.590, 0.747)
     # S58 (D217): was (0.454, 0.935, 0.706)
     # S59 (D218): was (0.450, 0.911, 0.676) - the flank is another cell, the crest and the gap the ring's as they were
     # S60 (D219): was (0.450, 0.911, 0.626) - the arms a census of pieces
-    assert read[6.0][3:] == pytest.approx((0.590, 0.723, 0.656), abs=0.002)
+    # S62 (D221): was (0.590, 0.723, 0.656) - the crest at 6 kpc a spur's foot on the ridge (1.40 of the ring's mean)
+    assert read[6.0][3:] == pytest.approx((0.5835, 0.723, 0.656), abs=0.002)
     # S57 (D216): was (0.452, 0.577, 0.520); S56 (D215): was (0.451, 0.576, 0.531)
     # S58 (D217): was (0.441, 0.630, 0.519) - the crest at 4 kpc is a lane's
     # S59 (D218): was (0.404, 0.641, 0.503) - inside the bar's half-length the arms turn against the lanes
@@ -635,11 +638,16 @@ def test_the_heating_is_still_the_ring_s_mean_column_s(prod):
         # convenience measurement of the modes' smooth pattern. S60 (D219): the pieces' forcing holds every harmonic the
         # cells do - the gate's fifth follow-up item 4: beyond 7 kpc 3.27e-4 and 2.75e-5, bounded at 5e-4 and 5e-5. The
         # heating's own statement - the quadrature reads every cell - is the allclose below, unchanged.
-        assert float(np.max(np.abs(sub[beyond] / placed[beyond] - 1.0))) < {4: 5e-4, 2: 5e-5}[step], step
+        # S62 (D221): were `< 5e-4` and `< 5e-5` - the gas spurs are 60 pc across, narrower than a cell at most radii,
+        # so a subsample of the ring misses or hits them: beyond 7 kpc 2.52e-3 (every fourth) and 1.04e-3 (every
+        # second), bounded at 5e-3 and 2e-3. The quadrature reads every cell (the allclose below, unchanged).
+        assert float(np.max(np.abs(sub[beyond] / placed[beyond] - 1.0))) < {4: 5e-3, 2: 2e-3}[step], step
     # S59 (D218): were 7.0e-5 and 5.13e-6 - the rings are turned by the segments' winding, so a subsample reads
     # other cells of them; beyond 7 kpc the two bounds above hold as they did (1.9e-8 and 2.1e-14).
     # S60 (D219): were 7.2e-5 and 5.65e-6 - the pieces' pattern has steps beyond 7 kpc too (the worst ring is beyond it)
-    assert read_sub[4] == pytest.approx(3.27e-4, rel=0.05) and read_sub[2] == pytest.approx(4.00e-5, rel=0.05)
+    # S62 (D221): were 3.27e-4 and 4.00e-5 - the spurs, a few cells wide, which a subsample misses (worst at 6.79 and
+    # 6.34 kpc).
+    assert read_sub[4] == pytest.approx(3.281e-3, rel=0.05) and read_sub[2] == pytest.approx(1.410e-3, rel=0.05)
     every = 1
     sub = (c[:, ::every] * dust.slab_absorbed_fraction(tau[:, None] * g[:, ::every])).mean(axis=1)
     assert np.allclose(sub, placed, rtol=1e-8, atol=0.0)

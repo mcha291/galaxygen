@@ -589,7 +589,11 @@ def test_gate_the_gas_is_zero_only_where_the_response_underflows(prod):
         for j in np.flatnonzero(zero[i]):
             at = np.linspace(edges[j], edges[j + 1], 9)
             assert float(gas.response_at(np.full(9, R[i]), at).max()) < tiny, (i, j)
-    assert np.asarray(F["star_formation_gas_contrast"]).tobytes() == g.tobytes()
+    # S62 (D221 item 7 as amended): was `star_formation_gas_contrast == g`, bit for bit - the gas's own contrast now carries
+    # the spurs, composed on the star-formation contrast's numbers (an unbarred galaxy: the same response), and the
+    # star-formation contrast does not.
+    sf = np.asarray(F["star_formation_gas_contrast"])
+    assert gas.spurs is not None and gas.spurs.compose_cells(R, edges, sf).tobytes() == g.tobytes()
     # No NaN where the barred galaxy has none, and the whole pipeline ran: the same fields, the modulation finite.
     assert barred.fields["bar_present"] == "yes" and set(barred.fields) == set(F)
     low = np.asarray(barred.fields["gas_density_contrast"])
@@ -1144,7 +1148,9 @@ def test_what_the_published_gas_shows_of_the_cliff_as_measured(prod):
     # relative to the disc's the three rings are turned otherwise.
     # S60 fourth pass: were [3.544, 2.646, 2.692] and 2.795 - past the half-length the ring is the pieces' response
     # alone, gentler than the modes' there.
-    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.974, 2.689], abs=2e-3) and float(g[after].max()) == pytest.approx(1.535, abs=2e-3)
+    # S62 (D221 item 7 as amended): were [3.222, 2.974, 2.689] and 1.535 - the gas spurs: a ring's gas gives the spurs'
+    # mean there in proportion, and a spur's foot stands on two of the three rings' crests.
+    assert g[last].max(axis=1).tolist() == pytest.approx([3.222, 2.966, 2.684], abs=2e-3) and float(g[after].max()) == pytest.approx(1.664, abs=2e-3)
 
 
 def test_the_gas_the_star_formation_law_reads_by_hand(prod):
@@ -1218,9 +1224,12 @@ def test_the_gas_the_star_formation_law_reads_by_hand(prod):
         means = gas.star_formation_sector_means(r, sectors)
         assert means.shape == (12,) and float(means.mean()) == pytest.approx(1.0, abs=1e-12), r
         if r > a:
-            assert means.tobytes() == gas.sector_means(r, sectors).tobytes(), r
+            # S62 (D221 item 7 as amended): was `means == gas.sector_means(r, sectors)` - the gas's own contrast is the
+            # star-formation contrast with the spurs composed on it, past the half-length.
+            assert gas.spurs.compose_cells(np.array([r]), sectors, means[None, :])[0].tobytes() == gas.sector_means(r, sectors).tobytes(), r
     past = R >= a
-    assert published[past].tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 331
+    # S62: was `published[past] == gas_density_contrast[past]` - the same, with the spurs composed on.
+    assert gas.spurs.compose_cells(R[past], edges, published[past]).tobytes() == np.asarray(F["gas_density_contrast"])[past].tobytes() and int(past.sum()) == 331
     # An unbarred pattern has no footprint to ask for; its star-formation readings are its own.
     n4414 = template_run(prod, "ngc_4414")
     bare = compose.gas_pattern(n4414.fields, R, constants(the_model(prod)))
@@ -1246,12 +1255,16 @@ def test_the_gas_at_a_point_inside_the_bar_is_the_blend_of_the_response_and_the_
     # (`response_at`, held in tests/test_pieces.py); the taper and the bar's angle are the point's own, as they were.
     taper, _, angle = pt.bar_terms(radius, gas.pitch_deg, gas.bar_length)
     want = (1.0 - taper) * gas.response_at(radius, phi) + taper * gas.lanes_at(radius, phi - angle)
-    assert np.allclose(gas.contrast_at(radius, phi), want, rtol=0.0, atol=1e-13)
-    assert np.all(gas.contrast_at(radius, phi) >= taper * (1.0 / RATIO_HAND)) and np.all(gas.lanes_at(radius, phi - angle) > 0.0)
+    # S62 (D221 item 7 as amended): the blend is the contrast without the spurs; the contrast is the spurs composed on it.
+    assert np.allclose(gas.unspurred_contrast_at(radius, phi), want, rtol=0.0, atol=1e-13)
+    assert np.array_equal(gas.contrast_at(radius, phi), gas.spurs.compose_at(radius, phi, gas.unspurred_contrast_at(radius, phi)))
+    assert np.all(gas.unspurred_contrast_at(radius, phi) >= taper * (1.0 / RATIO_HAND)) and np.all(gas.lanes_at(radius, phi - angle) > 0.0)
     for i in (5, 28, 40, 60):  # 0.41, 2.14, 3.04 and 4.54 kpc
         t = float(pt.bar_terms(R, gas.pitch_deg, gas.bar_length)[0][i])
         # S59 (D218): the cells' means with the hand's winding; S60 (D219): over the cell's φ edges themselves.
         cell = (1.0 - t) * hand_cell_means(gas.profiles[i], edges[:-1], edges[1:]) + t * hand_cell_means(gas.lanes[i], edges[:-1] - angle, edges[1:] - angle)
+        # S62 (D221 item 7 as amended): the hand blend with the spurs composed on it (the spurs reach the ring at 4.54 kpc).
+        cell = gas.spurs.compose_cells(R[i:i + 1], edges, cell[None, :])[0]
         assert float(np.abs(np.asarray(F["gas_density_contrast"])[i] - cell).max()) < 1e-11, i
 
 

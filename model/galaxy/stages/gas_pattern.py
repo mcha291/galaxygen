@@ -164,6 +164,16 @@ registry at gate G3 ("a stage may not declare reads it does not make") and live 
 sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
 constants: the ``bar`` stage derives the check's target from them.
 
+**Since S62 the gas carries spurs (BUILD_III Phase L2; DECISIONS.md D221 item 7 as the lead amended it).** The
+layer lays them (``layer/spurs.py``, the table ``gas_spur``) and ``stages/spurs.py`` holds their shape and composes
+them: a pattern built from fields that hold the table (the stages that place by the gas, and a run's fields) has
+``spurs``, and :meth:`GasPattern.contrast_at`, :meth:`GasPattern.cell_means` and :meth:`GasPattern.sector_means`
+are g' = (1 − ⟨S⟩(R)) g + S - the ring's mean kept exactly. The contrast the star formation law reads keeps neither
+the lanes nor the spurs. Because the spurs' spacing reads the ring's gas column, which the default model publishes
+after this stage (``sfh_azimuthal`` reads this stage's star-formation contrast), ``gas_density_contrast`` is published
+since S62 by the ``spurs`` stage; this stage publishes ``star_formation_gas_contrast`` alone.
+:meth:`GasPattern.unspurred_contrast_at` is g, what the spurs' walk reads on the grid's rings.
+
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
 cluster census), so the last few solutions are also kept by content - a digest of the forcing amplitudes,
@@ -475,7 +485,12 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "and nowhere negative; nothing is clipped. An unbarred galaxy has no lanes and its gas answers the "
         "arms to the centre. It reads no gas column. A composed field: with the randomness layer "
         "off it is 1 everywhere - the equation and its inputs are unchanged, and nothing says where the "
-        "arms are."
+        "arms are. Since the gas spurs were laid it carries them too: off every arm chain of a disc that is not "
+        "flocculent, feathers of gas leave the ridge's outer side at a steep trailing pitch, ten local Jeans "
+        "lengths of the ridge's peak apart along the arm, each as dense at its foot as the ridge there and fading "
+        "to a seventh of that over a quarter of a kiloparsec, their excess taken from the whole ring in proportion "
+        "to its gas so the ring's mean stays 1 exactly; published since then by the stage that lays them on, after "
+        "the gas column their spacing reads."
     ),
 )
 
@@ -500,7 +515,8 @@ STAR_FORMATION_GAS_CONTRAST = FieldDecl(
         "ring's total is unchanged, and there is no ridge. Star formation therefore follows the bar's "
         "footprint, not the lanes: the young stars of a barred galaxy fill the bar where it does not fill "
         "its ring, and where the footprint covers the whole ring this field is the response's blend alone. "
-        "The dust and the cloud census keep the lanes. Positive wherever the gas's own contrast is; nothing "
+        "The dust and the cloud census keep the lanes, and the gas spurs too: this contrast carries neither, so "
+        "the young stars follow neither the lanes nor the spurs. Positive wherever the gas's own contrast is; nothing "
         "is drawn, clipped or divided by a mean taken after the fact. A composed field: with the randomness "
         "layer off it is 1 everywhere."
     ),
@@ -622,6 +638,9 @@ class GasPattern:
     gas_ratio: float = float("nan")       # the mean inside the footprint over the mean outside it
     lane_width: float = float("nan")      # the lane's FWHM / a: a declared placeholder
     design_count: np.ndarray | None = None  # (R,): the law's arm number - read by the disclosed check's mask alone
+    # S62 (D221 item 7 as amended): the gas spurs the layer laid off the chains' ridges (``stages/spurs.Spurs``), or
+    # None - read where the run's view holds the table ``gas_spur``; composed into ``contrast_at`` and its cell means.
+    spurs: Any = None
     flat: bool = field(init=False)
     barred: bool = field(init=False)
     _solved: dict = field(init=False, repr=False)
@@ -663,6 +682,18 @@ class GasPattern:
         over; the gas answers its arm pieces. ``arm_multiplicity`` is not among what it reads (D215)."""
         if any(n not in fields for n in GAS_PATTERN_READS) or any(k not in constants for k in GAS_PATTERN_CONSTANTS):
             return None
+        # S62 (D221 item 7 as amended, ruling 2): the spurs, where the reader's view holds their table - the stages
+        # that place by the gas (the clouds, their texture, the clusters, the spurs' own stage) and a run's fields.
+        # The gas pattern's own stage, the spurs' layer stage and the young stars' readers do not hold it.
+        from galaxy.stages.spurs import SPUR_READS, Spurs
+
+        spurs = None
+        if all(n in fields for n in SPUR_READS) and np.size(fields["gas_spur_radius"]):
+            spurs = Spurs(
+                *(fields[n] for n in ("gas_spur_radius", "gas_spur_azimuth", "gas_spur_contrast", "gas_spur_pitch",
+                                      "gas_spur_length", "gas_spur_width", "gas_spur_fall")),
+                turn=-rotation_sense(float(fields["pitch_angle"])),
+            )
         return cls(
             R, stars, float(fields["pitch_angle"]), float(fields["bar_half_length"]),
             fields["epicyclic_frequency"], fields["disc_surface_density"],
@@ -671,6 +702,7 @@ class GasPattern:
             float(fields["bar_axis_ratio"]), float(fields["bar_boxiness"]),
             *(float(constants[k]) for k in LANE_CONSTANTS),
             np.asarray(fields["arm_design_count"], dtype=float),
+            spurs,
         )
 
     # --- the law's inputs ------------------------------------------------------------------------------
@@ -1241,7 +1273,14 @@ class GasPattern:
 
     def contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
         """The contrast at points: ``R`` and ``phi`` broadcast against each other, elementwise.
-        g = w_arm s + w_bar L, the taper at the point's own radius; an unbarred pattern is s (w_arm = 1)."""
+        g = w_arm s + w_bar L, the taper at the point's own radius; an unbarred pattern is s (w_arm = 1). Since S62,
+        with spurs, g' = (1 − ⟨S⟩(R)) g + S (``stages/spurs.py``; D221 item 7 as amended)."""
+        g = self._contrast_at(R, phi, lambda: self.lanes)
+        return g if self.spurs is None else self.spurs.compose_at(R, phi, g)
+
+    def unspurred_contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        """g = w_arm s + w_bar L at points: the contrast without the spurs - what the spurs' walk reads at a foot (on
+        the grid's rings) and what the spurs are composed on."""
         return self._contrast_at(R, phi, lambda: self.lanes)
 
     def star_formation_contrast_at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
@@ -1327,7 +1366,8 @@ class GasPattern:
         blended as a point blends them, the lanes' interpolants piece by piece in the bar's frame - so cells
         that tile the ring average to 1 to rounding on any grid, and a cell's value is never under
         w_bar min L. At one radius it is :meth:`sector_means`' arithmetic."""
-        return self._cell_means(R, edges, (lambda: self.lanes,))[0]
+        means = self._cell_means(R, edges, (lambda: self.lanes,))[0]
+        return means if self.spurs is None else self.spurs.compose_cells(R, edges, means)
 
     def star_formation_cell_means(self, R: np.ndarray, edges: np.ndarray) -> np.ndarray:
         """:meth:`cell_means` of the contrast the star formation law reads (:meth:`star_formation_contrast_at`):
@@ -1339,7 +1379,7 @@ class GasPattern:
         """(:meth:`cell_means`, :meth:`star_formation_cell_means`): the stage's two fields, the response's part
         integrated once and shared - each the same bits as its own method gives."""
         laned, uniform = self._cell_means(R, edges, (lambda: self.lanes, lambda: self.footprint))
-        return laned, uniform
+        return (laned if self.spurs is None else self.spurs.compose_cells(R, edges, laned)), uniform
 
     def _cell_means(self, R: np.ndarray, edges: np.ndarray, bars: "tuple[Callable[[], np.ndarray], ...]") -> tuple[np.ndarray, ...]:
         """The exact cell means of w_arm s + w_bar (a bar's profiles), one array per entry of ``bars`` (each
@@ -1367,7 +1407,7 @@ class GasPattern:
         """The contrast averaged over each sector between ``edges`` (radians, ascending) at one radius: the exact
         mean of the point function (:meth:`cell_means`' arithmetic at one radius). Sectors that tile the ring
         average to 1 to rounding."""
-        return self._cell_means(np.array([float(R)]), edges, (lambda: self.lanes,))[0][0]
+        return self.cell_means(np.array([float(R)]), edges)[0]
 
     def star_formation_sector_means(self, R: float, edges: np.ndarray) -> np.ndarray:
         """:meth:`sector_means` of the contrast the star formation law reads: the footprint-uniform field in
@@ -1478,28 +1518,20 @@ def compute_gas_pattern(ctx: Context) -> Mapping[str, Any]:
     # Everything is read, nothing drawn: the stellar pattern's arm pieces (the layer's) and checkpoint 1's disc.
     # A composed field (S55, D214): with the layer off compose gives the neutral value the declaration states,
     # everywhere. With it on, the pattern object comes from compose too, and a pattern with nothing to place
-    # (unresolved, or no arm mode and no bar) is the neutral.
+    # (unresolved, or no arm mode and no bar) is the neutral. Since S62 (D221 item 7 as amended, ruling 2) the gas's
+    # own contrast, ``gas_density_contrast``, is published by the ``spurs`` stage, after the gas column its spurs
+    # read; this stage publishes the contrast the star formation law reads, which keeps neither lanes nor spurs.
     cells = (R.size, ctx.grid.phi.size)
-    made: dict[str, np.ndarray] = {}
 
-    def response(decl: FieldDecl) -> np.ndarray:
-        # Both fields come of one pattern, solved once: the gas's own contrast, with the bar's lanes, and the
-        # contrast the star formation law reads, with the lanes' excess spread over the bar's footprint (S58).
-        if not made:
-            shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
-            if shape is None or shape.flat:
-                made.update({d.name: _compose.neutral(d, cells) for d in (GAS_DENSITY_CONTRAST, STAR_FORMATION_GAS_CONTRAST)})
-            else:
-                # The law's mean over each of the grid's φ cells, on each grid ring (gate G3 item 4): the interpolant
-                # integrated exactly, so a ring's cells average to 1 to rounding on any grid and nothing is divided.
-                laned, uniform = shape.published_cell_means(R, ctx.grid["phi"].edges)
-                made.update({GAS_DENSITY_CONTRAST.name: laned, STAR_FORMATION_GAS_CONTRAST.name: uniform})
-        return made[decl.name]
+    def make() -> np.ndarray:
+        shape = _compose.gas_pattern(ctx.fields, R, ctx.constants)
+        if shape is None or shape.flat:
+            return _compose.neutral(STAR_FORMATION_GAS_CONTRAST, cells)
+        # The law's mean over each of the grid's φ cells, on each grid ring (gate G3 item 4): the interpolant
+        # integrated exactly, so a ring's cells average to 1 to rounding on any grid and nothing is divided.
+        return shape.star_formation_cell_means(R, ctx.grid["phi"].edges)
 
-    return {
-        decl.name: _compose.field(ctx.fields, decl, cells, lambda decl=decl: response(decl))
-        for decl in (GAS_DENSITY_CONTRAST, STAR_FORMATION_GAS_CONTRAST)
-    }
+    return {STAR_FORMATION_GAS_CONTRAST.name: _compose.field(ctx.fields, STAR_FORMATION_GAS_CONTRAST, cells, make)}
 
 
 GAS_PATTERN = IMPLEMENTATIONS.register(
@@ -1519,15 +1551,19 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
             "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
             "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "
-            "radius, so every ring keeps its gas on any grid with nothing divided. Beside it, the same "
+            "radius, so every ring keeps its gas on any grid with nothing divided. It publishes the "
             "contrast as the star formation law reads it: inside a bar's reach the lanes' excess spread "
             "evenly over the bar's footprint, because the lanes' width is a placeholder and star formation "
-            "must not ride it; elsewhere the same numbers. It draws nothing; "
+            "must not ride it; elsewhere the response's numbers; never the gas spurs. The gas's own contrast, "
+            "with the lanes and the spurs, is published by the stage that lays the spurs on, after the gas "
+            "column. It draws nothing; "
             "its fields are seeded through the pattern's drawn pitch and amplitudes and the layer's pieces."
         ),
         compute=compute_gas_pattern,
         reads_constants=GAS_PATTERN_CONSTANTS,
         requires=GAS_PATTERN_READS,
-        publishes=(GAS_DENSITY_CONTRAST, STAR_FORMATION_GAS_CONTRAST),
+        # S62 (D221 item 7 as amended): was (GAS_DENSITY_CONTRAST, STAR_FORMATION_GAS_CONTRAST) - the gas's own
+        # contrast is published by the ``spurs`` stage, which composes the spurs on it after the gas column.
+        publishes=(STAR_FORMATION_GAS_CONTRAST,),
     )
 )

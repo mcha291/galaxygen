@@ -19,6 +19,10 @@ stand in for, and evaluable at a point.
                                     on ``texture_seed`` that places a cloud jointly in radius and azimuth on its
                                     level-0 cell's lattice (and the bright catalogue's young stars); its seed and
                                     each cell's mean, NaN with the layer off
+    galaxy/layer/gas_fluctuation.py  the diffuse gas's fluctuation field (S62, D221): the same noise continued to
+                                    six octaves, steeper below the gas's height, as wide as the cold gas's Mach
+                                    number, sheared by the rotation, unit mean per cell; its seed, the table `ring`
+                                    and each cell's normaliser, NaN with the layer off; read by nothing until V7
 
 A realisation stage registers with the rest when ``galaxy.stages`` is imported. Nothing is imported here: a reader
 imports ``galaxy.layer.noise`` or ``galaxy.layer.compose`` by name.

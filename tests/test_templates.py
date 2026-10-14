@@ -238,11 +238,14 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     for name in differ - {"sun_azimuth"}:
         d = named.decls[name]
         if d.kind.domain == "table":
-            assert d.of == "arm_piece" and producer[name] == "arm_pieces", name  # the layer's census of pieces
+            # S62 (D221): was `d.of == "arm_piece" and producer[name] == "arm_pieces"` - and the gas spurs' table, laid
+            # off the template's chains (their feet walk the pieces' ridges).
+            assert (d.of, producer[name]) in {("arm_piece", "arm_pieces"), ("gas_spur", "gas_spurs")}, name  # the layer's census of pieces
         elif d.composed:
             # S60 (D219, the fourth follow-up's C): the ring power and its split are `arm_ring_power`'s.
             # S60 fourth pass: was ("stellar_pattern", "gas_pattern", "sfh_azimuthal").
-            assert producer[name] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal"), name  # what reads the pieces
+            # S62 (D221): and "spurs", which publishes the gas's contrast with its spurs since S62.
+            assert producer[name] in ("stellar_pattern", "arm_ring_power", "gas_pattern", "sfh_azimuthal", "spurs"), name  # what reads the pieces
         elif d.kind.domain == "object":
             assert d.of in placed, name  # a placed census is another draw; the remnants (unplaced) are the same bits
         elif producer[name] in censuses and d.axes in ((), ("R",)):
@@ -262,8 +265,10 @@ def test_a_run_of_milky_way_is_bit_identical_to_a_run_with_no_inputs(prod):
     # S61 (D220 part II): and the `cell` table - `census_clustering_cell_mean`, the clustering field's mean per
     # level-0 cell - is a realisation on texture_seed alone that reads no pattern and no pin, so the two runs hold
     # the same bits; the arm_piece table is the one that moves with the pinned arms.
-    assert {n for n, d in named.decls.items() if (d.kind.domain == "table" and d.of != "cell") or d.composed} - unmoved <= differ
-    assert all(same(bare.fields[n], named.fields[n]) for n, d in named.decls.items() if d.kind.domain == "table" and d.of == "cell")
+    # S62 (D221): and the `ring` table and the gas field's `cell` column likewise - `gas_fluctuation_*` read the gas
+    # scale height, the rotation curve and texture_seed, none of which a template's pins touch.
+    assert {n for n, d in named.decls.items() if (d.kind.domain == "table" and d.of not in ("cell", "ring")) or d.composed} - unmoved <= differ
+    assert all(same(bare.fields[n], named.fields[n]) for n, d in named.decls.items() if d.kind.domain == "table" and d.of in ("cell", "ring"))
     # S61 (D220 item 4): but a column that is one value for every object - `hii_density_bounded`, 0 for every region -
     # is the same bytes in both runs, since the ring-first draw gives both the same count.
     constant = {n for n, d in named.decls.items() if d.kind.domain == "object" and d.of in placed and n not in differ}

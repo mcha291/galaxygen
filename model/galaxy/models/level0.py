@@ -860,6 +860,85 @@ LEVEL0: dict[str, Constant] = {
         "the mean at two is within 5.7e-3 rms (3.6e-2 at worst) of the mean at four. The number a renderer "
         "divides the field by is defined on this lattice and no other.",
     ),
+    # The gas fluctuation field (S62, DECISIONS.md D221 part I as the lead amended it): the randomness layer's stand-in
+    # for the turbulent structure of the diffuse ISM between the clouds - L1's noise continued finer, its gain
+    # steepening by one below the gas layer's thickness, a log-normal map whose width is the Mach number's, read
+    # sheared by the disc's rotation. Constants of the model (G1's ruling 2b); the layer's gas_fluctuation stage
+    # realises the field. Its coarsest scale, its first three octaves and its slope above the break are L1's
+    # (CENSUS_CLUSTERING_SCALE, CENSUS_CLUSTERING_SPECTRAL_SLOPE).
+    "GAS_FLUCTUATION_OCTAVES": Constant(
+        6,
+        "count",
+        "How many octaves of lattice noise the gas fluctuation field sums: L1's three (190, 95, 47.5 pc) continued "
+        "by three finer on the same path (23.75, 11.875, 5.9375 pc), the finest the field's resolution (DECISIONS.md "
+        "D221 part I item 1; a shader may stop earlier and say so). Below 5.9 pc the field has no structure of its own.",
+    ),
+    "GAS_FLUCTUATION_SLOPE_CHANGE": Constant(
+        1.0,
+        "dimensionless",
+        "How much steeper the gas's two-dimensional column spectrum is below the gas layer's thickness than above "
+        "it: one power of k - a slab thinner than 1/k projects 'shallower than the 3D density spectrum by one' "
+        "[verified: Elmegreen & Scalo 2004, ARA&A 42, 211, arXiv:astro-ph/0404451, sect. 2.1; docs/READING_GAS_SPECTRA.md "
+        "2.14] and the LMC's HI steepens by about one at its 80-100 pc break [verified: Elmegreen, Kim & "
+        "Staveley-Smith 2001, ApJ 548, 749, arXiv:astro-ph/0010578, sect. 3.3; READING_GAS_SPECTRA.md 2.1]. The "
+        "rule of the 2-D/3-D projection, which covers every disc thicker than a few octaves; measured changes run "
+        "0.8 (M33's HI) to 1.5 (NGC 1058's -1.0 to -2.5, Dutta et al. 2009). Koch et al. 2020 and Grisdale et al. "
+        "2017 see no break once the beam is modelled (READING_GAS_SPECTRA.md 2.7-2.8): built anyway, DECISIONS.md "
+        "D221 stop condition 2.",
+    ),
+    "GAS_FLUCTUATION_BREAK_FACTOR": Constant(
+        3.141592653589793,
+        "dimensionless",
+        "The break's wavelength over the gas's published scale height: pi, the factor of U = D / (pi z_h) by which "
+        "NGC 1058's 1.5 kpc break reads a scale height of 490 +- 90 pc [verified: Dutta, Begum, Bharadwaj & "
+        "Chengalur 2009, MNRAS 397, L60, arXiv:0905.1450, abstract and sect. 3; READING_GAS_SPECTRA.md 2.4] - one "
+        "galaxy; the LMC's 'about the thickness' (EKS01, 80-100 pc against a height of 95-180 pc) and simulations' "
+        "0.5-3 bracket it (DECISIONS.md D221 stop condition 2).",
+    ),
+    "GAS_FLUCTUATION_WIDTH_A": Constant(
+        0.11,
+        "dimensionless",
+        "A of the column density's log-normal width against the sonic Mach number, sigma^2_ln = A ln(1 + b^2 M^2): "
+        "0.11, the best fit with b fixed at 1/3 to isothermal ideal-MHD simulations driven solenoidally, M 0.4-8.8 "
+        "[verified: Burkhart & Lazarian 2012, ApJL 755, L19, arXiv:1205.3792, eq. 3 and Table 1; "
+        "READING_GAS_SPECTRA.md 2.10] - simulated boxes, no disc geometry. Their fits to Milky Way clouds give "
+        "A = 0.16 (Taurus) and 0.12 (IC 5146) with b = 0.5; Federrath et al. 2010's compressive forcing is three "
+        "times wider at M 5.5 (READING_GAS_SPECTRA.md 2.11). The measured galaxy widths (HI 0.19-0.51 dex, "
+        "Berkhuijsen & Fletcher 2015) are a disclosed check, not a target.",
+    ),
+    "GAS_FLUCTUATION_WIDTH_B": Constant(
+        0.3333333333333333,
+        "dimensionless",
+        "b of the same relation: 1/3, the solenoidal forcing parameter Burkhart & Lazarian 2012 fix it at (eq. 3; "
+        "Federrath, Klessen & Schmidt 2008 measure 0.36 for solenoidal and 1.05 for compressive forcing, eq. 5; "
+        "READING_GAS_SPECTRA.md 2.10-2.11). A matched pair with the relation's A, which was fitted given this b.",
+    ),
+    "CNM_TEMPERATURE": Constant(
+        70.0,
+        "K",
+        "The kinetic temperature of the cold neutral medium, for the sound speed the diffuse gas's Mach number is "
+        "measured against: 70 K, the median CNM spin temperature weighted by column density ('half the column "
+        "density lies above, and half below') at |b| > 10 deg; 48 K by Gaussian components, the histogram's peak "
+        "near 40 K, 63 K by column density at |b| < 10 deg, 77 % of the CNM column below 100 K [verified: Heiles & "
+        "Troland 2003, ApJ 586, 1067, arXiv:astro-ph/0207105, sect. 2.1-2.2 and Table 2, read at S62, "
+        "https://arxiv.org/abs/astro-ph/0207105]. The Millennium Arecibo survey's CNM, the Milky Way's local "
+        "absorption components; the column-weighted median because the field stands for column density. The "
+        "sound speed is sqrt(k T / mu m_H) with mu = 1.27 (neutral atomic gas, He/H = 0.1 by number: "
+        "(1 + 4 x 0.1) / (1 + 0.1) [inferred]): 0.675 km/s; Heiles & Troland adopt 1.4 m_H (sect. 6.2), which "
+        "reads 5 % slower. The WNM, 60 % of the HI by their abstract, is near-sonic and not this phase.",
+    ),
+    "GAS_FLUCTUATION_SHEAR_CAP": Constant(
+        30.0,
+        "Myr",
+        "The longest time the field's structure is sheared for: an isotropic pattern t old is read at the strain "
+        "(dOmega/dlnR) t with t = min(1/A, 30 Myr), 1/A the shear time [verified: Jeffreson & Kruijssen 2018, "
+        "MNRAS 476, 3688, arXiv:1803.01850, sect. 2.6 eq. 23; docs/READING_SPURS.md 4a]; the cap where feedback "
+        "ends a cloud before shear does - M51's interarm clouds live 20-30 Myr and track 1/A inside 70 arcsec "
+        "[verified: Meidt et al. 2015, arXiv:1504.04528, abstract, sect. 6.2; READING_SPURS.md 4b], nine PHANGS "
+        "galaxies' clouds 10-30 Myr [verified: Chevance et al. 2020, arXiv:1911.03479, abstract, sect. 5.2; "
+        "READING_SPURS.md 4c]. Koda 2021's 60-500 Myr for M51 with the pattern speed included is the named "
+        "alternative (READING_SPURS.md 4b). On the default galaxy the cap binds outside 1.9 kpc.",
+    ),
     # How long the clustering field's structure at a scale survives in the stars born in it (S61, DECISIONS.md D220
     # part II item 5): the bright catalogue's young stars keep the field's octaves no finer than their age allows.
     "AGE_SEPARATION_AMPLITUDE": Constant(
@@ -1764,5 +1843,58 @@ LEVEL0: dict[str, Constant] = {
         "of the shell equals the ISM temperature: T_sh = T_ISM = 10^4 K' [verified: Telezhinsky 2009, "
         "arXiv:0812.4604, section 2.3, read at S36] - that paper's model assumption, not a measurement; Kim & "
         "Ostriker 2015 define shell gas as below 2 x 10^4 K [verified: arXiv:1410.1537, section 3].",
+    ),
+    # S62 (BUILD_III Phase L2; DECISIONS.md D221 item 7, as the lead amended it): the gas spurs (feathers) off the
+    # gas ridge of the arm chains - their spacing, pitch, length, width and fall (docs/READING_SPURS.md).
+    "SPUR_SPACING_JEANS": Constant(
+        10.0,
+        "dimensionless",
+        "The spacing of gas spurs along an arm in local Jeans lengths of the arm's peak, lambda_J,sp = c_s^2 / (G "
+        "Sigma_peak): 'the spur spacing is ~10 lambda_J,sp', 'three to five times larger' than in a thin disc, "
+        "from two-dimensional thick-disc and three-dimensional stratified MHD models [verified: Kim & Ostriker "
+        "2006, ApJ 646, 213 = arXiv:astro-ph/0603751, abstract and section 6 item 1; docs/READING_SPURS.md "
+        "table rows 1g-1i]; M51's measured mean is 10.4 lambda_J along its primary dust lane with c_s = 7 km/s "
+        "adopted [verified: La Vigne, Vogel & Ostriker 2006, ApJ 650, 818 = arXiv:astro-ph/0606761, sections 4.7 "
+        "and 5] - 2 of the 45 feathered galaxies carry a Jeans ratio, and NGC 628's 1.7 is flagged an "
+        "underestimate. Named alternatives: 2.5 lambda_J,sp in the razor-thin magnetised models [verified: Kim & "
+        "Ostriker 2002, ApJ 570, 132 = arXiv:astro-ph/0111398, section 5.1], about 5 lambda_J of the arm in "
+        "global models [verified: Shetty & Ostriker 2006, arXiv:astro-ph/0605142, sections 5.1-5.2], 7.9 for "
+        "the fastest-growing feathering mode in M51 [verified: Lee 2014, arXiv:1407.5215, eq. 34]. The choice "
+        "between 10 and 2.5 is the owner's (D221 as amended).",
+    ),
+    "SPUR_PITCH": Constant(
+        63.0,
+        "deg",
+        "The angle a spur makes with the circle at its starting radius: 63 +- 12 degrees over 28 spurs of seven "
+        "galaxies, about 50 degrees more than the arms, always on the arms' outer edge [verified: Elmegreen 1980, "
+        "ApJ 242, 528, Table 1 and section IV, read from the ADS scan's OCR; docs/READING_SPURS.md row 2a]. "
+        "Measured on stellar spurs; a gas spur is laid at it, trailing, on the ridge's outer side. The named "
+        "alternative, carried as the look's debt, is the kinematic wavefront of the thin-disc theory - leading at "
+        "the ridge and trailing downstream [verified: Kim & Ostriker 2002 eq. 12 after Balbus 1988; La Vigne et "
+        "al. 2006 sections 4.1 and 4.4.5].",
+    ),
+    "SPUR_LENGTH": Constant(
+        0.24,
+        "kpc",
+        "The length of a gas spur from the ridge: M51's nine PAWS gas spurs, mean 6.5 arcsec at 7.6 Mpc, about "
+        "240 pc [verified: Schinnerer et al. 2017, ApJ 836, 62 = arXiv:1701.02184, section 3.1.1; the parsecs "
+        "are the reader's arithmetic, docs/READING_SPURS.md row 2d]; CO over 155, 420 and 475 pc in three spurs "
+        "of another M51 field [verified: Corder et al. 2008, arXiv:0811.2903]. Stellar spurs run 0.6-4.8 kpc "
+        "(Elmegreen 1980) and are not these.",
+    ),
+    "SPUR_WIDTH": Constant(
+        0.06,
+        "kpc",
+        "The full width at half maximum of a gas spur across itself: the thin parts of M51's PAWS gas spurs are "
+        "1-2 arcsec, 40-80 pc [verified: Schinnerer et al. 2017, arXiv:1701.02184, section 3.1.1]; the middle "
+        "taken. A Gaussian profile across is the declared look (no source gives the profile).",
+    ),
+    "SPUR_FALL": Constant(
+        7.0,
+        "dimensionless",
+        "By how much a spur's contrast falls from its foot on the ridge to its tip: the CO column along a "
+        "feather 'drops by at least a factor of 5-10' with distance from the primary dust lane [verified: La "
+        "Vigne, Vogel & Ostriker 2006, arXiv:astro-ph/0606761, section 4.6]; the geometric middle of 5-10, about "
+        "7, taken, the fall exponential along the spur - a declared look.",
     ),
 }

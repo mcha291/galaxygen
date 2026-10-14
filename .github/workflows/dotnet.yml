@@ -1,0 +1,20 @@
+# The gateway's tests (BUILD_IV Phase W3): restore, build and test the .NET solution on every change to it.
+# The deployable gateway image is Phase W4's (image.yml gains a second job then).
+name: dotnet
+on:
+  push:
+    paths: ["gateway/**", ".github/workflows/dotnet.yml"]
+  pull_request:
+    paths: ["gateway/**", ".github/workflows/dotnet.yml"]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet restore gateway/Galaxygen.slnx
+      - run: dotnet build gateway/Galaxygen.slnx --no-restore -c Release
+      - run: dotnet test gateway/Galaxygen.Gateway.Tests/Galaxygen.Gateway.Tests.csproj --no-build -c Release

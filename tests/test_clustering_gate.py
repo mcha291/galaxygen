@@ -55,9 +55,12 @@ CONTROL_SEEDS = 4
 WIDTH = "CENSUS_CLUSTERING_WIDTH"
 
 # As measured at S61 on the finished census (default galaxy, layer on; slope / law at 47.5 pc / worst bin beyond 380 pc).
+# S62 (D221): was clouds (-0.636, 1.977, 0.0216), clusters (-0.670, 2.097, 0.0210) - the gas spurs on the gas
+# contrast move the clouds' placement (and the clusters born in them) by a few thousandths; both well inside the
+# judged window (|slope + 0.64| < 0.15) and flat beyond 380 pc (< 0.05).
 MEASURED = {
-    "clouds": (-0.636, 1.977, 0.0216),
-    "clusters": (-0.670, 2.097, 0.0210),
+    "clouds": (-0.6396, 1.9798, 0.0212),
+    "clusters": (-0.6686, 2.0928, 0.0208),
 }
 # The templates, measured by hand with this file's construction at S61 (each run about 30 s, its control 10-20 s):
 # as measured, not run here. Every one inside the judged window; ngc_4414 holds a third of the clouds, so its
@@ -73,7 +76,9 @@ assert all(abs(v[0] - (-0.64)) < 0.15 and v[2] < 0.05 for t in TEMPLATES_MEASURE
 # 300 pc, and 1 + omega in the bins holding 100 and 300 pc. Before: the S60 census (docs/S61_PROBE.md, default galaxy,
 # layer on). After: as measured at S61 with the field. Not judged (D220 part II item 1).
 SQUARE_BEFORE = {"clouds": (-0.096, 1.17, 1.18, 1.17), "clusters<=10Myr": (-0.108, 1.18, 1.46, 1.10)}
-SQUARE_AFTER = {"clouds": (-0.163, 1.24, 2.01, 1.16), "clusters<=10Myr": (-0.141, 1.30, 1.60, 1.24)}
+# S62 (D221): was {"clouds": (-0.163, 1.24, 2.01, 1.16), "clusters<=10Myr": (-0.141, 1.30, 1.60, 1.24)} - the gas
+# spurs place the clouds on the spurs' streaks too, and the young clusters with them.
+SQUARE_AFTER = {"clouds": (-0.170, 1.248, 2.088, 1.176), "clusters<=10Myr": (-0.121, 1.278, 1.800, 1.202)}
 # The default galaxy's field alone in a flat 6.08 kpc square (exact expectation; points through the instrument).
 FIELD_ALONE = {"exact": (-0.613, 2.324), "points": (-0.621,)}  # as measured at S61; the 48-seed mean is -0.646
 

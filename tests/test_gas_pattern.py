@@ -104,6 +104,7 @@ from __future__ import annotations
 
 import ast
 import collections
+import dataclasses
 import functools
 import math
 import re
@@ -124,6 +125,7 @@ from galaxy.stages import pattern as pt
 from galaxy.stages import pieces as pc  # S60 (D219): the stellar pattern of arm pieces the gas answers
 from galaxy.stages.gas_pattern import GAS_PATTERN, GAS_PATTERN_CONSTANTS, GAS_PATTERN_READS, GasPattern
 from galaxy.stages.pattern import BAR, PATTERN
+from galaxy.stages.spurs import SPUR_READS, SPURS  # S62 (D221 item 7 as amended): publishes gas_density_contrast
 
 COARSE = GridSpec(n_R=120, n_t=400, n_z=6)
 SMALL = GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36)
@@ -166,6 +168,14 @@ def shape_of(model, o) -> GasPattern:
     gp = compose.gas_pattern(o.fields, o.grid.R, constants(model))
     assert gp is not None and not gp.flat
     return gp
+
+
+def unspurred(gp: GasPattern) -> GasPattern:
+    """S62 (D221 item 7 as amended): the gas pattern's own law, without the spurs the ``spurs`` stage composes on it -
+    what this file derives by hand. The published field is the spurs composed on its cell means, g' = (1 - <S>) g + S
+    (held to the bit in ``test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divided``); a
+    flocculent disc (``ngc_4414``) has no spur and its pattern is this one."""
+    return dataclasses.replace(gp, spurs=None)
 
 
 def row(o, R: float) -> int:
@@ -353,8 +363,18 @@ def test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divid
     assert float((g - lane_floor(gp, R)[:, None]).min()) > -2e-13 and g.min() > 0.0
     # Against the point function at the cells' centres: another number, by the profile's curvature across a cell -
     # a layer-on number since S60 (D219), pinned apart in the test after this one with the centre samples' means.
-    point = gp.contrast(R, phi)
-    assert 0.0 < float(np.abs(g - point).max()) < 0.1 and point.tobytes() != g.tobytes()
+    # S62 (D221): was `point = gp.contrast(R, phi)` against `g`, the published field - which carries the spurs since
+    # S62: a spur is 60 pc across, under a cell's width, so a cell's mean stands up to 0.617 from its centre (the
+    # Milky Way, 5.96 kpc; pinned in the test after this one). The bound is the law's own, without the spurs (0.0120
+    # as before), and the published field is the spurs composed on the law's cell means, to the bit.
+    law = unspurred(gp)
+    law_cells = law.cell_means(R, edges)
+    if gp.spurs is None:
+        assert g.tobytes() == law_cells.tobytes()
+    else:
+        assert g.tobytes() == gp.spurs.compose_cells(R, edges, law_cells).tobytes()
+    point = law.contrast(R, phi)
+    assert 0.0 < float(np.abs(law_cells - point).max()) < 0.1 and point.tobytes() != law_cells.tobytes()
     # 360 divides 1440, so the response's centre samples average to 1 to rounding - but the lanes are laid in the
     # bar's frame, whose angle is no multiple of a cell, and their centre samples do not (S58: was < 5e-13 for both).
     # S60 (D219): on `ngc_4414` too the centre samples no longer average to 1 to rounding - the pieces' response
@@ -394,9 +414,17 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     them (S60, D219). The bounds stay in the test before this one."""
     model = prod[0].get(DEFAULT_MODEL)
     o = template_run(prod, template)
-    R, phi = o.grid.R, o.grid.phi
+    R, phi, edges = o.grid.R, o.grid.phi, o.grid["phi"].edges
     g = np.asarray(o.fields["gas_density_contrast"])
     gp = shape_of(model, o)
+    # S62 (D221): the published field carries the spurs (the Milky Way's 48 on 12 chains; `ngc_4414`, flocculent,
+    # none). A spur is narrower than a cell, so on the Milky Way a cell's mean stands 0.617 from its centre (5.96
+    # kpc), its centre samples' ring mean 2.52e-3 from 1, and the 36-cell grid's 2.53e-2. The law's own numbers,
+    # without the spurs, are the ones pinned before (S60 fourth pass), held below.
+    law = unspurred(gp)
+    law_point = law.contrast(R, phi)
+    assert float(np.abs(law.cell_means(R, edges) - law_point).max()) == pytest.approx({"milky_way": 1.200e-2, "ngc_4414": 2.243e-3}[template], rel=0.02)
+    assert float(np.abs(law_point.sum(axis=1) / law_point.shape[1] - 1.0).max()) == pytest.approx({"milky_way": 9.774e-6, "ngc_4414": 1.0655e-6}[template], rel=0.02)
     # S58 (D217): were 1.718e-3 and 1.716e-3. The Milky Way's lanes are narrow - half a kiloparsec across, a few
     # cells of this grid inside 3 kpc - so a cell's mean and its centre differ by 1.2 % of the ring's mean there;
     # `ngc_4414`, unbarred, shows its innermost rings untapered, where the response swings hardest.
@@ -411,9 +439,10 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # profile exactly); the pieces' forcing holds harmonics up to the solver's Nyquist number, so its centre samples
     # miss 1 by 1.07e-6 now, as the Milky Way's did by its lanes. S60 fourth pass: were 1.222e-2, 5.023e-3,
     # 9.82e-6 and `< 5e-13`.
-    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 1.200e-2, "ngc_4414": 2.243e-3}[template], rel=0.02)
+    # S62 (D221): were {"milky_way": 1.200e-2, ...} and {"milky_way": 9.774e-6, ...} - the law's, held above.
+    assert float(np.abs(g - point).max()) == pytest.approx({"milky_way": 0.6167, "ngc_4414": 2.243e-3}[template], rel=0.02)
     sampled = float(np.abs(point.sum(axis=1) / point.shape[1] - 1.0).max())
-    assert sampled == pytest.approx({"milky_way": 9.774e-6, "ngc_4414": 1.0655e-6}[template], rel=0.02)
+    assert sampled == pytest.approx({"milky_way": 2.523e-3, "ngc_4414": 1.0655e-6}[template], rel=0.02)
     # S58 (D217): the 36-cell centre samples read 1.257e-3 and 1.056e-3; with the lanes, and with `ngc_4414`'s
     # inner rings untapered, 2.53e-2 and 7.26e-3 - the cells' means are 1 to 5e-14 as before.
     # S59 (D218): were 2.529e-2 and 7.263e-3 - the centre samples of rings the segments have turned (the Milky
@@ -421,8 +450,12 @@ def test_the_cell_s_mean_against_its_centre_as_measured(prod, template):
     # S59 (D218 follow-up): were 3.018e-2 and 1.931e-3, the centre samples on the first build's winding.
     given = templates.overrides(templates.TEMPLATES[template])
     coarse = run(model, given, GridSpec(n_R=48, n_t=64, n_z=8, n_phi=36), only=GAS_PATTERN_READS + ("gas_density_contrast",))
-    centre = compose.gas_pattern(coarse.fields, coarse.grid.R, constants(model)).contrast(coarse.grid.R, coarse.grid.phi)
+    coarse_gp = compose.gas_pattern(coarse.fields, coarse.grid.R, constants(model))
+    centre = coarse_gp.contrast(coarse.grid.R, coarse.grid.phi)
     # S60 fourth pass: were 2.960e-2 and 4.913e-3.
+    # S62 (D221): the Milky Way's was 2.791e-2, the law's still (held after this one).
+    assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.534e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)
+    centre = unspurred(coarse_gp).contrast(coarse.grid.R, coarse.grid.phi)
     assert float(np.abs(centre.sum(axis=1) / 36 - 1.0).max()) == pytest.approx({"milky_way": 2.791e-2, "ngc_4414": 1.568e-3}[template], rel=0.02)
 
 
@@ -499,8 +532,11 @@ def h2_law(prod, template: str) -> dict:
     if gp.barred:
         angle = pt.bar_terms(R, gp.pitch_deg, gp.bar_length)[2]
         lanes = taper[carries, None] * gr.sector_mean(gp.lanes[carries], lo - angle, hi - angle)
+    # S62 (D221): `published` was the published field; it carries the spurs since S62, which no solver cell count
+    # touches - the law's own cell means are what the solver's errors are of (the field is the spurs composed on them,
+    # held in test_the_published_field_is_the_law_s_mean_over_each_cell_and_is_never_divided).
     _RUNS[key] = dict(means=means, weight=weight, lanes=lanes, R=R[carries], at_1440=np.abs(means[1440] - means[5760]),
-                      at_2880=np.abs(means[2880] - means[5760]), published=np.asarray(o.fields["gas_density_contrast"])[carries],
+                      at_2880=np.abs(means[2880] - means[5760]), published=unspurred(gp).cell_means(R, edges)[carries],
                       exact=weight * means[5760] + lanes)
     return _RUNS[key]
 
@@ -1051,8 +1087,11 @@ def test_the_law_rederived_by_hand_on_three_rings(prod):
     assert o.decls["disc_surface_density"].unit == "Msun/pc2" and o.decls["epicyclic_frequency"].unit == "km/s/kpc"
     pitch = math.radians(float(F["pitch_angle"]))
     a_bar = float(F["bar_half_length"])
-    published = np.asarray(F["gas_density_contrast"])
     gp = shape_of(model, o)
+    # S62 (D221): was the published field, which carries the spurs since S62 (the Milky Way's at 4 kpc: 1.12 off the
+    # hand's composition); the hand rederives the gas pattern's law, and the field is the spurs composed on it.
+    published = unspurred(gp).cell_means(R, edges)
+    assert np.asarray(F["gas_density_contrast"]).tobytes() == gp.spurs.compose_cells(R, edges, published).tobytes()
     n = gr.CELLS
     assert n == 1440
     # S60 (D219 item 5): was `f = m A_m(untapered)/(X sin p)`, the five modes' forcing by hand, held to the module's
@@ -1138,7 +1177,11 @@ def test_the_law_s_three_rings_as_measured(prod):
     i = row(o, 4.0125)
     # S59 (D218 follow-up): was (4.990, 0.4738) - turned otherwise by segments of relative pitch: (5.366, 0.4738).
     # S60 fourth pass: was (5.366, 0.4738) - the pieces' response meets the lane: (5.320, 0.6815).
-    assert float(published[i].max()) == pytest.approx(5.320, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6815, abs=1e-3)
+    # S62 (D221): was (5.320, 0.6815) - a spur's foot on the ridge at 4 kpc lifts the crest; the law's own, without
+    # the spurs, is the number it was.
+    assert float(published[i].max()) == pytest.approx(5.910, abs=2e-3) and float(published[i].min()) == pytest.approx(0.6783, abs=1e-3)
+    law = unspurred(gp).cell_means(R[i : i + 1], o.grid["phi"].edges)[0]
+    assert float(law.max()) == pytest.approx(5.320, abs=2e-3) and float(law.min()) == pytest.approx(0.6815, abs=1e-3)
 
 
 def test_the_forcing_carries_the_saturation_by_hand_on_the_most_saturated_seed(prod):
@@ -1597,13 +1640,20 @@ def test_the_gate_s_predictions_as_measured(prod):
         (10.9875, (1.77, 0.38, 1.89), (1.1903, 0.80057, 1.2185), (1.1902, 0.80059), False),
         (12.0375, (1.20, 0.81, 1.28), (1.1030, 0.89953, 1.0883), (1.1030, 0.89954), False),
     )
+    # S62 (D221): the published field's (crest, trough) with the spurs, where they move it (beyond 10 kpc no spur
+    # reaches the ring: <S> under 2e-9).
+    SPURRED = {4.0125: (5.9102, 0.67833), 5.9625: (2.4148, 0.46399), 7.9875: (1.4516, 0.64389)}
     for radius, predicted, built, composed, held in table:
         i = row(o, radius)
         assert float(R[i]) == pytest.approx(radius, abs=1e-9)
         got = (float(s[i].max()), float(s[i].min()), float(ratio[i]))
         assert got[0] == pytest.approx(built[0], abs=2e-3) and got[2] == pytest.approx(built[2], abs=2e-3), radius
         assert got[1] == pytest.approx(built[1], rel=0.03), radius
-        assert (float(g[i].max()), float(g[i].min())) == pytest.approx(composed, abs=2e-4), radius
+        # S62 (D221): the published field carries the spurs - the column is the law's own cell means (was the field;
+        # the same numbers), and the field's crest and trough with the spurs are SPURRED's where a spur reaches.
+        law = unspurred(gp).cell_means(R[i : i + 1], o.grid["phi"].edges)[0]
+        assert (float(law.max()), float(law.min())) == pytest.approx(composed, abs=2e-4), radius
+        assert (float(g[i].max()), float(g[i].min())) == pytest.approx(SPURRED.get(radius, composed), abs=2e-4), radius
         # Against the prediction: the crest and the ratio within 0.5 % and the trough within 0.006 where it held.
         near = abs(got[0] / predicted[0] - 1.0) < 5e-3 and abs(got[2] / predicted[2] - 1.0) < 5e-3 and abs(got[1] - predicted[1]) < 6e-3
         assert near == held, (radius, got, predicted)
@@ -1846,7 +1896,8 @@ def test_nothing_of_the_ridge_builds_the_field(prod):
     c = constants(model)
     lean = compose.gas_pattern(o.fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS})
     assert lean.cell_means(R, edges).tobytes() == np.asarray(o.fields["gas_density_contrast"]).tobytes()
-    fields = {n: o.fields[n] for n in GAS_PATTERN_READS}
+    # S62 (D221): was GAS_PATTERN_READS alone - the published field carries the spurs, read from their table.
+    fields = {n: o.fields[n] for n in (*GAS_PATTERN_READS, *SPUR_READS)}
     # S60 (D219): the gas answers the stellar pattern of pieces, handed over by `compose`; its own door takes it.
     stars = pc.ArmPattern.from_fields(fields, R)
     assert GasPattern.from_fields(fields, R, {k: c[k] for k in GAS_PATTERN_CONSTANTS}, stars).cell_means(R, edges).tobytes() == lean.cell_means(R, edges).tobytes()
@@ -1918,7 +1969,8 @@ def test_the_field_moves_with_the_pattern_seed_and_not_the_world_seed(model):
     assert not np.array_equal(a["gas_density_contrast"], t["gas_density_contrast"])  # S56: the phases are the layer's
     assert GAS_PATTERN.reads_seeds == ()
     # S58 (D217 follow-up): was ["seeded"] - the stage's second field, the contrast the star formation law reads.
-    assert [d.provenance for d in GAS_PATTERN.publishes] == ["seeded", "seeded"]
+    # S62 (D221): was ["seeded", "seeded"] - the gas's own contrast is the spurs stage's since S62.
+    assert [d.provenance for d in GAS_PATTERN.publishes] == ["seeded"] and [d.provenance for d in SPURS.publishes] == ["seeded"]
     # It moves as the gas's own contrast does; at these defaults (a barred galaxy) the two are not one field.
     name = "star_formation_gas_contrast"
     assert np.array_equal(a[name], b[name]) and np.array_equal(a[name], w[name]) and not np.array_equal(a[name], c[name])
@@ -1950,7 +2002,11 @@ def test_the_point_function_is_one_function_and_the_published_field_is_its_cell_
     assert published.tobytes() == gp.cell_means(R, edges).tobytes() and published.tobytes() != on_mesh.tobytes()
     # S58 (D217): was 1.718e-3; the lanes are a few cells wide inside 3 kpc, and a cell's mean is 1.2e-2 from its centre.
     # S59 (D218): was 1.198e-2 - on a ring the winding's segments have turned, inside the bar's reach (3.79 kpc).
-    assert float(np.abs(published - on_mesh).max()) == pytest.approx(1.222e-2, rel=0.02)  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    # S62 (D221): was 1.222e-2 - a spur, narrower than a cell, puts a cell's mean 0.665 from its centre; the law's own,
+    # without the spurs, reads 1.198e-2, held to the old pin.
+    assert float(np.abs(published - on_mesh).max()) == pytest.approx(0.6651, rel=0.02)  # S59 (D218 follow-up): was 1.217e-2 (now at 3.94 kpc)
+    law = unspurred(gp)
+    assert float(np.abs(law.cell_means(R, edges) - law.contrast(R, phi)).max()) == pytest.approx(1.222e-2, rel=0.02)
     idx = np.array([5, 77, 190, 399]), np.array([0, 91, 180, 359])
     assert np.array_equal(gp.contrast_at(R[idx[0]], phi[idx[1]]), on_mesh[idx])
     assert np.array_equal(gp.contrast_at(R[:, None], phi[None, :]), on_mesh)
@@ -1991,12 +2047,14 @@ def test_a_point_reads_its_two_rings_carried_to_its_radius_and_its_own_bar_term(
     lanes = (1.0 - share) * gr.interpolate(gp.lanes[k], phi - bar_angle) + share * gr.interpolate(gp.lanes[k + 1], phi - bar_angle)
     assert np.allclose(gp.lanes_at(radius, phi - bar_angle), lanes, rtol=1e-13, atol=0.0) and gp.barred
     by_hand = (1.0 - taper[0]) * gp.response_at(radius, phi) + taper[0] * lanes
-    assert np.allclose(gp.contrast_at(np.full_like(phi, radius), phi), by_hand, rtol=1e-13, atol=0.0)
+    # S62 (D221): was `gp.contrast_at` - which carries the spurs since S62, composed on this: g' = (1 - <S>) g + S.
+    assert np.allclose(gp.unspurred_contrast_at(np.full_like(phi, radius), phi), by_hand, rtol=1e-13, atol=0.0)
+    assert np.allclose(gp.contrast_at(np.full_like(phi, radius), phi), gp.spurs.compose_at(np.full_like(phi, radius), phi, by_hand), rtol=1e-13, atol=0.0)
     # ... and deep inside the bar, where the lanes carry nearly all the weight: the same composition.
     k_in, deep = 26, float(0.6 * R[26] + 0.4 * R[27])
     t_in = pt.bar_terms(np.array([deep]), gp.pitch_deg, gp.bar_length)[0]
     inner = (1.0 - t_in[0]) * gp.response_at(deep, phi) + t_in[0] * (0.6 * gr.interpolate(gp.lanes[k_in], phi - bar_angle) + 0.4 * gr.interpolate(gp.lanes[k_in + 1], phi - bar_angle))
-    assert np.allclose(gp.contrast_at(np.full_like(phi, deep), phi), inner, rtol=1e-12, atol=0.0) and t_in[0] > 0.97
+    assert np.allclose(gp.unspurred_contrast_at(np.full_like(phi, deep), phi), inner, rtol=1e-12, atol=0.0) and t_in[0] > 0.97  # S62 (D221): was gp.contrast_at
     # Beyond the grid: the end ring alone, carried (S60: until then held as it is).
     assert np.all(np.isfinite(gp.response_at(99.0, chi))) and gp.response_at(99.0, chi).min() > 0.0
     # A point's mean round its ring is 1 at any radius: both blends are convex blends of mean-1 profiles, and a
@@ -2061,10 +2119,12 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # S59 (D218): was (2.73970, 0.024689) - the ring at R0 is the curve it was, its cells' means read at another phase.
     # S59 (D218 follow-up): was (2.73884, 0.024605) - the same curve's cell means at yet another phase.
     # S60 fourth pass: was (2.73831, 0.024599).
-    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.36161, 0.80241), abs=2e-5)
+    # S62 (D221): was (1.36161, 0.80241) - a spur's foot on the ridge at R0 lifts the crest (the ring's spurs' mean
+    # <S> takes the trough down by its share).
+    assert (float(g[i].max()), float(g[i].min())) == pytest.approx((1.87998, 0.80108), abs=2e-5)
     # S57 (D216): was 1.603 at R0 and 1.194 by gas mass. S57 (D216 G3): was 1.3443 and 1.1157 on the centre samples.
     # S60 fourth pass: was 1.34398.
-    assert float((g[i] ** 2).mean()) == pytest.approx(1.02626, abs=2e-5)  # S59: 1.343975, to the pin's tolerance the number it was
+    assert float((g[i] ** 2).mean()) == pytest.approx(1.02810, abs=2e-5)  # S62 (D221): was 1.02626, the spurs. S59: 1.343975
     weight = np.asarray(F["gas_surface_density"]) * R
     # S58 (D217): was 1.11562. The lanes: inside the bar the gas is thinned to four tenths of the ring's mean off two
     # narrow lanes at seven times it, so a process quadratic in the gas gains there - 1.312 over the disc by gas mass.
@@ -2072,7 +2132,7 @@ def test_the_default_field_s_range_and_its_mean_square(model):
     # mean square of their sum moves with it: 1.31031.
     # S59 (D218 follow-up): was 1.31031.
     # S60 fourth pass: was 1.31098.
-    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.21063, abs=2e-5)
+    assert float(((g**2).mean(axis=1) * weight).sum() / weight.sum()) == pytest.approx(1.21081, abs=2e-5)  # S62 (D221): was 1.21063, the spurs
 
 
 # --- what the stage reads, where it sits ---------------------------------------------------------------------
@@ -2109,14 +2169,17 @@ def test_the_stage_reads_no_gas_and_sits_at_checkpoint_three():
     # S58 (D217 follow-up): was {"gas_density_contrast"} - beside it the contrast as the star formation law reads
     # it, the lanes' excess spread evenly over the bar's footprint ("the lanes' one unsourced number (the width)
     # must not drive a census"). Its about says what it is and why, and names no constant (rule D5).
-    assert [d.name for d in GAS_PATTERN.publishes] == ["gas_density_contrast", "star_formation_gas_contrast"]
-    second = GAS_PATTERN.publishes[1]
+    # S62 (D221 item 7 as amended): was ["gas_density_contrast", "star_formation_gas_contrast"] - the gas's own
+    # contrast is published by the `spurs` stage after the gas column the spurs' spacing reads; its declaration stays here.
+    assert [d.name for d in GAS_PATTERN.publishes] == ["star_formation_gas_contrast"]
+    assert [d.name for d in SPURS.publishes] == ["gas_density_contrast"] and SPURS.publishes[0] is gm.GAS_DENSITY_CONTRAST
+    second = GAS_PATTERN.publishes[0]
     assert second.composed and second.neutral == 1.0 and second.axes == ("R", "phi") and second.provenance == "seeded"
     assert "Star formation therefore follows the bar's footprint, not the lanes" in second.about
     assert "a declared placeholder that no source gave" in second.about and "The dust and the cloud census keep the lanes" in second.about
     assert "A composed field: with the randomness layer off it is 1 everywhere" in second.about
     assert not re.search(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b", second.about + GAS_PATTERN.about)
-    about = GAS_PATTERN.publishes[0].about
+    about = gm.GAS_DENSITY_CONTRAST.about  # S62: was GAS_PATTERN.publishes[0].about
     assert "the mean over its azimuthal cell" in about and "the offset is zero for a lone mode" in about
     # S60 (D219): was "within about a degree of each other over the mid disc, to either side" - re-read to the 240-galaxy
     # sweep's counts (test_gate_s_numbers_on_every_seed_the_suite_draws_as_measured: 9 485 / 1 740 / 9 197 / 14 552, 20 cells).

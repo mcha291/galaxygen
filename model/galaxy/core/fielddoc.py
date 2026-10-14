@@ -44,7 +44,9 @@ OBJECTS: tuple[str, ...] = ("system", "star", "planet", "belt", "moon", "cloud",
 # (S60, D219; it took the place of S59's arm_segment, the common winding's seeded segments, retired with it).
 # cell: one row a level-0 cell of the catalogue grid, ring by ring (S61, D220 part II item 8) - the clustering field's
 # mean in each cell, a number a renderer divides by; the rows are the cells, which are not drawn.
-TABLES: tuple[str, ...] = ("arm_piece", "cell")
+# gas_spur: the realised census of gas spurs off the arm chains' ridges, the layer's (S62, D221 item 7 as amended).
+# ring: one row a level-0 ring, innermost first (S62, D221 item 6) - the gas fluctuation field's per-ring parameters.
+TABLES: tuple[str, ...] = ("arm_piece", "cell", "gas_spur", "ring")
 assert not set(TABLES) & set(OBJECTS), "a table is not an object class: the two closed lists share no name"
 SCALES: tuple[str, ...] = ("linear", "log", "symlog")
 PROVENANCE: tuple[str, ...] = ("derived", "seeded", "synthetic")  # rule A10 (four kinds since D212); inputs are the other
