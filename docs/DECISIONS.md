@@ -12260,3 +12260,37 @@ drawn, and a new surface beside the viewer is the honest place for Vue experienc
 description of the model (physics, randomness, objects) is the honest conceptual picture; a materialisation layer as
 a refactor is not worth a session until a phase needs the seam (the nebular and bubble chain reads realised objects,
 so the layers are not a one-way stack).
+
+**The independent review (an Opus reviewer at 74ee412, read-only, its own numpy estimators, walk, composition
+identity, autocorrelation and continuity checks; the note in the lead's scratchpad).** *Held, re-derived:* the
+spectra (ring 1 −1.523 / −2.407 with the break at 78 pc; ring 8 below the break −2.460; ring 11 −2.515; ring 13
+−2.512), the three coarse octaves bit-identical to L1's at 200 points, the width (0.2455 / 0.2465 / 0.2464 against σ²
+0.25097), the constant (Heiles & Troland §II.2 and Table 2: 70 K by column at |b| > 10°, 48 K by component, 63 K at
+low latitude; c_s 0.6745, M 8.895, σ 0.50097), unit mean per cell (4.5e-14 through the evaluator; the denser lattice
+8.4e-3 / 3.3e-3 / 1.2e-3 on three cells), the spurs' table to the printed digit on six spurs with its own walk, the
+walk's 0.0516 over all 48 feet, 48 spurs on 12 chains and none on `ngc_4414`, the ring means (9.97e-14 Milky Way,
+5.0e-14 default) and the composition identity 0.0, positivity (the contrast's minimum 0.385, 0.1245 on `ngc_4414`),
+⟨S⟩ ≤ 0.009214, the star-formation contrast identical to `main`, the spur's continuity (steps 1.28e-4 against its own
+bound 1.26e-4; 4.4e-5 across the foot, 6.3e-6 across the tip), the layer-off run bit-identical to `main` but the 20
+new fields, the 184 acceptance-row lines byte-identical, 35 stages, the streams (the spurs on `("gas_spurs", "spur",
+chain)`, the field drawing none; nothing drawn twice), ten re-pins with their old values, the templates' exceptions.
+*Findings, ruled:* (1) **BLOCKER — the gas field was sheared the wrong way round**: the disc turns towards
+decreasing φ (`pattern.rotation_sense`; the arms' azimuth grows outward on 45 of 47 Milky Way pieces) and the field
+read the noise at φ − Θ(R) with dΘ/dlnR < 0, a shear for rotation towards +φ, so its structures led — the
+autocorrelation's major axis in (along +φ, outward) (−0.93, +0.37), (−0.90, +0.44), (−0.78, +0.62) on rings 1, 8, 11,
+opposite to the arms; gate (c) measured in a +φ frame against `shear_anisotropy` in the same frame and could not see
+the sense; **fixed before the merge** (−`rotation_sense` on the strain as the spurs do, a test of the elongation's
+sense against the arms' winding, the vectors regenerated). (2) **The solar ring's miss had the wrong numbers and
+the wrong direction**: the band 600–338 pc holds three log bins and single seeds read −0.29 to −2.91; the test's
+three seeds gave −1.97, ten −1.55, **thirty −1.233 ± 0.060** (the reviewer's own estimator −1.173) — a real miss, too
+shallow by 0.3, as the plateau mechanism predicts; and the break, said to be judged, had no test — with thirty seeds
+it reads **341 pc against π·h 338**; the xfail restated and a break check added. (3) **#164 confirmed** (the composed
+over the unspurred at the feet median 1.998; the point function's R₀ crest 1.362 → 2.609) — **merged knowingly**, the
+mend reworded (the foot at the ridge's downstream half-width). (4) The walk reads the stellar chain, where the gas
+crest can stand 500 pc away: 11 feet at exactly 1.0 (not 9) and 3 below 1 — **#165**, the column relabelled. (5)
+`test_e`'s "every census untouched" holds against the branch before the stage, not `main` (the spurs moved every
+cloud, cluster, HII and bubble column): said so. (6) The `conserves` texts gain the lattice error, ⟨S⟩, the walk's
+0.052, and "no radial field moves" reads to 4.4e-16 (last bits in 4–13 cells of four HII fields on the Milky Way).
+(7–8) The autocorrelation's half-maximum ratio 4.91 / 2.36 / 1.91 against the formula's 5.83 / 2.72 / 2.17 (value
+noise's lattice anisotropy); the steep slope scalloped by octave (−2.8 to −3.05 mid-band, −2.17 in the transition
+octave) — recorded. (10) The stage 4.3 s cold, about a fifth of a layer-on run, for a field nothing reads (#163).
