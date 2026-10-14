@@ -4,7 +4,8 @@
 that day on the owner's word ("please create a plan …") and revised the same
 day on the owner's word — "Fable usage is limited … make sure only work that really benefits from using Fable uses
 that, and push the rest to Opus": every row is now Opus-led, and Fable is called at four named gates (§3).**
-Fourteen board rows, S53–S66, **and a fifteenth since 2026-10-05: Phase P5, the arms as a census of pieces, inserted at S60 on the owner's ruling (D219, §7 rulings 11–12); every later phase runs one session on, to S67.** S53 records the owner's answers (§7) in `DECISIONS.md` as D212. Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
+Fourteen board rows, S53–S66, **and a fifteenth since 2026-10-05: Phase P5, the arms as a census of pieces, inserted at S60 on the owner's ruling (D219, §7 rulings 11–12); every later phase runs one session on, to S67; and since 2026-10-14 two more rows on the owner's adoption of
+`BUILD_IV.md` (D222; §7 rulings 13–15): Phase V6b at S65 and Phase V9 at S68, so Audit V is S69.** S53 records the owner's answers (§7) in `DECISIONS.md` as D212. Hand a session this document, `RULES.md`, `BRIEF.md`, `RENDER_PHYSICS.md` and the sections
 of `GALAXY_INPUTS.md` its phase names.
 
 Everything here is `[inferred]` design unless tagged. Every source named is `[recall]` and **NEEDS SOURCING**: it is
@@ -326,6 +327,12 @@ timings. **Agents:** builder A (render route and its tests), builder B (viewer).
   model does not publish and is the named alternative.
 - **Bright stars by tiles** to 10⁶ (T28's windowed request); **the depth-aware composite** (T5).
 
+**Added 2026-10-14 on the owner's word (BUILD_IV §4b).** Every new answer this phase adds to the API — the clouds'
+extinction, the HII knots, the bright stars' tiles — is **keyed by cell and level on the wire**, as `/api/region`,
+`/api/clouds` and `/api/bright` already are: a window is resolved to the level-k cells it meets before the route,
+and any rasterisation by window is the viewer's. A window-keyed route cannot be precomputed, and BUILD_IV ships
+each template's answers as files.
+
 **Gate:** each closure (dust mass per ring, Hα per window, points plus field equal the render); the frame-time
 readout; goal metrics (dark covering fraction, point counts). **Agents:** three builders, one per group.
 
@@ -533,7 +540,18 @@ against a control stays green.
 
 **Agents:** two readers; builder A (evaluator, vectors); builder B (spurs).
 
-### Phase V7 — the layer in the viewer (S65)
+### Phase V6b — the zoomed-in point layer (S65) — inserted 2026-10-14 on the owner's adoption of BUILD_IV (D222, ruling 13)
+
+The owner's direction of 2026-10-14 puts the zoomed-in render beside the galaxy-scale one, and no phase scheduled
+**T4** (`VIEWER_TASKS.md` §2, debt #113): below 1 kpc the points are the level-0 sample and the bright catalogue,
+which thin out as the view narrows. This phase draws **the level-k stars as the point layer** at the levels the
+view reaches, each star through the filter set as the bright catalogue's are (T2's response), the picker reading
+`level`, `cell`, `index`; the sample and the bright catalogue withdrawn where the level-k points carry them (single
+counting, T3's rule). **Cell-keyed on the wire** (V6's added sentence applies). **Gate:** T2's closure at each
+level (points plus field equal the render's total within the window); the frame-time readout; a census identical
+at every level (S40's assertion kept). **Agents:** one builder, one reviewer.
+
+### Phase V7 — the layer in the viewer (S66)
 
 The GLSL twin of the noise (matching the vectors to 1e-5); the diffuse dust modulated per pixel in the march; the
 spurs; the bar's body and lanes; the "physics only" switch. **Added 2026-10-05 (D219):** the young starlight of
@@ -541,13 +559,33 @@ V5 — unresolved, and most of what a blue-white complex is — modulated per pi
 finest scales dropped with age as L1 rules for the bright catalogue; unit mean per cell keeps each ring's light. **Gate:** the vectors; the frame-time readout; each
 ring's dust on screen unchanged by the layer (`__galaxygenFrameSum` on a dust-only frame). **Agents:** two builders.
 
-### Phase V8 — the display defaults, the instrument, the goal captures (S66)
+### Phase V8 — the display defaults, the instrument, the goal captures (S67)
 
 T1 per template, from the owner's tuning. *Ruled here (T9):* a point's sprite is scaled by the template's distance
 and the instrument's pixel scale, both carried by the template. NGC 4414's instrument look; committed captures of
 both templates beside their goals; the goal metrics' final table against Phase 0's baseline. **Agents:** one builder.
 
-### Audit V (S67) — **gate G4**
+### Phase V9 — the generate-first edit panel (S68) — BUILD_IV's W1, moved here on adoption (D222)
+
+**The owner's direction (2026-10-14):** "instead of going through generation step by step with locks and stuff …
+produce a galaxy right away. If a user wants it they can then enable edits and change the variables, which should
+still be grouped for convenience but use whatever makes sense instead of strictly enforcing a sequential process."
+The landing is already a generated galaxy (D198, D213); what goes is the lock-and-sequence machinery behind
+"Edit galaxy". **Build:** the React workflow panel replaced by a control panel of the inputs in their registry
+groups (the checkpoint names, derived from the stage graph, kept as group names with no order), every control
+enabled at all times, seeds as rerolls, pins read-only with their source, one **Generate** enabled when any value
+differs from the shown galaxy with a dirty marker per group, **Reset to template**; the previous galaxy stays on
+screen, marked stale, until the new one returns; the checkpoint previews kept as a Science tab reached without
+reopening anything (T18 discharged by construction); `useWorkflow` reduced to values, the shown query and the
+generate action; the reference client `interface/` keeps its routes and loses the staged workflow (BUILD_IV §7
+ruling 2 (a)), `flow.js` reduced to what the panel needs; **rule D1 amended** to BUILD_IV Appendix A's text, the
+old text kept as history. No model change: a run is a function of the inputs and `resume=` reuses what is unchanged.
+**Gate:** the picture test's captures unchanged byte for byte (the landing did not move); vitest green with the
+lock and status tests replaced by generate-and-reset tests; `tests/test_viewer.py` and `tests/js/flow.test.mjs`
+rewritten to the new rule; `tsc -b` and `vite build` clean; a reviewer walks the panel and reports every control
+reachable without confirming anything. **Agents:** one builder, one reviewer.
+
+### Audit V (S69) — **gate G4**
 
 Opus agents, blind to the builders' reports: every citation entered since S51 read again; every synthetic field's
 conservation and statistic re-measured; I1–I5 re-derived, not re-run; a picture traced feature by feature to a
@@ -572,9 +610,11 @@ The lead assembles the findings. **Then G4:** Fable's verdict on each, and the f
 | **62** | L2 | The gas fluctuation field and its twin's vectors; spurs | 55, 57, 60 | Opus | — |
 | **63** | V5 | The field's light by age | the model phases (the owner's order) | Opus | — |
 | **64** | V6 | Clouds, HII knots, clusters and bright stars at whole-galaxy scale | 63 | Opus | — |
-| **65** | V7 | The layer in the shader; the physics-only switch; the young light by the clustering field | 62, 64 | Opus | — |
-| **66** | V8 | Display defaults, instrument look, goal captures | 65, the owner's tuning | Opus | — |
-| **67** | — | Audit V | 53–66 | Opus | **G4** |
+| **65** | V6b | The zoomed-in point layer: the level-k stars as the points below 1 kpc (T4), cell-keyed (inserted 2026-10-14, D222) | 64 | Opus | — |
+| **66** | V7 | The layer in the shader; the physics-only switch; the young light by the clustering field | 62, 64 | Opus | — |
+| **67** | V8 | Display defaults, instrument look, goal captures | 66, the owner's tuning | Opus | — |
+| **68** | V9 | The generate-first edit panel; locks retired, D1 amended (BUILD_IV's W1, moved here at adoption, D222) | — | Opus | — |
+| **69** | — | Audit V | 53–68 | Opus | **G4** |
 
 55 → 56 → {57, 58} → 59 → 60 is the hard chain on the model side; 61 and 62 stand on 55's primitives and on 60's arms. **The model's
 phases come first and the viewer's follow, on the owner's word (§7, ruling 9)**; §5 keeps the phases in the order
@@ -597,6 +637,9 @@ any conditional gate a stop condition opens.
 | 10 | The dependency rule stays numpy-only | **"ok"**: the runtime stays numpy-only; two development-only tools are allowed — Pillow, to read pictures in `goal_metrics`, and Playwright, for the picture test |
 | 11 | *(2026-10-05, after S59; D219)* The arms: fewer and stronger modes (A), a ridge per arm (B), or arm pieces as a census with the arm-number law as each ring's budget (C) | **"Take C"**: Phase P5, inserted at S60 |
 | 12 | *(2026-10-05; D219)* The picture-facing phases ahead of L1 and L2? | **"don't reorder the sessions"**: the order stands; P5 goes in ahead of L1 (the lead's reading of the two rulings together, told to the owner) and every later phase runs one session on |
+| 13 | *(2026-10-14; D222, BUILD_IV §4b)* The zoomed-in point layer, T4: in V6, a short V6b, or left out | **Adopted with the recommendation**: V6b, inserted at S65; every later phase runs one session on |
+| 14 | *(2026-10-14; D222)* V6's new routes cell-keyed on the wire, so BUILD_IV can bundle them | **Adopted**: the sentence entered in Phase V6's text the same day |
+| 15 | *(2026-10-14; D222)* BUILD_IV's edit-panel work (W1) and its rule D1 amendment: in BUILD_IV, or here as a viewer row | **Adopted with the recommendation**: here, as Phase V9 at S68, after V8, nothing reordered; BUILD_IV keeps to deployment |
 
 ---
 

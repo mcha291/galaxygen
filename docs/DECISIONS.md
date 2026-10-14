@@ -12187,3 +12187,76 @@ against the pin 0.98675 / 0.99042 / 0.99454 — inside 1e-3, not re-pinned; the 
 8 of 8 on the second compare. EXIT=0 on test_gas_pattern (68, 36 min), test_pieces minus the gate test, the
 clustering gate, test_spurs, clouds, clusters, bar, region synthesis, render, api, v4, nebular, bubbles, audit III,
 the S45 diagnosis, dust layer; the templates after the lead's exception.
+
+### D222. BUILD_IV adopted — deployment only: the template bundles, a .NET gateway, two container apps, smoothness measured; the edit panel and the zoomed-in point layer moved into BUILD_III as V9 and V6b; the gateway scaffolded (the owner's rulings of 2026-10-14)
+
+**The owner, in chat, on 2026-10-14**, after a review of the project's structure, the live deployment and the record:
+"I want to move away from the staged generation … produce a galaxy right away. If a user wants it they can then
+enable edits and change the variables, which should still be grouped for convenience but use whatever makes sense
+instead of strictly enforcing a sequential process. The emphasis is now on generating a realistic galaxy and
+creating good looking renders from it, including when zoomed in. This also means having some pregenerated galaxies
+as templates. The web deployment should have the templates cached so that users can switch between templates and
+zoom in or out reasonably smoothly. If they edit the templates it is okay for generation to take a while." Then, on
+the gateway: no accounts, but limits and share links, as a project to get modern .NET experience in. Then "please
+create a plan to implement this"; then, asked whether the plan could keep to deployment alone, the split; then
+**"adopt the plan with your recommendations except for 12, scaffold the project for me."** Written before any code
+moved (D113). This entry is written by the Fable session that wrote the plan, beside S62's close on the same branch.
+
+**What was found first (read-only `az` queries, 2026-10-14; not in the repository).** The Container Apps
+environment `galaxygen-env` reports itself suspended for a disabled subscription; the app's provisioning state is
+Failed and its template fields are empty; the public URL does not answer; the subscription now reads Enabled. The
+last rollout was 2026-09-25, image `ghcr.io/mcha291/galaxygen:d60f1ee` — before every session from S25. The record
+has no .NET direction anywhere: the S0 prompt opens "Python core plus a web viewer" and the design documents assume
+Python throughout; the owner's recollection of asking for a .NET backend is not in any document the sessions read.
+
+**The plan: `docs/BUILD_IV.md`.** Its §4b, written on the owner's compatibility question, found: no remaining
+BUILD_III row reads the staged flow; V7 is bundle-safe by construction; V6's new routes must be cell-keyed on the
+wire to be precomputable; the deepest zoom cannot be bundled (level 3 of the cell hierarchy is of order sixty times
+the million-star catalogue, and since L1 a cell's draw costs its ring); and no phase scheduled T4, the zoomed-in
+point layer. On the owner's question the plan was split before adoption: **BUILD_IV is W2–W5, deployment only.**
+
+**The rulings (BUILD_IV §7; every recommendation adopted, 12 excepted).** (1) W3 now in parallel on its own
+branch; W2, W4, W5 after V7. (2) The reference client keeps its routes and loses the staged workflow. (3) Any input
+at any time, regenerate whole. (4) Share links as a short id over a stored record, the result cached beside it, a
+stateless link as the copy-the-inputs fallback. (5) 60 requests a minute per client, 1 concurrent generate with a
+queue of 10, 120 s the longest route. (6) All shipped filter sets; levels 0–1 whole, level 2 as the probe allows,
+3 on demand; the size bound after the probe. (7) .NET 10 LTS, ASP.NET Core minimal API, YARP, xunit, Aspire,
+under `gateway/`. (8) Two container apps, the model's ingress internal. (9) Minimum replicas zero on both. (10)
+The smoothness bound 1 s warm, 5 s cold, checked against the probe. (11) The model's in-memory galaxy cache kept.
+**(12) The owner's word: "scaffold the project for me" — an agent scaffolds the gateway; the features (the queue,
+share links, the hash-keyed cache, the bundle routes) are the owner's.** (13) T4 as a short V6b after S64. (14)
+V6's cell-keyed sentence entered in BUILD_III the same day. (15) The deepest zoom on a template may wake the model
+within W5's bound until the probe says otherwise.
+
+**The board and the plans.** `GALAXY_PLAN.md`: rows 65 (V6b), 68 (V9), 70–73 (W3, W2, W4, W5) inserted; V7, V8
+and Audit V move to 66, 67, 69; §5g written. `BUILD_III.md`: the header, Phases V6b and V9 with their gates, the §6
+table, §7 rulings 13–15, the V6 sentence. `BUILD_IV.md`: status ADOPTED, W1 marked as moved with its text kept, the
+costs table, §7's answer paragraph, Appendix A's heading saying when each amendment enters (D1 at V9, D3 and D5 at
+W3's merge). `VIEWER_TASKS.md`: T4, T18, T19 absorbed. `RESUMING.md`: one line. **No rule is amended by this entry;
+D1 changes at S68, D3 and D5 when the gateway merges.** No model code, number, row or test moved.
+
+**The scaffold (`gateway/`, ruling 12), built and tested on this machine (.NET SDK 10.0.301).** `Galaxygen.slnx`
+with four projects: `Galaxygen.Gateway` (ASP.NET Core minimal API: `Program.cs` with the sliding-window limiter per
+client address and the concurrency limiter on `/jobs`, YARP in code sending `/api/{**rest}` to `Gateway:Model:
+BaseUrl` with the 120 s activity timeout, output caching registered, static serving of the frontend build and the
+bundles directory with immutable cache headers and the SPA fallback, `/healthz` reporting what was found, `/jobs`
+and `/share` route groups returning 501 at the `TODO(W3)` marks; `GatewayOptions.cs`, `Proxy.cs`,
+`StaticRoots.cs`); `Galaxygen.Gateway.Tests` (xunit through `WebApplicationFactory`, no model behind it: the health
+route, the 501s, the limiter's 429 past its permit, the proxy's route and cluster — **4 passed**);
+`Galaxygen.AppHost` (Aspire: the model as a container from the repository's root `Dockerfile` with its `/api`
+health check, the gateway project given the container's endpoint; the storage emulator a marked TODO) and
+`Galaxygen.ServiceDefaults` (the template's OpenTelemetry, health and resilience). `gateway/Dockerfile` (W4's image,
+built from the repository root), `.github/workflows/dotnet.yml` (restore, build, test on changes under `gateway/`),
+`gateway/README.md` (run, configure, what goes where), `.gitignore` for `bin/`, `obj/`, `bundles/`. Packages:
+`Yarp.ReverseProxy` 2.3.0, `Azure.Data.Tables` 12.13.0, `Azure.Storage.Blobs` 12.30.1,
+`Microsoft.AspNetCore.Mvc.Testing` 10.0.13; the Aspire project templates installed (`Aspire.ProjectTemplates`).
+`dotnet build -c Release`: 0 warnings, 0 errors. *Not done:* the Aspire app host was not run (it needs Docker
+Desktop and builds the model image); the gateway was not run against the live model; the frontend's `ORIGIN` is
+untouched (same-origin, D2).
+
+**Also asked and answered in the same conversation, for the record.** React was the S23 builder's default (no
+recorded reason); a Vue port would be a full viewer rewrite against the same endpoints for no change in what is
+drawn, and a new surface beside the viewer is the honest place for Vue experience if wanted. The three-layer
+description of the model (physics, randomness, objects) is the honest conceptual picture; a materialisation layer as
+a refactor is not worth a session until a phase needs the seam (the nebular and bubble chain reads realised objects,
+so the layers are not a one-way stack).

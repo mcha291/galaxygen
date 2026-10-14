@@ -130,3 +130,8 @@ give the next session.
 
 The model's open debts — #117 and #124 (row 37 and the gas gradient; the blind direct-method reading), #107, Audit V —
 are in `GALAXY_INPUTS.md` §11 and wait for the owner's word.
+
+**Absorbed by BUILD_IV and BUILD_III's two new rows (2026-10-14, D222).** T4 (the level-k stars as the point layer)
+is BUILD_III's Phase V6b (S65); T18 (view a checkpoint without reopening) is discharged by construction at Phase V9
+(S68), the generate-first edit panel that retires the locks; T19 (deploy) is BUILD_IV's Phase W4 (S72), where the
+deployment becomes two container apps behind the .NET gateway (`gateway/`, scaffolded 2026-10-14).

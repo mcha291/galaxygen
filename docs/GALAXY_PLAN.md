@@ -2,7 +2,7 @@
 
 ## Status
 
-`██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░` **63 / 68 sessions** · repo initialised: yes
+`██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░` **63 / 74 sessions** · repo initialised: yes
 
 | | S | Session | Surface | Model planned | Model used | Tag | Closed |
 |---|---|---|---|---|---|---|---|
@@ -71,9 +71,15 @@
 | ☑ | 62 | **Phase L2 — the gas fluctuation field and the spurs** (D221). `gas_fluctuation`: one noise with L1's, three finer octaves on the same seed path, the gain steepened by one below the disc's thickness (an octave below when 4× its lattice scale lies under π × the gas height), σ 0.501 from Burkhart & Lazarian at M = 6 / 0.675 km/s (the CNM's 70 K read from Heiles & Troland 2003), the strain −2A·min(1/A, 30 Myr) in polar form, unit mean per cell, an evaluator and vectors, nothing reading it until V7; the gate's spectra, width and anisotropy met, the shallow slope at R₀ a disclosed miss of the construction. The spurs: the layer census `gas_spur` at ten Jeans lengths of the ridge, composed into `gas_density_contrast` by a stage after the star formation history with the ring mean exact — 48 on the Milky Way at 5–7 kpc spacing at R₀ (a disclosed check: the ridge is weak, #155), none on a flocculent disc. Four stop conditions resolved in place; #163–#164 opened | desktop | Opus | **Fable 5.1 lead on the owner's word; Opus 5.5: two readers, the field builder (four passes), the spurs builder (two), the fix pass, the independent reviewer** | s62 | 2026-10-14 |
 | ☐ | 63 | **Phase V5.** `/api/render` returns the starlight by age (young, middle, old), each placed by its own weight and summing to `stars`; the field mode draws the three | desktop | Opus | — | s63 | — |
 | ☐ | 64 | **Phase V6.** The censuses at whole-galaxy scale: clouds as extinction (the ring's dust mass unchanged), HII regions as knots, clusters with their half-mass radius (T6), bright stars by tiles (T28), the depth-aware composite (T5) | desktop | Opus | — | s64 | — |
-| ☐ | 65 | **Phase V7.** The layer in the shader: the noise's GLSL twin against the vectors, the diffuse dust modulated per pixel, the spurs, the bar's body and lanes, the physics-only switch | desktop | Opus | — | s65 | — |
-| ☐ | 66 | **Phase V8.** The display defaults per template (T1), the sprite scaled by the template's distance and pixel scale (T9), NGC 4414's instrument look, the goal captures and the metrics' final table against S53's baseline | desktop | Opus | — | s66 | — |
-| ☐ | 67 | **Audit V.** Every citation since S51 read again, every synthetic field's conservation and statistic re-measured, I1–I5 re-derived, a picture traced feature by feature; Fable's verdict on the findings | desktop | Opus; **Fable at G4** | — | s67 | — |
+| ☐ | 65 | **Phase V6b** (inserted 2026-10-14, D222, BUILD_IV §4b ruling 13). The zoomed-in point layer: the level-k stars as the points below 1 kpc (T4), cell-keyed on the wire | desktop | Opus | — | s65 | — |
+| ☐ | 66 | **Phase V7.** The layer in the shader: the noise's GLSL twin against the vectors, the diffuse dust modulated per pixel, the spurs, the bar's body and lanes, the physics-only switch | desktop | Opus | — | s66 | — |
+| ☐ | 67 | **Phase V8.** The display defaults per template (T1), the sprite scaled by the template's distance and pixel scale (T9), NGC 4414's instrument look, the goal captures and the metrics' final table against S53's baseline | desktop | Opus | — | s67 | — |
+| ☐ | 68 | **Phase V9** (D222; BUILD_IV's W1 moved here). The generate-first edit panel: inputs in their registry groups, every one editable at any time, one Generate, Reset to template; the locks and the sequence retired, rule D1 amended; T18 discharged | desktop | Opus | — | s68 | — |
+| ☐ | 69 | **Audit V.** Every citation since S51 read again, every synthetic field's conservation and statistic re-measured, I1–I5 re-derived, a picture traced feature by feature; Fable's verdict on the findings | desktop | Opus; **Fable at G4** | — | s69 | — |
+| ☐ | 70 | **BUILD_IV Phase W3 — the gateway** (D222; runs in parallel from 2026-10-14 on its own branch, merged when ready). ASP.NET Core on .NET 10 under `gateway/`: serving, YARP, limits, the edit queue, share links, hash-keyed caching, Aspire. Scaffolded 2026-10-14; the features are the owner's (ruling 12) | desktop | the owner | — | s70 | — |
+| ☐ | 71 | **BUILD_IV Phase W2 — the template bundles.** `tools/export_template.py`, the bundle reader in `galaxy.api` behind the content hash, bundles built in CI; the probe of levels 2–3 first | desktop | Opus | — | s71 | — |
+| ☐ | 72 | **BUILD_IV Phase W4 — the deployment.** Two container apps (the model internal), storage for share links, two images from CI, the suspended environment recreated | desktop | Opus | — | s72 | — |
+| ☐ | 73 | **BUILD_IV Phase W5 — smoothness, measured.** Template switch and zoom step on the deployed site against the bound (1 s warm, 5 s cold); the fixes the table orders | desktop | Opus | — | s73 | — |
 
 **Surface** is where the session ran — desktop, web, terminal. **Model** is which
 model ran it. They are different things and neither substitutes for the other.
@@ -698,6 +704,17 @@ phase's decision says which mechanism moved a row; no row reads a synthetic fiel
 three declarations and its conservation test; the viewer evaluates only what the model publishes and matches the
 committed vectors; both templates load, and NGC 4414's five checks are read and recorded, pass or miss; and the goal
 metrics' final table is set beside this session's baseline and beside the plan's own "what will remain".
+
+## 5g. The fourth build — S70 to S73 (written 2026-10-14, at the owner's request; D222)
+
+**`BUILD_IV.md`** is the plan, adopted by the owner on 2026-10-14 with its recommendations ("adopt the plan with
+your recommendations except for 12, scaffold the project for me"): a deployment that stays up and answers at once.
+Pregenerated template bundles (W2), a .NET gateway in front of the Python model with limits, a queue for edits,
+share links and hash-keyed caching (W3, the owner's own build, scaffolded by an agent), two container apps on
+Azure (W4), and smoothness measured on the deployed site (W5). **The build changes no physics, no number and
+nothing the viewer draws**: the viewer work the owner's direction also named — the generate-first edit panel and
+the zoomed-in point layer — is BUILD_III's, rows 68 and 65. W3 runs in parallel from adoption on its own branch;
+W2, W4 and W5 run after V7 (S66), since a bundle holds what the viewer draws.
 
 ## 6. What the executable specs assert
 
