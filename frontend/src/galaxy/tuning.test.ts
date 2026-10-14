@@ -67,6 +67,9 @@ describe("tuning defaults (D199)", () => {
       gasIntensity: 1,
       dustIntensity: 1,
       cloudIntensity: 1,
+      ageYoung: true,
+      ageMiddle: true,
+      ageOld: true,
     });
     expect(WHITE_KELVIN).toBe(6500);
   });
@@ -191,7 +194,7 @@ describe("tuning storage", () => {
     expect(sanitize({ dustReading: "glow", compClouds: 1, gasIntensity: 9 })).toMatchObject({ dustReading: "acts", compClouds: false, gasIntensity: 4 });
     // The switches live in the brightest mode's Components section; the panel's Components group shows the intensities.
     const group = TUNING_CONTROLS.filter((c) => c.group === "Components");
-    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
+    expect(group.filter((c) => c.switch).map((c) => c.key).sort()).toEqual(["ageMiddle", "ageOld", "ageYoung", "compCells", "compClouds", "compDust", "compGas", "compPoints", "compStars", "dustReading"]);
     for (const c of group.filter((c) => !c.switch)) expect(c).toMatchObject({ kind: "range", min: 0.25, max: 4, log: true });
   });
 });

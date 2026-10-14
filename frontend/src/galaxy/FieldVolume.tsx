@@ -23,10 +23,12 @@ import {
   WebGLRenderTarget,
 } from "three";
 
+import { ALL_AGES, FIELD_SCALARS, ageParts, agedLight } from "@interface/ages.js";
+
 import { type FieldsPayload, type Frame, type Query, type RenderFrame, loadArrays, loadRender } from "../api";
 import { useLoad } from "../useLoad";
 import { type FilterSetName, bulgeLight, curvesOf, whiteOf } from "./filters";
-import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
+import { DUST_CUTS, marchHalfHeight, planeTexture, RING_ROWS, starTexels, SUB_SAMPLES_MAX, summed, type RegionWindow } from "./regimes";
 import { type DustPaintShown, FIELD_LAYERS, type MarchLayers, WHERE_STOPS, dustLevels, dustRamp, ringDepths, whereLevel } from "./components";
 import { DUST_TOP_HEIGHTS, tallestLayer } from "./flux";
 import type { PointDust } from "./FluxPoints";
@@ -61,7 +63,36 @@ const COMPOSITE_FRAGMENT = /* glsl */ `
 `;
 
 // The bulge's scale radius comes from the arrays; every component, its layer and its colour from /api/render.
-const SCALARS = ["bulge_scale_radius"];
+const SCALARS: string[] = [...FIELD_SCALARS];
+
+/** Each age part's switch (S63, D223): its light's multiplier in the stellar layer, 0 off and 1 on. */
+export interface AgeGains {
+  young: number;
+  middle: number;
+  old: number;
+}
+
+/** One age part as the render carries it (interface/ages.js ageParts): its name, switch, label and placing field. */
+export interface AgePart {
+  name: string;
+  key: keyof AgeGains;
+  label: string;
+  unit: string | null;
+  placedBy: string | null;
+  weight: string | null;
+}
+
+/** What the stellar layer's texture is refilled from when an age switch moves: the parts and the render's arrays. */
+interface AgedStars {
+  parts: AgePart[];
+  arrays: Record<string, ArrayLike<number>>;
+  n: { R: number; phi: number; filter: number };
+  white: number[];
+  /** The switches the texture was last filled with. */
+  shown: string;
+}
+
+const agesKey = (g: AgeGains) => `${g.young},${g.middle},${g.old}`;
 
 const VERTEX = /* glsl */ `
   varying vec3 vWorld;
@@ -364,6 +395,13 @@ interface Props {
   lMin?: number | null;
   /** Handed the march's dust textures for the segment to each point (T20, D208); null when the volume goes. */
   onDust?: (dust: PointDust | null) => void;
+  /**
+   * The starlight by age (S63, D223): each part's multiplier. Where the render carries the three parts the stellar
+   * layer is their sum at these switches; all on (the default) is the whole of the stars' light.
+   */
+  ages?: AgeGains;
+  /** Told which age parts the render carries and what places each (null: none, the layer is `stars`): the rail's switches. */
+  onAges?: (parts: AgePart[] | null) => void;
 }
 
 /** The last re-march: its target in pixels and how long the render call took on the CPU side, ms. */
@@ -394,6 +432,8 @@ export function FieldVolume({
   onDepth,
   lMin = null,
   onDust,
+  ages = ALL_AGES,
+  onAges,
 }: Props) {
   const { resolution, pixelBudget, steps, subMax, dither, filtering, fieldGain, whiteKelvin } = tuning;
   const declared = (name: string) => meta.fields.find((f) => f.name === name);
@@ -414,6 +454,8 @@ export function FieldVolume({
   filteringNow.current = filtering;
   const metaNow = useRef(meta);
   metaNow.current = meta;
+  const agesNow = useRef(ages);
+  agesNow.current = ages;
 
   const mesh = useMemo(() => {
     const R = frame?.header.grid.axes.R;
@@ -426,12 +468,19 @@ export function FieldVolume({
       return null;
     }
     const a = light.arrays;
+    // The starlight by age (S63, D223): where the render carries the three parts, the stellar layer is their sum at
+    // the switches, each part placed round the ring by its own weight. Not under the star-first mode's threshold,
+    // whose remainder is its own component.
+    const parts = unresolved ? null : (ageParts(light.header, a) as AgePart[] | null);
+    const n = { R: R.n, phi: phi.n, filter: white.length };
+    const aged: AgedStars | null = parts ? { parts, arrays: a, n, white, shown: agesKey(agesNow.current) } : null;
     const { data, scatter, hii, rings, width, height, cell } = planeTexture({
       R,
       phi,
       // The stars' light: the whole component, or under the star-first mode's threshold the remainder no point
       // carries (D208). A frame that predates the threshold has no remainder yet and draws the whole meanwhile.
-      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : a.stars,
+      // A frame that carries the age parts draws their sum at the switches; one from before them draws `stars`.
+      stars: unresolved && a.stars_unresolved ? a.stars_unresolved : aged ? agedLight(a, aged.parts, agesNow.current, n) : a.stars,
       // Every line in each layer (S42): Halpha plus the others the render carries (lines_hii, lines_dig).
       hii: summed(a.halpha_hii, a.lines_hii),
       dig: summed(a.halpha_dig, a.lines_dig),
@@ -528,6 +577,7 @@ export function FieldVolume({
       top: DUST_TOP_HEIGHTS * tallestLayer(typeof layers.dust === "string" ? a[layers.dust] : layers.dust),
     };
     box.userData.pointDust = pointDust;
+    box.userData.aged = aged;
     box.frustumCulled = false;
     return box;
   }, [frame, light, unresolved]);
@@ -581,6 +631,28 @@ export function FieldVolume({
     return () => tellDust.current?.(null);
   }, [mesh]);
 
+  const tellAges = useRef(onAges);
+  tellAges.current = onAges;
+  useEffect(() => {
+    if (!mesh) return;
+    const aged = mesh.userData.aged as AgedStars | null | undefined;
+    tellAges.current?.(aged ? aged.parts : null);
+  }, [mesh]);
+
+  // An age switch moved (S63, D223): the stellar layer's texture is refilled in place with the parts' sum at the
+  // new switches - no new texture, no new shader - and the march's settings key re-marches the frame.
+  const shownAges = agesKey(ages);
+  useEffect(() => {
+    if (!mesh) return;
+    const aged = mesh.userData.aged as AgedStars | null | undefined;
+    if (!aged || aged.shown === shownAges) return;
+    const texture = (mesh.material as ShaderMaterial).uniforms.plane.value as DataTexture;
+    const texels = starTexels(aged.n.R, aged.n.phi, agedLight(aged.arrays, aged.parts, agesNow.current, aged.n), aged.white);
+    (texture.image.data as Float32Array).set(texels);
+    texture.needsUpdate = true;
+    aged.shown = shownAges;
+  }, [mesh, shownAges]);
+
   const tellDepth = useRef(onDepth);
   tellDepth.current = onDepth;
   useEffect(() => {
@@ -624,7 +696,7 @@ export function FieldVolume({
     camera.updateMatrixWorld();
     const w = regionWindow;
     const region = w && hiiFade > 0 ? `${w.r_min},${w.r_max},${w.phi_min},${w.phi_max},${hiiFade}` : "";
-    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")}`;
+    const settings = `${steps},${subMax},${dither},${filtering},${shown.stars},${shown.gas},${shown.dust},${shown.dustDepth},${shown.where},${shown.whereStops.flat().join(",")},${shownAges}`;
     const moved =
       !last.view.equals(camera.matrixWorld) || !last.projection.equals(camera.projectionMatrix) || last.gain !== gain ||
       last.width !== width || last.height !== height || last.region !== region || last.settings !== settings;

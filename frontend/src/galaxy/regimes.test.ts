@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { ALL_AGES, ageParts, agedLight, ringClosure } from "@interface/ages.js";
+
+import { agesOf } from "./components";
 import {
   DUST_CUTS,
   MARCH_SCALE_HEIGHTS,
@@ -13,6 +16,7 @@ import {
   marchHalfHeight,
   phaseAt,
   planeTexture,
+  starTexels,
   subSamples,
   summed,
 } from "./regimes";
@@ -361,5 +365,110 @@ describe("a layer's lines summed (S42)", () => {
     expect(summed(undefined, alone)).toBe(alone);
     expect(summed(undefined, undefined)).toBeUndefined();
     expect(() => summed([1], [1, 2])).toThrow();
+  });
+});
+
+// The starlight by age (S63, D223): /api/render's three parts per ring and filter, each with the (R, phi) weight the
+// header names, summing to `stars` per ring and filter; drawn as the one stellar layer at the switches
+// (interface/ages.js).
+describe("the starlight by age", () => {
+  // Two more weights that average to 1 round every ring, as the gas's placement and sfr_modulation's do.
+  const weightOf = (amp: number, shift: number) => {
+    const w = new Float64Array(R.n * phi.n);
+    for (let i = 0; i < R.n; i += 1) {
+      for (let j = 0; j < phi.n; j += 1) w[i * phi.n + j] = 1 + amp * Math.cos(2 * ((j + 0.5) * phi.width - shift));
+    }
+    return w;
+  };
+  const gas = weightOf(0.6, 0.4);
+  const sfr = weightOf(0.2, 0.9);
+  const young = [6, 3, 1];
+  const middle = [8, 5, 2];
+  const old = [16, 12, 7]; // the three sum to stars' [30, 20, 10] in every ring
+  const entry = (placing: string) => ({ unit: "Lsun/pc2", fields: ["disc_sed_v", "disc_light_temperature", placing], layer: "stars" });
+  const header = {
+    axes: {
+      stars: ["R", "phi", "filter"], stars_young: ["R", "filter"], stars_middle: ["R", "filter"], stars_old: ["R", "filter"],
+      dust_placement: ["R", "phi"], sfr_weight: ["R", "phi"], pattern_density_contrast: ["R", "phi"],
+    },
+    components: {
+      stars_young: entry("gas_density_contrast"),
+      stars_middle: entry("sfr_modulation"),
+      stars_old: entry("pattern_density_contrast"),
+    },
+    placement: { dust: "dust_placement", stars_young: "dust_placement", stars_middle: "sfr_weight", stars_old: "pattern_density_contrast" },
+  };
+  const arrays = {
+    stars,
+    stars_young: perRing(() => young),
+    stars_middle: perRing(() => middle),
+    stars_old: perRing(() => old),
+    dust_placement: gas,
+    sfr_weight: sfr,
+    pattern_density_contrast: contrast,
+  };
+  const n = { R: R.n, phi: phi.n, filter: 3 };
+  const partsOf = (h: unknown, a: Record<string, ArrayLike<number>>) => ageParts(h, a) as { name: string; placedBy: string | null; weight: string | null; unit: string | null }[] | null;
+
+  it("reads the three parts, the field that places each and its weight from the header, youngest first", () => {
+    const parts = partsOf(header, arrays)!;
+    expect(parts.map((p) => p.name)).toEqual(["stars_young", "stars_middle", "stars_old"]);
+    expect(parts.map((p) => p.placedBy)).toEqual(["gas_density_contrast", "sfr_modulation", "pattern_density_contrast"]);
+    expect(parts.map((p) => p.weight)).toEqual(["dust_placement", "sfr_weight", "pattern_density_contrast"]);
+    expect(parts.every((p) => p.unit === "Lsun/pc2")).toBe(true);
+    // A render from before the parts, or with one missing, draws `stars` whole.
+    expect(partsOf({ axes: header.axes, components: {} }, { stars })).toBeNull();
+    const { stars_old: _old, ...two } = arrays;
+    expect(partsOf(header, two)).toBeNull();
+    // A per-ring part with no weight named among the arrays: the viewer would have to place it itself, so it does not.
+    expect(partsOf({ ...header, placement: { dust: "dust_placement" } }, arrays)).toBeNull();
+    const { sfr_weight: _w, ...unweighted } = arrays;
+    expect(partsOf(header, unweighted)).toBeNull();
+  });
+
+  it("closes on stars ring by ring, each part placed by its own weight", () => {
+    const parts = partsOf(header, arrays)!;
+    expect(ringClosure(arrays, parts, n)).toBeLessThan(1e-12);
+    // Cell by cell the sum is not stars: the young light lies where the gas does.
+    const sum = agedLight(arrays, parts, ALL_AGES, n);
+    let moved = 0;
+    for (let c = 0; c < sum.length; c += 1) moved = Math.max(moved, Math.abs(sum[c] / stars[c] - 1));
+    expect(moved).toBeGreaterThan(0.05);
+  });
+
+  it("draws today's stellar layer when the three are placed by one weight", () => {
+    const one = { ...arrays, dust_placement: contrast, sfr_weight: contrast };
+    const drawn = starTexels(R.n, phi.n, agedLight(one, partsOf(header, one)!, ALL_AGES, n), white);
+    const today = planeTexture({ R, phi, stars, white }).data;
+    expect(drawn.length).toBe(today.length);
+    let worst = 0;
+    for (let q = 0; q < today.length; q += 1) if (today[q] > 0) worst = Math.max(worst, Math.abs(drawn[q] / today[q] - 1));
+    expect(worst).toBeLessThan(1e-6); // float32's own rounding
+    expect(starTexels(R.n, phi.n, stars, white)).toEqual(today);
+  });
+
+  it("switches each part on and off through the same colour path", () => {
+    const parts = partsOf(header, arrays)!;
+    const at = (c: number, k: number, g: { young: number; middle: number; old: number }) => agedLight(arrays, parts, g, n)[c * 3 + k];
+    const c = 17 * phi.n + 40;
+    expect(at(c, 0, { young: 0, middle: 1, old: 1 })).toBeCloseTo(middle[0] * sfr[c] + old[0] * contrast[c], 10);
+    expect(at(c, 1, { young: 1, middle: 0, old: 0 })).toBeCloseTo(young[1] * gas[c], 10);
+    expect(agedLight(arrays, parts, { young: 0, middle: 0, old: 0 }, n).every((v) => v === 0)).toBe(true);
+    expect(agesOf({ ageYoung: true, ageMiddle: false, ageOld: true })).toEqual({ young: 1, middle: 0, old: 1 });
+  });
+
+  it("draws a part the route placed itself, on (R, phi, filter), as it comes", () => {
+    const placedBy = (w: Float64Array, light: number[]) => {
+      const out = new Float64Array(R.n * phi.n * 3);
+      for (let c = 0; c < R.n * phi.n; c += 1) out.set(light.map((v) => v * w[c]), c * 3);
+      return out;
+    };
+    const placedHeader = { ...header, axes: { ...header.axes, stars_young: ["R", "phi", "filter"] } };
+    const served = { ...arrays, stars_young: placedBy(gas, young) };
+    const parts = partsOf(placedHeader, served)!;
+    expect(parts[0].weight).toBeNull();
+    const a = agedLight(served, parts, ALL_AGES, n);
+    const b = agedLight(arrays, partsOf(header, arrays)!, ALL_AGES, n);
+    for (let q = 0; q < a.length; q += 997) expect(a[q]).toBeCloseTo(b[q], 10);
   });
 });

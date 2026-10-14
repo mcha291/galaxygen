@@ -80,6 +80,14 @@ export interface Tuning {
   gasIntensity: number;
   dustIntensity: number;
   cloudIntensity: number;
+  // The field mode's starlight by age (S63, D223): the render's three age parts, each a layer of the stellar
+  // light, all on by default (their sum, the whole).
+  /** The young part's light. */
+  ageYoung: boolean;
+  /** The middle part's light. */
+  ageMiddle: boolean;
+  /** The old part's light. */
+  ageOld: boolean;
 }
 
 export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
@@ -109,6 +117,9 @@ export const TUNING_DEFAULTS: Readonly<Tuning> = Object.freeze({
   gasIntensity: 1,
   dustIntensity: 1,
   cloudIntensity: 1,
+  ageYoung: true,
+  ageMiddle: true,
+  ageOld: true,
 });
 
 export type TuningKey = keyof Tuning;
@@ -255,6 +266,18 @@ export const TUNING_CONTROLS: readonly TuningControl[] = [
   {
     key: "cloudIntensity", label: "cloud marker brightness", group: "Components", kind: "range", min: 0.25, max: 4, step: 0.01, log: true, unit: "×",
     about: "Multiplies the cloud markers' ramp colour. A display balance.",
+  },
+  {
+    key: "ageYoung", label: "young stars", group: "Components", kind: "toggle", switch: true,
+    about: "The field's starlight of the young part, placed round each ring by its own weight (S63, D223). A display choice of what is drawn.",
+  },
+  {
+    key: "ageMiddle", label: "middle-aged stars", group: "Components", kind: "toggle", switch: true,
+    about: "The field's starlight of the middle age part, placed round each ring by its own weight (S63, D223). A display choice of what is drawn.",
+  },
+  {
+    key: "ageOld", label: "old stars", group: "Components", kind: "toggle", switch: true,
+    about: "The field's starlight of the old part, placed round each ring by its own weight (S63, D223). A display choice of what is drawn.",
   },
 ];
 
