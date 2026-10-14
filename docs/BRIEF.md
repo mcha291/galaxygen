@@ -1,57 +1,41 @@
-# BRIEF — S63: BUILD_III's Phase V5, light by age in the field (an Opus lead; Fable at a stop condition)
+# BRIEF — S64: BUILD_III's Phase V6, the censuses at whole-galaxy scale (an Opus lead; Fable at a stop condition)
 
-**The state (2026-10-14).** S62 is merged (D221): Phase L2 built **`gas_fluctuation`** — one noise with L1's, its
-three octaves continued by three finer on the same seed path, the gain steepened by one below the disc's thickness
-(an octave is "below" when four times its lattice scale lies under π × the ring's gas scale height), the log-normal
-width σ = 0.501 from Burkhart & Lazarian's relation at M = 6 km/s over the cold neutral medium's 0.675 (Heiles &
-Troland 2003's 70 K, read), the shear's strain −2A·min(1/A, 30 Myr) applied in polar form, unit mean per cell, an
-evaluator and committed vectors; **nothing reads it until V7** — and **the spurs**: a layer census `gas_spur` walked
-along each chain at ten Jeans lengths of the ridge, composed into `gas_density_contrast` by a new stage `spurs`
-after the star formation history (g′ = (1 − ⟨S⟩)g + S, the ring mean exact), 48 on the Milky Way, none on a
-flocculent disc. Register 99 open = 11 + 88, 48 discharged; next number **#166**, decisions from **D223** (D222 is BUILD_IV's adoption, the owner's other session of 2026-10-14), board
-row 63, acceptance rows from 38. The owner's standing order: run the sessions back to back, stop only for a ruling
-that is theirs; S61–S62 were led by Fable with Opus builders on the owner's word — re-read their latest word on
-models and on the usage windows (the rationing rule: no heavy agent past 50 % of the 5-hour window; stop and ask
-past 80 % of a weekly one) before spawning.
+**The state (2026-10-14).** S63 is merged (D223): Phase V5 — `/api/render` returns the starlight young (0–0.02 Gyr),
+middle (0.02–0.1) and old, each its own spectrum's response scaled by the ring's closure factor so the three sum to
+`stars` to 1e-14, each placed by its own weight (the gas contrast's placement, `sfr_modulation`, the stellar
+contrast), shipped per ring with the weights named in the header (+1.17 MB); the field mode draws the three as
+layers with switches. **The Milky Way frame's arm over interarm in blue rose 1.410 → 1.623 (the goal 1.83);
+`ngc_4414` 2.064 → 2.119.** The owner's D222 (BUILD_IV) reshaped the board: V6 is row 64, V6b (the zoomed-in point
+layer) row 65, V7 66, V8 67, V9 68, Audit V 69, BUILD_IV's W3, W2, W4, W5 rows 70–73 — read `BUILD_III.md` and
+`BUILD_IV.md` as the owner left them. Register 100 open = 11 + 89, 48 discharged; next number **#166**, decisions
+from **D224**, acceptance rows from 38. The owner's standing order: run the sessions back to back, stop only for a
+ruling that is theirs; S61–S63 were led by Fable with Opus builders on their word — re-read their latest word on
+models and the rationing rule (no heavy agent past 50 % of the 5-hour window; stop and ask past 80 % of a weekly).
 
 ## Read
-- `BUILD_III.md` §5 **Phase V5**: `/api/render` returns `stars_young`, `stars_middle`, `stars_old`, each through
-  the curves on its own and placed by its own weight (the gas contrast, `sfr_modulation`, the stellar contrast),
-  summing to `stars` per ring and filter to rounding; the field mode draws the three; **no stage changes**. Gate:
-  the closure; the arm–interarm colour difference before and after (`tools/goal_metrics.py`); payload and timings.
-  Two builders: the render route and its tests; the viewer. No reading is listed: none was taken.
-- D221 (S62's record) for what the render will one day read: the field's `evaluate`, the `ring` and `cell`
-  tables, #163; and what the spurs did to the gas contrast the young light is placed by (#164: a spur's foot
-  stands on top of the ridge, so the crest doubles at the foot — the mend S_foot = crest − g is one pass, and V5's
-  young light will show it; the owner's look).
-- `docs/RENDER_PHYSICS.md` (the contract), `model/galaxy/stages/light.py` and `spectra.py` (the SED, the filter
-  integral), `model/galaxy/api/service.py` (`/api/render`), `frontend/src/galaxy/FieldVolume.tsx` and the field
-  regime's colour (D188), `tests/test_render.py` (the V1/V2 gates), `tools/goal_metrics.py` (the arm–interarm
-  colour difference is its "arm / interarm, blue" column: S62's frames read 1.410 field / 1.743 star-first for the
-  Milky Way, 2.064 / 2.216 for `ngc_4414` at the instrument's default geometry).
+- `BUILD_III.md` §5 **Phase V6** (clouds, HII knots, clusters and bright stars at whole-galaxy scale: what the
+  plan rules, its gate) and the owner's **V6b** paragraph (D222); `docs/RENDER_PHYSICS.md`; D223 (the route's
+  `ages` header: the pattern for naming a placing weight; the warm render 0.39 → 0.90 s, the anchors cache not
+  added); D220 (the ring-first censuses and `census_clustering`: what the censuses' placements are at galaxy scale
+  — the clouds and clusters placed jointly on each cell's lattice, the young bright stars by age); D221 (the gas
+  field no route serves yet, V7's); the viewer's census routes (`/api/clouds`, `/api/clusters`, `/api/bright`) and
+  the region regime below 4 kpc (D190).
+- `tools/goal_metrics.py`: the frames at S63 read `milky_way` field 1.623 / star-first 1.743, `ngc_4414` field
+  2.119 / star-first 2.216 at the instrument's default geometry (q = cos 55° for `ngc_4414`).
 
 ## Told to the owner (none awaited; if they answer, their word comes first)
-- (a) The spurs' spacing: the law's ten Jeans lengths of the ridge (Kim & Ostriker 2006; M51's measured 10.4) gives
-  5–7 kpc at the solar circle on the Milky Way template because its gas crest is 1.1–1.55 of the ring mean (#155);
-  Kim & Ostriker 2002's thin-disc 2.5 would give 1.2–1.7 kpc. Both are sourced; which is theirs.
-- (b) A spur's foot doubles the ridge's crest (#164); the mend is one pass and moves every layer-on gas pin.
-- (c) The gas field is built and read by nothing; its look is V7's (S65). Its normaliser table costs ~5 s a run
-  (#163). The shallow slope above the thickness at the solar circle is a disclosed miss of the one-noise
-  construction (the band is a fifth of a decade wide).
-- (d) Still theirs: the default seed's cloud draw (the lowest of 300), the whole-disc routes' cost (#159), the
-  pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147), the 88-minute gate test (g).
+- (a) The young light now follows the gas arms in the field mode: the arms carry a bluish tint; 2.9 % of the light
+  moved. The closure factors (≤ 2.4e-3 in the narrow bands) are the spectrum join's non-linearity, recorded.
+- (b) The warm render request doubled (0.39 → 0.90 s); a cache of the parts' anchors per galaxy would save 0.13 s.
+- (c) Still theirs: the spurs' spacing factor (10 or 2.5), #164's mend, the default seed's cloud draw, the
+  whole-disc routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147),
+  the 88-minute gate test.
 
-## Traps learned at S62
-- **A derived spacing is read on the model's own inputs before it is ruled**: the builder's probe of the law at
-  three radii on the template, before any code, turned a 100–2 000 pc expectation into a 5–7 kpc fact.
-- **Value noise carries an octave's power near four times its lattice scale**: a mapping of octaves to a break by
-  the lattice scale alone put every octave below the thickness beyond 5 kpc; the measured mapping is π/4.
-- **A field needs a sound speed for the phase it stands for**: the model had one dispersion standing for every
-  phase; the new constant was fetched and read, not recalled.
-- **Two builders in one session each own disjoint files; the later one rebases**, and the bookkeeping tests
-  (`test_layer`, `test_graph`, `test_fielddoc`, `test_pieces`' lists) are resolved once, by the one who knows both.
-- **A builder waiting on its own background test runs can cycle without reporting**: tell it never to leave a
-  run in the background when it hands back, and ask for the hand-back when it stalls.
-- Keep every Bash command under 8 KB; scripts in a per-agent scratchpad sub-folder; capture pytest's own exit
-  code; background the suite with its EXIT line; layer off nothing may move; nothing is tuned to a goal picture.
-- Look at the frames beside the goals before the close and say plainly what they show.
+## Traps learned at S63
+- **"Each through the curves on its own" and "summing to the total to rounding" cannot both hold** when the
+  spectrum join is non-linear: probe the closure on the model before the route is built, and record the factor.
+- **A viewer builder can build against a fixed wire contract before the route lands**: state the contract (names,
+  shapes, the placing weights) in the ruling and both builders run in parallel.
+- Keep every Bash command under 8 KB; per-agent scratchpad sub-folders; capture pytest's own exit code; background
+  the suite with its EXIT line; never leave a run in the background at a hand-back; layer off nothing may move;
+  nothing is tuned to a goal picture; look at the frames beside the goals before the close and say what they show.

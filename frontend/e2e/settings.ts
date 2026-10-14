@@ -103,7 +103,11 @@ export const TRANSFER_SLACK = 1e-3;
  * for byte, and the layered one is brighter by 0.25, 0.18 and 0.08 % (the ratio moved by -0.00246, -0.00176 and
  * -0.00075: past the pin in R and G, inside it in B).
  */
-export const DUSTY_LAYER_RATIO = [0.98675, 0.99042, 0.99454] as const;
+export const DUSTY_LAYER_RATIO = [0.98805, 0.99210, 0.99716] as const;
+// S63 (D223): was [0.98675, 0.99042, 0.99454] at S61/S62 - the field mode draws the starlight by age, the young
+// part placed by the gas contrast's law: more of the young light stands in the gas arms behind the dust, so the
+// layered frame is dimmer against physics only by a further 0.13, 0.17, 0.26 % (the ratio moved by +0.00130,
+// +0.00168, +0.00262: past the pin in every channel).
 // S61 (D220): was [0.98618, 0.98950, 0.99265] at S60 - the censuses are drawn ring-first and the clouds, clusters and
 // young bright stars are placed by the clustering field with the layer on (the layer-off frame is a new draw too), so
 // the HII knots and the clusters' light lie elsewhere; the ratio moved by +0.00057, +0.00092, +0.00189: past the pin in B.
