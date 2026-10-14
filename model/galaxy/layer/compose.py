@@ -223,7 +223,8 @@ def census_clustering(source: Any, constants: Mapping[str, Any]) -> Any:
 def gas_fluctuation(source: Any, constants: Mapping[str, Any], R: np.ndarray) -> Any:
     """The gas fluctuation field (``layer/gas_fluctuation.py``, S62, D221): the evaluator built from what the layer's
     stage published - its seed, the table ``ring``'s parameters and the ``cell`` table's normalisers - on the run's
-    grid radii ``R`` (whose level-0 rings the table's rows are), or None with the layer off, when the map is 1."""
+    grid radii ``R`` (whose level-0 rings the table's rows are), the disc's sense from its ``pitch_angle``, or None
+    with the layer off, when the map is 1."""
     if not _on(source):
         return None
     from galaxy.layer import gas_fluctuation as _gas
@@ -232,6 +233,7 @@ def gas_fluctuation(source: Any, constants: Mapping[str, Any], R: np.ndarray) ->
     fields = getattr(source, "fields", source)
     params = {key: np.asarray(fields[name], dtype=float) for name, key in _gas.RING_KEYS.items()}
     params["edges"] = cell_edges(np.asarray(R, dtype=float))[0]
+    params["sense"] = _gas.disc_sense(fields["pitch_angle"])  # S62's review, finding 1: the shear's sense
     return _gas.field_of(int(fields[_gas.GAS_FLUCTUATION_SEED.name]), params, constants,
                          fields[_gas.GAS_FLUCTUATION_CELL_NORMALISER.name])
 

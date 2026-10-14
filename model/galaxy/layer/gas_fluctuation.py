@@ -66,6 +66,13 @@ disc the field is read at ``(R, phi - Theta(R))`` with ``dTheta / dlnR = s`` - i
 ln(R / R_r)``, R_r the ring's inner edge and ``twist_r`` the integral of the strain over ln R from the grid's first
 radius to it (published per ring), so the read positions are continuous across ring edges. One Cartesian
 ``noise.shear`` would shear along a single direction of the plane, the rotation's only on one line through the centre.
+**The sense** (S62's review, finding 1; D221): x is along the rotation, and the disc turns towards *decreasing* phi
+(``pattern.rotation_sense``, read off the arms' winding: their azimuth grows outward, so they trail). The strain and
+the twist are angles in the disc's own sense - **negative strain = trailing, in the disc's own sense** - and the read
+in phi is ``phi - sense (twist_r + s_r ln(R / R_r))`` with ``sense = rotation_sense(pitch_angle)`` (-1): a structure
+at one read angle has ``phi = const + sense s ln R``, its azimuth growing outward as the arms' does. (The first build
+read ``phi - Theta`` without the sense - a shear for a disc turning towards +phi - and its filaments led: the
+autocorrelation's major axis in (+phi, outward) read (-0.90, +0.44) on ring 8; the reviewer's measurement.)
 
 **Unit mean per cell** (D221 item 5): each level-0 cell's normaliser is ``noise.lognormal_normaliser`` of the field
 over the cell's quadrature lattice - L1's table lattice (two points per 47.5 pc along the ring's width and along the
@@ -83,8 +90,8 @@ and 3.7 s (the stage realises nothing then); ``python -m galaxy.specs``' perform
 6.7 s cold in ``azimuthal`` and 7.1 s in ``basic``. ``region: whole disc`` does not run it (5.3 s before, 6.0 after).
 
 **What a shader reads** (D221 item 6): the seed; per ring (the table ``ring``, the 32 level-0 rings) the break index,
-the Mach number, sigma, the strain, the twist and the sum's normaliser; per cell the normaliser; and the model's
-constants. The octave amplitudes are ``ladder_weights(s, 1, 6, b)``, products of two gains and ``top``: committed in
+the Mach number, sigma, the strain, the twist and the sum's normaliser; per cell the normaliser; the disc's sense
+(``rotation_sense`` of the published ``pitch_angle``); and the model's constants. The octave amplitudes are ``ladder_weights(s, 1, 6, b)``, products of two gains and ``top``: committed in
 ``vectors.json`` for every b. :meth:`GasFluctuationField.evaluate` is the reference evaluator.
 """
 
@@ -217,6 +224,15 @@ def shear_strain(oort_a_kms_kpc, cap_myr: float) -> tuple[np.ndarray, np.ndarray
     return strain, t
 
 
+def disc_sense(pitch_deg: float) -> float:
+    """The disc's sense of rotation in phi (``pattern.rotation_sense``: -1, towards decreasing phi), which turns the
+    strain's angles (the disc's own sense) into phi's; -1 for a pitch that is not finite, as the arm pieces take it."""
+    from galaxy.stages.pattern import rotation_sense
+
+    pitch_deg = float(pitch_deg)
+    return float(rotation_sense(pitch_deg)) if math.isfinite(pitch_deg) else -1.0
+
+
 # --- the per-ring parameters and the field ------------------------------------------------------------------------
 
 def ring_heights(edges: np.ndarray, R: np.ndarray, height_pc: np.ndarray) -> np.ndarray:
@@ -233,9 +249,10 @@ def ring_heights(edges: np.ndarray, R: np.ndarray, height_pc: np.ndarray) -> np.
     return h[index]
 
 
-def ring_parameters(R, height_pc, v_kms, constants: Mapping[str, Any]) -> dict[str, np.ndarray]:
+def ring_parameters(R, height_pc, v_kms, constants: Mapping[str, Any], pitch_deg: float) -> dict[str, Any]:
     """Per level-0 ring: the break index, the Mach number, sigma, the shear time, the strain, the twist at the ring's
-    inner edge and the octave sum's normaliser - every number but the seed a shader needs (the module docstring)."""
+    inner edge and the octave sum's normaliser - every number but the seed a shader needs (the module docstring) - and
+    the disc's sense from ``pitch_deg`` (``sense``, one number). The strain and the twist are in the disc's own sense."""
     from galaxy.stages.clouds import sound_speed
     from galaxy.stages.systems import cell_edges
 
@@ -256,7 +273,8 @@ def ring_parameters(R, height_pc, v_kms, constants: Mapping[str, Any]) -> dict[s
     norms = np.array([ladder_weights(slope, change, octaves, int(b))[1] for b in breaks])
     n = breaks.size
     return {"edges": edges, "height": h, "break_octave": breaks.astype(float), "mach": np.full(n, mach),
-            "sigma": np.full(n, sigma), "shear_time": t, "strain": strain, "twist": twist, "norm": norms}
+            "sigma": np.full(n, sigma), "shear_time": t, "strain": strain, "twist": twist, "norm": norms,
+            "sense": disc_sense(pitch_deg)}
 
 
 @dataclass(frozen=True)
@@ -272,7 +290,8 @@ class GasFluctuationField:
     break_octave: np.ndarray  # per ring, int
     sigma: np.ndarray  # per ring
     strain: np.ndarray  # per ring
-    twist: np.ndarray  # per ring, rad at the ring's inner edge
+    twist: np.ndarray  # per ring, rad at the ring's inner edge, in the disc's own sense
+    sense: float  # the disc's rotation in phi (pattern.rotation_sense, -1): turns the strain's angles into phi's
     cell_normaliser: np.ndarray | None = None  # per level-0 cell; None before the table is made
 
     def amplitudes(self) -> np.ndarray:
@@ -289,15 +308,15 @@ class GasFluctuationField:
 
     def read_positions(self, x, y, ring, dtype=np.float64) -> tuple[np.ndarray, np.ndarray]:
         """The sheared positions the noise is read at: ``(R, phi - Theta(R))`` (the module docstring's polar shear),
-        Theta from ``ring``'s strain and twist; R below the first ring's inner edge reads the twist there. In the
-        working precision, in this order: ``R = hypot(x, y)``, ``theta = twist + strain * log(max(R, R_0) / R_r)``,
-        ``phi = atan2(y, x) - theta``, ``(R cos phi, R sin phi)``."""
+        Theta from ``ring``'s strain and twist turned into phi by the disc's sense; R below the first ring's inner edge
+        reads the twist there. In the working precision, in this order: ``R = hypot(x, y)``, ``theta = sense * (twist
+        + strain * log(max(R, R_0) / R_r))``, ``phi = atan2(y, x) - theta``, ``(R cos phi, R sin phi)``."""
         ft = np.dtype(dtype).type
         x, y = np.broadcast_arrays(np.asarray(x, dtype=ft), np.asarray(y, dtype=ft))
         ring = np.broadcast_to(np.asarray(ring), x.shape)
         R = np.hypot(x, y)
         inner = self.edges.astype(ft)[ring]
-        theta = self.twist.astype(ft)[ring] + self.strain.astype(ft)[ring] * np.log(np.maximum(R, ft(self.edges[0])) / inner)
+        theta = ft(self.sense) * (self.twist.astype(ft)[ring] + self.strain.astype(ft)[ring] * np.log(np.maximum(R, ft(self.edges[0])) / inner))
         phi = np.arctan2(y, x) - theta
         return R * np.cos(phi), R * np.sin(phi)
 
@@ -312,7 +331,7 @@ class GasFluctuationField:
         """:meth:`gaussian` at ``(R, phi)`` with one ring's numbers: the same read positions without the round trip
         through (x, y) (the cell table's path; equal to :meth:`gaussian` to rounding, tested)."""
         R, phi = np.broadcast_arrays(np.asarray(R, dtype=float), np.asarray(phi, dtype=float))
-        theta = self.twist[ring] + self.strain[ring] * np.log(np.maximum(R, self.edges[0]) / self.edges[ring])
+        theta = self.sense * (self.twist[ring] + self.strain[ring] * np.log(np.maximum(R, self.edges[0]) / self.edges[ring]))
         phi = phi - theta
         return self._sum(R * np.cos(phi), R * np.sin(phi), self.amplitudes()[self.break_octave[ring]])
 
@@ -370,14 +389,14 @@ class GasFluctuationField:
 def field_of(seed: int, parameters: Mapping[str, np.ndarray], constants: Mapping[str, Any],
              cell_normaliser: np.ndarray | None = None) -> GasFluctuationField:
     """The field from its seed, its per-ring parameters (:func:`ring_parameters`, or a run's published columns with
-    ``edges``) and the model's constants."""
+    ``edges`` and ``sense``) and the model's constants."""
     c = constants
     return GasFluctuationField(
         int(seed), float(c[CONSTANTS["scale"]]), float(c[CONSTANTS["slope"]]), float(c[CONSTANTS["change"]]),
         int(c[CONSTANTS["octaves"]]), np.asarray(parameters["edges"], dtype=float),
         np.asarray(parameters["break_octave"]).astype(int), np.asarray(parameters["sigma"], dtype=float),
         np.asarray(parameters["strain"], dtype=float), np.asarray(parameters["twist"], dtype=float),
-        None if cell_normaliser is None else np.asarray(cell_normaliser, dtype=float),
+        float(parameters["sense"]), None if cell_normaliser is None else np.asarray(cell_normaliser, dtype=float),
     )
 
 
@@ -401,8 +420,9 @@ _CONSERVES = (
     "mean exactly on that lattice only: at other points the mean is off by the lattice's error (measured against a "
     "lattice four times denser, see the cell normaliser). It shares the noise's coarse octaves with the clouds' "
     "clustering field before the shear and differs from it by the shear alone at those scales - the clouds' map "
-    "is L1's own evaluation and is unsheared; this one is read at (R, phi - Theta(R)) with dTheta/dlnR the ring's "
-    "strain, which is noise.shear in each point's own frame. It moves no cloud."
+    "is L1's own evaluation and is unsheared; this one is read at (R, phi - Theta(R)) with dTheta/dlnR the disc's sense (-1) times the ring's "
+    "strain, which is noise.shear in each point's own frame, x along the rotation (the disc's sense, so the "
+    "structures trail as the arms do). It moves no cloud."
 )
 _STATISTIC = (
     "The 2-D column spectrum P(k) ~ k^-1.53 above the break (the clustering field's slope; the sources' THINGS median "
@@ -452,12 +472,15 @@ GAS_FLUCTUATION_SIGMA = _decl(
 GAS_FLUCTUATION_STRAIN = _decl(
     "gas_fluctuation_strain", "Gas fluctuation: shear strain", "dimensionless", Kind.TABLE_COLUMN,
     "How far the disc's differential rotation has sheared the field: dOmega/dlnR times the shear time, capped where "
-    "feedback ends a cloud first; -2 where the shear time is not capped." + _RING, of="ring",
+    "feedback ends a cloud first; -2 where the shear time is not capped. In the disc's own sense: negative strain = "
+    "trailing, in the disc's own sense - the azimuth along the rotation, which turns towards decreasing azimuth "
+    "(read off the arms' winding), so the field's structures trail as the arms do." + _RING, of="ring",
 )
 GAS_FLUCTUATION_TWIST = _decl(
     "gas_fluctuation_twist", "Gas fluctuation: twist at the ring's inner edge", "rad", Kind.TABLE_COLUMN,
-    "The azimuth the field is read back by at the ring's inner edge: the strain integrated over ln R from the "
-    "grid's first radius, so that the sheared read positions are continuous across rings." + _RING, of="ring",
+    "The angle the field is read back by at the ring's inner edge, in the disc's own sense (along the rotation; "
+    "the azimuth's is minus it, the disc turning towards decreasing azimuth): the strain integrated over ln R from "
+    "the grid's first radius, so that the sheared read positions are continuous across rings." + _RING, of="ring",
 )
 GAS_FLUCTUATION_NORM = _decl(
     "gas_fluctuation_norm", "Gas fluctuation: octave sum's normaliser", "dimensionless", Kind.TABLE_COLUMN,
@@ -495,7 +518,8 @@ def compute_gas_fluctuation(ctx: Context) -> Mapping[str, Any]:
     c = ctx.constants
 
     def draw() -> dict[str, Any]:
-        params = ring_parameters(ctx.grid.R, ctx.fields["gas_scale_height"], ctx.fields["circular_velocity"], c)
+        params = ring_parameters(ctx.grid.R, ctx.fields["gas_scale_height"], ctx.fields["circular_velocity"], c,
+                                 float(ctx.fields["pitch_angle"]))
         field = field_of(field_seed(int(ctx.seeds["texture_seed"])), params, c)
         normaliser = field.cell_normalisers(int(c[_l1.TABLE_POINTS]), l1_finest_frequency(c))
         return {"gas_fluctuation_seed": float(field.seed), **{n: params[k] for n, k in RING_KEYS.items()},
@@ -525,7 +549,7 @@ GAS_FLUCTUATION = IMPLEMENTATIONS.register(
         layer_stage=True,
         reads_seeds=("texture_seed",),
         reads_constants=(*CONSTANTS.values(), _l1.CONSTANTS["octaves"], _l1.TABLE_POINTS),
-        requires=("gas_scale_height", "circular_velocity"),
+        requires=("gas_scale_height", "circular_velocity", "pitch_angle"),  # the pitch: the disc's sense (finding 1)
         publishes=PUBLISHES,
     )
 )
@@ -552,7 +576,7 @@ def default_vector_inputs() -> dict[str, Any]:
 
     models, _, _ = production()
     model = models.get(DEFAULT) if isinstance(DEFAULT, str) else DEFAULT
-    names = (GAS_FLUCTUATION_SEED.name, *RING_KEYS)
+    names = (GAS_FLUCTUATION_SEED.name, *RING_KEYS, "pitch_angle")
     out = run(model, only=names)
     c = {k: v.value for k, v in model.constants.items()}
     f = out.fields
@@ -566,6 +590,7 @@ def default_vector_inputs() -> dict[str, Any]:
         "sigma": [_f32(v) for v in f["gas_fluctuation_sigma"]],
         "strain": [_f32(v) for v in f["gas_fluctuation_strain"]],
         "twist": [_f32(v) for v in f["gas_fluctuation_twist"]],
+        "sense": disc_sense(f["pitch_angle"]),
     }
 
 
@@ -575,7 +600,7 @@ def vector_field(inputs: Mapping[str, Any], cell_normaliser: np.ndarray | None =
         int(inputs["seed"]), float(inputs["scale"]), float(inputs["slope"]), float(inputs["change"]),
         int(inputs["octaves"]), np.asarray(inputs["edges"], dtype=float), np.asarray(inputs["break_octave"], dtype=int),
         np.asarray(inputs["sigma"], dtype=float), np.asarray(inputs["strain"], dtype=float),
-        np.asarray(inputs["twist"], dtype=float), cell_normaliser,
+        np.asarray(inputs["twist"], dtype=float), float(inputs["sense"]), cell_normaliser,
     )
 
 
@@ -615,8 +640,8 @@ def build_vectors(inputs: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "compare": "1e-12",
         "about": ("galaxy.layer.gas_fluctuation (S62, D221): g = sum_j w[b_r][j] noise2(seed, X f_j, Y f_j, octave=j), "
-                  "f_j = 2^j / scale, (X, Y) = R (cos, sin)(atan2(y, x) - twist_r - strain_r log(max(R, edges[0]) / "
-                  "edges[r])); the map = normaliser_cell exp(sigma_r g - sigma_r^2 / 2); w[b] = amplitude times the "
+                  "f_j = 2^j / scale, (X, Y) = R (cos, sin)(atan2(y, x) - sense (twist_r + strain_r log(max(R, edges[0]) / "
+                  "edges[r]))), sense the disc's rotation in phi (-1); the map = normaliser_cell exp(sigma_r g - sigma_r^2 / 2); w[b] = amplitude times the "
                   "ladder's normaliser for break index b; *_f32 the float32 path"),
         "inputs": dict(inputs),
         "weights": [[float(w) for w in row] for row in amplitudes],

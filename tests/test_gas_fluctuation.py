@@ -139,7 +139,7 @@ def default_run():
     """The default galaxy, layer on and off, restricted to the field and what it reads."""
     models, _, _ = production()
     model = models.get(DEFAULT) if isinstance(DEFAULT, str) else DEFAULT
-    names = (*FIELD_NAMES, "gas_scale_height", "circular_velocity")
+    names = (*FIELD_NAMES, "gas_scale_height", "circular_velocity", "pitch_angle")
     constants = {k: v.value for k, v in model.constants.items()}
     return {layer: run(model, only=names, layer=layer) for layer in (True, False)}, constants
 
@@ -222,9 +222,11 @@ def test_b_the_map_s_width_is_the_relation_s(field, ring):
     assert measured == pytest.approx(expected, rel=0.10)
 
 
-def local_gradient_moment(field, ring: int, half: float = 0.2, n: int = 800) -> np.ndarray:
+def local_gradient_moment(field, ring: int, half: float = 0.2, n: int = 800, along_sense: float | None = None) -> np.ndarray:
     """The covariance of the field's gradient in each point's own frame (x along the rotation, y outward) on a patch
-    about (R_ring, 0): the autocorrelation's curvature at zero lag, the tensor ``noise.shear_anisotropy`` derives."""
+    about (R_ring, 0): the autocorrelation's curvature at zero lag, the tensor ``noise.shear_anisotropy`` derives.
+    ``along_sense`` +1 takes x along +phi instead (the review's frame, finding 1); by default x is along the rotation,
+    the field's own ``sense`` times +phi."""
     R0 = 0.5 * (field.edges[ring] + field.edges[ring + 1])
     step = 2.0 * half / n
     u = (np.arange(n) + 0.5) * step - half
@@ -232,7 +234,8 @@ def local_gradient_moment(field, ring: int, half: float = 0.2, n: int = 800) -> 
     g = field.gaussian(X, Y, ring)
     gy, gx = np.gradient(g, step)
     phi = np.arctan2(Y, X)
-    along = -np.sin(phi) * gx + np.cos(phi) * gy  # d/d(R phi), the rotation's direction
+    sense = field.sense if along_sense is None else along_sense
+    along = sense * (-np.sin(phi) * gx + np.cos(phi) * gy)  # d/d(R phi) times the sense: along the rotation
     out = np.cos(phi) * gx + np.sin(phi) * gy  # d/dR
     return np.array([[np.mean(along * along), np.mean(along * out)], [np.mean(along * out), np.mean(out * out)]])
 
@@ -240,7 +243,10 @@ def local_gradient_moment(field, ring: int, half: float = 0.2, n: int = 800) -> 
 @pytest.mark.parametrize("ring", [1, 8, 11])
 def test_c_the_anisotropy_is_the_ring_s_own_strain_s(field, ring):
     """Gate (c): the gradient covariance's axis ratio sqrt(l+/l-) and its major axis against ``shear_anisotropy`` at
-    the ring's strain: 5.83 at -2 (ring 1), 2.72 at -1.043 (ring 8), 2.17 at -0.793 (ring 11). Measured (a 0.4 kpc patch at 0.5 pc): 5.589, 2.709, 2.182; the major axis 66.2, 58.3, 55.1 degrees against 67.5, 58.8, 55.8."""
+    the ring's strain: 5.83 at -2 (ring 1), 2.72 at -1.043 (ring 8), 2.17 at -0.793 (ring 11). In the disc's own
+    frame, x along the rotation (towards -phi): self-consistent and blind to the sense, which the test after this one
+    holds (S62's review, finding 1). Measured (a 0.4 kpc patch at 0.5 pc): 5.516, 2.734, 2.176; the major axis 65.9, 58.0, 55.3 degrees against 67.5, 58.8, 55.8
+    (5.589, 2.709, 2.182 and 66.2, 58.3, 55.1 before the sense was mended: the same noise read at mirrored positions)."""
     moment = local_gradient_moment(field, ring)
     values, vectors = np.linalg.eigh(moment)
     ratio = math.sqrt(values[1] / values[0])
@@ -250,6 +256,30 @@ def test_c_the_anisotropy_is_the_ring_s_own_strain_s(field, ring):
     print(f"ring {ring}: ratio {ratio:.3f} against {want_ratio:.3f}, tilt {math.degrees(tilt):.1f} against {math.degrees(want_tilt):.1f}")
     assert ratio == pytest.approx(want_ratio, rel=0.10)
     assert abs(math.degrees(turn)) < 3.0
+
+
+@pytest.mark.parametrize("ring", [1, 8, 11])
+def test_the_field_s_structures_trail_as_the_arms_do(default_run, field, ring):
+    """S62's review, finding 1: the elongation's sense follows the arms' winding. The disc turns towards
+    ``rotation_sense`` (read off the arms' winding: their azimuth grows outward, so they trail and the disc turns
+    towards -phi), and material further out lags, so a sheared structure's azimuth moves *against* the rotation going
+    outward: d(phi)/dR has the sign of ``-rotation_sense`` - the arms' own. The autocorrelation's major axis (its
+    zero-lag curvature: the gradient covariance's minor eigenvector) in (along +phi, outward) must therefore have
+    components of product sign ``-rotation_sense``, derived here, not written in. Measured after the fix (rings 1, 8,
+    11): (+0.91, +0.41), (+0.85, +0.53), (+0.82, +0.57) - 24.3, 31.9 and 34.8 degrees off +phi (the shear's 22.5,
+    31.2 and 34.2 from the rotation's direction, mirrored into +phi); the first build read (-0.93, +0.37), (-0.90, +0.44), (-0.78, +0.62) by the
+    autocorrelation's half-maximum in the same frame (the review's), the structures leading."""
+    from galaxy.stages.pattern import rotation_sense
+
+    runs, _ = default_run
+    sense = rotation_sense(float(runs[True].fields["pitch_angle"]))
+    assert field.sense == sense
+    moment = local_gradient_moment(field, ring, along_sense=1.0)
+    values, vectors = np.linalg.eigh(moment)
+    major = vectors[:, 0] * math.copysign(1.0, vectors[1, 0])  # the structures' long axis, pointing outward
+    print(f"ring {ring}: the long axis in (+phi, outward) ({major[0]:+.2f}, {major[1]:+.2f}); rotation_sense {sense:+.0f}")
+    assert math.copysign(1.0, major[0] * major[1]) == -sense
+    assert abs(major[0]) > 0.2  # an axis well off the radial, so the sign is the shear's and not the noise's
 
 
 def patch_spectrum(ring_break: int, R: float, seeds: int = 3):
@@ -360,12 +390,14 @@ def test_the_vectors_are_what_the_evaluator_computes_from_their_inputs():
 
 def test_the_vectors_cover_what_a_twin_must_match():
     """56 sums across the disc (8 inside 2 kpc), two cells' normalisers and 16 map values in them, the weights for
-    every break index 0-6, inputs exact in float32. The float32 path against float64, measured: the sum within
-    1.44e-3 out to 26 kpc and 2.7e-4 inside 3 kpc (single precision's lattice coordinates, noise.py's docstring: up
-    to 5e-3 at 10 000 cells), the map within 3.5e-4 relative."""
+    every break index 0-6, inputs exact in float32 (the disc's sense among them). The float32 path against float64,
+    measured: the sum within 1.98e-3 out to 26 kpc and 6.4e-5 inside 3 kpc (single precision's lattice coordinates,
+    noise.py's docstring: up to 5e-3 at 10 000 cells), the map within 5.1e-4 relative. (Before the sense was mended,
+    S62's review finding 1, the same points read the noise at mirrored positions: 1.44e-3, 2.7e-4 and 3.5e-4; the
+    bounds were 2e-3, 5e-4 and 5e-4, now 3e-3, 5e-4 and 1e-3 - the same precision's spread over other lattice points.)"""
     v = stored_section()
     inputs = v["inputs"]
-    for key in ("scale", "l1_finest_frequency"):
+    for key in ("scale", "l1_finest_frequency", "sense"):
         assert float(np.float32(inputs[key])) == inputs[key], key
     for key in ("edges", "sigma", "strain", "twist"):
         assert all(float(np.float32(x)) == x for x in inputs[key]), key
@@ -375,9 +407,9 @@ def test_the_vectors_cover_what_a_twin_must_match():
     assert len(sums) == 56 and len(maps) == 16 and len(v["cells"]) == 2
     assert all(float(np.float32(x)) == x and x * 1024 == round(x * 1024) for x in sums[:, :2].ravel())
     radius = np.hypot(sums[:, 0], sums[:, 1])
-    assert np.max(np.abs(sums[:, 3] - sums[:, 4])) < 2e-3
+    assert np.max(np.abs(sums[:, 3] - sums[:, 4])) < 3e-3
     assert np.max(np.abs(sums[radius < 3.0, 3] - sums[radius < 3.0, 4])) < 5e-4
-    assert np.max(np.abs(maps[:, 5] / maps[:, 4] - 1.0)) < 5e-4
+    assert np.max(np.abs(maps[:, 5] / maps[:, 4] - 1.0)) < 1e-3
 
 
 def test_e_nothing_reads_the_field_yet_so_l1_and_the_censuses_are_untouched():
@@ -391,4 +423,4 @@ def test_e_nothing_reads_the_field_yet_so_l1_and_the_censuses_are_untouched():
     for stage in impls_:
         assert not ours & set(stage.requires + stage.requires_optional), stage.id
     assert {d.name for d in impls_.get("gas_fluctuation").publishes} == ours
-    assert impls_.get("gas_fluctuation").requires == ("gas_scale_height", "circular_velocity")
+    assert impls_.get("gas_fluctuation").requires == ("gas_scale_height", "circular_velocity", "pitch_angle")  # the sense: S62 review, finding 1
