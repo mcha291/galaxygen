@@ -12360,3 +12360,28 @@ rows (`render: whole, rgb` 9.158 s at S62; the route's bytes). Two builders: A t
 an Opus reviewer before the merge; the age bounds of the three parts are the catalogue's (the cluster window's
 end to 100 Myr, 100 Myr to the middle part's end as `bright.py` declares, the rest old) and are **read from the
 code, not chosen**.
+
+**A stop condition before the build, resolved in place (builder A's probe; the lead's ruling).** The plan's "each
+through the curves on its own" and "summing to `stars` to rounding" cannot both hold: `spectra.stellar_response`
+joins the eight band points with power laws in log–log and adjusts them in twelve multiplicative passes
+(`band_consistent`), so the sum of three separately joined spectra — young light blue, old red — is not the joined
+total. The anchors close (the three parts' eight band points sum to `disc_sed_*` to 8e-14), the responses do not:
+the largest relative miss per ring and filter is **4.9e-6 in rgb, 2.45e-3 in sho and hoo, 2.0e-3 in wfc3, 2.4e-3
+in wfc3n** on the default galaxy and the Milky Way (3.98e-6 / 2.27e-3 / 1.79e-3 / 2.25e-3 on `ngc_4414`), the same
+departure `_unresolved` states as `closure.response` (pinned near 5e-6 through rgb). **Ruled:** `stars` is unchanged
+(the V1/V2 gates stand); **each part is its own spectrum's response scaled per ring and filter by the ring's closure
+factor** `stars / Σ parts`, so the three sum to `stars` by construction; the factors are recorded per filter in the
+route's header beside `_unresolved`'s, and a test pins them. The alternatives — `stars` redefined as the sum (ΔM_V
+−2.3e-6, Δ(B − V) +1.6e-6, the SED pins at 2e-6 re-read), the total split by its own linearisation (a part then its
+share of the total's spectrum), or a gate changed to "stated" — are recorded, not taken. **The age bounds are the
+code's, not D223's first wording:** young 0 to the cluster window (0.02 Gyr), middle 0.02 to `YOUNG_STAR_AGE`
+(0.1 Gyr), old older (`bright.AGE_PARTS`); the young part starts at 0 so the parts cover the field. **The weights as
+the code reads them:** the young by `gas_density_contrast` (the clusters sit in the clouds, placed by the gas
+pattern; the route ships it as `dust_placement` / `placed_gas`), the middle by `sfr_modulation` normalised per ring
+(`bright.part_weights[0]`), the old by `pattern_density_contrast` (what `stars` is placed by); each ring mean 1 to
+≤ 1e-13. **The payload:** the parts ship per ring and filter (3 × 4 800 bytes), the middle's weight as one (R, φ)
+array (576 000 bytes), the old's `pattern_density_contrast` added as an array, the young pointing to the gas's
+placement already shipped — about 1.2 MB over the 7.52 MB, where placed volumes would add 5.2 MB; the viewer
+multiplies a part's ring value by its weight at (R, φ). Measured before: `render: whole, rgb` 11.558 s cold on a busy
+machine (9.158 at S62), 7 519 776 bytes; the frame's arm over interarm in blue 1.410; the disc-integrated shares,
+each part on its own: young 0.1330 B / 0.0851 V, middle 0.0951 / 0.0634, old 0.7719 / 0.8516.
