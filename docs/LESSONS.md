@@ -1565,3 +1565,27 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
 - [close] At most two agents at once, one heavy, none started past 50 % of the 5-hour window, the meter read
   before every spawn; a first full suite in the background during a dead window costs no agent tokens and
   shows the failures early.
+
+## From S62 (the gas fluctuation field and the spurs; a Fable lead on the owner's word, two Opus readers, two builders, a fix pass, a reviewer)
+
+- [field] A derived spacing is read on the model's own inputs before it is ruled: ten Jeans lengths of the ridge
+  is M51's 300 pc at a dust lane's 100-300 Msun/pc^2 and 5-7 kpc on a Milky Way template whose gas crest is 1.1-1.55
+  of the ring mean. The builder's probe at three radii, before any code, turned the brief's expectation into the
+  record; the factor was not changed for the picture.
+- [field] Value noise carries an octave's power near four times its lattice scale. A mapping of octaves to the
+  disc's thickness by the lattice scale alone put every octave below the break beyond 5 kpc and the realised break
+  at 355-515 pc on every ring; the measured mapping (an octave is below when 4x its scale lies under pi h) lands
+  within an octave of the target. Measure a noise's own roll-off before a rule names a scale.
+- [field] A synthetic field needs a sound speed for the phase it stands for. The model had one dispersion standing
+  for every phase (M = 1, a width of 0.11, "a field standing for nothing"); the cold neutral medium's temperature
+  was fetched and read from the source, not recalled, and its about says what fraction it covers.
+- [infra] Two builders in one session own disjoint files and the later one rebases; the bookkeeping tests
+  (test_layer, test_graph, test_fielddoc, test_pieces' lists) are resolved once by whoever knows both builds, and
+  a fix pass re-pins what the composition moved with the cause beside each number.
+- [close] A builder waiting on its own background test runs can cycle for an hour without a report (five
+  notifications, 470k tokens): brief every builder never to leave a run in the background at the hand-back, and
+  ask for the hand-back the moment it stalls.
+- [audit] A stage that composes a narrow feature into a published field (a 60 pc spur into 75 pc cells) moves
+  every "cell mean against its centre" pin by orders of magnitude; the by-hand derivations then read the law
+  without the feature, and the published field is checked as the feature composed on the law - the identity, not a
+  tolerance.
