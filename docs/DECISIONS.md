@@ -12042,3 +12042,29 @@ by Opus readers under §3e's rules and entered as returned.
    before the thing it certifies: an FFT spectrum tool in `specs/`); the field and its parameters; the render's
    and the viewer's dust and gas layers reading it (a placement reader); the spurs; the reviewer; the re-pins
    (layer-on numbers only: the render's frames, the dusty ratio pin); the frames beside the goals.
+
+**Item 7 amended on the spurs builder's measurement (2026-10-14, before any code; the lead's ruling).** The builder
+measured the law on the `milky_way` template from the published fields before building (the S60 lesson): with
+c_s = `GAS_DISPERSION` 6 km/s (the model's one sound speed for the ridge's gas; LVO06 assumed 7), Σ_gas 10.92 M☉/pc²
+at R_SUN and the gas crest 1.13–1.55 times the ring mean on the five chains there (#155's shortfall; the PHANGS ratio
+2.73 against the model's 1.43), Σ_peak is 12.4–16.9 M☉/pc², λ_J,sp 494–678 pc and **10 λ_J,sp = 4.9–6.8 kpc at
+R_SUN** (0.69–3.97 kpc at 4 kpc, 6.9–10.3 at 10 kpc); KO02's 2.5 would give 1.2–1.7 kpc, SO06's 5 λ_J 2.5–3.4, Lee
+2014's 7.9 3.9–5.4, three arm widths 5.8 kpc. M51's 200–1 000 pc follow from its dust lanes' 100–300 M☉/pc²; a real
+Milky Way arm column near 30 would give 2.8 kpc under the same law. **Ruled:** the law stays **10 λ_J,sp** — a
+derived spacing is not re-factored for the picture — and the Milky Way's spacing is **a disclosed check recorded
+with its inputs**; the choice between Kim & Ostriker 2006's thick-disc 10 and 2002's thin-disc 2.5, both sourced, is
+**the owner's** (told below). Expect about one spur per chain crossing at R_SUN and more inside 4 kpc; the mechanism
+is built so that it holds when the gas crest is mended. *The graph:* `gas_surface_density` is `sfh_azimuthal`'s, which
+requires `star_formation_gas_contrast` from `gas_pattern`, so **`gas_density_contrast` moves to a composing stage
+`spurs` after `sfh`**, fed by the layer stage `layer/spurs.py` whose table of spurs (one row a spur: its chain, foot,
+spacing, λ_J and Σ_peak) is drawn on `texture_seed`; `star_formation_gas_contrast` stays in `gas_pattern` and
+**without spurs, as the lanes are kept out of it** — the young stars' contrast ignores lanes and spurs alike, a
+carried note. *The walk* reads the crest contrast on the two grid rings bracketing each foot at the chain's crossing
+azimuth, linear between (the point function's first off-grid read solves the mid-gap rings at 1.89 s on the template
+and would double the gas pattern's row): a declared approximation, its error against the point function measured on
+a sample of feet and tested. *The composition:* g′ = (1 − ⟨S⟩(R))·g + S — the spurs' excess taken from the ring in
+proportion to g, the ring mean exact, positive while ⟨S⟩ < 1 (uniform subtraction from the interarm floor would
+drive the trough, 1e-44 in places, negative). *The shape:* a straight segment in the log-polar plane (a 63° log-spiral
+arc, under a parsec from the plane's straight segment over 240 pc at R_SUN), Gaussian across (FWHM 60 pc), the
+amplitude along exp(−ln 7 · t/L) with round caps, the three stretches integrated in closed form with erf as
+`Stretches` does; the foot's peak the ridge's crest contrast there.
