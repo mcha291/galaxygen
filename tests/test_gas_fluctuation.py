@@ -208,8 +208,9 @@ def test_d_unit_mean_in_every_cell_on_its_lattice(default_run, field):
 @pytest.mark.parametrize("ring", [1, 8, 11])
 def test_b_the_map_s_width_is_the_relation_s(field, ring):
     """Gate (b): the variance of ln(map) over 200 000 points spread uniformly in area over the ring equals
-    sigma^2 = 0.11 ln(1 + M^2 / 9) = 0.2510 within 10 %. Measured: ring 1 0.2446, ring 8 0.2467, ring 11 0.2462 (2.5, 1.7, 1.9 % low)
-    (the cell normalisers' own spread is in it: ln(normaliser) has variance 0.0028 over the 1 024 cells, 0.80-1.27)."""
+    sigma^2 = 0.11 ln(1 + M^2 / 9) = 0.2510 within 10 %. Measured: ring 1 0.2443, ring 8 0.2460, ring 11 0.2466 (2.7, 2.0, 1.8 % low)
+    (the cell normalisers' own spread is in it: ln(normaliser) has variance 0.0026 over the 1 024 cells, 0.77-1.19).
+    Before the shear's sense was mended (S62's review, finding 1): 0.2446, 0.2467, 0.2462; 0.0028, 0.80-1.27."""
     rng = np.random.default_rng(ring)
     lo, hi = field.edges[ring], field.edges[ring + 1]
     R = np.sqrt(rng.uniform(lo * lo, hi * hi, 200_000))
