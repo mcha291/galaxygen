@@ -34,8 +34,8 @@
       "template": "milky_way",
       "width": 1024,
       "height": 1024,
-      "bytes": 549910,
-      "sha256": "df5ccef3b13667619b61ddc0c224ece5407a76c283ad6074038110da386cd5d2",
+      "bytes": 549912,
+      "sha256": "f11535da6c69f226db019a1679ee89b49c966ff1aafb4eb5ec7a0032c50071e3",
       "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)",
       "browser": "chromium 151.0.7922.34"
     },
