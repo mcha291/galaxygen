@@ -31,6 +31,15 @@ pattern's point function at the foot itself it differs by at most :data:`WALK_RE
 function's value over the feet ``tests/test_spurs.py`` samples. The foot's contrast is the spur's height there:
 "the foot's peak equal to the ridge's crest contrast there".
 
+**The walk reads the gas at the stellar chain's polyline, not at the gas crest** (S62's review, finding 4; measured on
+the Milky Way template's 48 spurs, unchanged here - the lead opens the debt): the gas ridge stands near the stellar
+crest but not on it, so the contrast the table carries is the gas's *at the chain*, which the column says. Of the 28
+feet whose contrast is above 1.05, the foot's contrast over the local gas crest (its largest within 0.5 kpc of arc
+round the ring) has median 0.987 and minimum 0.323, the crest up to 500 pc from the foot (median 36 pc); 6 feet read
+1-1.05, 11 exactly 1.0 (on chains past the arm power, where the gas pattern is flat: Sigma_peak is the ring's own
+column) and 3 below 1 - spurs 2, 12 and 44 (chains 1, 3 and 11 at R 4.20, 10.33 and 10.51 kpc) at 0.933, 0.799 and
+0.821: feet in a gas trough. (D221's "9 of them on chains past the arm power" counted the 11 and the 3 short.)
+
 **Every count is fixed in advance** (rule A1): a chain holds at most :data:`MAX_SPURS` spurs; past it the stage raises.
 
 **The layer off:** nothing is drawn and the table has no row: the gas carries no spur.
@@ -209,9 +218,11 @@ GAS_SPUR_COLUMNS: tuple[FieldDecl, ...] = (
     _column("gas_spur_spacing", "Spacing to the next spur", "kpc", "Ten local Jeans lengths of the ridge's peak at the foot: how far along the chain the next spur stands."),
     _column("gas_spur_jeans_length", "Jeans length at a spur's foot", "kpc", "The square of the cold gas's sound speed over the gravitational constant times the ridge's peak column at the foot."),
     _column("gas_spur_peak_surface_density", "Ridge's peak column at a spur's foot", "Msun/pc2",
-            "The ring's gas column times the gas ridge's contrast at the foot, read on the two grid rings either side of it."),
-    _column("gas_spur_contrast", "Ridge's contrast at a spur's foot", "dimensionless",
-            "The gas contrast of the ridge at the foot, and so the spur's height there: it leaves the ridge as dense as the ridge."),
+            "The ring's gas column times the gas contrast at the foot, read at the chain's polyline on the two grid rings either side of it."),
+    _column("gas_spur_contrast", "Gas contrast at a spur's foot, on its chain", "dimensionless",
+            "The gas contrast at the chain's polyline, where the walk reads it - the stellar chain's, not the gas crest's, "
+            "which can stand up to 500 pc away - and so the spur's height there: it leaves the chain as dense as the gas "
+            "is there."),
     _column("gas_spur_pitch", "Pitch of a gas spur", "deg", "The angle the spur makes with the circle at its foot, trailing, on the ridge's outer side."),
     _column("gas_spur_length", "Length of a gas spur", "kpc", "How far the spur runs from the ridge."),
     _column("gas_spur_width", "Width of a gas spur", "kpc", "The spur's full width at half maximum across itself."),
