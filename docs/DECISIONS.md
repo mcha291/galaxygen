@@ -12068,3 +12068,30 @@ drive the trough, 1e-44 in places, negative). *The shape:* a straight segment in
 arc, under a parsec from the plane's straight segment over 240 pc at R_SUN), Gaussian across (FWHM 60 pc), the
 amplitude along exp(−ln 7 · t/L) with round caps, the three stretches integrated in closed form with erf as
 `Stretches` does; the foot's peak the ridge's crest contrast there.
+
+**Items 2–5 amended on the field builder's measurements (2026-10-14, before the stage was registered; the lead's
+ruling).** The instrument came first (`specs/spectrum.py`: a Hann-windowed periodogram normalised to Parseval,
+averaged round k in log bins, one law or a continuous broken law by least error; fractals asked for 1.53 and 2.53
+read −1.511 and −2.499, a known broken law −1.557 / −2.497 with the break at 0.93 of the truth), then two stops.
+(1) *The model publishes no sound speed for the diffuse phase*: `GAS_DISPERSION` 6 km/s is its one dispersion and
+the gas pattern's isothermal sound speed too ("there is no second"), so item 3's Mach number would be 1 on every
+ring and σ_ln 0.108 — a field standing for nothing; `H2_GAS_DISPERSION` 8 km/s belongs to the pressure
+prescription and its about forbids its reuse; the molecular 0.19 km/s is the census's. **Ruled:** the Mach number
+is `GAS_DISPERSION` over **the cold neutral medium's isothermal sound speed, one new level-0 constant read before
+it enters** (Heiles & Troland 2003's Millennium survey or Wolfire et al. 2003's two-phase equilibrium, fetched and
+tagged by the builder; μ 1.27) — the phase between the clouds whose HI column spectra the sources measured; M ≈
+8–12 and σ_ln ≈ 0.47–0.55 expected, the measured HI widths (0.19–0.51 dex) the disclosed check. (2) *The literal
+mapping of octaves to the break* — an octave below the break when its lattice scale is below π·h — put every octave
+below it beyond 5.3 kpc (π·h 228–3 744 pc there, 355 at R_SUN) and the realised breaks at 355–515 pc on every ring,
+because value noise is flat up to a quarter cycle per lattice cell and an octave carries the spectrum near four
+times its scale. **Ruled:** an octave takes the steep gain when **four times its lattice scale** is below π·h (the
+builder's measured alternative: fitted breaks 57 / 157 / 179 / 266 pc against π·h 81 / 121 / 180 / 355 at 1, 3, 5
+and 8.2 kpc, slopes −1.43 to −1.72 above and −2.40 to −2.60 below; the break index 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1,
+1 on rings 0–11 and 0 from ring 12, where the whole band lies below the thickness and the field is the steep slope
+alone, declared); the gate's rings are 1, R_SUN's and 11, and one outer ring at one slope. (3) Past the gas disc's
+last published height (rings 25–31, h NaN) the ladder holds the last finite ring's. (4) The per-cell normaliser at
+`cell_quadrature`'s rule would cost ~1 000 s (1.3e9 points × 6 octaves): it is built on L1's lattice (2 points per
+47.5 pc), its error against a lattice four times denser measured on three cells and declared as L1's was; the
+stage's budget 3 s. (5) The strain per ring as measured: −2 on rings 0–1 only (1/A 14.7 and 27.5 Myr), the 30 Myr cap
+binding beyond 1.9 kpc (−1.81 at 2.4 kpc, −1.04 at 8.0, −0.73 at 11.7, −0.23 at 29.5); the anisotropy gate reads
+each ring's own strain. The Oort constant is derived from the published circular velocity (none is published).
