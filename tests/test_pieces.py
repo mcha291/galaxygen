@@ -1261,7 +1261,9 @@ def test_the_carried_map_never_folds(prod, leg):
 EXPECTED_CONTINUED: dict = {"milky_way": [(1750, 37), (1830, 44), (1880, 59)], "ngc_4414": [(1575, 195), (1475, 171), (1425, 168)],
                             "ngc_4414 drawn": [(1775, 284), (1885, 289), (1785, 248)], "default": [(1620, 20), (1700, 38), (1770, 28)]}
 EXPECTED_CARRIED_PHI_STEPS: dict = {
-    "milky_way": [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)],
+    # S62 (D221): was [(1, 0.0377, 4.46), (1, 0.0373, 4.46), (1, 0.037, 4.46)] - ``contrast_at`` carries the spurs,
+    # g' = (1 - <S>) g + S: S is smooth across the clipped anchor, so the step is g's scaled by (1 - <S>) at 4.46 kpc.
+    "milky_way": [(1, 0.0376, 4.46), (1, 0.0372, 4.46), (1, 0.0369, 4.46)],
     "ngc_4414": [(4, 0.0012, 0.06), (9, 0.0057, 0.04), (7, 0.0131, 0.07)],
     "ngc_4414 drawn": [(13, 0.089, 0.7), (14, 0.0502, 0.68), (18, 0.0506, 2.12)],
     "default": [(0, 0.0, 0.0), (0, 0.0, 0.0), (0, 0.0, 0.0)],
@@ -1567,7 +1569,11 @@ def test_disclosed_check_the_masers_loci_against_the_gas_s_and_the_young_stars_c
 
 
 # S60 fourth pass (re-pinned on the final model): EXPECTED_MASERS was {'gas': (0.18, {'Norma-Outer': 0.32, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.1, 'Local': 0.18}, 0.13, 0.38, (0.19, 0.62), 4, 100), 'young stars': (0.15, {'Norma-Outer': 0.4, 'Sct-Cen': 0.18, 'Sgr-Car': 0.05, 'Perseus': 0.08, 'Local': 0.15}, 0.12, 0.33, (0.18, 0.52), 2, 100)}
-EXPECTED_MASERS: dict = {'gas': (0.19, {'Norma-Outer': 0.25, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.15, 0.59, (0.33, 1.16), 1, 86), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.52, (0.23, 1.05), 2, 94)}
+# S62 (D221): the gas's was (0.19, {'Norma-Outer': 0.25, 'Sct-Cen': 0.23, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.15, 0.59,
+# (0.33, 1.16), 1, 86) - the gas contrast carries the spurs: crests off the ridge's outer side, so a crest stands nearer
+# any locus and the null narrows (median 0.59 -> 0.49 sigma); the young stars' read the star-formation contrast, without
+# spurs, and do not move.
+EXPECTED_MASERS: dict = {'gas': (0.18, {'Norma-Outer': 0.18, 'Sct-Cen': 0.22, 'Sgr-Car': 0.04, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.49, (0.3, 0.82), 1, 100), 'young stars': (0.19, {'Norma-Outer': 0.19, 'Sct-Cen': 0.2, 'Sgr-Car': 0.05, 'Perseus': 0.13, 'Local': 0.19}, 0.14, 0.52, (0.23, 1.05), 2, 94)}
 # S60 fourth pass: was {'gas': (0.08, {'Norma-Outer': 0.65, 'Sct-Cen': 0.61, 'Sgr-Car': 0.02, 'Perseus': 0.08, 'Local': 0.07}, 0.13, 0.57, (0.35, 1.05), 0, 92), 'young stars': (0.11, {'Norma-Outer': 0.5, 'Sct-Cen': 0.23, 'Sgr-Car': 0.03, 'Perseus': 0.09, 'Local': 0.11}, 0.12, 0.5, (0.31, 0.82), 0, 98)}
 # (the polyline alone, before A and B: gas 0.07 at the 0th percentile of a null of median 0.50, the young stars 0.10 / 0.44)
 
