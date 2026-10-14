@@ -12294,3 +12294,31 @@ cloud, cluster, HII and bubble column): said so. (6) The `conserves` texts gain 
 (7–8) The autocorrelation's half-maximum ratio 4.91 / 2.36 / 1.91 against the formula's 5.83 / 2.72 / 2.17 (value
 noise's lattice anisotropy); the steep slope scalloped by octave (−2.8 to −3.05 mid-band, −2.17 in the transition
 octave) — recorded. (10) The stage 4.3 s cold, about a fifth of a layer-on run, for a field nothing reads (#163).
+
+**The review's fixes applied (an Opus builder, seven commits; D221's earlier numbers superseded where stated).**
+(1) *The shear's sense:* the field now reads the noise at φ − sense·(twist_r + s_r ln(R/R_r)) with sense =
+`rotation_sense(pitch_angle)` (−1; `disc_sense` falls back to −1 for a pitch that is not finite, as the pieces do) —
+the strain and twist columns are unchanged as angles in the disc's own sense and their abouts say "negative strain
+= trailing, in the disc's own sense"; the stage requires `pitch_angle` and the vectors' inputs gain the sense. The new
+test derives the expected sign from `rotation_sense` and reads the structures' long axis in (+φ, outward) as
+(+0.91, +0.41), (+0.85, +0.53), (+0.82, +0.57) on rings 1, 8, 11 (the reviewer's (−0.93, +0.37) ... before): **they
+trail as the arms do.** Gate (c) in the rotation's frame now reads 5.516 / 2.734 / 2.176 and 65.9° / 58.0° / 55.3°
+(were 5.589 / 2.709 / 2.182); gate (b) 0.2443 / 0.2460 / 0.2466; the cell normalisers span 0.77–1.19 (were
+0.80–1.27). The vectors regenerated: all 56 sums and 16 map values changed, the two normalisers 0.967094 /
+1.068973 (were 0.964702 / 0.990274); float32 against float64 now 1.98e-3 on the sum and 5.1e-4 on the map, the
+twin's bounds 3e-3 / 1e-3 (were 2e-3 / 5e-4; D221's 1.44e-3 / 3.5e-4 superseded). Digests before and after (393
+fields, both galaxies, on and off): only `gas_fluctuation_cell_normaliser` differs, layer on; the layer-off run,
+every census and the gas contrast identical. **V7's GLSL twin must apply the disc's sense** (the vectors' about
+gives the formula). (2) *The solar ring's miss, re-measured:* above the break **−1.234 ± 0.059 on thirty seeds**
+(100 seeds −1.259 ± 0.112; one seed's scatter sd 0.97; the test's three seeds had read −1.97 by noise) against
+−1.53 ± 0.15 — **too shallow by 0.3**, as the plateau mechanism predicts; **the break 341 pc against π·h 338** (every
+ten-seed stack 212–353; the reviewer's 147 came from a 600 pc fit range) — the xfail restated and a break test
+added, the thirty seeds cached once (67 s under load). *The miss is marginal:* one of three disjoint thirty-seed
+stacks (160–189) reads −1.472, inside the band; the fixed seeds keep the strict xfail deterministic, and the record
+says it is a 2σ miss. (3) The spur table's contrast column relabelled ("the gas contrast at a spur's foot, on its
+chain"); the count corrected: **11 feet at exactly 1.0 and 3 below 1** (not 9), the foot over the local crest median
+0.987, minimum 0.323 (#165). (4) `test_e`'s docstring says its "untouched" is against 18a6520. (5) The `conserves`
+texts carry the lattice error, ⟨S⟩ ≤ 0.0092, the walk's 0.052 (relative), and "to 4.4e-16". (6) The reviewer's
+half-maximum ratios (4.91 / 2.36 / 1.91, measured before the mend) and the scalloped steep slope noted in the
+docstring. EXIT=0 on test_gas_fluctuation, test_layer_noise, test_spurs, test_graph, test_clustering_gate,
+test_clouds and test_layer in full; the graph's order unchanged.
