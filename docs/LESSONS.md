@@ -1589,3 +1589,16 @@ repository's tooling, `all` everyone. One bullet per lesson; tags first.
   every "cell mean against its centre" pin by orders of magnitude; the by-hand derivations then read the law
   without the feature, and the published field is checked as the feature composed on the law - the identity, not a
   tolerance.
+
+## From S63 (light by age in the field; a Fable lead on the owner's word, two Opus builders, a reviewer)
+
+- [api] Two gate clauses can contradict each other through a non-linearity nobody wrote down: "each part through
+  the curves on its own" and "summing to the total to rounding" fail together because the spectrum join adjusts
+  the band points in twelve multiplicative passes. The builder's closure probe before any code found it; the
+  ruling kept the total, scaled each part by the ring's closure factor and recorded the factor.
+- [viewer] A viewer builder can build against the wire contract before the route exists: name the arrays, their
+  shapes and the placing weights in the ruling, and the two builders run in parallel; the viewer stood in with
+  the whole `stars` until the header carried the parts, and the first real run closed on the wire to 1e-7.
+- [close] The picture moved for the first time in the third build: the young light placed by the gas contrast's
+  law lifts the arm-over-interarm blue from 1.41 to 1.62 against the goal's 1.83. Say so at the close in the
+  owner's own yardstick, before the numbers.

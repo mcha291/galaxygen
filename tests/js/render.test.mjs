@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { AGE_PARTS, ALL_AGES, FIELD_SCALARS, PLACING_FIELDS, ageParts, agedLight, ringClosure } from "../../interface/ages.js";
 import { cellAt, discOf, discScale, imageOf2D, polylineOf } from "../../interface/field.js";
 import { legendStops, makePalette, makeRamp, paintOf, rgbOf, statistics } from "../../interface/ramp.js";
 import { census, describe, format, identify, nearest, project } from "../../interface/stars.js";
@@ -422,6 +423,93 @@ test("a marker's area carries the radius, and is clamped at both ends", () => {
   assert.equal(markSize(NaN), markSize(0), "no radius is drawn at the smallest size, not omitted");
   // Area, not radius: eleven Earth radii is not eleven times the mark.
   assert.ok(markSize(11) < 5 * markSize(1));
+});
+
+// --- the field's starlight by age (S63, D223) ---------------------------------------
+// /api/render's three age parts, per ring and filter, each placed round the ring by the (R, phi) weight the header
+// names, summing to `stars` per ring and filter. The header's placing fields are checked against the real
+// declarations; the arrays are synthetic (this file's split). Where the fixture carries a real render (`render`:
+// its header and arrays, dumped beside the declarations), its parts are read and closed too.
+
+const AGE_PLACING = { stars_young: "gas_density_contrast", stars_middle: "sfr_modulation", stars_old: "pattern_density_contrast" };
+
+function syntheticRender(nR, nPhi, nF) {
+  const weight = (amp, shift) =>
+    Float64Array.from({ length: nR * nPhi }, (_, c) => 1 + amp * Math.cos(2 * (((c % nPhi) + 0.5) * (2 * Math.PI / nPhi) - shift)));
+  const perRing = (light) => Float64Array.from({ length: nR * nF }, (_, c) => light[c % nF] * (1 + Math.floor(c / nF)));
+  const contrast = weight(0.3, 0.1);
+  const stars = Float64Array.from({ length: nR * nPhi * nF }, (_, c) => {
+    const i = Math.floor(c / (nPhi * nF));
+    return [30, 20, 10][c % nF] * (1 + i) * contrast[Math.floor(c / nF)];
+  });
+  // The route's header shape (S63): `ages.parts` by part - its array, its (R, phi) weight, the weight's fields.
+  const weights = { stars_young: "dust_placement", stars_middle: "stars_middle_placement", stars_old: "stars_placement" };
+  const header = {
+    axes: { stars: ["R", "phi", "filter"], stars_young: ["R", "filter"], stars_middle: ["R", "filter"], stars_old: ["R", "filter"],
+            dust_placement: ["R", "phi"], stars_middle_placement: ["R", "phi"], stars_placement: ["R", "phi"] },
+    components: { stars: { unit: "Lsun/pc2" } },
+    ages: { parts: Object.fromEntries(AGE_PARTS.map((p) =>
+      [p.key, { array: p.name, weight: weights[p.name], weight_fields: [AGE_PLACING[p.name]] }])) },
+  };
+  const arrays = {
+    stars, stars_young: perRing([6, 3, 1]), stars_middle: perRing([8, 5, 2]), stars_old: perRing([16, 12, 7]),
+    dust_placement: weight(0.6, 0.4), stars_middle_placement: weight(0.2, 0.9), stars_placement: contrast,
+  };
+  return { header, arrays };
+}
+
+test("the field draws three age parts, each with its placing field, and the field is published", () => {
+  const { header, arrays } = syntheticRender(8, 16, 3);
+  const parts = ageParts(header, arrays);
+  assert.deepEqual(parts.map((p) => p.name), AGE_PARTS.map((p) => p.name));
+  assert.deepEqual(parts.map((p) => p.name), ["stars_young", "stars_middle", "stars_old"], "youngest first");
+  for (const p of parts) {
+    assert.equal(p.placedBy, AGE_PLACING[p.name]);
+    assert.ok(p.weight in arrays, `${p.name}'s weight is one of the render's arrays: the viewer places nothing itself`);
+    assert.ok(PLACING_FIELDS.includes(p.placedBy));
+  }
+  for (const [name, payload] of Object.entries(fixture.models)) {
+    const declared = new Set(payload.fields.map((f) => f.name));
+    assert.ok(declared.has("pattern_density_contrast"), `${name}: the old part's placing field is not published`);
+  }
+  const declared = new Set(fixture.fields.fields.map((f) => f.name));
+  for (const placing of Object.values(AGE_PLACING)) assert.ok(declared.has(placing), `${placing} is not published by the default model`);
+  // Missing one part, or one with no weight among the arrays: stars is drawn whole, nothing is placed by the viewer.
+  const { stars_middle: _, ...two } = arrays;
+  assert.equal(ageParts(header, two), null);
+  const { stars_placement: __, ...unweighted } = arrays;
+  assert.equal(ageParts(header, unweighted), null);
+});
+
+test("the three parts close on stars round every ring, and all on is their sum", () => {
+  const n = { R: 8, phi: 16, filter: 3 };
+  const { header, arrays } = syntheticRender(n.R, n.phi, n.filter);
+  const parts = ageParts(header, arrays);
+  assert.ok(ringClosure(arrays, parts, n) < 1e-12, `closure ${ringClosure(arrays, parts, n)}`);
+  const off = agedLight(arrays, parts, { young: 0, middle: 0, old: 0 }, n);
+  assert.ok(off.every((v) => v === 0));
+  const all = agedLight(arrays, parts, ALL_AGES, n);
+  const pieces = ["young", "middle", "old"].map((k) => agedLight(arrays, parts, { young: 0, middle: 0, old: 0, [k]: 1 }, n));
+  for (let c = 0; c < all.length; c += 1) assert.ok(Math.abs(all[c] - pieces[0][c] - pieces[1][c] - pieces[2][c]) <= 1e-12 * all[c]);
+  if (fixture.render) {
+    const real = fixture.render;
+    const got = ageParts(real.header, real.arrays);
+    assert.ok(got, "the fixture's render carries no drawable age parts");
+    const window = real.header.window;
+    const nReal = { R: window.R.n, phi: window.phi.n, filter: real.header.filters.length };
+    assert.ok(ringClosure(real.arrays, got, nReal) < 1e-6, "the route's parts do not close on stars");
+  }
+});
+
+test("the field asks for no scalar that would build a catalogue", () => {
+  const all = fixture.fields.fields;
+  const materialisers = view.catalogueStages(all);
+  const byStage = Object.fromEntries(all.map((f) => [f.name, f]));
+  for (const name of FIELD_SCALARS) {
+    const decl = byStage[name];
+    assert.ok(decl, `${name} is not published`);
+    assert.ok(!materialisers.has(decl.stage), `${name} would materialise a whole sample (rule D4)`);
+  }
 });
 
 test("a click picks the planet under it, or nothing", () => {

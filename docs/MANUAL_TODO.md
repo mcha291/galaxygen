@@ -122,6 +122,7 @@ the row is written with its SHA at once.
 | 60 | `s60` | `13217d285750` | **applied** 2026-10-12 at S60's own close (C2e; D219); the SHA written on `main` in the commit after the merge |
 | 61 | `s61` | `8ce8ac36e8f7` | **applied** 2026-10-14 at S61's own close (C2e; D220); the SHA written on `main` in the commit after the merge |
 | 62 | `s62` | `da1da078ffa7` | **applied** 2026-10-14 at S62's own close (C2e; D221); the SHA written on `main` in the commit after the merge |
+| 63 | `s63` | (the merge's SHA, written here in the commit after the tag) | **pending** at S63's close 2026-10-14 (C2e; D223): the tag is made after the merge and this row is completed with its SHA |
 
 > **There is no `s21`.** S21 ran twice on two branches that are never merged, into each
 > other or into `main` (D99, GALAXY_PLAN.md §5d), so no commit on `main` is S21's merge and

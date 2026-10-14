@@ -161,6 +161,14 @@ export function brightestLayers(
   };
 }
 
+/**
+ * The field mode's age switches (S63, D223) as the march's stellar layer takes them: each part's light at 1 when
+ * its switch is on and 0 when off. All on is the parts' sum, the whole of the stars' light.
+ */
+export function agesOf(t: Pick<Tuning, "ageYoung" | "ageMiddle" | "ageOld">): { young: number; middle: number; old: number } {
+  return { young: t.ageYoung ? 1 : 0, middle: t.ageMiddle ? 1 : 0, old: t.ageOld ? 1 : 0 };
+}
+
 /** The dust fields whose declaration paints the "where it is" reading, in order of preference. */
 export const DUST_TINT_FIELDS = ["dust_extinction_v", "dust_surface_density"] as const;
 

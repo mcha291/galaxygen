@@ -153,7 +153,7 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
   const { R, phi, stars, hii, dig, extinction, scattered, thermal, dustHeight, dustPlacement, white } = fields;
   const nPhi = phi.n;
   const nF = white.length;
-  const data = new Float32Array(R.n * nPhi * 4);
+  const data = starTexels(R.n, nPhi, stars, white);
   const scatter = new Float32Array(R.n * nPhi * 4);
   const line = new Float32Array(R.n * nPhi * 4);
   const rings = new Float32Array(R.n * RING_ROWS.count * 4);
@@ -171,13 +171,30 @@ export function planeTexture(fields: PlaneFields): PlaneTexture {
       const place = dustPlacement ? Number(dustPlacement[i * nPhi + j]) : 1;
       scatter[q + 3] = Number.isFinite(place) && place >= 0 ? place : 1;
       for (let k = 0; k < 3 && k < nF; k += 1) {
-        data[q + k] = balanced(Number(stars[at + k]), white[k]);
         scatter[q + k] = scattered ? balanced(Number(scattered[at + k]), white[k]) : 0;
         line[q + k] = hii ? balanced(Number(hii[at + k]), white[k]) : 0;
       }
     }
   }
   return { data, scatter, hii: line, rings, width: R.n, height: nPhi, cell: (R.hi - R.lo) / R.n };
+}
+
+/**
+ * The stellar layer's texels (planeTexture's `data`): each (R, φ) cell's response in each filter over its white
+ * point, one texel per cell with φ as the row, A unused. Kept apart so that the age parts' switches (S63, D223)
+ * refill the one texture in place: the march reads it as it read `stars`.
+ */
+export function starTexels(nR: number, nPhi: number, stars: ArrayLike<number>, white: readonly number[]): Float32Array {
+  const nF = white.length;
+  const data = new Float32Array(nR * nPhi * 4);
+  for (let i = 0; i < nR; i += 1) {
+    for (let j = 0; j < nPhi; j += 1) {
+      const q = (j * nR + i) * 4;
+      const at = (i * nPhi + j) * nF;
+      for (let k = 0; k < 3 && k < nF; k += 1) data[q + k] = balanced(Number(stars[at + k]), white[k]);
+    }
+  }
+  return data;
 }
 
 /**

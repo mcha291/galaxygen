@@ -484,6 +484,11 @@ def test_layer_off_every_route_s_arrays_and_header_are_the_s55_reference(referen
             assert ("cluster_birth_radius" in names) == ("/clusters/" in label), label
             assert got["header"] != held["header"], label
             continue
+        # S63 (D223): the render adds the stars split by age and the weights that place them (the old part's, and the
+        # middle's where the model publishes sfr_modulation; the young's is the dust's placement), digested apart.
+        assert got.get("added", []) == ((["stars_young", "stars_middle", "stars_old", "stars_placement"]
+                                         + (["stars_middle_placement"] if not label.startswith("basic/") else []))
+                                        if "/render/" in label else []), label
         if "/render/" in label:
             # S61 (D220 items 6 and 10): the render's HII line light is the regions' ring ratios - the ring-first
             # census's, binned by the clouds' radii - and is a new draw; every other array and the header are S55's.
@@ -1353,8 +1358,11 @@ def test_i5_what_layer_off_serves():
 # ones to the bit. The one is `lines_hii`, summed from the HII regions' four forbidden lines' ring light - the four
 # radial fields CENSUS_STATISTICS names, a sum over realised regions - and it is a census statistic in the render
 # too: up to a factor of six in a thinly populated ring on the production grid.
-RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement")  # (R, phi, ...)
-RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height")  # (R, ...)
+# S63 (D223): the two placing weights the starlight by age ships beside dust_placement - sfr_modulation over its ring
+# mean and the stellar contrast floored at 0 - are (R, phi) arrays, exactly 1 with the layer off.
+RENDER_PLACED = ("stars", "stars_unresolved", "halpha_hii", "dust_scattered", "dust_placement", "stars_middle_placement", "stars_placement")  # (R, phi, ...)
+# S63 (D223): and the three age parts of the starlight, per ring and filter, the same numbers on and off.
+RENDER_PER_RING = ("halpha_dig", "lines_dig", "dust_extinction", "dust_thermal", "dust_height", "stars_young", "stars_middle", "stars_old")  # (R, ...)
 # S61 (D220 items 4 and 6): was ("lines_hii",) - the regions' ring ratios are the ring-first census's, binned by the
 # clouds' radii, so the HII line light keeps its ring on and off to 1e-12 (RENDER_RING_FIRST). None is left here.
 RENDER_CENSUS_STATISTICS: tuple[str, ...] = ()

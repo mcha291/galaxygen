@@ -15,7 +15,7 @@ import {
   loadRegion,
 } from "../api";
 import { CellOutlines, CloudMarkers } from "./ComponentLayers";
-import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
+import { CLOUD_COLUMNS, type DustPaintShown, WHERE_LEVEL, agesOf, brightestLayers, cloudColors, diagnosticOn, dustRamp, marchWanted, rowsInWindow } from "./components";
 import { useLoad } from "../useLoad";
 import { formatNumber } from "../workflow/logic";
 import { type Template, pinWords, switcherItems, templateLabel } from "../workflow/templates";
@@ -25,7 +25,7 @@ import { compareCaption } from "./compare";
 import { PHOTOMETRIC, lightColors, photometricColors, starColors } from "./colors";
 import { Exposure } from "./Exposure";
 import { FieldLegend } from "./FieldLegend";
-import { FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
+import { type AgePart, FieldVolume, LIGHT_PER_LSUN_PC2, type MarchStats } from "./FieldVolume";
 import { fluxOf } from "./flux";
 import { FluxPoints, type PointDust } from "./FluxPoints";
 import { CLUSTER_SUMMARY, STAR_SUMMARY, type SummaryRow, summaryRows } from "./summary";
@@ -151,7 +151,9 @@ const COMPONENT_SWITCHES: { key: "compPoints" | "compStars" | "compGas" | "compD
   { key: "compClouds", label: "molecular clouds", what: "The cloud census as markers sized by cloud_size, painted by cloud_mass's ramp (a diagnostic)" },
   { key: "compCells", label: "cell outlines", what: "The level-0 cells, 32 rings by 32 sectors, the volumes the catalogues are drawn in (a diagnostic)" },
 ];
-const DUST_READINGS: { key: "acts" | "where"; label: string; what: string }[] = [
+/** The field mode's age switches (S63, D223): each part's tuning value. */
+const AGE_SWITCH = { young: "ageYoung", middle: "ageMiddle", old: "ageOld" } as const;
+const DUST_READINGS:{ key: "acts" | "where"; label: string; what: string }[] = [
   { key: "acts", label: "as it acts", what: "Extinction of what lies behind it, and its scattered and thermal light: the physical picture" },
   { key: "where", label: "where it is", what: "A diagnostic: its optical depth along each line of sight drawn as light through a declared ramp, normalised to its peak face-on depth, dimming nothing" },
 ];
@@ -243,6 +245,9 @@ export function GalaxyTab({
   const whiteKelvin = useDebounced(tuning.whiteKelvin, 400);
   const fieldTuning = { ...tuning, steps, whiteKelvin };
   const marchStats = useRef<MarchStats>({ width: 0, height: 0, ms: 0 }).current;
+  // The field mode's starlight by age (S63, D223): the parts the render carries, told by the field volume, and
+  // their switches. Null until a render carries them: the stellar layer is then `stars`, whole, and no switch shows.
+  const [ageParts, setAgeParts] = useState<AgePart[] | null>(null);
   const pointGain = tuning.pointGain;
   // The filter set's blackbody table (S42, P6): stars and clusters are drawn through the same curves as the field.
   const blackbodyKey = JSON.stringify([filterSet, whiteKelvin]);
@@ -448,6 +453,8 @@ export function GalaxyTab({
             hiiFade={area ? weights.stars : 0}
             tuning={fieldTuning}
             stats={marchStats}
+            ages={agesOf(tuning)}
+            onAges={setAgeParts}
           />
         )}
         {/* The star-first mode's field (D205, D208): the march with the switched layers at the whole field weight,
@@ -579,6 +586,33 @@ export function GalaxyTab({
             </>
           )}
         </div>
+
+        {/* The field's starlight by age (S63, D223): the render's three parts, each a layer of the stellar light placed
+            round each ring by the field the header names, all on by default (their sum, the whole). */}
+        {mode === "field" && ageParts && (
+          <div className={styles.section}>
+            <div className={styles.label}>Starlight by age</div>
+            <div className={styles.chips}>
+              {ageParts.map((p) => {
+                const key = AGE_SWITCH[p.key];
+                return (
+                  <button
+                    key={p.name}
+                    type="button"
+                    aria-pressed={tuning[key]}
+                    title={`${p.name}: the field's ${p.label}' light, placed round each ring by ${p.placedBy ?? "nothing (an even ring)"}`}
+                    onClick={() => setComponent({ [key]: !tuning[key] })}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className={styles.muted}>
+              {`placed by ${ageParts.map((p) => `${p.key}: ${p.placedBy ?? "an even ring"}`).join(" · ")}`}
+            </p>
+          </div>
+        )}
 
         {mode === "stars" && (
           <div className={styles.section}>

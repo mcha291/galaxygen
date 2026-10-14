@@ -12342,3 +12342,128 @@ a 2σ miss of the one-noise construction, recorded; (e) still theirs: the defaul
 routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width (#147), the 88-minute
 gate test (g). **S63 is V5**, the field's light by age — and the owner's D222 reshaped the board after it (V6b and
 V9 inserted, BUILD_IV's W2–W5 appended): the next lead reads `BUILD_III.md` and `BUILD_IV.md` as the owner left them.
+
+### D223. S63: light by age in the field — `/api/render` returns the starlight young, middle and old, each placed by its own weight; the field mode draws the three (BUILD_III Phase V5; a Fable lead on the owner's word, Opus builders)
+
+**Session S63, opened 2026-10-14 on `session-63` from S62's merge (da1da078ffa7; `verify_clone` of that main running
+at the open, its line entered below).** The owner's word: "if S62 finishes, continue with S63 too." The ruling is
+BUILD_III §5 Phase V5 as written, with no reading (none is listed) and **no stage changes**: `/api/render` returns
+`stars_young`, `stars_middle` and `stars_old` — each the field's light of that age part through the curves on its
+own, placed round each ring by its own weight (the young by the gas contrast's law as the censuses read it, the
+middle by `sfr_modulation`, the old by the stellar contrast — the three parts and their weights the bright
+catalogue's decomposition already holds, D200–D203, S59's point reader) — **summing to `stars` per ring and filter
+to rounding**; the field mode draws the three as layers. **The gate:** the closure (the three sum to `stars` to
+1e-12 relative per ring and filter, layer on and off); the arm–interarm colour difference measured before and
+after with `tools/goal_metrics.py` on the regenerated frames (recorded, not a target); the payload and the timings
+rows (`render: whole, rgb` 9.158 s at S62; the route's bytes). Two builders: A the route and its tests, B the viewer
+(three layers in the field regime from the route's arrays, the switcher's thumbnails and the picture test);
+an Opus reviewer before the merge; the age bounds of the three parts are the catalogue's (the cluster window's
+end to 100 Myr, 100 Myr to the middle part's end as `bright.py` declares, the rest old) and are **read from the
+code, not chosen**.
+
+**A stop condition before the build, resolved in place (builder A's probe; the lead's ruling).** The plan's "each
+through the curves on its own" and "summing to `stars` to rounding" cannot both hold: `spectra.stellar_response`
+joins the eight band points with power laws in log–log and adjusts them in twelve multiplicative passes
+(`band_consistent`), so the sum of three separately joined spectra — young light blue, old red — is not the joined
+total. The anchors close (the three parts' eight band points sum to `disc_sed_*` to 8e-14), the responses do not:
+the largest relative miss per ring and filter is **4.9e-6 in rgb, 2.45e-3 in sho and hoo, 2.0e-3 in wfc3, 2.4e-3
+in wfc3n** on the default galaxy and the Milky Way (3.98e-6 / 2.27e-3 / 1.79e-3 / 2.25e-3 on `ngc_4414`), the same
+departure `_unresolved` states as `closure.response` (pinned near 5e-6 through rgb). **Ruled:** `stars` is unchanged
+(the V1/V2 gates stand); **each part is its own spectrum's response scaled per ring and filter by the ring's closure
+factor** `stars / Σ parts`, so the three sum to `stars` by construction; the factors are recorded per filter in the
+route's header beside `_unresolved`'s, and a test pins them. The alternatives — `stars` redefined as the sum (ΔM_V
+−2.3e-6, Δ(B − V) +1.6e-6, the SED pins at 2e-6 re-read), the total split by its own linearisation (a part then its
+share of the total's spectrum), or a gate changed to "stated" — are recorded, not taken. **The age bounds are the
+code's, not D223's first wording:** young 0 to the cluster window (0.02 Gyr), middle 0.02 to `YOUNG_STAR_AGE`
+(0.1 Gyr), old older (`bright.AGE_PARTS`); the young part starts at 0 so the parts cover the field. **The weights as
+the code reads them:** the young by `gas_density_contrast` (the clusters sit in the clouds, placed by the gas
+pattern; the route ships it as `dust_placement` / `placed_gas`), the middle by `sfr_modulation` normalised per ring
+(`bright.part_weights[0]`), the old by `pattern_density_contrast` (what `stars` is placed by); each ring mean 1 to
+≤ 1e-13. **The payload:** the parts ship per ring and filter (3 × 4 800 bytes), the middle's weight as one (R, φ)
+array (576 000 bytes), the old's `pattern_density_contrast` added as an array, the young pointing to the gas's
+placement already shipped — about 1.2 MB over the 7.52 MB, where placed volumes would add 5.2 MB; the viewer
+multiplies a part's ring value by its weight at (R, φ). Measured before: `render: whole, rgb` 11.558 s cold on a busy
+machine (9.158 at S62), 7 519 776 bytes; the frame's arm over interarm in blue 1.410; the disc-integrated shares,
+each part on its own: young 0.1330 B / 0.0851 V, middle 0.0951 / 0.0634, old 0.7719 / 0.8516.
+
+**Built (builder A, the route, four commits; builder B, the viewer, three; both cherry-picked).** *The route:*
+`/api/render` returns `stars_young`, `stars_middle`, `stars_old` per ring and filter — `bright.part_anchors`, a
+reader of the field's own tables by the same decomposition `resolve` uses (`part_masses` on `AGE_PARTS`: 0–0.02,
+0.02–0.1, ≥ 0.1 Gyr), each part's own spectrum's response at the ring's colour temperature times the ring's closure
+factor `stars / Σ parts` (1 where a ring has no light) — **summing to `stars` to about 1e-14 per ring and filter on
+the three galaxies and every filter set**, placed by their weights keeping each ring's light to 1.6e-15, the same
+numbers layer off (rtol 1e-12) with every weight exactly 1, every part non-negative. The factors, pinned per filter
+at 1e-3 relative: rgb 4.9015e-6 / 2.904e-6 / 1.5652e-6, sho 9.534e-4 / 1.2172e-3 / 2.4408e-3, hoo 1.2172e-3 /
+2.4408e-3 / 2.4408e-3, wfc3 5.469e-5 / 2.0088e-3 / 8.444e-4, wfc3n 8.934e-4 / 1.2194e-3 / 2.4162e-3 (default and
+Milky Way identical; `ngc_4414` 3.9761e-6 … 2.2633e-3). The shares of the disc's light, pinned at 2e-6 (default,
+rgb R / G / B): young 0.066242 / 0.085078 / 0.133017, middle 0.050839 / 0.063355 / 0.095066, old 0.882919 /
+0.851568 / 0.771917 (`ngc_4414` young 0.046 / 0.060 / 0.098, measured). The header's `ages` entry names, per part,
+its array, its placing weight's array (young `dust_placement` — the gas density contrast floored at 0, ring-mean
+departure 5e-14, 1e-13 on the Milky Way; middle `stars_middle_placement`, `sfr_modulation` over its ring mean,
+3e-16 — in `basic`, which publishes no modulation, `stars_placement`; old `stars_placement`,
+`pattern_density_contrast`, 3e-16), `weight_fields`, `ages_gyr`, the rule "part(R, φ, filter) = part(R, filter) ×
+weight(R, φ)", `closure.factor` per filter and the colour temperature marked `[inferred]`, and an about saying a
+part is "its own spectrum's response, scaled by the ring's closure factor" and that a viewer draws the parts or
+`stars`, never both; a window slices the parts by rows and the weights by (rows, cols); at `level=k` both are cell
+means. `tests/layer_reference.py` digests the route without the S63 key and arrays and reports them `added`.
+*Bytes and cost:* 7 519 776 → 8 690 264 (+1 170 488: three per-ring arrays and two (R, φ) weights, the young
+reusing the gas's); `render: whole, rgb` cold 13.03 → 13.96 s interleaved on a busy machine (+7 %; S62's 9.158 on a
+quiet one), **warm 0.388 → 0.90 s** (`part_anchors` 0.13 s, the three per-ring responses 0.35 s; one call for the
+three was slower) — accepted and recorded; an anchors cache per galaxy would save 0.13 s and is not added (the
+Galaxy cache is a cache of work). `RENDER_PHYSICS.md` §0 states the split. *The viewer:* `interface/ages.js` (a
+plain shared module: `ageParts` reads the header's parts, `agedLight` multiplies each ring value by its (R, φ)
+weight and sums the switched-on parts, `ringClosure` checks the closure), `FieldVolume` fills the one stellar
+texture from the three — each part coloured by its own three filter responses over the white point, the same path
+as `stars` — the march shader and textures unchanged; a "Starlight by age" section in the rail with young,
+middle-aged and old switches (tuning values, all on), each tooltip naming its placing field; the star-first mode's
+remainder is not split. Measured in the built viewer: placed by one weight the parts reproduce `stars` to 1.6e-7
+in the worst cell (the baseline run matched all eight captures byte for byte); with their own weights the worst
+cell moves 43 % and 2.9 % of the light moves; the frame sums R / G / B 20 810 / 18 240 / 16 936 all on, 19 344 /
+16 586 / 14 618 young off, 4 869 / 4 575 / 5 252 old off, back to the bit when switched on; the ring closure on
+the wire 9.5e-8 (float32); the CPU sum 3.8 ms per build or switch; the payload the viewer parses 8 690 608 B
+(+15.5 %); the ready time 28.1 → 29.6 s with the route's own compute. Typecheck, vitest (297 tests) and the viewer
+logic tests green.
+
+**The independent review (an Opus reviewer at f2c1340, read-only, its own numpy and node; the note in the lead's
+scratchpad): no blocker, no must-fix; all ten checks hold.** Re-derived: Σ parts over `stars` per ring 9.8e-15 (rgb)
+and 1.0e-14 (sho); the factors identical to five figures on every set and galaxy; each part its own response times
+the ring's factor to 1.0e-13 (the reviewer's own anchors by `population_over` on clipped windows agree with
+`part_anchors` to 1.9e-13, by `isochrone_weights` to 1e-15); the age bounds the code's and the parts' masses the
+field's to 1.3e-14; the three weights `array_equal` to the reviewer's own, ring means 5.0e-14 / 3.3e-16 / 3.3e-16;
+the shares identical to six decimals; **every other array of twelve requests (layer off, f4, window, level,
+`l_min`, `basic`) byte-identical to `main`'s**, the headers equal but for `ages` and the added arrays; `agedLight`
+with one shared weight 2.2e-16 from `stars` × weight and exact on the real render; the bytes +1 170 480; the warm
+request 0.385 → 0.984 s (default), 0.348 → 0.837 (Milky Way); the cold row +3.7–3.9 % on a busy machine; D5: the
+viewer only multiplies, sums and guards; no test weakened, the 1e-3 relative pin on the factors honest (±4.9e-9 on
+4.9e-6). *The seven notes, ruled:* (1) the placed-closure number above (1.6e-15, carried from S60's record) is
+**about 2e-14** — 1.72e-14 default rgb, 1.93e-14 sho, 1.78e-14 / 1.69e-14 Milky Way — corrected here; (2) the viewer
+logic test's real-render branch never runs (the fixture holds no render): a note, the reviewer closed the real
+route's arrays through `agedLight` itself; (3) `_ages` runs on window, level and star-first requests that discard it
+— **#166**; (4) with the three switches on the field is `stars` per ring, not per cell (a cell differs by up to
+42.9 %, the ruling's intent): the rail's wording to say "per ring" when next touched; (5) two fallbacks hold only
+because today's weights are positive (the smallest 0.385 young, 0.005 middle, 0.54 old): noted; (6) the tests check
+the wiring more than the decomposition (swapped windows would pass but for the share pins): noted; (7)
+`RENDER_PHYSICS.md` says the young part is placed by `dust_placement` without the condition the code has (the gas's
+placement when shipped, else `stars_young_placement`, else `stars_placement`): the header names the right array in
+every case; the sentence qualified.
+
+**The frames beside the goals (the lead's look).** **The picture moved, for the first time in the third build:**
+the Milky Way's field frame reads **1.623 arm over interarm in blue (was 1.410; the goal 1.83)** — the young light,
+placed by the gas contrast's law, tints the arms blue against the beige disc; Δ(B − R) −0.376, m = 3; `ngc_4414`'s
+field 2.119 (was 2.064); the star-first frames unchanged (byte for byte). To the eye the Milky Way is still the
+barred disc with too many, too faint arms, now with a bluish cast along them; `ngc_4414` a smooth disc with a
+bulge. The physics-only over layered ratio moved past its pin in every channel (0.98675 / 0.99042 / 0.99454 →
+0.98805 / 0.99210 / 0.99716: more of the young light stands in the gas arms behind the dust), re-pinned; the
+dust-free check 1.00000 / 0.99999 / 1.00001.
+
+**Closing.** The full suite ran once on the final state, backgrounded with pytest's own exit code appended: EXIT=1 on two parametrisations of one test - `test_layer`'s I5 walk of the render's components holds a closed list, which gained the three age parts (per ring) and the two placing weights ((R, phi), exactly 1 layer off) - fixed and re-run EXIT=0; every other test green, the pieces gate test included; no model file changed after the run. `python -m galaxy.specs` OK: 12 / 20 / 5 of 37, unmoved. The register: 101 open = 11 permanent + 90 carried, 48 discharged (#166 opened above).
+Rows: 12 / 20 / 5 of 37, unmoved (no stage changed). *How S62 ended:* `verify_clone --ref main` on the tag record f2d896f - a fresh clone, the whole suite, under the load of S63's builders and suites (5 h 44 min) - read **1 failed, 1 504 passed, 5 skipped, 1 xfailed**: the one failure `test_performance.py::test_the_catalogue_is_priced_per_cell[azimuthal]`, the wall-clock ordering test that flakes under load (S45, S60), re-run alone in the same clone EXIT=0; every other test green on the merged state, the specs OK. **For the owner, plainly (none
+awaited):** (a) the arms now carry the young light's colour in the field mode — 2.9 % of the light moved, the
+arm-over-interarm blue 1.41 → 1.62 against the goal's 1.83; the three layers switch in the rail; (b) the warm render
+request doubled (0.39 → 0.90 s) and the age split runs on requests that discard it (#166: skip it under `l_min`,
+cache the anchors — one pass); (c) a part's spectrum departs from its own by the closure factor, ≤ 2.4e-3 in the
+narrow bands, recorded; (d) still theirs: the spurs' factor (10 or 2.5), #164's mend, the default seed's cloud
+draw, the whole-disc routes' cost (#159), the pitch floor (#142), Erwin's bar frequency (#145), the lanes' width
+(#147), the 88-minute gate test. **S64 is V6**, the censuses at whole-galaxy scale, on the board the owner's D222
+reshaped (V6b after it, then V7–V9, Audit V, BUILD_IV's W3, W2, W4, W5); this lead's session closes at S63 on its
+context, and the next session resumes from `BRIEF.md`.
