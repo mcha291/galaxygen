@@ -8,7 +8,7 @@ Troland 2003's 70 K, read), the shear's strain −2A·min(1/A, 30 Myr) applied i
 evaluator and committed vectors; **nothing reads it until V7** — and **the spurs**: a layer census `gas_spur` walked
 along each chain at ten Jeans lengths of the ridge, composed into `gas_density_contrast` by a new stage `spurs`
 after the star formation history (g′ = (1 − ⟨S⟩)g + S, the ring mean exact), 48 on the Milky Way, none on a
-flocculent disc. Register 99 open = 11 + 88, 48 discharged; next number **#165**, decisions from **D222**, board
+flocculent disc. Register 99 open = 11 + 88, 48 discharged; next number **#166**, decisions from **D223** (D222 is BUILD_IV's adoption, the owner's other session of 2026-10-14), board
 row 63, acceptance rows from 38. The owner's standing order: run the sessions back to back, stop only for a ruling
 that is theirs; S61–S62 were led by Fable with Opus builders on the owner's word — re-read their latest word on
 models and on the usage windows (the rationing rule: no heavy agent past 50 % of the 5-hour window; stop and ask

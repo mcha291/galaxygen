@@ -14,7 +14,7 @@ uv run pytest && uv run python -m galaxy.specs    # the suite (~3 h; the pieces'
 Then RULES.md in full, BRIEF.md, **BUILD_III.md (the phase's text is its ruling)**; GALAXY_INPUTS.md by section (§11's head is the debt map).
 Branch `session-NN`; commit and push at every sub-deliverable (C2b); in a worktree `git config --worktree core.hooksPath
 tools/hooks` and **reset it to the session branch if it started at `main`**; LF newlines. **Numbers are sequential**: debts
-from #165, decisions from D222, board rows from 63, acceptance rows from 38, taken when the entry is written.
+from #166, decisions from D223, board rows from 63, acceptance rows from 38, taken when the entry is written.
 ## Layout (since 0f78156: docs/, model/galaxy/, frontend/; the import name is still `galaxy`)
 ```
 docs/           RULES, this file, BRIEF, GALAXY_PLAN (board, §5e), GALAXY_INPUTS (§11 register), DECISIONS, LESSONS,
