@@ -313,6 +313,17 @@ def part_masses(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Ma
     return np.maximum(np.stack(parts), 0.0)
 
 
+def part_anchors(fields: Mapping[str, Any], t_max: float, n_t: int, constants: Mapping[str, Any]) -> np.ndarray:
+    """(3, n_R, 8): λL_λ at the table's eight bands, L☉/pc², of every living star of each of ``AGE_PARTS`` - the
+    field's light split by age (S63, D223; ``/api/render``'s ``stars_young``, ``stars_middle``, ``stars_old``). The same
+    decomposition :func:`resolve` reads (:func:`part_masses` on the field's own tables), with no threshold: the three
+    sum to the stars' ``disc_sed_*`` per ring and band to rounding (8e-14 measured at S63)."""
+    masses = part_masses(fields, t_max, n_t, constants)
+    flat = masses.reshape(*masses.shape[:2], -1)
+    bands = flat @ population_light().band_flux.reshape(-1, len(BANDS))  # (3, n_R, 8)
+    return np.stack([band_nu_l_nu(bands[..., k], b) for k, b in enumerate(BANDS)], axis=-1)
+
+
 def part_weights(contrast: np.ndarray, modulation: np.ndarray | None) -> np.ndarray:
     """(2, n_rings, n_sectors): the azimuthal weights of the ``middle`` and ``old`` parts around each ring. The old
     part follows the pattern's density ``contrast``; the middle part follows ``modulation`` (where stars form today)

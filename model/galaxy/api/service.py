@@ -116,6 +116,14 @@ RENDER_DUST_HEIGHT = "dust_height"
 # The render's (R, phi) array of the dust's column around each ring over the ring's mean (D207; the gas's
 # own contrast since S51, D210): what `placement.dust` names.
 RENDER_DUST_PLACEMENT = "dust_placement"
+# The stars' light by the age of its stars (S63, D223): one array per part of ``bright.AGE_PARTS``, per ring and filter,
+# each placed round its ring by the (R, phi) array the header's ``ages`` names. The old part is placed as ``stars`` is
+# (``RENDER_STARS_PLACEMENT``), the middle by where stars form today (``RENDER_MIDDLE_PLACEMENT``), the young by the
+# gas's own contrast - the dust's placement where the route ships it, else ``RENDER_YOUNG_PLACEMENT``.
+RENDER_AGES = {"young": "stars_young", "middle": "stars_middle", "old": "stars_old"}
+RENDER_STARS_PLACEMENT = "stars_placement"
+RENDER_MIDDLE_PLACEMENT = "stars_middle_placement"
+RENDER_YOUNG_PLACEMENT = "stars_young_placement"
 # The dust stage's modified blackbody (S39): its shape is read with the stage's own constants, server-side.
 RENDER_DUST_CONSTANTS = ("DUST_OPACITY_REFERENCE", "DUST_OPACITY_WAVELENGTH", "DUST_EMISSIVITY_INDEX")
 # Sub-samples per side a region cell's mean is taken over (level=k): the grid's values bilinearly
@@ -297,7 +305,10 @@ ROUTES: tuple[Route, ...] = (
         "the viewer's white balance; set=<name> is echoed; precision=f4 sends float32. l_min=<Lsun> (S48) adds "
         "stars_unresolved, the stars' light that no point carries - less the young stars the cluster census holds and "
         "the disc stars above l_min /api/bright holds - each age part placed as the bright catalogue places it, with "
-        "the header's resolved stating the light split and the closure.",
+        "the header's resolved stating the light split and the closure. The stars split by age (S63, D223): stars_young, "
+        "stars_middle and stars_old per ring and filter, each its own spectrum's response scaled by the ring's closure "
+        "factor so the three sum to the stars' ring value, with the (R, phi) weights that place them (stars_placement, "
+        "stars_middle_placement, or dust_placement for the young) - the header's ages names each part's weight.",
         ("model", "template", "layer", "filters", "set", "white", "r_min", "r_max", "phi_min", "phi_max", "level", "precision", "l_min"),
         "render",
     ),
@@ -1617,6 +1628,9 @@ class Service:
         if missing:
             raise NotFound(f"model {model.name!r} does not publish {missing}, which the stellar component is")
         wanted = [*RENDER_STARS, *(n for n in RENDER_OPTIONAL if n in declared)]
+        # S63 (D223): the history the light by age is decomposed from, and where stars form today (the middle part's
+        # weight) - the bright stage's own reads, where the model publishes them.
+        wanted += [n for n in _bright.RESOLVE_READS if n in declared and n not in wanted]
         if l_min is not None:
             # S48's wiring (D200 (4)): what the field's remainder decomposes - the bright stage's reads, only those (D4).
             bright = _stage_for(model, BRIGHT_SLOT, self.impls)
@@ -1823,6 +1837,13 @@ class Service:
                          "dust stage's modified blackbody at the published temperature and its emissivity index, "
                          "optically thin. Zero through an optical filter; a curve holding the far infrared gets it all",
             }
+        # The stars' light by age (S63, D223): three per-ring arrays and the (R, phi) arrays that place them.
+        ages, age_rings, age_weights = None, [], []
+        if all(n in f for n in _bright.RESOLVE_READS[:2]):
+            ages, age_rings, age_weights = self._ages(
+                model, f, curves, per_ring, placed, contrast_fields, placed_gas, gas_fields,
+                RENDER_DUST_PLACEMENT if placement is not None else None, even,
+            )
         drawn = {"halpha"} if ("halpha_hii" in about or "halpha_dig" in about) else set()
         for name in ("lines_hii", "lines_dig"):
             drawn |= set(about.get(name, {}).get("lines", {}))
@@ -1856,6 +1877,12 @@ class Service:
                 axes[RENDER_DUST_HEIGHT] = ["R"]
             if placement is not None:
                 axes[RENDER_DUST_PLACEMENT] = ["R", "phi"]
+            for name, value in age_rings:
+                arrays.append((name, value[rows]))
+                axes[name] = ["R", "filter"]
+            for name, value in age_weights:
+                arrays.append((name, value[rows][:, cols]))
+                axes[name] = ["R", "phi"]
         else:
             r_min = q.number("r_min", float(R[0]))
             r_max = q.number("r_max", float(R[-1]))
@@ -1880,6 +1907,13 @@ class Service:
                 # share of the ring's area.
                 arrays.append((RENDER_DUST_PLACEMENT, _cell_means(placed_gas[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
                 axes[RENDER_DUST_PLACEMENT] = ["cell"]
+            # The light by age (S63): a part's area-weighted mean over the cell's rings, and its weight's mean over the cell.
+            for name, value in age_rings:
+                arrays.append((name, _cell_means(value, bounds, R_axis, phi_axis, per_ring=True)))
+                axes[name] = ["cell", "filter"]
+            for name, value in age_weights:
+                arrays.append((name, _cell_means(value[..., None], bounds, R_axis, phi_axis, per_ring=False)[:, 0]))
+                axes[name] = ["cell"]
         if precision == "f4":
             arrays = [(n, a.astype(np.float32) if a.dtype == np.float64 else a) for n, a in arrays]
 
@@ -1901,6 +1935,9 @@ class Service:
             "layers": layers,
             # Where around each ring the dust is (D207; the gas's own pattern since D210): the name of the array that places it, or null when it is even.
             "placement": placement,
+            # The stars' light by age (S63, D223): each part's per-ring array and the array that places it, or null
+            # where the model publishes no history to decompose.
+            "ages": ages,
             # The unresolved bulge is a scalar luminosity at a scalar colour temperature: its response per filter, Lsun.
             "bulge": bulge,
             "white": white,
@@ -1911,6 +1948,111 @@ class Service:
         if resolved is not None:
             header["resolved"] = resolved
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
+
+    def _ages(
+        self, model: Model, f: Mapping[str, Any], curves: Sequence[Any], per_ring: np.ndarray, placed: np.ndarray,
+        contrast_fields: list[str], placed_gas: np.ndarray, gas_fields: list[str], dust_placement: str | None, even: str,
+    ) -> tuple[dict[str, Any], list[tuple[str, np.ndarray]], list[tuple[str, np.ndarray]]]:
+        """The stars component's light split by the age of its stars (S63, D223; BUILD_III Phase V5): (the header's
+        ``ages``, the three per-ring (R, filter) arrays, the (R, phi) weight arrays shipped for them).
+
+        The parts are ``bright.AGE_PARTS`` - the cluster census's ages, the bright catalogue's 20-100 Myr part, the
+        older - from ``bright.part_anchors``, the one decomposition of the history onto the isochrones the bright
+        catalogue and ``_unresolved`` read; their eight band points sum to the stars' to rounding. Each goes through
+        the curves on its own, at the ring's colour temperature as ``_unresolved``'s parts do. The join is not linear
+        (``spectra.band_consistent``'s twelve passes), so the three responses miss the stars' by up to a few 1e-3
+        through narrowband sets; each part is scaled, per ring and filter, by the ring's closure factor ``stars / sum
+        of the three``, so they sum to ``stars`` by construction, and the factor's largest departure from 1 is
+        stated per filter (D223's ruling: ``stars`` unchanged). Each part is placed round its ring by its own weight,
+        the one the censuses give the same ages: the young by the gas's own contrast (the clusters sit in the
+        clouds), the middle by sfr_modulation normalised per ring (``bright.part_weights``), the old by the stellar
+        pattern's contrast, as ``stars`` is."""
+        spec = self.grid.spec
+        constants = {k: c.value for k, c in model.constants.items()}
+        anchors = _bright.part_anchors(f, float(spec.t_max), int(spec.n_t), constants)  # (3, R, 8)
+        T = f["disc_light_temperature"]
+        raw = np.stack([_spectra.stellar_response(a, T, curves) for a in anchors])  # (3, R, filter)
+        total = raw.sum(axis=0)
+        lit = (total > 0.0) & (per_ring > 0.0)
+        factor = np.where(lit, per_ring / np.where(lit, total, 1.0), 1.0)
+        parts = raw * factor[None]
+        departure = [float(np.max(np.abs(factor[:, k] - 1.0), initial=0.0)) for k in range(factor.shape[1])]
+
+        modulation = _compose.published(f, "sfr_modulation")
+        middle_weight = _bright.part_weights(placed, modulation)[0]
+        stars_about = (
+            "the stellar pattern's density contrast round each ring, floored at zero: what the stars component is "
+            "placed by (pattern_density_contrast)" if contrast_fields else
+            "even round each ring: this model publishes no stellar pattern"
+        )
+        weights: dict[str, tuple[np.ndarray, list[str], str]] = {RENDER_STARS_PLACEMENT: (placed, list(contrast_fields), stars_about)}
+        if modulation is not None:
+            weights[RENDER_MIDDLE_PLACEMENT] = (
+                middle_weight, ["sfr_modulation"],
+                "where stars form today round each ring: the published sfr_modulation over its ring mean, floored at "
+                "zero (bright.part_weights: the bright catalogue's rule for its stars younger than YOUNG_STAR_AGE)",
+            )
+            middle_by = RENDER_MIDDLE_PLACEMENT
+        else:
+            middle_by = RENDER_STARS_PLACEMENT
+        if dust_placement is not None:
+            young_by = dust_placement
+        elif gas_fields == contrast_fields:
+            young_by = RENDER_STARS_PLACEMENT
+        else:
+            weights[RENDER_YOUNG_PLACEMENT] = (
+                placed_gas, list(gas_fields), "the gas's own density contrast round each ring, floored at zero")
+            young_by = RENDER_YOUNG_PLACEMENT
+        weight_fields = {RENDER_STARS_PLACEMENT: list(contrast_fields), RENDER_MIDDLE_PLACEMENT: ["sfr_modulation"],
+                         RENDER_YOUNG_PLACEMENT: list(gas_fields), RENDER_DUST_PLACEMENT: list(gas_fields)}
+        grids = {RENDER_STARS_PLACEMENT: placed, RENDER_MIDDLE_PLACEMENT: middle_weight,
+                 RENDER_YOUNG_PLACEMENT: placed_gas, RENDER_DUST_PLACEMENT: placed_gas}
+        cut = _bright.cluster_window(constants)
+        bounds = {"young": [0.0, cut], "middle": [cut, _catalogue.YOUNG_STAR_AGE], "old": [_catalogue.YOUNG_STAR_AGE, None]}
+        placed_by = {"young": young_by, "middle": middle_by, "old": RENDER_STARS_PLACEMENT}
+        says = {
+            "young": "the stars younger than the cluster census's window - the cluster points' ages - placed by the "
+                     "gas's own density contrast, as the clouds the clusters sit in are",
+            "middle": "the stars from the cluster window to YOUNG_STAR_AGE, placed by where stars form today "
+                      "(sfr_modulation normalised per ring), as the bright catalogue places its young stars",
+            "old": "the stars older than YOUNG_STAR_AGE, placed by the stellar pattern's density contrast, as the stars "
+                   "component is",
+        }
+        used = sorted(set(placed_by.values()))
+        header = {
+            "about": "the stars component's light split by the age of its stars, three parts of the one decomposition "
+                     "of the history onto the isochrones (bright.part_anchors; the bright catalogue's and l_min='s): "
+                     "each part is its own spectrum's response, scaled by the ring's closure factor, so the three "
+                     "sum to the stars component's ring value per ring and filter to rounding. Each part is an array "
+                     "per ring and filter; the viewer multiplies the part's ring value by the weight at (R, phi) its "
+                     "entry names, each weight averaging to 1 round every ring (ring_means), and the three so placed "
+                     "keep the ring's light. They are the stars component split, not light beside it: draw the parts "
+                     "or the stars, never both" + even,
+            "rule": "part(R, phi, filter) = part(R, filter) * weight(R, phi)",
+            "fields": ["stars_formed_history", "feh_history", "disc_light_temperature", *RENDER_STARS],
+            "parts": {
+                p: {"array": RENDER_AGES[p], "weight": placed_by[p], "weight_fields": weight_fields[placed_by[p]],
+                    "ages_gyr": bounds[p], "about": says[p]}
+                for p in _bright.AGE_PARTS
+            },
+            "weights": {n: {"unit": "dimensionless", "fields": w[1], "about": w[2] + even} for n, w in weights.items()},
+            "ring_means": {
+                "departure": {n: float(np.max(np.abs(grids[n].mean(axis=1) - 1.0))) for n in used},
+                "about": "the largest |mean - 1| round a ring of each placing weight, over the whole grid's rings",
+            },
+            "closure": {
+                "factor": departure,
+                "about": "per filter, the largest |factor - 1| over the rings of the closure factor each part is scaled "
+                         "by: the stars' response over the three parts' own responses summed, at the ring's colour "
+                         "temperature. The same departure l_min='s resolved.closure.response states - the spectrum's "
+                         "join (power laws between the eight band points, band_consistent's twelve passes) is not "
+                         "linear, so three spectra joined apart are not the total joined",
+            },
+            "temperature": "every part is put through the curves at the ring's colour temperature (disc_light_temperature), "
+                           "not its own [inferred], as l_min='s parts are: it shapes only the blackbody tails beyond U and K",
+        }
+        rings = [(RENDER_AGES[p], parts[k]) for k, p in enumerate(_bright.AGE_PARTS)]
+        return header, rings, [(n, w[0]) for n, w in weights.items()]
 
     def _unresolved(
         self, model: Model, f: Mapping[str, Any], R: np.ndarray, curves: Sequence[Any], per_ring: np.ndarray,
