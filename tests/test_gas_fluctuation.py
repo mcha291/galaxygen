@@ -417,7 +417,12 @@ def test_e_nothing_reads_the_field_yet_so_l1_and_the_censuses_are_untouched():
     clustering field's stage reads nothing of it: L1's map and every census are the branch's before the stage, by
     construction. Measured at S62 against the branch before the stage (18a6520): every field of the default galaxy's
     layer-on and layer-off runs but the eight new ones (777 digests) and the layer-on clouds' and clusters' 31
-    materialised columns, bit for bit; tests/test_clustering_gate.py green."""
+    materialised columns, bit for bit; tests/test_clustering_gate.py green. **Against the branch before the stage,
+    not against main**: 18a6520 already carries the spurs, which move every cloud, cluster, HII-region and bubble
+    column through the gas contrast (57 fields on the default galaxy, 62 on milky_way, layer on; S62's review, finding
+    5) - L1's map itself (``census_clustering_seed``, ``census_clustering_cell_mean``) is main's to the bit. After the
+    shear's sense was mended (finding 1) the same digests on default and milky_way, layer on and off, moved only this
+    field's ``gas_fluctuation_cell_normaliser``."""
     _, impls_, _ = production()
     ours = set(FIELD_NAMES)
     for stage in impls_:
