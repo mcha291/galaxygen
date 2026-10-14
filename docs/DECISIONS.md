@@ -12165,3 +12165,25 @@ gate green. (f) I1–I3: the lists cover the eight fields, the layer-off run bit
 rerolling moves the seed and the cell normalisers and not the ring table. *Cost (under another session's suite,
 upper bounds):* `run()` cold layer on 43.8–45.6 → 52.6–57.4 s, layer off 3.3 → 3.7 s; the stage 4.6–5.1 s alone
 (#163); `region: whole disc` untouched.
+
+**The fix pass (an Opus agent) and the landing.** The spurs' re-pins across sixteen tests of `test_gas_pattern`
+(the by-hand derivations read the law without spurs through `unspurred`, which reproduces every old pin, and the
+published field is the spurs composed on the law's cell means, identity 0.0; layer on the Milky Way's cell mean
+against its centre 0.012 → 0.617 at 5.96 kpc, the crest over trough at 4 kpc 5.320 / 0.682 → 5.910 / 0.678; the
+default galaxy's R₀ crest 1.362 → 1.880, ⟨g²⟩ 1.0263 → 1.0281), `test_pieces` (the carried map's steps 0.0377 →
+0.0376, the masers' gas check 0.19 → 0.18σ), the clustering gate (clouds −0.636 / 1.977 → **−0.6396 / 1.9798**,
+clusters −0.670 / 2.097 → **−0.6686 / 2.0928** — the gate holds; the spill's count 1 862 → 1 863; the square at R_SUN
+clouds (−0.163, 1.24, 2.01, 1.16) → (−0.170, 1.248, 2.088, 1.176), young clusters (−0.141, 1.30, 1.60, 1.24) →
+(−0.121, 1.278, 1.800, 1.202)), the dust layer (the crest transmission at R₀ 0.750 → 0.7178, a spur's foot the ring's
+largest contrast at 1.62; at 6 kpc 0.590 → 0.5835; the subsample bounds beyond 7 kpc 5e-4 / 5e-5 → 5e-3 / 2e-3,
+measured 2.52e-3 / 1.04e-3), the templates (the moved tables may be `gas_spur`, the moved composed fields from
+`spurs`; the `ring` table and the gas field's `cell` column excepted as the clustering field's was at S61 — they read
+no pin). **The spur's foot doubles the crest** (the fix pass's look: S_foot = the crest, stacked on g) — **#164**,
+carried, the mend one pass. *Timings, cold, alone:* `arrays: gas pattern` 1.357 → **1.316 s** (did not double),
+`region: whole disc` 4.870 → 4.799, `clouds: whole disc` 7.630 → 8.110, `clusters: whole disc` 8.878 → 9.013,
+`render: whole, rgb` 8.947 → 9.158. *The e2e:* the physics-only over layered ratio 0.98671 / 0.99038 / 0.99449
+against the pin 0.98675 / 0.99042 / 0.99454 — inside 1e-3, not re-pinned; the frames: `milky_way-stars` differed by
+3 % of its pixels (the bright points the gas places moved), regenerated with `milky_way-field` and the thumbnail,
+8 of 8 on the second compare. EXIT=0 on test_gas_pattern (68, 36 min), test_pieces minus the gate test, the
+clustering gate, test_spurs, clouds, clusters, bar, region synthesis, render, api, v4, nebular, bubbles, audit III,
+the S45 diagnosis, dust layer; the templates after the lead's exception.
