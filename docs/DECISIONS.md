@@ -12112,3 +12112,34 @@ ring edges; L1's map is unsheared. *The cost, measured and accepted:* the normal
 per 47.5 pc, 5.26 million points, six octaves, float64) 4.6–5.1 s cold — a sparser lattice breaks the declared error
 (1.5 points 3e-2, 1 point 7.8e-2 against the 2e-2 limit; 2 points 9.7e-3 rms, 1.83e-2 worst) — **#163**; the lead's
 3 s budget was an estimate.
+
+**The spurs built (the spurs builder's second pass; seven commits, cherry-picked).** `layer/spurs.py` is the layer
+stage `gas_spurs` (checkpoint 4, `texture_seed`, one stream per chain): it lays the table `gas_spur` — chain, arc
+length of the foot, its R and φ, the local spacing, λ_J, Σ_peak, the foot's contrast, the pitch, the length, the
+width, the fall — walking each chain from a first foot uniform within one spacing of the start, each next foot one
+local spacing (10 λ_J,sp) on; no row in a flocculent disc or with the layer off; the crest contrast read on the two
+grid rings bracketing each foot at the chain's crossing azimuth, linear in R between (never the mid-gap solves),
+**within 0.052 of the point function on ten feet** (`WALK_READ_DIFFERENCE`, declared and tested). `stages/spurs.py`
+holds the `Spurs` class and the composing stage `spurs` (checkpoint 4), which **now publishes
+`gas_density_contrast`** — g′ = (1 − ⟨S⟩(R))·g + S; each spur a 63° log-spiral arc, Gaussian across (FWHM 60 pc),
+its height exp(−ln 7 · t/L) along with round caps, the ring and cell integrals three stretches in closed form with
+erf — and `GasPattern.from_fields` builds the spurs whenever the reader's view holds the table, so `contrast_at`,
+`cell_means` and `sector_means` carry them for the clouds, the texture, the clusters and the API alike
+(`unspurred_contrast_at` kept for the bar's blend). The five constants: `SPUR_SPACING_JEANS` 10, `SPUR_PITCH` 63°,
+`SPUR_LENGTH` 0.24 kpc, `SPUR_WIDTH` 0.06, `SPUR_FALL` 7. `star_formation_gas_contrast` stays in `gas_pattern`
+carrying neither lanes nor spurs (its about says so; bright, systems and planets read only it). *Measured:* the
+Milky Way template lays **48 spurs on its 12 chains** (9 of them on chains past the arm power, where the crest
+contrast is 1 and Σ_peak the ring's own column — the law allows it, recorded), `ngc_4414` none; the spacing, a
+disclosed check pinned with Σ_gas: at 4.0 kpc (Σ 22.84) 1.54 and 3.97 kpc on the two crossing chains (λ_J 154 and
+397 pc), **at R_SUN (Σ 10.92) 5.27–6.78 kpc on five chains (λ_J 527–678 pc)**, at 10 kpc (Σ 8.12) 6.95–10.27 kpc on
+six — every one outside M51's 200–1 000 pc, as the amendment foresaw; the ring mean of the published contrast off 1
+by at most 1.0e-13 (held under 1e-12 on every ring of the three galaxies on 37- and 1 001-edge grids), the largest
+spur share of a ring 0.0092; the closed forms against Gauss–Legendre split at the kinks 1e-12 (ring) and 1e-11
+(cell); the point function against the law by hand 3.0e-13; continuity across foot and tip under 1e-9 of the
+amplitude, no step beyond the Gaussian's own slope bound; the published cells against 96-point sampling 2.6e-5
+(the midpoint rule on a 0.43° spur); rerolling the stream moves the feet and nothing of the law; layer off no row
+and a neutral contrast, every other layer-off field bit-identical; the acceptance rows byte-identical. Re-pins,
+layer on: the bar's cliff [3.222, 2.974, 2.689] / 1.535 → [3.222, 2.966, 2.684] / 1.664; the offset's crossings 1 582
+→ 1 581; the clouds' mesh test on an outer cell 0 → 1.9e-6 (a spur's flank); the region synthesis's first window
+0.8424 / 881 / z −0.91 → 0.8501 / 887 / −0.87, the sixty windows' z mean −0.004 → 0.009. The stages cost 0.04 and
+0.14–0.18 s cold; the gas pattern's row and the e2e ratio are measured by the fix pass below.
