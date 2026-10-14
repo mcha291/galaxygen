@@ -12143,3 +12143,25 @@ layer on: the bar's cliff [3.222, 2.974, 2.689] / 1.535 → [3.222, 2.966, 2.684
 → 1 581; the clouds' mesh test on an outer cell 0 → 1.9e-6 (a spur's flank); the region synthesis's first window
 0.8424 / 881 / z −0.91 → 0.8501 / 887 / −0.87, the sixty windows' z mean −0.004 → 0.009. The stages cost 0.04 and
 0.14–0.18 s cold; the gas pattern's row and the e2e ratio are measured by the fix pass below.
+
+**The field finished (the field builder's third pass; nine commits, rebased onto the spurs).** The stage publishes
+eight synthetic fields (the seed, the `ring` table's six per-ring columns — break octave, Mach number, σ, strain,
+twist, normaliser — and the `cell` column), `compose.gas_fluctuation` the evaluator or None, the module's `evaluate`
+1 layer off; `vectors.json` gains a `gas_fluctuation` section (the float32-exact inputs of the default run, the
+weights for break indices 0–6, 56 sums in float64 and float32, two cells' normalisers 0.96470 and 0.99027, 16 map
+values; float32 within 1.44e-3 of float64 on the sum to 26 kpc, 3.5e-4 relative on the map). **The gate, measured:**
+(a) ring 1 (π·h 88 pc) reads **−1.543 / −2.435 with the break at 77 pc** against −1.53 / −2.53 ± 0.15 and 88; the
+steep slope −2.451 ± 0.032 on ring 8, −2.502 ± 0.025 on ring 11, −2.488 ± 0.025 on ring 13 (one slope); **ring 8
+above its break misses — −1.76 to −1.97 against −1.53 ± 0.15** — because the band above π·h = 338 pc runs only to
+the coarsest octave's plateau at 4 × 190 = 760 pc (a fifth of a decade) and the field owns no coarser octave by item
+1: **a disclosed miss of the construction, recorded as a strict xfail; ring 8 is judged on its steep slope and
+its break** (the lead's ruling); ring 11 has no band above its break (760 to 672 pc) and says so. (b) The width:
+var ln(map) 0.2446, 0.2467, 0.2462 on rings 1, 8, 11 against σ² 0.2510 (1.7–2.5 % low; the cell normalisers 0.80–1.27).
+(c) The anisotropy from the gradient covariance in each point's frame: axis ratio 5.589 / 2.709 / 2.182 against
+5.828 / 2.721 / 2.167, the major axis 66.2° / 58.3° / 55.1° against 67.5° / 58.8° / 55.8°. (d) Unit mean per cell:
+4.4e-16 worst over the 1 024 cells. (e) Nothing reads the field yet (asserted): every other field of the default
+run, on and off, the same bits as before the stage (777 digests), the clouds' and clusters' 31 columns too; L1's
+gate green. (f) I1–I3: the lists cover the eight fields, the layer-off run bit-identical, no acceptance row moved,
+rerolling moves the seed and the cell normalisers and not the ring table. *Cost (under another session's suite,
+upper bounds):* `run()` cold layer on 43.8–45.6 → 52.6–57.4 s, layer off 3.3 → 3.7 s; the stage 4.6–5.1 s alone
+(#163); `region: whole disc` untouched.
