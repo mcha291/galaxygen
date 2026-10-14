@@ -453,7 +453,7 @@ def _decl(name: str, label: str, unit: str, kind: Kind, about: str, **extra: Any
     )
 
 
-_RING = " One row a level-0 ring, innermost first; read by a shader with the seed (S62, D221 item 6). Not shown by the viewer, which evaluates the field from it in V7."
+_RING = " One row a level-0 ring, innermost first; read by a shader with the seed (S62, D221 item 6). It is not shown by the viewer, which evaluates the field from it in V7."
 GAS_FLUCTUATION_SEED = _decl(
     "gas_fluctuation_seed", "Gas fluctuation field's seed", "dimensionless", Kind.SCALAR,
     "The 32-bit seed of the gas fluctuation field: the clustering field's own, folded once from the layer's seed on "
@@ -498,7 +498,7 @@ GAS_FLUCTUATION_CELL_NORMALISER = _decl(
     "gas_fluctuation_cell_normaliser", "Gas fluctuation: cell normaliser", "dimensionless", Kind.TABLE_COLUMN,
     "Each level-0 cell's normaliser of the gas fluctuation map: one over the map's area-weighted mean on the cell's "
     "quadrature lattice, so that the map multiplied by it has unit mean in the cell and moves no gas or dust between "
-    "cells (one row a cell, ring by ring, sector by sector). Not shown by the viewer, which will multiply its own "
+    "cells (one row a cell, ring by ring, sector by sector). It is not shown by the viewer, which will multiply its own "
     "evaluation of the same noise by it in V7 (S62, D221).", of="cell",
     # S62 (D221): taken on L1's table lattice, two points per 47.5 pc - 4.6-5.1 s cold, accepted by the lead over its
     # 3 s estimate (sparser lattices miss 2e-2 on the inner rings); debt #163.
