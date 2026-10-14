@@ -326,6 +326,11 @@ assert len(ADDED_AT_S60) == 21 and len(pt.PIECE_FIELDS) == 8
 # its placed radius, and the layer's clustering field - its seed and its mean in each level-0 cell (NaN with the
 # layer off).
 ADDED_AT_S61 = {"cluster_birth_radius", "cloud_birth_radius", "census_clustering_seed", "census_clustering_cell_mean"}
+# S62 (D221 item 7 as amended): the layer's census of gas spurs, the table `gas_spur` - no row with the layer off.
+from galaxy.stages.spurs import SPUR_FIELDS as _SPUR_FIELDS  # noqa: E402
+
+ADDED_AT_S62_SPURS = set(_SPUR_FIELDS)
+assert len(ADDED_AT_S62_SPURS) == 12
 # S61 (D220 items 1 and 10): "everything that moves, moves once". With the layer off the cloud census is a new draw -
 # each ring's count and arrays on the ring's stream - and with it every column of the clouds and of the clusters (with
 # their HII regions and bubbles, which are columns of the cluster class) and the nine statistics computed from them.
@@ -386,7 +391,8 @@ def test_layer_off_every_field_is_the_s55_reference_bit_for_bit_but_the_named_li
     # S60 (D219): was `... | ADDED_AT_S59` with the phases, the anchor, the segment columns and the spread among the
     # earlier sets - 21 more and seven retired; the reference's count is S55's and does not move.
     # S61 (D220 item 6): was `... | ADDED_AT_S60` - and the binners' radius, `cluster_birth_radius`.
-    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 | ADDED_AT_S60 | ADDED_AT_S61 and len(held) == (332 if name == "azimuthal" else 331)
+    # S62 (D221 item 7 as amended): was `... | ADDED_AT_S61` - and the gas spurs' twelve columns, empty with the layer off.
+    assert set(now) - set(held) == ADDED_AT_S56 | ADDED_AT_S57 | ADDED_AT_S58 | ADDED_AT_S59 | ADDED_AT_S60 | ADDED_AT_S61 | ADDED_AT_S62_SPURS and len(held) == (332 if name == "azimuthal" else 331)
     assert out.fields["bar_present"] == ("yes" if template == "milky_way" else "no")
     # S59 (D218): what the five are with the layer off. The anchor is the bar's half-length, or where the bar would
     # be; the drawn pitch is S55's `pitch_angle`, to the bit, on both templates; no segment is laid; and the Sun's

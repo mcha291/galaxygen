@@ -164,6 +164,16 @@ registry at gate G3 ("a stage may not declare reads it does not make") and live 
 sources; the measuring functions take the mask's width as an argument. The measured ratio's class means stay
 constants: the ``bar`` stage derives the check's target from them.
 
+**Since S62 the gas carries spurs (BUILD_III Phase L2; DECISIONS.md D221 item 7 as the lead amended it).** The
+layer lays them (``layer/spurs.py``, the table ``gas_spur``) and ``stages/spurs.py`` holds their shape and composes
+them: a pattern built from fields that hold the table (the stages that place by the gas, and a run's fields) has
+``spurs``, and :meth:`GasPattern.contrast_at`, :meth:`GasPattern.cell_means` and :meth:`GasPattern.sector_means`
+are g' = (1 − ⟨S⟩(R)) g + S - the ring's mean kept exactly. The contrast the star formation law reads keeps neither
+the lanes nor the spurs. Because the spurs' spacing reads the ring's gas column, which the default model publishes
+after this stage (``sfh_azimuthal`` reads this stage's star-formation contrast), ``gas_density_contrast`` is published
+since S62 by the ``spurs`` stage; this stage publishes ``star_formation_gas_contrast`` alone.
+:meth:`GasPattern.unspurred_contrast_at` is g, what the spurs' walk reads on the grid's rings.
+
 **One solve per pattern.** A pattern object solves its rings the first time a profile is asked for and keeps
 them. Several stages of one run build the same pattern (the stage here, the cloud census, its texture, the
 cluster census), so the last few solutions are also kept by content - a digest of the forcing amplitudes,
@@ -475,7 +485,12 @@ GAS_DENSITY_CONTRAST = FieldDecl(
         "and nowhere negative; nothing is clipped. An unbarred galaxy has no lanes and its gas answers the "
         "arms to the centre. It reads no gas column. A composed field: with the randomness layer "
         "off it is 1 everywhere - the equation and its inputs are unchanged, and nothing says where the "
-        "arms are."
+        "arms are. Since the gas spurs were laid it carries them too: off every arm chain of a disc that is not "
+        "flocculent, feathers of gas leave the ridge's outer side at a steep trailing pitch, ten local Jeans "
+        "lengths of the ridge's peak apart along the arm, each as dense at its foot as the ridge there and fading "
+        "to a seventh of that over a quarter of a kiloparsec, their excess taken from the whole ring in proportion "
+        "to its gas so the ring's mean stays 1 exactly; published since then by the stage that lays them on, after "
+        "the gas column their spacing reads."
     ),
 )
 
@@ -500,7 +515,8 @@ STAR_FORMATION_GAS_CONTRAST = FieldDecl(
         "ring's total is unchanged, and there is no ridge. Star formation therefore follows the bar's "
         "footprint, not the lanes: the young stars of a barred galaxy fill the bar where it does not fill "
         "its ring, and where the footprint covers the whole ring this field is the response's blend alone. "
-        "The dust and the cloud census keep the lanes. Positive wherever the gas's own contrast is; nothing "
+        "The dust and the cloud census keep the lanes, and the gas spurs too: this contrast carries neither, so "
+        "the young stars follow neither the lanes nor the spurs. Positive wherever the gas's own contrast is; nothing "
         "is drawn, clipped or divided by a mean taken after the fact. A composed field: with the randomness "
         "layer off it is 1 everywhere."
     ),
@@ -1535,10 +1551,12 @@ GAS_PATTERN = IMPLEMENTATIONS.register(
             "epicyclic frequency and surface density, and no gas column. Neither a contrast nor a width is "
             "put in: the measured ones are a disclosed check's target, held in the tests. The field it "
             "publishes is the response's exact mean over each grid cell's extent in azimuth, at the ring's own "
-            "radius, so every ring keeps its gas on any grid with nothing divided. Beside it, the same "
+            "radius, so every ring keeps its gas on any grid with nothing divided. It publishes the "
             "contrast as the star formation law reads it: inside a bar's reach the lanes' excess spread "
             "evenly over the bar's footprint, because the lanes' width is a placeholder and star formation "
-            "must not ride it; elsewhere the same numbers. It draws nothing; "
+            "must not ride it; elsewhere the response's numbers; never the gas spurs. The gas's own contrast, "
+            "with the lanes and the spurs, is published by the stage that lays the spurs on, after the gas "
+            "column. It draws nothing; "
             "its fields are seeded through the pattern's drawn pitch and amplitudes and the layer's pieces."
         ),
         compute=compute_gas_pattern,

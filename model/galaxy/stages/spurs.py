@@ -191,7 +191,7 @@ class Spurs:
         before = along < 0.0
         after = along > T
         gap = np.where(before, along, np.where(after, along - T, 0.0))
-        height = np.where(before, 1.0, np.where(after, 1.0 / self.fall[j], np.exp(-self.decay[j] * along)))
+        height = np.where(before, 1.0, np.where(after, 1.0 / self.fall[j], np.exp(-self.decay[j] * np.clip(along, 0.0, T))))
         return self.amplitude[j] * height * np.exp(-(across * across + gap * gap) * inv2)
 
     def at(self, R: np.ndarray, phi: np.ndarray) -> np.ndarray:
