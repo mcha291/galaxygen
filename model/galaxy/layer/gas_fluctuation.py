@@ -38,7 +38,10 @@ the fitted break at 355, 379, 407, 515 and 443 pc at R = 1, 3, 5, 8.2 and 12 kpc
 carried a wavelength above pi h. This one (``4 l_j < pi h``) fits -1.72 / -2.60 with the break at 57 pc (R 1),
 -1.43 / -2.45 at 157 (R 3), -1.50 / -2.40 at 179 (R 5) and -1.62 / -2.50 at 266 (R 8.2): within an octave of pi h.
 Beyond ring 11 (pi h above 760 pc) the whole band lies below pi h and the field is the steep slope alone (R 12: -2.51),
-declared. **Past the gas disc's last published height** (h is NaN past the stellar edge: rings 25-31 on the default
+declared. *The steep slope is scalloped by octave* (S62's review, finding 8): the local slope per octave band below
+the break reads -2.8 to -3.05 mid-band and about -2.17 in the transition octave, and the single fits (-2.46 / -2.51 /
+-2.51 on rings 8, 11, 13) average them - value noise's octave structure, inside the gate's definition, which a shader
+matching the vectors inherits. **Past the gas disc's last published height** (h is NaN past the stellar edge: rings 25-31 on the default
 galaxy) a ring keeps the last finite ring's ladder - "the field beyond the gas disc's last published height keeps that
 height's ladder" (the lead's ruling 3); nothing is placed there.
 
@@ -73,6 +76,10 @@ in phi is ``phi - sense (twist_r + s_r ln(R / R_r))`` with ``sense = rotation_se
 at one read angle has ``phi = const + sense s ln R``, its azimuth growing outward as the arms' does. (The first build
 read ``phi - Theta`` without the sense - a shear for a disc turning towards +phi - and its filaments led: the
 autocorrelation's major axis in (+phi, outward) read (-0.90, +0.44) on ring 8; the reviewer's measurement.)
+*The anisotropy by another estimator* (S62's review, finding 7): the axis ratio ``noise.shear_anisotropy`` derives is
+the zero-lag curvature's, which the gate reads from the gradient covariance (5.52 / 2.73 / 2.18 against 5.83 / 2.72 /
+2.17 on rings 1, 8, 11); the autocorrelation's half-maximum contour reads 4.91 / 2.36 / 1.91, 12-16 % low - value
+noise's square-lattice anisotropy and the pixels' resolution of the minor axis at large lags, not a defect.
 
 **Unit mean per cell** (D221 item 5): each level-0 cell's normaliser is ``noise.lognormal_normaliser`` of the field
 over the cell's quadrature lattice - L1's table lattice (two points per 47.5 pc along the ring's width and along the
