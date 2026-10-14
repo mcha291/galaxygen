@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Galaxygen.AppHost/Galaxygen.AppHost.csproj" />
+  <Project Path="Galaxygen.Gateway.Tests/Galaxygen.Gateway.Tests.csproj" />
+  <Project Path="Galaxygen.Gateway/Galaxygen.Gateway.csproj" />
+  <Project Path="Galaxygen.ServiceDefaults/Galaxygen.ServiceDefaults.csproj" />
+</Solution>
