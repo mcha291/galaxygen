@@ -213,6 +213,9 @@ const FRAGMENT = /* glsl */ `
   }
 `;
 
+/** The points' two shader texts, as the material is built with them: exported for the pin (fluxPoints.test.ts). */
+export const FLUX_POINTS_SHADER = { vertex: VERTEX, fragment: FRAGMENT } as const;
+
 interface Props {
   /** Scene positions, three per point (positions.ts toScene). */
   positions: Float32Array;
