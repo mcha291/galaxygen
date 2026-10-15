@@ -124,18 +124,25 @@ def line_response(census: Mapping[str, Any], lines: Sequence[str], curves: Seque
     return total, shares
 
 
-def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str], shares: Mapping[str, np.ndarray] | None) -> dict[str, Any]:
-    """The clusters answer's ``knots`` entry: what a knot is drawn from, the cells that name it, and the rule."""
+def column_header(shares: Mapping[str, np.ndarray]) -> dict[str, Any]:
+    """The clusters answer's ``line_response`` entry (with filters=): its unit and axes, each line's transmission per
+    curve (the render's ``lines`` entries' numbers), and what it is."""
+    return {
+        "unit": "Lsun", "axes": ["row", "filter"],
+        "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "transmission": t.tolist()} for n, t in shares.items()},
+        "about": LINE_ABOUT,
+    }
+
+
+def header(R: np.ndarray, lines: Sequence[str], unmatched: Sequence[str]) -> dict[str, Any]:
+    """The clusters answer's ``knots`` entry, the same with filters= or without: what a knot is drawn from, the
+    cells that name it, and the rule."""
     return {
         "light": LIGHT,
         "size": SIZE,
         "cell": CELL,
         "column": COLUMN,
-        "lines": {
-            n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "from": _source(n),
-                **({"transmission": shares[n].tolist()} if shares is not None else {})}
-            for n in lines
-        },
+        "lines": {n: {"wavelength": _spectra.LINE_WAVELENGTHS[n], "from": _source(n)} for n in lines},
         "unmatched": list(unmatched),
         "layout": _v6_tiles.layout(R),
         "rule": RULE,

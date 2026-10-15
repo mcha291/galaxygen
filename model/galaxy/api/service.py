@@ -1464,12 +1464,11 @@ class Service:
         # curves beside its starlight, and the rule by which a viewer drawing them scales the field (api/v6_knots.py).
         if _v6_knots.LIGHT in census:
             lines, unmatched = _v6_knots.matched(_v6_knots.field_lines(self._declared(model)), columns)
-            shares = None
+            header["knots"] = _v6_knots.header(R, lines, unmatched)
             if curves is not None and lines:
                 knot_light, shares = _v6_knots.line_response(census, lines, curves)
                 arrays.append((_v6_knots.COLUMN, knot_light))
-                header[_v6_knots.COLUMN] = {"unit": "Lsun", "axes": ["row", "filter"], "about": _v6_knots.LINE_ABOUT}
-            header["knots"] = _v6_knots.header(R, lines, unmatched, shares)
+                header[_v6_knots.COLUMN] = _v6_knots.column_header(shares)
         return Response(200, wire.MEDIA, wire.encode(header, arrays), ran)
 
     def _remnants(self, q: Query) -> Response:

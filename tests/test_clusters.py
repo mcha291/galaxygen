@@ -410,10 +410,10 @@ def test_with_filters_each_cluster_carries_its_band_light_through_the_curves():
     # The anchors are cluster_luminosity's population: mass x the band sums at the same age and [Fe/H].
     flux = ph.band_flux_at(a["cluster_age"] / 1000.0, a["cluster_metallicity"], ("V",))["V"]
     assert np.allclose(anchors[:, 2], ph.band_nu_l_nu(a["cluster_mass"] * flux, "V"), rtol=1e-14, atol=0.0)
-    # Without filters: byte-identical to the body with the additions taken out.
+    # Without filters: byte-identical to the body with the additions taken out (S64: and the knots' line_response).
     plain = svc.handle("/api/clusters", SECTOR)
-    stripped = {k: v for k, v in h.items() if k not in ("filters", "white", "response")}
-    assert plain.body == wire.encode(stripped, [(k, v) for k, v in a.items() if k != "response"])
+    stripped = {k: v for k, v in h.items() if k not in ("filters", "white", "response", "line_response")}
+    assert plain.body == wire.encode(stripped, [(k, v) for k, v in a.items() if k not in ("response", "line_response")])
     # At a level, the response rides on the rows kept.
     _, deep = wire.decode(svc.handle("/api/clusters", SECTOR + "&level=2&" + urlencode({"filters": json.dumps(curves)})).body)
     assert deep["response"].shape == (len(deep["cluster_mass"]), 3)
